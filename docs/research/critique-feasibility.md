@@ -2,9 +2,9 @@ I'll review this design set. Let me start by understanding the actual environmen
 
 ---
 
-# RackMate Design Review: Technical Feasibility & Engineering Risk
+# RackPal Design Review: Technical Feasibility & Engineering Risk
 
-**Verified against the live environment:** Dart 3.12.2 / Flutter 3.44.4 stable, Windows 11. Repo `C:\Users\riley\Documents\Projects\Vibecoding\RackMate` is empty except for `.editorconfig`, `.gitattributes`, `.gitignore`, `docs/`.
+**Verified against the live environment:** Dart 3.12.2 / Flutter 3.44.4 stable, Windows 11. Repo `C:\Users\riley\Documents\Projects\Vibecoding\RackPal` is empty except for `.editorconfig`, `.gitattributes`, `.gitignore`, `docs/`.
 
 **API claims I checked and found correct** (credit where due, this design set has a much lower hallucination rate than typical):
 
@@ -49,7 +49,7 @@ Two of these are provably wrong on their own stated criterion:
 - **architecture D3 is wrong.** It justifies hundredths-mm as exact, but the EIA inter-panel clearance the data-model doc specifically calls out, 1/32 in = 0.79375 mm, is **79.375 hundredths-mm**, not an integer. D3's own exactness argument fails on the exact case it was written to handle. Only the nanometre choice survives it (793,750 nm).
 - **ux-schematic §5.4 contains a hard arithmetic error.** It states `heightU × 444` tenths-mm and calls it "EIA-310 1U = 44.45 mm = 444 tenths, **exact: no rounding anywhere in the vertical axis**." 44.45 mm is **444.5** tenths. Over a 45U rack that is 2.25 mm of accumulated error, which is visible on a dimensioned print and would be caught by an installer, not by you.
 
-**Mitigation:** Pick **int64 nanometres** (data-model is right, and its 25,400,000 nm/inch argument is the only one that holds for every imperial fraction to 1/1000 in). Do a mechanical sweep of all five documents before a line of code is written. Define `Len`, `Mass`, and the schematic `Pt` exactly once in `rackmate_core/units/` and make every other document reference it rather than restate it. Add the 1/32-in clearance and the 45U-stack accumulation as unit tests on day one; they are the two cases that discriminate between the candidate units.
+**Mitigation:** Pick **int64 nanometres** (data-model is right, and its 25,400,000 nm/inch argument is the only one that holds for every imperial fraction to 1/1000 in). Do a mechanical sweep of all five documents before a line of code is written. Define `Len`, `Mass`, and the schematic `Pt` exactly once in `rackpal_core/units/` and make every other document reference it rather than restate it. Add the 1/32-in clearance and the 45U-stack accumulation as unit tests on day one; they are the two cases that discriminate between the candidate units.
 
 ---
 
@@ -60,7 +60,7 @@ Two of these are provably wrong on their own stated criterion:
 | # | Contradiction | Which is right |
 |---|---|---|
 | **2a** | **Y-flip.** pdf decision #10: "Global Y-flip in the PDF adapter, **not per-coordinate**, because the interface exposes `rotate`/`transform`." architecture §6.6: "Use **per-coordinate** flipping (`_y(y) => _h - y`) rather than a global `scale(1,-1)`." | **pdf doc.** Per-coordinate flipping is only valid for an axis-aligned, rotation-free interface. architecture §6.6's own `DiagramCanvas` declares `void rotate(double radians)` and `SheetItem` has `rotationQuarterTurns`. A rotation composed with per-coordinate negation is not a valid transform, rotated text and rotated 0U PDU labels will come out mirrored or mis-sheared. architecture §6.6 is internally inconsistent with the interface three lines above it. |
-| **2b** | **Route caching.** architecture §5.2 specifies a `RouteCache` with per-connection incremental invalidation and an `ObstacleField`, "~15–40 ms cold." ux-schematic §2.6: "**Do not build incremental-reroute machinery in v1.** A full deterministic recompute is both cheaper than the invalidation bookkeeping." | They are describing **two different routers**. architecture's is an obstacle-avoiding pathfinder; ux-schematic §3.1's central thesis is "RackMate **never needs a general orthogonal router**" because layering makes gutters empty. Resolve explicitly: if you take the Sugiyama+channel router (you should, the interval-graph-colouring argument is genuinely good), then delete `ObstacleField` and `RouteCache` from the architecture and the `router.dart # obstacle-aware` comment with it. |
+| **2b** | **Route caching.** architecture §5.2 specifies a `RouteCache` with per-connection incremental invalidation and an `ObstacleField`, "~15–40 ms cold." ux-schematic §2.6: "**Do not build incremental-reroute machinery in v1.** A full deterministic recompute is both cheaper than the invalidation bookkeeping." | They are describing **two different routers**. architecture's is an obstacle-avoiding pathfinder; ux-schematic §3.1's central thesis is "RackPal **never needs a general orthogonal router**" because layering makes gutters empty. Resolve explicitly: if you take the Sugiyama+channel router (you should, the interval-graph-colouring argument is genuinely good), then delete `ObstacleField` and `RouteCache` from the architecture and the `router.dart # obstacle-aware` comment with it. |
 | **2c** | **Revision monotonicity.** data-model invariant #6: "`Project.revision` is **strictly monotonic** across the life of the document and **never decreases** on save." architecture §7.4: undo "**restore**[s] the revision they were recorded at rather than incrementing it… This means `revision` is **not strictly monotonic**." | **architecture**, on the UX (undo-to-clean is correct behaviour), but it violates a stated invariant that the sync design depends on. Fix by separating the two counters properly: `revision` = dirty-tracking, non-monotonic; `sequence` = strictly monotonic sync cursor, never decremented. architecture mentions `sequence` in one sentence; promote it to the model and update invariant #6 to name it. |
 | **2d** | **Structure device kind.** data-model invariant #24 requires a structure device always has `UnplacedPlacement`. ux-rack's `Placement` has `String? rackId; // null => Staging Bin`, a completely different, non-sealed shape with `lastRackId`/`lastBottomU` fields that do not exist in the data model. | data-model's sealed union. But ux-rack's Staging Bin is a **real product requirement** with no representation in the data model, `UnplacedPlacement` has only a `schematicHint`, no `lastRackId`/`lastBottomU`, so "Return to Rack A U21" is unimplementable as specified. Add those two fields. |
 
@@ -272,12 +272,12 @@ Meanwhile ux-schematic §4.6's own density table says **0–40 connections = one
 
 **Evidence:** `part of` files **cannot have their own imports**: every import must be hoisted to the library file. With ~40 entity types and ~30 command types in one library, you get one `library` declaration importing everything, and 70 `part` files that cannot be reasoned about independently. Analyzer performance degrades, IDE navigation degrades, and any file's imports become everyone's problem. This is a known-bad Dart pattern at scale.
 
-**Mitigation:** Use `@internal` from `package:meta`, **already a declared dependency**. `@internal` on setters produces an analyzer error for consumers *outside the declaring package*, and `rackmate_ui` / `apps/rackmate` are different packages. That gives you exactly the enforcement you want with zero structural cost:
+**Mitigation:** Use `@internal` from `package:meta`, **already a declared dependency**. `@internal` on setters produces an analyzer error for consumers *outside the declaring package*, and `rackpal_ui` / `apps/rackpal` are different packages. That gives you exactly the enforcement you want with zero structural cost:
 
 ```dart
 class RackDevice {
   int get ruIndex => _ruIndex;
-  @internal set ruIndex(int v) => _ruIndex = v;   // error if set from rackmate_ui
+  @internal set ruIndex(int v) => _ruIndex = v;   // error if set from rackpal_ui
 }
 ```
 Add the existing `no_flutter_import_test.dart` pattern as a second guard, a test that greps for `.ruIndex =` outside `src/commands/`. Belt and braces, no `part of`.
@@ -363,7 +363,7 @@ Worth saying explicitly, because the list above is long and this design set is w
 Reordered from the two build-order lists, front-loading the things that are cheap now and ruinous later:
 
 1. **Reconcile the unit base and the four contradictions (#1, #2).** One normative decision per subsystem, written down. ~2 days, and it is the highest-leverage work available.
-2. **`rackmate_core` units + `Pt`/`Box` + the 1/32-in and 45U-accumulation tests.** Locks #1 in code.
+2. **`rackpal_core` units + `Pt`/`Box` + the 1/32-in and 45U-accumulation tests.** Locks #1 in code.
 3. **The five pdf spikes, plus a sixth for `PdfTtfFont` main-isolate metrics cost (#18).**
 4. **`DiagramCanvas` with `TextMetrics` (#4) and explicit `TextAnchor`**, both backends, and the parity test asserting on **baseline y**. If parity doesn't hold, stop, the pdf doc is right that every hour spent on layout before parity is an hour that may need redoing.
 5. **Command/Transaction/UndoStack + the round-trip property test + the epoch-mask test (#16)**, with `@internal` setters (#10) rather than `part of`.

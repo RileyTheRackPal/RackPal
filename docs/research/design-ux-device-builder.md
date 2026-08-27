@@ -1,4 +1,4 @@
-# RackMate: Device Builder, Seeded Catalog & Structure Device
+# RackPal: Device Builder, Seeded Catalog & Structure Device
 ## Design Specification v1
 
 ---
@@ -286,7 +286,7 @@ Three stacked previews, each collapsible, all updating on every keystroke:
 |---|---|---|
 | `.rmdev` | One device template | **Plain JSON, UTF-8, LF, 2-space indent, keys sorted.** Human-readable and git-diffable. Images embedded as `data:` URIs, 512 KB cap each, with a save-time warning |
 | `.rmlib` | A library pack (many templates + metadata) | Zip: `library.json` manifest + `templates/*.rmdev` + `assets/` |
-| `.rackmate` | A project | Zip: `project.json` + embedded template snapshots + `assets/` |
+| `.rackpal` | A project | Zip: `project.json` + embedded template snapshots + `assets/` |
 
 Plain JSON for the single-template case is deliberate: it is the unit people email each other and paste into forum posts, and diffability is a stated differentiator no competitor offers.
 
@@ -294,7 +294,7 @@ Plain JSON for the single-template case is deliberate: it is the unit people ema
 
 ```json
 {
-  "$schema": "https://rackmate.app/schema/device/1.json",
+  "$schema": "https://rackpal.app/schema/device/1.json",
   "schemaVersion": 1,
   "kind": "device-template",
   "templateId": "0f3a...-uuid",
@@ -357,7 +357,7 @@ Plain JSON for the single-template case is deliberate: it is the unit people ema
 
 ### 4.1 Library, search, favourites
 
-- **Storage:** app library dir (seeded catalog, read-only-by-default) + user library dir (writable) + per-project embedded snapshots. A `.rmlib` can be mounted as an additional read-only source (this is how a firm shares a house style, and how a manufacturer could ship a pack later without RackMate maintaining it).
+- **Storage:** app library dir (seeded catalog, read-only-by-default) + user library dir (writable) + per-project embedded snapshots. A `.rmlib` can be mounted as an additional read-only source (this is how a firm shares a house style, and how a manufacturer could ship a pack later without RackPal maintaining it).
 - **Browser:** grid or list, with the rack elevation strip as the card thumbnail. Left sidebar: category tree, then filter chips, RU height, mount method, "has HDMI", "has PoE", "is passthrough", "container", "used in this project", "drafts".
 - **Search:** fuzzy over name, manufacturer, model, tags, description, **and port signal families**. Typing `hdbaset` surfaces every template with an HDBaseT port even if the word isn't in the name. Typing `8x8` matches `MTX-8x8-HDBT`.
 - **Favourites:** star toggle; favourites pin to the top of the browser and to a dedicated palette in the rack editor.
@@ -407,7 +407,7 @@ PlacedDevice {
 }
 ```
 
-Two consequences worth stating: a `.rackmate` file is **self-contained and shareable**: the recipient does not need your library. And an override is a *diff against the template*, so template updates and user customizations compose rather than collide.
+Two consequences worth stating: a `.rackpal` file is **self-contained and shareable**: the recipient does not need your library. And an override is a *diff against the template*, so template updates and user customizations compose rather than collide.
 
 ### 5.2 Three verbs, never ambiguous
 
@@ -464,7 +464,7 @@ Rules that make this work:
 
 ### 5.4 The seeded catalog and updates
 
-Seeded templates ship read-only. Editing one silently performs **Duplicate → edit the copy**, with a one-line notice: *"Catalog templates are read-only. Editing your copy 'HDMI Matrix 8×8 (custom)'."* This keeps app-update semantics simple, RackMate can ship catalog v2 without ever clobbering user work, and it makes the correct workflow (fork the archetype) the default one.
+Seeded templates ship read-only. Editing one silently performs **Duplicate → edit the copy**, with a one-line notice: *"Catalog templates are read-only. Editing your copy 'HDMI Matrix 8×8 (custom)'."* This keeps app-update semantics simple, RackPal can ship catalog v2 without ever clobbering user work, and it makes the correct workflow (fork the archetype) the default one.
 
 ---
 
@@ -520,7 +520,7 @@ The `as bundle "…"` suffix is how a multi-media single run gets created in one
 
 Accepts a pull list in either **long** shape (one row per drop) or **wide** shape (rooms as rows, media as numeric columns, because that is how pull lists actually look). Shape is auto-detected: if ≥2 column headers resolve to media synonyms *and* their cells are numeric, wide mode is offered.
 
-Import is never fail-fast. A **column-mapping sheet** shows every source header, RackMate's best guess, and a dropdown to correct it. Unmapped columns are **preserved into a `custom` map and surfaced as optional grid columns**: user data is never discarded.
+Import is never fail-fast. A **column-mapping sheet** shows every source header, RackPal's best guess, and a dropdown to correct it. Unmapped columns are **preserved into a `custom` map and surfaced as optional grid columns**: user data is never discarded.
 
 **Accepted columns** (matching is case-, space-, underscore-, and hyphen-insensitive):
 
@@ -1234,7 +1234,7 @@ Every template above carries realistic weight, depth, nameplate and typical watt
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│  RackMate — Device Builder                    HDMI/HDBaseT Matrix 8x8  ·  v1.3.0  ·  ● Unsaved       │
+│  RackPal — Device Builder                    HDMI/HDBaseT Matrix 8x8  ·  v1.3.0  ·  ● Unsaved       │
 │  [ ← Library ]                                        [ Version diff… ]  [ Save as 1.4.0 ]  [ ⋯ ]    │
 ├────────────────────┬─────────────────────────────────────────────────────────┬───────────────────────┤
 │                    │ ┌─ Quick Add ─────────────────────────────────────────┐ │  ▾ RACK ELEVATION     │

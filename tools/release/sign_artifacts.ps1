@@ -61,8 +61,8 @@
     -TrustedSigningMetadata pointing at the JSON metadata file.
 
 .EXAMPLE
-    pwsh -File tools/release/sign_artifacts.ps1 -Path dist/RackMate-portable -Thumbprint ABC123...
-    pwsh -File tools/release/sign_artifacts.ps1 -Path dist/RackMate-portable -PfxPath key.pfx
+    pwsh -File tools/release/sign_artifacts.ps1 -Path dist/RackPal-portable -Thumbprint ABC123...
+    pwsh -File tools/release/sign_artifacts.ps1 -Path dist/RackPal-portable -PfxPath key.pfx
 #>
 [CmdletBinding(DefaultParameterSetName = 'Thumbprint')]
 param(

@@ -38,7 +38,7 @@ already reads the equipment list through an exported PDF in the same words.
 
 ## 1. Setup, which is not on the clock because nothing here is
 
-1. Launch RackMate. `File ▸ New` for a blank project. It opens with one rack.
+1. Launch RackPal. `File ▸ New` for a blank project. It opens with one rack.
 2. Nothing else. **Do not** set a project location, a client name or a device location: the blank
    fields are the point, and filling one in removes an unknown this drill is here to see.
 

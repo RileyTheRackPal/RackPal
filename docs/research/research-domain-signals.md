@@ -1,4 +1,4 @@
-I'll research this systematically. Let me load the web tools first.Good baseline. Now the control, distributed audio, and audio-over-IP families.Now control buses, coax/RF distribution, power, and documentation conventions.A few more gaps: RS-232 details, RF distribution, DALI/KNX/Lutron, and larger accessible palettes.# A/V + Low-Voltage Signal & Cable Taxonomy for RackMate
+I'll research this systematically. Let me load the web tools first.Good baseline. Now the control, distributed audio, and audio-over-IP families.Now control buses, coax/RF distribution, power, and documentation conventions.A few more gaps: RS-232 details, RF distribution, DALI/KNX/Lutron, and larger accessible palettes.# A/V + Low-Voltage Signal & Cable Taxonomy for RackPal
 
 Research report for the wiring-plan data model. Verified specifics are cited; source list at the end.
 
@@ -120,13 +120,13 @@ Verified conventions to implement:
 
 1. **Signal flows left → right.** Sources on the left, destinations on the right. Follows reading order. Vertical stacking by system (video block, audio block, control block).
 2. **Arrowheads at the sink end.** A line with no arrowhead reads as bidirectional or as a bus. Double-headed arrows for ↔.
-3. **Colour by signal domain** is already conventional in the trade: blue = video, red = audio, green = control, orange = network. RackMate should stay *near* this convention rather than inventing a fresh one, installers read these drawings. (See §5, I keep the hue families but shift to CVD-safe specific values.)
+3. **Colour by signal domain** is already conventional in the trade: blue = video, red = audio, green = control, orange = network. RackPal should stay *near* this convention rather than inventing a fresh one, installers read these drawings. (See §5, I keep the hue families but shift to CVD-safe specific values.)
 4. **Line style** distinguishes classes within a domain.
 5. **Reference designators** per ASME Y14.44 / IEEE 315 practice:
    - **J** = fixed connector (jack), i.e. a port on a device
    - **P** = movable connector (plug), i.e. a cable end
    - **W** = cable / wire harness, i.e. a run
-   This maps cleanly onto RackMate: `Port.designator = J###`, `Cable.designator = W###`, cable ends implicitly `P###`. Adopt it; it makes the schedule legible to anyone who's read a schematic.
+   This maps cleanly onto RackPal: `Port.designator = J###`, `Cable.designator = W###`, cable ends implicitly `P###`. Adopt it; it makes the schedule legible to anyone who's read a schematic.
 6. **Buses drawn as a thick trunk with perpendicular stubs**, not as N point-to-point lines; this is the board-schematic idiom the user asked for and it is exactly right for RS-485, DMX, Cresnet, DALI, 70 V speaker lines, and RF distribution.
 7. **Orthogonal routing with jump-overs** (arc hops) at crossings, dots at genuine junctions. The dot-vs-hop distinction is the single most important schematic legibility rule.
 8. **Off-page / off-rack connectors** as pennant/flag symbols with a matching tag; this is precisely how the **Structure device** should render: a bank of flags, each tagged with its home-run destination (e.g. `LR-TV-1`, `MBR-KEY`).

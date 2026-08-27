@@ -1,12 +1,12 @@
-name: rackmate_workspace
+name: rackpal_workspace
 publish_to: none
 
 environment:
   sdk: ^3.12.0
 
 workspace:
-  - packages/rackmate_core
-  - packages/rackmate_text
-  - packages/rackmate_export
-  - packages/rackmate_ui
-  - apps/rackmate
+  - packages/rackpal_core
+  - packages/rackpal_text
+  - packages/rackpal_export
+  - packages/rackpal_ui
+  - apps/rackpal

@@ -1,6 +1,6 @@
 I'll research this properly. Let me load the web tools and run a broad fan-out.# Professional Rack Wiring Documentation, Research Report
 
-Scope: what integrators actually produce, so RackMate's PDF is something an installer will accept as a work instruction.
+Scope: what integrators actually produce, so RackPal's PDF is something an installer will accept as a work instruction.
 
 ---
 
@@ -14,7 +14,7 @@ Scope: what integrators actually produce, so RackMate's PDF is something an inst
 | **Cable run list** | Same data, run-ordered rather than ID-ordered. | Field |
 | **Wire checklist** | Schedule + a tick-box status column, used as the field signoff sheet. D-Tools ships this as a distinct report. | Installer/QA |
 
-RackMate should generate **one data table** and offer these as *filtered views/sort orders*, not separate data models.
+RackPal should generate **one data table** and offer these as *filtered views/sort orders*, not separate data models.
 
 ### 1.2 Column set actually used in practice
 
@@ -59,7 +59,7 @@ Composite from EPC/industrial cable schedules, TIA-568 pull-schedule templates, 
 - `Notes / Remarks`
 - `Fire rating`, `Hazardous area class` (industrial only, skip for CI)
 
-### 1.3 Minimum viable column set for RackMate v1
+### 1.3 Minimum viable column set for RackPal v1
 `Cable ID | Signal Type | From Device | From Port | To Device | To Port | Cable Spec | Length | Path | Notes`, plus optional `Status` and `Test` columns toggled on for the field/as-built variant. That's the sweet spot: everything above it is EPC-industrial noise; everything below it is unusable in the field.
 
 Sources: [Pathnovo cable schedule template](https://pathnovo.com/resources/templates/cable-schedule) · [InstruNexus cable schedule checklist](https://instrunexus.com/cable-schedule-check-list/) · [D-Tools Wire Connections report](https://support.d-tools.com/35_SI_2017_Documentation/User_Guide/05_Reports/1_Standard_Reports/Wire_Connections) · [D-Tools Wire Checklist](https://support.d-tools.com/38_SIX/User_Guide/05_Reports/01_Stock_Standard_Reports/Wire_Checklist) · [RMIT cable schedule](https://www.dlsweb.rmit.edu.au/Toolbox/electrotech/toolbox1204/resources/04diagrams/03electrical/07schedule.htm)
@@ -113,7 +113,7 @@ So a horizontal link is literally `<floor><space>-<panel><port>` → e.g. `2A-A1
 
 Worked examples from the standard: `J0001` (information outlet jack) · `D306` (work area) · `3A-C17-005` (closet 3A, column C, row 17, block position 005).
 
-**Critically: "The actual format is not mandated by the standard. However, the chosen format must be consistent and provide a unique identifier number for each system element."** → RackMate should ship an *identifier format engine* (template string with tokens), not a hardcoded scheme.
+**Critically: "The actual format is not mandated by the standard. However, the chosen format must be consistent and provide a unique identifier number for each system element."** → RackPal should ship an *identifier format engine* (template string with tokens), not a hardcoded scheme.
 
 **What must be labelled:** pathways, work area outlets, patch panels, racks and cabinets, ports, grounding busbars, cabling, firestop locations, telecommunications spaces, data center room grid.
 
@@ -142,7 +142,7 @@ Sources: [Cabling Install, 606-C requirements](https://www.cablinginstall.com/ca
 
 ### 2.2 AVIXA F501.01:2015: Cable Labeling for Audiovisual Systems
 
-The AV-specific counterpart, and closer to what RackMate produces:
+The AV-specific counterpart, and closer to what RackPal produces:
 - Label placed **within two inches of the connector**
 - **Printed self-laminating** label
 - Masking tape, insulation tape, and handwritten permanent-marker labels **shall not** be used
@@ -153,7 +153,7 @@ The AV-specific counterpart, and closer to what RackMate produces:
 
 Field practice (NCSU AV standard, representative): labels 1–3″ from the end, **all facing the same direction inside the rack**; format = `PORT IDENTIFIER + DEVICE NAME`, e.g. `OUT 1 Laptop`. Do *not* label network switch connections (rely on cable colour, label only the incoming feed); do not label cable type (redundant).
 
-**A widely used AV block-numbering scheme:** first two digits identify the equipment, last two the port. A 16×16 matrix becomes `2301–2316` (inputs) and `2401–2416` (outputs); a 10-port switch becomes `XX01–XX10`. This **reserves IDs for unpopulated I/O** so future additions don't break the scheme. This is a strong default for RackMate's auto-ID generator.
+**A widely used AV block-numbering scheme:** first two digits identify the equipment, last two the port. A 16×16 matrix becomes `2301–2316` (inputs) and `2401–2416` (outputs); a 10-port switch becomes `XX01–XX10`. This **reserves IDs for unpopulated I/O** so future additions don't break the scheme. This is a strong default for RackPal's auto-ID generator.
 
 Sources: [AVIXA F501.01](https://www.avixa.org/standards/cable-labeling-for-audiovisual-systems) · [NCSU AV Cable Labeling Standards](https://ncsu.service-now.com/kb_view.do?sys_kb_id=2a3b37e683dd2a54a35714326daad335) · [21st Century AV, labelling an AV rack](https://21stcenturyav.com/what-is-the-best-way-to-label-an-av-rack/)
 
@@ -203,7 +203,7 @@ Documented residential schemes:
 
 Sources: [Quadomated wire naming convention](https://www.quadomated.com/technology/automation/home-automation-wire-naming-convention/) · [CocoonTech prewire naming convention thread](https://cocoontech.com/threads/prewire-naming-convention.17232/) · [Data Wire Solutions room-by-room guide](https://datawiresolutions.com/blog/how-to-wire-home-for-ethernet-room-by-room)
 
-**Design implication for RackMate:** ship **all three schemes as templates** in a token-based identifier builder (`{type}-{room}-{dir}-{seq}`, `{area}-{type}-{run}`, `{floor}{space}-{panel}{port}`), let the user define room codes and type codes, and store **two IDs per drop**: the *field/outlet label* and the *rack/panel-port label*. The schedule must print both, that's the single most common on-site failure point.
+**Design implication for RackPal:** ship **all three schemes as templates** in a token-based identifier builder (`{type}-{room}-{dir}-{seq}`, `{area}-{type}-{run}`, `{floor}{space}-{panel}{port}`), let the user define room codes and type codes, and store **two IDs per drop**: the *field/outlet label* and the *rack/panel-port label*. The schedule must print both, that's the single most common on-site failure point.
 
 ---
 
@@ -223,7 +223,7 @@ Published July 2018 by TR-42.2. Covers single- and multi-dwelling units.
 | Grade 2 | 2 × Cat6A or higher | 2 | optional (2-fiber) |
 | Grade 3 | 2 × Cat6 or higher | 1 | **required** (2-fiber) |
 
-**So the canonical residential bundle is Grade 2: 2 × Cat6/6A + 2 × RG6.** That is the default bundle RackMate should seed.
+**So the canonical residential bundle is Grade 2: 2 × Cat6/6A + 2 × RG6.** That is the default bundle RackPal should seed.
 
 **Outlet quantity guidance** (per TIA-570, restated in Leviton's installer guide):
 - Minimum one Ethernet outlet location in the kitchen, each bedroom, the family/great room, and the den/study
@@ -238,7 +238,7 @@ The **Structured Media Center (SMC)** (Leviton's trademark; generically "structu
 
 Key facts that shape the data model:
 - The SMC is a **termination and consolidation point**, not a rack. It has module bays, not RUs.
-- In higher-end CI jobs the SMC is *replaced or supplemented by* a real rack, the home runs then land on **rack-mounted patch panels**. This is RackMate's primary case.
+- In higher-end CI jobs the SMC is *replaced or supplemented by* a real rack, the home runs then land on **rack-mounted patch panels**. This is RackPal's primary case.
 - Sizing is driven by drop count, so a drop count total is a genuinely useful derived output.
 - Low-voltage rough-in is deliberately routed in **separate stud bays from AC**, and the pull happens at framing stage; final termination and test happen after drywall. Hence **status tracking** (`Pulled` → `Terminated` → `Tested`) is meaningful, not decorative.
 
@@ -288,7 +288,7 @@ A **2D scaled elevation** of the rack showing equipment organisation by RU posit
 ### 4.3 Title block contents (standard construction-document practice)
 Project name & address · Client/owner · Design firm / integrator name, address, contact, licence number · Sheet title · Sheet number · Discipline · Scale (or "NTS") · Issue date · Drawn by / Checked by / Approved by · Project number · Seal/stamp area · North arrow (plans only) · File reference.
 
-J-STD-710 notes the **legend may be placed within the title block area** or in a separate rectangle in the drawing area, and that **any sheet lacking the legend must carry a note stating where the legend is shown**: a concrete, easy rule for RackMate's multi-page export.
+J-STD-710 notes the **legend may be placed within the title block area** or in a separate rectangle in the drawing area, and that **any sheet lacking the legend must carry a note stating where the legend is shown**: a concrete, easy rule for RackPal's multi-page export.
 
 ### 4.4 Revision block
 Columns: `Rev # | Date | Description | By`. Revisions accumulate downward; the current revision also appears in the title block. AVIXA D401.01 §6.1 makes a formal change record mandatory: *"A formal record of all project documentation and changes shall be maintained,"* and authority to make changes must be agreed at the first project meeting.
@@ -300,7 +300,7 @@ Discipline designators: G General · H Hazmat · V Survey · B Geotechnical · C
 
 Sheet type designators: **0** General (symbol legend, abbreviations, general notes) · **1** Plans · **2** Elevations · **3** Sections · **4** Large-scale drawings · **5** Details · **6** Schedules and Diagrams · 7–8 user-defined · 9 3D/isometric/photos
 
-**This gives RackMate a defensible, free sheet-numbering scheme:**
+**This gives RackPal a defensible, free sheet-numbering scheme:**
 `T0.01` legend/abbreviations · `T2.01` rack elevations front · `T2.02` rack elevations rear · `T6.01` signal flow/interconnect · `T6.02` wiring schedule · `T6.03` structure/drop schedule · `T6.04` BOM. Sequence numbers need not be contiguous, leave gaps for future sheets.
 
 Sources: [Archtoolbox, construction document sheet numbers](https://www.archtoolbox.com/construction-document-sheet-numbers/) · [NCS v5 UDS sheet ID (PDF)](https://www.nationalcadstandard.org/ncs5/pdfs/ncs5_uds1.pdf) · [Symbol Logic rack elevations](https://www.symbollogic.com/drawings/rackelevations/) · [SmartDraw rack diagrams](https://www.smartdraw.com/rack-diagram/) · [Graphical Networks rack diagram guide](https://graphicalnetworks.com/blog-rack-diagrams-your-ultimate-guide/)
@@ -317,7 +317,7 @@ Established conventions, all directly implementable:
 - **Reference designators** on every block, matching the rack elevation and the schedule. This is the "netlist" binding: one designator, three documents.
 - **Direction arrows** on every line.
 - **Avoid crossing lines; where unavoidable, use bridge/hop symbols** to mark non-connections. (Orthogonal routing + hops is exactly the electronics-schematic idiom.)
-- **Colour by signal type**, held constant across every document in the set. The de facto AV convention is **blue = video, red = audio, green = control, orange = network**. Note this *conflicts* with TIA-606's termination-class colours, RackMate should treat signal-type colour and 606 termination colour as **two separate, independently assignable colour dimensions**, and print the active key in the legend.
+- **Colour by signal type**, held constant across every document in the set. The de facto AV convention is **blue = video, red = audio, green = control, orange = network**. Note this *conflicts* with TIA-606's termination-class colours, RackPal should treat signal-type colour and 606 termination colour as **two separate, independently assignable colour dimensions**, and print the active key in the legend.
 - **Three diagram levels** worth supporting as export filters: **System-level** (client-facing), **Detailed** (installer-facing), **Control signal flow** (RS-232 / IP control / IR / relay only).
 
 Sources: [Kenny AV, signal flow diagrams guide](https://kennyavsolution.com/av-signal-flow-diagrams-guide/) · [avsyncstudio, signal flow + rack + wiring integration](https://avsyncstudio.wordpress.com/2026/02/27/how-signal-flow-diagrams-integrate-with-rack-and-wiring-diagrams/)
@@ -373,7 +373,7 @@ Sources: [ANSI J-STD-710 full text (PDF)](https://s3.us-east-1.amazonaws.com/fon
 
 ## 7. AVIXA D401.01: Documentation Requirements for Audiovisual Systems
 
-**The single most directly applicable standard to this project.** ANSI/AVIXA D401.01:2023 (formerly INFOCOMM 2M-2010). It defines *the minimum documentation set*, tiered by project complexity, which is effectively a spec for RackMate's PDF export.
+**The single most directly applicable standard to this project.** ANSI/AVIXA D401.01:2023 (formerly INFOCOMM 2M-2010). It defines *the minimum documentation set*, tiered by project complexity, which is effectively a spec for RackPal's PDF export.
 
 **Project classification** by additive point score across: geographic spread, number of sites, budget, technical complexity, number of rooms/room types, number of other trades, subcontract/union labour, number of key stakeholders, risk factors, resources required, project schedule urgency.
 → **Simple = 11–15 pts · Moderate = 16–21 pts · Complex = 22+ pts**
@@ -383,7 +383,7 @@ Sources: [ANSI J-STD-710 full text (PDF)](https://s3.us-east-1.amazonaws.com/fon
 2. **Bill of Materials**: all system components; may include description, serial number, TCP/IP and MAC information, warranty details
 3. **Architectural Locational Information**: device locations + infrastructure requirements; *"If architectural drawings are used, device symbols (see J-STD-710...) should be included"*; notes should include mounting height, back boxes, structural mounting details; **scaled drawings preferred but not required**
 4. **Architectural References and Details**: elevational, isometric or other views with key dimensions
-5. **System Interconnection Information**: *"typically a drawing... that includes detailed information on how each component in the system is connected. This may include part numbers, cable type, cable labels, detailed network information..."* ← **this is RackMate's wiring plan + schedule, named by the standard**
+5. **System Interconnection Information**: *"typically a drawing... that includes detailed information on how each component in the system is connected. This may include part numbers, cable type, cable labels, detailed network information..."* ← **this is RackPal's wiring plan + schedule, named by the standard**
 6. **Equipment Mounting Information**: *"the location and placement of equipment inside of any equipment rack (See AVIXA F502.01:2018...)... should include part numbers and detailed rack or location identification"* ← **this is the rack elevation**
 7. **System Performance Verification**: per ANSI/INFOCOMM 10:2013
 8. **As Built Documentation**: corrections to reflect final installed condition; *"considered essential by owners for all future service and maintenance"*
@@ -412,12 +412,12 @@ Sources: [AVIXA F502.01 release](https://warmup.avixa.org/about-us/press-room/20
 
 ---
 
-## 8. The CI Deliverable Set: and what RackMate's PDF should emit, in order
+## 8. The CI Deliverable Set: and what RackPal's PDF should emit, in order
 
 ### 8.1 Full professional deliverable set
 Cover sheet · Drawing index · Symbol legend + abbreviations + general notes · Floor plans & reflected ceiling plans (device locations) · Architectural elevations/sections · **Rack elevations (front + rear)** · **Signal flow / line diagram** · Wiring & riser drawings · Plate/panel details & pin configurations · **Cable/wiring schedule** · **Equipment list / BOM** · Manufacturer datasheets & cut sheets · **Network/IP schedule** · **Power schedule** · Product substitution documentation · Revision notes · Performance verification report · As-builts & closeout package.
 
-### 8.2 Recommended RackMate PDF export: order and scope
+### 8.2 Recommended RackPal PDF export: order and scope
 
 **v1: ship these, in this order:**
 
@@ -449,7 +449,7 @@ Sources: [XTEN-AV submittal package guide](https://xtenav.com/blog/av-submittal-
 
 ---
 
-## 9. Concrete design implications for RackMate
+## 9. Concrete design implications for RackPal
 
 1. **One dataset, many views.** Diagram, rack elevation, and schedule must be projections of the same graph. TIA-606's core requirement is that labels **match the records**; D401.01's as-built requirement means every view must regenerate from one source. Never store the schedule separately from the connection graph.
 

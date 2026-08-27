@@ -1,4 +1,4 @@
-# RackMate: Design Review: Usability & Scope Discipline
+# RackPal: Design Review: Usability & Scope Discipline
 
 ## Verdict up front
 
@@ -54,7 +54,7 @@ Circuits, NEC 210.19 continuous-load derate, PoE budgets, BTU/hr, centre-of-grav
 
 This is the most dangerous cluster in the design, and not because it's expensive. **It fabricates data and then presents it with authority.** `typicalWatts` defaults to 50% of nameplate. BTU derives from that guess. CG derives from weights the user copied from a spec sheet or made up. Then the design paints those numbers amber and red, and `blockExportOnErrors: true` lets them stop a PDF.
 
-The first time RackMate says "Circuit A at 14.2 A of 16.0 A" and the integrator puts a clamp meter on it and reads 6 A, they stop trusting *every number in the app*, including the ones that are right.
+The first time RackPal says "Circuit A at 14.2 A of 16.0 A" and the integrator puts a clamp meter on it and reads 6 A, they stop trusting *every number in the app*, including the ones that are right.
 
 **Keep exactly two rollups: RU used/free, and total weight vs rack capacity.** Both are facts the user actually supplies. Everything else moves to an unbadged, non-blocking info panel, or waits for v2.
 

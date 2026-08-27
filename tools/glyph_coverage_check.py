@@ -29,7 +29,7 @@ gets trusted past its evidence:
     names a rack `Sala de máquinas` is outside this and always will be;
   * the catalog's JSON and the seeded registries, which are data rather than
     literals;
-  * anything drawn by `rackmate_ui` widgets using a system font rather than the
+  * anything drawn by `rackpal_ui` widgets using a system font rather than the
     bundled family, which after DR-090 §11.89.8 should be nothing, but this
     gate cannot tell the difference.
 
@@ -48,7 +48,7 @@ if hasattr(sys.stdout, 'reconfigure'):
     sys.stdout.reconfigure(encoding='utf-8', errors='replace')
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-FONTS = ROOT / 'apps' / 'rackmate' / 'assets' / 'fonts'
+FONTS = ROOT / 'apps' / 'rackpal' / 'assets' / 'fonts'
 WEIGHTS = ['Jost-Regular.ttf', 'Jost-Medium.ttf']
 
 # Emitted by live code onto printed sheets. Listed explicitly so that if the
@@ -72,7 +72,7 @@ REQUIRED = {0x2192: 'passthrough arrow, schedules T6.10/T6.11',
 # This project's own practice is that a test's exemption list is where the bug
 # lives, so the mitigation is that this list is CLOSED and reasoned, anything
 # absent from it fails, and a codepoint that migrates from data into a widget
-# label will fail the moment it appears in a `rackmate_ui` literal.
+# label will fail the moment it appears in a `rackpal_ui` literal.
 PATH_BACKED = {
     0x25A0, 0x25A1,          # net, native / transported
     0x25B3,                  # video.digital, transported

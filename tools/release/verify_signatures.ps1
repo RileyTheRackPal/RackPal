@@ -59,8 +59,8 @@
     nothing in the artifact and deletes the certificate it minted.
 
 .EXAMPLE
-    pwsh -File tools/release/verify_signatures.ps1 -Path dist/RackMate-portable
-    pwsh -File tools/release/verify_signatures.ps1 -Path dist/RackMate-portable -RequireTrusted
+    pwsh -File tools/release/verify_signatures.ps1 -Path dist/RackPal-portable
+    pwsh -File tools/release/verify_signatures.ps1 -Path dist/RackPal-portable -RequireTrusted
     pwsh -File tools/release/verify_signatures.ps1 -TestExpiry -ExpiryWindowMinutes 3
 #>
 [CmdletBinding()]
@@ -176,7 +176,7 @@ if ($TestExpiry) {
     Write-Host '== clause 4: does a timestamped signature outlive its certificate? =='
     Write-Host "  minting a certificate valid for $ExpiryWindowMinutes minute(s)"
 
-    $work = Join-Path ([System.IO.Path]::GetTempPath()) "rackmate-expiry-$(New-Guid)"
+    $work = Join-Path ([System.IO.Path]::GetTempPath()) "rackpal-expiry-$(New-Guid)"
     New-Item -ItemType Directory -Force -Path $work | Out-Null
     $cert = $null
     try {
@@ -193,7 +193,7 @@ if ($TestExpiry) {
 
         $cert = New-SelfSignedCertificate `
             -Type CodeSigningCert `
-            -Subject 'CN=RackMate expiry probe (transient)' `
+            -Subject 'CN=RackPal expiry probe (transient)' `
             -CertStoreLocation 'Cert:\CurrentUser\My' `
             -KeyUsage DigitalSignature `
             -KeyLength 2048 `

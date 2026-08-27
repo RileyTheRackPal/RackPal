@@ -10,7 +10,7 @@ The PDF is the artifact that leaves the office. Everything upstream of it (the r
 |---|---|---|---|
 | **P1** | **One renderer.** Every mark on a sheet (traces, device blocks, symbols, borders, title block, zone band, legend swatches) is produced by one body of code targeting an abstract `DiagramCanvas`. | CR-086, D4 | §8. The parity test replays one `DiagramScene` through both backends. |
 | **P2** | **True vector, always.** No `RepaintBoundary`, no `toImage`, no PNG-in-PDF for anything a user reads. | §6.3 | **No raster anywhere.** The document is 100% vector; there is no image path in the interface (RJ-017, AC-057). |
-| **P3** | **The renderer compiles without Flutter.** `dart test`, not `flutter test`, builds a full document. | CR-083 | `no_flutter_import_test` bans `package:flutter/`, `dart:ui` and `package:pdf/` in `rackmate_core`. |
+| **P3** | **The renderer compiles without Flutter.** `dart test`, not `flutter test`, builds a full document. | CR-083 | `no_flutter_import_test` bans `package:flutter/`, `dart:ui` and `package:pdf/` in `rackpal_core`. |
 | **P4** | **Colour is never the only encoding.** Four channels: hue, dash, weight, glyph, plus the tag text. | AC-054, PAL-1 | §5. |
 | **P5** | **Emitted identifiers are facts about the physical world.** A designator that has been printed exists on a label in a wall. Stored at allocation, never recomputed at render time. | CR-048, CR-034 | §4. |
 
@@ -239,7 +239,7 @@ Three consequences. **(1)** The schedule and the drawing cross-reference visuall
 > legend prints them adjacently — but any two families in one domain must still differ in **dash
 > pattern, weight, or glyph**.
 
-The rule is pairwise over **rendered family values**, not over the eight domain rows of the chip above. The chip prints each domain's *base* rendering; a family carrying a dash or weight override renders differently from its base, and it is the rendered value that reaches the paper. Reading the eight rows is not a check, the authority is `tools/pal1_check.py`, which enumerates every in-band cross-domain pair and exits non-zero on any violation. It is ported to `pal1_conformance_test.dart` in `rackmate_core` at M0 and remains the authority thereafter; where this document and that file disagree, the file wins. The dash-class definition, the collisions the check found and the palette corrections it forced are in [Schematic editor §6.3](05-schematic-editor.md) and are deliberately not restated here.
+The rule is pairwise over **rendered family values**, not over the eight domain rows of the chip above. The chip prints each domain's *base* rendering; a family carrying a dash or weight override renders differently from its base, and it is the rendered value that reaches the paper. Reading the eight rows is not a check, the authority is `tools/pal1_check.py`, which enumerates every in-band cross-domain pair and exits non-zero on any violation. It is ported to `pal1_conformance_test.dart` in `rackpal_core` at M0 and remains the authority thereafter; where this document and that file disagree, the file wins. The dash-class definition, the collisions the check found and the palette corrections it forced are in [Schematic editor §6.3](05-schematic-editor.md) and are deliberately not restated here.
 
 This matters because the common claim that Okabe-Ito is greyscale-safe **is false** and this project does not repeat it: Sky Blue `#56B4E9` (relative luminance 0.4050) and Orange `#E69F00` (0.4162) are ΔL 0.0112 apart, and Vermillion `#D55E00` (0.2215) / Green `#009E73` (0.2569) / Purple `#CC79A7` (0.2930) sit inside a 0.072 band. The dash-and-weight layer is load-bearing, not decoration (AC-054).
 
@@ -393,7 +393,7 @@ Note what the notes are doing. `NOT ETHERNET`, `NULL-MODEM 2↔3 4↔6 7↔8 5�
 
 ### 4.1 One format engine, five call sites
 
-TIA-606-C is explicit that the format is not mandated but must be consistent and unique, so RackMate ships a **token template engine**, not a hardcoded scheme. It lives once, in `rackmate_core/idformat/`, and five call sites share it: device `designator`, port `designator`, `Link.designator`, `StructureOrigin.fieldLabel`, and `StructureOrigin.rackLabel` (CR-045). Rejected: five bespoke generators, which is what the design corpus had.
+TIA-606-C is explicit that the format is not mandated but must be consistent and unique, so RackPal ships a **token template engine**, not a hardcoded scheme. It lives once, in `rackpal_core/idformat/`, and five call sites share it: device `designator`, port `designator`, `Link.designator`, `StructureOrigin.fieldLabel`, and `StructureOrigin.rackLabel` (CR-045). Rejected: five bespoke generators, which is what the design corpus had.
 
 Grammar: `{TOKEN}`, `{TOKEN:n}` zero-pad, `[...]` optional segment that collapses entirely if any token inside is empty, `|upper` `|first n` `|nz` filters, `{{`/`}}` literal braces. Tokens are **`UPPER_SNAKE`** (N3) drawn from one canonical vocabulary:
 
@@ -509,7 +509,7 @@ J-STD-710 symbol geometry becomes constants: distinctive shapes inside a 3/8 in 
 
 ### 6.1 Sizes
 
-`PdfPageFormat` ships only `a3, a4, a5, a6, letter, legal, roll57, roll80`. ANSI, ARCH and A2/A1/A0 are defined in `rackmate_export/sheets.dart`:
+`PdfPageFormat` ships only `a3, a4, a5, a6, letter, legal, roll57, roll80`. ANSI, ARCH and A2/A1/A0 are defined in `rackpal_export/sheets.dart`:
 
 ```dart
 const _in = PdfPageFormat.inch;  // 72.0
@@ -580,32 +580,32 @@ Everything above is policy and can be revised cheaply. This cannot. There is no 
 CR-083 rules **five packages**: the four from `design-architecture.md`, plus one that resolves the text-metric dependency by *inversion* rather than by contamination.
 
 ```
-rackmate_core    pure Dart. no flutter, no dart:ui, NO pdf.
+rackpal_core    pure Dart. no flutter, no dart:ui, NO pdf.
                  model, commands, derived, routing, draw/ (scene builders,
                  hit_test.dart, BoundsCanvas), persistence, units/, idformat/.
                  Declares abstract TextMeasurer + TextMetrics.
-rackmate_text    pure Dart. core + package:pdf (for PdfTtfFont ONLY).
+rackpal_text    pure Dart. core + package:pdf (for PdfTtfFont ONLY).
                  ~5 files. The single concrete TextMeasurer.
-rackmate_export  pure Dart. core + rackmate_text + package:pdf.
+rackpal_export  pure Dart. core + rackpal_text + package:pdf.
                  PdfDiagramCanvas, sheets, furniture, tables, assembly.
                  The isolate entry point.
-rackmate_ui      flutter. core + rackmate_text.
+rackpal_ui      flutter. core + rackpal_text.
                  FlutterDiagramCanvas, render objects, widgets, canvas/input/.
-apps/rackmate    everything + plugins.
+apps/rackpal    everything + plugins.
 ```
 
-`rackmate_ui` depending on `rackmate_text` is harmless, `package:pdf` is pure Dart and isolate-safe. The invariant that actually matters is preserved and mechanically enforced: **`rackmate_core`, where the scene builder lives, has no concrete font engine and no `dart:ui`.** It receives a `TextMeasurer` by injection. `no_flutter_import_test` bans `package:flutter/`, `dart:ui` **and** `package:pdf/` inside core.
+`rackpal_ui` depending on `rackpal_text` is harmless, `package:pdf` is pure Dart and isolate-safe. The invariant that actually matters is preserved and mechanically enforced: **`rackpal_core`, where the scene builder lives, has no concrete font engine and no `dart:ui`.** It receives a `TextMeasurer` by injection. `no_flutter_import_test` bans `package:flutter/`, `dart:ui` **and** `package:pdf/` inside core.
 
 Rejected: `design-pdf-export.md §10`'s single `lib/` tree with `backends/{pdf_canvas, flutter_canvas}.dart` side by side and `TextMeasurer` in the core tree, which would make core depend on `package:pdf` and is the arrangement `design-architecture.md §1.1` correctly predicts "will be violated within a month by an `Offset` that 'was just easier'".
 
-Hit-testing splits by concern (CR-084): the *geometric* test (`DiagramScene.hits`, point-to-segment distance, nearest hit) lives in `rackmate_core/draw/hit_test.dart`, pure, synchronously testable, reusable by the read-only mobile shell. The *pointer plumbing* (one query per frame, spatial hash, cursor policy, hover throttle) lives in `rackmate_ui/canvas/input/`.
+Hit-testing splits by concern (CR-084): the *geometric* test (`DiagramScene.hits`, point-to-segment distance, nearest hit) lives in `rackpal_core/draw/hit_test.dart`, pure, synchronously testable, reusable by the read-only mobile shell. The *pointer plumbing* (one query per frame, spatial hash, cursor policy, hover throttle) lives in `rackpal_ui/canvas/input/`.
 
 ### 7.2 The pipeline
 
 ```
 RackDocument (int-only model, Len = nm, Mass = µg)
    │
-   ▼   rackmate_core/draw/scene_builder.dart
+   ▼   rackpal_core/draw/scene_builder.dart
 buildScene(doc, style, measurer, lodLevel) → DiagramScene
    │   THE renderer. Pure Dart. No dart:ui. No pdf.
    │   Len(nm) → diagram units in exactly one function (CR-007).
@@ -629,7 +629,7 @@ Coordinate convention: **top-left origin, Y down, angles positive clockwise.** T
 ### 7.3 The interface
 
 ```dart
-// rackmate_core/draw/canvas.dart — pure Dart, imports only geometry/style/path
+// rackpal_core/draw/canvas.dart — pure Dart, imports only geometry/style/path
 abstract interface class DiagramCanvas {
   // ── state stack ────────────────────────────────────────────────────────
   void save();
@@ -699,7 +699,7 @@ Bundling the same TTF is **not** a sufficient fix; that is `design-architecture.
 5. `FlutterDiagramCanvas.drawText` still uses `TextPainter` to *rasterise* glyphs, Skia is far better at that than anything we would write, but **anchors using the injected metrics**, and disables `kern`, `liga` and `clig`.
 
 ```dart
-// rackmate_core/draw/text.dart — pure Dart. Abstract only.
+// rackpal_core/draw/text.dart — pure Dart. Abstract only.
 // THE declaration site. There is no draw/text_measurer.dart.
 abstract interface class TextMeasurer {
   TextMetrics measureText(String text, TextStyleSpec style);
@@ -715,7 +715,7 @@ final class TextMetrics {
 ```
 
 ```dart
-// rackmate_text/pdf_font_measurer.dart — the ONE implementation.
+// rackpal_text/pdf_font_measurer.dart — the ONE implementation.
 final class PdfFontMeasurer implements TextMeasurer {
   PdfFontMeasurer(this._fonts);
   final Map<FontRef, PdfFont> _fonts;
@@ -750,7 +750,7 @@ Cache aggressively, a rack sheet re-measures the same designators hundreds of ti
 **Anchor resolution lives in one shared pure-Dart helper**, so neither adapter ever guesses a baseline. `TextStyleSpec` carries an explicit 12-way `TextAnchor` including `baselineLeft/Center/Right`:
 
 ```dart
-// rackmate_core/draw/text.dart — used verbatim by BOTH backends.
+// rackpal_core/draw/text.dart — used verbatim by BOTH backends.
 Pt anchorOffset(TextAnchor a, TextMetrics m) {
   final w = m.advanceWidth;
   final dx = switch (a) {
@@ -801,7 +801,7 @@ Pt anchorOffset(TextAnchor a, TextMetrics m) {
 ### 7.7 The two adapters
 
 ```dart
-// rackmate_export/draw/pdf_canvas.dart — PURE DART. Isolate-safe. No Flutter.
+// rackpal_export/draw/pdf_canvas.dart — PURE DART. Isolate-safe. No Flutter.
 final class PdfDiagramCanvas implements DiagramCanvas {
   PdfDiagramCanvas({
     required PdfGraphics graphics,
@@ -909,7 +909,7 @@ doc.addPage(pw.Page(
 ```
 
 ```dart
-// rackmate_ui/draw/flutter_canvas.dart — the ONLY renderer file importing dart:ui.
+// rackpal_ui/draw/flutter_canvas.dart — the ONLY renderer file importing dart:ui.
 final class FlutterDiagramCanvas implements DiagramCanvas {
   FlutterDiagramCanvas(this._c, {required TextMeasurer measurer})
       : _measurer = measurer { _stack.add(Matrix4.identity()); }
@@ -997,12 +997,12 @@ RenderRackCanvas
 
 Each device is still a `RenderBox` child of `RenderRackCanvas`, it owns hit-testing, focus, hover, keyboard handling and `Semantics`, which is what makes the accessibility story true and the outline tree possible. But its `paint()` **replays that device's `DiagramScene` fragment through `FlutterDiagramCanvas`**; it draws nothing itself. Pixels come from the shared IR; behaviour comes from the widget. Both documents get what they argued for, D4's guarantee holds where it matters, and the parity test covers faceplates by construction. Canon calls this "the single most consequential architectural ruling in this record".
 
-Two consequences follow immediately. First, `rackmate_core/draw/` gains `panel_layer.dart` and `symbol_layer.dart` in v1: a schematic symbol cannot be a widget-only artifact if it is to print (CR-071, CR-086). Second, `DiagramScene` must be **fragment-addressable**, `scene.fragmentFor(entityId)` returns the op range for one entity, which is also what lets the wire layer split into eight per-domain sub-pictures so an edit to one HDMI run rebuilds ~1,200 ops instead of ~10,000 (AC-008).
+Two consequences follow immediately. First, `rackpal_core/draw/` gains `panel_layer.dart` and `symbol_layer.dart` in v1: a schematic symbol cannot be a widget-only artifact if it is to print (CR-071, CR-086). Second, `DiagramScene` must be **fragment-addressable**, `scene.fragmentFor(entityId)` returns the op range for one entity, which is also what lets the wire layer split into eight per-domain sub-pictures so an edit to one HDMI run rebuilds ~1,200 ops instead of ~10,000 (AC-008).
 
 ### 7.9 The display list, and why the recorder earns its place
 
 ```dart
-// rackmate_core/draw/ops.dart — pure Dart
+// rackpal_core/draw/ops.dart — pure Dart
 sealed class DiagramOp { void replay(DiagramCanvas c); }
 
 final class OpLine extends DiagramOp {
@@ -1252,7 +1252,7 @@ Every item below is cheap to confirm with a 30-line spike and expensive to disco
 
 | Gate | Assertion |
 |---|---|
-| `no_flutter_import_test` | `rackmate_core` imports no `package:flutter/`, no `dart:ui`, **no `package:pdf/`** (CR-083) |
+| `no_flutter_import_test` | `rackpal_core` imports no `package:flutter/`, no `dart:ui`, **no `package:pdf/`** (CR-083) |
 | Headless document build | A full sheet set builds under `dart test`, not `flutter test` (P3) |
 | **Baseline parity** | One fixture scene through both backends; **baseline Y** agrees, not merely the bounding box; kerning-heavy fixture `"AV Wa To Ty"` within 0.5% (CR-081, AC-007) |
 | Faceplate parity | A `RenderDeviceBox` paint and the PDF sheet resolve to the same op range (CR-086) |

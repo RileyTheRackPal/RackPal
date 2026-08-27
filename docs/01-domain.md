@@ -1,6 +1,6 @@
 # Domain Reference
 
-This document is the source of truth for the physical, electrical and documentary facts about A/V racks that RackMate encodes. It exists so that a developer with no custom-integration (CI) background can implement the model, the validation rules and the export sheets correctly without guessing, every constant here is either fixed by a published standard, fixed by a canonical ruling (`CR-nnn` / `AC-nnn` / `RJ-nnn`) in the decision record, or explicitly marked `VERIFY:` as a figure that has not been confirmed against a primary source. Where this document and any raw working paper in [docs/research/](research/) disagree, the canonical decision record wins and this document restates it; where this document and the code disagree, this document is the bug report.
+This document is the source of truth for the physical, electrical and documentary facts about A/V racks that RackPal encodes. It exists so that a developer with no custom-integration (CI) background can implement the model, the validation rules and the export sheets correctly without guessing, every constant here is either fixed by a published standard, fixed by a canonical ruling (`CR-nnn` / `AC-nnn` / `RJ-nnn`) in the decision record, or explicitly marked `VERIFY:` as a figure that has not been confirmed against a primary source. Where this document and any raw working paper in [docs/research/](research/) disagree, the canonical decision record wins and this document restates it; where this document and the code disagree, this document is the bug report.
 
 **Related:** [Data model](02-data-model.md) turns these facts into types. [Seed catalog](catalog/seed-devices.md) instantiates them. [Testing and quality](11-testing-and-quality.md) lists which of them are asserted by a unit test.
 
@@ -25,7 +25,7 @@ Two standing prohibitions apply to everything below. **Never fabricate a number*
 
 ### 2.1 The standards
 
-EIA-310-D (US, inches), IEC 60297-3-100 (metric) and DIN 41494 are the harmonised expression of one standard. RackMate targets EIA-310-D semantics and stores metric integers.
+EIA-310-D (US, inches), IEC 60297-3-100 (metric) and DIN 41494 are the harmonised expression of one standard. RackPal targets EIA-310-D semantics and stores metric integers.
 
 | Quantity | Inches | Millimetres | Nanometres (stored) | Note |
 |---|---|---|---|---|
@@ -201,7 +201,7 @@ must be rated ≥ 125% of it — equivalently, continuous load ≤ 80% of rating
    20 A circuit → 16 A continuous
 ```
 
-**WHAT RACKMATE COMPUTES IS A PLANNING ESTIMATE, AND IT IS NOT THE CODE RULE ABOVE** (DR-079 §11.78.4). The statement of 210.19(A)(1) is accurate; the arithmetic this product performs is a different thing, and the gap is worth stating rather than leaving a reader to assume it closed:
+**WHAT RACKPAL COMPUTES IS A PLANNING ESTIMATE, AND IT IS NOT THE CODE RULE ABOVE** (DR-079 §11.78.4). The statement of 210.19(A)(1) is accurate; the arithmetic this product performs is a different thing, and the gap is worth stating rather than leaving a reader to assume it closed:
 
 | The code rule | What this product does |
 |---|---|
@@ -221,7 +221,7 @@ Outlet balance matters as much as amperage, running out of PDU outlets is as com
 
 ### 4.3 Heat
 
-**Ruling: one constant, `kBtuPerWattHour = 3.412142`, defined once in `rackmate_core/units/thermal.dart`** (CR-005). *Rejected alternatives: 3.41214 and 3.412, which appeared in three different design documents.*
+**Ruling: one constant, `kBtuPerWattHour = 3.412142`, defined once in `rackpal_core/units/thermal.dart`** (CR-005). *Rejected alternatives: 3.41214 and 3.412, which appeared in three different design documents.*
 
 ```text
 btuPerHour = watts × 3.412142            // derived, NEVER stored
@@ -304,7 +304,7 @@ Yellow `#F0E442` is reserved for selection and focus and **is never a cable** (P
 
 The within-domain limb is a **domain-equality check, never an allowlist of waived pairs**. An allowlist is how a real collision gets waived.
 
-PAL-1 is enforced by [`tools/pal1_check.py`](../tools/pal1_check.py), which enumerates every in-band cross-domain family pair actually drawn; it is ported to `pal1_conformance_test.dart` in `rackmate_core` at M0 and that check is the authority thereafter (canon §14). Where this document and that file disagree, **the file wins and this document is the bug report**. PAL-1 is never established by reading the eight domain rows above: the domain table states base values, while PAL-1 is a statement about the ~55 shipped families' *effective* values, and a check performed against the eight rows passed three times over a palette carrying fourteen collisions. The dash-period floor is **≥ 4.5 pt** (1.5875 mm).
+PAL-1 is enforced by [`tools/pal1_check.py`](../tools/pal1_check.py), which enumerates every in-band cross-domain family pair actually drawn; it is ported to `pal1_conformance_test.dart` in `rackpal_core` at M0 and that check is the authority thereafter (canon §14). Where this document and that file disagree, **the file wins and this document is the bug report**. PAL-1 is never established by reading the eight domain rows above: the domain table states base values, while PAL-1 is a statement about the ~55 shipped families' *effective* values, and a check performed against the eight rows passed three times over a palette carrying fourteen collisions. The dash-period floor is **≥ 4.5 pt** (1.5875 mm).
 
 ---
 
@@ -539,7 +539,7 @@ The canonical residential outlet is Grade 2: **2 × Cat6/6A + 2 × RG6**.
 
 ### 8.2 The distribution device and the rack
 
-Residential home runs terminate either in a **structured media enclosure** (14/21/28/42-in recessed cans, module bays rather than RUs) or, in higher-end CI work, directly on **rack-mounted patch panels**. The latter is RackMate's primary case. In commercial work the analogue is the MDF/IDF and the building's horizontal cabling.
+Residential home runs terminate either in a **structured media enclosure** (14/21/28/42-in recessed cans, module bays rather than RUs) or, in higher-end CI work, directly on **rack-mounted patch panels**. The latter is RackPal's primary case. In commercial work the analogue is the MDF/IDF and the building's horizontal cabling.
 
 Low-voltage rough-in is deliberately routed in separate stud bays from AC, and the pull happens at framing while termination and test happen after drywall. **That is why `roughInStatus` is meaningful rather than decorative**: `planned → pulled → dressed → terminated → tested` (CR-065). `Link.designatorLocked` auto-sets at `roughInStatus >= pulled`, once sixty cables are physically labelled, an accidental renumber is a day of relabelling (CR-034, AC-034/m22).
 
@@ -571,7 +571,7 @@ fs1/fs2-n           Building backbone cable
 f-FSLn(h)           Firestop location, h = hour rating
 ```
 
-**The standard explicitly does not mandate a format**: it requires that the chosen format be consistent and produce a unique identifier for every element. That is why RackMate ships a **format engine** rather than a hard-coded scheme (CR-045): one grammar, one registry, one parser in `rackmate_core/idformat/`, shared by five call sites (device, port, link, outlet field label, outlet rack label). Every designator is evaluated once at creation and **stored** (CR-048); nothing is recomputed at render time.
+**The standard explicitly does not mandate a format**: it requires that the chosen format be consistent and produce a unique identifier for every element. That is why RackPal ships a **format engine** rather than a hard-coded scheme (CR-045): one grammar, one registry, one parser in `rackpal_core/idformat/`, shared by five call sites (device, port, link, outlet field label, outlet rack label). Every designator is evaluated once at creation and **stored** (CR-048); nothing is recomputed at render time.
 
 606 placement rules that the product must not contradict: cables and pathways are labelled **on both ends**; labels are printed or mechanically generated (handwritten is non-compliant); and **labels must match the records**: the drawing, the schedule and the physical label are one dataset. That last requirement is the reason the diagram, the elevation and the schedule are three projections of one graph and the schedule is never stored separately.
 
@@ -594,7 +594,7 @@ There is **no residential labelling standard**. 606 assumes floors, telecom room
 
 Per ASME Y14.44 / IEEE 315 schematic practice **[std]**, adopted wholesale because it makes the schedule legible to anyone who has read a schematic:
 
-| Prefix | Meaning | In RackMate |
+| Prefix | Meaning | In RackPal |
 |---|---|---|
 | **J** | Fixed connector (jack) | `Port.designator` = `J{PORT_SEQ:2}` → `J01`, unique within the device (CR-042) |
 | **P** | Movable connector (plug) | A cable end: implicit, not stored; the convention is referenced on the legend |
@@ -612,13 +612,13 @@ Label within two inches of the connector; printed self-laminating; masking tape,
 
 The joint CEA/CEDIA/InfoComm residential-CI drawing symbols standard (2015), free from the CEDIA resource library, normatively referenced by AVIXA D401.01 **[std]**. Geometry at original drawing scale: distinctive shapes fit inside a 3/8-in (10 mm) circle; circle diameter 0.35 in (9 mm); square 0.25 in (6.35 mm); **all line weights 0.014 in (0.35 mm / 1 pt)**; attribute text minimum 3/32 in (2.5 mm). Four optional text attributes surround the symbol: `M` mounting type, `T`/`T2` primary and secondary technology, and `X`, the legend or schedule reference that links symbol to schedule row.
 
-Two provisions RackMate uses directly. The standard sanctions **tag shape encoding run type** (circular for home runs, square for locally-run cables) provided the rule is documented in the legend and applied consistently across the whole set. And "Rack or Head End" is explicitly on the stretchable-symbol list, so drawing a rack at true proportion is conformant.
+Two provisions RackPal uses directly. The standard sanctions **tag shape encoding run type** (circular for home runs, square for locally-run cables) provided the rule is documented in the legend and applied consistently across the whole set. And "Rack or Head End" is explicitly on the stretchable-symbol list, so drawing a rack at true proportion is conformant.
 
 ### 9.6 ANSI/AVIXA D401.01: the documentation set
 
-The most directly applicable standard to this product: it defines the *minimum documentation set*, tiered by project complexity (Simple 11–15 points, Moderate 16–21, Complex 22+). Three of its nine Simple-project items are named RackMate outputs:
+The most directly applicable standard to this product: it defines the *minimum documentation set*, tiered by project complexity (Simple 11–15 points, Moderate 16–21, Complex 22+). Three of its nine Simple-project items are named RackPal outputs:
 
-| D401.01 item | RackMate artifact |
+| D401.01 item | RackPal artifact |
 |---|---|
 | **System Interconnection Information**: "detailed information on how each component in the system is connected… part numbers, cable type, cable labels" | The Interconnect sheets (`T6.01…`) + the Pull Sheet + the Termination Schedule |
 | **Equipment Mounting Information**: "the location and placement of equipment inside of any equipment rack… part numbers and detailed rack or location identification" | Front and rear rack elevations |

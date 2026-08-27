@@ -34,7 +34,7 @@ the items a naive port estimate would double-count.
 
 | Already paid | Evidence |
 |---|---|
-| **`Platform.isWindows` is used nowhere in Dart** | A repo-wide grep over `packages/*/lib` and `apps/*/lib` returns exactly one hit, and it is a comment explaining the deliberate avoidance (`apps/rackmate/lib/main.dart:132`). `storage_layering_test.dart` RULE 1 permits `dart:io` in exactly two files |
+| **`Platform.isWindows` is used nowhere in Dart** | A repo-wide grep over `packages/*/lib` and `apps/*/lib` returns exactly one hit, and it is a comment explaining the deliberate avoidance (`apps/rackpal/lib/main.dart:132`). `storage_layering_test.dart` RULE 1 permits `dart:io` in exactly two files |
 | **The platform split is an INJECTED FLAG, not a runtime check** | `isWindows` is threaded `main.dart:136` → `app_services.dart:198` → `atomic_writer.dart:213`. Its own comment already reasons about macOS: it *"decides which errno table classifies a failed save and whether MAX_PATH is enforced, so defaulting it made a disk-full save on macOS read 'something went wrong…' and refused any path over 259 characters on a filesystem whose limit is 4096 bytes"*. **Someone has already paid part of this debt and did not record it** |
 | **The file picker is behind an interface** | `abstract interface class FilePicker` (`file_picker.dart:154`) with `Win32FilePicker` as one implementation (`:168`), injected as a default at `app_services.dart:199`. A macOS picker is a SECOND IMPLEMENTATION, not a refactor |
 | **Fonts are bundled, not system** | `assets/fonts/Jost-Regular.ttf`, declared at `pubspec.yaml:134-139`. §10.10 lists *"font availability"* as a cost item; **it does not apply to this tree** |
@@ -51,21 +51,21 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 
 | # | Item | Evidence | Est. |
 |---|---|---|---|
-| **D1** | **No `macos/` platform directory.** `apps/rackmate` has `windows/` only | `ls apps/rackmate/` | hours |
-| **D2** | **Native file dialog.** RackMate drives `IFileDialog` itself from `windows/runner/file_dialog_channel.cpp` + `.h`, deliberately, `file_selector` was removed on purpose (`pubspec.yaml:8-20`). macOS needs an `NSOpenPanel`/`NSSavePanel` channel behind the existing `FilePicker` interface | `windows/runner/` | **largest item**: days |
+| **D1** | **No `macos/` platform directory.** `apps/rackpal` has `windows/` only | `ls apps/rackpal/` | hours |
+| **D2** | **Native file dialog.** RackPal drives `IFileDialog` itself from `windows/runner/file_dialog_channel.cpp` + `.h`, deliberately, `file_selector` was removed on purpose (`pubspec.yaml:8-20`). macOS needs an `NSOpenPanel`/`NSSavePanel` channel behind the existing `FilePicker` interface | `windows/runner/` | **largest item**: days |
 | **D3** | **`path_provider_windows`** must gain a macOS answer at the one call site | `pubspec.yaml:70` | hours |
 | **D4** | **CI has one job, pinned to Windows.** `azure-pipelines.yml:181` `job: windows_ci`, `:197` `vmImage: 'windows-2022'`. Needs a macOS job. Note the pipeline's own comment at `:106` already anticipates a matrix: *"that is a later question"*; **it is now this question** | `azure-pipelines.yml` | days |
 | **D5** | **Gate scripts are PowerShell.** Six `.ps1` under `tools/ci/`. Likely runnable under `pwsh` on macOS unmodified, **verify before budgeting a rewrite** | `tools/ci/` | verify first |
 | **D6** | **`verify_windows_build.ps1`** is Windows-specific by name and purpose; needs a macOS counterpart | `tools/ci/` | hours |
-| **D7** | ~~KEYBOARD MODIFIERS~~: **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today**, but see §3.1 and §2.1: the ban is enforced in **one file**, and not in the package where M3 is built, and M2-F added **nine** more rows to that ungated package (35 → 44), **~~gate owed~~ PAID at #94, §2.2: `keymap_source_ban_test.dart` scans all of `rackmate_ui/lib`, comments stripped, three constructors banned, mutation-verified** | `packages/rackmate_ui/lib/src/keymap/keymap.dart` | **done** |
+| **D7** | ~~KEYBOARD MODIFIERS~~: **CLEARED, GATE INCOMPLETE.** Was 43 hard-coded `SingleActivator` bindings assuming `Ctrl`, across six files. Now a 35-row `kKeymap` registry whose primary modifier resolves once, in `KeyBinding.activatorFor(TargetPlatform)`, through `defaultTargetPlatform`. **Zero `SingleActivator` instances remain outside the registry today**, but see §3.1 and §2.1: the ban is enforced in **one file**, and not in the package where M3 is built, and M2-F added **nine** more rows to that ungated package (35 → 44), **~~gate owed~~ PAID at #94, §2.2: `keymap_source_ban_test.dart` scans all of `rackpal_ui/lib`, comments stripped, three constructors banned, mutation-verified** | `packages/rackpal_ui/lib/src/keymap/keymap.dart` | **done** |
 | **D8** | **Code signing.** DR-006 rules Windows self-signing; macOS needs **notarisation and stapling**, which D10 names and §12.9 explicitly leaves *"unaffected and still binding"* | canon `:2696`, `:5875` | days + Apple Developer enrolment lead time |
 | **D9** | **pdfium is vendored per platform** (CR-100), **but not yet, and not by anything shipped.** `printing`/pdfium is in **no pubspec in this tree**; PDF comes from pure-Dart `pdf ^3.13.0`. docs/03 §10.1 *plans* `printing ^5.15.0` *"behind an explicit 'Verify output' button only"* and docs/11:432 schedules vendored pdfium at **M8**. So D9 is triggered by the preview button, not by adding sheets: **adding a sheet role costs zero here** | canon `:1517`; every `pubspec.yaml`; docs/11:432 | days, **at M8** |
 | **D10** | **`window_manager` / `screen_retriever_windows`** for geometry restore. `window_manager` is cross-platform; the pinned `screen_retriever_windows` transitive is not | `pubspec.yaml:98`, `:106` | hours |
 | **D11** | **A second print test matrix.** AC-054's greyscale laser check is a physical act on a physical printer, and no agent can perform it | §10.10 | manual |
 | **D12** | **Path-length semantics.** `exceedsWindowsMaxPath` is already gated behind `isWindows` (`atomic_writer.dart:464`), so the mechanism exists; macOS needs its own answer (4096 bytes, not 259 chars) | `atomic_writer.dart` | hours |
-| **D13** | **The file dialog takes no file-type filter.** `COMDLG_FILTERSPEC` is hard-coded to `.rackmate` and `SetDefaultExtension(L"rackmate")` fires on **both** dialogs, inside `ConfigureDialog`, which both branches call. The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`. **Add the filter argument BEFORE D2**, or D2 reimplements the narrow contract and then widens twice. **M3-F (CSV import) is what forces it**: see §5 | `file_dialog_channel.cpp:107-123, :216-218`; `file_picker.dart:156, :164` | hours, but **before D2** |
+| **D13** | **The file dialog takes no file-type filter.** `COMDLG_FILTERSPEC` is hard-coded to `.rackpal` and `SetDefaultExtension(L"rackpal")` fires on **both** dialogs, inside `ConfigureDialog`, which both branches call. The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`. **Add the filter argument BEFORE D2**, or D2 reimplements the narrow contract and then widens twice. **M3-F (CSV import) is what forces it**: see §5 | `file_dialog_channel.cpp:107-123, :216-218`; `file_picker.dart:156, :164` | hours, but **before D2** |
 | **D14** | **Locale-dependent sheet size.** docs/08:509 requires *"Non-US platform locale substitutes A4/A3"*. Unimplemented, `SheetSize` has two values, neither A4. **Not macOS-specific**: a Windows machine in a metric locale hits it, which is why it went unnoticed. Recorded here because it is the one genuinely platform-dependent input to PDF geometry, and §2's closing paragraph was worrying about floats and fonts while this sat unlisted | docs/08:509; `sheet_def.dart:38-45` | hours |
-| **D15** | **The PDF rasteriser for the Plan view's underlay import**, and it is the entry **DR-018 §11.17.4 predicted verbatim** before there was a ruling to hang it on: *"`docs/13` gains an entry if the chosen import path is a Windows-only rasterizer, because DR-009 puts macOS in v1."* DR-029 buys PDF import, so it does. **Cost it WITH D9, not twice**: D9 already contemplates vendoring pdfium per platform (CR-100) for the print-preview button, and if pdfium is chosen here the two become one vendoring problem paid once. The alternative, `Windows.Data.Pdf` (WinRT), has **no third-party dependency and no macOS answer at all**, so it converts a shared cost into a per-platform one. **Note what changes and what does not**: a PDF is rasterised at **import** and the member written to the zip is still PNG or JPEG, so `PlanUnderlay.format` keeps two values and `rackmate_core` needs no decoder (DR-029 §11.28.12). The debt is an import path, not a model change. **`PLAN-D/1` picks the rasteriser and re-costs this row against the tree** | canon §11.28.5, §11.36.8; docs/15 §2; the D9 row below | **days, and it moves D9's schedule from M8 to before M6** |
+| **D15** | **The PDF rasteriser for the Plan view's underlay import**, and it is the entry **DR-018 §11.17.4 predicted verbatim** before there was a ruling to hang it on: *"`docs/13` gains an entry if the chosen import path is a Windows-only rasterizer, because DR-009 puts macOS in v1."* DR-029 buys PDF import, so it does. **Cost it WITH D9, not twice**: D9 already contemplates vendoring pdfium per platform (CR-100) for the print-preview button, and if pdfium is chosen here the two become one vendoring problem paid once. The alternative, `Windows.Data.Pdf` (WinRT), has **no third-party dependency and no macOS answer at all**, so it converts a shared cost into a per-platform one. **Note what changes and what does not**: a PDF is rasterised at **import** and the member written to the zip is still PNG or JPEG, so `PlanUnderlay.format` keeps two values and `rackpal_core` needs no decoder (DR-029 §11.28.12). The debt is an import path, not a model change. **`PLAN-D/1` picks the rasteriser and re-costs this row against the tree** | canon §11.28.5, §11.36.8; docs/15 §2; the D9 row below | **days, and it moves D9's schedule from M8 to before M6** |
 
 ### 2.1 Re-read against `91cd487` (2026-08-01, after M2-F)
 
@@ -74,7 +74,7 @@ was checking for and did not get. What did move:
 
 | Row | Finding |
 |---|---|
-| **D1** | Unchanged. `ls apps/rackmate/` still shows `windows/` and no `macos/` |
+| **D1** | Unchanged. `ls apps/rackpal/` still shows `windows/` and no `macos/` |
 | **D3** | Unchanged, citation still exact: `path_provider_windows: ^2.3.0` at `pubspec.yaml:70` |
 | **D4** | Unchanged, **citation drifted**: `job: windows_ci` is `azure-pipelines.yml:181` and `vmImage: 'windows-2022'` is `:197`, not `:180`/`:196` |
 | **D5** | Unchanged: still exactly six `.ps1` under `tools/ci/`, still unverified under `pwsh` on macOS |
@@ -85,23 +85,23 @@ was checking for and did not get. What did move:
 
 **§3.1's hole grew, and M2-F is what grew it.** The register's D7 row says the ban on
 `SingleActivator` outside the registry *"is enforced in one file, and not in the package where M3 is
-built"*. That is still literally true, `apps/rackmate/test/session/session_layering_test.dart`'s
+built"*. That is still literally true, `apps/rackpal/test/session/session_layering_test.dart`'s
 RULE 14 asserts `isNot(contains('SingleActivator('))` against `app_shell.dart` alone, and
-`packages/rackmate_ui/test/keymap/keymap_arbitration_test.dart` arbitrates the registry's CONTENT
-without ever reading `rackmate_ui/lib` for literals. Meanwhile **M2-F added nine schematic rows**
+`packages/rackpal_ui/test/keymap/keymap_arbitration_test.dart` arbitrates the registry's CONTENT
+without ever reading `rackpal_ui/lib` for literals. Meanwhile **M2-F added nine schematic rows**
 (`kKeymap` stood at 44 rows then, up from 35), every one in the ungated package.
 
 So §3.5's warning, *"the largest remaining binding surface in v1, in the ungated package; if D7
 regresses anywhere, here"*, has had one milestone slice's worth of practice run against it with
 nothing watching. Nothing regressed; the register records that it was not being checked.
 
-**The gate D7 owes is one source scan in `rackmate_ui`'s own suite**, the same shape RULE 14
+**The gate D7 owes is one source scan in `rackpal_ui`'s own suite**, the same shape RULE 14
 already runs one package over.
 
-### 2.2 The gate is PAID: `packages/rackmate_ui/test/keymap/keymap_source_ban_test.dart` (board #94, 2026-08-02)
+### 2.2 The gate is PAID: `packages/rackpal_ui/test/keymap/keymap_source_ban_test.dart` (board #94, 2026-08-02)
 
 **D7 moves from `done — gate owed` to `done`.** The scan walks every `.dart` under
-`packages/rackmate_ui/lib`, strips comments, and fails on `SingleActivator(`, `CharacterActivator(`
+`packages/rackpal_ui/lib`, strips comments, and fails on `SingleActivator(`, `CharacterActivator(`
 or `LogicalKeySet(` anywhere outside `lib/src/keymap/`. It landed **before M3-C**, which §3.5 names
 as the largest remaining binding surface, a gate added after the bindings land tells you what you
 already shipped.
@@ -193,12 +193,12 @@ asserts `app_shell.dart` contains none"* as though that settled the enforcement 
 the whole enforcement, and it covers one file.**
 
 `session_layering_test.dart:503` reads `File('lib/src/session/app_shell.dart')`, relative to
-`apps/rackmate`, and asserts `isNot(contains('SingleActivator('))`. That is the entire ban.
-`packages/rackmate_ui/test/` has **no layering test at all**, and `keymap_arbitration_test.dart` is
+`apps/rackpal`, and asserts `isNot(contains('SingleActivator('))`. That is the entire ban.
+`packages/rackpal_ui/test/` has **no layering test at all**, and `keymap_arbitration_test.dart` is
 pure in-memory: it never reads a source file, so it cannot see a binding that never reached the
 table.
 
-**Every remaining M3 UI task writes into `packages/rackmate_ui/lib`**: M3-A, M3-C, M3-E and M3-H.
+**Every remaining M3 UI task writes into `packages/rackpal_ui/lib`**: M3-A, M3-C, M3-E and M3-H.
 A `SingleActivator(LogicalKeyboardKey.keyT, control: true)` in the new Structure editor compiles,
 ships, hard-codes `Ctrl` on macOS, and is invisible to `arbitrate()` and to M7's generated table.
 **Nothing fails.**
@@ -207,7 +207,7 @@ That is the same shape as the defect D7 existed to remove, and §3's own thesis,
 grew ~95% in one day of work on other tasks, is the reason to expect it to recur. M3-C is the
 largest binding surface left in v1.
 
-**The gate is owed in `packages/rackmate_ui/test/`, and it must ban the CONSTRUCTION rather than
+**The gate is owed in `packages/rackpal_ui/test/`, and it must ban the CONSTRUCTION rather than
 name a file**: a per-file ban is exactly what left this hole.
 
 ---
@@ -224,7 +224,7 @@ seam that already has a working Windows implementation M3 extends rather than wa
 | **M3-A** Outlet / structureOrigin / endpoint kinds in UI | **touches D7** | New bindings must be `kKeymap` rows; §3.1's hole is the exposure |
 | **M3-B** Locations panel (CR-112) | none | Pure model + Flutter UI |
 | **M3-C** Structure editor | **touches D7** | The **largest remaining binding surface in v1**, in the ungated package. If D7 regresses anywhere, here. **M3-C/2 landed 2026-08-08 and added two rows**, `Ctrl+D` and `Ctrl+V` in a new `KeyScope.structure`, both through `kKeymap` with the gate watching. The forecast said largest; the outcome was two, because every editable cell is a real focusable control and tab order is therefore the framework's, not a binding |
-| **M3-D** dual labels, lengths, footage rollup | none | Grows neither D9 (see the D9 row) nor the cross-platform question (see §2's correction). It **did** straddle M6, the Pull Sheet role being assigned to M6 by `sheet_def.dart:15-20` while M3's exit criterion demanded exporting it. **DR-027 §11.26.2 settled that seam on 2026-08-09**: M3 owes the rows, the sort and the per-room subtotals as tested `rackmate_core` output, M6 owes the `SheetRole`, the layout, the initial boxes and the page. Demonstrated at M3-D/4 (`pull_sheet_clause_test.dart`), which asserts M3's half and asserts that no Pull Sheet role exists to claim M6's. Not macOS debt; recorded so M3-D is not scoped from its one-line description |
+| **M3-D** dual labels, lengths, footage rollup | none | Grows neither D9 (see the D9 row) nor the cross-platform question (see §2's correction). It **did** straddle M6, the Pull Sheet role being assigned to M6 by `sheet_def.dart:15-20` while M3's exit criterion demanded exporting it. **DR-027 §11.26.2 settled that seam on 2026-08-09**: M3 owes the rows, the sort and the per-room subtotals as tested `rackpal_core` output, M6 owes the `SheetRole`, the layout, the initial boxes and the page. Demonstrated at M3-D/4 (`pull_sheet_clause_test.dart`), which asserts M3's half and asserts that no Pull Sheet role exists to claim M6's. Not macOS debt; recorded so M3-D is not scoped from its one-line description |
 | **M3-E** Pathway, multiple Structure instances | none | |
 | **M3-F** CSV import | **GROWS D2: the only growth in M3** | `pickOpen` already exists (`file_picker.dart:156`), so nothing is blocked. What is missing is a **file-type filter** anywhere in the stack, see **D13**. Hours on top of D2's days, once, and then it is done. **Not the D7 case**, which grew ~95% in a day because every commit added bindings |
 | **M3-G** 60-drop drill (AC-018) | none | **Specifically NOT D11.** D11 is a physical greyscale laser print for AC-054, an **M6** clause. M3-G's artifact is an exported file; AC-018's *"prints"* means "appears on the sheet" (canon `:2161`). Treating them as one would wrongly hang a printer-procurement dependency on M3 |
@@ -233,7 +233,7 @@ seam that already has a working Windows implementation M3 extends rather than wa
 **Nothing in M3 adds a new `dart:io`, `path`, or platform-channel dependency.** CSV bytes are
 reachable through the existing `FileStore.readBytes` (`file_store.dart:164`), which satisfies
 storage RULE 1/1b and session RULE 10 unchanged. **The only native-surface change M3 asks for is
-D13's filter argument on the existing `rackmate/file_dialog` channel: no new channel.**
+D13's filter argument on the existing `rackpal/file_dialog` channel: no new channel.**
 
 ---
 
@@ -281,7 +281,7 @@ code, and both should be started early precisely because they are not.
 
 **What is genuinely unknown** is whether the PDF's **content streams** survive a platform change.
 That is the one item that could turn a bounded port into a design question, but §2's correction
-narrows it twice. It is **not** a CR-117 question (that gate is the `.rackmate` JSON), and it is
+narrows it twice. It is **not** a CR-117 question (that gate is the `.rackpal` JSON), and it is
 **not cheap to answer**: the existing determinism test compares two exports in one process, so
 answering it means writing a golden-bytes comparison **and** having D4's macOS job to run it on.
 The text pipeline is already platform-independent by construction; the concrete risk that remains

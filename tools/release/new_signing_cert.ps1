@@ -53,7 +53,7 @@
 param(
     [Parameter(Mandatory)][string]$Subject,
     [int]$Years = 3,
-    [string]$CerOut = 'dist/rackmate-publisher.cer'
+    [string]$CerOut = 'dist/rackpal-publisher.cer'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -86,7 +86,7 @@ Write-Host "  not after  : $($cert.NotAfter.ToString('yyyy-MM-dd'))"
 Write-Host "  public .cer: $CerOut"
 Write-Host ''
 Write-Host 'The PRIVATE key stays in Cert:\CurrentUser\My. Sign with:'
-Write-Host "  pwsh -File tools/release/sign_artifacts.ps1 -Path dist/RackMate-portable -Thumbprint $($cert.Thumbprint)"
+Write-Host "  pwsh -File tools/release/sign_artifacts.ps1 -Path dist/RackPal-portable -Thumbprint $($cert.Thumbprint)"
 Write-Host ''
 Write-Host 'Deploy the PUBLIC .cer to every target machine, by GPO, into BOTH:'
 Write-Host '  LocalMachine\Root             (makes the chain validate)'

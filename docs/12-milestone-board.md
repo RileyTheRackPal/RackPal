@@ -16,7 +16,7 @@ shipped claims that did not survive measurement:
 | The schematic canvas works | It rendered a fabricated symbol behind a run of eight consecutive `fix:` commits, ten in the eighteen-commit detour overall, with zero tests; salvaged and reverted at `b560a50`. (`docs/m1-implementation-log.md:824` says *"twelve consecutive"*; over the range this board cites, `git log --oneline e433ae0^..1eec6bf` shows ten `fix:` subjects and a longest unbroken run of eight, `1eec6bf` back to `3965667`, broken by `a66668b`. The figure is corrected here rather than inherited, a table about unmeasured claims drifting is the last place to restate one) |
 | The rear elevation renders | It was blank. Nothing in the regression net observed `Face.rear` in emitted bytes until `elevation_true_scale_test.dart` was written for that purpose (`0fa532d`) |
 | PAL-1 is verified clear | Asserted three times by reading an eight-row domain table instead of enumerating the 385 family pairs actually drawn. The palette carried **fourteen** collisions (canon §14.3) |
-| The registry-claim row is accurate | Wrong four times running; the fix was to state a **bound** rather than a closed list, enforced by `apps/rackmate/test/session/registry_claim_test.dart` |
+| The registry-claim row is accurate | Wrong four times running; the fix was to state a **bound** rather than a closed list, enforced by `apps/rackpal/test/session/registry_claim_test.dart` |
 | The catalog weight is right | It was 1000× off, behind a test that only asserted non-null (`b560a50`) |
 
 Every one of those was an honest claim at the moment it was written. The failure mode is not lying;
@@ -93,13 +93,13 @@ reason** column says so; the headline still tracks the criterion.
 ## 1. The board at a glance
 
 Verified against the working tree at `0fa532d`, by reading code rather than checkboxes. Suite
-counts from that session: `rackmate_core` 886, `rackmate_ui` 351, `apps/rackmate` 651,
-`rackmate_export` 183, `rackmate_text` 1, **2072 passing, 0 failing**. `flutter analyze`: 195
+counts from that session: `rackpal_core` 886, `rackpal_ui` 351, `apps/rackpal` 651,
+`rackpal_export` 183, `rackpal_text` 1, **2072 passing, 0 failing**. `flutter analyze`: 195
 issues, all info-level, **zero errors, zero warnings**. `flutter build windows --release`: exit 0.
 
 **M2's row alone was re-audited at `ea0af6d`** (M2-F) and again after M2-G, against the thirteen
-local gates: `rackmate_core` 1380, `rackmate_ui` 592, `apps/rackmate` 690, `rackmate_export` 183,
-`rackmate_text` 1, **2846 passing, 0 failing**, analyzer pinned at exactly 194 infos by
+local gates: `rackpal_core` 1380, `rackpal_ui` 592, `apps/rackpal` 690, `rackpal_export` 183,
+`rackpal_text` 1, **2846 passing, 0 failing**, analyzer pinned at exactly 194 infos by
 `tools/ci/analyze_info_baseline.txt`. **Every other row is still as of `0fa532d`** and carries
 whatever drift the intervening milestones introduced; a row this file has not re-read is a row it
 does not vouch for, and saying so is cheaper than a footnote per row that would go stale the same
@@ -107,7 +107,7 @@ way. Board item #92 is the scheduled full sweep.
 
 | # | Milestone | Size | Exit clauses demonstrated | Status: weakest mark | The short reason |
 |---|---|---|---|---|---|
-| **M0** | Foundations | `S` | **6 of 8** clause rows | **PARTIAL**: `VACUOUS` | `dart test` in `rackmate_core`, 886/0, discharges six clauses and they are good work. The `templates.keys` conjunct and the epoch-mask conjunct are true only because their subjects did not exist at M0 (§2.2) |
+| **M0** | Foundations | `S` | **6 of 8** clause rows | **PARTIAL**: `VACUOUS` | `dart test` in `rackpal_core`, 886/0, discharges six clauses and they are good work. The `templates.keys` conjunct and the epoch-mask conjunct are true only because their subjects did not exist at M0 (§2.2) |
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **0 of 5** | **NOT STARTED**: `NOT BUILT` | Model only. **Its M2 block has lifted**: the gate was M2 putting `Link` + `Endpoint` in the UI, and M2-F did (§5.1). Row otherwise as of `0fa532d` |
@@ -144,7 +144,7 @@ starting rather than trusting them; that is what the `Mn-0` rows now say.
   problem today**. Now `#453`, and sequenced with M6 where page setup is actually built, rather
   than with the macOS work where it would be found late because it is filed under the wrong heading.
 - **`D13`'s register text is stale in one detail**: it says the dialog filter is hard-coded to
-  `.rackmate`; DR-015 made that `*.rmpj;*.rackmate` at `dc22ddc`. The hard-coding is unchanged, only
+  `.rackpal`; DR-015 made that `*.rmpj;*.rackpal` at `dc22ddc`. The hard-coding is unchanged, only
   the strings moved. The work itself is M4's (`#234`), so `#453`'s sibling row just points there.
 - **`D7` is closed on the board**, matching docs/13 §2.2, the debt cleared and its owed gate was
   paid at `#94` on 2026-08-02. The board had still read `To Do`.
@@ -163,8 +163,8 @@ they are wrong.
 > A milestone that ends with a known-broken build has not ended.
 
 Of its three limbs, exactly one is satisfiable today. **The app opens the four starter projects**:
-`apps/rackmate/test/starters/starter_assets_test.dart` opens each of
-`apps/rackmate/assets/starters/*.rackmate` through the real `DocumentStore`/`DartIoFileStore` path
+`apps/rackpal/test/starters/starter_assets_test.dart` opens each of
+`apps/rackpal/assets/starters/*.rackpal` through the real `DocumentStore`/`DartIoFileStore` path
 and asserts `Ok`, not read-only, no migration on open, 48 templates. **CI passes** is still
 unsatisfiable: a pipeline *definition* now exists and no service has ever executed it (§4.1).
 **Goldens pass** is vacuous: there are no goldens (§4.3). So the roadmap's
@@ -188,19 +188,19 @@ is the single most consequential finding on this board and it is the subject of 
 
 | # | Clause | Mark | Evidence |
 |---|---|---|---|
-| 1 | `dart test` green in `rackmate_core` | **DEMONSTRATED** | Run this session: **886 passing, 0 failing** |
-| 2 | 1/32-inch clearance exact, 45U accumulation exact (CR-001) | **DEMONSTRATED** | `packages/rackmate_core/test/units_test.dart:6` "1/32 inch inter-panel clearance is exact" and `:15` "zero accumulated error across a 45U rack stack", exact integer nanometre arithmetic, no tolerance |
-| 3 | `write(read(bytes)) == bytes` on **three** fixtures | **DEMONSTRATED: exceeded** | `packages/rackmate_core/test/byte_roundtrip_test.dart` writes and re-reads **four** real files under `packages/rackmate_core/test/fixtures/`: `a_empty_project`, `b_rack_and_device`, `c_fuller_project`, `d_templates_and_power` |
-| 4 | Command round-trip on 1,000 generated sequences | **DEMONSTRATED** | `packages/rackmate_core/test/command_roundtrip_test.dart:35` `_sequenceCount = 1000`, seeded `Random(20260718 + i)`, byte identity of real `JsonDocumentCodec` output asserted after `apply;revert` **at every step**. The run log shows 1000 discrete cases |
+| 1 | `dart test` green in `rackpal_core` | **DEMONSTRATED** | Run this session: **886 passing, 0 failing** |
+| 2 | 1/32-inch clearance exact, 45U accumulation exact (CR-001) | **DEMONSTRATED** | `packages/rackpal_core/test/units_test.dart:6` "1/32 inch inter-panel clearance is exact" and `:15` "zero accumulated error across a 45U rack stack", exact integer nanometre arithmetic, no tolerance |
+| 3 | `write(read(bytes)) == bytes` on **three** fixtures | **DEMONSTRATED: exceeded** | `packages/rackpal_core/test/byte_roundtrip_test.dart` writes and re-reads **four** real files under `packages/rackpal_core/test/fixtures/`: `a_empty_project`, `b_rack_and_device`, `c_fuller_project`, `d_templates_and_power` |
+| 4 | Command round-trip on 1,000 generated sequences | **DEMONSTRATED** | `packages/rackpal_core/test/command_roundtrip_test.dart:35` `_sequenceCount = 1000`, seeded `Random(20260718 + i)`, byte identity of real `JsonDocumentCodec` output asserted after `apply;revert` **at every step**. The run log shows 1000 discrete cases |
 | 4a | *…"including `templates.keys`: AC-015"* | **VACUOUS** | `command_roundtrip_test.dart:18-21` states in its own header that `doc.templates` is never touched by any M0 command, because AC-015 refcounting is deferred. Byte identity of an untouched map proves nothing about refcounting. Honest, and undemonstrated |
-| 5 | Epoch-mask coverage for **every command type** | **VACUOUS** | `packages/rackmate_core/test/epoch_mask_test.dart` covers all 8 concrete `Command` subclasses that exist (`AddDevice`, `RemoveDevice`, `MoveDevice`, `RenameEntity`×2, `SetRackHeight`, `SetRackProperty`×4, `AddLink`, `RemoveLink`) verified by grepping `extends Command` across `packages/rackmate_core/lib/src/commands/`, which returns exactly those plus `Transaction` (and a commented-out `SnapshotCommand` at `snapshot_command.dart:7`). The **command-type** limb is genuinely covered. The **epoch-mask** limb is not: its header admits it snapshots **persisted document maps**, not derived outputs, "a coverage test in spirit rather than the letter", because no derived pipeline existed at M0. That is the legend's definition of `VACUOUS` exactly, true, and true for a reason that has since stopped being true. **It has drifted**: see §4.5 |
-| 6 | One v0→v1 migration fixture in the golden corpus | **DEMONSTRATED: exceeded** | `packages/rackmate_core/test/migration_corpus_test.dart` covers v0→v1 synthetically **and** a real v1→v2 file fixture, `packages/rackmate_core/test/fixtures/v1_templates_and_power.rackmate.json` |
-| 7 | Zero Flutter imports, enforced by a test that fails the build | **DEMONSTRATED** | `packages/rackmate_core/test/no_flutter_import_test.dart` scans whole import/export directives (not a naive prefix match) and carries a **vacuity guard** counting files scanned, the guard is the thing that makes it a real gate rather than a test that passes on an empty glob |
+| 5 | Epoch-mask coverage for **every command type** | **VACUOUS** | `packages/rackpal_core/test/epoch_mask_test.dart` covers all 8 concrete `Command` subclasses that exist (`AddDevice`, `RemoveDevice`, `MoveDevice`, `RenameEntity`×2, `SetRackHeight`, `SetRackProperty`×4, `AddLink`, `RemoveLink`) verified by grepping `extends Command` across `packages/rackpal_core/lib/src/commands/`, which returns exactly those plus `Transaction` (and a commented-out `SnapshotCommand` at `snapshot_command.dart:7`). The **command-type** limb is genuinely covered. The **epoch-mask** limb is not: its header admits it snapshots **persisted document maps**, not derived outputs, "a coverage test in spirit rather than the letter", because no derived pipeline existed at M0. That is the legend's definition of `VACUOUS` exactly, true, and true for a reason that has since stopped being true. **It has drifted**: see §4.5 |
+| 6 | One v0→v1 migration fixture in the golden corpus | **DEMONSTRATED: exceeded** | `packages/rackpal_core/test/migration_corpus_test.dart` covers v0→v1 synthetically **and** a real v1→v2 file fixture, `packages/rackpal_core/test/fixtures/v1_templates_and_power.rackpal.json` |
+| 7 | Zero Flutter imports, enforced by a test that fails the build | **DEMONSTRATED** | `packages/rackpal_core/test/no_flutter_import_test.dart` scans whole import/export directives (not a naive prefix match) and carries a **vacuity guard** counting files scanned, the guard is the thing that makes it a real gate rather than a test that passes on an empty glob |
 
 **Package layout** matches CR-083's five-member list exactly: `pubspec.yaml`'s workspace at
-`:7-12` lists `rackmate_core`, `rackmate_text`, `rackmate_export`, `rackmate_ui`, `apps/rackmate`.
+`:7-12` lists `rackpal_core`, `rackpal_text`, `rackpal_export`, `rackpal_ui`, `apps/rackpal`.
 **The demonstration of the six discharged clauses is recorded in the closing commit** per roadmap
-§8.1: `b94bd60`, *"feat(core): implement rackmate_core through M0's command/undo system"*.
+§8.1: `b94bd60`, *"feat(core): implement rackpal_core through M0's command/undo system"*.
 
 ### 2.3 Why M0 is `PARTIAL`, and what the unbuilt checklist has to do with it: nothing
 
@@ -233,7 +233,7 @@ fact, not an M0 footnote. See §4.1.
   refcounting, or copy-on-place writing a `DeviceOverrides`), plus its round-trip case. The clause
   becomes real the day M4 or M1's copy-on-place lands, and not before.
 - **Epoch-mask letter (AC-014)**: needs `epoch_mask_test.dart` extended to snapshot the derived
-  outputs that now exist: `packages/rackmate_core/lib/src/derived/device_loads.dart`,
+  outputs that now exist: `packages/rackpal_core/lib/src/derived/device_loads.dart`,
   `equipment_list.dart`, `totals.dart`. This is **cheap today and gets more expensive with every
   derived consumer added**. §4.5.
 
@@ -274,14 +274,14 @@ Its **goal** line carries a clause the criterion does not: *"The smallest genuin
 
 | # | Clause | Mark | Evidence / what is missing |
 |---|---|---|---|
-| 1 | A user opens the app | **DEMONSTRATED** | `flutter build windows --release` exit 0, `√ Built build\windows\x64\runner\Release\rackmate.exe`; `apps/rackmate/test/starters/starter_assets_test.dart` opens all four starters through the real store |
-| 2 | **…creates a 42U rack** | **DEMONSTRATED** | `AddRackCommand` and docs/04 §9's three-field dialog now exist, and the whole path is driven against the real screen: `packages/rackmate_ui/test/canvas/rack_creation_test.dart` presses `Ctrl+Alt+N`, types a name, commits with `Enter`, and asserts the header reads `RK-2` / `42U`, no pointer after the initial focus click. `packages/rackmate_core/test/rack_commands_test.dart` covers the command (designator allocation, order, preset-vs-typed height, undo/redo, byte round trip). **This is the CAPABILITY, not the drill.** The row it discharges is "creates a 42U rack"; the wall-clock, keyboard-only sequence is clause 3, which is **CONFIRMED** as of 2026-07-28, see there. *Was* **NOT BUILT**, on the grep for `AddRack`/`addRack`/`createRack` returning nothing; that grep now returns `packages/rackmate_core/lib/src/commands/rack_commands.dart:59`. `apps/rackmate/lib/src/session/blank_document.dart` still seeds `kBlankProjectRackHeightU = 42` for `Ctrl+N`, and `apps/rackmate/test/session/blank_document_test.dart` now pins that seeded rack field-for-field against what the dialog builds |
-| 3 | 20 devices **in under four minutes, keyboard only** | **CONFIRMED**: by the user, 2026-07-28 | **Performed and passed on 2026-07-28: under three minutes, keyboard only**, against the build carrying `616a301`. A ~25% margin under the criterion, and both halves, the speed and the keyboard-only constraint, now measured in the SAME run, which the 2026-07-27 attempt never managed. **THE OPERATOR'S CONDITIONS ARE PART OF THE MEASUREMENT AND ARE RECORDED RATHER THAN DROPPED:** the user types 140+ wpm and had already learned most of the shortcut names. That is a fast, trained operator, and it is volunteered here because the number means something different without it. The clause says "a user" and is satisfied literally, this reading is not a hedge on the mark. But **it does not establish the time for a first-run or a slower-typing operator**, and clause 3 is load-bearing for M7's accessibility criterion, where exactly that population is the subject. A run by someone who has not memorised the keymap is worth having before M7 leans on this number; see §3.4. **A CONFIRMED mark is not a gate**: no CI job re-runs this, and it does not survive a change to the keymap; the regression net named below is what guards the mechanism between drills., *Previous mark, kept because REFUTED records a measured fact and deleting it would erase why any of the remedy exists:* **the user timed it on 2026-07-27: under four minutes, but with mouse and keyboard combined, and reported no full keyboard path exists.** So the *speed* half is demonstrated and the *keyboard-only* half is refused, which matters, because the constraint is the point: it is what makes the tool faster than Visio for a populated rack, and it is load-bearing for M7's accessibility criterion. **The named fix has since been built, and building it does not discharge the clause.** REFUTED means the act was performed and failed; only the act being performed again can move it, and no agent can perform it. What landed: `Esc` now clears the selection (docs/04 §8's third limb, `rack_canvas_screen.dart`'s `_onEscape`); a quick-add that the loop itself is repeating keeps caret-targeting live (`_selectionIsLastQuickAdd`); a cycle whose caret lands on an occupied U falls back to lowest-free-U *and says so* rather than jamming; and a refused cycle hands focus back to the canvas instead of stranding it on the modal scope. The regression net is `packages/rackmate_ui/test/canvas/keyboard_only_placement_test.dart` (11 cases, each written to fail if one half of the fix is removed) and `rack_creation_test.dart`'s twenty-device drill, which drives the caret to U5 first so the caret path and the lowest-free-U fallback give different answers. The earlier citation in this row (`rack_canvas_screen.dart:2216-2229` for a gap the code documented *against itself*) is **dead**: that comment was replaced by the fix and no line range holds it any more. The user also reports the interface "feels quite good already though may need a bit of optimization". **THE FIRST ATTEMPT TO RE-RUN THE DRILL FOUND THE PATH STILL IMPOSSIBLE, FOR REASONS NOTHING ABOVE PREDICTED**: see §3.5. Neither of the two blockers was in the remedy list this row had been carrying, and both had been shipped since M1's earliest days; the drill could not have passed on any build before `616a301` |
-| 4 | Exports a **three-sheet** PDF | **DEMONSTRATED** | `packages/rackmate_core/lib/src/draw/sheet/sheet_def.dart` declares exactly `SheetRole.rackElevationFront` / `rackElevationRear` / `equipmentList`, and its header names the 2N+1 trap; `packages/rackmate_export/test/scale_notice_test.dart:141` `expect(out.sheetCount, 3)` |
-| 5 | Elevations dimensionally correct **against a physical tape measure** at true scale | **CONFIRMED**: by the user, 2026-07-27 | The one clause of this criterion that no test could discharge, because it asks about *paper*. Verified by the user against a printed sheet this session and reported correct. The in-repo evidence remains `packages/rackmate_export/test/elevation_true_scale_test.dart`, which composes real `q`/`Q`/`cm` into PDF user space, derives every expectation from the literals `44_450_000` / `25_400_000` / `72.0` / `482_600_000` / `450_850_000`, regexes the ratio *n* back out of the sheet's own `SCALE` field, and takes its 0.01 pt tolerance from `PdfNum.precision = 5` rather than tuning it, but that test is titled, in `docs/m1-implementation-log.md:1434`, *"how dimensionally correct against a tape measure is proved **without a printer**"*, and the print chain (driver scaling, fit-to-page, media stretch) is exactly what it cannot reach. **Provenance is a human check, not a gate**: it is not re-run by CI and does not survive a change to the fit engine. AC-058 D13's full print matrix (ANSI B laser, ANSI D plotter, photocopy) is still scheduled at M6 and has not run |
-| 6 | Equipment list matches rack contents **exactly** | **DEMONSTRATED** | `packages/rackmate_export/test/starters_export_test.dart` asserts a **bijection in both directions** over all four real starter files: designator multiset equality against the document, **plus** every designator recovered as actual text from a `T6.30` content stream |
-| 7 | Baseline-y parity within 0.5% on a kerning-heavy string | **DEMONSTRATED** | `apps/rackmate/test/baseline_parity_test.dart`, fixture `AV Wa To Ty`, `tol = 0.005 * m.lineHeight` at line 208. Both backends' baselines are recovered **independently from real output**: PDF `cm`/`Td` operators out of the emitted stream; Flutter's recorded translate + `paintOffset` + `paragraph.alphabeticBaseline`, and it additionally pins Skia's line width to `PdfFont.stringMetrics` within 1%. This is `RISK-01`'s stop-the-line gate and it is genuinely green |
-| 8 | Undo restores every operation in that sequence | **DEMONSTRATED** | `command_roundtrip_test.dart` at the core level, plus UI-level coverage in `packages/rackmate_ui/test/canvas/{rack_canvas_screen,rack_compaction,rack_resize_drag}_test.dart` and `test/inspector/{rack_inspector_panel,shrink_rack_dialog}_test.dart`, including *"Preset and Apply lands the preset AND the resize AND every displacement as ONE undo entry"* |
+| 1 | A user opens the app | **DEMONSTRATED** | `flutter build windows --release` exit 0, `√ Built build\windows\x64\runner\Release\rackpal.exe`; `apps/rackpal/test/starters/starter_assets_test.dart` opens all four starters through the real store |
+| 2 | **…creates a 42U rack** | **DEMONSTRATED** | `AddRackCommand` and docs/04 §9's three-field dialog now exist, and the whole path is driven against the real screen: `packages/rackpal_ui/test/canvas/rack_creation_test.dart` presses `Ctrl+Alt+N`, types a name, commits with `Enter`, and asserts the header reads `RK-2` / `42U`, no pointer after the initial focus click. `packages/rackpal_core/test/rack_commands_test.dart` covers the command (designator allocation, order, preset-vs-typed height, undo/redo, byte round trip). **This is the CAPABILITY, not the drill.** The row it discharges is "creates a 42U rack"; the wall-clock, keyboard-only sequence is clause 3, which is **CONFIRMED** as of 2026-07-28, see there. *Was* **NOT BUILT**, on the grep for `AddRack`/`addRack`/`createRack` returning nothing; that grep now returns `packages/rackpal_core/lib/src/commands/rack_commands.dart:59`. `apps/rackpal/lib/src/session/blank_document.dart` still seeds `kBlankProjectRackHeightU = 42` for `Ctrl+N`, and `apps/rackpal/test/session/blank_document_test.dart` now pins that seeded rack field-for-field against what the dialog builds |
+| 3 | 20 devices **in under four minutes, keyboard only** | **CONFIRMED**: by the user, 2026-07-28 | **Performed and passed on 2026-07-28: under three minutes, keyboard only**, against the build carrying `616a301`. A ~25% margin under the criterion, and both halves, the speed and the keyboard-only constraint, now measured in the SAME run, which the 2026-07-27 attempt never managed. **THE OPERATOR'S CONDITIONS ARE PART OF THE MEASUREMENT AND ARE RECORDED RATHER THAN DROPPED:** the user types 140+ wpm and had already learned most of the shortcut names. That is a fast, trained operator, and it is volunteered here because the number means something different without it. The clause says "a user" and is satisfied literally, this reading is not a hedge on the mark. But **it does not establish the time for a first-run or a slower-typing operator**, and clause 3 is load-bearing for M7's accessibility criterion, where exactly that population is the subject. A run by someone who has not memorised the keymap is worth having before M7 leans on this number; see §3.4. **A CONFIRMED mark is not a gate**: no CI job re-runs this, and it does not survive a change to the keymap; the regression net named below is what guards the mechanism between drills., *Previous mark, kept because REFUTED records a measured fact and deleting it would erase why any of the remedy exists:* **the user timed it on 2026-07-27: under four minutes, but with mouse and keyboard combined, and reported no full keyboard path exists.** So the *speed* half is demonstrated and the *keyboard-only* half is refused, which matters, because the constraint is the point: it is what makes the tool faster than Visio for a populated rack, and it is load-bearing for M7's accessibility criterion. **The named fix has since been built, and building it does not discharge the clause.** REFUTED means the act was performed and failed; only the act being performed again can move it, and no agent can perform it. What landed: `Esc` now clears the selection (docs/04 §8's third limb, `rack_canvas_screen.dart`'s `_onEscape`); a quick-add that the loop itself is repeating keeps caret-targeting live (`_selectionIsLastQuickAdd`); a cycle whose caret lands on an occupied U falls back to lowest-free-U *and says so* rather than jamming; and a refused cycle hands focus back to the canvas instead of stranding it on the modal scope. The regression net is `packages/rackpal_ui/test/canvas/keyboard_only_placement_test.dart` (11 cases, each written to fail if one half of the fix is removed) and `rack_creation_test.dart`'s twenty-device drill, which drives the caret to U5 first so the caret path and the lowest-free-U fallback give different answers. The earlier citation in this row (`rack_canvas_screen.dart:2216-2229` for a gap the code documented *against itself*) is **dead**: that comment was replaced by the fix and no line range holds it any more. The user also reports the interface "feels quite good already though may need a bit of optimization". **THE FIRST ATTEMPT TO RE-RUN THE DRILL FOUND THE PATH STILL IMPOSSIBLE, FOR REASONS NOTHING ABOVE PREDICTED**: see §3.5. Neither of the two blockers was in the remedy list this row had been carrying, and both had been shipped since M1's earliest days; the drill could not have passed on any build before `616a301` |
+| 4 | Exports a **three-sheet** PDF | **DEMONSTRATED** | `packages/rackpal_core/lib/src/draw/sheet/sheet_def.dart` declares exactly `SheetRole.rackElevationFront` / `rackElevationRear` / `equipmentList`, and its header names the 2N+1 trap; `packages/rackpal_export/test/scale_notice_test.dart:141` `expect(out.sheetCount, 3)` |
+| 5 | Elevations dimensionally correct **against a physical tape measure** at true scale | **CONFIRMED**: by the user, 2026-07-27 | The one clause of this criterion that no test could discharge, because it asks about *paper*. Verified by the user against a printed sheet this session and reported correct. The in-repo evidence remains `packages/rackpal_export/test/elevation_true_scale_test.dart`, which composes real `q`/`Q`/`cm` into PDF user space, derives every expectation from the literals `44_450_000` / `25_400_000` / `72.0` / `482_600_000` / `450_850_000`, regexes the ratio *n* back out of the sheet's own `SCALE` field, and takes its 0.01 pt tolerance from `PdfNum.precision = 5` rather than tuning it, but that test is titled, in `docs/m1-implementation-log.md:1434`, *"how dimensionally correct against a tape measure is proved **without a printer**"*, and the print chain (driver scaling, fit-to-page, media stretch) is exactly what it cannot reach. **Provenance is a human check, not a gate**: it is not re-run by CI and does not survive a change to the fit engine. AC-058 D13's full print matrix (ANSI B laser, ANSI D plotter, photocopy) is still scheduled at M6 and has not run |
+| 6 | Equipment list matches rack contents **exactly** | **DEMONSTRATED** | `packages/rackpal_export/test/starters_export_test.dart` asserts a **bijection in both directions** over all four real starter files: designator multiset equality against the document, **plus** every designator recovered as actual text from a `T6.30` content stream |
+| 7 | Baseline-y parity within 0.5% on a kerning-heavy string | **DEMONSTRATED** | `apps/rackpal/test/baseline_parity_test.dart`, fixture `AV Wa To Ty`, `tol = 0.005 * m.lineHeight` at line 208. Both backends' baselines are recovered **independently from real output**: PDF `cm`/`Td` operators out of the emitted stream; Flutter's recorded translate + `paintOffset` + `paragraph.alphabeticBaseline`, and it additionally pins Skia's line width to `PdfFont.stringMetrics` within 1%. This is `RISK-01`'s stop-the-line gate and it is genuinely green |
+| 8 | Undo restores every operation in that sequence | **DEMONSTRATED** | `command_roundtrip_test.dart` at the core level, plus UI-level coverage in `packages/rackpal_ui/test/canvas/{rack_canvas_screen,rack_compaction,rack_resize_drag}_test.dart` and `test/inspector/{rack_inspector_panel,shrink_rack_dialog}_test.dart`, including *"Preset and Apply lands the preset AND the resize AND every displacement as ONE undo entry"* |
 | — | *Goal clause:* **"and it ships to real users"** | **NOT BUILT** | No installer, no signing, no release artefact of any kind. See M8 and DR-006 |
 
 The exporter demonstration is recorded in the closing commit `0fa532d`.
@@ -292,21 +292,21 @@ Not exit clauses, but every one is scope that a later milestone now inherits.
 
 | Item | State | Citation | Who inherits it |
 |---|---|---|---|
-| **The outline tree** | **NOT BUILT** | No outline-tree surface anywhere in `lib/`: grep for `TreeView` and `Ctrl+Alt+3` across `packages/*/lib` and `apps/*/lib` returns nothing, and every `outline` hit is a drawing term (`packages/rackmate_core/lib/src/draw/scene/rack_style.dart:45`, `:51`, `:70`, enclosure, rail and device-body outlines) | **M7.** Roadmap §4 M7 *Risks* names "the outline tree shipping in M1" as its mitigation, and docs/04:455 names it as the primary AT surface. Retrofitting canvas accessibility late is precisely the structural risk that line warns about |
-| **The Staging Bin** | Model-only | `packages/rackmate_ui/lib/src/canvas/staging_bin_overlay.dart:107` renders the honest text *"Staging Bin, not in this build"*; `rack_canvas_screen.dart:2981` states no command produces a `StagedPlacement` | M1 tail |
+| **The outline tree** | **NOT BUILT** | No outline-tree surface anywhere in `lib/`: grep for `TreeView` and `Ctrl+Alt+3` across `packages/*/lib` and `apps/*/lib` returns nothing, and every `outline` hit is a drawing term (`packages/rackpal_core/lib/src/draw/scene/rack_style.dart:45`, `:51`, `:70`, enclosure, rail and device-body outlines) | **M7.** Roadmap §4 M7 *Risks* names "the outline tree shipping in M1" as its mitigation, and docs/04:455 names it as the primary AT surface. Retrofitting canvas accessibility late is precisely the structural risk that line warns about |
+| **The Staging Bin** | Model-only | `packages/rackpal_ui/lib/src/canvas/staging_bin_overlay.dart:107` renders the honest text *"Staging Bin, not in this build"*; `rack_canvas_screen.dart:2981` states no command produces a `StagedPlacement` | M1 tail |
 | **Shelves with auto-pack** | **NOT BUILT** | No `ShelfPlacement` handling in any UI file; `rack_shrink.dart:276`, *"DEVICES ON A SHELF ARE DELIBERATELY ABSENT"* | M1 tail |
 | **0U occupants from the inspector** | **NOT BUILT** | No editing path | M1 tail |
 | **Locks** | Half-built | Honoured as immovable anchors by the compaction planner; **no `Ctrl+L`, no way to set `Placement.locked`** (docs/04:195) | M1 tail |
 | **Copy-on-place with `DeviceOverrides`** | **NOT BUILT** | Nothing writes one; `inspector_panel.dart:21` defers device-property editing | **M4** will hit this on day one |
-| **`sources.md` provenance as a gate** | Prose, not a gate | `assets/catalog/sources.md` exists (166 lines) and the catalog is real (48 templates = 30 rack-side + 18 field, `packages/rackmate_core/test/catalog/seed_catalog_test.dart:19` and `:40`). But **no test anywhere names the file**: `grep -rn "sources\.md"` across all four test trees returns **nothing at all**. Its only references in the repository are three orienting `lib/` comments, `catalog_connectors.dart:15`, `rack_presets.dart:21`, `seed_catalog.dart:6`. Nothing parses the file; nothing cross-references a numeric field to a citation | §4.4 |
+| **`sources.md` provenance as a gate** | Prose, not a gate | `assets/catalog/sources.md` exists (166 lines) and the catalog is real (48 templates = 30 rack-side + 18 field, `packages/rackpal_core/test/catalog/seed_catalog_test.dart:19` and `:40`). But **no test anywhere names the file**: `grep -rn "sources\.md"` across all four test trees returns **nothing at all**. Its only references in the repository are three orienting `lib/` comments, `catalog_connectors.dart:15`, `rack_presets.dart:21`, `seed_catalog.dart:6`. Nothing parses the file; nothing cross-references a numeric field to a citation | §4.4 |
 | **The connector-footprint CI assertion** | Real test, no CI | `seed_catalog_test.dart:281`, with `:303` and `:316` proving the exempt set is both truly footprint-free and actually reachable. It is a **CI assertion with no CI** | §4.1 |
 
 ### 3.4 What would finish M1
 
 In the order that makes each cheaper than the next:
 
-1. ~~**An `AddRackCommand` and the New-rack dialog**~~, **BUILT.** `packages/rackmate_core/lib/src/commands/rack_commands.dart` and
-   `packages/rackmate_ui/lib/src/inspector/new_rack_dialog.dart`, reached by `Ctrl+Alt+N`, by the
+1. ~~**An `AddRackCommand` and the New-rack dialog**~~, **BUILT.** `packages/rackpal_core/lib/src/commands/rack_commands.dart` and
+   `packages/rackpal_ui/lib/src/inspector/new_rack_dialog.dart`, reached by `Ctrl+Alt+N`, by the
    rack header's overflow menu, and by the rack-less panel's own button. **Deleting** a rack is
    still not possible, deliberately: a removal has to answer what happens to the rack's occupants
    and docs/04 settles nothing about it (rack_commands.dart's header states the choice). Multi-rack
@@ -375,7 +375,7 @@ that was real, was built, was mutation-tested, and **would not have made the dri
 because neither defect was in it. The mark stayed `REFUTED` on the rule that only a person can
 move it, and that rule is the only reason the error surfaced at all.
 
-**The gate that now exists.** `packages/rackmate_ui/test/canvas/palette_search_keys_test.dart`,
+**The gate that now exists.** `packages/rackpal_ui/test/canvas/palette_search_keys_test.dart`,
 13 cases, two-sided: gate-always-enabled kills T0/T1/T2/T3, gate-always-disabled (a fix that
 merely unbinds the keys) kills T2b/T3b, and removing both caret-visibility mechanisms kills
 C2/C2b. Its C2 case carries an **anti-vacuity guard** because the first version of that case
@@ -454,7 +454,7 @@ on the first push:
 | Gate as documented | Result today |
 |---|---|
 | `dart analyze --fatal-infos --fatal-warnings .` | **Exits 1.** 195 style infos. (Plain `flutter analyze` is clean of errors and warnings, the failure is entirely `--fatal-infos`) |
-| `dart format --output=none --set-exit-if-changed .` | **Exits 1.** *"Formatted 316 files (88 changed)"*, e.g. `packages/rackmate_ui/test/stroke_scaling_test.dart:101`, where the checked-in code splits a `const Stroke(...)` across five lines and the formatter joins it |
+| `dart format --output=none --set-exit-if-changed .` | **Exits 1.** *"Formatted 316 files (88 changed)"*, e.g. `packages/rackpal_ui/test/stroke_scaling_test.dart:101`, where the checked-in code splits a `const Stroke(...)` across five lines and the formatter joins it |
 
 **This is not a toolchain mismatch.** The installed SDK is Dart 3.12.2 / Flutter 3.44.4, and
 `3.44.4` is exactly the version docs/11 §7 pins. So the decision is a real one and it is the user's:
@@ -497,13 +497,13 @@ coincidence than a pattern: M5 is where this project stops deciding against a pl
 
 **Eighteen** commits (`e433ae0` … `1eec6bf`) added a schematic canvas with **zero tests**:
 `git rev-list --count e433ae0^..1eec6bf` returns 18. `b560a50`
-salvaged the symbol geometry and hit-testing into `rackmate_core`, deleted `sugiyama.dart` outright,
+salvaged the symbol geometry and hit-testing into `rackpal_core`, deleted `sugiyama.dart` outright,
 its commit message: *"It was dead (nothing constructed it) AND broken"*, naming a
 `ConcurrentModificationError` on any graph with an edge and a divide-by-zero for single-node
 layers, and replaced both tabs with an inert `UnbuiltView` whose `heading` getter
 (`unbuilt_view.dart:73`) is `'$viewName — not built'`.
 
-`packages/rackmate_ui/lib/src/shell/unbuilt_view.dart`'s header **reconciles the two governing
+`packages/rackpal_ui/lib/src/shell/unbuilt_view.dart`'s header **reconciles the two governing
 texts that conflict here**:
 
 - **roadmap §4, M1** *"What M1 deliberately lacks"*, *"an empty Schedule tab that explains it is
@@ -511,7 +511,7 @@ texts that conflict here**:
 - **docs/05 §12, line 780**: *"The v1 tab strip shows three tabs: Rack, Schematic, Schedule."*
 
 It resolves them by keeping three tabs whose first line of copy is *"not built"*, and it makes that
-honest mechanically: `packages/rackmate_ui/test/shell/unbuilt_view_test.dart` walks the semantics
+honest mechanically: `packages/rackpal_ui/test/shell/unbuilt_view_test.dart` walks the semantics
 subtree and **fails if any node offers `SemanticsAction.tap`**, so the panel provably cannot promise
 anything.
 
@@ -541,14 +541,14 @@ word and it does not discharge "goldens pass".
 it**:
 
 ```text
-$ grep -rn "sources\.md" packages/rackmate_core/test packages/rackmate_ui/test \
-      packages/rackmate_export/test apps/rackmate/test
+$ grep -rn "sources\.md" packages/rackpal_core/test packages/rackpal_ui/test \
+      packages/rackpal_export/test apps/rackpal/test
 $                     # no output — zero hits across all four test trees
 ```
 
 Its only references anywhere in the repository are **three orienting comments in `lib/`**, none of
 which reads or parses anything:
-`packages/rackmate_core/lib/src/catalog/catalog_connectors.dart:15`,
+`packages/rackpal_core/lib/src/catalog/catalog_connectors.dart:15`,
 `rack_presets.dart:21` and `seed_catalog.dart:6`.
 
 The nearest thing to a provenance test is a group *name* at `seed_catalog_test.dart:51`,
@@ -571,10 +571,10 @@ what mechanising AC-052 looks like.
 
 ### 4.5 The epoch-mask coverage test has drifted behind the code
 
-`packages/rackmate_core/test/epoch_mask_test.dart`'s header says it snapshots persisted document
+`packages/rackpal_core/test/epoch_mask_test.dart`'s header says it snapshots persisted document
 maps rather than derived outputs *"because no derived-data pipeline exists yet in this milestone"*.
 
-`packages/rackmate_core/lib/src/derived/device_loads.dart`, `equipment_list.dart` and `totals.dart`
+`packages/rackpal_core/lib/src/derived/device_loads.dart`, `equipment_list.dart` and `totals.dart`
 **now exist** and drive the chip strip, the rollups and the `T6.30` sheet, exactly the outputs
 AC-014 wants mask-checked, and the test still does not see them.
 
@@ -583,12 +583,12 @@ was honest when written and quietly stopped covering the thing it names.**
 
 ### 4.6 Font: Jost supersedes CR-080's IBM Plex; the docs have not caught up
 
-The code is unambiguous. `apps/rackmate/pubspec.yaml` bundles **Jost Regular AND Jost Medium**,
+The code is unambiguous. `apps/rackpal/pubspec.yaml` bundles **Jost Regular AND Jost Medium**,
 each twice (under `fonts:` at `:146-151` and under `assets:` at `:153-154`), with the reasoning
 inline at `:125-144`; commit `0545090`, *"style: swap the bundled font from IBM Plex Sans to Jost"*,
-made the swap and `875db98` added the second weight; every test fixture uses Jost, `apps/rackmate/test/baseline_parity_test.dart:81-82`
+made the swap and `875db98` added the second weight; every test fixture uses Jost, `apps/rackpal/test/baseline_parity_test.dart:81-82`
 (`const String _kFamily = 'Jost'; const FontRef _kFont = FontRef(_kFamily);`) and a literal
-`const FontRef _font = FontRef('Jost')` in eight `packages/rackmate_export/test/` files, including
+`const FontRef _font = FontRef('Jost')` in eight `packages/rackpal_export/test/` files, including
 `elevation_true_scale_test.dart:132` and `starters_export_test.dart:41`.
 
 **Not propagated to:** docs/08 §10.1 (lines 1144–1154, the whole `RackBody`/`RackCond`/`RackMono`
@@ -636,13 +636,13 @@ from M1 until `875db98`. Both faces render, so no gate could see it.
 
 **Ten sites corrected in docs/02 and docs/03**, and the semantic change below is written down in docs/02's reader-behaviour table where it belongs. **docs/06's `.rmdev` example was left alone**, exactly as the warning at the foot of this section says: `.rmdev` has its own parallel migration chain (CR-063) and no codec exists to decide its version, so bumping it would have been inventing a fact. The warning was worth its space.
 
-**This section's own line numbers had drifted and its fixture path was pre-rename** (`v1_templates_and_power.rackmate.json`; the file is `.rmpj.json`), so the sites were found by content rather than by the line numbers recorded below. A drift register drifts too.
+**This section's own line numbers had drifted and its fixture path was pre-rename** (`v1_templates_and_power.rackpal.json`; the file is `.rmpj.json`), so the sites were found by content rather than by the line numbers recorded below. A drift register drifts too.
 
 The record of what was wrong, unchanged:
 
-`packages/rackmate_core/lib/src/units/constants.dart:22`, `const kSchemaVersion = 2`, and `:35`,
+`packages/rackpal_core/lib/src/units/constants.dart:22`, `const kSchemaVersion = 2`, and `:35`,
 `const kMinReaderVersion = 2`, with a real `migrateV1ToV2` in `persistence/migrations.dart` and a
-checked-in v1 input fixture (`packages/rackmate_core/test/fixtures/v1_templates_and_power.rackmate.json`)
+checked-in v1 input fixture (`packages/rackpal_core/test/fixtures/v1_templates_and_power.rackpal.json`)
 proving old files still open.
 
 **Stale:** docs/02:142 (the constants block), :167 (`int schemaVersion, minReaderVersion; // 1, 1`),
@@ -670,11 +670,11 @@ line 847 is the `path_provider_windows` row explaining the umbrella / `dartjni.d
 docs/08:1085 matches.
 
 The enforcement is real and mechanical:
-`apps/rackmate/test/session/session_layering_test.dart` RULE 14d fails if `file_selector` returns;
-RULE 7 pins the dialog to one call site; `apps/rackmate/test/session/registry_claim_test.dart`
-fails if the doc row restates the bound as a closed list; `apps/rackmate/test/flutter_dependency_test.dart`
+`apps/rackpal/test/session/session_layering_test.dart` RULE 14d fails if `file_selector` returns;
+RULE 7 pins the dialog to one call site; `apps/rackpal/test/session/registry_claim_test.dart`
+fails if the doc row restates the bound as a closed list; `apps/rackpal/test/flutter_dependency_test.dart`
 asserts no `*_android` or `jni` package is in `pubspec.lock`. The Release directory built this
-session, `apps/rackmate/build/windows/x64/runner/Release/`, contains no `dartjni.dll`, and
+session, `apps/rackpal/build/windows/x64/runner/Release/`, contains no `dartjni.dll`, and
 neither does anywhere else in the tree (`find . -name dartjni.dll` returns nothing).
 **Nothing to fix.**
 
@@ -684,13 +684,13 @@ neither does anywhere else in the tree (`find . -name dartjni.dll` returns nothi
 full sheet set."* Neither is possible yet, Structure is M3, the full sheet set is M6.
 
 Worse, the regression net has a hole on exactly the axis it was built to guard.
-`packages/rackmate_export/test/elevation_true_scale_test.dart` states in its own fixture commentary
+`packages/rackpal_export/test/elevation_true_scale_test.dart` states in its own fixture commentary
 that *"the four starters contain no `Face.rear` and no partial-width placement whatsoever, so
 before this fixture nothing anywhere observed the rear reflection in emitted bytes"*, which is how
 the blank-rear-elevation defect named in `0fa532d` survived. It took a purpose-built synthetic
 fixture to find it.
 
-All four starters are authored by `apps/rackmate/tool/generate_starters.dart`, so growing them is a
+All four starters are authored by `apps/rackpal/tool/generate_starters.dart`, so growing them is a
 generator edit, not hand-authoring.
 
 ### 4.10 The roadmap carries no status at all
@@ -735,7 +735,7 @@ record, precisely so that a reader who meets the stale sentence first is not mis
 ### 4.12 CLOSED 2026-08-25: three stale fixture copies at the repo root
 
 **Deleted, and `kByteExactRoots` lost the root with them.** The three carried the **pre-rename**
-extension `.rackmate.json` while the live ones are `.rmpj.json`, so they predated DR-015's rename and
+extension `.rackpal.json` while the live ones are `.rmpj.json`, so they predated DR-015's rename and
 had been unreferenced ever since. **The vacuity guard in
 `gitattributes_byte_exactness_test.dart` is what forced the second half of the edit**: it asserts
 every root holds files and says *"either it moved — update `kByteExactRoots` — or the goldens are
@@ -744,12 +744,12 @@ guard doing its job on a tidy-up is the cheapest possible demonstration that it 
 
 The record of what was wrong, unchanged:
 
-`test/fixtures/{a_empty_project,b_rack_and_device,c_fuller_project}.rackmate.json` were **tracked**
-(`git ls-files test/`). The real ones live at `packages/rackmate_core/test/fixtures/`, because
+`test/fixtures/{a_empty_project,b_rack_and_device,c_fuller_project}.rackpal.json` were **tracked**
+(`git ls-files test/`). The real ones live at `packages/rackpal_core/test/fixtures/`, because
 `byte_roundtrip_test.dart:443` and `codec_split_test.dart:29` use the package-relative path
 `test/fixtures/…`. The root copies are an artefact of running the suite from the wrong directory,
 are referenced by nothing, and will rot silently, and
-`apps/rackmate/test/gitattributes_byte_exactness_test.dart:66` even lists `test/fixtures` as a path
+`apps/rackpal/test/gitattributes_byte_exactness_test.dart:66` even lists `test/fixtures` as a path
 it cares about.
 
 ### 4.13 Closed at `d8aedca`: 678 of 727 seed ports were in the wrong order
@@ -768,7 +768,7 @@ sheet), `PORT_SEQ` on the schedule, `chainOutputFor` (DR-012.1), and `portsInBan
 **Nothing in the suite compared a template's declared order with its ranked order**, so nothing
 could see it. It was found by a measurement taken for something else, #93 printing the fixture's
 banks to choose a test target, and reading `A01` as `src.1.l src.3.l src.3.r src.4.l … src.1.r`.
-`packages/rackmate_core/test/catalog/catalog_order_test.dart` is now that comparison over the whole
+`packages/rackpal_core/test/catalog/catalog_order_test.dart` is now that comparison over the whole
 catalog, with a coverage assertion that the catalog still crosses the tenth declaration (**29 of
 45**) so the gate cannot become vacuous by the catalog shrinking.
 
@@ -785,9 +785,9 @@ order values inside one would silently change a device the user placed months ag
 ### 4.14 RJ-017 accepted five items into hardening and the decomposition produced tasks for none
 
 **Found while placing DR-089's wordmark on the board, 2026-08-25.** RJ-017 accepted *"Icon,
-wordmark, window and document icons, file-type registration for `.rackmate` and `.rmdev`, and a
+wordmark, window and document icons, file-type registration for `.rackpal` and `.rmdev`, and a
 trademark search before any certificate or domain is bought"* into the hardening milestone under
-AC-058/D9. Canon §10.12(f) then named the mascot, **Riley the RackMate**, and filed three surfaces
+AC-058/D9. Canon §10.12(f) then named the mascot, **Riley the RackPal**, and filed three surfaces
 as `#563`–`#565`.
 
 **Neither `M8-0` nor `M9-0` produced a task for any of the five, and both are marked Done.** M8
@@ -845,15 +845,15 @@ this class is **at least one and unknown**.
 | Clause | Mark | Why |
 |---|---|---|
 | 60 connections without touching a menu | **CONFIRMED**: by the user, 2026-08-01 | **Performed and passed: sixty connections, roughly 5–7 minutes, reported against this clause and therefore under its own menu-free constraint.** THE OPERATOR'S CONDITION IS PART OF THE MEASUREMENT AND IS RECORDED RATHER THAN DROPPED, as M1's clause 3 records its own: *"after a bit of practice"*. **The clause carries no time bound**: it asks for sixty connections without a menu, and 5–7 minutes is a data point rather than a threshold met, so nothing here is graded against a number the criterion does not state. **It was done WITHOUT multi-draw**, which is still unbuilt (#93): the figure is what the pin-to-pin, chain-draw and atomic-set gestures deliver on their own, and it is therefore a floor. **A CONFIRMED mark is not a gate**: no CI job re-runs this and it does not survive a change to the keymap; the regression net named below is what guards the mechanism between drills |
-| Schedule shows 60 sorted rows, both labels both ends, conductor colours | **DEMONSTRATED** | `packages/rackmate_core/test/derived/schedule_test.dart:806`, a test named for this clause and asserting it verbatim: sixty rows fed in deliberately out of room order so the sort has to do the work, AC-025's room-then-pathway ordering, both labels on both ends, and `['red', 'black']` off a real speaker pair's conductors |
-| Deterministic re-layout ⇒ byte-identical display list | **DEMONSTRATED** | `packages/rackmate_core/test/scene/schematic_perf_test.dart:150` and `:158`, the same 300-link document twice, and **a separately decoded copy of the same bytes**, both through `op_digest.dart`, which is the instrument written for this clause's word *byte-identical*. `sugiyama_test.dart:470` holds the layer beneath it |
-| 300-connection fixture within one frame; **label-layer cost measured and recorded** | **DEMONSTRATED, on both halves, as of M2-G** | `schematic_perf_test.dart:173`/`:182` for the COMMIT path (`@Tags(['perf'])` and deliberately not excluded, `run_suite.ps1` does no tag filtering, so the number is defended on every push), and `packages/rackmate_ui/test/draw/paint_budget_test.dart` for the PAINT path. **The paint half was unmeasured when this row was first marked, and measuring it found 64 ms: nearly four frames.** See the note below the table: the mark stood on a scene build of ~3 ms while the thing that put it on screen took twenty times longer, which no reading of "within one frame at commit" survives. It is 10.6 ms now |
-| Keyboard path + screen-reader announcements | **DEMONSTRATED: at the channel, not with a screen reader** | `packages/rackmate_ui/test/canvas/schematic/schematic_keyboard_connect_test.dart:151` walks arrows → `W` → `Enter` to one `Link`, and `:639` intercepts `SystemChannels.accessibility` to assert a commit is announced **once** and never as a cancellation. The limit is stated rather than assumed: what is verified is the platform message, not NVDA reading it aloud, and M7's accessibility criterion is where a real reader meets this |
+| Schedule shows 60 sorted rows, both labels both ends, conductor colours | **DEMONSTRATED** | `packages/rackpal_core/test/derived/schedule_test.dart:806`, a test named for this clause and asserting it verbatim: sixty rows fed in deliberately out of room order so the sort has to do the work, AC-025's room-then-pathway ordering, both labels on both ends, and `['red', 'black']` off a real speaker pair's conductors |
+| Deterministic re-layout ⇒ byte-identical display list | **DEMONSTRATED** | `packages/rackpal_core/test/scene/schematic_perf_test.dart:150` and `:158`, the same 300-link document twice, and **a separately decoded copy of the same bytes**, both through `op_digest.dart`, which is the instrument written for this clause's word *byte-identical*. `sugiyama_test.dart:470` holds the layer beneath it |
+| 300-connection fixture within one frame; **label-layer cost measured and recorded** | **DEMONSTRATED, on both halves, as of M2-G** | `schematic_perf_test.dart:173`/`:182` for the COMMIT path (`@Tags(['perf'])` and deliberately not excluded, `run_suite.ps1` does no tag filtering, so the number is defended on every push), and `packages/rackpal_ui/test/draw/paint_budget_test.dart` for the PAINT path. **The paint half was unmeasured when this row was first marked, and measuring it found 64 ms: nearly four frames.** See the note below the table: the mark stood on a scene build of ~3 ms while the thing that put it on screen took twenty times longer, which no reading of "within one frame at commit" survives. It is 10.6 ms now |
+| Keyboard path + screen-reader announcements | **DEMONSTRATED: at the channel, not with a screen reader** | `packages/rackpal_ui/test/canvas/schematic/schematic_keyboard_connect_test.dart:151` walks arrows → `W` → `Enter` to one `Link`, and `:639` intercepts `SystemChannels.accessibility` to assert a commit is announced **once** and never as a cancellation. The limit is stated rather than assumed: what is verified is the platform message, not NVDA reading it aloud, and M7's accessibility criterion is where a real reader meets this |
 
 **The paint half of clause 4, and why this row was half-right for a week.**
 When M2-F re-audited this section it marked clause 4 `DEMONSTRATED` and cited
 `schematic_perf_test.dart`. That test is real and it measures the clause's own words, 
-*"the label-layer commit cost"*, but `rackmate_core` is a pure-Dart package and **cannot touch a
+*"the label-layer commit cost"*, but `rackpal_core` is a pure-Dart package and **cannot touch a
 `ui.Canvas`**, so what was demonstrated was the display list being BUILT, not the display list being
 PAINTED. M2-G measured the second half and found the 300-link fixture taking **63.9 ms to replay,
 against a 16.7 ms frame**, while the build it was cited beside took about 3 ms. On any reading of
@@ -897,7 +897,7 @@ it, so no follow-up run is owed.
 **What was `NOT BUILT` in the previous revision and is not now**, since a status document that
 silently improves is the failure mode this file is written against:
 
-- the schedule derivation (`packages/rackmate_core/lib/src/derived/schedule.dart`) and the Schedule
+- the schedule derivation (`packages/rackpal_core/lib/src/derived/schedule.dart`) and the Schedule
   tab that renders it, CR-105/AC-035's *live from an empty project* is `schedule_test.dart:254`;
 - Sugiyama phases 0–3 (`draw/scene/sugiyama.dart`) and the schematic scene builder;
 - net labels as the default render (DR-001), the domain filter bar, hue-by-domain styling
@@ -906,14 +906,14 @@ silently improves is the failure mode this file is written against:
 - `Ctrl+1..4`, `app_shell.dart`'s `kViewKeyToTabIndex`, with `Ctrl+3` deliberately dead per CR-071;
 - **CR-105's signposting and AC-048's coach mark**, which M2-F's last phase landed: a port-count
   chip on every device with unwired pins, clicking it switches to the Schematic with that device
-  selected (`packages/rackmate_ui/test/canvas/port_chip_test.dart`,
-  `apps/rackmate/test/session/signposting_test.dart`), and the domain-filter coach mark fires on the
+  selected (`packages/rackpal_ui/test/canvas/port_chip_test.dart`,
+  `apps/rackpal/test/session/signposting_test.dart`), and the domain-filter coach mark fires on the
   first sheet, persisted per USER in app-support prefs under DR-012.4.
 
 **Two claims in this section that were wrong and are corrected rather than deleted.** The old text
 said `AddLinkCommand`/`RemoveLinkCommand` were *"referenced from `lib/` code in exactly two places,
 both of them the `UnbuiltView` copy strings"*. That was true and is not: four link-minting commands
-now have real callers, and `apps/rackmate/test/unbuilt_copy_accuracy_test.dart` was widened during
+now have real callers, and `apps/rackpal/test/unbuilt_copy_accuracy_test.dart` was widened during
 M2-F precisely because it scanned for `AddLinkCommand(` alone and would have stayed green while both
 copies lied. The old text also called `symbol_layer.dart` *"a symbol renderer and hit-tester that no
 screen consumes"*, `schematic_canvas_screen.dart` consumes both.
@@ -942,11 +942,11 @@ where a family resolves, up from four, and unlike `ff712d2`'s accidental fifth t
 structural and does not come back.
 
 **DR-015 renamed the project file, and the rename found two silent-loss paths that had nothing to
-do with naming.** `.rmpj` ships at `dc22ddc`; `.rackmate` is still opened and still saved in place.
+do with naming.** `.rmpj` ships at `dc22ddc`; `.rackpal` is still opened and still saved in place.
 Both defects are the same mistake, **rebuilding a filename you already have**, and neither was
 found by a failing test. They were found by asking what the app's own files are called.
 
-**The snapshot prune** rebuilt its path from `pathFor`, which now spells `.rmpj`. Ten `.rackmate`
+**The snapshot prune** rebuilt its path from `pathFor`, which now spells `.rmpj`. Ten `.rackpal`
 snapshots left by an earlier build would therefore be **counted**, so the ten-per-document cap
 reads as already met, and then **fail to delete, silently**, because a snapshot that will not
 delete is deliberately swallowed as disk clutter rather than a failure. The old files would sit in
@@ -954,7 +954,7 @@ AppData forever and the new ones would pile up behind them. `_entriesFor` now ca
 file actually has.
 
 **The recovery scan** classified snapshots by the current extension only. A recovery pair exists
-*only across a crash*, so the one window in which a `.rackmate` snapshot meets a `.rmpj` build is
+*only across a crash*, so the one window in which a `.rackpal` snapshot meets a `.rmpj` build is
 exactly the window the feature exists for: the previous build died with unsaved work and the user
 installed this one before reopening. The sidecar would have been left an orphan, and `scan`
 deletes orphans **silently**, so a crash recovery would have gone without a word.
@@ -1032,7 +1032,7 @@ made a **latent defect reachable**, which the property suite caught immediately,
 vanish without `RemoveLinkCommand` doing it, so *"apply ran and found nothing"* became a legal state
 that the nullable-capture guard was reporting as *"revert before apply"*, throwing out of undo.
 Separately, `keymap_source_ban_test.dart` closes the hole §4's own D7 discussion named: the
-`SingleActivator` ban now covers `rackmate_ui`, the package every binding surface except the File
+`SingleActivator` ban now covers `rackpal_ui`, the package every binding surface except the File
 menu lives in, and it landed **before** M3-C rather than after.
 
 **The portable build (#13), and why it is not M8 arriving early.** `docs/14-deployment.md` and
@@ -1044,7 +1044,7 @@ untouched**: no installer, no crash reporter, no cold-start budget, no documente
 marks do not move. The app half needed no code at all: `data_root.dart` has been the portable seam
 since M0, and docs/03:847's claim that pinning `path_provider_windows` to one call site *"keeps M2's
 portable build a one-function change"* held exactly, **verified by running the staged tree, which
-wrote `RackMateData\sessions\<uuid>.lease` beside the executable rather than under AppData**.
+wrote `RackPalData\sessions\<uuid>.lease` beside the executable rather than under AppData**.
 
 **Two findings from building it, both recorded because they are corrections to the corpus and not
 to the code.** First, **DR-006 §11.6.2's expiry recipe has an unstated precondition**: run as
@@ -1158,7 +1158,7 @@ small to notice at zoom 1.0.
 
 **Clause 3 is AMENDED by DR-027 and the blockquote above is its original wording, kept because a
 quoted criterion is the record.** M3 owes the **derivation**: the rows, the sort by room then
-pathway, and the per-room footage subtotals, as tested `rackmate_core` output. **M6 owes the
+pathway, and the per-room footage subtotals, as tested `rackpal_core` output. **M6 owes the
 sheet**: the `SheetRole`, the layout, the initial boxes and the page. `SheetRole` has three values
 and none is a Pull Sheet, so M3 could not have discharged a clause about a sheet it does not own,
 and reading the clause loosely enough to call it met is the checklist-ticking §8.1 refuses. The same
@@ -1169,11 +1169,11 @@ export a complete set"* already contains the sheet.
 **Every clause NOT BUILT** *(as recorded when M3 opened; superseded below by M3-A and M3-B, and the
 file paths and line numbers in this paragraph are the ones that were true then)*. Model only,
 inherited from M0:
-`packages/rackmate_core/lib/src/model/{outlet,structure_body,location,pathway}.dart`, persisted and
+`packages/rackpal_core/lib/src/model/{outlet,structure_body,location,pathway}.dart`, persisted and
 byte-round-tripped by the `c_fuller_project` fixture. Grepping `Outlet`/`StructureBody`/`Pathway`/
-`Location` across `packages/rackmate_ui/lib` and `apps/rackmate/lib` finds **no Structure UI at
+`Location` across `packages/rackpal_ui/lib` and `apps/rackpal/lib` finds **no Structure UI at
 all**: only three **hard-coded demo Locations** at
-`packages/rackmate_ui/lib/src/canvas/rack_canvas_screen.dart:4030-4032` (Main House / Media Closet /
+`packages/rackpal_ui/lib/src/canvas/rack_canvas_screen.dart:4030-4032` (Main House / Media Closet /
 Living Room), whose own comment at `:4026-4027` says *"the project Locations panel (CR-112) and the
 '+ New…' creation flow remain out of scope, so these are seeded rather than creatable"*, and a
 chip-strip `Outlets` label at `rack_metrics_row.dart:136`.
@@ -1183,8 +1183,8 @@ number. That M2 block, `Link` + `Endpoint` reaching the UI, is discharged as of 
 
 **M3-B is CLOSED as of `4ae5a54`** (board #84, six commits from `d1b5266`), and the paragraph above
 is now stale in one detail rather than wrong in outline: **grepping `Location` across
-`packages/rackmate_ui/lib` no longer finds only the demo three.** There is a project-level Locations
-panel at `packages/rackmate_ui/lib/src/project/locations_panel.dart`, reached from a second
+`packages/rackpal_ui/lib` no longer finds only the demo three.** There is a project-level Locations
+panel at `packages/rackpal_ui/lib/src/project/locations_panel.dart`, reached from a second
 top-level menu, and `Location` is creatable, renameable, movable and deletable through commands.
 The three hard-coded demo Locations **are gone as of `5f5bce5`** (#143), which was sequenced after
 the panel precisely so the dropdown did not go empty in between. That closes the last part of the
@@ -1224,7 +1224,7 @@ Now `unterminated`, which the code says outright is the nearest true value and n
 the demo three were *"a lie that survives into a user's document"*. They could not have been, and
 had not been since the persistence layer landed: `RackCanvasScreen.document` is `@visibleForTesting`
 and the shell always passes `controller:`, so **production never reached the demo fallback at all**.
-What they actually were is FIXTURE data that the whole app suite and much of the `rackmate_ui` suite
+What they actually were is FIXTURE data that the whole app suite and much of the `rackpal_ui` suite
 open, which is a smaller problem of the same shape: three rooms no gesture created, sitting under
 every assertion made against that document. The removal stands; the reason is narrower than the one
 written on the board, and a task whose justification decays between being written and being done is
@@ -1246,7 +1246,7 @@ failure is invisible on every fixture in the corpus**, because they all give eve
 is also no longer an exotic state: from DR-021 §11.20.2, deleting a room clears
 `PlaceEndpoint.locationId` on every drop in it, so an ordinary undoable gesture now produces the
 roomless drop that band exists for. The PDF half is **not** covered and is not silently skipped:
-`rackmate_export` paginates the equipment list and no cable-schedule sheet exists yet.
+`rackpal_export` paginates the equipment list and no cable-schedule sheet exists yet.
 
 **M3 owes one small thing that is not an exit clause, and it is not the one first recorded here.**
 DR-018 §11.17.4 put the *raster carrier* on M3 on the ground that omitting it would cost a format
@@ -1302,7 +1302,7 @@ no drop DSL and no wide-mode header match could reach**, and would not have unti
 
 *One derived-document sentence was false and is now true.* docs/07 §5.1 closed with "Every target
 above resolves in `assets/catalog/registries.json`; a CI assertion enforces it". That file has
-never existed and could not have been loaded by `rackmate_core` if it had; DR-010 §11.10.1 settled
+never existed and could not have been loaded by `rackpal_core` if it had; DR-010 §11.10.1 settled
 the master as seeded Dart. The assertion now exists, transcribes the block from the doc rather than
 reading it out of the code, and checks the converse too, that the seed invents no synonym the doc
 does not list.
@@ -1770,7 +1770,7 @@ first-class, encouraged state"* and `seed_outlet_templates.dart` says the instan
 sentence: *"the DRC validates RETROACTIVELY when a `Service` later assigns a real family"*. **There
 is no later.** `buildAddHomeRunCommand` hardcodes the family with no parameter, `Service
 .signalFamily` still carries the pending-AC-013 marker, there is no `LinkField` row, and the four
-`signalFamily` references in `rackmate_ui/lib` and `apps/rackmate/lib` are all the schematic
+`signalFamily` references in `rackpal_ui/lib` and `apps/rackpal/lib` are all the schematic
 building a NEW link from two ports.
 
 *Three things look like they set it.* `@service=camera` sets the label tag and nothing else, and the
@@ -1822,7 +1822,7 @@ measured is a figure nobody can reconcile against the sheet's own rows.
 *Two tests changed and the second one is the finding.* `structure_table_test.dart` asserted that CUT
 and ROUTED were **not** editable; that case existed to keep #585's task boundary deliberate, and the
 boundary is what this task removes, so the assertion follows it and says so in place. The other is
-worth more than its diff: `schedule_screen_test.dart` in **`rackmate_ui`** built a fixture with
+worth more than its diff: `schedule_screen_test.dart` in **`rackpal_ui`** built a fixture with
 `..cutLength =`, and the moment the setter became `@internal` that became an
 `INVALID_USE_OF_INTERNAL_MEMBER` warning against a gate whose threshold is zero. **The AC-013
 boundary caught a real cross-package write on the first build in which it could**, in a widget test
@@ -2110,7 +2110,7 @@ hand-typed `RACK LBL` cell. **That ratio is the argument for it being a modifier
 and it is measured rather than asserted.
 
 **The drill kit is built and the stopwatch is the only thing left.** `docs/16-m3g-drill.md` carries
-the script, #164's conditions form and #165's verdict form; `apps/rackmate/tool/verify_drill.dart`
+the script, #164's conditions form and #165's verdict form; `apps/rackpal/tool/verify_drill.dart`
 reads the saved `.rmpj` and checks AC-018 clause by clause, reporting all thirteen rather than
 stopping at the first failure. **The script was driven through the real planner before any person
 touches it, and its first draft was wrong**: twelve drops open where the criterion wants fourteen,
@@ -2308,7 +2308,7 @@ undo, and every reader compiles. The only absent thing is a widget saying `actio
 and **no Dart type can require one**.
 
 *So it is a gate rather than a habit.* `actions_have_callers_test.dart` scans every function-typed
-member of a `*Actions` record in `rackmate_ui` and fails when one has no call site: **18 callbacks,
+member of a `*Actions` record in `rackpal_ui` and fails when one has no call site: **18 callbacks,
 one hole** on its first run. **It was watched failing before being trusted** and names the offender
 exactly. It skips nested records deliberately, because `StructureEditorActions.dropEntry` and
 `.outlets` are passed rather than invoked and a naive scan reports both, and a gate that cries wolf
@@ -2467,7 +2467,7 @@ different facts.
 gesture rebuilds a plate from nothing, so a brushed opening would have been **deleted by a gesture
 nobody thinks of as destructive**. Core proves the plan carries the pass-throughs to keep, and
 `outlets_view_test.dart`'s harness **reimplements** arrange without the loop that re-fits them, so
-neither suite could see the twenty lines in between. `apps/rackmate/test/session/outlet_plate_actions_test.dart`
+neither suite could see the twenty lines in between. `apps/rackpal/test/session/outlet_plate_actions_test.dart`
 is new for exactly that reason: **`buildOutletsActions` had no test of its own**, which is
 `callbacks-have-callers` one layer along. It was **watched failing** with the loop disabled before it
 was trusted.
@@ -2648,7 +2648,7 @@ the second commit.
 nobody looked: `List<Command>` also appears in four structure planners
 (`drop_build`, `drop_line_planner`, `matrix_plan`, `outlet_template_planner`), in
 `csv_import_apply.dart`, and in both of the app's session action files. The estimate counted
-`packages/rackmate_core/lib/src/commands/` and stopped there. It is a census miss of the ordinary
+`packages/rackpal_core/lib/src/commands/` and stopped there. It is a census miss of the ordinary
 kind: the noun searched for was the directory, not the type.
 
 **`EpochMask` became nullable, and null is NOT `EpochMask.none`.** `none` asserts a command touched
@@ -2681,7 +2681,7 @@ when two descriptor rows are pointed at one body field, and write-all-then-read-
 the second write clobbers the first. Confirmed by aliasing `model` onto `manufacturer`.
 
 **What M4-A does NOT deliver, stated so nobody reads the closure as more than it is.** There is no
-builder window, no form, no port grid, and nothing in `rackmate_ui` or `apps/rackmate` reaches
+builder window, no form, no port grid, and nothing in `rackpal_ui` or `apps/rackpal` reaches
 `TemplateEditSession` at all. Its file header says so rather than leaving it to be discovered, per
 `a modelled field is not a reachable one`. **The row above is now `L`** to match roadmap §6 and
 §5.3's own re-derivation, which had moved the estimate while this heading still read `M`.
@@ -2828,7 +2828,7 @@ it could not.
 `classifyTemplateChange`: both are M4-D's shell (`#175`). No badge widget, no save dialog, no
 library. `builder/fork_status.dart` and `builder/template_change_class.dart` say so in their own
 headers rather than leaving it to be discovered, per `a modelled field is not a reachable one`. The
-`rackmate_ui` paragraph below still holds unchanged.
+`rackpal_ui` paragraph below still holds unchanged.
 
 #### 5.3.4 M4-D, the builder shell and the metadata form · CLOSED · `27bf82f`, `3d153c0`, `56c052a`, `f105481`, `675292b`
 
@@ -2895,19 +2895,19 @@ library, no `Duplicate & edit`, and no `.rmdx`. `contentHash` is written as a la
 rather than a real sha256, because the hash belongs with the codec that decides which bytes it
 covers (M4-M). The seventeen glyph marks are M4-K's.
 
-**No builder surface exists** *(as recorded when M4 opened; M4-A adds `rackmate_core`'s `builder/`
-directory but no UI. **M4-D ends this**: `packages/rackmate_ui/lib/src/builder/` now holds
+**No builder surface exists** *(as recorded when M4 opened; M4-A adds `rackpal_core`'s `builder/`
+directory but no UI. **M4-D ends this**: `packages/rackpal_ui/lib/src/builder/` now holds
 `device_builder_screen.dart`, and the paragraph below is kept as the record of what was true when
-the milestone started)*. `ls packages/rackmate_ui/lib/src/` returns exactly five directories,
+the milestone started)*. `ls packages/rackpal_ui/lib/src/` returns exactly five directories,
 `canvas/`, `draw/`, `inspector/` (`inspector_panel`, `rack_inspector_panel`, `shrink_rack_dialog`),
 `palette/` (one file) and `shell/`. No `builder/`, no port grid, no form. Grep for `rmdev` across
 `packages/*/lib` and `apps/*/lib` returns **nothing**, so the single-file `.rmdev` codec and its
 `contentHash` warning do not exist. `TemplateBody`/`PortDef`/`TemplateSnapshot` exist in core
-(`packages/rackmate_core/lib/src/model/template.dart`, `port.dart`) and are exercised only by the 48
+(`packages/rackpal_core/lib/src/model/template.dart`, `port.dart`) and are exercised only by the 48
 seeded catalog templates.
 
 **One of those five is a starting point, not an absence.** `draw/` holds
-`packages/rackmate_ui/lib/src/draw/flutter_canvas.dart:52`, `final class FlutterDiagramCanvas
+`packages/rackpal_ui/lib/src/draw/flutter_canvas.dart:52`, `final class FlutterDiagramCanvas
 implements DiagramCanvas`, the on-screen backend of the same IR the PDF side replays. A port grid
 is a `DiagramScene` fragment like any other, so the builder's rendering surface is the one part of
 M4 that is already built and already parity-tested. That is a narrower claim than "no surface to
@@ -2915,8 +2915,8 @@ build on" and it is the accurate one.
 
 **Note the second half of the criterion is partly pre-satisfied by other work.** The equipment list
 already renders `—` per unknown column with an accurate unknown count
-(`packages/rackmate_core/lib/src/derived/totals.dart`,
-`packages/rackmate_ui/lib/src/canvas/rack_metrics_row.dart`). What is missing is any way to **author
+(`packages/rackpal_core/lib/src/derived/totals.dart`,
+`packages/rackpal_ui/lib/src/canvas/rack_metrics_row.dart`). What is missing is any way to **author
 the template** that would exercise it.
 
 **Its gate is now clear, and the reason is worth stating precisely.** Roadmap §5 lists `M1→M4`
@@ -3380,7 +3380,7 @@ autocomplete (`#216`) exists precisely for that population and was **not** exerc
 
 **A CONFIRMED mark is not a gate.** No CI job re-runs this, and it does not survive a change to the
 keymap or the grammar. What guards the mechanism between drills is
-`packages/rackmate_ui/test/builder/quick_add_bar_test.dart`, which types the same eight commands and
+`packages/rackpal_ui/test/builder/quick_add_bar_test.dart`, which types the same eight commands and
 asserts 68 ports across 6 banks with focus still in the bar, and
 `quick_add_test.dart`'s build group, which asserts the same totals in core.
 
@@ -3421,7 +3421,7 @@ So the 93-second template of §5.3.7 exists in the project and can never reach a
 first half has no route, and its second half is therefore unreachable.**
 
 **A SECOND FINDING BESIDE IT.** `buildEquipmentList` has **exactly one caller in the whole tree**,
-`rackmate_export`'s `build_document.dart:86`. **There is no equipment list on screen.** Even given a
+`rackpal_export`'s `build_document.dart:86`. **There is no equipment list on screen.** Even given a
 placed device, clause 2 could today only be checked through a PDF export, which is a question about
 what the criterion means and not merely a missing view.
 
@@ -3829,8 +3829,8 @@ and this section is not evidence that any of it is built.
 #### 5.3.16 M4-R, the seventeen marks and the accent that ships with them · CODE COMPLETE, DRILL UNRUN · `a915a04`, `95be9e6`, `64b953c`, `e58a922`, `365b3b7`, `77e9cf1`, `e356866`, `42f3391`, `811c5c6`
 
 **Nine commits, 2026-08-21, fourteen gates green on each. `#694` had ZERO tasks that morning** and
-now has nine, of which eight are closed and `#757`'s printed half is not. `rackmate_core` went
-**3,140 → 3,197** and `rackmate_ui` **1,115 → 1,117**.
+now has nine, of which eight are closed and `#757`'s printed half is not. `rackpal_core` went
+**3,140 → 3,197** and `rackpal_ui` **1,115 → 1,117**.
 
 **TWO RULINGS CAME OUT OF THE PICK-UP CENSUS, BEFORE ANY ARTWORK.** DR-083 (§11.82) placed the mark
 and settled the hatch collision; DR-084 (§11.83) made the seeded catalog author its own marks. Both
@@ -3902,7 +3902,7 @@ only surface besides the elevation that draws a mark.
 
 #### 5.3.17 M4-J1, the bank tree, and the field that has never had a reader · CLOSED · `dbd7d19`, `6a4e41c`, `817acfd`, `ab7eeb8`
 
-**Four commits, fourteen gates green on each.** `rackmate_core` **3,197 → 3,224**, `rackmate_ui`
+**Four commits, fourteen gates green on each.** `rackpal_core` **3,197 → 3,224**, `rackpal_ui`
 **1,117 → 1,139**. `#760` is DR-085 (§11.84); `#223` is the CRUD, the tree, the menu and the mirror.
 
 **THE PICK-UP CENSUS FOUND SOMETHING LARGER THAN THE MISSING ACTION, and it re-scoped the issue.**
@@ -3972,7 +3972,7 @@ mirrored output is a second output, not a passthrough (DR-085 §11.84.6).
 
 #### 5.3.18 M4-J2, the port set's missing producer and the role column that could spell `+` four ways · CLOSED · `109d5e6`, `a02eeef`
 
-**Two commits, fourteen gates green on each.** `rackmate_core` **3,224 → 3,245**, `rackmate_ui`
+**Two commits, fourteen gates green on each.** `rackpal_core` **3,224 → 3,245**, `rackpal_ui`
 **1,139 → 1,151**. `#761` is DR-086 (§11.85); `#224` is the gesture, the closed role list and the
 first editor `atomicConnect` has ever had.
 
@@ -4046,7 +4046,7 @@ consults it yet.
 
 #### 5.3.19 M4-J3, the pair with no creator, and the panel the model cannot describe · CLOSED · `b73e1f4`, `9cb1f51`
 
-**Two commits, fourteen gates green on each.** `rackmate_core` **3,245 → 3,263**, `rackmate_ui`
+**Two commits, fourteen gates green on each.** `rackpal_core` **3,245 → 3,263**, `rackpal_ui`
 **1,151 → 1,162**. `#762` is DR-087 (§11.86); `#225` is the action, the editable cell and the
 commands under both.
 
@@ -4128,7 +4128,7 @@ person make the FIRST one?"**, asked of every collection a control offers choice
 reads this, and what would it do differently if the value changed?"** Both are now in the OKF
 practice.
 
-**THE `rackmate_core` FIGURES IN FOUR COMMIT MESSAGES ARE THREE TOO HIGH, and the corpus is corrected
+**THE `rackpal_core` FIGURES IN FOUR COMMIT MESSAGES ARE THREE TOO HIGH, and the corpus is corrected
 rather than the history.** `ab7eeb8` states the suite going `3,221 → 3,227` when the three cases it
 added took it to **3,224**, and the next two commits and the merge did arithmetic on that base. The
 true chain, measured file by file after the merge, is
@@ -4252,7 +4252,7 @@ under it and does not touch the patch number.
 |---|---|---|
 | 28 rules × fixture pair | **NOT BUILT: 0/28** | No `validation/` or `rules/` directory under `packages/`, no rule registry, no `Finding` type, no severity resolution. No DRC fixture corpus. AC-051's gate is supposed to be *"enforced in CI"* and there is no CI |
 | Domain-expert sign-off on the 28 rules and the catalog data | **UNPERFORMED** | Has not happened |
-| No rule prevents a PDF being written | **VACUOUS: true, trivially** | True because no rule exists. `packages/rackmate_core/lib/src/draw/sheet/sheet_def.dart:96-98` does correctly encode CR-023/G3 for the one heuristic that exists (a malformed NCS id is a **NOTICE, never a gate**) which is the right shape for when rules arrive |
+| No rule prevents a PDF being written | **VACUOUS: true, trivially** | True because no rule exists. `packages/rackpal_core/lib/src/draw/sheet/sheet_def.dart:96-98` does correctly encode CR-023/G3 for the one heuristic that exists (a malformed NCS id is a **NOTICE, never a gate**) which is the right shape for when rules arrive |
 
 #### 5.4.1 M5-0a, the catalogue corrected before the engine exists · CLOSED · `bd71eef`, `91ac48f`, `31eac36`, `6f2ad64`, `4933588`, `aa25cba`
 
@@ -4298,7 +4298,7 @@ below still stands.
 and the first time the corpus was wrong **in the user's favour**, which is the direction that does
 not announce itself.
 
-Two persisted shells survive from M0 (`packages/rackmate_core/lib/src/model/acked_finding.dart` and
+Two persisted shells survive from M0 (`packages/rackpal_core/lib/src/model/acked_finding.dart` and
 `rule_override.dart`) both codec-round-tripped and **never produced by anything**. The rack
 editor's Validation drawer and Rack Vitals are both listed *not started* in
 `docs/m1-implementation-log.md` §2 §1, `:47` (*"Rack Vitals stays not-started (§5, needs the
@@ -4386,19 +4386,19 @@ than in any other unstarted milestone, and none of it discharges a clause of M6'
 is about **complete** sheet sets and **physical** sign-off. §0's rule grades the criterion, not the
 work. The work is described next so the headline does not erase it.
 
-**What exists is M1's slice, and it is real.** `packages/rackmate_core/lib/src/draw/sheet/` carries
+**What exists is M1's slice, and it is real.** `packages/rackpal_core/lib/src/draw/sheet/` carries
 `sheet_frame.dart` (border, outer/inner rules), `title_block.dart`, `revision_block.dart`,
-`sheet_furniture.dart` (which composes them into **one `DiagramScene` fragment so `rackmate_ui`
+`sheet_furniture.dart` (which composes them into **one `DiagramScene` fragment so `rackpal_ui`
 can replay the identical object**, a deliberate and documented deviation from docs/08 §5's
 `PageTheme` mechanism) `drawing_scale.dart` (the honest `1:n` / `NTS` report),
 `elevation_sheet.dart` and `equipment_sheet.dart`. All are tested
-(`packages/rackmate_core/test/sheet/*.dart`, `packages/rackmate_export/test/sheet_furniture_pdf_test.dart`),
-all four starters export real PDF bytes (`packages/rackmate_export/test/starters_export_test.dart`),
+(`packages/rackpal_core/test/sheet/*.dart`, `packages/rackpal_export/test/sheet_furniture_pdf_test.dart`),
+all four starters export real PDF bytes (`packages/rackpal_export/test/starters_export_test.dart`),
 and export is wired into the app with a full error surface
-(`apps/rackmate/test/session/export_controller_test.dart`).
+(`apps/rackpal/test/session/export_controller_test.dart`).
 
 **Furniture is incomplete against DR-005.** The **zone band and grid are not drawn**, 
-`packages/rackmate_core/lib/src/draw/sheet/sheet_frame.dart:377` says so verbatim (*"The zone band
+`packages/rackpal_core/lib/src/draw/sheet/sheet_frame.dart:377` says so verbatim (*"The zone band
 between them is NOT drawn, see the file header"*) and `:23-30` records the deviation and the arithmetic behind it (*"THE 6 PT INSET vs §5.1's ZONE BAND, recorded rather than papered over"*). There are no
 revision clouds and no `RevisionEntry`-driven lettered triangle. There is no `ISSUED FOR
 CONSTRUCTION` stamp (grep across core and export `lib/` returns nothing). Also absent: dry-run sheet
@@ -4450,10 +4450,10 @@ shipping the defect and the fix in that order.
 
 | Clause | Mark | Why |
 |---|---|---|
-| Tablet read-only surfaces | **NOT BUILT** | `apps/rackmate` has only a `windows/` platform directory, no `android`/`ios`/`macos`/`linux`, which `apps/rackmate/pubspec.yaml`'s `path_provider_windows` comment states as a deliberate fact. No explicit statement for the two unavailable surfaces either |
+| Tablet read-only surfaces | **NOT BUILT** | `apps/rackpal` has only a `windows/` platform directory, no `android`/`ios`/`macos`/`linux`, which `apps/rackpal/pubspec.yaml`'s `path_provider_windows` comment states as a deliberate fact. No explicit statement for the two unavailable surfaces either |
 | NVDA / VoiceOver matrix | **NOT BUILT** | And the connection-creation path it must pass on does not exist (M2) |
-| No keybinding bound twice **in the generated table** | **NOT BUILT: nothing generates a table** | Keybindings are hand-written `SingleActivator` maps in exactly two files: `apps/rackmate/lib/src/session/app_shell.dart:69-76` (`kFileShortcuts`, four file bindings at `:71`, `:72`, `:73` and `:74-75`, asserted at exactly four by `session_layering_test` RULE 14) and `packages/rackmate_ui/lib/src/canvas/rack_canvas_screen.dart:3278-3350` (the canvas `Shortcuts` map, **18** `SingleActivator` entries counted over that range, `Ctrl+Alt+N` for the New-rack dialog is the newest, and `Esc` is now bound to a ladder rather than a single cancel). Nothing generates a table and nothing arbitrates collisions. CR-101's 16 collisions are unfixed because the ~40-binding keymap does not exist |
-| Pseudo-locale build shows no hard-coded English | **NOT BUILT** | **No localisation at all**: `apps/rackmate/pubspec.yaml` has no `flutter_localizations` dependency, no `.arb` files, no `AppLocalizations`, so docs/11 §7's `flutter gen-l10n && git diff --exit-code` gate has nothing to run against |
+| No keybinding bound twice **in the generated table** | **NOT BUILT: nothing generates a table** | Keybindings are hand-written `SingleActivator` maps in exactly two files: `apps/rackpal/lib/src/session/app_shell.dart:69-76` (`kFileShortcuts`, four file bindings at `:71`, `:72`, `:73` and `:74-75`, asserted at exactly four by `session_layering_test` RULE 14) and `packages/rackpal_ui/lib/src/canvas/rack_canvas_screen.dart:3278-3350` (the canvas `Shortcuts` map, **18** `SingleActivator` entries counted over that range, `Ctrl+Alt+N` for the New-rack dialog is the newest, and `Esc` is now bound to a ladder rather than a single cancel). Nothing generates a table and nothing arbitrates collisions. CR-101's 16 collisions are unfixed because the ~40-binding keymap does not exist |
+| Pseudo-locale build shows no hard-coded English | **NOT BUILT** | **No localisation at all**: `apps/rackpal/pubspec.yaml` has no `flutter_localizations` dependency, no `.arb` files, no `AppLocalizations`, so docs/11 §7's `flutter gen-l10n && git diff --exit-code` gate has nothing to run against |
 
 **Inherits an unpaid M1 debt:** roadmap §4 M7 *Risks* names the outline tree shipping in M1 as this
 milestone's mitigation, and it did not ship (§3.3).
@@ -4480,17 +4480,17 @@ progress/cancel on every operation over 500 ms.
 |---|---|---|
 | Signed, timestamped installer; signature outlives the cert | **NOT BUILT** | A whole-word search for `msix`, `Inno Setup`, `signtool` and `codesign` across every source, script and manifest returns **nothing** outside `docs/` prose, build outputs, `.dart_tool/` caches and `.git/`. No installer configuration, no packaging tool, no signing script |
 | Cold-start within budget | **NOT BUILT** | No budget is defined and none has been measured |
-| Induced crash ⇒ local report with **no project content** | **NOT BUILT** | No crash reporter exists. The only related artefact is `apps/rackmate/lib/src/storage/storage_log.dart` and `session_layering_test` RULE 13's CR-096 redaction check, **a policy with no reporter behind it** |
+| Induced crash ⇒ local report with **no project content** | **NOT BUILT** | No crash reporter exists. The only related artefact is `apps/rackpal/lib/src/storage/storage_log.dart` and `session_layering_test` RULE 13's CR-096 redaction check, **a policy with no reporter behind it** |
 | Documented limits behave as documented | **VACUOUS** | No documented limits, no 1.5× soft warning, no 3× open-read-only gate in code |
 | *(not an exit clause: M8 checklist)* Licence / EULA, `showLicensePage`, version-check ping | **NOT BUILT** | Listed for completeness. M8's exit criterion has **four** clauses; this row is checklist scope, and it does not enter the weakest-mark arithmetic |
 
 **One thing this milestone inherits cleanly:** the Release build is already lean.
-`apps/rackmate/build/windows/x64/runner/Release/` (**not** the repo-root `build/`, which holds only
-`native_assets/`, `test_cache/` and `unit_test_assets/`) contains six entries: `rackmate.exe`,
+`apps/rackpal/build/windows/x64/runner/Release/` (**not** the repo-root `build/`, which holds only
+`native_assets/`, `test_cache/` and `unit_test_assets/`) contains six entries: `rackpal.exe`,
 `flutter_windows.dll`, two plugin DLLs (`screen_retriever_windows_plugin.dll`,
 `window_manager_plugin.dll`), `data/` and `native_assets.json`. The load-bearing fact is what is
 absent: **no `dartjni.dll`**, here or anywhere in the tree, which
-`apps/rackmate/test/flutter_dependency_test.dart` asserts and which the `flutter build windows
+`apps/rackpal/test/flutter_dependency_test.dart` asserts and which the `flutter build windows
 --release` run this session confirms.
 
 ### 5.8 M9, Beta hardening · `M` · NOT STARTED, weakest mark `UNPERFORMED` · hard-blocked on M8
@@ -4503,8 +4503,8 @@ absent: **no `dartjni.dll`**, here or anywhere in the tree, which
 of 11 sheets exist, so no sheet set is sendable (M6).
 
 No beta artefacts of any kind exist in the repo: no integrator names, no real-project fixtures
-beyond the four synthetic starters (`apps/rackmate/assets/starters/{apartment,home_theatre,small_office,whole_house}.rackmate`,
-all authored by `apps/rackmate/tool/generate_starters.dart`), and no performance harness to measure
+beyond the four synthetic starters (`apps/rackpal/assets/starters/{apartment,home_theatre,small_office,whole_house}.rackpal`,
+all authored by `apps/rackpal/tool/generate_starters.dart`), and no performance harness to measure
 against recorded budgets, **zero `@Tags(['perf'])` tests exist**.
 
 `RISK-08`'s early warning (*"no named integrator by the end of M6"*) is moot because M6 has not
@@ -4609,11 +4609,11 @@ gate meant measuring it, and four of the five floors had stopped tracking:
 
 | Suite | Floor | Actual | Slack |
 |---|---|---|---|
-| `rackmate_core` | 976 | 3263 | **+2287** |
-| `rackmate_text` | 1 | 1 | exact |
-| `rackmate_export` | 183 | 189 | +6 |
-| `rackmate_ui` | 382 | 1162 | **+780** |
-| `rackmate_app` | 664 | 838 | +174 |
+| `rackpal_core` | 976 | 3263 | **+2287** |
+| `rackpal_text` | 1 | 1 | exact |
+| `rackpal_export` | 183 | 189 | +6 |
+| `rackpal_ui` | 382 | 1162 | **+780** |
+| `rackpal_app` | 664 | 838 | +174 |
 
 `run_suite.ps1`'s own comment orders a re-measure *"in any commit that adds or removes tests"* and
 records **131 tests of slack** as the defect that prompted the rule. It had reached **3,247**. Two
@@ -4625,7 +4625,7 @@ the board, a dependency table in `docs/03`, and four test floors in CI.** None w
 edit. Each was true when written. The common shape is a number **maintained by intention rather than
 by a gate**, and the only durable answer found so far is to make something read it.
 
-The remedy is `apps/rackmate/test/dependency_table_test.dart`, which runs in **three directions** and
+The remedy is `apps/rackpal/test/dependency_table_test.dart`, which runs in **three directions** and
 was watched failing in all three plus the anti-vacuity case that would otherwise have made it inert.
 Ruled at **DR-088** (canon §11.87, §12.27). **No version bump**: `#764` is parentless, so its tasks
 are not under M5's epic, and docs/14 §14.0 counts Done tasks under the **current** milestone's epic.
@@ -4654,7 +4654,7 @@ exist, not because it is ungated, and the *Gated on* column says which.
 | 7a | **Delete the three root `test/fixtures/` copies** | Nothing | Five seconds (§4.12) |
 | 8 | **Finish M1**: ~~`AddRackCommand` + New-rack dialog~~ (built); ~~keyboard deselect~~ (built) **but time the drill**; ~~print a sheet~~ (done 2026-07-27); the outline tree | Nothing | One exit clause and one goal clause, and the exit clause needs a **person with a stopwatch**, not code (§3.4) |
 | 9 | **M4, the device builder** | **M1: a hard block (roadmap §5), DISCHARGED 2026-07-28** | Its inputs were all present long before its gate opened: the arrow's named artifact (*"devices exist"*) is there, and clause 3's keyboard-only drill was never a device-builder input (§5.3). The gate is now clear on the criterion, which is the only thing §8.1 lets a gate depend on. It still sits below M2 here on ordering grounds, not blocking ones |
-| 10 | ~~**A perf harness** (`@Tags(['perf'])`, op-count-per-layer)~~, **BUILT** | Nothing | Was: *"M2's exit criterion demands a measurement; there is no instrument"*. `packages/rackmate_core/test/scene/schematic_perf_test.dart` is that instrument, tagged and unexcluded so it runs on every push (§5.1) |
+| 10 | ~~**A perf harness** (`@Tags(['perf'])`, op-count-per-layer)~~, **BUILT** | Nothing | Was: *"M2's exit criterion demands a measurement; there is no instrument"*. `packages/rackpal_core/test/scene/schematic_perf_test.dart` is that instrument, tagged and unexcluded so it runs on every push (§5.1) |
 | 11 | **Recruit beta integrators** | Nothing but calendar | `RISK-08` lead time (§5.8) |
 
 **Removed from this list by DR-006:** *"order the Windows OV/EV certificate now"*, which the
@@ -4710,7 +4710,7 @@ is the proof**: eighteen commits of out-of-order work that had to be salvaged or
 **The honest read of the graph today.** M0 is *nearly* done, six clauses discharged, two vacuous,
 one of which can be closed this week (§2.4). M1 is close but has three untested exit clauses and six
 unbuilt checklist items. Everything from M2 rightward has **zero** demonstrated exit clauses, **except a tested
-symbol renderer sitting in `rackmate_core` with no consumer** (§5.1) and M6's real but unclaimed
+symbol renderer sitting in `rackpal_core` with no consumer** (§5.1) and M6's real but unclaimed
 M1 slice (§5.5).
 
 ---
@@ -4719,7 +4719,7 @@ M1 slice (§5.5).
 
 Roadmap §6 states the cost deliberately, **44–67 weeks of implementation, 11–18 months to a shipped
 v1** (42–65 / 11–17 before M4's decomposition moved it, §5.3), on AC-017's ground that *"a detailed design set with no cost attached reliably stalls at
-40%"*. That number was written for a **commercial** v1. **DR-006 (canon §11.6) rules that RackMate
+40%"*. That number was written for a **commercial** v1. **DR-006 (canon §11.6) rules that RackPal
 is an internal tool with no commercial release planned**, which changes the calculus on several
 milestones and on none of the others. This section lays out what could move to v1.1 and what each
 deferral costs. **It does not make the call.**

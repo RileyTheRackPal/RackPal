@@ -1,4 +1,4 @@
-# Domain-Realism Review: RackMate
+# Domain-Realism Review: RackPal
 ### Reviewer: 20 years racking A/V. I have pulled the wire. I have been the guy in the attic at 9pm with your PDF.
 
 There is real domain knowledge in these documents. Whoever wrote them knows that HDBaseT into a switch port is the money bug, that IR emitter jacks and receiver jacks are not interchangeable, that a 24-port patch panel eats rear RU, that a 92 lb UPS kills a wall rack, that EIA-310 hole spacing is 0.25/0.875/1.50 within the U, and that the "Study/Office/Room 3" naming failure is what makes as-builts worthless. That is more than most of this category ships with.

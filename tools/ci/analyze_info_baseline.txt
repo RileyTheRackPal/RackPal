@@ -22,7 +22,7 @@
 #
 # MEASURED, not asserted: `dart analyze --format=machine .` at the repo root
 # on Flutter 3.44.4 / Dart 3.12.2, over all five workspace members. The count
-# includes apps/rackmate -- verified by planting one long line there and
+# includes apps/rackpal -- verified by planting one long line there and
 # watching this gate read 196 and exit 1, not by assuming the root sweep
 # reaches it.
 #

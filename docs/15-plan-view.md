@@ -1,6 +1,6 @@
 # The Plan View
 
-The Plan view is RackMate's answer to the question a schedule cannot answer: **where**. A pull sheet
+The Plan view is RackPal's answer to the question a schedule cannot answer: **where**. A pull sheet
 says that `W044` runs from `RK-1 / U14 / rear` to `Great Room / TV wall / WP-1` and gives the
 installer everything except the one thing they are standing in the building to find out, which is
 which wall. This document defines the floorplan underlay, the pin that puts a device on it, the
@@ -38,7 +38,7 @@ designed (§4).
 
 **It survives the handoff.** The current practice this replaces is coloured dots in a notes
 application. That artifact is not in the project file, is not in the sheet set, does not print with
-a title block, and cannot be revised. Everything else in RackMate travels in one `.rmpj` and exports
+a title block, and cannot be revised. Everything else in RackPal travels in one `.rmpj` and exports
 into one drawing set; a plan that does not is not worth building.
 
 **What it is explicitly not**, and these are limits, not omissions:
@@ -90,7 +90,7 @@ a `docs/13` entry against DR-009. That increment is bought: DR-029 ships it in v
 costed 2–3 weeks over raster-only, because architects send PDFs and a manual conversion step
 would sit on the ordinary path rather than the exceptional one. **It changes no stored format**, and
 that prediction holds exactly: a PDF is rasterised at IMPORT and the member written to the zip is
-still PNG or JPEG, so `PlanUnderlay.format` keeps its two values and `rackmate_core` still needs no
+still PNG or JPEG, so `PlanUnderlay.format` keeps its two values and `rackpal_core` still needs no
 decoder. What it buys is a `docs/13` entry against DR-009, which DR-029 accepts and names, and which
 is now **D15** and is costed with **D9** rather than twice.
 
@@ -126,7 +126,7 @@ final class PlanUnderlay {
 ```
 
 `pixelWidth`/`pixelHeight` are stored so the model can lay a plan out, hit-test a pin and size a
-sheet **without decoding the image**. That keeps `rackmate_core` free of an image decoder, which
+sheet **without decoding the image**. That keeps `rackpal_core` free of an image decoder, which
 matters because core is Flutter-free by gate and because AC-057 counted the decode surface as a real
 cost.
 
@@ -472,7 +472,7 @@ because renumbering M6→M10 would have cost more than the sequencing constraint
 legal is the reasoning that decided it.
 
 **Whether the tablet question changes the answer.** The practice this feature replaces happens in a
-notes application, plausibly on an iPad, plausibly while walking the building. RackMate is desktop;
+notes application, plausibly on an iPad, plausibly while walking the building. RackPal is desktop;
 mobile editing is v2 (roadmap §2.4) and v1 mobile is read-only on three surfaces (AC-056). A Plan
 view moves this work to a desk rather than to the site. That is a real limitation, it is recorded in
 the feasibility study §7, and it is a product question rather than a design one.

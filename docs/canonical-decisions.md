@@ -1,4 +1,4 @@
-# RackMate: Canonical Decision Record, Part 1
+# RackPal: Canonical Decision Record, Part 1
 
 **Status:** NORMATIVE. Supersedes all six `design-*.md` documents wherever they disagree with it.
 **Scope of Part 1:** resolved contradictions, accepted critiques, rejected critiques.
@@ -39,7 +39,7 @@ are rejected in §3 on that ground alone:
 
 1. Desktop-first; **mobile read-only in v1**; architecture must not preclude touch.
 2. **A device builder *plus* a seeded catalog of ~40–55 generic archetypes.**
-3. Local **single-file `.rackmate` projects (JSON)**; cloud-ready model, stable UUIDs,
+3. Local **single-file `.rackpal` projects (JSON)**; cloud-ready model, stable UUIDs,
    `schemaVersion`, no positional identity.
 4. Seven core requirements, all represented in v1: RU height, device builder with I/O,
    physical connections, colour-coding by cable type, schematic idiom, Structure device,
@@ -76,7 +76,7 @@ inexact and wrong that hundredths is exact: the EIA 1/32-in inter-panel clearanc
 integer. Only nanometres make every imperial fraction to 1/1000 in exact (1/32 in = 793 750 nm;
 1U = 44 450 000 nm). Readability of a number no human reads is not a consideration.
 `Len`, and the extension types `Mass`, `Money`, `Permille`, are defined **once** in
-`rackmate_core/units/` and every other document references that definition rather than
+`rackpal_core/units/` and every other document references that definition rather than
 restating it. Two unit tests are written before any other code: exact 1/32-in clearance, and
 zero accumulated error across a 45U stack.
 
@@ -120,7 +120,7 @@ eighths of a gu, additive, no migration.
 - **design-data-model.md §2.5:** "`typicalWatts × 3.41214`."
 - **design-ux-rack.md §5.1** and **design-ux-device-builder.md §1.4:** "`watts × 3.412`."
 
-**Ruling: one constant, `kBtuPerWattHour = 3.412142`, in `rackmate_core/units/thermal.dart`.**
+**Ruling: one constant, `kBtuPerWattHour = 3.412142`, in `rackpal_core/units/thermal.dart`.**
 Heat is **derived, never stored**; `TemplateBody.btuPerHourOverride` is retained for the rare
 manufacturer figure that disagrees with the arithmetic.
 
@@ -239,7 +239,7 @@ polyline. **Symbol placement is persisted** (it is user intent); wire geometry i
   "~15–40 ms cold."
 - **design-ux-schematic.md §2.6/§3.1:** "**Do not build incremental-reroute machinery in v1.**
   A full deterministic recompute is both cheaper than the invalidation bookkeeping and
-  perfectly stable." / "RackMate **never needs a general orthogonal router**."
+  perfectly stable." / "RackPal **never needs a general orthogonal router**."
 
 **Ruling: Sugiyama layering + interval-graph channel routing, full deterministic recompute.**
 `ObstacleField`, `RouteCache`, and the phrase "obstacle-aware" are deleted from
@@ -701,7 +701,7 @@ padding (`:n`), and filters (`|upper`, `|first n`, `|nz`), all of which the othe
 and none of which they define. Token names are **UPPER_SNAKE**. The three vocabularies merge;
 collisions resolve to the longer, unambiguous name (`{ROOM}` and `{ROOM_ABBR}`, not `{abbr}`).
 `{{` and `}}` are literal braces. `CollisionPolicy{suffixLetter | suffixNumber | error}` is
-project-wide. Lives in `rackmate_core/idformat/`; five call sites (device, port, link, drop
+project-wide. Lives in `rackpal_core/idformat/`; five call sites (device, port, link, drop
 field label, drop rack label) share it.
 
 ### CR-046 · `Location.code` vs `abbr`
@@ -888,7 +888,7 @@ passthrough template whose pairs are missing is a load warning, not an error.
 `ConnectorTypeDef.aliases: List<String>` and `SignalFamilyDef.aliases` hold `HDMI-A`, `hdbt`,
 `rj45`, `xlr`, `spdif` and friends; the Quick Add DSL resolves against them. This gives the DSL
 its ergonomics and the file format its namespacing and forward compatibility, and it is what
-makes `.rmdev → .rackmate` import well-defined. `ac-inlet` is re-authored as
+makes `.rmdev → .rackpal` import well-defined. `ac-inlet` is re-authored as
 `power.ac_120` + `role: inlet` throughout the catalog.
 
 ### CR-059 · Gender enum is ambiguous, and a shipped rule is broken by it
@@ -1204,7 +1204,7 @@ to stay integral in the file.
   with a worked argument, and explicitly: "**Runner-up considered and rejected: Inter** … and
   **Roboto / Roboto Mono**."
 - **design-architecture.md §12.3:** "`Inter-Regular`, `Inter-SemiBold`, `JetBrainsMono-Regular`
-  in `apps/rackmate/assets/fonts/`."
+  in `apps/rackpal/assets/fonts/`."
 - **design-architecture.md §9.4** then asserts goldens use families `RackBody`/`RackMono`, the
   pdf document's aliases with the pdf document's rejected fonts, and no `RackCond`.
 
@@ -1254,7 +1254,7 @@ print floor. No stroke width is ever emitted as 0.
 
 ### CR-083 · Package layout: four packages or one tree
 
-- **design-architecture.md §1.1/§2.2:** four packages; "`rackmate_export` and `rackmate_ui` are
+- **design-architecture.md §1.1/§2.2:** four packages; "`rackpal_export` and `rackpal_ui` are
   **siblings that cannot see each other**. That is deliberate: it is what guarantees the PDF
   path is isolate-safe."
 - **design-pdf-export.md §10:** a **single** `lib/` tree with `diagram/backends/{pdf_canvas,
@@ -1267,20 +1267,20 @@ print floor. No stroke width is ever emitted as 0.
 text-metric dependency by inversion rather than by contamination.**
 
 ```
-rackmate_core    pure Dart. no flutter, no dart:ui, NO pdf.
+rackpal_core    pure Dart. no flutter, no dart:ui, NO pdf.
                  model, commands, derived, routing, draw/ (incl. scene builders, hit_test,
                  BoundsCanvas), persistence. Declares abstract TextMeasurer + TextMetrics.
-rackmate_text    pure Dart. core + package:pdf (for PdfTtfFont ONLY).
+rackpal_text    pure Dart. core + package:pdf (for PdfTtfFont ONLY).
                  ~5 files. The single concrete TextMeasurer.
-rackmate_export  pure Dart. core + rackmate_text + package:pdf. PdfDiagramCanvas, sheets,
+rackpal_export  pure Dart. core + rackpal_text + package:pdf. PdfDiagramCanvas, sheets,
                  furniture, tables, document assembly. Isolate entry point.
-rackmate_ui      flutter. core + rackmate_text. FlutterDiagramCanvas, render objects, widgets.
-apps/rackmate    everything + plugins.
+rackpal_ui      flutter. core + rackpal_text. FlutterDiagramCanvas, render objects, widgets.
+apps/rackpal    everything + plugins.
 ```
 
-`rackmate_ui` depending on `rackmate_text` is harmless, `package:pdf` is pure Dart and
+`rackpal_ui` depending on `rackpal_text` is harmless, `package:pdf` is pure Dart and
 isolate-safe. The invariant that actually matters is preserved and mechanically enforced:
-**`rackmate_core`, where the scene builder lives, has no concrete font engine and no
+**`rackpal_core`, where the scene builder lives, has no concrete font engine and no
 `dart:ui`.** It receives a `TextMeasurer` by injection. `no_flutter_import_test` keeps banning
 `package:flutter/`, `dart:ui`, and `package:pdf/` in core. `design-pdf-export.md §10`'s folder
 convention is the arrangement `design-architecture.md §1.1` correctly predicts "will be violated
@@ -1289,13 +1289,13 @@ within a month by an `Offset` that 'was just easier'".
 ### CR-084 · Where hit-testing lives
 
 - **design-pdf-export.md §10:** `diagram/hit_test.dart`, in the core tree.
-- **design-architecture.md §1.2:** `rackmate_ui/canvas/input/hit_tester.dart`.
+- **design-architecture.md §1.2:** `rackpal_ui/canvas/input/hit_tester.dart`.
 
 **Ruling: both, split by concern.** The *geometric* hit test (`DiagramScene.hits`,
-point-to-segment distance, nearest-hit selection) lives in `rackmate_core/draw/hit_test.dart`,
+point-to-segment distance, nearest-hit selection) lives in `rackpal_core/draw/hit_test.dart`,
 pure, synchronously testable, and reusable by the read-only mobile shell. The *pointer plumbing*
 (one query per frame, spatial hash, cursor policy, hover throttle) lives in
-`rackmate_ui/canvas/input/`.
+`rackpal_ui/canvas/input/`.
 
 ### CR-085 · Y-axis flip in the PDF backend
 
@@ -1377,12 +1377,12 @@ there is no other way to get it. SVG is one file on top of an architecture that 
 Deleted: `Connection`, `RackProject`, `Device`, `RackDevice`, `PhysicalLink`, `LogicalSignal`,
 `CableType`, `StructureDrop`, `StructureBundle`, `PortGroupDef`.
 
-### CR-091 · `.rackmate` container: plain JSON or zip
+### CR-091 · `.rackpal` container: plain JSON or zip
 
 - **design-data-model.md §4.1:** "v1 is **plain, pretty-printed, key-sorted UTF-8 JSON** … v2:
   ZipCodec."
 - **design-architecture.md §7.1:** "**Not zipped**, not binary."
-- **design-ux-device-builder.md §3.1:** "`.rackmate` | A project | **Zip**: `project.json` +
+- **design-ux-device-builder.md §3.1:** "`.rackpal` | A project | **Zip**: `project.json` +
   embedded template snapshots + `assets/`."
 
 **Ruling: plain JSON, because device images are cut from v1.** The zip requirement exists only
@@ -1417,7 +1417,7 @@ gives migrations one obvious place to stand.
 `schemaVersion > kSchemaVersion && minReaderVersion <= kSchemaVersion` ⇒
 `Ok(doc, openReadOnly: true)` with unknown fields preserved for a subsequent Save As.
 Both snippets are deleted in favour of one implementation in
-`rackmate_core/persistence/migrations.dart`, specified in `docs/file-format.md`.
+`rackpal_core/persistence/migrations.dart`, specified in `docs/file-format.md`.
 
 ### CR-094 · `revision` monotonicity
 
@@ -1486,9 +1486,9 @@ display toggle exists and does not modify the document or mark it dirty.
 - **design-architecture.md §7.3/§7.5:** single file, `.bak` sibling, recovery snapshots in
   application support.
 
-**Ruling: deleted.** The confirmed product decision is a **local single-file `.rackmate`
+**Ruling: deleted.** The confirmed product decision is a **local single-file `.rackpal`
 project**. Pre-update snapshots go to
-`getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rackmate`, alongside recovery
+`getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rackpal`, alongside recovery
 snapshots, pruned to the last 10. The user's folder gains nothing but the file they asked for
 and one `.bak`.
 
@@ -1939,7 +1939,7 @@ document under round trip, which this does not touch.
 | CR-051 | `PortKey` + `renamedFrom` is the migration join | Template revisions rewire the project, or renames become rewires |
 | CR-073 | One sheet in v1; the exporter partitions by domain | The first PDF is gated behind the entire multi-sheet subsystem |
 | CR-081 | One `TextMeasurer`, `PdfFont.stringMetrics`, baseline-asserted parity | A PDF that is subtly and unfixably different from the preview |
-| CR-083 | Five packages; `rackmate_text` inverts the metrics dependency | Either core depends on `package:pdf`, or screen and print measure differently |
+| CR-083 | Five packages; `rackpal_text` inverts the metrics dependency | Either core depends on `package:pdf`, or screen and print measure differently |
 | CR-086 | Devices paint by replaying their scene fragment | D4's parity guarantee is void for the densest content in the deliverable |
 
 ---
@@ -1967,7 +1967,7 @@ Two framing notes:
 criterion: hundredths-mm cannot express the 1/32-in EIA clearance the design itself renders.
 
 **Change:** CR-001, CR-002, CR-003, CR-004. Plus: `Len`, `Mass`, `Money`, `Permille` and the
-schematic `Pt` are defined exactly once in `rackmate_core/units/`, and every design document is
+schematic `Pt` are defined exactly once in `rackpal_core/units/`, and every design document is
 edited to reference that definition rather than restate it. Two tests are written before any
 other code (exact 1/32-in clearance, and zero accumulated error across a 45U stack) because
 they are the two cases that discriminate between the candidate units.
@@ -2097,8 +2097,8 @@ types in one library means one library file importing everything and 70 parts th
 reasoned about independently.
 
 **Change:** `@internal` from `package:meta`, already a declared dependency, on entity setters,
-which produces an analyzer error for consumers outside `rackmate_core`, and
-`rackmate_ui`/`apps/rackmate` are different packages. Belt and braces: a grep test asserting no
+which produces an analyzer error for consumers outside `rackpal_core`, and
+`rackpal_ui`/`apps/rackpal` are different packages. Belt and braces: a grep test asserting no
 entity setter is called outside `src/commands/`. `design-architecture.md §2.3` rule 2 is
 rewritten.
 
@@ -2624,7 +2624,7 @@ Accepted, with the ruling for each:
 | **A7.3** the BOM is referenced by four documents and designed by none | Accepted: see AC-055. |
 | **A7.4** no page-count bound or preview | Accepted: the export dialog's dry-run already computes the sheet count; it now also warns above 40 sheets and hard-caps at `maxPages: 2000`. |
 | **A8.1** mobile read-only designed for 1 of 4 surfaces | Accepted with scoping: see AC-056. |
-| **A8.2** the template library has no implementation home in the architecture | Accepted: `rackmate_core/library/` gains the `.rmdev` codec, its own migration chain, and a library directory service; `apps/rackmate/lib/library/` gains import/export. Its absence was an oversight. |
+| **A8.2** the template library has no implementation home in the architecture | Accepted: `rackpal_core/library/` gains the `.rmdev` codec, its own migration chain, and a library directory service; `apps/rackpal/lib/library/` gains import/export. Its absence was an oversight. |
 | **A8.3** tombstones, `EntityMeta` and `FracIndex` are absent from the architecture | CR-095, CR-027. |
 
 ### AC-051 · §D15: ~60 rules with electrical consequences have no test strategy
@@ -2636,7 +2636,7 @@ entire wedge.
 
 **Change:** a **DRC fixture corpus**: for every shipped rule, at least one known-bad design that
 must produce exactly that finding and one known-good near-miss that must not. The corpus is a
-directory of `.rackmate` files and an assertion table. **No rule ships without its pair**, which
+directory of `.rackpal` files and an assertion table. **No rule ships without its pair**, which
 is also the gate that keeps the v1 catalogue at **27** (AC-040, corrected by §12.6(b)). A domain-expert review of the
 shipped rules and of the catalog data is a named milestone exit criterion.
 
@@ -2648,7 +2648,7 @@ shipped rules and of the catalog data is a named milestone exit criterion.
   `assets/catalog/sources.md`. A template whose safety-adjacent fields (`pinoutVariant`,
   `impedanceOhms`, `poeBudgetWatts`, `maxUnsupportedMass`) are uncited does not ship. This is
   the gate that sets the catalog count (CR-061), not a target number.
-- **Sample projects:** the four starter projects are authored as **real `.rackmate` files** and
+- **Sample projects:** the four starter projects are authored as **real `.rackpal` files** and
   do triple duty as the golden corpus, the performance fixtures, and the screenshot source. At
   least one exercises the Structure device and at least one exports cleanly to a full sheet set,
   as listed today, none demonstrates either differentiator.
@@ -3090,7 +3090,7 @@ no file-type registration; no trademark search; and "for a firm handing drawings
 integrator's logo is close to table stakes" in the PDF title block.
 
 **Accepted except for the last clause.** Icon, wordmark, window and document icons, file-type
-registration for `.rackmate` and `.rmdev`, and a trademark search before any certificate or
+registration for `.rackpal` and `.rmdev`, and a trademark search before any certificate or
 domain is bought are all accepted into the hardening milestone (AC-058), without file
 association, double-click-to-open fails and the recents list is half-useful, which is a real
 defect rather than a polish item.
@@ -3200,7 +3200,7 @@ Four rules govern every name below.
 |---|---|
 | **N1** | **One concept, one name, everywhere**: Dart identifier, JSON key, UI label, prose, commit message, and PDF column header all derive from the same entry in the glossary. Where the UI label must differ from the identifier (it often must, `Outlet` is "outlet location" to a user), both are listed and the mapping is fixed. |
 | **N2** | **A banned word is banned in prose too.** `Connection` is not a synonym for `Link` in a comment. The words in §4.7 do not appear in the repository except in a migration note that explains their removal. |
-| **N3** | **Types are `UpperCamelCase`; fields, JSON keys and Dart members are `lowerCamelCase`; registry IDs are `lower.dotted.snake`; format-engine tokens are `UPPER_SNAKE`; rule IDs are `AAA-000`.** No exceptions, including in `.rmdev` and `.rackmate`. |
+| **N3** | **Types are `UpperCamelCase`; fields, JSON keys and Dart members are `lowerCamelCase`; registry IDs are `lower.dotted.snake`; format-engine tokens are `UPPER_SNAKE`; rule IDs are `AAA-000`.** No exceptions, including in `.rmdev` and `.rackpal`. |
 | **N4** | **Units are in the name or in the type, never in a comment.** A field is `weightUg`, `depthNm`, `heightU`, `breakerAmps`, or it is typed `Mass`, `Len`, `Permille` and needs no suffix. A bare `weight` or `length` on a serialized field is a defect. |
 
 `docs/glossary.md` is generated from §4.1–§4.6 and ships **in the app** as a searchable panel
@@ -3215,7 +3215,7 @@ states whether the entity carries `EntityMeta` per CR-095.
 
 | Canonical type | UI label | What it is | Owner / key | Conflict unit |
 |---|---|---|---|---|
-| **`RackDocument`** | "project" | The in-memory mutable aggregate: flat UUID-keyed entity maps, mutated only through `Command`s. The thing `.rackmate` serializes. | root | ✅ |
+| **`RackDocument`** | "project" | The in-memory mutable aggregate: flat UUID-keyed entity maps, mutated only through `Command`s. The thing `.rackpal` serializes. | root | ✅ |
 | **`ProjectInfo`** | "project details" | Title-block metadata: client, site address, integrator, drawn/checked/approved by, drawing number. Field of `RackDocument`. | on document | — |
 | **`ProjectSettings`** | "project settings" | Persisted per-project preferences: display units, ID formats, defaults, rule overrides. Field of `RackDocument`. | on document | — |
 | **`Location`** | "location" | One node of the arbitrary-depth location tree (site ▸ building ▸ floor ▸ room ▸ zone ▸ outdoor). CR-047. | `parentId` self-ref | ✅ |
@@ -3385,7 +3385,7 @@ Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `si
 | Template snapshot key | `"$templateId@$version"` | CR-050 |
 | Format-engine token | `UPPER_SNAKE` | CR-045 |
 
-**The format engine** is one grammar, one registry, one parser, in `rackmate_core/idformat/`
+**The format engine** is one grammar, one registry, one parser, in `rackpal_core/idformat/`
 (CR-045). Five call sites share it: device, port, link, outlet field label, outlet rack label.
 Grammar: `{TOKEN}`, `{TOKEN:n}` zero-pad, `[...]` optional segment, `|upper` `|first n` `|nz`
 filters, `{{` / `}}` literal braces. Collisions resolve by
@@ -3409,15 +3409,15 @@ never touches a locked ID (CR-034).
 
 | Name | What it is |
 |---|---|
-| **`.rackmate`** | A project. **Plain, pretty-printed, key-sorted UTF-8 JSON** with a `document` wrapper. CR-091, CR-092. `DocumentCodec` sniffs `PK\x03\x04` from commit one so a v2 zip container is a non-event. |
-| **`.rmdev`** | A single device template. Plain JSON, same unit regime as `.rackmate`, `depthNm`, `weightUg`. CR-063. Has its own migration chain. AC-050/A8.2. |
-| **`.bak`** | The single sibling backup of a `.rackmate`. No `.history/` folder. CR-098. |
+| **`.rackpal`** | A project. **Plain, pretty-printed, key-sorted UTF-8 JSON** with a `document` wrapper. CR-091, CR-092. `DocumentCodec` sniffs `PK\x03\x04` from commit one so a v2 zip container is a non-event. |
+| **`.rmdev`** | A single device template. Plain JSON, same unit regime as `.rackpal`, `depthNm`, `weightUg`. CR-063. Has its own migration chain. AC-050/A8.2. |
+| **`.bak`** | The single sibling backup of a `.rackpal`. No `.history/` folder. CR-098. |
 | **`.rmlib`** | Library pack. **Cut from v1.** AC-042. |
-| `rackmate_core` | Pure Dart. No `package:flutter`, no `dart:ui`, **no `package:pdf`**. Model, commands, derived, routing, `draw/` (scene builders, `hit_test.dart`, `BoundsCanvas`), persistence, `units/`, `idformat/`, `library/`. Declares abstract `TextMeasurer` + `TextMetrics`. |
-| `rackmate_text` | Pure Dart. `rackmate_core` + `package:pdf` for `PdfTtfFont` only. ~5 files. **The single concrete `TextMeasurer`.** CR-083. |
-| `rackmate_export` | Pure Dart. `PdfDiagramCanvas`, sheets, furniture, tables, assembly. The isolate entry point. |
-| `rackmate_ui` | Flutter. `FlutterDiagramCanvas`, render objects, widgets, `canvas/input/`. |
-| `apps/rackmate` | The app. |
+| `rackpal_core` | Pure Dart. No `package:flutter`, no `dart:ui`, **no `package:pdf`**. Model, commands, derived, routing, `draw/` (scene builders, `hit_test.dart`, `BoundsCanvas`), persistence, `units/`, `idformat/`, `library/`. Declares abstract `TextMeasurer` + `TextMetrics`. |
+| `rackpal_text` | Pure Dart. `rackpal_core` + `package:pdf` for `PdfTtfFont` only. ~5 files. **The single concrete `TextMeasurer`.** CR-083. |
+| `rackpal_export` | Pure Dart. `PdfDiagramCanvas`, sheets, furniture, tables, assembly. The isolate entry point. |
+| `rackpal_ui` | Flutter. `FlutterDiagramCanvas`, render objects, widgets, `canvas/input/`. |
+| `apps/rackpal` | The app. |
 | `docs/glossary.md` | Generated from §4. Ships in-app. |
 | `docs/rules.md` | **The one rule catalogue.** A rule not in it does not exist. CR-021. |
 | `docs/visual-language.md` | Colour, dash, weight, glyph, LOD, and the dash-phase-on-arcs caveat. CR-079, AC-016/#17. |
@@ -3591,7 +3591,7 @@ final class EntityMeta {
 }
 ```
 
-Constants, defined once in `rackmate_core/units/`:
+Constants, defined once in `rackpal_core/units/`:
 `kRackUnit = Len(44_450_000)` · `kGridUnit = Len(2_500_000)` · `kPinPitch = 2 gu` ·
 `kBtuPerWattHour = 3.412142` · `kBankCollapseThreshold = 8` · `kMaxRackHeightU = 60`.
 Two tests are written **before any other code**: exact 1/32-in inter-panel clearance, and zero
@@ -4090,7 +4090,7 @@ corrected per §12.6(b) and §10.12(g), paid 2026-08-03.)*
 | Derived values | **Never serialized**: `portIds`, `Outlet.roughInStatus`, `templateUpdateAvailable`, `Link.dominantSignalFamily`, elevation X/Y, circuit membership. | CR-115, CR-006 |
 | Floats | **None** in any persisted model, including `.rmdev`. | I-1, CR-063 |
 | IDs | UUIDv7 for entities; `uuidv5(deviceId, portKey)` for template-derived ports. Normative examples use real UUIDs. | CR-116, AC-006 |
-| Snapshots | `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rackmate`, last 10. No `.history/` in the user's folder. | CR-098 |
+| Snapshots | `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rackpal`, last 10. No `.history/` in the user's folder. | CR-098 |
 | Crash reports | Recovery files are **never** auto-attached. An explicit, default-off checkbox reads *"This includes your client's name and site address."* | CR-096 |
 | Import security | Zip-slip protection, entry-count and uncompressed-size caps, JSON depth and size limits on every import path. No evaluated program arrives in any file. | AC-058/D8, AC-011 |
 
@@ -4099,7 +4099,7 @@ corrected per §12.6(b) and §10.12(g), paid 2026-08-03.)*
 ## 6. Canonical signal and cable type registry
 
 **This section is data that ships.** It is the authored content of
-`assets/catalog/registries.json`, embedded into every `.rackmate` as the subset the document
+`assets/catalog/registries.json`, embedded into every `.rackpal` as the subset the document
 references (CR-090's self-describing-file argument). It is not illustrative.
 
 ### 6.1 The three orthogonal axes, restated
@@ -4136,7 +4136,7 @@ verified their set through protanopia, deuteranopia and tritanopia simulation. A
 per cable type therefore does not produce a colour-coded drawing; it produces an unreadable one,
 and it fails hardest for the ~8% of male installers with a CVD who are the exact audience.
 
-So RackMate uses **four independent encoding channels**, and hue is never one of them alone:
+So RackPal uses **four independent encoding channels**, and hue is never one of them alone:
 
 | Channel | Encodes | Survives CVD | Survives greyscale | Survives photocopy/fax |
 |---|---|---|---|---|
@@ -4151,7 +4151,7 @@ fails, and it is mandatory, not decorative.
 #### 6.2.2 The honest greyscale caveat, and the rule it generates
 
 Several sources claim Okabe–Ito "has distinct luminance values so it works in greyscale."
-**Computing WCAG relative luminance shows that claim is false**, and RackMate does not repeat it.
+**Computing WCAG relative luminance shows that claim is false**, and RackPal does not repeat it.
 Two collision bands exist in the shipped palette:
 
 - **Sky Blue `#56B4E9` (L 0.4050) vs Orange `#E69F00` (L 0.4162)**: ΔL 0.0112. Indistinguishable
@@ -4716,7 +4716,7 @@ Grouped by subsystem. The **Why** column names the filter or the ruling that put
 | 1 diagram unit = 1 PDF point at the canvas boundary, `double`, converted in exactly one function | CR-007 |
 | UUIDv7 identity, tombstones, `EntityMeta`, flat maps, `FracIndex` ordering everywhere including `.rmdev` | CR-027, CR-095, G5. `critique-ux-simplicity.md`'s own do-NOT-cut list, accepted wholesale |
 | `revision` (dirty-tracking, non-monotonic) **and** `sequence` (strictly monotonic sync cursor) as two counters | CR-094, AC-004 |
-| Plain pretty JSON `.rackmate`, single file, `schemaVersion`, hand-written codecs, migration chain + golden corpus | Confirmed decision 3; architecture step 2 |
+| Plain pretty JSON `.rackpal`, single file, `schemaVersion`, hand-written codecs, migration chain + golden corpus | Confirmed decision 3; architecture step 2 |
 | **Unconnected ports are not materialised as document entities**; ports resolve by key-join from the template snapshot, with a per-device allocation watermark | AC-006. This is what makes the file-size budget real rather than 3–6× wrong |
 | `Command` / `Transaction` / `UndoStack` / `DocumentController` as the single mutation gate, with the round-trip property test and the epoch-mask coverage test | Architecture step 3; AC-014. The most expensive retrofit in the project |
 | `@internal` setters, not `part of` | AC-013 |
@@ -4834,7 +4834,7 @@ Grouped by subsystem. The **Why** column names the filter or the ruling that put
 | `docs/glossary.md` shipped in-app as a searchable panel; `[Why?]` wired to `rationale`; one error-message catalogue with one voice | AC-058 (D1) |
 | The eight missing empty states; the full file-layer error surface incl. "target PDF open in Acrobat" | AC-058 (D3, D4) |
 | Progress and cancel on **every** operation over ~500 ms | AC-058 (D14) |
-| Four starter projects authored as real `.rackmate` files, doing triple duty as goldens, perf fixtures, and screenshot source; at least one exercises Structure and one exports a full sheet set | AC-052 |
+| Four starter projects authored as real `.rackpal` files, doing triple duty as goldens, perf fixtures, and screenshot source; at least one exercises Structure and one exports a full sheet set | AC-052 |
 | SIL OFL 1.1 registered via `LicenseRegistry`; `showLicensePage` wired; licence model and EULA as named deliverables | AC-058 (D7) |
 | Windows code signing with certificate procurement started **two milestones early**; vendored pdfium; release pipeline with symbol archival | AC-058 (D10) |
 
@@ -4937,7 +4937,7 @@ reduction inside the schematic milestone from RJ-001's accepted half. It does no
 
 ## 8. The core loop
 
-RackMate is a **cable-schedule generator with a rack elevation and a schematic on the front of
+RackPal is a **cable-schedule generator with a rack elevation and a schematic on the front of
 it**. The product's reason to exist is the artifact that leaves the office, gets printed, gets
 carried into an attic at 7 pm, and tells an installer what to pull, where it goes, what to call
 it, and where to land it, without a phone call. Everything upstream of that artifact is data
@@ -4986,19 +4986,19 @@ deliverable; the drawing is the receipt; the rack is where the gear lives; the j
 Repo scaffolding plus the pure-Dart core. No UI beyond a window that opens.
 
 **Contents.** Monorepo with four packages (CR-083) and the mechanical dependency-rule enforcement
-test. `rackmate_core/units/`, `Len`, `Mass`, `Permille`, `Pt`, `Box`, `UnitFormatter`,
+test. `rackpal_core/units/`, `Len`, `Mass`, `Permille`, `Pt`, `Box`, `UnitFormatter`,
 `kBtuPerWattHour`. The full entity set from Part 1 as immutable Dart with `@internal` setters
 (AC-013). Hand-written JSON codecs both ways, `schemaVersion`, the migration harness, tombstones,
 `EntityMeta`, `FracIndex`, `revision`/`sequence`. `Command` / `Transaction` / `UndoStack` /
 `DocumentController`. Epoch counters. The `idformat` grammar, registry, and parser (CR-045). CI:
 analyze, test, goldens, format, the no-Flutter-import test, the epoch-mask coverage test.
 
-**Exit criterion.** `dart test` is green in `rackmate_core` with: the 1/32-inch clearance test and
+**Exit criterion.** `dart test` is green in `rackpal_core` with: the 1/32-inch clearance test and
 the 45U-accumulation test passing exactly (CR-001); a byte round-trip test `write(read(bytes)) ==
 bytes` on three fixtures (CR-117, AC-016 #24); the command round-trip property test
 (`apply; revert` leaves the JSON byte-identical, including `templates.keys`, AC-015) passing on
 1,000 generated command sequences; the epoch-mask coverage test passing for every command type;
-and one v0→v1 migration fixture in the golden corpus. `rackmate_core` has zero Flutter imports,
+and one v0→v1 migration fixture in the golden corpus. `rackpal_core` has zero Flutter imports,
 enforced by a test that fails the build.
 
 **Why it is not compressible into M1.** Six decisions, the unit base (CR-001), the wiring entity
@@ -5141,7 +5141,7 @@ in-app glossary. The error-message catalogue in one voice. The eight empty state
 file-layer error surface. Progress and cancel on every operation over 500 ms. Localisation
 plumbing verified end to end with a pseudo-locale.
 
-**Exit criterion.** A reviewer opens a `.rackmate` file on a tablet and reads the elevation, the
+**Exit criterion.** A reviewer opens a `.rackpal` file on a tablet and reads the elevation, the
 schedule, and the PDF; the NVDA matrix passes on the elevation, the schedule, and the connection-
 creation path; no keybinding is bound twice in the generated table; the pseudo-locale build shows
 no hard-coded English in the primary surfaces.
@@ -5233,7 +5233,7 @@ and everything below it is downstream of the answer.
 ### 10.1 ⚠ **Draw every wire, or net labels by default**: the fork
 
 **This is the most consequential open question in the project and it is not a rendering
-preference. It decides what RackMate is.**
+preference. It decides what RackPal is.**
 
 **The two products.**
 
@@ -5588,7 +5588,7 @@ touches it. Recommendations only.
 | c | Default rack height in the new-rack dialog | **ANSWERED 2026-08-03, and it supersedes the recommendation rather than confirming it: the starting racks become EDITABLE PRESETS the user tailors to their own inventory.** 42U remains the shipped default, so the recommendation's substance survives as a seed value; what changes is that the preset set stops being fixed. This is a **scope addition under §8.3** and is ruled as **DR-016**. `rack_presets.dart` already anticipates it in so many words, *"a future editable-presets UI has the same shape to hang off"*, and presets are deliberately **not persisted on `Rack`** (no `presetRef`), so a user-authored preset store is a new writable location and not a document-format change. Board #561 | M1 |
 | d | Whether the four starter projects are residential-only | Three residential, one small commercial: they double as the domain-coverage argument for 10.2 | M1 |
 | e | Telemetry at all, and if so opt-in or opt-out | **ANSWERED 2026-08-03: opt-in, local crash log only. Telemetry is POST-v1.** Confirms the recommendation. Accepted consequence: 10.4's miss-rate instrumentation is a manual user-interview exercise, not a dashboard | M8 |
-| f | Product name and branding investment | **ANSWERED 2026-08-03, and it OVERRULES the recommendation to defer.** The name is **RackMate**, settled. Branding is a Protogen mascot, **Riley the RackMate**: neutral warm white with greys, so the mascot never competes with the eight signal-domain hues. Three surfaces follow, and **they are scope, not styling**: an opt-in Clippy-style in-app assistant; a first-run onboarding flow; and user-customisable UI accent colours. RJ-017 rejected branding as a v1 *requirement* and is not reversed, this schedules the work, and where it lands is a sequencing call. Board #563, #564, #565 | M8 |
+| f | Product name and branding investment | **ANSWERED 2026-08-03, and it OVERRULES the recommendation to defer.** The name is **RackPal**, settled. Branding is a Protogen mascot, **Riley the RackPal**: neutral warm white with greys, so the mascot never competes with the eight signal-domain hues. Three surfaces follow, and **they are scope, not styling**: an opt-in Clippy-style in-app assistant; a first-run onboarding flow; and user-customisable UI accent colours. RJ-017 rejected branding as a v1 *requirement* and is not reversed, this schedules the work, and where it lands is a sequencing call. Board #563, #564, #565 | M8 |
 | g | Whether `docs/rules.md` is user-visible documentation or internal | **ANSWERED 2026-08-03: user-visible, in-app, linked from every finding.** Confirms the recommendation. **Note the file deliberately does not exist**: canon §5 IS the catalogue and CR-021 says so, so this is *publish that section*, not *write a new file*. And it is **27** rules, not the 22 this row inherited from AC-040's arithmetic slip. Feeds M5-F3's `[Why?]` viewer | M5 |
 
 ---
@@ -5612,7 +5612,7 @@ as a real release rather than as a foundation.
 ---
 ---
 
-# RackMate: Canonical Decision Record, Part 4. Amendments
+# RackPal: Canonical Decision Record, Part 4. Amendments
 
 **Status:** NORMATIVE. Amends Parts 1, 2 and 3.
 **Authority:** these are the **user's own decisions**, given directly. Five of them (DR-001…DR-005)
@@ -5684,7 +5684,7 @@ same way.
 > sheet.
 
 **What it settles.** §10.1, the single most consequential open question in the project. It
-decides what RackMate's schematic *is*.
+decides what RackPal's schematic *is*.
 
 **What it supersedes.** §10.1's **recommendation**, which was the opposite, "(A) draw every wire
 as the default, with (B) as an automatic degradation above a per-sheet threshold". The
@@ -5983,7 +5983,7 @@ labels is a normal, professional, forty-year-old idiom, not a compromise.
 
 ---
 
-### 11.6 DR-006 · RackMate is an internal tool: self-signed distribution
+### 11.6 DR-006 · RackPal is an internal tool: self-signed distribution
 
 > **RULING — (a) INTERNAL TOOL. NO COMMERCIAL RELEASE IS PLANNED.** RackMate is distributed inside
 > the organisation that builds it. Code signing for that distribution is **self-signed**: a
@@ -6126,8 +6126,8 @@ the publisher trusted rather than merely known.
 
 **11.6.4 The measured registry fact, recorded because it bounds a claim.**
 
-RackMate's own code **writes no registry key**. Beside that, and measured against the shipped
-binary: **the shell writes values under ComDlg32 that RackMate does not control**, at minimum
+RackPal's own code **writes no registry key**. Beside that, and measured against the shipped
+binary: **the shell writes values under ComDlg32 that RackPal does not control**, at minimum
 `LastVisitedPidlMRU` (this executable plus the last folder browsed) and `CIDSizeMRU` (this
 executable, written even when the user cancels the dialog), **measured examples and not an
 inventory**, and no supported option prevents them while the shell common dialog is the dialog.
@@ -6136,7 +6136,7 @@ shortcut, so **no project file name reaches the host machine** (docs/03 §10.1).
 
 This is recorded in Part 4 because the internal-distribution story rests on it: **any portable
 build's no-trace claim is a bound, not a closed list.** Stating it as a closed list has been wrong
-four times running, which is why `apps/rackmate/test/session/registry_claim_test.dart` fails if the
+four times running, which is why `apps/rackpal/test/session/registry_claim_test.dart` fails if the
 architecture document restates it as one. Any deployment note written for §11.6.2's
 distribution side **repeats the bound and does not enumerate keys**.
 
@@ -6150,7 +6150,7 @@ distribution side **repeats the bound and does not enumerate keys**.
   carries MOTW, SmartScreen behaves exactly as it would for an unsigned file.
 - It does **not** cut M7, M9, or any brief requirement. Nothing here touches confirmed product
   decision 4.
-- It does **not** settle MSIX versus a plain signed installer. **VERIFY:** the `.rackmate`
+- It does **not** settle MSIX versus a plain signed installer. **VERIFY:** the `.rackpal`
   file-association path differs between the two and drives the choice (docs/11 §11 already carries
   this).
 - **VERIFY:** Microsoft Trusted Signing eligibility before relying on the fallback being available
@@ -6168,7 +6168,7 @@ distribution side **repeats the bound and does not enumerate keys**.
 > schedules, and **not** deferred to v1.X.
 
 **What it settles.** Where the internal geometry of a wall plate is built, and therefore whether
-the `Outlet` editor is built once or twice. The question arose because RackMate models field
+the `Outlet` editor is built once or twice. The question arose because RackPal models field
 devices but cannot arrange them into low-voltage boxes for a wiring schedule, and a room-by-room
 visual guide of what should be where is the artefact an installer actually works from.
 
@@ -6592,7 +6592,7 @@ with D7 outstanding.
 
 **11.9.3 What this does NOT change.**
 
-- **DR-006 stands unaltered.** RackMate is an internal tool and Windows distribution remains
+- **DR-006 stands unaltered.** RackPal is an internal tool and Windows distribution remains
   self-signed with a timestamp, Microsoft Trusted Signing as the named fallback at M8. macOS
   notarisation is **additive**, and it was never in doubt: §12.9 already records that the macOS
   half of D10 is *"unaffected and still binding"*, it simply had no milestone to attach to.
@@ -6600,7 +6600,7 @@ with D7 outstanding.
 - **No M0–M6 decision is reopened.** Every Windows-only dependency taken so far is recorded in
   the register and cleared on its own schedule. Nothing already built is wrong.
 - **The milestone board is not re-stamped here.** `docs/12-milestone-board.md` is an audit pinned
-  to `0fa532d`; its M7 row reading *"Windows-only"* and its §5.6 note that `apps/rackmate` has no
+  to `0fa532d`; its M7 row reading *"Windows-only"* and its §5.6 note that `apps/rackpal` has no
   `macos/` directory are **statements of fact at that commit and remain true**. They are
   superseded as SCOPE by this ruling, not as observations. Re-stamping a pinned audit without
   re-verifying its other claims would be worse than leaving it dated.
@@ -6627,15 +6627,15 @@ own test, which is why `connectors: 0` everywhere too.
 That line says the full contents are "shipped as `assets/catalog/registries.json`". They are not,
 and they will not be.
 
-**`rackmate_core` imports no Flutter, so it cannot load an asset at all**: `rootBundle` is
+**`rackpal_core` imports no Flutter, so it cannot load an asset at all**: `rootBundle` is
 Flutter-only. A JSON master would have to be loaded by the app layer and injected through two
-packages, because `rackmate_export` drives core directly and may never import `rackmate_ui`. A
+packages, because `rackpal_export` drives core directly and may never import `rackpal_ui`. A
 seeded Dart catalog needs no seam, works in core's pure-Dart tests unchanged, and is what this
 repository already does four times: 48 templates (`buildSeedCatalog`), connector footprints,
 jacket-colour conventions, rack presets.
 
 The JSON form's one real advantage, editing the catalog without a rebuild, is an ANTI-FEATURE
-here. RackMate is an internal tool under DR-006 and the catalog is canon; a hand-edited registry
+here. RackPal is an internal tool under DR-006 and the catalog is canon; a hand-edited registry
 that disagrees with `docs/catalog/seed-devices.md` is the drift `palette_parity.py` was written to
 catch after it "shipped four times".
 
@@ -6652,7 +6652,7 @@ proves the CODE does.
 DOCUMENT CREATION: never computed at save.**
 
 `docs/02:834`'s "the subset a document references is embedded in the file, which is what makes a
-`.rackmate` self-describing" **stands and is implemented**.
+`.rackpal` self-describing" **stands and is implemented**.
 
 **IT MUST NOT BE A CODEC TRANSFORM, and the reason is CR-117.** If `write()` recomputed the
 referenced subset, then reading a document carrying an entry nothing references and writing it
@@ -6715,7 +6715,7 @@ run-length cliff, will be the thing that needs `maxRunLengthPassive`.
 **The three findings that forced it.** Each was verified by direct inspection, not inferred.
 
 1. **Nothing in the application ever materialises a `Port`.** The only `doc.ports[id] = Port(...)`
-   in the tree is `apps/rackmate/tool/starters/authoring.dart:463`, a **build tool**, not app
+   in the tree is `apps/rackpal/tool/starters/authoring.dart:463`, a **build tool**, not app
    code. `resolvePortSet` fills `portId` only where `doc.ports` already contains the derived id
    (`port_set_resolution.dart:121-123`), and `planAtomicConnect` skips any position where both
    `portId`s are null (`atomic_connect.dart:150`). **On a document built by placing devices from
@@ -7078,7 +7078,7 @@ and #112 (stereo pairs for de-embedded zone audio).
 ### 11.15 DR-015 · The `rm` extension family, and what a device archive is
 
 **The question.** The product's three user-visible file kinds were named in three different
-idioms, `.rackmate` for a project, `.rmdev` for a device template, `.rmlib` for a library pack,
+idioms, `.rackpal` for a project, `.rmdev` for a device template, `.rmlib` for a library pack,
 and only the first has ever existed. The owner chose one family: **`.rmpj` project, `.rmdx`
 device, `.rmda` device archive.**
 
@@ -7086,7 +7086,7 @@ device, `.rmda` device archive.**
 
 | Extension | Contents | Status |
 |---|---|---|
-| `.rmpj` | One project. Plain, pretty-printed, key-sorted UTF-8 JSON, `document` wrapper. **Renames `.rackmate`.** | Built (`dc22ddc`) |
+| `.rmpj` | One project. Plain, pretty-printed, key-sorted UTF-8 JSON, `document` wrapper. **Renames `.rackpal`.** | Built (`dc22ddc`) |
 | `.rmdx` | One device template. Plain JSON, same unit regime (CR-063), own migration chain. **Renames `.rmdev`.** | Spec only: nothing constructs one (docs/12 §5.3) |
 | `.rmda` | Many device templates in one file. **Renames `.rmlib` and un-cuts it.** | Not built, not scheduled: §11.15.4 |
 | `.bak` | The single sibling backup of a `.rmpj`. No `.history/` folder. | Unchanged (CR-098) |
@@ -7095,12 +7095,12 @@ device, `.rmda` device archive.**
 does not advance, and the migration chain is not involved. This is a rename, and calling it
 anything more would put a format change in the record that did not happen.
 
-**11.15.2 `.rackmate` is still opened, and still saved in place.** Not deprecated, not migrated
+**11.15.2 `.rackpal` is still opened, and still saved in place.** Not deprecated, not migrated
 on open, not renamed underneath the user. `kDocumentExtensions` lists both spellings; the path
 normaliser appends the first and treats every entry as already-correct. The consequence that
 forced this shape: `SessionController.save()` runs the ALREADY-OPEN path back through that
-normaliser, so a single-entry list would turn a team's `Smith.rackmate` into
-`Smith.rackmate.rmpj` on `Ctrl+S`, a second file, the first left holding older bytes and still
+normaliser, so a single-entry list would turn a team's `Smith.rackpal` into
+`Smith.rackpal.rmpj` on `Ctrl+S`, a second file, the first left holding older bytes and still
 in the recents list, and nothing looking wrong until they open the wrong one. **Save As and a
 never-saved document still reach for `.rmpj`, so the old spelling is accepted and never
 propagated.**
@@ -7158,7 +7158,7 @@ today. The subsystem is M4 work and is tracked on the board.
 
 **11.15.6 What this does not settle.** File-type REGISTRATION (double-click-to-open, the shell
 icon, the MSIX `FileTypeAssociation`) is not ruled here and does not exist for any extension,
-old or new (critique-completeness: *"No file-type registration for `.rackmate` / `.rmdev` /
+old or new (critique-completeness: *"No file-type registration for `.rackpal` / `.rmdev` /
 `.rmlib` on Windows/macOS"*). It is now cheaper to do, because there is one coherent family to
 register instead of three idioms, and it belongs with the MSIX epic where the manifest is.
 
@@ -7902,7 +7902,7 @@ exporter. M3's exit criterion nonetheless says a rough-in *"exports a Pull Sheet
 pathway with per-room footage subtotals and initial boxes"*. One of the two has to give.
 
 **11.26.2 The ruling.** M3 owes the **derivation**: the rows, the sort by room then pathway, and the
-per-room footage subtotals, as tested output of `rackmate_core`. M6 owes the **sheet**: the
+per-room footage subtotals, as tested output of `rackpal_core`. M6 owes the **sheet**: the
 `SheetRole`, the layout, the initial boxes and the page.
 
 **11.26.3 It amends an exit criterion, which is why it is a ruling and not a note.** §8.1 makes the
@@ -8110,7 +8110,7 @@ are at 18 % over white, and #589 carries it.
 **11.28.12 One cost that is smaller than it looks.** docs/15 predicted that PDF import *"changes no
 stored format"*, and the prediction holds exactly: a PDF is rasterised **at import** and the member
 written to the zip is still PNG or JPEG, so `PlanUnderlay.format` keeps its two values and
-`rackmate_core` still needs no image decoder. What is bought is an import path and a `docs/13`
+`rackpal_core` still needs no image decoder. What is bought is an import path and a `docs/13`
 entry, not a model change.
 
 ### 11.29 DR-030 · The integrator's logo ships in v1, in M6, without its opacity
@@ -8311,7 +8311,7 @@ request against a separate catalog repository.
 **11.32.1 The ruling, in seven clauses.**
 
 1. **A second repository holds the community library**, one `.rmdx` per device. It is **not**
-   `packages/rackmate_core/lib/src/catalog/`, which is Dart and stays Dart (§11.32.4).
+   `packages/rackpal_core/lib/src/catalog/`, which is Dart and stays Dart (§11.32.4).
 2. **The Device Builder gains a `Submit to community catalog` toolbar action**, opening a review
    sheet showing the exact JSON to be proposed, the citation, and the sign-in state, before anything
    leaves the machine.
@@ -8350,7 +8350,7 @@ to a public source tree is dead before the first contributor finds the button th
 exists in two forms. The ruling takes **authorization code with PKCE** rather than device flow, on
 GitHub's own preference: device flow has no redirect URI at all and is therefore usable to
 impersonate an app in a phishing attack, and it is documented for constrained environments such as
-CLIs and headless systems. RackMate is a windowed desktop application that can open a browser and
+CLIs and headless systems. RackPal is a windowed desktop application that can open a browser and
 listen on loopback, so it is not that environment and does not get that exemption. Sources:
 `docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps` and
 `.../best-practices-for-creating-an-oauth-app`.
@@ -8406,7 +8406,7 @@ to the pull request that introduced it by ordinary version control, which is whe
 the reviewer's questions and the contributor's answers already live. That is the shape AC-042 wanted
 when it deleted the in-file chain.
 
-**11.32.7 The precondition this ruling does not rule.** DR-006 rules RackMate an internal tool with
+**11.32.7 The precondition this ruling does not rule.** DR-006 rules RackPal an internal tool with
 no commercial release planned, and §10.8's answer names an update check and API-key publishing as the
 only contemplated network uses, neither in v1 scope. **A community with contributors is a public
 project**, and this feature is a third network use. The user's stated intent, recorded because the
@@ -8602,7 +8602,7 @@ and the four starters are checked rather than assumed: none types a conduit thro
 
 ---
 
-### 11.35 DR-036 · RackMate is a public GPLv3 project, the catalog is CC0, and nothing is priced
+### 11.35 DR-036 · RackPal is a public GPLv3 project, the catalog is CC0, and nothing is priced
 
 **Settled by the user on 2026-08-10.** This is the ruling DR-033 §11.32.7 declined to make and named
 as its precondition. It **reverses DR-006's first clause**, answers §10.3 **on its own terms** rather
@@ -8610,7 +8610,7 @@ than leaving it moot, and unblocks the v1.1 community catalog.
 
 **11.35.1 The ruling, in five clauses.**
 
-1. **RackMate is a public project.** DR-006's *"NO COMMERCIAL RELEASE IS PLANNED"* is reversed as a
+1. **RackPal is a public project.** DR-006's *"NO COMMERCIAL RELEASE IS PLANNED"* is reversed as a
    statement about **distribution**. Development happens in the open.
 2. **The application code is GPLv3-or-later.** All five packages and the app shell.
 3. **The community catalog is CC0 1.0**, a public domain dedication, and is **not** GPL
@@ -8652,14 +8652,14 @@ licence term. Requiring attribution as a *licence condition* would put that same
 into every embedded snapshot, which is why CC-BY was refused.
 
 **11.35.4 The output exception, because the seed has the same problem and CC0 does not reach it.**
-The seeded catalog is **Dart source inside `rackmate_core`** and is therefore GPLv3 as code. Copy-on-
+The seeded catalog is **Dart source inside `rackpal_core`** and is therefore GPLv3 as code. Copy-on-
 place embeds *seeded* snapshots into `.rmpj` files exactly as it embeds community ones, so fixing
 only the community catalog would leave the identical defect wearing the archetypes that ship in the
 binary.
 
 **So the licence carries an explicit output exception**, in the manner of the GCC runtime library
-exception and of Bison's: **a document produced by RackMate is the user's own work and is not a
-derivative of RackMate**, and that includes template snapshots embedded from the seeded catalog and
+exception and of Bison's: **a document produced by RackPal is the user's own work and is not a
+derivative of RackPal**, and that includes template snapshots embedded from the seeded catalog and
 every exported PDF sheet. **This is stated in `LICENSE` and in the README, not inferred**, because an
 exception nobody can find is not one. Without it, GPLv3 on a program whose whole purpose is to emit
 a client deliverable is a trap set for the people the product exists to serve.
@@ -8699,7 +8699,7 @@ exists to collect.
 code licence cannot be changed later without every contributor's consent. **Clause 2 is therefore
 close to irreversible in practice**, and is taken meaning it rather than as a default.
 
-**11.35.8 Neither licence grants the name.** *RackMate* and **Riley the RackMate** (§10.12(f)) are
+**11.35.8 Neither licence grants the name.** *RackPal* and **Riley the RackPal** (§10.12(f)) are
 trademarks and are not licensed by GPLv3 or by CC0. A fork may take the code and **may not take the
 name or the mascot**. Stated because §10.12(f) scheduled real branding work and a reader who assumes
 the code licence covers it has assumed wrong.
@@ -9062,7 +9062,7 @@ make the second kind:
 | **Nothing allocates a `rackLabel`.** | `allocateOutletRackLabel` has four callers and all four are in `drop_label_allocator_test.dart`. |
 | **Nothing binds a far end.** | `drop_build.dart:159` never passes `rackEnd`, so `home_run_commands.dart:224` writes `OpenEndpoint('not yet landed')` on every drop the product can create. Sixty of sixty. |
 | **`BindEndpoint` was never written.** | Zero `.dart` files. §2186 names it, `docs/01` §535 and `docs/02` §663 both cite it as though it exists. |
-| **`{FLOOR}` and `{SPACE}` have no editor.** | `floorNumber` and `spaceCode` appear in the whole of `packages/rackmate_ui/lib` and `apps/rackmate/lib` **exactly once**, in a `locations_panel.dart` comment saying they are deliberately unedited. |
+| **`{FLOOR}` and `{SPACE}` have no editor.** | `floorNumber` and `spaceCode` appear in the whole of `packages/rackpal_ui/lib` and `apps/rackpal/lib` **exactly once**, in a `locations_panel.dart` comment saying they are deliberately unedited. |
 | **`{PANEL}` has no source field at all.** | It is in `kIdFormatTokens` and in the shipped preset. Nothing in the model answers it. |
 
 **Three of the four tokens in the shipped TIA-606 preset were unreachable**, so
@@ -9073,7 +9073,7 @@ second drill run rather than the first.
 **11.39.2 The ruling, in four clauses.**
 
 1. **A landed far end is a `PortEndpoint` on a patch panel device.** `BindEndpoint` is built, in
-   `rackmate_core`, and it materialises the port inside `apply()` exactly as DR-011.1 rules for the
+   `rackpal_core`, and it materialises the port inside `apply()` exactly as DR-011.1 rules for the
    connect gesture. `derivePortId` is a pure UUIDv5 over `(deviceId, portKey)` (CR-116, AC-006), so
    the id is knowable before the pin exists and no panel needs pre-materialised ports.
 2. **The gesture is `@panel=` on the drop line.** `Media Room: 4x Cat6 @panel=PP-1` lands every drop
@@ -9486,7 +9486,7 @@ older reader skips it (CR-117).
 **11.43.7 A SENTENCE OF THIS RULING WAS FALSE AND THE GOLDENS CAUGHT IT WITHIN THE HOUR.** §11.43.6
 first read *"`registries.outletTemplates` is `{}` in every shipped starter and in every document ever
 written, so the seed change costs no existing file a byte"*. **All four starters carry all nine
-seeded templates**, because `apps/rackmate/tool/starters/authoring.dart` assigns
+seeded templates**, because `apps/rackpal/tool/starters/authoring.dart` assigns
 `buildSeedRegistries()` into each, and `starter_assets_test.dart` failed on all four the first time
 the suite ran. They are regenerated with the seed and the four golden files change.
 
@@ -10131,7 +10131,7 @@ three-way merge is a different problem.** Two designers who each add a device pr
 that **succeeds** and a document that may carry duplicate designators, colliding `FracIndex` orders,
 or an `UndoStack` that no longer describes the file.
 
-**So the ruling forbids the tempting half: RackMate performs no merge.** It detects that the file
+**So the ruling forbids the tempting half: RackPal performs no merge.** It detects that the file
 changed underneath it, refuses to overwrite silently, and offers a side-by-side. Merging is git's job
 and a person's, and an in-app three-way merge UI for this format is how a sync feature becomes a
 corruption feature.
@@ -10299,7 +10299,7 @@ editor now distinguishes both ends, and which DR-027 parks on M6.
 **11.54.1 THE TASK UNDERSTATED ITS OWN FINDING, AND THE CENSUS IS WHAT CORRECTED IT.** #679 is filed
 as *"the sheet and the editor now disagree about what `TERM` means"*, which is true and is the
 smaller half. The larger half: **`StructureOrigin.terminationRack` reaches no printed output
-anywhere.** Its only consumer in the tree is `structure_table.dart`'s own column; `rackmate_export`
+anywhere.** Its only consumer in the tree is `structure_table.dart`'s own column; `rackpal_export`
 contains not one reference to any schedule column, and the whole derived schedule layer names the
 field alone.
 
@@ -10368,7 +10368,7 @@ set carrying `header` and `widthPt` is presentation**, so `kTerminationScheduleC
 it lays out are **M6's under DR-027 §11.26**. The derivation is already done and was done before this
 was asked: both fields exist, both round-trip, and both are populated by the editor.
 
-**Nothing renders this sheet today.** `rackmate_export` has no schedule renderer at all, so there is
+**Nothing renders this sheet today.** `rackpal_export` has no schedule renderer at all, so there is
 no printed page to re-lay and no drift to fear in the meantime; the code keeps a twelve-column
 constant and a pointer to this ruling until M6 reaches it.
 
@@ -10561,7 +10561,7 @@ made. `ForkResolution.currentSourceVersion` is therefore null on `sourceUnknown`
 site, because that comparison is wrong in exactly this case.
 
 **11.57.5 Scope.** No scope change: CR-062 already names the badge and roadmap §2 already carries
-the device library. `ForkStatus`, `ForkResolution` and `ForkAudit` are `rackmate_core` only; **no
+the device library. `ForkStatus`, `ForkResolution` and `ForkAudit` are `rackpal_core` only; **no
 widget ships**, because nothing forks yet (Duplicate is M4-D `#175`) and no library holds one
 (M4-N). No migration and `kSchemaVersion` does not advance: `derivedFrom` is written only when
 present, so every document already on disk still satisfies CR-117. `builder/fork_status.dart`
@@ -11704,7 +11704,7 @@ and the half it names is the smaller one.
 
 **11.75.2 THE INVALIDATION MODEL IS THE EPOCH MODEL THAT ALREADY EXISTS.** `DocEpochs` carries six
 independent notifiers (`structure`, `wires`, `rack`, `meta`, `style`, `sheet`) and its own doc says
-they exist so `rackmate_ui` *"can subscribe to exactly the epochs one widget cares about instead of
+they exist so `rackpal_ui` *"can subscribe to exactly the epochs one widget cares about instead of
 rebuilding on every commit"*. Every command declares its `touches` mask, and `MoveEndpointCommand`,
 `ConnectPortsCommand` and `BindEndpointCommand` all declare `wires | meta`. **The schematic collapses
 all six into one `_sceneEpoch` and rebuilds everything.** The matrix this ruling asks for is
@@ -11850,7 +11850,7 @@ Behaviour is byte-identical wherever only v1 exists, which is every seeded id in
 project and every fixture, and that is the check that this is a widening rather than a change.
 
 **11.76.4 THE EQUIPMENT LIST IS A SHEET, AND THAT IS WHERE CLAUSE 2 IS CHECKED.** §5.3.8's second
-finding was that `buildEquipmentList` has exactly one caller in the tree, `rackmate_export`, so the
+finding was that `buildEquipmentList` has exactly one caller in the tree, `rackpal_export`, so the
 criterion's *"appears correctly in the equipment list"* could only be read through a PDF. **That is
 not a gap; it is the criterion's own reading.** `T6.30 EQUIPMENT LIST AND MATERIALS` is a sheet
 (docs/08 §2.2), the corpus promises no view of it anywhere, and M1's exit criterion already reads
@@ -11901,7 +11901,7 @@ one does not.
 
 The direction of the collision is the part worth stating. `docs/04` §8 records that Flutter
 dispatches key events **leaf to root** while `DefaultTextEditingShortcuts` is installed at the app
-root, so **RackMate's binding wins**: transpose does not eat `Change type…`, `Change type…` eats
+root, so **RackPal's binding wins**: transpose does not eat `Change type…`, `Change type…` eats
 transpose. On macOS, inside a builder cell, `Ctrl+T` stops transposing two characters.
 
 **Taken anyway, for two reasons and against one.** `docs/06` §4.6 specifies `Ctrl+T` and moving it is
@@ -12278,7 +12278,7 @@ enumerating: `a spec table is an illustration until censused`, applied to a doc 
 
 **The five are RS-232's own set, not an invention of this ruling**, which is what makes taking them
 a transcription in DR-057's sense rather than a judgement. **Whether `mark` and `space` appear on
-gear a RackMate user actually meets is a TRADE question and this ruling does not claim to answer
+gear a RackPal user actually meets is a TRADE question and this ruling does not claim to answer
 it**: `trade objections are questions, not findings` has overruled a confident workflow claim from
 this side of the keyboard four times, and this is not the fifth. The argument for including them is
 asymmetric cost and nothing else: **an unused enum value costs one line, while a missing one costs a
@@ -12825,8 +12825,8 @@ remedy here is a gate rather than a correction.
 | core (zero Flutter imports, gated) | `SimpleNotifier<T>`, a pure-Dart `ValueNotifier` in 34 lines; `DocEpochs` holds **seven** of them | `commands/simple_notifier.dart`, `commands/command.dart` |
 | core, mutation | `DocumentController.run` / `.transact`, the single gate, bumping the epochs and `changes` | `document_controller.dart` |
 | app, re-broadcast | `DocumentSession extends ChangeNotifier`, turning core's pure-Dart ticks into a Flutter `Listenable` | `session/document_session.dart` |
-| ui, ephemeral | `ChangeNotifier` controllers consumed by painters as plain `Listenable`s. **Nine at v0.4.63**, an open count and not a closed list: selection, viewport, drag preview, resize preview, compaction preview, status message, insertion caret, schematic reveal, shake | `packages/rackmate_ui/lib/src/canvas/` |
-| DI | **constructor injection of one `AppServices`**, built in `main` and passed to `RackMateApp` and then `AppShell`. **No `InheritedWidget` and no `InheritedNotifier` exist anywhere in the repository.** | `session/app_services.dart` |
+| ui, ephemeral | `ChangeNotifier` controllers consumed by painters as plain `Listenable`s. **Nine at v0.4.63**, an open count and not a closed list: selection, viewport, drag preview, resize preview, compaction preview, status message, insertion caret, schematic reveal, shake | `packages/rackpal_ui/lib/src/canvas/` |
+| DI | **constructor injection of one `AppServices`**, built in `main` and passed to `RackPalApp` and then `AppShell`. **No `InheritedWidget` and no `InheritedNotifier` exist anywhere in the repository.** | `session/app_services.dart` |
 
 **11.87.3 EACH OF RIVERPOD'S FOUR CLAIMED BENEFITS WAS ANSWERED BY SOMETHING ALREADY BUILT.** This
 is the reasoning, and it is stated so the question is not re-litigated by someone reading only the
@@ -12868,7 +12868,7 @@ directions**:
   `desktop_drop`, `logging`, `intl`, `flutter_localizations`, `integration_test`,
   `benchmark_harness`.
 - **Present in a pubspec, named in no row: two.** `screen_retriever ^0.2.0` (a direct app
-  dependency) and `fake_async ^1.3.3` (a `rackmate_ui` dev dependency).
+  dependency) and `fake_async ^1.3.3` (a `rackpal_ui` dev dependency).
 
 **`screen_retriever` IS THE ONE THAT SETTLES THE ARGUMENT FOR A GATE.** Its twenty-line pubspec
 justification **cites "§10.1's `window_manager` row"** by name. Somebody read a row out of the table,
@@ -12911,7 +12911,7 @@ against silent installation, and left for the milestone that owns them.
 M4 and M5 to break the run of business logic, and **before any of it entered the tree**.
 
 **NOT A §8.3 AMENDMENT.** **RJ-017** already accepted *"Icon, wordmark, window and document icons,
-file-type registration for `.rackmate` and `.rmdev`, and a trademark search before any certificate
+file-type registration for `.rackpal` and `.rmdev`, and a trademark search before any certificate
 or domain is bought"* into the hardening milestone under **AC-058/D9**. Canon §10.12(f) then named
 the mascot. Nothing enters scope here; what changes is that a scheduled item acquires a decision, a
 board home and an implementation.
@@ -12995,7 +12995,7 @@ the sense **CR-117** wants of anything that reaches a file.
 
 **11.88.7 THE RULE IS DROPPED BELOW A 20 px CAP, AND THAT NUMBER WAS MEASURED.** At a 13 pt cap the
 rule is under a third of a point and prints as a smudge, which on a sheet whose whole job is to be
-trusted reads as a printing defect rather than a design. `kRackMateLockupMinRuledCapPx` carries it,
+trusted reads as a printing defect rather than a design. `kRackPalLockupMinRuledCapPx` carries it,
 and the unruled lockup exists for below it.
 
 **11.88.8 EVERY GLYPH IN THIS FACE IS A SINGLE CONTOUR, AND THAT IS LOAD BEARING.** Nasalization's
@@ -13005,7 +13005,7 @@ decision anyone made, which is exactly why it is gated: a later addition that cl
 break it, and would break it **only in whichever backend picked the other rule**.
 
 **11.88.9 WHAT THIS DOES NOT RULE.** It does not settle the **application icon**: §10.12(f) already
-ruled that branding is **Riley the RackMate**, *"in neutral warm white and greys so it never
+ruled that branding is **Riley the RackPal**, *"in neutral warm white and greys so it never
 competes with the eight domain hues"*, and the user intends Riley for the icon once assets exist.
 The open work there is the size ladder, since a character face at 16 px is mud and what a taskbar
 actually shows is a reduced mark derived from the silhouette. It does not settle the **console
@@ -13172,7 +13172,7 @@ which remain owed.
 **11.89.9 BUILT, AND WHAT REMAINS UNBUILT INSIDE IT.** The palette is applied at `b2b12fb` (`#770`)
 and `RackMono` is bundled at `71b9bd1` (`#773`, Space Mono, chosen by the user).
 
-**THE PALETTE LIVES IN `rackmate_core`, NOT IN THE WIDGET LAYER, AND THE REASON IS DR-080
+**THE PALETTE LIVES IN `rackpal_core`, NOT IN THE WIDGET LAYER, AND THE REASON IS DR-080
 §11.79.4**: the product must not acquire a second definition of contrast. Defined as Flutter
 `Color` constants it could only be checked by a second implementation of relative luminance, which
 is the mistake CR-080's font drift and the `family_glyph` measurement each made in their own
@@ -13705,7 +13705,7 @@ not.
 
 ### 11.95 DR-096 · The product is RackPal, and the wordmark is the one thing this repository cannot re-cut
 
-**Settled by the user on 2026-08-26.** The name **RackMate** is withdrawn and the product is
+**Settled by the user on 2026-08-26.** The name **RackPal** is withdrawn and the product is
 **RackPal**. Both searches are the user's; both results are recorded below rather than assumed.
 
 **NOT A §8.3 AMENDMENT**, on DR-089's own reasoning (§11.88): §8.3 governs moving an item between
@@ -13717,7 +13717,7 @@ authorises would otherwise be a large untraceable diff.
 **11.95.1 THE SEARCH THAT FOUND THIS IS THE SEARCH RJ-017 SCHEDULED, AND IT RAN IN TIME.** RJ-017
 put *"a trademark search before any certificate or domain is bought"* into hardening under
 AC-058/D9, and DR-089 §11.88 restated it while shipping the wordmark. It ran. **A company producing
-homelab-focused hardware is using RackMate, and the user assesses the likelihood of a cease and
+homelab-focused hardware is using RackPal, and the user assesses the likelihood of a cease and
 desist as high.**
 
 Nothing had been bought and nothing had been signed when that came back. DR-006 had already made
@@ -13736,18 +13736,18 @@ WHOLE RISK.** Measured at `21b42fe` with `git grep`, so a reader can re-derive r
 
 | What | Measured | Command |
 |---|---|---|
-| `rackmate`, any case | 4,359 hits in 807 files | `git grep -Iic rackmate` |
-| `package:rackmate` | 2,109 lines in 608 files | `git grep -Ic "package:rackmate" -- '*.dart'` |
-| `.rackmate` literal | 209 hits in 59 files | `git grep -IFc -- .rackmate` |
-| Inside a blockquote | **30 lines in 12 files**, of which **24 in 11** are in swept files | `git grep -Iic "^ *>.*rackmate" -- '*.md'` |
+| `rackpal`, any case | 4,359 hits in 807 files | `git grep -Iic rackpal` |
+| `package:rackpal` | 2,109 lines in 608 files | `git grep -Ic "package:rackpal" -- '*.dart'` |
+| `.rackpal` literal | 209 hits in 59 files | `git grep -IFc -- .rackpal` |
+| Inside a blockquote | **30 lines in 12 files**, of which **24 in 11** are in swept files | `git grep -Iic "^ *>.*rackpal" -- '*.md'` |
 
 **THAT LAST ROW WAS WRONG TWICE BEFORE IT WAS RIGHT, AND BOTH ERRORS ARE KEPT HERE RATHER THAN
 CORRECTED AWAY**, because this ruling authorises a substitution at 4,359 sites and the reader needs
 to know how the counting failed rather than only what it settled at.
 
-**First it read 9.** `git grep -Ic "^> .*RackMate"` is case-sensitive, and eighteen occurrences are
-the LOWERCASE form inside quotations: `rackmate_core` in docs/03's dependency rule and docs/07 §385,
-`packages/rackmate_core/…` in docs/08 §386, `.rackmate` in docs/10 §173. A pattern written against
+**First it read 9.** `git grep -Ic "^> .*RackPal"` is case-sensitive, and eighteen occurrences are
+the LOWERCASE form inside quotations: `rackpal_core` in docs/03's dependency rule and docs/07 §385,
+`packages/rackpal_core/…` in docs/08 §386, `.rackpal` in docs/10 §173. A pattern written against
 the name as a reader says it cannot see the name as a machine spells it.
 
 **Then it read 27.** `^>` anchors the quote marker to column zero, and three lines in
@@ -13766,19 +13766,19 @@ Those twenty-four are the ones a `sed -i` gets wrong. **Canon quotes rulings, cr
 word for word, and the house style already protects that: the em-dash sweep left blockquotes alone
 "because canon quotes rulings and critiques word for word and editing a quotation falsifies the
 record."** The identical argument governs here and is stronger, because a name inside a quotation is
-load-bearing: docs/00 §30's *"RackMate is a cable-schedule generator…"*, canon §10's *"RackMate is a
+load-bearing: docs/00 §30's *"RackPal is a cable-schedule generator…"*, canon §10's *"RackPal is a
 local application"* and docs/12 §4372's DR-006 amendment are all records of **what was said at the
 time under the name in force at the time.**
 
 So the rule for the sweep is: **rename the PRODUCT, never the RECORD.** A blockquote, the M1
 implementation log (65 hits) and the `.okf` decision bundle (191, of which 95 are the decision
-files) are history, and history said RackMate. Everything else, code, identifiers, package names,
+files) are history, and history said RackPal. Everything else, code, identifiers, package names,
 paths, live prose, becomes RackPal.
 
 **AND A QUOTED PATH STAYS QUOTED, EVEN THOUGH THE SWEEP MAKES IT STALE.** The twenty-four split
 **15 lowercase to 9 cased, with no line carrying both**, so fifteen of them quote an identifier
 rather than a sentence. Leaving them means canon will hold
-blockquotes naming `rackmate_core` after no such package exists. That is correct and it is the
+blockquotes naming `rackpal_core` after no such package exists. That is correct and it is the
 lesser of the two errors: a quotation altered to stay accurate is no longer evidence of what was
 said, and this corpus turns on being able to tell those apart. The practice already exists and is
 docs/12 §5.2's, which keeps M3's exit criterion verbatim under a heading saying DR-027 amended it:
@@ -13789,9 +13789,9 @@ current path reads the sentence under the quote.
 in the corpus, and the split runs cleanly between them: `.rmpj` (451 hits), `.rmdev` (79) and
 `.rmlib` (31) are `rm`-prefixed and **do not spell the name**, so they carry over untouched and
 **CR-117's byte round-trip is not in play at all**: no fixture is rewritten, no golden regenerated,
-no migration written. `.rackmate` (209) does spell it and goes.
+no migration written. `.rackpal` (209) does spell it and goes.
 
-The `rm` stood for RackMate and now stands for nothing in particular. **Leave it.** Re-cutting the
+The `rm` stood for RackPal and now stands for nothing in particular. **Leave it.** Re-cutting the
 project extension to `rp` would invalidate every file a user already has, in exchange for two
 letters nobody reads, and DR-006's shared-file reality (§11.6) makes that a real cost rather than a
 notional one.
@@ -13809,12 +13809,12 @@ licence and handed over as paths.
 
 **This makes the wordmark an art-asset dependency with the longest lead time in the rename, and it
 is already blocking.** The `app_icon.ico`, the document icons and the window icon sit behind the
-same brief. Any of that work already in flight is RackMate-shaped and is now waste; whoever holds it
+same brief. Any of that work already in flight is RackPal-shaped and is now waste; whoever holds it
 should be told before they deliver, which is a message the user sends and not this repository.
 
 **11.95.5 THE OS IDENTITY STRINGS ARE FREE TODAY AND DEAR AFTER M8.** `Runner.rc` carries
-`CompanyName "com.rackmate"`, `InternalName "rackmate"`, `OriginalFilename "rackmate.exe"` and
-`ProductName "rackmate"`. Nothing is signed, nothing is installed, nothing is published, so these
+`CompanyName "com.rackpal"`, `InternalName "rackpal"`, `OriginalFilename "rackpal.exe"` and
+`ProductName "rackpal"`. Nothing is signed, nothing is installed, nothing is published, so these
 are four string edits. After M8 they are an identity a signature and an install base have been
 issued against. **They move in this sweep and not later.**
 
@@ -13840,13 +13840,13 @@ re-running the count above and getting nine; **`.rmpj` and `.rmdev` hit-counts u
 does.
 
 **11.95.8 WHAT THIS DOES NOT RULE.** It does not change the file format, the schema version or any
-extension but `.rackmate` (§11.95.3). It does not rename the Azure DevOps project, the repository or
+extension but `.rackpal` (§11.95.3). It does not rename the Azure DevOps project, the repository or
 the board's area path (§11.95.6). It does not buy a domain: RJ-017 sequences that after the search
 and the search is now clear, but a purchase is the user's act and its own decision. It does not
 settle the mascot, which is canon §10.12(f). It does not disturb DR-089, whose outlines-not-text
 ruling stands unchanged and is the reason §11.95.4 is the long pole rather than a find and replace.
 And it does not rule on what the withdrawn name is worth defending: no position is taken here on
-whether RackMate was ever infringing, only that the product will not be called it.
+whether RackPal was ever infringing, only that the product will not be called it.
 
 ---
 
@@ -14015,7 +14015,7 @@ pointer does not restate the new ruling; it names where the new ruling lives.
 | 9 | §9.11, "The honest total" | under the heading, above the milestone table | ``> **Superseded: see §12.7.** M2 is `M` (4–7 weeks); the plan totals **42–65 weeks, 11–17 months**. The "41–69" figure below is additionally an arithmetic error against this section's own table, whose final cumulative row reads 45–69. Lever 2 is withdrawn by DR-003.`` |
 | 10 | §10 preamble | after the first preamble paragraph | `> **Six of these thirteen are now ANSWERED — see §13.** 10.1 (DR-001), 10.2 (DR-002), 10.4 (DR-003), 10.6 (DR-005) and 10.7 (DR-004) are settled by the user's decisions in §11 and are **binding**, not open; 10.3 is **moot** under DR-006, which rules that no commercial release is planned. The text below is retained as the record of the argument, per the Part 4 preamble.` |
 | 11 | §10.13 | after the heading | `> **Retired — see §13.** All three questions this section prioritises (10.1, 10.2, 10.4) are answered by DR-001, DR-002 and DR-003. Do not sequence work from this section.` |
-| 12 | AC-058, the **D10** row | after the gap table | `> **The D10 row's procurement schedule is superseded — see §12.9 and §11.6.** RackMate is an internal tool; signing is self-signed with a timestamp, Microsoft Trusted Signing is the named fallback at M8, and no OV/EV certificate is procured at any milestone. The rest of D10 — macOS notarisation, vendored pdfium (CR-100), the release pipeline with symbol archival — is **unaffected and still binding**.` |
+| 12 | AC-058, the **D10** row | after the gap table | `> **The D10 row's procurement schedule is superseded — see §12.9 and §11.6.** RackPal is an internal tool; signing is self-signed with a timestamp, Microsoft Trusted Signing is the named fallback at M8, and no OV/EV certificate is procured at any milestone. The rest of D10 — macOS notarisation, vendored pdfium (CR-100), the release pipeline with symbol archival — is **unaffected and still binding**.` |
 | 13 | RJ-014, the certificate sentence | after the RJ-014 body | `> **The certificate half is superseded — see §12.9 and §11.6.** There is no OV/EV validation and no reputation build, so nothing here needs scheduling two milestones ahead. RJ-014's actual ruling — no in-app auto-update in v1, a signed installer plus a version-check ping — is **reaffirmed**, and the `.rmdev` migration-chain half (AC-050/A8.2) is untouched.` |
 | 14 | §7.2.8, the code-signing row | after the table | `> **The code-signing row is superseded — see §12.9 and §11.6.** Read it as: Windows code signing **self-signed with a timestamp server**, no certificate procured early, Microsoft Trusted Signing as the named fallback at M8. Vendored pdfium and the release pipeline with symbol archival are **unchanged**.` |
 | 15 | §9.7, M6 exit criterion | after the exit paragraph | `> **The last sentence is superseded — see §12.9 and §11.6.** "Windows OV/EV certificate procurement starts here" is **deleted**. Every other clause of M6's exit criterion stands exactly as written.` |
@@ -14209,7 +14209,7 @@ in. See §11.7.
 
 | Ruling | What it said | What now governs |
 |---|---|---|
-| **DR-006 §11.6**, the posture clause | *"(a) INTERNAL TOOL. NO COMMERCIAL RELEASE IS PLANNED.* RackMate is distributed inside the organisation that builds it." | **Superseded on posture and on distribution.** RackMate is a public project, developed in the open under GPLv3-or-later. **The rest of DR-006 stands**, including §11.6.1's finding that the two-milestone lead time was specific to OV/EV procurement. §11.35.1, §11.35.5. |
+| **DR-006 §11.6**, the posture clause | *"(a) INTERNAL TOOL. NO COMMERCIAL RELEASE IS PLANNED.* RackPal is distributed inside the organisation that builds it." | **Superseded on posture and on distribution.** RackPal is a public project, developed in the open under GPLv3-or-later. **The rest of DR-006 stands**, including §11.6.1's finding that the two-milestone lead time was specific to OV/EV procurement. §11.35.1, §11.35.5. |
 | **DR-006's signing answer** | Self-signed, with Trusted Signing as a fallback *"if external distribution is ever required"*. | **The fallback fires, exactly as it was written to.** Public distribution makes Microsoft Trusted Signing necessary at M8. **No milestone before M8 changes**, which is the promise DR-006 made when it named the fallback, and it holds. §11.35.5. |
 | **§10.3, pricing** | **MOOT under DR-006**, retained with the standing note that it reopens exactly as written if DR-006 is reversed. | **Reopened and ANSWERED on its own terms: nothing is priced.** No perpetual licence, no subscription, no free tier. **The watermark hazard the note preserved is answered by never building one**, DR-005 having made the whole sheet set a client deliverable. §11.35.6, and §13's row. |
 | **AC-058/D7**, the licence deliverable | Already shrunk once by DR-006 consequence 9, which deleted the commercial EULA and enforcement machinery. | **Shrinks a second time and stops being provisional.** The EULA and enforcement stay deleted permanently rather than pending a commercial decision that will not come. **It also grows by one**: GPLv3 itself must register via `LicenseRegistry` and be reachable from `showLicensePage`. §11.35.6. |
@@ -14219,9 +14219,9 @@ in. See §11.7.
 
 | Ruling | Status under DR-036 |
 |---|---|
-| **AC-041, copy-on-place** | **Unaffected, and the reason clauses 3 and the output exception exist.** A `.rmpj` stays self-contained. What changes is that the licence now says so out loud: a document RackMate produces is the user's own work, seeded snapshots included. §11.35.3, §11.35.4. |
+| **AC-041, copy-on-place** | **Unaffected, and the reason clauses 3 and the output exception exist.** A `.rmpj` stays self-contained. What changes is that the licence now says so out loud: a document RackPal produces is the user's own work, seeded snapshots included. §11.35.3, §11.35.4. |
 | **DR-005** | **Unaffected and load-bearing.** The sheet set being a client deliverable is exactly why a watermark could never have shipped, so the pricing model that would have needed one was never really available. §11.35.6. |
-| **§10.12(f), branding** | **Unaffected and explicitly not licensed.** *RackMate* and Riley the RackMate are trademarks; neither GPLv3 nor CC0 grants them. A fork takes the code and not the name. §11.35.8. |
+| **§10.12(f), branding** | **Unaffected and explicitly not licensed.** *RackPal* and Riley the RackPal are trademarks; neither GPLv3 nor CC0 grants them. A fork takes the code and not the name. §11.35.8. |
 | **RJ-014** | **Unaffected.** Going public does not add an in-app application updater. A signed installer plus a version check is still the whole story, and DR-034's catalog check is still data rather than code. |
 | **§10.8** | **Unaffected.** Its network-use enumeration was already amended by DR-033 and DR-034 (§12.14, §12.15); a licence adds no network use of its own. |
 
@@ -14411,7 +14411,7 @@ label onto two drops.
 
 | Ruling | What it said | What now governs |
 |---|---|---|
-| **ADR-011** (docs/10) | *"Riverpod, with one `ProviderScope` per open document"*, with `VERIFY:` the Riverpod 3 API surface before the provider layer is written. | **Superseded by DR-088 §11.87.** The provider layer was never written and Riverpod is in no `pubspec.yaml`. The state management is **constructor injection of one `AppServices`** plus `SimpleNotifier` in core and `ChangeNotifier` in `rackmate_ui`. **ADR-011's other clauses are untouched and still binding:** `DocumentController` as the single mutation gate, `@internal` entity setters (AC-013), the three-tier derived pipeline driven by epoch counters, and `lodLevel` in every scene-builder signature and cache key (AC-016 #13). Its rejection of `ChangeNotifier`-on-the-document also stands: the document is still not a `ChangeNotifier`. |
+| **ADR-011** (docs/10) | *"Riverpod, with one `ProviderScope` per open document"*, with `VERIFY:` the Riverpod 3 API surface before the provider layer is written. | **Superseded by DR-088 §11.87.** The provider layer was never written and Riverpod is in no `pubspec.yaml`. The state management is **constructor injection of one `AppServices`** plus `SimpleNotifier` in core and `ChangeNotifier` in `rackpal_ui`. **ADR-011's other clauses are untouched and still binding:** `DocumentController` as the single mutation gate, `@internal` entity setters (AC-013), the three-tier derived pipeline driven by epoch counters, and `lodLevel` in every scene-builder signature and cache key (AC-016 #13). Its rejection of `ChangeNotifier`-on-the-document also stands: the document is still not a `ChangeNotifier`. |
 | **CR-119**, `ProviderScope` clause | *"The per-document `ProviderScope` stays exactly as designed; it costs nothing now and makes tabs (v1.2) and multi-window mechanical rather than a rewrite."* | **Superseded by DR-088 §11.87.4.** There is no `ProviderScope`. **CR-119's actual ruling is unaffected and still binding**: v1 is single-document and single-window, and `Ctrl+N`/`Ctrl+O` prompt Save / Don't Save / Cancel and then replace. What changes is only the reason tabs stay cheap, which is now that **adding** a container to a tree passing one object is the mechanical direction. |
 | **RJ-013** | *"the per-document `ProviderScope` already makes tabs mechanical when they are designed."* | **Superseded by DR-088 §11.87.4**, on the CR-119 row's reasoning. **The rejection itself stands**: a tab strip with no design is not a feature, and multi-document tabs remain out of v1. |
 | **AC-016 #19** (§2.1 disposition table) | *"Verified before the provider layer is written; the `epochs.revision` adapter is hand-written (~15 lines, `Provider` + `ref.onDispose`). The legacy library is not imported."* | **Moot under DR-088 §11.87.1.** No adapter was written because no provider layer was. The finding's own subject, whether Riverpod 3 demoted `ChangeNotifierProvider`, is now about a package this project does not depend on. **The last sentence survives by construction**: the legacy library is not imported, because nothing is. |
@@ -14439,12 +14439,12 @@ reversed DR-006 and made it a live question again, exactly as its own row had wa
 |---|---|---|---|
 | **10.1** | Draw every wire, or net labels by default, the fork | **ANSWERED, DR-001** | **(B) Net labels by default.** Drawn wires on domain filter, `Alt`-hover or focus. Reverses the record's recommendation. §11.1. |
 | **10.2** | Residential CI or commercial AV, the primary customer | **ANSWERED, DR-002** | **(a) Residential-primary, commercial-capable.** Commercial capability present, never fronted. Confirms the recommendation. §11.2. |
-| **10.3** | Pricing and licensing model | **REOPENED, then ANSWERED 2026-08-10: DR-036** | **Nothing is priced.** No perpetual licence, no subscription, no free tier with a paid ceiling. **The row's own warning came true**: DR-036 reversed DR-006, §10.3 reopened exactly as written, and the watermark hazard it preserved is answered by never building one, since DR-005 makes the whole sheet set a client deliverable and an integrator cannot send a stamped drawing to a homeowner. The licensing half is answered too: **GPLv3-or-later** for the code, **CC0** for the community catalog, with an output exception putting every document RackMate produces outside both. §11.35. |
+| **10.3** | Pricing and licensing model | **REOPENED, then ANSWERED 2026-08-10: DR-036** | **Nothing is priced.** No perpetual licence, no subscription, no free tier with a paid ceiling. **The row's own warning came true**: DR-036 reversed DR-006, §10.3 reopened exactly as written, and the watermark hazard it preserved is answered by never building one, since DR-005 makes the whole sheet set a client deliverable and an integrator cannot send a stamped drawing to a homeowner. The licensing half is answered too: **GPLv3-or-later** for the code, **CC0** for the community catalog, with an output exception putting every document RackPal produces outside both. §11.35. |
 | **10.4** | Does the device builder have to be in v1 | **ANSWERED: DR-003** | **(a) Yes. M4 stays where it is.** Confirms the recommendation. §11.3. |
 | **10.5** | Metric or imperial default | **ANSWERED 2026-08-03** | **Imperial default, one obvious toggle.** Confirms the recommendation. The default is already in the code; the toggle is owed (#562). §10.5. |
 | **10.6** | Is the schematic a client deliverable or an internal tool | **ANSWERED, DR-005** | **(a) Client deliverable, invest in drafting polish.** Reverses the record's recommendation. Orthogonal to 10.1. §11.5. |
 | **10.7** | Multi-sheet timing | **ANSWERED: DR-004** | **(c) Never.** One `Sheet` plus domain filtering, permanently. The entity remains. §11.4. |
-| **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackMate is a local application.** Confirms the recommendation. The six cloud-ready properties are **retained in full** and option (c) is not taken. `docs/02` §8 is **ratified** as the conflict-unit and merge-story page the recommendation asked for, rather than commissioned. An update check and API-key publishing to project-management services are the only contemplated network uses and are **not v1 scope** (§8.3 applies to either). §10.8. **Amended by DR-033 and DR-034**: there is a third contemplated network use, the community catalog, in a write direction (submission) and a read direction (library fetch and update check). Both are likewise not v1 (§12.14, §12.15). |
+| **10.8** | Cloud-ready investment | **ANSWERED 2026-08-03** | **(a). Spend nothing further; RackPal is a local application.** Confirms the recommendation. The six cloud-ready properties are **retained in full** and option (c) is not taken. `docs/02` §8 is **ratified** as the conflict-unit and merge-story page the recommendation asked for, rather than commissioned. An update check and API-key publishing to project-management services are the only contemplated network uses and are **not v1 scope** (§8.3 applies to either). §10.8. **Amended by DR-033 and DR-034**: there is a third contemplated network use, the community catalog, in a write direction (submission) and a read direction (library fetch and update check). Both are likewise not v1 (§12.14, §12.15). |
 | **10.9** | Generic archetypes forever, or a real-SKU catalog | **ANSWERED 2026-08-03** | **Shipped catalog stays generic; user templates may carry real SKUs.** Archetypes must be editable (docs/06 §7.3's `Duplicate & edit`), and DR-015's `.rmda` is the sharing mechanism. AC-052/DR-002 bind the SEED only. `T6.30` stays an equipment list, not a BOM (AC-055). §10.9. **Its recommendation is discharged by DR-033**, which builds the curated community library as a second repository the app submits to. §10.9's stated tipping condition was whether users start swapping device files unprompted; the user settled it by deciding to support the swap rather than waiting to observe it. §11.32. |
 | **10.10** | macOS in v1 | **ANSWERED: DR-009** | **(b) Windows and macOS from v1.** Reverses the record's recommendation, which was explicitly *"not a ruling"* and rested on a desk survey that was never run. The register §10.10 demanded and never received is `docs/13-macos-debt-register.md`. §11.9. |
 | 10.11 | What the beta gate actually is | **DEFERRED 2026-08-03, with a trigger** | Held until M5 (Validation) lands and the UI is largely frozen, on the ground that the bar is easier to state against a product than against a plan. **It must be answered before the M6 recruiting ask (M6-J5)**, not before M9; you cannot ask three people to commit real jobs without saying what you will judge. |
@@ -14577,7 +14577,7 @@ a limb of `tools/pal1_check.py`, so this list is checked rather than asserted.
 A unit test enumerates every shipped `SignalFamilyDef`, computes its rendered triple, and checks
 **every cross-domain pair** against §14.1. It exists today as **`tools/pal1_check.py`**, runnable
 before any Dart exists (`python tools/pal1_check.py`, exit 0 clean, 1 on any violation), and is
-ported to `pal1_conformance_test.dart` in `rackmate_core` at M0, remaining the authority
+ported to `pal1_conformance_test.dart` in `rackpal_core` at M0, remaining the authority
 thereafter. It is a named acceptance criterion of the registry (§6.7) and of M2's exit. The
 within-domain exemption is expressed in the test as a domain-equality check, **not** as an
 allowlist of pairs, an allowlist is how a real collision gets waived.

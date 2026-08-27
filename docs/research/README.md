@@ -1,6 +1,6 @@
 # Working papers
 
-Raw source material behind the RackMate plan. These are the outputs of the research, design and
+Raw source material behind the RackPal plan. These are the outputs of the research, design and
 critique passes that produced [the plan documents](../), unedited in substance. They are kept in
 version control so the reasoning behind each decision stays auditable; you can trace any ruling in
 [10-decisions.md](../10-decisions.md) back to the material it came from.

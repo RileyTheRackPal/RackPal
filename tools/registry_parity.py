@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Dart-seed-vs-registry parity check for the RackMate signal palette.
+"""Dart-seed-vs-registry parity check for the RackPal signal palette.
 
 THE THIRD GATE IN A FAMILY OF THREE, and each proves something the other two
 cannot:
@@ -10,10 +10,10 @@ cannot:
 
 DR-010 section 11.10.1 makes the shipped registries a SEEDED DART CATALOG
 rather than the `assets/catalog/registries.json` that `registries.dart` claimed
-for a year and that never existed. That is the right call -- `rackmate_core`
+for a year and that never existed. That is the right call -- `rackpal_core`
 imports no Flutter and cannot load an asset at all -- but it means the 8 domain
 hues and the 55 (dash, weight) pairs are now hand-authored into Dart, which
-makes packages/rackmate_core/lib/src/catalog/seed_registries.dart A FOURTH COPY
+makes packages/rackpal_core/lib/src/catalog/seed_registries.dart A FOURTH COPY
 of data that already lives in tools/pal1_check.py, seed-devices.md sections
 4.3/4.4 and canon section 6.2.5.
 
@@ -50,9 +50,9 @@ import re
 import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SEED = os.path.join(ROOT, 'packages', 'rackmate_core', 'lib', 'src', 'catalog',
+SEED = os.path.join(ROOT, 'packages', 'rackpal_core', 'lib', 'src', 'catalog',
                     'seed_registries.dart')
-SEED_REL = 'packages/rackmate_core/lib/src/catalog/seed_registries.dart'
+SEED_REL = 'packages/rackpal_core/lib/src/catalog/seed_registries.dart'
 
 # --------------------------------------------------------------------- authority
 

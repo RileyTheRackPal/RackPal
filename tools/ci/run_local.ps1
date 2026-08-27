@@ -95,7 +95,7 @@ try {
     # The third of the family: pal1_check says the palette is legible,
     # palette_parity says the DOCS agree with it, and this says the DART
     # SEED does (DR-010 section 11.10.1). Added when the seeded registries
-    # made packages/rackmate_core/.../seed_registries.dart a fourth copy of
+    # made packages/rackpal_core/.../seed_registries.dart a fourth copy of
     # the same 8 hues and 55 dash/weight pairs.
     Invoke-Gate 'registry parity'     { python tools/registry_parity.py }
     # DR-090 section 11.89.8. The only gate here that reads a font BINARY,
@@ -110,11 +110,11 @@ try {
 
     if (-not $SkipTests) {
         $suites = @(
-            @{ Package = 'packages/rackmate_core';   Runner = 'dart';    Name = 'rackmate_core' },
-            @{ Package = 'packages/rackmate_text';   Runner = 'dart';    Name = 'rackmate_text' },
-            @{ Package = 'packages/rackmate_export'; Runner = 'dart';    Name = 'rackmate_export' },
-            @{ Package = 'packages/rackmate_ui';     Runner = 'flutter'; Name = 'rackmate_ui' },
-            @{ Package = 'apps/rackmate';            Runner = 'flutter'; Name = 'rackmate_app' }
+            @{ Package = 'packages/rackpal_core';   Runner = 'dart';    Name = 'rackpal_core' },
+            @{ Package = 'packages/rackpal_text';   Runner = 'dart';    Name = 'rackpal_text' },
+            @{ Package = 'packages/rackpal_export'; Runner = 'dart';    Name = 'rackpal_export' },
+            @{ Package = 'packages/rackpal_ui';     Runner = 'flutter'; Name = 'rackpal_ui' },
+            @{ Package = 'apps/rackpal';            Runner = 'flutter'; Name = 'rackpal_app' }
         )
         foreach ($suite in $suites) {
             Invoke-Gate "suite: $($suite.Name)" {
@@ -127,7 +127,7 @@ try {
 
     if (-not $SkipBuild) {
         Invoke-Gate 'flutter build windows --release' {
-            Push-Location (Join-Path $RepoRoot 'apps/rackmate')
+            Push-Location (Join-Path $RepoRoot 'apps/rackpal')
             try { flutter build windows --release } finally { Pop-Location }
         }
         Invoke-Gate 'windows release output' {

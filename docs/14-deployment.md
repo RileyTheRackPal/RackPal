@@ -35,12 +35,12 @@ it without a changelog lookup.
 commit; M2's completed work (#93, #13, #94, #95 and the #96 field-test items) is inside it. M3's
 first task lands as `v0.3.1`.
 
-**The number is written in six places and gated in one.** `apps/rackmate/pubspec.yaml`, the four
+**The number is written in six places and gated in one.** `apps/rackpal/pubspec.yaml`, the four
 library `pubspec.yaml`s, and `kAppVersion` in `app_services.dart`, which is the one that matters,
 because it is stamped into `RackDocument.appVersion` on every new document and into every recovery
 sidecar. A release that bumps the pubspec and forgets the constant writes the PREVIOUS version
 permanently into files the user keeps, and nothing about running the app looks wrong.
-`apps/rackmate/test/version_parity_test.dart` compares all six and asserts the leading `0`.
+`apps/rackpal/test/version_parity_test.dart` compares all six and asserts the leading `0`.
 
 ---
 
@@ -49,8 +49,8 @@ permanently into files the user keeps, and nothing about running the app looks w
 ```powershell
 pwsh -File tools/release/new_signing_cert.ps1 -Subject 'CN=<your publisher name>'
 pwsh -File tools/release/make_portable.ps1
-pwsh -File tools/release/sign_artifacts.ps1 -Path dist/RackMate-portable -Thumbprint <printed above>
-pwsh -File tools/release/verify_signatures.ps1 -Path dist/RackMate-portable -ExpectedSubject 'CN=<your publisher name>'
+pwsh -File tools/release/sign_artifacts.ps1 -Path dist/RackPal-portable -Thumbprint <printed above>
+pwsh -File tools/release/verify_signatures.ps1 -Path dist/RackPal-portable -ExpectedSubject 'CN=<your publisher name>'
 ```
 
 The certificate is minted **once** and reused; the other three run per release.
@@ -75,7 +75,7 @@ is this page.
 
 | Do | Do not |
 |---|---|
-| Copy to a **Local Intranet UNC share** (`\\server\share\RackMate`) and have people copy from there | Post a ZIP to any HTTP/HTTPS link |
+| Copy to a **Local Intranet UNC share** (`\\server\share\RackPal`) and have people copy from there | Post a ZIP to any HTTP/HTTPS link |
 | Push with **Intune** or **GPO** | Email the ZIP |
 | Hand over a USB stick physically | Put it in a web-based file share and send the URL |
 
@@ -87,7 +87,7 @@ extraction leaves every already-extracted binary marked.
 
 ## 14.3 The certificate has to reach the machines: into **both** stores
 
-The public `.cer` (`dist/rackmate-publisher.cer`, produced by `new_signing_cert.ps1`) goes to every
+The public `.cer` (`dist/rackpal-publisher.cer`, produced by `new_signing_cert.ps1`) goes to every
 target machine, ideally by Group Policy:
 
 | Store | What it does | Symptom when it is missing |
@@ -117,20 +117,20 @@ An "Unknown publisher" there is the early warning canon names as the replacement
 ## 14.4 What the folder contains, and what it writes
 
 ```
-RackMate\
-  rackmate.exe
+RackPal\
+  rackpal.exe
   flutter_windows.dll
   screen_retriever_windows_plugin.dll, window_manager_plugin.dll
   MSVCP140.dll, VCRUNTIME140.dll, VCRUNTIME140_1.dll   <- see below
   data\                <- SHIPPED. Replaced by every update.
   portable.txt         <- presence is the mode switch; contents are never read
-  RackMateData\        <- OURS. Created on first run. Never in the release.
+  RackPalData\        <- OURS. Created on first run. Never in the release.
 ```
 
 **Updating is "unzip the new version over the old folder".** That is safe by construction:
-`RackMateData` is a sibling of `data\` rather than inside it, deliberately, because a portable root
+`RackPalData` is a sibling of `data\` rather than inside it, deliberately, because a portable root
 under `data\` would be destroyed by exactly that update, including recovery snapshots holding work
-from a crash minutes earlier. `apps/rackmate/test/storage/data_root_test.dart` reads
+from a crash minutes earlier. `apps/rackpal/test/storage/data_root_test.dart` reads
 `windows/runner/main.cpp` and asserts the two names differ, so the collision cannot come back by
 editing either end alone.
 
@@ -146,15 +146,15 @@ and serviced by Windows Update.
 
 ### What running it leaves on the host machine
 
-**RackMate's own code writes no registry key**: no `Reg*` call, no registry package, nothing under
-`HKCU` or `HKLM` from any line we ship, and `apps/rackmate/test/session/registry_claim_test.dart`
+**RackPal's own code writes no registry key**: no `Reg*` call, no registry package, nothing under
+`HKCU` or `HKLM` from any line we ship, and `apps/rackpal/test/session/registry_claim_test.dart`
 derives that from the source rather than trusting this sentence.
 
-**Beyond that, the honest statement is a BOUND and not a list.** RackMate drives the file dialog
+**Beyond that, the honest statement is a BOUND and not a list.** RackPal drives the file dialog
 itself and sets `FOS_DONTADDTORECENT`, which, as measured against the shipped binary, keeps
 everything out of OpenSavePidlMRU and out of `%APPDATA%\Microsoft\Windows\Recent`, so **no project
 file name reaches the host**. The rest is not ours: the shell writes values under ComDlg32 that
-RackMate does not control (at minimum LastVisitedPidlMRU and CIDSizeMRU, **measured examples
+RackPal does not control (at minimum LastVisitedPidlMRU and CIDSizeMRU, **measured examples
 rather than an inventory**) and no supported option prevents them while the shell common dialog is
 the dialog.
 

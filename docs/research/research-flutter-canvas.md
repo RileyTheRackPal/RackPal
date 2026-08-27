@@ -1,4 +1,4 @@
-I'll research this thoroughly. Let me start by loading the web tools and running parallel searches.I'll research this thoroughly across all seven areas. Let me run parallel searches to build a current picture.Let me dig into the packages and specific technical areas.Two newer packages surfaced that weren't in the brief. Let me evaluate them.vyuh_node_flow looks strongest so far. Now the core rendering and hit-testing questions.Let me verify a load-bearing API claim and read the two most relevant deep-dive articles.Confirmed an important correction: Flutter has no public stroke-to-fill-path API. Let me nail down desktop input and spatial indexing.Flutter 3.41 is current and Impeller isn't yet default on Windows, important for a desktop-first app. Final round.# RackMate Canvas Architecture, Deep Technical Research
+I'll research this thoroughly. Let me start by loading the web tools and running parallel searches.I'll research this thoroughly across all seven areas. Let me run parallel searches to build a current picture.Let me dig into the packages and specific technical areas.Two newer packages surfaced that weren't in the brief. Let me evaluate them.vyuh_node_flow looks strongest so far. Now the core rendering and hit-testing questions.Let me verify a load-bearing API claim and read the two most relevant deep-dive articles.Confirmed an important correction: Flutter has no public stroke-to-fill-path API. Let me nail down desktop input and spatial indexing.Flutter 3.41 is current and Impeller isn't yet default on Windows, important for a desktop-first app. Final round.# RackPal Canvas Architecture, Deep Technical Research
 
 **Verified against:** Flutter 3.41 (stable, Feb 2026), Dart 3.12. Package data pulled from pub.dev July 2026.
 
@@ -105,7 +105,7 @@ Hard numbers, since you asked for them:
 | `TextPainter.layout` (short label, cold) | ~0.3–1 ms | [flutter#92173](https://github.com/flutter/flutter/issues/92173); line-breaking dominates |
 | `TextPainter.paint` (warm, laid out) | ~10–20 µs | just `canvas.drawParagraph` |
 
-Run the arithmetic for RackMate: 800 wires × ~4 µs ≈ **3.2 ms** of raster time. Your 60fps budget is 16.6 ms. That fits, but it's ~20% of the budget spent on wires alone, which is exactly why the caching in the next section matters, and why you should not treat 800 wires as free.
+Run the arithmetic for RackPal: 800 wires × ~4 µs ≈ **3.2 ms** of raster time. Your 60fps budget is 16.6 ms. That fits, but it's ~20% of the budget spent on wires alone, which is exactly why the caching in the next section matters, and why you should not treat 800 wires as free.
 
 The two things that will actually kill you:
 
@@ -474,7 +474,7 @@ class ScenePoint {
 }
 ```
 
-Rendering converts once at paint time: `sceneX = xTenthMm * 0.1 * pxPerMm`. Storing doubles for positions is the mistake that produces `173.99999999999997` in your `.rackmate` JSON, breaks equality checks, makes diffs noisy, and makes cloud sync conflict resolution miserable. Integers cost you nothing here and solve all of it, and given your `.rackmate` format is explicitly cloud-ready with change-tracking, this pays for itself immediately.
+Rendering converts once at paint time: `sceneX = xTenthMm * 0.1 * pxPerMm`. Storing doubles for positions is the mistake that produces `173.99999999999997` in your `.rackpal` JSON, breaks equality checks, makes diffs noisy, and makes cloud sync conflict resolution miserable. Integers cost you nothing here and solve all of it, and given your `.rackpal` format is explicitly cloud-ready with change-tracking, this pays for itself immediately.
 
 Rack constants worth naming: EIA-310 1U = 44.45 mm = **444 tenths-mm exactly**. 19" rail width = 482.6 mm = 4826. Both exact in integer tenths, no rounding anywhere in the vertical axis.
 
@@ -514,9 +514,9 @@ Notes on the two that deserve real consideration:
 
 ### Build, don't adopt: and here's the actual reason
 
-The version numbers tell the story: `0.27.3`, `0.5.0+1`, `1.0.0`. Every one of these is pre-1.0 or barely past it, single-maintainer, and moving. RackMate's canvas *is* the product, not a feature of it. Taking a hard dependency there means every roadmap item you have (rack-aware RU snapping, front/rear faces, the Structure device, cable-type colour semantics, PDF export geometry, wiring-schedule generation) requires either forking or upstream cooperation.
+The version numbers tell the story: `0.27.3`, `0.5.0+1`, `1.0.0`. Every one of these is pre-1.0 or barely past it, single-maintainer, and moving. RackPal's canvas *is* the product, not a feature of it. Taking a hard dependency there means every roadmap item you have (rack-aware RU snapping, front/rear faces, the Structure device, cable-type colour semantics, PDF export geometry, wiring-schedule generation) requires either forking or upstream cooperation.
 
-But the deeper mismatch is conceptual. **RackMate is not a node graph.** Node editors model *free-floating nodes in unconstrained 2D*. Your devices are constrained to integer RU slots in a fixed-width column, with a front/rear dimension that no node editor has any concept of. Your "nodes" don't move in x at all. Adopting a node-editor package means fighting its core layout assumption on every single feature, you'd spend more effort suppressing its behaviour than writing your own.
+But the deeper mismatch is conceptual. **RackPal is not a node graph.** Node editors model *free-floating nodes in unconstrained 2D*. Your devices are constrained to integer RU slots in a fixed-width column, with a front/rear dimension that no node editor has any concept of. Your "nodes" don't move in x at all. Adopting a node-editor package means fighting its core layout assumption on every single feature, you'd spend more effort suppressing its behaviour than writing your own.
 
 **What to do instead:** read `vyuh_node_flow`'s source (MIT; you can legitimately learn from and adapt it) for its port-connection validation model, its LOD thresholds, and its keyboard-shortcut taxonomy. Lift `fl_nodes`' shader-grid trick. Write your own ~2500-line canvas that knows what a rack unit is. For a developer with your background, that's a couple of weeks and you own the thing your product lives or dies by.
 
@@ -590,7 +590,7 @@ bool shouldRebuildSemantics(covariant WirePainter old) =>
 
 Override `shouldRebuildSemantics` explicitly rather than letting it [default to `shouldRepaint`](https://api.flutter.dev/flutter/rendering/CustomPainter/shouldRebuildSemantics.html), otherwise every pan rebuilds the entire semantics tree, which is expensive and pointless since panning doesn't change what anything *is*.
 
-Pragmatically: a wiring canvas is inherently visual, and the accessible surface that actually matters for RackMate is the **wiring schedule**: a real, navigable, screen-reader-friendly `DataTable` that you're building anyway for PDF export. Make that a first-class alternative view, not an afterthought. It's better accessibility than heroic canvas semantics, and it's free.
+Pragmatically: a wiring canvas is inherently visual, and the accessible surface that actually matters for RackPal is the **wiring schedule**: a real, navigable, screen-reader-friendly `DataTable` that you're building anyway for PDF export. Make that a first-class alternative view, not an afterthought. It's better accessibility than heroic canvas semantics, and it's free.
 
 ---
 
@@ -617,7 +617,7 @@ For PDF: the `pdf` package's `CustomPaint` widget takes a raw PDF graphics strea
 ### Build order
 
 1. `ViewportController` + wheel/trackpad input + a grid painter. Get pan/zoom feeling *right*; this is the foundation everything sits on and it's cheap to iterate on early.
-2. Integer unit model + `.rackmate` schema with `schemaVersion` + UUIDs.
+2. Integer unit model + `.rackpal` schema with `schemaVersion` + UUIDs.
 3. `RenderRackCanvas` hybrid with device widgets, RU snapping.
 4. Ports + typed connections + the snap cascade.
 5. Orthogonal wire router + `LayerCache` tiers.

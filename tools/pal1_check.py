@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""PAL-1 conformance check for the RackMate signal palette.
+"""PAL-1 conformance check for the RackPal signal palette.
 
 Reference implementation of the pairwise greyscale-legibility test that
 docs/catalog/seed-devices.md section 4.2 requires. It is written in Python so it can run
 before any Dart exists; it must be ported to `pal1_conformance_test.dart` in
-`rackmate_core` at M0 and kept as the authority thereafter.
+`rackpal_core` at M0 and kept as the authority thereafter.
 
 WHY THIS FILE EXISTS. PAL-1 was asserted "verified clear" three times against a palette
 that in fact contained fourteen collisions, including S/PDIF against RS-232 and the two

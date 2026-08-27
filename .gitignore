@@ -46,8 +46,8 @@ coverage/
 test/**/failures/
 
 # App artifacts
-*.rackmate.bak
-*.rackmate.autosave
+*.rackpal.bak
+*.rackpal.autosave
 
 # Release staging (tools/release/make_portable.ps1)
 dist/
