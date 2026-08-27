@@ -318,6 +318,33 @@ class _PortGridState extends State<PortGrid> {
     );
   }
 
+  /// `Paste…`: somebody else's spreadsheet, mapped column by column.
+  ///
+  /// **IT HANDS BACK COMMANDS, NOT GROUPS**, because an import is not a
+  /// list of archetype groups: every row is its own port and the mapping
+  /// a person corrected is what turns text into fields. So it joins
+  /// [_run] one level down from the generators.
+  Future<void> _pasteSheet() async {
+    await _run(
+      showPortImportDialog(
+        context: context,
+        body: widget.body,
+        registries: widget.registries,
+      ),
+    );
+  }
+
+  /// Runs whatever commands a dialog hands back, as ONE undo entry.
+  Future<void> _run(Future<List<Command<TemplateBody>>?> dialog) async {
+    final commands = await dialog;
+    if (commands == null || commands.isEmpty || !mounted) return;
+    widget.actions.transact(LabelKey.generateArchetype, (tx) {
+      for (final command in commands) {
+        tx.add(command);
+      }
+    });
+  }
+
   /// Runs whatever groups a generator dialog hands back, as ONE undo
   /// entry. Every archetype goes through here.
   Future<void> _generate(Future<List<ArchetypeGroup>?> dialog) async {
@@ -327,13 +354,11 @@ class _PortGridState extends State<PortGrid> {
     // dialog was open while nothing else could edit, but planning keys
     // off a snapshot taken before it opened is the class of bug the
     // batch allocator exists to prevent and it costs one line not to.
-    final commands = buildArchetype(widget.registries, widget.body, groups);
-    if (commands.isEmpty) return;
-    widget.actions.transact(LabelKey.generateArchetype, (tx) {
-      for (final command in commands) {
-        tx.add(command);
-      }
-    });
+    await _run(
+      Future<List<Command<TemplateBody>>>.value(
+        buildArchetype(widget.registries, widget.body, groups),
+      ),
+    );
   }
 
   void _deleteSelected() {
@@ -1235,6 +1260,7 @@ class _PortGridState extends State<PortGrid> {
         _ArchetypeBar(
           onMatrix: () => unawaited(_matrixArchetype()),
           onSwitch: () => unawaited(_switchArchetype()),
+          onPaste: () => unawaited(_pasteSheet()),
         ),
         const Divider(height: 1),
         _Toolbar(
@@ -1414,10 +1440,15 @@ const double kPortSelectGutter = 76;
 /// objection `_Toolbar` already records against a `Pair front to rear`
 /// that could do nothing on 46 of the 48 seeded templates.
 class _ArchetypeBar extends StatelessWidget {
-  const _ArchetypeBar({required this.onMatrix, required this.onSwitch});
+  const _ArchetypeBar({
+    required this.onMatrix,
+    required this.onSwitch,
+    required this.onPaste,
+  });
 
   final VoidCallback onMatrix;
   final VoidCallback onSwitch;
+  final VoidCallback onPaste;
 
   @override
   Widget build(BuildContext context) => Padding(
@@ -1437,6 +1468,16 @@ class _ArchetypeBar extends StatelessWidget {
           onPressed: onSwitch,
           icon: const Icon(Icons.lan_outlined, size: 18),
           label: const Text('Switch ports…'),
+        ),
+        const SizedBox(width: 8),
+        OutlinedButton.icon(
+          onPressed: onPaste,
+          icon: const Icon(Icons.table_view_outlined, size: 18),
+          // THE ELLIPSIS AGAIN, and §2's sketch spells this one `[Paste]`
+          // without one. The sketch is the illustration: this opens a
+          // dialog exactly as its two neighbours do, and a bare `Paste`
+          // beside them would promise something happening on the click.
+          label: const Text('Paste…'),
         ),
       ],
     ),

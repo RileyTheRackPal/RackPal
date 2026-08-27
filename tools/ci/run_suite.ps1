@@ -120,13 +120,14 @@ $ErrorActionPreference = 'Stop'
 # (M4-I1): core 3281 -> 3311, the 30 cases of `archetypes_test.dart`, and
 # ui 1176 -> 1190 for the 14 of `archetype_dialogs_test.dart`. RE-MEASURED
 # again at #221 (M4-I2): core 3311 -> 3331 for the 20 Switch cases, ui
-# 1190 -> 1201 for its 11. Which is the whole instruction above and is
-# cheap only while it stays a habit.
+# 1190 -> 1201 for its 11. And again at #222 (M4-I3): core 3331 -> 3358 for
+# `port_import_test.dart`'s 27, ui 1201 -> 1213 for its 12. Which is the
+# whole instruction above and is cheap only while it stays a habit.
 $SuiteFloors = @{
-    'rackmate_core'   = 3331
+    'rackmate_core'   = 3358
     'rackmate_text'   = 1
     'rackmate_export' = 189
-    'rackmate_ui'     = 1201
+    'rackmate_ui'     = 1213
     'rackmate_app'    = 841
 }
 

@@ -121,9 +121,10 @@ void main() {
     ) async {
       // A control wired to nothing is the defect `_Toolbar` already
       // records against a `Pair front to rear` that could do nothing.
-      // `Paste` is M4-I3 and has no button until it has a dialog.
+      // Every button on the bar opens a dialog that exists; a generator
+      // nobody has built has no button at all.
       await pump(tester);
-      expect(find.text('Paste'), findsNothing);
+      expect(find.text('Import from a device datasheet…'), findsNothing);
     });
 
     testWidgets('tapping it opens Matrix I/O', (tester) async {
@@ -435,6 +436,209 @@ void main() {
       expect(
         body.banks.map((b) => b.key).toSet(),
         hasLength(body.banks.length),
+      );
+    });
+  });
+
+  group('Paste from spreadsheet (M4-I3, #222)', () {
+    const sheet =
+        'Port\tConnector\tSignal\tGroup\n'
+        'HDMI IN 1\tHDMI\tHDMI 2.0 (18 Gbps)\tInputs\n'
+        'HDMI IN 2\tHDMI\tHDMI 2.0 (18 Gbps)\tInputs\n'
+        'LAN\tRJ45\tEthernet\tControl\n';
+
+    Future<void> openPaste(WidgetTester tester) async {
+      await tester.tap(find.widgetWithText(OutlinedButton, 'Paste…'));
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> paste(WidgetTester tester, String text) async {
+      await tester.enterText(find.byKey(kPasteTextField), text);
+      await tester.pumpAndSettle();
+    }
+
+    Future<void> import(WidgetTester tester) async {
+      await tester.tap(find.widgetWithText(FilledButton, kPasteImportLabel));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the third button is there and it opens the sheet', (
+      tester,
+    ) async {
+      await pump(tester);
+      expect(find.widgetWithText(OutlinedButton, 'Paste…'), findsOneWidget);
+      await openPaste(tester);
+      expect(find.text(kPasteDialogTitle), findsOneWidget);
+    });
+
+    testWidgets('Import is refused on an empty box', (tester) async {
+      await pump(tester);
+      await openPaste(tester);
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, kPasteImportLabel),
+            )
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('THE SHEET SHOWS EVERY HEADER AS THE PERSON TYPED IT', (
+      tester,
+    ) async {
+      await pump(tester);
+      await openPaste(tester);
+      await paste(tester, sheet);
+      for (final header in <String>['Port', 'Connector', 'Signal', 'Group']) {
+        expect(find.text(header), findsWidgets, reason: header);
+      }
+    });
+
+    testWidgets('the summary counts the ports and the banks', (tester) async {
+      await pump(tester);
+      await openPaste(tester);
+      await paste(tester, sheet);
+      expect(find.text('3 ports across 2 new banks'), findsOneWidget);
+    });
+
+    testWidgets('A COMMA SHEET IN TAB MODE SHOWS THE ENGINES OWN SENTENCE', (
+      tester,
+    ) async {
+      await pump(tester);
+      await openPaste(tester);
+      await paste(tester, 'Port,Signal\nLAN,Ethernet\n');
+      expect(
+        find.textContaining('separates its columns with commas'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<FilledButton>(
+              find.widgetWithText(FilledButton, kPasteImportLabel),
+            )
+            .onPressed,
+        isNull,
+      );
+    });
+
+    testWidgets('switching the separator reads the same text again', (
+      tester,
+    ) async {
+      await pump(tester);
+      await openPaste(tester);
+      await paste(tester, 'Port,Signal\nLAN,Ethernet\n');
+      await tester.tap(find.text(pasteDelimiterLabel(CsvDelimiter.tab)));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text(pasteDelimiterLabel(CsvDelimiter.comma)).last,
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('1 port across 1 new bank'), findsOneWidget);
+    });
+
+    testWidgets('IMPORTING CREATES THE PORTS, WHICH Ctrl+V REFUSES TO DO', (
+      tester,
+    ) async {
+      final h = await pump(tester);
+      await openPaste(tester);
+      await paste(tester, sheet);
+      await import(tester);
+
+      final body = await h.read(tester);
+      expect(body.ports, hasLength(3));
+      expect(body.ports.map((p) => p.label).toList(), <String>[
+        'HDMI IN 1',
+        'HDMI IN 2',
+        'LAN',
+      ]);
+      expect(body.banks.map((b) => b.label).toList(), <String>[
+        'Inputs',
+        'Control',
+      ]);
+    });
+
+    testWidgets('ONE Undo takes the whole import back', (tester) async {
+      final h = await pump(tester);
+      await openPaste(tester);
+      await paste(tester, sheet);
+      await import(tester);
+      await tester.tap(find.byTooltip('Undo'));
+      await tester.pumpAndSettle();
+      final body = await h.read(tester);
+      expect(body.ports, isEmpty);
+    });
+
+    testWidgets('Cancel writes nothing', (tester) async {
+      final h = await pump(tester);
+      await openPaste(tester);
+      await paste(tester, sheet);
+      await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+      await tester.pumpAndSettle();
+      expect((await h.read(tester)).ports, isEmpty);
+    });
+
+    testWidgets('an unmapped column is announced, not hidden', (tester) async {
+      await pump(tester);
+      await openPaste(tester);
+      await paste(tester, 'Port\tWire colour\nLAN\tblue\n');
+      expect(find.textContaining('1 column not imported'), findsOneWidget);
+      expect(find.text(kPasteNotImported), findsWidgets);
+    });
+
+    testWidgets('the summary is singular where it should be', (tester) async {
+      // `1 ports` is the defect M4-G shipped, and this readout has the
+      // same shape. Pinned as whole strings, off the function.
+      expect(
+        portImportSummary(
+          const PortImportPlan(
+            ports: 1,
+            banks: 1,
+            skippedRows: 1,
+            droppedColumns: 1,
+            unresolvedCells: 1,
+          ),
+        ),
+        '1 port across 1 new bank · 1 empty row skipped · '
+        '1 column not imported · 1 cell nothing could be made of',
+      );
+      expect(
+        portImportSummary(
+          const PortImportPlan(
+            ports: 12,
+            banks: 0,
+            skippedRows: 0,
+            droppedColumns: 0,
+            unresolvedCells: 0,
+          ),
+        ),
+        '12 ports',
+      );
+      expect(
+        portImportSummary(
+          const PortImportPlan(
+            ports: 2,
+            banks: 3,
+            skippedRows: 2,
+            droppedColumns: 2,
+            unresolvedCells: 2,
+          ),
+        ),
+        '2 ports across 3 new banks · 2 empty rows skipped · '
+        '2 columns not imported · 2 cells nothing could be made of',
+      );
+    });
+
+    testWidgets('the delimiter row says which option is the persons', (
+      tester,
+    ) async {
+      expect(
+        pasteDelimiterLabel(CsvDelimiter.tab),
+        'Tabs (from a spreadsheet)',
+      );
+      expect(
+        pasteDelimiterLabel(CsvDelimiter.comma),
+        'Commas (from a .csv file)',
       );
     });
   });

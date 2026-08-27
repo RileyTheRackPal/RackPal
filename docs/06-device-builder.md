@@ -185,7 +185,7 @@ Three buttons **directly below Quick Add** that emit whole topologies:
 
 - **Matrix I/O…**: *N* inputs × *M* outputs, a type per side, with checkboxes for the usual companions: mirrored outputs, per-output audio de-embed, per-output IR, control (LAN + RS-232 + IR IN), AC inlet. Emits 2–7 banks in one action.
 - **Switch ports…**: *N* access ports + *M* uplinks, PoE standard and per-port class, SFP form factor, management port **and console**, redundant PSU. Access link speed too, which this line does not mention and the seed does write.
-- **Paste from spreadsheet**: TSV/CSV with a column-mapping sheet, sharing the engine with the Structure CSV import.
+- **Paste…**: TSV/CSV with a column-mapping sheet, sharing the engine with the Structure CSV import. It **creates ports**, which §4.6's `Ctrl+V` refuses to do, and that is the difference between the two.
 
 > **Five clauses here were illustrations and DR-092 (§11.91) is the specification.** *(a)* **"above
 > Quick Add"** contradicts §2's own layout sketch, which draws the buttons under the bar, and the
@@ -205,6 +205,14 @@ Three buttons **directly below Quick Add** that emit whole topologies:
 > The generator also **writes `pinoutVariant`** on the IR ports it makes, `mono-tip-sleeve` for
 > emitters and `xantech-stereo` for the receiver. It chose the family, so it knows the pinout, and
 > §4.5's validation dot would otherwise mark all seventeen (AC-052). The DSL path cannot and does not.
+>
+> **`Paste…` declares its separator and DR-094 (§11.93) records why.** `readCsv` is comma-only and
+> refuses tabs rather than sniffing, so the dialog carries the user-visible choice that reader's own
+> comment asks for: *"Tabs (from a spreadsheet)"* or *"Commas (from a .csv file)"*. Its mapping
+> sheet's targets are the grid's columns **plus the bank**, because `PortColumnId` has no bank member
+> and a Group column is the commonest thing a real sheet carries. A column nobody maps is **dropped
+> and counted**, not preserved: AC-012 rules `TemplateBody` closed, so a `PortDef` has no `unknown`
+> map for it to live in, and a visible discard is not the silent one canon §4.2 forbids.
 >
 > **The Switch generator's specification is `catalog_network.dart`'s N01 and DR-093 (§11.92) records
 > why.** The sentence above is one line; the seeded 48-port switch is the device, and it settles four

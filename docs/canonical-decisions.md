@@ -13488,6 +13488,101 @@ registry field nobody has authored.
 
 ---
 
+### 11.93 DR-094 · The paste sheet declares its separator, and drops what a closed model cannot hold
+
+**Settled by the user on 2026-08-26** (`#222`, M4-I3). DR-092 §11.91.8 and DR-093 §11.92.7 both
+left this open by name.
+
+**11.93.1 THE ENGINE IS M3'S AND THE ONE THING IT NEEDED WAS A DECLARED DELIMITER.** `#222` says
+*"sharing the engine with the Structure CSV import, use it, do not fork it"*, and it is used: the
+quoting rules, the ragged-row handling, the limits, the refusals and `normaliseCsvHeader` are all
+`structure/csv_reader.dart`'s and `structure/csv_header_map.dart`'s.
+
+**But `readCsv` is comma-only and REFUSES a tab file rather than sniffing one**, and a spreadsheet
+puts tabs on the clipboard. Its own comment names the shape the fix had to take, verbatim:
+
+> If a semicolon dialect later has to be read, it is **a ruling and a user-visible choice, not a
+> counter**.
+
+`CsvDelimiter` is that choice. It is a parameter defaulting to comma, so every M3 caller is
+unchanged, and the paste dialog exposes it as a two-row dropdown reading *"Tabs (from a
+spreadsheet)"* and *"Commas (from a .csv file)"*: a person who has just copied cells does not know
+what separates them, and the parenthesis is what makes the control answerable. **No sniffing was
+added.** A comma sheet read in tab mode is still diagnosed by name, in the reader's own sentence.
+
+**11.93.2 AN UNMAPPED COLUMN IS DROPPED, WHICH LOOKS LIKE A DEPARTURE AND IS A CONSEQUENCE.**
+`csv_mapping.dart` refuses a "discard this column" option outright, because docs/07 §5.1 is
+unconditional that unmapped columns are *"preserved into the row's `unknown` map"*. **`PortDef` has
+no such map, and that is canon rather than an oversight**: AC-012 (§2) rules that
+
+> `TemplateBody` is app-defined and **closed**; there is no forward-compat argument, because unknown
+> *keys* are already handled by `EntityMeta.unknown`.
+
+A port inside a template body is not one of the document's entities and carries no `EntityMeta`. So
+a column nobody maps genuinely cannot be kept, and the choice is between dropping it silently and
+dropping it out loud.
+
+**IT IS DROPPED OUT LOUD.** The mapping sheet shows the column as `Not imported`, and the summary
+line counts it: *"12 ports across 2 new banks · 1 column not imported"*. The word is **not
+imported** rather than "ignored", because it is a loss. A visible discard is not the silent one
+canon §4.2 forbids.
+
+Giving `PortDef` an `unknown` map is a model change, a codec change, four regenerated starters and
+an argument against AC-012. It is a ruling somebody should raise the first time a shop actually
+needs it, and this is not that day.
+
+**11.93.3 THE BANK IS A TARGET AND NOT A COLUMN.** `PortColumnId` has no `bank` member: the grid
+bands by `PortDef.bankKey` and `Move to bank…` is the editing path (CR-055, a bank is
+presentation). A spreadsheet of ports very often has a Group column, and a paste that could not read
+one would land sixty-eight rows in `Not in a bank`. So the mapping sheet's target set is
+`PortImportTarget`, which is **the grid's columns plus the bank**, and a bank cell is matched or
+created by LABEL through `uniqueBankNameAmong`, the same function Quick Add and the archetypes use.
+
+**11.93.4 A PASTED CELL IS DATA AND NEVER A PATTERN.** A label column reading `HDMI {n}` means those
+seven characters. Running it through `parseLabelPattern` would silently expand it to `HDMI 1`, and
+the label grammar has **no escape for a literal brace** by design: roadmap §2 names generalising
+that grammar as this milestone's scope hazard, by name, and `label_pattern.dart`'s header repeats
+it. So `QuickAddBatch.add` takes literal labels beside the plan rather than through it.
+
+They travel with the plan rather than being written afterwards because `autoPortKey` derives a
+port's KEY from its label: a label arriving after construction leaves every pasted port keyed
+`port.<n>`.
+
+**11.93.5 ONE TARGET, ONE COLUMN.** Assigning a target releases whichever column held it. Two
+columns both feeding `LABEL` means the second silently wins and a person reading the sheet cannot
+see which; the earlier one falls back to `Not imported`, visibly.
+
+**11.93.6 WHAT THE PLAN COUNTS, AND THE DEFECT THAT SHAPED IT.** The summary reports ports, **new**
+banks, empty rows skipped, columns not imported, and cells nothing could be made of. Every clause is
+conditional and every one is singularised, because `1 ports` is what M4-G shipped under a dozen
+green `contains` assertions (docs/12 §5.3.6).
+
+**The first draft counted banks by looking for an explicit bank cell**, and a sheet with no bank
+column therefore previewed "0 banks" and then made one, because a row with no bank derives its name.
+The plan and the build now read the same `QuickAddPlan` per row, which is the only arrangement in
+which the two cannot disagree. A count computed one way and a template built another is precisely
+what a preview exists to prevent.
+
+**11.93.7 IT CREATES PORTS, WHICH `Ctrl+V` REFUSES TO.** `port_tsv.dart` states the rule for §4.6's
+clipboard paste and keeps it: ten values into the last three rows would invent seven ports, each
+needing a key nobody chose. **This is the opposite feature and creating is the point of it**: a
+sheet of forty-eight rows is forty-eight ports that do not exist yet, and the mapping step is where
+the person says what they are. The two share `parsePortCell` and nothing else, so `RJ45` and
+`Ethernet` mean the same thing on both paths.
+
+The type collision between them was a compiler error rather than a subtle one, which is the good
+kind: this file's plan is `PortImportPlan` and §4.6's stays `PortPastePlan`.
+
+**11.93.8 WHAT THIS DOES NOT RULE.** It does not add a semicolon dialect, which would be a third
+`CsvDelimiter` value and its own decision. It does not give `PortDef` an `unknown` map (§11.93.2).
+It does not touch M3's Structure import, whose default is still comma and whose behaviour is
+unchanged. And it does not make the import idempotent the way `csv_import_plan.dart`'s Structure
+re-import is: **every import creates**, because a template has no `fieldLabel` to dedup on and
+CR-051's key join is a migration record rather than a match key. Re-pasting the same sheet doubles
+the ports, and `Ctrl+Z` is one keystroke away.
+
+---
+
 
 ## 12. Superseded rulings
 

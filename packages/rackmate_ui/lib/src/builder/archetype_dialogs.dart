@@ -1,4 +1,5 @@
-// THE ARCHETYPE GENERATOR DIALOGS (M4-I, docs/06 §4.3, DR-092 §11.91).
+// THE ARCHETYPE GENERATOR DIALOGS (M4-I, docs/06 §4.3, DR-092 §11.91,
+// DR-093 §11.92). Matrix I/O, Switch ports and Paste from spreadsheet.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // MODAL, WHERE QUICK ADD IS NOT, AND THE DIFFERENCE IS THE GESTURE
@@ -737,6 +738,7 @@ class _Choice<T> extends StatelessWidget {
     required this.values,
     required this.name,
     required this.onChanged,
+    super.key,
   });
 
   final T value;
@@ -761,3 +763,306 @@ class _Choice<T> extends StatelessWidget {
     },
   );
 }
+
+// ─── Paste from spreadsheet ──────────────────────────────────────────
+
+/// The dialog's title, and what a test finds it by.
+const String kPasteDialogTitle = 'Paste from spreadsheet';
+
+/// The box a person pastes into.
+const ValueKey<String> kPasteTextField = ValueKey<String>('paste.text');
+
+/// The commit button. It says what it does, unlike `Generate`: this one
+/// creates ports out of somebody else's data.
+const String kPasteImportLabel = 'Import';
+
+/// Said while the box is empty.
+const String kPasteEmptyNote =
+    'Copy a block of cells in your spreadsheet, including its header row, '
+    'and paste it here.';
+
+/// Said when nothing is mapped, because an import would then create a
+/// row of blank ports.
+const String kPasteNothingMappedNote =
+    'No column is mapped yet. Point at least one at a port field below.';
+
+/// Shows `Paste…` and returns the commands to run, or null.
+///
+/// **COMMANDS AND NOT GROUPS**, unlike the two generators. An import is
+/// not a list of archetype groups: every row is its own port, and the
+/// mapping the person corrected is what turns text into fields. It hands
+/// back what the grid should run so the mapping never leaves this file.
+Future<List<Command<TemplateBody>>?> showPortImportDialog({
+  required BuildContext context,
+  required TemplateBody body,
+  required Registries registries,
+}) => showDialog<List<Command<TemplateBody>>>(
+  context: context,
+  builder: (context) => _PasteDialog(body: body, registries: registries),
+);
+
+class _PasteDialog extends StatefulWidget {
+  const _PasteDialog({required this.body, required this.registries});
+
+  final TemplateBody body;
+  final Registries registries;
+
+  @override
+  State<_PasteDialog> createState() => _PasteDialogState();
+}
+
+class _PasteDialogState extends State<_PasteDialog> {
+  final TextEditingController _text = TextEditingController();
+
+  /// TAB BY DEFAULT, because that is what a spreadsheet puts on the
+  /// clipboard. `readCsv` refuses to sniff and its own comment says the
+  /// alternative has to be "a user-visible choice"; this is the control
+  /// that choice lives in.
+  CsvDelimiter _delimiter = CsvDelimiter.tab;
+
+  PortImportMapping? _mapping;
+  CsvReadRefused? _refusal;
+  List<List<String>> _rows = const [];
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  /// Re-reads the box. **THE MAPPING IS DISCARDED WHEN THE HEADERS
+  /// CHANGE AND KEPT WHEN THEY DO NOT**, so switching the delimiter or
+  /// fixing a typo in row nine does not throw away corrections a person
+  /// made in the sheet below.
+  void _read() {
+    final read = readCsv(_text.text, delimiter: _delimiter);
+    setState(() {
+      switch (read) {
+        case CsvReadRefused():
+          _refusal = read;
+          _mapping = null;
+          _rows = const [];
+        case CsvReadOk(:final table):
+          _refusal = null;
+          _rows = [for (final row in table.rows) row.cells];
+          final keep = _mapping;
+          _mapping = keep != null && _sameHeaders(keep.headers, table.headers)
+              ? keep
+              : PortImportMapping.guess(table.headers);
+      }
+    });
+  }
+
+  static bool _sameHeaders(List<String> a, List<String> b) =>
+      a.length == b.length &&
+      List.generate(a.length, (i) => a[i] == b[i]).every((x) => x);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final mapping = _mapping;
+    final plan = mapping == null
+        ? null
+        : planPortImport(
+            registries: widget.registries,
+            body: widget.body,
+            mapping: mapping,
+            rows: _rows,
+          );
+    final canImport =
+        mapping != null && !mapping.isEmpty && (plan?.ports ?? 0) > 0;
+
+    return AlertDialog(
+      title: const Text(kPasteDialogTitle),
+      content: SizedBox(
+        width: 640,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              children: [
+                const Text('Separated by'),
+                const SizedBox(width: 8),
+                SizedBox(
+                  width: 200,
+                  child: _Choice<CsvDelimiter>(
+                    value: _delimiter,
+                    values: CsvDelimiter.values,
+                    name: pasteDelimiterLabel,
+                    onChanged: (v) {
+                      _delimiter = v;
+                      _read();
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              key: kPasteTextField,
+              controller: _text,
+              minLines: 4,
+              maxLines: 6,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                hintText: kPasteEmptyNote,
+              ),
+              onChanged: (_) => _read(),
+            ),
+            const SizedBox(height: 12),
+            if (_refusal case final CsvReadRefused refused)
+              Text(
+                // THE ENGINE'S OWN SENTENCE, verbatim. `CsvReadRefused`
+                // carries a message "already written for a human" so the
+                // reason a sheet was refused is stated in one place.
+                refused.message,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.error,
+                ),
+              )
+            else if (mapping != null) ...[
+              Flexible(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (var i = 0; i < mapping.headers.length; i++)
+                        _MappingRow(
+                          index: i,
+                          header: mapping.headers[i],
+                          target: mapping.assignments[i],
+                          onPick: (target) => setState(
+                            () => _mapping = mapping.withAssignment(i, target),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                mapping.isEmpty
+                    ? kPasteNothingMappedNote
+                    : portImportSummary(plan!),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: mapping.isEmpty
+                      ? theme.colorScheme.onSurfaceVariant
+                      : theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: canImport
+              ? () => Navigator.of(context).pop(
+                  buildPortImport(
+                    registries: widget.registries,
+                    body: widget.body,
+                    mapping: mapping,
+                    rows: _rows,
+                  ),
+                )
+              : null,
+          child: const Text(kPasteImportLabel),
+        ),
+      ],
+    );
+  }
+}
+
+/// `Tabs (from a spreadsheet)`.
+///
+/// The parenthesis is the whole reason the control is discoverable: a
+/// person who has just copied cells out of Excel does not know or care
+/// what separates them, and this row tells them which option is theirs.
+String pasteDelimiterLabel(CsvDelimiter delimiter) => switch (delimiter) {
+  CsvDelimiter.tab => 'Tabs (from a spreadsheet)',
+  CsvDelimiter.comma => 'Commas (from a .csv file)',
+};
+
+/// `12 ports across 2 banks · 1 column not imported`.
+///
+/// **EVERY CLAUSE IS CONDITIONAL AND EVERY ONE IS SINGULARISED.** A
+/// summary that always prints five numbers trains a person to read none
+/// of them, and `1 ports` is the defect M4-G shipped under a dozen green
+/// `contains` assertions.
+String portImportSummary(PortImportPlan plan) {
+  final parts = <String>[
+    if (plan.ports == 1) '1 port' else '${plan.ports} ports',
+    if (plan.banks == 1)
+      'across 1 new bank'
+    else if (plan.banks > 1)
+      'across ${plan.banks} new banks',
+  ];
+  final notes = <String>[
+    if (plan.skippedRows == 1)
+      '1 empty row skipped'
+    else if (plan.skippedRows > 1)
+      '${plan.skippedRows} empty rows skipped',
+    // NOT IMPORTED, NOT "IGNORED". `PortDef` has no `unknown` map to keep
+    // a column in, so this is a loss and the word has to say so.
+    if (plan.droppedColumns == 1)
+      '1 column not imported'
+    else if (plan.droppedColumns > 1)
+      '${plan.droppedColumns} columns not imported',
+    if (plan.unresolvedCells == 1)
+      '1 cell nothing could be made of'
+    else if (plan.unresolvedCells > 1)
+      '${plan.unresolvedCells} cells nothing could be made of',
+  ];
+  return [parts.join(' '), ...notes].join(' · ');
+}
+
+/// One row of the column-mapping sheet: a header and where it goes.
+class _MappingRow extends StatelessWidget {
+  const _MappingRow({
+    required this.index,
+    required this.header,
+    required this.target,
+    required this.onPick,
+  });
+
+  final int index;
+  final String header;
+  final PortImportTarget? target;
+  final ValueChanged<PortImportTarget?> onPick;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 3),
+    child: Row(
+      children: [
+        SizedBox(
+          width: 220,
+          child: Text(
+            // AS TYPED. `CsvTable.headers` keeps the original spelling
+            // precisely so this row shows a person their own sheet.
+            header.isEmpty ? '(no header)' : header,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _Choice<PortImportTarget?>(
+            key: ValueKey<String>('paste.target.$index'),
+            value: target,
+            values: <PortImportTarget?>[null, ...PortImportTarget.all],
+            name: (t) => t == null ? kPasteNotImported : t.header,
+            onChanged: onPick,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+/// What the dropdown calls a column going nowhere.
+const String kPasteNotImported = 'Not imported';

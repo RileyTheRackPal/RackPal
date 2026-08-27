@@ -799,9 +799,23 @@ final class QuickAddBatch {
   /// `SetPortFieldCommand`s keeps one command per port and keeps `revert`
   /// symmetrical: `AddPortCommand` holds the port it added, so undo takes
   /// the decorated object out and redo puts the same one back.
+  /// [labels] overrides the pattern expansion with LITERAL text, one
+  /// entry per port.
+  ///
+  /// **A PASTED CELL IS DATA, NOT A PATTERN** (M4-I3, `#222`). A sheet
+  /// whose label column reads `HDMI {n}` means those characters, and
+  /// running it through `parseLabelPattern` would silently expand it to
+  /// `HDMI 1`. The label grammar has no escape for a literal brace and it
+  /// is not getting one: roadmap §2 names generalising that grammar as
+  /// this milestone's scope hazard, by name.
+  ///
+  /// Passed here rather than written by [decorate] because `autoPortKey`
+  /// derives the port's KEY from its label, and a label arriving after
+  /// construction would leave every pasted port keyed `port.<n>`.
   List<Command<TemplateBody>> add(
     QuickAddPlan plan, {
     void Function(PortDef port)? decorate,
+    List<String>? labels,
   }) {
     final commands = <Command<TemplateBody>>[];
 
@@ -838,7 +852,7 @@ final class QuickAddBatch {
         plan.direction ??
         family?.defaultDirection ??
         PortDirection.bidirectional;
-    final labels = plan.labels;
+    final expanded = labels ?? plan.labels;
 
     void addPort(String label, Face face) {
       // Keys and orders come off a GROWING set rather than off `body` as
@@ -870,7 +884,7 @@ final class QuickAddBatch {
     }
 
     for (var i = 0; i < plan.quantity; i++) {
-      final label = i < labels.length ? labels[i] : '';
+      final label = i < expanded.length ? expanded[i] : '';
       if (plan.bothFaces) {
         addPort(label, Face.front);
         addPort(label, Face.rear);
