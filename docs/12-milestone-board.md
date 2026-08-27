@@ -79,14 +79,18 @@ arithmetic against the clause table beneath it:
 | **NOT STARTED** | No exit clause is discharged. |
 
 Two headlines cost this board something when the rule was actually applied, and both are named
-here rather than buried. **M0 is `PARTIAL`, not complete**: two of its own exit conjuncts are
-`VACUOUS`, and the same `VACUOUS` mark is what unseats M5's clause 3 (§5.4) and the roadmap's
-global *"goldens pass"* limb (§4.3); an exemption granted to one milestone and to no other is a
-preference, not a finding (§2.3). **M6 is `NOT STARTED`, not partial**: real M1-slice work sits
-inside it, but zero of its five exit clauses is demonstrated, and grading "partial" against
-work-in-the-milestone rather than against the criterion is precisely the substitution roadmap §8.1
-forbids (§5.5). Where a milestone contains real work its headline does not credit, the **short
-reason** column says so; the headline still tracks the criterion.
+here rather than buried. **M0 WAS `PARTIAL`, not complete, until 2026-08-27**: two of its own exit
+conjuncts were `VACUOUS`, and the same `VACUOUS` mark still unseats M5's clause 3 (§5.4) and the
+roadmap's global *"goldens pass"* limb (§4.3); an exemption granted to one milestone and to no
+other is a preference, not a finding (§2.3). **Both are now `DEMONSTRATED`**, and the headline is
+kept because of how they closed: not by the argument §2.3 withdrew, but because their subjects
+came into existence and DR-095's §8.9 worklist noticed. **A clause whose `VACUOUS` reason has
+expired reads exactly like one whose reason still holds**, which is the argument for a gate over a
+habit. **M6 is `NOT STARTED`, not partial**: real M1-slice work sits inside it, but zero of its
+five exit clauses is demonstrated, and grading "partial" against work-in-the-milestone rather than
+against the criterion is precisely the substitution roadmap §8.1 forbids (§5.5). Where a milestone
+contains real work its headline does not credit, the **short reason** column says so; the headline
+still tracks the criterion.
 
 ---
 
@@ -107,7 +111,7 @@ way. Board item #92 is the scheduled full sweep.
 
 | # | Milestone | Size | Exit clauses demonstrated | Status: weakest mark | The short reason |
 |---|---|---|---|---|---|
-| **M0** | Foundations | `S` | **6 of 8** clause rows | **PARTIAL**: `VACUOUS` | `dart test` in `rackpal_core`, 886/0, discharges six clauses and they are good work. The `templates.keys` conjunct and the epoch-mask conjunct are true only because their subjects did not exist at M0 (§2.2) |
+| **M0** | Foundations | `S` | **8 of 8** | **CRITERION MET**: `DEMONSTRATED` | **The last two clauses closed on 2026-08-27, and both had been `VACUOUS` for reasons that expired without anyone noticing** (§0: *"true today, and true for a reason that will stop being true"*). Clause 4a needed a command that touches `doc.templates`; M4-S landed one, and `command_roundtrip_test.dart` now draws `SaveTemplateToProjectCommand` **717 times across its 1000 sequences** (`8af36ed`, `#513`). Clause 5 needed a derived pipeline to snapshot; three exist, and `epoch_mask_test.dart` now folds them into the same changed-key set, moving on **9 of 35 command cases** and guarded by a source-reading field count so the projection cannot fall behind (`38167ec`, `#507`). Both figures are measured rather than asserted, because §5.1's `#587` records an arm offered thousands of times that fired zero |
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
@@ -173,7 +177,7 @@ is the single most consequential finding on this board and it is the subject of 
 
 ---
 
-## 2. M0, Foundations · `S` · PARTIAL, weakest mark `VACUOUS`
+## 2. M0, Foundations · `S` · **CRITERION MET**, weakest mark `DEMONSTRATED` *(was `PARTIAL`/`VACUOUS` until 2026-08-27)*
 
 ### 2.1 The exit criterion, verbatim (roadmap §4, M0)
 
@@ -192,8 +196,8 @@ is the single most consequential finding on this board and it is the subject of 
 | 2 | 1/32-inch clearance exact, 45U accumulation exact (CR-001) | **DEMONSTRATED** | `packages/rackpal_core/test/units_test.dart:6` "1/32 inch inter-panel clearance is exact" and `:15` "zero accumulated error across a 45U rack stack", exact integer nanometre arithmetic, no tolerance |
 | 3 | `write(read(bytes)) == bytes` on **three** fixtures | **DEMONSTRATED: exceeded** | `packages/rackpal_core/test/byte_roundtrip_test.dart` writes and re-reads **four** real files under `packages/rackpal_core/test/fixtures/`: `a_empty_project`, `b_rack_and_device`, `c_fuller_project`, `d_templates_and_power` |
 | 4 | Command round-trip on 1,000 generated sequences | **DEMONSTRATED** | `packages/rackpal_core/test/command_roundtrip_test.dart:35` `_sequenceCount = 1000`, seeded `Random(20260718 + i)`, byte identity of real `JsonDocumentCodec` output asserted after `apply;revert` **at every step**. The run log shows 1000 discrete cases |
-| 4a | *…"including `templates.keys`: AC-015"* | **VACUOUS** | `command_roundtrip_test.dart:18-21` states in its own header that `doc.templates` is never touched by any M0 command, because AC-015 refcounting is deferred. Byte identity of an untouched map proves nothing about refcounting. Honest, and undemonstrated |
-| 5 | Epoch-mask coverage for **every command type** | **VACUOUS** | `packages/rackpal_core/test/epoch_mask_test.dart` covers all 8 concrete `Command` subclasses that exist (`AddDevice`, `RemoveDevice`, `MoveDevice`, `RenameEntity`×2, `SetRackHeight`, `SetRackProperty`×4, `AddLink`, `RemoveLink`) verified by grepping `extends Command` across `packages/rackpal_core/lib/src/commands/`, which returns exactly those plus `Transaction` (and a commented-out `SnapshotCommand` at `snapshot_command.dart:7`). The **command-type** limb is genuinely covered. The **epoch-mask** limb is not: its header admits it snapshots **persisted document maps**, not derived outputs, "a coverage test in spirit rather than the letter", because no derived pipeline existed at M0. That is the legend's definition of `VACUOUS` exactly, true, and true for a reason that has since stopped being true. **It has drifted**: see §4.5 |
+| 4a | *…"including `templates.keys`: AC-015"* | **DEMONSTRATED** *(was `VACUOUS`)* | `command_roundtrip_test.dart` gained a `saveTemplateToProject` arm on 2026-08-27 (`8af36ed`). Its first draft **failed**, on seed `20260724` step 2, with `"templates"` returning `{}` where a snapshot had been: the generator drew a version from a literal range and broke `SaveTemplateToProjectCommand`'s documented precondition, which is that `nextTemplateVersion` guarantees the key is free. The command was right; the arm now calls that function as the one production caller does |
+| 5 | Epoch-mask coverage for **every command type** | **DEMONSTRATED** *(was `VACUOUS`)* | The **command-type** limb was always covered; the **epoch-mask** limb is covered as of `38167ec`. `epoch_mask_test.dart` now snapshots `buildEquipmentList` and `computeRackRollups` alongside the persisted maps, under a `derived:` prefix, so all twenty-odd per-command tests gained derived coverage with no call-site change. `device_loads` rides in through `EquipmentRow.loads`, which resolves it per device. §4.5 row 5 is paid |
 | 6 | One v0→v1 migration fixture in the golden corpus | **DEMONSTRATED: exceeded** | `packages/rackpal_core/test/migration_corpus_test.dart` covers v0→v1 synthetically **and** a real v1→v2 file fixture, `packages/rackpal_core/test/fixtures/v1_templates_and_power.rackpal.json` |
 | 7 | Zero Flutter imports, enforced by a test that fails the build | **DEMONSTRATED** | `packages/rackpal_core/test/no_flutter_import_test.dart` scans whole import/export directives (not a naive prefix match) and carries a **vacuity guard** counting files scanned, the guard is the thing that makes it a real gate rather than a test that passes on an empty glob |
 
@@ -202,7 +206,7 @@ is the single most consequential finding on this board and it is the subject of 
 **The demonstration of the six discharged clauses is recorded in the closing commit** per roadmap
 §8.1: `b94bd60`, *"feat(core): implement rackpal_core through M0's command/undo system"*.
 
-### 2.3 Why M0 is `PARTIAL`, and what the unbuilt checklist has to do with it: nothing
+### 2.3 Why M0 WAS `PARTIAL`, and what the unbuilt checklist had to do with it: nothing
 
 The M0 **checklist**'s last line, *"CI: analyze, test, goldens, format, the no-Flutter-import
 test, the epoch-mask coverage test"*, is **entirely unbuilt**. There is no `.github` directory
@@ -227,15 +231,28 @@ demonstration. What changed is the headline, which is the only thing a reader sk
 Separately and unchanged: **no gate in this project is mechanical**, and that is a project-level
 fact, not an M0 footnote. See §4.1.
 
-### 2.4 What would close the two vacuous clauses: and make M0 `COMPLETE`
+### 2.4 What closed the two vacuous clauses, 2026-08-27
 
-- **AC-015 / `templates.keys`**: needs a command that touches `doc.templates` (template
-  refcounting, or copy-on-place writing a `DeviceOverrides`), plus its round-trip case. The clause
-  becomes real the day M4 or M1's copy-on-place lands, and not before.
-- **Epoch-mask letter (AC-014)**: needs `epoch_mask_test.dart` extended to snapshot the derived
-  outputs that now exist: `packages/rackpal_core/lib/src/derived/device_loads.dart`,
-  `equipment_list.dart`, `totals.dart`. This is **cheap today and gets more expensive with every
-  derived consumer added**. §4.5.
+**Neither was closed by an argument, and that distinction is the whole of §2.3.** The withdrawn
+draft recorded there tried to reason the two clauses away; what discharged them was a command that
+touches the map and a pipeline to snapshot, neither of which existed when that argument was made.
+
+- **AC-015 / `templates.keys`**: wanted *"a command that touches `doc.templates`… the clause becomes
+  real the day M4 or M1's copy-on-place lands, and not before."* **M4-S landed
+  `SaveTemplateToProjectCommand`**, and `8af36ed` (`#513`) put it in the fuzz. AC-015's template
+  refcounting is still deferred and this does not speak to it: what is covered is the narrower thing
+  the M0 criterion names, that a command touching `templates` leaves the map byte-identical across
+  apply-revert.
+- **Epoch-mask letter (AC-014)**: wanted `epoch_mask_test.dart` extended to the derived outputs, and
+  called it *"cheap today and more expensive with every derived consumer added."* Paid at `38167ec`
+  (`#507`), and the estimate held: the derived half folds into the existing changed-key set, so
+  twenty-odd tests gained coverage without a call-site change. §4.5 row 5 is closed by the same
+  commit.
+
+**Both were surfaced by DR-095, not by anyone reading this section.** §8.9 forced a worklist across
+every milestone before the current one, and these two are what it found in M0. A clause whose
+`VACUOUS` reason has expired reads exactly like one whose reason still holds, which is the argument
+for a gate rather than a habit.
 
 ---
 
@@ -4652,7 +4669,7 @@ exist, not because it is ungated, and the *Gated on* column says which.
 | 2 | ~~**Decide the two failing gates** (format the files and clear the infos, **or** amend docs/11 §7~~) **DECIDED 2026-08-03, `DR-017`** | Nothing; it was a **user decision**, not an engineering one | **Both, split by gate.** `dart format` adopted absolutely (`b6ff394` formatted 124 files, `ecdf3b2` gated it); the analyzer kept its ratchet, pin lowered 194 → 173; docs/11 §7 amended, having described a GitHub Actions workflow the project does not use. The predicted failure did not occur: main was never red (§4.1). Board #566 |
 | 3 | **First goldens + `flutter_test_config.dart` registering Jost** | Nothing | Makes *"goldens pass"* stop being a clause with nothing behind it (§4.3) |
 | 4 | **Mechanise the `sources.md` provenance gate** | Nothing | AC-052 is prose today; `RISK-04`'s early warning is unmeasurable (§4.4) |
-| 5 | **Extend `epoch_mask_test.dart` to the derived pipeline** | Nothing | The drift is live and grows with every derived consumer (§4.5) |
+| 5 | ~~**Extend `epoch_mask_test.dart` to the derived pipeline**~~ **PAID `38167ec`, 2026-08-27** | Nothing | Was *"live and grows with every derived consumer"*. Closed with M0's clause 5 (`#507`): the derived outputs fold into the same changed-key set, and a source-reading field count stops the projection falling behind the classes it reads |
 | 6 | **Propagate the Jost and `kSchemaVersion`-2 drift** into docs/08, docs/11, docs/02, docs/03 and canon; amend CR-080 | Nothing | Roadmap §8.3 requires an amendment for a ruling change; CR-080 has none (§4.6, §4.7) |
 | 7 | ~~**Propagate DR-006 into docs/09, docs/11, docs/10 and docs/00**~~, **PAID `e0941f6`** | Nothing | Was **nine** sites, the five signing sites plus four decision-count sites, listed in §4.11 and canon §12.9. The decision-count class recurred within days and was paid again at `69aa82d`, which found six more stale counts including a docs/09 §8.7 sentence listing four already-closed questions as open. **A count in prose is a maintenance liability**, and this is now the second sweep for it |
 | 7a | **Delete the three root `test/fixtures/` copies** | Nothing | Five seconds (§4.12) |
@@ -4670,11 +4687,11 @@ saving DR-006 buys.**
 ### 6.2 Gated, and correctly so
 
 ```text
- M0 ◑ PARTIAL — weakest mark VACUOUS
-  │  6 of 8 clause rows demonstrated; `templates.keys` and the
-  │  epoch-mask letter are true only because their subjects did
-  │  not exist at M0 (§2.2, §4.5). One is cheap to close now;
-  │  the other waits on M4 or copy-on-place (§2.4)
+ M0 ● CRITERION MET — weakest mark DEMONSTRATED
+  │  8 of 8, as of 2026-08-27. `templates.keys` and the
+  │  epoch-mask letter were VACUOUS only while their subjects
+  │  did not exist; M4-S and the derived pipeline supplied both,
+  │  and #513 / #507 closed them (§2.2, §2.4, §4.5 row 5)
   ▼
  M1 ● CRITERION MET — weakest CONFIRMED ────┬────────────────► M4 ○ NOT STARTED
   │  8 of 8 clauses discharged; the GOAL     │                  gate CLEAR (M1 met);
@@ -4732,7 +4749,7 @@ deferral costs. **It does not make the call.**
 
 | | Weeks (roadmap §6) | State |
 |---|---|---|
-| M0 | 2–3 | `PARTIAL`: 6 of 8 clause rows demonstrated; two vacuous clauses open (§2.4) |
+| M0 | 2–3 | `CRITERION MET` 2026-08-27: all 8 clause rows demonstrated. The last two were `VACUOUS` from M0 until their subjects existed (§2.4) |
 | M1 | 8–12 | `CRITERION MET` 2026-07-28: all 8 exit clauses discharged. Still open, and NOT exit clauses: "ships to real users" + six checklist items (§3.3) |
 | M2 | 4–7 | `CRITERION MET` 2026-08-01: all 5 exit clauses discharged, four by tests and one by a person (§1, §5.1) |
 | M3–M9 | 28–43 | `NOT STARTED`: zero demonstrated exit clauses anywhere, though M6 carries a real M1 slice (§5.5) |
