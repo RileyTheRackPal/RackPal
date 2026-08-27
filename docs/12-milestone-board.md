@@ -2030,15 +2030,19 @@ still cheap**, and two of them are reachable from a grep. Neither needed fifteen
 time to find, and neither would have been visible from the suite: 2206 tests were the M1 precedent
 that #163 quotes, and this milestone's are green over both holes.
 
-*The criterion, clause by clause, against `01c698d`.*
+*The criterion, clause by clause. **Rows carry the ruling that last touched them, not the
+commit this section was written at.** The earlier form of this caption read `against 01c698d`,
+which is 2026-08-10. **DR-040 superseded two of these rows on 2026-08-11, the following day.** The
+caption was still accurate the moment it was written and stopped being so before anyone read it
+again; DR-095 §11.94.8 took it as current on 2026-08-26 and built a ruling on it.*
 
 | # | Clause | State | Evidence |
 |---|---|---|---|
 | 1 | 60 drops entered in under fifteen minutes | **needs a person** | 349 keystrokes, 5.82 per drop, gated in `drop_entry_panel_test.dart:293`. The surface cannot make it impossible; only a clock can say whether a human is on pace |
 | 2 | 60 `Link`s each with one `fieldLabel` | **BUILT** | `drop_build.dart:124` allocates every one through `allocateOutletFieldLabel` |
-| 2b | ...and one `rackLabel` | **NOTHING ALLOCATES ONE** | `allocateOutletRackLabel` has four callers and all four are in `drop_label_allocator_test.dart` |
+| 2b | ...and one `rackLabel` | **BUILT** *(was `NOTHING ALLOCATES ONE`)* | **DR-040 §11.39, shipped as M3-K `#661` with `#663`–`#666` Done, 2026-08-11.** The allocator's callers are now `bind_endpoint_command.dart` and `home_run_commands.dart`, not only its own test |
 | 3 | Pull Sheet sorted by room then pathway, per-room footage subtotals | **BUILT as derivation** | `SchedulePreset.pullSheet`, `ScheduleSort.roomThenPathway`, `ScheduleGrouping.room` (`schedule.dart:1239`). The sheet, the initial boxes and the page are M6's under DR-027 |
-| 4 | fourteen of them have unbound far ends | **sixty of sixty are unbound** | `drop_build.dart:159` never passes `rackEnd`, so `home_run_commands.dart:224` writes `OpenEndpoint('not yet landed')` for every drop the product can create |
+| 4 | fourteen of them have unbound far ends | **REACHABLE** *(was `sixty of sixty are unbound`)* | **DR-040 §11.39 / M3-K.** `@panel=` on the drop line lands forty-six and leaves fourteen open, which is what the clause asks. The unlanded path in `drop_build.dart` is now the fourteen case rather than the only case |
 | 4b | ...and each still schedules and carries a `W` number | **BUILT** | gated at `drop_entry_panel_test.dart:420`, asserted as a set |
 | 4c | ...and prints | **M6's** | #574, parked there by DR-027 |
 

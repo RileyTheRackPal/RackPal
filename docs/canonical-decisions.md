@@ -13664,24 +13664,48 @@ The retroactive reading surfaces this much, and the cost is stated rather than d
 
 | Milestone | Clause | Today | Disposition this ruling forces |
 |---|---|---|---|
-| M0 | 4a, `templates.keys` (AC-015) | `VACUOUS` | **Park on M4.** §2.4 already says it *"becomes real the day M4 or M1's copy-on-place lands, and not before"*, which is a park written in prose |
+| M0 | 4a, `templates.keys` (AC-015) | `VACUOUS`, but no longer for the stated reason | **Owed, and small.** §2.4 said it *"becomes real the day M4 or M1's copy-on-place lands"*. M4-S landed `SaveTemplateToProjectCommand`, which mutates `doc.templates`, so the precondition is met and the clause is a generator change rather than a park |
 | M0 | 5, epoch-mask letter (AC-014) | `VACUOUS`, and drifting (§4.5) | **Owed.** Cheap today, dearer with every derived consumer added |
-| M3 | 1, sixty drops under fifteen minutes | needs a person | **Owed.** A drill, and nothing else discharges it |
-| M3 | 2b, one `rackLabel` each | nothing allocates one | **Owed, and the expensive one.** See below |
-| M3 | 4, fourteen unbound far ends | sixty of sixty are unbound | **Owed.** The criterion names fourteen; the builder produces sixty |
+| M3 | 1, sixty drops under fifteen minutes | `UNPERFORMED` | **Owed.** A drill, a person and fifteen minutes. Nothing else discharges it, and it is M3's only remaining build-independent debt |
+| M3 | 2b, one `rackLabel` each | **built** | **No action.** DR-040 (§11.39), shipped as M3-K `#661` with all four tasks Done on 2026-08-11 |
+| M3 | 4, fourteen unbound far ends | **reachable** | **No action.** Same ruling: `@panel=` lands forty-six and leaves fourteen open, which is what the clause asks |
 | M3 | 4c, prints | `M6's` | **Already parked**, by DR-027 as `#574`. No action |
 
-**11.94.8 M3'S CLAUSE 2b IS FEATURE WORK AND THE USER TOOK THIS DECISION BEFORE SEEING ITS SIZE.**
-The shipped rack-label pattern is `{FLOOR}{SPACE}-{PANEL}{PORT:2}`, and `{PANEL}` and `{PORT}` are
-facts about a landing. **Nothing in the product records a landing**, so the pattern cannot render,
-so `allocateOutletRackLabel` is never called, and its only four callers are its own test. §5.2 adds
-that clause 2b and clause 4 *"are one hole wearing two numbers"* and that closing either alone
-closes nothing.
+**11.94.8 THE TWO ROWS ABOVE THAT NOW READ "NO ACTION" SAID "OWED" WHEN THIS RULING WAS WRITTEN, AND
+THE MISTAKE IS THE POINT.** As first published, §11.94.7 recorded M3's clause 2b as *"owed, and the
+expensive one"*, and this subsection carried the consequence in a heading: **that M4 could not close
+until landings existed in the model.** It said the rack-label pattern could not render because
+`{PANEL}` and `{PORT}` are facts about a landing and nothing in the product recorded one, and that
+`allocateOutletRackLabel` had four callers all inside its own test.
 
-So the honest reading of §11.94.7 is that **M4 cannot close until landings exist in the model**, or
-until clause 2b is itself parked on the milestone that builds them. That is a real cost and it is
-recorded here at full size, because a ruling whose price is discovered afterwards is the failure
-mode the board's own opening table catalogues.
+**Every sentence of that was true on 2026-07-27 and false when it was written.** DR-040 (§11.39)
+settled it on 2026-08-11: `BindEndpoint` is built, `@panel=` lands a drop on a panel's rear port,
+and the rack label is allocated through the one format engine rather than typed. It shipped as M3-K,
+board `#661`, with `#663` through `#666` all Done. The allocator's callers today include
+`bind_endpoint_command.dart` and `home_run_commands.dart`.
+
+**THE SOURCE WAS docs/12 §5.2's CLAUSE TABLE, WHICH CARRIED ITS OWN DATE AND WAS OBSOLETE THE NEXT
+DAY.** Its caption read *"against `01c698d`"*, a commit of 2026-08-10; DR-040 settled on
+2026-08-11. **The table was accurate for one day**, and `#92` is already filed to sweep it. It was
+read as current, and a ruling was written on top of it. CLAUDE.md states the rule that would have
+prevented this in one line: **read the ruling, not only the derived sentence**, and it gives the
+precedent, *"a stale sentence in docs/09 once produced a board task instructing weeks of work that
+a ruling had abolished."* The same failure has now produced a **ruling clause** asserting a
+milestone was blocked on work that had shipped a fortnight earlier, which is worse: a board task
+is discarded when someone opens the code, and canon is quoted.
+
+**What this costs the rule itself: nothing, and that is worth saying plainly.** §11.94.4 is
+unchanged, and so is the retroactive reach in §11.94.7's heading. What changed is the WORKLIST, and
+a worklist that shrinks on inspection is the rule behaving correctly: the gate blocks on clauses
+neither discharged nor parked, and two of them turned out to be discharged. **M4's closure is not
+blocked by M3.** M3's own remaining debt is a drill.
+
+**AND THE GENERAL LESSON FOR §11.94.9's SCRIPT.** The mechanical gate is blocked on normalising the
+clause tables to the seven marks, and this subsection is the argument for why that normalisation is
+a correctness prerequisite rather than tidying. A table whose states read `BUILT` and `nothing
+allocates one` cannot be dated by a machine, and a human reading it cannot tell a current row from
+one describing a tree that is six weeks gone. **The sweep must date every clause row against the
+ruling that last touched it**, not against the commit the section was written at.
 
 **11.94.9 THE MECHANICAL GATE IS SEQUENCED BEHIND THE NORMALISATION, NOT SHIPPED WITH THIS RULING.**
 This ruling is enforced by review on the day it lands. A CI gate reading docs/12's clause tables and
