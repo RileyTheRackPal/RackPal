@@ -13703,6 +13703,139 @@ not.
 
 ---
 
+### 11.95 DR-096 · The product is RackPal, and the wordmark is the one thing this repository cannot re-cut
+
+**Settled by the user on 2026-08-26.** The name **RackMate** is withdrawn and the product is
+**RackPal**. Both searches are the user's; both results are recorded below rather than assumed.
+
+**NOT A §8.3 AMENDMENT**, on DR-089's own reasoning (§11.88): §8.3 governs moving an item between
+v1, v1.1, v1.2, v2 and not-doing, and nothing moves here. The scope list is untouched, every exit
+criterion stands verbatim, and no milestone gains or loses a clause. What changes is an identifier.
+It still takes a ruling ID, because §8.2 wants one for a change this size and because the sweep it
+authorises would otherwise be a large untraceable diff.
+
+**11.95.1 THE SEARCH THAT FOUND THIS IS THE SEARCH RJ-017 SCHEDULED, AND IT RAN IN TIME.** RJ-017
+put *"a trademark search before any certificate or domain is bought"* into hardening under
+AC-058/D9, and DR-089 §11.88 restated it while shipping the wordmark. It ran. **A company producing
+homelab-focused hardware is using RackMate, and the user assesses the likelihood of a cease and
+desist as high.**
+
+Nothing had been bought and nothing had been signed when that came back. DR-006 had already made
+signing self-signed with no OV/EV reputation ramp (§11.6), so there is no certificate to reissue and
+no SmartScreen history to lose. **This is the cheapest moment at which the finding could have
+arrived**, and it arrived there because a rule said it had to arrive before the purchases rather
+than with them. Recorded as a rule that paid, since the board's opening table is otherwise a list of
+the ones that did not.
+
+**RackPal has cleared its own search** (user, 2026-08-26), which is why it is ruled here and not
+merely proposed. A second name adopted on assumed availability would repeat the failure at twice the
+cost, the sweep below having already run once.
+
+**11.95.2 THE SWEEP IS MECHANICAL EXCEPT WHERE THE STRING IS A QUOTATION, AND THAT EXCEPTION IS THE
+WHOLE RISK.** Measured at `21b42fe` with `git grep`, so a reader can re-derive rather than trust:
+
+| What | Measured | Command |
+|---|---|---|
+| `rackmate`, any case | 4,359 hits in 807 files | `git grep -Iic rackmate` |
+| `package:rackmate` | 2,109 lines in 608 files | `git grep -Ic "package:rackmate" -- '*.dart'` |
+| `.rackmate` literal | 209 hits in 59 files | `git grep -IFc -- .rackmate` |
+| Inside a blockquote | **27 lines in 12 files** | `git grep -Iic "^> .*rackmate" -- '*.md'` |
+
+**That last row was first written as nine, and the error is worth keeping rather than quietly
+correcting**, because it is this repository's own recurring one. `git grep -Ic "^> .*RackMate"`
+returns 9. The same query case-insensitively returns **27**. The eighteen it could not see are the
+LOWERCASE form inside quotations: `rackmate_core` in docs/03's dependency rule and docs/07 §385,
+`packages/rackmate_core/…` in docs/08 §386, `.rackmate` in docs/10 §173. A pattern written against
+the name as a reader says it cannot see the name as a machine spells it, which is the census
+failure this project has now made five times.
+
+Those twenty-seven are the ones a `sed -i` gets wrong. **Canon quotes rulings, criteria and critiques
+word for word, and the house style already protects that: the em-dash sweep left blockquotes alone
+"because canon quotes rulings and critiques word for word and editing a quotation falsifies the
+record."** The identical argument governs here and is stronger, because a name inside a quotation is
+load-bearing: docs/00 §30's *"RackMate is a cable-schedule generator…"*, canon §10's *"RackMate is a
+local application"* and docs/12 §4372's DR-006 amendment are all records of **what was said at the
+time under the name in force at the time.**
+
+So the rule for the sweep is: **rename the PRODUCT, never the RECORD.** A blockquote, the M1
+implementation log (65 hits) and the `.okf` decision bundle (191, of which 95 are the decision
+files) are history, and history said RackMate. Everything else, code, identifiers, package names,
+paths, live prose, becomes RackPal.
+
+**AND A QUOTED PATH STAYS QUOTED, EVEN THOUGH THE SWEEP MAKES IT STALE.** Eighteen of the
+twenty-seven quote an identifier rather than a sentence, so leaving them means canon will hold
+blockquotes naming `rackmate_core` after no such package exists. That is correct and it is the
+lesser of the two errors: a quotation altered to stay accurate is no longer evidence of what was
+said, and this corpus turns on being able to tell those apart. The practice already exists and is
+docs/12 §5.2's, which keeps M3's exit criterion verbatim under a heading saying DR-027 amended it:
+**the correction goes in live prose beside the quotation, never inside it.** A reader who needs the
+current path reads the sentence under the quote.
+
+**11.95.3 THE FILE FORMAT SURVIVES, AND THAT IS LUCK RATHER THAN FORESIGHT.** Four extensions are
+in the corpus, and the split runs cleanly between them: `.rmpj` (451 hits), `.rmdev` (79) and
+`.rmlib` (31) are `rm`-prefixed and **do not spell the name**, so they carry over untouched and
+**CR-117's byte round-trip is not in play at all**: no fixture is rewritten, no golden regenerated,
+no migration written. `.rackmate` (209) does spell it and goes.
+
+The `rm` stood for RackMate and now stands for nothing in particular. **Leave it.** Re-cutting the
+project extension to `rp` would invalidate every file a user already has, in exchange for two
+letters nobody reads, and DR-006's shared-file reality (§11.6) makes that a real cost rather than a
+notional one.
+
+**11.95.4 THE WORDMARK CANNOT BE RE-CUT INSIDE THIS REPOSITORY, BY ANYONE, AND IT IS THE LONG POLE.**
+`brand.dart` is the wordmark as fixed outlines, and DR-089 §11.88 shipped it that way on two
+grounds, the second of which now binds hard: **Nasalization's EULA §4.3 forbids the font file
+entering this repository, now or later**, and §4.6 forbids inclusion in Publicly Available Software,
+which the GPLv3 release under consideration is in all but name.
+
+Outlines are letterforms. New letterforms spelling RackPal therefore **cannot be produced by anyone
+working in this tree**, whatever tooling they have, because the tool that produces them is the font
+and the font may not be here. They must be cut outside by a holder of a Nasalization desktop
+licence and handed over as paths.
+
+**This makes the wordmark an art-asset dependency with the longest lead time in the rename, and it
+is already blocking.** The `app_icon.ico`, the document icons and the window icon sit behind the
+same brief. Any of that work already in flight is RackMate-shaped and is now waste; whoever holds it
+should be told before they deliver, which is a message the user sends and not this repository.
+
+**11.95.5 THE OS IDENTITY STRINGS ARE FREE TODAY AND DEAR AFTER M8.** `Runner.rc` carries
+`CompanyName "com.rackmate"`, `InternalName "rackmate"`, `OriginalFilename "rackmate.exe"` and
+`ProductName "rackmate"`. Nothing is signed, nothing is installed, nothing is published, so these
+are four string edits. After M8 they are an identity a signature and an install base have been
+issued against. **They move in this sweep and not later.**
+
+**11.95.6 THE REMOTE IS NAMED TWICE AND IS NOT PART OF THE SWEEP.** `origin` is
+`https://{org}.visualstudio.com/RackMate/_git/RackMate`: the Azure DevOps **project** and the
+**repository** both carry the name, as does the area and iteration path this board files everything
+under. Renaming those is console work with consequences for every board URL already cited in the
+corpus, and it is **deliberately not authorised here.** It is its own decision, and the safe default
+is that an internal remote may keep a withdrawn name indefinitely, because a cease and desist
+addresses a product in commerce and not a private git host.
+
+**11.95.7 SEQUENCE, AND WHY THE ART GOES LAST.** The search clears (done), this ruling lands, the
+mechanical sweep lands as **one commit** with the fifteen gates as its proof (`#781`), and the art
+assets land when they arrive. The sweep goes before the art because it is deterministic and gated, and the
+art is neither; sequencing them the other way would leave the tree half-renamed while waiting on a
+person.
+
+**The sweep's post-conditions**, on the pattern the em-dash sweep established, since a
+4,359-site substitution is exactly the shape of change that passes a spot-check and fails in
+detail: **the fifteen gates green**; **the nine blockquote lines unchanged**, verified by
+re-running the count above and getting nine; **`.rmpj` and `.rmdev` hit-counts unchanged**; and
+**every `package:` import resolving**, which the analyzer proves at zero errors rather than a grep
+does.
+
+**11.95.8 WHAT THIS DOES NOT RULE.** It does not change the file format, the schema version or any
+extension but `.rackmate` (§11.95.3). It does not rename the Azure DevOps project, the repository or
+the board's area path (§11.95.6). It does not buy a domain: RJ-017 sequences that after the search
+and the search is now clear, but a purchase is the user's act and its own decision. It does not
+settle the mascot, which is canon §10.12(f). It does not disturb DR-089, whose outlines-not-text
+ruling stands unchanged and is the reason §11.95.4 is the long pole rather than a find and replace.
+And it does not rule on what the withdrawn name is worth defending: no position is taken here on
+whether RackMate was ever infringing, only that the product will not be called it.
+
+---
+
 
 ## 12. Superseded rulings
 
