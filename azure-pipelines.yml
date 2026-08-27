@@ -5,10 +5,14 @@
 # ----------------------------------------------------------------------
 # WHAT IS VERIFIED AND WHAT IS NOT. READ THIS FIRST.
 # ----------------------------------------------------------------------
-# This file was written on a developer machine. NO AZURE DEVOPS RUN HAS
-# EVER EXECUTED IT. Saying otherwise would be the fifth time in this
-# project's history that a claim outran its evidence, so the two halves are
-# separated here and neither is dressed up as the other.
+# This file was written on a developer machine and, for three and a half
+# weeks, NO AZURE DEVOPS RUN HAD EVER EXECUTED IT. That sentence stood here
+# unedited the whole time, which is the only reason the gap was cheap to
+# find. IT RAN ON 2026-08-27: pipeline "RackPal CI (Windows)" (definition 1),
+# build 20260827.1, against `main` at 46ec050, and it PASSED FIRST TRY --
+# all 24 steps, no fixes, 22 minutes wall clock. What that run proved and
+# what it still did not are separated below, and neither is dressed up as
+# the other.
 #
 # VERIFIED — every command below was run on a Windows 11 machine with the
 # pinned toolchain (Flutter 3.44.4 stable, Dart 3.12.2), and the gate
@@ -67,26 +71,50 @@
 #     tools/registry_parity.py — exit 0.
 #   * All five suites and `flutter build windows --release` — green.
 #
-# NOT VERIFIED, and only the first real run can prove it:
+# SETTLED BY RUN 1 (build 20260827.1). Each of these was a named unknown in
+# the list this replaces, and each is now a measurement:
 #
-#   * THE YAML SCHEMA ITSELF. It is well-formed YAML (parsed locally) and
-#     follows documented Azure Pipelines task shapes, but no Azure DevOps
-#     service has validated it. Expect to fix task-name or input typos on
-#     run 1.
-#   * THE FLUTTER SDK DOWNLOAD in tools/ci/ensure_flutter.ps1. The archive
-#     URL follows Google's long-standing pattern, but 3.44.4 postdates the
-#     author's knowledge and the URL was never fetched. If it 404s, the fix
-#     is one line in that script. THE MEASUREMENT AFTER IT IS THE POINT: a
-#     wrong SDK fails the build loudly rather than quietly.
-#   * THAT THE HOSTED IMAGE CAN BUILD DESKTOP WINDOWS. `windows-2022`
-#     carries the VS2022 C++ desktop workload, which `flutter build windows`
-#     needs. If the image has been retired or the workload moved, step
-#     "Build Windows release" is where it shows.
-#   * WALL-CLOCK TIME. The timeout below is an estimate, not a measurement.
-#   * PR VALIDATION. For an Azure Repos Git repository the `pr:` block below
-#     is IGNORED by the service — PR triggers come from a branch policy.
-#     Add "Build validation" on `main` pointing at this pipeline, or nothing
-#     here gates a pull request.
+#   * THE YAML SCHEMA. Accepted by the service unmodified. Zero task-name or
+#     input typos, against an expectation in this very file that there would
+#     be some.
+#   * THE FLUTTER SDK DOWNLOAD. The archive URL resolved. It was also
+#     HEAD-checked from the author's machine before the run (HTTP 200,
+#     1,899,506,906 bytes, Last-Modified 2026-06-24, which matches the
+#     framework date the pin names), so the download had two independent
+#     confirmations rather than one.
+#   * THE HOSTED IMAGE BUILDS DESKTOP WINDOWS. `windows-2022` still carries
+#     the VS2022 C++ desktop workload; "Build Windows release" took 100
+#     seconds and "Gate: Windows release output" passed over what it made.
+#   * WALL-CLOCK TIME, now measured rather than estimated: 22m01s total, of
+#     which rackpal_ui is 8m29s and the SDK install 1m44s on a COLD cache.
+#     The 120-minute timeout below is left alone deliberately: one sample is
+#     not a distribution, and a cache miss plus a slow agent is the case the
+#     headroom is for.
+#   * NON-VACUITY, which is the number that matters most here. 5,609 cases,
+#     0 failed, 0 errored, 0 SKIPPED, and every one of the five suites
+#     reported "exactly at it" against its floor. Zero slack means a deleted
+#     test fails the gate on the next run rather than in 3,247 tests' time,
+#     which is the state #764 had to go looking for.
+#   * THE ANALYZER RATCHET: 0 errors, 0 warnings, 173 infos, exactly the pin
+#     in tools/ci/analyze_info_baseline.txt.
+#
+# STILL NOT VERIFIED, and run 1 could not have proved any of it:
+#
+#   * PR VALIDATION END TO END. The `pr:` block below is still IGNORED by
+#     the service for an Azure Repos Git repository. The branch policy the
+#     old text asked for NOW EXISTS -- "Build validation" on `main`,
+#     blocking, policy id 1, created 2026-08-27 -- but NO PULL REQUEST HAS
+#     YET RUN THROUGH IT. A configured policy is not an exercised one, and
+#     the first PR is what turns this line into a measurement.
+#     NOTE WHAT IT DOES NOT DO: it gates PR COMPLETION only. A direct push
+#     to `main` still lands, and is then gated after the fact by `trigger:`.
+#   * A RED RUN ON THE SERVICE. Every gate script was mutation-tested
+#     locally, but no Azure DevOps run has ever FAILED, so the service-side
+#     reporting path (Tests tab, failed-step surfacing) is unexercised in
+#     the failure direction. Green over a broken reporter looks identical to
+#     green over a healthy one from here.
+#   * A SECOND RUN, i.e. THE WARM-CACHE PATH. Run 1 missed both caches by
+#     construction. The Cache@2 restore branches have never been taken.
 #
 # ----------------------------------------------------------------------
 # GOLDENS ARE NOT IN THIS PIPELINE, AND THAT IS DELIBERATE.
@@ -155,7 +183,10 @@ trigger:
 
 # IGNORED for Azure Repos Git — kept because it documents the intent and
 # becomes live if this repository is ever mirrored to GitHub. Real PR
-# validation is a branch policy. See the header.
+# validation is a branch policy, and that policy NOW EXISTS: "Build
+# validation" on `main`, blocking, pointing at definition 1, created
+# 2026-08-27. THE TWO ARE NOT THE SAME MECHANISM and editing this block
+# will not change PR behaviour by one bit. See the header.
 pr:
   branches:
     include:
