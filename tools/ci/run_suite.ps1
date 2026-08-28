@@ -123,8 +123,14 @@ $ErrorActionPreference = 'Stop'
 # 1190 -> 1201 for its 11. And again at #222 (M4-I3): core 3331 -> 3358 for
 # `port_import_test.dart`'s 27, ui 1201 -> 1213 for its 12. Which is the
 # whole instruction above and is cheap only while it stays a habit.
+# RE-MEASURED 2026-08-28 at #785 (M4-L0, DR-098): core 3365 -> 3379, the 14
+# cases of `test/model/device_overrides_test.dart`. NOTHING WAS REMOVED, and
+# the way that was checked is worth the line: deleting
+# `DeviceOverrides.displayName` and `.typePrefix` broke no test, because no
+# test had ever named either. That is the same absence the ruling's census
+# found in the shipped corpus, arriving from the other direction.
 $SuiteFloors = @{
-    'rackpal_core'   = 3365
+    'rackpal_core'   = 3379
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1213
