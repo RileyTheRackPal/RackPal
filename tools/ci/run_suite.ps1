@@ -129,8 +129,10 @@ $ErrorActionPreference = 'Stop'
 # `DeviceOverrides.displayName` and `.typePrefix` broke no test, because no
 # test had ever named either. That is the same absence the ruling's census
 # found in the shipped corpus, arriving from the other direction.
+# RE-MEASURED 2026-08-28 again at #230 (M4-L1): core 3379 -> 3389, the 10 cases
+# of `test/commands/device_override_edit_test.dart`.
 $SuiteFloors = @{
-    'rackpal_core'   = 3379
+    'rackpal_core'   = 3389
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1213

@@ -31,6 +31,98 @@ enum DeviceKind {
 /// set of strings (CR-053, AC-012: typed, never dotted-path maps).
 enum DeviceOverrideField { typicalWatts, weight, bodyDepth, accentColor }
 
+/// One overridable fact's COMPLETE state, as a single value.
+///
+/// ─────────────────────────────────────────────────────────────────────
+/// WHY THIS TYPE EXISTS AT ALL
+/// ─────────────────────────────────────────────────────────────────────
+/// `DeviceOverrides` stores the three states of DR-098 §11.97.3 across two
+/// members: a nullable field and the [DeviceOverrides.cleared] set. That is
+/// the right STORAGE, because it is what makes an unset field cost nothing
+/// on the wire. It is the wrong thing to hand an editor.
+///
+/// `EntityField`'s `get`/`set` pair carries exactly one `T`, and the undo
+/// stack's coalescing, its `mergeKey` and its `revert` are all built on
+/// that shape. Splitting an override edit into "write the field" and
+/// "write the cleared set" would put it on a second mechanism with a
+/// second undo story, and a user who cleared a weight and pressed
+/// `Ctrl+Z` once could land in the state the codec refuses. So the three
+/// states become one value, and door 1 reuses the machinery every other
+/// property edit already has.
+///
+/// NAMING, because it diverges from the ruling by one word. §11.97.3 calls
+/// the states *inherit*, *set* and *unknown*. The middle one is
+/// [OverrideStated] here rather than `OverrideSet`, because `set` is
+/// already the name of the accessor that writes any of the three, and a
+/// type called `OverrideSet` sitting beside `EntityField.set` reads as the
+/// setter rather than as one of its possible values.
+///
+/// IMMUTABLE, UNLIKE EVERYTHING AROUND IT. The document graph is mutable by
+/// CR-083 and `DeviceOverrides` is mutable with it. This is not part of the
+/// graph: it is a value passed to and from an editor, held as the `from`
+/// and `to` of an undo entry. `SetEntityPropertyCommand` keeps both for the
+/// life of the stack, so a mutable one would let a later edit reach back
+/// and change what `Ctrl+Z` restores.
+@immutable
+sealed class OverrideValue<T> {
+  const OverrideValue();
+
+  /// The value this state resolves to when it is the instance's word, or
+  /// `null` for both *inherit* and *unknown*. Callers that must tell those
+  /// two apart switch on the type; [DeviceOverrides]'s resolvers are the
+  /// ones that do.
+  T? get valueOrNull => switch (this) {
+    OverrideStated<T>(:final value) => value,
+    _ => null,
+  };
+}
+
+/// *inherit*: this instance has no opinion and the template governs.
+final class OverrideInherited<T> extends OverrideValue<T> {
+  const OverrideInherited();
+
+  @override
+  bool operator ==(Object other) => other is OverrideInherited<T>;
+
+  @override
+  int get hashCode => Object.hash(OverrideInherited, T);
+
+  @override
+  String toString() => 'OverrideInherited<$T>()';
+}
+
+/// *set*: this instance states [value].
+final class OverrideStated<T> extends OverrideValue<T> {
+  const OverrideStated(this.value);
+
+  final T value;
+
+  @override
+  bool operator ==(Object other) =>
+      other is OverrideStated<T> && other.value == value;
+
+  @override
+  int get hashCode => Object.hash(OverrideStated, T, value);
+
+  @override
+  String toString() => 'OverrideStated<$T>($value)';
+}
+
+/// *unknown*: the template's value does NOT govern here, and the true
+/// value is not known. Every rollup counts this rather than totalling it.
+final class OverrideUnknown<T> extends OverrideValue<T> {
+  const OverrideUnknown();
+
+  @override
+  bool operator ==(Object other) => other is OverrideUnknown<T>;
+
+  @override
+  int get hashCode => Object.hash(OverrideUnknown, T);
+
+  @override
+  String toString() => 'OverrideUnknown<$T>()';
+}
+
 /// Per-instance overrides of `TemplateBody` facts — typed, nullable
 /// fields (CR-053, AC-012).
 ///
@@ -77,21 +169,61 @@ enum DeviceOverrideField { typicalWatts, weight, bodyDepth, accentColor }
 /// makes leaving it unread honest, since absent asserts nothing.
 final class DeviceOverrides {
   DeviceOverrides({
-    this.typicalWatts,
-    this.weight,
-    this.bodyDepth,
-    this.accentColor,
+    int? typicalWatts,
+    Mass? weight,
+    Len? bodyDepth,
+    Rgb? accentColor,
     Set<DeviceOverrideField>? cleared,
-  }) : cleared = cleared ?? <DeviceOverrideField>{};
+  }) : _typicalWatts = typicalWatts,
+       _weight = weight,
+       _bodyDepth = bodyDepth,
+       _accentColor = accentColor,
+       cleared = cleared ?? <DeviceOverrideField>{};
 
-  int? typicalWatts;
-  Mass? weight;
-  Len? bodyDepth;
-  Rgb? accentColor;
+  // ─────────────────────────────────────────────────────────────────────
+  // AC-013's PUBLIC-GETTER / @internal-SETTER PAIRS, RETROFITTED HERE
+  // ─────────────────────────────────────────────────────────────────────
+  // These were plain public mutable fields from M0 until DR-098, which was
+  // harmless for exactly as long as nothing wrote one. The moment door 1
+  // gives them a producer it stops being harmless: a public setter is a
+  // second writer that bypasses the command system, so an override set
+  // that way is absent from the undo stack, touches no `EntityMeta` and
+  // invalidates no epoch, and the canvas keeps painting the old figure.
+  //
+  // `set_entity_property_command_test.dart`'s "the retrofit and the tables
+  // agree" case is what found this, by failing the moment `DeviceField`
+  // gained four rows with no `@internal` setter behind them. That is the
+  // test doing precisely the job its own comment claims.
+
+  int? _typicalWatts;
+  int? get typicalWatts => _typicalWatts;
+  @internal
+  set typicalWatts(int? v) => _typicalWatts = v;
+
+  Mass? _weight;
+  Mass? get weight => _weight;
+  @internal
+  set weight(Mass? v) => _weight = v;
+
+  Len? _bodyDepth;
+  Len? get bodyDepth => _bodyDepth;
+  @internal
+  set bodyDepth(Len? v) => _bodyDepth = v;
+
+  Rgb? _accentColor;
+  Rgb? get accentColor => _accentColor;
+  @internal
+  set accentColor(Rgb? v) => _accentColor = v;
 
   /// The fields this instance states are UNKNOWN, as distinct from the
   /// ones it does not override. Empty is the overwhelmingly common case
   /// and serializes as an absent key.
+  ///
+  /// MUTABLE AND PUBLIC, unlike the four above, and the asymmetry is worth
+  /// a sentence: this is a `final` collection whose contents only [clear]
+  /// and [inherit] change, and both of those are `@internal`. Making the
+  /// set itself unmodifiable would cost a copy on every edit to close a
+  /// hole the two writers above it already close.
   final Set<DeviceOverrideField> cleared;
 
   /// True when this instance says nothing at all, which is what every
@@ -105,12 +237,14 @@ final class DeviceOverrides {
 
   /// States [field] as UNKNOWN, dropping any value previously set for it
   /// so the two states cannot both be held.
+  @internal
   void clear(DeviceOverrideField field) {
     _write(field, null);
     cleared.add(field);
   }
 
   /// Returns [field] to INHERIT: no value, not cleared.
+  @internal
   void inherit(DeviceOverrideField field) {
     _write(field, null);
     cleared.remove(field);
@@ -118,6 +252,66 @@ final class DeviceOverrides {
 
   /// True when [field] is stated UNKNOWN by this instance.
   bool isUnknown(DeviceOverrideField field) => cleared.contains(field);
+
+  // ─────────────────────────────────────────────────────────────────────
+  // THE STATE ACCESSORS: two members in, one value out
+  // ─────────────────────────────────────────────────────────────────────
+  // Written out four times rather than generated from the enum, because
+  // each one is the only place its `T` is named and a generic version
+  // would hand every caller an `OverrideValue<Object>` to cast. The
+  // repetition is four lines each and it is what keeps `weightState`
+  // typed to `Mass` all the way out to the widget.
+
+  OverrideValue<int> get typicalWattsState =>
+      _stateOf(DeviceOverrideField.typicalWatts, typicalWatts);
+  @internal
+  set typicalWattsState(OverrideValue<int> v) =>
+      _applyState(DeviceOverrideField.typicalWatts, v);
+
+  OverrideValue<Mass> get weightState =>
+      _stateOf(DeviceOverrideField.weight, weight);
+  @internal
+  set weightState(OverrideValue<Mass> v) =>
+      _applyState(DeviceOverrideField.weight, v);
+
+  OverrideValue<Len> get bodyDepthState =>
+      _stateOf(DeviceOverrideField.bodyDepth, bodyDepth);
+  @internal
+  set bodyDepthState(OverrideValue<Len> v) =>
+      _applyState(DeviceOverrideField.bodyDepth, v);
+
+  OverrideValue<Rgb> get accentColorState =>
+      _stateOf(DeviceOverrideField.accentColor, accentColor);
+  @internal
+  set accentColorState(OverrideValue<Rgb> v) =>
+      _applyState(DeviceOverrideField.accentColor, v);
+
+  OverrideValue<T> _stateOf<T>(
+    DeviceOverrideField field,
+    T? value,
+  ) {
+    if (isUnknown(field)) return OverrideUnknown<T>();
+    if (value != null) return OverrideStated<T>(value);
+    return OverrideInherited<T>();
+  }
+
+  void _applyState<T>(
+    DeviceOverrideField field,
+    OverrideValue<T> state,
+  ) {
+    // GOES THROUGH [clear] AND [inherit] rather than writing `cleared`
+    // directly, so the "never both" invariant has exactly one enforcement
+    // point and this setter cannot drift away from it.
+    switch (state) {
+      case OverrideInherited<T>():
+        inherit(field);
+      case OverrideUnknown<T>():
+        clear(field);
+      case OverrideStated<T>(:final value):
+        cleared.remove(field);
+        _write(field, value);
+    }
+  }
 
   // ─────────────────────────────────────────────────────────────────────
   // THE RESOLVERS ARE HERE AND NOWHERE ELSE

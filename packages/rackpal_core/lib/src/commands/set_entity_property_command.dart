@@ -88,6 +88,7 @@ import 'package:rackpal_core/src/model/structure_body.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/mass.dart';
+import 'package:rackpal_core/src/units/rgb.dart';
 
 // Top-level functions rather than closures so the [EntityAccess] instances
 // below can be `const`: a tear-off of a top-level function is a constant
@@ -588,9 +589,76 @@ abstract final class DeviceField {
     touches: EpochMask.structure | EpochMask.meta,
   );
 
+  // ─────────────────────────────────────────────────────────────────────
+  // DOOR 1 (CR-054, DR-098 §11.97.5): the per-instance overrides
+  // ─────────────────────────────────────────────────────────────────────
+  // Each carries an `OverrideValue<T>`, which is all three of DR-098's
+  // states in one value, so an override edit is an ordinary property edit:
+  // same undo entry, same per-property coalescing, same meta touch. The
+  // alternative was a command that wrote a field and a set separately,
+  // which gives `Ctrl+Z` a way to land on "set AND cleared" -- the one
+  // state the codec refuses to load.
+  //
+  // THE KEYS ARE DOTTED AND THAT IS NOT CR-053's DOTTED PATH. CR-053 bans
+  // dotted-path maps as the STORAGE of an override's value. This string is
+  // an undo-coalescing identifier that never reaches a file, and it is
+  // dotted so that `overrides.weight` and a future instance-level `weight`
+  // could not silently share a merge key.
+
+  /// `structure | meta`: mass moves the elevation's load gutter and T6.30's
+  /// MASS column, and the rack subtotal above both.
+  static final overrideWeight =
+      EntityField<DeviceInstance, OverrideValue<Mass>>(
+        access: EntityAccess.device,
+        key: 'overrides.weight',
+        get: (d) => d.overrides.weightState,
+        set: (d, v) => d.overrides.weightState = v,
+        touches: EpochMask.structure | EpochMask.meta,
+      );
+
+  /// `meta`: the draw prints in T6.30 and feeds the chip strip. It moves
+  /// no geometry.
+  static final overrideTypicalWatts =
+      EntityField<DeviceInstance, OverrideValue<int>>(
+        access: EntityAccess.device,
+        key: 'overrides.typicalWatts',
+        get: (d) => d.overrides.typicalWattsState,
+        set: (d, v) => d.overrides.typicalWattsState = v,
+        touches: EpochMask.meta,
+      );
+
+  /// `structure`: depth is geometry, and M5's `RCK-012` reads it against
+  /// the rack's usable depth. Nothing renders it yet, which is why this is
+  /// declared and unused rather than absent: the field exists, and an
+  /// editor that could not reach it would be the gap DR-098's census found.
+  static final overrideBodyDepth =
+      EntityField<DeviceInstance, OverrideValue<Len>>(
+        access: EntityAccess.device,
+        key: 'overrides.bodyDepth',
+        get: (d) => d.overrides.bodyDepthState,
+        set: (d, v) => d.overrides.bodyDepthState = v,
+        touches: EpochMask.structure,
+      );
+
+  /// `structure`: DR-080 §11.79.4 made the accent the device BODY FILL, so
+  /// changing it repaints the elevation. It is not `meta`, because no
+  /// schedule prints a colour.
+  static final overrideAccentColor =
+      EntityField<DeviceInstance, OverrideValue<Rgb>>(
+        access: EntityAccess.device,
+        key: 'overrides.accentColor',
+        get: (d) => d.overrides.accentColorState,
+        set: (d, v) => d.overrides.accentColorState = v,
+        touches: EpochMask.structure,
+      );
+
   /// See [OutletField.all].
   static final List<EntityField<DeviceInstance, Object?>> all = [
     lifecycleStatus,
+    overrideWeight,
+    overrideTypicalWatts,
+    overrideBodyDepth,
+    overrideAccentColor,
   ];
 }
 
