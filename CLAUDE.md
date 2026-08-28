@@ -21,14 +21,38 @@ Fifteen gates. All must pass before a commit. Notes that cost real time:
 - **Anything you leave in `packages/*/tool/` is analyzed.** Scratch scripts inflate
   the info count and fail the gate. Delete them before committing, or keep them in
   the scratchpad.
-- **Test floors** (`tools/ci/run_suite.ps1`): core 3263, text 1, export 189, ui 1162,
-  app 838. Lowering one must be a visible line in a diff. **Re-measure them in any
+- **Test floors** (`tools/ci/run_suite.ps1`): core 3365, text 1, export 189, ui 1213,
+  app 841. Lowering one must be a visible line in a diff. **Re-measure them in any
   commit that adds or removes tests**, which the script says in its own comment and
   which went unheeded until #764 found 3,247 tests of slack under five floors.
+  **The script is the authority and this line is a copy**, which is why the copy was
+  wrong until 2026-08-28: it read 3263 / 1162 / 838 while the script read
+  3365 / 1213 / 841, so a reader trusting this file would have under-counted three
+  suites. CI build 20260827.1 reports every suite **exactly at its floor**, meaning
+  zero slack: the next deleted test fails the gate rather than hiding.
 - **Run suites from the package directory**, not the repo root. Several tests read
   files relative to CWD and fail spuriously otherwise.
 - **Stale `build/unit_test_assets` and `build/flutter_assets` cause phantom asset
   failures.** Delete both if a rootBundle test fails for no reason.
+
+## CI, which now exists
+
+`azure-pipelines.yml` is registered as **definition 1, `RackPal CI (Windows)`**, and
+**it runs**. First execution was 2026-08-27 (build 20260827.1) against `main` at
+`46ec050`: it passed first try, all 24 steps, 22m01s, no fixes. Run 2 took the
+warm-cache path at 18m28s.
+
+- **`main` has a blocking build-validation policy** (policy id 1). It gates PR
+  *completion* only. **A direct push to `main` still lands**, and is gated after the
+  fact by `trigger:`.
+- The pipeline is the same gate set as `run_local.ps1` minus the two local-only
+  checks (`flutter pin`, `tracked sources`), which a clean clone cannot fail by
+  construction.
+- Queue a run against any branch:
+  `az pipelines run --org https://{org}.visualstudio.com --project RackMate --id 1 --branch <name>`
+- **Nothing has ever gone red on the service.** Every gate script was mutation-tested
+  locally, but the service-side failure-reporting path is exercised in the green
+  direction only, so do not yet treat a green Tests tab as proof the reporter works.
 
 ## The corpus, and which document wins
 
@@ -100,9 +124,28 @@ a board task instructing weeks of work that a ruling had abolished.
 
 ## Board (Azure DevOps)
 
-Hierarchy is **Epic → Issue → Task**. Org `https://{org}.visualstudio.com`,
-project `RackPal`, area and iteration `RackPal`, tags `rackpal-sync; task`.
-States: `To Do`, `Doing`, `Done` (there is no `Removed`).
+Org `https://{org}.visualstudio.com`, project **`RackMate`**, area and iteration
+**`RackMate`**, tags `rackpal-sync; task`. States: `To Do`, `Doing`, `Done` (there
+is no `Removed`).
+
+**THE PROJECT IS `RackMate` AND THAT IS DELIBERATE.** DR-096 §11.95.9 rules in
+terms that the rename *"does not rename the Azure DevOps project, the repository or
+the board's area path"*. This file said `RackPal` for all three until 2026-08-28,
+so the sweep had edited a line inside its own ruling's exclusion list, and every
+`az` command built from it fails with `TF200016: project does not exist`.
+
+Hierarchy is **Saga → Epic → Story → Chapter** (DR-097). A **Saga** is a release
+band from roadmap §2: v1, v1.1, v1.2, v2, so moving an Epic between Sagas *is* the
+visible act of an §8.3 amendment. An **Epic** is a milestone or a ruling-born body
+of scope. **An Epic is `Done` when its exit criterion is met (§8.1), not when its
+children run out**; children still open at that moment are re-parented to whoever
+will deliver them, never left under a closed Epic. **No work item may have no
+parent.**
+
+`az` merges tags rather than replacing them: `--fields "System.Tags=..."` uses an
+`add` op, so it can only ever *widen* the tag set. Removing a tag needs the REST
+API. `az devops invoke` cannot help, being broken for the whole `wit` area and
+unable to parse any `-preview.N` api-version.
 
 The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.
 
