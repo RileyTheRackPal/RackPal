@@ -85,6 +85,9 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` �
 * [DR-092, the archetype emits the port §4.3 could not](dr-092-the-archetype-emits-the-port-4-3-could-not.md) - the Matrix checkbox list makes 67 ports and the worked example promises 68; `IR IN` had no producer, and four more of §4.3's clauses turned out to be illustrations.
 * [DR-093, the Switch generator copies the seeded switch](dr-093-the-switch-copies-the-seeded-switch.md) - the specification was already in the repository as `catalog_network.dart`'s N01, and the most valuable thing the census found was the two PoE fields N01 declines to write.
 * [DR-094, the paste sheet declares its separator](dr-094-the-paste-sheet-declares-its-separator.md) - M3's reader refuses tabs on purpose and its own comment names the price; an unmapped column is dropped and counted, because AC-012 rules `TemplateBody` closed.
+* [DR-095, a milestone closes on clauses discharged or parked](dr-095-a-milestone-closes-on-clauses-discharged-or-parked.md) - the habit held for two transitions out of four and nothing had named it; parking costs a ruling ID and a named later milestone, and the ruling was published containing the staleness it exists to catch.
+* [DR-096, the product is RackPal](dr-096-the-product-is-rackpal.md) - a trademark search found RackMate in use by a homelab hardware company, and it ran before anything was bought because RJ-017 said it had to; rename the product, never the record.
+* [DR-097, the tracker grows a fourth level](dr-097-the-tracker-grows-a-fourth-level.md) - Saga to Epic to Story to Chapter, a Saga being a release band so an §8.3 amendment becomes a visible drag; and an Epic is Done when its criterion is met, not when its children run out.
 
 # Not yet written up
 
