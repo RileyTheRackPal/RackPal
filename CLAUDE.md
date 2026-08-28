@@ -142,10 +142,31 @@ children run out**; children still open at that moment are re-parented to whoeve
 will deliver them, never left under a closed Epic. **No work item may have no
 parent.**
 
-`az` merges tags rather than replacing them: `--fields "System.Tags=..."` uses an
-`add` op, so it can only ever *widen* the tag set. Removing a tag needs the REST
-API. `az devops invoke` cannot help, being broken for the whole `wit` area and
-unable to parse any `-preview.N` api-version.
+The process is **`RackPal`** (inherited from Basic), not Basic. `Issue` and `Task`
+still exist but are **disabled**: everything migrated to `Story` and `Chapter` on
+2026-08-28, and the board holds 4 Sagas, 20 Epics, 218 Stories, 524 Chapters with
+zero hierarchy violations and zero parentless items.
+
+Board columns are **To Do / Ready / Doing / Needs You / Done** over the three
+states, since several columns may map to one state. **`Needs You` is for work
+blocked on a human act** (a timed drill, a tape measure, a print run) that no agent
+can move. Swimlanes are `Expedite / (default) / Blocked`. Columns and lanes are a
+team setting, not a ruling, and are reversible in a click.
+
+`az` quirks, each of which cost a round trip:
+
+- **`--fields "System.Tags=..."` merges rather than replaces** (`add` op), so it can
+  only ever *widen* the tag set. To rename a tag: widen every item to the new tag,
+  **then** one `DELETE /_apis/wit/tags/{old}`. Deleting first strips the tag from
+  everything not yet widened.
+- `az devops invoke` is broken for the whole `wit` area (bare `ERROR: 'type'`, even
+  on GET) and cannot parse any `-preview.N` api-version. Use a PAT with `curl` or
+  `Invoke-RestMethod`.
+- **A project's process cannot be changed over REST**; it is web-UI only. A
+  `description` PATCH to the same endpoint returns 202, so a 400 there is the
+  capability, not your credentials.
+- **The process API returns 200 while doing nothing.** It silently ignored two
+  rename attempts. Re-read after every write.
 
 The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.
 

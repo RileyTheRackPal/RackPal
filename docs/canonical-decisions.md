@@ -14034,6 +14034,58 @@ the swimlanes, which are a team board setting, are reversible in a click, and ar
 ID. And it does not settle which Saga the promoted Epics of §11.96.5 belong to beyond what their own
 rulings already say, DR-052 being explicit about v1.2 and the rest defaulting to v1.
 
+**11.96.8 THE MIGRATION RAN ON 2026-08-28, AND WHAT IT FOUND IS WORTH MORE THAN WHAT IT MOVED.**
+`746` items converted, `0` failed. The board now holds **4 Sagas, 20 Epics, 218 Stories and 524
+Chapters**, `766` in total, with **zero hierarchy violations and zero items without a parent**,
+both re-derived from a fresh query rather than inferred from the conversion log.
+
+**The fourth level immediately found fourteen faults the third level had been hiding.** They are
+pre-existing, none was created by this ruling, and not one was visible while the board had three
+levels:
+
+| Fault | Count | What it was |
+|---|---|---|
+| Chapter directly under an Epic | 4 | `#574`, `#576`, `#589`, `#779`, skipping the Story level |
+| Story under a Story | 10 | `#96`'s nine bug-hunt findings, and `#690`'s one |
+
+A three-level board tolerates `Task`-under-`Epic` and `Issue`-under-`Issue` in silence, because
+nothing in it can express that a level was skipped. **Adding a level did not add rules; it made an
+existing rule checkable**, which is §11.94.2's argument arriving in a different subsystem: the
+definition already existed and what was missing was a place it had to be true.
+
+`#574` is the sharpest of them. It is DR-027's **parked** AC-018 PRINTS clause, the worked example
+§11.94.3 uses to justify parking at all, and it was sitting as a Chapter directly under M6 rather
+than as a clause tracker beside every other clause tracker.
+
+**`#779` is a duplicate identifier, found on the way past.** It is titled `M4-K1`, but `#226`
+already is M4-K1 under Story `#182`, and `#779`'s subject, *"a structured wiring run cannot choose
+its landing port"*, has nothing to do with M4-K's panel auto-layout. The title is **left alone as a
+record** and the collision is noted on the item, rather than silently renumbering a Done item and
+destroying the evidence that board IDs have been assigned by hand.
+
+**11.96.9 THREE PLATFORM FACTS, EACH OF WHICH COST A ROUND TRIP, RECORDED SO THE NEXT PERSON DOES
+NOT REDISCOVER THEM.**
+
+**A project's process cannot be changed over the REST API.** The documented
+`PATCH _apis/projects/{id}` with `capabilities.processTemplate` returns `400 "The project update is
+invalid"`. This was **isolated rather than assumed**: the identical `PATCH` carrying only a
+`description` returns `202`, so the endpoint and the credentials are fine and the capability
+specifically is not exposed. It is a web-UI operation, and the four clicks are the only manual step
+in this entire migration.
+
+**The process API returns `200` while doing nothing.** Renaming a derived work item type returned
+`200` with the name unchanged; renaming a state returned `200` with the state unchanged. **A
+success code from this API is not evidence that anything happened**, which is the same lesson the
+non-vacuity floors teach about a green test run, and every step of this migration was therefore
+re-read rather than trusted.
+
+**A custom work item type is created with the state `To do`, and the system types use `To Do`.**
+The casing differs, and ADO will not rename a state, will not accept `To Do` as a new state while
+`To do` exists (it compares case-insensitively), and will accept the pair only if the old state is
+**deleted first and the new one added second**. Caught before the migration ran. Had it not been,
+`766` items would have landed in a state vocabulary that no longer matched `CLAUDE.md`, `docs/12`
+or any prose in this corpus, and every one of those documents would have been quietly wrong.
+
 ---
 
 ## 12. Superseded rulings

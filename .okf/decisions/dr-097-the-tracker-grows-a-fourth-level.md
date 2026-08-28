@@ -89,6 +89,45 @@ from that file failed with `TF200016`. **An exclusion list that is never turned 
 check is a comment.** See [a rule you invent must be checked against the good
 cases](/practices/a-rule-you-invent-must-be-checked-against-the-good-cases.md).
 
+## It ran, and what it found beats what it moved
+
+746 items converted, 0 failed. The board holds **4 Sagas, 20 Epics, 218 Stories and 524
+Chapters**, with **zero hierarchy violations and zero parentless items**, both re-derived
+from a fresh query rather than read off the conversion log.
+
+**The fourth level immediately found fourteen faults the third had been hiding**: four
+Chapters sitting directly under an Epic, and ten Stories parented to another Story. All
+pre-existing. A three-level board tolerates `Task`-under-`Epic` and `Issue`-under-`Issue`
+in silence because **nothing in it can express that a level was skipped**. Adding a level
+added no rules; it made an existing rule checkable, which is
+[DR-095](dr-095-a-milestone-closes-on-clauses-discharged-or-parked.md)'s argument arriving
+in a different subsystem.
+
+The sharpest was `#574`: DR-027's **parked** AC-018 PRINTS clause, the worked example
+DR-095 uses to justify parking at all, sitting as a Chapter under M6 instead of beside
+every other clause tracker.
+
+`#779` turned out to be a **duplicate identifier**, titled `M4-K1` when `#226` already is,
+on an unrelated subject. The title is left alone as a record and the collision noted on the
+item, rather than renumbering a Done item and destroying the evidence that board IDs get
+assigned by hand.
+
+## Three platform facts, each of which cost a round trip
+
+* **A project's process cannot be changed over the REST API.** `PATCH _apis/projects/{id}`
+  with `capabilities.processTemplate` returns 400. Isolated rather than assumed: the same
+  PATCH carrying only a `description` returns 202, so endpoint and credentials are fine and
+  the capability is simply not exposed. Four clicks in the web UI are the only manual step
+  in the whole migration.
+* **The process API returns 200 while doing nothing.** Renaming a derived work item type,
+  and renaming a state, both returned 200 with nothing changed. **A success code from this
+  API is not evidence that anything happened**, which is what the non-vacuity floors say
+  about a green test run. Every step was re-read rather than trusted.
+* **A custom type is born with the state `To do`; the system types use `To Do`.** ADO will
+  not rename a state, and refuses `To Do` as a duplicate while `To do` exists. The only
+  route is delete-then-add, in that order. Caught before the migration; had it not been,
+  766 items would have landed in a vocabulary matching no document in this corpus.
+
 ## What it does not rule
 
 Not the project, repository or area path, which §11.95.9 settled and this only stops
