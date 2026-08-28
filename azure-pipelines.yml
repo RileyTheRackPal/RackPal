@@ -98,23 +98,29 @@
 #   * THE ANALYZER RATCHET: 0 errors, 0 warnings, 173 infos, exactly the pin
 #     in tools/ci/analyze_info_baseline.txt.
 #
-# STILL NOT VERIFIED, and run 1 could not have proved any of it:
+# SETTLED BY RUN 3 (build 20260828.1), which nobody had to manufacture:
 #
-#   * PR VALIDATION END TO END. The `pr:` block below is still IGNORED by
-#     the service for an Azure Repos Git repository. The branch policy the
-#     old text asked for NOW EXISTS -- "Build validation" on `main`,
-#     blocking, policy id 1, created 2026-08-27 -- but NO PULL REQUEST HAS
-#     YET RUN THROUGH IT. A configured policy is not an exercised one, and
-#     the first PR is what turns this line into a measurement.
+#   * PR VALIDATION END TO END. The branch policy ("Build validation" on
+#     `main`, blocking, policy id 1) fired on PR !1, built
+#     `refs/pull/1/merge` -- the MERGE COMMIT, not either branch, which is
+#     the property that makes it worth having -- passed all 24 steps in
+#     18m16s, and the policy evaluation returned `approved`. A configured
+#     policy had been distinguished from an exercised one in this list on
+#     purpose; it is now exercised.
+#     THE `pr:` BLOCK BELOW IS STILL IGNORED by the service and had nothing
+#     to do with any of that.
 #     NOTE WHAT IT DOES NOT DO: it gates PR COMPLETION only. A direct push
 #     to `main` still lands, and is then gated after the fact by `trigger:`.
+#
+# STILL NOT VERIFIED. ONE ITEM REMAINS, AND IT IS THE IMPORTANT ONE:
 #   * A RED RUN ON THE SERVICE. Every gate script was mutation-tested
 #     locally, but no Azure DevOps run has ever FAILED, so the service-side
 #     reporting path (Tests tab, failed-step surfacing) is unexercised in
 #     the failure direction. Green over a broken reporter looks identical to
 #     green over a healthy one from here.
-#     (RUN 2 SETTLED THE WARM-CACHE HALF OF THIS, see below. The RED half
-#     stands: nothing has failed on the service yet.)
+#     FOUR GREEN RUNS DO NOT SHORTEN THIS LIST. They are four samples of
+#     the same path. The number that would settle it is one, and it has to
+#     be red.
 #
 # SETTLED BY RUN 2 (build 20260827.2, branch `ci-pipeline`), which existed
 # to take the branches run 1 could not:
