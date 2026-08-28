@@ -40,6 +40,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/inspector/device_overrides_section.dart';
 import 'package:rackpal_ui/src/inspector/rack_inspector_panel.dart'
     show InspectorDropdown, RackInspectorPanel;
 import 'package:rackpal_ui/src/theme/console_theme.dart';
@@ -71,6 +72,7 @@ class InspectorPanel extends StatelessWidget {
     required this.onApplyPreset,
     required this.onRefuse,
     required this.onSetLifecycle,
+    required this.onSetOverride,
     this.firstFieldFocus,
     super.key,
   });
@@ -89,6 +91,15 @@ class InspectorPanel extends StatelessWidget {
 
   /// Sets `lifecycleStatus` on EVERY selected device as one undo entry.
   final ValueChanged<LifecycleStatus> onSetLifecycle;
+
+  /// Door 1: writes ONE override field on the ONE selected device
+  /// (CR-054, DR-098 §11.97.5). Generic so `Mass` stays `Mass` from the
+  /// control all the way to `SetEntityPropertyCommand`.
+  final void Function<T>(
+    EntityField<DeviceInstance, OverrideValue<T>> field,
+    OverrideValue<T> value,
+  )
+  onSetOverride;
 
   final FocusNode? firstFieldFocus;
 
@@ -119,6 +130,7 @@ class InspectorPanel extends StatelessWidget {
           selectedIds: selectedIds,
           focusedId: focusedId,
           onSetLifecycle: onSetLifecycle,
+          onSetOverride: onSetOverride,
         ),
       },
     );
@@ -133,12 +145,28 @@ class _SelectionSummary extends StatelessWidget {
     required this.selectedIds,
     required this.focusedId,
     required this.onSetLifecycle,
+    required this.onSetOverride,
   });
 
   final RackDocument doc;
   final Set<Uuid> selectedIds;
   final Uuid? focusedId;
   final ValueChanged<LifecycleStatus> onSetLifecycle;
+  final void Function<T>(
+    EntityField<DeviceInstance, OverrideValue<T>> field,
+    OverrideValue<T> value,
+  )
+  onSetOverride;
+
+  /// The single selected device door 1 edits, or null whenever the
+  /// selection is not exactly one device that still exists.
+  DeviceInstance? get _soleDevice {
+    final live = [
+      for (final id in selectedIds)
+        if (doc.devices[id] case final d?) d,
+    ];
+    return live.length == 1 ? live.single : null;
+  }
 
   /// The one status every selected device shares, or null when they
   /// disagree or nothing is selected.
@@ -211,6 +239,32 @@ class _SelectionSummary extends StatelessWidget {
               // screen and the word on the sheet cannot drift apart.
               labelOf: lifecycleLabel,
               onChanged: onSetLifecycle,
+            ),
+          ],
+          // DOOR 1, ON ONE DEVICE ONLY (CR-054, DR-098 §11.97.5). `#183`
+          // describes right-clicking A device, and the amber badge counts
+          // the others on ITS template, so a multi-selection spanning two
+          // templates has no single number to print. The lifecycle picker
+          // above acts on the whole selection and is right to; this says
+          // so and stops, rather than inventing a "Mixed" rendering for
+          // three states across N devices.
+          if (_soleDevice case final one?)
+            Expanded(
+              child: SingleChildScrollView(
+                child: DeviceOverridesSection(
+                  doc: doc,
+                  device: one,
+                  onSetOverride: onSetOverride,
+                ),
+              ),
+            )
+          else if (selectedDevices.length > 1) ...[
+            const SizedBox(height: 18),
+            Text(
+              'Select a single device to edit its properties.',
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
             ),
           ],
           const Spacer(),

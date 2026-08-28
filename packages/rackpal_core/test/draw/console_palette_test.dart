@@ -151,6 +151,27 @@ void main() {
     });
   });
 
+  group('the scope cue (DR-098 §11.97.5)', () {
+    test('SCOPE/INSTANCE is readable as ink on the card it draws on', () {
+      // It is an ink and a border, never a fill, so this is the only bar
+      // it has to clear. A scope fill would need its own ink and its own
+      // pair of assertions.
+      expect(
+        _contrast(kConsoleScopeInstance, kConsoleCard),
+        greaterThanOrEqualTo(4.5),
+      );
+    });
+
+    test('it is NOT a member of the status ladder', () {
+      // A scope is not a severity: nothing is wrong when door 1's badge
+      // shows, it says how far an edit reaches. If this value ever joined
+      // the ladder, PAL-1's 0.10 greyscale floor would start being
+      // measured across a step that means nothing, and a widget reaching
+      // for a severity could pick it up by accident.
+      expect(kConsoleStatusLadder, isNot(contains(kConsoleScopeInstance)));
+    });
+  });
+
   group('what is NOT tested here', () {
     test('the second-cue rule is a widget property, not a colour one', () {
       // §11.89.6 says a status marker must carry a cue that survives its

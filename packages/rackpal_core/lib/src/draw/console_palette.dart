@@ -112,3 +112,28 @@ const List<int> kConsoleStatusLadder = <int>[
   kConsoleCaution,
   kConsoleNominal,
 ];
+
+/// Door 1's scope cue: "this edit touches this device and nothing else"
+/// (CR-054, DR-098 §11.97.5).
+///
+/// A SCOPE IS NOT A SEVERITY, and this constant exists rather than a
+/// reuse of [kConsoleWarning] for exactly that reason. Nothing is wrong
+/// when this badge shows; it is telling the user how far an edit reaches.
+/// `console_theme.dart`'s header already refuses to put status in the
+/// `ColorScheme` so no widget picks a severity up by accident, and reading
+/// amber off the status ladder here would walk straight into the same
+/// mistake from the other side.
+///
+/// IT IS AN INK AND A BORDER, NEVER A FILL. The badge draws on
+/// [kConsoleCard], which is why the only bar this has to clear is 4.5:1
+/// against that surface, asserted in `console_palette_test.dart`. Adding a
+/// scope FILL would need its own ink and its own pair of assertions, and
+/// the badge does not need one to be read.
+///
+/// DR-090 §11.89.6 IS SATISFIED BY THE SENTENCE, not by this value. The
+/// badge always spells out what will and will not change, so deleting this
+/// colour would cost the eye a cue and cost the reader nothing. Doors 2
+/// and 3 get their own tokens when `#231` and `#232` build them; they are
+/// deliberately not defined here in advance, because a colour with no
+/// caller cannot be checked against the thing it draws on.
+const int kConsoleScopeInstance = 0xFFFFC24D;

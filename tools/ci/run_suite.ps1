@@ -130,12 +130,15 @@ $ErrorActionPreference = 'Stop'
 # test had ever named either. That is the same absence the ruling's census
 # found in the shipped corpus, arriving from the other direction.
 # RE-MEASURED 2026-08-28 again at #230 (M4-L1): core 3379 -> 3389, the 10 cases
-# of `test/commands/device_override_edit_test.dart`.
+# of `test/commands/device_override_edit_test.dart`. And once more when the same
+# task shipped its UI half: core 3389 -> 3391 for the two scope-cue cases in
+# `console_palette_test.dart`, and ui 1213 -> 1220 for the seven of
+# `test/inspector/device_overrides_section_test.dart`.
 $SuiteFloors = @{
-    'rackpal_core'   = 3389
+    'rackpal_core'   = 3391
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1213
+    'rackpal_ui'     = 1220
     'rackpal_app'    = 841
 }
 
