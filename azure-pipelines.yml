@@ -113,8 +113,19 @@
 #     reporting path (Tests tab, failed-step surfacing) is unexercised in
 #     the failure direction. Green over a broken reporter looks identical to
 #     green over a healthy one from here.
-#   * A SECOND RUN, i.e. THE WARM-CACHE PATH. Run 1 missed both caches by
-#     construction. The Cache@2 restore branches have never been taken.
+#     (RUN 2 SETTLED THE WARM-CACHE HALF OF THIS, see below. The RED half
+#     stands: nothing has failed on the service yet.)
+#
+# SETTLED BY RUN 2 (build 20260827.2, branch `ci-pipeline`), which existed
+# to take the branches run 1 could not:
+#
+#   * THE WARM CACHE PATH. Both Cache@2 restores HIT. "Install and VERIFY
+#     Flutter" fell from 104s to 7s against a 68s restore, and the whole job
+#     came in at 18m28s against run 1's 22m01s. The verification still ran
+#     on the restored SDK rather than being skipped, which is the property
+#     that makes caching an SDK safe here at all.
+#   * A NON-`main` BRANCH. The definition runs against an arbitrary branch,
+#     which is what makes the branch policy above able to work at all.
 #
 # ----------------------------------------------------------------------
 # GOLDENS ARE NOT IN THIS PIPELINE, AND THAT IS DELIBERATE.
