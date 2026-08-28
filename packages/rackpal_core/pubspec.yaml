@@ -3,7 +3,7 @@ description: >
   RackPal's pure-Dart domain core: units, entities, commands/undo, persistence
   and the shared drawing IR. No Flutter, no dart:ui, no package:pdf (D1, CR-083).
 publish_to: none
-version: 0.4.66
+version: 0.4.68
 
 environment:
   sdk: ^3.12.0

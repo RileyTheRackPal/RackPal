@@ -149,12 +149,20 @@ final class DeviceLoads {
 /// which is why this is not simply short-circuited — a device whose
 /// template is missing but whose weight was typed in by hand is a KNOWN
 /// mass, and dropping it would under-report the rack.
+///
+/// THE PRECEDENCE ITSELF LIVES ON `DeviceOverrides` (DR-098 §11.97.3),
+/// not here. It used to be a `??` in this function, and a `??` cannot
+/// express the third state an override can now hold: that the template's
+/// figure does NOT govern for this instance and the real one is unknown.
+/// Resolving that to null is what routes the device into
+/// `Rollup.unknownCount` rather than into a total, which is G4's whole
+/// argument applied one level down.
 DeviceLoads resolveDeviceLoads(DeviceInstance device, TemplateBody? body) {
   final power = body?.power;
-  final watts = device.overrides.typicalWatts ?? power?.typicalWatts;
+  final watts = device.overrides.resolveTypicalWatts(power?.typicalWatts);
   final override = power?.btuPerHourOverride;
   return DeviceLoads(
-    mass: device.overrides.weight ?? body?.weight,
+    mass: device.overrides.resolveWeight(body?.weight),
     apparentVA: power?.apparentVA,
     typicalWatts: watts,
     btuPerHour:

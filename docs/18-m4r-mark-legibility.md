@@ -105,3 +105,44 @@ Record in `docs/12` §5.3 and in the closing commit:
 - and, if the cap survived, **say so explicitly**: *"seventeen marks, read at 8 pt on \<printer\>,
   and the four suspect neighbourhoods held"*. A drill that passes and is not written down is a drill
   that will be run again.
+
+---
+
+## 7. The run, 2026-08-28: CONFIRMED
+
+**Performed by the user. Board `#757`, closing `#694`.** The cap survives:
+**seventeen marks, read at 8 pt off an ANSI B plot, and the four suspect neighbourhoods
+held.** No mark was redrawn.
+
+| Condition | What it was |
+|---|---|
+| Printer | **HP DesignJet T790**, at 100% scale, no fit-to-page |
+| Paper | **ANSI B**, which is the size AC-054 names |
+| Copy step | **Performed**, on a Brother mono laser, from a section cut out of the plot |
+| Marks redrawn | **None** |
+
+**THE PLOTTER IS AN INKJET AND THE COPY IS WHERE THE TONER CAME FROM**, which is the
+one thing about this run a later reader must not lose. §0 asks for the ANSI B laser
+because that is the machine M6 will decide this on. A DesignJet lays down ink, not
+toner, and ink spreads at a stroke edge where toner does not, so the original plot is
+the SIZE condition met and not the LASER one. The laser condition was met by the
+photocopy, whose output is toner by construction, and which is also the harsher of the
+two: DR-059 capped the set at seventeen against the photocopy specifically.
+
+So the run answers the question DR-059 asked. **What it does not do is discharge
+AC-054's ANSI B laser print**, which M6 still owes and which `M6-J`'s print matrix
+(`#357`) still has to perform. Naming that here rather than in `docs/12` alone, because
+this is the file somebody reads before deciding whether to run it again.
+
+**THE COPY WAS OF A CUT SECTION, NOT THE WHOLE SHEET.** A section carrying enough
+devices to read was cut from the plot and copied, which is the sensible way to get an
+ANSI B plot through a Letter copier and is exactly what a person would do. It does mean
+the copy limb covered the marks in that section rather than all seventeen. The verdict
+above is the operator's, on the neighbourhoods §3 names; a later run that wants
+whole-sheet copy coverage would need a copier that takes ANSI B, which is M6's machine
+and not this one.
+
+**WHAT WOULD REOPEN THIS.** §5's refutation list, unchanged. A mark that dies on a copy
+at a size this run did not reach is still a real finding, and the cap is not the thing
+that would move: DR-059's seventeen is a ruling, and a legibility failure is an argument
+about artwork.

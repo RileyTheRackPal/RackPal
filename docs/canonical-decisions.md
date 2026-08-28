@@ -13926,6 +13926,113 @@ whether RackPal was ever infringing, only that the product will not be called it
 ---
 
 
+### 11.97 DR-098 · An override says three things, and two of its six fields were saying somebody else's
+
+**Settled by the user on 2026-08-28, before any code**, on DR-077's precedent (§11.76): three of
+the questions M4-L could not start without are product decisions rather than authoring, and settling
+them first is what stopped the last issue of this shape from building a save nothing read.
+
+**11.97.1 THE CENSUS IS WHY THERE ARE THREE QUESTIONS AND NOT ONE.** `DeviceOverrides` is declared
+at `device_instance.dart:38` and `PortOverrides` at `port.dart:34`, both since M0, both
+codec-covered, both under CR-117's byte round-trip, and **neither has ever been constructed by
+anything but its own class and the codec**. That much `#183` already said. Three things it did not:
+
+| Found | The measurement |
+|---|---|
+| **Every `overrides` block on disk is empty** | Four starters and six fixtures hold 800+ of them and **zero keys** between them, walking the parsed JSON rather than grepping a field name, because `displayName` also lives inside every `TemplateBody` and the naive grep returns 847 |
+| **Two of six `DeviceOverrides` fields have no reader** | `typicalWatts` and `weight` reach `derived/device_loads.dart:154,157`; `accentColor` reaches `draw/scene/device_layer.dart:148` by DR-080 §11.79.4. `displayName`, `typePrefix` and `bodyDepth` reach nothing |
+| **`PortOverrides` has no reader at all** | Not one of `label`, `connector` or `signalFamily` is read anywhere outside the codec. `connect_target.dart:238` and `schedule.dart:228` both read `PortDef.label` straight off the template |
+
+**The empty-corpus figure is what makes all three of the rulings below free**, and it is DR-079
+§11.78's timing argument arriving a second time in the same words: today this is a field deletion,
+and the first customer file carrying a key makes it a migration.
+
+**11.97.2 `null` WAS DOING TWO JOBS AND THEY ARE DIFFERENT STATEMENTS.** The class header rules that
+*"`null` is the sparse 'not overridden' semantics (CR-053, AC-012)"*. G4 and CR-114 rule that null
+is **unknown, never estimated**. Both are correct about their own subject and they collide on one
+sentinel, with a consequence nobody had written down:
+
+> A generic 2U amplifier template declares 30 lb. The unit actually in this rack is a different
+> model and its weight is not known. **There is no way to say so.** The instance can restate 30 lb,
+> or it can supply a different number it does not have.
+
+`RCK-003` then totals the template's figure as a measurement, and the rack subtotal prints a mass
+with no unknown counted against it. **That is the exact fabricated rollup CR-114 exists to forbid,
+reached through the one door built to let a person correct the record.** It is also the shape
+DR-079 §11.78.2 found on `JacketRating`, where a field mixing four axes could assert `cmp` and
+`plenum: false` at once: a two-state field asked to carry a three-state fact.
+
+**11.97.3 THE RULING ON STATE: an override is tri-state, on every overridable field.** An override
+says exactly one of:
+
+| State | Meaning | On the wire |
+|---|---|---|
+| **inherit** | this instance has no opinion; the template's value governs | the key is **absent** |
+| **set** | this instance states this value | the key is **present** with the value |
+| **unknown** | this instance states that the template's value does **not** govern here, and the true value is not known | named in a present `cleared` list |
+
+**The third state cannot be spelled as an explicit `null`**, because CR-114 rules that unknown
+serializes as an absent key and an absent key already means inherit. So the third state is carried
+by a **present key with a present value**, a `cleared` list naming the fields, absent when empty.
+That keeps CR-117's byte round-trip intact, keeps the encoder's existing skip-nulls behaviour
+(which is what produced 800 empty blocks and is correct), and makes the addition purely additive:
+no `kSchemaVersion` advance, because a file that carries no `cleared` key reads exactly as it does
+today.
+
+**Uniform across all overridable fields, and the uniformity is the ruling rather than a detail.**
+Only `weight` and `typicalWatts` feed a G4 rollup today and `bodyDepth` joins them the moment M5
+builds `RCK-012`. A tri-state on some fields and not others is a class whose next reader has to
+learn which is which, and this repository has already recorded what that costs: §5.3.18's
+`PortDef.gender` is a non-nullable enum with a default, so silence there is a positive claim, and
+the defence named there was *knowing which fields are shaped that way*. Two shapes in one class is
+the thing that makes them unknowable.
+
+**11.97.4 THE RULING ON FIELDS: `displayName` and `typePrefix` are deleted from `DeviceOverrides`.**
+Both facts already have an instance-level home that works. `DeviceInstance.name` is renameable and
+prints in the equipment list's `DESCRIPTION` column; the designator is allocated from the template's
+prefix and `DeviceInstance.designatorLocked` already exists to pin it. Keeping the override beside
+each of them makes **two spellings of one fact**, which is DR-079's `Link.plenum` again: a document
+that can say a thing twice can say it two different ways, and then a reader must be told which wins.
+
+`bodyDepth` **stays**. It has no duplicate anywhere on the instance, and M5's `RCK-012` (front depth
+plus rear depth plus 50 mm allowance against usable depth) is a named consumer that does not exist
+yet. It is declared, unread, and **the tri-state above is what makes it honest to leave unread**:
+absent means inherit, and nothing is asserted.
+
+`DeviceOverrides` therefore ships four fields: `typicalWatts`, `weight`, `bodyDepth`, `accentColor`.
+
+**11.97.5 THE RULING ON SURFACE: door 1 is a section of the inspector column, not a modal.** The
+320px column already exists and already holds the one working device control, the lifecycle picker
+(M3-A/7). Two of the four remaining override fields change something the user is looking at:
+`accentColor` is the device body fill by DR-080 §11.79.4, and `weight` moves the rack's load gutter.
+**A modal over the elevation hides the thing the edit changes**, and the amber scope badge's whole
+job is to say what this edit does not touch, which is a claim best read beside the untouched
+devices.
+
+It also retires `inspector_panel.dart:21`'s deferral **in the file that wrote it**. That header
+rules that *"rendering a plausible-looking device form with no working fields would be worse than
+rendering the honest summary"*, and notes that the lifecycle picker does not break the rule because
+it is the opposite case. Door 1's fields are the same opposite case: every one of them has a reader
+already in the tree.
+
+The builder shell was declined on merit rather than cost. It is a full-screen surface carrying a
+port grid and Quick Add, none of which door 1 may touch, so a per-instance mode would ship a screen
+whose majority is disabled, and a screen mostly disabled reads as broken rather than as scoped.
+
+**11.97.6 WHAT THIS RULING DOES NOT SETTLE, AND `#233` INHERITS IT.** `PortOverrides` has **no
+reader**, so an editor written against it today writes a field nothing consumes: §5.3.13's finding
+exactly, one level down. **M4-L4 therefore owes a resolver before it owes a form.** The two call
+sites that read `PortDef.label` straight off the template (`connect_target.dart:238`,
+`schedule.dart:228`) are its consumers, and they must both come to read the resolved value through
+one function, because a port label that differs between the connect picker and the schedule sheet
+is a document contradicting itself on the one field an installer uses to find the jack.
+
+No ruling is made here on **which** `PortDef` facts are overridable beyond the three declared, nor
+on whether `PortOverrides` takes the same tri-state. Both are `#233`'s to raise, against a resolver
+that exists.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

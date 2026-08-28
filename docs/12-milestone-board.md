@@ -3847,7 +3847,7 @@ multi-select cell, neither dropdown exists, and `device_layer.dart` still fills 
 `palette.deviceFill`. **These rulings are what that work will cite. The work itself is unstarted**,
 and this section is not evidence that any of it is built.
 
-#### 5.3.16 M4-R, the seventeen marks and the accent that ships with them · CODE COMPLETE, DRILL UNRUN · `a915a04`, `95be9e6`, `64b953c`, `e58a922`, `365b3b7`, `77e9cf1`, `e356866`, `42f3391`, `811c5c6`
+#### 5.3.16 M4-R, the seventeen marks and the accent that ships with them · CLOSED · DRILL CONFIRMED 2026-08-28 · `a915a04`, `95be9e6`, `64b953c`, `e58a922`, `365b3b7`, `77e9cf1`, `e356866`, `42f3391`, `811c5c6`
 
 **Nine commits, 2026-08-21, fourteen gates green on each. `#694` had ZERO tasks that morning** and
 now has nine, of which eight are closed and `#757`'s printed half is not. `rackpal_core` went
@@ -3915,11 +3915,24 @@ against the previous green run because the headline named an unrelated pre-exist
 | `#756` | The builder picker draws the marks through the elevation's own geometry (CR-086), never a look-alike |
 | `#757` | The elevation op census, and `docs/18`'s printed drill. **The print is unrun** |
 
-**WHAT M4-R DOES NOT DELIVER.** The drill (`docs/18`) has not been performed, so **whether seventeen
-silhouettes are tellable apart at 8 pt on a photocopy is unmeasured**, and that is the question
-DR-059 capped the set to answer. `#694` stays open and no version bump rides on it: eight tasks
-closed and the issue did not. The previews M4-K owns are still unbuilt, so the builder picker is the
-only surface besides the elevation that draws a mark.
+**THE DRILL RAN ON 2026-08-28 AND THE CAP SURVIVED.** `#757` closes and with it `#694`.
+**Seventeen marks, read at 8 pt off an ANSI B plot, and the four suspect neighbourhoods held. No
+mark was redrawn.** Printed on an **HP DesignJet T790** at 100%, then **photocopied on a Brother
+mono laser** from a section cut out of the plot. Full conditions and their limits are `docs/18` §7.
+
+**THE PLOTTER IS AN INKJET, SO THE COPY IS WHERE THE TONER CAME FROM**, and that is the sentence a
+later reader must not lose. A DesignJet lays down ink, and ink spreads at a stroke edge where toner
+does not, so the plot met the **size** condition and not the **laser** one. The photocopy met the
+laser condition, and it is the harsher of the two anyway: DR-059 capped the set against the
+photocopy specifically, which is exactly the limb that has now been measured. **AC-054's ANSI B
+laser print is still owed and is `M6-J`'s (`#357`)**, unchanged by this run.
+
+The copy covered the marks in the cut section rather than all seventeen, which is the honest way to
+get an ANSI B plot through a Letter copier and is recorded rather than smoothed over. Whole-sheet
+copy coverage needs a copier that takes ANSI B, which is M6's machine.
+
+**WHAT M4-R STILL DOES NOT DELIVER.** The previews M4-K owns are unbuilt, so the builder picker is
+the only surface besides the elevation that draws a mark.
 
 #### 5.3.17 M4-J1, the bank tree, and the field that has never had a reader · CLOSED · `dbd7d19`, `6a4e41c`, `817acfd`, `ab7eeb8`
 
