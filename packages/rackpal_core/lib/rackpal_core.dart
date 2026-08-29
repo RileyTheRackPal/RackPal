@@ -142,6 +142,7 @@ export 'src/draw/brand.dart';
 export 'src/draw/canvas.dart';
 export 'src/draw/console_palette.dart';
 export 'src/draw/contrast.dart';
+export 'src/draw/device_accent.dart';
 export 'src/draw/geometry.dart';
 export 'src/draw/hit_test.dart';
 export 'src/draw/ops.dart';

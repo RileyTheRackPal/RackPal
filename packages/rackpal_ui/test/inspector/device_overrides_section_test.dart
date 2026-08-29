@@ -79,12 +79,39 @@ Finder _segment(String field, String word) => find.descendant(
   matching: find.text(word),
 );
 
+/// SCROLLS FIRST, ALWAYS. The section lives in a `SingleChildScrollView`
+/// inside a 320px column, so ACCENT and BODY DEPTH sit below the fold on a
+/// test-sized window. A `tap` on an off-screen widget derives an offset
+/// that hits something else, the state does not change, and the assertion
+/// that follows blames the feature. That is what happened when these cases
+/// were first written, and it is why every driver here calls
+/// `ensureVisible`.
 Future<void> _tapSegment(
   WidgetTester tester,
   String field,
   String word,
 ) async {
-  await tester.tap(_segment(field, word));
+  final f = _segment(field, word);
+  await tester.ensureVisible(f);
+  await tester.pumpAndSettle();
+  await tester.tap(f);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _tapKey(WidgetTester tester, Key key) async {
+  final f = find.byKey(key);
+  await tester.ensureVisible(f);
+  await tester.pumpAndSettle();
+  await tester.tap(f);
+  await tester.pumpAndSettle();
+}
+
+Future<void> _typeInto(WidgetTester tester, Key key, String text) async {
+  final f = find.byKey(key);
+  await tester.ensureVisible(f);
+  await tester.pumpAndSettle();
+  await tester.enterText(f, text);
+  await tester.testTextInput.receiveAction(TextInputAction.done);
   await tester.pumpAndSettle();
 }
 
@@ -167,12 +194,7 @@ void main() {
     // transitions instead of one.
     await _selectDevice(tester, 1);
     await _tapSegment(tester, 'MASS', 'Value');
-    await tester.enterText(
-      find.byKey(const ValueKey('override-value-MASS')),
-      '30',
-    );
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
+    await _typeInto(tester, const ValueKey('override-value-MASS'), '30');
 
     final before = _massRollup(tester);
     expect(
@@ -247,13 +269,112 @@ void main() {
           'an override or an undo entry',
     );
 
-    await tester.enterText(box, '42');
-    await tester.testTextInput.receiveAction(TextInputAction.done);
-    await tester.pumpAndSettle();
+    await _typeInto(tester, const ValueKey('override-value-MASS'), '42');
 
     expect(
       _device(tester, 'UPS-1').overrides.weightState,
       isA<OverrideStated<Mass>>(),
+    );
+  });
+
+  testWidgets('ACCENT offers the SAME eight swatches the builder does, '
+      'from one list', (tester) async {
+    // A swatch a person can pick on a template and not on an instance
+    // reads as a bug in whichever surface they met second. The builder's
+    // private `_swatches` is deleted and both now read
+    // `kDeviceAccentSwatches`, so this asserts the count against the
+    // shared list rather than against a literal eight.
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    await _selectDevice(tester, 1);
+    await _tapSegment(tester, 'ACCENT', 'Value');
+
+    expect(
+      find.byKey(const ValueKey('override-swatches-ACCENT')),
+      findsOneWidget,
+    );
+    for (final c in kDeviceAccentSwatches) {
+      expect(
+        find.byKey(ValueKey('override-swatch-${c.argb}')),
+        findsOneWidget,
+        reason: 'swatch ${c.argb.toRadixString(16)} is missing',
+      );
+    }
+  });
+
+  testWidgets('PICKING AN ACCENT REPAINTS THE DEVICE BODY, which is what '
+      'makes it worth having in the column rather than a modal', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    await _selectDevice(tester, 1);
+    await _tapSegment(tester, 'ACCENT', 'Value');
+
+    // The third swatch, chosen because the FIRST is pure black and would
+    // make "did the fill change" ambiguous against a dark theme.
+    final pick = kDeviceAccentSwatches[2];
+    await _tapKey(tester, ValueKey('override-swatch-${pick.argb}'));
+
+    expect(_device(tester, 'UPS-1').overrides.accentColor, pick);
+    expect(
+      _device(tester, 'UPS-1').overrides.accentColorState,
+      OverrideStated<Rgb>(pick),
+    );
+  });
+
+  testWidgets('an UNKNOWN accent resolves to nothing, exactly as an '
+      'inherited one does, and the segment is where the difference is '
+      'readable', (tester) async {
+    // The one place two of the three states are indistinguishable ON THE
+    // CANVAS, and it is deliberate: a fill has no way to draw an unknown.
+    // The DOCUMENT still tells them apart, which is what this asserts.
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    await _selectDevice(tester, 1);
+    await _tapSegment(tester, 'ACCENT', 'Unknown');
+
+    final o = _device(tester, 'UPS-1').overrides;
+    expect(o.accentColorState, const OverrideUnknown<Rgb>());
+    expect(
+      o.resolveAccentColor(null),
+      isNull,
+      reason:
+          'unknown resolves to null, so the layer falls through to the '
+          'palette default',
+    );
+    expect(
+      o.accentColorState,
+      isNot(const OverrideInherited<Rgb>()),
+      reason:
+          'the document must still distinguish the two states even '
+          'though the canvas cannot',
+    );
+  });
+
+  testWidgets('BODY DEPTH edits, and says plainly that nothing reads it '
+      'yet', (tester) async {
+    // A control whose effect is invisible is what `inspector_panel.dart`'s
+    // deferral warns against. The answer is not to hide the field, whose
+    // value is real and round-trips, but to say where its reader is.
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    await _selectDevice(tester, 1);
+    await _tapSegment(tester, 'BODY DEPTH', 'Value');
+    await _typeInto(
+      tester,
+      const ValueKey('override-value-BODY DEPTH'),
+      '14.5',
+    );
+
+    expect(_device(tester, 'UPS-1').overrides.bodyDepth, isNotNull);
+    expect(
+      find.text('Read by the depth-clearance rule, which ships in M5.'),
+      findsOneWidget,
     );
   });
 

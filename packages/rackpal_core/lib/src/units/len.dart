@@ -28,6 +28,20 @@ extension type const Len(int nm) {
   factory Len.fromMillimetres(num millimetres) =>
       Len((millimetres * nmPerMillimetre).round());
 
+  /// A length authored in INCHES, which is what a US installer types for a
+  /// device depth.
+  ///
+  /// Here for the same reason as [Len.fromMillimetres] and
+  /// `Mass.fromPounds`: door 1's inspector has to turn a typed `14.5` into
+  /// nanometres when the project is on imperial units, and a
+  /// `* 25_400_000` at the call site is a literal no reviewer can check
+  /// against the unit it claims to convert.
+  ///
+  /// NOT for rack geometry. RU pitch and panel clearances are CR-001
+  /// integer arithmetic over exact constants; this is a display-entry
+  /// helper and rounds to the nearest nanometre.
+  factory Len.fromInches(num inches) => Len((inches * nmPerInch).round());
+
   static const Len zero = Len(0);
 
   /// Exact nanometres per inch.
