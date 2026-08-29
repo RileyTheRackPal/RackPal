@@ -14195,6 +14195,79 @@ that exists.
 
 ---
 
+### 11.98 DR-099 · Door 2 moves the device it was opened from, and the Device Manager holds one draft
+
+**Settled by the user on 2026-08-29, before any code**, on DR-077's and DR-098's precedent. Two
+questions M4-L2 could not start without, both of which are product decisions with a trap on each
+side rather than authoring work.
+
+**11.98.1 THE FIRST QUESTION IS ONE AC-041 CREATED AND DID NOT NOTICE.** AC-041 cut the Update
+Manager to v1.2 and made v1 **copy-on-place**: `templateRef{templateId, version, contentHash}` is
+recorded, the snapshot is embedded, and *"placed instances untouched until opted in"*. That is the
+right cut and nothing here reopens it.
+
+What it does not say is what happens to **the instance the gesture was invoked from**. CR-054's
+door 2 is *"edit the template, forking version+1"*, and `#231` restates AC-041's clause verbatim. Read
+literally, the sequence is:
+
+> Right-click `AMP-1`. Choose **Edit the template**. Change the wattage. Save. The template is now
+> v2, `AMP-1` is still on v1, and **nothing in v1 of this product can ever move it**, because the
+> mechanism that would is v1.2's.
+
+**A menu item invoked on a device that provably cannot affect that device is not a feature, it is a
+misunderstanding waiting to happen**, and the user's next act is to try it again. This is the same
+class as DR-077 §11.76's finding, where a template saved in the builder could not reach a rack: the
+machinery was right and the route was missing.
+
+**11.98.2 THE RULING ON BINDING: the originating instance rebinds; every other instance stays
+pinned.** Choosing door 2 **on a device** is itself the opt-in AC-041 asks for. The user did not
+open a library manager; they pointed at one device and asked for its template to change. Copy-on-place
+holds exactly where AC-041 put it, on the instances nobody pointed at.
+
+**AC-041 IS NOT AMENDED AND THIS IS NOT §8.3 SCOPE.** No update mechanism is built, no diff, no
+per-cable remap, no conflicts-with-local-edits merge: the five things AC-041 cut stay cut. One
+device's `templateRef.version` advances at the moment its own user asks, which is a rebind of one
+reference and not a package manager. The passive stale-fork badge (CR-062, `fork_status.dart`) is
+untouched and still describes every device that did not rebind.
+
+**THE ALTERNATIVE WAS OFFERED AND DECLINED ON ITS COPY.** Leaving everything pinned and explaining
+it on save is defensible and is AC-041's letter; it was declined because the sentence it requires
+(*"Saved as v2. Devices stay on the version they were placed at until v1.2"*) is a permanent apology
+printed at the moment of success, and because the commonest expectation of the gesture would be
+wrong every time. Removing door 2 from the device menu entirely was also offered and declined: it
+would leave CR-054's three doors unreachable from one place, which is the whole shape CR-054 rules.
+
+**11.98.3 THE SECOND QUESTION IS A DATA-LOSS TRAP, and it is in the app shell rather than the
+model.** The Device Manager is one of six views and keeps **one** draft alive across view switches:
+`app_shell.dart` records that an `IndexedStack` was tried at DR-091 and reverted, and that the draft
+survives on `AutomaticKeepAliveClientMixin` instead. Door 2 has to open a template into that one
+surface, so a user with unsaved work in it is one menu click from losing it.
+
+**11.98.4 THE RULING ON COLLISION: door 2 refuses, shows the draft, and says why.** It switches to
+the Device Manager and, when a dirty draft is open, loads nothing:
+
+> **Finish or discard this template first.**
+
+`TemplateEditSession` already tracks `isDirty` and `editsSinceSave`, so the check costs nothing and
+reads a value the session maintains rather than a second notion of dirtiness.
+
+**NO DISCARD PROMPT, AND THE REASON IS WHERE PEOPLE CLICK.** A dialog offering *"discard and open the
+other one"* is the shape people dismiss by reflex, and a discarded draft has **no recovery path**:
+the session is a deep copy that exists only in memory, so there is nothing for `Ctrl+Z` to reach and
+nothing on disk to reopen. A refusal costs a user with a forgotten draft one extra step and can
+destroy nothing. A second builder window was declined as the largest change for the least return:
+two live `TemplateEditSession`s and two undo stacks would put CR-106's one-machinery-three-stacks
+reasoning back on the table for a collision that a guard closes in one branch.
+
+**11.98.5 WHAT THIS RULING DOES NOT SETTLE.** It says nothing about door 3, whose rebind is already
+CR-054's own text and which is `#232`'s. It does not decide what the Device Manager shows when door 2
+is invoked twice on the same template, because the second invocation finds the first still open and
+the guard above answers it. And it does not give the stale-fork badge a surface: `fork_status.dart`
+has had its rule since M4-C and a widget is still nobody's, which is recorded here so the next reader
+does not go looking for one.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

@@ -89,6 +89,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` ย
 * [DR-096, the product is RackPal](dr-096-the-product-is-rackpal.md) - a trademark search found RackMate in use by a homelab hardware company, and it ran before anything was bought because RJ-017 said it had to; rename the product, never the record.
 * [DR-097, the tracker grows a fourth level](dr-097-the-tracker-grows-a-fourth-level.md) - Saga to Epic to Story to Chapter, a Saga being a release band so an ยง8.3 amendment becomes a visible drag; and an Epic is Done when its criterion is met, not when its children run out.
 * [DR-098, an override says three things](dr-098-an-override-says-three-things.md) - `null` was carrying both G4's "unknown" and the class's own "not overridden", so a device could not disown a template's weight without inventing a replacement; two override fields duplicating instance facts are deleted, and door 1 lands in the inspector column.
+* [DR-099, door 2 moves the device it was opened from](dr-099-door-2-moves-the-device-it-was-opened-from.md) - AC-041's copy-on-place left one instance unaccounted for, the one the gesture was invoked on; and the Device Manager's single draft is guarded by a refusal rather than a discard prompt, because a discarded draft has no recovery path.
 
 # Not yet written up
 
