@@ -1,0 +1,80 @@
+---
+type: Gate
+title: The pipeline, and what a green run does not prove
+description: >-
+  azure-pipelines.yml is definition 1 on Azure DevOps and it runs. It ran first on
+  2026-08-27 and passed first try, which is what mutation-testing every gate script
+  locally buys. What it still cannot tell you is whether it can report a failure,
+  because nothing has ever failed on the service.
+tags: [gate, ci, azure-devops, pipeline, non-vacuity, dr-017, m0, m8]
+timestamp: 2026-08-27T00:00:00Z
+status: live
+---
+
+# The pipeline, and what a green run does not prove
+
+Board `#567`. `azure-pipelines.yml` is registered as **definition 1, `RackPal CI
+(Windows)`**, on `https://{org}.visualstudio.com`, project `RackMate`.
+
+## It ran, and the first run is the interesting one
+
+The file carried the sentence *"NO AZURE DEVOPS RUN HAS EVER EXECUTED IT"* for three and a
+half weeks. Because that sentence stood unedited, the gap was cheap to find rather than
+being something a reader had to infer.
+
+Build **20260827.1**, against `main` at `46ec050`: **passed first try**, all 24 steps,
+22m01s, zero fixes. Six named unknowns became measurements in one run: the YAML schema was
+accepted unmodified, the pinned Flutter archive resolved, `windows-2022` still builds
+desktop Windows, and wall clock is 22 minutes rather than an estimate.
+
+**A 541-line pipeline passing on attempt one is not luck.** Every gate script had been
+mutation-tested on a developer machine first: deliberately broken, observed to fail, then
+restored. The cost was paid before the run, which is why the run was boring.
+
+Build **20260827.2** then took the branches run 1 could not, hitting both caches (Flutter
+install 104s to 7s) and running against a non-`main` branch.
+
+## What it defends
+
+| Gate | Evidence from run 1 |
+|---|---|
+| Analyzer ratchet | 0 errors, 0 warnings, **173 infos, exactly the pin** |
+| Formatter (DR-017) | clean |
+| PAL-1, palette parity, registry parity | pass |
+| JUnit converter self-test | pass, and it runs **before** the suites |
+| Five suites | **5,609 cases, 0 failed, 0 errored, 0 skipped** |
+| Non-vacuity floors | every suite **"exactly at it"** |
+| Windows release output | passes over what the build actually produced |
+
+**"Exactly at it" on all five floors is the number worth keeping.** Zero slack means the
+next deleted test fails the gate on the next run, rather than accumulating until somebody
+goes looking, which is what `#764` had to do after finding 3,247 tests of slack.
+
+## What it deliberately does not defend
+
+* **Goldens.** There are none, and standing them up inside a CI task would produce a corpus
+  blessed by nobody. There is deliberately no `--exclude-tags golden` either, so the first
+  golden anybody writes runs in the ordinary suites rather than being silently skipped.
+* **"The app opens the four starter projects."** Not runnable headless without an
+  `integration_test` target. What *is* checked is one step short and labelled as such: the
+  four starters were packaged into the bundle and are byte-intact there.
+* **Anything but Windows.** A green Linux job would say nothing about a Windows desktop
+  application, and several suites are Windows-specific by design.
+
+## The blind spot that matters
+
+**Nothing has ever gone red on the service.** Every gate script was mutation-tested
+*locally*, but no Azure DevOps run has ever failed, so the service-side reporting path is
+exercised in the green direction only.
+
+Green over a broken reporter and green over a healthy one look identical from here. This is
+the same shape as the non-vacuity problem the floors exist to solve, one level up: a run
+that reports nothing wrong is not evidence that it could. Until a genuine failure is
+observed on the service, **a green Tests tab is a weaker claim than it looks**.
+
+## PR validation is configured, not exercised
+
+The `pr:` block in the YAML is **ignored** for an Azure Repos Git repository; PR triggers
+come from a branch policy. That policy now exists (Build validation on `main`, blocking,
+policy id 1), **but no pull request has yet run through it**, and it gates PR *completion*
+only. A direct push to `main` still lands and is gated after the fact.
