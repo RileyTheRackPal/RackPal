@@ -1,5 +1,47 @@
 # Update Log
 
+## 2026-08-29
+
+* **Updated**: [re-read a task against canon](/practices/re-read-a-task-against-canon.md)
+  grows a second arm. The practice was written for tasks whose QUESTION a ruling
+  had already answered; M4-M1 (`#234`) is a task whose WORK another task had
+  already done. `2180a35` (M3-F/4, `#162`) made the file dialog's filter a named
+  kind on the wire before M4 opened, and said so in its subject line. **Canon was
+  not stale and the grep this practice prescribes would have come back clean**:
+  the wrong document was `docs/13`'s D13 row, and the board item was a
+  transcription of it. So there are two greps and they ask different questions:
+  §11 for *has this been decided*, and the file the task names for *has this been
+  built*.
+* **Note**: **A DERIVED DOCUMENT THAT TRACKS THE TREE IS A TASK GENERATOR, AND
+  THIS ONE HAD NO GATE.** `docs/13`'s own preamble rules that *"a row that has
+  stopped describing the tree is worse than a missing row, because it is
+  trusted"*. D13 is the first row to actually do it, and it was trusted exactly
+  as predicted: two board items were opened against it and a third transcribed
+  it. It was wrong in **all four** of its clauses, including naming an extension
+  DR-015 had renamed. Cleared at `#234` with the measurement in `docs/13` §2.3.
+* **Note**: **THE GATE WORTH HAVING WAS THE ONE NOBODY HAD ASKED FOR.** The kind
+  table's real hazard is silent: an unrecognised `FileDialogType` does not throw
+  and does not open an empty dialog, it falls back to the project filter, so an
+  `Export device template…` would offer `*.rmpj` and read as a mis-wired feature
+  rather than an un-taught runner. The new assertion is that every Dart enum
+  value has a `kFileKinds` row. Mutation-verified four ways, and two of the
+  assertions it replaced were
+  [mechanism assertions](/practices/assert-the-artifact-not-the-mechanism.md)
+  pinned to the exact text of a ternary, which is why the third kind broke them.
+* **Note**: **THIS BUNDLE'S LOG SKIPPED 2026-08-27 AND 2026-08-28, AND THE GAP IS
+  RECORDED RATHER THAN BACKFILLED.** The CONCEPTS landed:
+  [DR-095](/decisions/dr-095-a-milestone-closes-on-clauses-discharged-or-parked.md),
+  [DR-096](/decisions/dr-096-the-product-is-rackpal.md),
+  [DR-097](/decisions/dr-097-the-tracker-grows-a-fourth-level.md),
+  [DR-098](/decisions/dr-098-an-override-says-three-things.md),
+  [DR-099](/decisions/dr-099-door-2-moves-the-device-it-was-opened-from.md) and
+  [the pipeline itself](/gates/the-pipeline-itself.md) are all present and
+  current. Only the dated narrative is missing, for M4-R, M4-J, M4-L and CI going
+  live at `v0.4.66` through `v0.4.73`. **Reconstructing a week of findings from
+  commit messages would produce a plausible record rather than a true one**,
+  which is the failure the 2026-08-25 entry already names about transcribing
+  one's own earlier prose. The entries are owed by whoever ran that work.
+
 ## 2026-08-26 (thirteenth entry)
 
 * **Added**: [DR-092](decisions/dr-092-the-archetype-emits-the-port-4-3-could-not.md),
