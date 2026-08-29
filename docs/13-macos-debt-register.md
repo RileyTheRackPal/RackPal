@@ -63,7 +63,7 @@ Cost column is an **estimate**, not a measurement, unless marked otherwise.
 | **D10** | **`window_manager` / `screen_retriever_windows`** for geometry restore. `window_manager` is cross-platform; the pinned `screen_retriever_windows` transitive is not | `pubspec.yaml:98`, `:106` | hours |
 | **D11** | **A second print test matrix.** AC-054's greyscale laser check is a physical act on a physical printer, and no agent can perform it | §10.10 | manual |
 | **D12** | **Path-length semantics.** `exceedsWindowsMaxPath` is already gated behind `isWindows` (`atomic_writer.dart:464`), so the mechanism exists; macOS needs its own answer (4096 bytes, not 259 chars) | `atomic_writer.dart` | hours |
-| **D13** | **The file dialog takes no file-type filter.** `COMDLG_FILTERSPEC` is hard-coded to `.rackpal` and `SetDefaultExtension(L"rackpal")` fires on **both** dialogs, inside `ConfigureDialog`, which both branches call. The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`. **Add the filter argument BEFORE D2**, or D2 reimplements the narrow contract and then widens twice. **M3-F (CSV import) is what forces it**: see §5 | `file_dialog_channel.cpp:107-123, :216-218`; `file_picker.dart:156, :164` | hours, but **before D2** |
+| **D13** | ~~**The file dialog takes no file-type filter.** `COMDLG_FILTERSPEC` is hard-coded to `.rackpal` and `SetDefaultExtension(L"rackpal")` fires on **both** dialogs, inside `ConfigureDialog`, which both branches call. The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`.~~ **CLEARED at `2180a35` (M3-F/4, `#162`), CONFIRMED and WIDENED at M4-M1 (`#234`). See §2.3.** Dart sends a KIND and the runner keeps a table of them. **This row was three separate false statements about the tree for the whole of M4**, which is the failure §2's own preamble names: a stale row is trusted. The instruction that survives is the one aimed at D2: **the macOS dialog must be born taking the kind**, which is `#457` | `file_dialog_channel.cpp` `kFileKinds`; `file_picker.dart` `enum FileDialogType` | **done**, `#457` outstanding |
 | **D14** | **Locale-dependent sheet size.** docs/08:509 requires *"Non-US platform locale substitutes A4/A3"*. Unimplemented, `SheetSize` has two values, neither A4. **Not macOS-specific**: a Windows machine in a metric locale hits it, which is why it went unnoticed. Recorded here because it is the one genuinely platform-dependent input to PDF geometry, and §2's closing paragraph was worrying about floats and fonts while this sat unlisted | docs/08:509; `sheet_def.dart:38-45` | hours |
 | **D15** | **The PDF rasteriser for the Plan view's underlay import**, and it is the entry **DR-018 §11.17.4 predicted verbatim** before there was a ruling to hang it on: *"`docs/13` gains an entry if the chosen import path is a Windows-only rasterizer, because DR-009 puts macOS in v1."* DR-029 buys PDF import, so it does. **Cost it WITH D9, not twice**: D9 already contemplates vendoring pdfium per platform (CR-100) for the print-preview button, and if pdfium is chosen here the two become one vendoring problem paid once. The alternative, `Windows.Data.Pdf` (WinRT), has **no third-party dependency and no macOS answer at all**, so it converts a shared cost into a per-platform one. **Note what changes and what does not**: a PDF is rasterised at **import** and the member written to the zip is still PNG or JPEG, so `PlanUnderlay.format` keeps two values and `rackpal_core` needs no decoder (DR-029 §11.28.12). The debt is an import path, not a model change. **`PLAN-D/1` picks the rasteriser and re-costs this row against the tree** | canon §11.28.5, §11.36.8; docs/15 §2; the D9 row below | **days, and it moves D9's schedule from M8 to before M6** |
 
@@ -154,6 +154,43 @@ platforms; and whether `pwsh` runs the gate suite unmodified (D5).
 > platform-dependent input to PDF geometry, it is unimplemented (`SheetSize` has two values, neither
 > A4), and it is **not macOS-specific**: a Windows machine in Germany hits it. It belongs on this
 > list and was missing from it.
+
+### 2.3 D13 is CLEARED, and it had been cleared for weeks (`2180a35`, `#162`; confirmed `#234`)
+
+**THE ROW WAS WRONG IN EVERY CLAUSE IT MADE, AND THAT IS THE FINDING.** §2's preamble rules that
+*"a row that has stopped describing the tree is worse than a missing row, because it is trusted"*.
+D13 is the first row to actually do it, and it was trusted: `#234`'s board text is a transcription
+of it, and `#475` and `#476` were opened against it.
+
+Measured against `file_dialog_channel.cpp` on 2026-08-29, clause by clause:
+
+| The row said | The tree says |
+|---|---|
+| *"takes no file-type filter"* | `StringArg(args, "fileType")` has been read since `2180a35` |
+| *"hard-coded to `.rackpal`"* | `.rackpal` has not been the project extension since DR-015 (`dc22ddc`), and the entry reads `*.rmpj;*.rackpal` |
+| *"`SetDefaultExtension(L"rackpal")` fires on both dialogs"* | it fires once, on the value the chosen kind carries |
+| *"The Dart interface passes only `confirmButtonText`, `suggestedName`, `initialDirectory`"* | `FileDialogType` is a fourth argument and has been since `2180a35` |
+
+**WHAT M4-M1 ACTUALLY ADDED, stated so this closure is not read as more than it is.** The
+parameterisation was M3-F/4's. `#234` added the `device` kind that `.rmdx` needs, turned two
+parallel ternaries into one table so the filter and the default extension are a single row, and
+added the gate that had been missing: **every `FileDialogType` value must have a row in
+`kFileKinds`**. That gate is the one worth having, because the failure it catches is silent. An
+unrecognised kind does not throw and does not open an empty dialog; it falls back to the project
+filter, so an `Export device template…` would offer `*.rmpj` and read as a mis-wired feature
+rather than an un-taught runner.
+
+**HOW A ROW STAYS WRONG FOR WEEKS.** `2180a35`'s message says *"closing D13 before D2"* in its
+subject line, so the author knew which register row they were closing and did not edit the
+register. The register is not under any gate: nothing compares a row against the tree, and
+`re-read a task against canon` is aimed at rulings rather than at source. **The countermeasure is
+not another document.** It is that a task written from an absence gets one grep for its own nouns
+in the file it names, at pickup and not only at decomposition. One `grep -n fileType` on the file
+`#234` names in its own text would have found this in a second.
+
+**`#457` (D2/3) is untouched and stays open.** There is no macOS runner, so nothing has carried the
+kind across. The instruction it inherits is now sharper than the one D13 wrote: macOS implements
+the same **table**, not the same argument, and `NSOpenPanel` takes the row's extension directly.
 
 ---
 
@@ -287,7 +324,9 @@ answering it means writing a golden-bytes comparison **and** having D4's macOS j
 The text pipeline is already platform-independent by construction; the concrete risk that remains
 is **D14**, and that one is not even macOS-specific.
 
-**Two ordering consequences worth acting on before the big items.** **D13 before D2**: widening
-the dialog contract after the macOS implementation exists means writing it twice. And **the §3.1
-gate before M3-C**, which is the largest remaining binding surface in v1 and lands in the package
-the gate does not cover.
+**Two ordering consequences worth acting on before the big items.** ~~**D13 before D2**: widening
+the dialog contract after the macOS implementation exists means writing it twice.~~ **BOUGHT, and
+earlier than this paragraph knew** (§2.3): `2180a35` made the filter a kind before any macOS runner
+existed, and `#234` made the kinds a table. What D2 inherits is a shape rather than a warning, and
+`#457` is where it gets carried across. And **the §3.1 gate before M3-C**, which is the largest
+remaining binding surface in v1 and lands in the package the gate does not cover.

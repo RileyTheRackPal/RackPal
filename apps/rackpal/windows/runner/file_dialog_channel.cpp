@@ -120,27 +120,77 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
   // could only be reached through "All files" and a Save As of anything
   // else acquired a project extension.
   //
-  // Dart sends a KIND (`project`, `csv`) and never a `COMDLG_FILTERSPEC`,
-  // and that is the decision D13 asks to get right the first time,
-  // because D2 is the macOS port and would otherwise reimplement a narrow
-  // contract and widen it twice. A Win32 filter string does not port:
-  // `NSOpenPanel` wants `UTType`s or bare extensions, so a raw pattern
-  // would have to be parsed back apart on the other platform. A kind maps
-  // onto both, and an unknown kind falls back to the project filter
-  // rather than showing the user nothing.
-  const std::optional<std::wstring> file_type = StringArg(args, "fileType");
-  const bool csv = file_type.has_value() && *file_type == L"csv";
+  // Dart sends a KIND (`project`, `csv`, `device`) and never a
+  // `COMDLG_FILTERSPEC`, and that is the decision D13 asks to get right the
+  // first time, because D2 is the macOS port and would otherwise
+  // reimplement a narrow contract and widen it twice. A Win32 filter string
+  // does not port: `NSOpenPanel` wants `UTType`s or bare extensions, so a
+  // raw pattern would have to be parsed back apart on the other platform. A
+  // kind maps onto both, and an unknown kind falls back to the project
+  // filter rather than showing the user nothing.
+  //
+  // ─────────────────────────────────────────────────────────────────────
+  // M4-M1: A TABLE, BECAUSE THE THIRD KIND IS WHERE A TERNARY GOES WRONG
+  // ─────────────────────────────────────────────────────────────────────
+  // Board `#234`. Two kinds fit in `csv ? a : b` and three do not: the
+  // filter choice and the default extension are TWO ternaries over one
+  // condition, so a third kind nests both and the two can then disagree
+  // about what `device` means. That is the same defect D13 closed, one
+  // spelling further on — it fired `SetDefaultExtension(L"rmpj")` on a
+  // dialog whose filter said something else.
+  //
+  // So the pair is one ROW, and adding a kind is adding a row rather than
+  // editing two expressions. `kFileKinds[0]` is the fallback, which is why
+  // `project` is first and why the loop below can simply not find a match.
+  struct FileKind {
+    const wchar_t* name;                // the Dart enum name, on the wire
+    const COMDLG_FILTERSPEC* filters;
+    UINT filter_count;
+    const wchar_t* default_extension;   // no `*.`, unlike the pattern
+  };
 
-  COMDLG_FILTERSPEC project_filter[] = {
+  // `.rmpj` has no registered UTI and no MIME type, so a filter is an
+  // extension and a label, and `.rmdx` is in the same position.
+  static const COMDLG_FILTERSPEC kProjectFilters[] = {
       {L"RackPal project", L"*.rmpj;*.rackpal"},
       {L"All files", L"*.*"},
   };
-  COMDLG_FILTERSPEC csv_filter[] = {
+  static const COMDLG_FILTERSPEC kCsvFilters[] = {
       {L"Comma-separated values", L"*.csv"},
       {L"All files", L"*.*"},
   };
-  hr = csv ? dialog->SetFileTypes(ARRAYSIZE(csv_filter), csv_filter)
-           : dialog->SetFileTypes(ARRAYSIZE(project_filter), project_filter);
+  // ONE ENTRY AND NO LEGACY SPELLING, unlike the project row above: no
+  // build has ever written a device template, so there is nothing on any
+  // disk for a second spelling to rescue (docs/06 §7.3).
+  static const COMDLG_FILTERSPEC kDeviceFilters[] = {
+      {L"RackPal device template", L"*.rmdx"},
+      {L"All files", L"*.*"},
+  };
+
+  static const FileKind kFileKinds[] = {
+      {L"project", kProjectFilters, ARRAYSIZE(kProjectFilters), L"rmpj"},
+      {L"csv", kCsvFilters, ARRAYSIZE(kCsvFilters), L"csv"},
+      {L"device", kDeviceFilters, ARRAYSIZE(kDeviceFilters), L"rmdx"},
+  };
+
+  const std::optional<std::wstring> file_type = StringArg(args, "fileType");
+  const FileKind* kind = &kFileKinds[0];
+  if (file_type.has_value()) {
+    for (const FileKind& candidate : kFileKinds) {
+      if (*file_type == candidate.name) {
+        kind = &candidate;
+        break;
+      }
+    }
+  }
+
+  // BOTH PROJECT SPELLINGS IN ONE ENTRY, semicolon-separated, and one entry
+  // rather than two on purpose (DR-015). Two entries would make a user who
+  // has `.rackpal` files from an earlier build switch the filter combo to
+  // see them, which is a discoverability cliff for the exact people least
+  // likely to know the extension changed. One entry shows both in Open, and
+  // `SetDefaultExtension` below still decides what a Save gets.
+  hr = dialog->SetFileTypes(kind->filter_count, kind->filters);
   if (FAILED(hr)) {
     return hr;
   }
@@ -154,7 +204,7 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
   // bare name. It also leaves a `.rackpal` the user is saving over
   // exactly where it is — the default extension applies to a name that has
   // none, not to one this app still recognises.
-  hr = dialog->SetDefaultExtension(csv ? L"csv" : L"rmpj");
+  hr = dialog->SetDefaultExtension(kind->default_extension);
   if (FAILED(hr)) {
     return hr;
   }

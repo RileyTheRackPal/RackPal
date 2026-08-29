@@ -161,11 +161,11 @@ $ErrorActionPreference = 'Stop'
 # the demo document has ZERO ports and a screen-level test would have been
 # asserting an empty list.
 $SuiteFloors = @{
-    'rackpal_core'   = 3427
+    'rackpal_core'   = 3445
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1243
-    'rackpal_app'    = 847
+    'rackpal_app'    = 848
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

@@ -186,6 +186,11 @@ The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.
   redirect. Symptom: "The system cannot find the file specified".
 - `--fields` truncates at the first newline.
 - `@project` in WIQL returns empty with exit 0. Name the project literally.
+- **A PR description is capped at 4,000 characters** and `az repos pr create`
+  refuses the whole call over it, having already validated everything else. The
+  work-item description has no such cap, so the habit that works there does not
+  transfer. Measure the file before the call; a commit message is the place for
+  the long version, and it is under no cap at all.
 
 ## Committing
 

@@ -14268,6 +14268,110 @@ does not go looking for one.
 
 ---
 
+### 11.99 DR-100 · A `.rmdx` carries the body flat, because the sections were an illustration with 21 holes in it
+
+**Settled by the user on 2026-08-29, before any code**, on DR-077 (§11.76) and DR-098 (§11.97)'s
+precedent: M4-M2 (`#235`) is a file format, and a format question answered after the writer exists
+is a migration rather than an edit.
+
+**A §8.3-ADJACENT AMENDMENT, and it is named as one.** No scope moves and no milestone changes, but
+this **changes what two derived documents assert** about a shipped file shape, which §8.3's own
+corollary in `getting-started.md` says is the moment to stop and record a ruling. `docs/06` §7.3's
+worked example and `docs/02` §6.4 are edited to match rather than left pointing at a shape the codec
+does not write.
+
+**11.99.1 THE CENSUS IS THE RULING, AND IT WAS RUN OVER THE ENCODER RATHER THAN THE PROSE.**
+`_encodeTemplateBody` (`json_codec.dart:3445`) is the only description of a `TemplateBody` under
+CR-117's byte gate. Counted from the function, not from a grep of field names, because
+`putIfNotNull` and the three bare `json[...] =` assignments do not match the pattern the always-on
+keys do:
+
+| Measurement | Figure |
+|---|---|
+| Keys `_encodeTemplateBody` emits | **39** |
+| Keys docs/06 §7.3's worked `.rmdx` places, sections plus top level | **18** |
+| Keys with **no home anywhere in the corpus** | **21** |
+| Keys the example **renames** against the encoder | **2** |
+
+The twenty-one: `accentColor`, `alternateMountMethods`, `category`, `connectorProjectionNm`,
+`containerUsableDepthNm`, `containerUsableWidthNm`, `containerVented`, `containerWeightCapacityUg`,
+`customPanelWidthNm`, `description`, `glyph`, `isContainer`, `maxUnsupportedMassUg`, `model`,
+`nominalSpanTwelfths`, `panelGraphics`, `portSets`, `requiresClearanceAboveU`,
+`requiresClearanceBelowU`, `submittedBy`, `thermalClass`.
+
+**`model` IS ON THAT LIST AND IT IS THE ONE THAT MAKES THIS URGENT.** It is a required constructor
+parameter, always encoded, and DR-056 §11.55.4 rules that it stays undefaulted **specifically so it
+prints `—`**. It is the unknown `docs/17`'s clause-2 drill is sent to look for. A codec built from
+§7.3's example drops it, and the field that proves G4 works would have been lost on the one path
+built for sharing a device.
+
+**11.99.2 THE TWO RENAMES ARE A DEFECT IN THE ILLUSTRATION, NOT A DECISION IT WAS MAKING.** The
+example writes `depthNm` where the encoder writes `bodyDepthNm`, and `chassisWidth` where the
+encoder writes `chassisWidthNm`. The second is the worse of the two: `"chassisWidth": 432000000` is
+a bare integer with **no unit in its key**, in a format whose own ruling exists to forbid exactly
+that. CR-063 rules `.rmdx` obeys I-1, and N3 rules the naming. An illustration cannot overrule
+either, and nobody was choosing to when they typed it.
+
+**11.99.3 THE SECTIONS' FOOTING WAS THINNER THAN THREE DOCUMENTS MAKE IT LOOK, and tracing it is
+what decided this.** The chain is one sentence long. **CR-053's subject is the override key
+namespace**, and it **rejected** `design-ux-device-builder.md` §5.1's dotted paths
+(`"identity.name"`, `"physical.weightKg"`) in favour of typed classes. The sections survive only in
+that rejection's trailing clause, *"`.rmdev`'s `identity.` / `physical.` / `power.` sections are a
+file layout only; the codec flattens them onto `TemplateBody`"*, whose whole job is to say the
+sections do **not** define an override namespace. It asserts they exist in passing, on the way to
+throwing away the proposal they came from.
+
+Everything downstream is a restatement of that clause in a **priority-3 derived document**:
+`docs/06` §7.3's example and `docs/02` §6.4. **This is §11.56.5 arriving for the third time**, after
+a Dart constructor read as a product rule (DR-056) and docs/06 §5's pseudocode pricing a feature cut
+that did not exist (DR-057): *a derived document describing a mechanism is not a ruling about what
+the mechanism needs.*
+
+**11.99.4 THE RULING: the file is an envelope over the body the encoder already writes.**
+
+```json
+{
+  "schemaVersion": 1,
+  "kind": "device-template",
+  "templateId": "0f3a…",
+  "version": 3,
+  "contentHash": "sha256:…",
+  "body": { "…": "the 39 keys _encodeTemplateBody emits, sorted" }
+}
+```
+
+**`derivedFrom` moves inside `body`, where the encoder already puts it**, rather than being lifted
+to the envelope as §7.3 drew it. It is a `TemplateBody` field; hoisting it would be the twenty-second
+invented assignment and would give one fact two homes, which is DR-098 §11.97.4's rule against two
+spellings applied to a file.
+
+**THE MEASUREMENT THAT SETTLED IT.** A template snapshot **already on disk** in all four starters is
+`{templateId, version, contentHash, capturedAt, body: {…}}`. The ruled `.rmdx` is that shape with
+`capturedAt` dropped (a file has no capture time) and `schemaVersion` and `kind` added. **The format
+was therefore not designed here; it was recognised.** `.rmda` is an array of these plus a manifest
+(DR-015 §11.15.3), so the archive inherits it and no second body shape is invented there either.
+
+**11.99.5 WHAT THE FLAT BODY BUYS, STATED AS A MECHANISM RATHER THAN AS TIDINESS.** `.rmdx` acquires
+**no second description of a `TemplateBody`**. The alternative was a 39-row partition table that
+must stay **total** as the class grows, because a key no section claims is a key that silently
+vanishes from the file, and only a gate written for that purpose would ever say so. That is
+precisely the failure `copyTemplateBody`'s own header records about a hand-written clone: *"a clone
+drifts the first time somebody adds field 51."* The counter-argument was put and is real: a `.rmdx`
+is the unit people email each other, `port_validation.dart:154` already reasons about a hand-edited
+one arriving, and sections help a person find a key in a 39-key object. **It was outweighed by the
+21 holes**, each of which would have been authored today with no source, and one more owed on every
+future field, forever.
+
+**11.99.6 WHAT THIS DOES NOT RULE.** It does not touch the unit regime (CR-063 stands), the
+migration chain (`.rmdx` keeps its own, AC-050/A8.2, starting at `schemaVersion` 1 independent of
+`.rmpj`'s 2), `contentHash`'s status as a warning and never a load failure (AC-042), or the JSON
+depth and size limits every import path owes (AC-058/D8, `#237`). It says nothing about the import
+and export **surface**, which is `#236`. And it does not make the sections wrong as **documentation**:
+a reader who wants the identity fields grouped is served by docs/06 §3's own headings, which is where
+that grouping was always doing real work.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

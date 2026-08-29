@@ -116,11 +116,22 @@ DeviceBuilderActions buildDeviceBuilderActions({
           // "three lines and it is what makes the embedded-snapshot
           // argument true" — but the three lines are a real sha256 over
           // the canonical encoding, and that is a job with its own
-          // question (which bytes? sorted how?) that the `.rmdx` codec
-          // task owns (M4-M, #184). Writing a fake that LOOKS like a
-          // sha256 would be worse than writing one that plainly is not,
-          // because a mismatch is a warning badge (AC-042) and a badge
-          // that fires on every template teaches people to ignore it.
+          // question: which bytes, sorted how? Writing a fake that LOOKS
+          // like a sha256 would be worse than writing one that plainly is
+          // not, because a mismatch is a warning badge (AC-042) and a
+          // badge that fires on every template teaches people to ignore
+          // it.
+          //
+          // THE QUESTION NOW HAS AN ANSWER AND THE JOB HAS AN OWNER,
+          // which it did not when this said "the `.rmdx` codec task owns
+          // it (M4-M, #184)". That task is M4-M2 (`#235`) and it shipped
+          // WITHOUT making the hash real, deliberately: the hasher is
+          // shared with every `.rmpj` snapshot, so doing it inside one
+          // file format's codec would leave the placeholder in the other.
+          // It is `#795`. The bytes are DR-100 §11.99's, which is the
+          // half that was genuinely open: `encodeCanonicalJsonBytes` over
+          // `templateBodyToJson`, the pair that is now the single
+          // authority on a `TemplateBody`'s shape.
           contentHash: 'unhashed:${templateId.v}@$version',
           body: body,
           capturedAt: controller.clock.nowUtc(),
