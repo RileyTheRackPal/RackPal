@@ -15,6 +15,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/canvas_intent.dart';
 import 'package:rackpal_ui/src/canvas/compaction_preview_bar.dart';
 import 'package:rackpal_ui/src/canvas/compaction_preview_controller.dart';
+import 'package:rackpal_ui/src/canvas/device_doors_menu.dart';
 import 'package:rackpal_ui/src/canvas/drag_preview_controller.dart';
 import 'package:rackpal_ui/src/canvas/editing_overlay_painter.dart';
 import 'package:rackpal_ui/src/canvas/grid_painter.dart';
@@ -87,6 +88,7 @@ class RackCanvasScreen extends StatefulWidget {
     this.document,
     this.controller,
     this.onRevealInSchematic,
+    this.onEditTemplate,
     super.key,
   });
 
@@ -156,6 +158,14 @@ class RackCanvasScreen extends StatefulWidget {
   /// occupancy": CR-105 defines it as the affordance, and the count is
   /// what the affordance is labelled with.
   final void Function(Uuid deviceId)? onRevealInSchematic;
+
+  /// Door 2 (CR-054, DR-099 §11.98): open this template in the Device
+  /// Manager for editing, which forks `version + 1` on save.
+  ///
+  /// OPTIONAL, because the shell owns the six-view stack and the Device
+  /// Manager's single draft, and this screen is mounted bare in widget
+  /// tests. Null means the row refuses out loud rather than doing nothing.
+  final void Function(TemplateId templateId)? onEditTemplate;
 
   @override
   State<RackCanvasScreen> createState() => _RackCanvasScreenState();
@@ -2189,6 +2199,105 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     }
   }
 
+  // ── CR-054's three doors, on the first right-click in the product ─────
+  //
+  // `onSecondaryTap` occurred ZERO times in this package before this. The
+  // secondary button was being routed into `beginDrag` like any other, so a
+  // right-press armed a marquee on empty canvas and a MOVE on a device;
+  // CR-102 had already reserved it ("right-drag is reserved for the context
+  // menu, which is a platform expectation on desktop") and nothing noticed
+  // because nothing bound it. `CanvasIntentDetector` now consumes it.
+  //
+  // ON A DEVICE ONLY. docs/04 §5 also specifies an empty-U menu (`Insert
+  // device…`, `Insert 1U blank`, and three more), and that is not this
+  // task: offering a menu with one working row and four that are not built
+  // is worse than offering none, and the empty-U menu has no board item yet.
+  Future<void> _onSecondaryTap(DPt scene, Offset global) async {
+    final built = _rackScene?.scene;
+    final region = built == null ? null : hitTest(built, scene);
+    final deviceId = region?.entityId;
+    if (deviceId == null) return;
+
+    final id = Uuid(deviceId);
+    final device = _doc.devices[id];
+    if (device == null) return;
+
+    // SELECT IT FIRST, so the menu is unambiguous about its subject and so
+    // door 1 has nothing left to do but return: the override section renders
+    // for a single selection already (DR-098 §11.97.5).
+    if (_inspectorTarget != InspectorTarget.selection) {
+      setState(() => _inspectorTarget = InspectorTarget.selection);
+    }
+    _selection.apply([id], SelectMode.replace);
+    _canvasFocus.requestFocus();
+
+    final door = await showDeviceDoorsMenu(
+      context: context,
+      globalPosition: global,
+      designator: device.designator,
+    );
+    if (door == null || !mounted) return;
+
+    switch (door) {
+      case DeviceDoor.thisDeviceOnly:
+        // Nothing to run. The device is selected and the inspector is on
+        // the selection, which IS door 1.
+        break;
+      case DeviceDoor.editTemplate:
+        _openTemplateForEditing(device);
+      case DeviceDoor.forkToNew:
+        _forkToNewTemplate(device);
+    }
+  }
+
+  /// Door 2. Routing lives in the app shell, which owns the six-view stack
+  /// and the Device Manager's single draft, so this hands off rather than
+  /// reaching across the layer.
+  void _openTemplateForEditing(DeviceInstance device) {
+    final open = widget.onEditTemplate;
+    if (open == null) {
+      // A HONEST REFUSAL RATHER THAN A DEAD ROW. `RackCanvasScreen` is
+      // constructed directly in widget tests with no shell around it, and a
+      // menu item that silently does nothing there is one somebody debugs
+      // for an hour.
+      _status.show('The Device Manager is not available from here.');
+      return;
+    }
+    open(device.templateRef.templateId);
+  }
+
+  /// Door 3. Mints an id and runs the fork; the command refuses with a
+  /// sentence when it cannot (a snapshot that does not resolve, an id
+  /// already taken).
+  void _forkToNewTemplate(DeviceInstance device) {
+    final name = templateNameFor(_doc, device);
+    final result = buildForkTemplateFromDevice(
+      doc: _doc,
+      deviceId: device.id,
+      // SEEDED FROM THE DEVICE'S OWN NAME, not the template's, because the
+      // fork is about THIS thing in the rack. `templateIdFor` suffixes a
+      // collision rather than joining an existing id.
+      newTemplateId: templateIdFor(_doc, '$name fork'),
+      now: _controller.clock.nowUtc(),
+      actor: _controller.actor,
+    );
+    switch (result) {
+      case ForkTemplateFailed(:final reason):
+        _status.show(reason);
+      case ForkTemplateReady(:final command):
+        _controller.selection = _selection.snapshot();
+        _controller.run(command);
+        _status.show(
+          deviceDoorScopeText(
+            door: DeviceDoor.forkToNew,
+            designator: device.designator,
+            others: 0,
+            templateName: name,
+          ),
+        );
+    }
+  }
+
   // ── dragging the rack's top edge (docs/04 §4.1, way three) ────────────
   //
   // "Dragging the rack's top edge (8 px band, snaps to whole U, a '24U (+3)'
@@ -4170,6 +4279,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
             children: [
               Positioned.fill(
                 child: CanvasIntentDetector(
+                  onSecondaryTap: _onSecondaryTap,
                   key: _canvasBoxKey,
                   viewport: _viewport,
                   // The editing handler now consumes primary drags (select /

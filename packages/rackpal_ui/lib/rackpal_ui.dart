@@ -61,6 +61,7 @@ export 'src/builder/renumber_dialog.dart';
 export 'src/canvas/canvas_intent.dart';
 export 'src/canvas/compaction_preview_bar.dart';
 export 'src/canvas/compaction_preview_controller.dart';
+export 'src/canvas/device_doors_menu.dart';
 export 'src/canvas/drag_preview_controller.dart';
 export 'src/canvas/editing_overlay_painter.dart';
 export 'src/canvas/grid_painter.dart';

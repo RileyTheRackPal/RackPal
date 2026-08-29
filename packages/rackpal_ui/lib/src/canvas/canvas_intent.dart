@@ -169,11 +169,29 @@ class CanvasIntentDetector extends StatefulWidget {
     required this.viewport,
     required this.child,
     this.handler,
+    this.onSecondaryTap,
     this.behavior = HitTestBehavior.opaque,
     super.key,
   });
 
   final ViewportController viewport;
+
+  /// The context-menu gesture, in scene coordinates and in global ones.
+  ///
+  /// SECONDARY NEVER BECOMES A DRAG, whether or not this is supplied. CR-102
+  /// rules that marquee is left-drag in every view and that "right-drag is
+  /// reserved for the context menu, which is a platform expectation on
+  /// desktop", so routing the secondary button into `beginDrag` was a latent
+  /// bug: a right-press on the canvas armed a marquee, and on a device it
+  /// armed a MOVE. Nothing surfaced it because nothing in the product bound
+  /// right-click until the three doors (CR-054), so the gesture had no
+  /// competing meaning to collide with.
+  ///
+  /// Global position as well as scene, because a menu is positioned in
+  /// screen space and the scene point is what decides WHAT was hit; deriving
+  /// one from the other at the call site would put the viewport transform in
+  /// two places.
+  final void Function(DPt scene, Offset global)? onSecondaryTap;
 
   /// Optional editing sink. When null (the common case for the viewport-first
   /// stage) primary drags pan instead.
@@ -223,6 +241,16 @@ class _CanvasIntentDetectorState extends State<CanvasIntentDetector> {
     // Button check (not a device-kind check): middle mouse always pans.
     if (event.buttons & kMiddleMouseButton != 0) {
       _panPointer = event.pointer;
+      return;
+    }
+    // SECONDARY IS CONSUMED HERE AND NEVER ROUTED (CR-102). It returns
+    // whether or not a callback is supplied: a view with no context menu
+    // wants right-click to do NOTHING, not to arm a marquee or a move.
+    if (event.buttons & kSecondaryMouseButton != 0) {
+      widget.onSecondaryTap?.call(
+        _toScene(event.localPosition),
+        event.position,
+      );
       return;
     }
     final handler = widget.handler;

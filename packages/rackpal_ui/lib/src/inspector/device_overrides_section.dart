@@ -47,6 +47,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/canvas/device_doors_menu.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 
 /// Which of the three states a segmented control is showing.
@@ -104,7 +105,7 @@ class DeviceOverridesSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 6),
-        _ScopeBadge(others: others),
+        _ScopeBadge(designator: device.designator, others: others),
         const SizedBox(height: 4),
         _OverrideField<Mass>(
           label: 'MASS',
@@ -185,24 +186,31 @@ class DeviceOverridesSection extends StatelessWidget {
 
 /// The amber badge. Names what this edit will NOT change.
 class _ScopeBadge extends StatelessWidget {
-  const _ScopeBadge({required this.others});
+  const _ScopeBadge({required this.designator, required this.others});
 
+  final String designator;
   final int others;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    // ZERO IS A REAL ANSWER AND GETS ITS OWN SENTENCE. "0 other devices
-    // are unaffected" invites the reader to wonder which ones were, and a
-    // template placed once has no blast radius to reassure anybody about.
-    final text = others == 0
-        ? 'Only this device uses this template.'
-        : others == 1
-        ? 'Edits here change this device only. 1 other device on this '
-              'template is unaffected.'
-        : 'Edits here change this device only. $others other devices on '
-              'this template are unaffected.';
+    // docs/06 §8.2's OWN SENTENCE, not a paraphrase of it. The spec writes
+    // this badge out in full ("Editing MTX-1 only. 3 other devices use this
+    // template and will not change.") and an earlier draft of this widget
+    // reworded it, which is `ui copy in corpus dialect` in its usual form:
+    // two versions of one sentence, one in the product and one in the spec,
+    // with nothing able to notice them diverge.
+    //
+    // The ZERO case is not the spec's, because every §8.2 example has
+    // others. A template placed once has no blast radius to reassure
+    // anybody about.
+    final text = deviceDoorScopeText(
+      door: DeviceDoor.thisDeviceOnly,
+      designator: designator,
+      others: others,
+      templateName: '',
+    );
 
     // AN INK AND A BORDER, NOT A FILL. `kConsoleScopeInstance` clears
     // 4.5:1 against the card it draws on and that is the only bar it has

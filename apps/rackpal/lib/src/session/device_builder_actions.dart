@@ -36,37 +36,6 @@ import 'package:rackpal/src/storage/prefs_store.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
-/// A stable-ish template id derived from the display name.
-///
-/// **DERIVED FROM THE SPELLING RATHER THAN MINTED AS A UUID**, which is
-/// `mediaTypeIdFor`'s call and made here for the same reason: this id is
-/// written into every `TemplateRef` that resolves the device, it is the
-/// left half of the `"$templateId@$version"` key, and it is read by a
-/// person diffing two `.rmpj` files. `tpl.hdmi_matrix_16x16` tells that
-/// reader what the device is; `tpl.9f3c-...` tells them to go and look it
-/// up.
-///
-/// Collisions get a numeric suffix rather than joining an existing id:
-/// two devices a user happened to name the same thing are two devices,
-/// and silently merging them would put one template's ports on the
-/// other's instances.
-TemplateId templateIdFor(RackDocument doc, String displayName) {
-  final slug = displayName
-      .toLowerCase()
-      .replaceAll(RegExp('[^a-z0-9]+'), '_')
-      .replaceAll(RegExp(r'^_+|_+$'), '');
-  final base = slug.isEmpty ? 'device' : slug;
-
-  final taken = {for (final s in doc.templates.values) s.templateId};
-  var candidate = TemplateId('tpl.$base');
-  var n = 2;
-  while (taken.contains(candidate)) {
-    candidate = TemplateId('tpl.${base}_$n');
-    n++;
-  }
-  return candidate;
-}
-
 /// Wires the builder's Save to a live [DocumentController].
 ///
 /// [editing] is the id of the template being re-saved, or null when the

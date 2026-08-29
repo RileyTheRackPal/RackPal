@@ -143,11 +143,16 @@ $ErrorActionPreference = 'Stop'
 # core 3408 -> 3415, the seven of
 # `test/sheet/clause2_drill_expectations_test.dart`, which pins docs/17's
 # drill script against the product after two of its steps were found rotted.
+# RE-MEASURED 2026-08-29 at `#231`/`#232` (the three doors): ui 1224 -> 1237,
+# the nine of `test/canvas/device_doors_menu_test.dart` and the four
+# secondary-button cases added to `canvas_intent_detector_test.dart`. Core is
+# unchanged: `templateIdFor` MOVED from the app into core and its one caller
+# moved with it, so no core case was added or removed.
 $SuiteFloors = @{
     'rackpal_core'   = 3415
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1224
+    'rackpal_ui'     = 1237
     'rackpal_app'    = 841
 }
 
