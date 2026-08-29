@@ -139,9 +139,12 @@ $ErrorActionPreference = 'Stop'
 # ui 1220 -> 1224 for the four accent and body-depth cases in the same
 # inspector file.
 # RE-MEASURED 2026-08-29 at #232 (M4-L3, door 3): core 3394 -> 3408, the 14
-# cases of `test/commands/template_fork_commands_test.dart`.
+# cases of `test/commands/template_fork_commands_test.dart`. And at `#251`:
+# core 3408 -> 3415, the seven of
+# `test/sheet/clause2_drill_expectations_test.dart`, which pins docs/17's
+# drill script against the product after two of its steps were found rotted.
 $SuiteFloors = @{
-    'rackpal_core'   = 3408
+    'rackpal_core'   = 3415
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1224
