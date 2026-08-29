@@ -400,12 +400,11 @@ void main() {
         .toList();
 
     expect(badge, isNotEmpty, reason: 'the scope badge did not render');
-    expect(
-      badge.single,
-      anyOf(
-        contains('Only this device uses this template.'),
-        contains('Edits here change this device only.'),
-      ),
-    );
+    // docs/06 §8.2's OWN SENTENCE. An earlier draft of the widget reworded
+    // it and this case pinned the rewording, so the two agreed with each
+    // other and with nothing else. It now names the device, which is what
+    // makes the badge a claim about a subject rather than a general notice.
+    expect(badge.single, startsWith('Editing UPS-1 only.'));
+    expect(badge.single, contains('template'));
   });
 }

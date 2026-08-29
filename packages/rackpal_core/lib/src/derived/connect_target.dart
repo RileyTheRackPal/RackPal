@@ -36,6 +36,7 @@
 
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/derived/device_loads.dart' show bodyFor;
+import 'package:rackpal_core/src/derived/port_facts.dart';
 import 'package:rackpal_core/src/idformat/designator_allocator.dart';
 import 'package:rackpal_core/src/model/port.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
@@ -108,7 +109,16 @@ final class ConnectTarget {
   String? get setKey => def.setKey;
 
   PortDirection get direction => def.direction;
-  SignalFamilyId get signalFamily => def.signalFamily;
+
+  /// THROUGH THE RESOLVER (`#233`, DR-098 §11.97.6), not off the template.
+  /// A port whose connector or family the user corrected on THIS device
+  /// must answer with the correction, or the connect gesture evaluates
+  /// tier-1 rules against a fact the document no longer states.
+  SignalFamilyId get signalFamily =>
+      resolvePortSignalFamily(materialisedPort, def);
+
+  /// The connector this pin actually presents, same rule.
+  ConnectorTypeId get connector => resolvePortConnector(materialisedPort, def);
 
   /// Whether this pin is a tap on a shared medium rather than one end of
   /// a point-to-point run.
@@ -243,7 +253,12 @@ final class ConnectTarget {
       materialisedPort?.designator ??
       plannedDesignator ??
       def.designatorHint ??
-      (def.label.trim().isEmpty ? def.key.v : def.label);
+      // STEP 4 MOVED INTO `resolvePortLabel` (`#233`), which puts the
+      // instance's own `userLabel` above the template's silkscreen: a
+      // label the user typed outranks what the template says is printed,
+      // because the user is looking at the actual box. The blank-label
+      // fallback to the key is unchanged and lives there now.
+      resolvePortLabel(materialisedPort, def);
 
   /// "AVR-1 J03" — how canon cites a port (CR-042: "a port is always cited
   /// as `MTX-1:J09`", rendered with a space here because these strings are

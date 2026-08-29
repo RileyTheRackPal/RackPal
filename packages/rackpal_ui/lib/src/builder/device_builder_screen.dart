@@ -167,6 +167,7 @@ class DeviceBuilderScreen extends StatefulWidget {
     this.registries,
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     this.onDone,
+    this.onDirtyChanged,
     super.key,
   });
 
@@ -191,6 +192,23 @@ class DeviceBuilderScreen extends StatefulWidget {
   final IdFormat portDesignatorFormat;
 
   final VoidCallback? onDone;
+
+  /// Reports whether this window's draft differs from its last save point.
+  ///
+  /// FOR DR-099 §11.98.4's GUARD, and it exists because the shell cannot ask.
+  /// The session is private to the State and `TemplateEditSession` is
+  /// `late final`, so handing this screen a different template does NOT
+  /// reopen it: loading another template means a new `key`, which destroys
+  /// the State and the draft with it. Door 2 therefore has to know BEFORE
+  /// it swaps the key, and a discarded draft has no recovery path, because
+  /// the session is an in-memory deep copy with nothing for `Ctrl+Z` to
+  /// reach and nothing on disk to reopen.
+  ///
+  /// Driven off `TemplateEditSession.changes`, the session's own counter,
+  /// rather than sampled during `build`: the notifier is bumped for every
+  /// commit, undo, redo AND save-point move, which is exactly the set of
+  /// events that can flip `isDirty`.
+  final ValueChanged<bool>? onDirtyChanged;
 
   @override
   State<DeviceBuilderScreen> createState() => _DeviceBuilderScreenState();
@@ -217,8 +235,39 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
   /// chosen key quietly went back to following its label.
   final _keyTouched = <String>{};
 
+  /// The last value handed to [DeviceBuilderScreen.onDirtyChanged]. Null
+  /// until the first report, so a window that opens clean still announces
+  /// itself and the shell never has to assume.
+  bool? _reportedDirty;
+
+  @override
+  void initState() {
+    super.initState();
+    _session.changes.addListener(_reportDirty);
+    // ANNOUNCE THE OPENING STATE, once the frame this screen was built in
+    // has finished. A fresh window is clean and the shell's flag may be
+    // stale from a window that just closed dirty.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reportDirty());
+  }
+
+  void _reportDirty() {
+    final dirty = _session.isDirty;
+    if (dirty == _reportedDirty) return;
+    _reportedDirty = dirty;
+    widget.onDirtyChanged?.call(dirty);
+  }
+
   @override
   void dispose() {
+    _session.changes.removeListener(_reportDirty);
+    // NOTHING IS REPORTED FROM HERE, and the first draft did report
+    // `false`. `dispose` runs while the tree is being finalised, so a
+    // listener that calls `setState` (which the shell's does, because the
+    // flag drives a guard) throws "setState() called when widget tree was
+    // locked". The notification was redundant anyway: this screen is
+    // disposed when its key changes, the replacement is inflated in the
+    // same build, and that one announces its own clean state on its first
+    // frame. A stale `true` cannot outlive the frame it was set in.
     _session.close();
     super.dispose();
   }

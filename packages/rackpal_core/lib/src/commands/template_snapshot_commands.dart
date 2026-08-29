@@ -42,6 +42,46 @@ import 'package:rackpal_core/src/units/ids.dart';
 String templateSnapshotKey(TemplateId templateId, int version) =>
     '${templateId.v}@$version';
 
+/// A stable-ish template id derived from the display name.
+///
+/// **DERIVED FROM THE SPELLING RATHER THAN MINTED AS A UUID**, which is
+/// `mediaTypeIdFor`'s call and made here for the same reason: this id is
+/// written into every `TemplateRef` that resolves the device, it is the
+/// left half of the `"$templateId@$version"` key, and it is read by a
+/// person diffing two `.rmpj` files. `tpl.hdmi_matrix_16x16` tells that
+/// reader what the device is; `tpl.9f3c-...` tells them to go and look it
+/// up.
+///
+/// MOVED HERE FROM THE APP at `#232`, and the comment that sent it there
+/// was wrong. It read that this belongs in the app "where the collision
+/// policy and the document's existing ids both live". The collision
+/// policy is `doc.templates`, which is core data, and there is no
+/// app-specific knowledge in the function at all. Door 3 needs the same
+/// allocation from `rackpal_ui`, which cannot import the app, and two
+/// spellings of one naming rule is the drift this repository keeps paying
+/// for.
+///
+/// Collisions get a numeric suffix rather than joining an existing id:
+/// two devices a user happened to name the same thing are two devices,
+/// and silently merging them would put one template's ports on the
+/// other's instances.
+TemplateId templateIdFor(RackDocument doc, String displayName) {
+  final slug = displayName
+      .toLowerCase()
+      .replaceAll(RegExp('[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+  final base = slug.isEmpty ? 'device' : slug;
+
+  final taken = {for (final s in doc.templates.values) s.templateId};
+  var candidate = TemplateId('tpl.$base');
+  var n = 2;
+  while (taken.contains(candidate)) {
+    candidate = TemplateId('tpl.${base}_$n');
+    n++;
+  }
+  return candidate;
+}
+
 /// The next free version for [templateId] in [doc].
 ///
 /// **Monotonic int, never a semver** (CR-050): a semver whose components

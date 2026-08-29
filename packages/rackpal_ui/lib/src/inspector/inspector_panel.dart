@@ -41,6 +41,7 @@
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/inspector/device_overrides_section.dart';
+import 'package:rackpal_ui/src/inspector/device_ports_section.dart';
 import 'package:rackpal_ui/src/inspector/rack_inspector_panel.dart'
     show InspectorDropdown, RackInspectorPanel;
 import 'package:rackpal_ui/src/theme/console_theme.dart';
@@ -73,6 +74,7 @@ class InspectorPanel extends StatelessWidget {
     required this.onRefuse,
     required this.onSetLifecycle,
     required this.onSetOverride,
+    required this.onSetPortFact,
     this.firstFieldFocus,
     super.key,
   });
@@ -100,6 +102,17 @@ class InspectorPanel extends StatelessWidget {
     OverrideValue<T> value,
   )
   onSetOverride;
+
+  /// M4-L4: writes one fact on one of the selected device's ports,
+  /// materialising the port if the document does not hold it (`#233`).
+  final void Function(
+    Uuid deviceId,
+    PortKey portKey,
+    PortFactField field,
+    Object? value,
+    String designatorIfMaterialised,
+  )
+  onSetPortFact;
 
   final FocusNode? firstFieldFocus;
 
@@ -131,6 +144,7 @@ class InspectorPanel extends StatelessWidget {
           focusedId: focusedId,
           onSetLifecycle: onSetLifecycle,
           onSetOverride: onSetOverride,
+          onSetPortFact: onSetPortFact,
         ),
       },
     );
@@ -146,6 +160,7 @@ class _SelectionSummary extends StatelessWidget {
     required this.focusedId,
     required this.onSetLifecycle,
     required this.onSetOverride,
+    required this.onSetPortFact,
   });
 
   final RackDocument doc;
@@ -157,6 +172,15 @@ class _SelectionSummary extends StatelessWidget {
     OverrideValue<T> value,
   )
   onSetOverride;
+
+  final void Function(
+    Uuid deviceId,
+    PortKey portKey,
+    PortFactField field,
+    Object? value,
+    String designatorIfMaterialised,
+  )
+  onSetPortFact;
 
   /// The single selected device door 1 edits, or null whenever the
   /// selection is not exactly one device that still exists.
@@ -251,10 +275,24 @@ class _SelectionSummary extends StatelessWidget {
           if (_soleDevice case final one?)
             Expanded(
               child: SingleChildScrollView(
-                child: DeviceOverridesSection(
-                  doc: doc,
-                  device: one,
-                  onSetOverride: onSetOverride,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    DeviceOverridesSection(
+                      doc: doc,
+                      device: one,
+                      onSetOverride: onSetOverride,
+                    ),
+                    // M4-L4 (`#233`). Below door 1's device fields, because
+                    // a port is a fact ABOUT the device and a person looks
+                    // for the mass before they look for jack 37.
+                    DevicePortsSection(
+                      doc: doc,
+                      device: one,
+                      onSetPortFact: (key, field, value, designator) =>
+                          onSetPortFact(one.id, key, field, value, designator),
+                    ),
+                  ],
                 ),
               ),
             )

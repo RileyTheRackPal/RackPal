@@ -540,4 +540,117 @@ void main() {
 
     await tester.sendEventToBinding(p.panZoomEnd());
   });
+
+  // ── the secondary button (CR-102, `#231`/`#232`) ──────────────────────
+  //
+  // Right-drag is reserved for the context menu, "a platform expectation on
+  // desktop". Until the three doors were built nothing bound it, so the
+  // secondary button fell through to `beginDrag` like any other and armed a
+  // marquee on empty canvas and a MOVE on an already-selected device.
+  //
+  // THESE LIVE HERE AND NOT ON THE SCREEN, and the reason is worth the
+  // paragraph. The screen-level version of this case CANNOT FAIL: opening
+  // the menu is itself a modal route that swallows the subsequent pointer
+  // moves, so a right-drag does not move a device whether or not the button
+  // is consumed. Two drafts of it passed with the fix reverted before that
+  // was noticed. The property is about the DETECTOR, and this is the only
+  // level at which it can be observed.
+
+  testWidgets('a secondary press NEVER reaches the handler', (tester) async {
+    final vp = ViewportController();
+    final handler = _RecordingHandler();
+    await tester.pumpWidget(_host(vp, handler));
+
+    final g = await tester.startGesture(
+      const Offset(100, 100),
+      buttons: kSecondaryButton,
+    );
+    await g.moveTo(const Offset(300, 220));
+    await g.up();
+    await tester.pumpAndSettle();
+
+    expect(
+      handler.log,
+      isEmpty,
+      reason: 'the secondary button must not begin, update or commit a drag',
+    );
+  });
+
+  testWidgets('a secondary press is reported to onSecondaryTap, in BOTH '
+      'scene and global coordinates', (tester) async {
+    final vp = ViewportController();
+    final seen = <(DPt, Offset)>[];
+    await tester.pumpWidget(
+      Directionality(
+        textDirection: TextDirection.ltr,
+        child: Align(
+          alignment: Alignment.topLeft,
+          child: SizedBox(
+            width: 800,
+            height: 600,
+            child: CanvasIntentDetector(
+              viewport: vp,
+              handler: _RecordingHandler(),
+              onSecondaryTap: (scene, global) => seen.add((scene, global)),
+              child: const SizedBox.expand(),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    final g = await tester.startGesture(
+      const Offset(120, 140),
+      buttons: kSecondaryButton,
+    );
+    await g.up();
+    await tester.pumpAndSettle();
+
+    expect(seen, hasLength(1));
+    // The host is top-left aligned, so local == global here, and the
+    // viewport is identity until something pans it.
+    expect(seen.single.$2, const Offset(120, 140));
+    expect(
+      seen.single.$1.x,
+      closeTo(vp.screenToScene(const DPt(120, 140)).x, 1e-9),
+    );
+  });
+
+  testWidgets('a view with NO context menu still gets no drag from it', (
+    tester,
+  ) async {
+    // The callback is optional and the consumption is not conditional on it.
+    // A view with nothing bound wants right-click to do NOTHING, not to arm
+    // a marquee.
+    final vp = ViewportController();
+    final handler = _RecordingHandler();
+    await tester.pumpWidget(_host(vp, handler));
+
+    final g = await tester.startGesture(
+      const Offset(50, 50),
+      buttons: kSecondaryButton,
+    );
+    await g.moveTo(const Offset(400, 400));
+    await g.up();
+    await tester.pumpAndSettle();
+
+    expect(handler.log, isEmpty);
+  });
+
+  testWidgets('the PRIMARY button still routes a drag, so the guard is not '
+      'swallowing everything', (tester) async {
+    // The vacuity check on the three cases above: if the button test were
+    // wrong in the other direction they would all pass over a detector that
+    // routes nothing at all.
+    final vp = ViewportController();
+    final handler = _RecordingHandler();
+    await tester.pumpWidget(_host(vp, handler));
+
+    final g = await tester.startGesture(const Offset(100, 100));
+    await g.moveTo(const Offset(300, 220));
+    await g.up();
+    await tester.pumpAndSettle();
+
+    expect(handler.log, isNotEmpty);
+  });
 }
