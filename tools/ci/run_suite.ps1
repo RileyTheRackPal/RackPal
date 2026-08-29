@@ -160,12 +160,29 @@ $ErrorActionPreference = 'Stop'
 # DIRECTLY rather than through `RackCanvasScreen`, because every template on
 # the demo document has ZERO ports and a screen-level test would have been
 # asserting an empty list.
+# RE-MEASURED 2026-08-29 at `#234` (M4-M1): app 847 -> 848, one case in
+# `test/session/file_dialog_flags_test.dart`. Two of that file's assertions
+# were REPLACED rather than added: both pinned the exact source text of a
+# ternary, which is a mechanism assertion the house style forbids and which
+# the third file-dialog kind broke on contact.
+# RE-MEASURED 2026-08-29 at `#235` (M4-M2, DR-100): core 3427 -> 3445, the
+# eighteen of `test/library/rmdx_codec_test.dart`. Then 3445 -> 3455 at
+# `#236` for the ten of `test/library/template_import_test.dart`. The
+# codec's sweep is 48 templates wide inside ONE of those eighteen cases: it
+# runs every seeded template through bytes and back, which is the only
+# shape that could catch a key the file layout silently drops.
+# RE-MEASURED 2026-08-29 at `#236` (M4-M3, DR-101): ui 1243 -> 1257 for the
+# fourteen of `test/library/device_template_io_dialogs_test.dart`, and app
+# 848 -> 859 for the eleven of `test/session/device_template_io_test.dart`.
+# The split is `session_prompts.dart`'s: the BRANCHES are core's and were
+# counted above, the dialogs' copy and buttons are ui's, and what is left
+# for app is the sequence and the places it can end early.
 $SuiteFloors = @{
     'rackpal_core'   = 3455
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1243
-    'rackpal_app'    = 848
+    'rackpal_ui'     = 1257
+    'rackpal_app'    = 859
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

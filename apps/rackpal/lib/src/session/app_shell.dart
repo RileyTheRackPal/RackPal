@@ -536,6 +536,24 @@ final class AppShellState extends State<AppShell>
     await _services.export.exportPdf();
   }
 
+  /// `File ▸ Export device template…` (DR-101 §11.100.4).
+  ///
+  /// The chooser is passed in rather than reached for inside the action,
+  /// so the sequence is testable against a scripted answer exactly as the
+  /// save and close sequences are (`session_prompts.dart`).
+  Future<void> _exportTemplate() async {
+    await _services.templateIo.export(
+      (rows) async => showExportTemplateChooser(context, templates: rows),
+    );
+  }
+
+  /// `File ▸ Import device template…`.
+  Future<void> _importTemplate() async {
+    await _services.templateIo.import(
+      (plan) async => showImportTemplateConfirm(context, plan: plan),
+    );
+  }
+
   Future<void> _openRecent(String path) async {
     if (await _services.controller.openPath(path)) _dismissStartCard();
   }
@@ -579,6 +597,8 @@ final class AppShellState extends State<AppShell>
               onSave: _save,
               onSaveAs: _saveAs,
               onExportPdf: _exportPdf,
+              onExportTemplate: _exportTemplate,
+              onImportTemplate: _importTemplate,
               onOpenRecent: _openRecent,
             ),
             const SizedBox(width: 16),
@@ -1086,6 +1106,8 @@ final class _FileMenu extends StatelessWidget {
     required this.onSave,
     required this.onSaveAs,
     required this.onExportPdf,
+    required this.onExportTemplate,
+    required this.onImportTemplate,
     required this.onOpenRecent,
   });
 
@@ -1098,6 +1120,8 @@ final class _FileMenu extends StatelessWidget {
   final Future<void> Function() onSave;
   final Future<void> Function() onSaveAs;
   final Future<void> Function() onExportPdf;
+  final Future<void> Function() onExportTemplate;
+  final Future<void> Function() onImportTemplate;
   final Future<void> Function(String path) onOpenRecent;
 
   @override
@@ -1167,6 +1191,20 @@ final class _FileMenu extends StatelessWidget {
             MenuItemButton(
               onPressed: () => unawaited(onExportPdf()),
               child: const Text('Export PDF…'),
+            ),
+            // DR-101 §11.100.4 puts the device-template pair HERE, beside
+            // the other file operations, and not on a palette card:
+            // Import belongs to no template, so a card menu would split
+            // the pair across two surfaces. No `shortcut:` on either, for
+            // the reason stated above Export PDF: RULE 14 holds the
+            // global file group at exactly four bindings.
+            MenuItemButton(
+              onPressed: () => unawaited(onExportTemplate()),
+              child: const Text('Export device template…'),
+            ),
+            MenuItemButton(
+              onPressed: () => unawaited(onImportTemplate()),
+              child: const Text('Import device template…'),
             ),
           ],
           child: const Text('File'),

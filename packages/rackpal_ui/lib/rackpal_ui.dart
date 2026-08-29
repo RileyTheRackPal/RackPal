@@ -103,6 +103,7 @@ export 'src/inspector/shrink_rack_dialog.dart';
 // File menu's accelerators from it: a registry only half the application
 // can read is two registries.
 export 'src/keymap/keymap.dart';
+export 'src/library/device_template_io_dialogs.dart';
 export 'src/palette/device_palette_panel.dart';
 export 'src/project/delete_location_dialog.dart';
 export 'src/project/locations_panel.dart';

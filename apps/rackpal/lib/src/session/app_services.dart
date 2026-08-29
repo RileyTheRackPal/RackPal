@@ -48,6 +48,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:rackpal/src/session/autosave_scheduler.dart';
+import 'package:rackpal/src/session/device_template_io_actions.dart';
 import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/export_controller.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
@@ -94,6 +95,7 @@ final class AppServices {
     required this.session,
     required this.controller,
     required this.export,
+    required this.templateIo,
     required this.chrome,
     required this.autosave,
     required this.titleWriter,
@@ -114,6 +116,14 @@ final class AppServices {
   /// deliverable's failure paths next to the document's own. The seam is
   /// also what lets the export be tested without a `DocumentStore`.
   final ExportController export;
+
+  /// `File ▸ Export device template…` and `File ▸ Import device
+  /// template…` (DR-101 §11.100).
+  ///
+  /// A SECOND SIBLING, for [export]'s reason: it shares the picker, the
+  /// prompts and the writer and nothing else. Its own header says why an
+  /// import touching the document is not an exception to that.
+  final DeviceTemplateIo templateIo;
 
   final WindowChrome chrome;
   final AutosaveScheduler autosave;
@@ -393,6 +403,20 @@ Future<AppServices> buildAppServices({
       clock: clock,
       // The PDF dialog opens where the last document save did (§8.3's
       // "the same MRU behaviour as document Save As, for free").
+      initialDirectory: controller.exportInitialDirectory,
+      context: ctx,
+    ),
+    templateIo: DeviceTemplateIo(
+      session: session,
+      // THE SESSION'S OWN `DocumentController`, so an import lands on the
+      // same undo stack as every other edit and `Ctrl+Z` puts it back.
+      controller: session.controller,
+      picker: picker,
+      writer: writer,
+      fs: fs,
+      prompts: prompts,
+      clock: clock,
+      // Where the last document save went, for the PDF export's reason.
       initialDirectory: controller.exportInitialDirectory,
       context: ctx,
     ),
