@@ -1,5 +1,42 @@
 # Update Log
 
+## 2026-08-29 (third entry)
+
+* **New**: [DR-101, an id collision on import is a question](/decisions/dr-101-an-id-collision-on-import-is-a-question.md).
+  On collision, and only on collision, the import asks: add as a new version,
+  or import as a separate template.
+* **Note**: **I PUT THE QUESTION ONCE ON A WRONG PREMISE AND HAD TO PUT IT
+  AGAIN.** The first framing priced id collisions as rare and mostly the
+  returning-file case. `templateIdFor` derives the id **from the display
+  name**, identically on every machine, so a collision means *somebody typed
+  the same name*, which between two integrators documenting the same hardware
+  is close to certain. The answer chosen against that framing would have
+  shipped the defect the function's own header refuses in terms: *"silently
+  merging them would put one template's ports on the other's instances."*
+  **The header was there to be read before the question was asked**, which is
+  [re-read a task against canon](/practices/re-read-a-task-against-canon.md)'s
+  second arm firing twice in one milestone.
+* **Note**: **"THERE IS NO SIGNAL" IS A MEASUREMENT, NOT A SHRUG.** Three
+  discriminators were checked against the tree and all three fail:
+  `derivedFrom` is written by door 3 only, so a door-2 fork carries no
+  lineage; `contentHash` is a placeholder everywhere; and a `.rmdx` carries
+  one version rather than a chain. A version-keyed rule was drafted and
+  **rejected on that third row**, because it merges two strangers whenever the
+  incomer's version is higher. That is
+  [a rule you invent must be checked against the good cases](/practices/a-rule-you-invent-must-be-checked-against-the-good-cases.md)
+  firing before the rule shipped rather than after.
+* **Note**: **A PROMPT IS THE RIGHT INSTRUMENT EXACTLY ONCE: when no answer is
+  derivable.** DR-033 rejected a save-flow prompt because a question asked
+  every time trains the dismissal reflex. The distinction is the TRIGGER, not
+  the dialog: that one fires on every save, this one only when an ambiguity
+  exists, on a gesture the user just initiated.
+* **Note**: **THE PLATFORM DECIDED PART OF THE SURFACE.** `IFileDialog` has no
+  body text, so the ruled inert-data sentence had nowhere to live and Import
+  gained a confirmation step nobody asked for. It earns the click by printing
+  the file's real contents before they enter the document: a `.rmdx` claiming
+  to be a 16x16 matrix while reporting `2 ports` is visible there and nowhere
+  else.
+
 ## 2026-08-29 (second entry)
 
 * **New**: [DR-100, a `.rmdx` carries the body flat](/decisions/dr-100-the-rmdx-carries-the-body-flat.md).
