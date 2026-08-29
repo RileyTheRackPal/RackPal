@@ -1122,21 +1122,6 @@ class _AppearanceSection extends StatelessWidget {
   final TemplateBody body;
   final void Function<T>(TemplateField<T> field, T value) onEdit;
 
-  /// A small fixed set, not a full picker. The value is an `Rgb` on the
-  /// model and a wheel would invite a hue nobody checked against the
-  /// greyscale gate; these are the eight Okabe-Ito hues the palette
-  /// already ships, which PAL-1 has already cleared.
-  static const _swatches = <Rgb>[
-    Rgb(0x00, 0x00, 0x00),
-    Rgb(0xE6, 0x9F, 0x00),
-    Rgb(0x56, 0xB4, 0xE9),
-    Rgb(0x00, 0x9E, 0x73),
-    Rgb(0xF0, 0xE4, 0x42),
-    Rgb(0x00, 0x72, 0xB2),
-    Rgb(0xD5, 0x5E, 0x00),
-    Rgb(0xCC, 0x79, 0xA7),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final resolved = effectiveGlyph(body.glyph, body.category);
@@ -1154,7 +1139,7 @@ class _AppearanceSection extends StatelessWidget {
         Wrap(
           spacing: 8,
           children: [
-            for (final c in _swatches)
+            for (final c in kDeviceAccentSwatches)
               InkWell(
                 onTap: () => onEdit(TemplateBodyField.accentColor, c),
                 child: Container(

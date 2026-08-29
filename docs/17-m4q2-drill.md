@@ -59,8 +59,15 @@ leaving it blank exercises it. Leave `Weight` blank.
 4. `Ctrl+Enter` to jump to Ports, then type one Quick Add line and press Enter:
 
 ```
-4x HDMI in
+4 hdmi in
 ```
+
+**NO `x` AFTER THE NUMBER.** This line read `4x HDMI in` until 2026-08-29 and Quick Add
+**refuses** it: quantity is the one positional token in the grammar and `4x` does not parse as
+one, so the bar answers *"A command starts with how many ports to add, such as 16."* Nothing was
+wrong with the product; the script had invented a form the DSL never had. It is corrected here and
+`clause2_drill_expectations_test.dart` now asserts both the working line and the refusal, so this
+cannot drift again without a red test.
 
 5. `[Save & Close]`.
 
@@ -109,7 +116,7 @@ are in the sheet's own order.**
 | `MASS` | `—` | You left the weight blank |
 | `DRAW` | `—` | Never `0`: a zero would read as a measurement |
 | `LIFECYCLE` | `NEW` | |
-| `NOTES` | `—` | |
+| `NOTES` | **nothing at all** | **Not a dash**, and this is the one column that differs from its neighbours. `_scheduleRow` builds every other nullable cell with `?? kUnknownCell` and builds this one with `?? ''`, because a missing note is a KNOWN absence: nobody wrote one. A dash would claim the sheet does not know whether a note exists. This row said `—` until 2026-08-29 and would have been recorded as a refutation of correct behaviour |
 
 Then find the **subtotal band** below the rack's rows. It reads, verbatim:
 
@@ -142,6 +149,19 @@ Read this before you start, not after.
 ---
 
 ## 6. The verdict form
+
+**THE EXPECTATION TABLE ABOVE IS ASSERTED IN CODE**, by
+`packages/rackpal_core/test/sheet/clause2_drill_expectations_test.dart`, which runs the same
+commands this script tells you to type and pins every cell of the row plus the subtotal band
+verbatim. It exists because two steps of this script had rotted unnoticed between being written
+on 2026-08-19 and being run: a Quick Add line the parser refuses, and a NOTES cell that would
+have been recorded as a refutation of correct behaviour.
+
+**It does not discharge the clause and must not be read as doing so.** The clause asks whether a
+template a PERSON authored in the builder reaches a rack and prints correctly. The test drives
+core and cannot see the builder, the palette, the export dialog or the PDF. It makes this drill
+worth running; it does not replace it. M1's clause 3 is the precedent, where 2,206 green tests sat
+over two defects one run found.
 
 Fill this in while it is fresh, then paste it into docs/12 §5.3.13.
 

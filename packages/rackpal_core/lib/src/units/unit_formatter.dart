@@ -9,6 +9,19 @@ import 'package:rackpal_core/src/units/mass.dart';
 
 /// Display formatting for [Len].
 extension LenFormatting on Len {
+  /// e.g. `"2.50"` — the bare number, for a field that prints its unit in
+  /// a suffix rather than inside the value.
+  String toMillimetresValue({int fractionDigits = 2}) =>
+      (nm / Len.nmPerMillimetre).toStringAsFixed(fractionDigits);
+
+  /// e.g. `"14.50"` — the bare number in inches.
+  ///
+  /// DELIBERATELY NOT [toFeetInches], which renders a 14 inch device depth
+  /// as `1' 2"`. That form is right for a cable run and wrong for a box:
+  /// nobody specifies rack gear in feet.
+  String toInchesValue({int fractionDigits = 2}) =>
+      (nm / Len.nmPerInch).toStringAsFixed(fractionDigits);
+
   /// e.g. `"2.50 mm"`.
   String toMillimeters({int fractionDigits = 2}) {
     final mm = nm / 1e6;

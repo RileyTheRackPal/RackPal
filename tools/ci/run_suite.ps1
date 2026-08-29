@@ -134,11 +134,20 @@ $ErrorActionPreference = 'Stop'
 # task shipped its UI half: core 3389 -> 3391 for the two scope-cue cases in
 # `console_palette_test.dart`, and ui 1213 -> 1220 for the seven of
 # `test/inspector/device_overrides_section_test.dart`.
+# RE-MEASURED 2026-08-29 when #230 finished its last two fields: core
+# 3391 -> 3394 for the three cases of `test/draw/device_accent_test.dart`, and
+# ui 1220 -> 1224 for the four accent and body-depth cases in the same
+# inspector file.
+# RE-MEASURED 2026-08-29 at #232 (M4-L3, door 3): core 3394 -> 3408, the 14
+# cases of `test/commands/template_fork_commands_test.dart`. And at `#251`:
+# core 3408 -> 3415, the seven of
+# `test/sheet/clause2_drill_expectations_test.dart`, which pins docs/17's
+# drill script against the product after two of its steps were found rotted.
 $SuiteFloors = @{
-    'rackpal_core'   = 3391
+    'rackpal_core'   = 3415
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1220
+    'rackpal_ui'     = 1224
     'rackpal_app'    = 841
 }
 

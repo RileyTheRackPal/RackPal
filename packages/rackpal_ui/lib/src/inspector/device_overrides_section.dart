@@ -141,6 +141,43 @@ class DeviceOverridesSection extends StatelessWidget {
           onChanged: (v) =>
               onSetOverride<int>(DeviceField.overrideTypicalWatts, v),
         ),
+        _OverrideField<Len>(
+          label: 'BODY DEPTH',
+          state: device.overrides.bodyDepthState,
+          fromTemplate: body?.bodyDepth,
+          // Inches, not feet-and-inches: `toFeetInches` renders a 14 inch
+          // device as `1' 2"`, which is right for a cable run and absurd
+          // for a box.
+          format: (d) => units == UnitSystem.metric
+              ? d.toMillimetresValue(fractionDigits: 1)
+              : d.toInchesValue(fractionDigits: 1),
+          suffix: units == UnitSystem.metric ? 'mm' : 'in',
+          parse: (s) {
+            final n = double.tryParse(s.trim());
+            if (n == null || n <= 0) return null;
+            return units == UnitSystem.metric
+                ? Len.fromMillimetres(n)
+                : Len.fromInches(n);
+          },
+          onChanged: (v) =>
+              onSetOverride<Len>(DeviceField.overrideBodyDepth, v),
+          // NOTHING RENDERS THIS YET, and the note says so rather than
+          // letting the field imply otherwise. M5's `RCK-012` (front depth
+          // plus rear depth plus 50 mm against usable depth) is its named
+          // consumer. A control whose effect is invisible is exactly what
+          // `inspector_panel.dart`'s deferral warns against, so the honest
+          // move is to state where it goes rather than to hide it: the
+          // value is real, persisted and round-tripped, and the reader
+          // arrives in M5.
+          helper: 'Read by the depth-clearance rule, which ships in M5.',
+        ),
+        _AccentField(
+          state: device.overrides.accentColorState,
+          fromTemplate: body?.accentColor,
+          onChanged: (v) =>
+              onSetOverride<Rgb>(DeviceField.overrideAccentColor, v),
+        ),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -199,6 +236,7 @@ class _OverrideField<T> extends StatefulWidget {
     required this.suffix,
     required this.parse,
     required this.onChanged,
+    this.helper,
   });
 
   final String label;
@@ -208,6 +246,9 @@ class _OverrideField<T> extends StatefulWidget {
   final String suffix;
   final T? Function(String) parse;
   final ValueChanged<OverrideValue<T>> onChanged;
+
+  /// A standing note under the field, for a value nothing renders yet.
+  final String? helper;
 
   @override
   State<_OverrideField<T>> createState() => _OverrideFieldState<T>();
@@ -391,6 +432,156 @@ class _OverrideFieldState<T> extends State<_OverrideField<T>> {
                 border: const OutlineInputBorder(),
                 suffixText: widget.suffix,
               ),
+            ),
+          ],
+          const SizedBox(height: 4),
+          Text(
+            provenance,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+            ),
+          ),
+          if (widget.helper case final h?)
+            Text(
+              h,
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The accent, which is the same three states over a row of swatches
+/// rather than a text box.
+///
+/// IT SHARES `kDeviceAccentSwatches` WITH THE BUILDER and does not carry
+/// its own copy. The builder sets `TemplateBody.accentColor` and this sets
+/// `DeviceOverrides.accentColor`: different fields at different scopes,
+/// offering the same eight colours, because a swatch you can pick on a
+/// template and not on an instance reads as a bug in whichever surface you
+/// met second.
+///
+/// UNKNOWN AND TEMPLATE PAINT THE SAME BOX, which is worth stating because
+/// it looks like a defect. DR-098 §11.97.3's third state resolves to null,
+/// and `device_layer.dart` then falls through to `palette.deviceFill`
+/// exactly as an absent override does. A fill has no way to draw an
+/// unknown: there is no hatch for "we do not know what colour this is",
+/// and inventing one would put a second meaning on the elevation's most
+/// glanceable channel. The DIFFERENCE still matters in the document, and
+/// the segment is where a person reads it.
+class _AccentField extends StatelessWidget {
+  const _AccentField({
+    required this.state,
+    required this.fromTemplate,
+    required this.onChanged,
+  });
+
+  final OverrideValue<Rgb> state;
+  final Rgb? fromTemplate;
+  final ValueChanged<OverrideValue<Rgb>> onChanged;
+
+  _Segment get _segment => switch (state) {
+    OverrideInherited<Rgb>() => _Segment.template,
+    OverrideStated<Rgb>() => _Segment.value,
+    OverrideUnknown<Rgb>() => _Segment.unknown,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final chosen = switch (state) {
+      OverrideStated<Rgb>(:final value) => value,
+      _ => null,
+    };
+
+    final provenance = switch (state) {
+      OverrideInherited<Rgb>() when fromTemplate != null =>
+        'From the template.',
+      OverrideInherited<Rgb>() =>
+        'The template states none, so the '
+            'elevation uses its default fill.',
+      OverrideStated<Rgb>() => 'Overridden on this device.',
+      OverrideUnknown<Rgb>() =>
+        'Unknown on this device. The elevation draws its default fill, '
+            'the same as it would for a device nobody has coloured.',
+    };
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'ACCENT',
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: scheme.onSurfaceVariant,
+              fontWeight: kConsoleEmphasis,
+              letterSpacing: 0.6,
+            ),
+          ),
+          const SizedBox(height: 6),
+          SegmentedButton<_Segment>(
+            key: const ValueKey('override-segments-ACCENT'),
+            segments: const [
+              ButtonSegment(value: _Segment.template, label: Text('Template')),
+              ButtonSegment(value: _Segment.value, label: Text('Value')),
+              ButtonSegment(value: _Segment.unknown, label: Text('Unknown')),
+            ],
+            selected: {_segment},
+            showSelectedIcon: false,
+            style: const ButtonStyle(
+              visualDensity: VisualDensity.compact,
+              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            ),
+            onSelectionChanged: (s) {
+              switch (s.single) {
+                case _Segment.template:
+                  onChanged(const OverrideInherited<Rgb>());
+                case _Segment.unknown:
+                  onChanged(const OverrideUnknown<Rgb>());
+                case _Segment.value:
+                  // Seed from the template when it has one, and otherwise
+                  // from the first swatch, so the row opens with something
+                  // selected rather than in a fourth state the model
+                  // cannot hold. `_OverrideField` opens an empty box for
+                  // the same situation; a swatch row has no empty.
+                  onChanged(
+                    OverrideStated<Rgb>(
+                      fromTemplate ?? kDeviceAccentSwatches.first,
+                    ),
+                  );
+              }
+            },
+          ),
+          if (_segment == _Segment.value) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              key: const ValueKey('override-swatches-ACCENT'),
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final c in kDeviceAccentSwatches)
+                  InkWell(
+                    key: ValueKey('override-swatch-${c.argb}'),
+                    onTap: () => onChanged(OverrideStated<Rgb>(c)),
+                    child: Container(
+                      width: 26,
+                      height: 26,
+                      decoration: BoxDecoration(
+                        color: Color(c.argb),
+                        border: Border.all(
+                          width: chosen == c ? 3 : 1,
+                          color: scheme.outline,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ],
           const SizedBox(height: 4),
