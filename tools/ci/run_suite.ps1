@@ -151,8 +151,12 @@ $ErrorActionPreference = 'Stop'
 # then took app 841 -> 847, the six of `test/session/door_two_test.dart`:
 # the routing and DR-099's dirty-draft refusal are both the shell's, so
 # `rackpal_ui` can only see a template id handed to a callback.
+# RE-MEASURED 2026-08-29 at `#233` (M4-L4): core 3415 -> 3427, the twelve of
+# `test/commands/port_override_commands_test.dart`. `PortOverrides.label` was
+# DELETED as an unread duplicate of `Port.userLabel` and NO TEST NAMED IT,
+# which is the same absence DR-098's census found on the device side.
 $SuiteFloors = @{
-    'rackpal_core'   = 3415
+    'rackpal_core'   = 3427
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1237

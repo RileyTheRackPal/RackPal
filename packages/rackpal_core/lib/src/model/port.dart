@@ -29,12 +29,30 @@ Uuid derivePortId(Uuid deviceId, PortKey portKey) {
 /// Per-instance overrides of a `PortDef`'s facts — typed, nullable fields.
 /// Lives on the `Port` itself, never in a device-keyed map (CR-053).
 ///
-/// M0 MINIMAL SHAPE: subset chosen per this package's governing
-/// instructions (label/connector/signal family); deliberately incomplete.
+/// ─────────────────────────────────────────────────────────────────────
+/// `label` IS DELETED, AND IT WAS A DUPLICATE (`#233`)
+/// ─────────────────────────────────────────────────────────────────────
+/// It meant "what this jack is called on this instance", which is exactly
+/// what [Port.userLabel] means, and `userLabel` is the one with a reader:
+/// `derived/schedule.dart` has printed it in the port-label column since
+/// DR-054. This one was read by nothing at all.
+///
+/// That is DR-098 §11.97.4's finding on a different class and it gets the
+/// same answer: two spellings of one fact is how a document comes to say
+/// it two different ways, and the field with a consumer survives. Every
+/// override block in the shipped corpus is empty, so this was a deletion
+/// rather than a migration.
+///
+/// TWO STATES, NOT DR-098's THREE, and the third is deferred with a named
+/// trigger rather than forgotten. `DeviceOverrides` is tri-state because
+/// `null` was fabricating a rollup TOTAL; nothing here feeds a total.
+/// These two feed predicates, and the predicates are M5's `CON-001` and
+/// `SIG-002`, neither of which exists. The addition is purely additive
+/// when M5 wants it (an absent `cleared` key means nothing cleared), so
+/// building it now would add a state with no reader.
 final class PortOverrides {
-  PortOverrides({this.label, this.connector, this.signalFamily});
+  PortOverrides({this.connector, this.signalFamily});
 
-  String? label;
   ConnectorTypeId? connector;
   SignalFamilyId? signalFamily;
 }

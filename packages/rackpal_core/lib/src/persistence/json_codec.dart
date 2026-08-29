@@ -1339,14 +1339,12 @@ DeviceInstance _decodeDeviceInstance(Uuid id, JsonMap json) => DeviceInstance(
 
 JsonMap _encodePortOverrides(PortOverrides o) {
   final json = <String, Object?>{};
-  putIfNotNull(json, 'label', o.label);
   putIfNotNull(json, 'connector', o.connector?.v);
   putIfNotNull(json, 'signalFamily', o.signalFamily?.v);
   return json;
 }
 
 PortOverrides _decodePortOverrides(JsonMap json) => PortOverrides(
-  label: asStrOrNull(json['label'], 'PortOverrides.label'),
   connector: json['connector'] == null
       ? null
       : ConnectorTypeId(asStr(json['connector'], 'PortOverrides.connector')),
