@@ -21,15 +21,18 @@ Fifteen gates. All must pass before a commit. Notes that cost real time:
 - **Anything you leave in `packages/*/tool/` is analyzed.** Scratch scripts inflate
   the info count and fail the gate. Delete them before committing, or keep them in
   the scratchpad.
-- **Test floors** (`tools/ci/run_suite.ps1`): core 3365, text 1, export 189, ui 1213,
-  app 841. Lowering one must be a visible line in a diff. **Re-measure them in any
-  commit that adds or removes tests**, which the script says in its own comment and
-  which went unheeded until #764 found 3,247 tests of slack under five floors.
-  **The script is the authority and this line is a copy**, which is why the copy was
-  wrong until 2026-08-28: it read 3263 / 1162 / 838 while the script read
-  3365 / 1213 / 841, so a reader trusting this file would have under-counted three
-  suites. CI build 20260827.1 reports every suite **exactly at its floor**, meaning
-  zero slack: the next deleted test fails the gate rather than hiding.
+- **Test floors** live in `tools/ci/run_suite.ps1` and **only there**. Read them from
+  `$SuiteFloors`; do not trust a number written in prose, including this bullet.
+  Lowering one must be a visible line in a diff. **Re-measure them in any commit that
+  adds or removes tests**, which the script says in its own comment and which went
+  unheeded until #764 found 3,247 tests of slack under five floors.
+  **A COPY OF THESE NUMBERS WENT STALE TWICE ON 2026-08-28 ALONE.** It read
+  3263 / 1162 / 838 against a script saying 3365 / 1213 / 841; that was corrected,
+  and within the day two concurrent branches re-measured core and ui upward again,
+  so the correction was stale before it merged. The figures are therefore no longer
+  reproduced here: a second copy of a moving number is a liability, not a
+  convenience. CI reports every suite **exactly at its floor**, meaning zero slack,
+  so the next deleted test fails the gate rather than hiding.
 - **Run suites from the package directory**, not the repo root. Several tests read
   files relative to CWD and fail spuriously otherwise.
 - **Stale `build/unit_test_assets` and `build/flutter_assets` cause phantom asset
