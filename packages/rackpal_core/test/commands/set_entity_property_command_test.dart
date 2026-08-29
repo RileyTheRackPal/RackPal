@@ -1021,9 +1021,20 @@ void main() {
       // and `MoveDeviceCommand`, and `Link` has five of its own. So these
       // tables are SUBSETS, and the direction that must hold is that no
       // table row writes a field the retrofit skipped.
+      //
+      // THE DOTTED KEYS RESOLVE TO THEIR LAST SEGMENT, which is
+      // `StructureOriginField`'s rule two cases up, applied here for the
+      // same reason it was made there. DR-098's four door-1 rows are keyed
+      // `overrides.weight` and the like, namespaced so they cannot share a
+      // merge key with a future instance-level `weight`; the setter they
+      // write is `DeviceOverrides.weight`, declared in this same file. The
+      // retrofit that made this pass is the point: those four were plain
+      // public mutable fields until door 1 gave them a producer, and a
+      // public setter is a second writer that skips the undo stack, the
+      // meta touch and the epoch invalidation all at once.
       expect(
         _internalSetters('device_instance.dart'),
-        containsAll([for (final f in DeviceField.all) f.key]),
+        containsAll([for (final f in DeviceField.all) f.key.split('.').last]),
       );
       expect(
         _internalSetters('link.dart'),

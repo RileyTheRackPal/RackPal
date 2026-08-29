@@ -88,6 +88,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` ย
 * [DR-095, a milestone closes on clauses discharged or parked](dr-095-a-milestone-closes-on-clauses-discharged-or-parked.md) - the habit held for two transitions out of four and nothing had named it; parking costs a ruling ID and a named later milestone, and the ruling was published containing the staleness it exists to catch.
 * [DR-096, the product is RackPal](dr-096-the-product-is-rackpal.md) - a trademark search found RackMate in use by a homelab hardware company, and it ran before anything was bought because RJ-017 said it had to; rename the product, never the record.
 * [DR-097, the tracker grows a fourth level](dr-097-the-tracker-grows-a-fourth-level.md) - Saga to Epic to Story to Chapter, a Saga being a release band so an ยง8.3 amendment becomes a visible drag; and an Epic is Done when its criterion is met, not when its children run out.
+* [DR-098, an override says three things](dr-098-an-override-says-three-things.md) - `null` was carrying both G4's "unknown" and the class's own "not overridden", so a device could not disown a template's weight without inventing a replacement; two override fields duplicating instance facts are deleted, and door 1 lands in the inspector column.
 
 # Not yet written up
 

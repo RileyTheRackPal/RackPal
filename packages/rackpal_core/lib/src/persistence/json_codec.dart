@@ -912,34 +912,112 @@ Rack _decodeRack(Uuid id, JsonMap json) => Rack(
 
 // --- DeviceInstance / DeviceOverrides / Placement / TemplateRef -------------
 
+/// DR-098 §11.97.3's third state on the wire.
+///
+/// UNKNOWN CANNOT BE AN EXPLICIT NULL HERE. CR-114 rules that an unknown
+/// serializes as an ABSENT key, and on this type an absent key already
+/// means "inherit the template's value" — so the two states would share a
+/// spelling and the file could not tell them apart. The cleared set is
+/// therefore a PRESENT key with a present value, and it is omitted
+/// entirely when empty, which every override block in the shipped corpus
+/// is. That makes this addition byte-invisible to existing files (CR-117)
+/// and no `kSchemaVersion` advance is owed.
+const Map<DeviceOverrideField, String> _kOverrideFieldNames = {
+  DeviceOverrideField.typicalWatts: 'typicalWatts',
+  DeviceOverrideField.weight: 'weight',
+  DeviceOverrideField.bodyDepth: 'bodyDepth',
+  DeviceOverrideField.accentColor: 'accentColor',
+};
+
+/// The wire names above, read the other way. A written-out inverse rather
+/// than a search of the forward map, so that adding a field to the enum
+/// and forgetting this pair is a compile-time hole in exactly one place.
+const Map<String, DeviceOverrideField> _kOverrideFieldsByName = {
+  'typicalWatts': DeviceOverrideField.typicalWatts,
+  'weight': DeviceOverrideField.weight,
+  'bodyDepth': DeviceOverrideField.bodyDepth,
+  'accentColor': DeviceOverrideField.accentColor,
+};
+
 JsonMap _encodeDeviceOverrides(DeviceOverrides o) {
   final json = <String, Object?>{};
-  putIfNotNull(json, 'displayName', o.displayName);
-  putIfNotNull(json, 'typePrefix', o.typePrefix);
   putIfNotNull(json, 'typicalWatts', o.typicalWatts);
   putIfNotNull(json, 'weightUg', o.weight?.ug);
   putIfNotNull(json, 'bodyDepthNm', o.bodyDepth?.nm);
   if (o.accentColor != null) json['accentColor'] = _encodeRgb(o.accentColor!);
+  if (o.cleared.isNotEmpty) {
+    // SORTED BY THE ENUM'S OWN ORDER, not by the set's iteration order.
+    // `Set` iteration is insertion-ordered in Dart, so two documents that
+    // cleared the same two fields in a different sequence would write
+    // different bytes and CR-117's round-trip would be the thing that
+    // found out.
+    json['cleared'] = [
+      for (final f in DeviceOverrideField.values)
+        if (o.cleared.contains(f)) _kOverrideFieldNames[f]!,
+    ];
+  }
   return json;
 }
 
-DeviceOverrides _decodeDeviceOverrides(JsonMap json) => DeviceOverrides(
-  displayName: asStrOrNull(json['displayName'], 'DeviceOverrides.displayName'),
-  typePrefix: asStrOrNull(json['typePrefix'], 'DeviceOverrides.typePrefix'),
-  typicalWatts: asIntOrNull(
-    json['typicalWatts'],
-    'DeviceOverrides.typicalWatts',
-  ),
-  weight: _decodeMassOrNull(json['weightUg'], 'DeviceOverrides.weightUg'),
-  bodyDepth: _decodeLenOrNull(
-    json['bodyDepthNm'],
-    'DeviceOverrides.bodyDepthNm',
-  ),
-  accentColor: _decodeRgbOrNull(
-    json['accentColor'],
-    'DeviceOverrides.accentColor',
-  ),
-);
+DeviceOverrides _decodeDeviceOverrides(JsonMap json) {
+  final cleared = <DeviceOverrideField>{};
+  final raw = json['cleared'];
+  if (raw != null) {
+    final names = asJsonList(raw, 'DeviceOverrides.cleared');
+    for (var i = 0; i < names.length; i++) {
+      final name = asStr(names[i], 'DeviceOverrides.cleared[$i]');
+      final field = _kOverrideFieldsByName[name];
+      if (field == null) {
+        throw FormatException(
+          'DeviceOverrides.cleared[$i]: unknown field "$name".',
+        );
+      }
+      cleared.add(field);
+    }
+  }
+
+  final decoded = DeviceOverrides(
+    typicalWatts: asIntOrNull(
+      json['typicalWatts'],
+      'DeviceOverrides.typicalWatts',
+    ),
+    weight: _decodeMassOrNull(json['weightUg'], 'DeviceOverrides.weightUg'),
+    bodyDepth: _decodeLenOrNull(
+      json['bodyDepthNm'],
+      'DeviceOverrides.bodyDepthNm',
+    ),
+    accentColor: _decodeRgbOrNull(
+      json['accentColor'],
+      'DeviceOverrides.accentColor',
+    ),
+    cleared: cleared,
+  );
+
+  // SET AND CLEARED AT ONCE IS REFUSED BY NAME, NOT NORMALISED.
+  //
+  // The file states two incompatible things about one field, and either
+  // way of picking a winner silently discards one of them. G2 says the
+  // model must be able to draw a mistake; it does not say the codec
+  // should invent which half of a contradiction was meant. Nothing this
+  // application writes can produce one, because `clear` and `inherit`
+  // each undo the other.
+  for (final f in cleared) {
+    final value = switch (f) {
+      DeviceOverrideField.typicalWatts => decoded.typicalWatts,
+      DeviceOverrideField.weight => decoded.weight,
+      DeviceOverrideField.bodyDepth => decoded.bodyDepth,
+      DeviceOverrideField.accentColor => decoded.accentColor,
+    };
+    if (value != null) {
+      throw FormatException(
+        'DeviceOverrides."${_kOverrideFieldNames[f]}" is both set and '
+        'listed in "cleared". A field is overridden to a value, or stated '
+        'unknown, never both (DR-098 §11.97.3).',
+      );
+    }
+  }
+  return decoded;
+}
 
 JsonMap _encodeTemplateRef(TemplateRef ref) => {
   'templateId': ref.templateId.v,

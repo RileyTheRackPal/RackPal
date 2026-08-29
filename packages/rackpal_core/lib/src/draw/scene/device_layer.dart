@@ -144,9 +144,15 @@ DeviceLayerBuild buildDeviceLayer(
   // door 1 of CR-054 read literally, an instance-level statement being by
   // construction the more specific one, and this is the first thing on
   // the elevation to read a `DeviceOverrides` at all.
+  // DR-098 §11.97.3 added a third state and this reads it through the
+  // model's resolver rather than re-spelling the precedence: an accent
+  // stated UNKNOWN falls through to `palette.deviceFill` exactly as an
+  // absent one does, because "I do not know this device's colour" and
+  // "nobody said" paint the same box. That is the one place a cleared
+  // override and an inherited one are indistinguishable, and they are
+  // indistinguishable because a fill has no way to draw an unknown.
   final fillArgb =
-      device.overrides.accentColor?.argb ??
-      body.accentColor?.argb ??
+      device.overrides.resolveAccentColor(body.accentColor)?.argb ??
       palette.deviceFill;
 
   // The ink then follows the FILL rather than the palette, because one of

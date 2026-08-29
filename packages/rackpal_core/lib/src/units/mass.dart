@@ -26,6 +26,17 @@ extension type const Mass(int ug) {
   factory Mass.fromKilograms(num kilograms) =>
       Mass((kilograms * ugPerKilogram).round());
 
+  /// A mass authored in POUNDS, which is what a US installer types.
+  ///
+  /// The inverse of `UnitFormatter.toPoundsValue`, and here for the same
+  /// reason [Mass.fromKilograms] is: door 1's inspector needs to turn a
+  /// typed `30.0` into micrograms when the project is on imperial units,
+  /// and the alternative is a `* 453_592_370` at the call site that no
+  /// reviewer can check against the unit it claims to convert. Every
+  /// pound conversion in the system now goes through this constant or
+  /// through the formatter beside it.
+  factory Mass.fromPounds(num pounds) => Mass((pounds * ugPerPound).round());
+
   static const Mass zero = Mass(0);
 
   /// Exact micrograms per pound.

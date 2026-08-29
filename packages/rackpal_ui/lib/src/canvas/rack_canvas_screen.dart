@@ -1557,6 +1557,42 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     });
   }
 
+  /// Door 1: one override field on the ONE selected device (CR-054,
+  /// DR-098 §11.97.5).
+  ///
+  /// NOT WRAPPED IN A TRANSACTION, unlike `_setSelectionLifecycle` above,
+  /// and the difference is the scope rather than an inconsistency. That
+  /// one edits every selected device and wraps N commands so the Edit menu
+  /// offers one thing to undo. This edits exactly one device by
+  /// construction, since the section renders only for a single selection,
+  /// so a transaction around a single command would add an undo frame that
+  /// says nothing.
+  ///
+  /// `buildSetEntityProperty` returns null when the value is unchanged,
+  /// which is what keeps re-pressing the segment already lit out of the
+  /// undo stack.
+  void _setDeviceOverride<T>(
+    EntityField<DeviceInstance, OverrideValue<T>> field,
+    OverrideValue<T> value,
+  ) {
+    final ids = [
+      for (final id in _selection.ids)
+        if (_doc.devices.containsKey(id)) id,
+    ];
+    if (ids.length != 1) return;
+    final command = buildSetEntityProperty(
+      doc: _doc,
+      id: ids.single,
+      field: field,
+      to: value,
+      now: _controller.clock.nowUtc(),
+      actor: _controller.actor,
+    );
+    if (command == null) return;
+    _controller.selection = _selection.snapshot();
+    _controller.run(command);
+  }
+
   /// Rebuilds so the inspector's Height field re-reads the rack's real
   /// height, whatever its own buffer currently says.
   ///
@@ -4045,6 +4081,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 onApplyPreset: _applyPreset,
                 onRefuse: _status.show,
                 onSetLifecycle: _setSelectionLifecycle,
+                onSetOverride: _setDeviceOverride,
                 firstFieldFocus: _inspectorFirstFieldFocus,
               ),
             ),
