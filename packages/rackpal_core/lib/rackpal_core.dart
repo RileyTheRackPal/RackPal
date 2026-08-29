@@ -110,6 +110,7 @@ export 'src/commands/signal_family_command.dart';
 export 'src/commands/simple_notifier.dart';
 export 'src/commands/split_commands.dart';
 export 'src/commands/structure_commands.dart';
+export 'src/commands/template_fork_commands.dart';
 export 'src/commands/template_snapshot_commands.dart';
 export 'src/commands/transaction.dart';
 export 'src/commands/undo_stack.dart';

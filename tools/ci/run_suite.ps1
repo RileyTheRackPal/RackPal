@@ -138,8 +138,10 @@ $ErrorActionPreference = 'Stop'
 # 3391 -> 3394 for the three cases of `test/draw/device_accent_test.dart`, and
 # ui 1220 -> 1224 for the four accent and body-depth cases in the same
 # inspector file.
+# RE-MEASURED 2026-08-29 at #232 (M4-L3, door 3): core 3394 -> 3408, the 14
+# cases of `test/commands/template_fork_commands_test.dart`.
 $SuiteFloors = @{
-    'rackpal_core'   = 3394
+    'rackpal_core'   = 3408
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1224
