@@ -14372,6 +14372,94 @@ that grouping was always doing real work.
 
 ---
 
+### 11.100 DR-101 · An id collision on import means somebody typed the same name, and only a person knows which
+
+**Settled by the user on 2026-08-29, before any code**, for DR-100's reason one level up: M4-M3
+(`#236`) is the surface that first lets a template from outside this machine reach a rack, and the
+rule for what happens when it lands on a name you already use is not derivable from the file.
+
+**11.100.1 THE FACT THAT DECIDED IT, AND THE FIRST ANSWER IT OVERTURNED.** `templateIdFor`
+(`template_snapshot_commands.dart:68`) derives the id **from the display name**:
+`HDMI Matrix 16x16` becomes `tpl.hdmi_matrix_16x16`, and does so identically in every project on
+every machine. That was `#232`'s deliberate call, made so *"a person diffing two `.rmpj` files"*
+reads what the device is instead of a UUID, and it is not reopened here.
+
+Its consequence for import is what nobody had written down. **A colliding id does not mean "this
+template came back". It means "somebody typed the same name",** and between two integrators
+documenting the same class of hardware that is close to certain rather than rare. The first ruling
+put to the user priced collisions as rare and as mostly the returning-file case; **that premise was
+wrong and it was load-bearing**, so the question was put again against the measurement.
+
+**The policy for the local case was already ruled, in the function's own header**, and reading it is
+what caught this:
+
+> *"Collisions get a numeric suffix rather than joining an existing id: two devices a user happened
+> to name the same thing are two devices, and silently merging them would put one template's ports
+> on the other's instances."*
+
+An import that joined an existing id unconditionally would ship exactly that defect, and every
+placed instance of the incumbent would take a stale-fork badge (CR-062) pointing at a device that is
+not theirs.
+
+**11.100.2 THERE IS NO SIGNAL IN THE FILE, AND THAT IS A MEASUREMENT RATHER THAN A SHRUG.** Three
+candidate discriminators were checked against the tree and all three fail:
+
+| Candidate | Why it cannot answer |
+|---|---|
+| `derivedFrom` | Written by **door 3 only** (`template_fork_commands.dart:196`). Door 2 forks `version+1` on the **same** id and leaves it untouched, so the returning-file case carries no lineage at all |
+| `contentHash` | Every value in the tree is a labelled placeholder. `#795` is filed and unbuilt, and a placeholder never distinguishes anything |
+| The version number | A `.rmdx` carries **one** version, not a chain, so a stranger who iterated their own same-named device to `@4` is indistinguishable from your template returning at `@4` |
+
+**A rule keyed to the version was drafted and rejected on the third row.** It would have merged two
+strangers whenever the incomer's version happened to be higher, which is `#232`'s defect reached
+through a narrower door rather than closed. This is `a rule you invent must be checked against the
+good cases` firing before the rule shipped.
+
+**11.100.3 THE RULING: on collision, and only on collision, ask.** Two buttons, no default action,
+no third option:
+
+> A device template named **HDMI Matrix 16x16** is already in this project.
+> `[ Add as a new version of it ]`  `[ Import as a separate template ]`
+
+**Add as a new version** takes `nextTemplateVersion` and keeps the id, so placement resolves the
+newest and the send-it-back-fixed flow works. **Import as a separate template** takes
+`templateIdFor`'s suffix, which is the existing policy unchanged.
+
+**THE PROMPT IS NOT A HEDGE AND IT IS NOT THE DEFAULT SHAPE THIS CORPUS PREFERS.** DR-033 §11.32
+rejected a save-flow prompt in terms, because a question asked every time trains the dismissal
+reflex and makes the rare bad case routine. **That argument does not reach this one, and the
+difference is the trigger**: DR-033's prompt fires on every save, and this one fires only when an
+ambiguity actually exists, on a gesture the user just initiated deliberately, with the answer
+available to them and to nothing else. **A question with no derivable answer is the one case a
+dialog is the right instrument.**
+
+**11.100.4 THE RULING ON PLACEMENT: `File ▸ Export device template…` and `File ▸ Import device
+template…`.** Beside `Export PDF…`, which is where every other file operation in this product
+already lives and where `docs/17`'s drill already sends people. **Import belongs to no template**, so
+a palette card's context menu would split the pair across two surfaces and make one verb learnable
+twice. A card-level `Export` was declined for `file_picker.dart`'s own stated reason: *"a second call
+site would be a second dialog configuration to keep in sync"*, and `session_layering_test.dart` RULE
+7 asserts there is exactly one.
+
+**11.100.5 THE RULING ON COPY: one line, in the import dialog.** *"A device template is data. It
+contains no scripts and nothing that runs."* docs/06 §7.3 requires the dialog to say it, and the
+failure being answered is a reasonable person hesitating over a file a stranger emailed them, which
+is a hesitation that happens **at the dialog** and not six months earlier. A dismissible first-run
+card was declined for that timing: it lands when nobody is importing anything, and the person who
+dismissed it is exactly the one now staring at a stranger's file. Dropping the sentence entirely was
+declined as a scope edit under §8.3 rather than a copy choice, §7.3 having stated the requirement in
+terms.
+
+**11.100.6 WHAT THIS DOES NOT RULE.** It does not make `contentHash` real, so **AC-042's mismatch
+warning and its badge cannot be exercised until `#795` lands** and `#236` must not be read as having
+discharged them. It does not give the stale-fork badge a surface, which §11.98.5 already records as
+nobody's. It says nothing about importing a `.rmda` or about several libraries at once, both M4-N's.
+And it does not decide what happens when the imported body is **byte-identical** to a version
+already held: that is a no-op worth detecting, but detecting it cheaply is `#795`'s hash, so it is
+named here and left to it.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
