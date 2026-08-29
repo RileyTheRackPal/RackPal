@@ -1603,6 +1603,33 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _controller.run(command);
   }
 
+  /// M4-L4 (`#233`): one fact on one port of one device.
+  ///
+  /// THE DESIGNATOR IS ALLOCATED HERE AND HANDED OVER, because the command
+  /// materialises inside `apply` and must not allocate there (DR-011.1).
+  /// The section reads it off `ConnectTarget.plannedDesignator`, which is
+  /// the same number the connect gesture would have written.
+  void _setPortFact(
+    Uuid deviceId,
+    PortKey portKey,
+    PortFactField field,
+    Object? value,
+    String designatorIfMaterialised,
+  ) {
+    _controller.selection = _selection.snapshot();
+    _controller.run(
+      SetPortFactCommand(
+        deviceId: deviceId,
+        portKey: portKey,
+        field: field,
+        value: value,
+        designatorIfMaterialised: designatorIfMaterialised,
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+      ),
+    );
+  }
+
   /// Rebuilds so the inspector's Height field re-reads the rack's real
   /// height, whatever its own buffer currently says.
   ///
@@ -4191,6 +4218,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 onRefuse: _status.show,
                 onSetLifecycle: _setSelectionLifecycle,
                 onSetOverride: _setDeviceOverride,
+                onSetPortFact: _setPortFact,
                 firstFieldFocus: _inspectorFirstFieldFocus,
               ),
             ),

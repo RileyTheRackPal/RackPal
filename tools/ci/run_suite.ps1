@@ -154,12 +154,17 @@ $ErrorActionPreference = 'Stop'
 # RE-MEASURED 2026-08-29 at `#233` (M4-L4): core 3415 -> 3427, the twelve of
 # `test/commands/port_override_commands_test.dart`. `PortOverrides.label` was
 # DELETED as an unread duplicate of `Port.userLabel` and NO TEST NAMED IT,
-# which is the same absence DR-098's census found on the device side.
+# which is the same absence DR-098's census found on the device side. Its
+# form then took ui 1237 -> 1243, the six of
+# `test/inspector/device_ports_section_test.dart`. Those mount the section
+# DIRECTLY rather than through `RackCanvasScreen`, because every template on
+# the demo document has ZERO ports and a screen-level test would have been
+# asserting an empty list.
 $SuiteFloors = @{
     'rackpal_core'   = 3427
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1237
+    'rackpal_ui'     = 1243
     'rackpal_app'    = 847
 }
 
