@@ -72,9 +72,26 @@ the same shape as the non-vacuity problem the floors exist to solve, one level u
 that reports nothing wrong is not evidence that it could. Until a genuine failure is
 observed on the service, **a green Tests tab is a weaker claim than it looks**.
 
-## PR validation is configured, not exercised
+## PR validation, and the thing this section got wrong twice
 
 The `pr:` block in the YAML is **ignored** for an Azure Repos Git repository; PR triggers
-come from a branch policy. That policy now exists (Build validation on `main`, blocking,
-policy id 1), **but no pull request has yet run through it**, and it gates PR *completion*
-only. A direct push to `main` still lands and is gated after the fact.
+come from a branch policy. That policy exists (Build validation on `main`, blocking,
+policy id 1) and is **exercised**: build `20260828.1` fired on PR !1 and built
+`refs/pull/1/merge`, the **merge commit** rather than either branch, which is the good
+part. What went green is what landed, not a prediction of it.
+
+**A direct push to `main` is REFUSED**, and this section said the opposite twice:
+
+```
+$ git push origin <branch>:main
+! [remote rejected] (TF402455: Pushes to this branch are not permitted;
+                     you must use a pull request)
+```
+
+The claim was that the policy *"gates PR completion only"* and that a direct push
+*"still lands and is gated after the fact"*. In Azure Repos a **blocking** policy
+protects the branch itself, so one policy does both jobs and `trigger:` is not
+covering a hole. **The error is kept here rather than quietly replaced**: it was written
+confidently, repeated in three files, and survived because nobody tried the push it
+described. See [a confident paragraph is a
+tell](/practices/two-documents-agreeing-is-not-verification.md).

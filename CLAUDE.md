@@ -45,9 +45,14 @@ Fifteen gates. All must pass before a commit. Notes that cost real time:
 `46ec050`: it passed first try, all 24 steps, 22m01s, no fixes. Run 2 took the
 warm-cache path at 18m28s.
 
-- **`main` has a blocking build-validation policy** (policy id 1). It gates PR
-  *completion* only. **A direct push to `main` still lands**, and is gated after the
-  fact by `trigger:`.
+- **`main` has a blocking build-validation policy** (policy id 1), and it protects
+  the branch, not merely the PR. **A direct push to `main` is REFUSED** with
+  `TF402455: Pushes to this branch are not permitted; you must use a pull request`.
+  This file said the opposite until 2026-08-29 (*"a direct push to `main` still
+  lands"*), which was wrong: in Azure Repos a *blocking* policy does both jobs.
+  Land work with `az repos pr create`, then
+  `az repos pr update --id N --status completed --squash false`, and budget the
+  policy build (~18 min) before the PR can complete.
 - The pipeline is the same gate set as `run_local.ps1` minus the two local-only
   checks (`flutter pin`, `tracked sources`), which a clean clone cannot fail by
   construction.
