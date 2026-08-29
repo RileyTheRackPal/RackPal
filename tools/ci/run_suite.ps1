@@ -147,13 +147,16 @@ $ErrorActionPreference = 'Stop'
 # the nine of `test/canvas/device_doors_menu_test.dart` and the four
 # secondary-button cases added to `canvas_intent_detector_test.dart`. Core is
 # unchanged: `templateIdFor` MOVED from the app into core and its one caller
-# moved with it, so no core case was added or removed.
+# moved with it, so no core case was added or removed. Door 2's shell half
+# then took app 841 -> 847, the six of `test/session/door_two_test.dart`:
+# the routing and DR-099's dirty-draft refusal are both the shell's, so
+# `rackpal_ui` can only see a template id handed to a callback.
 $SuiteFloors = @{
     'rackpal_core'   = 3415
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1237
-    'rackpal_app'    = 841
+    'rackpal_app'    = 847
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

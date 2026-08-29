@@ -73,9 +73,12 @@ import 'package:rackpal_core/rackpal_core.dart'
     show
         LocationRemovalPlan,
         TemplateBody,
+        TemplateId,
         TextMeasurer,
         Uuid,
-        buildRackPresets;
+        buildRackPresets,
+        copyTemplateBody,
+        resolveLatestTemplate;
 import 'package:rackpal_ui/rackpal_ui.dart';
 
 /// Which tab of the v1 strip each `Ctrl/Cmd+n` view identity renders as.
@@ -155,6 +158,14 @@ enum ShellViewGroup { project, design, deliverable }
 /// both need to name this tab; neither may hard-code a position that
 /// CR-071's `Ctrl+3` Rear Panel will move in v1.1.
 final int _kSchematicTabIndex = kViewKeyToTabIndex[2]!;
+
+/// The Device Manager's ordinal in the view strip, door 2's destination.
+///
+/// READ OFF THE ENUM rather than written as `1`, for the same reason
+/// `_kSchematicTabIndex` is read out of the map: the strip's order is
+/// DR-091 §11.90.3's and a view inserted before this one must not silently
+/// send door 2 to the Locations tab.
+final int _kDeviceManagerTabIndex = ShellView.deviceManager.index;
 
 /// The handler for the registry's view-switch bindings.
 ///
@@ -251,6 +262,19 @@ final class AppShellState extends State<AppShell>
     with SingleTickerProviderStateMixin
     implements WindowChromeListener {
   late final TabController _tabController;
+
+  /// Door 2's subject: the template the Device Manager is editing, or null
+  /// for the blank draft it opens on (DR-099 §11.98).
+  TemplateId? _editingTemplateId;
+
+  /// Whether the Device Manager's ONE draft has unsaved work, reported by
+  /// the builder off its own session counter.
+  ///
+  /// THE SHELL CANNOT ASK, which is why this is pushed rather than pulled:
+  /// `TemplateEditSession` is private to the builder's State and is
+  /// `late final`, so loading another template means a new `key` and a
+  /// destroyed State. Door 2 has to know BEFORE it swaps that key.
+  bool _builderDirty = false;
 
   /// What the `IndexedStack` is showing. Mirrors `_tabController.index`,
   /// pushed by [_onTabChanged] rather than read during build, because a
@@ -785,16 +809,36 @@ final class AppShellState extends State<AppShell>
   /// `TabBarView`.
   Widget _deviceManagerTab(DocumentSession session) {
     final doc = session.controller.doc;
+    // DOOR 2's SUBJECT, when one was asked for. `resolveLatestTemplate`
+    // rather than the pinned version the device carries: door 2 edits THE
+    // TEMPLATE, and editing anything but its newest version would fork
+    // from a body somebody has already superseded.
+    final editing = _editingTemplateId;
+    final snapshot = editing == null
+        ? null
+        : resolveLatestTemplate(doc, editing.v);
     return DeviceBuilderScreen(
-      key: ValueKey(session.controller),
-      template: TemplateBody(
-        manufacturer: 'Generic',
-        model: '',
-        displayName: '',
-      ),
+      // KEYED ON THE CONTROLLER **AND** THE TEMPLATE, and the second half
+      // is what makes door 2 work at all: `TemplateEditSession` is
+      // `late final`, so handing this screen a different `template` on the
+      // same `State` would be ignored and the user would arrive at the
+      // Device Manager still looking at the old draft. A new key builds a
+      // fresh State. That is also precisely why DR-099 §11.98.4 refuses on
+      // a dirty draft: the swap destroys it.
+      key: ValueKey((session.controller, editing)),
+      template: snapshot == null
+          ? TemplateBody(manufacturer: 'Generic', model: '', displayName: '')
+          : copyTemplateBody(snapshot.body),
+      onDirtyChanged: (dirty) {
+        if (mounted) setState(() => _builderDirty = dirty);
+      },
       actions: buildDeviceBuilderActions(
         controller: session.controller,
         prefs: _services.prefsStore,
+        // NON-NULL IS WHAT MAKES SAVE A FORK RATHER THAN A NEW TEMPLATE.
+        // With `editing` set, `onSave` reuses the id and `nextTemplateVersion`
+        // gives it `version + 1`; with it null the save mints a fresh id.
+        editing: snapshot == null ? null : editing,
       ),
       // THE PROJECT'S OWN REGISTRIES AND FORMAT, so the port grid prints
       // `HDMI Type A` where the model holds `conn.hdmi_a` and previews the
@@ -957,7 +1001,43 @@ final class AppShellState extends State<AppShell>
       // elevation refuses to draw a signpost nobody is listening to, and
       // this shell is the only listener that can exist.
       onRevealInSchematic: _revealInSchematic,
+      // Door 2 (CR-054, DR-099). Routing is the shell's because the shell
+      // owns the six-view stack and the Device Manager's single draft.
+      onEditTemplate: _openTemplateForEditing,
     );
+  }
+
+  /// Door 2: open [templateId] in the Device Manager, which forks
+  /// `version + 1` on save (DR-099 §11.98).
+  ///
+  /// REFUSES ON A DIRTY DRAFT rather than prompting to discard it
+  /// (§11.98.4). The dialog offering "discard and open the other one" is
+  /// the shape people dismiss by reflex, and a discarded draft has NO
+  /// RECOVERY PATH: the session is an in-memory deep copy, so there is
+  /// nothing for `Ctrl+Z` to reach and nothing on disk to reopen. A
+  /// refusal costs a forgotten draft one extra step and can destroy
+  /// nothing. The user is still TAKEN THERE, because "finish it first" is
+  /// useless without showing them what "it" is.
+  void _openTemplateForEditing(TemplateId templateId) {
+    final refused = _builderDirty && _editingTemplateId != templateId;
+    if (!refused) _editingTemplateId = templateId;
+
+    // THE SAME POST-FRAME HOP `_revealInSchematic` uses, for its reason: a
+    // `PageView` settles to the nearest page when the pointer it is
+    // watching lifts, and the menu tap that chose this door IS that
+    // pointer. Switching inside it moves the index and the settle puts it
+    // straight back.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      switchToTab(_kDeviceManagerTabIndex);
+      if (refused) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Finish or discard this template first.'),
+          ),
+        );
+      }
+    });
   }
 
   /// The elevation's chip, answered: park the request, then switch tabs.
