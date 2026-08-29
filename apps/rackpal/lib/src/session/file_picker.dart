@@ -161,7 +161,7 @@ const MethodChannel kFileDialogChannel = MethodChannel(
 /// the macOS runner implements the same two words rather than a Windows
 /// contract in disguise.
 ///
-/// Adding a value means adding an arm in
+/// Adding a value means adding a ROW to `kFileKinds` in
 /// `windows/runner/file_dialog_channel.cpp`; an unrecognised kind falls
 /// back to [project] there rather than showing the user nothing.
 enum FileDialogType {
@@ -170,6 +170,22 @@ enum FileDialogType {
 
   /// `.csv`, for M3-F's import.
   csv,
+
+  /// `.rmdx`, a single device template (docs/06 §7.3).
+  ///
+  /// **DECLARED AHEAD OF ITS CALLER, AND THAT IS THE POINT OF `#234`.**
+  /// The import and export surface is `#236` and does not exist; the
+  /// codec it needs is `#235` and does not exist either. This arm ships
+  /// first because the alternative its own board item names is the one
+  /// that actually happens: a surface built against a dialog that cannot
+  /// offer its file type acquires a second hard-coded filter beside the
+  /// first, and then the two disagree.
+  ///
+  /// The precedent for declaring-before-reading is DR-098 §11.97.4, which
+  /// keeps `bodyDepth` unread because M5's `RCK-012` is a NAMED consumer.
+  /// The name is the whole difference between this and an unreachable
+  /// field, so it is written down: **`#236`**.
+  device,
 }
 
 /// Native open and save dialogs, behind two methods.

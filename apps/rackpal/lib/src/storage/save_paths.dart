@@ -40,6 +40,24 @@ const List<String> kDocumentExtensions = <String>[
 /// The extension an exported PDF gets, including the dot, lower-case.
 const String kPdfExtension = '.pdf';
 
+/// The extension one exported device template gets, including the dot,
+/// lower-case (docs/06 §7.3).
+///
+/// **NO LEGACY SIBLING, and the absence is a fact rather than an
+/// oversight.** [kDocumentExtensions] exists because `.rackpal` files were
+/// written by shipped builds and refusing them would be a data-loss event.
+/// No build has ever written a device template, so there is nothing for a
+/// second spelling to rescue and [SavePaths.forTarget] takes this one
+/// alone.
+const String kDeviceTemplateExtension = '.rmdx';
+
+/// Every extension a device template may carry, **the one to append
+/// first**. One entry today; the list shape is what
+/// [SavePaths.forTarget] takes.
+const List<String> kDeviceTemplateExtensions = <String>[
+  kDeviceTemplateExtension,
+];
+
 /// Appended to the target to name the in-progress write.
 const String kTempSuffix = '.tmp';
 

@@ -53,6 +53,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:rackpal/src/storage/save_paths.dart';
 
 const _channel = 'windows/runner/file_dialog_channel.cpp';
 
@@ -182,18 +183,98 @@ void main() {
       contains('*.rmpj;*.rackpal'),
       reason: 'DR-015 keeps both project spellings in ONE entry',
     );
+    expect(
+      source,
+      contains('*.rmdx'),
+      reason:
+          'M4-M1 (#234): the device-template filter has to exist, or the '
+          'import surface #236 builds will reach for a second hard-coded '
+          'array, which is the defect that item exists to prevent',
+    );
   });
 
-  test('the DEFAULT extension follows the kind, on both dialogs', () {
+  // ── M4-M1: the kind table (board #234) ─────────────────────────────
+  //
+  // WHY THESE READ A TABLE AND NOT A TERNARY. Until #234 the filter and
+  // the default extension were two `csv ? … : …` expressions over one
+  // condition, and the assertion here was `contains` over the exact
+  // ternary text — a MECHANISM assertion, which the house style forbids
+  // and which the third kind broke on contact. What the criterion
+  // actually wants is that every kind Dart can send has a filter AND a
+  // matching default extension, bound so they cannot drift apart. That
+  // is a property of the table, so the table is what is read.
+
+  /// The `kFileKinds` rows as `{wire name: default extension}`.
+  Map<String, String> nativeKinds() {
+    final rows = RegExp(
+      r'\{L"(\w+)",\s*\w+,\s*ARRAYSIZE\(\w+\),\s*L"(\w+)"\}',
+    ).allMatches(_source());
+    return {for (final m in rows) m.group(1)!: m.group(2)!};
+  }
+
+  /// The `FileDialogType` values, in declaration order.
+  List<String> dartKinds() {
+    final picker = _stripComments(
+      File('lib/src/session/file_picker.dart').readAsStringSync(),
+    );
+    final body = RegExp(
+      r'enum FileDialogType\s*\{([^}]*)\}',
+      dotAll: true,
+    ).firstMatch(picker);
+    expect(body, isNotNull, reason: 'the enum is the wire vocabulary');
+    return RegExp(
+      r'\w+',
+    ).allMatches(body!.group(1)!).map((m) => m.group(0)!).toList();
+  }
+
+  test('every kind Dart can send is a row the runner knows', () {
+    // THE DEFECT THIS CATCHES IS SILENT. An unrecognised kind does not
+    // throw and does not show an empty dialog — it falls back to the
+    // project filter, so `Export device template…` would open a dialog
+    // offering `*.rmpj` and a person would reasonably conclude the
+    // feature was mis-wired rather than the runner un-taught.
+    expect(
+      nativeKinds().keys.toSet(),
+      containsAll(dartKinds()),
+      reason:
+          'add the row in file_dialog_channel.cpp in the same commit as '
+          'the enum value, or the new kind silently gets the project '
+          'filter',
+    );
+  });
+
+  test('the filter and the DEFAULT extension are one row, not two', () {
     // The half D13 names separately: `SetDefaultExtension` fired inside
     // `ConfigureDialog`, which BOTH branches call, so a Save As of
-    // anything that was not a project still acquired `.rmpj`.
+    // anything that was not a project still acquired `.rmpj`. A row
+    // carrying both is what stops the pair disagreeing again.
+    final source = _source();
     expect(
-      _source(),
-      contains('SetDefaultExtension(csv ? L"csv" : L"rmpj")'),
+      source,
+      contains('SetDefaultExtension(kind->default_extension)'),
       reason:
-          'one call, one condition; a second hard-coded call anywhere '
+          'ONE call reading the row. A second hard-coded call anywhere '
           'would re-open the defect on whichever dialog reached it',
+    );
+    expect(
+      source,
+      contains('SetFileTypes(kind->filter_count, kind->filters)'),
+      reason: 'and the filter comes from the same row, not another branch',
+    );
+    expect(
+      nativeKinds(),
+      containsPair('project', 'rmpj'),
+      reason: 'DR-015: a Save with no extension typed is a .rmpj',
+    );
+    expect(nativeKinds(), containsPair('csv', 'csv'));
+    expect(
+      nativeKinds(),
+      containsPair(
+        'device',
+        // Read out of the Dart constant rather than spelled twice, so the
+        // two ends cannot drift. docs/06 §7.3 fixes the extension.
+        kDeviceTemplateExtension.substring(1),
+      ),
     );
   });
 
@@ -220,10 +301,28 @@ void main() {
   });
 
   test('an unknown kind falls back rather than showing nothing', () {
-    // `csv` is the only special case and everything else takes the
-    // project filter, so a Dart value the runner has not been taught
-    // yet opens a usable dialog instead of an empty one.
-    expect(_source(), contains('*file_type == L"csv"'));
+    // A Dart value the runner has not been taught yet opens a USABLE
+    // dialog instead of an empty one. The fallback is row zero, so the
+    // property is "row zero is project" plus "the loop may find nothing",
+    // and both are read rather than assumed.
+    final source = _source();
+    expect(
+      source,
+      contains('const FileKind* kind = &kFileKinds[0]'),
+      reason: 'the fallback is the initialiser, so no match is not a crash',
+    );
+    expect(
+      dartKinds().first,
+      'project',
+      reason:
+          'and row zero must be the project kind. Dart declares the same '
+          'order and its enum names the fallback in FileDialogType.device',
+    );
+    expect(
+      nativeKinds().keys.first,
+      'project',
+      reason: 'the C++ table is what actually decides it',
+    );
   });
 
   test('the runner actually registers the channel', () {

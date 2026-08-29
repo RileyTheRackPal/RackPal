@@ -165,7 +165,7 @@ $SuiteFloors = @{
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1243
-    'rackpal_app'    = 847
+    'rackpal_app'    = 848
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
