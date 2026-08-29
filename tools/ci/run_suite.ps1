@@ -161,7 +161,7 @@ $ErrorActionPreference = 'Stop'
 # the demo document has ZERO ports and a screen-level test would have been
 # asserting an empty list.
 $SuiteFloors = @{
-    'rackpal_core'   = 3445
+    'rackpal_core'   = 3455
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1243
