@@ -13926,6 +13926,168 @@ whether RackPal was ever infringing, only that the product will not be called it
 ---
 
 
+### 11.96 DR-097 · The tracker grows a fourth level, and an epic's state follows its criterion
+
+**Settled by the user on 2026-08-28.** The board's hierarchy becomes **Saga → Epic → Story →
+Chapter**, a Saga is a **release band**, and an Epic's board state is decided by **§8.1's exit
+criterion** rather than by how many children are still open. Four questions were put and four were
+answered; the reasoning for each is below rather than in a commit message.
+
+**NOT A §8.3 AMENDMENT.** §8.3 governs moving an item between v1, v1.1, v1.2, v2 and not-doing.
+Nothing moves. The scope list is untouched, no exit criterion changes a word, and no milestone gains
+or loses a clause. What changes is **the shape of the container the work is tracked in**. It takes a
+ruling ID on DR-096's precedent (§11.95): §8.2 wants one for a change this size, and the migration
+it authorises would otherwise be a large untraceable diff across every work item in the project.
+
+**11.96.1 THE SHAPE, AND WHAT EACH LEVEL HOLDS.**
+
+| Level | Holds | Was |
+|---|---|---|
+| **Saga** | A release band: v1, v1.1, v1.2, v2 | did not exist |
+| **Epic** | A milestone (M0…M9), or a ruling-born body of scope | Epic, unchanged |
+| **Story** | What a milestone decomposes into: M4-A, a clause tracker | `Issue` |
+| **Chapter** | The unit of work a Story decomposes into | `Task` |
+
+**11.96.2 A SAGA IS A RELEASE BAND, AND THAT IS WHAT MAKES THE LEVEL EARN ITS KEEP.** A fourth
+level whose meaning is "bigger than an epic" is a taller filing cabinet and nothing else. This one
+carries **roadmap §2's scope list**, which is the one list §8.3 governs. The consequence is the
+point: **moving an Epic between Sagas is the visible act of a §8.3 amendment**, so the thing the
+process already required to cost a ruling ID now also costs a drag the reader can see. It also
+gives the four scope epics that were impersonating milestones (macOS `#55`, the Store `#100`, the
+Plan view `#588`, the community catalog `#592`) a level to sit at that does not imply they are
+milestones with exit criteria.
+
+**11.96.3 THE COST IS A TYPE CHANGE ON EVERY WORK ITEM, AND IT IS PAID DELIBERATELY.** Azure DevOps
+lets an inherited process restyle, extend and disable a system work item type. **It does not let one
+be renamed.** `Story` and `Chapter` are therefore new custom types and every existing item is
+converted into one. Measured at the time of the ruling with a WIQL count over
+`[System.TeamProject]='RackMate'`: **759 work items**, of which 526 are `Task` and 219 are `Issue`.
+The alternatives were considered and rejected in the open: renaming only the backlog *tabs* leaves
+the cards themselves reading `Issue`, which is the exact irritation being paid to remove; and
+adopting the Agile process buys four levels natively at the price of Microsoft's vocabulary
+(`Feature`, `User Story`) instead of this project's.
+
+**11.96.4 AN EPIC'S STATE FOLLOWS ITS CRITERION, NOT ITS CHILD COUNT, AND THE BOARD HAD DRIFTED
+FAR ENOUGH TO PROVE WHY THAT NEEDS SAYING.** §8.1 already rules that *"the milestone is the unit of
+planning; the exit criterion is the unit of truth"*. The board was not reading it. Measured
+2026-08-27, against `docs/12`'s own marks on the same day:
+
+| Epic | `docs/12` said | The board said |
+|---|---|---|
+| M0 | `CRITERION MET`, 8 of 8, weakest mark `DEMONSTRATED` | `To Do`, 3 of 10 stories closed |
+| M1 | `CRITERION MET`, 8 of 8, weakest mark `CONFIRMED` | `To Do`, 1 of 10 |
+| M3 | `CRITERION MET`, 4 of 5 with the fifth parked | `To Do`, 17 of 18 |
+| M4 | `IN PROGRESS`, clause 1 `CONFIRMED` | `To Do` |
+
+**Three milestones whose criteria were met, and one in flight, all sitting in the same column as M9,
+which nobody has touched.** A board on which every epic reads `To Do` conveys exactly as much as a
+board with no states at all.
+
+The root cause was one level down and is the more useful finding. **The clause-tracking Stories
+were never closed when their clauses were discharged.** `docs/12` §2 has marked M0 clause 1
+`DEMONSTRATED` since M0 closed; `#28`, the Story that tracks it, was still open on 2026-08-27, as
+were five of its siblings and all eight of M1's. `#32` and `#65` were closed on 2026-08-27 by
+`38167ec` and `8af36ed`, **and their child Chapters `#508` and `#514` were left open**, so the same
+class of drift was reproduced in the act of paying it down. **Forty-three** items were closed on
+2026-08-28 to reconcile the two (fourteen clause Stories, twenty-six of their Chapters, plus `#508`,
+`#514` and `#567`), each carrying the `docs/12` row or the closing commit that discharges it, and
+**no code changed in any of them**.
+
+**The rule this settles:** an Epic is `Done` when its exit criterion is met. Children still open
+when that happens are **re-parented to the milestone that will actually deliver them**, never left
+hanging under a closed Epic. `#66`, M1's goal clause *"and it ships to real users"*, is the worked
+example: `docs/12` §3 marks it `NOT BUILT` and it is the one M1 row that did **not** close. It
+moved to M8, which owns the installer and the signing, because that is who inherits it.
+
+**11.96.5 NO WORK ITEM MAY HAVE NO PARENT.** Twenty-three items sat at the root of the board,
+belonging to no Epic and appearing in no rollup, of which **two, `#781` and `#782`, were Chapters
+parented to nothing at all**, skipping the Story layer the hierarchy requires. Six that were born of
+rulings (`#655` DR-039, `#681` DR-048, `#686` DR-049, `#688` DR-051, `#689` DR-052) are promoted to
+Epics, which is the shape they always had; `#687` DR-050 is **not**, because "geometry fills the
+room estimate" is Plan view work and belongs under `#588`. The remaining debt, reviews and research
+gather under one Epic that is honest about being none of the above. **`#96`, `#97` and `#98` are
+post-M2 reviews. M2 closed on 2026-08-01.** They were three milestones overdue and invisible the
+whole time, because an item with no parent appears on no backlog.
+
+**11.96.6 THE BOARD IS A SITE OF DR-096'S SWEEP AND WAS NOT COUNTED AS ONE, AND THE SWEEP ALSO
+REACHED SOMEWHERE ITS OWN RULING EXCLUDED.** Measured 2026-08-27 over all 759 items: **694 carried
+`rackmate-sync` and exactly one carried `rackpal-sync`**, against a convention `CLAUDE.md` already
+documented as `rackpal-sync`. A standard written down and applied to one item in six hundred and
+ninety-five is not a standard. The tag is an **identifier** and is swept; work item titles and
+descriptions that quote the old name are **records** and are not, per §11.95.2.
+
+**The more interesting half is the over-reach.** §11.95.9 rules in terms that DR-096 *"does not
+rename the Azure DevOps project, the repository or the board's area path"*. The project is
+`RackMate`, its area and iteration paths are `RackMate`, and all three are correct. **`CLAUDE.md`
+nonetheless says the project, area and iteration are all `RackPal`**, which cost this session six
+failed commands before anyone thought to distrust the document rather than the credentials. A sweep
+that renames the product is a mechanical act; a sweep that renames it **inside its own ruling's
+list of exclusions** is a demonstration that the exclusion list was never turned into a check. The
+line is corrected here, and the general lesson is §11.95.2's own, arriving a second time: the
+dangerous sites in a rename are the ones a pattern cannot distinguish from the safe ones.
+
+**11.96.7 WHAT THIS DOES NOT RULE.** It does not rename the Azure DevOps project, the repository or
+the area path, which §11.95.9 already settled and which this ruling merely stops `CLAUDE.md` from
+contradicting. It does not change any exit criterion, any milestone's size or any scope band's
+contents: an Epic lands in the Saga it was already in. It does not decide the Kanban column set or
+the swimlanes, which are a team board setting, are reversible in a click, and are not worth a ruling
+ID. And it does not settle which Saga the promoted Epics of §11.96.5 belong to beyond what their own
+rulings already say, DR-052 being explicit about v1.2 and the rest defaulting to v1.
+
+**11.96.8 THE MIGRATION RAN ON 2026-08-28, AND WHAT IT FOUND IS WORTH MORE THAN WHAT IT MOVED.**
+`746` items converted, `0` failed. The board now holds **4 Sagas, 20 Epics, 218 Stories and 524
+Chapters**, `766` in total, with **zero hierarchy violations and zero items without a parent**,
+both re-derived from a fresh query rather than inferred from the conversion log.
+
+**The fourth level immediately found fourteen faults the third level had been hiding.** They are
+pre-existing, none was created by this ruling, and not one was visible while the board had three
+levels:
+
+| Fault | Count | What it was |
+|---|---|---|
+| Chapter directly under an Epic | 4 | `#574`, `#576`, `#589`, `#779`, skipping the Story level |
+| Story under a Story | 10 | `#96`'s nine bug-hunt findings, and `#690`'s one |
+
+A three-level board tolerates `Task`-under-`Epic` and `Issue`-under-`Issue` in silence, because
+nothing in it can express that a level was skipped. **Adding a level did not add rules; it made an
+existing rule checkable**, which is §11.94.2's argument arriving in a different subsystem: the
+definition already existed and what was missing was a place it had to be true.
+
+`#574` is the sharpest of them. It is DR-027's **parked** AC-018 PRINTS clause, the worked example
+§11.94.3 uses to justify parking at all, and it was sitting as a Chapter directly under M6 rather
+than as a clause tracker beside every other clause tracker.
+
+**`#779` is a duplicate identifier, found on the way past.** It is titled `M4-K1`, but `#226`
+already is M4-K1 under Story `#182`, and `#779`'s subject, *"a structured wiring run cannot choose
+its landing port"*, has nothing to do with M4-K's panel auto-layout. The title is **left alone as a
+record** and the collision is noted on the item, rather than silently renumbering a Done item and
+destroying the evidence that board IDs have been assigned by hand.
+
+**11.96.9 THREE PLATFORM FACTS, EACH OF WHICH COST A ROUND TRIP, RECORDED SO THE NEXT PERSON DOES
+NOT REDISCOVER THEM.**
+
+**A project's process cannot be changed over the REST API.** The documented
+`PATCH _apis/projects/{id}` with `capabilities.processTemplate` returns `400 "The project update is
+invalid"`. This was **isolated rather than assumed**: the identical `PATCH` carrying only a
+`description` returns `202`, so the endpoint and the credentials are fine and the capability
+specifically is not exposed. It is a web-UI operation, and the four clicks are the only manual step
+in this entire migration.
+
+**The process API returns `200` while doing nothing.** Renaming a derived work item type returned
+`200` with the name unchanged; renaming a state returned `200` with the state unchanged. **A
+success code from this API is not evidence that anything happened**, which is the same lesson the
+non-vacuity floors teach about a green test run, and every step of this migration was therefore
+re-read rather than trusted.
+
+**A custom work item type is created with the state `To do`, and the system types use `To Do`.**
+The casing differs, and ADO will not rename a state, will not accept `To Do` as a new state while
+`To do` exists (it compares case-insensitively), and will accept the pair only if the old state is
+**deleted first and the new one added second**. Caught before the migration ran. Had it not been,
+`766` items would have landed in a state vocabulary that no longer matched `CLAUDE.md`, `docs/12`
+or any prose in this corpus, and every one of those documents would have been quietly wrong.
+
+---
+
 ### 11.97 DR-098 · An override says three things, and two of its six fields were saying somebody else's
 
 **Settled by the user on 2026-08-28, before any code**, on DR-077's precedent (§11.76): three of

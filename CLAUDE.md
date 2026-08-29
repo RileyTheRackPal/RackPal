@@ -21,14 +21,41 @@ Fifteen gates. All must pass before a commit. Notes that cost real time:
 - **Anything you leave in `packages/*/tool/` is analyzed.** Scratch scripts inflate
   the info count and fail the gate. Delete them before committing, or keep them in
   the scratchpad.
-- **Test floors** (`tools/ci/run_suite.ps1`): core 3263, text 1, export 189, ui 1162,
-  app 838. Lowering one must be a visible line in a diff. **Re-measure them in any
-  commit that adds or removes tests**, which the script says in its own comment and
-  which went unheeded until #764 found 3,247 tests of slack under five floors.
+- **Test floors** live in `tools/ci/run_suite.ps1` and **only there**. Read them from
+  `$SuiteFloors`; do not trust a number written in prose, including this bullet.
+  Lowering one must be a visible line in a diff. **Re-measure them in any commit that
+  adds or removes tests**, which the script says in its own comment and which went
+  unheeded until #764 found 3,247 tests of slack under five floors.
+  **A COPY OF THESE NUMBERS WENT STALE TWICE ON 2026-08-28 ALONE.** It read
+  3263 / 1162 / 838 against a script saying 3365 / 1213 / 841; that was corrected,
+  and within the day two concurrent branches re-measured core and ui upward again,
+  so the correction was stale before it merged. The figures are therefore no longer
+  reproduced here: a second copy of a moving number is a liability, not a
+  convenience. CI reports every suite **exactly at its floor**, meaning zero slack,
+  so the next deleted test fails the gate rather than hiding.
 - **Run suites from the package directory**, not the repo root. Several tests read
   files relative to CWD and fail spuriously otherwise.
 - **Stale `build/unit_test_assets` and `build/flutter_assets` cause phantom asset
   failures.** Delete both if a rootBundle test fails for no reason.
+
+## CI, which now exists
+
+`azure-pipelines.yml` is registered as **definition 1, `RackPal CI (Windows)`**, and
+**it runs**. First execution was 2026-08-27 (build 20260827.1) against `main` at
+`46ec050`: it passed first try, all 24 steps, 22m01s, no fixes. Run 2 took the
+warm-cache path at 18m28s.
+
+- **`main` has a blocking build-validation policy** (policy id 1). It gates PR
+  *completion* only. **A direct push to `main` still lands**, and is gated after the
+  fact by `trigger:`.
+- The pipeline is the same gate set as `run_local.ps1` minus the two local-only
+  checks (`flutter pin`, `tracked sources`), which a clean clone cannot fail by
+  construction.
+- Queue a run against any branch:
+  `az pipelines run --org https://{org}.visualstudio.com --project RackMate --id 1 --branch <name>`
+- **Nothing has ever gone red on the service.** Every gate script was mutation-tested
+  locally, but the service-side failure-reporting path is exercised in the green
+  direction only, so do not yet treat a green Tests tab as proof the reporter works.
 
 ## The corpus, and which document wins
 
@@ -100,9 +127,49 @@ a board task instructing weeks of work that a ruling had abolished.
 
 ## Board (Azure DevOps)
 
-Hierarchy is **Epic → Issue → Task**. Org `https://{org}.visualstudio.com`,
-project `RackPal`, area and iteration `RackPal`, tags `rackpal-sync; task`.
-States: `To Do`, `Doing`, `Done` (there is no `Removed`).
+Org `https://{org}.visualstudio.com`, project **`RackMate`**, area and iteration
+**`RackMate`**, tags `rackpal-sync; task`. States: `To Do`, `Doing`, `Done` (there
+is no `Removed`).
+
+**THE PROJECT IS `RackMate` AND THAT IS DELIBERATE.** DR-096 §11.95.9 rules in
+terms that the rename *"does not rename the Azure DevOps project, the repository or
+the board's area path"*. This file said `RackPal` for all three until 2026-08-28,
+so the sweep had edited a line inside its own ruling's exclusion list, and every
+`az` command built from it fails with `TF200016: project does not exist`.
+
+Hierarchy is **Saga → Epic → Story → Chapter** (DR-097). A **Saga** is a release
+band from roadmap §2: v1, v1.1, v1.2, v2, so moving an Epic between Sagas *is* the
+visible act of an §8.3 amendment. An **Epic** is a milestone or a ruling-born body
+of scope. **An Epic is `Done` when its exit criterion is met (§8.1), not when its
+children run out**; children still open at that moment are re-parented to whoever
+will deliver them, never left under a closed Epic. **No work item may have no
+parent.**
+
+The process is **`RackPal`** (inherited from Basic), not Basic. `Issue` and `Task`
+still exist but are **disabled**: everything migrated to `Story` and `Chapter` on
+2026-08-28, and the board holds 4 Sagas, 20 Epics, 218 Stories, 524 Chapters with
+zero hierarchy violations and zero parentless items.
+
+Board columns are **To Do / Ready / Doing / Needs You / Done** over the three
+states, since several columns may map to one state. **`Needs You` is for work
+blocked on a human act** (a timed drill, a tape measure, a print run) that no agent
+can move. Swimlanes are `Expedite / (default) / Blocked`. Columns and lanes are a
+team setting, not a ruling, and are reversible in a click.
+
+`az` quirks, each of which cost a round trip:
+
+- **`--fields "System.Tags=..."` merges rather than replaces** (`add` op), so it can
+  only ever *widen* the tag set. To rename a tag: widen every item to the new tag,
+  **then** one `DELETE /_apis/wit/tags/{old}`. Deleting first strips the tag from
+  everything not yet widened.
+- `az devops invoke` is broken for the whole `wit` area (bare `ERROR: 'type'`, even
+  on GET) and cannot parse any `-preview.N` api-version. Use a PAT with `curl` or
+  `Invoke-RestMethod`.
+- **A project's process cannot be changed over REST**; it is web-UI only. A
+  `description` PATCH to the same endpoint returns 202, so a 400 there is the
+  capability, not your credentials.
+- **The process API returns 200 while doing nothing.** It silently ignored two
+  rename attempts. Re-read after every write.
 
 The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.
 
