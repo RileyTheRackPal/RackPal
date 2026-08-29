@@ -109,8 +109,17 @@
 #     purpose; it is now exercised.
 #     THE `pr:` BLOCK BELOW IS STILL IGNORED by the service and had nothing
 #     to do with any of that.
-#     NOTE WHAT IT DOES NOT DO: it gates PR COMPLETION only. A direct push
-#     to `main` still lands, and is then gated after the fact by `trigger:`.
+#     A DIRECT PUSH TO `main` IS REFUSED OUTRIGHT, which two earlier
+#     versions of this header got wrong. They said the policy "gates PR
+#     COMPLETION only" and that "a direct push to `main` still lands".
+#     Neither is true: in Azure Repos a BLOCKING policy protects the branch
+#     itself, and the push is rejected with
+#       TF402455: Pushes to this branch are not permitted; you must use a
+#       pull request
+#     There is exactly one policy on this repository and it does both jobs.
+#     So `trigger:` is not a safety net behind a hole in the gate; there is
+#     no hole. Everything lands through a PR, and budget the policy build
+#     (~18 min) before one can complete.
 #
 # STILL NOT VERIFIED. ONE ITEM REMAINS, AND IT IS THE IMPORTANT ONE:
 #   * A RED RUN ON THE SERVICE. Every gate script was mutation-tested
