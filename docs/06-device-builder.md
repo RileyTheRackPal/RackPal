@@ -404,25 +404,33 @@ Templates are immutable versioned records. Editing a published template does not
   "templateId": "0f3a…",
   "version": 3,
   "contentHash": "sha256:…",
-  "derivedFrom": { "templateId": "…", "version": 1 },
-  "identity": { "displayName": "HDMI Matrix 16x16", "manufacturer": "Generic",
-                "typePrefix": "MTX", "tags": ["hdbaset", "4k60"] },
-  "physical": { "frontU": 4, "rearU": 4, "side": "both", "mountMethod": "rackEars",
-                "widthClass": "full", "depthNm": 330000000, "weightUg": 7300000000,
-                "chassisWidth": 432000000, "isPassthrough": false },
-  "power":    { "nameplateWatts": 90 },
-  "banks": [ { "key": "hdmi-in", "label": "HDMI Inputs", "abbr": "IN",
-               "symbolSide": "left", "collapseInSymbol": true, "order": "a0" } ],
-  "ports": [ { "key": "hdmi-in-01", "renamedFrom": [], "bankKey": "hdmi-in", "order": "a0",
-               "label": "HDMI IN 01", "designatorHint": "J01",
-               "connector": "conn.hdmi_a", "signalFamily": "video.hdmi.2_0",
-               "direction": "sink", "face": "rear", "gender": "female",
-               "topology": "p2p", "maxConnections": 1 } ],
-  "passthroughPairs": []
+  "body": {
+    "displayName": "HDMI Matrix 16x16", "manufacturer": "Generic",
+    "model": "", "typePrefix": "MTX", "tags": ["hdbaset", "4k60"],
+    "frontU": 4, "rearU": 4, "side": "both", "mountMethod": "rackEars",
+    "widthClass": "full", "bodyDepthNm": 330000000, "weightUg": 7300000000,
+    "chassisWidthNm": 432000000, "isPassthrough": false,
+    "power": { "nameplateWatts": 90, "isContinuousLoad": false },
+    "derivedFrom": { "templateId": "…", "version": 1 },
+    "banks": [ { "key": "hdmi-in", "label": "HDMI Inputs", "abbr": "IN",
+                 "symbolSide": "left", "collapseInSymbol": true, "order": "a0" } ],
+    "ports": [ { "key": "hdmi-in-01", "renamedFrom": [], "bankKey": "hdmi-in", "order": "a0",
+                 "label": "HDMI IN 01", "designatorHint": "J01",
+                 "connector": "conn.hdmi_a", "signalFamily": "video.hdmi.2_0",
+                 "direction": "sink", "face": "rear", "gender": "female",
+                 "topology": "p2p", "maxConnections": 1 } ],
+    "passthroughPairs": []
+  }
 }
 ```
 
-Note what is **not** in the file: no `portId` UUID, no semver object, no `frontImage`, no `signature`, no `xMm`. The `identity.` / `physical.` / `power.` sections are a **file layout only**; the codec flattens them onto `TemplateBody` (CR-053).
+**THE BODY IS AN ILLUSTRATION AND THE FIVE ENVELOPE KEYS ARE NOT.** The five are the whole of the file's own shape and are exhaustive; the body above shows some of what a `TemplateBody` writes and is **not** a field list. The authority is `_encodeTemplateBody` in `json_codec.dart`, reached through `templateBodyToJson`, which is the same pair a `.rmpj` snapshot goes through and the only description of a `TemplateBody` under CR-117's byte gate.
+
+**This is DR-100 §11.99, and the previous drawing of this example is why the ruling exists.** It grouped the body into `identity.` / `physical.` / `power.` sections and placed **18 of the encoder's 39 keys**, leaving 21 with no home, `model` among them: required, always written, and kept undefaulted by DR-056 precisely so it prints as an unknown. It also renamed two keys, writing `chassisWidth` for `chassisWidthNm`, a bare integer with no unit in its key in a format whose own ruling forbids exactly that (CR-063). Both were defects in an illustration rather than decisions it was making, and a codec written from it would have dropped a fifth of the model.
+
+The sections' only normative footing was a trailing clause in **CR-053**, whose subject is the override key namespace and which **rejected** the dotted-path proposal they came from. They survive here as **documentation** rather than as a file layout: §3's own headings group the same fields for a reader, which is where that grouping was always doing real work.
+
+Note what is **not** in the file: no `portId` UUID, no semver object, no `frontImage`, no `signature`, no `xMm`, and no `capturedAt` (a file has no capture time; the moment of export is not a fact about the template). `derivedFrom` sits **inside** `body`, where the encoder puts it, because it is a `TemplateBody` field and hoisting it would give one fact two homes.
 
 Note also what is **absent rather than null**: `typicalWatts` and `apparentVA` are unknown on this template and are therefore omitted entirely. The codec never writes an explicit `null` for an unknown value, and an absent key reads back as unknown (CR-114, G4).
 

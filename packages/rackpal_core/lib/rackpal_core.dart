@@ -180,6 +180,7 @@ export 'src/idformat/collision_policy.dart';
 export 'src/idformat/designator_allocator.dart';
 export 'src/idformat/id_format.dart';
 export 'src/idformat/tokens.dart';
+export 'src/library/rmdx_codec.dart';
 export 'src/model/acked_finding.dart';
 export 'src/model/circuit.dart';
 export 'src/model/conductor.dart';

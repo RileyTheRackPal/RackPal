@@ -3442,6 +3442,23 @@ TemplateBody copyTemplateBody(TemplateBody b) =>
 /// view of [b].
 JsonMap templateBodyToJson(TemplateBody b) => _encodeTemplateBody(b);
 
+/// The inverse of [templateBodyToJson].
+///
+/// **Made public for the `.rmdx` codec (DR-100 §11.99), and it is the
+/// half that was missing rather than a new capability.** The encoder has
+/// been public since M4-C for `template_change_class.dart`; the decoder
+/// had no caller until a FILE carried a body, because `.rmpj` reaches
+/// this function through `_decodeTemplateSnapshot` and never needed a
+/// door of its own.
+///
+/// **The pairing is the point.** DR-100 rules that a `.rmdx` carries the
+/// body flat, exactly as this pair writes and reads it, so the `.rmdx`
+/// codec acquires **no second description of a `TemplateBody`** and
+/// inherits CR-117's gate instead of drifting from it. A field this pair
+/// fails to carry is a field `.rmpj` fails to carry, and that gate fails
+/// first and loudly.
+TemplateBody templateBodyFromJson(JsonMap json) => _decodeTemplateBody(json);
+
 JsonMap _encodeTemplateBody(TemplateBody b) {
   final json = <String, Object?>{
     'manufacturer': b.manufacturer,

@@ -1,5 +1,38 @@
 # Update Log
 
+## 2026-08-29 (second entry)
+
+* **New**: [DR-100, a `.rmdx` carries the body flat](/decisions/dr-100-the-rmdx-carries-the-body-flat.md).
+  The `.rmdx` is five envelope keys over `templateBodyToJson`'s own map, verbatim,
+  so the product acquires no second description of a `TemplateBody`.
+* **Note**: **A WORKED EXAMPLE PLACED 18 OF 39 KEYS AND NOBODY HAD COUNTED.**
+  docs/06 §7.3's `identity.` / `physical.` / `power.` sections left **21** keys
+  with no home anywhere in the corpus, and renamed two more against the encoder,
+  one of them dropping the unit suffix CR-063 exists to require. **`model` was
+  among the 21**: required, always encoded, and kept undefaulted by DR-056
+  *specifically* so it prints as an unknown. It is the cell `docs/17`'s clause-2
+  drill is sent to look for, so a codec written from that example would have made
+  a drill fail on a defect the codec caused.
+* **Note**: **THE SECTIONS' FOOTING WAS ONE SENTENCE, AND IT WAS INSIDE A
+  REJECTION.** CR-053's subject is the override key namespace and it **refused**
+  the dotted paths (`"identity.name"`, `"physical.weightKg"`) the sections came
+  from; they survive only in that refusal's trailing clause, whose job is to say
+  they do not define an override namespace. Everything downstream restates it in
+  a priority-3 document. Third instance of
+  [a derived document describing a mechanism is not a ruling about what the mechanism needs](/practices/a-spec-table-is-an-illustration-until-censused.md).
+* **Note**: **THE FORMAT WAS RECOGNISED, NOT DESIGNED.** A `TemplateSnapshot`
+  already on disk in all four starters is
+  `{templateId, version, contentHash, capturedAt, body}`. The ruled `.rmdx` is
+  that minus `capturedAt` plus `schemaVersion` and `kind`. When the answer is
+  already sitting in the file the product writes, the design work is reading it.
+* **Note**: **THE SWEEP ASSERTS THE FIELDS NOBODY THOUGHT OF.** The defect DR-100
+  prevents is silent: an unclaimed key does not throw, does not warn and does not
+  fail to encode, it is simply absent. A hand-written fixture asserts the fields
+  its author remembered, which is the same set that would have been partitioned.
+  So the gate is all 48 seeded templates through bytes and back, compared byte
+  for byte, and it was **mutation-verified by simulating the sectioned layout**
+  as an 18-key projection.
+
 ## 2026-08-29
 
 * **Updated**: [re-read a task against canon](/practices/re-read-a-task-against-canon.md)

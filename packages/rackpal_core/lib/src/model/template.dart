@@ -444,12 +444,20 @@ final class TemplateBody {
   /// question about it answers UNKNOWN rather than no.
   ///
   /// **It lives on the body rather than beside `TemplateSnapshot.version`
-  /// for `submittedBy`'s reason, which is a file-layout fact.** The
-  /// `.rmdx` worked example in docs/06 §7.3 writes it at the top level
-  /// beside `templateId`, and a `.rmdx` has no snapshot to hang it on —
-  /// the whole file IS one template. The codec flattens that layout onto
-  /// this class exactly as it does `identity.`/`physical.`/`power.`
-  /// (CR-053).
+  /// for `submittedBy`'s reason, which is a file-layout fact.** A `.rmdx`
+  /// has no snapshot to hang it on: the whole file IS one template.
+  ///
+  /// **The reasoning here changed at DR-100 §11.99 and the conclusion did
+  /// not.** docs/06 §7.3's worked example used to draw this at the file's
+  /// TOP LEVEL beside `templateId`, so this comment said the codec
+  /// flattened that layout onto the class the way it flattened
+  /// `identity.`/`physical.`/`power.` (CR-053). **There are no sections
+  /// now and there is no hoist**: the file's `body` is
+  /// `templateBodyToJson`'s own map, so this field is written exactly
+  /// where it is declared and nothing flattens anything. Hoisting it
+  /// would give one fact two homes, and `rmdx_codec_test.dart` asserts
+  /// the envelope carries five keys and `body`, so a future hoist fails
+  /// rather than drifts.
   TemplateOrigin? derivedFrom;
 }
 
