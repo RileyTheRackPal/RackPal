@@ -256,11 +256,32 @@ class _MatrixDialogState extends State<_MatrixDialog> {
 /// summary line printed it on four of eight steps under a dozen green
 /// `contains` assertions, which cannot see grammar. A generator with one
 /// input and one output reaches every singular here.
-String archetypePreviewLine(ArchetypePreview preview) {
-  final ports = preview.ports == 1 ? '1 port' : '${preview.ports} ports';
-  if (preview.banks == 0) return ports;
-  final banks = preview.banks == 1 ? '1 bank' : '${preview.banks} banks';
-  return '$ports across $banks';
+///
+/// **THE GRAMMAR MOVED OUT OF THIS FUNCTION AT `#236`** and lives in
+/// [portsAcrossBanks], because the import dialog says the same sentence
+/// about a `TemplateBody` and a second singulariser is how `1 ports`
+/// comes back. This wrapper stays for its callers and for the preview
+/// type it names.
+String archetypePreviewLine(ArchetypePreview preview) =>
+    portsAcrossBanks(preview.ports, preview.banks);
+
+/// `68 ports across 6 banks`, singularised: **the one place this product
+/// counts ports and banks into a sentence.**
+///
+/// Extracted at `#236` rather than copied, on the finding recorded above:
+/// `1 ports` reached a shipped build once, under green `contains`
+/// assertions that cannot see grammar. Two spellings of this sentence
+/// would be two chances to reintroduce it, and only one of them would
+/// have a test remembering why.
+///
+/// A [banks] count of zero prints the ports alone: a template with no
+/// bank has nothing to be "across", and `68 ports across 0 banks` reads
+/// as a defect.
+String portsAcrossBanks(int ports, int banks) {
+  final portText = ports == 1 ? '1 port' : '$ports ports';
+  if (banks == 0) return portText;
+  final bankText = banks == 1 ? '1 bank' : '$banks banks';
+  return '$portText across $bankText';
 }
 
 /// One side of the matrix: a count and the two pickers that type it.

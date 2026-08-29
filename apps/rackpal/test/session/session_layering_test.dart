@@ -568,14 +568,31 @@ final class AppServices {
       // ruling's own reason is this file's, that two routes to one
       // surface is two things to keep true. What is left is the five File
       // items, and the accelerator count did not move for the sixth time.
-      [5, 4],
+      //
+      // 5 -> 7 at M4-M3 (`#236`), and the accelerator count did not move
+      // for the SEVENTH time. The two are `Export device template…` and
+      // `Import device template…`, put here by DR-101 §11.100.4 rather
+      // than on a palette card: Import belongs to no template, so a card
+      // menu would split the pair across two surfaces and make one verb
+      // learnable twice, and a card-level Export would be a second
+      // `FilePicker` call site, which RULE 7 above forbids by name.
+      //
+      // NEITHER EARNS AN ACCELERATOR, for the seventh time and the same
+      // reason every previous item did not: a file operation reached from
+      // a menu a few times per project does not pay for a row in
+      // `kKeymap`, M7's generated table and `arbitrate()`'s conflict
+      // checks on every platform. Export PDF has been sitting here
+      // unbound on that argument since M1 and docs/08 §8.1 still nominates
+      // `Ctrl+P` for it; these two do not queue ahead of it.
+      [7, 4],
       reason:
-          'five File-menu items — New, Open…, Save, Save As…, Export PDF… '
-          '— and four accelerators. The Project menu is gone: DR-091 '
-          '§11.90 made Locations, Structured Wiring and Device Manager '
-          'views in the strip, and a menu item beside a tab is a second '
-          'route to one surface. docs/08 §8.1 gives export Ctrl+P; the '
-          'dialog is not built and neither is the binding.',
+          'seven File-menu items — New, Open…, Save, Save As…, Export '
+          'PDF…, Export device template…, Import device template… — and '
+          'four accelerators. The Project menu is gone: DR-091 §11.90 '
+          'made Locations, Structured Wiring and Device Manager views in '
+          'the strip, and a menu item beside a tab is a second route to '
+          'one surface. docs/08 §8.1 gives export Ctrl+P; the dialog is '
+          'not built and neither is the binding.',
     );
   });
 

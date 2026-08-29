@@ -91,6 +91,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` ย
 * [DR-098, an override says three things](dr-098-an-override-says-three-things.md) - `null` was carrying both G4's "unknown" and the class's own "not overridden", so a device could not disown a template's weight without inventing a replacement; two override fields duplicating instance facts are deleted, and door 1 lands in the inspector column.
 * [DR-099, door 2 moves the device it was opened from](dr-099-door-2-moves-the-device-it-was-opened-from.md) - AC-041's copy-on-place left one instance unaccounted for, the one the gesture was invoked on; and the Device Manager's single draft is guarded by a refusal rather than a discard prompt, because a discarded draft has no recovery path.
 * [DR-100, a .rmdx carries the body flat](dr-100-the-rmdx-carries-the-body-flat.md) - docs/06 ยง7.3's identity/physical/power sections placed 18 of the encoder's 39 keys and left 21 with no home, `model` among them; the sections' only footing was a trailing clause in a ruling that rejected the proposal they came from.
+* [DR-101, an id collision on import is a question](dr-101-an-id-collision-on-import-is-a-question.md) - templateIdFor derives ids from display names, so a collision means somebody typed the same name; three discriminators were checked against the tree and all three fail, so the import asks rather than guesses.
 
 # Not yet written up
 
