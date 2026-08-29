@@ -204,12 +204,9 @@ void main() {
 
     test('UNDO REMOVES THE PORT IT CREATED, leaving no empty row', () {
       final doc = _doc();
-      final cmd = _set(
-        PortFactField.connector,
-        const ConnectorTypeId('conn.xlr3'),
-      )..apply(doc);
-
-      cmd.revert(doc);
+      _set(PortFactField.connector, const ConnectorTypeId('conn.xlr3'))
+        ..apply(doc)
+        ..revert(doc);
 
       expect(
         doc.ports,
@@ -225,11 +222,9 @@ void main() {
       // Materialise it with a label first.
       _set(PortFactField.userLabel, 'UPLINK').apply(doc);
 
-      final second = _set(
-        PortFactField.connector,
-        const ConnectorTypeId('conn.xlr3'),
-      )..apply(doc);
-      second.revert(doc);
+      _set(PortFactField.connector, const ConnectorTypeId('conn.xlr3'))
+        ..apply(doc)
+        ..revert(doc);
 
       final port = doc.ports[derivePortId(_deviceId, _portKey)];
       expect(port, isNotNull, reason: 'the second undo must not delete it');
