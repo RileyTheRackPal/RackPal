@@ -44,6 +44,7 @@ import 'package:rackpal/src/storage/atomic_writer.dart';
 import 'package:rackpal/src/storage/file_store.dart';
 import 'package:rackpal/src/storage/import_guard.dart';
 import 'package:rackpal/src/storage/library_directory.dart';
+import 'package:rackpal/src/storage/library_shelf.dart';
 import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -112,6 +113,19 @@ final class LibraryIo {
     initialDirectory: initialDirectory,
     context: context,
   );
+
+  /// Every library on the shelf, decoded (`#242`, DR-102 §11.101.3).
+  ///
+  /// **THE DEGRADED SESSION IS AN EMPTY SHELF AND NOT AN ERROR**, the
+  /// same one nullable field expressing it that expresses import being
+  /// unavailable: `DataRootUnusable` means there is nowhere to keep a
+  /// library, so there is nothing to read. The palette keeps working,
+  /// because it reads the document and the seed and neither lives here.
+  Future<List<ShelfLibrary>> shelf() async {
+    final root = dataRoot;
+    if (root == null) return const [];
+    return loadLibraryShelf(fs, root, context: context);
+  }
 
   Future<bool> import(
     Future<bool> Function(LibraryImportPreview) confirm,

@@ -319,6 +319,19 @@ final class CatalogPlacementFailed extends CatalogPlacementResult {
 /// device list surface in this stage, but the device still exists in the
 /// document, undoes/redoes correctly, and is a real `DeviceInstance`
 /// rather than a UI fiction.
+///
+/// [using] supplies the template INSTEAD of resolving it out of [doc],
+/// and exists for exactly one caller: a palette row offered by a loaded
+/// library, which by definition is not in the document yet (DR-103
+/// §11.102.2). It is what lets the refusals above run **before** the copy
+/// is committed. Adding the template first and discovering "the rack is
+/// full" second would leave a template in the project for a device that
+/// was never placed, because `DocumentController.transact` commits
+/// whatever children it has and a refusal is not a throw.
+///
+/// Everything downstream of the resolution is unchanged by it: the
+/// blocking-occupant and lowest-free-U searches read `doc.templates` for
+/// the devices ALREADY placed, which is a different question.
 CatalogPlacementResult buildPlaceFromCatalogCommand({
   required RackDocument doc,
   required String catalogId,
@@ -326,8 +339,9 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
   required DateTime now,
   required String actor,
   int? explicitRuIndex,
+  TemplateSnapshot? using,
 }) {
-  final snapshot = resolveLatestTemplate(doc, catalogId);
+  final snapshot = using ?? resolveLatestTemplate(doc, catalogId);
   if (snapshot == null) {
     return CatalogPlacementFailed('Unknown catalog template "$catalogId".');
   }

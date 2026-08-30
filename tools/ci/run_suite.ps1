@@ -220,11 +220,25 @@ $ErrorActionPreference = 'Stop'
 # the moment its picker opened, and its Export button read the name field
 # without anything rebuilding when that field changed, so clearing the name
 # left the button enabled.
+# RE-MEASURED 2026-08-30 at `#241` (M4-N4): core 3492 -> 3508 for the sixteen
+# merge and provenance cases in `test/derived/placeable_templates_test.dart`,
+# and app 894 -> 908 for the fourteen of `test/storage/library_shelf_test.dart`.
+# Nothing was removed. `PlaceableTemplate.key` was RENAMED to `documentKey` and
+# typed nullable, which moved four assertions rather than deleting them.
+# RE-MEASURED 2026-08-30 again at `#242` (M4-N5): core 3508 -> 3525, the
+# seventeen of `test/library/library_placement_test.dart`, and ui 1273 -> 1289
+# for the thirteen of `test/canvas/library_rows_place_test.dart` plus the three
+# of `test/canvas/palette_click_is_not_a_drag_test.dart`. That last file is a
+# DEFECT this chapter found rather than a feature it added: a plain click on a
+# palette row announced "Released outside the rack ... was not placed" for a
+# gesture nobody made, and a grep found no test asserting that message in
+# either direction, which is how it survived a milestone.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3508
+    'rackpal_core'   = 3525
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1273
+    'rackpal_ui'     = 1289
     'rackpal_app'    = 908
 }
 

@@ -69,7 +69,7 @@ void _author(
 Widget _app({
   required void Function(String) onPlace,
   void Function(String, PointerDownEvent)? onArmDrag,
-  String? draggingCatalogId,
+  String? draggingRowKey,
   RackDocument? document,
 }) => MaterialApp(
   home: Scaffold(
@@ -78,7 +78,7 @@ Widget _app({
       categoryOrder: kCatalogCategoryOrder,
       onPlace: onPlace,
       onArmDrag: onArmDrag,
-      draggingCatalogId: draggingCatalogId,
+      draggingRowKey: draggingRowKey,
     ),
   ),
 );
@@ -149,7 +149,7 @@ void main() {
     expect(find.textContaining('No devices match'), findsOneWidget);
   });
 
-  testWidgets('double-tapping a row invokes onPlace with its catalog id', (
+  testWidgets('double-tapping a row invokes onPlace with its row key', (
     tester,
   ) async {
     String? placed;
@@ -169,12 +169,12 @@ void main() {
     await tester.tap(row);
     await tester.pumpAndSettle();
 
-    expect(placed, 'V01');
+    expect(placed, 'catalog/V01@1');
   });
 
   group('drag-from-palette arming (docs/04 §3.1, added this stage)', () {
-    testWidgets('a pointer-down on a row fires onArmDrag with its catalog '
-        'id, without interfering with double-tap-to-place', (tester) async {
+    testWidgets('a pointer-down on a row fires onArmDrag with its row '
+        'key, without interfering with double-tap-to-place', (tester) async {
       final armed = <String>[];
       String? placed;
       await tester.pumpWidget(
@@ -200,16 +200,17 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(armed, isNotEmpty);
-      expect(armed, everyElement('V01'));
-      expect(placed, 'V01'); // double-tap still placed -- Listener didn't
-      // steal the gesture arena from GestureDetector.onDoubleTap.
+      expect(armed, everyElement('catalog/V01@1'));
+      // double-tap still placed: the Listener did not steal the gesture
+      // arena from GestureDetector.onDoubleTap.
+      expect(placed, 'catalog/V01@1');
     });
 
-    testWidgets('draggingCatalogId dims + outlines only the matching row', (
+    testWidgets('draggingRowKey dims + outlines only the matching row', (
       tester,
     ) async {
       await tester.pumpWidget(
-        _app(onPlace: (_) {}, draggingCatalogId: 'V01'),
+        _app(onPlace: (_) {}, draggingRowKey: 'catalog/V01@1'),
       );
       await tester.pumpAndSettle();
 
@@ -230,7 +231,7 @@ void main() {
       expect(dimmedOpacity, isNotEmpty);
     });
 
-    testWidgets('no draggingCatalogId means no row is dimmed', (tester) async {
+    testWidgets('no draggingRowKey means no row is dimmed', (tester) async {
       await tester.pumpWidget(_app(onPlace: (_) {}));
       await tester.pumpAndSettle();
 
@@ -331,7 +332,11 @@ void main() {
       expect(find.text(kProjectRowTag), findsOneWidget);
     });
 
-    testWidgets('placing it reports its template id, not a catalog id', (
+    // `#242` widened this: it used to report the TEMPLATE ID, which was
+    // unambiguous only while every row came from the document. A row key
+    // names the source too, because an id can now name two rows (DR-102
+    // §11.101.4).
+    testWidgets('placing it reports its row key, source included', (
       tester,
     ) async {
       final doc = _seeded();
@@ -350,7 +355,7 @@ void main() {
       await tester.tap(row);
       await tester.pumpAndSettle();
 
-      expect(placed, 'tpl.custom_matrix_24x24');
+      expect(placed, 'project/tpl.custom_matrix_24x24@1');
     });
 
     testWidgets('the newest version is the one listed', (tester) async {

@@ -68,9 +68,11 @@ import 'package:rackpal/src/session/starter_projects.dart';
 import 'package:rackpal/src/session/structure_edit_actions.dart';
 import 'package:rackpal/src/session/structure_matrix_actions.dart';
 import 'package:rackpal/src/session/window_chrome.dart';
+import 'package:rackpal/src/storage/library_shelf.dart';
 import 'package:rackpal/src/storage/recents_store.dart';
 import 'package:rackpal_core/rackpal_core.dart'
     show
+        LoadedLibrary,
         LocationRemovalPlan,
         TemplateBody,
         TemplateId,
@@ -317,6 +319,19 @@ final class AppShellState extends State<AppShell>
 
   late bool _startCardVisible = widget.showStartCard;
 
+  /// The shelf as last read (`#242`), in the two shapes the palette
+  /// takes. Held rather than recomputed per build because
+  /// `RackCanvasScreen` compares [_libraries] by IDENTITY to decide
+  /// whether its palette memo is stale, so a list rebuilt every frame
+  /// would rebuild the row list every frame with it.
+  ///
+  /// The undecoded `ShelfLibrary` list is deliberately NOT kept: nothing
+  /// reads it, and a field held "in case" is a field that goes stale
+  /// quietly. `LibraryIo.shelf()` returns it whenever somebody needs the
+  /// typed faults again.
+  List<LoadedLibrary> _libraries = const [];
+  List<UnreadableLibrary> _unreadableLibraries = const [];
+
   AppServices get _services => widget.services;
 
   @override
@@ -338,6 +353,12 @@ final class AppShellState extends State<AppShell>
       initialIndex: kViewKeyToTabIndex[1]!,
       vsync: this,
     )..addListener(_onTabChanged);
+    // THE SHELF IS READ ONCE AT STARTUP AND AFTER EVERY IMPORT, and
+    // never on a build. It is filesystem work, the folder changes only
+    // when this app or the user's file manager changes it, and a palette
+    // that stats a directory on every frame is the shape this repository
+    // already fixed once in `DocumentMemo`'s own header.
+    unawaited(_reloadLibraryShelf());
     _services.session.addListener(_onSessionChanged);
     // Persistence can fail at any point in the session, not only at
     // startup — see app_services.dart's header.
@@ -563,9 +584,41 @@ final class AppShellState extends State<AppShell>
 
   /// `File ▸ Import device library…`.
   Future<void> _importLibrary() async {
-    await _services.libraryIo.import(
+    final imported = await _services.libraryIo.import(
       (preview) async => showImportLibraryConfirm(context, preview: preview),
     );
+    // THE PALETTE UPDATES WITHOUT A REOPEN, which is the whole point of
+    // `#242` landing in the same milestone as `#240`. Until this line an
+    // imported library sat on the shelf and nothing read it.
+    if (imported) await _reloadLibraryShelf();
+  }
+
+  /// Re-reads the shelf into [_libraries] (`#242`, DR-102 §11.101.3).
+  ///
+  /// **A FRESH LIST EVERY TIME, and `RackCanvasScreen` depends on it**:
+  /// its palette memo is keyed on the document, and it clears that memo
+  /// when the `libraries` list is not IDENTICAL to the previous one. A
+  /// mutated-in-place list would leave the palette showing what the shelf
+  /// held before the import.
+  Future<void> _reloadLibraryShelf() async {
+    final shelf = await _services.libraryIo.shelf();
+    if (!mounted) return;
+    setState(() {
+      _libraries = loadedLibrariesOf(shelf);
+      _unreadableLibraries = [
+        for (final entry in shelf)
+          if (entry.fault case final fault?)
+            UnreadableLibrary(
+              id: entry.id,
+              // THE ERROR OBJECT RENDERED HERE AND NOT IN THE SERVICE,
+              // which keeps the typed fault available to anything else
+              // that wants the numbers (DR-103 §11.102.7). `toString` on
+              // these is written for a person: `NewerRmdaSchemaError`
+              // says which version it is and which this build reads.
+              reason: '$fault',
+            ),
+      ];
+    });
   }
 
   Future<void> _openRecent(String path) async {
@@ -1032,6 +1085,11 @@ final class AppShellState extends State<AppShell>
       key: ValueKey(session.controller),
       measurer: widget.measurer,
       controller: session.controller,
+      // `#242`, DR-102 §11.101.3. The palette answers for the document
+      // AND these; the shell reads the shelf because `rackpal_ui` has no
+      // `FileStore` and must not grow one.
+      libraries: _libraries,
+      unreadableLibraries: _unreadableLibraries,
       // CR-105, joined up. Supplying this callback is ALSO what makes the
       // chip appear at all (`RackCanvasScreen.onRevealInSchematic`): the
       // elevation refuses to draw a signpost nobody is listening to, and

@@ -14683,6 +14683,16 @@ libraries loaded will ask.
 **`All` IS A CHIP AND NOT A CLEAR BUTTON**, so the reset is in the same control, reachable by the
 same gesture, and readable as the current state rather than as an action.
 
+**THE ROW APPEARS ONLY WHEN A LIBRARY IS ON THE SHELF**, which is narrower than "when there is more
+than one source" and is a deliberate narrowing rather than an implementation detail. `All` /
+`Catalog` / `This project` on a project with no libraries is a real control and it was still
+declined twice over: DR-077 §11.76.2's pinned `This project` group already answers the only question
+it could, and **M4's exit criterion clause 2 is a stopwatch drill on this exact panel that has not
+been run yet** (`#251`, deferred by the user to end of milestone). Adding a row of chrome above the
+search box changes the surface that drill measures, for every user who will never load a library.
+The chips appear the moment they have a job, and a session without libraries is pixel-identical to
+what shipped before `#242`.
+
 **11.102.7 THE RULING ON A LIBRARY THAT WILL NOT LOAD, which DR-102 §11.101.6 left open in terms.**
 A `.rmda` on the shelf that fails to decode appears as a **disabled chip carrying its file name**,
 with the fault in its tooltip. Every other library loads.
