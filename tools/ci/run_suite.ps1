@@ -274,8 +274,15 @@ $ErrorActionPreference = 'Stop'
 # regenerating the only file that carried zero positions would have left the
 # new migration with no real-file coverage at all.
 
+# RE-MEASURED 2026-08-30 at `#226` (M4-K1, the algorithm): core 3570 -> 3590,
+# the twenty of `test/scene/panel_layer_test.dart`. TWO of those cases started
+# as assumptions and became measurements when they failed: 48 RJ45s do NOT
+# overflow a 1U panel (an RJ45 cutout is 10mm, so 48 is two rows and 20mm), and
+# TWO seeded archetypes DO overflow their own (A03 and N01, both dense 1U).
+# Both are now pinned by name so the footprint table cannot move silently.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3570
+    'rackpal_core'   = 3590
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1324
