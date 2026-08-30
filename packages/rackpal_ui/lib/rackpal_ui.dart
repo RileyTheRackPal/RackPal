@@ -43,6 +43,7 @@
 /// something true to show.
 library;
 
+export 'src/browser/device_browser_screen.dart';
 export 'src/builder/archetype_dialogs.dart';
 export 'src/builder/bank_dialogs.dart';
 export 'src/builder/bank_tree.dart';

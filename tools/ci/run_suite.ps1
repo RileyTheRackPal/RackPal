@@ -247,12 +247,21 @@ $ErrorActionPreference = 'Stop'
 # projection of existing answers and its test runs against the SEEDED catalog
 # rather than against fixtures, because a chip is a promise about the 48.
 
+# RE-MEASURED 2026-08-30 at `#243` (M4-O1, the browser): ui 1292 -> 1311, the
+# nineteen of `test/browser/device_browser_screen_test.dart`, and app 908 -> 909
+# for the case `door_two_test.dart` gained when the Device Manager tab stopped
+# being the blank builder. NOTHING WAS REMOVED there: five of its cases moved
+# from `openDeviceManager` to a new `openNewTemplate` helper, because the tab is
+# the browser now and its first `TextField` is the SEARCH BOX. One of those five
+# would otherwise have gone on passing while asserting a refusal that could no
+# longer fire.
+
 $SuiteFloors = @{
     'rackpal_core'   = 3562
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1292
-    'rackpal_app'    = 908
+    'rackpal_ui'     = 1311
+    'rackpal_app'    = 909
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

@@ -14772,8 +14772,24 @@ left open, and a modal is the one shape that cannot be.
 
 **WHAT THIS COSTS AND IT IS NAMED HERE RATHER THAN FOUND LATER.** The tab **is** the New-template
 entry point today. Making it the browser means that entry point has to be rebuilt inside the
-browser, and `Project ▸ New device template…` must keep working unchanged, because it is what
-`#251`'s stopwatch drill uses and that drill has not been run.
+browser, or authoring a new template becomes unreachable.
+
+**THIS CLAUSE WAS WRONG ON ITS FIRST DRAFT AND THE CORRECTION IS THE INTERESTING PART.** It read
+*"and `Project ▸ New device template…` must keep working unchanged, because it is what `#251`'s
+stopwatch drill uses"*. **There is no `Project` menu.** The application has exactly one, `File`,
+with nine items, and no new-template item in it or anywhere else: `Ctrl+2` onto the Device Manager
+with nothing being edited renders a blank `DeviceBuilderScreen`, and that is the whole of how a
+template is authored today.
+
+The false sentence came from a **doc comment** in `app_shell.dart` that opens *"docs/06's Device
+Builder, from `Project ▸ New device template…`"* and documents a method that no longer exists. That
+is `don't price a decision off a derived artifact` firing on a ruling rather than on a task, and it
+is the second time in this corpus that a comment was read as a product fact.
+
+**The correction makes the browser's own button LOAD-BEARING rather than convenient.** There is no
+menu route to fall back on, so `#243` ships the entry point or M4 loses the ability to author a
+device. It also means **`#251`'s drill route is `Ctrl+2`**, not a menu item, and the drill's own
+first step had to be corrected before it was run.
 
 **11.103.3 THE RULING ON THE CARD: the device's glyph mark and an RU badge, NOT an elevation strip.
 This is a substitution for docs/06 §7.1's literal words and is recorded as one.**
