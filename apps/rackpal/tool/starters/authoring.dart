@@ -144,7 +144,12 @@ final class StarterAuthor {
       doc.templates[catalogTemplateKey(entry.key)] = TemplateSnapshot(
         templateId: TemplateId(entry.key),
         version: kStarterTemplateVersion,
-        contentHash: 'sha256:seed-${entry.key}',
+        // REAL AT `#795`. This read `sha256:seed-<id>`, a value claiming
+        // an algorithm it never ran, and it is in `tool/` rather than
+        // `lib/` which is why the first census of this task missed it:
+        // the grep was scoped to the two source directories and the
+        // generator of four SHIPPED artifacts sat outside them.
+        contentHash: templateContentHash(entry.value),
         capturedAt: createdAt,
         body: entry.value,
       );
@@ -420,7 +425,10 @@ final class StarterAuthor {
       templateRef: const TemplateRef(
         templateId: TemplateId('structure'),
         version: kStarterTemplateVersion,
-        contentHash: 'sha256:structure-no-template',
+        // The sentinel, re-spelled at `#795` to match
+        // `kStructureTemplateRef`: there is no body here to hash, so it
+        // must not claim an algorithm.
+        contentHash: kNoTemplateContentHash,
       ),
       designator: designator,
       name: title,

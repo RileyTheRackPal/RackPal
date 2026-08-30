@@ -67,7 +67,11 @@ RackDocument buildBlankDocument({
     doc.templates[catalogTemplateKey(entry.key)] = TemplateSnapshot(
       templateId: TemplateId(entry.key),
       version: 1,
-      contentHash: 'sha256:seed-${entry.key}',
+      // REAL AT `#795`. This read `sha256:seed-<id>`, which claimed an
+      // algorithm it never ran; a seeded template now carries the hash
+      // of the body it actually holds, so a hand-edited `.rmpj` is
+      // detectable on the 48 templates every project starts with.
+      contentHash: templateContentHash(entry.value),
       capturedAt: now,
       body: entry.value,
     );

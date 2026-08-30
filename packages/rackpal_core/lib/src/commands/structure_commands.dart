@@ -46,6 +46,7 @@ import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
 import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackpal_core/src/idformat/designator_allocator.dart';
+import 'package:rackpal_core/src/library/template_hash.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/entity_meta.dart';
 import 'package:rackpal_core/src/model/enums.dart' show MountSurface, Wall;
@@ -66,7 +67,13 @@ const String kStructureTypePrefix = 'STR';
 const TemplateRef kStructureTemplateRef = TemplateRef(
   templateId: TemplateId('structure'),
   version: 1,
-  contentHash: 'sha256:structure-no-template',
+  // RE-SPELLED AT `#795`, and the rename is the point. This read
+  // `sha256:structure-no-template`, which was harmless while nothing in
+  // the tree was a real sha256 and became a value claiming an algorithm
+  // it never ran the moment one was. There is no body here to hash, by
+  // design, so `templateHashMatches` answers UNKNOWN for it rather than
+  // "modified".
+  contentHash: kNoTemplateContentHash,
 );
 
 /// The designator a NEW Structure device should receive.

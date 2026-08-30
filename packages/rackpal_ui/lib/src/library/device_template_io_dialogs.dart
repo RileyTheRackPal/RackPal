@@ -84,6 +84,22 @@ String templateSummaryLine(TemplateBody body) =>
     '${portsAcrossBanks(body.ports.length, body.banks.length)} · '
     '${occupancySummary(body)}';
 
+/// AC-042's mismatch warning, verbatim.
+///
+/// **A WARNING AND NEVER A REFUSAL**, which is AC-042's whole ruling:
+/// refusing to open a file because somebody hand-edited it is a data-loss
+/// event dressed as a safety feature. The buttons are unchanged when this
+/// shows; the sentence says what is known and lets the person decide.
+///
+/// It says EDITED rather than CORRUPT or TAMPERED. A hand-edited `.rmdx`
+/// is a supported thing to have (`port_validation.dart` reasons about one
+/// arriving), and the common cause is somebody fixing a label in a text
+/// editor, not an attack.
+const String kHashMismatchWarning =
+    'This file has been edited since it was exported. That is allowed, and '
+    'it is imported exactly as it reads; the note is here so a difference '
+    'from the original is not a surprise later.';
+
 /// The inert-data sentence, verbatim (DR-101 §11.100.5, docs/06 §7.3).
 ///
 /// **A CONSTANT SO THE TEST ASSERTS THE SHIPPED STRING** rather than a
@@ -234,6 +250,32 @@ class _ImportConfirmDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(kInertDataNotice, style: theme.textTheme.bodySmall),
+            // AC-042's warning, and the FIRST SURFACE `contentHash` has
+            // ever had. Shown only for `hashMismatched`, which is true
+            // for a file carrying a real hash that fails it and false for
+            // one carrying no hash at all: a `.rmdx` written before
+            // `#795` is UNKNOWN, not modified, and warning about it would
+            // fire on every file this product wrote before today.
+            if (plan.hashMismatched) ...[
+              const SizedBox(height: 12),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      kHashMismatchWarning,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             if (collision != null) ...[
               const Divider(height: 24),
               Text(

@@ -4744,17 +4744,21 @@ RackDocument _buildDemoDocument(Map<String, TemplateBody> catalog) {
   EntityMeta meta() =>
       EntityMeta(createdAt: now, updatedAt: now, updatedBy: 'demo');
 
+  // THE HASH IS COMPUTED ONCE PER TEMPLATE AND READ BACK BY THE REF
+  // (`#795`). These used to be two hand-spelled strings, `sha256:demo-$id`
+  // in both places, which agreed because they were the same expression
+  // rather than because either described the body. A real hash cannot be
+  // spelled twice, so `snapshot()` records it here and `device()` reads
+  // it: a ref and the snapshot it names cannot disagree.
+  final hashes = <String, String>{};
+
   TemplateSnapshot snapshot(
     String id, {
     required int frontU,
     required String displayName,
     int rearU = 0,
-  }) => TemplateSnapshot(
-    templateId: TemplateId(id),
-    version: 1,
-    contentHash: 'sha256:demo-$id',
-    capturedAt: now,
-    body: TemplateBody(
+  }) {
+    final body = TemplateBody(
       manufacturer: 'Demo',
       model: id,
       displayName: displayName,
@@ -4763,8 +4767,17 @@ RackDocument _buildDemoDocument(Map<String, TemplateBody> catalog) {
       side: rearU > 0
           ? (frontU > 0 ? OccupancySide.both : OccupancySide.rear)
           : OccupancySide.front,
-    ),
-  );
+    );
+    final hash = templateContentHash(body);
+    hashes[id] = hash;
+    return TemplateSnapshot(
+      templateId: TemplateId(id),
+      version: 1,
+      contentHash: hash,
+      capturedAt: now,
+      body: body,
+    );
+  }
 
   DeviceInstance device(
     String id, {
@@ -4779,7 +4792,11 @@ RackDocument _buildDemoDocument(Map<String, TemplateBody> catalog) {
     templateRef: TemplateRef(
       templateId: TemplateId(templateId),
       version: 1,
-      contentHash: 'sha256:demo-$templateId',
+      // READ BACK, never re-derived. Every caller places a device from a
+      // template `snapshot()` already minted, so the `!` is the
+      // assertion: a demo device naming a template nobody seeded is a
+      // defect in the seed rather than a case to tolerate.
+      contentHash: hashes[templateId]!,
     ),
     designator: designator,
     name: name,
@@ -4889,7 +4906,8 @@ RackDocument _buildDemoDocument(Map<String, TemplateBody> catalog) {
     doc.templates[catalogTemplateKey(entry.key)] = TemplateSnapshot(
       templateId: TemplateId(entry.key),
       version: 1,
-      contentHash: 'sha256:seed-${entry.key}',
+      // REAL AT `#795`, matching `blank_document.dart`'s seeding.
+      contentHash: templateContentHash(entry.value),
       capturedAt: now,
       body: entry.value,
     );
