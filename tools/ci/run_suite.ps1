@@ -280,9 +280,15 @@ $ErrorActionPreference = 'Stop'
 # overflow a 1U panel (an RJ45 cutout is 10mm, so 48 is two rows and 20mm), and
 # TWO seeded archetypes DO overflow their own (A03 and N01, both dense 1U).
 # Both are now pinned by name so the footprint table cannot move silently.
+#
+# RE-MEASURED 2026-08-30 at `#229` (M4-K4): core 3590 -> 3592, the two of
+# `test/scene/symbol_sizing_seam_test.dart`. They guard a SEAM rather than a
+# behaviour: `sizeSymbolForBody` was extracted from the schematic scene so the
+# device builder's preview draws the sheet's symbol instead of a second one,
+# and the test replays all 93 fixture devices through both paths.
 
 $SuiteFloors = @{
-    'rackpal_core'   = 3590
+    'rackpal_core'   = 3592
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1324
