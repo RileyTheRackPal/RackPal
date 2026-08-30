@@ -240,8 +240,15 @@ $ErrorActionPreference = 'Stop'
 # removed: the palette's private `_matchesQuery` MOVED to core and grew, and its
 # two existing callers moved with it.
 
+# RE-MEASURED 2026-08-30 at `#243` (M4-O1, the facts layer): core 3546 -> 3562,
+# the sixteen of `test/derived/template_facts_test.dart`. DR-104 §11.103.6 said
+# each of `#243`'s eight filter chips "needs a producer this ruling does not
+# grant it"; the census found all eight already in the model, so the file is a
+# projection of existing answers and its test runs against the SEEDED catalog
+# rather than against fixtures, because a chip is a promise about the 48.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3546
+    'rackpal_core'   = 3562
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1292
