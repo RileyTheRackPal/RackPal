@@ -38,6 +38,7 @@ import 'dart:convert';
 import 'package:flutter/widgets.dart';
 import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/storage/file_store.dart';
+import 'package:rackpal/src/storage/import_guard.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
@@ -61,8 +62,32 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 /// with none of the errno translation `io_file_store.dart` does, on the
 /// one platform where a locked file is the normal case, because Excel is
 /// still holding the sheet open.
-Future<String> readCsvText(FileStore fs, String path) async =>
-    utf8.decode(await fs.readBytes(path), allowMalformed: true);
+/// **THE SIZE CAP RUNS BEFORE THE READ, NOT AFTER IT** (AC-058/D8,
+/// `#237`). D8's subject is files that *"arrive by email from
+/// strangers"*, and a CSV picked off a stick is one; the depth cap the
+/// JSON paths run is meaningless here, because a CSV has no nesting, but
+/// the size cap is not, because a 2 GB spreadsheet exhausts memory just
+/// as thoroughly as a 2 GB project.
+///
+/// It asks `stat` first rather than measuring what it read: a cap that
+/// fires after the allocation it exists to prevent is decoration.
+/// A path `stat` cannot answer for is NOT refused here, because "the file
+/// vanished between the picker and the read" is the failure the caller
+/// already has a sentence for, and inventing a second one would report a
+/// missing file as an oversized one.
+Future<String> readCsvText(
+  FileStore fs,
+  String path, {
+  int maxBytes = kMaxDocumentBytes,
+}) async {
+  switch (await checkImportedFileSize(fs, path, maxBytes: maxBytes)) {
+    case Err(:final error):
+      throw error as Exception;
+    case Ok<void>():
+      break;
+  }
+  return utf8.decode(await fs.readBytes(path), allowMalformed: true);
+}
 
 /// Runs docs/07 §5's import end to end: pick, read, preview, commit.
 ///
@@ -83,6 +108,13 @@ Future<String?> runCsvImport({
   final String text;
   try {
     text = await readCsvText(fs, path);
+  } on DocumentTooLargeError catch (e) {
+    // NAMED BEFORE THE GENERAL CASE, because "that file could not be
+    // read, it may have moved" would be a false explanation for a file
+    // that is right where the user left it and simply enormous.
+    return 'That file is ${e.bytes} bytes, and an import is capped at '
+        '${e.limit}. Nothing has been read. If it really is a pull list, '
+        'split it and import the parts.';
   } on Exception catch (e) {
     // `FileStore.readBytes` declares no typed failure, so this catches
     // the interface's whole contract rather than one implementation's

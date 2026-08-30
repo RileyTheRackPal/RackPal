@@ -1,5 +1,47 @@
 # Update Log
 
+## 2026-08-29 (fifth entry)
+
+* **Note**: **A GATE THAT LISTS WHAT IT COVERS CANNOT TELL YOU ABOUT WHAT IT
+  DOES NOT.** `#237` owed "JSON depth and size limits on every import path",
+  and the caps already existed on every path anybody had thought of. So the
+  deliverable became a CENSUS AS A TEST: sweep both source trees for
+  `jsonDecode(` and `readBytes(`, comments stripped, and fail on a hit the
+  file's own map does not name. **It found three call sites on its first
+  run**, two of them real import paths that read before they measured, and
+  **one of those had shipped two hours earlier**. Written this way because
+  the previous task's census was scoped by directory and missed a production
+  site in `tool/`.
+* **Note**: **THE CAPS WERE THERE; THEY RAN TOO LATE.** Three paths refused
+  an oversized file only after `readBytes` had pulled it entirely into
+  memory, which is the cap doing its paperwork and none of its job, and the
+  CSV import had no cap at all. Every path now asks `stat` first. The
+  in-memory check stays behind it, because a caller that must read to parse
+  has already paid.
+* **Note**: **THE THIRD COPY IS WHERE THE RULE BROKE.** The first draft
+  wrote the check inline at three call sites. Two treated a stat that could
+  not answer as "carry on"; the third let the failure escape, turning a
+  network blink into a broken backup-open on a path that had survived one
+  for a milestone. `null` and THROWN are the same answer, **cannot tell**,
+  and neither is evidence a file is too big:
+  [G4](/invariants/g4-unknowns-are-counted.md)'s shape on a precondition
+  rather than on a value.
+* **Note**: **AN INDEX-KEYED FAULT SILENTLY RETARGETS.** `FakeFileStore`
+  injects failures by operation index, and a test armed one at
+  `operationCount + 1` with a comment naming exactly which call that was.
+  One added `stat` made the comment false and pointed the fault at the
+  wrong operation. **Probed rather than guessed**: the test fails at +1,
+  fails at +7 and passes only at +2, so it does discriminate. A positional
+  assertion about a call sequence retargets rather than failing to compile,
+  which is the same class as
+  [assert the artifact, not the mechanism](/practices/assert-the-artifact-not-the-mechanism.md).
+* **Version**: `v0.4.78`. Epic `#22`: 22 stories, 95 chapters, **78** Done.
+  **The two derivations disagreed at first** and the rule caught it: the
+  walk said 77 while the arithmetic said 78, because the arithmetic counted
+  a chapter that was finished but not yet marked. Counting twice is what
+  turned that into a five-second check instead of a wrong number in six
+  files.
+
 ## 2026-08-29 (fourth entry)
 
 * **Updated**: [census before building](/practices/census-before-building.md)

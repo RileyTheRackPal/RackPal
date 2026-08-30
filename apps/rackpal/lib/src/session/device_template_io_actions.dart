@@ -37,6 +37,7 @@ import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/session/session_prompts.dart';
 import 'package:rackpal/src/storage/atomic_writer.dart';
 import 'package:rackpal/src/storage/file_store.dart';
+import 'package:rackpal/src/storage/import_guard.dart';
 import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -212,6 +213,24 @@ Future<bool> importDeviceTemplate({
   // going to change either way, and this is the one "nothing happened"
   // `SessionController.openDocument` already allows.
   if (path == null) return false;
+
+  // THE SIZE CAP RUNS BEFORE THE READ (AC-058/D8, `#237`), and `#237`'s
+  // own census gate is what found this: `readRmdxBytes` DOES run the
+  // limits, but only after `readBytes` has already pulled the whole file
+  // into memory, so a 2 GB `.rmdx` was refused at the cost of 2 GB. The
+  // stat is one syscall and the refusal is the same sentence.
+  //
+  // A path `stat` cannot answer for is not refused here: "the file
+  // vanished between the picker and the read" already has its own
+  // message below, and reporting it as oversized would be a false
+  // explanation.
+  switch (await checkImportedFileSize(fs, path)) {
+    case Err(:final error):
+      await prompts.showFileError(_refused(path, error));
+      return false;
+    case Ok<void>():
+      break;
+  }
 
   final Uint8List bytes;
   try {

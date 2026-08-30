@@ -41,6 +41,7 @@ import 'package:rackpal/src/session/starter_projects.dart';
 import 'package:rackpal/src/storage/document_store.dart';
 import 'package:rackpal/src/storage/errors.dart';
 import 'package:rackpal/src/storage/file_store.dart';
+import 'package:rackpal/src/storage/import_guard.dart';
 import 'package:rackpal/src/storage/prefs_store.dart';
 import 'package:rackpal/src/storage/recents_store.dart';
 import 'package:rackpal/src/storage/recovery_store.dart';
@@ -441,6 +442,30 @@ final class SessionController {
     required String forPath,
     required bool targetExists,
   }) async {
+    // BOUNDED BEFORE THE READ (AC-058/D8, `#237`). A `.bak` is written
+    // by this build, but it sits beside a project file the user PICKED,
+    // and nothing stops a stranger shipping one alongside. The limits
+    // run inside the deserializer either way; the stat is what stops an
+    // enormous one being allocated first.
+    if (await checkImportedFileSize(fs, backup.path) is Err<void>) {
+      await prompts.showFileError(
+        FileErrorView(
+          title: 'The backup is too large to open.',
+          detail:
+              'RackPal found ${backup.path}, and it is larger than an '
+              'import may be. Nothing has been read.',
+          actions: const [
+            FileErrorAction(
+              id: FileErrorActionId.ok,
+              label: 'OK',
+              isPrimary: true,
+            ),
+          ],
+        ),
+      );
+      return false;
+    }
+
     final Uint8List bytes;
     try {
       bytes = await fs.readBytes(backup.path);
