@@ -1,5 +1,50 @@
 # Update Log
 
+## 2026-08-29 (fourth entry)
+
+* **Updated**: [census before building](/practices/census-before-building.md)
+  gains the variant where **the census itself was scoped wrong**. `#795`'s
+  first pass grepped `packages/*/lib apps/*/lib` for `contentHash` writers,
+  found eight and handled them; **two more were outside the glob**, in
+  `tool/`, and one of those generates four SHIPPED artifacts. The starters
+  would have kept `sha256:seed-A01` while a fresh blank project got real
+  hashes: two conventions in one product, in the files a new user opens
+  first. **Nothing in the method notices this.** It was caught by
+  `generate_starters.dart --check` reporting four files unchanged when they
+  should have moved, and had those been generated at build time rather than
+  checked in, nothing would have said anything. The correction inverts the
+  order: census the whole tree, then justify each exclusion.
+* **Note**: **THE THIRD STATE WAS THE WHOLE JOB, NOT THE HASH.** Computing a
+  sha256 is arithmetic somebody else wrote. The risk was everything that is
+  NOT a hash: ~150 test fixtures carrying `'h'`, every project ever written
+  carrying `sha256:seed-A01`, every builder save carrying
+  `unhashed:<id>@<v>`. Reading any of those as a MISMATCH would badge every
+  device in every document that predates the change, which is AC-042's own
+  reasoning arriving from the other side. So the verifier answers `bool?`
+  and `null` means *nothing to check against*, which is
+  [G4](/invariants/g4-unknowns-are-counted.md)'s shape on a comparison
+  rather than on a value.
+* **Note**: **A PREFIX IS NOT A CLAIM ANYBODY CHECKED.** Three placeholders
+  read `sha256:` and none was a digest, which was harmless while no value in
+  the tree was one and became three lies the moment one was. The verifier
+  therefore checks length and alphabet rather than the colon, and the
+  Structure sentinel was re-spelled `no-template:structure` so it stops
+  claiming an algorithm it never ran.
+* **Note**: **THE FIELD HAD NO VERIFYING READER AT ALL**, which the task's
+  own description did not claim. `contentHash` was written, round-tripped
+  and never compared, so AC-042's warning had no implementation rather than
+  a placeholder input. Making the hash real and stopping there would have
+  moved [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  one step along instead of closing it, so the verifier and its first
+  caller ship in the same change.
+* **Note**: **A TEST WAS PINNING THE PLACEHOLDER, AND IT WAS HONEST.**
+  `device_builder_actions_test.dart` asserted
+  `unhashed:tpl.hdmi_matrix_16x16@2` under the heading *"it is labelled
+  unhashed and carries the version it belongs to"*. That WAS the intended
+  behaviour and the label was deliberate. It failed on this change, which
+  is the good case: a test that survives the behaviour it was protecting is
+  the bad one.
+
 ## 2026-08-29 (third entry)
 
 * **New**: [DR-101, an id collision on import is a question](/decisions/dr-101-an-id-collision-on-import-is-a-question.md).

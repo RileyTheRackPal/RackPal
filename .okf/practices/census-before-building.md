@@ -1,7 +1,7 @@
 ---
 type: Playbook
 title: Census the data before building the rule that reads it
-description: Print the field over the whole corpus first. It has now caught three distinct classes of problem in three milestones — an empty field, an unmeasured cost, and a wrong ordering nobody had ever compared.
+description: Print the field over the whole corpus first, and make sure "the whole corpus" is not really "the directories I thought of". It has caught an empty field, an unmeasured cost, a wrong ordering nobody had compared, a field that collapses rather than being absent, and once a census whose own glob missed the generator of four shipped artifacts.
 tags: [practice, measurement, catalog, debugging, m2]
 timestamp: 2026-08-01T00:00:00Z
 status: adopted
@@ -58,6 +58,36 @@ itself, and reading it with human eyes rather than an `expect`.
 **Do it before, not after.** All three of these were caught before shipping the
 rule that would have depended on them, which is the whole margin: the same
 finding a week later is a regression in a released build.
+
+# The variant where the CENSUS ITSELF was scoped wrong (`#795`)
+
+**Every instance above assumes the census covered the corpus. This one did
+not, and nothing in the method notices.**
+
+Making `contentHash` a real sha256 began with a census of every writer:
+`grep -rn "contentHash: '" packages/*/lib apps/*/lib`. Eight sites, all
+handled. **Two more were outside the glob.**
+`apps/rackpal/tool/starters/authoring.dart` is in `tool/` rather than
+`lib/`, and it is the generator of **four shipped artifacts**. Left alone,
+the four starter projects would have kept `sha256:seed-A01` while a freshly
+created blank project got real hashes: two conventions in one product, in
+the files a new user opens first.
+
+**It was caught by an artifact disagreeing with an expectation, not by the
+method.** `generate_starters.dart --check` reported all four unchanged when
+they should have moved. Had the starters been generated at build time rather
+than checked in, nothing would have said anything.
+
+> **Scoping a census by directory is a filter, and a filter needs the same
+> justification as a query.** `packages/*/lib apps/*/lib` reads like "the
+> source", and it is really "the source I thought of". `tool/`, `test/` and
+> anything generating a tracked artifact are all places a production value
+> can be spelled.
+
+The cheap correction is to census the whole tree first and *then* explain
+each hit you are excluding, rather than excluding by path before looking.
+That inverts the failure: an unjustified exclusion becomes visible, where an
+unconsidered directory never is.
 
 # The variant that survives a census: a field that collapses
 
