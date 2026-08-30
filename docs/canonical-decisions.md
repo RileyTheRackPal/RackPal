@@ -14562,6 +14562,164 @@ loaded and no browser at all, which is the whole reason this shape was chosen ov
 
 ---
 
+### 11.102 DR-103 · Placing a library row copies the template into the project, and the palette says which shelf every row came from
+
+**Settled by the user on 2026-08-30, before any code**, on the precedent this milestone has now set
+five times (DR-077, DR-098, DR-100, DR-101, DR-102). DR-102 ruled that the palette answers for the
+document **and** the loaded libraries. It did not rule what happens when somebody double-clicks one
+of those rows, and the census found that today the honest answer is a refusal.
+
+**11.102.1 THE FINDING: DR-102's palette would list rows it cannot place.**
+`buildPlaceFromCatalogCommand` opens with `resolveLatestTemplate(doc, catalogId)` and returns
+`CatalogPlacementFailed('Unknown catalog template "$catalogId".')` when that answers null
+(`commands/catalog_placement.dart`). It has resolved out of `RackDocument.templates` since M0, and
+DR-077 §11.76.3 made that its **property** rather than an implementation detail. A library template
+is by definition not in the document. So every library row DR-102 adds would list with a badge, take
+a double-click, and answer with a refusal naming an id the user can see on screen.
+
+DR-102 §11.101.3 says the merged list *"keeps placement a single gesture"*, and that is the whole of
+what it says about placement. **That sentence is a consequence, not a mechanism.** The mechanism is
+ruled here rather than chosen inside a widget.
+
+**11.102.2 THE RULING ON PLACEMENT: the copy happens, and it is AC-041 rather than a new idea.**
+Placing a row whose provenance is a library writes that template's snapshot into
+`RackDocument.templates` and then places the device, **in one transaction**.
+
+This is neither an invention nor a compromise. **AC-041 already rules that v1 is copy-on-place**:
+`templateRef{templateId, version, contentHash}` is recorded and *the snapshot is embedded*, which is
+what makes a `.rmpj` self-contained and what §11.35.4 leans on when it says a document RackPal
+produces is the user's own work. docs/02's rejected-alternatives table is blunter still: the
+alternative to embedded snapshots is *"a live library reference"*, and the cost it names is
+*"non-reproducible deliverables; drawings that change silently across machines"* (CR-054, AC-041).
+A device resolving out of a `.rmda` on one person's shelf **is** that rejected alternative. So the
+copy is not the price of this feature; it is the format's standing promise, and the only open
+question was where it gets paid.
+
+**ONE TRANSACTION, AND NOTHING IS BUILT FOR IT.** `DocumentController.transact` already groups any
+number of commands into a single undo entry and applies each on `add` so the next one sees it
+(`document_controller.dart`, CR-106's third piece). `SaveTemplateToProjectCommand` followed by
+`AddDeviceCommand` inside one `transact` is one `Ctrl+Z`, which is what a single gesture owes. A
+composite command was considered and is recorded only so that nobody builds one.
+
+**THE PLACEMENT IS BUILT BEFORE THE COPY IS COMMITTED, NOT AFTER.** `buildPlaceFromCatalogCommand`
+takes the resolved snapshot as an argument on this path, so a rack with no room refuses **without**
+having copied anything. Adding the save first and discovering the refusal second would leave a
+template in the project for a device that was never placed, and `transact` commits whatever children
+it has: it rolls back on a throw, and a refusal is not a throw. This is the one ordering constraint
+in the chapter and it is why the argument exists.
+
+**11.102.3 THE RULING ON THE ID THAT IS ALREADY TAKEN, and it is the common case rather than the
+edge.** A library row names `templateId@version`. Three cases, and all three are decidable without
+asking the user anything:
+
+| The document at that exact key | What happens |
+|---|---|
+| Nothing | Copy the library's own `templateId@version` verbatim, then place. The version is **preserved, not reset to 1**, for `buildTemplateImport`'s stated reason: a later `@4` then slots in above it and the chain keeps meaning what it means. |
+| A body that hashes identically | **No copy at all.** The document already holds this template; place it. Nothing is announced, because nothing changed. |
+| A body that hashes differently | Mint a fresh id through `templateIdFor(doc, displayName)` at version 1, copy that, then place. |
+
+**Row three is not hypothetical and DR-101 §11.100.1 is why.** `templateIdFor` derives an id from
+the display name identically on every machine, so two people who both typed `HDMI Matrix 16x16` have
+`tpl.hdmi_matrix_16x16` in both libraries, both at version 1. DR-102 §11.101.4 already ruled that
+those are **two rows** in the palette; this is the same ruling one step later, at the moment one of
+them has to land in a document that holds the other. Overwriting was never available: the key is
+what placed devices resolve against, and rewriting it would change what somebody's existing device
+IS. Placing the document's version instead would silently give the user the other library's device
+under the name they clicked.
+
+**THE COMPARISON IS A RECOMPUTED HASH, NOT THE CLAIMED ONE** (`templateContentHash`, `#795`).
+Comparing the two `contentHash` strings would answer "unknown" for every template written before
+`#795` and for every hand-authored one, and there is no user to ask mid-gesture. Hashing both bodies
+answers the question that is actually being asked, which is whether these are the same device.
+
+**`SaveTemplateToProjectCommand`'s revert stays bounded**, which is the one property that had to
+survive. Its own comment rests that on `nextTemplateVersion` having guaranteed the key was free; on
+this path the guarantee is established differently and just as strictly, since case one is reached
+**only** when `doc.templates[key]` is null and case three mints an id nothing holds. An undo can
+therefore still not delete a snapshot somebody else's devices resolve against.
+
+**11.102.4 THE RULING ON WHAT IS SAID: once per template, never per placement.** The status line
+names the copy the first time a given library template lands and never again: *"Added HDMI Matrix
+16x16 from Shop Kit. Placed MTX-1 at RK-1 U3, front."* Every later placement reads exactly as it
+does today.
+
+Silence was declined for the reason this repository keeps re-finding: a project quietly growing a
+template is a change to a saved artifact that the user did not ask for in those words. Announcing on
+**every** placement was declined for the opposite one: the fact is true once, and a clause repeated
+on every double-click is the sentence people stop reading, which spends the warning's value before
+the day it matters. **The trigger is the copy actually happening**, so the rule carries no state of
+its own and cannot drift out of step with what the document did. Case two of §11.102.3 is silent by
+construction, and that is the same rule rather than an exception to it.
+
+**11.102.5 THE RULING ON GROUPING: the category, badged. NOT a pinned group per library.** A
+library's HDMI matrix files into `Video` beside the seeded ones, carrying its library's name as the
+badge where an authored template carries `PROJECT`.
+
+**The alternative is what is already built, and it was still declined.** DR-077 §11.76.2 gives an
+authored template both homes: badged in its category, and repeated in a `This project` group pinned
+above the nine. Mirroring that would give every library its own pinned group, and consistency with a
+shipped surface is a real argument. It loses on arithmetic. The pinned region sits above the
+categories in a panel that is **280px wide by default and legal down to 220** (docs/04 §1), one
+library costs one heading, and the user's own goal for this subsystem is *"multiple device libraries
+loaded into the device palette"*. At four libraries the nine categories start below the fold, so the
+feature's success case is the case that breaks the panel. **The chips in §11.102.6 are what replaces
+the pinned group**, and they cost one row of height no matter how many libraries load.
+
+**11.102.6 THE RULING ON THE FILTER: single-select source chips, and `All` is one of them.** A
+wrapping chip row under the search box, one chip per SOURCE: `All`, `Catalog`, `This project`, and
+one per loaded library. Choosing one narrows the whole panel to that source.
+
+Single rather than multiple, on the story's own words: *"filtered by which one a device came from"*.
+Multi-select is the more powerful query and was declined on the state it admits, **zero chips lit**,
+which renders as an empty palette that looks broken and needs a rule of its own to prevent. A
+dropdown was declined for hiding the source list behind a click, in a feature whose entire point is
+that there is more than one source.
+
+**THE SEEDED CATALOG GETS A CHIP, which no surface has offered before.** Once the row exists and
+means *where this came from*, omitting the 48 archetypes would leave `All` minus every other chip
+meaning something with no name. "Show me only the shipped ones" is a question a person with three
+libraries loaded will ask.
+
+**`All` IS A CHIP AND NOT A CLEAR BUTTON**, so the reset is in the same control, reachable by the
+same gesture, and readable as the current state rather than as an action.
+
+**11.102.7 THE RULING ON A LIBRARY THAT WILL NOT LOAD, which DR-102 §11.101.6 left open in terms.**
+A `.rmda` on the shelf that fails to decode appears as a **disabled chip carrying its file name**,
+with the fault in its tooltip. Every other library loads.
+
+**This is the case AC-042 does NOT cover, and the distinction is the reason both rules can stand.** A
+hash mismatch is a warning and never a refusal, so a mismatched library loads, and its templates are
+badged; that rule is untouched here. A file that is not JSON, that is a `.rmdx`, that carries a newer
+`schemaVersion`, or that trips AC-058/D8's size cap yields **no templates at all**, and there is
+nothing to badge. Skipping it silently was declined as the failure this milestone's own practice
+keeps naming: a person put a file in a folder, nothing appeared, and there is no thread to pull. A
+footer line reading *"1 library could not be read"* was declined for not saying **which**, which is
+the only fact that lets them act on it.
+
+**11.102.8 THE RULING ON SHAPE: `PlaceableTemplate.documentKey` is NULLABLE, and that is the point.**
+`PlaceableTemplate.key` reads today as *"the `RackDocument.templates` key this row resolves to"*, and
+for a library row there is no such entry. It is renamed `documentKey` and typed `String?`, so the
+compiler shows every reader on the day library rows start existing. **A getter that cheerfully spells
+`"$id@$version"` for a row the document does not hold is a lookup key that silently misses**, and
+`library_import.dart` already calls `doc.templates[row.key]` in precisely that shape.
+
+`isProjectAuthored` survives unchanged, as DR-102 §11.101.5 requires: it is the one question the
+palette badge asks, and a library row answers **false** to it, because the shelf it names is not this
+project's.
+
+**11.102.9 WHAT THIS DOES NOT RULE.** It does not decide **which** libraries are loaded: every
+`.rmda` on the shelf is, because `#240`'s import is the only thing that puts one there and a
+per-project enable list is a preference nobody has asked for. It does not build favourites, smart
+folders or search over port signal families, all of which are M4-O's. It gives a library no rename,
+delete or unload gesture, so the file manager remains the only way to take one off the shelf until
+M4-O: that is a real gap, and it is named here rather than closed. It says nothing about a library
+template colliding with a **placed** device's template, because copy-on-place makes a placed device
+immune by construction, its `TemplateRef` resolving the version it was placed from for life
+(CR-050). And it does not touch the schematic's library panel, CR-104's other half, which is M2's
+surface and lists these same rows through this same widget on the day it exists.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
