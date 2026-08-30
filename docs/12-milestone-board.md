@@ -115,7 +115,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
-| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 IS NOW PERFORMABLE and has not yet been performed** (§5.3.13): it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` is unblocked and is the remaining work on this criterion. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 IS NOW PERFORMABLE and has not yet been performed** (§5.3.13): it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` is unblocked and is the remaining work on this criterion. **SEVENTEEN OF TWENTY-TWO STORIES ARE NOW CLOSED** (§5.3.1–§5.3.23) and five remain: M4-K (`#182`), M4-N (`#170`), M4-O (`#186`), M4-P (`#187`) and the drill itself (`#188`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22) and **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`). **Neither moves this criterion**, and that is the point of the row: story after story has closed since clause 1 was confirmed on 2026-08-15, and clause 2 is still a person with a document to read. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -2637,9 +2637,17 @@ test says so where a later reader would otherwise tidy the absurd length away.
 > ports places into a rack and appears correctly in the equipment list with `—` in every unknown
 > column and an accurate unknown count in the rollup.
 
-**M4-A through M4-E, M4-G and M4-H are CLOSED** (board #172, #173, #174, #175, #176, #178, #179),
-and §5.3.1 through §5.3.6
-below are their record. The first three are machinery under no surface at all; **M4-D builds the
+**SEVENTEEN OF M4's TWENTY-TWO STORIES ARE CLOSED**, and §5.3.1 through §5.3.23 below are their
+record. **Five remain**: M4-K (`#182`, panel auto-layout and the three live previews), M4-N
+(`#170`, the library subsystem), M4-O (`#186`, the browser, behind M4-N), M4-P (`#187`, the
+field-device form) and M4-Q (`#188`, the drill, which is a person and not a chapter).
+
+**THE SENTENCE THAT USED TO OPEN THIS SECTION NAMED SEVEN CLOSED STORIES AND WENT ON NAMING THEM
+FOR SIX MORE**, which is the drift this document exists to prevent and had no gate against. It read
+*"M4-A through M4-E, M4-G and M4-H are CLOSED"* while M4-I, M4-J, M4-L, M4-M, M4-R, M4-S and M4-T
+had all closed behind it. A reader taking it at face value would have re-opened work that shipped.
+
+M4-A through M4-C are machinery under no surface at all; **M4-D builds the
 surface**, **M4-E builds the product** and **M4-G makes it fast**, which is the pair that moves the
 exit criterion at
 all. A 16×16 matrix can now be authored from scratch, and **M4-G types one in eight lines**
@@ -4274,6 +4282,284 @@ hold **92** tasks, of which **66** are `Done`. By arithmetic from the last relea
 M4-I's **3** closed tasks (`#220`, `#221`, `#222`) is **66**. The issue count moved 21 to 22 since
 §5.3.20 was written and the task count did not, which is a decomposition item added with no tasks
 under it and does not touch the patch number.
+
+#### 5.3.22 M4-L, the three doors and the fourth that needed a resolver first · CLOSED · `e58562f`, `c426060`, `76bcd5d`, `da750e0`, `b484241`, `e62c229`, `148d10e`, `a994a95`, `5631c8f`, `5b594ed`, `a33a71f`, `70d2cbe`
+
+**Written on 2026-08-29, four days after the fact, and the delay is the finding.** M4-L closed at
+`v0.4.73` on 2026-08-25 and this section did not exist until M4-M was already three chapters in.
+For those four days the board said `Done`, the version said 73, and **the document this corpus
+names as its evidence authority said nothing at all**. Nothing failed, because nothing gates it.
+That is the same shape as `docs/13`'s D13 row (§5.3.23's M4-M1, and `docs/13` §2.3), one document further out: a record that
+has stopped describing the tree is trusted exactly as much as one that has not.
+
+**TWO RULINGS CAME FIRST, AND BOTH WERE CENSUSES RATHER THAN OPINIONS.** DR-098 (§11.97) and
+DR-099 (§11.98) were settled before any code, on DR-077's precedent. Between them they found that
+`DeviceOverrides` and `PortOverrides` had existed since M0, both codec-covered, both under CR-117's
+byte gate, and **neither had ever been constructed by anything but its own class and the codec**.
+Every `overrides` block in the shipped corpus was empty: four starters and six fixtures holding
+800+ of them and **zero keys** between them, measured by walking the parsed JSON rather than
+grepping a field name, because `displayName` also lives inside every `TemplateBody` and the naive
+grep returns 847.
+
+**THE MODEL CHANGE IS TRI-STATE AND THE THIRD STATE IS A PRESENT KEY** (`c426060`). CR-114 rules
+that an unknown serializes as an **absent** key; on this type an absent key already meant "inherit
+the template's value", so `null` was carrying two different statements. Spelling unknown as
+`"weight": null` would have given two states one spelling and the file could not tell them apart.
+The set of unknown fields therefore rides in a `cleared` list, omitted when empty, which every
+override block in the corpus is: **the addition is byte-invisible to existing files and no
+`kSchemaVersion` advance is owed**, asserted by a round-trip case rather than claimed. `cleared` is
+sorted by the enum's own order rather than the set's, because Dart's `Set` iterates in insertion
+order and two documents that cleared the same fields in a different sequence would otherwise write
+different bytes.
+
+**`displayName` AND `typePrefix` WERE DELETED AND NO TEST NAMED EITHER.** That is how the deletion
+was checked: removing them broke nothing, because nothing had ever asserted them. The same absence
+the ruling's census found in the shipped corpus, arriving from the other direction.
+
+**DOOR 1's WIDGET TEST FOUND THE ONE PATH IT COULD NOT REACH** (`da750e0`), and it is the part
+worth keeping. The first draft of the `Value` segment seeded its box from the template and bailed
+out when there was nothing to seed from. **No demo template states a mass**, so tapping `Value` on
+the demo rack did nothing at all: no box, no state change, no feedback. Stating a value for a fact
+the template omits is door 1's commonest use, and it was the only path that could not be reached.
+The assertion that now guards it is the **rollup**, not the field: DR-098 exists because a rack
+subtotal could total a figure the user had no way to disown, so the unknown case drives the real
+screen and reads `computeRackRollups`, asserting both halves.
+
+**DOOR 2 IS A ROUTE AND A REFUSAL** (`148d10e`, `a994a95`), and DR-099 is why it refuses rather
+than offers. `TemplateEditSession` is `late final` inside the builder's `State`, so handing that
+screen a different template is ignored; loading one means a new `key`, which destroys the `State`
+and the draft with it. **That is not recoverable in any sense**: the session is an in-memory deep
+copy, so there is nothing for `Ctrl+Z` to reach and nothing on disk to reopen. The user is still
+taken to the Device Manager, because *"finish it first"* is useless without showing them what "it"
+is.
+
+**DOOR 3 GAVE `derivedFrom` ITS FIRST PRODUCER** (`5631c8f`). `fork_status.dart` had carried
+CR-062's stale-fork rule since M4-C and said in its own header that *"nothing writes a `derivedFrom`
+yet"*: **the badge had a rule and nothing to badge.** A forked template now answers
+`resolveForkStatus` against the source it was copied from.
+
+**M4-L4 OWED A RESOLVER BEFORE A FORM, AND GOT ONE** (`5b594ed`, `a33a71f`), which DR-098 §11.97.6
+ruled in advance. `PortOverrides` had **no reader anywhere in the tree**: three fields, codec-covered
+since M0, under CR-117's gate, consumed by nothing. An editor written against that is §5.3.8's
+finding one level down, a save that changes nothing a person can see. So `derived/port_facts.dart`
+landed first and `connect_target.dart` came to it, which means a corrected connector reaches the pin
+the connect gesture acts on and tier-1 rules are evaluated against. The load-bearing test is
+therefore not *"the dropdown changed"* but that the **connect target** answers with the correction,
+and it was watched failing with the resolver sabotaged.
+
+**`PortOverrides.label` WAS DELETED AS A DUPLICATE.** It meant "what this jack is called on this
+instance", which is exactly what `Port.userLabel` means, and `userLabel` is the one with a reader:
+`schedule.dart` has printed it since DR-054. **No test named the deleted one either**, so the suite
+could not have told anybody whether it worked.
+
+**THE DEMO FIXTURE CANNOT EXERCISE THE PORT FORM, and finding that out changed the test.** The
+first draft drove `RackCanvasScreen`, selected `SW-1`, a network switch, and asserted the section
+listed its jacks. **The count came back 0: every template on the demo document has zero ports.** A
+screen-level test would have been asserting an empty list while looking like an integration test.
+The section is mounted directly over a document that has ports instead.
+
+##### THE PIPELINE'S FIRST RED, and it caught something the local gate structurally cannot
+
+`70d2cbe`. `run_local.ps1` passed all fifteen gates on that tree, and build `20260829.7` failed the
+analyzer gate on `refs/pull/5/merge` with *"info count rose by 2 (173 → 175)"*. **Both were telling
+the truth about different trees**: the local gate analyses the WORKING TREE and the service checks
+out the COMMIT. Two `cascade_invocations` had been fixed and the fix was never committed, because
+the file was `git add`ed BEFORE the fix and the commit that followed named a different pathspec, so
+the index kept the pre-fix content while the working tree carried the corrected version. Every local
+check after that read the corrected file and passed.
+
+**`git add` THEN EDIT THEN `git commit <other paths>` IS THE TRAP**, and an explicit pathspec makes
+it MORE likely rather than less: the pathspec protects a concurrent session's work and in exchange
+silently omits a file the author already staged and then changed. A bare `git commit -a` would have
+caught this and swallowed the other session's work instead. **Neither habit is safe alone**; the
+check is `git diff` before committing.
+
+**This is also the first evidence the service's failure-reporting path works at all.** §4.1 recorded
+that every gate script had been mutation-tested locally while the service-side failure path was
+exercised in the green direction only, and said not to treat a green Tests tab as proof the reporter
+works. It is now proof.
+
+**Version `v0.4.73`, derived two ways that agree.** By hierarchy walk: Epic `#22`'s **22** issues
+hold **94** chapters, of which **73** are `Done`. By arithmetic: `v0.4.68` plus the five closed
+since (`#230`, `#231`, `#232`, `#233`, `#794`) is 73. **The walk needed a different query than last
+time**: DR-097 migrated every `Task` to `Chapter`, so the WIQL that derived `v0.4.68`
+(`WorkItemType = 'Task'`) returns **zero** and would have produced a patch number of 0 with no
+error. Counting by parentage rather than by type is what survives the migration.
+
+**WHAT M4-L DOES NOT DELIVER.** The stale-fork badge still has no surface: `fork_status.dart` has
+had its rule since M4-C, door 3 now gives it something to badge, and **a widget is still nobody's**
+(§11.98.5). Nothing here touches the exit criterion.
+
+#### 5.3.23 M4-M, the `.rmdx` file format and every path that reads one · CLOSED · `v0.4.78` · `106d195`, `13299bb`, `acb1952`, `6712bbe`, `1440cfa`, `bacc610`, `b74e1c8`, `7957313`, `aab6744`, `1059296`, `fa7f8ed`, `1e64e28`, `e389df3`
+
+**Five chapters, two rulings, and four PRs, all green on the service before completing.** M4-M is
+the first story in this milestone to land entirely through the branch policy CI made blocking
+(§4.1), which is worth the line only because it is now unremarkable.
+
+**FOUR OF THE FIVE CHAPTERS WERE PARTLY A READING JOB, and §5.3's own header predicted it.** That
+header records the pattern across M4-A through M4-E: *"Four for four, the first useful hour went
+into reading, not typing."* M4-M makes it nine for nine, and the two places the reading was skipped
+are the two that had to be corrected afterwards.
+
+##### M4-M1: the task asked for work another task had finished (`#234`, `106d195`, `13299bb`)
+
+`#234` reads *"`file_dialog_channel.cpp` holds ONE hardcoded `COMDLG_FILTERSPEC` array shared by
+Open and Save. Filter and default extension become parameters of the method call."* All of that was
+true once and none of it still was: **`2180a35` (M3-F/4, `#162`) made the filter a named KIND on the
+wire before M4 opened**, and said *"closing D13 before D2"* in its own subject line.
+
+**The stale document was `docs/13`'s D13 row, and the board item is a transcription of it.** That
+row was wrong in **all four** of its clauses, including naming an extension DR-015 had renamed, and
+`docs/13`'s own preamble had predicted the consequence in terms: *"a row that has stopped describing
+the tree is worse than a missing row, because it is trusted."* It was. `#475` and `#476` were opened
+against it and part of `#234` was written from it. Cleared in `docs/13` §2.3.
+
+**Canon was not stale**, so `re-read a task against canon` would have come back clean. The check
+that finds this is one grep of the FILE the task names, for the noun it says is missing. That is the
+practice's second arm and it is recorded there.
+
+**What was actually owed**: the `device` kind `.rmdx` needs; a table in place of two parallel
+ternaries, because two kinds fit `csv ? a : b` and three do not and a nested pair can then disagree
+about what `device` means; and **the gate nobody had asked for**, that every `FileDialogType` value
+has a `kFileKinds` row. That last one catches a SILENT failure: an unrecognised kind does not throw
+and does not open an empty dialog, it falls back to the project filter, so an
+`Export device template…` would offer `*.rmpj` and read as a mis-wired feature rather than an
+un-taught runner. **Two assertions it replaced were mechanism assertions** pinned to the exact
+source text of a ternary, which the third kind broke on contact.
+
+##### M4-M2: DR-100, and a worked example with 21 holes in it (`#235`, `acb1952`, `6712bbe`)
+
+Censused over `_encodeTemplateBody` rather than over the prose, and counted from the function
+because `putIfNotNull` and three bare `json[...] =` assignments do not match the pattern the
+always-on keys do:
+
+| Measurement | Figure |
+|---|---|
+| Keys the encoder emits | **39** |
+| Keys docs/06 §7.3's worked `.rmdx` places | **18** |
+| Keys with no home anywhere in the corpus | **21** |
+| Keys the example renames against the encoder | **2** |
+
+**`model` was one of the 21.** It is required, always encoded, and DR-056 keeps it undefaulted
+*specifically* so it prints as an unknown: it is the cell `docs/17`'s clause-2 drill is sent to look
+for. A codec built from that example drops it, so **the field that proves G4 works would have gone
+missing on the one path built for sharing a device.**
+
+**The sections' footing was one sentence long, and inside a rejection.** CR-053's subject is the
+override key namespace and it **refused** the dotted-path proposal the sections came from; they
+survive only in that refusal's trailing clause, whose job is to say they do not define an override
+namespace. Everything downstream restates it in a priority-3 document. Third instance of §11.56.5.
+
+**The format was recognised, not designed.** A `TemplateSnapshot` already on disk in all four
+starters is `{templateId, version, contentHash, capturedAt, body}`; the ruled `.rmdx` is that minus
+`capturedAt` plus `schemaVersion` and `kind`. The gate is a **48-template byte sweep**, because the
+defect DR-100 prevents is silent: an unclaimed key does not throw, does not warn and does not fail
+to encode. A hand-written fixture asserts the fields its author remembered, which is the same set
+that would have been partitioned.
+
+##### M4-M3: DR-101, and the first answer that had to be overturned (`#236`, `bacc610`, `b74e1c8`, `7957313`)
+
+**`templateIdFor` derives the id FROM THE DISPLAY NAME**, identically on every machine, which was
+`#232`'s deliberate call so a person diffing two `.rmpj` files reads what the device is instead of a
+UUID. Its consequence for import had not been written down: **a colliding id means "somebody typed
+the same name", not "this template came back"**, and between two integrators documenting the same
+class of hardware that is close to certain.
+
+**The question was first put to the user pricing collisions as rare, and that premise was wrong and
+load-bearing.** The answer chosen against it would have shipped the defect `templateIdFor`'s own
+header refuses in terms: *"silently merging them would put one template's ports on the other's
+instances."* Every placed instance of the incumbent would have taken a CR-062 stale-fork badge
+pointing at somebody else's device. The question was put again against the measurement.
+
+**Three discriminators were checked against the tree and all three fail**: `derivedFrom` is written
+by door 3 only, so a door-2 fork carries no lineage; `contentHash` was a placeholder everywhere; and
+a `.rmdx` carries one version rather than a chain, so a stranger who iterated their own same-named
+device to `@4` is indistinguishable from yours returning at `@4`. **A version-keyed rule was drafted
+and rejected on that third row.**
+
+**A platform fact decided part of the surface.** DR-101 §11.100.5 rules the inert-data sentence into
+*"the import dialog"*; `IFileDialog` has no body text, and adding any means `IFileDialogCustomize`,
+a slab of C++ with no `NSOpenPanel` equivalent for D2 to inherit. So Import gained a confirmation
+step the ruling did not ask for. It earns the click by printing the file's real contents before they
+enter the document.
+
+##### M4-M2/1: the hash was the easy half (`#795`, `1059296`, `fa7f8ed`)
+
+**The census found something the task's own description did not claim: `contentHash` had NO
+VERIFYING READER ANYWHERE.** It was written, round-tripped through the codec and never compared, so
+AC-042's warning had no implementation rather than a placeholder input. Making the hash real and
+stopping there would have moved `a modelled field is not a reachable one` one step along instead of
+closing it, so the verifier ships in the same change and the import dialog is its first caller.
+
+**The third state was the whole job.** Computing a sha256 is arithmetic somebody else wrote; the
+risk was everything that is NOT a hash: ~150 test fixtures carrying `'h'`, every project ever
+written carrying `sha256:seed-A01`, every builder save carrying `unhashed:<id>@<v>`. Reading any of
+those as a MISMATCH badges every device in every document that predates the change, which is
+AC-042's own reasoning arriving from the other side. `templateHashMatches` answers `bool?` and
+`null` means *nothing to check against*: G4's shape on a comparison rather than on a value.
+
+**A prefix is not a claim anybody checked.** Three placeholders read `sha256:` and none was a digest,
+harmless while no value in the tree was one and three lies the moment one was. The verifier checks
+length and alphabet; `sha256:structure-no-template` is re-spelled `no-template:structure`.
+
+**THE CENSUS WAS SCOPED WRONG AND THE MISS IS RECORDED.** The first pass grepped
+`packages/*/lib apps/*/lib`, found eight writers and handled them; **two more sat in `tool/`**, and
+one of those generates four SHIPPED artifacts. The starters would have kept `sha256:seed-A01` while
+a fresh blank project got real hashes: two conventions in one product, in the files a new user opens
+first. Caught only because `generate_starters.dart --check` reported four files unchanged when they
+should have moved, and had they been generated at build time rather than checked in, nothing would
+have said anything. `census before building` gains the variant: **scoping a census by directory is a
+filter that needs the same justification as a query.**
+
+**A test was pinning the placeholder** as intended behaviour, and it was honest when written: that
+WAS the behaviour and the label was deliberate. It failed on this change, which is the good case.
+
+##### M4-M4: the caps existed and ran too late (`#237`, `1e64e28`, `e389df3`)
+
+Three paths refused an oversized file only after `readBytes` had pulled it entirely into memory,
+which is the cap doing its paperwork and none of its job, and **the CSV import had no cap at all**.
+Every path now asks `stat` first; the in-memory check stays behind it, because a caller that must
+read to parse has already paid.
+
+**The gate found three call sites on its first run**, which is the argument for it existing.
+`import_hardening_test.dart` is a **census as a test**: it sweeps both source trees for
+`jsonDecode(` and `readBytes(`, comments stripped, and fails on a hit its own map does not name. Two
+of the three were real import paths that read before they measured, and **one of those was `#236`'s,
+two hours old**. Written this way because `#795`'s census was scoped by directory: a gate that lists
+what it covers cannot tell you about what it does not.
+
+**The third copy is where the rule broke.** The first draft wrote the check inline at three call
+sites; two treated a stat that could not answer as "carry on" and the third let the failure escape,
+turning a network blink into a broken backup-open on a path that had survived one for a milestone.
+One function now, and `null` and THROWN are the same answer: **cannot tell**, and neither is
+evidence a file is too big.
+
+**An index-keyed fault silently retargeted.** `FakeFileStore` injects failures by operation index and
+a test armed one at `operationCount + 1` with a comment naming which call that was. One added `stat`
+made the comment false within the hour. **Probed rather than guessed**: the test fails at +1, fails
+at +7 and passes only at +2, so it does discriminate. A positional assertion about a call sequence
+retargets rather than failing to compile.
+
+**The exclusions are argued in writing**, which is the corrected census practice in use.
+`prefs.json`, `recents.json` and the recovery sidecar are written by this app into its own data root
+and never picked from a dialog, so they are not *"arriving by email from strangers"* in D8's sense,
+and capping them would let a corrupt prefs file refuse to start the app.
+
+##### Version `v0.4.78`, and the disagreement that caught a mistake
+
+By hierarchy walk: Epic `#22`'s **22** stories hold **95** chapters, of which **78** are `Done`. By
+arithmetic: `v0.4.73` plus the five closed since (`#234`, `#235`, `#236`, `#795`, `#237`) is 78.
+
+**They disagreed at first, 77 against 78**, because the arithmetic counted `#237` while the board
+still had the card open: the work was finished and pushed and nobody had moved it. Counting twice
+turned that into a five-second check instead of a wrong number in six files, which
+`version_parity_test` is structurally blind to, being an equality check between the six.
+
+**WHAT M4-M DOES NOT DELIVER.** There is **no library**. M4-N (`#170`) owns `.rmda`, the directory
+service and more than one library in the palette, so an imported template lands in **this project
+only** and does not appear in another job. The stale-fork badge still has no surface. And **nothing
+here touches the exit criterion**: clause 2 is demonstrated by a person, and the drill is deferred
+to the end of the milestone by the user's decision.
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
