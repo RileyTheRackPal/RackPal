@@ -166,11 +166,21 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
       {L"RackPal device template", L"*.rmdx"},
       {L"All files", L"*.*"},
   };
+  // ONE ENTRY AND NO LEGACY SPELLING, for the device row's reason. `.rmlib`
+  // was the pre-DR-015 name and was NEVER SHIPPED IN ANY FORM: it was
+  // specified as a zip and cut by AC-042 before anything wrote one, so
+  // unlike `.rackpal` there is nothing on any disk for a second spelling
+  // to rescue.
+  static const COMDLG_FILTERSPEC kLibraryFilters[] = {
+      {L"RackPal device library", L"*.rmda"},
+      {L"All files", L"*.*"},
+  };
 
   static const FileKind kFileKinds[] = {
       {L"project", kProjectFilters, ARRAYSIZE(kProjectFilters), L"rmpj"},
       {L"csv", kCsvFilters, ARRAYSIZE(kCsvFilters), L"csv"},
       {L"device", kDeviceFilters, ARRAYSIZE(kDeviceFilters), L"rmdx"},
+      {L"library", kLibraryFilters, ARRAYSIZE(kLibraryFilters), L"rmda"},
   };
 
   const std::optional<std::wstring> file_type = StringArg(args, "fileType");

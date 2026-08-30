@@ -209,12 +209,23 @@ $ErrorActionPreference = 'Stop'
 # row `#237`'s census gate DEMANDED. Its sweep is the `.rmdx` sweep's shape
 # for a sharper reason: one `.rmdx` losing a key costs one template and one
 # `.rmda` losing it costs every template in the pack, silently.
+# RE-MEASURED 2026-08-29 at `#240` (M4-N3): core 3483 -> 3492 for the nine
+# of `test/library/library_import_test.dart`, ui 1261 -> 1273 for the twelve
+# of `test/library/library_io_dialogs_test.dart`, and app 882 -> 894 for the
+# twelve of `test/session/library_io_test.dart` plus the row and assertion
+# `#237`'s census gate demanded for the SECOND chapter running.
+#
+# TWO OF THE UI TWELVE FOUND REAL DEFECTS ON FIRST RUN, both invisible to
+# anything but a pumped widget: the export dialog overflowed by 56 pixels
+# the moment its picker opened, and its Export button read the name field
+# without anything rebuilding when that field changed, so clearing the name
+# left the button enabled.
 $SuiteFloors = @{
-    'rackpal_core'   = 3483
+    'rackpal_core'   = 3492
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1261
-    'rackpal_app'    = 882
+    'rackpal_ui'     = 1273
+    'rackpal_app'    = 894
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

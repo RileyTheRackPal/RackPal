@@ -584,15 +584,27 @@ final class AppServices {
       // checks on every platform. Export PDF has been sitting here
       // unbound on that argument since M1 and docs/08 §8.1 still nominates
       // `Ctrl+P` for it; these two do not queue ahead of it.
-      [7, 4],
+      //
+      // 7 -> 9 at M4-N3 (`#240`), and the accelerator count did not move
+      // for the EIGHTH time. The two are `Export device library…` and
+      // `Import device library…`, beside the template pair for DR-101
+      // §11.100.4's reason applied one level up: an import belongs to no
+      // library, so a browser-side control would split the verbs, and a
+      // second `FilePicker` call site is what RULE 7 above forbids.
+      //
+      // **THIS ROW HAS NOW GROWN TWICE IN ONE DAY**, which is what the
+      // comment above it predicted when it said the number "should move
+      // visibly each time". It has, and each time the reason is on the
+      // line above the number rather than in a commit nobody re-reads.
+      [9, 4],
       reason:
-          'seven File-menu items — New, Open…, Save, Save As…, Export '
-          'PDF…, Export device template…, Import device template… — and '
-          'four accelerators. The Project menu is gone: DR-091 §11.90 '
-          'made Locations, Structured Wiring and Device Manager views in '
-          'the strip, and a menu item beside a tab is a second route to '
-          'one surface. docs/08 §8.1 gives export Ctrl+P; the dialog is '
-          'not built and neither is the binding.',
+          'nine File-menu items — New, Open…, Save, Save As…, Export '
+          'PDF…, Export/Import device template…, Export/Import device '
+          'library… — and four accelerators. The Project menu is gone: '
+          'DR-091 §11.90 made Locations, Structured Wiring and Device '
+          'Manager views in the strip, and a menu item beside a tab is a '
+          'second route to one surface. docs/08 §8.1 gives export Ctrl+P; '
+          'the dialog is not built and neither is the binding.',
     );
   });
 
