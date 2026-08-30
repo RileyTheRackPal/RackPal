@@ -189,12 +189,21 @@ $ErrorActionPreference = 'Stop'
 # answers UNKNOWN for anything that is not 64 hex digits, so none of them
 # reads as a mismatch, and rewriting them would have been the change that
 # made this task expensive for no gain.
+# RE-MEASURED 2026-08-29 at `#237` (M4-M4): app 860 -> 871, the eleven of
+# `test/session/import_hardening_test.dart`. Core is unchanged:
+# `checkImportSize` was EXTRACTED from `checkJsonLimits` rather than added
+# beside it, so the size cap has one implementation and core gained no case.
+#
+# THAT FILE IS A CENSUS AS A TEST, and it earned its place on its first run
+# by naming three byte-reading call sites the author had not listed. Two
+# were real import paths that read before they measured, and one of those
+# had shipped two hours earlier at `#236`.
 $SuiteFloors = @{
     'rackpal_core'   = 3469
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1261
-    'rackpal_app'    = 860
+    'rackpal_app'    = 871
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

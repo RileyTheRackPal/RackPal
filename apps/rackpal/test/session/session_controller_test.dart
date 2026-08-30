@@ -635,11 +635,21 @@ void main() {
           errorActions: [FileErrorActionId.openBackup],
         );
         final t = await _session(fs: fs, prompts: prompts);
-        // Inside the dialog, arm a fault for the stat that follows the
-        // backup read: `_openBackup` does readBytes, then decode (no fs
-        // ops), then exactly one stat.
+        // Inside the dialog, arm a fault for the WRITE-BACK stat.
+        //
+        // THE OFFSET MOVED AT `#237` AND THE COMMENT THAT NAMED IT WAS
+        // WRONG WITHIN THE HOUR. It used to read "`_openBackup` does
+        // readBytes, then decode (no fs ops), then exactly one stat", and
+        // `#237` put an import-size stat in front of the read, so `+1`
+        // became that one instead. An index-keyed fault is a positional
+        // assertion about a call sequence, and it silently retargets when
+        // the sequence changes rather than failing to compile.
+        //
+        // `_openBackup` now does: stat (the import cap), readBytes,
+        // decode (no fs ops), stat (the write-back baseline). The second
+        // is the one this test is about, so the offset is +2.
         prompts.onBeforeErrorAnswer = () async {
-          faults[fs.operationCount + 1] = const StorageOsException(
+          faults[fs.operationCount + 2] = const StorageOsException(
             1231,
             'the share blinked',
           );

@@ -126,16 +126,39 @@ Outcome<void> checkJsonLimits(
   Uint8List bytes, {
   JsonLimits limits = const JsonLimits(),
 }) {
-  if (bytes.length > limits.maxBytes) {
-    return Err(
-      DocumentTooLargeError(bytes: bytes.length, limit: limits.maxBytes),
-    );
+  switch (checkImportSize(bytes.length, limit: limits.maxBytes)) {
+    case Err(:final error):
+      return Err(error);
+    case Ok<void>():
+      break;
   }
   final depth = scanMaxJsonDepth(bytes, stopAt: limits.maxDepth + 1);
   if (depth > limits.maxDepth) {
     return Err(
       JsonTooDeeplyNestedError(depth: depth, limit: limits.maxDepth),
     );
+  }
+  return const Ok<void>(null);
+}
+
+/// The size half of import hardening, on its own (AC-058/D8, `#237`).
+///
+/// **SEPARATE FROM [checkJsonLimits] BECAUSE NOT EVERY IMPORT IS JSON.**
+/// D8 names the paths it cares about as the files that *"arrive by email
+/// from strangers"*, and M3-F's CSV is one of them. The depth cap is
+/// meaningless for a CSV, which has no nesting to overflow a recursive
+/// encoder with; **the size cap is not**, because a 2 GB spreadsheet
+/// exhausts memory just as thoroughly as a 2 GB document.
+///
+/// **IT TAKES A LENGTH RATHER THAN BYTES, and that is the whole point of
+/// it existing.** [checkJsonLimits] measures a buffer that is already in
+/// memory, which is fine when the caller had to read it anyway to parse
+/// it. A CSV import can ask the filesystem how big the file is BEFORE
+/// reading a byte of it, and a cap that only fires after the allocation
+/// it was meant to prevent is decoration.
+Outcome<void> checkImportSize(int bytes, {int limit = kMaxDocumentBytes}) {
+  if (bytes > limit) {
+    return Err(DocumentTooLargeError(bytes: bytes, limit: limit));
   }
   return const Ok<void>(null);
 }
