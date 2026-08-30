@@ -65,6 +65,7 @@ void main() {
   });
 
   /// Opens the app on the demo document and lands on the Device Manager.
+  /// Opens the Device Manager tab, which since `#243` is the BROWSER.
   Future<void> openDeviceManager(WidgetTester tester) async {
     await tester.pumpWidget((await buildTestApp(measurer)).app);
     await tester.pumpAndSettle();
@@ -72,10 +73,33 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the Device Manager opens on a BLANK draft, as it always has', (
+  /// Opens the tab and then starts a new template.
+  ///
+  /// **THE SECOND TAP IS `#243` AND NOT CEREMONY.** The tab used to BE
+  /// the blank builder; DR-104 §11.103.2 made it the browser and moved
+  /// the new-template entry point onto the browser's own button, which
+  /// is load-bearing because no menu route to authoring one exists.
+  Future<void> openNewTemplate(WidgetTester tester) async {
+    await openDeviceManager(tester);
+    await tester.tap(find.text(kBrowserNewTemplateLabel));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('the Device Manager opens on the BROWSER since `#243`', (
     tester,
   ) async {
+    // It opened on a blank builder until DR-104 §11.103.2: a *manager*
+    // that showed one editor and no list. The blank draft did not go
+    // away, it moved behind the browser's own New button.
     await openDeviceManager(tester);
+    expect(find.byType(DeviceBrowserScreen), findsOneWidget);
+    expect(find.byType(DeviceBuilderScreen), findsNothing);
+  });
+
+  testWidgets('New device template… still gives a BLANK draft', (
+    tester,
+  ) async {
+    await openNewTemplate(tester);
 
     final screen = tester.widget<DeviceBuilderScreen>(
       find.byType(DeviceBuilderScreen),
@@ -93,7 +117,7 @@ void main() {
     // The regression this guards: the builder reports its dirty state on
     // open, and a shell that assumed "dirty until told otherwise" would
     // refuse door 2 on a freshly launched app.
-    await openDeviceManager(tester);
+    await openNewTemplate(tester);
 
     final screen = tester.widget<DeviceBuilderScreen>(
       find.byType(DeviceBuilderScreen),
@@ -108,7 +132,7 @@ void main() {
 
   testWidgets('EDITING THE DRAFT MARKS IT UNSAVED, which is what door 2 '
       'reads before it swaps the key', (tester) async {
-    await openDeviceManager(tester);
+    await openNewTemplate(tester);
 
     // The display-name field is the first thing the metadata form offers
     // and typing in it is the smallest real edit.
@@ -205,8 +229,14 @@ void main() {
       await tester.pumpWidget((await buildTestApp(measurer)).app);
       await tester.pumpAndSettle();
 
-      // Dirty the one draft.
+      // Dirty the one draft. THE `New device template…` TAP IS LOAD-
+      // BEARING SINCE `#243`: the tab is the browser now, and its first
+      // `TextField` is the SEARCH BOX, so typing straight after the tab
+      // tap would have filtered a list and dirtied nothing, leaving this
+      // case asserting a refusal that could never fire.
       await tester.tap(find.text('Device Manager'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kBrowserNewTemplateLabel));
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField).first, 'Half finished');
       await tester.pumpAndSettle();

@@ -373,4 +373,90 @@ void main() {
       );
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // `#245`, DR-104 §11.103.4 — favourites are per USER, not per project.
+  // ═══════════════════════════════════════════════════════════════════
+  group('favourite template ids', () {
+    test('an absent key is an empty set, not a failure', () {
+      // A convenience file must never be able to stop the app starting,
+      // which is this class's standing rule and applies to a key that
+      // predates the feature.
+      expect(const AppPrefs().favouriteTemplateIds, isEmpty);
+      expect(
+        AppPrefs.fromJson(<String, Object?>{
+          'window': <String, Object?>{},
+        }).favouriteTemplateIds,
+        isEmpty,
+      );
+    });
+
+    test('the toggle adds, and toggling again REMOVES', () {
+      // The one thing in this file a user takes back, unlike a coach
+      // mark, which is add-only and says so.
+      const prefs = AppPrefs();
+      final on = prefs.withFavouriteToggled('V03');
+      expect(on.isFavourite('V03'), isTrue);
+      expect(on.withFavouriteToggled('V03').isFavourite('V03'), isFalse);
+    });
+
+    test('a toggle keeps the other stars', () {
+      final two = const AppPrefs()
+          .withFavouriteToggled('V03')
+          .withFavouriteToggled('A01');
+      final one = two.withFavouriteToggled('V03');
+      expect(one.favouriteTemplateIds, <String>{'A01'});
+    });
+
+    test('a toggle does not disturb the rest of the file', () {
+      // LOAD-MODIFY-WRITE is the shell's rule and `copyWith`'s `??` is
+      // what makes it safe; this pins that a favourite cannot revert the
+      // window geometry, which is the defect AppServices documents.
+      const prefs = AppPrefs(
+        window: WindowBounds(left: 1, top: 2, width: 300, height: 400),
+        lastSaveDirectory: r'C:\Jobs',
+        coachMarksSeen: <String>{'m1'},
+      );
+      final next = prefs.withFavouriteToggled('V03');
+      expect(next.window?.left, 1);
+      expect(next.lastSaveDirectory, r'C:\Jobs');
+      expect(next.coachMarksSeen, <String>{'m1'});
+    });
+
+    test('it round-trips through JSON, sorted', () {
+      final prefs = const AppPrefs()
+          .withFavouriteToggled('V03')
+          .withFavouriteToggled('A01');
+      final json = prefs.toJson();
+      // SORTED, so two runs that starred the same devices in a different
+      // order write the same bytes.
+      expect(json['favouriteTemplateIds'], <String>['A01', 'V03']);
+      expect(
+        AppPrefs.fromJson(json).favouriteTemplateIds,
+        <String>{'A01', 'V03'},
+      );
+    });
+
+    test('an empty set writes NO key at all', () {
+      expect(
+        const AppPrefs().toJson().containsKey('favouriteTemplateIds'),
+        isFalse,
+      );
+    });
+
+    test('junk in the file is ignored rather than fatal', () {
+      expect(
+        AppPrefs.fromJson(<String, Object?>{
+          'favouriteTemplateIds': <Object?>['V03', 42, '', null],
+        }).favouriteTemplateIds,
+        <String>{'V03'},
+      );
+      expect(
+        AppPrefs.fromJson(<String, Object?>{
+          'favouriteTemplateIds': 'nope',
+        }).favouriteTemplateIds,
+        isEmpty,
+      );
+    });
+  });
 }

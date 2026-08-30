@@ -104,6 +104,13 @@ const String kProjectGroupTitle = 'This project';
 /// looks for the group finds the group.
 const String kProjectRowTag = 'PROJECT';
 
+/// The favourites group's heading (`#245`, docs/06 §7.1).
+///
+/// **DEFINED HERE AND NOT IN THE BROWSER**, because the browser imports
+/// this file and the reverse would be a cycle. Both surfaces pin
+/// favourites and both must spell the word once.
+const String kFavouritesGroupTitle = 'Favourites';
+
 /// The trailing group's heading, for a template whose category is not one
 /// of [kCatalogCategoryOrder]'s nine — the empty string included.
 const String kUncategorisedGroupTitle = 'Uncategorised';
@@ -263,16 +270,47 @@ List<PlaceableTemplate> _projectAuthored(List<PlaceableTemplate> templates) => [
     if (t.isProjectAuthored) t,
 ];
 
-bool _matchesQuery(String query, PlaceableTemplate template) {
-  if (query.isEmpty) return true;
-  final q = query.toLowerCase();
-  final body = template.body;
-  return template.id.toLowerCase().contains(q) ||
-      body.displayName.toLowerCase().contains(q) ||
-      (body.typePrefix ?? '').toLowerCase().contains(q) ||
-      body.category.toLowerCase().contains(q) ||
-      body.tags.any((t) => t.toLowerCase().contains(q));
-}
+/// Every starred template, in the caller's order (`#245`).
+///
+/// **BY TEMPLATE ID, WHICH CAN NAME TWO ROWS.** A starred id present in
+/// the document and in a library pins BOTH (DR-102 §11.101.4), and that
+/// is right rather than a duplicate: they are two devices that share a
+/// name, each carrying its own badge, and starring "the HDMI matrix"
+/// cannot mean one of them when the user has never been asked which.
+List<PlaceableTemplate> _favourites(
+  List<PlaceableTemplate> templates,
+  Set<String> favourites,
+) => [
+  for (final t in templates)
+    if (favourites.contains(t.id)) t,
+];
+
+/// The rows of [templates] a box containing [query] should show.
+///
+/// **THE MATCHER MOVED TO `rackpal_core` AT `#244`** (DR-104 §11.103.5).
+/// It was eight lines here reading five text fields; it now also reads
+/// the model string and every connector and signal family the template
+/// declares, so typing `hdbaset` finds an extender whose NAME does not
+/// contain the word. M4-O's browser calls the same function, because a
+/// browser that searched better than the palette would be CR-104's drift
+/// arriving through the matcher instead of through a second widget.
+///
+/// [index] is precomputed and passed in rather than built here: this runs
+/// on every keystroke against every row, and `SignalFamilyCellOption`
+/// already established that a filter box holds its keys rather than
+/// rebuilding them.
+List<PlaceableTemplate> _matching(
+  List<PlaceableTemplate> templates,
+  String query,
+  Map<String, TemplateSearchEntry> index,
+) => [
+  for (final t in templates)
+    // A ROW WITH NO ENTRY STILL SHOWS. The index is rebuilt when the row
+    // list changes identity, and a frame where the two disagree must not
+    // silently hide a device; failing open costs a stale match for one
+    // frame, failing closed loses a row with no way to tell.
+    if (index[t.rowKey]?.matches(query) ?? true) t,
+];
 
 /// The first two characters of a type prefix, for the leading avatar.
 String _initials(String prefix) =>
@@ -295,6 +333,8 @@ class DevicePalettePanel extends StatefulWidget {
     required this.templates,
     required this.categoryOrder,
     required this.onPlace,
+    this.favourites = const <String>{},
+    this.registries,
     this.unreadableLibraries = const [],
     this.searchFocusNode,
     this.searchController,
@@ -313,6 +353,30 @@ class DevicePalettePanel extends StatefulWidget {
   /// that made a milestone's exit criterion unperformable), and the
   /// document alone until `#242`.
   final List<PlaceableTemplate> templates;
+
+  /// The template ids this USER has starred (`#245`, DR-104 §11.103.4).
+  ///
+  /// docs/06 §7.1: *"favourites pin to the top of the browser AND to the
+  /// palette"*. They pin as a GROUP above `This project`, mirroring
+  /// DR-077 §11.76.2's shape exactly, and the group is absent rather
+  /// than empty when nothing is starred, so a user who has never
+  /// starred anything sees the palette that shipped.
+  ///
+  /// **THAT LAST PART IS NOT TIDINESS.** M4's exit criterion clause 2 is
+  /// a stopwatch drill on this panel and has not been run (`#251`); a
+  /// heading that appears for everyone would change the surface it
+  /// measures.
+  final Set<String> favourites;
+
+  /// The document's registries, which widen the search only (`#244`,
+  /// DR-104 §11.103.5).
+  ///
+  /// Null is legal and costs reach rather than correctness: without it
+  /// the port key still holds the raw ids, so `hdbaset` and `hdb` both
+  /// land on `video.hdbaset` by substring. What a registry buys is the
+  /// vocabulary that is NOT a substring of the id, `hdbt` being DR-060
+  /// §11.59.4's own example.
+  final Registries? registries;
 
   /// Libraries on the shelf that would not decode (DR-103 §11.102.7).
   ///
@@ -419,14 +483,11 @@ class _DevicePalettePanelState extends State<DevicePalettePanel> {
   void _submitQuery(String query) {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return; // "type, THEN Enter" — nothing typed yet.
-    final matches = [
-      // THE SOURCE FILTER IS APPLIED HERE TOO, and it has to be: `Enter`
-      // places "the top match", which docs/04 §3.2 reads as the first row
-      // in the CURRENT filtered list. Searching the unfiltered list would
-      // place a row that is not on screen.
-      for (final t in _visible)
-        if (_matchesQuery(query, t)) t,
-    ];
+    // THE SOURCE FILTER IS APPLIED HERE TOO, and it has to be: `Enter`
+    // places "the top match", which docs/04 §3.2 reads as the first row
+    // in the CURRENT filtered list. Searching the unfiltered list would
+    // place a row that is not on screen.
+    final matches = _matching(_visible, query, _searchIndex);
     if (matches.isEmpty) {
       widget.onRefuse?.call(
         _source == kAllSourceKey
@@ -440,6 +501,30 @@ class _DevicePalettePanelState extends State<DevicePalettePanel> {
 
   /// The selected source chip's key. [kAllSourceKey] narrows nothing.
   String _source = kAllSourceKey;
+
+  /// One entry per row, rebuilt only when the row list changes identity.
+  ///
+  /// The host hands back the same `List` instance while its memo holds
+  /// (`RackCanvasScreen._rows`), so identity is an exact "is my index
+  /// stale" test rather than a heuristic over lengths, which would miss
+  /// a rebuild that happened to produce the same number of rows.
+  Map<String, TemplateSearchEntry> _index = const {};
+  List<PlaceableTemplate>? _indexedFrom;
+
+  Map<String, TemplateSearchEntry> get _searchIndex {
+    final rows = widget.templates;
+    if (!identical(_indexedFrom, rows)) {
+      _indexedFrom = rows;
+      _index = {
+        for (final row in rows)
+          row.rowKey: buildTemplateSearchEntry(
+            row,
+            registries: widget.registries,
+          ),
+      };
+    }
+    return _index;
+  }
 
   List<PlaceableTemplate> get _visible => _inSource(widget.templates, _source);
 
@@ -557,12 +642,14 @@ class _DevicePalettePanelState extends State<DevicePalettePanel> {
                 ? _SearchResults(
                     templates: visible,
                     query: _query,
+                    index: _searchIndex,
                     onPlace: widget.onPlace,
                     onArmDrag: widget.onArmDrag,
                     draggingRowKey: widget.draggingRowKey,
                   )
                 : _CategoryList(
                     templates: visible,
+                    favourites: widget.favourites,
                     categoryOrder: widget.categoryOrder,
                     onPlace: widget.onPlace,
                     onArmDrag: widget.onArmDrag,
@@ -643,6 +730,7 @@ class _SourceChips extends StatelessWidget {
 class _CategoryList extends StatelessWidget {
   const _CategoryList({
     required this.templates,
+    required this.favourites,
     required this.categoryOrder,
     required this.onPlace,
     this.onArmDrag,
@@ -650,6 +738,7 @@ class _CategoryList extends StatelessWidget {
   });
 
   final List<PlaceableTemplate> templates;
+  final Set<String> favourites;
   final List<String> categoryOrder;
   final void Function(String templateId) onPlace;
   final void Function(String templateId, PointerDownEvent event)? onArmDrag;
@@ -658,10 +747,23 @@ class _CategoryList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authored = _projectAuthored(templates);
+    final starred = _favourites(templates, favourites);
     final homeless = _uncategorised(templates, categoryOrder);
     return ListView(
       padding: EdgeInsets.zero,
       children: [
+        // FAVOURITES ABOVE `This project`, and absent when empty for
+        // that group's own stated reason: a heading teaching the reader
+        // a feature is broken is worse than no heading (DR-077
+        // §11.76.2).
+        if (starred.isNotEmpty)
+          _PaletteGroup(
+            title: kFavouritesGroupTitle,
+            rows: starred,
+            onPlace: onPlace,
+            onArmDrag: onArmDrag,
+            draggingRowKey: draggingRowKey,
+          ),
         // PINNED FIRST, and only when it would hold something: an empty
         // `This project` group on a fresh file would be a heading that
         // teaches the reader the feature is broken (DR-077 §11.76.2).
@@ -740,6 +842,7 @@ class _SearchResults extends StatelessWidget {
   const _SearchResults({
     required this.templates,
     required this.query,
+    required this.index,
     required this.onPlace,
     this.onArmDrag,
     this.draggingRowKey,
@@ -747,16 +850,14 @@ class _SearchResults extends StatelessWidget {
 
   final List<PlaceableTemplate> templates;
   final String query;
+  final Map<String, TemplateSearchEntry> index;
   final void Function(String templateId) onPlace;
   final void Function(String templateId, PointerDownEvent event)? onArmDrag;
   final String? draggingRowKey;
 
   @override
   Widget build(BuildContext context) {
-    final matches = [
-      for (final t in templates)
-        if (_matchesQuery(query, t)) t,
-    ];
+    final matches = _matching(templates, query, index);
 
     if (matches.isEmpty) {
       return Padding(

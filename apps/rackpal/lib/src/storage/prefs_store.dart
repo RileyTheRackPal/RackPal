@@ -156,6 +156,7 @@ final class AppPrefs {
     this.lastSaveDirectory,
     this.coachMarksSeen = const <String>{},
     this.portColumnPacks = const <String, Set<String>>{},
+    this.favouriteTemplateIds = const <String>{},
   });
 
   /// Parses `prefs.json`'s decoded root, defaulting anything missing or
@@ -168,11 +169,13 @@ final class AppPrefs {
     final lastDir = lastSaveDirectory is String ? lastSaveDirectory : null;
     final seen = _coachMarksFromJson(raw['coachMarksSeen']);
     final packs = _packsFromJson(raw['portColumnPacks']);
+    final favourites = _coachMarksFromJson(raw['favouriteTemplateIds']);
     if (window is! Map) {
       return AppPrefs(
         lastSaveDirectory: lastDir,
         coachMarksSeen: seen,
         portColumnPacks: packs,
+        favouriteTemplateIds: favourites,
       );
     }
     final displayId = window['displayId'];
@@ -183,6 +186,7 @@ final class AppPrefs {
       lastSaveDirectory: lastDir,
       coachMarksSeen: seen,
       portColumnPacks: packs,
+      favouriteTemplateIds: favourites,
     );
   }
 
@@ -277,8 +281,48 @@ final class AppPrefs {
     },
   );
 
+  /// The template ids this USER has starred (`#245`, DR-104 §11.103.4).
+  ///
+  /// ══════════════════════════════════════════════════════════════════
+  /// HERE, AND NOT IN THE DOCUMENT
+  /// ══════════════════════════════════════════════════════════════════
+  /// §11.103.4 rules it: a star is a fact about the person, not about
+  /// the project. The twelve devices you actually install are the same
+  /// twelve across every job, which is the whole reason a favourite
+  /// beats a search. The document alternative costs a model field, a
+  /// codec change and a CR-117 byte-round-trip obligation, in exchange
+  /// for stars that reset at the start of every job.
+  ///
+  /// **A PROJECT MAILED ELSEWHERE CARRIES NO STARS AND NOTHING BREAKS.**
+  /// These are `templateId`s, the seeded ones are identical on every
+  /// install, and a starred id this machine does not hold is simply not
+  /// shown. G4's shape on a preference: absent is absent, never a
+  /// broken row.
+  ///
+  /// Stored as ids rather than as `TemplateId`, for `coachMarksSeen`'s
+  /// reason: this file is a JSON convenience store and must not need the
+  /// domain's value types to parse.
+  final Set<String> favouriteTemplateIds;
+
   /// Whether [id] has already been shown to this user.
   bool hasSeenCoachMark(String id) => coachMarksSeen.contains(id);
+
+  bool isFavourite(String templateId) =>
+      favouriteTemplateIds.contains(templateId);
+
+  /// This, with [templateId]'s star flipped.
+  ///
+  /// A TOGGLE RATHER THAN AN ADD, unlike [withCoachMarkSeen], because a
+  /// star is the one thing in this file a user takes BACK. `coachMarks`
+  /// is add-only and says so; this is not, so `copyWith`'s `??` cannot
+  /// carry it and the set is always passed whole.
+  AppPrefs withFavouriteToggled(String templateId) => copyWith(
+    favouriteTemplateIds: <String>{
+      for (final id in favouriteTemplateIds)
+        if (id != templateId) id,
+      if (!favouriteTemplateIds.contains(templateId)) templateId,
+    },
+  );
 
   /// This, plus [id] marked as seen.
   AppPrefs withCoachMarkSeen(String id) =>
@@ -291,6 +335,7 @@ final class AppPrefs {
     String? lastSaveDirectory,
     Set<String>? coachMarksSeen,
     Map<String, Set<String>>? portColumnPacks,
+    Set<String>? favouriteTemplateIds,
   }) => AppPrefs(
     window: window ?? this.window,
     maximized: maximized ?? this.maximized,
@@ -298,6 +343,7 @@ final class AppPrefs {
     lastSaveDirectory: lastSaveDirectory ?? this.lastSaveDirectory,
     coachMarksSeen: coachMarksSeen ?? this.coachMarksSeen,
     portColumnPacks: portColumnPacks ?? this.portColumnPacks,
+    favouriteTemplateIds: favouriteTemplateIds ?? this.favouriteTemplateIds,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -321,6 +367,10 @@ final class AppPrefs {
         for (final key in portColumnPacks.keys.toList()..sort())
           key: portColumnPacks[key]!.toList()..sort(),
       },
+    // SORTED, for the reason two entries above: a preferences file that
+    // churns is one whose diffs nobody reads.
+    if (favouriteTemplateIds.isNotEmpty)
+      'favouriteTemplateIds': favouriteTemplateIds.toList()..sort(),
   };
 }
 

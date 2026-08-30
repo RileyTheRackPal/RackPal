@@ -78,6 +78,7 @@ import 'package:rackpal_core/rackpal_core.dart'
         TemplateId,
         TextMeasurer,
         Uuid,
+        buildPlaceableTemplates,
         buildRackPresets,
         copyTemplateBody,
         resolveLatestTemplate;
@@ -269,6 +270,38 @@ final class AppShellState extends State<AppShell>
   /// for the blank draft it opens on (DR-099 §11.98).
   TemplateId? _editingTemplateId;
 
+  /// Whether the Device Manager is authoring a NEW template rather than
+  /// showing the browser (`#243`). See [_deviceManagerTab]'s three states.
+  bool _authoringNew = false;
+
+  /// The starred template ids (`#245`, DR-104 §11.103.4), held here so
+  /// both the browser and the palette read one value.
+  ///
+  /// Seeded from `prefsStore.current` at startup and written back on
+  /// every toggle. A DEGRADED SESSION HAS NO STORE, and then favourites
+  /// work for the session and are not persisted, which is the same
+  /// bargain the schematic coach mark already takes: the feature keeps
+  /// working and the memory does not.
+  Set<String> _favourites = const <String>{};
+
+  /// Flips a star and persists it (`#245`).
+  void _toggleFavourite(String templateId) {
+    final store = _services.prefsStore;
+    final next = store == null
+        ? <String>{
+            for (final id in _favourites)
+              if (id != templateId) id,
+            if (!_favourites.contains(templateId)) templateId,
+          }
+        : store.current.withFavouriteToggled(templateId).favouriteTemplateIds;
+    setState(() => _favourites = next);
+    if (store == null) return;
+    // LOAD-MODIFY-WRITE THROUGH THE STORE'S OWN CACHE, for
+    // `_dismissFilterCoachMark`'s reason: anything else can revert the
+    // window geometry or `lastSaveDirectory`.
+    unawaited(store.save(store.current.withFavouriteToggled(templateId)));
+  }
+
   /// Whether the Device Manager's ONE draft has unsaved work, reported by
   /// the builder off its own session counter.
   ///
@@ -359,6 +392,10 @@ final class AppShellState extends State<AppShell>
     // that stats a directory on every frame is the shape this repository
     // already fixed once in `DocumentMemo`'s own header.
     unawaited(_reloadLibraryShelf());
+    // Favourites are per USER, so they are read once at startup rather
+    // than per document (DR-104 §11.103.4).
+    _favourites =
+        _services.prefsStore?.current.favouriteTemplateIds ?? const <String>{};
     _services.session.addListener(_onSessionChanged);
     // Persistence can fail at any point in the session, not only at
     // startup — see app_services.dart's header.
@@ -896,8 +933,36 @@ final class AppShellState extends State<AppShell>
   /// THE DRAFT LIVES AS LONG AS THE VIEW DOES, which is what the
   /// `IndexedStack` above buys and why it is there rather than a
   /// `TabBarView`.
+  /// `Ctrl+2`: the browser, or the editor when one is open (`#243`,
+  /// DR-104 §11.103.2).
+  ///
+  /// **THREE STATES, AND THE THIRD IS WHY A FLAG EXISTS.** Before `#243`
+  /// this tab had two: `_editingTemplateId` set meant door 2's editor,
+  /// and null meant a blank builder. Null now means the BROWSER, so
+  /// "author a new one" needs a way to say so that is not "no template
+  /// is selected". [_authoringNew] is that, and it is cleared whenever
+  /// the browser is shown again.
   Widget _deviceManagerTab(DocumentSession session) {
     final doc = session.controller.doc;
+    if (_editingTemplateId == null && !_authoringNew) {
+      return DeviceBrowserScreen(
+        // The same merged, source-tagged list the palette lists
+        // (DR-102 §11.101.3), so the two surfaces cannot come to
+        // disagree about what this project can place.
+        templates: buildPlaceableTemplates(doc, libraries: _libraries),
+        document: doc,
+        registries: doc.registries,
+        unreadableLibraries: _unreadableLibraries,
+        favourites: _favourites,
+        onToggleFavourite: _toggleFavourite,
+        // LOAD-BEARING, not convenient. There is no menu route to
+        // authoring a template: this tab was the only one, so the
+        // browser either carries it or the capability is gone
+        // (DR-104 §11.103.2's corrected clause).
+        onNew: () => setState(() => _authoringNew = true),
+        onEdit: _openTemplateForEditing,
+      );
+    }
     // DOOR 2's SUBJECT, when one was asked for. `resolveLatestTemplate`
     // rather than the pinned version the device carries: door 2 edits THE
     // TEMPLATE, and editing anything but its newest version would fork
@@ -921,6 +986,24 @@ final class AppShellState extends State<AppShell>
       onDirtyChanged: (dirty) {
         if (mounted) setState(() => _builderDirty = dirty);
       },
+      // SAVE-AND-CLOSE RETURNS TO THE BROWSER (`#243`). The draft is
+      // saved by definition on this path, so nothing is lost, and this
+      // is also the first thing ever to clear `_editingTemplateId`:
+      // before `#243` door 2 left the tab pinned to one template for the
+      // rest of the session, because there was nowhere else for it to go.
+      //
+      // **THERE IS NO DISCARD-AND-RETURN ROUTE YET, AND THAT IS A GAP
+      // RATHER THAN A DECISION.** Going back with a dirty draft is
+      // exactly the case DR-091 §11.90.6 protects with `wantKeepAlive`:
+      // the builder holds an edit SESSION, not a view, so swapping it
+      // for the browser destroys the copy that makes closing without
+      // saving a complete undo. It needs the refusal
+      // `_openTemplateForEditing` already spells, and it is filed rather
+      // than improvised here.
+      onDone: () => setState(() {
+        _editingTemplateId = null;
+        _authoringNew = false;
+      }),
       actions: buildDeviceBuilderActions(
         controller: session.controller,
         prefs: _services.prefsStore,
@@ -1090,6 +1173,9 @@ final class AppShellState extends State<AppShell>
       // `FileStore` and must not grow one.
       libraries: _libraries,
       unreadableLibraries: _unreadableLibraries,
+      // `#245`: the same per-user set the browser stars into, so the
+      // two surfaces cannot show different favourites.
+      favourites: _favourites,
       // CR-105, joined up. Supplying this callback is ALSO what makes the
       // chip appear at all (`RackCanvasScreen.onRevealInSchematic`): the
       // elevation refuses to draw a signpost nobody is listening to, and
@@ -1114,7 +1200,15 @@ final class AppShellState extends State<AppShell>
   /// useless without showing them what "it" is.
   void _openTemplateForEditing(TemplateId templateId) {
     final refused = _builderDirty && _editingTemplateId != templateId;
-    if (!refused) _editingTemplateId = templateId;
+    // `setState`, AND IT WAS MISSING. This assignment used to reach the
+    // screen anyway because the Device Manager tab built
+    // `DeviceBuilderScreen` unconditionally, so the tab switch below was
+    // the rebuild. `#243` made the tab CHOOSE between the browser and
+    // the builder on this very field, at which point a mutation nothing
+    // notified left door 2 opening onto the browser. Exposed by
+    // `door_two_test.dart`, which is the test that already existed for
+    // exactly this routing.
+    if (!refused) setState(() => _editingTemplateId = templateId);
 
     // THE SAME POST-FRAME HOP `_revealInSchematic` uses, for its reason: a
     // `PageView` settles to the nearest page when the pointer it is

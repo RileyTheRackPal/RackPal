@@ -14730,6 +14730,129 @@ surface and lists these same rows through this same widget on the day it exists.
 
 ---
 
+### 11.103 DR-104 · The Device Manager tab becomes the browser, the card draws the glyph, and there is one matcher
+
+**Settled by the user on 2026-08-30, before any code**, on the precedent this milestone has now set
+six times (DR-077, DR-098, DR-100, DR-101, DR-102, DR-103). M4-O (`#186`) is the library browser,
+and four of its questions are product decisions its three chapters cannot start without.
+
+**11.103.1 THE CENSUS, AND FOUR OF THE FIVE PIECES ARE ALREADY BUILT.** `#186` was written in 2026
+against a tree that had none of the library subsystem in it. Most of what it names now exists:
+
+| What `#186` asks for | What the tree already holds |
+|---|---|
+| A list of every template | `buildPlaceableTemplates(doc, libraries:)`, merged and source-tagged (DR-102, `#241`) |
+| Search over port signal families | `PortDef.signalFamily` is a `SignalFamilyId` **on the definition**, so "has HDBaseT" is a scan of `body.ports` rather than a resolution against a placed device |
+| `Used in this project` | `countDevicesOnTemplate(doc, templateId)`, `derived/template_usage.dart` |
+| Somewhere to keep favourites | `AppPrefs`, which already persists per-user collections in this exact shape (`coachMarksSeen`, `portColumnPacks`) |
+| The rack elevation strip as a card thumbnail | **Nothing.** `buildRackScene` takes a document and a rack; there is no way to draw one template standing alone |
+
+**The expensive item is the one the chapter did not flag**, and the four cheap ones are the ones it
+did. That is the seventh time this milestone a census has moved the cost of a chapter, and the
+second time it moved it in both directions at once.
+
+**11.103.2 THE RULING ON THE TAB: the Device Manager becomes the browser, and the editor opens from
+it.** `Ctrl+2` lists every template the project can place; a card's `Edit` and a `New device
+template…` button are what reach `DeviceBuilderScreen`.
+
+**The tab already carries the name and renders something else.** `app_shell.dart`'s
+`_deviceManagerTab` returns `DeviceBuilderScreen` directly: a *manager* that shows one editor and no
+list. That is not a defect anybody introduced, it is what the tab could be while the browser did not
+exist, and it is exactly the mismatch M4-O closes.
+
+**The plumbing is already there.** DR-099 §11.98.4 routes door 2 into this tab **by template id**,
+so *"open the editor on this template"* is a call the shell already makes and already guards with a
+dirty-draft refusal. The browser adds a second caller of an existing path rather than a path.
+
+**A split view was declined on width.** List beside editor removes a navigation step and suits
+authoring several templates in a sitting. It loses because the window already spends 280px on the
+palette and 320px on the inspector (docs/04 §1), and the builder's port grid is the widest surface
+in the product. **A modal dialog was declined harder**: a browser with smart folders exists to be
+left open, and a modal is the one shape that cannot be.
+
+**WHAT THIS COSTS AND IT IS NAMED HERE RATHER THAN FOUND LATER.** The tab **is** the New-template
+entry point today. Making it the browser means that entry point has to be rebuilt inside the
+browser, or authoring a new template becomes unreachable.
+
+**THIS CLAUSE WAS WRONG ON ITS FIRST DRAFT AND THE CORRECTION IS THE INTERESTING PART.** It read
+*"and `Project ▸ New device template…` must keep working unchanged, because it is what `#251`'s
+stopwatch drill uses"*. **There is no `Project` menu.** The application has exactly one, `File`,
+with nine items, and no new-template item in it or anywhere else: `Ctrl+2` onto the Device Manager
+with nothing being edited renders a blank `DeviceBuilderScreen`, and that is the whole of how a
+template is authored today.
+
+The false sentence came from a **doc comment** in `app_shell.dart` that opens *"docs/06's Device
+Builder, from `Project ▸ New device template…`"* and documents a method that no longer exists. That
+is `don't price a decision off a derived artifact` firing on a ruling rather than on a task, and it
+is the second time in this corpus that a comment was read as a product fact.
+
+**The correction makes the browser's own button LOAD-BEARING rather than convenient.** There is no
+menu route to fall back on, so `#243` ships the entry point or M4 loses the ability to author a
+device. It also means **`#251`'s drill route is `Ctrl+2`**, not a menu item, and the drill's own
+first step had to be corrected before it was run.
+
+**11.103.3 THE RULING ON THE CARD: the device's glyph mark and an RU badge, NOT an elevation strip.
+This is a substitution for docs/06 §7.1's literal words and is recorded as one.**
+
+§7.1 says *"grid or list, the rack elevation strip as the card thumbnail"*. The card draws
+**M4-R's glyph mark** instead (DR-059, DR-083): seventeen marks authored as real geometry, one op
+each, which `device_layer.dart` already draws inline on the actual elevation before the designator.
+
+**The substitution loses less than it looks and it is not a downgrade.** The mark IS the device's
+visual identity on the elevation since M4-R, so a card showing the mark shows what the rack will
+show. What is given up is the RU proportion a strip conveys at a glance, and the RU badge carries
+that as a number instead.
+
+**It was decided on cost at the size the surface will meet.** A strip needs a synthetic one-device
+rack and a full `buildRackScene` **per card**, re-run on every filter change and every resize, and
+the browser is the one surface in this product where the card count is unbounded: the seeded 48,
+plus the project's own, plus every loaded library. `measure at the size the criterion will meet` is
+already a practice here because a 300-link fixture met its budget and missed by 5.8x at 3,600.
+**If somebody wants the strip later, this paragraph is what they are overturning**, and the thing to
+bring is a measurement at 200 cards.
+
+**11.103.4 THE RULING ON FAVOURITES: per-user, in `AppPrefs`, and not in the document.** A star is a
+fact about the person, not about the project: the twelve devices you actually install are the same
+twelve across every job, which is the whole reason a favourite beats a search.
+
+`AppPrefs` needs one field and no new machinery. **The document alternative was declined on what it
+costs and on what it does**: a model field, a codec change and a CR-117 byte-round-trip obligation,
+in exchange for stars that reset at the start of every job, which is exactly when they are worth
+most. **Both-with-project-winning was declined on the surface it needs**, a star whose meaning
+depends on which store answered, which is a control that has to explain itself.
+
+**A PROJECT MAILED ELSEWHERE CARRIES NO STARS, AND NOTHING BREAKS.** Favourites key on `templateId`,
+the seeded ids are identical on every install, and a starred id that this machine does not hold is
+simply not shown. G4's shape on a preference: absent is absent, never a broken row.
+
+**11.103.5 THE RULING ON SEARCH: ONE MATCHER, IN CORE, CALLED BY BOTH SURFACES.**
+`device_palette_panel.dart`'s private `_matchesQuery` moves to `rackpal_core` and grows signal
+families; the palette and the browser both call it.
+
+**CR-104 is the reason it is not two.** *"One palette widget, shared with the Schematic's library
+panel"* is a rule about the widget, and a browser whose search understood more than the palette's
+would be the same drift arriving through the matcher instead. Typing `hdbaset` must find the
+HDBaseT extender wherever you are.
+
+**It also decouples `#244` from `#243`**, which matters because the browser is the larger chapter:
+the smarter search reaches the surface where placing actually happens even if the browser slips.
+
+**THE PALETTE'S SEARCH IS THE SUBJECT OF AN UNRUN DRILL**, so the change is additive only. Every
+query that matched before still matches, `#251` measures the same field with the same keys, and the
+only difference is that some queries now match MORE. A matcher that narrowed anything would be a
+change to the surface under measurement.
+
+**11.103.6 WHAT THIS DOES NOT RULE.** It does not decide grid versus list as the browser's default,
+which is a layout preference reversible in a click and belongs to whoever builds it. It says nothing
+about which filter chips ship beyond the source chips DR-103 §11.102.6 already ruled: `#243`'s list
+(RU height, mount method, has HDMI, has PoE, is passthrough, container, used in this project,
+drafts) is a menu to choose from and not a contract, and each chip needs a producer this ruling does
+not grant it. It does not give a library a delete or unload gesture, which DR-103 §11.102.9 already
+names as an open gap and which the browser is the obvious future home for. And it does not touch
+the schematic's library panel, CR-104's other half, which stays M2's surface.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
