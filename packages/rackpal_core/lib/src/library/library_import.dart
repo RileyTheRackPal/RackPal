@@ -97,17 +97,28 @@ LibraryImportPreview previewLibraryImport(DeviceLibraryFile file) {
 /// for its stated reason: a person packing a kit means the templates as
 /// they stand, and CR-050 keeps every earlier version resolvable in the
 /// projects that placed them.
-List<DeviceTemplateFile> exportableLibraryTemplates(RackDocument doc) {
-  final rows = buildPlaceableTemplates(doc).where((r) => r.isProjectAuthored);
-  final out = <DeviceTemplateFile>[];
-  for (final row in rows) {
-    final snapshot = doc.templates[row.key];
-    // Unreachable: `buildPlaceableTemplates` read the same map a moment
-    // ago. Skipped rather than asserted for that file's own reason, a
-    // projection that throws on a hand-edited document takes the export
-    // down with it.
-    if (snapshot == null) continue;
-    out.add(DeviceTemplateFile.fromSnapshot(snapshot));
-  }
-  return out;
-}
+///
+/// **NO `libraries` ARGUMENT, AND THAT IS THE RULE RATHER THAN AN
+/// OVERSIGHT** (`#241`). `buildPlaceableTemplates` can now answer for the
+/// loaded libraries too, and this call deliberately does not ask it to: a
+/// library's templates re-exported out of a project that never placed one
+/// would pack somebody else's work under this project's name. What the
+/// project has actually taken from a library is in `doc.templates` by
+/// then, put there by copy-on-place (DR-103 §11.102.2), and is offered
+/// here as an ordinary project row.
+List<DeviceTemplateFile> exportableLibraryTemplates(RackDocument doc) => [
+  // STRAIGHT FROM THE ROW, no second lookup. The row already carries
+  // every field a `DeviceTemplateFile` has, `#241` having added
+  // `contentHash` to it, so the `doc.templates[row.key]` this replaced
+  // was re-reading a map it had just been built from. That lookup is
+  // also the reader DR-103 §11.102.8 predicted the compiler would find
+  // when `key` became nullable, and it did, on the first analyze.
+  for (final row in buildPlaceableTemplates(doc))
+    if (row.isProjectAuthored)
+      DeviceTemplateFile(
+        templateId: row.templateId,
+        version: row.version,
+        contentHash: row.contentHash,
+        body: row.body,
+      ),
+];

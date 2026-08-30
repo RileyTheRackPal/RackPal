@@ -38,12 +38,15 @@
 // WHAT THIS FILE DELIBERATELY DOES NOT DO
 // ═══════════════════════════════════════════════════════════════════════
 // It does not PARSE anything. Listing what is on the shelf and decoding
-// what is in a file are two jobs, and `#239` owns the second: the `.rmda`
-// codec does not exist yet, so a service that tried to hand back parsed
-// libraries would either be blocked on it or would invent a second
-// decoder. It answers with paths and the facts `stat` gives, which is
-// exactly what `#240`'s import and `#237`'s size cap need to decide
-// anything.
+// what is in a file are two jobs, and `#239` owned the second. It answers
+// with paths and the facts `stat` gives, which is exactly what `#240`'s
+// import and `#237`'s size cap need to decide anything.
+//
+// **THE SPLIT SURVIVED THE CODEC LANDING, which is the test of it.** The
+// two jobs are joined in `library_shelf.dart` (`#241`) rather than folded
+// in here, because both callers of THIS file still want paths and facts:
+// the import wants somewhere to write and the size cap wants a `stat`,
+// and neither wants templates.
 import 'package:path/path.dart' as p;
 import 'package:rackpal/src/storage/file_store.dart';
 

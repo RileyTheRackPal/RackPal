@@ -71,6 +71,7 @@ DeviceTemplateFile _file(TemplateBody body) => DeviceTemplateFile(
 PlaceableTemplate _row(String name, int version) => PlaceableTemplate(
   templateId: TemplateId('tpl.${name.toLowerCase()}'),
   version: version,
+  contentHash: 'unhashed:tpl.${name.toLowerCase()}@$version',
   body: _body(displayName: name),
   provenance: TemplateProvenance.project,
 );

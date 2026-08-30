@@ -87,10 +87,30 @@ class RackCanvasScreen extends StatefulWidget {
     this.clock = const SystemClock(),
     this.document,
     this.controller,
+    this.libraries = const [],
+    this.unreadableLibraries = const [],
     this.onRevealInSchematic,
     this.onEditTemplate,
     super.key,
   });
+
+  /// The device libraries on the shelf, decoded (`#242`, DR-102
+  /// §11.101.3). Their templates join the document's in the palette,
+  /// tagged with which library offered them.
+  ///
+  /// **PUSHED DOWN RATHER THAN READ HERE**, for `measurer`'s reason:
+  /// reading the shelf is filesystem work and `rackpal_ui` has no
+  /// `FileStore` and must not grow one. The app reads it
+  /// (`library_shelf.dart`) and hands over the answer.
+  ///
+  /// Empty is the honest default and covers three real sessions: a
+  /// degraded data root, an empty shelf, and every widget test that is
+  /// not about libraries.
+  final List<LoadedLibrary> libraries;
+
+  /// Libraries on the shelf that would not decode (DR-103 §11.102.7).
+  /// They draw as disabled chips and contribute no rows.
+  final List<UnreadableLibrary> unreadableLibraries;
 
   /// The shared `TextMeasurer` (CR-081) used to build the scene AND to paint
   /// it, so on-screen layout matches what the PDF backend would measure. The
@@ -395,6 +415,49 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// maintains `stateId`, so a save moves the key and the palette shows
   /// the new template without a reopen.
   final DocumentMemo<List<PlaceableTemplate>> _placeable = DocumentMemo();
+
+  /// The merged palette rows by `rowKey`, rebuilt whenever [_placeable]
+  /// is (see [_rows]).
+  ///
+  /// **THE PALETTE HANDS BACK A `rowKey` AND THIS IS WHAT RESOLVES IT.**
+  /// Since `#242` a template id can name two rows, the document's and a
+  /// library's (DR-102 §11.101.4), so the id the palette used to pass was
+  /// no longer an answer to "which row did they click".
+  Map<String, PlaceableTemplate> _rowsByKey = const {};
+
+  /// The list [_rowsByKey] was built from, compared by IDENTITY. The memo
+  /// hands back the same instance on a hit and a fresh one on a miss, so
+  /// this is an exact "is my index stale" test rather than a heuristic
+  /// over lengths, which would miss a rebuild that happened to produce the
+  /// same number of rows.
+  List<PlaceableTemplate>? _rowsIndexedFrom;
+
+  /// A memo keyed on the document alone would go stale the moment the app
+  /// re-read the shelf, showing a palette that has forgotten a library
+  /// somebody just imported. `DocumentMemo.clear` exists for exactly this
+  /// (its own doc comment says so), and identity is the right test: the
+  /// app builds a fresh list only when it has actually re-read.
+  @override
+  void didUpdateWidget(RackCanvasScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!identical(oldWidget.libraries, widget.libraries)) _placeable.clear();
+  }
+
+  /// What the palette lists, and the map that resolves its callbacks.
+  List<PlaceableTemplate> get _rows {
+    final rows = _placeable.of(
+      _doc,
+      () => buildPlaceableTemplates(_doc, libraries: widget.libraries),
+    );
+    // REBUILT WHENEVER THE LIST IS, not memoised separately: two caches
+    // over one answer is two things that can disagree, and this one is
+    // O(rows) over a list that was just built.
+    if (!identical(_rowsIndexedFrom, rows)) {
+      _rowsIndexedFrom = rows;
+      _rowsByKey = {for (final row in rows) row.rowKey: row};
+    }
+    return rows;
+  }
 
   // Four hand-built demo devices (see _buildDemoDocument) still seed the
   // INITIAL rack contents — kept for continuity with earlier stages rather
@@ -3156,7 +3219,28 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   // unchanged) — see the caret-targeting note below for exactly what
   // "exists" means here.
 
-  void _placeFromCatalog(String catalogId) {
+  void _placeFromCatalog(String rowKey) {
+    // WHICH ROW, and it can no longer be inferred from an id (`#242`).
+    // A row that has gone away between the pointer-down and this call
+    // (the shelf was re-read, the document moved) is a no-op rather than
+    // a crash: the palette is a projection of a list this screen owns and
+    // a projection can be one row short for a frame.
+    final row = _rowsByKey[rowKey];
+    if (row == null) return;
+
+    // DR-103 §11.102.2: a library row is COPIED INTO THE PROJECT and then
+    // placed. The plan is computed here, before anything is committed,
+    // precisely so the refusals below can still happen with the document
+    // untouched.
+    final plan = row.provenance is LibraryProvenance
+        ? planLibraryPlacement(
+            _doc,
+            row,
+            capturedAt: _controller.clock.nowUtc(),
+          )
+        : null;
+    final catalogId = plan?.templateId ?? row.id;
+
     // selectionBefore for the undo entry = the live selection, same
     // convention as the move-drag commit/_deleteSelection.
     _controller.selection = _selection.snapshot();
@@ -3248,6 +3332,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           now: now,
           actor: _controller.actor,
           explicitRuIndex: explicitRuIndex,
+          using: plan?.snapshot,
         );
 
     var result = attempt(targetRu);
@@ -3270,6 +3355,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         catalogId,
         fromQuickAdd: true,
         caretRefusal: caretRefusal,
+        plan: plan,
+        row: row,
       );
     } else if (result is CatalogPlacementFailed) {
       _status.show(result.reason);
@@ -3327,13 +3414,33 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// than dropped, because a device that lands somewhere other than where
   /// the caret was pointing is precisely the thing a user must not have to
   /// notice for themselves.
+  /// [plan] is non-null only for a row a LIBRARY offered (DR-103
+  /// §11.102.2). When it carries a copy, the copy and the placement go
+  /// into ONE `transact`, so the whole gesture is one `Ctrl+Z`:
+  /// `DocumentController.transact` applies each child on `add`, so the
+  /// placement command sees the template the copy just wrote.
+  ///
+  /// [row] is what the user actually clicked, and it is a separate
+  /// argument from [plan] because the ANNOUNCEMENT names the library,
+  /// which only the row knows.
   void _finalizeCatalogPlacement(
     AddDeviceCommand command,
     String catalogId, {
     required bool fromQuickAdd,
     String? caretRefusal,
+    LibraryPlacement? plan,
+    PlaceableTemplate? row,
   }) {
-    _controller.run(command);
+    final copy = plan?.copy;
+    if (copy == null) {
+      _controller.run(command);
+    } else {
+      _controller.transact(command.label, (tx) {
+        tx
+          ..add(copy)
+          ..add(command);
+      });
+    }
     // Return focus to the canvas so the brand-new selection can
     // immediately respond to Delete/undo/the arrow-key nudge without an
     // extra click — mirrors `_onBeginDrag`'s existing `requestFocus()` for
@@ -3366,7 +3473,16 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // reordering.
     _recomputeCaret();
 
-    final prefix = caretRefusal == null ? '' : '$caretRefusal ';
+    // DR-103 §11.102.4: ONCE PER TEMPLATE, NEVER PER PLACEMENT, and the
+    // trigger is the copy having actually happened rather than a counter.
+    // A second placement of the same library row copies nothing, so it
+    // says nothing, and the rule cannot drift out of step with what the
+    // document did because it IS what the document did.
+    final copied = copy == null || row == null
+        ? ''
+        : 'Added ${row.body.displayName} from '
+              '${row.library?.libraryName ?? 'a library'}. ';
+    final prefix = '$copied${caretRefusal == null ? '' : '$caretRefusal '}';
     final placement = command.placement;
     if (placement is RailPlacement) {
       // THE REF THE COMMAND BUILT, not a key spelled again here: the
@@ -3460,19 +3576,24 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   // -only (Part 1's unchanged behaviour); nothing regresses for them.
 
   /// docs/04 §3.1 step 1: "Arm — pointer down on a palette row."
-  void _onPaletteArmDrag(String catalogId, PointerDownEvent event) {
+  void _onPaletteArmDrag(String rowKey, PointerDownEvent event) {
     // THE "CAN THIS ROW ARM AT ALL" TESTS COME FIRST, before the claim: a
     // press on a field-device row is not a gesture, so it must not take the
     // screen from an open compaction preview for a drag that was never going
     // to start. (A subsequent click/double-click on that row places the
     // device, which runs a command, which the stale-state guard turns into
     // that same cancel — through the one path, at the moment it is true.)
-    // OUT OF THE DOCUMENT, at the version the palette is offering. Read
-    // from the seeded catalog, this refused to arm a drag on every
-    // template a person had authored, silently, because a row the palette
-    // draws and the map this consulted were two different lists.
-    final body = resolveLatestTemplate(_doc, catalogId)?.body;
-    if (body == null) return;
+    // OUT OF THE PALETTE'S OWN ROW, at the version it is offering. This
+    // read `resolveLatestTemplate(_doc, catalogId)` until `#242`, which
+    // was already once-fixed (from the seeded catalog, which silently
+    // refused to arm a drag on every authored template) and was about to
+    // break the same way again for the same reason: a library row is not
+    // in the document, so the document lookup would answer null and a
+    // drag from a library row would refuse to start, silently. The row
+    // the palette drew is the answer, and now it is what is consulted.
+    final row = _rowsByKey[rowKey];
+    if (row == null) return;
+    final body = row.body;
     // Field devices: click/double-click-only, see above.
     final mountable = body.frontU > 0 || body.rearU > 0;
     if (!mountable) return;
@@ -3509,7 +3630,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _armPointer = event.pointer;
     _armGlobalStart = event.position; // PointerEvent.position is always global.
     _paletteDrag.arm(
-      subjectId: catalogId,
+      // THE `rowKey`, not the template id: `_commitOrNoopPaletteDrag`
+      // reads this back to find the row, and a template id can name two
+      // rows (DR-102 §11.101.4). `subjectId` is opaque to
+      // `DragPreviewController`, which is why this needed no change there.
+      subjectId: rowKey,
       deviceH: deviceH,
       face: face,
       displayName: body.displayName,
@@ -3682,8 +3807,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // AND (redundantly, harmlessly) nowhere else below is correct.
     _removePaletteEscHandler();
 
-    final catalogId = _paletteDrag.subjectId;
-    if (catalogId == null) return;
+    final rowKey = _paletteDrag.subjectId;
+    if (rowKey == null) return;
 
     if (_paletteDrag.phase != DragPreviewPhase.dragging) {
       // Released while still armed/lifted — outside the canvas widget's
@@ -3695,10 +3820,32 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       // silently do nothing". The Staging Bin chip that was on screen a
       // moment ago says the same thing while the pointer is still down;
       // this is the same claim at the moment of release.
+      //
+      // ── EXCEPT WHEN THE POINTER NEVER MOVED, and that exception is a
+      // DEFECT FIX rather than a new rule (`#242`) ──────────────────────
+      //
+      // `armed` is not a released drag. `DragPreviewPhase.armed`'s own
+      // comment says what it is: below the 4px slop, "might still just be
+      // a click/double-click", because docs/04 §3.1 step 1 requires that
+      // "nothing until 4 px of movement, so a click still means 'show
+      // details'". Every pointer-down on a palette row arms (AC-016 #23,
+      // no gesture-outcome branch), so a plain CLICK on a row reached
+      // here and announced *"Released outside the rack — HDMI Matrix 4x4
+      // was not placed. The Staging Bin is not in this build."* for a
+      // gesture the user never made. So did the second half of every
+      // DOUBLE-click, which is how it was found: it landed after the
+      // placement and overwrote *"Placed MTX-1 at RK-1 U1, front."*, and
+      // then DR-103 §11.102.4's copy announcement on top of that.
+      //
+      // "Never silently do nothing" is about a REFUSED ACTION. A press
+      // that never became a drag was not an action, and narrating it is
+      // the same noise the rule exists to prevent, pointed the other way.
+      final lifted = _paletteDrag.phase == DragPreviewPhase.lifted;
       final name = _paletteDrag.displayName;
       _removePaletteDragOverlay();
       _removeStagingBinOverlay();
       _paletteDrag.reset();
+      if (!lifted) return;
       _status.show(
         name.isEmpty
             ? 'Released outside the rack — nothing placed. '
@@ -3735,13 +3882,32 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // blocked flag) is still exactly what was last shown, per docs/04's
     // "commit reads the last live-evaluated state".
     _controller.selection = _selection.snapshot();
+    // THE SAME PLAN THE QUICK-ADD PATH USES (DR-103 §11.102.2), because
+    // dragging a library row onto the rails is the same act as
+    // double-clicking it. One placement mechanism, two entry points, and
+    // the copy-on-place rule is a property of the first rather than of
+    // either entry.
+    final row = _rowsByKey[rowKey];
+    if (row == null) {
+      _removePaletteDragOverlay();
+      _paletteDrag.reset();
+      return;
+    }
+    final plan = row.provenance is LibraryProvenance
+        ? planLibraryPlacement(
+            _doc,
+            row,
+            capturedAt: _controller.clock.nowUtc(),
+          )
+        : null;
     final result = buildPlaceFromCatalogCommand(
       doc: _doc,
-      catalogId: catalogId,
+      catalogId: plan?.templateId ?? row.id,
       targetRack: _rack,
       now: _controller.clock.nowUtc(),
       actor: _controller.actor,
       explicitRuIndex: evaluation.ruIndex,
+      using: plan?.snapshot,
     );
     _removePaletteDragOverlay();
     _paletteDrag.reset();
@@ -3749,8 +3915,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     if (result is CatalogPlacementReady) {
       _finalizeCatalogPlacement(
         result.command,
-        catalogId,
+        plan?.templateId ?? row.id,
         fromQuickAdd: false,
+        plan: plan,
+        row: row,
       );
     } else if (result is CatalogPlacementFailed) {
       // Unreachable in practice (this frame's own evaluation just said
@@ -4168,10 +4336,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 // longer what the palette lists, because a template
                 // authored in the Device Builder is in the document and
                 // was in no catalog.
-                templates: _placeable.of(
-                  _doc,
-                  () => buildPlaceableTemplates(_doc),
-                ),
+                templates: _rows,
+                unreadableLibraries: widget.unreadableLibraries,
                 categoryOrder: kCatalogCategoryOrder,
                 searchFocusNode: _paletteSearchFocus,
                 searchController: _paletteSearchController,
@@ -4179,7 +4345,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 onRefuse: _status.show,
                 onPlace: _placeFromCatalog,
                 onArmDrag: _onPaletteArmDrag,
-                draggingCatalogId: _lastPaletteDragDimId,
+                draggingRowKey: _lastPaletteDragDimId,
               ),
             ),
             const VerticalDivider(width: 1),

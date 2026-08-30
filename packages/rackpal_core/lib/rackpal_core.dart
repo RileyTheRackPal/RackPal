@@ -181,6 +181,8 @@ export 'src/idformat/designator_allocator.dart';
 export 'src/idformat/id_format.dart';
 export 'src/idformat/tokens.dart';
 export 'src/library/library_import.dart';
+export 'src/library/library_placement.dart';
+export 'src/library/loaded_library.dart';
 export 'src/library/rmda_codec.dart';
 export 'src/library/rmdx_codec.dart';
 export 'src/library/template_hash.dart';

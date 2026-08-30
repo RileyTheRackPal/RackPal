@@ -115,7 +115,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
-| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 IS NOW PERFORMABLE and has not yet been performed** (§5.3.13): it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` is unblocked and is the remaining work on this criterion. **SEVENTEEN OF TWENTY-TWO STORIES ARE NOW CLOSED** (§5.3.1–§5.3.23) and five remain: M4-K (`#182`), M4-N (`#170`), M4-O (`#186`), M4-P (`#187`) and the drill itself (`#188`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22) and **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`). **Neither moves this criterion**, and that is the point of the row: story after story has closed since clause 1 was confirmed on 2026-08-15, and clause 2 is still a person with a document to read. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 IS NOW PERFORMABLE and has not yet been performed** (§5.3.13): it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` is unblocked and is the remaining work on this criterion. **EIGHTEEN OF TWENTY-TWO STORIES ARE NOW CLOSED** (§5.3.1–§5.3.24) and four remain: M4-K (`#182`), M4-O (`#186`), M4-P (`#187`) and the drill itself (`#188`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moves this criterion**, and that is the point of the row: story after story has closed since clause 1 was confirmed on 2026-08-15, and clause 2 is still a person with a document to read. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -2637,9 +2637,9 @@ test says so where a later reader would otherwise tidy the absurd length away.
 > ports places into a rack and appears correctly in the equipment list with `—` in every unknown
 > column and an accurate unknown count in the rollup.
 
-**SEVENTEEN OF M4's TWENTY-TWO STORIES ARE CLOSED**, and §5.3.1 through §5.3.23 below are their
-record. **Five remain**: M4-K (`#182`, panel auto-layout and the three live previews), M4-N
-(`#170`, the library subsystem), M4-O (`#186`, the browser, behind M4-N), M4-P (`#187`, the
+**EIGHTEEN OF M4's TWENTY-TWO STORIES ARE CLOSED**, and §5.3.1 through §5.3.24 below are their
+record. **Four remain**: M4-K (`#182`, panel auto-layout and the three live previews), M4-O
+(`#186`, the browser, **no longer behind M4-N**, which closed at §5.3.24), M4-P (`#187`, the
 field-device form) and M4-Q (`#188`, the drill, which is a person and not a chapter).
 
 **THE SENTENCE THAT USED TO OPEN THIS SECTION NAMED SEVEN CLOSED STORIES AND WENT ON NAMING THEM
@@ -4560,6 +4560,110 @@ service and more than one library in the palette, so an imported template lands 
 only** and does not appear in another job. The stale-fork badge still has no surface. And **nothing
 here touches the exit criterion**: clause 2 is demonstrated by a person, and the drill is deferred
 to the end of the milestone by the user's decision.
+
+#### 5.3.24 M4-N, the library subsystem, and the palette that lists what it can place · CLOSED · `v0.4.83` · `2180a35`, `3c04f52`, `a6c972c`, `aab5900`, `cd252e8`, `99d5f5d`
+
+**Five chapters, `#238` through `#242`, and the milestone's whole remaining library scope.** DR-015
+§11.15.5 named four absences in 2026: *"no library directory service, no import/export surface, no
+notion of a template's SOURCE library, and no palette filter keyed to one."* All four are now
+built, plus the two things nobody had written down: what happens when you place a library row, and
+what happens when a library will not open.
+
+**THE HEADLINE: an imported library's devices are in the palette, filterable by which library
+offered them, and placeable.** Before this, a template authored in one job travelled with that
+project file and appeared nowhere else, which is the sentence
+`device_builder_actions.dart` has been apologising for since M4-D and which requirement 2's
+*"author the long tail once and use it everywhere"* was written against.
+
+##### The chapter-by-chapter, and what each census found
+
+| Chapter | What it built | What the census found first |
+|---|---|---|
+| `#238` M4-N1 | `library_directory.dart`, the writable shelf under the data root | The premise held. docs/06 §7.1 has named three storage locations since M0 and only two existed |
+| `#239` M4-N2 | `rmda_codec.dart`, the archive format | DR-015's *"array of `TemplateBody`"* cannot carry a version, a hash or a source, so it writes the same entry `.rmdx` does and says so in its header rather than deciding quietly |
+| `#240` M4-N3 | Import and export, with `#237`'s size cap on the read | Two defects only a pumped widget could see: a fixed-height picker overflowing the dialog by 56px, and an Export button that stayed enabled after the name was cleared |
+| `#241` M4-N4 | `TemplateProvenance` as a sealed class; the merge | **The architectural call the chapter was going to make was already shipped.** DR-102 §11.101.1 recorded it: M4-S built `TemplateProvenance` on a runtime object in exactly the prescribed shape |
+| `#242` M4-N5 | The source chips, and copy-on-place | **DR-102's palette lists rows the placement path cannot resolve**, and a click on any palette row had been announcing a refusal for a gesture nobody made |
+
+##### `#242`'s finding, which is the one that would have shipped visible
+
+`buildPlaceFromCatalogCommand` opens with `resolveLatestTemplate(doc, catalogId)` and has resolved
+out of `RackDocument.templates` since M0. A library template is not in the document. So DR-102
+§11.101.3's merged palette, built literally, lists a badged row that answers *"Unknown catalog
+template"* on double-click and names an id the user can see on screen.
+
+**DR-103 rules the mechanism, and it is AC-041 rather than a new idea.** v1 is copy-on-place: the
+snapshot is embedded and `templateRef{templateId, version, contentHash}` records what was placed.
+docs/02's rejected-alternatives table is blunter, naming *"a live library reference"* as what
+embedded snapshots refuse and *"drawings that change silently across machines"* as the cost. A
+device resolving out of a `.rmda` on one person's shelf **is** that alternative.
+
+**THE ORDERING IS THE ENGINEERING.** The placement is built BEFORE the copy is committed, because
+`transact` rolls back on a throw and a refusal is not a throw: adding the template first and
+discovering "the rack is full" second leaves a template in the project for a device that was never
+placed. `buildPlaceFromCatalogCommand` gained a `using:` parameter for exactly that one caller.
+
+**AND `transact` ALREADY EXISTED**, which is the sixth time this milestone the hardest-looking item
+was already in the tree. It groups any number of commands into one undo entry and applies each on
+`add` so the next sees it, so the copy and the placement are one `Ctrl+Z` with no composite command
+written.
+
+##### The collision is the common case, and DR-101 answers it one level down
+
+`templateIdFor` derives an id from the display name identically on every machine, so two libraries
+that each hold an `HDMI Matrix 16x16` collide **by construction**. DR-103 §11.102.3's three cases
+are all decidable with no prompt: the key is free (copy it verbatim, version preserved), the key
+holds an identical body (copy nothing, and this is also every placement after the first), or the key
+holds a different body (mint a fresh id at v1, which is `buildTemplateImport`'s `separateTemplate`
+branch reached through the palette instead of through an import).
+
+**The comparison is a RECOMPUTED hash over both bodies, not the two claimed strings.** Comparing
+claims would answer "cannot tell" for every template written before `#795` and every hand-authored
+one, and there is no user to ask in the middle of a double-click. What gets **written** is still the
+claim, never the recomputation, or AC-042's mismatch warning becomes unreachable.
+
+##### A defect older than the chapter that found it
+
+Every pointer-down on a palette row arms a drag (AC-016 #23, no gesture-outcome branch). The
+pointer-up reached `_commitOrNoopPaletteDrag`, found `phase != dragging`, and said:
+
+> Released outside the rack — HDMI Matrix 4x4 was not placed. The Staging Bin is not in this build.
+
+**For a gesture nobody made.** A single CLICK on a palette row did this, which docs/04 §3.1 step 1
+defines as *"a click still means 'show details'"*; so did the second half of every DOUBLE-click,
+landing after the placement and overwriting *"Placed MTX-1 at RK-1 U1, front."*
+`DragPreviewPhase.armed`'s own comment says what it is, *"might still just be a click/double-click"*,
+so the message now fires only from `lifted`.
+
+**It was found because it was eating DR-103 §11.102.4's copy announcement**, and a grep found **no
+test asserting that string anywhere in the repository, in either direction**. That is how it
+survived a milestone. `palette_click_is_not_a_drag_test.dart` now holds all three cases including
+the one that must keep saying it, and the fix is mutation-checked: removing the guard fails the
+first two and correctly leaves the third green.
+
+##### What the chips do NOT do, which is a decision
+
+The source row appears **only when a library is on the shelf**, not merely when there is more than
+one source. `All` / `Catalog` / `This project` on a project with no libraries is a real control and
+was declined twice over: DR-077 §11.76.2's pinned group already answers the only question it could,
+and **M4's exit criterion clause 2 is a stopwatch drill on this exact panel that has not been run**
+(`#251`). Adding chrome above the search box changes the surface that drill will measure, for every
+user who never loads a library. A session without libraries is pixel-identical to what shipped
+before `#242`.
+
+##### WHAT M4-N DOES NOT DELIVER
+
+**No browser.** Favourites, smart folders and search over port signal families are M4-O's (`#186`),
+and DR-102 §11.101.6 makes the palette usable without them, which is the whole reason its shape was
+chosen over requiring a template to be added to the project first.
+
+**No way to remove a library from inside the app.** The shelf is a folder, `#240`'s import is the
+only thing that writes to it, and the file manager is the only thing that can take one off. DR-103
+§11.102.9 names that as a real gap rather than closing it.
+
+**Nothing here touches the exit criterion.** Clause 2 is demonstrated by a person, and the drill is
+deferred to the end of the milestone by the user's decision. This is the fourth story in a row to
+close without moving it.
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 

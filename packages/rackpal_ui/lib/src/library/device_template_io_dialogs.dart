@@ -183,7 +183,14 @@ class _ExportChooserDialogState extends State<_ExportChooserDialog> {
                 itemCount: widget.templates.length,
                 itemBuilder: (context, i) {
                   final row = widget.templates[i];
-                  final chosen = row.key == _chosen?.key;
+                  // `rowKey`, not `key`: `#241` made the document key
+                  // nullable, and two nulls comparing equal would have
+                  // made every library row read as the chosen one. This
+                  // list holds document rows only, so the bug was not
+                  // reachable from here; the identity is spelled the safe
+                  // way regardless, because the day this list grows a
+                  // library row is not the day to remember.
+                  final chosen = row.rowKey == _chosen?.rowKey;
                   // A SELECTABLE ListTile RATHER THAN A RadioListTile,
                   // and the reason is mechanical: `groupValue` and
                   // `onChanged` are deprecated in favour of a
