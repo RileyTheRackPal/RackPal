@@ -81,6 +81,10 @@ const Map<String, String> _knownByteReaders = <String, String>{
       'the .rmda reader; runs checkJsonLimits before jsonDecode, and a '
       'library is the biggest file this product reads so the cap matters '
       'most here (DR-015 §11.15.4)',
+  // ── ADDED AT `#240`, BY THIS GATE, FOR THE SECOND CHAPTER RUNNING ────
+  'apps/rackpal/lib/src/session/library_io_actions.dart':
+      'the .rmda import; stats and runs checkImportedFileSize BEFORE '
+      'reading, like the three paths above it',
 };
 
 String _repoRoot() {
@@ -257,6 +261,7 @@ void main() {
         'apps/rackpal/lib/src/session/csv_import_actions.dart',
         'apps/rackpal/lib/src/session/device_template_io_actions.dart',
         'apps/rackpal/lib/src/session/session_controller.dart',
+        'apps/rackpal/lib/src/session/library_io_actions.dart',
       ]) {
         final code = File('$root/$path').readAsStringSync();
         final guardAt = code.indexOf('checkImportedFileSize(');

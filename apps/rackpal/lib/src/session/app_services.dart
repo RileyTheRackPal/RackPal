@@ -53,6 +53,7 @@ import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/export_controller.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/session/file_picker.dart';
+import 'package:rackpal/src/session/library_io_actions.dart';
 import 'package:rackpal/src/session/session_controller.dart';
 import 'package:rackpal/src/session/session_prompts.dart';
 import 'package:rackpal/src/session/starter_projects.dart';
@@ -96,6 +97,7 @@ final class AppServices {
     required this.controller,
     required this.export,
     required this.templateIo,
+    required this.libraryIo,
     required this.chrome,
     required this.autosave,
     required this.titleWriter,
@@ -124,6 +126,15 @@ final class AppServices {
   /// prompts and the writer and nothing else. Its own header says why an
   /// import touching the document is not an exception to that.
   final DeviceTemplateIo templateIo;
+
+  /// `File ▸ Export device library…` and `File ▸ Import device library…`
+  /// (`#240`).
+  ///
+  /// A third sibling, for [export]'s reason. Its `dataRoot` is null in
+  /// the degraded session, which is the whole of that handling: import
+  /// has nowhere to put a library and says so, while EXPORT is
+  /// unaffected because it writes to the user's chosen directory.
+  final LibraryIo libraryIo;
 
   final WindowChrome chrome;
   final AutosaveScheduler autosave;
@@ -403,6 +414,18 @@ Future<AppServices> buildAppServices({
       clock: clock,
       // The PDF dialog opens where the last document save did (§8.3's
       // "the same MRU behaviour as document Save As, for free").
+      initialDirectory: controller.exportInitialDirectory,
+      context: ctx,
+    ),
+    libraryIo: LibraryIo(
+      session: session,
+      picker: picker,
+      writer: writer,
+      fs: fs,
+      prompts: prompts,
+      // Null when the root is unusable, which is exactly the degraded
+      // session: there is nowhere to keep a library.
+      dataRoot: ready?.path,
       initialDirectory: controller.exportInitialDirectory,
       context: ctx,
     ),

@@ -186,6 +186,15 @@ enum FileDialogType {
   /// The name is the whole difference between this and an unreachable
   /// field, so it is written down: **`#236`**.
   device,
+
+  /// `.rmda`, a device library (DR-015 §11.15.3).
+  ///
+  /// **THE FOURTH KIND, AND THE TABLE IS WHY IT COSTS ONE ROW.** `#234`
+  /// replaced two parallel ternaries with `kFileKinds` precisely so the
+  /// third and fourth kinds would not each nest another condition, and
+  /// `file_dialog_flags_test.dart` fails if this value has no row there.
+  /// Adding the arm is not optional and cannot be forgotten.
+  library,
 }
 
 /// Native open and save dialogs, behind two methods.

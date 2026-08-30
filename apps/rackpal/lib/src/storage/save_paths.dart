@@ -58,6 +58,20 @@ const List<String> kDeviceTemplateExtensions = <String>[
   kDeviceTemplateExtension,
 ];
 
+/// The extension a device library gets, including the dot, lower-case
+/// (DR-015 §11.15.3).
+///
+/// **NO LEGACY SIBLING, and for a stronger reason than `.rmdx` has.**
+/// `.rmlib` was the pre-DR-015 name and was never shipped in any form: it
+/// was specified as a zip and cut by AC-042 before anything wrote one. So
+/// there is not merely nothing on a user's disk, there was never a writer.
+const String kDeviceLibraryExtension = '.rmda';
+
+/// Every extension a device library may carry, the one to append first.
+const List<String> kDeviceLibraryExtensions = <String>[
+  kDeviceLibraryExtension,
+];
+
 /// Appended to the target to name the in-progress write.
 const String kTempSuffix = '.tmp';
 

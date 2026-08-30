@@ -554,6 +554,20 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  /// `File ▸ Export device library…` (`#240`).
+  Future<void> _exportLibrary() async {
+    await _services.libraryIo.export(
+      (candidates) async => showExportLibrary(context, candidates: candidates),
+    );
+  }
+
+  /// `File ▸ Import device library…`.
+  Future<void> _importLibrary() async {
+    await _services.libraryIo.import(
+      (preview) async => showImportLibraryConfirm(context, preview: preview),
+    );
+  }
+
   Future<void> _openRecent(String path) async {
     if (await _services.controller.openPath(path)) _dismissStartCard();
   }
@@ -599,6 +613,8 @@ final class AppShellState extends State<AppShell>
               onExportPdf: _exportPdf,
               onExportTemplate: _exportTemplate,
               onImportTemplate: _importTemplate,
+              onExportLibrary: _exportLibrary,
+              onImportLibrary: _importLibrary,
               onOpenRecent: _openRecent,
             ),
             const SizedBox(width: 16),
@@ -1108,6 +1124,8 @@ final class _FileMenu extends StatelessWidget {
     required this.onExportPdf,
     required this.onExportTemplate,
     required this.onImportTemplate,
+    required this.onExportLibrary,
+    required this.onImportLibrary,
     required this.onOpenRecent,
   });
 
@@ -1122,6 +1140,8 @@ final class _FileMenu extends StatelessWidget {
   final Future<void> Function() onExportPdf;
   final Future<void> Function() onExportTemplate;
   final Future<void> Function() onImportTemplate;
+  final Future<void> Function() onExportLibrary;
+  final Future<void> Function() onImportLibrary;
   final Future<void> Function(String path) onOpenRecent;
 
   @override
@@ -1205,6 +1225,20 @@ final class _FileMenu extends StatelessWidget {
             MenuItemButton(
               onPressed: () => unawaited(onImportTemplate()),
               child: const Text('Import device template…'),
+            ),
+            // `#240`. The library pair sits beside the template pair for
+            // DR-101 §11.100.4's reason applied one level up: an import
+            // belongs to no library, so a browser-side control would
+            // split the verbs, and a second `FilePicker` call site is
+            // what RULE 7 forbids. Still no accelerators, for the eighth
+            // time and the same reason.
+            MenuItemButton(
+              onPressed: () => unawaited(onExportLibrary()),
+              child: const Text('Export device library…'),
+            ),
+            MenuItemButton(
+              onPressed: () => unawaited(onImportLibrary()),
+              child: const Text('Import device library…'),
             ),
           ],
           child: const Text('File'),
