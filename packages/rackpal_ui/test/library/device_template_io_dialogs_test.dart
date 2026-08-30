@@ -300,6 +300,75 @@ void main() {
       );
     });
 
+    testWidgets('AC-042: an edited file WARNS and still offers Import', (
+      tester,
+    ) async {
+      // The first surface `contentHash` has ever had (`#795`). AC-042
+      // rules a mismatch a warning and a badge and NEVER a load failure,
+      // so the buttons are unchanged: refusing to open a file because
+      // somebody hand-edited it is a data-loss event dressed as a safety
+      // feature.
+      await _open(
+        tester,
+        (c) => showImportTemplateConfirm(
+          c,
+          plan: TemplateImportPlan(
+            file: _file(_body()),
+            hashVerdict: false,
+          ),
+        ),
+      );
+      expect(find.text(kHashMismatchWarning), findsOneWidget);
+      expect(
+        find.text('Import'),
+        findsOneWidget,
+        reason: 'the warning does not take the button away',
+      );
+    });
+
+    testWidgets('a file with NO hash is not warned about', (tester) async {
+      // The third state, and the one that decides whether this feature
+      // is usable at all: every `.rmdx` written before `#795` carries a
+      // placeholder, and warning about those would fire on every file
+      // this product has ever produced.
+      await _open(
+        tester,
+        (c) => showImportTemplateConfirm(
+          c,
+          plan: TemplateImportPlan(file: _file(_body())),
+        ),
+      );
+      expect(find.text(kHashMismatchWarning), findsNothing);
+    });
+
+    testWidgets('a file that VERIFIES is not warned about either', (
+      tester,
+    ) async {
+      await _open(
+        tester,
+        (c) => showImportTemplateConfirm(
+          c,
+          plan: TemplateImportPlan(file: _file(_body()), hashVerdict: true),
+        ),
+      );
+      expect(find.text(kHashMismatchWarning), findsNothing);
+    });
+
+    test('the warning says EDITED, not corrupt or tampered', () {
+      // A hand-edited .rmdx is a supported thing to have, and the common
+      // cause is somebody fixing a label in a text editor. Copy that
+      // implied an attack would be wrong about the usual case and would
+      // train people to distrust their own files.
+      expect(kHashMismatchWarning, contains('edited'));
+      expect(kHashMismatchWarning, isNot(contains('corrupt')));
+      expect(kHashMismatchWarning, isNot(contains('tamper')));
+      expect(
+        kHashMismatchWarning,
+        contains('allowed'),
+        reason: 'and it says so, rather than only implying it',
+      );
+    });
+
     test('the choice maps to core in exactly one place', () {
       expect(resolutionFor(ImportTemplateChoice.cancel), isNull);
       expect(resolutionFor(ImportTemplateChoice.importIt), isNull);

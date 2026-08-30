@@ -47,6 +47,7 @@ import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
 import 'package:rackpal_core/src/commands/template_snapshot_commands.dart'
     show templateSnapshotKey;
+import 'package:rackpal_core/src/library/template_hash.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/model/template.dart';
@@ -198,14 +199,16 @@ final class ForkTemplateFromDeviceCommand extends Command<RackDocument> {
       version: ref.version,
     );
 
+    final hash = templateContentHash(body);
     doc.templates[key] = TemplateSnapshot(
       templateId: newTemplateId,
       version: 1,
-      // The convention `device_builder_actions.dart` already writes. No
-      // real hashing exists anywhere yet, and AC-042 makes a mismatch a
-      // warning rather than a load failure, so inventing a scheme here
-      // would put a second answer beside the one that ships.
-      contentHash: 'unhashed:${newTemplateId.v}@1',
+      // REAL AT `#795`, over DR-100's canonical bytes. This used to be
+      // `unhashed:<id>@1` with a comment explaining that no real hashing
+      // existed and that inventing a scheme here would put a second
+      // answer beside the one that ships. The scheme exists now and this
+      // reads it rather than spelling one.
+      contentHash: hash,
       body: body,
       capturedAt: now,
     );
@@ -214,7 +217,10 @@ final class ForkTemplateFromDeviceCommand extends Command<RackDocument> {
       ..templateRef = TemplateRef(
         templateId: newTemplateId,
         version: 1,
-        contentHash: 'unhashed:${newTemplateId.v}@1',
+        // THE SAME VALUE as the snapshot above, from one computation:
+        // a ref whose hash disagreed with the snapshot it names would be
+        // a mismatch this command manufactured.
+        contentHash: hash,
       )
       // THE OVERRIDES ARE NOW IN THE TEMPLATE, so keeping them would
       // apply them twice: once as the forked body's own values and again

@@ -28,6 +28,7 @@
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/template_snapshot_commands.dart';
 import 'package:rackpal_core/src/library/rmdx_codec.dart';
+import 'package:rackpal_core/src/library/template_hash.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 
@@ -72,14 +73,36 @@ final class TemplateImportCollision {
 
 /// A read `.rmdx`, and what standing it has in this document.
 final class TemplateImportPlan {
-  const TemplateImportPlan({required this.file, this.collision});
-
-  final DeviceTemplateFile file;
+  const TemplateImportPlan({
+    required this.file,
+    this.collision,
+    this.hashVerdict,
+  });
 
   /// Null when the id is free, in which case no question is asked.
   final TemplateImportCollision? collision;
 
+  final DeviceTemplateFile file;
+
+  /// Whether the file's `contentHash` is the hash its body actually has.
+  ///
+  /// **TRI-STATE, AND NEVER A REASON TO REFUSE** (AC-042, `#795`). `true`
+  /// means the file is exactly as exported. `false` means it was edited
+  /// after export, which is a WARNING and a badge and never a load
+  /// failure: refusing to open a file because somebody hand-edited it is
+  /// a data-loss event dressed as a safety feature. `null` means there is
+  /// nothing to check against, which is every `.rmdx` written before
+  /// `#795` and is not evidence of anything.
+  final bool? hashVerdict;
+
   bool get collides => collision != null;
+
+  /// True only for a file that carries a real hash AND fails it.
+  ///
+  /// Spelled once so no caller writes `hashVerdict == false` and quietly
+  /// treats the unknown case as a pass or a failure depending on which
+  /// way they happened to compare.
+  bool get hashMismatched => hashVerdict == false;
 }
 
 /// Whether [file]'s id is already in use in [doc], and by what.
@@ -96,9 +119,13 @@ TemplateImportPlan planTemplateImport(
       name = s.body.displayName;
     }
   }
-  if (name == null) return TemplateImportPlan(file: file);
+  final verdict = templateHashMatches(file.body, file.contentHash);
+  if (name == null) {
+    return TemplateImportPlan(file: file, hashVerdict: verdict);
+  }
   return TemplateImportPlan(
     file: file,
+    hashVerdict: verdict,
     collision: TemplateImportCollision(
       templateId: file.templateId,
       incumbentDisplayName: name,
@@ -154,10 +181,13 @@ Command<RackDocument> buildTemplateImport(
   return SaveTemplateToProjectCommand(
     templateId: id,
     version: version,
-    // CARRIED, NOT RECOMPUTED. Nothing in this repository computes a
-    // sha256 yet (`#795`), and AC-042's mismatch warning cannot fire
-    // until it does, because a placeholder never mismatches. Recomputing
-    // a fake here would put a second answer beside the one that ships.
+    // STILL CARRIED, NOT RECOMPUTED, and `#795` making the hash real is
+    // exactly why that is now a decision rather than a stopgap.
+    // Recomputing here would make every import verify by construction and
+    // the mismatch warning unreachable: the document would record what
+    // the body IS rather than what the file CLAIMED, and the difference
+    // between those two is the whole of AC-042. `planTemplateImport` has
+    // already compared them, and the answer travels on the plan.
     contentHash: file.contentHash,
     body: file.body,
     capturedAt: capturedAt,

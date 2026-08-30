@@ -177,12 +177,24 @@ $ErrorActionPreference = 'Stop'
 # The split is `session_prompts.dart`'s: the BRANCHES are core's and were
 # counted above, the dialogs' copy and buttons are ui's, and what is left
 # for app is the sequence and the places it can end early.
+# RE-MEASURED 2026-08-29 at `#795` (the real sha256): core 3455 -> 3469 for
+# the fourteen of `test/library/template_hash_test.dart`, ui 1257 -> 1261 for
+# the four AC-042 warning cases added to the dialogs file, and app 859 -> 860
+# for the second case in `device_builder_actions_test.dart`. That file's
+# `content hash` group USED TO PIN THE PLACEHOLDER and asserted
+# `unhashed:tpl.hdmi_matrix_16x16@2`; it was honest when written, because
+# that WAS the intended behaviour, and it had to move when the behaviour did.
+# NOTHING WAS REMOVED. The ~150 test fixtures carrying `'h'` and
+# `'sha256:test'` were left exactly as they are: `templateHashMatches`
+# answers UNKNOWN for anything that is not 64 hex digits, so none of them
+# reads as a mismatch, and rewriting them would have been the change that
+# made this task expensive for no gain.
 $SuiteFloors = @{
-    'rackpal_core'   = 3455
+    'rackpal_core'   = 3469
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1257
-    'rackpal_app'    = 859
+    'rackpal_ui'     = 1261
+    'rackpal_app'    = 860
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
