@@ -323,7 +323,15 @@ jobs:
       # zero agents registered, which is worth knowing before anybody
       # re-points this line at it. A build queues silently until the agent
       # comes online, so an unexplained "queued" here is usually a stopped
-      # agent rather than a busy one.
+      # agent rather than a busy one -- it runs INTERACTIVELY from
+      # `run.cmd` and is not a Windows service.
+      #
+      # PROVEN, not assumed: build 20260830.17 ran on it against 3cec172 and
+      # passed every gate in 25.6 minutes, against a hosted mean of 18.9.
+      # The build's own `queue` field still reads "Azure Pipelines", which is
+      # where the build was SUBMITTED and not where the job ran; the agent's
+      # assigned request is what actually answers that, and it named this
+      # job.
       name: 'Default'
 
     workspace:
