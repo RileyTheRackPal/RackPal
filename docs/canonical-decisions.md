@@ -14460,6 +14460,108 @@ named here and left to it.
 
 ---
 
+### 11.101 DR-102 · The palette answers for the document AND the loaded libraries, and a template in two of them is two rows
+
+**Settled by the user on 2026-08-29, before any code**, on the precedent this milestone has now set
+four times (DR-077, DR-098, DR-100, DR-101): the questions a story cannot start without are product
+decisions, and settling them first is what stopped the last four issues of this shape from building
+a save nothing reads.
+
+**11.101.1 THE CENSUS FIRST, AND ONE OF M4-N's FIVE CHAPTERS IS PARTLY BUILT.** `#241` reads
+*"THE ITEM MOST LIKELY TO BE UNDERESTIMATED. Nothing carries this today. It is a field on a RUNTIME
+object, NOT on `TemplateBody`, because the same template can legitimately arrive from two libraries
+and a field on the body would force a false choice between them."*
+
+**`TemplateProvenance` already exists, on a runtime object, in exactly that shape.** M4-S built it
+at `derived/placeable_templates.dart:53`, with two values, `seeded` and `project`, and a class
+comment that already reasons about what this build cannot tell apart. **The architectural call
+`#241` was going to make is made and shipped**, and what remains is widening it to name a library.
+That is the fifth time this milestone a chapter written from an absence has met a filled one, and
+the first time the surprise was in the cheap direction.
+
+The other four chapters' premises hold. `#238` is right that there is **no writable library
+directory at all**: `data_root.dart` defines the portable and installed roots and no library under
+either. `#239` and `#240` are unbuilt and both are now materially cheaper than when they were
+priced, because the `.rmdx` codec they were waiting on exists (DR-100) and `rmdx_codec.dart`'s own
+header already states the relationship: *"`.rmda` is an array of these plus a manifest."*
+
+**11.101.2 THE QUESTION NO DOCUMENT ANSWERED.** `buildPlaceableTemplates(doc)` is the palette's
+single source, and DR-077 §11.76.1 made that its **property** rather than an implementation detail:
+the palette lists *the document's own shelf*, and
+`rackpal_ui/test/canvas/palette_reads_the_document_test.dart` drives live commands through a mounted
+screen to hold it, because the defect it closed was a surface holding a `late final` copy of a
+constant.
+
+M4-N makes the palette answer for the document **and N libraries**. That is not a contradiction of
+DR-077, whose subject was the in-project case, but it changes what *placeable* means, and no ruling
+in this corpus says which way.
+
+**11.101.3 THE RULING ON SOURCE: one merged list, every row carrying where it came from.**
+`buildPlaceableTemplates` takes the loaded libraries alongside the document and returns one sorted
+list of rows tagged by provenance; `#242`'s filter chips narrow it.
+
+**`#242` is the argument, in its own words**: *"Multiple libraries loaded at once, filtered by which
+one a device came from, the user-facing point of the whole subsystem."* Filtering by source only
+means anything if the sources are in one list to be filtered. It also keeps **CR-104's one-palette
+rule literally true** rather than by interpretation, and keeps placement a single gesture.
+
+**The alternative was real and is recorded rather than waved past.** Keeping the palette on the
+document alone, and requiring a library template to be *added to the project* before it can be
+placed, preserves DR-077 untouched and makes *place* always mean *place something this document
+holds*, which is what AC-041's copy-on-place already guarantees on the wire. It was declined on
+cost to the common case: it puts a step in front of every use of a library, and it makes M4-O a
+prerequisite for M4-N being useful at all rather than the follow-on the decomposition has it as.
+
+**DR-077's PROPERTY WIDENS AND MUST BE RESTATED WHERE IT IS HELD.** It becomes *the palette lists
+the document plus the loaded libraries, and never a constant*. The `late final` defect that test
+exists to catch is untouched by the widening; what changes is that a second source must be read
+afresh too, and the test file is where that gets said.
+
+**11.101.4 THE RULING ON COLLISION: two rows, each tagged.** A template id present in two loaded
+libraries, or in a library and the document, appears **once per source**, distinguished by the tag.
+
+**`#241`'s own sentence is the argument** and it was written before anybody asked this question:
+provenance cannot live on `TemplateBody` *"because the same template can legitimately arrive from
+two libraries and a field on the body would force a false choice between them."* That reasoning only
+holds if both are meant to survive to the screen.
+
+**It is also DR-101 §11.100.1 one level up.** `templateIdFor` derives an id from the display name,
+identically on every machine, so a colliding id means **two people typed the same name**, not that
+one template is duplicated. Hiding one would be the defect `templateIdFor`'s own header refuses,
+reached through the palette instead of through an import.
+
+**A precedence rule was considered and declined**, and the cost is what decided it: it silently
+hides a device the user deliberately loaded, and the hidden row reappears when they unload the other
+library, which reads as a bug rather than as a rule. **Refusing to load a colliding library was
+declined harder**: since ids are name-derived, two independently authored libraries that each
+contain an `HDMI Matrix 16x16` could never be loaded together, so the multi-library feature would
+refuse its own main use case.
+
+**THIS IS NOT THE DUPLICATE-ROW DEFECT DR-077 §11.76.2 CLOSED**, and the difference is the reason
+the tag is load-bearing. That defect was **one** template appearing twice in one search because the
+pinned group leaked into the filtered state: two rows, one thing, no way to tell them apart and no
+reason for the second. This is **two** things that happen to share a name, each answering for a
+different shelf, and the tag is what makes them two things rather than a bug. A row that could not
+say which library it came from would be that defect.
+
+**11.101.5 THE RULING ON SHAPE, which is engineering and is written down so it is not re-taken.**
+`TemplateProvenance` becomes a **sealed class**, not an enum with a nullable `libraryId` beside it.
+Three variants: seeded, project, and one carrying a library's id. An enum plus a nullable field is a
+two-field invariant that a constructor cannot enforce and a `switch` cannot exhaust, and this
+repository already spells exactly this shape as a sealed class in `Outcome`, `FileContent` and
+`FsOp`. `isProjectAuthored` survives as the one question the palette badge asks.
+
+**11.101.6 WHAT THIS DOES NOT RULE.** It does not decide where the library directory lives, which is
+derivable from `data_root.dart`'s existing portable-versus-installed rule and is `#238`'s. It does
+not touch the `.rmda` format, which DR-015 §11.15.3 already ruled and `#239` implements. It says
+nothing about **favourites, smart folders or fuzzy search over port families**, all of which are
+M4-O's and none of which this ruling makes easier or harder. It does not decide what happens when a
+library fails to load, beyond AC-042's standing rule that a hash mismatch is a warning and never a
+refusal. And it does not make the browser a prerequisite: the palette is usable with libraries
+loaded and no browser at all, which is the whole reason this shape was chosen over the other.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

@@ -74,6 +74,13 @@ const Map<String, String> _knownByteReaders = <String, String>{
   'apps/rackpal/lib/src/storage/file_store.dart':
       'the interface declaration, not a call site: `readBytes` is named '
       'here and implemented in io_file_store.dart',
+  // ── ADDED AT `#239`, BY THIS GATE, ONE CHAPTER AFTER IT WAS WRITTEN ──
+  // The `.rmda` codec landed and this file failed on the very next run.
+  // That is the design working on somebody who had read the design.
+  'packages/rackpal_core/lib/src/library/rmda_codec.dart':
+      'the .rmda reader; runs checkJsonLimits before jsonDecode, and a '
+      'library is the biggest file this product reads so the cap matters '
+      'most here (DR-015 §11.15.4)',
 };
 
 String _repoRoot() {
@@ -168,6 +175,23 @@ void main() {
       final outcome = parseDocumentJsonTree(deep);
       expect(outcome, isA<Err<JsonMap>>());
       expect((outcome as Err<JsonMap>).error, isA<JsonTooDeeplyNestedError>());
+    });
+
+    test('the .rmda reader refuses both, and it is the biggest file', () {
+      // DR-015 §11.15.4's argument for one JSON file rather than a zip is
+      // that it *inherits* AC-058/D8's limits and introduces no new
+      // attack surface. This is that inheritance, asserted rather than
+      // taken on the ruling's word.
+      final deep = Uint8List.fromList(utf8.encode('[' * 300));
+      expect(readRmdaBytes(deep), isA<Err<DeviceLibraryFile>>());
+
+      final small = Uint8List.fromList(utf8.encode('{"kind":"x"}'));
+      expect(
+        (readRmdaBytes(small, limits: const JsonLimits(maxBytes: 4))
+                as Err<DeviceLibraryFile>)
+            .error,
+        isA<DocumentTooLargeError>(),
+      );
     });
 
     test('the .rmdx reader refuses both, on the same limits object', () {
