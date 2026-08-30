@@ -4337,6 +4337,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 // authored in the Device Builder is in the document and
                 // was in no catalog.
                 templates: _rows,
+                // `#244`, DR-104 §11.103.5. The registries only WIDEN the
+                // search: without them `hdbaset` still lands on
+                // `video.hdbaset` by substring, and what they add is the
+                // vocabulary that is not a substring of the id, `hdbt`
+                // being DR-060's own example.
+                registries: _doc.registries,
                 unreadableLibraries: widget.unreadableLibraries,
                 categoryOrder: kCatalogCategoryOrder,
                 searchFocusNode: _paletteSearchFocus,

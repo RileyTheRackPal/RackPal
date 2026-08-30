@@ -234,11 +234,17 @@ $ErrorActionPreference = 'Stop'
 # gesture nobody made, and a grep found no test asserting that message in
 # either direction, which is how it survived a milestone.
 
+# RE-MEASURED 2026-08-30 at `#244` (M4-O2): core 3525 -> 3546, the twenty-one
+# of `test/derived/template_search_test.dart`, and ui 1289 -> 1292 for the three
+# end-to-end cases added to `device_palette_panel_test.dart`. Nothing was
+# removed: the palette's private `_matchesQuery` MOVED to core and grew, and its
+# two existing callers moved with it.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3525
+    'rackpal_core'   = 3546
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1289
+    'rackpal_ui'     = 1292
     'rackpal_app'    = 908
 }
 
