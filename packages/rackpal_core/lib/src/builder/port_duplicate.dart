@@ -169,7 +169,13 @@ PortDuplicateResult buildPortDuplicate({
           key: key,
           label: labels[i],
           order: minted[i],
-          position: kUnplacedPanelPosition,
+          // A DUPLICATE IS AUTO-PLACED, not stacked on its source.
+          // `portWithIdentity` keeps this REQUIRED on purpose (see its
+          // own comment about not defaulting a pass-through), so the
+          // answer is spelled rather than omitted. Copying the source's
+          // nudge would put the new jack exactly on top of the old one,
+          // which is the one place a person can never see it.
+          position: null,
           renamedFrom: const [],
           designatorHint: null,
         ),

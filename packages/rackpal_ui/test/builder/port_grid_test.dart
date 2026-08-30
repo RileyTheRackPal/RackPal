@@ -54,7 +54,6 @@ PortDef _port(String key, {required String order, String? bank}) => PortDef(
   connector: const ConnectorTypeId('conn.hdmi_a'),
   signalFamily: const SignalFamilyId('video.hdmi.2_0'),
   face: Face.rear,
-  position: kUnplacedPanelPosition,
   order: FracIndex(order),
   direction: PortDirection.sink,
   bankKey: bank,

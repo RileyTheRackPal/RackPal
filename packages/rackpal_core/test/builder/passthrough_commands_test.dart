@@ -21,7 +21,6 @@ PortDef _port(
   connector: const ConnectorTypeId('conn.rj45'),
   signalFamily: const SignalFamilyId('net.ethernet'),
   face: face,
-  position: kUnplacedPanelPosition,
   order: FracIndex(order),
   direction: PortDirection.passive,
 );

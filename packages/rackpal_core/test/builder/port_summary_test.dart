@@ -39,7 +39,6 @@ PortDef _port(
   connector: ConnectorTypeId(connector),
   signalFamily: const SignalFamilyId('video.hdmi.2_0'),
   face: face,
-  position: kUnplacedPanelPosition,
   order: FracIndex(order),
   bankKey: bank,
   poe: poe,

@@ -31,17 +31,19 @@ import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackpal_core/src/model/placement.dart' show Face;
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/ids.dart';
-import 'package:rackpal_core/src/units/len.dart';
 
-/// A port with no panel geometry yet. Panel layout is M4-K (`#182`), and
-/// until it runs every authored port sits at the origin; the catalog's own
-/// `PortBuilder` uses exactly this value for the same reason.
-const kUnplacedPanelPosition = PanelPosition(
-  ruOffset: 0,
-  xTwelfth: 0,
-  xFineNm: Len(0),
-  yFineNm: Len(0),
-);
+/// A port with no panel geometry: **null since DR-105 §11.104.3**.
+///
+/// This was `PanelPosition(0, 0, 0, 0)`, and its own comment said why:
+/// *"Panel layout is M4-K (`#182`), and until it runs every authored port
+/// sits at the origin."* M4-K ran. The origin is a legal coordinate a
+/// person may nudge a jack to, so a zero sentinel could not survive the
+/// feature it was waiting for, and `PortDef.position` is nullable now.
+///
+/// **KEPT AS A NAME RATHER THAN DELETED** because it is what a caller
+/// authoring a port means, and `null` at a call site reads as an omission
+/// rather than as a statement.
+const PanelPosition? kUnplacedPanelPosition = null;
 
 /// A typed accessor for one editable property of a [PortDef].
 ///
@@ -1089,7 +1091,7 @@ PortDef portWithIdentity(
   required PortKey key,
   required String label,
   required FracIndex order,
-  required PanelPosition position,
+  required PanelPosition? position,
   required List<PortKey> renamedFrom,
   required String? designatorHint,
 }) => PortDef(
@@ -1179,7 +1181,6 @@ PortDef blankPort(TemplateBody body, {String? bankKey}) {
     connector: const ConnectorTypeId(''),
     signalFamily: const SignalFamilyId(''),
     face: Face.rear,
-    position: kUnplacedPanelPosition,
     order: nextOrder(body.ports.map((p) => p.order)),
     bankKey: bankKey ?? (body.ports.isEmpty ? null : body.ports.last.bankKey),
   );

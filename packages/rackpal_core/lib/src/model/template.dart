@@ -609,8 +609,12 @@ final class PortDef {
     required this.connector,
     required this.signalFamily,
     required this.face,
-    required this.position,
     required this.order,
+    // AFTER the required ones (`always_put_required_named_parameters_
+    // first`). It became optional at DR-105 §11.104.3 and kept its old
+    // slot, which put an optional parameter in the middle of the
+    // required run.
+    this.position,
     List<PortKey>? renamedFrom,
     this.designatorHint,
     List<SignalFamilyId>? carriedProtocols,
@@ -669,7 +673,30 @@ final class PortDef {
 
   Gender gender;
   Face face;
-  PanelPosition position;
+
+  /// Where this port sits on the rear panel, or **null when the layout is
+  /// AUTOMATIC** (`#226`, DR-105 §11.104.3).
+  ///
+  /// ══════════════════════════════════════════════════════════════════
+  /// NULLABLE, BECAUSE THE ORIGIN IS A LEGAL COORDINATE
+  /// ══════════════════════════════════════════════════════════════════
+  /// This was a non-nullable field defaulting to `{0, 0, 0, 0}`, and
+  /// `port_commands.dart` named that value `kUnplacedPanelPosition`
+  /// because until M4-K there was no producer and every port sat at the
+  /// origin. A zero-valued sentinel cannot survive the feature it was
+  /// waiting for: `{ruOffset: 0, xTwelfth: 0, ...}` is the top-left of
+  /// the panel and a person may nudge a jack there deliberately, so
+  /// "never nudged" and "nudged to the corner" would be the same value.
+  ///
+  /// Null is therefore the only shape that carries both facts, and it is
+  /// **G4's own shape** (CR-114): unknown is an ABSENT KEY, never an
+  /// explicit `null`, and the codec omits it rather than writing one.
+  ///
+  /// **THE LAYOUT ITSELF IS DERIVED** (DR-105 §11.104.2). `panel_layer
+  /// .dart` computes every port's place from the banks, the connector
+  /// footprints and `chassisWidthNm`; this field is the OVERRIDE, and a
+  /// template with none is not incomplete (docs/06 §5's non-negotiable).
+  PanelPosition? position;
 
   /// The IR emitter/receiver hazard. Must be cited (AC-052).
   String? pinoutVariant;

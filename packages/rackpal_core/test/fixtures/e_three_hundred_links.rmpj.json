@@ -19011,12 +19011,6 @@
               "label": "SRC 1 L",
               "maxConnections": 1,
               "order": "a0001",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src1",
               "setRole": "L",
@@ -19035,12 +19029,6 @@
               "label": "SRC 1 R",
               "maxConnections": 1,
               "order": "a0002",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src1",
               "setRole": "R",
@@ -19061,12 +19049,6 @@
               "maxConnections": 1,
               "order": "a0004",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone1",
               "setRole": "+",
@@ -19087,12 +19069,6 @@
               "maxConnections": 1,
               "order": "a0005",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone1",
               "setRole": "-",
@@ -19112,12 +19088,6 @@
               "maxConnections": 1,
               "order": "a0007",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -19134,12 +19104,6 @@
               "label": "SRC 2 L",
               "maxConnections": 1,
               "order": "a0008",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src2",
               "setRole": "L",
@@ -19158,12 +19122,6 @@
               "label": "SRC 2 R",
               "maxConnections": 1,
               "order": "a0009",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src2",
               "setRole": "R",
@@ -19184,12 +19142,6 @@
               "maxConnections": 1,
               "order": "a0010",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone2",
               "setRole": "+",
@@ -19210,12 +19162,6 @@
               "maxConnections": 1,
               "order": "a0011",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone2",
               "setRole": "-",
@@ -19235,12 +19181,6 @@
               "maxConnections": 1,
               "order": "a0012",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -19257,12 +19197,6 @@
               "label": "SRC 3 L",
               "maxConnections": 1,
               "order": "a0013",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src3",
               "setRole": "L",
@@ -19281,12 +19215,6 @@
               "label": "SRC 3 R",
               "maxConnections": 1,
               "order": "a0014",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src3",
               "setRole": "R",
@@ -19307,12 +19235,6 @@
               "maxConnections": 1,
               "order": "a0015",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone3",
               "setRole": "+",
@@ -19333,12 +19255,6 @@
               "maxConnections": 1,
               "order": "a0016",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone3",
               "setRole": "-",
@@ -19358,12 +19274,6 @@
               "maxConnections": 1,
               "order": "a0017",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -19380,12 +19290,6 @@
               "label": "SRC 4 L",
               "maxConnections": 1,
               "order": "a0018",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src4",
               "setRole": "L",
@@ -19404,12 +19308,6 @@
               "label": "SRC 4 R",
               "maxConnections": 1,
               "order": "a0019",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src4",
               "setRole": "R",
@@ -19430,12 +19328,6 @@
               "maxConnections": 1,
               "order": "a0020",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone4",
               "setRole": "+",
@@ -19456,12 +19348,6 @@
               "maxConnections": 1,
               "order": "a0021",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone4",
               "setRole": "-",
@@ -19481,12 +19367,6 @@
               "maxConnections": 1,
               "order": "a0022",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -19503,12 +19383,6 @@
               "label": "SRC 5 L",
               "maxConnections": 1,
               "order": "a0023",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src5",
               "setRole": "L",
@@ -19527,12 +19401,6 @@
               "label": "SRC 5 R",
               "maxConnections": 1,
               "order": "a0024",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src5",
               "setRole": "R",
@@ -19553,12 +19421,6 @@
               "maxConnections": 1,
               "order": "a0025",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone5",
               "setRole": "+",
@@ -19579,12 +19441,6 @@
               "maxConnections": 1,
               "order": "a0026",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone5",
               "setRole": "-",
@@ -19604,12 +19460,6 @@
               "maxConnections": 1,
               "order": "a0027",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -19626,12 +19476,6 @@
               "label": "SRC 6 L",
               "maxConnections": 1,
               "order": "a0028",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src6",
               "setRole": "L",
@@ -19650,12 +19494,6 @@
               "label": "SRC 6 R",
               "maxConnections": 1,
               "order": "a0029",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src6",
               "setRole": "R",
@@ -19676,12 +19514,6 @@
               "maxConnections": 1,
               "order": "a0030",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone6",
               "setRole": "+",
@@ -19702,12 +19534,6 @@
               "maxConnections": 1,
               "order": "a0031",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone6",
               "setRole": "-",
@@ -19727,12 +19553,6 @@
               "maxConnections": 1,
               "order": "a0032",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -19749,12 +19569,6 @@
               "label": "SRC 7 L",
               "maxConnections": 1,
               "order": "a0033",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src7",
               "setRole": "L",
@@ -19773,12 +19587,6 @@
               "label": "SRC 7 R",
               "maxConnections": 1,
               "order": "a0034",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src7",
               "setRole": "R",
@@ -19799,12 +19607,6 @@
               "maxConnections": 1,
               "order": "a0035",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone7",
               "setRole": "+",
@@ -19825,12 +19627,6 @@
               "maxConnections": 1,
               "order": "a0036",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone7",
               "setRole": "-",
@@ -19850,12 +19646,6 @@
               "maxConnections": 1,
               "order": "a0037",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -19872,12 +19662,6 @@
               "label": "SRC 8 L",
               "maxConnections": 1,
               "order": "a0038",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src8",
               "setRole": "L",
@@ -19896,12 +19680,6 @@
               "label": "SRC 8 R",
               "maxConnections": 1,
               "order": "a0039",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "src8",
               "setRole": "R",
@@ -19922,12 +19700,6 @@
               "maxConnections": 1,
               "order": "a0040",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone8",
               "setRole": "+",
@@ -19948,12 +19720,6 @@
               "maxConnections": 1,
               "order": "a0041",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "zone8",
               "setRole": "-",
@@ -19973,12 +19739,6 @@
               "maxConnections": 1,
               "order": "a0042",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -19995,12 +19755,6 @@
               "label": "SUB OUT 1",
               "maxConnections": 1,
               "order": "a0044",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.sub",
               "topology": "p2p"
@@ -20017,12 +19771,6 @@
               "label": "SUB OUT 2",
               "maxConnections": 1,
               "order": "a0045",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.sub",
               "topology": "p2p"
@@ -20039,12 +19787,6 @@
               "label": "LAN",
               "maxConnections": 1,
               "order": "a0046",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -20061,12 +19803,6 @@
               "label": "RS-232",
               "maxConnections": 1,
               "order": "a0047",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -20084,12 +19820,6 @@
               "maxConnections": 1,
               "maxCurrentMa": 100,
               "order": "a0048",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.trigger12v",
               "topology": "p2p"
@@ -20107,12 +19837,6 @@
               "maxConnections": 1,
               "maxCurrentMa": 100,
               "order": "a0049",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.trigger12v",
               "topology": "p2p"
@@ -20129,12 +19853,6 @@
               "label": "AC (captive cord)",
               "maxConnections": 1,
               "order": "a0051",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -20344,12 +20062,6 @@
               "label": "HDMI IN 1",
               "maxConnections": 1,
               "order": "a0001",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -20366,12 +20078,6 @@
               "label": "HDMI IN 2",
               "maxConnections": 1,
               "order": "a0002",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -20388,12 +20094,6 @@
               "label": "HDMI IN 3",
               "maxConnections": 1,
               "order": "a0003",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -20410,12 +20110,6 @@
               "label": "HDMI IN 4",
               "maxConnections": 1,
               "order": "a0004",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -20432,12 +20126,6 @@
               "label": "HDMI IN 5",
               "maxConnections": 1,
               "order": "a0005",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -20454,12 +20142,6 @@
               "label": "HDMI IN 6",
               "maxConnections": 1,
               "order": "a0006",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -20476,12 +20158,6 @@
               "label": "HDMI IN 7",
               "maxConnections": 1,
               "order": "a0007",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -20498,12 +20174,6 @@
               "label": "HDMI FRONT",
               "maxConnections": 1,
               "order": "a0008",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -20520,12 +20190,6 @@
               "label": "HDMI OUT MAIN",
               "maxConnections": 1,
               "order": "a0010",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "returnChannel": "eArc",
               "signalFamily": "video.hdmi.2_1",
@@ -20543,12 +20207,6 @@
               "label": "HDMI OUT ZONE 1",
               "maxConnections": 1,
               "order": "a0011",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -20565,12 +20223,6 @@
               "label": "HDMI OUT ZONE 2",
               "maxConnections": 1,
               "order": "a0012",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -20587,12 +20239,6 @@
               "label": "OPTICAL IN 1",
               "maxConnections": 1,
               "order": "a0014",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.spdif_optical",
               "topology": "p2p"
@@ -20609,12 +20255,6 @@
               "label": "OPTICAL IN 2",
               "maxConnections": 1,
               "order": "a0015",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.spdif_optical",
               "topology": "p2p"
@@ -20632,12 +20272,6 @@
               "label": "COAX IN 1",
               "maxConnections": 1,
               "order": "a0016",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.spdif_coax",
               "topology": "p2p"
@@ -20655,12 +20289,6 @@
               "label": "COAX IN 2",
               "maxConnections": 1,
               "order": "a0017",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.spdif_coax",
               "topology": "p2p"
@@ -20677,12 +20305,6 @@
               "label": "ANALOG IN 1 L",
               "maxConnections": 1,
               "order": "a0019",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an1",
               "setRole": "L",
@@ -20701,12 +20323,6 @@
               "label": "ANALOG IN 1 R",
               "maxConnections": 1,
               "order": "a0020",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an1",
               "setRole": "R",
@@ -20725,12 +20341,6 @@
               "label": "ANALOG IN 2 L",
               "maxConnections": 1,
               "order": "a0021",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an2",
               "setRole": "L",
@@ -20749,12 +20359,6 @@
               "label": "ANALOG IN 2 R",
               "maxConnections": 1,
               "order": "a0022",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an2",
               "setRole": "R",
@@ -20773,12 +20377,6 @@
               "label": "ANALOG IN 3 L",
               "maxConnections": 1,
               "order": "a0023",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an3",
               "setRole": "L",
@@ -20797,12 +20395,6 @@
               "label": "ANALOG IN 3 R",
               "maxConnections": 1,
               "order": "a0024",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an3",
               "setRole": "R",
@@ -20821,12 +20413,6 @@
               "label": "ANALOG IN 4 L",
               "maxConnections": 1,
               "order": "a0025",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an4",
               "setRole": "L",
@@ -20845,12 +20431,6 @@
               "label": "ANALOG IN 4 R",
               "maxConnections": 1,
               "order": "a0026",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an4",
               "setRole": "R",
@@ -20869,12 +20449,6 @@
               "label": "PHONO L",
               "maxConnections": 1,
               "order": "a0027",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "phono",
               "setRole": "L",
@@ -20893,12 +20467,6 @@
               "label": "PHONO R",
               "maxConnections": 1,
               "order": "a0028",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "phono",
               "setRole": "R",
@@ -20917,12 +20485,6 @@
               "label": "PHONO GND",
               "maxConnections": 1,
               "order": "a0029",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "power.bonding",
               "topology": "p2p"
@@ -20941,12 +20503,6 @@
               "maxConnections": 1,
               "order": "a0031",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkFL",
               "setRole": "+",
@@ -20967,12 +20523,6 @@
               "maxConnections": 1,
               "order": "a0032",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkFL",
               "setRole": "-",
@@ -20993,12 +20543,6 @@
               "maxConnections": 1,
               "order": "a0033",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkFR",
               "setRole": "+",
@@ -21019,12 +20563,6 @@
               "maxConnections": 1,
               "order": "a0034",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkFR",
               "setRole": "-",
@@ -21045,12 +20583,6 @@
               "maxConnections": 1,
               "order": "a0035",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkC",
               "setRole": "+",
@@ -21071,12 +20603,6 @@
               "maxConnections": 1,
               "order": "a0036",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkC",
               "setRole": "-",
@@ -21097,12 +20623,6 @@
               "maxConnections": 1,
               "order": "a0037",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkSL",
               "setRole": "+",
@@ -21123,12 +20643,6 @@
               "maxConnections": 1,
               "order": "a0038",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkSL",
               "setRole": "-",
@@ -21149,12 +20663,6 @@
               "maxConnections": 1,
               "order": "a0039",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkSR",
               "setRole": "+",
@@ -21175,12 +20683,6 @@
               "maxConnections": 1,
               "order": "a0040",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkSR",
               "setRole": "-",
@@ -21201,12 +20703,6 @@
               "maxConnections": 1,
               "order": "a0041",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkSBL",
               "setRole": "+",
@@ -21227,12 +20723,6 @@
               "maxConnections": 1,
               "order": "a0042",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkSBL",
               "setRole": "-",
@@ -21253,12 +20743,6 @@
               "maxConnections": 1,
               "order": "a0043",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkSBR",
               "setRole": "+",
@@ -21279,12 +20763,6 @@
               "maxConnections": 1,
               "order": "a0044",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkSBR",
               "setRole": "-",
@@ -21303,12 +20781,6 @@
               "label": "SUB PRE OUT 1",
               "maxConnections": 1,
               "order": "a0045",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.sub",
               "topology": "p2p"
@@ -21325,12 +20797,6 @@
               "label": "SUB PRE OUT 2",
               "maxConnections": 1,
               "order": "a0046",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.sub",
               "topology": "p2p"
@@ -21348,12 +20814,6 @@
               "label": "FM ANTENNA",
               "maxConnections": 1,
               "order": "a0048",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "rf.ota",
               "topology": "p2p"
@@ -21370,12 +20830,6 @@
               "label": "LAN",
               "maxConnections": 1,
               "order": "a0050",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -21393,12 +20847,6 @@
               "maxConnections": 1,
               "order": "a0051",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -21416,12 +20864,6 @@
               "maxConnections": 1,
               "maxCurrentMa": 100,
               "order": "a0052",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.trigger12v",
               "topology": "p2p"
@@ -21439,12 +20881,6 @@
               "maxConnections": 1,
               "maxCurrentMa": 100,
               "order": "a0053",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.trigger12v",
               "topology": "p2p"
@@ -21461,12 +20897,6 @@
               "label": "RS-232",
               "maxConnections": 1,
               "order": "a0054",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21483,12 +20913,6 @@
               "label": "USB",
               "maxConnections": 1,
               "order": "a0055",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21505,12 +20929,6 @@
               "label": "PHONES",
               "maxConnections": 1,
               "order": "a0056",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.headphone",
               "topology": "p2p"
@@ -21527,12 +20945,6 @@
               "label": "AC (captive cord)",
               "maxConnections": 1,
               "order": "a0058",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -21662,12 +21074,6 @@
               "label": "LAN 1",
               "maxConnections": 1,
               "order": "a0001",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -21684,12 +21090,6 @@
               "label": "LAN 2",
               "maxConnections": 1,
               "order": "a0002",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -21706,12 +21106,6 @@
               "label": "COM 1",
               "maxConnections": 1,
               "order": "a0004",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21728,12 +21122,6 @@
               "label": "COM 2",
               "maxConnections": 1,
               "order": "a0005",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21750,12 +21138,6 @@
               "label": "COM 3",
               "maxConnections": 1,
               "order": "a0006",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21772,12 +21154,6 @@
               "label": "COM 4",
               "maxConnections": 1,
               "order": "a0007",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21794,12 +21170,6 @@
               "label": "COM 5",
               "maxConnections": 1,
               "order": "a0008",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21816,12 +21186,6 @@
               "label": "COM 6",
               "maxConnections": 1,
               "order": "a0009",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21838,12 +21202,6 @@
               "label": "COM 7",
               "maxConnections": 1,
               "order": "a0010",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21860,12 +21218,6 @@
               "label": "COM 8",
               "maxConnections": 1,
               "order": "a0011",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -21883,12 +21235,6 @@
               "maxConnections": 1,
               "order": "a0013",
               "pinoutVariant": "mono-tip-sleeve",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_emitter",
               "topology": "p2p"
@@ -21906,12 +21252,6 @@
               "maxConnections": 1,
               "order": "a0014",
               "pinoutVariant": "mono-tip-sleeve",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_emitter",
               "topology": "p2p"
@@ -21929,12 +21269,6 @@
               "maxConnections": 1,
               "order": "a0015",
               "pinoutVariant": "mono-tip-sleeve",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_emitter",
               "topology": "p2p"
@@ -21952,12 +21286,6 @@
               "maxConnections": 1,
               "order": "a0016",
               "pinoutVariant": "mono-tip-sleeve",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_emitter",
               "topology": "p2p"
@@ -21975,12 +21303,6 @@
               "maxConnections": 1,
               "order": "a0017",
               "pinoutVariant": "mono-tip-sleeve",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_emitter",
               "topology": "p2p"
@@ -21998,12 +21320,6 @@
               "maxConnections": 1,
               "order": "a0018",
               "pinoutVariant": "mono-tip-sleeve",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_emitter",
               "topology": "p2p"
@@ -22021,12 +21337,6 @@
               "maxConnections": 1,
               "order": "a0019",
               "pinoutVariant": "mono-tip-sleeve",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_emitter",
               "topology": "p2p"
@@ -22044,12 +21354,6 @@
               "maxConnections": 1,
               "order": "a0020",
               "pinoutVariant": "mono-tip-sleeve",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_emitter",
               "topology": "p2p"
@@ -22066,12 +21370,6 @@
               "label": "DIGITAL IN 1",
               "maxConnections": 1,
               "order": "a0022",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22088,12 +21386,6 @@
               "label": "DIGITAL IN 2",
               "maxConnections": 1,
               "order": "a0023",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22110,12 +21402,6 @@
               "label": "DIGITAL IN 3",
               "maxConnections": 1,
               "order": "a0024",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22132,12 +21418,6 @@
               "label": "DIGITAL IN 4",
               "maxConnections": 1,
               "order": "a0025",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22154,12 +21434,6 @@
               "label": "DIGITAL IN 5",
               "maxConnections": 1,
               "order": "a0026",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22176,12 +21450,6 @@
               "label": "DIGITAL IN 6",
               "maxConnections": 1,
               "order": "a0027",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22198,12 +21466,6 @@
               "label": "DIGITAL IN 7",
               "maxConnections": 1,
               "order": "a0028",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22220,12 +21482,6 @@
               "label": "DIGITAL IN 8",
               "maxConnections": 1,
               "order": "a0029",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22242,12 +21498,6 @@
               "label": "RELAY 1",
               "maxConnections": 1,
               "order": "a0031",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22264,12 +21514,6 @@
               "label": "RELAY 2",
               "maxConnections": 1,
               "order": "a0032",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22286,12 +21530,6 @@
               "label": "RELAY 3",
               "maxConnections": 1,
               "order": "a0033",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22308,12 +21546,6 @@
               "label": "RELAY 4",
               "maxConnections": 1,
               "order": "a0034",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -22330,12 +21562,6 @@
               "label": "CRESNET",
               "maxConnections": 1,
               "order": "a0036",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.cresnet",
               "topology": "p2p"
@@ -22352,12 +21578,6 @@
               "label": "SETUP",
               "maxConnections": 1,
               "order": "a0037",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -22374,12 +21594,6 @@
               "label": "AC IN",
               "maxConnections": 1,
               "order": "a0039",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -22482,12 +21696,6 @@
               "label": "HDMI 1",
               "maxConnections": 1,
               "order": "a0001",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "returnChannel": "arc",
               "signalFamily": "video.hdmi.2_1",
@@ -22505,12 +21713,6 @@
               "label": "HDMI 2",
               "maxConnections": 1,
               "order": "a0002",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -22527,12 +21729,6 @@
               "label": "HDMI 3",
               "maxConnections": 1,
               "order": "a0003",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -22549,12 +21745,6 @@
               "label": "HDMI 4",
               "maxConnections": 1,
               "order": "a0004",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_1",
               "topology": "p2p"
@@ -22571,12 +21761,6 @@
               "label": "OPTICAL OUT",
               "maxConnections": 1,
               "order": "a0006",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.spdif_optical",
               "topology": "p2p"
@@ -22593,12 +21777,6 @@
               "label": "LAN",
               "maxConnections": 1,
               "order": "a0008",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -22615,12 +21793,6 @@
               "label": "RS-232",
               "maxConnections": 1,
               "order": "a0009",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -22638,12 +21810,6 @@
               "maxConnections": 1,
               "order": "a0010",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -22660,12 +21826,6 @@
               "label": "AC (captive cord)",
               "maxConnections": 1,
               "order": "a0012",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -22760,12 +21920,6 @@
               "maxConnections": 1,
               "order": "a0001",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkL",
               "setRole": "+",
@@ -22786,12 +21940,6 @@
               "maxConnections": 1,
               "order": "a0002",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkL",
               "setRole": "-",
@@ -22812,12 +21960,6 @@
               "maxConnections": 1,
               "order": "a0003",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkR",
               "setRole": "+",
@@ -22838,12 +21980,6 @@
               "maxConnections": 1,
               "order": "a0004",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spkR",
               "setRole": "-",
@@ -22924,12 +22060,6 @@
               "maxConnections": 1,
               "order": "a0001",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spk",
               "setRole": "+",
@@ -22950,12 +22080,6 @@
               "maxConnections": 1,
               "order": "a0002",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "spk",
               "setRole": "-",
@@ -23049,12 +22173,6 @@
                 "role": "pd",
                 "standard": "af"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -23071,12 +22189,6 @@
               "label": "ALARM I/O",
               "maxConnections": 1,
               "order": "a0003",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -23094,12 +22206,6 @@
               "maxConnections": 1,
               "nominalVoltage": 12,
               "order": "a0005",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -23191,12 +22297,6 @@
                 "role": "pd",
                 "standard": "at"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -23214,12 +22314,6 @@
               "maxConnections": 1,
               "nominalVoltage": 48,
               "order": "a0003",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -23318,12 +22412,6 @@
                 "role": "pd",
                 "standard": "af"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -23340,12 +22428,6 @@
               "label": "CRESNET (24V)",
               "maxConnections": 1,
               "order": "a0003",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.cresnet",
               "topology": "p2p"
@@ -23363,12 +22445,6 @@
               "maxConnections": 1,
               "nominalVoltage": 24,
               "order": "a0005",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -23446,12 +22522,6 @@
               "label": "CRESNET",
               "maxConnections": 1,
               "order": "a0001",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.cresnet",
               "topology": "p2p"
@@ -23468,12 +22538,6 @@
               "label": "QS LINK (alt)",
               "maxConnections": 1,
               "order": "a0002",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.lutron_qs",
               "topology": "p2p"
@@ -23569,12 +22633,6 @@
               "maxConnections": 1,
               "order": "a0001",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "in",
               "setRole": "+",
@@ -23594,12 +22652,6 @@
               "maxConnections": 1,
               "order": "a0002",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "in",
               "setRole": "-",
@@ -23619,12 +22671,6 @@
               "maxConnections": 1,
               "order": "a0004",
               "polarity": "positive",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "out",
               "setRole": "+",
@@ -23644,12 +22690,6 @@
               "maxConnections": 1,
               "order": "a0005",
               "polarity": "negative",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "out",
               "setRole": "-",
@@ -23752,12 +22792,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -23778,12 +22812,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -23806,12 +22834,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -23832,12 +22854,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -23860,12 +22876,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -23886,12 +22896,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -23914,12 +22918,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -23940,12 +22938,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -23968,12 +22960,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -23994,12 +22980,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24022,12 +23002,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24048,12 +23022,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24076,12 +23044,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24102,12 +23064,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24130,12 +23086,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24156,12 +23106,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24184,12 +23128,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24210,12 +23148,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24238,12 +23170,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24264,12 +23190,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24292,12 +23212,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24318,12 +23232,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24346,12 +23254,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24372,12 +23274,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24400,12 +23296,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24426,12 +23316,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24454,12 +23338,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24480,12 +23358,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24508,12 +23380,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24534,12 +23400,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24562,12 +23422,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24588,12 +23442,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24616,12 +23464,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24642,12 +23484,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24670,12 +23506,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24696,12 +23526,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24724,12 +23548,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24750,12 +23568,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24778,12 +23590,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24804,12 +23610,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24832,12 +23632,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24858,12 +23652,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24886,12 +23674,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24912,12 +23694,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24940,12 +23716,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -24966,12 +23736,6 @@
               "poe": {
                 "role": "pse",
                 "standard": "btType3"
-              },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
               },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
@@ -24994,12 +23758,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25021,12 +23779,6 @@
                 "role": "pse",
                 "standard": "btType3"
               },
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25044,12 +23796,6 @@
               "linkSpeedMbps": 25000,
               "maxConnections": 1,
               "order": "a0050",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "sfp": "sfp28",
               "signalFamily": "net.dac",
@@ -25068,12 +23814,6 @@
               "linkSpeedMbps": 25000,
               "maxConnections": 1,
               "order": "a0051",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "sfp": "sfp28",
               "signalFamily": "net.dac",
@@ -25092,12 +23832,6 @@
               "linkSpeedMbps": 25000,
               "maxConnections": 1,
               "order": "a0052",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "sfp": "sfp28",
               "signalFamily": "net.dac",
@@ -25116,12 +23850,6 @@
               "linkSpeedMbps": 25000,
               "maxConnections": 1,
               "order": "a0053",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "sfp": "sfp28",
               "signalFamily": "net.dac",
@@ -25139,12 +23867,6 @@
               "label": "OOB MGMT",
               "maxConnections": 1,
               "order": "a0055",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25161,12 +23883,6 @@
               "label": "CONSOLE",
               "maxConnections": 1,
               "order": "a0056",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -25183,12 +23899,6 @@
               "label": "PSU A",
               "maxConnections": 1,
               "order": "a0058",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -25208,12 +23918,6 @@
               "label": "PSU B",
               "maxConnections": 1,
               "order": "a0059",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -25424,12 +24128,6 @@
               "label": "01",
               "maxConnections": 1,
               "order": "a0001",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25446,12 +24144,6 @@
               "label": "01",
               "maxConnections": 1,
               "order": "a0003",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25468,12 +24160,6 @@
               "label": "02",
               "maxConnections": 1,
               "order": "a0004",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25490,12 +24176,6 @@
               "label": "02",
               "maxConnections": 1,
               "order": "a0005",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25512,12 +24192,6 @@
               "label": "03",
               "maxConnections": 1,
               "order": "a0006",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25534,12 +24208,6 @@
               "label": "03",
               "maxConnections": 1,
               "order": "a0007",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25556,12 +24224,6 @@
               "label": "04",
               "maxConnections": 1,
               "order": "a0008",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25578,12 +24240,6 @@
               "label": "04",
               "maxConnections": 1,
               "order": "a0009",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25600,12 +24256,6 @@
               "label": "05",
               "maxConnections": 1,
               "order": "a0010",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25622,12 +24272,6 @@
               "label": "05",
               "maxConnections": 1,
               "order": "a0011",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25644,12 +24288,6 @@
               "label": "06",
               "maxConnections": 1,
               "order": "a0012",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25666,12 +24304,6 @@
               "label": "06",
               "maxConnections": 1,
               "order": "a0013",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25688,12 +24320,6 @@
               "label": "07",
               "maxConnections": 1,
               "order": "a0014",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25710,12 +24336,6 @@
               "label": "07",
               "maxConnections": 1,
               "order": "a0015",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25732,12 +24352,6 @@
               "label": "08",
               "maxConnections": 1,
               "order": "a0016",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25754,12 +24368,6 @@
               "label": "08",
               "maxConnections": 1,
               "order": "a0017",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25776,12 +24384,6 @@
               "label": "09",
               "maxConnections": 1,
               "order": "a0018",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25798,12 +24400,6 @@
               "label": "09",
               "maxConnections": 1,
               "order": "a0019",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25820,12 +24416,6 @@
               "label": "10",
               "maxConnections": 1,
               "order": "a0020",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25842,12 +24432,6 @@
               "label": "10",
               "maxConnections": 1,
               "order": "a0021",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25864,12 +24448,6 @@
               "label": "11",
               "maxConnections": 1,
               "order": "a0022",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25886,12 +24464,6 @@
               "label": "11",
               "maxConnections": 1,
               "order": "a0023",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25908,12 +24480,6 @@
               "label": "12",
               "maxConnections": 1,
               "order": "a0024",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25930,12 +24496,6 @@
               "label": "12",
               "maxConnections": 1,
               "order": "a0025",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25952,12 +24512,6 @@
               "label": "13",
               "maxConnections": 1,
               "order": "a0026",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25974,12 +24528,6 @@
               "label": "13",
               "maxConnections": 1,
               "order": "a0027",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -25996,12 +24544,6 @@
               "label": "14",
               "maxConnections": 1,
               "order": "a0028",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26018,12 +24560,6 @@
               "label": "14",
               "maxConnections": 1,
               "order": "a0029",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26040,12 +24576,6 @@
               "label": "15",
               "maxConnections": 1,
               "order": "a0030",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26062,12 +24592,6 @@
               "label": "15",
               "maxConnections": 1,
               "order": "a0031",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26084,12 +24608,6 @@
               "label": "16",
               "maxConnections": 1,
               "order": "a0032",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26106,12 +24624,6 @@
               "label": "16",
               "maxConnections": 1,
               "order": "a0033",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26128,12 +24640,6 @@
               "label": "17",
               "maxConnections": 1,
               "order": "a0034",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26150,12 +24656,6 @@
               "label": "17",
               "maxConnections": 1,
               "order": "a0035",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26172,12 +24672,6 @@
               "label": "18",
               "maxConnections": 1,
               "order": "a0036",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26194,12 +24688,6 @@
               "label": "18",
               "maxConnections": 1,
               "order": "a0037",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26216,12 +24704,6 @@
               "label": "19",
               "maxConnections": 1,
               "order": "a0038",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26238,12 +24720,6 @@
               "label": "19",
               "maxConnections": 1,
               "order": "a0039",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26260,12 +24736,6 @@
               "label": "20",
               "maxConnections": 1,
               "order": "a0040",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26282,12 +24752,6 @@
               "label": "20",
               "maxConnections": 1,
               "order": "a0041",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26304,12 +24768,6 @@
               "label": "21",
               "maxConnections": 1,
               "order": "a0042",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26326,12 +24784,6 @@
               "label": "21",
               "maxConnections": 1,
               "order": "a0043",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26348,12 +24800,6 @@
               "label": "22",
               "maxConnections": 1,
               "order": "a0044",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26370,12 +24816,6 @@
               "label": "22",
               "maxConnections": 1,
               "order": "a0045",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26392,12 +24832,6 @@
               "label": "23",
               "maxConnections": 1,
               "order": "a0046",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26414,12 +24848,6 @@
               "label": "23",
               "maxConnections": 1,
               "order": "a0047",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26436,12 +24864,6 @@
               "label": "24",
               "maxConnections": 1,
               "order": "a0048",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26458,12 +24880,6 @@
               "label": "24",
               "maxConnections": 1,
               "order": "a0049",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26550,12 +24966,6 @@
               "label": "AC IN (captive cord)",
               "maxConnections": 1,
               "order": "a0001",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -26576,12 +24986,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 1, delay 0 ms",
               "order": "a0003",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26602,12 +25006,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 1, delay 0 ms",
               "order": "a0004",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26628,12 +25026,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 1, delay 0 ms",
               "order": "a0005",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26654,12 +25046,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 1, delay 0 ms",
               "order": "a0006",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26680,12 +25066,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 2, delay 1000 ms",
               "order": "a0007",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26706,12 +25086,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 2, delay 1000 ms",
               "order": "a0008",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26732,12 +25106,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 2, delay 1000 ms",
               "order": "a0009",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26758,12 +25126,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 2, delay 1000 ms",
               "order": "a0010",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26784,12 +25146,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 3, delay 2000 ms",
               "order": "a0011",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26810,12 +25166,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 3, delay 2000 ms",
               "order": "a0012",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26836,12 +25186,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 3, delay 2000 ms",
               "order": "a0013",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26862,12 +25206,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 3, delay 2000 ms",
               "order": "a0014",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26888,12 +25226,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 4, delay 3000 ms",
               "order": "a0015",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26914,12 +25246,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 4, delay 3000 ms",
               "order": "a0016",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26940,12 +25266,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 4, delay 3000 ms",
               "order": "a0017",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26966,12 +25286,6 @@
               "maxConnections": 1,
               "notes": "Sequence step 4, delay 3000 ms",
               "order": "a0018",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "outlet"
               },
@@ -26991,12 +25305,6 @@
               "label": "REMOTE ON",
               "maxConnections": 1,
               "order": "a0020",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.contact",
               "topology": "p2p"
@@ -27014,12 +25322,6 @@
               "maxConnections": 1,
               "maxCurrentMa": 100,
               "order": "a0021",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.trigger12v",
               "topology": "p2p"
@@ -27037,12 +25339,6 @@
               "maxConnections": 1,
               "maxCurrentMa": 100,
               "order": "a0022",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.trigger12v",
               "topology": "p2p"
@@ -27059,12 +25355,6 @@
               "label": "LAN",
               "maxConnections": 1,
               "order": "a0023",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -27081,12 +25371,6 @@
               "label": "RS-232",
               "maxConnections": 1,
               "order": "a0024",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -27204,12 +25488,6 @@
               "label": "RF IN",
               "maxConnections": 1,
               "order": "a0001",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "rf.catv",
               "topology": "p2p"
@@ -27227,12 +25505,6 @@
               "label": "RF OUT (loop)",
               "maxConnections": 1,
               "order": "a0002",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "rf.catv",
               "topology": "p2p"
@@ -27249,12 +25521,6 @@
               "label": "HDMI OUT",
               "maxConnections": 1,
               "order": "a0004",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27271,12 +25537,6 @@
               "label": "AUDIO OUT L",
               "maxConnections": 1,
               "order": "a0006",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an",
               "setRole": "L",
@@ -27295,12 +25555,6 @@
               "label": "AUDIO OUT R",
               "maxConnections": 1,
               "order": "a0007",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "setKey": "an",
               "setRole": "R",
@@ -27320,12 +25574,6 @@
               "label": "COAX DIGITAL",
               "maxConnections": 1,
               "order": "a0008",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.spdif_coax",
               "topology": "p2p"
@@ -27342,12 +25590,6 @@
               "label": "OPTICAL",
               "maxConnections": 1,
               "order": "a0009",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.spdif_optical",
               "topology": "p2p"
@@ -27364,12 +25606,6 @@
               "label": "LAN",
               "maxConnections": 1,
               "order": "a0011",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -27386,12 +25622,6 @@
               "label": "USB",
               "maxConnections": 1,
               "order": "a0012",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -27409,12 +25639,6 @@
               "maxConnections": 1,
               "order": "a0013",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -27431,12 +25655,6 @@
               "label": "AC (captive cord)",
               "maxConnections": 1,
               "order": "a0015",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -27550,12 +25768,6 @@
               "label": "HDMI IN 01",
               "maxConnections": 1,
               "order": "a0001",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27572,12 +25784,6 @@
               "label": "HDMI IN 02",
               "maxConnections": 1,
               "order": "a0002",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27594,12 +25800,6 @@
               "label": "HDMI IN 03",
               "maxConnections": 1,
               "order": "a0003",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27616,12 +25816,6 @@
               "label": "HDMI IN 04",
               "maxConnections": 1,
               "order": "a0004",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27638,12 +25832,6 @@
               "label": "HDMI IN 05",
               "maxConnections": 1,
               "order": "a0005",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27660,12 +25848,6 @@
               "label": "HDMI IN 06",
               "maxConnections": 1,
               "order": "a0006",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27682,12 +25864,6 @@
               "label": "HDMI IN 07",
               "maxConnections": 1,
               "order": "a0007",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27704,12 +25880,6 @@
               "label": "HDMI IN 08",
               "maxConnections": 1,
               "order": "a0008",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27726,12 +25896,6 @@
               "label": "HDMI IN 09",
               "maxConnections": 1,
               "order": "a0009",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27748,12 +25912,6 @@
               "label": "HDMI IN 10",
               "maxConnections": 1,
               "order": "a0010",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27770,12 +25928,6 @@
               "label": "HDMI IN 11",
               "maxConnections": 1,
               "order": "a0011",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27792,12 +25944,6 @@
               "label": "HDMI IN 12",
               "maxConnections": 1,
               "order": "a0012",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27814,12 +25960,6 @@
               "label": "HDMI IN 13",
               "maxConnections": 1,
               "order": "a0013",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27836,12 +25976,6 @@
               "label": "HDMI IN 14",
               "maxConnections": 1,
               "order": "a0014",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27858,12 +25992,6 @@
               "label": "HDMI IN 15",
               "maxConnections": 1,
               "order": "a0015",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27880,12 +26008,6 @@
               "label": "HDMI IN 16",
               "maxConnections": 1,
               "order": "a0016",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27902,12 +26024,6 @@
               "label": "HDMI OUT 01",
               "maxConnections": 1,
               "order": "a0018",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27924,12 +26040,6 @@
               "label": "HDMI OUT 02",
               "maxConnections": 1,
               "order": "a0019",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27946,12 +26056,6 @@
               "label": "HDMI OUT 03",
               "maxConnections": 1,
               "order": "a0020",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27968,12 +26072,6 @@
               "label": "HDMI OUT 04",
               "maxConnections": 1,
               "order": "a0021",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -27990,12 +26088,6 @@
               "label": "HDMI OUT 05",
               "maxConnections": 1,
               "order": "a0022",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28012,12 +26104,6 @@
               "label": "HDMI OUT 06",
               "maxConnections": 1,
               "order": "a0023",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28034,12 +26120,6 @@
               "label": "HDMI OUT 07",
               "maxConnections": 1,
               "order": "a0024",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28056,12 +26136,6 @@
               "label": "HDMI OUT 08",
               "maxConnections": 1,
               "order": "a0025",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28078,12 +26152,6 @@
               "label": "HDMI OUT 09",
               "maxConnections": 1,
               "order": "a0026",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28100,12 +26168,6 @@
               "label": "HDMI OUT 10",
               "maxConnections": 1,
               "order": "a0027",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28122,12 +26184,6 @@
               "label": "HDMI OUT 11",
               "maxConnections": 1,
               "order": "a0028",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28144,12 +26200,6 @@
               "label": "HDMI OUT 12",
               "maxConnections": 1,
               "order": "a0029",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28166,12 +26216,6 @@
               "label": "HDMI OUT 13",
               "maxConnections": 1,
               "order": "a0030",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28188,12 +26232,6 @@
               "label": "HDMI OUT 14",
               "maxConnections": 1,
               "order": "a0031",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28210,12 +26248,6 @@
               "label": "HDMI OUT 15",
               "maxConnections": 1,
               "order": "a0032",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28232,12 +26264,6 @@
               "label": "HDMI OUT 16",
               "maxConnections": 1,
               "order": "a0033",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0",
               "topology": "p2p"
@@ -28255,12 +26281,6 @@
               "label": "AUD OUT 01",
               "maxConnections": 1,
               "order": "a0035",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28278,12 +26298,6 @@
               "label": "AUD OUT 02",
               "maxConnections": 1,
               "order": "a0036",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28301,12 +26315,6 @@
               "label": "AUD OUT 03",
               "maxConnections": 1,
               "order": "a0037",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28324,12 +26332,6 @@
               "label": "AUD OUT 04",
               "maxConnections": 1,
               "order": "a0038",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28347,12 +26349,6 @@
               "label": "AUD OUT 05",
               "maxConnections": 1,
               "order": "a0039",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28370,12 +26366,6 @@
               "label": "AUD OUT 06",
               "maxConnections": 1,
               "order": "a0040",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28393,12 +26383,6 @@
               "label": "AUD OUT 07",
               "maxConnections": 1,
               "order": "a0041",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28416,12 +26400,6 @@
               "label": "AUD OUT 08",
               "maxConnections": 1,
               "order": "a0042",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28439,12 +26417,6 @@
               "label": "AUD OUT 09",
               "maxConnections": 1,
               "order": "a0043",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28462,12 +26434,6 @@
               "label": "AUD OUT 10",
               "maxConnections": 1,
               "order": "a0044",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28485,12 +26451,6 @@
               "label": "AUD OUT 11",
               "maxConnections": 1,
               "order": "a0045",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28508,12 +26468,6 @@
               "label": "AUD OUT 12",
               "maxConnections": 1,
               "order": "a0046",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28531,12 +26485,6 @@
               "label": "AUD OUT 13",
               "maxConnections": 1,
               "order": "a0047",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28554,12 +26502,6 @@
               "label": "AUD OUT 14",
               "maxConnections": 1,
               "order": "a0048",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28577,12 +26519,6 @@
               "label": "AUD OUT 15",
               "maxConnections": 1,
               "order": "a0049",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28600,12 +26536,6 @@
               "label": "AUD OUT 16",
               "maxConnections": 1,
               "order": "a0050",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
@@ -28622,12 +26552,6 @@
               "label": "LAN",
               "maxConnections": 1,
               "order": "a0052",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -28644,12 +26568,6 @@
               "label": "RS-232",
               "maxConnections": 1,
               "order": "a0053",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -28667,12 +26585,6 @@
               "maxConnections": 1,
               "order": "a0054",
               "pinoutVariant": "xantech-stereo",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "renamedFrom": [],
               "signalFamily": "ctl.ir_receiver",
               "topology": "p2p"
@@ -28689,12 +26601,6 @@
               "label": "AC IN",
               "maxConnections": 1,
               "order": "a0056",
-              "position": {
-                "ruOffset": 0,
-                "xFineNm": 0,
-                "xTwelfth": 0,
-                "yFineNm": 0
-              },
               "power": {
                 "role": "inlet"
               },
@@ -28826,9 +26732,9 @@
   },
   "generator": "RackPal",
   "id": "0190f000-0000-7000-8000-000000000000",
-  "minReaderVersion": 2,
+  "minReaderVersion": 3,
   "modifiedAt": "2026-07-28T09:00:00.000Z",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "sequence": 0,
   "unknown": {}
 }

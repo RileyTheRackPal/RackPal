@@ -265,8 +265,17 @@ $ErrorActionPreference = 'Stop'
 # second time this milestone a fixed extent has been the bug and the second time
 # only a pumped widget could see it.
 
+# RE-MEASURED 2026-08-30 at `#226` (M4-K1, schema 3): core 3562 -> 3570, the
+# eight `v2 -> v3` cases in `migration_corpus_test.dart`. NOTHING WAS REMOVED.
+# `PortDef.position` became nullable, so 27 files stopped passing
+# `kUnplacedPanelPosition`; that is an argument going away, not a case. Two
+# checked-in goldens were REGENERATED deliberately (`byte_roundtrip` and the
+# schematic perf fixture) and a THIRD was captured first, at v2, because
+# regenerating the only file that carried zero positions would have left the
+# new migration with no real-file coverage at all.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3562
+    'rackpal_core'   = 3570
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1324

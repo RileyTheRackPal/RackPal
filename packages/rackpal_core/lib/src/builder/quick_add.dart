@@ -45,7 +45,7 @@
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/builder/label_pattern.dart';
 import 'package:rackpal_core/src/builder/port_commands.dart'
-    show AddBankCommand, AddPortCommand, autoPortKey, kUnplacedPanelPosition;
+    show AddBankCommand, AddPortCommand, autoPortKey;
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackpal_core/src/model/placement.dart';
@@ -872,7 +872,6 @@ final class QuickAddBatch {
         connector: plan.connector ?? const ConnectorTypeId(''),
         signalFamily: plan.family ?? const SignalFamilyId(''),
         face: face,
-        position: kUnplacedPanelPosition,
         order: _portOrder,
         direction: direction,
         topology: family?.defaultTopology ?? PortTopology.p2p,

@@ -18,15 +18,14 @@
 import 'package:rackpal_core/src/model/placement.dart' show Face;
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/ids.dart';
-import 'package:rackpal_core/src/units/len.dart';
 
-const _kZeroPosition = PanelPosition(
-  ruOffset: 0,
-  xTwelfth: 0,
-  xFineNm: Len.zero,
-  yFineNm: Len.zero,
-);
-
+/// **NO PANEL POSITION IS AUTHORED HERE**, and that is DR-105 §11.104.2:
+/// the layout is DERIVED for all 727 shipped ports, so `PortDef.position`
+/// is left null and means "automatic". This file used to pass a
+/// `_kZeroPosition` constant, a second spelling of `port_commands.dart`'s
+/// `kUnplacedPanelPosition`, and between them the two wrote the origin
+/// into every file this product has ever produced.
+///
 /// Accumulates [PortDef]s and their [BankDef]s for one [TemplateBody],
 /// auto-numbering `order` and auto-creating a bank (presentation grouping,
 /// CR-055) the first time its key is used — the same "first use wins"
@@ -110,9 +109,9 @@ final class PortBuilder {
     String label, {
     required String connector,
     required String family,
+    required String bank,
     PortDirection dir = PortDirection.bidirectional,
     Face face = Face.rear,
-    required String bank,
     String? bankLabel,
     SymbolSide bankSide = SymbolSide.left,
     String? pinout,
@@ -141,7 +140,6 @@ final class PortBuilder {
         connector: ConnectorTypeId(connector),
         signalFamily: SignalFamilyId(family),
         face: face,
-        position: _kZeroPosition,
         order: _next(),
         direction: dir,
         bankKey: bank,

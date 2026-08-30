@@ -3143,13 +3143,18 @@ JsonMap _encodePortDef(PortDef p) {
     'maxConnections': p.maxConnections,
     'gender': encodeEnumName(p.gender),
     'face': encodeEnumName(p.face),
-    // Required per the Dart model even though the doc's worked example
-    // (§6.2) omits "position" from every port shown — see the
-    // PanelPosition doc comment in template.dart for why this type is a
-    // judgement call to begin with. Always emitted, never omittable.
-    'position': _encodePanelPosition(p.position),
     'order': p.order.v,
   };
+  // OMITTED WHEN THE LAYOUT IS AUTOMATIC (DR-105 §11.104.3), which the
+  // doc's own worked example (§6.2) has always shown by leaving
+  // `position` off every port. It was written unconditionally while the
+  // field was non-nullable and every value was `kUnplacedPanelPosition`,
+  // so the file carried 727 copies of the origin per starter and said
+  // nothing by it. An absent key is G4's shape for unknown (CR-114) and
+  // is what the schema-3 migration produces from those zeros.
+  if (p.position case final position?) {
+    json['position'] = _encodePanelPosition(position);
+  }
   putIfNotNull(json, 'designatorHint', p.designatorHint);
   // `returnChannel` is a plain 2-value enum on the Dart model, NOT the
   // object shape docs/02-data-model.md §6.2 shows — see the naming-drift
@@ -3198,9 +3203,11 @@ PortDef _decodePortDef(JsonMap json) => PortDef(
     asStr(json['face'], 'PortDef.face'),
     'PortDef.face',
   ),
-  position: _decodePanelPosition(
-    asJsonMap(json['position'], 'PortDef.position'),
-  ),
+  // ABSENT MEANS AUTOMATIC. `asJsonMap` on a missing key throws, which
+  // is right for a required field and wrong for this one since DR-105.
+  position: json['position'] == null
+      ? null
+      : _decodePanelPosition(asJsonMap(json['position'], 'PortDef.position')),
   order: FracIndex(asStr(json['order'], 'PortDef.order')),
   renamedFrom: [
     for (final v in asJsonList(

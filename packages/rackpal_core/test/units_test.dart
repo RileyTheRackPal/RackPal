@@ -124,12 +124,23 @@ void main() {
       expect(kPinPitch, equals(2));
       expect(kBankCollapseThreshold, equals(8));
       expect(kMaxRackHeightU, equals(60));
+      // A LITERAL ON PURPOSE, and it is the point of the case: pinning
+      // the version to `kSchemaVersion` would assert nothing at all. A
+      // bump has to be a deliberate edit HERE, with a sentence saying
+      // what moved, so a format change cannot arrive as a silent
+      // constant.
+      //
       // 2, not 1: the encoder stopped writing an explicit
       // `"outletsProvided": 0` for an unauthored outlet count and started
-      // omitting the key, which a v1 reader cannot survive. See
-      // `constants.dart`'s version history and `migrateV1ToV2`.
-      expect(kSchemaVersion, equals(2));
-      expect(kMinReaderVersion, equals(2));
+      // omitting the key, which a v1 reader cannot survive.
+      //
+      // 3, not 2: `PortDef.position` became NULLABLE with null meaning
+      // "the layout is automatic" (DR-105 §11.104.3), and the encoder
+      // stopped writing the origin on every port. A v2 reader calls
+      // `asJsonMap` on the absent key and throws, so `minReaderVersion`
+      // moved with it. See `constants.dart` and `migrateV2ToV3`.
+      expect(kSchemaVersion, equals(3));
+      expect(kMinReaderVersion, equals(3));
     });
   });
 

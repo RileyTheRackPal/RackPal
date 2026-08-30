@@ -226,12 +226,20 @@ void main() {
       expect(alreadyStricter['minReaderVersion'], 7);
     });
 
-    test('the chain runs BOTH migrations for a v0 file', () {
+    test('the chain runs EVERY migration for a v0 file', () {
+      // Was "BOTH" when there were two. It asserts the same property and
+      // is pinned to `kSchemaVersion` rather than to a literal now, so
+      // the next bump moves this case by adding a step rather than by
+      // editing a number somebody has to notice.
       final result = migrateToCurrent(_v0Fixture());
 
       expect(result, isA<Ok<MigratedDoc>>());
       final raw = (result as Ok<MigratedDoc>).value.raw;
-      expect(raw['schemaVersion'], 2, reason: 'v0 -> v1 -> v2');
+      expect(
+        raw['schemaVersion'],
+        kSchemaVersion,
+        reason: 'v0 -> v1 -> v2 -> v3, whatever the chain currently is',
+      );
       expect(raw['sequence'], 5, reason: 'v0 -> v1 still ran');
       expect(
         raw['minReaderVersion'],
@@ -395,6 +403,180 @@ void main() {
         reason: 'an Error escaping here is an unhandled future upstream',
       );
       expect((result as Err<RackDocument>).error, isA<Error>());
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // v2 -> v3: `PortDef.position` becomes nullable (DR-105 §11.104.3/.4)
+  // ═══════════════════════════════════════════════════════════════════
+  group('v2 -> v3: the panel position that meant nothing', () {
+    const codec = JsonDocumentCodec();
+    const path = 'test/fixtures/v2_ports_with_positions.rmpj.json';
+
+    Uint8List v2Bytes() => File(path).readAsBytesSync();
+
+    RackDocument openV2() {
+      final result = codec.read(v2Bytes());
+      expect(
+        result,
+        isA<Ok<RackDocument>>(),
+        reason: 'a v2 document must still open: ${result is Err ? result : ''}',
+      );
+      return (result as Ok<RackDocument>).value;
+    }
+
+    test('the fixture really is a v2 file carrying zero positions', () {
+      // THE CONTROL. A migration fixture whose input does not contain the
+      // thing being migrated proves the code compiles, not that it works,
+      // and this corpus has a v1 sibling that exists for the same reason.
+      final raw = jsonDecode(utf8.decode(v2Bytes())) as Map<String, Object?>;
+      expect(raw['schemaVersion'], 2);
+      expect(
+        utf8.decode(v2Bytes()).split('"position"').length - 1,
+        greaterThan(300),
+        reason: '349 ports, every one of them at the origin',
+      );
+    });
+
+    test('a real v2 file on disk still opens', () {
+      expect(openV2().templates, isNotEmpty);
+    });
+
+    test('EVERY zero position becomes null, which means AUTO', () {
+      // The whole of the migration. Read untouched, all 349 would mean
+      // "manually placed at the origin" and the auto-layout would never
+      // run for any template anybody had ever saved.
+      final doc = openV2();
+      final ports = [
+        for (final snapshot in doc.templates.values) ...snapshot.body.ports,
+      ];
+      expect(ports, isNotEmpty, reason: 'the fixture has ports at all');
+      expect(
+        ports.where((p) => p.position != null),
+        isEmpty,
+        reason: 'a zero position is an UNPLACED port, not a placed one',
+      );
+    });
+
+    test('it comes back stamped v3, so the next save is honestly labelled', () {
+      final doc = openV2();
+      expect(doc.schemaVersion, kSchemaVersion);
+      expect(
+        doc.minReaderVersion,
+        kMinReaderVersion,
+        reason:
+            'this build re-saves it with `position` omitted; a stamp of 2 '
+            'would promise a v2 reader it can open bytes whose absent '
+            'key makes its `asJsonMap` throw',
+      );
+    });
+
+    test('re-saving it round-trips byte-exactly from then on (CR-117)', () {
+      // A MIGRATED file is not byte-equal to its INPUT, by definition.
+      // What must hold is that the migrated form is stable: save it once
+      // and every later load-and-save is a no-op.
+      final once = codec.write(openV2());
+      final twice = codec.write(
+        (codec.read(once) as Ok<RackDocument>).value,
+      );
+      expect(utf8.decode(twice), utf8.decode(once));
+    });
+
+    test('a NON-zero position would survive, and one is proven to', () {
+      // The half that makes the migration a rule rather than a delete.
+      // Hand-built rather than taken from the corpus, because no producer
+      // of a non-zero position existed at v2 and so no v2 file has one.
+      final raw = jsonDecode(utf8.decode(v2Bytes())) as Map<String, Object?>;
+      final templates =
+          (raw['document']! as Map)['templates']! as Map<String, Object?>;
+      final firstBody =
+          (templates.values.first! as Map)['body']! as Map<String, Object?>;
+      final ports = firstBody['ports']! as List;
+      (ports.first! as Map)['position'] = <String, Object?>{
+        'ruOffset': 1,
+        'xTwelfth': 0,
+        'xFineNm': 0,
+        'yFineNm': 0,
+      };
+      final migrated = migrateV2ToV3(JsonMap.of(raw));
+      final outPorts =
+          ((((migrated['document']! as Map)['templates']! as Map).values.first!
+                      as Map)['body']!
+                  as Map)['ports']!
+              as List;
+      expect(
+        (outPorts.first! as Map).containsKey('position'),
+        isTrue,
+        reason: 'a nudged port keeps its coordinate',
+      );
+    });
+
+    test('a SheetItem position is a different type and is untouched', () {
+      // `SheetItem.position` is `{gx, gy}` and shares only the key name.
+      // The guard checks for exactly the four PanelPosition components,
+      // which is why `c_fuller_project`'s sheet item survived the
+      // regeneration with its position intact.
+      final raw = <String, Object?>{
+        'document': <String, Object?>{
+          'sheets': <String, Object?>{
+            's1': <String, Object?>{
+              'items': <String, Object?>{
+                'i1': <String, Object?>{
+                  'position': <String, Object?>{'gx': 0, 'gy': 0},
+                },
+              },
+            },
+          },
+        },
+      };
+      final migrated = migrateV2ToV3(JsonMap.of(raw));
+      final item =
+          ((((migrated['document']! as Map)['sheets']! as Map)['s1']!
+                      as Map)['items']!
+                  as Map)['i1']!
+              as Map;
+      expect(item.containsKey('position'), isTrue);
+    });
+
+    test('a malformed port is left exactly as it was', () {
+      // A migration that threw on a bad port would turn a recoverable
+      // file into an unopenable one; the decoder downstream reports the
+      // real problem with the real key path.
+      final raw = <String, Object?>{
+        'document': <String, Object?>{
+          'templates': <String, Object?>{
+            't': <String, Object?>{
+              'body': <String, Object?>{
+                'ports': <Object?>[
+                  'not a map',
+                  <String, Object?>{'position': 'not a map either'},
+                  <String, Object?>{
+                    // Three of four components: malformed, not zero.
+                    'position': <String, Object?>{
+                      'ruOffset': 0,
+                      'xTwelfth': 0,
+                      'xFineNm': 0,
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        },
+      };
+      final migrated = migrateV2ToV3(JsonMap.of(raw));
+      final ports =
+          ((((migrated['document']! as Map)['templates']! as Map)['t']!
+                      as Map)['body']!
+                  as Map)['ports']!
+              as List;
+      expect(ports[0], 'not a map');
+      expect((ports[1]! as Map)['position'], 'not a map either');
+      expect(
+        (ports[2]! as Map).containsKey('position'),
+        isTrue,
+        reason: 'a map missing yFineNm is not a zero position',
+      );
     });
   });
 }

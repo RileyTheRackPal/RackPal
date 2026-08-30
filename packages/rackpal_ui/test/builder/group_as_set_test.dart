@@ -34,7 +34,6 @@ PortDef _port(String key, {required String order}) => PortDef(
   connector: const ConnectorTypeId('conn.rca'),
   signalFamily: const SignalFamilyId('audio.line_unbal'),
   face: Face.rear,
-  position: kUnplacedPanelPosition,
   order: FracIndex(order),
 );
 

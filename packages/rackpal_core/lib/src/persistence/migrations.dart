@@ -129,6 +129,7 @@ final class UnmigratableSchemaError implements Exception {
 const Map<int, Migration> migrations = <int, Migration>{
   0: migrateV0ToV1,
   1: migrateV1ToV2,
+  2: migrateV2ToV3,
 };
 
 /// Synthetic v0 -> v1 migration (see [migrations]'s doc comment): v0
@@ -196,6 +197,75 @@ JsonMap migrateV1ToV2(JsonMap raw) {
     migrated[kKeyMinReaderVersion] = kMinReaderVersion;
   }
   return migrated;
+}
+
+/// v2 -> v3: **drops a `PortDef.position` whose four components are all
+/// zero** (`#226`, DR-105 §11.104.4).
+///
+/// ══════════════════════════════════════════════════════════════════════
+/// WITHOUT THIS, EVERY FILE EVER SAVED READS AS HAND-PLACED
+/// ══════════════════════════════════════════════════════════════════════
+/// DR-105 §11.104.3 makes `position` nullable, with null meaning "the
+/// layout is automatic". Every v2 file writes the key on every port,
+/// **727 of them in each of the four checked-in starters**, all zero,
+/// because `kUnplacedPanelPosition` was the only value any producer had.
+/// Read at v3 untouched, all of them would mean *"manually placed at the
+/// origin"* and the auto-layout would never run for anything anybody had
+/// saved.
+///
+/// ══════════════════════════════════════════════════════════════════════
+/// IT IS EXACT, NOT A HEURISTIC, AND THE DIFFERENCE MATTERS
+/// ══════════════════════════════════════════════════════════════════════
+/// A "drop it if it looks like a default" rule is usually a guess about
+/// intent. This one is not: **no producer of a non-zero position has ever
+/// existed**, so in every file that can exist at v2 a zero position IS an
+/// unplaced port, with no exceptions to reason about. A genuine
+/// nudge-to-origin authored after DR-105 is written into a v3 file and is
+/// never seen by this step.
+///
+/// **A PORT IT CANNOT PARSE IS LEFT EXACTLY AS IT WAS.** A migration that
+/// threw on a malformed port would turn a recoverable file into an
+/// unopenable one; the decoder downstream reports the real problem with
+/// the real key path.
+JsonMap migrateV2ToV3(JsonMap raw) {
+  final migrated = JsonMap.of(raw);
+  final document = migrated[kKeyDocument];
+  if (document is Map) {
+    final templates = document['templates'];
+    if (templates is Map) {
+      for (final snapshot in templates.values) {
+        if (snapshot is! Map) continue;
+        final body = snapshot['body'];
+        if (body is! Map) continue;
+        final ports = body['ports'];
+        if (ports is! List) continue;
+        for (final port in ports) {
+          if (port is! Map) continue;
+          if (_isZeroPanelPosition(port['position'])) port.remove('position');
+        }
+      }
+    }
+  }
+  migrated[kKeySchemaVersion] = 3;
+  final declared = migrated[kKeyMinReaderVersion];
+  if (declared is! int || declared < kMinReaderVersion) {
+    migrated[kKeyMinReaderVersion] = kMinReaderVersion;
+  }
+  return migrated;
+}
+
+/// Whether [raw] is a panel position with all four components zero.
+///
+/// **ALL FOUR, AND A MISSING ONE IS NOT A ZERO.** A map that omits
+/// `yFineNm` is not a zero position, it is a malformed one, and dropping
+/// it would silently discard whatever the other three said.
+bool _isZeroPanelPosition(Object? raw) {
+  if (raw is! Map) return false;
+  const keys = ['ruOffset', 'xTwelfth', 'xFineNm', 'yFineNm'];
+  for (final key in keys) {
+    if (raw[key] != 0) return false;
+  }
+  return raw.length == keys.length;
 }
 
 /// Runs [raw] (a freshly `jsonDecode`d root envelope map) through the

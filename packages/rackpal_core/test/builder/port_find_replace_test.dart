@@ -20,7 +20,6 @@ PortDef _port(
   connector: const ConnectorTypeId('conn.hdmi_a'),
   signalFamily: const SignalFamilyId('sig.hdmi'),
   face: Face.rear,
-  position: kUnplacedPanelPosition,
   order: FracIndex(order),
   designatorHint: designator,
   notes: notes,

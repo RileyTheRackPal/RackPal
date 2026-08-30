@@ -20,7 +20,6 @@ PortDef _port(
   connector: ConnectorTypeId(connector),
   signalFamily: SignalFamilyId(family),
   face: Face.rear,
-  position: kUnplacedPanelPosition,
   order: FracIndex(order),
   direction: direction,
   topology: topology,

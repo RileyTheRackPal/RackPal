@@ -62,9 +62,9 @@
   },
   "generator": "RackPal",
   "id": "0190e3c1-0000-7000-8000-000000000000",
-  "minReaderVersion": 2,
+  "minReaderVersion": 3,
   "modifiedAt": "2026-07-18T09:00:00.000Z",
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "sequence": 0,
   "unknown": {}
 }
