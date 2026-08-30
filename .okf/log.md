@@ -1,5 +1,47 @@
 # Update Log
 
+## 2026-08-30 (sixth entry)
+
+* **Ruling**: [DR-102](/decisions/dr-102-the-palette-answers-for-every-shelf.md).
+  The palette answers for the document AND the loaded libraries, one merged list
+  tagged by source, and **a template id in two sources is two rows**. Its census
+  found the chapter's hardest item already built: `TemplateProvenance` existed on
+  a runtime object in exactly the prescribed shape, so the architectural call had
+  been made at M4-S. Fifth time in one milestone a chapter written from an
+  absence met a filled one, and the first time in the cheap direction.
+* **Ruling**: [DR-103](/decisions/dr-103-a-library-row-copies-itself-in.md).
+  **DR-102's palette, built literally, lists rows the placement path cannot
+  resolve**: `buildPlaceFromCatalogCommand` has resolved out of `doc.templates`
+  since M0, and a library template is not in it. Copy-on-place is AC-041's
+  standing promise rather than a new idea, and docs/02's own rejected-
+  alternatives table names *"a live library reference"* as what embedded
+  snapshots refuse.
+* **Note**: **THE ORDERING WAS THE ENGINEERING, and it is one line of argument.**
+  `transact` rolls back on a throw and **a refusal is not a throw**, so the
+  placement must be BUILT before the copy is committed or a full rack leaves a
+  template in the project for a device that was never placed.
+* **Note**: **`transact` ALREADY EXISTED**, grouping any number of commands into
+  one undo entry and applying each on `add`. Sixth time this milestone the
+  hardest-looking item was already in the tree; no composite command was
+  written.
+* **Practice**: [a string no test names](/practices/a-string-no-test-names.md).
+  A click on a palette row had been announcing *"Released outside the rack ...
+  was not placed"* for a gesture nobody made, and so had the second half of every
+  double-click, overwriting the placement it followed. **A grep found no test
+  naming that message anywhere, in either direction.** Zero hits is a finding,
+  not a coverage gap. Found only because it was eating DR-103's own
+  announcement.
+* **Note**: **A COMPARATOR THAT WAS TOTAL BY ACCIDENT OF ITS OLD SHAPE.**
+  `buildPlaceableTemplates` sorted on template id, unique while one row per id
+  was guaranteed. Libraries end that guarantee and Dart's `List.sort` is not
+  stable, so the palette's order would have been decided by map iteration between
+  two runs of one build.
+* **Note**: **A NULLABLE TYPE AS A CENSUS INSTRUMENT.** `PlaceableTemplate.key`
+  became `String?` `documentKey`, and the compiler named both readers on the
+  first analyze. One re-read a map it had just been built from; the other
+  compared two keys for selection identity, where two nulls comparing equal would
+  have made every library row read as the chosen one.
+
 ## 2026-08-29 (fifth entry)
 
 * **Note**: **A GATE THAT LISTS WHAT IT COVERS CANNOT TELL YOU ABOUT WHAT IT
