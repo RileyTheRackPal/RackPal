@@ -14,6 +14,24 @@
 # what it still did not are separated below, and neither is dressed up as
 # the other.
 #
+# SELF-HOSTED SINCE 2026-08-30, AND THAT CHANGES ONE OF THE CLAIMS BELOW.
+# The `pool:` block moved from `vmImage: 'windows-2022'` to the `Default`
+# pool's own agent, on cost rather than on engineering: 34 runs had spent
+# 643 of the month's 1,800 free Microsoft-hosted minutes at a mean of 18.9
+# each. The full trade is written at that block; the part that belongs in
+# THIS section is what stopped being verified.
+#
+# The clean checkout survives (`workspace: clean: all` plus a `clean: true`
+# checkout, both of which work identically on a self-hosted agent) and so
+# does the Flutter pin (`ensure_flutter.ps1` installs and verifies the
+# pinned SDK, which was never inherited from the image). **What no longer
+# holds is "and it builds on a machine that is not the author's".** Every
+# run below now happens on the same desk as `run_local.ps1`, so a
+# machine-level dependency -- an environment variable, a tool outside the
+# pinned Flutter, a path that happens to exist here -- passes CI and is
+# found by whoever clones next. Run 1's finding that `windows-2022`
+# carries the VS2022 C++ desktop workload is now a fact about one laptop.
+#
 # VERIFIED — every command below was run on a Windows 11 machine with the
 # pinned toolchain (Flutter 3.44.4 stable, Dart 3.12.2), and the gate
 # scripts were mutation-tested, meaning each was deliberately broken and
@@ -258,15 +276,55 @@ jobs:
     timeoutInMinutes: 120
 
     pool:
-      # NAMED EXPLICITLY, not `windows-latest`. A pipeline whose whole
-      # premise is that the toolchain is pinned should not sit on a moving
-      # image alias: `windows-latest` re-points itself to a new Windows and a
-      # new Visual Studio without anybody deciding to, which is the same
-      # class of silent drift the Flutter pin exists to prevent. If this
-      # image is retired the pipeline fails to START — loud, obvious, and one
-      # line to fix (the successor image is `windows-2025`), which is the
-      # trade being made here.
-      vmImage: 'windows-2022'
+      # SELF-HOSTED SINCE 2026-08-30, and the reason is money rather than
+      # engineering: 34 runs had consumed 643 of the 1,800 free Microsoft-
+      # hosted minutes this month at a mean of 18.9 minutes each, and M4
+      # still owes two stories, a drill and their pull requests.
+      #
+      # This was `vmImage: 'windows-2022'`, named explicitly rather than
+      # `windows-latest` so a moving image alias could not re-point itself
+      # at a new Windows and a new Visual Studio without anybody deciding
+      # to. That argument still holds and is now MOOT: a self-hosted agent
+      # has no image to move.
+      #
+      # ── WHAT SURVIVES THE MOVE, MEASURED RATHER THAN ASSUMED ─────────
+      #
+      #   * THE CLEAN CHECKOUT. `workspace: clean: all` below deletes the
+      #     entire working directory before the job, and `checkout: self`
+      #     re-clones with `clean: true`. Both work identically on a
+      #     self-hosted agent, so "would a clean clone build" is still
+      #     answered here and nowhere else. That is the gate `run_local.ps1`
+      #     prints a NOTE about being unable to give.
+      #   * THE FLUTTER PIN. `ensure_flutter.ps1 -Version -Expected
+      #     FrameworkRevision` installs the pinned SDK into the agent's
+      #     tools directory and verifies the framework revision. The
+      #     toolchain was never inherited from the image, so nothing about
+      #     it changes.
+      #   * EVERY GATE. The step list below is untouched.
+      #
+      # ── WHAT IS GIVEN UP, STATED PLAINLY ────────────────────────────
+      #
+      # **CI NOW RUNS ON THE SAME MACHINE AS `run_local.ps1`.** It can no
+      # longer catch a MACHINE-level dependency: an environment variable,
+      # a tool installed outside the pinned Flutter, a path that happens to
+      # exist here. A hosted agent proved "this builds somewhere that is
+      # not the author's desk"; this one cannot, and the next person to
+      # clone onto a fresh machine is the one who finds out.
+      #
+      # That is a real loss and it is not being dressed up. It is accepted
+      # because the alternative was running out of minutes mid-milestone,
+      # and because the Windows build gate is the only step that leans on
+      # anything the image supplied (the VS C++ toolchain).
+      #
+      # ── OPERATIONAL ─────────────────────────────────────────────────
+      #
+      # The agent is `{agent-host}` in the `Default` pool. **The pool is
+      # `Default`, not `LocalMachine`**: pool 11 carries that name and has
+      # zero agents registered, which is worth knowing before anybody
+      # re-points this line at it. A build queues silently until the agent
+      # comes online, so an unexplained "queued" here is usually a stopped
+      # agent rather than a busy one.
+      name: 'Default'
 
     workspace:
       # Delete the entire working directory before the job. THIS IS A GATE,
