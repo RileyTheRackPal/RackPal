@@ -1,7 +1,7 @@
 name: rackpal
 description: RackPal — A/V rack and wiring design for custom integration.
 publish_to: none
-version: 0.4.78
+version: 0.4.83
 
 environment:
   sdk: ^3.12.0

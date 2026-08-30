@@ -30,6 +30,14 @@
 // palette lists `buildPlaceableTemplates(doc)`, this document's own
 // shelf. If a later change makes it false again, the failing test is
 // `rackpal_ui/test/canvas/palette_reads_the_document_test.dart`.
+//
+// AND SINCE M4-N (`#242`) THE SHELF IS NOT ONLY THIS DOCUMENT'S. What
+// this file writes can be packed into a `.rmda` and imported into
+// another job, where it is a palette row tagged with the library that
+// carried it and placeable from there (DR-102 §11.101.3, DR-103
+// §11.102.2). That closes the OTHER half of requirement 2, "author the
+// long tail once and use it EVERYWHERE": until the library subsystem
+// existed, a template's only home was the project that placed it.
 import 'dart:async';
 
 import 'package:rackpal/src/storage/prefs_store.dart';

@@ -28,11 +28,15 @@
 // ─────────────────────────────────────────────────────────────────────────
 // WHAT THIS DELIBERATELY DOES NOT DO
 // ─────────────────────────────────────────────────────────────────────────
-// It does not put anything in the palette. DR-102 §11.101.3 rules that
-// the palette answers for the document AND the loaded libraries, and the
-// merge is `#242`'s with `#241`'s provenance under it. A library imported
-// today is on the shelf and `listLibraries` can see it; nothing reads the
-// shelf yet, and the header of the directory service says so too.
+// It does not decide what a library MEANS to the palette. DR-102
+// §11.101.3 rules that the palette answers for the document AND the
+// loaded libraries; the merge is `#241`'s and the surface is `#242`'s.
+// What this file gained from them is one method, [LibraryIo.shelf], and
+// one line in `_importLibrary`: the shell re-reads the shelf after a
+// successful import, so a library lands in the palette without a reopen.
+//
+// This paragraph read *"nothing reads the shelf yet"* until `#242`, and
+// it was true when it was written.
 import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
