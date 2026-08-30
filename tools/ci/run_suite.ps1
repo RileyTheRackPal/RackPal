@@ -198,12 +198,18 @@ $ErrorActionPreference = 'Stop'
 # by naming three byte-reading call sites the author had not listed. Two
 # were real import paths that read before they measured, and one of those
 # had shipped two hours earlier at `#236`.
+# RE-MEASURED 2026-08-29 at `#238` (M4-N1): app 871 -> 881, the ten of
+# `test/storage/library_directory_test.dart`. Every one of them is an
+# ABSENCE case: the directory missing, unreadable, or a file vanishing
+# between the listing and the stat. Listing files in a folder is not where
+# this goes wrong, and in all three the required behaviour is the same, an
+# empty shelf and a working palette.
 $SuiteFloors = @{
     'rackpal_core'   = 3469
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1261
-    'rackpal_app'    = 871
+    'rackpal_app'    = 881
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
