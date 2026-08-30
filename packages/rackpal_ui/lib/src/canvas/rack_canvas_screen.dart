@@ -89,6 +89,7 @@ class RackCanvasScreen extends StatefulWidget {
     this.controller,
     this.libraries = const [],
     this.unreadableLibraries = const [],
+    this.favourites = const <String>{},
     this.onRevealInSchematic,
     this.onEditTemplate,
     super.key,
@@ -111,6 +112,15 @@ class RackCanvasScreen extends StatefulWidget {
   /// Libraries on the shelf that would not decode (DR-103 §11.102.7).
   /// They draw as disabled chips and contribute no rows.
   final List<UnreadableLibrary> unreadableLibraries;
+
+  /// The starred template ids (`#245`, DR-104 §11.103.4). They pin as a
+  /// group above `This project`, and the group is ABSENT when empty, so
+  /// a user who has starred nothing sees the palette that shipped.
+  ///
+  /// Per USER, so the shell reads it from `AppPrefs` and pushes it down
+  /// exactly as it pushes `libraries`: `rackpal_ui` has no prefs store
+  /// and must not grow one.
+  final Set<String> favourites;
 
   /// The shared `TextMeasurer` (CR-081) used to build the scene AND to paint
   /// it, so on-screen layout matches what the PDF backend would measure. The
@@ -4343,6 +4353,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 // vocabulary that is not a substring of the id, `hdbt`
                 // being DR-060's own example.
                 registries: _doc.registries,
+                favourites: widget.favourites,
                 unreadableLibraries: widget.unreadableLibraries,
                 categoryOrder: kCatalogCategoryOrder,
                 searchFocusNode: _paletteSearchFocus,

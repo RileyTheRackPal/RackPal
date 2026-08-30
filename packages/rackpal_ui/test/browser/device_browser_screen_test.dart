@@ -89,12 +89,16 @@ Widget _app({
   VoidCallback? onNew,
   void Function(TemplateId)? onEdit,
   RackDocument? document,
+  Set<String> favourites = const <String>{},
+  void Function(String)? onToggleFavourite,
 }) => MaterialApp(
   home: Scaffold(
     body: DeviceBrowserScreen(
       templates: rows ?? _rows(),
       document: document,
       registries: buildSeedRegistries(),
+      favourites: favourites,
+      onToggleFavourite: onToggleFavourite,
       onNew: onNew ?? () {},
       onEdit: onEdit,
     ),
@@ -389,6 +393,121 @@ void main() {
       await tester.tap(find.byIcon(Icons.view_list));
       await tester.pumpAndSettle();
       expect(_names(tester), ['Signal Router']);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // `#245`, DR-104 §11.103.4 — the star, and where a favourite goes.
+  // ═══════════════════════════════════════════════════════════════════
+  group('favourites', () {
+    testWidgets('no onToggleFavourite means no star at all', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.star_border), findsNothing);
+      expect(find.byIcon(Icons.star), findsNothing);
+    });
+
+    testWidgets('every card gets an outlined star when none are set', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app(onToggleFavourite: (_) {}));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.star_border), findsNWidgets(3));
+      expect(find.byIcon(Icons.star), findsNothing);
+    });
+
+    testWidgets('a starred row draws a FILLED star, not a tinted one', (
+      tester,
+    ) async {
+      // CR-078's "hue is never used alone" applied off the canvas: a
+      // star that differed only in colour fails on a greyscale print and
+      // for a person who cannot see the difference.
+      await tester.pumpWidget(
+        _app(favourites: const {'tpl.switch'}, onToggleFavourite: (_) {}),
+      );
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.star), findsOneWidget);
+      expect(find.byIcon(Icons.star_border), findsNWidgets(2));
+    });
+
+    testWidgets('pressing it reports the template id', (tester) async {
+      final toggled = <String>[];
+      await tester.pumpWidget(_app(onToggleFavourite: toggled.add));
+      await tester.pumpAndSettle();
+      final star = find.descendant(
+        of: find.ancestor(
+          of: find.text('Edge Switch'),
+          matching: find.byType(Card),
+        ),
+        matching: find.byIcon(Icons.star_border),
+      );
+      await tester.tap(star);
+      await tester.pumpAndSettle();
+      expect(toggled, ['tpl.switch']);
+    });
+
+    testWidgets('a favourite PINS TO THE TOP of the browser', (tester) async {
+      // docs/06 §7.1. `_rows()` hands the list over in its own order,
+      // matrix then switch then panel, so the switch is in the MIDDLE
+      // until it is starred. (The first draft of this case asserted it
+      // was last, on an assumption that the fixture came through
+      // `buildPlaceableTemplates`'s id sort. It does not, and the test
+      // said so.)
+      await tester.pumpWidget(_app(onToggleFavourite: (_) {}));
+      await tester.pumpAndSettle();
+      expect(_names(tester), ['Signal Router', 'Edge Switch', 'Patch Panel']);
+
+      await tester.pumpWidget(
+        _app(favourites: const {'tpl.switch'}, onToggleFavourite: (_) {}),
+      );
+      await tester.pumpAndSettle();
+      expect(_names(tester), ['Edge Switch', 'Signal Router', 'Patch Panel']);
+    });
+
+    testWidgets('pinning is STABLE: the rest keep their order', (
+      tester,
+    ) async {
+      // A partition, not a sort. Re-sorting on a boolean would need a
+      // tiebreak to stay total, and the incoming order already is.
+      await tester.pumpWidget(_app(onToggleFavourite: (_) {}));
+      await tester.pumpAndSettle();
+      final before = _names(tester);
+      await tester.pumpWidget(
+        _app(favourites: const {'tpl.switch'}, onToggleFavourite: (_) {}),
+      );
+      await tester.pumpAndSettle();
+      final after = _names(tester);
+      expect(after.first, 'Edge Switch');
+      expect(
+        after.sublist(1),
+        before.where((n) => n != 'Edge Switch').toList(),
+      );
+    });
+
+    testWidgets('a starred id this project does not hold is simply absent', (
+      tester,
+    ) async {
+      // G4's shape on a preference. A star survives a project that has
+      // never seen the template, and must not become a broken row.
+      await tester.pumpWidget(
+        _app(
+          favourites: const {'tpl.not_here'},
+          onToggleFavourite: (_) {},
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(_names(tester), hasLength(3));
+    });
+
+    testWidgets('the star survives the list layout', (tester) async {
+      await tester.pumpWidget(
+        _app(favourites: const {'tpl.switch'}, onToggleFavourite: (_) {}),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byIcon(Icons.view_list));
+      await tester.pumpAndSettle();
+      expect(find.byIcon(Icons.star), findsOneWidget);
+      expect(_names(tester).first, 'Edge Switch');
     });
   });
 }

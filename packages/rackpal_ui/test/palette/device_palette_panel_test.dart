@@ -71,6 +71,7 @@ Widget _app({
   void Function(String, PointerDownEvent)? onArmDrag,
   String? draggingRowKey,
   RackDocument? document,
+  Set<String> favourites = const <String>{},
 }) => MaterialApp(
   home: Scaffold(
     body: DevicePalettePanel(
@@ -79,6 +80,7 @@ Widget _app({
       // the real seeded set means these cases exercise the alias chain
       // that ships rather than one this file invented.
       registries: buildSeedRegistries(),
+      favourites: favourites,
       categoryOrder: kCatalogCategoryOrder,
       onPlace: onPlace,
       onArmDrag: onArmDrag,
@@ -486,6 +488,81 @@ void main() {
         scrollable: find.byType(Scrollable).last,
       );
       expect(find.text(kUncategorisedGroupTitle), findsNothing);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // `#245`, DR-104 §11.103.4 — docs/06 §7.1: "favourites pin to the top
+  // of the browser AND to the palette".
+  // ═══════════════════════════════════════════════════════════════════
+  group('the pinned Favourites group', () {
+    testWidgets('is ABSENT when nothing is starred', (tester) async {
+      // Not empty, absent. A heading that appears for everyone would
+      // change the surface `#251`'s stopwatch drill measures, and it is
+      // the same rule `This project` already follows (DR-077 §11.76.2).
+      await tester.pumpWidget(_app(onPlace: (_) {}));
+      await tester.pumpAndSettle();
+      expect(find.text(kFavouritesGroupTitle), findsNothing);
+    });
+
+    testWidgets('appears above This project once something is starred', (
+      tester,
+    ) async {
+      final doc = _seeded();
+      _author(doc);
+      await tester.pumpWidget(
+        _app(
+          onPlace: (_) {},
+          document: doc,
+          favourites: const {'tpl.custom_matrix_24x24'},
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(kFavouritesGroupTitle), findsOneWidget);
+      expect(find.text(kProjectGroupTitle), findsOneWidget);
+      // ABOVE, and asserted by geometry rather than by document order,
+      // because a `ListView`'s child order is not what a person sees if
+      // anything ever reorders it.
+      expect(
+        tester.getTopLeft(find.text(kFavouritesGroupTitle)).dy,
+        lessThan(tester.getTopLeft(find.text(kProjectGroupTitle)).dy),
+      );
+    });
+
+    testWidgets('a starred SEEDED row pins too, not only authored ones', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        _app(onPlace: (_) {}, favourites: const {'V01'}),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(kFavouritesGroupTitle), findsOneWidget);
+    });
+
+    testWidgets('a starred id this project does not hold shows no group', (
+      tester,
+    ) async {
+      // G4 on a preference: absent is absent, never a broken heading.
+      await tester.pumpWidget(
+        _app(onPlace: (_) {}, favourites: const {'tpl.not_here'}),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text(kFavouritesGroupTitle), findsNothing);
+    });
+
+    testWidgets('a search FLATTENS it away, like every pinned group', (
+      tester,
+    ) async {
+      // The pinned group is browse-state only: a row appearing twice in
+      // a search makes the match count wrong and Enter-on-the-top-match
+      // ambiguous (DR-077 §11.76.2).
+      await tester.pumpWidget(
+        _app(onPlace: (_) {}, favourites: const {'V01'}),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'matrix');
+      await tester.pumpAndSettle();
+      expect(find.text(kFavouritesGroupTitle), findsNothing);
     });
   });
 }

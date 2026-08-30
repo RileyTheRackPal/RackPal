@@ -256,12 +256,21 @@ $ErrorActionPreference = 'Stop'
 # would otherwise have gone on passing while asserting a refusal that could no
 # longer fire.
 
+# RE-MEASURED 2026-08-30 at `#245` (M4-O3, favourites): ui 1311 -> 1324, the
+# eight star and pinning cases in `device_browser_screen_test.dart` plus the
+# five pinned-group cases in `device_palette_panel_test.dart`, and app 909 -> 916
+# for the seven `AppPrefs` favourites cases in `prefs_store_test.dart`. Nothing
+# was removed. The browser suite found a REAL DEFECT on its first run: the star's
+# 28px tap target overflowed the card's fixed 132px extent by 2px, which is the
+# second time this milestone a fixed extent has been the bug and the second time
+# only a pumped widget could see it.
+
 $SuiteFloors = @{
     'rackpal_core'   = 3562
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1311
-    'rackpal_app'    = 909
+    'rackpal_ui'     = 1324
+    'rackpal_app'    = 916
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

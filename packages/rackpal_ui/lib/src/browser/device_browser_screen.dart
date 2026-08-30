@@ -9,11 +9,17 @@
 // exactly the mismatch DR-104 §11.103.2 closes. The editor now opens FROM
 // here, through [onEdit] and [onNew].
 //
-// **THE `New device template…` BUTTON IS NOT DECORATION.** The tab WAS
-// the new-template entry point, so making it the browser means that entry
-// point has to exist here or it is gone. DR-104 named that cost rather
-// than leaving it to be found, and `Project ▸ New device template…` keeps
-// working unchanged because `#251`'s stopwatch drill uses it.
+// **THE `New device template…` BUTTON IS NOT DECORATION, AND IT IS THE
+// ONLY ROUTE.** This paragraph said the button was a rebuild of an entry
+// point that also survived on a menu, *"and `Project ▸ New device
+// template…` keeps working unchanged"*. **There is no `Project` menu.**
+// The application has exactly one, `File`, with nine items, and no
+// new-template item anywhere: `Ctrl+2` with nothing being edited was the
+// whole of how a template got authored. DR-104 §11.103.2 carries the
+// correction; the consequence here is that a browser whose button does
+// nothing REMOVES the ability to author a device rather than failing to
+// add a surface, which is why `device_browser_screen_test.dart` asserts
+// the callback fires and not merely that the button renders.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // THE CARD DRAWS THE GLYPH MARK, NOT AN ELEVATION STRIP
@@ -122,6 +128,8 @@ class DeviceBrowserScreen extends StatefulWidget {
   const DeviceBrowserScreen({
     required this.templates,
     required this.onNew,
+    this.favourites = const <String>{},
+    this.onToggleFavourite,
     this.document,
     this.registries,
     this.unreadableLibraries = const [],
@@ -137,6 +145,15 @@ class DeviceBrowserScreen extends StatefulWidget {
   /// each template (`TemplateFacts.usedInProject`). Null is legal and
   /// makes that count zero, which is honest rather than a claim.
   final RackDocument? document;
+
+  /// The template ids this USER has starred (DR-104 §11.103.4). Per
+  /// user, never in the document, so a starred id this project does not
+  /// hold is simply absent rather than a broken row.
+  final Set<String> favourites;
+
+  /// Flips a star. Null hides the control, which is what a render test
+  /// that does not care about it wants.
+  final void Function(String templateId)? onToggleFavourite;
 
   /// Widens the search only (`#244`, DR-104 §11.103.5).
   final Registries? registries;
@@ -209,9 +226,27 @@ class _DeviceBrowserScreenState extends State<DeviceBrowserScreen> {
 
   List<PlaceableTemplate> get _visible {
     _rebuildIfStale();
-    return [
+    final kept = [
       for (final row in widget.templates)
         if (_admits(row)) row,
+    ];
+    // FAVOURITES PIN TO THE TOP (docs/06 §7.1). A STABLE PARTITION
+    // rather than a sort: the incoming order is already total and
+    // deterministic (`buildPlaceableTemplates`), and re-sorting on a
+    // boolean would need a tiebreak to stay total. Two passes preserve
+    // the order within each half for free.
+    // **A PARTITION, NOT A LABELLED GROUP**, which is where the browser
+    // and the palette differ on the same rule. docs/06 §7.1 says
+    // favourites "pin to the top" of both; the palette is a list of
+    // headed groups so it gets a `Favourites` heading, and this is a
+    // grid of cards where a heading would mean a sectioned grid for one
+    // section. The filled star is the cue, and it is on the card.
+    if (widget.favourites.isEmpty) return kept;
+    return [
+      for (final r in kept)
+        if (widget.favourites.contains(r.id)) r,
+      for (final r in kept)
+        if (!widget.favourites.contains(r.id)) r,
     ];
   }
 
@@ -291,7 +326,9 @@ class _DeviceBrowserScreenState extends State<DeviceBrowserScreen> {
                           rows: rows,
                           facts: _facts,
                           asGrid: _asGrid,
+                          favourites: widget.favourites,
                           onEdit: widget.onEdit,
+                          onToggleFavourite: widget.onToggleFavourite,
                         ),
                 ),
               ],
@@ -483,13 +520,17 @@ class _Results extends StatelessWidget {
     required this.rows,
     required this.facts,
     required this.asGrid,
+    required this.favourites,
     this.onEdit,
+    this.onToggleFavourite,
   });
 
   final List<PlaceableTemplate> rows;
   final Map<String, TemplateFacts> facts;
   final bool asGrid;
+  final Set<String> favourites;
   final void Function(TemplateId templateId)? onEdit;
+  final void Function(String templateId)? onToggleFavourite;
 
   @override
   Widget build(BuildContext context) {
@@ -499,7 +540,9 @@ class _Results extends StatelessWidget {
         itemBuilder: (context, i) => _Row(
           row: rows[i],
           facts: facts[rows[i].rowKey],
+          starred: favourites.contains(rows[i].id),
           onEdit: onEdit,
+          onToggleFavourite: onToggleFavourite,
         ),
       );
     }
@@ -507,7 +550,14 @@ class _Results extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
         maxCrossAxisExtent: 220,
-        mainAxisExtent: 132,
+        // 144 AND NOT 132, and a widget test is why. The star's
+        // `IconButton` has a 28px minimum tap target, which is the
+        // glyph's height plus its own padding, and the card's `Column`
+        // overflowed by 2px the moment `#245` put one in the header row.
+        // That renders as the yellow and black stripe and nothing but a
+        // pumped test was going to catch it: the second time this
+        // milestone a fixed extent has been the defect.
+        mainAxisExtent: 144,
         crossAxisSpacing: 12,
         mainAxisSpacing: 12,
       ),
@@ -515,7 +565,9 @@ class _Results extends StatelessWidget {
       itemBuilder: (context, i) => _Card(
         row: rows[i],
         facts: facts[rows[i].rowKey],
+        starred: favourites.contains(rows[i].id),
         onEdit: onEdit,
+        onToggleFavourite: onToggleFavourite,
       ),
     );
   }
@@ -541,11 +593,19 @@ String _subtitleOf(PlaceableTemplate row, TemplateFacts? facts) {
 }
 
 class _Card extends StatelessWidget {
-  const _Card({required this.row, this.facts, this.onEdit});
+  const _Card({
+    required this.row,
+    required this.starred,
+    this.facts,
+    this.onEdit,
+    this.onToggleFavourite,
+  });
 
   final PlaceableTemplate row;
   final TemplateFacts? facts;
+  final bool starred;
   final void Function(TemplateId templateId)? onEdit;
+  final void Function(String templateId)? onToggleFavourite;
 
   @override
   Widget build(BuildContext context) {
@@ -575,6 +635,11 @@ class _Card extends StatelessWidget {
                   ),
                   const Spacer(),
                   if (tag != null) Flexible(child: _Tag(text: tag)),
+                  if (onToggleFavourite != null)
+                    _Star(
+                      starred: starred,
+                      onPressed: () => onToggleFavourite!(row.id),
+                    ),
                 ],
               ),
               const Spacer(),
@@ -605,11 +670,19 @@ class _Card extends StatelessWidget {
 }
 
 class _Row extends StatelessWidget {
-  const _Row({required this.row, this.facts, this.onEdit});
+  const _Row({
+    required this.row,
+    required this.starred,
+    this.facts,
+    this.onEdit,
+    this.onToggleFavourite,
+  });
 
   final PlaceableTemplate row;
   final TemplateFacts? facts;
+  final bool starred;
   final void Function(TemplateId templateId)? onEdit;
+  final void Function(String templateId)? onToggleFavourite;
 
   @override
   Widget build(BuildContext context) {
@@ -628,10 +701,47 @@ class _Row extends StatelessWidget {
         overflow: TextOverflow.ellipsis,
         style: theme.textTheme.bodySmall,
       ),
-      trailing: tag == null ? null : _Tag(text: tag),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (tag != null) _Tag(text: tag),
+          if (onToggleFavourite != null)
+            _Star(
+              starred: starred,
+              onPressed: () => onToggleFavourite!(row.id),
+            ),
+        ],
+      ),
       onTap: edit == null ? null : () => edit(row.templateId),
     );
   }
+}
+
+/// docs/06 §7.1's star toggle.
+///
+/// **THE ICON CHANGES SHAPE, NOT ONLY COLOUR** (filled versus outlined).
+/// CR-078's "hue is never used alone" is PAL-1's rule for the canvas and
+/// this repository's standing position everywhere else, and a star that
+/// differed only in tint would fail it on a greyscale print and for a
+/// person who cannot see the difference.
+class _Star extends StatelessWidget {
+  const _Star({required this.starred, required this.onPressed});
+
+  final bool starred;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    icon: Icon(starred ? Icons.star : Icons.star_border, size: 16),
+    // THE TOOLTIP SAYS WHAT PRESSING IT DOES, not what the state is. A
+    // control labelled with its own state leaves the user to work out
+    // which way the press goes.
+    tooltip: starred ? 'Remove from favourites' : 'Add to favourites',
+    visualDensity: VisualDensity.compact,
+    padding: EdgeInsets.zero,
+    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+    onPressed: onPressed,
+  );
 }
 
 /// The provenance tag, spelled the way the palette's subtitle spells it

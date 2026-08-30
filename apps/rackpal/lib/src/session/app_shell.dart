@@ -274,6 +274,34 @@ final class AppShellState extends State<AppShell>
   /// showing the browser (`#243`). See [_deviceManagerTab]'s three states.
   bool _authoringNew = false;
 
+  /// The starred template ids (`#245`, DR-104 §11.103.4), held here so
+  /// both the browser and the palette read one value.
+  ///
+  /// Seeded from `prefsStore.current` at startup and written back on
+  /// every toggle. A DEGRADED SESSION HAS NO STORE, and then favourites
+  /// work for the session and are not persisted, which is the same
+  /// bargain the schematic coach mark already takes: the feature keeps
+  /// working and the memory does not.
+  Set<String> _favourites = const <String>{};
+
+  /// Flips a star and persists it (`#245`).
+  void _toggleFavourite(String templateId) {
+    final store = _services.prefsStore;
+    final next = store == null
+        ? <String>{
+            for (final id in _favourites)
+              if (id != templateId) id,
+            if (!_favourites.contains(templateId)) templateId,
+          }
+        : store.current.withFavouriteToggled(templateId).favouriteTemplateIds;
+    setState(() => _favourites = next);
+    if (store == null) return;
+    // LOAD-MODIFY-WRITE THROUGH THE STORE'S OWN CACHE, for
+    // `_dismissFilterCoachMark`'s reason: anything else can revert the
+    // window geometry or `lastSaveDirectory`.
+    unawaited(store.save(store.current.withFavouriteToggled(templateId)));
+  }
+
   /// Whether the Device Manager's ONE draft has unsaved work, reported by
   /// the builder off its own session counter.
   ///
@@ -364,6 +392,10 @@ final class AppShellState extends State<AppShell>
     // that stats a directory on every frame is the shape this repository
     // already fixed once in `DocumentMemo`'s own header.
     unawaited(_reloadLibraryShelf());
+    // Favourites are per USER, so they are read once at startup rather
+    // than per document (DR-104 §11.103.4).
+    _favourites =
+        _services.prefsStore?.current.favouriteTemplateIds ?? const <String>{};
     _services.session.addListener(_onSessionChanged);
     // Persistence can fail at any point in the session, not only at
     // startup — see app_services.dart's header.
@@ -921,6 +953,8 @@ final class AppShellState extends State<AppShell>
         document: doc,
         registries: doc.registries,
         unreadableLibraries: _unreadableLibraries,
+        favourites: _favourites,
+        onToggleFavourite: _toggleFavourite,
         // LOAD-BEARING, not convenient. There is no menu route to
         // authoring a template: this tab was the only one, so the
         // browser either carries it or the capability is gone
@@ -1139,6 +1173,9 @@ final class AppShellState extends State<AppShell>
       // `FileStore` and must not grow one.
       libraries: _libraries,
       unreadableLibraries: _unreadableLibraries,
+      // `#245`: the same per-user set the browser stars into, so the
+      // two surfaces cannot show different favourites.
+      favourites: _favourites,
       // CR-105, joined up. Supplying this callback is ALSO what makes the
       // chip appear at all (`RackCanvasScreen.onRevealInSchematic`): the
       // elevation refuses to draw a signpost nobody is listening to, and
