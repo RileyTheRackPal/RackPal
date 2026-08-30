@@ -204,12 +204,17 @@ $ErrorActionPreference = 'Stop'
 # between the listing and the stat. Listing files in a folder is not where
 # this goes wrong, and in all three the required behaviour is the same, an
 # empty shelf and a working palette.
+# RE-MEASURED 2026-08-29 at `#239` (M4-N2): core 3469 -> 3483, the fourteen
+# of `test/library/rmda_codec_test.dart`, and app 881 -> 882 for the .rmda
+# row `#237`'s census gate DEMANDED. Its sweep is the `.rmdx` sweep's shape
+# for a sharper reason: one `.rmdx` losing a key costs one template and one
+# `.rmda` losing it costs every template in the pack, silently.
 $SuiteFloors = @{
-    'rackpal_core'   = 3469
+    'rackpal_core'   = 3483
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1261
-    'rackpal_app'    = 881
+    'rackpal_app'    = 882
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
