@@ -85,6 +85,14 @@ const Map<String, String> _knownByteReaders = <String, String>{
   'apps/rackpal/lib/src/session/library_io_actions.dart':
       'the .rmda import; stats and runs checkImportedFileSize BEFORE '
       'reading, like the three paths above it',
+  // ── ADDED AT `#241`, IN ADVANCE, WHICH IS THE FIRST TIME ─────────────
+  // The gate has found the previous three itself. This one was written
+  // knowing it would fire, which is what the map is for once somebody
+  // has read it.
+  'apps/rackpal/lib/src/storage/library_shelf.dart':
+      'reads every .rmda on the shelf at palette-build time; stats and '
+      'runs checkImportedFileSize BEFORE reading, and re-stats rather '
+      'than trusting the size listLibraries returned',
 };
 
 String _repoRoot() {

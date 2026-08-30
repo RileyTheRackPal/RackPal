@@ -221,11 +221,11 @@ $ErrorActionPreference = 'Stop'
 # without anything rebuilding when that field changed, so clearing the name
 # left the button enabled.
 $SuiteFloors = @{
-    'rackpal_core'   = 3492
+    'rackpal_core'   = 3508
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1273
-    'rackpal_app'    = 894
+    'rackpal_app'    = 908
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

@@ -50,7 +50,7 @@ void main() {
       expect(rows, hasLength(1));
       expect(rows.single.provenance, TemplateProvenance.seeded);
       expect(rows.single.isProjectAuthored, isFalse);
-      expect(rows.single.key, 'V01@1');
+      expect(rows.single.documentKey, 'V01@1');
     });
 
     test('an id this build does not ship reads as project-authored', () {
@@ -104,7 +104,7 @@ void main() {
       expect(rows, hasLength(1));
       expect(rows.single.version, 2);
       expect(rows.single.body.displayName, 'Amp mk2');
-      expect(rows.single.key, 'tpl.amp@2');
+      expect(rows.single.documentKey, 'tpl.amp@2');
     });
 
     test('insertion order does not decide which version wins', () {
@@ -135,8 +135,8 @@ void main() {
       for (final id in ['V03', 'tpl.zebra', 'A01']) {
         doc.templates['$id@1'] = _snapshot(id: id, version: 1);
       }
-      final first = buildPlaceableTemplates(doc).map((r) => r.key).toList();
-      final second = buildPlaceableTemplates(doc).map((r) => r.key).toList();
+      final first = buildPlaceableTemplates(doc).map((r) => r.rowKey).toList();
+      final second = buildPlaceableTemplates(doc).map((r) => r.rowKey).toList();
       expect(first, second);
     });
   });
@@ -181,4 +181,297 @@ void main() {
       expect(() => kSeedCatalogIds.add('tpl.forgery'), throwsUnsupportedError);
     });
   });
+
+  // ── `#241`, DR-102 §11.101.3 and §11.101.4 ──────────────────────────
+  group('the shelf is the document AND the loaded libraries', () {
+    test('an empty library is no rows and changes nothing', () {
+      // The default is an empty list, so every pre-#241 caller keeps its
+      // old answer without saying so. What is worth an assertion is that
+      // a library CONTRIBUTING NOTHING is also not a row, which is the
+      // shape an empty `.rmda` on the shelf has.
+      final doc = _doc();
+      doc.templates['V01@1'] = _snapshot(id: 'V01', version: 1);
+      final rows = buildPlaceableTemplates(
+        doc,
+        libraries: [_library('empty-kit', 'Empty Kit', const [])],
+      );
+      expect(rows, hasLength(1));
+      expect(rows.single.provenance, isA<SeededProvenance>());
+    });
+
+    test('a library template is a row, tagged with the library', () {
+      final rows = buildPlaceableTemplates(
+        _doc(),
+        libraries: [
+          _library('shop-kit', 'Shop Kit', [_entry('tpl.amp', 1)]),
+        ],
+      );
+      expect(rows, hasLength(1));
+      final p = rows.single.provenance;
+      expect(p, isA<LibraryProvenance>());
+      expect((p as LibraryProvenance).libraryId, 'shop-kit');
+      expect(p.libraryName, 'Shop Kit');
+    });
+
+    // DR-103 §11.102.8. The whole reason the type changed.
+    test('a library row has NO document key and a document row has one', () {
+      final doc = _doc();
+      doc.templates['tpl.mine@1'] = _snapshot(id: 'tpl.mine', version: 1);
+      final rows = buildPlaceableTemplates(
+        doc,
+        libraries: [
+          _library('kit', 'Kit', [_entry('tpl.theirs', 1)]),
+        ],
+      );
+      expect(_row(rows, 'tpl.mine').documentKey, 'tpl.mine@1');
+      expect(_row(rows, 'tpl.theirs').documentKey, isNull);
+    });
+
+    // DR-102 §11.101.5: `isProjectAuthored` survives, and a library row
+    // answers false to it. `exportableLibraryTemplates` filters on this,
+    // so a true here would re-export somebody else's library.
+    test('a library row is not project-authored', () {
+      final rows = buildPlaceableTemplates(
+        _doc(),
+        libraries: [
+          _library('kit', 'Kit', [_entry('tpl.amp', 1)]),
+        ],
+      );
+      expect(rows.single.isProjectAuthored, isFalse);
+      expect(rows.single.library?.libraryId, 'kit');
+    });
+
+    test('a document row reports no library', () {
+      final doc = _doc();
+      doc.templates['tpl.mine@1'] = _snapshot(id: 'tpl.mine', version: 1);
+      expect(buildPlaceableTemplates(doc).single.library, isNull);
+    });
+  });
+
+  // ── DR-102 §11.101.4, and it is the COMMON case ─────────────────────
+  group('a template id in two sources is two rows', () {
+    test('the document and a library both offering an id give two rows', () {
+      final doc = _doc();
+      doc.templates['tpl.hdmi_matrix_16x16@1'] = _snapshot(
+        id: 'tpl.hdmi_matrix_16x16',
+        version: 1,
+        displayName: 'HDMI Matrix 16x16',
+      );
+      final rows = buildPlaceableTemplates(
+        doc,
+        libraries: [
+          _library('shop-kit', 'Shop Kit', [
+            _entry('tpl.hdmi_matrix_16x16', 1),
+          ]),
+        ],
+      );
+      expect(rows, hasLength(2));
+      expect(rows.map((r) => r.id).toSet(), {'tpl.hdmi_matrix_16x16'});
+      expect(rows.map((r) => r.provenance.sourceKey).toList(), [
+        'project',
+        'library:shop-kit',
+      ]);
+    });
+
+    test('two libraries offering one id give two rows, one each', () {
+      final rows = buildPlaceableTemplates(
+        _doc(),
+        libraries: [
+          _library('a-kit', 'A Kit', [_entry('tpl.amp', 1)]),
+          _library('b-kit', 'B Kit', [_entry('tpl.amp', 1)]),
+        ],
+      );
+      expect(rows, hasLength(2));
+      expect(rows.map((r) => r.provenance.sourceKey).toList(), [
+        'library:a-kit',
+        'library:b-kit',
+      ]);
+    });
+
+    // The identity a `ValueKey` needs. `id` stopped being unique across
+    // rows the moment libraries joined, and a duplicate `ValueKey` in a
+    // `ListView` is a framework error rather than a wrong row.
+    test('rowKey is unique across colliding rows where id is not', () {
+      final doc = _doc();
+      doc.templates['tpl.amp@1'] = _snapshot(id: 'tpl.amp', version: 1);
+      final rows = buildPlaceableTemplates(
+        doc,
+        libraries: [
+          _library('a-kit', 'A Kit', [_entry('tpl.amp', 1)]),
+          _library('b-kit', 'B Kit', [_entry('tpl.amp', 1)]),
+        ],
+      );
+      expect(rows.map((r) => r.id).toSet(), hasLength(1));
+      expect(rows.map((r) => r.rowKey).toSet(), hasLength(3));
+    });
+  });
+
+  group('the merged order is still total (§8.4)', () {
+    // The property the comparator change exists for. `List.sort` is not
+    // stable in Dart, so an id-only comparator over colliding rows would
+    // let map iteration decide the palette's order.
+    test('two calls with the same libraries agree, colliding ids included', () {
+      final doc = _doc();
+      for (final id in ['V03', 'tpl.amp', 'A01']) {
+        doc.templates['$id@1'] = _snapshot(id: id, version: 1);
+      }
+      final libs = [
+        _library('z-kit', 'Z Kit', [_entry('tpl.amp', 2), _entry('V03', 1)]),
+        _library('a-kit', 'A Kit', [_entry('tpl.amp', 1)]),
+      ];
+      final first = buildPlaceableTemplates(doc, libraries: libs);
+      final second = buildPlaceableTemplates(doc, libraries: libs);
+      expect(
+        first.map((r) => r.rowKey).toList(),
+        second.map((r) => r.rowKey).toList(),
+      );
+    });
+
+    test(
+      'the document row precedes its library twins, then libraries sort',
+      () {
+        final doc = _doc();
+        doc.templates['tpl.amp@1'] = _snapshot(id: 'tpl.amp', version: 1);
+        final rows = buildPlaceableTemplates(
+          doc,
+          libraries: [
+            _library('z-kit', 'Z Kit', [_entry('tpl.amp', 1)]),
+            _library('a-kit', 'A Kit', [_entry('tpl.amp', 1)]),
+          ],
+        );
+        expect(rows.map((r) => r.provenance.sourceKey).toList(), [
+          'project',
+          'library:a-kit',
+          'library:z-kit',
+        ]);
+      },
+    );
+
+    // The libraries arrive in shelf order and their ROWS still sort by
+    // id, so a library appearing second does not push its templates to
+    // the bottom of the palette.
+    test('rows interleave by id across sources', () {
+      final doc = _doc();
+      doc.templates['tpl.mid@1'] = _snapshot(id: 'tpl.mid', version: 1);
+      final rows = buildPlaceableTemplates(
+        doc,
+        libraries: [
+          _library('kit', 'Kit', [_entry('tpl.aaa', 1), _entry('tpl.zzz', 1)]),
+        ],
+      );
+      expect(rows.map((r) => r.id).toList(), [
+        'tpl.aaa',
+        'tpl.mid',
+        'tpl.zzz',
+      ]);
+    });
+  });
+
+  group('newest version of each id, per library', () {
+    // A `.rmda` can hold two versions of one template, because `#240`'s
+    // export packs what the project held and CR-050 keeps every earlier
+    // version resolvable. Offering both as palette rows would ask a
+    // version question the document's own rows never ask.
+    test('a library holding v1 and v3 offers one row, at v3', () {
+      final rows = buildPlaceableTemplates(
+        _doc(),
+        libraries: [
+          _library('kit', 'Kit', [
+            _entry('tpl.amp', 3, displayName: 'Amp mk3'),
+            _entry('tpl.amp', 1, displayName: 'Amp'),
+          ]),
+        ],
+      );
+      expect(rows, hasLength(1));
+      expect(rows.single.version, 3);
+      expect(rows.single.body.displayName, 'Amp mk3');
+    });
+
+    test('list order does not decide which version wins', () {
+      final rows = buildPlaceableTemplates(
+        _doc(),
+        libraries: [
+          _library('kit', 'Kit', [
+            _entry('tpl.amp', 1),
+            _entry('tpl.amp', 3),
+            _entry('tpl.amp', 2),
+          ]),
+        ],
+      );
+      expect(rows.single.version, 3);
+    });
+  });
+
+  group('the hash the row carries', () {
+    // Copy-on-place writes this into the document verbatim (DR-103
+    // §11.102.2). Recomputing it anywhere on the way would make every
+    // import verify by construction and AC-042's warning unreachable.
+    test('a library row carries the library file s claim, not a new hash', () {
+      final rows = buildPlaceableTemplates(
+        _doc(),
+        libraries: [
+          _library('kit', 'Kit', [
+            _entry('tpl.amp', 1, contentHash: 'sha256:whatever-the-file-said'),
+          ]),
+        ],
+      );
+      expect(rows.single.contentHash, 'sha256:whatever-the-file-said');
+    });
+
+    test('a document row carries the snapshot s hash', () {
+      final doc = _doc();
+      doc.templates['tpl.amp@1'] = _snapshot(id: 'tpl.amp', version: 1);
+      expect(
+        buildPlaceableTemplates(doc).single.contentHash,
+        'unhashed:tpl.amp@1',
+      );
+    });
+  });
+
+  group('the seeded id a library also ships', () {
+    // Provenance is about the SOURCE, not about the id. A library that
+    // happens to contain `V01` offers a library row, and this build's
+    // own `V01` is a separate seeded one.
+    test('a library entry with a seed id is still a library row', () {
+      final doc = _doc();
+      doc.templates['V01@1'] = _snapshot(id: 'V01', version: 1);
+      final rows = buildPlaceableTemplates(
+        doc,
+        libraries: [
+          _library('kit', 'Kit', [_entry('V01', 1)]),
+        ],
+      );
+      expect(rows.map((r) => r.provenance.sourceKey).toList(), [
+        'catalog',
+        'library:kit',
+      ]);
+    });
+  });
 }
+
+/// The row for [id] from whichever source, when exactly one has it.
+PlaceableTemplate _row(List<PlaceableTemplate> rows, String id) =>
+    rows.singleWhere((r) => r.id == id);
+
+LoadedLibrary _library(
+  String id,
+  String name,
+  List<DeviceTemplateFile> templates,
+) => LoadedLibrary(id: id, name: name, templates: templates);
+
+DeviceTemplateFile _entry(
+  String id,
+  int version, {
+  String displayName = 'Thing',
+  String contentHash = 'sha256:entry',
+}) => DeviceTemplateFile(
+  templateId: TemplateId(id),
+  version: version,
+  contentHash: contentHash,
+  body: TemplateBody(
+    manufacturer: 'Generic',
+    model: '',
+    displayName: displayName,
+    frontU: 1,
+  ),
+);
