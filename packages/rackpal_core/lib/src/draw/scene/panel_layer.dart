@@ -313,9 +313,29 @@ RenderedPanel buildPanelGeometry({
     final was = slots[at];
     slots[at] = PanelSlot(
       portKey: was.portKey,
-      // `xTwelfth` is docs/research's twelfth-of-a-rack-unit grid, and
-      // `xFineNm` the offset within it; `ruOffset` is whole RU down.
-      x: Len(override.xTwelfth * (kRackUnit.nm ~/ 12) + override.xFineNm.nm),
+      // ═══════════════════════════════════════════════════════════════
+      // A TWELFTH OF THE PANEL WIDTH, NOT OF A RACK UNIT (DR-106
+      // §11.105.7)
+      // ═══════════════════════════════════════════════════════════════
+      // `#226` wrote this as `kRackUnit.nm ~/ 12` (3.70 mm) in a comment
+      // that called it "docs/research's twelfth-of-a-rack-unit grid".
+      // **The corpus says no such thing.** It declares the field and
+      // never says what the twelfth measures, and all three of its
+      // worked examples carry `xTwelfth: 0` with the whole offset in
+      // `xFineNm`. The confident comment was the tell.
+      //
+      // The pairing settles it: `ruOffset` + `yFineNm` is coarse plus
+      // fine VERTICALLY, so `xTwelfth` + `xFineNm` is coarse plus fine
+      // HORIZONTALLY, and a coarse unit of 3.70 mm sitting beside a
+      // nanometre-precision fine field buys nothing at all. 482.6 / 12 is
+      // 40.22 mm, which is a lattice.
+      //
+      // Changed while it was still FREE: every stored value is 0, no test
+      // asserted the resulting x, and DR-106 rules that nudging never
+      // sets this field. Same position `BankDef.collapseInSymbol` was in.
+      x: Len(
+        override.xTwelfth * (kPanelWidth.nm ~/ 12) + override.xFineNm.nm,
+      ),
       y: Len(override.ruOffset * kRackUnit.nm + override.yFineNm.nm),
       width: was.width,
       height: was.height,

@@ -331,6 +331,25 @@ void main() {
       expect(moved.nudged, isTrue);
       expect(auto.nudged, isFalse);
       expect(moved.y.nm, 2_000_000);
+
+      // ═══════════════════════════════════════════════════════════════
+      // THE X ASSERTION THAT WAS MISSING, AND WHAT IT COST
+      // ═══════════════════════════════════════════════════════════════
+      // This test pinned `y` and not `x`, so the meaning of `xTwelfth`
+      // was unobservable: `#226` implemented it as a twelfth of a RACK
+      // UNIT (3.70 mm) under a comment claiming the corpus said so. The
+      // corpus declares the field and never says what the twelfth
+      // measures, and all three of its worked examples carry
+      // `xTwelfth: 0`.
+      //
+      // DR-106 §11.105.7 rules it a twelfth of the PANEL width, because
+      // `ruOffset` + `yFineNm` is coarse plus fine vertically and the x
+      // pair must mirror it. 482.6 / 12 = 40.216 mm.
+      expect(
+        moved.x.nm,
+        3 * (kPanelWidth.nm ~/ 12) + 1_000_000,
+        reason: 'a twelfth is 40.22mm of panel, not 3.70mm of rack unit',
+      );
     });
 
     test('nudging one port does NOT move the others', () {

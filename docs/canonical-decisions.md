@@ -15001,9 +15001,28 @@ snap, and the two modifiers are the CAD convention a person arrives already know
 
 **The offset lives entirely in `xFineNm`/`yFineNm` and `xTwelfth` stays 0 for a nudged port.** Two
 representations of one position is how they come to disagree, and the twelfth grid is a coarse
-authoring lattice rather than a nudge unit: a twelfth of 482.6 mm is about 40 mm, which is not a
-number any installer thinks in. CR-001 is satisfied by construction, since every step is an integer
-count of nanometres.
+authoring lattice rather than a nudge unit. **The corpus reaches the same answer independently**:
+all three worked examples in `docs/research/design-data-model.md` carry `xTwelfth: 0` and put the
+whole offset in `xFineNm`, at 12.7 mm and 25.4 mm, which are a half inch and an inch. CR-001 is
+satisfied by construction, since every step is an integer count of nanometres.
+
+**11.105.7 A `xTwelfth` IS A TWELFTH OF THE PANEL WIDTH, AND THE CODE SAID A RACK UNIT.** This
+ruling's first draft asserted *"a twelfth of 482.6 mm is about 40 mm"* as a statement about the
+implementation. `panel_layer.dart` computed `kRackUnit.nm ~/ 12`, which is 3.70 mm, under a comment
+calling it *"docs/research's twelfth-of-a-rack-unit grid"*. **The corpus says no such thing.** It
+declares `{ruOffset:int, xTwelfth:int, xFineNm:Len, yFineNm:Len}` and never says what the twelfth
+measures; the confident comment was `#226`'s own invention, which is [a confident paragraph is a
+tell] firing on a line of code rather than on prose.
+
+**Ruled: a twelfth of `kPanelWidth`, 40.22 mm.** The pairing settles it. `ruOffset` + `yFineNm` is
+coarse plus fine vertically, so `xTwelfth` + `xFineNm` is coarse plus fine horizontally, and a
+coarse unit of 3.70 mm sitting beside a nanometre-precision fine field buys nothing: nothing would
+ever set it, and a field that exists and means nothing is the state this corpus keeps punishing.
+
+**Corrected while it was still free**, which is the only reason this is a one-line change rather than
+a migration: every stored `xTwelfth` is 0, the three corpus examples are 0, no test asserted the
+resulting x, and this ruling makes nudging never write the field. It is exactly the position
+`BankDef.collapseInSymbol` was in when its default was fixed inert.
 
 *Rejected: 1 mm and nothing else.* This surface exists to fix one jack that is 3 mm out, and it
 would also be used to move one 40 mm, which at one step per millimetre is forty keypresses. CR-071
