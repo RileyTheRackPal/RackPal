@@ -88,6 +88,7 @@ export 'src/commands/clock.dart';
 export 'src/commands/command.dart';
 export 'src/commands/compaction.dart';
 export 'src/commands/connect_commands.dart';
+export 'src/commands/connector_alias_commands.dart';
 export 'src/commands/device_commands.dart';
 export 'src/commands/gang_commands.dart';
 export 'src/commands/home_run_commands.dart';

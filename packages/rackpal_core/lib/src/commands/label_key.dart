@@ -243,6 +243,24 @@ enum LabelKey {
   // that it removed some drops.
   addMediaType,
 
+  // M4-P2 (`#247`, RJ-012). Editing a media type's LABEL, never its id:
+  // the id is frozen at creation because it is written into every
+  // `Link.media` and read by a human diffing two `.rmpj` files, so a
+  // typo fix must not become a document-wide rewrite.
+  editMediaType,
+
+  // M4-P2's load-bearing half. RJ-012 ships this editor "because users
+  // hit it", and what they hit is an importer that made
+  // `media.cat_6e_riser` out of a typo in row 40. Renaming cannot
+  // reunify that with `media.cat6e` -- only a merge can, because the
+  // duplicate is already written into cable runs.
+  mergeMediaTypes,
+
+  // M4-P3 (`#248`, RJ-012, CR-058). Teaching a connector the word a crew
+  // uses. `resolveConnectorToken` already resolved by alias; only the
+  // writer was missing, so the whole chapter is this key and a surface.
+  setConnectorAliases,
+
   // The transaction label for a whole CSV import (docs/07 §5.3: "the
   // whole import is one undoable `Command`"). ONE ENTRY on the undo
   // stack for sixty drops, four rooms and two cable types, because

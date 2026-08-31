@@ -108,6 +108,15 @@ final class _Harness {
       importCsvOpened++;
       importCsvBody = bodyId;
     },
+    // APPLIED STRAIGHT TO [doc], like the outlet actions above: this
+    // fixture has no controller, and the commands' own undo behaviour is
+    // asserted in `media_type_merge_test.dart` where it can be without a
+    // widget.
+    onRunMediaTypeCommands: (commands) {
+      for (final c in commands) {
+        c.apply(doc);
+      }
+    },
     outlets: outletsActions,
   );
 
