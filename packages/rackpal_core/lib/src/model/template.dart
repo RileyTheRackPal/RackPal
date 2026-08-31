@@ -297,7 +297,7 @@ final class TemplateBody {
     this.frontU = 0,
     this.rearU = 0,
     this.side = OccupancySide.none,
-    this.mountMethod = MountMethod.notInRack,
+    this.mountMethod = MountMethod.rackEars,
     List<MountMethod>? alternateMountMethods,
     this.widthClass = WidthClass.full,
     this.nominalSpanTwelfths = 12,
@@ -355,6 +355,38 @@ final class TemplateBody {
   int frontU;
   int rearU;
   OccupancySide side;
+
+  /// **DEFAULTS TO `rackEars`, AND IT USED TO DEFAULT TO `notInRack`**
+  /// (`#246`, DR-107 §11.106.2).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A DEFAULT CANNOT BE EVIDENCE OF INTENT, WHICH IS WHY THIS MOVED
+  /// ═══════════════════════════════════════════════════════════════════
+  /// AC-049's save gate accepts a zero RU height only when that zero was
+  /// MEANT, and it recognises two spellings of meaning it: a 0U PDU
+  /// (`side: zeroUVertical`) and a field device (`mountMethod:
+  /// notInRack`). Admitting the second while it was ALSO the default
+  /// would have let a blank new template save with no height at all,
+  /// which is exactly the stall AC-049 exists to prevent. `zeroUVertical`
+  /// is safe in that role because nobody reaches it by accident.
+  ///
+  /// It was also wrong for the product independently: every new template
+  /// opened in AC-031's stripped field-device form, with the rack fields
+  /// hidden, until the author found this dropdown and changed it. Most
+  /// devices are rack devices.
+  ///
+  /// **PERSISTENCE IS UNAFFECTED AND THAT WAS CHECKED, NOT ASSUMED.**
+  /// `json_codec.dart` writes `mountMethod` unconditionally for every
+  /// template, and its reader carries its own separate `?? 'notInRack'`
+  /// fallback for an absent key. The two defaults are independent: this
+  /// change reinterprets no stored file, needs no migration, and does not
+  /// touch CR-117. The WIRE fallback deliberately stays `notInRack`,
+  /// because that is what an absent key has always meant and changing it
+  /// would reinterpret foreign data.
+  ///
+  /// 92 files construct a bare `TemplateBody`. All five suites were run
+  /// under the change before it was kept: one test moved, and it was a
+  /// test asserting the old default's LABEL.
   MountMethod mountMethod;
   List<MountMethod> alternateMountMethods;
   WidthClass widthClass;

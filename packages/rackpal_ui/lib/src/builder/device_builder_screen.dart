@@ -171,6 +171,33 @@ enum BuilderSection {
   final String label;
 }
 
+/// The sections a body of this shape shows (AC-031, DR-107 §11.106.2).
+///
+/// **`Panel` goes for a field device, because a field device has no
+/// panel.** `T2.02` is `Rack Elevation: Rear`, one per `Rack`, and a
+/// device that is not in a rack never appears on it, so its connector
+/// field has no sheet to live on. DR-107 §11.106.4 ruled the opposite in
+/// its first draft and was withdrawn before it was built.
+///
+/// **`Power` and `Appearance` stay.** A display draws power and carries a
+/// glyph, and AC-031's removals are all rack geometry plus thermal class.
+/// `Physical` stays too, stripped to the two rows that survive: see
+/// `_PhysicalSection._inRack`.
+///
+/// A PURE FUNCTION over the body, so a test asserts the rule without
+/// pumping a widget, and so the rail cannot disagree with the pane about
+/// which sections exist.
+List<BuilderSection> visibleSections(TemplateBody body) =>
+    body.mountMethod == MountMethod.notInRack
+    ? const [
+        BuilderSection.identity,
+        BuilderSection.ports,
+        BuilderSection.physical,
+        BuilderSection.power,
+        BuilderSection.appearance,
+      ]
+    : BuilderSection.values;
+
 /// docs/06 §2's editor, in the shape M4-D actually builds.
 class DeviceBuilderScreen extends StatefulWidget {
   const DeviceBuilderScreen({
@@ -251,6 +278,31 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
   BuilderSection _section = BuilderSection.identity;
   String? _refusal;
 
+  /// [_section], or `Ports` when the body has stopped having that section.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A SECTION CAN VANISH UNDER A PERSON WHO IS STANDING IN IT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `Mount method` lives in `Physical`, and setting it to `notInRack`
+  /// removes `Panel` (AC-031, DR-107 §11.106.2). Nothing stops somebody
+  /// opening `Panel` first, going back, and changing it: the rail would
+  /// then show five tiles with none selected while the pane still drew a
+  /// nudge canvas for a device that has no panel.
+  ///
+  /// RESOLVED ON READ rather than by patching `_section` inside the edit
+  /// callback. The mount method is written through the ordinary command
+  /// path and is undoable, so a `Ctrl+Z` can put `Panel` back; a fix that
+  /// mutated `_section` on the way past would have to be undone too, and
+  /// would not be.
+  ///
+  /// FALLS BACK TO `Ports`, not `Identity`: a person who was looking at
+  /// the panel was thinking about connectors, and Ports is where those
+  /// are.
+  BuilderSection get _liveSection =>
+      visibleSections(_session.body).contains(_section)
+      ? _section
+      : BuilderSection.ports;
+
   /// Port keys the author has typed by hand, for the whole life of this
   /// window. See `PortGrid.keyTouched`: it lives here rather than in the
   /// grid because the rail rebuilds the grid, so a set kept there was
@@ -306,16 +358,32 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
   /// hat. A brand-new template would save as a 0U device, which for a
   /// rack-mount box is both wrong and invisible on an elevation.
   ///
-  /// So a zero height must be MEANT, and the model already has the
-  /// spelling for meaning it: docs/06 §3.2 writes a 0U PDU as
-  /// `{front: 0, rear: 0, side: zeroUVertical}`. That is the one
-  /// combination in which `0` is a measured zero rather than an untouched
-  /// default, which is G4's own distinction applied to occupancy.
+  /// So a zero height must be MEANT, and the model has TWO spellings for
+  /// meaning it. docs/06 §3.2 writes a 0U PDU as
+  /// `{front: 0, rear: 0, side: zeroUVertical}`, and AC-031's field
+  /// devices are `{front: 0, rear: 0, side: none, notInRack}`. In both,
+  /// `0` is a measured zero rather than an untouched default, which is
+  /// G4's own distinction applied to occupancy.
+  ///
+  /// **THE SECOND SPELLING WAS MISSING, AND IT BLOCKED A WHOLE DEVICE
+  /// CLASS** (`#246`, DR-107 §11.106.2). Every one of AC-031's 18 shipped
+  /// field templates is `notInRack` with zero occupancy, so `Save` was
+  /// disabled for all of them and stayed disabled whatever the person
+  /// typed. The 18 ship in the seed catalog and nobody could author a
+  /// nineteenth. It went unseen because a rack device cannot reach the
+  /// state and the field-device path had no test.
+  ///
+  /// **This is not a fourth fact joining AC-049's three.** It is the same
+  /// third fact, occupancy, with the second of its two honest spellings
+  /// admitted: choosing `notInRack` means a zero as deliberately as
+  /// choosing `zeroUVertical` does. Nothing else may join the list.
   bool get _canSave {
     final b = _session.body;
     return b.displayName.trim().isNotEmpty &&
         (b.typePrefix ?? '').trim().isNotEmpty &&
-        (b.frontU > 0 || b.side == OccupancySide.zeroUVertical);
+        (b.frontU > 0 ||
+            b.side == OccupancySide.zeroUVertical ||
+            b.mountMethod == MountMethod.notInRack);
   }
 
   TemplateChangeReport get _report =>
@@ -586,7 +654,7 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
               child: SizedBox(
                 width: 200,
                 child: _SectionRail(
-                  selected: _section,
+                  selected: _liveSection,
                   canSave: _canSave,
                   onSelect: (s) => setState(() => _section = s),
                   body: _session.body,
@@ -599,7 +667,7 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
             const VerticalDivider(width: 1),
             Expanded(
               child: FocusTraversalGroup(
-                child: switch (_section) {
+                child: switch (_liveSection) {
                   BuilderSection.identity => _IdentitySection(
                     body: _session.body,
                     onEdit: _run,
@@ -689,7 +757,7 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
             // is worse than no pane. `_batch` survives a trip to Physical
             // and back, deliberately, so the selection is still there when
             // the person returns.
-            if (_section == BuilderSection.ports) ...[
+            if (_liveSection == BuilderSection.ports) ...[
               const VerticalDivider(width: 1),
               if (_batch case final PortBatchContext batch)
                 _batchInspector(batch)
@@ -956,7 +1024,7 @@ class _SectionRail extends StatelessWidget {
       // putting both in one scroller would let a template with nine banks
       // push `Identity` off the top, which is the one tile that can be
       // blocking a save.
-      for (final s in BuilderSection.values)
+      for (final s in visibleSections(body))
         ListTile(
           dense: true,
           selected: s == selected,
@@ -992,31 +1060,56 @@ class _PhysicalSection extends StatelessWidget {
   final TemplateBody body;
   final void Function<T>(TemplateField<T> field, T value) onEdit;
 
+  /// ═══════════════════════════════════════════════════════════════════
+  /// AC-031's STRIPPED FORM IS FEWER ROWS, NOT GREYED-OUT ONES
+  /// ═══════════════════════════════════════════════════════════════════
+  /// *"no RU, no rack depth, no thermal class"*. Twelve of this section's
+  /// fourteen rows are statements about living in a rack, and they go
+  /// together: occupancy, fit, depth, load, clearance, thermal, and the
+  /// two switches, which describe a patch panel and a shelf.
+  ///
+  /// **TWO STAY.** `Mount method` is the control that put the body in
+  /// this state, and hiding it would strand a person here with no way
+  /// back. `Weight` stays because a speaker has one and nothing about
+  /// weight is rack geometry.
+  ///
+  /// A GETTER RATHER THAN A LOCAL, so `build` keeps its expression body:
+  /// converting it to a block meant managing a closing brace by hand in a
+  /// 2000-line file, which mangled this file twice before it was written
+  /// this way.
+  bool get _inRack => body.mountMethod != MountMethod.notInRack;
+
   @override
   Widget build(BuildContext context) => ListView(
     padding: const EdgeInsets.all(24),
     children: [
-      const _SectionNote(
-        'Where a device sits takes more than one number. A 2U patch '
-        'panel fills 2U front and back; a rear lacing bar takes nothing '
-        'at the front and 1U behind; a 0U PDU takes no rack units at '
-        'all and mounts vertically.',
+      _SectionNote(
+        _inRack
+            ? 'Where a device sits takes more than one number. A 2U patch '
+                  'panel fills 2U front and back; a rear lacing bar takes '
+                  'nothing at the front and 1U behind; a 0U PDU takes no '
+                  'rack units at all and mounts vertically.'
+            : 'A field device is not in the rack, so it has no rack '
+                  'geometry to state. Change Mount method to bring the '
+                  'rack fields back.',
       ),
-      _IntRow(
-        label: 'RU height (rear)',
-        value: body.rearU,
-        hint:
-            'How much it takes up behind the rails. A front-only '
-            'device is 0.',
-        onChanged: (v) => onEdit(TemplateBodyField.rearU, v),
-      ),
-      _EnumRow<OccupancySide>(
-        label: 'Occupies',
-        value: body.side,
-        values: OccupancySide.values,
-        nameOf: _occupancyLabel,
-        onChanged: (v) => onEdit(TemplateBodyField.side, v),
-      ),
+      if (_inRack)
+        _IntRow(
+          label: 'RU height (rear)',
+          value: body.rearU,
+          hint:
+              'How much it takes up behind the rails. A front-only '
+              'device is 0.',
+          onChanged: (v) => onEdit(TemplateBodyField.rearU, v),
+        ),
+      if (_inRack)
+        _EnumRow<OccupancySide>(
+          label: 'Occupies',
+          value: body.side,
+          values: OccupancySide.values,
+          nameOf: _occupancyLabel,
+          onChanged: (v) => onEdit(TemplateBodyField.side, v),
+        ),
       _EnumRow<MountMethod>(
         label: 'Mount method',
         value: body.mountMethod,
@@ -1024,97 +1117,109 @@ class _PhysicalSection extends StatelessWidget {
         nameOf: _mountLabel,
         onChanged: (v) => onEdit(TemplateBodyField.mountMethod, v),
       ),
-      _EnumRow<WidthClass>(
-        label: 'Width class',
-        value: body.widthClass,
-        values: WidthClass.values,
-        nameOf: _widthLabel,
-        onChanged: (v) => onEdit(TemplateBodyField.widthClass, v),
-      ),
-      _IntRow(
-        label: 'Width in twelfths of a rack',
-        value: body.nominalSpanTwelfths,
-        // HALF-RACK IS A CLASS PLUS A SPAN, never "0.5 rack width"
-        // (CR-030), because 9.5 / 10 / 10.4 / 10.5 in all ship and a
-        // fraction cannot tell them apart.
-        hint:
-            '12 is full width, 6 is half. Half-rack gear is not all one '
-            'width, which is why this sits alongside the width class '
-            'rather than instead of it.',
-        onChanged: (v) => onEdit(TemplateBodyField.nominalSpanTwelfths, v),
-      ),
-      _LenRow(
-        label: 'Body depth',
-        value: body.bodyDepth,
-        // UNKNOWN, NOT ZERO (G4, CR-114). An empty box stays unknown,
-        // serialises as an absent key, and every rollup that reads it
-        // reports its unknown count instead of inventing a total.
-        hint:
-            'Millimetres. Leave blank if you do not know: nothing will '
-            'be guessed for you.',
-        onChanged: (v) => onEdit(TemplateBodyField.bodyDepth, v),
-      ),
-      _LenRow(
-        label: 'Chassis width',
-        value: body.chassisWidth,
-        // 432, NOT 482.6 (AC-032). 482.6 is the PANEL width including
-        // ears; flowing connectors across it draws jacks out past the
-        // rails, on the one view that gets taped inside the rack door.
-        hint:
-            'Millimetres, and 432 for a standard full-width chassis. '
-            '482.6 is the panel width including the rack ears, which is '
-            'a different measurement.',
-        onChanged: (v) => onEdit(
-          TemplateBodyField.chassisWidth,
-          v ?? const Len(432_000_000),
+      if (_inRack)
+        _EnumRow<WidthClass>(
+          label: 'Width class',
+          value: body.widthClass,
+          values: WidthClass.values,
+          nameOf: _widthLabel,
+          onChanged: (v) => onEdit(TemplateBodyField.widthClass, v),
         ),
-      ),
+      if (_inRack)
+        _IntRow(
+          label: 'Width in twelfths of a rack',
+          value: body.nominalSpanTwelfths,
+          // HALF-RACK IS A CLASS PLUS A SPAN, never "0.5 rack width"
+          // (CR-030), because 9.5 / 10 / 10.4 / 10.5 in all ship and a
+          // fraction cannot tell them apart.
+          hint:
+              '12 is full width, 6 is half. Half-rack gear is not all one '
+              'width, which is why this sits alongside the width class '
+              'rather than instead of it.',
+          onChanged: (v) => onEdit(TemplateBodyField.nominalSpanTwelfths, v),
+        ),
+      if (_inRack)
+        _LenRow(
+          label: 'Body depth',
+          value: body.bodyDepth,
+          // UNKNOWN, NOT ZERO (G4, CR-114). An empty box stays unknown,
+          // serialises as an absent key, and every rollup that reads it
+          // reports its unknown count instead of inventing a total.
+          hint:
+              'Millimetres. Leave blank if you do not know: nothing will '
+              'be guessed for you.',
+          onChanged: (v) => onEdit(TemplateBodyField.bodyDepth, v),
+        ),
+      if (_inRack)
+        _LenRow(
+          label: 'Chassis width',
+          value: body.chassisWidth,
+          // 432, NOT 482.6 (AC-032). 482.6 is the PANEL width including
+          // ears; flowing connectors across it draws jacks out past the
+          // rails, on the one view that gets taped inside the rack door.
+          hint:
+              'Millimetres, and 432 for a standard full-width chassis. '
+              '482.6 is the panel width including the rack ears, which is '
+              'a different measurement.',
+          onChanged: (v) => onEdit(
+            TemplateBodyField.chassisWidth,
+            v ?? const Len(432_000_000),
+          ),
+        ),
       _MassRow(
         label: 'Weight',
         value: body.weight,
         hint: 'Kilograms. Leave blank if you do not know.',
         onChanged: (v) => onEdit(TemplateBodyField.weight, v),
       ),
-      _MassRow(
-        label: 'Max unsupported mass',
-        value: body.maxUnsupportedMass,
-        hint:
-            'Kilograms. Heavier than this and the device needs rear '
-            'support, which the drawing will call out.',
-        onChanged: (v) => onEdit(TemplateBodyField.maxUnsupportedMass, v),
-      ),
-      _IntRow(
-        label: 'Clearance above (U)',
-        value: body.requiresClearanceAboveU,
-        onChanged: (v) => onEdit(TemplateBodyField.requiresClearanceAboveU, v),
-      ),
-      _IntRow(
-        label: 'Clearance below (U)',
-        value: body.requiresClearanceBelowU,
-        onChanged: (v) => onEdit(TemplateBodyField.requiresClearanceBelowU, v),
-      ),
-      _EnumRow<ThermalClass>(
-        label: 'Thermal class',
-        value: body.thermalClass,
-        values: ThermalClass.values,
-        nameOf: _thermalLabel,
-        onChanged: (v) => onEdit(TemplateBodyField.thermalClass, v),
-      ),
-      SwitchListTile(
-        title: const Text('Passthrough'),
-        subtitle: const Text(
-          'A patch panel or plate: front and rear ports pair up. The '
-          'pairing itself is set in the port grid.',
+      if (_inRack)
+        _MassRow(
+          label: 'Max unsupported mass',
+          value: body.maxUnsupportedMass,
+          hint:
+              'Kilograms. Heavier than this and the device needs rear '
+              'support, which the drawing will call out.',
+          onChanged: (v) => onEdit(TemplateBodyField.maxUnsupportedMass, v),
         ),
-        value: body.isPassthrough,
-        onChanged: (v) => onEdit(TemplateBodyField.isPassthrough, v),
-      ),
-      SwitchListTile(
-        title: const Text('Container'),
-        subtitle: const Text('A shelf or drawer that holds other devices.'),
-        value: body.isContainer,
-        onChanged: (v) => onEdit(TemplateBodyField.isContainer, v),
-      ),
+      if (_inRack)
+        _IntRow(
+          label: 'Clearance above (U)',
+          value: body.requiresClearanceAboveU,
+          onChanged: (v) =>
+              onEdit(TemplateBodyField.requiresClearanceAboveU, v),
+        ),
+      if (_inRack)
+        _IntRow(
+          label: 'Clearance below (U)',
+          value: body.requiresClearanceBelowU,
+          onChanged: (v) =>
+              onEdit(TemplateBodyField.requiresClearanceBelowU, v),
+        ),
+      if (_inRack)
+        _EnumRow<ThermalClass>(
+          label: 'Thermal class',
+          value: body.thermalClass,
+          values: ThermalClass.values,
+          nameOf: _thermalLabel,
+          onChanged: (v) => onEdit(TemplateBodyField.thermalClass, v),
+        ),
+      if (_inRack)
+        SwitchListTile(
+          title: const Text('Passthrough'),
+          subtitle: const Text(
+            'A patch panel or plate: front and rear ports pair up. The '
+            'pairing itself is set in the port grid.',
+          ),
+          value: body.isPassthrough,
+          onChanged: (v) => onEdit(TemplateBodyField.isPassthrough, v),
+        ),
+      if (_inRack)
+        SwitchListTile(
+          title: const Text('Container'),
+          subtitle: const Text('A shelf or drawer that holds other devices.'),
+          value: body.isContainer,
+          onChanged: (v) => onEdit(TemplateBodyField.isContainer, v),
+        ),
     ],
   );
 }

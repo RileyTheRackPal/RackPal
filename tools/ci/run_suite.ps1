@@ -315,11 +315,18 @@ $ErrorActionPreference = 'Stop'
 # arithmetic WITHOUT pumping a widget, and the 18 ui cases assert only what a
 # widget test can see and a core test cannot.
 
+# RE-MEASURED 2026-08-31 at `#246` (the field-device path): ui 1351 -> 1361,
+# the ten of `test/builder/field_device_form_test.dart`. Core, export and app
+# are UNCHANGED, which is the measurement that made the model default safe to
+# move: 92 files construct a bare `TemplateBody`, all five suites were run
+# under the change before it was kept, and exactly one test moved -- one
+# asserting the old default's LABEL, not its behaviour.
+
 $SuiteFloors = @{
     'rackpal_core'   = 3625
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1351
+    'rackpal_ui'     = 1361
     'rackpal_app'    = 916
 }
 
