@@ -15055,6 +15055,76 @@ two cutouts together is describing hardware this model does not know about, not 
 
 ---
 
+### §11.106 DR-107 · M4-P's scope, the stripped form, and the panel a field device actually has
+
+**Question.** M4-P (`#187`) opens with three chapters: the stripped field-device form (`#246`), the
+media-type editor (`#247`) and connector aliases (`#248`). A census before pricing found three things
+the board items do not say, and each needs ruling before code.
+
+**11.106.1 RJ-012 NAMES THREE v1 SURFACES AND THE BOARD NAMES TWO.** RJ-012 ships *"a media-type
+editor, connector aliases, and a per-family colour override row in settings"*. `#187` calls these
+*"the two extensibility surfaces that DO ship"* and omits the third.
+
+**The third has nowhere to go.** `ProjectSettings.familyColorOverrides` exists and
+`signal_style.dart` consumes it; **no file in `rackpal_ui` or `apps/rackpal` references it.** Nor is
+it alone: `ProjectSettings` carries roughly twenty fields with no producer, including
+`displayUnits` (CR-097, authoritative over any app preference), five `IdFormat`s,
+`collisionPolicy`, `ruleOverrides` and `jacketColorConventions`. **There is no settings surface in
+the app and none assigned to any milestone**; the corpus's only mention is M1's own deferral list,
+item 5, left unowned.
+
+**Ruled: M4-P builds its two named chapters, and the settings surface is `#805`.** RJ-012 therefore
+stays **partly unmet through M4**, and this ruling says so rather than leaving it implied. A settings
+pane built inside M4-P to hold one colour row would invite the other nineteen fields to arrive
+without a design, and M4 is already the milestone that grew from `M` to `L`.
+
+**11.106.2 THE STRIPPED FORM IS ONE BUILDER WITH SECTIONS KEYED ON `mountMethod`.** A body whose
+mount method is `notInRack` drops the Physical section's rack fields and shows what AC-031 leaves:
+identity and ports.
+
+*Rejected: a separate screen.* Two authoring surfaces would have to be kept in step, and changing a
+device's mount method after the fact would mean moving it between them, which is CR-104's *"two
+places to add a device"* defect rebuilt in a new place.
+
+*Rejected: disabling rather than hiding.* AC-031 asks for a **stripped** form in terms, and a wall of
+greyed-out rack fields on a ceiling speaker is the opposite of stripped.
+
+**11.106.3 AC-031's "location" DESCRIBES THE INSPECTOR'S JOB, NOT THE BUILDER'S.** AC-031 says the
+form is *"identity, ports, location; no RU, no rack depth, no thermal class"*. **`TemplateBody` has
+no location field and must not gain one.** `locationId` lives on `DeviceInstance`: where a speaker
+hangs is a fact about a placed device, and a template is a model of a device rather than an instance
+of one. A default location on a template would be data nothing reads, with every in-ceiling speaker
+carrying "ceiling".
+
+The sentence is read as descriptive rather than as a section list, which its own shape supports:
+the three words that follow it are all REMOVALS. The builder builds identity and ports.
+
+**11.106.4 A FIELD DEVICE HAS A PANEL, AND ITS HEIGHT COMES FROM ITS CUTOUTS.** `#227`'s own test
+established that a zero-U body lays out and draws: *"`frontU`/`rearU` are RACK occupancy, and a wall
+plate has holes without occupying any U."* But `buildPanelGeometry` derives panel HEIGHT from
+`heightU`, so a field device's panel comes back zero-height, and both the preview dock and the
+`Panel` section then refuse it with *"occupies no rack U"*. **The geometry exists and the two
+surfaces that would show it decline to.**
+
+**Ruled: when a body occupies no rack U, the panel's height is the extent of its own cutouts plus a
+margin.** A wall plate, a floor box and a structured enclosure then draw what they have, and those
+are precisely the field devices AC-031 ships with real cutouts.
+
+**THE WIDTH IS NOT FIXED HERE AND IS `#806`.** `kPanelWidth` is 482.6 mm and `chassisWidth` defaults
+to 432 mm; both are rack figures, and a 1-gang plate is about 70 mm. `TemplateBody.customPanelWidth`
+is a `Len?` that **`panel_layer.dart` does not read**, and it is the first candidate to check. It is
+filed rather than ruled because a plate width invented mid-chapter would be a second geometry rule
+beside AC-032's, and AC-032 exists because getting panel width wrong draws jacks over the rack ears.
+
+**11.106.5 WHAT THIS DOES NOT RULE.** It does not build a signal-family editor, a colour-scheme
+editor or a rule editor: RJ-012 rejects all three for v1, and AC-011 withdraws user-authored
+validation rules from every document, because rules are Dart functions keyed by `ruleId` and a UI
+for them would make the app an interpreter for user input. It does not decide where the settings
+surface lands, which is `#805`'s first question. And it does not touch the 18 seeded field templates
+themselves, which shipped at AC-031 and are not this story's.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
