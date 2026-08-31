@@ -14956,6 +14956,86 @@ this story invents.
 
 ---
 
+### §11.105 DR-106 · `#227` is un-parked, and the nudge canvas gets its four unruled answers
+
+**Question.** DR-105 §11.104.6 parked `#227`, the optional nudge canvas, and M4-K closed without it
+(docs/12 §5.3.26, `v0.4.89`). The user has directed that it be built now. §11.104.8 said in terms
+that DR-105 *"does not decide the nudge canvas's own interaction"*, so there are two things to rule:
+whether the park lifts, and the four interaction questions CR-071 leaves open.
+
+**11.105.1 THE PARK LIFTS, AND THIS IS AN AMENDMENT RATHER THAN A CORRECTION.** §8.3 requires a
+scope change to carry a new ruling ID in its own commit, and this is that commit. Nothing about
+DR-105 §11.104.6 was WRONG: the reasons it gave still hold, and they are the reasons the park was
+cheap to reverse.
+
+- CR-071 part 1 calls the canvas an *"optional hidden toggle"* in terms, so building it is inside
+  roadmap §2's scope list and needs no amendment to that list.
+- **Nothing downstream reads a coordinate.** docs/06 §5's non-negotiable, that a template with no
+  layout data is not incomplete, held by construction and still does.
+- **The expensive half already shipped.** `PortDef.position` is nullable with null meaning automatic
+  (DR-105 §11.104.3), an override beats the flow, `PanelSlot.nudged` reports which is which, and
+  `buildPanelLayer` already draws a nudged cutout differently. `#227` is UI over a finished model.
+
+**M4-K STAYS CLOSED AND `#227` IS RE-PARENTED RATHER THAN REOPENED.** §8.9 is explicit that
+*"closing is the moment that binds"*, and docs/12 §5.3.26 is the record of a story that closed with
+three of four chapters and a named park. Reopening it would falsify that record to tidy a board.
+`#227` moves to `#804`, a story of its own under M4, so the work lands against the milestone it
+belongs to without rewriting a discharged clause.
+
+**11.105.2 THE CANVAS IS A SIXTH RAIL SECTION, `Panel`.** It sits after `Ports`, its head carries
+CR-071's `☐ Customize panel layout` toggle, and the canvas fills the main pane at full width.
+
+*Rejected: putting it in the dock's rear-panel pane.* That pane is 340 px and the drawing is
+482.6 mm wide; `#802` already records that this window has no narrow layout, and nudging a 10 mm
+RJ45 cutout inside a third of a pane is not an interaction, it is a dare.
+
+*Rejected: stacking it under the port grid.* The grid is virtualised and already competes for
+vertical room. Two scrollable work surfaces in one pane is how neither gets enough.
+
+**The `AUTO` badge lives on the rail tile**, green, exactly as docs/06 §5 asks, so a template that
+never touches this section says so from the rail without the section being entered. The section is
+skippable forever and that is a property of the rail, not of a dialog somebody has to dismiss.
+
+**11.105.3 ONE ARROW PRESS IS 1 mm; `Shift` IS 0.1 mm AND `Ctrl` IS 10 mm.** CR-071 names a 1 mm
+snap, and the two modifiers are the CAD convention a person arrives already knowing.
+
+**The offset lives entirely in `xFineNm`/`yFineNm` and `xTwelfth` stays 0 for a nudged port.** Two
+representations of one position is how they come to disagree, and the twelfth grid is a coarse
+authoring lattice rather than a nudge unit: a twelfth of 482.6 mm is about 40 mm, which is not a
+number any installer thinks in. CR-001 is satisfied by construction, since every step is an integer
+count of nanometres.
+
+*Rejected: 1 mm and nothing else.* This surface exists to fix one jack that is 3 mm out, and it
+would also be used to move one 40 mm, which at one step per millimetre is forty keypresses. CR-071
+says 1 mm **snap**, not 1 mm only.
+
+**11.105.4 `Reset to auto` TAKES THE SELECTION WHEN THERE IS ONE.** With ports selected it clears
+those overrides; with nothing selected the control reads `Reset all to auto` and clears every one.
+One button whose label says which it will do before it is pressed, and undoable either way through
+the builder's own stack (CR-106's third stack).
+
+*Rejected: always the whole panel.* A person who nudged twelve jacks and wants one back would have
+to undo their way there or re-nudge eleven.
+
+**11.105.5 ALIGN IS SIX OPERATIONS AND DISTRIBUTE IS TWO.** Align left, right, top, bottom, centre
+horizontally, centre vertically; distribute evenly on each axis. The standard set, which needs no
+explanation, and **distribute is the load-bearing half**: it is what turns eight hand-nudged XLRs
+into a row rather than eight near-misses, and its absence is what sends a person back to nudging one
+jack at a time.
+
+*Rejected: an "align to auto-layout" operation instead.* It is not what docs/06 names, nobody has
+seen it before, and it overlaps `Reset to auto` confusingly enough that a person would learn neither.
+
+**11.105.6 WHAT THIS DOES NOT RULE.** It does not touch the v1.1 interactive Rear Panel view
+(`Ctrl+3`), which CR-071 part 3 places outside v1 and which this is not. It does not make a
+nudged position mean anything to the netlist, the schedule or any export: ports still connect by
+IDENTITY (CR-071 part 1), and a coordinate remains a drawing fact. It does not feed T2.02, which
+stays DR-105 §11.104.5's. And it does not make an overlapping or off-panel nudge a refusal: the
+panel already reports overflow as a finding (DR-105 §11.104.8) and a person who deliberately drags
+two cutouts together is describing hardware this model does not know about, not making an error.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
