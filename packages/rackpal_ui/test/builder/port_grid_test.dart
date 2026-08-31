@@ -11,6 +11,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
+/// The builder's previews measure text to decide what fits; these tests are
+/// not about that, so the proportional stub the rest of the suite uses is
+/// enough. `_ProportionalMeasurer` rather than `_FakeMeasurer` deliberately:
+/// it returns plausible widths, so a preview laying out against it exercises
+/// the real "only if it fits" branches instead of the degenerate zero case.
+final class _ProportionalMeasurer implements TextMeasurer {
+  @override
+  TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
+    advanceWidth: text.length * style.sizePt * 0.55,
+    ascent: style.sizePt * 0.75,
+    descent: style.sizePt * 0.25,
+    capHeight: style.sizePt * 0.7,
+    xHeight: style.sizePt * 0.5,
+    lineHeight: style.sizePt * 1.2,
+  );
+}
+
 TemplateBody _blank() =>
     TemplateBody(manufacturer: 'Generic', model: '', displayName: '');
 
@@ -100,7 +117,7 @@ Future<_Harness> _pump(
   IdFormat format = const IdFormat('J{PORT_SEQ:2}'),
 }) async {
   final harness = _Harness();
-  tester.view.physicalSize = const Size(1400, 820);
+  tester.view.physicalSize = const Size(1740, 820);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 
@@ -108,6 +125,7 @@ Future<_Harness> _pump(
     MaterialApp(
       home: Scaffold(
         body: DeviceBuilderScreen(
+          measurer: _ProportionalMeasurer(),
           template: template ?? _blank(),
           registries: _registries(),
           portDesignatorFormat: format,
@@ -2632,7 +2650,7 @@ void main() {
     testWidgets('the app is handed the set to remember, keyed on the '
         'category', (tester) async {
       final remembered = <String, Set<PortColumnPack>>{};
-      tester.view.physicalSize = const Size(1400, 820);
+      tester.view.physicalSize = const Size(1740, 820);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.reset);
 
@@ -2640,6 +2658,7 @@ void main() {
         MaterialApp(
           home: Scaffold(
             body: DeviceBuilderScreen(
+              measurer: _ProportionalMeasurer(),
               // ONE OF `kCatalogCategoryOrder`'S NINE. The Identity
               // section's category dropdown asserts that exactly one item
               // matches its value, so a made-up category takes the whole

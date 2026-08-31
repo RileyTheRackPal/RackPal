@@ -11,6 +11,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
+/// The builder's previews measure text to decide what fits; these tests are
+/// not about that, so the proportional stub the rest of the suite uses is
+/// enough. `_ProportionalMeasurer` rather than `_FakeMeasurer` deliberately:
+/// it returns plausible widths, so a preview laying out against it exercises
+/// the real "only if it fits" branches instead of the degenerate zero case.
+final class _ProportionalMeasurer implements TextMeasurer {
+  @override
+  TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
+    advanceWidth: text.length * style.sizePt * 0.55,
+    ascent: style.sizePt * 0.75,
+    descent: style.sizePt * 0.25,
+    capHeight: style.sizePt * 0.7,
+    xHeight: style.sizePt * 0.5,
+    lineHeight: style.sizePt * 1.2,
+  );
+}
+
 TemplateBody _blank() => TemplateBody(
   manufacturer: 'Generic',
   model: '',
@@ -67,6 +84,7 @@ Future<_Harness> _pump(WidgetTester tester, {TemplateBody? template}) async {
     MaterialApp(
       home: Scaffold(
         body: DeviceBuilderScreen(
+          measurer: _ProportionalMeasurer(),
           template: template ?? _fourPorts(),
           registries: _registries(),
           actions: DeviceBuilderActions(

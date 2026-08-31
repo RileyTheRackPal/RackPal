@@ -66,6 +66,7 @@ import 'package:rackpal_ui/src/builder/bank_dialogs.dart';
 import 'package:rackpal_ui/src/builder/bank_tree.dart';
 import 'package:rackpal_ui/src/builder/batch_inspector.dart';
 import 'package:rackpal_ui/src/builder/port_grid.dart';
+import 'package:rackpal_ui/src/builder/preview_dock.dart';
 import 'package:rackpal_ui/src/draw/device_glyph_mark.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
 
@@ -126,6 +127,7 @@ Future<void> showDeviceBuilder(
   BuildContext context, {
   required TemplateBody template,
   required DeviceBuilderActions actions,
+  required TextMeasurer measurer,
   Registries? registries,
   IdFormat portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
 }) => showDialog<void>(
@@ -134,6 +136,7 @@ Future<void> showDeviceBuilder(
     child: DeviceBuilderScreen(
       template: template,
       actions: actions,
+      measurer: measurer,
       registries: registries,
       portDesignatorFormat: portDesignatorFormat,
       onDone: () => Navigator.of(context).pop(),
@@ -164,6 +167,7 @@ class DeviceBuilderScreen extends StatefulWidget {
   const DeviceBuilderScreen({
     required this.template,
     required this.actions,
+    required this.measurer,
     this.registries,
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     this.onDone,
@@ -177,6 +181,16 @@ class DeviceBuilderScreen extends StatefulWidget {
   final TemplateBody template;
 
   final DeviceBuilderActions actions;
+
+  /// The one shared `TextMeasurer` (CR-081), for the right dock's three
+  /// previews.
+  ///
+  /// REQUIRED, exactly as `RackCanvasScreen` takes it, and not defaulted to
+  /// a stub. Every preview here is drawn by a real scene builder that
+  /// measures text to decide what fits: a stub measurer would lay every
+  /// label out wrong AND STILL RENDER, which is the failure mode that
+  /// costs a person their afternoon rather than their next thirty seconds.
+  final TextMeasurer measurer;
 
   /// The project's registries, so the port grid can print `HDMI Type A`
   /// where the model holds `conn.hdmi_a`.
@@ -632,51 +646,90 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
               ),
             ),
             // ═══════════════════════════════════════════════════════════
-            // docs/06 §2's RIGHT DOCK, IN ITS ONE BUILT STATE
+            // docs/06 §2's RIGHT DOCK, NOW IN BOTH ITS STATES
             // ═══════════════════════════════════════════════════════════
             // §2 says the dock "swaps to a batch inspector when more than
-            // one grid row is selected". The other state is three live
-            // previews, which are M4-K (`#182`), so the pane is DRAWN
-            // ONLY when there is a selection to inspect. That keeps the
-            // rule this file has held since M4-D: a pane that opens onto
-            // nothing is the `UnbuiltView` defect wearing a hat.
+            // one grid row is selected", and SWAPS is the operative word:
+            // the previews are the resting state and the inspector takes
+            // the pane while a batch is live. `#228` builds the previews,
+            // so the old note here -- "there is nothing to put in a 340px
+            // dock, so it is not drawn" -- is discharged rather than
+            // deleted, and DR-105 §11.104.7 quotes it as the condition it
+            // was ending.
             //
-            // Gated on the section too. `_batch` survives a trip to
-            // Physical and back, deliberately, so the selection is still
-            // there when the person returns; drawing the dock over the
-            // METADATA FORM would put a pane about ports beside a field
-            // about weight.
-            if (_batch case final PortBatchContext batch
-                when _section == BuilderSection.ports) ...[
+            // STILL GATED ON THE SECTION, for the reason that gating was
+            // introduced: a pane about ports beside a field about weight
+            // is worse than no pane. `_batch` survives a trip to Physical
+            // and back, deliberately, so the selection is still there when
+            // the person returns.
+            if (_section == BuilderSection.ports) ...[
               const VerticalDivider(width: 1),
-              BatchInspector(
-                body: _session.body,
-                registries: widget.registries ?? Registries(),
-                context_: batch,
-                // THE DOCK WRITES THROUGH THE SESSION, in ONE transaction
-                // per field, so setting a value across eight rows is one
-                // `Ctrl+Z` (M4-F11). `buildBatchWrite` builds the commands
-                // in core; this closure only decides which stack they land
-                // on, which is the same division the grid's own edits use.
-                onWrite: (column, value) => _transact(
-                  LabelKey.setPortProperty,
-                  (tx) {
-                    for (final command in buildBatchWrite(
-                      body: _session.body,
-                      column: column,
-                      portKeys: batch.portKeys,
-                      value: value,
-                    )) {
-                      tx.add(command);
-                    }
-                  },
+              if (_batch case final PortBatchContext batch)
+                _batchInspector(batch)
+              else
+              // ═══════════════════════════════════════════════════════
+              // THE DOCK YIELDS TO THE GRID, AND THE THRESHOLD IS
+              // MEASURED RATHER THAN CHOSEN
+              // ═══════════════════════════════════════════════════════
+              // 340 px of dock on a narrow window leaves the port grid
+              // too little to draw its own archetype bar: at 434 px of
+              // grid it overflows by 203, so the bar alone needs ~637.
+              // Add the 200 px section rail, the dock and the dividers
+              // and the floor is a shade over 1170.
+              //
+              // A grid that cannot draw its own toolbar is a worse
+              // outcome than a preview a person cannot see, and it is
+              // the PRIMARY surface: docs/06 §2 sizes this window for
+              // "a 68-row virtualised grid", not for the dock beside
+              // it. So the dock is what gives way.
+              //
+              // AND IT DOES SO SILENTLY, which is the part that is
+              // not good enough: a person on a laptop sees no previews
+              // and no explanation. `#802` owes this window a real
+              // narrow layout; `#227`, the nudge canvas, is the other
+              // unbuilt part of it.
+              //
+              // THE WINDOW, NOT A `LayoutBuilder`. A `Row` hands its
+              // non-flex children UNBOUNDED width, so a `LayoutBuilder`
+              // here reads `maxWidth: infinity` and the gate never
+              // fires -- which is exactly what it did on the first
+              // attempt, silently drawing the dock at every size while
+              // looking like it was measuring something.
+              if (MediaQuery.sizeOf(context).width >= kPreviewDockMinWindow)
+                BuilderPreviewDock(
+                  body: _session.body,
+                  registries: widget.registries ?? Registries(),
+                  measurer: widget.measurer,
                 ),
-              ),
             ],
           ],
         ),
       ),
     ],
+  );
+
+  /// The dock's OTHER state (docs/06 §2), lifted out of the tree when the
+  /// previews joined it so the `if` above reads as the swap it is.
+  Widget _batchInspector(PortBatchContext batch) => BatchInspector(
+    body: _session.body,
+    registries: widget.registries ?? Registries(),
+    context_: batch,
+    // THE DOCK WRITES THROUGH THE SESSION, in ONE transaction per field,
+    // so setting a value across eight rows is one `Ctrl+Z` (M4-F11).
+    // `buildBatchWrite` builds the commands in core; this closure only
+    // decides which stack they land on, which is the same division the
+    // grid's own edits use.
+    onWrite: (column, value) =>
+        _transact(LabelKey.setPortProperty, (TxnScope<TemplateBody> tx) {
+          for (final command in buildBatchWrite(
+            body: _session.body,
+            column: column,
+            portKeys: batch.portKeys,
+            value: value,
+          )) {
+            tx.add(command);
+          }
+        }),
   );
 }
 

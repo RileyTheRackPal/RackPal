@@ -302,11 +302,18 @@ $ErrorActionPreference = 'Stop'
 # what says the schematic canvas did not move and `schematic_perf_test.dart`'s
 # 4155-op M2-C baseline is still measuring the same drawing.
 
+# RE-MEASURED 2026-08-30 at `#228` (the dock itself): ui 1324 -> 1333, the
+# nine of `test/builder/preview_dock_test.dart`. They deliberately do NOT
+# check that the previews look right -- every pixel comes from a core scene
+# builder and the drawing is asserted beside it. They check that the dock asks
+# the right builder, survives the bodies that break naive previews, collapses,
+# and does not paint over the grid.
+
 $SuiteFloors = @{
     'rackpal_core'   = 3609
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1324
+    'rackpal_ui'     = 1333
     'rackpal_app'    = 916
 }
 

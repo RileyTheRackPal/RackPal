@@ -972,6 +972,7 @@ final class AppShellState extends State<AppShell>
         ? null
         : resolveLatestTemplate(doc, editing.v);
     return DeviceBuilderScreen(
+      measurer: widget.measurer,
       // KEYED ON THE CONTROLLER **AND** THE TEMPLATE, and the second half
       // is what makes door 2 work at all: `TemplateEditSession` is
       // `late final`, so handing this screen a different `template` on the

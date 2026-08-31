@@ -11,6 +11,23 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
+/// The builder's previews measure text to decide what fits; these tests are
+/// not about that, so the proportional stub the rest of the suite uses is
+/// enough. `_ProportionalMeasurer` rather than `_FakeMeasurer` deliberately:
+/// it returns plausible widths, so a preview laying out against it exercises
+/// the real "only if it fits" branches instead of the degenerate zero case.
+final class _ProportionalMeasurer implements TextMeasurer {
+  @override
+  TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
+    advanceWidth: text.length * style.sizePt * 0.55,
+    ascent: style.sizePt * 0.75,
+    descent: style.sizePt * 0.25,
+    capHeight: style.sizePt * 0.7,
+    xHeight: style.sizePt * 0.5,
+    lineHeight: style.sizePt * 1.2,
+  );
+}
+
 TemplateBody _blank() => TemplateBody(
   manufacturer: 'Generic',
   model: '',
@@ -93,7 +110,11 @@ Finder _inGrid(Finder matching) =>
 Future<_Harness> _pump(
   WidgetTester tester, {
   TemplateBody? template,
-  Size size = const Size(1400, 820),
+  // WIDENED BY 340 AT `#228`: the right dock now sits beside the grid in
+  // the Ports section, so a surface sized for the old two-pane layout
+  // pushes the cell these tests tap off the visible grid. The subject
+  // is the GRID, so the window grows rather than the dock going away.
+  Size size = const Size(1740, 820),
 }) async {
   final harness = _Harness();
   tester.view.physicalSize = size;
@@ -104,6 +125,7 @@ Future<_Harness> _pump(
     MaterialApp(
       home: Scaffold(
         body: DeviceBuilderScreen(
+          measurer: _ProportionalMeasurer(),
           template: template ?? _matrix(),
           registries: _registries(),
           actions: DeviceBuilderActions(
@@ -555,7 +577,7 @@ void main() {
       }
       body.ports.add(_port('last.1', bank: 'last', order: 'a9000'));
 
-      await _pump(tester, template: body, size: const Size(1400, 700));
+      await _pump(tester, template: body, size: const Size(1740, 700));
       await tester.tap(find.widgetWithText(ListTile, 'Ports'));
       await tester.pumpAndSettle();
 
