@@ -161,3 +161,215 @@ final class AddMediaTypeCommand extends Command<RackDocument> {
     doc.registries.mediaTypes.remove(id);
   }
 }
+
+/// Rewrites a media type's LABEL. Never its id (`#247`, DR-107).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE ID IS FROZEN AT CREATION, AND THAT IS WHY THIS COMMAND IS CHEAP
+/// ═══════════════════════════════════════════════════════════════════════
+/// [mediaTypeIdFor] derives `media.cat6e` from the spelling, and its own
+/// comment argues why: a registry key is written into every `Link.media`
+/// and read by a human diffing two `.rmpj` files. Re-deriving it on a
+/// rename would turn a typo fix into a document-wide rewrite, and CR-117's
+/// byte round-trip would see the whole file churn for a cosmetic edit.
+///
+/// So an id can drift from its label, and that is the accepted cost. The
+/// thing that reunifies a duplicate is [MergeMediaTypesCommand], not a
+/// rename, which is exactly why that command has to exist.
+final class EditMediaTypeCommand extends Command<RackDocument> {
+  EditMediaTypeCommand({required this.from, required this.to})
+    : assert(
+        from.id == to.id,
+        'the id is frozen at creation; a merge repoints references, an '
+        'edit never does',
+      );
+
+  final MediaTypeDef from;
+  final MediaTypeDef to;
+
+  @override
+  LabelKey get label => LabelKey.editMediaType;
+
+  /// `AddMediaTypeCommand`'s reasoning unchanged: `structure` because a
+  /// cable type is part of how the building is put together, `meta`
+  /// because its name prints in the schedule's `TYPE` cell.
+  @override
+  EpochMask get touches => EpochMask.structure | EpochMask.meta;
+
+  /// Empty, for `AddMediaTypeCommand`'s reason: a registry key is not an
+  /// entity a selection can hold.
+  @override
+  Iterable<Uuid> get affects => const [];
+
+  @override
+  void apply(RackDocument doc) => doc.registries.mediaTypes[to.id] = to;
+
+  @override
+  void revert(RackDocument doc) => doc.registries.mediaTypes[from.id] = from;
+}
+
+/// Folds [loser] into [winner], repointing every reference (`#247`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THIS IS WHAT RJ-012 IS ACTUALLY FOR
+/// ═══════════════════════════════════════════════════════════════════════
+/// RJ-012 ships a media-type editor *"because users hit it"*, and what
+/// they hit is `csv_import_apply.dart`: an unmatched value in a Structure
+/// sheet CREATES a type rather than rejecting the row, which is correct
+/// and is why a typo in row 40 becomes `media.cat_6e_riser` sitting beside
+/// `media.cat6e`. The schedule then prints two rows for one cable.
+///
+/// A rename cannot fix that, because the duplicate is already written into
+/// cable runs. Only a merge can.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// FIVE FIELDS NAME A `MediaTypeId`, AND A TEST PROVES IT IS FIVE
+/// ═══════════════════════════════════════════════════════════════════════
+/// `Link.media`, `OutletTemplate.drops[].media`, `Pathway.pathwayMedia`,
+/// `ProjectSettings.defaultNetworkMedia` and `CableSpecDef.mediaTypeId`.
+/// **The list is not what the test checks.** `media_type_merge_test.dart`
+/// serialises the document afterwards and asserts the loser's id appears
+/// NOWHERE in the bytes, so a sixth field added later fails that test
+/// rather than silently orphaning whatever names it. Enumerating by hand
+/// is how a census misses the call it cannot see.
+///
+/// THE LOSER'S SPELLINGS MOVE TO THE WINNER, which is not tidiness: it is
+/// what keeps the import idempotent. `AddMediaTypeCommand.aliases` exists
+/// so re-importing the same sheet resolves the type instead of inventing a
+/// second one; a merge that dropped the loser's aliases would let the next
+/// import of that same typo mint the duplicate all over again.
+final class MergeMediaTypesCommand extends Command<RackDocument> {
+  MergeMediaTypesCommand({required this.winner, required this.loser})
+    : assert(winner != loser, 'a type cannot be merged into itself');
+
+  final MediaTypeId winner;
+  final MediaTypeId loser;
+
+  /// RECORDED DURING `apply`, which `AddPortCommand` establishes as this
+  /// package's idiom: it holds the port it added so redo restores the
+  /// identical object. Recording the touched ids is the same move, and it
+  /// is what makes `revert` exact rather than a re-scan, which would also
+  /// catch references that legitimately named [winner] beforehand.
+  final List<Uuid> _links = [];
+
+  /// `(outletTemplate key, drop index)` pairs. **NOT `Outlet` ids**: an
+  /// `Outlet` holds gangs and no media at all, and the id lives on
+  /// `OutletDrop`, which hangs off `OutletTemplate.drops` in the
+  /// REGISTRY. The first draft of this command wrote `Outlet.media` on
+  /// the strength of a grep that found the field and assumed its owner,
+  /// and the analyzer refused it.
+  final List<(String, int)> _drops = [];
+  final List<Uuid> _pathways = [];
+  final List<String> _cableSpecs = [];
+  bool _settings = false;
+  MediaTypeDef? _removed;
+  MediaTypeDef? _winnerWas;
+
+  @override
+  LabelKey get label => LabelKey.mergeMediaTypes;
+
+  @override
+  EpochMask get touches => EpochMask.structure | EpochMask.meta;
+
+  @override
+  Iterable<Uuid> get affects => [..._links, ..._pathways];
+
+  @override
+  void apply(RackDocument doc) {
+    _links.clear();
+    _drops.clear();
+    _pathways.clear();
+    _cableSpecs.clear();
+    _settings = false;
+
+    for (final e in doc.links.entries) {
+      if (e.value.media == loser) {
+        e.value.media = winner;
+        _links.add(e.key);
+      }
+    }
+    for (final e in doc.registries.outletTemplates.entries) {
+      final drops = e.value.drops;
+      for (var i = 0; i < drops.length; i++) {
+        if (drops[i].media == loser) {
+          drops[i].media = winner;
+          _drops.add((e.key, i));
+        }
+      }
+    }
+    for (final e in doc.pathways.entries) {
+      if (e.value.pathwayMedia == loser) {
+        e.value.pathwayMedia = winner;
+        _pathways.add(e.key);
+      }
+    }
+    if (doc.settings.defaultNetworkMedia == loser) {
+      doc.settings.defaultNetworkMedia = winner;
+      _settings = true;
+    }
+
+    final specs = doc.registries.cableSpecs;
+    for (final e in specs.entries.toList()) {
+      if (e.value.mediaTypeId == loser) {
+        specs[e.key] = CableSpecDef(
+          id: e.value.id,
+          manufacturer: e.value.manufacturer,
+          partNumber: e.value.partNumber,
+          mediaTypeId: winner,
+        );
+        _cableSpecs.add(e.key);
+      }
+    }
+
+    final types = doc.registries.mediaTypes;
+    _removed = types[loser];
+    _winnerWas = types[winner];
+    final gone = _removed;
+    final kept = _winnerWas;
+    if (gone != null && kept != null) {
+      types[winner] = MediaTypeDef(
+        id: kept.id,
+        displayName: kept.displayName,
+        shortTag: kept.shortTag,
+        aliases: {...kept.aliases, ...gone.aliases, gone.displayName}.toList(),
+        maxRunLengthPassive: kept.maxRunLengthPassive,
+        maxRunLengthActive: kept.maxRunLengthActive,
+        jacketOptions: kept.jacketOptions,
+        isPathwayOnly: kept.isPathwayOnly,
+      );
+    }
+    types.remove(loser);
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    final gone = _removed;
+    if (gone != null) doc.registries.mediaTypes[loser] = gone;
+    final kept = _winnerWas;
+    if (kept != null) doc.registries.mediaTypes[winner] = kept;
+
+    for (final id in _links) {
+      doc.links[id]?.media = loser;
+    }
+    for (final (key, i) in _drops) {
+      final drops = doc.registries.outletTemplates[key]?.drops;
+      if (drops != null && i < drops.length) drops[i].media = loser;
+    }
+    for (final id in _pathways) {
+      doc.pathways[id]?.pathwayMedia = loser;
+    }
+    if (_settings) doc.settings.defaultNetworkMedia = loser;
+
+    final specs = doc.registries.cableSpecs;
+    for (final key in _cableSpecs) {
+      final was = specs[key];
+      if (was == null) continue;
+      specs[key] = CableSpecDef(
+        id: was.id,
+        manufacturer: was.manufacturer,
+        partNumber: was.partNumber,
+        mediaTypeId: loser,
+      );
+    }
+  }
+}
