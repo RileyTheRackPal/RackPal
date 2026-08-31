@@ -15055,6 +15055,94 @@ two cutouts together is describing hardware this model does not know about, not 
 
 ---
 
+### §11.106 DR-107 · M4-P's scope, the stripped form, and the panel a field device actually has
+
+**Question.** M4-P (`#187`) opens with three chapters: the stripped field-device form (`#246`), the
+media-type editor (`#247`) and connector aliases (`#248`). A census before pricing found three things
+the board items do not say, and each needs ruling before code.
+
+**11.106.1 RJ-012 NAMES THREE v1 SURFACES AND THE BOARD NAMES TWO.** RJ-012 ships *"a media-type
+editor, connector aliases, and a per-family colour override row in settings"*. `#187` calls these
+*"the two extensibility surfaces that DO ship"* and omits the third.
+
+**The third has nowhere to go.** `ProjectSettings.familyColorOverrides` exists and
+`signal_style.dart` consumes it; **no file in `rackpal_ui` or `apps/rackpal` references it.** Nor is
+it alone: `ProjectSettings` carries roughly twenty fields with no producer, including
+`displayUnits` (CR-097, authoritative over any app preference), five `IdFormat`s,
+`collisionPolicy`, `ruleOverrides` and `jacketColorConventions`. **There is no settings surface in
+the app and none assigned to any milestone**; the corpus's only mention is M1's own deferral list,
+item 5, left unowned.
+
+**Ruled: M4-P builds its two named chapters, and the settings surface is `#805`.** RJ-012 therefore
+stays **partly unmet through M4**, and this ruling says so rather than leaving it implied. A settings
+pane built inside M4-P to hold one colour row would invite the other nineteen fields to arrive
+without a design, and M4 is already the milestone that grew from `M` to `L`.
+
+**11.106.2 THE STRIPPED FORM IS ONE BUILDER WITH SECTIONS KEYED ON `mountMethod`.** A body whose
+mount method is `notInRack` drops the Physical section's rack fields and shows what AC-031 leaves:
+identity and ports.
+
+*Rejected: a separate screen.* Two authoring surfaces would have to be kept in step, and changing a
+device's mount method after the fact would mean moving it between them, which is CR-104's *"two
+places to add a device"* defect rebuilt in a new place.
+
+*Rejected: disabling rather than hiding.* AC-031 asks for a **stripped** form in terms, and a wall of
+greyed-out rack fields on a ceiling speaker is the opposite of stripped.
+
+**11.106.3 AC-031's "location" DESCRIBES THE INSPECTOR'S JOB, NOT THE BUILDER'S.** AC-031 says the
+form is *"identity, ports, location; no RU, no rack depth, no thermal class"*. **`TemplateBody` has
+no location field and must not gain one.** `locationId` lives on `DeviceInstance`: where a speaker
+hangs is a fact about a placed device, and a template is a model of a device rather than an instance
+of one. A default location on a template would be data nothing reads, with every in-ceiling speaker
+carrying "ceiling".
+
+The sentence is read as descriptive rather than as a section list, which its own shape supports:
+the three words that follow it are all REMOVALS. The builder builds identity and ports.
+
+**11.106.4 A FIELD DEVICE HAS NO PANEL, AND THE FIRST DRAFT OF THIS CLAUSE WAS WRONG.**
+
+**WITHDRAWN BEFORE IT WAS BUILT, and recorded rather than quietly rewritten.** This clause first
+ruled that a body occupying no rack U should take its panel height from its own cutouts, so that
+*"a wall plate, a floor box and a structured enclosure then draw what they have"*. The code change
+was written, two tests refused it, and the census those failures forced overturned the clause.
+
+**Two facts settle it, and both were reachable before the ruling was written.**
+
+`T2.02` is **`Rack Elevation: Rear`, one per `Rack`** (docs/01 §9.8, docs/00 R7), and CR-071 part 2
+makes that sheet the thing `panel_layer.dart` draws for. **A field device is by definition not in a
+rack**, so it never appears on it. A panel for a field device is a drawing with no sheet to live on:
+a display's HDMI sockets are on the back of a television, and putting them on a 482.6 mm EIA panel
+draws something that does not exist.
+
+**And no shipped field template is a plate.** AC-031's ruled 18 are display, projector, projection
+screen, four speakers, IP camera, NVR, wireless AP, touchpanel, keypad, volume control, IR receiver
+eye, ISP gateway/ONT, OTA antenna and F-type ground block. *"Wall plate, parametric N keystones"*
+comes from `critique-domain-realism.md`'s **wishlist**, which AC-031 did not adopt. The case the
+clause existed to serve is not in the catalog, and the clause was priced off a critique rather than
+off the ruling that answered it, which is [don't price a decision off a derived artifact] firing for
+the third time in this corpus.
+
+**Ruled: the existing behaviour stands.** A body occupying no rack U has no panel, and the `Panel`
+section and the preview dock are right to say so. `#806`, filed against the plate width, is
+withdrawn: `plate_geometry.dart` already carries a MEASURED plate outline (2.75 x 4.5 in), gang
+pitch (1.8125 in) and an N-gang width rule under DR-041/DR-042, so *"candidates, none ruled"* was a
+census miss as well.
+
+**`PlateGeometry` and `panel_layer` stay separate, and that is not two drawings of one thing.** A
+Structure plate is an `Outlet`: a physical cover with keystone straps, keyed on `gangCount`, drawn
+at its own 4 units/mm anchor because a rack's 0.495 would render a 14.5 mm nose smaller than its own
+label. A rear panel is a rack device's connector field at EIA width. They answer different questions
+about different entities, and CR-086 is not in tension with that.
+
+**11.106.5 WHAT THIS DOES NOT RULE.** It does not build a signal-family editor, a colour-scheme
+editor or a rule editor: RJ-012 rejects all three for v1, and AC-011 withdraws user-authored
+validation rules from every document, because rules are Dart functions keyed by `ruleId` and a UI
+for them would make the app an interpreter for user input. It does not decide where the settings
+surface lands, which is `#805`'s first question. And it does not touch the 18 seeded field templates
+themselves, which shipped at AC-031 and are not this story's.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

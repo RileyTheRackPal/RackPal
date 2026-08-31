@@ -61,8 +61,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard;
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
+import 'package:rackpal_ui/src/structure/connector_aliases_dialog.dart';
 import 'package:rackpal_ui/src/structure/csv_import_dialog.dart';
 import 'package:rackpal_ui/src/structure/drop_entry_panel.dart';
+import 'package:rackpal_ui/src/structure/media_types_dialog.dart';
 import 'package:rackpal_ui/src/structure/outlets_view.dart';
 import 'package:rackpal_ui/src/structure/pathways_view.dart';
 import 'package:rackpal_ui/src/structure/structure_matrix_view.dart';
@@ -85,6 +87,7 @@ final class StructureEditorActions {
     required this.onAddPathway,
     required this.onRemovePathway,
     required this.onImportCsv,
+    required this.onRunMediaTypeCommands,
     required this.outlets,
   });
 
@@ -151,6 +154,12 @@ final class StructureEditorActions {
   /// dialog: the native picker blocks on the user and AC-058/D14 wants
   /// progress on anything over ~500 ms.
   final Future<void> Function(Uuid? structureBodyId) onImportCsv;
+
+  /// Runs the media-type editor's commands on the document stack
+  /// (`#247`, RJ-012). A LIST, because one gesture may produce more than
+  /// one command and a single `Ctrl+Z` should take back what it did.
+  final void Function(List<Command<RackDocument>> commands)
+  onRunMediaTypeCommands;
 
   /// The Outlets tab's five gestures (M3-H/2, #167, DR-007 §11.7).
   ///
@@ -419,6 +428,31 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
           onBody: (id) => setState(() => _pickedBodyId = id),
           onImportCsv: () =>
               unawaited(widget.actions.onImportCsv(_bodyIdFor(doc))),
+          onManageMediaTypes: () => unawaited(
+            showMediaTypesDialog(
+              context,
+              doc: doc,
+              // The dialog builds commands; the SESSION decides which
+              // stack they land on, exactly as the batch inspector and the
+              // nudge canvas do. A registry edit IS undoable, on the
+              // document stack (CR-106), even though a library import is
+              // not: this one writes the open document.
+              onEdit: (commands) {
+                widget.actions.onRunMediaTypeCommands(commands);
+                setState(() {});
+              },
+            ),
+          ),
+          onConnectorAliases: () => unawaited(
+            showConnectorAliasesDialog(
+              context,
+              doc: doc,
+              onEdit: (commands) {
+                widget.actions.onRunMediaTypeCommands(commands);
+                setState(() {});
+              },
+            ),
+          ),
         ),
         _TabStrip(
           tab: _tab,
@@ -948,6 +982,8 @@ class _EditorHeader extends StatelessWidget {
     required this.onDone,
     required this.onBody,
     required this.onImportCsv,
+    required this.onManageMediaTypes,
+    required this.onConnectorAliases,
   });
 
   final RackDocument doc;
@@ -959,6 +995,12 @@ class _EditorHeader extends StatelessWidget {
   /// because it acts on the whole body and not on the table's selection,
   /// and §4's wireframe draws it with the other body-level controls.
   final VoidCallback onImportCsv;
+
+  /// Opens the media-type editor (`#247`, RJ-012).
+  final VoidCallback onManageMediaTypes;
+
+  /// Opens the connector-alias editor (`#248`, RJ-012, CR-058).
+  final VoidCallback onConnectorAliases;
 
   /// Choose which body the editor is working on (M3-E/3, #158).
   final ValueChanged<Uuid> onBody;
@@ -1005,6 +1047,34 @@ class _EditorHeader extends StatelessWidget {
           TextButton(
             onPressed: onImportCsv,
             child: const Text(kImportCsvLabel),
+          ),
+          // ═════════════════════════════════════════════════════════════
+          // BESIDE THE IMPORT BUTTON, WHICH IS WHAT CREATES THE MESS
+          // ═════════════════════════════════════════════════════════════
+          // RJ-012 ships the media-type editor "because users hit it", and
+          // `csv_import_apply.dart` is how they hit it: an unmatched value
+          // CREATES a type rather than rejecting the row (RJ-009), so a
+          // typo in row 40 becomes a second cable type. Putting the fix
+          // next to the button that made it is the shortest path from
+          // noticing to repairing.
+          //
+          // NOT AN ITEM IN THE MEDIA DROPDOWN, which was the first idea.
+          // Those are `DropdownButton`s over the type NAMES, so a
+          // "Manage..." entry would be a value a person could accidentally
+          // assign to a pathway. A control that can be chosen by mistake
+          // is worse than one that is a step further away.
+          TextButton(
+            onPressed: onManageMediaTypes,
+            child: const Text(kManageMediaTypesLabel),
+          ),
+          // The second of RJ-012's two shipping surfaces, beside the
+          // first. Both are project VOCABULARY -- what a word means in
+          // this document -- and `resolveConnectorToken` serves the
+          // builder's Quick Add and the drop lines here alike, so one
+          // place to teach a word is right for both.
+          TextButton(
+            onPressed: onConnectorAliases,
+            child: const Text(kConnectorAliasesLabel),
           ),
           if (onDone != null)
             TextButton(onPressed: onDone, child: const Text('Done')),

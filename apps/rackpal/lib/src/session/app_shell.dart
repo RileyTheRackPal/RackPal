@@ -917,6 +917,9 @@ final class AppShellState extends State<AppShell>
         controller: session.controller,
       ),
       onImportCsv: (bodyId) => _runCsvImport(session, bodyId),
+      onRunMediaTypeCommands: buildMediaTypeAction(
+        controller: session.controller,
+      ),
       outlets: buildOutletsActions(controller: session.controller),
     ),
   );

@@ -266,18 +266,22 @@ void main() {
       await tester.pumpAndSettle();
 
       // A COLLAPSED DROPDOWN SHOWS ONLY ITS CURRENT VALUE, so these are
-      // the defaults a new template carries: `notInRack` and `none`.
-      // Those two spellings are exactly what a user would have seen.
-      expect(find.text('notInRack'), findsNothing);
+      // the defaults a new template carries. **The mount default moved
+      // from `notInRack` to `rackEars` at `#246`** (DR-107 §11.106.2):
+      // `notInRack` being the default was what let a blank template pass
+      // AC-049's save gate with no RU height, because a default carries
+      // no evidence that its zero was MEANT. It also opened every new
+      // template in the stripped field-device form.
+      expect(find.text('rackEars'), findsNothing);
       expect(find.text('none'), findsNothing);
-      expect(find.text('Not in a rack'), findsWidgets);
+      expect(find.text('Rack ears'), findsWidgets);
       expect(find.text('Does not sit in the rack'), findsWidgets);
 
       // And the whole set, once the menu is open.
-      await tester.tap(find.text('Not in a rack').first);
+      await tester.tap(find.text('Rack ears').first);
       await tester.pumpAndSettle();
 
-      expect(find.text('Rack ears'), findsWidgets);
+      expect(find.text('Not in a rack'), findsWidgets);
       expect(find.text('rackEars'), findsNothing);
     });
   });

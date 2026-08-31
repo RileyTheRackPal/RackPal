@@ -409,3 +409,31 @@ const String kPathwayNeedsAName =
 const String kRunsIsDerived =
     'RUNS counts the cables routed through this pathway, so there is '
     'nothing to type: route a cable to change it.';
+
+/// Runs the media-type editor's commands on the document stack (`#247`,
+/// RJ-012).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// ONE TRANSACTION PER GESTURE, AND THE LABEL COMES FROM THE COMMANDS
+/// ═══════════════════════════════════════════════════════════════════════
+/// A merge repoints every reference and removes a type; that is one act to
+/// the person who asked for it, so it is one `Ctrl+Z`. The label is taken
+/// from the first command rather than fixed here, because the same seam
+/// carries an edit and a merge and an undo entry reading `mergeMediaTypes`
+/// for a rename would be a lie about what it will take back.
+///
+/// A REGISTRY EDIT IS UNDOABLE, unlike a library import (docs/03 §5.6).
+/// The distinction is which aggregate is written: a library operation
+/// touches files outside the document, and this writes `doc.registries`,
+/// which is part of the document and is what makes a `.rmpj` file
+/// self-describing.
+void Function(List<Command<RackDocument>>) buildMediaTypeAction({
+  required DocumentController controller,
+}) => (commands) {
+  if (commands.isEmpty) return;
+  controller.transact(commands.first.label, (tx) {
+    for (final command in commands) {
+      tx.add(command);
+    }
+  });
+};

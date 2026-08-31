@@ -50,4 +50,26 @@
 # optional parameter and an escaped inner quote in `seed_catalog_test`.
 # The gate asked for this in as many words: "info count FELL by 2 (173 ->
 # 171). Lower the pin so the ground you gained cannot be given back."
-171
+#
+# 171 -> 233 on 2026-08-31 at `#246` (DR-107). RAISED, and against the `#226`
+# precedent three paragraphs up, so the difference is worth stating.
+#
+# `TemplateBody.mountMethod` moved from `notInRack` to `rackEars`, which
+# turned 60 catalog and fixture sites' explicit `mountMethod:
+# MountMethod.rackEars` into redundant arguments. `#226` met the same shape
+# and REMOVED them.
+#
+# These stay, for a reason `#226`'s did not have. `position:
+# kUnplacedPanelPosition` was a placeholder standing in for "not set"; a mount
+# method is a FACT ABOUT THE HARDWARE, and the seed catalog is where those
+# facts are written down. This very change is the argument: the default moved
+# once, and a template that had gone silent on the question would have changed
+# meaning without a diff. The catalog already carries roughly a hundred
+# explicit values matching their defaults for the same reason -- `dir:
+# PortDirection.bidirectional` and its neighbours -- and the ratchet has
+# always absorbed them.
+#
+# WHAT THIS IS NOT: mechanical noise from a formatting sweep. That case is
+# argued against above and the argument stands. Every one of the 62 is a
+# statement a person wrote about a piece of equipment.
+233

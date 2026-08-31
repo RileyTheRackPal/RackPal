@@ -315,11 +315,33 @@ $ErrorActionPreference = 'Stop'
 # arithmetic WITHOUT pumping a widget, and the 18 ui cases assert only what a
 # widget test can see and a core test cannot.
 
+# RE-MEASURED 2026-08-31 at `#246` (the field-device path): ui 1351 -> 1361,
+# the ten of `test/builder/field_device_form_test.dart`. Core, export and app
+# are UNCHANGED, which is the measurement that made the model default safe to
+# move: 92 files construct a bare `TemplateBody`, all five suites were run
+# under the change before it was kept, and exactly one test moved -- one
+# asserting the old default's LABEL, not its behaviour.
+
+# RE-MEASURED 2026-08-31 at `#247` (the media-type editor): core 3625 -> 3634
+# and ui 1361 -> 1373. The split is deliberate. The nine core cases assert the
+# COMMANDS, including the one that matters: after a merge, the loser's id
+# appears NOWHERE in the serialised document, so a sixth field naming a
+# `MediaTypeId` fails that test rather than being silently orphaned. The twelve
+# ui cases assert only what a widget test can see -- that a merge names how
+# many references it will repoint before it does it.
+
+# RE-MEASURED 2026-08-31 at `#248` (connector aliases and the two refusals):
+# core 3634 -> 3651 and ui 1373 -> 1381. Seven of the core cases are
+# `refused_surfaces_test.dart`, which asserts an ABSENCE -- no command that
+# creates a signal family, a connector type, a colour scheme or a validation
+# rule (RJ-012, AC-011). It carries its own vacuity guard, because a scan that
+# walks zero files passes every such assertion while proving nothing.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3625
+    'rackpal_core'   = 3651
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1351
+    'rackpal_ui'     = 1381
     'rackpal_app'    = 916
 }
 
