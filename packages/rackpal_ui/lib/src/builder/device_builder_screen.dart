@@ -65,6 +65,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/builder/bank_dialogs.dart';
 import 'package:rackpal_ui/src/builder/bank_tree.dart';
 import 'package:rackpal_ui/src/builder/batch_inspector.dart';
+import 'package:rackpal_ui/src/builder/panel_canvas.dart';
 import 'package:rackpal_ui/src/builder/port_grid.dart';
 import 'package:rackpal_ui/src/builder/preview_dock.dart';
 import 'package:rackpal_ui/src/draw/device_glyph_mark.dart';
@@ -153,6 +154,14 @@ enum BuilderSection {
   /// editor is what the exit criterion is measured on, and the metadata
   /// form is what a user fills in once.
   ports('Ports'),
+
+  /// CR-071's rear-panel nudge canvas (`#227`), ruled a section of its own
+  /// by DR-106 §11.105.2 rather than a corner of the dock: the drawing is
+  /// 482.6 mm wide and the dock is 340 px.
+  ///
+  /// AFTER PORTS, because it is derived FROM the ports and a person
+  /// arrives here having just authored them.
+  panel('Panel'),
   physical('Physical'),
   power('Power'),
   appearance('Appearance');
@@ -629,6 +638,24 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
                     },
                     bankActions: _bankActions,
                     bankJump: _bankJump,
+                  ),
+                  BuilderSection.panel => PanelCanvasSection(
+                    body: _session.body,
+                    registries: widget.registries ?? Registries(),
+                    measurer: widget.measurer,
+                    // ONE TRANSACTION PER GESTURE, so aligning eight
+                    // cutouts is one `Ctrl+Z`, the discipline the batch
+                    // inspector already follows. `panel_arrange.dart`
+                    // builds the commands in core; this closure only
+                    // decides which stack they land on.
+                    onEdit: (commands) => _transact(
+                      LabelKey.setPortProperty,
+                      (TxnScope<TemplateBody> tx) {
+                        for (final command in commands) {
+                          tx.add(command);
+                        }
+                      },
+                    ),
                   ),
                   BuilderSection.physical => _PhysicalSection(
                     body: _session.body,

@@ -439,11 +439,33 @@ abstract final class PortDefField {
     set: _setOrder,
   );
 
+  /// The rear-panel override (CR-071 part 1, DR-106), null meaning the
+  /// layout is automatic (DR-105 §11.104.3).
+  ///
+  /// **THE SECOND ENTRY HERE THAT IS NOT A CELL**, and it earns the
+  /// exception the same way [order] does: it is a single typed write to a
+  /// single port, which is the shape [SetPortFieldCommand] already is, and
+  /// a bespoke command would be a second undo path to one field. It is
+  /// edited by the `Panel` section's nudge canvas (`#227`), never by a
+  /// column.
+  ///
+  /// **Unreachable by fill and by batch write, by construction**: both are
+  /// keyed on `PortColumnId` and there is no `PortColumnId.panelPosition`.
+  /// That matters more here than it does for [order], because a batch
+  /// write of one position across eight ports would stack eight cutouts on
+  /// top of each other and read as the panel having eaten them.
+  static const panelPosition = PortField<PanelPosition?>(
+    key: 'panelPosition',
+    get: _getPanelPosition,
+    set: _setPanelPosition,
+  );
+
   /// Every entry above. The unit test walks this to prove no two share a
   /// [PortField.key] and that no accessor pair is aliased onto another
   /// field, which is the census M4-A's field table needed three attempts
   /// to get right.
   static const all = <PortField<Object?>>[
+    panelPosition,
     label,
     designatorHint,
     connector,
@@ -515,6 +537,9 @@ void _setFace(PortDef p, Face v) => p.face = v;
 
 String? _getBankKey(PortDef p) => p.bankKey;
 void _setBankKey(PortDef p, String? v) => p.bankKey = v;
+
+PanelPosition? _getPanelPosition(PortDef port) => port.position;
+void _setPanelPosition(PortDef port, PanelPosition? v) => port.position = v;
 
 FracIndex _getOrder(PortDef p) => p.order;
 void _setOrder(PortDef p, FracIndex v) => p.order = v;

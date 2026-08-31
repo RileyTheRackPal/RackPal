@@ -54,6 +54,7 @@ export 'src/builder/device_builder_screen.dart';
 export 'src/builder/find_replace_dialog.dart';
 export 'src/builder/group_as_set_dialog.dart';
 export 'src/builder/move_to_bank_dialog.dart';
+export 'src/builder/panel_canvas.dart';
 export 'src/builder/port_grid.dart';
 export 'src/builder/port_impact_list.dart';
 export 'src/builder/preview_dock.dart';

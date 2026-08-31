@@ -309,11 +309,17 @@ $ErrorActionPreference = 'Stop'
 # the right builder, survives the bodies that break naive previews, collapses,
 # and does not paint over the grid.
 
+# RE-MEASURED 2026-08-30 at `#227` (the nudge canvas): core 3609 -> 3625 and
+# ui 1333 -> 1351. The split is the point: 16 of the core cases are
+# `panel_arrange_test.dart`, which asserts align/distribute/nudge/reset
+# arithmetic WITHOUT pumping a widget, and the 18 ui cases assert only what a
+# widget test can see and a core test cannot.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3609
+    'rackpal_core'   = 3625
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1333
+    'rackpal_ui'     = 1351
     'rackpal_app'    = 916
 }
 

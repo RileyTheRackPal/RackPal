@@ -89,6 +89,22 @@ void _writeProbe(PortField<Object?> subject, PortDef port) {
       subject.set(port, _next(PortPowerRole.values, subject.get(port)));
     case PortField<ReturnChannel?>():
       subject.set(port, _next(ReturnChannel.values, subject.get(port)));
+    case PortField<PanelPosition?>():
+      // `#227`'s nudge override. Toggles between null and a position, so
+      // the probe exercises the aliasing check in both directions: a
+      // field wrongly aliased onto this one would show a `PanelPosition`
+      // where a `String` belongs, which is the reading this test compares.
+      subject.set(
+        port,
+        subject.get(port) == null
+            ? const PanelPosition(
+                ruOffset: 0,
+                xTwelfth: 0,
+                xFineNm: Len(7_000_000),
+                yFineNm: Len(3_000_000),
+              )
+            : null,
+      );
     default:
       fail('no probe for ${subject.key}: teach this switch its type');
   }
