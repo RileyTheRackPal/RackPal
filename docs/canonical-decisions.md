@@ -15099,22 +15099,40 @@ carrying "ceiling".
 The sentence is read as descriptive rather than as a section list, which its own shape supports:
 the three words that follow it are all REMOVALS. The builder builds identity and ports.
 
-**11.106.4 A FIELD DEVICE HAS A PANEL, AND ITS HEIGHT COMES FROM ITS CUTOUTS.** `#227`'s own test
-established that a zero-U body lays out and draws: *"`frontU`/`rearU` are RACK occupancy, and a wall
-plate has holes without occupying any U."* But `buildPanelGeometry` derives panel HEIGHT from
-`heightU`, so a field device's panel comes back zero-height, and both the preview dock and the
-`Panel` section then refuse it with *"occupies no rack U"*. **The geometry exists and the two
-surfaces that would show it decline to.**
+**11.106.4 A FIELD DEVICE HAS NO PANEL, AND THE FIRST DRAFT OF THIS CLAUSE WAS WRONG.**
 
-**Ruled: when a body occupies no rack U, the panel's height is the extent of its own cutouts plus a
-margin.** A wall plate, a floor box and a structured enclosure then draw what they have, and those
-are precisely the field devices AC-031 ships with real cutouts.
+**WITHDRAWN BEFORE IT WAS BUILT, and recorded rather than quietly rewritten.** This clause first
+ruled that a body occupying no rack U should take its panel height from its own cutouts, so that
+*"a wall plate, a floor box and a structured enclosure then draw what they have"*. The code change
+was written, two tests refused it, and the census those failures forced overturned the clause.
 
-**THE WIDTH IS NOT FIXED HERE AND IS `#806`.** `kPanelWidth` is 482.6 mm and `chassisWidth` defaults
-to 432 mm; both are rack figures, and a 1-gang plate is about 70 mm. `TemplateBody.customPanelWidth`
-is a `Len?` that **`panel_layer.dart` does not read**, and it is the first candidate to check. It is
-filed rather than ruled because a plate width invented mid-chapter would be a second geometry rule
-beside AC-032's, and AC-032 exists because getting panel width wrong draws jacks over the rack ears.
+**Two facts settle it, and both were reachable before the ruling was written.**
+
+`T2.02` is **`Rack Elevation: Rear`, one per `Rack`** (docs/01 §9.8, docs/00 R7), and CR-071 part 2
+makes that sheet the thing `panel_layer.dart` draws for. **A field device is by definition not in a
+rack**, so it never appears on it. A panel for a field device is a drawing with no sheet to live on:
+a display's HDMI sockets are on the back of a television, and putting them on a 482.6 mm EIA panel
+draws something that does not exist.
+
+**And no shipped field template is a plate.** AC-031's ruled 18 are display, projector, projection
+screen, four speakers, IP camera, NVR, wireless AP, touchpanel, keypad, volume control, IR receiver
+eye, ISP gateway/ONT, OTA antenna and F-type ground block. *"Wall plate, parametric N keystones"*
+comes from `critique-domain-realism.md`'s **wishlist**, which AC-031 did not adopt. The case the
+clause existed to serve is not in the catalog, and the clause was priced off a critique rather than
+off the ruling that answered it, which is [don't price a decision off a derived artifact] firing for
+the third time in this corpus.
+
+**Ruled: the existing behaviour stands.** A body occupying no rack U has no panel, and the `Panel`
+section and the preview dock are right to say so. `#806`, filed against the plate width, is
+withdrawn: `plate_geometry.dart` already carries a MEASURED plate outline (2.75 x 4.5 in), gang
+pitch (1.8125 in) and an N-gang width rule under DR-041/DR-042, so *"candidates, none ruled"* was a
+census miss as well.
+
+**`PlateGeometry` and `panel_layer` stay separate, and that is not two drawings of one thing.** A
+Structure plate is an `Outlet`: a physical cover with keystone straps, keyed on `gangCount`, drawn
+at its own 4 units/mm anchor because a rack's 0.495 would render a 14.5 mm nose smaller than its own
+label. A rear panel is a rack device's connector field at EIA width. They answer different questions
+about different entities, and CR-086 is not in tension with that.
 
 **11.106.5 WHAT THIS DOES NOT RULE.** It does not build a signal-family editor, a colour-scheme
 editor or a rule editor: RJ-012 rejects all three for v1, and AC-011 withdraws user-authored
