@@ -44,6 +44,13 @@
 // because a person looking at a 6-port device that drew 4 jacks needs the
 // difference between "two are missing" and "two do not have a hole".
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/draw/geometry.dart';
+import 'package:rackpal_core/src/draw/ops.dart';
+import 'package:rackpal_core/src/draw/scene/rack_geometry.dart';
+import 'package:rackpal_core/src/draw/scene/rack_layer.dart' show LayerBuild;
+import 'package:rackpal_core/src/draw/scene/rack_style.dart' show rackText;
+import 'package:rackpal_core/src/draw/spec.dart';
+import 'package:rackpal_core/src/draw/text.dart';
 import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/constants.dart' show kRackUnit;
@@ -66,6 +73,13 @@ const Len kPanelHeightGap = Len(790_000);
 /// connector that did not state its own spacing, and it is visibly a
 /// drawing decision rather than a claim about hardware.
 const Len kPanelGutter = Len(2_000_000);
+
+/// The chassis width a body that states none falls back to (AC-032).
+///
+/// 432 mm, and the distinction from [kPanelWidth]'s 482.6 mm is the whole
+/// point of AC-032: connectors live on the chassis, the ears do not carry
+/// jacks, and flowing across the panel width draws holes over the rails.
+const Len kChassisWidth = Len(432_000_000);
 
 /// Where one port's cutout sits on the panel, in nanometres from the
 /// panel's top-left.
@@ -203,9 +217,7 @@ RenderedPanel buildPanelGeometry({
   // STEPS 2 AND 3: flow left to right at pitch-or-footprint, wrapping at
   // the CHASSIS width (AC-032), tracking each row's tallest cutout so the
   // next row clears it.
-  final chassis = body.chassisWidth.nm > 0
-      ? body.chassisWidth
-      : const Len(432_000_000);
+  final chassis = body.chassisWidth.nm > 0 ? body.chassisWidth : kChassisWidth;
   var cursorX = 0;
   var rowTop = 0;
   var rowHeight = 0;
@@ -317,5 +329,220 @@ RenderedPanel buildPanelGeometry({
     slots: slots,
     noCutout: noCutout,
     overflowed: overflowed,
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// THE DRAWING, WHICH IS A SEPARATE QUESTION FROM THE LAYOUT
+// ═══════════════════════════════════════════════════════════════════════
+// [buildPanelGeometry] answers "where does each cutout go" and stops. This
+// half answers "what ink does that make", in the same `DiagramOp` IR every
+// other layer emits, and for the same reason `device_glyph_mark.dart`
+// gives: a hand-drawn Flutter `Path` that merely LOOKED like the panel
+// would be a second drawing of one thing, and two drawings of one thing
+// come to disagree silently, on paper, which is the half nobody looks at
+// until a job site does (CR-086).
+//
+// T2.02, the printed Rear Panel sheet, is NOT fed by this yet (DR-105
+// §11.104.5). That is a wiring decision, not a capability one: when the
+// sheet is built it calls this function rather than growing its own.
+
+/// Chrome for the rear-panel drawing.
+///
+/// NOT SIGNAL COLOUR. Nothing here is derived from a port's family or
+/// domain, so PAL-1 (canon §14) has no jurisdiction and CR-078's "colour
+/// lives on the signal domain" is not being quietly re-litigated: these
+/// are the panel, the chassis outline and the cutouts, which are metal.
+final class PanelPalette {
+  const PanelPalette({
+    this.panelFill = 0xFFF1F5F9,
+    this.panelStroke = 0xFF334155,
+    this.chassisStroke = 0xFF94A3B8,
+    this.cutoutFill = 0xFFFFFFFF,
+    this.cutoutStroke = 0xFF334155,
+    this.nudgedStroke = 0xFF2563EB,
+    this.overflowStroke = 0xFFB45309,
+    this.overflowFill = 0xFFFEF3C7,
+    this.label = 0xFF475569,
+  });
+
+  final int panelFill;
+  final int panelStroke;
+
+  /// The 432 mm chassis field, drawn dashed INSIDE the 482.6 mm panel.
+  ///
+  /// Drawn at all because AC-032's distinction is invisible otherwise, and
+  /// it is the distinction that stops jacks being drawn out over the rack
+  /// ears on the one view that gets taped inside the door.
+  final int chassisStroke;
+
+  final int cutoutFill;
+  final int cutoutStroke;
+
+  /// A cutout whose position came from `PortDef.position` rather than the
+  /// flow (`PanelSlot.nudged`). Outline only: a nudge is a fact about
+  /// AUTHORSHIP, not about the hardware, so it must not read as a
+  /// different kind of jack.
+  final int nudgedStroke;
+
+  /// A cutout the panel has no room for. Per DR-105 §11.104.8 this is a
+  /// finding, never a refusal, so it is drawn and flagged rather than
+  /// dropped or clipped away.
+  final int overflowStroke;
+  final int overflowFill;
+
+  final int label;
+}
+
+/// Type size for a cutout's designator, in diagram units.
+///
+/// One value and no scale ladder: the preview is small, the labels are
+/// either legible or suppressed, and [buildPanelLayer] measures rather
+/// than guesses which.
+const double kPanelLabelSize = 2.4;
+
+/// Renders [panel] as `DiagramOp`s in the panel's LOCAL coordinates, with
+/// the panel's top-left at the origin.
+///
+/// [measurer] is real work and not a formality: a designator is drawn only
+/// if it MEASURES narrower than its own cutout, the same "only if it fits"
+/// discipline `device_layer` and `symbol_layer` apply. A 10 mm RJ45 cutout
+/// cannot hold `NET-SW-1 PORT 24` at any size a person would read, and a
+/// label that overhangs its neighbour is worse than no label: on this
+/// drawing the labels are what tell an installer which hole to use.
+LayerBuild buildPanelLayer(
+  RenderedPanel panel, {
+  required TemplateBody body,
+  required TextMeasurer measurer,
+  PanelPalette palette = const PanelPalette(),
+}) {
+  // Geometry stays geometry: `PanelSlot` carries no label, because a
+  // coordinate does not need one and `#226`'s twenty tests would all have
+  // had to restate it. The caller always has the body -- it just handed
+  // the same one to `buildPanelGeometry` -- so the lookup is free.
+  final labelOf = <String, String>{
+    for (final port in body.ports) port.key.v: port.label,
+  };
+  final chassisWidth = body.chassisWidth.nm > 0
+      ? body.chassisWidth
+      : kChassisWidth;
+
+  final ops = <DiagramOp>[];
+  final sizes = <double>[];
+  // Ink bounds are ACCUMULATED, not assumed to be the panel. An
+  // overflowing cutout is drawn BELOW the panel on purpose (DR-105
+  // §11.104.8: a finding, not a refusal), so a `inkBounds` set to the
+  // panel rect would clip exactly the thing the drawing exists to show.
+  var inkL = 0.0;
+  var inkT = 0.0;
+  var inkR = 0.0;
+  var inkB = 0.0;
+  void cover(DBox b) {
+    if (b.left < inkL) inkL = b.left;
+    if (b.top < inkT) inkT = b.top;
+    if (b.right > inkR) inkR = b.right;
+    if (b.bottom > inkB) inkB = b.bottom;
+  }
+
+  double u(Len l) => RackGeometry.unitsForLen(l);
+
+  final width = u(panel.width);
+  final height = u(panel.height);
+  final panelBox = DBox.fromLtwh(0, 0, width, height);
+  cover(panelBox);
+
+  ops.add(
+    OpRect(
+      panelBox,
+      fill: Fill(palette.panelFill),
+      stroke: Stroke(argb: palette.panelStroke, widthPt: 0.6),
+    ),
+  );
+
+  // The chassis field, centred, dashed. Skipped when it is not narrower
+  // than the panel — a full-width chassis would draw a dashed line exactly
+  // on the panel outline, which reads as a rendering fault rather than as
+  // "these two happen to be equal".
+  final chassis = u(chassisWidth);
+  if (chassis > 0 && chassis < width - 0.5) {
+    final inset = (width - chassis) / 2;
+    ops.add(
+      OpRect(
+        DBox.fromLtwh(inset, 0, chassis, height),
+        // BOTH CR-082 KNOBS, NAMED TOGETHER, because `draw_source_gate_
+        // test.dart` refuses a Stroke that decides one and inherits the
+        // other -- and it caught this one. The decision: the chassis field
+        // is diagram geometry, one op away from the panel outline it sits
+        // inside, so it SCALES; and it is sheet furniture, so it may
+        // legitimately print finer than the 0.5 pt signal floor.
+        stroke: Stroke(
+          argb: palette.chassisStroke,
+          widthPt: 0.35,
+          dash: const [1.5, 1.5],
+          // Redundant against the default AND REQUIRED ANYWAY, which is
+          // the same standoff `symbol_layer.dart:722` records: the
+          // analyzer calls an explicit default noise, and
+          // `draw_source_gate_test.dart` refuses a Stroke that decides
+          // `hairlineFloor` while inheriting this. The source gate wins,
+          // because the flags disagreeing silently is what it exists to
+          // stop.
+          // ignore: avoid_redundant_argument_values
+          scaleWithGeometry: true,
+          hairlineFloor: true,
+        ),
+      ),
+    );
+  }
+
+  final overflowed = panel.overflowed.map((k) => k.v).toSet();
+
+  for (final slot in panel.slots) {
+    final rect = DBox.fromLtwh(
+      u(slot.x),
+      u(slot.y),
+      u(slot.width),
+      u(slot.height),
+    );
+    cover(rect);
+    final isOver = overflowed.contains(slot.portKey.v);
+    ops.add(
+      OpRoundRect(
+        rect,
+        const Radii.circular(0.6),
+        fill: Fill(isOver ? palette.overflowFill : palette.cutoutFill),
+        stroke: Stroke(
+          argb: isOver
+              ? palette.overflowStroke
+              : slot.nudged
+              ? palette.nudgedStroke
+              : palette.cutoutStroke,
+          // A nudged or overflowing cutout is heavier, not differently
+          // hued alone: the same "dash and weight, never hue" discipline
+          // `device_layer` applies to lifecycle borders, and the reason
+          // this drawing still reads when it prints in greyscale.
+          widthPt: isOver || slot.nudged ? 0.7 : 0.45,
+        ),
+      ),
+    );
+
+    final label = labelOf[slot.portKey.v] ?? '';
+    if (label.isEmpty) continue;
+    final style = rackText(
+      kPanelLabelSize,
+      palette.label,
+      TextAnchor.topCenter,
+    );
+    if (measurer.measureText(label, style).advanceWidth > rect.width) continue;
+    final midX = (rect.left + rect.right) / 2;
+    ops.add(OpText(label, DPt(midX, rect.bottom + 0.6), style));
+    sizes.add(kPanelLabelSize);
+  }
+
+  return (
+    ops: ops,
+    minTextPt: sizes.isEmpty
+        ? double.infinity
+        : sizes.reduce((a, b) => a < b ? a : b),
+    inkBounds: DBox.fromLtwh(inkL, inkT, inkR - inkL, inkB - inkT),
   );
 }

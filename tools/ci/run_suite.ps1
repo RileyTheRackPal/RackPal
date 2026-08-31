@@ -286,9 +286,18 @@ $ErrorActionPreference = 'Stop'
 # behaviour: `sizeSymbolForBody` was extracted from the schematic scene so the
 # device builder's preview draws the sheet's symbol instead of a second one,
 # and the test replays all 93 fixture devices through both paths.
+#
+# RE-MEASURED 2026-08-30 at `#229` again: core 3592 -> 3600, the eight of
+# `test/scene/panel_draw_test.dart`. THREE of the eight started as assumptions
+# and became measurements when they failed: an invented 40-port RJ45 body does
+# NOT overflow a 1U panel (40 x 10mm is 400mm inside a 432mm chassis, so the
+# seeded N01 is used instead), a zero-U body DOES still lay out and draw
+# (`frontU` is rack occupancy, and a wall plate has holes without having any),
+# and `PanelPalette` had to name both CR-082 stroke knobs because
+# `draw_source_gate_test.dart` refuses a Stroke that decides only one.
 
 $SuiteFloors = @{
-    'rackpal_core'   = 3592
+    'rackpal_core'   = 3600
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1324
