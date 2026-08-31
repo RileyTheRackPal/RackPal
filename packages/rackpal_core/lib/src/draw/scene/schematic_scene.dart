@@ -804,6 +804,7 @@ SizedSymbol sizeSymbolForBody({
   required TemplateBody body,
   required TextMeasurer measurer,
   SchematicMetrics metrics = const SchematicMetrics(),
+  bool collapseBanks = false,
 }) {
   final upg = kSchematicUnitsPerGrid;
 
@@ -812,11 +813,17 @@ SizedSymbol sizeSymbolForBody({
   // requires them pre-sorted; the key breaks a duplicated `order`.
   final ports = portsInDeclaredOrder(body.ports);
 
-  final bankOf = <String, BankDef>{};
-  for (final bank in body.banks) {
-    // First use wins, matching `PortBuilder` and `buildSymbolGeometry`.
-    bankOf.putIfAbsent(bank.key, () => bank);
-  }
+  // ONE EDGE ASSIGNMENT, SHARED WITH THE BUILDER. This used to re-derive
+  // each port's side here and let `buildSymbolGeometry` derive it again;
+  // that was survivable while the two loops did the same arithmetic, and
+  // stopped being survivable the moment collapse existed. A sizer counting
+  // 48 ports while the builder draws one pin reserves 24 pitches of empty
+  // edge, and nothing would have reported it.
+  final edges = layOutSymbolEdges(
+    ports: ports,
+    banks: body.banks,
+    collapseBanks: collapseBanks,
+  );
 
   var left = 0;
   var right = 0;
@@ -835,28 +842,28 @@ SizedSymbol sizeSymbolForBody({
     _measurePalette.portLabel,
     TextAnchor.midLeft,
   );
-  for (final port in ports) {
-    final key = port.bankKey;
-    final side = symbolSideForPort(
-      port,
-      bank: key == null ? null : bankOf[key],
-    );
-    final width = port.label.isEmpty
-        ? 0.0
-        : measurer.measureText(port.label, labelStyle).advanceWidth;
-    switch (side) {
-      case SymbolSide.left:
-        left++;
-        widestLeftLabel = math.max(widestLeftLabel, width);
-      case SymbolSide.right:
-        right++;
-        widestRightLabel = math.max(widestRightLabel, width);
-      case SymbolSide.top:
-        top++;
-        widestTopLabel = math.max(widestTopLabel, width);
-      case SymbolSide.bottom:
-        bottom++;
-        widestBottomLabel = math.max(widestBottomLabel, width);
+  for (final side in SymbolSide.values) {
+    for (final entry in edges[side]!) {
+      // `entry.label`, not `port.label`: a collapsed bank measures the
+      // `SFP[1..48]` it actually draws, which is wider than any one of the
+      // pin labels it replaced and would otherwise under-reserve the body.
+      final width = entry.label.isEmpty
+          ? 0.0
+          : measurer.measureText(entry.label, labelStyle).advanceWidth;
+      switch (side) {
+        case SymbolSide.left:
+          left++;
+          widestLeftLabel = math.max(widestLeftLabel, width);
+        case SymbolSide.right:
+          right++;
+          widestRightLabel = math.max(widestRightLabel, width);
+        case SymbolSide.top:
+          top++;
+          widestTopLabel = math.max(widestTopLabel, width);
+        case SymbolSide.bottom:
+          bottom++;
+          widestBottomLabel = math.max(widestBottomLabel, width);
+      }
     }
   }
 
@@ -940,6 +947,7 @@ SizedSymbol sizeSymbolForBody({
     minBodyHeight: baseHeightGu * upg,
     labelBandTop: bandTop,
     labelBandBottom: bandBottom,
+    collapseBanks: collapseBanks,
   );
 
   return (geometry: geometry, widthGu: widthGu, heightGu: heightGu);

@@ -296,8 +296,14 @@ $ErrorActionPreference = 'Stop'
 # and `PanelPalette` had to name both CR-082 stroke knobs because
 # `draw_source_gate_test.dart` refuses a Stroke that decides only one.
 
+# RE-MEASURED 2026-08-30 at `#229` a third time: core 3600 -> 3609, the nine
+# of `test/scene/symbol_collapse_test.dart`. The first of them is the one that
+# matters: a seeded 48-port switch STILL DRAWS 48 PINS by default, which is
+# what says the schematic canvas did not move and `schematic_perf_test.dart`'s
+# 4155-op M2-C baseline is still measuring the same drawing.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3600
+    'rackpal_core'   = 3609
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1324
