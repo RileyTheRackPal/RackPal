@@ -115,7 +115,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M1** | Elevation release | `L` | **8 of 8** | **CRITERION MET**: `CONFIRMED` | All eight clauses discharged. Two by a person, not a gate: the tape measure on 2026-07-27, the keyboard-only drill on 2026-07-28 at **under three minutes** against a four-minute criterion. The drill's re-run **failed first**, the palette filter could not be edited and the caret was drawn below the canvas, neither of which any remedy had named and neither of which 2206 tests could see (§3.5), then passed against `616a301`. The three-minute figure is a 140+ wpm operator who knew the keymap; §3.2 records that condition because M7's accessibility criterion rests on this clause. The goal line's *"ships to real users"* is **not** met |
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
-| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 IS NOW PERFORMABLE and has not yet been performed** (§5.3.13): it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` is unblocked and is the remaining work on this criterion. **NINETEEN OF TWENTY-TWO STORIES ARE NOW CLOSED** (§5.3.1–§5.3.25) and three remain: M4-K (`#182`), M4-P (`#187`) and the drill itself (`#188`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moves this criterion**, and that is the point of the row: story after story has closed since clause 1 was confirmed on 2026-08-15, and clause 2 is still a person with a document to read. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
+| **M4** | Device builder | **`L`** *(was `M`)* | **1 of 2** | **IN PROGRESS**: `CONFIRMED` on clause 1 | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **Clause 2 IS NOW PERFORMABLE and has not yet been performed** (§5.3.13): it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` is unblocked and is the remaining work on this criterion. **TWENTY OF TWENTY-TWO STORIES ARE NOW CLOSED** (§5.3.1–§5.3.26) and two remain: M4-P (`#187`) and the drill itself (`#188`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); `#227`'s nudge canvas is parked there by ruling. **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moves this criterion**, and that is the point of the row: story after story has closed since clause 1 was confirmed on 2026-08-15, and clause 2 is still a person with a document to read. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
@@ -2637,10 +2637,11 @@ test says so where a later reader would otherwise tidy the absurd length away.
 > ports places into a rack and appears correctly in the equipment list with `—` in every unknown
 > column and an accurate unknown count in the rollup.
 
-**NINETEEN OF M4's TWENTY-TWO STORIES ARE CLOSED**, and §5.3.1 through §5.3.25 below are their
-record. **Three remain**: M4-K (`#182`, panel auto-layout and the three live previews), M4-P
-(`#187`, the field-device form) and M4-Q (`#188`, the drill, which is a person and not a chapter).
-M4-O closed at §5.3.25.
+**TWENTY OF M4's TWENTY-TWO STORIES ARE CLOSED**, and §5.3.1 through §5.3.26 below are their
+record. **Two remain**: M4-P (`#187`, the field-device form) and M4-Q (`#188`, the drill, which is
+a person and not a chapter). M4-K closed at §5.3.26 with `#227` parked by DR-105 §11.104.6, which
+§8.9 permits: a park names a later home and a reason, and the reason is that CR-071 part 1 calls
+the nudge canvas optional in terms while its model half shipped anyway.
 
 **THE SENTENCE THAT USED TO OPEN THIS SECTION NAMED SEVEN CLOSED STORIES AND WENT ON NAMING THEM
 FOR SIX MORE**, which is the drift this document exists to prevent and had no gate against. It read
@@ -4763,6 +4764,129 @@ switching tabs mid-gesture and choosing a rack the user cannot see. No ruling gr
 
 **And nothing here touches the exit criterion.** Clause 2 is demonstrated by a person. That is now
 **five stories in a row** to close without moving it, and `#251` is the only work left on it.
+
+#### 5.3.26 M4-K, the rear panel that is derived, and four assumptions the tests refused · CLOSED · `v0.4.89` · `0a37a27`, `9e4be83`, `711330b`, `d1905d1`, `6938d17`, `a075c18`
+
+**Three of four chapters. `#227` is parked by ruling, not dropped.** DR-105 §11.104.6 defers the
+nudge canvas and names the milestone it stays under; §8.9's discharge rule is satisfied by a park
+with a reason, and the reason is that CR-071 part 1 calls the canvas optional in terms while the
+model half of it shipped anyway. `PortDef.position` is nullable, an override beats the flow, and
+`PanelSlot.nudged` reports which is which, so `#227` is now UI-only work over a finished model.
+
+**The panel is DERIVED and never stored.** docs/06 §5's non-negotiable, that a template with no
+layout data is complete, holds here by construction: nothing downstream reads a coordinate, and
+`buildPanelGeometry` writes nothing. Schema 3's migration dropped 727 explicit zeros that had been
+serialising as *measured* positions under G4/CR-114, which is the invariant that made the
+nullability worth its cost rather than a tidy-up.
+
+##### One drawing, or it is not a drawing
+
+`#229`'s whole content is a refusal: **a preview-only widget is forbidden**, because CR-086's sharp
+form is that a symbol which cannot print is not a symbol. Two drawings of one thing disagree
+silently, on paper, which is the half nobody looks at until a job site does. That forced three
+pieces of work that a hand-drawn Flutter `Path` would have skipped:
+
+| The cheap version | What landed instead |
+|---|---|
+| A `CustomPainter` shaped like a rack strip | `buildDeviceLayer` over a placeholder `DeviceInstance`, replayed through `FlutterDiagramCanvas` |
+| A symbol sized in the widget layer | `sizeSymbolForBody`, extracted from `schematic_scene.dart` and asserted against it over all 93 fixture devices |
+| Cutouts drawn from `RenderedPanel` coordinates | `buildPanelLayer`, emitting the same `DiagramOp` IR every other layer emits |
+
+**The symbol extraction was not a convenience.** `schematic_scene.dart` already carried a warning
+that its gu-denominated sizing and `buildSymbolGeometry`'s diagram-unit sizing are *"the two
+transcriptions"* a test keeps in agreement. A third transcription in `rackpal_ui` would have been
+reachable by no test in `rackpal_core`. The split is now by INPUT rather than by behaviour:
+everything derivable from a body plus a measurer is public, everything needing the document stays
+private.
+
+##### Bank collapse, and the baseline that decided where it switches on
+
+CR-103 rules that banks over eight auto-collapse *"on first layout AND in the symbol preview"*.
+`#229` requires the preview to use the real builder, so building it there offers the schematic
+canvas the same behaviour in the same commit. **It is off by default and the preview passes
+`true`.** Turning it on for the canvas invalidates `schematic_perf_test.dart`'s **4155-op** M2-C
+baseline and every schematic golden, mid-M4, for a canvas nobody is currently editing. Regenerating
+those is cheap; deciding whether the new numbers are RIGHT is not, and that judgement belongs to
+whoever is looking at the schematic. CR-103 is therefore honoured in one of its two named places
+and the other is owed as `#801`.
+
+**It forced a refactor rather than a flag**, and this is the part worth keeping. The sizer counted
+every port to reserve the box; the builder assigned ports to edges separately. Two loops doing the
+same arithmetic, survivable until collapse existed: **a sizer counting 48 ports while the builder
+draws one pin reserves 24 pitches of empty edge, and nothing in this repository would have reported
+it.** Edge assignment happens once now, in `layOutSymbolEdges`, and both callers consume it, so the
+flag cannot be honoured by one and not the other by construction rather than by care.
+
+`BankDef.collapseInSymbol` has defaulted to `true` since board 96-L and **nothing had ever read it**;
+22 seeded banks above the threshold carried the value inertly. This is the code that reads it.
+
+##### Four assumptions the tests refused, and one that reframed the invariant
+
+The pattern is the same one this board keeps recording, and the count is the point: **five
+belief-shaped assertions this milestone, four of them in this story.**
+
+| I asserted | The measurement |
+|---|---|
+| 40 RJ45 ports overflow a 1U panel | They do not. A cutout is 10 mm, so 40 is 400 mm inside a 432 mm chassis, one row. The seeded **N01** is used instead, and it is one of exactly two archetypes that genuinely overflow |
+| A zero-U body draws nothing | It lays out and draws normally. `frontU`/`rearU` are RACK occupancy, and a wall plate has holes without occupying any U. The refusal belongs in the widget, which knows what it is drawing into |
+| Collapsing never makes the reserved box taller | **V01: 67gu loose, 69gu tight**, and correct. See below |
+| A01 is front-only | A01 is 3U front **and** 3U rear, as most chassis are. Exactly four seeded archetypes are front-only and **N03** is the only one with ports |
+
+**The V01 case changed a test rather than a line of code, which is why it is the valuable one.** The
+reserved height carries the top/bottom label bands, whose depth is the *widest* label, because #96-A
+turned those labels a quarter turn to read inward. Collapsing swaps sixteen short labels for one
+long `AUX[1..16]`, so the band deepens as the pin run shortens. **Enforcing my rule would have made
+the sizer reserve less room than the builder draws in**: the exact defect the refactor existed to
+prevent, introduced by the test written to prove it had been prevented. The assertion is now the
+invariant stated directly: the reserved box contains the drawn box, both axes, every seeded
+template.
+
+##### Three gates caught what reading the diff could not
+
+Recorded because all three failures **render**, which is the class this corpus keeps finding:
+
+- **CR-082's stroke knobs.** `draw_source_gate_test.dart` refuses a `Stroke` that names
+  `hairlineFloor` while inheriting `scaleWithGeometry`; the chassis field did exactly that. The
+  analyzer then called the explicit default redundant, so two gates disagreed and the source gate
+  won, matching `symbol_layer.dart:722`'s record of the same standoff.
+- **The font-weight coverage gate.** The overflow chip asked for `w600`. Jost bundles exactly
+  Regular and Medium, so **Flutter would have synthesised it and nothing would have failed**: it
+  would have looked slightly wrong on screen and printed differently, forever, with no error
+  anywhere.
+- **The port grid's own empty text.** The symbol pane's empty state read "No ports yet", which is
+  what the grid six inches to its left already says. Two widgets carrying one string is how
+  `find.text` locates the wrong one and passes.
+
+##### The dock yields to the grid, and the threshold is measured
+
+340 px of dock on a narrow window leaves the port grid too little to draw its own archetype bar: at
+434 px it overflows by 203, so the bar alone needs about 637. Add the 200 px section rail and the
+dividers and the floor is a shade over **1180**. A grid that cannot draw its own toolbar is worse
+than a preview a person cannot see, and docs/06 §2 sizes this window for *"a 68-row virtualised
+grid"*, so the dock is what gives way. **`#802` owes this window a real narrow layout.**
+
+**The first attempt at that gate silently did nothing.** It used a `LayoutBuilder`, and a `Row`
+hands its non-flex children unbounded width, so it read `maxWidth: infinity` and drew the dock at
+every size while looking like it was measuring something. It measures the window now.
+
+**A separate finding, filed rather than fixed: the port grid overflows an 800 px window by 63 px on
+its own**, with the dock already gone. That predates this story. The dock test does not assert it
+clean, which would fail for a defect it does not own, nor assert it dirty, which would pin the
+defect as intended behaviour: `#803` holds it.
+
+##### What this does not do
+
+T2.02, the printed Rear Panel sheet, is **not fed by `buildPanelLayer` yet** (DR-105 §11.104.5).
+That is a wiring decision rather than a capability one, and when the sheet is built it calls this
+function rather than growing its own. The symbol still defers connector glyphs, pin colour by
+domain and the model line under the name, all on `symbol_layer.dart`'s own list; pulling them in
+here would put them in the preview and not on the sheet, which is the divergence this story exists
+to forbid.
+
+**And nothing here touches the exit criterion.** Clause 2 is demonstrated by a person. That is now
+**six stories in a row** to close without moving it, and `#251` is still the only work left on it.
+
+---
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
