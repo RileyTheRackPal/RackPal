@@ -760,7 +760,9 @@ final class _Candidate {
   final LayoutNode node;
 }
 
-/// Sizes one symbol and turns it into a [LayoutNode].
+/// Sizes one symbol and turns it into a [LayoutNode]. The sizing itself is
+/// [sizeSymbolForBody]'s; this adds only what a LAYOUT needs and a preview
+/// does not (sort key, anchor, pin).
 ///
 /// docs/05 §3's sizing formula, evaluated in INTEGER grid units:
 ///
@@ -772,14 +774,37 @@ final class _Candidate {
 /// same terms are evaluated here in gu so that the box the layout reserves
 /// and the box the symbol draws are the same box. A test asserts they agree
 /// rather than trusting that the two transcriptions match.
-_Candidate _measureCandidate({
-  required RackDocument doc,
-  required DeviceInstance device,
+typedef SizedSymbol = ({RenderedSymbol geometry, int widthGu, int heightGu});
+
+/// docs/05 §3's symbol sizing, for ONE body, with no sheet around it.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// PUBLIC BECAUSE THE DEVICE BUILDER DRAWS THE SAME SYMBOL
+/// ═══════════════════════════════════════════════════════════════════════
+/// This was the first two thirds of [_measureCandidate], which needed a
+/// whole `RackDocument` and a `DeviceInstance` to reach it. The builder's
+/// symbol preview (`#228`) has neither: it holds a [TemplateBody] that has
+/// never been placed and may never be saved.
+///
+/// The alternative was for the preview to re-derive the width and height
+/// itself, and this file already says what that costs — the gu terms here
+/// and the diagram-unit terms inside `buildSymbolGeometry` are *"the two
+/// transcriptions"* a test exists to keep in agreement. A third
+/// transcription in `rackpal_ui`, where no such test could reach it, is
+/// exactly the preview-only drawing CR-086 forbids and `#229` was written
+/// to prevent.
+///
+/// So the split is by INPUT, not by behaviour: everything derivable from a
+/// body plus a measurer is here, and everything needing the document (sort
+/// key, anchor, pinned position) stays with the caller.
+SizedSymbol sizeSymbolForBody({
+  required String id,
+  required String designator,
+  required String name,
   required TemplateBody body,
   required TextMeasurer measurer,
-  required SchematicMetrics metrics,
-  required Pt? pinnedAt,
-  required bool isDestination,
+  SchematicMetrics metrics = const SchematicMetrics(),
+  bool collapseBanks = false,
 }) {
   final upg = kSchematicUnitsPerGrid;
 
@@ -788,11 +813,17 @@ _Candidate _measureCandidate({
   // requires them pre-sorted; the key breaks a duplicated `order`.
   final ports = portsInDeclaredOrder(body.ports);
 
-  final bankOf = <String, BankDef>{};
-  for (final bank in body.banks) {
-    // First use wins, matching `PortBuilder` and `buildSymbolGeometry`.
-    bankOf.putIfAbsent(bank.key, () => bank);
-  }
+  // ONE EDGE ASSIGNMENT, SHARED WITH THE BUILDER. This used to re-derive
+  // each port's side here and let `buildSymbolGeometry` derive it again;
+  // that was survivable while the two loops did the same arithmetic, and
+  // stopped being survivable the moment collapse existed. A sizer counting
+  // 48 ports while the builder draws one pin reserves 24 pitches of empty
+  // edge, and nothing would have reported it.
+  final edges = layOutSymbolEdges(
+    ports: ports,
+    banks: body.banks,
+    collapseBanks: collapseBanks,
+  );
 
   var left = 0;
   var right = 0;
@@ -811,34 +842,34 @@ _Candidate _measureCandidate({
     _measurePalette.portLabel,
     TextAnchor.midLeft,
   );
-  for (final port in ports) {
-    final key = port.bankKey;
-    final side = symbolSideForPort(
-      port,
-      bank: key == null ? null : bankOf[key],
-    );
-    final width = port.label.isEmpty
-        ? 0.0
-        : measurer.measureText(port.label, labelStyle).advanceWidth;
-    switch (side) {
-      case SymbolSide.left:
-        left++;
-        widestLeftLabel = math.max(widestLeftLabel, width);
-      case SymbolSide.right:
-        right++;
-        widestRightLabel = math.max(widestRightLabel, width);
-      case SymbolSide.top:
-        top++;
-        widestTopLabel = math.max(widestTopLabel, width);
-      case SymbolSide.bottom:
-        bottom++;
-        widestBottomLabel = math.max(widestBottomLabel, width);
+  for (final side in SymbolSide.values) {
+    for (final entry in edges[side]!) {
+      // `entry.label`, not `port.label`: a collapsed bank measures the
+      // `SFP[1..48]` it actually draws, which is wider than any one of the
+      // pin labels it replaced and would otherwise under-reserve the body.
+      final width = entry.label.isEmpty
+          ? 0.0
+          : measurer.measureText(entry.label, labelStyle).advanceWidth;
+      switch (side) {
+        case SymbolSide.left:
+          left++;
+          widestLeftLabel = math.max(widestLeftLabel, width);
+        case SymbolSide.right:
+          right++;
+          widestRightLabel = math.max(widestRightLabel, width);
+        case SymbolSide.top:
+          top++;
+          widestTopLabel = math.max(widestTopLabel, width);
+        case SymbolSide.bottom:
+          bottom++;
+          widestBottomLabel = math.max(widestBottomLabel, width);
+      }
     }
   }
 
   final designatorWidth = measurer
       .measureText(
-        device.designator,
+        designator,
         rackText(
           RackTextSizes.designator,
           _measurePalette.designator,
@@ -846,11 +877,11 @@ _Candidate _measureCandidate({
         ),
       )
       .advanceWidth;
-  final nameWidth = device.name.isEmpty
+  final nameWidth = name.isEmpty
       ? 0.0
       : measurer
             .measureText(
-              device.name,
+              name,
               rackText(
                 RackTextSizes.name,
                 _measurePalette.name,
@@ -901,9 +932,9 @@ _Candidate _measureCandidate({
   final heightGu = baseHeightGu + ((bandTop + bandBottom) / upg).ceil();
 
   final geometry = buildSymbolGeometry(
-    id: device.id.v,
-    designator: device.designator,
-    name: device.name,
+    id: id,
+    designator: designator,
+    name: name,
     ports: ports,
     banks: body.banks,
     headerHeight: metrics.headerHeightGu * upg,
@@ -916,16 +947,37 @@ _Candidate _measureCandidate({
     minBodyHeight: baseHeightGu * upg,
     labelBandTop: bandTop,
     labelBandBottom: bandBottom,
+    collapseBanks: collapseBanks,
   );
 
+  return (geometry: geometry, widthGu: widthGu, heightGu: heightGu);
+}
+
+_Candidate _measureCandidate({
+  required RackDocument doc,
+  required DeviceInstance device,
+  required TemplateBody body,
+  required TextMeasurer measurer,
+  required SchematicMetrics metrics,
+  required Pt? pinnedAt,
+  required bool isDestination,
+}) {
+  final sized = sizeSymbolForBody(
+    id: device.id.v,
+    designator: device.designator,
+    name: device.name,
+    body: body,
+    measurer: measurer,
+    metrics: metrics,
+  );
   return _Candidate(
     device,
-    geometry,
+    sized.geometry,
     LayoutNode(
       id: device.id.v,
       sortKey: _sortKeyFor(doc, device),
-      widthGu: widthGu,
-      heightGu: heightGu,
+      widthGu: sized.widthGu,
+      heightGu: sized.heightGu,
       anchor: _anchorFor(doc, device, isDestination: isDestination),
       pinnedAt: pinnedAt,
     ),

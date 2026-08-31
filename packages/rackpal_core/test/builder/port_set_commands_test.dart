@@ -22,7 +22,6 @@ PortDef _port(
   connector: const ConnectorTypeId('conn.rca'),
   signalFamily: const SignalFamilyId('audio.line_unbal'),
   face: Face.rear,
-  position: kUnplacedPanelPosition,
   order: FracIndex(order),
   setKey: set,
   setRole: role,

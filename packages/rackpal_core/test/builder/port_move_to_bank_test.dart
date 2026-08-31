@@ -13,7 +13,6 @@ PortDef _port(String key, String order, {String? bank}) => PortDef(
   connector: const ConnectorTypeId('conn.hdmi_a'),
   signalFamily: const SignalFamilyId('sig.hdmi'),
   face: Face.rear,
-  position: kUnplacedPanelPosition,
   order: FracIndex(order),
   bankKey: bank,
 );

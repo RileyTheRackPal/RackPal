@@ -16,7 +16,6 @@ PortDef _port(
   connector: const ConnectorTypeId('conn.hdmi_a'),
   signalFamily: const SignalFamilyId('video.hdmi.2_0'),
   face: Face.rear,
-  position: kUnplacedPanelPosition,
   order: FracIndex(order),
   bankKey: bank,
   designatorHint: designatorHint,
@@ -351,7 +350,6 @@ void main() {
       connector: const ConnectorTypeId('conn.rj45'),
       signalFamily: SignalFamilyId(family),
       face: Face.rear,
-      position: kUnplacedPanelPosition,
       order: FracIndex(order),
     );
 

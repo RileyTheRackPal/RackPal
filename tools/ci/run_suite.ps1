@@ -265,11 +265,61 @@ $ErrorActionPreference = 'Stop'
 # second time this milestone a fixed extent has been the bug and the second time
 # only a pumped widget could see it.
 
+# RE-MEASURED 2026-08-30 at `#226` (M4-K1, schema 3): core 3562 -> 3570, the
+# eight `v2 -> v3` cases in `migration_corpus_test.dart`. NOTHING WAS REMOVED.
+# `PortDef.position` became nullable, so 27 files stopped passing
+# `kUnplacedPanelPosition`; that is an argument going away, not a case. Two
+# checked-in goldens were REGENERATED deliberately (`byte_roundtrip` and the
+# schematic perf fixture) and a THIRD was captured first, at v2, because
+# regenerating the only file that carried zero positions would have left the
+# new migration with no real-file coverage at all.
+
+# RE-MEASURED 2026-08-30 at `#226` (M4-K1, the algorithm): core 3570 -> 3590,
+# the twenty of `test/scene/panel_layer_test.dart`. TWO of those cases started
+# as assumptions and became measurements when they failed: 48 RJ45s do NOT
+# overflow a 1U panel (an RJ45 cutout is 10mm, so 48 is two rows and 20mm), and
+# TWO seeded archetypes DO overflow their own (A03 and N01, both dense 1U).
+# Both are now pinned by name so the footprint table cannot move silently.
+#
+# RE-MEASURED 2026-08-30 at `#229` (M4-K4): core 3590 -> 3592, the two of
+# `test/scene/symbol_sizing_seam_test.dart`. They guard a SEAM rather than a
+# behaviour: `sizeSymbolForBody` was extracted from the schematic scene so the
+# device builder's preview draws the sheet's symbol instead of a second one,
+# and the test replays all 93 fixture devices through both paths.
+#
+# RE-MEASURED 2026-08-30 at `#229` again: core 3592 -> 3600, the eight of
+# `test/scene/panel_draw_test.dart`. THREE of the eight started as assumptions
+# and became measurements when they failed: an invented 40-port RJ45 body does
+# NOT overflow a 1U panel (40 x 10mm is 400mm inside a 432mm chassis, so the
+# seeded N01 is used instead), a zero-U body DOES still lay out and draw
+# (`frontU` is rack occupancy, and a wall plate has holes without having any),
+# and `PanelPalette` had to name both CR-082 stroke knobs because
+# `draw_source_gate_test.dart` refuses a Stroke that decides only one.
+
+# RE-MEASURED 2026-08-30 at `#229` a third time: core 3600 -> 3609, the nine
+# of `test/scene/symbol_collapse_test.dart`. The first of them is the one that
+# matters: a seeded 48-port switch STILL DRAWS 48 PINS by default, which is
+# what says the schematic canvas did not move and `schematic_perf_test.dart`'s
+# 4155-op M2-C baseline is still measuring the same drawing.
+
+# RE-MEASURED 2026-08-30 at `#228` (the dock itself): ui 1324 -> 1333, the
+# nine of `test/builder/preview_dock_test.dart`. They deliberately do NOT
+# check that the previews look right -- every pixel comes from a core scene
+# builder and the drawing is asserted beside it. They check that the dock asks
+# the right builder, survives the bodies that break naive previews, collapses,
+# and does not paint over the grid.
+
+# RE-MEASURED 2026-08-30 at `#227` (the nudge canvas): core 3609 -> 3625 and
+# ui 1333 -> 1351. The split is the point: 16 of the core cases are
+# `panel_arrange_test.dart`, which asserts align/distribute/nudge/reset
+# arithmetic WITHOUT pumping a widget, and the 18 ui cases assert only what a
+# widget test can see and a core test cannot.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3562
+    'rackpal_core'   = 3625
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1324
+    'rackpal_ui'     = 1351
     'rackpal_app'    = 916
 }
 

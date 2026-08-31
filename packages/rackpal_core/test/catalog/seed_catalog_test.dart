@@ -67,7 +67,7 @@ void main() {
         },
       );
 
-      test('no typePrefix collides with another template\'s or a system '
+      test('no typePrefix collides with another template or a system '
           'prefix (C4, CR-043)', () {
         final seen = <String, String>{};
         for (final entry in catalog.entries) {

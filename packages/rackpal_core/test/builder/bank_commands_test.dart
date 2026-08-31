@@ -21,7 +21,6 @@ PortDef _port(String key, {String? bank, PortDirection dir = kSource}) =>
       direction: dir,
       bankKey: bank,
       face: Face.rear,
-      position: kUnplacedPanelPosition,
       order: const FracIndex('a0000'),
     );
 

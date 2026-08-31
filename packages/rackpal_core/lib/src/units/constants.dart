@@ -19,7 +19,17 @@ const kMaxRackHeightU = 60; // CR-038
 ///    document this build produces. The version had to move so the change
 ///    is detectable rather than arriving as a corrupt-file error — see
 ///    [kMinReaderVersion] and `migrations.dart`'s `migrateV1ToV2`.
-const kSchemaVersion = 2;
+///
+/// 2 -> 3 at DR-105 §11.104.3/.4: `PortDef.position` became NULLABLE with
+/// null meaning "the layout is automatic", and the encoder switched from
+/// writing the origin on every port to OMITTING the key. Another BREAKING
+/// WRITE in `migrateV1ToV2`'s exact sense: a v2 reader calls `asJsonMap`
+/// on `position` and throws on a file this build produces, so
+/// [kMinReaderVersion] moves with it. `migrateV2ToV3` drops the 727
+/// zero positions each existing file carries; without it every one of
+/// them would read as a hand-placed port and the auto-layout would never
+/// run.
+const kSchemaVersion = 3;
 
 /// The lowest [kSchemaVersion] that can safely READ a document this build
 /// writes — stamped into every file as `minReaderVersion` and checked by
@@ -32,4 +42,4 @@ const kSchemaVersion = 2;
 /// outlet keys above, which are exactly such a change — an older reader
 /// does not degrade on them, it throws. Refusing the file with
 /// `NewerSchemaError` is the honest outcome and is what this constant buys.
-const kMinReaderVersion = 2;
+const kMinReaderVersion = 3;

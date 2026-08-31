@@ -41,4 +41,13 @@
 # (catalog_placement.dart), so the braces were added. Formatting does not
 # reduce the info count for free, and a ratchet that absorbs what the last
 # mechanical sweep introduced is a ratchet nobody is reading.
-173
+#
+# 173 -> 171 on 2026-08-30 at `#226` (DR-105). NOT a lint-fixing pass: the
+# schema-3 work made `PortDef.position` optional, which turned 27 files'
+# `position: kUnplacedPanelPosition` into a redundant argument, and
+# removing those took two PRE-EXISTING infos with them because the sweep
+# had to touch their neighbours: `catalog_ports.dart`'s required-after-
+# optional parameter and an escaped inner quote in `seed_catalog_test`.
+# The gate asked for this in as many words: "info count FELL by 2 (173 ->
+# 171). Lower the pin so the ground you gained cannot be given back."
+171

@@ -22,13 +22,6 @@ import 'package:test/test.dart';
 
 import 'support/source_gate.dart';
 
-const _kZeroPosition = PanelPosition(
-  ruOffset: 0,
-  xTwelfth: 0,
-  xFineNm: Len.zero,
-  yFineNm: Len.zero,
-);
-
 var _order = 0;
 
 PortDef _port(
@@ -42,7 +35,6 @@ PortDef _port(
   connector: const ConnectorTypeId('test'),
   signalFamily: SignalFamilyId(family),
   face: Face.rear,
-  position: _kZeroPosition,
   order: FracIndex('a${_order++}'),
   direction: direction,
 );

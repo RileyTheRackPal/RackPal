@@ -71,6 +71,8 @@ import 'package:rackpal_core/src/draw/scene/rack_style.dart';
 import 'package:rackpal_core/src/draw/spec.dart';
 import 'package:rackpal_core/src/draw/text.dart';
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/constants.dart'
+    show kBankCollapseThreshold;
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:vector_math/vector_math_64.dart';
 
@@ -123,6 +125,7 @@ final class SymbolPort {
     required this.direction,
     required this.family,
     this.bankKey,
+    this.collapsedCount = 0,
   });
 
   /// `PortDef.key.v` — the stable author-assigned join (CR-051), never a
@@ -139,6 +142,23 @@ final class SymbolPort {
   final double size;
   final PortDirection direction;
   final SignalFamilyId family;
+
+  /// How many real ports this pin stands for, or **0 when it is one port**.
+  ///
+  /// CR-103's vector pin: a bank over `kBankCollapseThreshold` (8) draws as
+  /// ONE pin carrying a bracketed `IN[1..48]` label, *"which is what keeps a
+  /// 48-port switch legible"*. Zero rather than one for the ordinary case,
+  /// so `isCollapsed` is a question about intent rather than about
+  /// arithmetic on a count that would otherwise always read 1.
+  ///
+  /// [key] is still a REAL `PortKey` — the first port of the bank — and not
+  /// a synthesised `bank:` string. Hit-testing, selection and the connect
+  /// gesture all join on this field, so a value that no `PortDef` carries
+  /// would make a collapsed pin unclickable, and a prefix convention would
+  /// collide the first time an author used a colon in a port key.
+  final int collapsedCount;
+
+  bool get isCollapsed => collapsedCount > 0;
 
   /// `PortDef.bankKey` — the PRESENTATION grouping this pin belongs to
   /// (CR-055), or null when it belongs to none.
@@ -170,11 +190,21 @@ final class SymbolPort {
       other.size == size &&
       other.direction == direction &&
       other.family == family &&
-      other.bankKey == bankKey;
+      other.bankKey == bankKey &&
+      other.collapsedCount == collapsedCount;
 
   @override
-  int get hashCode =>
-      Object.hash(key, label, side, offset, size, direction, family, bankKey);
+  int get hashCode => Object.hash(
+    key,
+    label,
+    side,
+    offset,
+    size,
+    direction,
+    family,
+    bankKey,
+    collapsedCount,
+  );
 
   @override
   String toString() =>
@@ -489,6 +519,116 @@ bool _inNamespace(String family, String ns) =>
 
 // ── geometry ─────────────────────────────────────────────────────────────
 
+/// One entry on a symbol edge: a single port, or a collapsed bank that
+/// stands for several.
+final class SymbolEntry {
+  const SymbolEntry({
+    required this.port,
+    required this.label,
+    this.collapsedCount = 0,
+  });
+
+  /// The port this entry draws, or the FIRST port of a collapsed bank.
+  final PortDef port;
+
+  /// What is drawn beside the pin: `PortDef.label`, or `IN[1..48]`.
+  final String label;
+
+  /// 0 for a single port; the bank's size when collapsed.
+  final int collapsedCount;
+
+  bool get isCollapsed => collapsedCount > 0;
+}
+
+/// Assigns [ports] to edges and applies CR-103's bank collapse.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// PUBLIC BECAUSE TWO CALLERS MUST AGREE, WHICH IS THIS FILE'S OLD LESSON
+/// ═══════════════════════════════════════════════════════════════════════
+/// `buildSymbolGeometry` draws the pins; `sizeSymbolForBody` reserves the
+/// box they sit in and measures their labels. Those are already "the two
+/// transcriptions" a test keeps in agreement, and collapse would have made
+/// a third disagreement possible: a sizer that counted 48 ports while the
+/// builder drew one pin reserves 24 pitches of empty edge.
+///
+/// So the assignment happens ONCE, here, and both callers consume the
+/// result. [collapseBanks] therefore cannot be honoured by one and not the
+/// other by construction rather than by care.
+///
+/// COLLAPSE IS PER (EDGE, BANK), not per bank. A bank that declares
+/// `BankDef.symbolSide` puts all its ports on one edge and the distinction
+/// never arises; a bank that does not lets each port fall to the family
+/// rule, and 6 inputs plus 6 outputs is two legible runs rather than one
+/// collapsed pin standing for ports on opposite sides of the box.
+Map<SymbolSide, List<SymbolEntry>> layOutSymbolEdges({
+  required Iterable<PortDef> ports,
+  Iterable<BankDef> banks = const [],
+  bool collapseBanks = false,
+}) {
+  final byKey = <String, BankDef>{};
+  for (final bank in banks) {
+    // First use wins, matching `PortBuilder` and this file's own rule.
+    byKey.putIfAbsent(bank.key, () => bank);
+  }
+
+  final bySide = <SymbolSide, List<PortDef>>{
+    for (final side in SymbolSide.values) side: <PortDef>[],
+  };
+  for (final port in ports) {
+    final key = port.bankKey;
+    bySide[symbolSideForPort(port, bank: key == null ? null : byKey[key])]!.add(
+      port,
+    );
+  }
+
+  final out = <SymbolSide, List<SymbolEntry>>{
+    for (final side in SymbolSide.values) side: <SymbolEntry>[],
+  };
+  for (final side in SymbolSide.values) {
+    final defs = bySide[side]!;
+    if (!collapseBanks) {
+      for (final port in defs) {
+        out[side]!.add(SymbolEntry(port: port, label: port.label));
+      }
+      continue;
+    }
+
+    final onThisEdge = <String, int>{};
+    for (final port in defs) {
+      final key = port.bankKey;
+      if (key != null) onThisEdge[key] = (onThisEdge[key] ?? 0) + 1;
+    }
+
+    final done = <String>{};
+    for (final port in defs) {
+      final key = port.bankKey;
+      final bank = key == null ? null : byKey[key];
+      final n = key == null ? 0 : onThisEdge[key]!;
+      // `collapseInSymbol` is the per-bank opt-OUT for a bank that must
+      // always show every pin, and this is the first code to read it.
+      if (bank == null ||
+          !bank.collapseInSymbol ||
+          n <= kBankCollapseThreshold) {
+        out[side]!.add(SymbolEntry(port: port, label: port.label));
+        continue;
+      }
+      if (!done.add(key!)) continue;
+      final name = bank.abbr.isNotEmpty ? bank.abbr : bank.label;
+      out[side]!.add(
+        SymbolEntry(
+          port: port,
+          // `1..n`, not the ports' own labels: the run is contiguous by
+          // construction (it is one bank in `PortDef.order`) and the
+          // author's labels may be `SFP+1`..`SFP+4` on a bank of 48.
+          label: name.isEmpty ? '[1..$n]' : '$name[1..$n]',
+          collapsedCount: n,
+        ),
+      );
+    }
+  }
+  return out;
+}
+
 /// Resolves [ports] onto the four edges and sizes the body, returning the
 /// symbol placed with its top-left at [origin].
 ///
@@ -526,21 +666,13 @@ RenderedSymbol buildSymbolGeometry({
   double labelBandTop = 0,
   double labelBandBottom = 0,
   DPt origin = const DPt(0, 0),
+  bool collapseBanks = false,
 }) {
-  final byKey = <String, BankDef>{};
-  for (final bank in banks) {
-    byKey.putIfAbsent(bank.key, () => bank);
-  }
-
-  final bySide = <SymbolSide, List<PortDef>>{
-    for (final side in SymbolSide.values) side: <PortDef>[],
-  };
-  for (final port in ports) {
-    final key = port.bankKey;
-    bySide[symbolSideForPort(port, bank: key == null ? null : byKey[key])]!.add(
-      port,
-    );
-  }
+  final bySide = layOutSymbolEdges(
+    ports: ports,
+    banks: banks,
+    collapseBanks: collapseBanks,
+  );
 
   final nLeft = bySide[SymbolSide.left]!.length;
   final nRight = bySide[SymbolSide.right]!.length;
@@ -580,17 +712,19 @@ RenderedSymbol buildSymbolGeometry({
         ? (width - defs.length * portPitch) / 2
         : 0.0;
     for (var i = 0; i < defs.length; i++) {
-      final def = defs[i];
+      final entry = defs[i];
+      final def = entry.port;
       resolved[side]!.add(
         SymbolPort(
           key: def.key.v,
-          label: def.label,
+          label: entry.label,
           side: side,
           offset: start + (i + 0.5) * portPitch,
           size: portSize,
           direction: def.direction,
           family: def.signalFamily,
           bankKey: def.bankKey,
+          collapsedCount: entry.collapsedCount,
         ),
       );
     }
@@ -777,6 +911,26 @@ LayerBuild buildSymbolLayer(
         stroke: Stroke(argb: palette.portStroke, widthPt: 1),
       ),
     );
+
+    // THE VECTOR PIN (CR-103): a bank over eight draws as ONE pin, and the
+    // diagonal tick is what says so. It is the bus marker every schematic
+    // tool uses, which is the whole reason for choosing it over an
+    // invented badge shape: an installer reading this has seen it before.
+    //
+    // GEOMETRY, NOT HUE, and the count is carried by the label rather than
+    // by a second glyph. The drawing has to survive printing in greyscale
+    // on a page taped inside a rack door, and `IN[1..48]` is legible there
+    // in a way a coloured dot with a number in it is not.
+    if (port.isCollapsed) {
+      final k = port.size * 0.9;
+      ops.add(
+        OpLine(
+          DPt(centre.x - k, centre.y + k),
+          DPt(centre.x + k, centre.y - k),
+          Stroke(argb: palette.portStroke, widthPt: 1.6),
+        ),
+      );
+    }
 
     // Direction arrowhead — INTO the body for a sink, AWAY for a source
     // (§3's KEY: "► direction arrow on the stub — into body = sink, away =

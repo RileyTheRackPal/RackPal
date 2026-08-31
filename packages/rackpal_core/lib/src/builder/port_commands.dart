@@ -31,17 +31,19 @@ import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackpal_core/src/model/placement.dart' show Face;
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/ids.dart';
-import 'package:rackpal_core/src/units/len.dart';
 
-/// A port with no panel geometry yet. Panel layout is M4-K (`#182`), and
-/// until it runs every authored port sits at the origin; the catalog's own
-/// `PortBuilder` uses exactly this value for the same reason.
-const kUnplacedPanelPosition = PanelPosition(
-  ruOffset: 0,
-  xTwelfth: 0,
-  xFineNm: Len(0),
-  yFineNm: Len(0),
-);
+/// A port with no panel geometry: **null since DR-105 §11.104.3**.
+///
+/// This was `PanelPosition(0, 0, 0, 0)`, and its own comment said why:
+/// *"Panel layout is M4-K (`#182`), and until it runs every authored port
+/// sits at the origin."* M4-K ran. The origin is a legal coordinate a
+/// person may nudge a jack to, so a zero sentinel could not survive the
+/// feature it was waiting for, and `PortDef.position` is nullable now.
+///
+/// **KEPT AS A NAME RATHER THAN DELETED** because it is what a caller
+/// authoring a port means, and `null` at a call site reads as an omission
+/// rather than as a statement.
+const PanelPosition? kUnplacedPanelPosition = null;
 
 /// A typed accessor for one editable property of a [PortDef].
 ///
@@ -437,11 +439,33 @@ abstract final class PortDefField {
     set: _setOrder,
   );
 
+  /// The rear-panel override (CR-071 part 1, DR-106), null meaning the
+  /// layout is automatic (DR-105 §11.104.3).
+  ///
+  /// **THE SECOND ENTRY HERE THAT IS NOT A CELL**, and it earns the
+  /// exception the same way [order] does: it is a single typed write to a
+  /// single port, which is the shape [SetPortFieldCommand] already is, and
+  /// a bespoke command would be a second undo path to one field. It is
+  /// edited by the `Panel` section's nudge canvas (`#227`), never by a
+  /// column.
+  ///
+  /// **Unreachable by fill and by batch write, by construction**: both are
+  /// keyed on `PortColumnId` and there is no `PortColumnId.panelPosition`.
+  /// That matters more here than it does for [order], because a batch
+  /// write of one position across eight ports would stack eight cutouts on
+  /// top of each other and read as the panel having eaten them.
+  static const panelPosition = PortField<PanelPosition?>(
+    key: 'panelPosition',
+    get: _getPanelPosition,
+    set: _setPanelPosition,
+  );
+
   /// Every entry above. The unit test walks this to prove no two share a
   /// [PortField.key] and that no accessor pair is aliased onto another
   /// field, which is the census M4-A's field table needed three attempts
   /// to get right.
   static const all = <PortField<Object?>>[
+    panelPosition,
     label,
     designatorHint,
     connector,
@@ -513,6 +537,9 @@ void _setFace(PortDef p, Face v) => p.face = v;
 
 String? _getBankKey(PortDef p) => p.bankKey;
 void _setBankKey(PortDef p, String? v) => p.bankKey = v;
+
+PanelPosition? _getPanelPosition(PortDef port) => port.position;
+void _setPanelPosition(PortDef port, PanelPosition? v) => port.position = v;
 
 FracIndex _getOrder(PortDef p) => p.order;
 void _setOrder(PortDef p, FracIndex v) => p.order = v;
@@ -1089,7 +1116,7 @@ PortDef portWithIdentity(
   required PortKey key,
   required String label,
   required FracIndex order,
-  required PanelPosition position,
+  required PanelPosition? position,
   required List<PortKey> renamedFrom,
   required String? designatorHint,
 }) => PortDef(
@@ -1179,7 +1206,6 @@ PortDef blankPort(TemplateBody body, {String? bankKey}) {
     connector: const ConnectorTypeId(''),
     signalFamily: const SignalFamilyId(''),
     face: Face.rear,
-    position: kUnplacedPanelPosition,
     order: nextOrder(body.ports.map((p) => p.order)),
     bankKey: bankKey ?? (body.ports.isEmpty ? null : body.ports.last.bankKey),
   );

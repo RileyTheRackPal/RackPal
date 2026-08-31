@@ -56,6 +56,20 @@ warm-cache path at 18m28s.
 - The pipeline is the same gate set as `run_local.ps1` minus the two local-only
   checks (`flutter pin`, `tracked sources`), which a clean clone cannot fail by
   construction.
+- **CI RUNS ON A SELF-HOSTED AGENT SINCE 2026-08-30**, `{agent-host}` in the
+  **`Default`** pool (not `LocalMachine`, which exists and has zero agents). It
+  lives at `C:\Users\riley\Documents\vsts-agent-win-x64-5.277.0` and runs
+  **interactively** from `run.cmd`, NOT as a Windows service: `Get-Service
+  vstsagent*` finds nothing and `Agent.Listener.exe` has no parent service. So
+  a build sits in `queued` until somebody opens that window, and an
+  unexplained queue is a stopped agent rather than a busy one.
+  **First run on it was 2026-08-30, build 20260830.17, green in 25.6 minutes**
+  against a hosted mean of 18.9: about 35% slower, and it shares the machine
+  with whatever else is running.
+  The move was cost, not engineering: 34 hosted runs spent 643 of the month's
+  1,800 free minutes at a mean of 18.9. The clean checkout and the Flutter pin
+  both survive it; **"it builds on a machine that is not the author's" does
+  not**, and that is now nobody's gate.
 - Queue a run against any branch:
   `az pipelines run --org https://{org}.visualstudio.com --project RackMate --id 1 --branch <name>`
 - **Nothing has ever gone red on the service.** Every gate script was mutation-tested

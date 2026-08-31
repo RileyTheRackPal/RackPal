@@ -14853,6 +14853,208 @@ the schematic's library panel, CR-104's other half, which stays M2's surface.
 
 ---
 
+### 11.104 DR-105 · The panel layout is DERIVED, a nudge is the override, and `PortDef.position` cannot say "auto" until it is nullable
+
+**Settled by the user on 2026-08-30, before any code**, on the precedent this milestone has now set
+seven times. M4-K (`#182`) is panel auto-layout and the three live previews, and its first chapter
+cannot be written without deciding where a layout lives.
+
+**11.104.1 THE CENSUS: A MODELLED FIELD, A CODEC ENTRY, 727 STORED VALUES PER STARTER, AND NO
+PRODUCER.** `PortDef.position` is a non-nullable `PanelPosition` with a zero default. It encodes
+and decodes (`json_codec.dart`), it round-trips under CR-117, and **nothing has ever written a
+non-zero one**. `port_commands.dart` says so in its own words:
+
+> `kUnplacedPanelPosition` · A port with no panel geometry yet. Panel layout is M4-K (`#182`), and
+> until it runs every authored port sits at the origin; the catalog's own `PortBuilder` uses exactly
+> this value for the same reason.
+
+That is `a modelled field is not a reachable one` for the fourth time in this milestone, and M4-K is
+the producer it names. **The inputs are ready**: 47 of the 51 shipped connectors carry a footprint
+and the 4 that do not are §5.1's no-cutout kinds, which the algorithm skips by rule; DR-057 §11.56.4
+already ruled `pitch ?? (footprintWidth + gutter)` so a sparse pitch is a refinement rather than a
+gate.
+
+**11.104.2 THE RULING ON WHERE IT LIVES: DERIVED, and a nudge is a typed override.** The layout is a
+pure function of the banks, the ports, the connector footprints and `chassisWidthNm`, computed at
+draw time exactly as `buildPlaceableTemplates` computes the palette.
+
+**This is what makes docs/06 §5's non-negotiable true by construction rather than by care.** *"A
+template with no layout data is not incomplete"* is trivially satisfied when there IS no layout data
+in the ordinary case. It also means a corrected connector footprint reaches every template ever
+authored, including ones saved before the correction, which a stored layout could never do.
+
+**The stored alternative was declined on what it cannot buy back.** Writing coordinates into every
+`PortDef.position` on save needs no model change at all, the field being already there. It costs the
+one distinction the feature rests on: a stored coordinate is indistinguishable from a nudged one, so
+`#227`'s `Reset to auto` has nothing to reset TO, and CR-071's whole framing of the interaction as
+*nudging rather than placing* stops being expressible.
+
+**11.104.3 THE RULING ON SHAPE: `PortDef.position` BECOMES `PanelPosition?`, AND NULL MEANS AUTO.**
+
+**A non-nullable field with a zero default has already answered.** The origin is a legal panel
+coordinate: `{ruOffset: 0, xTwelfth: 0, xFineNm: 0, yFineNm: 0}` is the top-left of the panel and a
+person may deliberately nudge a jack there. So a zero-valued sentinel cannot distinguish *never
+nudged* from *nudged to the corner*, and `kUnplacedPanelPosition` is that sentinel today. Nullable
+is the only shape that carries both facts, and it is **G4's own shape** (CR-114): unknown is an
+**absent key**, never an explicit `null`.
+
+`PortOverrides` was considered and is the wrong home. DR-098 and M4-L4 put typed overrides on a
+PLACED device's `Port`; a panel layout is a fact about the TEMPLATE, shared by every instance, so an
+override living on the instance would let two devices from one template disagree about where the
+same jack is.
+
+**11.104.4 THE MIGRATION IS THE COST AND IT IS NAMED HERE RATHER THAN FOUND.** Every file that
+exists today writes `position` on every port: **727 of them in each of the four checked-in
+starters**, all zero. Read under §11.104.3 without a migration, every one of those becomes *"manually
+placed at the origin"*, and the auto-layout would never run for any template anybody has ever saved.
+
+So `kSchemaVersion` goes to **3** with a `migrateV2ToV3` that **drops a `position` whose four
+components are all zero**, and the starters are regenerated. The chain is append-only and this is a
+new entry, never an edit.
+
+**THE MIGRATION IS EXACTLY CORRECT AND NOT AN APPROXIMATION**, which is worth stating because a
+"drop it if it looks like a default" rule usually is one. No producer of a non-zero position has
+ever existed, so in every file that can exist at v2 a zero position IS an unplaced port, with no
+exceptions to reason about. A genuine nudge-to-origin written after this ruling lands in a v3 file
+and is never seen by this step.
+
+**11.104.5 THE RULING ON T2.02: NOT YET.** `panel_layer.dart` lands in `rackpal_core` producing a
+`DiagramScene`, printable by construction (CR-086), and M4-K wires it to the **builder's preview
+dock only**. Sheet `T2.02 Rack Elevation — Rear` keeps drawing device boxes through
+`buildElevationSheet`.
+
+M4-K's four chapters name the builder's dock and never name T2.02. Changing what a shipped sheet
+prints changes a deliverable **M6's exit criterion measures**, brings new ANSI B legibility
+obligations and regenerates goldens, none of which this story priced. Building the layer in core
+costs nothing extra to wire later, and CR-071 part 2 stays owed rather than quietly discharged.
+
+**11.104.6 THE RULING ON `#227`: DEFERRED, AND THE STORY CLOSES WITHOUT IT.** M4-K ships `#226` the
+algorithm, `#228` the previews and `#229` the real-scene-builder rule. The nudge canvas stays open.
+
+**CR-071 calls it optional in terms** and docs/06 §5 makes a template with no layout data explicitly
+complete, so nothing downstream waits on it: no sheet, no schedule, no export reads a coordinate.
+It is also the only remaining chapter that is a whole new interactive canvas, and M4 has two other
+stories plus an **unrun exit-criterion drill**. §8.9's rule is what makes this legal: a clause is
+discharged or **parked**, and this is parked by ruling id to `#227` under M4-K, not silently
+dropped.
+
+**11.104.7 THE RULING ON THE DOCK: all three previews, collapsible.** docs/06 §6's right dock
+arrives: the rack elevation strip at true aspect, the schematic symbol, and the rear panel render
+with its fill percentage, each individually collapsible and updating on every keystroke.
+
+**The dock's absence was deliberate and its own comment sets the condition for ending it**:
+*"There is nothing to put in a 340px dock, so it is not drawn."* All three previews have real scene
+builders the moment `#226` lands, `rack_layer.dart` and `symbol_layer.dart` already shipping and
+printing, so not one of them is the preview-only widget CR-086 forbids and `#229` exists to prevent.
+
+**11.104.8 WHAT THIS DOES NOT RULE.** It does not decide the nudge canvas's own interaction, which
+stays `#227`'s and stays as CR-071 describes it. It does not give the rail's `Notes & Publish`
+section a home, which is M4-P's. It says nothing about the v1.1 interactive Rear Panel view
+(`Ctrl+3`), which CR-071 part 3 already places outside v1. And it does not make the panel-fill
+percentage a validation rule: a panel over 100% full is a finding for M5 to rule on, not a refusal
+this story invents.
+
+---
+
+### §11.105 DR-106 · `#227` is un-parked, and the nudge canvas gets its four unruled answers
+
+**Question.** DR-105 §11.104.6 parked `#227`, the optional nudge canvas, and M4-K closed without it
+(docs/12 §5.3.26, `v0.4.89`). The user has directed that it be built now. §11.104.8 said in terms
+that DR-105 *"does not decide the nudge canvas's own interaction"*, so there are two things to rule:
+whether the park lifts, and the four interaction questions CR-071 leaves open.
+
+**11.105.1 THE PARK LIFTS, AND THIS IS AN AMENDMENT RATHER THAN A CORRECTION.** §8.3 requires a
+scope change to carry a new ruling ID in its own commit, and this is that commit. Nothing about
+DR-105 §11.104.6 was WRONG: the reasons it gave still hold, and they are the reasons the park was
+cheap to reverse.
+
+- CR-071 part 1 calls the canvas an *"optional hidden toggle"* in terms, so building it is inside
+  roadmap §2's scope list and needs no amendment to that list.
+- **Nothing downstream reads a coordinate.** docs/06 §5's non-negotiable, that a template with no
+  layout data is not incomplete, held by construction and still does.
+- **The expensive half already shipped.** `PortDef.position` is nullable with null meaning automatic
+  (DR-105 §11.104.3), an override beats the flow, `PanelSlot.nudged` reports which is which, and
+  `buildPanelLayer` already draws a nudged cutout differently. `#227` is UI over a finished model.
+
+**M4-K STAYS CLOSED AND `#227` IS RE-PARENTED RATHER THAN REOPENED.** §8.9 is explicit that
+*"closing is the moment that binds"*, and docs/12 §5.3.26 is the record of a story that closed with
+three of four chapters and a named park. Reopening it would falsify that record to tidy a board.
+`#227` moves to `#804`, a story of its own under M4, so the work lands against the milestone it
+belongs to without rewriting a discharged clause.
+
+**11.105.2 THE CANVAS IS A SIXTH RAIL SECTION, `Panel`.** It sits after `Ports`, its head carries
+CR-071's `☐ Customize panel layout` toggle, and the canvas fills the main pane at full width.
+
+*Rejected: putting it in the dock's rear-panel pane.* That pane is 340 px and the drawing is
+482.6 mm wide; `#802` already records that this window has no narrow layout, and nudging a 10 mm
+RJ45 cutout inside a third of a pane is not an interaction, it is a dare.
+
+*Rejected: stacking it under the port grid.* The grid is virtualised and already competes for
+vertical room. Two scrollable work surfaces in one pane is how neither gets enough.
+
+**The `AUTO` badge lives on the rail tile**, green, exactly as docs/06 §5 asks, so a template that
+never touches this section says so from the rail without the section being entered. The section is
+skippable forever and that is a property of the rail, not of a dialog somebody has to dismiss.
+
+**11.105.3 ONE ARROW PRESS IS 1 mm; `Shift` IS 0.1 mm AND `Ctrl` IS 10 mm.** CR-071 names a 1 mm
+snap, and the two modifiers are the CAD convention a person arrives already knowing.
+
+**The offset lives entirely in `xFineNm`/`yFineNm` and `xTwelfth` stays 0 for a nudged port.** Two
+representations of one position is how they come to disagree, and the twelfth grid is a coarse
+authoring lattice rather than a nudge unit. **The corpus reaches the same answer independently**:
+all three worked examples in `docs/research/design-data-model.md` carry `xTwelfth: 0` and put the
+whole offset in `xFineNm`, at 12.7 mm and 25.4 mm, which are a half inch and an inch. CR-001 is
+satisfied by construction, since every step is an integer count of nanometres.
+
+**11.105.7 A `xTwelfth` IS A TWELFTH OF THE PANEL WIDTH, AND THE CODE SAID A RACK UNIT.** This
+ruling's first draft asserted *"a twelfth of 482.6 mm is about 40 mm"* as a statement about the
+implementation. `panel_layer.dart` computed `kRackUnit.nm ~/ 12`, which is 3.70 mm, under a comment
+calling it *"docs/research's twelfth-of-a-rack-unit grid"*. **The corpus says no such thing.** It
+declares `{ruOffset:int, xTwelfth:int, xFineNm:Len, yFineNm:Len}` and never says what the twelfth
+measures; the confident comment was `#226`'s own invention, which is [a confident paragraph is a
+tell] firing on a line of code rather than on prose.
+
+**Ruled: a twelfth of `kPanelWidth`, 40.22 mm.** The pairing settles it. `ruOffset` + `yFineNm` is
+coarse plus fine vertically, so `xTwelfth` + `xFineNm` is coarse plus fine horizontally, and a
+coarse unit of 3.70 mm sitting beside a nanometre-precision fine field buys nothing: nothing would
+ever set it, and a field that exists and means nothing is the state this corpus keeps punishing.
+
+**Corrected while it was still free**, which is the only reason this is a one-line change rather than
+a migration: every stored `xTwelfth` is 0, the three corpus examples are 0, no test asserted the
+resulting x, and this ruling makes nudging never write the field. It is exactly the position
+`BankDef.collapseInSymbol` was in when its default was fixed inert.
+
+*Rejected: 1 mm and nothing else.* This surface exists to fix one jack that is 3 mm out, and it
+would also be used to move one 40 mm, which at one step per millimetre is forty keypresses. CR-071
+says 1 mm **snap**, not 1 mm only.
+
+**11.105.4 `Reset to auto` TAKES THE SELECTION WHEN THERE IS ONE.** With ports selected it clears
+those overrides; with nothing selected the control reads `Reset all to auto` and clears every one.
+One button whose label says which it will do before it is pressed, and undoable either way through
+the builder's own stack (CR-106's third stack).
+
+*Rejected: always the whole panel.* A person who nudged twelve jacks and wants one back would have
+to undo their way there or re-nudge eleven.
+
+**11.105.5 ALIGN IS SIX OPERATIONS AND DISTRIBUTE IS TWO.** Align left, right, top, bottom, centre
+horizontally, centre vertically; distribute evenly on each axis. The standard set, which needs no
+explanation, and **distribute is the load-bearing half**: it is what turns eight hand-nudged XLRs
+into a row rather than eight near-misses, and its absence is what sends a person back to nudging one
+jack at a time.
+
+*Rejected: an "align to auto-layout" operation instead.* It is not what docs/06 names, nobody has
+seen it before, and it overlaps `Reset to auto` confusingly enough that a person would learn neither.
+
+**11.105.6 WHAT THIS DOES NOT RULE.** It does not touch the v1.1 interactive Rear Panel view
+(`Ctrl+3`), which CR-071 part 3 places outside v1 and which this is not. It does not make a
+nudged position mean anything to the netlist, the schedule or any export: ports still connect by
+IDENTITY (CR-071 part 1), and a coordinate remains a drawing fact. It does not feed T2.02, which
+stays DR-105 §11.104.5's. And it does not make an overlapping or off-panel nudge a refusal: the
+panel already reports overflow as a finding (DR-105 §11.104.8) and a person who deliberately drags
+two cutouts together is describing hardware this model does not know about, not making an error.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
