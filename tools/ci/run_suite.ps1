@@ -351,6 +351,12 @@ $ErrorActionPreference = 'Stop'
 # ui test is the unknown-token case, which is the one the settings dialog was
 # letting escape unhandled. export, text and app do not move.
 
+# RE-MEASURED 2026-08-31 at `#802`: ui 1396 -> 1399. The narrow-window group
+# in preview_dock_test.dart went from one test to four, because the dock
+# stopped being a threshold and became a control: drawn at 1000, drawn at
+# desktop width, hidden and restored by its own button, and leaving no
+# dangling divider behind it.
+#
 # RE-MEASURED 2026-08-31 at `#803`: ui 1390 -> 1396, six widths in
 # `builder_narrow_window_test.dart`. Each width needs its own tree because a
 # `RenderFlex` reports its overflow ONCE per render object, so a single test
@@ -360,7 +366,7 @@ $SuiteFloors = @{
     'rackpal_core'   = 3667
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1396
+    'rackpal_ui'     = 1399
     'rackpal_app'    = 916
 }
 

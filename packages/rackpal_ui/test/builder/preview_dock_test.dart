@@ -190,50 +190,87 @@ void main() {
     });
   });
 
-  group('the dock yields to the grid on a narrow window', () {
-    testWidgets('it is drawn beside the port grid at desktop width and not '
-        'at 800px, because the grid cannot draw its own toolbar there', (
-      tester,
-    ) async {
-      Future<void> pumpBuilder(Size size) async {
-        tester.view.physicalSize = size;
-        tester.view.devicePixelRatio = 1;
-        addTearDown(tester.view.reset);
-        await tester.pumpWidget(
-          MaterialApp(
-            home: Scaffold(
-              body: DeviceBuilderScreen(
-                template: _seed['A01']!,
-                registries: _registries,
-                measurer: _Measurer(),
-                actions: DeviceBuilderActions(onSave: (_) => null),
-              ),
+  group('the dock is a preference now, not a threshold (`#802`)', () {
+    Future<void> pumpBuilder(WidgetTester tester, Size size) async {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: DeviceBuilderScreen(
+              template: _seed['A01']!,
+              registries: _registries,
+              measurer: _Measurer(),
+              actions: DeviceBuilderActions(onSave: (_) => null),
             ),
           ),
-        );
-        await tester.pumpAndSettle();
-      }
-
-      await pumpBuilder(const Size(1740, 900));
+        ),
+      );
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Ports').first);
       await tester.pumpAndSettle();
+    }
+
+    testWidgets('it is drawn at 1000px, the narrowest window the app will '
+        'open, which it was NOT before the toolbars wrapped', (tester) async {
+      // THE INVERSION IS THE POINT OF THIS TEST. It used to assert the
+      // dock was absent here, because the port grid could not draw its own
+      // archetype bar beside it. `#803` made that bar a `Wrap`, so the
+      // floor it set is gone and `kPreviewDockMinWindow` went with it.
+      //
+      // 1000 is `kMinWindowWidth` in `prefs_store.dart`, enforced through
+      // `setMinimumSize`. Below it there is no window to test.
+      await pumpBuilder(tester, const Size(1000, 900));
+      expect(find.byType(BuilderPreviewDock), findsOneWidget);
+    });
+
+    testWidgets('and at desktop width, which never changed', (tester) async {
+      await pumpBuilder(tester, const Size(1740, 900));
+      expect(find.byType(BuilderPreviewDock), findsOneWidget);
+    });
+
+    testWidgets('the toolbar hides it and brings it back, and the label says '
+        'which way it goes', (tester) async {
+      await pumpBuilder(tester, const Size(1740, 900));
       expect(find.byType(BuilderPreviewDock), findsOneWidget);
 
-      await pumpBuilder(const Size(800, 900));
-      await tester.tap(find.text('Ports').first);
+      await tester.tap(find.text('Hide previews'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BuilderPreviewDock), findsNothing);
+
+      // THE CONTROL SURVIVES ITS OWN EFFECT, which is the whole reason it
+      // is on the grid toolbar rather than on the dock: a button that went
+      // away with the pane could not bring the pane back.
+      expect(
+        find.text('Show previews'),
+        findsOneWidget,
+        reason:
+            'the second reading has to work for somebody who never saw '
+            'the previews',
+      );
+
+      await tester.tap(find.text('Show previews'));
+      await tester.pumpAndSettle();
+      expect(find.byType(BuilderPreviewDock), findsOneWidget);
+      expect(find.text('Hide previews'), findsOneWidget);
+    });
+
+    testWidgets('hiding it leaves no dangling divider where it was', (
+      tester,
+    ) async {
+      // The divider used to be drawn for the whole ports section and the
+      // dock separately inside it, so every window under the old threshold
+      // got a rule down the right edge with nothing beyond it. It is one
+      // block with the pane now.
+      await pumpBuilder(tester, const Size(1740, 900));
+      final before = tester.widgetList(find.byType(VerticalDivider)).length;
+      await tester.tap(find.text('Hide previews'));
       await tester.pumpAndSettle();
       expect(
-        find.byType(BuilderPreviewDock),
-        findsNothing,
-        reason: 'a 340px dock on an 800px window makes the grid unusable',
+        tester.widgetList(find.byType(VerticalDivider)).length,
+        before - 1,
       );
-      // NO `takeException` ASSERTION HERE, and the reason is a finding
-      // rather than a shrug: with the dock already gone, the port grid
-      // STILL overflows an 800px window by 63px on its own. That predates
-      // `#228` and is not this dock's to fix -- asserting it clean would
-      // make this test fail for a defect it does not own, and asserting it
-      // dirty would pin the defect as intended. `#803` holds it.
-      tester.takeException();
     });
   });
 }

@@ -35,19 +35,6 @@ import 'package:rackpal_ui/src/theme/console_theme.dart';
 /// docs/06 §2's dock width.
 const double kPreviewDockWidth = 340;
 
-/// The narrowest WINDOW that seats the dock beside the grid.
-///
-/// MEASURED, NOT CHOSEN. The port grid's archetype bar overflows a 434 px
-/// slot by 203 px, so the grid needs about 637 to draw its own toolbar;
-/// the dock takes [kPreviewDockWidth] and the section rail 200. A window
-/// that cannot seat both gives the space to the grid, which is the
-/// primary surface (docs/06 §2 sizes this window for "a 68-row
-/// virtualised grid").
-///
-/// 200 rail + ~637 grid + 340 dock + dividers is a shade over 1180, which
-/// every desktop this ships to clears and a 800x600 test surface does not.
-const double kPreviewDockMinWindow = 1180;
-
 /// Heights for the three panes, in logical pixels.
 ///
 /// The elevation and the panel are drawn at TRUE ASPECT and therefore take

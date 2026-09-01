@@ -106,6 +106,8 @@ class PortGrid extends StatefulWidget {
     this.quickAddAutofocus = true,
     this.bankActions,
     this.bankJump,
+    this.previewsShown = true,
+    this.onTogglePreviews,
     super.key,
   });
 
@@ -194,6 +196,21 @@ class PortGrid extends StatefulWidget {
   /// what this project would allocate rather than what a default one
   /// would (CR-042).
   final IdFormat portDesignatorFormat;
+
+  /// Whether the host is currently drawing docs/06 §6's preview dock.
+  ///
+  /// The grid does not own the dock and never draws it. It owns the
+  /// TOOLBAR, which is the surface that stays on screen when the dock is
+  /// not, and that is the only reason the flag is passed down here.
+  final bool previewsShown;
+
+  /// Flips [previewsShown], or null in a host that has no dock to flip.
+  ///
+  /// NULLABLE, AND THE BUTTON IS ABSENT WHEN IT IS NULL. A control wired
+  /// to nothing is the `UnbuiltView` defect wearing a toolbar, which is
+  /// the objection `_ArchetypeBar` already records against carrying a
+  /// generator that does not exist.
+  final VoidCallback? onTogglePreviews;
 
   @override
   State<PortGrid> createState() => _PortGridState();
@@ -1275,6 +1292,8 @@ class _PortGridState extends State<PortGrid> {
           openPacks: _openPacks(),
           onTogglePack: _togglePack,
           refusal: _fillRefusal,
+          previewsShown: widget.previewsShown,
+          onTogglePreviews: widget.onTogglePreviews,
         ),
         const Divider(height: 1),
         // ONLY WHEN THERE IS A SORT. A permanent bar reading "not sorted"
@@ -1460,9 +1479,10 @@ class _ArchetypeBar extends StatelessWidget {
     // 637, and NOTHING ABOUT THE GRID ELSE DID: the grid scrolls its own
     // columns. So the bar alone set the floor under the whole window, and
     // `kPreviewDockMinWindow` existed to keep the dock off until that
-    // floor was cleared. Wrapping removes the floor rather than working
-    // around it, which is why `#802`'s threshold could then be measured
-    // against what the dock needs instead of what the bar could not give.
+    // floor was cleared, and it is GONE: `#802` deleted it, because with
+    // the floor removed rather than worked around there was nothing left
+    // for a threshold to measure. The dock is a preference now, and the
+    // toggle for it sits at the other end of `_Toolbar`.
     //
     // NOT A HORIZONTAL SCROLLER, which was the other candidate: these are
     // the section's only generators, and a `Paste…` that has scrolled out
@@ -1508,6 +1528,8 @@ class _Toolbar extends StatelessWidget {
     required this.openPacks,
     required this.onTogglePack,
     required this.refusal,
+    required this.previewsShown,
+    required this.onTogglePreviews,
   });
 
   final int selectedCount;
@@ -1519,6 +1541,10 @@ class _Toolbar extends StatelessWidget {
   final VoidCallback? onPairByOrder;
   final Set<PortColumnPack> openPacks;
   final void Function(PortColumnPack pack, {required bool on}) onTogglePack;
+
+  /// docs/06 §6's dock, and the control that brings it back (`#802`).
+  final bool previewsShown;
+  final VoidCallback? onTogglePreviews;
 
   /// What the last action had to say, or null.
   ///
@@ -1536,49 +1562,64 @@ class _Toolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-    child: Row(
+    // ═══════════════════════════════════════════════════════════════════
+    // TWO GROUPS IN A WRAP, WHICH IS `_Header`'s SHAPE AND FOR ITS REASON
+    // ═══════════════════════════════════════════════════════════════════
+    // The actions go left and the view controls right, and at a width
+    // that cannot seat both the right group drops to its own line rather
+    // than overflowing. It was a `Row` with an `Expanded` left group until
+    // `Hide previews` joined `Columns`, at which point the pinned right
+    // group needed 14 px more than a 1000 px window can give it.
+    //
+    // A `Wrap` CANNOT BE A BARE `Row` CHILD and wrap: a `Row` hands its
+    // non-flex children UNBOUNDED width, so the inner wrap reads
+    // `maxWidth: infinity` and lays everything on one line while looking
+    // like it is measuring something. `device_builder_screen.dart` records
+    // the same trap costing a `LayoutBuilder` that never fired.
+    child: Wrap(
+      alignment: WrapAlignment.spaceBetween,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      runSpacing: 8,
       children: [
-        Expanded(
-          child: Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            crossAxisAlignment: WrapCrossAlignment.center,
-            children: [
-              FilledButton.tonalIcon(
-                onPressed: onAdd,
-                icon: const Icon(Icons.add, size: 18),
-                label: const Text('Add port'),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            FilledButton.tonalIcon(
+              onPressed: onAdd,
+              icon: const Icon(Icons.add, size: 18),
+              label: const Text('Add port'),
+            ),
+            TextButton.icon(
+              onPressed: onDelete,
+              icon: const Icon(Icons.delete_outline, size: 18),
+              // COUNTS WHAT IT WILL DELETE. A bare "Delete" beside a grid of
+              // 68 rows does not say whether it means the selected rows or
+              // all of them, and the answer matters most to the person who is
+              // about to find out.
+              label: Text(
+                selectedCount == 0
+                    ? 'Delete'
+                    : 'Delete $selectedCount selected',
               ),
+            ),
+            if (onPairByOrder case final VoidCallback pair)
               TextButton.icon(
-                onPressed: onDelete,
-                icon: const Icon(Icons.delete_outline, size: 18),
-                // COUNTS WHAT IT WILL DELETE. A bare "Delete" beside a grid of
-                // 68 rows does not say whether it means the selected rows or
-                // all of them, and the answer matters most to the person who is
-                // about to find out.
-                label: Text(
-                  selectedCount == 0
-                      ? 'Delete'
-                      : 'Delete $selectedCount selected',
+                onPressed: pair,
+                icon: const Icon(Icons.swap_horiz, size: 18),
+                label: const Text('Pair front to rear'),
+              ),
+            if (refusal case final String message)
+              Text(
+                message,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
-              if (onPairByOrder case final VoidCallback pair)
-                TextButton.icon(
-                  onPressed: pair,
-                  icon: const Icon(Icons.swap_horiz, size: 18),
-                  label: const Text('Pair front to rear'),
-                ),
-              if (refusal case final String message)
-                Text(
-                  message,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
         // ═══════════════════════════════════════════════════════════════
         // TICKS, NOT A LIST OF NAMES, AND THE STATE IS ALREADY DECIDED
@@ -1588,28 +1629,57 @@ class _Toolbar extends StatelessWidget {
         // tick a person changes OVERRIDES that for the rest of the
         // session. Without the override, closing a pack the auto-reveal
         // wants would last exactly one rebuild.
-        MenuAnchor(
-          menuChildren: [
-            for (final pack in PortColumnPack.values)
-              MenuItemButton(
-                closeOnActivate: false,
-                leadingIcon: Icon(
-                  openPacks.contains(pack)
-                      ? Icons.check_box
-                      : Icons.check_box_outline_blank,
+        Wrap(
+          spacing: 4,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            MenuAnchor(
+              menuChildren: [
+                for (final pack in PortColumnPack.values)
+                  MenuItemButton(
+                    closeOnActivate: false,
+                    leadingIcon: Icon(
+                      openPacks.contains(pack)
+                          ? Icons.check_box
+                          : Icons.check_box_outline_blank,
+                      size: 18,
+                    ),
+                    onPressed: () =>
+                        onTogglePack(pack, on: !openPacks.contains(pack)),
+                    child: Text(pack.label),
+                  ),
+              ],
+              builder: (context, controller, child) => TextButton.icon(
+                onPressed: () =>
+                    controller.isOpen ? controller.close() : controller.open(),
+                icon: const Icon(Icons.settings_outlined, size: 18),
+                label: const Text('Columns'),
+              ),
+            ),
+            // ═══════════════════════════════════════════════════════════════
+            // LABELLED, NOT AN ICON, AND THAT IS THE WHOLE POINT OF IT
+            // ═══════════════════════════════════════════════════════════════
+            // `#802` was filed because the dock used to vanish on a narrow
+            // window with no explanation. A bare eye glyph beside `Columns`
+            // would be a second thing a person has to already know, so the
+            // button says which way it goes: `Hide previews` while they are
+            // up, `Show previews` while they are not. The second reading is
+            // the one that has to work for somebody who never saw them.
+            if (onTogglePreviews case final VoidCallback toggle) ...[
+              const SizedBox(width: 4),
+              TextButton.icon(
+                onPressed: toggle,
+                icon: Icon(
+                  previewsShown
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
                   size: 18,
                 ),
-                onPressed: () =>
-                    onTogglePack(pack, on: !openPacks.contains(pack)),
-                child: Text(pack.label),
+                label: Text(previewsShown ? 'Hide previews' : 'Show previews'),
               ),
+            ],
           ],
-          builder: (context, controller, child) => TextButton.icon(
-            onPressed: () =>
-                controller.isOpen ? controller.close() : controller.open(),
-            icon: const Icon(Icons.settings_outlined, size: 18),
-            label: const Text('Columns'),
-          ),
         ),
       ],
     ),
