@@ -15143,6 +15143,115 @@ themselves, which shipped at AC-031 and are not this story's.
 
 ---
 
+### §11.107 DR-108 · The preview dock is drawn at every width, and hiding it is a control
+
+**Question.** `#802` asks the device builder for a narrow-window layout, because docs/06 §6's preview
+dock vanishes below `kPreviewDockMinWindow` with no explanation. It offers three candidates and rules
+none: a collapsed icon rail the dock expands from, an end-drawer over the grid, or the dock moving
+under the grid at narrow widths.
+
+**11.107.1 THE THRESHOLD WAS MEASURING THE PORT GRID'S TOOLBAR, NOT THE DOCK.** Its own doc comment
+called the number *"MEASURED, NOT CHOSEN"* and derived it from the archetype bar: *"the port grid's
+archetype bar overflows a 434 px slot by 203 px, so the grid needs about 637 to draw its own
+toolbar"*. That was true, and it was the only hard width in the pane. **The grid scrolls its own
+columns**, so nothing else in it had a floor at all. The dock was therefore being withheld to protect
+a `Row` of three buttons, and the number described the bar rather than the previews.
+
+**11.107.2 IT WAS ALSO 23 PX SHORT, IN THE ONLY BAND A PERSON CAN REACH.** Measured across the range
+`kMinWindowWidth` (1000) admits: clean from 1000 to 1179, **overflowing by 23 at 1180**, by 13 at
+1190, by 3 at 1200, and clean from 1203. The constant was 1180, so the dock was admitted 23 px before
+there was room for it. The arithmetic in the comment stopped one term short, and the band it created
+sits well above the enforced minimum, unlike the 800 px defect `#803` was filed for, which no window
+can reach.
+
+**11.107.3 Ruled: the dock is drawn at every width the app will open, and a labelled toggle on the
+port grid's toolbar hides it.** `#803` made the archetype bar and the grid toolbar `Wrap`s, which
+removes the floor rather than working around it; measured with the threshold forced to zero, the dock
+then draws at 1000 with no overflow at any width down to 700. With no geometric floor left, **a
+threshold has nothing to measure**, and a constant that still claimed to measure one would be
+fiction. What remains is a preference, and a preference belongs to the person holding it.
+
+**The complaint `#802` was filed for is answered by construction rather than by copy.** It objected
+that the dock *"gives way SILENTLY"*. Nothing gives way on its own now, so there is no disappearance
+to explain.
+
+**The toggle is on the grid's toolbar and not on the dock**, because a control reachable only while
+the dock is drawn cannot bring the dock back. It is labelled rather than iconic: `Hide previews`
+while they are up and `Show previews` while they are not, since the second reading has to work for
+somebody who never saw them. **The state is per session and is deliberately not persisted**, the same
+shape as the grid's column-pack override: a remembered value would mean opening the builder on a wide
+monitor and finding the previews gone because of a laptop three weeks ago. It defaults to shown,
+which is CR-086's side of it.
+
+*Rejected: a collapsed icon rail, `#802`'s first candidate.* It is the right answer to a question
+that no longer exists. The rail earns its complexity only when geometry forces the dock out, and
+after `#803` nothing does.
+
+*Rejected: keeping a threshold, re-measured and explained.* It preserves the mechanism that produced
+the defect, and the explanatory copy would be a sentence apologising for a decision the app made on
+the person's behalf while a control was available instead.
+
+*Rejected: an end-drawer over the grid, or the dock beneath it.* Both re-lay the pane to buy width
+that measurement says is not needed, and docs/06 §2's drawing is a three-column window.
+
+### §11.108 DR-109 · Bank collapse reaches the canvas, and the user can undo it there
+
+**Question.** CR-103 collapses banks over eight *"on first layout and in the symbol preview"*. `#229`
+built collapse in the shared geometry and turned it on for the preview only. `#801` was filed to turn
+it on for the canvas, priced as one argument at one call site.
+
+**11.108.1 THAT ONE ARGUMENT REMOVES 47 OF A SWITCH'S 48 PORTS FROM THE SHEET.** `symbolHitRegions`
+emits one region per entry in `RenderedSymbol.allPorts`, and a collapsed bank contributes ONE entry.
+A collapsed 48-port switch therefore has one pin, one hit region, and **no way to select, trace or
+wire the other forty-seven**. **Nothing in `rackpal_ui` or `rackpal_export` read `isCollapsed` or
+`collapsedCount`**, so there was no affordance to get them back, and the PDF backend was equally
+unaware. Sixty-five schematic tests failed; they were not stale fixtures.
+
+**11.108.2 THE RULING ALREADY OWNED THE ANSWER AND NOTHING HAD BUILT IT.** CR-103 also says any bank
+of two or more ports *"may be collapsed by the user at any time"*, which means nothing unless it can
+be un-collapsed. `BankDef.collapseInSymbol` is the TEMPLATE's opt-out, edited in the device builder;
+it is not something a person can reach while looking at a drawing.
+
+**11.108.3 Ruled: `#801` ships both halves, and the expansion is an exception set.** `expandedBanks`
+threads from `buildSchematicScene` through the symbol tier to `layOutSymbolEdges`, keyed by device
+and then by bank key. Auto-collapse stays what a device gets on first layout and the user's choice is
+the deviation from it, so the ruling's default survives as the default rather than becoming one of
+two equal modes.
+
+**The state is per session and is not a document write**, the same shape as DR-011.4's `holdAt`: a
+layout INPUT rather than a value in CR-117's byte surface. The collapsed state is derivable from the
+template and the threshold and needs no storage; what a person expands while working is not a fact
+about the design.
+
+**A click on a vector pin expands it, and `B` collapses it again.** Selecting a pin that stands for
+forty-eight ports means nothing, so the click has no meaning to share. The reverse needed a key
+because every modifier on that canvas is spoken for: `Shift` extends a pin selection, `Ctrl`
+suppresses the magnet, `Alt` re-answers what is under the cursor. Both directions announce
+themselves in the status line, because a person who expanded a bank by clicking it cannot otherwise
+guess how to put it away.
+
+**`sizeSymbolForBody`'s DEFAULT moves, rather than its two call sites opting in.**
+`symbol_sizing_seam_test.dart` reproduces every symbol in the 300-link fixture through that function
+WITHOUT the flag and compares it to the scene; it is the guard against the preview and the sheet
+drifting apart (`#229`, CR-086), so the value it exercises has to be the value the sheet uses.
+Opting in twice would leave the seam holding only while two call sites remembered to agree, which is
+the arrangement that test exists to forbid.
+
+*Rejected: shipping collapse and rewriting the sixty-five tests to work through vector pins.* They
+fail because the behaviour is broken, so rewriting them pins a defect as intended behaviour, which
+this repository has already found in itself more than once.
+
+*Rejected: parking `#801` until an expand affordance exists.* It was the disciplined call and the
+user declined it in favour of building the half that was missing.
+
+*Rejected: collapsing only the unlinked remainder of a bank.* It is an appealing drawing, and it is
+not CR-103: the ruling collapses a bank on a count, not on how much of it happens to be patched, and
+a symbol that changes shape as cables land is a sheet that will not sit still.
+
+*Rejected: persisting the expansion in the document.* It buys a remembered view at the cost of a
+model field, a codec key, a byte round-trip and a migration, for state CR-103 describes as a default
+plus a deviation.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
