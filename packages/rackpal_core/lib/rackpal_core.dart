@@ -103,6 +103,7 @@ export 'src/commands/move_endpoint_command.dart';
 export 'src/commands/multi_draw.dart';
 export 'src/commands/pathway_commands.dart';
 export 'src/commands/port_override_commands.dart';
+export 'src/commands/project_settings_commands.dart';
 export 'src/commands/rack_commands.dart';
 export 'src/commands/rack_shrink.dart';
 export 'src/commands/rename_entity_command.dart';

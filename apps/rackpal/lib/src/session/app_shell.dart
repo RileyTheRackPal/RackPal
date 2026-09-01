@@ -662,6 +662,29 @@ final class AppShellState extends State<AppShell>
     if (await _services.controller.openPath(path)) _dismissStartCard();
   }
 
+  /// Opens the project settings editor (`#805`, RJ-012, AC-054).
+  ///
+  /// The dialog builds commands; this decides which stack they land on,
+  /// exactly as the batch inspector, the nudge canvas and the media-type
+  /// editor do. Settings are a field of `RackDocument`, so they go on the
+  /// DOCUMENT stack and are undoable, unlike a library operation
+  /// (docs/03 §5.6).
+  Future<void> _openProjectSettings() async {
+    final session = _services.session;
+    await showProjectSettingsDialog(
+      context,
+      doc: session.document,
+      onEdit: (commands) {
+        if (commands.isEmpty) return;
+        session.controller.transact(commands.first.label, (tx) {
+          for (final command in commands) {
+            tx.add(command);
+          }
+        });
+      },
+    );
+  }
+
   /// Runs the bounded probe when the File menu opens. NEVER at startup,
   /// and it removes nothing — a slow share is not a broken entry.
   Future<void> _refreshRecents() async {
@@ -705,6 +728,7 @@ final class AppShellState extends State<AppShell>
               onImportTemplate: _importTemplate,
               onExportLibrary: _exportLibrary,
               onImportLibrary: _importLibrary,
+              onProjectSettings: _openProjectSettings,
               onOpenRecent: _openRecent,
             ),
             const SizedBox(width: 16),
@@ -1282,6 +1306,7 @@ final class _FileMenu extends StatelessWidget {
     required this.onImportTemplate,
     required this.onExportLibrary,
     required this.onImportLibrary,
+    required this.onProjectSettings,
     required this.onOpenRecent,
   });
 
@@ -1298,6 +1323,9 @@ final class _FileMenu extends StatelessWidget {
   final Future<void> Function() onImportTemplate;
   final Future<void> Function() onExportLibrary;
   final Future<void> Function() onImportLibrary;
+
+  /// Opens the project settings editor (`#805`, RJ-012).
+  final Future<void> Function() onProjectSettings;
   final Future<void> Function(String path) onOpenRecent;
 
   @override
@@ -1395,6 +1423,20 @@ final class _FileMenu extends StatelessWidget {
             MenuItemButton(
               onPressed: () => unawaited(onImportLibrary()),
               child: const Text('Import device library…'),
+            ),
+            // ═════════════════════════════════════════════════════════
+            // ON THE FILE MENU, BECAUSE SETTINGS LIVE IN THE FILE
+            // ═════════════════════════════════════════════════════════
+            // `ProjectSettings` is a field of `RackDocument`, so these
+            // travel with the project and are undoable on its stack. That
+            // is what makes File the right menu rather than an
+            // application-preferences home: nothing here is a preference
+            // about the app, and `displayUnits` is authoritative OVER any
+            // app-level preference (CR-097).
+            const Divider(),
+            MenuItemButton(
+              onPressed: () => unawaited(onProjectSettings()),
+              child: const Text(kProjectSettingsLabel),
             ),
           ],
           child: const Text('File'),
