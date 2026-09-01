@@ -1453,7 +1453,24 @@ class _ArchetypeBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Padding(
     padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
-    child: Row(
+    // ═══════════════════════════════════════════════════════════════════
+    // A `Wrap`, AND THAT CHOICE IS WHAT LETS THE DOCK COME BACK
+    // ═══════════════════════════════════════════════════════════════════
+    // As a `Row` these three buttons had a hard natural width of about
+    // 637, and NOTHING ABOUT THE GRID ELSE DID: the grid scrolls its own
+    // columns. So the bar alone set the floor under the whole window, and
+    // `kPreviewDockMinWindow` existed to keep the dock off until that
+    // floor was cleared. Wrapping removes the floor rather than working
+    // around it, which is why `#802`'s threshold could then be measured
+    // against what the dock needs instead of what the bar could not give.
+    //
+    // NOT A HORIZONTAL SCROLLER, which was the other candidate: these are
+    // the section's only generators, and a `Paste…` that has scrolled out
+    // of sight is a button a person cannot find. A second run costs six
+    // points of height and keeps all three legible.
+    child: Wrap(
+      spacing: 8,
+      runSpacing: 8,
       children: [
         OutlinedButton.icon(
           onPressed: onMatrix,
@@ -1463,13 +1480,11 @@ class _ArchetypeBar extends StatelessWidget {
           // happening. `Renumber…` and `Change type…` read the same way.
           label: const Text('Matrix I/O…'),
         ),
-        const SizedBox(width: 8),
         OutlinedButton.icon(
           onPressed: onSwitch,
           icon: const Icon(Icons.lan_outlined, size: 18),
           label: const Text('Switch ports…'),
         ),
-        const SizedBox(width: 8),
         OutlinedButton.icon(
           onPressed: onPaste,
           icon: const Icon(Icons.table_view_outlined, size: 18),
@@ -1523,45 +1538,48 @@ class _Toolbar extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
     child: Row(
       children: [
-        FilledButton.tonalIcon(
-          onPressed: onAdd,
-          icon: const Icon(Icons.add, size: 18),
-          label: const Text('Add port'),
-        ),
-        const SizedBox(width: 8),
-        TextButton.icon(
-          onPressed: onDelete,
-          icon: const Icon(Icons.delete_outline, size: 18),
-          // COUNTS WHAT IT WILL DELETE. A bare "Delete" beside a grid of
-          // 68 rows does not say whether it means the selected rows or
-          // all of them, and the answer matters most to the person who is
-          // about to find out.
-          label: Text(
-            selectedCount == 0 ? 'Delete' : 'Delete $selectedCount selected',
-          ),
-        ),
-        if (onPairByOrder case final VoidCallback pair) ...[
-          const SizedBox(width: 8),
-          TextButton.icon(
-            onPressed: pair,
-            icon: const Icon(Icons.swap_horiz, size: 18),
-            label: const Text('Pair front to rear'),
-          ),
-        ],
-        if (refusal case final String message) ...[
-          const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              message,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context).colorScheme.onSurfaceVariant,
+        Expanded(
+          child: Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: onAdd,
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text('Add port'),
               ),
-            ),
+              TextButton.icon(
+                onPressed: onDelete,
+                icon: const Icon(Icons.delete_outline, size: 18),
+                // COUNTS WHAT IT WILL DELETE. A bare "Delete" beside a grid of
+                // 68 rows does not say whether it means the selected rows or
+                // all of them, and the answer matters most to the person who is
+                // about to find out.
+                label: Text(
+                  selectedCount == 0
+                      ? 'Delete'
+                      : 'Delete $selectedCount selected',
+                ),
+              ),
+              if (onPairByOrder case final VoidCallback pair)
+                TextButton.icon(
+                  onPressed: pair,
+                  icon: const Icon(Icons.swap_horiz, size: 18),
+                  label: const Text('Pair front to rear'),
+                ),
+              if (refusal case final String message)
+                Text(
+                  message,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
           ),
-        ],
-        const Spacer(),
+        ),
         // ═══════════════════════════════════════════════════════════════
         // TICKS, NOT A LIST OF NAMES, AND THE STATE IS ALREADY DECIDED
         // ═══════════════════════════════════════════════════════════════
