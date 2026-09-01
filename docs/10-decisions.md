@@ -3,13 +3,19 @@
 **This file is not the normative record.** The normative record is
 [docs/canonical-decisions.md](canonical-decisions.md), 120 `CR-nnn`, 59 `AC-nnn`, 17 `RJ-nnn`,
 canonical naming, the model, the registry, the scope ruling, the milestone plan, and Part 4's
-binding user decisions `DR-001`–`DR-023`. This file is a sixteen-ADR summary of it. Where an ADR
-and a ruling appear to differ, the ruling wins and this file is wrong.
+binding user decisions, now `DR-001` to `DR-107`. This file is a sixteen-ADR summary of it. Where
+an ADR and a ruling appear to differ, the ruling wins and this file is wrong.
+
+**THE COUNTS IN THIS PARAGRAPH ARE THE KIND THAT GO STALE**, and two of them had. It read
+`DR-001`–`DR-023` while canon held 107, and the next paragraph promised thirty-six user
+decisions against a table that stopped at DR-036 and a body that writes out five. Counts in
+prose are a liability this corpus has swept five times; these are stated once, here, and the
+index below is what to trust.
 
 What follows is the short-form decision log for RackPal: sixteen ADRs covering the choices that
 shape the codebase, each traced back to its adjudication in the canonical decision record; then
-**the thirty-six user decisions `DR-001`–`DR-036`**, which are binding and override the recommendations
-they answer; then the questions of canon §10, **none of which is open any longer**: ten are
+**the user decisions `DR-001` to `DR-107`**, which are binding and override the recommendations
+they answer, five of them written out in full below and the rest indexed; then the questions of canon §10, **none of which is open any longer**: ten are
 answered, 10.3 is moot under DR-006, 10.13 is retired, and 10.11 alone is deferred, to M5 rather
 than indefinitely. An ADR here is a summary with a pointer, not a new ruling. Open questions carry no
 normative weight at all: each states its options, the honest trade-off, the evidence that would
@@ -89,6 +95,100 @@ canon §11; the supersession index is canon §12.
 | DR-034 | **The community library is fetched as an `.rmda` release asset, never cloned** | — | DR-033's **read** path: one feature, two directions, ruled apart because they fail differently. **"Clone" does not survive the platform**: Flutter desktop has no git, so it means vendoring libgit2 or shelling out to a binary absent from an integrator's site laptop, a native dependency on both platforms to fetch some JSON, and it drags every revision of every device to deliver the current one. **The deciding reason is that the format is already ruled and unbuilt**: **DR-015's** `.rmda` is the library pack whose codec, directory service and palette filter M4 owes anyway, so HTTPS instead of email changes the transport and nothing else; a tarball of loose `.rmdx` would be a second on-disk shape carried forever. **The user took the bundled snapshot AND the opt-in card rather than choosing, and that is the better answer**: the bundle is a floor and the fetch is a ceiling. Bundling alone ties library freshness to the app's release cadence, the exact coupling release tags exist to break; fetching alone means a first launch with no wifi shows an empty library, and since the seed is generic archetypes (**DR-002**) the user who most needs a real SKU is the one standing in a mechanical room. Update check is `releases/latest`, unauthenticated, **at most once per 24 h**, behind a **non-modal** notice. **NOT RJ-014's auto-updater**: nothing updates the application, no code is fetched, templates are inert data, and the call is the version-check ping RJ-014 explicitly permitted. **§11.33.5 is a determinism gate, not a preference**: a golden resolving a template out of a fetched library depends on a release tag and has stopped being a golden, so seed and community library are separate resolution scopes and a test says so. **A download is an import**: AC-058/D8 limits and `contentHash` verification apply, the network being no more trusted than the disk. Obliges the catalog repo to actually cut releases. Scope addition under §8.3, sharing DR-033's precondition |
 | DR-035 | **A created `Pathway` records the medium it is and the room it serves** | — | DR-032 ruled what such a pathway is CALLED and §11.31.6 mentions neither field, which was invisible while one surface created pathways. **The forcing case is a broken control**: docs/07 §4.2's matrix cell is a COUNT, so it must find "the pathways in this room, of this medium", and a DR-032 pathway recorded neither: the cell would accept a number and read back `0` forever. So creation sets `pathwayMedia` and `fromLocationId`; `toLocationId` **stays null**, which is UNKNOWN and not empty (G4), because a run to the rack is a guess about a rack this project may not hold. **`from` is the room, and the orientation is being set for the first time**: both fields shipped at M0 with no reader establishing an order, and the only writer, `RemoveLocationCommand`, treats them symmetrically. docs/08 §3.2 reads every schedule row `FROM — ROOM` then `TO — RACK` and `ScheduleEntry.roomId` already relies on it, so this is the product's existing convention rather than a new one. **Rejected: the installer's own phrasing** ("conduit runs from the panel to the bedroom"), which loses on cost, since the same physical run would read `FROM = room` on its cable rows and `TO = room` on its pathway, one table apart. **The drop line is retrofitted in the same change**, because §11.31.5 requires one medium not to mean two things depending on which box a person typed it into. `+ Add pathway` sets neither and that is not an inconsistency: a button press names no room and no medium, and inventing them is what §11.31.2 refused one field over. No scope change; a behaviour change to a shipped gesture on §11.31.7's terms |
 | DR-036 | **RackPal is a public GPLv3 project, the catalog is CC0, and nothing is priced** | §10.3 | The ruling **DR-033 §11.32.7 declined to make and named as its precondition**, now discharged. Five clauses: RackPal is a **public project**, reversing DR-006's *"no commercial release is planned"* as a statement about distribution; the application code is **GPLv3-or-later**; the community catalog is **CC0 1.0**; contributions arrive under a **DCO sign-off** rather than a CLA; and **nothing is priced**. **THE DEPENDENCY CENSUS WAS MEASURED, NOT RECALLED**, by reading LICENSE files in the pub cache: every dependency is permissive, and `pdf` being **Apache-2.0 closes GPLv2 permanently** because Apache's patent-termination and indemnity terms are additional restrictions under v2 and are accommodated by v3. The SIL OFL fonts AC-058/D7 speaks of are **not bundled yet**, so that obligation is future. **THE CATALOG IS NOT COPYLEFT, AND THAT IS THE CLAUSE THAT WOULD HAVE BEEN GOT WRONG.** Copy-on-place (**AC-041**) embeds a full `TemplateSnapshot` so a `.rmpj` is self-contained, so a copyleft catalog would put catalog-derived content in **every project file an integrator sends a client** and hand professional users a licensing question about their own deliverables. CC0 removes the question rather than answering it, and is the honest description of content that is largely uncopyrightable fact. Attribution survives in the pull request history and in `submittedBy`, a credit and never a licence term. **THE SEED HAS THE SAME PROBLEM AND CC0 DOES NOT REACH IT**, since the seeded catalog is Dart source and therefore GPLv3 as code, so the licence carries an explicit **output exception** in the manner of GCC's runtime library exception: a document RackPal produces is the user's own work and is not a derivative, seeded snapshots and exported sheets included, **stated in LICENSE and README rather than inferred**. **DR-006's OWN FALLBACK FIRES ON SCHEDULE**: it named Microsoft Trusted Signing *"if external distribution is ever required, adoptable at M8, with no earlier milestone needing to anticipate it"*, and the promise holds, **no milestone before M8 moves**. §11.6.1's finding that the two-milestone lead time was OV/EV-specific is untouched. **§10.3 reopened exactly as its own row warned it would** and is answered: no fee, no tier, no gate. **The watermark hazard is answered by never building one**, DR-005 having made the sheet set a client deliverable that cannot be stamped. AC-058/D7 shrinks a second time, permanently rather than pending, and grows by one, GPLv3 must register via `LicenseRegistry`. **The DCO's accepted cost is that clause 2 is near-irreversible**: without a CLA the code licence cannot change without every contributor's consent. **Neither licence grants the name**: RackPal and Riley the RackPal are trademarks (§10.12(f)) and a fork takes the code and not the mascot. No milestone moves and roadmap §2 gains nothing; licensing is not a feature. Does not rule the date the repo goes public, the forge, or governance |
+
+## DR-037 to DR-107, indexed rather than summarised
+
+**The table above stops at DR-036, and canon holds 107.** For seventy-one
+rulings this file said nothing at all, while its own header claimed to cover
+*"the thirty-six user decisions"*. The gap opened because the summary was
+maintained by hand and the record was not: nothing enforces the two agreeing,
+and nothing detected seventy-one absences.
+
+**These rows carry each ruling's OWN TITLE, verbatim from its canon heading,
+and no paraphrase.** That is deliberate rather than lazy. Summarising
+seventy-one rulings by hand is seventy-one chances to write a plausible
+sentence that misstates one, and a wrong summary in a file people consult
+BEFORE the record is worse than no summary at all: it is the exact shape this
+corpus has had to withdraw claims over. A title cannot misstate its own
+ruling.
+
+So this index answers one question, *"which ruling do I want and where is
+it"*, and refers every other question to canon §11. The rows above keep their
+fuller treatment; nothing here replaces them.
+
+| DR | Ruling, in its own words | Where |
+|---|---|---|
+| DR-037 | The Plan view's exit criterion, and the four questions decomposition had to answer first | canon §11.36 |
+| DR-038 | The cell is uniform across strap widths, measured; §11.7.8's change 3 is discharged | canon §11.37 |
+| DR-039 | Project history: an in-file journal, an operation panel, and snapshots, in that order | canon §11.38 |
+| DR-040 | A drop lands on a panel port; `@panel=` is the gesture and the rack label is allocated | canon §11.39 |
+| DR-041 | The plate opening and the two cell pitches, measured; §11.7.8's last "about" is discharged | canon §11.40 |
+| DR-042 | The plate outline and the gang pitch, measured; DR-041's last two hedges are discharged | canon §11.41 |
+| DR-043 | The field termination gets three entry paths; the default stays Unspecified | canon §11.42 |
+| DR-044 | The shipped templates carry terminations, and a euroblock occupies no cell | canon §11.43 |
+| DR-045 | The field-crimped RJ45 plug, and an outlet that needs no plate | canon §11.44 |
+| DR-046 | The rack end is its own termination, and nothing infers it | canon §11.45 |
+| DR-047 | A gang can be fitted with a pass-through, and the plate follows from what is in it | canon §11.46 |
+| DR-048 | A network value is a dated as-built fact, and `T6.50` ships in v1 | canon §11.47 |
+| DR-049 | The tabular exports ship in v1: rows out, and a label sheet that is not a sheet | canon §11.48 |
+| DR-050 | Plan geometry fills the room estimate that already exists, and it buys cable | canon §11.49 |
+| DR-051 | Documentation is referenced and never embedded | canon §11.50 |
+| DR-052 | Git sync is v1.2 and gated on evidence; live collaboration is never | canon §11.51 |
+| DR-053 | The typed line and the CSV agree on what identifies an outlet and a room | canon §11.52 |
+| DR-054 | The `PORT` column prints the number on the part | canon §11.53 |
+| DR-055 | The Termination Schedule prints both ends, because it already prints both ends of everything else | canon §11.54 |
+| DR-056 | `Generic` is the trade's word for unspecified, so the builder pre-fills it | canon §11.55 |
+| DR-057 | Connector pitch is a refinement, not a prerequisite, and stays sparse | canon §11.56 |
+| DR-058 | A fork whose source cannot be seen is silent on the device and counted in the rollup | canon §11.57 |
+| DR-059 | The device glyph ships, because `accentColor` alone is hue alone | canon §11.58 |
+| DR-060 | Quick Add resolves family-first, because the family already names its connector | canon §11.59 |
+| DR-061 | The port grid's selection is a row range and a focused column, and the tick box is that selection | canon §11.60 |
+| DR-062 | Fill series infers its sequence from the top selected cell, because there is no stored pattern to re-apply | canon §11.61 |
+| DR-063 | A disagreement is not an unknown, and the identity columns are not batch-editable | canon §11.62 |
+| DR-064 | The reorder is within a band, and the index generator gets its missing character | canon §11.63 |
+| DR-065 | A sort is a way of looking, and four things follow from saying so | canon §11.64 |
+| DR-066 | The viewport is a way of looking: framed on arrival, remembered on return | canon §11.65 |
+| DR-067 | A class you can assert, and a classifier you can hear disagree | canon §11.66 |
+| DR-068 | Either end of a run may land on a device, because a speaker run is one cable | canon §11.67 |
+| DR-069 | Whose binding posts are they? The plate's, or the speaker's | canon §11.68 |
+| DR-070 | A run may come out of no box, and "there is none" is not "nobody has said" | canon §11.69 |
+| DR-071 | Landing a drop is a gesture, and the product picks the hole | canon §11.70 |
+| DR-072 | The sheet counts the runs nobody landed, and only the end that is a job | canon §11.71 |
+| DR-073 | Finishing a run is not making a cable, and the sheet now knows the difference | canon §11.72 |
+| DR-074 | A drop punched into the wrong port can be moved, and the label follows the hole | canon §11.73 |
+| DR-075 | A rack label somebody imported is a rack label somebody typed | canon §11.74 |
+| DR-076 | The schematic rebuilds what changed, and the epochs already say what that is | canon §11.75 |
+| DR-077 | A template authored in this project reaches the rack, and the palette says where it came from | canon §11.76 |
+| DR-078 | The five grid operations, and what a bulk write shows before it fires | canon §11.77 |
+| DR-079 | A listing is not a material, and three code rules stop overstating what they know | canon §11.78 |
+| DR-080 | The accent colour reaches the elevation, and the text colour follows it | canon §11.79 |
+| DR-081 | Three unreachable port fields get a cell, and the rule that would read one is M5's | canon §11.80 |
+| DR-082 | `parity` and `flowControl` are closed sets, and the corpus can now say so | canon §11.81 |
+| DR-083 | The mark rides the designator line, and it wins over a hatch | canon §11.82 |
+| DR-084 | The seeded catalog authors its own marks, so seventeen does not ship as nine | canon §11.83 |
+| DR-085 | Mirror bank, and the two models with a reader and no writer | canon §11.84 |
+| DR-086 | The port set gets its producer, and the role column stops being free text | canon §11.85 |
+| DR-087 | The passthrough pair gets its creator, and the LIU that cannot be paired | canon §11.86 |
+| DR-088 | State management is constructor injection and hand-rolled Listenables, and the dependency table gets a gate | canon §11.87 |
+| DR-089 | The wordmark is Nasalization, shipped as outlines, and the licence is what forbids the obvious implementation | canon §11.88 |
+| DR-090 | The console palette, and the rule that hue is never the only cue | canon §11.89 |
+| DR-091 | The view strip carries every full-screen surface, ordered by the job | canon §11.90 |
+| DR-092 | The Matrix archetype emits the port §4.3 could not, and four defaults it had no opinion on | canon §11.91 |
+| DR-093 | The Switch generator copies the seeded switch, including what it declines to say | canon §11.92 |
+| DR-094 | The paste sheet declares its separator, and drops what a closed model cannot hold | canon §11.93 |
+| DR-095 | A milestone closes on clauses discharged or parked, and parking costs a ruling | canon §11.94 |
+| DR-096 | The product is RackPal, and the wordmark is the one thing this repository cannot re-cut | canon §11.95 |
+| DR-097 | The tracker grows a fourth level, and an epic's state follows its criterion | canon §11.96 |
+| DR-098 | An override says three things, and two of its six fields were saying somebody else's | canon §11.97 |
+| DR-099 | Door 2 moves the device it was opened from, and the Device Manager holds one draft | canon §11.98 |
+| DR-100 | A `.rmdx` carries the body flat, because the sections were an illustration with 21 holes in it | canon §11.99 |
+| DR-101 | An id collision on import means somebody typed the same name, and only a person knows which | canon §11.100 |
+| DR-102 | The palette answers for the document AND the loaded libraries, and a template in two of them is two rows | canon §11.101 |
+| DR-103 | Placing a library row copies the template into the project, and the palette says which shelf every row came from | canon §11.102 |
+| DR-104 | The Device Manager tab becomes the browser, the card draws the glyph, and there is one matcher | canon §11.103 |
+| DR-105 | The panel layout is DERIVED, a nudge is the override, and `PortDef.position` cannot say "auto" until it is nullable | canon §11.104 |
+| DR-106 | `#227` is un-parked, and the nudge canvas gets its four unruled answers | canon §11.105 |
+| DR-107 | M4-P's scope, the stripped form, and the panel a field device actually has | canon §11.106 |
 
 See also [Canonical decisions](canonical-decisions.md), normative, plus
 [Overview](00-overview.md), [Data model](02-data-model.md),
