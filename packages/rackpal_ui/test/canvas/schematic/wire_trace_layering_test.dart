@@ -52,6 +52,16 @@ const _b = Uuid('dev-b');
   bool crossed = false,
 }) {
   final body = buildSeedCatalog()['N03']!;
+  // OPTED OUT OF CR-103's COLLAPSE, for the reason this file's own test
+  // names say out loud: "the midpoint rule would put all 48 on one" and
+  // "the layer emits one trace and two pill ops per end". Collapsed, N03's
+  // two 24-port banks draw one vector pin each, so there are four ends
+  // rather than forty-eight and the corridor rule is never exercised.
+  // `#801` did not change wire tracing; it changed how many pins this
+  // fixture has. See `schematic_test_document.dart`'s note.
+  for (final bank in body.banks) {
+    bank.collapseInSymbol = false;
+  }
   final doc = RackDocument(
     id: const Uuid('doc-wt'),
     appVersion: '0.2.0',

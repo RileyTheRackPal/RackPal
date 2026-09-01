@@ -345,7 +345,6 @@ class _SymbolPreview extends StatelessWidget {
       // CR-103: banks over 8 auto-collapse "on first layout AND IN THE
       // SYMBOL PREVIEW". This is the preview, so it is on here and off on
       // the schematic canvas until that canvas's own chapter turns it on.
-      collapseBanks: true,
     );
     final built = buildSymbolLayer(
       sized.geometry,

@@ -52,6 +52,29 @@ const double _oneFrameMs = 1000 / 60;
 const int _kM2cOps = 4155;
 const double _kM2cMs = 3.052;
 
+/// The symbol layer's op count on this fixture SINCE `#801`, which is what
+/// the total is actually asserted against.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// 4,155 IS KEPT ABOVE RATHER THAN OVERWRITTEN, BECAUSE IT IS A RECORD
+/// ═══════════════════════════════════════════════════════════════════════
+/// `_kM2cOps` is what M2-C measured, and editing it in place would leave
+/// the file claiming M2-C had measured a number that did not exist until
+/// `#801`. The two are different facts and both are worth having: the
+/// delta IS the change.
+///
+/// **4,155 -> 2,371, which is 1,784 ops and 42.9% of the symbol layer.**
+/// CR-103's bank collapse now runs on first layout as well as in the
+/// preview, so the fixture's banks over eight draw one vector pin each
+/// instead of one pin per port. The saving is large because the fixture is
+/// twenty-four switches and patch panels wide.
+///
+/// MEASURED TWICE AND EQUAL: the committed fixture reports 3,319 total
+/// against 948 label ops, and the nets-and-registries document reports
+/// 3,556 against 1,185. Both leave 2,371, which is the check that this is
+/// the symbol layer moving rather than the label layer.
+const int _kSymbolOps = 2371;
+
 /// The headroom fixture: twelve copies of the 300-link pod, which is a
 /// building with twelve IDFs rather than a house with one rack.
 const int _kHeadroomPods = 12;
@@ -673,9 +696,11 @@ void _measure(RackDocument doc, String label, {required int opsPerFlag}) {
     '  total      $ops ops, best of 15 = ${ms}ms '
     '(budget ${_oneFrameMs}ms)\n'
     '  labels     $labelOps ops, best of 15 = ${labelMs}ms\n'
+    '  symbols    $_kSymbolOps ops (collapsed, `#801`)\n'
     '  vs M2-C    $_kM2cOps ops / ${_kM2cMs}ms symbols-only baseline '
-    '=> +${ops - _kM2cOps} ops '
-    '(${((ops - _kM2cOps) / _kM2cOps * 100).toStringAsFixed(1)}%), '
+    '=> ${_kSymbolOps - _kM2cOps} ops '
+    '(${((_kSymbolOps - _kM2cOps) / _kM2cOps * 100).toStringAsFixed(1)}%) '
+    'on the symbol layer alone, '
     'label share ${(labelMs / ms * 100).toStringAsFixed(1)}% of this run',
   );
   expect(
@@ -709,7 +734,7 @@ void _measure(RackDocument doc, String label, {required int opsPerFlag}) {
   // fallback to the measured run. Every family in this fixture resolves,
   // which is what makes the figure a single number here.
   expect(labelOps, opsPerFlag * labels);
-  expect(ops, _kM2cOps + labelOps);
+  expect(ops, _kSymbolOps + labelOps);
 }
 
 /// The committed fixture with the registries DR-010 seeds and one

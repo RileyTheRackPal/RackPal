@@ -351,6 +351,14 @@ $ErrorActionPreference = 'Stop'
 # ui test is the unknown-token case, which is the one the settings dialog was
 # letting escape unhandled. export, text and app do not move.
 
+# RE-MEASURED 2026-09-01 at `#801`: core 3667 -> 3672 and ui 1399 -> 1403.
+# CR-103's bank collapse now runs on first layout, AND the user can expand a
+# bank again, which is the half the ruling always had and nothing had built.
+# The core tests cover the exception set (per bank, per device, and a stale
+# key changing nothing); the ui tests cover the click, the `B` key, and the
+# defect that made the feature necessary: a collapsed bank leaves 47 of 48
+# ports with no pin and no hit region.
+#
 # RE-MEASURED 2026-08-31 at `#802`: ui 1396 -> 1399. The narrow-window group
 # in preview_dock_test.dart went from one test to four, because the dock
 # stopped being a threshold and became a control: drawn at 1000, drawn at
@@ -363,10 +371,10 @@ $ErrorActionPreference = 'Stop'
 # re-pumped at six sizes measures one of them and reports clean for five.
 
 $SuiteFloors = @{
-    'rackpal_core'   = 3667
+    'rackpal_core'   = 3672
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1399
+    'rackpal_ui'     = 1403
     'rackpal_app'    = 916
 }
 

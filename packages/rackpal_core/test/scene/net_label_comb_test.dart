@@ -70,6 +70,26 @@ final class _Measurer implements TextMeasurer {
   final catalog = buildSeedCatalog();
   final body = catalog['N03']!;
 
+  // ═══════════════════════════════════════════════════════════════════
+  // THE BANKS ARE OPTED OUT OF COLLAPSE, AND THAT IS THE FIXTURE'S POINT
+  // ═══════════════════════════════════════════════════════════════════
+  // `#801` turned CR-103's bank collapse on for the canvas, and N03's two
+  // 24-port banks are precisely what it collapses: the scene would draw
+  // two vector pins where this file needs twenty-four labelled pins.
+  // Every test below is about a comb packing a WIDE edge without
+  // overprinting, so a collapsed edge does not make them pass. It makes
+  // them VACUOUS, which is worse, and the coverage assertion in group 0
+  // is the thing that noticed.
+  //
+  // `collapseInSymbol` is CR-103's own per-bank opt-out for "a bank that
+  // must always show every pin", so the fixture says this in the model
+  // rather than reaching for a view flag the scene deliberately has not
+  // got. A fresh `buildSeedCatalog()` is built above, so the mutation
+  // does not reach any other test.
+  for (final bank in body.banks) {
+    bank.collapseInSymbol = false;
+  }
+
   final doc = RackDocument(
     id: const Uuid('doc-1'),
     appVersion: '0.1.0+build.1',

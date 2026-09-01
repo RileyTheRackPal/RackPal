@@ -393,6 +393,21 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// [_sceneFor].
   int _sceneEpoch = 0;
 
+  /// Per device, the bank keys the user has EXPANDED (`#801`, CR-103).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// SESSION STATE, NOT A DOCUMENT WRITE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// CR-103's auto-collapse is what a device gets "on first layout", so
+  /// the collapsed state is derivable from the template and the threshold
+  /// and needs no storage. What a person expands is a deviation from it
+  /// while they work, which is the same shape as DR-011.4's `holdAt`: a
+  /// layout INPUT rather than a value in CR-117's byte surface.
+  ///
+  /// A NON-EMPTY ENTRY IS REMOVED RATHER THAN LEFT EMPTY, so this map's
+  /// emptiness is a usable question and the scene cache key stays small.
+  final Map<Uuid, Set<String>> _expandedBanks = <Uuid, Set<String>>{};
+
   SchematicScene? _scene;
   ({int epoch, SchematicPalette palette, SignalTheme theme})? _sceneKey;
 
@@ -999,6 +1014,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       measurer: widget.measurer,
       palette: palette,
       netLabelStyle: NetLabelStyle(theme: theme),
+      // `#801`. Every toggle bumps `_sceneEpoch` and sets
+      // `_structureDirty`, so a tier built under a different expansion is
+      // never carried: a symbol with the wrong pin count would put every
+      // wire on this sheet in the wrong place.
+      expandedBanks: _expandedBanks,
       // DR-011.4 — see [_holdLayoutOnNextBuild]. A hold is a layout INPUT
       // and never a document write, which is the whole reason the ruling
       // chose this shape over pinning every symbol into CR-117's byte
@@ -2713,7 +2733,37 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _extendPinSelectionTo(ref);
       return false;
     }
+    // ═══════════════════════════════════════════════════════════════
+    // A PRESS ON A VECTOR PIN EXPANDS ITS BANK (`#801`, CR-103)
+    // ═══════════════════════════════════════════════════════════════
+    // AT THE PRESS AND NOT THE RELEASE, which the first draft got wrong.
+    // A release only reaches `_releaseWireAt` when `_armWireFrom` claimed
+    // the press, and a pin the wire rules refuse never arms: the click
+    // then falls through the ordinary claim and the expansion never ran.
+    // The press is the one place both paths pass through.
+    //
+    // IT TAKES THE CLICK RATHER THAN SHARING IT, because SELECTING a
+    // collapsed pin means nothing: it stands for up to forty-eight ports
+    // and a selection of it can be neither read nor wired. Until this
+    // existed those ports had no pin, no hit region and no way to be
+    // connected at all, which is what turning collapse on otherwise
+    // costs.
+    //
+    // THE CARET IS SET FIRST, and it has to be: `B` collapses the bank the
+    // caret is in, and a press that expanded without leaving one would
+    // give a person no way back from the gesture they just made. The
+    // bank's representative port is a real pin once expanded, so the
+    // caret lands somewhere true.
     setState(() => _pinCaret = ref);
+    final scene = _scene;
+    if (scene != null) {
+      final pin = _drawnPin(scene, ref);
+      final bank = pin?.bankKey;
+      if (pin != null && pin.isCollapsed && bank != null) {
+        _toggleBankExpansion(ref.deviceId, bank);
+        return false;
+      }
+    }
     // THE ANCHOR IS SET BY THE ORDINARY PRESS, before anything is armed.
     // Without it `Shift`+click has nothing to extend FROM, and there is
     // no second gesture that could set one — a modifier-free press on a
@@ -2776,6 +2826,76 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _freeEnd = snapped == null ? scenePoint : null;
     });
     if (snapped != null) _announceCaret();
+  }
+
+  /// The drawn pin [ref] names, or null when the scene has none.
+  ///
+  /// A COLLAPSED PIN CARRIES A REAL `PortKey` (the bank's first port), so
+  /// this resolves for a vector pin exactly as it does for an ordinary
+  /// one. That is `SymbolPort.key`'s own stated reason for not being a
+  /// synthesised `bank:` string.
+  SymbolPort? _drawnPin(SchematicScene scene, PinRef ref) {
+    for (final symbol in scene.symbols) {
+      if (symbol.id != ref.deviceId) continue;
+      for (final port in symbol.allPorts) {
+        if (port.key == ref.portKey) return port;
+      }
+    }
+    return null;
+  }
+
+  /// The device and bank the pin caret sits in, or null.
+  ///
+  /// NULL FOR A PIN WITH NO BANK, and for a bank the threshold would
+  /// never collapse, because `B` on those has nothing to say and an
+  /// enabled action that does nothing is a key a person presses twice.
+  ({String deviceId, String bankKey})? _caretBank() {
+    final scene = _scene;
+    final caret = _pinCaret;
+    if (scene == null || caret == null) return null;
+    final pin = _drawnPin(scene, caret);
+    final bank = pin?.bankKey;
+    if (pin == null || bank == null) return null;
+    if (pin.isCollapsed) return (deviceId: caret.deviceId, bankKey: bank);
+    // Expanded: only offer to put it away if collapse would actually take
+    // it, which is the same question `layOutSymbolEdges` asks.
+    final open = _expandedBanks[Uuid(caret.deviceId)] ?? const <String>{};
+    if (!open.contains(bank)) return null;
+    return (deviceId: caret.deviceId, bankKey: bank);
+  }
+
+  /// CR-103's user half: put a bank away, or get it back (`#801`).
+  ///
+  /// BUMPS THE EPOCH AND DIRTIES THE STRUCTURE, because the symbol's pin
+  /// count changes and every wire that lands on it moves. A carried tier
+  /// here would draw the new sheet with the old symbols.
+  void _toggleBankExpansion(String deviceId, String bankKey) {
+    final id = Uuid(deviceId);
+    final open = _expandedBanks[id] ?? const <String>{};
+    final wasOpen = open.contains(bankKey);
+    setState(() {
+      final next = open.toSet();
+      if (wasOpen) {
+        next.remove(bankKey);
+      } else {
+        next.add(bankKey);
+      }
+      if (next.isEmpty) {
+        _expandedBanks.remove(id);
+      } else {
+        _expandedBanks[id] = next;
+      }
+      _structureDirty = true;
+      _sceneEpoch++;
+    });
+    // THE KEY IS NAMED ON THE WAY OUT, not only on the way in. A person
+    // who expanded a bank by clicking it has no way to guess how to put
+    // it back, and this canvas has no modifier left to spend on it.
+    _status.show(
+      wasOpen
+          ? 'Collapsed $bankKey. Click the pin to expand it again.'
+          : 'Expanded $bankKey. Press B to collapse it again.',
+    );
   }
 
   /// The pointer came up at [scenePoint].
@@ -3351,6 +3471,19 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           FocusSelectionIntent: _GatedAction<FocusSelectionIntent>(
             () => _canvasKeysEnabled,
             (_) => _toggleFocus(),
+          ),
+          // `#801`, CR-103. GATED ON THE CARET BEING IN A COLLAPSIBLE
+          // BANK, not merely on the canvas having keys: a disabled action
+          // falls through, so `B` over a pin with no bank stays available
+          // to whatever is behind this canvas rather than being eaten.
+          ToggleBankExpansionIntent: _GatedAction<ToggleBankExpansionIntent>(
+            () => _canvasKeysEnabled && _caretBank() != null,
+            (_) {
+              final where = _caretBank();
+              if (where != null) {
+                _toggleBankExpansion(where.deviceId, where.bankKey);
+              }
+            },
           ),
           SchematicCancelIntent: _GatedAction<SchematicCancelIntent>(
             // THE WIRE IS THE NEW TOP RUNG, and this predicate is the whole
