@@ -343,11 +343,19 @@ $ErrorActionPreference = 'Stop'
 # unmeetable. The app floor does not move: its one new assertion is a CHANGED
 # pin, RULE 14's File-menu census going 9 items to 10.
 
+# RE-MEASURED 2026-08-31 again, at the `IdFormat` decode gate: core 3662 ->
+# 3667 and ui 1389 -> 1390. `IdFormat`'s constructor validates NOTHING, so a
+# hand-edited `.rmpj` carrying a pattern the renderer cannot read opened
+# cleanly and threw at the first designator mint, a subsystem away from the
+# field that caused it. Five wire tests cover the six settings patterns; the
+# ui test is the unknown-token case, which is the one the settings dialog was
+# letting escape unhandled. export, text and app do not move.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3662
+    'rackpal_core'   = 3667
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1389
+    'rackpal_ui'     = 1390
     'rackpal_app'    = 916
 }
 

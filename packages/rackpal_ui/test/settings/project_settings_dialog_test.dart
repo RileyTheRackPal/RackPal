@@ -169,6 +169,41 @@ void main() {
       expect(find.byType(TextField), findsWidgets);
     });
 
+    testWidgets('an UNKNOWN TOKEN is refused too, and this is the case the '
+        'first draft let escape unhandled', (tester) async {
+      // `{NOPE}` is not a syntax error: the regex reporter sees it, and
+      // `requiredTokens()` throws `UnrecognisedTokenException`, which is a
+      // DIFFERENT type from the syntax one. The first draft ran the
+      // throwing check first and caught only the syntax type, so typing
+      // this into the field threw straight out of a text field.
+      final doc = _doc();
+      final ran = await _open(tester, doc);
+      final was = doc.settings.netNameFormat.pattern;
+
+      // SCROLLED TO FIRST. 'Net name' sits below the fold and a `ListView`
+      // never builds it, so the descendant finder matched nothing and
+      // `enterText` threw "Bad state: No element" rather than reporting a
+      // missing row. The 'Port designator' case above only works without
+      // this because it happens to be high in the list.
+      await tester.scrollUntilVisible(
+        find.text('Net name'),
+        120,
+        scrollable: _list,
+      );
+      final field = find.descendant(
+        of: find.widgetWithText(ListTile, 'Net name'),
+        matching: find.byType(TextField),
+      );
+      await tester.enterText(field, 'N{NOPE}');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(tester.takeException(), isNull, reason: 'it must not throw');
+      expect(ran, isEmpty);
+      expect(doc.settings.netNameFormat.pattern, was);
+      expect(find.textContaining('Unknown token'), findsOneWidget);
+    });
+
     testWidgets('a pattern it CAN read is accepted', (tester) async {
       final doc = _doc();
       final ran = await _open(tester, doc);
