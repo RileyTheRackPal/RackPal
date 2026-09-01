@@ -22,6 +22,8 @@
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 
+import 'schematic_fixture.dart';
+
 final class _Measurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -83,15 +85,27 @@ RenderedSymbol _sized(TemplateBody body, {required bool collapse}) =>
     ).geometry;
 
 void main() {
-  group('collapse is OFF unless asked, which is what protects the canvas', () {
-    test('a seeded 48-port switch still draws 48 pins by default', () {
+  group('the default is ON, and that is `#801` (CR-103)', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // THIS GROUP USED TO ASSERT THE OPPOSITE, AND SAYING SO IS THE POINT
+    // ═══════════════════════════════════════════════════════════════════
+    // It read "collapse is OFF unless asked, which is what protects the
+    // canvas", and it was right for as long as the canvas half of CR-103
+    // was unbuilt: `#229` shipped collapse in the shared geometry and
+    // turned it on for the preview only. The ruling always said "on first
+    // layout AND in the symbol preview", so the canvas was the half that
+    // was missing rather than the half that was protected.
+    //
+    // The default moved rather than the two call sites, because
+    // `symbol_sizing_seam_test.dart` reproduces every symbol through
+    // `sizeSymbolForBody` WITHOUT the flag and compares it to the scene.
+    // A default neither caller used would make that seam hold only while
+    // two places remembered to say `true`.
+    test('an explicit false still collapses nothing, which is the '
+        'uncollapsed path the flag now exists to exercise', () {
       final body = buildSeedCatalog()['N01']!;
       final drawn = _sized(body, collapse: false);
-      expect(
-        _pinCount(drawn),
-        body.ports.length,
-        reason: 'the schematic canvas moved, and its baselines did not',
-      );
+      expect(_pinCount(drawn), body.ports.length);
       expect(
         drawn.allPorts.where((p) => p.isCollapsed),
         isEmpty,
@@ -99,7 +113,8 @@ void main() {
       );
     });
 
-    test('the default really is false — an omitted flag collapses nothing', () {
+    test('the default really is TRUE now: an omitted flag collapses a bank '
+        'of 24 to one pin', () {
       final body = _body(ports: 24);
       final implicit = sizeSymbolForBody(
         id: 'preview',
@@ -108,7 +123,41 @@ void main() {
         body: body,
         measurer: _Measurer(),
       ).geometry;
-      expect(_pinCount(implicit), 24);
+      expect(_pinCount(implicit), 1);
+    });
+
+    test('and the SCENE collapses, which is the artifact rather than the '
+        'flag: CR-103 first layout is a canvas that has moved', () {
+      // ASSERTED ON THE SCENE, NOT ON THE PARAMETER. A test that pinned
+      // the argument would survive the behaviour it is protecting, which
+      // is this repository's standing objection to testing a mechanism.
+      final doc = readSchematicFixture();
+      final scene = buildSchematicScene(doc: doc, measurer: _Measurer());
+      expect(
+        scene.symbols,
+        isNotEmpty,
+        reason:
+            'the fixture stopped producing symbols and this proves '
+            'nothing',
+      );
+      final collapsed = scene.symbols
+          .expand((s) => s.allPorts)
+          .where((p) => p.isCollapsed)
+          .toList();
+      expect(
+        collapsed,
+        isNotEmpty,
+        reason:
+            'the canvas draws every pin of every bank, so `#801` is '
+            'not built',
+      );
+      expect(
+        collapsed.every((p) => p.collapsedCount > kBankCollapseThreshold),
+        isTrue,
+        reason:
+            'a bank at or under eight collapsed, which is not the '
+            'threshold CR-103 names',
+      );
     });
   });
 
@@ -166,6 +215,115 @@ void main() {
     });
   });
 
+  group('the user can expand a bank again (`#801`, CR-103)', () {
+    // CR-103 reads "any bank of >= 2 ports may be collapsed by the user at
+    // any time", which only means something if it can be un-collapsed.
+    // Auto-collapse is what a device gets on FIRST layout; this set is the
+    // deviation from it, which is why it is an exception set and not a
+    // second rule.
+    test('expanding the bank draws every pin it stands for', () {
+      final body = _body(ports: 24);
+      final bank = body.banks.single.key;
+      expect(_pinCount(_sized(body, collapse: true)), 1);
+
+      final open = sizeSymbolForBody(
+        id: 'preview',
+        designator: 'SW-1',
+        name: '',
+        body: body,
+        measurer: _Measurer(),
+        expandedBanks: {bank},
+      ).geometry;
+      expect(_pinCount(open), 24);
+      expect(open.allPorts.where((p) => p.isCollapsed), isEmpty);
+    });
+
+    test('a bank key nobody declared changes nothing, so a stale expansion '
+        'from a deleted bank cannot un-collapse the rest', () {
+      final body = _body(ports: 24);
+      final drawn = sizeSymbolForBody(
+        id: 'preview',
+        designator: 'SW-1',
+        name: '',
+        body: body,
+        measurer: _Measurer(),
+        expandedBanks: const {'no-such-bank'},
+      ).geometry;
+      expect(_pinCount(drawn), 1);
+    });
+
+    test('expanding one bank leaves its neighbours collapsed, because the '
+        'set is per bank and not per symbol', () {
+      final body = buildSeedCatalog()['N03']!;
+      final over = [
+        for (final b in body.banks)
+          if (b.collapseInSymbol &&
+              body.ports.where((p) => p.bankKey == b.key).length >
+                  kBankCollapseThreshold)
+            b.key,
+      ];
+      expect(
+        over.length,
+        greaterThanOrEqualTo(2),
+        reason:
+            'N03 should carry two banks over the threshold; the '
+            'catalog changed and this test now proves nothing',
+      );
+
+      final drawn = sizeSymbolForBody(
+        id: 'preview',
+        designator: 'SW-1',
+        name: '',
+        body: body,
+        measurer: _Measurer(),
+        expandedBanks: {over.first},
+      ).geometry;
+      final stillCollapsed = drawn.allPorts
+          .where((p) => p.isCollapsed)
+          .map((p) => p.bankKey)
+          .toSet();
+      expect(stillCollapsed, contains(over[1]));
+      expect(stillCollapsed, isNot(contains(over.first)));
+    });
+
+    test('the SCENE honours it per device, so expanding one switch does not '
+        'expand the identical one beside it', () {
+      final doc = readSchematicFixture();
+      final collapsed = buildSchematicScene(doc: doc, measurer: _Measurer())
+          .symbols
+          .expand((sym) => sym.allPorts.map((p) => (sym.id, p)))
+          .where((e) => e.$2.isCollapsed)
+          .toList();
+      expect(collapsed, isNotEmpty, reason: 'nothing collapsed to expand');
+
+      final who = Uuid(collapsed.first.$1);
+      final bank = collapsed.first.$2.bankKey!;
+      final after = buildSchematicScene(
+        doc: doc,
+        measurer: _Measurer(),
+        expandedBanks: {
+          who: {bank},
+        },
+      );
+      final mine = after.symbols.firstWhere((sym) => sym.id == who.v);
+      expect(
+        mine.allPorts.where((p) => p.isCollapsed && p.bankKey == bank),
+        isEmpty,
+        reason: 'the named device kept its bank collapsed',
+      );
+      expect(
+        after.symbols
+            .where((sym) => sym.id != who.v)
+            .expand((sym) => sym.allPorts)
+            .where((p) => p.isCollapsed),
+        isNotEmpty,
+        reason:
+            'expanding one device expanded the others too, so the map '
+            'key is being ignored',
+      );
+    });
+  });
+
   group('the sizer and the builder cannot disagree about the count', () {
     test('the reserved box shrinks with the pin run, on every seeded '
         'template that has a bank over the threshold', () {
@@ -186,6 +344,10 @@ void main() {
           name: '',
           body: body,
           measurer: _Measurer(),
+          // EXPLICIT SINCE `#801` flipped the default. Left implicit this
+          // is the same call as `tight`, and the comparison below becomes
+          // a value against itself.
+          collapseBanks: false,
         );
         final tight = sizeSymbolForBody(
           id: 'x',
@@ -193,7 +355,10 @@ void main() {
           name: '',
           body: body,
           measurer: _Measurer(),
-          collapseBanks: true,
+          // NOT PASSED, deliberately: since `#801` the default IS
+          // collapse, so leaving it off makes `tight` the call the canvas
+          // and the preview both actually make. Naming it here would also
+          // be a redundant-argument info against an exact analyzer pin.
         );
         final who = entry.key;
         expect(

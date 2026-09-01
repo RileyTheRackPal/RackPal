@@ -386,6 +386,7 @@ SchematicSymbolTier buildSchematicSymbolTier({
   NetLabelStyle netLabelStyle = const NetLabelStyle(),
   Map<Uuid, Pt> holdAt = const <Uuid, Pt>{},
   SugiyamaLayout? reuseLayout,
+  Map<Uuid, Set<String>> expandedBanks = const <Uuid, Set<String>>{},
 }) {
   final upg = kSchematicUnitsPerGrid;
   final pinned = _holdOrPin(doc, holdAt);
@@ -457,6 +458,7 @@ SchematicSymbolTier buildSchematicSymbolTier({
         metrics: metrics,
         pinnedAt: pinned[entry.device.id],
         isDestination: !feeds.contains(entry.device.id.v),
+        expandedBanks: expandedBanks[entry.device.id] ?? const <String>{},
       ),
     );
   }
@@ -638,6 +640,15 @@ SchematicScene buildSchematicScene({
   Map<Uuid, Pt> holdAt = const <Uuid, Pt>{},
   SugiyamaLayout? reuseLayout,
   SchematicSymbolTier? reuseSymbols,
+
+  /// Per device, the bank keys the user has expanded (`#801`).
+  ///
+  /// PASSED TO THE TIER, WHICH MEANS IT INVALIDATES THE SYMBOL CACHE. A
+  /// `reuseSymbols` built under a different expansion is a stale symbol,
+  /// and the caller that reuses one has to rebuild the tier when this
+  /// changes. `schematic_canvas_screen.dart` bumps its scene epoch for
+  /// exactly this reason.
+  Map<Uuid, Set<String>> expandedBanks = const <Uuid, Set<String>>{},
 }) {
   final upg = kSchematicUnitsPerGrid;
   final tier =
@@ -650,6 +661,7 @@ SchematicScene buildSchematicScene({
         netLabelStyle: netLabelStyle,
         holdAt: holdAt,
         reuseLayout: reuseLayout,
+        expandedBanks: expandedBanks,
       );
   final layout = tier.layout;
   final symbols = tier.symbols;
@@ -804,7 +816,32 @@ SizedSymbol sizeSymbolForBody({
   required TemplateBody body,
   required TextMeasurer measurer,
   SchematicMetrics metrics = const SchematicMetrics(),
-  bool collapseBanks = false,
+  // ═════════════════════════════════════════════════════════════════════
+  // DEFAULTS TO TRUE SINCE `#801`, AND THE SEAM TEST IS WHY
+  // ═════════════════════════════════════════════════════════════════════
+  // CR-103 collapses banks over eight "on first layout AND in the symbol
+  // preview", which is both of this function's callers. It defaulted to
+  // `false` while the canvas half was unbuilt, so the sheet path opted in
+  // and the preview path opted in and the DEFAULT was a third behaviour
+  // neither used.
+  //
+  // `symbol_sizing_seam_test.dart` reproduces every symbol in the
+  // 300-link fixture through this function and compares it to the scene,
+  // and it calls it WITHOUT the flag. That test is the guard against the
+  // preview and the sheet drifting apart (`#229`, CR-086), so the value
+  // it exercises has to be the value the sheet uses. With the default at
+  // `false` the seam held only while two call sites remembered to say
+  // `true`, which is the arrangement the test exists to forbid.
+  //
+  // The per-bank opt-out is `BankDef.collapseInSymbol`, which is where
+  // CR-103 puts "a bank that must always show every pin". This parameter
+  // is now for exercising the uncollapsed path, not for choosing a
+  // product behaviour.
+  bool collapseBanks = true,
+
+  /// Bank keys this device has had EXPANDED by the user, which collapse
+  /// skips (`#801`, CR-103's "may be collapsed by the user at any time").
+  Set<String> expandedBanks = const {},
 }) {
   final upg = kSchematicUnitsPerGrid;
 
@@ -823,6 +860,7 @@ SizedSymbol sizeSymbolForBody({
     ports: ports,
     banks: body.banks,
     collapseBanks: collapseBanks,
+    expandedBanks: expandedBanks,
   );
 
   var left = 0;
@@ -948,6 +986,7 @@ SizedSymbol sizeSymbolForBody({
     labelBandTop: bandTop,
     labelBandBottom: bandBottom,
     collapseBanks: collapseBanks,
+    expandedBanks: expandedBanks,
   );
 
   return (geometry: geometry, widthGu: widthGu, heightGu: heightGu);
@@ -961,6 +1000,7 @@ _Candidate _measureCandidate({
   required SchematicMetrics metrics,
   required Pt? pinnedAt,
   required bool isDestination,
+  required Set<String> expandedBanks,
 }) {
   final sized = sizeSymbolForBody(
     id: device.id.v,
@@ -969,6 +1009,11 @@ _Candidate _measureCandidate({
     body: body,
     measurer: measurer,
     metrics: metrics,
+    // CR-103's "first layout" IS THIS CALL (`#801`). `collapseBanks` is
+    // not passed: `sizeSymbolForBody` defaults to collapsing now, and
+    // saying `true` here would restore the arrangement where the seam
+    // holds only while two call sites agree. See that parameter's note.
+    expandedBanks: expandedBanks,
   );
   return _Candidate(
     device,

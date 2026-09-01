@@ -183,7 +183,12 @@ void main() {
       // `isActionEnabled` is false when there is none.
       expect(keyBindingsIn(KeyScope.global), hasLength(7));
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
-      expect(keyBindingsIn(KeyScope.schematic), hasLength(24));
+      // TWENTY-FIVE SINCE `#801`, which added `B` for CR-103's other
+      // half. A click on a collapsed pin expands the bank, because
+      // selecting a pin that stands for forty-eight ports means nothing;
+      // going back needed a key, since `Shift`, `Ctrl` and `Alt` are all
+      // spoken for on this canvas.
+      expect(keyBindingsIn(KeyScope.schematic), hasLength(25));
       expect(keyBindingsIn(KeyScope.structure), hasLength(2));
       //
       // FIVE IN THE BUILDER SINCE M4-F1, which added `Ctrl+D` and
@@ -228,7 +233,7 @@ void main() {
       // why `LabelKey` splits them.
       expect(keyBindingsIn(KeyScope.builder), hasLength(16));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(66));
+      expect(kKeymap, hasLength(67));
     });
   });
 

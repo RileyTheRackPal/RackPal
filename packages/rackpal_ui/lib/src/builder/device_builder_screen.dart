@@ -435,6 +435,20 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
   /// fewer than two rows are selected (M4-F2).
   PortBatchContext? _batch;
 
+  /// Whether docs/06 §6's previews take their pane (`#802`).
+  ///
+  /// SESSION STATE, NOT A SETTING, and deliberately not persisted. It is
+  /// the same shape as the column-pack override the grid already carries:
+  /// a choice about this look at this template, which a person makes by
+  /// reaching for room and unmakes when they want the previews back. A
+  /// remembered value would mean opening the builder on a wide monitor
+  /// and finding the previews gone because of a laptop three weeks ago.
+  ///
+  /// IT DEFAULTS TO SHOWN. `#228` built these previews and CR-086 is the
+  /// reason they matter: a symbol that cannot print is not a symbol, and
+  /// the dock is where a person sees the one they are authoring.
+  bool _previewsShown = true;
+
   // ═══════════════════════════════════════════════════════════════════
   // docs/06 §2's BANK TREE, AND THE FOUR ACTIONS BEHIND IT
   // ═══════════════════════════════════════════════════════════════════
@@ -706,6 +720,12 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
                     },
                     bankActions: _bankActions,
                     bankJump: _bankJump,
+                    // THE TOGGLE LIVES ON THE GRID'S TOOLBAR, not on the
+                    // dock, because a control that is only reachable while
+                    // the dock is drawn cannot bring it back.
+                    previewsShown: _previewsShown,
+                    onTogglePreviews: () =>
+                        setState(() => _previewsShown = !_previewsShown),
                   ),
                   BuilderSection.panel => PanelCanvasSection(
                     body: _session.body,
@@ -758,44 +778,46 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
             // and back, deliberately, so the selection is still there when
             // the person returns.
             if (_liveSection == BuilderSection.ports) ...[
-              const VerticalDivider(width: 1),
-              if (_batch case final PortBatchContext batch)
-                _batchInspector(batch)
-              else
-              // ═══════════════════════════════════════════════════════
-              // THE DOCK YIELDS TO THE GRID, AND THE THRESHOLD IS
-              // MEASURED RATHER THAN CHOSEN
-              // ═══════════════════════════════════════════════════════
-              // 340 px of dock on a narrow window leaves the port grid
-              // too little to draw its own archetype bar: at 434 px of
-              // grid it overflows by 203, so the bar alone needs ~637.
-              // Add the 200 px section rail, the dock and the dividers
-              // and the floor is a shade over 1170.
-              //
-              // A grid that cannot draw its own toolbar is a worse
-              // outcome than a preview a person cannot see, and it is
-              // the PRIMARY surface: docs/06 §2 sizes this window for
-              // "a 68-row virtualised grid", not for the dock beside
-              // it. So the dock is what gives way.
-              //
-              // AND IT DOES SO SILENTLY, which is the part that is
-              // not good enough: a person on a laptop sees no previews
-              // and no explanation. `#802` owes this window a real
-              // narrow layout; `#227`, the nudge canvas, is the other
-              // unbuilt part of it.
-              //
-              // THE WINDOW, NOT A `LayoutBuilder`. A `Row` hands its
-              // non-flex children UNBOUNDED width, so a `LayoutBuilder`
-              // here reads `maxWidth: infinity` and the gate never
-              // fires -- which is exactly what it did on the first
-              // attempt, silently drawing the dock at every size while
-              // looking like it was measuring something.
-              if (MediaQuery.sizeOf(context).width >= kPreviewDockMinWindow)
+              if (_batch case final PortBatchContext batch) ...[
+                const VerticalDivider(width: 1),
+                _batchInspector(batch),
+              ] else if (_previewsShown) ...[
+                // ═══════════════════════════════════════════════════════
+                // NO THRESHOLD ANY MORE, AND THAT IS `#803`'s DOING
+                // ═══════════════════════════════════════════════════════
+                // `kPreviewDockMinWindow` existed because the port grid's
+                // archetype bar was a `Row` with a hard natural width of
+                // about 637, and nothing else in the grid had one: the
+                // grid scrolls its own columns. The bar alone set the
+                // floor under the whole window, and the dock was held off
+                // until that floor was cleared.
+                //
+                // It was also held off 23 px too early. The constant said
+                // 1180 and the layout did not fit until 1203, measured;
+                // its own doc comment called the number "MEASURED, NOT
+                // CHOSEN" and the arithmetic had stopped one term short.
+                // That band sits above `kMinWindowWidth`, so it was the
+                // one part of this a person could actually reach.
+                //
+                // With both bars wrapping the dock fits at 1000, the
+                // narrowest window the app will open, so the geometry no
+                // longer decides this and a constant pretending to
+                // measure it would be fiction. What is left is a
+                // PREFERENCE, and a preference belongs to the person: the
+                // grid toolbar carries the toggle, which is the surface
+                // that stays visible when the dock is not.
+                //
+                // THE SILENT FAILURE `#802` WAS FILED FOR IS GONE BY
+                // CONSTRUCTION rather than by explanation. Nothing
+                // vanishes on its own any more, so there is no
+                // disappearance left to explain.
+                const VerticalDivider(width: 1),
                 BuilderPreviewDock(
                   body: _session.body,
                   registries: widget.registries ?? Registries(),
                   measurer: widget.measurer,
                 ),
+              ],
             ],
           ],
         ),

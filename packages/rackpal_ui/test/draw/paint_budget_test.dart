@@ -74,7 +74,33 @@ void main() {
     if (read is! Ok<RackDocument>) {
       throw StateError('$_fixturePath did not decode: $read');
     }
-    scene = buildSchematicScene(doc: read.value, measurer: measurer);
+    // ═══════════════════════════════════════════════════════════════
+    // EVERY BANK EXPANDED, WHICH IS THE CASE A BUDGET SHOULD MEASURE
+    // ═══════════════════════════════════════════════════════════════
+    // `#801` turned CR-103's bank collapse on for the canvas, and the
+    // fixture's text runs fell from 2,374 to 1,066: a collapsed bank
+    // draws one label where it used to draw twenty-four. Measuring the
+    // budget against the collapsed sheet would quietly halve what this
+    // file is watching.
+    //
+    // THE EXPANDED SHEET IS STILL REACHABLE, and it is exactly when paint
+    // matters: a person expands a 48-port switch precisely because they
+    // are about to work on it, so the heavy frame is the one they are
+    // looking at. A budget defined against the light case is a budget
+    // that passes when the app is slow.
+    final doc = read.value;
+    final expanded = <Uuid, Set<String>>{};
+    for (final device in doc.devices.values) {
+      final body = doc.templates[templateKeyFor(device.templateRef)]?.body;
+      if (body == null) continue;
+      final keys = body.banks.map((b) => b.key).toSet();
+      if (keys.isNotEmpty) expanded[device.id] = keys;
+    }
+    scene = buildSchematicScene(
+      doc: doc,
+      measurer: measurer,
+      expandedBanks: expanded,
+    );
   });
 
   /// Replays the whole display list once, returning the elapsed microseconds.

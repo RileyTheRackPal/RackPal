@@ -191,6 +191,7 @@ enum KeyBindingId {
   schematicCancel,
   beginWire,
   commitWire,
+  toggleBankExpansion,
 
   // --- builder (M4-G) -------------------------------------------------
   quickAddCommit,
@@ -404,6 +405,23 @@ final class FocusSelectionIntent extends Intent {
 /// Drop the focus set, then the selection (`Esc`, docs/05 §11.4).
 final class SchematicCancelIntent extends Intent {
   const SchematicCancelIntent();
+}
+
+/// Collapse or expand the bank the pin caret is in (`B`, CR-103, `#801`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE OTHER HALF OF A RULING, AND IT NEEDED A KEY BECAUSE EVERY MODIFIER
+/// ON THIS CANVAS IS SPOKEN FOR
+/// ═══════════════════════════════════════════════════════════════════════
+/// CR-103 reads "any bank of >= 2 ports may be collapsed by the user at
+/// any time". A click on a COLLAPSED pin expands it, which needs no key
+/// because selecting a pin that stands for forty-eight ports means
+/// nothing; going back the other way had nowhere to live. `Shift` extends
+/// a pin selection, `Ctrl` suppresses the magnet and `Alt` re-answers what
+/// is under the cursor, so a modifier-click was not available and a bare
+/// key is the house mechanism.
+final class ToggleBankExpansionIntent extends Intent {
+  const ToggleBankExpansionIntent();
 }
 
 /// Begin a wire from the pin under the caret (`W`, docs/05 §7 and §14).
@@ -1078,6 +1096,15 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'wire) could not share, and meaningDrift compares labels across '
         'scopes. Here the thing in flight is the compaction preview; on '
         'the sheet it is the wire.',
+  ),
+
+  KeyBinding(
+    id: KeyBindingId.toggleBankExpansion,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.keyB,
+    label: 'Collapse or expand this bank',
+    intent: ToggleBankExpansionIntent(),
+    source: 'CR-103 · #801',
   ),
 
   // ── schematic ────────────────────────────────────────────────────────

@@ -239,7 +239,58 @@ Rgb? _decodeRgbOrNull(Object? value, String context) =>
 
 String _encodeIdFormat(IdFormat value) => value.pattern;
 
-IdFormat _decodeIdFormat(String raw) => IdFormat(raw);
+/// Decodes a designator pattern, REFUSING one the renderer cannot use.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// `IdFormat`'s CONSTRUCTOR VALIDATES NOTHING, AND THIS IS WHERE THAT BIT
+/// ═══════════════════════════════════════════════════════════════════════
+/// `const IdFormat(this.pattern)` stores the string and checks none of it;
+/// `IdFormatSyntaxException` comes from `_parsePattern`, which only
+/// `render()` calls. So this used to accept ANY string from a file, and a
+/// hand-edited or corrupted `.rmpj` would open cleanly and then throw the
+/// first time a designator was minted, a whole subsystem away from the
+/// field that caused it.
+///
+/// **A FALLBACK TO THE DEFAULT WOULD BE THE SILENT GUESS THIS FILE'S OWN
+/// HEADER REJECTS.** That header says every enum but two decodes through
+/// the strict, throwing path "which surfaces as a whole-document `Err` at
+/// the `read()` boundary rather than a silent guess". Substituting
+/// `J{PORT_SEQ:2}` for a pattern its author did not write is exactly that
+/// guess, and G4 forbids fabricating a value nobody supplied. So a bad
+/// pattern refuses the document, and the message names the field.
+///
+/// TWO CHECKS, AND THE SAFE ONE GOES FIRST. `unrecognisedTokens()` is
+/// regex-based and never throws, so it can report an unknown NAME as a
+/// named list; `requiredTokens()` runs `_parsePattern`, which throws
+/// `IdFormatSyntaxException` for a malformed pattern AND
+/// `UnrecognisedTokenException` for an unknown name. The first draft
+/// assumed the two checks were disjoint, ran the throwing one first, and
+/// caught only the syntax type, so an unknown token escaped as an
+/// unhandled exception and the message naming the field never fired.
+///
+/// Both types are caught anyway. If the regex and the parser ever
+/// disagree about what a token is, the parser is authoritative and its
+/// complaint should reach the reader rather than an unhandled throw.
+IdFormat _decodeIdFormat(String raw, String context) {
+  final format = IdFormat(raw);
+  final unknown = format.unrecognisedTokens();
+  if (unknown.isNotEmpty) {
+    throw FormatException(
+      'Unknown token${unknown.length == 1 ? '' : 's'} '
+      '${unknown.join(', ')} in $context: '
+      'a token the renderer does not know throws when a designator is '
+      'minted, so it is refused here rather than at that point.',
+    );
+  }
+  try {
+    format.requiredTokens();
+  } on IdFormatSyntaxException catch (e) {
+    throw FormatException('Invalid pattern for $context: ${e.message}');
+  } on UnrecognisedTokenException catch (e) {
+    throw FormatException('Invalid pattern for $context: $e');
+  }
+  return format;
+}
 
 JsonMap _encodePt(Pt p) => {'gx': p.gx, 'gy': p.gy};
 
@@ -641,27 +692,33 @@ ProjectSettings _decodeProjectSettings(JsonMap json) => ProjectSettings(
       json['deviceDesignatorFormat'],
       'ProjectSettings.deviceDesignatorFormat',
     ),
+    'ProjectSettings.deviceDesignatorFormat',
   ),
   portDesignatorFormat: _decodeIdFormat(
     asStr(json['portDesignatorFormat'], 'ProjectSettings.portDesignatorFormat'),
+    'ProjectSettings.portDesignatorFormat',
   ),
   linkDesignatorFormat: _decodeIdFormat(
     asStr(json['linkDesignatorFormat'], 'ProjectSettings.linkDesignatorFormat'),
+    'ProjectSettings.linkDesignatorFormat',
   ),
   netNameFormat: _decodeIdFormat(
     asStr(json['netNameFormat'], 'ProjectSettings.netNameFormat'),
+    'ProjectSettings.netNameFormat',
   ),
   outletFieldLabelFormat: _decodeIdFormat(
     asStr(
       json['outletFieldLabelFormat'],
       'ProjectSettings.outletFieldLabelFormat',
     ),
+    'ProjectSettings.outletFieldLabelFormat',
   ),
   outletRackLabelFormat: _decodeIdFormat(
     asStr(
       json['outletRackLabelFormat'],
       'ProjectSettings.outletRackLabelFormat',
     ),
+    'ProjectSettings.outletRackLabelFormat',
   ),
   designatorSeparator: asStr(
     json['designatorSeparator'],

@@ -4865,6 +4865,12 @@ dividers and the floor is a shade over **1180**. A grid that cannot draw its own
 than a preview a person cannot see, and docs/06 §2 sizes this window for *"a 68-row virtualised
 grid"*, so the dock is what gives way. **`#802` owes this window a real narrow layout.**
 
+> **SUPERSEDED at §5.3.29 (DR-108).** The arithmetic above stopped one term short: the floor is
+> **1203**, not 1180, so the dock was admitted 23 px before it fit, and that band is the only part of
+> this a person could reach. It also measured the ARCHETYPE BAR rather than the dock, since the grid
+> scrolls its own columns and nothing else in it had a floor. `#803` made the bar a `Wrap` and the
+> floor is gone; `kPreviewDockMinWindow` is deleted.
+
 **The first attempt at that gate silently did nothing.** It used a `LayoutBuilder`, and a `Row`
 hands its non-flex children unbounded width, so it read `maxWidth: infinity` and drew the dock at
 every size while looking like it was measuring something. It measures the window now.
@@ -4873,6 +4879,10 @@ every size while looking like it was measuring something. It measures the window
 its own**, with the dock already gone. That predates this story. The dock test does not assert it
 clean, which would fail for a defect it does not own, nor assert it dirty, which would pin the
 defect as intended behaviour: `#803` holds it.
+
+> **CLOSED at §5.3.29.** The 63 px is real and **no window can reach it**: `kMinWindowWidth` is 1000
+> and the builder is a `Dialog.fullscreen`. Wrapping the archetype bar fixed it anyway, and turned up
+> the reachable defect this ticket was not looking at.
 
 ##### What this does not do
 
@@ -5088,6 +5098,121 @@ milestone can point at and say cost something every time it appeared.
 document to read. Clause 2 has now survived **eight stories** closing without moving it.
 
 ---
+
+#### 5.3.29 Four debt chapters, three of which were filed against the wrong thing · CLOSED · `v0.4.93` · `67c9a68`, `8259526`, `2f20c5a`, `c4079d7`
+
+Story `#800` held M4-K's three findings and `#805` produced a fourth. **The version does not move**:
+all four sit under epic `786`, DR-097's cross-cutting debt epic, and docs/14 §14.0 counts Done
+chapters under the CURRENT milestone's epic, which is M4's `22`. `#805` set that precedent three
+commits earlier.
+
+**`#807`, and `IdFormat` validates nothing.** `const IdFormat(this.pattern)` stores the string and
+checks none of it; `IdFormatSyntaxException` comes from `_parsePattern`, which only `render()` calls.
+So the codec accepted **any** string a file carried, and a hand-edited or corrupted `.rmpj` opened
+cleanly and threw the first time a designator was minted, a whole subsystem away from the field that
+caused it. `_decodeIdFormat` now forces the parse for all six settings patterns and names the field
+it refused, following `json_codec.dart`'s own stated convention rather than a new one: every enum but
+two decodes through the strict throwing path, *"which surfaces as a whole-document `Err` at the
+`read()` boundary rather than a silent guess"*, and substituting a default pattern for one an author
+did not write is exactly that guess (G4, CR-114).
+
+**THE TWO CHECKS ARE NOT DISJOINT, which the first draft assumed.** `unrecognisedTokens()` is
+regex-based and never throws; `requiredTokens()` runs the parser and throws for a malformed pattern
+**and** for an unknown token name. Running the throwing one first while catching only the syntax type
+let an unknown token escape unhandled. `project_settings_dialog.dart`, built five days earlier under
+`#805`, had the identical mistake one package away, where `N{NOPE}` threw straight out of a text
+field. The wire test caught it there first.
+
+##### `#803` was filed against a width no window can open
+
+The ticket says the port grid overflows an 800 px window by 63 px, in the `Row` at
+`port_grid.dart:1456`. That is true and it is **unreachable**: `kMinWindowWidth` is 1000, enforced
+through `setMinimumSize`, and the builder is a `Dialog.fullscreen`. Sweeping the range a person can
+actually reach found the defect that mattered, and it was not the one filed.
+
+| window | before |
+|---|---|
+| 1000 to 1179 | clean, the dock is off |
+| **1180** | **overflows by 23** |
+| 1190 | overflows by 13 |
+| 1200 | overflows by 3 |
+| 1203 | overflows by 0.0000076 |
+| 1210 and up | clean |
+
+`kPreviewDockMinWindow` was 1180 and the layout did not fit until 1203, so **the dock was admitted
+23 px before there was room for it**. Its own doc comment called the number *"MEASURED, NOT CHOSEN"*
+and put the floor at *"a shade over 1180"*; the arithmetic stopped one term short.
+
+**The fix is structural rather than a nudge to the constant.** As a `Row`, `_ArchetypeBar`'s three
+buttons had a hard natural width of about 637 and **nothing else in the grid had one**, because the
+grid scrolls its own columns. The bar alone set the floor under the whole window, which is why a dock
+threshold existed at all. Wrapping it removes the floor, and 1180, 1190 and 1200 all go clean without
+the constant being touched. `_Toolbar` gets the same treatment, beyond the ticket's letter and
+load-bearing for what follows: with both bars wrapping, the dock fits at **1000**.
+
+**A fourth finding, filed rather than fixed.** At 800 px the header's inner controls `Row` overflows
+by 22. `_Header` is already a `Wrap` for exactly this reason and keeps its controls as ONE wrap child
+on purpose, so `Save` and `Save & Close` cannot land on different lines; every fix preserving that
+intent makes the status chips a third wrap child, which `WrapAlignment.spaceBetween` then centres in
+the header **at every width**. It trades a visible change everywhere for an invisible one at a width
+the app refuses to open, so the sweep starts at 900 and says why.
+
+##### `#802`: the dock stops being a threshold and becomes a control (DR-108)
+
+With the floor gone there is nothing left for a threshold to measure, so `kPreviewDockMinWindow` is
+deleted. The complaint the ticket was filed for, that the dock *"gives way SILENTLY"*, is answered by
+construction rather than by copy: nothing gives way on its own, so there is no disappearance to
+explain. A labelled toggle on the grid toolbar hides the previews, **on the toolbar and not on the
+dock**, because a control reachable only while the dock is drawn cannot bring it back. A dangling
+`VerticalDivider` goes with it: it was drawn for the whole ports section and the dock separately
+inside it, so every window under the old threshold got a rule down the right edge with nothing beyond.
+
+##### `#801`: one argument that removes 47 of 48 ports (DR-109)
+
+Priced as one line, and it is not. `symbolHitRegions` emits one region per entry in
+`RenderedSymbol.allPorts`, and a collapsed bank contributes **one** entry, so collapsing a 48-port
+switch takes 47 ports off the sheet: no pin, no hit region, no selection, no wire. **Nothing in
+`rackpal_ui` or `rackpal_export` read `isCollapsed` or `collapsedCount`**, so there was no way back
+and the PDF backend was equally unaware. **Sixty-five schematic tests failed and they were not stale
+fixtures**; they were the product telling the truth.
+
+CR-103 always owned the answer: any bank *"may be collapsed by the user at any time"*, which means
+nothing unless it can be un-collapsed. So the chapter ships both halves. `expandedBanks` threads from
+`buildSchematicScene` through the symbol tier to `layOutSymbolEdges`, keyed by device then bank, as an
+**exception set** so auto-collapse stays the default and the user's choice is the deviation. A click
+on a vector pin expands it and `B` collapses it again; the key exists because every modifier on that
+canvas is spoken for.
+
+**Two mistakes worth recording.** The gesture was hooked at the RELEASE first and never fired: a
+release only reaches `_releaseWireAt` when `_armWireFrom` claimed the press, and a pin the wire rules
+refuse never arms, so the press is the one path both cases share. Then `B` did nothing, because the
+early return came before the caret was set and the key had nothing to act on.
+
+**The default moved rather than the two call sites, and the seam test is why.**
+`symbol_sizing_seam_test.dart` reproduces every symbol in the 300-link fixture through
+`sizeSymbolForBody` **without** the flag and compares it to the scene. It is the guard against the
+preview and the sheet drifting apart (`#229`, CR-086), so the value it exercises has to be the value
+the sheet uses. It failed on the first attempt, which is how this was found.
+
+**The op baseline: 4,155 to 2,371 on the symbol layer, 1,784 ops and 42.9%.** `_kM2cOps` is kept
+rather than overwritten, because it is M2-C's record and editing it in place would leave the file
+claiming M2-C measured a number that did not exist until today. **Measured twice and equal**: the
+committed fixture reports 3,319 total against 948 label ops and the nets-and-registries document
+reports 3,556 against 1,185, both leaving 2,371, which is the check that the symbol layer moved and
+the label layer did not.
+
+**Four fixtures changed and none was regenerated.** `schematic_test_document.dart` and
+`wire_trace_layering_test.dart` set `collapseInSymbol = false`, CR-103's own per-bank escape said in
+the model: those tests are about the wire gesture, pin selection, multi-draw and tracing, they predate
+the feature, and rewriting them to work through vector pins would change what they cover.
+`net_label_comb_test.dart` failed for a better reason, its N03 fixture being exactly what collapse
+eats, so its comb tests would have gone on passing over an edge with two pins on it, **vacuous rather
+than wrong**, and group 0's coverage assertion is what noticed. `paint_budget_test.dart` goes the
+other way and expands everything: its text runs had fallen 2,374 to 1,066, and a budget measured
+against the collapsed sheet quietly halves what it watches.
+
+**Floors across the four commits:** core 3662 to 3672, ui 1389 to 1403. Keymap census 24 to 25 in the
+schematic scope, 66 to 67 overall.
 
 ### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 

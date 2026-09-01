@@ -300,6 +300,21 @@ class _FormatRowState extends State<_FormatRow> {
       return;
     }
     final next = IdFormat(text);
+    // THE SAFE CHECK FIRST. `unrecognisedTokens()` is regex-based and
+    // never throws; `requiredTokens()` runs the parser, which throws for a
+    // malformed pattern AND for an unknown token NAME. Running the
+    // throwing one first while catching only the syntax type let an
+    // unknown token escape unhandled, straight out of a text field. The
+    // codec's own test caught the identical mistake one package away.
+    final unknown = next.unrecognisedTokens();
+    if (unknown.isNotEmpty) {
+      setState(
+        () => _error =
+            'Unknown token${unknown.length == 1 ? '' : 's'}: '
+            '${unknown.join(', ')}.',
+      );
+      return;
+    }
     try {
       // FORCES THE PARSE. The constructor does not.
       next.requiredTokens();
@@ -309,14 +324,8 @@ class _FormatRowState extends State<_FormatRow> {
       // second description of one fault.
       setState(() => _error = e.message);
       return;
-    }
-    final unknown = next.unrecognisedTokens();
-    if (unknown.isNotEmpty) {
-      setState(
-        () => _error =
-            'Unknown token${unknown.length == 1 ? '' : 's'}: '
-            '${unknown.join(', ')}.',
-      );
+    } on UnrecognisedTokenException catch (e) {
+      setState(() => _error = '$e');
       return;
     }
     setState(() => _error = null);

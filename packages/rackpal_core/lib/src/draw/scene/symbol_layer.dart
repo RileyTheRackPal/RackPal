@@ -564,6 +564,7 @@ Map<SymbolSide, List<SymbolEntry>> layOutSymbolEdges({
   required Iterable<PortDef> ports,
   Iterable<BankDef> banks = const [],
   bool collapseBanks = false,
+  Set<String> expandedBanks = const {},
 }) {
   final byKey = <String, BankDef>{};
   for (final bank in banks) {
@@ -606,8 +607,22 @@ Map<SymbolSide, List<SymbolEntry>> layOutSymbolEdges({
       final n = key == null ? 0 : onThisEdge[key]!;
       // `collapseInSymbol` is the per-bank opt-OUT for a bank that must
       // always show every pin, and this is the first code to read it.
+      // ═══════════════════════════════════════════════════════════════
+      // FOUR WAYS NOT TO COLLAPSE, AND THE LAST ONE IS THE USER'S
+      // ═══════════════════════════════════════════════════════════════
+      // CR-103 gives the threshold and `collapseInSymbol` gives the
+      // TEMPLATE's opt-out, for a bank that must always show every pin.
+      // Neither is a thing a person can reach while looking at a drawing,
+      // and the ruling's other half says any bank "may be collapsed by
+      // the user at any time", which only means anything if it can also
+      // be un-collapsed.
+      //
+      // [expandedBanks] is that half. It is an EXCEPTION SET rather than
+      // a replacement rule, so the auto behaviour is still what a device
+      // gets on first layout and the user's choice is the deviation.
       if (bank == null ||
           !bank.collapseInSymbol ||
+          expandedBanks.contains(key) ||
           n <= kBankCollapseThreshold) {
         out[side]!.add(SymbolEntry(port: port, label: port.label));
         continue;
@@ -667,11 +682,16 @@ RenderedSymbol buildSymbolGeometry({
   double labelBandBottom = 0,
   DPt origin = const DPt(0, 0),
   bool collapseBanks = false,
+
+  /// Bank keys the user has expanded, which collapse skips. See
+  /// [layOutSymbolEdges].
+  Set<String> expandedBanks = const {},
 }) {
   final bySide = layOutSymbolEdges(
     ports: ports,
     banks: banks,
     collapseBanks: collapseBanks,
+    expandedBanks: expandedBanks,
   );
 
   final nLeft = bySide[SymbolSide.left]!.length;

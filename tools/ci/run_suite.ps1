@@ -343,11 +343,38 @@ $ErrorActionPreference = 'Stop'
 # unmeetable. The app floor does not move: its one new assertion is a CHANGED
 # pin, RULE 14's File-menu census going 9 items to 10.
 
+# RE-MEASURED 2026-08-31 again, at the `IdFormat` decode gate: core 3662 ->
+# 3667 and ui 1389 -> 1390. `IdFormat`'s constructor validates NOTHING, so a
+# hand-edited `.rmpj` carrying a pattern the renderer cannot read opened
+# cleanly and threw at the first designator mint, a subsystem away from the
+# field that caused it. Five wire tests cover the six settings patterns; the
+# ui test is the unknown-token case, which is the one the settings dialog was
+# letting escape unhandled. export, text and app do not move.
+
+# RE-MEASURED 2026-09-01 at `#801`: core 3667 -> 3672 and ui 1399 -> 1403.
+# CR-103's bank collapse now runs on first layout, AND the user can expand a
+# bank again, which is the half the ruling always had and nothing had built.
+# The core tests cover the exception set (per bank, per device, and a stale
+# key changing nothing); the ui tests cover the click, the `B` key, and the
+# defect that made the feature necessary: a collapsed bank leaves 47 of 48
+# ports with no pin and no hit region.
+#
+# RE-MEASURED 2026-08-31 at `#802`: ui 1396 -> 1399. The narrow-window group
+# in preview_dock_test.dart went from one test to four, because the dock
+# stopped being a threshold and became a control: drawn at 1000, drawn at
+# desktop width, hidden and restored by its own button, and leaving no
+# dangling divider behind it.
+#
+# RE-MEASURED 2026-08-31 at `#803`: ui 1390 -> 1396, six widths in
+# `builder_narrow_window_test.dart`. Each width needs its own tree because a
+# `RenderFlex` reports its overflow ONCE per render object, so a single test
+# re-pumped at six sizes measures one of them and reports clean for five.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3662
+    'rackpal_core'   = 3672
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1389
+    'rackpal_ui'     = 1403
     'rackpal_app'    = 916
 }
 

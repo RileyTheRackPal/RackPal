@@ -68,6 +68,34 @@ const List<String> kFixtureDomains = <String>[
 /// exactly as it was. See its own note at the call site.
 RackDocument buildSchematicTestDocument({bool feedback = false}) {
   final catalog = buildSeedCatalog();
+
+  // ═══════════════════════════════════════════════════════════════════
+  // EVERY BANK IS OPTED OUT OF COLLAPSE, AND THAT KEEPS THESE TESTS
+  // ABOUT WHAT THEY WERE ABOUT
+  // ═══════════════════════════════════════════════════════════════════
+  // `#801` turned CR-103's bank collapse on for the canvas, and this
+  // fixture places an N01 (a 48-port switch) and a V03 (three banks of
+  // 16). Collapsed, each of those banks draws ONE vector pin, so the
+  // individual pins these files select, drag from, trace and chain-draw
+  // through simply do not exist and sixty-five tests fail looking for
+  // them.
+  //
+  // NONE OF THOSE TESTS IS ABOUT COLLAPSE. They are about the wire
+  // gesture, pin selection, multi-draw and wire tracing, and they predate
+  // the feature. Rewriting them to work through vector pins would change
+  // what they cover; opting the fixture out leaves each one testing its
+  // own subject with one unrelated variable removed.
+  //
+  // `collapseInSymbol` is CR-103's own per-bank opt-out for "a bank that
+  // must always show every pin", so this is said in the model rather than
+  // through a flag the scene does not take. Collapse and expansion have
+  // their own coverage: `symbol_collapse_test.dart` in core and
+  // `schematic_bank_expand_test.dart` beside this file.
+  for (final body in catalog.values) {
+    for (final bank in body.banks) {
+      bank.collapseInSymbol = false;
+    }
+  }
   final at = DateTime.utc(2026, 7, 28, 9);
   EntityMeta meta() =>
       EntityMeta(createdAt: at, updatedAt: at, updatedBy: 'test');
