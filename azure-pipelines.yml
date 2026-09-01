@@ -17,7 +17,7 @@
 # SELF-HOSTED SINCE 2026-08-30, AND THAT CHANGES ONE OF THE CLAIMS BELOW.
 # The `pool:` block moved from `vmImage: 'windows-2022'` to the `Default`
 # pool's own agent, on cost rather than on engineering: 34 runs had spent
-# 643 of the month's 1,800 free Microsoft-hosted minutes at a mean of 18.9
+# 643 of the month's 1,800 free Microsoft-hosted minutes at a mean of 19.4
 # each. The full trade is written at that block; the part that belongs in
 # THIS section is what stopped being verified.
 #
@@ -278,7 +278,7 @@ jobs:
     pool:
       # SELF-HOSTED SINCE 2026-08-30, and the reason is money rather than
       # engineering: 34 runs had consumed 643 of the 1,800 free Microsoft-
-      # hosted minutes this month at a mean of 18.9 minutes each, and M4
+      # hosted minutes this month at a mean of 19.4 minutes each, and M4
       # still owes two stories, a drill and their pull requests.
       #
       # This was `vmImage: 'windows-2022'`, named explicitly rather than
@@ -326,8 +326,28 @@ jobs:
       # agent rather than a busy one -- it runs INTERACTIVELY from
       # `run.cmd` and is not a Windows service.
       #
+      # ── HOW LONG IT ACTUALLY TAKES ─────────────────────────────────
+      # THIS NOTE WAS WRONG TWICE, IN OPPOSITE DIRECTIONS, and both times
+      # from one sample: first "25.6 minutes, about 35% slower" off the
+      # cold-cache first run, then nearly "comfortably faster" off two warm
+      # PR builds. Measured 2026-08-31 over all 38 completed runs:
+      #
+      #   hosted       n=33   mean 19.4   median 19.0   18.0 to 22.0
+      #   self-hosted  n=5    mean 20.8   median 25.2   10.9 to 30.4
+      #
+      # The means are close and THE VARIANCE IS THE STORY: 4.0 minutes of
+      # spread against 19.5, nearly five times as wide, on five runs.
+      #
+      # The five split by trigger, which is a CORRELATION and not a cause:
+      # `refs/pull/*/merge` took 10.9 and 11.8, `refs/heads/*` took 25.6,
+      # 30.4 and 25.2. The obvious mechanism is the one named below -- it
+      # shares the machine -- because a branch build starts the instant
+      # somebody pushes, which is when that person carries on working and
+      # starts a local gate run, while a policy build is waited on. To test
+      # it, run one branch build with the machine idle.
+      #
       # PROVEN, not assumed: build 20260830.17 ran on it against 3cec172 and
-      # passed every gate in 25.6 minutes, against a hosted mean of 18.9.
+      # passed every gate.
       # The build's own `queue` field still reads "Azure Pipelines", which is
       # where the build was SUBMITTED and not where the job ran; the agent's
       # assigned request is what actually answers that, and it named this
