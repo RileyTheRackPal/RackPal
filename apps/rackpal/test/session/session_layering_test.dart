@@ -596,11 +596,27 @@ final class AppServices {
       // comment above it predicted when it said the number "should move
       // visibly each time". It has, and each time the reason is on the
       // line above the number rather than in a commit nobody re-reads.
-      [9, 4],
+      //
+      // 9 -> 10 at `#805`, and the accelerator count did not move for the
+      // NINTH time. The tenth is `Project settings...`, RJ-012's third v1
+      // surface, and it is on THIS menu rather than an application
+      // preferences one because `ProjectSettings` is a field of
+      // `RackDocument`: these travel in the file and are undoable on its
+      // stack, and `displayUnits` is authoritative OVER any app-level
+      // preference (CR-097). No accelerator, for the reason every item
+      // since Locations has had none: a surface opened once per session
+      // does not pay for a row in `kKeymap`, M7's generated table and
+      // `arbitrate()`'s conflict checks on every platform.
+      //
+      // It also does not violate this rule's own warning that "a menu
+      // item beside a tab is a second route to one surface": settings are
+      // not a tab and have no other route at all, which was the defect.
+      [10, 4],
       reason:
-          'nine File-menu items — New, Open…, Save, Save As…, Export '
+          'ten File-menu items — New, Open…, Save, Save As…, Export '
           'PDF…, Export/Import device template…, Export/Import device '
-          'library… — and four accelerators. The Project menu is gone: '
+          'library…, Project settings… — and four accelerators. '
+          'The Project menu is gone: '
           'DR-091 §11.90 made Locations, Structured Wiring and Device '
           'Manager views in the strip, and a menu item beside a tab is a '
           'second route to one surface. docs/08 §8.1 gives export Ctrl+P; '

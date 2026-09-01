@@ -261,6 +261,22 @@ enum LabelKey {
   // writer was missing, so the whole chapter is this key and a surface.
   setConnectorAliases,
 
+  // `#805` (RJ-012, AC-054, CR-097). ProjectSettings has 22 fields, has
+  // shipped since M0, and NOTHING WROTE ANY OF THEM: no command touched
+  // doc.settings anywhere, so every value was whatever the constructor or
+  // the codec supplied for the life of the project. That made RJ-012's
+  // third surface unmeetable, since there was no settings.
+  //
+  // ONE key for eighteen scalar fields, on `setPortProperty`'s reasoning:
+  // a single typed write to a single field is one shape, and twenty-two
+  // keys would make the Edit menu name a field rather than an act.
+  setProjectSetting,
+
+  // The colour override is its OWN key, because it writes one entry of a
+  // map rather than a whole value, and because "Undo colour override" is
+  // what a person who just recoloured a family expects to read.
+  setFamilyColorOverride,
+
   // The transaction label for a whole CSV import (docs/07 §5.3: "the
   // whole import is one undoable `Command`"). ONE ENTRY on the undo
   // stack for sixty drops, four rooms and two cable types, because

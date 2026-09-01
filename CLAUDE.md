@@ -63,11 +63,31 @@ warm-cache path at 18m28s.
   vstsagent*` finds nothing and `Agent.Listener.exe` has no parent service. So
   a build sits in `queued` until somebody opens that window, and an
   unexplained queue is a stopped agent rather than a busy one.
-  **First run on it was 2026-08-30, build 20260830.17, green in 25.6 minutes**
-  against a hosted mean of 18.9: about 35% slower, and it shares the machine
-  with whatever else is running.
+  **THE DURATION NOTE HERE HAS BEEN WRONG TWICE, IN OPPOSITE DIRECTIONS**, and
+  the numbers below are the first ones measured over the whole population
+  rather than generalised from whichever run had just finished. It first read
+  *"25.6 minutes, about 35% slower"*, from the single cold-cache first run; it
+  was then about to be corrected to *"comfortably faster"*, from the two warm
+  PR builds. Both were one sample wearing a trend's clothes.
+  **Measured 2026-08-31 over all 38 completed runs (`az pipelines runs list`,
+  one cancelled run excluded):**
+  - **Hosted, n=33: mean 19.4 min, median 19.0, range 18.0 to 22.0.**
+  - **Self-hosted, n=5: mean 20.8 min, median 25.2, range 10.9 to 30.4.**
+  The means are close. **THE VARIANCE IS THE STORY**: hosted spans 4.0 minutes
+  end to end and self-hosted spans 19.5, nearly five times as wide, on a
+  sample of five.
+  The five split cleanly by trigger, which is a correlation and not yet a
+  cause: the two `refs/pull/*/merge` policy builds took 10.9 and 11.8, and the
+  three `refs/heads/*` builds took 25.6, 30.4 and 25.2. The obvious mechanism
+  is the one this arrangement always had, written into `azure-pipelines.yml`
+  from the start: **it shares the machine with whatever else is running.** A
+  branch build starts the instant somebody pushes, which is exactly when that
+  person carries on working and starts a local `run_local.ps1`; a policy build
+  is waited on. **That is a hypothesis with five data points behind it.** To
+  test it, run one branch build with the machine idle and see which mode it
+  lands in.
   The move was cost, not engineering: 34 hosted runs spent 643 of the month's
-  1,800 free minutes at a mean of 18.9. The clean checkout and the Flutter pin
+  1,800 free minutes at a mean of 19.4. The clean checkout and the Flutter pin
   both survive it; **"it builds on a machine that is not the author's" does
   not**, and that is now nobody's gate.
 - Queue a run against any branch:

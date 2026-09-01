@@ -337,11 +337,17 @@ $ErrorActionPreference = 'Stop'
 # rule (RJ-012, AC-011). It carries its own vacuity guard, because a scan that
 # walks zero files passes every such assertion while proving nothing.
 
+# RE-MEASURED 2026-08-31 at `#805` (the settings surface): core 3651 -> 3662
+# and ui 1381 -> 1389. `ProjectSettings` had 22 fields, had shipped since M0
+# and NOTHING WROTE ANY OF THEM, which is what made RJ-012's third v1 surface
+# unmeetable. The app floor does not move: its one new assertion is a CHANGED
+# pin, RULE 14's File-menu census going 9 items to 10.
+
 $SuiteFloors = @{
-    'rackpal_core'   = 3651
+    'rackpal_core'   = 3662
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1381
+    'rackpal_ui'     = 1389
     'rackpal_app'    = 916
 }
 

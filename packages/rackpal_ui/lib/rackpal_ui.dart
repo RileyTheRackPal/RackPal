@@ -118,6 +118,7 @@ export 'src/schedule/schedule_screen.dart';
 // them knows what a file is, which is what keeps this package free of the
 // native file dialog, `window_manager`, the path provider and `dart:io`
 // while the app layer owns all four.
+export 'src/settings/project_settings_dialog.dart';
 export 'src/shell/coach_mark.dart';
 export 'src/shell/file_error_dialog.dart';
 export 'src/shell/no_racks_view.dart';
