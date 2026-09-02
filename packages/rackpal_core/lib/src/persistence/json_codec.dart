@@ -2744,6 +2744,16 @@ JsonMap _encodeConnectorTypeDef(ConnectorTypeDef d) {
   // it does not also mean by saying nothing, because `genderApplies` is
   // a `bool` whose false branch IS the silent one (registries.dart).
   if (d.genderApplies) json['genderApplies'] = true;
+  // `matesWith` (`#255`, `CON-001`), ADDITIVE AND ONLY WHEN NON-EMPTY,
+  // for the same reason as the two above. Suppressing the empty list is
+  // safe because empty and absent mean the SAME thing here: the mating
+  // set is unknown and `CON-001` skips it (registries.dart). A connector
+  // that deliberately mates nothing and one nobody has seeded yet are
+  // indistinguishable by design, so there is no second state for the
+  // silent branch to lose.
+  if (d.matesWith.isNotEmpty) {
+    json['matesWith'] = [for (final m in d.matesWith) m.v];
+  }
   return json;
 }
 
@@ -2771,6 +2781,13 @@ ConnectorTypeDef _decodeConnectorTypeDef(ConnectorTypeId id, JsonMap json) =>
         json['genderApplies'] ?? false,
         'ConnectorTypeDef.genderApplies',
       ),
+      matesWith: [
+        for (final v in asJsonList(
+          json['matesWith'] ?? const <Object?>[],
+          'ConnectorTypeDef.matesWith',
+        ))
+          ConnectorTypeId(asStr(v, 'ConnectorTypeDef.matesWith[]')),
+      ],
     );
 
 JsonMap _encodeMediaTypeDef(MediaTypeDef d) {

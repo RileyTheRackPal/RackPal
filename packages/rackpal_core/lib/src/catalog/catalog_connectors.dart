@@ -98,6 +98,7 @@ ConnectorTypeDef _c(
   List<String> aliases = const [],
   num? pitchMm,
   bool gender = false,
+  List<String> mates = const [],
 }) => ConnectorTypeDef(
   id: ConnectorTypeId(id),
   displayName: name,
@@ -106,6 +107,7 @@ ConnectorTypeDef _c(
   footprintHeight: _mm(heightMm),
   pitch: pitchMm == null ? null : _mm(pitchMm),
   genderApplies: gender,
+  matesWith: [for (final m in mates) ConnectorTypeId(m)],
 );
 
 /// A registry entry for a connector that has no panel cutout to author.
@@ -136,28 +138,132 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       5.6,
       aliases: const ['hdmi'],
       pitchMm: 19,
+      mates: const ['conn.hdmi_a'],
     ),
-    _c('conn.hdmi_c', 'HDMI Type C (Mini)', 11.3, 4.2),
-    _c('conn.hdmi_d', 'HDMI Type D (Micro)', 9.1, 3.4),
-    _c('conn.dp', 'DisplayPort', 13.0, 5.0),
-    _c('conn.mini_dp', 'Mini DisplayPort', 8.0, 4.0),
-    _c('conn.usb_c', 'USB-C', 9.0, 3.5),
+    _c(
+      'conn.hdmi_c',
+      'HDMI Type C (Mini)',
+      11.3,
+      4.2,
+      mates: const ['conn.hdmi_c'],
+    ),
+    _c(
+      'conn.hdmi_d',
+      'HDMI Type D (Micro)',
+      9.1,
+      3.4,
+      mates: const ['conn.hdmi_d'],
+    ),
+    _c(
+      'conn.dp',
+      'DisplayPort',
+      13.0,
+      5.0,
+      mates: const ['conn.dp'],
+    ),
+    _c(
+      'conn.mini_dp',
+      'Mini DisplayPort',
+      8.0,
+      4.0,
+      mates: const ['conn.mini_dp'],
+    ),
+    _c(
+      'conn.usb_c',
+      'USB-C',
+      9.0,
+      3.5,
+      mates: const ['conn.usb_c'],
+    ),
     // -- Analog video / RF -----------------------------------------------
-    _c('conn.bnc75', 'BNC 75 ohm', 10.0, 10.0, pitchMm: 14, gender: true),
-    _c('conn.bnc50', 'BNC 50 ohm', 10.0, 10.0, gender: true),
-    _c('conn.f_type', 'F-type', 9.5, 9.5, pitchMm: 13, gender: true),
-    _c('conn.rca', 'RCA', 8.4, 8.4, pitchMm: 11, gender: true),
-    _c('conn.rca75', 'RCA 75 ohm', 8.4, 8.4, pitchMm: 11, gender: true),
-    _c('conn.hd15', 'HD-15 (VGA)', 27.0, 12.0, gender: true),
-    _c('conn.mini_din4', 'Mini-DIN 4 (S-Video)', 12.0, 12.0, gender: true),
+    _c(
+      'conn.bnc75',
+      'BNC 75 ohm',
+      10.0,
+      10.0,
+      pitchMm: 14,
+      gender: true,
+      mates: const ['conn.bnc75', 'conn.bnc50'],
+    ),
+    _c(
+      'conn.bnc50',
+      'BNC 50 ohm',
+      10.0,
+      10.0,
+      gender: true,
+      mates: const ['conn.bnc50', 'conn.bnc75'],
+    ),
+    _c(
+      'conn.f_type',
+      'F-type',
+      9.5,
+      9.5,
+      pitchMm: 13,
+      gender: true,
+      mates: const ['conn.f_type'],
+    ),
+    _c(
+      'conn.rca',
+      'RCA',
+      8.4,
+      8.4,
+      pitchMm: 11,
+      gender: true,
+      mates: const ['conn.rca', 'conn.rca75'],
+    ),
+    _c(
+      'conn.rca75',
+      'RCA 75 ohm',
+      8.4,
+      8.4,
+      pitchMm: 11,
+      gender: true,
+      mates: const ['conn.rca75', 'conn.rca'],
+    ),
+    _c(
+      'conn.hd15',
+      'HD-15 (VGA)',
+      27.0,
+      12.0,
+      gender: true,
+      mates: const ['conn.hd15'],
+    ),
+    _c(
+      'conn.mini_din4',
+      'Mini-DIN 4 (S-Video)',
+      12.0,
+      12.0,
+      gender: true,
+      mates: const ['conn.mini_din4'],
+    ),
     // -- Analog / digital audio ------------------------------------------
     // SHARED SHELL with `conn.3_5mm_trs` below — the same 7 mm barrel,
     // which is the pairing `assets/catalog/sources.md` already makes for
     // the footprint ("applied to both TS/TRS variants of the same
     // barrel"). DR-057 §11.56.2.
-    _c('conn.3_5mm_ts', '3.5 mm mono (TS)', 7.0, 7.0, pitchMm: 10),
-    _c('conn.3_5mm_trs', '3.5 mm stereo (TRS)', 7.0, 7.0, pitchMm: 10),
-    _c('conn.6_35mm_trs', '1/4 in TRS', 10.0, 10.0),
+    _c(
+      'conn.3_5mm_ts',
+      '3.5 mm mono (TS)',
+      7.0,
+      7.0,
+      pitchMm: 10,
+      mates: const ['conn.3_5mm_ts', 'conn.3_5mm_trs'],
+    ),
+    _c(
+      'conn.3_5mm_trs',
+      '3.5 mm stereo (TRS)',
+      7.0,
+      7.0,
+      pitchMm: 10,
+      mates: const ['conn.3_5mm_trs', 'conn.3_5mm_ts'],
+    ),
+    _c(
+      'conn.6_35mm_trs',
+      '1/4 in TRS',
+      10.0,
+      10.0,
+      mates: const ['conn.6_35mm_trs'],
+    ),
     _c(
       'conn.xlr3',
       'XLR3',
@@ -166,16 +272,26 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['xlr'],
       pitchMm: 27,
       gender: true,
+      mates: const ['conn.xlr3'],
     ),
     // SHARED SHELL with `conn.xlr3` — sources.md says so in terms
     // ("XLR5 shares the XLR3 shell"). DR-057 §11.56.2.
-    _c('conn.xlr5', 'XLR5', 24.0, 24.0, pitchMm: 27, gender: true),
+    _c(
+      'conn.xlr5',
+      'XLR5',
+      24.0,
+      24.0,
+      pitchMm: 27,
+      gender: true,
+      mates: const ['conn.xlr5'],
+    ),
     _c(
       'conn.jis_f05',
       'JIS F05 (TOSLINK)',
       7.0,
       7.0,
       aliases: const ['toslink'],
+      mates: const ['conn.jis_f05'],
     ),
     // -- Network -----------------------------------------------------------
     // `hdbt` LEFT THIS LIST AT DR-060 §11.59.5, and it was never a
@@ -199,6 +315,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['rj45'],
       pitchMm: 17,
       gender: true,
+      mates: const ['conn.rj45'],
     ),
     _c(
       'conn.lc_duplex',
@@ -208,9 +325,24 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['lc'],
       pitchMm: 14,
       gender: true,
+      mates: const ['conn.lc_duplex'],
     ),
-    _c('conn.sc', 'SC fibre', 13.0, 13.0, gender: true),
-    _c('conn.st', 'ST fibre', 10.0, 10.0, gender: true),
+    _c(
+      'conn.sc',
+      'SC fibre',
+      13.0,
+      13.0,
+      gender: true,
+      mates: const ['conn.sc'],
+    ),
+    _c(
+      'conn.st',
+      'ST fibre',
+      10.0,
+      10.0,
+      gender: true,
+      mates: const ['conn.st'],
+    ),
     _c(
       'conn.sfp_cage',
       'SFP/SFP+/SFP28 cage',
@@ -227,6 +359,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['db9', '232'],
       pitchMm: 34,
       gender: true,
+      mates: const ['conn.de9'],
     ),
     // `euro2` mirrors the `euro3` alias three lines down, which has been
     // here since M1. The id's tail normalises to `euroblock2`, so the
@@ -245,6 +378,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       10.0,
       aliases: const ['euro2'],
       gender: true,
+      mates: const ['conn.euroblock_2'],
     ),
     _c(
       'conn.euroblock_3',
@@ -254,14 +388,23 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['euro3'],
       pitchMm: 15,
       gender: true,
+      mates: const ['conn.euroblock_3'],
     ),
-    _c('conn.euroblock_5', 'Euroblock 5-pole', 18.0, 10.0, gender: true),
+    _c(
+      'conn.euroblock_5',
+      'Euroblock 5-pole',
+      18.0,
+      10.0,
+      gender: true,
+      mates: const ['conn.euroblock_5'],
+    ),
     _c(
       'conn.phoenix_4',
       'Phoenix 4-pole (Cresnet)',
       18.0,
       10.0,
       gender: true,
+      mates: const ['conn.phoenix_4'],
     ),
     _c('conn.screw_terminal', 'Screw terminal', 9.0, 10.0),
     _c('conn.knx_terminal', 'KNX bus terminal', 9.0, 10.0),
@@ -274,9 +417,24 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['bp'],
       pitchMm: 20,
       gender: true,
+      mates: const ['conn.banana'],
     ),
-    _c('conn.banana', 'Banana plug', 10.0, 10.0, gender: true),
-    _c('conn.speakon_nl4', 'SpeakON NL4', 24.0, 24.0, gender: true),
+    _c(
+      'conn.banana',
+      'Banana plug',
+      10.0,
+      10.0,
+      gender: true,
+      mates: const ['conn.binding_post'],
+    ),
+    _c(
+      'conn.speakon_nl4',
+      'SpeakON NL4',
+      24.0,
+      24.0,
+      gender: true,
+      mates: const ['conn.speakon_nl4'],
+    ),
     _c(
       'conn.punchdown_110',
       '110 punchdown',
@@ -297,6 +455,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['c13'],
       pitchMm: 30,
       gender: true,
+      mates: const ['conn.iec_c14'],
     ),
     _c(
       'conn.iec_c14',
@@ -306,6 +465,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['c14'],
       pitchMm: 30,
       gender: true,
+      mates: const ['conn.iec_c13'],
     ),
     _c(
       'conn.iec_c19',
@@ -314,6 +474,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       26.0,
       aliases: const ['c19'],
       gender: true,
+      mates: const ['conn.iec_c20'],
     ),
     _c(
       'conn.iec_c20',
@@ -322,6 +483,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       26.0,
       aliases: const ['c20'],
       gender: true,
+      mates: const ['conn.iec_c19'],
     ),
     _c(
       'conn.nema_5_15p',
@@ -334,6 +496,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       // gives the four a single footprint row. DR-057 §11.56.2.
       pitchMm: 38,
       gender: true,
+      mates: const ['conn.nema_5_15r', 'conn.nema_5_20r'],
     ),
     _c(
       'conn.nema_5_15r',
@@ -343,6 +506,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['5-15r'],
       pitchMm: 38,
       gender: true,
+      mates: const ['conn.nema_5_15p'],
     ),
     _c(
       'conn.nema_5_20p',
@@ -352,6 +516,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['5-20p'],
       pitchMm: 38, // shared shell, see `conn.nema_5_15p`
       gender: true,
+      mates: const ['conn.nema_5_20r'],
     ),
     _c(
       'conn.nema_5_20r',
@@ -361,6 +526,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['5-20r'],
       pitchMm: 38, // shared shell, see `conn.nema_5_15p`
       gender: true,
+      mates: const ['conn.nema_5_20p', 'conn.nema_5_15p'],
     ),
     _c(
       'conn.nema_l5_30p',
@@ -377,6 +543,7 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       8.0,
       aliases: const ['dc'],
       gender: true,
+      mates: const ['conn.barrel_dc'],
     ),
     // -- No panel cutout (§5.1 states their footprint column as "no") -----
     //
