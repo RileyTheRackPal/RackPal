@@ -407,8 +407,89 @@ jobs:
         # configured to do.
         continueOnError: true
 
+      # ═══════════════════════════════════════════════════════════════════
+      # IS THE PINNED SDK ALREADY ON THIS AGENT? MEASURE, THEN DECIDE
+      # ═══════════════════════════════════════════════════════════════════
+      # `Agent.ToolsDirectory` is OUTSIDE the workspace, so the clean
+      # checkout never touches it and a self-hosted agent still holds the
+      # SDK the previous build used. Measured on `{agent-host}`: **3.1
+      # GB**, and `Cache@2` was pulling an identical 3.1 GB archive across
+      # the network and unpacking it on top of that, every single run.
+      #
+      # IT WAS THE MOST VARIABLE STEP IN THE JOB BY A WIDE MARGIN, and the
+      # restore is the whole of it. Measured over builds 39 to 44:
+      #
+      #   restore   135s  155s  169s  452s  927s  1019s
+      #   verify      8s    6s    6s    6s    6s     6s
+      #
+      # The SDK is never downloaded: `ensure_flutter.ps1` finds what it
+      # needs and measures it in seconds. That 7.5x spread on the restore
+      # is most of the difference between a ten-minute build and a
+      # twenty-five-minute one, and it bought nothing.
+      #
+      # THE VERSION IS COMPARED, NOT JUST THE PATH. A directory that
+      # exists is not a pin; `flutter.version.json` carries the version
+      # AND the framework revision, which are the two things
+      # `ensure_flutter.ps1` gates on, so a stale or half-written SDK
+      # falls through to the cache exactly as before. A file read rather
+      # than `flutter --version`, because spawning the tool to ask whether
+      # the tool is there costs more than the check saves.
+      #
+      # NO POWERSHELL `$( )` SUBEXPRESSIONS BELOW, DELIBERATELY. Azure
+      # expands its own `$(name)` macros in this script BEFORE PowerShell
+      # ever sees the text, so `$($v.flutterVersion)` is a macro lookup
+      # that happens to miss and get left as literal text. It works until
+      # it does not, and this file already carries one comment about a
+      # trailing space turning a backtick continuation into a syntax
+      # error. Plain `$var` interpolation cannot be confused for a macro.
+      # The three `$(...)` that remain are macros and are meant to be.
+      - pwsh: |
+          $marker = Join-Path '$(Agent.ToolsDirectory)' 'flutter/bin/cache/flutter.version.json'
+          $present = 'false'
+          if (Test-Path $marker) {
+            try {
+              $v = Get-Content $marker -Raw | ConvertFrom-Json
+              $onDisk = $v.flutterVersion
+              $onDiskRev = $v.frameworkRevision
+              Write-Host "  on disk  : $onDisk @ $onDiskRev"
+              if (($onDisk -eq '$(flutterVersion)') -and ($onDiskRev -eq '$(flutterFrameworkRevision)')) {
+                $present = 'true'
+              }
+            } catch {
+              Write-Host '  marker unreadable, treating as absent'
+            }
+          } else {
+            Write-Host "  no marker at $marker"
+          }
+          Write-Host "  required : $(flutterVersion) @ $(flutterFrameworkRevision)"
+          Write-Host "  pin already on this agent: $present"
+          Write-Host "##vso[task.setvariable variable=FLUTTER_PRESENT]$present"
+        displayName: 'Probe: is the pinned Flutter already on this agent?'
+        # RECORDING, NOT GATING. If this step fails outright the variable is
+        # unset, the cache restores as it always did, and nothing is worse
+        # than before.
+        continueOnError: true
+
       - task: Cache@2
         displayName: 'Restore Flutter SDK cache'
+        # SKIPPED WHEN THE AGENT ALREADY HAS THE PIN. Kept rather than
+        # deleted because it is still correct on a machine that does not:
+        # a hosted agent, a rebuilt self-hosted one, or a tool directory
+        # somebody has cleared. See the probe above.
+        #
+        # THE ACCEPTED COST, STATED RATHER THAN DISCOVERED: a skipped task
+        # saves no cache either, and Azure evicts an entry that goes
+        # unaccessed. So the stored SDK will lapse, and the first build on
+        # a machine without the pin downloads from source through
+        # `ensure_flutter.ps1` instead of restoring. That is the path the
+        # script exists for, it is gated by the same version measurement,
+        # and it is a one-off minutes-long cost on a machine that is
+        # already being set up, weighed against up to 17 minutes on every
+        # build here.
+        #
+        # The pub cache below is NOT given this treatment and must not be:
+        # measured at 2 seconds a run, hitting every time.
+        condition: ne(variables['FLUTTER_PRESENT'], 'true')
         inputs:
           # Keyed on the exact version: a different pin is a different cache,
           # never a stale one silently reused.
