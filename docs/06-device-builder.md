@@ -516,7 +516,7 @@ The M4 exit criterion is that a user who has seen the tool once authors this tem
 
 | # | Action | Keys / clicks | Ports |
 |---|---|---|---|
-| 1 | `File ▸ New template` | `Ctrl+Shift+N` | 0 |
+| 1 | `New device template…` on the Device Manager tab | click | 0 |
 | 2 | Type the name | `HDMI Matrix 16x16` | 0 |
 | 3 | Tab to RU height, type | `Tab` `4` | 0 |
 | 4 | Tab to prefix: pre-filled `MTX`, accept | `Tab` | 0 |
@@ -530,21 +530,30 @@ The M4 exit criterion is that a user who has seen the tool once authors this tem
 | 12 | `1 ir35 in "IR IN" @Control` | `Enter` | 67 |
 | 13 | `1 c14 in` then save | `Enter` `Ctrl+S` | 68 |
 
-**13 steps, ~120 keystrokes, zero mouse clicks, no dialog.** Banks 1–5 are auto-named from family + direction; bank 6 is named by `@Control` on first use. Designators `J01…J68` are auto-assigned per ASME Y14.44. Panel layout is `AUTO`. Power, weight and depth are left blank and render `—` downstream with an accurate unknown count in every rollup.
+**13 steps, ~120 keystrokes and no dialog, with ONE click to open the builder.** Banks 1–5 are auto-named from family + direction; bank 6 is named by `@Control` on first use. Designators `J01…J68` are auto-assigned per ASME Y14.44. Panel layout is `AUTO`. Power, weight and depth are left blank and render `—` downstream with an accurate unknown count in every rollup.
 
 ### 9.2 The archetype path: 7 steps
 
 | # | Action | Emits |
 |---|---|---|
-| 1 | `Ctrl+Shift+N`, type `HDMI Matrix 16x16`, `Tab` `4` `Tab`, `Ctrl+Enter` | — |
+| 1 | `New device template…`, type `HDMI Matrix 16x16`, `Tab` `4` `Tab`, `Ctrl+Enter` | — |
 | 2 | Click **Matrix I/O…** | dialog |
-| 3 | Inputs `16`, type `hdmi` | — |
-| 4 | Outputs `16`, type `hdbt` | — |
+| 3 | Input type `hdmi`; the count is already `16` | — |
+| 4 | Output type `hdbt`; the count is already `16` | — |
 | 5 | Tick ☑ Mirrored outputs · ☑ Per-output IR · ☑ Control · ☑ AC inlet | — |
 | 6 | `[ Generate ]` | **68 ports, 6 banks** |
 | 7 | `Ctrl+S` | saved |
 
-**7 steps.** Step 6 does the work of steps 6–13 above. The 68th port is `IR IN`, which arrives inside Control because **per-output IR** is ticked (DR-092 §11.91.2); with the emitters switched off, Control is LAN and RS-232 and the template is 51 ports across 5 banks.
+**7 steps.** Step 6 does the work of steps 6–13 above. **Both paths open the builder from the
+Device Manager tab's `New device template…` button**, and this section said `Ctrl+Shift+N` until the
+M4-Q2 drill on 2026-09-01: there is no such binding, `Ctrl+N` is `New document`, and the
+`Project ▸ New device template…` menu item DR-104 assumed exists does not (docs/12 §5.3.25). The
+counts pre-fill at 16 because the criterion's device is a 16×16, so steps 3 and 4 are a type token
+each rather than a count and a token.
+
+**Measured, both paths, by the user against a stopwatch:** the DSL path **93 seconds** on
+2026-08-15 and the archetype path **46 seconds** on 2026-09-01, against a 180-second criterion
+(docs/12 §5.3.7, §5.3.30). The 68th port is `IR IN`, which arrives inside Control because **per-output IR** is ticked (DR-092 §11.91.2); with the emitters switched off, Control is LAN and RS-232 and the template is 51 ports across 5 banks.
 
 ### 9.3 What the speed goal is measured against
 
