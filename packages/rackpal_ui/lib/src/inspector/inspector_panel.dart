@@ -305,7 +305,26 @@ class _SelectionSummary extends StatelessWidget {
               ),
             ),
           ],
-          const Spacer(),
+          // ═══════════════════════════════════════════════════════════
+          // ONLY WHEN NOTHING ELSE IS FLEXING, AND THAT IS A BUG FIX
+          // ═══════════════════════════════════════════════════════════
+          // A `Spacer` IS an `Expanded`. Unconditionally, it competed
+          // with the `Expanded(SingleChildScrollView(...))` above for the
+          // free space and they split it 50/50, so the scroll VIEWPORT
+          // got half the column while its content needed all of it.
+          //
+          // The port list was then laid out BELOW the viewport, inside
+          // the blank half the spacer was holding: painted where a person
+          // can see it, and outside the viewport's bounds for hit
+          // testing, so `PORTS (52)` was visible, sat above a large empty
+          // area, and did nothing at all when clicked. Measured at a
+          // 320x1400 panel: viewport 190..763, content 190..916, the
+          // section itself at 878.
+          //
+          // With a sole device the scroll view already fills the space
+          // and pushes this hint to the bottom on its own, so the spacer
+          // has nothing to do and must not ask for a share.
+          if (_soleDevice == null) const Spacer(),
           Text(
             'Rack settings: Ctrl+Alt+U, or click the rack header.',
             style: theme.textTheme.labelSmall?.copyWith(
