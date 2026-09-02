@@ -504,6 +504,10 @@
           "footprintHeightNm": 7000000,
           "footprintWidthNm": 7000000,
           "id": "conn.3_5mm_trs",
+          "matesWith": [
+            "conn.3_5mm_trs",
+            "conn.3_5mm_ts"
+          ],
           "pitchNm": 10000000
         },
         "conn.3_5mm_ts": {
@@ -512,6 +516,10 @@
           "footprintHeightNm": 7000000,
           "footprintWidthNm": 7000000,
           "id": "conn.3_5mm_ts",
+          "matesWith": [
+            "conn.3_5mm_ts",
+            "conn.3_5mm_trs"
+          ],
           "pitchNm": 10000000
         },
         "conn.6_35mm_trs": {
@@ -519,7 +527,10 @@
           "displayName": "1/4 in TRS",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 10000000,
-          "id": "conn.6_35mm_trs"
+          "id": "conn.6_35mm_trs",
+          "matesWith": [
+            "conn.6_35mm_trs"
+          ]
         },
         "conn.banana": {
           "aliases": [],
@@ -527,7 +538,10 @@
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 10000000,
           "genderApplies": true,
-          "id": "conn.banana"
+          "id": "conn.banana",
+          "matesWith": [
+            "conn.binding_post"
+          ]
         },
         "conn.barrel_dc": {
           "aliases": [
@@ -537,7 +551,10 @@
           "footprintHeightNm": 8000000,
           "footprintWidthNm": 8000000,
           "genderApplies": true,
-          "id": "conn.barrel_dc"
+          "id": "conn.barrel_dc",
+          "matesWith": [
+            "conn.barrel_dc"
+          ]
         },
         "conn.binding_post": {
           "aliases": [
@@ -548,6 +565,9 @@
           "footprintWidthNm": 12000000,
           "genderApplies": true,
           "id": "conn.binding_post",
+          "matesWith": [
+            "conn.banana"
+          ],
           "pitchNm": 20000000
         },
         "conn.bnc50": {
@@ -556,7 +576,11 @@
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 10000000,
           "genderApplies": true,
-          "id": "conn.bnc50"
+          "id": "conn.bnc50",
+          "matesWith": [
+            "conn.bnc50",
+            "conn.bnc75"
+          ]
         },
         "conn.bnc75": {
           "aliases": [],
@@ -565,6 +589,10 @@
           "footprintWidthNm": 10000000,
           "genderApplies": true,
           "id": "conn.bnc75",
+          "matesWith": [
+            "conn.bnc75",
+            "conn.bnc50"
+          ],
           "pitchNm": 14000000
         },
         "conn.de9": {
@@ -577,6 +605,9 @@
           "footprintWidthNm": 31000000,
           "genderApplies": true,
           "id": "conn.de9",
+          "matesWith": [
+            "conn.de9"
+          ],
           "pitchNm": 34000000
         },
         "conn.dp": {
@@ -584,7 +615,10 @@
           "displayName": "DisplayPort",
           "footprintHeightNm": 5000000,
           "footprintWidthNm": 13000000,
-          "id": "conn.dp"
+          "id": "conn.dp",
+          "matesWith": [
+            "conn.dp"
+          ]
         },
         "conn.euroblock_2": {
           "aliases": [
@@ -594,7 +628,10 @@
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 9000000,
           "genderApplies": true,
-          "id": "conn.euroblock_2"
+          "id": "conn.euroblock_2",
+          "matesWith": [
+            "conn.euroblock_2"
+          ]
         },
         "conn.euroblock_3": {
           "aliases": [
@@ -605,6 +642,9 @@
           "footprintWidthNm": 12500000,
           "genderApplies": true,
           "id": "conn.euroblock_3",
+          "matesWith": [
+            "conn.euroblock_3"
+          ],
           "pitchNm": 15000000
         },
         "conn.euroblock_5": {
@@ -613,7 +653,10 @@
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 18000000,
           "genderApplies": true,
-          "id": "conn.euroblock_5"
+          "id": "conn.euroblock_5",
+          "matesWith": [
+            "conn.euroblock_5"
+          ]
         },
         "conn.f_type": {
           "aliases": [],
@@ -622,6 +665,9 @@
           "footprintWidthNm": 9500000,
           "genderApplies": true,
           "id": "conn.f_type",
+          "matesWith": [
+            "conn.f_type"
+          ],
           "pitchNm": 13000000
         },
         "conn.ground_lug": {
@@ -644,7 +690,10 @@
           "footprintHeightNm": 12000000,
           "footprintWidthNm": 27000000,
           "genderApplies": true,
-          "id": "conn.hd15"
+          "id": "conn.hd15",
+          "matesWith": [
+            "conn.hd15"
+          ]
         },
         "conn.hdmi_a": {
           "aliases": [
@@ -654,6 +703,9 @@
           "footprintHeightNm": 5600000,
           "footprintWidthNm": 15100000,
           "id": "conn.hdmi_a",
+          "matesWith": [
+            "conn.hdmi_a"
+          ],
           "pitchNm": 19000000
         },
         "conn.hdmi_c": {
@@ -661,14 +713,20 @@
           "displayName": "HDMI Type C (Mini)",
           "footprintHeightNm": 4200000,
           "footprintWidthNm": 11300000,
-          "id": "conn.hdmi_c"
+          "id": "conn.hdmi_c",
+          "matesWith": [
+            "conn.hdmi_c"
+          ]
         },
         "conn.hdmi_d": {
           "aliases": [],
           "displayName": "HDMI Type D (Micro)",
           "footprintHeightNm": 3400000,
           "footprintWidthNm": 9100000,
-          "id": "conn.hdmi_d"
+          "id": "conn.hdmi_d",
+          "matesWith": [
+            "conn.hdmi_d"
+          ]
         },
         "conn.iec_c13": {
           "aliases": [
@@ -679,6 +737,9 @@
           "footprintWidthNm": 27000000,
           "genderApplies": true,
           "id": "conn.iec_c13",
+          "matesWith": [
+            "conn.iec_c14"
+          ],
           "pitchNm": 30000000
         },
         "conn.iec_c14": {
@@ -690,6 +751,9 @@
           "footprintWidthNm": 27000000,
           "genderApplies": true,
           "id": "conn.iec_c14",
+          "matesWith": [
+            "conn.iec_c13"
+          ],
           "pitchNm": 30000000
         },
         "conn.iec_c19": {
@@ -700,7 +764,10 @@
           "footprintHeightNm": 26000000,
           "footprintWidthNm": 35000000,
           "genderApplies": true,
-          "id": "conn.iec_c19"
+          "id": "conn.iec_c19",
+          "matesWith": [
+            "conn.iec_c20"
+          ]
         },
         "conn.iec_c20": {
           "aliases": [
@@ -710,7 +777,10 @@
           "footprintHeightNm": 26000000,
           "footprintWidthNm": 35000000,
           "genderApplies": true,
-          "id": "conn.iec_c20"
+          "id": "conn.iec_c20",
+          "matesWith": [
+            "conn.iec_c19"
+          ]
         },
         "conn.jis_f05": {
           "aliases": [
@@ -719,7 +789,10 @@
           "displayName": "JIS F05 (TOSLINK)",
           "footprintHeightNm": 7000000,
           "footprintWidthNm": 7000000,
-          "id": "conn.jis_f05"
+          "id": "conn.jis_f05",
+          "matesWith": [
+            "conn.jis_f05"
+          ]
         },
         "conn.keystone": {
           "aliases": [],
@@ -744,6 +817,9 @@
           "footprintWidthNm": 12500000,
           "genderApplies": true,
           "id": "conn.lc_duplex",
+          "matesWith": [
+            "conn.lc_duplex"
+          ],
           "pitchNm": 14000000
         },
         "conn.mini_din4": {
@@ -752,14 +828,20 @@
           "footprintHeightNm": 12000000,
           "footprintWidthNm": 12000000,
           "genderApplies": true,
-          "id": "conn.mini_din4"
+          "id": "conn.mini_din4",
+          "matesWith": [
+            "conn.mini_din4"
+          ]
         },
         "conn.mini_dp": {
           "aliases": [],
           "displayName": "Mini DisplayPort",
           "footprintHeightNm": 4000000,
           "footprintWidthNm": 8000000,
-          "id": "conn.mini_dp"
+          "id": "conn.mini_dp",
+          "matesWith": [
+            "conn.mini_dp"
+          ]
         },
         "conn.nema_5_15p": {
           "aliases": [
@@ -770,6 +852,10 @@
           "footprintWidthNm": 34000000,
           "genderApplies": true,
           "id": "conn.nema_5_15p",
+          "matesWith": [
+            "conn.nema_5_15r",
+            "conn.nema_5_20r"
+          ],
           "pitchNm": 38000000
         },
         "conn.nema_5_15r": {
@@ -781,6 +867,9 @@
           "footprintWidthNm": 34000000,
           "genderApplies": true,
           "id": "conn.nema_5_15r",
+          "matesWith": [
+            "conn.nema_5_15p"
+          ],
           "pitchNm": 38000000
         },
         "conn.nema_5_20p": {
@@ -792,6 +881,9 @@
           "footprintWidthNm": 34000000,
           "genderApplies": true,
           "id": "conn.nema_5_20p",
+          "matesWith": [
+            "conn.nema_5_20r"
+          ],
           "pitchNm": 38000000
         },
         "conn.nema_5_20r": {
@@ -803,6 +895,10 @@
           "footprintWidthNm": 34000000,
           "genderApplies": true,
           "id": "conn.nema_5_20r",
+          "matesWith": [
+            "conn.nema_5_20p",
+            "conn.nema_5_15p"
+          ],
           "pitchNm": 38000000
         },
         "conn.nema_l5_30p": {
@@ -821,7 +917,10 @@
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 18000000,
           "genderApplies": true,
-          "id": "conn.phoenix_4"
+          "id": "conn.phoenix_4",
+          "matesWith": [
+            "conn.phoenix_4"
+          ]
         },
         "conn.punchdown_110": {
           "aliases": [
@@ -839,6 +938,10 @@
           "footprintWidthNm": 8400000,
           "genderApplies": true,
           "id": "conn.rca",
+          "matesWith": [
+            "conn.rca",
+            "conn.rca75"
+          ],
           "pitchNm": 11000000
         },
         "conn.rca75": {
@@ -848,6 +951,10 @@
           "footprintWidthNm": 8400000,
           "genderApplies": true,
           "id": "conn.rca75",
+          "matesWith": [
+            "conn.rca75",
+            "conn.rca"
+          ],
           "pitchNm": 11000000
         },
         "conn.rj45": {
@@ -859,6 +966,9 @@
           "footprintWidthNm": 15000000,
           "genderApplies": true,
           "id": "conn.rj45",
+          "matesWith": [
+            "conn.rj45"
+          ],
           "pitchNm": 17000000
         },
         "conn.sc": {
@@ -867,7 +977,10 @@
           "footprintHeightNm": 13000000,
           "footprintWidthNm": 13000000,
           "genderApplies": true,
-          "id": "conn.sc"
+          "id": "conn.sc",
+          "matesWith": [
+            "conn.sc"
+          ]
         },
         "conn.screw_terminal": {
           "aliases": [],
@@ -891,7 +1004,10 @@
           "footprintHeightNm": 24000000,
           "footprintWidthNm": 24000000,
           "genderApplies": true,
-          "id": "conn.speakon_nl4"
+          "id": "conn.speakon_nl4",
+          "matesWith": [
+            "conn.speakon_nl4"
+          ]
         },
         "conn.st": {
           "aliases": [],
@@ -899,7 +1015,10 @@
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 10000000,
           "genderApplies": true,
-          "id": "conn.st"
+          "id": "conn.st",
+          "matesWith": [
+            "conn.st"
+          ]
         },
         "conn.unterminated": {
           "aliases": [],
@@ -911,7 +1030,10 @@
           "displayName": "USB-C",
           "footprintHeightNm": 3500000,
           "footprintWidthNm": 9000000,
-          "id": "conn.usb_c"
+          "id": "conn.usb_c",
+          "matesWith": [
+            "conn.usb_c"
+          ]
         },
         "conn.xlr3": {
           "aliases": [
@@ -922,6 +1044,9 @@
           "footprintWidthNm": 24000000,
           "genderApplies": true,
           "id": "conn.xlr3",
+          "matesWith": [
+            "conn.xlr3"
+          ],
           "pitchNm": 27000000
         },
         "conn.xlr5": {
@@ -931,6 +1056,9 @@
           "footprintWidthNm": 24000000,
           "genderApplies": true,
           "id": "conn.xlr5",
+          "matesWith": [
+            "conn.xlr5"
+          ],
           "pitchNm": 27000000
         }
       },

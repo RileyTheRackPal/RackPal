@@ -168,6 +168,7 @@ final class ConnectorTypeDef {
     this.footprintHeight,
     this.pitch,
     this.genderApplies = false,
+    this.matesWith = const [],
   });
 
   final ConnectorTypeId id;
@@ -229,6 +230,39 @@ final class ConnectorTypeDef {
   /// A user-authored connector type (M4-P) therefore arrives with gender
   /// not applying until somebody says otherwise.
   final bool genderApplies;
+
+  /// The connector ids this one physically mates with (`CON-001`, `#255`).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// EMPTY IS UNKNOWN, AND `CON-001` SKIPS IT (G4)
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A rule that fired on an empty list would report a mating failure for
+  /// every connector nobody has got to yet, which is a false FAIL on a
+  /// half-seeded table. `CODE-002` already sets the precedent in the
+  /// other direction: a jacket listing from an article the product cannot
+  /// read is *unknown and skips* rather than passing or failing. Silence
+  /// on an unknown is the only honest answer either way.
+  ///
+  /// It carries the same meaning for `conn.unterminated` and
+  /// `conn.hardwired`, deliberately: there is no connector there to mate,
+  /// so there is nothing for the rule to say. One representation serves
+  /// both because the behaviour is the same, and inventing a
+  /// "mates with everything" list would assert something false to make a
+  /// predicate simpler.
+  ///
+  /// PHYSICAL MATING ONLY. `conn.bnc50` mates `conn.bnc75` and
+  /// `conn.rca` mates `conn.rca75`: they share a shell and they go
+  /// together. The impedance mismatch is a different fact and belongs to
+  /// a different rule with its own id and severity, which v1 does not
+  /// ship. `CON-001` answering "these do not mate" for a 50-into-75 joint
+  /// would name the wrong defect and offer an adapter that does not fix
+  /// it.
+  ///
+  /// SYMMETRIC, and a test holds it: if `A` lists `B` then `B` lists `A`.
+  /// Plug and receptacle each name their counterpart, so the pairing is
+  /// discoverable from whichever end a gesture starts at, and `CON-001`
+  /// cannot decide differently depending on drag direction.
+  final List<ConnectorTypeId> matesWith;
 }
 
 /// What cable is pulled, how long it may run, what jacket it takes.
