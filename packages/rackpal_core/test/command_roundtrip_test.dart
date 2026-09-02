@@ -275,6 +275,13 @@ enum _StepKind {
   // entity rather than removing what it made.
   acknowledgeFinding,
   unacknowledgeFinding,
+
+  // M5-B3, and `ProjectSettings.ruleOverrides` was in the same state:
+  // a codec entry with no writer, so the map's byte behaviour under
+  // interleaving had never been asked about. Sets AND clears, because
+  // null-clears is the arm whose revert has to put a whole map value
+  // back rather than remove one.
+  setRuleOverride,
 }
 
 /// The rules the acknowledgement arms may draw from: everything except
@@ -701,6 +708,7 @@ final class _SequenceState {
     // writing it faithfully.
     _StepKind.acknowledgeFinding,
     if (aliveAckIds.isNotEmpty) _StepKind.unacknowledgeFinding,
+    _StepKind.setRuleOverride,
   ];
 }
 
@@ -1003,6 +1011,8 @@ Command<RackDocument>? _buildCommand(
     case _StepKind.setSignalFamily:
       return _buildSetSignalFamily(s, rnd);
 
+    case _StepKind.setRuleOverride:
+      return _buildRuleOverride(s, rnd, step);
     case _StepKind.acknowledgeFinding:
       return _buildAcknowledge(s, rnd, step);
     case _StepKind.unacknowledgeFinding:
@@ -1019,6 +1029,36 @@ Command<RackDocument>? _buildCommand(
 /// command asserts on an empty one (RJ-006); the instance arm draws an
 /// empty reason half the time, which is the state RJ-006 exists to allow
 /// and the one a codec that wrote `""` as an absent key would break.
+/// One rule override, set or cleared.
+///
+/// `from` is READ OUT OF THE DOCUMENT rather than tracked alongside it,
+/// because a command whose `from` disagrees with what is actually there
+/// reverts to a value that was never in the file, and the byte property
+/// would then be asserting the wrong thing quietly.
+SetRuleOverrideCommand _buildRuleOverride(
+  _SequenceState s,
+  Random rnd,
+  int step,
+) {
+  final ruleId =
+      _acknowledgeableRules[rnd.nextInt(
+        _acknowledgeableRules.length,
+      )];
+  final from = s.doc.settings.ruleOverrides[ruleId];
+  return SetRuleOverrideCommand(
+    ruleId: ruleId,
+    from: from,
+    to: rnd.nextInt(4) == 0
+        ? null
+        : RuleOverride(
+            severity: Severity.values[rnd.nextInt(Severity.values.length)],
+            reason: 'Overridden at step $step.',
+            by: 'gen',
+            at: s.nextNow(),
+          ),
+  );
+}
+
 AcknowledgeFindingCommand _buildAcknowledge(
   _SequenceState s,
   Random rnd,
@@ -1133,6 +1173,11 @@ void _reconcileTrackingAfterCommit(
       s.aliveLinkIds.add(run.id);
       s.linkNetIds[run.id] = run.netId;
       s.aliveHomeRunLinkIds.add(run.id);
+    // Tracks nothing of its own: `from` is read out of the document at
+    // build time, so there is no alive-id set for a later step to draw
+    // on and no bookkeeping that could go stale behind it.
+    case _StepKind.setRuleOverride:
+      break;
     case _StepKind.acknowledgeFinding:
       s.aliveAckIds.add((cmd as AcknowledgeFindingCommand).id);
     case _StepKind.unacknowledgeFinding:

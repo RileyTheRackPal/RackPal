@@ -263,3 +263,4 @@ export 'src/util/outcome.dart';
 export 'src/validation/finding.dart';
 export 'src/validation/rule_catalogue.dart';
 export 'src/validation/rule_exception.dart';
+export 'src/validation/severity_resolution.dart';

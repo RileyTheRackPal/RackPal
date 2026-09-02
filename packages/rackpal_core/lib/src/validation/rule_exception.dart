@@ -99,6 +99,34 @@ RuleExceptionVerdict evaluateAcknowledgement({
   return const RuleExceptionAllowed();
 }
 
+/// Whether a `RuleOverride` on [ruleId] carrying [reason] may be
+/// written.
+///
+/// THE REASON IS ALWAYS REQUIRED HERE, WITH NO SCOPE TO SPLIT ON. RJ-006
+/// lets a single-instance acknowledgement go unexplained because it is
+/// one click about one cable and it can be taken back. An override is a
+/// standing decision about a rule for the whole project, which is the
+/// side of RJ-006's line where *"the essay is only demanded where the
+/// consequence is permanent"* puts it. CR-019 says the same from the
+/// other direction: the bare `Map<String, Severity>` was replaced
+/// BECAUSE it *"has no field for the justification that two documents
+/// promise will print"*, and an override with an empty reason is that
+/// map again wearing a richer type.
+RuleExceptionVerdict evaluateRuleOverride({
+  required String ruleId,
+  required String reason,
+}) {
+  final refusal = ruleAcceptsAnException(ruleId, 'overridden');
+  if (refusal != null) return refusal;
+  if (!isWrittenReason(reason)) {
+    return RuleExceptionRefused(
+      'Changing what $ruleId counts as needs a written reason, because it '
+      'prints on sheet T0.02 for whoever reads the drawings.',
+    );
+  }
+  return const RuleExceptionAllowed();
+}
+
 /// The refusal shared by both kinds of exception, or null when [ruleId]
 /// can carry one. [verb] completes the sentence: "acknowledged",
 /// "overridden".

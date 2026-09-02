@@ -28,9 +28,11 @@ import 'package:rackpal_core/src/idformat/id_format.dart';
 import 'package:rackpal_core/src/model/enums.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
+import 'package:rackpal_core/src/model/rule_override.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/permille.dart';
 import 'package:rackpal_core/src/units/rgb.dart';
+import 'package:rackpal_core/src/validation/rule_exception.dart';
 
 /// One editable setting: how to read it, how to write it, what to call it.
 final class ProjectSettingField<T> {
@@ -75,7 +77,9 @@ final class ProjectSettingField<T> {
 ///   * `ruleOverrides` is AC-011's delicate one. An override carries a
 ///     severity, a REASON, an AUTHOR and a TIME: it is a signed exception
 ///     to a shipped rule, so its editor is a small form and never a
-///     dropdown. Filed.
+///     dropdown. Its WRITE PATH landed at M5-B3 as
+///     [SetRuleOverrideCommand] below, on `familyColorOverrides`'
+///     precedent; the form is still filed.
 ///   * `jacketColorConventions` expresses three distinct states (entries
 ///     present, zero entries, an entry nothing references) and its own
 ///     doc comment argues each. Filed.
@@ -374,6 +378,70 @@ final class SetFamilyColorOverrideCommand extends Command<RackDocument> {
       doc.settings.familyColorOverrides.remove(family);
     } else {
       doc.settings.familyColorOverrides[family] = value;
+    }
+  }
+}
+
+/// Sets or clears what one DRC rule counts as in this project (`#260`,
+/// M5-B3, CR-019).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE SAME SHAPE AS THE COLOUR OVERRIDE, FOR THE SAME REASONS
+/// ═══════════════════════════════════════════════════════════════════════
+/// One key of a map, `from`/`to`, null clears. Routing it through the
+/// field table would mean a command carrying two copies of the whole map
+/// to move one rule, and an undo restoring severities nobody touched.
+///
+/// **NULL CLEARS, and clearing is not the same as setting the default.**
+/// `projectSeverity` falls back to `RuleMeta.defaultSeverity` when there
+/// is no entry, so removing the entry returns the rule to what the
+/// catalogue says. An override that happens to equal the default is a
+/// different state: it carries a reason, an author and a date, and it
+/// prints on `T0.02` as a decision somebody made. A surface that treated
+/// the two as one would silently delete the record of the decision.
+///
+/// The reason is REQUIRED, unlike a single-instance acknowledgement.
+/// [evaluateRuleOverride] argues why and this constructor asserts it,
+/// leaving the codec free to read whatever a file holds.
+final class SetRuleOverrideCommand extends Command<RackDocument> {
+  SetRuleOverrideCommand({
+    required this.ruleId,
+    required this.from,
+    required this.to,
+  }) : assert(
+         to == null ||
+             evaluateRuleOverride(ruleId: ruleId, reason: to.reason)
+                 is RuleExceptionAllowed,
+         'built from an override the rules refuse: call '
+         'evaluateRuleOverride first and show its message',
+       );
+
+  /// `'PWR-001'`. Keyed exactly as `ProjectSettings.ruleOverrides` is.
+  final String ruleId;
+
+  final RuleOverride? from;
+  final RuleOverride? to;
+
+  @override
+  LabelKey get label => LabelKey.setRuleOverride;
+
+  @override
+  EpochMask get touches => EpochMask.meta;
+
+  @override
+  Iterable<Uuid> get affects => const [];
+
+  @override
+  void apply(RackDocument doc) => _write(doc, to);
+
+  @override
+  void revert(RackDocument doc) => _write(doc, from);
+
+  void _write(RackDocument doc, RuleOverride? value) {
+    if (value == null) {
+      doc.settings.ruleOverrides.remove(ruleId);
+    } else {
+      doc.settings.ruleOverrides[ruleId] = value;
     }
   }
 }
