@@ -259,4 +259,5 @@ export 'src/units/thermal.dart';
 export 'src/units/unit_formatter.dart';
 export 'src/util/id_gen.dart';
 export 'src/util/outcome.dart';
+export 'src/validation/finding.dart';
 export 'src/validation/rule_catalogue.dart';

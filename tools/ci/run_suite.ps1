@@ -356,6 +356,14 @@ $ErrorActionPreference = 'Stop'
 # the scroll view went unseen: the port section it pushed outside the viewport
 # has its own test, and that one mounts the section directly and passes.
 #
+# RE-MEASURED 2026-09-02 at `#258` (M5-B1): core 3696 -> 3708. `Finding` and
+# the fingerprint an acknowledgement joins on. The chapter called this "the
+# part most likely to be got subtly wrong" and it is worse than it says: rule
+# 42 GARBAGE-COLLECTS a stale acknowledgement on load, so a fingerprint that
+# moved would delete the person's written reason and re-fire the finding bare.
+# Most of the twelve assert what must NOT change the answer, and one pins the
+# digest to a literal so a change of algorithm is a visible diff.
+#
 # RE-MEASURED 2026-09-02 at `#255` (M5-A3): core 3685 -> 3696. The connector
 # compatibility matrix lands as `ConnectorTypeDef.matesWith`, seeded on 40 of
 # the 49 shipped connectors. EMPTY IS UNKNOWN AND `CON-001` SKIPS IT (G4), so
@@ -392,7 +400,7 @@ $ErrorActionPreference = 'Stop'
 # re-pumped at six sizes measures one of them and reports clean for five.
 
 $SuiteFloors = @{
-    'rackpal_core'   = 3696
+    'rackpal_core'   = 3708
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1406
