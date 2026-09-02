@@ -903,7 +903,7 @@ makes `.rmdev → .rackpal` import well-defined. `ac-inlet` is re-authored as
 is a female panel connector and a plug is male. `ConnectorTypeDef.genderApplies: bool` decides
 whether `CON-002` evaluates and whether the glyph fill encodes gender, which is what
 `design-ux-schematic.md` actually wanted when it restricted gender encoding to XLR, IEC, DB9,
-SpeakON and fibre. Fixes a concrete bug in a shipped rule.
+SpeakON and fibre. **Fixes a concrete bug in a rule that turned out not to ship in v1**: `CON-002` is deferred to v1.2 by docs/02 §5.3, and DR-110 §11.109 corrects this sentence without touching the ruling above it. `genderApplies` earns its keep in v1 on the port grid's GENDER column and the glyph fill.
 
 ### CR-060 · Direction encoding
 
@@ -4255,7 +4255,8 @@ failure the paragraph was written to avoid. The `str` base dash is **`6,3,3,3`**
 ### 6.3 `ConnectorTypeDef`: the connectors referenced below
 
 Abbreviated to `id · display · genderApplies · contacts`. `genderApplies` decides whether
-`CON-002` (both ends the same gender) evaluates and whether the symbol glyph's fill encodes
+`CON-002` (both ends the same gender) **will** evaluate, in v1.2 where that rule lives
+(DR-110 §11.109), and whether the symbol glyph's fill encodes
 gender, which is what `design-ux-schematic.md` actually wanted when it limited gender encoding
 to XLR, IEC, DE-9, SpeakON and fibre (CR-059). Gender values are `male | female | genderless`
 only; `jack` and `plug` are deleted.
@@ -15251,6 +15252,145 @@ a symbol that changes shape as cables land is a sheet that will not sit still.
 *Rejected: persisting the expansion in the document.* It buys a remembered view at the cost of a
 model field, a codec key, a byte round-trip and a migration, for state CR-103 describes as a default
 plus a deviation.
+
+### §11.109 DR-110 · `CON-002` is v1.2, and two sentences say otherwise
+
+**Question.** M5-A's census turned up `ConnectorTypeDef.genderApplies`, a field canon §6.3 says
+*"decides whether `CON-002` (both ends the same gender) evaluates"*, while docs/02 §5's catalogue of
+28 does not list `CON-002` at all. CR-021 rules that *"a rule not listed there does not exist"*, so
+the question raised was whether v1 ships a field serving a rule it has not got.
+
+**11.109.1 THE ALARM WAS LARGER THAN THE FINDING, AND THAT IS RECORDED RATHER THAN QUIETLY DROPPED.**
+It was put as a possible CR-021 violation. It is not one. docs/02 §5.3's closing sentence defers
+*"the remaining `DIR`, **`CON`**, `ELE`, `LEN`, `BUS`, `SER`, `NET`, `PWR` and `RCK` rules"* to v1.2
+behind a fixture corpus, and `CON-002` is one of the remaining `CON` rules. **It is deferred scope,
+not a missing rule**, and the catalogue accounts for it by name-class exactly as it accounts for the
+other several dozen.
+
+**11.109.2 THE FIELD IS NOT ORPHANED EITHER, AND THAT WAS MEASURED.** `genderApplies` has a live v1
+consumer that has nothing to do with `CON-002`: `port_table.dart`'s `portGenderApplies` gates the
+**GENDER column in the device builder's port grid**, which M4 shipped. CR-059 gives it a second,
+the symbol glyph's fill. A field with a shipped reader is a field that earns its place, whatever the
+status of the rule it was named for.
+
+**11.109.3 Ruled: the 28 stands, `CON-002` is v1.2, and the two sentences are corrected.** No rule is
+added and no rule moves. What changes is prose in two normative places that describe `CON-002` as
+though it were live:
+
+- **CR-059** closes *"fixes a concrete bug in a shipped rule"*. `CON-002` was never shipped in v1.
+  The ruling's substance is untouched and still governs: three gender values, `jack` and `plug`
+  deleted, `genderApplies` on `ConnectorTypeDef`. Only the claim about what was fixed is wrong, and
+  §12.14 records it.
+- **§6.3** reads *"`genderApplies` decides whether `CON-002` evaluates"*. It will, in v1.2. Today it
+  decides whether the port grid draws a GENDER column and whether the glyph fill encodes gender.
+
+**A field may ship ahead of the rule that named it, and this ruling says so in general terms** so the
+next census does not re-raise it. The test is whether it has a reader now, not whether every reason
+it was introduced has arrived. `PortDef.pinoutVariant` is the precedent pointing the other way and is
+worth naming: docs/02 §5.2 says it *"exists solely to make `DIR-003` detectable"*, and `DIR-003` is
+one of the six tier-2 rules v1 does ship, so that field is owed a consumer and this one is not.
+
+*Rejected: adding `CON-002` to the catalogue to match CR-059's wording.* It would make the count 29
+against AC-040 as amended by DR-020, and it would ship a rule with no fixture pair, which AC-051
+forbids in terms. Correcting a sentence is cheaper than moving scope to match it.
+
+*Rejected: deleting `genderApplies` until `CON-002` lands.* It has two readers today and removing it
+would take the GENDER column out of a shipped surface to tidy a docstring.
+
+### §11.110 DR-111 · `#261` is `#322` seen from the other side, and DR-027 already ruled which one owns it
+
+**Question.** M5-B's fourth chapter, `#261`, is *"the acknowledgement reaches `T0.02`"*, and its own
+body ends *"coordinate with M6-C"*. `T0.02` does not exist. So either M5-B builds a sheet, or the
+chapter is on the wrong side of a seam this corpus has already cut.
+
+**11.110.1 MEASURED, NOT ASSUMED, AND THE MEASUREMENT FOUND SOMETHING SHARPER THAN A MISPLACED
+CHAPTER.** `SheetRole` carries three values, front elevation, rear elevation and equipment list.
+`sheet_def.dart` names `T0.02` among the nine absent ones and states the reason in its own header:
+they *"are M6 and most of them need `Link`s"*, and they are *"absent from `SheetRole` rather than
+stubbed"*. That much was expected. What was not is that **`#261` and M6-C's story `#322` are the
+same work written twice**, a sentence apart:
+
+> `#261`: *"This is where 'the reason prints' actually happens, a promise three design documents made
+> and no sheet list honoured until CR-022. Coordinate with M6-C."*
+
+> `#322`: *"This is where 'the reason prints' actually happens, a promise three design documents made
+> and no sheet list honoured until CR-022. ... Depends on M5-B's acknowledgement mechanism;
+> coordinate the two."*
+
+Each names the other. **They are one clause with two tickets**, and the dependency `#322` declares is
+precisely what M5-B has just delivered.
+
+**11.110.2 Ruled: `#261` is re-parented to `#322` and stays open there.** This adds no seam. DR-027
+§11.26 already rules that **M6 owns every rendered sheet** and the earlier milestone owns the
+derivation, and it names `SheetRole`'s three values as the evidence, the same three that are still
+there. A chapter asking M5 to put rows on a page is on the wrong side of a boundary drawn in 2026-08
+and reaffirmed at `#574`, `#653` and `#693`. Parking costs a ruling ID under §8.9 (DR-095) and this
+is that ID; the re-parenting on the board is the visible act of it, and M6-C is the **named later
+milestone** the rule requires.
+
+**11.110.3 What M5-B owes has been discharged, and this section exists so the park is not read as a
+deferral.** DR-027 §11.26.4 is explicit that a milestone handing the later one *"an unordered,
+untotalled data structure"* has turned the seam into an excuse. M5-B's half is the **mechanism**, and
+it is built and tested:
+
+- `Finding` and `findingFingerprint` (`#258`), the identity an acknowledgement joins on, built from
+  stable ids and nothing else so a renumber cannot make rule 42 delete somebody's written reason.
+- The acknowledgement at both of CR-019's scopes with RJ-006's reason enforced at exactly one of them
+  (`#259`), the writer strict and the reader tolerant.
+- `ProjectSettings.ruleOverrides` with a writer, and the three-layer order catalogue then project
+  then acknowledgement (`#260`).
+
+**And one instruction that binds `#322` when it is built.** `T0.02` and the issues list must resolve
+through `acknowledgementFor` and `effectiveSeverity`, never through a second implementation of the
+join. CR-022 makes the sheet and the list two presentations of one answer, and two implementations
+are how they come to disagree about the same row in front of a client.
+
+**11.110.4 The derivation half is not parked, and it is not M5-B's either.** `#294` (M5-F1) is *"the
+findings list, grouped and filterable: by severity, by rule, by locus"*, which is `T0.02`'s row set in
+its other presentation. That is where the ordering is authored, and putting it there rather than in
+M5-B is not the excuse §11.26.4 warns about: **the Pull Sheet's rows derive from data that exists,
+and `T0.02`'s rows derive from findings that no rule produces until M5-E.** A sort order written at
+M5-B would be a design invented for a sheet nobody has laid out, over a list nothing can fill, and
+pinned by a test that could only ever assert its own fixtures.
+
+**11.110.5 M5-B's exit is not blocked, and neither is M5's.** §8.9 binds at **closing**, and M5 is
+not closing here; opening is soft. What this ruling does is make the eventual close legal, by naming
+where the clause went before the question is asked under time pressure.
+
+*Rejected: building an `ExceptionsReport` type in `rackpal_core` now.* It is the DR-027-shaped answer
+and it fails on the same fact §11.110.4 turns on. It would fix a sheet's data model a milestone
+before the sheet is designed and two before anything can fill it, and the "no entry without a
+surface" rule `project_settings_commands.dart` states would be broken from the other end: a reader
+with no producer is the `NetworkConfig` defect wearing the opposite sign.
+
+*Rejected: closing `#261` as `Done` on the grounds that its M5 half is delivered.* Its title is *"the
+acknowledgement reaches `T0.02`"* and nothing reaches `T0.02`. Marking that `Done` is exactly the
+checklist-ticking §8.1 refuses, and the board would then carry no open item for a promise three
+design documents made. **The second clause of that sentence is false and §11.110.6 corrects it.**
+
+*Rejected: deleting `#261` as a duplicate of `#322`.* There is no `Removed` state on this board, and
+the chapter carries the M5-side reasoning that `#322` does not. Re-parenting keeps both.
+
+**11.110.6 §11.110.2 SAID RE-PARENT AND STAY OPEN, AND THE NEXT LOOK AT THE BOARD SAID CLOSE. The
+correction is recorded here rather than written over the paragraph above**, because the mistake is
+the instructive part: the ruling above was reasoned from `#322`'s *description* without reading
+`#322`'s *children*, which is the shape this repository keeps meeting under other names.
+
+`#322` is already decomposed, into `#323` *"open findings with rule ID, severity and locus"*, `#324`
+*"acknowledgements with reason, author and date"* and `#325` *"emit when empty, and say so"*. Those
+three ARE docs/08 §2.2 row 3, clause for clause, and **`#324` is `#261`**, not merely adjacent to it.
+
+So the rejected alternative above rests on a premise that is not true: the board does not carry *no*
+open item for the promise, it carries **three**, and they are more specific than `#261` is. A fourth
+chapter under the same story saying what `#324` already says is noise rather than insurance, and the
+person who eventually builds `#324` would have to work out what the extra one wanted.
+
+**Amended disposition: `#261` is closed as a duplicate of `#324`, named by this ruling's own commit
+under §8.8.** A ruling is what closed it, and that is the honest entry: no code discharged it and
+none was owed. §8.1 is untouched, because §8.1 governs **exit criteria** and this ruling discharges
+none; M6's criterion still contains the sheet, and `#323`, `#324` and `#325` are all open. The
+M5-side reasoning the second rejection wanted to keep is kept **here**, in the normative record,
+which is where §8.2 says a re-litigated decision should have been in the first place.
 
 ## 12. Superseded rulings
 

@@ -492,4 +492,26 @@ enum LabelKey {
   // leaves behind is a snapshot in `RackDocument.templates` that the
   // project keeps. Undoing it is undoing an edit to the project.
   saveTemplateToProject,
+
+  // ACKNOWLEDGING A FINDING (commands/acknowledgement_commands.dart),
+  // M5-B2. Its own value, and the Edit menu is the reason: an
+  // acknowledgement is the one act in this family whose whole point is
+  // that somebody wrote a sentence and signed it. "Undo Set Project
+  // Setting" in front of a person who has just justified an exception
+  // names the storage location instead of the act.
+  acknowledgeFinding,
+
+  // WITHDRAWING ONE (same file), M5-B2. NOT the same value as the
+  // acknowledgement, on the split every value above it is made on. The
+  // two are opposite acts and the undo entry has to say which one is
+  // being taken back: "Undo Acknowledge" after a withdrawal would name
+  // the thing the person was trying to get RID of.
+  unacknowledgeFinding,
+
+  // SETTING A RULE'S SEVERITY FOR THIS PROJECT (commands/
+  // project_settings_commands.dart), M5-B3. Its own value and not
+  // `setProjectSetting`: `ruleOverrides` is a map and the row carries a
+  // reason, an author and a date, so the undo entry names one rule
+  // rather than the whole settings object.
+  setRuleOverride,
 }

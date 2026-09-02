@@ -408,12 +408,29 @@ comment.
 Read this section before trusting any other document in `docs/`. Each entry states the drift, the
 evidence, and which document sites are stale.
 
-### 4.1 There is a CI *file*. No CI service has ever run it.
+### 4.1 DISCHARGED 2026-08-27: the pipeline runs, and it has been red
 
-**This row was "There is no CI. There has never been any CI.", verified by a maxdepth-3 search for
-`yml`/`yaml` returning eight files and no workflow among them. That search now returns a ninth:
-`azure-pipelines.yml` at the repository root.** The heading is corrected rather than deleted,
-because the thing it was really about has not changed.
+**This heading has now been corrected twice and the pair is the record, which is why neither
+correction is written over.** It read *"There is no CI. There has never been any CI."*, verified by a
+maxdepth-3 search for `yml`/`yaml` returning eight files and no workflow among them. It then read
+*"There is a CI file. No CI service has ever run it."*, when that search returned a ninth,
+`azure-pipelines.yml`. Both were true when written and both are now false.
+
+**MEASURED 2026-09-02 over the whole run list, not from the last run anybody looked at.** Definition
+1, `RackPal CI (Windows)`. First execution **2026-08-27**, build `20260827.1`, against `main`, and it
+passed first try. `az pipelines runs list` returns **51**: 48 succeeded, one cancelled, one in
+progress, and **one failed**, run 11 on `refs/pull/5/merge` on 2026-08-29.
+
+**That single red run is the reason this row is discharged rather than merely updated.** The version
+of this section below worried, correctly, that a plan is not a measurement. The version that replaced
+it worried about the next thing along, that a service which has only ever been green proves nothing
+about its failure path: *"do not yet treat a green Tests tab as proof the reporter works."* Run 11
+answers that. The service-side reporting path has been exercised in the red direction, on a real
+defect, and the gate held. What is left in this row is history, and history belongs out of §4.
+
+**What the rest of this section says about run 1 is kept verbatim below**, because the reasoning is
+still the right reasoning and because a row edited into agreement with the present tense teaches
+nobody anything about how it went wrong.
 
 **What exists:** an Azure DevOps pipeline definition targeting a Windows agent, Flutter pinned to
 3.44.4 *and verified after install*, the analyzer gate, both palette gates, the JUnit converter
@@ -422,6 +439,9 @@ published release ZIP. Plus `tools/ci/`, `analyze_gate.ps1`, `run_suite.ps1`,
 `junit_from_dart_test.py`, `junit_converter_selftest.py`, `ensure_flutter.ps1`,
 `verify_windows_build.ps1`, `verify_tracked_sources.ps1` and `run_local.ps1`, all of which run on a
 developer machine and were mutation-tested there.
+
+*Everything from here to the end of §4.1 is the row as it stood before 2026-08-27 and is kept as
+history. Its condition has been met: the run number is `20260827.1`.*
 
 **What does NOT exist, and this is the part that matters for every claim below:** a run. No Azure
 DevOps service has parsed the YAML, resolved a task name, fetched the pinned SDK archive, or built
@@ -5271,7 +5291,7 @@ not, and it never reached docs/06 §9. **It also falsifies the DSL path's "zero 
 which is a claim about the whole route and not about steps 6 to 13. docs/06 is priority-3 and owes
 the correction; the ruling and the code win in the meantime.
 
-### 5.4 M5, Validation · `M` · NOT STARTED, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
+### 5.4 M5, Validation · `M` · IN PROGRESS, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing
 > exactly that finding and a known-good near-miss producing none — **no rule ships without its pair**
@@ -5280,7 +5300,7 @@ the correction; the ruling and the code win in the meantime.
 
 | Clause | Mark | Why |
 |---|---|---|
-| 28 rules × fixture pair | **NOT BUILT: 0/28** | No `validation/` or `rules/` directory under `packages/`, no rule registry, no `Finding` type, no severity resolution. No DRC fixture corpus. AC-051's gate is supposed to be *"enforced in CI"* and there is no CI |
+| 28 rules × fixture pair | **NOT BUILT: 0/28** | The COUNT is unchanged and everything the old text said about why is now false, which is worth separating rather than editing over. `packages/rackpal_core/lib/src/validation/` exists and holds the catalogue, `Finding`, the acknowledgement and the severity resolution (§5.4.2); CI has existed since 2026-08-27 (§4.1). What is still absent is the thing this clause counts: **no tier-2 or tier-3 rule has a predicate, and no rule of any tier has a fixture pair**. `TOP-001` to `TOP-005` are enforced by `derived/connect_rules.dart` and are still not counted here, because AC-051 asks for the PAIR and no DRC fixture corpus exists |
 | Domain-expert sign-off on the 28 rules and the catalog data | **UNPERFORMED** | Has not happened |
 | No rule prevents a PDF being written | **VACUOUS: true, trivially** | True because no rule exists. `packages/rackpal_core/lib/src/draw/sheet/sheet_def.dart:96-98` does correctly encode CR-023/G3 for the one heuristic that exists (a malformed NCS id is a **NOTICE, never a gate**) which is the right shape for when rules arrive |
 
@@ -5389,6 +5409,32 @@ milestone belongs in that milestone's section: this is where somebody looks when
 §13 is where somebody looks when they are already thinking about open questions.
 
 Nothing about M5's own scope depends on it. It is an M6 input that M5 unblocks.
+
+#### 5.4.2 M5-A and M5-B, the whole mechanism and not one rule · CLOSED · `11028a8`, `bd158a1`, `d17d614`, `d6500b8`, `d6356db`
+
+**Closed 2026-09-02** (`#252`, `#257`), five commits, fifteen gates green on each. The core floor in
+`tools/ci/run_suite.ps1` moved 3672 to 3751 across them, re-measured at every commit.
+
+**WHAT THIS IS NOT IS THE THING THE EXIT CRITERION COUNTS**, and §5.4's table says `0/28` after both
+stories exactly as it did before them. The clause asks for 28 rules each with a known-bad and a
+known-good fixture (AC-051). **Not one rule predicate was written here.** What was written is
+everything a rule predicate lands on, which is why the count is unmoved and the row's *reasons* were
+all false and had to be replaced.
+
+| Story | What it left behind |
+|---|---|
+| **M5-A** | `RuleMeta` and the catalogue as **data**, parsed out of docs/02 §5 by a test that fails when the two disagree, so CR-021's *"a rule not listed there does not exist"* is a gate and not a slogan. The connector mating matrix moves onto `ConnectorTypeDef.matesWith` because `CON-001` and `SIG-002` both read it and *"duplicating the data into predicates is how the two drift apart"*. An empty list is **unknown and skips** (G4), which is what let 40 of 49 be seeded without the other nine reading as failures |
+| **M5-B** | `Finding`, computed and never stored, with a fingerprint built from stable ids and nothing else; the acknowledgement at both of CR-019's scopes with RJ-006's reason enforced at exactly one; `ruleOverrides` with a writer and the catalogue/override/acknowledgement order. `ackedFindings` and `ruleOverrides` were both **codec entries with no writer**, so CR-117 had never been carried across either map; both now have `command_roundtrip_test` arms |
+
+**THE MARK FOR THIS PAIR IS `DEMONSTRATED` AND IT DISCHARGES NOTHING**, which is the distinction §0
+exists for. Every claim above is a named test that a reader can run. None of them is an exit clause:
+M5's three clauses are the fixture pairs, the sign-off and the PDF, and this pair of stories is
+underneath all three rather than any of them. **A milestone can be half built and still `0/28`.**
+
+**M5-B4 (`#261`) is parked on M6-C by DR-111** (canon §11.110): it asks the acknowledgement to reach
+`T0.02`, `SheetRole` still carries three values, and DR-027 already rules that M6 owns every rendered
+sheet. §11.110.6 records that the first disposition was reasoned from `#322`'s description without
+reading its children, and that `#324` **is** `#261`.
 
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
