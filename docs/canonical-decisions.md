@@ -15297,6 +15297,80 @@ forbids in terms. Correcting a sentence is cheaper than moving scope to match it
 *Rejected: deleting `genderApplies` until `CON-002` lands.* It has two readers today and removing it
 would take the GENDER column out of a shipped surface to tidy a docstring.
 
+### §11.110 DR-111 · `#261` is `#322` seen from the other side, and DR-027 already ruled which one owns it
+
+**Question.** M5-B's fourth chapter, `#261`, is *"the acknowledgement reaches `T0.02`"*, and its own
+body ends *"coordinate with M6-C"*. `T0.02` does not exist. So either M5-B builds a sheet, or the
+chapter is on the wrong side of a seam this corpus has already cut.
+
+**11.110.1 MEASURED, NOT ASSUMED, AND THE MEASUREMENT FOUND SOMETHING SHARPER THAN A MISPLACED
+CHAPTER.** `SheetRole` carries three values, front elevation, rear elevation and equipment list.
+`sheet_def.dart` names `T0.02` among the nine absent ones and states the reason in its own header:
+they *"are M6 and most of them need `Link`s"*, and they are *"absent from `SheetRole` rather than
+stubbed"*. That much was expected. What was not is that **`#261` and M6-C's story `#322` are the
+same work written twice**, a sentence apart:
+
+> `#261`: *"This is where 'the reason prints' actually happens, a promise three design documents made
+> and no sheet list honoured until CR-022. Coordinate with M6-C."*
+
+> `#322`: *"This is where 'the reason prints' actually happens, a promise three design documents made
+> and no sheet list honoured until CR-022. ... Depends on M5-B's acknowledgement mechanism;
+> coordinate the two."*
+
+Each names the other. **They are one clause with two tickets**, and the dependency `#322` declares is
+precisely what M5-B has just delivered.
+
+**11.110.2 Ruled: `#261` is re-parented to `#322` and stays open there.** This adds no seam. DR-027
+§11.26 already rules that **M6 owns every rendered sheet** and the earlier milestone owns the
+derivation, and it names `SheetRole`'s three values as the evidence, the same three that are still
+there. A chapter asking M5 to put rows on a page is on the wrong side of a boundary drawn in 2026-08
+and reaffirmed at `#574`, `#653` and `#693`. Parking costs a ruling ID under §8.9 (DR-095) and this
+is that ID; the re-parenting on the board is the visible act of it, and M6-C is the **named later
+milestone** the rule requires.
+
+**11.110.3 What M5-B owes has been discharged, and this section exists so the park is not read as a
+deferral.** DR-027 §11.26.4 is explicit that a milestone handing the later one *"an unordered,
+untotalled data structure"* has turned the seam into an excuse. M5-B's half is the **mechanism**, and
+it is built and tested:
+
+- `Finding` and `findingFingerprint` (`#258`), the identity an acknowledgement joins on, built from
+  stable ids and nothing else so a renumber cannot make rule 42 delete somebody's written reason.
+- The acknowledgement at both of CR-019's scopes with RJ-006's reason enforced at exactly one of them
+  (`#259`), the writer strict and the reader tolerant.
+- `ProjectSettings.ruleOverrides` with a writer, and the three-layer order catalogue then project
+  then acknowledgement (`#260`).
+
+**And one instruction that binds `#322` when it is built.** `T0.02` and the issues list must resolve
+through `acknowledgementFor` and `effectiveSeverity`, never through a second implementation of the
+join. CR-022 makes the sheet and the list two presentations of one answer, and two implementations
+are how they come to disagree about the same row in front of a client.
+
+**11.110.4 The derivation half is not parked, and it is not M5-B's either.** `#294` (M5-F1) is *"the
+findings list, grouped and filterable: by severity, by rule, by locus"*, which is `T0.02`'s row set in
+its other presentation. That is where the ordering is authored, and putting it there rather than in
+M5-B is not the excuse §11.26.4 warns about: **the Pull Sheet's rows derive from data that exists,
+and `T0.02`'s rows derive from findings that no rule produces until M5-E.** A sort order written at
+M5-B would be a design invented for a sheet nobody has laid out, over a list nothing can fill, and
+pinned by a test that could only ever assert its own fixtures.
+
+**11.110.5 M5-B's exit is not blocked, and neither is M5's.** §8.9 binds at **closing**, and M5 is
+not closing here; opening is soft. What this ruling does is make the eventual close legal, by naming
+where the clause went before the question is asked under time pressure.
+
+*Rejected: building an `ExceptionsReport` type in `rackpal_core` now.* It is the DR-027-shaped answer
+and it fails on the same fact §11.110.4 turns on. It would fix a sheet's data model a milestone
+before the sheet is designed and two before anything can fill it, and the "no entry without a
+surface" rule `project_settings_commands.dart` states would be broken from the other end: a reader
+with no producer is the `NetworkConfig` defect wearing the opposite sign.
+
+*Rejected: closing `#261` as `Done` on the grounds that its M5 half is delivered.* Its title is *"the
+acknowledgement reaches `T0.02`"* and nothing reaches `T0.02`. Marking that `Done` is exactly the
+checklist-ticking §8.1 refuses, and the board would then carry no open item for a promise three
+design documents made.
+
+*Rejected: deleting `#261` as a duplicate of `#322`.* There is no `Removed` state on this board, and
+the chapter carries the M5-side reasoning that `#322` does not. Re-parenting keeps both.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
