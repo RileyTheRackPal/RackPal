@@ -356,6 +356,13 @@ $ErrorActionPreference = 'Stop'
 # the scroll view went unseen: the port section it pushed outside the viewport
 # has its own test, and that one mounts the section directly and passes.
 #
+# RE-MEASURED 2026-09-02 at `#253`/`#254`/`#256` (M5-A): core 3672 -> 3685.
+# The DRC rule catalogue lands as data, and the first test PARSES docs/02 §5
+# and compares tier by tier: CR-021 says a rule not listed there does not
+# exist, and a hand-kept Dart list beside a hand-kept markdown table is two
+# copies of one fact. Thirteen cases, one of which is the 8/6/14 = 28 scope
+# gate.
+#
 # RE-MEASURED 2026-09-01 at `#801`: core 3667 -> 3672 and ui 1399 -> 1403.
 # CR-103's bank collapse now runs on first layout, AND the user can expand a
 # bank again, which is the half the ruling always had and nothing had built.
@@ -376,7 +383,7 @@ $ErrorActionPreference = 'Stop'
 # re-pumped at six sizes measures one of them and reports clean for five.
 
 $SuiteFloors = @{
-    'rackpal_core'   = 3672
+    'rackpal_core'   = 3685
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1406
