@@ -351,6 +351,11 @@ $ErrorActionPreference = 'Stop'
 # ui test is the unknown-token case, which is the one the settings dialog was
 # letting escape unhandled. export, text and app do not move.
 
+# RE-MEASURED 2026-09-01 at `#808`: ui 1403 -> 1406. `InspectorPanel` had no
+# test at all, which is why a `Spacer` splitting the column's free space with
+# the scroll view went unseen: the port section it pushed outside the viewport
+# has its own test, and that one mounts the section directly and passes.
+#
 # RE-MEASURED 2026-09-01 at `#801`: core 3667 -> 3672 and ui 1399 -> 1403.
 # CR-103's bank collapse now runs on first layout, AND the user can expand a
 # bank again, which is the half the ruling always had and nothing had built.
@@ -374,7 +379,7 @@ $SuiteFloors = @{
     'rackpal_core'   = 3672
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1403
+    'rackpal_ui'     = 1406
     'rackpal_app'    = 916
 }
 
