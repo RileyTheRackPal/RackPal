@@ -903,7 +903,7 @@ makes `.rmdev → .rackpal` import well-defined. `ac-inlet` is re-authored as
 is a female panel connector and a plug is male. `ConnectorTypeDef.genderApplies: bool` decides
 whether `CON-002` evaluates and whether the glyph fill encodes gender, which is what
 `design-ux-schematic.md` actually wanted when it restricted gender encoding to XLR, IEC, DB9,
-SpeakON and fibre. Fixes a concrete bug in a shipped rule.
+SpeakON and fibre. **Fixes a concrete bug in a rule that turned out not to ship in v1**: `CON-002` is deferred to v1.2 by docs/02 §5.3, and DR-110 §11.109 corrects this sentence without touching the ruling above it. `genderApplies` earns its keep in v1 on the port grid's GENDER column and the glyph fill.
 
 ### CR-060 · Direction encoding
 
@@ -4255,7 +4255,8 @@ failure the paragraph was written to avoid. The `str` base dash is **`6,3,3,3`**
 ### 6.3 `ConnectorTypeDef`: the connectors referenced below
 
 Abbreviated to `id · display · genderApplies · contacts`. `genderApplies` decides whether
-`CON-002` (both ends the same gender) evaluates and whether the symbol glyph's fill encodes
+`CON-002` (both ends the same gender) **will** evaluate, in v1.2 where that rule lives
+(DR-110 §11.109), and whether the symbol glyph's fill encodes
 gender, which is what `design-ux-schematic.md` actually wanted when it limited gender encoding
 to XLR, IEC, DE-9, SpeakON and fibre (CR-059). Gender values are `male | female | genderless`
 only; `jack` and `plug` are deleted.
@@ -15251,6 +15252,50 @@ a symbol that changes shape as cables land is a sheet that will not sit still.
 *Rejected: persisting the expansion in the document.* It buys a remembered view at the cost of a
 model field, a codec key, a byte round-trip and a migration, for state CR-103 describes as a default
 plus a deviation.
+
+### §11.109 DR-110 · `CON-002` is v1.2, and two sentences say otherwise
+
+**Question.** M5-A's census turned up `ConnectorTypeDef.genderApplies`, a field canon §6.3 says
+*"decides whether `CON-002` (both ends the same gender) evaluates"*, while docs/02 §5's catalogue of
+28 does not list `CON-002` at all. CR-021 rules that *"a rule not listed there does not exist"*, so
+the question raised was whether v1 ships a field serving a rule it has not got.
+
+**11.109.1 THE ALARM WAS LARGER THAN THE FINDING, AND THAT IS RECORDED RATHER THAN QUIETLY DROPPED.**
+It was put as a possible CR-021 violation. It is not one. docs/02 §5.3's closing sentence defers
+*"the remaining `DIR`, **`CON`**, `ELE`, `LEN`, `BUS`, `SER`, `NET`, `PWR` and `RCK` rules"* to v1.2
+behind a fixture corpus, and `CON-002` is one of the remaining `CON` rules. **It is deferred scope,
+not a missing rule**, and the catalogue accounts for it by name-class exactly as it accounts for the
+other several dozen.
+
+**11.109.2 THE FIELD IS NOT ORPHANED EITHER, AND THAT WAS MEASURED.** `genderApplies` has a live v1
+consumer that has nothing to do with `CON-002`: `port_table.dart`'s `portGenderApplies` gates the
+**GENDER column in the device builder's port grid**, which M4 shipped. CR-059 gives it a second,
+the symbol glyph's fill. A field with a shipped reader is a field that earns its place, whatever the
+status of the rule it was named for.
+
+**11.109.3 Ruled: the 28 stands, `CON-002` is v1.2, and the two sentences are corrected.** No rule is
+added and no rule moves. What changes is prose in two normative places that describe `CON-002` as
+though it were live:
+
+- **CR-059** closes *"fixes a concrete bug in a shipped rule"*. `CON-002` was never shipped in v1.
+  The ruling's substance is untouched and still governs: three gender values, `jack` and `plug`
+  deleted, `genderApplies` on `ConnectorTypeDef`. Only the claim about what was fixed is wrong, and
+  §12.14 records it.
+- **§6.3** reads *"`genderApplies` decides whether `CON-002` evaluates"*. It will, in v1.2. Today it
+  decides whether the port grid draws a GENDER column and whether the glyph fill encodes gender.
+
+**A field may ship ahead of the rule that named it, and this ruling says so in general terms** so the
+next census does not re-raise it. The test is whether it has a reader now, not whether every reason
+it was introduced has arrived. `PortDef.pinoutVariant` is the precedent pointing the other way and is
+worth naming: docs/02 §5.2 says it *"exists solely to make `DIR-003` detectable"*, and `DIR-003` is
+one of the six tier-2 rules v1 does ship, so that field is owed a consumer and this one is not.
+
+*Rejected: adding `CON-002` to the catalogue to match CR-059's wording.* It would make the count 29
+against AC-040 as amended by DR-020, and it would ship a rule with no fixture pair, which AC-051
+forbids in terms. Correcting a sentence is cheaper than moving scope to match it.
+
+*Rejected: deleting `genderApplies` until `CON-002` lands.* It has two readers today and removing it
+would take the GENDER column out of a shipped surface to tidy a docstring.
 
 ## 12. Superseded rulings
 
