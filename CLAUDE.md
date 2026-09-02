@@ -92,9 +92,20 @@ warm-cache path at 18m28s.
   not**, and that is now nobody's gate.
 - Queue a run against any branch:
   `az pipelines run --org https://{org}.visualstudio.com --project RackMate --id 1 --branch <name>`
-- **Nothing has ever gone red on the service.** Every gate script was mutation-tested
-  locally, but the service-side failure-reporting path is exercised in the green
-  direction only, so do not yet treat a green Tests tab as proof the reporter works.
+- **THE SERVICE HAS GONE RED EXACTLY ONCE, AND THIS BULLET SAID IT NEVER HAD.** It read
+  *"Nothing has ever gone red on the service"* until 2026-09-02. Measured over the
+  whole run list on that date: 50 completed runs, 48 succeeded, one cancelled, and
+  **one failed**, run 11 / build `20260829.7` on `refs/pull/5/merge`, 2026-08-29.
+  **So a failing gate STEP is proven end to end**: it failed the analyzer gate with
+  `info count rose by 2` on a tree whose fifteen local gates were green (a staged file
+  edited after `git add`, so only a clean checkout saw it), the service surfaced it, and
+  the PR was blocked.
+- **A FAILING TEST is still not proven, and that is a different path sharing a word.**
+  No test has ever failed on a run, so the JUnit converter's output has only ever been
+  parsed in the green direction: **do not yet treat a green Tests tab as proof the
+  reporter works.** Trust the build result; do not yet trust the Tests tab. Every gate
+  script was mutation-tested locally, which is not the same evidence. docs/12 §4.1
+  carries the measurement.
 
 ## The corpus, and which document wins
 
