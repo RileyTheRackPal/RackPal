@@ -266,7 +266,23 @@ enum _StepKind {
   // clause asks for byte identity "including `templates.keys`", and until
   // M4-S there was no command that touched the map to ask it of.
   saveTemplateToProject,
+
+  // M5-B2, REGISTERED THE DAY IT SHIPPED. `doc.ackedFindings` has been
+  // in the codec since M0 and NOTHING EVER WROTE IT, so the map's byte
+  // behaviour across interleavings was untested by construction: the
+  // same state `templates.keys` was in before M4-S. The withdraw arm
+  // matters more than the write one, because its revert restores a held
+  // entity rather than removing what it made.
+  acknowledgeFinding,
+  unacknowledgeFinding,
 }
+
+/// The rules the acknowledgement arms may draw from: everything except
+/// tier 1, which files no finding and whose command asserts.
+final List<String> _acknowledgeableRules = [
+  for (final r in kRuleCatalogue)
+    if (r.tier != RuleTier.modelIllegal) r.ruleId,
+];
 
 /// The convention ids the generator draws from, plus `null` (clear) and
 /// one id naming NO convention entry — a dangling id must round-trip as
@@ -595,6 +611,10 @@ final class _SequenceState {
   final List<Uuid> aliveStructureBodyIds = [];
   final List<Uuid> aliveOutletIds = [];
 
+  /// Acknowledgements currently in the document, so the withdraw arm
+  /// only ever names one that is really there.
+  final List<Uuid> aliveAckIds = [];
+
   /// The subset of [aliveLinkIds] that carry a `structureOrigin`. A
   /// separate list because `setOriginProperty` is only legal on those,
   /// and an ordinary `AddLinkCommand` link would refuse it.
@@ -672,6 +692,15 @@ final class _SequenceState {
     if (aliveHomeRunLinkIds.isNotEmpty) _StepKind.setSignalFamily,
     if (aliveDeviceIds.isNotEmpty || aliveLinkIds.isNotEmpty)
       _StepKind.setLifecycleStatus,
+
+    // UNCONDITIONAL: an acknowledgement names a rule and a fingerprint,
+    // not an entity, so there is nothing for it to wait on. The
+    // fingerprint it carries may name ids that no longer resolve, which
+    // is the point rather than an oversight: rule 42 collects a stale
+    // acknowledgement on LOAD, and until then the codec has to keep
+    // writing it faithfully.
+    _StepKind.acknowledgeFinding,
+    if (aliveAckIds.isNotEmpty) _StepKind.unacknowledgeFinding,
   ];
 }
 
@@ -973,7 +1002,51 @@ Command<RackDocument>? _buildCommand(
       return _buildSetLifecycle(s, rnd);
     case _StepKind.setSignalFamily:
       return _buildSetSignalFamily(s, rnd);
+
+    case _StepKind.acknowledgeFinding:
+      return _buildAcknowledge(s, rnd, step);
+    case _StepKind.unacknowledgeFinding:
+      return UnacknowledgeFindingCommand(
+        id: s.aliveAckIds[rnd.nextInt(s.aliveAckIds.length)],
+      );
   }
+}
+
+/// One acknowledgement, drawn across BOTH of CR-019's scopes and both
+/// states of the reason box.
+///
+/// The project-wide arm always carries a written reason because the
+/// command asserts on an empty one (RJ-006); the instance arm draws an
+/// empty reason half the time, which is the state RJ-006 exists to allow
+/// and the one a codec that wrote `""` as an absent key would break.
+AcknowledgeFindingCommand _buildAcknowledge(
+  _SequenceState s,
+  Random rnd,
+  int step,
+) {
+  final ruleId =
+      _acknowledgeableRules[rnd.nextInt(
+        _acknowledgeableRules.length,
+      )];
+  final projectWide = rnd.nextBool();
+  // A REAL fingerprint over a real id where one exists, so the string in
+  // the file is the shape the evaluator will actually produce.
+  final target = s.aliveDeviceIds.isEmpty
+      ? _rackId
+      : s.aliveDeviceIds[rnd.nextInt(s.aliveDeviceIds.length)];
+  return AcknowledgeFindingCommand(
+    ruleId: ruleId,
+    targetFingerprint: projectWide
+        ? kProjectWideFingerprint
+        : findingFingerprint(ruleId: ruleId, targets: [target]),
+    targetEntityId: projectWide || rnd.nextBool() ? null : target,
+    reason: projectWide
+        ? 'Muted at step $step.'
+        : (rnd.nextBool() ? '' : 'Noted at step $step.'),
+    demotedTo: Severity.values[rnd.nextInt(Severity.values.length)],
+    now: s.nextNow(),
+    actor: 'gen',
+  );
 }
 
 /// One `SetSignalFamilyCommand` over a random home run (DR-025 §11.24).
@@ -1060,6 +1133,13 @@ void _reconcileTrackingAfterCommit(
       s.aliveLinkIds.add(run.id);
       s.linkNetIds[run.id] = run.netId;
       s.aliveHomeRunLinkIds.add(run.id);
+    case _StepKind.acknowledgeFinding:
+      s.aliveAckIds.add((cmd as AcknowledgeFindingCommand).id);
+    case _StepKind.unacknowledgeFinding:
+      s.aliveAckIds.remove((cmd as UnacknowledgeFindingCommand).id);
+    // EVERY EMPTY CASE BELOW FALLS INTO THE NEXT BODY, so the group with
+    // no bookkeeping of its own has to stay LAST. A new arm appended
+    // after it silently inherits every case above.
     case _StepKind.moveDevice:
     case _StepKind.renameDevice:
     case _StepKind.renameRack:
