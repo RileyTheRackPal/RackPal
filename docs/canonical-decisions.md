@@ -15366,10 +15366,31 @@ with no producer is the `NetworkConfig` defect wearing the opposite sign.
 *Rejected: closing `#261` as `Done` on the grounds that its M5 half is delivered.* Its title is *"the
 acknowledgement reaches `T0.02`"* and nothing reaches `T0.02`. Marking that `Done` is exactly the
 checklist-ticking §8.1 refuses, and the board would then carry no open item for a promise three
-design documents made.
+design documents made. **The second clause of that sentence is false and §11.110.6 corrects it.**
 
 *Rejected: deleting `#261` as a duplicate of `#322`.* There is no `Removed` state on this board, and
 the chapter carries the M5-side reasoning that `#322` does not. Re-parenting keeps both.
+
+**11.110.6 §11.110.2 SAID RE-PARENT AND STAY OPEN, AND THE NEXT LOOK AT THE BOARD SAID CLOSE. The
+correction is recorded here rather than written over the paragraph above**, because the mistake is
+the instructive part: the ruling above was reasoned from `#322`'s *description* without reading
+`#322`'s *children*, which is the shape this repository keeps meeting under other names.
+
+`#322` is already decomposed, into `#323` *"open findings with rule ID, severity and locus"*, `#324`
+*"acknowledgements with reason, author and date"* and `#325` *"emit when empty, and say so"*. Those
+three ARE docs/08 §2.2 row 3, clause for clause, and **`#324` is `#261`**, not merely adjacent to it.
+
+So the rejected alternative above rests on a premise that is not true: the board does not carry *no*
+open item for the promise, it carries **three**, and they are more specific than `#261` is. A fourth
+chapter under the same story saying what `#324` already says is noise rather than insurance, and the
+person who eventually builds `#324` would have to work out what the extra one wanted.
+
+**Amended disposition: `#261` is closed as a duplicate of `#324`, named by this ruling's own commit
+under §8.8.** A ruling is what closed it, and that is the honest entry: no code discharged it and
+none was owed. §8.1 is untouched, because §8.1 governs **exit criteria** and this ruling discharges
+none; M6's criterion still contains the sheet, and `#323`, `#324` and `#325` are all open. The
+M5-side reasoning the second rejection wanted to keep is kept **here**, in the normative record,
+which is where §8.2 says a re-litigated decision should have been in the first place.
 
 ## 12. Superseded rulings
 
