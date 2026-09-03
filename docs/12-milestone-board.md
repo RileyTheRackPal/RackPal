@@ -5446,6 +5446,56 @@ underneath all three rather than any of them. **A milestone can be half built an
 sheet. §11.110.6 records that the first disposition was reasoned from `#322`'s description without
 reading its children, and that `#324` **is** `#261`.
 
+**M5-C AND M5-D LAND, AND THE TABLE ABOVE GAINS TWO ROWS.** `M5-C` closed at PR 27 and had no row
+here, which is the omission this section exists to prevent; both are recorded now.
+
+| Story | What it left behind |
+|---|---|
+| **M5-C** | The eight tier-1 rules as `evaluatePlacement`, with `PLC-001..003` ratified from CR-017's three placement-coherence conditions. Two of the three had **no writer to refuse**: `#269` built the Width position control so `PLC-002` has a gesture, and `#270` built 0U channels and their occupants so `PLC-003` has a chain. A census-as-a-test over `lib/` sources went red twice, each time naming a new writer, and is the reason those two exist rather than being noticed later |
+| **M5-D** | `evaluateSpringBack` and the six tier-2 predicates, docs/05 §7.3's amber ring, and the reason chip with `[ Connect anyway ]`. Three rulings: DR-113 (`SIG-001` fires on the joint, not the path), DR-113 §11.112.5 (a passthrough is a physical joint and not a signal endpoint) and DR-114 (a verdict is not a cursor; `[ Why? ]` waits for M5-F3; a spring-back leaves the gesture armed). **Nothing files a tier-3 finding on override**, which is M5-B1 paying off rather than a gap: `Finding` is computed, so the finding appears on the next pass over a document that now holds the cable |
+
+**THE AC-051 NEAR-MISS TABLE PAID FOR ITSELF ON THE DAY IT SHIPPED.** `SIG-001`'s passthrough case
+cleared and then **`SIG-002` fired**, because a patch panel's RJ45 declares `net.ethernet` and does
+not list `video.hdbaset` in `acceptedFamilies`. So patching HDBaseT through a panel would still have
+sprung back, one rule along, for the same wrong reason. That is the known-good half of AC-051 doing
+exactly what `#298` says it is for, and it is why the pair is indivisible from the rule.
+
+**AND IT FOUND SOMETHING OLDER: EIGHT M2 TESTS WERE ASSERTING THAT THE PRODUCT MAKES CABLES NO
+INSTALLER WOULD MAKE.** The connect suites drew `freePin('MTX-1')` to `freePin('AMP-1')` and asserted
+a commit. Measured: `MTX-1` is the seed catalog's V03, sixteen HDMI **inputs** and then sixteen
+outputs with the first four inputs wired, so both ends were **sinks**. Two inputs, nothing driving
+the cable, which is `DIR-001`. Arming from an output does not rescue it either, because `AMP-1`'s
+first free sink is `src.2.l`, an RCA analog jack.
+
+**The rules are right and the fixture choices were wrong**, and the shape of the fix is the finding.
+`clearConnectPair` **searches** for a pair both tiers accept rather than naming one, because both
+pairs picked by hand looked obviously fine and neither was, twice in one afternoon. A search cannot
+be wrong that way, and when a seventh rule lands it re-answers instead of going stale. The split
+suite cannot be fixed that way at all: this fixture holds no free analog audio **source** for the R
+leg to land on, so those gestures press `[ Connect anyway ]`, which earns the override end-to-end
+coverage the suite did not have.
+
+**`#278` DOES NOT CLOSE, AND THE REASON IS A MEASURED CATALOG HOLE.** Its own description says *"a
+remedy chip that only explains has not remedied: `SIG-001`'s inserts a device"*, and there is no
+device. Every `video.hdbaset` port in the seed catalog is a **source** (`HDBT OUT` on V03, V04 and
+V05) plus exactly one sink, F02 the flat panel's `HDBT IN`. V06 is the **transmitter**, V07 is an
+AVoIP encoder, and V06's own description says the receiver half *"is a Device Builder fork of this
+shape (P4, the role parameter is used for extender halves only)"* while `seed_catalog.dart` puts
+variant-picking *"out of scope for this stage (M4)"*.
+
+Inserting V06 where a receiver belongs would put a transmitter in the signal path and call it a fix,
+which is the fabrication G4 forbids for a value. **Ruled by the user 2026-09-03: author a seeded RX
+archetype**, filed as `#812`, with AC-052 binding: uncited safety-adjacent fields do not ship, so its
+PoH class and power draw need real sources. `#811` is the sibling hole, and it is a question rather
+than a task: **landing a run's loose end consults neither tier**, because `_armLandingFrom` builds
+its candidates from occupancy alone by a decision that predates both, so an HDBaseT run dragged onto
+a switch port is the flagship hazard arriving through a gesture that never asks.
+
+**THE MARK FOR M5-C AND M5-D IS `DEMONSTRATED` AND IT DISCHARGES NOTHING**, on §0's terms and for the
+reason the M5-A/B pair records: M5's three clauses are the fixture pairs, the sign-off and the PDF,
+and fourteen of the twenty-eight rules now exist underneath all three rather than being any of them.
+**A milestone can be half built and still `0/28`.**
+
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
 > **Exit criterion, verbatim.** All four starter projects export a complete sheet set; the legend has
