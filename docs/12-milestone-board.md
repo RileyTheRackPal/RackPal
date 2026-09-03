@@ -5496,6 +5496,62 @@ reason the M5-A/B pair records: M5's three clauses are the fixture pairs, the si
 and fourteen of the twenty-eight rules now exist underneath all three rather than being any of them.
 **A milestone can be half built and still `0/28`.**
 
+**`#278` AND `#812` CLOSE, AND M5-D IS COMPLETE ON ITS OWN CRITERION.** The chip has its remedy, so
+the sentence `#278` was filed under is discharged rather than ticked: *"a remedy chip that only
+explains has not remedied."*
+
+**THE REMEDY HAD NOTHING TO INSERT, AND THE FIX WAS NOT THE ONE FILED.** `#812` was written as
+*"author a seeded RX archetype"*, priced before anybody read docs/catalog/seed-devices.md §540. That
+section's own rejected alternative is *"separate `TX` and `RX` templates"*, and P4's is *"four
+separate templates, which spends four of thirty rack-side slots on two products."* **The receiver
+was never missing.** It is specified port for port at §540, down to `notInRack`, 0 W and `[poh:pd]`;
+what was missing was P4's `role` parameter, which had no implementation because the PICKER it feeds
+is M4-deferred and nothing else had needed it.
+
+So `catalog_roles.dart` implements the parameter and `buildSeedCatalog()` still returns 48 bodies,
+asserted by a test that fails if a variant ever enters that map. Shipping V08 would have reversed a
+considered ruling by accident and left P4's own *"used exactly twice"* false.
+
+**NO NEW BYTE SURFACE, WHICH IS WHY THE ID CARRIES THE ROLE.** A placed device snapshots its whole
+`TemplateBody` (AC-041), and `templateKey` is `"$templateId@$version"`, so two halves under one id
+collide on that key. The derived half takes `V06:receiver` and the document needs no `role` field:
+the snapshot it already stores IS the resolved half. CR-117 is untouched.
+
+**PoH CAN STATE A ROLE AND CANNOT STATE A STANDARD**, and the absence is the finding rather than an
+omission. `PoeStandard` is `{af, at, btType3, btType4}`, IEEE 802.3 and nothing else, while docs/01
+:470 says PoH *"is based on 802.3at but modified, and is **not** interoperable with a standard PoE
+PSE"*. Naming one of those four to avoid an empty field is what G4 and AC-052 forbid. The same look
+found `#813`: V06's transmitter is `[poh:pse]` in §540 and carries no `PoeSpec` in code, so the
+annotation was never transcribed. Filed rather than fixed in passing, because a PSE spec on a shipped
+body is a data change with a power-rollup consequence.
+
+**AND THE REMEDY'S SECOND LINK DOES NOT EXIST (DR-115).** docs/05 §5 asked for both links in one undo
+step. `SIG-001`'s target is an Ethernet jack by construction (DR-113), so the receiver's `HDMI OUT`
+into it fails `SIG-002` and `CON-001` together: **the remedy would refuse its own second cable, on
+the only case the rule has.** Canon §280 says only *"inserts a device, correctly"*, so the ruling
+narrows the derived sentence rather than the other way round, and the HDMI end is left OPEN, which
+AC-018, `unlandedHomeRunIds` and `LNK-020` already give this product a vocabulary for.
+
+**THE SUITE CAUGHT THE COMMENT CLAIMING THE IMPLEMENTATION WAS SAFE.**
+`insertHdbasetReceiver`'s doc read *"nothing is written on a refusal: every check that can fail runs
+before the first `tx.add`"*, and that was false as written: the tier-1 check ran AFTER the snapshot
+and the device had applied, so a full source pin minted a receiver and then refused the cable,
+leaving an orphan wired to nothing. It surfaced because one test asked for a second insert from the
+same pin, where `maxConnections: 1` makes `TOP-003` fire. The fix moves the occupancy check in front,
+with the argument that occupancy is the ONLY tier-1 rule reachable against a device one frame old
+written out rather than assumed.
+
+**M5-D's TALLY.** Six rules with their AC-051 pairs, the amber ring, the chip, the spring-back, the
+override and the inserting remedy: **`#272`-`#278` and `#812` all `DEMONSTRATED`**, with two adjacent
+findings still open under the story and named rather than absorbed. `#811` asks whether binding a run
+end consults the rule stack at all, which wants a ruling before code; `#813` is V06's missing PSE
+spec. Neither is part of what `#271` was filed to deliver, and leaving them under it is the honest
+place for them until somebody schedules them.
+
+**THE MARK IS STILL `DEMONSTRATED` AND STILL DISCHARGES NOTHING.** Fourteen of the twenty-eight rules
+exist and two tiers of surface exist, and M5's three clauses remain the fixture pairs, the sign-off
+and the PDF. **A milestone can be two-thirds built and still `0/28`.**
+
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
 > **Exit criterion, verbatim.** All four starter projects export a complete sheet set; the legend has

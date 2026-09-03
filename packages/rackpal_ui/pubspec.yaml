@@ -3,7 +3,7 @@ description: >
   FlutterDiagramCanvas, render objects, widgets, viewport and canvas input.
   No app shell (that lives in apps/rackpal).
 publish_to: none
-version: 0.5.28
+version: 0.5.30
 
 environment:
   sdk: ^3.12.0
