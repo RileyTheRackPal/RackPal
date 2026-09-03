@@ -73,6 +73,7 @@ class InspectorPanel extends StatelessWidget {
     required this.onApplyPreset,
     required this.onRefuse,
     required this.onSetLifecycle,
+    required this.onSetWidth,
     required this.onSetOverride,
     required this.onSetPortFact,
     this.firstFieldFocus,
@@ -93,6 +94,11 @@ class InspectorPanel extends StatelessWidget {
 
   /// Sets `lifecycleStatus` on EVERY selected device as one undo entry.
   final ValueChanged<LifecycleStatus> onSetLifecycle;
+
+  /// Sets the lateral position on every RAIL-PLACED selected device as
+  /// one undo entry (CR-030, docs/04 §3). Each one goes through
+  /// `planSetDeviceWidth`, so `PLC-002` finally has a writer to refuse.
+  final ValueChanged<WidthPosition> onSetWidth;
 
   /// Door 1: writes ONE override field on the ONE selected device
   /// (CR-054, DR-098 §11.97.5). Generic so `Mass` stays `Mass` from the
@@ -143,6 +149,7 @@ class InspectorPanel extends StatelessWidget {
           selectedIds: selectedIds,
           focusedId: focusedId,
           onSetLifecycle: onSetLifecycle,
+          onSetWidth: onSetWidth,
           onSetOverride: onSetOverride,
           onSetPortFact: onSetPortFact,
         ),
@@ -159,6 +166,7 @@ class _SelectionSummary extends StatelessWidget {
     required this.selectedIds,
     required this.focusedId,
     required this.onSetLifecycle,
+    required this.onSetWidth,
     required this.onSetOverride,
     required this.onSetPortFact,
   });
@@ -167,6 +175,7 @@ class _SelectionSummary extends StatelessWidget {
   final Set<Uuid> selectedIds;
   final Uuid? focusedId;
   final ValueChanged<LifecycleStatus> onSetLifecycle;
+  final ValueChanged<WidthPosition> onSetWidth;
   final void Function<T>(
     EntityField<DeviceInstance, OverrideValue<T>> field,
     OverrideValue<T> value,
@@ -190,6 +199,42 @@ class _SelectionSummary extends StatelessWidget {
         if (doc.devices[id] case final d?) d,
     ];
     return live.length == 1 ? live.single : null;
+  }
+
+  /// The selected devices that are mounted to the rails, which are the
+  /// only ones with a lateral position at all. A shelf-hosted, off-rack
+  /// or staged device has none, so the control does not appear for them
+  /// rather than appearing disabled and inviting a question.
+  List<RailPlacement> get _railPlacements => [
+    for (final id in selectedIds)
+      if (doc.devices[id]?.placement case final RailPlacement p) p,
+  ];
+
+  /// The one width position every rail-placed selection shares, or null
+  /// when they disagree or when the position is one the v1 dropdown
+  /// cannot express (CR-030 offers three of the seventy-eight legal
+  /// pairs; a file from a later build can hold any of them).
+  WidthPosition? get _sharedWidth {
+    final positions = <WidthPosition?>{
+      for (final p in _railPlacements)
+        WidthPosition.matching(p.startTwelfth, p.spanTwelfths),
+    };
+    return positions.length == 1 ? positions.single : null;
+  }
+
+  /// What the control says when it has no value to show. TWO DIFFERENT
+  /// ANSWERS, because "Mixed" for a single device sitting at `(3, 6)`
+  /// would be a lie: nothing is mixed, the position is simply outside
+  /// what this dropdown can name. Showing `Full` instead would be worse
+  /// still, and silently correcting it would edit somebody's drawing
+  /// without being asked.
+  String get _widthHint {
+    final rails = _railPlacements;
+    if (rails.length == 1) {
+      final p = rails.single;
+      return '${p.spanTwelfths}/12 from twelfth ${p.startTwelfth}';
+    }
+    return 'Mixed';
   }
 
   /// The one status every selected device shares, or null when they
@@ -265,6 +310,21 @@ class _SelectionSummary extends StatelessWidget {
               onChanged: onSetLifecycle,
             ),
           ],
+          // §3's `Width position` dropdown (CR-030), which this file's
+          // header listed as NOT in scope for the stage that wrote it.
+          // `PLC-002` is why it is now: the rule guarding these two
+          // fields had no writer to refuse, so M5-C built one.
+          if (_railPlacements.isNotEmpty)
+            InspectorDropdown<WidthPosition>(
+              label: _railPlacements.length == 1
+                  ? 'Width position'
+                  : 'Width position (${_railPlacements.length} devices)',
+              value: _sharedWidth,
+              hintText: _widthHint,
+              values: WidthPosition.values,
+              labelOf: (p) => p.label,
+              onChanged: onSetWidth,
+            ),
           // DOOR 1, ON ONE DEVICE ONLY (CR-054, DR-098 §11.97.5). `#183`
           // describes right-clicking A device, and the amber badge counts
           // the others on ITS template, so a multi-selection spanning two

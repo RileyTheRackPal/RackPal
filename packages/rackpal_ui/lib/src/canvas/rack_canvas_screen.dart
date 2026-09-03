@@ -1640,6 +1640,52 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     });
   }
 
+  /// §3's `Width position`, on every rail-placed device in the selection
+  /// (CR-030, `#269`).
+  ///
+  /// GOES THROUGH `planSetDeviceWidth` RATHER THAN BUILDING THE COMMAND,
+  /// which is the whole point of `PLC-002` having a writer at last. The
+  /// dropdown offers only CR-030's three positions, so the LATERAL rule
+  /// cannot refuse anything picked here; `PLC-001` still can, because a
+  /// device sitting outside its rack (reachable by import or a hand
+  /// edit, DR-112) may not have any placement written for it until it is
+  /// back inside.
+  ///
+  /// A REFUSED DEVICE IS SKIPPED AND SAID OUT LOUD, on docs/04 §3.4's
+  /// rule that a refusal never silently stops. The rest of the selection
+  /// still moves: holding back four legal edits because a fifth device is
+  /// out of bounds would punish the user for a fault they did not make
+  /// here and cannot see from this control.
+  void _setSelectionWidth(WidthPosition position) {
+    final commands = <SetDeviceWidthCommand>[];
+    String? refusal;
+    for (final id in _selection.ids) {
+      if (!_doc.devices.containsKey(id)) continue;
+      final planned = planSetDeviceWidth(
+        doc: _doc,
+        id: id,
+        startTwelfth: position.startTwelfth,
+        spanTwelfths: position.spanTwelfths,
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+      );
+      switch (planned) {
+        case WidthChangeReady(:final command):
+          commands.add(command);
+        case WidthChangeRefused(:final reason):
+          refusal ??= reason;
+      }
+    }
+    if (refusal != null) _status.show(refusal);
+    if (commands.isEmpty) return;
+    _controller.selection = _selection.snapshot();
+    _controller.transact(LabelKey.setDeviceWidth, (tx) {
+      for (final command in commands) {
+        tx.add(command);
+      }
+    });
+  }
+
   /// Door 1: one override field on the ONE selected device (CR-054,
   /// DR-098 §11.97.5).
   ///
@@ -4400,6 +4446,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 onApplyPreset: _applyPreset,
                 onRefuse: _status.show,
                 onSetLifecycle: _setSelectionLifecycle,
+                onSetWidth: _setSelectionWidth,
                 onSetOverride: _setDeviceOverride,
                 onSetPortFact: _setPortFact,
                 firstFieldFocus: _inspectorFirstFieldFocus,

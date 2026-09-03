@@ -15392,6 +15392,76 @@ none; M6's criterion still contains the sheet, and `#323`, `#324` and `#325` are
 M5-side reasoning the second rejection wanted to keep is kept **here**, in the normative record,
 which is where §8.2 says a re-litigated decision should have been in the first place.
 
+### §11.111 DR-112 · Tier 1 refuses the gesture, tier 3 reports the state, and the same condition may sit in both
+
+**Question.** M5-C implements `PLC-001..003`, and docs/02 §5.1 cannot be read straight. It lists
+`PLC-001` as *"`RailPlacement.ruIndex ∈ [1, rack.heightU]` and the device fits within the rack extent
+on that face"*, then closes by repeating CR-017: *"the rack editor's other blocking drop checks are
+demoted to warnings, **except** RU-range-free on the same face and fits-within-rack-extent."* Two
+sections later, §5.3 lists **both** of those conditions as tier-3 findings: `RCK-001` *"RU overlap on
+the same face"* and `RCK-002` *"device extends past `heightU`"*. So one document appears to put one
+condition in two tiers, and a third condition, occupancy, is named as blocking without a rule id at
+all.
+
+**11.111.1 MEASURED FIRST, AND THE CODE IS FURTHER ALONG THAN THE QUESTION ASSUMES.** The overlap
+refusal ships. `catalog_placement.dart` exports `findBlockingOccupant`, a query over one face's
+occupancy by RU, and two surfaces consult it: the keyboard nudge, which shakes the selection and
+reads the blocker's designator onto the status line (docs/04 §3.4, *"a nudge that would collide never
+silently stops"*), and the catalog quick-add's caret path, whose planner returns
+`CatalogPlacementFailed`. `PLC-001..003` themselves appear in no Dart file, which
+`rule_catalogue_test.dart` already asserts by name.
+
+**11.111.2 THE TWO SENTENCES ARE NOT IN CONFLICT, AND CR-017's OWN ENUMERATION IS WHY.** CR-017 gives
+model-level illegality as *"only `TOP-001..005` ... plus placement coherence (`ruIndex` within the
+rack; host is a container; no containment cycle)"*. **Occupancy is not in that list.** The
+"except RU-range-free" sentence sits in a different bullet about a different thing: the **rack
+editor's drop checks**, which are gestures. One ruling, two lists, and reading the second as if it
+amended the first is what makes the document look self-contradictory.
+
+**11.111.3 Ruled: the tier is a property of the MOMENT, not of the condition.** docs/02 §5's table
+already defines tier 1 as *"the command is rejected"* and tier 3 as *"a `Finding` in the issues
+list"*. Those are two different moments, and the same physical fact can be met at both:
+
+- **Tier 1 refuses the gesture.** It stops a person creating the state by dragging.
+- **Tier 3 reports the state however it arrived.** Import, a hand-edited file, a rack shrunk under a
+  device, or a build that predates the rule.
+
+**So `PLC-001` is bounds-plus-extent exactly as §5.1 writes it, `RCK-002` is the same condition seen
+at the other moment, and that is deliberate rather than a duplication to be tidied away.** A
+catalogue that refused to name a condition twice would have to choose between refusing the drag and
+reporting the import, and G2 requires both: *"a model that cannot draw a mistake cannot document
+reality, cannot plan a remediation, and cannot import an as-found survey."*
+
+**11.111.4 The overlap refusal stays unnumbered, and the count stays at 28.** It is not tier 1 by
+canon's own definition, because **no `Command` refuses on it**: `findBlockingOccupant` is consulted
+by a planner and by a keystroke handler, both of which decline before a command exists. That is the
+gesture hesitating, which CR-017 permits in as many words. And an overlap does not make the document
+mean nothing: two devices in one U is a clear, physically wrong statement, which is what a tier-3
+error is for. Contrast `TOP-001`, a conductor from a port to itself, which means nothing at all.
+
+**§12.6(b) is not being contradicted here and the difference is worth stating**, because its argument
+looks like it applies. It ratified `PLC-001..003` on the ground that *"an unnumbered blocking rule
+can carry neither a `Finding.ruleId` nor an AC-051 fixture pair"*. That was about conditions **canon
+had already named as model-level illegality** and then left without ids. Occupancy was never in that
+list, and it carries a `Finding.ruleId` today: `RCK-001`.
+
+**11.111.5 A consequence M5-G has to plan for, stated here so it is not discovered late.** `RCK-001`
+and `RCK-002` are now formally unreachable by gesture. Their AC-051 known-bad fixtures therefore
+**cannot be produced by driving the editor** and must be authored as documents directly. That is not
+a defect in the fixture corpus; it is the corpus testing the reader rather than the writer, and it is
+the same shape as `acknowledgement_commands_test.dart`'s tolerant-reader case at M5-B2. A near-miss
+that is one RU away from an overlap is still a legal document a gesture could make, so only the
+known-bad half needs hand-authoring.
+
+*Rejected: numbering the overlap refusal `PLC-004`.* Honest about what the code does, and it costs
+more than it buys: 29 rules against AC-040 as amended by DR-020, an §8.3 amendment, a new fixture
+pair obligation, and a second rule id for a condition `RCK-001` already names.
+
+*Rejected: folding occupancy into `PLC-001` by reading "fits within the rack extent" broadly.*
+Cheapest and the worst of the three. "Extent" is the rack's physical bounds; stretching it to mean
+occupancy makes a catalogue row describe something other than what its rule checks, and CR-021 makes
+that table the definition of what exists.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

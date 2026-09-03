@@ -12,9 +12,15 @@ pwsh -File tools/ci/run_local.ps1 -SkipBuild
 Fifteen gates. All must pass before a commit. Notes that cost real time:
 
 - **Analyzer is a ratchet pinned to an exact number** in
-  `tools/ci/analyze_info_baseline.txt` (currently 173 infos). Errors and warnings
-  are gated at **zero** and are not ratcheted. Going *under* the pin passes with a
-  warning; going over fails.
+  `tools/ci/analyze_info_baseline.txt`. **Read the pin from that file**, which
+  carries its own history of every move and why; do not trust a number written
+  here. This bullet said *"currently 173 infos"* until 2026-09-02, against a file
+  saying **233**: the pin had moved twice since (171 at `#226`, then 233 at
+  `#246`) and the copy here moved neither time. Same failure as the test-floor
+  bullet below, same fix, and the rule generalises: **a second copy of a moving
+  number is a liability, not a convenience.** Errors and warnings are gated at
+  **zero** and are not ratcheted. Going *under* the pin passes with a warning;
+  going over fails.
 - **`dart format` is a gate** (DR-017) as of 2026-08-03. Run `dart format .`
   before committing. It is not `--fatal-infos`: the two were separate questions
   and DR-017 took the formatter and kept the ratchet.
