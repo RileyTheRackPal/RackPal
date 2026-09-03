@@ -174,8 +174,7 @@ void main() {
     });
   });
 
-  group('the five tier-1 rules that are already built agree with their '
-      'implementation', () {
+  group('the tier-1 rules agree with their implementations', () {
     // `derived/connect_rules.dart` shipped `TOP-001`..`TOP-005` before
     // this catalogue existed, with an evaluation order its enum encodes.
     // M5-A does not rewrite it: the rows point at it and this test is
@@ -194,24 +193,40 @@ void main() {
       }
     });
 
-    test('the catalogue knows the three tier-1 rules that are NOT built, '
-        'and says which', () {
-      // A census at the start of M5, not an assumption: `PLC-00` appears
-      // in no Dart file in this repository and there is no
-      // placement-validity helper. This test states the gap so that
-      // building them is what makes it fail.
-      final built = ConnectRule.values.map((r) => r.id).toSet();
+    test('EVERY tier-1 rule has a predicate now, across both evaluators', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THIS TEST REPLACED ITS OWN PREDECESSOR, ON THAT ONE'S ORDERS
+      // ═══════════════════════════════════════════════════════════════
+      // It used to assert the unbuilt set was EXACTLY `PLC-001..003`, a
+      // census at the start of M5 rather than an assumption: the string
+      // `PLC-00` appeared in no Dart file and there was no
+      // placement-validity helper anywhere. Its own `reason` said what to
+      // do next: *"if PLC-001..003 now have one, delete this test and
+      // assert the placement command set enforces them"*. M5-C built
+      // them, so this is that replacement.
+      //
+      // NOTE WHAT THE OLD ONE COULD NOT DO. It derived "built" from
+      // `ConnectRule.values` alone, so it would have kept passing,
+      // unchanged and quietly wrong, after `PlacementRule` shipped. A
+      // census test that cannot see the thing it is counting is a
+      // comment with an `expect` around it. This one fails the moment a
+      // tier-1 rule joins the catalogue without a predicate, whichever
+      // evaluator that predicate would belong to.
+      final built = <String>{
+        for (final rule in ConnectRule.values) rule.id,
+        for (final rule in PlacementRule.values) rule.id,
+      };
       final unbuilt = [
         for (final rule in rulesInTier(RuleTier.modelIllegal))
           if (!built.contains(rule.ruleId)) rule.ruleId,
       ];
       expect(
         unbuilt,
-        <String>['PLC-001', 'PLC-002', 'PLC-003'],
+        isEmpty,
         reason:
-            'the set of tier-1 rules with no predicate has changed. If '
-            'PLC-001..003 now have one, delete this test and assert the '
-            'placement command set enforces them',
+            'these tier-1 rules are in the catalogue with no predicate in '
+            'either evaluator. A rule that refuses nothing refuses '
+            'nothing silently',
       );
     });
   });
