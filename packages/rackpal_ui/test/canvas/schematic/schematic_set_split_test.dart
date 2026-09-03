@@ -165,6 +165,39 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Presses `[ Connect anyway ]` when a tier-2 chip is up, and reports
+  /// whether it had to.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THIS SUITE'S CABLES REALLY ARE ONES THE RULES OBJECT TO, AND THAT IS
+  /// NOT FIXABLE BY PICKING BETTER PINS
+  /// ═══════════════════════════════════════════════════════════════════
+  /// DR-014's split gesture is *"the same builder for both, because from
+  /// the user's side there is one gesture"*, so a split is a connect and
+  /// tier 2 applies to it. The drag these tests perform lifts the R leg
+  /// of `AMP-1`'s `src5` pair — an RCA ANALOG AUDIO INPUT — onto a free
+  /// pin of `MTX-1`, which carries HDMI on `conn.hdmi_a`. Two sinks, two
+  /// families, two connectors: `DIR-001` first and `SIG-002` behind it.
+  ///
+  /// Elsewhere in this directory the answer was to pick a legal pair
+  /// (`clearConnectPair`). Here there is nothing to pick: this fixture
+  /// has no free ANALOG AUDIO SOURCE for that leg to land on, so a pair
+  /// that satisfies both tiers does not exist and inventing one would
+  /// mean changing the fixture out from under the split tests that made
+  /// it.
+  ///
+  /// So these gestures OVERRIDE, which is what a real user drawing an
+  /// as-found survey does (G2, CR-017) — and it earns something the
+  /// suite did not have: `[ Connect anyway ]` proven end to end, writing
+  /// exactly the cable the ordinary gesture would have written.
+  Future<bool> connectAnyway(WidgetTester tester) async {
+    final button = find.text(kSpringBackConnectAnyway);
+    if (button.evaluate().isEmpty) return false;
+    await tester.tap(button);
+    await tester.pumpAndSettle();
+    return true;
+  }
+
   /// Wires AMP-1's `src5` pair to its `zone5` pair as ONE atomic cable —
   /// the state the field report starts from — and returns that link.
   ///
@@ -180,6 +213,7 @@ void main() {
       nthPinOfSet('AMP-1', 'src5', 0),
       nthPinOfSet('AMP-1', 'zone5', 0),
     );
+    await connectAnyway(tester);
     final made = doc.links.entries
         .firstWhere((e) => !before.contains(e.key))
         .value;
@@ -238,6 +272,7 @@ void main() {
         nthPinOfSet('AMP-1', 'src5', 1),
         freeUnsetPinOf('MTX-1'),
       );
+      await connectAnyway(tester);
 
       // ONE CABLE BECAME TWO. That is the bill of materials moving, which
       // is the whole subject of DR-012.2 and the reason this is announced
@@ -274,6 +309,7 @@ void main() {
         nthPinOfSet('AMP-1', 'src5', 1),
         freeUnsetPinOf('MTX-1'),
       );
+      await connectAnyway(tester);
 
       final said = statusOf(tester)!;
       // DR-012.2: a silent choice between "one cable, N conductors" and "N
@@ -301,6 +337,7 @@ void main() {
         nthPinOfSet('AMP-1', 'src5', 1),
         freeUnsetPinOf('AMP-1'),
       );
+      await connectAnyway(tester);
 
       expect(doc.links, hasLength(before));
       expect(set.conductors, hasLength(2));
@@ -321,6 +358,7 @@ void main() {
         nthPinOfSet('AMP-1', 'src5', 1),
         freeUnsetPinOf('MTX-1'),
       );
+      await connectAnyway(tester);
       expect(doc.links, hasLength(before + 1));
 
       controller.undo.undo(doc);
@@ -345,6 +383,7 @@ void main() {
         nthPinOfSet('AMP-1', 'src5', 1),
         freeUnsetPinOf('MTX-1'),
       );
+      await connectAnyway(tester);
 
       // A user who reads "Undo connect" and takes it at its word expects
       // one cable to disappear, not a lifted conductor to go back into the
@@ -362,6 +401,7 @@ void main() {
         freeUnsetPinOf('MTX-1'),
         freeUnsetPinOf('AMP-1'),
       );
+      await connectAnyway(tester);
 
       expect(doc.links, hasLength(before + 1));
       expect(controller.undo.undoLabelKey, LabelKey.connectPorts.name);

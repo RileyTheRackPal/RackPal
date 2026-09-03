@@ -224,7 +224,14 @@ void main() {
     await pump(tester);
     final before = doc.links.length;
 
-    await dragFromTo(tester, freePin('MTX-1').centre, freePin('AMP-1').centre);
+    // A PAIR BOTH TIERS ACCEPT, searched rather than named. This test is
+    // about PRECEDENCE — a press on a pin is a connect and not a landing —
+    // so the cable it draws only has to be one the product would make.
+    // `freePin('MTX-1')` to `freePin('AMP-1')` is two INPUTS and springs
+    // back on `DIR-001`, which would fail this test for a reason that has
+    // nothing to do with what it is testing.
+    final pair = clearConnectPair(doc, reference, 'MTX-1', 'AMP-1');
+    await dragFromTo(tester, pair.fromCentre, pair.toCentre);
 
     expect(
       doc.links.length,

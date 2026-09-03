@@ -403,7 +403,7 @@ $SuiteFloors = @{
     'rackpal_core'   = 3839
     'rackpal_text'   = 1
     'rackpal_export' = 189
-    'rackpal_ui'     = 1431
+    'rackpal_ui'     = 1436
     'rackpal_app'    = 916
 }
 

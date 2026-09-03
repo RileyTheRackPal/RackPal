@@ -139,6 +139,7 @@ import 'package:rackpal_ui/src/canvas/schematic/render_schematic_canvas.dart';
 import 'package:rackpal_ui/src/canvas/schematic/schematic_filter.dart';
 import 'package:rackpal_ui/src/canvas/schematic/schematic_paint_plan.dart';
 import 'package:rackpal_ui/src/canvas/schematic/schematic_reveal.dart';
+import 'package:rackpal_ui/src/canvas/schematic/spring_back_chip_card.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/status_message_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
@@ -244,7 +245,8 @@ final class SchematicCanvasScreen extends StatefulWidget {
   State<SchematicCanvasScreen> createState() => _SchematicCanvasScreenState();
 }
 
-class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
+class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
+    with TickerProviderStateMixin {
   /// Net pointer travel (screen px) below which a press is a click —
   /// docs/04 §3.1 step 1's "Nothing until 4 px of movement, so a click
   /// still means show details", compared in SCREEN space so the slop does
@@ -460,7 +462,29 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
   /// The pin a wire is armed from — docs/05 §7's `WIRE_STICKY` — or null
   /// when no wire is in flight.
-  PinRef? _wireFrom;
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A PROPERTY RATHER THAN A FIELD, SO THE CHIP CANNOT OUTLIVE THE CABLE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A spring-back chip is a statement about a cable IN FLIGHT, so a chip
+  /// still on screen after the gesture ended is talking about something
+  /// that is over. `#278`'s first draft cleared it in `_clearWire`, which
+  /// covers the cancels and the teardown and NOT the three commit paths —
+  /// each of which nulls this field in a `setState` block of its own. So
+  /// `[ Connect anyway ]` wrote its cable and left its own chip on the
+  /// sheet, which a widget test caught and no amount of care would have.
+  ///
+  /// Five sites null this field today and a sixth is one feature away.
+  /// Rather than patch four of them and hope, the invariant is enforced
+  /// where it cannot be forgotten: **losing the cable loses the chip.**
+  /// Same lesson as [_setTargets] above, arrived at the same way.
+  PinRef? get _wireFrom => _wireFromPin;
+  set _wireFrom(PinRef? value) {
+    _wireFromPin = value;
+    if (value == null) _forgetChip();
+  }
+
+  PinRef? _wireFromPin;
 
   /// The half-landed home run this gesture is LANDING, and which of its
   /// ends is the loose one, or null when the gesture is an ordinary
@@ -613,6 +637,46 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     _candidates = const <PinRef>[];
     _preferred = const <PinRef>{};
     _springBack = const <PinRef>{};
+  }
+
+  // ── the spring-back and its chip (`#278`, CR-017, DR-114) ────────────
+
+  /// The chip on screen, or null when no cable has just sprung back.
+  SpringBackChip? _chip;
+
+  /// The pin the chip is about, which is where it is anchored and where
+  /// the refusal mark is drawn.
+  ///
+  /// SEPARATE FROM [_pinCaret] BECAUSE THE CARET LEFT. The band sprang
+  /// back to the source and took the caret with it, which is what "sprang
+  /// back" means; this remembers the pin the chip is talking about so the
+  /// mark and the anchor do not go with it.
+  PinRef? _chipAt;
+
+  /// docs/05 §7's retraction: *"120 ms, `Curves.easeOutBack`."*
+  ///
+  /// Drives [_freeEnd] from the refused pin back to the source, reusing
+  /// the UNSNAPPED-band path the pointer route already has rather than
+  /// teaching the overlay a second way to draw a partial band. That path
+  /// needs [_pinCaret] to be null, which it is: the caret went with the
+  /// band.
+  AnimationController? _springBackAnim;
+
+  /// docs/05 §7's *"target flashes `#D55E00` twice at 90 ms"*, as four
+  /// 90 ms phases: on, off, on, off, then the steady mark that stays
+  /// while the chip is up.
+  AnimationController? _flashAnim;
+
+  /// The curve driving [_springBackAnim], held so it can be disposed.
+  CurvedAnimation? _springBackCurve;
+
+  /// Whether the refusal mark is drawn THIS frame. False only during the
+  /// flash's two troughs.
+  bool get _refusedVisible {
+    final flash = _flashAnim;
+    if (flash == null || !flash.isAnimating) return true;
+    // Four equal phases over the controller's span; the even ones are lit.
+    return (flash.value * 4).floor().isEven;
   }
 
   /// Where a POINTER drag's band currently ends when the magnet has not
@@ -776,6 +840,12 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
   @override
   void dispose() {
+    // THE CURVE BEFORE ITS PARENT: a `CurvedAnimation` unregisters from
+    // the controller it was built on, so disposing the controller first
+    // leaves it holding a dead parent.
+    _springBackCurve?.dispose();
+    _springBackAnim?.dispose();
+    _flashAnim?.dispose();
     HardwareKeyboard.instance.removeHandler(_onRawKey);
     widget.reveal?.removeListener(_onRevealRequested);
     widget.controller.epochs.structure.removeListener(_onStructureChanged);
@@ -1685,6 +1755,25 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// the selection while cancelling a wire would take away the thing the
   /// wire was being drawn from, and the second `Esc` is free.
   void _onEscape() {
+    // THE CHIP IS THE NEW TOP RUNG, ABOVE THE WIRE (`#278`, DR-114
+    // §11.113.4). `schematicCancel`'s own registry note describes exactly
+    // this shape — *"one more limb in the gate, which is exactly what
+    // layering a key means when only isActionEnabled can decline one"* —
+    // and it is why the chip binds no key of its own: a second Esc row in
+    // one scope would be the collision `arbitrate()` exists to forbid.
+    //
+    // AND IT DOES NOT CANCEL THE WIRE UNDERNEATH. A gesture that
+    // hesitated has not ended, so Esc here closes the chip and hands the
+    // keyboard back to a cable that is still armed. The NEXT Esc cancels
+    // it, which is what Esc has always meant on this canvas.
+    if (_chip != null) {
+      _dismissChip();
+      _status.show(
+        'Chip dismissed. The cable is still in hand — Tab to another '
+        'jack, or Esc again to let it go.',
+      );
+      return;
+    }
     if (_wireFrom != null) {
       _cancelWire();
       return;
@@ -3226,6 +3315,10 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// otherwise overwrite it with a generic one.
   void _clearWire() {
     setState(() {
+      // THE CHIP GOES WITH THE GESTURE, and this line is what does it:
+      // nulling `_wireFrom` runs its setter, which forgets the chip. See
+      // that property for why the invariant lives there rather than in
+      // each of the five places a gesture can end.
       _wireFrom = null;
       _landingFrom = null;
       _wireFromSetKey = null;
@@ -3236,10 +3329,147 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     });
   }
 
+  /// The cable sprang back off [at], and this is the chip that says why.
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// THE GESTURE IS NOT OVER, WHICH IS DR-114 §11.113.4
+  /// ═════════════════════════════════════════════════════════════════
+  /// CR-017's binding sentence is *"the gesture may HESITATE; the
+  /// document may not lie"*, and a gesture that hesitated has not ended.
+  /// So [_wireFrom] is untouched, the candidate rings stay lit, and the
+  /// user is back where they were one frame before the release. That is
+  /// what makes `[ Pick a different port ]` a real button rather than a
+  /// relabelled Cancel.
+  ///
+  /// THE CARET GOES WITH THE BAND, and that is what "sprang back" means
+  /// rather than a shortcut. A caret left sitting on the refused pin
+  /// would keep the band drawn to it, which says the cable is still
+  /// aimed there — the one thing that just stopped being true. It lands
+  /// on NOTHING rather than on the source: `_cycleCandidate` reads
+  /// `_pinCaret ?? _candidates.first`, so Tab picks up from the top of a
+  /// candidate list that is still the right one.
+  ///
+  /// NOTHING IS WRITTEN. This is the half of CR-017 that does not bend.
+  void _springBackOff(PinRef at, SpringBackChip chip) {
+    final source = _wireFrom;
+    final scene = _scene;
+    if (source == null || scene == null) return;
+    final from = locatePin(scene, source);
+    final to = locatePin(scene, at);
+
+    // THE CURVE BEFORE ITS PARENT, as in [dispose]: a `CurvedAnimation`
+    // unregisters from the controller it was built on.
+    _springBackCurve?.dispose();
+    _springBackCurve = null;
+    _springBackAnim?.dispose();
+    _flashAnim?.dispose();
+
+    // docs/05 §7: 120 ms, `Curves.easeOutBack`. The overshoot is the
+    // point of that curve and it is right here: a band that eases to a
+    // stop reads as a decision, and one that springs past and settles
+    // reads as a rejection, which is what happened.
+    final retract = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 120),
+    );
+    final flash = AnimationController(
+      vsync: this,
+      // Four 90 ms phases: lit, dark, lit, dark. docs/05 §7's "flashes
+      // twice at 90 ms" is two flashes, and a flash is a pair.
+      duration: const Duration(milliseconds: 360),
+    );
+    _springBackAnim = retract;
+    _flashAnim = flash;
+
+    if (from != null && to != null) {
+      // HELD IN A FIELD AND DISPOSED, not created and dropped. A
+      // `CurvedAnimation` registers with its parent and is exactly what
+      // `leak_tracker_flutter_testing` flags, and docs/11 runs that
+      // tracker on every canvas widget test — so an escaped one fails
+      // the suite rather than quietly costing memory.
+      final curve = CurvedAnimation(parent: retract, curve: Curves.easeOutBack);
+      _springBackCurve = curve;
+      retract
+        ..addListener(() {
+          if (!mounted) return;
+          final t = curve.value;
+          setState(() {
+            // 1 at the refused pin, 0 at the source. `easeOutBack`
+            // overshoots below zero on the way in, which pulls the band a
+            // little PAST the source before it settles — the visual
+            // recoil the curve was chosen for.
+            _freeEnd = DPt(
+              from.centre.x + (to.centre.x - from.centre.x) * (1 - t),
+              from.centre.y + (to.centre.y - from.centre.y) * (1 - t),
+            );
+          });
+        })
+        ..addStatusListener((status) {
+          if (status != AnimationStatus.completed || !mounted) return;
+          setState(() => _freeEnd = null);
+        });
+    }
+
+    flash.addListener(() {
+      if (mounted) setState(() {});
+    });
+
+    setState(() {
+      _chip = chip;
+      _chipAt = at;
+      // THE CARET DROPS, THE SOURCE HOLDS. See this method's doc.
+      _pinCaret = null;
+      _freeEnd = from == null || to == null ? null : to.centre;
+    });
+    retract.forward();
+    flash.forward();
+
+    // THE RULE ID AND THE SENTENCE, LIKE EVERY OTHER REFUSAL ON THIS
+    // SCREEN. The chip is the surface, and the status line is what a
+    // screen reader following the gesture hears; DR-011.5's rule for a
+    // refusal is the id AND a sentence naming real designators, and a
+    // chip that were the only carrier would be invisible to the
+    // accessibility channel this screen has used throughout.
+    _status.show('${chip.ruleId} — ${chip.headline} ${chip.explanation}');
+  }
+
+  /// Drops the chip and its animations WITHOUT a `setState`.
+  ///
+  /// Every caller is already inside one: the `_wireFrom` setter runs from
+  /// the `setState` blocks that end a gesture, and [_dismissChip] wraps
+  /// its own. A notify here would be a second rebuild for one act.
+  void _forgetChip() {
+    if (_chip == null && _chipAt == null) return;
+    _springBackAnim?.stop();
+    _flashAnim?.stop();
+    _chip = null;
+    _chipAt = null;
+  }
+
+  /// `[ Pick a different port ]`, and what `Esc` does while a chip is up.
+  ///
+  /// Closes the chip and leaves everything else exactly as it is: the
+  /// wire armed, the candidates lit, the caret free. The refusal mark
+  /// goes with the chip, because it existed to say what the chip was
+  /// about.
+  void _dismissChip() {
+    if (_chip == null) return;
+    setState(() {
+      _forgetChip();
+      _freeEnd = null;
+    });
+  }
+
   /// `Enter` — commit the wire in flight (docs/05 §7, DR-011.6).
-  void _commitWire() {
+  ///
+  /// [overriding] is `[ Connect anyway ]`: the same commit with tier 2
+  /// skipped, and NOT a second path. CR-017's override writes exactly the
+  /// cable the ordinary gesture would have written, so a separate builder
+  /// here would be two ways to make one Link, differing by whichever one
+  /// somebody forgot to update.
+  void _commitWire({bool overriding = false}) {
     final from = _wireFrom;
-    final to = _pinCaret;
+    final to = _pinCaret ?? (overriding ? _chipAt : null);
     if (from == null || to == null) return;
     // LANDING FIRST, because it is not a connect at all. See
     // [_landingFrom]: the run exists, so completing it must MOVE an end
@@ -3336,6 +3566,38 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
         :final splits,
         :final roleMismatch,
       ):
+        // ═════════════════════════════════════════════════════════════
+        // TIER 2, AFTER TIER 1 AND BEFORE ANYTHING RUNS (CR-017, `#278`)
+        // ═════════════════════════════════════════════════════════════
+        // INSIDE THIS ARM ON PURPOSE, AND THE FIRST DRAFT HAD IT ABOVE
+        // THE BUILDER. That put tier 2 ahead of tier 1, so a pin the
+        // MODEL refuses would have shown a trade opinion instead of
+        // `TOP-003`. DR-112 §11.111 is the ruling the order comes from:
+        // the tiers answer different questions, and tier 1's is whether
+        // the document would mean anything at all. It goes first.
+        //
+        // The draft's stated reason for going early was that a built
+        // command would "have to be thrown away", which is not a cost:
+        // `buildSplitConnectCommands` returns a VALUE and writes nothing
+        // until `run`. Nothing is thrown away except an object.
+        //
+        // `ontoLink: null` for the arm-time walk's reason: this gesture
+        // always mints a new Link, so there is none yet to carry an
+        // adapter that would clear the rule.
+        //
+        // SKIPPED WHOLE WHEN OVERRIDING rather than evaluated and
+        // ignored. docs/02 §5.2 gives the override as *"creates the Link
+        // and files a T3 finding"*, and the finding is COMPUTED
+        // (CR-021): it appears on the next pass over a document that now
+        // holds the cable. There is nothing to file and nothing to
+        // remember, which is M5-B1's ruling paying off rather than a gap.
+        if (!overriding) {
+          final verdict = evaluateSpringBack(_doc, fromTarget, toTarget);
+          if (verdict is SpringBackChip) {
+            _springBackOff(to, verdict);
+            return;
+          }
+        }
         final command = connect;
         // See [_committingWire]. `try`/`finally` because a command that
         // throws must not leave the latch stuck true.
@@ -3522,6 +3784,8 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       freeEnd: _freeEnd,
       candidates: _candidates,
       springBack: _springBack,
+      refused: _chipAt,
+      refusedVisible: _refusedVisible,
       selected: _pins.refs,
       pairs: _multiDrawBands(),
       selectedLink: _selectedLink,
@@ -3613,7 +3877,8 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
             // no meaning here and must fall through to the layer behind it.
             () =>
                 _canvasKeysEnabled &&
-                (_wireFrom != null ||
+                (_chip != null ||
+                    _wireFrom != null ||
                     !_pins.isEmpty ||
                     _selectedLink != null ||
                     _focused.isNotEmpty ||
@@ -3742,6 +4007,63 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     );
   }
 
+  /// The chip, placed beside the pin it is about.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// CLAMPED INTO THE VIEWPORT, BECAUSE THE ANCHOR CAN BE OFF-SCREEN
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The pin is wherever the sheet put it and the user is wherever they
+  /// panned to, so a chip placed at the raw projected point is a chip
+  /// that can land entirely outside the canvas — on the very gesture
+  /// whose whole subject is telling the user something. Both axes are
+  /// clamped to the canvas box, so it is always readable and always as
+  /// near the pin as the box allows.
+  ///
+  /// ABOVE THE PIN WHERE THERE IS ROOM, below it where there is not. The
+  /// chip is up to three lines and a button row; hanging it below by
+  /// default would cover the candidate rings the user is about to Tab
+  /// through, which are the affordance the chip is handing them back to.
+  Widget _chipAnchor(BoxConstraints constraints, SpringBackChip chip) {
+    const width = 360.0;
+    // A generous estimate rather than a measurement: this only decides
+    // WHICH SIDE of the pin the chip hangs from, and the clamp below
+    // catches the case where the guess was wrong by making it fit
+    // anyway. Measuring would need a layout pass this placement cannot
+    // wait for.
+    const estimatedHeight = 150.0;
+    const gap = 12.0;
+
+    final scene = _scene;
+    final at = _chipAt;
+    final pin = scene == null || at == null ? null : locatePin(scene, at);
+    final anchor = pin == null
+        ? DPt(constraints.maxWidth / 2, constraints.maxHeight / 2)
+        : _viewport.sceneToScreen(pin.centre);
+
+    final above = anchor.y - estimatedHeight - gap;
+    final top = above >= 0 ? above : anchor.y + gap;
+    return Positioned(
+      left: (anchor.x - width / 2).clamp(
+        0.0,
+        math.max(0, constraints.maxWidth - width),
+      ),
+      top: top.clamp(0.0, math.max(0, constraints.maxHeight - estimatedHeight)),
+      width: width,
+      child: SpringBackChipCard(
+        chip: chip,
+        // `[ Connect anyway ]` IS THE SAME COMMIT with tier 2 skipped —
+        // see [_commitWire]'s `overriding`. Not a second builder.
+        onConnectAnyway: () => _commitWire(overriding: true),
+        onPickAnother: _dismissChip,
+        // NO `onRemedy` YET, so no remedy button is drawn at all.
+        // DR-114 §11.113.3's rule for `[ Why? ]` generalises: a button
+        // that leads nowhere is worse than an absent one. Left off
+        // rather than passed as an explicit null, which the analyzer
+        // reads as redundant and which would say the same thing twice.
+      ),
+    );
+  }
+
   Widget _canvas(ColorScheme scheme, SchematicPaintPlan plan) {
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -3791,6 +4113,15 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
                   // press meant for the canvas underneath it — which on a
                   // screen whose whole subject is a refused gesture would be
                   // a memorable way to refuse one.
+                  // THE CHIP, OVER THE SHEET AND UNDER THE STATUS LINE.
+                  // Anchored at the pin the cable sprang back off, which
+                  // is what `design-ux-schematic.md §2.1` asks for: *"an
+                  // inline chip appears anchored at the target"*. The
+                  // refusal mark under it is drawn by the overlay, so the
+                  // chip and the pin it is about are joined by a colour
+                  // rather than by a leader line the canvas would have to
+                  // route.
+                  if (_chip case final chip?) _chipAnchor(constraints, chip),
                   Positioned(
                     left: 12,
                     bottom: 12,

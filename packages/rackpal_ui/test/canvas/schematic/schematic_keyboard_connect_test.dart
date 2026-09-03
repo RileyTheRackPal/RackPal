@@ -108,7 +108,23 @@ void main() {
           data.contains('Wire from') ||
           data.contains('No pin') ||
           data.contains('No candidate') ||
-          data.startsWith('TOP-')) {
+          data.startsWith('TOP-') ||
+          // THE SIX TIER-2 IDS, AND THE STATUS LINE'S FORMAT RATHER THAN
+          // THE ID ALONE. This filter is a whitelist, so a message it does
+          // not know reads as NO MESSAGE AT ALL, which is how a
+          // spring-back looked like silence to every assertion here for
+          // exactly one run.
+          //
+          // THE TRAILING SPACE IS LOAD-BEARING. The CHIP renders the bare
+          // id as its own label, so `startsWith(id)` matched the chip's
+          // badge and this helper started returning 'CON-001' with
+          // nothing after it — a status-line reader quietly reading a
+          // widget. The status line is `'$ruleId — …'`, so requiring what
+          // follows tells the two apart.
+          //
+          // `kSpringBackRuleIds` is derived from the enum rather than
+          // typed, so a seventh rule cannot go unheard the same way.
+          kSpringBackRuleIds.any((id) => data.startsWith('$id '))) {
         return data;
       }
     }
@@ -176,6 +192,109 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  /// Tabs from the ARMED pin until the caret is on a target both
+  /// validation tiers accept, and returns how many presses that took.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// ONE `Tab` STOPPED BEING ENOUGH WHEN M5-D SHIPPED
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Every commit test below pressed `Tab` once, because one press lands
+  /// on `_candidates.first`. That candidate is a free pin on `MTX-1`
+  /// itself, and `MTX-1` is the seed catalog's V03: sixteen HDMI INPUTS
+  /// then sixteen outputs, first four inputs wired. So the armed pin and
+  /// the first candidate were both SINKS. **Two inputs with nothing
+  /// driving the cable**, which is `DIR-001`, and this suite was asserting
+  /// that the gesture made that cable.
+  ///
+  /// The rule is right and the pin choice was wrong, so this walks to a
+  /// pin the rules accept instead of naming one.
+  ///
+  /// IT READS WHICH PIN IS ARMED OFF THE STATUS LINE rather than assuming
+  /// it. The first draft took a designator and used its first free pin,
+  /// which is what `caretOnto` lands on — true for the first cable of a
+  /// test and false for the second, because a commit parks the caret on
+  /// the SINK it just reached. A helper that assumed the caret would have
+  /// been silently reasoning about the wrong pin in exactly the test whose
+  /// subject is that the caret moves.
+  ///
+  /// IT REPLICATES THE ARM'S OWN CANDIDATE WALK rather than guessing an
+  /// index, because the two must agree about ORDER for a count to mean
+  /// anything: same `locatePins` order, same `evaluateConnect`, same
+  /// `planSplitsFor` freeing set. `_cycleCandidate` starts at
+  /// `_candidates.first` when the caret is not itself a candidate, which
+  /// it never is here, so the (k+1)-th press lands on the k-th candidate.
+  Future<int> tabToClearTarget(WidgetTester tester, {String? onDevice}) async {
+    final said = statusOf(tester) ?? '';
+    final scene = buildFixtureScene(doc);
+
+    ConnectTarget? targetOf(PinRef ref) => resolveConnectTarget(
+      doc,
+      deviceId: Uuid(ref.deviceId),
+      portKey: ref.portKey,
+    );
+
+    ConnectTarget? fromTarget;
+    PinRef? fromRef;
+    for (final pin in locatePins(scene)) {
+      final t = targetOf(pin.ref);
+      if (t == null) continue;
+      // TWO SENTENCES NAME AN ARMED PIN, and the helper has to know
+      // both: `W` says *"Wire from X ..."* and a chain-draw re-arm says
+      // *"... Chained: now drawing from X, N pins can take it."* The
+      // first draft knew only the first, so it reported "no wire is
+      // armed" on the one gesture whose whole point is that a wire is
+      // armed without a `W`.
+      //
+      // THE TRAILING DELIMITER MATTERS: `MTX-1 J1` is a prefix of
+      // `MTX-1 J17`, so a bare `contains` would match the wrong pin on a
+      // sixteen-jack device and silently count Tabs from it.
+      if (said.startsWith('Wire from ${t.citation} ') ||
+          said.contains('now drawing from ${t.citation} ') ||
+          said.contains('now drawing from ${t.citation},')) {
+        fromTarget = t;
+        fromRef = pin.ref;
+        break;
+      }
+    }
+    expect(
+      fromRef,
+      isNotNull,
+      reason:
+          'no wire is armed, or the status line stopped naming the '
+          'pin it armed from: $said',
+    );
+
+    var index = 0;
+    for (final pin in locatePins(scene)) {
+      if (pin.ref == fromRef) continue;
+      final to = targetOf(pin.ref);
+      if (to == null) continue;
+      final freeing = <ConductorRef>{
+        for (final split in planSplitsFor(doc, fromTarget!, to))
+          split.conductor,
+      };
+      if (evaluateConnect(doc, fromTarget, to, freeing: freeing)
+          is! ConnectAllowed) {
+        continue;
+      }
+      final wanted =
+          onDevice == null ||
+          doc.devices[Uuid(pin.ref.deviceId)]?.designator == onDevice;
+      if (wanted &&
+          evaluateSpringBack(doc, fromTarget, to) is SpringBackClear) {
+        for (var i = 0; i <= index; i++) {
+          await press(tester, LogicalKeyboardKey.tab);
+        }
+        return index + 1;
+      }
+      index++;
+    }
+    throw StateError(
+      'no candidate from ${fromTarget!.citation} satisfies both tiers, so '
+      'this fixture can no longer demonstrate a keyboard commit at all',
+    );
+  }
+
   group('1 — the route, end to end', () {
     testWidgets('arrows reach a pin, W arms it, Enter commits ONE link with '
         'ONE undo entry', (tester) async {
@@ -200,7 +319,7 @@ void main() {
             'user knows the mode is worth being in',
       );
 
-      await press(tester, LogicalKeyboardKey.tab);
+      await tabToClearTarget(tester);
       expect(statusOf(tester), contains('→'));
 
       final undoBefore = controller.undo.canUndo;
@@ -237,7 +356,7 @@ void main() {
 
       await caretOnto(tester, 'MTX-1');
       await press(tester, LogicalKeyboardKey.keyW);
-      await press(tester, LogicalKeyboardKey.tab);
+      await tabToClearTarget(tester);
       await press(tester, LogicalKeyboardKey.enter);
 
       expect(
@@ -262,7 +381,7 @@ void main() {
       await pump(tester);
       await caretOnto(tester, 'MTX-1');
       await press(tester, LogicalKeyboardKey.keyW);
-      await press(tester, LogicalKeyboardKey.tab);
+      await tabToClearTarget(tester);
       await press(tester, LogicalKeyboardKey.enter);
 
       final link = doc.links.values.last;
@@ -334,7 +453,7 @@ void main() {
 
       await caretOnto(tester, 'MTX-1');
       await press(tester, LogicalKeyboardKey.keyW);
-      await press(tester, LogicalKeyboardKey.tab);
+      await tabToClearTarget(tester);
       await press(tester, LogicalKeyboardKey.enter);
       expect(doc.links, hasLength(6), reason: 'the premise: it committed');
 
@@ -471,7 +590,7 @@ void main() {
       final before = labelOps();
       await caretOnto(tester, 'MTX-1');
       await press(tester, LogicalKeyboardKey.keyW);
-      await press(tester, LogicalKeyboardKey.tab);
+      await tabToClearTarget(tester);
       await press(tester, LogicalKeyboardKey.enter);
       expect(labelOps(), greaterThan(before));
     });
@@ -526,7 +645,33 @@ void main() {
       await pump(tester);
       await caretOnto(tester, 'MTX-1');
 
+      // ═══════════════════════════════════════════════════════════════
+      // M5-D SPLIT THIS CLAIM IN TWO, AND ONLY THE TIER-1 HALF SURVIVES
+      // ═══════════════════════════════════════════════════════════════
+      // This test used to assert that every offered candidate COMMITS.
+      // That is DR-011.5 about tier 1 and it still holds. It is not true
+      // of tier 2 and was never meant to be: docs/05:476 makes a
+      // spring-back target *"droppable"* on purpose, so the gesture
+      // offers pins that then hesitate, which is the whole of what the
+      // tier exists to do (DR-112 §11.111 on the two tiers answering
+      // different questions).
+      //
+      // So the surviving claim is the sharper one: whichever candidate is
+      // chosen, the outcome is one of exactly two, and NEITHER is a
+      // tier-1 refusal. Either a cable is made, or a chip says which rule
+      // objects and NOTHING IS WRITTEN, which is the half of CR-017 that
+      // does not bend.
+      var committed = 0;
+      var sprangBack = 0;
       for (var round = 0; round < 4; round++) {
+        // RE-SEEDED EVERY ROUND, because the two outcomes leave the caret
+        // in different places: a commit parks it on the sink it just
+        // reached, and a spring-back drops it (the band retracted and the
+        // caret went with it, DR-114 §11.113.4). Without this the second
+        // round armed from `MTX-1 J01`, a pin the fixture has already
+        // filled, and refused for a reason that has nothing to do with
+        // what is being tested.
+        await caretOnto(tester, 'MTX-1');
         await press(tester, LogicalKeyboardKey.keyW);
         expect(
           statusOf(tester),
@@ -537,19 +682,49 @@ void main() {
           await press(tester, LogicalKeyboardKey.tab);
         }
         await press(tester, LogicalKeyboardKey.enter);
-        expect(
-          doc.links,
-          hasLength(6),
-          reason:
-              'round $round chose candidate #$round, and a pin that was '
-              'OFFERED was then refused',
-        );
-        expect(statusOf(tester), contains('connected'));
 
-        controller.undoLast();
-        await tester.pumpAndSettle();
-        expect(doc.links, hasLength(5));
+        final said = statusOf(tester) ?? '';
+        expect(
+          said,
+          isNot(startsWith('TOP-')),
+          reason:
+              'round $round chose candidate #$round, and a pin the gesture '
+              'OFFERED was then refused by TIER 1 — which is the defect '
+              'this test has always been about',
+        );
+
+        if (doc.links.length == 6) {
+          committed++;
+          expect(said, contains('connected'));
+          controller.undoLast();
+          await tester.pumpAndSettle();
+          expect(doc.links, hasLength(5));
+        } else {
+          sprangBack++;
+          expect(
+            doc.links,
+            hasLength(5),
+            reason: 'a spring-back writes NOTHING (CR-017)',
+          );
+          expect(
+            said,
+            matches(RegExp(r'^(SIG|DIR|CON|ELE)-\d{3} ')),
+            reason:
+                'and it says WHICH rule, id first, like every other '
+                'refusal on this screen (DR-011.5)',
+          );
+          // Back to aiming for the next round: the chip is up and the
+          // wire is still armed (DR-114 §11.113.4), so one Esc closes
+          // the chip and a second lets the cable go.
+          await press(tester, LogicalKeyboardKey.escape);
+          await press(tester, LogicalKeyboardKey.escape);
+        }
       }
+      expect(
+        committed + sprangBack,
+        4,
+        reason: 'every round ended in one of the two outcomes',
+      );
     });
 
     testWidgets('W on a pin nothing can accept REFUSES to arm, and says '
@@ -603,7 +778,7 @@ void main() {
           contains('Wire from'),
           reason: 'cable ${i + 1} armed from the caret',
         );
-        await press(tester, LogicalKeyboardKey.tab);
+        await tabToClearTarget(tester);
         await press(tester, LogicalKeyboardKey.enter);
         expect(
           doc.links,
@@ -784,7 +959,7 @@ void main() {
       await press(tester, LogicalKeyboardKey.keyW);
 
       final heard = spoken(tester);
-      await press(tester, LogicalKeyboardKey.tab);
+      await tabToClearTarget(tester);
       await press(tester, LogicalKeyboardKey.enter);
 
       expect(doc.links, hasLength(6), reason: 'the premise: it committed');
@@ -830,26 +1005,6 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    /// Tabs through the candidate ring until the live resolution line
-    /// names [designator] as the TARGET.
-    ///
-    /// Needed because "which pin is candidate #1" is a property of the
-    /// fixture's layout, and the first draft of these tests aimed at
-    /// whatever came first — which was SW-1, a network switch with no
-    /// HDMI output, so every chain correctly ENDED and no test ever
-    /// exercised one continuing.
-    Future<bool> tabUntilTarget(
-      WidgetTester tester,
-      String designator,
-    ) async {
-      for (var i = 0; i < 60; i++) {
-        await press(tester, LogicalKeyboardKey.tab);
-        final now = statusOf(tester);
-        if (now != null && now.contains('→ $designator')) return true;
-      }
-      return false;
-    }
-
     testWidgets('Shift at commit RE-ARMS from the sink device, so the next '
         'cable needs no W at all', (tester) async {
       // "ATV-1 -> MTX-1 IN1, MTX-1 OUT1 -> DA-1 IN, DA-1 OUT1 -> TV is
@@ -863,7 +1018,12 @@ void main() {
       // fixture the matrix is the device that does — a loopback between
       // two of its own jacks is legal (only pin-to-ITSELF is not) and is
       // the deterministic way to reach a sink that chains.
-      expect(await tabUntilTarget(tester, 'MTX-1'), isTrue);
+      //
+      // AND IT MUST ALSO CLEAR TIER 2, which the older `tabUntilTarget`
+      // could not ask. It stopped at the first target ON the device, and
+      // MTX-1's own free INPUTS come before its outputs, so it stopped on
+      // a sink-to-sink pair that `DIR-001` now springs back.
+      await tabToClearTarget(tester, onDevice: 'MTX-1');
       await chainCommit(tester);
 
       expect(doc.links, hasLength(6), reason: 'the first cable landed');
@@ -873,8 +1033,11 @@ void main() {
         reason: 'and the same sentence says the gesture continued',
       );
 
-      // NO `W`. Straight to choosing and committing again.
-      await press(tester, LogicalKeyboardKey.tab);
+      // NO `W`. Straight to choosing and committing again — and choosing
+      // still means a target both tiers accept, because the chain re-armed
+      // from an OUTPUT and its first candidate is another of the matrix's
+      // own outputs, which is `DIR-001`.
+      await tabToClearTarget(tester);
       await press(tester, LogicalKeyboardKey.enter);
       expect(
         doc.links,
@@ -890,7 +1053,7 @@ void main() {
       await pump(tester);
       await caretOnto(tester, 'MTX-1');
       await press(tester, LogicalKeyboardKey.keyW);
-      await press(tester, LogicalKeyboardKey.tab);
+      await tabToClearTarget(tester);
       await press(tester, LogicalKeyboardKey.enter);
 
       expect(statusOf(tester), isNot(contains('Chained')));
@@ -904,7 +1067,7 @@ void main() {
       await pump(tester);
       await caretOnto(tester, 'MTX-1');
       await press(tester, LogicalKeyboardKey.keyW);
-      expect(await tabUntilTarget(tester, 'MTX-1'), isTrue);
+      await tabToClearTarget(tester, onDevice: 'MTX-1');
 
       final aimed = statusOf(tester)!;
       final sink = aimed.split('→').last.trim().split(' ').first;
@@ -951,7 +1114,7 @@ void main() {
       await pump(tester);
       await caretOnto(tester, 'MTX-1');
       await press(tester, LogicalKeyboardKey.keyW);
-      await press(tester, LogicalKeyboardKey.tab);
+      await tabToClearTarget(tester);
       heard.clear();
       await chainCommit(tester);
       // Either outcome is one sentence; which one depends on the sink.

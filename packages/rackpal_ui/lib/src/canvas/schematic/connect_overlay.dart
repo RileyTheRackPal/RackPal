@@ -360,6 +360,17 @@ final class ConnectOverlay {
 /// drawn only while [source] is armed: a ring on every reachable pin of an
 /// IDLE sheet would be permanent chrome answering a question nobody asked.
 ///
+/// [refused] is the pin a cable JUST sprang back off, marked in
+/// [kSpringBackRefusedArgb] while its chip is up, and [refusedVisible] is
+/// docs/05 §7's flash: *"the target port flashes `#D55E00` twice at 90
+/// ms"*, which is two periods of it being false.
+///
+/// UNLIKE EVERYTHING ELSE HERE IT SURVIVES THE CARET LEAVING. The band
+/// retracted and the caret went with it, so without this mark the chip
+/// would float beside a pin with nothing to say the chip is ABOUT that
+/// pin. It is drawn at the caret's radius rather than a candidate's,
+/// because it is a place the eye is being sent and not one of a field.
+///
 /// [springBack] are the candidates a tier-2 rule objects to (docs/05 §7.3).
 /// A SUBSET OF [candidates] AND NEVER A SEPARATE POOL, because docs/05:476
 /// says these pins *"remain droppable, the chip and `[ Connect anyway ]`
@@ -393,6 +404,8 @@ ConnectOverlay buildConnectOverlay({
   DPt? freeEnd,
   List<PinRef> candidates = const <PinRef>[],
   Set<PinRef> springBack = const <PinRef>{},
+  PinRef? refused,
+  bool refusedVisible = true,
   List<PinRef> selected = const <PinRef>[],
   List<(PinRef, PinRef)> pairs = const <(PinRef, PinRef)>[],
   Uuid? selectedLink,
@@ -417,6 +430,7 @@ ConnectOverlay buildConnectOverlay({
   ];
   if (caretPin == null &&
       sourcePin == null &&
+      refused == null &&
       selectedPins.isEmpty &&
       selectedLinkPennants.isEmpty) {
     return const ConnectOverlay(
@@ -669,6 +683,26 @@ ConnectOverlay buildConnectOverlay({
         ),
       ),
     );
+  }
+
+  // THE REFUSAL MARK LAST, OVER EVERYTHING INCLUDING THE CARET. It is the
+  // most recent thing that happened on this sheet, and the one the chip
+  // beside it is talking about. Everything under it is an affordance; this
+  // is an outcome.
+  if (refused != null && refusedVisible) {
+    if (locatePin(scene, refused) case final pin?) {
+      ops.add(
+        OpCircle(
+          pin.centre,
+          radius,
+          stroke: const Stroke(
+            argb: kSpringBackRefusedArgb,
+            widthPt: 2.5,
+            scaleWithGeometry: false,
+          ),
+        ),
+      );
+    }
   }
 
   return ConnectOverlay(

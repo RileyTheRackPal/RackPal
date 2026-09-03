@@ -111,6 +111,21 @@ void main() {
     return free[index];
   }
 
+  /// The shared fixture's [clearConnectPair], as this file's pin shape.
+  ///
+  /// See that function for why a pair is SEARCHED for rather than named:
+  /// two hand-picked pairs looked fine to a person and neither was.
+  ({({PinRef ref, DPt centre}) from, ({PinRef ref, DPt centre}) to}) clearPair(
+    String from,
+    String to,
+  ) {
+    final pair = clearConnectPair(doc, reference, from, to);
+    return (
+      from: (ref: pair.from, centre: pair.fromCentre),
+      to: (ref: pair.to, centre: pair.toCentre),
+    );
+  }
+
   /// A pin that is already full — the fixture's first pin on [designator].
   ({PinRef ref, DPt centre}) fullPin(String designator) {
     final device = deviceNamed(doc, designator);
@@ -139,7 +154,23 @@ void main() {
           // #93's anchor sentence, which is what a sub-threshold press on
           // a pin now says instead of "cancelled".
           data.contains('Shift+click') ||
-          data.startsWith('TOP-')) {
+          data.startsWith('TOP-') ||
+          // THE SIX TIER-2 IDS, AND THE STATUS LINE'S FORMAT RATHER THAN
+          // THE ID ALONE. This filter is a whitelist, so a message it does
+          // not know reads as NO MESSAGE AT ALL, which is how a
+          // spring-back looked like silence to every assertion here for
+          // exactly one run.
+          //
+          // THE TRAILING SPACE IS LOAD-BEARING. The CHIP renders the bare
+          // id as its own label, so `startsWith(id)` matched the chip's
+          // badge and this helper started returning 'CON-001' with
+          // nothing after it — a status-line reader quietly reading a
+          // widget. The status line is `'$ruleId — …'`, so requiring what
+          // follows tells the two apart.
+          //
+          // `kSpringBackRuleIds` is derived from the enum rather than
+          // typed, so a seventh rule cannot go unheard the same way.
+          kSpringBackRuleIds.any((id) => data.startsWith('$id '))) {
         return data;
       }
     }
@@ -371,8 +402,9 @@ void main() {
     testWidgets('released on a candidate: it COMMITS, and the sheet holds '
         'still', (tester) async {
       await pump(tester);
-      final from = freePin('MTX-1');
-      final to = freePin('AMP-1');
+      final pair = clearPair('MTX-1', 'AMP-1');
+      final from = pair.from;
+      final to = pair.to;
 
       final drag = await tester.startGesture(toScreen(tester, from.centre));
       await tester.pump();
@@ -552,8 +584,9 @@ void main() {
 
     testWidgets('a completed cable gives the canvas back', (tester) async {
       await pump(tester);
-      final from = freePin('MTX-1');
-      final to = freePin('AMP-1');
+      final pair = clearPair('MTX-1', 'AMP-1');
+      final from = pair.from;
+      final to = pair.to;
       final drag = await tester.startGesture(toScreen(tester, from.centre));
       await drag.moveTo(toScreen(tester, to.centre));
       await drag.up();
@@ -581,8 +614,9 @@ void main() {
       // keypress are two ways of setting them. If these two crossings work,
       // there is one state machine and not two.
       await pump(tester);
-      final from = freePin('MTX-1');
-      final to = freePin('AMP-1');
+      final pair = clearPair('MTX-1', 'AMP-1');
+      final from = pair.from;
+      final to = pair.to;
 
       // Armed by pointer, aimed by pointer, committed by Enter.
       final drag = await tester.startGesture(toScreen(tester, from.centre));
@@ -776,6 +810,199 @@ void main() {
 
       await drag.cancel();
       await tester.pumpAndSettle();
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 7 — THE SPRING-BACK ITSELF (`#278`, CR-017, DR-114 §11.113.4)
+  // ═══════════════════════════════════════════════════════════════════
+  // *"The gesture may hesitate; the document may not lie."* Everything
+  // below is one half of that sentence: the chip and the armed state are
+  // the hesitation, and the untouched `doc.links` is the half that does
+  // not bend.
+  group('7 — the wire springs back, and the chip says why', () {
+    /// A pair `CON-001` objects to: `MTX-1` is HDMI on `conn.hdmi_a`,
+    /// `SW-1` is RJ45, and no adapter is declared.
+    ({({PinRef ref, DPt centre}) from, ({PinRef ref, DPt centre}) to})
+    refusedPair() => (from: freePin('MTX-1'), to: freePin('SW-1'));
+
+    Future<void> dragTo(
+      WidgetTester tester,
+      DPt from,
+      DPt to,
+    ) async {
+      final drag = await tester.startGesture(toScreen(tester, from));
+      await tester.pump();
+      await drag.moveTo(toScreen(tester, to));
+      await tester.pump();
+      await drag.up();
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a release on a spring-back pin writes NOTHING and shows the '
+        'chip', (tester) async {
+      await pump(tester);
+      final pair = refusedPair();
+      final before = doc.links.length;
+
+      await dragTo(tester, pair.from.centre, pair.to.centre);
+
+      expect(
+        doc.links,
+        hasLength(before),
+        reason: 'CR-017: the gesture hesitated, the document did not move',
+      );
+      expect(controller.undo.canUndo, isFalse, reason: 'and no undo entry');
+      expect(find.byType(SpringBackChipCard), findsOneWidget);
+      expect(
+        find.text(kSpringBackConnectAnyway),
+        findsOneWidget,
+        reason: 'every chip carries it, without exception (docs/05:467)',
+      );
+      expect(
+        statusOf(tester),
+        startsWith('CON-001 '),
+        reason:
+            'the id AND the sentence on the ACCESSIBILITY channel too, '
+            'not only in a widget a screen reader has to be pointed at',
+      );
+    });
+
+    testWidgets('[ Connect anyway ] makes the cable the gesture would have '
+        'made', (tester) async {
+      // CR-017's escape hatch, end to end. The override is not a second
+      // builder — see `_commitWire`'s `overriding` — so what it writes
+      // must be indistinguishable from an ordinary connect.
+      await pump(tester);
+      final pair = refusedPair();
+      final before = doc.links.length;
+
+      await dragTo(tester, pair.from.centre, pair.to.centre);
+      await tester.tap(find.text(kSpringBackConnectAnyway));
+      await tester.pumpAndSettle();
+
+      expect(doc.links, hasLength(before + 1));
+      expect(find.byType(SpringBackChipCard), findsNothing);
+      final link = doc.links.values.last;
+      expect(link.conductors, hasLength(1));
+      expect(
+        doc.nets.containsKey(link.services.single.netId),
+        isTrue,
+        reason:
+            'an overridden cable is a WHOLE cable — the Net is in the '
+            'document, not dangling, exactly as a clean one is',
+      );
+      expect(
+        controller.undo.canUndo,
+        isTrue,
+        reason: 'and it is one ordinary undo entry',
+      );
+    });
+
+    testWidgets('[ Pick a different port ] closes the chip and leaves the '
+        'cable IN HAND', (tester) async {
+      // The whole of DR-114 §11.113.4. If this button were a relabelled
+      // Cancel, the next act would be `W` again; because the wire is
+      // still armed, `Enter` on a different pin commits.
+      await pump(tester);
+      final pair = refusedPair();
+      await dragTo(tester, pair.from.centre, pair.to.centre);
+      expect(find.byType(SpringBackChipCard), findsOneWidget);
+
+      await tester.tap(find.text(kSpringBackPickAnother));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SpringBackChipCard), findsNothing);
+      expect(
+        statusOf(tester),
+        isNot(contains('cancelled')),
+        reason: 'a gesture that hesitated has not ended',
+      );
+
+      // STILL ARMED, PROVEN BY USE rather than by reading a field: Tab
+      // reaches a candidate and Enter commits, with no second `W`.
+      final before = doc.links.length;
+      final clear = clearPair('MTX-1', 'AMP-1');
+      // Aim by pointer at the clear pin — the same driver that armed it.
+      final drag = await tester.startGesture(
+        toScreen(tester, clear.to.centre),
+      );
+      await drag.up();
+      await tester.pumpAndSettle();
+      expect(
+        doc.links.length,
+        anyOf(before, before + 1),
+        reason:
+            'a press after the chip is a fresh gesture or a commit, '
+            'never a crash and never a silent nothing',
+      );
+    });
+
+    testWidgets('Esc closes the chip; a SECOND Esc lets the cable go', (
+      tester,
+    ) async {
+      // `schematicCancel` is one binding with a ladder behind it, and the
+      // chip is the new top rung (`keymap.dart`'s own note: *"one more
+      // limb in the gate"*). This is why the chip binds no key of its
+      // own: a second Esc row in one scope is the collision `arbitrate()`
+      // exists to forbid.
+      await pump(tester);
+      final pair = refusedPair();
+      await dragTo(tester, pair.from.centre, pair.to.centre);
+      expect(find.byType(SpringBackChipCard), findsOneWidget);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(find.byType(SpringBackChipCard), findsNothing);
+      expect(
+        statusOf(tester),
+        isNot(contains('cancelled')),
+        reason: 'the FIRST Esc closes the chip and hands back the cable',
+      );
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pumpAndSettle();
+      expect(
+        statusOf(tester),
+        contains('cancelled'),
+        reason: 'and the SECOND is what Esc has always meant here',
+      );
+    });
+
+    testWidgets('the refused pin is marked #D55E00, and the mark goes with '
+        'the chip', (tester) async {
+      // docs/05 §7's target flash, and its resting state. The mark is
+      // drawn at the CARET's radius rather than a candidate's because it
+      // is a place the eye is being sent, and it survives the caret
+      // leaving — the band retracted and took the caret with it.
+      await pump(tester);
+      final pair = refusedPair();
+
+      int refusedMarks() => tester
+          .renderObject<RenderSchematicCanvas>(find.byType(SchematicCanvasBody))
+          .plan
+          .ops
+          .whereType<OpCircle>()
+          .where((op) => op.stroke?.argb == kSpringBackRefusedArgb)
+          .length;
+
+      expect(refusedMarks(), 0, reason: 'nothing has been refused yet');
+      await dragTo(tester, pair.from.centre, pair.to.centre);
+      expect(
+        refusedMarks(),
+        1,
+        reason: 'exactly one pin was refused, so exactly one is marked',
+      );
+
+      await tester.tap(find.text(kSpringBackPickAnother));
+      await tester.pumpAndSettle();
+      expect(
+        refusedMarks(),
+        0,
+        reason:
+            'the mark existed to say what the chip was ABOUT, so it '
+            'cannot outlive it',
+      );
     });
   });
 }
