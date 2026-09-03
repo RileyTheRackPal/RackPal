@@ -15297,6 +15297,28 @@ forbids in terms. Correcting a sentence is cheaper than moving scope to match it
 *Rejected: deleting `genderApplies` until `CON-002` lands.* It has two readers today and removing it
 would take the GENDER column out of a shipped surface to tidy a docstring.
 
+**11.109.6 THE COUNTER-EXAMPLE THIS RULING NAMED IS NOT ONE, AND M5-D MEASURED IT.** §11.109's closing
+paragraph offered `PortDef.pinoutVariant` as the field pointing the other way, *"owed a consumer"*,
+on the ground that docs/02 §5.2 says it *"exists solely to make `DIR-003` detectable"* and `DIR-003`
+is one of the six tier-2 rules v1 ships.
+
+**That reasoning took a sentence at face value instead of reading the data**, which is the failure
+this corpus keeps meeting. Every `pinoutVariant` the seed catalog authors is a connector WIRING
+pinout: `xantech-stereo` and `mono-tip-sleeve`. Neither encodes the emitter/receiver distinction
+`DIR-003` turns on. What does is the family split, `ctl.ir_emitter` against `ctl.ir_receiver`, nine
+ports and fourteen, exactly as HDBaseT's own family carries `SIG-001`. `DIR-003` shipped at M5-D
+without reading `pinoutVariant` at all.
+
+**So `pinoutVariant` is in the same position `genderApplies` was**, and §11.109's own general rule
+governs it rather than excepting it: a field may ship ahead of the rule that named it, and the test
+is whether it has a reader NOW. Today it has none. That is a fact to carry into the census that asks
+about it next, not a defect to fix here: docs/02 §5.2's sentence is the thing that is wrong, and
+correcting a derived sentence is §12's business.
+
+**The ruling's substance is untouched.** `CON-002` is still v1.2, `genderApplies` still has its two
+readers, and the general rule still stands. Only the example chosen to illustrate its opposite was
+picked without measuring, and the measurement is now on the record beside it.
+
 ### §11.110 DR-111 · `#261` is `#322` seen from the other side, and DR-027 already ruled which one owns it
 
 **Question.** M5-B's fourth chapter, `#261`, is *"the acknowledgement reaches `T0.02`"*, and its own
@@ -15461,6 +15483,195 @@ pair obligation, and a second rule id for a condition `RCK-001` already names.
 Cheapest and the worst of the three. "Extent" is the rack's physical bounds; stretching it to mean
 occupancy makes a catalogue row describe something other than what its rule checks, and CR-021 makes
 that table the definition of what exists.
+
+### §11.112 DR-113 · `SIG-001` fires on the joint in front of it, and "switch port" is a path question tier 2 cannot ask
+
+**Question.** M5-D builds the six tier-2 rules, and the flagship one cannot be written from its own
+row. docs/02 §5.2 gives `SIG-001` as *"HDBaseT port connected to a `net.ethernet` **switch** port.
+The flagship rule: PoH into a switch port"*, and nothing in the model says which `net.ethernet` ports
+belong to a switch.
+
+**11.112.1 MEASURED, AND THE ONLY TWO CANDIDATES ARE BOTH WRONG.** In the seed catalog a switch
+carries `tags: const ['poe', 'switch']` and a patch panel carries `glyph:
+DeviceGlyph.patchPanel`. **A hardware-damage rule may not rest on either.** Tags are free text a
+person edits and a community template will spell differently; a glyph is a drawing choice, and
+`device_glyph.dart` exists to pick a picture. A rule keyed to a tag is a rule that stops working the
+day somebody renames one, silently, with no test able to notice.
+
+**What IS modelled is the opposite fact.** CR-057 gives the patch panel `isPassthrough: true` and a
+`passthroughPairs` list, and the seeded panels declare both. So the product can say with certainty
+which ports pass a signal through to another connector, and cannot say which ports belong to a
+switch.
+
+**11.112.2 THE PATCH PANEL IS NOT A CARVE-OUT, IT IS THE CASE CR-017 ALREADY RULED ON.** Patching an
+HDBaseT run into a panel and out the back is ordinary structured cabling, and it is the commonest
+layout this product will ever draw. A predicate reading only the signal families would fire on every
+one of them.
+
+The reason it must not is not merely that it would be annoying. **It is the same reason CR-017 gives
+for demoting two of Class A's members unconditionally**: *"Dante endpoints with no network path"* and
+*"AVB traversing a non-AVB switch"* are *"logically unevaluatable at drag time, because the link being
+drawn may be the one that completes the path."* HDBaseT into a panel is that exact shape. Whether the
+run ends on a switch depends on what is on the far side of the panel, which may be nothing yet, and
+may be the next cable the person draws.
+
+**11.112.3 Ruled: tier-2 `SIG-001` evaluates THE JOINT, not the path.** It fires when an HDBaseT port
+is connected directly to a `net.ethernet` port that TERMINATES the signal, which the model expresses
+as the port's device not being a passthrough. It does not fire on a passthrough connector, and it
+asks nothing about what lies beyond one.
+
+This is a reading of §5.2's row and not an amendment to it: the row's *"switch port"* is the trade's
+name for the terminating case, and **the catalogue count does not move**. `SIG-001` stays one of the
+six tier-2 rules, with the same id, the same severity and the same remedy.
+
+**11.112.4 The consequence is stated rather than left to be discovered: v1 does not catch
+HDBaseT through a panel into a switch.** That is the honest position and it is consistent, not a
+hole this ruling opens. The rule that WOULD catch it is a path rule, path rules are exactly what
+CR-017 sends to tier 3, and docs/02 §5.3's fourteen do not include one: Dante-with-no-path and
+AVB-across-a-non-AVB-switch are not in the v1 catalogue either, they sit with the remaining forty
+that AC-040 defers to v1.2 behind a fixture corpus. **The same milestone that gains a path evaluator
+gains all three of them together.**
+
+*Rejected: firing on any `net.ethernet` port.* It buys the through-panel case at the price of a false
+failure on the most common layout in the product, and a rule that springs back on correct designs is
+a rule people learn to click past. Roadmap M5's own risk list names credibility as the thing the
+catalogue is protecting; the flagship rule crying wolf is how that is spent.
+
+*Rejected: reading the `switch` tag, or the patch-panel glyph.* Both are unversioned free choices
+made for other purposes, and `AC-051`'s fixture pair cannot protect a predicate whose input a
+community template may spell however it likes.
+
+**11.112.5 THE RULING GENERALISES ONE RULE FURTHER THAN IT WAS WRITTEN, AND ITS OWN NEAR-MISS TEST IS
+WHAT FOUND THAT.** §11.112.3 speaks only of `SIG-001`. Building it, the AC-051 near-miss for the
+passthrough case went red not on `SIG-001`, which cleared correctly, but on **`SIG-002`**: a patch
+panel's RJ45 declares `net.ethernet` and does not list `video.hdbaset` in `acceptedFamilies`, so
+patching HDBaseT through a panel sprang back anyway, one rule along, for the same wrong reason.
+
+**A passthrough is a physical joint and not a signal endpoint.** `SIG-002` asks what THE SINK accepts,
+and a patch panel is not the sink; it is passive copper in the middle of a run, carrying whatever the
+cable carries. Its jack declares `net.ethernet` because that is what the connector IS, not a claim
+about what may pass through it, and asking a panel to enumerate every family that runs on RJ45 is a
+list nobody can finish. So `SIG-002` skips a passthrough sink as `SIG-001` skips a passthrough
+target.
+
+**`CON-001` DELIBERATELY DOES NOT SKIP ONE**, and the line is worth stating because it is the whole
+distinction: you really do plug into that jack, so the connectors really must mate. Physical rules
+apply at a passthrough; signal rules do not. `DIR-001` and `ELE-006` are unaffected by construction,
+neither being a question about what the far end accepts.
+
+*Rejected: deferring `SIG-001` to v1.2 with the path rules.* It is *"the highest-value validation in
+the product"* (`seed_registries.dart`, authored for it), the direct joint is the case that actually
+damages a switch, and it is evaluatable today. Half a rule that fires on the damaging case beats no
+rule at all, provided the half it does not cover is written down. It is, here.
+
+### §11.113 DR-114 · A verdict is not a cursor: the spring-back ring takes the severity hex, `[ Why? ]` waits for its viewer, and a gesture that hesitated has not ended
+
+**Question.** `#278` builds the chip and the spring-back interaction, and it is the first thing in the
+product that paints a rule's verdict on a canvas. Three questions had to be settled before a pixel
+was drawn: what colour the amber ring and the target flash are, whether `[ Why? ]` ships, and what
+state the gesture is in once the wire has sprung back.
+
+**11.113.1 THE COMMENT THAT ALREADY REFUSED THE HEX IS HALF WRONG, AND THE HALVES POINT IN OPPOSITE
+DIRECTIONS.** `schematic_canvas_screen.dart`'s `_connectOverlayStyle` declined docs/05 §7's fixed
+figures on a stated ground:
+
+> docs/05 §7 gives the illumination figures in fixed hex, `#F0E442` for a compatible port and
+> `#E69F00` for one that would spring back, and those are PAL-1 colours belonging to the signal
+> taxonomy.
+
+Measured against the palette tables, that is wrong about the first colour and right about the second,
+and the correction does not merely repair a comment: it reverses which way the argument runs.
+
+**`#F0E442` is not a signal colour at all.** PAL-2 (§14, docs/05:348) reserves it: *"Yellow `#F0E442`
+is reserved for selection and focus and is **never a cable**."* docs/05:284 carries it in the palette
+table with the family column reading *(reserved)* and the role reading *"Selection / focus"*. So the
+compatible ring was specified in that hex precisely BECAUSE it is the reserved focus colour, and the
+comment refused it on a claim the corpus contradicts in the same document, eight rows up from the
+sentence it was reading.
+
+**`#E69F00` and `#D55E00` genuinely are cable colours**, `audio.analog` and `audio.digital`
+respectively (docs/01 §6.3, §6.4). That half of the comment holds. **But docs/05 §8 already paints
+validation in exactly those two hexes**, over cables that may themselves be them:
+
+| Severity | Mark |
+|---|---|
+| `error` | `#D55E00` chevron-hatch stroked along the run at 0.5x weight, plus a badge at the midpoint |
+| `warning` | `#E69F00` 0.6 px dotted parallel line offset 1 gu below the run, plus a badge |
+
+The corpus therefore crossed this line on purpose and stated how it stays legible: the discriminator
+between a `#D55E00` cable and a `#D55E00` error mark is **shape and badge**, not hue. That is the same
+answer PAL-1 gives for two families sharing a grey, and it is why the collision is survivable here.
+
+**11.113.2 Ruled: cursor chrome takes theme roles, a verdict takes the severity hex.** The line runs
+between what the overlay is SAYING, not between which file draws it:
+
+- **Chrome** is the caret ring, the source ring, the rubber band, the multi-draw selection ring and
+  the selected cable's pennant outline. Every one of them marks *where the user is* or *what the user
+  picked*. They keep `scheme.primary`, `scheme.tertiary` and `scheme.secondary`, and the existing
+  argument for that is untouched and correct: a cursor must read in both brightnesses and against
+  whatever theme its owner chose.
+- **A verdict** is the spring-back ring and the target flash. They state what a RULE decided. They
+  take `#E69F00` and `#D55E00`, fixed, the same two figures docs/05 §8 gives the DRC mark that will
+  appear on the very same cable the moment the user clicks `[ Connect anyway ]`.
+
+**The reason is continuity of meaning across two surfaces, and it is not aesthetic.** Under a theme
+role, a port that would spring back is amber during the drag and `scheme.error` (whatever the user's
+theme makes that) in the DRC list four seconds later. The user learns two colours for one verdict, and
+the one they learn first moves when they change theme. Under the fixed hex they learn one. **The
+compatible ring's `#F0E442` follows the same rule from the other side**: it is PAL-2's reserved focus
+colour, so a candidate ring is one of the two things that colour exists for, and taking it is
+obedience to the palette rather than a raid on it.
+
+*Rejected: theme roles throughout, for one policy per file.* It is a tidier rule and it buys the
+tidiness by making the product's error colour a preference. Consistency inside one file is worth less
+than consistency across the two surfaces a user sees three seconds apart.
+
+*Rejected: a derived dark-mode pair.* docs/05:278-279 does publish a dark variant per family, so the
+mechanism exists, and a lightened amber would read better on a dark sheet. It is refused HERE because
+those variants are registry data the PAL-1 gate checks, and inventing two more outside it would put
+uncheckable colours in the one palette three gates exist to keep honest. **If the dark sheet proves
+illegible, the fix is a dark variant for the severity pair IN the registry, checked like the rest, and
+that is a ruling with a measurement behind it rather than a constant typed into a widget.**
+
+**11.113.3 Ruled: `[ Why? ]` does not ship with the chip.** `design-ux-schematic.md`'s worked chip
+carries three buttons, `[ Insert HDBaseT receiver ]  [ Pick a different port ]  [ Why? ]`, and the
+third has no destination in this build. AC-058/D1 already adjudicated exactly that button:
+
+> `ux-schematic`'s reason chip has a `[ Why? ]` button that leads nowhere. Rule rationale exists in
+> the model (`CompatibilityRuleDef.rationale`, `remedyHint`) with no viewer.
+
+and §10(g) assigns the viewer to **M5-F3**, noting the file it publishes *"deliberately does not
+exist"* because canon §5 IS the catalogue. **So the button is a named defect with a named fix in a
+named later chapter of this same milestone.** Shipping it now would be building the defect on purpose,
+in the milestone that promised to remove it, four chapters ahead of the code that would make it true.
+
+The chip is not thereby silent about why. `SpringBackChip.explanation` is the second line of the
+mockup, inline and always present, and it carries the trade reason in the trade's words: *"HDBaseT
+uses Ethernet cabling but is not interoperable; PoH may damage the switch."* `[ Why? ]` goes DEEPER
+than that, to the catalogue entry, which is the thing that does not exist yet.
+
+*Rejected: shipping it disabled with a tooltip.* It sets the layout now and is honest about the state.
+It also puts a permanently dead control on the highest-traffic chip in the editor, and "honestly
+greyed" is still a button a user aims at once per rule before learning not to.
+
+**11.113.4 Ruled: a spring-back leaves the gesture ARMED, and that is CR-017 read literally.** The
+governing sentence is *"the gesture may hesitate; the document may not lie"*. **A gesture that
+hesitated has not ended.** So the wire springs back to the source and stays armed there: `_wireFrom`
+holds, the candidate rings stay lit, the caret stays where the user aimed.
+
+This is what makes `[ Pick a different port ]` a real button rather than a relabelled Cancel. It
+dismisses the chip and returns the user to the state they were in one frame before the release, still
+aiming, with the field of candidates still on screen. Under the alternative it closes a dialog and
+leaves them to press `W` again to retry the thing they were just told about, which charges a fresh arm
+for every near miss on a gesture the roadmap calls the highest-throughput one in the editor.
+
+**The document is untouched either way, which is the half of CR-017 that does not bend.** Nothing is
+written until `[ Connect anyway ]`, and the armed state is screen state exclusively.
+
+*Rejected: full cancellation, matching the tier-1 refusal path.* Tier 1 cancels because there is
+nothing to escape to (docs/02:854), which is the exact property tier 2 does not have: a spring-back is
+droppable by design, docs/05:476 says so in as many words, and a state machine that treated the two
+identically would be discarding the distinction the whole tier exists to draw.
 
 ## 12. Superseded rulings
 

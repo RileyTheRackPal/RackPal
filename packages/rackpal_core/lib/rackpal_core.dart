@@ -142,6 +142,7 @@ export 'src/derived/port_facts.dart';
 export 'src/derived/port_fill.dart';
 export 'src/derived/port_set_resolution.dart';
 export 'src/derived/schedule.dart';
+export 'src/derived/spring_back_rules.dart';
 export 'src/derived/structure_matrix.dart';
 export 'src/derived/structure_table.dart';
 export 'src/derived/template_facts.dart';

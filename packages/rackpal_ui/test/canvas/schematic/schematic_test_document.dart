@@ -19,6 +19,7 @@
 // non-empty and the status strip's count has something true to say.
 
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/rackpal_ui.dart';
 
 /// A `TextMeasurer` with plausible metrics and no font file.
 ///
@@ -285,3 +286,96 @@ SchematicScene buildFixtureScene(RackDocument doc) =>
 /// The fixture device whose designator is [designator].
 DeviceInstance deviceNamed(RackDocument doc, String designator) =>
     doc.devices.values.firstWhere((d) => d.designator == designator);
+
+/// A pin on [from] and a pin on [to] that BOTH validation tiers accept.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// M5-D MADE THE PAIR MATTER, AND "TWO FREE PINS" STOPPED BEING ENOUGH
+/// ═══════════════════════════════════════════════════════════════════════
+/// Suites across this directory drew the first free pin of `MTX-1` to the
+/// first free pin of `AMP-1` and asserted the gesture committed. Both
+/// halves were wrong about the cable and nothing in the product could say
+/// so until the six tier-2 rules shipped:
+///
+///  * `MTX-1` is the seed catalog's V03, sixteen HDMI INPUTS and then
+///    sixteen outputs, with the first four inputs wired. So its first free
+///    pin is `hdmi.in.5`, a SINK, and `AMP-1`'s first free pin is a sink
+///    too. **Two inputs with nothing driving the cable**, which is
+///    `DIR-001`.
+///  * Arming from an OUTPUT instead does not rescue it. `AMP-1` is A01 and
+///    its first free sink is `src.2.l`, an RCA analog jack, so HDMI-out
+///    into RCA-in is `SIG-002` and would be `CON-001` besides.
+///
+/// **The rules are right both times and the fixture choice was wrong**, so
+/// what moves is which pins a test picks.
+///
+/// IT SEARCHES RATHER THAN NAMING A PAIR, and that is the lesson rather
+/// than laziness: both hand-picked pairs above looked obviously fine to a
+/// person and neither was. A premise chosen by eye can be wrong, and these
+/// were, twice in one afternoon. A search cannot be, and when a seventh
+/// rule lands it re-answers rather than going stale.
+///
+/// THROWS rather than returning null when no pair exists, because that is
+/// not a case any caller can handle: it means this fixture can no longer
+/// demonstrate a commit at all, which is a fact about the fixture and
+/// wants a loud failure rather than a skipped assertion.
+({PinRef from, PinRef to, DPt fromCentre, DPt toCentre}) clearConnectPair(
+  RackDocument doc,
+  SchematicScene scene,
+  String from,
+  String to,
+) {
+  List<({PinRef ref, DPt centre, ConnectTarget target})> freeOn(String d) {
+    final device = deviceNamed(doc, d);
+    final symbol = scene.symbols.firstWhere((s) => s.id == device.id.v);
+    return <({PinRef ref, DPt centre, ConnectTarget target})>[
+      for (final port in symbol.allPorts)
+        if (portConductorCount(
+              doc,
+              derivePortId(device.id, PortKey(port.key)),
+            ) ==
+            0)
+          if (resolveConnectTarget(
+                doc,
+                deviceId: device.id,
+                portKey: port.key,
+              )
+              case final t?)
+            (
+              ref: PinRef(deviceId: symbol.id, portKey: port.key),
+              centre: symbolPortCentre(symbol, port),
+              target: t,
+            ),
+    ];
+  }
+
+  for (final a in freeOn(from)) {
+    for (final b in freeOn(to)) {
+      if (evaluateConnect(doc, a.target, b.target) is! ConnectAllowed) continue;
+      if (evaluateSpringBack(doc, a.target, b.target) is! SpringBackClear) {
+        continue;
+      }
+      return (
+        from: a.ref,
+        to: b.ref,
+        fromCentre: a.centre,
+        toCentre: b.centre,
+      );
+    }
+  }
+  throw StateError(
+    'no cable between $from and $to satisfies both validation tiers, so '
+    'this fixture can no longer demonstrate a commit at all',
+  );
+}
+
+/// Every tier-2 rule id, derived from the enum rather than typed out.
+///
+/// The suites' `statusOf` helpers are WHITELISTS: a message they do not
+/// recognise reads as no message at all, which is how a spring-back looked
+/// exactly like silence to every assertion in this directory for one test
+/// run. Deriving the list means a seventh rule cannot go unheard the same
+/// way, which a typed list of six would have allowed silently.
+final List<String> kSpringBackRuleIds = <String>[
+  for (final rule in SpringBackRule.values) rule.id,
+];

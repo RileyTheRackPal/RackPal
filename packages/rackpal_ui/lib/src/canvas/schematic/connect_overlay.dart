@@ -144,6 +144,66 @@ LocatedPin? locatePin(SchematicScene scene, PinRef ref) {
   return null;
 }
 
+/// docs/05 §7.3's amber "would spring back" ring: `#E69F00`, FIXED.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// NOT A FIELD OF [ConnectOverlayStyle], AND THAT IS DR-114 MADE
+/// STRUCTURAL RATHER THAN DOCUMENTARY
+/// ═════════════════════════════════════════════════════════════════════
+/// Every other colour this overlay draws with is a theme role the screen
+/// passes in, and the argument for that is untouched: a caret, a source
+/// ring, a band and a selection all mark WHERE THE USER IS or WHAT THEY
+/// PICKED, and a cursor has to read against whatever theme its owner
+/// chose. This one is different in kind. It states what a RULE decided.
+///
+/// DR-114 §11.113.2 fixes it so a verdict does not change colour between
+/// the drag and the DRC mark four seconds later: docs/05 §8 gives that
+/// mark `#E69F00` for `warning` and `#D55E00` for `error`, painted over
+/// cables that may themselves be those hues, with SHAPE AND BADGE as the
+/// discriminator rather than the hue. Under a theme role the user would
+/// learn two colours for one verdict, and the one they learned first
+/// would move when they changed theme.
+///
+/// **So there is deliberately no knob.** A `springBackArgb` parameter
+/// beside the other five would be an open invitation to pass
+/// `scheme.error`, which is exactly the thing ruled against. The colour
+/// that is not a preference does not live in the class whose whole
+/// content is preferences.
+///
+/// The comment this replaces refused the fixed hexes wholesale, on the
+/// ground that `#F0E442` and `#E69F00` are *"PAL-1 colours belonging to
+/// the signal taxonomy"*. §11.113.1 measured that: `#F0E442` is PAL-2's
+/// RESERVED selection-and-focus colour and is *"never a cable"*, so the
+/// candidate ring was specified in it precisely because it is reserved
+/// for this. Only the second half held.
+const int kSpringBackRingArgb = 0xFFE69F00;
+
+/// The colour of a spring-back that HAS happened: `#D55E00`, FIXED.
+///
+/// docs/05 §7's release feedback — *"the target port flashes `#D55E00`
+/// twice at 90 ms"* — and the chip's badge and rule id, which state the
+/// same verdict in words.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// TWO COLOURS FOR ONE RULE, AND THE PAIR IS NOT ARBITRARY
+/// ═════════════════════════════════════════════════════════════════════
+/// The corpus specifies amber for the ring and vermillion for the flash
+/// without saying why, and the reason is worth writing down because it
+/// is also the reason both are fixed. They are docs/05 §8's `warning` and
+/// `error` hues in that order, and the order is the TENSE:
+///
+///  * BEFORE THE RELEASE the rule has not fired. The pin is droppable
+///    (docs/05:476) and the ring is a caution about what would happen,
+///    so it wears the caution colour.
+///  * AFTER THE RELEASE it has fired. The cable sprang back, and the
+///    flash and the chip wear the error colour — the same one the DRC
+///    mark will wear on this cable the moment `[ Connect anyway ]` is
+///    pressed and the finding becomes computable.
+///
+/// So a user who learns these two learns them once, and the second one
+/// is already familiar by the time they meet the issues list.
+const int kSpringBackRefusedArgb = 0xFFD55E00;
+
 /// The colours and sizes the overlay draws with, in SCREEN pixels.
 ///
 /// Screen pixels, not diagram units, and every field says so by being
@@ -183,18 +243,22 @@ final class ConnectOverlayStyle {
   /// the chip and `[ Connect anyway ]` are what handles them". Neither
   /// half of that is expressible in M2.
   ///
-  /// DR-011.5 deletes `[ Connect anyway ]`: docs/02:854 gives T1's escape
-  /// as "None. There is nothing to escape to", and docs/02 governs. And
-  /// the spring-back tier IS the six T2 rules — `SIG-001`, `DIR-001`,
-  /// `CON-001` and the rest — every one of them deferred to M5
-  /// (docs/09:299). So this build knows exactly two states for a pin: the
-  /// cable may land on it, or a tier-1 rule refuses it outright. Drawing
-  /// an amber "you may drop here but it will spring back" ring would be
-  /// inventing a verdict the model cannot compute, which is the same
-  /// fabrication G4 forbids for a value.
+  /// DR-011.5 deletes `[ Connect anyway ]` FOR TIER 1: docs/02:854 gives
+  /// T1's escape as "None. There is nothing to escape to", and that half
+  /// still stands. The other half was a statement about M2 and has since
+  /// come true: the spring-back tier IS the six T2 rules, `SIG-001`,
+  /// `DIR-001`, `CON-001` and the rest, all six built in M5-D. Until they
+  /// existed, drawing an amber "you may drop here but it will spring
+  /// back" ring would have been inventing a verdict the model could not
+  /// compute, the same fabrication G4 forbids for a value. It can compute
+  /// it now, so the ring is drawn, and the reason it took three
+  /// milestones is recorded here rather than deleted.
   ///
-  /// The second ring arrives with M5's validation, and with a colour taken
-  /// from the same place the first tier's is.
+  /// THE SECOND RING HAS ARRIVED, and it is NOT a field here. See
+  /// [kSpringBackRingArgb]: it is a fixed figure rather than a theme role
+  /// because it states a VERDICT and not a position, and DR-114 §11.113.2
+  /// makes that structural by giving it no knob. Everything in this class
+  /// is chrome; the one colour that is not lives outside it.
   final int candidateArgb;
 
   /// Candidate rings are drawn INSIDE the pin's own glyph, not around it,
@@ -228,6 +292,7 @@ final class ConnectOverlay {
     this.selected = const <LocatedPin>[],
     this.bands = const <List<DPt>>[],
     this.selectedLinkPennants = const <DBox>[],
+    this.springBack = const <LocatedPin>[],
   });
 
   /// Appended AFTER every other op in the frame — see
@@ -267,6 +332,16 @@ final class ConnectOverlay {
   /// ops, and so the zero case is observable as itself.
   final List<DBox> selectedLinkPennants;
 
+  /// The candidates a tier-2 rule would spring back, resolved against the
+  /// sheet: a SUBSET of the pins that got a ring, wearing the amber one.
+  ///
+  /// Published rather than left to op-counting for this file's usual
+  /// reason and one sharper: the two rings differ only in ARGB, so a test
+  /// that counted `OpCircle`s could not tell an amber ring from a
+  /// candidate ring and would pass while the overlay drew the wrong
+  /// verdict on every pin.
+  final List<LocatedPin> springBack;
+
   bool get isEmpty => ops.isEmpty;
 }
 
@@ -284,6 +359,26 @@ final class ConnectOverlay {
 /// [candidates] are the pins the armed cable may legally land on. They are
 /// drawn only while [source] is armed: a ring on every reachable pin of an
 /// IDLE sheet would be permanent chrome answering a question nobody asked.
+///
+/// [refused] is the pin a cable JUST sprang back off, marked in
+/// [kSpringBackRefusedArgb] while its chip is up, and [refusedVisible] is
+/// docs/05 §7's flash: *"the target port flashes `#D55E00` twice at 90
+/// ms"*, which is two periods of it being false.
+///
+/// UNLIKE EVERYTHING ELSE HERE IT SURVIVES THE CARET LEAVING. The band
+/// retracted and the caret went with it, so without this mark the chip
+/// would float beside a pin with nothing to say the chip is ABOUT that
+/// pin. It is drawn at the caret's radius rather than a candidate's,
+/// because it is a place the eye is being sent and not one of a field.
+///
+/// [springBack] are the candidates a tier-2 rule objects to (docs/05 §7.3).
+/// A SUBSET OF [candidates] AND NEVER A SEPARATE POOL, because docs/05:476
+/// says these pins *"remain droppable, the chip and `[ Connect anyway ]`
+/// are what handles them"* — a spring-back target the cable could not
+/// reach would be a tier-1 refusal wearing the wrong colour. Anything here
+/// that is not also in [candidates] is silently ignored rather than drawn,
+/// so a caller that got the subset relation wrong cannot put a ring on a
+/// pin the commit would refuse outright.
 ///
 /// [selected] is the multi-draw selection (#93). Unlike [candidates] it is
 /// drawn on an IDLE sheet too, because it is not a derived affordance —
@@ -308,6 +403,9 @@ ConnectOverlay buildConnectOverlay({
   PinRef? source,
   DPt? freeEnd,
   List<PinRef> candidates = const <PinRef>[],
+  Set<PinRef> springBack = const <PinRef>{},
+  PinRef? refused,
+  bool refusedVisible = true,
   List<PinRef> selected = const <PinRef>[],
   List<(PinRef, PinRef)> pairs = const <(PinRef, PinRef)>[],
   Uuid? selectedLink,
@@ -332,6 +430,7 @@ ConnectOverlay buildConnectOverlay({
   ];
   if (caretPin == null &&
       sourcePin == null &&
+      refused == null &&
       selectedPins.isEmpty &&
       selectedLinkPennants.isEmpty) {
     return const ConnectOverlay(
@@ -351,6 +450,10 @@ ConnectOverlay buildConnectOverlay({
 
   final ops = <DiagramOp>[];
   var band = const <DPt>[];
+  // Accumulated INSIDE the candidate walk rather than resolved separately,
+  // so what is published cannot drift from what was painted: one pass
+  // decides the colour and records the pin in the same breath.
+  final springBackPins = <LocatedPin>[];
 
   // THE SELECTED CABLE'S FLAGS, UNDER EVERYTHING — the most persistent mark
   // this overlay draws, so the bottom of its stack for the same reason the
@@ -425,6 +528,21 @@ ConnectOverlay buildConnectOverlay({
       widthPt: style.ringWidthPx,
       scaleWithGeometry: false,
     );
+    // docs/05:476: *"the SAME ring in amber `#E69F00`, no pulse."* Same
+    // radius, same width, one colour apart — because the pin is equally
+    // reachable and the difference is entirely what happens on release.
+    // A larger or heavier amber ring would read as "more of a target",
+    // which is the opposite of what it means.
+    //
+    // NO PULSE IS FREE HERE. §7.2's 900 ms breathing pulse on the
+    // COMPATIBLE ring is not built either, so "amber, no pulse" and
+    // "yellow, pulsing" currently differ by the one channel that is
+    // implemented. When the pulse arrives it must skip these.
+    final springBackStroke = Stroke(
+      argb: kSpringBackRingArgb,
+      widthPt: style.ringWidthPx,
+      scaleWithGeometry: false,
+    );
     for (final ref in candidates) {
       // Skip the one the caret is on: it gets the caret's own, larger ring
       // a few lines below, and two concentric circles on one pin reads as
@@ -432,7 +550,15 @@ ConnectOverlay buildConnectOverlay({
       if (ref == caret) continue;
       final pin = locatePin(scene, ref);
       if (pin == null) continue;
-      ops.add(OpCircle(pin.centre, radius, stroke: stroke));
+      final warns = springBack.contains(ref);
+      if (warns) springBackPins.add(pin);
+      ops.add(
+        OpCircle(
+          pin.centre,
+          radius,
+          stroke: warns ? springBackStroke : stroke,
+        ),
+      );
     }
   }
 
@@ -559,6 +685,26 @@ ConnectOverlay buildConnectOverlay({
     );
   }
 
+  // THE REFUSAL MARK LAST, OVER EVERYTHING INCLUDING THE CARET. It is the
+  // most recent thing that happened on this sheet, and the one the chip
+  // beside it is talking about. Everything under it is an affordance; this
+  // is an outcome.
+  if (refused != null && refusedVisible) {
+    if (locatePin(scene, refused) case final pin?) {
+      ops.add(
+        OpCircle(
+          pin.centre,
+          radius,
+          stroke: const Stroke(
+            argb: kSpringBackRefusedArgb,
+            widthPt: 2.5,
+            scaleWithGeometry: false,
+          ),
+        ),
+      );
+    }
+  }
+
   return ConnectOverlay(
     ops: ops,
     caret: caretPin,
@@ -567,6 +713,7 @@ ConnectOverlay buildConnectOverlay({
     selected: List<LocatedPin>.unmodifiable(selectedPins),
     bands: List<List<DPt>>.unmodifiable(bands),
     selectedLinkPennants: List<DBox>.unmodifiable(selectedLinkPennants),
+    springBack: List<LocatedPin>.unmodifiable(springBackPins),
   );
 }
 
