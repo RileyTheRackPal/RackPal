@@ -282,6 +282,15 @@ enum _StepKind {
   // placement that COPIED them. This arm is the first that changes one.
   setDeviceWidth,
 
+  // M5-C/`#270`. `Rack.zeroUChannels` is a codec surface nothing had ever
+  // written, so its bytes had never been carried across an interleaving.
+  // The occupant half (`SetZeroUPositionCommand`) is covered by
+  // `zero_u_commands_test.dart`'s apply/revert/apply rather than here,
+  // because it needs a 0U TEMPLATE in the fixture and this generator's
+  // devices all share one rail-mounted body.
+  addZeroUChannel,
+  removeZeroUChannel,
+
   // M5-B3, and `ProjectSettings.ruleOverrides` was in the same state:
   // a codec entry with no writer, so the map's byte behaviour under
   // interleaving had never been asked about. Sets AND clears, because
@@ -628,6 +637,9 @@ final class _SequenceState {
   /// only ever names one that is really there.
   final List<Uuid> aliveAckIds = [];
 
+  /// 0U channel ids on the fixture rack.
+  final List<String> aliveChannelIds = [];
+
   /// The subset of [aliveLinkIds] that carry a `structureOrigin`. A
   /// separate list because `setOriginProperty` is only legal on those,
   /// and an ordinary `AddLinkCommand` link would refuse it.
@@ -716,6 +728,8 @@ final class _SequenceState {
     if (aliveAckIds.isNotEmpty) _StepKind.unacknowledgeFinding,
     _StepKind.setRuleOverride,
     if (aliveDeviceIds.isNotEmpty) _StepKind.setDeviceWidth,
+    _StepKind.addZeroUChannel,
+    if (aliveChannelIds.isNotEmpty) _StepKind.removeZeroUChannel,
   ];
 }
 
@@ -1018,6 +1032,30 @@ Command<RackDocument>? _buildCommand(
     case _StepKind.setSignalFamily:
       return _buildSetSignalFamily(s, rnd);
 
+    case _StepKind.addZeroUChannel:
+      final planned = planAddZeroUChannel(
+        doc: s.doc,
+        rackId: _rackId,
+        id: 'ch-$step',
+        side: ZeroUChannelSide
+            .values[rnd.nextInt(ZeroUChannelSide.values.length)],
+        startU: 1,
+        endU: 1 + rnd.nextInt(4),
+      );
+      return switch (planned) {
+        ZeroUReady(:final command) => command,
+        ZeroURefused() => null,
+      };
+    case _StepKind.removeZeroUChannel:
+      final planned = planRemoveZeroUChannel(
+        doc: s.doc,
+        rackId: _rackId,
+        id: s.aliveChannelIds[rnd.nextInt(s.aliveChannelIds.length)],
+      );
+      return switch (planned) {
+        ZeroUReady(:final command) => command,
+        ZeroURefused() => null,
+      };
     case _StepKind.setDeviceWidth:
       // NULL IS LEGITIMATE HERE, exactly as it is for `connectPorts`: a
       // rack shrunk under this device makes `PLC-001` refuse, which is
@@ -1207,6 +1245,12 @@ void _reconcileTrackingAfterCommit(
     // Tracks nothing: it edits a device already in `aliveDeviceIds`.
     case _StepKind.setDeviceWidth:
       break;
+    case _StepKind.addZeroUChannel:
+      s.aliveChannelIds.add((cmd as AddZeroUChannelCommand).channel.id);
+    case _StepKind.removeZeroUChannel:
+      s.aliveChannelIds.remove(
+        (cmd as RemoveZeroUChannelCommand).channel.id,
+      );
     case _StepKind.acknowledgeFinding:
       s.aliveAckIds.add((cmd as AcknowledgeFindingCommand).id);
     case _StepKind.unacknowledgeFinding:

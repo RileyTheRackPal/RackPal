@@ -415,22 +415,23 @@ void main() {
       }
     });
 
-    test('PLC-003 and TOP-005 have NO production writer to gate, and this '
-        'test is what notices when one arrives', () {
+    test('TOP-005 has NO production writer to gate, and this test is what '
+        'notices when one arrives', () {
       // ═══════════════════════════════════════════════════════════════
       // A CENSUS AS A TEST, NOT A CENSUS AS A COMMENT
       // ═══════════════════════════════════════════════════════════════
-      // AC-044 makes 0U occupants inspector-edited in v1 and that
-      // editor is not built, so nothing constructs a `ZeroUPlacement`
-      // or a `ShelfPlacement`, and wiring those rules into a command
-      // nobody calls would be theatre.
+      // Nothing constructs a `ShelfPlacement`: shelf hosting has no
+      // authoring gesture, so `TOP-005` guards a containment chain no
+      // command can build, and wiring it into one would be theatre.
       //
-      // THIS TEST HAS ALREADY DONE ITS JOB ONCE. It covered `PLC-002`
-      // as well, until `#269` built the width control; it went red
-      // naming `device_width_commands.dart`, which is what the reason
-      // string below asks for. That half now lives in its own test
-      // below, asking a sharper question: not whether a writer exists,
-      // but whether the one that does is the gated one.
+      // THIS TEST HAS DONE ITS JOB TWICE ALREADY, which is the argument
+      // for writing a census as a test rather than as a comment. It
+      // covered `PLC-002` until `#269` built the width control, and
+      // `PLC-003` until `#270` built the 0U chain; both times it went
+      // red naming the new file, which is exactly what its reason string
+      // asks for. Each of those halves is now its own test below, asking
+      // the sharper question: not whether a writer exists, but whether
+      // the ones that do are gated.
       //
       // The predecessor of THIS repository's other census test derived
       // its answer from a list that could not see the thing it counted,
@@ -463,7 +464,6 @@ void main() {
             'and update these paths if the workspace moved',
       );
 
-      final zeroUWriters = <String>[];
       final shelfWriters = <String>[];
       for (final f
           in roots
@@ -483,14 +483,6 @@ void main() {
           // would turn this gate red over prose.
           final code = line.trimLeft();
           if (code.startsWith('//')) continue;
-          if (_constructs(line, 'ZeroUPlacement')) {
-            zeroUWriters.add('$path: ${line.trim()}');
-          }
-          // `ShelfPlacement` rides along, because `TOP-005` is in exactly
-          // the same position: it guards a containment chain that no
-          // shipped gesture can build. `connect_rules.dart` used to say
-          // its creation site was "the placement command set, which does
-          // not check it today", which reads like a hole and is not one.
           if (_constructs(line, 'ShelfPlacement')) {
             shelfWriters.add('$path: ${line.trim()}');
           }
@@ -504,13 +496,6 @@ void main() {
             'something now builds a ShelfPlacement: $shelfWriters. TOP-005 '
             'has a creation site to gate, so gate it and correct the note '
             'on ConnectRule.hostResolves',
-      );
-      expect(
-        zeroUWriters,
-        isEmpty,
-        reason:
-            'something in lib/ now builds a ZeroUPlacement: $zeroUWriters. '
-            'PLC-003 has a writer to gate, so gate it and delete this half',
       );
     });
 
@@ -555,6 +540,38 @@ void main() {
             'the lateral writer stopped calling the placement gate, so '
             'PLC-002 is a predicate nobody calls again',
       );
+    });
+
+    test('PLC-003 HAS writers now, and BOTH of them are gated', () {
+      // Two, and they are the two AC-044 names: creating an occupant
+      // (`catalog_placement.dart`) and editing where it sits along its
+      // channel (`zero_u_commands.dart`). A third that skipped the gate
+      // would put a device in a channel the rack does not have.
+      final writers = <String>{};
+      for (final f
+          in Directory('lib')
+              .listSync(recursive: true)
+              .whereType<File>()
+              .where((f) => f.path.endsWith('.dart'))) {
+        final path = f.path.replaceAll(r'\', '/');
+        if (path.endsWith('/model/placement.dart')) continue;
+        if (path.endsWith('/persistence/json_codec.dart')) continue;
+        for (final line in f.readAsLinesSync()) {
+          if (line.trimLeft().startsWith('//')) continue;
+          if (_constructs(line, 'ZeroUPlacement')) writers.add(path);
+        }
+      }
+      expect(writers, {
+        'lib/src/commands/catalog_placement.dart',
+        'lib/src/commands/zero_u_commands.dart',
+      });
+      for (final path in writers) {
+        expect(
+          File(path).readAsStringSync(),
+          contains('evaluatePlacement('),
+          reason: '$path builds a ZeroUPlacement without the gate',
+        );
+      }
     });
   });
 

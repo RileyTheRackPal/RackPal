@@ -26,6 +26,7 @@ import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/ids.dart';
+import 'package:rackpal_core/src/units/len.dart';
 
 /// The `RackDocument.templates` key a SEEDED template lands under: catalog
 /// id at version 1, through `derived/device_loads.dart`'s [templateKey] so
@@ -283,6 +284,18 @@ int _blockerEndRu(
   return placement.ruIndex + h - 1;
 }
 
+/// Where in a rack's 0U channel an occupant is being put (AC-044).
+///
+/// A RECORD RATHER THAN THREE PARAMETERS, because all three are
+/// meaningless apart: a channel with no offset does not say where, and an
+/// offset with no channel does not say where along what. `PLC-003` reads
+/// both of the first two.
+typedef ZeroUTarget = ({
+  String channelId,
+  Len offsetFromChannelStart,
+  ZeroUOrientation orientation,
+});
+
 /// The outcome of [buildPlaceFromCatalogCommand]: either a ready-to-run
 /// command, or a reason it could not build one (surfaced to the user
 /// rather than silently doing nothing — docs/04 §3.4's "a nudge that
@@ -351,6 +364,7 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
   required String actor,
   int? explicitRuIndex,
   TemplateSnapshot? using,
+  ZeroUTarget? zeroU,
 }) {
   final snapshot = using ?? resolveLatestTemplate(doc, catalogId);
   if (snapshot == null) {
@@ -361,8 +375,34 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
   // and stays pinned to it for life (CR-050).
   final body = snapshot.body;
 
+  final isZeroU =
+      body.side == OccupancySide.zeroUVertical ||
+      body.mountMethod == MountMethod.zeroU;
+
   final Placement placement;
-  if (body.side == OccupancySide.none ||
+  // THE CHANNEL PATH, WHICH THE REFUSAL BELOW HAS BEEN NAMING SINCE M4.
+  // AC-044 makes the inspector the only way a 0U occupant is created, and
+  // until `#270` there was no inspector path to send anyone to. A caller
+  // that supplies a target is that path; one that does not still gets the
+  // sentence, because a double-click on P01 in the palette still has no
+  // channel to mean.
+  if (isZeroU && zeroU != null) {
+    final proposed = ZeroUPlacement(
+      rackId: targetRack.id,
+      channelId: zeroU.channelId,
+      offsetFromChannelStart: zeroU.offsetFromChannelStart,
+      orientation: zeroU.orientation,
+    );
+    final verdict = evaluatePlacement(
+      doc: doc,
+      placement: proposed,
+      body: body,
+    );
+    if (verdict is PlacementRefused) {
+      return CatalogPlacementFailed(verdict.message, ruleId: verdict.ruleId);
+    }
+    placement = proposed;
+  } else if (body.side == OccupancySide.none ||
       body.mountMethod == MountMethod.notInRack) {
     placement = const OffRackPlacement();
   } else {
@@ -392,9 +432,6 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
     // already honours it via its `mountable` guard; this is the
     // double-click / row-Enter / search-Enter path catching up.
     if (deviceH <= 0) {
-      final isZeroU =
-          body.side == OccupancySide.zeroUVertical ||
-          body.mountMethod == MountMethod.zeroU;
       return CatalogPlacementFailed(
         isZeroU
             ? '$catalogId is a 0U occupant: it mounts in a vertical channel, '

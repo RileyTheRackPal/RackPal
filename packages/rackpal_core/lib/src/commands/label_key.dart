@@ -522,4 +522,13 @@ enum LabelKey {
   // spans, and "Undo Move Device" in front of somebody who has just
   // picked `Left half` from a dropdown names an act that did not happen.
   setDeviceWidth,
+
+  // 0U CHANNELS AND THEIR OCCUPANTS (commands/zero_u_commands.dart),
+  // M5-C/`#270`. Three values, not one: AC-044 makes the inspector the
+  // only way any of this happens, so the Edit menu is the only account a
+  // person gets of what they just did, and "Undo Add 0U Channel" after
+  // sliding a PDU up its channel names the wrong act.
+  addZeroUChannel,
+  removeZeroUChannel,
+  setZeroUPosition,
 }

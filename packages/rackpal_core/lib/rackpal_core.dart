@@ -120,6 +120,7 @@ export 'src/commands/template_fork_commands.dart';
 export 'src/commands/template_snapshot_commands.dart';
 export 'src/commands/transaction.dart';
 export 'src/commands/undo_stack.dart';
+export 'src/commands/zero_u_commands.dart';
 export 'src/derived/cable_footage.dart';
 export 'src/derived/connect_rules.dart';
 export 'src/derived/connect_target.dart';
