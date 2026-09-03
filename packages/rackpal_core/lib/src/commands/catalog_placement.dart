@@ -18,6 +18,7 @@
 import 'package:rackpal_core/src/commands/device_commands.dart';
 import 'package:rackpal_core/src/derived/device_loads.dart';
 import 'package:rackpal_core/src/derived/placeable_templates.dart';
+import 'package:rackpal_core/src/derived/placement_rules.dart';
 import 'package:rackpal_core/src/idformat/designator_allocator.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/placement.dart';
@@ -296,8 +297,18 @@ final class CatalogPlacementReady extends CatalogPlacementResult {
 }
 
 final class CatalogPlacementFailed extends CatalogPlacementResult {
-  const CatalogPlacementFailed(this.reason);
+  const CatalogPlacementFailed(this.reason, {this.ruleId});
   final String reason;
+
+  /// The tier-1 rule that refused, when one did: `"PLC-001"` (M5-C).
+  ///
+  /// NULLABLE, AND NULL IS NOT AN OVERSIGHT. Most refusals here are not
+  /// rules at all. "Occupied by SW-1" is `findBlockingOccupant`, which
+  /// DR-112 §11.111.4 rules OUT of tier 1 and leaves to `RCK-001` at tier
+  /// 3; "P01 is a 0U occupant" is AC-044's scope boundary. Attaching a
+  /// rule id to those would claim a catalogue entry that does not exist
+  /// (CR-021), which is the failure the id exists to prevent.
+  final String? ruleId;
 }
 
 /// Builds the [AddDeviceCommand] that places one new instance of the
@@ -395,16 +406,42 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
 
     final int ruIndex;
     if (explicitRuIndex != null) {
-      final overflow =
-          explicitRuIndex < 1 ||
-          explicitRuIndex + deviceH - 1 > targetRack.heightU;
-      if (overflow) {
+      // ═══════════════════════════════════════════════════════════════
+      // `PLC-001` DECIDES THIS, AND IT USED TO BE WRITTEN OUT HERE
+      // ═══════════════════════════════════════════════════════════════
+      // The predicate was `explicitRuIndex < 1 || explicitRuIndex +
+      // deviceH - 1 > targetRack.heightU`, which is docs/02 §5.1's
+      // `PLC-001` transcribed by hand into a planner, with no rule id on
+      // the refusal. Canon §12.6(b) ratified `PLC-001..003` over exactly
+      // that shape: *"an unnumbered blocking rule can carry neither a
+      // `Finding.ruleId` nor an AC-051 fixture pair"*. M5-C gave it a
+      // predicate, so this is the call site catching up, and the bound
+      // now has one implementation instead of two that could drift.
+      //
+      // THE SENTENCE STAYS LOCAL AND THAT IS DELIBERATE. A drop chip is
+      // read in half a second with a device under the cursor, and
+      // "Needs 3U, only 1U free at top" is the shape docs/04 designs for
+      // that moment; `PlacementRefused.message` is written for an
+      // inspector reading a refusal at rest. The DECISION is shared,
+      // which is the half that can drift into a bug; the wording is not,
+      // and the rule id travels with it either way.
+      final verdict = evaluatePlacement(
+        doc: doc,
+        placement: RailPlacement(
+          rackId: targetRack.id,
+          ruIndex: explicitRuIndex,
+          face: face,
+        ),
+        body: body,
+      );
+      if (verdict is PlacementRefused) {
         final freeAtTop = (targetRack.heightU - explicitRuIndex + 1).clamp(
           0,
           targetRack.heightU,
         );
         return CatalogPlacementFailed(
           'Needs ${deviceH}U, only ${freeAtTop}U free at top.',
+          ruleId: verdict.ruleId,
         );
       }
       final blocker = findBlockingOccupant(

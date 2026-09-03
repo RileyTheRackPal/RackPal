@@ -400,7 +400,7 @@ $ErrorActionPreference = 'Stop'
 # re-pumped at six sizes measures one of them and reports clean for five.
 
 $SuiteFloors = @{
-    'rackpal_core'   = 3774
+    'rackpal_core'   = 3779
     'rackpal_text'   = 1
     'rackpal_export' = 189
     'rackpal_ui'     = 1406

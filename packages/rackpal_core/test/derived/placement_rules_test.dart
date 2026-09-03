@@ -20,6 +20,8 @@
 // below asserting exactly that, because the natural mistake when writing
 // `PLC-001` is to reach for the occupancy scan that is sitting right
 // there in `catalog_placement.dart`.
+import 'dart:io';
+
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 
@@ -321,6 +323,176 @@ void main() {
     });
   });
 
+  group('the writers that exist are gated (M5-C wiring)', () {
+    RackDocument docWithCatalog() {
+      final doc = _doc();
+      doc.templates[catalogTemplateKey('V01')] = TemplateSnapshot(
+        templateId: const TemplateId('V01'),
+        version: 1,
+        contentHash: 'sha256:v01',
+        body: _body(frontU: 3),
+        capturedAt: _now,
+      );
+      return doc;
+    }
+
+    CatalogPlacementResult place(int ruIndex) => buildPlaceFromCatalogCommand(
+      doc: docWithCatalog(),
+      catalogId: 'V01',
+      targetRack: _rack(),
+      now: _now,
+      actor: 'test',
+      explicitRuIndex: ruIndex,
+    );
+
+    test('KNOWN-BAD: the catalog planner refuses a caret that would not '
+        'fit, and the refusal now CITES PLC-001', () {
+      // The bound used to be transcribed by hand into this planner with
+      // no rule id on the refusal, which is the shape canon §12.6(b)
+      // ratified PLC-001..003 over. The sentence is still the drop
+      // chip's; the decision and the attribution are the rule's.
+      final result = place(11);
+      expect(result, isA<CatalogPlacementFailed>());
+      expect((result as CatalogPlacementFailed).ruleId, 'PLC-001');
+    });
+
+    test('NEAR-MISS: one U lower fits exactly and builds a command', () {
+      expect(place(10), isA<CatalogPlacementReady>());
+    });
+
+    test('an occupancy refusal carries NO rule id, because DR-112 rules '
+        'it out of tier 1 and CR-021 forbids inventing one', () {
+      final doc = docWithCatalog();
+      doc.devices[const Uuid('dev-1')] = DeviceInstance(
+        id: const Uuid('dev-1'),
+        kind: DeviceKind.rackDevice,
+        templateRef: const TemplateRef(
+          templateId: TemplateId('V01'),
+          version: 1,
+          contentHash: 'sha256:v01',
+        ),
+        designator: 'SW-1',
+        name: 'Switch',
+        placement: _rail(ruIndex: 2),
+        meta: _meta(),
+      );
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: 'V01',
+        targetRack: doc.racks[const Uuid('rk-1')]!,
+        now: _now,
+        actor: 'test',
+        explicitRuIndex: 1,
+      );
+      expect(result, isA<CatalogPlacementFailed>());
+      final failed = result as CatalogPlacementFailed;
+      expect(failed.reason, contains('SW-1'));
+      expect(failed.ruleId, isNull);
+    });
+
+    test('the writer-detector itself is verified in BOTH directions, '
+        'because a scan that cannot fail is worse than no scan', () {
+      // The gate below is a grep, and the first draft of it reported five
+      // pattern matches as writers. `junit_converter_selftest.py` is the
+      // precedent this follows: a checker whose negative direction is
+      // reproduced by hand is a verification somebody performed, not one
+      // the repository performs.
+      //
+      // The four NO cases are the exact shapes present in `lib/` today.
+      for (final line in const [
+        '      placement: ZeroUPlacement(',
+        "  return ZeroUPlacement(rackId: rack.id, channelId: 'c');",
+      ]) {
+        expect(_constructsZeroU(line), isTrue, reason: line);
+      }
+      for (final line in const [
+        '      case ZeroUPlacement(:final rackId, :final channelId)',
+        '      case ZeroUPlacement():',
+        '    ZeroUPlacement() => (EquipmentMounting.zeroU, null, null),',
+        '    ZeroUPlacement() => _evaluateZeroU(doc, placement, what),',
+      ]) {
+        expect(_constructsZeroU(line), isFalse, reason: line);
+      }
+    });
+
+    test('PLC-002 and PLC-003 have NO production writer to gate, and this '
+        'test is what notices when one arrives', () {
+      // ═══════════════════════════════════════════════════════════════
+      // A CENSUS AS A TEST, NOT A CENSUS AS A COMMENT
+      // ═══════════════════════════════════════════════════════════════
+      // CR-030 gives the v1 editor a `Width position` dropdown that is
+      // not built, and AC-044 makes 0U occupants inspector-edited in v1,
+      // also not built. So nothing in `lib/` writes a non-default
+      // `startTwelfth`/`spanTwelfths` or constructs a `ZeroUPlacement`,
+      // and wiring those two rules into a command nobody calls with
+      // those values would be theatre.
+      //
+      // The predecessor of THIS repository's other census test derived
+      // its answer from a list that could not see the thing it counted,
+      // and kept passing while going quietly wrong. So this reads the
+      // source. A grep, not a parser: false negatives are acceptable,
+      // a false positive that makes it flaky is not.
+      //
+      // THE FIRST DRAFT WAS A FALSE POSITIVE FIVE TIMES OVER, which is
+      // worth leaving on the record because it is the failure the
+      // sentence above promises not to make. `line.contains('ZeroU
+      // Placement(')` matches every PATTERN MATCH on the type as well as
+      // every construction, and this codebase switches on placements in
+      // four files. [_constructsZeroU] carries the discriminator.
+      final lib = Directory('lib');
+      expect(lib.existsSync(), isTrue, reason: 'run from the package dir');
+
+      final zeroUWriters = <String>[];
+      final lateralWriters = <String>[];
+      for (final f
+          in lib
+              .listSync(recursive: true)
+              .whereType<File>()
+              .where((f) => f.path.endsWith('.dart'))) {
+        final path = f.path.replaceAll(r'\', '/');
+        // The type's own declaration and the codec are not writers in
+        // the sense that matters: one defines it and the other reads a
+        // file somebody else wrote.
+        if (path.endsWith('/model/placement.dart')) continue;
+        if (path.endsWith('/persistence/json_codec.dart')) continue;
+        for (final line in f.readAsLinesSync()) {
+          // COMMENTS ARE NOT WRITERS, and skipping them is not tidiness:
+          // the files in this package explain themselves at length and a
+          // doc comment showing a worked `ZeroUPlacement(rackId: ...)`
+          // would turn this gate red over prose.
+          final code = line.trimLeft();
+          if (code.startsWith('//')) continue;
+          if (_constructsZeroU(line)) zeroUWriters.add('$path: ${line.trim()}');
+          // A COPY IS NOT A WRITE. `MoveDeviceCommand` rebuilds a rail
+          // placement and carries `base.startTwelfth` across it; that
+          // cannot introduce a value `PLC-002` would refuse.
+          final m = RegExp(
+            r'(startTwelfth|spanTwelfths):\s*(.+)$',
+          ).firstMatch(line);
+          if (m != null && !m.group(2)!.contains('.${m.group(1)}')) {
+            lateralWriters.add('$path: ${line.trim()}');
+          }
+        }
+      }
+
+      expect(
+        zeroUWriters,
+        isEmpty,
+        reason:
+            'something in lib/ now builds a ZeroUPlacement: $zeroUWriters. '
+            'PLC-003 has a writer to gate, so gate it and delete this half',
+      );
+      expect(
+        lateralWriters,
+        isEmpty,
+        reason:
+            'something in lib/ now sets a lateral position that is not '
+            'copied from an existing placement: $lateralWriters. PLC-002 '
+            'has a writer to gate, so gate it and delete this half',
+      );
+    });
+  });
+
   group('the catalogue and the predicates agree', () {
     test('every PlacementRule id is a tier-1 rule the catalogue knows, '
         'and the three PLC rows are exactly the three here', () {
@@ -346,3 +518,19 @@ void main() {
 }
 
 FracIndex _order() => const FracIndex('a0');
+
+/// Whether [line] CONSTRUCTS a `ZeroUPlacement` rather than matching one.
+///
+/// A construction is followed by a named argument or by the end of the
+/// line (a multi-line call). A pattern is followed by `)` immediately, or
+/// by `:final`, or sits behind `case`. Every occurrence in `lib/` today is
+/// one of those three.
+bool _constructsZeroU(String line) {
+  final at = line.indexOf('ZeroUPlacement(');
+  if (at < 0) return false;
+  if (line.contains('case ')) return false;
+  final rest = line.substring(at + 'ZeroUPlacement('.length).trim();
+  if (rest.startsWith(')')) return false;
+  if (rest.startsWith(':')) return false;
+  return true;
+}
