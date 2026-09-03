@@ -731,3 +731,223 @@ Map<String, TemplateBody> buildVideoCatalog() {
 
   return out;
 }
+
+/// P4's DERIVED role halves for the two video templates that carry the
+/// role parameter — V06's receiver and V07's decoder.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// NOT CATALOG ENTRIES, WHICH IS THE WHOLE POINT
+/// ═══════════════════════════════════════════════════════════════════════
+/// [buildVideoCatalog] still returns seven bodies and §3.10's count is
+/// untouched. P4 rejects *"four separate templates, which spends four of
+/// thirty rack-side slots on two products"* and §540 rejects *"separate
+/// `TX` and `RX` templates"* by name, so these live beside their bases and
+/// are reached through `catalog_roles.dart` rather than through the map.
+///
+/// TRANSCRIBED FROM §540 AND §575, NOT DERIVED FROM THE BASES. The halves
+/// are not a direction flip: the receiver DROPS `HDMI IN` and renames
+/// `HDMI LOOP OUT` to `HDMI OUT`, seven ports becoming six, and the
+/// decoder drops two of the encoder's eight. P4's summary line says the
+/// halves *"differ only in port direction"*; the per-template listings say
+/// otherwise and they are the specific spec.
+///
+/// EVERY PHYSICAL FACT IS THE BASE'S, which is P4's stated reason for one
+/// template rather than two: *"the halves share every physical fact"*. The
+/// receiver is the one exception the doc itself makes, and it makes it
+/// explicitly — `notInRack`, no depth, and **0 W** because its power comes
+/// down the `net.poh` conductor from the transmitter (§540's note).
+Map<String, TemplateBody> buildVideoRoleVariants() {
+  final out = <String, TemplateBody>{};
+
+  // V06 · HDBaseT Extender, RECEIVER half (§540).
+  final v06rx = PortBuilder()
+    ..p(
+      'hdbt.in',
+      'HDBT IN',
+      connector: 'conn.rj45',
+      family: 'video.hdbaset',
+      dir: PortDirection.sink,
+      bank: 'video',
+      bankLabel: 'Video',
+      gender: Gender.female,
+      // §540's `[poh:pd]`, which §367 maps to a `PoeSpec` on `net.poh`.
+      //
+      // `standard` IS DELIBERATELY ABSENT, AND THAT IS G4 RATHER THAN AN
+      // OVERSIGHT. `PoeStandard` is `{af, at, btType3, btType4}`, which is
+      // IEEE 802.3 and nothing else, and docs/01:470 is explicit that PoH
+      // *"is based on 802.3at but modified, and is NOT interoperable with
+      // a standard PoE PSE"*. Naming any of those four here would put a
+      // false standard on a safety-adjacent field to avoid an empty one,
+      // which is what G4 forbids. The ROLE is known and shipped; the
+      // standard is unknown to this vocabulary and stays absent.
+      poe: PoeSpec(role: PoeRole.pd),
+    )
+    ..p(
+      'hdmi.out',
+      'HDMI OUT',
+      connector: 'conn.hdmi_a',
+      family: 'video.hdmi.2_0',
+      dir: PortDirection.source,
+      bank: 'video',
+    )
+    ..p(
+      'ir.in',
+      'IR IN',
+      connector: 'conn.3_5mm_trs',
+      family: 'ctl.ir_receiver',
+      dir: PortDirection.sink,
+      bank: 'control',
+      bankLabel: 'Control',
+      pinout: 'xantech-stereo',
+    )
+    ..p(
+      'ir.out',
+      'IR OUT',
+      connector: 'conn.3_5mm_ts',
+      family: 'ctl.ir_emitter',
+      dir: PortDirection.source,
+      bank: 'control',
+      pinout: 'mono-tip-sleeve',
+    )
+    ..p(
+      'rs232',
+      'RS-232',
+      connector: 'conn.3_5mm_trs',
+      family: 'ctl.rs232',
+      bank: 'control',
+    )
+    ..p(
+      'dc.in',
+      '12V DC IN (opt)',
+      connector: 'conn.barrel_dc',
+      family: 'power.dc_low',
+      dir: PortDirection.sink,
+      bank: 'power',
+      bankLabel: 'Power',
+      nominalVoltage: 12,
+      power: PortPowerSpec(role: PortPowerRole.inlet),
+    );
+  out['V06:receiver'] = TemplateBody(
+    manufacturer: 'Generic',
+    model: 'RX-HDBT-1',
+    displayName: 'HDBaseT Extender (Receiver)',
+    description:
+        'The receiver half of the TX/RX kit V06 ships as its transmitter. '
+        'Powered over the link (PoH), so it draws nothing from the rack.',
+    category: kCatVideo,
+    typePrefix: 'RX',
+    glyph: DeviceGlyph.extender,
+    tags: const ['hdbaset', 'extender'],
+    // `notInRack` AND NO DEPTH, both from §540. The receiver lives at the
+    // display end of the run, which is the whole reason the kit exists, so
+    // it occupies no U and has no rack depth to state.
+    mountMethod: MountMethod.notInRack,
+    weight: _kg(0.55),
+    // ZERO IS MEASURED ZERO HERE, NOT UNKNOWN (G4/CR-114). §540: *"The
+    // receiver draws 0 W from the rack and its `outletsConsumed` is 0 —
+    // its power comes down the `net.poh` conductor from the transmitter.
+    // That is a genuinely different power topology from everything else in
+    // the catalog and the power rollup has to get it right."* An absent
+    // figure would make the rollup count this device in its UNKNOWN column,
+    // which is the opposite of what is true about it.
+    power: PowerProfile(
+      nameplateWatts: 0,
+      typicalWatts: 0,
+      outletsProvided: 0,
+      outletsConsumed: 0,
+    ),
+    ports: v06rx.ports,
+    banks: v06rx.banks,
+  );
+
+  // V07 · AVoIP Endpoint, DECODER half (§575).
+  final v07dec = PortBuilder()
+    ..p(
+      'network',
+      'NETWORK',
+      connector: 'conn.rj45',
+      family: 'video.avoip',
+      bank: 'network',
+      bankLabel: 'Network',
+      poe: PoeSpec(role: PoeRole.pd, standard: PoeStandard.af, poeClass: 3),
+    )
+    ..p(
+      'hdmi.out',
+      'HDMI OUT',
+      connector: 'conn.hdmi_a',
+      family: 'video.hdmi.2_0',
+      dir: PortDirection.source,
+      bank: 'video',
+      bankLabel: 'Video',
+    )
+    ..p(
+      'analog.out',
+      'ANALOG OUT',
+      connector: 'conn.rca',
+      family: 'audio.line_unbal',
+      dir: PortDirection.source,
+      bank: 'audio',
+      bankLabel: 'Audio',
+    )
+    ..p(
+      'ir.out',
+      'IR OUT',
+      connector: 'conn.3_5mm_ts',
+      family: 'ctl.ir_emitter',
+      dir: PortDirection.source,
+      bank: 'control',
+      bankLabel: 'Control',
+      pinout: 'mono-tip-sleeve',
+    )
+    ..p(
+      'rs232',
+      'RS-232',
+      connector: 'conn.3_5mm_trs',
+      family: 'ctl.rs232',
+      bank: 'control',
+    )
+    ..p(
+      'dc.in',
+      '12V DC IN (opt)',
+      connector: 'conn.barrel_dc',
+      family: 'power.dc_low',
+      dir: PortDirection.sink,
+      bank: 'power',
+      bankLabel: 'Power',
+      nominalVoltage: 12,
+      power: PortPowerSpec(role: PortPowerRole.inlet),
+    );
+  // EVERY PHYSICAL FACT IS THE ENCODER'S, unlike V06's pair. §575 states
+  // one set of figures above both halves — *"hosted, half-width · shallow
+  // (125 mm + 55 mm) · 0.7 kg · 12 / 9 W (802.3af PD)"* — and lists the
+  // roles under it, so the decoder differs in ports alone.
+  out['V07:decoder'] = TemplateBody(
+    manufacturer: 'Generic',
+    model: 'DEC-AVOIP-1',
+    displayName: 'AVoIP Endpoint (Decoder)',
+    description:
+        'The decoder half of the endpoint pair V07 ships as its encoder. '
+        'One part number, two roles (P4).',
+    category: kCatVideo,
+    typePrefix: 'DEC',
+    glyph: DeviceGlyph.extender,
+    tags: const ['avoip', 'sdvoe'],
+    mountMethod: MountMethod.hosted,
+    widthClass: WidthClass.half,
+    nominalSpanTwelfths: 6,
+    bodyDepth: _mm(125),
+    connectorProjection: _mm(55),
+    weight: _kg(0.7),
+    power: PowerProfile(
+      nameplateWatts: 12,
+      typicalWatts: 9,
+      nominalVolts: 48,
+      outletsProvided: 0,
+      outletsConsumed: 0,
+    ),
+    ports: v07dec.ports,
+    banks: v07dec.banks,
+  );
+
+  return out;
+}
