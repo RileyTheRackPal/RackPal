@@ -15673,6 +15673,63 @@ nothing to escape to (docs/02:854), which is the exact property tier 2 does not 
 droppable by design, docs/05:476 says so in as many words, and a state machine that treated the two
 identically would be discarding the distinction the whole tier exists to draw.
 
+### §11.114 DR-115 · The remedy inserts a device and wires the run into it; the second link is unbuildable for the rule that asks for it
+
+**Question.** `#278` builds `SIG-001`'s remedy. docs/05 §5 (:767) specifies it in one sentence:
+*"The `[ Insert HDBaseT receiver ]` remedy chip therefore inserts a device, correctly, and creates
+both links in one undo step."* Building it revealed that the second link cannot exist.
+
+**11.114.1 MEASURED: THE SECOND LINK SPRINGS BACK ON THE RULE'S OWN TARGET.** DR-113 rules that
+`SIG-001` fires when an HDBaseT port is connected directly to a `net.ethernet` port that TERMINATES
+the signal. So the target is, by construction, an Ethernet jack. The remedy's second link would be
+the receiver's `HDMI OUT` into that same jack:
+
+| End | Family | Connector |
+|---|---|---|
+| `V06:receiver` `hdmi.out` | `video.hdmi.2_0` | `conn.hdmi_a` |
+| the switch port the user aimed at | `net.ethernet` | `conn.rj45` |
+
+That pair fails `SIG-002` (the sink does not accept the family) and `CON-001` (the connectors do not
+mate) together. **The remedy would refuse its own second cable**, which is not a corner case: it is
+the only case `SIG-001` has.
+
+**11.114.2 CANON IS NARROWER THAN THE DERIVED SENTENCE, AND CANON IS WHAT BINDS.** §280 says
+*"`[ Insert HDBaseT receiver ]` therefore inserts a device, correctly"* and stops there. CR-015's
+subject is the adapter/device split, *"does an installer pull two separate cables to it?"*, and the
+answer for a TX/RX pair is yes, which is the whole of what that ruling decides. **The "both links"
+clause is docs/05 prose**, priority-3 and derived, and it does not survive contact with the rule it
+was written for.
+
+**11.114.3 Ruled: the remedy mints the receiver, wires the HDBaseT run into it, and leaves the HDMI
+end OPEN.** One undo step, one new device, one new link. The receiver's `hdmi.out` is connected to
+nothing and that is the finished state of the remedy rather than a half-done one.
+
+**AN OPEN END IS A THING THIS PRODUCT ALREADY MODELS**, which is why this is a narrowing rather than
+an invention. AC-018 leaves a home run's far end open on purpose, `unlandedHomeRunIds` counts them,
+the schematic status strip reports them, and `LNK-020` is *"a CHECKLIST, NOT A FAILURE"* over exactly
+that state. The remedy therefore hands back a design in a state the product has a vocabulary for.
+
+**AND IT IS WHAT THE TRADE WANTS.** An installer who drew a matrix output into a switch port did not
+want a cable between the receiver and the switch; they wanted the HDBaseT run to reach a receiver
+near the display. The remedy puts the receiver in the design and terminates the run on it. Where the
+display is, is a fact about the job that the product does not have and must not invent.
+
+*Rejected: wiring both links and letting the second one file a finding.* It follows §767 to the
+letter and it is defensible under G2, *"a model that cannot draw a mistake cannot document reality."*
+It is refused because G2 licenses the USER to draw a mistake; it does not license the PRODUCT to draw
+one on their behalf and hand it back as a fix. A remedy that leaves a fresh error behind is the nag
+`design-ux-schematic.md` contrasts a rule engine with, arriving one step later.
+
+*Rejected: offering the remedy only where the second link is constructible.* `SIG-001`'s target is
+an Ethernet port by definition, so this hides the button on every case the rule has. `#278`'s own
+description is *"a remedy chip that only explains has not remedied"*, and a remedy that never
+appears has explained.
+
+**11.114.4 The docs/05 edit is owed and is listed in §12.** :767's clause becomes *"and wires the
+run into it in one undo step"*. Nothing else in that paragraph moves: the adapter/device test, the
+`mountMethod: notInRack`, the *"two or more `Link`s"* and the full symbol are all untouched and all
+still true of a receiver, which will carry a second link the moment the user lands its HDMI end.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
