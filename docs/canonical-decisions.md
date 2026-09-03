@@ -15297,6 +15297,28 @@ forbids in terms. Correcting a sentence is cheaper than moving scope to match it
 *Rejected: deleting `genderApplies` until `CON-002` lands.* It has two readers today and removing it
 would take the GENDER column out of a shipped surface to tidy a docstring.
 
+**11.109.6 THE COUNTER-EXAMPLE THIS RULING NAMED IS NOT ONE, AND M5-D MEASURED IT.** §11.109's closing
+paragraph offered `PortDef.pinoutVariant` as the field pointing the other way, *"owed a consumer"*,
+on the ground that docs/02 §5.2 says it *"exists solely to make `DIR-003` detectable"* and `DIR-003`
+is one of the six tier-2 rules v1 ships.
+
+**That reasoning took a sentence at face value instead of reading the data**, which is the failure
+this corpus keeps meeting. Every `pinoutVariant` the seed catalog authors is a connector WIRING
+pinout: `xantech-stereo` and `mono-tip-sleeve`. Neither encodes the emitter/receiver distinction
+`DIR-003` turns on. What does is the family split, `ctl.ir_emitter` against `ctl.ir_receiver`, nine
+ports and fourteen, exactly as HDBaseT's own family carries `SIG-001`. `DIR-003` shipped at M5-D
+without reading `pinoutVariant` at all.
+
+**So `pinoutVariant` is in the same position `genderApplies` was**, and §11.109's own general rule
+governs it rather than excepting it: a field may ship ahead of the rule that named it, and the test
+is whether it has a reader NOW. Today it has none. That is a fact to carry into the census that asks
+about it next, not a defect to fix here: docs/02 §5.2's sentence is the thing that is wrong, and
+correcting a derived sentence is §12's business.
+
+**The ruling's substance is untouched.** `CON-002` is still v1.2, `genderApplies` still has its two
+readers, and the general rule still stands. Only the example chosen to illustrate its opposite was
+picked without measuring, and the measurement is now on the record beside it.
+
 ### §11.110 DR-111 · `#261` is `#322` seen from the other side, and DR-027 already ruled which one owns it
 
 **Question.** M5-B's fourth chapter, `#261`, is *"the acknowledgement reaches `T0.02`"*, and its own
@@ -15518,6 +15540,24 @@ catalogue is protecting; the flagship rule crying wolf is how that is spent.
 *Rejected: reading the `switch` tag, or the patch-panel glyph.* Both are unversioned free choices
 made for other purposes, and `AC-051`'s fixture pair cannot protect a predicate whose input a
 community template may spell however it likes.
+
+**11.112.5 THE RULING GENERALISES ONE RULE FURTHER THAN IT WAS WRITTEN, AND ITS OWN NEAR-MISS TEST IS
+WHAT FOUND THAT.** §11.112.3 speaks only of `SIG-001`. Building it, the AC-051 near-miss for the
+passthrough case went red not on `SIG-001`, which cleared correctly, but on **`SIG-002`**: a patch
+panel's RJ45 declares `net.ethernet` and does not list `video.hdbaset` in `acceptedFamilies`, so
+patching HDBaseT through a panel sprang back anyway, one rule along, for the same wrong reason.
+
+**A passthrough is a physical joint and not a signal endpoint.** `SIG-002` asks what THE SINK accepts,
+and a patch panel is not the sink; it is passive copper in the middle of a run, carrying whatever the
+cable carries. Its jack declares `net.ethernet` because that is what the connector IS, not a claim
+about what may pass through it, and asking a panel to enumerate every family that runs on RJ45 is a
+list nobody can finish. So `SIG-002` skips a passthrough sink as `SIG-001` skips a passthrough
+target.
+
+**`CON-001` DELIBERATELY DOES NOT SKIP ONE**, and the line is worth stating because it is the whole
+distinction: you really do plug into that jack, so the connectors really must mate. Physical rules
+apply at a passthrough; signal rules do not. `DIR-001` and `ELE-006` are unaffected by construction,
+neither being a question about what the far end accepts.
 
 *Rejected: deferring `SIG-001` to v1.2 with the path rules.* It is *"the highest-value validation in
 the product"* (`seed_registries.dart`, authored for it), the direct joint is the case that actually
