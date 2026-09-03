@@ -84,6 +84,7 @@ export 'src/canvas/schematic/schematic_canvas_screen.dart';
 export 'src/canvas/schematic/schematic_filter.dart';
 export 'src/canvas/schematic/schematic_paint_plan.dart';
 export 'src/canvas/schematic/schematic_reveal.dart';
+export 'src/canvas/schematic/spring_back_chip_card.dart';
 export 'src/canvas/schematic/wire_trace.dart';
 export 'src/canvas/selection_controller.dart';
 export 'src/canvas/shake_animation.dart';

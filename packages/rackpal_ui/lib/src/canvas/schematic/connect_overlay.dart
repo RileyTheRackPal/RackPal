@@ -178,6 +178,32 @@ LocatedPin? locatePin(SchematicScene scene, PinRef ref) {
 /// for this. Only the second half held.
 const int kSpringBackRingArgb = 0xFFE69F00;
 
+/// The colour of a spring-back that HAS happened: `#D55E00`, FIXED.
+///
+/// docs/05 §7's release feedback — *"the target port flashes `#D55E00`
+/// twice at 90 ms"* — and the chip's badge and rule id, which state the
+/// same verdict in words.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// TWO COLOURS FOR ONE RULE, AND THE PAIR IS NOT ARBITRARY
+/// ═════════════════════════════════════════════════════════════════════
+/// The corpus specifies amber for the ring and vermillion for the flash
+/// without saying why, and the reason is worth writing down because it
+/// is also the reason both are fixed. They are docs/05 §8's `warning` and
+/// `error` hues in that order, and the order is the TENSE:
+///
+///  * BEFORE THE RELEASE the rule has not fired. The pin is droppable
+///    (docs/05:476) and the ring is a caution about what would happen,
+///    so it wears the caution colour.
+///  * AFTER THE RELEASE it has fired. The cable sprang back, and the
+///    flash and the chip wear the error colour — the same one the DRC
+///    mark will wear on this cable the moment `[ Connect anyway ]` is
+///    pressed and the finding becomes computable.
+///
+/// So a user who learns these two learns them once, and the second one
+/// is already familiar by the time they meet the issues list.
+const int kSpringBackRefusedArgb = 0xFFD55E00;
+
 /// The colours and sizes the overlay draws with, in SCREEN pixels.
 ///
 /// Screen pixels, not diagram units, and every field says so by being
