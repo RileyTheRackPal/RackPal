@@ -79,6 +79,7 @@ export 'src/builder/template_change_class.dart';
 export 'src/builder/template_commands.dart';
 export 'src/builder/template_draft.dart';
 export 'src/builder/template_edit_session.dart';
+export 'src/catalog/catalog_roles.dart';
 export 'src/catalog/rack_presets.dart';
 export 'src/catalog/seed_catalog.dart';
 export 'src/commands/acknowledgement_commands.dart';

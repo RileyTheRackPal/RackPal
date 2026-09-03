@@ -207,3 +207,42 @@ exact-inch and whole-kilogram constraints, and the swing-frame/hinge-side
 coherence rule, so an edit here or in `rack_presets.dart` cannot drift from
 docs/04 §4 silently, the same guarantee `seed_catalog_test.dart` gives the
 device catalog.
+
+## 6. P4's role variants (`rackpal_core/src/catalog/catalog_roles.dart`)
+
+`#812`. The two DERIVED halves of the role-parametric templates, V06's
+receiver and V07's decoder, are covered by this file on the same terms as
+everything above, and this section exists because they are the one place a
+reader could reasonably expect a provenance gap and find none.
+
+**THEY ADD NO TEMPLATE AND MOVE NO COUNT.** `buildSeedCatalog()` still
+returns one body per id. P4 rejects *"four separate templates, which spends
+four of thirty rack-side slots on two products"* and §540 rejects
+*"separate `TX` and `RX` templates"* by name, so a variant is derived under
+an id of its own (`V06:receiver`) and never enters the catalog map.
+`catalog_roles_test.dart` asserts exactly that, because a variant leaking
+into the map would reverse a ruling by accident.
+
+**EVERY FIGURE IS ALREADY CITED, WHICH IS WHY THIS SECTION IS SHORT.** The
+halves are transcribed from docs/catalog/seed-devices.md §540 and §575,
+which list them port by port and state their physical facts; those figures
+fall under §1 and §2 above exactly as their bases do, because P4's whole
+premise is that *"the halves share every physical fact"*. Nothing new was
+invented, and the one place a half departs from its base, the receiver's
+`notInRack` mount and its 0 W, is stated by §540 itself.
+
+| Field | Kind | Source |
+|---|---|---|
+| Both halves' `weight`, `bodyDepth`, `connectorProjection`, watts | Representative / synthesized | Inherited unchanged from the shipped half. See §2; P4's premise is that the halves share every physical fact. |
+| `V06:receiver` `nameplateWatts: 0` / `typicalWatts: 0` / `outletsConsumed: 0` | Stated by the corpus | docs/catalog/seed-devices.md §540: *"The receiver draws 0 W from the rack and its `outletsConsumed` is 0 — its power comes down the `net.poh` conductor from the transmitter."* **Zero here is measured zero, not unknown** (G4/CR-114): an absent figure would put the device in the power rollup's unknown column, which is the opposite of what is true about it. |
+| `V06:receiver` `mountMethod: notInRack`, no depth | Stated by the corpus | §540, `role: receiver` line. The receiver lives at the display end of the run, which is what the kit is for. |
+| `hdbt.in` `PoeSpec(role: pd)` with **no `standard`** | Published standard, and an absence that is itself the finding | §540's `[poh:pd]`, mapped by §367 to a `PoeSpec` on `net.poh`. The ROLE is stated; the STANDARD is deliberately absent, because `PoeStandard` is `{af, at, btType3, btType4}` — IEEE 802.3 and nothing else — while docs/01:470 says PoH *"is based on 802.3at but modified, and is **not** interoperable with a standard PoE PSE"*. Naming any of those four would put a false standard on a safety-adjacent field to avoid an empty one, which is precisely what AC-052 and G4 forbid. |
+| Both halves' port families, connectors, directions and pinouts | Transcribed | §540 and §575 list every port. `catalog_roles_test.dart` asserts the key list and order against those listings rather than against the code, and checks every family and connector resolves in the seeded registries. |
+
+**ONE THING THIS SECTION RECORDS RATHER THAN FIXES.** V06's shipped half
+carries `[poh:pse]` in §540 and carries no `PoeSpec` in code: the
+annotation was never transcribed. That is a real gap in an existing
+template and it is `#813` rather than a silent repair here, because the
+transmitter's PoH is a **source** of up to 100 W and adding a PSE spec to
+a shipped body is a data change with a power-rollup consequence, not a
+typo fix.
