@@ -15462,6 +15462,68 @@ Cheapest and the worst of the three. "Extent" is the rack's physical bounds; str
 occupancy makes a catalogue row describe something other than what its rule checks, and CR-021 makes
 that table the definition of what exists.
 
+### §11.112 DR-113 · `SIG-001` fires on the joint in front of it, and "switch port" is a path question tier 2 cannot ask
+
+**Question.** M5-D builds the six tier-2 rules, and the flagship one cannot be written from its own
+row. docs/02 §5.2 gives `SIG-001` as *"HDBaseT port connected to a `net.ethernet` **switch** port.
+The flagship rule: PoH into a switch port"*, and nothing in the model says which `net.ethernet` ports
+belong to a switch.
+
+**11.112.1 MEASURED, AND THE ONLY TWO CANDIDATES ARE BOTH WRONG.** In the seed catalog a switch
+carries `tags: const ['poe', 'switch']` and a patch panel carries `glyph:
+DeviceGlyph.patchPanel`. **A hardware-damage rule may not rest on either.** Tags are free text a
+person edits and a community template will spell differently; a glyph is a drawing choice, and
+`device_glyph.dart` exists to pick a picture. A rule keyed to a tag is a rule that stops working the
+day somebody renames one, silently, with no test able to notice.
+
+**What IS modelled is the opposite fact.** CR-057 gives the patch panel `isPassthrough: true` and a
+`passthroughPairs` list, and the seeded panels declare both. So the product can say with certainty
+which ports pass a signal through to another connector, and cannot say which ports belong to a
+switch.
+
+**11.112.2 THE PATCH PANEL IS NOT A CARVE-OUT, IT IS THE CASE CR-017 ALREADY RULED ON.** Patching an
+HDBaseT run into a panel and out the back is ordinary structured cabling, and it is the commonest
+layout this product will ever draw. A predicate reading only the signal families would fire on every
+one of them.
+
+The reason it must not is not merely that it would be annoying. **It is the same reason CR-017 gives
+for demoting two of Class A's members unconditionally**: *"Dante endpoints with no network path"* and
+*"AVB traversing a non-AVB switch"* are *"logically unevaluatable at drag time, because the link being
+drawn may be the one that completes the path."* HDBaseT into a panel is that exact shape. Whether the
+run ends on a switch depends on what is on the far side of the panel, which may be nothing yet, and
+may be the next cable the person draws.
+
+**11.112.3 Ruled: tier-2 `SIG-001` evaluates THE JOINT, not the path.** It fires when an HDBaseT port
+is connected directly to a `net.ethernet` port that TERMINATES the signal, which the model expresses
+as the port's device not being a passthrough. It does not fire on a passthrough connector, and it
+asks nothing about what lies beyond one.
+
+This is a reading of §5.2's row and not an amendment to it: the row's *"switch port"* is the trade's
+name for the terminating case, and **the catalogue count does not move**. `SIG-001` stays one of the
+six tier-2 rules, with the same id, the same severity and the same remedy.
+
+**11.112.4 The consequence is stated rather than left to be discovered: v1 does not catch
+HDBaseT through a panel into a switch.** That is the honest position and it is consistent, not a
+hole this ruling opens. The rule that WOULD catch it is a path rule, path rules are exactly what
+CR-017 sends to tier 3, and docs/02 §5.3's fourteen do not include one: Dante-with-no-path and
+AVB-across-a-non-AVB-switch are not in the v1 catalogue either, they sit with the remaining forty
+that AC-040 defers to v1.2 behind a fixture corpus. **The same milestone that gains a path evaluator
+gains all three of them together.**
+
+*Rejected: firing on any `net.ethernet` port.* It buys the through-panel case at the price of a false
+failure on the most common layout in the product, and a rule that springs back on correct designs is
+a rule people learn to click past. Roadmap M5's own risk list names credibility as the thing the
+catalogue is protecting; the flagship rule crying wolf is how that is spent.
+
+*Rejected: reading the `switch` tag, or the patch-panel glyph.* Both are unversioned free choices
+made for other purposes, and `AC-051`'s fixture pair cannot protect a predicate whose input a
+community template may spell however it likes.
+
+*Rejected: deferring `SIG-001` to v1.2 with the path rules.* It is *"the highest-value validation in
+the product"* (`seed_registries.dart`, authored for it), the direct joint is the case that actually
+damages a switch, and it is evaluatable today. Half a rule that fires on the damaging case beats no
+rule at all, provided the half it does not cover is written down. It is, here.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
