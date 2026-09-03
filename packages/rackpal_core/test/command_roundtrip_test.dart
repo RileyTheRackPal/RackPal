@@ -276,6 +276,12 @@ enum _StepKind {
   acknowledgeFinding,
   unacknowledgeFinding,
 
+  // M5-C/`#269`. `RailPlacement.startTwelfth`/`spanTwelfths` had no
+  // writer until the width control shipped, so CR-117 had never been
+  // carried across either field: every generated sequence rebuilt a
+  // placement that COPIED them. This arm is the first that changes one.
+  setDeviceWidth,
+
   // M5-B3, and `ProjectSettings.ruleOverrides` was in the same state:
   // a codec entry with no writer, so the map's byte behaviour under
   // interleaving had never been asked about. Sets AND clears, because
@@ -709,6 +715,7 @@ final class _SequenceState {
     _StepKind.acknowledgeFinding,
     if (aliveAckIds.isNotEmpty) _StepKind.unacknowledgeFinding,
     _StepKind.setRuleOverride,
+    if (aliveDeviceIds.isNotEmpty) _StepKind.setDeviceWidth,
   ];
 }
 
@@ -1011,6 +1018,25 @@ Command<RackDocument>? _buildCommand(
     case _StepKind.setSignalFamily:
       return _buildSetSignalFamily(s, rnd);
 
+    case _StepKind.setDeviceWidth:
+      // NULL IS LEGITIMATE HERE, exactly as it is for `connectPorts`: a
+      // rack shrunk under this device makes `PLC-001` refuse, which is
+      // an OUTCOME rather than a defect, and there is then no command
+      // and nothing to assert a byte property about.
+      final width =
+          WidthPosition.values[rnd.nextInt(WidthPosition.values.length)];
+      final planned = planSetDeviceWidth(
+        doc: s.doc,
+        id: s.aliveDeviceIds[rnd.nextInt(s.aliveDeviceIds.length)],
+        startTwelfth: width.startTwelfth,
+        spanTwelfths: width.spanTwelfths,
+        now: s.nextNow(),
+        actor: 'gen',
+      );
+      return switch (planned) {
+        WidthChangeReady(:final command) => command,
+        WidthChangeRefused() => null,
+      };
     case _StepKind.setRuleOverride:
       return _buildRuleOverride(s, rnd, step);
     case _StepKind.acknowledgeFinding:
@@ -1177,6 +1203,9 @@ void _reconcileTrackingAfterCommit(
     // build time, so there is no alive-id set for a later step to draw
     // on and no bookkeeping that could go stale behind it.
     case _StepKind.setRuleOverride:
+      break;
+    // Tracks nothing: it edits a device already in `aliveDeviceIds`.
+    case _StepKind.setDeviceWidth:
       break;
     case _StepKind.acknowledgeFinding:
       s.aliveAckIds.add((cmd as AcknowledgeFindingCommand).id);

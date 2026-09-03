@@ -514,4 +514,12 @@ enum LabelKey {
   // reason, an author and a date, so the undo entry names one rule
   // rather than the whole settings object.
   setRuleOverride,
+
+  // LATERAL POSITION (commands/device_width_commands.dart), M5-C/`#269`.
+  // Its own value and not `moveDevice`, on the split every value here is
+  // made on: what the Edit menu has to say. A move changes which U a
+  // device is in and a width change changes how much of the opening it
+  // spans, and "Undo Move Device" in front of somebody who has just
+  // picked `Left half` from a dropdown names an act that did not happen.
+  setDeviceWidth,
 }

@@ -415,17 +415,22 @@ void main() {
       }
     });
 
-    test('PLC-002 and PLC-003 have NO production writer to gate, and this '
+    test('PLC-003 and TOP-005 have NO production writer to gate, and this '
         'test is what notices when one arrives', () {
       // ═══════════════════════════════════════════════════════════════
       // A CENSUS AS A TEST, NOT A CENSUS AS A COMMENT
       // ═══════════════════════════════════════════════════════════════
-      // CR-030 gives the v1 editor a `Width position` dropdown that is
-      // not built, and AC-044 makes 0U occupants inspector-edited in v1,
-      // also not built. So nothing in `lib/` writes a non-default
-      // `startTwelfth`/`spanTwelfths` or constructs a `ZeroUPlacement`,
-      // and wiring those two rules into a command nobody calls with
-      // those values would be theatre.
+      // AC-044 makes 0U occupants inspector-edited in v1 and that
+      // editor is not built, so nothing constructs a `ZeroUPlacement`
+      // or a `ShelfPlacement`, and wiring those rules into a command
+      // nobody calls would be theatre.
+      //
+      // THIS TEST HAS ALREADY DONE ITS JOB ONCE. It covered `PLC-002`
+      // as well, until `#269` built the width control; it went red
+      // naming `device_width_commands.dart`, which is what the reason
+      // string below asks for. That half now lives in its own test
+      // below, asking a sharper question: not whether a writer exists,
+      // but whether the one that does is the gated one.
       //
       // The predecessor of THIS repository's other census test derived
       // its answer from a list that could not see the thing it counted,
@@ -460,7 +465,6 @@ void main() {
 
       final zeroUWriters = <String>[];
       final shelfWriters = <String>[];
-      final lateralWriters = <String>[];
       for (final f
           in roots
               .expand((d) => d.listSync(recursive: true))
@@ -490,15 +494,6 @@ void main() {
           if (_constructs(line, 'ShelfPlacement')) {
             shelfWriters.add('$path: ${line.trim()}');
           }
-          // A COPY IS NOT A WRITE. `MoveDeviceCommand` rebuilds a rail
-          // placement and carries `base.startTwelfth` across it; that
-          // cannot introduce a value `PLC-002` would refuse.
-          final m = RegExp(
-            r'(startTwelfth|spanTwelfths):\s*(.+)$',
-          ).firstMatch(line);
-          if (m != null && !m.group(2)!.contains('.${m.group(1)}')) {
-            lateralWriters.add('$path: ${line.trim()}');
-          }
         }
       }
 
@@ -517,13 +512,48 @@ void main() {
             'something in lib/ now builds a ZeroUPlacement: $zeroUWriters. '
             'PLC-003 has a writer to gate, so gate it and delete this half',
       );
+    });
+
+    test('PLC-002 HAS a writer now, and the only one is the gated one', () {
+      // The question this replaces was "does a writer exist"; it went
+      // red the moment one did, which is what it was for. The question
+      // now is narrower and lasts longer: `device_width_commands.dart`
+      // is the single file that sets a lateral position it did not copy
+      // from an existing placement, and it runs the placement gate.
+      final writers = <String>{};
+      for (final f
+          in Directory('lib')
+              .listSync(recursive: true)
+              .whereType<File>()
+              .where((f) => f.path.endsWith('.dart'))) {
+        final path = f.path.replaceAll(r'\', '/');
+        if (path.endsWith('/persistence/json_codec.dart')) continue;
+        for (final line in f.readAsLinesSync()) {
+          if (line.trimLeft().startsWith('//')) continue;
+          // A COPY IS NOT A WRITE. `MoveDeviceCommand` rebuilds a rail
+          // placement and carries `base.startTwelfth` across it, which
+          // cannot introduce a value `PLC-002` would refuse.
+          final m = RegExp(
+            r'(startTwelfth|spanTwelfths):\s*(.+)$',
+          ).firstMatch(line);
+          if (m != null && !m.group(2)!.contains('.${m.group(1)}')) {
+            writers.add(path);
+          }
+        }
+      }
       expect(
-        lateralWriters,
-        isEmpty,
+        writers,
+        {'lib/src/commands/device_width_commands.dart'},
         reason:
-            'something in lib/ now sets a lateral position that is not '
-            'copied from an existing placement: $lateralWriters. PLC-002 '
-            'has a writer to gate, so gate it and delete this half',
+            'a second lateral writer would need its own gate, and a '
+            'first one that moved would leave this pointing at nothing',
+      );
+      expect(
+        File('lib/src/commands/device_width_commands.dart').readAsStringSync(),
+        contains('evaluatePlacement('),
+        reason:
+            'the lateral writer stopped calling the placement gate, so '
+            'PLC-002 is a predicate nobody calls again',
       );
     });
   });
