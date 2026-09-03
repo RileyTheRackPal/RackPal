@@ -3460,6 +3460,70 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     });
   }
 
+  /// A remedy chip was pressed (CR-015, DR-115).
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// THE ONLY BUTTON ON THIS CHIP THAT WRITES A DEVICE
+  /// ═════════════════════════════════════════════════════════════════
+  /// `[ Connect anyway ]` makes a cable and `[ Pick a different port ]`
+  /// makes nothing; this mints a `DeviceInstance`. That is why the chip
+  /// autofocuses `[ Pick a different port ]` rather than this: the key
+  /// that opened the chip is the `Enter` the user pressed to commit, and
+  /// a mutation under a reflex is how a hesitation becomes an edit.
+  ///
+  /// ONE UNDO ENTRY, LABELLED FOR WHAT IT DID. `LabelKey.connectPorts`
+  /// would put "Undo connect" in the Edit menu for a gesture that also
+  /// placed a device, which is the same defect DR-014's split label
+  /// exists to avoid: a user who reads that and takes it at its word
+  /// expects one cable to disappear and nothing else.
+  void _applyRemedy(SpringBackRemedy remedy) {
+    final from = _wireFrom;
+    final fromTarget = from == null ? null : _targetFor(from);
+    if (fromTarget == null) {
+      _dismissChip();
+      _status.show("That cable's source pin is no longer in this document.");
+      return;
+    }
+    switch (remedy) {
+      case SpringBackRemedy.insertHdbasetReceiver:
+        late InsertReceiverResult result;
+        // See [_committingWire]: this writes the document, so the
+        // teardown that fires on a `structure` bump must not read it as
+        // somebody else's edit and announce a cancellation.
+        _committingWire = true;
+        try {
+          widget.controller.transact(LabelKey.insertRemedyDevice, (tx) {
+            result = insertHdbasetReceiver(
+              tx,
+              doc: _doc,
+              from: fromTarget,
+              now: widget.controller.clock.nowUtc(),
+              actor: widget.controller.actor,
+            );
+          });
+        } finally {
+          _committingWire = false;
+        }
+        switch (result) {
+          case InsertReceiverRefused(:final reason):
+            // THE CHIP STAYS UP. The user asked for a fix and did not get
+            // one, so closing the chip would leave them looking at a
+            // sheet with no cable and no explanation of either failure.
+            _status.show(reason);
+          case InsertReceiverDone(
+            :final receiverDesignator,
+            :final landedOn,
+          ):
+            _clearWire();
+            _status.show(
+              'Inserted $receiverDesignator and landed the run on its '
+              '$landedOn. Its HDMI output is open — drag from it to the '
+              'display (DR-115).',
+            );
+        }
+    }
+  }
+
   /// `Enter` — commit the wire in flight (docs/05 §7, DR-011.6).
   ///
   /// [overriding] is `[ Connect anyway ]`: the same commit with tier 2
@@ -4055,11 +4119,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
         // see [_commitWire]'s `overriding`. Not a second builder.
         onConnectAnyway: () => _commitWire(overriding: true),
         onPickAnother: _dismissChip,
-        // NO `onRemedy` YET, so no remedy button is drawn at all.
-        // DR-114 §11.113.3's rule for `[ Why? ]` generalises: a button
-        // that leads nowhere is worse than an absent one. Left off
-        // rather than passed as an explicit null, which the analyzer
-        // reads as redundant and which would say the same thing twice.
+        onRemedy: _applyRemedy,
       ),
     );
   }

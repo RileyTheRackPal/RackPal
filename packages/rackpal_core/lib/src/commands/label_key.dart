@@ -83,6 +83,21 @@ enum LabelKey {
   // it came out of.
   splitSet,
 
+  // A REMEDY THAT INSERTS A DEVICE (commands/insert_receiver.dart),
+  // CR-015 and DR-115. A FIFTH entry in the connect family and the one
+  // that is least like the others: `[ Insert HDBaseT receiver ]` places a
+  // `DeviceInstance` and THEN makes a cable, so the Edit menu offering
+  // "Undo connect" would name half of what it would take back. That is
+  // DR-014's argument for `splitSet` applied one gesture along, and the
+  // half it omits here is bigger: a user who reads "Undo connect" expects
+  // one cable to disappear, not a device to leave the equipment list.
+  //
+  // NAMED FOR THE ACT AND NOT FOR THE RULE. `SIG-001` has the only
+  // inserting remedy today (`SpringBackRemedy` has one member for exactly
+  // that reason), but the label belongs to the SHAPE of the act, and a
+  // second inserting remedy would undo the same way.
+  insertRemedyDevice,
+
   // STRUCTURE AND OUTLETS (commands/structure_commands.dart), M3-A/1.
   // `StructureBody`, `Outlet` and `OutletDrop` have been modelled and
   // byte-round-tripped since M0 and NOTHING WROTE THEM, which is the shape
