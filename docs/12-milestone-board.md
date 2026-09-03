@@ -421,12 +421,22 @@ maxdepth-3 search for `yml`/`yaml` returning eight files and no workflow among t
 passed first try. `az pipelines runs list` returns **51**: 48 succeeded, one cancelled, one in
 progress, and **one failed**, run 11 on `refs/pull/5/merge` on 2026-08-29.
 
-**That single red run is the reason this row is discharged rather than merely updated.** The version
-of this section below worried, correctly, that a plan is not a measurement. The version that replaced
-it worried about the next thing along, that a service which has only ever been green proves nothing
-about its failure path: *"do not yet treat a green Tests tab as proof the reporter works."* Run 11
-answers that. The service-side reporting path has been exercised in the red direction, on a real
-defect, and the gate held. What is left in this row is history, and history belongs out of §4.
+**The row is discharged on its own subject, which is whether the service runs the file at all.** It
+does, fifty times. What is left here is history, and history belongs out of §4.
+
+**WHAT RUN 11 PROVES IS NARROWER THAN THE FIRST DRAFT OF THIS PARAGRAPH CLAIMED, AND THE DIFFERENCE
+IS THE USEFUL PART.** That draft said the service-side reporting path *"has been exercised in the red
+direction"*, full stop. Run 11 is build `20260829.7` and it failed the **analyzer gate**, with
+`info count rose by 2`, on a tree whose fifteen local gates were all green: a `git add` had staged a
+file that was then edited, so the commit carried the un-fixed version and only a clean checkout could
+see it. **A PowerShell gate step failing, being surfaced, and blocking the PR is therefore proven.**
+
+**A FAILING TEST ON THE SERVICE IS STILL NOT.** No test has ever failed on a run, so the JUnit
+converter's output has only ever been parsed in the green direction, and the specific worry the
+paragraph below raises, *"do not yet treat a green Tests tab as proof the reporter works"*, **stands
+unanswered**. Those are two different reporting paths sharing one word, and collapsing them is how
+this row would go quietly wrong a third time. The honest state: the **build** result is trusted, the
+**Tests tab** is not yet. `CLAUDE.md` carries the same correction.
 
 **What the rest of this section says about run 1 is kept verbatim below**, because the reasoning is
 still the right reasoning and because a row edited into agreement with the present tense teaches
