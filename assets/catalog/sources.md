@@ -239,10 +239,20 @@ invented, and the one place a half departs from its base, the receiver's
 | `hdbt.in` `PoeSpec(role: pd)` with **no `standard`** | Published standard, and an absence that is itself the finding | §540's `[poh:pd]`, mapped by §367 to a `PoeSpec` on `net.poh`. The ROLE is stated; the STANDARD is deliberately absent, because `PoeStandard` is `{af, at, btType3, btType4}` — IEEE 802.3 and nothing else — while docs/01:470 says PoH *"is based on 802.3at but modified, and is **not** interoperable with a standard PoE PSE"*. Naming any of those four would put a false standard on a safety-adjacent field to avoid an empty one, which is precisely what AC-052 and G4 forbid. |
 | Both halves' port families, connectors, directions and pinouts | Transcribed | §540 and §575 list every port. `catalog_roles_test.dart` asserts the key list and order against those listings rather than against the code, and checks every family and connector resolves in the seeded registries. |
 
-**ONE THING THIS SECTION RECORDS RATHER THAN FIXES.** V06's shipped half
-carries `[poh:pse]` in §540 and carries no `PoeSpec` in code: the
-annotation was never transcribed. That is a real gap in an existing
-template and it is `#813` rather than a silent repair here, because the
-transmitter's PoH is a **source** of up to 100 W and adding a PSE spec to
-a shipped body is a data change with a power-rollup consequence, not a
-typo fix.
+**AND THE GAP THIS SECTION RECORDED IS NOW CLOSED (`#813`).** V06's
+shipped half carried `[poh:pse]` in §540 and no `PoeSpec` in code: the
+annotation had been in the doc since M1 and never in the code, and `#812`
+found it only by adding the receiver's matching `[poh:pd]` beside it. It
+was filed rather than repaired in passing because the transmitter's PoH is
+a **source** and a PSE spec on a shipped body is a data change with a
+power-rollup consequence.
+
+| Field | Kind | Source |
+|---|---|---|
+| `V06` `hdbt.out` `PoeSpec(role: pse)` | Stated by the corpus | §540's `[poh:pse]`, mapped by §367. This is the end that supplies the power and the datum `SIG-001` is about: docs/01:470 and `seed_registries.dart` both record that PoH runs up to 100 W over four pairs and can damage a switch. |
+| `standard` and `watts` on **both** PoH ports | Absent, deliberately | `standard` for the receiver's reason above, unchanged. `watts` because **100 W is the specification's ceiling, not this archetype's figure**, and AC-052 admits a published standard or a representative value, never a ceiling wearing the costume of a measurement. Absent is unknown, which is the truth. |
+
+**The pair is asserted together** in `catalog_roles_test.dart`, because
+one end supplying and the other drawing is what makes this a power
+topology rather than two unrelated fields: a kit with a PD and no PSE
+would say the receiver's power comes from nowhere.

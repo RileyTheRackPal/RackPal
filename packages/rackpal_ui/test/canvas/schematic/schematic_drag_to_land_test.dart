@@ -123,6 +123,18 @@ void main() {
     return link.id;
   }
 
+  /// A free jack that landing or moving [runId] may terminate on and that
+  /// BOTH tiers accept (DR-116).
+  ///
+  /// `freePin('MTX-1')` stopped being enough when `#811` landed. The
+  /// fixture's first half-landed run is anchored on `MTX-1 J01`, an HDMI
+  /// **input**, and MTX-1's free pins are its other fifteen inputs: two
+  /// inputs with nothing driving the cable, which is `DIR-001`. The rule
+  /// is right and the pin choice was wrong, for the third gesture in a
+  /// row.
+  ({PinRef ref, DPt centre}) landingTarget(Uuid runId, {Uuid? anchorPortId}) =>
+      clearBindTarget(doc, reference, runId, anchorPortId: anchorPortId);
+
   /// The pennant drawn for [linkId]. A half-landed run has exactly ONE.
   DPt pennantOf(Uuid linkId) {
     final labels = reference.netLabels
@@ -156,7 +168,7 @@ void main() {
     final runId = makeHalfLandedRun();
     await pump(tester);
     final before = doc.links.length;
-    final target = freePin('MTX-1');
+    final target = landingTarget(runId);
 
     await dragFromTo(tester, pennantOf(runId), target.centre);
 
@@ -186,7 +198,7 @@ void main() {
     final fieldLabel = was.structureOrigin!.fieldLabel;
     await pump(tester);
 
-    await dragFromTo(tester, pennantOf(runId), freePin('MTX-1').centre);
+    await dragFromTo(tester, pennantOf(runId), landingTarget(runId).centre);
 
     final now = doc.links[runId]!;
     expect(now.designator, designator, reason: 'the W number is the cable');
@@ -198,7 +210,7 @@ void main() {
   ) async {
     final runId = makeHalfLandedRun();
     await pump(tester);
-    await dragFromTo(tester, pennantOf(runId), freePin('MTX-1').centre);
+    await dragFromTo(tester, pennantOf(runId), landingTarget(runId).centre);
     expect(doc.links[runId]!.conductors.first.to, isA<PortEndpoint>());
 
     controller.undoLast();
@@ -265,7 +277,7 @@ void main() {
   testWidgets('Esc abandons a landing with no model change', (tester) async {
     final runId = makeHalfLandedRun();
     await pump(tester);
-    final target = freePin('MTX-1');
+    final target = landingTarget(runId);
 
     final drag = await tester.startGesture(
       toScreen(tester, pennantOf(runId)),
@@ -350,7 +362,11 @@ void main() {
     final wasOn =
         (doc.links[runId]!.conductors.first.to as PortEndpoint).portId;
     final wasFrom = doc.links[runId]!.conductors.first.from;
-    final target = freePin('MTX-1');
+    final target = landingTarget(
+      runId,
+      anchorPortId:
+          (doc.links[runId]!.conductors.first.from as PortEndpoint).portId,
+    );
 
     await dragFromTo(tester, rackPennantOf(runId), target.centre);
 
@@ -385,7 +401,15 @@ void main() {
     final wasOn =
         (doc.links[runId]!.conductors.first.to as PortEndpoint).portId;
 
-    await dragFromTo(tester, rackPennantOf(runId), freePin('MTX-1').centre);
+    await dragFromTo(
+      tester,
+      rackPennantOf(runId),
+      landingTarget(
+        runId,
+        anchorPortId:
+            (doc.links[runId]!.conductors.first.from as PortEndpoint).portId,
+      ).centre,
+    );
     expect(
       (doc.links[runId]!.conductors.first.to as PortEndpoint).portId,
       isNot(wasOn),
@@ -416,7 +440,15 @@ void main() {
     reference = buildFixtureScene(doc);
     await pump(tester);
 
-    await dragFromTo(tester, rackPennantOf(runId), freePin('MTX-1').centre);
+    await dragFromTo(
+      tester,
+      rackPennantOf(runId),
+      landingTarget(
+        runId,
+        anchorPortId:
+            (doc.links[runId]!.conductors.first.from as PortEndpoint).portId,
+      ).centre,
+    );
 
     expect(doc.links[runId]!.structureOrigin!.rackLabel, 'BY-HAND-7');
     expect(
@@ -433,7 +465,15 @@ void main() {
     await pump(tester);
     expect(doc.links[runId]!.structureOrigin!.rackLabel, 'PP1-01');
 
-    await dragFromTo(tester, rackPennantOf(runId), freePin('MTX-1').centre);
+    await dragFromTo(
+      tester,
+      rackPennantOf(runId),
+      landingTarget(
+        runId,
+        anchorPortId:
+            (doc.links[runId]!.conductors.first.from as PortEndpoint).portId,
+      ).centre,
+    );
 
     // WHAT IT BECOMES IS THE ALLOCATOR'S BUSINESS, and this fixture's
     // panel may render no label at all (DR-040 §11.39.5). What must not
@@ -468,5 +508,95 @@ void main() {
       (doc.links[link.id]!.conductors.first.to as PortEndpoint).portId,
       wasOn,
     );
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // `#811` / DR-116 — A RULE IS ABOUT THE STATE, NOT ABOUT THE GESTURE
+  // ═══════════════════════════════════════════════════════════════════
+  // Landing a run used to consult occupancy and nothing else, so an
+  // HDBaseT run dragged onto a switch port was written in silence while
+  // the connect gesture sprang the identical pair back. These are the
+  // tests that would have caught that, and they exist because nothing
+  // did.
+  group('both tiers govern a landing', () {
+    testWidgets('a pin a tier-2 rule objects to SPRINGS BACK and writes '
+        'nothing', (tester) async {
+      final runId = makeHalfLandedRun();
+      await pump(tester);
+      final before = doc.links[runId]!.conductors.first.to;
+      expect(before, isA<PlaceEndpoint>(), reason: 'the premise: still open');
+
+      // The pin the OLD code would have landed on: free, and refused by
+      // `DIR-001` because the run is anchored on `MTX-1 J01`, an input,
+      // and this is another one.
+      final objectionable = freePin('MTX-1');
+      await dragFromTo(tester, pennantOf(runId), objectionable.centre);
+
+      expect(
+        doc.links[runId]!.conductors.first.to,
+        isA<PlaceEndpoint>(),
+        reason: 'CR-017: the gesture hesitated, the document did not move',
+      );
+      expect(find.byType(SpringBackChipCard), findsOneWidget);
+    });
+
+    testWidgets('and [ Connect anyway ] lands it, which is what makes this '
+        'safe for an as-found survey', (tester) async {
+      // DR-116 §11.115.4. A home run was pulled weeks before anybody
+      // opened this sheet, so somebody documenting an existing install
+      // has to be able to record what the last installer actually did.
+      // The override is the whole answer to that objection, and a bind
+      // that only refused would fail G2 in the case G2 names.
+      final runId = makeHalfLandedRun();
+      await pump(tester);
+      final objectionable = freePin('MTX-1');
+      await dragFromTo(tester, pennantOf(runId), objectionable.centre);
+
+      await tester.tap(find.text(kSpringBackConnectAnyway));
+      await tester.pumpAndSettle();
+
+      final landed = doc.links[runId]!.conductors.first.to;
+      expect(landed, isA<PortEndpoint>());
+      expect(
+        (landed as PortEndpoint).portId,
+        derivePortId(
+          Uuid(objectionable.ref.deviceId),
+          PortKey(objectionable.ref.portKey),
+        ),
+        reason: 'the override lands the very pin that was refused',
+      );
+    });
+
+    testWidgets('the objectionable pin is still OFFERED, wearing amber', (
+      tester,
+    ) async {
+      // docs/05:476's *"they remain droppable"*, reaching the second
+      // gesture. A tier-2 pin that vanished from the candidate set would
+      // be a tier-1 refusal wearing the wrong tier.
+      final runId = makeHalfLandedRun();
+      await pump(tester);
+      final drag = await tester.startGesture(
+        toScreen(tester, pennantOf(runId)),
+      );
+      await tester.pump();
+
+      final amber = tester
+          .renderObject<RenderSchematicCanvas>(find.byType(SchematicCanvasBody))
+          .plan
+          .ops
+          .whereType<OpCircle>()
+          .where((op) => op.stroke?.argb == kSpringBackRingArgb)
+          .length;
+      expect(
+        amber,
+        greaterThan(0),
+        reason:
+            'MTX-1 offers fifteen free inputs and the run is anchored '
+            'on a sixteenth, so every one of them is droppable and amber',
+      );
+
+      await drag.cancel();
+      await tester.pumpAndSettle();
+    });
   });
 }

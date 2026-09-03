@@ -379,3 +379,77 @@ DeviceInstance deviceNamed(RackDocument doc, String designator) =>
 final List<String> kSpringBackRuleIds = <String>[
   for (final rule in SpringBackRule.values) rule.id,
 ];
+
+/// A free pin that landing [linkId]'s loose end may terminate on, which
+/// BOTH validation tiers accept (DR-116).
+///
+/// The bind's counterpart to [clearConnectPair], and it exists for the
+/// same reason and was found the same way. Landing a home run used to
+/// consult occupancy alone, so any free pin would do; DR-116 rules that a
+/// rule is a statement about the resulting STATE rather than about the
+/// gesture, so the bind now springs back like a connect does.
+///
+/// The suites here landed on `freePin('MTX-1')` and went red on
+/// `DIR-001`: the fixture's first half-landed run is anchored on
+/// `MTX-1 J01`, an HDMI **input**, and MTX-1's free pins are its other
+/// fifteen inputs. **Two inputs, nothing driving the cable** — the same
+/// shape, on a third gesture. The outputs clear it.
+///
+/// SEARCHES rather than naming one, for [clearConnectPair]'s reason:
+/// every pair picked by eye in this directory has been wrong.
+/// [anchorPortId] is the end this landing is NOT writing. Omit it for a
+/// half-landed run, where exactly one end is a port and the helper finds
+/// it; pass it for a MOVE, where both ends are ports and only the caller
+/// knows which one is being dragged.
+///
+/// THE FIRST DRAFT DERIVED IT FROM `LinkEnd` AND HAD IT BACKWARDS.
+/// `buildBindEndpointCommand` reads `LinkEnd.field` as `conductor.from`,
+/// which is the end being WRITTEN, while `_runEndAt` sets `anchorPortId`
+/// to the opposite one. Two conventions one letter apart, and a helper
+/// that picked the wrong end would have searched for a pin compatible
+/// with the jack the cable is leaving.
+({PinRef ref, DPt centre}) clearBindTarget(
+  RackDocument doc,
+  SchematicScene scene,
+  Uuid linkId, {
+  Uuid? anchorPortId,
+}) {
+  final link = doc.links[linkId]!;
+  final conductor = link.conductors.first;
+  final anchorId =
+      anchorPortId ??
+      [conductor.from, conductor.to].whereType<PortEndpoint>().single.portId;
+  final anchorPort = doc.ports[anchorId]!;
+  final anchor = resolveConnectTarget(
+    doc,
+    deviceId: anchorPort.deviceId,
+    portKey: anchorPort.templatePortKey!.v,
+  )!;
+
+  for (final symbol in scene.symbols) {
+    final device = doc.devices[Uuid(symbol.id)];
+    if (device == null) continue;
+    for (final port in symbol.allPorts) {
+      final id = derivePortId(device.id, PortKey(port.key));
+      if (portConductorCount(doc, id) != 0) continue;
+      final t = resolveConnectTarget(
+        doc,
+        deviceId: device.id,
+        portKey: port.key,
+      );
+      if (t == null) continue;
+      if (evaluateSpringBack(doc, anchor, t, ontoLink: linkId)
+          is! SpringBackClear) {
+        continue;
+      }
+      return (
+        ref: PinRef(deviceId: symbol.id, portKey: port.key),
+        centre: symbolPortCentre(symbol, port),
+      );
+    }
+  }
+  throw StateError(
+    'no free jack on this sheet takes ${link.designator} without springing '
+    'back, so this fixture can no longer demonstrate a landing at all',
+  );
+}

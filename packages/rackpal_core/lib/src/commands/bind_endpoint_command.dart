@@ -456,6 +456,58 @@ BindEndpointResult buildBindEndpointCommand({
     );
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // THE REST OF TIER 1 (`#811`, DR-116 §11.115.3)
+  // ═══════════════════════════════════════════════════════════════════
+  // `TOP-003` was the only catalogue rule this builder asked, which was
+  // an artefact of the bind path predating both tiers rather than a
+  // decision anybody made. DR-116 rules that **a rule is a statement
+  // about the resulting state, not about the gesture that produced it**:
+  // a meaningless document is not made meaningful by which gesture wrote
+  // it.
+  //
+  // ASKED HERE AND NOT THROUGH `evaluateConnect`, and the reason is that
+  // this gesture has no second `ConnectTarget` to hand it. A bind writes
+  // ONE endpoint onto a conductor whose other end is already fixed, so
+  // the pair `evaluateConnect` reads is (the anchor, this port) — and the
+  // anchor is an endpoint rather than a pin the caller resolved. The two
+  // rules that can fire on that pair are spelled out below with their
+  // ids, which is what `PLC-001..003`'s ratification demanded of exactly
+  // this shape (canon §12.6(b): an unnumbered blocking rule can carry
+  // neither a `Finding.ruleId` nor an AC-051 fixture pair).
+  final anchor = switch (end) {
+    LinkEnd.field => conductor.to,
+    LinkEnd.rack => conductor.from,
+  };
+  if (anchor is PortEndpoint) {
+    if (anchor.portId == port.portId) {
+      // `TOP-001`: a conductor may not connect a port to itself. Reachable
+      // by pointer: the anchor pin and the loose end's pennant sit beside
+      // each other, and the surface's candidate set is what usually keeps
+      // them apart — usually is not a guarantee a command may rely on.
+      return BindEndpointRefused(
+        'TOP-001 — ${port.designator} is the end this drop is already on, '
+        'so landing it there would connect the cable to itself.',
+      );
+    }
+    // `TOP-002`: two conductors may not duplicate the same ordered port
+    // pair on the same link. A multi-conductor home run can land its
+    // second pair on the jack its first already uses, which is one
+    // physical punchdown recorded twice.
+    for (final other in link.conductors) {
+      if (identical(other, conductor)) continue;
+      final ends = {other.from, other.to}.whereType<PortEndpoint>().map(
+        (e) => e.portId,
+      );
+      if (ends.contains(anchor.portId) && ends.contains(port.portId)) {
+        return const BindEndpointRefused(
+          'TOP-002 — another conductor on this cable already runs between '
+          'those two ports.',
+        );
+      }
+    }
+  }
+
   // THE LABEL GATE IS RACK-ONLY, like the write it guards. A field bind
   // passes no label (the constructor asserts it), so there is nothing to
   // normalise and nothing that could collide.

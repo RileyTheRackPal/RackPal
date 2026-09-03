@@ -1961,6 +1961,52 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     _announceCaret();
   }
 
+  /// Whether landing [grab] on [target] would duplicate a port pair the
+  /// cable already carries — `TOP-002`, from the surface's side.
+  ///
+  /// THE SAME PREDICATE `buildBindEndpointCommand` APPLIES, and a second
+  /// spelling of it is what DR-011.5's rule exists to prevent: a set that
+  /// offered a pin the command then refused would be the defect that
+  /// ruling is about. It is duplicated in SHAPE and not in DECISION,
+  /// because the command's copy is the one that binds and this one only
+  /// decides whether to draw a ring.
+  bool _bindWouldDuplicate(RunEndGrab grab, ConnectTarget target) {
+    final link = _doc.links[grab.linkId];
+    if (link == null || link.conductors.isEmpty) return false;
+    final conductor = link.conductors.first;
+    final anchor = switch (grab.end) {
+      LinkEnd.field => conductor.to,
+      LinkEnd.rack => conductor.from,
+    };
+    if (anchor is! PortEndpoint) return false;
+    for (final other in link.conductors) {
+      if (identical(other, conductor)) continue;
+      final ends = {
+        other.from,
+        other.to,
+      }.whereType<PortEndpoint>().map((e) => e.portId).toSet();
+      if (ends.contains(anchor.portId) && ends.contains(target.portId)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// The `ConnectTarget` for [grab]'s anchor: the end this landing is NOT
+  /// writing, which is the other half of the cable being completed.
+  ///
+  /// THE SAME READING `_armLandingFrom` TAKES, and deliberately not a
+  /// second one. That method's own note says the anchor is what
+  /// `_runEndAt` already settled and that re-deriving it off the
+  /// conductor runs in opposite directions for the two ends; this asks
+  /// the grab, as it does.
+  ConnectTarget? _anchorTargetOf(RunEndGrab grab) {
+    final port = _doc.ports[grab.anchorPortId];
+    final key = port?.templatePortKey;
+    if (port == null || key == null) return null;
+    return _targetFor(PinRef(deviceId: port.deviceId.v, portKey: key.v));
+  }
+
   /// Cycles the caret through [_candidates] — `Tab` / `Shift+Tab`.
   void _cycleCandidate({required int step}) {
     if (_wireFrom == null || _candidates.isEmpty) return;
@@ -2869,12 +2915,48 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     if (port == null || key == null) return false;
     final source = PinRef(deviceId: port.deviceId.v, portKey: key.v);
 
-    final free = <PinRef>[
-      for (final pin in locatePins(scene))
-        if (pin.ref != source)
-          if (_targetFor(pin.ref) case final t?)
-            if (portConductorCount(_doc, t.portId) == 0) pin.ref,
-    ];
+    // ═════════════════════════════════════════════════════════════════
+    // THE CANDIDATE SET NARROWS WITH THE COMMAND (DR-116 §11.115.5)
+    // ═════════════════════════════════════════════════════════════════
+    // This used to be occupancy alone. DR-116 rules that a bind consults
+    // both tiers, and DR-011.5's surviving tier-1 half is what forces the
+    // surface to keep up: *"a pin the gesture OFFERS is never then
+    // refused"* by tier 1. So a pin `buildBindEndpointCommand` would now
+    // refuse is not offered.
+    //
+    // `TOP-001` IS THE `pin.ref != source` LINE and always was, which is
+    // the one piece of tier 1 this set already had by accident: the
+    // anchor pin is excluded, so a conductor cannot be landed on itself.
+    // It is named now rather than left as a bare inequality.
+    //
+    // TIER-2 PINS STAY OFFERED and wear the amber ring, which is
+    // docs/05:476's *"they remain droppable"* reaching the second
+    // gesture. That set is computed in the same walk for [_springBack]'s
+    // stated reason: one pass decides and records together.
+    final anchorTarget = _anchorTargetOf(grab);
+    final free = <PinRef>[];
+    final springBack = <PinRef>{};
+    for (final pin in locatePins(scene)) {
+      if (pin.ref == source) continue; // TOP-001
+      final t = _targetFor(pin.ref);
+      if (t == null) continue;
+      if (portConductorCount(_doc, t.portId) != 0) continue; // TOP-003
+      if (_bindWouldDuplicate(grab, t)) continue; // TOP-002
+      free.add(pin.ref);
+      if (anchorTarget != null &&
+          evaluateSpringBack(
+                _doc,
+                anchorTarget,
+                t,
+                // The one gesture where this parameter earns its keep: a
+                // bind completes an EXISTING cable, so an adapter already
+                // declared on it clears `CON-001` and `SIG-002`.
+                ontoLink: grab.linkId,
+              )
+              is SpringBackChip) {
+        springBack.add(pin.ref);
+      }
+    }
     if (free.isEmpty) {
       // THE PIN THIS RUN IS LEAVING IS NOT FREE, because this cable is
       // still in it: `portConductorCount` counts it, exactly as
@@ -2899,22 +2981,15 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       // cable being created. This one exists already and its family is
       // whatever it was pulled as.
       //
-      // AND NO AMBER RING, WHICH IS A DIFFERENT ANSWER FROM THE TWO
-      // ABOVE. Those two lack a pin PAIR to judge; this one has both
-      // ends and could be judged, and is not, because a bind's rules are
-      // its own — `_bindCandidates` builds `free` from occupancy alone,
-      // deliberately not from `evaluateConnect` (see its note on the two
-      // rule sets). Painting a tier-2 verdict over a candidate set that
-      // never saw tier 1 would mix two vocabularies on one ring.
-      //
-      // THAT LEAVES A REAL HOLE AND IT IS FILED RATHER THAN NOTED:
-      // `#811` asks whether a bind adopts the connect gesture's rule
-      // stack or whether occupancy really is its only rule, because
-      // dragging an HDBaseT run's loose end onto a switch port is the
-      // flagship `SIG-001` hazard arriving through a gesture that never
-      // asks. It wants a ruling before code, which is why `#278` does
-      // not settle it by painting a ring here.
-      _setTargets(candidates: free);
+      // THE AMBER RING IS HERE NOW, which `#811` and DR-116 §11.115.3
+      // settled. The comment this replaces said a bind's rules were its
+      // own and that painting a tier-2 verdict over a set that never saw
+      // tier 1 would mix two vocabularies on one ring. Both halves are
+      // answered rather than argued with: the set above now DOES see
+      // tier 1, and DR-116 rules that a rule is a statement about the
+      // resulting state rather than about the gesture, so there was never
+      // a second vocabulary.
+      _setTargets(candidates: free, springBack: springBack);
     });
     _status.show(
       grab.moving
@@ -3204,7 +3279,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   /// field label names the wall plate and landing a speaker says nothing
   /// about what the plate is called. A move re-derives it unless a person
   /// typed it, which `buildMoveEndpointCommand` decides rather than this.
-  void _commitLanding(RunEndGrab grab, PinRef to) {
+  void _commitLanding(RunEndGrab grab, PinRef to, {bool overriding = false}) {
     final target = _targetFor(to);
     if (target == null) {
       _cancelWire();
@@ -3216,6 +3291,42 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       _clearWire();
       _status.show('That cable is no longer in this project.');
       return;
+    }
+
+    // ═════════════════════════════════════════════════════════════════
+    // TIER 2 ON THE BIND TOO (`#811`, DR-116 §11.115.3)
+    // ═════════════════════════════════════════════════════════════════
+    // DR-116: a rule is a statement about the RESULTING STATE, not about
+    // the gesture that produced it. An HDBaseT run landed on a switch
+    // port is the same 100 W hazard whichever gesture put it there, and
+    // this one used to write it in silence.
+    //
+    // THE PAIR IS THE ANCHOR AND THE TARGET, because that is the cable
+    // this gesture completes: the loose end is being given a port, and
+    // the conductor's other end is already fixed. `evaluateSpringBack`
+    // reads two `ConnectTarget`s and does not care which gesture
+    // assembled them.
+    //
+    // `ontoLink: grab.linkId`, UNLIKE THE CONNECT GESTURE, and this is
+    // the one place that parameter earns its keep. A bind completes an
+    // EXISTING cable, so an `InlineAdapter` already declared on it
+    // clears `CON-001` and `SIG-002`, and a `passiveSplit` net clears
+    // `DIR-001` — exactly the cases the connect gesture passes null for
+    // because it is minting a link that cannot yet carry any of them.
+    if (!overriding) {
+      final from = _anchorTargetOf(grab);
+      if (from != null) {
+        final verdict = evaluateSpringBack(
+          _doc,
+          from,
+          target,
+          ontoLink: grab.linkId,
+        );
+        if (verdict is SpringBackChip) {
+          _springBackOff(to, verdict);
+          return;
+        }
+      }
     }
 
     // EXCLUDES THIS RUN'S OWN LABEL, which matters only for a move: the
@@ -3539,7 +3650,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     // [_landingFrom]: the run exists, so completing it must MOVE an end
     // rather than create a second cable beside it.
     if (_landingFrom case final grab?) {
-      _commitLanding(grab, to);
+      // THE OVERRIDE TRAVELS, which is `#811`'s half of DR-116: a bind
+      // that springs back must offer the same way through as a connect
+      // does, or `[ Connect anyway ]` would be a button that reopens the
+      // chip it was pressed on.
+      _commitLanding(grab, to, overriding: overriding);
       return;
     }
     // The same three-way branch [_armWireFrom] took, read back off the
