@@ -88,7 +88,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 /// THE SCHEME (docs/14 §14.0): `0.EPIC.TASK`. The leading `0` holds until
 /// the first public release, the middle number is the milestone epic under
 /// development, and the last increments per major task completed in it.
-const String kAppVersion = '0.5.14';
+const String kAppVersion = '0.5.15';
 
 /// Everything the shell is handed.
 final class AppServices {
