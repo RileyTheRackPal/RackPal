@@ -557,6 +557,30 @@ Map<String, TemplateBody> buildVideoCatalog() {
       dir: PortDirection.source,
       bank: 'video',
       gender: Gender.female,
+      // §540's `[poh:pse]`, which §367 maps to a `PoeSpec` on `net.poh`.
+      // TRANSCRIBED AT `#813`, having been specified since M1 and never
+      // written: the annotation was in the doc and the argument was not
+      // in the code, which `#812` found only because it added the
+      // receiver's matching `[poh:pd]` beside it.
+      //
+      // THIS IS THE END THAT SUPPLIES THE POWER, and it is the reason
+      // `SIG-001` exists at all: docs/01:470 and the seed registry both
+      // record that PoH runs *"up to 100 W over four pairs"* and *"can
+      // damage the switch"*. A PSE role on this port is the datum that
+      // sentence is about.
+      //
+      // `standard` IS ABSENT, exactly as on the receiver's inlet and for
+      // the same reason (G4). `PoeStandard` is `{af, at, btType3,
+      // btType4}`, IEEE 802.3 and nothing else, while PoH *"is based on
+      // 802.3at but modified, and is NOT interoperable with a standard
+      // PoE PSE"*. Naming one of those four to fill the field would be a
+      // false standard on a safety-adjacent one.
+      //
+      // AND NO `watts` EITHER. 100 W is the SPEC'S CEILING rather than
+      // this archetype's figure, and AC-052 admits a published standard
+      // or a representative value, not a ceiling wearing the costume of
+      // a measurement. An absent watt figure is unknown, which is true.
+      poe: PoeSpec(role: PoeRole.pse),
     )
     ..p(
       'ir.in',

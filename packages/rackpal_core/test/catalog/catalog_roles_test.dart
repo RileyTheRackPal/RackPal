@@ -155,6 +155,41 @@ void main() {
       },
     );
 
+    test('the KIT states PoH at both ends, and neither claims a standard', () {
+      // `#813`. §540 marks the transmitter `[poh:pse]` and the receiver
+      // `[poh:pd]`, and until this the transmitter carried no `PoeSpec`
+      // at all: the annotation had been in the doc since M1 and never in
+      // the code. `#812` found it only by adding the matching inlet.
+      //
+      // ASSERTED AS A PAIR rather than one end at a time, because that is
+      // what makes it a power topology rather than two unrelated fields:
+      // one end supplies and the other draws, and a kit with a PD and no
+      // PSE would say the receiver's power comes from nowhere.
+      final tx = catalog['V06']!;
+      final out = tx.ports.firstWhere((p) => p.key.v == 'hdbt.out');
+      final inlet = hdbasetInletOf(rx)!;
+
+      expect(out.poe?.role, PoeRole.pse);
+      expect(inlet.poe?.role, PoeRole.pd);
+      for (final port in [out, inlet]) {
+        expect(
+          port.poe?.standard,
+          isNull,
+          reason:
+              'PoeStandard is IEEE 802.3 only, and docs/01:470 says '
+              'PoH is not interoperable with a standard PoE PSE — so a '
+              'PoH port can state a role and cannot state a standard',
+        );
+        expect(
+          port.poe?.watts,
+          isNull,
+          reason:
+              "100 W is the SPEC's ceiling, not this archetype's "
+              'figure, and a ceiling in a watts field is a guess (G4)',
+        );
+      }
+    });
+
     test('it is notInRack, so it occupies nothing', () {
       expect(rx.mountMethod, MountMethod.notInRack);
       expect(rx.frontU, 0);

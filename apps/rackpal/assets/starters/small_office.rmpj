@@ -491,7 +491,7 @@
           "type": "shelf"
         },
         "templateRef": {
-          "contentHash": "sha256:462b00a23bb67b9b8af1e53ec71b9c42fb40ac4da63d19047db527c342594a46",
+          "contentHash": "sha256:a79bf34bc3a87180c3c6520d947ce8ada4093481661cdf653d1bfa82e9a56bc9",
           "templateId": "V06",
           "version": 1
         }
@@ -19598,6 +19598,9 @@
               "label": "HDBT OUT",
               "maxConnections": 1,
               "order": "a0003",
+              "poe": {
+                "role": "pse"
+              },
               "renamedFrom": [],
               "signalFamily": "video.hdbaset",
               "topology": "p2p"
@@ -19698,7 +19701,7 @@
           "widthClass": "half"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:462b00a23bb67b9b8af1e53ec71b9c42fb40ac4da63d19047db527c342594a46",
+        "contentHash": "sha256:a79bf34bc3a87180c3c6520d947ce8ada4093481661cdf653d1bfa82e9a56bc9",
         "templateId": "V06",
         "version": 1
       },

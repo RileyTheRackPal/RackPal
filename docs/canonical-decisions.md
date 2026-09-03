@@ -15730,6 +15730,67 @@ run into it in one undo step"*. Nothing else in that paragraph moves: the adapte
 `mountMethod: notInRack`, the *"two or more `Link`s"* and the full symbol are all untouched and all
 still true of a receiver, which will carry a second link the moment the user lands its HDMI end.
 
+### §11.115 DR-116 · A rule is about the state, not about the gesture: landing a run end consults both tiers
+
+**Question.** `#811`. Landing or moving a home run's loose end writes a `Link` endpoint, and
+`buildBindEndpointCommand` asks almost nothing about it. Does binding adopt the connect gesture's
+rule stack, or is occupancy genuinely a bind's only rule?
+
+**11.115.1 MEASURED: SIX CHECKS, AND ONLY ONE OF THEM IS A RULE.** `buildBindEndpointCommand`
+refuses when the link is absent, when it is not a home run (`structureOrigin == null`), when it has
+no conductors, when that end is already landed, when `portConductorCount > 0`, and when the rack
+label collides (CR-113). The candidate set the SURFACE offers is narrower still: `_armLandingFrom`
+builds it from occupancy alone, and its own comment says so, *"a bind's only occupancy rule is
+`TOP-003`."*
+
+Of the six, four are gesture applicability, one is CR-113, and exactly one is a catalogue rule.
+**`TOP-001` and `TOP-002` are unasked**, and no tier-2 rule is asked at all.
+
+**11.115.2 THE CONSEQUENCE IS THE FLAGSHIP HAZARD ARRIVING THROUGH A SIDE DOOR.** Dragging an
+HDBaseT run's loose end onto a switch port is `SIG-001` in every particular: the same two ports, the
+same 100 W PoH, the same damaged switch. The connect gesture springs it back with a chip and the bind
+gesture writes it silently, and nothing in the corpus ever decided that. It is an artefact of the
+bind path predating both tiers.
+
+**11.115.3 Ruled: a rule is a statement about the RESULTING STATE, not about the gesture that
+produced it.** Both tiers govern the bind.
+
+**TIER 1 COMPLETES.** `TOP-001` and `TOP-002` join the `TOP-003` already there. These are the rules
+CR-017 calls states in which *"the model means nothing"*, and a meaningless document is not made
+meaningful by the gesture that wrote it. The existing occupancy check stays exactly where it is and
+keeps asking through `portConductorCount`, so `TOP-003` still lives in one place.
+
+**TIER 2 SPRINGS BACK, WITH ITS CHIP AND ITS `[ Connect anyway ]`.** The six rules read a pair of
+`ConnectTarget`s and neither of them cares which gesture assembled the pair.
+
+**11.115.4 THE OVERRIDE IS WHY THIS IS SAFE FOR AS-FOUND WORK, AND IT IS THE WHOLE ANSWER TO THE
+OBJECTION.** A home run was pulled weeks before anybody opened this sheet, so landing it is recording
+a fact rather than proposing a design, and a product that REFUSED to record what the previous
+installer did would fail G2 in the case G2 names: *"cannot import an as-found survey."*
+
+CR-017 already resolves that tension and resolves it in this direction. Tier 2 does not refuse; **it
+hesitates**, and the hesitation is the teaching moment. Somebody surveying an existing install lands
+the run, is told the rule the last installer broke, presses `[ Connect anyway ]`, and now has a
+document that both records reality and carries the finding. That is a better outcome than silence,
+and silence is what ships today.
+
+*Rejected: tier 1 only, on the ground that an existing cable is a fact rather than a proposal.* It is
+the strongest objection and it fails on CR-017's own mechanism: the tier that would "argue with
+reality" is the one built not to, and refusing to mention a hazard is not neutrality when the hazard
+is a damaged switch. It also costs `SIG-001` on one of the two gestures that can create it, which
+`seed_registries.dart` calls *"the highest-value validation in the product"*.
+
+*Rejected: ruling that occupancy really is a bind's only rule.* It is the cheapest answer and it
+leaves `TOP-001` and `TOP-002` unchecked on a gesture that writes an endpoint. That is not a matter
+of taste: `TOP-001` is a conductor connecting a port to itself.
+
+**11.115.5 The candidate set narrows with the command, and that is the half a surface must not
+forget.** `_armLandingFrom` offers every free pin. Under this ruling a pin the command would refuse
+at tier 1 must not be offered, on DR-011.5's standing rule that *"a pin the gesture OFFERS is never
+then refused"* by tier 1 — the claim M5-D split in two and whose tier-1 half survives intact. Tier-2
+pins stay OFFERED and wear the amber ring, which is docs/05:476's *"they remain droppable"* reaching
+the second gesture.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
