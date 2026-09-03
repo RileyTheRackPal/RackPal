@@ -544,8 +544,76 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   /// here is already legal, and the family only decides which of two legal
   /// pins the band reaches for. That distinction is the whole of DR-012.5 —
   /// this is an ordering heuristic, not `SIG-001`, and the tier-2 rules
-  /// that WOULD refuse an incompatible pair do not exist until M5.
+  /// that WOULD refuse an incompatible pair now live in [_springBack],
+  /// one field down, which is the distinction made visible.
   Set<PinRef> _preferred = const <PinRef>{};
+
+  /// The candidates a tier-2 rule would spring back: docs/05 §7.3's amber
+  /// ring, and on release the chip.
+  ///
+  /// A SUBSET OF [_candidates] LIKE [_preferred] AND FOR THE OPPOSITE
+  /// REASON. Both are refinements of the legal set rather than pools
+  /// beside it, but [_preferred] says which legal pin the magnet reaches
+  /// for FIRST and this says which one it will argue with. A pin can be
+  /// in both: `snapToPin` still steers toward the source's own family,
+  /// and a same-family pair can still fail `CON-001` on its connector.
+  ///
+  /// COMPUTED ONCE AT ARM TIME, in the walk that computes the other two.
+  /// `evaluateSpringBack` runs six predicates over the registries and is
+  /// nothing to do sixty times a second, and it can be cached for exactly
+  /// as long as the document holds still — which is what
+  /// [_invalidateLivePreviews] guarantees by tearing the whole gesture
+  /// down the moment it does not.
+  Set<PinRef> _springBack = const <PinRef>{};
+
+  /// Sets the three arm-time target sets together, which is the only way
+  /// they are ever set.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THREE FIELDS WITH A SUBSET INVARIANT, ASSIGNED AT NINE SITES, IS THE
+  /// SHAPE THAT DRIFTS
+  /// ═══════════════════════════════════════════════════════════════════
+  /// [_candidates] and [_preferred] were two, maintained in step by hand
+  /// across six teardowns and three arms, and it held. [_springBack] is
+  /// the third, and it is the one whose staleness is VISIBLE: a leftover
+  /// preferred pin only tugs the magnet a little, while a leftover amber
+  /// pin tells the user a rule objects to a cable no rule has looked at.
+  ///
+  /// So the assignment is one call rather than three lines, and the
+  /// invariant is asserted in the one place instead of being a sentence
+  /// three doc comments repeat. A fourth refinement later touches this
+  /// method and [_clearTargets], not nine `setState` blocks.
+  ///
+  /// CALL IT INSIDE `setState`, like the assignments it replaces: it
+  /// writes fields and notifies nobody.
+  void _setTargets({
+    required List<PinRef> candidates,
+    Set<PinRef> preferred = const <PinRef>{},
+    Set<PinRef> springBack = const <PinRef>{},
+  }) {
+    assert(
+      preferred.every(candidates.contains),
+      'a preferred pin must be a candidate: the magnet may only reorder '
+      'legal targets, never add one',
+    );
+    assert(
+      springBack.every(candidates.contains),
+      'a spring-back pin must be a candidate: docs/05:476 makes these '
+      'targets DROPPABLE, so one the cable cannot reach is a tier-1 '
+      'refusal wearing the tier-2 colour',
+    );
+    _candidates = List<PinRef>.unmodifiable(candidates);
+    _preferred = Set<PinRef>.unmodifiable(preferred);
+    _springBack = Set<PinRef>.unmodifiable(springBack);
+  }
+
+  /// Drops all three, for the teardowns: a commit, a cancel, and the
+  /// document moving under a gesture in flight.
+  void _clearTargets() {
+    _candidates = const <PinRef>[];
+    _preferred = const <PinRef>{};
+    _springBack = const <PinRef>{};
+  }
 
   /// Where a POINTER drag's band currently ends when the magnet has not
   /// caught a pin — the raw cursor, in scene space. Null whenever
@@ -881,8 +949,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       // in the air.
       _wireFromBankKey = null;
       _multiPlans = const <(String, String), MultiDrawPlan>{};
-      _candidates = const <PinRef>[];
-      _preferred = const <PinRef>{};
+      _clearTargets();
       what ??= 'Wire';
     }
     // THE PIN RUN NEXT, AND AHEAD OF THE CARET — the ordering matters
@@ -2050,8 +2117,15 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     setState(() {
       _wireFrom = caret;
       _wireFromBankKey = sel.bankKey;
-      _candidates = List<PinRef>.unmodifiable(candidates);
-      _preferred = const <PinRef>{};
+      // NO TIER-2 VERDICT ON A MULTI-DRAW, AND IT IS A GAP RATHER THAN A
+      // RULING. A bank run aims at a BANK, and `planMultiDraw` decides
+      // which source lands on which member only once a target bank is
+      // chosen — so at arm time there is no pin PAIR to ask
+      // `evaluateSpringBack` about, and an amber ring would have to mean
+      // "one of the N cables this bank would make might object", which is
+      // not a thing a ring on one pin can say. The commit path checks it
+      // per pair, where the pairing exists.
+      _setTargets(candidates: candidates);
       _multiPlans = Map<(String, String), MultiDrawPlan>.unmodifiable(plans);
     });
     if (announce) {
@@ -2172,8 +2246,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _pinCaret = to;
       _wireFrom = null;
       _wireFromBankKey = null;
-      _candidates = const <PinRef>[];
-      _preferred = const <PinRef>{};
+      _clearTargets();
       _multiPlans = const <(String, String), MultiDrawPlan>{};
       _pins = PinSelection.none;
     });
@@ -2247,13 +2320,18 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     setState(() {
       _wireFrom = caret;
       _wireFromSetKey = from.def.key;
-      _candidates = List<PinRef>.unmodifiable(candidates);
       // NO FAMILY PREFERENCE ON A SET GESTURE. DR-012.3's magnet orders
       // PINS by the family the cable carries; a set connects as a whole
       // and its members' families are the set's, so there is no second
       // group to prefer. Left empty rather than filled with everything,
       // which would read as a preference that happens to be universal.
-      _preferred = const <PinRef>{};
+      //
+      // NO TIER-2 VERDICT EITHER, for the multi-draw's reason in a
+      // smaller frame: a set connects N members at once and
+      // `evaluateSpringBack` answers about ONE pair, so a ring on the
+      // set's anchor pin would be a verdict about whichever member the
+      // ring happened to be drawn on. Checked per member at commit.
+      _setTargets(candidates: candidates);
     });
     if (announce) {
       _status.show(
@@ -2322,8 +2400,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           _pinCaret = to;
           _wireFrom = null;
           _wireFromSetKey = null;
-          _candidates = const <PinRef>[];
-          _preferred = const <PinRef>{};
+          _clearTargets();
         });
         // OPEN ENDS ARE SAID OUT LOUD. §11.8.3 chose "connect what fits
         // and warn" against a recommendation to refuse, and recorded the
@@ -2443,14 +2520,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       return _armSetFrom(caret, set, announce: announce);
     }
 
-    // EVERY OTHER PIN ON THE SHEET, RUN THROUGH THE REAL RULES. Not a
-    // compatibility guess: `evaluateConnect` is TOP-001..005 and nothing
-    // else, because docs/02 §5's tier table defers all six T2 rules
-    // (SIG-001, DIR-001, CON-001 …) to M5 and canon §5 opens with "a rule
-    // not listed here does not exist". A pin that is merely a BAD idea —
-    // an HDMI output into an RJ45 jack — is therefore a candidate here,
-    // and that is correct for M2: G2 and CR-017 rule that a model which
-    // cannot draw a mistake cannot document reality.
+    // EVERY OTHER PIN ON THE SHEET, RUN THROUGH THE REAL RULES, AND NOW
+    // THROUGH BOTH TIERS. `evaluateConnect` is TOP-001..005 and decides
+    // whether a pin is a CANDIDATE at all; `evaluateSpringBack` is the
+    // six T2 rules and decides what colour its ring is. A pin that is
+    // merely a BAD idea — an HDMI output into an RJ45 jack — is still a
+    // candidate, because G2 and CR-017 rule that a model which cannot
+    // draw a mistake cannot document reality. It now wears amber while
+    // being one, which is the whole of docs/05:476: *"they remain
+    // droppable, the chip and `[ Connect anyway ]` are what handles
+    // them."*
     //
     // AND THE SAME WALK COMPUTES DR-012.3's PREFERRED SET, because the
     // question — does this pin carry the source's family? — needs
@@ -2469,6 +2548,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     // nothing — which is why the commit builder is not called here.
     final candidates = <PinRef>[];
     final preferred = <PinRef>{};
+    final springBack = <PinRef>{};
     for (final pin in locatePins(scene)) {
       if (pin.ref == caret) continue;
       final to = _targetFor(pin.ref);
@@ -2479,6 +2559,23 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       if (evaluateConnect(_doc, from, to, freeing: freeing) is ConnectAllowed) {
         candidates.add(pin.ref);
         if (to.acceptsFamily(from.signalFamily)) preferred.add(pin.ref);
+        // TIER 2 IS ASKED ONLY OF PINS TIER 1 ALLOWED, which is the tier
+        // order made structural: a pin the model refuses outright has no
+        // business also carrying a trade opinion, and DR-112 §11.111
+        // rules that the two tiers answer different questions rather
+        // than one being a stronger version of the other.
+        //
+        // `ontoLink: null`, AND IT IS NOT A SHORTCUT. That parameter is
+        // how a declared `InlineAdapter` clears `CON-001` and `SIG-002`
+        // and how a `passiveSplit` net clears `DIR-001` — all three read
+        // an EXISTING link. This gesture always mints a new one
+        // (`buildSplitConnectCommands` returns a plain connect, or a
+        // split that still creates its own Link), so there is no link
+        // yet to carry an adapter and null is the true answer rather
+        // than a missing one.
+        if (evaluateSpringBack(_doc, from, to) is SpringBackChip) {
+          springBack.add(pin.ref);
+        }
       }
     }
 
@@ -2496,8 +2593,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
 
     setState(() {
       _wireFrom = caret;
-      _candidates = List<PinRef>.unmodifiable(candidates);
-      _preferred = Set<PinRef>.unmodifiable(preferred);
+      _setTargets(
+        candidates: candidates,
+        preferred: preferred,
+        springBack: springBack,
+      );
     });
     // SILENT WHEN A CHAIN RE-ARMS IT. The chain composes ONE sentence
     // covering the commit and the re-arm; announcing here as well would
@@ -2534,8 +2634,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
   //    They want a palette-level mechanism, not a per-frame op rewrite on
   //    the path §11.2 bans `saveLayer` from." The dim is the fourth member
   //    of that family and takes the same answer.
-  //  * THE AMBER "would spring back" RING (§7.3). There is no spring-back
-  //    tier in M2 — see `ConnectOverlayStyle.candidateArgb`.
+  //  * THE 900 ms BREATHING PULSE on the compatible ring (§7.2). The ring
+  //    itself is drawn and so is §7.3's amber one, but neither breathes,
+  //    which leaves "amber, no pulse" and "yellow, pulsing" differing by
+  //    the one channel that exists. A pulse wants a ticker driving a
+  //    per-frame recolour on a canvas whose whole discipline is that a
+  //    frame is a replay of published fragments, so it is the same
+  //    family as the dim above it and takes the same answer.
   //  * TYPE-WEIGHTED SNAP (§7.6). DR-011.8, unruled — see [snapToPin].
   //  * AUTO-PAN (§7.7) and COLLAPSED-BANK EXPANSION (§7.8). No bank
   //    collapse exists to expand, and auto-pan is a comfort on a gesture
@@ -2700,12 +2805,27 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
     setState(() {
       _wireFrom = source;
       _landingFrom = grab;
-      _candidates = free;
       // NO PREFERRED SET. DR-012.3's magnet ranks candidates by whether
       // they accept the SOURCE's family, which is a question about a
       // cable being created. This one exists already and its family is
       // whatever it was pulled as.
-      _preferred = const <PinRef>{};
+      //
+      // AND NO AMBER RING, WHICH IS A DIFFERENT ANSWER FROM THE TWO
+      // ABOVE. Those two lack a pin PAIR to judge; this one has both
+      // ends and could be judged, and is not, because a bind's rules are
+      // its own — `_bindCandidates` builds `free` from occupancy alone,
+      // deliberately not from `evaluateConnect` (see its note on the two
+      // rule sets). Painting a tier-2 verdict over a candidate set that
+      // never saw tier 1 would mix two vocabularies on one ring.
+      //
+      // THAT LEAVES A REAL HOLE AND IT IS FILED RATHER THAN NOTED:
+      // `#811` asks whether a bind adopts the connect gesture's rule
+      // stack or whether occupancy really is its only rule, because
+      // dragging an HDBaseT run's loose end onto a switch port is the
+      // flagship `SIG-001` hazard arriving through a gesture that never
+      // asks. It wants a ruling before code, which is why `#278` does
+      // not settle it by painting a ring here.
+      _setTargets(candidates: free);
     });
     _status.show(
       grab.moving
@@ -3111,8 +3231,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       _wireFromSetKey = null;
       _wireFromBankKey = null;
       _multiPlans = const <(String, String), MultiDrawPlan>{};
-      _candidates = const <PinRef>[];
-      _preferred = const <PinRef>{};
+      _clearTargets();
       _freeEnd = null;
     });
   }
@@ -3249,8 +3368,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
           _pinCaret = to;
           _wireFrom = null;
           _wireFromSetKey = null;
-          _candidates = const <PinRef>[];
-          _preferred = const <PinRef>{};
+          _clearTargets();
         });
         // ═══════════════════════════════════════════════════════════
         // THE DESIGNATORS THE COMMAND WROTE, NOT THE ONES RESOLVE-TIME
@@ -3403,6 +3521,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen> {
       source: _wireFrom,
       freeEnd: _freeEnd,
       candidates: _candidates,
+      springBack: _springBack,
       selected: _pins.refs,
       pairs: _multiDrawBands(),
       selectedLink: _selectedLink,
@@ -4271,15 +4390,27 @@ final class _SchematicStatusStrip extends StatelessWidget {
 
 /// The connect gesture's chrome colours, from the theme.
 ///
-/// THEME ROLES, NOT THE SIGNAL PALETTE. docs/05 §7 gives the illumination
-/// figures in fixed hex — `#F0E442` for a compatible port, `#E69F00` for
-/// one that would spring back — and those are PAL-1 colours belonging to
-/// the signal taxonomy, resolved by `pal1_check.py` and the registry parity
-/// gate. This overlay is a CURSOR: it is not a signal, it is not printed,
-/// and borrowing a family hue for it would put chrome inside the one
-/// palette three gates exist to keep honest. `primary` and `tertiary` move
-/// with the user's own theme and read in both brightnesses, which is what a
-/// caret needs.
+/// THEME ROLES, BECAUSE EVERY COLOUR IN HERE IS CHROME. A caret, a source
+/// ring, a band and a selection all mark WHERE THE USER IS or WHAT THEY
+/// PICKED. That is a cursor: not a signal, never printed, and it has to
+/// read against whatever theme its owner chose, which `primary`,
+/// `tertiary` and `secondary` do in both brightnesses.
+///
+/// THE ONE COLOUR THAT IS NOT CHROME IS DELIBERATELY NOT A FIELD HERE.
+/// [kSpringBackRingArgb] states what a RULE decided, so DR-114 §11.113.2
+/// fixes it at docs/05 §8's `#E69F00` rather than letting a theme move it,
+/// and gives it no knob so nobody can pass `scheme.error` and make the
+/// product's verdict colour a preference.
+///
+/// THIS COMMENT USED TO REFUSE THE FIXED HEXES WHOLESALE, on the ground
+/// that `#F0E442` and `#E69F00` are both *"PAL-1 colours belonging to the
+/// signal taxonomy"*. §11.113.1 measured that and it is half wrong:
+/// `#F0E442` is **PAL-2's** reserved selection-and-focus colour and is
+/// *"never a cable"*, so docs/05 specified the candidate ring in it
+/// precisely because it is reserved for this use, and refusing it was
+/// obedience to a rule the corpus does not have. Only the second half
+/// held, and §8's own severity table crosses that line on purpose with
+/// shape and badge as the discriminator rather than hue.
 ConnectOverlayStyle _connectOverlayStyle(ColorScheme scheme) =>
     ConnectOverlayStyle(
       caretArgb: _argbOfColor(scheme.primary),

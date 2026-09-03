@@ -609,4 +609,173 @@ void main() {
       expect(doc.links, hasLength(6), reason: 'Esc wrote nothing');
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // 6 — docs/05 §7.3's AMBER RING, DRIVEN THROUGH THE SCREEN (`#278`)
+  // ═══════════════════════════════════════════════════════════════════
+  // `connect_overlay_test.dart` proves the overlay paints `#E69F00` when
+  // it is TOLD a pin springs back. This group proves the screen works
+  // out which pins those are, which is the half that can silently do
+  // nothing: pass an empty set and every assertion over there still
+  // passes.
+  group('6 — the tier-2 verdict reaches the sheet', () {
+    /// Circles wearing the spring-back hue in the current frame.
+    int amberRings(WidgetTester tester) => tester
+        .renderObject<RenderSchematicCanvas>(find.byType(SchematicCanvasBody))
+        .plan
+        .ops
+        .whereType<OpCircle>()
+        .where((op) => op.stroke?.argb == kSpringBackRingArgb)
+        .length;
+
+    testWidgets('arming from an HDMI jack ambers the switch, and the rule '
+        'that says so is CON-001', (tester) async {
+      // THE FIXTURE ALREADY HELD A SPRING-BACK PAIR, which is worth
+      // saying because nothing was added to make this pass. `MTX-1` is
+      // the seed catalog's V03, an HDMI matrix whose jacks are
+      // `conn.hdmi_a`; `SW-1` is N01, a 48-port PoE switch whose jacks
+      // are `conn.rj45`. Those connectors do not mate and no adapter is
+      // declared, so `CON-001` fires on every pair between them.
+      //
+      // The rule is asserted THROUGH CORE FIRST, so that a failure here
+      // reads as "the screen did not paint it" rather than as "the
+      // premise moved". A test whose setup and whose subject can both
+      // break tells you nothing about which did.
+      await pump(tester);
+      final source = freePin('MTX-1');
+      final sink = freePin('SW-1');
+
+      ConnectTarget target(PinRef ref) => resolveConnectTarget(
+        doc,
+        deviceId: Uuid(ref.deviceId),
+        portKey: ref.portKey,
+      )!;
+      final verdict = evaluateSpringBack(
+        doc,
+        target(source.ref),
+        target(sink.ref),
+      );
+      expect(
+        verdict,
+        isA<SpringBackChip>().having(
+          (c) => c.ruleId,
+          'ruleId',
+          'CON-001',
+        ),
+        reason: 'the premise: hdmi_a and rj45 do not mate',
+      );
+
+      expect(amberRings(tester), 0, reason: 'an idle sheet states no verdict');
+
+      final drag = await tester.startGesture(toScreen(tester, source.centre));
+      await tester.pump();
+      expect(
+        amberRings(tester),
+        greaterThan(0),
+        reason:
+            "the switch's free jacks are candidates and CON-001 "
+            'objects to every one of them',
+      );
+
+      await drag.cancel();
+      await tester.pumpAndSettle();
+      expect(
+        amberRings(tester),
+        0,
+        reason:
+            'a cancelled gesture leaves no verdict behind — the ring '
+            'is a statement about a cable in flight',
+      );
+    });
+
+    testWidgets('a pin no rule objects to keeps the candidate colour', (
+      tester,
+    ) async {
+      // THE OTHER HALF, AND THE ONE THAT CATCHES "AMBER EVERYTHING".
+      // A screen that put every candidate in the spring-back set would
+      // pass the test above and be useless, since the ring's whole job
+      // is to distinguish.
+      //
+      // IT NAMES A PIN RATHER THAN COUNTING, AND THE FIRST DRAFT DID NOT.
+      // That draft asserted `total - amber > 0` over every stroked circle
+      // in the frame, which passes no matter what the overlay does:
+      // `symbol_layer` draws all 164 SYMBOL PINS as `OpCircle`, so the
+      // subtraction was measuring the sheet rather than the verdict. It is
+      // the finder problem one layer along, a count that cannot say WHICH
+      // one being a count that agrees with anything.
+      //
+      // AND IT FINDS ITS OWN PAIR RATHER THAN NAMING ONE. The second draft
+      // hard-coded `MTX-1` to `AMP-1` and went red on `DIR-001`: the first
+      // FREE pin on each happens to be an input, because the fixture wires
+      // the outputs. A premise a human picked by eye is a premise that can
+      // be wrong, and this one was; a search cannot be.
+      await pump(tester);
+      final source = freePin('MTX-1');
+
+      ConnectTarget target(PinRef ref) => resolveConnectTarget(
+        doc,
+        deviceId: Uuid(ref.deviceId),
+        portKey: ref.portKey,
+      )!;
+
+      ({PinRef ref, DPt centre})? found;
+      for (final symbol in reference.symbols) {
+        for (final port in symbol.allPorts) {
+          final ref = PinRef(deviceId: symbol.id, portKey: port.key);
+          if (ref == source.ref) continue;
+          if (portConductorCount(
+                doc,
+                derivePortId(Uuid(symbol.id), PortKey(port.key)),
+              ) !=
+              0) {
+            continue;
+          }
+          final to = target(ref);
+          if (evaluateConnect(doc, target(source.ref), to) is! ConnectAllowed) {
+            continue;
+          }
+          if (evaluateSpringBack(doc, target(source.ref), to)
+              is! SpringBackClear) {
+            continue;
+          }
+          found = (ref: ref, centre: symbolPortCentre(symbol, port));
+          break;
+        }
+        if (found != null) break;
+      }
+      expect(
+        found,
+        isNotNull,
+        reason:
+            'the premise: SOME pin on this sheet takes the cable with '
+            'no tier-2 objection, or the ring has nothing to distinguish',
+      );
+      final clear = found!;
+      final drag = await tester.startGesture(toScreen(tester, source.centre));
+      await tester.pump();
+
+      // THE LAST CIRCLE AT THAT CENTRE IS THE OVERLAY'S. A symbol pin is
+      // drawn at the same point, and `schematic_paint_plan.dart`'s ordering
+      // rule puts the overlay after every other op in the frame because the
+      // IR has no z-index.
+      final atPin = tester
+          .renderObject<RenderSchematicCanvas>(find.byType(SchematicCanvasBody))
+          .plan
+          .ops
+          .whereType<OpCircle>()
+          .where((op) => op.center == clear.centre && op.stroke != null)
+          .toList();
+      expect(atPin, isNotEmpty, reason: 'the pin got a candidate ring');
+      expect(
+        atPin.last.stroke!.argb,
+        isNot(kSpringBackRingArgb),
+        reason:
+            'a pin the rules accept must not wear the verdict colour, or '
+            'the ring is chrome rather than a statement',
+      );
+
+      await drag.cancel();
+      await tester.pumpAndSettle();
+    });
+  });
 }

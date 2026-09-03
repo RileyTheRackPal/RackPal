@@ -226,6 +226,157 @@ void main() {
     });
   });
 
+  // ═══════════════════════════════════════════════════════════════════
+  // docs/05 §7.3 / DR-114 — THE AMBER RING
+  // ═══════════════════════════════════════════════════════════════════
+  // *"Ports that would spring back get the same ring in amber `#E69F00`,
+  // no pulse. They remain droppable, the chip and `[ Connect anyway ]`
+  // are what handles them."*
+  //
+  // THE TESTS ASSERT ARGB, NOT OP COUNT, and that is the point. The two
+  // rings differ ONLY in colour, so a test that counted `OpCircle`s
+  // would pass while the overlay painted the wrong verdict on every pin
+  // on the sheet — which is exactly the class of test this repo has
+  // found asserting a defect as intended behaviour.
+  group('the amber "would spring back" ring', () {
+    /// The ring drawn on [pin], by its centre, or null when it has none.
+    ///
+    /// Located by CENTRE rather than by index, because op order is the
+    /// overlay's business and a test that pinned it would break on a
+    /// z-order change that moved nothing a user can see.
+    OpCircle? ringOn(ConnectOverlay overlay, PinRef ref) {
+      final centre = locatePin(scene, ref)!.centre;
+      for (final op in overlay.ops) {
+        if (op is OpCircle && op.center == centre) return op;
+      }
+      return null;
+    }
+
+    test('a spring-back candidate wears #E69F00 and a plain one does not', () {
+      final source = pinOn('MTX-1');
+      final amber = pinOn('AMP-1');
+      final plain = pinOn('AMP-1', index: 1);
+      expect(amber, isNot(plain), reason: 'the premise: two distinct pins');
+
+      final overlay = buildConnectOverlay(
+        scene: scene,
+        style: style,
+        scale: 1,
+        source: source,
+        candidates: [amber, plain],
+        springBack: {amber},
+      );
+
+      expect(ringOn(overlay, amber)!.stroke!.argb, kSpringBackRingArgb);
+      expect(ringOn(overlay, plain)!.stroke!.argb, style.candidateArgb);
+      expect(
+        kSpringBackRingArgb,
+        0xFFE69F00,
+        reason: 'docs/05:476 names the figure; DR-114 §11.113.2 fixes it',
+      );
+    });
+
+    test('it is the SAME ring — same radius, same width, one colour apart', () {
+      // docs/05:476's own word is "same", and it is load-bearing rather
+      // than terse: the pin is equally reachable, and the difference is
+      // entirely what happens on release. A larger or heavier amber ring
+      // would read as MORE of a target, which is backwards.
+      final source = pinOn('MTX-1');
+      final amber = pinOn('AMP-1');
+      final plain = pinOn('AMP-1', index: 1);
+      final overlay = buildConnectOverlay(
+        scene: scene,
+        style: style,
+        scale: 1,
+        source: source,
+        candidates: [amber, plain],
+        springBack: {amber},
+      );
+      final a = ringOn(overlay, amber)!;
+      final b = ringOn(overlay, plain)!;
+      expect(a.radius, b.radius);
+      expect(a.stroke!.widthPt, b.stroke!.widthPt);
+      expect(a.stroke!.scaleWithGeometry, isFalse);
+      expect(a.stroke!.argb, isNot(b.stroke!.argb));
+    });
+
+    test('the published list is what was PAINTED, and it is resolved', () {
+      final source = pinOn('MTX-1');
+      final amber = pinOn('AMP-1');
+      final overlay = buildConnectOverlay(
+        scene: scene,
+        style: style,
+        scale: 1,
+        source: source,
+        candidates: [amber, pinOn('AMP-1', index: 1)],
+        springBack: {amber},
+      );
+      expect(overlay.springBack.map((p) => p.ref), [amber]);
+      expect(overlay.springBack.single.centre, locatePin(scene, amber)!.centre);
+    });
+
+    test('a spring-back pin that is NOT a candidate is ignored, not drawn', () {
+      // docs/05:476 makes these targets DROPPABLE. One the cable could
+      // not reach is a tier-1 refusal wearing the tier-2 colour, and the
+      // overlay refuses to paint it rather than trusting the caller —
+      // the screen asserts the same invariant in `_setTargets`, and two
+      // guards on one relation is cheap next to a ring that promises a
+      // drop the commit refuses.
+      final source = pinOn('MTX-1');
+      final legal = pinOn('AMP-1');
+      final stranger = pinOn('AMP-1', index: 1);
+      final overlay = buildConnectOverlay(
+        scene: scene,
+        style: style,
+        scale: 1,
+        source: source,
+        candidates: [legal],
+        springBack: {stranger},
+      );
+      expect(ringOn(overlay, stranger), isNull);
+      expect(overlay.springBack, isEmpty);
+      expect(ringOn(overlay, legal)!.stroke!.argb, style.candidateArgb);
+    });
+
+    test("the caret's own pin takes the caret ring, amber or not", () {
+      // The pre-existing skip, re-asserted because the amber branch runs
+      // inside the loop that does the skipping: two concentric circles
+      // on one pin reads as a target rather than as a cursor, and the
+      // verdict is not worth breaking the cursor for. The chip says it
+      // on release, in words.
+      final source = pinOn('MTX-1');
+      final caret = pinOn('AMP-1');
+      final overlay = buildConnectOverlay(
+        scene: scene,
+        style: style,
+        scale: 1,
+        caret: caret,
+        source: source,
+        candidates: [caret],
+        springBack: {caret},
+      );
+      expect(ringOn(overlay, caret)!.stroke!.argb, style.caretArgb);
+      expect(overlay.springBack, isEmpty);
+    });
+
+    test('no rings at all on an idle sheet, whatever is passed', () {
+      // The candidate walk is gated on a SOURCE being armed, and the
+      // amber branch lives inside it. A ring on a sheet nobody is
+      // drawing on would be permanent chrome answering a question
+      // nobody asked, which is as true of a verdict as of a candidate.
+      final overlay = buildConnectOverlay(
+        scene: scene,
+        style: style,
+        scale: 1,
+        caret: pinOn('MTX-1'),
+        candidates: [pinOn('AMP-1')],
+        springBack: {pinOn('AMP-1')},
+      );
+      expect(overlay.springBack, isEmpty);
+      expect(overlay.ops.whereType<OpCircle>(), hasLength(1));
+    });
+  });
+
   group('DR-012.3 — the magnet prefers the FAMILY, absolutely', () {
     test('a preferred pin beats a nearer unpreferred one, anywhere inside '
         'the radius', () {
