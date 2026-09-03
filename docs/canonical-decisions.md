@@ -15564,6 +15564,115 @@ the product"* (`seed_registries.dart`, authored for it), the direct joint is the
 damages a switch, and it is evaluatable today. Half a rule that fires on the damaging case beats no
 rule at all, provided the half it does not cover is written down. It is, here.
 
+### §11.113 DR-114 · A verdict is not a cursor: the spring-back ring takes the severity hex, `[ Why? ]` waits for its viewer, and a gesture that hesitated has not ended
+
+**Question.** `#278` builds the chip and the spring-back interaction, and it is the first thing in the
+product that paints a rule's verdict on a canvas. Three questions had to be settled before a pixel
+was drawn: what colour the amber ring and the target flash are, whether `[ Why? ]` ships, and what
+state the gesture is in once the wire has sprung back.
+
+**11.113.1 THE COMMENT THAT ALREADY REFUSED THE HEX IS HALF WRONG, AND THE HALVES POINT IN OPPOSITE
+DIRECTIONS.** `schematic_canvas_screen.dart`'s `_connectOverlayStyle` declined docs/05 §7's fixed
+figures on a stated ground:
+
+> docs/05 §7 gives the illumination figures in fixed hex, `#F0E442` for a compatible port and
+> `#E69F00` for one that would spring back, and those are PAL-1 colours belonging to the signal
+> taxonomy.
+
+Measured against the palette tables, that is wrong about the first colour and right about the second,
+and the correction does not merely repair a comment: it reverses which way the argument runs.
+
+**`#F0E442` is not a signal colour at all.** PAL-2 (§14, docs/05:348) reserves it: *"Yellow `#F0E442`
+is reserved for selection and focus and is **never a cable**."* docs/05:284 carries it in the palette
+table with the family column reading *(reserved)* and the role reading *"Selection / focus"*. So the
+compatible ring was specified in that hex precisely BECAUSE it is the reserved focus colour, and the
+comment refused it on a claim the corpus contradicts in the same document, eight rows up from the
+sentence it was reading.
+
+**`#E69F00` and `#D55E00` genuinely are cable colours**, `audio.analog` and `audio.digital`
+respectively (docs/01 §6.3, §6.4). That half of the comment holds. **But docs/05 §8 already paints
+validation in exactly those two hexes**, over cables that may themselves be them:
+
+| Severity | Mark |
+|---|---|
+| `error` | `#D55E00` chevron-hatch stroked along the run at 0.5x weight, plus a badge at the midpoint |
+| `warning` | `#E69F00` 0.6 px dotted parallel line offset 1 gu below the run, plus a badge |
+
+The corpus therefore crossed this line on purpose and stated how it stays legible: the discriminator
+between a `#D55E00` cable and a `#D55E00` error mark is **shape and badge**, not hue. That is the same
+answer PAL-1 gives for two families sharing a grey, and it is why the collision is survivable here.
+
+**11.113.2 Ruled: cursor chrome takes theme roles, a verdict takes the severity hex.** The line runs
+between what the overlay is SAYING, not between which file draws it:
+
+- **Chrome** is the caret ring, the source ring, the rubber band, the multi-draw selection ring and
+  the selected cable's pennant outline. Every one of them marks *where the user is* or *what the user
+  picked*. They keep `scheme.primary`, `scheme.tertiary` and `scheme.secondary`, and the existing
+  argument for that is untouched and correct: a cursor must read in both brightnesses and against
+  whatever theme its owner chose.
+- **A verdict** is the spring-back ring and the target flash. They state what a RULE decided. They
+  take `#E69F00` and `#D55E00`, fixed, the same two figures docs/05 §8 gives the DRC mark that will
+  appear on the very same cable the moment the user clicks `[ Connect anyway ]`.
+
+**The reason is continuity of meaning across two surfaces, and it is not aesthetic.** Under a theme
+role, a port that would spring back is amber during the drag and `scheme.error` (whatever the user's
+theme makes that) in the DRC list four seconds later. The user learns two colours for one verdict, and
+the one they learn first moves when they change theme. Under the fixed hex they learn one. **The
+compatible ring's `#F0E442` follows the same rule from the other side**: it is PAL-2's reserved focus
+colour, so a candidate ring is one of the two things that colour exists for, and taking it is
+obedience to the palette rather than a raid on it.
+
+*Rejected: theme roles throughout, for one policy per file.* It is a tidier rule and it buys the
+tidiness by making the product's error colour a preference. Consistency inside one file is worth less
+than consistency across the two surfaces a user sees three seconds apart.
+
+*Rejected: a derived dark-mode pair.* docs/05:278-279 does publish a dark variant per family, so the
+mechanism exists, and a lightened amber would read better on a dark sheet. It is refused HERE because
+those variants are registry data the PAL-1 gate checks, and inventing two more outside it would put
+uncheckable colours in the one palette three gates exist to keep honest. **If the dark sheet proves
+illegible, the fix is a dark variant for the severity pair IN the registry, checked like the rest, and
+that is a ruling with a measurement behind it rather than a constant typed into a widget.**
+
+**11.113.3 Ruled: `[ Why? ]` does not ship with the chip.** `design-ux-schematic.md`'s worked chip
+carries three buttons, `[ Insert HDBaseT receiver ]  [ Pick a different port ]  [ Why? ]`, and the
+third has no destination in this build. AC-058/D1 already adjudicated exactly that button:
+
+> `ux-schematic`'s reason chip has a `[ Why? ]` button that leads nowhere. Rule rationale exists in
+> the model (`CompatibilityRuleDef.rationale`, `remedyHint`) with no viewer.
+
+and §10(g) assigns the viewer to **M5-F3**, noting the file it publishes *"deliberately does not
+exist"* because canon §5 IS the catalogue. **So the button is a named defect with a named fix in a
+named later chapter of this same milestone.** Shipping it now would be building the defect on purpose,
+in the milestone that promised to remove it, four chapters ahead of the code that would make it true.
+
+The chip is not thereby silent about why. `SpringBackChip.explanation` is the second line of the
+mockup, inline and always present, and it carries the trade reason in the trade's words: *"HDBaseT
+uses Ethernet cabling but is not interoperable; PoH may damage the switch."* `[ Why? ]` goes DEEPER
+than that, to the catalogue entry, which is the thing that does not exist yet.
+
+*Rejected: shipping it disabled with a tooltip.* It sets the layout now and is honest about the state.
+It also puts a permanently dead control on the highest-traffic chip in the editor, and "honestly
+greyed" is still a button a user aims at once per rule before learning not to.
+
+**11.113.4 Ruled: a spring-back leaves the gesture ARMED, and that is CR-017 read literally.** The
+governing sentence is *"the gesture may hesitate; the document may not lie"*. **A gesture that
+hesitated has not ended.** So the wire springs back to the source and stays armed there: `_wireFrom`
+holds, the candidate rings stay lit, the caret stays where the user aimed.
+
+This is what makes `[ Pick a different port ]` a real button rather than a relabelled Cancel. It
+dismisses the chip and returns the user to the state they were in one frame before the release, still
+aiming, with the field of candidates still on screen. Under the alternative it closes a dialog and
+leaves them to press `W` again to retry the thing they were just told about, which charges a fresh arm
+for every near miss on a gesture the roadmap calls the highest-throughput one in the editor.
+
+**The document is untouched either way, which is the half of CR-017 that does not bend.** Nothing is
+written until `[ Connect anyway ]`, and the armed state is screen state exclusively.
+
+*Rejected: full cancellation, matching the tier-1 refusal path.* Tier 1 cancels because there is
+nothing to escape to (docs/02:854), which is the exact property tier 2 does not have: a spring-back is
+droppable by design, docs/05:476 says so in as many words, and a state machine that treated the two
+identically would be discarding the distinction the whole tier exists to draw.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
