@@ -334,6 +334,118 @@ List<_Refusal> _refusals() => [
   ),
 ];
 
+/// One rule's worth of "and here is the case ONE PROPERTY away from that
+/// refusal, which must be accepted".
+typedef _NearMiss = ({
+  ConnectRule rule,
+  String what,
+  ConnectVerdict Function() run,
+});
+
+/// ══════════════════════════════════════════════════════════════════════
+/// THE HALF AC-051 SAYS GETS SKIPPED, AND IT WAS SKIPPED HERE
+/// ══════════════════════════════════════════════════════════════════════
+/// `#298`: *"the near-miss is the half that gets skipped and the half that
+/// matters: a known-bad alone proves the rule fires, not that it
+/// discriminates."* This file had a gated table of refusals from the day
+/// it was written, and a coverage test making a new rule impossible to add
+/// without one. It had no equivalent for the other direction: the legal
+/// cases below existed, scattered, and nothing checked that every rule had
+/// one.
+///
+/// So each row here is the matching row of [_refusals] with EXACTLY ONE
+/// property changed, and the coverage assertion is the same shape. A rule
+/// implemented as `return refused` passes every row of that table and
+/// fails every row of this one.
+List<_NearMiss> _nearMisses() => [
+  (
+    rule: ConnectRule.endpointResolves,
+    what:
+        'the tombstone is for some other port and this pin is merely '
+        'unmaterialised',
+    run: () {
+      // DR-011.1: "not yet in doc.ports" is the NORMAL state of a legal
+      // target, because the connect command materialises on apply(). The
+      // refusal case buries this pin; this one buries a stranger.
+      final doc = _pair();
+      doc.tombstones[const Uuid('port-of-some-other-device')] = Tombstone(
+        deletedAt: _when,
+        entityType: 'Port',
+        by: 'test',
+      );
+      return evaluateConnect(doc, _avrOut(doc), _tvIn(doc));
+    },
+  ),
+  (
+    rule: ConnectRule.hostResolves,
+    what: 'the shelf IS in the document and IS a container',
+    run: () {
+      const shelf = Uuid('dev-shelf');
+      final doc = _pair();
+      _addDevice(doc, shelf, 'SHF-1', _body(const [], isContainer: true));
+      doc.devices[_avr] = DeviceInstance(
+        id: _avr,
+        kind: DeviceKind.rackDevice,
+        templateRef: doc.devices[_avr]!.templateRef,
+        designator: 'AVR-1',
+        name: 'AVR-1',
+        placement: const ShelfPlacement(
+          hostDeviceId: shelf,
+          order: FracIndex('a0'),
+        ),
+        meta: _meta(),
+      );
+      return evaluateConnect(doc, _avrOut(doc), _tvIn(doc));
+    },
+  ),
+  (
+    rule: ConnectRule.notSelf,
+    what: 'the two ends are DIFFERENT pins on the same device',
+    run: () {
+      // A loopback is a real cable somebody runs. Only the pin-to-ITSELF
+      // case is model-illegal, and one letter separates the two.
+      final doc = _doc();
+      _addDevice(
+        doc,
+        _avr,
+        'AVR-1',
+        _body([_port('a'), _port('b', order: 'a1')]),
+      );
+      return evaluateConnect(doc, _pin(doc, _avr, 'a'), _pin(doc, _avr, 'b'));
+    },
+  ),
+  (
+    rule: ConnectRule.notDuplicatePair,
+    what: 'the same ordered pair goes onto a FRESH link',
+    run: () {
+      // TOP-002 is scoped to one link, exactly as canon writes it. Two
+      // cables between the same two jacks is an ordinary redundant run;
+      // two conductors doing it inside one cable is the illegal state.
+      final doc = _pair(avrMax: 4, tvMax: 4);
+      final from = _avrOut(doc);
+      final to = _tvIn(doc);
+      _link(doc, 'W001', PortEndpoint(from.portId), PortEndpoint(to.portId));
+      return evaluateConnect(doc, from, to);
+    },
+  ),
+  (
+    rule: ConnectRule.withinMaxConnections,
+    what: 'the pin declares room for one more',
+    run: () {
+      final doc = _pair(avrMax: 2);
+      final from = _avrOut(doc);
+      final to = _tvIn(doc);
+      _link(
+        doc,
+        'W001',
+        PortEndpoint(from.portId),
+        const OpenEndpoint('elsewhere'),
+      );
+      return evaluateConnect(doc, from, to);
+    },
+  ),
+];
+
 void main() {
   group('resolveConnectTarget — the join that did not exist', () {
     test('resolves a pin the document has NOT materialised', () {
@@ -747,6 +859,41 @@ void main() {
         reason:
             'canon says "the same ORDERED port pair"; a reversed pair is '
             'DIR-001 business, and DIR-001 is tier 2 and deferred',
+      );
+    });
+  });
+
+  group('evaluateConnect — the near-miss for every refusal (AC-051)', () {
+    test('EVERY ConnectRule has a near-miss case in this file', () {
+      expect(
+        _nearMisses().map((n) => n.rule).toSet(),
+        ConnectRule.values.toSet(),
+        reason:
+            'a rule with a known-bad and no known-good near-miss is a rule '
+            'proven to FIRE and not proven to DISCRIMINATE. `return '
+            'refused` satisfies the refusal table above and nothing else. '
+            'Add a row, do not relax this.',
+      );
+    });
+
+    for (final n in _nearMisses()) {
+      test('${n.rule.id} accepts when ${n.what}', () {
+        expect(
+          n.run(),
+          isA<ConnectAllowed>(),
+          reason:
+              '${n.rule.id} refused a case one property away from its own '
+              'known-bad, so the rule is wider than the catalogue says',
+        );
+      });
+    }
+
+    test('the two tables are the same size and cover the same rules, so '
+        'neither can grow without the other', () {
+      expect(_nearMisses(), hasLength(_refusals().length));
+      expect(
+        _nearMisses().map((n) => n.rule).toSet(),
+        _refusals().map((r) => r.rule).toSet(),
       );
     });
   });

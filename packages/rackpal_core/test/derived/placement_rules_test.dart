@@ -403,7 +403,7 @@ void main() {
         '      placement: ZeroUPlacement(',
         "  return ZeroUPlacement(rackId: rack.id, channelId: 'c');",
       ]) {
-        expect(_constructsZeroU(line), isTrue, reason: line);
+        expect(_constructs(line, 'ZeroUPlacement'), isTrue, reason: line);
       }
       for (final line in const [
         '      case ZeroUPlacement(:final rackId, :final channelId)',
@@ -411,7 +411,7 @@ void main() {
         '    ZeroUPlacement() => (EquipmentMounting.zeroU, null, null),',
         '    ZeroUPlacement() => _evaluateZeroU(doc, placement, what),',
       ]) {
-        expect(_constructsZeroU(line), isFalse, reason: line);
+        expect(_constructs(line, 'ZeroUPlacement'), isFalse, reason: line);
       }
     });
 
@@ -438,15 +438,32 @@ void main() {
       // sentence above promises not to make. `line.contains('ZeroU
       // Placement(')` matches every PATTERN MATCH on the type as well as
       // every construction, and this codebase switches on placements in
-      // four files. [_constructsZeroU] carries the discriminator.
-      final lib = Directory('lib');
-      expect(lib.existsSync(), isTrue, reason: 'run from the package dir');
+      // four files. [_constructs] carries the discriminator.
+      // EVERY PACKAGE, not just this one, and the count is asserted so
+      // the scan cannot silently degrade to core-only if the workspace
+      // layout moves. `internal_setter_grep_test.dart` learned that the
+      // hard way: it scanned core alone while the UI was writing straight
+      // to `Rack` setters.
+      final roots = <Directory>[
+        Directory('lib'),
+        Directory('../rackpal_ui/lib'),
+        Directory('../../apps/rackpal/lib'),
+      ].where((d) => d.existsSync()).toList();
+      expect(
+        roots,
+        hasLength(3),
+        reason:
+            'expected core, ui and the app shell; found '
+            '${roots.map((d) => d.path)}. Run from the package directory, '
+            'and update these paths if the workspace moved',
+      );
 
       final zeroUWriters = <String>[];
+      final shelfWriters = <String>[];
       final lateralWriters = <String>[];
       for (final f
-          in lib
-              .listSync(recursive: true)
+          in roots
+              .expand((d) => d.listSync(recursive: true))
               .whereType<File>()
               .where((f) => f.path.endsWith('.dart'))) {
         final path = f.path.replaceAll(r'\', '/');
@@ -462,7 +479,17 @@ void main() {
           // would turn this gate red over prose.
           final code = line.trimLeft();
           if (code.startsWith('//')) continue;
-          if (_constructsZeroU(line)) zeroUWriters.add('$path: ${line.trim()}');
+          if (_constructs(line, 'ZeroUPlacement')) {
+            zeroUWriters.add('$path: ${line.trim()}');
+          }
+          // `ShelfPlacement` rides along, because `TOP-005` is in exactly
+          // the same position: it guards a containment chain that no
+          // shipped gesture can build. `connect_rules.dart` used to say
+          // its creation site was "the placement command set, which does
+          // not check it today", which reads like a hole and is not one.
+          if (_constructs(line, 'ShelfPlacement')) {
+            shelfWriters.add('$path: ${line.trim()}');
+          }
           // A COPY IS NOT A WRITE. `MoveDeviceCommand` rebuilds a rail
           // placement and carries `base.startTwelfth` across it; that
           // cannot introduce a value `PLC-002` would refuse.
@@ -475,6 +502,14 @@ void main() {
         }
       }
 
+      expect(
+        shelfWriters,
+        isEmpty,
+        reason:
+            'something now builds a ShelfPlacement: $shelfWriters. TOP-005 '
+            'has a creation site to gate, so gate it and correct the note '
+            'on ConnectRule.hostResolves',
+      );
       expect(
         zeroUWriters,
         isEmpty,
@@ -519,17 +554,18 @@ void main() {
 
 FracIndex _order() => const FracIndex('a0');
 
-/// Whether [line] CONSTRUCTS a `ZeroUPlacement` rather than matching one.
+/// Whether [line] CONSTRUCTS a placement of [type] rather than matching one.
 ///
 /// A construction is followed by a named argument or by the end of the
 /// line (a multi-line call). A pattern is followed by `)` immediately, or
 /// by `:final`, or sits behind `case`. Every occurrence in `lib/` today is
 /// one of those three.
-bool _constructsZeroU(String line) {
-  final at = line.indexOf('ZeroUPlacement(');
+bool _constructs(String line, String type) {
+  final needle = '$type(';
+  final at = line.indexOf(needle);
   if (at < 0) return false;
   if (line.contains('case ')) return false;
-  final rest = line.substring(at + 'ZeroUPlacement('.length).trim();
+  final rest = line.substring(at + needle.length).trim();
   if (rest.startsWith(')')) return false;
   if (rest.startsWith(':')) return false;
   return true;

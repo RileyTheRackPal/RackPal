@@ -85,9 +85,18 @@ enum ConnectRule {
   /// evaluated here as a PRECONDITION: a connect must not write a `Link`
   /// into a region of the document that is already model-illegal, because
   /// the resulting cable would be the only evidence of a state the model
-  /// says means nothing. The enforcement site for the state's CREATION is
-  /// the placement command set, which does not check it today — see the
-  /// note in `connect_rules_test.dart`.
+  /// says means nothing.
+  ///
+  /// THE NOTE HERE USED TO READ that the creation site is *"the placement
+  /// command set, which does not check it today"*, which is alarming in a
+  /// way the facts are not. Measured at M5-C: **nothing in any package's
+  /// `lib/` constructs a `ShelfPlacement` at all.** Only the type's own
+  /// declaration and the codec do, so the only route into a bad shelf
+  /// chain is a file somebody wrote by hand or a build that predates the
+  /// rule. There is no command to gate, and DR-112's seam is the frame:
+  /// tier 1 refuses a gesture, and a state that arrives another way is
+  /// tier 3's to report. `placement_rules_test.dart` carries a source
+  /// scan that fails the day a writer appears.
   hostResolves('TOP-005'),
 
   /// `TOP-001` — a conductor may not connect a port to itself.
