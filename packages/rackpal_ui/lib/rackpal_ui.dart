@@ -142,6 +142,7 @@ export 'src/theme/console_theme.dart';
 export 'src/theme/status_marker.dart';
 export 'src/validation/acknowledge_finding_dialog.dart';
 export 'src/validation/drc_panel.dart';
+export 'src/validation/rule_severity_dialog.dart';
 export 'src/validation/why_rule_dialog.dart';
 export 'src/widgets/document_memo.dart';
 export 'src/widgets/family_picker.dart';
