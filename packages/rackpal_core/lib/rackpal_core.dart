@@ -268,6 +268,7 @@ export 'src/util/id_gen.dart';
 export 'src/util/outcome.dart';
 export 'src/validation/drc.dart';
 export 'src/validation/finding.dart';
+export 'src/validation/findings_view.dart';
 export 'src/validation/rule_catalogue.dart';
 export 'src/validation/rule_exception.dart';
 export 'src/validation/severity_resolution.dart';
