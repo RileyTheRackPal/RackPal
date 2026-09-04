@@ -15871,6 +15871,79 @@ deliverables, and only the second is being scheduled here.
 `docs/19-riley.md` carries the character reference this needs, including the pose catalogue the
 manual's illustrations are drawn from.
 
+### §11.117 DR-118 · The visor is a display, which buys the manual a narrator it did not have
+
+**Settled by the user on 2026-09-03**, extending DR-117 §11.116.3. Riley's visor runs a range from
+punctuation through kaomoji to a bluescreen, and the consequence is larger than a list of faces: it
+is what makes the manual's chosen register actually writable.
+
+**11.117.1 THE PROBLEM DR-117 LEFT BEHIND, WHICH THIS SOLVES.** §11.116.3 rules the manual a vintage
+games manual and DR-117's companion document rules that **Riley does not speak in words there**.
+Those two together are a constraint most characters could not survive. A wordless mascot whose only
+vocabulary is posture and a domain glyph can *point at* things and can say almost nothing about
+them; every page would need its body text to carry the whole load, and the illustrations would be
+decoration on a technical document rather than a way of reading it.
+
+**A display face removes that limit.** Riley can now react rather than only report, and a reaction
+is what makes a manual read cover to cover instead of being consulted.
+
+**11.117.2 Ruled: four registers, and the register is a statement about who is speaking.**
+
+| Register | Examples | Who is speaking |
+|---|---|---|
+| **Product marks** | `—` for unknown, a domain glyph, a severity mark | **The product**, through Riley |
+| **Punctuation** | `?` `!` `&` `!?` | **Riley**, minimally |
+| **Grawlix** | `#$%&!` | **Riley**, with feeling |
+| **Faces** | `>///<` `>_>` `^_^` `OwO` | **Riley**, fully |
+
+**THE FIRST ROW IS A DIFFERENT KIND OF THING FROM THE OTHER THREE AND THE MANUAL MUST NOT BLUR
+THEM.** A `?` on the visor is Riley being puzzled; a `—` on the visor is a `Finding` reporting that
+nobody has supplied a value (G4/CR-114). **One is a joke and one is data**, and a page where a
+reader cannot tell which they are looking at has made the product's most careful invariant into a
+gag. Product marks are therefore reserved: they appear when Riley is speaking for the product and
+never as decoration.
+
+**11.117.3 TWO STATES THAT ARE THEIR OWN THING.**
+
+**The BSOD is Riley failing, and that is not the same as the product not knowing.** The dash means
+*nobody has told me*; the bluescreen means *I have fallen over*. The product distinguishes those and
+so does the character. It is **manual-only and never on a page carrying domain glyphs** (user,
+2026-09-03), which settles by placement a collision that would otherwise have needed a palette
+answer: `video.digital` is `#0072B2` and a modern `#0078D7` bluescreen sits almost on top of it, so
+a blue visor beside a legend could read as a domain marker. **Placement is the better fix**, because
+the classic bluescreen is recognisable precisely by being that blue and greying it out would destroy
+the reference this state exists to make.
+
+**The loading face is the third member of that set**, and completing it is why it matters: `—` is
+*nobody knows*, the bluescreen is *I have failed*, and loading is *not yet*. Three different answers
+that a product which refuses to guess has to be able to give.
+
+**11.117.4 WHAT IT OPENS, WHICH IS THE USER'S REASON FOR ASKING.**
+
+- **Wordless sequential art.** A strip of panels carried by visor states alone can now teach a
+  procedure. That is the device a manual of this era used most and the one a symbols-only character
+  could not have sustained.
+- **A failure-mode voice.** The manual can show the product's own limits honestly, in character,
+  without a paragraph apologising for them.
+- **Margin and furniture art that says something.** §7.2's page-as-a-building furniture was
+  decorative; a visor gives a marginal Riley an opinion about the paragraph beside them.
+- **A legible difference between the reference chapters and the teaching chapters.** Product marks
+  dominate where the book is a bestiary; faces dominate where it is teaching.
+
+**11.117.5 AND EXPRESSIVENESS IS A BUDGET DRAWN AGAINST THE CHARACTER'S AUTHORITY.** Riley is
+*"the competent one ... not a mascot who mugs at the reader"*, and that is the spine every other
+decision here hangs from. **A face on every page spends it.** The discipline is therefore stated
+rather than left to taste: the wider the register, the rarer it should be, and the reference
+chapters should be nearly all product marks.
+
+**THE SAFETY RULE EXTENDS UNCHANGED AND GAINS A CLAUSE.** DR-117 §11.116.3 quotes `CODE-001`,
+`CODE-002` and `SIG-001` verbatim and forbids Riley paraphrasing them. To that: **no grawlix and no
+face on a page carrying one of those sentences.** Riley may be present, in a product-mark register
+and a §4 posture. A bluescreen next to a warning about 100 W damaging a switch would be the book
+laughing at the one thing it is most obliged to be straight about.
+
+`docs/19-riley.md` §7.3 carries the vocabulary and the illustrator-facing form of all of this.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
