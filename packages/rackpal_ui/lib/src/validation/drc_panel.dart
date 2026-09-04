@@ -1,4 +1,5 @@
-// The issues list (`#294`, M5-F1). docs/05 §8 calls it the DRC panel.
+// The issues list (`#294` M5-F1, `#295` M5-F2). docs/05 §8 calls it the
+// DRC panel.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // IT DECIDES NOTHING ABOUT THE FINDINGS
@@ -7,7 +8,8 @@
 // sheet `T0.02` and the device rollup chip need the same answers and
 // three surfaces disagreeing about one document is the failure this
 // splits to avoid. This file turns `FindingGroup`s into widgets and
-// reports two gestures back: change the view, reveal a locus.
+// reports gestures back: change the view, reveal a locus, acknowledge a
+// finding, withdraw an acknowledgement. It performs none of them.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // THE FIRST CONSUMER OF `StatusMarker`, WHICH IS WHY IT EXISTS
@@ -58,6 +60,15 @@ String drcGroupCount(FindingGroup group) {
   return '${group.length} ($acked acknowledged)';
 }
 
+/// The row action that opens the acknowledgement dialog.
+const String kDrcAcknowledge = 'Acknowledge';
+
+/// The row action that takes an acknowledgement back.
+///
+/// NOT "Delete" or "Remove": what is withdrawn is the person's own
+/// statement about the finding, and the finding itself was never gone.
+const String kDrcWithdraw = 'Withdraw';
+
 /// The severities a finding can reach the list with, in the order the
 /// filter row shows them.
 ///
@@ -95,6 +106,8 @@ class DrcPanel extends StatelessWidget {
     this.includeAcknowledged = true,
     this.onIncludeAcknowledgedChanged,
     this.onReveal,
+    this.onAcknowledge,
+    this.onWithdraw,
     this.hasAnyFindings = true,
     super.key,
   });
@@ -118,6 +131,19 @@ class DrcPanel extends StatelessWidget {
   /// `primaryEntityId` does not call this, because there is no single
   /// thing to navigate to.
   final ValueChanged<Uuid>? onReveal;
+
+  /// Called to acknowledge the row's finding (`#295`). The panel shows
+  /// no action when this is null, rather than a dead control.
+  final ValueChanged<Finding>? onAcknowledge;
+
+  /// Called to withdraw an existing acknowledgement, with the row it
+  /// belongs to.
+  ///
+  /// OFFERED WHEREVER ACKNOWLEDGING IS. A surface that can only
+  /// acknowledge is a one-way door, and CR-019's whole argument for
+  /// demotion over deletion is that a person stays in charge of their
+  /// own document.
+  final ValueChanged<FindingRow>? onWithdraw;
 
   /// Whether the DOCUMENT has findings, as opposed to this filtered
   /// view. Distinguishes [kDrcNoFindings] from [kDrcAllFiltered].
@@ -147,7 +173,12 @@ class DrcPanel extends StatelessWidget {
                     for (final g in groups) ...[
                       _GroupHeader(group: g),
                       for (final row in g.rows)
-                        _FindingTile(row: row, onReveal: onReveal),
+                        _FindingTile(
+                          row: row,
+                          onReveal: onReveal,
+                          onAcknowledge: onAcknowledge,
+                          onWithdraw: onWithdraw,
+                        ),
                     ],
                   ],
                 ),
@@ -275,10 +306,17 @@ class _GroupHeader extends StatelessWidget {
 }
 
 class _FindingTile extends StatelessWidget {
-  const _FindingTile({required this.row, required this.onReveal});
+  const _FindingTile({
+    required this.row,
+    required this.onReveal,
+    required this.onAcknowledge,
+    required this.onWithdraw,
+  });
 
   final FindingRow row;
   final ValueChanged<Uuid>? onReveal;
+  final ValueChanged<Finding>? onAcknowledge;
+  final ValueChanged<FindingRow>? onWithdraw;
 
   @override
   Widget build(BuildContext context) {
@@ -298,9 +336,33 @@ class _FindingTile extends StatelessWidget {
       // inert. There is no single thing to reveal, and a tap that looks
       // live and does nothing is worse than one that never offered.
       onTap: (locus == null || reveal == null) ? null : () => reveal(locus),
+      trailing: _rowAction(),
     );
     final reason = row.reason;
     if (reason == null) return tile;
     return Tooltip(message: reason, child: tile);
+  }
+
+  /// The row's one action: acknowledge it, or take that back.
+  ///
+  /// Never both, because they are the two directions of one state and a
+  /// row offering both would be asking which way the state already is.
+  Widget? _rowAction() {
+    if (row.isAcknowledged) {
+      final withdraw = onWithdraw;
+      return withdraw == null
+          ? null
+          : TextButton(
+              onPressed: () => withdraw(row),
+              child: const Text(kDrcWithdraw),
+            );
+    }
+    final ack = onAcknowledge;
+    return ack == null
+        ? null
+        : TextButton(
+            onPressed: () => ack(row.finding),
+            child: const Text(kDrcAcknowledge),
+          );
   }
 }
