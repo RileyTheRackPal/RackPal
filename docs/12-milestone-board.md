@@ -5552,6 +5552,71 @@ place for them until somebody schedules them.
 exist and two tiers of surface exist, and M5's three clauses remain the fixture pairs, the sign-off
 and the PDF. **A milestone can be two-thirds built and still `0/28`.**
 
+**M5-E LANDS WHOLE: FOURTEEN TIER-3 RULES AND THE EVALUATOR THEY RUN ON.** With M5-C's eight and
+M5-D's six, **all twenty-eight catalogue rules now have predicates**, which is the first time the
+number in docs/02 §5 has described the code rather than the plan.
+
+| Story | What it left behind |
+|---|---|
+| **M5-E** | `evaluateDocument`, and `RCK-001/002/003/012/013`, `PWR-001/003`, `NET-001`, `LEN-001/002`, `ELE-003`, `CODE-001/002`, `LNK-020`. The catalogue coverage gate now runs BOTH ways, which it could not while the tier was part-built: **a row with no predicate is a rule the product claims to check and does not**, and nothing else in the tree would have noticed |
+
+**SEVERITY IS RESOLVED IN ONE PLACE, IN THREE STEPS, IN THAT ORDER.** `projectSeverity` applies
+`ruleOverrides`; `Severity.off` drops the finding, which is what off MEANS and the only place it can
+be honoured without every predicate re-implementing it; then an acknowledgement demotes (CR-019).
+Demoting before overriding would let an override resurrect something somebody turned off. **A
+predicate returns facts and the evaluator decides what they are worth**, which is why a predicate
+that tried to choose its own severity was overwritten rather than obeyed (below).
+
+**THE OUTPUT ORDER IS PART OF THE CONTRACT, AND IT IS NOT BY SEVERITY.** Severity is a per-project
+setting, so sorting by it would churn the whole list the moment somebody demotes one rule and a
+reader diffing two runs would see movement that means nothing. Rule id, then fingerprint, which is
+derived from the target ids and is therefore total: `List.sort` is not stable.
+
+**THE FIRST RULE PAIR EXPOSED A FLAW IN THE FINGERPRINT, NOT A TYPO.** `RCK-001`'s first draft
+looped faces on the OUTSIDE and emitted a finding inside. Measured, every seeded rack-side archetype
+is `OccupancySide.both` except the patch panel, so two devices in one U produced TWO findings with
+IDENTICAL targets and therefore identical fingerprints. `Finding.targetFingerprint` is what an
+`AckedFinding` matches on, so accepting the front collision would have silenced the rear one:
+**CR-019's instance scope failing in silence.** The pair is the unit now, the faces are a detail of
+the sentence, and `RCK-002` takes the same shape for the same reason.
+
+**AND A RULE WAS INVENTED AND CAUGHT.** `LEN-001`'s unknown case stamped `advisory` on a genuinely
+good argument: an unmeasured run is a checklist item, and reporting it as an error buries the runs
+that are actually too long. **That argument is not in the catalogue.** docs/02 §5.3 gives one
+severity and one row and says only that the unknown case emits its sentence *"rather than passing
+silently"*, so a predicate choosing a second severity is inventing a rule (CR-021). The evaluator
+overwrote it, which is the single-place design working. The MESSAGE distinguishes the two cases and
+the severity does not.
+
+**`PWR-001` IS THE FIRST CONSUMER `diversityFactorsByCategory` HAS EVER HAD.** The field has sat on
+`ProjectSettings` since M0 with no reader, exactly as `genderApplies` and `pinoutVariant` did
+(§11.109). AC-020 gives its worked case and docs/02 §5.3 gives the sum as *"typical x diversity
+factor, in VA"*. **An absent entry applies no de-rating**, which is not the fabrication G4 forbids: a
+diversity factor is a reduction somebody CLAIMS, and its absence means nobody has claimed one.
+Refusing to sum instead would silence the rule on every project, since the map defaults to empty on
+purpose so an old file cannot decode carrying a convention its author never wrote.
+
+**THE TWO CODE RULES ASK RATHER THAN ASSERT, AND NEITHER SENTENCE SAYS "VIOLATES".** DR-079 demoted
+both and gave the same shape of reason twice: this product cannot see the thing the article turns on.
+`CODE-001` cites NEC 725.136 and says the article permits arrangements this product does not model;
+`CODE-002` cites 800.154 and names 300.22(C)'s metal-raceway exception. **A DRC that overstated its
+reach on a code question would be worse than one that stayed silent, because somebody would believe
+it.**
+
+**AND A TEST ASSERTION WAS TOO CLEVER TO WORK**, which is worth recording because it will be tempting
+again: `isNot(contains('violat'))` failed against a sentence ending *"so this is a check rather than
+a violation"*. A substring cannot express "does not ASSERT a violation".
+
+**WHAT M5-E DOES NOT DO, STATED SO NOBODY READS THE CLOSURE AS MORE THAN IT IS.** Nothing SURFACES
+any of these findings: there is no issues list, no badge on a sheet, no count anywhere a user can
+see. That is `M5-F` (`#293`), and the fixture corpus AC-051's exit criterion actually rests on is
+`M5-G` (`#298`). **A user of this build cannot tell that fourteen rules exist.**
+
+**THE MARK IS `DEMONSTRATED` AND IT DISCHARGES NOTHING**, on §0's terms and for the reason the
+M5-A/B and M5-C/D pairs record. M5's three clauses are the fixture pairs, the sign-off and the PDF.
+Twenty-eight rules and two tiers of surface exist underneath all three rather than being any of them.
+**A milestone can be nearly all built and still `0/28`.**
+
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
 > **Exit criterion, verbatim.** All four starter projects export a complete sheet set; the legend has

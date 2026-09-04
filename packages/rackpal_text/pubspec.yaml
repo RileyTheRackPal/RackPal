@@ -3,7 +3,7 @@ description: >
   The single concrete TextMeasurer (CR-081), backed by PdfFont.stringMetrics and
   used by every DiagramCanvas backend including the Flutter one.
 publish_to: none
-version: 0.5.32
+version: 0.5.46
 
 environment:
   sdk: ^3.12.0
