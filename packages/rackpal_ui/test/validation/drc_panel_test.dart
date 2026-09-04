@@ -1,4 +1,5 @@
-// M5-F1 — the issues list on screen (`#294`).
+// The issues list on screen: M5-F1 (`#294`) and the row action
+// M5-F2 adds (`#295`).
 //
 // THE COPY IS PRINTED, NOT ONLY MATCHED. This repository has shipped
 // twelve green `contains` assertions over a line reading "1 ports", so
@@ -272,5 +273,93 @@ void main() {
     );
     await tester.tap(find.widgetWithText(ChoiceChip, 'Location'));
     expect(chosen, FindingGrouping.locus);
+  });
+
+  group('the row action (M5-F2, #295)', () {
+    FindingRow acked(String ruleId) => FindingRow(
+      finding: finding(ruleId, Severity.error, primary: rackId),
+      acknowledgement: AckedFinding(
+        id: ackId,
+        ruleId: ruleId,
+        targetFingerprint: '*',
+        reason: 'As-found.',
+        by: 'riley',
+        at: at,
+        demotedTo: Severity.error,
+        meta: EntityMeta(createdAt: at, updatedAt: at, updatedBy: 't'),
+      ),
+    );
+
+    testWidgets('an open row offers Acknowledge and hands back its finding', (
+      tester,
+    ) async {
+      Finding? asked;
+      await pump(
+        tester,
+        DrcPanel(
+          groups: [
+            aGroup('error', [
+              FindingRow(
+                finding: finding('SIG-001', Severity.error, primary: rackId),
+              ),
+            ]),
+          ],
+          grouping: FindingGrouping.severity,
+          onGroupingChanged: (_) {},
+          onAcknowledge: (f) => asked = f,
+          onWithdraw: (_) {},
+        ),
+      );
+      expect(find.text(kDrcWithdraw), findsNothing);
+      await tester.tap(find.text(kDrcAcknowledge));
+      expect(asked?.ruleId, 'SIG-001');
+    });
+
+    testWidgets('an acknowledged row offers Withdraw instead, never both', (
+      tester,
+    ) async {
+      FindingRow? taken;
+      await pump(
+        tester,
+        DrcPanel(
+          groups: [
+            aGroup('error', [acked('CODE-002')]),
+          ],
+          grouping: FindingGrouping.severity,
+          onGroupingChanged: (_) {},
+          onAcknowledge: (_) {},
+          onWithdraw: (r) => taken = r,
+        ),
+      );
+      // NEVER BOTH: they are two directions of one state, and a row
+      // offering both would be asking which way the state already is.
+      expect(find.text(kDrcAcknowledge), findsNothing);
+      await tester.tap(find.text(kDrcWithdraw));
+      expect(taken?.finding.ruleId, 'CODE-002');
+    });
+
+    testWidgets('no callback means no control, not a dead one', (tester) async {
+      await pump(
+        tester,
+        DrcPanel(
+          groups: [
+            aGroup('error', [
+              FindingRow(
+                finding: finding('SIG-001', Severity.error, primary: rackId),
+              ),
+              acked('CODE-002'),
+            ]),
+          ],
+          grouping: FindingGrouping.severity,
+          onGroupingChanged: (_) {},
+        ),
+      );
+      expect(find.text(kDrcAcknowledge), findsNothing);
+      expect(find.text(kDrcWithdraw), findsNothing);
+    });
+
+    test('the two action labels are different strings', () {
+      expect(kDrcAcknowledge, isNot(kDrcWithdraw));
+    });
   });
 }

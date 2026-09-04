@@ -1822,8 +1822,10 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
 
 /// The dialog `Esc`, present so the registry has one row per binding.
 ///
-/// NEVER HANDLED BY AN `Actions` MAP. The three dialogs pop a value rather
+/// NEVER HANDLED BY AN `Actions` MAP. These dialogs pop a value rather
 /// than dispatch a command, so they bind through [dialogDismissShortcut];
+/// the count is deliberately not written here, because it said "three"
+/// while six files already bound it;
 /// this type exists so the row can be declared in the same shape as every
 /// other and appear in the generated table.
 final class DismissDialogIntent extends Intent {
