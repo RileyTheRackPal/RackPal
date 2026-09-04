@@ -325,29 +325,47 @@ def main() -> int:
         f"<style>{_CSS}</style></head><body>{''.join(docs)}</body></html>"
     )
 
-    with tempfile.TemporaryDirectory() as tmp:
-        html_path = os.path.join(tmp, "doc.html")
-        with open(html_path, "w", encoding="utf-8") as fh:
-            fh.write(page)
-        chrome = find_chrome()
-        # A THROWAWAY PROFILE, so this never touches the user's own Chrome
-        # session and never blocks on one already running.
-        subprocess.run(
-            [
-                chrome,
-                "--headless",
-                "--disable-gpu",
-                f"--user-data-dir={os.path.join(tmp, 'profile')}",
-                "--no-pdf-header-footer",
-                f"--print-to-pdf={os.path.abspath(out)}",
-                "file:///" + html_path.replace("\\", "/"),
-            ],
-            check=True,
-            capture_output=True,
-        )
+    # RETRIED ONCE, because a cold start loses the race. Chrome exits 0
+    # having written nothing when it is building the throwaway profile for
+    # the first time in a while: it reports success on the LAUNCH, not on
+    # the print. Observed 2026-09-04 on a render whose second attempt
+    # succeeded unchanged, so the retry is the whole fix and a longer
+    # timeout is not. A third attempt has never been needed; if one ever
+    # is, the bug is not this one.
+    attempts = 2
+    for attempt in range(1, attempts + 1):
+        with tempfile.TemporaryDirectory() as tmp:
+            html_path = os.path.join(tmp, "doc.html")
+            with open(html_path, "w", encoding="utf-8") as fh:
+                fh.write(page)
+            chrome = find_chrome()
+            # A THROWAWAY PROFILE, so this never touches the user's own
+            # Chrome session and never blocks on one already running. It is
+            # also what makes a cold start possible, which is the trade.
+            subprocess.run(
+                [
+                    chrome,
+                    "--headless",
+                    "--disable-gpu",
+                    f"--user-data-dir={os.path.join(tmp, 'profile')}",
+                    "--no-pdf-header-footer",
+                    f"--print-to-pdf={os.path.abspath(out)}",
+                    "file:///" + html_path.replace("\\", "/"),
+                ],
+                check=True,
+                capture_output=True,
+            )
+        if os.path.exists(out):
+            break
+        if attempt < attempts:
+            print(f"  chrome exited 0 without writing; retrying ({attempt + 1}/{attempts})")
 
     if not os.path.exists(out):
-        raise SystemExit(f"Chrome reported success but {out} was not written.")
+        raise SystemExit(
+            f"Chrome reported success but {out} was not written, twice. "
+            "That is no longer the known cold-start race: check that the "
+            "output directory exists and is writable."
+        )
     print(f"  wrote {out}  ({os.path.getsize(out):,} bytes)")
     return 0
 
