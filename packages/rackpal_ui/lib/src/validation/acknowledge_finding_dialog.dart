@@ -37,6 +37,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 import 'package:rackpal_ui/src/validation/drc_panel.dart';
+import 'package:rackpal_ui/src/validation/why_rule_dialog.dart';
 
 /// What `[ Acknowledge ]` returns, or null when the dialog was cancelled.
 typedef AcknowledgeChoice = ({
@@ -246,6 +247,22 @@ class _AcknowledgeDialogState extends State<_AcknowledgeDialog> {
             ),
           ),
           actions: [
+            // LEFTMOST AND PASSIVE. `#293`: the viewer *"is what makes an
+            // override informed rather than a reflex"*, so it belongs on
+            // the screen where the override is agreed to, next to the
+            // decision rather than behind it. It opens a second dialog
+            // and changes nothing here, so this one stays open behind it.
+            TextButton(
+              onPressed: () => showWhyRuleDialog(
+                context: context,
+                ruleId: finding.ruleId,
+              ),
+              child: const Text(kWhyLabel),
+            ),
+            // NO `Spacer` HERE. `AlertDialog.actions` is an `OverflowBar`
+            // and not a `Row`, so an `Expanded` inside it throws on
+            // parent data. The bar lays the actions out in order, which
+            // is enough: `[ Why? ]` is simply first.
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
               child: const Text('Cancel'),

@@ -28,15 +28,22 @@
 //    the finality and kept the remedies exactly as designed, so docs/05
 //    :467 now requires that *"every chip carries `[ Connect anyway ]`
 //    next to its remedies"*, without exception.
-//  * `[ Why? ]` IS OMITTED. DR-114 §11.113.3. AC-058/D1 names that
-//    button as a defect in as many words — *"a `[Why?]` button that
-//    leads nowhere"* — and canon §10(g) assigns the viewer to M5-F3
-//    (`#296`). Shipping it here would be building the named defect in
-//    the milestone that promised to remove it. The chip is not thereby
-//    silent about why: [SpringBackChip.explanation] is the mockup's
-//    second line, always present, in the trade's own words. `[ Why? ]`
-//    goes DEEPER than that, to the catalogue entry, which is the thing
-//    that does not exist yet.
+//  * `[ Why? ]` WAS OMITTED UNTIL M5-F3, AND NOW ARRIVES. DR-114
+//    §11.113.3 held it back because AC-058/D1 names that button as a
+//    defect in as many words — *"a `[Why?]` button that leads nowhere"* —
+//    and shipping it before its viewer would have built the named defect
+//    in the milestone that promised to remove it. `#296` built the
+//    viewer and `RuleMeta.rationale` underneath it, so the condition
+//    that comment set has been met and the button is here.
+//
+//    IT IS OPTIONAL, and absent when [onWhy] is null. That keeps
+//    DR-114's measured focus ring intact for every caller that does not
+//    offer it, and the ring is a thing this file's own comment measured
+//    rather than assumed.
+//
+//    The chip was never silent about why: [SpringBackChip.explanation]
+//    is the mockup's second line, always present, in the trade's own
+//    words. `[ Why? ]` goes DEEPER, to the catalogue entry.
 //
 // ═════════════════════════════════════════════════════════════════════
 // WHERE THE COLOURS COME FROM, WHICH IS TWO PLACES ON PURPOSE
@@ -60,6 +67,7 @@ import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/schematic/connect_overlay.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
+import 'package:rackpal_ui/src/validation/why_rule_dialog.dart';
 
 /// `[ Pick a different port ]` — the mockup's own words.
 ///
@@ -94,6 +102,7 @@ final class SpringBackChipCard extends StatelessWidget {
     required this.chip,
     required this.onConnectAnyway,
     required this.onPickAnother,
+    this.onWhy,
     this.onRemedy,
     this.maxWidth = 360,
     super.key,
@@ -121,6 +130,13 @@ final class SpringBackChipCard extends StatelessWidget {
   /// dead — the reasoning DR-114 §11.113.3 gives for `[ Why? ]` applies
   /// to any button that leads nowhere.
   final void Function(SpringBackRemedy remedy)? onRemedy;
+
+  /// Opens the `[ Why? ]` viewer for this chip's rule (`#296`).
+  ///
+  /// NULL MEANS THE BUTTON IS ABSENT, not disabled: a control that
+  /// cannot act should not be drawn, which is the reasoning DR-114
+  /// §11.113.3 already applied to this very button.
+  final VoidCallback? onWhy;
 
   /// The chip is anchored at a PIN, so it must not grow to the width of
   /// the sheet. 360 logical pixels holds the worked chip's three lines at
@@ -220,14 +236,27 @@ final class SpringBackChipCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 10),
-                  // WRAPPED, NOT SCROLLED. Four buttons at 360 px do
-                  // not fit on one line and a chip that clipped one
-                  // would hide `[ Connect anyway ]`, which is the one
-                  // CR-017 says may never be missing.
+                  // WRAPPED, NOT SCROLLED. The buttons do not fit on
+                  // one line at 360 px and a chip that clipped one would
+                  // hide `[ Connect anyway ]`, which is the one CR-017
+                  // says may never be missing. The count is not written
+                  // here: `[ Why? ]` made it four or five depending on
+                  // the caller, and a number in this comment would have
+                  // been wrong the moment it did.
                   Wrap(
                     spacing: 8,
                     runSpacing: 4,
                     children: [
+                      // FIRST, so it lands at the END of the ring that
+                      // starts at the autofocused `Pick a different
+                      // port`. `[ Connect anyway ]` stays exactly one
+                      // Tab away, which is the property DR-114 measured
+                      // and this button must not cost.
+                      if (onWhy != null)
+                        TextButton(
+                          onPressed: onWhy,
+                          child: const Text(kWhyLabel),
+                        ),
                       for (final remedy in remedies)
                         FilledButton.tonal(
                           onPressed: () => onRemedy!(remedy),

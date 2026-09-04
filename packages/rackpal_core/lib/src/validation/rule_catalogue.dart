@@ -66,6 +66,7 @@ final class RuleMeta {
     required this.ruleId,
     required this.tier,
     required this.summary,
+    required this.rationale,
     required this.governing,
     this.defaultSeverity,
   });
@@ -82,6 +83,26 @@ final class RuleMeta {
   /// COMPLETE SENTENCE naming the real designators, and a generic summary
   /// is exactly what that forbids.
   final String summary;
+
+  /// WHY the rule exists, in trade language, for the `[ Why? ]` viewer
+  /// (AC-058/D1, M5-F3).
+  ///
+  /// [summary] says what the predicate TESTS, in the model's vocabulary.
+  /// A person who clicks `[ Why? ]` is not asking for that restated: they
+  /// are asking what goes wrong on the job, and a viewer that answered
+  /// with the predicate would be the button that *"leads nowhere"* the
+  /// completeness critique named.
+  ///
+  /// REQUIRED, so the catalogue cannot carry a rule with no explanation.
+  /// AC-058/D1 describes `CompatibilityRuleDef.rationale` as though the
+  /// text already existed and only lacked a viewer; it did not. That type
+  /// is from `docs/research/design-data-model.md`, a priority-3 document,
+  /// and was never built. This is the field that sentence assumed.
+  ///
+  /// M5-H1 wants these same 28 rules *"in trade language, not model
+  /// language"* for expert review, so this is ONE text serving both, and
+  /// H2's corrections land on the words the product actually shows.
+  final String rationale;
 
   /// The ruling ids this rule answers to, e.g. `['CR-017', 'AC-018']`.
   /// §8.2's citation, carried by the rule rather than by a comment.
@@ -113,6 +134,10 @@ const List<RuleMeta> kTier1Rules = <RuleMeta>[
     ruleId: 'TOP-001',
     tier: RuleTier.modelIllegal,
     summary: 'A conductor may not connect a port to itself.',
+    rationale:
+        'A cable that starts and ends at the same jack is not a cable. Nothing '
+        'can be pulled to it and nothing can be terminated on it, so a drawing '
+        'showing one is describing work no installer can do.',
     governing: ['CR-017'],
   ),
   RuleMeta(
@@ -121,6 +146,10 @@ const List<RuleMeta> kTier1Rules = <RuleMeta>[
     summary:
         'Two conductors may not duplicate the same ordered port pair on '
         'the same link.',
+    rationale:
+        'Two conductors between the same pair of pins inside one cable is the '
+        'same conductor counted twice. The schedule would call for wire nobody '
+        'pulls, and the terminations would not add up on site.',
     governing: ['CR-017'],
   ),
   RuleMeta(
@@ -129,6 +158,10 @@ const List<RuleMeta> kTier1Rules = <RuleMeta>[
     summary:
         "A port's live conductor count may not exceed its effective "
         'maxConnections.',
+    rationale:
+        'A jack takes the number of plugs it physically has. A drawing showing '
+        'two cables in one HDMI port is asking for something the hardware '
+        'cannot do, and the second cable has nowhere to go.',
     governing: ['CR-017'],
   ),
   RuleMeta(
@@ -137,6 +170,10 @@ const List<RuleMeta> kTier1Rules = <RuleMeta>[
     summary:
         'Every endpoint must resolve: a PortEndpoint to an existing, '
         'non-tombstoned port.',
+    rationale:
+        'A cable landing on a port that is not there is a run nobody can '
+        'terminate. This usually means the device was deleted after the cable '
+        'was drawn.',
     governing: ['CR-017', 'AC-018'],
   ),
   RuleMeta(
@@ -145,6 +182,10 @@ const List<RuleMeta> kTier1Rules = <RuleMeta>[
     summary:
         "A shelf-hosted device's hostDeviceId must resolve to a container "
         'and must not create a containment cycle.',
+    rationale:
+        'A shelf mounted inside itself has no place in a rack. The elevation '
+        'could not be drawn, because the device would have no height and no '
+        'position.',
     governing: ['CR-017'],
   ),
   RuleMeta(
@@ -153,6 +194,9 @@ const List<RuleMeta> kTier1Rules = <RuleMeta>[
     summary:
         'RailPlacement.ruIndex lies in [1, rack.heightU] and the device '
         'fits within the rack extent on that face.',
+    rationale:
+        'A device at RU 45 of a 42U rack is not in the rack. Whatever the '
+        'drawing says, the installer arrives to find no rail there.',
     governing: ['CR-017'],
   ),
   RuleMeta(
@@ -161,6 +205,11 @@ const List<RuleMeta> kTier1Rules = <RuleMeta>[
     summary:
         'startTwelfth in [0,11], spanTwelfths in [1,12], and '
         'startTwelfth + spanTwelfths at most 12.',
+    rationale:
+        'A rack unit is divided into twelfths so part-width gear can sit side '
+        'by side. A device claiming more than the full width, or starting past '
+        'its own right-hand edge, is in a position on the rail that does not '
+        'exist.',
     governing: ['CR-030'],
   ),
   RuleMeta(
@@ -169,6 +218,10 @@ const List<RuleMeta> kTier1Rules = <RuleMeta>[
     summary:
         'ZeroUPlacement.channelId resolves in rack.zeroUChannels and the '
         'offset lies within the channel.',
+    rationale:
+        'Zero-U gear mounts in a channel down the side of the rack. A device '
+        'in a channel this rack does not have, or past the end of one, has '
+        'nothing to screw into.',
     governing: ['CR-031'],
   ),
 ];
@@ -185,6 +238,10 @@ const List<RuleMeta> kTier2Rules = <RuleMeta>[
     summary:
         'HDBaseT port connected to a net.ethernet switch port. The '
         'flagship rule: PoH into a switch port.',
+    rationale:
+        'HDBaseT extenders often push power down the same cable. Plugged into '
+        'a network switch that is not expecting it, that power can destroy the '
+        'switch. This is the failure this product was built to catch.',
     governing: ['CR-017'],
     defaultSeverity: Severity.error,
   ),
@@ -194,6 +251,11 @@ const List<RuleMeta> kTier2Rules = <RuleMeta>[
     summary:
         "The sink's acceptedFamilies excludes the service's signalFamily, "
         'and no InlineAdapter is declared.',
+    rationale:
+        'The signal arriving is not one this input can read. It will show '
+        'nothing, or noise, and the crew will spend a morning swapping cables '
+        'to find out why. If an adapter is going in, declare it and this '
+        'clears.',
     governing: ['CR-017'],
     defaultSeverity: Severity.error,
   ),
@@ -203,6 +265,10 @@ const List<RuleMeta> kTier2Rules = <RuleMeta>[
     summary:
         'source to source, or sink to sink. Exceptions: both ports '
         'declare returnChannel (eARC), or the net is passiveSplit.',
+    rationale:
+        'Two outputs wired to each other, or two inputs: nothing is driving '
+        'the run. Two exceptions are real and allowed for, eARC where both '
+        'ends talk back, and a passive split.',
     governing: ['AC-040'],
     defaultSeverity: Severity.error,
   ),
@@ -212,6 +278,10 @@ const List<RuleMeta> kTier2Rules = <RuleMeta>[
     summary:
         'IR emitter output plugged into an IR receiver jack. Damages '
         'hardware; PortDef.pinoutVariant exists solely to detect it.',
+    rationale:
+        'IR emitters and receivers use the same plug and different wiring. '
+        'Swapped, the emitter can be damaged. The connector will not tell you, '
+        'which is the whole reason this is checked in the drawing.',
     governing: ['AC-040'],
     defaultSeverity: Severity.error,
   ),
@@ -221,6 +291,10 @@ const List<RuleMeta> kTier2Rules = <RuleMeta>[
     summary:
         'Connector types do not mate and no InlineAdapter is declared. '
         'Satisfied by data: declaring the adapter clears it.',
+    rationale:
+        'The plug does not fit the jack. Declaring the adapter that is '
+        'actually going in the box clears this: it is asking what the job '
+        'includes, not refusing the design.',
     governing: ['CR-015'],
     defaultSeverity: Severity.error,
   ),
@@ -230,6 +304,10 @@ const List<RuleMeta> kTier2Rules = <RuleMeta>[
     summary:
         'Constant-voltage speaker on a low-Z amplifier output, or the '
         'reverse.',
+    rationale:
+        'Constant-voltage (70/100 V) speakers and low-impedance amplifier '
+        'outputs are not interchangeable. The wrong pairing is quiet at best '
+        'and a damaged amplifier at worst.',
     governing: ['AC-040'],
     defaultSeverity: Severity.error,
   ),
@@ -249,6 +327,10 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     summary:
         'Speaker polarity inverted between the two ends of a conductor '
         'pair.',
+    rationale:
+        'One speaker of a pair wired backwards cancels bass where the two '
+        'overlap. It measures fine and sounds thin, so it is usually found '
+        'long after handover, if at all.',
     governing: ['AC-030'],
     defaultSeverity: Severity.warning,
   ),
@@ -258,6 +340,10 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     summary:
         'Sum of PD class draw on a switch exceeds '
         'PowerProfile.poeBudgetWatts.',
+    rationale:
+        'A switch has a total power budget, not only a per-port one. Load '
+        'every port and it starts dropping devices, usually the ones that came '
+        'up last and usually at the worst moment.',
     governing: ['CR-056'],
     defaultSeverity: Severity.error,
   ),
@@ -268,6 +354,11 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
         'Continuous amps on a circuit exceed 80% of the breaker, on '
         'typical times diversity, in VA. A planning estimate and not a '
         'compliance check.',
+    rationale:
+        'Continuous load on a breaker is conventionally kept to 80% of its '
+        'rating; past that, expect nuisance trips. This is a planning estimate '
+        'from typical draw and diversity, NOT a compliance check: verify '
+        'against real nameplates before anyone commits to a panel schedule.',
     governing: ['CR-020', 'AC-020', 'DR-079'],
     defaultSeverity: Severity.warning,
   ),
@@ -275,6 +366,10 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     ruleId: 'PWR-003',
     tier: RuleTier.postHoc,
     summary: 'Outlets consumed exceed outlets provided in the rack.',
+    rationale:
+        'More things to plug in than places to plug them. Somebody will arrive '
+        'with a power strip nobody drew, in a rack whose load was worked out '
+        'without it.',
     governing: ['AC-040'],
     defaultSeverity: Severity.error,
   ),
@@ -284,6 +379,11 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     summary:
         'Ethernet channel over 100 m. A null length emits "length '
         'unknown, cannot verify" rather than passing silently.',
+    rationale:
+        '100 m is the whole Ethernet channel, patch cords at both ends '
+        'included, not just the horizontal run. Past it the link negotiates '
+        'down or drops. Where the length is not known, this says so rather '
+        'than passing quietly.',
     governing: ['AC-024'],
     defaultSeverity: Severity.error,
   ),
@@ -294,6 +394,11 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
         "A run's known length exceeds MediaTypeDef.maxRunLengthPassive. "
         'Generic by construction: one rule reading the registry, not one '
         'rule per medium.',
+    rationale:
+        'Every medium has a distance past which it needs help. The figure is '
+        'read from the media registry rather than written into the rule, so a '
+        "run past its own medium's limit needs an extender or a different "
+        'cable.',
     governing: ['DR-020'],
     defaultSeverity: Severity.warning,
   ),
@@ -301,6 +406,9 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     ruleId: 'RCK-001',
     tier: RuleTier.postHoc,
     summary: 'RU overlap on the same face.',
+    rationale:
+        'Two devices in the same rack space. One of them is not going in, and '
+        'the elevation is showing a rack that cannot be built.',
     governing: ['AC-040'],
     defaultSeverity: Severity.error,
   ),
@@ -308,6 +416,9 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     ruleId: 'RCK-002',
     tier: RuleTier.postHoc,
     summary: 'Device extends past heightU.',
+    rationale:
+        'The device runs off the end of the rack. Either the rack is shorter '
+        'than the design assumed, or the device is mounted too low to fit.',
     governing: ['AC-040'],
     defaultSeverity: Severity.error,
   ),
@@ -317,6 +428,10 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     summary:
         'Sum of device weight exceeds Rack.weightCapacity. Advisory at '
         '85%.',
+    rationale:
+        'Racks have a load rating, and a full rack of amplifiers reaches it '
+        'faster than people expect. Advisory from 85%, because that is when it '
+        'is still worth checking the floor and the anchors rather than after.',
     governing: ['CR-020'],
     defaultSeverity: Severity.warning,
   ),
@@ -326,6 +441,11 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     summary:
         'Front depth plus rear depth plus a 50 mm cable allowance exceeds '
         'usable depth, for overlapping RU ranges.',
+    rationale:
+        'Gear mounted front and rear in the same rack space shares the depth '
+        'between them, and cables need somewhere to bend. The 50 mm allowance '
+        'is what stands between the design and a rear door that will not '
+        'close.',
     governing: ['AC-022'],
     defaultSeverity: Severity.error,
   ),
@@ -335,6 +455,10 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     summary:
         'Device mass exceeds maxUnsupportedMass on front ears only; '
         'requires rear support or a shelf.',
+    rationale:
+        'Heavy gear hung on its front ears alone will bend them and can tear '
+        'out of the rail. It needs rear support or a shelf. Common on power '
+        'amplifiers and UPS units, which are heavier than they look.',
     governing: ['AC-028'],
     defaultSeverity: Severity.warning,
   ),
@@ -345,6 +469,11 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
         'Class 2/3 conductor in a Pathway with containsLineVoltage. Cites '
         'NEC 725.136 and asks the user to verify rather than asserting a '
         'violation.',
+    rationale:
+        'Low-voltage cable sharing a pathway with line voltage. NEC 725.136 '
+        'governs when that is permitted and when it is not, and the answer '
+        'depends on the cable, the barrier and the jurisdiction. This flags it '
+        'for you to verify against the article; it does not decide it.',
     governing: ['AC-027', 'DR-079'],
     defaultSeverity: Severity.warning,
   ),
@@ -355,6 +484,11 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
         "Pathway.kind is plenumSpace and the jacket's LISTING is not "
         'plenum-rated for its own NEC article. A listing from another '
         'article, or none, is unknown and skips (G4).',
+    rationale:
+        'Cable in a plenum has to carry a plenum listing, because in a fire '
+        'that air path feeds the rest of the building. A jacket listed under '
+        'another article, or carrying no listing at all, is treated as unknown '
+        'here rather than assumed either way.',
     governing: ['AC-027', 'DR-079'],
     defaultSeverity: Severity.warning,
   ),
@@ -362,6 +496,10 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     ruleId: 'LNK-020',
     tier: RuleTier.postHoc,
     summary: 'N links have unbound endpoints. A checklist, not a failure.',
+    rationale:
+        'Cables drawn but not yet landed on anything. This is a checklist for '
+        'the end of a design session, not a fault: unbound ends are a normal '
+        'way to work.',
     governing: ['AC-018'],
     defaultSeverity: Severity.advisory,
   ),
