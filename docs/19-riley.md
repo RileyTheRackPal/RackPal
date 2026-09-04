@@ -74,6 +74,8 @@ without anybody having to explain it.**
 
 And a fourth that is not a tier and matters as much:
 
+| Not a tier | What it means | Proposed posture |
+|---|---|---|
 | **Unknown** | The product has no figure and refuses to invent one | **Palms up, shoulders raised, visor showing a dash.** The dash is not decorative: `—` is what G4 prints for an unknown value, and it is already in the product's type system |
 
 ---
