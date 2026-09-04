@@ -216,9 +216,11 @@ def main() -> int:
       'drawn as an unnamed two-wire cable is one somebody lands on the '
       'wrong controller.')
     w('')
-    w('**One field on that row is a guess and is worth your eye:** the '
-      'default connector is a screw terminal, following DALI. Everything '
-      'else came from a stated fact.')
+    w('That row shipped with one guessed field, a screw-terminal '
+      'connector copied from DALI, and it was wrong: Vantage joins the '
+      'bus with Wago or wire nut connections, so it is now recorded as a '
+      'hardwired splice with no connector at all. Everything else came '
+      'from a stated fact.')
     w('')
     w('## What a new one costs, so the answer is not automatic')
     w('')

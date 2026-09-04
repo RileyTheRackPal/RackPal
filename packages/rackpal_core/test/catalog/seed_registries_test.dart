@@ -109,12 +109,17 @@ void main() {
       }
     });
 
-    test('the two structure families are the only users of the exempt '
-        'connectors, and they use `conn.unterminated`', () {
+    test('every user of a footprint-exempt connector is one the doc '
+        'states', () {
       // Guards the ONE invented value declared in the seed's header:
       // §4.4 prints "—" for `structure.pathway`'s connector and the field
       // is non-nullable. If that spreads to families whose connector the
       // doc really does state, this test says so.
+      //
+      // THE NAME USED TO SAY "the two structure families are the only
+      // users", which was never true: the two power families are here as
+      // well and always were. It is a list, not a count, and `ctl.vantage`
+      // joining it is what made the difference visible.
       final exemptUsers = {
         for (final f in families.values)
           if (kFootprintExemptConnectors.contains(f.defaultConnector.v))
@@ -123,6 +128,11 @@ void main() {
       expect(exemptUsers, {
         'power.ac_hardwired': 'conn.hardwired',
         'power.bonding': 'conn.ground_lug',
+        // NOT INVENTED, WHICH IS WHAT THIS TEST IS ABOUT. Vantage joins
+        // its bus with Wago or wire nut connections (DR-120 §11.119.4),
+        // so it has no connector for the same reason hardwired AC has
+        // none, and §4.4 states it.
+        'ctl.vantage': 'conn.hardwired',
         'structure.undetermined': 'conn.unterminated',
         'structure.pathway': 'conn.unterminated',
       });

@@ -962,15 +962,18 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
     // is a run an installer can land on the wrong controller. A family
     // of its own is what makes the drawing say which one.
     //
-    // THE CONNECTOR IS THE INFERRED FIELD. `conn.screw_terminal` follows
-    // `ctl.dali`, the other polarity-flexible two-wire bus; it is the one
-    // value here not taken from a stated fact and is the first thing to
-    // correct if the trade says otherwise.
+    // `conn.hardwired`, AND THE FIRST DRAFT HAD IT WRONG. It shipped as
+    // `conn.screw_terminal`, inferred from `ctl.dali`, flagged in this
+    // comment as the one value not taken from a stated fact and as the
+    // first thing to correct. It was corrected within the day: Vantage
+    // joins the bus with Wago or wire nut connections, so there is no
+    // connector at all and the conductors are spliced, which is
+    // `power.ac_hardwired`'s situation exactly and its connector too.
     _family(
       'ctl.vantage',
       'Vantage station bus (Legrand)',
       'ctl',
-      'conn.screw_terminal',
+      'conn.hardwired',
       bi,
       md,
       'VTG',

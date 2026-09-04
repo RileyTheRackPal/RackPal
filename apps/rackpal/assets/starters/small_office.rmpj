@@ -2736,7 +2736,7 @@
             1500,
             3000
           ],
-          "defaultConnector": "conn.screw_terminal",
+          "defaultConnector": "conn.hardwired",
           "defaultDirection": "bidirectional",
           "defaultTopology": "multidrop",
           "displayName": "Vantage station bus (Legrand)",
