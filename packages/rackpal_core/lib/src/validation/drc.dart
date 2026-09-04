@@ -49,6 +49,9 @@
 import 'package:rackpal_core/src/model/enums.dart' show Severity;
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/validation/finding.dart';
+import 'package:rackpal_core/src/validation/rules_cable.dart';
+import 'package:rackpal_core/src/validation/rules_code.dart';
+import 'package:rackpal_core/src/validation/rules_power.dart';
 import 'package:rackpal_core/src/validation/rules_rack.dart';
 import 'package:rackpal_core/src/validation/severity_resolution.dart';
 
@@ -70,8 +73,20 @@ typedef DrcRule = List<Finding> Function(RackDocument doc);
 /// matters**: fourteen rows and thirteen predicates ships a catalogue
 /// that lies about what the product checks.
 const Map<String, DrcRule> kDrcRules = <String, DrcRule>{
+  'CODE-001': ruleCode001,
+  'CODE-002': ruleCode002,
+  'ELE-003': ruleEle003,
+  'LEN-001': ruleLen001,
+  'LEN-002': ruleLen002,
+  'LNK-020': ruleLnk020,
+  'NET-001': ruleNet001,
+  'PWR-001': rulePwr001,
+  'PWR-003': rulePwr003,
   'RCK-001': ruleRck001,
   'RCK-002': ruleRck002,
+  'RCK-003': ruleRck003,
+  'RCK-012': ruleRck012,
+  'RCK-013': ruleRck013,
 };
 
 /// Every finding this document carries, severity resolved and

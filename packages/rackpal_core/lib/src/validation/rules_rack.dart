@@ -41,6 +41,8 @@ import 'package:rackpal_core/src/model/enums.dart' show Severity;
 import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
+import 'package:rackpal_core/src/units/ids.dart';
+import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/validation/finding.dart';
 
 /// One rail-placed device, with the U span it occupies on one face.
@@ -224,3 +226,202 @@ List<Finding> ruleRck002(RackDocument doc) {
   }
   return out;
 }
+
+// ─────────────────────────────────────────────────────────────────────
+// RCK-003 — total device weight exceeds the rack's capacity (#287)
+// ─────────────────────────────────────────────────────────────────────
+
+/// `RCK-003` — the rack's loaded weight is over capacity, or near it.
+///
+/// TWO SEVERITIES FROM ONE ROW, which docs/02 §5.3 states in the row
+/// itself: *"warning (advisory at 85%)"*. The finding carries `advisory`
+/// in the band below the limit and `warning` above it, and the
+/// evaluator's override still applies on top of whichever it chose — a
+/// project that demotes `RCK-003` demotes both.
+///
+/// THE UNKNOWN COUNT IS IN THE SENTENCE (G4/CR-114). A rack whose devices
+/// mostly state no mass is a rack this rule cannot speak about, and a
+/// total that silently omitted them would read as reassurance.
+List<Finding> ruleRck003(RackDocument doc) {
+  final out = <Finding>[];
+  for (final rack in doc.racks.values) {
+    final capacity = rack.weightCapacity;
+    // NO CAPACITY IS UNKNOWN, NOT UNLIMITED, and the rule is silent. A
+    // rack whose capacity nobody stated cannot be over it.
+    if (capacity == null) continue;
+
+    var loadedUg = 0;
+    final unknown = <String>[];
+    final members = <Uuid>[];
+    for (final device in doc.devices.values) {
+      if (!belongsToRack(device, rack.id, doc.devices)) continue;
+      members.add(device.id);
+      final mass = resolveDeviceLoads(
+        device,
+        bodyFor(device, doc.templates),
+      ).mass;
+      if (mass == null) {
+        unknown.add(device.designator);
+      } else {
+        loadedUg += mass.ug;
+      }
+    }
+    if (members.isEmpty) continue;
+
+    // 85% OF CAPACITY, IN MICROGRAMS, so the comparison stays in CR-001's
+    // integer units and never becomes a float.
+    final advisoryAtUg = (capacity.ug * 85) ~/ 100;
+    if (loadedUg < advisoryAtUg) continue;
+    final over = loadedUg > capacity.ug;
+    unknown.sort();
+    final more = unknown.length > 3 ? ' and ${unknown.length - 3} more' : '';
+    final caveat = unknown.isEmpty
+        ? ''
+        : ' ${unknown.length} of its devices state no weight '
+              '(${unknown.take(3).join(', ')}$more), so the real load is '
+              'higher.';
+    out.add(
+      Finding(
+        ruleId: 'RCK-003',
+        severity: over ? Severity.warning : Severity.advisory,
+        message: over
+            ? '${rack.designator} is loaded to ${_kg(loadedUg)} kg against '
+                  'a ${_kg(capacity.ug)} kg capacity.$caveat'
+            : '${rack.designator} is at ${_kg(loadedUg)} kg, over 85% of '
+                  'its ${_kg(capacity.ug)} kg capacity.$caveat',
+        targets: [rack.id, ...members],
+        primaryEntityId: rack.id,
+      ),
+    );
+  }
+  return out;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// RCK-012 — front depth + rear depth + 50 mm > usable depth (#288)
+// ─────────────────────────────────────────────────────────────────────
+
+/// The cable allowance docs/02 §5.3 names: 50 mm between a front device's
+/// tail and a rear device's.
+final Len kRearCableAllowance = Len.fromMillimetres(50);
+
+/// `RCK-012` — a front and a rear device collide in depth over shared U.
+///
+/// THE PAIR IS THE UNIT, for `RCK-001`'s reason: this is a fact about two
+/// devices, and a fingerprint naming one of them could not be
+/// acknowledged apart from another pair that same device is in.
+List<Finding> ruleRck012(RackDocument doc) {
+  final out = <Finding>[];
+  for (final rack in doc.racks.values) {
+    final usable = rack.usableDepth;
+    // UNKNOWN DEPTH, UNKNOWN ANSWER. A rack that states no usable depth
+    // cannot be over it, and assuming a standard depth would be exactly
+    // the estimate G4 forbids.
+    if (usable == null) continue;
+
+    final fronts = _spansOn(doc, rack, Face.front);
+    final rears = _spansOn(doc, rack, Face.rear);
+    for (final f in fronts) {
+      for (final r in rears) {
+        if (f.device.id == r.device.id) continue;
+        // OVERLAPPING RU RANGES ONLY, which is §5.3's own qualifier: two
+        // devices at opposite ends of the rack share no depth to fight
+        // over.
+        if (f.ruIndex >= r.ruIndex + r.height) continue;
+        if (r.ruIndex >= f.ruIndex + f.height) continue;
+
+        final fd = _depthOf(doc, f.device);
+        final rd = _depthOf(doc, r.device);
+        // EITHER DEPTH UNKNOWN MEANS NO ARITHMETIC. Two bodies and an
+        // allowance is a sum, and a sum missing a term is not a smaller
+        // sum.
+        if (fd == null || rd == null) continue;
+
+        final needed = fd + rd + kRearCableAllowance.nm;
+        if (needed <= usable.nm) continue;
+        out.add(
+          Finding(
+            ruleId: 'RCK-012',
+            severity: Severity.error,
+            message:
+                '${f.device.designator} at the front and '
+                '${r.device.designator} at the rear need ${_mm(needed)} mm '
+                'together including the 50 mm cable allowance, and '
+                '${rack.designator} is ${_mm(usable.nm)} mm deep.',
+            targets: [f.device.id, r.device.id, rack.id],
+            primaryEntityId: f.device.id,
+          ),
+        );
+      }
+    }
+  }
+  return out;
+}
+
+/// [device]'s depth including what its connectors project, in nanometres.
+///
+/// BOTH TERMS OR NEITHER. `bodyDepth` without `connectorProjection` is the
+/// box and not the space it needs, and `RCK-012` is about the space.
+int? _depthOf(RackDocument doc, DeviceInstance device) {
+  final body = bodyFor(device, doc.templates);
+  final depth = body?.bodyDepth;
+  if (depth == null) return null;
+  return depth.nm + (body?.connectorProjection?.nm ?? 0);
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// RCK-013 — mass over maxUnsupportedMass on front ears only (#289)
+// ─────────────────────────────────────────────────────────────────────
+
+/// `RCK-013` — a heavy device hangs on its front ears with no rear
+/// support.
+///
+/// WHAT THIS CAN SEE AND WHAT IT CANNOT. The model records which rails a
+/// device's ears are bolted to (`boltedRailFace`) and what a template can
+/// hang unsupported (`maxUnsupportedMass`). It does NOT record a shelf
+/// under a device that is not hosted by it, so the rule speaks about the
+/// case it can see — front-only ears, mass over the limit — and says
+/// "rear support or a shelf" rather than asserting there is none.
+List<Finding> ruleRck013(RackDocument doc) {
+  final out = <Finding>[];
+  for (final device in doc.devices.values) {
+    final body = bodyFor(device, doc.templates);
+    final limit = body?.maxUnsupportedMass;
+    // NO STATED LIMIT IS UNKNOWN, and a device with none is one this rule
+    // has nothing to say about rather than one that can hang any weight.
+    if (limit == null) continue;
+    final mass = resolveDeviceLoads(device, body).mass;
+    if (mass == null) continue;
+    if (mass.ug <= limit.ug) continue;
+
+    // FRONT EARS ONLY. `boltedRailFace` answers which rails carry the
+    // ears, which `device_loads.dart` keeps deliberately separate from
+    // "does it occupy U on this face" — asking the other question is what
+    // emptied the rear elevation.
+    if (boltedRailFace(device) != Face.front) continue;
+    final placement = device.placement;
+    if (placement is! RailPlacement) continue;
+    final rack = doc.racks[placement.rackId];
+    if (rack == null) continue;
+
+    out.add(
+      Finding(
+        ruleId: 'RCK-013',
+        severity: Severity.warning,
+        message:
+            '${device.designator} is ${_kg(mass.ug)} kg on front ears rated '
+            'to ${_kg(limit.ug)} kg. It needs rear rail support or a shelf '
+            'in ${rack.designator}.',
+        targets: [device.id, rack.id],
+        primaryEntityId: device.id,
+      ),
+    );
+  }
+  return out;
+}
+
+/// [ug] in kilograms, to one decimal place.
+String _kg(int ug) => (ug / 1000000000).toStringAsFixed(1);
+
+/// [nm] in millimetres, as a whole number.
+String _mm(int nm) => (nm / 1000000).round().toString();

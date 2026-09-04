@@ -123,13 +123,23 @@ void main() {
             'a predicate with no catalogue row is a rule CR-021 says '
             'does not exist',
       );
-      // The other direction is the milestone's own progress bar rather
-      // than a failure today, so it is reported as a count and asserted
-      // once M5-E finishes.
+      // THE OTHER DIRECTION NOW CLOSES, which it could not while M5-E was
+      // part-built. Fourteen rows and thirteen predicates ships a
+      // catalogue that LIES about what the product checks, and nothing
+      // else in the tree would notice.
       expect(
-        rows.difference(built).length,
-        rows.length - built.length,
-        reason: 'sanity: the two sets are consistent about their overlap',
+        rows.difference(built),
+        isEmpty,
+        reason:
+            'a catalogue row with no predicate is a rule the product '
+            'claims to check and does not',
+      );
+      expect(
+        built,
+        hasLength(14),
+        reason:
+            'docs/02 §5 gives 28 rules as 8 + 6 + 14, and this is '
+            'the fourteen',
       );
     });
 
@@ -313,7 +323,10 @@ void main() {
     test('a project override changes what the finding IS', () {
       place('V01', 3, designator: 'MTX-1');
       place('V01', 3, designator: 'MTX-2');
-      expect(evaluateDocument(doc).single.severity, Severity.error);
+      expect(
+        evaluateDocument(doc, only: 'RCK-001').single.severity,
+        Severity.error,
+      );
 
       doc.settings.ruleOverrides['RCK-001'] = RuleOverride(
         severity: Severity.warning,
@@ -325,7 +338,7 @@ void main() {
         at: at,
       );
       expect(
-        evaluateDocument(doc).single.severity,
+        evaluateDocument(doc, only: 'RCK-001').single.severity,
         Severity.warning,
         reason:
             'a finding carries what it IS in this project, so the '
@@ -345,7 +358,7 @@ void main() {
         by: 't',
         at: at,
       );
-      expect(evaluateDocument(doc), isEmpty);
+      expect(evaluateDocument(doc, only: 'RCK-001'), isEmpty);
     });
 
     test('the order is deterministic across runs', () {
@@ -357,14 +370,16 @@ void main() {
       place('V01', 12, designator: 'MTX-3');
       final once = evaluateDocument(doc);
       final twice = evaluateDocument(doc);
+      expect(once, isNotEmpty, reason: 'the premise: something fired');
       expect(idsOf(once), idsOf(twice));
       expect(
         once.map((f) => f.targetFingerprint).toList(),
         twice.map((f) => f.targetFingerprint).toList(),
       );
+      final sorted = [...idsOf(once)]..sort();
       expect(
         idsOf(once),
-        ['RCK-001', 'RCK-002'],
+        sorted,
         reason:
             'sorted by rule id, not by severity — severity is a '
             'per-project setting and sorting by it would churn the whole '
@@ -372,10 +387,35 @@ void main() {
       );
     });
 
-    test('a clean document has no findings at all', () {
+    test('an empty project reports nothing at all', () {
+      // THE ONE DOCUMENT THAT REALLY IS CLEAN. The first draft used two
+      // properly stacked matrices and expected silence; it got three
+      // findings, and ALL THREE WERE RIGHT — a rack with no PDU provides
+      // zero outlets against two consumed (`PWR-003`), and V01 is 7.3 kg
+      // against a 7.0 kg front-ear rating (`RCK-013`, twice). Fourteen
+      // rules over a realistic rack is a document with things to say
+      // about it, which is the product working rather than a defect.
+      expect(evaluateDocument(doc), isEmpty);
+    });
+
+    test('a bare rack with two matrices reports exactly what it should', () {
+      // The corrected version of the test above, and more useful than the
+      // silence it expected: this NAMES what a realistic two-device rack
+      // is guilty of, so a rule that stops firing shows up here.
       place('V01', 3, designator: 'MTX-1');
       place('V01', 3 + heightOf('V01'), designator: 'MTX-2');
-      expect(evaluateDocument(doc), isEmpty);
+      expect(
+        idsOf(evaluateDocument(doc)).toSet(),
+        {'PWR-003', 'RCK-013'},
+        reason:
+            'no PDU means no outlets provided, and V01 is over its own '
+            'front-ear rating — both are true of this document',
+      );
+      expect(
+        evaluateDocument(doc, only: 'RCK-001'),
+        isEmpty,
+        reason: 'and the two are correctly stacked',
+      );
     });
   });
 }
