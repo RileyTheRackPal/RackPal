@@ -1,0 +1,283 @@
+// The spring-back tier's scenarios and their AC-051 pairs (M5-G2/G3).
+//
+// MOVED HERE FROM `spring_back_rules_test.dart`, unchanged in substance,
+// for the reason `connect_scenarios.dart` gives: `#302`'s gate is over
+// the CATALOGUE, and a coverage test driven by `SpringBackRule.values`
+// cannot see a catalogue row no enum mentions. The assertions stayed
+// where they were; only the data moved.
+
+import 'package:rackpal_core/rackpal_core.dart';
+
+final springBackWhen = DateTime.utc(2026, 9, 3);
+const springBackA = Uuid('dev-a');
+const springBackB = Uuid('dev-b');
+
+EntityMeta springBackMeta() => EntityMeta(
+  createdAt: springBackWhen,
+  updatedAt: springBackWhen,
+  updatedBy: 'test',
+);
+
+const springBackPos = PanelPosition(
+  ruOffset: 0,
+  xTwelfth: 0,
+  xFineNm: Len.zero,
+  yFineNm: Len.zero,
+);
+
+PortDef springBackPort(
+  String key,
+  String family, {
+  PortDirection dir = PortDirection.source,
+  String connector = 'conn.rj45',
+  List<String> accepts = const [],
+  ReturnChannel? returnChannel,
+}) => PortDef(
+  key: PortKey(key),
+  label: key,
+  connector: ConnectorTypeId(connector),
+  signalFamily: SignalFamilyId(family),
+  face: Face.rear,
+  position: springBackPos,
+  order: const FracIndex('a0'),
+  direction: dir,
+  returnChannel: returnChannel,
+  acceptedFamilies: [for (final f in accepts) SignalFamilyId(f)],
+  maxConnections: 4,
+);
+
+/// Two devices, one port each, so every case below is exactly the pair
+/// under test with nothing else able to fire.
+RackDocument springBackPair(
+  PortDef fromPort,
+  PortDef toPort, {
+  bool toIsPassthrough = false,
+}) {
+  final doc = RackDocument(
+    id: const Uuid('doc-t2'),
+    appVersion: '0.5.22',
+    createdAt: springBackWhen,
+    modifiedAt: springBackWhen,
+    meta: springBackMeta(),
+  )..registries = buildSeedRegistries();
+  springBackAdd(doc, springBackA, 'SRC-1', fromPort, isPassthrough: false);
+  springBackAdd(
+    doc,
+    springBackB,
+    'DST-1',
+    toPort,
+    isPassthrough: toIsPassthrough,
+  );
+  return doc;
+}
+
+void springBackAdd(
+  RackDocument doc,
+  Uuid id,
+  String designator,
+  PortDef port, {
+  required bool isPassthrough,
+}) {
+  final tpl = 'tpl.${id.v}';
+  doc.templates['$tpl@1'] = TemplateSnapshot(
+    templateId: TemplateId(tpl),
+    version: 1,
+    contentHash: 'sha256:$tpl',
+    body: TemplateBody(
+      manufacturer: 'Acme',
+      model: designator,
+      displayName: designator,
+      isPassthrough: isPassthrough,
+      ports: [port],
+    ),
+    capturedAt: springBackWhen,
+  );
+  doc.devices[id] = DeviceInstance(
+    id: id,
+    kind: DeviceKind.rackDevice,
+    templateRef: TemplateRef(
+      templateId: TemplateId(tpl),
+      version: 1,
+      contentHash: 'sha256:$tpl',
+    ),
+    designator: designator,
+    name: designator,
+    placement: const OffRackPlacement(),
+    meta: springBackMeta(),
+  );
+}
+
+SpringBackVerdict springBackRun(RackDocument doc) => evaluateSpringBack(
+  doc,
+  resolveConnectTarget(doc, deviceId: springBackA, portKey: 'p')!,
+  resolveConnectTarget(doc, deviceId: springBackB, portKey: 'p')!,
+);
+
+typedef SpringBackCase = ({
+  SpringBackRule rule,
+  String what,
+  RackDocument Function() doc,
+});
+
+/// One known-bad per rule. The coverage test below compares this against
+/// `SpringBackRule.values`.
+List<SpringBackCase> springBackChips() => [
+  (
+    rule: SpringBackRule.hdbasetIntoEthernet,
+    what: 'HDBaseT lands on a terminating Ethernet port',
+    doc: () => springBackPair(
+      springBackPort('p', 'video.hdbaset'),
+      springBackPort('p', 'net.ethernet', dir: PortDirection.sink),
+    ),
+  ),
+  (
+    rule: SpringBackRule.irEmitterIntoReceiver,
+    what: 'an IR emitter output lands on an IR receiver jack',
+    doc: () => springBackPair(
+      springBackPort('p', 'ctl.ir_emitter', connector: 'conn.3_5mm_ts'),
+      springBackPort(
+        'p',
+        'ctl.ir_receiver',
+        dir: PortDirection.sink,
+        connector: 'conn.3_5mm_ts',
+      ),
+    ),
+  ),
+  (
+    rule: SpringBackRule.speakerImpedanceMismatch,
+    what: 'a constant-voltage line meets a low-Z speaker',
+    doc: () => springBackPair(
+      springBackPort('p', 'audio.speaker_cv', connector: 'conn.euroblock_2'),
+      springBackPort(
+        'p',
+        'audio.speaker_lowz',
+        dir: PortDirection.sink,
+        connector: 'conn.euroblock_2',
+      ),
+    ),
+  ),
+  (
+    rule: SpringBackRule.directionMismatch,
+    what: 'both ends are outputs',
+    doc: () => springBackPair(
+      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+    ),
+  ),
+  (
+    rule: SpringBackRule.familyNotAccepted,
+    what: 'the sink does not accept the source family',
+    doc: () => springBackPair(
+      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort(
+        'p',
+        'audio.analog_bal',
+        dir: PortDirection.sink,
+        connector: 'conn.hdmi_a',
+      ),
+    ),
+  ),
+  (
+    rule: SpringBackRule.connectorsDoNotMate,
+    what: 'the connectors do not mate and no adapter is declared',
+    doc: () => springBackPair(
+      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort(
+        'p',
+        'video.hdmi',
+        dir: PortDirection.sink,
+        connector: 'conn.xlr3_f',
+        accepts: ['video.hdmi'],
+      ),
+    ),
+  ),
+];
+
+/// One known-good near-miss per rule, ONE PROPERTY from its bad case.
+List<SpringBackCase> springBackNearMisses() => [
+  (
+    rule: SpringBackRule.hdbasetIntoEthernet,
+    what:
+        'the Ethernet port is on a PASSTHROUGH, so the joint is a patch '
+        'panel and the switch question is a path question (DR-113)',
+    doc: () => springBackPair(
+      springBackPort('p', 'video.hdbaset'),
+      springBackPort('p', 'net.ethernet', dir: PortDirection.sink),
+      toIsPassthrough: true,
+    ),
+  ),
+  (
+    rule: SpringBackRule.irEmitterIntoReceiver,
+    what:
+        'the far end is an emitter port too, which is what an IR '
+        'connecting block offers',
+    doc: () => springBackPair(
+      springBackPort('p', 'ctl.ir_emitter', connector: 'conn.3_5mm_ts'),
+      springBackPort(
+        'p',
+        'ctl.ir_emitter',
+        dir: PortDirection.sink,
+        connector: 'conn.3_5mm_ts',
+      ),
+    ),
+  ),
+  (
+    rule: SpringBackRule.speakerImpedanceMismatch,
+    what: 'both ends are constant voltage',
+    doc: () => springBackPair(
+      springBackPort('p', 'audio.speaker_cv', connector: 'conn.euroblock_2'),
+      springBackPort(
+        'p',
+        'audio.speaker_cv',
+        dir: PortDirection.sink,
+        connector: 'conn.euroblock_2',
+      ),
+    ),
+  ),
+  (
+    rule: SpringBackRule.directionMismatch,
+    what: 'both ends declare a return channel, which is eARC working',
+    doc: () => springBackPair(
+      springBackPort(
+        'p',
+        'video.hdmi',
+        connector: 'conn.hdmi_a',
+        returnChannel: ReturnChannel.eArc,
+      ),
+      springBackPort(
+        'p',
+        'video.hdmi',
+        connector: 'conn.hdmi_a',
+        returnChannel: ReturnChannel.eArc,
+      ),
+    ),
+  ),
+  (
+    rule: SpringBackRule.familyNotAccepted,
+    what: 'the sink DECLARES the source family in acceptedFamilies',
+    doc: () => springBackPair(
+      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort(
+        'p',
+        'audio.analog_bal',
+        dir: PortDirection.sink,
+        connector: 'conn.hdmi_a',
+        accepts: ['video.hdmi'],
+      ),
+    ),
+  ),
+  (
+    rule: SpringBackRule.connectorsDoNotMate,
+    what: 'the connectors mate',
+    doc: () => springBackPair(
+      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort(
+        'p',
+        'video.hdmi',
+        dir: PortDirection.sink,
+        connector: 'conn.hdmi_a',
+        accepts: ['video.hdmi'],
+      ),
+    ),
+  ),
+];

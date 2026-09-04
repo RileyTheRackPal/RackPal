@@ -107,6 +107,18 @@ try {
     Invoke-Gate 'JUnit converter self-test' {
         python (Join-Path $ci 'junit_converter_selftest.py')
     }
+    # AC-051, #302. A NAMED STEP even though the core suite runs this file
+    # anyway, because the thing it protects is a SCHEDULE control: roadmap
+    # M5's risk list names the pressure to add "just one more obvious
+    # rule" without its pair as how this milestone overruns. Buried among
+    # 3,900 passing tests that failure reads as one red line; here it
+    # reads as "AC-051 pair coverage FAILED" in the summary, which is
+    # where somebody adding a rule will see it.
+    Invoke-Gate 'AC-051 pair coverage' {
+        Push-Location (Join-Path $RepoRoot 'packages/rackpal_core')
+        try { dart test test/validation/drc_corpus_test.dart }
+        finally { Pop-Location }
+    }
 
     if (-not $SkipTests) {
         $suites = @(
