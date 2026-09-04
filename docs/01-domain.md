@@ -395,6 +395,7 @@ The requirement's "Analog RCA" and "speaker level" share one orange and are sepa
 | `ctl.lutron_qs` | Lutron QS / HomeWorks link | `conn.rj45` | ↔ | **BUS**, topology-free | `QS` | 2000 ft on 12 AWG |
 | `ctl.dali` | DALI / DALI-2 | `conn.screw_terminal` | ↔ | **BUS**, topology-free | `DALI` | **64 devices per line**, ~300 m, polarity-free, a wiring error is inexpressible |
 | `ctl.knx` | KNX TP1 | `conn.knx_terminal` | ↔ | **BUS** (line/tree) | `KNX` | 64 devices per line segment, 1000 m per line |
+| `ctl.vantage` | Vantage station bus (Legrand) | `conn.screw_terminal` | ↔ | **BUS** (line / tree) | `VTG` | Two-wire station bus; a family of its own so it is not drawn as an unnamed two-wire run |
 
 **`topologyFree` is a registry field, not a hard-coded suppression array** (AC-030). It ships set on `ctl.cresnet`, `ctl.lutron_qs`, `ctl.dali` and `ctl.knx`. A star-wired Cresnet run is Crestron's own recommended residential approach; a rule that fires on every correctly wired Crestron job for the life of the product is worse than no rule.
 

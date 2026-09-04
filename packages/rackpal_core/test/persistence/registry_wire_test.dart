@@ -253,10 +253,10 @@ void main() {
       expect(codec.write(reread(doc)), bytes);
     });
 
-    test('all 8 domains, 55 families and every connector come back', () {
+    test('all 8 domains, 56 families and every connector come back', () {
       final back = reread(seededDoc()).registries;
       expect(back.signalDomains, hasLength(8));
-      expect(back.signalFamilies, hasLength(55));
+      expect(back.signalFamilies, hasLength(56));
       expect(
         back.connectorTypes.length,
         buildSeedConnectorFootprints().length,

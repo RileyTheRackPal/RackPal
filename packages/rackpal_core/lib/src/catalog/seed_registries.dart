@@ -1,4 +1,4 @@
-// THE SEEDED SIGNAL REGISTRIES — the 8 domains and 55 families of
+// THE SEEDED SIGNAL REGISTRIES — the 8 domains and 56 families of
 // docs/catalog/seed-devices.md §4.3/§4.4 (= canon §6.2.5/§6.4).
 //
 // ═════════════════════════════════════════════════════════════════════
@@ -27,7 +27,7 @@
 // THIS IS A FOURTH COPY OF THE PALETTE, AND IT IS GATED LIKE ONE
 // ═════════════════════════════════════════════════════════════════════
 // `tools/pal1_check.py` REMAINS THE SINGLE AUTHORITY (DR-010 §11.10.1,
-// §4.2). Hand-authoring 8 domains and 55 families into Dart creates a
+// §4.2). Hand-authoring 8 domains and 56 families into Dart creates a
 // fourth copy of data that already exists in three places, and doc-vs-
 // authority drift is precisely the failure `tools/palette_parity.py` was
 // written to catch after — in its own words — it "shipped four times".
@@ -313,7 +313,7 @@ SignalFamilyDef _family(
   aliases: aliases,
 );
 
-/// The 55 shipped signal families (§4.4).
+/// The 56 shipped signal families (§4.4).
 ///
 /// ═══════════════════════════════════════════════════════════════════
 /// HOW §4.4's `Dir` AND `Topo` COLUMNS ARE READ, MECHANICALLY
@@ -953,6 +953,30 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       md,
       'KNX',
       dash: [7000, 3000, 1500, 3000],
+      weight: 1000,
+    ),
+    // VANTAGE IS THE SEVENTH TWO-WIRE BUS IN THIS DOMAIN, and that is
+    // the argument for it rather than an objection. RS-485, DALI, KNX,
+    // Cresnet, Lutron QS and contact closure all land on two conductors
+    // at a terminal, so a Vantage run drawn as "some two-wire bus"
+    // is a run an installer can land on the wrong controller. A family
+    // of its own is what makes the drawing say which one.
+    //
+    // THE CONNECTOR IS THE INFERRED FIELD. `conn.screw_terminal` follows
+    // `ctl.dali`, the other polarity-flexible two-wire bus; it is the one
+    // value here not taken from a stated fact and is the first thing to
+    // correct if the trade says otherwise.
+    _family(
+      'ctl.vantage',
+      'Vantage station bus (Legrand)',
+      'ctl',
+      'conn.screw_terminal',
+      bi,
+      md,
+      'VTG',
+      // 9 is the free slot in this domain's dash-dot run: DALI 5,
+      // RS-232 6, KNX 7, DMX 8, Cresnet 10. PAL-1 passes at 56 families.
+      dash: [9000, 3000, 1500, 3000],
       weight: 1000,
     ),
 

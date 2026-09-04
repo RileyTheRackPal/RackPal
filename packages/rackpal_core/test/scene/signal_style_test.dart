@@ -5,7 +5,7 @@
 // WHY THE SEED AND NOT A TOY
 // ─────────────────────────────────────────────────────────────────────
 // Every claim in docs/05 §6 is a claim about the 8 shipped domains and
-// the 55 shipped families: that the hue set is Okabe–Ito and survives a
+// the 56 shipped families: that the hue set is Okabe–Ito and survives a
 // CVD, that no two families in a domain render alike, that the effective
 // dash and weight are the ones PAL-1 was cleared against. A two-family
 // fixture can satisfy all of it and prove none of it. So the suite runs

@@ -2030,6 +2030,23 @@
           "id": "ctl.trigger12v",
           "shortTag": "TRG"
         },
+        "ctl.vantage": {
+          "aliases": [],
+          "dashOverride": [
+            9000,
+            3000,
+            1500,
+            3000
+          ],
+          "defaultConnector": "conn.screw_terminal",
+          "defaultDirection": "bidirectional",
+          "defaultTopology": "multidrop",
+          "displayName": "Vantage station bus (Legrand)",
+          "domain": "ctl",
+          "id": "ctl.vantage",
+          "lineWeightPermilleOverride": 1000,
+          "shortTag": "VTG"
+        },
         "net.dac": {
           "aliases": [],
           "dashOverride": [
