@@ -28,24 +28,53 @@ because of interior detail, it will not survive the taskbar.
 
 ---
 
-## 2. What is open
+## 2. The body: settled, and what is still open
 
-Everything else, and these are genuinely the artist's calls rather than questions with hidden
-answers:
+### Settled by the user, 2026-09-03
 
-- **Body plan below the head.** Digitigrade or plantigrade, tail or no tail, proportions, whether
-  Riley is chunky or lithe. Nothing in the code or the corpus reaches this.
-- **The visor's expression vocabulary.** How many glyphs, how abstract, whether the eye shape
-  changes or only its contents. §4 proposes a set; treat it as a request rather than a spec.
-- **Hands.** Paws, gloves, three fingers or five. They will hold tools constantly, so this is worth
-  deciding early and deliberately.
-- **Wear and personality.** Whether Riley is factory-fresh or has scuffs, a tool belt, a favourite
-  screwdriver.
-- **Height relative to a rack.** §3's scenes assume Riley is roughly knee-high to an adult, which
-  makes a 42U rack a building. **If that is wrong, say so and the scenes change** — it is the single
-  assumption most of the poses below rest on.
+| Fact | Note for the artist |
+|---|---|
+| **Roughly 5 feet tall** | Canonically. A 42U rack is about 6'2", so Riley is **rack-height, not knee-height**: they work a rack the way a person does and need a step for the top few U |
+| **Rendered CHIBI in the manual** | The manual's illustrations are a stylisation, not the canonical proportion. See the note below, because this is the one place two renderings of Riley coexist and a brief that blurred them would produce inconsistent art |
+| **Digitigrade legs** | Which also settles how Riley stands, crouches and kneels at a rack base |
+| **A mechanical tail ending in an RJ45 connector** | The single most characterful thing in this list. §5 adds four scenes that only exist because of it |
+| **Three fingers and an opposable thumb** | Four digits. They hold tools constantly, so this is worth resolving in the first sketch rather than the tenth |
+| **Scuffs** | Riley works. Not battered, not pristine |
+| **A tool belt** | Loadout is the artist's; it should look chosen rather than issued |
+| **A favourite screwdriver: the classic red flip-shaft** | Reversible shaft, Phillips one end and flat the other, red handle. A specific, real tool a trade reader will recognise instantly, which is worth more than a generic one |
+| **Riley is they/them** | Throughout, in the manual, in the app and in this document |
+| **No words in the manual — symbols instead** | Riley communicates through posture and glyph on the page. §7.1 gives the vocabulary and it is the product's own |
+| **Words in the app** | The opt-in assistant (`#563`) speaks in a text bubble, as Clippy did. §7.2 |
 
----
+**THE TWO RENDERINGS ARE THE THING TO GET RIGHT.** Riley is 5 feet in the world and chibi on the
+page. That is a deliberate split and not a contradiction, but it means **every brief has to say which
+rendering it wants**:
+
+- **The mark** (`brand.dart`, the app icon, the window icon) is whatever the supplied art is, at
+  0.806:1 and holding up at 16 px.
+- **The manual** is chibi throughout.
+- **Scale cues stay canonical in both.** A chibi Riley beside a rack is still rack-height relative to
+  it. Stylisation changes the proportions of the character, never their size relative to the job.
+
+**AND THE TAIL IS THE PRODUCT'S OWN JOKE, WHICH IS WHY IT WORKS.** RJ45 is the connector at the
+centre of `SIG-001`, the flagship rule: docs/05:145 calls RJ45-carrying-HDBaseT and
+RJ45-carrying-Ethernet *"the two most dangerous ports in the taxonomy"*, and the whole spring-back
+tier exists because 100 W of PoH goes down one of them. **Riley is terminated in the one connector
+this product is most careful about.** That is available as a running gag and as a warning-page beat,
+and §5 uses it both ways.
+
+### Still open
+
+- **The visor's expression vocabulary.** How many glyphs, how abstract, whether the eye shape changes
+  or only its contents. §4 proposes a set; treat it as a request rather than a spec.
+- **Colouring within the constraint.** §1 fixes neutral warm white and greys. Where the greys fall,
+  whether there is a darker chassis against a lighter face, and what the visor's lit colour is are
+  all open, provided nothing competes with the eight domain hues.
+- **Ear articulation.** They are load-bearing for the silhouette (§1) and for expression, and nothing
+  decides how far they move.
+- **Whether the chibi rendering keeps the tail at full length.** A chibi figure with a full-length
+  tail reads very differently from one with a stub, and both are defensible. **This is the one open
+  question that would change §5's tail scenes**, so it is worth answering before those are drawn.
 
 ## 3. Who Riley is, in one paragraph
 
@@ -82,23 +111,30 @@ And a fourth that is not a tier and matters as much:
 
 ## 5. Pose and scene catalogue
 
-Numbered so an artist and a writer can refer to the same thing. The first four are the user's;
-the rest are proposed.
+Numbered so an artist and a writer can refer to the same thing. The first four are the user's; the
+rest are proposed. **Scenes 25 to 30 exist only because the tail and the screwdriver were settled**,
+which is the argument for settling §2 before drawing anything: a prop that generates scenes is worth
+more than one that fills them.
 
 ### Given
 
 1. **Directional pointing.** The workhorse. Needs to exist in four rotations and read at small size.
 2. **Installing equipment in a rack.** Riley at the rails with a device half-seated, ears back,
-   taking the weight.
+   taking the weight. **At 5 feet this is mid-rack work done standing**, which is the natural
+   composition: the device goes in at chest height and the top few U need a step. Tail braced
+   against a rail for the lift.
 3. **Running wire through the attic.** Riley in the whitespace at the top of the page, feeding a
    cable down toward the text. See §6 — this is the idea the whole page furniture grows from.
-4. **In a hard hat, talking with a builder.** Riley small beside a full-size human, gesturing at
-   something offscreen. The only scene with another character in it.
+4. **In a hard hat, talking with a builder.** Riley gesturing at something offscreen. **A head
+   shorter than the builder rather than tiny beside them** — the settled 5 feet makes this a
+   conversation between two trades, which is a better scene than a mascot addressing a giant. The
+   only scene with another character in it.
 
 ### Proposed, in rough order of usefulness
 
-5. **Shrugging, palms up, visor showing a dash.** The unknown pose from §4. This will be used more
-   than anybody expects: every rollup in the product reports what it could not count.
+5. **Shrugging, palms up, visor showing a dash.** The unknown pose from §4, and the clearest example
+   of §7.1's grammar: the posture is the mood and the `—` on the visor is the whole statement. Used
+   more than anybody expects, because every rollup in the product reports what it could not count.
 6. **Arms crossed.** Tier 1. Deadpan.
 7. **Head tilted, palm raised.** Tier 2. The spring-back chip's illustration.
 8. **With a clipboard.** Tier 3, and the DRC page's header. Riley reading, not alarmed.
@@ -114,8 +150,10 @@ the rest are proposed.
     depth plus 50 mm.
 14. **On a ladder in a ceiling grid**, holding a cable up into a lifted tile. Plenum space,
     `CODE-002`. Riley is checking the jacket print, not just pulling.
-15. **Asleep on a rack shelf**, curled, visor dimmed to a standby glyph. Empty state, first run,
-    and the "no cables in this document" panel.
+15. **Asleep sitting on the floor**, back against the rack, legs out, tool belt sagging, visor
+    dimmed to a standby glyph. Empty state, first run, and the "no cables in this document" panel.
+    **Not curled on a shelf**, which the first draft of this list proposed before the height was
+    settled: a 5-foot Riley does not fit on 1U.
 16. **Presenting a finished sheet.** Riley holding up a printed elevation, pleased. Export, and the
     back cover.
 17. **With a label maker**, applying a designator to a panel. Naming and CR-042/CR-048.
@@ -128,6 +166,32 @@ the rest are proposed.
 23. **Untangling a knot of cable**, patient rather than exasperated. Tidy sheet, and the chapter on
     schematic layout.
 24. **Back turned, hands on hips, surveying a finished rack.** Chapter close.
+
+### The tail, which earns four of its own
+
+The RJ45 tail is the one piece of the design that generates scenes rather than decorating them.
+
+25. **Riley plugging their own tail into a patch panel port.** The "I will just test it myself"
+    pose. Reads instantly, needs no caption, and is the obvious candidate for a chapter opener on
+    certification.
+26. **Tail reaching a far jack while both hands are busy.** Riley punching down with both hands and
+    the tail stretched off to the side holding a connection. Says *competent* rather than *cute*,
+    which is the line this character walks.
+27. **Tail wrapped around a rail for balance**, both hands overhead, digitigrade legs braced. The
+    working pose for anything at the top of a rack.
+28. **Riley eyeing their own tail warily beside a PoE switch port.** §2's note made visible:
+    RJ45-carrying-HDBaseT and RJ45-carrying-Ethernet are *"the two most dangerous ports in the
+    taxonomy"* and 100 W of PoH goes down one of them. **Pairs with the `SIG-001` warning page**,
+    and is the one place the running gag and the safety content are the same picture. It must not
+    replace the warning's own sentence (DR-117 §11.116.3) — it sits beside it, and per §7.1 the
+    glyph alone may never carry a safety statement.
+
+### The screwdriver
+
+29. **Flipping the shaft**, Phillips to flat, mid-gesture, looking at the reader. A beat for
+    "there is another way to do this": section transitions, and the tips page.
+30. **Screwdriver behind the ear**, hands busy elsewhere. Idle art, margin art, and the smallest
+    possible way to say Riley has been doing this a while.
 
 ---
 
@@ -150,35 +214,100 @@ may not decorate it, obscure it or paraphrase it.
 
 ---
 
-## 7. Speech bubbles
+## 7. How Riley communicates
 
-**Riley's copy is the product's copy.** The app already has a voice and it is specified: a complete
-sentence about THIS document, naming real designators, ending in a full stop, with the rule id as a
-separate field so the sentence never has to carry it (`Finding.message`, and `ConnectRefused`
-before it). *"AVR-1 J03 already carries 1 of 1 connections"* is an explanation; *"TOP-003"* is a log
-line.
+**Riley does not speak in words in the manual. Riley speaks in words in the app.** Two registers,
+settled by the user on 2026-09-03, and the split is not arbitrary: a printed page can teach a symbol
+once and rely on it forever, and a window cannot.
 
-So bubbles are drawn with real text in them, not lorem, and the text obeys that. Examples, all in
-register:
+### 7.1 In the manual: symbols
 
-| Scene | Bubble |
+**The vocabulary is the product's own, and that is the whole idea.** RackPal already has a symbol
+language a reader has to learn anyway — canon §6.2.4's fourth encoding channel, the domain glyph
+that appears at every run midpoint on every sheet:
+
+| Domain | Native | Transported |
+|---|---|---|
+| Digital video | ▲ | △ |
+| Analog video & RF | ▼ | ▽ |
+| Analog audio | ● ◐ | ○ |
+| Digital audio | ◆ | ◇ |
+| Network | ■ | □ |
+| Control | ✚ | ✳ |
+| Power | ⬢ | ⬡ ⏚ |
+| Structure | ★ | ☆ |
+
+**Shape encodes the domain; fill encodes the tier** — filled is the domain's native carrier, hollow
+is the transported or networked variant. So **a reader who learns Riley's speech has learned the
+legend on every drawing they will ever open.** That is worth more than any invented icon set could
+be, and it costs nothing: the glyphs are already drawn, already gated for legibility at 6 pt, and
+already checked under protanopia and deuteranopia simulation (canon §6.7).
+
+**THEY ARE SHAPES, NOT CHARACTERS, AND THIS PAGE PROVED IT THE HARD WAY.** The table above sets them
+as text so a reader can see them here, and that is the one thing the manual must not do.
+`tools/glyph_coverage_check.py` lists all eight as `PATH_BACKED`: they are registry data drawn as
+GEOMETRY by `family_glyph.dart` and `device_glyph_art.dart`, whose advance is computed from the type
+size *"so that measurer and emitter cannot disagree"*, and the gate's own comment says requiring them
+in a font would be *"requiring a font for something deliberately taken out of the font's hands"*.
+
+That is not theoretical. `device_glyph_art.dart` exists because a signal glyph shipped as a codepoint
+returned a near-zero advance from `PdfFontMeasurer` while the screen fell back to a system face and
+drew it full width, and `NET-NEN006` printed over a net name. **Both backends emitted identical ops;
+only the font behind one differed, so every gate passed.**
+
+And it happened again while this document was being built. The first PDF render of this very table
+was checked codepoint by codepoint against the output, and **U+2B22 ⬢, the power domain, did not
+resolve** — eight of the nine marks found an outline and the hexagon did not. The other eight
+survived only because this machine happened to have fallback faces for them.
+
+**So: the illustrator draws these as shapes.** Riley's visor displays geometry, not a font. The
+characters in the table are a description of what to draw and are never the artwork, and any page
+furniture that sets them as text carries the same defect the product spent a ruling removing.
+
+Two more marks Riley has available, both already in the product:
+
+- **`—`, the em dash**, for unknown. It is literally what G4 prints for a value nobody has supplied,
+  and it is the visor glyph for §4's fourth posture.
+- **The severity marks** of docs/05 §8, for the hazard pages.
+
+**GRAMMAR: POSTURE IS THE MOOD, THE GLYPH IS THE SUBJECT.** §4 gives four postures — refusing,
+hesitating, reporting, not knowing — and the glyph says what about. Arms crossed with a ■ is *"that
+network cable cannot exist"*; head tilted with a ◆ is *"that digital audio run would be wrong, but
+you may have it"*. **The two channels together are a sentence**, and neither alone is.
+
+**THE ONE HARD LIMIT, WHICH IS DR-117 §11.116.3 AND NOT NEGOTIABLE.** A symbol may not carry a
+safety statement by itself. `CODE-001`, `CODE-002` and `SIG-001` are quoted into the manual verbatim
+as text; Riley stands beside them with the matching glyph and posture. **The symbol is emphasis, and
+the body text is the information.** A reader who misreads a glyph has misread an ornament; a reader
+who cannot find the sentence has been failed by the book.
+
+### 7.2 In the app: a text bubble
+
+Canon §10.12(f) scopes *"an opt-in Clippy-style in-app assistant"* (`#563`), and there Riley uses
+words in a bubble, as Clippy did.
+
+**The copy is the product's copy.** The app already has a specified voice: a complete sentence about
+THIS document, naming real designators, ending in a full stop, with the rule id as a separate field
+so the sentence never has to carry it (`Finding.message`, and `ConnectRefused` before it). *"AVR-1
+J03 already carries 1 of 1 connections"* is an explanation; *"TOP-003"* is a log line.
+
+| Situation | Bubble |
 |---|---|
-| 9, the spark | *"That is HDBaseT. It carries up to 100 W and the switch is not expecting it."* |
-| 5, the shrug | *"Nobody has measured this run, so I cannot tell you whether it is too long."* |
-| 7, the hesitation | *"Both of those are inputs. Nothing would drive the cable."* |
-| 12, the amplifier | *"Sixteen kilos on front ears rated for seven. It wants rear support."* |
-| 13, the tape measure | *"Front and rear plus fifty millimetres for the cable. It does not fit."* |
-| 15, asleep | *(no bubble)* |
-| 22, the keymap | *"W starts a wire. Tab picks the far end. Enter makes it."* |
+| A spring-back on `SIG-001` | *"That is HDBaseT. It carries up to 100 W and the switch is not expecting it."* |
+| A rollup with a gap | *"Nobody has measured this run, so I cannot tell you whether it is too long."* |
+| `DIR-001` | *"Both of those are inputs. Nothing would drive the cable."* |
+| `RCK-013` | *"Sixteen kilos on front ears rated for seven. It wants rear support."* |
+| `RCK-012` | *"Front and rear plus fifty millimetres for the cable. It does not fit."* |
+| Idle | *(nothing — the assistant is opt-in and silence is its resting state)* |
 
-**Three things Riley never says**, and they are the ones a mascot reaches for by default:
+**Three things Riley never says, in either register**, and they are the ones a mascot reaches for by
+default:
 
 - **An apology.** The product refusing a bad cable is the product working.
-- **A guess.** No "about", no "roughly", no number Riley does not have. If the figure is unknown,
-  the bubble says it is unknown.
-- **A rule id on its own.** That is the log line the voice exists to avoid.
-
----
+- **A guess.** No "about", no "roughly", no number Riley does not have. Unknown is said with the em
+  dash in the manual and said plainly in the app; it is never rounded into a figure.
+- **A bare rule id.** That is the log line the voice exists to avoid — and in the manual it is not
+  even available, since a rule id is text and Riley has none.
 
 ## 8. What an artist needs delivered back
 
@@ -188,8 +317,13 @@ For the mark to ship, one asset:
   separate closed subpath so the even-odd fill still works. This replaces `_rileyD` in
   `brand.dart` and nothing else changes.
 
-For the manual, the poses in §5 as line art. **A silhouette check on each**: fill it solid and
-confirm it still reads.
+For the manual, the poses in §5 as line art, **chibi** (§2). **A silhouette check on each**: fill it
+solid and confirm it still reads.
+
+**Draw scene 25 early.** Riley plugging their own tail into a panel is the picture that will decide
+whether the tail reads as equipment or as decoration, and everything from 26 to 28 depends on that
+answer. It is also the fastest way to find out whether the chibi rendering keeps the tail at full
+length, which §2 leaves open and which those four scenes need settled.
 
 ---
 
@@ -205,7 +339,10 @@ confirm it still reads.
   three needed to leave the app to fix something."* **A manual written before that beta is guessing
   at what confuses somebody; a manual written for it is read by the three people whose confusion the
   criterion counts.**
-- **Riley's pronouns**, beyond the they/them this document uses throughout.
+- **How many glyphs the manual's symbol vocabulary actually needs.** §7.1 supplies the eight domain
+  marks, the em dash and the severity marks, which is a floor rather than a roster: whether Riley
+  also needs a small set of purely conversational marks (assent, "look here", "wait") is the
+  illustrator's call once a few pages exist.
 - **Whether Riley speaks in the application at all.** `#563` is an *opt-in* assistant, and canon
   §10.12(f) is explicit about the opt-in. A mascot in a manual and a mascot in a window are two
   decisions, and only the first is made here.
