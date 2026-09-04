@@ -18,7 +18,7 @@ RJ-017 rejected the integrator's logo in the title block on three grounds. Two
 have fallen:
 
 - *"It requires a raster asset inside the project, which reopens the container
-  question that AC-057 just closed by cutting images."* **Gone** — DR-019 settled
+  question that AC-057 just closed by cutting images."* **Gone**: DR-019 settled
   the container and [DR-029](/decisions/dr-029-plan-view-in-v1.md) builds it.
 - *"The logo lands with the v2 zip container, alongside device images."*
   **Arrived early**, for the same reason.
@@ -75,8 +75,8 @@ Owed: a model field, a **fit rule** (aspect preserved, never stretched), import
 hardening under M4-M4, and a place in the print matrix (AC-058 D13). It lands
 beside #343 (M6-G2, the title block).
 
-**It does NOT return device images** — AC-057 cut those on a separate file-size
-argument — and it does not make a logo required.
+**It does NOT return device images** (AC-057 cut those on a separate file-size
+argument), and it does not make a logo required.
 
 # Scope
 

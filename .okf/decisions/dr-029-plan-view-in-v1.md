@@ -73,7 +73,7 @@ This is the ruling that does it, and RJ-017's §12 row is amended to say so.
 **One consequence NOT ruled here.** RJ-017 rejected the integrator's logo partly
 because a raster asset *"reopens the container question"*. DR-019 answered the
 container and this ruling ships raster handling, so **that ground is gone and the
-logo would now be cheap** — but RJ-017 is not reversed by a ruling that never
+logo would now be cheap**, but RJ-017 is not reversed by a ruling that never
 considered it, and anyone who wants it should ask directly rather than collect it
 as a side effect. They did, the next day:
 [DR-030](/decisions/dr-030-integrator-logo-in-v1.md).

@@ -100,7 +100,7 @@ available proof that nothing else moved.
 # Citations
 
 [1] canonical-decisions.md §11.59 (DR-060), all ten clauses
-[2] `packages/rackmate_core/lib/src/structure/drop_line_planner.dart` — the
+[2] `packages/rackmate_core/lib/src/structure/drop_line_planner.dart`: the
     shared resolver, whose own docstring named this ruling as the precondition
     for widening it
 [3] `packages/rackmate_core/lib/src/catalog/seed_registries.dart`

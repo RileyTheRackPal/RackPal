@@ -9,7 +9,7 @@ status: adopted
 
 A board task is a **snapshot of what was unknown on the day it was written**.
 Canon moves faster than the board. Before opening a task, re-read its question
-against `docs/canonical-decisions.md` §11 — especially any task whose text asks
+against `docs/canonical-decisions.md` §11: especially any task whose text asks
 for a decision rather than for code.
 
 # Two instances in one issue, which is what makes it a practice
@@ -28,7 +28,7 @@ the exporter's `SheetRole`.
 exactly the seam the task proposed.
 
 Both rulings are dated **2026-08-09**, after both tasks were written. Neither
-task was wrong and neither was empty — what remained each time was the build half
+task was wrong and neither was empty: what remained each time was the build half
 plus the work of recording the ruling where it would be read.
 
 # The failure it prevents, which is not the obvious one

@@ -129,7 +129,7 @@ manufacturer figure that disagrees with the arithmetic.
 - **design-data-model.md §3.7:** "Rack elevation space is not stored. … Elevation is a
   **projection**, computed fresh, always correct by construction."
 - **design-ux-rack.md (appendix):** `Placement { … final int bottomU; … final int?
-  xOffsetTenthMm; }` — stored elevation geometry for shelf-hosted devices.
+  xOffsetTenthMm; }`: stored elevation geometry for shelf-hosted devices.
 
 **Ruling: elevation geometry is derived, with one exception that is not geometry.**
 A device's X/Y in the elevation is a pure function of `(Placement, rail geometry, face)` and is
@@ -579,7 +579,7 @@ it is off is retained, a drawing must never lie about itself.
 - **design-data-model.md §2.5:** `TemplateBody{frontU, rearU, side: OccupancySide, …}` with
   depth and weight as sibling fields.
 - **design-ux-rack.md §6:** `class Occupancy { frontU, rearU, MountSide side, depthTenthMm,
-  weightGrams }` — different enum name, depth and weight folded in.
+  weightGrams }`: different enum name, depth and weight folded in.
 - **design-ux-device-builder.md §1.3:** matches data-model's shape but its `side` enum is
   `front · rear · both · zeroU_vertical`, missing `none`, different casing.
 
@@ -978,7 +978,7 @@ addition. `layerId` is **not** reserved, the additive-only rule makes reservatio
 - `DeviceStatus{existing, new, future, removed}` (design-data-model.md §2.7).
 - `RoughInStatus{planned, pulled, dressed, terminated, tested, issued}` (§2.8/§2.9).
 - **design-ux-device-builder.md §6.5:** `{Planned, Pulled, Terminated, Tested, In use, Spare,
-  Abandoned}` — drops two, adds three.
+  Abandoned}`: drops two, adds three.
 - **design-ux-schematic.md §6.1:** a connections-table `Status` column showing `✓`/`⚠`, which
   is **DRC state**, a fourth meaning under the same header.
 
@@ -999,7 +999,7 @@ addition. `layerId` is **not** reserved, the additive-only rule makes reservatio
 - **design-data-model.md I-40:** `Sheet.number` must match `^[A-Z]{1,2}\d\.\d{2}$`, NCS.
 - **design-pdf-export.md §12 decision 1:** agrees, "NCS `T`-discipline numbering".
 - **design-ux-schematic.md §1.7:** title block shows "`SHEET 2 of 6 · VIDEO`" and "`DRG
-  SR-0247`" — no NCS numbers, and `DRG` has no model field.
+  SR-0247`": no NCS numbers, and `DRG` has no model field.
 
 **Ruling: `ProjectSettings.sheetNumbering: ncs | simple`, default `simple`.**
 A residential drawing set is four to eight pages; failing validation on a naming convention
@@ -1022,7 +1022,7 @@ filter and costs one field.
 - **design-ux-schematic.md §2.5:** "Every symbol is `auto` or `pinned`. Any manual move sets
   `pinned = true` … **Auto-layout never moves a pinned symbol.**"
 - **design-data-model.md §2.11:** `SheetItem{targetId, position, rotationQuarterTurns,
-  collapsed, zOrder}` — no `pinned`.
+  collapsed, zOrder}`: no `pinned`.
 
 **Ruling: `SheetItem.pinned: bool` ships in v1.** It is one boolean and it is the entire
 difference between auto-layout being usable and being feared. The *commands* around it (four
@@ -1131,7 +1131,7 @@ purpose honestly.
 ### CR-075 · `Sheet.viewKind` vs `Sheet.kind`
 
 - **design-data-model.md §1** (ER diagram): `viewKind: elevation | schematic | schedule | cover
-  | legend` — 5 values.
+  | legend`: 5 values.
 - **design-data-model.md §2.11:** `SheetKind kind`, 11 values. I-42 refers to `viewKind`.
 
 **Ruling: one field, `SheetKind kind`, 11 values, plus `exceptions`** for the new `T0.02`
@@ -1176,7 +1176,7 @@ property of the design.
 - **design-data-model.md §3.4:** "**Colour is on the `SignalDomain` (7 values), not the family
   (43+).** No palette is CVD-safe past ~9 categories."
 - **design-data-model.md §2.10:** `SignalFamilyDef` carries `Rgb color`, `List<int>
-  dashPattern`, `int lineWeightPermille`, `String? glyph` — per family, 43+ entries.
+  dashPattern`, `int lineWeightPermille`, `String? glyph`: per family, 43+ entries.
 - No `SignalDomainDef` exists anywhere.
 
 **Ruling: `SignalDomainDef` is created and owns the visual language.**
@@ -1258,7 +1258,7 @@ print floor. No stroke width is ever emitted as 0.
   **siblings that cannot see each other**. That is deliberate: it is what guarantees the PDF
   path is isolate-safe."
 - **design-pdf-export.md §10:** a **single** `lib/` tree with `diagram/backends/{pdf_canvas,
-  svg_canvas, bounds_canvas, flutter_canvas}.dart` — the Flutter and PDF backends in one
+  svg_canvas, bounds_canvas, flutter_canvas}.dart`: the Flutter and PDF backends in one
   directory. Worse, it places `diagram/text.dart # TextMeasurer, PdfFontMeasurer` in the core
   tree, which makes core depend on `package:pdf` and breaks
   `design-architecture.md`'s own `no_flutter_import_test`.
@@ -8245,7 +8245,7 @@ default and **`designator` stays null**.
 no quantity: two runs are two entities, exactly as two Cat6 drops are two `Link`s. **Where the count
 exceeds one the names carry a 1-based index** (`Living Room ENT 1`, `Living Room ENT 2`), for
 §11.31.3's reason applied within a single line rather than across two rooms: identical `PATH` cells
-defeat the column. **The index is part of a description and is not a series** — it says *"the second
+defeat the column. **The index is part of a description and is not a series**: it says *"the second
 ENT to the Living Room"* and it restarts per line, where `PW-LR-1` would be a document-wide
 allocation. A count of one takes no index, because there is nothing to distinguish it from.
 
@@ -11715,9 +11715,9 @@ The scene splits in three tiers, each keyed on what can move it:
 
 | Tier | Rebuilt when | Cost at 3,600 links |
 |---|---|---|
-| **Layout** — Sugiyama phases 0–3, symbol positions | `structure` | ~50 ms |
-| **Symbols** — the symbol layer's ops and text | `structure`, `meta` | ~75 ms |
-| **Wires and labels** — net-label pennants, drawn wires | `wires` | ~19 ms |
+| **Layout**: Sugiyama phases 0–3, symbol positions | `structure` | ~50 ms |
+| **Symbols**: the symbol layer's ops and text | `structure`, `meta` | ~75 ms |
+| **Wires and labels**: net-label pennants, drawn wires | `wires` | ~19 ms |
 
 The wire tier was **predicted at ~19 ms from the decomposition and measured at 19.6 ms** once
 `#729` built it, which is the corroboration this table was worth taking. Note what it does NOT
@@ -11740,7 +11740,7 @@ reader deciding to "simplify the cache" needs to know what it costs.
 The first tier is therefore **a cheaper mechanism for a guarantee the product already makes**, not a
 new guarantee: `holdAt` freezes the positions and still runs the layout and both measurements, at
 **92 ms**; handing the layout back is **48 ms** for the identical scene. That is where §11.75.2's
-saving actually comes from, and it is roughly half of a wire edit rather than all of it — phases two
+saving actually comes from, and it is roughly half of a wire edit rather than all of it: phases two
 and three carry the rest.
 
 The equality gate in §11.75.5 is against the SAME document, never against a fresh layout of a changed
@@ -15787,7 +15787,7 @@ of taste: `TOP-001` is a conductor connecting a port to itself.
 **11.115.5 The candidate set narrows with the command, and that is the half a surface must not
 forget.** `_armLandingFrom` offers every free pin. Under this ruling a pin the command would refuse
 at tier 1 must not be offered, on DR-011.5's standing rule that *"a pin the gesture OFFERS is never
-then refused"* by tier 1 — the claim M5-D split in two and whose tier-1 half survives intact. Tier-2
+then refused"* by tier 1: the claim M5-D split in two and whose tier-1 half survives intact. Tier-2
 pins stay OFFERED and wear the amber ring, which is docs/05:476's *"they remain droppable"* reaching
 the second gesture.
 
@@ -15838,7 +15838,7 @@ JOKE.** No manual exists and none was scheduled: AC-058/D1 buys a glossary panel
 `[Why?]` viewer and stops there.
 
 The register is chosen because it fits what this product is, not because it is charming. A games
-manual of that era had to teach a system with **no network, no tooltips and no undo for the reader** —
+manual of that era had to teach a system with **no network, no tooltips and no undo for the reader**,
 so it explained the model first, listed the hazards plainly, and expected to be read once and
 consulted after. That is a rack drawing's manual exactly. The **28-rule catalogue is a bestiary**, the
 **device catalog is an item list**, the **keymap is a controls diagram**, and CR-021's *"a rule not

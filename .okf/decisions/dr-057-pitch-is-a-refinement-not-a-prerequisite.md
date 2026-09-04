@@ -56,8 +56,8 @@ because ¾ inch is the centre spacing binding posts are physically built on, and
 
 The question was first put to the user as a trade-off between sparse pitch and
 auto-layout coverage, priced at **14 of 45 shipped templates**. **That price came
-from docs/06 §5's pseudocode** — *"flow left → right at
-`ConnectorTypeDef.pitch`"* — in a derived, priority-3 document.
+from docs/06 §5's pseudocode** (*"flow left → right at
+`ConnectorTypeDef.pitch`"*) in a derived, priority-3 document.
 
 Every normative statement says **footprint**:
 

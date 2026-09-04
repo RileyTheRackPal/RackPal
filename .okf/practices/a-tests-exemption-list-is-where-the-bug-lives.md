@@ -49,7 +49,7 @@ a test asserting "this is refused" passed.
 
 The check was unreachable. It sat after the branch that swallowed the input, so
 `{n@2:2}` matched `n@`, failed `int.tryParse("2:2")`, and reported **"A repeat
-count must be a whole number, not `2:2`"** — a true sentence about the wrong
+count must be a whole number, not `2:2`"**: a true sentence about the wrong
 problem. Only an assertion on the MESSAGE could see it.
 
 A designed-error system (AC-050/A2.4) makes this sharper than usual: when the
@@ -98,12 +98,12 @@ that exposes it. A round-trip property enumerates its own cases.
 
 # Citations
 
-[1] `packages/rackmate_core/test/builder/label_pattern_test.dart` — the widened
+[1] `packages/rackmate_core/test/builder/label_pattern_test.dart`: the widened
     loop, and the two cases it found
-[2] `packages/rackmate_core/lib/src/builder/label_pattern.dart` — the
+[2] `packages/rackmate_core/lib/src/builder/label_pattern.dart`: the
     one-value-set repair, and the reachability comment on the composition check
-[3] `packages/rackmate_core/test/builder/quick_add_test.dart` — the bank count
-[4] `packages/rackmate_core/test/builder/quick_add_test.dart` — the
+[3] `packages/rackmate_core/test/builder/quick_add_test.dart`: the bank count
+[4] `packages/rackmate_core/test/builder/quick_add_test.dart`: the
     render/parse round trip
 [5] Commits `70d4fc5`, `c57c6b1`, `2a8180c`
 [6] [Assert the artifact, not the

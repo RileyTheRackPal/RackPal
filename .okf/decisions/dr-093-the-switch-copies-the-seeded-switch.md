@@ -85,6 +85,6 @@ strings for the grid's SFP column.
 
 ## Citations
 
-[1] `packages/rackmate_core/lib/src/catalog/catalog_network.dart` — N01
+[1] `packages/rackmate_core/lib/src/catalog/catalog_network.dart`: N01
 [2] `packages/rackmate_core/lib/src/builder/archetypes.dart`
 [3] [census the field, not the name](/practices/census-before-building.md)

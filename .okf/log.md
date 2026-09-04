@@ -939,9 +939,9 @@
   [DR-074](/decisions/dr-074-a-wrong-hole-can-be-corrected.md) §11.73.2. **A
   rack label somebody imported is a rack label somebody typed**: the test is who
   AUTHORED the name, not which control carried it, so a `rack_label` column
-  locks exactly as the cell does. The counter-argument is real and outweighed —
-  a sheet exported from this product carries allocator labels, and a round trip
-  would lock names nobody chose — but **the product cannot tell the two sheets
+  locks exactly as the cell does. The counter-argument is real and outweighed
+  (a sheet exported from this product carries allocator labels, and a round trip
+  would lock names nobody chose), but **the product cannot tell the two sheets
   apart and must not guess**, and the two mistakes are not equal: a wrongly
   locked label is visible, carries the pin, and is cleared by emptying the box;
   a wrongly discarded one is gone.
@@ -2643,8 +2643,8 @@
   is where the entry surface decides what it can refuse.
 * **Note**: **refusing was the option that looked principled and cost the
   most.** Keeping `{SERVICE}` to one meaning would have refused `Living Room:
-  4x Cat6` — `docs/07` §4.3's own first worked example of the surface being
-  built — and fought §4.1's statement that the undetermined state is
+  4x Cat6` (`docs/07` §4.3's own first worked example of the surface being
+  built), and fought §4.1's statement that the undetermined state is
   "first-class, encouraged". The chain takes a second sense for the token
   instead.
 * **Note**: **the media tag is not the answer DR-022 rejected, and the

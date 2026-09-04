@@ -23,7 +23,7 @@ because an emitter port with direction `in` is not structurally invalid. The
 tests now pin whole strings.
 
 **DR-074, `#724`.** A landing's refusal was reused for a move, so a panel with
-no free position told a person *"that drop was not landed"* — that their cable
+no free position told a person *"that drop was not landed"*: that their cable
 is loose, when it was exactly where they left it. The worse of the two things
 somebody can believe about a rack they cannot see. Found by writing the test that
 provoked it, not by reading the code.

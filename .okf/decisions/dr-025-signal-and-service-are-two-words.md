@@ -66,7 +66,7 @@ stops meaning anything.
 # Resolution, and why an unresolved value refuses
 
 `@signal=` resolves against `registries.signalFamilies` by `shortTag`, then the
-id's tail, then `displayName` — `resolveMediaToken`'s widest-last shape, so
+id's tail, then `displayName`: `resolveMediaToken`'s widest-last shape, so
 `@signal=hbt`, `@signal=hdbaset` and `@signal=avoip` all land. The word is
 `signal` because docs/07 §5.1 already lists it as an accepted CSV header, so the
 DSL and the importer share one word rather than acquiring a third.
