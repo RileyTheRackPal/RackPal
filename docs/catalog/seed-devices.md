@@ -1753,6 +1753,7 @@ fibre analogue of null-modem: it is `Link.crossover: fiberPolarityAB`.
 | `ctl.lutron_qs` | Lutron QS / HomeWorks link | `conn.rj45` | ↔ | **BUS**, topology-free | `10,3` | 1.00× | `QS` | ✳ |
 | `ctl.dali` | DALI / DALI-2 | `conn.screw_terminal` | ↔ | **BUS**, topology-free | `5,3,1.5,3` | 1.00× | `DALI` | ✳ |
 | `ctl.knx` | KNX TP1 | `conn.knx_terminal` | ↔ | **BUS** (line / tree) | `7,3,1.5,3` | 1.00× | `KNX` | ✳ |
+| `ctl.vantage` | Vantage station bus (Legrand) | `conn.hardwired` | ↔ | **BUS** (line / tree) | `9,3,1.5,3` | 1.00× | `VTG` | ✳ |
 
 `topologyFree: true` ships set on `ctl.cresnet`, `ctl.lutron_qs`, `ctl.dali` and `ctl.knx`. This is
 a **registry field, not a hard-coded suppression array** (AC-030).

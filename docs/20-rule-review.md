@@ -376,7 +376,7 @@ Nothing here is a code ruling. Two of the checks mention NEC articles and both a
 
 # Part 2: the signal types RackPal knows
 
-**55 of them, in 8 groups.** These are catalogue data and cannot be added by the person drawing, so a missing one cannot be worked around on a job. That is why the list is here.
+**56 of them, in 8 groups.** These are catalogue data and cannot be added by the person drawing, so a missing one cannot be worked around on a job. That is why the list is here.
 
 The question is not whether the names are right. It is whether anything you would put on a drawing has nowhere to go.
 
@@ -405,7 +405,7 @@ The question is not whether the names are right. It is whether anything you woul
 | S/PDIF, coaxial (75 Ω) | `audio.spdif_coax` |
 | TOSLINK (optical S/PDIF) | `audio.spdif_optical` |
 
-## ctl (11)
+## ctl (12)
 
 | Name | Id |
 |---|---|
@@ -420,6 +420,7 @@ The question is not whether the names are right. It is whether anything you woul
 | Lutron QS / HomeWorks link | `ctl.lutron_qs` |
 | RS-232 | `ctl.rs232` |
 | RS-485 | `ctl.rs485` |
+| Vantage station bus (Legrand) | `ctl.vantage` |
 
 ## net (6)
 
@@ -475,9 +476,11 @@ The question is not whether the names are right. It is whether anything you woul
 | SDI (HD / 3G / 6G / 12G) | `video.sdi` |
 | USB-C DP Alt Mode | `video.usbc_dpalt` |
 
-## Two names already raised
+## The two names that started this
 
-**Lutron QS / HomeWorks already ships**, as `ctl.lutron_qs` in the control group. **Legrand Vantage does not.** Both were named when this question was first raised, and one of the two turned out to be there already, which is why this is a census rather than a shopping list.
+**Lutron QS / HomeWorks** was already there as `ctl.lutron_qs`. **Vantage was not, and now is**, as `ctl.vantage`: it was added on the reasoning that it is a two-wire bus and the control group already holds six others it could be mistaken for, so a Vantage run drawn as an unnamed two-wire cable is one somebody lands on the wrong controller.
+
+That row shipped with one guessed field, a screw-terminal connector copied from DALI, and it was wrong: Vantage joins the bus with Wago or wire nut connections, so it is now recorded as a hardwired splice with no connector at all. Everything else came from a stated fact.
 
 ## What a new one costs, so the answer is not automatic
 

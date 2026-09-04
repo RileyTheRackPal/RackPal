@@ -22,7 +22,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 /// What the panel says when a filter matches nothing.
 ///
 /// IT NAMES THE RULE RATHER THAN LISTING THE SET. Its enum-backed
-/// neighbours can name all nine terminations in a sentence; there are 55
+/// neighbours can name all nine terminations in a sentence; there are 56
 /// families, and a refusal that printed them would be a wall a person
 /// scrolls past. The sentence a person needs is not "here are the
 /// options", it is "you cannot invent one here", which is DR-025
@@ -154,7 +154,7 @@ class _FamilyPickerState extends State<FamilyPicker> {
 }
 
 /// How tall the list may grow before it scrolls. Eight domain headers and
-/// 55 rows do not fit any screen, so this is a scroll viewport and not a
+/// 56 rows do not fit any screen, so this is a scroll viewport and not a
 /// budget: the filter box above it is what makes the scroll avoidable.
 const double kFamilyPickerMaxHeight = 340;
 

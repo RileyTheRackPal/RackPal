@@ -207,13 +207,20 @@ def main() -> int:
         for i, name in sorted(dom[d], key=lambda x: x[1].lower()):
             w(f'| {name} | `{i}` |')
         w('')
-    w('## Two names already raised')
+    w('## The two names that started this')
     w('')
-    w('**Lutron QS / HomeWorks already ships**, as `ctl.lutron_qs` in the '
-      'control group. **Legrand Vantage does not.** Both were named when '
-      'this question was first raised, and one of the two turned out to be '
-      'there already, which is why this is a census rather than a shopping '
-      'list.')
+    w('**Lutron QS / HomeWorks** was already there as `ctl.lutron_qs`. '
+      '**Vantage was not, and now is**, as `ctl.vantage`: it was added on '
+      'the reasoning that it is a two-wire bus and the control group '
+      'already holds six others it could be mistaken for, so a Vantage run '
+      'drawn as an unnamed two-wire cable is one somebody lands on the '
+      'wrong controller.')
+    w('')
+    w('That row shipped with one guessed field, a screw-terminal '
+      'connector copied from DALI, and it was wrong: Vantage joins the '
+      'bus with Wago or wire nut connections, so it is now recorded as a '
+      'hardwired splice with no connector at all. Everything else came '
+      'from a stated fact.')
     w('')
     w('## What a new one costs, so the answer is not automatic')
     w('')

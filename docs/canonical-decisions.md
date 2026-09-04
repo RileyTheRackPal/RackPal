@@ -4448,6 +4448,7 @@ null-modem: it is `Link.crossover: fiberPolarityAB`.
 | `ctl.lutron_qs` | Lutron QS / HomeWorks link | `conn.rj45` | ↔ | **BUS**, topology-free | `10,3` | 1.00× | `QS` | ✳ |
 | `ctl.dali` | DALI / DALI-2 | `conn.screw_terminal` | ↔ | **BUS**, topology-free | `5,3,1.5,3` | 1.00× | `DALI` | ✳ |
 | `ctl.knx` | KNX TP1 | `conn.knx_terminal` | ↔ | **BUS** (line / tree) | `7,3,1.5,3` | 1.00× | `KNX` | ✳ |
+| `ctl.vantage` | Vantage station bus (Legrand) | `conn.hardwired` | ↔ | **BUS** (line / tree) | `9,3,1.5,3` | 1.00× | `VTG` | ✳ |
 
 `topologyFree: true` ships set on `ctl.cresnet`, `ctl.lutron_qs`, `ctl.dali` and `ctl.knx`. This
 is a **registry field, not a hard-coded suppression array** (AC-030): a star-wired Cresnet run is
@@ -16003,6 +16004,82 @@ today and the test holds it true.
 `#310` is therefore closed as delivered rather than parked, because what
 it exists to protect is protected. The narrower assertion it names
 becomes M6's, alongside the stamp it is about.
+
+### §11.119 DR-120 · Vantage ships as `ctl.vantage`, and a seventh two-wire bus is the argument for the row rather than against it
+
+**Settled by the user on 2026-09-04**, answering the half of `#692` the
+census left open. Legrand's Vantage control system ships as a seeded
+signal family. RJ-012 and DR-025 §11.24.3 govern.
+
+**11.119.1 THE REASON IS THE USER'S AND IT IS BETTER THAN "IT IS
+MISSING".** The argument given is that Vantage *"is a two wire bus and can
+easily be confused for other two wire busses that may exist"*, and the
+registry bears that out from the other side: **`ctl` already ships six**
+in `ctl.rs485`, `ctl.dali`, `ctl.knx`, `ctl.cresnet`, `ctl.lutron_qs` and
+`ctl.contact`.
+
+So the crowding is not an objection to the row, it IS the row's case. A
+Vantage run drawn as an unnamed two-wire cable is a run somebody lands on
+the wrong controller, and the six neighbours are exactly what makes that
+easy. **This is trade knowledge and it overturned the framing the census
+was heading for**, which was "one of the two names already ships, so how
+much of the rest is real?".
+
+**11.119.2 A DECOMPOSITION GAP, NOT AN §8.3 AMENDMENT**, on `#692`'s own
+test: *"filling out a vocabulary the roadmap already promises is a gap,
+and adding a new class of signal is an amendment."* The `ctl` domain
+exists, its hue and glyph are settled, and a control bus is the class of
+thing it holds. Nothing moves between release bands and no scope list
+changes.
+
+**11.119.3 WHAT THE ROW ACTUALLY COST, because `#692` asked for that and
+the answer is not "a row".** The (dash, weight) pair is **hand-authored
+into four places** by DR-010's design: the Dart seed, `tools/pal1_check.py`,
+`docs/catalog/seed-devices.md` §4.3/§4.4 and canon §6.2.5, with
+`docs/01-domain.md` carrying a fifth, prose copy. The family COUNT was
+written out at **twenty-three sites across twelve files**. The four
+checked-in starters embed the registries and were regenerated.
+
+**ONE OF THE TWENTY-FOUR WAS NOT A `55`.** `seed_registries_test.dart`
+asserted `hasLength(54)` on a copy with one family removed, so a sweep
+looking for the count missed it and the suite failed on a number that had
+been correct. It is now `b.signalFamilies.length - 1`: **the property was
+"one shorter", and writing that arithmetic out as a literal is what made
+it a second copy.**
+
+**11.119.4 THE CONNECTOR WAS INFERRED, WAS FLAGGED AS THE FIELD TO
+CORRECT FIRST, AND WAS CORRECTED WITHIN THE DAY.** It shipped as
+`conn.screw_terminal`, copied from `ctl.dali` on the reasoning that both
+are polarity-flexible two-wire buses, and the seed's comment said in as
+many words that it was the one value not taken from a stated fact.
+
+**The user's correction: Vantage joins the bus with Wago or wire nut
+connections.** So there is no connector at all. The conductors are
+spliced, which is `power.ac_hardwired`'s situation exactly, and it takes
+that family's connector: **`conn.hardwired`**.
+
+`conn.unterminated` was the near miss and is wrong for a reason worth
+keeping. It is what `structure.undetermined` and `structure.pathway` use,
+and it describes a STATE, a cable end nobody has landed yet, rather than
+a method. A wire-nutted Vantage drop is finished, not unterminated.
+
+**`CON-001` was never at risk either way**, which is the only comfortable
+part: an empty `matesWith` makes that rule SKIP (G4, `#255`), and neither
+connector declares one. The cost of the wrong value was a lie in the
+model rather than a false spring-back, which is the harder kind to
+notice.
+
+**11.119.5 THE DASH IS `9,3,1.5,3` AT 1.00×**, the free slot in this
+domain's dash-dot run (DALI 5, RS-232 6, KNX 7, DMX 8, Cresnet 10). PAL-1
+passes at 56 families over 400 in-band cross-domain pairs.
+`vantage_family_test.dart` pins the property that matters rather than the
+values: **no other `ctl` family renders identically**, checked pairwise,
+because colour is per domain (CR-078) and on a greyscale print the dash
+and weight are all a reader has.
+
+**The rest of `#692` stays open.** This ruling adds the family the user
+named and asked for; the gap LIST is still with the domain reviewer, and
+whether anything else follows is M5-H2's to answer.
 
 ## 12. Superseded rulings
 

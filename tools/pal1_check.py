@@ -139,6 +139,7 @@ FAMILIES = [
     ('ctl.lutron_qs',         'ctl',           '10,3',                 1.00),
     ('ctl.dali',              'ctl',           '5,3,1.5,3',            1.00),
     ('ctl.knx',               'ctl',           '7,3,1.5,3',            1.00),
+    ('ctl.vantage',           'ctl',           '9,3,1.5,3',            1.00),
 
     ('power.ac_branch',       'pwr',           '8,3,1.5,3,1.5,3',      2.00),
     ('power.ac_iec',          'pwr',           '8,3,1.5,3',            2.00),
