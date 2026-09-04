@@ -37,7 +37,7 @@ ever moved between two fields the way a hand does.
 A `ListTile` fires `onTap` on `Enter` or `Space`. So somebody tabbing toward a
 field and typing without watching **changes section**, and the keystrokes land
 nowhere. The user's second report was that the designator prefix
-*"doesn't appear to work at all"* — and the field wrote correctly and had a
+*"doesn't appear to work at all"*, and the field wrote correctly and had a
 passing test proving it. What was broken was getting to it.
 
 **A navigation defect presents as a data defect.** Expect the bug report to name

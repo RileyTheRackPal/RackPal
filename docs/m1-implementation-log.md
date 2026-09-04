@@ -1676,7 +1676,7 @@ makes `rack_shrink_test`'s "two faces each freeing 3U have together freed 3U" th
 `side: both` devices at the same U on opposite rails are an occupancy conflict the bolted view
 cannot see.
 
-### Deferred, and named rather than dropped — **both closed in §3i**
+### Deferred, and named rather than dropped: **both closed in §3i**
 
 `planCompaction` packs around the **bolted** set, so it still does not anchor on a device the other
 face bolted and this face merely draws: Compact Down on a rear elevation can propose a target the

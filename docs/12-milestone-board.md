@@ -1244,7 +1244,7 @@ drops, not teaching the schedule."* Nothing joined the entry loop to `buildSched
 closing commit: seven drops from one typed line now produce seven schedule rows, each with a W
 number and a field label and no rack label, asserted as a SET so a duplicate cannot hide inside a
 matching count (G1). **AC-018's fourth clause, "prints", is not claimed and is not reachable in M3
-at all** — `SheetRole` has three values and none is a cable schedule, which is #574.
+at all**: `SheetRole` has three values and none is a cable schedule, which is #574.
 
 **#575 was the last task, and what it found is the part worth keeping.** Its premise ("the command
 layer is done, nothing in the app calls it") had already been discharged by M3-C/1 two days
@@ -2626,8 +2626,8 @@ Recorded as a task somebody should take deliberately.
 **#702 IS BUILT (DR-076, phases `#728`–`#731`).** The schematic no longer rebuilds the whole document
 on every edit. Measured at 3,600 links, best of five: a cold build is ~96 ms, the `holdAt` path a
 wire edit used to take is ~90 ms, reusing the layout is ~46 ms and reusing the whole symbol tier is
-~20 ms. **On the shipped 300-link fixture — a house with one rack, which is what M2's criterion was
-written against — a wires-only rebuild is 0.913 ms against a 16.7 ms frame**, and that case now
+~20 ms. **On the shipped 300-link fixture (a house with one rack, which is what M2's criterion was
+written against) a wires-only rebuild is 0.913 ms against a 16.7 ms frame**, and that case now
 fails if an edit ever costs a frame.
 
 **THE ISSUE'S OWN PRESCRIPTION WAS THE SMALLER HALF, AND THE MEASUREMENT IS WHY THE RULING EXISTS.**

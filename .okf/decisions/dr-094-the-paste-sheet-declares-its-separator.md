@@ -91,5 +91,5 @@ and `Ctrl+Z` is one keystroke away.
 ## Citations
 
 [1] `packages/rackmate_core/lib/src/builder/port_import.dart`
-[2] `packages/rackmate_core/lib/src/structure/csv_reader.dart` — `CsvDelimiter`
+[2] `packages/rackmate_core/lib/src/structure/csv_reader.dart`: `CsvDelimiter`
 [3] [two documents agreeing is not verification](/practices/two-documents-agreeing-is-not-verification.md)

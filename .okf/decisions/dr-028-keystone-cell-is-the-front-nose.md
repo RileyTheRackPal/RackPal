@@ -43,7 +43,7 @@ independently, and now corroborates rather than conflicts.
 A figure carried as an unruled *"about"* inside an arithmetic check survived
 contact with reality; a figure elevated to a ruling did not. The supersession was
 written on the reasoning that *"this ruling's is the one to build from, because
-it is the one a person stated deliberately"* — and **deliberateness turned out to
+it is the one a person stated deliberately"*, and **deliberateness turned out to
 be the wrong test**. The earlier number had a source; the later one had a
 recollection.
 

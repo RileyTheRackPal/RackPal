@@ -284,7 +284,18 @@ included; `research/README.md` carries the exception this created to its own
 "unedited outputs" claim. **363 of those sites were wrong** and have been restored;
 the fourth class below is why.
 
-Four classes are deliberately left alone, and a later sweep should leave them alone.
+**THAT SWEEP DID NOT FINISH, AND THIS PARAGRAPH READ AS THOUGH IT HAD UNTIL
+2026-09-04.** A second pass that pairs inline code across lines found **61 survivors
+in 23 files**, 42 of them in `.okf/` and 19 under `docs/`: canon 15, docs/12 3,
+docs/10 1, the m1 log 1, `assets/catalog/sources.md` 1. They are now swept, in the
+same commit as this correction. **43 of the 61 sat immediately after a closing
+backtick or a `**`**, as in ``` `Placement { … }` — stored elevation geometry ```,
+which is the shape the first sweep evidently could not see and the shape to check
+first next time. The dash there is punctuation and not data, so the code exception
+below does not reach it. A fifth class was added to the four: **an inline quotation**
+is left alone for the same reason a blockquote is.
+
+Five classes are deliberately left alone, and a later sweep should leave them alone.
 **Code** keeps them, fenced or inline, because there the dash is data rather than
 punctuation: `—` is what G4 prints for an unknown. **A table cell whose whole content
 is a dash** keeps it for exactly that reason, backticks or no: it is G4's unknown, or
@@ -292,7 +303,10 @@ is a dash** keeps it for exactly that reason, backticks or no: it is G4's unknow
 bare `,` it reads as a typo and the fact is gone. **Blockquotes** keep them, because
 canon quotes rulings and critiques word for word and editing a quotation falsifies the
 record. **YAML frontmatter** keeps them, because a `title: DR-001 — …` rewritten with a
-colon is a parse error, and OKF puts ruling titles in exactly that field.
+colon is a parse error, and OKF puts ruling titles in exactly that field. **An inline
+quotation** keeps them, on the blockquote's reasoning exactly: `*"a dash inside quoted
+words"*` is somebody else's sentence, and the quote marks do not stop being quote marks
+because the passage is short enough to sit in a paragraph.
 
 A future sweep should reuse the post-conditions rather than trust a spot-check:
 brackets, backticks and emphasis markers must balance, and the **line count must not
@@ -304,3 +318,10 @@ cross a `|`.** Five table rows survived the sweep with `(` in one cell and `)` i
 next, which balances per line and is nonsense per cell, and no post-condition then in
 force could see it. The cheap check is that no cell's trimmed content is a lone
 bracket.
+
+Two more the 2026-09-04 pass needed, both cheap and both caught in its own dry run:
+**a dash that ends a line must not leave a trailing space** where its replacement
+lands, and when a parenthesis opens at a line end it belongs on the next line
+**inside that line's indent**, since the corpus indents continuations. Run
+`git diff --check` and `git diff --stat`: **insertions must equal deletions**, which
+is the line-count post-condition stated in a form that reads at a glance.

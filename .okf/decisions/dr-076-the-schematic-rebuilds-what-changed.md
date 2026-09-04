@@ -21,7 +21,7 @@ Measured on the 12-pod fixture, 3,600 links, best of five:
 | | time |
 |---|---|
 | cold build | ~96 ms |
-| `holdAt` — what a wire edit did before this | ~90 ms |
+| `holdAt`: what a wire edit did before this | ~90 ms |
 | `reuseLayout` | ~46 ms |
 | `reuseSymbols` | ~20 ms |
 
@@ -33,8 +33,8 @@ nothing and add a second invalidation axis to reason about.
 
 # The model was already in the tree
 
-`DocEpochs` has carried six independent notifiers since M0 — `structure`,
-`wires`, `rack`, `meta`, `style`, `sheet` — and its own doc says they exist so
+`DocEpochs` has carried six independent notifiers since M0 (`structure`,
+`wires`, `rack`, `meta`, `style`, `sheet`), and its own doc says they exist so
 `rackmate_ui` *"can subscribe to exactly the epochs one widget cares about
 instead of rebuilding on every commit"*. Every command declares a `touches`
 mask. **The schematic collapsed all six into one counter.** The matrix the issue
@@ -42,9 +42,9 @@ asked for was mostly written already, per command, and unread.
 
 Three tiers, each keyed on what can move it:
 
-* **layout** — `structure`
-* **symbols** — `structure`, `meta`
-* **wires and labels** — `wires`
+* **layout**: `structure`
+* **symbols**: `structure`, `meta`
+* **wires and labels**: `wires`
 
 A rename rebuilds symbols and keeps the layout: a designator changes what a
 symbol prints, not where anything sits, and re-running layout would move symbols
@@ -56,7 +56,7 @@ A cold build of a twelve-pod job happens once, behind a file load the person is
 already waiting through. So the incremental path asserts one frame and the cold
 build keeps a ratchet ceiling. **On the 300-link fixture a wires-only rebuild is
 0.913 ms against 16.7 ms.** At twelve pods an edit is ~20 ms, still over a
-frame, and that case asserts an ORDERING rather than a figure — asserting the
+frame, and that case asserts an ORDERING rather than a figure: asserting the
 budget there would make a red gate out of work the ruling sequenced later.
 
 This is a narrowing of what the budget was assumed to cover, stated rather than
@@ -82,7 +82,7 @@ user has reported open time.**
   removed, a rename to `MTX-9` moves nothing, and neither does
   `MATRIX-SWITCHER-MAIN-RACK-1`; only a ~180-character designator makes a full
   rebuild demonstrably move the sheet. At realistic names both paths agree, so
-  the rename tier is justified by cost rather than by observed churn — and the
+  the rename tier is justified by cost rather than by observed churn, and the
   test records that, because the absurd length is the first thing a later reader
   would tidy away.
 
@@ -96,6 +96,6 @@ unchanged.
 
 One staleness is carried and written down rather than hidden: a held layout's
 `reversedEdgeIds` and `nonForwardEdgeIds` describe the edges that existed when
-it ran, so a link added under a reused tier is in neither. Censused — nothing in
-`lib/` reads them, the only callers are two tests — so it costs no drawing
+it ran, so a link added under a reused tier is in neither. Censused (nothing in
+`lib/` reads them, the only callers are two tests), so it costs no drawing
 today, and the first consumer to appear would otherwise inherit it silently.

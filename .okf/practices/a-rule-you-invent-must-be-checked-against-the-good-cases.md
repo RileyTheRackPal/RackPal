@@ -62,9 +62,9 @@ paragraph.**
 
 # Citations
 
-[1] `packages/rackmate_core/test/catalog/signal_family_alias_test.dart` — the
+[1] `packages/rackmate_core/test/catalog/signal_family_alias_test.dart`: the
     attempt, and why it was abandoned
-[2] `packages/rackmate_core/test/builder/quick_add_test.dart` — the pinned
+[2] `packages/rackmate_core/test/builder/quick_add_test.dart`: the pinned
     artifact that replaced it
 [3] canonical-decisions.md §11.59.10(a)
 [4] Commit `3947192`

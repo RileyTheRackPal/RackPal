@@ -63,7 +63,7 @@ pairs and the units, so a regression arrives already diagnosed.
 # And a third mouth: every part right, the claim never asserted
 
 M3-D/4 found the same family of gap from the other side. Exit clause 3 is a
-compound claim — a rough-in produces rows **sorted by room and pathway** with
+compound claim: a rough-in produces rows **sorted by room and pathway** with
 **per-room footage subtotals**. The sort, the room grouping and the footage
 rollup each had passing cases in `schedule_test.dart`, each asserting a genuine
 artifact, none of them a proxy.
@@ -81,7 +81,7 @@ every part reads:
 Two details make that file carry its weight rather than merely exist. **It is
 built to falsify**: rooms and pathways are created in an order that is not their
 sorted order, so a build that preserved insertion order fails instead of
-coinciding. And **it asserts the boundary too** — `SheetRole` is pinned to its
+coinciding. And **it asserts the boundary too**: `SheetRole` is pinned to its
 three values, so if a Pull Sheet role ever appears the case fails and whoever
 added it has to say whether M3's clause or M6's now owns the sheet
 ([DR-027](/decisions/dr-027-m3-owes-rows-m6-owns-sheets.md)).
