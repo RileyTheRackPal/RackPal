@@ -48,6 +48,13 @@ _CHROME_CANDIDATES = [
     r"C:\Program Files\Microsoft\Edge\Application\msedge.exe",
 ]
 
+# Stands in for a code span while the emphasis rules run. A NUL cannot
+# occur in the source: `git grep -I` treats a file containing one as
+# binary, which this repository has already been bitten by once (a
+# sentinel written with a raw NUL made a Dart file invisible to a
+# corpus-wide sweep).
+_SENTINEL = "\x00"
+
 _CSS = """
 @page { size: Letter; margin: 18mm 16mm 20mm 16mm; }
 * { box-sizing: border-box; }
@@ -105,22 +112,39 @@ a { color: #1b1b1b; text-decoration: underline; text-underline-offset: 1.5pt; }
 
 
 def _inline(text: str) -> str:
-    """Inline markdown to HTML, code spans first so nothing rewrites them."""
-    out: list[str] = []
-    # CODE SPANS ARE EXTRACTED BEFORE ANYTHING ELSE RUNS. `**` inside a
-    # code span is data, and a converter that bolded it would corrupt
-    # exactly the identifiers this corpus is made of.
-    parts = re.split(r"(`[^`]+`)", text)
-    for part in parts:
-        if part.startswith("`") and part.endswith("`") and len(part) > 1:
-            out.append(f"<code>{html.escape(part[1:-1])}</code>")
-            continue
-        s = html.escape(part)
-        s = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', s)
-        s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
-        s = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<em>\1</em>", s)
-        out.append(s)
-    return "".join(out)
+    """Inline markdown to HTML.
+
+    CODE SPANS ARE MASKED, NOT EXTRACTED, AND THE DIFFERENCE IS A BUG THIS
+    FILE ALREADY HAD. The first version split the line on code spans and
+    ran the emphasis rules on each piece separately. That protects `**`
+    INSIDE a span correctly and silently breaks emphasis that SPANS one:
+    bold whose opening pair and closing pair land in different pieces is
+    never matched, so the asterisks survive into the output.
+
+    It is not a cosmetic miss. CommonMark allows emphasis across a code
+    span and GitHub renders it, so the same source read two ways
+    disagreed about its own bold — and this corpus writes bold sentences
+    containing identifiers on nearly every page.
+
+    So each span becomes a sentinel token, the emphasis rules run over the
+    whole line, and the spans are restored last. `**` inside a span is
+    still safe because it is not in the string while those rules run.
+    """
+    spans: list[str] = []
+
+    def stash(m: "re.Match[str]") -> str:
+        spans.append(m.group(1))
+        return f"{_SENTINEL}{len(spans) - 1}{_SENTINEL}"
+
+    s = html.escape(re.sub(r"`([^`]+)`", stash, text))
+    s = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', s)
+    s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
+    s = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<em>\1</em>", s)
+
+    def restore(m: "re.Match[str]") -> str:
+        return f"<code>{html.escape(spans[int(m.group(1))])}</code>"
+
+    return re.sub(_SENTINEL + r"(\d+)" + _SENTINEL, restore, s)
 
 
 def _row(line: str) -> list[str]:
