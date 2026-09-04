@@ -15791,6 +15791,86 @@ then refused"* by tier 1 — the claim M5-D split in two and whose tier-1 half s
 pins stay OFFERED and wear the amber ring, which is docs/05:476's *"they remain droppable"* reaching
 the second gesture.
 
+### §11.116 DR-117 · The lockup ships, arranging supplied art is not generating it, and the manual is a games manual
+
+**Settled by the user on 2026-09-03.** Three clauses about the product's outward identity, ruled
+together because they arrived together and because the second is the one a later reader will most
+want to find.
+
+**11.116.1 THE LOCKUP SHIPS AS IT STANDS, AND `#784`'s TWO OPEN QUESTIONS CLOSE WITH IT.** That item
+landed *"landable and revisable, not final"* and left two review questions that would change the
+path data: whether the rule matches `RACK` or runs the full width including Riley, and whether `PAL`
+is flush left or optically centred under `RACK`.
+
+**Both are settled as shipped**: the rule matches `RACK`, and `PAL` is flush left. The user has the
+mark in front of a test group and it was well received, which is a better answer than either
+question was going to get from argument. **A drawn mark that reads is not improved by re-deriving
+its geometry**, and the two questions were asked by somebody who could not see it.
+
+**RILEY'S PORTRAIT IS EXPECTED TO CHANGE AND THE LOCKUP IS NOT.** The two are separate paths for
+reasons `brand.dart` already gives, and this ruling adds a third: they are on different clocks. Final
+art replaces `_rileyD` and nothing else moves, because Riley's box, its 0.806:1 ratio, its cap-high
+placement and its 268-unit clearance are all constants the letterforms never read.
+
+**11.116.2 ARRANGING SUPPLIED ARTWORK IS NOT GENERATING IT, AND THIS REPOSITORY HAD NEVER SAID SO.**
+The user's position is that composing supplied assets on a page is not AI-generated art. **Measured:
+no ruling on the subject exists.** Canon, docs/10, the roadmap and the OKF bundle carry exactly one
+`AI` clause, DR-089 §11.88's note on the *font licence's* §4.7, which is about supplying glyph data
+to a model and is a different question entirely. So this is ruled rather than cited.
+
+**The distinction is authorship of the marks, not the tooling that placed them.** Three cases, and
+the line falls in the same place each time:
+
+| Act | What it is |
+|---|---|
+| Tracing supplied raster art to outlines, as `#784` did at 98.6% pixel agreement | **Transcription.** Every curve descends from a mark the artist made |
+| Composing a lockup: choosing a measure, a clearance, a fill rule, a baseline | **Layout.** The letterforms are cut from a licensed face and Riley is the artist's |
+| Emitting a figure no hand drew, from a model, as the thing itself | **Generation**, and it is not how any mark in this repository was made |
+
+**WHAT THAT ACTUALLY COMMITS THE PROJECT TO** is the part worth writing down, because the sentence
+above is comfortable and the obligation is not: **every mark this product ships is traceable to a
+human author, and the file that carries it says which.** `brand.dart` already does, for both halves.
+A future asset that cannot make that claim does not ship, and the honest place to discover that is
+before it is drawn rather than in a licence review.
+
+**11.116.3 THE USER MANUAL IS A VINTAGE VIDEO-GAME MANUAL, AND THAT IS A REGISTER RATHER THAN A
+JOKE.** No manual exists and none was scheduled: AC-058/D1 buys a glossary panel and M5-F3's
+`[Why?]` viewer and stops there.
+
+The register is chosen because it fits what this product is, not because it is charming. A games
+manual of that era had to teach a system with **no network, no tooltips and no undo for the reader** —
+so it explained the model first, listed the hazards plainly, and expected to be read once and
+consulted after. That is a rack drawing's manual exactly. The **28-rule catalogue is a bestiary**, the
+**device catalog is an item list**, the **keymap is a controls diagram**, and CR-021's *"a rule not
+listed here does not exist"* is the promise a bestiary makes and a wiki does not.
+
+**THE ONE THING THE REGISTER MAY NOT DO IS SOFTEN A SAFETY SENTENCE.** DR-079 demoted `CODE-001` and
+`CODE-002` to warnings that ask a person to verify against a named article, and `SIG-001` exists
+because 100 W of PoH damages a switch. **Those sentences are quoted into the manual verbatim or not
+at all.** Riley may be beside them; Riley may not paraphrase them.
+
+**11.116.4 THE MANUAL IS SCHEDULED INTO M9, BETA HARDENING, AND THE MILESTONE'S OWN CRITERION IS THE
+ARGUMENT.** The user placed it at beta hardening and read that as M8; **beta hardening is M9** and M8
+is release engineering (docs/12 §5.7, §5.8). The correction is worth making because M9's exit
+criterion is a better case for the manual than the number was:
+
+> Three integrators have each produced a sheet set they were willing to send to a client or a job
+> site, and **none of the three needed to leave the app to fix something.**
+
+**A manual is what that clause is measured against.** Its failure mode IS the criterion's failure
+mode: an integrator who went looking elsewhere. Written earlier it would be guessing at what confuses
+somebody; written for M9 it is read by the three people whose confusion the criterion counts, and
+what they still had to ask is the revision.
+
+**IT IS NOT A SCOPE AMENDMENT (§8.3), because nothing moves between release bands.** The manual is
+new work inside a milestone that already exists, and RJ-017's *"documentation and onboarding"* line
+under AC-058/D9 is where it lands rather than a v1 clause being added. **The mascot's three surfaces
+stay at M8** where §10.12(f) put them: an app that draws Riley and a book that draws Riley are two
+deliverables, and only the second is being scheduled here.
+
+`docs/19-riley.md` carries the character reference this needs, including the pose catalogue the
+manual's illustrations are drawn from.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
