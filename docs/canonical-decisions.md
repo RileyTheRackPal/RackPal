@@ -15944,6 +15944,66 @@ laughing at the one thing it is most obliged to be straight about.
 
 `docs/19-riley.md` §7.3 carries the vocabulary and the illustrator-facing form of all of this.
 
+### §11.118 DR-119 · The stamp `#310` gates does not exist, so M5-I proves the stronger thing instead
+
+**Ruled 2026-09-04, closing M5-I.** `#310` asks for proof that the
+`ISSUED FOR CONSTRUCTION` stamp is the ONLY thing an error gates, *"via
+`ExportSpec.issuedForConstruction`"*. **Measured: neither exists.**
+`ExportSpec` appears nowhere in shipped code, no stamp is drawn, and
+`ExportRequest` carries `documentJson`, `fontBytes`, `fileName` and
+`issuedAt` and nothing else.
+
+**11.118.1 THIS IS THE SECOND TIME A CLAUSE HAS DESCRIBED A FIELD THAT WAS
+NEVER BUILT, AND THE PATTERN IS WORTH NAMING.** DR-117's companion work
+found AC-058/D1 promising a viewer over `CompatibilityRuleDef.rationale`,
+a type from `docs/research/design-data-model.md` that was never built;
+M5-F3 had to author the field before it could build the viewer. This is
+the same shape: canon §5's export section describes a design in the
+present tense, and a chapter written from it reads as though the code
+already had the field.
+
+**Neither sentence was wrong about the DESIGN.** Both describe what the
+product should do. What neither says is that it does not do it yet, and a
+chapter derived from either prices as "wire up the existing thing" work
+that is actually "build the thing". **A corpus sentence in the present
+tense is a claim about the design, not about the tree**, and pricing a
+task off one without reading the code is how both were mis-scoped.
+
+**11.118.2 A VACUOUS ASSERTION IS NOT AN ACCEPTABLE SUBSTITUTE.** The
+tempting move is to write the test `#310` asks for and let it pass over a
+stamp that is not there. It would be green forever and would mean
+nothing, which is the exact failure this repository keeps finding in its
+own suite: `status_marker_source_test.dart` records a gate that would have
+counted zero offenders and passed, and `run_suite.ps1`'s own header
+records green-over-nothing as the recurring shape.
+
+**11.118.3 SO THE CLAUSE IS PROVED IN THE STRONGER FORM AVAILABLE TODAY:
+NOTHING IS GATED, AND THE TYPE SYSTEM SAYS SO.** `ExportError` is a
+sealed class with three arms, `ExportDocumentUnreadable`, `ExportNoRacks`
+and `ExportFontMissing`, and **none of them is about a rule.** An
+exhaustive `switch` over those arms in
+`findings_never_block_export_test.dart` **fails to compile** if a fourth
+appears, so whoever adds *"export refused because the project has
+errors"* has to come to that file and argue with CR-022 rather than ship
+past it.
+
+A source scan is the second cue: `rackpal_export` never mentions
+`evaluateDocument`, `kDrcRules`, `AckedFinding` or `blockExportOnErrors`.
+**The exporter cannot gate on a finding it never asks for**, which is a
+better guarantee than the one `#310` requested and is available now.
+
+**11.118.4 WHAT M6 INHERITS.** When the stamp is built, the gating it
+introduces is the FIRST gating the export path will have, and
+`findings_never_block_export_test.dart` is where the tightening lands:
+the exhaustive switch gains an arm, or the stamp's own predicate gains a
+test that it is the only reader of a `Finding`. **M5's clause is
+discharged either way**: "no rule prevents a PDF being written" is true
+today and the test holds it true.
+
+`#310` is therefore closed as delivered rather than parked, because what
+it exists to protect is protected. The narrower assertion it names
+becomes M6's, alongside the stamp it is about.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
