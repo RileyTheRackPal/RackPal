@@ -9,7 +9,10 @@ schedules, PDF sheet set. Windows-first, macOS ruled in for v1 (DR-009).
 pwsh -File tools/ci/run_local.ps1 -SkipBuild
 ```
 
-Fifteen gates. All must pass before a commit. Notes that cost real time:
+All must pass before a commit. **The count is not written here**, on this
+file's own rule about a second copy of a moving number: it said *"fifteen"*
+until M5-G4 added the AC-051 pair gate and made it sixteen. Count the
+`Invoke-Gate` calls in the script. Notes that cost real time:
 
 - **Analyzer is a ratchet pinned to an exact number** in
   `tools/ci/analyze_info_baseline.txt`. **Read the pin from that file**, which

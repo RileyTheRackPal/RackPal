@@ -34,424 +34,14 @@
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 
-final _when = DateTime.utc(2026, 7, 29);
-EntityMeta _meta() =>
-    EntityMeta(createdAt: _when, updatedAt: _when, updatedBy: 'test');
-
-const _pos = PanelPosition(
-  ruOffset: 0,
-  xTwelfth: 0,
-  xFineNm: Len.zero,
-  yFineNm: Len.zero,
-);
-
-const _avr = Uuid('dev-avr');
-const _tv = Uuid('dev-tv');
-const _shelf = Uuid('dev-shelf');
-
-PortDef _port(
-  String key, {
-  String? hint,
-  String? label,
-  int maxConnections = 1,
-  String family = 'video.hdmi.2_1',
-  String order = 'a0',
-  PortDirection direction = PortDirection.bidirectional,
-  PortTopology topology = PortTopology.p2p,
-}) => PortDef(
-  key: PortKey(key),
-  label: label ?? key,
-  designatorHint: hint,
-  connector: const ConnectorTypeId('conn.hdmi_a'),
-  signalFamily: SignalFamilyId(family),
-  face: Face.rear,
-  position: _pos,
-  order: FracIndex(order),
-  maxConnections: maxConnections,
-  direction: direction,
-  topology: topology,
-);
-
-TemplateBody _body(List<PortDef> ports, {bool isContainer = false}) =>
-    TemplateBody(
-      manufacturer: 'Acme',
-      model: 'T',
-      displayName: 'T',
-      isContainer: isContainer,
-      ports: ports,
-    );
-
-/// Adds [id] with [body] under designator [designator], materialising
-/// only the port keys in [materialise] — every other pin stays
-/// unmaterialised, which is the normal state of a device dropped out of
-/// the palette (AC-006, DR-011.1).
-void _addDevice(
-  RackDocument doc,
-  Uuid id,
-  String designator,
-  TemplateBody body, {
-  Placement placement = const OffRackPlacement(),
-  Set<String> materialise = const {},
-}) {
-  final tplId = 'tpl.${id.v}';
-  doc.templates['$tplId@1'] = TemplateSnapshot(
-    templateId: TemplateId(tplId),
-    version: 1,
-    contentHash: 'sha256:$tplId',
-    body: body,
-    capturedAt: _when,
-  );
-  doc.devices[id] = DeviceInstance(
-    id: id,
-    kind: DeviceKind.rackDevice,
-    templateRef: TemplateRef(
-      templateId: TemplateId(tplId),
-      version: 1,
-      contentHash: 'sha256:$tplId',
-    ),
-    designator: designator,
-    name: designator,
-    placement: placement,
-    meta: _meta(),
-  );
-  for (final key in materialise) {
-    final pid = derivePortId(id, PortKey(key));
-    doc.ports[pid] = Port(
-      id: pid,
-      deviceId: id,
-      designator: 'J${materialise.toList().indexOf(key) + 1}',
-      templatePortKey: PortKey(key),
-    );
-  }
-}
-
-RackDocument _doc() => RackDocument(
-  id: const Uuid('doc-cr'),
-  appVersion: '0.1.0',
-  createdAt: _when,
-  modifiedAt: _when,
-  meta: _meta(),
-);
-
-/// AVR-1 with one HDMI output, TV-1 with one HDMI input. Neither pin is
-/// materialised — the state every real document is in.
-///
-/// NO `designatorHint` ANYWHERE. **Zero of the 727 seed-catalog ports
-/// carry one** (`PortBuilder.p` never passes it), so a fixture that set
-/// hints and then asserted on them would be testing a branch no shipped
-/// device can reach. The `J`-numbers asserted below are the ones
-/// `allocatePortDesignator` computes from the pin's template position,
-/// which is what a refusal on a real document actually prints.
-RackDocument _pair({int avrMax = 1, int tvMax = 1}) {
-  final doc = _doc();
-  _addDevice(
-    doc,
-    _avr,
-    'AVR-1',
-    _body([_port('hdmi.out.1', maxConnections: avrMax)]),
-  );
-  _addDevice(
-    doc,
-    _tv,
-    'TV-1',
-    _body([_port('hdmi.in.1', maxConnections: tvMax)]),
-  );
-  return doc;
-}
-
-ConnectTarget _avrOut(RackDocument doc) => resolveConnectTarget(
-  doc,
-  deviceId: _avr,
-  portKey: 'hdmi.out.1',
-)!;
-
-ConnectTarget _tvIn(RackDocument doc) =>
-    resolveConnectTarget(doc, deviceId: _tv, portKey: 'hdmi.in.1')!;
-
-ConnectTarget _pin(RackDocument doc, Uuid device, String key) =>
-    resolveConnectTarget(doc, deviceId: device, portKey: key)!;
-
-/// The seed catalog, built once — `buildSeedCatalog()` walks every
-/// template on each call.
-final Map<String, TemplateBody> _seed = buildSeedCatalog();
-
-/// Adds a device whose template body is the REAL seed-catalog entry for
-/// [catalogId] — no fixture `PortDef`s, so what is asserted is what
-/// ships. Every pin stays unmaterialised, which is what placing from the
-/// palette produces.
-void _seedDevice(
-  RackDocument doc,
-  Uuid id,
-  String catalogId,
-  String designator,
-) {
-  final body = _seed[catalogId];
-  if (body == null) throw StateError('seed catalog has no "$catalogId"');
-  doc.templates[catalogTemplateKey(catalogId)] = TemplateSnapshot(
-    templateId: TemplateId(catalogId),
-    version: 1,
-    contentHash: 'sha256:seed-$catalogId',
-    body: body,
-    capturedAt: _when,
-  );
-  doc.devices[id] = DeviceInstance(
-    id: id,
-    kind: DeviceKind.rackDevice,
-    templateRef: TemplateRef(
-      templateId: TemplateId(catalogId),
-      version: 1,
-      contentHash: 'sha256:seed-$catalogId',
-    ),
-    designator: designator,
-    name: designator,
-    placement: const OffRackPlacement(),
-    meta: _meta(),
-  );
-}
-
-/// A `Link` carrying one conductor from [from] to [to], so a test can set
-/// up an occupied port or an already-run ordered pair.
-Uuid _link(
-  RackDocument doc,
-  String designator,
-  Endpoint from,
-  Endpoint to,
-) {
-  final id = Uuid('lnk-$designator');
-  doc.links[id] = Link(
-    id: id,
-    designator: designator,
-    media: const MediaTypeId('media.hdmi'),
-    order: const FracIndex('a0'),
-    meta: _meta(),
-    services: [
-      Service(
-        id: 'svc-1',
-        signalFamily: const SignalFamilyId('video.hdmi.2_1'),
-        netId: const Uuid('net-x'),
-      ),
-    ],
-    conductors: [Conductor(from: from, to: to)],
-  );
-  return id;
-}
-
-/// One rule's worth of "this is how it refuses, and this is what the
-/// sentence must say".
-typedef _Refusal = ({
-  ConnectRule rule,
-  String what,
-  ConnectVerdict Function() run,
-  List<String> mustName,
-});
-
-/// EVERY rule gets a row. The coverage assertion below compares this
-/// list against `ConnectRule.values`.
-List<_Refusal> _refusals() => [
-  (
-    rule: ConnectRule.endpointResolves,
-    what: 'the port has been tombstoned',
-    mustName: ['AVR-1'],
-    run: () {
-      final doc = _pair();
-      final from = _avrOut(doc);
-      doc.tombstones[from.portId] = Tombstone(
-        deletedAt: _when,
-        entityType: 'Port',
-        by: 'test',
-      );
-      return evaluateConnect(doc, from, _tvIn(doc));
-    },
-  ),
-  (
-    rule: ConnectRule.hostResolves,
-    what: 'the shelf the device sits on is not in the document',
-    mustName: ['AVR-1'],
-    run: () {
-      final doc = _pair();
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
-      doc.devices[_avr] = DeviceInstance(
-        id: _avr,
-        kind: DeviceKind.rackDevice,
-        templateRef: doc.devices[_avr]!.templateRef,
-        designator: 'AVR-1',
-        name: 'AVR-1',
-        placement: const ShelfPlacement(
-          hostDeviceId: Uuid('dev-gone'),
-          order: FracIndex('a0'),
-        ),
-        meta: _meta(),
-      );
-      return evaluateConnect(doc, from, to);
-    },
-  ),
-  (
-    rule: ConnectRule.notSelf,
-    what: 'both ends are the same pin',
-    mustName: ['AVR-1', 'J01'],
-    run: () {
-      final doc = _pair();
-      final from = _avrOut(doc);
-      return evaluateConnect(doc, from, _avrOut(doc));
-    },
-  ),
-  (
-    rule: ConnectRule.notDuplicatePair,
-    what: 'the link already runs this exact ordered pair',
-    mustName: ['AVR-1', 'TV-1', 'W001'],
-    run: () {
-      // maxConnections raised so TOP-003 cannot pre-empt the rule under
-      // test — the existing conductor already occupies both pins.
-      final doc = _pair(avrMax: 4, tvMax: 4);
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
-      final id = _link(
-        doc,
-        'W001',
-        PortEndpoint(from.portId),
-        PortEndpoint(to.portId),
-      );
-      return evaluateConnect(doc, from, to, ontoLink: id);
-    },
-  ),
-  (
-    rule: ConnectRule.withinMaxConnections,
-    what: 'the pin is already at its maxConnections',
-    mustName: ['AVR-1', '1 of 1'],
-    run: () {
-      final doc = _pair();
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
-      _link(
-        doc,
-        'W001',
-        PortEndpoint(from.portId),
-        const OpenEndpoint('elsewhere'),
-      );
-      return evaluateConnect(doc, from, to);
-    },
-  ),
-];
-
-/// One rule's worth of "and here is the case ONE PROPERTY away from that
-/// refusal, which must be accepted".
-typedef _NearMiss = ({
-  ConnectRule rule,
-  String what,
-  ConnectVerdict Function() run,
-});
-
-/// ══════════════════════════════════════════════════════════════════════
-/// THE HALF AC-051 SAYS GETS SKIPPED, AND IT WAS SKIPPED HERE
-/// ══════════════════════════════════════════════════════════════════════
-/// `#298`: *"the near-miss is the half that gets skipped and the half that
-/// matters: a known-bad alone proves the rule fires, not that it
-/// discriminates."* This file had a gated table of refusals from the day
-/// it was written, and a coverage test making a new rule impossible to add
-/// without one. It had no equivalent for the other direction: the legal
-/// cases below existed, scattered, and nothing checked that every rule had
-/// one.
-///
-/// So each row here is the matching row of [_refusals] with EXACTLY ONE
-/// property changed, and the coverage assertion is the same shape. A rule
-/// implemented as `return refused` passes every row of that table and
-/// fails every row of this one.
-List<_NearMiss> _nearMisses() => [
-  (
-    rule: ConnectRule.endpointResolves,
-    what:
-        'the tombstone is for some other port and this pin is merely '
-        'unmaterialised',
-    run: () {
-      // DR-011.1: "not yet in doc.ports" is the NORMAL state of a legal
-      // target, because the connect command materialises on apply(). The
-      // refusal case buries this pin; this one buries a stranger.
-      final doc = _pair();
-      doc.tombstones[const Uuid('port-of-some-other-device')] = Tombstone(
-        deletedAt: _when,
-        entityType: 'Port',
-        by: 'test',
-      );
-      return evaluateConnect(doc, _avrOut(doc), _tvIn(doc));
-    },
-  ),
-  (
-    rule: ConnectRule.hostResolves,
-    what: 'the shelf IS in the document and IS a container',
-    run: () {
-      const shelf = Uuid('dev-shelf');
-      final doc = _pair();
-      _addDevice(doc, shelf, 'SHF-1', _body(const [], isContainer: true));
-      doc.devices[_avr] = DeviceInstance(
-        id: _avr,
-        kind: DeviceKind.rackDevice,
-        templateRef: doc.devices[_avr]!.templateRef,
-        designator: 'AVR-1',
-        name: 'AVR-1',
-        placement: const ShelfPlacement(
-          hostDeviceId: shelf,
-          order: FracIndex('a0'),
-        ),
-        meta: _meta(),
-      );
-      return evaluateConnect(doc, _avrOut(doc), _tvIn(doc));
-    },
-  ),
-  (
-    rule: ConnectRule.notSelf,
-    what: 'the two ends are DIFFERENT pins on the same device',
-    run: () {
-      // A loopback is a real cable somebody runs. Only the pin-to-ITSELF
-      // case is model-illegal, and one letter separates the two.
-      final doc = _doc();
-      _addDevice(
-        doc,
-        _avr,
-        'AVR-1',
-        _body([_port('a'), _port('b', order: 'a1')]),
-      );
-      return evaluateConnect(doc, _pin(doc, _avr, 'a'), _pin(doc, _avr, 'b'));
-    },
-  ),
-  (
-    rule: ConnectRule.notDuplicatePair,
-    what: 'the same ordered pair goes onto a FRESH link',
-    run: () {
-      // TOP-002 is scoped to one link, exactly as canon writes it. Two
-      // cables between the same two jacks is an ordinary redundant run;
-      // two conductors doing it inside one cable is the illegal state.
-      final doc = _pair(avrMax: 4, tvMax: 4);
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
-      _link(doc, 'W001', PortEndpoint(from.portId), PortEndpoint(to.portId));
-      return evaluateConnect(doc, from, to);
-    },
-  ),
-  (
-    rule: ConnectRule.withinMaxConnections,
-    what: 'the pin declares room for one more',
-    run: () {
-      final doc = _pair(avrMax: 2);
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
-      _link(
-        doc,
-        'W001',
-        PortEndpoint(from.portId),
-        const OpenEndpoint('elsewhere'),
-      );
-      return evaluateConnect(doc, from, to);
-    },
-  ),
-];
+import 'validation/fixtures/connect_scenarios.dart';
 
 void main() {
   group('resolveConnectTarget — the join that did not exist', () {
     test('resolves a pin the document has NOT materialised', () {
-      final doc = _pair();
-      final t = _avrOut(doc);
-      expect(t.deviceId, _avr);
+      final doc = connectPair();
+      final t = connectAvrOut(doc);
+      expect(t.deviceId, connectAvr);
       expect(t.deviceDesignator, 'AVR-1');
       expect(t.portKey, const PortKey('hdmi.out.1'));
       expect(t.signalFamily, const SignalFamilyId('video.hdmi.2_1'));
@@ -466,7 +56,7 @@ void main() {
       );
       expect(
         t.portId,
-        derivePortId(_avr, const PortKey('hdmi.out.1')),
+        derivePortId(connectAvr, const PortKey('hdmi.out.1')),
         reason:
             'the id is derived, so it is knowable before the port exists — '
             'that is what lets the command materialise on apply()',
@@ -481,15 +71,15 @@ void main() {
     });
 
     test('a materialised pin carries its Port and its real designator', () {
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([_port('hdmi.out.1')]),
+        connectBody([connectPort('hdmi.out.1')]),
         materialise: {'hdmi.out.1'},
       );
-      final t = _avrOut(doc);
+      final t = connectAvrOut(doc);
       expect(t.isMaterialised, isTrue);
       expect(t.materialisedPort!.designator, 'J1');
       expect(
@@ -514,20 +104,20 @@ void main() {
       // declared order and the allocation is a pure function of the
       // document, so the J-number a refusal prints is the one the connect
       // would have written.
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([
-          _port('hdmi.out.1'),
-          _port('hdmi.out.2', order: 'a1'),
-          _port('hdmi.out.3', order: 'a2'),
+        connectBody([
+          connectPort('hdmi.out.1'),
+          connectPort('hdmi.out.2', order: 'a1'),
+          connectPort('hdmi.out.3', order: 'a2'),
         ]),
       );
       final t = resolveConnectTarget(
         doc,
-        deviceId: _avr,
+        deviceId: connectAvr,
         portKey: 'hdmi.out.3',
       )!;
       expect(t.isMaterialised, isFalse);
@@ -546,12 +136,12 @@ void main() {
       // The fallback chain only unwinds when the project's own
       // portDesignatorFormat cannot render: here it needs DEV_BLOCK, and
       // reserve-block allocation is not implemented anywhere in the repo.
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([_port('ir.out.3', label: 'IR OUT 3', hint: 'J34')]),
+        connectBody([connectPort('ir.out.3', label: 'IR OUT 3', hint: 'J34')]),
       );
       doc.settings.portDesignatorFormat = const IdFormat(
         '{DEV_BLOCK}{PORT_SEQ:2}',
@@ -559,7 +149,7 @@ void main() {
 
       final withHint = resolveConnectTarget(
         doc,
-        deviceId: _avr,
+        deviceId: connectAvr,
         portKey: 'ir.out.3',
       )!;
       expect(
@@ -571,18 +161,18 @@ void main() {
 
       // No hint — which is every one of the 727 seed ports — falls to the
       // silkscreen label before it falls to the machine key.
-      final noHint = _doc();
-      _addDevice(
+      final noHint = connectDoc();
+      connectAddDevice(
         noHint,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([_port('ir.out.3', label: 'IR OUT 3')]),
+        connectBody([connectPort('ir.out.3', label: 'IR OUT 3')]),
       );
       noHint.settings.portDesignatorFormat = const IdFormat('{DEV_BLOCK}');
       expect(
         resolveConnectTarget(
           noHint,
-          deviceId: _avr,
+          deviceId: connectAvr,
           portKey: 'ir.out.3',
         )!.citation,
         'AVR-1 IR OUT 3',
@@ -595,18 +185,18 @@ void main() {
       // file. It renders "J" for every PORT_SEQ; the second pin on the
       // device has nothing left to allocate, and the walk USED TO SPIN
       // FOREVER in a tight synchronous loop no timeout can interrupt.
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([_port('a'), _port('b', order: 'a1')]),
+        connectBody([connectPort('a'), connectPort('b', order: 'a1')]),
       );
       doc.settings.portDesignatorFormat = const IdFormat('J');
-      final first = derivePortId(_avr, const PortKey('a'));
-      doc.ports[first] = Port(id: first, deviceId: _avr, designator: 'J');
+      final first = derivePortId(connectAvr, const PortKey('a'));
+      doc.ports[first] = Port(id: first, deviceId: connectAvr, designator: 'J');
 
-      final t = resolveConnectTarget(doc, deviceId: _avr, portKey: 'b')!;
+      final t = resolveConnectTarget(doc, deviceId: connectAvr, portKey: 'b')!;
       expect(t.plannedDesignator, isNull);
       expect(t.citation, 'AVR-1 b');
       expect(
@@ -619,18 +209,18 @@ void main() {
     });
 
     test('null for a missing device, a missing template, a missing key', () {
-      final doc = _pair();
+      final doc = connectPair();
       expect(
         resolveConnectTarget(doc, deviceId: const Uuid('no'), portKey: 'x'),
         isNull,
       );
       expect(
-        resolveConnectTarget(doc, deviceId: _avr, portKey: 'nope'),
+        resolveConnectTarget(doc, deviceId: connectAvr, portKey: 'nope'),
         isNull,
       );
       doc.templates.clear();
       expect(
-        resolveConnectTarget(doc, deviceId: _avr, portKey: 'hdmi.out.1'),
+        resolveConnectTarget(doc, deviceId: connectAvr, portKey: 'hdmi.out.1'),
         isNull,
       );
     });
@@ -641,16 +231,16 @@ void main() {
       // TOP-001 makes this unreachable through a command; a hand-edited
       // or imported file can still carry one, and under-counting it makes
       // an over-subscribed jack read as legal.
-      final doc = _pair();
-      final a = _avrOut(doc).portId;
-      _link(doc, 'W001', PortEndpoint(a), PortEndpoint(a));
+      final doc = connectPair();
+      final a = connectAvrOut(doc).portId;
+      connectLink(doc, 'W001', PortEndpoint(a), PortEndpoint(a));
       expect(portConductorCount(doc, a), 2);
     });
 
     test('ignores Open and Place endpoints', () {
-      final doc = _pair();
-      final a = _avrOut(doc).portId;
-      _link(
+      final doc = connectPair();
+      final a = connectAvrOut(doc).portId;
+      connectLink(
         doc,
         'W001',
         const OpenEndpoint('coil'),
@@ -660,19 +250,19 @@ void main() {
     });
 
     test('is NOT linkCountForDevice — two pins on one device differ', () {
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([_port('a'), _port('b', order: 'a1')]),
+        connectBody([connectPort('a'), connectPort('b', order: 'a1')]),
       );
-      final a = derivePortId(_avr, const PortKey('a'));
-      final b = derivePortId(_avr, const PortKey('b'));
-      doc.ports[a] = Port(id: a, deviceId: _avr, designator: 'J01');
-      doc.ports[b] = Port(id: b, deviceId: _avr, designator: 'J02');
-      _link(doc, 'W001', PortEndpoint(a), const OpenEndpoint('x'));
-      _link(doc, 'W002', PortEndpoint(a), const OpenEndpoint('y'));
+      final a = derivePortId(connectAvr, const PortKey('a'));
+      final b = derivePortId(connectAvr, const PortKey('b'));
+      doc.ports[a] = Port(id: a, deviceId: connectAvr, designator: 'J01');
+      doc.ports[b] = Port(id: b, deviceId: connectAvr, designator: 'J02');
+      connectLink(doc, 'W001', PortEndpoint(a), const OpenEndpoint('x'));
+      connectLink(doc, 'W002', PortEndpoint(a), const OpenEndpoint('y'));
 
       expect(portConductorCount(doc, a), 2);
       expect(
@@ -682,14 +272,14 @@ void main() {
             'the per-DEVICE count is 2 for both pins; TOP-003 is bounded '
             'by a property of one jack and must not read the device total',
       );
-      expect(linkCountForDevice(doc, _avr), 2);
+      expect(linkCountForDevice(doc, connectAvr), 2);
     });
   });
 
   group('evaluateConnect — the tier-1 refusals', () {
     test('EVERY ConnectRule has a refusal case in this file', () {
       expect(
-        _refusals().map((r) => r.rule).toSet(),
+        connectRefusals().map((r) => r.rule).toSet(),
         ConnectRule.values.toSet(),
         reason:
             'a refusal mode with no exercised sentence is a spring-back '
@@ -698,7 +288,7 @@ void main() {
       );
     });
 
-    for (final c in _refusals()) {
+    for (final c in connectRefusals()) {
       test('${c.rule.id} refuses when ${c.what}', () {
         final verdict = c.run();
         expect(verdict, isA<ConnectRefused>());
@@ -725,7 +315,7 @@ void main() {
 
     test('no two rules share a sentence', () {
       final messages = <String, ConnectRule>{};
-      for (final c in _refusals()) {
+      for (final c in connectRefusals()) {
         final refused = c.run() as ConnectRefused;
         final clash = messages[refused.message];
         expect(
@@ -744,72 +334,76 @@ void main() {
       // Three distinct faults, one rule; the sentences differ so the user
       // is told which of the three they are looking at.
       final missingHost =
-          _refusals()
+          connectRefusals()
                   .firstWhere((r) => r.rule == ConnectRule.hostResolves)
                   .run()
               as ConnectRefused;
 
-      final notContainer = _doc();
-      _addDevice(
+      final notContainer = connectDoc();
+      connectAddDevice(
         notContainer,
-        _shelf,
+        connectShelf,
         'SHF-1',
-        _body(const []),
+        connectBody(const []),
       );
-      _addDevice(
+      connectAddDevice(
         notContainer,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([_port('hdmi.out.1')]),
+        connectBody([connectPort('hdmi.out.1')]),
         placement: const ShelfPlacement(
-          hostDeviceId: _shelf,
+          hostDeviceId: connectShelf,
           order: FracIndex('a0'),
         ),
       );
-      _addDevice(
+      connectAddDevice(
         notContainer,
-        _tv,
+        connectTv,
         'TV-1',
-        _body([_port('hdmi.in.1')]),
+        connectBody([connectPort('hdmi.in.1')]),
       );
       final v1 = evaluateConnect(
         notContainer,
-        _avrOut(notContainer),
-        _tvIn(notContainer),
+        connectAvrOut(notContainer),
+        connectTvIn(notContainer),
       );
       expect(v1, isA<ConnectRefused>());
       expect((v1 as ConnectRefused).rule, ConnectRule.hostResolves);
       expect(v1.message, contains('SHF-1'));
       expect(v1.message, isNot(missingHost.message));
 
-      final cycle = _doc();
-      _addDevice(
+      final cycle = connectDoc();
+      connectAddDevice(
         cycle,
-        _shelf,
+        connectShelf,
         'SHF-1',
-        _body(const [], isContainer: true),
+        connectBody(const [], isContainer: true),
         placement: const ShelfPlacement(
-          hostDeviceId: _avr,
+          hostDeviceId: connectAvr,
           order: FracIndex('a0'),
         ),
       );
-      _addDevice(
+      connectAddDevice(
         cycle,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([_port('hdmi.out.1')], isContainer: true),
+        connectBody([connectPort('hdmi.out.1')], isContainer: true),
         placement: const ShelfPlacement(
-          hostDeviceId: _shelf,
+          hostDeviceId: connectShelf,
           order: FracIndex('a0'),
         ),
       );
-      _addDevice(
+      connectAddDevice(
         cycle,
-        _tv,
+        connectTv,
         'TV-1',
-        _body([_port('hdmi.in.1')]),
+        connectBody([connectPort('hdmi.in.1')]),
       );
-      final v2 = evaluateConnect(cycle, _avrOut(cycle), _tvIn(cycle));
+      final v2 = evaluateConnect(
+        cycle,
+        connectAvrOut(cycle),
+        connectTvIn(cycle),
+      );
       expect(v2, isA<ConnectRefused>());
       expect((v2 as ConnectRefused).rule, ConnectRule.hostResolves);
       expect(v2.message, contains('loops'));
@@ -819,9 +413,10 @@ void main() {
     test('TOP-003 says a zero-max pin ACCEPTS NONE, not "0 of 0"', () {
       // "already carries 0 of 0" reads as a state the user could clear by
       // unplugging something. There is nothing to unplug.
-      final doc = _pair(avrMax: 0);
+      final doc = connectPair(avrMax: 0);
       final v =
-          evaluateConnect(doc, _avrOut(doc), _tvIn(doc)) as ConnectRefused;
+          evaluateConnect(doc, connectAvrOut(doc), connectTvIn(doc))
+              as ConnectRefused;
       expect(v.rule, ConnectRule.withinMaxConnections);
       expect(v.message, 'AVR-1 J01 accepts no connections.');
     });
@@ -832,10 +427,15 @@ void main() {
       // is legal; reading the rule document-wide would make a redundant
       // run model-ILLEGAL with no escape, which is a rule canon does not
       // have (§5: "a rule not listed here does not exist").
-      final doc = _pair(avrMax: 4, tvMax: 4);
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
-      _link(doc, 'W001', PortEndpoint(from.portId), PortEndpoint(to.portId));
+      final doc = connectPair(avrMax: 4, tvMax: 4);
+      final from = connectAvrOut(doc);
+      final to = connectTvIn(doc);
+      connectLink(
+        doc,
+        'W001',
+        PortEndpoint(from.portId),
+        PortEndpoint(to.portId),
+      );
       expect(
         evaluateConnect(doc, from, to),
         isA<ConnectAllowed>(),
@@ -844,10 +444,10 @@ void main() {
     });
 
     test('TOP-002 ignores the REVERSED pair', () {
-      final doc = _pair(avrMax: 4, tvMax: 4);
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
-      final id = _link(
+      final doc = connectPair(avrMax: 4, tvMax: 4);
+      final from = connectAvrOut(doc);
+      final to = connectTvIn(doc);
+      final id = connectLink(
         doc,
         'W001',
         PortEndpoint(to.portId),
@@ -866,7 +466,7 @@ void main() {
   group('evaluateConnect — the near-miss for every refusal (AC-051)', () {
     test('EVERY ConnectRule has a near-miss case in this file', () {
       expect(
-        _nearMisses().map((n) => n.rule).toSet(),
+        connectNearMisses().map((n) => n.rule).toSet(),
         ConnectRule.values.toSet(),
         reason:
             'a rule with a known-bad and no known-good near-miss is a rule '
@@ -876,7 +476,7 @@ void main() {
       );
     });
 
-    for (final n in _nearMisses()) {
+    for (final n in connectNearMisses()) {
       test('${n.rule.id} accepts when ${n.what}', () {
         expect(
           n.run(),
@@ -890,19 +490,19 @@ void main() {
 
     test('the two tables are the same size and cover the same rules, so '
         'neither can grow without the other', () {
-      expect(_nearMisses(), hasLength(_refusals().length));
+      expect(connectNearMisses(), hasLength(connectRefusals().length));
       expect(
-        _nearMisses().map((n) => n.rule).toSet(),
-        _refusals().map((r) => r.rule).toSet(),
+        connectNearMisses().map((n) => n.rule).toSet(),
+        connectRefusals().map((r) => r.rule).toSet(),
       );
     });
   });
 
   group('evaluateConnect — a legal pair is accepted', () {
     test('two unmaterialised pins on two devices connect', () {
-      final doc = _pair();
+      final doc = connectPair();
       expect(
-        evaluateConnect(doc, _avrOut(doc), _tvIn(doc)),
+        evaluateConnect(doc, connectAvrOut(doc), connectTvIn(doc)),
         isA<ConnectAllowed>(),
       );
     });
@@ -911,45 +511,45 @@ void main() {
       // The gesture may hesitate; the document may not lie (CR-017). A T2
       // condition implemented as a T1 refusal makes the product unable to
       // document a system it was called in to fix.
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([_port('hdmi.out.1')]),
+        connectBody([connectPort('hdmi.out.1')]),
       );
-      _addDevice(
+      connectAddDevice(
         doc,
-        _tv,
+        connectTv,
         'TV-1',
-        _body([_port('hdmi.in.1')]),
+        connectBody([connectPort('hdmi.in.1')]),
       );
       // Both declared `source`, which DIR-001 flags — in M5.
-      for (final d in [_avr, _tv]) {
+      for (final d in [connectAvr, connectTv]) {
         final body = doc.templates['tpl.${d.v}@1']!.body;
         for (final p in body.ports) {
           p.direction = PortDirection.source;
         }
       }
       expect(
-        evaluateConnect(doc, _avrOut(doc), _tvIn(doc)),
+        evaluateConnect(doc, connectAvrOut(doc), connectTvIn(doc)),
         isA<ConnectAllowed>(),
       );
     });
 
     test('a loopback between two DIFFERENT pins on one device is legal', () {
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([
-          _port('a'),
-          _port('b', order: 'a1'),
+        connectBody([
+          connectPort('a'),
+          connectPort('b', order: 'a1'),
         ]),
       );
-      final a = resolveConnectTarget(doc, deviceId: _avr, portKey: 'a')!;
-      final b = resolveConnectTarget(doc, deviceId: _avr, portKey: 'b')!;
+      final a = resolveConnectTarget(doc, deviceId: connectAvr, portKey: 'a')!;
+      final b = resolveConnectTarget(doc, deviceId: connectAvr, portKey: 'b')!;
       expect(evaluateConnect(doc, a, b), isA<ConnectAllowed>());
     });
   });
@@ -968,17 +568,17 @@ void main() {
     // the containment check left the whole suite green.
 
     test('a device removed by RemoveDeviceCommand refuses the connect', () {
-      final doc = _pair();
+      final doc = connectPair();
       // Both targets are resolved BEFORE the removal — which is exactly
       // the gesture: the user grabs a pin, and the device goes away
       // under them (a delete on another surface, or an undo).
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
+      final from = connectAvrOut(doc);
+      final to = connectTvIn(doc);
       expect(evaluateConnect(doc, from, to), isA<ConnectAllowed>());
 
-      final controller = DocumentController(doc, clock: FixedClock(_when))
-        ..run(RemoveDeviceCommand(id: _avr));
-      expect(doc.devices.containsKey(_avr), isFalse);
+      final controller = DocumentController(doc, clock: FixedClock(connectWhen))
+        ..run(RemoveDeviceCommand(id: connectAvr));
+      expect(doc.devices.containsKey(connectAvr), isFalse);
 
       final verdict = evaluateConnect(doc, from, to);
       expect(
@@ -1002,10 +602,10 @@ void main() {
     });
 
     test('the removed device may be the TO end as well as the FROM end', () {
-      final doc = _pair();
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
-      RemoveDeviceCommand(id: _tv).apply(doc);
+      final doc = connectPair();
+      final from = connectAvrOut(doc);
+      final to = connectTvIn(doc);
+      RemoveDeviceCommand(id: connectTv).apply(doc);
 
       final refused = evaluateConnect(doc, from, to) as ConnectRefused;
       expect(refused.rule, ConnectRule.endpointResolves);
@@ -1027,13 +627,13 @@ void main() {
       PortDirection direction = PortDirection.busNode,
       PortTopology topology = PortTopology.p2p,
     }) {
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'CP-1',
-        _body([
-          _port(
+        connectBody([
+          connectPort(
             'cresnet',
             family: 'ctl.cresnet',
             direction: direction,
@@ -1041,18 +641,18 @@ void main() {
           ),
         ]),
       );
-      _addDevice(
+      connectAddDevice(
         doc,
-        _tv,
+        connectTv,
         'KP-1',
-        _body([_port('cresnet', family: 'ctl.cresnet')]),
+        connectBody([connectPort('cresnet', family: 'ctl.cresnet')]),
       );
       return doc;
     }
 
     test('a busNode pin takes a SECOND drop', () {
       final doc = busDoc();
-      final bus = _pin(doc, _avr, 'cresnet');
+      final bus = connectPin(doc, connectAvr, 'cresnet');
       expect(bus.isMultidrop, isTrue);
       expect(
         bus.effectiveMaxConnections,
@@ -1061,11 +661,16 @@ void main() {
       );
 
       // KP-1 is already on the bus.
-      _link(doc, 'W001', PortEndpoint(bus.portId), const OpenEndpoint('KP-1'));
+      connectLink(
+        doc,
+        'W001',
+        PortEndpoint(bus.portId),
+        const OpenEndpoint('KP-1'),
+      );
       expect(portConductorCount(doc, bus.portId), 1);
 
       expect(
-        evaluateConnect(doc, bus, _pin(doc, _tv, 'cresnet')),
+        evaluateConnect(doc, bus, connectPin(doc, connectTv, 'cresnet')),
         isA<ConnectAllowed>(),
         reason:
             'a two-keypad Cresnet bus is the normal case for C01 + 2x F13, '
@@ -1081,20 +686,25 @@ void main() {
         direction: PortDirection.source,
         topology: PortTopology.multidrop,
       );
-      final bus = _pin(doc, _avr, 'cresnet');
+      final bus = connectPin(doc, connectAvr, 'cresnet');
       expect(bus.isMultidrop, isTrue);
       expect(bus.effectiveMaxConnections, isNull);
     });
 
     test('a p2p pin is still bounded at 1 — this widens nothing else', () {
       final doc = busDoc(direction: PortDirection.source);
-      final pin = _pin(doc, _avr, 'cresnet');
+      final pin = connectPin(doc, connectAvr, 'cresnet');
       expect(pin.isMultidrop, isFalse);
       expect(pin.effectiveMaxConnections, 1);
 
-      _link(doc, 'W001', PortEndpoint(pin.portId), const OpenEndpoint('x'));
+      connectLink(
+        doc,
+        'W001',
+        PortEndpoint(pin.portId),
+        const OpenEndpoint('x'),
+      );
       final refused =
-          evaluateConnect(doc, pin, _pin(doc, _tv, 'cresnet'))
+          evaluateConnect(doc, pin, connectPin(doc, connectTv, 'cresnet'))
               as ConnectRefused;
       expect(refused.rule, ConnectRule.withinMaxConnections);
       expect(refused.message, contains('1 of 1'));
@@ -1105,41 +715,50 @@ void main() {
       // `maxConnections: 2` — a real authored bound (two IR emitters on
       // one 3.5 mm output). Only the DEFAULT 1, which a template reaches
       // by saying nothing, yields to `busNode`.
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AMP-1',
-        _body([
-          _port(
+        connectBody([
+          connectPort(
             'cv.a',
             maxConnections: 2,
             direction: PortDirection.busNode,
           ),
         ]),
       );
-      final pin = _pin(doc, _avr, 'cv.a');
+      final pin = connectPin(doc, connectAvr, 'cv.a');
       expect(pin.isMultidrop, isTrue);
       expect(pin.effectiveMaxConnections, 2);
     });
 
     test('a declared ZERO still means "not a socket", bus or not', () {
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AMP-1',
-        _body([
-          _port(
+        connectBody([
+          connectPort(
             'cv.a',
             maxConnections: 0,
             direction: PortDirection.busNode,
           ),
         ]),
       );
-      _addDevice(doc, _tv, 'SPK-1', _body([_port('in')]));
+      connectAddDevice(
+        doc,
+        connectTv,
+        'SPK-1',
+        connectBody([connectPort('in')]),
+      );
       final refused =
-          evaluateConnect(doc, _pin(doc, _avr, 'cv.a'), _pin(doc, _tv, 'in'))
+          evaluateConnect(
+                doc,
+                connectPin(doc, connectAvr, 'cv.a'),
+                connectPin(doc, connectTv, 'in'),
+              )
               as ConnectRefused;
       expect(refused.message, endsWith('accepts no connections.'));
     });
@@ -1148,10 +767,10 @@ void main() {
       // The seed catalog itself, not a fixture: `ctl.cresnet` on C01 and
       // on F13 are both declared `BUS` (`PortDirection.busNode`), and
       // §4.4 gives the family `MD` topology.
-      final doc = _doc();
-      _seedDevice(doc, const Uuid('dev-cp'), 'C01', 'CP-1');
-      _seedDevice(doc, const Uuid('dev-kp1'), 'F13', 'KP-1');
-      _seedDevice(doc, const Uuid('dev-kp2'), 'F13', 'KP-2');
+      final doc = connectDoc();
+      connectSeedDevice(doc, const Uuid('dev-cp'), 'C01', 'CP-1');
+      connectSeedDevice(doc, const Uuid('dev-kp1'), 'F13', 'KP-1');
+      connectSeedDevice(doc, const Uuid('dev-kp2'), 'F13', 'KP-2');
 
       final cp = resolveConnectTarget(
         doc,
@@ -1168,7 +787,12 @@ void main() {
       );
       expect(cp.effectiveMaxConnections, isNull);
 
-      _link(doc, 'W001', PortEndpoint(cp.portId), const OpenEndpoint('KP-1'));
+      connectLink(
+        doc,
+        'W001',
+        PortEndpoint(cp.portId),
+        const OpenEndpoint('KP-1'),
+      );
       final kp2 = resolveConnectTarget(
         doc,
         deviceId: const Uuid('dev-kp2'),
@@ -1178,17 +802,22 @@ void main() {
     });
 
     test('THE REAL CATALOG: A05 70V out feeds two F08 pendants', () {
-      final doc = _doc();
-      _seedDevice(doc, const Uuid('dev-amp'), 'A05', 'AMP-1');
-      _seedDevice(doc, const Uuid('dev-spk1'), 'F08', 'SPK-1');
-      _seedDevice(doc, const Uuid('dev-spk2'), 'F08', 'SPK-2');
+      final doc = connectDoc();
+      connectSeedDevice(doc, const Uuid('dev-amp'), 'A05', 'AMP-1');
+      connectSeedDevice(doc, const Uuid('dev-spk1'), 'F08', 'SPK-1');
+      connectSeedDevice(doc, const Uuid('dev-spk2'), 'F08', 'SPK-2');
 
       final cv = resolveConnectTarget(
         doc,
         deviceId: const Uuid('dev-amp'),
         portKey: 'cv.a',
       )!;
-      _link(doc, 'W001', PortEndpoint(cv.portId), const OpenEndpoint('SPK-1'));
+      connectLink(
+        doc,
+        'W001',
+        PortEndpoint(cv.portId),
+        const OpenEndpoint('SPK-1'),
+      );
 
       final spk2 = resolveConnectTarget(
         doc,
@@ -1218,25 +847,25 @@ void main() {
     });
 
     test('TOP-004 beats TOP-005', () {
-      final doc = _pair();
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
+      final doc = connectPair();
+      final from = connectAvrOut(doc);
+      final to = connectTvIn(doc);
       doc.tombstones[from.portId] = Tombstone(
-        deletedAt: _when,
+        deletedAt: connectWhen,
         entityType: 'Port',
         by: 'test',
       );
-      doc.devices[_avr] = DeviceInstance(
-        id: _avr,
+      doc.devices[connectAvr] = DeviceInstance(
+        id: connectAvr,
         kind: DeviceKind.rackDevice,
-        templateRef: doc.devices[_avr]!.templateRef,
+        templateRef: doc.devices[connectAvr]!.templateRef,
         designator: 'AVR-1',
         name: 'AVR-1',
         placement: const ShelfPlacement(
           hostDeviceId: Uuid('dev-gone'),
           order: FracIndex('a0'),
         ),
-        meta: _meta(),
+        meta: connectMeta(),
       );
       expect(
         (evaluateConnect(doc, from, to) as ConnectRefused).rule,
@@ -1245,19 +874,19 @@ void main() {
     });
 
     test('TOP-005 beats TOP-001', () {
-      final doc = _pair();
-      final from = _avrOut(doc);
-      doc.devices[_avr] = DeviceInstance(
-        id: _avr,
+      final doc = connectPair();
+      final from = connectAvrOut(doc);
+      doc.devices[connectAvr] = DeviceInstance(
+        id: connectAvr,
         kind: DeviceKind.rackDevice,
-        templateRef: doc.devices[_avr]!.templateRef,
+        templateRef: doc.devices[connectAvr]!.templateRef,
         designator: 'AVR-1',
         name: 'AVR-1',
         placement: const ShelfPlacement(
           hostDeviceId: Uuid('dev-gone'),
           order: FracIndex('a0'),
         ),
-        meta: _meta(),
+        meta: connectMeta(),
       );
       expect(
         (evaluateConnect(doc, from, from) as ConnectRefused).rule,
@@ -1266,9 +895,9 @@ void main() {
     });
 
     test('TOP-001 beats TOP-002', () {
-      final doc = _pair(avrMax: 4);
-      final from = _avrOut(doc);
-      final id = _link(
+      final doc = connectPair(avrMax: 4);
+      final from = connectAvrOut(doc);
+      final id = connectLink(
         doc,
         'W001',
         PortEndpoint(from.portId),
@@ -1284,10 +913,10 @@ void main() {
     });
 
     test('TOP-002 beats TOP-003', () {
-      final doc = _pair();
-      final from = _avrOut(doc);
-      final to = _tvIn(doc);
-      final id = _link(
+      final doc = connectPair();
+      final from = connectAvrOut(doc);
+      final to = connectTvIn(doc);
+      final id = connectLink(
         doc,
         'W001',
         PortEndpoint(from.portId),
@@ -1306,9 +935,18 @@ void main() {
 
   group('DR-012.3 — acceptsFamily, and the third empty field', () {
     test('a pin always accepts its OWN family, declared list or not', () {
-      final doc = _doc();
-      _addDevice(doc, _avr, 'AVR-1', _body([_port('out', family: 'a.b')]));
-      final t = resolveConnectTarget(doc, deviceId: _avr, portKey: 'out')!;
+      final doc = connectDoc();
+      connectAddDevice(
+        doc,
+        connectAvr,
+        'AVR-1',
+        connectBody([connectPort('out', family: 'a.b')]),
+      );
+      final t = resolveConnectTarget(
+        doc,
+        deviceId: connectAvr,
+        portKey: 'out',
+      )!;
       expect(t.acceptsFamily(const SignalFamilyId('a.b')), isTrue);
       expect(t.acceptsFamily(const SignalFamilyId('c.d')), isFalse);
     });
@@ -1333,19 +971,19 @@ void main() {
 
     test('a DECLARED list widens the pin, and never narrows it below its '
         'own family', () {
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'AVR-1',
-        _body([
+        connectBody([
           PortDef(
             key: const PortKey('out'),
             label: 'OUT',
             connector: const ConnectorTypeId('conn.rj45'),
             signalFamily: const SignalFamilyId('video.hdbaset'),
             face: Face.rear,
-            position: _pos,
+            position: connectPos,
             order: const FracIndex('a0'),
             // The exclusion case seed_registries.dart:394 describes,
             // authored the other way round: a pin that also takes IR.
@@ -1353,7 +991,11 @@ void main() {
           ),
         ]),
       );
-      final t = resolveConnectTarget(doc, deviceId: _avr, portKey: 'out')!;
+      final t = resolveConnectTarget(
+        doc,
+        deviceId: connectAvr,
+        portKey: 'out',
+      )!;
       expect(t.acceptsFamily(const SignalFamilyId('ctl.ir')), isTrue);
       expect(
         t.acceptsFamily(const SignalFamilyId('video.hdbaset')),
@@ -1371,21 +1013,21 @@ void main() {
       int maxConnections = 1,
       String outFamily = 'video.hdmi.2_1',
     }) {
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'MTX-1',
-        _body([
-          _port('in.1', direction: PortDirection.sink),
-          _port(
+        connectBody([
+          connectPort('in.1', direction: PortDirection.sink),
+          connectPort(
             'out.1',
             direction: PortDirection.source,
             order: 'a1',
             family: outFamily,
             maxConnections: maxConnections,
           ),
-          _port(
+          connectPort(
             'out.2',
             direction: PortDirection.source,
             order: 'a2',
@@ -1401,7 +1043,7 @@ void main() {
       final doc = withChainDevice();
       final next = chainOutputFor(
         doc,
-        deviceId: _avr,
+        deviceId: connectAvr,
         family: const SignalFamilyId('video.hdmi.2_1'),
       );
       expect(next!.portKey.v, 'out.1');
@@ -1410,16 +1052,16 @@ void main() {
     test('a FULL output is skipped and the next one wins — the chain does '
         'not stop at an occupied jack', () {
       final doc = withChainDevice();
-      _link(
+      connectLink(
         doc,
         'W1',
-        PortEndpoint(derivePortId(_avr, const PortKey('out.1'))),
+        PortEndpoint(derivePortId(connectAvr, const PortKey('out.1'))),
         const OpenEndpoint('to the field'),
       );
       expect(
         chainOutputFor(
           doc,
-          deviceId: _avr,
+          deviceId: connectAvr,
           family: const SignalFamilyId('video.hdmi.2_1'),
         )!.portKey.v,
         'out.2',
@@ -1430,22 +1072,22 @@ void main() {
       // The whole point of "output": a chain that re-armed from an input
       // would draw a cable back the way it came.
       final doc = withChainDevice();
-      _link(
+      connectLink(
         doc,
         'W1',
-        PortEndpoint(derivePortId(_avr, const PortKey('out.1'))),
+        PortEndpoint(derivePortId(connectAvr, const PortKey('out.1'))),
         const OpenEndpoint('to the field'),
       );
-      _link(
+      connectLink(
         doc,
         'W2',
-        PortEndpoint(derivePortId(_avr, const PortKey('out.2'))),
+        PortEndpoint(derivePortId(connectAvr, const PortKey('out.2'))),
         const OpenEndpoint('to the field'),
       );
       expect(
         chainOutputFor(
           doc,
-          deviceId: _avr,
+          deviceId: connectAvr,
           family: const SignalFamilyId('video.hdmi.2_1'),
         ),
         isNull,
@@ -1461,7 +1103,7 @@ void main() {
       expect(
         chainOutputFor(
           doc,
-          deviceId: _avr,
+          deviceId: connectAvr,
           family: const SignalFamilyId('audio.speaker'),
         ),
         isNull,
@@ -1470,13 +1112,13 @@ void main() {
 
     test('a BUS NODE is a valid chain output — reading `source` alone '
         'would end the chain at every bus device in the catalog', () {
-      final doc = _doc();
-      _addDevice(
+      final doc = connectDoc();
+      connectAddDevice(
         doc,
-        _avr,
+        connectAvr,
         'IRB-1',
-        _body([
-          _port(
+        connectBody([
+          connectPort(
             'bus.1',
             direction: PortDirection.busNode,
             family: 'ctl.ir',
@@ -1485,7 +1127,7 @@ void main() {
       );
       final next = chainOutputFor(
         doc,
-        deviceId: _avr,
+        deviceId: connectAvr,
         family: const SignalFamilyId('ctl.ir'),
       );
       expect(next, isNotNull);
@@ -1499,8 +1141,8 @@ void main() {
     test('a device that is not in the document is null, not a throw', () {
       expect(
         chainOutputFor(
-          _doc(),
-          deviceId: _avr,
+          connectDoc(),
+          deviceId: connectAvr,
           family: const SignalFamilyId('video.hdmi.2_1'),
         ),
         isNull,
