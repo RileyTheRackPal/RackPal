@@ -16762,6 +16762,68 @@ The family lands in all four copies of the palette (the Dart seed,
 `pal1_check.py`, `seed-devices.md` §4.4 and docs/01 §6.6) and all three
 palette gates pass at 57 families over 415 in-band cross-domain pairs.
 
+### §11.126 DR-127 · The M5-H2 review's unpriced findings enter M5, which is an amendment and not a disposition
+
+**A §8.3 AMENDMENT, in its own commit, with its own ruling ID**, because
+that is what §8.3 requires of a scope change and because four of DR-125's
+dispositions were *"unpriced"* rather than refused. Unpriced is not a
+state a milestone can close over: it means somebody agreed the finding was
+real and said nothing about who builds it.
+
+**Settled by the user 2026-09-05**, on the reasoning *"might as well
+finish them out while they're fresh"* and that M5's buildable work was
+done.
+
+**11.126.1 THE FOUR BODIES, AND WHERE THEY GO.**
+
+| Board | What | From |
+|---|---|---|
+| `#837` M5-J | The remedy prompt generalises: `SIG-002`, `CON-001` and `PWR-003` each offer to create the part that fixes them and wire it in | DR-125 §11.124.4 |
+| `#838` M5-K | `ELE-006`: a tap selector for constant-voltage speakers, and CV-to-Low-Z switching | DR-125 §11.124.1 finding 5 |
+| `#839` M5-L | `PLC-001`: a cabinet head end, which the reviewer says is the COMMON residential case rather than an edge | DR-125 finding 11 |
+| `#840` M5-M | `CODE-002`: a code-adjacent finding wants more than a row in a panel | DR-125 finding 12 |
+
+**11.126.2 A FIFTH ARRIVED WHILE THIS WAS BEING WRITTEN**, and it is
+DR-126's, not the reviewer's. `#842` M5-N holds the fields with no
+producer, and `#841` its one chapter: **census `p()`'s parameters against
+`PortDef`'s fields.** Three such fields turned up in one milestone
+(`maxConnections` at DR-124, `acceptedFamilies` at DR-126, `RuleMeta`'s
+severity one layer up at DR-125), **two of them because a user's review
+made a rule fire on a connection that is correct**. The third was found
+the same way. Nobody has looked for the fourth, and the census is the only
+one of the five items here that could have been scheduled before the
+review rather than after it.
+
+**11.126.3 WHAT THIS AMENDMENT DOES NOT DO.** It adds no rule. The
+catalogue stays at 28, CR-021 and AC-040 are untouched, and M5-H1's pack
+told the reviewer in writing that *"whether there should be MORE checks"*
+was not being asked. **Every item here changes what an EXISTING rule
+offers or how it reads**, which is the difference between answering the
+review and reopening the rule set.
+
+**11.126.4 THE COST NOTE, RECORDED BECAUSE THE REASONING FOR THE
+AMENDMENT RESTS ON IT.** The decision was taken on the ground that M5's
+buildable work was finished and the project is ahead of the roadmap's
+pricing (§7, `M`, 4-6 weeks). **That was measured before 2026-09-05's
+findings and is no longer quite true**: DR-126 alone added a signal
+family, a builder parameter and a test file, and this ruling adds five
+items to the board.
+
+**The estimate is not amended, because an estimate is not scope and
+changing it here would confuse the two.** What is recorded is that M5-H2
+has produced buildable work at a rate no decomposition predicted, being
+four rulings in two days, so **M5's remaining cost should be re-measured
+before M6 opens rather than after**, and §8.9 makes that a live question
+rather than a tidy one: M6 opens only over a predecessor whose clauses are
+discharged or parked.
+
+**11.126.5 THE SIGN-OFF IS NOT BLOCKED ON ANY OF THIS.** `#305` and `#306`
+close on the REVIEW, which is a human act, and these five are its
+consequences. **A milestone clause is discharged by evidence, not by an
+empty backlog** (§8.1), so nothing here reopens M5-H, and an item still
+open when M5 closes is re-parented rather than left under a closed Epic
+(DR-097).
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
