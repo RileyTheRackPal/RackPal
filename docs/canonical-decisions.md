@@ -16609,6 +16609,102 @@ something else, and a test suite that asserted around the gap rather than
 through it. **The AC-051 corpus is complete at 28/28 and saw none of
 them**, because a pair proves a rule fires, not that it fires correctly.
 
+### §11.125 DR-126 · `DIR-003` was never keyed on the wrong field: the catalogue was calling two signals by one name
+
+**DR-125 §11.124.3 held this for a decision and framed it wrongly**, in
+terms this ruling has to correct before it can answer. That paragraph says
+the predicate *"matches families only"* and that *"the data to discriminate
+exists and the rule ignores all of it"*, over a three-row census of the
+emitter jack, the receiver jack and the receiver pigtail.
+
+**The census was a row short, and the missing row is the whole case.**
+
+| Port | Family | Dir | Connector | Pinout | Bank |
+|---|---|---|---|---|---|
+| `C02.emitter.N` | `ctl.ir_emitter` | source | `conn.3_5mm_ts` | `mono-tip-sleeve` | `emitterOut` |
+| `C02.ir.rx.N` | `ctl.ir_receiver` | sink | `conn.3_5mm_trs` | `xantech-stereo` | `rxIn` |
+| **`V01.ir.in`, and ten more like it** | **`ctl.ir_receiver`** | **sink** | **`conn.3_5mm_trs`** | **`xantech-stereo`** | `control` |
+
+Rows two and three are **identical on every field any rule reads**. Row two
+is the hazard and row three is a matrix, an AVR, a cable box or a TV: the
+thing an emitter head is put on, which is what an IR system is for. So no
+re-keying of the predicate could have separated them, `pinoutVariant`
+least of all, and the fix DR-125 imagined was unavailable.
+
+**11.125.1 THE MECHANISM WAS WRITTEN DOWN IN THE REGISTRY THE WHOLE TIME.**
+`seed_registries.dart` states it beside the two family definitions:
+
+> receivers are tip = signal, ring = GND, sleeve = +12 V; emitters are tip
+> = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys
+> the emitter and can damage the supply.
+
+**A two-conductor TS plug entering a three-conductor jack bridges ring to
+sleeve.** That is the damage, and it happens because the jack SUPPLIES
++12 V, not because the device at the other end is called a receiver. So
+the discriminating fact is **whether the jack is powered**, and the
+catalogue had no way to say it because it filed powered and unpowered
+sinks under one family.
+
+**11.125.2 RULED: the passive device input is its own family.**
+`ctl.ir_direct` ships, and eleven port sites move to it. `ctl.ir_receiver`
+keeps its id and narrows to what it always meant, **the powered
+receiver-eye circuit**: a block's RX inputs, a block's `IR IN`, and the eye
+pigtail that draws the supply.
+
+**THE PREDICATE DOES NOT CHANGE, AND THAT IS THE POINT.**
+`_irEmitterIntoReceiver` asks for one `ctl.ir_emitter` and one
+`ctl.ir_receiver` and is correct as written. It fired on the everyday case
+because the everyday case was wearing the hazard's family name. **A rule
+reported as keyed on the wrong field turned out to be a rule reading a
+field that lied**, which is a different defect with a different fix, and
+DR-125 would have had us edit the one thing here that was already right.
+
+**11.125.3 THE BLOCK'S `IR IN` IS POWERED, ON A TRADE ANSWER.** Censused,
+`C02.ir.in.processor` was the only port whose side was not obvious. The
+answer is that it depends on the unit: an RTI head end carries +12 V and
+the IR signal on a four-wire Phoenix bus, while others take a supply from
+an adapter and present a 3.5 mm input that will accept either a receiver
+eye or an emitter lead directly. **None is self-powered**, because an
+emitter output has only enough current for two diodes, which is DR-124's
+`maxConnections: 2` arriving from the other direction.
+
+**Assume powered.** The seeded `C02` therefore files `ir.in.processor`
+with the RX jacks. This is deliberately the conservative side of a fact
+that varies by model: the rule springs the wire back and always offers
+`[ Connect anyway ]` (CR-017), so a false hesitation on a block that
+tolerates a direct emitter lead costs one click, and the opposite error
+costs an emitter and possibly a supply.
+
+**11.125.4 THE SPLIT EXPOSED A SECOND DEFECT IN THE ELEVEN.** They declare
+`xantech-stereo`, the powered pinout, on jacks this ruling has just
+established are not powered, and `conn.3_5mm_trs` on jacks an emitter's TS
+plug goes straight into. Both are corrected with the re-family:
+`ctl.ir_direct` defaults to `conn.3_5mm_ts` and `mono-tip-sleeve`, so an
+emitter output and a device input agree on family, connector and pinout,
+and the direct-connect cable is the same object at both ends.
+
+**11.125.5 THE ALTERNATIVE THAT WAS REJECTED, AND ITS BEST ARGUMENT.**
+The eleven could have been re-familied to `ctl.ir_emitter` with
+`dir: sink`, adding no family at all. The predicate would then be correct
+for the same reason, PAL-1 would face no thirteenth `ctl` pattern, and the
+argument is strong: `SignalFamilyDef` answers *"what IS this signal"*, and
+an emitter output and a device input carry one signal, so a second family
+for the far end of one cable is the mirror of the error being fixed.
+
+**It was rejected on the legend.** A family's `displayName` prints on
+T0.01 and in the inspector, and `IR emitter (flasher)` on a television's
+`IR IN` row is a device name on a port that is not that device. Renaming
+the family to cover both ends would leave the id `ctl.ir_emitter`
+describing half of what it holds, and an id is in the file format
+(CR-117), so it cannot be renamed without a migration. **Two names that
+are each right beat one name that is right at one end.**
+
+**11.125.6 PAL-1's OWN HISTORY IS THE REASON THIS IS MEASURED AND NOT
+ASSERTED.** `tools/pal1_check.py` records that PAL-1 was called *"verified
+clear"* three times over a palette holding fourteen collisions, **the two
+IR families among them**. The thirteenth `ctl` pattern is therefore chosen
+by running the gate, not by reading the table it checks.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
