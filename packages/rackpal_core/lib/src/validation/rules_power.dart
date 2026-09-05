@@ -134,6 +134,13 @@ List<Finding> rulePwr003(RackDocument doc) {
         // devices are in it should not survive somebody adding a fourth.
         targets: [rack.id, ...members],
         primaryEntityId: rack.id,
+        // THE ONLY TIER-3 RULE WITH A REMEDY, AND THE REVIEW IS WHY
+        // (DR-128 §11.127.5). The M5-H2 reviewer's own sentence for this
+        // rule is "somebody will arrive with a power strip nobody drew,
+        // in a rack whose load was worked out without it", which names
+        // both the defect and its answer. The other twelve tier-3 rules
+        // have no remedy because nobody has designed one.
+        remedy: FindingRemedy.addRackPdu,
       ),
     );
   }

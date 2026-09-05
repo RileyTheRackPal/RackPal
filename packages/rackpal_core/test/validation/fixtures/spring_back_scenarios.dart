@@ -54,6 +54,11 @@ PortDef springBackPort(
   String connector = 'conn.rj45',
   List<String> accepts = const [],
   ReturnChannel? returnChannel,
+  // FOUR BY DEFAULT so a scenario never trips `TOP-003` by accident: this
+  // tier's cases are about the SIGNAL, and a pin that filled up would
+  // refuse at tier 1 before any of them ran. A caller testing an
+  // occupancy path passes 1.
+  int maxConnections = 4,
 }) => PortDef(
   key: PortKey(key),
   label: key,
@@ -65,7 +70,7 @@ PortDef springBackPort(
   direction: dir,
   returnChannel: returnChannel,
   acceptedFamilies: [for (final f in accepts) SignalFamilyId(f)],
-  maxConnections: 4,
+  maxConnections: maxConnections,
 );
 
 /// Two devices, one port each, so every case below is exactly the pair

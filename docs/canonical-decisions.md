@@ -16917,6 +16917,56 @@ unaffected for every finding that has no remedy: **unknown serializes as
 an absent key** (G4/CR-114), and a finding is computed rather than stored
 in any case (docs/02 §4.8).
 
+**11.127.8 THE `PWR-003` REMEDY WAS DECIDED WRONG FIRST, AND THE TRADE
+CORRECTED IT.** This ruling's own §11.127.5 says the remedy inserts `P01`,
+the 24-outlet 0U vertical PDU. **The option that produced that answer was
+written by an agent listing what the catalogue happened to hold**, and the
+user returned the fact it was missing:
+
+> a small bank of PoE injectors or Sonos Ports connected to a simple power
+> strip and then plugged into a PDU outlet to allow for remote resetting
+> (Via BlueBOLT or OvrC, e.g.) and automation/power sequencing
+
+and, separately, that *"these small power strips are commonly just set on
+a shelf in the rack"*.
+
+**THE MODEL ALREADY EXPRESSED IT AND THE CATALOGUE DID NOT.** All three
+seeded templates that provide outlets are `outletsConsumed: 1` with
+`outletsProvided: N`, which is exactly a strip: one outlet in, six out, so
+`PWR-003`'s arithmetic closes the shortfall by five. **What is missing is
+the row**, and it is the fifth thing in one milestone that a rule asks a
+person to do and the product cannot express.
+
+`P02`, a shelf-mounted 6-outlet passive strip, ships. **CR-061's count
+moves from 49 to 50** on DR-120's precedent for `F19` (§12.28), and 50 is
+still mid-band in CR-061's confirmed 40 to 55, so the ruling decided a
+band and this moves within it. **Six outlets is the user's figure and it cites a
+real product**: *"6 outlets is standard on the most basic Wattbox power
+strip, which is easily the most common my company installs."* That is
+AC-052 satisfied in the form the rule actually wants, a number with a
+source rather than a number with a rationale.
+
+**THE ROW STAYS GENERIC, AND THE CITATION DOES NOT.** §10.9 keeps the
+shipped catalogue to archetypes, so `P02` is a `Rack Power Strip` and not
+a WattBox; the brand is recorded as WHERE THE SIX CAME FROM, in the
+template's source note and here, which is the same split `sources.md`
+already uses. The strip states no wattage of its own, being passive.
+
+**11.127.9 AND THE REMEDY ASKS RATHER THAN GUESSING WHEN THE RACK IS
+EMPTY.** Ruled: if the rack already has anything providing outlets, the
+button inserts the strip, because that is the everyday fix and it needs no
+0U channel. **If nothing in the rack provides an outlet, the remedy
+returns a CHOICE rather than picking**, and the panel asks whether to add
+a strip or a PDU.
+
+The rule already knows which case it is, having summed `outletsProvided`
+to decide the rack was short, so the branch costs nothing to evaluate. The
+reason for asking rather than deciding is that the two answers are
+different jobs: a strip in a rack with no distribution reaches a wall
+outlet and is a legal drawing, a PDU is the beginning of a power plan, and
+**a remedy that silently picks the second has made a design decision on
+somebody's behalf.**
+
 **11.127.7 THE REMEDY'S OWN TEST FOUND THREE GHOST IDS IN THE AC-051
 CORPUS.** `spring_back_scenarios.dart` named `conn.xlr3_f`,
 `video.hdmi` and `audio.analog_bal`; the shipped ids are `conn.xlr3`,

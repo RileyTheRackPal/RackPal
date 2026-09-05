@@ -92,6 +92,33 @@ String findingFingerprint({
   return out;
 }
 
+/// A tier-3 action the issues panel offers beside a finding.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// ONE VALUE, AND `SpringBackRemedy`'s DOC COMMENT IS WHY
+/// ═══════════════════════════════════════════════════════════════════════
+/// That enum says inventing labels for rules nobody has asked about "would
+/// be putting words in a designer's mouth and shipping them as though the
+/// corpus had said them". The same restraint holds here, and the same
+/// thing lifts it: the M5-H2 review asked for `PWR-003`, so `PWR-003` gets
+/// one and the other twelve tier-3 rules do not.
+///
+/// `CODE-002` (`#840`) is expected to want the second value. That is the
+/// reason this is an enum on `Finding` rather than a boolean or a
+/// hard-wired button in the panel (DR-128 §11.127.5): a second bespoke
+/// path is how one mechanism becomes three, which §5.3.20 records
+/// happening to three unreachable models in one issue.
+enum FindingRemedy {
+  /// `PWR-003`: more things to plug in than places to plug them. Places
+  /// the 24-outlet 0U vertical PDU the catalogue already ships.
+  addRackPdu('Add a rack PDU');
+
+  const FindingRemedy(this.label);
+
+  /// What the panel's button reads.
+  final String label;
+}
+
 /// One tier-2 or tier-3 DRC finding about this document.
 ///
 /// Tier 1 does not produce these: it refuses the command and returns a
@@ -104,6 +131,7 @@ final class Finding {
     required this.message,
     required this.targets,
     this.primaryEntityId,
+    this.remedy,
   });
 
   /// `'SIG-001'`. Joins to `RuleMeta`, `RuleOverride` and `AckedFinding`.
@@ -132,6 +160,20 @@ final class Finding {
   /// total draw is about a set, and `AckedFinding.targetEntityId` is
   /// nullable for the same reason.
   final Uuid? primaryEntityId;
+
+  /// The action the panel offers beside this row, or null when there is
+  /// nothing to offer.
+  ///
+  /// NULL IS THE NORMAL CASE and carries no information about the
+  /// finding's importance: twelve of the thirteen tier-3 rules have no
+  /// remedy because nobody has designed one, not because they are minor.
+  ///
+  /// IT IS DELIBERATELY OUTSIDE THE FINGERPRINT. `targetFingerprint` is
+  /// computed from the rule id and the targets and from nothing else, so
+  /// giving a rule a remedy later must not orphan every `AckedFinding`
+  /// somebody has already written a reason on. A remedy is a thing the
+  /// PRODUCT offers, not a fact about the defect.
+  final FindingRemedy? remedy;
 
   /// What an `AckedFinding` must carry to suppress THIS finding.
   String get targetFingerprint =>
