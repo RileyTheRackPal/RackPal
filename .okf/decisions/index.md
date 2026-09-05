@@ -30,6 +30,7 @@ Each requires a user decision and is recorded in `docs/canonical-decisions.md` Â
 * [DR-034, the community library is fetched, never cloned](dr-034-community-library-fetch.md) - DR-033's read path; clone does not survive a platform with no git, the format was already ruled and unbuilt, and the bundled snapshot is a floor while the fetch is a ceiling.
 * [DR-102, the palette answers for every shelf](dr-102-the-palette-answers-for-every-shelf.md) - one merged list of the document and N libraries, tagged by source; a template id in two of them is TWO rows, because templateIdFor derives ids from display names and hiding one is the defect that function's own header refuses.
 * [DR-103, a library row copies itself in](dr-103-a-library-row-copies-itself-in.md) - DR-102's palette listed rows the placement path could not resolve; copy-on-place is AC-041's standing promise, the placement is built BEFORE the copy is committed, and the census found a click announcing a refusal for a gesture nobody made.
+* [DR-126, the catalogue was calling two signals by one name](dr-126-the-catalogue-was-calling-two-signals-by-one-name.md) - DR-125 held the IR pairing for a decision on a census that was a row short; eleven device inputs were identical to the hazard on every field a rule reads, so the split is powered against passive and `_irEmitterIntoReceiver` never changes. Implementing it found `acceptedFamilies` unauthorable by construction, the second such field in two days.
 * [DR-036, public GPLv3 project, CC0 catalog, nothing priced](dr-036-public-gplv3-cc0-catalog.md) - reverses DR-006 and discharges DR-033's precondition; the licence names matter less than the two clauses copy-on-place forced, a catalog that is deliberately not copyleft and an output exception putting every document the app emits outside the GPL.
 * [DR-037, the Plan view's exit criterion](dr-037-plan-view-exit-criterion.md) - a stranger finds every drop from a printed set, because an author cannot test legibility to somebody else; three of its four decisions came from code that contradicted the design, including an alpha path row 9 was too narrowly worded to forbid.
 * [DR-039, project history is a journal first](dr-039-history-is-a-journal-first.md) - a request for snapshots that cited the journal's benefit; what a file LOOKED like and why it CHANGED are two artifacts, and only the second fits in the file today.
@@ -114,3 +115,11 @@ being able to link it. DR-007 and DR-018 are next, for DR-028 and DR-029.
 **DR-006 was on this list while its own concept sat two lines above**, which is
 the drift a list of absences invites: it names what is missing, so nothing fails
 when an entry stops being true.
+
+**AND THE LIST STOPPED BEING THE WHOLE ANSWER ON 2026-09-05.** It enumerates
+early rulings whose concepts were never written, and reads as though that is the
+only gap. It is not: **DR-104 through DR-125 have no concepts here either**,
+twenty-two of them, because the bundle was last updated on 2026-08-30 and six
+days of M5 landed after it. DR-126 is written because it was written as the work
+landed; the twenty-two behind it are owed. A list of absences that is itself
+incomplete is worse than no list, since it invites the reader to believe it.

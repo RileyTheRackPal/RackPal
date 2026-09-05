@@ -33,7 +33,7 @@ TemplateBody _body(List<PortDef> ports) => TemplateBody(
 );
 
 /// Two families and two connectors, enough to state every rule under test
-/// without dragging the 56-family seed in.
+/// without dragging the 57-family seed in.
 Registries _registries() => Registries(
   signalFamilies: {
     const SignalFamilyId('video.hdmi'): const SignalFamilyDef(

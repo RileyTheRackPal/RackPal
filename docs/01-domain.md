@@ -385,7 +385,8 @@ The requirement's "Analog RCA" and "speaker level" share one orange and are sepa
 | `id` | Display | Connector | Dir | Topo | Tag | Shipped limits |
 |---|---|---|---|---|---|---|
 | `ctl.ir_emitter` | **IR emitter (flasher)** | `conn.3_5mm_ts` | → | P2P | `IR` | ~15 m; see §7.4 |
-| `ctl.ir_receiver` | IR receiver | `conn.3_5mm_trs` | → to block | MD | `IRRX` | ~60 m; receivers are powered, emitters are not |
+| `ctl.ir_receiver` | IR receiver (powered eye) | `conn.3_5mm_trs` | → to block | MD | `IRRX` | ~60 m; the POWERED receiver-eye circuit only: a block's RX jacks, its `IR IN`, the eye pigtail (DR-126) |
+| `ctl.ir_direct` | IR direct (device input) | `conn.3_5mm_ts` | ← from emitter | P2P | `IRD` | ~15 m; the passive jack on a matrix, AVR, source or TV that an emitter lead lands on. Not powered, so `DIR-003` does not fire on it (DR-126) |
 | `ctl.rs232` | **RS-232** | `conn.de9` | ↔ | **P2P only** | `232` | ~15 m at 9600–19200; see §7.8 |
 | `ctl.rs485` | RS-485 | `conn.euroblock_3` | ↔ half-duplex | **BUS** | `485` | **32 unit loads**, 120 Ω at *both* ends only, 1200 m |
 | `ctl.dmx512` | DMX512-A | `conn.xlr5` | → over RS-485 | **BUS** | `DMX` | 32 unit loads, **512 channels/universe**, terminator at the far end, `busUniverse` on the port |

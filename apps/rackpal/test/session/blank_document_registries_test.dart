@@ -49,9 +49,9 @@ void main() {
     });
   });
 
-  test('and the 56 families, with the tag and hue §4.3/§4.4 print', () {
+  test('and the 57 families, with the tag and hue §4.3/§4.4 print', () {
     final registries = _blank().registries;
-    expect(registries.signalFamilies, hasLength(56));
+    expect(registries.signalFamilies, hasLength(57));
 
     final power = registries.signalDomains[const SignalDomainId('pwr')]!;
     expect(power.displayName, 'Power');

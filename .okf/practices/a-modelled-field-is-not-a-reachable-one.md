@@ -1,8 +1,8 @@
 ---
 type: Playbook
 title: A modelled field is not a reachable one; look for the gesture, not the field
-description: Fields with no writer, a callback with no caller, and one field whose only writer is the JSON decoder. Ask what a person clicks, and follow it down.
-tags: [practice, model, commands, verification]
+description: Fields with no writer, a callback with no caller, one field whose only writer is the JSON decoder, and three found in one milestone where the missing producer was the seed catalogue's own port builder. Ask what a person clicks, and follow it down.
+tags: [practice, model, commands, verification, catalog, dr-124, dr-125, dr-126, m5]
 timestamp: 2026-08-12T00:00:00Z
 status: adopted
 ---
@@ -229,6 +229,36 @@ document was in neither the model nor the codec.
 found while implementing something else, and each added a command nobody had
 scheduled. The ones found by reading cost a paragraph, which is the argument for
 reading first.
+
+# The seed BUILDER is a producer too, and it hid three fields in one milestone
+
+**Every case above asks what COMMAND writes a field. M5 found a different
+producer missing: the catalogue's own port builder.** `catalog_ports.dart`'s
+`p()` constructs all 727 seeded ports, and a `PortDef` field it has no parameter
+for takes its default **by construction rather than by anybody's choice**. That
+reads as authored data and is not.
+
+| Field | Found by | Cost |
+|---|---|---|
+| `maxConnections` | DR-124 | `TOP-003` refused the second head of a dual-head IR flasher at the gesture, with no `[ Connect anyway ]` to escape through. `seed-devices.md` had documented `2` since M0 |
+| `acceptedFamilies` | DR-126 | `SIG-002` refuses every cross-family pairing in the shipped catalogue. Invisible until DR-126 deliberately created one that is not same-family |
+| `RuleMeta` severity band | DR-125 | Not the builder, but the same shape one layer up: `evaluateDocument` discarded the predicate's severity, so `RCK-003`'s `advisory` had never reached a user since M5-E |
+
+**Three in one milestone, all found the same way: a rule fired on a connection
+that is correct.** That is now the strongest single signal in this repository
+that a field has no producer, and it is a better detector than reading, because
+it costs nothing to notice and arrives on its own.
+
+**A CANARY IS WORTH MORE THAN A CENSUS HERE**, and one existed.
+`connect_rules_test.dart` asserted *"NOT ONE seed catalog port declares
+acceptedFamilies"* and said in writing that a failure would mean the catalog had
+started declaring. It fired at exactly the right moment and was widened to a
+named set rather than deleted. A census finds a field once; a canary finds the
+day it changes.
+
+**What is owed**: a census of `p()`'s parameters against `PortDef`'s fields.
+Two of three were found by a user's review rather than by looking, and the third
+is the one nobody has looked for yet.
 
 # Citations
 

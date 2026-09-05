@@ -3178,8 +3178,11 @@ S/PDIF is 75 ohm on a BNC too, and the seeded catalog's own default connector fo
 **Two validation rules name catalog ids, and a test holds them.** The durable form is a field on
 `SignalFamilyDef`, which is not built, so a rename in the seeded registries would otherwise switch a
 safety check off in silence. `port_validation_test.dart` resolves every id against the shipped
-registries and asserts there are still exactly two IR families, because the hazard IS that they are
-two.
+registries and asserts which IR families exist. **It said "exactly two, because the hazard IS that
+they are two" until DR-126 §11.125**, which is the right instinct on the wrong count: the hazard is
+a two-conductor TS plug meeting a jack that supplies +12 V, so the split that matters is powered
+against passive and there are three. The test now NAMES the three rather than counting them, because
+a count of three passes on a merge back to two the day somebody adds a fourth.
 
 **PANEL FILL IS ABSENT FROM THE FOOTER, AND THAT IS A DECISION.** §4.5's worked line ends
 `· Panel fill R: 71%`; that number comes only from the auto-layout, which is M4-K, and every port

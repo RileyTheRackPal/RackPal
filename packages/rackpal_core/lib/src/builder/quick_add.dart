@@ -167,8 +167,18 @@ const _kDirections = <String, PortDirection>{
 /// `{resolved family id: (direction that swaps it, what it becomes)}`.
 /// See the note at the call site: this exists for the IR pinout hazard
 /// and holds exactly one row on purpose.
+///
+/// THE DESTINATION CHANGED AT DR-126 §11.125 AND THE ROW DID NOT MOVE.
+/// `ir35 in` used to resolve to `ctl.ir_receiver`, on the reading that an
+/// IR input listens and is therefore a receiver. It is not: a matrix's
+/// `IR IN` is a PASSIVE jack an emitter lead lands on, and
+/// `ctl.ir_receiver` now means only the powered receiver-eye circuit. A
+/// person typing `ir35 in` is describing the everyday device input, so
+/// this points at `ctl.ir_direct`. Quick Add cannot author a block's RX
+/// jack by token, which is correct: that is the hazard end, and reaching
+/// it should cost naming the family outright.
 const _kDirectionalFamilies = <String, (PortDirection, String)>{
-  'ctl.ir_emitter': (PortDirection.sink, 'ctl.ir_receiver'),
+  'ctl.ir_emitter': (PortDirection.sink, 'ctl.ir_direct'),
 };
 
 const _kFaces = <String, Face?>{
@@ -348,18 +358,20 @@ QuickAddResult parseQuickAdd(Registries registries, String source) {
   // ONE TOKEN WHOSE FAMILY DEPENDS ON THE DIRECTION, AND THE REASON IS
   // A DESTRUCTIVE PINOUT (DR-060 §11.59.11)
   // ═══════════════════════════════════════════════════════════════════
-  // `seed_registries.dart` states the hazard where the two IR families
-  // are declared: "receivers are tip = signal, ring = GND, sleeve =
+  // `seed_registries.dart` states the hazard where the IR families are
+  // declared: "receivers are tip = signal, ring = GND, sleeve =
   // +12 V; emitters are tip = IR in, sleeve = GND. Plugging an emitter
   // into a receiver jack destroys the emitter and can damage the
   // supply." AC-052 makes `pinoutVariant` mandatory on every 3.5 mm IR
   // port for that reason.
   //
   // docs/06 §9.1 types `ir35 out` at step 9 for emitters and
-  // `1 ir35 in "IR IN"` at step 12 for the matrix's IR INPUT, which is a
-  // RECEIVER input. One token, two families, and the direction is what
-  // separates them: an IR port you drive is an emitter, an IR port that
-  // listens is a receiver.
+  // `1 ir35 in "IR IN"` at step 12 for the matrix's IR INPUT. THIS
+  // COMMENT USED TO CALL THAT "a RECEIVER input" and DR-126 §11.125
+  // establishes it is not: the matrix jack is passive, and an emitter
+  // lead goes straight into it. One token, two families, and the
+  // direction is what separates them: an IR port you drive is an
+  // emitter, an IR port that is driven is a direct input.
   //
   // A NAMED TABLE RATHER THAN AN `if`, so a second pair is a row and not
   // a second branch. If one ever arrives this becomes a field on
@@ -368,10 +380,19 @@ QuickAddResult parseQuickAdd(Registries registries, String source) {
   final swapped = _kDirectionalFamilies[family?.v];
   if (swapped != null && direction == swapped.$1) {
     family = SignalFamilyId(swapped.$2);
-    // The connector is NOT swapped with it. `conn.3_5mm_ts` and
-    // `conn.3_5mm_trs` are the two families' defaults and they differ,
-    // but a named connector must still win: `16 ir35 in trs` is a person
-    // being explicit, and DR-060 §11.59.4 says a default loses.
+    // The connector is NOT swapped with it, and a named connector must
+    // still win: `16 ir35 in trs` is a person being explicit, and DR-060
+    // §11.59.4 says a default loses.
+    //
+    // THE RE-READ IS NOW A NO-OP FOR THE ONLY ROW IN THE TABLE, and it
+    // stays because it is the general rule and not the special case.
+    // `ctl.ir_emitter` and `ctl.ir_direct` BOTH default to
+    // `conn.3_5mm_ts` since DR-126 §11.125.4, which is the whole point of
+    // that clause: the direct-connect lead is the same object at both
+    // ends. Before it, the swap moved the default from TS to TRS and this
+    // line carried the change; a second row in the table would need it
+    // again, so deleting it would be optimising against the comment three
+    // lines above.
     inheritedConnector = namedConnector == null
         ? registries.signalFamilies[family]?.defaultConnector
         : inheritedConnector;

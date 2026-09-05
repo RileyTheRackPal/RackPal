@@ -499,34 +499,59 @@ void main() {
   });
 
   group('IR direction picks the family (DR-060 §11.59.11)', () {
-    // The catalog states the hazard where the two families are declared:
+    // The catalog states the hazard where the IR families are declared:
     // emitter and receiver have incompatible pinouts, and plugging one
     // into the other's jack destroys the emitter and can damage the
     // supply. docs/06 §9.1 types `ir35 out` for emitters at step 9 and
-    // `1 ir35 in "IR IN"` at step 12 for a matrix's IR INPUT, which is a
-    // receiver. Settled by the user on 2026-08-15.
+    // `1 ir35 in "IR IN"` at step 12 for a matrix's IR INPUT. Settled by
+    // the user on 2026-08-15.
+    //
+    // THE DESTINATION OF THE SWAP MOVED AT DR-126 §11.125. This block
+    // used to end "which is a receiver", and a matrix's IR IN is not one:
+    // it is a passive jack an emitter lead lands on, and
+    // `ctl.ir_receiver` now means only the powered receiver-eye circuit.
+    // The swap itself, and the reason for it, are untouched.
     test('ir35 out is an emitter', () {
       final p = planOk(r, '16 ir35 out "IR OUT {n:2}"');
       expect(p.family?.v, 'ctl.ir_emitter');
       expect(p.connector?.v, 'conn.3_5mm_ts');
     });
 
-    test('AND ir35 in IS A RECEIVER, which is a different pinout', () {
+    test('AND ir35 in IS A DIRECT INPUT, which an emitter lead lands on', () {
       final p = planOk(r, '1 ir35 in "IR IN"');
-      expect(p.family?.v, 'ctl.ir_receiver');
+      expect(p.family?.v, 'ctl.ir_direct');
       expect(
         p.connector?.v,
-        'conn.3_5mm_trs',
-        reason: 'the receiver needs the ring for +12 V',
+        'conn.3_5mm_ts',
+        reason:
+            'a passive device input takes the emitter’s own TS plug: '
+            'DR-126 §11.125.4 makes the direct-connect lead the same '
+            'object at both ends',
       );
     });
 
-    test('a NAMED connector still wins over the swapped default', () {
+    test('typing ir35 in cannot reach the family that is the hazard', () {
+      // The powered receiver-eye circuit is where an emitter lead does
+      // damage, so no token resolves to it by direction alone. Reaching
+      // it costs naming the family outright, which is the point.
+      expect(planOk(r, '1 ir35 in').family?.v, isNot('ctl.ir_receiver'));
+      expect(planOk(r, '1 ir35 out').family?.v, isNot('ctl.ir_receiver'));
+      expect(planOk(r, '1 irrx in').family?.v, 'ctl.ir_receiver');
+    });
+
+    test('a NAMED connector still wins over the family default', () {
       // §11.59.4's rule survives the swap: a person being explicit is
       // not overruled by a table.
-      final p = planOk(r, '1 ir35 in 3_5mm_ts');
-      expect(p.family?.v, 'ctl.ir_receiver');
-      expect(p.connector?.v, 'conn.3_5mm_ts');
+      //
+      // TRS, NOT TS. This read `1 ir35 in 3_5mm_ts` and asserted TS,
+      // which was a real check while `ir35 in` swapped to a TRS-default
+      // family. DR-126 gave `ctl.ir_direct` a TS default, so that command
+      // now proves nothing: it would pass with the named connector
+      // ignored entirely. The named value has to DIFFER from the default
+      // for this test to be able to fail.
+      final p = planOk(r, '1 ir35 in 3_5mm_trs');
+      expect(p.family?.v, 'ctl.ir_direct');
+      expect(p.connector?.v, 'conn.3_5mm_trs');
     });
 
     test('and no other family swaps on direction', () {

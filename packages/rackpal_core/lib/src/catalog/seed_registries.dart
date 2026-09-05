@@ -1,4 +1,4 @@
-// THE SEEDED SIGNAL REGISTRIES — the 8 domains and 56 families of
+// THE SEEDED SIGNAL REGISTRIES — the 8 domains and 57 families of
 // docs/catalog/seed-devices.md §4.3/§4.4 (= canon §6.2.5/§6.4).
 //
 // ═════════════════════════════════════════════════════════════════════
@@ -27,7 +27,7 @@
 // THIS IS A FOURTH COPY OF THE PALETTE, AND IT IS GATED LIKE ONE
 // ═════════════════════════════════════════════════════════════════════
 // `tools/pal1_check.py` REMAINS THE SINGLE AUTHORITY (DR-010 §11.10.1,
-// §4.2). Hand-authoring 8 domains and 56 families into Dart creates a
+// §4.2). Hand-authoring 8 domains and 57 families into Dart creates a
 // fourth copy of data that already exists in three places, and doc-vs-
 // authority drift is precisely the failure `tools/palette_parity.py` was
 // written to catch after — in its own words — it "shipped four times".
@@ -313,7 +313,7 @@ SignalFamilyDef _family(
   aliases: aliases,
 );
 
-/// The 56 shipped signal families (§4.4).
+/// The 57 shipped signal families (§4.4).
 ///
 /// ═══════════════════════════════════════════════════════════════════
 /// HOW §4.4's `Dir` AND `Topo` COLUMNS ARE READ, MECHANICALLY
@@ -352,6 +352,7 @@ SignalFamilyDef _family(
 /// carry is observable.
 Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
   const src = PortDirection.source;
+  const snk = PortDirection.sink;
   const bi = PortDirection.bidirectional;
   const pas = PortDirection.passive;
   const p2p = PortTopology.p2p;
@@ -822,12 +823,23 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
 
     // ── Control — #CC79A7, ✚ point-to-point / ✳ multi-drop bus ───────
     //
-    // The two IR families are separate because the pinout hazard is real
-    // and destructive: receivers are tip = signal, ring = GND, sleeve =
-    // +12 V; emitters are tip = IR in, sleeve = GND. Plugging an emitter
-    // into a receiver jack destroys the emitter and can damage the
+    // THE THREE IR FAMILIES ARE SEPARATE BECAUSE THE PINOUT HAZARD IS
+    // REAL AND DESTRUCTIVE: receivers are tip = signal, ring = GND,
+    // sleeve = +12 V; emitters are tip = IR in, sleeve = GND. Plugging an
+    // emitter into a receiver jack destroys the emitter and can damage the
     // supply. That is why `PortDef.pinoutVariant` is a safety-adjacent
     // mandatory field on every 3.5 mm IR port (AC-052).
+    //
+    // THERE ARE THREE AND NOT TWO SINCE DR-126 §11.125, and the reason is
+    // that the sentence above names the wrong discriminator. The damage is
+    // a two-conductor TS plug bridging ring to sleeve on a jack that
+    // SUPPLIES +12 V; it has nothing to do with what the far device is
+    // called. `ctl.ir_receiver` therefore means the POWERED receiver-eye
+    // circuit (a block's RX jacks, its `IR IN`, the eye's pigtail), and
+    // `ctl.ir_direct` means the passive device input an emitter lead
+    // lands on. Eleven ports carried the first name while being the
+    // second thing, which is why `DIR-003` fired an `error` spring-back on
+    // an emitter head reaching a television.
     _family(
       'ctl.ir_emitter',
       'IR emitter (flasher)',
@@ -845,13 +857,32 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
     ),
     _family(
       'ctl.ir_receiver',
-      'IR receiver',
+      'IR receiver (powered eye)',
       'ctl',
       'conn.3_5mm_trs',
       src,
       md,
       'IRRX',
       dash: [4000, 3000, 1500, 3000],
+    ),
+    // `1.5,9` IS THE EMITTER'S OWN DOT AT THREE TIMES THE GAP, and the
+    // pattern was searched rather than picked: 3,928 candidates were run
+    // through `tools/pal1_check.py` in full and 1,209 survived, so the
+    // choice among them is a design one. It reads as the IR family's
+    // quieter sibling on T0.01, which is what it is, and a 7.5 pt gap
+    // difference is unmistakable at 300 dpi where the 0.5 pt separating
+    // the near misses (`2,3`, `1.5,4`) would not be. The exact-tuple
+    // within-domain limb cannot see a pattern that TILES to another one,
+    // so `1.5,3,1.5,3` was excluded by hand: it renders as `1.5,3`.
+    _family(
+      'ctl.ir_direct',
+      'IR direct (device input)',
+      'ctl',
+      'conn.3_5mm_ts',
+      snk,
+      p2p,
+      'IRD',
+      dash: [1500, 9000],
     ),
     _family(
       'ctl.rs232',
@@ -978,7 +1009,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       md,
       'VTG',
       // 9 is the free slot in this domain's dash-dot run: DALI 5,
-      // RS-232 6, KNX 7, DMX 8, Cresnet 10. PAL-1 passes at 56 families.
+      // RS-232 6, KNX 7, DMX 8, Cresnet 10. PAL-1 passes at 57 families.
       dash: [9000, 3000, 1500, 3000],
       weight: 1000,
     ),

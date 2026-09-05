@@ -53,15 +53,30 @@ void main() {
       }
     });
 
-    test('there are exactly two of them, because the hazard is that they '
-        'are two', () {
-      // The seeded registries split emitter from receiver precisely
-      // because the pinouts are opposite. A third IR family, or a merge
-      // back to one, changes what this rule should say.
-      final ir = registries.signalFamilies.keys.where(
-        (k) => k.v.startsWith('ctl.ir_'),
+    test('there are exactly three of them, and which three is the point', () {
+      // THIS ASSERTED TWO UNTIL DR-126 §11.125, on the reasoning that
+      // "the hazard is that they are two". That was the wrong count for
+      // the right instinct. The hazard is a two-conductor TS plug
+      // bridging ring to sleeve on a jack that SUPPLIES +12 V, so the
+      // split that matters is powered against passive, and the catalogue
+      // had eleven passive device inputs filed under the powered name.
+      //
+      // Named rather than counted, because a count cannot fail usefully:
+      // a merge back to two would pass a `hasLength(3)` written the day
+      // somebody added a fourth.
+      final ir = registries.signalFamilies.keys
+          .where((k) => k.v.startsWith('ctl.ir_'))
+          .map((k) => k.v)
+          .toSet();
+      expect(ir, {'ctl.ir_emitter', 'ctl.ir_receiver', 'ctl.ir_direct'});
+      expect(
+        ir,
+        equals(kIrFamilies.map((f) => f.v).toSet()),
+        reason:
+            'the validation set and the registry must name the same '
+            'families, or the pinout check goes quiet on whichever one '
+            'the set forgot',
       );
-      expect(ir, hasLength(2));
     });
   });
 

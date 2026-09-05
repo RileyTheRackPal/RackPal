@@ -88,13 +88,14 @@ Map<String, TemplateBody> buildVideoCatalog() {
   v01..p(
     'ir.in',
     'IR IN',
-    connector: 'conn.3_5mm_trs',
-    family: 'ctl.ir_receiver',
+    connector: 'conn.3_5mm_ts',
+    family: 'ctl.ir_direct',
     dir: PortDirection.sink,
     bank: 'control',
     bankLabel: 'Control',
     bankSide: SymbolSide.top,
-    pinout: 'xantech-stereo',
+    pinout: 'mono-tip-sleeve',
+    accepts: const ['ctl.ir_emitter'],
   );
   for (var i = 1; i <= 8; i++) {
     v01.p(
@@ -225,11 +226,12 @@ Map<String, TemplateBody> buildVideoCatalog() {
     ..p(
       'ir.in',
       'IR IN',
-      connector: 'conn.3_5mm_trs',
-      family: 'ctl.ir_receiver',
+      connector: 'conn.3_5mm_ts',
+      family: 'ctl.ir_direct',
       dir: PortDirection.sink,
       bank: 'control',
-      pinout: 'xantech-stereo',
+      pinout: 'mono-tip-sleeve',
+      accepts: const ['ctl.ir_emitter'],
     )
     ..p(
       'dc.in',
@@ -318,11 +320,12 @@ Map<String, TemplateBody> buildVideoCatalog() {
     ..p(
       'ir.in',
       'IR IN',
-      connector: 'conn.3_5mm_trs',
-      family: 'ctl.ir_receiver',
+      connector: 'conn.3_5mm_ts',
+      family: 'ctl.ir_direct',
       dir: PortDirection.sink,
       bank: 'control',
-      pinout: 'xantech-stereo',
+      pinout: 'mono-tip-sleeve',
+      accepts: const ['ctl.ir_emitter'],
     )
     ..p(
       'ac.in',
@@ -487,11 +490,12 @@ Map<String, TemplateBody> buildVideoCatalog() {
     ..p(
       'ir.in',
       'IR IN',
-      connector: 'conn.3_5mm_trs',
-      family: 'ctl.ir_receiver',
+      connector: 'conn.3_5mm_ts',
+      family: 'ctl.ir_direct',
       dir: PortDirection.sink,
       bank: 'control',
-      pinout: 'xantech-stereo',
+      pinout: 'mono-tip-sleeve',
+      accepts: const ['ctl.ir_emitter'],
     )
     ..p(
       'service',
@@ -590,12 +594,13 @@ Map<String, TemplateBody> buildVideoCatalog() {
     ..p(
       'ir.in',
       'IR IN',
-      connector: 'conn.3_5mm_trs',
-      family: 'ctl.ir_receiver',
+      connector: 'conn.3_5mm_ts',
+      family: 'ctl.ir_direct',
       dir: PortDirection.sink,
       bank: 'control',
       bankLabel: 'Control',
-      pinout: 'xantech-stereo',
+      pinout: 'mono-tip-sleeve',
+      accepts: const ['ctl.ir_emitter'],
     )
     ..p(
       'ir.out',
@@ -832,12 +837,13 @@ Map<String, TemplateBody> buildVideoRoleVariants() {
     ..p(
       'ir.in',
       'IR IN',
-      connector: 'conn.3_5mm_trs',
-      family: 'ctl.ir_receiver',
+      connector: 'conn.3_5mm_ts',
+      family: 'ctl.ir_direct',
       dir: PortDirection.sink,
       bank: 'control',
       bankLabel: 'Control',
-      pinout: 'xantech-stereo',
+      pinout: 'mono-tip-sleeve',
+      accepts: const ['ctl.ir_emitter'],
     )
     ..p(
       'ir.out',

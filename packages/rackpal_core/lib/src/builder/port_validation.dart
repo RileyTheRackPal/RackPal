@@ -31,13 +31,22 @@ import 'package:rackpal_core/src/units/ids.dart';
 /// Coaxial S/PDIF, which is a 75 ohm connection wherever it appears.
 const kSpdifCoaxFamily = SignalFamilyId('audio.spdif_coax');
 
-/// The two IR families, which are separate BECAUSE the pinout differs and
-/// getting it wrong is destructive: a receiver is tip signal, ring ground,
-/// sleeve +12 V; an emitter is tip IR, sleeve ground. Plugging an emitter
-/// into a receiver jack destroys the emitter and can damage the supply.
+/// The three IR families, which are separate BECAUSE the pinout differs
+/// and getting it wrong is destructive: a receiver is tip signal, ring
+/// ground, sleeve +12 V; an emitter is tip IR, sleeve ground. Plugging an
+/// emitter into a receiver jack destroys the emitter and can damage the
+/// supply.
+///
+/// `ctl.ir_direct` JOINED THEM AT DR-126 §11.125 AND MUST BE HERE, even
+/// though every seeded port carrying it declares `mono-tip-sleeve`. The
+/// set gates AUTHORED templates, and a passive device input is the family
+/// somebody hand-building a TV is most likely to reach for: it is the one
+/// IR family whose ports are not obviously a hazard, which makes an
+/// uncited pinout on it the easiest to leave blank.
 const kIrFamilies = <SignalFamilyId>{
   SignalFamilyId('ctl.ir_emitter'),
   SignalFamilyId('ctl.ir_receiver'),
+  SignalFamilyId('ctl.ir_direct'),
 };
 
 /// The impedance coaxial S/PDIF is specified at.
@@ -209,7 +218,7 @@ Map<String, List<PortIssue>> validatePorts(TemplateBody body) {
 
     // ── An IR jack that does not say which way it is wired ───────────
     // THE ONLY WARNING HERE THAT IS ABOUT HARDWARE RATHER THAN PAPER.
-    // The seeded registries carry the two IR families separately for
+    // The seeded registries carry the three IR families separately for
     // exactly this reason, and AC-052 makes the value citable before a
     // template ships in the catalog.
     if (kIrFamilies.any((f) => f.v == port.signalFamily.v) &&

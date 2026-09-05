@@ -248,7 +248,7 @@ void main() {
 
     test('a keypad is 22/4 with an UNDETERMINED service', () {
       // docs/07 §4's table prints `Keypad` in its SERVICE column and
-      // there is no keypad family among the 56: which control bus a
+      // there is no keypad family among the 57: which control bus a
       // keypad speaks is chosen with the control system, months after
       // the 22/4 is pulled.
       expect(shapeOf('outlet.keypad'), {'media.22_4': 1});
