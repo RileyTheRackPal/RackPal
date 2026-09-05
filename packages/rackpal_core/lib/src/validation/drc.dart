@@ -49,6 +49,7 @@
 import 'package:rackpal_core/src/model/enums.dart' show Severity;
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/validation/finding.dart';
+import 'package:rackpal_core/src/validation/rule_catalogue.dart';
 import 'package:rackpal_core/src/validation/rules_cable.dart';
 import 'package:rackpal_core/src/validation/rules_code.dart';
 import 'package:rackpal_core/src/validation/rules_power.dart';
@@ -116,9 +117,33 @@ List<Finding> evaluateDocument(RackDocument doc, {String? only}) {
       // and one that forgot would leak a suppressed rule onto a sheet.
       if (resolved == Severity.off) continue;
 
+      // STEP 2b — A BANDED RULE REPORTS ITS OWN SEVERITY, AND ONLY A
+      // BANDED ONE MAY (DR-125 §11.124.2).
+      //
+      // The default above is right for every other rule and was ruled so:
+      // M5-E overwrote `LEN-001`'s self-chosen `advisory` because that
+      // argument *"is not in the catalogue"*, and a predicate picking a
+      // severity the catalogue did not authorise is inventing a rule
+      // (CR-021).
+      //
+      // `RCK-003` is the case where the row itself authorises three, and
+      // until this existed the `advisory` its predicate had been setting
+      // since M5-E reached nobody at all.
+      //
+      // AN OVERRIDE COLLAPSES THE BAND. If the project has set one, it is
+      // the project saying what this rule counts as here, and every band
+      // becomes that value: `rules_rack.dart` already promised that a
+      // project demoting `RCK-003` demotes all three.
+      final band = kRulesById[raw.ruleId]?.severityBand;
+      final overridden = doc.settings.ruleOverrides.containsKey(raw.ruleId);
+      final severity =
+          (band != null && !overridden && band.contains(raw.severity))
+          ? raw.severity
+          : resolved;
+
       final finding = Finding(
         ruleId: raw.ruleId,
-        severity: resolved,
+        severity: severity,
         message: raw.message,
         targets: raw.targets,
         primaryEntityId: raw.primaryEntityId,

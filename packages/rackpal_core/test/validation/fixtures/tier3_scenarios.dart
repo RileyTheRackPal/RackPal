@@ -63,9 +63,15 @@ RackDocument _overCapacity() {
 /// 85% advisory line.
 RackDocument _underCapacity() {
   final doc = fixtureDoc(weightCapacity: Mass.fromKilograms(50));
+  // 25 kg IS HALF OF 50, WHICH IS UNDER THE 60% ADVISORY LINE (DR-125).
+  // It was 40 kg while the band opened at 85%; when the review moved the
+  // advisory to 60% this fixture started firing the rule it exists to
+  // NOT fire, and the AC-051 contract caught it rather than a reviewer.
+  // That is the pair working: a near-miss has to stay a near-miss when
+  // the threshold moves, or it silently stops testing anything.
   fixturePlaceBody(
     doc,
-    fixtureBody(frontU: 2, weight: Mass.fromKilograms(40)),
+    fixtureBody(frontU: 2, weight: Mass.fromKilograms(25)),
     1,
     seq: 1,
     designator: 'AMP-1',
@@ -539,7 +545,7 @@ List<DrcFixture> tier3Fixtures() => [
   DrcFixture(
     ruleId: 'RCK-003',
     kind: FixtureKind.nearMiss,
-    what: '40 kg in the same rack, under the 85% advisory line too',
+    what: '25 kg in the same rack, under the 60% advisory line too',
     run: () => fromDocument(_underCapacity()),
   ),
   DrcFixture(

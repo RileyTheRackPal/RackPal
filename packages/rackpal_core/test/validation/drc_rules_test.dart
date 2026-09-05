@@ -16,6 +16,8 @@
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 
+import 'fixtures/fixture_docs.dart';
+
 void main() {
   final at = DateTime.utc(2026, 9, 3, 12);
   EntityMeta meta() => EntityMeta(createdAt: at, updatedAt: at, updatedBy: 't');
@@ -513,6 +515,111 @@ void main() {
       );
       put(pdu.key, 8);
       expect(ids('PWR-003'), isEmpty);
+    });
+  });
+  // ═══════════════════════════════════════════════════════════════════
+  // RCK-003's THREE BANDS (M5-H2, DR-125)
+  // ═══════════════════════════════════════════════════════════════════
+  // The AC-051 pair asserts WHICH RULE fires and says nothing about how
+  // loudly, so before this the band was the only part of RCK-003 no test
+  // held. That is what let the 85% line sit unexamined until a domain
+  // reviewer read it.
+  group('RCK-003 speaks in three bands', () {
+    Severity? severityAt(int kg) {
+      final doc = fixtureDoc(weightCapacity: Mass.fromKilograms(100));
+      fixturePlaceBody(
+        doc,
+        fixtureBody(frontU: 2, weight: Mass.fromKilograms(kg)),
+        1,
+        seq: 1,
+        designator: 'AMP-1',
+      );
+      final found = evaluateDocument(doc).where((f) => f.ruleId == 'RCK-003');
+      return found.isEmpty ? null : found.single.severity;
+    }
+
+    test('silent below the advisory line', () {
+      expect(severityAt(59), isNull);
+    });
+
+    test('advisory from 60%, which is the band the review moved', () {
+      expect(severityAt(60), Severity.advisory);
+      expect(severityAt(84), Severity.advisory);
+    });
+
+    test('warning from 85%, which is where it used to start', () {
+      expect(severityAt(85), Severity.warning);
+      expect(severityAt(100), Severity.warning);
+    });
+
+    test('error over capacity, and it still blocks nothing (CR-022)', () {
+      expect(severityAt(101), Severity.error);
+    });
+
+    test('AN OVERRIDE COLLAPSES THE BAND, which rules_rack promised', () {
+      // "A project that demotes RCK-003 demotes all three." An override is
+      // the project saying what this rule counts as here, so the band
+      // stops applying rather than being clamped into.
+      final doc = fixtureDoc(weightCapacity: Mass.fromKilograms(100));
+      fixturePlaceBody(
+        doc,
+        fixtureBody(frontU: 2, weight: Mass.fromKilograms(70)),
+        1,
+        seq: 1,
+        designator: 'AMP-1',
+      );
+      expect(
+        evaluateDocument(
+          doc,
+        ).singleWhere((f) => f.ruleId == 'RCK-003').severity,
+        Severity.advisory,
+        reason: '70 of 100 kg is the advisory band',
+      );
+      doc.settings.ruleOverrides['RCK-003'] = RuleOverride(
+        severity: Severity.error,
+        reason: 'this shop stacks racks on a mezzanine',
+        by: 'reviewer',
+        at: at,
+      );
+      expect(
+        evaluateDocument(
+          doc,
+        ).singleWhere((f) => f.ruleId == 'RCK-003').severity,
+        Severity.error,
+        reason: 'the override wins over the band it collapses',
+      );
+    });
+
+    test('an UNBANDED rule still cannot choose its own severity', () {
+      // The other direction, and the one M5-E ruled on: LEN-001 declares
+      // no band, so whatever its predicate sets is discarded. A test here
+      // rather than only on RCK-003, because a change to the evaluator
+      // that widened banding to everything would pass every test above.
+      expect(kRulesById['LEN-001']!.severityBand, isNull);
+      expect(
+        kRuleCatalogue
+            .where((m) => m.severityBand != null)
+            .map((m) => m.ruleId),
+        ['RCK-003'],
+        reason: 'exactly one banded row today; add deliberately',
+      );
+    });
+
+    test('the advisory sentence says what to do, not just what is true', () {
+      final doc = fixtureDoc(weightCapacity: Mass.fromKilograms(100));
+      fixturePlaceBody(
+        doc,
+        fixtureBody(frontU: 2, weight: Mass.fromKilograms(70)),
+        1,
+        seq: 1,
+        designator: 'AMP-1',
+      );
+      final f = evaluateDocument(
+        doc,
+      ).singleWhere((f) => f.ruleId == 'RCK-003');
+      // The reviewer's reason for the band is a floor and some casters,
+      // so the sentence names them rather than restating the percentage.
+      expect(f.message, contains('casters'));
     });
   });
 }
