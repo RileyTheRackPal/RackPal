@@ -16321,6 +16321,99 @@ claim is still narrowed and still true, which was RJ-012's actual
 requirement, and §12.30 records the eight derived sites the old sentence
 was written at.
 
+### §11.122 DR-123 · An authored device reaches the shelf, and the project keeps its copy
+
+**Settled by the user on 2026-09-05**, an **§8.3 amendment** and the
+companion to DR-122. Nothing leaves v1 and no milestone is renumbered.
+
+**11.122.1 THE CENSUS CAME FIRST, AND IT CUT THE SCOPE TO A THIRD OF THE
+REQUEST.** The ask was that an authored device save to a master list, that
+imported `.rmda` files join that list, and that export offer a choice of
+devices. **Two of the three already ship**, from M4-N (§5.3.24 of docs/12):
+
+| Asked for | State |
+|---|---|
+| Export offers a choice of devices | **Built.** `library_io_dialogs.dart` renders a `CheckboxListTile` per template, everything ticked when it opens so *pack the lot* stays one click |
+| An imported library joins the list | **Built.** `loadLibraryShelf` reads EVERY library on the shelf, and `#242` made the palette list them all at once with source chips and a per-library filter |
+| An authored device joins the list | **MISSING, and this ruling is that gap** |
+
+**This is why the census precedes the pricing.** A ruling written from the
+request would have re-specified two shipped subsystems, and the derived
+document would then have described a rebuild nobody did. §1's caveat on
+every decomposition names the same hazard and this is the fourth time it
+has paid.
+
+**11.122.2 THE GAP, STATED AS A MEASUREMENT.**
+`SaveTemplateToProjectCommand` writes into `RackDocument.templates` and
+nowhere else. A device authored in the builder therefore **lives in that
+project only** until somebody deliberately exports an `.rmda`.
+
+**So requirement 2, *"author the long tail once and use it everywhere"*, is
+satisfied for devices that arrive by IMPORT and not for devices the user
+CREATES**, which is backwards, and is the sentence
+`device_builder_actions.dart` has been apologising for since M4-D. M4-N
+closed the import half and read as though it had closed both.
+
+**11.122.3 SAVE WRITES BOTH, AND THE PROJECT COPY IS AUTHORITATIVE FOR THE
+DRAWING.** The project keeps its embedded snapshot exactly as AC-041 and
+DR-103 already require. The shelf gains a copy so the device follows the
+person to the next job. **Neither replaces the other.**
+
+**THE USER'S PRECEDENT IS RollerCoaster Tycoon 2**, whose save file carries
+the custom scenery objects it uses, so a save opens on a machine that never
+had them. That is copy-on-place arriving from outside this project, and it
+decides the direction: **the document must never resolve a device out of a
+shelf**, which docs/02's rejected-alternatives table names as *"a live
+library reference"* and prices as *"drawings that change silently across
+machines"*. DR-103 §11.102 is untouched, `templateRef{templateId, version,
+contentHash}` is untouched, and no `.rmpj` changes shape.
+
+**ONLY AUTHORED DEVICES**, which is the user's own boundary: *"custom
+devices (beyond the archetypes)"*. The 49 seeded templates ship with the
+application and need no shelf copy. A fork of a seeded template **is**
+authored, carries `derivedFrom`, and goes to both.
+
+**11.122.4 THE SHELF WRITE IS NOT A COMMAND, AND THAT IS THE ONE THING A
+READER WILL NOT EXPECT.** AC-014 makes the command stack the single
+mutation gate **for the document**, and the shelf is not the document: it
+is a directory under the data root, shared by every project this person
+opens. A shelf write therefore does not enter the `UndoStack`.
+
+**SO UNDOING THE SAVE DOES NOT UN-SHELVE THE DEVICE**, and that asymmetry
+is deliberate rather than an oversight. `Ctrl+Z` is scoped to the drawing a
+person is looking at, and reaching out of it to delete from a personal
+library is a surprise in the more damaging direction: **an undo that
+silently removes an asset from a library the user has been building across
+jobs is the loss they will not forgive** (DR-015 §11.15.4 makes the same
+argument about `.rmdev`). Withdrawing a device from the shelf is its own
+act in the library surface.
+
+**AND A SHELF FAILURE IS A NOTICE, NEVER A REFUSAL.** The project save
+happens FIRST and completes on its own terms; the shelf copy follows and
+may fail on a session with no data root, an absent directory or an
+unwritable one. All three are states `loadLibraryShelf` already answers as
+an empty shelf without throwing, and the same posture holds for the write:
+**a person must never lose an authored device because a library directory
+was unavailable.**
+
+**11.122.5 PROVENANCE IS KEPT, SO ONE LIST IS A VIEW AND NOT A
+FLATTENING.** The user's answer was one master list **with** provenance.
+The palette keeps badging every row by source, and an authored device lands
+in a library that is the person's own rather than in an unattributed pool.
+**Discarding the source chips would make *"where did this device come
+from"* unanswerable at exactly the moment it matters**, because DR-101's
+`templateIdFor` derives an id from the display name identically on every
+machine, so two libraries holding an `HDMI Matrix 16x16` **collide by
+construction**. DR-103 §11.102.3's three cases decide that collision with
+no prompt and apply to the shelf write unchanged: the key is free, the key
+holds an identical body, or the key holds a different body and a fresh id
+is minted at v1.
+
+**11.122.6 WHAT THIS DOES NOT DO.** It does not make the shelf a sync
+target, does not add a second format, does not touch `.rmdx` or `.rmda`,
+and does not give a library a version chain. It is one write, in one
+caller, plus the surface that names where the write went.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
