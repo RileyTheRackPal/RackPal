@@ -23,7 +23,8 @@
 //
 // ── WHAT IS IN IT ────────────────────────────────────────────────────────
 // Real seed-catalog templates (`buildSeedCatalog`, AC-052 provenance), two
-// racks, 93 devices and exactly 300 `Link`s. It deliberately contains:
+// racks, 109 devices and exactly 300 `Link`s (DR-121 took the keypads
+// from 16 to 32, one bus cable each). It deliberately contains:
 //   * A GENUINE CYCLE with a return channel — `AVR-1 → MTX-1 → DIS-2` and
 //     `DIS-2 → AVR-1` on the display's ARC port (F01's second HDMI declares
 //     `ReturnChannel.arc`, catalog_field.dart:59). Phase 0 has something to
@@ -125,7 +126,14 @@ const List<_Roster> _fieldRoster = [
   (catalogId: 'F09', prefix: 'CAM', count: 8),
   (catalogId: 'F11', prefix: 'WAP', count: 6),
   (catalogId: 'F12', prefix: 'TP', count: 4),
-  (catalogId: 'F13', prefix: 'KEY', count: 16),
+  // THIRTY-TWO, NOT SIXTEEN, AND THE CHANGE IS PHYSICAL. This fixture
+  // used to wire TWO home runs into each of sixteen keypads, which only
+  // worked because `F13` carried three bus ports and `claim` took the
+  // next unused one. A keypad has ONE bus connection; the second cable
+  // was landing on an alternate the device would never wire. DR-121 gave
+  // the keypad a single bus port and the fixture stopped compiling a
+  // fiction, which is the modelling smell showing up as a StateError.
+  (catalogId: 'F13', prefix: 'KEY', count: 32),
   (catalogId: 'F14', prefix: 'VOL', count: 8),
 ];
 
@@ -183,7 +191,7 @@ List<_Run> _wiring() => <_Run>[
     (from: 'PP-4', to: 'SPK-$i', count: 1, fromKey: null),
   for (var i = 1; i <= 8; i++)
     (from: 'PP-4', to: 'VOL-$i', count: 1, fromKey: null),
-  for (var i = 1; i <= 16; i++)
+  for (var i = 17; i <= 32; i++)
     (from: 'PP-5', to: 'KEY-$i', count: 1, fromKey: null),
   for (var i = 1; i <= 8; i++)
     (from: 'PP-6', to: 'DIS-$i', count: 1, fromKey: null),

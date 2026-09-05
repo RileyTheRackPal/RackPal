@@ -97,9 +97,17 @@ A parametric template ships once and presents preset sizes in the picker. The pa
 | Occupancy side, where the product line genuinely spans it | PDU 1U horizontal / 0U vertical | Direction, except by the `role` parameter below |
 | Capacity scalars (VA, PoE budget, channel count) that move together with the count | UPS 1000/1500/3000 VA | `pinoutVariant` |
 | **Endpoint role** on an extender kit sold as one part number | HDBaseT Extender TX/RX; AVoIP Endpoint ENC/DEC | anything else |
+| **Control bus** on a field device whose bus is a wiring choice | Keypad Cresnet / Lutron QS / Vantage (`F13`, `F19`) | anything else |
 
 The `role` parameter is used **exactly twice** (V06, V07) and both uses are extender halves that
-share every physical fact and differ only in port direction. *Rejected alternative:* four separate
+share every physical fact and differ only in port direction.
+
+**The `bus` parameter is DR-121's amendment and is used on the two keypads.** It varies what the
+row above forbids, a port's signal family and its connector, and the argument is that this
+catalogue is generic: `F13` is not a part number, it is "a keypad", so which bus it speaks is a
+wiring choice on one archetype rather than a different product. Before the amendment a keypad
+carried every bus it might speak as a separate port, which said the device had three bus
+connections when it has one. *Rejected alternative:* four separate
 templates, which spends four of thirty rack-side slots on two products.
 
 **A parametric variant is not a template.** RU height is never derived from port count, a 24-port

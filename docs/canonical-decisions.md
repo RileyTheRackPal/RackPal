@@ -16139,6 +16139,79 @@ exists and is not taken here**: P4's `TemplateRole` variants already model
 become role variants rather than accumulate ports is a real question and
 is left open rather than answered by drift.
 
+### §11.120 DR-121 · P4 gains a second variant axis, because a keypad has one bus and the catalogue was saying it had three
+
+**Settled by the user on 2026-09-04**, and it is an **§8.3 amendment**:
+P4's table is a ruling about what a parametric variant may vary, and this
+changes it. Nothing moves between release bands, so roadmap §2 is
+untouched.
+
+**11.120.1 THE CONFLICT, STATED BEFORE IT WAS ROUTED AROUND.** P4 lists
+under *may not vary*: **"signal family of any port"** and **"connector
+type"**. A keypad's bus changes both, `ctl.cresnet` on `conn.phoenix_4`
+becoming `ctl.vantage` on `conn.hardwired`. The request was for
+`TemplateRole` variants; that enum is closed and says why, since P4 uses
+the role parameter *"exactly twice"* and both uses are extender halves.
+Adding a bus to it would have made that sentence false and put a keypad's
+wiring and an extender's direction on one axis.
+
+**So the rule is amended rather than reinterpreted.** The alternative was
+to add the axis quietly under a name P4 did not forbid, which is how a
+ruling becomes decoration.
+
+**11.120.2 THE ARGUMENT P4 COULD NOT HAVE MADE: THE CATALOGUE IS
+GENERIC.** Every seeded template ships `manufacturer: 'Generic'` by
+ruling, and `seed_catalog_test.dart` gates it. So `F13` is not a part
+number, it is **"a keypad"**, and which bus it speaks is a wiring choice
+on one archetype rather than a different product. P4's forbidden row is
+right about the case it was written for, where the family IS the product:
+a matrix that is HDMI or SDI is two products. It does not reach an
+archetype whose family is a site decision.
+
+**Scoped to the two keypads** (`F13`, `F19`), because that is where the
+cost was measured. A third device registers in `busesFor` rather than
+accumulating ports.
+
+**11.120.3 WHAT THIS ENDED.** Before it, a keypad carried every bus it
+might speak as a separate port. DR-120 §11.119.8 measured the drawing at
+32 symbol ops per alternate, but **the model was worse than the drawing**:
+a real keypad has one bus connection, and the catalogue said it had three.
+
+**THE FIXTURE PROVED IT, BY FAILING.** Giving the keypad a single bus port
+broke `schematic_fixture.dart` outright with *"KEY-1 ran out of ports"*,
+because it had been wiring TWO home runs into each of sixteen keypads and
+`claim` was handing the second one an alternate. That second cable was
+never buildable. It existed because three ports existed.
+
+The fixture now holds **thirty-two keypads with one bus cable each**,
+still exactly 300 links. The symbol baseline went 2,403 to 2,515, and
+**the old number was cheaper because the fixture was wrong**: a smaller
+symbol layer bought by drawing a house that cannot be built is not a
+saving.
+
+**11.120.4 THE MACHINERY IS THE ROLE AXIS'S, WHICH IS THE POINT.**
+`ControlBus`, `busVariantTemplateId`, `busesFor`, `resolveTemplateBus`
+and `buildSeedBusVariants` mirror the role five exactly: the shipped bus
+keeps the bare catalog id, derived bodies live outside
+`buildSeedCatalog()`, and the variant id carries the axis so no `.rmpj`
+gains a field (CR-117 untouched, AC-041's snapshot still resolves).
+
+**The catalogue count does not move.** A variant is not a template, and
+`buildSeedCatalog()` still returns 49.
+
+**ONE DIFFERENCE FROM THE ROLE AXIS, AND IT IS DELIBERATE.** V06's halves
+are TRANSCRIBED because they are not a mechanical flip, seven ports
+becoming six. The keypad bodies differ in exactly one port, so all six
+come from one `_keypad` builder: computing them is what stops a Vantage
+keypad drifting from a Cresnet one in a field nobody meant to change.
+
+**11.120.5 THE PORT KEYS DID NOT MOVE**, and that was a constraint rather
+than a preference. `F13` already shipped `cresnet` and `qs.link` as keys,
+a document may hold either, and `connect_rules_test.dart`'s real-catalog
+case resolves `portKey: 'cresnet'` on a seeded keypad. A tidier
+`bus.link` would have moved bytes for nothing and broken that test to no
+purpose.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -16718,6 +16791,12 @@ label onto two drops.
 |---|---|---|
 | **CR-061**, the integer only | "v1 ships 48 templates: 30 rack-side and 18 field-side." | **49 templates: 30 rack-side and 19 field-side.** `F19`, the load-controlling keypad, is the addition (DR-120 §11.119.6). CR-061's REASONING is untouched: it chose 48 because that *"sits mid-band in the confirmed 40-55"*, and 49 is still mid-band, so the ruling decided a band and this moves within it. **The rest of CR-061 stands**, including AC-052's gate that every numeric field on a shipped template cites a source, which is why `F19` states no wattage. |
 | **CR-061**, the single-source claim | "The count is stated in exactly one place, `docs/catalog.md`, and no prose in any document states a number." | **Was already false and is recorded as such.** The count is written at thirteen sites across eleven files, including `lib/` comments, test assertions and canon itself. DR-120 §11.119.7 has the census. Consolidating it is its own work and is not done here. |
+
+### 12.29 Superseded by DR-121 (a second variant axis)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **P4**, the "may not vary" row | A parametric variant may not vary "signal family of any port" or "connector type". | **Amended for a control bus on a field device.** `ControlBus` varies both, on `F13` and `F19` only (DR-121 §11.120.2). The row still governs everywhere else and still governs the ROLE axis: P4's *"exactly twice"* is untouched, because a bus is not a role. The argument is that the seeded catalogue is generic, so a keypad's bus is a wiring choice on one archetype rather than a different product. |
 
 ## 13. Resolved §10 questions
 

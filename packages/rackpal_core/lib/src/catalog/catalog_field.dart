@@ -5,6 +5,7 @@
 // read `impedanceOhms`/`tapWatts` from at all (AC-031).
 
 import 'package:rackpal_core/src/catalog/catalog_ports.dart';
+import 'package:rackpal_core/src/catalog/catalog_roles.dart';
 import 'package:rackpal_core/src/model/device_glyph.dart';
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/mass.dart';
@@ -733,56 +734,10 @@ Map<String, TemplateBody> buildFieldCatalog() {
     banks: f12.banks,
   );
 
-  // F13 · Keypad.
-  final f13 = PortBuilder()
-    ..p(
-      'cresnet',
-      'CRESNET',
-      connector: 'conn.phoenix_4',
-      family: 'ctl.cresnet',
-      dir: PortDirection.busNode,
-      bank: 'bus',
-      bankLabel: 'Control Bus',
-    )
-    ..p(
-      'qs.link',
-      'QS LINK (alt)',
-      connector: 'conn.rj45',
-      family: 'ctl.lutron_qs',
-      dir: PortDirection.busNode,
-      bank: 'bus',
-    )
-    // A THIRD ALTERNATE, on the two above's precedent (DR-120). Vantage
-    // joins its bus with Wago or wire nut connections, so the port is
-    // hardwired and carries no connector: see `ctl.vantage`'s own note.
-    ..p(
-      'vantage.link',
-      'VANTAGE STATION BUS (alt)',
-      connector: 'conn.hardwired',
-      family: 'ctl.vantage',
-      dir: PortDirection.busNode,
-      bank: 'bus',
-    );
-  out['F13'] = _field(
-    model: 'KP-1',
-    displayName: 'Keypad',
-    description:
-        'ctl.cresnet and ctl.lutron_qs both ship topologyFree: true — '
-        'Lutron QS is 2000 ft on 12 AWG; Cresnet is limited twice over '
-        '(data length and 24V power drop).',
-    typePrefix: 'KP',
-    glyph: DeviceGlyph.control,
-    tags: const ['keypad', 'control', 'field'],
-    weight: _kg(0.2),
-    power: PowerProfile(
-      nameplateWatts: 3,
-      typicalWatts: 2,
-      outletsProvided: 0,
-      outletsConsumed: 0,
-    ),
-    ports: f13.ports,
-    banks: f13.banks,
-  );
+  // F13 · Keypad, low voltage. One bus port; the other two are
+  // DERIVED (DR-121), which is what stopped this device growing a
+  // port per bus. See `_keypad` at the foot of this file.
+  out['F13'] = _keypad(bus: ControlBus.cresnet, loadControlling: false);
 
   // F14 · Volume Control — a real DeviceInstance, not an InlineAdapter
   // (CR-015): two independent cable pulls land here.
@@ -1016,58 +971,41 @@ Map<String, TemplateBody> buildFieldCatalog() {
     banks: f18.banks,
   );
 
-  // F19 · Keypad, load-controlling.
-  //
-  // THE DISTINCTION IS THE LOAD, NOT THE BRAND (user, 2026-09-04):
-  // *"Keypad voltage entirely depends on if it controls a load or not. LV
-  // keypads do not, HV keypads are directly wired to loads."* So this is
-  // not a Vantage device with a Lutron and a Crestron sibling owed; it is
-  // the LOAD-CONTROLLING keypad, and it carries the same three bus
-  // alternates F13 does because all three systems build both kinds.
-  //
-  // WHAT MAKES IT HIGH VOLTAGE IS THE `ac.in` PORT, on F03's precedent:
-  // the motorised screen takes a trigger AND a hardwired line-voltage
-  // feed, and this takes a bus AND one. A keypad with no such port is
-  // F13, which is the whole difference.
-  //
-  // SUPPLY ONLY, NO SWITCHED OUTPUT (user's call). The load it switches
-  // is drawn as its own run where somebody needs it on the sheet, which
-  // is what F03 already does and what keeps this device honest about the
-  // one thing it knows: that line voltage arrives here.
-  //
-  // NO POWER FIGURES, and that is G4 rather than an omission. F13 states
-  // 3 W / 2 W because somebody had a number; nobody has measured this,
-  // and inventing a nameplate for a device whose whole point is that it
-  // sits on a branch circuit would put a fabricated figure into
-  // `PWR-001`'s arithmetic. An absent draw is unknown and the rules skip
-  // it (AC-039's neighbour).
-  final f19 = PortBuilder()
+  // F19 · Keypad, load-controlling. Same builder, same three
+  // buses; the `ac.in` port is the whole difference (DR-120).
+  out['F19'] = _keypad(bus: ControlBus.cresnet, loadControlling: true);
+
+  return out;
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// THE TWO KEYPADS COME FROM ONE BUILDER (DR-121)
+// ═════════════════════════════════════════════════════════════════════
+// Six bodies, one source: two keypads times three buses. `V06`'s role
+// halves are TRANSCRIBED because they are not a mechanical flip (seven
+// ports become six); these ARE mechanical, differing in exactly one port,
+// so computing them is what stops a Vantage keypad drifting from a
+// Cresnet one in a field nobody meant to change.
+//
+// WHAT MAKES ONE LOAD-CONTROLLING is the `ac.in` port and nothing else,
+// which is the distinction the user drew: LV keypads do not control a
+// load, HV keypads are wired directly to one.
+TemplateBody _keypad({
+  required ControlBus bus,
+  required bool loadControlling,
+}) {
+  final ports = PortBuilder()
     ..p(
-      'cresnet',
-      'CRESNET',
-      connector: 'conn.phoenix_4',
-      family: 'ctl.cresnet',
+      bus.portKey,
+      bus.label,
+      connector: bus.connector,
+      family: bus.family,
       dir: PortDirection.busNode,
       bank: 'bus',
       bankLabel: 'Control Bus',
-    )
-    ..p(
-      'qs.link',
-      'QS LINK (alt)',
-      connector: 'conn.rj45',
-      family: 'ctl.lutron_qs',
-      dir: PortDirection.busNode,
-      bank: 'bus',
-    )
-    ..p(
-      'vantage.link',
-      'VANTAGE STATION BUS (alt)',
-      connector: 'conn.hardwired',
-      family: 'ctl.vantage',
-      dir: PortDirection.busNode,
-      bank: 'bus',
-    )
-    ..p(
+    );
+  if (loadControlling) {
+    ports.p(
       'ac.in',
       'AC (hardwired)',
       connector: 'conn.hardwired',
@@ -1077,20 +1015,47 @@ Map<String, TemplateBody> buildFieldCatalog() {
       bankLabel: 'Power',
       power: PortPowerSpec(role: PortPowerRole.inlet),
     );
-  out['F19'] = _field(
-    model: 'KP-HV-1',
-    displayName: 'Keypad, load-controlling',
-    description:
-        'Wired directly to the load it switches, so its box carries line '
-        'voltage as well as the control bus. The low-voltage keypad that '
-        'only sends commands is F13.',
+  }
+  return _field(
+    model: loadControlling ? 'KP-HV-1' : 'KP-1',
+    displayName: loadControlling ? 'Keypad, load-controlling' : 'Keypad',
+    description: loadControlling
+        ? 'Wired directly to the load it switches, so its box carries '
+              'line voltage as well as the control bus. The low-voltage '
+              'keypad that only sends commands is F13.'
+        : 'Sends commands and switches nothing, so its box carries no '
+              'line voltage. The load-controlling keypad is F19.',
     typePrefix: 'KP',
     glyph: DeviceGlyph.control,
-    tags: const ['keypad', 'control', 'field', 'line voltage'],
+    tags: loadControlling
+        ? const ['keypad', 'control', 'field', 'line voltage']
+        : const ['keypad', 'control', 'field'],
     weight: _kg(0.2),
-    ports: f19.ports,
-    banks: f19.banks,
+    // NO POWER FIGURES ON THE HV HALF, and that is G4: nobody has
+    // measured one, and a device whose point is that it sits on a branch
+    // circuit must not carry a fabricated nameplate into `PWR-001`.
+    power: loadControlling
+        ? null
+        : PowerProfile(
+            nameplateWatts: 3,
+            typicalWatts: 2,
+            outletsProvided: 0,
+            outletsConsumed: 0,
+          ),
+    ports: ports.ports,
+    banks: ports.banks,
   );
-
-  return out;
 }
+
+/// Every DERIVED keypad body: the buses that are not the shipped one.
+///
+/// `ControlBus.values.skip(1)` rather than a written list, so registering
+/// a fourth bus is a line in the enum and nothing here.
+Map<String, TemplateBody> buildFieldBusVariants() => <String, TemplateBody>{
+  for (final id in const ['F13', 'F19'])
+    for (final bus in busesFor(id).skip(1))
+      busVariantTemplateId(id, bus): _keypad(
+        bus: bus,
+        loadControlling: id == 'F19',
+      ),
+};
