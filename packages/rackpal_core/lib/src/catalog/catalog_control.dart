@@ -65,6 +65,11 @@ Map<String, TemplateBody> buildControlCatalog() {
       bank: 'irOut',
       bankLabel: 'IR Outputs',
       pinout: 'mono-tip-sleeve',
+      // DUAL-HEAD FLASHER (M5-H2): one 3.5 mm plug, two heads, as
+      // on the Episode IRF-2. Three or more needs another port or
+      // an IR expansion block, which is its own device with its
+      // own ports, so 2 is the physical bound and not a guess.
+      maxConnections: 2,
     );
   }
   for (var i = 1; i <= 8; i++) {
@@ -176,6 +181,11 @@ Map<String, TemplateBody> buildControlCatalog() {
       bank: 'emitterOut',
       bankLabel: 'Emitter Outputs',
       pinout: 'mono-tip-sleeve',
+      // DUAL-HEAD FLASHER (M5-H2): one 3.5 mm plug, two heads, as
+      // on the Episode IRF-2. Three or more needs another port or
+      // an IR expansion block, which is its own device with its
+      // own ports, so 2 is the physical bound and not a guess.
+      maxConnections: 2,
     );
   }
   c02.p(

@@ -1149,4 +1149,99 @@ void main() {
       );
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // TOP-003 OVER THE REAL CATALOG (M5-H2, DR-124)
+  // ═══════════════════════════════════════════════════════════════════
+  // THE AC-051 PAIR COULD NOT HAVE FOUND THIS AND THAT IS THE LESSON.
+  // `TOP-003`'s fixtures build a synthetic port and pass `maxConnections`
+  // in explicitly (`connectPair(avrMax: 4)`), so both halves passed while
+  // every shipped IR output refused a legal second conductor. A rule
+  // exercised only against ports the test itself authored is a rule
+  // tested against its own assumptions.
+  //
+  // The finding came from the domain review: a dual-head IR flasher
+  // (Episode IRF-2) is ONE 3.5 mm plug with TWO heads, and Control4's
+  // Composer Pro models exactly that. `docs/catalog/seed-devices.md` had
+  // documented `"maxConnections": 2` on `ir.out.1` since M0; the catalog
+  // builder had no parameter to carry it.
+  group('TOP-003 against seeded devices', () {
+    test('every IR emitter OUTPUT in the catalog accepts two conductors', () {
+      final catalog = buildSeedCatalog();
+      final emitters = <String>[];
+      final wrong = <String>[];
+      for (final entry in catalog.entries) {
+        for (final port in entry.value.ports) {
+          if (port.signalFamily.v == 'ctl.ir_emitter' &&
+              port.direction == PortDirection.source) {
+            final at = '${entry.key}/${port.key.v}';
+            emitters.add(at);
+            if (port.maxConnections != 2) {
+              wrong.add('$at declares ${port.maxConnections}');
+            }
+          }
+        }
+      }
+      // NOT VACUOUS: a census that found no emitter outputs would report
+      // no offenders and pass, which is this repository's recurring shape.
+      expect(emitters, isNotEmpty, reason: 'no IR emitter outputs found');
+      expect(wrong, isEmpty, reason: wrong.join('\n'));
+    });
+
+    test('a second head lands on a seeded IR output, and a third refuses', () {
+      // V01 is the matrix with `ir.out.1`..`ir.out.8`, which is the port
+      // seed-devices.md names. The body is the SHIPPED one, so this fails
+      // if the catalog stops declaring the bound.
+      final body = buildSeedCatalog()['V01']!;
+      final doc = connectDoc();
+      connectAddDevice(doc, connectAvr, 'AVR-1', body);
+      connectAddDevice(
+        doc,
+        connectTv,
+        'TV-1',
+        connectBody([connectPort('ir.in', maxConnections: 4)]),
+      );
+
+      final from = resolveConnectTarget(
+        doc,
+        deviceId: connectAvr,
+        portKey: 'ir.out.1',
+      )!;
+      final to = resolveConnectTarget(
+        doc,
+        deviceId: connectTv,
+        portKey: 'ir.in',
+      )!;
+
+      // Head one.
+      connectLink(
+        doc,
+        'W001',
+        PortEndpoint(from.portId),
+        PortEndpoint(to.portId),
+      );
+      // Head two: the case the review found refused.
+      final second = evaluateConnect(doc, from, to);
+      expect(
+        second is ConnectRefused &&
+            second.rule == ConnectRule.withinMaxConnections,
+        isFalse,
+        reason: 'a dual-head flasher must reach its second head, got $second',
+      );
+      connectLink(
+        doc,
+        'W002',
+        PortEndpoint(from.portId),
+        PortEndpoint(to.portId),
+      );
+      // Head three: three or more needs another port or an expansion
+      // block, so the bound is still a bound.
+      final third = evaluateConnect(doc, from, to);
+      expect(third, isA<ConnectRefused>());
+      expect((third as ConnectRefused).rule, ConnectRule.withinMaxConnections);
+      // The sentence is the whole recourse at tier 1, so it must name the
+      // real bound rather than the rule id.
+      expect(third.message, contains('2 of 2'));
+    });
+  });
 }

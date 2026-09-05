@@ -105,6 +105,11 @@ Map<String, TemplateBody> buildVideoCatalog() {
       dir: PortDirection.source,
       bank: 'control',
       pinout: 'mono-tip-sleeve',
+      // DUAL-HEAD FLASHER (M5-H2): one 3.5 mm plug, two heads, as
+      // on the Episode IRF-2. Three or more needs another port or
+      // an IR expansion block, which is its own device with its
+      // own ports, so 2 is the physical bound and not a guess.
+      maxConnections: 2,
     );
   }
   v01
@@ -600,6 +605,11 @@ Map<String, TemplateBody> buildVideoCatalog() {
       dir: PortDirection.source,
       bank: 'control',
       pinout: 'mono-tip-sleeve',
+      // DUAL-HEAD FLASHER (M5-H2): one 3.5 mm plug, two heads, as
+      // on the Episode IRF-2. Three or more needs another port or
+      // an IR expansion block, which is its own device with its
+      // own ports, so 2 is the physical bound and not a guess.
+      maxConnections: 2,
     )
     ..p(
       'rs232',
@@ -701,6 +711,11 @@ Map<String, TemplateBody> buildVideoCatalog() {
       bank: 'control',
       bankLabel: 'Control',
       pinout: 'mono-tip-sleeve',
+      // DUAL-HEAD FLASHER (M5-H2): one 3.5 mm plug, two heads, as
+      // on the Episode IRF-2. Three or more needs another port or
+      // an IR expansion block, which is its own device with its
+      // own ports, so 2 is the physical bound and not a guess.
+      maxConnections: 2,
     )
     ..p(
       'rs232',
@@ -832,6 +847,11 @@ Map<String, TemplateBody> buildVideoRoleVariants() {
       dir: PortDirection.source,
       bank: 'control',
       pinout: 'mono-tip-sleeve',
+      // DUAL-HEAD FLASHER (M5-H2): one 3.5 mm plug, two heads, as
+      // on the Episode IRF-2. Three or more needs another port or
+      // an IR expansion block, which is its own device with its
+      // own ports, so 2 is the physical bound and not a guess.
+      maxConnections: 2,
     )
     ..p(
       'rs232',
@@ -922,6 +942,11 @@ Map<String, TemplateBody> buildVideoRoleVariants() {
       bank: 'control',
       bankLabel: 'Control',
       pinout: 'mono-tip-sleeve',
+      // DUAL-HEAD FLASHER (M5-H2): one 3.5 mm plug, two heads, as
+      // on the Episode IRF-2. Three or more needs another port or
+      // an IR expansion block, which is its own device with its
+      // own ports, so 2 is the physical bound and not a guess.
+      maxConnections: 2,
     )
     ..p(
       'rs232',
