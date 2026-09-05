@@ -343,11 +343,19 @@ List<Finding> ruleRck012(RackDocument doc) {
           Finding(
             ruleId: 'RCK-012',
             severity: Severity.error,
+            // THE SENTENCE NAMES THE REMEDY (M5-H2, DR-125). Many
+            // chassis carry several sets of rack-ear holes and shift fore
+            // and aft in the field, so a depth collision on paper is
+            // often an adjustment rather than a redesign. The reviewer's
+            // point was that `error` reads as "blocked" to somebody who
+            // has not read CR-022/G3, and the answer belongs in the
+            // sentence rather than in a document they will not open.
             message:
                 '${f.device.designator} at the front and '
                 '${r.device.designator} at the rear need ${_mm(needed)} mm '
                 'together including the 50 mm cable allowance, and '
-                '${rack.designator} is ${_mm(usable.nm)} mm deep.',
+                '${rack.designator} is ${_mm(usable.nm)} mm deep. May '
+                'require adjustment of the rack ears.',
             targets: [f.device.id, r.device.id, rack.id],
             primaryEntityId: f.device.id,
           ),
@@ -411,7 +419,8 @@ List<Finding> ruleRck013(RackDocument doc) {
         message:
             '${device.designator} is ${_kg(mass.ug)} kg on front ears rated '
             'to ${_kg(limit.ug)} kg. It needs rear rail support or a shelf '
-            'in ${rack.designator}.',
+            'in ${rack.designator}, and may require adjustment of the rack '
+            'ears.',
         targets: [device.id, rack.id],
         primaryEntityId: device.id,
       ),

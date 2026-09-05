@@ -16503,6 +16503,112 @@ the clause's whole argument, paid before the clause closed**, and it is the
 second time this project has been corrected by trade knowledge it could not
 derive: DR-120's Vantage census was the first.
 
+### §11.124 DR-125 · The M5-H2 review's twelve findings, and the four that were not what they looked like
+
+**Returned by the user on 2026-09-05**, mid-review, as one batch. Every
+finding was censused against the tree before it was priced, and **four of
+the twelve turned out to be something other than what the ticket said**,
+which is the same rate §1's decomposition caveat has been recording all
+milestone.
+
+**11.124.1 THE DISPOSITIONS.**
+
+| # | Finding | What it turned out to be |
+|---|---|---|
+| 2 | `DIR-001` and eARC | **Already correct, and the fact CONFIRMS the model.** Exactly two seeded ports declare a return channel and they are a matched pair: a TV's `hdmi.1` is `sink` + `ARC`, a soundbar's `hdmi.out.main` is **`source`** + `eARC`. That is the reviewer's own point, that an eARC port is a source in the HDMI spec, already in the catalogue. Directions are opposite so `DIR-001` never fires, and an explicit eARC exception exists for the same-direction case |
+| 3 | `DIR-003` and IR | **A real defect, held for a decision** (§11.124.3) |
+| 8 | `NET-001` and PoE draw | **The model was already right and the sentence was not.** `_ceilingFor` prefers a stated `watts` and falls back to the IEEE class ceiling, which is the conservative direction and the only defensible one for a PSE. But **no seeded PD states any watts**, so every figure is a ceiling, and the message presented it as a draw. Now named as an estimate |
+| 9 | `RCK-003`'s band | **Architectural, not a threshold** (§11.124.2) |
+| 10 | `RCK-012` / `RCK-013` wording | Accepted as stated. Both sentences now say *"may require adjustment of the rack ears"* |
+| 6 | `LEN-001` / `LEN-002` usage | **Not a defect: a usage expectation, recorded as one.** The reviewer predicts these stay quiet until plan-view run estimation exists, because a residential run near 100 m is uncommon and the case that reaches it is a second building, where the trade answer is fibre or a wireless bridge |
+| 1, 4, 7 | Offer an adapter / a power strip | **One feature, three-quarters built** (§11.124.4) |
+| 5 | `ELE-006` and speaker taps | `maxTapWatts` exists on the model; a tap SELECTOR and CV-to-Low-Z switching do not. A real modelling gap, unpriced |
+| 11 | `PLC-001` and cabinet head ends | Expressible as `OffRackPlacement` with a `mountNote`, but crude, and the reviewer's point is that it is the COMMON case rather than an edge. Unpriced |
+| 12 | `CODE-002` surfacing | Accepted; unpriced. A code-adjacent finding wants more than a row in a panel |
+
+**11.124.2 `RCK-003`'S BANDS NEVER REACHED A USER, AND NOBODY HAD
+CHECKED.** The reviewer asked for the advisory to move from 85% to 60%,
+with a reason from the job: a 42U rack at 85% of a 1,000 lb rating is
+around 850 lb, already enough for the casters to mark a floor, so a notice
+that arrives then arrives after the fourth amplifier was specified rather
+than before it.
+
+**Measured while implementing it, every `RCK-003` finding surfaces as
+`warning` in every band, and always has.** `evaluateDocument` builds its
+`Finding` with `severity: resolved`, where `resolved` is
+`projectSeverity(ruleId, settings)`, and **the predicate's own severity is
+discarded**. The `advisory` that `ruleRck003` has set since M5-E has never
+been seen by anybody.
+
+| docs/02 §5.3 | *"warning (advisory at 85%)"*, since M0 |
+| The predicate | Implements two severities |
+| The evaluator | Flattens both to the catalogue default |
+| The AC-051 pair | Asserts WHICH RULE fires, never how loudly |
+
+**THE FLATTENING IS DELIBERATE AND WAS RIGHT ONCE.** M5-E records
+`LEN-001` proposing its own `advisory` on a good argument, and the
+evaluator overwriting it because *"that argument is not in the
+catalogue"*: a predicate choosing a second severity is inventing a rule
+(CR-021). **`RCK-003` is the opposite case**, where the catalogue row
+itself authorises the band, and the evaluator has no way to tell the two
+apart.
+
+**Ruled: the catalogue authorises the band.** `RuleMeta` gains an explicit
+banded-severity declaration and `evaluateDocument` honours a predicate's
+severity **only** for a rule whose row declares one. `LEN-001` stays
+overwritten because its row declares a single severity; `RCK-003` is
+obeyed because its row will declare three. **CR-021 is preserved exactly**:
+the catalogue still decides what a rule may say, and a predicate still
+cannot invent it.
+
+The bands are **advisory at 60%, warning at 85%, error over capacity**.
+The `error` band blocks nothing (CR-022/G3); what it buys is that a loaded
+rack stops reading as a note somebody scrolls past.
+
+**THAT WORK IS NOT IN THIS COMMIT**, deliberately. It needs a `RuleMeta`
+field, an evaluator change and a docs/02 row, and landing it beside three
+unrelated sentence fixes would make one commit that cannot be reverted in
+parts.
+
+**11.124.3 `DIR-003` KEYS ON THE ONE FACT THAT DOES NOT DISCRIMINATE.**
+Its catalogue summary says *"`PortDef.pinoutVariant` exists solely to
+detect it"*. The predicate matches **families only**, and `pinoutVariant`
+is read by no rule anywhere in the tree.
+
+The catalogue itself is unambiguous, and censused it separates the two
+cases three ways:
+
+| Emitter jack | `ctl.ir_emitter` · `source` · `conn.3_5mm_ts` · `mono-tip-sleeve` |
+| Receiver jack | `ctl.ir_receiver` · `sink` · `conn.3_5mm_trs` · `xantech-stereo` |
+| Receiver pigtail | `ctl.ir_receiver` · **`source`** · `xantech-stereo` |
+
+**So the data to discriminate exists and the rule ignores all of it.** The
+reviewer's fact is that an IR receiver *"can be either"* a window or a
+jack and *"some devices feature both"*, which means family-matching fires
+an `error` spring-back on a connection that is correct and everyday.
+**Held for a decision on which pairings are legal**, because that is a
+trade question and not a code one.
+
+**11.124.4 THE ADAPTER PROMPT IS ONE FEATURE AND IT IS MOSTLY BUILT.**
+`SIG-002`, `CON-001` and `PWR-003` all asked for the same thing: offer to
+create the part that fixes it, and wire it in. `insert_receiver.dart`
+already does exactly that for `SIG-001`, in three commands under one undo
+entry through `TxnScope`.
+
+**Its own header already names the interaction**, which is why this is a
+generalisation rather than an invention: the `SIG-001` remedy leaves its
+second link open because the receiver's HDMI end *"fails `SIG-002` and
+`CON-001` together"*. Unpriced, and it wants a ruling of its own.
+
+**11.124.5 THE REVIEW'S VALUE, MEASURED.** Before this batch the review
+had already produced DR-124. This batch adds a defect nobody had checked
+in `RCK-003`, a rule keyed on the wrong field in `DIR-003`, and a message
+that presented a ceiling as a measurement in `NET-001`. **Three of those
+four are the same shape**: a document stating a behaviour, code doing
+something else, and a test suite that asserted around the gap rather than
+through it. **The AC-051 corpus is complete at 28/28 and saw none of
+them**, because a pair proves a rule fires, not that it fires correctly.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

@@ -62,6 +62,27 @@ Len? knownLengthOf(Link link) => link.terminatedLength ?? link.cutLength;
 final Len kEthernetChannelLimit = Len.fromMillimetres(100000);
 
 /// `LEN-001` — an Ethernet channel exceeds 100 m, or is unmeasured.
+///
+/// ═══════════════════════════════════════════════════════════════════
+/// EXPECT THIS RULE TO BE QUIET, AND DO NOT READ THAT AS BROKEN
+/// ═══════════════════════════════════════════════════════════════════
+/// The M5-H2 domain review (DR-125) predicts that `LEN-001` and
+/// `LEN-002` will rarely fire before the plan view's run estimation
+/// exists: **a residential run near 100 m is uncommon**, and the case
+/// that reaches it is usually a second building, where the trade
+/// answer is fibre or a wireless bridge rather than a long copper run.
+///
+/// So the over-length limb will sit idle and the **unmeasured** limb
+/// will do nearly all the work, which is by design: docs/02 §5.3 makes
+/// *"length unknown, cannot verify"* a finding rather than silence.
+/// This note exists because a rule that never fires looks identical to
+/// a rule that is broken, and the AC-051 corpus is what shows the
+/// difference: `LEN-001` and `LEN-002` both carry a known-bad that
+/// fires and a near-miss that does not.
+///
+/// **Nothing here changes.** The review named a usage expectation, not
+/// a defect, and a rule priced for the job it is rare on is still
+/// correct on the job it is not.
 List<Finding> ruleLen001(RackDocument doc) {
   final out = <Finding>[];
   for (final link in doc.links.values) {

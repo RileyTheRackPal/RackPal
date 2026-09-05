@@ -64,6 +64,31 @@ String _unknownClause(List<DeviceInstance> unknown) {
       '($said), so the real total is higher than this.';
 }
 
+/// The clause naming devices charged their IEEE class ceiling rather
+/// than a stated draw (M5-H2, DR-125).
+///
+/// **A CEILING IS NOT A MEASUREMENT AND THE SENTENCE MUST NOT IMPLY IT
+/// IS.** The domain review's point: a PoE+ access point is rated at 30 W
+/// and commonly settles around 15 to 20, so a switch reported over budget
+/// purely on class ceilings may be comfortably inside it on the job. The
+/// arithmetic stays conservative, which `_ceilingFor` argues is the only
+/// defensible direction for a PSE, and the honesty is carried in the
+/// words instead.
+///
+/// Same shape as [_unknownClause] on purpose: designators up to three,
+/// then a count.
+String _estimatedClause(List<DeviceInstance> estimated) {
+  if (estimated.isEmpty) return '';
+  final names = estimated.map((d) => d.designator).toList()..sort();
+  final said = names.length <= 3
+      ? names.join(', ')
+      : '${names.take(3).join(', ')} and ${names.length - 3} more';
+  return ' ${names.length == 1 ? 'One of them' : '${names.length} of them'} '
+      '${names.length == 1 ? 'states' : 'state'} no measured draw and '
+      '${names.length == 1 ? 'was' : 'were'} charged the class ceiling '
+      '($said), so the real total is likely lower.';
+}
+
 // ─────────────────────────────────────────────────────────────────────
 // PWR-003 — outlets consumed exceed outlets provided in the rack
 // ─────────────────────────────────────────────────────────────────────
@@ -155,6 +180,7 @@ List<Finding> ruleNet001(RackDocument doc) {
 
     var drawn = 0;
     final unknown = <DeviceInstance>[];
+    final estimated = <DeviceInstance>[];
     final powered = <Uuid>[];
     for (final port in body!.ports) {
       if (port.poe?.role != PoeRole.pse) continue;
@@ -178,6 +204,15 @@ List<Finding> ruleNet001(RackDocument doc) {
           unknown.add(peerDevice);
         } else {
           drawn += ceiling;
+          // CHARGED ITS CLASS CEILING RATHER THAN A STATED DRAW, and the
+          // sentence has to say so (M5-H2, DR-125). A PoE+ access point
+          // is rated at 30 W and commonly settles around 15 to 20, so a
+          // switch reported as over budget on class ceilings alone may be
+          // comfortably within it in the field. The arithmetic stays
+          // conservative, which is the only defensible direction for a
+          // PSE, but presenting a ceiling as if it were a measurement is
+          // how a designer stops trusting the rule.
+          if (spec.watts == null) estimated.add(peerDevice);
         }
       }
     }
@@ -188,7 +223,8 @@ List<Finding> ruleNet001(RackDocument doc) {
         severity: Severity.error,
         message:
             '${device.designator} has a $budget W PoE budget and the '
-            'devices on it draw up to $drawn W.${_unknownClause(unknown)}',
+            'devices on it draw up to $drawn W.'
+            '${_estimatedClause(estimated)}${_unknownClause(unknown)}',
         targets: [device.id, ...powered],
         primaryEntityId: device.id,
       ),
