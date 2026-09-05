@@ -403,7 +403,10 @@ $SuiteFloors = @{
     # 3963 at DR-126: +8 from ir_family_split_test.dart, which sweeps the
     # shipped catalogue rather than a fixture, plus one swapped near-miss
     # and one widened canary that net to zero.
-    'rackpal_core'   = 3963
+    # 3978 at DR-128: +13 from declare_adapter_test.dart, the writer
+    # InlineAdapter never had, and +2 for the census that found three
+    # ghost ids in the AC-051 spring-back fixtures.
+    'rackpal_core'   = 3978
     'rackpal_text'   = 1
     'rackpal_export' = 195
     'rackpal_ui'     = 1483

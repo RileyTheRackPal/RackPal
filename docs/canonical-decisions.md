@@ -16917,6 +16917,33 @@ unaffected for every finding that has no remedy: **unknown serializes as
 an absent key** (G4/CR-114), and a finding is computed rather than stored
 in any case (docs/02 §4.8).
 
+**11.127.7 THE REMEDY'S OWN TEST FOUND THREE GHOST IDS IN THE AC-051
+CORPUS.** `spring_back_scenarios.dart` named `conn.xlr3_f`,
+`video.hdmi` and `audio.analog_bal`; the shipped ids are `conn.xlr3`,
+`video.hdmi.2_0` and `audio.line_bal`. Every case passed on the ghosts,
+because the predicates that read them compare ids directly and a fixture
+family only has to DIFFER from the other end rather than exist.
+
+**`CON-001` is where it mattered.** That rule reads the registry, and
+`_connectorsDoNotMate` skips entirely when the FROM connector is unknown
+(the G4 branch, `#255`). So a ghost exercises the real limb or the
+unknown limb **depending on which end it lands on**. Here it landed on the
+TO end, so the known-bad fired, and what it was actually asserting is that
+HDMI does not mate with a typo, which is true of every typo.
+
+Found because DR-128's own first draft invented `conn.xlr3_m` and was
+caught by its own *"this is not vacuous"* test. **That test existed only
+because the house rule says to assert the artifact**: a remedy test
+checking `inlineAdapters.length == 1` would have passed on a rule that
+never fired. `spring_back_rules_test.dart` now censuses both id kinds
+against the seeded registries.
+
+**This is the second time in two days that DR-125 §11.124.5's sentence has
+proved too kind.** It says the AC-051 corpus *"saw none of them, because a
+pair proves a rule fires, not that it fires correctly"*. The corpus also
+could not see that three of its own fixtures named entities the product
+does not ship.
+
 **11.127.6 `SpringBackRemedy` GAINS TWO MEMBERS, AND ITS DOC COMMENT'S
 OBJECTION IS ANSWERED RATHER THAN OVERRULED.** It holds one member today
 and says why: *"Inventing labels for the other five would be putting words

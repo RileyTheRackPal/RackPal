@@ -129,4 +129,62 @@ void main() {
       );
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // A CENSUS, ADDED AT DR-128 BECAUSE A GHOST ID WAS FOUND HERE
+  // ═══════════════════════════════════════════════════════════════════
+  // `conn.xlr3_f` was named by the `CON-001` known-bad and does not
+  // exist. The case still fired, because a made-up id is absent from
+  // `conn.hdmi_a`'s `matesWith` list and so is every other made-up id:
+  // the fixture was asserting that HDMI does not mate with a typo.
+  //
+  // It matters beyond that one row. `_connectorsDoNotMate` skips
+  // entirely when the FROM connector is unknown (the G4 branch, `#255`),
+  // so which limb a ghost exercises depends on which end it lands on,
+  // and a fixture can silently move between "this rule fired" and "this
+  // rule was skipped" without its author noticing.
+  //
+  // Zero hits is a finding, not a coverage gap: this is the shape
+  // `#237`'s census-as-a-test took, over a table nobody had swept.
+  group('the fixtures name only things that ship', () {
+    test('every connector a scenario declares resolves in the seeded '
+        'registries', () {
+      final connectors = buildSeedRegistries().connectorTypes;
+      final seen = <String>{};
+      for (final c in [...springBackChips(), ...springBackNearMisses()]) {
+        final doc = c.doc();
+        for (final snapshot in doc.templates.values) {
+          for (final port in snapshot.body.ports) {
+            seen.add(port.connector.v);
+            expect(
+              connectors[port.connector],
+              isNotNull,
+              reason:
+                  '${c.rule.id} names ${port.connector.v}, which the '
+                  'registry has never heard of. A rule reading it takes '
+                  'its unknown branch, so the case proves something '
+                  'other than what it says',
+            );
+          }
+        }
+      }
+      expect(seen, isNotEmpty, reason: 'the sweep found no connectors');
+    });
+
+    test('and every signal family too, for the same reason', () {
+      final families = buildSeedRegistries().signalFamilies;
+      for (final c in [...springBackChips(), ...springBackNearMisses()]) {
+        final doc = c.doc();
+        for (final snapshot in doc.templates.values) {
+          for (final port in snapshot.body.ports) {
+            expect(
+              families[port.signalFamily],
+              isNotNull,
+              reason: '${c.rule.id} names ${port.signalFamily.v}',
+            );
+          }
+        }
+      }
+    });
+  });
 }
