@@ -5420,7 +5420,7 @@ milestone belongs in that milestone's section: this is where somebody looks when
 
 Nothing about M5's own scope depends on it. It is an M6 input that M5 unblocks.
 
-#### 5.4.2 M5-A and M5-B, the whole mechanism and not one rule · CLOSED · `11028a8`, `bd158a1`, `d17d614`, `d6500b8`, `d6356db`
+#### 5.4.4 M5-A and M5-B, the whole mechanism and not one rule · CLOSED · `11028a8`, `bd158a1`, `d17d614`, `d6500b8`, `d6356db`
 
 **Closed 2026-09-02** (`#252`, `#257`), five commits, fifteen gates green on each. The core floor in
 `tools/ci/run_suite.ps1` moved 3672 to 3751 across them, re-measured at every commit.
@@ -5616,6 +5616,69 @@ see. That is `M5-F` (`#293`), and the fixture corpus AC-051's exit criterion act
 M5-A/B and M5-C/D pairs record. M5's three clauses are the fixture pairs, the sign-off and the PDF.
 Twenty-eight rules and two tiers of surface exist underneath all three rather than being any of them.
 **A milestone can be nearly all built and still `0/28`.**
+
+#### 5.4.5 ARCH-A, a question that had two answers, and the third recorded number to stop tracking · CLOSED · `962dfa7`, `63e5850`, `33f4708`, `789cfec`
+
+**It began as a question, not a task.** *"What state management are we using and why?"* The corpus
+answered **Riverpod** in four places. The repository answered **nothing** in every place.
+
+**THE MEASUREMENT.** At `v0.4.63`, `riverpod` occurs **zero** times in any Dart file, any
+`pubspec.yaml` and the lockfile, and `ProviderScope` likewise. Seven tracked files mention the
+package and **all seven are prose**; three are under `docs/research/`, which is working papers, so
+the sweep touched four. ADR-011 was accepted at M0 and five milestones passed.
+
+| | ADR-011 said | The tree has |
+|---|---|---|
+| container | `ProviderScope`, one per document | nothing; `AppServices` passed by constructor |
+| DI | `ProviderScope(overrides:)` | one constructor parameter |
+| epochs | `ValueNotifier<int>` × 6 | `SimpleNotifier<int>` × 7, pure Dart under D1 |
+| derived | `DerivedRegistry derived` | not built, **deliberately**, and the reason is in the source |
+| ui state | four `*Provider` declarations | nine `ChangeNotifier`s owned by the screens' `State` |
+
+**WHAT MAKES THIS WORTH A SECTION RATHER THAN A CORRECTION.** ADR-011 carried
+`VERIFY: ... before the provider layer is written`. **That condition never came true, so the check
+never fired.** Nothing was edited wrongly, no reviewer could have caught it in a diff, and every
+sentence involved was true when written. A precondition attached to work that does not happen is not
+a tripwire, and the same reasoning voids every other `VERIFY:` in the corpus that waits on future
+work.
+
+**THE SECOND FINDING WAS LARGER THAN THE FIRST.** §10.1 is titled *"The full table"*. Audited
+against all five pubspecs it was wrong **in both directions**: **eight** packages named and installed
+nowhere (`flutter_riverpod`, `printing`, `desktop_drop`, `logging`, `intl`, `flutter_localizations`,
+`integration_test`, `benchmark_harness`), and **two** installed and named nowhere
+(`screen_retriever ^0.2.0`, `fake_async ^1.3.3`).
+
+**`screen_retriever` is the row that settles what kind of failure this is.** Its twenty-line pubspec
+justification **cites "§10.1's `window_manager` row"** by name. The author had the table open, read a
+row out of it, added a package on the strength of it, and did not add a row. Care was not the missing
+ingredient. **Nothing could fail**, because a dependency table is prose no gate reads: the same
+sentence `§5.4.2` earned about the board three days earlier.
+
+**THE THIRD INSTANCE TURNED UP WHILE FIXING THE SECOND.** Raising the app suite's floor for the new
+gate meant measuring it, and four of the five floors had stopped tracking:
+
+| Suite | Floor | Actual | Slack |
+|---|---|---|---|
+| `rackpal_core` | 976 | 3263 | **+2287** |
+| `rackpal_text` | 1 | 1 | exact |
+| `rackpal_export` | 183 | 189 | +6 |
+| `rackpal_ui` | 382 | 1162 | **+780** |
+| `rackpal_app` | 664 | 838 | +174 |
+
+`run_suite.ps1`'s own comment orders a re-measure *"in any commit that adds or removes tests"* and
+records **131 tests of slack** as the defect that prompted the rule. It had reached **3,247**. Two
+thousand two hundred and eighty-seven core tests could have stopped being discovered while the script
+printed a cheerful `+2287` and exited 0. All five are now exact.
+
+**Three recorded numbers, in one week, that quietly stopped tracking their subject: a rule count on
+the board, a dependency table in `docs/03`, and four test floors in CI.** None was introduced by an
+edit. Each was true when written. The common shape is a number **maintained by intention rather than
+by a gate**, and the only durable answer found so far is to make something read it.
+
+The remedy is `apps/rackpal/test/dependency_table_test.dart`, which runs in **three directions** and
+was watched failing in all three plus the anti-vacuity case that would otherwise have made it inert.
+Ruled at **DR-088** (canon §11.87, §12.27). **No version bump**: `#764` is parentless, so its tasks
+are not under M5's epic, and docs/14 §14.0 counts Done tasks under the **current** milestone's epic.
 
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
@@ -5823,69 +5886,6 @@ Read it against the tree before starting rather than trusting it, per §1's cave
 decomposition: `PLAN-E`'s canvas row rests on the claim that the viewport, selection, hit-test and
 drag-preview machinery are reusable, and **that claim has not been tested by anything except a
 read**.
-
-#### 5.4.4 ARCH-A, a question that had two answers, and the third recorded number to stop tracking · CLOSED · `962dfa7`, `63e5850`, `33f4708`, `789cfec`
-
-**It began as a question, not a task.** *"What state management are we using and why?"* The corpus
-answered **Riverpod** in four places. The repository answered **nothing** in every place.
-
-**THE MEASUREMENT.** At `v0.4.63`, `riverpod` occurs **zero** times in any Dart file, any
-`pubspec.yaml` and the lockfile, and `ProviderScope` likewise. Seven tracked files mention the
-package and **all seven are prose**; three are under `docs/research/`, which is working papers, so
-the sweep touched four. ADR-011 was accepted at M0 and five milestones passed.
-
-| | ADR-011 said | The tree has |
-|---|---|---|
-| container | `ProviderScope`, one per document | nothing; `AppServices` passed by constructor |
-| DI | `ProviderScope(overrides:)` | one constructor parameter |
-| epochs | `ValueNotifier<int>` × 6 | `SimpleNotifier<int>` × 7, pure Dart under D1 |
-| derived | `DerivedRegistry derived` | not built, **deliberately**, and the reason is in the source |
-| ui state | four `*Provider` declarations | nine `ChangeNotifier`s owned by the screens' `State` |
-
-**WHAT MAKES THIS WORTH A SECTION RATHER THAN A CORRECTION.** ADR-011 carried
-`VERIFY: ... before the provider layer is written`. **That condition never came true, so the check
-never fired.** Nothing was edited wrongly, no reviewer could have caught it in a diff, and every
-sentence involved was true when written. A precondition attached to work that does not happen is not
-a tripwire, and the same reasoning voids every other `VERIFY:` in the corpus that waits on future
-work.
-
-**THE SECOND FINDING WAS LARGER THAN THE FIRST.** §10.1 is titled *"The full table"*. Audited
-against all five pubspecs it was wrong **in both directions**: **eight** packages named and installed
-nowhere (`flutter_riverpod`, `printing`, `desktop_drop`, `logging`, `intl`, `flutter_localizations`,
-`integration_test`, `benchmark_harness`), and **two** installed and named nowhere
-(`screen_retriever ^0.2.0`, `fake_async ^1.3.3`).
-
-**`screen_retriever` is the row that settles what kind of failure this is.** Its twenty-line pubspec
-justification **cites "§10.1's `window_manager` row"** by name. The author had the table open, read a
-row out of it, added a package on the strength of it, and did not add a row. Care was not the missing
-ingredient. **Nothing could fail**, because a dependency table is prose no gate reads: the same
-sentence `§5.4.2` earned about the board three days earlier.
-
-**THE THIRD INSTANCE TURNED UP WHILE FIXING THE SECOND.** Raising the app suite's floor for the new
-gate meant measuring it, and four of the five floors had stopped tracking:
-
-| Suite | Floor | Actual | Slack |
-|---|---|---|---|
-| `rackpal_core` | 976 | 3263 | **+2287** |
-| `rackpal_text` | 1 | 1 | exact |
-| `rackpal_export` | 183 | 189 | +6 |
-| `rackpal_ui` | 382 | 1162 | **+780** |
-| `rackpal_app` | 664 | 838 | +174 |
-
-`run_suite.ps1`'s own comment orders a re-measure *"in any commit that adds or removes tests"* and
-records **131 tests of slack** as the defect that prompted the rule. It had reached **3,247**. Two
-thousand two hundred and eighty-seven core tests could have stopped being discovered while the script
-printed a cheerful `+2287` and exited 0. All five are now exact.
-
-**Three recorded numbers, in one week, that quietly stopped tracking their subject: a rule count on
-the board, a dependency table in `docs/03`, and four test floors in CI.** None was introduced by an
-edit. Each was true when written. The common shape is a number **maintained by intention rather than
-by a gate**, and the only durable answer found so far is to make something read it.
-
-The remedy is `apps/rackpal/test/dependency_table_test.dart`, which runs in **three directions** and
-was watched failing in all three plus the anti-vacuity case that would otherwise have made it inert.
-Ruled at **DR-088** (canon §11.87, §12.27). **No version bump**: `#764` is parentless, so its tasks
-are not under M5's epic, and docs/14 §14.0 counts Done tasks under the **current** milestone's epic.
 
 ---
 
