@@ -116,7 +116,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
 | **M4** | Device builder | **`L`** *(was `M`)* | **2 of 2** | **CRITERION MET**: `CONFIRMED` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **CLAUSE 2 IS NOW CONFIRMED, performed on 2026-09-01** (§5.3.30), and it was performable only from §5.3.13: it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` demonstrated it: every unknown column printed `—` and said so, which is G4/CR-114 read off a printed sheet for the first time. **The archetype path ran the same day at 46 SECONDS against the DSL path's 93** (`#250`), which is what settled whether the generators earned their place. **EVERY M4 STORY IS NOW CLOSED** (§5.3.1–§5.3.30), the last being the drill itself (`#188`), and **95 chapters are Done under this epic with none left open or re-parented**, which is where `v0.4.95` comes from. **M4-P shipped RJ-012's two extensibility surfaces and found each chapter to be something else underneath**: the builder could not save a field device at all, the media-type editor's real gap was MERGE rather than create, and connector aliases were already resolved and only lacked a writer (§5.3.28, DR-107, `v0.4.93`). **RJ-012 stays two-thirds met**: its third surface, a per-family colour override row in settings, has nowhere to go because `ProjectSettings` has no editor and none is assigned to any milestone (`#805`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); **its parked nudge canvas was then un-parked by DR-106 and built** as a sixth `Panel` section, with its align/distribute arithmetic in core (§5.3.27, `v0.4.90`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moved this criterion**, and that was the point of the row for a fortnight: story after story closed while clause 2 remained a person with a document to read. **It was read on 2026-09-01** (§5.3.30), which is the only thing that could ever have closed it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
-| **M5** | Validation | `M` | **0 of 3** (one clause passes, but `VACUOUS`ly) | **NOT STARTED**: `NOT BUILT` | 0 of 28 rules (DR-020 added `LEN-002`). **Its M2 block has lifted** (§5.1); canon §11.12.5 names the seam the six tier-2 rules land on. Row otherwise as of `0fa532d` |
+| **M5** | Validation | `M` | **2 of 3** | **PARTIAL**: `UNPERFORMED` | **All 28 rules have predicates, all 28 have their AC-051 pair, and neither of those was true on 2026-09-02.** Clause 1 is `DEMONSTRATED` by `drc_corpus_test.dart`, which `run_local.ps1` runs as a step of its own and whose subject is `kRuleCatalogue` rather than any evaluator enum, so a registered rule without a pair fails the build (§5.4.7). Clause 3 was `VACUOUS` *because no rule existed* and that reason expired; it is now `DEMONSTRATED` in a stronger form than `#310` asked for, since `ExportError` is **sealed with three arms and none of them is about a rule** (§5.4.8, DR-119). **Clause 2 is the whole gap**: the domain-expert sign-off is `UNPERFORMED` and no code discharges it. The pack it needs is generated from the live catalogue and is with the reviewer (§5.4.9), so `#305` and `#306` are the only M5 work that is not buildable by an agent. **Eight of the nine build stories are closed; `M5-H` is the ninth and it IS the sign-off**, which is why the milestone cannot close itself |
 | **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
@@ -5301,7 +5301,7 @@ not, and it never reached docs/06 §9. **It also falsifies the DSL path's "zero 
 which is a claim about the whole route and not about steps 6 to 13. docs/06 is priority-3 and owes
 the correction; the ruling and the code win in the meantime.
 
-### 5.4 M5, Validation · `M` · IN PROGRESS, weakest mark `NOT BUILT` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
+### 5.4 M5, Validation · `M` · PARTIAL, **2 of 3 discharged**, weakest mark `UNPERFORMED` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing
 > exactly that finding and a known-good near-miss producing none — **no rule ships without its pair**
@@ -5310,9 +5310,17 @@ the correction; the ruling and the code win in the meantime.
 
 | Clause | Mark | Why |
 |---|---|---|
-| 28 rules × fixture pair | **NOT BUILT: 0/28** | The COUNT is unchanged and everything the old text said about why is now false, which is worth separating rather than editing over. `packages/rackpal_core/lib/src/validation/` exists and holds the catalogue, `Finding`, the acknowledgement and the severity resolution (§5.4.2); CI has existed since 2026-08-27 (§4.1). What is still absent is the thing this clause counts: **no tier-2 or tier-3 rule has a predicate, and no rule of any tier has a fixture pair**. `TOP-001` to `TOP-005` are enforced by `derived/connect_rules.dart` and are still not counted here, because AC-051 asks for the PAIR and no DRC fixture corpus exists |
-| Domain-expert sign-off on the 28 rules and the catalog data | **UNPERFORMED** | Has not happened |
-| No rule prevents a PDF being written | **VACUOUS: true, trivially** | True because no rule exists. `packages/rackpal_core/lib/src/draw/sheet/sheet_def.dart:96-98` does correctly encode CR-023/G3 for the one heuristic that exists (a malformed NCS id is a **NOTICE, never a gate**) which is the right shape for when rules arrive |
+| 28 rules × fixture pair | **DEMONSTRATED: 28/28** | `dart test test/validation/drc_corpus_test.dart` from `packages/rackpal_core`, and `run_local.ps1` runs it as a step of its own named `AC-051 pair coverage`. **56 fixtures: 28 known-bad and 28 near-misses, one pair per rule, no rule with two and none with none.** The gate's subject is `kRuleCatalogue` rather than any evaluator's enum, which is what makes it enforce CR-021 rather than restate it (§5.4.7). Three assertions, and the third is the anti-vacuity one: a corpus that walked nothing would report no gaps and pass |
+| Domain-expert sign-off on the 28 rules and the catalog data | **UNPERFORMED** | Still has not happened, and no amount of code discharges it. What has changed is that it is now *performable*: `docs/20-rule-review.md` is 489 lines of trade language generated from the live catalogue (§5.4.9), and it is with the reviewer. `#305` is the pass and `#306` records the result. **This is the clause that keeps M5 out of `COMPLETE`** |
+| No rule prevents a PDF being written | **DEMONSTRATED** | `packages/rackpal_export/test/findings_never_block_export_test.dart`, 316 lines. The `VACUOUS` mark expired the moment rules existed, and §0 predicted exactly that: *"true today, and true for a reason that will stop being true."* It is not replaced by the assertion `#310` asked for, which would have been vacuous a second way, but by the type system: **`ExportError` is sealed with three arms and none of them is about a rule** (§5.4.8, DR-119) |
+
+**WHAT THIS MEANS FOR §8.9, STATED HERE SO NOBODY HAS TO INFER IT.** M5's successor is **the Plan
+view**, not M6, on DR-029 §11.28.4 and roadmap §4: M6's criterion is that all four starters export a
+*complete* set, and a plan sheet arriving afterwards would make that criterion run twice (§5.9).
+Clause 2 above is `UNPERFORMED`, so it is neither discharged nor parked, and §8.9 therefore makes
+opening the Plan view over M5 the **soft edge** that rule explicitly contemplates rather than a
+violation of it: *"closing is the moment that binds; opening is a soft edge."* **M5 cannot close
+until a person reviews the pack**, and no amount of Plan view work changes that.
 
 #### 5.4.1 M5-0a, the catalogue corrected before the engine exists · CLOSED · `bd71eef`, `91ac48f`, `31eac36`, `6f2ad64`, `4933588`, `aa25cba`
 
@@ -5420,7 +5428,7 @@ milestone belongs in that milestone's section: this is where somebody looks when
 
 Nothing about M5's own scope depends on it. It is an M6 input that M5 unblocks.
 
-#### 5.4.2 M5-A and M5-B, the whole mechanism and not one rule · CLOSED · `11028a8`, `bd158a1`, `d17d614`, `d6500b8`, `d6356db`
+#### 5.4.4 M5-A and M5-B, the whole mechanism and not one rule · CLOSED · `11028a8`, `bd158a1`, `d17d614`, `d6500b8`, `d6356db`
 
 **Closed 2026-09-02** (`#252`, `#257`), five commits, fifteen gates green on each. The core floor in
 `tools/ci/run_suite.ps1` moved 3672 to 3751 across them, re-measured at every commit.
@@ -5616,6 +5624,360 @@ see. That is `M5-F` (`#293`), and the fixture corpus AC-051's exit criterion act
 M5-A/B and M5-C/D pairs record. M5's three clauses are the fixture pairs, the sign-off and the PDF.
 Twenty-eight rules and two tiers of surface exist underneath all three rather than being any of them.
 **A milestone can be nearly all built and still `0/28`.**
+
+#### 5.4.5 ARCH-A, a question that had two answers, and the third recorded number to stop tracking · CLOSED · `962dfa7`, `63e5850`, `33f4708`, `789cfec`
+
+**It began as a question, not a task.** *"What state management are we using and why?"* The corpus
+answered **Riverpod** in four places. The repository answered **nothing** in every place.
+
+**THE MEASUREMENT.** At `v0.4.63`, `riverpod` occurs **zero** times in any Dart file, any
+`pubspec.yaml` and the lockfile, and `ProviderScope` likewise. Seven tracked files mention the
+package and **all seven are prose**; three are under `docs/research/`, which is working papers, so
+the sweep touched four. ADR-011 was accepted at M0 and five milestones passed.
+
+| | ADR-011 said | The tree has |
+|---|---|---|
+| container | `ProviderScope`, one per document | nothing; `AppServices` passed by constructor |
+| DI | `ProviderScope(overrides:)` | one constructor parameter |
+| epochs | `ValueNotifier<int>` × 6 | `SimpleNotifier<int>` × 7, pure Dart under D1 |
+| derived | `DerivedRegistry derived` | not built, **deliberately**, and the reason is in the source |
+| ui state | four `*Provider` declarations | nine `ChangeNotifier`s owned by the screens' `State` |
+
+**WHAT MAKES THIS WORTH A SECTION RATHER THAN A CORRECTION.** ADR-011 carried
+`VERIFY: ... before the provider layer is written`. **That condition never came true, so the check
+never fired.** Nothing was edited wrongly, no reviewer could have caught it in a diff, and every
+sentence involved was true when written. A precondition attached to work that does not happen is not
+a tripwire, and the same reasoning voids every other `VERIFY:` in the corpus that waits on future
+work.
+
+**THE SECOND FINDING WAS LARGER THAN THE FIRST.** §10.1 is titled *"The full table"*. Audited
+against all five pubspecs it was wrong **in both directions**: **eight** packages named and installed
+nowhere (`flutter_riverpod`, `printing`, `desktop_drop`, `logging`, `intl`, `flutter_localizations`,
+`integration_test`, `benchmark_harness`), and **two** installed and named nowhere
+(`screen_retriever ^0.2.0`, `fake_async ^1.3.3`).
+
+**`screen_retriever` is the row that settles what kind of failure this is.** Its twenty-line pubspec
+justification **cites "§10.1's `window_manager` row"** by name. The author had the table open, read a
+row out of it, added a package on the strength of it, and did not add a row. Care was not the missing
+ingredient. **Nothing could fail**, because a dependency table is prose no gate reads: the same
+sentence `§5.4.2` earned about the board three days earlier.
+
+**THE THIRD INSTANCE TURNED UP WHILE FIXING THE SECOND.** Raising the app suite's floor for the new
+gate meant measuring it, and four of the five floors had stopped tracking:
+
+| Suite | Floor | Actual | Slack |
+|---|---|---|---|
+| `rackpal_core` | 976 | 3263 | **+2287** |
+| `rackpal_text` | 1 | 1 | exact |
+| `rackpal_export` | 183 | 189 | +6 |
+| `rackpal_ui` | 382 | 1162 | **+780** |
+| `rackpal_app` | 664 | 838 | +174 |
+
+`run_suite.ps1`'s own comment orders a re-measure *"in any commit that adds or removes tests"* and
+records **131 tests of slack** as the defect that prompted the rule. It had reached **3,247**. Two
+thousand two hundred and eighty-seven core tests could have stopped being discovered while the script
+printed a cheerful `+2287` and exited 0. All five are now exact.
+
+**Three recorded numbers, in one week, that quietly stopped tracking their subject: a rule count on
+the board, a dependency table in `docs/03`, and four test floors in CI.** None was introduced by an
+edit. Each was true when written. The common shape is a number **maintained by intention rather than
+by a gate**, and the only durable answer found so far is to make something read it.
+
+The remedy is `apps/rackpal/test/dependency_table_test.dart`, which runs in **three directions** and
+was watched failing in all three plus the anti-vacuity case that would otherwise have made it inert.
+Ruled at **DR-088** (canon §11.87, §12.27). **No version bump**: `#764` is parentless, so its tasks
+are not under M5's epic, and docs/14 §14.0 counts Done tasks under the **current** milestone's epic.
+
+#### 5.4.6 M5-F, the surface, and a viewer promised over a field nobody had built · CLOSED · `v0.5.50` · `cc37461`, `a3ab151`, `cbf1625`, `0772946`
+
+**Closed 2026-09-04, four chapters, `#294`-`#297`.** §5.4.4 ended on the sentence that this story
+exists to falsify: *"a user of this build cannot tell that fourteen rules exist."* They can now.
+
+| Chapter | What it left behind |
+|---|---|
+| **M5-F1** | The findings list, grouped by severity, rule or locus and filterable by severity. `groupFindings` is in **core**, not in the panel, because the panel is one of three consumers and the other two are not widgets: sheet `T0.02` prints open findings and acknowledgements (CR-022) and docs/05 §8's device rollup chip counts them. **Three surfaces disagreeing about which findings belong together is one document with three answers** |
+| **M5-F2** | Acknowledgement from the list, at both of CR-019's scopes, with the reason captured. The dialog **asks** `evaluateAcknowledgement` on every keystroke and renders its refusal verbatim rather than implementing *"a project mute needs a reason"* a second time |
+| **M5-F3** | `RuleMeta.rationale` and the `[ Why? ]` viewer over it, which discharges DR-114's deferral |
+| **M5-F4** | The per-rule severity control, `off` included, and the asymmetry that setting an override always needs a reason and withdrawing one never does |
+
+**THE LOCUS TYPES WERE CENSUSED, NOT ASSUMED.** `Finding.primaryEntityId` is nullable and could name
+any entity. Across all fourteen tier-3 predicates it is set from exactly four: `Link`, `Rack`,
+`DeviceInstance`, `Circuit`. All four carry a designator, so `locusLabel` is short and total instead
+of a twelve-arm switch over types no rule produces. **A fifth type is a test failure, not a blank
+cell**: a later rule pointing at a `Port` returns null and trips the guard rather than drawing an
+empty group header nobody can click.
+
+**THE ACKNOWLEDGEMENT JOIN IS RE-RUN RATHER THAN CARRIED.** `evaluateDocument` applies a demotion and
+then no longer holds the fact that there *was* one, which is precisely what the list needs: docs/05
+§8 renders an acknowledged badge hollow with the reason in its tooltip. So the join goes back through
+`acknowledgementFor` and nothing else, because the project-wide `*` mute is exactly the case a second
+hand-written matcher gets wrong.
+
+**M5-F1 IS THE FIRST CONSUMER `StatusMarker` HAS EVER HAD.** `status_marker.dart` records that
+nothing drew a status marker and that DR-090 §11.89.6's gate was therefore vacuous and had to be made
+structural. Severity now reaches the screen only through `StatusMarker`, so every row carries a shape
+as well as a colour, and the gate has offenders to count.
+
+**AND THE GATE THEN REFUSED THIS STORY'S OWN CODE, CORRECTLY.** M5-F2's refusal text took a console
+severity's fill. A **form refusal about an empty text field is not a severity** and should not borrow
+a finding's vocabulary; it takes the theme's error colour instead. The scan is textual and does not
+skip comments, so the comment explaining the fix deliberately does not spell the offending expression
+out. **Weakening the gate to admit a justified exception was the alternative and was not taken.**
+
+**THE PREMISE OF M5-F3 WAS FALSE, AND THAT IS THE CHAPTER.** AC-058/D1 says
+`CompatibilityRuleDef.rationale` *"gets the viewer `[ Why? ]` already promises"*, and the
+completeness critique says rule rationale *"exists in the model with no viewer"*. Measured: it does
+not exist. The type is from `docs/research/design-data-model.md`, a priority-3 document, and was
+never built. `RuleMeta` carried `summary` and `governing` and nothing a person could read as an
+answer. **So the chapter is not "wire a viewer to existing data", it is: author the data, then build
+the viewer.** `rationale` is REQUIRED on the constructor, so the catalogue cannot carry a rule with
+no explanation.
+
+**ONE TEXT SERVES TWO CHAPTERS ON PURPOSE.** M5-H1 wants the same 28 rules *"in trade language, not
+model language"* for review. Writing them twice would give the project two texts to keep in step and
+let the reviewed one drift from the shipped one. **M5-H2's corrections therefore land on the words
+the product actually shows.**
+
+**THE TRADE-LANGUAGE RULE IS CHECKABLE RATHER THAN ASPIRATIONAL**, and its ban list is proved
+non-vacuous by a second test. One test bans this repository's own vocabulary from every rationale:
+`acceptedFamilies`, `maxConnections`, `heightU`, `hostDeviceId`, `startTwelfth`, `ruIndex`,
+`MediaTypeDef` and twenty more. **A ban list naming words nobody writes would pass forever**, so the
+second test requires every banned word to appear in some `summary`, the summaries being the same 28
+rules in model language.
+
+**`off` IS OFFERED PLAINLY BECAUSE IT IS A LEGITIMATE ANSWER.** `#297` rules it *"a legitimate answer
+a professional is allowed to give"*, so it sits in the list with the others rather than behind a
+confirmation implying the person is doing something wrong. **A tool that will not let an integrator
+say "this rule does not apply to my jobs" is a tool they stop opening**, which is the position CR-019
+took deliberately over a nag that cannot be silenced.
+
+**AND THE DEFAULT DEMOTION IS THE FINDING'S OWN SEVERITY, NOT `off`.** CR-019 makes acknowledgement a
+demotion, and the case the model exists for is the inspector's *"noted, justified, and still an
+error"*. Defaulting to `off` would make the one-click path the one that hides evidence: a person
+working down a list of twelve would silently empty it. Hiding is still offered, it is just not the
+default. **`Withdraw` ships beside `Acknowledge` for the same reason**, since a surface that can only
+acknowledge is a one-way door and CR-019's whole argument for demotion over deletion is that the
+person stays in charge of their document.
+
+**FIVE DEFECTS, AND NONE WAS A TYPO.** They are recorded because four of the five produce a symptom
+that points somewhere other than the cause:
+
+1. **THE TEST HARNESS DEADLOCKED.** An `async` helper returning the dialog's own future is flattened
+   by Dart, so awaiting the helper did not resolve until the dialog closed. Every test hung. The
+   result future is held in a variable now.
+2. **A HANG WITH NO ASSERTION AND NO EXCEPTION**, two minutes, reported as *"did not complete"*. A
+   radio was tapped and `enterText` called **without pumping**, so the reason field was still
+   disabled, the text never arrived, `Apply` stayed disabled and the await on the result waited
+   forever. **A missing pump between a state change and the input that depends on it produces a hang
+   rather than a failure, and a hang names nothing.**
+3. **A VERTICAL OVERFLOW at 800x600**, which is a real screen and not a test artifact: `AlertDialog`
+   does not scroll its content.
+4. **A HORIZONTAL OVERFLOW of 127 px**, because `DropdownButton` sizes itself to its widest item.
+   Fixed with `Expanded` plus `isExpanded` and **not** by shortening the copy, which would have
+   hidden the bug until the next long label.
+5. **A `Spacer` in `AlertDialog.actions` throws.** That is an `OverflowBar`, not a `Row`.
+
+**Two vacuous assertions were found and replaced**, both in this story's own tests.
+`expect(statusForSeverity(s), isNotNull)` cannot fail against a non-nullable return; what is worth
+pinning is that the three markers are **distinct**, which is the failure a reader would suffer. And
+both empty-state tests would have passed with the two constants equal, so a test asserts they differ:
+**an empty list under an active filter reads as a broken panel unless it says which empty it is.**
+
+**Floors re-measured in the commits that added the tests**, per `run_suite.ps1`'s own instruction:
+core 3909 to 3932, ui 1444 to 1483.
+
+#### 5.4.7 M5-G, one corpus, and a gate whose subject is the catalogue · CLOSED · `v0.5.54` · `b890154`
+
+**Closed 2026-09-04, four chapters, `#299`-`#302`, in one commit** because the four are one artifact.
+This is the story M5's first exit clause actually rests on.
+
+**THE TICKET READ AS GREENFIELD AND THE TREE DISAGREED.** `#298` asks for a fixture corpus as though
+none existed. Measured, **three of the four evaluators already had both AC-051 halves**:
+`connect_rules_test.dart` had `_refusals()` and `_nearMisses()` with a coverage assertion and cited
+`#298` by name in its own comment; `spring_back_rules_test.dart` had the same pair;
+`placement_rules_test.dart` had a known-bad and a near-miss per `PLC` rule as named tests, and its
+header already said the corpus and its gate were M5-G's while *"the DISCIPLINE is not deferred with
+them"*. Only tier 3 was genuinely short.
+
+**MY OWN FIRST CENSUS OF THAT WAS WRONG AND IS RECORDED AS WRONG.** It reported placement as having
+no near-miss half. The error was grepping for a **table** shape rather than for the cases, which were
+there as named tests. **The corrected measurement is not a claim in a commit message, it is the gate
+finding the real gaps itself**, which is the only form of this that survives the next reader.
+
+**THE STRUCTURAL GAP MATTERED MORE THAN THE MISSING FIXTURES.** Each tier's coverage test drove off
+**its own enum**: `ConnectRule.values`, `SpringBackRule.values`. Nothing had the catalogue as its
+subject. So all three could pass green while a catalogue row had no pair at all, because no enum
+mentions it and no test is looking for it. **CR-021 makes the catalogue what decides a rule exists,
+and it is the union of four evaluators' rules.** `#302` asks that a REGISTERED rule without its pair
+fail the build, so the gate's subject has to be `kRuleCatalogue`. That is why the tier-1 and tier-2
+tables were **absorbed rather than federated**: the data moved into `test/validation/fixtures/`, the
+assertions did not, and `connect_rules_test.dart` and `spring_back_rules_test.dart` still own
+everything they asserted before and now read their rows from the corpus.
+
+**FOUR EVALUATORS, NOT ONE, WHICH IS THE FORMAT'S WHOLE PROBLEM.** `#299` asks for *"a document plus
+the expected finding set"*, which is literally true for tier 3 and false for the rest. Tier 1 refuses
+a gesture through **two** evaluators, `evaluateConnect` (`TOP-001..005`) and `evaluatePlacement`
+(`PLC-001..003`); tier 2 springs back through `evaluateSpringBack`; tier 3 describes a document.
+**A format built around one evaluator could have expressed fourteen of the twenty-eight rules and
+looked complete doing it.** So every tier normalises to one question, WHICH RULE IDS FIRED, and both
+halves of AC-051 become one comparison. Messages come back too, so the connect corpus's `mustName`
+contract survived the move.
+
+**WHAT THE HARNESS CAUGHT IS THE POINT OF THE HARNESS.** `#300` requires a known-bad to fire
+**exactly** its own rule, and enforcing that found four real problems in fixtures that looked right:
+
+1. **Seed-catalog devices state a mass, an outlet draw and an unsupported-mass limit**, so placing
+   one to test RU overlap also armed `PWR-003` and `RCK-013`. Fixed with minimal hand-built bodies
+   where every unstated field is unknown and therefore silent (G4).
+2. **`cat6` declares its own passive limit**, so a 120 m Ethernet run fires `LEN-002` as well as
+   `LEN-001`. That fixture now uses a medium declaring none.
+3. **`LEN-001` and `LEN-002` fire on an ABSENT length, by design**, because docs/02 §5.3 makes
+   *"length unknown, cannot verify"* a finding rather than silence. Four fixtures about jackets and
+   home runs were arming both length rules simply by not stating a length.
+4. **The absorbed tier-1 and tier-2 fixtures all pass the "and nothing else" contract**, which they
+   had never been checked against before.
+
+**None of the four was a typo. Each is a fixture that would have passed review as evidence about a
+rule it was not testing**, which is the same defect class §5.2 records under a different name.
+
+**THE GATE IS A NAMED STEP EVEN THOUGH THE CORE SUITE RUNS THE FILE ANYWAY**, and the reason is a
+schedule control rather than a coverage one. Roadmap M5's risk list names the pressure to add *"just
+one more obvious rule"* without its pair as how this milestone overruns. **Buried among 3,900 passing
+tests that failure is one red line; in the gate summary it reads as `AC-051 pair coverage FAILED`,
+which is where somebody adding a rule will see it.** §4.1 had already drawn this dependency in the
+other direction: M5-G4 is a convention until a service runs it, and CI existing since 2026-08-27 is
+what made it a gate.
+
+**MEASURED AT CLOSURE: 56 fixtures, 28 known-bad, 28 near-miss, across 28 rules**, one pair each.
+The corpus is `packages/rackpal_core/test/validation/fixtures/`, 1,996 lines over seven files. Core's
+floor moved 3932 to 3935.
+
+**AND CLAUDE.md'S GATE COUNT WAS COLLATERAL.** It said *"fifteen gates"*; the pair gate makes
+sixteen. **The number was removed rather than updated**, on that file's own rule about a second copy
+of a moving number, which it had already broken twice in the same paragraph about test floors.
+
+#### 5.4.8 M5-I, the clause that was `VACUOUS` and is now a type · CLOSED · `v0.5.57` · `c500cf5`
+
+**Closed 2026-09-04, three chapters, `#308`-`#310`.** Canon gains §11.118 (DR-119).
+
+**THE STAMP `#310` IS ABOUT DOES NOT EXIST.** It asks to prove the `ISSUED FOR CONSTRUCTION` stamp is
+the only thing an error gates, *"via `ExportSpec.issuedForConstruction`"*. Measured: neither exists.
+`ExportSpec` appears nowhere in shipped code, no stamp is drawn, and `ExportRequest` carries
+`documentJson`, `fontBytes`, `fileName` and `issuedAt` and nothing else.
+
+**THIS IS THE SECOND TIME IN TWO STORIES THAT A CLAUSE DESCRIBED A FIELD NOBODY BUILT**, after M5-F3
+and `CompatibilityRuleDef.rationale` (§5.4.6). Neither sentence is wrong about the **design**; what
+neither says is that the tree does not have it. **A corpus sentence in the present tense is a claim
+about the design, not about the code**, and pricing a chapter off one without reading the tree is how
+both were mis-scoped. DR-119 names the pattern, and §1's standing caveat on every decomposition is
+the same warning written before either instance.
+
+**A VACUOUS ASSERTION WAS THE TEMPTING MOVE AND WAS REFUSED.** Writing the test `#310` asks for and
+letting it pass over a stamp that is not there would be green forever and mean nothing. That is the
+exact failure this repository keeps finding in its own suite: `status_marker_source_test.dart`
+records a gate that would have counted zero offenders and passed, and `run_suite.ps1`'s header
+records green-over-nothing as the recurring shape.
+
+**SO THE CLAUSE IS PROVED IN THE STRONGER FORM AVAILABLE TODAY: NOTHING IS GATED, AND THE TYPE SYSTEM
+SAYS SO.** `ExportError` is sealed with three arms, `ExportDocumentUnreadable`, `ExportNoRacks` and
+`ExportFontMissing`, and none is about a rule. **An exhaustive switch over those arms fails to
+compile if a fourth appears**, so whoever adds *"export refused because the project has errors"* has
+to come to this file and argue with CR-022 rather than ship past it. A source scan is the second cue:
+`rackpal_export` never mentions `evaluateDocument`, `kDrcRules`, `AckedFinding` or
+`blockExportOnErrors`. **The exporter cannot gate on a finding it never asks for**, which is a better
+guarantee than the one `#310` requested.
+
+**THE FIXTURE IS PINNED BY RULE NAME, NOT BY SEVERITY SET.** `#308` wants open findings at every
+severity, and it has three: `RCK-001` error, `RCK-003` warning, `LNK-020` advisory. The test asserts
+that **map**, because a fixture edit that lost one source and gained another would satisfy a
+set-of-severities assertion and quietly stop testing what the file says it tests.
+
+**AND "BYTES REACH DISK" IS TAKEN LITERALLY.** The test writes a real file and checks the length
+matches, the header is `%PDF-`, and the sheet count is non-zero. Then it exports three more times,
+once per severity with the other two overridden `off`: **a project whose only finding is an ERROR is
+the case somebody would most expect to be refused.** Export's floor moved 189 to 195.
+
+**WHAT M6 INHERITS.** The stamp's gating will be the first gating the export path has ever had, and
+this file is where that tightening lands. **M5's clause is discharged either way**, because CR-022/G3
+is about a rule blocking an export and a stamp is not a rule.
+
+#### 5.4.9 M5-H1, the pack that is generated, and the two chapters that need a person · `68c87a7`
+
+**Landed 2026-09-04, `#304`, and the census half of `#692`.** No version bump was taken at the time;
+see §5.4.10, which is where that decision is corrected rather than left implicit.
+
+**GENERATED, NOT WRITTEN, AND THAT IS THE CHAPTER'S ONE STRUCTURAL DECISION.** `#304`: *"a reviewer
+who has to learn the words 'net', 'service' and 'conductor' first is a reviewer who signs off on the
+vocabulary rather than the rules."* The words a reviewer marks up have to be the words the product
+ships, so `tools/rule_review.py` reads the catalogue and emits `docs/20-rule-review.md`. **A
+hand-copied pack drifts from the code the first time a rationale is corrected, and M5-H2 exists to
+produce exactly those corrections**: re-run the tool afterwards and the pack is current again.
+
+**It parses the Dart source rather than running `dart`**, because a `dart run` needs a file under
+`packages/*/tool/` and anything left there is analyzed and counts against the ratchet. The parse was
+checked field by field against a `dart run` dump of `kRuleCatalogue` and agreed on all 28 rules.
+
+**GROUPED BY SUBJECT, NOT BY TIER.** A reviewer thinks in subjects: signal compatibility, cable
+lengths, power, racks, code, drawing integrity. The tier is a **consequence**, so it is stated per
+rule as what happens in plain words, refused outright or springs back with an override or listed
+afterwards, rather than as a heading. **An unplaced rule is a hard error rather than a catch-all
+group**, because the bottom of the pack is where a reviewer stops reading.
+
+**WHAT IT DOES NOT ASK is whether there should be more checks.** The set is capped at 28 and adding
+to it is its own decision (CR-021, AC-040), so a gap becomes a separate question rather than a change
+to this list.
+
+**AND A CLAIM HAD TO BE CORRECTED IN THE PACK'S OWN FIRST DRAFT.** It told the reviewer an error
+*"holds back the `ISSUED FOR CONSTRUCTION` stamp"*. DR-119 had ruled the day before that the stamp
+does not exist. **That is the mistake the ruling is about, made while writing the ruling's own
+follow-up work**, and it is recorded here rather than quietly fixed: a present-tense sentence about a
+design reads as a sentence about the tree even to somebody who has just finished proving it is not
+one. The pack says what is true today, that nothing blocks a drawing or an export at any level.
+
+**`#692`'s CENSUS CHANGED ITS OWN QUESTION.** The ticket names Lutron HomeWorks QS and Legrand
+Vantage. Censused: **55 families in 8 groups, and `ctl.lutron_qs` already shipped.** Vantage did not.
+The ticket predicted this and asked for the census before any pricing, which is why Part 2 of the
+pack is a list to mark up rather than a proposal. The pack also states what a new family costs, seven
+fields plus a dash and weight that PAL-1 gates against its group-mates, **so the reviewer's answer is
+informed rather than free**.
+
+**THE ANSWER TO THE FIRST NAME ARRIVED FROM THE USER BEFORE THE REVIEW DID**, and three rulings came
+with it: DR-120 shipped `ctl.vantage` and `F19` the load-controlling keypad, and DR-121 gave P4 a
+control-bus variant axis after the fixture proved a keypad had been carrying three bus ports for one
+cable (canon §11.119, §11.120, §12.28, §12.29). **The pack was regenerated and is current**: 56
+families, `ctl.vantage` listed, and re-running `tools/rule_review.py` against the tree today produces
+no diff.
+
+**WHAT IS LEFT IS NOT BUILDABLE.** `#305` is the review pass and `#306` records the sign-off with
+name, date and scope, **rules and catalog data being separate scopes**. Both are `UNPERFORMED` in
+§0's sense: somebody has to do the thing.
+
+#### 5.4.10 The version was one behind, and the reason is worth more than the digit
+
+**`v0.5.57` was current while the board held 58 Done Chapters under epic 23.** `68c87a7` closed
+`#304` and declined the bump, reasoning that `#305` and `#306` are the review itself and cannot be
+done by an agent, **so the pack shipped rather than the sign-off**. That is true about the STORY and
+not about the rule: docs/14 §14.0 counts Done **Chapters**, and `#304` is one.
+
+**Derived two ways, which is the discipline that caught it.** 57 plus the one chapter that closed
+without a bump is 58; the board query for Done Chapters under epic 23 returns 58. **The two agree,
+and neither is a number anybody typed twice.**
+
+**ONE WRINKLE IS RECORDED RATHER THAN RESOLVED**, because resolving it silently is how the next
+person inherits a number they cannot re-derive. That 58 includes **`#587`, which is M3 work**: it
+closed 2026-08-13, during M3, and was re-parented under epic 23 by the `#690` hierarchy repair long
+afterwards. The 0.5 series has counted it since the re-parenting, so the digit is consistent with
+itself. **The alternative reading, that the patch counts only chapters whose work belongs to the
+milestone, gives 57 and is equally defensible.** What is not defensible is switching between the two
+without saying so, so the mechanical reading is kept: **the patch is the count of Done Chapters under
+the epic, and the board is the register.** `#764` is unaffected either way and §5.4.5 already says
+why, being parentless.
+
+**This is the second time an unpaid bump has been paid in a later commit**, after `7d61656` which
+records that `94a8f2c` said *"no version bump"* for the wrong reason. **The parity gate cannot see
+this class of error**: `version_parity_test.dart` compares the six files against each other and is
+structurally blind to all six being stale together, which is how `v0.2.0` sat through thirty M3 tasks
+and `v0.3.30` through forty-six M4 ones.
 
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
@@ -5823,69 +6185,6 @@ Read it against the tree before starting rather than trusting it, per §1's cave
 decomposition: `PLAN-E`'s canvas row rests on the claim that the viewport, selection, hit-test and
 drag-preview machinery are reusable, and **that claim has not been tested by anything except a
 read**.
-
-#### 5.4.4 ARCH-A, a question that had two answers, and the third recorded number to stop tracking · CLOSED · `962dfa7`, `63e5850`, `33f4708`, `789cfec`
-
-**It began as a question, not a task.** *"What state management are we using and why?"* The corpus
-answered **Riverpod** in four places. The repository answered **nothing** in every place.
-
-**THE MEASUREMENT.** At `v0.4.63`, `riverpod` occurs **zero** times in any Dart file, any
-`pubspec.yaml` and the lockfile, and `ProviderScope` likewise. Seven tracked files mention the
-package and **all seven are prose**; three are under `docs/research/`, which is working papers, so
-the sweep touched four. ADR-011 was accepted at M0 and five milestones passed.
-
-| | ADR-011 said | The tree has |
-|---|---|---|
-| container | `ProviderScope`, one per document | nothing; `AppServices` passed by constructor |
-| DI | `ProviderScope(overrides:)` | one constructor parameter |
-| epochs | `ValueNotifier<int>` × 6 | `SimpleNotifier<int>` × 7, pure Dart under D1 |
-| derived | `DerivedRegistry derived` | not built, **deliberately**, and the reason is in the source |
-| ui state | four `*Provider` declarations | nine `ChangeNotifier`s owned by the screens' `State` |
-
-**WHAT MAKES THIS WORTH A SECTION RATHER THAN A CORRECTION.** ADR-011 carried
-`VERIFY: ... before the provider layer is written`. **That condition never came true, so the check
-never fired.** Nothing was edited wrongly, no reviewer could have caught it in a diff, and every
-sentence involved was true when written. A precondition attached to work that does not happen is not
-a tripwire, and the same reasoning voids every other `VERIFY:` in the corpus that waits on future
-work.
-
-**THE SECOND FINDING WAS LARGER THAN THE FIRST.** §10.1 is titled *"The full table"*. Audited
-against all five pubspecs it was wrong **in both directions**: **eight** packages named and installed
-nowhere (`flutter_riverpod`, `printing`, `desktop_drop`, `logging`, `intl`, `flutter_localizations`,
-`integration_test`, `benchmark_harness`), and **two** installed and named nowhere
-(`screen_retriever ^0.2.0`, `fake_async ^1.3.3`).
-
-**`screen_retriever` is the row that settles what kind of failure this is.** Its twenty-line pubspec
-justification **cites "§10.1's `window_manager` row"** by name. The author had the table open, read a
-row out of it, added a package on the strength of it, and did not add a row. Care was not the missing
-ingredient. **Nothing could fail**, because a dependency table is prose no gate reads: the same
-sentence `§5.4.2` earned about the board three days earlier.
-
-**THE THIRD INSTANCE TURNED UP WHILE FIXING THE SECOND.** Raising the app suite's floor for the new
-gate meant measuring it, and four of the five floors had stopped tracking:
-
-| Suite | Floor | Actual | Slack |
-|---|---|---|---|
-| `rackpal_core` | 976 | 3263 | **+2287** |
-| `rackpal_text` | 1 | 1 | exact |
-| `rackpal_export` | 183 | 189 | +6 |
-| `rackpal_ui` | 382 | 1162 | **+780** |
-| `rackpal_app` | 664 | 838 | +174 |
-
-`run_suite.ps1`'s own comment orders a re-measure *"in any commit that adds or removes tests"* and
-records **131 tests of slack** as the defect that prompted the rule. It had reached **3,247**. Two
-thousand two hundred and eighty-seven core tests could have stopped being discovered while the script
-printed a cheerful `+2287` and exited 0. All five are now exact.
-
-**Three recorded numbers, in one week, that quietly stopped tracking their subject: a rule count on
-the board, a dependency table in `docs/03`, and four test floors in CI.** None was introduced by an
-edit. Each was true when written. The common shape is a number **maintained by intention rather than
-by a gate**, and the only durable answer found so far is to make something read it.
-
-The remedy is `apps/rackpal/test/dependency_table_test.dart`, which runs in **three directions** and
-was watched failing in all three plus the anti-vacuity case that would otherwise have made it inert.
-Ruled at **DR-088** (canon §11.87, §12.27). **No version bump**: `#764` is parentless, so its tasks
-are not under M5's epic, and docs/14 §14.0 counts Done tasks under the **current** milestone's epic.
 
 ---
 
