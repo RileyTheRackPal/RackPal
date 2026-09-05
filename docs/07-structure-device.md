@@ -67,7 +67,7 @@ The bare word `Bundle` appears nowhere in code, JSON, or prose.
 
 **`Outlet.roughInStatus` is derived as the minimum across its member Links, and is not serialized** (CR-111, CR-115). An outlet is as complete as its least-complete run; a maximum would report an outlet "tested" while three of its four cables are still coiled in the attic.
 
-**Media types are user-extensible in v1.** An unmatched media value in a CSV import creates a new `MediaTypeDef` with a confirmation chip rather than rejecting the row; a small media-type editor ships to support it (RJ-012). Signal families and connector types remain catalog-updated.
+**Media types are user-extensible in v1.** An unmatched media value in a CSV import creates a new `MediaTypeDef` with a confirmation chip rather than rejecting the row; a small media-type editor ships to support it (RJ-012). **Signal families are user-extensible BY CLONE** (DR-122): a new one is derived from a shipped family and never authored from blank, so it inherits every field a rule reads. Connector types remain catalog-updated.
 
 ---
 
@@ -297,7 +297,8 @@ check.
 `@signal=` resolves by `shortTag`, then the id's own tail, then `displayName`, so `@signal=hbt`,
 `@signal=hdbaset` and `@signal=avoip` all land. **An unresolved value refuses** rather than creating
 a family, which is the opposite of RJ-012's rule for media and follows §3: media types are
-user-extensible, signal families are catalog-updated. Omitting it leaves the run
+user-extensible and signal families are extensible only BY CLONE (DR-122), so no typed
+token can mint one. Omitting it leaves the run
 `structure.undetermined`, which stays the encouraged default (§4.1).
 
 `+ Add outlet ▾` instantiates an `OutletTemplate` in one action, *TV location* → 2 × Cat6 + 2 × RG6 as one `Outlet` with four `Link`s and four label pairs. Seeded templates: **TV location · AP · Keypad · Ceiling speaker pair · Camera · Data only**, plus **TIA-570-D Grade 1 / 2 / 3** (CR-108). The grades stay **presets and a standards tag, never an axis**: the integrator does not speak TIA-570-D and is never asked to (AC-034/m23, DR-002). Which location fields the inspector demands is driven by the template: a ceiling speaker pair asks for `mountSurface: ceiling` and never for a wall compass direction (AC-034/m24).

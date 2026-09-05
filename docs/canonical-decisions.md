@@ -3024,6 +3024,8 @@ into `design-data-model.md §3.4` in that form. A signal family is not a thing a
 inventing casually: it carries direction defaults, topology, length limits, and rule
 applicability, and a hand-rolled one produces silently wrong validation.
 
+> **The signal-family limb is amended: see §12.30 and §11.121.** **The rest of the rejection stands**, including the connector-type editor, the colour-scheme editor and the rule editor. DR-122 does not overrule the reason given here; it removes the blank form the reason is about, by requiring every new family to be cloned from a shipped one.
+
 ### RJ-013 · `critique-completeness.md` C25: multi-document tabs
 
 **The argument.** `design-architecture.md §8.6` says ship in-app document tabs; no UX document
@@ -4116,7 +4118,7 @@ So there are four registries, not one:
 | Registry | Answers | User-extensible in v1? |
 |---|---|---|
 | `SignalDomainDef` | What colour, dash, weight and glyph does this class of signal draw in? | No: 8 fixed entries |
-| `SignalFamilyDef` | What *is* this signal, what does it require, what may it mate with? | No: catalog-updated (RJ-012) |
+| `SignalFamilyDef` | What *is* this signal, what does it require, what may it mate with? | **By clone only** (DR-122; was catalog-updated, RJ-012) |
 | `ConnectorTypeDef` | What plugs into what, and does gender apply? | Aliases only (CR-058) |
 | `MediaTypeDef` | What cable is pulled, how long may it be, what jacket? | **Yes**: the CSV import creates them (RJ-009) |
 
@@ -4898,7 +4900,7 @@ users rather than now.
 | Item | Ruling |
 |---|---|
 | **A rule-authoring UI and the JSON predicate AST** | The claim that users can author rules is **withdrawn from all documents**. ~20 of 70 rules cannot be expressed in a boolean predicate tree, so the AST buys a second rule system, a second debugger, and a second test suite for rules nobody can write without a UI that was never designed. CR-024, AC-011 |
-| **A full registry authoring UI** | RJ-012. Media types and connector aliases ship because users hit them; a general registry editor is a database admin tool wearing a product's clothes |
+| **A full registry authoring UI** | RJ-012 **as amended by DR-122** (§12.30). Media types and connector aliases ship because users hit them, and a signal family may be **cloned** from a shipped one; a general registry editor, a connector-type editor and a colour-scheme editor remain a database admin tool wearing a product's clothes |
 | **Multi-document tabs** | RJ-013. One window, one document, multiple windows if you want two |
 | **Tagged / accessible PDF (PDF/UA)** | RJ-015. The accessibility budget buys the outline tree, the keyboard connection path, and the NVDA matrix, all of which help a real user. A tagged schematic helps nobody who could not already read the schedule table |
 | **An in-app update mechanism in v1** | RJ-014. Signed installer plus a version-check ping; auto-update is a security surface and a support burden before there are users |
@@ -7781,6 +7783,8 @@ for media and the difference is already ruled: docs/07 §3 says *"Media types ar
 v1 … Signal families and connector types remain catalog-updated."* A family invented from a typo
 would be a family with no domain, no colour, no dash and no `acceptedFamilies`, which is a run the
 DRC and the palette both cannot reason about.
+
+**The sentence quoted above has since moved, and the refusal survives it** (DR-122 §11.121.5). docs/07 §3 now reads that signal families are extensible **by clone**, not that they are catalog-updated. **`@signal=` still refuses an unresolved value**, and for the reason this clause already gives rather than a new one: a clone needs a parent that a person chose, so no typed token can mint a family, and the family-with-no-domain this paragraph describes stays unreachable. The quotation is kept as written because it is what docs/07 said when DR-025 was decided.
 
 **11.24.4 A CSV `Use` column feeds the label chain and never the family.** Real pull lists put `TV`,
 `Data`, `Camera`, `Speaker` in that column, which name templates rather than families, and DR-023's
@@ -16212,6 +16216,204 @@ case resolves `portKey: 'cresnet'` on a seeded keypad. A tidier
 `bus.link` would have moved bytes for nothing and broken that test to no
 purpose.
 
+### §11.121 DR-122 · A signal family may be CLONED, which answers RJ-012's objection instead of overruling it
+
+**Settled by the user on 2026-09-05**, and it is an **§8.3 amendment**: v1
+grows a surface RJ-012 refused, so roadmap §2.1 gains a paragraph and this
+section records what moved. No milestone is renumbered and nothing leaves
+v1.
+
+**11.121.1 WHAT RJ-012 REFUSED, AND WHY THE REFUSAL WAS RIGHT.** It rejected
+*"a full registry authoring UI"* as *"a database admin tool wearing a
+product's clothes"*, and gave signal families their own reason: *"a signal
+family is not a thing a user should be inventing casually: it carries
+direction defaults, topology, length limits, and rule applicability, and a
+hand-rolled one produces silently wrong validation."*
+
+**THAT OBJECTION IS TECHNICAL AND IT STANDS.** A family drives
+`defaultDirection`, `defaultTopology`, `defaultConnector` and
+`acceptedFamilies`, which are read by `TOP-003`, `DIR-001`, `SIG-002` and
+`CON-001`. A person who picks the wrong topology does not get *missing*
+validation. They get **confident wrong validation**, which is worse than the
+gap they were working around, and worse in the specific way this product
+sells itself against: `SIG-001` exists to stop somebody destroying a switch.
+
+**11.121.2 SO NOTHING IS HAND-ROLLED: A NEW FAMILY IS A CLONE.** It is
+derived from a shipped family and never authored from blank. The clone
+inherits domain, direction, topology, connector and every field a rule
+reads; the author renames it, sets a `shortTag`, and chooses a dash and a
+weight. **What RJ-012 feared is not reachable, because there is no blank
+form to reach it from.**
+
+**MEASURED AGAINST THE CASE THAT PROVED THE NEED.** `ctl.vantage` (DR-120)
+would have been *clone Cresnet, rename, change the connector to
+`conn.hardwired`*. Three acts, every one of them a fact the user already
+stated in a sentence, and not one of them a topology decision. **The
+family the corpus was missing is exactly the family a clone expresses
+well**, which is the evidence this shape is the right one rather than the
+convenient one.
+
+**11.121.3 WHAT IS STILL REFUSED.** RJ-012's other two limbs are untouched:
+**no connector-type editor** and **no colour-scheme editor**. AC-011 is
+untouched: **no user-authored validation rules**, because rules are Dart
+functions keyed by `ruleId` and a UI for them would make the app an
+interpreter for user input. A cloned family reaches existing rules through
+existing data and adds no rule, so AC-040's cap of 28 is not approached.
+
+**`refused_surfaces_test.dart` KEEPS ITS SIGNAL-FAMILY ARM UNTIL THE CHAPTER
+THAT BUILDS THE EDITOR REMOVES IT**, and removing it is that chapter's
+visible act. **A ruling that permits what the tree still refuses is the
+correct state between an amendment and its build**: the gate is ahead of the
+corpus rather than wrong, because nothing has been built. That file's own
+header asks for exactly this, saying a later chapter *"cannot build one in
+good faith without a test going red first"*.
+
+**11.121.4 PAL-1 MOVES FROM CI INTO THE APP, FOR THIS CASE ONLY.** PAL-1 is
+a gate over the **shipped** families' rendered greyscale values, and a
+user-created family cannot be CI-gated because it does not exist when CI
+runs. **The editor therefore runs PAL-1's own arithmetic live and refuses a
+dash and weight that collide inside the domain.**
+
+This requires PAL-1's rules to live in `rackpal_core` rather than only in
+`tools/pal1_check.py`, with the gate and the editor reading one
+implementation. **Two implementations of a legibility rule is how the
+printed sheet and the CI check come to disagree**, which is the argument
+CR-021 makes about the rule catalogue and M5-A made about the connector
+mating matrix, applied a third time.
+
+**CR-078 IS UNTOUCHED AND THAT IS STRUCTURAL, NOT A PROMISE.** Colour lives
+on the **domain**, never the family, and a clone inherits its parent's
+domain. **So a clone cannot introduce a new hue even in principle.** What it
+varies is dash and weight, which is precisely what AC-054 makes the
+distinguishing channel for a type within a domain.
+
+**11.121.5 DR-025'S REFUSAL SURVIVES, AS A CONSEQUENCE RATHER THAN AN
+EXEMPTION.** `@signal=` refuses an unknown value (§11.24.3) on the ground
+that families are catalog-updated where media types are user-extensible.
+**Clone-from-existing does not disturb it**: a family cannot be conjured
+from a typed token, because a clone needs a parent that a person chose. So
+the modifier still refuses, and RJ-009's *"an unmatched value creates a
+media type"* still has no counterpart here. **The asymmetry that DR-025 was
+built on is preserved by the shape of the surface rather than by a rule
+saying so**, which is the more durable of the two.
+
+**11.121.6 STORAGE IS BOTH, AND THE PROJECT COPY IS AUTHORITATIVE FOR THE
+DRAWING.** A cloned family is written into `doc.registries.signalFamilies`
+**and** onto the user's shelf. Neither replaces the other.
+
+**THE USER'S OWN FRAMING IS THE PRECEDENT: RollerCoaster Tycoon 2 saves
+custom scenery objects into the save file**, so a save opens on a machine
+that never had them. That is AC-041 and DR-103's copy-on-place argument
+arriving from outside this project, and it settles the direction: **the
+document must never depend on a shelf**, or a drawing changes meaning when
+it crosses machines, which docs/02's rejected-alternatives table names as
+what embedded snapshots refuse. The shelf copy exists so the family follows
+the person to the next job; the project copy exists so the file is
+self-contained. **CR-117 needs nothing new**: `signalFamilies` is already a
+serialized map with a round-trip arm.
+
+**11.121.7 THE CLAIM THAT SURVIVES, RESTATED.** RJ-012 narrowed the
+extensibility claim to *"media types and colours are user-extensible;
+signal families and connector types are catalog-updated"*. It becomes:
+**media types and colours are user-extensible, signal families are
+user-extensible BY CLONE, and connector types remain catalog-updated.** The
+claim is still narrowed and still true, which was RJ-012's actual
+requirement, and §12.30 records the eight derived sites the old sentence
+was written at.
+
+### §11.122 DR-123 · An authored device reaches the shelf, and the project keeps its copy
+
+**Settled by the user on 2026-09-05**, an **§8.3 amendment** and the
+companion to DR-122. Nothing leaves v1 and no milestone is renumbered.
+
+**11.122.1 THE CENSUS CAME FIRST, AND IT CUT THE SCOPE TO A THIRD OF THE
+REQUEST.** The ask was that an authored device save to a master list, that
+imported `.rmda` files join that list, and that export offer a choice of
+devices. **Two of the three already ship**, from M4-N (§5.3.24 of docs/12):
+
+| Asked for | State |
+|---|---|
+| Export offers a choice of devices | **Built.** `library_io_dialogs.dart` renders a `CheckboxListTile` per template, everything ticked when it opens so *pack the lot* stays one click |
+| An imported library joins the list | **Built.** `loadLibraryShelf` reads EVERY library on the shelf, and `#242` made the palette list them all at once with source chips and a per-library filter |
+| An authored device joins the list | **MISSING, and this ruling is that gap** |
+
+**This is why the census precedes the pricing.** A ruling written from the
+request would have re-specified two shipped subsystems, and the derived
+document would then have described a rebuild nobody did. §1's caveat on
+every decomposition names the same hazard and this is the fourth time it
+has paid.
+
+**11.122.2 THE GAP, STATED AS A MEASUREMENT.**
+`SaveTemplateToProjectCommand` writes into `RackDocument.templates` and
+nowhere else. A device authored in the builder therefore **lives in that
+project only** until somebody deliberately exports an `.rmda`.
+
+**So requirement 2, *"author the long tail once and use it everywhere"*, is
+satisfied for devices that arrive by IMPORT and not for devices the user
+CREATES**, which is backwards, and is the sentence
+`device_builder_actions.dart` has been apologising for since M4-D. M4-N
+closed the import half and read as though it had closed both.
+
+**11.122.3 SAVE WRITES BOTH, AND THE PROJECT COPY IS AUTHORITATIVE FOR THE
+DRAWING.** The project keeps its embedded snapshot exactly as AC-041 and
+DR-103 already require. The shelf gains a copy so the device follows the
+person to the next job. **Neither replaces the other.**
+
+**THE USER'S PRECEDENT IS RollerCoaster Tycoon 2**, whose save file carries
+the custom scenery objects it uses, so a save opens on a machine that never
+had them. That is copy-on-place arriving from outside this project, and it
+decides the direction: **the document must never resolve a device out of a
+shelf**, which docs/02's rejected-alternatives table names as *"a live
+library reference"* and prices as *"drawings that change silently across
+machines"*. DR-103 §11.102 is untouched, `templateRef{templateId, version,
+contentHash}` is untouched, and no `.rmpj` changes shape.
+
+**ONLY AUTHORED DEVICES**, which is the user's own boundary: *"custom
+devices (beyond the archetypes)"*. The 49 seeded templates ship with the
+application and need no shelf copy. A fork of a seeded template **is**
+authored, carries `derivedFrom`, and goes to both.
+
+**11.122.4 THE SHELF WRITE IS NOT A COMMAND, AND THAT IS THE ONE THING A
+READER WILL NOT EXPECT.** AC-014 makes the command stack the single
+mutation gate **for the document**, and the shelf is not the document: it
+is a directory under the data root, shared by every project this person
+opens. A shelf write therefore does not enter the `UndoStack`.
+
+**SO UNDOING THE SAVE DOES NOT UN-SHELVE THE DEVICE**, and that asymmetry
+is deliberate rather than an oversight. `Ctrl+Z` is scoped to the drawing a
+person is looking at, and reaching out of it to delete from a personal
+library is a surprise in the more damaging direction: **an undo that
+silently removes an asset from a library the user has been building across
+jobs is the loss they will not forgive** (DR-015 §11.15.4 makes the same
+argument about `.rmdev`). Withdrawing a device from the shelf is its own
+act in the library surface.
+
+**AND A SHELF FAILURE IS A NOTICE, NEVER A REFUSAL.** The project save
+happens FIRST and completes on its own terms; the shelf copy follows and
+may fail on a session with no data root, an absent directory or an
+unwritable one. All three are states `loadLibraryShelf` already answers as
+an empty shelf without throwing, and the same posture holds for the write:
+**a person must never lose an authored device because a library directory
+was unavailable.**
+
+**11.122.5 PROVENANCE IS KEPT, SO ONE LIST IS A VIEW AND NOT A
+FLATTENING.** The user's answer was one master list **with** provenance.
+The palette keeps badging every row by source, and an authored device lands
+in a library that is the person's own rather than in an unattributed pool.
+**Discarding the source chips would make *"where did this device come
+from"* unanswerable at exactly the moment it matters**, because DR-101's
+`templateIdFor` derives an id from the display name identically on every
+machine, so two libraries holding an `HDMI Matrix 16x16` **collide by
+construction**. DR-103 §11.102.3's three cases decide that collision with
+no prompt and apply to the shelf write unchanged: the key is free, the key
+holds an identical body, or the key holds a different body and a fresh id
+is minted at v1.
+
+**11.122.6 WHAT THIS DOES NOT DO.** It does not make the shelf a sync
+target, does not add a second format, does not touch `.rmdx` or `.rmda`,
+and does not give a library a version chain. It is one write, in one
+caller, plus the surface that names where the write went.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -16797,6 +16999,14 @@ label onto two drops.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **P4**, the "may not vary" row | A parametric variant may not vary "signal family of any port" or "connector type". | **Amended for a control bus on a field device.** `ControlBus` varies both, on `F13` and `F19` only (DR-121 §11.120.2). The row still governs everywhere else and still governs the ROLE axis: P4's *"exactly twice"* is untouched, because a bus is not a role. The argument is that the seeded catalogue is generic, so a keypad's bus is a wiring choice on one archetype rather than a different product. |
+
+### 12.30 Amended by DR-122 (a family may be cloned)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **RJ-012**, the signal-family limb | "Not shipping in v1: a signal-family editor, a colour-scheme editor, and a rule editor." | **A signal-family editor ships in v1, restricted to CLONE-FROM-EXISTING** (DR-122 §11.121.2). **The colour-scheme editor and the rule editor are still refused**, and so is a connector-type editor. RJ-012's REASONING is not overruled but satisfied: it objected that a hand-rolled family *"produces silently wrong validation"*, and a clone inherits every field a rule reads, so there is no blank form to hand-roll from. |
+| **RJ-012**, the extensibility claim | "media types and colours are user-extensible; signal families and connector types are catalog-updated" | **"Media types and colours are user-extensible, signal families are user-extensible BY CLONE, and connector types remain catalog-updated."** The old sentence is written at **eight sites in six documents**: `docs/01` §256, `docs/02` §826, `docs/07` §70 and §300, `docs/10`'s DR-025 row, canon §4119 and §7781, and `docs/catalog/seed-devices.md` §1461. All are edited rather than pointered, per the corpus table. |
+| **DR-025 §11.24.3** | `@signal=` refuses an unknown value *"since §3 keeps signal families catalog-updated"* | **Unchanged in effect, and its reason is restated rather than removed** (DR-122 §11.121.5). A clone needs a parent a person chose, so no typed token can mint a family and the modifier still refuses. |
 
 ## 13. Resolved §10 questions
 

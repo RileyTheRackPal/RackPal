@@ -1458,7 +1458,7 @@ it is only expressible because the axes are separate.
 | Registry | Answers | User-extensible in v1? |
 |---|---|---|
 | `SignalDomainDef` | What colour, dash, weight and glyph does this class of signal draw in? | No: 8 fixed entries |
-| `SignalFamilyDef` | What *is* this signal, what does it require, what may it mate with? | No: catalog-updated (RJ-012) |
+| `SignalFamilyDef` | What *is* this signal, what does it require, what may it mate with? | **By clone only** (DR-122; was catalog-updated, RJ-012) |
 | `ConnectorTypeDef` | What plugs into what, and does gender apply? | Aliases only (CR-058) |
 | `MediaTypeDef` | What cable is pulled, how long may it be, what jacket? | **Yes**: the CSV import creates them (RJ-009) |
 

@@ -253,7 +253,7 @@ So there are four registries (CR-058, CR-078):
 | Registry | Answers | User-extensible in v1? |
 |---|---|---|
 | `SignalDomainDef` | Colour, dash, weight, glyph for this class of signal | No: 8 fixed entries |
-| `SignalFamilyDef` | What the signal *is*, what it requires, what it may mate with | No: catalog-updated (RJ-012) |
+| `SignalFamilyDef` | What the signal *is*, what it requires, what it may mate with | **By clone only** (DR-122; was catalog-updated, RJ-012) |
 | `ConnectorTypeDef` | What plugs into what, and whether gender applies | Aliases only |
 | `MediaTypeDef` | What cable is pulled, how long it may be, what jacket | **Yes**: CSV import creates them (RJ-009) |
 
