@@ -16414,6 +16414,95 @@ target, does not add a second format, does not touch `.rmdx` or `.rmda`,
 and does not give a library a version chain. It is one write, in one
 caller, plus the surface that names where the write went.
 
+### §11.123 DR-124 · An IR emitter output carries two conductors, and the catalogue had no way to say so
+
+**Found by the user on 2026-09-05, during the M5-H2 domain review**, and
+fixed the same day. **Not an §8.3 amendment**: no scope moves, roadmap §2
+is untouched, and the number below was already the design's.
+
+**11.123.1 THE TRADE FACT.** A dual-head IR flasher is **one 3.5 mm plug
+with two heads**: SnapOne ships the Episode `IRF-2`, and Control4's
+Composer Pro models it directly by allowing more than one connection on a
+single port. **Three or more is not a bigger flasher**; it needs a second
+port or an IR expansion block, which is its own physical device with its
+own ports. **So `2` is a physical bound and not a cap somebody chose.**
+
+A splitter needs no exemption, because a splitter *is* a device and gets
+modelled as one. The dual-head flasher is the case that is genuinely one
+connection carrying two heads.
+
+**11.123.2 THE DESIGN DOCUMENT WAS RIGHT AND HAD BEEN SINCE M0.**
+`docs/catalog/seed-devices.md` declares `"maxConnections": 2` on
+`ir.out.1`. Somebody knew this at the start.
+
+**THE CODE COULD NOT EXPRESS IT.** `catalog_ports.dart`'s `p()`, which
+every seeded port is built through, **had no `maxConnections` parameter at
+all**, so all 727 seed ports took `PortDef`'s default of `1` **by
+construction rather than by anybody's choice**. `effectiveMaxConnections`
+widens a default `1` only on a `busNode` pin, and an IR output is
+`PortDirection.source`, so nothing rescued it downstream.
+
+**`TOP-003` IS TIER 1, WHICH IS WHY THIS MATTERED.** docs/02 §5's tier
+table gives T1's escape as *"None. There is nothing to escape to."* So the
+second head of a legal, shipping, commonplace device was refused at the
+gesture on **every IR output in the catalogue**, with no
+`[ Connect anyway ]`. **The product could not draw a system it ships a
+catalog for.**
+
+**11.123.3 THE RULE IS NOT AT FAULT AND IS NOT CHANGED.** `TOP-003` reads
+`effectiveMaxConnections` and honours a declared value above one. The
+catalogue was what could not speak. `p()` gains the parameter, the **seven
+`ctl.ir_emitter` source ports** across `catalog_control.dart` and
+`catalog_video.dart` declare `2`, and nothing about the rule, the tier or
+the evaluator moves.
+
+`catalog_field.dart`'s `pigtail` is deliberately **not** among the seven:
+it is `ctl.ir_receiver` carried on a `source` pin, which is a receiver's
+return leg to the controller rather than a flasher jack.
+
+**11.123.4 THE THIRD INSTANCE OF DR-119'S PATTERN, AND THE WORST OF THE
+THREE.** `connect_target.dart` argued its own design from the missing
+number, in the present tense:
+
+> `2` on an IR emitter output (docs/catalog/seed-devices.md's `ir.out.1`)
+> is a real, authored bound and this must not widen it to infinity.
+
+**It was authored nowhere in code.** After
+`CompatibilityRuleDef.rationale` (M5-F3) and
+`ExportSpec.issuedForConstruction` (M5-I), this is the third time a
+present-tense corpus sentence has been read as a statement about the tree.
+**It is the worst of the three because the document was RIGHT**: the other
+two described things nobody had decided to build, and this one described a
+decision that was made and then silently lost between a design document
+and a builder signature, with a tier-1 rule enforcing the loss.
+
+**11.123.5 THE AC-051 PAIR COULD NOT HAVE FOUND IT, AND THAT IS THE
+GENERALISABLE PART.** `TOP-003`'s known-bad and near-miss both build a
+**synthetic** port and pass the bound in explicitly, as
+`connectPair(avrMax: 4)`. Both halves passed, forever, while the shipped
+catalogue refused a legal connection.
+
+**A rule exercised only against ports the test itself authored is a rule
+tested against its own assumptions.** That is the house rule about
+asserting the artifact rather than the mechanism, arriving from a new
+direction: the fixtures were not wrong about `TOP-003`, they were wrong
+about *what `TOP-003` runs on*.
+
+`connect_rules_test.dart` now carries two cases over the real catalogue: a
+census that every IR emitter output declares `2`, guarded against vacuity
+by requiring the census to find some; and a behavioural case where a second
+head lands on a seeded `V01` and a third is refused naming `2 of 2`.
+**Whether every tier-1 rule owes a shipped-catalogue case is a real
+question and is left open rather than answered by this ruling**, because it
+is a gate change and belongs to whoever prices it.
+
+**11.123.6 WHAT THIS SAYS ABOUT M5-H.** The domain review had not
+finished, and had already produced a defect that sixteen green gates,
+3,946 core tests and a 56-fixture AC-051 corpus could not see. **That is
+the clause's whole argument, paid before the clause closed**, and it is the
+second time this project has been corrected by trade knowledge it could not
+derive: DR-120's Vantage census was the first.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

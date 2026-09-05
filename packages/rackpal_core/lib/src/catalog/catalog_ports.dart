@@ -131,6 +131,22 @@ final class PortBuilder {
     String? setKey,
     String? setRole,
     String? notes,
+    // HOW MANY CONDUCTORS THIS PIN ACCEPTS, and the reason it is a
+    // parameter at all (M5-H2, DR-124).
+    //
+    // Until 2026-09-05 this builder had no way to say it, so all 727 seed
+    // ports took `PortDef`'s default of `1` BY CONSTRUCTION rather than by
+    // anybody's choice. `docs/catalog/seed-devices.md` documents
+    // `"maxConnections": 2` on `ir.out.1` and had done since M0, and
+    // `connect_target.dart` cited that number as *"a real, authored
+    // bound"* which existed nowhere in code. `TOP-003` is tier 1, so it
+    // refused the second head of a dual-head IR flasher at the gesture
+    // with no `[ Connect anyway ]` to escape through.
+    //
+    // Leave it alone unless a real device says otherwise. A declared value
+    // is not widened by `effectiveMaxConnections`, so this is a promise
+    // and not a hint.
+    int maxConnections = 1,
   }) {
     _bank(bank, bankLabel ?? bank, bankSide);
     ports.add(
@@ -160,6 +176,7 @@ final class PortBuilder {
         setKey: setKey,
         setRole: setRole,
         notes: notes,
+        maxConnections: maxConnections,
       ),
     );
   }

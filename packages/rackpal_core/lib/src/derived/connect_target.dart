@@ -163,11 +163,26 @@ final class ConnectTarget {
   /// ships a catalog for.
   ///
   /// WHY A DECLARED `> 1` STILL WINS ON A BUS PIN. `2` on an IR emitter
-  /// output (docs/catalog/seed-devices.md's `ir.out.1`) is a real,
-  /// authored bound and this must not widen it to infinity. Only the
-  /// DEFAULT `1` — the value a template reaches by saying nothing —
-  /// yields to the bus fact, because on a `busNode` pin that `1` is the
-  /// absence of a statement rather than one.
+  /// output is a real, authored bound and this must not widen it to
+  /// infinity. Only the DEFAULT `1` — the value a template reaches by
+  /// saying nothing — yields to the bus fact, because on a `busNode` pin
+  /// that `1` is the absence of a statement rather than one.
+  ///
+  /// THIS PARAGRAPH CITED A NUMBER THAT DID NOT EXIST, UNTIL 2026-09-05.
+  /// It named `docs/catalog/seed-devices.md`'s `ir.out.1` as the authored
+  /// `2`, and that document did say so, and had since M0. **The code could
+  /// not**: `catalog_ports.dart`'s `p()` had no `maxConnections` parameter,
+  /// so all 727 seed ports took `1` by construction. `TOP-003` is tier 1,
+  /// so the second head of a dual-head flasher (Episode IRF-2: one 3.5 mm
+  /// plug, two heads) was refused at the gesture with no `[ Connect
+  /// anyway ]` to escape through, on every shipped IR output.
+  ///
+  /// **Found by the M5-H2 domain review, not by a test**, and the AC-051
+  /// pair could not have found it: `TOP-003`'s fixtures build a synthetic
+  /// port and pass `maxConnections` in explicitly, so both halves passed
+  /// while the shipped catalog refused a legal connection. A fixture over
+  /// a real seed device is now part of the pair, and DR-124 records the
+  /// third instance of DR-119's pattern.
   ///
   /// A declared `<= 0` is returned untouched, bus or not: `0` is the one
   /// value a template can only have meant on purpose, and `TOP-003` reads
