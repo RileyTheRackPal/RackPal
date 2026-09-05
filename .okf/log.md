@@ -1,5 +1,51 @@
 # Update Log
 
+## 2026-09-05
+
+* **Ruling**: [DR-126](/decisions/dr-126-the-catalogue-was-calling-two-signals-by-one-name.md).
+  `DIR-003` was never keyed on the wrong field. DR-125 held it for a decision
+  over a three-row census, and **the census was a row short**: eleven
+  device-side `IR IN` ports carried `ctl.ir_receiver` with the same direction,
+  connector and pinout as the block's powered RX jack, so no re-keying could
+  have separated them. The mechanism was in `seed_registries.dart` the whole
+  time: a two-conductor TS plug bridges ring to sleeve on a jack supplying
+  +12 V. `ctl.ir_direct` ships and **the predicate is untouched**.
+* **Note**: **SILENCING A RULE CAN BUY A DIFFERENT SENTENCE AND NOTHING ELSE.**
+  With the eleven re-familied the everyday connection still sprang back, now as
+  `SIG-002`. `catalog_ports.dart`'s `p()` **had no parameter for
+  `acceptedFamilies`**, so all 727 seeded ports carried the empty list by
+  construction and `SIG-002` refuses every cross-family pairing in the shipped
+  catalogue. Invisible because almost every seeded connection is same-family;
+  DR-126 created the first that is not.
+* **Note**: **THE SECOND FIELD IN TWO DAYS FOUND UNAUTHORABLE BY
+  CONSTRUCTION**, after DR-124's `maxConnections`, in the same builder, on the
+  same evidence: a rule firing on a correct connection. With `RCK-003`'s
+  discarded severity that is three for three this milestone. See
+  [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md),
+  which now carries all three.
+  A census of `p()`'s parameters against `PortDef`'s fields is owed.
+* **Note**: **A CANARY FIRED AND WAS WIDENED RATHER THAN DELETED.**
+  `connect_rules_test.dart` asserted *"NOT ONE seed catalog port declares
+  acceptedFamilies"* and said in writing what a failure would mean. It now names
+  the exact set, because `isNotEmpty` would let the next accidental widening
+  through unremarked.
+* **Note**: **A SWEEP OVER `buildSeedCatalog()` ALONE MISSES THE ROLE
+  VARIANTS.** The eighteenth IR device input is on `V06:receiver`, in
+  `buildSeedRoleVariants()`, and `insert_receiver.dart` places that template as
+  the `SIG-001` remedy: it is the one IR port the product creates on a user's
+  behalf, and the base-catalogue sweep skipped it in silence.
+* **Note**: **PAL-1 CANNOT SEE A PATTERN THAT TILES TO ANOTHER ONE.** Its
+  within-domain limb compares the exact `(dash, weight)` tuple, so
+  `1.5,3,1.5,3` passes against `ctl.ir_emitter`'s `1.5,3` while rendering as the
+  identical line. Repetitions were excluded by hand; the gap is recorded, not
+  fixed. The chosen `1.5,9` survived a full run of 3,928 candidates alongside
+  1,208 others, so the gate narrowed the field and a person chose within it.
+* **Note**: **THIS BUNDLE WAS SIX DAYS AND TWENTY-TWO RULINGS STALE** when this
+  entry was written, its last update being 2026-08-30. DR-104 through DR-125
+  have no concepts. Recorded here rather than quietly caught up, because
+  batching a catch-up is the drift this bundle exists to prevent, and this log
+  said exactly that about itself on 2026-07-28.
+
 ## 2026-08-30 (sixth entry)
 
 * **Ruling**: [DR-102](/decisions/dr-102-the-palette-answers-for-every-shelf.md).
