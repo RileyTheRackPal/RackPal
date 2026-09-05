@@ -69,22 +69,28 @@ const double _kM2cMs = 3.052;
 /// instead of one pin per port. The saving is large because the fixture is
 /// twenty-four switches and patch panels wide.
 ///
-/// MEASURED TWICE AND EQUAL: the committed fixture reports 3,351 total
+/// MEASURED TWICE AND EQUAL: the committed fixture reports 3,463 total
 /// against 948 label ops, and the nets-and-registries document reports
-/// 3,588 against 1,185. Both leave 2,403, which is the check that this is
+/// 3,700 against 1,185. Both leave 2,515, which is the check that this is
 /// the symbol layer moving rather than the label layer.
 ///
-/// **2,371 -> 2,403 ON 2026-09-04, AND THE ARITHMETIC IS EXACT.** DR-120
-/// gave `F13` a third bus alternate, `vantage.link`, and this fixture
-/// holds SIXTEEN keypads. Sixteen devices times two ops for one more
-/// vector pin is the whole +32, and the LABEL ops did not move at all
-/// (948 and 1,185, unchanged), which is what says this is a port being
-/// drawn rather than the layout shifting underneath it.
+/// **2,371 -> 2,403 -> 2,515 ON 2026-09-04, IN TWO MOVES WITH DIFFERENT
+/// CAUSES.** The first was DR-120 giving `F13` a third bus alternate:
+/// sixteen keypads times two ops for one more vector pin, +32 exactly.
 ///
-/// It is also the standing cost of the alternates-as-ports pattern:
-/// every seeded keypad draws all three buses whether the job uses one or
-/// not, and a fourth alternate would cost another 32 here.
-const int _kSymbolOps = 2403;
+/// The second is DR-121 and is not a regression. Giving the keypad ONE
+/// bus port broke this fixture outright with *"KEY-1 ran out of ports"*,
+/// because it had been wiring TWO home runs into each of sixteen
+/// keypads and the second was landing on an alternate no installer would
+/// wire. The fixture now holds THIRTY-TWO keypads with one bus cable
+/// each, still 300 links, and the +112 is sixteen more device bodies to
+/// draw against thirty-two fewer bus pins.
+///
+/// **THE OLD NUMBER WAS CHEAPER BECAUSE THE FIXTURE WAS WRONG**, which is
+/// the honest way to read this: a smaller symbol layer bought by drawing
+/// a house that could not be built is not a saving. Label ops did not
+/// move in either step (948 and 1,185 throughout).
+const int _kSymbolOps = 2515;
 
 /// The headroom fixture: twelve copies of the 300-link pod, which is a
 /// building with twelve IDFs rather than a house with one rack.
@@ -92,13 +98,19 @@ const int _kHeadroomPods = 12;
 
 /// Devices in the headroom fixture, asserted before anything is timed.
 ///
-/// **94 per pod**, and the arithmetic is written out because the first
+/// **110 per pod**, and the arithmetic is written out because the first
 /// draft said 93 and the shape assertion caught it: 16 rail (1 MTX, 2 AMP,
-/// 2 SW, 6 PP, 1 CTL, 1 PWR, 1 SHF, 2 BLK), 5 shelf (1 AVR, 4 STB), 72
-/// field (8 DIS, 10 SPK, 12 IWS, 8 CAM, 6 WAP, 4 TP, 16 KEY, 8 VOL), and
+/// 2 SW, 6 PP, 1 CTL, 1 PWR, 1 SHF, 2 BLK), 5 shelf (1 AVR, 4 STB), 88
+/// field (8 DIS, 10 SPK, 12 IWS, 8 CAM, 6 WAP, 4 TP, 32 KEY, 8 VOL), and
 /// the Structure device. `schematic_fixture.dart`'s own header says "93
-/// devices", which is the same count with `STR-1` left out of it.
-const int _kHeadroomDevices = 94 * _kHeadroomPods;
+/// devices", which was the same count with `STR-1` left out of it.
+///
+/// **94 -> 110 ON 2026-09-04 (DR-121).** The keypads went from sixteen to
+/// thirty-two, because the fixture had been wiring two home runs into
+/// each of sixteen and the second was landing on a bus alternate no
+/// installer would wire. One cable per keypad needs twice the keypads to
+/// keep 300 links, and the link count is what this fixture is for.
+const int _kHeadroomDevices = 110 * _kHeadroomPods;
 
 /// THE RATCHET, NOT THE BUDGET. Measured at ~110 ms on the machine that
 /// wrote this (32 cores, Dart 3.12), and set well above it because wall

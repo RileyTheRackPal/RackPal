@@ -43,6 +43,7 @@
 // the snapshot it already stores IS the resolved half. Nothing in the
 // codec moves, and `write(read(bytes)) == bytes` is unaffected.
 
+import 'package:rackpal_core/src/catalog/catalog_field.dart';
 import 'package:rackpal_core/src/catalog/catalog_video.dart';
 import 'package:rackpal_core/src/model/template.dart';
 
@@ -95,6 +96,14 @@ Map<String, TemplateBody> buildSeedRoleVariants() => <String, TemplateBody>{
   ...buildVideoRoleVariants(),
 };
 
+/// Every DERIVED bus body, keyed by its variant id (DR-121).
+///
+/// Never the shipped bus, which is in `buildSeedCatalog()` under the bare
+/// id, exactly as [buildSeedRoleVariants] treats the shipped half.
+Map<String, TemplateBody> buildSeedBusVariants() => <String, TemplateBody>{
+  ...buildFieldBusVariants(),
+};
+
 /// The roles [catalogId] offers, shipped half first, or empty when it
 /// carries no role parameter.
 ///
@@ -125,4 +134,98 @@ TemplateBody? resolveTemplateRole(
   // which half is which.
   if (roles.first == role) return catalog[catalogId];
   return buildSeedRoleVariants()[roleVariantTemplateId(catalogId, role)];
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// THE SECOND AXIS: WHICH CONTROL BUS (DR-121)
+// ═════════════════════════════════════════════════════════════════════
+// P4's table forbids a variant changing *"signal family of any port"* or
+// *"connector type"*, and a keypad's bus changes both. DR-121 amends that
+// row rather than working around it, on the argument P4 could not have
+// made: the seeded catalog is GENERIC. `F13` is not a part number, it is
+// "a keypad", and which bus it speaks is a wiring choice on one archetype
+// rather than a different product.
+//
+// WHY NOT `TemplateRole`. That enum is closed and says so: P4 uses the
+// role parameter *"exactly twice"*, and both uses are extender halves.
+// Adding `cresnet` to it would make that sentence false and would put a
+// keypad's bus and an extender's direction on one axis, which are not the
+// same kind of fact.
+//
+// THE COST THIS REMOVES. Before this, a keypad carried every bus it might
+// speak as a separate port, so every instance drew three pins for one
+// cable. DR-120 §11.119.8 measured it at 32 symbol ops per alternate on
+// the 300-link fixture, and the model was worse than the drawing: a real
+// keypad has ONE bus.
+enum ControlBus {
+  /// The shipped half for both keypads, and therefore the one that keeps
+  /// the bare catalog id.
+  cresnet('cresnet', 'CRESNET', 'ctl.cresnet', 'conn.phoenix_4'),
+
+  lutronQs('qs.link', 'QS LINK', 'ctl.lutron_qs', 'conn.rj45'),
+
+  /// Wago or wire nut onto the bus, so no connector (DR-120 §11.119.4).
+  vantage(
+    'vantage.link',
+    'VANTAGE STATION BUS',
+    'ctl.vantage',
+    'conn.hardwired',
+  );
+
+  const ControlBus(this.portKey, this.label, this.family, this.connector);
+
+  /// THE PORT KEY IS THE BUS'S, NOT A SHARED `bus.link`. `F13` already
+  /// shipped `cresnet` and `qs.link` as keys and a document may hold
+  /// either, so a rename would move bytes for nothing (CR-117) and would
+  /// break `connect_rules_test.dart`'s real-catalog case, which resolves
+  /// `portKey: 'cresnet'` on a seeded keypad.
+  final String portKey;
+
+  final String label;
+  final String family;
+  final String connector;
+}
+
+/// The template id [bus] places under, for a base catalog id.
+///
+/// Same shape and same separator as [roleVariantTemplateId], and for the
+/// same reasons: the shipped bus keeps the bare id, and `:` is the one
+/// punctuation neither a catalog id nor a Device Builder fork produces.
+///
+/// The two axes cannot collide today because no template carries both.
+/// If one ever does, this is where that has to be decided rather than
+/// discovered.
+String busVariantTemplateId(String catalogId, ControlBus bus) =>
+    '$catalogId:${bus.name}';
+
+/// The buses [catalogId] offers, shipped bus first, or empty when it
+/// carries no bus parameter.
+///
+/// TWO ENTRIES, and DR-121 scopes it there: the keypads are the case the
+/// cost was measured on. A control device that grows a second bus later
+/// registers here rather than accumulating ports.
+List<ControlBus> busesFor(String catalogId) => switch (catalogId) {
+  'F13' || 'F19' => const [
+    ControlBus.cresnet,
+    ControlBus.lutronQs,
+    ControlBus.vantage,
+  ],
+  _ => const [],
+};
+
+/// The body for [catalogId] on [bus], base or derived, or null when
+/// [catalogId] does not offer that bus.
+///
+/// Null is REACHABLE AND NORMAL, on [resolveTemplateRole]'s reasoning: a
+/// caller asking a patch panel for its Vantage half is asking a
+/// reasonable question and getting a true answer.
+TemplateBody? resolveTemplateBus(
+  Map<String, TemplateBody> catalog,
+  String catalogId,
+  ControlBus bus,
+) {
+  final buses = busesFor(catalogId);
+  if (!buses.contains(bus)) return null;
+  if (buses.first == bus) return catalog[catalogId];
+  return buildSeedBusVariants()[busVariantTemplateId(catalogId, bus)];
 }
