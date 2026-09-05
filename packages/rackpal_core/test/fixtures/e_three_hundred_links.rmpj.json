@@ -19476,10 +19476,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -19487,9 +19489,9 @@
               "label": "ZONE 1 IR",
               "maxConnections": 1,
               "order": "a0007",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -19569,10 +19571,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -19580,9 +19584,9 @@
               "label": "ZONE 2 IR",
               "maxConnections": 1,
               "order": "a0012",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -19662,10 +19666,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -19673,9 +19679,9 @@
               "label": "ZONE 3 IR",
               "maxConnections": 1,
               "order": "a0017",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -19755,10 +19761,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -19766,9 +19774,9 @@
               "label": "ZONE 4 IR",
               "maxConnections": 1,
               "order": "a0022",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -19848,10 +19856,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -19859,9 +19869,9 @@
               "label": "ZONE 5 IR",
               "maxConnections": 1,
               "order": "a0027",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -19941,10 +19951,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -19952,9 +19964,9 @@
               "label": "ZONE 6 IR",
               "maxConnections": 1,
               "order": "a0032",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -20034,10 +20046,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -20045,9 +20059,9 @@
               "label": "ZONE 7 IR",
               "maxConnections": 1,
               "order": "a0037",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -20127,10 +20141,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -20138,9 +20154,9 @@
               "label": "ZONE 8 IR",
               "maxConnections": 1,
               "order": "a0042",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -21235,10 +21251,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -21246,9 +21264,9 @@
               "label": "IR IN",
               "maxConnections": 1,
               "order": "a0051",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -22198,10 +22216,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -22209,9 +22229,9 @@
               "label": "IR",
               "maxConnections": 1,
               "order": "a0010",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -26011,10 +26031,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -26022,9 +26044,9 @@
               "label": "IR IN",
               "maxConnections": 1,
               "order": "a0013",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {
@@ -26957,10 +26979,12 @@
               "topology": "p2p"
             },
             {
-              "acceptedFamilies": [],
+              "acceptedFamilies": [
+                "ctl.ir_emitter"
+              ],
               "bankKey": "control",
               "carriedProtocols": [],
-              "connector": "conn.3_5mm_trs",
+              "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
               "gender": "genderless",
@@ -26968,9 +26992,9 @@
               "label": "IR IN",
               "maxConnections": 1,
               "order": "a0054",
-              "pinoutVariant": "xantech-stereo",
+              "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
-              "signalFamily": "ctl.ir_receiver",
+              "signalFamily": "ctl.ir_direct",
               "topology": "p2p"
             },
             {

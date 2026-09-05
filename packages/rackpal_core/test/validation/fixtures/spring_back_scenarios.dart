@@ -206,18 +206,37 @@ List<SpringBackCase> springBackNearMisses() => [
       toIsPassthrough: true,
     ),
   ),
+  // THE ROW MOVED TO THE CASE THE RULE USED TO GET WRONG (DR-126
+  // §11.125). It read "the far end is an emitter port too, which is what
+  // an IR connecting block offers", and that is still true and still
+  // clears. This one is worth more: an emitter head reaching a
+  // television, a matrix, an AVR or a cable box is what an IR system IS,
+  // and until the eleven device inputs were re-familied every one of them
+  // sprang the wire back with the words "destroys the emitter".
+  //
+  // ONE ROW PER RULE IS THIS TABLE'S OWN INVARIANT, gated two tests down,
+  // so this is a swap and not an addition. The wider sweep, over the
+  // shipped catalogue rather than ports a fixture wrote, lives in
+  // `catalog/ir_family_split_test.dart`, which is where it can actually
+  // see a mis-familied port.
+  //
+  // NOTE THE `accepts`. Without it `SIG-002` fires instead and the pair
+  // still springs back, which is exactly what happened on the first run
+  // of this row: silencing `DIR-003` alone would have changed the
+  // sentence and nothing else.
   (
     rule: SpringBackRule.irEmitterIntoReceiver,
     what:
-        'the far end is an emitter port too, which is what an IR '
-        'connecting block offers',
+        'the far end is a passive device input, which is where an emitter '
+        'head is supposed to go (DR-126)',
     doc: () => springBackPair(
       springBackPort('p', 'ctl.ir_emitter', connector: 'conn.3_5mm_ts'),
       springBackPort(
         'p',
-        'ctl.ir_emitter',
+        'ctl.ir_direct',
         dir: PortDirection.sink,
         connector: 'conn.3_5mm_ts',
+        accepts: ['ctl.ir_emitter'],
       ),
     ),
   ),

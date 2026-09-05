@@ -360,7 +360,7 @@ Requirement 4 names ten cable types and demands the plan be colour-coded by them
 | **Analog RCA** | `audio.line_unbal` | `#E69F00` | `6,3` | 1.00× | ● | `AUD` |
 | **HDMI** | `video.hdmi.1_4` / `2_0` / `2_1` | `#0072B2` | solid | **0.75× / 1.00× / 1.25×** | ▲ | `HD14` `HD20` `HD21` |
 | **Network** | `net.ethernet` (+ `net.poe`) | `#009E73` | solid | 1.50× / 2.00× | ■ | `NET` `PoE` |
-| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`) | `#CC79A7` | `1.5,3` / `4,3,1.5,3` | 0.75× | ✚ | `IR` `IRRX` |
+| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`, `ctl.ir_direct`) | `#CC79A7` | `1.5,3` / `4,3,1.5,3` / `1.5,9` | 0.75× | ✚ | `IR` `IRRX` `IRD` |
 | **RS-232** | `ctl.rs232` | `#CC79A7` | `6,3,1.5,3` | 0.75× | ✚ | `232` |
 | **RG6** | `media.rg6` carrying `rf.catv` / `rf.satellite` / `rf.ota` | `#56B4E9` | `12,4` / `12,4,3,4` / `16,4` | 1.50× / 1.50× / 1.00× | ▽ | `RF` `SAT` `OTA` |
 | **S/PDIF** | `audio.spdif_coax` | `#D55E00` | **`12,4,3,4`** | 1.00× | ◆ | `SPD` |

@@ -16705,6 +16705,63 @@ clear"* three times over a palette holding fourteen collisions, **the two
 IR families among them**. The thirteenth `ctl` pattern is therefore chosen
 by running the gate, not by reading the table it checks.
 
+**11.125.7 SILENCING `DIR-003` WOULD HAVE BOUGHT A DIFFERENT SENTENCE AND
+NOTHING ELSE**, and this was found by the first run of this ruling's own
+test rather than by reading the code. With the eleven re-familied, the
+everyday emitter-into-a-television connection still sprang back, now
+carrying `SIG-002: does not accept ctl.ir_emitter`.
+
+`acceptsFamily` is `signalFamily == family || acceptedFamilies.contains
+(family)`, and **`catalog_ports.dart`'s `p()` had no parameter for the
+second limb**, so all 727 seeded ports carried an empty list BY
+CONSTRUCTION rather than by anybody's choice. `SIG-002` therefore refuses
+every cross-family pairing in the shipped catalogue, and nobody noticed
+because almost every seeded connection is same-family. **DR-126 created
+the first one that is not, on purpose.**
+
+**THIS IS THE SECOND FIELD IN TWO DAYS FOUND UNAUTHORABLE BY
+CONSTRUCTION**, after DR-124's `maxConnections`, in the same builder, on
+the same evidence: a rule firing on a connection that is correct. The
+shape is now three for three this milestone, counting `RCK-003`'s
+discarded severity (DR-125 §11.124.2): **a field the model has, the
+documents describe, and no producer ever writes.** A census of `p()`'s
+parameters against `PortDef`'s fields is owed and is not done here.
+
+`p()` gains `accepts`, and the eleven declare `ctl.ir_emitter`.
+
+**11.125.8 THE COUNTS, SO NOBODY RECONCILES TWO MEASUREMENTS THAT WERE
+NEVER THE SAME ONE.** Eleven DECLARATION SITES were edited; eighteen
+PORTS ship, because the eight-zone matrix amplifier declares
+`zone.$zone.ir` inside a loop. Six ports stay on `ctl.ir_receiver`.
+
+**One of the eighteen is on `V06:receiver`, a ROLE VARIANT**, which lives
+in `buildSeedRoleVariants()` and not in `buildSeedCatalog()`. A sweep over
+the base catalogue alone sees seventeen and misses it in silence, which
+matters more than the arithmetic: `insert_receiver.dart` places that exact
+template as the `SIG-001` remedy, so **it is the one IR port in the
+catalogue the product creates on a user's behalf**. `ir_family_split_test
+.dart` reads both builders for that reason.
+
+**11.125.9 PAL-1 AND THE PALETTE COPIES.** The pattern is `1.5,9` at
+0.75x: the emitter's own dot at three times the gap, so the two read as
+siblings on T0.01 and are unmistakable at 300 dpi. **3,928 candidates were
+run through `tools/pal1_check.py` in full and 1,209 survived**, so the
+choice among them was a design one made after the gate rather than
+against it. Near misses like `2,3` and `1.5,4` also pass and were rejected
+by eye: half a point of dot or gap does not read on paper.
+
+**A PATTERN THAT TILES TO ANOTHER ONE IS A COLLISION THE GATE CANNOT
+SEE.** Its within-domain limb compares the exact `(dash, weight)` tuple,
+so `1.5,3,1.5,3` passes against `ctl.ir_emitter`'s `1.5,3` while rendering
+as the identical line. It was excluded by hand, and the search excluded
+every repetition with it. **That is a gap in `pal1_check.py`, recorded
+here rather than fixed**, because closing it is a change to the authority
+and belongs in its own commit.
+
+The family lands in all four copies of the palette (the Dart seed,
+`pal1_check.py`, `seed-devices.md` §4.4 and docs/01 §6.6) and all three
+palette gates pass at 57 families over 415 in-band cross-domain pairs.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

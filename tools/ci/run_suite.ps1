@@ -400,7 +400,10 @@ $ErrorActionPreference = 'Stop'
 # re-pumped at six sizes measures one of them and reports clean for five.
 
 $SuiteFloors = @{
-    'rackpal_core'   = 3955
+    # 3963 at DR-126: +8 from ir_family_split_test.dart, which sweeps the
+    # shipped catalogue rather than a fixture, plus one swapped near-miss
+    # and one widened canary that net to zero.
+    'rackpal_core'   = 3963
     'rackpal_text'   = 1
     'rackpal_export' = 195
     'rackpal_ui'     = 1483

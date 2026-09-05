@@ -13,7 +13,7 @@
 //
 // What it CAN prove is everything that is structural rather than
 // numeric, and every one of these is a real failure mode:
-//   * the shape (8 domains, 56 families) the doc's own summary states;
+//   * the shape (8 domains, 57 families) the doc's own summary states;
 //   * referential integrity — every family's domain resolves, every
 //     default connector resolves or is a declared footprint exemption;
 //   * that map keys agree with the ids inside them, so a lookup by id
@@ -51,9 +51,9 @@ void main() {
       });
     });
 
-    test('exactly 56 families ship — the count §4.2 and pal1_check.py '
+    test('exactly 57 families ship — the count §4.2 and pal1_check.py '
         'both state', () {
-      expect(families, hasLength(56));
+      expect(families, hasLength(57));
     });
 
     test('every family lands in one of the eight domains', () {
@@ -325,7 +325,7 @@ void main() {
 
     test('carries the domains, families and connector footprints', () {
       expect(seeded.signalDomains, hasLength(8));
-      expect(seeded.signalFamilies, hasLength(56));
+      expect(seeded.signalFamilies, hasLength(57));
       // `buildSeedConnectorFootprints()` shipped at M1 and was consumed
       // ONLY by its own test, which is why DR-010's finding reads
       // "connectors: 0" everywhere. This is the line that made it live.
@@ -368,7 +368,7 @@ void main() {
       final a = buildSeedRegistries();
       final b = buildSeedRegistries();
       a.signalFamilies.remove(const SignalFamilyId('net.ethernet'));
-      expect(b.signalFamilies, hasLength(56));
+      expect(b.signalFamilies, hasLength(57));
       // DERIVED, NOT A SECOND LITERAL. The property is that `a` is one
       // shorter than `b`, and writing that arithmetic out as a number
       // made this the one site the family count broke when `ctl.vantage`

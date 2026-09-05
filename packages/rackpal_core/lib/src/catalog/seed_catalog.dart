@@ -48,7 +48,7 @@ export 'package:rackpal_core/src/catalog/seed_media_types.dart'
 // presets (M3-C/4).
 export 'package:rackpal_core/src/catalog/seed_outlet_templates.dart'
     show buildSeedOutletTemplates;
-// Likewise: the 8 signal domains and 56 signal families (DR-010 §11.10).
+// Likewise: the 8 signal domains and 57 signal families (DR-010 §11.10).
 // Same contract again — seeded into a new document at CREATION, ordinary
 // stored data from that line onward, and NEVER recomputed at save.
 export 'package:rackpal_core/src/catalog/seed_registries.dart'

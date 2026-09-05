@@ -62,7 +62,7 @@ import 'starter_integrity.dart';
 /// assertion.
 ///
 /// DR-010 §11.10 ADDED ~37 KB TO EACH OF THE FOUR, which is the 8 domains,
-/// 56 families and 46 connector footprints that every document had been
+/// 57 families and 46 connector footprints that every document had been
 /// carrying as three empty maps. The ceiling did not move for it: the
 /// largest starter went 819 KB → 856 KB, still 84 % of budget.
 const int kStarterByteCeiling = 1024 * 1024;
@@ -393,7 +393,7 @@ void main() {
               'are missing here, either the seeding line was dropped '
               'from `StarterAuthor.newDocument` or the assets predate it.',
         );
-        expect(doc.registries.signalFamilies, hasLength(56));
+        expect(doc.registries.signalFamilies, hasLength(57));
         expect(doc.registries.connectorTypes, isNotEmpty);
 
         // EXPECTATIONS ARE LITERALS, for the same reason the jacket-colour

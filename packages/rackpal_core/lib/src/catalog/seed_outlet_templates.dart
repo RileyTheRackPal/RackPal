@@ -103,7 +103,7 @@
 //
 // KEYPAD'S SERVICE IS `structure.undetermined`, AND IT IS THE FINDING.
 // docs/07 §4's table prints `Keypad` in its SERVICE column, and there is
-// no keypad family among the 56: a keypad speaks Cresnet, Lutron QS,
+// no keypad family among the 57: a keypad speaks Cresnet, Lutron QS,
 // DALI, KNX, RS-485 or a contact closure depending on a control system
 // chosen months after the 22/4 is pulled. Naming one here would assert
 // the job's control platform from a rough-in preset.

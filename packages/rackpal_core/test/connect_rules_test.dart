@@ -951,22 +951,49 @@ void main() {
       expect(t.acceptsFamily(const SignalFamilyId('c.d')), isFalse);
     });
 
-    test('NOT ONE seed catalog port declares acceptedFamilies, which is '
-        'why this is an effective* getter and not a field read', () {
-      // The same arithmetic that produced effectiveMaxConnections in
-      // Phase 0 and that DR-012 records for channelIndex. If this ever
-      // fails, the catalog has started declaring exclusions and the
-      // fallback below stops being the only branch real data reaches.
-      final catalog = buildSeedCatalog();
+    test('exactly the IR device inputs declare acceptedFamilies, and '
+        'nothing else does', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THIS CANARY FIRED, WHICH IS THE POINT OF A CANARY
+      // ═══════════════════════════════════════════════════════════════
+      // It read `expect(declaring, isEmpty)` and said "NOT ONE seed
+      // catalog port declares acceptedFamilies, which is why this is an
+      // effective* getter and not a field read", warning that "if this
+      // ever fails, the catalog has started declaring exclusions". It
+      // has, at DR-126 §11.125.7, and the reason is worth more than the
+      // count: the empty list was not a decision anybody made. `p()` had
+      // no parameter for the field, so all 727 ports took it BY
+      // CONSTRUCTION, and `SIG-002` refused every cross-family pairing
+      // in the shipped catalogue. Nobody saw it because almost every
+      // seeded connection is same-family.
+      //
+      // So this is widened rather than deleted, and it is widened to a
+      // NAMED SET. `isNotEmpty` would pass on any port declaring
+      // anything, which is the assertion that would let the next
+      // accidental widening through unremarked.
       final declaring = <String>[];
-      for (final entry in catalog.entries) {
-        for (final port in entry.value.ports) {
-          if (port.acceptedFamilies.isNotEmpty) {
+      for (final map in [buildSeedCatalog(), buildSeedRoleVariants()]) {
+        for (final entry in map.entries) {
+          for (final port in entry.value.ports) {
+            if (port.acceptedFamilies.isEmpty) continue;
             declaring.add('${entry.key}/${port.key.v}');
+            expect(
+              port.signalFamily.v,
+              'ctl.ir_direct',
+              reason:
+                  '${entry.key}/${port.key.v}: a declared list is a '
+                  'widening, and only the IR device input has been '
+                  'ruled to need one',
+            );
+            expect(port.acceptedFamilies.map((f) => f.v), [
+              'ctl.ir_emitter',
+            ]);
           }
         }
       }
-      expect(declaring, isEmpty);
+      // Eighteen ports from eleven declaration sites: the eight-zone
+      // matrix amplifier declares its IR input inside a loop.
+      expect(declaring, hasLength(18));
     });
 
     test('a DECLARED list widens the pin, and never narrows it below its '

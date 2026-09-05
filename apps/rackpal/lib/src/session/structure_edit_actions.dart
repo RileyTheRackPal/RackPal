@@ -449,7 +449,7 @@ String? _termination({
 /// whether an absence is a real state, and here it is not).
 ///
 /// **THE REFUSAL LISTS NOTHING.** Its neighbour can name all nine
-/// terminations in a sentence; there are 56 families, and a refusal that
+/// terminations in a sentence; there are 57 families, and a refusal that
 /// printed them would be a wall a person scrolls past. The picker is the
 /// list, which is why this column is a closed set rather than a text box.
 String? _signalFamily({

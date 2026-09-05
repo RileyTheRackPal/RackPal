@@ -37,7 +37,7 @@
 // term is the family's EFFECTIVE value — "after any per-family override
 // (`colorOverride`, `dashOverride`, weight override), NOT the domain base
 // value" (docs/05 §6.3). `tools/pal1_check.py` is the authority and it
-// enumerates the 56 shipped families' rendered values pairwise. A
+// enumerates the 57 shipped families' rendered values pairwise. A
 // renderer that read `SignalFamilyDef.dashOverride` directly would draw a
 // whole domain's families alike, and the check would then be clearing a
 // palette that nothing draws. So this file resolves through

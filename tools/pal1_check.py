@@ -130,6 +130,7 @@ FAMILIES = [
 
     ('ctl.ir_emitter',        'ctl',           '1.5,3',                0.75),
     ('ctl.ir_receiver',       'ctl',           '4,3,1.5,3',            0.75),
+    ('ctl.ir_direct',         'ctl',           '1.5,9',                0.75),
     ('ctl.rs232',             'ctl',           '6,3,1.5,3',            0.75),
     ('ctl.rs485',             'ctl',           '6,3',                  1.00),
     ('ctl.dmx512',            'ctl',           '8,3,1.5,3',            1.00),
@@ -159,7 +160,8 @@ PERIOD_FLOOR = 4.5   # pt; below this a dash blurs to solid at 300 dpi
 #: not a style nit -- it is requirement 4 failing its own acceptance test.
 REQUIREMENT_4 = {
     'audio.line_unbal': 'Analog RCA', 'video.hdmi.2_0': 'HDMI', 'net.ethernet': 'Network',
-    'ctl.ir_emitter': 'IR', 'ctl.ir_receiver': 'IR', 'ctl.rs232': 'RS-232',
+    'ctl.ir_emitter': 'IR', 'ctl.ir_receiver': 'IR', 'ctl.ir_direct': 'IR',
+    'ctl.rs232': 'RS-232',
     'rf.catv': 'RG6', 'audio.spdif_coax': 'S/PDIF', 'audio.spdif_optical': 'TOSLINK',
     'audio.speaker_lowz': 'Speaker level', 'power.ac_iec': 'Power',
 }

@@ -297,6 +297,7 @@ three-axis split**: `rj45` and `hdbt` resolve to the same connector and differen
 | `dante` | `conn.rj45` | `audio.dante` | — |
 | `ir` | `conn.3_5mm_ts` | `ctl.ir_emitter` | `pinoutVariant` **required** |
 | `irrx` | `conn.3_5mm_trs` | `ctl.ir_receiver` | `pinoutVariant` **required** |
+| `ird` | `conn.3_5mm_ts` | `ctl.ir_direct` | `pinoutVariant` **required** |
 | `232` / `db9` | `conn.de9` | `ctl.rs232` | `SerialSpec.role` required |
 | `485` | `conn.euroblock_3` | `ctl.rs485` | — |
 | `dmx` | `conn.xlr5` | `ctl.dmx512` | — |
@@ -1754,7 +1755,8 @@ fibre analogue of null-modem: it is `Link.crossover: fiberPolarityAB`.
 | id | Display name | Default connector | Dir | Topo | Dash (pt) | Wt | Tag | Glyph |
 |---|---|---|---|---|---|---|---|---|
 | `ctl.ir_emitter` | **IR emitter (flasher)** | `conn.3_5mm_ts` | → | P2P | `1.5,3` | 0.75× | `IR` | ✚ |
-| `ctl.ir_receiver` | IR receiver | `conn.3_5mm_trs` | → to block | MD | `4,3,1.5,3` | 0.75× | `IRRX` | ✚ |
+| `ctl.ir_receiver` | IR receiver (powered eye) | `conn.3_5mm_trs` | → to block | MD | `4,3,1.5,3` | 0.75× | `IRRX` | ✚ |
+| `ctl.ir_direct` | IR direct (device input) | `conn.3_5mm_ts` | ← from emitter | P2P | `1.5,9` | 0.75× | `IRD` | ✚ |
 | `ctl.rs232` | **RS-232** | `conn.de9` | ↔ | **P2P only** | `6,3,1.5,3` | 0.75× | `232` | ✚ |
 | `ctl.rs485` | RS-485 | `conn.euroblock_3` | ↔ half-duplex | **BUS** | `6,3` | 1.00× | `485` | ✳ |
 | `ctl.dmx512` | DMX512-A | `conn.xlr5` | → over RS-485 | **BUS** | `8,3,1.5,3` | 1.00× | `DMX` | ✳ |
@@ -1847,7 +1849,7 @@ type in colour and greyscale side by side.**
 | **Analog RCA** | `audio.line_unbal` | `#E69F00` | `6,3` | 1.00× | ● | `AUD` |
 | **HDMI** | `video.hdmi.2_0` / `2_1` / `1_4` | `#0072B2` | solid | 1.00× / 1.25× / **0.75×** | ▲ | `HD20` `HD21` `HD14` |
 | **Network** | `net.ethernet` (+ `net.poe`) | `#009E73` | solid | 1.50× / 2.00× | ■ | `NET` `PoE` |
-| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`) | `#CC79A7` | `1.5,3` / `4,3,1.5,3` | 0.75× | ✚ | `IR` `IRRX` |
+| **IR** | `ctl.ir_emitter` (+ `ctl.ir_receiver`, `ctl.ir_direct`) | `#CC79A7` | `1.5,3` / `4,3,1.5,3` / `1.5,9` | 0.75× | ✚ | `IR` `IRRX` `IRD` |
 | **RS-232** | `ctl.rs232` | `#CC79A7` | `6,3,1.5,3` | 0.75× | ✚ | `232` |
 | **RG6** | `media.rg6` carrying `rf.catv` / `rf.satellite` / `rf.ota` | `#56B4E9` | `12,4` / `12,4,3,4` / `16,4` | 1.50× / 1.50× / 1.00× | ▽ | `RF` `SAT` `OTA` |
 | **S/PDIF** | `audio.spdif_coax` | `#D55E00` | `12,4,3,4` | 1.00× | ◆ | `SPD` |

@@ -147,6 +147,23 @@ final class PortBuilder {
     // is not widened by `effectiveMaxConnections`, so this is a promise
     // and not a hint.
     int maxConnections = 1,
+    // WHAT ELSE THIS PIN TAKES BESIDES ITS OWN FAMILY (M5-H2, DR-126).
+    //
+    // THE SECOND FIELD IN TWO DAYS FOUND UNAUTHORABLE BY CONSTRUCTION,
+    // after `maxConnections` directly above, and found the same way: a
+    // rule fired on a connection that is correct. `acceptsFamily` is
+    // `signalFamily == family || acceptedFamilies.contains(family)`, and
+    // this builder could express only the first limb, so every seeded
+    // port took the empty list and `SIG-002` refused every cross-family
+    // pairing in the shipped catalogue.
+    //
+    // It went unnoticed because almost every seeded connection is
+    // same-family. DR-126 made one that is not: an emitter output and the
+    // passive device input it drives are now two families ON PURPOSE, so
+    // the everyday IR connection needs this to be sayable. Silencing
+    // `DIR-003` alone would have moved the false spring-back to `SIG-002`
+    // and changed nothing a person sees except the sentence.
+    List<String> accepts = const [],
   }) {
     _bank(bank, bankLabel ?? bank, bankSide);
     ports.add(
@@ -177,6 +194,7 @@ final class PortBuilder {
         setRole: setRole,
         notes: notes,
         maxConnections: maxConnections,
+        acceptedFamilies: [for (final f in accepts) SignalFamilyId(f)],
       ),
     );
   }

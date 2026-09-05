@@ -106,11 +106,12 @@ Map<String, TemplateBody> buildSourcesCatalog() {
     ..p(
       'ir.in',
       'IR IN',
-      connector: 'conn.3_5mm_trs',
-      family: 'ctl.ir_receiver',
+      connector: 'conn.3_5mm_ts',
+      family: 'ctl.ir_direct',
       dir: PortDirection.sink,
       bank: 'control',
-      pinout: 'xantech-stereo',
+      pinout: 'mono-tip-sleeve',
+      accepts: const ['ctl.ir_emitter'],
     )
     ..p(
       'ac.in',
