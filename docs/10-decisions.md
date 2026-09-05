@@ -203,6 +203,7 @@ fuller treatment; nothing here replaces them.
 | DR-119 | The ISSUED FOR CONSTRUCTION stamp does not exist, so M5-I proves nothing is gated and the sealed ExportError says so | canon §11.118 |
 | DR-120 | Vantage ships as `ctl.vantage`; a seventh two-wire bus in `ctl` is the argument for the row, not against it | canon §11.119 |
 | DR-121 | P4 gains a control-bus variant axis: a keypad has one bus, and the catalogue was saying it had three | canon §11.120 |
+| DR-122 | **A signal family may be CLONED from a shipped one**, which satisfies RJ-012's objection rather than overruling it: the clone inherits every field a rule reads, so there is no blank form and no hand-rolled family. PAL-1 moves from CI into the app for this case, since a user-created family does not exist when CI runs. Written to the project **and** the shelf, the project copy authoritative. Connector-type and colour-scheme editors stay refused | canon §11.121, §12.30 |
 
 See also [Canonical decisions](canonical-decisions.md), normative, plus
 [Overview](00-overview.md), [Data model](02-data-model.md),
