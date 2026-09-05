@@ -16824,6 +16824,108 @@ empty backlog** (§8.1), so nothing here reopens M5-H, and an item still
 open when M5 closes is re-parented rather than left under a closed Epic
 (DR-097).
 
+### §11.127 DR-128 · The remedy prompt, and the fourth field in one milestone whose only writer is the decoder
+
+**Board `#837` (M5-J), authorised by DR-127 §11.126.** Settled by the user
+2026-09-05, in three answers.
+
+**11.127.1 DR-125 CALLED THIS *"ONE FEATURE, THREE-QUARTERS BUILT"*. IT IS
+NOT.** That reading came from `insert_receiver.dart` existing and doing
+the same shape of thing for `SIG-001`. Censused before pricing:
+
+**`InlineAdapter` is modelled, round-trips through the codec, and is read
+by `_adapterSatisfies` to clear `CON-001` and `SIG-002`. Its only writer
+in the entire tree is `_decodeInlineAdapter`.** No command builds one, no
+widget offers one, and `schematic_canvas_screen.dart` twice reasons
+carefully about how *"an `InlineAdapter` already declared on it"* clears
+those rules, a sentence whose subject cannot come into existence.
+
+So `CON-001`'s catalogue summary, *"Satisfied by data: declaring the
+adapter clears it"*, **describes an action no user can take**. The rule
+tells somebody to do a thing, and the product has no way to do it.
+
+**THE FOURTH IN ONE MILESTONE**, after `maxConnections` (DR-124),
+`acceptedFamilies` (DR-126) and `RuleMeta`'s discarded severity
+(DR-125). It is the first of the four where the missing writer makes a
+SHIPPED RULE'S OWN PROMISE unkeepable rather than merely leaving a
+default in place, and it strengthens `#841`'s census from a tidy-up into
+the thing that should have run first.
+
+**11.127.2 `CON-001` DECLARES AN ADAPTER, AND CR-015 ALREADY CHOSE THE
+SHAPE.** CR-015 splits adapters on a mechanical test, *"does an installer
+pull two separate cables to it?"*: no makes it an `InlineAdapter` value on
+the Link, yes makes it a real `DeviceInstance`. `CON-001` is *"the plug
+does not fit the jack"*, which is the barrel, the gender changer, the
+null-modem shell. **Value object.**
+
+`[ Declare an adapter ]` writes one with **both connectors prefilled from
+the two pins that just failed**, an optional model, and
+`satisfiesRuleIds: ['CON-001']`. The model is optional deliberately: an
+adapter with no model reaches the BOM as an unspecified line, which is
+worse than a specified one and better than a remedy nobody uses because
+it demanded typing mid-gesture. G4's frame applies, an absent model is
+unknown and prints as unknown, rather than being invented.
+
+**11.127.3 `SIG-002` INSERTS A DEVICE, ON THE SAME TEST READ THE OTHER
+WAY.** *"The sink does not accept the source's family"* is answered by
+electronics, not by a plug shape: HDMI to composite, SDI to HDMI, a
+balun. An installer pulls two cables to every one of those, so CR-015
+makes them devices, exactly as it says of the `SIG-001` remedy.
+
+**11.127.4 THE CONVERTER IS MINTED, NOT SHIPPED, AND THE CATALOGUE DOES
+NOT GROW.** Censused: the catalogue holds no generic converter. It holds
+the HDBaseT extender pair and a presentation scaler, and nothing else
+that converts.
+
+A seeded `Signal Converter` archetype was rejected: **a converter's ports
+cannot be right in general**, because the families it bridges vary per
+use, so it would ship with unknown-family ports or a P4 variant axis, and
+that is a great deal of machinery for a box whose entire purpose is to be
+specific. A palette filtered to devices bridging the two families was
+rejected on measurement: **that filter returns almost nothing today**, and
+an empty picker behind a remedy button is worse than no button.
+
+**So the remedy AUTHORS the device from the two pins it was invoked on**:
+one input port carrying the source's family and connector, one output
+port carrying the sink's, `mountMethod: notInRack`, named for what it
+bridges. DR-123's authored-device path and `insert_receiver.dart`'s
+`TxnScope` are both built and are what this uses. **CR-061's count of 49
+does not move**, and the device is correct for its case by construction
+rather than generic.
+
+**IT STATES NO WATTAGE AND NO MODEL**, which is G4 rather than an
+oversight, and is the precedent DR-120's `F19` set: a shipped row that
+cannot cite a source states nothing rather than guessing. The BOM line is
+uncosted and says so.
+
+**11.127.5 `PWR-003` IS A TIER-3 FINDING AND HAD NO SURFACE AT ALL.**
+DR-125 §11.124.4 grouped it with the other two as one feature. It is not
+one feature: `SpringBackRemedy` lives on a CHIP, `PWR-003` is a row in the
+issues panel, and **`Finding` has no remedy field**. The three could not
+have shared a mechanism because two of them had one and the third had
+nowhere to put it.
+
+**Ruled: `Finding` gains an optional remedy**, the issues panel renders it
+as a button, and `PWR-003`'s inserts `P01`, the 24-outlet 0U vertical PDU
+that already ships. **Built once, here, because `CODE-002` (`#840`) wants
+the same surface**, and a second bespoke path is how one mechanism becomes
+three: §5.3.20 records three unreachable models in one issue arriving
+exactly that way.
+
+The field is optional and absent by default, so CR-117's round trip is
+unaffected for every finding that has no remedy: **unknown serializes as
+an absent key** (G4/CR-114), and a finding is computed rather than stored
+in any case (docs/02 §4.8).
+
+**11.127.6 `SpringBackRemedy` GAINS TWO MEMBERS, AND ITS DOC COMMENT'S
+OBJECTION IS ANSWERED RATHER THAN OVERRULED.** It holds one member today
+and says why: *"Inventing labels for the other five would be putting words
+in a designer's mouth and shipping them as though the corpus had said
+them."* **That objection was right and is now satisfied**, because the
+M5-H2 review is the corpus saying them. It still governs the remaining
+three: `DIR-001`, `DIR-003` and `ELE-006` get no remedy here, because
+nobody has asked for one.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
