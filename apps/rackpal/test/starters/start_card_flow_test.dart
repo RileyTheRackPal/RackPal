@@ -129,7 +129,7 @@ void main() {
     expect(session.document.racks.values.single.heightU, 42);
     expect(
       session.document.templates,
-      hasLength(48),
+      hasLength(49),
       reason:
           'a blank project must carry the catalogue, or every palette '
           'row refuses',

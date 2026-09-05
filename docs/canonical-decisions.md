@@ -5018,7 +5018,7 @@ tests rather than prose.
 The hybrid `RenderRackCanvas`, device widgets, RU snapping, front/rear elevations with per-rack
 mirroring. Quick-add by typing with the drop caret. The Staging Bin. Shelves with auto-pack. 0U
 occupants from the inspector. Compact Up/Down with preview-then-accept, and the shrink-rack
-dialog. Locks. The full seeded catalog including the 18 field devices, with `sources.md`
+dialog. Locks. The full seeded catalog including the 19 field devices, with `sources.md`
 provenance and the connector-footprint CI assertion. Copy-on-place with `DeviceOverrides`. The
 chip strip: RU, weight, VA, outlets, with unknown counts. `DiagramCanvas` + `SceneBuilder` +
 both backends + the baseline-y parity test. A minimal PDF exporter: front elevation, rear
@@ -6633,7 +6633,7 @@ and they will not be.
 Flutter-only. A JSON master would have to be loaded by the app layer and injected through two
 packages, because `rackpal_export` drives core directly and may never import `rackpal_ui`. A
 seeded Dart catalog needs no seam, works in core's pure-Dart tests unchanged, and is what this
-repository already does four times: 48 templates (`buildSeedCatalog`), connector footprints,
+repository already does four times: 49 templates (`buildSeedCatalog`), connector footprints,
 jacket-colour conventions, rack presets.
 
 The JSON form's one real advantage, editing the catalog without a rebuild, is an ANTI-FEATURE
@@ -16081,6 +16081,64 @@ and weight are all a reader has.
 named and asked for; the gap LIST is still with the domain reviewer, and
 whether anything else follows is M5-H2's to answer.
 
+**11.119.6 F19, THE LOAD-CONTROLLING KEYPAD, AND WHY IT IS NOT A VANTAGE
+DEVICE.** The user's second and third facts: Vantage keypads are typically
+1-gang, and *"keypad voltage entirely depends on if it controls a load or
+not. LV keypads do not, HV keypads are directly wired to loads."*
+
+**The gang fact needed nothing.** Gang count lives on `Outlet`, not on the
+device or the outlet template, and `outlet.keypad` already reasons that
+the keypad fills the gang itself, which is why its 22/4 drop is a
+euroblock at zero keystone cells. The fact confirms the model rather than
+correcting it.
+
+**THE VOLTAGE FACT IS A PORT SET, NOT A FIELD, AND NOT A BRAND.** What
+makes a keypad high voltage is that line voltage arrives at it, which is
+`F03`'s shape exactly: the motorised screen takes a trigger AND a
+hardwired feed. So `F19` is the LOAD-CONTROLLING keypad and carries the
+same three bus alternates `F13` does, because Lutron and Crestron build
+both kinds too. A Vantage-specific device would have owed a Lutron and a
+Crestron sibling immediately.
+
+Supply only, no switched output (the user's call): the load is drawn as
+its own run where a sheet needs it, which is what `F03` already does.
+**No power figures**, because nobody has measured one and inventing a
+nameplate for a device whose point is that it sits on a branch circuit
+would put a fabricated number into `PWR-001`'s arithmetic (G4, AC-039's
+neighbour).
+
+**11.119.7 CR-061's NUMBER MOVES TO 49, AND ITS REASONING SURVIVES
+INTACT.** That ruling states *"v1 ships 48 templates: 30 rack-side and 18
+field-side"*, and its argument is that 48 *"sits mid-band in the confirmed
+40-55"*. **Forty-nine is still mid-band**, so what CR-061 decided is
+unchanged and only the integer moves. This is recorded in §12 rather than
+edited in place.
+
+**AND CR-061'S OTHER SENTENCE WAS ALREADY FALSE.** It says the count *"is
+stated in exactly one place, `docs/catalog.md`, and no prose in any
+document states a number."* Moving 48 to 49 touched **thirteen sites
+across eleven files**, including four comments in `lib/`, six test
+assertions, and canon itself twice. The single-source discipline the
+ruling set was never held, which is why a one-device change is a
+twenty-file diff. The count is not now consolidated: that would be its own
+piece of work, and pretending otherwise by fixing three of thirteen is
+worse than recording the state.
+
+**11.119.8 THE ALTERNATES-AS-PORTS PATTERN HAS A STANDING COST, AND IT IS
+NOW MEASURED.** Giving `F13` a third bus alternate moved the schematic
+perf baseline from 2,371 symbol ops to 2,403. The arithmetic is exact:
+the 300-link fixture holds sixteen keypads, and sixteen devices times two
+ops for one more vector pin is the whole +32. Label ops did not move at
+all, which is what says this is a port being drawn rather than the layout
+shifting.
+
+Every seeded keypad now draws all three buses whether the job uses one or
+not, and a fourth alternate would cost another 32. **The alternative
+exists and is not taken here**: P4's `TemplateRole` variants already model
+"one device, several configurations" for `V06`. Whether the keypad should
+become role variants rather than accumulate ports is a real question and
+is left open rather than answered by drift.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -16653,6 +16711,13 @@ label onto two drops.
 > deliberately narrow: it gates the **dependency table**, not prose in general.
 
 ---
+
+### 12.28 Superseded by DR-120 (the catalogue grows by one device)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **CR-061**, the integer only | "v1 ships 48 templates: 30 rack-side and 18 field-side." | **49 templates: 30 rack-side and 19 field-side.** `F19`, the load-controlling keypad, is the addition (DR-120 §11.119.6). CR-061's REASONING is untouched: it chose 48 because that *"sits mid-band in the confirmed 40-55"*, and 49 is still mid-band, so the ruling decided a band and this moves within it. **The rest of CR-061 stands**, including AC-052's gate that every numeric field on a shipped template cites a source, which is why `F19` states no wattage. |
+| **CR-061**, the single-source claim | "The count is stated in exactly one place, `docs/catalog.md`, and no prose in any document states a number." | **Was already false and is recorded as such.** The count is written at thirteen sites across eleven files, including `lib/` comments, test assertions and canon itself. DR-120 §11.119.7 has the census. Consolidating it is its own work and is not done here. |
 
 ## 13. Resolved §10 questions
 

@@ -838,7 +838,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:aefab22b0cca0e0dce0df8acd4d54b5c89ad8b5e3f72ba757c8a4d74124031d6",
+          "contentHash": "sha256:c87c807a3bbe2e8b69ce2b3aca6216ae746ec6a1fe39dde03a383fbf91202a2a",
           "templateId": "F13",
           "version": 1
         }
@@ -10214,6 +10214,22 @@
               "renamedFrom": [],
               "signalFamily": "ctl.lutron_qs",
               "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "bus",
+              "carriedProtocols": [],
+              "connector": "conn.hardwired",
+              "direction": "busNode",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "vantage.link",
+              "label": "VANTAGE STATION BUS (alt)",
+              "maxConnections": 1,
+              "order": "a0003",
+              "renamedFrom": [],
+              "signalFamily": "ctl.vantage",
+              "topology": "p2p"
             }
           ],
           "power": {
@@ -10238,7 +10254,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:aefab22b0cca0e0dce0df8acd4d54b5c89ad8b5e3f72ba757c8a4d74124031d6",
+        "contentHash": "sha256:c87c807a3bbe2e8b69ce2b3aca6216ae746ec6a1fe39dde03a383fbf91202a2a",
         "templateId": "F13",
         "version": 1
       },
@@ -10827,6 +10843,135 @@
         "capturedAt": "2026-03-02T09:15:00.000Z",
         "contentHash": "sha256:df6b69b8a1a727e892ca2973cce04adf9b8c26dd48852eeeb0692877d71a6433",
         "templateId": "F18",
+        "version": 1
+      },
+      "F19@1": {
+        "body": {
+          "alternateMountMethods": [],
+          "banks": [
+            {
+              "abbr": "CONT",
+              "collapseInSymbol": true,
+              "key": "bus",
+              "label": "Control Bus",
+              "order": "a0000",
+              "symbolSide": "left"
+            },
+            {
+              "abbr": "POWE",
+              "collapseInSymbol": true,
+              "key": "power",
+              "label": "Power",
+              "order": "a0004",
+              "symbolSide": "left"
+            }
+          ],
+          "category": "Field Devices",
+          "chassisWidthNm": 432000000,
+          "containerVented": false,
+          "description": "Wired directly to the load it switches, so its box carries line voltage as well as the control bus. The low-voltage keypad that only sends commands is F13.",
+          "displayName": "Keypad, load-controlling",
+          "frontU": 0,
+          "glyph": "control",
+          "isContainer": false,
+          "isPassthrough": false,
+          "manufacturer": "Generic",
+          "model": "KP-HV-1",
+          "mountMethod": "notInRack",
+          "nominalSpanTwelfths": 12,
+          "panelGraphics": [],
+          "passthroughPairs": [],
+          "portSets": [],
+          "ports": [
+            {
+              "acceptedFamilies": [],
+              "bankKey": "bus",
+              "carriedProtocols": [],
+              "connector": "conn.phoenix_4",
+              "direction": "busNode",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "cresnet",
+              "label": "CRESNET",
+              "maxConnections": 1,
+              "order": "a0001",
+              "renamedFrom": [],
+              "signalFamily": "ctl.cresnet",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "bus",
+              "carriedProtocols": [],
+              "connector": "conn.rj45",
+              "direction": "busNode",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "qs.link",
+              "label": "QS LINK (alt)",
+              "maxConnections": 1,
+              "order": "a0002",
+              "renamedFrom": [],
+              "signalFamily": "ctl.lutron_qs",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "bus",
+              "carriedProtocols": [],
+              "connector": "conn.hardwired",
+              "direction": "busNode",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "vantage.link",
+              "label": "VANTAGE STATION BUS (alt)",
+              "maxConnections": 1,
+              "order": "a0003",
+              "renamedFrom": [],
+              "signalFamily": "ctl.vantage",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "power",
+              "carriedProtocols": [],
+              "connector": "conn.hardwired",
+              "direction": "sink",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "ac.in",
+              "label": "AC (hardwired)",
+              "maxConnections": 1,
+              "order": "a0005",
+              "power": {
+                "role": "inlet"
+              },
+              "renamedFrom": [],
+              "signalFamily": "power.ac_hardwired",
+              "topology": "p2p"
+            }
+          ],
+          "power": {
+            "isContinuousLoad": false
+          },
+          "rearU": 0,
+          "requiresClearanceAboveU": 0,
+          "requiresClearanceBelowU": 0,
+          "side": "none",
+          "tags": [
+            "keypad",
+            "control",
+            "field",
+            "line voltage"
+          ],
+          "thermalClass": "passive",
+          "typePrefix": "KP",
+          "weightUg": 200000000,
+          "widthClass": "full"
+        },
+        "capturedAt": "2026-03-02T09:15:00.000Z",
+        "contentHash": "sha256:0fab130b6a8b72309fd8592cac3e1ad7c1f14728cf98e29add7bb82fed669fb6",
+        "templateId": "F19",
         "version": 1
       },
       "N01@1": {

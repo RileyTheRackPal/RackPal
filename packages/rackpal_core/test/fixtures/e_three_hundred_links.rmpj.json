@@ -22541,6 +22541,22 @@
               "renamedFrom": [],
               "signalFamily": "ctl.lutron_qs",
               "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "bus",
+              "carriedProtocols": [],
+              "connector": "conn.hardwired",
+              "direction": "busNode",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "vantage.link",
+              "label": "VANTAGE STATION BUS (alt)",
+              "maxConnections": 1,
+              "order": "a0003",
+              "renamedFrom": [],
+              "signalFamily": "ctl.vantage",
+              "topology": "p2p"
             }
           ],
           "power": {

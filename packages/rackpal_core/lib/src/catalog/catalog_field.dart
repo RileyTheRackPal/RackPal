@@ -751,6 +751,17 @@ Map<String, TemplateBody> buildFieldCatalog() {
       family: 'ctl.lutron_qs',
       dir: PortDirection.busNode,
       bank: 'bus',
+    )
+    // A THIRD ALTERNATE, on the two above's precedent (DR-120). Vantage
+    // joins its bus with Wago or wire nut connections, so the port is
+    // hardwired and carries no connector: see `ctl.vantage`'s own note.
+    ..p(
+      'vantage.link',
+      'VANTAGE STATION BUS (alt)',
+      connector: 'conn.hardwired',
+      family: 'ctl.vantage',
+      dir: PortDirection.busNode,
+      bank: 'bus',
     );
   out['F13'] = _field(
     model: 'KP-1',
@@ -1003,6 +1014,82 @@ Map<String, TemplateBody> buildFieldCatalog() {
     weight: _kg(0.1),
     ports: f18.ports,
     banks: f18.banks,
+  );
+
+  // F19 · Keypad, load-controlling.
+  //
+  // THE DISTINCTION IS THE LOAD, NOT THE BRAND (user, 2026-09-04):
+  // *"Keypad voltage entirely depends on if it controls a load or not. LV
+  // keypads do not, HV keypads are directly wired to loads."* So this is
+  // not a Vantage device with a Lutron and a Crestron sibling owed; it is
+  // the LOAD-CONTROLLING keypad, and it carries the same three bus
+  // alternates F13 does because all three systems build both kinds.
+  //
+  // WHAT MAKES IT HIGH VOLTAGE IS THE `ac.in` PORT, on F03's precedent:
+  // the motorised screen takes a trigger AND a hardwired line-voltage
+  // feed, and this takes a bus AND one. A keypad with no such port is
+  // F13, which is the whole difference.
+  //
+  // SUPPLY ONLY, NO SWITCHED OUTPUT (user's call). The load it switches
+  // is drawn as its own run where somebody needs it on the sheet, which
+  // is what F03 already does and what keeps this device honest about the
+  // one thing it knows: that line voltage arrives here.
+  //
+  // NO POWER FIGURES, and that is G4 rather than an omission. F13 states
+  // 3 W / 2 W because somebody had a number; nobody has measured this,
+  // and inventing a nameplate for a device whose whole point is that it
+  // sits on a branch circuit would put a fabricated figure into
+  // `PWR-001`'s arithmetic. An absent draw is unknown and the rules skip
+  // it (AC-039's neighbour).
+  final f19 = PortBuilder()
+    ..p(
+      'cresnet',
+      'CRESNET',
+      connector: 'conn.phoenix_4',
+      family: 'ctl.cresnet',
+      dir: PortDirection.busNode,
+      bank: 'bus',
+      bankLabel: 'Control Bus',
+    )
+    ..p(
+      'qs.link',
+      'QS LINK (alt)',
+      connector: 'conn.rj45',
+      family: 'ctl.lutron_qs',
+      dir: PortDirection.busNode,
+      bank: 'bus',
+    )
+    ..p(
+      'vantage.link',
+      'VANTAGE STATION BUS (alt)',
+      connector: 'conn.hardwired',
+      family: 'ctl.vantage',
+      dir: PortDirection.busNode,
+      bank: 'bus',
+    )
+    ..p(
+      'ac.in',
+      'AC (hardwired)',
+      connector: 'conn.hardwired',
+      family: 'power.ac_hardwired',
+      dir: PortDirection.sink,
+      bank: 'power',
+      bankLabel: 'Power',
+      power: PortPowerSpec(role: PortPowerRole.inlet),
+    );
+  out['F19'] = _field(
+    model: 'KP-HV-1',
+    displayName: 'Keypad, load-controlling',
+    description:
+        'Wired directly to the load it switches, so its box carries line '
+        'voltage as well as the control bus. The low-voltage keypad that '
+        'only sends commands is F13.',
+    typePrefix: 'KP',
+    glyph: DeviceGlyph.control,
+    tags: const ['keypad', 'control', 'field', 'line voltage'],
+    weight: _kg(0.2),
+    ports: f19.ports,
+    banks: f19.banks,
   );
 
   return out;
