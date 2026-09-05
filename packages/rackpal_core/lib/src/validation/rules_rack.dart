@@ -231,13 +231,37 @@ List<Finding> ruleRck002(RackDocument doc) {
 // RCK-003 — total device weight exceeds the rack's capacity (#287)
 // ─────────────────────────────────────────────────────────────────────
 
+/// Which band [ruleRck003] landed in. Named rather than inlined so the
+/// severity and the sentence cannot disagree about it.
+enum _Band { advisory, warning, over }
+
+/// The loaded-weight band at which `RCK-003` first speaks, in percent.
+///
+/// **60, AND THE REASON IS A FLOOR RATHER THAN AN ARITHMETIC** (DR-125,
+/// M5-H2). The domain reviewer set it from a job they have done twice:
+/// a 42U rack at 85% of capacity is around 850 lb, which is already
+/// enough for the casters to damage a floor, and a notice that arrives
+/// then arrives after the fourth amplifier has been specified rather than
+/// before. The number is a working practice, not a derivation, and it is
+/// stated here once so nothing else has to hold a copy.
+const int kRck003AdvisoryPercent = 60;
+
+/// The band at which `RCK-003` escalates to a warning.
+const int kRck003WarningPercent = 85;
+
 /// `RCK-003` — the rack's loaded weight is over capacity, or near it.
 ///
-/// TWO SEVERITIES FROM ONE ROW, which docs/02 §5.3 states in the row
-/// itself: *"warning (advisory at 85%)"*. The finding carries `advisory`
-/// in the band below the limit and `warning` above it, and the
-/// evaluator's override still applies on top of whichever it chose — a
-/// project that demotes `RCK-003` demotes both.
+/// THREE SEVERITIES FROM ONE ROW (DR-125). docs/02 §5.3 used to read
+/// *"warning (advisory at 85%)"* and now reads three bands: `advisory` at
+/// [kRck003AdvisoryPercent], `warning` at [kRck003WarningPercent], and
+/// `error` over capacity. The evaluator's override still applies on top
+/// of whichever was chosen, so a project that demotes `RCK-003` demotes
+/// all three.
+///
+/// **THE `error` BAND BLOCKS NOTHING**, and saying so here is worth the
+/// line: CR-022/G3 makes no finding at any severity prevent an export.
+/// What the severity changes is whether a loaded rack reads as a note
+/// somebody scrolls past.
 ///
 /// THE UNKNOWN COUNT IS IN THE SENTENCE (G4/CR-114). A rack whose devices
 /// mostly state no mass is a rack this rule cannot speak about, and a
@@ -268,11 +292,11 @@ List<Finding> ruleRck003(RackDocument doc) {
     }
     if (members.isEmpty) continue;
 
-    // 85% OF CAPACITY, IN MICROGRAMS, so the comparison stays in CR-001's
+    // THE BANDS, IN MICROGRAMS, so every comparison stays in CR-001's
     // integer units and never becomes a float.
-    final advisoryAtUg = (capacity.ug * 85) ~/ 100;
+    final advisoryAtUg = (capacity.ug * kRck003AdvisoryPercent) ~/ 100;
+    final warningAtUg = (capacity.ug * kRck003WarningPercent) ~/ 100;
     if (loadedUg < advisoryAtUg) continue;
-    final over = loadedUg > capacity.ug;
     unknown.sort();
     final more = unknown.length > 3 ? ' and ${unknown.length - 3} more' : '';
     final caveat = unknown.isEmpty
@@ -280,15 +304,38 @@ List<Finding> ruleRck003(RackDocument doc) {
         : ' ${unknown.length} of its devices state no weight '
               '(${unknown.take(3).join(', ')}$more), so the real load is '
               'higher.';
+    // THREE BANDS, NOT TWO (DR-125). The rule used to speak first at 85%,
+    // which the domain review found is far too late: a 42U rack at 85% of
+    // a 1,000 lb capacity is 850 lb, already enough for the casters to
+    // damage a floor. The advisory now lands at 60%, before the decision
+    // to add one more amplifier rather than after it.
+    final (severity, band) = switch (loadedUg) {
+      _ when loadedUg > capacity.ug => (Severity.error, _Band.over),
+      _ when loadedUg >= warningAtUg => (Severity.warning, _Band.warning),
+      _ => (Severity.advisory, _Band.advisory),
+    };
     out.add(
       Finding(
         ruleId: 'RCK-003',
-        severity: over ? Severity.warning : Severity.advisory,
-        message: over
-            ? '${rack.designator} is loaded to ${_kg(loadedUg)} kg against '
-                  'a ${_kg(capacity.ug)} kg capacity.$caveat'
-            : '${rack.designator} is at ${_kg(loadedUg)} kg, over 85% of '
-                  'its ${_kg(capacity.ug)} kg capacity.$caveat',
+        severity: severity,
+        message: switch (band) {
+          // OVER CAPACITY IS AN ERROR AND STILL BLOCKS NOTHING. CR-022/G3
+          // is unchanged: no finding at any severity prevents an export.
+          // What the severity buys is that the rack stops being a note in
+          // a list somebody scrolls past.
+          _Band.over =>
+            '${rack.designator} is loaded to ${_kg(loadedUg)} kg against '
+                'a ${_kg(capacity.ug)} kg capacity.$caveat',
+          _Band.warning =>
+            '${rack.designator} is at ${_kg(loadedUg)} kg, over '
+                '$kRck003WarningPercent% of its ${_kg(capacity.ug)} kg '
+                'capacity.$caveat',
+          _Band.advisory =>
+            '${rack.designator} is at ${_kg(loadedUg)} kg, over '
+                '$kRck003AdvisoryPercent% of its ${_kg(capacity.ug)} kg '
+                'capacity. Check the floor and the casters before adding '
+                'more.$caveat',
+        },
         targets: [rack.id, ...members],
         primaryEntityId: rack.id,
       ),
@@ -343,12 +390,12 @@ List<Finding> ruleRck012(RackDocument doc) {
           Finding(
             ruleId: 'RCK-012',
             severity: Severity.error,
-            // THE SENTENCE NAMES THE REMEDY (M5-H2, DR-125). Many
-            // chassis carry several sets of rack-ear holes and shift fore
-            // and aft in the field, so a depth collision on paper is
+            // THE SENTENCE SAYS WHAT TO DO ABOUT IT (M5-H2, DR-125).
+            // Many chassis carry several sets of rack-ear holes and shift
+            // fore and aft in the field, so a depth collision on paper is
             // often an adjustment rather than a redesign. The reviewer's
             // point was that `error` reads as "blocked" to somebody who
-            // has not read CR-022/G3, and the answer belongs in the
+            // has not read CR-022/G3, and the remedy belongs in the
             // sentence rather than in a document they will not open.
             message:
                 '${f.device.designator} at the front and '

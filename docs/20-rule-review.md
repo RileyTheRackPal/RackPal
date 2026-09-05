@@ -202,7 +202,7 @@ Nothing here is a code ruling. Two of the checks mention NEC articles and both a
 
 ### RCK-003
 
-**Why it matters.** Racks have a load rating, and a full rack of amplifiers reaches it faster than people expect. Advisory from 85%, because that is when it is still worth checking the floor and the anchors rather than after.
+**Why it matters.** Racks have a load rating, and a full rack of amplifiers reaches it faster than people expect. The notice starts at 60% because a 42U rack at 85% of its rating is already heavy enough for the casters to mark a floor, and a warning that arrives then arrives after the fourth amplifier was specified rather than before it.
 
 **What happens.** Listed on the issues panel after the fact. Nothing is blocked, and you can acknowledge it with a reason that prints on the sheet set.
 

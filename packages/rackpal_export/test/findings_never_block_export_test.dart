@@ -81,9 +81,9 @@ void main() {
   /// `#308`: ONE project carrying an open finding at every severity.
   ///
   /// Three rules chosen because their severities differ and their
-  /// conditions do not interfere: an RU overlap is an ERROR, a rack over
-  /// its stated capacity is a WARNING, and a home run still on the wall
-  /// is an ADVISORY.
+  /// conditions do not interfere: an RU overlap is an ERROR, a rack in
+  /// `RCK-003`'s WARNING band (85% to capacity, DR-125) is a warning, and
+  /// a home run still on the wall is an ADVISORY.
   RackDocument troubled() {
     final doc = RackDocument(
       id: id(0),
@@ -103,10 +103,18 @@ void main() {
       weightCapacity: Mass.fromKilograms(50),
       meta: meta(),
     );
-    // ERROR: two devices in the same rack space. Also carries the mass
-    // that puts the rack over its capacity, for the warning.
-    place(doc, body(weight: Mass.fromKilograms(40)), 1, 1, 'A-1');
-    place(doc, body(weight: Mass.fromKilograms(40)), 2, 2, 'A-2');
+    // ERROR: two devices in the same rack space. Their mass also has to
+    // land RCK-003 in its WARNING band and not its error one, which is a
+    // constraint DR-125 introduced: 44 of 50 kg is 88%, inside the 85%
+    // warning band and under capacity.
+    //
+    // IT WAS 40 kg EACH AND THAT NOW READS AS AN ERROR. 80 of 50 kg is
+    // 160%, so this fixture briefly carried two errors and no warning and
+    // stopped being the every-severity fixture its own name promises. The
+    // test caught it, which is the point of asserting the rules BY NAME
+    // rather than asserting a set of severities.
+    place(doc, body(weight: Mass.fromKilograms(22)), 1, 1, 'A-1');
+    place(doc, body(weight: Mass.fromKilograms(22)), 2, 2, 'A-2');
 
     // ADVISORY: a home run whose far end is still on the wall.
     final link =

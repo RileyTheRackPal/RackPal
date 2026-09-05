@@ -69,6 +69,7 @@ final class RuleMeta {
     required this.rationale,
     required this.governing,
     this.defaultSeverity,
+    this.severityBand,
   });
 
   /// `'TOP-003'`. The join to `Finding.ruleId`, to `RuleOverride` and to
@@ -116,6 +117,39 @@ final class RuleMeta {
   /// so there is nothing for a severity to describe. `severityIsTiered`
   /// in the test holds the correspondence in both directions.
   final Severity? defaultSeverity;
+
+  /// The severities this rule's predicate may choose between, when the
+  /// catalogue authorises a BAND rather than a single value.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// WHY THIS EXISTS, AND WHY IT IS NOT "LET PREDICATES PICK"
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `evaluateDocument` builds every `Finding` with the project-resolved
+  /// severity and DISCARDS whatever the predicate set, which is correct
+  /// and was ruled: M5-E found `LEN-001` stamping its own `advisory` on a
+  /// good argument that *"is not in the catalogue"*, and a predicate
+  /// choosing a second severity is inventing a rule (CR-021).
+  ///
+  /// **`RCK-003` is the opposite case.** docs/02 §5.3's row has said
+  /// *"warning (advisory at 85%)"* since M0: the CATALOGUE authorises two
+  /// severities and the evaluator had no way to express that, so the
+  /// `advisory` the predicate had been setting since M5-E **never reached
+  /// a single user**. Nobody had checked, because the AC-051 pair asserts
+  /// which rule fires and never how loudly (DR-125 §11.124.2).
+  ///
+  /// So the catalogue declares the band and the evaluator honours it for
+  /// exactly the rules that declare one. **CR-021 is preserved**: the
+  /// catalogue still decides what a rule may say, and a predicate still
+  /// cannot invent it.
+  ///
+  /// NULL MEANS ONE SEVERITY, which is every other rule.
+  ///
+  /// **A PROJECT OVERRIDE COLLAPSES THE BAND**, deliberately: an override
+  /// is the project saying what this rule counts as here, so a rack that
+  /// was advisory, warning and error becomes whatever was set. That is
+  /// what `rules_rack.dart` already promised, that *"a project that
+  /// demotes `RCK-003` demotes all three"*.
+  final Set<Severity>? severityBand;
 
   @override
   String toString() => '$ruleId (${tier.label})';
@@ -427,13 +461,19 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     tier: RuleTier.postHoc,
     summary:
         'Sum of device weight exceeds Rack.weightCapacity. Advisory at '
-        '85%.',
+        '60%, warning at 85%, error over capacity.',
     rationale:
         'Racks have a load rating, and a full rack of amplifiers reaches it '
-        'faster than people expect. Advisory from 85%, because that is when it '
-        'is still worth checking the floor and the anchors rather than after.',
+        'faster than people expect. The notice starts at 60% because a 42U '
+        'rack at 85% of its rating is already heavy enough for the casters '
+        'to mark a floor, and a warning that arrives then arrives after the '
+        'fourth amplifier was specified rather than before it.',
     governing: ['CR-020'],
     defaultSeverity: Severity.warning,
+    // THE ONE BANDED ROW IN THE CATALOGUE (DR-125 §11.124.2). docs/02
+    // §5.3 has authorised two severities here since M0; the evaluator
+    // could not express it, so the `advisory` half never reached anybody.
+    severityBand: {Severity.advisory, Severity.warning, Severity.error},
   ),
   RuleMeta(
     ruleId: 'RCK-012',
