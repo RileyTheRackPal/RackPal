@@ -1165,6 +1165,7 @@ because `impedanceOhms` lives on the speaker terminal and `tapWatts` on the inst
 | F16 | ISP Gateway / ONT | `ONT` | 1.1 kg | 25 / 15 | 5 | Present in every North American residential rack |
 | F17 | OTA Antenna | `ANT` | 3.6 kg | — | 1 | `rf.ota`; the F-type ground path |
 | F18 | F-Type Ground Block | `GB` | 0.1 kg | — | 3 | Code item and a real lightning liability |
+| F19 | Keypad, load-controlling | `KP` | 0.2 kg | — | 4 | Wired to its load, so its box carries line voltage as well as the bus (DR-120) |
 
 ---
 
@@ -1368,6 +1369,8 @@ because `impedanceOhms` lives on the speaker terminal and `tapWatts` on the inst
 ```
 
 **F18 · F-Type Ground Block**: `GB` · 0.1 kg · passive
+
+**F19 · Keypad, load-controlling**: `KP` · 0.2 kg · bus + hardwired AC in
 
 ```text
 2x F-PAS              "LINE / LOAD"          @Coax                     [z75]

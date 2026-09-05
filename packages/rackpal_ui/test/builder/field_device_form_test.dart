@@ -94,12 +94,12 @@ Future<void> _open(WidgetTester tester, String section) async {
 
 void main() {
   group('the save gate admits a field device', () {
-    test('the 18 shipped field templates are all zero-occupancy notInRack, '
+    test('the 19 shipped field templates are all zero-occupancy notInRack, '
         'which is the state the gate used to refuse', () {
       final field = _seed.values.where(
         (b) => b.mountMethod == MountMethod.notInRack,
       );
-      expect(field, hasLength(18), reason: 'AC-031 ships exactly 18');
+      expect(field, hasLength(19), reason: 'AC-031 ships exactly 18');
       for (final b in field) {
         expect(b.frontU, 0, reason: b.displayName);
         expect(b.rearU, 0, reason: b.displayName);

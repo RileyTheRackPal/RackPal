@@ -160,7 +160,7 @@ const Map<String, DeviceGlyph> kCategoryDefaultGlyph = {
   kCatRf: DeviceGlyph.distribution,
   kCatPower: DeviceGlyph.power,
   kCatPassive: DeviceGlyph.blank,
-  // The 18 field devices are the widest category by a factor of four and
+  // The 19 field devices are the widest category by a factor of four and
   // the only one whose members share no silhouette at all: a speaker, a
   // camera, a keypad and a projector. `display` is the modal answer
   // rather than the right one, which is why the form's picker matters

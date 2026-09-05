@@ -69,11 +69,22 @@ const double _kM2cMs = 3.052;
 /// instead of one pin per port. The saving is large because the fixture is
 /// twenty-four switches and patch panels wide.
 ///
-/// MEASURED TWICE AND EQUAL: the committed fixture reports 3,319 total
+/// MEASURED TWICE AND EQUAL: the committed fixture reports 3,351 total
 /// against 948 label ops, and the nets-and-registries document reports
-/// 3,556 against 1,185. Both leave 2,371, which is the check that this is
+/// 3,588 against 1,185. Both leave 2,403, which is the check that this is
 /// the symbol layer moving rather than the label layer.
-const int _kSymbolOps = 2371;
+///
+/// **2,371 -> 2,403 ON 2026-09-04, AND THE ARITHMETIC IS EXACT.** DR-120
+/// gave `F13` a third bus alternate, `vantage.link`, and this fixture
+/// holds SIXTEEN keypads. Sixteen devices times two ops for one more
+/// vector pin is the whole +32, and the LABEL ops did not move at all
+/// (948 and 1,185, unchanged), which is what says this is a port being
+/// drawn rather than the layout shifting underneath it.
+///
+/// It is also the standing cost of the alternates-as-ports pattern:
+/// every seeded keypad draws all three buses whether the job uses one or
+/// not, and a fourth alternate would cost another 32 here.
+const int _kSymbolOps = 2403;
 
 /// The headroom fixture: twelve copies of the 300-link pod, which is a
 /// building with twelve IDFs rather than a house with one rack.

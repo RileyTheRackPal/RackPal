@@ -24,13 +24,13 @@ void main() {
   ];
 
   group('a variant is not a template (P4, §540)', () {
-    test('the seed catalog still ships one body per id, and 48 of them', () {
+    test('the seed catalog still ships one body per id, and 49 of them', () {
       // P4's rejected alternative is *"four separate templates, which
       // spends four of thirty rack-side slots on two products"*, and §540
       // repeats it for V06: *"Rejected alternative: separate TX and RX
       // templates."* If a variant ever reaches this map, that ruling has
       // been reversed by accident rather than by amendment.
-      expect(catalog, hasLength(48));
+      expect(catalog, hasLength(49));
       for (final id in variants.keys) {
         expect(
           catalog.containsKey(id),

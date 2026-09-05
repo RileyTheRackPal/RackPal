@@ -403,7 +403,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   String? _lastMoveDragSourceId;
 
   /// The seeded catalog (docs/09-roadmap.md M1 checklist #6,
-  /// docs/catalog/seed-devices.md): 30 rack-side archetypes + 18 field
+  /// docs/catalog/seed-devices.md): 30 rack-side archetypes + 19 field
   /// devices, embedded into `_doc.templates` at document construction
   /// (see `_buildDemoDocument`).
   ///
