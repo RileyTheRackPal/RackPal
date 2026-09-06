@@ -16994,6 +16994,46 @@ pair proves a rule fires, not that it fires correctly"*. The corpus also
 could not see that three of its own fixtures named entities the product
 does not ship.
 
+**11.127.10 THE SHELF MODEL IS PARKED AS A MAYBE, NOT AMENDED.** Building
+`PWR-003`'s remedy required putting a device on a shelf, which nothing in
+the product could do, and the user returned five trade facts about what a
+shelf really holds: **1/12th granularity is right; a Roku is under 1U so
+two stack, and 0.5U heights are necessary; a shallow device leaves room at
+the back where the power strip goes; a modem sits sideways or upright
+depending on the install; and Penn Elecom and Marantz make shelves for
+specific gear.**
+
+**AC-043 sorts them, and the sort is the whole reason no amendment was
+needed here.** That ruling KEEPS *"auto-pack left to right;
+`ShelfPlacement.order` decides sequence"* and defers *"free lateral
+positioning, `Alt`-drag, the third focus level entered with `Enter`, and
+per-host depth-overhang warnings"*, saying **"only the UI defers"**. So
+fact 3 is cut by name, facts 1 and 4 sit against the same cut, and **fact
+2 is neither cut nor built**: AC-043 never mentions height, and there is
+no body height in `Len` anywhere on `TemplateBody`. The half that shipped
+is the half AC-043 keeps.
+
+**Ruled by the user, in their own words:**
+
+> As much as I don't want to both A: go back on AC-043's decision and B:
+> don't want to increase scope for v1, this may be a necessary fix before
+> v1. File it as a "maybe" under M8/M9; I'll see how the team reacts to
+> the version you're building now.
+
+`#844` sits under **M9, Beta hardening**, rather than M8: the trigger
+named is how a team reacts to a build, which is what beta hardening is
+for, and M8 is release engineering with no seat for a model change. **It
+is a MAYBE and not a schedule.** If the reaction says it must precede
+release, moving one Story between two Epics is the visible act §8.3 asks
+for and costs a click (DR-097).
+
+**THIS IS THE RIGHT SHAPE OF RESTRAINT AND IS RECORDED AS SUCH.** An
+agent had the five facts, a working branch and momentum, and the
+alternative was amending a confirmed acceptance criterion inside a DRC
+remedy commit on one session's enthusiasm. §8.3 forbids that in terms,
+and the person who would have to live with a half-designed shelf model
+asked for evidence first.
+
 **11.127.6 `SpringBackRemedy` GAINS TWO MEMBERS, AND ITS DOC COMMENT'S
 OBJECTION IS ANSWERED RATHER THAN OVERRULED.** It holds one member today
 and says why: *"Inventing labels for the other five would be putting words
