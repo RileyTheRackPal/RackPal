@@ -69,7 +69,7 @@ void main() {
     for (final id in variants.keys) {
       expect(catalog.containsKey(id), isFalse, reason: id);
     }
-    expect(catalog, hasLength(49));
+    expect(catalog, hasLength(50));
   });
 
   test('only the load-controlling half takes line voltage', () {

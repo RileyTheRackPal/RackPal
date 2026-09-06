@@ -407,7 +407,9 @@ $SuiteFloors = @{
     # InlineAdapter never had, and +2 for the census that found three
     # ghost ids in the AC-051 spring-back fixtures.
     # 3991 at DR-128 part two: +13 from insert_converter_test.dart.
-    'rackpal_core'   = 3991
+    # 4010 at DR-128 part three: +16 from add_outlets_test.dart, PWR-003's
+    # remedy, and +3 for the guard on Finding.withSeverity.
+    'rackpal_core'   = 4010
     'rackpal_text'   = 1
     'rackpal_export' = 195
     'rackpal_ui'     = 1483

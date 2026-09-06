@@ -361,5 +361,96 @@ Map<String, TemplateBody> buildPowerCatalog() {
     banks: p03.banks,
   );
 
+  // ═══════════════════════════════════════════════════════════════════
+  // P04 · Rack Power Strip, 6-outlet, shelf (DR-128 §11.127.8)
+  // ═══════════════════════════════════════════════════════════════════
+  // THE CHEAPEST FIX FOR `PWR-003` WAS THE ONE THING THE CATALOGUE COULD
+  // NOT DRAW. Three templates provided outlets before this one and every
+  // one of them is a piece of distribution gear: a 24-outlet PDU, a 16-
+  // outlet sequencer, a 10-outlet UPS. The trade's ordinary answer to
+  // "two more things to plug in than places to plug them" is none of
+  // those. From the user, 2026-09-05:
+  //
+  //   "a small bank of PoE injectors or Sonos Ports connected to a simple
+  //    power strip and then plugged into a PDU outlet to allow for remote
+  //    resetting (Via BlueBOLT or OvrC, e.g.) and automation/power
+  //    sequencing"
+  //
+  // and "these small power strips are commonly just set on a shelf in the
+  // rack", which is why `mountMethod` is `shelf` and not `zeroU`.
+  //
+  // THE MODEL ALREADY EXPRESSED IT. `outletsConsumed: 1` with
+  // `outletsProvided: 6` is exactly a strip, and it is the shape the
+  // other three already use, so `PWR-003`'s arithmetic needed no change:
+  // the strip closes a shortfall by FIVE, not six, because it eats an
+  // outlet to give six.
+  //
+  // SIX CITES A PRODUCT, WHICH IS AC-052 IN THE FORM THE RULE WANTS.
+  // The user's source: "6 outlets is standard on the most basic Wattbox
+  // power strip, which is easily the most common my company installs."
+  // The ROW stays generic per §10.9, so this is a `Rack Power Strip` and
+  // not a WattBox; the brand records where the number came from.
+  //
+  // NO WATTAGE OF ITS OWN, and that is a fact rather than an omission: a
+  // passive strip draws nothing. `outletsProvided`/`Consumed` are the
+  // only power facts it has, so `PowerProfile` states those and stays
+  // silent on the rest (G4/CR-114, AC-039).
+  final p04 = PortBuilder()
+    ..p(
+      'ac.in',
+      'AC IN (captive cord)',
+      connector: 'conn.nema_5_15p',
+      family: 'power.ac_branch',
+      dir: PortDirection.sink,
+      bank: 'inlet',
+      bankLabel: 'Inlet',
+      gender: Gender.male,
+      power: PortPowerSpec(role: PortPowerRole.inlet),
+    );
+  for (var i = 1; i <= 6; i++) {
+    p04.p(
+      'out.$i',
+      'OUT $i',
+      connector: 'conn.nema_5_15r',
+      family: 'power.ac_branch',
+      dir: PortDirection.source,
+      bank: 'outlets',
+      bankLabel: 'Outlets',
+      gender: Gender.female,
+      power: PortPowerSpec(role: PortPowerRole.outlet),
+    );
+  }
+  out['P04'] = TemplateBody(
+    manufacturer: 'Generic',
+    model: 'PSTRIP-6',
+    displayName: 'Rack Power Strip, 6-outlet, shelf',
+    description:
+        'A passive strip, set on a shelf and fed from a PDU or sequencer '
+        'outlet so the gear on it can be power-cycled remotely. It draws '
+        'nothing itself.',
+    category: kCatPower,
+    typePrefix: 'PS',
+    tags: const ['strip', 'shelf', 'passive'],
+    // NO RAIL HOLES AND NO U OF ITS OWN, WHICH IS THE SHELF'S JOB. A
+    // strip lying on a shelf is not mounted to the rails, so
+    // `mountMethod` is `shelf`; the U it sits in belongs to the shelf,
+    // which is its own template. Claiming rail holes here would put a
+    // device on the elevation that no installer screws in.
+    //
+    // `frontU`, `rearU` and `side` are left to their defaults of 0, 0 and
+    // `none`, which say exactly that, so they are not restated here.
+    mountMethod: MountMethod.shelf,
+    bodyDepth: _mm(45),
+    weight: _kg(0.7),
+    power: PowerProfile(
+      nominalVolts: 120,
+      outletsProvided: 6,
+      outletsConsumed: 1,
+      inletPlug: PlugType.nema515p,
+    ),
+    ports: p04.ports,
+    banks: p04.banks,
+  );
+
   return out;
 }

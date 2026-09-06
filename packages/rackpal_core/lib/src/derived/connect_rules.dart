@@ -87,16 +87,29 @@ enum ConnectRule {
   /// the resulting cable would be the only evidence of a state the model
   /// says means nothing.
   ///
-  /// THE NOTE HERE USED TO READ that the creation site is *"the placement
-  /// command set, which does not check it today"*, which is alarming in a
-  /// way the facts are not. Measured at M5-C: **nothing in any package's
-  /// `lib/` constructs a `ShelfPlacement` at all.** Only the type's own
-  /// declaration and the codec do, so the only route into a bad shelf
-  /// chain is a file somebody wrote by hand or a build that predates the
-  /// rule. There is no command to gate, and DR-112's seam is the frame:
-  /// tier 1 refuses a gesture, and a state that arrives another way is
-  /// tier 3's to report. `placement_rules_test.dart` carries a source
-  /// scan that fails the day a writer appears.
+  /// THERE IS A CREATION SITE NOW, AND IT ASKS. `shelf_placement.dart`
+  /// (DR-128, `#837`) is the first and only command that builds a
+  /// `ShelfPlacement`, and it refuses a host that is not a container,
+  /// citing this rule id. So the shelf chain finally has a gate at the
+  /// moment it is created rather than only when somebody wires it.
+  ///
+  /// THIS NOTE HAS BEEN WRONG ONCE AND STALE ONCE, which is why it now
+  /// says what to check rather than what is true. It first read that the
+  /// creation site is *"the placement command set, which does not check
+  /// it today"*, alarming in a way the facts were not. M5-C corrected it
+  /// to "nothing constructs one at all", which was measured and right;
+  /// DR-128 made it stale within the milestone by building the writer.
+  ///
+  /// `placement_rules_test.dart` is the thing that noticed, both times.
+  /// It carries a source scan that went red naming the new file and
+  /// telling its reader to gate the site and fix this paragraph, and it
+  /// has now done that job three times over, for `PLC-002`, `PLC-003`
+  /// and this. **Trust the scan, not this comment.**
+  ///
+  /// The precondition framing above is unchanged: a connect still cannot
+  /// CREATE a `TOP-005` violation, and DR-112's seam still holds, that
+  /// tier 1 refuses a gesture and a state arriving another way is tier
+  /// 3's to report.
   hostResolves('TOP-005'),
 
   /// `TOP-001` — a conductor may not connect a port to itself.

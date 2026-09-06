@@ -6635,7 +6635,7 @@ and they will not be.
 Flutter-only. A JSON master would have to be loaded by the app layer and injected through two
 packages, because `rackpal_export` drives core directly and may never import `rackpal_ui`. A
 seeded Dart catalog needs no seam, works in core's pure-Dart tests unchanged, and is what this
-repository already does four times: 49 templates (`buildSeedCatalog`), connector footprints,
+repository already does four times: 50 templates (`buildSeedCatalog`), connector footprints,
 jacket-colour conventions, rack presets.
 
 The JSON form's one real advantage, editing the catalog without a rebuild, is an ANTI-FEATURE
@@ -16369,7 +16369,7 @@ machines"*. DR-103 §11.102 is untouched, `templateRef{templateId, version,
 contentHash}` is untouched, and no `.rmpj` changes shape.
 
 **ONLY AUTHORED DEVICES**, which is the user's own boundary: *"custom
-devices (beyond the archetypes)"*. The 49 seeded templates ship with the
+devices (beyond the archetypes)"*. The 50 seeded templates ship with the
 application and need no shelf copy. A fork of a seeded template **is**
 authored, carries `derivedFrom`, and goes to both.
 
@@ -17582,6 +17582,13 @@ label onto two drops.
 |---|---|---|
 | **CR-061**, the integer only | "v1 ships 48 templates: 30 rack-side and 18 field-side." | **49 templates: 30 rack-side and 19 field-side.** `F19`, the load-controlling keypad, is the addition (DR-120 §11.119.6). CR-061's REASONING is untouched: it chose 48 because that *"sits mid-band in the confirmed 40-55"*, and 49 is still mid-band, so the ruling decided a band and this moves within it. **The rest of CR-061 stands**, including AC-052's gate that every numeric field on a shipped template cites a source, which is why `F19` states no wattage. |
 | **CR-061**, the single-source claim | "The count is stated in exactly one place, `docs/catalog.md`, and no prose in any document states a number." | **Was already false and is recorded as such.** The count is written at thirteen sites across eleven files, including `lib/` comments, test assertions and canon itself. DR-120 §11.119.7 has the census. Consolidating it is its own work and is not done here. |
+
+### 12.31 Superseded by DR-128 (the catalogue grows by one strip)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **CR-061**, the count, as already amended by §12.28 | "49 templates: 30 rack-side and 19 field-side." | **50 templates: 31 rack-side and 19 field-side.** `P04`, a 6-outlet shelf-mounted passive power strip, is the addition (DR-128 §11.127.8). CR-061's REASONING is untouched for the second time: it chose its figure because that *"sits mid-band in the confirmed 40-55"*, and 50 is still mid-band. **AC-052 is satisfied in the form the rule wants**, a number with a source rather than a rationale: the user gives 6 as standard on the basic WattBox strip their company most often installs. |
+| **`seed-devices.md` §3.10**, the single place the count is allowed to live | P3: "the count is stated in **exactly one place, the summary table in §3.10**, and no prose in any document, including this one, states a template count." | **The rule stands and the table was stale.** It read 48 with 18 field devices until 2026-09-05, against a catalogue that had shipped 49 since DR-120 added `F19` the day before, **while thirteen sites in code and tests carried 49 correctly**. So the one place the number was permitted to live was the one place it was wrong. Corrected to 50 here. `seed_catalog_test.dart` asserts that table's category counts row by row, so the gate existed; nobody had read the table against it. **A single source of truth that nothing gates is a single source of staleness.** |
 
 ### 12.29 Superseded by DR-121 (a second variant axis)
 

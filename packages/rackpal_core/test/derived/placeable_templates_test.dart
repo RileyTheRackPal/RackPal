@@ -67,7 +67,7 @@ void main() {
     // The whole point of the file: a document seeded the way
     // `blank_document.dart` seeds one offers every shipped archetype,
     // and it does so WITHOUT the caller naming the catalog.
-    test('a document holding the seed catalog offers all 49, all seeded', () {
+    test('a document holding the seed catalog offers all 50, all seeded', () {
       final doc = _doc();
       for (final entry in buildSeedCatalog().entries) {
         doc.templates['${entry.key}@1'] = TemplateSnapshot(
@@ -79,7 +79,7 @@ void main() {
         );
       }
       final rows = buildPlaceableTemplates(doc);
-      expect(rows, hasLength(49));
+      expect(rows, hasLength(buildSeedCatalog().length));
       expect(
         rows.every((r) => r.provenance == TemplateProvenance.seeded),
         isTrue,

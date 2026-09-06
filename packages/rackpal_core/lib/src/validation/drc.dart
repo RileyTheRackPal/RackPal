@@ -141,13 +141,11 @@ List<Finding> evaluateDocument(RackDocument doc, {String? only}) {
           ? raw.severity
           : resolved;
 
-      final finding = Finding(
-        ruleId: raw.ruleId,
-        severity: severity,
-        message: raw.message,
-        targets: raw.targets,
-        primaryEntityId: raw.primaryEntityId,
-      );
+      // `withSeverity`, NOT A LONGHAND COPY. Both reconstructions here
+      // used to spell out every field, and `Finding.remedy` was added
+      // without either of them learning about it, so `PWR-003`'s button
+      // never reached the panel. See that method's doc comment.
+      final finding = raw.withSeverity(severity);
 
       // STEP 3 — an acknowledgement demotes, it does not delete (CR-019).
       // `effectiveSeverity` reads the ack's `demotedTo`, and a demotion
@@ -156,15 +154,7 @@ List<Finding> evaluateDocument(RackDocument doc, {String? only}) {
       final after = effectiveSeverity(finding, doc.ackedFindings.values);
       if (after == Severity.off) continue;
       out.add(
-        after == finding.severity
-            ? finding
-            : Finding(
-                ruleId: finding.ruleId,
-                severity: after,
-                message: finding.message,
-                targets: finding.targets,
-                primaryEntityId: finding.primaryEntityId,
-              ),
+        after == finding.severity ? finding : finding.withSeverity(after),
       );
     }
   }

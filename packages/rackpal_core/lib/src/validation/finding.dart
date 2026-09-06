@@ -175,6 +175,35 @@ final class Finding {
   /// PRODUCT offers, not a fact about the defect.
   final FindingRemedy? remedy;
 
+  /// The same finding, reported at [severity].
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THIS EXISTS BECAUSE THE FIELD-BY-FIELD COPY DROPPED A FIELD, TWICE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `evaluateDocument` rebuilds a finding to change its severity, once
+  /// for the project's resolved value and once for an acknowledgement's
+  /// demotion. Both were written out longhand, so **every new field on
+  /// this class had to be remembered in two places or it silently
+  /// vanished between the predicate and the panel.**
+  ///
+  /// It vanished. `remedy` was added at DR-128 §11.127.5 and neither copy
+  /// carried it, so `PWR-003`'s button never reached the issues list. The
+  /// defect was found by a test that ran `evaluateDocument` rather than
+  /// the predicate, which is the same shape DR-125 §11.124.2 records for
+  /// `RCK-003`'s discarded severity: **the entry point is where findings
+  /// lose things, and a test that calls the predicate cannot see it.**
+  ///
+  /// So the copy is here, once, where adding a field to the constructor
+  /// and forgetting it is a compile error rather than a quiet loss.
+  Finding withSeverity(Severity severity) => Finding(
+    ruleId: ruleId,
+    severity: severity,
+    message: message,
+    targets: targets,
+    primaryEntityId: primaryEntityId,
+    remedy: remedy,
+  );
+
   /// What an `AckedFinding` must carry to suppress THIS finding.
   String get targetFingerprint =>
       findingFingerprint(ruleId: ruleId, targets: targets);

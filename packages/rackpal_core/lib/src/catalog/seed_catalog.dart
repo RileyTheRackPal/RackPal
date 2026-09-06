@@ -1,6 +1,6 @@
 // The M1 seeded catalog (docs/09-roadmap.md M1 checklist #6,
 // docs/catalog/seed-devices.md §3.10): 30 rack-side archetypes across
-// eight categories plus 19 field devices, 49 templates total — matching
+// eight categories plus 19 field devices, 50 templates total — matching
 // the doc's own summary table exactly (P3: "the template count lives in
 // exactly one place"). Every numeric field's provenance is recorded in
 // `assets/catalog/sources.md` per AC-052 / DR-002 (generic archetypes,
@@ -89,7 +89,7 @@ const List<String> kCatalogCategoryOrder = [
 /// second list of 48 strings is a list that drifts, and the drift would
 /// show up as a template badged as somebody's own work.
 ///
-/// Lazily initialised, so the 49 templates are built once per isolate
+/// Lazily initialised, so the 50 templates are built once per isolate
 /// rather than once per palette rebuild, and unmodifiable for the same
 /// reason `buildRackPresets` copies: a caller must not be able to teach
 /// this build that it ships a template it does not.

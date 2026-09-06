@@ -107,7 +107,7 @@ Map<String, TemplateBody> buildSeedBusVariants() => <String, TemplateBody>{
 /// The roles [catalogId] offers, shipped half first, or empty when it
 /// carries no role parameter.
 ///
-/// EMPTY IS THE ANSWER FOR 47 OF THE 49, and it is a fact rather than a
+/// EMPTY IS THE ANSWER FOR 48 OF THE 50, and it is a fact rather than a
 /// fallback: P4 lists the parameter's two uses exhaustively.
 List<TemplateRole> rolesFor(String catalogId) => switch (catalogId) {
   'V06' => const [TemplateRole.transmitter, TemplateRole.receiver],

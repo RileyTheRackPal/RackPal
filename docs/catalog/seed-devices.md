@@ -1101,6 +1101,38 @@ The 3000 VA variant shown.
 > `[ups]` versus `[surge]` on the outlet is load-bearing — the 1000 VA and 1500 VA variants carry
 > both kinds, and an integrator needs the drawing to say which outlets survive an outage.
 
+**P04 · Rack Power Strip, 6-outlet, shelf**: `PS` · shelf-mounted, no rail holes · 45 mm ·
+0.7 kg · `outletsProvided` 6, `outletsConsumed` 1, no wattage of its own
+
+```text
+1x 5-15P-IN           "AC IN (captive cord)"  @Inlet
+6x 5-15R-OUT          "OUT {n}"               @Outlets
+```
+
+> **THE CHEAPEST FIX FOR `PWR-003` WAS THE ONE THING THIS CATALOG COULD NOT DRAW** (DR-128
+> §11.127.8). Every other template that provides outlets is distribution gear: a 24-outlet PDU, a
+> 16-outlet sequencer, a 10-outlet UPS. The trade's ordinary answer to "two more things to plug in
+> than places to plug them" is none of those.
+>
+> **Provenance for the 6.** From the user, 2026-09-05: *"6 outlets is standard on the most basic
+> Wattbox power strip, which is easily the most common my company installs."* The row stays generic
+> per §10.9, so this is a `Rack Power Strip` and not a WattBox; the brand records where the number
+> came from, which is AC-052 in the form the rule actually wants.
+>
+> **Why it is on a shelf and not a rail.** *"These small power strips are commonly just set on a
+> shelf in the rack."* So `mountMethod: shelf` and no `frontU`: the U it sits in belongs to the
+> shelf, which is its own template. Claiming rail holes would put a device on the elevation that no
+> installer screws in.
+>
+> **It closes a shortfall by FIVE, not six**, because it eats an outlet to give six. That
+> arithmetic needed no change to `PWR-003`: `outletsConsumed: 1` with `outletsProvided: N` is the
+> shape all four power templates already use.
+>
+> **No wattage, and that is a fact rather than an omission.** A passive strip draws nothing, so
+> `PowerProfile` states its outlets and stays silent on the rest (G4/CR-114, AC-039). What it is
+> usually plugged INTO is a PDU or sequencer outlet, so the gear on it can be power-cycled
+> remotely (BlueBOLT, OvrC); that is a fact about the job and lives on the cable, not here.
+
 ---
 
 ### 3.8 Passive & Mechanical: 3
@@ -1405,11 +1437,23 @@ because `impedanceOhms` lives on the speaker terminal and `tapWatts` on the inst
 | Control | 3 |
 | Sources | 2 |
 | RF / Coax | 2 |
-| Power | 3 |
+| Power | 4 |
 | Passive & Mechanical | 3 |
-| **Rack-side subtotal** | **30** |
-| Field Devices | 18 |
-| **Total shipped templates** | **48** |
+| **Rack-side subtotal** | **31** |
+| Field Devices | 19 |
+| **Total shipped templates** | **50** |
+
+**THIS TABLE WAS STALE, AND P3 ABOVE IS WHY THAT MATTERS.** P3 rules that the count lives in
+"exactly one place, the summary table in §3.10", and that no prose anywhere states one. It said
+**48 / 18 field** until 2026-09-05, against a catalogue that had shipped 49 since DR-120 added `F19`
+on 2026-09-04. So the one place the number was allowed to live was the one place it was wrong,
+while thirteen sites in code and tests carried 49 correctly. **A single source of truth that nothing
+gates is a single source of staleness**; `seed_catalog_test.dart` asserts this table's category
+counts row by row, which is what caught it here, so the gate exists and the table simply had not
+been read against it.
+
+Now 50: `F19` (DR-120) and `P04` (DR-128 §11.127.8), the 6-outlet shelf strip that `PWR-003`'s
+remedy inserts.
 
 **Eleven templates carry a build-time parameter** (V04, V06, V07, A01, N01, N03, P01, P03, X01,
 X02, X03) which is what lets the catalog cover roughly seventy distinct configurations without
@@ -1890,7 +1934,7 @@ this audit meaningful rather than theoretical:
 | S/PDIF | V02, A02, A06, S01 |
 | TOSLINK | A02, S01, F01 |
 | Speaker level | A01, A04, A05, F04–F08, F14 |
-| Power | P01–P03 and every AC inlet in the catalog |
+| Power | P01–P04 and every AC inlet in the catalog |
 
 ---
 

@@ -29,9 +29,12 @@
 // no button.
 //
 // So the body is authored HERE from the pins the remedy was invoked on.
-// CR-061's count of 49 shipped templates does not move, because this
-// template is written into the PROJECT (DR-123's path) and was never in
-// the catalogue.
+// CR-061's shipped-template count does not move, because this template is
+// written into the PROJECT (DR-123's path) and was never in the
+// catalogue. (The count itself moved to 50 in the same ruling, for
+// `PWR-003`'s power strip, which IS a catalogue row. The two remedies
+// went opposite ways on purpose: a converter is specific to its two pins
+// and a power strip is the same object on every job.)
 //
 // ═════════════════════════════════════════════════════════════════════
 // IT CLEARS BOTH RULES ON BOTH NEW CABLES BY CONSTRUCTION

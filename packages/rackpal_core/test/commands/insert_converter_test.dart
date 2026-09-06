@@ -111,7 +111,7 @@ void main() {
     });
 
     test('and the template lands in the PROJECT, so the shipped catalogue '
-        'is untouched (CR-061 stays at 49)', () {
+        'does not grow by it', () {
       final result = run() as InsertConverterDone;
       final conv = doc.devices[result.converterId]!;
       final id = conv.templateRef.templateId.v;
