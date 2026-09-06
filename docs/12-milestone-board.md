@@ -5304,7 +5304,7 @@ not, and it never reached docs/06 §9. **It also falsifies the DSL path's "zero 
 which is a claim about the whole route and not about steps 6 to 13. docs/06 is priority-3 and owes
 the correction; the ruling and the code win in the meantime.
 
-### 5.4 M5, Validation · `M` · PARTIAL, **2 of 3 discharged**, weakest mark `UNPERFORMED` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
+### 5.4 M5, Validation · `M` · **3 of 3 discharged**, weakest mark `CONFIRMED` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing
 > exactly that finding and a known-good near-miss producing none — **no rule ships without its pair**
@@ -5314,16 +5314,24 @@ the correction; the ruling and the code win in the meantime.
 | Clause | Mark | Why |
 |---|---|---|
 | 28 rules × fixture pair | **DEMONSTRATED: 28/28** | `dart test test/validation/drc_corpus_test.dart` from `packages/rackpal_core`, and `run_local.ps1` runs it as a step of its own named `AC-051 pair coverage`. **56 fixtures: 28 known-bad and 28 near-misses, one pair per rule, no rule with two and none with none.** The gate's subject is `kRuleCatalogue` rather than any evaluator's enum, which is what makes it enforce CR-021 rather than restate it (§5.4.7). Three assertions, and the third is the anti-vacuity one: a corpus that walked nothing would report no gaps and pass |
-| Domain-expert sign-off on the 28 rules and the catalog data | **UNPERFORMED** | Still has not happened, and no amount of code discharges it. What has changed is that it is now *performable*: `docs/20-rule-review.md` is 489 lines of trade language generated from the live catalogue (§5.4.9), and it is with the reviewer. `#305` is the pass and `#306` records the result. **This is the clause that keeps M5 out of `COMPLETE`** |
+| Domain-expert sign-off on the 28 rules and the catalog data | **CONFIRMED 2026-09-06** | Signed by Riley, reviewing integrator. **Two scopes, and they do not carry the same weight**: the 28 rules SIGNED outright, the catalog data SIGNED PROVISIONAL on the reviewer's own hedge, *"there may be signal families we are missing, but I haven't found any yet"*. §5.4.11 has the record. **The review returned twelve findings and produced four rulings**, and found six fields the model has and no producer writes; `#845` is the second pass, against a product a team has used rather than against a document |
 | No rule prevents a PDF being written | **DEMONSTRATED** | `packages/rackpal_export/test/findings_never_block_export_test.dart`, 316 lines. The `VACUOUS` mark expired the moment rules existed, and §0 predicted exactly that: *"true today, and true for a reason that will stop being true."* It is not replaced by the assertion `#310` asked for, which would have been vacuous a second way, but by the type system: **`ExportError` is sealed with three arms and none of them is about a rule** (§5.4.8, DR-119) |
 
 **WHAT THIS MEANS FOR §8.9, STATED HERE SO NOBODY HAS TO INFER IT.** M5's successor is **the Plan
 view**, not M6, on DR-029 §11.28.4 and roadmap §4: M6's criterion is that all four starters export a
 *complete* set, and a plan sheet arriving afterwards would make that criterion run twice (§5.9).
-Clause 2 above is `UNPERFORMED`, so it is neither discharged nor parked, and §8.9 therefore makes
-opening the Plan view over M5 the **soft edge** that rule explicitly contemplates rather than a
-violation of it: *"closing is the moment that binds; opening is a soft edge."* **M5 cannot close
-until a person reviews the pack**, and no amount of Plan view work changes that.
+
+**ALL THREE CLAUSES ARE NOW DISCHARGED, so §8.9's condition on opening a successor is met.** This
+paragraph read *"clause 2 above is `UNPERFORMED`, so it is neither discharged nor parked"* and that
+was true until 2026-09-06.
+
+**WHAT IS NOT YET TRUE IS THAT M5 IS CLOSED**, and the distinction is §8.1's: the exit criterion is
+the unit of truth and the clauses are discharged, but DR-127 §11.126 amended M5's scope with five
+items on the day of the review, four of them unbuilt (`#838`, `#839`, `#840`, `#841`). **A clause
+discharged is not a backlog emptied**, and DR-127 §11.126.4 records the other half: the amendment was
+taken on the ground that M5's buildable work was finished, which had stopped being true by the time
+it was written. **M5's remaining cost should be re-measured before its successor opens rather than
+after**, and that measurement is owed.
 
 #### 5.4.1 M5-0a, the catalogue corrected before the engine exists · CLOSED · `bd71eef`, `91ac48f`, `31eac36`, `6f2ad64`, `4933588`, `aa25cba`
 
@@ -5951,9 +5959,69 @@ cable (canon §11.119, §11.120, §12.28, §12.29). **The pack was regenerated a
 families, `ctl.vantage` listed, and re-running `tools/rule_review.py` against the tree today produces
 no diff.
 
-**WHAT IS LEFT IS NOT BUILDABLE.** `#305` is the review pass and `#306` records the sign-off with
-name, date and scope, **rules and catalog data being separate scopes**. Both are `UNPERFORMED` in
-§0's sense: somebody has to do the thing.
+**WHAT WAS LEFT WAS NOT BUILDABLE, AND IS NOW DONE.** `#305` was the review pass and `#306` the
+sign-off with name, date and scope, **rules and catalog data being separate scopes**. Both were
+`UNPERFORMED` in §0's sense: somebody had to do the thing. Somebody did; see §5.4.11.
+
+#### 5.4.11 M5-H2 and M5-H3, the sign-off and what it is signing · CLOSED · `v0.5.60` · `#305`, `#306`
+
+**Signed off by Riley, reviewing integrator, 2026-09-06.** The clause asks for name, date and
+**two scopes**, and the two do not carry the same weight:
+
+| Scope | State | Why |
+|---|---|---|
+| **The 28 rules** | **SIGNED** | All 28 read, twelve findings returned, every one dispositioned. Four rulings came out of it |
+| **The catalog data** | **SIGNED, PROVISIONAL** | 56 families reviewed and none found missing, in the reviewer's own words *"but I haven't found any yet"*. `#845` is the item that finishes it |
+
+**THE HEDGE IS THE REVIEWER'S AND IS RECORDED AS THEY PUT IT**, rather than smoothed into an
+acceptance: *"this isn't totally finalized until M8/M9. There may be signal families we are missing,
+but I haven't found any yet."* Absence of a find after one reading is not evidence of absence, and
+the honest form of that is a scope that says so.
+
+**5.4.11.1 WHAT THE REVIEW ACTUALLY BOUGHT, MEASURED.** `#303`'s own description predicted the
+value: *"a code-adjacent rule that is subtly wrong is worse than absent, because the tool's silence
+reads as approval."* It found worse than that. **Six fields that the model has, the documents
+describe, and no producer ever writes**, five of them inside this milestone:
+
+| Field | Ruling | What it cost |
+|---|---|---|
+| `maxConnections` | DR-124 | `TOP-003` refused a dual-head flasher's second head at the gesture, with no escape |
+| `RuleMeta`'s severity band | DR-125 | `RCK-003`'s `advisory` had never reached a user since M5-E |
+| `acceptedFamilies` | DR-126 | `SIG-002` refused every cross-family pairing in the shipped catalogue |
+| `InlineAdapter` | DR-128 | `CON-001` told people to declare an adapter the product could not create |
+| `ShelfPlacement` | DR-128 | Nothing a person did put a device on a shelf |
+| `Finding.remedy` | DR-128 | The panel button vanished between the predicate and the panel, twice |
+
+**ALL SIX SURFACED THE SAME WAY: a rule firing on a connection that is correct.** That is now the
+strongest single signal in this repository that a field has no producer, and it is a better detector
+than reading, because it costs nothing to notice and arrives on its own. `#841` is the census nobody
+has run.
+
+**5.4.11.2 THE REVIEW ALSO CORRECTED THE RULINGS IT PRODUCED, TWICE.** DR-125 §11.124.3 framed
+`DIR-003` as a rule keyed on the wrong field, over a census that was a row short; DR-126 found the
+missing row and the predicate turned out to be correct all along. DR-128's first answer for
+`PWR-003` was the 0U PDU, chosen by an agent listing what the catalogue happened to hold, and the
+reviewer returned the trade fact that the ordinary fix is a passive strip on a shelf. **Neither
+correction came from the pack. Both came from somebody who wires racks.**
+
+**5.4.11.3 WHY THIS CLOSES AT ALL, GIVEN THE CAVEAT.** §8.1: done means demonstrated, and the thing
+to demonstrate is that a domain expert read the rules and the catalog data and said what they think.
+That happened, at length, and it moved four rulings. **A clause is discharged by evidence, not by an
+empty backlog**, and `#845` is not a defect in this sign-off: it is the second pass, against a
+product a team has used rather than against a document, which is a different act on different
+evidence and cannot be performed today.
+
+**5.4.11.4 THE VERSION REACHES `v0.5.60`, DERIVED TWO WAYS THAT AGREE.** The board query for Done
+Chapters under epic 23 returns **60**. `v0.5.58` was current and **two CHAPTERS closed here**, `#305`
+and `#306`, which is also 60. **`#837` is a STORY and is not counted**, which is docs/14 §14.0's rule
+and the thing most likely to be got wrong today: DR-127 created four Stories and one Chapter, and
+only the Chapter would ever move this digit.
+
+**5.4.11.5 WHAT THE SECOND PASS WILL HAVE THAT THIS ONE DID NOT.** DR-125 §11.124.5 states the
+limit of any pack: *"a pair proves a rule fires, not that it fires correctly."* The same holds one
+level up. **This review proved the rules READ correctly. Only use proves they FIRE at the right
+time**, and the three remedies DR-128 shipped have never been pressed on a real job. `#845` carries
+that list; `#844` carries the shelf model, parked on the same evidence.
 
 #### 5.4.10 The version was one behind, and the reason is worth more than the digit
 
