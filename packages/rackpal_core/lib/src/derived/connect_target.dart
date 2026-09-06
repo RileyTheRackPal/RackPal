@@ -150,9 +150,12 @@ final class ConnectTarget {
   /// docs/02 §5.1 words `TOP-003` as *"a port's live conductor count may
   /// not exceed its effective `maxConnections`"*, and reading `effective`
   /// as `declared` is not a simplification — it is wrong on real data.
-  /// **Not one of the seed catalog's ports declares `maxConnections`**:
-  /// `PortBuilder.p` (catalog_ports.dart) never passes it, so all of them
-  /// take `PortDef`'s default of `1`. Eight of them are declared
+  /// **Almost none of the seed catalog's ports declares `maxConnections`**:
+  /// only the IR emitter outputs do, since DR-124 (see below), and every
+  /// other one takes `PortDef`'s default of `1`. This sentence read "not
+  /// one" until `#841`'s census, which is a claim DR-124 had falsified the
+  /// day before while correcting the paragraph four below. Eight of them
+  /// are declared
   /// `PortDirection.busNode`, and a Cresnet drop or a 70 V tap whose
   /// bound is one connection is not a bus at all — A05's own catalog note
   /// reads *"a constant-voltage BUS output, not OUT (a 70V run is a
@@ -206,17 +209,27 @@ final class ConnectTarget {
   /// "EFFECTIVE" AGAIN, AND FOR THE THIRD TIME THE FIELD IS EMPTY
   /// ═══════════════════════════════════════════════════════════════════
   /// `PortDef.acceptedFamilies` is declared, round-trips through the codec
-  /// — and is populated on NONE of the 727 seed catalog ports.
-  /// `seed_registries.dart:394` says so outright, about the one case that
-  /// matters most: *"The exclusion list is not on the M0 class yet; the
-  /// family separation is."* So a rule that simply read the list would be
-  /// a rule that answers "no" to everything on every real document.
+  /// — and was populated on NONE of the 727 seed catalog ports until
+  /// DR-126. `seed_registries.dart:394` still says so outright, about the
+  /// one case that mattered most: *"The exclusion list is not on the M0
+  /// class yet; the family separation is."* So a rule that simply read the
+  /// list would have answered "no" to everything on every real document.
   ///
-  /// This is the same shape as [effectiveMaxConnections] — where not one
-  /// seed port declares `maxConnections` — and as `channelIndex`, which
-  /// DR-012.2 declined to read for the identical reason. Three fields,
-  /// one pattern, and the pattern is why these are `effective*` getters
-  /// rather than field reads.
+  /// **EIGHTEEN PORTS DECLARE ONE NOW**, all of them `ctl.ir_direct`
+  /// device inputs accepting `ctl.ir_emitter` (DR-126 §11.127.7). The
+  /// getter below is unchanged and was right either way; what changed is
+  /// that its declared-list branch is finally reachable from shipped data.
+  /// **This paragraph said "NONE" for a day after that stopped being
+  /// true**, which `#841`'s census caught.
+  ///
+  /// This was the same shape as [effectiveMaxConnections] and as
+  /// `channelIndex`, which DR-012.2 declined to read for the identical
+  /// reason. **Two of the three have since gained a producer** and
+  /// `channelIndex` has not, which is `#841`'s remaining half. The pattern
+  /// is why these are `effective*` getters rather than field reads, and it
+  /// holds even now that the fields are writable: a getter that falls back
+  /// keeps working while a catalogue fills in, and a field read would have
+  /// had to change on the day it did.
   ///
   /// So: the declared list when there IS one, exact family equality when
   /// there is not. **A port always accepts its own family**, declared list
