@@ -5711,6 +5711,13 @@ it. **Nothing in `apps/rackpal` mounts it**, and outside that widget file nothin
 acknowledge flow and the `Why?` viewer are real, tested, and **unreachable by any gesture a person
 can make**.
 
+**AND IT IS TRUE AGAIN AS OF DR-133 (`#847`, §5.4.16), which is recorded HERE so a reader meets one
+current answer rather than two corrections and a guess about which won.** The validation drawer is
+mounted, so everything listed above is reachable, and it opens itself on the first error rather than
+waiting to be found. **The sentence was wrong for two days and is now right for a different reason
+than it was first written**: it was asserted from what M5-F built, and it holds because something
+mounts it.
+
 **The chapters below are not withdrawn and the Story stays closed**, which is §8.1 rather than
 generosity: each built what it said, and M5's three clauses are the fixture pairs, the sign-off and
 the export, none of which says a user can see a finding. **What was wrong is the sentence**, and a
@@ -6287,6 +6294,58 @@ every branch of `SetPortFactCommand` to be written before it compiled.
 `device_ports_section.dart` lists its controls **by hand**, so both fields compiled green with no way
 to set either, exactly as DR-128's nullable `Finding.remedy` did. `port_tap_controls_test.dart` is
 the gate, in `remedy_pairing_test.dart`'s shape.
+
+#### 5.4.16 M5, the panel gets a host, and it was in the layout table all along · CLOSED · `#847`
+
+**DR-133 §11.132.** Ordered into M5 by the user behind `#838` and `#839`, and settled mostly by
+**reading docs/04** rather than by deciding anything.
+
+**5.4.16.1 THE ITEM WAS FILED CLAIMING A DECISION THAT WAS ALREADY MADE.** `#847` said *"mounting it
+is a shell decision, not a widget one"* and listed three open questions. **docs/04 answers all
+three.** §1's layout table carries a row for it, written and never built:
+
+| Element | Default | Range | Behaviour |
+|---|---|---|---|
+| **Validation drawer** | 28 px | 28 / 320 | Auto-expands to 180 px **once**, on the first *error* per session, never again |
+
+and §8's keymap names `F7` re-check, `F8` next issue, `Shift+F8` previous, none of which was bound.
+
+**One of those answers is better than what was about to be proposed.** A keybinding was going to be
+offered; the spec says **it opens by itself**, and a person who does not know the validation engine
+exists cannot press a key to find it. That is precisely the state §5.4.6's closing sentence claimed
+to have ended.
+
+**5.4.16.2 THE SHELL BECAME A COLUMN, WHICH IS WHY NO SEAM WAS NEEDED.** The drawer is a horizontal
+band under the palette/canvas/inspector row, not a fourth column, so it wanted neither the unbuilt
+`PanelHost` nor a share of the inspector's 320 px. **The whole `#847` estimate rested on a seam the
+work did not touch.**
+
+**5.4.16.3 THE ONE THING THE SPEC DOES NOT SAY.** *"The first error per session"* leaves open what an
+error IS at that moment, and `RuleOverride` and `AckedFinding` both move severities. **Ruled: the
+RESOLVED severity**, so a project that demoted a rule is not overruled by a drawer, which is RJ-006's
+whole reason for keeping the acknowledgement machinery.
+
+**5.4.16.4 THREE THINGS CAUGHT THIS CHAPTER, AND TWO WERE GATES NOBODY HAD MET.**
+
+- **`draw_source_gate_test`** asserts every test file a production comment cites actually exists,
+  because a reader following a dead reference *"finds nothing, which reads exactly like the gate
+  having been deleted"*. A comment named `drc_drawer_test.dart` against a file called
+  `validation_drawer_test.dart`.
+- **RULE 14 in `session_layering_test`** failed a keymap group bound two-of-three. Its own words:
+  *"a partial keymap reads as a whole one, so a group lands only when it is complete."* `F7` had been
+  left out on the argument that a re-check key has nothing to do while validation recomputes on every
+  build. **The rule was right and so was the argument's opposite**: "re-check" promises to re-run the
+  check and does, and a phantom button is one that does NOTHING.
+- **Two self-inflicted defects, found before committing**: an unreachable `else if (advisories > 1)`
+  that would have printed *"3 advisory"*, and an `onHeightChanged` parameter with no gesture calling
+  it, which is the ninth-and-tenth producer gap's shape committed by the person who had just written
+  the practice note about it.
+
+**5.4.16.5 EVALUATION RECOMPUTES ON BUILD, AND THAT IS FILED RATHER THAN HIDDEN.** `evaluateDocument`
+walks the whole document on every frame of this screen. The epoch machinery exists so a derived view
+can recompute only when the epochs it reads bump, and wiring it is real work with a real payoff.
+**It is not this chapter**: `#847` is about the panel being reachable at all, and a correctness
+problem would be worse to ship than a performance one.
 
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 

@@ -2,6 +2,28 @@
 
 ## 2026-09-06
 
+* **Ruling**: [DR-133](/decisions/dr-133-the-validation-drawer-was-in-the-layout-table.md).
+  `DrcPanel` gets its host, so **everything M5-F built is reachable for
+  the first time**. `#847` was filed calling the mount point an open
+  shell decision with three questions; **docs/04 answers all three**, and
+  §1's layout table had a row for a validation drawer nobody had built.
+* **Note**: **THE SPEC'S ANSWER WAS BETTER THAN MINE.** I was going to
+  propose a keybinding. §1 says the drawer **opens by itself** on the
+  first error, and that is the stronger answer: a person who does not
+  know the validation engine exists cannot press a key to find it.
+* **Note**: **TWO GATES I HAD NOT MET CAUGHT THIS ONE.**
+  `draw_source_gate_test` fails a production comment citing a test file
+  that does not exist, because a dead reference *"reads exactly like the
+  gate having been deleted"*. And RULE 14 failed a keymap group bound
+  two-of-three, on its own rule that **a partial keymap reads as a whole
+  one**. I had left `F7` out deliberately and written the reasoning into
+  three comments; the rule was right, and so was the opposite of my
+  argument, because "re-check" re-runs the check whether or not the
+  answer moved.
+* **Note**: **I COMMITTED THE PRODUCER-GAP SIN WHILE WRITING THE PRACTICE
+  NOTE ABOUT IT.** `onHeightChanged` shipped in my first draft as a
+  parameter with no gesture calling it. Caught before commit, and the
+  rail is now a drag handle.
 * **Ruling**: [DR-132](/decisions/dr-132-ele-005-restored-a-rule-that-already-had-an-id.md),
   a §8.3 amendment taking the catalogue to **29**. The user chose a rule
   over a rollup because **an overloaded 70 V line clips the amplifier and

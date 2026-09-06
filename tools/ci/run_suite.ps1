@@ -447,7 +447,11 @@ $SuiteFloors = @{
     # switches exhaustively so the COMMAND had to handle both new fields,
     # and the widget lists its controls by hand, so both compiled green
     # with no way to set either.
-    'rackpal_ui'     = 1513
+    # 1523 at DR-133: +10 from validation_drawer_test.dart. Nine of
+    # them mount the drawer, which is how DrcPanel passed its own suite
+    # for two days while nothing in the product mounted it; the tenth
+    # mounts RackCanvasScreen and is the assertion #847 IS.
+    'rackpal_ui'     = 1524
     'rackpal_app'    = 916
 }
 

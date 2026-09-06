@@ -181,7 +181,12 @@ void main() {
       // the caret does move right. It shadows caret movement, so it is
       // gated on a suggestion existing through a real `Action` whose
       // `isActionEnabled` is false when there is none.
-      expect(keyBindingsIn(KeyScope.global), hasLength(7));
+      // TEN SINCE DR-133 (`#847`), which bound all THREE of docs/04
+      // §8's validation keys: F7 re-check, F8 next issue, Shift+F8
+      // previous. The first draft bound two and left F7 out; RULE 14 in
+      // session_layering_test.dart failed it, on its own rule that a
+      // partial keymap reads as a whole one.
+      expect(keyBindingsIn(KeyScope.global), hasLength(10));
       expect(keyBindingsIn(KeyScope.rack), hasLength(16));
       // TWENTY-FIVE SINCE `#801`, which added `B` for CR-103's other
       // half. A click on a collapsed pin expands the bank, because
@@ -233,7 +238,7 @@ void main() {
       // why `LabelKey` splits them.
       expect(keyBindingsIn(KeyScope.builder), hasLength(16));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(67));
+      expect(kKeymap, hasLength(70));
     });
   });
 
