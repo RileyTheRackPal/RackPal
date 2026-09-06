@@ -17401,6 +17401,75 @@ known-good therefore differ **only in one tap value**, on DR-131
 §11.130.4's reasoning: a rule whose fault cannot be built from the
 catalogue has never been tested against the catalogue.
 
+### §11.132 DR-133 · The validation drawer was specified in the layout table and never built
+
+**Board `#847`, ordered into M5 by the user 2026-09-06** behind `#838` and
+`#839`. Settled the same day, and settled mostly by **reading docs/04**
+rather than by deciding anything.
+
+**11.132.1 THE ITEM WAS FILED CLAIMING A DECISION THAT WAS ALREADY MADE.**
+`#847` said *"mounting it is a shell decision, not a widget one"* and
+listed three open questions: where the panel lives, how it opens, and
+what it displaces. **docs/04 answers all three**, and the item was written
+without reading it closely enough.
+
+§1's layout table carries a row for it, written and never built:
+
+| Element | Default | Range | Behaviour |
+|---|---|---|---|
+| **Validation drawer** | 28 px | 28 / 320 | Auto-expands to 180 px **once**, on the first *error* per session, never again |
+
+and §8's keymap binds its navigation: **`F7` re-check, `F8` next issue,
+`Shift+F8` previous issue**, global. **None of the three is bound in
+`keymap.dart`.**
+
+**11.132.2 SO THE THREE QUESTIONS WERE CLOSED, AND ONE ANSWER IS BETTER
+THAN WHAT WAS GOING TO BE PROPOSED.** A bottom drawer spanning the shell
+is not a fourth column, so it needs neither the unbuilt `PanelHost` seam
+nor a share of the 320 px inspector. And **it opens by itself**, which is
+a better answer than the keybinding about to be offered: a person who
+does not know the validation engine exists cannot press a key to find it,
+and **that is precisely the state M5-F's closing sentence claimed to have
+ended** (§5.4.6).
+
+**11.132.3 THE ONE THING THE SPEC DOES NOT SAY, RULED HERE.** *"The first
+error per session"* leaves open what an error IS at that moment, and the
+choice is load-bearing because `RuleOverride` and `AckedFinding` both move
+severities.
+
+**RULED: the trigger is a finding whose RESOLVED severity is `error`,
+after overrides and acknowledgements.** Not the catalogue's default
+severity. A project that has demoted `PWR-003` to advisory has said it
+does not want to be stopped by it, and re-opening a drawer for it would
+overrule a decision the user recorded, which is RJ-006's whole point in
+keeping the acknowledgement machinery.
+
+**A DOCUMENT WITH NO ERRORS NEVER AUTO-OPENS IT**, and warnings never do.
+The drawer still shows its 28 px rail with a count, so the engine is
+visible without being loud, which is the difference between the drawer
+and a dialog.
+
+**11.132.4 SESSION MEANS THE APP RUN, TAKEN LITERALLY.** Opening a second
+document does not re-arm it. **The alternative is defensible and is
+recorded rather than taken**: a per-document arming would surface the
+first error in each job, which is arguably what an integrator opening
+four projects wants. It is not what §1 says, and changing it is a ruling
+rather than a detail, so it stays as written until somebody has used it.
+
+**11.132.5 THE PANEL IS MOUNTED UNCHANGED.** `DrcPanel` gets a host, not
+a rewrite. Everything M5-F built (the grouping, the severity filter,
+acknowledge and withdraw, the `Why?` viewer) plus DR-128's remedy button
+and DR-129's code-citation row become reachable **by mounting one widget
+that already passes its own tests**, which is the whole shape of `#847`:
+the thing existed, something read it, and no path a person walks reached
+it.
+
+**11.132.6 WHAT THIS DOES TO §5.4.6's CORRECTION.** That section was
+amended by DR-129 to say a user *cannot* see the findings. **It becomes
+true again on this commit**, and the record should say so in the same
+place rather than leaving a reader to work out which of two corrections
+is current.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
