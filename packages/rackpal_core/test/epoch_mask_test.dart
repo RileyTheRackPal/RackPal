@@ -117,7 +117,7 @@ Set<String> _changedTopLevelKeys(RackDocument doc, void Function() mutate) {
 ///
 /// MEASURED FROM SOURCE by [_projectionCoversEveryField], never trusted.
 const _projectedFieldCounts = <String, int>{
-  'EquipmentRow': 13,
+  'EquipmentRow': 14,
   'RackRollups': 10,
   'Rollup<T>': 3,
 };
@@ -156,6 +156,10 @@ Map<String, Object?> _derivedProjection(RackDocument doc) {
           'loads': loads(row.loads),
           'lifecycleStatus': row.lifecycleStatus.name,
           'notes': row.notes,
+          // DR-130. `SetMountNoteCommand` declares `EpochMask.meta`, so
+          // a projection blind to this field could not tell whether that
+          // declaration is honest.
+          'mountNote': row.mountNote,
         },
   ];
 

@@ -417,7 +417,11 @@ $SuiteFloors = @{
     # OffRackPlacement.mountNote never had. Its canary earned its keep on
     # the first run: "no PLC finding from evaluateDocument" passed on a
     # rule that entry point never emits, for any document.
-    'rackpal_core'   = 4035
+    # 4043 at DR-130 part two: +8 from mount_note_on_the_sheet_test.dart.
+    # A producer that reaches no surface is DR-128 repeating one layer
+    # out, and the ruling chose the smallest option ON THE GROUND that a
+    # note reaches the schedule and the PDF.
+    'rackpal_core'   = 4043
     'rackpal_text'   = 1
     'rackpal_export' = 195
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which

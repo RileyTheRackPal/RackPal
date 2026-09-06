@@ -123,6 +123,7 @@ final class EquipmentRow {
     required this.loads,
     required this.lifecycleStatus,
     required this.notes,
+    this.mountNote,
   });
 
   final Uuid deviceId;
@@ -179,6 +180,18 @@ final class EquipmentRow {
 
   /// `DeviceInstance.notes`, or `null`.
   final String? notes;
+
+  /// `OffRackPlacement.mountNote`, or `null` for every other placement.
+  ///
+  /// WHY IT IS ITS OWN FIELD AND NOT FOLDED INTO [notes] HERE: they are
+  /// two different facts with two different owners. [notes] is prose
+  /// about the DEVICE and survives a move; this is prose about WHERE IT
+  /// SITS and is meaningless the moment the device goes into a rack. A
+  /// reader who wants only one of them, and any future sheet that gives
+  /// them separate cells, needs them separable. The equipment sheet
+  /// happens to print them in one column today, and that is the sheet's
+  /// decision to make rather than this file's.
+  final String? mountNote;
 
   /// Always 1 in this build. See the file header.
   int get qty => 1;
@@ -436,6 +449,13 @@ EquipmentRow _row(
     loads: resolveDeviceLoads(device, body),
     lifecycleStatus: device.lifecycleStatus,
     notes: device.notes,
+    // ONLY an off-rack device has one. A rail, 0U or shelf placement
+    // says where it sits with a rack, a U and a face, and a note beside
+    // those would be a second answer to a question already answered.
+    mountNote: switch (placement) {
+      OffRackPlacement(:final mountNote) => mountNote,
+      _ => null,
+    },
   );
 }
 
