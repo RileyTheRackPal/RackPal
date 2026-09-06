@@ -451,7 +451,7 @@ $SuiteFloors = @{
     # them mount the drawer, which is how DrcPanel passed its own suite
     # for two days while nothing in the product mounted it; the tenth
     # mounts RackCanvasScreen and is the assertion #847 IS.
-    'rackpal_ui'     = 1523
+    'rackpal_ui'     = 1524
     'rackpal_app'    = 916
 }
 

@@ -10,6 +10,7 @@
 // test cannot make about itself, and the assertion whose absence `#847`
 // is.
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -260,6 +261,30 @@ void main() {
         reason:
             'opening the drawer must reach the panel through the SHELL, '
             'not through a test harness',
+      );
+    });
+
+    testWidgets('all THREE of docs/04 §8s validation keys are bound', (
+      tester,
+    ) async {
+      // COMPLETE, and the completeness is the assertion. The first draft
+      // bound two and left `F7` out; `session_layering_test.dart`'s
+      // RULE 14 failed it, on its own rule that *"a partial keymap reads
+      // as a whole one, so a group lands only when it is complete"*.
+      final triggers = {
+        for (final b in kKeymap) (b.trigger, b.shift): b.id,
+      };
+      expect(
+        triggers[(LogicalKeyboardKey.f7, false)],
+        KeyBindingId.recheck,
+      );
+      expect(
+        triggers[(LogicalKeyboardKey.f8, false)],
+        KeyBindingId.nextIssue,
+      );
+      expect(
+        triggers[(LogicalKeyboardKey.f8, true)],
+        KeyBindingId.previousIssue,
       );
     });
   });

@@ -177,6 +177,22 @@ enum KeyBindingId {
   newRack,
   applyCompaction,
 
+  // --- validation (M5, `#847`, DR-133) --------------------------------
+  // ALL THREE docs/04 §8 NAMES, AND THE COMPLETENESS IS THE POINT.
+  // `session_layering_test.dart`'s RULE 14 rules that *"a partial keymap
+  // reads as a whole one, so a group lands only when it is complete"*,
+  // and it caught the first draft of this shipping two of the three.
+  //
+  // `F7` was going to be left out on the ground that `evaluateDocument`
+  // recomputes on every build, so a re-check key has nothing to do. That
+  // reasoning was wrong about what the key PROMISES: "re-check" re-runs
+  // the check, and it does. That the answer is already current today is
+  // an implementation detail, not a lie to the person pressing it, and
+  // the key becomes load-bearing the moment validation is cached.
+  recheck,
+  nextIssue,
+  previousIssue,
+
   // --- schematic ------------------------------------------------------
   soloDomain1,
   soloDomain2,
@@ -372,6 +388,21 @@ final class RackCancelIntent extends Intent {
 /// Open the `RackInspector` (`Ctrl+Alt+U`, docs/04 §4 and §8's keymap).
 final class RackSettingsIntent extends Intent {
   const RackSettingsIntent();
+}
+
+/// Re-run the DRC over the whole document (`F7`, docs/04 §8).
+final class RecheckIntent extends Intent {
+  const RecheckIntent();
+}
+
+/// Move the selection to the next finding's locus (`F8`, docs/04 §8).
+final class NextIssueIntent extends Intent {
+  const NextIssueIntent();
+}
+
+/// The same, backwards (`Shift+F8`, docs/04 §8).
+final class PreviousIssueIntent extends Intent {
+  const PreviousIssueIntent();
 }
 
 /// Open the New-rack dialog (`Ctrl+Alt+N`, docs/04 §8 and §9).
@@ -1064,6 +1095,36 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'character could be typed, by gating on "no text field has '
         'focus". The collision does NOT exist on macOS, where the chord '
         'resolves to Cmd+Option+U.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.recheck,
+    scope: KeyScope.global,
+    trigger: LogicalKeyboardKey.f7,
+    label: 'Re-check',
+    intent: RecheckIntent(),
+    source: 'docs/04 §8',
+  ),
+  KeyBinding(
+    id: KeyBindingId.nextIssue,
+    scope: KeyScope.global,
+    trigger: LogicalKeyboardKey.f8,
+    label: 'Next issue',
+    intent: NextIssueIntent(),
+    source: 'docs/04 §8',
+    note:
+        'A BARE FUNCTION KEY, so it needs no text-field gate: F8 types '
+        'nothing, which is why docs/04 chose the function row for the '
+        'three validation keys rather than another Ctrl+Alt chord that '
+        'would have collided with AltGr the way Ctrl+Alt+U does.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.previousIssue,
+    scope: KeyScope.global,
+    trigger: LogicalKeyboardKey.f8,
+    shift: true,
+    label: 'Previous issue',
+    intent: PreviousIssueIntent(),
+    source: 'docs/04 §8',
   ),
   KeyBinding(
     id: KeyBindingId.newRack,

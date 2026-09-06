@@ -4418,6 +4418,23 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
             () => !_textFieldHasFocus,
             () => unawaited(_showNewRackDialog()),
           ),
+          // F7 / F8 / Shift+F8, docs/04 §8. Bare function keys, so no
+          // text-field gate: they type nothing.
+          //
+          // F7 RE-RUNS AN EVALUATION THAT IS ALREADY CURRENT, because
+          // `_findings` recomputes on build. It is bound anyway: the key
+          // promises a re-check and performs one, and it becomes
+          // load-bearing the moment validation is cached. RULE 14 also
+          // requires the group to land complete.
+          RecheckIntent: CallbackAction<RecheckIntent>(
+            onInvoke: (_) => setState(() {}),
+          ),
+          NextIssueIntent: CallbackAction<NextIssueIntent>(
+            onInvoke: (_) => _stepIssue(1),
+          ),
+          PreviousIssueIntent: CallbackAction<PreviousIssueIntent>(
+            onInvoke: (_) => _stepIssue(-1),
+          ),
           // NOT a `CallbackAction`. See the class's own doc comment: a
           // CallbackAction returning null still reports the key as HANDLED,
           // which would swallow every `Enter` in the palette search box and
@@ -4556,6 +4573,42 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   FindingGrouping _drcGrouping = FindingGrouping.severity;
   bool _drcExpanded = false;
   double _drcHeight = kDrawerAutoHeight;
+
+  /// Where `F8` is in the issue list. Survives a rebuild, resets when the
+  /// list it indexes into changes shape.
+  int _issueCursor = -1;
+
+  /// Moves the selection to the next finding's locus, or the previous.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// ONLY FINDINGS WITH A DEVICE LOCUS, and the list is what makes this
+  /// honest rather than the stepping.
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A finding about a circuit's total draw has a null locus, and one
+  /// about a rack or a net points at something this screen cannot
+  /// select. Stepping onto one would look like the key had failed. So
+  /// the cursor walks the findings this screen can actually show, and
+  /// `F8` on a document whose every finding is unlocatable does nothing
+  /// visible, which is true rather than broken.
+  ///
+  /// WRAPS, because a list you can fall off the end of makes the last
+  /// press feel like a bug. `evaluateDocument` is deterministic, so the
+  /// order is stable between presses.
+  void _stepIssue(int delta) {
+    final locatable = [
+      for (final f in _findings)
+        if (f.primaryEntityId case final id?)
+          if (_doc.devices.containsKey(id)) id,
+    ];
+    if (locatable.isEmpty) return;
+    // The list can shrink under the cursor when a fix removes a finding,
+    // so it is clamped on read rather than trusted from the last press.
+    final next = _issueCursor < 0
+        ? (delta > 0 ? 0 : locatable.length - 1)
+        : (_issueCursor + delta) % locatable.length;
+    _issueCursor = next < 0 ? next + locatable.length : next;
+    _revealFinding(locatable[_issueCursor]);
+  }
 
   /// Selects the entity a finding points at, so "reveal" means the same
   /// thing here as it does everywhere else in this screen.

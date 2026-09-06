@@ -476,8 +476,16 @@ final class AppServices {
   test('RULE 14 — exactly two complete keybinding groups are registered', () {
     // docs/04 §8's ~40-binding table is NOT bound wholesale: a partial
     // keymap reads as a whole one, so a group lands only when it is
-    // complete. TWO are complete — the four FILE bindings, and the VIEW
-    // switch.
+    // complete. THREE are complete: the four FILE bindings, the VIEW
+    // switch, and DR-133's VALIDATION keys.
+    //
+    // THIS RULE DID ITS JOB ON THE THIRD GROUP. `#847` first bound `F8`
+    // and `Shift+F8` and deliberately left `F7` out, on the argument
+    // that a re-check key has nothing to do while `evaluateDocument`
+    // recomputes on every build. This test failed, and it was right to:
+    // two of three keys IS the partial keymap the rule exists to stop,
+    // and the argument was wrong anyway, since "re-check" re-runs the
+    // check and does so honestly whether or not the answer moved.
     expect(
       keyBindingsIn(KeyScope.global).map((b) => b.id),
       orderedEquals(<KeyBindingId>[
@@ -488,12 +496,16 @@ final class AppServices {
         KeyBindingId.switchViewRack,
         KeyBindingId.switchViewSchematic,
         KeyBindingId.switchViewSchedule,
+        KeyBindingId.recheck,
+        KeyBindingId.nextIssue,
+        KeyBindingId.previousIssue,
       ]),
       reason:
-          'the app binds Ctrl/Cmd+N / +O / +S / +Shift+S and '
-          'Ctrl/Cmd+1 / +2 / +4, and nothing else above the root focus '
-          'scope. An eighth is either a new binding or a group that grew '
-          'without the decision being taken again.',
+          'the app binds Ctrl/Cmd+N / +O / +S / +Shift+S, '
+          'Ctrl/Cmd+1 / +2 / +4 and F7 / F8 / Shift+F8, and nothing else '
+          'above the root focus scope. An eleventh is either a new '
+          'binding or a group that grew without the decision being taken '
+          'again.',
     );
 
     final shell = _stripComments(
