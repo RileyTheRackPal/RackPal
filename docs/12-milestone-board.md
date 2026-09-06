@@ -6172,6 +6172,63 @@ record exists; what a code acknowledgement wants is a different QUESTION, and th
 its keep is **T0.02, the exceptions sheet, which is M6-C and not built**. Designing the form before
 the page is the same error in a different direction.
 
+#### 5.4.14 M5-L, the cabinet head end, and a fallback that did not exist either · CLOSED · `#839`
+
+**DR-130 §11.129.** The M5-H2 reviewer's eleventh finding: a cabinet head end is **the COMMON
+residential case rather than an edge**.
+
+**THE FINDING'S OWN FALLBACK WAS NOT AVAILABLE.** DR-125 dispositioned this as *"expressible as
+`OffRackPlacement` with a `mountNote`, but crude"*. Censused before pricing, which is what that
+ruling requires of itself:
+
+| | |
+|---|---|
+| modelled, serialized, round-tripped | yes, since M0 |
+| written by a gesture | **no. Nothing** |
+| the one hit in `commands/` | `location_commands.dart` carrying it across a location clear so it is not destroyed. A preserver, not a producer |
+| rendered anywhere | no widget, no schedule, no exporter |
+| actual writers | `apps/rackpal/tool/starters/`, the starter generator |
+
+So four seeded devices carried sentences like *"Ceiling mount, rear of room"* that **no user could
+have typed**, and the finding had been priced against a workaround reachable only by hand-editing
+JSON. **Eighth field this milestone with no producer**, and the first found by censusing a ruling's
+own escape hatch rather than by a rule firing on a connection that is correct.
+
+**5.4.14.1 THE USER TOOK THE SMALLEST OF FOUR OPTIONS**, and the reasoning is not timidity: what a
+common case needs first is to be **sayable**. A device in the AV closet on the top shelf should print
+that way on the schedule and in the PDF rather than appearing as a device with no location, and a
+note reaches every one of those surfaces. Geometry reaches none of them without a drawing nobody has
+drawn, which is `#844`'s argument and does not improve by being made twice. A first-class container
+reusing DR-128's `ShelfPlacement` would have **unparked `#844` by accident**, six commits after it
+was parked.
+
+**5.4.14.2 BUILT IN THREE COMMITS, EACH ONE A LAYER**, because the milestone has now twice shipped a
+layer and described the next one as done. `55c4146` the writer, `a346742` the sheet, `d90a590` the
+control. **The last is where `#847`'s lesson was spent**: seven of that commit's eight tests mount
+`InspectorPanel` themselves, which is exactly how `DrcPanel` passes its own suite while nothing in
+the product mounts it. The eighth mounts `RackCanvasScreen` and asserts **the screen hands over the
+callback**, which is the one assertion a panel test cannot make about itself.
+
+**5.4.14.3 TWO GATES AND ONE CANARY CAUGHT REAL THINGS**, all three worth recording:
+
+- **The canary earned its keep on its first run.** The test asserting no `PLC` finding asked
+  `evaluateDocument` for one. `PLC-001` is **tier 1** and that entry point never emits one for any
+  document, so the assertion passed on a rule it was not reaching. The silence is now measured in
+  `evaluatePlacement`, where the rule lives, and `RCK-002`, its tier-3 half, is asserted quiet too.
+- **`epoch_mask_test`** caught `EquipmentRow` reaching 14 fields against a projection written for 13.
+  A field the projection cannot see is a change AC-014 cannot see.
+- **A doc comment was overstated and is corrected.** `Finding.withSeverity` claimed that forgetting a
+  field at the constructor *"is a compile error rather than a quiet loss"*. It is not: a field with a
+  default is a **silent drop** at a call site that omits it, which is the very defect that method was
+  written to stop. What one copy site buys is one place to remember, not a compiler that remembers.
+  Same class as the three stale claims `#841` found in `connect_target.dart`.
+
+**5.4.14.4 NO RULE WAS ADDED, and the count stays at 28.** `PLC-001` asks whether a rail position
+fits inside a rack; a cabinet has neither, so the rule is unevaluatable and silent, which is G4
+rather than an omission. Making it fire would be fabricating a rack. **Whether a cabinet's outlets,
+watts and BTU should roll up as a rack's do is left open and filed**, because the honest version of
+that question needs the container the ruling declined.
+
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
 > **Exit criterion, verbatim.** All four starter projects export a complete sheet set; the legend has

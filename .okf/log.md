@@ -2,6 +2,26 @@
 
 ## 2026-09-06
 
+* **Ruling**: [DR-130](/decisions/dr-130-the-cabinet-head-end-gets-a-name-and-a-note.md).
+  A cabinet head end is a `Location` plus a note, not a container.
+  **The finding's own fallback did not exist**: `mountNote` was
+  modelled, serialized and seeded, and written by nothing a person could
+  reach, so the COMMON residential case had been priced against a
+  workaround reachable only by hand-editing JSON. **Eighth producer gap
+  this milestone**, and the first found by censusing a ruling's escape
+  hatch rather than by a rule firing on something correct.
+* **Note**: **THE CANARY EARNED ITS KEEP ON ITS FIRST RUN.** A test
+  asserting no `PLC` finding asked `evaluateDocument` for one. `PLC-001`
+  is TIER 1 and that entry point never emits one **for any document**, so
+  the assertion passed on a rule it was not reaching. The canary, a
+  placement the rule must refuse, failed and exposed it.
+* **Note**: **A DOC COMMENT WAS OVERSTATED AND IS CORRECTED.**
+  `Finding.withSeverity` claimed that forgetting a field at the
+  constructor *"is a compile error rather than a quiet loss"*. It is not:
+  a field with a default is a **silent drop** at a call site that omits
+  it, which is the defect that method exists to stop. One copy site buys
+  one place to remember, not a compiler that remembers. Same class as
+  `#841`'s three stale claims.
 * **Ruling**: [DR-129](/decisions/dr-129-a-code-adjacent-row-is-a-different-kind-of-row.md).
   `CODE-002`'s NEC article was findable only by reading to the end of a
   sentence that opens with a cable designator, and **`RuleMeta.governing`
