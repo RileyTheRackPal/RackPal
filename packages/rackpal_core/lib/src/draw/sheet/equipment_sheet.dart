@@ -159,6 +159,38 @@ const double _kCellPad = 3;
 /// The maximum number of lines the NOTES column wraps to (§3.7).
 const int kMaxNoteLines = 2;
 
+/// What separates a mount note from a device note in one NOTES cell.
+///
+/// A CONSTANT SO A TEST CAN NAME IT rather than repeat the literal, which
+/// is how a separator quietly becomes two different separators.
+const String kNoteJoin = '; ';
+
+/// The NOTES cell for [row]: the mount note first, then the device note.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE MOUNT NOTE GOES FIRST, AND THE ORDER IS THE WHOLE POINT
+/// ═══════════════════════════════════════════════════════════════════════
+/// On an off-rack row, RU prints an em dash, RACK prints an em dash and
+/// FACE prints `NONE`. **The mount note is the only cell on that row that
+/// says where the device is.** The column wraps to [kMaxNoteLines] and
+/// truncates past it, so whichever fact is second is the one a long row
+/// loses, and losing "AV closet, top shelf" to keep "spare unit, ordered
+/// 2026-04" would be the wrong trade on a placement document.
+///
+/// A FOURTEENTH COLUMN WAS THE ALTERNATIVE AND DOES NOT FIT. The thirteen
+/// widths sum to 690 pt, the ANSI A landscape usable width, and
+/// `equipment_sheet_test.dart` asserts that against the frame. A new
+/// column has to be taken out of the others, and the two it would come
+/// from are DESCRIPTION and MODEL, which are what a reader identifies the
+/// row by.
+String equipmentNotesCell(EquipmentRow row) {
+  final parts = [
+    if (row.mountNote case final m? when m.isNotEmpty) m,
+    if (row.notes case final n? when n.isNotEmpty) n,
+  ];
+  return parts.join(kNoteJoin);
+}
+
 // ── the paginated model ──────────────────────────────────────────────────
 
 /// One laid-out thing on a schedule page.
@@ -620,7 +652,7 @@ ScheduleRow _row(
     // 0 means measured, null means we do not know — survives onto paper.
     if (row.loads.apparentVA case final va?) '$va' else kUnknownCell,
     lifecycleLabel(row.lifecycleStatus),
-    row.notes ?? '',
+    equipmentNotesCell(row),
   ];
 
   final fitted = <String>[

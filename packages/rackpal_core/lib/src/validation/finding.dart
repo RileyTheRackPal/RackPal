@@ -193,8 +193,12 @@ final class Finding {
   /// `RCK-003`'s discarded severity: **the entry point is where findings
   /// lose things, and a test that calls the predicate cannot see it.**
   ///
-  /// So the copy is here, once, where adding a field to the constructor
-  /// and forgetting it is a compile error rather than a quiet loss.
+  /// So the copy is here, ONCE. **This sentence used to say "a compile
+  /// error rather than a quiet loss" and that was wrong** (DR-130): a
+  /// field added to the constructor with a default is not a compile
+  /// error at a call site that omits it, it is a silent drop, which is
+  /// precisely the defect this method was written to stop. What one site
+  /// buys is one place to remember, not a compiler that remembers.
   Finding withSeverity(Severity severity) => Finding(
     ruleId: ruleId,
     severity: severity,

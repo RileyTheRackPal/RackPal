@@ -1,8 +1,8 @@
 ---
 type: Playbook
 title: A modelled field is not a reachable one; look for the gesture, not the field
-description: Fields with no writer, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, and a panel nothing mounts. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
-tags: [practice, model, commands, verification, catalog, ui, dr-124, dr-125, dr-126, dr-128, dr-129, m5]
+description: Fields with no writer, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, a panel nothing mounts, and a note found by censusing a ruling's own escape hatch. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
+tags: [practice, model, commands, verification, catalog, ui, dr-124, dr-125, dr-126, dr-128, dr-129, dr-130, m5]
 timestamp: 2026-08-12T00:00:00Z
 status: adopted
 ---
@@ -294,6 +294,17 @@ at all. Everything M5-F built (the findings list, the grouping, the severity
 filter, acknowledge and withdraw, the `Why?` viewer) is real, tested and
 **unreachable by any gesture a person can make**, and docs/12 recorded that it was
 reachable (`#847`).
+
+**AND AN EIGHTH ARRIVED BY A ROUTE NONE OF THE OTHERS TOOK.**
+`OffRackPlacement.mountNote` (DR-130) was found by **censusing a ruling's own
+escape hatch**: DR-125 priced the cabinet head end as *"expressible as
+`OffRackPlacement` with a `mountNote`, but crude"*, and the crude option turned
+out not to exist either. Nothing a person could reach had ever written it; the
+only writers were the starter generator's, which is why four seeded devices
+carried sentences no user could type. **The grep that answers this one is the
+same as the first**, and the new part is WHEN to run it: **a disposition that
+says "already expressible" is a claim about a producer, and it is worth two
+minutes before it is worth a milestone.**
 
 **THE WIDGET'S TESTS PASS BECAUSE ITS TESTS MOUNT IT THEMSELVES.** That is this
 whole practice in its final form: the thing exists, something reads it, every test

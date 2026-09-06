@@ -42,6 +42,7 @@ import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/inspector/device_overrides_section.dart';
 import 'package:rackpal_ui/src/inspector/device_ports_section.dart';
+import 'package:rackpal_ui/src/inspector/mount_note_field.dart';
 import 'package:rackpal_ui/src/inspector/rack_inspector_panel.dart'
     show InspectorDropdown, RackInspectorPanel;
 import 'package:rackpal_ui/src/theme/console_theme.dart';
@@ -76,6 +77,7 @@ class InspectorPanel extends StatelessWidget {
     required this.onSetWidth,
     required this.onSetOverride,
     required this.onSetPortFact,
+    this.onSetMountNote,
     this.firstFieldFocus,
     super.key,
   });
@@ -120,6 +122,12 @@ class InspectorPanel extends StatelessWidget {
   )
   onSetPortFact;
 
+  /// DR-130: writes `OffRackPlacement.mountNote` on the ONE selected
+  /// off-rack device. Null hides the control rather than disabling it,
+  /// on `onSetWidth`'s precedent one control up: a dead field invites the
+  /// question of what would make it live.
+  final ValueChanged<String>? onSetMountNote;
+
   final FocusNode? firstFieldFocus;
 
   @override
@@ -152,6 +160,7 @@ class InspectorPanel extends StatelessWidget {
           onSetWidth: onSetWidth,
           onSetOverride: onSetOverride,
           onSetPortFact: onSetPortFact,
+          onSetMountNote: onSetMountNote,
         ),
       },
     );
@@ -169,6 +178,7 @@ class _SelectionSummary extends StatelessWidget {
     required this.onSetWidth,
     required this.onSetOverride,
     required this.onSetPortFact,
+    required this.onSetMountNote,
   });
 
   final RackDocument doc;
@@ -190,6 +200,18 @@ class _SelectionSummary extends StatelessWidget {
     String designatorIfMaterialised,
   )
   onSetPortFact;
+
+  final ValueChanged<String>? onSetMountNote;
+
+  /// The one selected device that is OFF-RACK, or null. Mirrors
+  /// [_railPlacements] one control up: the width dropdown appears only
+  /// for a rail placement because only a rail placement HAS a lateral
+  /// position, and a mount note is the same claim for the other side of
+  /// that sealed type.
+  OffRackPlacement? get _soleOffRack => switch (_soleDevice?.placement) {
+    final OffRackPlacement p => p,
+    _ => null,
+  };
 
   /// The single selected device door 1 edits, or null whenever the
   /// selection is not exactly one device that still exists.
@@ -324,6 +346,15 @@ class _SelectionSummary extends StatelessWidget {
               values: WidthPosition.values,
               labelOf: (p) => p.label,
               onChanged: onSetWidth,
+            ),
+          // DR-130 (`#839`). The other side of the sealed placement type
+          // from the width dropdown above: a rail-placed device says
+          // where it sits with a rack, a U and a face, and an off-rack
+          // one had nothing to say at all until this existed.
+          if (_soleOffRack case final offRack? when onSetMountNote != null)
+            MountNoteField(
+              value: offRack.mountNote,
+              onChanged: onSetMountNote!,
             ),
           // DOOR 1, ON ONE DEVICE ONLY (CR-054, DR-098 §11.97.5). `#183`
           // describes right-clicking A device, and the amber badge counts

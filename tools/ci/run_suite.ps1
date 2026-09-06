@@ -413,7 +413,15 @@ $SuiteFloors = @{
     # after the ruling claimed two chip buttons that did not exist.
     # 4021 at #841: +3 for the producer census, which names the eleven
     # PortDef fields the seed builder cannot set rather than counting them.
-    'rackpal_core'   = 4021
+    # 4035 at DR-130: +14 from mount_note_command_test.dart, the writer
+    # OffRackPlacement.mountNote never had. Its canary earned its keep on
+    # the first run: "no PLC finding from evaluateDocument" passed on a
+    # rule that entry point never emits, for any document.
+    # 4043 at DR-130 part two: +8 from mount_note_on_the_sheet_test.dart.
+    # A producer that reaches no surface is DR-128 repeating one layer
+    # out, and the ruling chose the smallest option ON THE GROUND that a
+    # note reaches the schedule and the PDF.
+    'rackpal_core'   = 4043
     'rackpal_text'   = 1
     'rackpal_export' = 195
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
@@ -422,7 +430,11 @@ $SuiteFloors = @{
     # 1498 at DR-129: +9 from remedy_pairing_test.dart, which asserts in
     # both directions that a FindingRemedy reaches a pressable row, after
     # a ruling described a button the panel never drew.
-    'rackpal_ui'     = 1498
+    # 1506 at DR-130: +8 from mount_note_field_test.dart. One of the
+    # eight mounts RackCanvasScreen rather than the panel, and asserts
+    # the SCREEN hands over the callback: #847 is a panel that passes its
+    # own tests because its own tests mount it.
+    'rackpal_ui'     = 1506
     'rackpal_app'    = 916
 }
 
