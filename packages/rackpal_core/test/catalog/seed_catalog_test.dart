@@ -1,6 +1,6 @@
 // M1 roadmap checklist #6 — the seeded catalog (docs/09-roadmap.md ~line
 // 232, docs/catalog/seed-devices.md §3.10, §7): 30 rack-side archetypes +
-// 19 field devices = 50 shipped templates, the connector-footprint CI
+// 20 field devices = 51 shipped templates, the connector-footprint CI
 // assertion (AC-050/A2.2), and the idformat/designator-allocation wiring
 // docs/04-rack-editor.md §7 calls for on catalog placement.
 
@@ -16,8 +16,8 @@ void main() {
   final footprints = buildSeedConnectorFootprints();
 
   group('catalog shape (§3.10 summary table)', () {
-    test('exactly 50 templates ship', () {
-      expect(catalog, hasLength(50));
+    test('exactly 51 templates ship', () {
+      expect(catalog, hasLength(51));
     });
 
     test('category counts match the §3.10 summary table exactly', () {
@@ -33,19 +33,19 @@ void main() {
       expect(counts[kCatRf], 2);
       expect(counts[kCatPower], 4);
       expect(counts[kCatPassive], 3);
-      expect(counts[kCatField], 19);
-      expect(counts.values.reduce((a, b) => a + b), 50);
+      expect(counts[kCatField], 20);
+      expect(counts.values.reduce((a, b) => a + b), 51);
     });
 
     test(
-      'rack-side ids are V/A/N/C/S/R/P/X-prefixed, field ids are F01-F19',
+      'rack-side ids are V/A/N/C/S/R/P/X-prefixed, field ids are F01-F20',
       () {
         final fieldIds = catalog.entries
             .where((e) => e.value.category == kCatField)
             .map((e) => e.key)
             .toSet();
         expect(fieldIds, {
-          for (var i = 1; i <= 19; i++) 'F${i.toString().padLeft(2, '0')}',
+          for (var i = 1; i <= 20; i++) 'F${i.toString().padLeft(2, '0')}',
         });
       },
     );

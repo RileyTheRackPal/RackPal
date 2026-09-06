@@ -764,7 +764,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:a6a8650bbb3dcac54d5f596061b0c902007e7442db0ca1ab2c22cfd7f0dffb4e",
+          "contentHash": "sha256:bf410bac1c8a061f6cba0f14dcb5ac28a451f92770adf91585e4329237c64e4d",
           "templateId": "F08",
           "version": 1
         }
@@ -791,7 +791,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:a6a8650bbb3dcac54d5f596061b0c902007e7442db0ca1ab2c22cfd7f0dffb4e",
+          "contentHash": "sha256:bf410bac1c8a061f6cba0f14dcb5ac28a451f92770adf91585e4329237c64e4d",
           "templateId": "F08",
           "version": 1
         }
@@ -818,7 +818,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:a6a8650bbb3dcac54d5f596061b0c902007e7442db0ca1ab2c22cfd7f0dffb4e",
+          "contentHash": "sha256:bf410bac1c8a061f6cba0f14dcb5ac28a451f92770adf91585e4329237c64e4d",
           "templateId": "F08",
           "version": 1
         }
@@ -845,7 +845,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:a6a8650bbb3dcac54d5f596061b0c902007e7442db0ca1ab2c22cfd7f0dffb4e",
+          "contentHash": "sha256:bf410bac1c8a061f6cba0f14dcb5ac28a451f92770adf91585e4329237c64e4d",
           "templateId": "F08",
           "version": 1
         }
@@ -9545,7 +9545,7 @@
           "category": "Field Devices",
           "chassisWidthNm": 432000000,
           "containerVented": false,
-          "description": "tapWatts is a per-installation selector (2.5/5/10/15/20 W), not a per-device fact — the transformer tap is set on the ladder.",
+          "description": "tapWatts is a per-installation selector, not a per-device fact: the transformer tap is set on the ladder at install. Typed rather than picked (DR-132), because the ladder is not one ladder — 7.5/15/30/60 and 1/1.9/3.8/7.5/15 are both shipping products.",
           "displayName": "70V Pendant Speaker",
           "frontU": 0,
           "glyph": "speaker",
@@ -9623,7 +9623,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:a6a8650bbb3dcac54d5f596061b0c902007e7442db0ca1ab2c22cfd7f0dffb4e",
+        "contentHash": "sha256:bf410bac1c8a061f6cba0f14dcb5ac28a451f92770adf91585e4329237c64e4d",
         "templateId": "F08",
         "version": 1
       },
@@ -11075,6 +11075,106 @@
         "capturedAt": "2026-02-17T13:30:00.000Z",
         "contentHash": "sha256:49c8abf65e71d70c600bb9c17e732066e524382d5d782a551d8dc0a32d2d5222",
         "templateId": "F19",
+        "version": 1
+      },
+      "F20@1": {
+        "body": {
+          "alternateMountMethods": [],
+          "banks": [
+            {
+              "abbr": "PIGT",
+              "collapseInSymbol": true,
+              "key": "pigtail",
+              "label": "Pigtail",
+              "order": "a0000",
+              "symbolSide": "left"
+            }
+          ],
+          "category": "Field Devices",
+          "chassisWidthNm": 432000000,
+          "containerVented": false,
+          "description": "A transformer with a bypass position, which is where a Low-Z/CV switch actually lives: amplifiers are rarely switchable and one that does both has separate outputs. Set the tap per install, or tick the bypass and run it low impedance.",
+          "displayName": "Dual-Mode Speaker, 70V tapped or 8 ohm",
+          "frontU": 0,
+          "glyph": "speaker",
+          "isContainer": false,
+          "isPassthrough": false,
+          "manufacturer": "Generic",
+          "model": "SPK-DUALMODE-1",
+          "mountMethod": "notInRack",
+          "nominalSpanTwelfths": 12,
+          "panelGraphics": [],
+          "passthroughPairs": [],
+          "portSets": [
+            {
+              "atomicConnect": true,
+              "key": "tap",
+              "kind": "speakerPair",
+              "label": "CV tap pair"
+            }
+          ],
+          "ports": [
+            {
+              "acceptedFamilies": [],
+              "bankKey": "pigtail",
+              "carriedProtocols": [],
+              "connector": "conn.unterminated",
+              "direction": "busNode",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "pos",
+              "label": "+",
+              "maxConnections": 1,
+              "order": "a0001",
+              "polarity": "positive",
+              "renamedFrom": [],
+              "setKey": "tap",
+              "setRole": "+",
+              "signalFamily": "audio.speaker_cv",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "pigtail",
+              "carriedProtocols": [],
+              "connector": "conn.unterminated",
+              "direction": "busNode",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "neg",
+              "label": "-",
+              "maxConnections": 1,
+              "order": "a0002",
+              "polarity": "negative",
+              "renamedFrom": [],
+              "setKey": "tap",
+              "setRole": "-",
+              "signalFamily": "audio.speaker_cv",
+              "topology": "p2p"
+            }
+          ],
+          "power": {
+            "isContinuousLoad": false
+          },
+          "rearU": 0,
+          "requiresClearanceAboveU": 0,
+          "requiresClearanceBelowU": 0,
+          "side": "none",
+          "tags": [
+            "speaker",
+            "70v",
+            "dual-mode",
+            "in-ceiling",
+            "landscape"
+          ],
+          "thermalClass": "passive",
+          "typePrefix": "SPK",
+          "weightUg": 1900000000,
+          "widthClass": "full"
+        },
+        "capturedAt": "2026-02-17T13:30:00.000Z",
+        "contentHash": "sha256:13dea3abdfa6383b7e1dbba049ab300cb82845d57797a69cb6ce111784cef689",
+        "templateId": "F20",
         "version": 1
       },
       "N01@1": {

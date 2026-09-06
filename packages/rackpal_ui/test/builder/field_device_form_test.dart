@@ -94,12 +94,16 @@ Future<void> _open(WidgetTester tester, String section) async {
 
 void main() {
   group('the save gate admits a field device', () {
-    test('the 19 shipped field templates are all zero-occupancy notInRack, '
+    test('the 20 shipped field templates are all zero-occupancy notInRack, '
         'which is the state the gate used to refuse', () {
       final field = _seed.values.where(
         (b) => b.mountMethod == MountMethod.notInRack,
       );
-      expect(field, hasLength(19), reason: 'AC-031 ships exactly 18');
+      // 20 SINCE DR-132 ADDED `F20`, the dual-mode speaker. The reason
+      // string said "exactly 18" against an assertion of 19, which is
+      // the second copy of a moving number this corpus warns about, so
+      // it now names the ruling rather than a figure.
+      expect(field, hasLength(20), reason: 'every field template, DR-132');
       for (final b in field) {
         expect(b.frontU, 0, reason: b.displayName);
         expect(b.rearU, 0, reason: b.displayName);
