@@ -70,6 +70,7 @@ final class RuleMeta {
     required this.governing,
     this.defaultSeverity,
     this.severityBand,
+    this.codeCitation,
   });
 
   /// `'TOP-003'`. The join to `Finding.ruleId`, to `RuleOverride` and to
@@ -107,7 +108,33 @@ final class RuleMeta {
 
   /// The ruling ids this rule answers to, e.g. `['CR-017', 'AC-018']`.
   /// §8.2's citation, carried by the rule rather than by a comment.
+  ///
+  /// THESE ARE THIS REPOSITORY'S IDS, NOT AN EXTERNAL DOCUMENT'S, which
+  /// is why [codeCitation] is a separate field and not a row here.
   final List<String> governing;
+
+  /// The external code article this rule asks a person to verify against,
+  /// e.g. `'NEC 800.154'`. Null for every rule that turns on nothing
+  /// outside this product, which is 26 of the 28.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A FIELD BECAUSE THE ARTICLE WAS PROSE, AND PROSE IS NOT FINDABLE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// DR-129 §11.128. `CODE-002`'s message ends *"Verify against NEC
+  /// 800.154"*, which is correct and puts the article at the end of a
+  /// sentence that begins with a cable designator. The M5-H2 reviewer's
+  /// twelfth finding was that a code-adjacent row wants more than that.
+  ///
+  /// DR-125's shape: **the catalogue authorises the fact and the surface
+  /// renders it.** A panel inferring "this is a code rule" from a rule id
+  /// beginning `CODE-` would be a widget deciding what the catalogue
+  /// means, which is the thing CR-021 exists to prevent.
+  ///
+  /// WHAT DOES NOT GO HERE. `CODE-002` also names `300.22(C)`'s
+  /// metal-raceway exception, and that stays in the message: it is an
+  /// argument about what this product cannot see, not a citation to look
+  /// up, and a sentence is where an argument belongs.
+  final String? codeCitation;
 
   /// The severity a finding is filed at before any `RuleOverride`.
   ///
@@ -516,6 +543,7 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
         'for you to verify against the article; it does not decide it.',
     governing: ['AC-027', 'DR-079'],
     defaultSeverity: Severity.warning,
+    codeCitation: 'NEC 725.136',
   ),
   RuleMeta(
     ruleId: 'CODE-002',
@@ -531,6 +559,7 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
         'here rather than assumed either way.',
     governing: ['AC-027', 'DR-079'],
     defaultSeverity: Severity.warning,
+    codeCitation: 'NEC 800.154',
   ),
   RuleMeta(
     ruleId: 'LNK-020',

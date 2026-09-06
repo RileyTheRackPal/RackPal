@@ -69,6 +69,10 @@ const String kDrcAcknowledge = 'Acknowledge';
 /// statement about the finding, and the finding itself was never gone.
 const String kDrcWithdraw = 'Withdraw';
 
+/// What a code-adjacent row says before its article, e.g.
+/// "Verify against NEC 800.154".
+const String kDrcVerifyAgainst = 'Verify against';
+
 /// The severities a finding can reach the list with, in the order the
 /// filter row shows them.
 ///
@@ -95,6 +99,30 @@ ConsoleStatus statusForSeverity(Severity severity) => switch (severity) {
   Severity.off => ConsoleStatus.nominal,
 };
 
+/// The marker a ROW draws, which is not always its severity's.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A DIFFERENT SHAPE, NOT A LOUDER COLOUR (DR-129 §11.128.3)
+/// ═══════════════════════════════════════════════════════════════════════
+/// A rule with a `codeCitation` turns on a document this product cannot
+/// read, which is why DR-079 demoted both to `warning` in the first place:
+/// *"this product cannot see the thing the code article turns on."*
+///
+/// `ConsoleStatus.caution` draws a DIAMOND where warning draws a triangle,
+/// and it has been defined, themed and reachable by no finding since M5-F.
+/// A code row is not a louder warning, it is a different question, and a
+/// shape says "different kind" where a colour says "different amount".
+/// PAL-1's argument one domain over is that hue alone is never the
+/// channel.
+///
+/// THE SEVERITY IS UNTOUCHED. The filter still finds these rows under
+/// their real severity and an override still moves them; only the marker
+/// differs, which is a rendering fact and not a validation one.
+ConsoleStatus statusForRow(Finding finding) =>
+    kRulesById[finding.ruleId]?.codeCitation != null
+    ? ConsoleStatus.caution
+    : statusForSeverity(finding.severity);
+
 /// The issues list.
 class DrcPanel extends StatelessWidget {
   const DrcPanel({
@@ -108,6 +136,7 @@ class DrcPanel extends StatelessWidget {
     this.onReveal,
     this.onAcknowledge,
     this.onWithdraw,
+    this.onRemedy,
     this.hasAnyFindings = true,
     super.key,
   });
@@ -145,6 +174,15 @@ class DrcPanel extends StatelessWidget {
   /// own document.
   final ValueChanged<FindingRow>? onWithdraw;
 
+  /// Called to carry out a finding's `remedy`, with the finding.
+  ///
+  /// Null shows no button rather than a dead one, as `onAcknowledge`
+  /// does. `PWR-003` is the only rule with a remedy today (DR-128), and
+  /// `remedy_pairing_test.dart` asserts that every `FindingRemedy` value
+  /// reaches a row, so a value nothing renders fails rather than
+  /// disappears.
+  final ValueChanged<Finding>? onRemedy;
+
   /// Whether the DOCUMENT has findings, as opposed to this filtered
   /// view. Distinguishes [kDrcNoFindings] from [kDrcAllFiltered].
   final bool hasAnyFindings;
@@ -178,6 +216,7 @@ class DrcPanel extends StatelessWidget {
                           onReveal: onReveal,
                           onAcknowledge: onAcknowledge,
                           onWithdraw: onWithdraw,
+                          onRemedy: onRemedy,
                         ),
                     ],
                   ],
@@ -311,43 +350,83 @@ class _FindingTile extends StatelessWidget {
     required this.onReveal,
     required this.onAcknowledge,
     required this.onWithdraw,
+    required this.onRemedy,
   });
 
   final FindingRow row;
   final ValueChanged<Uuid>? onReveal;
   final ValueChanged<Finding>? onAcknowledge;
   final ValueChanged<FindingRow>? onWithdraw;
+  final ValueChanged<Finding>? onRemedy;
 
   @override
   Widget build(BuildContext context) {
     final finding = row.finding;
     final locus = finding.primaryEntityId;
     final reveal = onReveal;
+    final citation = kRulesById[finding.ruleId]?.codeCitation;
     final tile = ListTile(
       dense: true,
-      leading: StatusMarker(statusForSeverity(finding.severity)),
+      leading: StatusMarker(statusForRow(finding)),
       title: Text(finding.message),
+      // THE ARTICLE SITS BESIDE THE RULE ID, not at the end of the
+      // message (DR-129 §11.128.1). It is the thing a person leaves the
+      // app to look up, and it was findable only by reading a sentence
+      // that begins with a cable designator.
       subtitle: Text(
-        row.isAcknowledged
-            ? '${finding.ruleId} · acknowledged'
-            : finding.ruleId,
+        [
+          finding.ruleId,
+          if (citation != null) '$kDrcVerifyAgainst $citation',
+          if (row.isAcknowledged) 'acknowledged',
+        ].join(' · '),
       ),
       // A ROW WITH NO LOCUS IS NOT CLICKABLE, rather than clickable and
       // inert. There is no single thing to reveal, and a tap that looks
       // live and does nothing is worse than one that never offered.
       onTap: (locus == null || reveal == null) ? null : () => reveal(locus),
-      trailing: _rowAction(),
+      trailing: _rowActions(),
     );
     final reason = row.reason;
     if (reason == null) return tile;
     return Tooltip(message: reason, child: tile);
   }
 
-  /// The row's one action: acknowledge it, or take that back.
+  /// The row's actions: its remedy, if it has one, and then acknowledge
+  /// or withdraw.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE REMEDY WAS RULED TO EXIST BEFORE IT DID (DR-129 §11.128.4)
+  /// ═══════════════════════════════════════════════════════════════════
+  /// DR-128 §11.127.5 says the issues panel "renders it as a button". It
+  /// did not. `Finding.remedy` shipped, `PWR-003` declared one, and this
+  /// file never read the field, so `[ Add a rack PDU ]` existed nowhere a
+  /// person could press it. A nullable field a widget ignores compiles
+  /// perfectly and tests green.
+  ///
+  /// THE REMEDY COMES FIRST AND ACKNOWLEDGE SECOND, deliberately: they
+  /// are "fix it" and "accept it", and a panel that offered accepting
+  /// before fixing would be teaching the wrong reflex on an error-severity
+  /// row.
+  Widget? _rowActions() {
+    final remedy = row.finding.remedy;
+    final act = onRemedy;
+    final fix = (remedy == null || act == null)
+        ? null
+        : TextButton(
+            onPressed: () => act(row.finding),
+            child: Text(remedy.label),
+          );
+    final rest = _acknowledgeAction();
+    if (fix == null) return rest;
+    if (rest == null) return fix;
+    return Row(mainAxisSize: MainAxisSize.min, children: [fix, rest]);
+  }
+
+  /// Acknowledge it, or take that back.
   ///
   /// Never both, because they are the two directions of one state and a
   /// row offering both would be asking which way the state already is.
-  Widget? _rowAction() {
+  Widget? _acknowledgeAction() {
     if (row.isAcknowledged) {
       final withdraw = onWithdraw;
       return withdraw == null

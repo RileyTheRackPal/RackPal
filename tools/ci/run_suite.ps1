@@ -419,7 +419,10 @@ $SuiteFloors = @{
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
     # presses the two new remedy buttons on chips raised by a real drag.
     # The core suites cannot see whether the SCREEN reaches the commands.
-    'rackpal_ui'     = 1489
+    # 1498 at DR-129: +9 from remedy_pairing_test.dart, which asserts in
+    # both directions that a FindingRemedy reaches a pressable row, after
+    # a ruling described a button the panel never drew.
+    'rackpal_ui'     = 1498
     'rackpal_app'    = 916
 }
 
