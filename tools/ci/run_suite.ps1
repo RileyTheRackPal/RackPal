@@ -442,7 +442,12 @@ $SuiteFloors = @{
     # eight mounts RackCanvasScreen rather than the panel, and asserts
     # the SCREEN hands over the callback: #847 is a panel that passes its
     # own tests because its own tests mount it.
-    'rackpal_ui'     = 1506
+    # 1513 at DR-132: +7 from port_tap_controls_test.dart. Its first
+    # test is the DR-129 gate one layer along: SetPortFactCommand
+    # switches exhaustively so the COMMAND had to handle both new fields,
+    # and the widget lists its controls by hand, so both compiled green
+    # with no way to set either.
+    'rackpal_ui'     = 1513
     'rackpal_app'    = 916
 }
 

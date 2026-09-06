@@ -289,6 +289,37 @@ class _DevicePortsSectionState extends State<DevicePortsSection> {
             planned,
           ),
         ),
+        // ═══════════════════════════════════════════════════════════════
+        // THE TRANSFORMER, ONLY ON A CONSTANT-VOLTAGE PIN (DR-131/DR-132)
+        // ═══════════════════════════════════════════════════════════════
+        // Gated on the RESOLVED family rather than the template's, so a
+        // pin the user corrected to `audio.speaker_cv` grows the controls
+        // and one corrected away from it loses them. Every port getting a
+        // tap box would be noise on 700-odd pins that have no
+        // transformer.
+        if (family == kSpeakerCv || (port?.lowZBypass ?? false)) ...[
+          const SizedBox(height: 8),
+          _PortTapField(
+            key: ValueKey('port-tap-${def.key.v}'),
+            value: port?.tapWatts,
+            onCommit: (v) => widget.onSetPortFact(
+              def.key,
+              PortFactField.tapWatts,
+              v,
+              planned,
+            ),
+          ),
+          _PortBypassToggle(
+            fieldKey: ValueKey('port-bypass-${def.key.v}'),
+            value: port?.lowZBypass ?? false,
+            onChanged: (v) => widget.onSetPortFact(
+              def.key,
+              PortFactField.lowZBypass,
+              v,
+              planned,
+            ),
+          ),
+        ],
       ],
     );
   }
@@ -390,6 +421,150 @@ class _PortLabelFieldState extends State<_PortLabelField> {
       ],
     );
   }
+}
+
+/// The label above the transformer tap box, and the string a test looks
+/// for.
+const String kPortTapLabel = 'TAP (W)';
+
+/// The label on the bypass toggle.
+const String kPortBypassLabel = 'Transformer bypassed (low-Z)';
+
+/// What the tap box shows when nothing is recorded.
+///
+/// NOT "0", AND NOT BLANK-MEANING-ZERO. `ELE-005` counts an unrecorded
+/// tap as an UNKNOWN and names the speaker in its message, so an empty
+/// box is a real state with a consequence, and the hint says which state
+/// it is.
+const String kPortTapHint = 'not recorded';
+
+/// The transformer tap in watts, typed rather than picked.
+///
+/// DR-132 §11.130.8: there is no single tap ladder. Episode ships
+/// 7.5/15/30/60, Beale Street ranges from 1/1.9/3.8/7.5/15 to that same
+/// scheme, and `F08`'s own catalogue description hard-codes a third set.
+/// A dropdown would be wrong on somebody's speaker.
+class _PortTapField extends StatefulWidget {
+  const _PortTapField({
+    required this.value,
+    required this.onCommit,
+    super.key,
+  });
+
+  final int? value;
+  final ValueChanged<int?> onCommit;
+
+  @override
+  State<_PortTapField> createState() => _PortTapFieldState();
+}
+
+class _PortTapFieldState extends State<_PortTapField> {
+  late final TextEditingController _text = TextEditingController(
+    text: widget.value?.toString() ?? '',
+  );
+  final FocusNode _focus = FocusNode();
+
+  @override
+  void initState() {
+    super.initState();
+    _focus.addListener(_commitOnBlur);
+  }
+
+  @override
+  void didUpdateWidget(_PortTapField old) {
+    super.didUpdateWidget(old);
+    // Only while unfocused, for `_PortLabelField`'s reason: this panel
+    // rebuilds on every epoch bump and overwriting a buffer mid-keystroke
+    // eats what was typed.
+    if (_focus.hasFocus) return;
+    final incoming = widget.value?.toString() ?? '';
+    if (incoming != _text.text) _text.text = incoming;
+  }
+
+  @override
+  void dispose() {
+    _focus
+      ..removeListener(_commitOnBlur)
+      ..dispose();
+    _text.dispose();
+    super.dispose();
+  }
+
+  void _commitOnBlur() {
+    if (_focus.hasFocus) return;
+    _commit(_text.text);
+  }
+
+  /// AN UNPARSEABLE ENTRY IS LEFT ALONE RATHER THAN TREATED AS CLEARED.
+  /// "1o" is a typo, and turning it into "no tap recorded" would silently
+  /// change what `ELE-005` reports about this line.
+  void _commit(String raw) {
+    final t = raw.trim();
+    if (t.isEmpty) {
+      if (widget.value != null) widget.onCommit(null);
+      return;
+    }
+    final parsed = int.tryParse(t);
+    if (parsed == null || parsed < 0) return;
+    if (parsed != widget.value) widget.onCommit(parsed);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          kPortTapLabel,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontWeight: kConsoleEmphasis,
+            letterSpacing: 0.6,
+          ),
+        ),
+        const SizedBox(height: 4),
+        TextField(
+          controller: _text,
+          focusNode: _focus,
+          keyboardType: TextInputType.number,
+          onSubmitted: _commit,
+          decoration: const InputDecoration(
+            isDense: true,
+            border: OutlineInputBorder(),
+            hintText: kPortTapHint,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Whether the transformer is switched out, making this pin low impedance.
+class _PortBypassToggle extends StatelessWidget {
+  const _PortBypassToggle({
+    required this.fieldKey,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final ValueKey<String> fieldKey;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) => CheckboxListTile(
+    key: fieldKey,
+    value: value,
+    onChanged: (v) => onChanged(v ?? false),
+    dense: true,
+    contentPadding: EdgeInsets.zero,
+    controlAffinity: ListTileControlAffinity.leading,
+    title: Text(
+      kPortBypassLabel,
+      style: Theme.of(context).textTheme.bodySmall,
+    ),
+  );
 }
 
 /// A registry-backed picker with a "back to the template" escape.

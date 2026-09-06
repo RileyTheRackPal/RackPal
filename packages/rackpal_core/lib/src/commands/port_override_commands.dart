@@ -57,6 +57,15 @@ enum PortFactField {
 
   /// `PortOverrides.signalFamily`.
   signalFamily,
+
+  /// `Port.tapWatts`. NOT an override: a first-class instance field, and
+  /// the only one here that FEEDS A ROLLUP (`ELE-005`, DR-132).
+  tapWatts,
+
+  /// `Port.lowZBypass`. Also first-class, and it moves the RESOLVED
+  /// signal family (DR-131), so it is a `wires` edit and not a `meta`
+  /// one.
+  lowZBypass,
 }
 
 /// Sets one fact on one port, materialising the port if the document does
@@ -83,9 +92,12 @@ final class SetPortFactCommand extends Command<RackDocument> {
 
   /// The new value, or null to inherit the template's.
   ///
-  /// `Object?` because the three fields are three types and this command
-  /// is one. The switch in [_write] is exhaustive over [PortFactField], so
-  /// a fourth field cannot be added without a compile error here.
+  /// `Object?` because the fields are several types and this command is
+  /// one. The switch in [_write] is exhaustive over [PortFactField], so a
+  /// new field cannot be added without a compile error here. **That is
+  /// not a small property**: DR-128 shipped a ruling describing two
+  /// buttons that did not exist, and the exhaustive switch is what caught
+  /// it within the hour.
   final Object? value;
 
   /// The designator to give the port IF this command materialises it,
@@ -110,8 +122,14 @@ final class SetPortFactCommand extends Command<RackDocument> {
   @override
   EpochMask get touches => switch (field) {
     PortFactField.userLabel => EpochMask.meta,
+    // `tapWatts` is `wires` because `ELE-005` reads it, and a load rule
+    // that recomputes only on `meta` would miss the edit that put the
+    // line over. `lowZBypass` because it moves the resolved family and
+    // two tier-2 rules read that.
     PortFactField.connector ||
-    PortFactField.signalFamily => EpochMask.meta | EpochMask.wires,
+    PortFactField.signalFamily ||
+    PortFactField.tapWatts ||
+    PortFactField.lowZBypass => EpochMask.meta | EpochMask.wires,
   };
 
   /// The DEVICE, not the port. A selection holds devices; a port id is a
@@ -162,6 +180,8 @@ final class SetPortFactCommand extends Command<RackDocument> {
     PortFactField.userLabel => port.userLabel,
     PortFactField.connector => port.overrides.connector,
     PortFactField.signalFamily => port.overrides.signalFamily,
+    PortFactField.tapWatts => port.tapWatts,
+    PortFactField.lowZBypass => port.lowZBypass,
   };
 
   void _write(Port port, Object? v) {
@@ -172,6 +192,17 @@ final class SetPortFactCommand extends Command<RackDocument> {
         port.overrides.connector = v as ConnectorTypeId?;
       case PortFactField.signalFamily:
         port.overrides.signalFamily = v as SignalFamilyId?;
+      case PortFactField.tapWatts:
+        // NULL IS "NOT RECORDED" AND SURVIVES AS AN ABSENT KEY (G4).
+        // `ELE-005` counts it as an unknown and names the speaker rather
+        // than treating it as no load, so clearing this box is a real
+        // statement and not a reset.
+        port.tapWatts = v as int?;
+      case PortFactField.lowZBypass:
+        // NON-NULLABLE, so a cleared value is `false`: a transformer is
+        // either switched out or it is not, and "unknown bypass" is not
+        // a state a speaker can be in.
+        port.lowZBypass = (v as bool?) ?? false;
     }
     // NO `meta.touch` HERE, AND THE REASON IS THE MODEL RATHER THAN AN
     // OVERSIGHT: `Port` CARRIES NO `EntityMeta`, by CR-095. Every other entity
