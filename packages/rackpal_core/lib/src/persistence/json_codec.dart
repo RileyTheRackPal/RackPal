@@ -1472,6 +1472,10 @@ JsonMap _encodePort(Port p) {
   putIfNotNull(json, 'busUniverse', p.busUniverse);
   putIfNotNull(json, 'isBusTerminator', p.isBusTerminator);
   putIfNotNull(json, 'tapWatts', p.tapWatts);
+  // DR-131. Written only when TRUE, so a document full of ordinary ports
+  // gains no bytes and CR-117's round-trip over every existing fixture is
+  // byte-identical to before this field existed.
+  if (p.lowZBypass) json['lowZBypass'] = true;
   putIfNotNull(json, 'circuitId', p.circuitId?.v);
   if (p.poeActual != null) {
     json['poeActual'] = _encodePoeAssignment(p.poeActual!);
@@ -1505,6 +1509,7 @@ Port _decodePort(Uuid id, JsonMap json) => Port(
     'Port.isBusTerminator',
   ),
   tapWatts: asIntOrNull(json['tapWatts'], 'Port.tapWatts'),
+  lowZBypass: asBoolOrNull(json['lowZBypass'], 'Port.lowZBypass') ?? false,
   circuitId: _decodeUuidOrNull(json['circuitId'], 'Port.circuitId'),
   poeActual: decodeNullableObject(
     json,

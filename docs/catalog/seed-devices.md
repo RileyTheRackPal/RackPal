@@ -1173,7 +1173,7 @@ U height per P4.
 
 ---
 
-### 3.9 Field Devices: 18
+### 3.9 Field Devices: 20
 
 Every entry in this category is `mountMethod: notInRack`, `occupancy {0, 0, none}`, no rack depth,
 no thermal class, and is authored through the **stripped builder form**: identity, ports,
@@ -1440,8 +1440,8 @@ because `impedanceOhms` lives on the speaker terminal and `tapWatts` on the inst
 | Power | 4 |
 | Passive & Mechanical | 3 |
 | **Rack-side subtotal** | **31** |
-| Field Devices | 19 |
-| **Total shipped templates** | **50** |
+| Field Devices | 20 |
+| **Total shipped templates** | **51** |
 
 **THIS TABLE WAS STALE, AND P3 ABOVE IS WHY THAT MATTERS.** P3 rules that the count lives in
 "exactly one place, the summary table in §3.10", and that no prose anywhere states one. It said

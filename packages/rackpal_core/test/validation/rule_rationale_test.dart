@@ -4,7 +4,8 @@
 // exist: the type it names, `CompatibilityRuleDef`, is from
 // `docs/research/design-data-model.md` and was never built. These tests
 // hold the field that sentence assumed, and hold it to the standard
-// M5-H1 sets for the same 28 rules: *"trade language, not model
+// M5-H1 sets for the same rules, 29 of them since DR-132
+// restored `ELE-005`: *"trade language, not model
 // language"*.
 
 import 'package:rackpal_core/rackpal_core.dart';
@@ -19,7 +20,7 @@ void main() {
         if (r.rationale.trim().isEmpty) r.ruleId,
     ];
     expect(empty, isEmpty);
-    expect(kRuleCatalogue, hasLength(28));
+    expect(kRuleCatalogue, hasLength(29));
   });
 
   test('a rationale is not the summary again', () {
@@ -83,7 +84,7 @@ void main() {
 
   test('the ban list is not vacuous: the summaries DO use those words', () {
     // A ban list that named words nobody writes would pass forever. The
-    // summaries are the same 28 rules in model language, so if the list
+    // summaries are the same rules in model language, so if the list
     // is real it must catch them there.
     const modelWords = [
       'acceptedFamilies',

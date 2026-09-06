@@ -121,6 +121,7 @@ final class Port {
     this.busUniverse,
     this.isBusTerminator,
     this.tapWatts,
+    this.lowZBypass = false,
     this.circuitId,
     this.poeActual,
     String? notes,
@@ -168,8 +169,50 @@ final class Port {
   int? busUniverse;
   bool? isBusTerminator;
 
-  /// 70/100 V transformer tap — per INSTALLATION, not per template.
+  /// 70/100 V transformer tap, in watts: per INSTALLATION, not per
+  /// template.
+  ///
+  /// **NOTHING WROTE OR READ THIS UNTIL DR-131 §11.130** (`#838`). It was
+  /// modelled with the right home and the right doc comment, round-tripped
+  /// by the codec, and reachable by no gesture: the NINTH producer gap of
+  /// M5, and `catalog_field.dart`'s header had said so in as many words,
+  /// that no rule *"reads `impedanceOhms`/`tapWatts` from at all"*.
+  ///
+  /// NULL IS UNKNOWN, and `0` would be a measured zero (G4/CR-114). A 70 V
+  /// bus rollup counts an unknown rather than treating it as no load: a
+  /// speaker whose tap nobody recorded still draws from the amplifier.
+  ///
+  /// TYPED RATHER THAN PICKED FROM A LADDER (DR-131 §11.130.8). There is
+  /// no single ladder: Episode ships 7.5/15/30/60, Beale Street ranges
+  /// from 1/1.9/3.8/7.5/15 to that same scheme, and `F08`'s own
+  /// description hard-codes a third set. Any fixed list is wrong on
+  /// somebody's speaker.
+  ///
+  /// Meaningless while [lowZBypass] is true. Read the pair through
+  /// [isConstantVoltage] rather than separately.
   int? tapWatts;
+
+  /// Whether the transformer is bypassed, making this a low-impedance
+  /// connection.
+  ///
+  /// **THIS IS THE CV-to-LOW-Z SWITCHING DR-125 FOUND MISSING**, and it
+  /// is on the SPEAKER because that is where the switch physically is.
+  /// The question went to the user as an AMPLIFIER mode and the premise
+  /// was wrong: amplifiers are rarely switchable, and one that does both
+  /// has separate outputs rather than a switch. `A05` already models
+  /// exactly that, with two `audio.speaker_cv` bus nodes and no low-Z
+  /// output at all.
+  ///
+  /// `ELE-006` reads it. A bypassed speaker landed on a low-Z output is
+  /// CORRECT, and the rule fired on it before this existed.
+  bool lowZBypass;
+
+  /// Whether this port is presently a constant-voltage load.
+  ///
+  /// The pair's precedence in one place, so a reader cannot get it
+  /// backwards: **bypass wins over any tap value**, because the
+  /// transformer the tap would have been read from is out of circuit.
+  bool get isConstantVoltage => !lowZBypass;
 
   /// Only set where the rack meets the building.
   Uuid? circuitId;

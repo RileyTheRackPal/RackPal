@@ -894,6 +894,7 @@ Severity vocabulary is `error | warning | advisory | off`, "info" is renamed `ad
 | Rule ID | Condition | Severity | Governing |
 |---|---|---|---|
 | `ELE-003` | Speaker polarity inverted between the two ends of a conductor pair. | **warning** (demoted from error) | AC-030/M12 |
+| `ELE-005` | Σ of 70 V/100 V `Port.tapWatts` on a net > 80% of the amplifier channel's `bus.maxTapWatts`. **Known taps only**: an unrecorded tap is counted and named, never estimated, so the total is a FLOOR (CR-114). **Restored by DR-132 §11.131**, having been cut by AC-040, on that cut's own "protects the user from real money" test: an overloaded line clips the amplifier and clipped square waves destroy tweeters. | **warning** | AC-040, DR-132, CR-114 |
 | `NET-001` | Σ PD class draw on a switch exceeds `PowerProfile.poeBudgetWatts`. | error | CR-056 |
 | `PWR-001` | Σ continuous amps on a circuit > 80% of the breaker, computed on **typical × diversity factor, in VA**. **A planning estimate and not a compliance check** (DR-079 §11.78.4): it names the circuit to look at first and asserts nothing about NEC. | **warning** (demoted from error) | CR-020, AC-020, DR-079 |
 | `PWR-003` | Outlets consumed exceed outlets provided in the rack. | error | AC-040 |

@@ -421,7 +421,15 @@ $SuiteFloors = @{
     # A producer that reaches no surface is DR-128 repeating one layer
     # out, and the ruling chose the smallest option ON THE GROUND that a
     # note reaches the schedule and the PDF.
-    'rackpal_core'   = 4043
+    # 4049 at DR-131: +6 from speaker_bypass_test.dart. The bypass moves
+    # the resolved FAMILY rather than one rule verdict, which is where
+    # the fix belongs: ELE-006 was patched first and SIG-002 immediately
+    # refused the same correct connection.
+    # 4058 at DR-132: +9 from ele005_tap_budget_test.dart. The AC-051
+    # pair proves ELE-005 fires; these prove it COUNTS honestly, which is
+    # what a load rule gets wrong while passing its pair. One of them
+    # caught the amplifier being reported as a speaker nobody measured.
+    'rackpal_core'   = 4058
     'rackpal_text'   = 1
     'rackpal_export' = 195
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
@@ -434,7 +442,12 @@ $SuiteFloors = @{
     # eight mounts RackCanvasScreen rather than the panel, and asserts
     # the SCREEN hands over the callback: #847 is a panel that passes its
     # own tests because its own tests mount it.
-    'rackpal_ui'     = 1506
+    # 1513 at DR-132: +7 from port_tap_controls_test.dart. Its first
+    # test is the DR-129 gate one layer along: SetPortFactCommand
+    # switches exhaustively so the COMMAND had to handle both new fields,
+    # and the widget lists its controls by hand, so both compiled green
+    # with no way to set either.
+    'rackpal_ui'     = 1513
     'rackpal_app'    = 916
 }
 

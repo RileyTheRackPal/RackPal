@@ -2489,6 +2489,12 @@ to be confidently wrong about a system the user knows better than the app does. 
 `ELE-003` · `ELE-006` · `NET-001` · `PWR-001` · `PWR-003` · `LEN-001` · `RCK-001` · `RCK-002` ·
 `RCK-003` · `RCK-012` · `RCK-013` · `CODE-001` · `CODE-002` · `LNK-020`.
 
+> **Amended again by DR-132 §11.131, 2026-09-06.** `ELE-005` is **restored, making 29**, on this
+> paragraph's own "protect the user from real money" test: an overloaded 70 V line clips the
+> amplifier and clipped square waves destroy tweeters. It is a CUT rule rather than a new one, and
+> `docs/research/design-data-model.md` line 1136 already carried its severity and its 80% threshold.
+> **`ELE-004` stays cut**, and the enumeration above is otherwise untouched.
+
 > **Amended per §12.6(b), paid 2026-08-03.** This paragraph read *"22 rules, listed once in
 > `docs/rules.md`"* over an enumeration of **24** ids. The enumeration governs and "22" was an
 > arithmetic error; `PLC-001..003` are ratified as distinct tier-1 rules, giving **27**. The home is
@@ -17181,6 +17187,219 @@ and BTU should roll up the way a rack's do is a real question and is
 **explicitly left open**, filed rather than answered, because the honest
 version of it needs the container the first table row declined. It joins
 `#844` under M9 rather than being half-built here.
+
+### §11.130 DR-131 · The switchable device is the SPEAKER, and one control answers both halves of finding 5
+
+**Board `#838` (M5-K), authorised by DR-127 §11.126.** Settled by the user
+2026-09-06 on the fifth of the M5-H2 review's findings: *"`maxTapWatts`
+exists on the model; a tap SELECTOR and CV-to-Low-Z switching do not."*
+
+**11.130.1 THE FIELD HAS A PRODUCER AND NO CONSUMER, WHICH IS A SHAPE
+THIS MILESTONE HAD NOT YET MET.** Eight producer gaps preceded this one
+and every one was a field nothing could write. `maxTapWatts` is the
+opposite and is no better off:
+
+| | |
+|---|---|
+| authorable | **yes**, in the device builder (`port_commands.dart`, `port_grid.dart`) |
+| declared on a seeded port | **zero of 727** |
+| read by a rule, a rollup, a schedule or an export | **nothing, anywhere** |
+
+So a person can type a tap wattage into the builder and **it does not
+participate in one calculation**. `catalog_field.dart` even names the
+gap in its own comment, calling `F08` *"the only field source of a
+tapWatts selector"*, a selector that was never built.
+
+**11.130.2 THE CORRECTION THAT RELOCATED THE WHOLE PROBLEM.** The
+question put to the user assumed a switchable AMPLIFIER and asked how its
+mode is recorded. The answer was that the premise is wrong:
+*"Amplifiers are very rarely switchable, and if they support both Low-Z
+and CV, they almost always have separate outputs instead of a switch.
+Speakers are the only CV devices that I've seen with taps/switches for
+Low-Z/CV in person."*
+
+**The catalogue already agrees, which nobody had checked.** `A05`, the
+only rack-side CV source, declares `cv.a` and `cv.b` as
+`audio.speaker_cv` bus nodes at `nominalVoltage: 70` and **has no low-Z
+output at all**. The amp side needed nothing; the model had been right
+for a reason nobody had written down.
+
+**THIS IS THE THIRD TRADE CORRECTION IN THIS MILESTONE**, after the
+passive power strip and the shelf, and it has the same shape every time:
+an agent reasoning from what the model could express, rather than from
+what an installer touches. Recorded under
+`trade-knowledge-beats-workflow-reasoning`.
+
+**11.130.3 RULED: ONE CONTROL ON THE SPEAKER, DOING DOUBLE DUTY.** The
+tap selector is a per-instance fact on a CV speaker, and its positions
+are wattages **plus a Low-Z bypass**. That single control answers both
+halves of finding 5, which is why they are one chapter's design and not
+two:
+
+- its **wattage** positions are what a 70V bus sums against the
+  amplifier's rating, giving `maxTapWatts` its first consumer;
+- its **bypass** position is CV-to-Low-Z switching, and it tells
+  `ELE-006` that this speaker is currently a low-impedance device.
+
+The amplifier gains nothing. Two catalogue entries with their own outputs
+is the model, and it is the model already shipped.
+
+**11.130.4 `ELE-006`'S FALSE POSITIVE IS REAL AND HAS NO REPRODUCING
+CASE TODAY.** The rule fires on `audio.speaker_cv` opposite
+`audio.speaker_lowz` and looks at nothing else, so a dual-mode speaker
+set to bypass and landed correctly on a low-Z output would be told it is
+a near short. **No seeded speaker is dual-mode**, though: `F08` is CV
+only and `F07` is low-Z only, so the fault is unreachable with shipped
+data.
+
+That is exactly `acceptedFamilies`' position before DR-126, and the
+lesson there transfers: **a rule whose fault cannot be constructed from
+the catalogue has never been tested against the catalogue.** The fixture
+must therefore create the dual-mode speaker deliberately, and AC-051's
+pair is a known-bad and a known-good that differ **only in the selector
+position**.
+
+**11.130.5 TWO CHAPTERS, IN THE ORDER THE USER GAVE.** The false
+positive first, then the selector and the sum. The order is not
+arbitrary: the bypass position is what makes `ELE-006` correct, and
+building the sum first would add a rule on top of one still crying wolf.
+
+**11.130.6 THE SUM CHECK IS A TWENTY-NINTH RULE AND IS NOT AUTHORISED
+HERE.** AC-040 caps v1 at an enumerated catalogue, corrected to 28 by
+§12.6(b), and CR-021 rules that a rule not in canon §5 does not exist.
+**Chapter two therefore needs its own §8.3 amendment**, which is
+deliberately not smuggled into this ruling: DR-127 exists precisely
+because "unpriced" was being used to let consequences sit outside the one
+scope list. The alternative, expressing the sum as a **rollup** in
+`totals.dart` rather than a rule, is genuinely open and is cheaper: it
+reports a number with a G4 unknown count and adds nothing to the
+catalogue.
+
+**11.130.7 WHICH SPEAKERS ARE DUAL-MODE, ANSWERED BY THE USER RATHER
+THAN GUESSED.** Two, and the pairing is deliberate: **`F08` gains a
+bypass**, which makes the `ELE-006` fix reachable using an entry that
+already exists, and **a NEW template covers the in-ceiling / outdoor /
+landscape case** rather than `F04`, `F05` or `F07` changing their ports
+under documents that already reference them.
+
+**11.130.8 THE TAP VALUE IS FREE NUMERIC ENTRY WITH BYPASS AS A FLAG,
+AND THE REASON IS THAT THE LADDER IS NOT ONE LADDER.** A fixed list was
+offered and declined on evidence: *"Episode makes one of theirs with
+7.5/15/30/60/Bypass taps, while Beale Street has models that range from
+1/1.9/3.8/7.5/15W/Bypass, to the same scheme as Episode."* A per-template
+list was also offered and declined, for a workflow reason worth
+recording: the tap is **set once at install and not touched**, and
+*"if any issues come up it's simple enough to reference the sheets and
+make the fix on site"*, so the model buys little by policing which
+numbers are legal on which speaker.
+
+So the per-instance state is **two fields on the device**, and G4 governs
+the third state:
+
+| `lowZBypass` | `tapWatts` | means |
+|---|---|---|
+| `true` | ignored | the transformer is bypassed; this speaker is a low-impedance device and `ELE-006` must not fire against a low-Z output |
+| `false` | `15` | constant voltage at 15 W, and the figure a 70 V bus sums |
+| `false` | absent | constant voltage, tap **UNKNOWN**. CR-114: never estimated, never `0`, and the rollup reports it in its unknown count |
+
+**11.130.9 IT LIVES ON `Port`, BECAUSE `Port.tapWatts` ALREADY EXISTS
+AND THIS RULING FIRST PUT IT IN THE WRONG PLACE.** §11.130.8 was drafted
+ruling the pair onto `DeviceInstance`, and the fields were written there
+before the collision surfaced. **The census that priced this ruling
+grepped `maxTapWatts` and never grepped `tapWatts`**, which is
+`census-the-field-not-the-name` for the fifth recorded time and the
+second where the miss was a NAME rather than a call shape.
+
+`Port.tapWatts` is not merely present, it is **already documented as the
+right home**: *"70/100 V transformer tap: per INSTALLATION, not per
+template."* And it is the **ninth producer gap of this milestone**,
+matching `maxTapWatts`' shape exactly:
+
+| | |
+|---|---|
+| written by | **nothing.** The codec decodes it and no command, no widget and no builder sets it |
+| read by | **nothing.** The codec encodes it |
+| said so already | `catalog_field.dart`'s header, in as many words: no rule *"reads `impedanceOhms`/`tapWatts` from at all (AC-031)"* |
+
+So `#838` does not add a tap field. **It gives the one already modelled a
+producer and a consumer**, and adds only `lowZBypass` beside it. The
+device-level draft is withdrawn: a speaker with two pigtail conductors
+has one port SET, and the repo already decided that a per-installation
+electrical fact belongs on the port (CR-053, "typed; lives here, not in a
+device-keyed map").
+
+**AND THE CATALOGUE'S OWN LADDER IS A FOURTH DATA POINT FOR §11.130.8.**
+`F08`'s description hard-codes *"2.5/5/10/15/20 W"*, which matches
+neither Episode's nor Beale Street's. A fixed list was going to be wrong
+in the shipped catalogue as well as in the field, and that sentence
+should be read as an example rather than as a constraint.
+
+### §11.131 DR-132 · A §8.3 amendment restoring `ELE-005`, a rule that already had an id, a severity and a threshold
+
+**Board `#838` (M5-K), amending AC-040.** Settled by the user 2026-09-06,
+choosing a rule over a rollup: *"I feel like having a warning for that is
+important to prevent blowing speakers out."*
+
+**11.131.1 THE REASON IS THE ONE AC-040 ITSELF USED.** That cut kept
+`RCK-012`, `CODE-001` and `CODE-002` because they *"protect the user from
+real money"*. Overload a 70 V line and the amplifier clips; **clipped
+square waves are what destroy tweeters**, so the loss is not the
+amplifier's protection circuit doing its job, it is a van full of
+replacement drivers. That is the same test, met.
+
+**11.131.2 IT IS NOT A NEW RULE. IT IS A CUT ONE, AND I NEARLY MINTED A
+DUPLICATE.** The plan of record was to add `ELE-007`. Two greps before
+writing it found that
+`docs/research/design-data-model.md` line 1136 already specifies:
+
+> `ELE-005` **warning**: Σ of 70 V/100 V `tapWatts` on a net > 80% of the
+> amp channel rating.
+
+**Every parameter matches what was about to be invented**: the severity
+the user asked for, the 80% threshold `PWR-001` independently sets as
+this repository's load-headroom convention, and the aggregate. Line 1224
+even names the mechanism, that *"each speaker's input `Port.tapWatts` is
+per-installation. `ELE-005` sums the net."*
+
+`ELE-007` was also already taken, by a satellite-splitter DC-passing rule
+in the same document. **Minting it would have put two different rules
+behind one id in one corpus.**
+
+**11.131.3 SO THE AMENDMENT IS NARROW AND SAYS WHAT IT DOES NOT DO.**
+AC-040's enumeration governs (§12.6(b)) and it currently lists 28.
+`ELE-005` is **added, making 29**. `ELE-004`, cut in the same breath by
+the same paragraph, **stays cut**: parallel low-Z impedance is a
+different calculation over a different aggregate, nobody has asked for
+it, and restoring a neighbour because it is adjacent is how a cut list
+unravels. The rest of AC-040 is untouched.
+
+**11.131.4 THE SUM IS OVER KNOWN TAPS AND NEVER OVER ESTIMATED ONES**
+(G4/CR-114). A speaker whose tap nobody recorded still draws from the
+amplifier, so it cannot be treated as zero, and it must not be guessed
+either. The rule therefore fires **only when the KNOWN taps alone cross
+80%**, which is the one case that is certain, and **the message carries
+the unknown count** so the reader knows the figure is a floor rather than
+a total.
+
+That asymmetry is deliberate and is the honest direction: a net whose
+recorded taps sit under the line while four taps are blank has not been
+cleared, it has been **incompletely measured**, and saying so is worth
+more than a number nobody can act on.
+
+**11.131.5 WHAT IT NEEDS, AND BOTH HALVES WERE PRODUCER GAPS.** The
+capacity side is `PortDef.bus.maxTapWatts`, **declared on zero of 727
+seeded ports**, so `A05`'s two CV outputs must state their rating or the
+rule is unevaluatable and silent on the only amplifier that can raise it.
+The consumption side is `Port.tapWatts`, which DR-131 §11.130.9 found had
+no producer at all and which that ruling's first chapter gave a home.
+**The rule is the consumer both fields have been waiting for since M0.**
+
+**11.131.6 AND ITS AC-051 PAIR MUST BE CONSTRUCTED, NOT FOUND.** No
+seeded document can currently overload a 70 V line, because nothing
+declares a capacity and nothing sets a tap. The known-bad and the
+known-good therefore differ **only in one tap value**, on DR-131
+§11.130.4's reasoning: a rule whose fault cannot be built from the
+catalogue has never been tested against the catalogue.
 
 ## 12. Superseded rulings
 

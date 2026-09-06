@@ -62,8 +62,32 @@ ConnectorTypeId resolvePortConnector(Port? port, PortDef def) =>
     port?.overrides.connector ?? def.connector;
 
 /// The signal family this port actually carries.
-SignalFamilyId resolvePortSignalFamily(Port? port, PortDef def) =>
-    port?.overrides.signalFamily ?? def.signalFamily;
+SignalFamilyId resolvePortSignalFamily(Port? port, PortDef def) {
+  final overridden = port?.overrides.signalFamily;
+  if (overridden != null) return overridden;
+  // DR-131 §11.130: A BYPASSED TRANSFORMER MAKES THIS A LOW-Z PORT, and
+  // the family is where that has to land rather than inside one rule.
+  //
+  // ELE-006 was patched first and it was the wrong level: SIG-002 then
+  // refused the same correct connection, because the sink's
+  // `acceptedFamilies` never listed `audio.speaker_cv` and the source
+  // still CALLED itself constant voltage. Two rules disagreeing with one
+  // switch is the signal that the fact belongs upstream of both.
+  //
+  // Only in this direction. A low-Z port cannot be bypassed INTO
+  // constant voltage: there is no transformer to switch back in, and
+  // inventing one would be fabricating hardware.
+  if (port != null && port.lowZBypass && def.signalFamily == kSpeakerCv) {
+    return kSpeakerLowZ;
+  }
+  return def.signalFamily;
+}
+
+/// The two families the transformer bypass moves between (DR-131).
+const SignalFamilyId kSpeakerCv = SignalFamilyId('audio.speaker_cv');
+
+/// See [kSpeakerCv].
+const SignalFamilyId kSpeakerLowZ = SignalFamilyId('audio.speaker_lowz');
 
 /// What to call this port in front of a person.
 ///

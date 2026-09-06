@@ -75,10 +75,17 @@ PortDef springBackPort(
 
 /// Two devices, one port each, so every case below is exactly the pair
 /// under test with nothing else able to fire.
+/// [fromIsBypassed] MATERIALISES the source port with `lowZBypass` set
+/// (DR-131 §11.130.4). It has to materialise: the bypass is a fact about
+/// this installed speaker, so `ELE-006` reads it off `doc.ports` rather
+/// than off the template, and a fixture that only declares a `PortDef`
+/// cannot express it. Every other case here leaves ports unmaterialised
+/// and is unaffected.
 RackDocument springBackPair(
   PortDef fromPort,
   PortDef toPort, {
   bool toIsPassthrough = false,
+  bool fromIsBypassed = false,
 }) {
   final doc = RackDocument(
     id: const Uuid('doc-t2'),
@@ -95,6 +102,16 @@ RackDocument springBackPair(
     toPort,
     isPassthrough: toIsPassthrough,
   );
+  if (fromIsBypassed) {
+    final id = derivePortId(springBackA, fromPort.key);
+    doc.ports[id] = Port(
+      id: id,
+      deviceId: springBackA,
+      designator: 'SRC-1.p',
+      templatePortKey: fromPort.key,
+      lowZBypass: true,
+    );
+  }
   return doc;
 }
 

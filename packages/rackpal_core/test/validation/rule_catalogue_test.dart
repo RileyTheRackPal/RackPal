@@ -104,22 +104,29 @@ void main() {
   });
 
   group('the count is the scope gate', () {
-    test('28 rules: 8 tier-1, 6 tier-2, 14 tier-3', () {
+    test('29 rules: 8 tier-1, 6 tier-2, 15 tier-3', () {
       // The arithmetic written out, because AC-040's own "22" is an error
       // against its enumeration of 24 and canon §12.6(b)'s "27" predates
       // DR-020 adding `LEN-002`. A number this corpus has got wrong twice
       // is a number worth deriving rather than trusting.
+      //
+      // 29 AT DR-132 §11.131, and the movement is the POINT of this
+      // gate rather than an inconvenience to it: `ELE-005` was cut by
+      // AC-040 and is restored by a §8.3 amendment, so the number moves
+      // in the same commit as the ruling that authorises it. A rule
+      // arriving without one fails here, which is what roadmap M5's risk
+      // list means by *"just one more obvious rule"*.
       expect(rulesInTier(RuleTier.modelIllegal), hasLength(8));
       expect(rulesInTier(RuleTier.springBack), hasLength(6));
-      expect(rulesInTier(RuleTier.postHoc), hasLength(14));
-      expect(kRuleCatalogue, hasLength(28));
+      expect(rulesInTier(RuleTier.postHoc), hasLength(15));
+      expect(kRuleCatalogue, hasLength(29));
     });
 
     test('no two rules share an id, which is the join Finding, '
         'RuleOverride and AckedFinding all use', () {
       final ids = kRuleCatalogue.map((r) => r.ruleId).toList();
       expect(ids.toSet(), hasLength(ids.length));
-      expect(kRulesById, hasLength(28));
+      expect(kRulesById, hasLength(29));
     });
 
     test('every rule cites at least one ruling (§8.2)', () {

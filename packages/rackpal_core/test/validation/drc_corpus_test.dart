@@ -31,6 +31,6 @@ void main() {
   test('the corpus is not vacuous', () {
     // A corpus that walked nothing would report no gaps and pass.
     expect(drcCorpus().length, greaterThan(20));
-    expect(kRuleCatalogue, hasLength(28));
+    expect(kRuleCatalogue, hasLength(29));
   });
 }

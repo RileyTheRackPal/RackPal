@@ -101,12 +101,17 @@ void main() {
               .toList()
             ..sort();
 
-      // NAMED, NOT COUNTED. A count of eleven passes on the wrong eleven,
-      // and the whole point is WHICH field stopped being writable.
+      // NAMED, NOT COUNTED. A count of ten passes on the wrong ten, and
+      // the whole point is WHICH field stopped being writable.
+      //
+      // `bus` LEFT THIS LIST AT DR-132, which is the shrink the reason
+      // string below asks for: `ELE-005` needs a 70 V line's CAPACITY,
+      // `BusCapability.maxTapWatts` is where it lives, and no seeded port
+      // could declare one. It is the only field here removed by a rule
+      // needing it rather than by a rule firing wrongly without it.
       expect(
         missing,
         [
-          'bus',
           'carriedProtocols',
           'channelIndex',
           'conductorCount',

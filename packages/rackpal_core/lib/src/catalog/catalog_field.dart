@@ -502,8 +502,11 @@ Map<String, TemplateBody> buildFieldCatalog() {
     model: 'SPK-70V-PENDANT',
     displayName: '70V Pendant Speaker',
     description:
-        'tapWatts is a per-installation selector (2.5/5/10/15/20 W), not a '
-        'per-device fact — the transformer tap is set on the ladder.',
+        'tapWatts is a per-installation selector, not a per-device fact: '
+        'the transformer tap is set on the ladder at install. Typed '
+        'rather than picked (DR-132), because the ladder is not one '
+        'ladder — 7.5/15/30/60 and 1/1.9/3.8/7.5/15 are both shipping '
+        'products.',
     typePrefix: 'SPK',
     glyph: DeviceGlyph.speaker,
     tags: const ['speaker', '70v', 'field'],
@@ -976,6 +979,65 @@ Map<String, TemplateBody> buildFieldCatalog() {
   // F19 · Keypad, load-controlling. Same builder, same three
   // buses; the `ac.in` port is the whole difference (DR-120).
   out['F19'] = _keypad(bus: ControlBus.cresnet, loadControlling: true);
+
+  // F20 · Dual-Mode In-Ceiling / Landscape Speaker, the entry DR-132
+  // §11.130.7 asks for by name.
+  //
+  // ═══════════════════════════════════════════════════════════════════
+  // A NEW TEMPLATE RATHER THAN CHANGING F04, F05 OR F07
+  // ═══════════════════════════════════════════════════════════════════
+  // Those three are modelled low-Z and are referenced by documents that
+  // already exist; changing their ports under a saved job would move
+  // what its cables are allowed to land on. This is the same trade
+  // decision the user made about amplifiers one ruling up: **separate
+  // entries, not a mode switch on an existing one.**
+  //
+  // Its pins are `audio.speaker_cv` because that is what the speaker IS
+  // with its transformer in circuit, which is how it leaves the box.
+  // Ticking `Port.lowZBypass` on an instance switches the transformer
+  // out and moves the RESOLVED family to `audio.speaker_lowz` (DR-131),
+  // so one template covers both ways it gets installed.
+  final f20 = PortBuilder()
+    ..set('tap', 'CV tap pair', SetKind.speakerPair)
+    ..p(
+      'pos',
+      '+',
+      connector: 'conn.unterminated',
+      family: 'audio.speaker_cv',
+      dir: PortDirection.busNode,
+      bank: 'pigtail',
+      bankLabel: 'Pigtail',
+      polarity: Polarity.positive,
+      setKey: 'tap',
+      setRole: '+',
+    )
+    ..p(
+      'neg',
+      '-',
+      connector: 'conn.unterminated',
+      family: 'audio.speaker_cv',
+      dir: PortDirection.busNode,
+      bank: 'pigtail',
+      polarity: Polarity.negative,
+      setKey: 'tap',
+      setRole: '-',
+    );
+  out['F20'] = _field(
+    model: 'SPK-DUALMODE-1',
+    displayName: 'Dual-Mode Speaker, 70V tapped or 8 ohm',
+    description:
+        'A transformer with a bypass position, which is where a Low-Z/CV '
+        'switch actually lives: amplifiers are rarely switchable and one '
+        'that does both has separate outputs. Set the tap per install, or '
+        'tick the bypass and run it low impedance.',
+    typePrefix: 'SPK',
+    glyph: DeviceGlyph.speaker,
+    tags: const ['speaker', '70v', 'dual-mode', 'in-ceiling', 'landscape'],
+    weight: _kg(1.9),
+    ports: f20.ports,
+    banks: f20.banks,
+    portSets: f20.portSets,
+  );
 
   return out;
 }
