@@ -5702,7 +5702,25 @@ are not under M5's epic, and docs/14 §14.0 counts Done tasks under the **curren
 #### 5.4.6 M5-F, the surface, and a viewer promised over a field nobody had built · CLOSED · `v0.5.50` · `cc37461`, `a3ab151`, `cbf1625`, `0772946`
 
 **Closed 2026-09-04, four chapters, `#294`-`#297`.** §5.4.4 ended on the sentence that this story
-exists to falsify: *"a user of this build cannot tell that fourteen rules exist."* They can now.
+exists to falsify: *"a user of this build cannot tell that fourteen rules exist."*
+
+**THIS PARAGRAPH SAID "THEY CAN NOW" AND THAT WAS NOT TRUE, MEASURED 2026-09-06 (`#847`).**
+`DrcPanel` appears in exactly two files in the tree: the one that defines it and the one that tests
+it. **Nothing in `apps/rackpal` mounts it**, and outside that widget file nothing calls
+`evaluateDocument` or `groupFindings` at all. So the list, the grouping, the severity filter, the
+acknowledge flow and the `Why?` viewer are real, tested, and **unreachable by any gesture a person
+can make**.
+
+**The chapters below are not withdrawn and the Story stays closed**, which is §8.1 rather than
+generosity: each built what it said, and M5's three clauses are the fixture pairs, the sign-off and
+the export, none of which says a user can see a finding. **What was wrong is the sentence**, and a
+closed chapter asserting a user-visible outcome nobody can reach is the most believable kind of wrong
+record.
+
+**FOUND THE WAY EVERY OTHER GAP THIS MILESTONE WAS FOUND**: by trying to use the thing. DR-129 went
+looking for the panel's caller in order to wire `PWR-003`'s remedy button to it, and there was no
+caller. **The widget's tests pass because they mount it themselves**, which is the producer-gap shape
+one layer out: the thing exists, something reads it, and no path a person walks reaches it.
 
 | Chapter | What it left behind |
 |---|---|
@@ -6097,6 +6115,62 @@ scan whose pattern stops matching reports a clean sweep.
 **`carriedProtocols` IS NOT PRICED HERE**, and its third option is real: if protocol search is not a
 v1 feature, deleting two dead reads and a field is cheaper and more honest than filling it, and the
 data is a trade question under AC-052 rather than a code one.
+
+**5.4.12.3 AND ITS OWN BUMP WENT UNPAID, WHICH IS THE THIRD TIME.** `#841` is a Chapter, it closed,
+and the commit that closed it left the six files at `v0.5.60`. Paid in `#840`'s branch at
+**`v0.5.61`**, derived the two ways §5.4.10 requires: the board query for Done Chapters under epic 23
+returns 61, and 60 plus the one chapter that closed without a bump is 61. **`#840` itself is a Story
+with no Chapters and moves the digit by nothing**, which is §5.4.11.4's rule and DR-127's `#837`
+precedent.
+
+**Three misses now, all the same shape**: a commit whose subject is the work forgets a digit that
+lives in six other files, and `version_parity_test.dart` cannot see it because all six are stale
+together. **The tell is that every one of the three was caught by DERIVING rather than by reading**,
+which is the argument for the derivation being written into the commit message rather than the
+number being copied out of it.
+
+#### 5.4.13 M5-M, the code row that reads as a different kind, and the button ruled twice · CLOSED · `#840`
+
+**DR-129 §11.128.** The M5-H2 reviewer's twelfth finding was one sentence: *"a code-adjacent finding
+wants more than a row in a panel."*
+
+**THE ARTICLE WAS PROSE.** `CODE-002`'s message ends *"Verify against NEC 800.154"*, which is correct
+and puts the citation at the end of a sentence beginning with a cable designator. `RuleMeta` carried
+`summary`, `rationale` and `governing`, and **`governing` holds this repository's ids, not the
+code's**, so nothing in the model said "this rule turns on a document the product cannot read".
+
+`RuleMeta` gains `codeCitation`, on DR-125's precedent that the catalogue authorises the fact and the
+surface renders it. **Two rules and no others**, named in a test rather than counted.
+
+**A DIFFERENT SHAPE, NOT A LOUDER COLOUR.** `ConsoleStatus.caution` had been defined, themed, and
+reachable by no finding since M5-F; `status_marker.dart` draws it as a **diamond** where warning is a
+triangle. DR-079 demoted both code rules to `warning` because *"this product cannot see the thing the
+code article turns on"*, so a code row is not a louder warning but a different question, and a shape
+says "different kind" where a colour says "different amount". **The severity is untouched**: the
+filter still finds these under Warning and an override still moves them.
+
+**5.4.13.1 AND THE PANEL FINALLY RENDERS `Finding.remedy`, WHICH DR-128 SAID IT ALREADY DID.**
+§11.127.5 states the panel *"renders it as a button"*. It did not: the field shipped, `PWR-003`
+declared one, `addOutletsToRack` implemented it, and `drc_panel.dart` never read the field.
+
+**That is the second phantom button in two rulings.** The first was `SpringBackRemedy`'s two members,
+and **Dart's exhaustive switch caught it within the hour** because a chip handler must match every
+enum value. **A nullable field a widget ignores has no such backstop**: it compiles, and every test
+that could have noticed was written against the model. `remedy_pairing_test.dart` is the backstop,
+asserting the pairing in both directions in the shape the chips already use.
+
+**5.4.13.2 AND THE PANEL ITSELF HAS NO HOST, WHICH IS `#847` AND NOT THIS.** Wiring the button meant
+finding the panel's caller, and there is none: `DrcPanel` is referenced by its own definition and its
+own test and by nothing else in the tree. **Everything M5-F built is unreachable**, and §5.4.6's
+closing sentence is corrected above. Mounting it is a shell decision that `docs/04` §4.1 already
+describes a seam for (`PanelHost` keyed by `PanelId`, neither of which exists), and improvising one
+inside a rule-surfacing chapter would be the shelf mistake a second time.
+
+**WHAT WAS OFFERED AND NOT TAKEN**: a separate verification dialog for code rules, recording who
+checked what against which edition. `AckedFinding` already carries `reason`, `by` and `at`, so the
+record exists; what a code acknowledgement wants is a different QUESTION, and the place that earns
+its keep is **T0.02, the exceptions sheet, which is M6-C and not built**. Designing the form before
+the page is the same error in a different direction.
 
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 

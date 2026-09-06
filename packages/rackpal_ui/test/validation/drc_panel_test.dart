@@ -139,14 +139,21 @@ void main() {
     expect(taps, 0);
   });
 
+  // DELIBERATELY NOT A CODE RULE. This test is about the acknowledged
+  // segment and the reason tooltip; the rule id was incidental until
+  // DR-129 made `CODE-002`'s row carry a citation segment too, at which
+  // point an exact-string assertion here would have become a test of the
+  // citation format wearing an acknowledgement test's name. The three
+  // segments composing is a real question and is asserted where it
+  // belongs, in remedy_pairing_test.dart.
   testWidgets('an acknowledged row says so and keeps its reason', (
     tester,
   ) async {
     final row = FindingRow(
-      finding: finding('CODE-002', Severity.error, primary: rackId),
+      finding: finding('PWR-002', Severity.error, primary: rackId),
       acknowledgement: AckedFinding(
         id: ackId,
-        ruleId: 'CODE-002',
+        ruleId: 'PWR-002',
         targetFingerprint: '*',
         reason: 'Reviewed with the AHJ.',
         by: 'riley',
@@ -165,7 +172,7 @@ void main() {
         onGroupingChanged: (_) {},
       ),
     );
-    expect(find.text('CODE-002 · acknowledged'), findsOneWidget);
+    expect(find.text('PWR-002 · acknowledged'), findsOneWidget);
     final tooltip = tester.widget<Tooltip>(find.byType(Tooltip));
     expect(tooltip.message, 'Reviewed with the AHJ.');
   });

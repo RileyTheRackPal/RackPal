@@ -17043,6 +17043,81 @@ M5-H2 review is the corpus saying them. It still governs the remaining
 three: `DIR-001`, `DIR-003` and `ELE-006` get no remedy here, because
 nobody has asked for one.
 
+### §11.128 DR-129 · A code-adjacent finding is a different KIND of row, and the panel had no way to say so
+
+**Board `#840` (M5-M), authorised by DR-127 §11.126.** Settled by the user
+2026-09-06, on the twelfth of the M5-H2 review's findings: *"a
+code-adjacent finding wants more than a row in a panel."*
+
+**11.128.1 THE CITATION WAS PROSE, AND THAT IS THE WHOLE PROBLEM.**
+`CODE-002`'s message ends *"Verify against NEC 800.154; 300.22(C) permits
+a metal raceway, which this product does not model."* Every word of that
+is right, and **the article is findable only by reading to the end of a
+sentence** that begins with a cable designator. `RuleMeta` carries
+`summary`, `rationale` and `governing`, and `governing` holds this
+repository's own ids (`AC-027`, `DR-079`), not the code's.
+
+So there is nothing in the model that says "this rule turns on an external
+document", and the panel renders these two rows exactly like a cable being
+three metres too long.
+
+**11.128.2 RULED: `RuleMeta` GAINS `codeCitation`, ON DR-125's PRECEDENT.**
+That ruling's shape is the one being followed: **the catalogue authorises
+the fact and the surface renders it**, rather than a widget inferring
+something from a rule id. `CODE-001` declares `NEC 725.136` and `CODE-002`
+declares `NEC 800.154`. **Two rules and no others**, which is a checkable
+claim and is checked.
+
+`300.22(C)`'s metal-raceway exception stays in the message rather than
+becoming a second field. It is an argument about what this product cannot
+see, not a citation to look up, and the sentence is where an argument
+belongs.
+
+**11.128.3 A DIFFERENT SHAPE, NOT A LOUDER COLOUR.** `ConsoleStatus`
+carries five values and `statusForSeverity` maps four; **`caution` has
+been defined, themed, and reachable by no finding since M5-F**.
+`status_marker.dart` draws it as a **diamond**, where warning is a
+triangle.
+
+That is the right instrument, and the reason is the one DR-079 gave when
+it demoted both rules to `warning`: **this product cannot see the thing
+the code article turns on.** A code row is not a louder warning, it is a
+different question, and a shape says "different kind" where a colour says
+"different amount". PAL-1's whole argument one domain over is that hue
+alone is never the channel.
+
+**THE SEVERITY IS UNTOUCHED.** `Finding.severity` stays `warning`, the
+severity filter still finds these rows under Warning, and an override
+still moves them. Only the MARKER differs, which is a rendering fact and
+not a validation one.
+
+**11.128.4 AND THE PANEL RENDERS `Finding.remedy`, WHICH DR-128 SAID IT
+ALREADY DID.** §11.127.5 states that the issues panel *"renders it as a
+button"*. It did not. The field shipped, `PWR-003` declared it,
+`addOutletsToRack` implemented it, and **`drc_panel.dart` never read the
+field**, so `[ Add a rack PDU ]` existed nowhere a person could press it.
+
+**THIS IS THE SECOND TIME IN TWO RULINGS THAT A BUTTON WAS DESCRIBED
+BEFORE IT EXISTED.** The first was `SpringBackRemedy`'s two members, and
+**Dart's exhaustive switch caught that one within the hour**. This one had
+no such backstop: a nullable field a widget ignores compiles perfectly and
+tests green, because every test that could have noticed was written
+against the model.
+
+**So the gate is the correction.** `FindingRemedy` values are asserted
+against what the panel renders, in both directions, exactly as
+`SpringBackRemedy`'s pairing now is. **A remedy nothing renders is a
+button nobody can press**, and that sentence is now a failing test rather
+than a thing I have written twice.
+
+**11.128.5 WHAT IS DELIBERATELY NOT HERE.** A separate verification
+dialog for code rules, recording who checked what against which edition,
+was offered and not taken. `AckedFinding` already carries `reason`, `by`
+and `at`, so the record exists; what a code acknowledgement wants is a
+different QUESTION, and **the place that earns its keep is T0.02, the
+exceptions sheet, which is M6-C and not built**. Building the dialog first
+would design a form for a page nobody has drawn.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
