@@ -413,7 +413,11 @@ $SuiteFloors = @{
     # after the ruling claimed two chip buttons that did not exist.
     # 4021 at #841: +3 for the producer census, which names the eleven
     # PortDef fields the seed builder cannot set rather than counting them.
-    'rackpal_core'   = 4021
+    # 4035 at DR-130: +14 from mount_note_command_test.dart, the writer
+    # OffRackPlacement.mountNote never had. Its canary earned its keep on
+    # the first run: "no PLC finding from evaluateDocument" passed on a
+    # rule that entry point never emits, for any document.
+    'rackpal_core'   = 4035
     'rackpal_text'   = 1
     'rackpal_export' = 195
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which

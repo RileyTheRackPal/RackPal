@@ -552,4 +552,11 @@ enum LabelKey {
   // already exists, and "Undo Add Cable" in front of somebody who has
   // just named a barrel adapter would offer to take back the wrong act.
   declareInlineAdapter,
+
+  // A MOUNT NOTE ON AN OFF-RACK DEVICE (commands/mount_note_command.dart),
+  // M5-L/`#839`, DR-130. Its own value and not `setProperty`: the field
+  // lives on the `Placement` rather than on the device, and "Undo Set
+  // Property" in front of somebody who has just typed "Top shelf, left"
+  // names nothing they did.
+  setMountNote,
 }

@@ -143,7 +143,31 @@ final class OffRackPlacement extends Placement {
   const OffRackPlacement({this.locationId, this.mountNote, super.unknown});
 
   final Uuid? locationId;
+
+  /// Free prose about where the device physically sits when it is not in
+  /// a rack: *"AV closet, top shelf"*, *"Ceiling mount, rear of room"*.
+  ///
+  /// **THIS HAD NO PRODUCER UNTIL DR-130** (`#839`). It was modelled,
+  /// serialized, round-tripped and seeded by the starter generator, and
+  /// nothing a person could reach ever wrote one, which is why DR-125
+  /// priced the cabinet head end against a fallback that did not exist.
+  /// `SetMountNoteCommand` is the writer.
   final String? mountNote;
+
+  /// A copy with a different [mountNote], on `Finding.withSeverity`'s
+  /// precedent (DR-128).
+  ///
+  /// THE VALUE IS ONE SITE RATHER THAN A COMPILE ERROR, and the
+  /// difference matters: a field added to this class with a default is
+  /// NOT a compile error at a longhand rebuild, it is a silent drop, and
+  /// that is exactly how `evaluateDocument` lost `Finding.remedy` twice
+  /// in one file. What this buys is that there is only one place to
+  /// remember, not that the compiler will remember for you.
+  OffRackPlacement withMountNote(String? note) => OffRackPlacement(
+    locationId: locationId,
+    mountNote: note,
+    unknown: unknown,
+  );
 }
 
 /// The device has not been placed anywhere yet — this variant *is* the
