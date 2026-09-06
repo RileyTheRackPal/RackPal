@@ -1,8 +1,8 @@
 ---
 type: Playbook
 title: A modelled field is not a reachable one; look for the gesture, not the field
-description: Fields with no writer, a callback with no caller, one field whose only writer is the JSON decoder, and three found in one milestone where the missing producer was the seed catalogue's own port builder. Ask what a person clicks, and follow it down.
-tags: [practice, model, commands, verification, catalog, dr-124, dr-125, dr-126, m5]
+description: Fields with no writer, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, and a panel nothing mounts. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
+tags: [practice, model, commands, verification, catalog, ui, dr-124, dr-125, dr-126, dr-128, dr-129, m5]
 timestamp: 2026-08-12T00:00:00Z
 status: adopted
 ---
@@ -256,9 +256,51 @@ started declaring. It fired at exactly the right moment and was widened to a
 named set rather than deleted. A census finds a field once; a canary finds the
 day it changes.
 
-**What is owed**: a census of `p()`'s parameters against `PortDef`'s fields.
-Two of three were found by a user's review rather than by looking, and the third
-is the one nobody has looked for yet.
+**THE CENSUS THAT WAS OWED HAS RUN**, as `#841`, and it narrowed the claim
+rather than widening it. Eleven `PortDef` fields have no `p()` parameter, but
+**almost every one is written by the DEVICE BUILDER**, where a person authors a
+port. They are not fields nothing can write; they are fields **the shipped
+catalogue cannot express**. The sharp question is who READS one outside the
+builder, and two do: `topology`, covered deliberately because the seed declares
+`PortDirection.busNode` instead, and `carriedProtocols`, which nothing populates,
+so **searching the catalogue by protocol matches nothing and always has**
+(`#846`).
+
+It found more stale claims than fields: three in `connect_target.dart`, all in
+doc comments that REASON from them, all falsified within two days by DR-124 and
+DR-126. **The lesson is not "sweep harder"**: a claim about what the catalogue
+contains belongs in a test, where it fails, rather than in prose, where it is
+believed. `seed_producer_census_test.dart` NAMES the eleven rather than counting
+them, because a count of eleven passes on the wrong eleven.
+
+# The widget is a producer too, and the layer above it is where this ends
+
+**Two more arrived in DR-128 and DR-129, and the second is the largest.**
+
+`Finding.remedy` shipped with a writer (`PWR-003` declares it), an implementation
+(`addOutletsToRack`) and a ruling stating that the panel *"renders it as a
+button"*. **The panel never read the field.** The reachability gap had moved off
+the model entirely and onto the surface, and **nothing caught it** because a
+nullable field a widget ignores compiles and tests green. Contrast
+`SpringBackRemedy`, whose identical error in the same ruling **Dart's exhaustive
+switch caught within the hour**, because a chip handler must match every enum
+value. **Where the type system cannot make the pairing mandatory, a test must**,
+and it must assert in both directions.
+
+**AND THEN THE PANEL ITSELF HAD NO CALLER.** `DrcPanel` appears in exactly two
+files in the tree: the one defining it and the one testing it. Nothing mounts it,
+and outside that widget file nothing calls `evaluateDocument` or `groupFindings`
+at all. Everything M5-F built (the findings list, the grouping, the severity
+filter, acknowledge and withdraw, the `Why?` viewer) is real, tested and
+**unreachable by any gesture a person can make**, and docs/12 recorded that it was
+reachable (`#847`).
+
+**THE WIDGET'S TESTS PASS BECAUSE ITS TESTS MOUNT IT THEMSELVES.** That is this
+whole practice in its final form: the thing exists, something reads it, every test
+is green, and no path a person walks reaches it. **"What does a person click"
+means the WHOLE path, ending at a window that opens on its own**, and a widget
+test is not evidence of the last step, because the test supplies the step it is
+meant to prove.
 
 # Citations
 

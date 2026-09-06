@@ -2,6 +2,50 @@
 
 ## 2026-09-06
 
+* **Ruling**: [DR-129](/decisions/dr-129-a-code-adjacent-row-is-a-different-kind-of-row.md).
+  `CODE-002`'s NEC article was findable only by reading to the end of a
+  sentence that opens with a cable designator, and **`RuleMeta.governing`
+  holds THIS repository's ids, not the code's**. The catalogue gains
+  `codeCitation` and the row gains `ConsoleStatus.caution`, a DIAMOND
+  where warning is a triangle, because a code row is a different question
+  and not a louder warning. **The severity is untouched**, so the filter
+  and the override still work on it.
+* **Note**: **THE SAME BUTTON WAS RULED TWICE AND BUILT ONCE, AND THIS
+  TIME NOTHING CAUGHT IT.** DR-128 §11.127.5 said the panel *"renders it
+  as a button"*. It did not: `Finding.remedy` shipped, `PWR-003` declared
+  one, `addOutletsToRack` implemented it, and `drc_panel.dart` never read
+  the field. The `SpringBackRemedy` twin was caught by **Dart's exhaustive
+  switch within the hour**; a nullable field a widget ignores compiles and
+  tests green. **Where the type system cannot make a pairing mandatory, a
+  test must**, so `remedy_pairing_test.dart` asserts it in both
+  directions. See
+  [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md).
+* **Note**: **AND THE PANEL HAS NO HOST AT ALL** (`#847`). `DrcPanel` is
+  referenced by its own definition and its own test and by nothing else in
+  the tree; nothing in `apps/rackpal` mounts it, and nothing outside that
+  widget file calls `evaluateDocument` or `groupFindings`. **Everything
+  M5-F built is real, tested and unreachable**, and docs/12 §5.4.6 had
+  recorded the opposite in the words *"They can now"*. Corrected in the
+  same commit that measured it. **A widget test supplies the step it is
+  meant to prove.**
+* **Note**: **AN EXISTING TEST WAS MOVED OFF A CODE RULE ON PURPOSE.**
+  `drc_panel_test`'s acknowledgement test pinned the exact subtitle of a
+  `CODE-002` row, where the rule id had been incidental. Adding a third
+  segment would have turned it into a test of the citation format wearing
+  an acknowledgement test's name, so it now uses `PWR-002`, and the three
+  segments composing is asserted where it belongs.
+* **Note**: **THIRD UNPAID VERSION BUMP, AND ALL THREE WERE CAUGHT BY
+  DERIVING RATHER THAN READING.** `#841` closed at `v0.5.60` and the board
+  held 61 Done Chapters under epic 23. Paid as `v0.5.61`. `#840` is a
+  STORY with no Chapters and moves the digit by nothing, which is the part
+  most likely to be got wrong on a branch whose whole subject is `#840`.
+* **Note**: `#841`'s census RAN, and it narrowed its own claim. Eleven
+  `PortDef` fields have no `p()` parameter, but almost all are written by
+  the device builder: they are fields **the shipped catalogue cannot
+  express**, not fields nothing can write. Only `carriedProtocols` is
+  genuinely open (`#846`), and **protocol search in the catalogue has
+  matched nothing since it was written**. It found three stale prose
+  claims, more than it found fields.
 * **Ruling**: [DR-128](/decisions/dr-128-the-remedy-prompt-and-rules-that-ask-the-impossible.md).
   The M5-H2 review asked three rules to offer the part that fixes them.
   **`CON-001` had been promising that "declaring the adapter clears it"
