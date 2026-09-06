@@ -39,6 +39,7 @@ import 'package:rackpal_ui/src/keymap/keymap.dart';
 import 'package:rackpal_ui/src/palette/device_palette_panel.dart';
 import 'package:rackpal_ui/src/shell/no_racks_view.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
+import 'package:rackpal_ui/src/validation/validation_drawer.dart';
 import 'package:rackpal_ui/src/widgets/document_memo.dart';
 
 /// The rack editor canvas: the pannable/zoomable grid (L0) with a real rack
@@ -4423,83 +4424,152 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           // on every focusable palette row.
           ApplyCompactionIntent: _ApplyCompactionAction(this),
         },
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
+        // ═══════════════════════════════════════════════════════════════
+        // A COLUMN, BECAUSE docs/04 §1 PUTS THE DRAWER UNDER ALL THREE
+        // ═══════════════════════════════════════════════════════════════
+        // The validation drawer is a horizontal band across the shell,
+        // not a fourth column, so it wraps the palette/canvas/inspector
+        // row rather than joining it. That is why `#847` needed neither
+        // the unbuilt `PanelHost` seam nor a share of the inspector's
+        // 320 px: the decision had been made in the layout table and
+        // simply never built (DR-133 §11.132.2).
+        child: Column(
           children: [
-            SizedBox(
-              width: 280,
-              child: DevicePalettePanel(
-                // WHAT THE DOCUMENT CAN PLACE, not what this build ships
-                // (DR-077 §11.76.1). `_catalog` is still the seed data
-                // this screen's demo document is built FROM; it is no
-                // longer what the palette lists, because a template
-                // authored in the Device Builder is in the document and
-                // was in no catalog.
-                templates: _rows,
-                // `#244`, DR-104 §11.103.5. The registries only WIDEN the
-                // search: without them `hdbaset` still lands on
-                // `video.hdbaset` by substring, and what they add is the
-                // vocabulary that is not a substring of the id, `hdbt`
-                // being DR-060's own example.
-                registries: _doc.registries,
-                favourites: widget.favourites,
-                unreadableLibraries: widget.unreadableLibraries,
-                categoryOrder: kCatalogCategoryOrder,
-                searchFocusNode: _paletteSearchFocus,
-                searchController: _paletteSearchController,
-                onDismissSearch: _dismissPaletteSearch,
-                onRefuse: _status.show,
-                onPlace: _placeFromCatalog,
-                onArmDrag: _onPaletteArmDrag,
-                draggingRowKey: _lastPaletteDragDimId,
-              ),
-            ),
-            const VerticalDivider(width: 1),
             Expanded(
-              child: Focus(
-                focusNode: _canvasFocus,
-                autofocus: true,
-                child: _buildCanvas(
-                  context,
-                  scheme,
-                  gridStyle,
-                  palette,
-                  rackScene,
-                ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(
+                    width: 280,
+                    child: DevicePalettePanel(
+                      // WHAT THE DOCUMENT CAN PLACE, not what this build ships
+                      // (DR-077 §11.76.1). `_catalog` is still the seed data
+                      // this screen's demo document is built FROM; it is no
+                      // longer what the palette lists, because a template
+                      // authored in the Device Builder is in the document and
+                      // was in no catalog.
+                      templates: _rows,
+                      // `#244`, DR-104 §11.103.5. The registries only WIDEN the
+                      // search: without them `hdbaset` still lands on
+                      // `video.hdbaset` by substring, and what they add is the
+                      // vocabulary that is not a substring of the id, `hdbt`
+                      // being DR-060's own example.
+                      registries: _doc.registries,
+                      favourites: widget.favourites,
+                      unreadableLibraries: widget.unreadableLibraries,
+                      categoryOrder: kCatalogCategoryOrder,
+                      searchFocusNode: _paletteSearchFocus,
+                      searchController: _paletteSearchController,
+                      onDismissSearch: _dismissPaletteSearch,
+                      onRefuse: _status.show,
+                      onPlace: _placeFromCatalog,
+                      onArmDrag: _onPaletteArmDrag,
+                      draggingRowKey: _lastPaletteDragDimId,
+                    ),
+                  ),
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    child: Focus(
+                      focusNode: _canvasFocus,
+                      autofocus: true,
+                      child: _buildCanvas(
+                        context,
+                        scheme,
+                        gridStyle,
+                        palette,
+                        rackScene,
+                      ),
+                    ),
+                  ),
+                  const VerticalDivider(width: 1),
+                  // docs/04 §1's 320px inspector column, the FOURTH
+                  // column, added this stage. §4's `RackInspector` and
+                  // the minimal selection summary share it; see
+                  // inspector_panel.dart's header for how "the
+                  // RackInspector REPLACES the Selection section" is
+                  // honoured given there was no Selection section to
+                  // replace.
+                  SizedBox(
+                    width: 320,
+                    child: InspectorPanel(
+                      target: _inspectorTarget,
+                      rack: _rack,
+                      doc: _doc,
+                      presets: _presets,
+                      selectedIds: _selection.ids.toSet(),
+                      focusedId: _selection.focus,
+                      onSetProperty: _setRackProperty,
+                      onRename: _renameRack,
+                      onRequestHeight: _requestHeight,
+                      onApplyPreset: _applyPreset,
+                      onRefuse: _status.show,
+                      onSetLifecycle: _setSelectionLifecycle,
+                      onSetWidth: _setSelectionWidth,
+                      onSetOverride: _setDeviceOverride,
+                      onSetPortFact: _setPortFact,
+                      onSetMountNote: _setMountNote,
+                      firstFieldFocus: _inspectorFirstFieldFocus,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const VerticalDivider(width: 1),
-            // docs/04 §1's 320px inspector column — the FOURTH column, added
-            // this stage. §4's `RackInspector` and the minimal selection
-            // summary share it; see inspector_panel.dart's header for how
-            // "the RackInspector REPLACES the Selection section" is honoured
-            // given there was no Selection section to replace.
-            SizedBox(
-              width: 320,
-              child: InspectorPanel(
-                target: _inspectorTarget,
-                rack: _rack,
-                doc: _doc,
-                presets: _presets,
-                selectedIds: _selection.ids.toSet(),
-                focusedId: _selection.focus,
-                onSetProperty: _setRackProperty,
-                onRename: _renameRack,
-                onRequestHeight: _requestHeight,
-                onApplyPreset: _applyPreset,
-                onRefuse: _status.show,
-                onSetLifecycle: _setSelectionLifecycle,
-                onSetWidth: _setSelectionWidth,
-                onSetOverride: _setDeviceOverride,
-                onSetPortFact: _setPortFact,
-                onSetMountNote: _setMountNote,
-                firstFieldFocus: _inspectorFirstFieldFocus,
+            const Divider(height: 1),
+            // THE HOST `DrcPanel` NEVER HAD (`#847`, DR-133). Everything
+            // M5-F built has been real, tested and unreachable since it
+            // shipped, and nothing outside that widget file called
+            // `evaluateDocument` or `groupFindings` at all.
+            ValidationDrawer(
+              findings: _findings,
+              groups: groupFindings(
+                _doc,
+                _findings,
+                by: _drcGrouping,
               ),
+              grouping: _drcGrouping,
+              onGroupingChanged: (FindingGrouping g) =>
+                  setState(() => _drcGrouping = g),
+              expanded: _drcExpanded,
+              onExpandedChanged: (bool v) => setState(() => _drcExpanded = v),
+              height: _drcHeight,
+              onHeightChanged: (double h) => setState(() => _drcHeight = h),
+              onReveal: _revealFinding,
             ),
           ],
         ),
       ),
     );
+  }
+
+  /// Every finding on the CURRENT document, severity resolved and
+  /// acknowledgements applied.
+  ///
+  /// RECOMPUTED ON BUILD, which is honest for M5 and is not the end
+  /// state. `evaluateDocument` walks the whole document, and the epoch
+  /// machinery exists so a derived view can recompute only when the
+  /// epochs it reads bump. Wiring this to `wires`/`structure`/`meta` is
+  /// real work with a real payoff and it is NOT this chapter: `#847` is
+  /// about the panel being reachable at all, and a correctness problem
+  /// would be a worse thing to ship than a performance one. Filed.
+  List<Finding> get _findings => evaluateDocument(_doc);
+
+  FindingGrouping _drcGrouping = FindingGrouping.severity;
+  bool _drcExpanded = false;
+  double _drcHeight = kDrawerAutoHeight;
+
+  /// Selects the entity a finding points at, so "reveal" means the same
+  /// thing here as it does everywhere else in this screen.
+  void _revealFinding(Uuid id) {
+    // A FINDING'S LOCUS IS NOT ALWAYS A DEVICE: it can be a rack, a net
+    // or a circuit, and selecting one of those here would be a silent
+    // no-op that looks like a broken row. Only devices are revealed, and
+    // the rest simply do not offer the gesture (`DrcPanel` already draws
+    // a row with no locus as untappable).
+    if (!_doc.devices.containsKey(id)) return;
+    _selection.apply([id], SelectMode.replace);
+    if (_inspectorTarget != InspectorTarget.selection) {
+      setState(() => _inspectorTarget = InspectorTarget.selection);
+    }
   }
 
   /// CR-105's chip for [id], or null when this device is not signposted.
