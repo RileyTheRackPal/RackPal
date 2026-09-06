@@ -17118,6 +17118,70 @@ different QUESTION, and **the place that earns its keep is T0.02, the
 exceptions sheet, which is M6-C and not built**. Building the dialog first
 would design a form for a page nobody has drawn.
 
+### §11.129 DR-130 · The cabinet head end gets a name and a note, and the note had no producer either
+
+**Board `#839` (M5-L), authorised by DR-127 §11.126.** Settled by the user
+2026-09-06, on the eleventh of the M5-H2 review's findings: a cabinet head
+end is *"the COMMON residential case rather than an edge"*.
+
+**11.129.1 THE FINDING'S OWN FALLBACK DOES NOT EXIST.** DR-125 §11.124.1
+dispositioned this as *"expressible as `OffRackPlacement` with a
+`mountNote`, but crude"*. Censused before pricing, as that ruling requires
+of itself, and **the crude option is not available either**:
+
+`OffRackPlacement.mountNote` is modelled, serialized under its own key,
+round-tripped by the codec, and **written by nothing a person can reach**.
+The one occurrence in `commands/` is `location_commands.dart` copying it
+forward so a location change does not destroy it, which is a preserver and
+not a producer. No widget renders it, no schedule prints it, no exporter
+reads it. **Its only writers are `apps/rackpal/tool/starters/`**, the
+starter-generation tool, which is why four seeded devices carry sentences
+like *"Ceiling mount, rear of room"* and no user has ever been able to
+type one.
+
+**SO THE FINDING WAS PRICED AGAINST A WORKAROUND THAT IS REACHABLE ONLY
+BY HAND-EDITING JSON.** That is the eighth field this milestone with no
+producer, and the first found by censusing a ruling's own escape hatch
+rather than by a rule firing. The lesson stands where DR-128 left it: **a
+claim about what the product can already express belongs in a test.**
+
+**11.129.2 RULED: A NAMED PLACE, WITH A NOTE. NOT A CONTAINER.**
+`mountNote` gains a producer, and the cabinet head end is a `Location`
+plus that note. **No cabinet entity, no shelf geometry, no RU grid, and no
+elevation.** Three larger readings were offered and declined:
+
+| Offered | Why not |
+|---|---|
+| A cabinet counted by the power and thermal rollups, as a rack is | Real, and the failure it catches (a sealed cabinet full of gear) is real. It is also a container decision, and containers are what M9 is holding |
+| A first-class container with shelf geometry, reusing DR-128's `ShelfPlacement` | Collides head-on with `#844`, which parked exactly this under M9 six commits ago. Building it here would unpark by accident |
+| Park everything, fix nothing | Leaves the finding's premise false in the record AND leaves a modelled field unreachable, which is the state that produced the finding |
+
+**11.129.3 WHY THE SMALLEST OPTION IS NOT THE TIMID ONE.** The reviewer's
+point is that this case is COMMON, and what a common case needs first is
+to be **sayable**: a device in the AV closet on the top shelf should print
+that way on the schedule and in the PDF, rather than appearing as a device
+with no location. A note reaches every one of those surfaces. **Geometry
+reaches none of them without a drawing nobody has drawn**, which is
+`#844`'s argument and does not improve by being made twice.
+
+**11.129.4 `PLC-001` STAYS SILENT ON AN OFF-RACK DEVICE, AND THAT IS G4
+AND NOT AN OMISSION.** `placement_rules.dart` already makes `PLC-001` and
+`PLC-003` unevaluatable for `OffRackPlacement` and `StagedPlacement`, on
+the ground that there is no RU to be within. **A cabinet does not change
+that**: the rule asks whether a rail position fits inside a rack, and a
+cabinet has neither. Making `PLC-001` fire on a cabinet would be
+fabricating a rack, which CR-114 forbids in the same breath it forbids
+estimating an unknown.
+
+So this chapter adds **no rule**, and the rule count stays at 28 under
+CR-021 and AC-040.
+
+**11.129.5 WHAT THIS DOES NOT RULE.** Whether a cabinet's outlets, watts
+and BTU should roll up the way a rack's do is a real question and is
+**explicitly left open**, filed rather than answered, because the honest
+version of it needs the container the first table row declined. It joins
+`#844` under M9 rather than being half-built here.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
