@@ -409,6 +409,128 @@ RackDocument _speakerRun({required String fromLeg, required String toLeg}) {
   return doc;
 }
 
+/// A 70 V line: one amplifier channel rated [rating] W driving speakers
+/// whose taps are [taps], plus [unrecorded] speakers with no tap set.
+///
+/// ═══════════════════════════════════════════════════════════════════
+/// THE PAIR HAS TO BE CONSTRUCTED, BECAUSE THE CATALOGUE CANNOT BUILD IT
+/// ═══════════════════════════════════════════════════════════════════
+/// DR-132 §11.131.6. No seeded document can overload a constant-voltage
+/// line: until this milestone nothing declared a `bus.maxTapWatts` and
+/// nothing set a `Port.tapWatts`, so a rule whose fault cannot be built
+/// from the catalogue had never been tested against it. The known-bad
+/// and the near-miss below differ in ONE TAP VALUE and nothing else.
+/// PUBLIC, unlike its neighbours, because `ele005_tap_budget_test.dart`
+/// asserts the ARITHMETIC around absences and the AC-051 pair cannot:
+/// DR-125 §11.124.5's *"a pair proves a rule fires, not that it fires
+/// correctly."*
+RackDocument cvLineFixture({
+  required int? rating,
+  required List<int> taps,
+  int unrecorded = 0,
+  bool bypassLast = false,
+}) {
+  final doc = fixtureDoc();
+
+  TemplateBody ampBody() => TemplateBody(
+    manufacturer: 'FX',
+    model: 'amp70',
+    displayName: '70V amp',
+    ports: [
+      PortDef(
+        key: const PortKey('cv'),
+        label: '70V OUT',
+        signalFamily: const SignalFamilyId('audio.speaker_cv'),
+        connector: const ConnectorTypeId('euroblock2'),
+        face: Face.rear,
+        order: const FracIndex('a0'),
+        direction: PortDirection.busNode,
+        nominalVoltage: 70,
+        // NULL RATING IS A REAL CASE, not a fixture shortcut: no seeded
+        // port declared one until DR-132, so "the amplifier states no
+        // capacity" is the state every existing document is in.
+        bus: rating == null ? null : BusCapability(maxTapWatts: rating),
+      ),
+    ],
+  );
+
+  TemplateBody spkBody() => TemplateBody(
+    manufacturer: 'FX',
+    model: 'pendant',
+    displayName: '70V pendant',
+    ports: [
+      PortDef(
+        key: const PortKey('cv'),
+        label: 'TAP',
+        signalFamily: const SignalFamilyId('audio.speaker_cv'),
+        connector: const ConnectorTypeId('euroblock2'),
+        face: Face.rear,
+        order: const FracIndex('a0'),
+        direction: PortDirection.busNode,
+      ),
+    ],
+  );
+
+  final amp = fixturePlaceBody(doc, ampBody(), 1, seq: 60, designator: 'AMP-1');
+  final ampPort = Port(
+    id: fixtureId(660),
+    deviceId: amp.id,
+    designator: 'AMP-1.CV',
+    templatePortKey: const PortKey('cv'),
+  );
+  doc.ports[ampPort.id] = ampPort;
+
+  const netId = Uuid('00000000-0000-4000-8000-0000000006ff');
+  var next = 661;
+  var seq = 61;
+  final ends = <Uuid>[];
+  for (var i = 0; i < taps.length + unrecorded; i++) {
+    final spk = fixturePlaceBody(
+      doc,
+      spkBody(),
+      1,
+      seq: seq++,
+      designator: 'SPK-${i + 1}',
+    );
+    final port = Port(
+      id: fixtureId(next++),
+      deviceId: spk.id,
+      designator: 'SPK-${i + 1}.TAP',
+      templatePortKey: const PortKey('cv'),
+      tapWatts: i < taps.length ? taps[i] : null,
+      lowZBypass: bypassLast && i == taps.length - 1,
+    );
+    doc.ports[port.id] = port;
+    ends.add(port.id);
+  }
+
+  // ONE LINK PER SPEAKER, which is what a daisy-chained 70 V run is:
+  // each hop is its own cable and its own schedule row (G1), and they
+  // share the run by sharing a NET rather than by being one object.
+  for (var i = 0; i < ends.length; i++) {
+    final link = _quietWire(doc);
+    link.services[0] = Service(
+      id: 'svc-cv-$i',
+      signalFamily: const SignalFamilyId('audio.speaker_cv'),
+      netId: netId,
+    );
+    link.conductors[0] = Conductor(
+      role: 'pair',
+      from: PortEndpoint(ampPort.id),
+      to: PortEndpoint(ends[i]),
+    );
+  }
+  doc.nets[netId] = Net(
+    id: netId,
+    name: '70V Line 1',
+    designator: 'N-CV1',
+    signalFamily: const SignalFamilyId('audio.speaker_cv'),
+    nominalVoltage: 70,
+    meta: fixtureMeta(),
+  );
+  return doc;
+}
+
 /// A switch with a [budget] W PoE budget feeding one PD drawing
 /// [standard]'s ceiling.
 RackDocument _poeBudget({
@@ -701,6 +823,30 @@ List<DrcFixture> tier3Fixtures() => [
     kind: FixtureKind.nearMiss,
     what: 'the same pair running + to +, which is in phase',
     run: () => fromDocument(_speakerRun(fromLeg: 'SP1+', toLeg: 'SP2+')),
+  ),
+  DrcFixture(
+    ruleId: 'ELE-005',
+    kind: FixtureKind.knownBad,
+    // 4 x 60 W is 240 W against a 200 W budget on a 250 W channel.
+    what: 'four 60 W taps on a 250 W amplifier channel',
+    run: () => fromDocument(cvLineFixture(rating: 250, taps: [60, 60, 60, 60])),
+  ),
+  DrcFixture(
+    ruleId: 'ELE-005',
+    kind: FixtureKind.nearMiss,
+    // ONE TAP DIFFERENT, and it is the last one. Not "fewer speakers"
+    // and not "a bigger amplifier", because either would clear the rule
+    // for a reason that is not the one under test.
+    //
+    // 60+60+60+20 IS 200, WHICH IS THE BUDGET EXACTLY, and landing on
+    // the boundary is deliberate: the rule reads `known <= budget`, so a
+    // near-miss one watt under would pass just as well on a `<` written
+    // as `<=` by accident. The first draft used 40 and summed to 220,
+    // which fired, and the gate caught it.
+    what:
+        'the same four speakers with the last tap at 20 W, exactly the '
+        'budget',
+    run: () => fromDocument(cvLineFixture(rating: 250, taps: [60, 60, 60, 20])),
   ),
   DrcFixture(
     ruleId: 'NET-001',

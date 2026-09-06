@@ -164,6 +164,19 @@ final class PortBuilder {
     // `DIR-003` alone would have moved the false spring-back to `SIG-002`
     // and changed nothing a person sees except the sentence.
     List<String> accepts = const [],
+    // WHAT THIS PIN CAN CARRY AS A SHARED MEDIUM (M5-K, DR-132).
+    //
+    // THE THIRD FIELD FOUND UNAUTHORABLE BY CONSTRUCTION, after
+    // `maxConnections` and `accepts` above, and `#841`'s census named it
+    // rather than waiting for a rule to fire on it. `BusCapability` was
+    // modelled at M0 and no seeded port could declare one, so
+    // `maxTapWatts`, the CAPACITY half of a 70 V line's load sum, was
+    // zero of 727 ports.
+    //
+    // `ELE-005` is the consumer, restored by DR-132 §11.131. Without
+    // this the rule is unevaluatable on the only amplifier in the
+    // catalogue that can raise it, which is G4-correct and useless.
+    BusCapability? bus,
   }) {
     _bank(bank, bankLabel ?? bank, bankSide);
     ports.add(
@@ -195,6 +208,7 @@ final class PortBuilder {
         notes: notes,
         maxConnections: maxConnections,
         acceptedFamilies: [for (final f in accepts) SignalFamilyId(f)],
+        bus: bus,
       ),
     );
   }

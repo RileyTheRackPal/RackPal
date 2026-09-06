@@ -5869,6 +5869,9 @@
             {
               "acceptedFamilies": [],
               "bankKey": "cvOut",
+              "bus": {
+                "maxTapWatts": 250
+              },
               "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "busNode",
@@ -5886,6 +5889,9 @@
             {
               "acceptedFamilies": [],
               "bankKey": "cvOut",
+              "bus": {
+                "maxTapWatts": 250
+              },
               "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "busNode",
@@ -5978,7 +5984,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-05-11T15:45:00.000Z",
-        "contentHash": "sha256:21cf82a13bf5c5ba243e55e87bd9275247ebfc524f336c4726136803483497c4",
+        "contentHash": "sha256:27da6d2aa24cba46dc0904377dcc9f1367c813a7b07b1de4831ed8b094624409",
         "templateId": "A05",
         "version": 1
       },

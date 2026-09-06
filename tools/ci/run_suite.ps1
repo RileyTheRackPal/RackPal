@@ -425,7 +425,11 @@ $SuiteFloors = @{
     # the resolved FAMILY rather than one rule verdict, which is where
     # the fix belongs: ELE-006 was patched first and SIG-002 immediately
     # refused the same correct connection.
-    'rackpal_core'   = 4049
+    # 4058 at DR-132: +9 from ele005_tap_budget_test.dart. The AC-051
+    # pair proves ELE-005 fires; these prove it COUNTS honestly, which is
+    # what a load rule gets wrong while passing its pair. One of them
+    # caught the amplifier being reported as a speaker nobody measured.
+    'rackpal_core'   = 4058
     'rackpal_text'   = 1
     'rackpal_export' = 195
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which

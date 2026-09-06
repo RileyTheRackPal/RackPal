@@ -396,6 +396,24 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     defaultSeverity: Severity.warning,
   ),
   RuleMeta(
+    ruleId: 'ELE-005',
+    tier: RuleTier.postHoc,
+    summary:
+        'Speaker taps on a constant-voltage line exceed 80% of the '
+        'amplifier channel rating. Known taps only; unrecorded taps are '
+        'counted and named, never estimated.',
+    rationale:
+        'Overload a 70 V line and the amplifier clips, and clipped square '
+        'waves are what destroy tweeters, so the cost of getting this '
+        'wrong is a van full of replacement drivers rather than a '
+        'protection circuit doing its job. The 80% is headroom on the same '
+        'convention PWR-001 derates a breaker by, and it is a planning '
+        'figure rather than a measurement: a tap nobody recorded still '
+        'draws, so the total this reports is a FLOOR.',
+    governing: ['AC-040', 'DR-132', 'CR-114'],
+    defaultSeverity: Severity.warning,
+  ),
+  RuleMeta(
     ruleId: 'NET-001',
     tier: RuleTier.postHoc,
     summary:

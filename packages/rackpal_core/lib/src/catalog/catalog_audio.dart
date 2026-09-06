@@ -758,6 +758,14 @@ Map<String, TemplateBody> buildAudioCatalog() {
       bank: 'linkThru',
       balanced: true,
     )
+    // 250 W PER OUTPUT, which is the "2x250W" in this template's own
+    // model string read the way an amplifier spec sheet means it: two
+    // channels, each rated 250 W, not 250 W shared. DR-132 §11.131.5.
+    //
+    // THE CAPACITY HALF OF `ELE-005`. Until DR-132 gave `p()` a `bus`
+    // parameter, no seeded port could state one, so the rule that sums
+    // speaker taps had nothing to compare against on the ONLY rack-side
+    // constant-voltage source in the catalogue.
     ..p(
       'cv.a',
       '70V OUT A',
@@ -767,6 +775,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
       bank: 'cvOut',
       bankLabel: 'CV Speaker Outputs',
       nominalVoltage: 70,
+      bus: BusCapability(maxTapWatts: 250),
     )
     ..p(
       'cv.b',
@@ -776,6 +785,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
       dir: PortDirection.busNode,
       bank: 'cvOut',
       nominalVoltage: 70,
+      bus: BusCapability(maxTapWatts: 250),
     )
     ..p(
       'mute',

@@ -50,6 +50,7 @@ import 'package:rackpal_core/src/model/enums.dart' show Severity;
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/validation/finding.dart';
 import 'package:rackpal_core/src/validation/rule_catalogue.dart';
+import 'package:rackpal_core/src/validation/rules_audio.dart';
 import 'package:rackpal_core/src/validation/rules_cable.dart';
 import 'package:rackpal_core/src/validation/rules_code.dart';
 import 'package:rackpal_core/src/validation/rules_power.dart';
@@ -77,6 +78,7 @@ const Map<String, DrcRule> kDrcRules = <String, DrcRule>{
   'CODE-001': ruleCode001,
   'CODE-002': ruleCode002,
   'ELE-003': ruleEle003,
+  'ELE-005': ruleEle005,
   'LEN-001': ruleLen001,
   'LEN-002': ruleLen002,
   'LNK-020': ruleLnk020,

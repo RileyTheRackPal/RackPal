@@ -136,10 +136,11 @@ void main() {
       );
       expect(
         built,
-        hasLength(14),
+        hasLength(15),
         reason:
-            'docs/02 §5 gives 28 rules as 8 + 6 + 14, and this is '
-            'the fourteen',
+            'docs/02 §5 gives 29 rules as 8 + 6 + 15, and this is '
+            'the fifteen. It was fourteen until DR-132 §11.131 restored '
+            '`ELE-005`, which AC-040 had cut',
       );
     });
 
