@@ -17182,6 +17182,98 @@ and BTU should roll up the way a rack's do is a real question and is
 version of it needs the container the first table row declined. It joins
 `#844` under M9 rather than being half-built here.
 
+### §11.130 DR-131 · The switchable device is the SPEAKER, and one control answers both halves of finding 5
+
+**Board `#838` (M5-K), authorised by DR-127 §11.126.** Settled by the user
+2026-09-06 on the fifth of the M5-H2 review's findings: *"`maxTapWatts`
+exists on the model; a tap SELECTOR and CV-to-Low-Z switching do not."*
+
+**11.130.1 THE FIELD HAS A PRODUCER AND NO CONSUMER, WHICH IS A SHAPE
+THIS MILESTONE HAD NOT YET MET.** Eight producer gaps preceded this one
+and every one was a field nothing could write. `maxTapWatts` is the
+opposite and is no better off:
+
+| | |
+|---|---|
+| authorable | **yes**, in the device builder (`port_commands.dart`, `port_grid.dart`) |
+| declared on a seeded port | **zero of 727** |
+| read by a rule, a rollup, a schedule or an export | **nothing, anywhere** |
+
+So a person can type a tap wattage into the builder and **it does not
+participate in one calculation**. `catalog_field.dart` even names the
+gap in its own comment, calling `F08` *"the only field source of a
+tapWatts selector"*, a selector that was never built.
+
+**11.130.2 THE CORRECTION THAT RELOCATED THE WHOLE PROBLEM.** The
+question put to the user assumed a switchable AMPLIFIER and asked how its
+mode is recorded. The answer was that the premise is wrong:
+*"Amplifiers are very rarely switchable, and if they support both Low-Z
+and CV, they almost always have separate outputs instead of a switch.
+Speakers are the only CV devices that I've seen with taps/switches for
+Low-Z/CV in person."*
+
+**The catalogue already agrees, which nobody had checked.** `A05`, the
+only rack-side CV source, declares `cv.a` and `cv.b` as
+`audio.speaker_cv` bus nodes at `nominalVoltage: 70` and **has no low-Z
+output at all**. The amp side needed nothing; the model had been right
+for a reason nobody had written down.
+
+**THIS IS THE THIRD TRADE CORRECTION IN THIS MILESTONE**, after the
+passive power strip and the shelf, and it has the same shape every time:
+an agent reasoning from what the model could express, rather than from
+what an installer touches. Recorded under
+`trade-knowledge-beats-workflow-reasoning`.
+
+**11.130.3 RULED: ONE CONTROL ON THE SPEAKER, DOING DOUBLE DUTY.** The
+tap selector is a per-instance fact on a CV speaker, and its positions
+are wattages **plus a Low-Z bypass**. That single control answers both
+halves of finding 5, which is why they are one chapter's design and not
+two:
+
+- its **wattage** positions are what a 70V bus sums against the
+  amplifier's rating, giving `maxTapWatts` its first consumer;
+- its **bypass** position is CV-to-Low-Z switching, and it tells
+  `ELE-006` that this speaker is currently a low-impedance device.
+
+The amplifier gains nothing. Two catalogue entries with their own outputs
+is the model, and it is the model already shipped.
+
+**11.130.4 `ELE-006`'S FALSE POSITIVE IS REAL AND HAS NO REPRODUCING
+CASE TODAY.** The rule fires on `audio.speaker_cv` opposite
+`audio.speaker_lowz` and looks at nothing else, so a dual-mode speaker
+set to bypass and landed correctly on a low-Z output would be told it is
+a near short. **No seeded speaker is dual-mode**, though: `F08` is CV
+only and `F07` is low-Z only, so the fault is unreachable with shipped
+data.
+
+That is exactly `acceptedFamilies`' position before DR-126, and the
+lesson there transfers: **a rule whose fault cannot be constructed from
+the catalogue has never been tested against the catalogue.** The fixture
+must therefore create the dual-mode speaker deliberately, and AC-051's
+pair is a known-bad and a known-good that differ **only in the selector
+position**.
+
+**11.130.5 TWO CHAPTERS, IN THE ORDER THE USER GAVE.** The false
+positive first, then the selector and the sum. The order is not
+arbitrary: the bypass position is what makes `ELE-006` correct, and
+building the sum first would add a rule on top of one still crying wolf.
+
+**11.130.6 THE SUM CHECK IS A TWENTY-NINTH RULE AND IS NOT AUTHORISED
+HERE.** AC-040 caps v1 at an enumerated catalogue, corrected to 28 by
+§12.6(b), and CR-021 rules that a rule not in canon §5 does not exist.
+**Chapter two therefore needs its own §8.3 amendment**, which is
+deliberately not smuggled into this ruling: DR-127 exists precisely
+because "unpriced" was being used to let consequences sit outside the one
+scope list. The alternative, expressing the sum as a **rollup** in
+`totals.dart` rather than a rule, is genuinely open and is cheaper: it
+reports a number with a G4 unknown count and adds nothing to the
+catalogue.
+
+**11.130.7 WHAT IS NOT RULED: WHICH SEEDED SPEAKERS ARE DUAL-MODE.**
+That is catalogue data under AC-052 and a trade question, not a code one.
+It is asked rather than assumed, because guessing it is how this
+milestone has already been wrong three times.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
