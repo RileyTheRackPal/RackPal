@@ -2489,6 +2489,12 @@ to be confidently wrong about a system the user knows better than the app does. 
 `ELE-003` · `ELE-006` · `NET-001` · `PWR-001` · `PWR-003` · `LEN-001` · `RCK-001` · `RCK-002` ·
 `RCK-003` · `RCK-012` · `RCK-013` · `CODE-001` · `CODE-002` · `LNK-020`.
 
+> **Amended again by DR-132 §11.131, 2026-09-06.** `ELE-005` is **restored, making 29**, on this
+> paragraph's own "protect the user from real money" test: an overloaded 70 V line clips the
+> amplifier and clipped square waves destroy tweeters. It is a CUT rule rather than a new one, and
+> `docs/research/design-data-model.md` line 1136 already carried its severity and its 80% threshold.
+> **`ELE-004` stays cut**, and the enumeration above is otherwise untouched.
+
 > **Amended per §12.6(b), paid 2026-08-03.** This paragraph read *"22 rules, listed once in
 > `docs/rules.md`"* over an enumeration of **24** ids. The enumeration governs and "22" was an
 > arithmetic error; `PLC-001..003` are ratified as distinct tier-1 rules, giving **27**. The home is
@@ -17327,6 +17333,73 @@ device-keyed map").
 neither Episode's nor Beale Street's. A fixed list was going to be wrong
 in the shipped catalogue as well as in the field, and that sentence
 should be read as an example rather than as a constraint.
+
+### §11.131 DR-132 · A §8.3 amendment restoring `ELE-005`, a rule that already had an id, a severity and a threshold
+
+**Board `#838` (M5-K), amending AC-040.** Settled by the user 2026-09-06,
+choosing a rule over a rollup: *"I feel like having a warning for that is
+important to prevent blowing speakers out."*
+
+**11.131.1 THE REASON IS THE ONE AC-040 ITSELF USED.** That cut kept
+`RCK-012`, `CODE-001` and `CODE-002` because they *"protect the user from
+real money"*. Overload a 70 V line and the amplifier clips; **clipped
+square waves are what destroy tweeters**, so the loss is not the
+amplifier's protection circuit doing its job, it is a van full of
+replacement drivers. That is the same test, met.
+
+**11.131.2 IT IS NOT A NEW RULE. IT IS A CUT ONE, AND I NEARLY MINTED A
+DUPLICATE.** The plan of record was to add `ELE-007`. Two greps before
+writing it found that
+`docs/research/design-data-model.md` line 1136 already specifies:
+
+> `ELE-005` **warning**: Σ of 70 V/100 V `tapWatts` on a net > 80% of the
+> amp channel rating.
+
+**Every parameter matches what was about to be invented**: the severity
+the user asked for, the 80% threshold `PWR-001` independently sets as
+this repository's load-headroom convention, and the aggregate. Line 1224
+even names the mechanism, that *"each speaker's input `Port.tapWatts` is
+per-installation. `ELE-005` sums the net."*
+
+`ELE-007` was also already taken, by a satellite-splitter DC-passing rule
+in the same document. **Minting it would have put two different rules
+behind one id in one corpus.**
+
+**11.131.3 SO THE AMENDMENT IS NARROW AND SAYS WHAT IT DOES NOT DO.**
+AC-040's enumeration governs (§12.6(b)) and it currently lists 28.
+`ELE-005` is **added, making 29**. `ELE-004`, cut in the same breath by
+the same paragraph, **stays cut**: parallel low-Z impedance is a
+different calculation over a different aggregate, nobody has asked for
+it, and restoring a neighbour because it is adjacent is how a cut list
+unravels. The rest of AC-040 is untouched.
+
+**11.131.4 THE SUM IS OVER KNOWN TAPS AND NEVER OVER ESTIMATED ONES**
+(G4/CR-114). A speaker whose tap nobody recorded still draws from the
+amplifier, so it cannot be treated as zero, and it must not be guessed
+either. The rule therefore fires **only when the KNOWN taps alone cross
+80%**, which is the one case that is certain, and **the message carries
+the unknown count** so the reader knows the figure is a floor rather than
+a total.
+
+That asymmetry is deliberate and is the honest direction: a net whose
+recorded taps sit under the line while four taps are blank has not been
+cleared, it has been **incompletely measured**, and saying so is worth
+more than a number nobody can act on.
+
+**11.131.5 WHAT IT NEEDS, AND BOTH HALVES WERE PRODUCER GAPS.** The
+capacity side is `PortDef.bus.maxTapWatts`, **declared on zero of 727
+seeded ports**, so `A05`'s two CV outputs must state their rating or the
+rule is unevaluatable and silent on the only amplifier that can raise it.
+The consumption side is `Port.tapWatts`, which DR-131 §11.130.9 found had
+no producer at all and which that ruling's first chapter gave a home.
+**The rule is the consumer both fields have been waiting for since M0.**
+
+**11.131.6 AND ITS AC-051 PAIR MUST BE CONSTRUCTED, NOT FOUND.** No
+seeded document can currently overload a 70 V line, because nothing
+declares a capacity and nothing sets a tap. The known-bad and the
+known-good therefore differ **only in one tap value**, on DR-131
+§11.130.4's reasoning: a rule whose fault cannot be built from the
+catalogue has never been tested against the catalogue.
 
 ## 12. Superseded rulings
 
