@@ -1,5 +1,58 @@
 # Update Log
 
+## 2026-09-06
+
+* **Ruling**: [DR-128](/decisions/dr-128-the-remedy-prompt-and-rules-that-ask-the-impossible.md).
+  The M5-H2 review asked three rules to offer the part that fixes them.
+  **`CON-001` had been promising that "declaring the adapter clears it"
+  while `InlineAdapter`'s only writer was the JSON decoder**, so the rule
+  named an action nobody could take. CR-015's own test splits the two
+  chips: a barrel is a VALUE on the link, a converter is a DEVICE.
+  `Finding` gains a remedy because `PWR-003` is a panel row and had no
+  surface at all.
+* **Ruling**: [DR-127](/decisions/dr-127-the-review-s-unpriced-findings-enter-m5.md),
+  the §8.3 amendment that made DR-128 legal. **"Unpriced" agrees a finding
+  is real and says nothing about who builds it**, so four of DR-125's
+  dispositions were sitting outside the one scope list.
+* **Note**: **THE TRADE CORRECTED THE FIRST ANSWER, AND THE FIRST ANSWER
+  WAS AN AGENT LISTING WHAT THE CATALOGUE HAPPENED TO HOLD.** `PWR-003`'s
+  remedy was going to insert the 24-outlet 0U PDU. The user returned the
+  fact that the ordinary fix is a small passive strip on a shelf, fed from
+  a PDU outlet so the gear on it can be power-cycled remotely. The MODEL
+  already expressed it (`outletsConsumed: 1`, `outletsProvided: N`); the
+  catalogue had no row. See
+  [trade knowledge beats workflow reasoning](/practices/trade-knowledge-beats-workflow-reasoning.md).
+* **Note**: **A SECOND CORRECTION STOPPED A WORSE MISTAKE.** An agent was
+  about to build shelf placement from the model alone. The user
+  interrupted with five trade facts (sub-1U devices stack, a shallow
+  device leaves room at the back for the strip, a modem sits sideways or
+  upright, purpose-made shelves exist), and the design about to be written
+  satisfied one of them. **AC-043 sorted them**: it KEEPS auto-pack and
+  cuts three of the five BY NAME, so only the kept half was built and the
+  rest is `#844`, parked as a maybe under M9 rather than amended.
+* **Note**: **THE RULING CLAIMED TWO BUTTONS BEFORE THEY EXISTED.**
+  §11.127.6 said `SpringBackRemedy` gains two members; it was committed
+  and put in a PR while the enum had one and both chips carried empty
+  remedy lists. **Dart's exhaustive switch caught it**, not diligence: the
+  analyzer gate is zero errors and is not ratcheted.
+* **Note**: **`evaluateDocument` REBUILDS A `Finding` FIELD BY FIELD,
+  TWICE**, and neither copy carried the new `remedy`, so the button never
+  reached the panel. That is DR-125 §11.124.2's defect repeating on a
+  different field inside its own milestone. `Finding.withSeverity` now
+  owns the copy, so the next field is a compile error.
+* **Note**: **`seed-devices.md` §3.10 WAS THE ONE PLACE THE COUNT WAS
+  ALLOWED TO LIVE AND THE ONE PLACE IT WAS WRONG.** P3 rules the template
+  count lives only there; it read 48 against a catalogue shipping 49 since
+  DR-120, while thirteen sites in code and tests carried 49 correctly. **A
+  single source of truth that nothing gates is a single source of
+  staleness.**
+* **Note**: **THREE CANARIES FIRED IN ONE TASK, each having written its
+  own instructions to whoever tripped it**: `acceptedFamilies`,
+  `TOP-005`'s missing writer (*"gate it and correct the note on
+  ConnectRule.hostResolves"*), and a "this is not vacuous" guard that
+  caught a fixture naming a connector that does not exist. All three were
+  census-as-a-test rather than census-as-a-comment.
+
 ## 2026-09-05
 
 * **Ruling**: [DR-126](/decisions/dr-126-the-catalogue-was-calling-two-signals-by-one-name.md).
