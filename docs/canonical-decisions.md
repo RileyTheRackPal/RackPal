@@ -17269,10 +17269,38 @@ scope list. The alternative, expressing the sum as a **rollup** in
 reports a number with a G4 unknown count and adds nothing to the
 catalogue.
 
-**11.130.7 WHAT IS NOT RULED: WHICH SEEDED SPEAKERS ARE DUAL-MODE.**
-That is catalogue data under AC-052 and a trade question, not a code one.
-It is asked rather than assumed, because guessing it is how this
-milestone has already been wrong three times.
+**11.130.7 WHICH SPEAKERS ARE DUAL-MODE, ANSWERED BY THE USER RATHER
+THAN GUESSED.** Two, and the pairing is deliberate: **`F08` gains a
+bypass**, which makes the `ELE-006` fix reachable using an entry that
+already exists, and **a NEW template covers the in-ceiling / outdoor /
+landscape case** rather than `F04`, `F05` or `F07` changing their ports
+under documents that already reference them.
+
+**11.130.8 THE TAP VALUE IS FREE NUMERIC ENTRY WITH BYPASS AS A FLAG,
+AND THE REASON IS THAT THE LADDER IS NOT ONE LADDER.** A fixed list was
+offered and declined on evidence: *"Episode makes one of theirs with
+7.5/15/30/60/Bypass taps, while Beale Street has models that range from
+1/1.9/3.8/7.5/15W/Bypass, to the same scheme as Episode."* A per-template
+list was also offered and declined, for a workflow reason worth
+recording: the tap is **set once at install and not touched**, and
+*"if any issues come up it's simple enough to reference the sheets and
+make the fix on site"*, so the model buys little by policing which
+numbers are legal on which speaker.
+
+So the per-instance state is **two fields on the device**, and G4 governs
+the third state:
+
+| `lowZBypass` | `tapWatts` | means |
+|---|---|---|
+| `true` | ignored | the transformer is bypassed; this speaker is a low-impedance device and `ELE-006` must not fire against a low-Z output |
+| `false` | `15` | constant voltage at 15 W, and the figure a 70 V bus sums |
+| `false` | absent | constant voltage, tap **UNKNOWN**. CR-114: never estimated, never `0`, and the rollup reports it in its unknown count |
+
+It lives on the `DeviceInstance` rather than the port, on the user's own
+"set and forget" framing: a person sets the transformer on the speaker,
+not on one of its two pigtail conductors. `ConnectTarget` already carries
+`deviceId`, and `spring_back_rules.dart` already passes `doc` to
+`_directionMismatch`, so `ELE-006` reaching it costs a parameter.
 
 ## 12. Superseded rulings
 
