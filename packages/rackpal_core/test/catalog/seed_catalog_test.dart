@@ -1,6 +1,6 @@
 // M1 roadmap checklist #6 — the seeded catalog (docs/09-roadmap.md ~line
 // 232, docs/catalog/seed-devices.md §3.10, §7): 30 rack-side archetypes +
-// 19 field devices = 49 shipped templates, the connector-footprint CI
+// 19 field devices = 50 shipped templates, the connector-footprint CI
 // assertion (AC-050/A2.2), and the idformat/designator-allocation wiring
 // docs/04-rack-editor.md §7 calls for on catalog placement.
 
@@ -16,8 +16,8 @@ void main() {
   final footprints = buildSeedConnectorFootprints();
 
   group('catalog shape (§3.10 summary table)', () {
-    test('exactly 49 templates ship', () {
-      expect(catalog, hasLength(49));
+    test('exactly 50 templates ship', () {
+      expect(catalog, hasLength(50));
     });
 
     test('category counts match the §3.10 summary table exactly', () {
@@ -31,10 +31,10 @@ void main() {
       expect(counts[kCatControl], 3);
       expect(counts[kCatSources], 2);
       expect(counts[kCatRf], 2);
-      expect(counts[kCatPower], 3);
+      expect(counts[kCatPower], 4);
       expect(counts[kCatPassive], 3);
       expect(counts[kCatField], 19);
-      expect(counts.values.reduce((a, b) => a + b), 49);
+      expect(counts.values.reduce((a, b) => a + b), 50);
     });
 
     test(

@@ -403,10 +403,21 @@ $SuiteFloors = @{
     # 3963 at DR-126: +8 from ir_family_split_test.dart, which sweeps the
     # shipped catalogue rather than a fixture, plus one swapped near-miss
     # and one widened canary that net to zero.
-    'rackpal_core'   = 3963
+    # 3978 at DR-128: +13 from declare_adapter_test.dart, the writer
+    # InlineAdapter never had, and +2 for the census that found three
+    # ghost ids in the AC-051 spring-back fixtures.
+    # 3991 at DR-128 part two: +13 from insert_converter_test.dart.
+    # 4010 at DR-128 part three: +16 from add_outlets_test.dart, PWR-003's
+    # remedy, and +3 for the guard on Finding.withSeverity.
+    # 4018 at DR-128 part four: +8 gating which rule offers which remedy,
+    # after the ruling claimed two chip buttons that did not exist.
+    'rackpal_core'   = 4018
     'rackpal_text'   = 1
     'rackpal_export' = 195
-    'rackpal_ui'     = 1483
+    # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
+    # presses the two new remedy buttons on chips raised by a real drag.
+    # The core suites cannot see whether the SCREEN reaches the commands.
+    'rackpal_ui'     = 1489
     'rackpal_app'    = 916
 }
 

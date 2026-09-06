@@ -415,41 +415,38 @@ void main() {
       }
     });
 
-    test('TOP-005 has NO production writer to gate, and this test is what '
-        'notices when one arrives', () {
+    test('TOP-005 HAS a writer now, and the only one is the gated one', () {
       // ═══════════════════════════════════════════════════════════════
-      // A CENSUS AS A TEST, NOT A CENSUS AS A COMMENT
+      // THIS TEST HAS NOW DONE ITS JOB THREE TIMES
       // ═══════════════════════════════════════════════════════════════
-      // Nothing constructs a `ShelfPlacement`: shelf hosting has no
-      // authoring gesture, so `TOP-005` guards a containment chain no
-      // command can build, and wiring it into one would be theatre.
+      // It asked "does a writer exist" and went red the moment one did,
+      // naming the file, which is exactly what it was for. It covered
+      // `PLC-002` until `#269` built the width control and `PLC-003`
+      // until `#270` built the 0U chain; each of those became the
+      // sharper question below. **`ShelfPlacement` is the third**, built
+      // at DR-128 for `PWR-003`'s power-strip remedy, which had nowhere
+      // to put a strip because nothing in this product could set a
+      // device on a shelf.
       //
-      // THIS TEST HAS DONE ITS JOB TWICE ALREADY, which is the argument
-      // for writing a census as a test rather than as a comment. It
-      // covered `PLC-002` until `#269` built the width control, and
-      // `PLC-003` until `#270` built the 0U chain; both times it went
-      // red naming the new file, which is exactly what its reason string
-      // asks for. Each of those halves is now its own test below, asking
-      // the sharper question: not whether a writer exists, but whether
-      // the ones that do are gated.
+      // Its own reason string said what to do: "gate it and correct the
+      // note on ConnectRule.hostResolves". Both are done, and the
+      // question is now narrower and lasts longer: not whether a writer
+      // exists, but whether the one that does asks TOP-005 first.
       //
-      // The predecessor of THIS repository's other census test derived
-      // its answer from a list that could not see the thing it counted,
-      // and kept passing while going quietly wrong. So this reads the
-      // source. A grep, not a parser: false negatives are acceptable,
-      // a false positive that makes it flaky is not.
+      // The scan reads the SOURCE, and it is a grep rather than a
+      // parser: false negatives are acceptable, a false positive that
+      // makes it flaky is not. Its first draft was a false positive five
+      // times over, because `contains('ShelfPlacement(')` matches every
+      // pattern match on the type as well as every construction, and
+      // this codebase switches on placements in four files.
+      // [_constructs] carries the discriminator, and the test above
+      // verifies that discriminator in BOTH directions.
       //
-      // THE FIRST DRAFT WAS A FALSE POSITIVE FIVE TIMES OVER, which is
-      // worth leaving on the record because it is the failure the
-      // sentence above promises not to make. `line.contains('ZeroU
-      // Placement(')` matches every PATTERN MATCH on the type as well as
-      // every construction, and this codebase switches on placements in
-      // four files. [_constructs] carries the discriminator.
       // EVERY PACKAGE, not just this one, and the count is asserted so
       // the scan cannot silently degrade to core-only if the workspace
       // layout moves. `internal_setter_grep_test.dart` learned that the
-      // hard way: it scanned core alone while the UI was writing straight
-      // to `Rack` setters.
+      // hard way: it scanned core alone while the UI was writing
+      // straight to `Rack` setters.
       final roots = <Directory>[
         Directory('lib'),
         Directory('../rackpal_ui/lib'),
@@ -464,7 +461,7 @@ void main() {
             'and update these paths if the workspace moved',
       );
 
-      final shelfWriters = <String>[];
+      final shelfWriters = <String>{};
       for (final f
           in roots
               .expand((d) => d.listSync(recursive: true))
@@ -479,23 +476,27 @@ void main() {
         for (final line in f.readAsLinesSync()) {
           // COMMENTS ARE NOT WRITERS, and skipping them is not tidiness:
           // the files in this package explain themselves at length and a
-          // doc comment showing a worked `ZeroUPlacement(rackId: ...)`
-          // would turn this gate red over prose.
-          final code = line.trimLeft();
-          if (code.startsWith('//')) continue;
-          if (_constructs(line, 'ShelfPlacement')) {
-            shelfWriters.add('$path: ${line.trim()}');
-          }
+          // doc comment showing a worked `ShelfPlacement(hostDeviceId:
+          // ...)` would turn this gate red over prose.
+          if (line.trimLeft().startsWith('//')) continue;
+          if (_constructs(line, 'ShelfPlacement')) shelfWriters.add(path);
         }
       }
 
       expect(
         shelfWriters,
-        isEmpty,
+        {'lib/src/commands/shelf_placement.dart'},
         reason:
-            'something now builds a ShelfPlacement: $shelfWriters. TOP-005 '
-            'has a creation site to gate, so gate it and correct the note '
-            'on ConnectRule.hostResolves',
+            'a second shelf writer would need its own TOP-005 check, and '
+            'a first one that moved would leave this pointing at nothing',
+      );
+      expect(
+        File('lib/src/commands/shelf_placement.dart').readAsStringSync(),
+        contains("ruleId: 'TOP-005'"),
+        reason:
+            'the shelf writer stopped asking whether its host is a '
+            'container, so a device can be set on a rack ear and TOP-005 '
+            'will not say so until somebody wires it',
       );
     });
 

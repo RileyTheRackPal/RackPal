@@ -15745,6 +15745,204 @@
         "templateId": "P03",
         "version": 1
       },
+      "P04@1": {
+        "body": {
+          "alternateMountMethods": [],
+          "banks": [
+            {
+              "abbr": "INLE",
+              "collapseInSymbol": true,
+              "key": "inlet",
+              "label": "Inlet",
+              "order": "a0000",
+              "symbolSide": "left"
+            },
+            {
+              "abbr": "OUTL",
+              "collapseInSymbol": true,
+              "key": "outlets",
+              "label": "Outlets",
+              "order": "a0002",
+              "symbolSide": "left"
+            }
+          ],
+          "bodyDepthNm": 45000000,
+          "category": "Power",
+          "chassisWidthNm": 432000000,
+          "containerVented": false,
+          "description": "A passive strip, set on a shelf and fed from a PDU or sequencer outlet so the gear on it can be power-cycled remotely. It draws nothing itself.",
+          "displayName": "Rack Power Strip, 6-outlet, shelf",
+          "frontU": 0,
+          "isContainer": false,
+          "isPassthrough": false,
+          "manufacturer": "Generic",
+          "model": "PSTRIP-6",
+          "mountMethod": "shelf",
+          "nominalSpanTwelfths": 12,
+          "panelGraphics": [],
+          "passthroughPairs": [],
+          "portSets": [],
+          "ports": [
+            {
+              "acceptedFamilies": [],
+              "bankKey": "inlet",
+              "carriedProtocols": [],
+              "connector": "conn.nema_5_15p",
+              "direction": "sink",
+              "face": "rear",
+              "gender": "male",
+              "key": "ac.in",
+              "label": "AC IN (captive cord)",
+              "maxConnections": 1,
+              "order": "a0001",
+              "power": {
+                "role": "inlet"
+              },
+              "renamedFrom": [],
+              "signalFamily": "power.ac_branch",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "outlets",
+              "carriedProtocols": [],
+              "connector": "conn.nema_5_15r",
+              "direction": "source",
+              "face": "rear",
+              "gender": "female",
+              "key": "out.1",
+              "label": "OUT 1",
+              "maxConnections": 1,
+              "order": "a0003",
+              "power": {
+                "role": "outlet"
+              },
+              "renamedFrom": [],
+              "signalFamily": "power.ac_branch",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "outlets",
+              "carriedProtocols": [],
+              "connector": "conn.nema_5_15r",
+              "direction": "source",
+              "face": "rear",
+              "gender": "female",
+              "key": "out.2",
+              "label": "OUT 2",
+              "maxConnections": 1,
+              "order": "a0004",
+              "power": {
+                "role": "outlet"
+              },
+              "renamedFrom": [],
+              "signalFamily": "power.ac_branch",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "outlets",
+              "carriedProtocols": [],
+              "connector": "conn.nema_5_15r",
+              "direction": "source",
+              "face": "rear",
+              "gender": "female",
+              "key": "out.3",
+              "label": "OUT 3",
+              "maxConnections": 1,
+              "order": "a0005",
+              "power": {
+                "role": "outlet"
+              },
+              "renamedFrom": [],
+              "signalFamily": "power.ac_branch",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "outlets",
+              "carriedProtocols": [],
+              "connector": "conn.nema_5_15r",
+              "direction": "source",
+              "face": "rear",
+              "gender": "female",
+              "key": "out.4",
+              "label": "OUT 4",
+              "maxConnections": 1,
+              "order": "a0006",
+              "power": {
+                "role": "outlet"
+              },
+              "renamedFrom": [],
+              "signalFamily": "power.ac_branch",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "outlets",
+              "carriedProtocols": [],
+              "connector": "conn.nema_5_15r",
+              "direction": "source",
+              "face": "rear",
+              "gender": "female",
+              "key": "out.5",
+              "label": "OUT 5",
+              "maxConnections": 1,
+              "order": "a0007",
+              "power": {
+                "role": "outlet"
+              },
+              "renamedFrom": [],
+              "signalFamily": "power.ac_branch",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "bankKey": "outlets",
+              "carriedProtocols": [],
+              "connector": "conn.nema_5_15r",
+              "direction": "source",
+              "face": "rear",
+              "gender": "female",
+              "key": "out.6",
+              "label": "OUT 6",
+              "maxConnections": 1,
+              "order": "a0008",
+              "power": {
+                "role": "outlet"
+              },
+              "renamedFrom": [],
+              "signalFamily": "power.ac_branch",
+              "topology": "p2p"
+            }
+          ],
+          "power": {
+            "inletPlug": "nema515p",
+            "isContinuousLoad": false,
+            "nominalVolts": 120,
+            "outletsConsumed": 1,
+            "outletsProvided": 6
+          },
+          "rearU": 0,
+          "requiresClearanceAboveU": 0,
+          "requiresClearanceBelowU": 0,
+          "side": "none",
+          "tags": [
+            "strip",
+            "shelf",
+            "passive"
+          ],
+          "thermalClass": "passive",
+          "typePrefix": "PS",
+          "weightUg": 700000000,
+          "widthClass": "full"
+        },
+        "capturedAt": "2026-02-17T13:30:00.000Z",
+        "contentHash": "sha256:ce999741d267128e1cb04fe4d0ce714856d192b02e605015a8833aa7bcddbc4e",
+        "templateId": "P04",
+        "version": 1
+      },
       "R01@1": {
         "body": {
           "alternateMountMethods": [],

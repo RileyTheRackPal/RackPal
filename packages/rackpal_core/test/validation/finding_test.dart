@@ -160,4 +160,55 @@ void main() {
       );
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // THE COPY THAT USED TO DROP FIELDS (DR-128 §11.127.5)
+  // ═══════════════════════════════════════════════════════════════════
+  // `evaluateDocument` rebuilds a finding twice to change its severity,
+  // and both rebuilds were longhand, so `remedy` was added and neither
+  // learned about it: `PWR-003`'s button never reached the panel. The
+  // copy now lives on `Finding.withSeverity`.
+  //
+  // ASSERTED FIELD BY FIELD RATHER THAN ON EQUALITY, because `Finding`
+  // has no `operator ==`, so `expect(copy, original)` would compare
+  // identity and pass on a copy that dropped everything.
+  group('withSeverity carries every field but the severity', () {
+    const original = Finding(
+      ruleId: 'PWR-003',
+      severity: Severity.error,
+      message: 'RK-1 provides 2 outlets and its devices need 4.',
+      targets: [Uuid('rack-1'), Uuid('amp-1')],
+      primaryEntityId: Uuid('rack-1'),
+      remedy: FindingRemedy.addRackPdu,
+    );
+
+    test('the severity is the only thing that moves', () {
+      final copy = original.withSeverity(Severity.warning);
+      expect(copy.severity, Severity.warning);
+      expect(copy.ruleId, original.ruleId);
+      expect(copy.message, original.message);
+      expect(copy.targets, original.targets);
+      expect(copy.primaryEntityId, original.primaryEntityId);
+      expect(copy.remedy, original.remedy);
+    });
+
+    test('and the fingerprint does not, so an acknowledgement survives a '
+        'demotion', () {
+      expect(
+        original.withSeverity(Severity.advisory).targetFingerprint,
+        original.targetFingerprint,
+      );
+    });
+
+    test('a finding with no remedy stays without one', () {
+      const bare = Finding(
+        ruleId: 'LEN-001',
+        severity: Severity.warning,
+        message: 'A run is long.',
+        targets: [Uuid('link-1')],
+      );
+      expect(bare.remedy, isNull);
+      expect(bare.withSeverity(Severity.advisory).remedy, isNull);
+    });
+  });
 }

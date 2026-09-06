@@ -1,5 +1,27 @@
 // The spring-back tier's scenarios and their AC-051 pairs (M5-G2/G3).
 //
+// ═════════════════════════════════════════════════════════════════════
+// THREE IDS IN HERE NAMED NOTHING THAT SHIPS, UNTIL DR-128
+// ═════════════════════════════════════════════════════════════════════
+// `conn.xlr3_f`, `video.hdmi` and `audio.analog_bal`. The real ones are
+// `conn.xlr3`, `video.hdmi.2_0` and `audio.line_bal`, and every case
+// still passed on the ghosts because the predicates that read them
+// compare ids directly: a fixture family only has to differ from the
+// other end, not to exist.
+//
+// `CON-001` is the one where it mattered. It reads the REGISTRY, and
+// `_connectorsDoNotMate` skips entirely when the FROM connector is
+// unknown (the G4 branch, `#255`). So a ghost exercises the real limb or
+// the unknown limb depending on which END it lands on, and a fixture can
+// move between "this rule fired" and "this rule was skipped" without its
+// author noticing. Here it landed on the TO end, so the known-bad was
+// asserting that HDMI does not mate with a typo.
+//
+// Found while building DR-128's `CON-001` remedy, whose own first draft
+// invented `conn.xlr3_m` and was caught by its own "this is not vacuous"
+// test. `spring_back_rules_test.dart` now censuses both id kinds against
+// the seeded registries, so the next one fails on sight.
+//
 // MOVED HERE FROM `spring_back_rules_test.dart`, unchanged in substance,
 // for the reason `connect_scenarios.dart` gives: `#302`'s gate is over
 // the CATALOGUE, and a coverage test driven by `SpringBackRule.values`
@@ -32,6 +54,11 @@ PortDef springBackPort(
   String connector = 'conn.rj45',
   List<String> accepts = const [],
   ReturnChannel? returnChannel,
+  // FOUR BY DEFAULT so a scenario never trips `TOP-003` by accident: this
+  // tier's cases are about the SIGNAL, and a pin that filled up would
+  // refuse at tier 1 before any of them ran. A caller testing an
+  // occupancy path passes 1.
+  int maxConnections = 4,
 }) => PortDef(
   key: PortKey(key),
   label: key,
@@ -43,7 +70,7 @@ PortDef springBackPort(
   direction: dir,
   returnChannel: returnChannel,
   acceptedFamilies: [for (final f in accepts) SignalFamilyId(f)],
-  maxConnections: 4,
+  maxConnections: maxConnections,
 );
 
 /// Two devices, one port each, so every case below is exactly the pair
@@ -160,34 +187,43 @@ List<SpringBackCase> springBackChips() => [
     rule: SpringBackRule.directionMismatch,
     what: 'both ends are outputs',
     doc: () => springBackPair(
-      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
-      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort('p', 'video.hdmi.2_0', connector: 'conn.hdmi_a'),
+      springBackPort('p', 'video.hdmi.2_0', connector: 'conn.hdmi_a'),
     ),
   ),
   (
     rule: SpringBackRule.familyNotAccepted,
     what: 'the sink does not accept the source family',
     doc: () => springBackPair(
-      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort('p', 'video.hdmi.2_0', connector: 'conn.hdmi_a'),
       springBackPort(
         'p',
-        'audio.analog_bal',
+        'audio.line_bal',
         dir: PortDirection.sink,
         connector: 'conn.hdmi_a',
       ),
     ),
   ),
+  // `conn.xlr3`, AND IT USED TO READ `conn.xlr3_f`, WHICH DOES NOT EXIST.
+  // The case still fired, because a ghost id is not in `conn.hdmi_a`'s
+  // `matesWith` list and neither is any other made-up string: the test
+  // was asserting that HDMI does not mate with a typo. `CON-001` reads
+  // the REGISTRY, and a fixture that names a connector the registry has
+  // never heard of is exercising the G4 unknown branch of some rules and
+  // the real branch of others, depending on which end it lands on. Found
+  // while building DR-128's remedy, whose own first draft made the same
+  // mistake and was caught by its own "this is not vacuous" test.
   (
     rule: SpringBackRule.connectorsDoNotMate,
     what: 'the connectors do not mate and no adapter is declared',
     doc: () => springBackPair(
-      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort('p', 'video.hdmi.2_0', connector: 'conn.hdmi_a'),
       springBackPort(
         'p',
-        'video.hdmi',
+        'video.hdmi.2_0',
         dir: PortDirection.sink,
-        connector: 'conn.xlr3_f',
-        accepts: ['video.hdmi'],
+        connector: 'conn.xlr3',
+        accepts: ['video.hdmi.2_0'],
       ),
     ),
   ),
@@ -259,13 +295,13 @@ List<SpringBackCase> springBackNearMisses() => [
     doc: () => springBackPair(
       springBackPort(
         'p',
-        'video.hdmi',
+        'video.hdmi.2_0',
         connector: 'conn.hdmi_a',
         returnChannel: ReturnChannel.eArc,
       ),
       springBackPort(
         'p',
-        'video.hdmi',
+        'video.hdmi.2_0',
         connector: 'conn.hdmi_a',
         returnChannel: ReturnChannel.eArc,
       ),
@@ -275,13 +311,13 @@ List<SpringBackCase> springBackNearMisses() => [
     rule: SpringBackRule.familyNotAccepted,
     what: 'the sink DECLARES the source family in acceptedFamilies',
     doc: () => springBackPair(
-      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort('p', 'video.hdmi.2_0', connector: 'conn.hdmi_a'),
       springBackPort(
         'p',
-        'audio.analog_bal',
+        'audio.line_bal',
         dir: PortDirection.sink,
         connector: 'conn.hdmi_a',
-        accepts: ['video.hdmi'],
+        accepts: ['video.hdmi.2_0'],
       ),
     ),
   ),
@@ -289,13 +325,13 @@ List<SpringBackCase> springBackNearMisses() => [
     rule: SpringBackRule.connectorsDoNotMate,
     what: 'the connectors mate',
     doc: () => springBackPair(
-      springBackPort('p', 'video.hdmi', connector: 'conn.hdmi_a'),
+      springBackPort('p', 'video.hdmi.2_0', connector: 'conn.hdmi_a'),
       springBackPort(
         'p',
-        'video.hdmi',
+        'video.hdmi.2_0',
         dir: PortDirection.sink,
         connector: 'conn.hdmi_a',
-        accepts: ['video.hdmi'],
+        accepts: ['video.hdmi.2_0'],
       ),
     ),
   ),

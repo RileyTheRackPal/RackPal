@@ -129,10 +129,13 @@ void main() {
     expect(session.document.racks.values.single.heightU, 42);
     expect(
       session.document.templates,
-      hasLength(49),
+      hasLength(buildSeedCatalog().length),
       reason:
           'a blank project must carry the catalogue, or every palette '
-          'row refuses',
+          'row refuses. DERIVED, not restated: this read hasLength(49) '
+          'and a per-line census for the template count could not see '
+          'it, because the collection and the number are on different '
+          'lines',
     );
   });
 

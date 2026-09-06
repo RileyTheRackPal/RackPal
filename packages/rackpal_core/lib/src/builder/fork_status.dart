@@ -29,7 +29,7 @@
 // THE SEQUENCING HALF OF THAT PARAGRAPH IS NOW HALF FALSE, and it is
 // corrected rather than deleted because the correction is the useful
 // part. It used to read "nothing forks yet: the palette lists only
-// `buildSeedCatalog()` -- 49 templates, all version 1, none of them a
+// `buildSeedCatalog()` -- 50 templates, all version 1, none of them a
 // fork". Since M4-S (DR-077 §11.76) the palette lists the DOCUMENT'S
 // shelf, and a second `Save` in one builder session forks `version + 1`
 // rather than minting a second id, so **a document can now hold several

@@ -5,7 +5,7 @@
 // ═════════════════════════════════════════════════════════════════════
 // A PROJECT HAS ONE SHELF AND IT IS `doc.templates`
 // ═════════════════════════════════════════════════════════════════════
-// `blank_document.dart` writes all 49 seeded archetypes into that map at
+// `blank_document.dart` writes all 50 seeded archetypes into that map at
 // creation, `SaveTemplateToProjectCommand` writes an authored body into
 // the same map, and `buildPlaceFromCatalogCommand` has always resolved
 // from it. The seeded catalog is therefore a CONTRIBUTOR to a document's

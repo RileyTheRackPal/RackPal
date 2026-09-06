@@ -121,7 +121,7 @@ void main() {
   });
 
   group('the set is capped, and the cap is the point', () {
-    test('is 17 marks plus none, against 49 templates in 9 categories: '
+    test('is 17 marks plus none, against 50 templates in 9 categories: '
         'a mark drawn 1U tall on a photocopy cannot carry 40 distinctions', () {
       expect(DeviceGlyph.values, hasLength(18));
       expect(DeviceGlyph.values.first, DeviceGlyph.none);

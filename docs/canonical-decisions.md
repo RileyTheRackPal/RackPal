@@ -6635,7 +6635,7 @@ and they will not be.
 Flutter-only. A JSON master would have to be loaded by the app layer and injected through two
 packages, because `rackpal_export` drives core directly and may never import `rackpal_ui`. A
 seeded Dart catalog needs no seam, works in core's pure-Dart tests unchanged, and is what this
-repository already does four times: 49 templates (`buildSeedCatalog`), connector footprints,
+repository already does four times: 50 templates (`buildSeedCatalog`), connector footprints,
 jacket-colour conventions, rack presets.
 
 The JSON form's one real advantage, editing the catalog without a rebuild, is an ANTI-FEATURE
@@ -16369,7 +16369,7 @@ machines"*. DR-103 §11.102 is untouched, `templateRef{templateId, version,
 contentHash}` is untouched, and no `.rmpj` changes shape.
 
 **ONLY AUTHORED DEVICES**, which is the user's own boundary: *"custom
-devices (beyond the archetypes)"*. The 49 seeded templates ship with the
+devices (beyond the archetypes)"*. The 50 seeded templates ship with the
 application and need no shelf copy. A fork of a seeded template **is**
 authored, carries `derivedFrom`, and goes to both.
 
@@ -16823,6 +16823,225 @@ consequences. **A milestone clause is discharged by evidence, not by an
 empty backlog** (§8.1), so nothing here reopens M5-H, and an item still
 open when M5 closes is re-parented rather than left under a closed Epic
 (DR-097).
+
+### §11.127 DR-128 · The remedy prompt, and the fourth field in one milestone whose only writer is the decoder
+
+**Board `#837` (M5-J), authorised by DR-127 §11.126.** Settled by the user
+2026-09-05, in three answers.
+
+**11.127.1 DR-125 CALLED THIS *"ONE FEATURE, THREE-QUARTERS BUILT"*. IT IS
+NOT.** That reading came from `insert_receiver.dart` existing and doing
+the same shape of thing for `SIG-001`. Censused before pricing:
+
+**`InlineAdapter` is modelled, round-trips through the codec, and is read
+by `_adapterSatisfies` to clear `CON-001` and `SIG-002`. Its only writer
+in the entire tree is `_decodeInlineAdapter`.** No command builds one, no
+widget offers one, and `schematic_canvas_screen.dart` twice reasons
+carefully about how *"an `InlineAdapter` already declared on it"* clears
+those rules, a sentence whose subject cannot come into existence.
+
+So `CON-001`'s catalogue summary, *"Satisfied by data: declaring the
+adapter clears it"*, **describes an action no user can take**. The rule
+tells somebody to do a thing, and the product has no way to do it.
+
+**THE FOURTH IN ONE MILESTONE**, after `maxConnections` (DR-124),
+`acceptedFamilies` (DR-126) and `RuleMeta`'s discarded severity
+(DR-125). It is the first of the four where the missing writer makes a
+SHIPPED RULE'S OWN PROMISE unkeepable rather than merely leaving a
+default in place, and it strengthens `#841`'s census from a tidy-up into
+the thing that should have run first.
+
+**11.127.2 `CON-001` DECLARES AN ADAPTER, AND CR-015 ALREADY CHOSE THE
+SHAPE.** CR-015 splits adapters on a mechanical test, *"does an installer
+pull two separate cables to it?"*: no makes it an `InlineAdapter` value on
+the Link, yes makes it a real `DeviceInstance`. `CON-001` is *"the plug
+does not fit the jack"*, which is the barrel, the gender changer, the
+null-modem shell. **Value object.**
+
+`[ Declare an adapter ]` writes one with **both connectors prefilled from
+the two pins that just failed**, an optional model, and
+`satisfiesRuleIds: ['CON-001']`. The model is optional deliberately: an
+adapter with no model reaches the BOM as an unspecified line, which is
+worse than a specified one and better than a remedy nobody uses because
+it demanded typing mid-gesture. G4's frame applies, an absent model is
+unknown and prints as unknown, rather than being invented.
+
+**11.127.3 `SIG-002` INSERTS A DEVICE, ON THE SAME TEST READ THE OTHER
+WAY.** *"The sink does not accept the source's family"* is answered by
+electronics, not by a plug shape: HDMI to composite, SDI to HDMI, a
+balun. An installer pulls two cables to every one of those, so CR-015
+makes them devices, exactly as it says of the `SIG-001` remedy.
+
+**11.127.4 THE CONVERTER IS MINTED, NOT SHIPPED, AND THE CATALOGUE DOES
+NOT GROW.** Censused: the catalogue holds no generic converter. It holds
+the HDBaseT extender pair and a presentation scaler, and nothing else
+that converts.
+
+A seeded `Signal Converter` archetype was rejected: **a converter's ports
+cannot be right in general**, because the families it bridges vary per
+use, so it would ship with unknown-family ports or a P4 variant axis, and
+that is a great deal of machinery for a box whose entire purpose is to be
+specific. A palette filtered to devices bridging the two families was
+rejected on measurement: **that filter returns almost nothing today**, and
+an empty picker behind a remedy button is worse than no button.
+
+**So the remedy AUTHORS the device from the two pins it was invoked on**:
+one input port carrying the source's family and connector, one output
+port carrying the sink's, `mountMethod: notInRack`, named for what it
+bridges. DR-123's authored-device path and `insert_receiver.dart`'s
+`TxnScope` are both built and are what this uses. **CR-061's count of 49
+does not move**, and the device is correct for its case by construction
+rather than generic.
+
+**IT STATES NO WATTAGE AND NO MODEL**, which is G4 rather than an
+oversight, and is the precedent DR-120's `F19` set: a shipped row that
+cannot cite a source states nothing rather than guessing. The BOM line is
+uncosted and says so.
+
+**11.127.5 `PWR-003` IS A TIER-3 FINDING AND HAD NO SURFACE AT ALL.**
+DR-125 §11.124.4 grouped it with the other two as one feature. It is not
+one feature: `SpringBackRemedy` lives on a CHIP, `PWR-003` is a row in the
+issues panel, and **`Finding` has no remedy field**. The three could not
+have shared a mechanism because two of them had one and the third had
+nowhere to put it.
+
+**Ruled: `Finding` gains an optional remedy**, the issues panel renders it
+as a button, and `PWR-003`'s inserts `P01`, the 24-outlet 0U vertical PDU
+that already ships. **Built once, here, because `CODE-002` (`#840`) wants
+the same surface**, and a second bespoke path is how one mechanism becomes
+three: §5.3.20 records three unreachable models in one issue arriving
+exactly that way.
+
+The field is optional and absent by default, so CR-117's round trip is
+unaffected for every finding that has no remedy: **unknown serializes as
+an absent key** (G4/CR-114), and a finding is computed rather than stored
+in any case (docs/02 §4.8).
+
+**11.127.8 THE `PWR-003` REMEDY WAS DECIDED WRONG FIRST, AND THE TRADE
+CORRECTED IT.** This ruling's own §11.127.5 says the remedy inserts `P01`,
+the 24-outlet 0U vertical PDU. **The option that produced that answer was
+written by an agent listing what the catalogue happened to hold**, and the
+user returned the fact it was missing:
+
+> a small bank of PoE injectors or Sonos Ports connected to a simple power
+> strip and then plugged into a PDU outlet to allow for remote resetting
+> (Via BlueBOLT or OvrC, e.g.) and automation/power sequencing
+
+and, separately, that *"these small power strips are commonly just set on
+a shelf in the rack"*.
+
+**THE MODEL ALREADY EXPRESSED IT AND THE CATALOGUE DID NOT.** All three
+seeded templates that provide outlets are `outletsConsumed: 1` with
+`outletsProvided: N`, which is exactly a strip: one outlet in, six out, so
+`PWR-003`'s arithmetic closes the shortfall by five. **What is missing is
+the row**, and it is the fifth thing in one milestone that a rule asks a
+person to do and the product cannot express.
+
+`P02`, a shelf-mounted 6-outlet passive strip, ships. **CR-061's count
+moves from 49 to 50** on DR-120's precedent for `F19` (§12.28), and 50 is
+still mid-band in CR-061's confirmed 40 to 55, so the ruling decided a
+band and this moves within it. **Six outlets is the user's figure and it cites a
+real product**: *"6 outlets is standard on the most basic Wattbox power
+strip, which is easily the most common my company installs."* That is
+AC-052 satisfied in the form the rule actually wants, a number with a
+source rather than a number with a rationale.
+
+**THE ROW STAYS GENERIC, AND THE CITATION DOES NOT.** §10.9 keeps the
+shipped catalogue to archetypes, so `P02` is a `Rack Power Strip` and not
+a WattBox; the brand is recorded as WHERE THE SIX CAME FROM, in the
+template's source note and here, which is the same split `sources.md`
+already uses. The strip states no wattage of its own, being passive.
+
+**11.127.9 AND THE REMEDY ASKS RATHER THAN GUESSING WHEN THE RACK IS
+EMPTY.** Ruled: if the rack already has anything providing outlets, the
+button inserts the strip, because that is the everyday fix and it needs no
+0U channel. **If nothing in the rack provides an outlet, the remedy
+returns a CHOICE rather than picking**, and the panel asks whether to add
+a strip or a PDU.
+
+The rule already knows which case it is, having summed `outletsProvided`
+to decide the rack was short, so the branch costs nothing to evaluate. The
+reason for asking rather than deciding is that the two answers are
+different jobs: a strip in a rack with no distribution reaches a wall
+outlet and is a legal drawing, a PDU is the beginning of a power plan, and
+**a remedy that silently picks the second has made a design decision on
+somebody's behalf.**
+
+**11.127.7 THE REMEDY'S OWN TEST FOUND THREE GHOST IDS IN THE AC-051
+CORPUS.** `spring_back_scenarios.dart` named `conn.xlr3_f`,
+`video.hdmi` and `audio.analog_bal`; the shipped ids are `conn.xlr3`,
+`video.hdmi.2_0` and `audio.line_bal`. Every case passed on the ghosts,
+because the predicates that read them compare ids directly and a fixture
+family only has to DIFFER from the other end rather than exist.
+
+**`CON-001` is where it mattered.** That rule reads the registry, and
+`_connectorsDoNotMate` skips entirely when the FROM connector is unknown
+(the G4 branch, `#255`). So a ghost exercises the real limb or the
+unknown limb **depending on which end it lands on**. Here it landed on the
+TO end, so the known-bad fired, and what it was actually asserting is that
+HDMI does not mate with a typo, which is true of every typo.
+
+Found because DR-128's own first draft invented `conn.xlr3_m` and was
+caught by its own *"this is not vacuous"* test. **That test existed only
+because the house rule says to assert the artifact**: a remedy test
+checking `inlineAdapters.length == 1` would have passed on a rule that
+never fired. `spring_back_rules_test.dart` now censuses both id kinds
+against the seeded registries.
+
+**This is the second time in two days that DR-125 §11.124.5's sentence has
+proved too kind.** It says the AC-051 corpus *"saw none of them, because a
+pair proves a rule fires, not that it fires correctly"*. The corpus also
+could not see that three of its own fixtures named entities the product
+does not ship.
+
+**11.127.10 THE SHELF MODEL IS PARKED AS A MAYBE, NOT AMENDED.** Building
+`PWR-003`'s remedy required putting a device on a shelf, which nothing in
+the product could do, and the user returned five trade facts about what a
+shelf really holds: **1/12th granularity is right; a Roku is under 1U so
+two stack, and 0.5U heights are necessary; a shallow device leaves room at
+the back where the power strip goes; a modem sits sideways or upright
+depending on the install; and Penn Elecom and Marantz make shelves for
+specific gear.**
+
+**AC-043 sorts them, and the sort is the whole reason no amendment was
+needed here.** That ruling KEEPS *"auto-pack left to right;
+`ShelfPlacement.order` decides sequence"* and defers *"free lateral
+positioning, `Alt`-drag, the third focus level entered with `Enter`, and
+per-host depth-overhang warnings"*, saying **"only the UI defers"**. So
+fact 3 is cut by name, facts 1 and 4 sit against the same cut, and **fact
+2 is neither cut nor built**: AC-043 never mentions height, and there is
+no body height in `Len` anywhere on `TemplateBody`. The half that shipped
+is the half AC-043 keeps.
+
+**Ruled by the user, in their own words:**
+
+> As much as I don't want to both A: go back on AC-043's decision and B:
+> don't want to increase scope for v1, this may be a necessary fix before
+> v1. File it as a "maybe" under M8/M9; I'll see how the team reacts to
+> the version you're building now.
+
+`#844` sits under **M9, Beta hardening**, rather than M8: the trigger
+named is how a team reacts to a build, which is what beta hardening is
+for, and M8 is release engineering with no seat for a model change. **It
+is a MAYBE and not a schedule.** If the reaction says it must precede
+release, moving one Story between two Epics is the visible act §8.3 asks
+for and costs a click (DR-097).
+
+**THIS IS THE RIGHT SHAPE OF RESTRAINT AND IS RECORDED AS SUCH.** An
+agent had the five facts, a working branch and momentum, and the
+alternative was amending a confirmed acceptance criterion inside a DRC
+remedy commit on one session's enthusiasm. §8.3 forbids that in terms,
+and the person who would have to live with a half-designed shelf model
+asked for evidence first.
+
+**11.127.6 `SpringBackRemedy` GAINS TWO MEMBERS, AND ITS DOC COMMENT'S
+OBJECTION IS ANSWERED RATHER THAN OVERRULED.** It holds one member today
+and says why: *"Inventing labels for the other five would be putting words
+in a designer's mouth and shipping them as though the corpus had said
+them."* **That objection was right and is now satisfied**, because the
+M5-H2 review is the corpus saying them. It still governs the remaining
+three: `DIR-001`, `DIR-003` and `ELE-006` get no remedy here, because
+nobody has asked for one.
 
 ## 12. Superseded rulings
 
@@ -17403,6 +17622,13 @@ label onto two drops.
 |---|---|---|
 | **CR-061**, the integer only | "v1 ships 48 templates: 30 rack-side and 18 field-side." | **49 templates: 30 rack-side and 19 field-side.** `F19`, the load-controlling keypad, is the addition (DR-120 §11.119.6). CR-061's REASONING is untouched: it chose 48 because that *"sits mid-band in the confirmed 40-55"*, and 49 is still mid-band, so the ruling decided a band and this moves within it. **The rest of CR-061 stands**, including AC-052's gate that every numeric field on a shipped template cites a source, which is why `F19` states no wattage. |
 | **CR-061**, the single-source claim | "The count is stated in exactly one place, `docs/catalog.md`, and no prose in any document states a number." | **Was already false and is recorded as such.** The count is written at thirteen sites across eleven files, including `lib/` comments, test assertions and canon itself. DR-120 §11.119.7 has the census. Consolidating it is its own work and is not done here. |
+
+### 12.31 Superseded by DR-128 (the catalogue grows by one strip)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **CR-061**, the count, as already amended by §12.28 | "49 templates: 30 rack-side and 19 field-side." | **50 templates: 31 rack-side and 19 field-side.** `P04`, a 6-outlet shelf-mounted passive power strip, is the addition (DR-128 §11.127.8). CR-061's REASONING is untouched for the second time: it chose its figure because that *"sits mid-band in the confirmed 40-55"*, and 50 is still mid-band. **AC-052 is satisfied in the form the rule wants**, a number with a source rather than a rationale: the user gives 6 as standard on the basic WattBox strip their company most often installs. |
+| **`seed-devices.md` §3.10**, the single place the count is allowed to live | P3: "the count is stated in **exactly one place, the summary table in §3.10**, and no prose in any document, including this one, states a template count." | **The rule stands and the table was stale.** It read 48 with 18 field devices until 2026-09-05, against a catalogue that had shipped 49 since DR-120 added `F19` the day before, **while thirteen sites in code and tests carried 49 correctly**. So the one place the number was permitted to live was the one place it was wrong. Corrected to 50 here. `seed_catalog_test.dart` asserts that table's category counts row by row, so the gate existed; nobody had read the table against it. **A single source of truth that nothing gates is a single source of staleness.** |
 
 ### 12.29 Superseded by DR-121 (a second variant axis)
 

@@ -6117,6 +6117,18 @@ absent: **no `dartjni.dll`**, here or anywhere in the tree, which
 
 ### 5.8 M9, Beta hardening · `M` · NOT STARTED, weakest mark `UNPERFORMED` · hard-blocked on M8
 
+**`#844` IS PARKED HERE AS A MAYBE (DR-128 §11.127.10), and it is the first thing in this milestone
+that is a MODEL question rather than a hardening one.** Building `PWR-003`'s remedy needed shelf
+placement, which nothing in the product could do, and the user returned five trade facts about what
+a shelf actually holds: sub-1U devices stack, a shallow device leaves room at the back for a power
+strip, a modem sits sideways or upright, and Penn Elecom and Marantz make shelves for specific gear.
+
+**AC-043 cuts three of the five by name and never considered the fourth**, which is that
+`TemplateBody` has no body height in `Len` at all. So the auto-pack half shipped at DR-128 as an
+IMPLEMENTATION of AC-043, and the rest waits on evidence: *"I'll see how the team reacts to the
+version you're building now."* It sits in M9 because the trigger is a team using a build, which is
+what beta hardening is for. **A maybe, not a schedule**, and moving it to M8 if the reaction says
+it must precede release is one Story between two Epics.
 > **Exit criterion, verbatim.** Three integrators have each produced a sheet set they were willing to
 > send to a client or a job site, and none of the three needed to leave the app to fix something.
 > **That is the only exit criterion that matters and it is deliberately a judgement, not a metric.**

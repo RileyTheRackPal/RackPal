@@ -19,7 +19,7 @@
 // and injected through two packages, because `rackpal_export` drives
 // core directly and may never import `rackpal_ui`. A seeded Dart
 // catalog needs no seam, works unchanged in core's pure-Dart tests, and
-// is what this repository already does four times over — 49 templates
+// is what this repository already does four times over — 50 templates
 // (`seed_catalog.dart`), connector footprints (`catalog_connectors
 // .dart`), jacket-colour conventions, rack presets.
 //

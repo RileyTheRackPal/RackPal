@@ -81,22 +81,27 @@ void main() {
   });
 
   group('the chip carries what CR-017 says it must', () {
-    test('SIG-001 offers the remedy that INSERTS A DEVICE (CR-015), and it '
-        'is the only rule with one', () {
-      for (final c in springBackChips()) {
-        final chip = springBackRun(c.doc()) as SpringBackChip;
-        if (c.rule == SpringBackRule.hdbasetIntoEthernet) {
-          expect(chip.remedies, [SpringBackRemedy.insertHdbasetReceiver]);
-        } else {
-          expect(
-            chip.remedies,
-            isEmpty,
-            reason:
-                'docs/02 §5.2 names a remedy for SIG-001 and for no other '
-                'rule; inventing one puts words in a designer mouth',
-          );
-        }
-      }
+    test('SIG-001 offers the remedy that INSERTS A DEVICE (CR-015)', () {
+      // THIS USED TO END "and it is the only rule with one", which was
+      // true until DR-128 §11.127. docs/02 §5.2 named a remedy for
+      // SIG-001 alone, and the reason given for holding there was that
+      // inventing the others "puts words in a designer's mouth". The
+      // M5-H2 review is a designer's mouth: a working integrator read all
+      // 28 rules and asked for these two by name.
+      //
+      // The which-rule-offers-what table now lives in its own group
+      // below, asserted in both directions, so this test keeps only the
+      // CR-015 claim it was named for.
+      final chip =
+          springBackRun(
+                springBackChips()
+                    .firstWhere(
+                      (c) => c.rule == SpringBackRule.hdbasetIntoEthernet,
+                    )
+                    .doc(),
+              )
+              as SpringBackChip;
+      expect(chip.remedies, [SpringBackRemedy.insertHdbasetReceiver]);
     });
 
     test('[ Connect anyway ] is NOT a remedy value, so no chip can ship '
@@ -127,6 +132,114 @@ void main() {
         SpringBackRule.values.map((r) => r.id).toSet(),
         {for (final r in rulesInTier(RuleTier.springBack)) r.ruleId},
       );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // A CENSUS, ADDED AT DR-128 BECAUSE A GHOST ID WAS FOUND HERE
+  // ═══════════════════════════════════════════════════════════════════
+  // `conn.xlr3_f` was named by the `CON-001` known-bad and does not
+  // exist. The case still fired, because a made-up id is absent from
+  // `conn.hdmi_a`'s `matesWith` list and so is every other made-up id:
+  // the fixture was asserting that HDMI does not mate with a typo.
+  //
+  // It matters beyond that one row. `_connectorsDoNotMate` skips
+  // entirely when the FROM connector is unknown (the G4 branch, `#255`),
+  // so which limb a ghost exercises depends on which end it lands on,
+  // and a fixture can silently move between "this rule fired" and "this
+  // rule was skipped" without its author noticing.
+  //
+  // Zero hits is a finding, not a coverage gap: this is the shape
+  // `#237`'s census-as-a-test took, over a table nobody had swept.
+  // ═══════════════════════════════════════════════════════════════════
+  // EVERY REMEDY IS OFFERED BY A CHIP, AND BY THE RIGHT ONE
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-128 §11.127.6 says this enum gains two members for `CON-001` and
+  // `SIG-002`. **It said that before they were wired**, and the ruling
+  // would have described code that did not exist: the members were added
+  // and the two chips still carried no remedies, which is the same class
+  // of defect this milestone has now found six times.
+  //
+  // So the pairing is asserted in BOTH directions. A member no chip
+  // offers is a button nobody can press, and a chip carrying the wrong
+  // member would offer to declare an adapter for a family mismatch.
+  group('the remedies a chip offers', () {
+    /// The remedy each rule is ruled to offer, and no other.
+    const expected = <SpringBackRule, List<SpringBackRemedy>>{
+      SpringBackRule.hdbasetIntoEthernet: [
+        SpringBackRemedy.insertHdbasetReceiver,
+      ],
+      SpringBackRule.connectorsDoNotMate: [SpringBackRemedy.declareAdapter],
+      SpringBackRule.familyNotAccepted: [SpringBackRemedy.insertConverter],
+      // THE RESTRAINT, ASSERTED. `SpringBackRemedy`'s doc comment refuses
+      // to invent labels nobody wrote, and these three are the rules
+      // nobody has asked about. An empty list here is the ruling, not a
+      // gap waiting to be filled.
+      SpringBackRule.directionMismatch: [],
+      SpringBackRule.irEmitterIntoReceiver: [],
+      SpringBackRule.speakerImpedanceMismatch: [],
+    };
+
+    test('every rule is in the table, so a seventh cannot arrive without '
+        'somebody deciding whether it offers anything', () {
+      expect(expected.keys.toSet(), SpringBackRule.values.toSet());
+    });
+
+    for (final c in springBackChips()) {
+      test('${c.rule.id} offers exactly what it is ruled to', () {
+        final chip = springBackRun(c.doc()) as SpringBackChip;
+        expect(chip.remedies, expected[c.rule]);
+      });
+    }
+
+    test('and every member of the enum is offered by some chip, so there '
+        'is no button nobody can press', () {
+      final offered = <SpringBackRemedy>{
+        for (final list in expected.values) ...list,
+      };
+      expect(offered, SpringBackRemedy.values.toSet());
+    });
+  });
+
+  group('the fixtures name only things that ship', () {
+    test('every connector a scenario declares resolves in the seeded '
+        'registries', () {
+      final connectors = buildSeedRegistries().connectorTypes;
+      final seen = <String>{};
+      for (final c in [...springBackChips(), ...springBackNearMisses()]) {
+        final doc = c.doc();
+        for (final snapshot in doc.templates.values) {
+          for (final port in snapshot.body.ports) {
+            seen.add(port.connector.v);
+            expect(
+              connectors[port.connector],
+              isNotNull,
+              reason:
+                  '${c.rule.id} names ${port.connector.v}, which the '
+                  'registry has never heard of. A rule reading it takes '
+                  'its unknown branch, so the case proves something '
+                  'other than what it says',
+            );
+          }
+        }
+      }
+      expect(seen, isNotEmpty, reason: 'the sweep found no connectors');
+    });
+
+    test('and every signal family too, for the same reason', () {
+      final families = buildSeedRegistries().signalFamilies;
+      for (final c in [...springBackChips(), ...springBackNearMisses()]) {
+        final doc = c.doc();
+        for (final snapshot in doc.templates.values) {
+          for (final port in snapshot.body.ports) {
+            expect(
+              families[port.signalFamily],
+              isNotNull,
+              reason: '${c.rule.id} names ${port.signalFamily.v}',
+            );
+          }
+        }
+      }
     });
   });
 }
