@@ -5311,9 +5311,24 @@ the correction; the ruling and the code win in the meantime.
 > (AC-051). A domain-expert review of the 28 rules and of the catalog data is signed off. No rule, at
 > any severity, prevents a PDF from being written to disk.
 
+**THE NUMBER IN THAT QUOTE IS 28 AND THE CATALOGUE NOW HOLDS 29** (DR-132 §11.131 restored
+`ELE-005`). **This is a derived edit owed by that ruling, not a second amendment**, and the reason is
+which half of the sentence binds: the clause is *"no rule ships without its pair"*, and
+`drc_corpus_test.dart` asserts it over `kRuleCatalogue` rather than over a literal, so it moved to
+29/29 by itself and the gate stayed green. **The quote is left verbatim because §8.1 makes the
+criterion the unit of truth and a criterion edited in place is a criterion nobody can audit**; the
+correction sits beside it instead.
+
+**THE SIGN-OFF CLAUSE IS A DIFFERENT MATTER AND THE 28 THERE IS CORRECT.** The review was signed at
+03:08 on 2026-09-06 (`605c05d`) and `ELE-005` shipped at 15:22 the same day (`a74e7f8`), so **the
+systematic read covered 28 rules and not this one**. It is not unreviewed: DR-132 records the same
+reviewer's explicit judgement on it, *"I feel like having a warning for that is important to prevent
+blowing speakers out"*, which is domain-expert input on that rule specifically. **What it has not had
+is the systematic pass**, and `#845` is where that lands.
+
 | Clause | Mark | Why |
 |---|---|---|
-| 28 rules × fixture pair | **DEMONSTRATED: 28/28** | `dart test test/validation/drc_corpus_test.dart` from `packages/rackpal_core`, and `run_local.ps1` runs it as a step of its own named `AC-051 pair coverage`. **56 fixtures: 28 known-bad and 28 near-misses, one pair per rule, no rule with two and none with none.** The gate's subject is `kRuleCatalogue` rather than any evaluator's enum, which is what makes it enforce CR-021 rather than restate it (§5.4.7). Three assertions, and the third is the anti-vacuity one: a corpus that walked nothing would report no gaps and pass |
+| 28 rules × fixture pair | **DEMONSTRATED: 29/29** | `dart test test/validation/drc_corpus_test.dart` from `packages/rackpal_core`, and `run_local.ps1` runs it as a step of its own named `AC-051 pair coverage`. **58 fixtures: 29 known-bad and 29 near-misses, one pair per rule, no rule with two and none with none.** It read 28/28 and 56 until DR-132 restored `ELE-005`; the mark moved without the gate changing, because its subject is `kRuleCatalogue` rather than any evaluator's enum, which is what makes it enforce CR-021 rather than restate it (§5.4.7). Three assertions, and the third is the anti-vacuity one: a corpus that walked nothing would report no gaps and pass |
 | Domain-expert sign-off on the 28 rules and the catalog data | **CONFIRMED 2026-09-06** | Signed by Riley, reviewing integrator. **Two scopes, and they do not carry the same weight**: the 28 rules SIGNED outright, the catalog data SIGNED PROVISIONAL on the reviewer's own hedge, *"there may be signal families we are missing, but I haven't found any yet"*. §5.4.11 has the record. **The review returned twelve findings and produced four rulings**, and found six fields the model has and no producer writes; `#845` is the second pass, against a product a team has used rather than against a document |
 | No rule prevents a PDF being written | **DEMONSTRATED** | `packages/rackpal_export/test/findings_never_block_export_test.dart`, 316 lines. The `VACUOUS` mark expired the moment rules existed, and §0 predicted exactly that: *"true today, and true for a reason that will stop being true."* It is not replaced by the assertion `#310` asked for, which would have been vacuous a second way, but by the type system: **`ExportError` is sealed with three arms and none of them is about a rule** (§5.4.8, DR-119) |
 
