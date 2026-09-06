@@ -2,6 +2,37 @@
 
 ## 2026-09-06
 
+* **Ruling**: [DR-132](/decisions/dr-132-ele-005-restored-a-rule-that-already-had-an-id.md),
+  a §8.3 amendment taking the catalogue to **29**. The user chose a rule
+  over a rollup because **an overloaded 70 V line clips the amplifier and
+  clipped square waves destroy tweeters**, which is AC-040's own "protects
+  the user from real money" test.
+* **Note**: **IT WAS NOT A NEW RULE, AND A DUPLICATE WAS TWO GREPS AWAY.**
+  `ELE-005` was already specified in the research corpus with the severity
+  the user asked for and the 80% threshold `PWR-001` sets independently,
+  and `ELE-007`, the id about to be minted, was taken by a satellite
+  splitter rule in the same document. **Second time in two days that
+  reading before writing stopped a duplicate.**
+* **Ruling**: [DR-131](/decisions/dr-131-the-switchable-device-is-the-speaker.md).
+  The switchable device is the **speaker**, not the amplifier, and `A05`
+  already modelled exactly that with two CV bus nodes and no low-Z output.
+  **The question was put to the user on a wrong premise and their answer
+  corrected it**, which is the third trade correction this milestone.
+* **Note**: **PATCHING THE RULE WAS THE WRONG LEVEL, AND THE GATE PROVED
+  IT IN A MINUTE.** Teaching `ELE-006` to ignore a bypassed speaker made
+  `SIG-002` refuse the same correct connection. **Two rules disagreeing
+  with one physical switch** means the fact belongs upstream of both, so
+  the bypass now moves the RESOLVED family and neither rule changed.
+* **Note**: that surfaced a defect **nobody had ticketed**: both `_oneOf`
+  and `SIG-002` read `def.signalFamily`, the raw TEMPLATE value, so every
+  port-family correction `#233` lets a person make has been invisible to
+  every tier-2 rule since that resolver was built.
+* **Note**: **THE EXHAUSTIVE SWITCH CAUGHT HALF.** Adding two
+  `PortFactField` values forced every branch of the COMMAND to be written
+  before it compiled; the widget lists its controls by hand, so both
+  fields compiled green with no way to set either. That is DR-128's
+  nullable-field defect one layer along, and the pairing test is the
+  correction.
 * **Ruling**: [DR-130](/decisions/dr-130-the-cabinet-head-end-gets-a-name-and-a-note.md).
   A cabinet head end is a `Location` plus a note, not a container.
   **The finding's own fallback did not exist**: `mountNote` was

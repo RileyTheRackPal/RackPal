@@ -1,8 +1,8 @@
 ---
 type: Playbook
 title: A modelled field is not a reachable one; look for the gesture, not the field
-description: Fields with no writer, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, a panel nothing mounts, and a note found by censusing a ruling's own escape hatch. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
-tags: [practice, model, commands, verification, catalog, ui, dr-124, dr-125, dr-126, dr-128, dr-129, dr-130, m5]
+description: Fields with no writer, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, a panel nothing mounts, a note found by censusing a ruling's own escape hatch, and a field with a producer and no consumer that a new ruling nearly added a second copy of. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
+tags: [practice, model, commands, verification, catalog, ui, dr-124, dr-125, dr-126, dr-128, dr-129, dr-130, dr-131, dr-132, m5]
 timestamp: 2026-08-12T00:00:00Z
 status: adopted
 ---
@@ -305,6 +305,20 @@ carried sentences no user could type. **The grep that answers this one is the
 same as the first**, and the new part is WHEN to run it: **a disposition that
 says "already expressible" is a claim about a producer, and it is worth two
 minutes before it is worth a milestone.**
+
+**AND THE NINTH AND TENTH ARRIVED TOGETHER, ONE OF THEM BY COLLISION.**
+`Port.tapWatts` (DR-131) had the right home and the right doc comment, *"per
+INSTALLATION, not per template"*, and no writer; `PortDef.bus.maxTapWatts` was
+authorable in the device builder and declared on **zero of 727 seeded ports**.
+The second is a shape none of the earlier ones had: **a producer with no
+consumer.** A person could type a tap wattage and it participated in not one
+calculation.
+
+**THE COLLISION IS THE LESSON.** DR-131 was drafted ruling a NEW tap field onto
+`DeviceInstance`, because the census that priced it grepped `maxTapWatts` and
+never grepped `tapWatts`. That is `census-the-field-not-the-name` a fifth time,
+and the cheap post-condition is the one that keeps being skipped: **before adding
+a field, grep the SHORTEST form of its name, not the one the ticket used.**
 
 **THE WIDGET'S TESTS PASS BECAUSE ITS TESTS MOUNT IT THEMSELVES.** That is this
 whole practice in its final form: the thing exists, something reads it, every test

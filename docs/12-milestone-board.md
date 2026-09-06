@@ -6229,6 +6229,65 @@ rather than an omission. Making it fire would be fabricating a rack. **Whether a
 watts and BTU should roll up as a rack's do is left open and filed**, because the honest version of
 that question needs the container the ruling declined.
 
+#### 5.4.15 M5-K, the switchable device that was the speaker, and a rule that already had an id · CLOSED · `#838`
+
+**DR-131 §11.130 and DR-132 §11.131.** The M5-H2 reviewer's fifth finding: *"`maxTapWatts` exists on
+the model; a tap SELECTOR and CV-to-Low-Z switching do not."*
+
+**5.4.15.1 THE USER'S CORRECTION RELOCATED THE WHOLE PROBLEM.** The question went to them as a
+switchable AMPLIFIER and asked how its mode is recorded. The premise was wrong: *"Amplifiers are very
+rarely switchable, and if they support both Low-Z and CV, they almost always have separate outputs
+instead of a switch. Speakers are the only CV devices that I've seen with taps/switches for
+Low-Z/CV in person."*
+
+**The catalogue already agreed, and nobody had checked.** `A05`, the only rack-side CV source,
+declares two `audio.speaker_cv` bus nodes at `nominalVoltage: 70` and **has no low-Z output at all**.
+The amp side needed nothing, and a mode switch was one chapter from being built onto a model that was
+already right. **Third trade correction this milestone**, after the passive power strip and the
+shelf, all three the same shape.
+
+**5.4.15.2 THE MILESTONE'S NINTH AND TENTH PRODUCER GAPS, FOUND BY COLLIDING WITH THEM.**
+DR-131 was drafted ruling the tap onto `DeviceInstance`, and **`Port.tapWatts` already existed**,
+documented as *"per INSTALLATION, not per template"* and written by nothing. The census that priced
+the ruling grepped `maxTapWatts` and never grepped `tapWatts`: `census-the-field-not-the-name` for the
+fifth recorded time. `PortDef.bus.maxTapWatts`, the capacity half, was declared on **zero of 727
+seeded ports** because `p()` had no `bus` parameter.
+
+| | authorable | in the data | read by |
+|---|---|---|---|
+| `Port.tapWatts` | no | n/a | nothing |
+| `bus.maxTapWatts` | in the device builder only | 0 of 727 | nothing |
+
+**5.4.15.3 PATCHING `ELE-006` WAS THE WRONG LEVEL, AND THE GATE PROVED IT IN A MINUTE.** Teaching the
+rule to ignore a bypassed source made **`SIG-002` refuse the same correct connection**: the sink's
+`acceptedFamilies` never listed `audio.speaker_cv` and the source still called itself constant
+voltage. **Two rules disagreeing with one physical switch** is the signal that the fact belongs
+upstream, so the bypass now moves the resolved family in `resolvePortSignalFamily` and neither rule
+needed changing.
+
+**That surfaced a defect nobody had ticketed**: both `_oneOf` and `SIG-002`'s acceptance check read
+`def.signalFamily`, the raw TEMPLATE value, so **every port-family correction `#233` lets a person
+make has been invisible to every tier-2 rule** since that resolver was built.
+
+**5.4.15.4 `ELE-005` WAS NOT A NEW RULE, AND A DUPLICATE WAS TWO GREPS AWAY.** The plan was to mint
+`ELE-007`. `docs/research/design-data-model.md` line 1136 already specified `ELE-005` as *"warning: Σ
+of 70 V/100 V `tapWatts` on a net > 80% of the amp channel rating"*, matching the severity the user
+asked for and the 80% `PWR-001` independently sets. **`ELE-007` was taken too**, by a
+satellite-splitter rule in the same document. AC-040 is amended to 29 by DR-132, `ELE-004` stays cut,
+and every count guarding that number moved in the same commit.
+
+**5.4.15.5 THE TESTS CAUGHT TWO DEFECTS THE AC-051 PAIR COULD NOT.** DR-125 §11.124.5's limit again:
+a pair proves a rule fires, not that it fires correctly. **The amplifier was being reported as a
+speaker nobody had measured**, because its own port has no tap and landed in the unknown list. And
+the first draft of the near-miss **fired**, summing 220 against a 200 W budget; it is now
+60+60+60+20, on the boundary exactly, which also catches a `<=` written as `<`.
+
+**5.4.15.6 AND THE EXHAUSTIVE SWITCH ONLY CAUGHT HALF.** Adding two `PortFactField` values forced
+every branch of `SetPortFactCommand` to be written before it compiled.
+`device_ports_section.dart` lists its controls **by hand**, so both fields compiled green with no way
+to set either, exactly as DR-128's nullable `Finding.remedy` did. `port_tap_controls_test.dart` is
+the gate, in `remedy_pairing_test.dart`'s shape.
+
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
 > **Exit criterion, verbatim.** All four starter projects export a complete sheet set; the legend has
