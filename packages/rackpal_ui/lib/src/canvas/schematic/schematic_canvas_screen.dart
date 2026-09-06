@@ -3632,6 +3632,139 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
               'display (DR-115).',
             );
         }
+
+      // ═════════════════════════════════════════════════════════════
+      // `CON-001` — DECLARE THE ADAPTER, AND MAKE THE CABLE IT SITS IN
+      // ═════════════════════════════════════════════════════════════
+      // DR-128 §11.127.2. The rule's own catalogue summary promises
+      // that "declaring the adapter clears it", and until DR-128
+      // nothing in the tree could declare one: `InlineAdapter`'s only
+      // writer was the JSON decoder.
+      //
+      // TWO COMMANDS, ONE UNDO ENTRY, and the cable comes first because
+      // the adapter is a value ON it. This gesture is mid-draw, so
+      // there is no Link yet to carry anything — which is exactly why
+      // `evaluateSpringBack` was called with `ontoLink: null` and why
+      // the rule fired in the first place.
+      case SpringBackRemedy.declareAdapter:
+        final at = _chipAt;
+        final toTarget = at == null ? null : _targetFor(at);
+        if (toTarget == null) {
+          _dismissChip();
+          _status.show("That cable's far pin is no longer in this document.");
+          return;
+        }
+        // ASKED BEFORE ANYTHING IS WRITTEN, on `insert_receiver.dart`'s
+        // argument: the chip is a frame old, and a port override in
+        // between can make the two connectors agree. Declaring an
+        // adapter needs the link to exist, so a refusal discovered
+        // AFTER the connect would leave a bare cable behind for
+        // somebody who asked for an adapter. The only precondition that
+        // can fail here is the connectors matching; a duplicate is
+        // impossible on a Link one command old.
+        if (fromTarget.def.connector == toTarget.def.connector) {
+          _status.show(
+            '${fromTarget.citation} and ${toTarget.citation} both take '
+            '${fromTarget.def.connector.v} now, so no adapter is needed.',
+          );
+          return;
+        }
+        late String outcome;
+        _committingWire = true;
+        try {
+          // `declareInlineAdapter` AND NOT `insertRemedyDevice`: no
+          // device is minted, and the Edit menu has to name the act the
+          // person actually took. They pressed "Declare an adapter".
+          widget.controller.transact(LabelKey.declareInlineAdapter, (tx) {
+            final built = buildSplitConnectCommands(
+              doc: _doc,
+              from: fromTarget,
+              to: toTarget,
+              media: kUnstatedMedia,
+              now: widget.controller.clock.nowUtc(),
+              actor: widget.controller.actor,
+            );
+            switch (built) {
+              case SplitConnectRefused(:final ruleId, :final message):
+                outcome = '$ruleId — $message';
+              case SplitConnectReady(:final commands, :final connect):
+                for (final command in commands) {
+                  tx.add(command);
+                }
+                final adapter = buildDeclareAdapterCommand(
+                  doc: _doc,
+                  linkId: connect.id,
+                  from: fromTarget,
+                  to: toTarget,
+                  ruleId: SpringBackRule.connectorsDoNotMate.id,
+                );
+                switch (adapter) {
+                  case DeclareAdapterRefused(:final message):
+                    outcome = message;
+                  case DeclareAdapterReady(:final command):
+                    tx.add(command);
+                    outcome =
+                        'Declared a ${fromTarget.def.connector.v} to '
+                        '${toTarget.def.connector.v} adapter on the cable. '
+                        'Name the part in the inspector so it reaches the '
+                        'bill of materials.';
+                }
+            }
+          });
+        } finally {
+          _committingWire = false;
+        }
+        _clearWire();
+        _status.show(outcome);
+
+      // ═════════════════════════════════════════════════════════════
+      // `SIG-002` — MINT THE CONVERTER AND WIRE IT IN BETWEEN
+      // ═════════════════════════════════════════════════════════════
+      // DR-128 §11.127.3/.4. CR-015's test read the other way from
+      // `CON-001`'s: a family mismatch is answered by electronics, an
+      // installer pulls two cables to one, so it is a DEVICE.
+      //
+      // NO CONNECT HERE. `insertSignalConverter` makes BOTH cables
+      // itself, because the converter goes BETWEEN the two pins rather
+      // than on the cable between them, and it refuses before writing
+      // anything rather than half way through.
+      case SpringBackRemedy.insertConverter:
+        final at = _chipAt;
+        final toTarget = at == null ? null : _targetFor(at);
+        if (toTarget == null) {
+          _dismissChip();
+          _status.show("That cable's far pin is no longer in this document.");
+          return;
+        }
+        late InsertConverterResult converted;
+        _committingWire = true;
+        try {
+          widget.controller.transact(LabelKey.insertRemedyDevice, (tx) {
+            converted = insertSignalConverter(
+              tx,
+              doc: _doc,
+              from: fromTarget,
+              to: toTarget,
+              now: widget.controller.clock.nowUtc(),
+              actor: widget.controller.actor,
+            );
+          });
+        } finally {
+          _committingWire = false;
+        }
+        switch (converted) {
+          case InsertConverterRefused(:final message):
+            // THE CHIP STAYS UP, for the reason the `SIG-001` arm gives:
+            // the user asked for a fix and did not get one.
+            _status.show(message);
+          case InsertConverterDone(:final designator, :final displayName):
+            _clearWire();
+            _status.show(
+              'Inserted $designator, a $displayName, and ran a cable to '
+              'each side. It states no wattage, because nothing has said '
+              'what it draws.',
+            );
+        }
     }
   }
 

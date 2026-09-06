@@ -409,10 +409,15 @@ $SuiteFloors = @{
     # 3991 at DR-128 part two: +13 from insert_converter_test.dart.
     # 4010 at DR-128 part three: +16 from add_outlets_test.dart, PWR-003's
     # remedy, and +3 for the guard on Finding.withSeverity.
-    'rackpal_core'   = 4010
+    # 4018 at DR-128 part four: +8 gating which rule offers which remedy,
+    # after the ruling claimed two chip buttons that did not exist.
+    'rackpal_core'   = 4018
     'rackpal_text'   = 1
     'rackpal_export' = 195
-    'rackpal_ui'     = 1483
+    # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
+    # presses the two new remedy buttons on chips raised by a real drag.
+    # The core suites cannot see whether the SCREEN reaches the commands.
+    'rackpal_ui'     = 1489
     'rackpal_app'    = 916
 }
 

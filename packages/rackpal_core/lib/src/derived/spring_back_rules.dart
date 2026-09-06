@@ -94,13 +94,40 @@ enum SpringBackRule {
 /// docs/02 §5.2's table names a remedy for `SIG-001` and for no other
 /// rule.
 ///
-/// So this enum has one member. Inventing labels for the other five would
-/// be putting words in a designer's mouth and shipping them as though the
-/// corpus had said them.
+/// So this enum had ONE member for a milestone, and the restraint was
+/// right: inventing labels for the other five would be putting words in a
+/// designer's mouth and shipping them as though the corpus had said them.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THREE NOW, AND THE OBJECTION ABOVE IS SATISFIED RATHER THAN OVERRULED
+/// ═══════════════════════════════════════════════════════════════════════
+/// The M5-H2 review is the corpus saying them. A working integrator read
+/// all 28 rules and asked, for `SIG-002`, `CON-001` and `PWR-003`, that
+/// the product offer to create the part that fixes the problem and wire it
+/// in (DR-125 §11.124.4, ruled at DR-128 §11.127).
+///
+/// `PWR-003` is not here, and that is the shape of the tier rather than an
+/// omission: it is a row in the issues panel, not a chip, so it carries a
+/// `FindingRemedy` on `Finding` instead.
+///
+/// **The restraint still governs the remaining three.** `DIR-001`,
+/// `DIR-003` and `ELE-006` get no remedy, because nobody has asked for
+/// one and a label nobody wrote is still a label nobody wrote.
 enum SpringBackRemedy {
   /// CR-015: it inserts a DEVICE, not an annotation, and *"creates both
   /// links in one undo step"* (docs/05 §5).
-  insertHdbasetReceiver('Insert HDBaseT receiver');
+  insertHdbasetReceiver('Insert HDBaseT receiver'),
+
+  /// `CON-001`. CR-015's test says a barrel is a VALUE on the link: one
+  /// cable passes through it, so nobody pulls two cables to it.
+  /// `declare_adapter.dart` writes it, with both connectors prefilled
+  /// from the pins that just failed.
+  declareAdapter('Declare an adapter'),
+
+  /// `SIG-002`. The same test read the other way: a family mismatch is
+  /// answered by electronics, and an installer pulls two cables to every
+  /// converter, so `insert_converter.dart` mints a DEVICE.
+  insertConverter('Insert a converter');
 
   const SpringBackRemedy(this.label);
 
@@ -381,6 +408,7 @@ SpringBackChip? _familyNotAccepted(
     explanation:
         'The jack carries ${sink.def.signalFamily.v}, and nothing on this '
         'cable converts one to the other.',
+    remedies: const [SpringBackRemedy.insertConverter],
   );
 }
 
@@ -415,6 +443,7 @@ SpringBackChip? _connectorsDoNotMate(
     explanation:
         'One is ${a.v} and the other is ${b.v}, and no adapter is '
         'declared on this cable.',
+    remedies: const [SpringBackRemedy.declareAdapter],
   );
 }
 
