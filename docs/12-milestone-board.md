@@ -6115,6 +6115,20 @@ scan whose pattern stops matching reports a clean sweep.
 **`carriedProtocols` IS NOT PRICED HERE**, and its third option is real: if protocol search is not a
 v1 feature, deleting two dead reads and a field is cheaper and more honest than filling it, and the
 data is a trade question under AC-052 rather than a code one.
+
+**5.4.12.3 AND ITS OWN BUMP WENT UNPAID, WHICH IS THE THIRD TIME.** `#841` is a Chapter, it closed,
+and the commit that closed it left the six files at `v0.5.60`. Paid in `#840`'s branch at
+**`v0.5.61`**, derived the two ways §5.4.10 requires: the board query for Done Chapters under epic 23
+returns 61, and 60 plus the one chapter that closed without a bump is 61. **`#840` itself is a Story
+with no Chapters and moves the digit by nothing**, which is §5.4.11.4's rule and DR-127's `#837`
+precedent.
+
+**Three misses now, all the same shape**: a commit whose subject is the work forgets a digit that
+lives in six other files, and `version_parity_test.dart` cannot see it because all six are stale
+together. **The tell is that every one of the three was caught by DERIVING rather than by reading**,
+which is the argument for the derivation being written into the commit message rather than the
+number being copied out of it.
+
 #### 5.4.13 M5-M, the code row that reads as a different kind, and the button ruled twice · CLOSED · `#840`
 
 **DR-129 §11.128.** The M5-H2 reviewer's twelfth finding was one sentence: *"a code-adjacent finding
