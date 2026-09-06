@@ -1686,6 +1686,49 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     });
   }
 
+  /// DR-130 (`#839`): writes `OffRackPlacement.mountNote` on the one
+  /// selected off-rack device.
+  ///
+  /// NOT WRAPPED IN A TRANSACTION, for `_setDeviceOverride`'s reason
+  /// below: the control renders only for a single off-rack selection, so
+  /// a transaction around one command adds an undo frame that says
+  /// nothing.
+  ///
+  /// THE COMMAND ITSELF COLLAPSES THE KEYSTROKES. `SetMountNoteCommand`
+  /// declares a `mergeKey` over the device id, so typing a sentence is
+  /// one undo entry rather than one per character. That is why the field
+  /// can afford to commit on every change instead of on submit, which
+  /// loses the note when the panel is dismissed by clicking away.
+  void _setMountNote(String note) {
+    final id = _soleSelectedDeviceId;
+    if (id == null) return;
+    final planned = planSetMountNote(
+      doc: _doc,
+      id: id,
+      note: note,
+      now: DateTime.now().toUtc(),
+      actor: _controller.actor,
+    );
+    switch (planned) {
+      case MountNoteReady(:final command):
+        _controller.run(command);
+      case MountNoteRefused(:final reason):
+        _status.show(reason);
+    }
+  }
+
+  /// The one selected device, or null when the selection is not exactly
+  /// one that still exists. The mount-note control renders on the same
+  /// condition, so this agreeing with it is what keeps the callback from
+  /// writing to a device the user is not looking at.
+  Uuid? get _soleSelectedDeviceId {
+    final live = [
+      for (final id in _selection.ids)
+        if (_doc.devices.containsKey(id)) id,
+    ];
+    return live.length == 1 ? live.single : null;
+  }
+
   /// Door 1: one override field on the ONE selected device (CR-054,
   /// DR-098 §11.97.5).
   ///
@@ -4449,6 +4492,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 onSetWidth: _setSelectionWidth,
                 onSetOverride: _setDeviceOverride,
                 onSetPortFact: _setPortFact,
+                onSetMountNote: _setMountNote,
                 firstFieldFocus: _inspectorFirstFieldFocus,
               ),
             ),

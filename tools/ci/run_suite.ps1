@@ -430,7 +430,11 @@ $SuiteFloors = @{
     # 1498 at DR-129: +9 from remedy_pairing_test.dart, which asserts in
     # both directions that a FindingRemedy reaches a pressable row, after
     # a ruling described a button the panel never drew.
-    'rackpal_ui'     = 1498
+    # 1506 at DR-130: +8 from mount_note_field_test.dart. One of the
+    # eight mounts RackCanvasScreen rather than the panel, and asserts
+    # the SCREEN hands over the callback: #847 is a panel that passes its
+    # own tests because its own tests mount it.
+    'rackpal_ui'     = 1506
     'rackpal_app'    = 916
 }
 

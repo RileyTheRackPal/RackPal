@@ -98,6 +98,7 @@ export 'src/inspector/delete_device_dialog.dart';
 export 'src/inspector/device_overrides_section.dart';
 export 'src/inspector/device_ports_section.dart';
 export 'src/inspector/inspector_panel.dart';
+export 'src/inspector/mount_note_field.dart';
 export 'src/inspector/new_rack_dialog.dart';
 export 'src/inspector/rack_inspector_panel.dart';
 export 'src/inspector/shrink_rack_dialog.dart';
