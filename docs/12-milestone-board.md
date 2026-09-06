@@ -5982,6 +5982,54 @@ this class of error**: `version_parity_test.dart` compares the six files against
 structurally blind to all six being stale together, which is how `v0.2.0` sat through thirty M3 tasks
 and `v0.3.30` through forty-six M4 ones.
 
+#### 5.4.12 M5-N1, the census that should have run first, and what it narrowed · CLOSED · `#841`
+
+**Six fields with no producer surfaced in M5 and four of them were found by a user's review**, which
+is an expensive way to run a census. `#841` is the cheap way, run at last: sweep `PortDef`'s
+constructor against `catalog_ports.dart`'s `p()` and ask what the shipped catalogue cannot say.
+
+**ELEVEN FIELDS HAVE NO `p()` PARAMETER, AND THE HEADLINE IS NOT THE FINDING.** `position`,
+`designatorHint`, `topology`, `conductorCount`, `level`, `channelIndex`, `wavelengthNm`, `bus`,
+`serial`, `renamedFrom`, `carriedProtocols`. **Almost every one is written by the DEVICE BUILDER**,
+where a person authors a port. They are not fields nothing can write; they are fields **the shipped
+catalogue cannot express**, which is a narrower claim and the one worth making.
+
+**THE SHARP QUESTION IS WHO READS ONE OUTSIDE THE BUILDER**, because there every seeded device takes
+the default and the reader decides on a value nobody could have authored. That is DR-124's and
+DR-126's shape exactly. Censused, **two do**:
+
+| Field | Read by | Verdict |
+|---|---|---|
+| `topology` | `ConnectTarget.isMultidrop` | **COVERED, deliberately.** The seed declares `PortDirection.busNode` instead and the getter accepts either. That file has said so since M5-C |
+| `carriedProtocols` | `template_facts.dart`, `template_search.dart` | **OPEN.** Nothing seeded populates it, so **searching the shipped catalogue by protocol matches nothing and always has**. `#846` |
+
+**5.4.12.1 THE CENSUS FOUND THREE STALE CLAIMS, WHICH IS MORE THAN IT FOUND FIELDS.** All three sit
+in `connect_target.dart`, in doc comments that REASON from them, and all three were falsified by
+rulings from the preceding two days:
+
+- *"Not one of the seed catalog's ports declares `maxConnections`"*: false since DR-124, which
+  corrected a different paragraph four lines below and left this one standing.
+- *"`PortDef.acceptedFamilies` ... is populated on NONE of the 727 seed catalog ports"*: false since
+  DR-126, which populated eighteen.
+- *"Three fields, one pattern"*: two of the three have since gained a producer.
+
+**THIS IS THE COST OF A CORRECTION THAT EDITS ONE PARAGRAPH.** DR-124 knew `maxConnections` had
+become authorable, said so in the place it was working, and did not sweep the file. A confident
+bolded sentence three paragraphs up outlived it by a day. **The lesson is not "sweep harder"**: it is
+that a claim about what the catalogue contains belongs in a test, where it fails, rather than in
+prose, where it is believed.
+
+**5.4.12.2 SO THE CENSUS IS A TEST.** `seed_producer_census_test.dart` names the eleven rather than
+counting them, because a count of eleven passes on the wrong eleven. A field LEAVING the list means
+something gained a producer and the list should shrink in the same commit; a field JOINING it means
+`PortDef` grew something the catalogue cannot express, and the reason string asks the `#841` question
+of whoever put it there. It also asserts its own parsers find something, on `#237`'s precedent: a
+scan whose pattern stops matching reports a clean sweep.
+
+**`carriedProtocols` IS NOT PRICED HERE**, and its third option is real: if protocol search is not a
+v1 feature, deleting two dead reads and a field is cheaper and more honest than filling it, and the
+data is a trade question under AC-052 rather than a code one.
+
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
 > **Exit criterion, verbatim.** All four starter projects export a complete sheet set; the legend has

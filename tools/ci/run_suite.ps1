@@ -411,7 +411,9 @@ $SuiteFloors = @{
     # remedy, and +3 for the guard on Finding.withSeverity.
     # 4018 at DR-128 part four: +8 gating which rule offers which remedy,
     # after the ruling claimed two chip buttons that did not exist.
-    'rackpal_core'   = 4018
+    # 4021 at #841: +3 for the producer census, which names the eleven
+    # PortDef fields the seed builder cannot set rather than counting them.
+    'rackpal_core'   = 4021
     'rackpal_text'   = 1
     'rackpal_export' = 195
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
