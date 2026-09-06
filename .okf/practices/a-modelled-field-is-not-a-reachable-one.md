@@ -2,7 +2,7 @@
 type: Playbook
 title: A modelled field is not a reachable one; look for the gesture, not the field
 description: Fields with no writer, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, a panel nothing mounts, a note found by censusing a ruling's own escape hatch, and a field with a producer and no consumer that a new ruling nearly added a second copy of. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
-tags: [practice, model, commands, verification, catalog, ui, dr-124, dr-125, dr-126, dr-128, dr-129, dr-130, dr-131, dr-132, m5]
+tags: [practice, model, commands, verification, catalog, ui, dr-124, dr-125, dr-126, dr-128, dr-129, dr-130, dr-131, dr-132, dr-133, m5]
 timestamp: 2026-08-12T00:00:00Z
 status: adopted
 ---
@@ -326,6 +326,15 @@ is green, and no path a person walks reaches it. **"What does a person click"
 means the WHOLE path, ending at a window that opens on its own**, and a widget
 test is not evidence of the last step, because the test supplies the step it is
 meant to prove.
+
+**AND WHEN THE PATH IS MISSING, READ THE SPEC BEFORE DESIGNING ONE.** `#847`
+was filed calling `DrcPanel`’s mount point an open shell decision with three
+questions; docs/04 §1 had a layout-table row for the drawer and §8 had its
+three keybindings, so all three questions were closed and one of the answers
+was better than the one about to be proposed (DR-133). **A thing that is
+unreachable is often a thing that was SPECIFIED AND SKIPPED, not a thing
+nobody decided**, and the cheap check is to grep the spec for the surface
+before designing it.
 
 # Citations
 
