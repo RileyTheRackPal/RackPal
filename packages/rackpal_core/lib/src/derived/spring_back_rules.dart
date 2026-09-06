@@ -298,6 +298,25 @@ SpringBackChip? _irEmitterIntoReceiver(ConnectTarget from, ConnectTarget to) {
 const SignalFamilyId _speakerCv = SignalFamilyId('audio.speaker_cv');
 const SignalFamilyId _speakerLowZ = SignalFamilyId('audio.speaker_lowz');
 
+/// `ELE-006`, which asked one question and needed two (DR-131 §11.130.4).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// A BYPASSED SPEAKER ON A LOW-Z OUTPUT IS CORRECT, AND THIS FIRED ON IT
+/// ═════════════════════════════════════════════════════════════════════
+/// The rule compared the two SIGNAL FAMILIES and looked at nothing else.
+/// A constant-voltage speaker whose transformer is switched out is a
+/// low-impedance speaker, and landing it on a low-Z amplifier output is
+/// the correct thing to do; the chip called it a near short.
+///
+/// `Port.lowZBypass` is what the rule was missing. **It is read off the
+/// MATERIALISED port**, because the bypass is a fact about this installed
+/// speaker and not about its template: two of the same model on one job
+/// routinely sit differently.
+///
+/// A PORT THAT HAS NOT MATERIALISED YET IS NOT BYPASSED, and that is the
+/// conservative direction rather than an accident. The default is a
+/// transformer in circuit, which is how a CV speaker leaves the box, so
+/// the rule still fires on the pairing it was written for.
 SpringBackChip? _speakerMismatch(ConnectTarget from, ConnectTarget to) {
   final cv = _oneOf(from, to, _speakerCv);
   final lowZ = _oneOf(from, to, _speakerLowZ);
@@ -396,7 +415,12 @@ SpringBackChip? _familyNotAccepted(
   // plug into that jack, so the connectors really must mate. The split is
   // physical rules yes, signal rules no.
   if (_isPassthrough(doc, sink)) return null;
-  if (sink.acceptsFamily(source.def.signalFamily)) return null;
+  // `source.signalFamily`, NOT `source.def.signalFamily` (DR-131). Same
+  // correction as `_oneOf`'s: the raw template value ignores both the
+  // user's port-family override (`#233`) and a bypassed speaker
+  // transformer, and this rule refused a correct connection on the
+  // second of those while `ELE-006` had already been taught to allow it.
+  if (sink.acceptsFamily(source.signalFamily)) return null;
   if (_adapterSatisfies(doc, ontoLink, SpringBackRule.familyNotAccepted.id)) {
     return null;
   }
@@ -404,9 +428,9 @@ SpringBackChip? _familyNotAccepted(
     rule: SpringBackRule.familyNotAccepted,
     headline:
         '${sink.citation} does not accept '
-        '${source.def.signalFamily.v}.',
+        '${source.signalFamily.v}.',
     explanation:
-        'The jack carries ${sink.def.signalFamily.v}, and nothing on this '
+        'The jack carries ${sink.signalFamily.v}, and nothing on this '
         'cable converts one to the other.',
     remedies: const [SpringBackRemedy.insertConverter],
   );
@@ -462,8 +486,15 @@ bool _adapterSatisfies(RackDocument doc, Uuid? linkId, String ruleId) {
 /// Returns ONE end rather than a bool so the chip can name the actual
 /// pin. `ConnectRefused`'s contract carries over: a sentence that says
 /// which jack is which is the difference between a remedy and a riddle.
+/// THROUGH `ConnectTarget.signalFamily`, NOT `def.signalFamily`.
+///
+/// This read the raw template family until DR-131, so **every port-family
+/// correction a user made on an instance was invisible to every tier-2
+/// rule** (`#233`, DR-098 §11.97.6 built that resolver and this file
+/// never called it). The transformer bypass is what surfaced it, and the
+/// override case it also fixes was never anybody's ticket.
 ConnectTarget? _oneOf(ConnectTarget a, ConnectTarget b, SignalFamilyId family) {
-  if (a.def.signalFamily == family) return a;
-  if (b.def.signalFamily == family) return b;
+  if (a.signalFamily == family) return a;
+  if (b.signalFamily == family) return b;
   return null;
 }

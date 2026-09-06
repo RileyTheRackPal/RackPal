@@ -17296,11 +17296,37 @@ the third state:
 | `false` | `15` | constant voltage at 15 W, and the figure a 70 V bus sums |
 | `false` | absent | constant voltage, tap **UNKNOWN**. CR-114: never estimated, never `0`, and the rollup reports it in its unknown count |
 
-It lives on the `DeviceInstance` rather than the port, on the user's own
-"set and forget" framing: a person sets the transformer on the speaker,
-not on one of its two pigtail conductors. `ConnectTarget` already carries
-`deviceId`, and `spring_back_rules.dart` already passes `doc` to
-`_directionMismatch`, so `ELE-006` reaching it costs a parameter.
+**11.130.9 IT LIVES ON `Port`, BECAUSE `Port.tapWatts` ALREADY EXISTS
+AND THIS RULING FIRST PUT IT IN THE WRONG PLACE.** §11.130.8 was drafted
+ruling the pair onto `DeviceInstance`, and the fields were written there
+before the collision surfaced. **The census that priced this ruling
+grepped `maxTapWatts` and never grepped `tapWatts`**, which is
+`census-the-field-not-the-name` for the fifth recorded time and the
+second where the miss was a NAME rather than a call shape.
+
+`Port.tapWatts` is not merely present, it is **already documented as the
+right home**: *"70/100 V transformer tap: per INSTALLATION, not per
+template."* And it is the **ninth producer gap of this milestone**,
+matching `maxTapWatts`' shape exactly:
+
+| | |
+|---|---|
+| written by | **nothing.** The codec decodes it and no command, no widget and no builder sets it |
+| read by | **nothing.** The codec encodes it |
+| said so already | `catalog_field.dart`'s header, in as many words: no rule *"reads `impedanceOhms`/`tapWatts` from at all (AC-031)"* |
+
+So `#838` does not add a tap field. **It gives the one already modelled a
+producer and a consumer**, and adds only `lowZBypass` beside it. The
+device-level draft is withdrawn: a speaker with two pigtail conductors
+has one port SET, and the repo already decided that a per-installation
+electrical fact belongs on the port (CR-053, "typed; lives here, not in a
+device-keyed map").
+
+**AND THE CATALOGUE'S OWN LADDER IS A FOURTH DATA POINT FOR §11.130.8.**
+`F08`'s description hard-codes *"2.5/5/10/15/20 W"*, which matches
+neither Episode's nor Beale Street's. A fixed list was going to be wrong
+in the shipped catalogue as well as in the field, and that sentence
+should be read as an example rather than as a constraint.
 
 ## 12. Superseded rulings
 

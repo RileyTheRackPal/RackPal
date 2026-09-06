@@ -421,7 +421,11 @@ $SuiteFloors = @{
     # A producer that reaches no surface is DR-128 repeating one layer
     # out, and the ruling chose the smallest option ON THE GROUND that a
     # note reaches the schedule and the PDF.
-    'rackpal_core'   = 4043
+    # 4049 at DR-131: +6 from speaker_bypass_test.dart. The bypass moves
+    # the resolved FAMILY rather than one rule verdict, which is where
+    # the fix belongs: ELE-006 was patched first and SIG-002 immediately
+    # refused the same correct connection.
+    'rackpal_core'   = 4049
     'rackpal_text'   = 1
     'rackpal_export' = 195
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
