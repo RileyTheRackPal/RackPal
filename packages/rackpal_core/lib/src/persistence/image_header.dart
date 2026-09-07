@@ -1,5 +1,5 @@
 // rackpal_core/src/persistence/image_header.dart — what an image SAYS it
-// is, read without decoding it (PLAN-D/2 and PLAN-D/4, AC-058/D12).
+// is, read without decoding it (PLAN-D/2 and PLAN-D/4, AC-058/D8).
 //
 // ═══════════════════════════════════════════════════════════════════════
 // A HEADER PARSER IS NOT A DECODER, AND THE DISTINCTION IS THE WHOLE
@@ -29,13 +29,32 @@
 // ═══════════════════════════════════════════════════════════════════════
 // EVERY FUNCTION HERE READS HOSTILE BYTES AND NONE OF THEM THROWS
 // ═══════════════════════════════════════════════════════════════════════
-// AC-058/D12's rule, and CR-093's contract for the persistence layer. A
+// AC-058/D8's rule, and CR-093's contract for the persistence layer. A
 // truncated file, a lying length, a marker walk that runs off the end: all
 // of them are `Err`, none of them is an exception and none of them is an
 // out-of-range read. Every index is bounds-checked before it is used
 // rather than after, because "after" is a `RangeError` escaping into an
 // `unawaited` future in the shell, which reaches the user as the menu item
 // doing nothing at all.
+//
+// ═══════════════════════════════════════════════════════════════════════
+// THE CITATION HERE READ `AC-058/D12` UNTIL 2026-09-07, AND D12 IS
+// LOCALISATION
+// ═══════════════════════════════════════════════════════════════════════
+// The import-hardening item is **D8**: *"zip-slip protection, entry-count
+// and uncompressed-size limits, and JSON depth/size limits on every import
+// path."* D12 is the DSL, the CSV synonym table and registry display names
+// being structurally English-only, which this file has nothing to do with.
+//
+// **THE WRONG ID WAS NOT INVENTED HERE.** It came from docs/09's Plan view
+// import row, written 2026-08-10 in `f423aa3`, and was copied into two
+// source files and two derived documents without anybody reading the row it
+// pointed at. A wrong ruling ID is worse than a missing one for exactly
+// that reason: it resolves. Every check that verifies an ID EXISTS passes,
+// and the authority of a real ruling is lent to a claim it does not make.
+// The cheap post-condition is to grep the ID in canon and read the row,
+// which is the same move `a stated cost is a hypothesis` prescribes for a
+// number.
 import 'dart:typed_data';
 
 import 'package:meta/meta.dart';

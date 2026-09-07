@@ -1,5 +1,5 @@
 // PLAN-D/2 and PLAN-D/4: what an image declares, read without decoding
-// it, and the three controls AC-058/D12 owes every import path.
+// it, and the three controls AC-058/D8 owes every import path.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // THE FIXTURES ARE BUILT BYTE BY BYTE, DELIBERATELY

@@ -100,9 +100,14 @@ a floorplan supersedes **none** of the four tiers.
 
 # What it does not rule
 
-Not the rasteriser, which `PLAN-D/1` picks against the tree. Not the
-rasterisation resolution, which `PLAN-D/3` settles with a measurement against
-AC-006. Not the integrator's logo, which is
+Not the rasteriser, which `PLAN-D/1` picks against the tree. **It has since
+picked PDFIUM** (2026-09-07): docs/13 D9 already contemplates vendoring pdfium
+per platform for M8's preview, so the two become one vendoring problem paid once,
+and `Windows.Data.Pdf` has no macOS answer at all. That is a note about what
+happened next, not a widening of this ruling, which still does not rule it. Not
+the rasterisation resolution, which `PLAN-D/3` settles with a measurement against
+AC-006 and which is **still open**, blocked on a real architectural page rather
+than on effort. Not the integrator's logo, which is
 [DR-030](/decisions/dr-030-integrator-logo-in-v1.md)'s and lands in M6. Not
 mobile: this ships to a desk and not to a technician on site.
 

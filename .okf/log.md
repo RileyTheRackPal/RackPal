@@ -2,6 +2,84 @@
 
 ## 2026-09-07
 
+* **Correction**: **`AC-058/D12` WAS THE WRONG ITEM AND IT RESOLVED
+  PERFECTLY.** The Plan view's import hardening was cited to D12 in four
+  places, two of them source. D12 is *localisation*: the DSL, the CSV
+  synonym table and registry display names being structurally
+  English-only. The item that owes byte and pixel caps on every import
+  path is **D8**. Corrected everywhere; docs/11's l10n gate keeps its D12
+  because that one is right.
+* **Creation**: [A wrong ruling ID
+  resolves](/practices/a-wrong-ruling-id-resolves.md). **The wrong ID was
+  not invented at the point of use**: it came from docs/09's Plan view
+  import row, written four weeks earlier in `f423aa3`, and the chapter did
+  exactly what roadmap §8.2 asks by citing what the roadmap gave it. The
+  reusable half is why nothing caught it. A DANGLING id fails to resolve
+  and a COLLIDING one is caught by scanning refs; a WRONG one resolves, so
+  the only check anybody performs at speed comes back satisfied and no gate
+  in `run_local.ps1` opens canon at all.
+* **Build**: `PLAN-D` is **three chapters of five** at `v0.6.19`.
+  `image_header.dart` reads what a PNG or JPEG DECLARES without decoding
+  it; `plan_import_actions.dart` is the import path; the file dialog grows
+  a floorplan kind in both Dart and C++. `PLAN-D/3` and `PLAN-D/5` are open
+  and blocked, and the block is named rather than left to be inferred.
+* **Note**: **THE RASTERISER IS PDFIUM, NOT `Windows.Data.Pdf`**, and the
+  tree decided it rather than a preference. docs/13 D9 already contemplates
+  vendoring pdfium per platform for M8's preview, so choosing it here makes
+  the two **one vendoring problem paid once**; and `Windows.Data.Pdf` has
+  no macOS answer, which DR-009 makes a v1 problem. **Two things are
+  unverified and are recorded as unverified**: the Dart wrapper's licence
+  (PDFium itself is BSD-3-Clause and clean under DR-036, the package around
+  it is a separate question) and whether its build fetches pdfium or takes
+  a vendored one. docs/03 carries `pdfrx` as `planned` until `PLAN-D/3`
+  establishes both.
+* **Note**: **TWO CHAPTERS OF ONE DECOMPOSITION CONTRADICTED EACH OTHER,
+  AND THE CONTRADICTION WAS A MISSING DISTINCTION RATHER THAN A WRONG
+  TASK.** `#624` says the decode happens in the app layer and only
+  dimensions cross into core. `#626` says the third control is a pixel cap
+  and names what it exists for: a three-kilobyte PNG declaring
+  60000 x 60000 allocates 10.8 GB before anything objects. Obeying `#624`
+  literally puts that cap AFTER the allocation it prevents. **A header
+  parser is not a decoder**, so the CHECK moved to core and the DECODE did
+  not: nothing in `image_header.dart` decompresses a pixel, allocates
+  proportionally or touches `dart:ui`, and core stays decoder-free.
+* **Note**: **THE HEADER IS A CLAIM BY THE FILE, SO THE DECODE RE-CHECKS
+  IT.** A cap that runs on a declared size is only a cap if a file that
+  understates itself is caught, which is why the decoded dimensions are
+  compared with the declared ones and a mismatch refused. `container.dart`
+  has the same shape one format over: declared entry sizes are summed
+  before anything inflates, AND a running total catches a lying header.
+  Four hardening controls in this tree now, and all four run before the
+  allocation they bound.
+* **Note**: **A PDF IS REFUSED BY NAME AND NOT AS AN UNSUPPORTED FORMAT.**
+  DR-029 bought PDF import deliberately, so *"that is not a supported
+  format"* would tell somebody the product decided something it has not,
+  and would send them to convert the file by hand believing they must.
+  `PdfImportNotAvailableError` says *not yet* and names the chapter.
+* **Note**: **THE FLATTEN STAYED WHERE THE SCREENING MOVED.** The screening
+  percentage belongs in the export backend where it can change without
+  re-importing every underlay a user owns (DR-037 §11.36.3). An alpha
+  channel in the STORED bytes is a hazard either way, because
+  `PdfImage(..., alpha: true)` emits an `/SMask` and docs/08 row 9 forbids
+  alpha absolutely. Composited over **white**, which is what paper is; the
+  other plausible default turns an architectural export into a dark sheet
+  with white lines. An opaque image is **not** re-encoded: the container
+  holds what the architect sent.
+* **Note**: **WHAT BLOCKS THE REMAINING TWO CHAPTERS IS AN INPUT, NOT
+  EFFORT.** `PLAN-D/3` (rasterisation resolution) and `PLAN-D/5` (what a
+  plan costs a `.rmpj` against AC-006) both demand a **real architectural
+  page** in their own words, and `#627` says why: docs/15 §2 rejected
+  base64 on an ESTIMATE and *"the zip path's real number has never been
+  taken"*. A synthetic fixture would settle it with a preference wearing a
+  number, which is
+  [a stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md)
+  arriving one chapter early. `PLAN-D/3` additionally waits on the pdfium
+  vendoring being executed rather than decided.
+* **Note**: **A CALLER LIST INSIDE THE CALLEE GOES STALE DOWNWARD.**
+  `import_guard.dart` said *"three import paths need it"* and named them;
+  there are six, and the list had missed three. It is not restated: the
+  direction of the drift is what makes it dangerous, because a shrunken
+  list reads as a NARROWER helper and invites a second copy of it.
 * **Ruling**: [DR-136](/decisions/dr-136-plan-data-declares-its-reader.md).
   A document carrying plan data declares a `minReaderVersion` that
   understands plans, so an older build opens it READ-ONLY rather than
