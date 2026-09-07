@@ -1,8 +1,8 @@
 ---
 type: Playbook
 title: A modelled field is not a reachable one; look for the gesture, not the field
-description: Fields with no writer, an ERROR TYPE with no producer, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, a panel nothing mounts, a note found by censusing a ruling's own escape hatch, and a field with a producer and no consumer that a new ruling nearly added a second copy of. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
-tags: [practice, model, commands, verification, catalog, ui, persistence, dr-019, dr-124, dr-125, dr-126, dr-128, dr-129, dr-130, dr-131, dr-132, dr-133, m5]
+description: Fields with no writer, an ERROR TYPE with no producer, a PROTECTION that never covered what it was bought for, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, a panel nothing mounts, a note found by censusing a ruling's own escape hatch, and a field with a producer and no consumer that a new ruling nearly added a second copy of. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
+tags: [practice, model, commands, verification, catalog, ui, persistence, dr-019, dr-136, dr-124, dr-125, dr-126, dr-128, dr-129, dr-130, dr-131, dr-132, dr-133, m5]
 timestamp: 2026-08-12T00:00:00Z
 status: adopted
 ---
@@ -45,6 +45,23 @@ behaviour, and libraries are the thing this practice keeps saying to measure.**
 "What does a person click" has a sibling: **what does the dependency actually
 DO when the thing goes wrong**. Both are answered by running it, and neither is
 answered by reading it.
+
+**AND A FIFTH, WHICH IS THE OTHER FOUR POINTED AT A PROTECTION RATHER THAN A
+FEATURE.** DR-019 bought an `unknown` passthrough to stop an older build dropping
+plan pins on save. M3-I built it as a reserved container, correctly, and said in
+capitals that it collects no unrecognised sibling keys. `planPin` is a sibling
+key. **So the remedy never reached the hazard**, and nothing noticed for a month.
+
+The reason nothing noticed is the reusable half: **a protection bought for a
+feature that does not exist has no way to be wrong until the feature arrives.**
+There is no writer to grep for, no gesture to follow, no data to count. Every
+check in this practice needs something to point at, and a guard for a field
+nobody has added yet points at nothing.
+
+So the moment to re-check a protection is **the moment you first need it**, not
+the moment you first cite it. PLAN-C found this by trying to write the test its
+own brief asked for and discovering the test could not exist; DR-136 is what came
+out of that.
 
 # Why, with the evidence
 
