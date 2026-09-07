@@ -939,11 +939,23 @@ void main() {
     // Reads the model source relative to CWD, like
     // internal_setter_grep_test.dart — run the suite from the package
     // directory.
-    test('every @internal Outlet setter has a table row, and vice versa', () {
-      expect(
-        _internalSetters('outlet.dart'),
-        {for (final f in OutletField.all) f.key},
-      );
+    test('every @internal Outlet setter has a table row, except the one '
+        'PLAN-C keeps out', () {
+      // `planPin` IS an `@internal` setter and is deliberately NOT a table
+      // row, on `parentId`'s exemption two cases down and for the same
+      // reason: a row's `set` writes and returns WITH NO WAY TO REFUSE. A
+      // `PlanPin` names an underlay by id, so a row would let a caller pin
+      // an outlet to an underlay that does not exist in this document, and
+      // a dangling reference in a drawing is exactly what DR-021's cascade
+      // spends a ruling avoiding elsewhere.
+      //
+      // `SetPlanPinCommand` owns it and can refuse. Named literally rather
+      // than filtered by a predicate, so a SECOND field escaping the table
+      // fails this case instead of slipping through a rule written for one.
+      expect(_internalSetters('outlet.dart'), {
+        for (final f in OutletField.all) f.key,
+        'planPin',
+      });
     });
 
     test('every @internal StructureBody setter has a table row, except the '

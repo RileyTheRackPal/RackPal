@@ -485,6 +485,17 @@ final _byteRoundTripCases =
         now: _later,
         actor: 'tester',
       ),
+      // PLAN-C. The value is deliberately NOT round: DR-020 keeps this a
+      // BOUND, and a suspiciously tidy 3 metres would round-trip through
+      // any encoder that quietly went via millimetres.
+      'riseAllowance': (doc, id) => SetEntityPropertyCommand<Location, Len?>(
+        id: id,
+        field: LocationField.riseAllowance,
+        from: doc.locations[id]!.riseAllowance,
+        to: const Len(2_743_200_001),
+        now: _later,
+        actor: 'tester',
+      ),
       'estimatedRunLengthFromRack': (doc, id) =>
           SetEntityPropertyCommand<Location, Len?>(
             id: id,

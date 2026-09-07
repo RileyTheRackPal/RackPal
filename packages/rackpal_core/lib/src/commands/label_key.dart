@@ -559,4 +559,26 @@ enum LabelKey {
   // Property" in front of somebody who has just typed "Top shelf, left"
   // names nothing they did.
   setMountNote,
+
+  // THE PLAN VIEW'S SIX WRITERS (commands/plan_commands.dart), PLAN-C/6,
+  // DR-037. SIX VALUES AND NOT TWO, because AC-044's rule holds here as
+  // it does for the 0U channels above: the Edit menu is the only account
+  // a person gets of what they just did, and every one of these names a
+  // different act.
+  //
+  // `setPlanPin` AND `movePlanPin` ARE ONE COMMAND WITH TWO LABELS,
+  // chosen at apply time from whether a pin was already there. "Undo Move
+  // Pin" in front of somebody who has just placed their first pin names
+  // an act they did not perform, and asking the call site to know which
+  // it was is how the two spellings drift apart.
+  //
+  // `clearPlanPin` is its own value on `ClearLinkClassOverrideCommand`'s
+  // precedent: "Undo Set Pin" in front of somebody who has just removed
+  // one names the opposite act.
+  setPlanPin,
+  movePlanPin,
+  clearPlanPin,
+  addPlanUnderlay,
+  removePlanUnderlay,
+  reorderPlanUnderlay,
 }

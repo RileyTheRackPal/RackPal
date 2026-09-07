@@ -116,6 +116,22 @@ more than one page and nothing is tiled.
 Four additions. All are additive, all use absent-key-is-unknown (G4, CR-114), and none changes an
 existing field's meaning.
 
+**BUILT AT PLAN-C, 2026-09-07**, in `model/plan.dart`, `units/px_pt.dart` and
+`commands/plan_commands.dart`. **Two things the implementation found that this section did not
+predict**, both recorded in docs/12 §5.9.3 rather than only here.
+
+**`kSchemaVersion` MOVED TO 5, AND `minReaderVersion` STOPPED BEING A CONSTANT** (DR-136 §11.135).
+This section calls the additions additive and they are: every starter and every fixture re-encodes
+with one line changed, the schema stamp. But the `unknown` passthrough DR-019 §11.18.2(5) bought to
+stop an older build dropping pins **is a reserved container and not a harvester**, so it never
+covered a sibling key like `planPin`. The loss is prevented instead by refusing the write: a document
+carrying an underlay or a pin declares a reader that understands plans, and an older build opens it
+read-only.
+
+**THE `underlays` MAP IS OMITTED WHEN EMPTY**, unlike the fourteen entity maps beside it, which is
+what keeps the paragraph above true. Writing `"underlays": {}` would add a key to every `.rmpj` in
+existence on its next save.
+
 ### 3.1 `PlanUnderlay`
 
 ```dart

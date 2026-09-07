@@ -947,6 +947,23 @@ abstract final class LocationField {
     touches: EpochMask.structure | EpochMask.wires,
   );
 
+  /// The vertical drop a plan cannot see, added to a plan-derived
+  /// straight line so the result stays a LOWER BOUND (DR-020 §11.19.2(1),
+  /// DR-037 §11.36.5, PLAN-C).
+  ///
+  /// SAME MASK AS [estimatedRunLengthFromRack] and for the identical
+  /// reason: it is an input to a CABLE length the schedule prints, so a
+  /// consumer watching cable data subscribes to `wires`. Null stays
+  /// UNKNOWN and `0` is a measured zero, which are different statements
+  /// about a room (G4, CR-114).
+  static final riseAllowance = EntityField<Location, Len?>(
+    access: EntityAccess.location,
+    key: 'riseAllowance',
+    get: (l) => l.riseAllowance,
+    set: (l, v) => l.riseAllowance = v,
+    touches: EpochMask.structure | EpochMask.wires,
+  );
+
   /// See [OutletField.all].
   static final List<EntityField<Location, Object?>> all = [
     name,
@@ -955,6 +972,7 @@ abstract final class LocationField {
     floorNumber,
     spaceCode,
     estimatedRunLengthFromRack,
+    riseAllowance,
   ];
 }
 

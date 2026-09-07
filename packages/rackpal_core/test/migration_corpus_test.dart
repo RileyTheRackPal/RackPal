@@ -627,7 +627,8 @@ void main() {
       expect(out, isNot(contains('carriedProtocols')));
     });
 
-    test('it comes back stamped v4, and minReaderVersion STAYS at 3', () {
+    test('it comes back stamped CURRENT, and minReaderVersion STAYS at '
+        '3', () {
       // THE DIVERGENCE IS THE POINT AND IT IS THE FIRST ONE. Every
       // earlier advance moved both stamps, because each made bytes an
       // older reader throws on. This one does not: a v3 reader meets the
@@ -635,8 +636,16 @@ void main() {
       // the only value the field ever held in any file. Raising the
       // stamp would refuse a file that opens perfectly (§11.133.5).
       final doc = openV3();
+      // THE LITERAL `4` THAT USED TO BE HERE WAS RIGHT WHEN WRITTEN AND
+      // WRONG NINE DAYS LATER. It read `expect(doc.schemaVersion, 4)`
+      // beside the `kSchemaVersion` assertion, to pin the number as well
+      // as the constant. But this case is about a v3 file reaching
+      // CURRENT, not about reaching 4: v5 arrived, the chain grew a step,
+      // and the literal failed while nothing it was guarding had changed.
+      // `units_test.dart` is where a version literal belongs, because
+      // there the whole point is that a bump is a deliberate edit with a
+      // sentence attached. Here it was a second copy of a moving number.
       expect(doc.schemaVersion, kSchemaVersion);
-      expect(doc.schemaVersion, 4);
       expect(doc.minReaderVersion, kMinReaderVersion);
       expect(doc.minReaderVersion, 3);
     });
@@ -647,7 +656,7 @@ void main() {
       expect(utf8.decode(twice), utf8.decode(once));
     });
 
-    test('the older fixtures reach v4 through the whole chain', () {
+    test('the older fixtures reach CURRENT through the whole chain', () {
       // v2 -> v3 -> v4 in one read, on a file that predates BOTH steps.
       // The v2 fixture carries 349 of the key as well as its 349 zero
       // positions, so it exercises this migration without being written
@@ -659,7 +668,8 @@ void main() {
       );
       expect(result, isA<Ok<RackDocument>>());
       final doc = (result as Ok<RackDocument>).value;
-      expect(doc.schemaVersion, 4);
+      // Current, not a literal: see the note two cases up.
+      expect(doc.schemaVersion, kSchemaVersion);
       expect(
         utf8.decode(codec.write(doc)),
         isNot(contains('carriedProtocols')),
@@ -696,6 +706,78 @@ void main() {
         isFalse,
         reason: 'the value is dropped whatever shape it was in',
       );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // v4 -> v5: the plan model arrives and nothing in a v4 file changes
+  // (DR-037, DR-136 §11.135.3)
+  // ═══════════════════════════════════════════════════════════════════
+  group('v4 -> v5: the advance that is not about bytes moving', () {
+    const codec = JsonDocumentCodec();
+    const path = 'test/fixtures/v4_before_plan.rmpj.json';
+
+    Uint8List v4Bytes() => File(path).readAsBytesSync();
+
+    RackDocument openV4() {
+      final result = codec.read(v4Bytes());
+      expect(
+        result,
+        isA<Ok<RackDocument>>(),
+        reason: 'a v4 document must still open: ${result is Err ? result : ''}',
+      );
+      return (result as Ok<RackDocument>).value;
+    }
+
+    test('the fixture really is a v4 file with no plan data in it', () {
+      // THE CONTROL, on its three siblings' precedent. This one is
+      // shaped differently from theirs and the difference is the point:
+      // v1, v2 and v3 assert that the fixture CONTAINS the thing being
+      // migrated. There is nothing to contain here, so the control is
+      // that it contains none of what v5 adds. A fixture that already
+      // had an underlay would prove nothing about a v4 file.
+      final raw = jsonDecode(utf8.decode(v4Bytes())) as Map<String, Object?>;
+      expect(raw['schemaVersion'], 4);
+      final document = raw['document']! as Map<String, Object?>;
+      expect(document.containsKey('underlays'), isFalse);
+      expect(utf8.decode(v4Bytes()), isNot(contains('planPin')));
+      expect(utf8.decode(v4Bytes()), isNot(contains('riseAllowanceNm')));
+      // And it is a real project rather than an empty one.
+      expect((document['devices']! as Map).length, greaterThan(100));
+    });
+
+    test('a real v4 file on disk still opens', () {
+      expect(openV4().devices, isNotEmpty);
+      expect(openV4().underlays, isEmpty);
+    });
+
+    test('THE CONTENT DOES NOT MOVE: only the stamp changes', () {
+      // The whole of DR-136 §11.135.3, as an artifact assertion. If any
+      // plan key were written unconditionally this fails, and the ruling
+      // in the same commit would be false.
+      final before = utf8.decode(v4Bytes());
+      final after = utf8.decode(codec.write(openV4()));
+
+      expect(
+        after.replaceAll('"schemaVersion": 5', '"schemaVersion": 4'),
+        before,
+        reason: 'a v4 file re-encodes byte for byte apart from its stamp',
+      );
+    });
+
+    test('and it does NOT gain an underlays key, which is what keeps the '
+        'line above true', () {
+      expect(utf8.decode(codec.write(openV4())), isNot(contains('underlays')));
+    });
+
+    test('minReaderVersion stays 3, because a migrated v4 file has no '
+        'plan data by construction', () {
+      final doc = openV4();
+      expect(doc.schemaVersion, kSchemaVersion);
+      expect(doc.minReaderVersion, kMinReaderVersion);
+      final raw =
+          jsonDecode(utf8.decode(codec.write(doc))) as Map<String, Object?>;
+      expect(raw['minReaderVersion'], 3);
     });
   });
 }

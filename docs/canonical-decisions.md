@@ -17666,6 +17666,73 @@ major, which stays `0` until a public release whatever the feature set. And it d
 park a single clause of the Plan view's own criterion, all seven of which remain `NOT BUILT` or
 `UNPERFORMED` (docs/12 §5.9).
 
+### §11.135 DR-136 · A document that carries plan data declares a reader that understands plans
+
+**Settled by the user on 2026-09-07**, on a finding PLAN-C/5 turned up while trying to write the
+test its own brief asked for.
+
+**11.135.1 THE FINDING: DR-019 BOUGHT A PROTECTION THAT WAS NEVER DELIVERED.** §11.18.1 identified a
+real G5 item and described it precisely: *"`json_codec.dart` decodes `OffRackPlacement` as exactly
+`locationId` and `mountNote` and re-encodes exactly those two, so a build that predates the Plan
+view, opening a file that has plan pins, silently drops them on save."* §11.18.2(5) bought the
+remedy, an `unknown` map on `Placement` and `Outlet`, and M3-I (`#568`) built it.
+
+**IT DOES NOT CLOSE THAT HAZARD, AND BOTH IMPLEMENTING FILES SAY SO IN CAPITALS.**
+`placement.dart`: *"RESERVED CONTAINER, NOT A HARVESTER. Nothing collects unrecognised SIBLING keys
+... Harvesting siblings would be a different format and would need its own ruling (roadmap §8.3)."*
+`json_codec.dart`'s `_unknownBag` repeats it. So the bag preserves what a writer deliberately puts
+**inside** it, and `planPin` is a sibling key like any other. An older build still drops it.
+
+**NEITHER FILE IS WRONG.** They implemented a reserved container, said exactly that, and named the
+ruling a harvester would need. What went missing is that §11.18.2(5)'s remedy does not reach
+§11.18.1's hazard, and nothing between the two noticed, because the field the protection was for
+did not exist until PLAN-C. **This is `two documents agreeing is not verification` in its costliest
+form: the ruling and the implementation agreed with each other and neither agreed with the hazard.**
+
+**11.135.2 THE RULING.** A document that carries plan data **declares a higher
+`minReaderVersion`**, so a build that does not understand plans opens it **read-only** and cannot
+overwrite it. The silent loss becomes a visible refusal, which is what this corpus does everywhere
+else.
+
+- **`kSchemaVersion` moves to 5.** `kMinReaderVersion` stays at **3**.
+- **`minReaderVersion` stops being written unconditionally.** It is `kMinReaderVersion` for an
+  ordinary document and **5** for one carrying plan data.
+- **Plan data means an underlay or a pin**, and nothing else. Any entry in `document.underlays`, or
+  any `planPin` on a `Rack`, an `Outlet` or an `OffRackPlacement`.
+
+**11.135.3 WHY THE SCHEMA MOVES WHEN THE FORMAT'S OWN TRIGGER SAYS IT NEED NOT, which is the part
+worth keeping.** `json_codec.dart` states the trigger twice in the same words: an advance is owed
+when a change is not *"byte-invisible to existing files (CR-117)"*. **These additions are
+byte-invisible.** Every `.rmpj` on disk has no underlays and no pins, so every one re-encodes byte
+for byte, and by that trigger alone nothing would move.
+
+**The stamp needs a NUMBER, and that is a second limb the trigger did not have.** A conditional
+`minReaderVersion` of 5 written by a build declaring `kSchemaVersion` 4 would make this build refuse
+its own file the moment it wrote a pin. So the schema advances **because the format gained a
+capability `minReaderVersion` must be able to name**, which is a different reason from bytes moving
+and is now written down as one.
+
+**11.135.4 WHAT IT COSTS, NAMED RATHER THAN DISCOVERED.** Two things, and the second is the one a
+user will actually meet.
+
+- **Every document re-saved by this build declares schema 5**, so a colleague on an older build
+  opens it read-only. That is the standing cost of any schema advance and DR-134 paid it nine days
+  ago; it is stated here because this ruling is the one that chose to incur it.
+- **A project becomes read-only for older builds the moment somebody drops ONE pin.** That is the
+  trade taken deliberately: under DR-006 this is an internal tool whose users share files, and a
+  colleague who cannot save is a colleague who asks, while a colleague whose save quietly deleted an
+  afternoon of pinning is a colleague who finds out on site.
+
+**11.135.5 WHAT IT DOES NOT RULE.** **It does not make the `unknown` bag a harvester**, and that
+stays exactly where `placement.dart` left it: a different format, owing its own ruling. This closes
+the hazard by refusing the write rather than by preserving the field, which is a narrower fix and
+leaves the general problem open for the ruling that wants it. **It does not extend the stamp to
+`Location.riseAllowance`**, which is an ordinary additive optional field on `tia570Grade`'s
+precedent (DR-024) and `MediaTypeDef.aliases`'s before it: an older build drops it, as it already
+drops those, and a scalar somebody can retype is not a drawing somebody spent an afternoon making.
+**It does not add a migration that changes data**: `migrateV4ToV5` re-stamps and touches nothing,
+because there is nothing in a v4 file for it to convert.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

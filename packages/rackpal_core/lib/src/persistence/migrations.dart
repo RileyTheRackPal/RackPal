@@ -131,7 +131,32 @@ const Map<int, Migration> migrations = <int, Migration>{
   1: migrateV1ToV2,
   2: migrateV2ToV3,
   3: migrateV3ToV4,
+  4: migrateV4ToV5,
 };
+
+/// v4 -> v5: the Plan view's model arrives, and NOTHING IN A v4 FILE
+/// CHANGES (DR-037, DR-136 §11.135.3).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A RE-STAMP AND NOTHING ELSE, WHICH IS WORTH A COMMENT RATHER THAN A
+/// SHRUG
+/// ═══════════════════════════════════════════════════════════════════════
+/// Every v5 addition is an optional key or an empty entity map: no v4
+/// document has an underlay, a pin or a `riseAllowance`, so there is no
+/// value to convert and no key to strip. This step exists because the
+/// SCHEMA moved, and the schema moved for a reason the format's usual
+/// trigger does not cover: `minReaderVersion` became conditional and the
+/// stamp it writes needs a number this build declares as current.
+///
+/// It deliberately does NOT stamp `minReaderVersion`. A migrated v4 file
+/// has no plan data by construction, so it keeps `kMinReaderVersion` and
+/// keeps opening on older builds; the conditional stamp is the ENCODER's
+/// job, decided from the document's content at write time.
+JsonMap migrateV4ToV5(JsonMap raw) {
+  final migrated = JsonMap.of(raw);
+  migrated[kKeySchemaVersion] = 5;
+  return migrated;
+}
 
 /// Synthetic v0 -> v1 migration (see [migrations]'s doc comment): v0
 /// called the root envelope's `sequence` counter `revision` instead.

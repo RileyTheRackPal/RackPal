@@ -2,6 +2,45 @@
 
 ## 2026-09-07
 
+* **Ruling**: [DR-136](/decisions/dr-136-plan-data-declares-its-reader.md).
+  A document carrying plan data declares a `minReaderVersion` that
+  understands plans, so an older build opens it READ-ONLY rather than
+  silently dropping the pins on save.
+* **Build**: `PLAN-C` closes at `v0.6.16`. `PxPt`, `PlanScale`, `PlanPin`,
+  `PlanUnderlay`, `Location.riseAllowance`, the serialization and six
+  commands with real undo.
+* **Note**: **THE TEST THE CHAPTER ASKED FOR COULD NOT BE WRITTEN, AND
+  THAT IS WHERE DR-136 CAME FROM.** `#621` said the plan pin is the first
+  field `Placement.unknown` exists to protect, so prove a pin survives a
+  codec that does not know the key. It does not. The bag is a RESERVED
+  CONTAINER, not a harvester, which two files state in capitals and which
+  is a correct implementation of what DR-019 §11.18.2(5) bought.
+  **The remedy never reached the hazard §11.18.1 named**, and nothing
+  noticed for a month.
+* **Update**: [A modelled field is not a reachable
+  one](/practices/a-modelled-field-is-not-a-reachable-one.md) gains a
+  FIFTH shape: **a protection that never covered what it was bought for**.
+  The reason nothing caught it is the reusable half: a guard for a feature
+  that does not exist yet has nothing to point at, so every check in that
+  practice comes up empty. **Re-check a protection the moment you first
+  NEED it, not the moment you first cite it.**
+* **Note**: **THE SCHEMA MOVED FOR A REASON THE FORMAT'S TRIGGER DID NOT
+  HAVE.** That trigger asks whether existing files stop re-encoding byte
+  for byte, and the plan additions are byte-invisible: regenerating four
+  starters and five fixtures moves exactly one line each, the stamp. The
+  advance is owed because the stamp NEEDS A NUMBER, and a conditional 5
+  written by a build declaring 4 would make it refuse its own file.
+* **Note**: **`PxPt` IS ENFORCED BY A SOURCE GATE, NOT BY AGREEMENT.** The
+  three-point-types rule is only worth its cost if the compiler holds it,
+  and the changes that reopen it are one-liners that look like tidying: an
+  `operator +`, a `toPt()`, a shared supertype. A collapsed type does not
+  throw, it rounds a pin to the 2.5 mm lattice, and the person who finds
+  out is an installer looking for the wrong wall.
+* **Note**: **THE EPOCH MASKS ARE TESTED AGAINST A LISTENER, INCLUDING THE
+  NEGATIVES.** `expect(cmd.touches, ...)` restates the getter and would
+  have been green throughout DR-011.4's defect. Pinning a rack must NOT
+  wake `EpochMask.rack`, and a mask that woke everything would pass every
+  positive assertion.
 * **Build**: `PLAN-B` closes at `v0.6.10`. `.rmpj` is plain JSON with no
   binary member and a **zip container** with one (DR-019 §11.18.2), all four
   nondeterminism sources fixed or guarded, byte identity proven over the four

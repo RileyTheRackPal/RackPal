@@ -5,6 +5,7 @@
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/entity_meta.dart';
 import 'package:rackpal_core/src/model/enums.dart' show RuNumbering;
+import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/zero_u_channel.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
@@ -43,6 +44,7 @@ final class Rack {
     required this.order,
     required this.meta,
     Uuid? locationId,
+    PlanPin? planPin,
     RuNumbering ruNumbering = RuNumbering.bottomUpFromOne,
     bool mirrorRearElevation = true,
     RackWidthClass widthClass = RackWidthClass.eia19,
@@ -68,6 +70,7 @@ final class Rack {
        _designator = designator,
        _heightU = heightU,
        _locationId = locationId,
+       _planPin = planPin,
        _ruNumbering = ruNumbering,
        _mirrorRearElevation = mirrorRearElevation,
        _widthClass = widthClass,
@@ -97,6 +100,25 @@ final class Rack {
   Uuid? get locationId => _locationId;
   @internal
   set locationId(Uuid? v) => _locationId = v;
+
+  /// Where this rack sits on a floorplan (docs/15 §3.4).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// NOT OPTIONAL TO THE DESIGN, WHATEVER THE `?` SAYS
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A home run is measured FROM THE RACK. Without this pin, no length on
+  /// that plan is derivable at all, and the product must say so rather
+  /// than measure from the corner of the image, which would produce a
+  /// number that looks like a cable length and is a property of how the
+  /// architect cropped the page. `PLN-003` is the advisory that says it.
+  ///
+  /// Nullable because a rack that has not been pinned yet is the ordinary
+  /// state of every project before somebody opens the Plan view, and G4
+  /// spells that absence as null rather than as a guess.
+  PlanPin? _planPin;
+  PlanPin? get planPin => _planPin;
+  @internal
+  set planPin(PlanPin? v) => _planPin = v;
 
   /// 1..60, asserted. Advisory above 50 (CR-038).
   ///

@@ -444,7 +444,27 @@ $SuiteFloors = @{
     # cases, whose truncation group is the one that found `ZipDecoder`
     # returning an EMPTY archive rather than throwing, at six cut points
     # and on a four-byte file.
-    'rackpal_core'   = 4144
+    # 4152 at PLAN-C part one: +8 from units/px_pt_separation_test.dart,
+    # which is a SOURCE gate as well as a behavioural one. `PxPt` gaining
+    # an `operator +`, a `toPt()` or a supertype is a one-line change that
+    # looks like tidying and re-opens the collapse three documents rule
+    # against; a running program cannot tell the two apart. Plus one byte
+    # round-trip case for Location.riseAllowance, which
+    # location_commands_test.dart demands per table row rather than per
+    # command.
+    # 4203 at PLAN-C part two: +20 from persistence/plan_serialization_
+    # test.dart and +26 from commands/plan_commands_test.dart, plus five
+    # in the migration corpus for the v4 -> v5 step. The serialization
+    # file is where DR-136 came from: it set out to write the test `#621`
+    # asked for, that a pin survives a codec which does not know the key,
+    # and found that it cannot, because `Placement.unknown` is a reserved
+    # container and not a harvester. It asserts the contract instead, so
+    # nobody re-derives the false belief from an absence of tests.
+    # The command file tests every epoch mask AGAINST A LISTENER rather
+    # than against `touches`, including the negatives: pinning a rack
+    # must NOT wake `EpochMask.rack`, and a mask that woke everything
+    # would pass every positive assertion.
+    'rackpal_core'   = 4203
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
