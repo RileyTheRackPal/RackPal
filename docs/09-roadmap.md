@@ -341,7 +341,7 @@ Two further sequencing constraints are binding, from AC-059:
 - [ ] `drawImage` on `DiagramCanvas` through the IR and both backends, under `draw/canvas.dart`'s own amendment clause (DR-029 §11.28.6); op-count baselines re-recorded; the underlay excluded from PAL-1 explicitly
 - [ ] The zip container DR-019 ruled: `document.json` plus `underlays/<uuid>.<ext>`, entries sorted, a constant timestamp, one compression method, no extra fields, and CR-117 holding on the zip path
 - [ ] `PlanUnderlay`, `PlanScale`, `PxPt` and `PlanPin` on `OffRackPlacement`, `Outlet` and `Rack`; **`Location.riseAllowance`, which DR-020 specified and nothing ever built** (DR-037 §11.36.5)
-- [ ] Import: PNG and JPEG, **PDF rasterised at import with a page picker** (DR-037 §11.36.2), the format allowlist and the byte and pixel caps every import path owes (AC-058/D12)
+- [ ] Import: PNG and JPEG, **PDF rasterised at import with a page picker** (DR-037 §11.36.2), the format allowlist and the byte and pixel caps every import path owes (AC-058/D8)
 - [ ] The Plan editor as a third canvas, reusing the viewport, selection, hit-test and drag-preview machinery; the Structure-table-then-plan fast path for a 60-drop rough-in; the unpinned strip with its count
 - [ ] Two-point calibration, recalibration as an undoable document command, and **uncalibrated as a fact rather than a default**
 - [ ] `planLowerBound` as a fifth `ScheduleLengthSource`, ranked **below `roomEstimate`** and out of the footage rollup as a quantity (DR-020 §11.19.2(2), DR-037 §11.36.4); `LEN-001` reads the bound whichever tier printed
