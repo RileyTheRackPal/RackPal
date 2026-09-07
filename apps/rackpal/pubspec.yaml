@@ -9,6 +9,13 @@ environment:
 resolution: workspace
 
 dependencies:
+  # Declared for `plan_import_actions.dart`'s `contentHash`, on the rule
+  # docs/03 §10.1 has now stated four times: already resolved as somebody
+  # else's dependency is not a licence to import it
+  # (`depend_on_referenced_packages`). Dart-team package, pure Dart,
+  # BSD-3, and already `rackpal_core`'s declared dependency for the
+  # template hash.
+  crypto: ^3.0.7
   # NO FILE-DIALOG PACKAGE. RackPal drives `IFileDialog` itself, from
   # `windows/runner/file_dialog_channel.cpp`, reached only through
   # `lib/src/session/file_picker.dart`'s two-method wrapper — so every
@@ -37,6 +44,18 @@ dependencies:
   # trade in its dependency table.
   flutter:
     sdk: flutter
+  # PLAN-D/2 (DR-029): decoding a floorplan on import, and flattening its
+  # alpha before it is stored. Pure Dart, MIT, and ALREADY in the resolved
+  # tree transitively via `pdf`, so this declares what this package
+  # imports rather than adding a dependency: `archive`'s reasoning in
+  # `rackpal_core`, one package over.
+  #
+  # IT IS DECLARED HERE AND NOT IN CORE, DELIBERATELY. `rackpal_core` is
+  # decoder-free by design (docs/15 §3.1) and stays so: it reads a HEADER
+  # (`persistence/image_header.dart`) and never a pixel. The decode is an
+  # app-layer act because that is where the bytes arrive and where the
+  # result is thrown away again.
+  image: ^4.9.1
   # `@immutable` on the storage layer's value objects, so overriding
   # `==`/`hashCode` on them is the analyzer-approved spelling rather than
   # a suppressed lint. Zero runtime cost; already core's dependency.

@@ -100,6 +100,23 @@ const Map<String, String> _knownByteReaders = <String, String>{
   // The gate has found the previous three itself. This one was written
   // knowing it would fire, which is what the map is for once somebody
   // has read it.
+  // ── ADDED AT PLAN-D, IN ADVANCE, WHICH IS THE SECOND TIME ───────────
+  // The floorplan import is a NEW UNTRUSTED-INPUT SURFACE and AC-057
+  // counted removing the image-decode surface as one of four benefits of
+  // cutting device images. DR-029 reopens it knowingly, which is the
+  // honest price of the feature and is stated in the ruling rather than
+  // discovered here.
+  //
+  // It gets THREE controls rather than the usual one, because a picture
+  // has a second size: a format allowlist BY CONTENT SNIFF, a byte cap on
+  // the stat before the read, and a PIXEL cap read out of the header
+  // before anything is decoded. The third is the one that would be
+  // forgotten: a three-kilobyte PNG can declare 60000 x 60000, and a cap
+  // that fires after the decode fires after the allocation it prevents.
+  'apps/rackpal/lib/src/session/plan_import_actions.dart':
+      'the floorplan import; stats and runs checkImportedFileSize BEFORE '
+      'reading, then sniffs by content and refuses on the DECLARED pixel '
+      'size before any decoder is handed the bytes (PLAN-D/4)',
   'apps/rackpal/lib/src/storage/library_shelf.dart':
       'reads every .rmda on the shelf at palette-build time; stats and '
       'runs checkImportedFileSize BEFORE reading, and re-stats rather '

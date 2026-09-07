@@ -515,7 +515,13 @@ $SuiteFloors = @{
     # +1 in document_store_test.dart, which gained the case proving a real
     # container opens beside the one proving six bytes of signature does
     # not.
-    'rackpal_app'    = 930
+    # 945 at PLAN-D: +15 from session/plan_import_test.dart. What is under
+    # test is the ORDER, not just the outcome: every refusal here could
+    # also be produced by a slower implementation that decoded first and
+    # checked afterwards, so the cases use inputs a correct order survives
+    # and an incorrect one does not. The 60000x60000 header in under a
+    # hundred bytes is the one that separates them.
+    'rackpal_app'    = 945
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

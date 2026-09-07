@@ -195,6 +195,26 @@ enum FileDialogType {
   /// `file_dialog_flags_test.dart` fails if this value has no row there.
   /// Adding the arm is not optional and cannot be forgotten.
   library,
+
+  /// A floorplan to import as a plan underlay: PNG, JPEG or PDF
+  /// (DR-029, PLAN-D).
+  ///
+  /// **THE FIRST KIND WHOSE FILTER COVERS THREE FORMATS**, because a
+  /// floorplan arrives as whichever of them the architect's office
+  /// exports and asking the user which menu item to use would be asking
+  /// them to classify a file they were sent.
+  ///
+  /// **THE FILTER IS A COURTESY AND NEVER THE CHECK.** What is accepted
+  /// is decided by `sniffImportKind` on the CONTENT (PLAN-D/4, M4-M4's
+  /// rule), because a dialog filter is advisory: "All files" is one click
+  /// away, and a `.png` that is really an executable passes any filter
+  /// ever written.
+  ///
+  /// **OPEN ONLY.** Nothing in this product saves a floorplan; an import
+  /// copies one into the container. The `kFileKinds` row carries `png` as
+  /// its default extension because the struct requires one, and that row
+  /// is wrong the day a save path appears.
+  floorplan,
 }
 
 /// Native open and save dialogs, behind two methods.
