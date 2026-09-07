@@ -238,6 +238,7 @@ export 'src/model/template.dart';
 export 'src/model/tombstone.dart';
 export 'src/model/zero_u_channel.dart';
 export 'src/persistence/codec.dart';
+export 'src/persistence/container.dart';
 export 'src/persistence/json_codec.dart';
 export 'src/persistence/json_limits.dart';
 // The `JsonMap` typedef only — the plain-JSON-tree currency the split

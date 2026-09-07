@@ -40,9 +40,30 @@ final class OpenedDocument {
     required this.openReadOnly,
     required this.originalBytes,
     required this.migratedFromSchemaVersion,
+    this.members = const {},
   });
 
   final RackDocument document;
+
+  /// The container's binary members, keyed by member path, or empty for a
+  /// plain-JSON file, which is every file this project has written to
+  /// date (DR-019 §11.18.2, PLAN-B).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THIS IS A PASSTHROUGH, AND IT IS §11.18.2(5)'s ARGUMENT ONE LAYER OUT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// DR-019 gave `Placement` and `Outlet` an `unknown` map so that a build
+  /// predating a field does not silently drop it on save. A container
+  /// member is the same hazard with bigger stakes: without this, opening a
+  /// project that carries a floorplan and pressing Ctrl+S would write a
+  /// plain-JSON file and **delete the architect's page**, with nothing on
+  /// screen suggesting anything had happened.
+  ///
+  /// So the members ride from open to save untouched, and this build
+  /// preserves members it has no model for. `PlanUnderlay` arrives at
+  /// PLAN-C and gives them meaning; until then they are bytes with a name,
+  /// which is all this layer has ever needed them to be.
+  final Map<String, Uint8List> members;
 
   /// Where it came from. Null for a starter project or a recovered
   /// snapshot opened as an untitled copy.
@@ -177,6 +198,25 @@ final class DocumentStore {
   }) async {
     final label = path ?? '';
 
+    // ---- THE ENVELOPE COMES OFF FIRST (DR-019 §11.18.2, PLAN-B). ------
+    // `.rmpj` is plain JSON with no binary member and a zip container with
+    // one, and this is the discriminator. It runs BEFORE the deserializer
+    // rather than inside it for two reasons: the `Deserializer` typedef
+    // returns a JSON tree and has nowhere to put members, and unzipping is
+    // a copy while the JSON parse is the expensive half that earns the
+    // isolate (see serialization.dart's header). A plain file costs one
+    // four-byte comparison and no copy here.
+    final Outcome<ContainerParts> split;
+    try {
+      split = readContainerParts(bytes);
+    } on Object catch (e, st) {
+      return Err(OpenUnexpected(label, cause: e, stackTrace: st));
+    }
+    if (split case Err(:final error)) {
+      return Err(await _classifyDecode(label, error));
+    }
+    final parts = (split as Ok<ContainerParts>).value;
+
     // THE DESERIALIZER CALL IS GUARDED, AND THAT IS NOT BELT-AND-BRACES.
     // `deserializer` is `Isolate.run` in production. Everything INSIDE it
     // comes back as an `Err` value (CR-093), but the spawn itself can
@@ -191,7 +231,7 @@ final class DocumentStore {
     // exception for our own infrastructure failing.
     final Outcome<JsonMap> tree;
     try {
-      tree = await deserializer(bytes);
+      tree = await deserializer(parts.documentBytes);
     } on Object catch (e, st) {
       return Err(OpenUnexpected(label, cause: e, stackTrace: st));
     }
@@ -239,8 +279,11 @@ final class DocumentStore {
         baseline: FileBaseline.of(facts),
         openReadOnly: ok.openReadOnly,
         // Retained only when it will actually be used — see the field.
+        // The WHOLE file's bytes, container and all: a pre-update snapshot
+        // has to reproduce what was on disk, not the JSON half of it.
         originalBytes: migratedFrom == null ? null : bytes,
         migratedFromSchemaVersion: migratedFrom,
+        members: parts.members,
       ),
     );
   }
@@ -266,6 +309,7 @@ final class DocumentStore {
     required SavePaths paths,
     FileBaseline? expected,
     bool keepBackup = true,
+    Map<String, Uint8List> members = const {},
   }) async {
     // ---- STEP 1: SNAPSHOT. Do not insert an await between these two. --
     final capturedStateId = controller.doc.stateId;
@@ -276,7 +320,12 @@ final class DocumentStore {
     // ---- STEP 2: SERIALIZE OFF-THREAD (AC-006, CR-099). ---------------
     final Uint8List bytes;
     try {
-      bytes = await serializer(tree);
+      // The JSON half off-thread, then the envelope back on (DR-019
+      // §11.18.2, PLAN-B). `writeContainerBytes` RETURNS ITS INPUT
+      // UNCHANGED when there are no members, so every save this project
+      // has ever performed takes the identical path it did before, down
+      // to the object identity of the byte list.
+      bytes = writeContainerBytes(await serializer(tree), members);
     } on Object catch (e, st) {
       // A serializer failure is a programmer error, not an expected
       // outcome: the tree came from our own encoder moments ago.
@@ -397,6 +446,39 @@ final class DocumentStore {
         ),
         JsonTooDeeplyNestedError(:final depth, :final limit) =>
           OpenTooDeeplyNested(path, depth: depth, limit: limit),
+        // THE CONTAINER STATES (DR-019 §11.18.2, PLAN-B). Two of them,
+        // because "damaged archive" and "archive that is not a project"
+        // want different sentences and different remedies: only the first
+        // should be offered a `.bak`.
+        ContainerUnreadableError(:final detail) => OpenContainerUnreadable(
+          path,
+          detail: detail,
+          backup: await _backupFactsFor(path),
+        ),
+        ContainerTooLargeError(
+          :final declaredBytes,
+          :final members,
+          :final byteLimit,
+          :final memberLimit,
+        ) =>
+          OpenContainerTooLarge(
+            path,
+            declaredBytes: declaredBytes,
+            members: members,
+            byteLimit: byteLimit,
+            memberLimit: memberLimit,
+          ),
+        ContainerMissingDocumentError(:final members) => OpenZipContainer(
+          path,
+          // Capped: a zip of a photo library has thousands of entries and
+          // the dialog needs a handful to be recognisable, not an
+          // inventory.
+          members: members.take(6).toList(),
+        ),
+        // Still reachable, and only through one door now: a container
+        // whose `document.json` is itself a zip. `decodeBytes` strips the
+        // envelope before the deserializer runs, so a plain zip file no
+        // longer reaches this arm.
         UnsupportedZipContainerError() => OpenZipContainer(path),
         NotARackPalFileError(:final generator) => OpenNotARackPalFile(
           path,

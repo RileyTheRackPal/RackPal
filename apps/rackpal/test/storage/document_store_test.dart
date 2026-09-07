@@ -254,7 +254,15 @@ void main() {
       );
     });
 
-    test('a ZIP gets its own message, not the generic one', () async {
+    test('SIX BYTES OF ZIP SIGNATURE IS A DAMAGED FILE, NOT A FOREIGN '
+        'ONE, and this expectation moved at PLAN-B', () async {
+      // It used to expect `OpenZipContainer`, when that state meant "this
+      // file begins with PK and we do not read zip". DR-019 §11.18.2(1)
+      // makes a zip an ordinary `.rmpj`, so the two outcomes separated:
+      // an archive with entries but no `document.json` is FOREIGN, and an
+      // archive with no entries at all is DAMAGED. Six bytes has no
+      // central directory, so it is the second, and it is the one that
+      // earns a `.bak` offer.
       final made = _make(
         files: {
           _paths.target: Uint8List.fromList([0x50, 0x4B, 0x03, 0x04, 1, 2]),
@@ -262,7 +270,26 @@ void main() {
       );
       expect(
         ((await made.store.open(_paths.target)) as Err<OpenedDocument>).error,
-        isA<OpenZipContainer>(),
+        isA<OpenContainerUnreadable>(),
+      );
+    });
+
+    test('AND A REAL PROJECT WITH A BINARY MEMBER OPENS, which is what '
+        'stops the case above from reading as "zip is refused"', () async {
+      final made = _make(
+        files: {
+          _paths.target: writeContainerBytes(_codec.write(_doc()), {
+            'underlays/level-1.png': Uint8List.fromList(
+              List<int>.generate(512, (i) => i % 256),
+            ),
+          }),
+        },
+      );
+      final opened = await made.store.open(_paths.target);
+      expect(opened, isA<Ok<OpenedDocument>>());
+      expect(
+        (opened as Ok<OpenedDocument>).value.members,
+        contains('underlays/level-1.png'),
       );
     });
 

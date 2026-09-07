@@ -177,6 +177,17 @@ final class DocumentSession extends ChangeNotifier {
   String? _filePath;
   bool _openReadOnly;
   FileBaseline _baseline;
+
+  /// The container members the open document arrived with (DR-019
+  /// §11.18.2, PLAN-B), or empty for a plain-JSON file.
+  ///
+  /// Held by the SESSION and not by `RackDocument`, because they are a
+  /// property of the FILE rather than of the model: the document has no
+  /// field for an image and `PlanUnderlay` (PLAN-C) will name a member
+  /// rather than carry its bytes. Threading them here is what stops a
+  /// save from writing plain JSON over a project that had a floorplan in
+  /// it, which would delete the architect's page silently.
+  Map<String, Uint8List> _members = const {};
   bool _recoveryEnabled;
   String? _status;
 
@@ -199,6 +210,9 @@ final class DocumentSession extends ChangeNotifier {
   /// The document is FULLY EDITABLE and still autosaves to a recovery
   /// snapshot. The user is blocked from OVERWRITING, not from working.
   bool get openReadOnly => _openReadOnly;
+
+  /// The container members to write back on the next save. See [_members].
+  Map<String, Uint8List> get members => _members;
 
   /// The (size, modified) the next save's external-change check compares
   /// against.
@@ -251,6 +265,7 @@ final class DocumentSession extends ChangeNotifier {
     required bool openReadOnly,
     required FileBaseline baseline,
     String? status,
+    Map<String, Uint8List> members = const {},
   }) {
     _controller.changes.removeListener(_onDocumentChanged);
     _controller = controller;
@@ -259,6 +274,10 @@ final class DocumentSession extends ChangeNotifier {
     _openReadOnly = openReadOnly;
     _baseline = baseline;
     _status = status;
+    // A property of the FILE, so adopting a different document replaces
+    // it. The default is empty, which is what makes every existing caller
+    // correct without naming it.
+    _members = members;
     notifyListeners();
   }
 

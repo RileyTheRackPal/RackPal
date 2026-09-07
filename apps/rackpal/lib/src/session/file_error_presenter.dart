@@ -39,6 +39,16 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 /// enum because `FileErrorAction` lives in `rackpal_ui`, which must not
 /// know what a save is; these constants keep the two ends spelled the
 /// same in exactly one place.
+/// A short, human list of archive member names for the "not a project"
+/// dialog. Three at most plus a count, because the point is to let the
+/// user RECOGNISE the file, not to inventory it: "it holds x.docx" tells
+/// them they picked the wrong thing, and 900 names tells them nothing.
+String _memberList(List<String> members) {
+  if (members.length <= 3) return members.join(', ');
+  final shown = members.take(3).join(', ');
+  return '$shown and ${members.length - 3} more';
+}
+
 abstract final class FileErrorActionId {
   static const String ok = 'ok';
   static const String cancel = 'cancel';
@@ -317,18 +327,61 @@ FileErrorView describeOpenError(
       actions: const [_ok],
     ),
 
-    // Its own case with its own copy, because "that is a zip archive" is
-    // a far more useful sentence than "that is not a RackPal file".
-    OpenZipContainer(:final path) => FileErrorView(
+    // ITS COPY WAS REWRITTEN AT PLAN-B AND THE OLD COPY WAS A LIE THE
+    // MOMENT THE CONTAINER SHIPPED. It read "RackPal projects are plain
+    // JSON. If the project is inside the archive, extract it first" —
+    // advice that now destroys a project, because a RackPal project WITH
+    // a floorplan IS a zip archive and extracting it yields a
+    // `document.json` with no underlay beside it. DR-019 §11.18.2(1).
+    OpenZipContainer(:final path, :final members) => FileErrorView(
       title:
-          '${_name(path, context)} is a zip archive, not a RackPal '
+          '${_name(path, context)} is a zip archive, but not a RackPal '
           'project.',
-      detail:
-          'The file begins with the ZIP signature. RackPal projects are '
-          'plain JSON. If the project is inside the archive, extract it '
-          'first and open the `.rmpj` file.',
+      detail: members.isEmpty
+          ? 'The archive opened, and it has no `document.json` inside it. '
+                'A RackPal project always does, whether or not it carries '
+                'a floorplan.'
+          : 'The archive opened, and it has no `document.json` inside it. '
+                'It holds ${_memberList(members)}. A RackPal project '
+                'always has a `document.json` at its root.',
       actions: const [_ok],
     ),
+
+    // THE SIZE IN THIS SENTENCE IS THE DECLARED ONE, NOT THE FILE'S. See
+    // `OpenContainerTooLarge`: the whole hazard is a small file claiming
+    // to be an enormous one, so naming the file's own size here would
+    // describe the attack as if it were a large project.
+    OpenContainerTooLarge(
+      :final path,
+      :final declaredBytes,
+      :final members,
+      :final byteLimit,
+      :final memberLimit,
+    ) =>
+      FileErrorView(
+        title: '${_name(path, context)} will not be opened.',
+        detail:
+            'It is a project archive that says it contains $members '
+            'item(s) and ${_megabytes(declaredBytes)} of content, against '
+            'limits of $memberLimit and ${_megabytes(byteLimit)}. Nothing '
+            'was extracted. A real project holds a handful of items, so '
+            'either this is not one or it has been built to exhaust '
+            'memory on the machine that opens it.',
+        actions: const [_ok],
+      ),
+
+    // A DAMAGED CONTAINER GETS THE BACKUP OFFER AND THE ONE ABOVE DOES
+    // NOT, which is the whole reason these are two states. Somebody who
+    // opened a spreadsheet by mistake should not be asked about a `.bak`;
+    // somebody whose project was truncated mid-copy should be.
+    OpenContainerUnreadable(:final path, :final detail, :final backup) =>
+      FileErrorView(
+        title: '${_name(path, context)} is damaged.',
+        detail:
+            'It begins like a RackPal project that carries a floorplan, '
+            'but the archive itself could not be read. $detail',
+        actions: backup == null ? const [_ok] : const [_openBackup, _cancel],
+      ),
 
     OpenNotARackPalFile(:final path, :final generator) => FileErrorView(
       title: 'That is not a RackPal file.',

@@ -379,14 +379,80 @@ final class OpenNotARackPalFile extends OpenError {
   final Object? generator;
 }
 
-/// The file begins with the ZIP magic number. Its own case, with its own
-/// copy, because "that is a zip archive" is a far more useful sentence
-/// than "that is not a RackPal file".
+/// A readable zip archive with no `document.json` at its root.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THIS STATE CHANGED MEANING AT PLAN-B, AND THE OLD MEANING IS GONE
+/// ═══════════════════════════════════════════════════════════════════════
+/// It used to mean *"the file begins with the ZIP magic number"*, full
+/// stop, and its copy told the user *"RackPal projects are plain JSON. If
+/// the project is inside the archive, extract it first."* **Both halves
+/// are now false.** DR-019 §11.18.2(1) makes a zip a perfectly ordinary
+/// `.rmpj`: the sniff is a discriminator, not a refusal.
+///
+/// So the state survives with a narrower and more useful job. It is what
+/// a `.docx`, a folder of holiday photographs and a project someone
+/// re-zipped by hand all land in: **a real archive that is not a
+/// project**. [members] carries what was inside, so the message can say
+/// what the file appears to BE rather than only what it is not.
 final class OpenZipContainer extends OpenError {
-  const OpenZipContainer(this.path);
+  const OpenZipContainer(this.path, {this.members = const []});
 
   @override
   final String path;
+
+  /// The member names the archive did hold, capped by the caller.
+  final List<String> members;
+}
+
+/// The file begins with the ZIP signature and could not be read as an
+/// archive at all.
+///
+/// Distinct from [OpenZipContainer] because they are different sentences
+/// and different remedies: this one is "the archive is damaged", that one
+/// is "the archive is fine and is not a project". Conflating them would
+/// offer a `.bak` to somebody who opened a spreadsheet by mistake, and
+/// withhold it from somebody whose project was truncated mid-copy.
+final class OpenContainerUnreadable extends OpenError {
+  const OpenContainerUnreadable(this.path, {required this.detail, this.backup});
+
+  @override
+  final String path;
+
+  /// What the decoder said, for the detail line.
+  final String detail;
+
+  /// A sibling `.bak`, when there is one. A damaged container is exactly
+  /// the moment a backup earns its existence.
+  final BackupFacts? backup;
+}
+
+/// The archive declares more members, or more inflated content, than the
+/// container caps allow (AC-058/D8).
+///
+/// ITS OWN STATE AND NOT `OpenTooLarge`, and the difference is the whole
+/// point: `OpenTooLarge` says "that file is 90 MB", which is measured
+/// from the bytes on disk. A decompression bomb is a SMALL file that
+/// declares an enormous one, so reusing that copy would tell somebody
+/// staring at a one-megabyte file that it is too large, and they would
+/// reasonably conclude the app was broken.
+final class OpenContainerTooLarge extends OpenError {
+  const OpenContainerTooLarge(
+    this.path, {
+    required this.declaredBytes,
+    required this.members,
+    required this.byteLimit,
+    required this.memberLimit,
+  });
+
+  @override
+  final String path;
+
+  /// What the archive said it would become. Not its size on disk.
+  final int declaredBytes;
+  final int members;
+  final int byteLimit;
+  final int memberLimit;
 }
 
 /// The file demands a reader newer than this build. REFUSED, with no

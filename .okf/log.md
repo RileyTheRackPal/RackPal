@@ -2,6 +2,47 @@
 
 ## 2026-09-07
 
+* **Build**: `PLAN-B` closes at `v0.6.10`. `.rmpj` is plain JSON with no
+  binary member and a **zip container** with one (DR-019 §11.18.2), all four
+  nondeterminism sources fixed or guarded, byte identity proven over the four
+  checked-in starters.
+* **Update**: [A modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md)
+  gains a FOURTH shape: **an error type with no producer**.
+  `ContainerUnreadableError` was written for a truncated archive on the
+  assumption that `ZipDecoder` throws. **It does not.** It reads the central
+  directory, which lives at the END of the file, so a truncated archive has
+  none and it returns an EMPTY `Archive`. Six cut points and a four-byte
+  file: zero throws. The `catch` arm was unreachable, and the cost was not
+  cosmetic: every truncated project would have been told "this is not a
+  RackPal project" and **refused the backup that would have rescued it**.
+* **Note**: **A CENSUS OVERRULED TWO DOCUMENTS ABOUT WHERE THE CONTAINER
+  GOES.** `codec.dart`'s header and the chapter both said the container
+  would be `DocumentCodec`'s second implementation. Measured:
+  `DocumentCodec.read` has **two callers and neither is the app's open
+  path**, which reads through a `Deserializer` for the two-phase snapshot
+  split. It is an ENVELOPE instead, and DR-019's "one encoder serves both"
+  then falls out rather than being maintained.
+* **Note**: **THE DOS TIME FIELD HAS TWO-SECOND GRANULARITY.** The first
+  measurement of the wall-clock nondeterminism source used a 1.1 second gap,
+  reported "deterministic", and was wrong: both calls landed in the same
+  bucket. **A test of this that waits under two seconds asserts nothing.**
+* **Note**: **THE OLD ZIP COPY BECAME DANGEROUS ADVICE, NOT MERELY STALE.**
+  `OpenZipContainer` told users "RackPal projects are plain JSON. If the
+  project is inside the archive, extract it first." A project with a
+  floorplan IS a zip archive, so following that now leaves the underlay
+  behind. **A test asserting the error TYPE would have left the sentence
+  standing**, which is why these assert the words.
+* **Note**: **THE PASSTHROUGH WAS IN NO CHAPTER AND IS THE REASON THE EPIC
+  IS SAFE TO STOP HERE.** Members ride from open through the session to
+  save untouched, which is DR-019 §11.18.2(5)'s `unknown`-map argument one
+  layer out. Without it, opening a project with a floorplan and pressing
+  Ctrl+S writes plain JSON and deletes the architect's page.
+* **Note**: **`import_hardening_test.dart` CAUGHT THE BOMB SURFACE ON THE
+  FIRST RUN**, its fourth catch and the first where the hazard was the
+  INFLATE rather than JSON depth: `checkJsonLimits` runs on `document.json`,
+  which only exists after unzipping. DR-015 §11.15.4 avoided needing this
+  bound by refusing zip for `.rmda`; DR-019 buys the surface deliberately,
+  so this is the bill.
 * **Build**: `PLAN-A` closes at `v0.6.5`. `DiagramCanvas` gains `drawImage`
   under its own amendment clause (DR-029 §11.28.6), `OpImage` carries a
   container-member REFERENCE and never pixels, and both backends draw it.

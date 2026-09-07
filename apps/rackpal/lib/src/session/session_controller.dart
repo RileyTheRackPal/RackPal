@@ -625,6 +625,10 @@ final class SessionController {
       controller: session.controller,
       paths: paths,
       expected: expected,
+      // PLAN-B's passthrough: whatever the file arrived carrying goes back
+      // into it. Empty for every plain-JSON project, which is all of them
+      // until PLAN-C.
+      members: session.members,
       // See [_openBackup]: after a `.bak` fallback the file at the target
       // is the DAMAGED one, and backing it up over the good `.bak` would
       // destroy the copy that just rescued the user.
@@ -999,6 +1003,7 @@ final class SessionController {
       migratedFrom: opened.migratedFromSchemaVersion,
       status: status,
       markDirty: markDirty,
+      members: opened.members,
     );
   }
 
@@ -1011,6 +1016,7 @@ final class SessionController {
     required int? migratedFrom,
     required String? status,
     bool markDirty = false,
+    Map<String, Uint8List> members = const {},
   }) {
     _pendingMigrationBytes = originalBytes;
     _pendingMigrationFromVersion = migratedFrom;
@@ -1029,6 +1035,7 @@ final class SessionController {
       openReadOnly: openReadOnly,
       baseline: baseline,
       status: status,
+      members: members,
     );
     if (markDirty) session.markUnsavedRecovery();
     // A new document must not inherit the previous one's debounce window,

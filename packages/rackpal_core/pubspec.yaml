@@ -3,7 +3,7 @@ description: >
   RackPal's pure-Dart domain core: units, entities, commands/undo, persistence
   and the shared drawing IR. No Flutter, no dart:ui, no package:pdf (D1, CR-083).
 publish_to: none
-version: 0.6.5
+version: 0.6.10
 
 environment:
   sdk: ^3.12.0
@@ -11,6 +11,18 @@ environment:
 resolution: workspace
 
 dependencies:
+  # PLAN-B/1 (DR-019 §11.18.2): the `.rmpj` zip container. Pure Dart, MIT,
+  # and ALREADY in the resolved tree transitively via `pdf`, so this
+  # declares what this package imports rather than adding a dependency.
+  # DR-036's GPLv3 licence census counted 81 packages with zero copyleft
+  # and MIT adds no obligation; the licence text was read out of
+  # archive-4.0.9/LICENSE rather than recalled.
+  #
+  # IT MOVES BYTES AND DOES NOT DECODE IMAGES. Core stays Flutter-free by
+  # gate and decoder-free by choice: an `ImageRef` names a container
+  # member and each BACKEND resolves it (see draw/image_ref.dart). If
+  # something here ever needs `dart:ui`, it is in the wrong package.
+  archive: ^4.0.9
   collection: ^1.19.0
   crypto: ^3.0.7
   meta: ^1.16.0

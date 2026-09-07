@@ -51,6 +51,17 @@ const Map<String, String> _knownByteReaders = <String, String>{
       'the .rmpj document reader; runs checkJsonLimits before jsonDecode',
   'packages/rackpal_core/lib/src/library/rmdx_codec.dart':
       'the .rmdx reader; runs checkJsonLimits before jsonDecode (#235)',
+  // ── ADDED AT PLAN-B, BY THIS GATE, ON THE FIRST RUN AFTER THE ────────
+  // CONTAINER LANDED. Which is the fourth time it has caught a path its
+  // author had not thought of as one, and the first where the hazard was
+  // not the JSON depth but the INFLATE: `checkJsonLimits` runs on
+  // `document.json`, which only exists after unzipping, so a small file
+  // declaring ten gigabytes would have exhausted memory before any
+  // existing cap could fire.
+  'packages/rackpal_core/lib/src/persistence/container.dart':
+      'the .rmpj container reader; checks the central directory against '
+      'ContainerLimits BEFORE inflating anything, then keeps a running '
+      'total over what actually came out because a header can lie',
   'apps/rackpal/lib/src/session/csv_import_actions.dart':
       'the CSV import; runs checkImportSize on stat BEFORE reading (#237)',
   'apps/rackpal/lib/src/storage/io_file_store.dart':
