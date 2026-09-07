@@ -117,7 +117,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
 | **M4** | Device builder | **`L`** *(was `M`)* | **2 of 2** | **CRITERION MET**: `CONFIRMED` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **CLAUSE 2 IS NOW CONFIRMED, performed on 2026-09-01** (§5.3.30), and it was performable only from §5.3.13: it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` demonstrated it: every unknown column printed `—` and said so, which is G4/CR-114 read off a printed sheet for the first time. **The archetype path ran the same day at 46 SECONDS against the DSL path's 93** (`#250`), which is what settled whether the generators earned their place. **EVERY M4 STORY IS NOW CLOSED** (§5.3.1–§5.3.30), the last being the drill itself (`#188`), and **95 chapters are Done under this epic with none left open or re-parented**, which is where `v0.4.95` comes from. **M4-P shipped RJ-012's two extensibility surfaces and found each chapter to be something else underneath**: the builder could not save a field device at all, the media-type editor's real gap was MERGE rather than create, and connector aliases were already resolved and only lacked a writer (§5.3.28, DR-107, `v0.4.93`). **RJ-012 stays two-thirds met**: its third surface, a per-family colour override row in settings, has nowhere to go because `ProjectSettings` has no editor and none is assigned to any milestone (`#805`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); **its parked nudge canvas was then un-parked by DR-106 and built** as a sixth `Panel` section, with its align/distribute arithmetic in core (§5.3.27, `v0.4.90`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moved this criterion**, and that was the point of the row for a fortnight: story after story closed while clause 2 remained a person with a document to read. **It was read on 2026-09-01** (§5.3.30), which is the only thing that could ever have closed it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **3 of 3** | **CRITERION MET**: `CONFIRMED` | **CLOSED 2026-09-07 (DR-135 §11.134).** All three clauses discharged. Clause 1 is `DEMONSTRATED` at **29 of 29** by `drc_corpus_test.dart`, which `run_local.ps1` runs as a step of its own and whose subject is `kRuleCatalogue` rather than any evaluator enum, so a registered rule without a pair fails the build; that is also why it moved from 28 to 29 when DR-132 restored `ELE-005` and no gate had to change (§5.4.7). Clause 3 was `VACUOUS` *because no rule existed* and that reason expired; it is `DEMONSTRATED` in a stronger form than `#310` asked for, since `ExportError` is **sealed with three arms and none of them is about a rule** (§5.4.8, DR-119). **Clause 2 was the whole gap for a fortnight and is `CONFIRMED` on 2026-09-06** (§5.4.11), signed by the reviewing integrator against a pack generated from the live catalogue: **twelve findings, four rulings, six fields the model has and no producer writes**, and the catalog half signed PROVISIONAL on the reviewer's own hedge. **All twenty Stories under epic 23 are `Done` and 61 Chapters beneath them**, which is where `v0.5.61` comes from and why the close itself owes no bump. The successor is **the Plan view, not M6** (DR-029 §11.28.4) |
-| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open and is **`v0.6.5`** with PLAN-A's five chapters `Done` of 43 |
+| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open and is **`v0.6.10`** with PLAN-A's and PLAN-B's ten chapters `Done` of 43 |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
@@ -6726,7 +6726,7 @@ that decomposed the epic rather than a Chapter that built anything.
 | `T1.01` with a callout per pin | **NOT BUILT** | `SheetRole` has **exactly three values** (`rackElevationFront`, `rackElevationRear`, `equipmentList`). **`DiagramCanvas` HAS a `drawImage` since PLAN-A** (§5.9.1) and this cell said it did not until 2026-09-07; the sheet role is what is missing now, not the primitive |
 | The stranger locates every drop | **UNPERFORMED** | Nothing to print, and nobody has been asked |
 | Greyscale laser at ANSI B | **UNPERFORMED** | Same as M6's row: nothing has been printed on hardware |
-| CR-117 on the zip path | **NOT BUILT** | `looksLikeZip` returns `UnsupportedZipContainerError` today, by design. `DocumentCodec` still has exactly one implementation |
+| CR-117 on the zip path | **NOT BUILT** | **The container SHIPS as of PLAN-B** (§5.9.2): `looksLikeZip` is the discriminator DR-019 said it was, all four nondeterminism sources are fixed or guarded, and `write(read(bytes)) == bytes` holds across a write, a reopen and a second write. **The CLAUSE still does not**, because it is about a document carrying an underlay and `PlanUnderlay` arrives at PLAN-C. `DocumentCodec` deliberately still has one implementation: the container is an envelope around the same encoder, not a second codec (§5.9.2.1) |
 
 **What the decomposition found by reading the tree rather than the design.** Three things, and none
 was inferable from docs/15:
@@ -6840,6 +6840,85 @@ here is 5. Floors re-measured in the same commit: core 4093 to 4109, export 195 
 by no path at all. **The op-count baselines: nothing**, per §5.9.1.4. So of the six things a design
 document listed, two were wrong, and the one file that did break was on nobody's list. docs/15 §7 is
 corrected in place rather than pointered.
+
+#### 5.9.2 PLAN-B, the container, and three facts about zip that reading would not have given · CLOSED · `v0.6.10` · `6902404`
+
+**Closed 2026-09-07** (`#598`, five Chapters `#612`-`#616`, DR-019 §11.18.2). **No exit clause moves**:
+the `CR-117 on the zip path` clause names *"a write, a reopen and a second write"* over a document
+carrying an underlay, and `PlanUnderlay` does not exist until `PLAN-C`. What ships is the envelope
+that clause will be measured through, gated on its own terms.
+
+**5.9.2.1 IT IS AN ENVELOPE AND NOT A SECOND CODEC, WHICH IS A CENSUS OVERRULING TWO DOCUMENTS.**
+`codec.dart`'s header has said since M0 that *"`JsonDocumentCodec` is the only implementation in
+M0"*, and `#613` was written to end that sentence. Censused before building it: **`DocumentCodec.read`
+has exactly two callers in the tree and neither is the app's open path.** `DocumentStore` reads
+through a `Deserializer` and writes through `encodeToJsonTree` plus a serializer, deliberately, for
+the two-phase snapshot split `serialization.dart` spends forty lines justifying. **A container behind
+`DocumentCodec` would have been unreachable from the one gesture that opens a project**, which is
+this repository's most-found defect wearing a seam that already existed. So `container.dart` splits
+BYTES into the document JSON plus its members and hands the JSON half to the pipeline that is already
+there, and DR-019's *"one encoder serves both"* falls out rather than being maintained by hand.
+
+**5.9.2.2 THE FOUR NONDETERMINISM SOURCES ARE THREE PLUS ONE.** DR-019 §11.18.2(2) names entry order,
+timestamps, compression level and extra fields. Measured against `archive 4.0.9`: the first three are
+real and are fixed. **Extra fields are already absent**, so that one is not fixed but **guarded** by a
+test asserting zero, and a dependency bump that starts emitting a UT or Zip64 field fails the build
+instead of quietly breaking the round trip. **The level default is `bestSpeed`** and differs from both
+6 and 9, so *leave it alone* was itself a choice a dependency could change underneath.
+
+**5.9.2.3 THE TWO-SECOND TRAP, WHICH THIS WORK FELL INTO AND CAUGHT.** The MS-DOS time field a zip
+stores has **two-second granularity**. The first measurement of the wall-clock source used a 1.1
+second gap, reported *deterministic*, and was wrong: both calls had landed in the same bucket. **Any
+test of this that waits under two seconds asserts nothing.** The one that does is slower than its
+neighbours and says why, which is the only reason the next person will not shorten it.
+
+**5.9.2.4 A ZIP IS A DECOMPRESSION-BOMB SURFACE AND THE HARDENING CENSUS CAUGHT IT ON THE FIRST RUN.**
+`import_hardening_test.dart` failed the moment `container.dart` appeared, for the **fourth** time and
+the first where the hazard was not JSON depth but the **inflate**: `checkJsonLimits` runs on
+`document.json`, which only exists after unzipping, so **a one-megabyte file declaring ten gigabytes
+would have exhausted memory before any existing cap fired**. DR-015 §11.15.4 avoided needing this
+bound by choosing a single JSON file for `.rmda`, *"because the zip buys only a decompression-bomb
+surface"*; DR-019 buys that surface deliberately, so this is the bill. `readContainerParts` checks the
+central directory against `ContainerLimits` **before inflating**, then keeps a running total over what
+actually came out, **because a header can lie**, and the residual is written down rather than implied.
+
+**5.9.2.5 A TRUNCATED ZIP DOES NOT THROW, AND THAT MEASUREMENT IS THE DIFFERENCE BETWEEN THIS AND A
+SHIPPED SHELL.** `ZipDecoder` reads the central directory, which lives at the **end** of the file, so a
+truncated archive simply has none: **it returns an EMPTY archive and throws nothing.** Cut at 10, 25,
+50, 75, 90 and 99 percent, all six decoded *successfully* with zero entries, as did a file that was
+only the four signature bytes. **Written from the assumption instead**, `ContainerUnreadableError`
+would have been the exception arm, nothing would ever have reached it, and **every truncated project
+would have reported "this is not a RackPal project" and been refused the `.bak` that would have
+rescued it.** Zero entries is therefore the damage signature, and the exception arm is documented as
+the belt-and-braces one it turned out to be.
+
+**5.9.2.6 `OpenZipContainer` CHANGED MEANING, AND ITS COPY WAS A LIE THE MOMENT THIS SHIPPED.** It read
+*"RackPal projects are plain JSON. If the project is inside the archive, extract it first and open the
+`.rmpj` file."* **That advice now destroys a project**: a project with a floorplan IS a zip archive,
+and extracting it yields a `document.json` with the underlay left behind. The state survives as the
+**foreign-archive** case and names what the archive held; `OpenContainerUnreadable` and
+`OpenContainerTooLarge` join it, and only the damaged one offers a backup. **A test asserting the
+error TYPE would have left that sentence standing**, which is why the tests assert the words
+(`print the output before claiming copy is done`).
+
+**5.9.2.7 THE PASSTHROUGH IS §11.18.2(5)'s ARGUMENT ONE LAYER OUT, AND IT WAS NOT IN ANY CHAPTER.**
+DR-019 gave `Placement` and `Outlet` an `unknown` map so a build predating a field does not silently
+drop it on save. **A container member is the same hazard with bigger stakes**, and none of `#612`-`#616`
+asked for it: without it, opening a project that carries a floorplan and pressing Ctrl+S writes plain
+JSON and **deletes the architect's page**, with nothing on screen suggesting anything happened. So
+members ride from `OpenedDocument` through `DocumentSession` to `DocumentStore.save` untouched, and
+this build preserves members it has no model for. `PlanUnderlay` gives them meaning at `PLAN-C`.
+
+**5.9.2.8 BYTE IDENTITY IS PROVEN OVER THE CORPUS, AND THE NO-MEMBER WRITE IS AN IDENTITY.**
+`writeContainerBytes` **returns its input object unchanged** when there are no members, so there is no
+second encoder that could drift from the first, and `identical()` says so rather than `==`. Asserted
+over the four checked-in starters rather than a fixture, together with the negative `#615` asked for:
+nothing writes a zip unless a member exists, and the boundary is the member COUNT rather than its
+size, because a zero-byte underlay is a corrupt import rather than an absent one.
+
+**5.9.2.9 THE VERSION IS `v0.6.10`.** The board query for `Done` Chapters under epic 588 returns
+**10**; and `v0.6.5` plus this issue's five Chapters is 10. Floors re-measured: core 4109 to 4144, app
+916 to 930.
 
 ---
 

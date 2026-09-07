@@ -58,9 +58,17 @@ into one drawing set; a plan that does not is not worth building.
 Ruled by **DR-019**. Stated here because every other section depends on it.
 
 `.rmpj` is **plain pretty JSON when the document has no binary member, and a zip container when it
-does**. The discriminator already exists: `persistence/codec.dart` sniffs `PK\x03\x04` today and
-returns `UnsupportedZipContainerError`, a typed error written precisely so a container could arrive
-later without a crash. That sniff becomes the branch it was always shaped to be.
+does**. **BUILT AT PLAN-B, 2026-09-07** (`persistence/container.dart`), and this paragraph described
+it in the future tense until then. The sniff `persistence/codec.dart` has carried since M0 is now the
+branch it was always shaped to be.
+
+**Three things the implementation found that this section did not predict.** The four nondeterminism
+sources are **three plus one**: extra fields are already absent in `archive 4.0.9`, so that one is
+guarded by a test rather than fixed by the writer. **A truncated zip does not throw**, it decodes to
+an EMPTY archive, so *zero entries* rather than *an exception* is the signature of a damaged file, and
+writing it the other way round would have refused a backup to every truncated project. And the
+container is an **envelope** rather than a second `DocumentCodec`, because `DocumentCodec.read` turned
+out to have no caller on the app's open path at all. docs/12 §5.9.2 carries the measurements.
 
 The consequences worth stating:
 
