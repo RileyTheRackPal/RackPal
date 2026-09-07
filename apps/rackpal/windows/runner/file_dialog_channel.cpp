@@ -176,11 +176,37 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
       {L"All files", L"*.*"},
   };
 
+  // THE FIRST KIND WHOSE FILTER IS NOT ONE FORMAT (PLAN-D, DR-029). A
+  // floorplan arrives as a PNG, a JPEG or a PDF, and the three are one
+  // gesture rather than three menu items, so the first entry lists all of
+  // them and the per-format entries are conveniences below it.
+  //
+  // THE FILTER IS A COURTESY AND NEVER THE CHECK. The dialog decides what
+  // the user SEES; `sniffImportKind` decides what is accepted, by content
+  // (PLAN-D/4, M4-M4's rule). A file renamed to `.png` passes this filter
+  // and is refused on its signature, which is the correct division: a
+  // filter that refuses is a filter somebody works around with "All
+  // files", and then the only real check is the one in Dart anyway.
+  //
+  // NO DEFAULT EXTENSION THAT MEANS ANYTHING. This kind is open-only:
+  // nothing in this product SAVES a floorplan, it copies one into the
+  // container. `png` is here because the struct requires a value and it
+  // is the least surprising of the three; if a save path ever appears
+  // this row is wrong and will need splitting.
+  static const COMDLG_FILTERSPEC kFloorplanFilters[] = {
+      {L"Floorplan (PNG, JPEG, PDF)", L"*.png;*.jpg;*.jpeg;*.pdf"},
+      {L"PNG image", L"*.png"},
+      {L"JPEG image", L"*.jpg;*.jpeg"},
+      {L"PDF document", L"*.pdf"},
+      {L"All files", L"*.*"},
+  };
+
   static const FileKind kFileKinds[] = {
       {L"project", kProjectFilters, ARRAYSIZE(kProjectFilters), L"rmpj"},
       {L"csv", kCsvFilters, ARRAYSIZE(kCsvFilters), L"csv"},
       {L"device", kDeviceFilters, ARRAYSIZE(kDeviceFilters), L"rmdx"},
       {L"library", kLibraryFilters, ARRAYSIZE(kLibraryFilters), L"rmda"},
+      {L"floorplan", kFloorplanFilters, ARRAYSIZE(kFloorplanFilters), L"png"},
   };
 
   const std::optional<std::wstring> file_type = StringArg(args, "fileType");

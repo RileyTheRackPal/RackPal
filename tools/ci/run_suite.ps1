@@ -464,7 +464,14 @@ $SuiteFloors = @{
     # than against `touches`, including the negatives: pinning a rack
     # must NOT wake `EpochMask.rack`, and a mask that woke everything
     # would pass every positive assertion.
-    'rackpal_core'   = 4203
+    # 4230 at PLAN-D part one: +27 from persistence/image_header_test.dart.
+    # Two of those are SWEEPS rather than cases: every truncation of a good
+    # PNG and JPEG, and every single-byte flip through a JPEG header, each
+    # asserting only that the parser RETURNS rather than throws. That is
+    # the property AC-058/D12 actually needs from a parser over hostile
+    # input, and it is not expressible as a handful of hand-picked
+    # malformed files.
+    'rackpal_core'   = 4230
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -508,7 +515,13 @@ $SuiteFloors = @{
     # +1 in document_store_test.dart, which gained the case proving a real
     # container opens beside the one proving six bytes of signature does
     # not.
-    'rackpal_app'    = 930
+    # 945 at PLAN-D: +15 from session/plan_import_test.dart. What is under
+    # test is the ORDER, not just the outcome: every refusal here could
+    # also be produced by a slower implementation that decoded first and
+    # checked afterwards, so the cases use inputs a correct order survives
+    # and an incorrect one does not. The 60000x60000 header in under a
+    # hundred bytes is the one that separates them.
+    'rackpal_app'    = 945
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
