@@ -3,7 +3,7 @@ description: >
   PdfDiagramCanvas, sheet furniture, schedule tables and document assembly.
   The isolate entry point for PDF generation. Pure Dart (isolate-safe).
 publish_to: none
-version: 0.5.61
+version: 0.6.0
 
 environment:
   sdk: ^3.12.0
