@@ -17733,6 +17733,98 @@ drops those, and a scalar somebody can retype is not a drawing somebody spent an
 **It does not add a migration that changes data**: `migrateV4ToV5` re-stamps and touches nothing,
 because there is nothing in a v4 file for it to convert.
 
+### §11.136 DR-137 · Underlay members are deflated, because a floorplan is line art and line art is not a photograph
+
+**Settled by the user on 2026-09-07**, on a measurement taken against the first real plan set this
+project has ever been given: an 18-sheet residential permit set, ARCH D (36 x 24 inches), supplied
+as `docs/reference/House-Plan.pdf` and **deliberately never committed** (§11.136.6).
+
+**11.136.1 WHAT PLAN-B DECIDED, AND WHICH HALF OF IT WAS MEASURED.** `container.dart` stores binary
+members uncompressed, and its header gives four reasons. Measurement falsifies two of them.
+
+| The reason as written | What measuring found |
+|---|---|
+| *"A PNG or JPEG is already compressed; deflating it again buys ~nothing"* | **False.** Every one of the 18 pages deflates: 7.0% to 34.3%, mean **16.0%** over the set. **The floor plans deflate BEST** (A-2.1 at **34.3%**), because a floor plan is mostly white and JPEG's entropy coding leaves that redundancy on the table. The dense structural-notes sheets deflate worst, at 7% |
+| *"costs real time at level 9 on a multi-megabyte architectural page"* | **False.** Level 6 on the realistic single import (A-2.1, 286,197 bytes) is **5.7 ms**. Even the pathological case, all 18 sheets at once, is **232 ms**, and AC-006 §5 already moved save to `Isolate.run` |
+| *"the underlay's bytes appear VERBATIM, so CR-117 on the zip path does not depend on the deflate implementation for the largest member"* | **True, and it is the only surviving argument.** See §11.136.3 |
+| *"the file opens in any zip tool with the architect's original page inside it"* | **Not affected by the choice.** Every zip tool inflates a deflated entry. This reason argued for nothing |
+
+**THE GENERALISATION IS THE POINT AND IT IS NOT ABOUT ZIP.** *"Already-compressed rasters do not
+deflate"* is a true statement about **photographs** and a false one about **line art on white**,
+and this product receives line art on white. The rule was imported from the domain where it is
+right into the domain where it is wrong, and it read as self-evident in both.
+
+**11.136.2 THE CHANGE.** Container members are written with the same deflate level as
+`document.json` (`kContainerDeflateLevel`, level 6). `CompressionType.none` is removed. On this
+set: **1,557,118 bytes saved over 18 sheets**, and **98,160 bytes on the single sheet a user
+actually imports.**
+
+**11.136.3 THE SURVIVING OBJECTION IS ANSWERED BY AN EXPOSURE THAT ALREADY EXISTS.** CR-117 on the
+zip path now depends on the deflate implementation reproducing identical output for the underlay as
+well as for the document. **That dependency is not new**: `document.json` has been deflated in this
+same container since PLAN-B, so a dependency bump that moved the deflate stream already broke the
+round-trip. This widens an existing surface rather than opening a new one, and
+`container_identity_test.dart` is the thing that would fail, loudly, on the day it moves.
+
+**11.136.4 THE RASTERISATION RESOLUTION IS BOUNDED ABOVE BY THE SOURCE, WHICH IS NOT WHAT PLAN-D/3
+ASSUMED.** `#625` frames the resolution as a three-way trade between legibility at working zoom,
+AC-006's budget and the asymmetric PDF cost PLAN-A/3 measured. **For a raster-backed PDF there is
+no trade.** Every page of this set is a single full-page `DCTDecode` image, 2160 x 1440 px on a
+36 x 24 inch sheet: **60 dpi**, with **zero fonts and zero vector content in the entire file**.
+Rasterising above 60 dpi upsamples:
+
+| Rasterised at | Pixels | Bytes | Information gained |
+|---|---|---|---|
+| 60 dpi (native) | 2160 x 1440 | 279.5 KB | the source |
+| 96 dpi | 3456 x 2304 | 506.7 KB (1.8x) | **none** |
+| 150 dpi | 5400 x 3600 | 1122.6 KB (4.0x) | **none** |
+| 300 dpi | 10800 x 7200 | 3614.7 KB (12.9x) | **none** |
+
+**AND 60 DPI IS ENOUGH**, which was checked by looking rather than by asserting. At 1:1 on A-2.1
+the room names, the dimension strings (`15'-8 1/2"`), the window callouts (`3052`), the stair
+counts (`Up 16R`) and the annotations (`Pocket Office`, `Drop Zone`) are all legible. At the
+sheet's 1/4 inch = 1 foot scale, 60 dpi is **15 px per foot**, so **one pixel is 0.8 real inches**.
+An installer needs to know which wall a drop is in, not which inch of it.
+
+**So the rule is: never rasterise above the source's own effective resolution.** For a vector PDF
+`#625`'s trade is real and stands. For a raster-backed one it is a lookup.
+
+**11.136.5 A PLAN MAKES THE FILE SMALLER, WHICH INVERTS docs/15 §2.** That section rejected base64
+on an estimate: *"a 2 MB PNG becomes roughly 2.7 MB of inline text"*, a 35% inflation, and admitted
+*"the zip path's real number has never been taken"*. Taken:
+
+| | Bytes |
+|---|---|
+| `whole_house.rmpj` today, plain JSON | 745,646 |
+| the same document plus A-2.1 as an underlay, as a container | **331,776** |
+
+**Adding a floorplan makes the project file 55% SMALLER than it was without one**, because the
+underlay flips the format from plain JSON to a container and the JSON then deflates **16.3x**
+(745,646 to 45,734). AC-006 re-justified plain JSON against a corrected ~600 KB figure;
+`whole_house` is over that today at 728 KB and lands **under** it the moment a plan is added. The
+whole 18-sheet set as underlays is 9,541 KB, of which 9,495 KB is images and the document is
+effectively free.
+
+**11.136.6 THE PLAN SET IS NOT COMMITTED, AND THE REASON IS GIT RATHER THAN SIZE.** It carries a
+licensed engineer's seal and licence number, the firm's name, the builder's mark and an address
+whose redaction covers the address and none of the rest. **DR-036's public GPLv3 release is
+pending, and a public release publishes every commit ever made rather than the current tree**, so a
+plan set committed today and deleted tomorrow ships anyway. `.gitignore` refuses
+`docs/reference/*.pdf` at the top level only, which leaves the seven manufacturer drawings under
+`keystone/` tracked. **The measurements above are the artifact**, with the method beside them in
+docs/12 §5.9.5 so anybody can re-run them against their own sheet.
+
+**11.136.7 WHAT IT DOES NOT RULE.** **It does not settle PDF rasterisation**, which still needs
+pdfium vendored and a page picker built, and `PLAN-D/3` stays open for exactly that. **It does not
+adopt the shortcut this file makes visible**: because every page here is one full-page image, the
+JPEG could be extracted without rasterising at all, which is faster and lossless and works only
+for this structure. A vector PDF breaks it and DR-029 bought PDF import generally, so pdfium
+remains necessary and the extraction is at most an optimisation with a fallback behind it. **It
+does not generalise from one plan set to all of them**: n is one, the user reports it
+representative of what this trade is usually given, and that is trade knowledge rather than a
+census. The deflate change is safe either way, since a member that will not compress simply does
+not.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
