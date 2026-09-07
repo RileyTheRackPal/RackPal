@@ -579,4 +579,123 @@ void main() {
       );
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // v3 -> v4: `PortDef.carriedProtocols` is deleted (DR-134 §11.133)
+  // ═══════════════════════════════════════════════════════════════════
+  group('v3 -> v4: the field that was a second copy', () {
+    const codec = JsonDocumentCodec();
+    const path = 'test/fixtures/v3_carried_protocols.rmpj.json';
+
+    Uint8List v3Bytes() => File(path).readAsBytesSync();
+
+    RackDocument openV3() {
+      final result = codec.read(v3Bytes());
+      expect(
+        result,
+        isA<Ok<RackDocument>>(),
+        reason: 'a v3 document must still open: ${result is Err ? result : ''}',
+      );
+      return (result as Ok<RackDocument>).value;
+    }
+
+    test('the fixture really is a v3 file carrying the key', () {
+      // THE CONTROL, on its v1 and v2 siblings' precedent: a migration
+      // fixture whose input does not contain the thing being migrated
+      // proves the code compiles rather than that it works. This file is
+      // the working `e_three_hundred_links` golden as it stood at v3,
+      // copied before the regeneration that took it to v4, which is
+      // exactly how `v2_ports_with_positions` came to exist.
+      final raw = jsonDecode(utf8.decode(v3Bytes())) as Map<String, Object?>;
+      expect(raw['schemaVersion'], 3);
+      expect(
+        utf8.decode(v3Bytes()).split('"carriedProtocols"').length - 1,
+        greaterThan(300),
+        reason: '348 ports, every one of them carrying an empty list',
+      );
+    });
+
+    test('a real v3 file on disk still opens', () {
+      expect(openV3().templates, isNotEmpty);
+    });
+
+    test('the key is gone from what this build writes back', () {
+      // The whole of the migration, asserted on the ARTIFACT rather than
+      // on the migration function: what matters is that the bytes this
+      // build produces from a v3 file no longer carry the field.
+      final out = utf8.decode(codec.write(openV3()));
+      expect(out, isNot(contains('carriedProtocols')));
+    });
+
+    test('it comes back stamped v4, and minReaderVersion STAYS at 3', () {
+      // THE DIVERGENCE IS THE POINT AND IT IS THE FIRST ONE. Every
+      // earlier advance moved both stamps, because each made bytes an
+      // older reader throws on. This one does not: a v3 reader meets the
+      // absent key with `?? const <Object?>[]` and gets `[]`, which is
+      // the only value the field ever held in any file. Raising the
+      // stamp would refuse a file that opens perfectly (§11.133.5).
+      final doc = openV3();
+      expect(doc.schemaVersion, kSchemaVersion);
+      expect(doc.schemaVersion, 4);
+      expect(doc.minReaderVersion, kMinReaderVersion);
+      expect(doc.minReaderVersion, 3);
+    });
+
+    test('re-saving it round-trips byte-exactly from then on (CR-117)', () {
+      final once = codec.write(openV3());
+      final twice = codec.write((codec.read(once) as Ok<RackDocument>).value);
+      expect(utf8.decode(twice), utf8.decode(once));
+    });
+
+    test('the older fixtures reach v4 through the whole chain', () {
+      // v2 -> v3 -> v4 in one read, on a file that predates BOTH steps.
+      // The v2 fixture carries 349 of the key as well as its 349 zero
+      // positions, so it exercises this migration without being written
+      // for it, which is what an append-only chain is supposed to buy.
+      final result = codec.read(
+        File(
+          'test/fixtures/v2_ports_with_positions.rmpj.json',
+        ).readAsBytesSync(),
+      );
+      expect(result, isA<Ok<RackDocument>>());
+      final doc = (result as Ok<RackDocument>).value;
+      expect(doc.schemaVersion, 4);
+      expect(
+        utf8.decode(codec.write(doc)),
+        isNot(contains('carriedProtocols')),
+      );
+    });
+
+    test('a malformed port is left exactly as it was', () {
+      // `migrateV2ToV3`'s sibling case, for the same reason: a migration
+      // that threw on a bad port would turn a recoverable file into an
+      // unopenable one.
+      final raw = <String, Object?>{
+        'document': <String, Object?>{
+          'templates': <String, Object?>{
+            't': <String, Object?>{
+              'body': <String, Object?>{
+                'ports': <Object?>[
+                  'not a map',
+                  <String, Object?>{'carriedProtocols': 'not a list'},
+                ],
+              },
+            },
+          },
+        },
+      };
+      final migrated = migrateV3ToV4(JsonMap.of(raw));
+      final ports =
+          ((((migrated['document']! as Map)['templates']! as Map)['t']!
+                      as Map)['body']!
+                  as Map)['ports']!
+              as List;
+      expect(ports[0], 'not a map');
+      expect(
+        (ports[1]! as Map).containsKey('carriedProtocols'),
+        isFalse,
+        reason: 'the value is dropped whatever shape it was in',
+      );
+    });
+  });
 }

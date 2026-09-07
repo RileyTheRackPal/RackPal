@@ -71,10 +71,16 @@ final class PortField<T> {
 /// **ONE ENTRY PER COLUMN, AND NO ENTRY WITHOUT ONE.** The table opened at
 /// nine, for the reason `TemplateBodyField` opened at five, and grew when
 /// M4-E3 gave the packs their cells. It does not grow ahead of them:
-/// `channelIndex`, `carriedProtocols` and `acceptedFamilies` are on the
-/// model, have no column, and are therefore absent here rather than
-/// sitting as accessors nothing calls, which is the state this package
-/// already found `NetworkConfig` in.
+/// `channelIndex` and `acceptedFamilies` are on the model, have no column,
+/// and are therefore absent here rather than sitting as accessors nothing
+/// calls, which is the state this package already found `NetworkConfig`
+/// in.
+///
+/// **THE LIST WAS THREE UNTIL DR-134**, which deleted `carriedProtocols`
+/// rather than giving it the cell DR-081 ordered: it modelled two facts
+/// the model already carried elsewhere, and nothing ever wrote it
+/// (§11.133.2). `acceptedFamilies` gets that cell, and this comment is
+/// what should stop saying so when it lands.
 ///
 /// `key` is NOT here, and cannot be: `PortDef.key` is `final`, so renaming
 /// one is a replacement rather than a write. See [RenamePortKeyCommand].
@@ -1129,7 +1135,6 @@ PortDef portWithIdentity(
   order: order,
   renamedFrom: renamedFrom,
   designatorHint: designatorHint,
-  carriedProtocols: List<SignalFamilyId>.from(port.carriedProtocols),
   acceptedFamilies: List<SignalFamilyId>.from(port.acceptedFamilies),
   direction: port.direction,
   returnChannel: port.returnChannel,

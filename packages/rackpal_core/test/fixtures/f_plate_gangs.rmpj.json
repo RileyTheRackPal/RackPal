@@ -239,7 +239,7 @@
   "id": "0190e3c1-0000-7000-8000-000000000005",
   "minReaderVersion": 3,
   "modifiedAt": "2026-08-11T10:30:00.000Z",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "sequence": 0,
   "unknown": {}
 }

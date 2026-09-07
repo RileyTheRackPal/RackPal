@@ -78,6 +78,13 @@ enum PortColumnId {
   //     through the codec today with no way to author them, which is `a
   //     modelled field is not a reachable one` in its original form.
   //
+  //     THAT PAIR IS NOW ONE FIELD AND THE COUNT IS SEVEN (DR-134).
+  //     `carriedProtocols` was deleted rather than given the cell DR-081
+  //     ordered, because it was a second copy of two facts the model
+  //     already records with producers and consumers (§11.133.2).
+  //     `acceptedFamilies` keeps the cell, and by then it had gained
+  //     three connect-time readers, which is what settled it.
+  //
   // So the packs below carry the intersection plus the six unnamed
   // scalars that clearly belong to a pack §4.5 already draws.
   // `channelIndex` and the two family lists stay out: the first belongs

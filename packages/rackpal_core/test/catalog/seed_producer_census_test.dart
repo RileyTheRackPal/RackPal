@@ -29,6 +29,19 @@
 //     `template_search.dart`. Nothing seeded populates it, so searching
 //     the shipped catalogue by carried protocol matches nothing.
 //
+// THE SECOND ONE WAS DELETED AT DR-134, AND THE CENSUS'S CONCLUSION
+// ABOUT IT WAS WRONG IN A WAY WORTH LEAVING ON THE PAGE. "Searching the
+// shipped catalogue by carried protocol matches nothing" is true and
+// says less than it sounds: searching by PROTOCOL works, through the
+// port's own `signalFamily` and the device's tags, and
+// `template_search_test.dart` asserts `dante` finding the seeded DSP
+// over the real catalogue. The field was a second copy of two facts the
+// model already carried (§11.133.2), so it went rather than gaining a
+// `p()` parameter. **The census question was right and the inference
+// from its answer was not**: a field nothing populates is a finding
+// about the FIELD, and what that costs the FEATURE is a second
+// measurement nobody had taken.
+//
 // This file pins the shape rather than the list, so the next field added
 // to `PortDef` without a `p()` parameter has to be looked at.
 import 'dart:io';
@@ -67,7 +80,7 @@ Set<String> _portDefFields() {
     final m = RegExp(r'this\.([a-zA-Z][A-Za-z0-9]*)').firstMatch(line);
     if (m != null) out.add(m.group(1)!);
   }
-  return out..addAll(['renamedFrom', 'carriedProtocols', 'acceptedFamilies']);
+  return out..addAll(['renamedFrom', 'acceptedFamilies']);
 }
 
 /// `p()` renames some on the way through.
@@ -101,7 +114,7 @@ void main() {
               .toList()
             ..sort();
 
-      // NAMED, NOT COUNTED. A count of ten passes on the wrong ten, and
+      // NAMED, NOT COUNTED. A count of nine passes on the wrong nine, and
       // the whole point is WHICH field stopped being writable.
       //
       // `bus` LEFT THIS LIST AT DR-132, which is the shrink the reason
@@ -109,10 +122,16 @@ void main() {
       // `BusCapability.maxTapWatts` is where it lives, and no seeded port
       // could declare one. It is the only field here removed by a rule
       // needing it rather than by a rule firing wrongly without it.
+      //
+      // `carriedProtocols` LEFT IT AT DR-134 BY A THIRD ROUTE, which is
+      // why this list shrinking is not by itself good news. It gained no
+      // producer: **it stopped existing**. A field the catalogue cannot
+      // express and nothing else needs is a field to delete, and the
+      // check that tells that case from the other two is whether
+      // anything OUTSIDE the builder depends on the answer.
       expect(
         missing,
         [
-          'carriedProtocols',
           'channelIndex',
           'conductorCount',
           'designatorHint',
@@ -135,8 +154,7 @@ is what DR-124 and DR-126 both were.''',
       );
     });
 
-    test('and the two that are READ outside the device builder are the '
-        'two that were investigated', () {
+    test('and the one that is READ outside the device builder is covered', () {
       // The narrow question, kept as prose because the answer is an
       // argument rather than a value:
       //
@@ -144,12 +162,13 @@ is what DR-124 and DR-126 both were.''',
       //                     `PortDirection.busNode` instead and
       //                     `ConnectTarget.isMultidrop` accepts either,
       //                     which that getter's own doc states.
-      //   carriedProtocols  OPEN. `template_facts.dart` and
-      //                     `template_search.dart` read it and nothing
-      //                     seeded populates it, so a search of the
-      //                     shipped catalogue by carried protocol matches
-      //                     nothing. Unpriced; it is a search gap rather
-      //                     than a wrong answer.
+      //
+      // IT WAS TWO UNTIL DR-134 AND THE SECOND WAS RESOLVED BY DELETION,
+      // not by a producer: `carriedProtocols` is gone, so nothing outside
+      // the builder reads a field the catalogue cannot express. The other
+      // eight in the list above are read only by `src/builder/`, where a
+      // person authors the value, which is the whole distinction this
+      // file exists to draw.
       //
       // Asserted through `isMultidrop`'s source rather than restated,
       // because the claim that matters is that the fallback still exists.

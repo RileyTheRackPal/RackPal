@@ -3215,7 +3215,12 @@ JsonMap _encodePortDef(PortDef p) {
     'label': p.label,
     'connector': p.connector.v,
     'signalFamily': p.signalFamily.v,
-    'carriedProtocols': [for (final f in p.carriedProtocols) f.v],
+    // `carriedProtocols` sat here until DR-134 §11.133.5 and was written
+    // UNCONDITIONALLY, so `apartment.rmpj` carried 737 copies of `[]` for
+    // a field nothing set. `acceptedFamilies` keeps that spelling on
+    // purpose: DR-081 §11.80.5 rules that an empty list is the statement
+    // "this port constrains nothing" rather than an unknown, so it is not
+    // a `putIfNotNull` candidate the way a nullable scalar is.
     'acceptedFamilies': [for (final f in p.acceptedFamilies) f.v],
     'direction': encodeEnumName(p.direction),
     'topology': encodeEnumName(p.topology),
@@ -3296,13 +3301,11 @@ PortDef _decodePortDef(JsonMap json) => PortDef(
       PortKey(asStr(v, 'PortDef.renamedFrom[]')),
   ],
   designatorHint: asStrOrNull(json['designatorHint'], 'PortDef.designatorHint'),
-  carriedProtocols: [
-    for (final v in asJsonList(
-      json['carriedProtocols'] ?? const <Object?>[],
-      'PortDef.carriedProtocols',
-    ))
-      SignalFamilyId(asStr(v, 'PortDef.carriedProtocols[]')),
-  ],
+  // NO `carriedProtocols` READ, AND A SCHEMA-3 FILE STILL OPENS (DR-134
+  // §11.133.5). `migrateV3ToV4` strips the key before this function sees
+  // it, so there is nothing here to ignore; a file that somehow reaches
+  // this reader with the key still on it loses an empty list, which is
+  // the only value it has ever held in any file.
   acceptedFamilies: [
     for (final v in asJsonList(
       json['acceptedFamilies'] ?? const <Object?>[],

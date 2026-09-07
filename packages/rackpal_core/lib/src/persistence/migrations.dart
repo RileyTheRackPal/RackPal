@@ -130,6 +130,7 @@ const Map<int, Migration> migrations = <int, Migration>{
   0: migrateV0ToV1,
   1: migrateV1ToV2,
   2: migrateV2ToV3,
+  3: migrateV3ToV4,
 };
 
 /// Synthetic v0 -> v1 migration (see [migrations]'s doc comment): v0
@@ -266,6 +267,58 @@ bool _isZeroPanelPosition(Object? raw) {
     if (raw[key] != 0) return false;
   }
   return raw.length == keys.length;
+}
+
+/// v3 -> v4: `PortDef.carriedProtocols` is deleted (DR-134 §11.133).
+///
+/// WHY THE VERSION MOVES AT ALL, since the reader could simply ignore the
+/// key. `json_codec.dart` states the trigger twice in the same words: a
+/// change is free when *"every file already on disk re-encodes byte for
+/// byte"*. This one is not. `_encodePortDef` wrote `carriedProtocols`
+/// unconditionally, so every `.rmpj` ever saved carries one empty array
+/// per port and loses it here. `apartment.rmpj` alone carries 737.
+/// Leaving the version at 3 while changing what the build emits gives a
+/// version-gated migration nothing to gate on, which is [migrateV1ToV2]'s
+/// stated reason and applies unchanged.
+///
+/// WHY [kMinReaderVersion] DOES NOT MOVE WITH IT, which is the first time
+/// the two have diverged. That stamp rises when this build emits bytes an
+/// older reader THROWS on. A v3 reader meets the absent key with
+/// `?? const <Object?>[]` and gets `[]`, and **`[]` is the only value this
+/// field has ever held in any file**, because nothing in the product could
+/// write another. So a v3 reader loses nothing, and raising the stamp
+/// would refuse a file that opens perfectly.
+///
+/// UNCONDITIONAL, UNLIKE [migrateV2ToV3]'s REMOVAL. That one had to test
+/// `_isZeroPanelPosition` first, because a non-zero position was authored
+/// data and dropping it would have destroyed a fact. There is no such
+/// case here: no gesture ever set this field, so there is no value to
+/// preserve and no discrimination to get wrong.
+JsonMap migrateV3ToV4(JsonMap raw) {
+  final migrated = JsonMap.of(raw);
+  final document = migrated[kKeyDocument];
+  if (document is Map) {
+    final templates = document['templates'];
+    if (templates is Map) {
+      for (final snapshot in templates.values) {
+        if (snapshot is! Map) continue;
+        final body = snapshot['body'];
+        if (body is! Map) continue;
+        final ports = body['ports'];
+        if (ports is! List) continue;
+        for (final port in ports) {
+          if (port is! Map) continue;
+          port.remove('carriedProtocols');
+        }
+      }
+    }
+  }
+  migrated[kKeySchemaVersion] = 4;
+  final declared = migrated[kKeyMinReaderVersion];
+  if (declared is! int || declared < kMinReaderVersion) {
+    migrated[kKeyMinReaderVersion] = kMinReaderVersion;
+  }
+  return migrated;
 }
 
 /// Runs [raw] (a freshly `jsonDecode`d root envelope map) through the
