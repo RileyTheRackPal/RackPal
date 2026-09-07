@@ -150,8 +150,26 @@ void main() {
       // v3 reader meets the absent key with `?? const <Object?>[]` and
       // reads `[]`, which is the only value the field ever held in any
       // file, so it loses nothing and refusing it would be wrong.
-      expect(kSchemaVersion, equals(4));
+      // 5, not 4: THE PLAN MODEL, AND THE FIRST ADVANCE THIS FORMAT HAS
+      // MADE FOR A REASON THAT IS NOT ABOUT BYTES MOVING (DR-136
+      // §11.135.3). Every plan addition is an optional key absent from
+      // every file on disk, and the `underlays` map is OMITTED when
+      // empty precisely so that stays true, so every existing file
+      // re-encodes with the same content and only this stamp changes.
+      // The advance is owed because `minReaderVersion` became
+      // CONDITIONAL and the stamp it writes needs a number this build
+      // declares as current: a document carrying a pin stamps
+      // `kPlanMinReaderVersion` 5, and a build declaring 4 while writing
+      // that stamp would refuse its own file.
+      //
+      // AND `minReaderVersion` STILL STAYS AT 3, for a different reason
+      // from v4's. There the absent key was survivable; here the keys
+      // are simply not present in an ordinary document at all, so it
+      // opens everywhere. The document that carries plan data is the one
+      // that stamps 5, and it stamps it from its CONTENT.
+      expect(kSchemaVersion, equals(5));
       expect(kMinReaderVersion, equals(3));
+      expect(kPlanMinReaderVersion, equals(5));
     });
   });
 

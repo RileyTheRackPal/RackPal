@@ -19784,7 +19784,7 @@
   "id": "019c6bcb-1fc0-7000-8000-000000000001",
   "minReaderVersion": 3,
   "modifiedAt": "2026-05-06T10:12:00.000Z",
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "sequence": 604,
   "unknown": {}
 }

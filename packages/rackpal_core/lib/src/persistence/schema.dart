@@ -6,7 +6,7 @@
 // persistence-layer surface they're already importing.
 
 export 'package:rackpal_core/src/units/constants.dart'
-    show kMinReaderVersion, kSchemaVersion;
+    show kMinReaderVersion, kPlanMinReaderVersion, kSchemaVersion;
 
 /// The container format's magic generator tag (CR-092). A root
 /// `"generator"` key that is not exactly this string means the file is

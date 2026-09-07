@@ -38,7 +38,43 @@ const kMaxRackHeightU = 60; // CR-038
 /// `[]`, and `[]` is the only value the field has ever held in any file,
 /// so there is nothing an older reader can lose by not finding it.
 /// `migrateV3ToV4` strips the key and re-stamps.
-const kSchemaVersion = 4;
+///
+/// v5 ADDS THE PLAN MODEL (DR-037), AND ADVANCES FOR A REASON THIS
+/// FILE'S HISTORY DID NOT PREVIOUSLY HAVE (DR-136 §11.135.3). Every
+/// addition is optional and absent from every file on disk, so every one
+/// of them re-encodes BYTE FOR BYTE and the trigger stated twice above is
+/// not met. **The advance is owed because the format gained a capability
+/// [kPlanMinReaderVersion] must be able to name.** A document carrying a
+/// pin stamps a conditional `minReaderVersion` of 5, and a build
+/// declaring `kSchemaVersion` 4 while writing that stamp would refuse its
+/// own file. `migrateV4ToV5` re-stamps and converts nothing, because
+/// there is nothing in a v4 file to convert.
+const kSchemaVersion = 5;
+
+/// The `minReaderVersion` stamped into a document that carries PLAN DATA
+/// (DR-136 §11.135.2).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE ONE PLACE `minReaderVersion` STOPS BEING A CONSTANT
+/// ═══════════════════════════════════════════════════════════════════════
+/// Every other document stamps [kMinReaderVersion]. A document holding an
+/// underlay or a pin stamps this instead, so a build that does not
+/// understand plans opens it READ-ONLY and cannot overwrite it.
+///
+/// **IT EXISTS BECAUSE THE PASSTHROUGH DR-019 BOUGHT DOES NOT CLOSE THE
+/// HAZARD DR-019 NAMED.** §11.18.1 described it exactly: a build predating
+/// the Plan view, opening a file with pins, silently drops them on save.
+/// §11.18.2(5) bought an `unknown` map, and M3-I built a RESERVED
+/// CONTAINER rather than a harvester, correctly and with the limitation
+/// written in capitals in `placement.dart`. A sibling key like `planPin`
+/// was never covered. Neither file is wrong; the remedy simply does not
+/// reach the hazard, and nothing noticed until PLAN-C tried to write the
+/// test proving it did.
+///
+/// So the loss is prevented by REFUSING THE WRITE rather than by
+/// preserving the field. The narrower fix, and it leaves harvesting where
+/// `placement.dart` left it: a different format, owing its own ruling.
+const kPlanMinReaderVersion = 5;
 
 /// The lowest [kSchemaVersion] that can safely READ a document this build
 /// writes — stamped into every file as `minReaderVersion` and checked by
@@ -58,4 +94,12 @@ const kSchemaVersion = 4;
 /// reader tolerates the absent key and reads `[]`, which is what the field
 /// held in every file ever written. Raising this would refuse a file that
 /// opens perfectly, which is the opposite of what the constant is for.
+///
+/// **IT DOES NOT MOVE AT v5 EITHER, AND FOR A DIFFERENT REASON.** The
+/// plan additions are optional keys a v3 reader simply does not find, so
+/// an ordinary document keeps this stamp and keeps opening everywhere. A
+/// document that actually CARRIES plan data stamps
+/// [kPlanMinReaderVersion] instead: the value is a property of the
+/// document from v5 onwards rather than of the build, which is the first
+/// time that has been true (DR-136 §11.135.2).
 const kMinReaderVersion = 3;

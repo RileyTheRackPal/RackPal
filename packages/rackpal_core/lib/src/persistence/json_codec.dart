@@ -55,6 +55,7 @@ import 'package:rackpal_core/src/model/note.dart';
 import 'package:rackpal_core/src/model/outlet.dart';
 import 'package:rackpal_core/src/model/pathway.dart';
 import 'package:rackpal_core/src/model/placement.dart';
+import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/port.dart';
 import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
@@ -80,6 +81,7 @@ import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/mass.dart';
 import 'package:rackpal_core/src/units/permille.dart';
 import 'package:rackpal_core/src/units/pt.dart';
+import 'package:rackpal_core/src/units/px_pt.dart';
 import 'package:rackpal_core/src/units/rgb.dart';
 import 'package:rackpal_core/src/util/outcome.dart';
 
@@ -128,6 +130,53 @@ final class JsonDocumentCodec extends DocumentCodec {
   /// taken at a known instant.
   JsonMap encodeToJsonTree(RackDocument document) =>
       _encodeRackDocument(document);
+}
+
+/// The `minReaderVersion` [doc] must be stamped with.
+///
+/// [kMinReaderVersion] for an ordinary document, and
+/// [kPlanMinReaderVersion] for one carrying PLAN DATA: any underlay, or
+/// any pin on a `Rack`, an `Outlet` or an `OffRackPlacement`
+/// (DR-136 §11.135.2).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// WHY THE STAMP AND NOT THE PASSTHROUGH
+/// ═══════════════════════════════════════════════════════════════════════
+/// DR-019 §11.18.1 named the hazard exactly: a build predating the Plan
+/// view, opening a file that has pins, SILENTLY DROPS THEM ON SAVE.
+/// §11.18.2(5) bought an `unknown` map on `Placement` and `Outlet` as the
+/// remedy, and M3-I built a RESERVED CONTAINER rather than a harvester,
+/// correctly and with the limitation stated in capitals in both
+/// `placement.dart` and `_unknownBag` below. A sibling key like `planPin`
+/// was never covered by it, so the remedy does not reach the hazard.
+///
+/// This closes it from the other end. An older build meeting
+/// `minReaderVersion: 5` opens the document READ-ONLY and cannot
+/// overwrite it, so the loss becomes a refusal somebody notices instead
+/// of a deletion nobody does.
+///
+/// **`riseAllowance` DELIBERATELY DOES NOT COUNT.** It is an ordinary
+/// additive optional field on `tia570Grade`'s precedent (DR-024): an
+/// older build drops it exactly as it already drops those, and a number
+/// somebody can retype is not a drawing somebody spent an afternoon
+/// making. Widening this predicate to every new optional field would make
+/// every document unopenable on every older build, which is the opposite
+/// of what `kMinReaderVersion` exists for.
+int documentMinReaderVersion(RackDocument doc) {
+  if (doc.underlays.isNotEmpty) return kPlanMinReaderVersion;
+  for (final rack in doc.racks.values) {
+    if (rack.planPin != null) return kPlanMinReaderVersion;
+  }
+  for (final outlet in doc.outlets.values) {
+    if (outlet.planPin != null) return kPlanMinReaderVersion;
+  }
+  for (final device in doc.devices.values) {
+    final placement = device.placement;
+    if (placement is OffRackPlacement && placement.planPin != null) {
+      return kPlanMinReaderVersion;
+    }
+  }
+  return kMinReaderVersion;
 }
 
 /// Phase 2 of [JsonDocumentCodec.write]: a plain JSON tree to the
@@ -338,6 +387,28 @@ JsonMap _encodeRackDocument(RackDocument doc) {
     'racks': {
       for (final e in doc.racks.entries) e.key.v: _encodeRack(e.value),
     },
+    // ═════════════════════════════════════════════════════════════════
+    // OMITTED WHEN EMPTY, UNLIKE EVERY OTHER ENTITY MAP HERE
+    // ═════════════════════════════════════════════════════════════════
+    // The fourteen maps around this one write `{}` when they hold
+    // nothing, which is what they have always done. This one does not,
+    // and the difference is load-bearing rather than stylistic: writing
+    // `"underlays": {}` would add a key to EVERY `.rmpj` in existence on
+    // its next save, so no existing file would re-encode byte for byte,
+    // and DR-136 §11.135.3's reasoning about why the schema advances
+    // would become false in the same commit that stated it.
+    //
+    // It is also what CR-114 says and what this codec has twice recently
+    // chosen: DR-105 §11.104.3 stopped writing 727 origin positions per
+    // starter, and DR-134 §11.133 counted 737 empty arrays in
+    // `apartment.rmpj` as a reason to delete a field. An absent map means
+    // no underlays, which is exactly what an absent key has meant here
+    // since M0.
+    if (doc.underlays.isNotEmpty)
+      'underlays': {
+        for (final e in doc.underlays.entries)
+          e.key.v: _encodePlanUnderlay(e.value),
+      },
     'registries': _encodeRegistries(doc.registries),
     'revisionBlock': [
       for (final r in doc.revisionBlock) _encodeRevisionEntry(r),
@@ -391,7 +462,17 @@ JsonMap _encodeRackDocument(RackDocument doc) {
     // keeps the fields it was read with (they are what the pre-update
     // snapshot and the migration bookkeeping reason about); the CONTAINER
     // is stamped from the constants.
-    kKeyMinReaderVersion: kMinReaderVersion,
+    //
+    // ═══════════════════════════════════════════════════════════════════
+    // EXCEPT `minReaderVersion`, WHICH IS NOW A PROPERTY OF THE DOCUMENT
+    // ═══════════════════════════════════════════════════════════════════
+    // The one exception to the paragraph above, and it is deliberate
+    // (DR-136 §11.135.2). A document carrying plan data needs a reader
+    // that understands plans, and a document without it does not, so the
+    // stamp is decided from the CONTENT rather than from the constants.
+    // See [documentMinReaderVersion] for the hazard this closes and why
+    // it is closed by refusing the write rather than preserving the field.
+    kKeyMinReaderVersion: documentMinReaderVersion(doc),
     kKeyModifiedAt: encodeDateTime(doc.modifiedAt),
     kKeySchemaVersion: kSchemaVersion,
     kKeySequence: doc.sequence,
@@ -402,10 +483,21 @@ JsonMap _encodeRackDocument(RackDocument doc) {
 RackDocument _decodeRackDocument(JsonMap root) {
   final document = asJsonMap(root[kKeyDocument], 'document');
 
+  /// [optional] tolerates the KEY BEING ABSENT and is passed by exactly
+  /// one caller.
+  ///
+  /// NOT THE DEFAULT, DELIBERATELY. A document missing `racks` is a
+  /// damaged document, and decoding it as an empty map would open a
+  /// project with the racks quietly gone rather than refusing it. Only
+  /// `underlays` is optional, because the encoder OMITS it when empty so
+  /// that existing files keep re-encoding byte for byte, and because a
+  /// map that has never been written cannot be a map that went missing.
   Map<Uuid, T> decodeUuidKeyedMap<T>(
     String key,
-    T Function(Uuid id, JsonMap json) decode,
-  ) {
+    T Function(Uuid id, JsonMap json) decode, {
+    bool optional = false,
+  }) {
+    if (optional && document[key] == null) return <Uuid, T>{};
     final json = asJsonMap(document[key], 'document.$key');
     return {
       for (final e in json.entries)
@@ -439,6 +531,11 @@ RackDocument _decodeRackDocument(JsonMap root) {
     outlets: decodeUuidKeyedMap('outlets', _decodeOutlet),
     structures: decodeUuidKeyedMap('structures', _decodeStructureBody),
     circuits: decodeUuidKeyedMap('circuits', _decodeCircuit),
+    underlays: decodeUuidKeyedMap(
+      'underlays',
+      _decodePlanUnderlay,
+      optional: true,
+    ),
     sheets: decodeUuidKeyedMap('sheets', _decodeSheet),
     notes: decodeUuidKeyedMap('notes', _decodeNote),
     ackedFindings: decodeUuidKeyedMap('ackedFindings', _decodeAckedFinding),
@@ -813,6 +910,10 @@ JsonMap _encodeLocation(Location loc) {
     'estimatedRunLengthFromRackNm',
     loc.estimatedRunLengthFromRack?.nm,
   );
+  // The `Nm` suffix is the format's own convention for a `Len`, so the
+  // wire name says its unit and a reader cannot mistake nanometres for
+  // millimetres (docs/02 §6.1).
+  putIfNotNull(json, 'riseAllowanceNm', loc.riseAllowance?.nm);
   return json;
 }
 
@@ -834,6 +935,106 @@ Location _decodeLocation(Uuid id, JsonMap json) => Location(
     json['estimatedRunLengthFromRackNm'],
     'Location.estimatedRunLengthFromRackNm',
   ),
+  riseAllowance: _decodeLenOrNull(
+    json['riseAllowanceNm'],
+    'Location.riseAllowanceNm',
+  ),
+);
+
+// --- Plan (docs/15 §3, DR-037) -----------------------------------------------
+
+/// A `PxPt` as a two-key object rather than a pair.
+///
+/// NAMED KEYS AND NOT A `[x, y]` ARRAY, on `_encodePt`'s precedent: an
+/// array is one transposition away from silently swapping the axes, and
+/// nothing in a diff of two numbers says which is which.
+JsonMap _encodePxPt(PxPt p) => {'px': p.px, 'py': p.py};
+
+PxPt _decodePxPt(Object? raw, String context) {
+  final json = asJsonMap(raw, context);
+  return PxPt(
+    asInt(json['px'], '$context.px'),
+    asInt(json['py'], '$context.py'),
+  );
+}
+
+/// THE INPUTS, NEVER THE FACTOR (CR-001, docs/15 §3.2). Two integer pixel
+/// points and one `Len`, which is exactly what the user supplied. A stored
+/// factor would be a floating-point length in the file format, which
+/// CR-001 forbids outright, and it would also be a second copy of a
+/// derived number.
+JsonMap _encodePlanScale(PlanScale scale) => {
+  'a': _encodePxPt(scale.a),
+  'b': _encodePxPt(scale.b),
+  'distanceNm': scale.distance.nm,
+};
+
+PlanScale _decodePlanScale(Object? raw, String context) {
+  final json = asJsonMap(raw, context);
+  return PlanScale(
+    a: _decodePxPt(json['a'], '$context.a'),
+    b: _decodePxPt(json['b'], '$context.b'),
+    distance: Len(asInt(json['distanceNm'], '$context.distanceNm')),
+  );
+}
+
+JsonMap _encodePlanPin(PlanPin pin) => {
+  'underlayId': pin.underlayId.v,
+  'at': _encodePxPt(pin.at),
+};
+
+PlanPin _decodePlanPin(Object? raw, String context) {
+  final json = asJsonMap(raw, context);
+  return PlanPin(
+    underlayId: _decodeUuid(json['underlayId'], '$context.underlayId'),
+    at: _decodePxPt(json['at'], '$context.at'),
+  );
+}
+
+PlanPin? _decodePlanPinOrNull(Object? raw, String context) =>
+    raw == null ? null : _decodePlanPin(raw, context);
+
+JsonMap _encodePlanUnderlay(PlanUnderlay u) {
+  final json = <String, Object?>{
+    'id': u.id.v,
+    'name': u.name,
+    'imageMember': u.imageMember,
+    'format': encodeEnumName(u.format),
+    'pixelWidth': u.pixelWidth,
+    'pixelHeight': u.pixelHeight,
+    'contentHash': u.contentHash,
+    'order': u.order.v,
+    'meta': _encodeEntityMeta(u.meta),
+  };
+  putIfNotNull(json, 'locationId', u.locationId?.v);
+  // ABSENT MEANS UNCALIBRATED, and that is a statement rather than a
+  // default (G4, CR-114). It never becomes a 1:1 scale on the way back in.
+  putIfNotNull(
+    json,
+    'scale',
+    u.scale == null ? null : _encodePlanScale(u.scale!),
+  );
+  return json;
+}
+
+PlanUnderlay _decodePlanUnderlay(Uuid id, JsonMap json) => PlanUnderlay(
+  id: id,
+  name: asStr(json['name'], 'PlanUnderlay.name'),
+  imageMember: asStr(json['imageMember'], 'PlanUnderlay.imageMember'),
+  format: decodeEnumStrict(
+    PlanImageFormat.values,
+    asStr(json['format'], 'PlanUnderlay.format'),
+    'PlanUnderlay.format',
+  ),
+  pixelWidth: asInt(json['pixelWidth'], 'PlanUnderlay.pixelWidth'),
+  pixelHeight: asInt(json['pixelHeight'], 'PlanUnderlay.pixelHeight'),
+  contentHash: asStr(json['contentHash'], 'PlanUnderlay.contentHash'),
+  order: FracIndex(asStr(json['order'], 'PlanUnderlay.order')),
+  meta: _decodeEntityMeta(asJsonMap(json['meta'], 'PlanUnderlay.meta')),
+  locationId: _decodeUuidOrNull(json['locationId'], 'PlanUnderlay.locationId'),
+  scale: json['scale'] == null
+      ? null
+      : _decodePlanScale(json['scale'], 'PlanUnderlay.scale'),
 );
 
 // --- Rack / ZeroUChannel -----------------------------------------------------
@@ -889,6 +1090,11 @@ JsonMap _encodeRack(Rack r) {
   if (r.hingeSide != null) json['hingeSide'] = encodeEnumName(r.hingeSide!);
   putIfNotNull(json, 'frontDoorClearanceNm', r.frontDoorClearance?.nm);
   putIfNotNull(json, 'rearDoorClearanceNm', r.rearDoorClearance?.nm);
+  putIfNotNull(
+    json,
+    'planPin',
+    r.planPin == null ? null : _encodePlanPin(r.planPin!),
+  );
   return json;
 }
 
@@ -900,6 +1106,7 @@ Rack _decodeRack(Uuid id, JsonMap json) => Rack(
   order: FracIndex(asStr(json['order'], 'Rack.order')),
   meta: _decodeEntityMeta(asJsonMap(json['meta'], 'Rack.meta')),
   locationId: _decodeUuidOrNull(json['locationId'], 'Rack.locationId'),
+  planPin: _decodePlanPinOrNull(json['planPin'], 'Rack.planPin'),
   ruNumbering: decodeEnumStrict(
     RuNumbering.values,
     asStr(json['ruNumbering'], 'Rack.ruNumbering'),
@@ -1167,10 +1374,11 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
       'locked': locked,
       ...?_placementUnknown(placement),
     },
-  OffRackPlacement(:final locationId, :final mountNote) => {
+  OffRackPlacement(:final locationId, :final mountNote, :final planPin) => {
     'type': 'offRack',
     if (locationId != null) 'locationId': locationId.v,
     if (mountNote != null) 'mountNote': mountNote,
+    if (planPin != null) 'planPin': _encodePlanPin(planPin),
     ...?_placementUnknown(placement),
   },
   StagedPlacement(
@@ -1267,6 +1475,10 @@ Placement _decodePlacement(JsonMap json) {
           'OffRackPlacement.locationId',
         ),
         mountNote: asStrOrNull(json['mountNote'], 'OffRackPlacement.mountNote'),
+        planPin: _decodePlanPinOrNull(
+          json['planPin'],
+          'OffRackPlacement.planPin',
+        ),
         unknown: _unknownBag(json, 'OffRackPlacement'),
       );
     case 'staged':
@@ -2087,6 +2299,11 @@ JsonMap _encodeOutlet(Outlet o) {
     'meta': _encodeEntityMeta(o.meta),
   };
   putIfNotNull(json, 'notes', o.notes);
+  putIfNotNull(
+    json,
+    'planPin',
+    o.planPin == null ? null : _encodePlanPin(o.planPin!),
+  );
   putIfNotNull(json, 'locationId', o.locationId?.v);
   if (o.wall != null) json['wall'] = encodeEnumName(o.wall!);
   if (o.mountSurface != null) {
@@ -2292,6 +2509,7 @@ Outlet _decodeOutlet(Uuid id, JsonMap json) => Outlet(
     'Outlet.nominalRunLengthNm',
   ),
   notes: asStrOrNull(json['notes'], 'Outlet.notes'),
+  planPin: _decodePlanPinOrNull(json['planPin'], 'Outlet.planPin'),
   // `?? const []` because the key is absent on every document written
   // before M3-H, which is all of them.
   gangs: decodeObjectList(

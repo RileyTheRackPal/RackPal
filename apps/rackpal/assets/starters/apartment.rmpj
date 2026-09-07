@@ -19085,7 +19085,7 @@
   "id": "019e17b6-8c60-7000-8000-000000000001",
   "minReaderVersion": 3,
   "modifiedAt": "2026-05-12T09:20:00.000Z",
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "sequence": 37,
   "unknown": {}
 }
