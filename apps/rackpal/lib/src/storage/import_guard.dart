@@ -3,12 +3,21 @@
 // ═══════════════════════════════════════════════════════════════════════
 // WHY THIS IS A FUNCTION AND NOT THREE COPIES OF FOUR LINES
 // ═══════════════════════════════════════════════════════════════════════
-// Three import paths need it: the CSV import, the `.rmdx` import, and the
-// `.bak` sibling of a picked project. The first draft of `#237` wrote it
-// inline at each, and the third copy is where the rule broke: two of them
-// treated a stat that could not answer as "carry on" and the third let
-// the failure escape, which turned a network hiccup into a broken
+// The first draft of `#237` wrote it inline at each of the three call
+// sites it then had, and the third copy is where the rule broke: two of
+// them treated a stat that could not answer as "carry on" and the third
+// let the failure escape, which turned a network hiccup into a broken
 // backup-open on a path that had survived one for a milestone.
+//
+// **THIS COMMENT SAID "THREE IMPORT PATHS NEED IT" UNTIL 2026-09-07 AND
+// NAMED THEM**, by which time there were six and the list had missed
+// three: `grep -rn checkImportedFileSize` finds the CSV import, the
+// `.rmdx` import, the `.rmda` library import, the library shelf scan, the
+// `.bak` sibling and the floorplan import. **The count is not restated
+// here for that reason.** A list of callers inside the callee is a second
+// copy of a fact the compiler already holds, and it goes stale in exactly
+// the direction that matters: it shrinks, so a reader concludes the
+// helper is narrower than it is.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // A STAT THAT CANNOT ANSWER IS NOT A REFUSAL
