@@ -117,7 +117,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
 | **M4** | Device builder | **`L`** *(was `M`)* | **2 of 2** | **CRITERION MET**: `CONFIRMED` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **CLAUSE 2 IS NOW CONFIRMED, performed on 2026-09-01** (§5.3.30), and it was performable only from §5.3.13: it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` demonstrated it: every unknown column printed `—` and said so, which is G4/CR-114 read off a printed sheet for the first time. **The archetype path ran the same day at 46 SECONDS against the DSL path's 93** (`#250`), which is what settled whether the generators earned their place. **EVERY M4 STORY IS NOW CLOSED** (§5.3.1–§5.3.30), the last being the drill itself (`#188`), and **95 chapters are Done under this epic with none left open or re-parented**, which is where `v0.4.95` comes from. **M4-P shipped RJ-012's two extensibility surfaces and found each chapter to be something else underneath**: the builder could not save a field device at all, the media-type editor's real gap was MERGE rather than create, and connector aliases were already resolved and only lacked a writer (§5.3.28, DR-107, `v0.4.93`). **RJ-012 stays two-thirds met**: its third surface, a per-family colour override row in settings, has nowhere to go because `ProjectSettings` has no editor and none is assigned to any milestone (`#805`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); **its parked nudge canvas was then un-parked by DR-106 and built** as a sixth `Panel` section, with its align/distribute arithmetic in core (§5.3.27, `v0.4.90`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moved this criterion**, and that was the point of the row for a fortnight: story after story closed while clause 2 remained a person with a document to read. **It was read on 2026-09-01** (§5.3.30), which is the only thing that could ever have closed it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **3 of 3** | **CRITERION MET**: `CONFIRMED` | **CLOSED 2026-09-07 (DR-135 §11.134).** All three clauses discharged. Clause 1 is `DEMONSTRATED` at **29 of 29** by `drc_corpus_test.dart`, which `run_local.ps1` runs as a step of its own and whose subject is `kRuleCatalogue` rather than any evaluator enum, so a registered rule without a pair fails the build; that is also why it moved from 28 to 29 when DR-132 restored `ELE-005` and no gate had to change (§5.4.7). Clause 3 was `VACUOUS` *because no rule existed* and that reason expired; it is `DEMONSTRATED` in a stronger form than `#310` asked for, since `ExportError` is **sealed with three arms and none of them is about a rule** (§5.4.8, DR-119). **Clause 2 was the whole gap for a fortnight and is `CONFIRMED` on 2026-09-06** (§5.4.11), signed by the reviewing integrator against a pack generated from the live catalogue: **twelve findings, four rulings, six fields the model has and no producer writes**, and the catalog half signed PROVISIONAL on the reviewer's own hedge. **All twenty Stories under epic 23 are `Done` and 61 Chapters beneath them**, which is where `v0.5.61` comes from and why the close itself owes no bump. The successor is **the Plan view, not M6** (DR-029 §11.28.4) |
-| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open and is **`v0.6.19`** with nineteen chapters `Done` of 43. **PLAN-A to PLAN-C are closed and PLAN-D is three of five**, its remaining two blocked on a real architectural page rather than on effort (§5.9.4.6) |
+| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open and is **`v0.6.20`** with twenty chapters `Done` of 43. **PLAN-A to PLAN-C are closed and PLAN-D is four of five**: the plan set arrived, `PLAN-D/5` is answered and closed, and `PLAN-D/3` keeps only the half that needs pdfium built (§5.9.5) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
@@ -7076,6 +7076,100 @@ page, and `PLAN-D/3` additionally waits on the pdfium vendoring being executed r
 **5.9.4.7 THE VERSION IS `v0.6.19`.** The board query for `Done` Chapters under epic 588 returns
 **19**; and `v0.6.16` plus this issue's three closed Chapters is 19. Floors re-measured: core 4203 to
 4230, app 930 to 945.
+
+#### 5.9.5 The plan set arrived, and it answered PLAN-D/5 and half of PLAN-D/3 · `DR-137` · `v0.6.20`
+
+**The block named in §5.9.4.6 lifted on 2026-09-07.** The user supplied an 18-sheet residential
+permit set, ARCH D (36 x 24 inches), and described it as representative of what this trade is
+usually given. **It is not in the repository and never will be** (DR-137 §11.136.6): it carries a
+licensed engineer's seal and licence number, the firm's name, the builder's mark and a redaction
+that covers the address and nothing else, and DR-036's public GPLv3 release would publish every
+commit ever made. `.gitignore` refuses `docs/reference/*.pdf` at the top level only, which leaves
+`keystone/`'s seven manufacturer drawings tracked.
+
+**5.9.5.1 THE METHOD, SO THE NUMBERS SURVIVE WITHOUT THE FIXTURE.** This is the whole reason the
+measurements are written out rather than left in a test. Anybody with their own plan set can
+re-derive every figure below:
+
+1. **Structure**, without any PDF library: count `/Type /Page`, `/Subtype /Image` and the filter
+   names by regex over the raw bytes, and read `/MediaBox` for the sheet size. Read each image
+   XObject's `/Width`, `/Height` and `/Length`.
+2. **Carve the pages**: a `DCTDecode` stream with no other filter *is* a JPEG file. Slice from
+   after `stream` to `/Length` bytes and check for `FF D8`.
+3. **Deflate ratios**: `zlib.compress(page_bytes, level)` per page, timed best-of-N.
+4. **Container cost**: `writeContainerBytes(starterBytes, {member: pageBytes})` against a
+   checked-in starter, which is in the repository and is not going anywhere.
+5. **Legibility**: crop the plan region at 1:1 and *look at it*. There is no substitute and there
+   was never going to be one.
+
+**5.9.5.2 WHAT THE SET ACTUALLY IS, AND IT IS NOT WHAT ANYBODY ASSUMED.** Every page is a **single
+full-page JPEG**. Eighteen pages, eighteen images, eighteen `DCTDecode` filters, **zero fonts and
+zero vector content in the entire file**, 99.9% of the bytes are the images. Each page is
+2160 x 1440 px on a 36 x 24 inch sheet, which is **60 dpi**.
+
+**So the office flattened it.** The linework is clean and unskewed, so this is a raster export of a
+vector drawing rather than a scan, and somebody's export preset chose 60 dpi. **That is the input
+this product receives**, and it is a fact about a workflow rather than about a file format.
+
+**5.9.5.3 PLAN-D/3's RESOLUTION QUESTION IS ANSWERED AND ITS BUILD IS NOT.** `#625` frames the
+resolution as a three-way trade. For a raster-backed PDF **there is no trade**, because
+rasterising above the source upsamples: 96 dpi costs 1.8x the bytes, 150 dpi 4.0x, 300 dpi
+**12.9x**, and every one of them gains **zero** information. The rule is *never rasterise above the
+source's own effective resolution*, and for a vector PDF `#625`'s trade is real and stands.
+
+**AND 60 DPI IS ENOUGH, WHICH WAS SETTLED BY LOOKING.** At 1:1 on A-2.1 the room names, the
+dimension strings (`15'-8 1/2"`), the window callouts (`3052`), the stair counts (`Up 16R`) and the
+annotations (`Pocket Office`, `Drop Zone`, `Bench Coat Hooks`) are all legible. At 1/4 inch = 1
+foot, 60 dpi is **15 px per foot**, so **one pixel is 0.8 real inches**. An installer needs the
+wall, not the inch.
+
+**`#625` STAYS OPEN** for what it still owes: pdfium vendored, the licence and build behaviour of
+the Dart wrapper established, and the page picker built. **A shortcut is visible and is
+deliberately not taken**: because every page here is one full-page image, the JPEG could be
+extracted without rasterising, losslessly. A vector PDF breaks it and DR-029 bought PDF import
+generally, so it is at most an optimisation with pdfium behind it.
+
+**5.9.5.4 PLAN-D/5 IS ANSWERED, AND THE ANSWER INVERTS docs/15 §2.** That section rejected base64
+on an estimate (*"a 2 MB PNG becomes roughly 2.7 MB of inline text"*, a 35% inflation) and admitted
+*"the zip path's real number has never been taken"*.
+
+| | Bytes |
+|---|---|
+| `whole_house.rmpj` today, plain JSON | 745,646 |
+| the same document plus A-2.1 as an underlay, as a container | **234,165** |
+| all 18 sheets as underlays | 8,235,004 |
+
+**A plan makes the project file 69% SMALLER than it was without one.** The underlay flips the
+format from plain JSON to a container, and the JSON then deflates **16.3x** (745,646 to 45,734).
+AC-006 re-justified plain JSON against a corrected ~600 KB figure; `whole_house` misses that today
+at 728 KB and lands far under it the moment a plan is added, which is the opposite of the direction
+the budget was braced for.
+
+**THE FIGURES ABOVE WERE FIRST TAKEN UNDER STORE AND RE-TAKEN UNDER DR-137**, because a number
+measured under the behaviour you are about to change is a number about the past. Under STORE the
+same two rows read 331,776 and 9,769,984, so the ruling is worth **97,611 bytes on the sheet a user
+imports** and **1,534,980 across the set**. CR-117 was re-checked on the real member rather than on
+a fixture, and holds.
+
+**5.9.5.5 AND THE MEASUREMENT CONTRADICTED THE CODE, WHICH IS WHY IT WAS WORTH TAKING.** PLAN-B's
+`container.dart` stored binary members uncompressed behind four confident sentences. Two are false:
+every page deflates (7.0% to 34.3%, mean **16.0%**), **the floor plans deflate best** at 34.3%
+because line art on white is mostly white, and level 9 costs **6.2 ms** on the sheet a user
+actually imports. A third reason argued for nothing, since every zip tool inflates a deflated
+entry. DR-137 changes it.
+
+**THE GENERALISATION IS THE ONE TO KEEP.** *"Already-compressed rasters do not deflate"* is true of
+**photographs** and false of **line art on white**, and this product receives line art on white. The
+rule was imported from the domain where it holds into the domain where it does not, and read as
+self-evident in both. Compare `a stated cost is a hypothesis`: this was not a number nobody ran, it
+was a **domain assumption nobody noticed making**.
+
+**5.9.5.6 THE SAMPLE IS ONE AND IS SAID TO BE.** The duration note in CLAUDE.md has been wrong
+twice in opposite directions from single samples, so: n=1, the user reports it representative, and
+that is trade knowledge rather than a census. **Nothing here depends on the generalisation
+holding.** Deflate is safe on a member that will not compress, since it simply does not; the
+resolution rule is expressed as a bound (never exceed the source) rather than as a number; and the
+container-size finding is a property of the format, not of this file.
 
 ---
 

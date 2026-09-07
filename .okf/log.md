@@ -2,6 +2,66 @@
 
 ## 2026-09-07
 
+* **Ruling**: [DR-137](/decisions/dr-137-a-floorplan-is-line-art.md).
+  Underlay members are DEFLATED, not stored, and rasterisation never
+  exceeds the source's own resolution. Both halves came from measuring the
+  first real plan set this project has ever been given.
+* **Creation**: [A borrowed rule is not
+  re-checked](/practices/a-borrowed-rule-is-not-re-checked.md). **The
+  dangerous claim is not the one somebody guessed**, it is the one that is
+  genuinely true SOMEWHERE ELSE, arrives with its justification attached,
+  and is therefore never re-run where it has just been applied. *"A PNG or
+  JPEG is already compressed; deflating it again buys ~nothing"* is a
+  correct statement about photographs. A floor plan is line art on white,
+  it is mostly white, and every one of 18 sheets deflates: 7.0% to 34.3%,
+  **the floor plans best**. The unexamined step was never written down,
+  because it was not a claim: it was an assumption about what kind of thing
+  the product receives.
+* **Note**: **TWO SUPPORTING TELLS SAT IN THE SAME FILE AND BOTH ARE
+  ORDINARY.** A fourth reason for storing said the file *"opens in any zip
+  tool with the architect's original page inside it"*, and every zip tool
+  inflates a deflated entry, so it was true either way and decided nothing:
+  **a reason that does not discriminate makes a list look longer than it
+  argues.** And the test asserted which compression METHOD the header
+  named, which the writer answered by an `if`, so it read the decision back
+  rather than its consequence. Its fixture was labelled "incompressible-
+  looking" and deflates 2.2x, and nothing noticed because nothing asked.
+* **Note**: **THE RESOLUTION TRADE `PLAN-D/3` WAS BUILT AROUND DOES NOT
+  EXIST FOR THIS INPUT.** The set is 18 pages of full-page JPEG with **zero
+  fonts and zero vector content**, 2160 x 1440 on a 36 x 24 sheet: 60 dpi.
+  Rasterising above the source upsamples, at 12.9x the bytes for 300 dpi
+  and no information at any step. The rule is a BOUND rather than a number:
+  never rasterise above the source's own effective resolution. For a vector
+  PDF the trade is real and stands.
+* **Note**: **60 DPI IS ENOUGH, AND THAT WAS SETTLED BY LOOKING.** At 1:1
+  the room names, dimension strings, window callouts and stair counts are
+  legible. 15 px per foot makes one pixel **0.8 real inches**, and an
+  installer needs the wall rather than the inch. There was no substitute
+  for opening the crop and there was never going to be one.
+* **Note**: **A PLAN MAKES THE FILE SMALLER, WHICH INVERTS docs/15 §2.**
+  That section rejected base64 on an ESTIMATE and admitted the zip path's
+  real number had never been taken. Taken: 745,646 bytes of plain JSON
+  becomes **234,165** as a container, a **69% drop**, because the underlay
+  flips the format and the JSON then deflates 16.3x. AC-006's ~600 KB
+  figure is missed today and met the moment a plan is added.
+* **Note**: **THE FIGURES WERE RE-TAKEN AFTER THE CHANGE THEY MEASURE.**
+  The first pass ran under STORE, which makes it a number about the past.
+  Re-measured under DR-137 the ruling is worth 97,611 bytes on the sheet a
+  user imports and 1,534,980 across the set, and CR-117 was re-checked on
+  the real member rather than on a fixture.
+* **Note**: **THE PLAN SET IS NOT IN THE REPOSITORY AND THE REASON IS GIT
+  RATHER THAN SIZE.** It carries a licensed engineer's seal and licence
+  number, the firm's name, the builder's mark and a redaction covering the
+  address and nothing else. **DR-036's public release publishes every
+  commit ever made**, not the current tree, so committing it today and
+  deleting it tomorrow ships it anyway. The measurements are the artifact,
+  and docs/12 §5.9.5.1 carries the METHOD so anybody can re-derive them
+  against their own sheet.
+* **Note**: **n IS ONE AND IS SAID TO BE.** CLAUDE.md's CI duration note
+  has been wrong twice in opposite directions from single samples. Nothing
+  here depends on the generalisation: deflate is safe on a member that will
+  not compress, the resolution rule is a bound rather than a number, and
+  the container finding is a property of the format.
 * **Correction**: **`AC-058/D12` WAS THE WRONG ITEM AND IT RESOLVED
   PERFECTLY.** The Plan view's import hardening was cited to D12 in four
   places, two of them source. D12 is *localisation*: the DSL, the CSV
