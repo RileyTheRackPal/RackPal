@@ -90,12 +90,15 @@ final class TemplateFacts {
 /// A PREFIX rather than an equality, because the families are a dotted
 /// hierarchy: `video.hdmi.1_4`, `video.hdmi.2_0` and `video.hdmi.2_1` are
 /// three ids and one question. Callers pass the level they mean.
+///
+/// **IT ALSO TESTED `carriedProtocols` UNTIL DR-134, AND THAT HALF NEVER
+/// MATCHED ANYTHING.** Not because the question was wrong but because no
+/// gesture could answer it: every seeded port and every authored one held
+/// `[]`. The answers this function gives are unchanged by its removal,
+/// which is the measurement that made the field's deletion safe rather
+/// than the argument that made it right (§11.133.2).
 bool templateHasFamilyPrefix(TemplateBody body, String prefix) =>
-    body.ports.any(
-      (p) =>
-          p.signalFamily.v.startsWith(prefix) ||
-          p.carriedProtocols.any((f) => f.v.startsWith(prefix)),
-    );
+    body.ports.any((p) => p.signalFamily.v.startsWith(prefix));
 
 /// Whether any port declares a connector whose id starts with [prefix].
 bool templateHasConnectorPrefix(TemplateBody body, String prefix) =>

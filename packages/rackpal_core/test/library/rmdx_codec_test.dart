@@ -316,4 +316,121 @@ void main() {
       );
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // v1 -> v2: `carriedProtocols` is gone (DR-134 §11.133)
+  // ═══════════════════════════════════════════════════════════════════
+  // THE FIRST STEP THE CHAIN HAS EVER HAD. `migrateRmdxToCurrent` shipped
+  // empty at M4-M and said so: it bought "the SEAM plus the refusal, so
+  // that the first person to bump `kRmdxSchemaVersion` adds a row to a
+  // table that already exists". This is that row, and the cases below are
+  // the ones a v1 file on somebody's disk actually meets.
+  group('v1 -> v2, the first step the .rmdx chain has ever had', () {
+    /// A v1 tree: the shape an older build wrote, key and all.
+    JsonMap v1Tree({String? hash}) {
+      final body = templateBodyToJson(_seed('A01'));
+      final ports = body['ports']! as List;
+      for (final port in ports) {
+        (port! as Map)['carriedProtocols'] = <String>['net.ethernet'];
+      }
+      return <String, Object?>{
+        'kind': kRmdxKind,
+        'schemaVersion': 1,
+        'templateId': 'A01',
+        'version': 1,
+        'contentHash': hash ?? 'sha256:${'a' * 64}',
+        'body': body,
+      };
+    }
+
+    test('the fixture really is a v1 tree carrying the key', () {
+      // The control every migration group in this repository opens with:
+      // an input that does not contain the thing being migrated proves
+      // the code compiles rather than that it works.
+      final raw = v1Tree();
+      final ports = (raw['body']! as Map)['ports']! as List;
+      expect(ports, isNotEmpty);
+      expect(
+        (ports.first! as Map).containsKey('carriedProtocols'),
+        isTrue,
+      );
+    });
+
+    test('a v1 file still opens, and comes back at the current version', () {
+      final outcome = readRmdxJsonTree(v1Tree());
+      expect(outcome, isA<Ok<DeviceTemplateFile>>());
+    });
+
+    test('the key is stripped from every port', () {
+      switch (migrateRmdxToCurrent(v1Tree(), storedSchemaVersion: 1)) {
+        case Err(:final error):
+          fail('expected Ok, got Err($error)');
+        case Ok(value: final migrated):
+          expect(migrated['schemaVersion'], kRmdxSchemaVersion);
+          final ports = (migrated['body']! as Map)['ports']! as List;
+          expect(ports, isNotEmpty);
+          for (final port in ports) {
+            expect(
+              (port! as Map).containsKey('carriedProtocols'),
+              isFalse,
+            );
+          }
+      }
+    });
+
+    test(
+      'THE HASH IS RECOMPUTED, so a v1 file does not import as tampered',
+      () {
+        // The half that needed a decision. `contentHash` is taken over
+        // `templateBodyToJson`'s canonical bytes and this migration changes
+        // those bytes, so without recomputing, every file exported before
+        // DR-134 would report `mismatched` for a reason that has nothing to
+        // do with its content. A warning that fires on every older file is
+        // one a person learns to click past, and then it is gone for the
+        // files it was built for.
+        final real = templateContentHash(_seed('A01'));
+        final outcome = readRmdxJsonTree(v1Tree(hash: 'sha256:${'a' * 64}'));
+        switch (outcome) {
+          case Err(:final error):
+            fail('expected Ok, got Err($error)');
+          case Ok(value: final file):
+            expect(file.contentHash, real);
+            expect(
+              templateHashMatches(file.body, file.contentHash),
+              isTrue,
+              reason: 'a migrated v1 file verifies against itself',
+            );
+        }
+      },
+    );
+
+    test('a v2 file is not touched, so the check still MEANS something', () {
+      // The half that makes the case above safe. Recomputing on every
+      // read would make the hash verify by construction and stop being
+      // tamper evidence at all; only the migration recomputes.
+      final tampered = <String, Object?>{
+        ...v1Tree(),
+        'schemaVersion': kRmdxSchemaVersion,
+        'contentHash': 'sha256:${'b' * 64}',
+      };
+      switch (readRmdxJsonTree(tampered)) {
+        case Err(:final error):
+          fail('expected Ok, got Err($error)');
+        case Ok(value: final file):
+          expect(file.contentHash, 'sha256:${'b' * 64}');
+          expect(templateHashMatches(file.body, file.contentHash), isFalse);
+      }
+    });
+
+    test("a v1 tree with a malformed body is the DECODER's error", () {
+      // The migration does not swallow it: `readRmdxJsonTree` decodes
+      // next and names the real key path, which is the only message that
+      // helps somebody fix the file.
+      final broken = <String, Object?>{
+        ...v1Tree(),
+        'body': <String, Object?>{'ports': 'not a list'},
+      };
+      expect(readRmdxJsonTree(broken), isA<Err<DeviceTemplateFile>>());
+    });
+  });
 }

@@ -487,6 +487,227 @@ class PortFamilyCell extends StatelessWidget {
   );
 }
 
+/// The ACCEPTS cell: the grid's ONLY multi-select (DR-081 §11.80.2, built
+/// at DR-134 §11.133).
+///
+/// ══════════════════════════════════════════════════════════════════════
+/// THE CELL SHAPE IS THE DELIVERABLE, WHICH IS DR-081's OWN SENTENCE
+/// ══════════════════════════════════════════════════════════════════════
+/// Every other cell in this grid holds one value: it commits, closes, and
+/// moves on. This one holds a SET, so three things differ and each is a
+/// decision rather than an accident.
+///
+///   * **The menu does not close on a pick.** Choosing a second family is
+///     the ordinary case, and a menu that shut after the first would make
+///     a two-entry list cost two round trips through a filter box.
+///   * **The tick is a checkbox, not a check ICON.** [PortMenuCell] draws
+///     a transparent `Icons.check` beside the one selected entry, which
+///     reads as "this is the value". A box that can be empty or full
+///     reads as "these are on", which is what a set is.
+///   * **Empty prints a sentence, not the dash.** `—` is G4's unknown and
+///     this is not one: an untouched list is the author saying the port
+///     adds nothing to its own family. `kAcceptsOwnFamilyOnly` is core's
+///     spelling of that and this widget does not invent a second.
+///
+/// **THE FILTER BOX IS `FamilyPicker`'s, FOR ITS MEASURED REASON.** 57
+/// families is a wall to scroll and the labels reach 45 characters, which
+/// is the measurement that put `family_picker.dart` on a `MenuAnchor`
+/// instead of a `DropdownButton`. The same numbers apply here, so the
+/// same width does.
+///
+/// **IT NARROWS AND NEVER COMMITS**, which is DR-025 §11.24.3 one control
+/// over: typing into the filter can only hide rows, and a family enters
+/// the set by being ticked. A filter that committed its top match would
+/// let `hdmi` choose whichever HDMI generation sorted first.
+class PortAcceptsCell extends StatefulWidget {
+  const PortAcceptsCell({
+    required this.registries,
+    required this.value,
+    required this.onChanged,
+    this.mixedLabel,
+    super.key,
+  });
+
+  final Registries registries;
+  final List<SignalFamilyId> value;
+  final ValueChanged<List<SignalFamilyId>> onChanged;
+
+  /// M4-F11's one parameter, unchanged in shape: what to print when the
+  /// selected rows disagree. Null means they agree and [value] is theirs.
+  ///
+  /// **A MIXED SELECTION SHOWS NO TICKS**, which the batch dock arranges
+  /// by passing an empty [value] alongside this label. Pre-ticking one
+  /// row's set would draw it as the answer for all of them.
+  ///
+  /// **AND A BATCH WRITE REPLACES RATHER THAN ADDS**, like every other
+  /// column: `buildBatchWrite` puts the value it is given on every
+  /// selected port. §4.6's "left untouched unless explicitly set" is
+  /// about which COLUMNS a batch touches, not about merging within one.
+  final String? mixedLabel;
+
+  @override
+  State<PortAcceptsCell> createState() => PortAcceptsCellState();
+}
+
+class PortAcceptsCellState extends State<PortAcceptsCell> {
+  final MenuController _menu = MenuController();
+  final TextEditingController _filter = TextEditingController();
+
+  @override
+  void dispose() {
+    _filter.dispose();
+    super.dispose();
+  }
+
+  void _toggle(SignalFamilyId id) {
+    final next = [...widget.value];
+    if (next.contains(id)) {
+      next.remove(id);
+    } else {
+      next.add(id);
+    }
+    widget.onChanged(next);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final query = normaliseMediaToken(_filter.text.trim());
+    final groups = signalFamilyCellGroups(widget.registries);
+    final visible = <SignalFamilyCellGroup, List<SignalFamilyCellOption>>{};
+    for (final group in groups) {
+      final options = [
+        for (final option in group.options)
+          if (query.isEmpty || option.matches(query)) option,
+      ];
+      if (options.isNotEmpty) visible[group] = options;
+    }
+    final text =
+        widget.mixedLabel ??
+        acceptedFamiliesCellText(widget.registries, widget.value);
+
+    return MenuAnchor(
+      controller: _menu,
+      menuChildren: [
+        SizedBox(
+          width: kFamilyPickerWidth,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+                child: TextField(
+                  controller: _filter,
+                  autofocus: true,
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    border: OutlineInputBorder(),
+                    hintText: kFamilyFilterHint,
+                  ),
+                  onChanged: (_) => setState(() {}),
+                ),
+              ),
+              ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxHeight: kFamilyPickerMaxHeight,
+                ),
+                // `primary: false`, WHICH IS NOT A STYLE CHOICE. Without
+                // it this scroll view adopts the `PrimaryScrollController`
+                // that the port grid's own vertical list is already using,
+                // and the framework throws the moment the menu opens over
+                // a grid with a visible scrollbar: "attached to more than
+                // one ScrollPosition". A menu is not the page's scroll
+                // view and must never claim to be.
+                child: SingleChildScrollView(
+                  primary: false,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (visible.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            familyFilterEmpty(_filter.text.trim()),
+                            style: theme.textTheme.bodySmall,
+                          ),
+                        ),
+                      for (final entry in visible.entries) ...[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 8, 12, 2),
+                          child: Text(
+                            entry.key.domainName,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
+                        for (final option in entry.value)
+                          // A `MenuItemButton` would close the menu on
+                          // every pick, which is the one behaviour this
+                          // control exists not to have.
+                          CheckboxListTile(
+                            key: ValueKey('accepts-${option.id.v}'),
+                            dense: true,
+                            controlAffinity: ListTileControlAffinity.leading,
+                            value: widget.value.contains(option.id),
+                            title: Text(
+                              option.label,
+                              style: theme.textTheme.bodySmall,
+                            ),
+                            onChanged: (_) => _toggle(option.id),
+                          ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      builder: (context, controller, child) => InkWell(
+        onTap: () {
+          if (controller.isOpen) {
+            controller.close();
+          } else {
+            _filter.clear();
+            controller.open();
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    // THE EMPTY STATEMENT IS DRAWN LIKE AN AUTOMATIC
+                    // VALUE, not like an unknown: it is true, the author
+                    // did not type it, and `DESIG` already spells that
+                    // state this way.
+                    color: widget.value.isEmpty && widget.mixedLabel == null
+                        ? theme.colorScheme.onSurfaceVariant
+                        : theme.colorScheme.onSurface,
+                  ),
+                ),
+              ),
+              Icon(
+                Icons.arrow_drop_down,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// A menu of `(value, label)` pairs, wider than the cell that opened it.
 class PortMenuCell extends StatefulWidget {
   const PortMenuCell({

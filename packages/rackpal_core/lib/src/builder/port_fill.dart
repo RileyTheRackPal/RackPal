@@ -32,6 +32,7 @@ import 'package:rackpal_core/src/builder/port_commands.dart';
 import 'package:rackpal_core/src/builder/port_table.dart';
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 
 /// What a fill may do to one grid column.
 ///
@@ -159,6 +160,45 @@ PortColumnFill _text(PortField<String> field) => PortColumnFill(
   ),
 );
 
+/// A LIST-VALUED column, whose no-op check cannot be `==`.
+///
+/// **THE ONLY ONE, AND THE REASON IT NEEDS ITS OWN HELPER** (DR-134
+/// §11.133). [_set] skips a write when `now == value`, and on a `List`
+/// that comparison is IDENTITY: a fill-down of a column whose target rows
+/// already hold an equal list would emit a command per row that changes
+/// nothing, which is precisely the undo entry [_set]'s own comment exists
+/// to prevent. So the comparison is by ELEMENT.
+///
+/// **AND BY SET, NOT BY SEQUENCE.** `acceptedFamilies` answers "does this
+/// port accept X" through `contains`, so order carries no meaning and two
+/// orderings of the same families are the same fact. Comparing sequences
+/// would make re-picking the same two families in the other order an edit.
+PortColumnFill _familyList(PortField<List<SignalFamilyId>> field) =>
+    PortColumnFill(
+      copy: (from, to) => _setFamilies(field, to, field.get(from)),
+      read: field.get,
+      write: (port, value) =>
+          _setFamilies(field, port, (value! as List).cast<SignalFamilyId>()),
+      set: (port, value) =>
+          field.set(port, (value! as List).cast<SignalFamilyId>()),
+    );
+
+/// [_set] for a family list: no command when the SETS are equal.
+Command<TemplateBody>? _setFamilies(
+  PortField<List<SignalFamilyId>> field,
+  PortDef port,
+  List<SignalFamilyId> value,
+) {
+  final now = field.get(port);
+  if (acceptedFamiliesEqual(now, value)) return null;
+  return SetPortFieldCommand<List<SignalFamilyId>>(
+    port: port.key,
+    field: field,
+    from: now,
+    to: value,
+  );
+}
+
 /// A text column that may be UNKNOWN.
 PortColumnFill _textOrNull(PortField<String?> field) => PortColumnFill(
   copy: (from, to) => _set<String?>(field, to, field.get(from)),
@@ -193,6 +233,11 @@ PortColumnFill? portColumnFill(PortColumnId id) => switch (id) {
   PortColumnId.portKey => null,
   PortColumnId.pairedPort => null,
   PortColumnId.renamedFrom => null,
+  // FILLS DOWN AND CARRIES NO SERIES, like every other non-text column.
+  // A series over a SET has no meaning to define: there is no next set
+  // after {IR emitter}, which is why [PortColumnFill.text] stays null
+  // here rather than getting the joined spelling the cell displays.
+  PortColumnId.acceptedFamilies => _familyList(PortDefField.acceptedFamilies),
   PortColumnId.label => _text(PortDefField.label),
   PortColumnId.designator => _textOrNull(PortDefField.designatorHint),
   PortColumnId.notes => _textOrNull(PortDefField.notes),

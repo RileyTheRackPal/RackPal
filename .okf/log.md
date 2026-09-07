@@ -1,5 +1,50 @@
 # Update Log
 
+## 2026-09-07
+
+* **Ruling**: [DR-134](/decisions/dr-134-carried-protocols-was-a-second-copy.md),
+  a §8.3 amendment. `PortDef.carriedProtocols` is **deleted**, and the
+  multi-select cell DR-081 ordered is **built** for `acceptedFamilies`,
+  the field that survives to receive it.
+* **Note**: **THE CASE I PUT TO THE USER WAS WRONG IN ITS FACTS.** I
+  relayed `#846`'s *"searching the shipped catalogue by protocol matches
+  nothing"* with *"two dead reads and a field"*. Protocol search WORKS,
+  `dante` finds the seeded DSP by family and by tag, and a test has said
+  so since M4. Neither read was dead either. **A finding about a FIELD is
+  not a finding about the FEATURE it is part of**, and the second claim
+  needed its own measurement, which was sitting in a test file.
+* **Note**: **THE REAL CASE WAS BETTER AND CAME FROM THE SPEC.** docs/02
+  §6.2's worked example gives one HDMI port a `returnChannel` of eARC AND
+  an `audio.earc` in `carriedProtocols`. One fact, twice, and only the
+  copy in `returnChannel` is read by anything. **A worked example carrying
+  a fact twice is the cheapest evidence that one of the two fields is
+  redundant**, and it sat in the spec unread.
+* **Note**: **`==` ON A `List` IS IDENTITY, AND FOUR PLACES ASSUMED
+  OTHERWISE.** The fill path would have filed a command per row that
+  changed nothing; the batch dock would have read `Mixed (8 values)` on
+  eight ports that agree completely; the grid cell had the same check
+  inline; and `port_commands_test`'s alias census **caught itself on the
+  first run** because the getter hands back a fresh `List.unmodifiable`.
+  That last one is the instructive one: loosening the test was right only
+  because the getter was right, since a stable reference would mean
+  handing out the live list.
+* **Note**: **DR-081's WORDING WOULD HAVE SHIPPED THE OPPOSITE COPY.**
+  §11.80.5 calls an empty `acceptedFamilies` *"this port constrains
+  nothing"*. `acceptsFamily` is `signalFamily == f || contains(f)`, so the
+  list only WIDENS and empty is the NARROWEST state. The cell reads `Own
+  family only`. **A ruling's DISTINCTION can survive while its WORDING
+  does not**, and separating the two is the edit rather than choosing one.
+* **Note**: **A SEAM BUILT ON ARGUMENT PAID OFF IN NINE DAYS.**
+  `migrateRmdxToCurrent` shipped EMPTY at M4-M, justified as buying "the
+  SEAM plus the refusal, so that the first person to bump
+  `kRmdxSchemaVersion` adds a row to a table that already exists". That
+  person arrived on 2026-09-07 and it was a row.
+* **Chapter**: `#690` closed on evidence it already had. It was filed
+  2026-08-13 as a hierarchy repair over `#587`, which closed the same
+  day, so **no future commit would ever cite it** and the board offers no
+  other way for a Story to become `Done`. It was not forgotten, it was
+  **unreachable**, which is this milestone's own theme one level up.
+
 ## 2026-09-06
 
 * **Ruling**: [DR-133](/decisions/dr-133-the-validation-drawer-was-in-the-layout-table.md).

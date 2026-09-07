@@ -649,7 +649,6 @@ final class PortDef {
     this.position,
     List<PortKey>? renamedFrom,
     this.designatorHint,
-    List<SignalFamilyId>? carriedProtocols,
     List<SignalFamilyId>? acceptedFamilies,
     this.direction = PortDirection.bidirectional,
     this.returnChannel,
@@ -679,7 +678,6 @@ final class PortDef {
     this.power,
     this.notes,
   }) : renamedFrom = renamedFrom ?? [],
-       carriedProtocols = carriedProtocols ?? [],
        acceptedFamilies = acceptedFamilies ?? [];
 
   final PortKey key;
@@ -692,10 +690,21 @@ final class PortDef {
   String label;
   String? designatorHint;
 
-  /// Three orthogonal axes — never one enum.
+  /// Orthogonal axes — never one enum.
+  ///
+  /// **THERE WERE THREE UNTIL DR-134, AND THE THIRD WAS A SECOND COPY.**
+  /// `carriedProtocols` sat here and docs/01 called it the third axis. It
+  /// modelled two things: eARC over HDMI, which [returnChannel] carries
+  /// with a cell, seed data, a spring-back rule and a drawing, and Dante
+  /// over RJ45, which is a signal family on a port plus a tag on the
+  /// device. Nothing wrote it, so all 727 seeded ports held `[]` and each
+  /// starter carried a copy per port that said nothing (§11.133.2).
   ConnectorTypeId connector;
   SignalFamilyId signalFamily;
-  List<SignalFamilyId> carriedProtocols;
+
+  /// What this port will ACCEPT, where that is narrower than [signalFamily]
+  /// implies. Empty is the statement *this port constrains nothing*, and is
+  /// never an unknown (DR-081 §11.80.5).
   List<SignalFamilyId> acceptedFamilies;
 
   PortDirection direction;

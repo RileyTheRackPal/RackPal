@@ -89,6 +89,16 @@ void _writeProbe(PortField<Object?> subject, PortDef port) {
       subject.set(port, _next(PortPowerRole.values, subject.get(port)));
     case PortField<ReturnChannel?>():
       subject.set(port, _next(ReturnChannel.values, subject.get(port)));
+    // THE ONE LIST FIELD (DR-134 §11.133). Toggles between empty and a
+    // single family so the probe moves it in both directions, on the
+    // `PanelPosition?` case's reasoning below.
+    case PortField<List<SignalFamilyId>>():
+      subject.set(
+        port,
+        subject.get(port).isEmpty
+            ? const [SignalFamilyId('ctl.ir_emitter')]
+            : const <SignalFamilyId>[],
+      );
     case PortField<PanelPosition?>():
       // `#227`'s nudge override. Toggles between null and a position, so
       // the probe exercises the aliasing check in both directions: a
@@ -119,6 +129,28 @@ List<Object?> _readings(PortDef port) => [
   for (final field in PortDefField.all) field.get(port),
 ];
 
+/// Whether two readings of the same field are the same value.
+///
+/// **`==` FOR EVERY FIELD BUT THE LIST ONE, AND THAT EXCEPTION IS THE
+/// GETTER BEING CORRECT RATHER THAN THE TEST BEING LENIENT** (DR-134
+/// §11.133). `PortDefField.acceptedFamilies` hands back
+/// `List.unmodifiable`, a FRESH object per call, so that no caller can
+/// edit a port through a read. `==` on two such lists is identity, so
+/// every probe in the census below reported `acceptedFamilies` as having
+/// moved, and this test caught it on the first run.
+///
+/// Loosening the comparison here would be the wrong fix if the getter
+/// could return a stable reference, and it cannot: the alternative is
+/// handing out the live list, which is the aliasing this whole file
+/// exists to detect, one level down.
+bool _sameReading(Object? a, Object? b) {
+  if (a is List && b is List) {
+    return a.length == b.length &&
+        [for (var i = 0; i < a.length; i++) a[i] == b[i]].every((x) => x);
+  }
+  return a == b;
+}
+
 void main() {
   group('the core-column field table', () {
     test('no two entries share a key', () {
@@ -136,7 +168,7 @@ void main() {
 
         final moved = [
           for (var j = 0; j < before.length; j++)
-            if (before[j] != after[j]) PortDefField.all[j].key,
+            if (!_sameReading(before[j], after[j])) PortDefField.all[j].key,
         ];
         expect(
           moved,
@@ -164,7 +196,7 @@ void main() {
       final after = _readings(port);
       final moved = [
         for (var j = 0; j < before.length; j++)
-          if (before[j] != after[j]) PortDefField.all[j].key,
+          if (!_sameReading(before[j], after[j])) PortDefField.all[j].key,
       ];
       expect(moved, ['notes'], reason: 'the probe lands on the WRONG name');
     });

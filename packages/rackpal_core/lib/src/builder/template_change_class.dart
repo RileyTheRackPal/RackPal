@@ -287,7 +287,6 @@ const Map<String, _Rule> _portRules = {
   // until M5's compat matrix exists. See the header.
   'connector': _breaking,
   'signalFamily': _breaking,
-  'carriedProtocols': _breakingUnlessGrown,
   'acceptedFamilies': _breakingUnlessGrown,
 
   'direction': _breaking,

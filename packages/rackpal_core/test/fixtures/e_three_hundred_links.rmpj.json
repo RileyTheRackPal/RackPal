@@ -19402,7 +19402,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19420,7 +19419,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19438,7 +19436,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19458,7 +19455,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19480,7 +19476,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -19497,7 +19492,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19515,7 +19509,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19533,7 +19526,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19553,7 +19545,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19575,7 +19566,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -19592,7 +19582,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19610,7 +19599,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19628,7 +19616,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19648,7 +19635,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19670,7 +19656,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -19687,7 +19672,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19705,7 +19689,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19723,7 +19706,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19743,7 +19725,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19765,7 +19746,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -19782,7 +19762,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19800,7 +19779,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19818,7 +19796,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19838,7 +19815,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19860,7 +19836,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -19877,7 +19852,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19895,7 +19869,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19913,7 +19886,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19933,7 +19905,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -19955,7 +19926,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -19972,7 +19942,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -19990,7 +19959,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20008,7 +19976,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -20028,7 +19995,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -20050,7 +20016,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -20067,7 +20032,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20085,7 +20049,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "srcIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20103,7 +20066,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -20123,7 +20085,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "zoneOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "source",
               "face": "rear",
@@ -20145,7 +20106,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -20162,7 +20122,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "subOut",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "source",
               "face": "rear",
@@ -20178,7 +20137,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "subOut",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "source",
               "face": "rear",
@@ -20194,7 +20152,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -20210,7 +20167,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.de9",
               "direction": "bidirectional",
               "face": "rear",
@@ -20226,7 +20182,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -20243,7 +20198,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -20260,7 +20214,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_20p",
               "direction": "sink",
               "face": "rear",
@@ -20469,7 +20422,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -20485,7 +20437,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -20501,7 +20452,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -20517,7 +20467,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -20533,7 +20482,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -20549,7 +20497,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -20565,7 +20512,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -20581,7 +20527,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "front",
@@ -20597,7 +20542,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -20614,7 +20558,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -20630,7 +20573,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -20646,7 +20588,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.jis_f05",
               "direction": "sink",
               "face": "rear",
@@ -20662,7 +20603,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.jis_f05",
               "direction": "sink",
               "face": "rear",
@@ -20678,7 +20618,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.rca75",
               "direction": "sink",
               "face": "rear",
@@ -20695,7 +20634,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.rca75",
               "direction": "sink",
               "face": "rear",
@@ -20712,7 +20650,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20730,7 +20667,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20748,7 +20684,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20766,7 +20701,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20784,7 +20718,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20802,7 +20735,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20820,7 +20752,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20838,7 +20769,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20856,7 +20786,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20874,7 +20803,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "sink",
               "face": "rear",
@@ -20892,7 +20820,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "analogIn",
-              "carriedProtocols": [],
               "connector": "conn.ground_lug",
               "direction": "passive",
               "face": "rear",
@@ -20908,7 +20835,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -20928,7 +20854,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -20948,7 +20873,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -20968,7 +20892,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -20988,7 +20911,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21008,7 +20930,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21028,7 +20949,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21048,7 +20968,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21068,7 +20987,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21088,7 +21006,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21108,7 +21025,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21128,7 +21044,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21148,7 +21063,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21168,7 +21082,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.binding_post",
               "direction": "source",
               "face": "rear",
@@ -21188,7 +21101,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "source",
               "face": "rear",
@@ -21204,7 +21116,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "spkOut",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "source",
               "face": "rear",
@@ -21220,7 +21131,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "tuner",
-              "carriedProtocols": [],
               "connector": "conn.f_type",
               "direction": "sink",
               "face": "rear",
@@ -21237,7 +21147,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -21255,7 +21164,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -21272,7 +21180,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21289,7 +21196,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21306,7 +21212,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.de9",
               "direction": "bidirectional",
               "face": "rear",
@@ -21322,7 +21227,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.usb_c",
               "direction": "bidirectional",
               "face": "front",
@@ -21338,7 +21242,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.6_35mm_trs",
               "direction": "source",
               "face": "front",
@@ -21354,7 +21257,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15p",
               "direction": "sink",
               "face": "rear",
@@ -21483,7 +21385,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "network",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -21499,7 +21400,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "network",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -21515,7 +21415,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "serial",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "bidirectional",
               "face": "rear",
@@ -21531,7 +21430,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "serial",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "bidirectional",
               "face": "rear",
@@ -21547,7 +21445,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "serial",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "bidirectional",
               "face": "rear",
@@ -21563,7 +21460,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "serial",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "bidirectional",
               "face": "rear",
@@ -21579,7 +21475,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "serial",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "bidirectional",
               "face": "rear",
@@ -21595,7 +21490,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "serial",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "bidirectional",
               "face": "rear",
@@ -21611,7 +21505,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "serial",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "bidirectional",
               "face": "rear",
@@ -21627,7 +21520,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "serial",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "bidirectional",
               "face": "rear",
@@ -21643,7 +21535,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "irOut",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21660,7 +21551,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "irOut",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21677,7 +21567,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "irOut",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21694,7 +21583,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "irOut",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21711,7 +21599,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "irOut",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21728,7 +21615,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "irOut",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21745,7 +21631,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "irOut",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21762,7 +21647,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "irOut",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -21779,7 +21663,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "sink",
               "face": "rear",
@@ -21795,7 +21678,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "sink",
               "face": "rear",
@@ -21811,7 +21693,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "sink",
               "face": "rear",
@@ -21827,7 +21708,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "sink",
               "face": "rear",
@@ -21843,7 +21723,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "sink",
               "face": "rear",
@@ -21859,7 +21738,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "sink",
               "face": "rear",
@@ -21875,7 +21753,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "sink",
               "face": "rear",
@@ -21891,7 +21768,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "digitalIn",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "sink",
               "face": "rear",
@@ -21907,7 +21783,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "relays",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -21923,7 +21798,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "relays",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -21939,7 +21813,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "relays",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -21955,7 +21828,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "relays",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -21971,7 +21843,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "bus",
-              "carriedProtocols": [],
               "connector": "conn.phoenix_4",
               "direction": "busNode",
               "face": "rear",
@@ -21987,7 +21858,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "bus",
-              "carriedProtocols": [],
               "connector": "conn.usb_c",
               "direction": "bidirectional",
               "face": "front",
@@ -22003,7 +21873,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.iec_c14",
               "direction": "sink",
               "face": "rear",
@@ -22105,7 +21974,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "video",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -22122,7 +21990,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "video",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -22138,7 +22005,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "video",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -22154,7 +22020,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "video",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -22170,7 +22035,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "audio",
-              "carriedProtocols": [],
               "connector": "conn.jis_f05",
               "direction": "source",
               "face": "rear",
@@ -22186,7 +22050,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -22202,7 +22065,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.de9",
               "direction": "bidirectional",
               "face": "rear",
@@ -22220,7 +22082,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -22237,7 +22098,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15p",
               "direction": "sink",
               "face": "rear",
@@ -22329,7 +22189,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "terminals",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -22349,7 +22208,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "terminals",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -22369,7 +22227,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "terminals",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -22389,7 +22246,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "terminals",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -22469,7 +22325,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "terminals",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -22489,7 +22344,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "terminals",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -22578,7 +22432,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "network",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -22600,7 +22453,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "bidirectional",
               "face": "rear",
@@ -22616,7 +22468,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.barrel_dc",
               "direction": "sink",
               "face": "rear",
@@ -22702,7 +22553,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "network",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -22724,7 +22574,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.barrel_dc",
               "direction": "sink",
               "face": "rear",
@@ -22817,7 +22666,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "network",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -22839,7 +22687,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "bus",
-              "carriedProtocols": [],
               "connector": "conn.phoenix_4",
               "direction": "busNode",
               "face": "rear",
@@ -22855,7 +22702,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.barrel_dc",
               "direction": "sink",
               "face": "rear",
@@ -22933,7 +22779,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "bus",
-              "carriedProtocols": [],
               "connector": "conn.phoenix_4",
               "direction": "busNode",
               "face": "rear",
@@ -23027,7 +22872,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "input",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -23046,7 +22890,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "input",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -23065,7 +22908,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "output",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -23084,7 +22926,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "output",
-              "carriedProtocols": [],
               "connector": "conn.screw_terminal",
               "direction": "passive",
               "face": "rear",
@@ -23182,7 +23023,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23203,7 +23043,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23224,7 +23063,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23245,7 +23083,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23266,7 +23103,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23287,7 +23123,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23308,7 +23143,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23329,7 +23163,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23350,7 +23183,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23371,7 +23203,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23392,7 +23223,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23413,7 +23243,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23434,7 +23263,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23455,7 +23283,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23476,7 +23303,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23497,7 +23323,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23518,7 +23343,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23539,7 +23363,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23560,7 +23383,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23581,7 +23403,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23602,7 +23423,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23623,7 +23443,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23644,7 +23463,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23665,7 +23483,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23686,7 +23503,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23707,7 +23523,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23728,7 +23543,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23749,7 +23563,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23770,7 +23583,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23791,7 +23603,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23812,7 +23623,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23833,7 +23643,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23854,7 +23663,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23875,7 +23683,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23896,7 +23703,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23917,7 +23723,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23938,7 +23743,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23959,7 +23763,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -23980,7 +23783,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24001,7 +23803,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24022,7 +23823,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24043,7 +23843,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24064,7 +23863,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24085,7 +23883,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24106,7 +23903,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24127,7 +23923,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24148,7 +23943,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24169,7 +23963,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "access",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24190,7 +23983,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "uplinks",
-              "carriedProtocols": [],
               "connector": "conn.sfp_cage",
               "direction": "bidirectional",
               "face": "rear",
@@ -24208,7 +24000,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "uplinks",
-              "carriedProtocols": [],
               "connector": "conn.sfp_cage",
               "direction": "bidirectional",
               "face": "rear",
@@ -24226,7 +24017,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "uplinks",
-              "carriedProtocols": [],
               "connector": "conn.sfp_cage",
               "direction": "bidirectional",
               "face": "rear",
@@ -24244,7 +24034,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "uplinks",
-              "carriedProtocols": [],
               "connector": "conn.sfp_cage",
               "direction": "bidirectional",
               "face": "rear",
@@ -24262,7 +24051,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "mgmt",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -24278,7 +24066,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "mgmt",
-              "carriedProtocols": [],
               "connector": "conn.de9",
               "direction": "bidirectional",
               "face": "front",
@@ -24294,7 +24081,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.iec_c14",
               "direction": "sink",
               "face": "rear",
@@ -24313,7 +24099,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.iec_c14",
               "direction": "sink",
               "face": "rear",
@@ -24523,7 +24308,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24539,7 +24323,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24555,7 +24338,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24571,7 +24353,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24587,7 +24368,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24603,7 +24383,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24619,7 +24398,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24635,7 +24413,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24651,7 +24428,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24667,7 +24443,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24683,7 +24458,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24699,7 +24473,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24715,7 +24488,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24731,7 +24503,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24747,7 +24518,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24763,7 +24533,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24779,7 +24548,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24795,7 +24563,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24811,7 +24578,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24827,7 +24593,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24843,7 +24608,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24859,7 +24623,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24875,7 +24638,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24891,7 +24653,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24907,7 +24668,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24923,7 +24683,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24939,7 +24698,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24955,7 +24713,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -24971,7 +24728,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -24987,7 +24743,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25003,7 +24758,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -25019,7 +24773,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25035,7 +24788,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -25051,7 +24803,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25067,7 +24818,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -25083,7 +24833,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25099,7 +24848,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -25115,7 +24863,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25131,7 +24878,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -25147,7 +24893,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25163,7 +24908,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -25179,7 +24923,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25195,7 +24938,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -25211,7 +24953,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25227,7 +24968,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -25243,7 +24983,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25259,7 +24998,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "front",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "passive",
               "face": "front",
@@ -25275,7 +25013,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rear",
-              "carriedProtocols": [],
               "connector": "conn.punchdown_110",
               "direction": "passive",
               "face": "rear",
@@ -25361,7 +25098,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "inlet",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_20p",
               "direction": "sink",
               "face": "rear",
@@ -25380,7 +25116,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25400,7 +25135,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25420,7 +25154,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25440,7 +25173,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25460,7 +25192,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25480,7 +25211,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25500,7 +25230,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25520,7 +25249,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25540,7 +25268,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25560,7 +25287,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25580,7 +25306,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25600,7 +25325,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25620,7 +25344,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25640,7 +25363,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25660,7 +25382,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25680,7 +25401,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "seqOutlets",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15r",
               "direction": "source",
               "face": "rear",
@@ -25700,7 +25420,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_2",
               "direction": "sink",
               "face": "rear",
@@ -25716,7 +25435,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -25733,7 +25451,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "source",
               "face": "rear",
@@ -25750,7 +25467,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -25766,7 +25482,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.de9",
               "direction": "bidirectional",
               "face": "rear",
@@ -25882,7 +25597,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rf",
-              "carriedProtocols": [],
               "connector": "conn.f_type",
               "direction": "sink",
               "face": "rear",
@@ -25899,7 +25613,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "rf",
-              "carriedProtocols": [],
               "connector": "conn.f_type",
               "direction": "passive",
               "face": "rear",
@@ -25916,7 +25629,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "video",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -25932,7 +25644,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "audio",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "source",
               "face": "rear",
@@ -25950,7 +25661,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "audio",
-              "carriedProtocols": [],
               "connector": "conn.rca",
               "direction": "source",
               "face": "rear",
@@ -25968,7 +25678,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "audio",
-              "carriedProtocols": [],
               "connector": "conn.rca75",
               "direction": "source",
               "face": "rear",
@@ -25985,7 +25694,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "audio",
-              "carriedProtocols": [],
               "connector": "conn.jis_f05",
               "direction": "source",
               "face": "rear",
@@ -26001,7 +25709,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -26017,7 +25724,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.usb_c",
               "direction": "bidirectional",
               "face": "rear",
@@ -26035,7 +25741,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -26052,7 +25757,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.nema_5_15p",
               "direction": "sink",
               "face": "rear",
@@ -26165,7 +25869,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26181,7 +25884,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26197,7 +25899,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26213,7 +25914,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26229,7 +25929,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26245,7 +25944,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26261,7 +25959,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26277,7 +25974,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26293,7 +25989,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26309,7 +26004,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26325,7 +26019,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26341,7 +26034,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26357,7 +26049,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26373,7 +26064,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26389,7 +26079,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26405,7 +26094,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiIn",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "sink",
               "face": "rear",
@@ -26421,7 +26109,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26437,7 +26124,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26453,7 +26139,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26469,7 +26154,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26485,7 +26169,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26501,7 +26184,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26517,7 +26199,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26533,7 +26214,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26549,7 +26229,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26565,7 +26244,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26581,7 +26259,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26597,7 +26274,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26613,7 +26289,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26629,7 +26304,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26645,7 +26319,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26661,7 +26334,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "hdmiOut",
-              "carriedProtocols": [],
               "connector": "conn.hdmi_a",
               "direction": "source",
               "face": "rear",
@@ -26678,7 +26350,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26695,7 +26366,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26712,7 +26382,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26729,7 +26398,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26746,7 +26414,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26763,7 +26430,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26780,7 +26446,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26797,7 +26462,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26814,7 +26478,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26831,7 +26494,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26848,7 +26510,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26865,7 +26526,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26882,7 +26542,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26899,7 +26558,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26916,7 +26574,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26933,7 +26590,6 @@
               "acceptedFamilies": [],
               "balanced": true,
               "bankKey": "audOut",
-              "carriedProtocols": [],
               "connector": "conn.euroblock_3",
               "direction": "source",
               "face": "rear",
@@ -26949,7 +26605,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.rj45",
               "direction": "bidirectional",
               "face": "rear",
@@ -26965,7 +26620,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.de9",
               "direction": "bidirectional",
               "face": "rear",
@@ -26983,7 +26637,6 @@
                 "ctl.ir_emitter"
               ],
               "bankKey": "control",
-              "carriedProtocols": [],
               "connector": "conn.3_5mm_ts",
               "direction": "sink",
               "face": "rear",
@@ -27000,7 +26653,6 @@
             {
               "acceptedFamilies": [],
               "bankKey": "power",
-              "carriedProtocols": [],
               "connector": "conn.iec_c14",
               "direction": "sink",
               "face": "rear",
@@ -27142,7 +26794,7 @@
   "id": "0190f000-0000-7000-8000-000000000000",
   "minReaderVersion": 3,
   "modifiedAt": "2026-07-28T09:00:00.000Z",
-  "schemaVersion": 3,
+  "schemaVersion": 4,
   "sequence": 0,
   "unknown": {}
 }

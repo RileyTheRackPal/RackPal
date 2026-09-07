@@ -87,13 +87,34 @@ BatchValue summariseBatch({
     final port = byKey[key];
     if (port == null) continue;
     final value = target.read(port);
-    if (!seen.contains(value)) seen.add(value);
+    if (!seen.any((s) => _sameBatchValue(column, s, value))) seen.add(value);
   }
 
   if (seen.isEmpty) return const BatchUnknown();
   if (seen.length > 1) return BatchMixed(seen.length);
   final only = seen.first;
   return only == null ? const BatchUnknown() : BatchAgreed(only);
+}
+
+/// Whether two readings of [column] are the same value.
+///
+/// **`==` FOR EVERY COLUMN BUT ONE, AND THE EXCEPTION IS NOT COSMETIC.**
+/// `acceptedFamilies` holds a `List`, where `==` is IDENTITY: two ports
+/// that both accept nothing hold two different empty lists, so a plain
+/// `contains` would find every row distinct and report `Mixed (8 values)`
+/// on a selection that agrees completely. The dock would then offer no
+/// ticks on eight identical ports (DR-134 §11.133).
+///
+/// `acceptedFamiliesEqual` is core's one rule for this, shared with the
+/// fill path and the grid cell.
+bool _sameBatchValue(PortColumnId column, Object? a, Object? b) {
+  if (column == PortColumnId.acceptedFamilies && a is List && b is List) {
+    return acceptedFamiliesEqual(
+      a.cast<SignalFamilyId>(),
+      b.cast<SignalFamilyId>(),
+    );
+  }
+  return a == b;
 }
 
 /// Whether [column] may be written across a whole selection at once.
@@ -196,6 +217,13 @@ String portValueLabel(
     PortColumnId.gender => portGenderLabel(value as Gender),
     PortColumnId.returnChannel => portReturnChannelLabel(
       value as ReturnChannel,
+    ),
+    // THE ONLY LIST-VALUED COLUMN (DR-134 §11.133). It must be named
+    // here rather than falling to the `toString` arm below, which would
+    // print `[SignalFamilyId(ctl.ir_emitter)]` on a batch dock.
+    PortColumnId.acceptedFamilies => acceptedFamiliesCellText(
+      registries,
+      (value as List).cast<SignalFamilyId>(),
     ),
     PortColumnId.balanced ||
     PortColumnId.phantomPower ||

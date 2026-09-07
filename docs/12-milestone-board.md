@@ -6425,6 +6425,94 @@ is how the next person inherits a number they cannot re-derive.**
 **5.4.17.4 SO M5's OPEN COUNT WAS WRONG, NOT ITS WORK.** The epic held two open Stories and one of
 them was M3's. **M5's only genuinely open item is `#846`**, under `#842`.
 
+#### 5.4.18 M5-N, the field that was a second copy, and the cell a closed item never built · CLOSED · `#846`
+
+**DR-134 §11.133**, a §8.3 amendment. M5's last genuinely open item, and the one where **the case put
+to the user was wrong in its facts**.
+
+**5.4.18.1 THE RECOMMENDATION WAS RELAYED BEFORE THE MEASUREMENT WAS TAKEN.** `#846` reads
+*"searching the shipped catalogue by protocol matches nothing, and always has"*, and it was passed on
+with *"deleting two dead reads and a field is cheaper and more honest than filling it"*. Both halves
+are false, and both were checkable in one command:
+
+| The claim | Measured |
+|---|---|
+| protocol search matches nothing | it matches. `dante` finds the seeded DSP twice, by the `audio.dante` family on its `dante.pri` / `dante.sec` ports and by the device's own `dante` tag. **`template_search_test.dart` has asserted it since M4** |
+| two dead reads | neither is dead. `templateHasFamilyPrefix` tests `signalFamily` first; the search tokeniser already adds `connector.v` and `signalFamily.v` per port. Both are **widenings of paths that work** |
+
+**A FINDING ABOUT A FIELD IS NOT A FINDING ABOUT THE FEATURE IT IS PART OF**, and that is the
+reusable half. `#841`'s census asked the right question, *what reads this outside the builder*, and
+answered it right, *two things do*. Reading that as *the feature those two implement is broken* is a
+different claim needing a different measurement, and the measurement was sitting in a test file.
+
+**5.4.18.2 THE REAL CASE IS BETTER AND CAME FROM THE SPEC'S OWN WORKED EXAMPLE.** docs/02 §6.2 uses
+`carriedProtocols` for exactly two things, and the model already records both with a producer **and**
+a consumer:
+
+- **eARC over HDMI.** `PortDef.returnChannel` has a builder column, seed data on two catalogue
+  entries, a spring-back rule and a schematic consumer. **§6.2's example writes the eARC fact twice
+  on one port**, once in each field, and only the copy that is not `carriedProtocols` is read.
+- **Dante over RJ45.** A signal family on a dedicated port, plus a device tag.
+
+So the field was not an unfinished feature. **It was a weaker spelling of two facts already recorded
+properly**, and it cost 737 empty arrays per starter, which is `position`'s defect one field over in
+the same encoder (DR-105 §11.104.3).
+
+**5.4.18.3 THE USER CHOSE TO BUILD DR-081's CELL RATHER THAN NARROW IT**, which is what makes this an
+amendment worth its own commit. DR-081 ordered one multi-select over both family lists and said
+*"THE CELL SHAPE IS THE DELIVERABLE, NOT THE TWO COLUMNS"*. **`#224`, the item DR-081 landed that
+scope on, is `Done` and the cell was never built.** The surviving field is the one that needed it:
+`acceptedFamilies` gained eighteen seeded ports at DR-126 and **three connect-time readers**, so a
+value the DRC consults had no gesture that could correct it. That is this milestone's own defect,
+found ten times, and shipping it knowingly on the day of the tenth would be worse than the nine that
+were accidents.
+
+**5.4.18.4 WHAT MADE THE CELL SHAPE A DELIVERABLE IS ONE FACT ABOUT DART.** `==` on a `List` is
+IDENTITY. Every scalar cell in the grid compares readings with it, and **four places were wrong the
+moment a column held a set**, each failing differently:
+
+| Where | What it would have done |
+|---|---|
+| `port_fill.dart`'s `_set` | never skip, so a fill-down files a command per row that changes nothing: an undo entry that appears to do nothing when reverted, which is M4-D's shipped defect |
+| `summariseBatch`'s `contains` | eight ports that all accept nothing hold eight different empty lists, so the dock reads **`Mixed (8 values)`** on a selection that agrees completely, with nothing ticked |
+| `port_grid.dart`'s cell setter | the same check, inline |
+| `port_commands_test.dart`'s alias census | **caught itself on the first run**: the getter hands back `List.unmodifiable`, a fresh object per call, so every probe reported `acceptedFamilies` as having moved |
+
+**THE LAST ONE IS THE INSTRUCTIVE ONE**, because loosening the test was the right fix only because
+the getter was right. A stable reference would have meant handing out the live list, which is the
+aliasing that file exists to detect, one level down. `acceptedFamiliesEqual` is core's one rule and
+all four use it.
+
+**5.4.18.5 THE COPY SAYS `Own family only`, AND DR-081's OWN WORDING WOULD HAVE SAID THE OPPOSITE.**
+§11.80.5 spells an empty list *"this port constrains nothing"*. `ConnectTarget.acceptsFamily` is
+`signalFamily == f || acceptedFamilies.contains(f)`: **the list only ever WIDENS**, so an empty one
+is the NARROWEST state rather than the loosest, and a cell printing *no constraint* would tell an
+installer the reverse of what the port does. **The distinction §11.80.5 was drawing survives intact**
+(an empty list is a statement, not an unknown, so it is not the dash either); only its wording does
+not.
+
+**5.4.18.6 TWO MORE DEFECTS THE TESTS FOUND IN CODE WRITTEN AN HOUR EARLIER.** The menu's
+`SingleChildScrollView` adopted the `PrimaryScrollController` the grid's own list already held, and
+the framework throws the moment the menu opens over a scrollable grid. And the widget test's first
+finder was `find.text` on a family label, **which is on screen twice** once the port accepts that
+family: the cell summary and the menu row. The rows carry keys for exactly that, and this is
+`a finder that cannot say which one` catching itself with the tool it recommends.
+
+**5.4.18.7 AND THE `.rmdx` CHAIN GOT ITS FIRST STEP, NINE DAYS AFTER SHIPPING EMPTY.** Deleting the
+field moves the bytes of a device-exchange file too, and its `contentHash` covers them, so every
+`.rmdx` written before this would have imported reporting a mismatch. `migrateRmdxToCurrent` shipped
+with no steps at M4-M and argued for itself in advance: it bought *"the SEAM plus the refusal, so
+that the first person to bump `kRmdxSchemaVersion` adds a row to a table that already exists instead
+of discovering that `.rmdx` never had a chain and inventing one under deadline."* **That person
+arrived and it was a row.** The migration recomputes the hash, which is a real cost stated in
+§11.133.7: a migrated file verifies against itself and nothing more, taken because a warning that
+fires on every older file is one a person learns to click past.
+
+**5.4.18.8 THE VERSION DOES NOT MOVE, AND §5.4.17 PREDICTED THAT IN WRITING.** Closing `#846` takes
+the register from 60 to 61. `v0.5.61` has shipped since `#840` and was one ahead from the moment
+`#690` was re-parented, so **the two meet here and no bump is owed**. Derived the two ways §5.4.10
+requires: the board query for Done Chapters under epic 23 returns 61, and 60 plus this chapter is 61.
+
 
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 

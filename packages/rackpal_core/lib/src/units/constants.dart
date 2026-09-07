@@ -29,7 +29,16 @@ const kMaxRackHeightU = 60; // CR-038
 /// zero positions each existing file carries; without it every one of
 /// them would read as a hand-placed port and the auto-layout would never
 /// run.
-const kSchemaVersion = 3;
+/// v4 DELETES `PortDef.carriedProtocols` (DR-134 §11.133.5). The trigger
+/// is the one this file's own history states twice: the advance is owed
+/// because every file on disk stops re-encoding byte for byte, losing one
+/// key per port. It is NOT a breaking write in `migrateV1ToV2`'s sense,
+/// which is why [kMinReaderVersion] stays behind at 3 for the first time:
+/// a v3 reader meets the absent key with `?? const <Object?>[]` and gets
+/// `[]`, and `[]` is the only value the field has ever held in any file,
+/// so there is nothing an older reader can lose by not finding it.
+/// `migrateV3ToV4` strips the key and re-stamps.
+const kSchemaVersion = 4;
 
 /// The lowest [kSchemaVersion] that can safely READ a document this build
 /// writes — stamped into every file as `minReaderVersion` and checked by
@@ -42,4 +51,11 @@ const kSchemaVersion = 3;
 /// outlet keys above, which are exactly such a change — an older reader
 /// does not degrade on them, it throws. Refusing the file with
 /// `NewerSchemaError` is the honest outcome and is what this constant buys.
+///
+/// **IT DID NOT MOVE TO 4, AND THAT IS THE FIRST TIME THE TWO HAVE
+/// DIVERGED.** DR-134 §11.133.5: deleting `carriedProtocols` changes what
+/// every file contains, so [kSchemaVersion] is owed an advance, but a v3
+/// reader tolerates the absent key and reads `[]`, which is what the field
+/// held in every file ever written. Raising this would refuse a file that
+/// opens perfectly, which is the opposite of what the constant is for.
 const kMinReaderVersion = 3;

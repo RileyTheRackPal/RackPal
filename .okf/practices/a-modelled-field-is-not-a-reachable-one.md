@@ -266,6 +266,16 @@ builder, and two do: `topology`, covered deliberately because the seed declares
 so **searching the catalogue by protocol matches nothing and always has**
 (`#846`).
 
+**THAT SECOND SENTENCE IS TRUE AND SAYS LESS THAN IT SOUNDS, WHICH IS THE
+CORRECTION WORTH KEEPING.** Searching by PROTOCOL works: `dante` finds the
+seeded DSP through the port's own `signalFamily` and the device's tags, and a
+test has asserted it since M4. What matched nothing was the extra tokens this
+one field contributed. **A finding about a FIELD is not a finding about the
+FEATURE it feeds**, and the second claim needs its own measurement rather than
+inheriting the first one's. DR-134 deleted the field: it was a second copy of two
+facts the model already recorded properly, and its emptiness was never the cost
+it appeared to be.
+
 It found more stale claims than fields: three in `connect_target.dart`, all in
 doc comments that REASON from them, all falsified within two days by DR-124 and
 DR-126. **The lesson is not "sweep harder"**: a claim about what the catalogue

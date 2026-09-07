@@ -23,6 +23,8 @@
 // and its rows still in declared order, which is visible and honest
 // rather than silently renumbered.
 import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
+import 'package:rackpal_core/src/derived/structure_table.dart'
+    show resolveSignalFamilyCell, signalFamilyCellGroups;
 import 'package:rackpal_core/src/idformat/designator_allocator.dart';
 import 'package:rackpal_core/src/idformat/id_format.dart';
 import 'package:rackpal_core/src/model/placement.dart' show Face;
@@ -78,11 +80,22 @@ enum PortColumnId {
   //     through the codec today with no way to author them, which is `a
   //     modelled field is not a reachable one` in its original form.
   //
+  //     THAT PAIR IS NOW ONE FIELD AND THE COUNT IS SEVEN (DR-134).
+  //     `carriedProtocols` was deleted rather than given the cell DR-081
+  //     ordered, because it was a second copy of two facts the model
+  //     already records with producers and consumers (§11.133.2).
+  //     `acceptedFamilies` keeps the cell, and by then it had gained
+  //     three connect-time readers, which is what settled it.
+  //
   // So the packs below carry the intersection plus the six unnamed
   // scalars that clearly belong to a pack §4.5 already draws.
-  // `channelIndex` and the two family lists stay out: the first belongs
-  // with port sets (M4-J2) and the other two need a multi-select the
-  // grid has no cell shape for. docs/06 §4.5's table is owed an edit.
+  // `channelIndex` stays out and belongs with port sets (M4-J2).
+  //
+  //     `acceptedFamilies` NO LONGER STAYS OUT. This comment read `the
+  //     other two need a multi-select the grid has no cell shape for`
+  //     from M4-E until DR-134 built that shape. It is the last entry
+  //     in the Advanced pack below, and it is the grid's only
+  //     list-valued column.
 
   // Electrical.
   impedanceOhms,
@@ -136,6 +149,23 @@ enum PortColumnId {
   conductorCount,
   returnChannel,
   renamedFrom,
+
+  /// The families this port accepts BEYOND ITS OWN (DR-081 §11.80.2,
+  /// built at DR-134 §11.133).
+  ///
+  /// **THE ONLY LIST-VALUED COLUMN, WHICH IS WHY THE CELL SHAPE WAS THE
+  /// DELIVERABLE AND NOT THE COLUMN.** Every other cell in this grid
+  /// holds one value; this one holds a set, so the menu toggles instead
+  /// of committing and closing. DR-081 asked for it once, keyed and
+  /// testable, so the next list-valued field is a reuse rather than a
+  /// copy.
+  ///
+  /// IT WIDENS, IT DOES NOT NARROW, and the cell's copy has to say so:
+  /// `ConnectTarget.acceptsFamily` is `signalFamily == f ||
+  /// acceptedFamilies.contains(f)`, so a port ALWAYS accepts its own
+  /// family and this list adds to that. An empty list therefore reads
+  /// `own family only` and not `no constraint`.
+  acceptedFamilies,
 }
 
 /// The column groups `⚙ Columns` toggles (docs/06 §4.5).
@@ -229,7 +259,8 @@ PortColumnPack? portColumnPack(PortColumnId id) => switch (id) {
   PortColumnId.pinoutVariant ||
   PortColumnId.conductorCount ||
   PortColumnId.returnChannel ||
-  PortColumnId.renamedFrom => PortColumnPack.advanced,
+  PortColumnId.renamedFrom ||
+  PortColumnId.acceptedFamilies => PortColumnPack.advanced,
 };
 
 /// The core columns, always visible, in reading order.
@@ -377,6 +408,9 @@ String portColumnHeader(PortColumnId id) => switch (id) {
   PortColumnId.conductorCount => 'CONDUCTORS',
   PortColumnId.returnChannel => 'RETURN',
   PortColumnId.renamedFrom => 'WAS CALLED',
+  // `p()` already calls this parameter `accepts`, so the header and the
+  // seed builder use one word for one field.
+  PortColumnId.acceptedFamilies => 'ACCEPTS',
 };
 
 /// Points, at the scale `structureColumnWidth` uses, so the two editable
@@ -440,6 +474,12 @@ double portColumnWidth(PortColumnId id) => switch (id) {
   PortColumnId.conductorCount => 92,
   PortColumnId.returnChannel => 88,
   PortColumnId.renamedFrom => 108,
+  // WIDE ENOUGH FOR THE EMPTY STATEMENT, which is the text most rows
+  // will show: `Own family only` is 15 characters where the longest
+  // family label is 45. A cell cannot be sized to a set, so it is sized
+  // to the sentence every unconstrained port prints and lets a long
+  // selection summarise itself.
+  PortColumnId.acceptedFamilies => 160,
 };
 
 /// What a [PortDirection] is called on screen.
@@ -581,6 +621,111 @@ String? portConnectorText(Registries registries, ConnectorTypeId id) {
 String? portFamilyText(Registries registries, SignalFamilyId id) {
   if (id.v.trim().isEmpty) return null;
   return registries.signalFamilies[id]?.displayName ?? id.v;
+}
+
+/// What separates two family labels in an ACCEPTS cell.
+///
+/// **MEASURED, NOT CHOSEN.** A comma is the obvious separator and is
+/// wrong: `AUD·Speaker, constant-voltage 70 / 100 / 25 V` contains one,
+/// and so would any parse of a joined list. A semicolon appears in none
+/// of the 57 seeded family labels, and `port_table_test.dart` asserts
+/// that over the real registries rather than leaving it as a fact this
+/// comment claims.
+const String kAcceptedFamiliesSeparator = '; ';
+
+/// What the ACCEPTS cell prints when the list is empty.
+///
+/// **NOT THE DASH, AND NOT BLANK.** G4 spends `—` on UNKNOWN, and an
+/// empty `acceptedFamilies` is not an unknown: DR-081 §11.80.5 rules that
+/// it is the statement *this port adds nothing*, which is a fact the
+/// author asserted by leaving the menu alone.
+///
+/// **AND IT SAYS `OWN FAMILY ONLY` RATHER THAN `NO CONSTRAINT`**, which
+/// DR-081's prose invites and `ConnectTarget.acceptsFamily` forbids. That
+/// getter is `signalFamily == f || acceptedFamilies.contains(f)`: a port
+/// ALWAYS accepts its own family, and this list only ever WIDENS that. An
+/// empty list is therefore the NARROWEST state, not the loosest, and a
+/// cell reading `no constraint` would tell an installer the opposite of
+/// what the port does.
+const String kAcceptsOwnFamilyOnly = 'Own family only';
+
+/// Whether two ACCEPTS lists say the same thing.
+///
+/// **BY SET, AND THAT IS THE FIELD'S OWN SEMANTICS RATHER THAN A
+/// SHORTCUT.** `ConnectTarget.acceptsFamily` asks `contains`, so order
+/// carries no meaning and two tick orders of the same families are one
+/// fact. Ticking A then B and ticking B then A must not be an edit.
+///
+/// **AND IT EXISTS BECAUSE `==` ON A `List` IS IDENTITY**, which would
+/// make every fill-down and every re-pick a command that changes nothing:
+/// an undo entry that appears to do nothing when reverted, which is the
+/// defect M4-D shipped and had to be told about. Public so the fill path
+/// and the grid cell share one rule instead of writing it twice.
+bool acceptedFamiliesEqual(
+  List<SignalFamilyId> a,
+  List<SignalFamilyId> b,
+) => a.length == b.length && a.toSet().containsAll(b);
+
+/// What the ACCEPTS cell prints for [families].
+///
+/// SORTED, because the same template must draw the same cell every time
+/// (the determinism invariant), and a `List` preserves whatever order the
+/// author happened to tick in.
+///
+/// A family the registries do not hold prints its raw id, which is
+/// [portFamilyText]'s third state and is here for the same reason: a
+/// document naming something the menu cannot offer must stay visible and
+/// fixable rather than disappearing from its own row.
+String acceptedFamiliesCellText(
+  Registries registries,
+  List<SignalFamilyId> families,
+) {
+  if (families.isEmpty) return kAcceptsOwnFamilyOnly;
+  final labels = <String>[];
+  for (final id in families) {
+    labels.add(_acceptedFamilyLabel(registries, id));
+  }
+  labels.sort();
+  return labels.join(kAcceptedFamiliesSeparator);
+}
+
+/// One family's spelling in an ACCEPTS cell, matching the menu's.
+String _acceptedFamilyLabel(Registries registries, SignalFamilyId id) {
+  for (final group in signalFamilyCellGroups(registries)) {
+    for (final option in group.options) {
+      if (option.id == id) return option.label;
+    }
+  }
+  return id.v;
+}
+
+/// The families an ACCEPTS cell's text names, or null when one of them
+/// resolves to nothing.
+///
+/// **ALL OR NOTHING, ON [resolveSignalFamilyCell]'s PRECEDENT.** That
+/// function refuses rather than inventing a family, because families are
+/// not user-mintable from a typed token (DR-025 §11.24.3, DR-122
+/// §11.121.5). A list that dropped its unresolvable members would do
+/// quietly what a single cell refuses to do at all, and the author would
+/// see a shorter list rather than an error.
+///
+/// The empty spelling round-trips: [kAcceptsOwnFamilyOnly] reads back as
+/// an empty list, so what the cell shows is what a paste can say.
+List<SignalFamilyId>? resolveAcceptedFamiliesCell(
+  Registries registries,
+  String cell,
+) {
+  final trimmed = cell.trim();
+  if (trimmed.isEmpty || trimmed == kAcceptsOwnFamilyOnly) {
+    return const <SignalFamilyId>[];
+  }
+  final out = <SignalFamilyId>[];
+  for (final part in trimmed.split(';')) {
+    final id = resolveSignalFamilyCell(registries, part);
+    if (id == null) return null;
+    if (!out.contains(id)) out.add(id);
+  }
+  return out;
 }
 
 /// One port, and everything the grid needs that is not on the port.

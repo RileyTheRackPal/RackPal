@@ -125,12 +125,17 @@ TemplateSearchEntry buildTemplateSearchEntryFor(
   // of the list.
   final tokens = <String>{};
   for (final port in body.ports) {
+    // `carriedProtocols` was a third source here until DR-134 and
+    // contributed nothing, on every template, always: nothing could write
+    // it. **The protocol questions people actually type still land**, and
+    // through the two lines above plus the tags joined into `plain`:
+    // `dante` finds the seeded DSP by the `audio.dante` family on its
+    // `dante.pri` / `dante.sec` ports and by the device's own `dante`
+    // tag, which `template_search_test.dart` has asserted since M4. That
+    // measurement is why the field went (§11.133.1).
     tokens
       ..add(port.connector.v)
       ..add(port.signalFamily.v);
-    for (final f in port.carriedProtocols) {
-      tokens.add(f.v);
-    }
     if (registries == null) continue;
     if (registries.signalFamilies[port.signalFamily] case final def?) {
       tokens

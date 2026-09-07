@@ -198,12 +198,32 @@ void main() {
       );
     });
 
-    test('a carried protocol matches', () {
-      final body = _body(name: 'Extender', ports: [_port('video.hdbaset')]);
-      body.ports.single.carriedProtocols.add(
-        const SignalFamilyId('net.ethernet'),
-      );
-      expect(_matches('ethernet', body: body), isTrue);
+    // ═══════════════════════════════════════════════════════════════════
+    // THE MEASUREMENT DR-134 §11.133.1 RESTS ON, OVER THE SHIPPED
+    // CATALOGUE RATHER THAN A FIXTURE
+    // ═══════════════════════════════════════════════════════════════════
+    // A test here used to add `net.ethernet` to a hand-built port's
+    // `carriedProtocols` and assert `ethernet` then matched. It passed,
+    // and it proved nothing about the product: **the only way to get a
+    // value into that field was the line above the assertion**, because
+    // nothing in the app could write one. `#846` read the field's
+    // emptiness as "protocol search matches nothing" and the
+    // recommendation built on that reached the user before anybody asked
+    // the catalogue.
+    //
+    // So this asks the catalogue. It is deliberately not a fixture: a
+    // fixture is what let the old test agree with a broken product.
+    test('dante finds the shipped DSP, through the seeded catalogue', () {
+      final seeded = buildSeedCatalog();
+      final hits = <String>[
+        for (final entry in seeded.entries)
+          if (buildTemplateSearchEntry(
+            _row(entry.value, id: entry.key),
+            registries: _registries,
+          ).matches('dante'))
+            entry.key,
+      ];
+      expect(hits, isNotEmpty, reason: 'protocol search over the catalogue');
     });
   });
 

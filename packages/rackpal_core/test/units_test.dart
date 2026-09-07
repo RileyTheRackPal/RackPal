@@ -139,7 +139,18 @@ void main() {
       // stopped writing the origin on every port. A v2 reader calls
       // `asJsonMap` on the absent key and throws, so `minReaderVersion`
       // moved with it. See `constants.dart` and `migrateV2ToV3`.
-      expect(kSchemaVersion, equals(3));
+      //
+      // 4, not 3: `PortDef.carriedProtocols` was DELETED (DR-134
+      // §11.133.5). The encoder wrote it unconditionally, so every file
+      // on disk loses one key per port and stops re-encoding byte for
+      // byte, which is this format's stated trigger for an advance.
+      //
+      // AND `minReaderVersion` STAYS AT 3, WHICH IS WHY THESE ARE TWO
+      // LINES AND NOT ONE. It is the first time the pair has diverged. A
+      // v3 reader meets the absent key with `?? const <Object?>[]` and
+      // reads `[]`, which is the only value the field ever held in any
+      // file, so it loses nothing and refusing it would be wrong.
+      expect(kSchemaVersion, equals(4));
       expect(kMinReaderVersion, equals(3));
     });
   });
