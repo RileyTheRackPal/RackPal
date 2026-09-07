@@ -342,11 +342,25 @@ bin already applies to unplaced devices (CR-032).
 
 ## 7. Rendering
 
-The underlay draws through a new `drawImage` op on `DiagramCanvas`. **That op does not exist**, is
-excluded by RJ-017, and the interface's own header forbids adding a method without an amendment.
-Adding it is part of building this feature and is costed in the feasibility study §3.1; it touches
-`canvas.dart`, `ops.dart`, the bounds canvas, both backends, hit-test, and the op-count baselines
-that are M2-C's record.
+The underlay draws through a `drawImage` op on `DiagramCanvas`. **It exists as of PLAN-A, 2026-09-07**,
+and this paragraph said *"that op does not exist"* until then. It was added under the interface's own
+amendment clause, DR-029 §11.28.6 being the amendment; RJ-017 is superseded in part (canon §12.32) and
+**the logo's opacity did not come back with it**.
+
+**What it actually touched, against the five files this paragraph predicted.** `canvas.dart`, `ops.dart`,
+the bounds canvas and both backends: as predicted. **Hit-test: nothing.** `hit_test.dart` reads
+`DiagramScene.hits`, which scene builders populate, and an op type reaches it through no path at all. **The
+op-count baselines: nothing moved**, which is `schematic_perf_test.dart`'s own prediction holding, because
+no scene emits an `OpImage` until PLAN-C. **One file nobody predicted did break, and it is the right one**:
+`test/scene/op_digest.dart`'s exhaustive switch over the sealed hierarchy, which is the determinism
+instrument, so the compiler required a decision about what an image contributes to *"same document, same
+display list"* before anything could build. It contributes its reference and its rect.
+
+**`OpImage` carries a container-member REFERENCE and never pixels.** A display list is compared byte for
+byte and `rackpal_core` has no image decoder and must not gain one, so each backend resolves the reference
+through its own resolver: `ui.Image` on screen, `PdfImage` in the export. A reference nothing resolves
+**throws** rather than drawing nothing, because a `T1.01` that is a title block over white paper is
+indistinguishable from a plan with no drops on it.
 
 **The underlay prints screened.** On screen it renders at full value; on paper it renders through a
 lightening pass so that black callouts stay legible over it. This is ordinary drafting practice for

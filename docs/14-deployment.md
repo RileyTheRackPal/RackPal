@@ -21,7 +21,7 @@
 | Position | Means | Moves when |
 |---|---|---|
 | **major** | `0` until the first **public** release | the product ships publicly. Not before, whatever the feature set |
-| **minor** | the **milestone epic** under development | work moves to the next epic: M2 ⇒ `2`, M3 ⇒ `3` |
+| **minor** | the **epic** under development, by its position in the plan's order | work moves to the next epic. **Not the digit in a milestone's name** since DR-135 |
 | **patch** | major tasks completed **within that epic** | a major task closes |
 
 **It is deliberately not semver, and the difference matters when reading it.** Semver's minor
@@ -34,6 +34,31 @@ it without a changelog lookup.
 **`v0.2.0` is M2's baseline**, tagged with the milestone's criterion met rather than at its last
 commit; M2's completed work (#93, #13, #94, #95 and the #96 field-test items) is inside it. M3's
 first task lands as `v0.3.1`.
+
+**THE MINOR STOPPED BEING A MILESTONE NUMBER ON 2026-09-07** (DR-135 §11.134), and the row above is
+amended rather than pointered because a reader who applies the old shortcut is wrong by one for the
+rest of v1. **The Plan view is an epic with no milestone number**, deliberately (DR-029 §11.28.4),
+so `M2 ⇒ 2` had no answer for the epic that is now under development. It takes `0.6`, and everything
+behind it shifts by one:
+
+| Epic | Band | First build in the band |
+|---|---|---|
+| M5 Validation | `0.5` | `v0.5.1` |
+| **The Plan view** | **`0.6`** | **`v0.6.0`, the baseline at open on 2026-09-07** |
+| M6 Full sheet set | `0.7` | not yet opened |
+| M7 Platform and access | `0.8` | not yet opened |
+| M8 Release engineering | `0.9` | not yet opened |
+| M9 Beta hardening | `0.10` | not yet opened |
+
+**No milestone is renumbered by this**: `M6` is still `M6` on the board, in every task title and in
+every document. Only the band is renumbered, because a band has six gated copies and no prose ones,
+where a milestone number is duplicated into hundreds of task titles nothing can rewrite safely.
+That asymmetry is the whole reason DR-029 refused the one and DR-135 allowed the other.
+
+**A BAND'S BASELINE IS TAKEN AT THE TRANSITION, NOT AT THE FIRST COMMIT INSIDE IT**, which is what
+`v0.2.0` already did one milestone at a time. So `v0.6.0` ships with zero Plan view Chapters closed,
+and `PLAN-0` (`#589`) moves nothing because it is the Story that decomposed the epic rather than a
+Chapter that built anything.
 
 **The number is written in six places and gated in one.** `apps/rackpal/pubspec.yaml`, the four
 library `pubspec.yaml`s, and `kAppVersion` in `app_services.dart`, which is the one that matters,

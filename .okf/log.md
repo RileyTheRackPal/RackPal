@@ -2,6 +2,75 @@
 
 ## 2026-09-07
 
+* **Build**: `PLAN-A` closes at `v0.6.5`. `DiagramCanvas` gains `drawImage`
+  under its own amendment clause (DR-029 §11.28.6), `OpImage` carries a
+  container-member REFERENCE and never pixels, and both backends draw it.
+* **Update**: [A stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md)
+  gains a fourth instance, and the fourth is not a number. docs/15 §7 listed
+  six things the op would touch. **Two were wrong**: hit-test, which reads
+  `DiagramScene.hits` and never an op type, and the op-count baselines, which
+  could not move because no scene emits the op yet. **And the one file that
+  did break was on nobody's list.** A list of impacted files fails the same
+  way a figure does, and worse: it is wrong in both directions at once, and
+  the omission is the half nothing warns you about.
+* **Note**: **THE COMPILE-ERROR TRAP FIRED IN THE DETERMINISM INSTRUMENT.**
+  `PLAN-A/2` expected every exhaustive switch over ops to stop compiling.
+  Measured: this repository has **exactly one** such switch and it is
+  `test/scene/op_digest.dart`, whose own header explains it is a switch
+  rather than a `toString()` for precisely this reason. So the compiler
+  demanded an answer to *what does an image contribute to "same document,
+  same display list"* before anything would build. Its reference and its
+  rect; the bytes behind the member are CR-117's question.
+* **Note**: **A MIRRORED FLOORPLAN HAS A CORRECT BOUNDING BOX.** A PDF image
+  occupies the unit square with its TOP row at `v = 1`, and the PDF canvas
+  carries one global Y-flip, so the naive call lands the picture upside down
+  inside exactly the right box and every dimensional assertion still passes.
+  Both backend tests therefore read CORNERS, and both were mutation-tested:
+  delete the counter-flip and three of four fail; flip the Flutter
+  destination and five of five fail.
+* **Note**: **A TEST FOUND A DEFECT TEN MINUTES OLD.**
+  `BoundsCanvas.drawImage` was written `_ink(_toRoot(dst))` and `_ink`
+  already maps through the CTM, so every underlay would have inked at twice
+  its own translation. **No sibling method makes that mistake**, so no
+  assertion about a rect could have caught it, and a bounds pass wrong in
+  the loose direction does not crash: it scales every sheet with a plan on
+  it to fit a box half again too big.
+* **Note**: **AN EXCLUSION THAT IS AN ABSENCE READS LIKE AN OVERSIGHT.** The
+  underlay was outside PAL-1 because `FAMILIES` is hand-written and nobody
+  had added it. It is now named with its reason, **checked** (an excluded id
+  appearing in `FAMILIES` fails the gate, verified by adding one), and
+  **printed on every run**, because a check nobody can see declining to check
+  something is indistinguishable from one that checked it and passed.
+* **Ruling**: [DR-135](/decisions/dr-135-m5-closes-and-the-minor-stops-being-a-milestone.md).
+  **M5 is CLOSED** and **the Plan view is OPEN**, which is §8.9's condition met
+  rather than assumed. The version band moves to `0.6`.
+* **Note**: **WHAT CLOSED M5 WAS NOT THE CLAUSE TABLE.** All three clauses had
+  been discharged since 2026-09-06. What was outstanding was one sentence
+  DR-127 §11.126.4 left behind, *"M5's remaining cost should be re-measured
+  before its successor opens rather than after"*, and it was outstanding
+  because DR-127 had amended M5's scope with five items on the day of the
+  review. Measured: twenty Stories `Done`, 61 `Done` Chapters, none open or
+  re-parented, and `#845` living under M9 where §5.4.11.3 put it. **A clause
+  discharged is not a backlog emptied**, and the way to tell the two apart is
+  to count rather than to look.
+* **Note**: **THE REQUEST SAID M6, AND THE ANSWER IS THE PLAN VIEW.** DR-029
+  §11.28.4, roadmap §4 and docs/12 §5.4 all sequence the Plan view between M5
+  and M6, because M6's criterion is a *complete* sheet set and a plan sheet
+  arriving afterwards would make that criterion run twice. It self-corrected
+  before anything was built. **Kept in the record because the sequencing lives
+  in three documents and was still nearly missed**, which is the argument for
+  writing it a fourth time rather than against.
+* **Note**: **THE EPIC HAD NO NUMBER FOR THE VERSION SCHEME TO READ.** docs/14
+  §14.0 says the minor is *"the milestone epic under development"* and spells
+  `M2 ⇒ 2`. DR-029 gave the Plan view no milestone number on purpose, so there
+  was no digit to read. The user ruled `0.6`, so the minor now means the epic's
+  **position in the plan's order** and M6 to M9 shift to `0.7` to `0.10`.
+* **Note**: **THE SAME RENUMBERING WAS REFUSED AT DR-029 AND TAKEN HERE, FOR A
+  REASON WORTH KEEPING.** A milestone number is duplicated into hundreds of
+  task titles, four section headers, a cost table and dozens of canon
+  references. A version minor lives in six files with one gate over them.
+  **Renumbering costs whatever the number has been duplicated into**, so
+  neither answer is evidence for the other.
 * **Ruling**: [DR-134](/decisions/dr-134-carried-protocols-was-a-second-copy.md),
   a §8.3 amendment. `PortDef.carriedProtocols` is **deleted**, and the
   multi-select cell DR-081 ordered is **built** for `acceptedFamilies`,

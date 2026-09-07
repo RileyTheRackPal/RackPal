@@ -429,9 +429,21 @@ $SuiteFloors = @{
     # pair proves ELE-005 fires; these prove it COUNTS honestly, which is
     # what a load rule gets wrong while passing its pair. One of them
     # caught the amplifier being reported as a speaker nobody measured.
-    'rackpal_core'   = 4093
+    # 4109 at PLAN-A: +16 from draw/image_op_test.dart. Its translated
+    # case earned the file on the first run: `BoundsCanvas.drawImage` was
+    # written as `_ink(_toRoot(dst))` and `_ink` already maps through the
+    # CTM, so every underlay landed at twice its own translation. No
+    # sibling method makes that mistake, so no assertion about a rect
+    # could have seen it.
+    'rackpal_core'   = 4109
     'rackpal_text'   = 1
-    'rackpal_export' = 195
+    # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
+    # harness self-test's new XObject group. Both are about ONE fact a
+    # bounding box cannot carry: a PDF image occupies the unit square with
+    # its top row at v = 1, so a vertically flipped placement produces an
+    # IDENTICAL box and an upside-down floorplan. Mutation-tested by
+    # deleting the counter-flip: three of the four orientation cases fail.
+    'rackpal_export' = 209
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
     # presses the two new remedy buttons on chips raised by a real drag.
     # The core suites cannot see whether the SCREEN reaches the commands.
@@ -451,7 +463,13 @@ $SuiteFloors = @{
     # them mount the drawer, which is how DrcPanel passed its own suite
     # for two days while nothing in the product mounted it; the tenth
     # mounts RackCanvasScreen and is the assertion #847 IS.
-    'rackpal_ui'     = 1532
+    # 1539 at PLAN-A: +7 from draw/flutter_canvas_image_test.dart, which
+    # RASTERISES rather than recording calls. It is the one place in this
+    # repository where pixels are the right artifact: a recorder-based
+    # test asserts that drawImageRect got two rects, which passes with the
+    # source and destination swapped. Mutation-tested by flipping the
+    # destination rect: five of five fail.
+    'rackpal_ui'     = 1539
     'rackpal_app'    = 916
 }
 

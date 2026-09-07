@@ -165,6 +165,7 @@ export 'src/draw/contrast.dart';
 export 'src/draw/device_accent.dart';
 export 'src/draw/geometry.dart';
 export 'src/draw/hit_test.dart';
+export 'src/draw/image_ref.dart';
 export 'src/draw/ops.dart';
 export 'src/draw/path.dart';
 export 'src/draw/scene/device_glyph_art.dart';

@@ -37,6 +37,7 @@ import 'dart:math' as math;
 
 import 'package:rackpal_core/src/draw/canvas.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
+import 'package:rackpal_core/src/draw/image_ref.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/path.dart';
 import 'package:rackpal_core/src/draw/spec.dart';
@@ -170,6 +171,30 @@ final class BoundsCanvas implements DiagramCanvas {
           stroke,
         ),
       );
+
+  /// A raster inks exactly its destination rect, with no inflation.
+  ///
+  /// **It never touches the bytes, which is the whole point of measuring
+  /// through the interface rather than switching over ops.** An underlay
+  /// is the largest thing in any scene that carries one, and a bounds pass
+  /// that decoded it to find its extent would decode a multi-megabyte page
+  /// to learn a number the caller already had. `ImageRef` carries the
+  /// intrinsic pixel size for the same reason one level up (docs/15 §3.1,
+  /// *"so aspect is known without decoding"*), and this method does not
+  /// even need that: the destination rect IS the ink, because `drawImage`
+  /// fills [dst] exactly and has no fit rule of its own.
+  ///
+  /// No stroke inflation for the same reason there is no stroke: an image
+  /// has no outline in this interface, and adding half a hairline here
+  /// would be inventing ink that no backend draws.
+  ///
+  /// [_ink] takes a LOCAL box and maps it itself. This method was written
+  /// with `_ink(_toRoot(dst))` and every image landed at twice its own
+  /// translation, which no assertion about a rect could have seen because
+  /// no sibling method makes that mistake; `image_op_test.dart`'s
+  /// translated case is the one that found it, on its first run.
+  @override
+  void drawImage(ImageRef image, DBox dst) => _ink(dst);
 
   @override
   void drawText(String text, DPt at, TextStyleSpec style) {

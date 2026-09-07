@@ -166,6 +166,49 @@ REQUIREMENT_4 = {
     'audio.speaker_lowz': 'Speaker level', 'power.ac_iec': 'Power',
 }
 
+# ------------------------------------------------------------------ exclusions
+
+#: THINGS THIS SCRIPT DRAWS NO CONCLUSION ABOUT, AND WHY, listed rather than
+#: left implicit (PLAN-A/5, DR-029 section 11.28.6).
+#:
+#: PAL-1 is a rule about SIGNAL FAMILIES: every one renders as
+#: (luminance, dash class, weight), and the check is pairwise over that
+#: triple. The Plan view's floorplan underlay is drawn by the same canvas
+#: through the same display list and is NOT one of those. It is an
+#: arbitrary raster supplied by an architect, so it injects greyscale
+#: values the palette does not control, and a check that folded them in
+#: would report a different verdict for every project. A silently averaged
+#: underlay is worse than a skipped one, because the skip is visible and
+#: the average is not.
+#:
+#: The exclusion is CHECKED rather than merely commented: `check_exclusions`
+#: fails the gate if any of these ids ever appears in FAMILIES, so the day
+#: somebody decides an underlay IS a family, this stops rather than quietly
+#: agreeing.
+NOT_A_SIGNAL_FAMILY = {
+    'plan.underlay':
+        'an architect-supplied raster, not a rendered signal (docs/15 section 7)',
+    'brand.logo':
+        "DR-030's integrator logo, art rather than a signal (docs/08 row 17)",
+}
+
+#: WHAT IS *NOT* EXCLUDED, and what this script cannot check.
+#:
+#: docs/15 section 7 and feasibility section 3.5 add an obligation the
+#: underlay's exclusion does not cover: a callout glyph must stay legible
+#: against a NON-WHITE background. Every PAL-1 pair to date is drawn on
+#: white, so this is the first background in the corpus. The screening pass
+#: exists to satisfy it and it is checked at PLAN-H/3, against a rendered
+#: sheet rather than against a table of hues. Recorded here because the
+#: obvious reading of "the underlay is excluded from PAL-1" is that the
+#: underlay raises no legibility question at all, and it raises the only
+#: new one this palette has met.
+CALLOUT_OVER_UNDERLAY_IS_CHECKED_AT = 'PLAN-H/3'
+
+def check_exclusions():
+    """Ids that are excluded AND present. Any result is a contradiction."""
+    return sorted({f[0] for f in FAMILIES} & set(NOT_A_SIGNAL_FAMILY))
+
 # --------------------------------------------------------------------------- checks
 
 def check():
@@ -214,6 +257,20 @@ def main():
                 if a[1] != b[1] and abs(lum[a[1]] - lum[b[1]]) < BAND)
     print('PAL-1 conformance: %d families, %d in-band cross-domain pairs checked'
           % (len(FAMILIES), pairs))
+    contradictions = check_exclusions()
+    if contradictions:
+        print('FAIL - excluded id(s) present in FAMILIES: %s'
+              % ', '.join(contradictions))
+        print('  Either it is a signal family or it is not. See '
+              'NOT_A_SIGNAL_FAMILY.')
+        return 1
+    # Printed so the skip is VISIBLE in a CI log. A check nobody can see
+    # declining to check something is indistinguishable from one that
+    # checked it and passed.
+    print('  excluded (not signal families): %s'
+          % ', '.join(sorted(NOT_A_SIGNAL_FAMILY)))
+    print('  callouts over a non-white underlay are checked at %s, not here'
+          % CALLOUT_OVER_UNDERLAY_IS_CHECKED_AT)
     if not failures:
         print('PASS - no collisions.')
         return 0

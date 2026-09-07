@@ -30,6 +30,30 @@ import 'package:pdf/pdf.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:vector_math/vector_math_64.dart';
 
+/// Resolves a container-member reference to an embeddable [PdfImage].
+///
+/// Declared HERE and not in `rackpal_core`, because `PdfImage` is the
+/// `pdf` package's type and core neither depends on it nor owns a decoder.
+/// The screen backend declares its own over `ui.Image` for the same
+/// reason.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE FLATTEN AND THE SCREEN BOTH HAPPEN ON THE FAR SIDE OF THIS.
+/// ═══════════════════════════════════════════════════════════════════════
+/// DR-037 §11.36.3: the stored bytes are the architect's page, and the
+/// lightening pass that keeps black callouts legible over an underlay runs
+/// where the `PdfImage` is built. That is the implementer of this
+/// typedef, not this file and not the IR.
+///
+/// **`PdfImage(..., alpha: true)` writes an `/SMask`.** Read out of
+/// `pdf-3.13.0/lib/src/pdf/obj/image.dart`, not recalled: a PNG underlay
+/// carrying an alpha channel emits an alpha path into the document without
+/// anybody calling `setGraphicState`, which is not the failure docs/08
+/// row 9 was written about and which row 9 nonetheless forbids. So
+/// whatever implements this MUST flatten to opaque RGB and pass
+/// `alpha: false`.
+typedef PdfImageResolver = PdfImage? Function(ImageRef ref);
+
 /// The PDF backend of [DiagramCanvas] (CR-086): replays a [DiagramScene]
 /// onto a [PdfGraphics], with the one global Y-flip absorbed once at
 /// construction (CR-085, docs/08-pdf-export.md §7.4).
@@ -39,6 +63,7 @@ final class PdfDiagramCanvas implements DiagramCanvas {
     required double boxHeight, // MUST be pw.CustomPaint's size.y -- §7.4
     required Map<FontRef, PdfFont> fonts,
     required TextMeasurer measurer,
+    this.images,
   }) : _g = graphics,
        _fonts = fonts,
        _measurer = measurer {
@@ -54,6 +79,13 @@ final class PdfDiagramCanvas implements DiagramCanvas {
   final PdfGraphics _g;
   final Map<FontRef, PdfFont> _fonts;
   final TextMeasurer _measurer;
+
+  /// Resolves an [ImageRef] to an embeddable [PdfImage], or null when no
+  /// scene this canvas replays contains an `OpImage`, which is every scene
+  /// this repository builds until PLAN-C. Public and not `_`-prefixed to
+  /// match `FlutterDiagramCanvas.runs`, the sibling backend's optional
+  /// injected collaborator.
+  final PdfImageResolver? images;
   final List<Matrix4> _stack = [];
 
   /// Balances the constructor's [PdfGraphics.saveContext]. Callers MUST
@@ -257,6 +289,43 @@ final class PdfDiagramCanvas implements DiagramCanvas {
       _g.strokePath();
       _g.restoreContext();
     }
+  }
+
+  @override
+  void drawImage(ImageRef image, DBox dst) {
+    final resolved = images?.call(image);
+    if (resolved == null) throw MissingImageError(image);
+
+    // ═════════════════════════════════════════════════════════════════
+    // THIS METHOD IS NOT SYMMETRIC WITH THE SCREEN BACKEND'S, AND THE
+    // ASYMMETRY IS A PDF FACT RATHER THAN AN ADAPTATION CHOICE.
+    // ═════════════════════════════════════════════════════════════════
+    // `PdfGraphics.drawImage(img, x, y, w, h)` emits `cm [w 0 0 h x y]`
+    // and a PDF image XObject occupies the unit square with its TOP row
+    // at v = 1 (read out of pdf-3.13.0's graphics.dart, not recalled). So
+    // an image drawn with a positive height grows UPWARD from (x, y) in
+    // whatever space the CTM defines. Our CTM carries the one global flip
+    // (CR-085), so "upward" is toward the top of the SHEET but the
+    // image's own rows land bottom-first: drawn naively it is vertically
+    // MIRRORED, and a mirrored floorplan is the failure that looks
+    // plausible until somebody stands in the wrong room.
+    //
+    // So counter-flip locally, exactly as `drawText` does for glyphs. The
+    // local frame below is Y-UP with its origin at the destination's
+    // TOP-LEFT; placing the image at y = -height puts its top row on that
+    // origin, which is the destination's top edge.
+    //
+    // No opacity argument exists to pass: docs/08 row 9 forbids alpha
+    // absolutely, and the screening DR-037 §11.36.3 requires is already in
+    // `resolved`, applied by whoever built the `PdfImage`.
+    _g
+      ..saveContext()
+      ..setTransform(
+        Matrix4.translationValues(dst.left, dst.top, 0)
+          ..multiply(Matrix4.diagonal3Values(1, -1, 1)),
+      )
+      ..drawImage(resolved, 0, -dst.height, dst.width, dst.height)
+      ..restoreContext();
   }
 
   @override

@@ -157,8 +157,53 @@ final class RecoveredText {
 }
 
 /// Everything the interpreter recovered from one content stream.
+/// An XObject painted by `Do`, with the image's OWN four corners mapped
+/// into PDF user space through the CTM in force at that moment.
+///
+/// WHY THE CORNERS AND NOT A BOX. A box cannot be mirrored. A PDF image
+/// XObject occupies the unit square with its top row at `v = 1`, so an
+/// image drawn under a Y-flipped CTM without a counter-flip lands with
+/// [topLeft] BELOW [bottomLeft] on the page, and its bounding box is
+/// identical either way. Recording the corners separately is the only
+/// shape of evidence in which "the floorplan is upside down" is a
+/// checkable claim, and an upside-down floorplan is the failure that looks
+/// plausible until somebody stands in the wrong room.
+final class RecoveredImage {
+  const RecoveredImage({
+    required this.name,
+    required this.bottomLeft,
+    required this.topLeft,
+    required this.topRight,
+    required this.bottomRight,
+  });
+
+  /// The resource name from `/Name Do`, without the slash.
+  final String name;
+
+  /// The image's own bottom-left pixel corner, in user-space points.
+  final (double, double) bottomLeft;
+
+  /// The image's own TOP-left pixel corner, in user-space points. On a
+  /// correctly placed image this has a LARGER y than [bottomLeft], because
+  /// PDF user space is Y-up.
+  final (double, double) topLeft;
+
+  final (double, double) topRight;
+  final (double, double) bottomRight;
+
+  @override
+  String toString() =>
+      'RecoveredImage($name, bl=$bottomLeft, tl=$topLeft, '
+      'tr=$topRight, br=$bottomRight)';
+}
+
 final class RecoveredStream {
-  const RecoveredStream(this.rects, this.texts, this.paths);
+  const RecoveredStream(
+    this.rects,
+    this.texts,
+    this.paths, {
+    this.images = const <RecoveredImage>[],
+  });
 
   /// Rectangles from the `re` operator specifically.
   final List<RecoveredRect> rects;
@@ -168,6 +213,9 @@ final class RecoveredStream {
   /// EVERY painted path's bounding box, `re`-built ones included. See
   /// [RecoveredPath].
   final List<RecoveredPath> paths;
+
+  /// Every XObject painted by `Do`, in stream order.
+  final List<RecoveredImage> images;
 
   /// Every recovered text run concatenated, for `contains` assertions.
   String get allText => texts.map((t) => t.text).join('\n');
@@ -292,6 +340,11 @@ RecoveredStream interpretContentStream(
   final rects = <RecoveredRect>[];
   final texts = <RecoveredText>[];
   final paths = <RecoveredPath>[];
+  final images = <RecoveredImage>[];
+
+  // The most recent `/Name` token. `Do` takes its operand this way, and
+  // the tokeniser otherwise discards names.
+  var lastName = '';
 
   var ctm = PdfMatrix.identity;
   final ctmStack = <PdfMatrix>[];
@@ -326,7 +379,11 @@ RecoveredStream interpretContentStream(
     final first = token.codeUnitAt(0);
 
     // Operands.
-    if (token == '[' || token == ']' || first == 0x2f /* / */ ) continue;
+    if (token == '[' || token == ']') continue;
+    if (first == 0x2f /* / */ ) {
+      lastName = token.substring(1);
+      continue;
+    }
     if (first == 0x3c /* < */ ) {
       strings.add(_decodeHexString(token, toUnicode));
       continue;
@@ -354,6 +411,16 @@ RecoveredStream interpretContentStream(
           final n = numbers.sublist(numbers.length - 6);
           ctm = ctm.after(PdfMatrix(n[0], n[1], n[2], n[3], n[4], n[5]));
         }
+      case 'Do':
+        images.add(
+          RecoveredImage(
+            name: lastName,
+            bottomLeft: ctm.apply(0, 0),
+            topLeft: ctm.apply(0, 1),
+            topRight: ctm.apply(1, 1),
+            bottomRight: ctm.apply(1, 0),
+          ),
+        );
       case 'w':
         if (numbers.isNotEmpty) lineWidth = numbers.last;
       case 're':
@@ -417,7 +484,7 @@ RecoveredStream interpretContentStream(
     strings.clear();
   }
 
-  return RecoveredStream(rects, texts, paths);
+  return RecoveredStream(rects, texts, paths, images: images);
 }
 
 RecoveredPath _hullOf(List<(double, double)> points, double lineWidthPt) {

@@ -97,6 +97,17 @@ String _op(DiagramOp op) => switch (op) {
     'ellipse ${_pt(center)} $rx $ry ${_fill(fill)} ${_stroke(stroke)}',
   OpText(:final text, :final at, :final style) =>
     'text ${_escape(text)} ${_pt(at)} ${_style(style)}',
+  // LOSSLESS MEANS THE REFERENCE, NOT THE PIXELS, and here that is the
+  // whole property rather than a shortcut. `OpImage` carries an `ImageRef`
+  // precisely so a display list stays cheap to compare (see `ops.dart`),
+  // so digesting the member name, the format and the intrinsic size IS
+  // digesting everything the op holds. Two scenes naming the same member
+  // at the same rect ARE the same drawing instruction; whether the bytes
+  // behind that member changed is the container's question and CR-117's,
+  // not this instrument's.
+  OpImage(:final image, :final dst) =>
+    'image ${_escape(image.member)} ${image.format.name} '
+        '${image.pixelWidth}x${image.pixelHeight} ${_box(dst)}',
 };
 
 String _pt(DPt p) => '${p.x},${p.y}';

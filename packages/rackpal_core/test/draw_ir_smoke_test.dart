@@ -83,6 +83,10 @@ final class _RecordingCanvas implements DiagramCanvas {
       calls.add('drawText($text,$at)');
 
   @override
+  void drawImage(ImageRef image, DBox dst) =>
+      calls.add('drawImage(${image.member},$dst)');
+
+  @override
   TextMetrics measureText(String text, TextStyleSpec style) =>
       const TextMetrics(
         advanceWidth: 0,
