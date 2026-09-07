@@ -444,7 +444,15 @@ $SuiteFloors = @{
     # cases, whose truncation group is the one that found `ZipDecoder`
     # returning an EMPTY archive rather than throwing, at six cut points
     # and on a four-byte file.
-    'rackpal_core'   = 4144
+    # 4152 at PLAN-C part one: +8 from units/px_pt_separation_test.dart,
+    # which is a SOURCE gate as well as a behavioural one. `PxPt` gaining
+    # an `operator +`, a `toPt()` or a supertype is a one-line change that
+    # looks like tidying and re-opens the collapse three documents rule
+    # against; a running program cannot tell the two apart. Plus one byte
+    # round-trip case for Location.riseAllowance, which
+    # location_commands_test.dart demands per table row rather than per
+    # command.
+    'rackpal_core'   = 4152
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

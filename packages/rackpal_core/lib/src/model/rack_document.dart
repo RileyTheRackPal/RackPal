@@ -8,6 +8,7 @@ import 'package:rackpal_core/src/model/net.dart';
 import 'package:rackpal_core/src/model/note.dart';
 import 'package:rackpal_core/src/model/outlet.dart';
 import 'package:rackpal_core/src/model/pathway.dart';
+import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/port.dart';
 import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
@@ -73,6 +74,7 @@ final class RackDocument {
     Map<Uuid, Outlet>? outlets,
     Map<Uuid, StructureBody>? structures,
     Map<Uuid, Circuit>? circuits,
+    Map<Uuid, PlanUnderlay>? underlays,
     Map<Uuid, Sheet>? sheets,
     Map<Uuid, Note>? notes,
     Map<Uuid, AckedFinding>? ackedFindings,
@@ -93,6 +95,7 @@ final class RackDocument {
        outlets = outlets ?? {},
        structures = structures ?? {},
        circuits = circuits ?? {},
+       underlays = underlays ?? {},
        sheets = sheets ?? {},
        notes = notes ?? {},
        ackedFindings = ackedFindings ?? {},
@@ -141,6 +144,23 @@ final class RackDocument {
   final Map<Uuid, Outlet> outlets;
   final Map<Uuid, StructureBody> structures;
   final Map<Uuid, Circuit> circuits;
+
+  /// The floorplans this project carries (docs/15 §3.1, DR-029).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE MODEL NAMES A MEMBER; THE CONTAINER HOLDS THE BYTES
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A `PlanUnderlay` carries `imageMember`, a path into the `.rmpj` zip
+  /// container (`persistence/container.dart`, DR-019 §11.18.2), and never
+  /// the image itself. That is what keeps `rackpal_core` free of an image
+  /// decoder and what keeps a display list cheap to compare: the same
+  /// split `ImageRef` makes one layer down in `draw/`.
+  ///
+  /// EMPTY IS THE ORDINARY STATE and stays so for most projects. A
+  /// document with no underlay writes plain JSON, byte-identical to what
+  /// this build wrote before the Plan view existed, which is the clause
+  /// that makes this feature additive rather than a migration.
+  final Map<Uuid, PlanUnderlay> underlays;
 
   /// Exactly one schematic sheet, always (CR-073, DR-004, AC-037).
   final Map<Uuid, Sheet> sheets;

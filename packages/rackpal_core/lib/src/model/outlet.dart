@@ -7,6 +7,7 @@ import 'package:rackpal_core/src/model/entity_meta.dart';
 import 'package:rackpal_core/src/model/enums.dart'
     show MountSurface, TerminationType, Wall;
 import 'package:rackpal_core/src/model/gang.dart';
+import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 
@@ -30,6 +31,7 @@ final class Outlet {
     Uuid? pathwayId,
     Len? nominalRunLength,
     String? notes,
+    PlanPin? planPin,
     List<Gang>? gangs,
     Map<String, Object?>? unknown,
   }) : gangs = gangs ?? [],
@@ -43,6 +45,7 @@ final class Outlet {
        _pathwayId = pathwayId,
        _nominalRunLength = nominalRunLength,
        _notes = notes,
+       _planPin = planPin,
        unknown = unknown ?? {};
 
   final Uuid id;
@@ -67,6 +70,21 @@ final class Outlet {
   String get designation => _designation;
   @internal
   set designation(String v) => _designation = v;
+
+  /// Where this outlet's plate sits on a floorplan (docs/15 §3.4).
+  ///
+  /// **THE THING THE DESIGNER IS ACTUALLY DOTTING TODAY.** The practice
+  /// this feature replaces is coloured dots in a notes application, and
+  /// what those dots mark is plates: one wall plate, one ceiling location
+  /// (CR-016). The device pin and the rack pin exist so a length can be
+  /// derived; this one exists because it is the drawing people already
+  /// make by hand.
+  ///
+  /// Null is UNKNOWN, not "at the origin" (G4, CR-114).
+  PlanPin? _planPin;
+  PlanPin? get planPin => _planPin;
+  @internal
+  set planPin(PlanPin? v) => _planPin = v;
 
   String? _notes;
   String? get notes => _notes;

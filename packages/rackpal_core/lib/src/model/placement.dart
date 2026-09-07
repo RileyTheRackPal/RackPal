@@ -1,3 +1,4 @@
+import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/pt.dart';
@@ -140,9 +141,31 @@ final class ZeroUPlacement extends Placement {
 /// Not in any rack — a wall-mounted speaker, an off-rack passive splitter,
 /// a hardwired device.
 final class OffRackPlacement extends Placement {
-  const OffRackPlacement({this.locationId, this.mountNote, super.unknown});
+  const OffRackPlacement({
+    this.locationId,
+    this.mountNote,
+    this.planPin,
+    super.unknown,
+  });
 
   final Uuid? locationId;
+
+  /// Where this device sits on a floorplan (docs/15 §3.4, DR-037).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A FIELD HERE, NOT A SIXTH `Placement` VARIANT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The sealed union's five members are MUTUALLY EXCLUSIVE ways a device
+  /// is mounted (CR-032, docs/02 §4.3), and "pinned on a plan" is not one
+  /// of them: a wall speaker with a pin is still off-rack in a room. A
+  /// sixth variant would make the two states unrepresentable together and
+  /// force every exhaustive switch in the tree to answer a question about
+  /// mounting that this is not.
+  ///
+  /// **[locationId] remains the schedule's source of room truth and a pin
+  /// never replaces it.** A plan says WHERE on a page; a location says
+  /// which room, and the schedule prints the room.
+  final PlanPin? planPin;
 
   /// Free prose about where the device physically sits when it is not in
   /// a rack: *"AV closet, top shelf"*, *"Ceiling mount, rear of room"*.
@@ -166,6 +189,20 @@ final class OffRackPlacement extends Placement {
   OffRackPlacement withMountNote(String? note) => OffRackPlacement(
     locationId: locationId,
     mountNote: note,
+    planPin: planPin,
+    unknown: unknown,
+  );
+
+  /// A copy with a different [planPin], on [withMountNote]'s precedent.
+  ///
+  /// Placement variants keep all-`final` fields, so setting a pin
+  /// REPLACES the placement object rather than mutating it, per this
+  /// file's own header. Passing `null` clears the pin, which is what
+  /// un-pinning a device is.
+  OffRackPlacement withPlanPin(PlanPin? pin) => OffRackPlacement(
+    locationId: locationId,
+    mountNote: mountNote,
+    planPin: pin,
     unknown: unknown,
   );
 }
