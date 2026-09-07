@@ -435,7 +435,16 @@ $SuiteFloors = @{
     # CTM, so every underlay landed at twice its own translation. No
     # sibling method makes that mistake, so no assertion about a rect
     # could have seen it.
-    'rackpal_core'   = 4109
+    # 4144 at PLAN-B: +35 across three container files. +13 determinism,
+    # one assertion per nondeterminism source rather than one round trip,
+    # because a single `write(read(bytes)) == bytes` passes the moment the
+    # writer is self-consistent and says nothing about WHICH knob is
+    # fixed. +8 byte identity over the four checked-in starters, including
+    # the negative that nothing writes a zip without a member. +14 error
+    # cases, whose truncation group is the one that found `ZipDecoder`
+    # returning an EMPTY archive rather than throwing, at six cut points
+    # and on a four-byte file.
+    'rackpal_core'   = 4144
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -470,7 +479,16 @@ $SuiteFloors = @{
     # source and destination swapped. Mutation-tested by flipping the
     # destination rect: five of five fail.
     'rackpal_ui'     = 1539
-    'rackpal_app'    = 916
+    # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
+    # -layer states a container owes (AC-058/D3), through the real store
+    # and the real presenter. Its copy assertions are the point: the
+    # pre-existing `OpenZipContainer` sentence told users to "extract it
+    # first", advice that DESTROYS a project once a project can be a zip,
+    # and a test checking only the error TYPE would have left it standing.
+    # +1 in document_store_test.dart, which gained the case proving a real
+    # container opens beside the one proving six bytes of signature does
+    # not.
+    'rackpal_app'    = 930
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

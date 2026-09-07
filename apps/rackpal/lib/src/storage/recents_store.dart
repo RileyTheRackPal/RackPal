@@ -396,6 +396,11 @@ bool shouldEvictOnOpenFailure(OpenError error) => switch (error) {
   OpenTooDeeplyNested() => false,
   OpenNotARackPalFile() => false,
   OpenZipContainer() => false,
+  // Same reason as `OpenCorrupt`, and it matters MORE here: a damaged
+  // container is exactly the case where the recents entry is the user's
+  // route to the `.bak` that will rescue them.
+  OpenContainerUnreadable() => false,
+  OpenContainerTooLarge() => false,
   OpenNewerSchema() => false,
   OpenUnexpected() => false,
 };
