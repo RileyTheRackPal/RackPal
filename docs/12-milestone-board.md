@@ -116,8 +116,8 @@ way. Board item #92 is the scheduled full sweep.
 | **M2** | Wiring + live schedule | `M` | **5 of 5** | **CRITERION MET**: `CONFIRMED` | All five clauses discharged. Four by tests; one by a person, not a gate, **the user made sixty connections on 2026-08-01, in roughly 5–7 minutes, without multi-draw, which is still unbuilt (#93)**. The clause carries no time bound, so that figure is a data point rather than a threshold met. M2-G then found the half of clause 4 nobody had measured: the sheet took **64 ms to paint** beside a 3 ms build, and is 10.6 ms now (§5.1). The goal line is met; the roadmap's global *"ends green"* rule is **not**, for the same reason it is not for any milestone, no CI service has ever run (§4.1) |
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
 | **M4** | Device builder | **`L`** *(was `M`)* | **2 of 2** | **CRITERION MET**: `CONFIRMED` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **CLAUSE 2 IS NOW CONFIRMED, performed on 2026-09-01** (§5.3.30), and it was performable only from §5.3.13: it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` demonstrated it: every unknown column printed `—` and said so, which is G4/CR-114 read off a printed sheet for the first time. **The archetype path ran the same day at 46 SECONDS against the DSL path's 93** (`#250`), which is what settled whether the generators earned their place. **EVERY M4 STORY IS NOW CLOSED** (§5.3.1–§5.3.30), the last being the drill itself (`#188`), and **95 chapters are Done under this epic with none left open or re-parented**, which is where `v0.4.95` comes from. **M4-P shipped RJ-012's two extensibility surfaces and found each chapter to be something else underneath**: the builder could not save a field device at all, the media-type editor's real gap was MERGE rather than create, and connector aliases were already resolved and only lacked a writer (§5.3.28, DR-107, `v0.4.93`). **RJ-012 stays two-thirds met**: its third surface, a per-family colour override row in settings, has nowhere to go because `ProjectSettings` has no editor and none is assigned to any milestone (`#805`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); **its parked nudge canvas was then un-parked by DR-106 and built** as a sixth `Panel` section, with its align/distribute arithmetic in core (§5.3.27, `v0.4.90`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moved this criterion**, and that was the point of the row for a fortnight: story after story closed while clause 2 remained a person with a document to read. **It was read on 2026-09-01** (§5.3.30), which is the only thing that could ever have closed it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
-| **M5** | Validation | `M` | **2 of 3** | **PARTIAL**: `UNPERFORMED` | **All 28 rules have predicates, all 28 have their AC-051 pair, and neither of those was true on 2026-09-02.** Clause 1 is `DEMONSTRATED` by `drc_corpus_test.dart`, which `run_local.ps1` runs as a step of its own and whose subject is `kRuleCatalogue` rather than any evaluator enum, so a registered rule without a pair fails the build (§5.4.7). Clause 3 was `VACUOUS` *because no rule existed* and that reason expired; it is now `DEMONSTRATED` in a stronger form than `#310` asked for, since `ExportError` is **sealed with three arms and none of them is about a rule** (§5.4.8, DR-119). **Clause 2 is the whole gap**: the domain-expert sign-off is `UNPERFORMED` and no code discharges it. The pack it needs is generated from the live catalogue and is with the reviewer (§5.4.9), so `#305` and `#306` are the only M5 work that is not buildable by an agent. **Eight of the nine build stories are closed; `M5-H` is the ninth and it IS the sign-off**, which is why the milestone cannot close itself |
-| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **NOT STARTED**: `NOT BUILT` | Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses. **Decomposed 2026-08-10**, exit criterion at DR-037 §11.36.1 (§5.9) |
+| **M5** | Validation | `M` | **3 of 3** | **CRITERION MET**: `CONFIRMED` | **CLOSED 2026-09-07 (DR-135 §11.134).** All three clauses discharged. Clause 1 is `DEMONSTRATED` at **29 of 29** by `drc_corpus_test.dart`, which `run_local.ps1` runs as a step of its own and whose subject is `kRuleCatalogue` rather than any evaluator enum, so a registered rule without a pair fails the build; that is also why it moved from 28 to 29 when DR-132 restored `ELE-005` and no gate had to change (§5.4.7). Clause 3 was `VACUOUS` *because no rule existed* and that reason expired; it is `DEMONSTRATED` in a stronger form than `#310` asked for, since `ExportError` is **sealed with three arms and none of them is about a rule** (§5.4.8, DR-119). **Clause 2 was the whole gap for a fortnight and is `CONFIRMED` on 2026-09-06** (§5.4.11), signed by the reviewing integrator against a pack generated from the live catalogue: **twelve findings, four rulings, six fields the model has and no producer writes**, and the catalog half signed PROVISIONAL on the reviewer's own hedge. **All twenty Stories under epic 23 are `Done` and 61 Chapters beneath them**, which is where `v0.5.61` comes from and why the close itself owes no bump. The successor is **the Plan view, not M6** (DR-029 §11.28.4) |
+| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DiagramCanvas` has no `drawImage`, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **not one of the seven clauses has moved yet**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** and the version is `v0.6.0` at open, 0 of 43 chapters `Done` |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
@@ -5304,7 +5304,7 @@ not, and it never reached docs/06 §9. **It also falsifies the DSL path's "zero 
 which is a claim about the whole route and not about steps 6 to 13. docs/06 is priority-3 and owes
 the correction; the ruling and the code win in the meantime.
 
-### 5.4 M5, Validation · `M` · **3 of 3 discharged**, weakest mark `CONFIRMED` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
+### 5.4 M5, Validation · `M` · **CLOSED 2026-09-07**, 3 of 3 discharged, weakest mark `CONFIRMED` · ~~hard-blocked on M2~~ (block lifted at M2-F, §5.1)
 
 > **Exit criterion, verbatim.** Every one of the **28** rules has a known-bad fixture producing
 > exactly that finding and a known-good near-miss producing none — **no rule ships without its pair**
@@ -5340,13 +5340,22 @@ view**, not M6, on DR-029 §11.28.4 and roadmap §4: M6's criterion is that all 
 paragraph read *"clause 2 above is `UNPERFORMED`, so it is neither discharged nor parked"* and that
 was true until 2026-09-06.
 
-**WHAT IS NOT YET TRUE IS THAT M5 IS CLOSED**, and the distinction is §8.1's: the exit criterion is
-the unit of truth and the clauses are discharged, but DR-127 §11.126 amended M5's scope with five
+**M5 IS CLOSED, 2026-09-07, DR-135 §11.134.** This paragraph read *"what is not yet true is that M5
+is closed"* until then, and the reason it was true is worth keeping: the exit criterion is the unit
+of truth (§8.1) and its clauses were discharged, but DR-127 §11.126 had amended M5's scope with five
 items on the day of the review, four of them unbuilt (`#838`, `#839`, `#840`, `#841`). **A clause
-discharged is not a backlog emptied**, and DR-127 §11.126.4 records the other half: the amendment was
-taken on the ground that M5's buildable work was finished, which had stopped being true by the time
-it was written. **M5's remaining cost should be re-measured before its successor opens rather than
-after**, and that measurement is owed.
+discharged is not a backlog emptied**, and DR-127 §11.126.4 records the other half: that amendment
+was taken on the ground that M5's buildable work was finished, which had stopped being true by the
+time it was written.
+
+**THE RE-MEASUREMENT THIS PARAGRAPH DEMANDED HAS BEEN TAKEN, AND THAT IS WHAT CLOSES M5 RATHER THAN
+THE CLAUSE TABLE ABOVE.** It asked that *"M5's remaining cost be re-measured before its successor
+opens rather than after"*. Measured on 2026-09-07 against the board: **all twenty Stories under epic
+23 are `Done`**, the four DR-127 items among them (§5.4.12 to §5.4.15), and **61 Chapters beneath
+them are `Done` with none open or re-parented**. `#845`, the second sign-off pass, is **not
+outstanding M5 work**: it was re-parented to M9 (epic 27) because it can only be performed against a
+product a team has used, which §5.4.11.3 argued before anybody needed the answer. **The remaining
+cost is zero**, which is a measurement and not a shrug.
 
 #### 5.4.1 M5-0a, the catalogue corrected before the engine exists · CLOSED · `bd71eef`, `91ac48f`, `31eac36`, `6f2ad64`, `4933588`, `aa25cba`
 
@@ -6678,7 +6687,7 @@ started, but **the recruiting lead time is already running against the calendar*
 depend on anything being built. Under DR-006 the population changes (three integrators become three
 internal users on three real jobs, §7.2's M9 row) but the lead time does not.
 
-### 5.9 The Plan view · `L` · NOT STARTED, weakest mark `NOT BUILT` · decomposed 2026-08-10
+### 5.9 The Plan view · `L` · **OPEN since 2026-09-07**, 0 of 7, weakest mark `NOT BUILT` · decomposed 2026-08-10
 
 > **Exit criterion, verbatim** (DR-037 §11.36.1, roadmap §4). An architect's floorplan PDF is
 > imported **without leaving the app**, calibrated from one known dimension, and the rack plus every
@@ -6693,6 +6702,21 @@ internal users on three real jobs, §7.2's M9 row) but the lead time does not.
 **An epic, not a milestone number** (DR-029 §11.28.4), on this board's own precedent (#55 macOS,
 #100 Store). Sequenced **before M6** because M6's criterion is that all four starters export a
 *complete* set, and a plan sheet arriving afterwards would make that criterion run twice.
+
+**OPENED 2026-09-07 BY DR-135 §11.134, OVER A CLOSED M5.** §8.9's condition is that a milestone opens
+only over a predecessor whose clauses are all discharged or parked, and M5's three are discharged
+(§5.4). **Opening discharges nothing here**: all seven clauses below are still `NOT BUILT` or
+`UNPERFORMED`, and the header says `0 of 7` for that reason. §8.9 also says closing is the moment
+that binds and opening is soft, so this line records a fact rather than claiming a permission.
+
+**AND THE REQUEST THAT OPENED IT NAMED M6.** It self-corrected before any work started, which is
+what the note in §5.4 exists for, but the near miss is recorded because the sequencing lives in three
+places (DR-029 §11.28.4, roadmap §4, §5.4 of this file) and was still nearly missed. **`M6-A` does
+not exist as work anybody can start**; the first buildable row of the current epic is `PLAN-A`.
+
+**THIS EPIC TAKES THE `0.6` VERSION BAND** (DR-135 §11.134.4), which pushes M6 to `0.7` and M9 to
+`0.10`. The version at open is `v0.6.0`: 0 of 43 Chapters `Done`, `PLAN-0` (`#589`) being the Story
+that decomposed the epic rather than a Chapter that built anything.
 
 | Clause | Mark | Why |
 |---|---|---|
