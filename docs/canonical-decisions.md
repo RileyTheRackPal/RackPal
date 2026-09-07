@@ -17469,6 +17469,95 @@ amended by DR-129 to say a user *cannot* see the findings. **It becomes
 true again on this commit**, and the record should say so in the same
 place rather than leaving a reader to work out which of two corrections
 is current.
+### §11.133 DR-134 · `carriedProtocols` is deleted, and DR-081's cell is built for the field that survives
+
+**Settled by the user on 2026-09-07** (`#846`), on a finding `#841`'s census raised and on a
+correction to the reasoning that was offered with it.
+
+**A §8.3 AMENDMENT.** It supersedes **DR-081 §11.80.2 in part**: that ruling gave `carriedProtocols`
+and `acceptedFamilies` one multi-select cell between them, and one of the two fields does not survive
+to receive it. The cell is still built. **DR-081 is discharged by this ruling rather than narrowed**,
+which is the user's choice between the two and is the reason the amendment is worth its own commit.
+
+**11.133.1 THE CASE PUT TO THE USER WAS WRONG IN ITS FACTS, AND IS RECORDED BEFORE THE ONE THAT
+REPLACED IT.** `#846` says *"searching the shipped catalogue by protocol matches nothing, and always
+has"*, and it was relayed with the recommendation that *"deleting two dead reads and a field is
+cheaper and more honest than filling it"*. Measured, both halves are false:
+
+| The claim | What the code does |
+|---|---|
+| protocol search matches nothing | it matches. `dante` finds the seeded DSP twice over, by the `audio.dante` family on `dante.pri` / `dante.sec` and by the device's own `dante` tag, and `template_search_test.dart:181` has asserted it since M4 |
+| two dead reads | neither is dead. `templateHasFamilyPrefix` tests `signalFamily` first and `carriedProtocols` second; the search tokeniser already adds `connector.v` and `signalFamily.v` for every port. Both reads are **widenings of paths that work** |
+
+**A finding about a field is not a finding about the feature it is part of.** The census asked
+correctly whether anything outside the device builder reads the field, and answered correctly that
+two things do. The error was reading that as *"the feature those two things implement is broken"*,
+which is a different claim needing a different measurement, and the measurement was available: a
+test names it.
+
+**11.133.2 THE ACTUAL CASE FOR DELETING IT IS BETTER, AND IT IS THAT THE FIELD IS A SECOND COPY.**
+docs/02 §6.2's worked example uses `carriedProtocols` for exactly two things, and the corpus already
+models both, in fields that have a producer **and** a consumer:
+
+- **eARC over HDMI.** `PortDef.returnChannel` has a builder column (`RETURN`, 88 points), seed data
+  (`catalog_audio.dart:224` `ReturnChannel.eArc`, `catalog_field.dart:63` `.arc`), a spring-back rule
+  at `spring_back_rules.dart:354` and a schematic consumer. **§6.2's own example carries the eARC
+  fact twice on one port**, once in `returnChannel` and once in `carriedProtocols`, and only the
+  first of the two is read by anything.
+- **Dante over RJ45.** A family on a dedicated port plus a device tag, as §11.133.1 measures.
+
+So the field is not an unfinished feature. **It is a weaker spelling of two facts the model already
+records properly**, and the version of each that is read is the version that is not this field.
+
+**11.133.3 IT ALSO HAS NO WRITER, WHICH IS THE PART `#846` GOT RIGHT.** `portWithIdentity` copies an
+existing value and the codec reads one off disk. **No gesture in the product sets it**, so every one
+of the 727 seeded ports and every port a person has ever authored carries `[]`. `#846`'s claim that
+*"the device builder CAN set it"* is false for the same reason DR-081 exists: the cell was ordered
+and never built.
+
+**11.133.4 TWO OF DR-081's OWN STATEMENTS ARE CORRECTED HERE, BECAUSE THAT RULING REASONED FROM
+THEM.** Neither correction changes what DR-081 decided; both change why.
+
+- **§11.80.5: *"CR-117 holds because the codec writes no key for an empty list, which is its existing
+  behaviour rather than a new rule."*** **False, and false when it was written.** `_encodePortDef`
+  writes `'carriedProtocols'` and `'acceptedFamilies'` unconditionally, list comprehensions over
+  possibly-empty lists, with no `putIfNotNull` and no pruning pass after. **`apartment.rmpj` carries
+  737 copies of `[]` for this field** and the other three starters carry their own. This is
+  `position`'s defect one field over, which DR-105 §11.104.3 found and fixed in the same file and
+  described in the same words: *"the file carried 727 copies of the origin per starter and said
+  nothing by it."*
+- **§11.80.3: *"Nothing reads `acceptedFamilies` at connect time in v1."*** True on 2026-08-21 and
+  **false since DR-126**, which populated eighteen seeded ports. Three call sites read it at connect
+  time today: `connect_rules.dart:318` (tier 1), `spring_back_rules.dart:423` (`SIG-002`, tier 2) and
+  `insert_converter.dart:156`.
+
+**THE SECOND CORRECTION IS WHY THE CELL IS BUILT RATHER THAN DROPPED WITH THE FIELD**, and it is the
+whole of the user's choice. DR-081 could treat the cell as a convenience because nothing consumed the
+value. **A field that three connect-time call sites read, with no way for a person to correct it, is
+the defect this milestone has now found ten times**, and shipping it knowingly on the day of the
+tenth would be worse than the nine that were accidents.
+
+**11.133.5 THE SCHEMA MOVES TO 4 AND `kMinReaderVersion` DOES NOT, AND BOTH HALVES ARE THE CORPUS'S
+OWN RULE RATHER THAN A NEW ONE.** The trigger for an advance is written in `json_codec.dart` twice in
+the same words: a change is free when *"every file already on disk re-encodes byte for byte"* and
+*"byte-invisible to existing files (CR-117)"*. **Removing this key is neither.** Every `.rmpj` on
+disk loses one key per port, so `migrateV3ToV4` strips it and re-stamps, on `migrateV2ToV3`'s
+precedent and in its shape.
+
+**`kMinReaderVersion` STAYS AT 3, WHICH IS NOT BOOKKEEPING EITHER.** DR-081's v1-to-v2 reasoning
+raises the stamp when this build would emit bytes an older reader **throws** on. A schema-3 reader
+meeting a schema-4 file calls `json['carriedProtocols'] ?? const <Object?>[]`, gets `[]`, and is
+correct: **`[]` is the only value this field has ever held in any file**, so there is nothing an
+older reader can lose by not finding it. Raising the stamp would refuse a file that opens perfectly.
+
+**11.133.6 WHAT THIS DOES NOT RULE.** It does not touch `acceptedFamilies`' meaning: **DR-081
+§11.80.5's distinction stands**, an empty list is the statement *this port constrains nothing* and
+not an unknown, and the multi-select must not introduce a third state to be helpful. It does not
+prune the empty `acceptedFamilies` key from the encoder, which is a separate question with §11.80.5's
+answer pointing the other way and no measurement behind it yet. It does not move `channelIndex`,
+which DR-081 put on the port-set surface and which stays there. And it does not add, arm or re-tier
+any validation rule.
+
 
 ## 12. Superseded rulings
 
@@ -18070,6 +18159,15 @@ label onto two drops.
 | **RJ-012**, the signal-family limb | "Not shipping in v1: a signal-family editor, a colour-scheme editor, and a rule editor." | **A signal-family editor ships in v1, restricted to CLONE-FROM-EXISTING** (DR-122 §11.121.2). **The colour-scheme editor and the rule editor are still refused**, and so is a connector-type editor. RJ-012's REASONING is not overruled but satisfied: it objected that a hand-rolled family *"produces silently wrong validation"*, and a clone inherits every field a rule reads, so there is no blank form to hand-roll from. |
 | **RJ-012**, the extensibility claim | "media types and colours are user-extensible; signal families and connector types are catalog-updated" | **"Media types and colours are user-extensible, signal families are user-extensible BY CLONE, and connector types remain catalog-updated."** The old sentence is written at **eight sites in six documents**: `docs/01` §256, `docs/02` §826, `docs/07` §70 and §300, `docs/10`'s DR-025 row, canon §4119 and §7781, and `docs/catalog/seed-devices.md` §1461. All are edited rather than pointered, per the corpus table. |
 | **DR-025 §11.24.3** | `@signal=` refuses an unknown value *"since §3 keeps signal families catalog-updated"* | **Unchanged in effect, and its reason is restated rather than removed** (DR-122 §11.121.5). A clone needs a parent a person chose, so no typed token can mint a family and the modifier still refuses. |
+### 12.32 Superseded by DR-134 (`carriedProtocols` is deleted and DR-081's cell is built)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-081 §11.80.2** | "`acceptedFamilies` and `carriedProtocols` get a **multi-select cell** over the seeded signal families." | **Superseded in part: the cell is built for `acceptedFamilies` alone**, because `PortDef.carriedProtocols` no longer exists (DR-134 §11.133.2). **The clause that was doing the work is untouched**: *"THE CELL SHAPE IS THE DELIVERABLE, NOT THE TWO COLUMNS."* It was always one control, and it lands as one. `channelIndex`'s integer cell on the port-set surface is not disturbed. |
+| **DR-081 §11.80.3**, the reason the cell was safe | "**Nothing reads `acceptedFamilies` at connect time in v1.** The value is authored, persisted, and available to whatever describes a port." | **True when written and false since DR-126**, which populated eighteen seeded ports. Three call sites read it at connect time: `connect_rules.dart:318`, `spring_back_rules.dart:423` (`SIG-002`) and `insert_converter.dart:156` (DR-134 §11.133.4). **The clause's PROTECTION is undisturbed and was never about this**: it exists to stop a validation rule shipping outside M5's registry without AC-051's fixture pair, and no rule is added, armed or re-tiered here. What changes is the urgency, in the opposite direction from the one that would let the cell wait: a field three connect-time call sites read, with no gesture that can correct it, is why the cell is built now rather than parked. |
+| **DR-081 §11.80.5**, the CR-117 half | "CR-117 holds because **the codec writes no key for an empty list**, which is its existing behaviour rather than a new rule." | **False, and false when it was written.** `_encodePortDef` writes both list keys unconditionally with no pruning, so `apartment.rmpj` carries **737 copies of `[]`** for `carriedProtocols` alone (DR-134 §11.133.4). This is `position`'s defect one field over, in the same function, which DR-105 §11.104.3 found and described in the same words. **The rest of §11.80.5 stands and is load-bearing**: an empty list is the statement *this port constrains nothing*, not an unknown, and the multi-select must not add a third state. Pruning the empty `acceptedFamilies` key is a separate question that §11.80.5's own reasoning points away from, and is not ruled here. |
+| **CR-117**, the byte round-trip, for this one change | `write(read(bytes)) == bytes`, keys sorted. | **Unchanged as a rule and satisfied by a schema advance rather than by an exemption.** Removing the key changes the bytes of every file on disk, which is the corpus's own stated trigger for moving `kSchemaVersion`, so it moves to **4** with `migrateV3ToV4` on `migrateV2ToV3`'s precedent. **`kMinReaderVersion` stays at 3**: a schema-3 reader tolerates the absent key and `[]` is the only value the field has ever held in any file, so an older reader loses nothing by not finding it (DR-134 §11.133.5). |
+
 
 ## 13. Resolved §10 questions
 
