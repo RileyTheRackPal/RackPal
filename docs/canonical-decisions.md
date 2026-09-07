@@ -17552,13 +17552,37 @@ correct: **`[]` is the only value this field has ever held in any file**, so the
 older reader can lose by not finding it. Raising the stamp would refuse a file that opens perfectly.
 
 **11.133.6 WHAT THIS DOES NOT RULE.** It does not touch `acceptedFamilies`' meaning: **DR-081
-§11.80.5's distinction stands**, an empty list is the statement *this port constrains nothing* and
-not an unknown, and the multi-select must not introduce a third state to be helpful. It does not
+§11.80.5's DISTINCTION stands**, an empty list is a statement and not an unknown, and the
+multi-select must not introduce a third state to be helpful. **Its WORDING does not survive contact
+with the cell**, and that is worth separating from the distinction it was making: §11.80.5 spells the
+statement *"this port constrains nothing"*, and `ConnectTarget.acceptsFamily` is
+`signalFamily == f || acceptedFamilies.contains(f)`, so the list only ever WIDENS and an empty one is
+the NARROWEST state rather than the loosest. The cell therefore reads **`Own family only`**, which is
+what the port does; a cell reading *no constraint* would tell an installer the opposite. It does not
 prune the empty `acceptedFamilies` key from the encoder, which is a separate question with §11.80.5's
 answer pointing the other way and no measurement behind it yet. It does not move `channelIndex`,
 which DR-081 put on the port-set surface and which stays there. And it does not add, arm or re-tier
 any validation rule.
 
+**11.133.7 ONE CONSEQUENCE THE IMPLEMENTATION FOUND, RECORDED BECAUSE THE RULING DID NOT SEE IT.**
+`.rmdx` and `.rmda` carry a `TemplateBody` written by the same `templateBodyToJson`, and a
+`contentHash` taken over its canonical bytes. **Those bytes move here**, so every device-exchange
+file written before this ruling would import reporting a content mismatch, for a reason that has
+nothing to do with its content.
+
+**`kRmdxSchemaVersion` therefore moves to 2**, its own chain being independent of `.rmpj`'s by
+AC-050/A8.2, and the step strips the key. **`migrateRmdxToCurrent` shipped EMPTY at M4-M and said
+what it was for**: *"the SEAM plus the refusal, so that the first person to bump
+`kRmdxSchemaVersion` adds a row to a table that already exists instead of discovering that `.rmdx`
+never had a chain and inventing one under deadline."* That person arrived nine days later and it was
+a row.
+
+**THE MIGRATION RECOMPUTES THE HASH, AND THAT COST IS TAKEN DELIBERATELY.** A recomputed hash cannot
+attest to what the exporter wrote, so a migrated file verifies against itself and nothing more. The
+alternative is worse: a warning that fires on every older file is one a person learns to click past,
+and the check is then gone for the files it was built for. **Only the migration recomputes**;
+a file already at the current version is compared as written, so tamper evidence still means what it
+says for everything written from here on.
 
 ## 12. Superseded rulings
 

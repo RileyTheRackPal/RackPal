@@ -40,6 +40,8 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:rackpal_core/src/library/template_hash.dart'
+    show templateContentHash;
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/persistence/codec.dart';
 import 'package:rackpal_core/src/persistence/json_codec.dart';
@@ -56,7 +58,13 @@ import 'package:rackpal_core/src/util/outcome.dart';
 /// never have to move together: a device template's shape is not a
 /// project's shape and coupling them would make every project migration
 /// a template migration for no reason.
-const int kRmdxSchemaVersion = 1;
+/// **2 SINCE DR-134 §11.133**, which deleted `PortDef.carriedProtocols`.
+/// The body of a `.rmdx` is written by `templateBodyToJson`, so a file
+/// exported before that change carries the key on every port AND a
+/// `contentHash` taken over bytes that include it. Left alone, every such
+/// file would import reporting a content mismatch, which is a false alarm
+/// that trains a person to ignore a real one.
+const int kRmdxSchemaVersion = 2;
 
 /// The root `kind` tag every `.rmdx` carries (docs/06 §7.3).
 ///
@@ -303,14 +311,13 @@ Outcome<DeviceTemplateFile> readRmdxJsonTree(JsonMap raw) {
 /// The `.rmdx` migration chain: `storedSchemaVersion` to
 /// [kRmdxSchemaVersion]. Never throws (CR-093).
 ///
-/// **EMPTY TODAY AND THAT IS THE POINT OF BUILDING IT NOW.** There is
-/// exactly one `.rmdx` schema version, so there is exactly one step and
-/// it is the identity. What this function actually buys is the SEAM plus
-/// the refusal below, so that the first person to bump
-/// [kRmdxSchemaVersion] adds a row to a table that already exists instead
-/// of discovering that `.rmdx` never had a chain and inventing one under
-/// deadline. AC-050/A8.2 requires the chain; nothing said it had to have
-/// steps in it.
+/// **IT WAS EMPTY UNTIL DR-134 AND THE SEAM PAID FOR ITSELF.** This
+/// function's own words were that it buys "the SEAM plus the refusal
+/// below, so that the first person to bump [kRmdxSchemaVersion] adds a
+/// row to a table that already exists instead of discovering that `.rmdx`
+/// never had a chain and inventing one under deadline". That person
+/// arrived, and adding v1 to v2 was a row. AC-050/A8.2 requires the
+/// chain; nothing said it had to have steps in it, and now it has one.
 ///
 /// **A version this build cannot reach is an ERROR, not a shrug**, which
 /// is `UnmigratableSchemaError`'s argument transplanted: the contract to
@@ -325,10 +332,56 @@ Outcome<JsonMap> migrateRmdxToCurrent(
   required int storedSchemaVersion,
 }) {
   if (storedSchemaVersion == kRmdxSchemaVersion) return Ok(raw);
+  if (storedSchemaVersion == 1) return _migrateRmdxV1ToV2(raw);
   return Err(
     MalformedRmdxError(
       'no migration from $_kSchemaVersion $storedSchemaVersion to '
       '$kRmdxSchemaVersion',
     ),
   );
+}
+
+/// v1 to v2: `PortDef.carriedProtocols` is gone (DR-134 §11.133).
+///
+/// **AND THE `contentHash` IS RECOMPUTED, WHICH IS THE HALF THAT NEEDED A
+/// DECISION.** That value is tamper evidence: it is taken over
+/// `templateBodyToJson`'s canonical bytes, and this migration changes
+/// those bytes, so every v1 file would otherwise import reporting
+/// `mismatched` for a reason that has nothing to do with its content.
+///
+/// A recomputed hash cannot attest to what the exporter wrote, and that
+/// is the cost, taken deliberately. The alternative is worse: a warning
+/// that fires on every older file is one a person learns to click past,
+/// and then the check is gone for the files it was built for. Verification
+/// still means what it says for anything written at v2, which is every
+/// file from here on.
+///
+/// **IT DECODES TO RECOMPUTE, RATHER THAN HASHING THE STRIPPED MAP.**
+/// The two agree today and would stop agreeing the first time the codec
+/// normalises anything on read; `templateContentHash` is the one speller
+/// of this value and going through it is what keeps that true.
+Outcome<JsonMap> _migrateRmdxV1ToV2(JsonMap raw) {
+  try {
+    final migrated = JsonMap.of(raw);
+    final body = migrated[_kBody];
+    if (body is Map) {
+      final ports = body['ports'];
+      if (ports is List) {
+        for (final port in ports) {
+          if (port is! Map) continue;
+          port.remove('carriedProtocols');
+        }
+      }
+      migrated[_kContentHash] = templateContentHash(
+        templateBodyFromJson(asJsonMap(body, 'rmdx.$_kBody')),
+      );
+    }
+    migrated[_kSchemaVersion] = kRmdxSchemaVersion;
+    return Ok(migrated);
+  } on Object catch (e) {
+    // A MALFORMED BODY IS THE DECODER'S ERROR TO REPORT, not this
+    // function's to swallow: `readRmdxJsonTree` decodes next and names
+    // the real key path.
+    return Err(e);
+  }
 }
