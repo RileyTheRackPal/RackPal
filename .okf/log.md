@@ -2,6 +2,36 @@
 
 ## 2026-09-07
 
+* **Ruling**: [DR-135](/decisions/dr-135-m5-closes-and-the-minor-stops-being-a-milestone.md).
+  **M5 is CLOSED** and **the Plan view is OPEN**, which is §8.9's condition met
+  rather than assumed. The version band moves to `0.6`.
+* **Note**: **WHAT CLOSED M5 WAS NOT THE CLAUSE TABLE.** All three clauses had
+  been discharged since 2026-09-06. What was outstanding was one sentence
+  DR-127 §11.126.4 left behind, *"M5's remaining cost should be re-measured
+  before its successor opens rather than after"*, and it was outstanding
+  because DR-127 had amended M5's scope with five items on the day of the
+  review. Measured: twenty Stories `Done`, 61 `Done` Chapters, none open or
+  re-parented, and `#845` living under M9 where §5.4.11.3 put it. **A clause
+  discharged is not a backlog emptied**, and the way to tell the two apart is
+  to count rather than to look.
+* **Note**: **THE REQUEST SAID M6, AND THE ANSWER IS THE PLAN VIEW.** DR-029
+  §11.28.4, roadmap §4 and docs/12 §5.4 all sequence the Plan view between M5
+  and M6, because M6's criterion is a *complete* sheet set and a plan sheet
+  arriving afterwards would make that criterion run twice. It self-corrected
+  before anything was built. **Kept in the record because the sequencing lives
+  in three documents and was still nearly missed**, which is the argument for
+  writing it a fourth time rather than against.
+* **Note**: **THE EPIC HAD NO NUMBER FOR THE VERSION SCHEME TO READ.** docs/14
+  §14.0 says the minor is *"the milestone epic under development"* and spells
+  `M2 ⇒ 2`. DR-029 gave the Plan view no milestone number on purpose, so there
+  was no digit to read. The user ruled `0.6`, so the minor now means the epic's
+  **position in the plan's order** and M6 to M9 shift to `0.7` to `0.10`.
+* **Note**: **THE SAME RENUMBERING WAS REFUSED AT DR-029 AND TAKEN HERE, FOR A
+  REASON WORTH KEEPING.** A milestone number is duplicated into hundreds of
+  task titles, four section headers, a cost table and dozens of canon
+  references. A version minor lives in six files with one gate over them.
+  **Renumbering costs whatever the number has been duplicated into**, so
+  neither answer is evidence for the other.
 * **Ruling**: [DR-134](/decisions/dr-134-carried-protocols-was-a-second-copy.md),
   a §8.3 amendment. `PortDef.carriedProtocols` is **deleted**, and the
   multi-select cell DR-081 ordered is **built** for `acceptedFamilies`,
