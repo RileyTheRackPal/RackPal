@@ -2845,7 +2845,36 @@ class _PortRow extends StatelessWidget {
           ? null
           : _port.renamedFrom.map((k) => k.v).join(', '),
     ),
+    // THE GRID'S ONLY MULTI-SELECT (DR-081 §11.80.2, built at DR-134).
+    PortColumnId.acceptedFamilies => PortAcceptsCell(
+      registries: registries,
+      value: _port.acceptedFamilies,
+      onChanged: _setAccepts,
+    ),
   };
+
+  /// [_set] for the one list-valued column.
+  ///
+  /// **A SEPARATE PATH BECAUSE `_set`'s NO-OP CHECK IS `==`**, which on a
+  /// `List` is identity: every toggle would pass it, and so would a
+  /// re-pick that changed nothing, filing an undo entry that appears to
+  /// do nothing when reverted. `acceptedFamiliesEqual` is core's rule and
+  /// the fill path uses the same one, so the two cannot come to disagree
+  /// about what an edit is.
+  void _setAccepts(List<SignalFamilyId> value) {
+    const id = PortColumnId.acceptedFamilies;
+    if (onBatchWrite(_port.key.v, id, value)) return;
+    final from = PortDefField.acceptedFamilies.get(_port);
+    if (acceptedFamiliesEqual(from, value)) return;
+    actions.run(
+      SetPortFieldCommand<List<SignalFamilyId>>(
+        port: _port.key,
+        field: PortDefField.acceptedFamilies,
+        from: from,
+        to: value,
+      ),
+    );
+  }
 
   static String? _orNull(String v) => v.trim().isEmpty ? null : v.trim();
 }

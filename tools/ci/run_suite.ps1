@@ -429,7 +429,7 @@ $SuiteFloors = @{
     # pair proves ELE-005 fires; these prove it COUNTS honestly, which is
     # what a load rule gets wrong while passing its pair. One of them
     # caught the amplifier being reported as a speaker nobody measured.
-    'rackpal_core'   = 4065
+    'rackpal_core'   = 4087
     'rackpal_text'   = 1
     'rackpal_export' = 195
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
@@ -451,7 +451,7 @@ $SuiteFloors = @{
     # them mount the drawer, which is how DrcPanel passed its own suite
     # for two days while nothing in the product mounted it; the tenth
     # mounts RackCanvasScreen and is the assertion #847 IS.
-    'rackpal_ui'     = 1524
+    'rackpal_ui'     = 1532
     'rackpal_app'    = 916
 }
 

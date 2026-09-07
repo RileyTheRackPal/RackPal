@@ -71,16 +71,15 @@ final class PortField<T> {
 /// **ONE ENTRY PER COLUMN, AND NO ENTRY WITHOUT ONE.** The table opened at
 /// nine, for the reason `TemplateBodyField` opened at five, and grew when
 /// M4-E3 gave the packs their cells. It does not grow ahead of them:
-/// `channelIndex` and `acceptedFamilies` are on the model, have no column,
-/// and are therefore absent here rather than sitting as accessors nothing
-/// calls, which is the state this package already found `NetworkConfig`
-/// in.
+/// `channelIndex` is on the model, has no column, and is therefore absent
+/// here rather than sitting as an accessor nothing calls, which is the
+/// state this package already found `NetworkConfig` in.
 ///
-/// **THE LIST WAS THREE UNTIL DR-134**, which deleted `carriedProtocols`
-/// rather than giving it the cell DR-081 ordered: it modelled two facts
-/// the model already carried elsewhere, and nothing ever wrote it
-/// (§11.133.2). `acceptedFamilies` gets that cell, and this comment is
-/// what should stop saying so when it lands.
+/// **THE WAITING LIST WAS THREE AND IS NOW ONE.** `carriedProtocols` was
+/// deleted rather than given the cell DR-081 ordered, because it modelled
+/// two facts the model already carried and nothing ever wrote it; the same
+/// ruling built that cell for `acceptedFamilies`, which is the entry below
+/// with a `List` type (DR-134 §11.133).
 ///
 /// `key` is NOT here, and cannot be: `PortDef.key` is `final`, so renaming
 /// one is a replacement rather than a write. See [RenamePortKeyCommand].
@@ -466,6 +465,23 @@ abstract final class PortDefField {
     set: _setPanelPosition,
   );
 
+  /// The families this port accepts BEYOND its own (DR-081 §11.80.2,
+  /// built at DR-134 §11.133).
+  ///
+  /// **THE ONLY LIST-VALUED ENTRY IN THIS TABLE**, and both accessors
+  /// COPY, which the scalar ones have no reason to do. The getter hands
+  /// back an unmodifiable view so no caller can edit a port through a
+  /// read, and the setter takes its own copy so two ports filled from one
+  /// value do not end up sharing a `List` that a later edit to either
+  /// mutates for both. `SetPortFieldCommand` stores `from` and `to` for
+  /// its revert, so an aliased list would make undo restore the value it
+  /// was undoing.
+  static const acceptedFamilies = PortField<List<SignalFamilyId>>(
+    key: 'acceptedFamilies',
+    get: _getAcceptedFamilies,
+    set: _setAcceptedFamilies,
+  );
+
   /// Every entry above. The unit test walks this to prove no two share a
   /// [PortField.key] and that no accessor pair is aliased onto another
   /// field, which is the census M4-A's field table needed three attempts
@@ -520,8 +536,14 @@ abstract final class PortDefField {
     conductorCount,
     returnChannel,
     order,
+    acceptedFamilies,
   ];
 }
+
+List<SignalFamilyId> _getAcceptedFamilies(PortDef p) =>
+    List<SignalFamilyId>.unmodifiable(p.acceptedFamilies);
+void _setAcceptedFamilies(PortDef p, List<SignalFamilyId> v) =>
+    p.acceptedFamilies = [...v];
 
 String _getLabel(PortDef p) => p.label;
 void _setLabel(PortDef p, String v) => p.label = v;

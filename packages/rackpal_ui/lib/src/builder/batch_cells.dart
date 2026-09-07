@@ -79,6 +79,26 @@ Widget? buildBatchCell({
       onPick: onWrite,
     );
   }
+  // THE LIST COLUMN, WHICH MUST BE NAMED BEFORE `portColumnOptions` IS
+  // ASKED (DR-134 §11.133). That function answers null for it, and the
+  // open-column arm below would then hand a `List` to `PortTextCell` as
+  // a `String?` and throw. Registry-resolved sets are exactly the case
+  // the two ID columns above are placed first for; this is the third.
+  if (column == PortColumnId.acceptedFamilies) {
+    return PortAcceptsCell(
+      key: batchCellKey(column),
+      registries: registries,
+      // NOTHING TICKED WHEN THE ROWS DISAGREE. A mixed selection holds no
+      // set, and pre-ticking one row's would make the dock look like the
+      // answer for all of them.
+      value: mixed == null
+          ? ((value as List?)?.cast<SignalFamilyId>() ??
+                const <SignalFamilyId>[])
+          : const <SignalFamilyId>[],
+      mixedLabel: mixed,
+      onChanged: onWrite,
+    );
+  }
 
   final options = portColumnOptions(column);
   if (options == null) {
