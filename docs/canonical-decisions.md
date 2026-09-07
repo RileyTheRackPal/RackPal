@@ -17755,9 +17755,28 @@ and this product receives line art on white. The rule was imported from the doma
 right into the domain where it is wrong, and it read as self-evident in both.
 
 **11.136.2 THE CHANGE.** Container members are written with the same deflate level as
-`document.json` (`kContainerDeflateLevel`, level 6). `CompressionType.none` is removed. On this
-set: **1,557,118 bytes saved over 18 sheets**, and **98,160 bytes on the single sheet a user
-actually imports.**
+`document.json`: the existing `kContainerDeflateLevel`, which is `DeflateLevel.bestCompression`
+and therefore **9**. No new constant, and the per-member `CompressionType.none` override is
+removed rather than replaced, so "every entry is treated alike" is expressed by the absence of a
+branch.
+
+**MEASURED IN THE CONTAINER RATHER THAN IN `zlib`**, because the container is the artifact and the
+raw ratio is only a proxy for it:
+
+| `whole_house.rmpj` plus | STORE (before) | DEFLATE (after) | Saved |
+|---|---|---|---|
+| A-2.1, the sheet a user imports | 331,776 | **234,165** | **97,611** |
+| all 18 sheets | 9,769,984 | **8,235,004** | **1,534,980** |
+
+CR-117 was re-checked on the real member rather than on a fixture: the underlay round-trips byte
+for byte, and `write(read(bytes)) == bytes` holds on the container that carries it.
+
+**THIS CLAUSE SAID "level 6" IN ITS FIRST DRAFT, WHICH WAS A CLAIM ABOUT A CONSTANT MADE WITHOUT
+READING IT**, in the same session that added `a wrong ruling ID resolves` to the bundle for
+precisely that shape of error. The measured difference is immaterial and is recorded so the
+choice is not mistaken for a considered one: level 9 saves **34.3%** in **6.2 ms** on the realistic
+import against level 6's **34.1%** in **5.7 ms**. Level 1 is the only level that trades materially,
+at 28.4% in 2.1 ms, and it was offered and declined.
 
 **11.136.3 THE SURVIVING OBJECTION IS ANSWERED BY AN EXPOSURE THAT ALREADY EXISTS.** CR-117 on the
 zip path now depends on the deflate implementation reproducing identical output for the underlay as
@@ -17796,14 +17815,14 @@ on an estimate: *"a 2 MB PNG becomes roughly 2.7 MB of inline text"*, a 35% infl
 | | Bytes |
 |---|---|
 | `whole_house.rmpj` today, plain JSON | 745,646 |
-| the same document plus A-2.1 as an underlay, as a container | **331,776** |
+| the same document plus A-2.1 as an underlay, as a container | **234,165** |
 
-**Adding a floorplan makes the project file 55% SMALLER than it was without one**, because the
+**Adding a floorplan makes the project file 69% SMALLER than it was without one**, because the
 underlay flips the format from plain JSON to a container and the JSON then deflates **16.3x**
 (745,646 to 45,734). AC-006 re-justified plain JSON against a corrected ~600 KB figure;
-`whole_house` is over that today at 728 KB and lands **under** it the moment a plan is added. The
-whole 18-sheet set as underlays is 9,541 KB, of which 9,495 KB is images and the document is
-effectively free.
+`whole_house` is over that today at 728 KB and lands **far under** it the moment a plan is added,
+which is the opposite of what the budget was braced for. All 18 sheets as underlays is 8,235,004
+bytes, almost all of it image: the document is effectively free inside its own container.
 
 **11.136.6 THE PLAN SET IS NOT COMMITTED, AND THE REASON IS GIT RATHER THAN SIZE.** It carries a
 licensed engineer's seal and licence number, the firm's name, the builder's mark and an address

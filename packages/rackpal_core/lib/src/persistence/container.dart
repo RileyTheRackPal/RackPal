@@ -54,23 +54,48 @@
 //      build fails instead of the round-trip quietly breaking.
 //
 // ═══════════════════════════════════════════════════════════════════════
-// BINARY MEMBERS ARE STORED, NOT DEFLATED, AND IT IS NOT ABOUT SIZE
+// EVERY MEMBER IS DEFLATED, INCLUDING THE RASTERS (DR-137)
 // ═══════════════════════════════════════════════════════════════════════
-// A PNG or JPEG is already compressed; deflating it again buys ~nothing
-// and costs real time at level 9 on a multi-megabyte architectural page,
-// which is the worst case for match-finding. Two better reasons than
-// speed:
+// THIS BLOCK SAID THE OPPOSITE UNTIL 2026-09-07, in four confident
+// sentences, and measurement against the first real plan set this project
+// was ever given falsified two of them.
 //
-//   * **The underlay's bytes then appear VERBATIM in the container**, so
-//     CR-117 on the zip path does not depend on the deflate
-//     implementation producing identical output for the largest member in
-//     the file. That is one fewer thing a dependency bump can move.
-//   * The file opens in any zip tool with the architect's original page
-//     inside it, which is what a person reaches for when the app will not
-//     open the project.
+// It read: *"A PNG or JPEG is already compressed; deflating it again buys
+// ~nothing and costs real time at level 9 on a multi-megabyte
+// architectural page."* Both halves are wrong for the input this product
+// actually receives.
 //
-// `document.json` IS deflated, because pretty-printed key-sorted JSON is
-// the one member where it pays.
+//   * **BUYS ~NOTHING: FALSE.** All 18 sheets of an ARCH D permit set
+//     deflate, from 7.0% to 34.3%, mean 16.0%. **The FLOOR PLANS deflate
+//     BEST**, the first-floor plan at 34.3%, because a floor plan is
+//     mostly white and JPEG's entropy coding leaves that redundancy on
+//     the table. The dense structural-notes sheets deflate worst.
+//   * **COSTS REAL TIME: FALSE.** At this container's existing level
+//     (`bestCompression`, 9) that floor plan (286,197 bytes) deflates in
+//     **6.2 ms**. All 18 sheets at once is ~230 ms, and AC-006 §5 already
+//     moved save to `Isolate.run`. The old sentence named level 9 as the
+//     expensive case and it is the one measured here.
+//
+// **THE MISTAKE GENERALISES AND IT IS NOT ABOUT ZIP.** "Already-compressed
+// rasters do not deflate" is a true statement about PHOTOGRAPHS and a
+// false one about LINE ART ON WHITE. The rule was imported from the domain
+// where it holds into the domain where it does not, and read as
+// self-evident in both.
+//
+// ONE ARGUMENT FOR STORING SURVIVED, AND IT IS ANSWERED RATHER THAN
+// IGNORED: storing made the underlay's bytes appear VERBATIM, so CR-117
+// on the zip path did not depend on the deflate implementation
+// reproducing the largest member exactly. **That exposure is not new.**
+// `document.json` has been deflated in this same container since PLAN-B,
+// so a dependency bump that moved the deflate stream already broke the
+// round-trip; this widens an existing surface rather than opening one, and
+// `container_identity_test.dart` fails loudly on the day it moves.
+//
+// A FOURTH REASON WAS ALSO GIVEN AND ARGUED FOR NOTHING: *"the file opens
+// in any zip tool with the architect's original page inside it."* Every
+// zip tool inflates a deflated entry, so that sentence was true either
+// way and decided nothing. It is recorded because a reason that does not
+// discriminate is worse than no reason: it makes a list look longer.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // A ZIP IS A DECOMPRESSION-BOMB SURFACE AND THIS FORMAT NOW HAS ONE
@@ -394,12 +419,11 @@ Uint8List writeContainerBytes(
   final names = <String>[kDocumentMember, ...members.keys]..sort();
   for (final name in names) {
     final data = name == kDocumentMember ? documentBytes : members[name]!;
-    final file = ArchiveFile.bytes(name, data);
-    if (name != kDocumentMember) {
-      // Already-compressed rasters are STORED. See the file header.
-      file.compression = CompressionType.none;
-    }
-    archive.add(file);
+    // NO PER-MEMBER COMPRESSION OVERRIDE (DR-137). Every entry takes
+    // `kContainerDeflateLevel`, including the rasters. The old arm set
+    // `CompressionType.none` for anything that was not `document.json`,
+    // on a size claim that measurement disproved. See the file header.
+    archive.add(ArchiveFile.bytes(name, data));
   }
 
   return ZipEncoder().encodeBytes(

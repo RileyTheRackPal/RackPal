@@ -32,8 +32,15 @@ final Uint8List _doc = Uint8List.fromList(
   utf8.encode('{\n  "schemaVersion": 4,\n  "id": "abc",\n  "racks": []\n}'),
 );
 
-/// Two members, deliberately NOT in sorted order in the source map, and
-/// with incompressible-looking content so STORE vs DEFLATE is visible.
+/// Two members, deliberately NOT in sorted order in the source map.
+///
+/// **THE COMMENT HERE CLAIMED "incompressible-looking content" AND THE
+/// CONTENT IS NOTHING OF THE KIND**: `(i * 37 + 11) % 256` is a periodic
+/// ramp, and it deflates 2.2x. The claim went unchecked because the test
+/// it served only ever asked which compression METHOD the header named,
+/// which the old writer answered by a branch rather than by the data.
+/// Kept as it is, with an honest description, because sort order is what
+/// these two exist to exercise (DR-137).
 Map<String, Uint8List> _members() => <String, Uint8List>{
   'underlays/zzz-level-2.png': Uint8List.fromList(
     List<int>.generate(600, (i) => (i * 37 + 11) % 256),
@@ -115,9 +122,10 @@ void main() {
         final m = _members();
         for (final name in order) {
           final data = name == kDocumentMember ? _doc : m[name]!;
-          final f = ArchiveFile.bytes(name, data);
-          if (name != kDocumentMember) f.compression = CompressionType.none;
-          a.add(f);
+          // No per-member compression override, matching the writer
+          // since DR-137. If this drifts from `writeContainerBytes` the
+          // test stops isolating ORDER, which is its whole point.
+          a.add(ArchiveFile.bytes(name, data));
         }
         return ZipEncoder().encodeBytes(
           a,
@@ -220,31 +228,59 @@ void main() {
       );
     });
 
-    test('the JSON member is DEFLATED and binary members are STORED', () {
+    test('EVERY member is deflated, rasters included (DR-137)', () {
+      // This asserted method 0 for the two binary members until
+      // 2026-09-07, on the claim that an already-compressed raster does
+      // not deflate. Measured against a real ARCH D permit set, all 18
+      // sheets deflate and the FLOOR PLANS deflate best, at 34.3%,
+      // because line art on white is not a photograph. Canon §11.136.
       final headers = _localHeaders(writeContainerBytes(_doc, _members()));
       final byName = {for (final h in headers) h.$1: h.$2};
 
-      expect(byName[kDocumentMember], 8, reason: 'deflate');
-      expect(byName['underlays/aaa-level-1.png'], 0, reason: 'store');
-      expect(byName['underlays/zzz-level-2.png'], 0, reason: 'store');
+      for (final name in [
+        kDocumentMember,
+        'underlays/aaa-level-1.png',
+        'underlays/zzz-level-2.png',
+      ]) {
+        expect(byName[name], 8, reason: 'deflate for $name');
+      }
     });
 
-    test("a stored member's bytes appear VERBATIM in the container, which "
-        'is what takes deflate out of the round trip for rasters', () {
+    test('a member survives the container byte for byte, which is the '
+        'obligation the old STORE arm was a proxy for', () {
+      // THIS REPLACED A TEST THAT SEARCHED THE ZIP FOR THE MEMBER'S RAW
+      // BYTES (DR-137). That test proved storage rather than fidelity:
+      // verbatim embedding was one WAY to keep the round trip honest, and
+      // asserting the way instead of the obligation is exactly what house
+      // style calls pinning the mechanism. The obligation is CR-117, and
+      // it is asserted here directly, so it keeps holding under a
+      // compression policy the test does not know about.
       final members = _members();
-      final needle = members['underlays/aaa-level-1.png']!;
       final zip = writeContainerBytes(_doc, members);
+      final parts = (readContainerParts(zip) as Ok<ContainerParts>).value;
 
-      var found = -1;
-      outer:
-      for (var i = 0; i + needle.length <= zip.length; i++) {
-        for (var j = 0; j < needle.length; j++) {
-          if (zip[i + j] != needle[j]) continue outer;
-        }
-        found = i;
-        break;
+      expect(parts.documentBytes, _doc);
+      for (final entry in members.entries) {
+        expect(parts.members[entry.key], entry.value, reason: entry.key);
       }
-      expect(found, greaterThanOrEqualTo(0));
+    });
+
+    test('DEFLATING THE RASTER IS NOT FREE MOTION: the container is '
+        'materially smaller than storing would make it', () {
+      // The claim DR-137 turns on, at fixture scale. A member shaped like
+      // line art (long runs of one value, which is what a floor plan is)
+      // must come out smaller than its input, or the ruling bought
+      // nothing and this file should say so.
+      final lineArt = Uint8List.fromList(
+        List<int>.generate(4000, (i) => i % 97 == 0 ? 0 : 255),
+      );
+      final zip = writeContainerBytes(_doc, {'underlays/plan.png': lineArt});
+
+      expect(
+        zip.length,
+        lessThan(lineArt.length),
+        reason: 'the whole container, headers included, beats the raw member',
+      );
     });
   });
 
