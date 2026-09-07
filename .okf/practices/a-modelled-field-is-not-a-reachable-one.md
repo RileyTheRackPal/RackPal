@@ -1,8 +1,8 @@
 ---
 type: Playbook
 title: A modelled field is not a reachable one; look for the gesture, not the field
-description: Fields with no writer, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, a panel nothing mounts, a note found by censusing a ruling's own escape hatch, and a field with a producer and no consumer that a new ruling nearly added a second copy of. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
-tags: [practice, model, commands, verification, catalog, ui, dr-124, dr-125, dr-126, dr-128, dr-129, dr-130, dr-131, dr-132, dr-133, m5]
+description: Fields with no writer, an ERROR TYPE with no producer, a callback with no caller, one field whose only writer is the JSON decoder, a missing producer that was the seed catalogue's own port builder, a field the panel never read, a panel nothing mounts, a note found by censusing a ruling's own escape hatch, and a field with a producer and no consumer that a new ruling nearly added a second copy of. Ask what a person clicks, follow it down, and remember that a widget test supplies the step it is meant to prove.
+tags: [practice, model, commands, verification, catalog, ui, persistence, dr-019, dr-124, dr-125, dr-126, dr-128, dr-129, dr-130, dr-131, dr-132, dr-133, m5]
 timestamp: 2026-08-12T00:00:00Z
 status: adopted
 ---
@@ -24,6 +24,27 @@ parameter. Two board tasks and canon CR-058 all asserted it was populated. The
 grep that answers this one is not "what writes it" but **"what is in it"**: a
 count of non-empty values across the seed, which took a minute and unblocked a
 milestone task written from the opposite belief (DR-060 §11.59.2).
+
+**And a FOURTH shape, which nothing in this practice covered until PLAN-B: an
+ERROR TYPE with no producer.** `ContainerUnreadableError` was written for a
+truncated `.rmpj`, on the assumption that `ZipDecoder` throws when it cannot read
+an archive. **It does not.** It reads the central directory, which lives at the
+END of the file, so a truncated archive simply has none and it returns an EMPTY
+`Archive`. Measured at six truncation points and on a file that was nothing but
+the four signature bytes: zero throws, every time.
+
+So the `catch` arm was unreachable, and the consequence was not cosmetic. Every
+truncated project would have fallen through to the *foreign archive* state,
+been told "this is not a RackPal project", and been **refused the backup that
+would have rescued it** — a user-facing failure caused entirely by a state
+nothing could reach. The fix was to make *zero entries* the damage signature and
+to write down that the exception arm is the belt-and-braces one.
+
+**The generalisation: an error taxonomy is a set of claims about a LIBRARY's
+behaviour, and libraries are the thing this practice keeps saying to measure.**
+"What does a person click" has a sibling: **what does the dependency actually
+DO when the thing goes wrong**. Both are answered by running it, and neither is
+answered by reading it.
 
 # Why, with the evidence
 
