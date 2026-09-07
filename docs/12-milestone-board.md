@@ -117,7 +117,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
 | **M4** | Device builder | **`L`** *(was `M`)* | **2 of 2** | **CRITERION MET**: `CONFIRMED` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **CLAUSE 2 IS NOW CONFIRMED, performed on 2026-09-01** (§5.3.30), and it was performable only from §5.3.13: it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` demonstrated it: every unknown column printed `—` and said so, which is G4/CR-114 read off a printed sheet for the first time. **The archetype path ran the same day at 46 SECONDS against the DSL path's 93** (`#250`), which is what settled whether the generators earned their place. **EVERY M4 STORY IS NOW CLOSED** (§5.3.1–§5.3.30), the last being the drill itself (`#188`), and **95 chapters are Done under this epic with none left open or re-parented**, which is where `v0.4.95` comes from. **M4-P shipped RJ-012's two extensibility surfaces and found each chapter to be something else underneath**: the builder could not save a field device at all, the media-type editor's real gap was MERGE rather than create, and connector aliases were already resolved and only lacked a writer (§5.3.28, DR-107, `v0.4.93`). **RJ-012 stays two-thirds met**: its third surface, a per-family colour override row in settings, has nowhere to go because `ProjectSettings` has no editor and none is assigned to any milestone (`#805`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); **its parked nudge canvas was then un-parked by DR-106 and built** as a sixth `Panel` section, with its align/distribute arithmetic in core (§5.3.27, `v0.4.90`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moved this criterion**, and that was the point of the row for a fortnight: story after story closed while clause 2 remained a person with a document to read. **It was read on 2026-09-01** (§5.3.30), which is the only thing that could ever have closed it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **3 of 3** | **CRITERION MET**: `CONFIRMED` | **CLOSED 2026-09-07 (DR-135 §11.134).** All three clauses discharged. Clause 1 is `DEMONSTRATED` at **29 of 29** by `drc_corpus_test.dart`, which `run_local.ps1` runs as a step of its own and whose subject is `kRuleCatalogue` rather than any evaluator enum, so a registered rule without a pair fails the build; that is also why it moved from 28 to 29 when DR-132 restored `ELE-005` and no gate had to change (§5.4.7). Clause 3 was `VACUOUS` *because no rule existed* and that reason expired; it is `DEMONSTRATED` in a stronger form than `#310` asked for, since `ExportError` is **sealed with three arms and none of them is about a rule** (§5.4.8, DR-119). **Clause 2 was the whole gap for a fortnight and is `CONFIRMED` on 2026-09-06** (§5.4.11), signed by the reviewing integrator against a pack generated from the live catalogue: **twelve findings, four rulings, six fields the model has and no producer writes**, and the catalog half signed PROVISIONAL on the reviewer's own hedge. **All twenty Stories under epic 23 are `Done` and 61 Chapters beneath them**, which is where `v0.5.61` comes from and why the close itself owes no bump. The successor is **the Plan view, not M6** (DR-029 §11.28.4) |
-| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open and is **`v0.6.10`** with PLAN-A's and PLAN-B's ten chapters `Done` of 43 |
+| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open and is **`v0.6.16`** with PLAN-A, PLAN-B and PLAN-C's sixteen chapters `Done` of 43 |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
@@ -6722,7 +6722,7 @@ that decomposed the epic rather than a Chapter that built anything.
 |---|---|---|
 | PDF imported without leaving the app | **NOT BUILT** | No import path of any kind. `pdf ^3.13.0` **writes** documents and does not import pages (docs/08 §1.1); no rasteriser is in any pubspec in this tree (docs/13 D9) |
 | Calibrated from a known dimension | **NOT BUILT** | `PlanScale`, `PxPt` and the two-point pick do not exist |
-| Rack and every drop pinned | **NOT BUILT** | `PlanPin` does not exist; `OffRackPlacement` decodes as exactly `locationId` and `mountNote`. **The M3-I passthrough that protects a pin against an older build DOES ship** (#568, `Placement` and `Outlet` both carry the reserved `unknown` map), so that dependency is discharged |
+| Rack and every drop pinned | **NOT BUILT** | **The MODEL ships as of PLAN-C** (§5.9.3): `PlanPin` on all three carriers, serialized, commanded and undoable. The clause needs a person pinning every drop of a real rough-in, which needs `PLAN-E`'s editor. **AND THE M3-I PASSTHROUGH DOES NOT PROTECT A PIN, WHICH THIS CELL CLAIMED UNTIL 2026-09-07**: the `unknown` map is a reserved container and not a harvester, so a sibling key like `planPin` was never covered. DR-136 §11.135 closes the hazard from the other end, by stamping `minReaderVersion` so an older build cannot write |
 | `T1.01` with a callout per pin | **NOT BUILT** | `SheetRole` has **exactly three values** (`rackElevationFront`, `rackElevationRear`, `equipmentList`). **`DiagramCanvas` HAS a `drawImage` since PLAN-A** (§5.9.1) and this cell said it did not until 2026-09-07; the sheet role is what is missing now, not the primitive |
 | The stranger locates every drop | **UNPERFORMED** | Nothing to print, and nobody has been asked |
 | Greyscale laser at ANSI B | **UNPERFORMED** | Same as M6's row: nothing has been printed on hardware |
@@ -6919,6 +6919,94 @@ size, because a zero-byte underlay is a corrupt import rather than an absent one
 **5.9.2.9 THE VERSION IS `v0.6.10`.** The board query for `Done` Chapters under epic 588 returns
 **10**; and `v0.6.5` plus this issue's five Chapters is 10. Floors re-measured: core 4109 to 4144, app
 916 to 930.
+
+#### 5.9.3 PLAN-C, the plan model, and a protection DR-019 bought that could never have worked · CLOSED · `v0.6.16` · `da8087e`, `e620e68`
+
+**Closed 2026-09-07** (`#599`, six Chapters `#617`–`#622`, DR-037, and **DR-136 §11.135**, which this
+issue produced). **No exit clause moves**, and one becomes measurable: `CR-117 on the zip path` is
+about a document *carrying* an underlay across a write, a reopen and a second write, and there is now
+a document that can carry one. The clause still needs `PLAN-D`'s import to make one the ordinary way.
+
+**BOTH OF THIS ISSUE'S FINDINGS WERE RE-MEASURED BEFORE BUILDING AND BOTH HELD.**
+`Location.riseAllowance`: **zero occurrences** across every `.dart` file, while DR-020 §11.19.2(1)
+and docs/15 §4.1 both spend it as though it ships. The plan model: four mentions in the tree, all of
+them comments PLAN-A and PLAN-B had written about a thing that did not exist.
+
+**5.9.3.1 THE TEST `#621` ASKED FOR CANNOT BE WRITTEN, AND THAT IS THE MILESTONE'S REAL FINDING.**
+Its brief: *"The plan pin is the first field that map exists to protect, so write the test that proves
+it: a document with pins, read by a codec that does not know the key, written back, still carrying
+them."* **It does not carry them.** `Placement.unknown` is a **reserved container and not a
+harvester**: it preserves what a writer deliberately put inside it and collects no unrecognised
+sibling keys. `placement.dart` says so in capitals and names the ruling a harvester would need;
+`_unknownBag` repeats it. `planPin` is a sibling key like any other.
+
+**SO DR-019 §11.18.1's HAZARD WAS NEVER CLOSED.** That paragraph described it exactly, *"a build that
+predates the Plan view, opening a file that has plan pins, silently drops them on save"*, and
+§11.18.2(5) bought the bag as the remedy. M3-I built the bag correctly. **The remedy simply does not
+reach the hazard**, and nothing noticed for a month because the field it protected did not exist.
+**This is `two documents agreeing is not verification` in its costliest form**: the ruling and the
+implementation agreed with each other, and neither agreed with the hazard.
+
+**5.9.3.2 THE USER CHOSE TO REFUSE THE WRITE RATHER THAN PRESERVE THE FIELD** (DR-136 §11.135.2). A
+document carrying an underlay or a pin stamps `minReaderVersion` **5**, so a build that cannot model a
+pin opens it **read-only** and never gets to write the version that lost it. The narrower fix, and it
+leaves harvesting exactly where `placement.dart` left it. **The costs are named in the ruling rather
+than discovered**: every re-saved document reads read-only on an older build, and a project becomes
+unsaveable there the moment somebody drops one pin.
+
+**5.9.3.3 THE SCHEMA MOVES TO 5 FOR A REASON THIS FORMAT'S TRIGGER DID NOT HAVE.** That trigger, stated
+twice in `json_codec.dart`, asks whether existing files stop re-encoding byte for byte. **These
+additions are byte-invisible.** The advance is owed because `minReaderVersion` became conditional and
+**the stamp needs a number**: a conditional 5 written by a build declaring 4 would make this build
+refuse its own file.
+
+**AND THE BYTE-INVISIBILITY IS MEASURED RATHER THAN CLAIMED.** Regenerating the four starters and the
+five byte-roundtrip fixtures moves **exactly one line each**, `schemaVersion 4 -> 5`, and nothing
+else. That only holds because **the `underlays` map is OMITTED WHEN EMPTY, unlike its fourteen
+siblings**: writing `"underlays": {}` would have added a key to every `.rmpj` in existence and made
+the ruling false in the commit that stated it. It is also what CR-114 says, and what this codec chose
+twice recently (DR-105's 727 origins, DR-134's 737 empty arrays).
+
+**5.9.3.4 `PxPt` IS ENFORCED RATHER THAN AGREED.** The three-point-types decision is only worth its
+cost if the type system holds it, so there is no arithmetic, no conversion, no supertype, and no
+mention of `Pt` or `DPt` in the file's code at all. `px_pt_separation_test.dart` is a **source** gate
+as well as a behavioural one, on `draw_source_gate_test.dart`'s precedent: the changes that reopen the
+hole are one-liners that look like tidying, and a running program cannot tell a collapsed type from a
+separate one. What it costs is specific: a `Pt` accepted where a `PxPt` was meant does not throw, it
+rounds the pin to the 2.5 mm lattice and moves the dot, and the person who finds out is an installer
+looking for the wrong wall.
+
+**5.9.3.5 THE EPOCH MASKS ARE TESTED AGAINST A LISTENER, INCLUDING THE NEGATIVES.** `#622` asked for
+this and named the scar: DR-011.4's first implementation silently did nothing because a `meta` bump
+advanced the scene epoch past the stamp the `wires` listener had just written, and an
+`expect(cmd.touches, ...)` assertion would have been green throughout. A pin wakes
+`structure | wires` because it feeds `planLowerBound`, which feeds a schedule row, which feeds a
+sheet. **Pinning a rack must NOT wake `EpochMask.rack`**, which means heightU, rails and depth, and
+that negative is what stops a mask that wakes everything from passing every positive.
+
+**5.9.3.6 REMOVING AN UNDERLAY CASCADES, ON DR-021's REASONING RATHER THAN A NEW ONE.** A pin names
+its underlay, so leaving the pins would leave every one of them pointing at nothing, which is the
+dangling reference DR-021 §11.20 refuses for a `Location` subtree. The undo puts back the plan **and
+the dots on it**, and a pin on a different plan is left alone, which is the discrimination a
+clear-everything implementation gets wrong.
+
+**5.9.3.7 THREE CENSUS GATES FIRED AND ALL THREE WERE RIGHT.**
+`set_entity_property_command_test.dart` refused two new `@internal` setters with no table row:
+`riseAllowance` gets one, masked `structure | wires` for `estimatedRunLengthFromRack`'s reason, and
+**`Outlet.planPin` is kept out** on `parentId`'s exemption, because a row's `set` writes and returns
+with no way to refuse a pin naming an underlay that does not exist. `location_commands_test.dart` then
+refused the new row for having no byte round-trip case, which is CR-117 per table row rather than per
+command.
+
+**5.9.3.8 A STALE LITERAL FELL OUT, AND IT IS THIS REPOSITORY'S OWN LESSON.**
+`migration_corpus_test.dart` asserted `doc.schemaVersion == 4` beside `== kSchemaVersion`. Right when
+written, wrong nine days later: that case is about a v3 file reaching **current**, not about reaching
+4, so the literal was a second copy of a moving number and failed while nothing it guarded had
+changed. `units_test.dart` keeps ITS literal, because there the whole point is that a bump must be a
+deliberate edit with a sentence attached.
+
+**5.9.3.9 THE VERSION IS `v0.6.16`.** The board query for `Done` Chapters under epic 588 returns
+**16**; and `v0.6.10` plus this issue's six Chapters is 16. Floors re-measured: core 4152 to 4203.
 
 ---
 
