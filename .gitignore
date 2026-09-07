@@ -68,3 +68,26 @@ dist/
 # Python (tools/)
 __pycache__/
 *.pyc
+
+# ═══════════════════════════════════════════════════════════════════════
+# REAL CLIENT DRAWINGS ARE NEVER COMMITTED, AND GIT IS WHY
+# ═══════════════════════════════════════════════════════════════════════
+# `docs/reference/` holds product photographs and manufacturer technical
+# drawings, which are tracked. A real job's plan set is a different thing
+# and is not: it carries a licensed engineer's seal and licence number,
+# the firm's name, the builder's mark and a client's address, and a
+# redaction that covers the address does not cover any of the rest.
+#
+# THE REASON IS THAT GIT HISTORY IS PERMANENT AND DR-036 IS PENDING. A
+# public GPLv3 release publishes every commit ever made, not the current
+# tree, so a plan set committed today and deleted tomorrow ships anyway.
+# Nothing in this product needs one in the repository: the measurements
+# taken from a plan set are recorded in docs/12 with the method beside
+# them, so anybody can re-run them against their own sheet (docs/12
+# section 5.9.5).
+#
+# The pattern is deliberately TOP-LEVEL ONLY: a single `*` does not cross
+# a `/`, so `keystone/technical drawings/*.pdf` stays tracked without
+# needing a negation to rescue it. Broadening this to `**` would silently
+# untrack seven manufacturer drawings the catalogue cites.
+docs/reference/*.pdf

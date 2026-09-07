@@ -465,13 +465,19 @@ $SuiteFloors = @{
     # must NOT wake `EpochMask.rack`, and a mask that woke everything
     # would pass every positive assertion.
     # 4230 at PLAN-D part one: +27 from persistence/image_header_test.dart.
+    # 4231 at DR-137: net +1 in container_determinism_test.dart. The STORE
+    # assertion became a DEFLATE one and stayed a single test; the
+    # verbatim-bytes search was REPLACED by a byte-for-byte round trip
+    # (the obligation it was a proxy for), and a second case was added
+    # asserting the ruling actually buys size on a line-art-shaped member.
+    # Re-measured, not incremented: `dart test` reports 4231.
     # Two of those are SWEEPS rather than cases: every truncation of a good
     # PNG and JPEG, and every single-byte flip through a JPEG header, each
     # asserting only that the parser RETURNS rather than throws. That is
     # the property AC-058/D12 actually needs from a parser over hostile
     # input, and it is not expressible as a handful of hand-picked
     # malformed files.
-    'rackpal_core'   = 4230
+    'rackpal_core'   = 4231
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
