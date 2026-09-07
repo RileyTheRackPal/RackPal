@@ -97,6 +97,9 @@ final class _CircleRecorder implements DiagramCanvas {
   void drawText(String text, DPt at, TextStyleSpec style) {}
 
   @override
+  void drawImage(ImageRef image, DBox dst) {}
+
+  @override
   TextMetrics measureText(String text, TextStyleSpec style) =>
       const _FakeMeasurer().measureText(text, style);
 }

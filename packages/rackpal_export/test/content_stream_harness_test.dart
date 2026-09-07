@@ -434,6 +434,67 @@ void main() {
     });
   });
 
+  group('XObject recovery, for the image ops PLAN-A added', () {
+    // WHY CORNERS AND NOT A BOX: a PDF image occupies the unit square with
+    // its TOP row at v = 1, so a vertically flipped placement produces an
+    // IDENTICAL bounding box and an upside-down floorplan. The interpreter
+    // is therefore asked for the image's own corners, and these cases
+    // check it can tell the two apart on hand-written streams.
+
+    test('a unit-square Do under an identity CTM is the unit square', () {
+      final img = interpretContentStream('/I0 Do').images.single;
+      expect(img.name, 'I0');
+      expect(img.bottomLeft, (0.0, 0.0));
+      expect(img.topLeft, (0.0, 1.0));
+      expect(img.topRight, (1.0, 1.0));
+      expect(img.bottomRight, (1.0, 0.0));
+    });
+
+    test('the placement cm is applied, so a 120 x 60 image is 120 x 60', () {
+      final img = interpretContentStream(
+        'q 120 0 0 60 20 30 cm /Im1 Do Q',
+      ).images.single;
+      expect(img.name, 'Im1');
+      expect(img.bottomLeft, (20.0, 30.0));
+      expect(img.topRight, (140.0, 90.0));
+    });
+
+    test('A FLIPPED PLACEMENT IS DISTINGUISHABLE FROM AN UPRIGHT ONE, '
+        'which is the whole reason this records corners', () {
+      const upright = 'q 120 0 0 60 20 30 cm /I Do Q';
+      const flipped = 'q 120 0 0 -60 20 90 cm /I Do Q';
+
+      final a = interpretContentStream(upright).images.single;
+      final b = interpretContentStream(flipped).images.single;
+
+      // Same box on the page, both ways.
+      double lo(RecoveredImage i) =>
+          i.bottomLeft.$2 < i.topLeft.$2 ? i.bottomLeft.$2 : i.topLeft.$2;
+      double hi(RecoveredImage i) =>
+          i.bottomLeft.$2 > i.topLeft.$2 ? i.bottomLeft.$2 : i.topLeft.$2;
+      expect(lo(a), lo(b));
+      expect(hi(a), hi(b));
+
+      // Opposite orientations, which is the fact a box cannot carry.
+      expect(a.topLeft.$2, greaterThan(a.bottomLeft.$2));
+      expect(b.topLeft.$2, lessThan(b.bottomLeft.$2));
+    });
+
+    test('the CTM in force at Do is the one used, not the one after Q', () {
+      final images = interpretContentStream(
+        'q 10 0 0 10 0 0 cm /A Do Q q 20 0 0 20 5 5 cm /B Do Q',
+      ).images;
+      expect(images.map((i) => i.name), ['A', 'B']);
+      expect(images[0].topRight, (10.0, 10.0));
+      expect(images[1].topRight, (25.0, 25.0));
+    });
+
+    test('a stream with no Do recovers no images, so an assertion about '
+        'one cannot pass vacuously', () {
+      expect(interpretContentStream('10 20 30 40 re S').images, isEmpty);
+    });
+  });
+
   group('the export package still exposes what the harness targets', () {
     test('the ANSI formats are reachable through the barrel', () {
       // Guards against the harness being exercised against a package that

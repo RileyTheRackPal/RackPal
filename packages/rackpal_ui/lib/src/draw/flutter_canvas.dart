@@ -42,6 +42,15 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/draw/text_run_cache.dart';
 import 'package:vector_math/vector_math_64.dart';
 
+/// Resolves a container-member reference to a decoded `ui.Image`.
+///
+/// Declared HERE and not in `rackpal_core`, because `ui.Image` is a
+/// `dart:ui` type and core is Flutter-free by gate. The PDF backend
+/// declares its own for the same reason, over `PdfImage`. Neither image
+/// type ever reaches the IR, which is what lets one display list drive
+/// both.
+typedef FlutterImageResolver = ui.Image? Function(ImageRef ref);
+
 /// The Flutter backend of [DiagramCanvas] (CR-086): replays a
 /// `DiagramScene` onto a real `ui.Canvas`. Unlike `PdfDiagramCanvas`
 /// (rackpal_export/src/draw/pdf_canvas.dart -- not referenced as a
@@ -51,14 +60,35 @@ import 'package:vector_math/vector_math_64.dart';
 /// diagram space (docs/08-pdf-export.md §7.4/§7.6 divergence #1), so this
 /// constructor pushes a plain identity matrix rather than a flip.
 final class FlutterDiagramCanvas implements DiagramCanvas {
-  FlutterDiagramCanvas(this._c, {required TextMeasurer measurer, this.runs})
-    : _measurer = measurer {
+  FlutterDiagramCanvas(
+    this._c, {
+    required TextMeasurer measurer,
+    this.runs,
+    this.images,
+  }) : _measurer = measurer {
     _stack.add(Matrix4.identity());
   }
 
   final ui.Canvas _c;
   final TextMeasurer _measurer;
   final List<Matrix4> _stack = [];
+
+  /// Resolves an [ImageRef] to an already-decoded `ui.Image`, or null when
+  /// no scene this canvas replays contains an `OpImage`.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// SYNCHRONOUS, BECAUSE PAINTING IS.
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `ui.Canvas.drawImageRect` wants a decoded `ui.Image` and a paint
+  /// callback cannot await. Decoding is therefore somebody else's job,
+  /// done once when the underlay is imported or the document is opened,
+  /// and this is only the lookup. A resolver that decoded on demand would
+  /// decode a floorplan on every frame of a pan.
+  ///
+  /// NULL IS THE ORDINARY STATE and stays so until PLAN-C: nothing in this
+  /// repository emits an `OpImage`, so every existing construction site is
+  /// correct without passing anything.
+  final FlutterImageResolver? images;
 
   /// M2-G's laid-out-run cache, or null to lay every run out afresh.
   ///
@@ -321,6 +351,34 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
       final key = _PathKey.identity('path', p);
       _strokeShape(_emit(p), key, stroke);
     }
+  }
+
+  @override
+  void drawImage(ImageRef image, DBox dst) {
+    final resolved = images?.call(image);
+    if (resolved == null) throw MissingImageError(image);
+    // No flip and no counter-transform: `ui.Canvas` is already top-left,
+    // Y-down, the same sense as diagram space (docs/08 §7.4/§7.6
+    // divergence #1), and a `ui.Image`'s own row order matches. The PDF
+    // backend's version of this method is NOT symmetric and says why.
+    _c.drawImageRect(
+      resolved,
+      ui.Rect.fromLTWH(
+        0,
+        0,
+        resolved.width.toDouble(),
+        resolved.height.toDouble(),
+      ),
+      ui.Rect.fromLTWH(dst.left, dst.top, dst.width, dst.height),
+      // No `color` and no alpha: docs/08 row 9 forbids alpha in the
+      // DOCUMENT, and matching it on screen is what keeps the preview
+      // honest about what will print. `medium` because an underlay is
+      // usually drawn well below its native resolution and `none` shimmers
+      // on every pan.
+      ui.Paint()
+        ..isAntiAlias = true
+        ..filterQuality = ui.FilterQuality.medium,
+    );
   }
 
   @override

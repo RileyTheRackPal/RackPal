@@ -8,6 +8,7 @@
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/draw/canvas.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
+import 'package:rackpal_core/src/draw/image_ref.dart';
 import 'package:rackpal_core/src/draw/path.dart';
 import 'package:rackpal_core/src/draw/spec.dart';
 import 'package:rackpal_core/src/draw/text.dart';
@@ -165,6 +166,33 @@ final class OpText extends DiagramOp {
 
   @override
   void replay(DiagramCanvas c) => c.drawText(text, at, style);
+}
+
+/// A raster placed to fill [dst], added with `drawImage` under
+/// `canvas.dart`'s amendment clause (DR-029 §11.28.6).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// IT HOLDS AN `ImageRef`, WHICH IS A NAME. IT HOLDS NO PIXELS.
+/// ═══════════════════════════════════════════════════════════════════════
+/// This list is compared byte for byte (M2-C's determinism clause) and
+/// held whole while a sheet set lays out. A `Uint8List` here would put
+/// megabytes into the one structure whose entire purpose is to be cheap to
+/// compare, and would drag a decoder into a package that is Flutter-free
+/// by gate. See `image_ref.dart` for the resolution seam.
+///
+/// **This op is emitted by nothing today.** `PlanUnderlay` does not exist
+/// until PLAN-C and the container that holds the member does not exist
+/// until PLAN-B, so every scene this repository builds still contains
+/// exactly zero of these. That is the intended state at PLAN-A and it is
+/// what `schematic_perf_test.dart`'s untouched op-count baselines record.
+final class OpImage extends DiagramOp {
+  const OpImage(this.image, this.dst);
+
+  final ImageRef image;
+  final DBox dst;
+
+  @override
+  void replay(DiagramCanvas c) => c.drawImage(image, dst);
 }
 
 // ── scene ─────────────────────────────────────────────────────────────

@@ -179,6 +179,12 @@ final class _RecordingCanvas implements DiagramCanvas {
     calls.add('drawText($text,$at,$style)');
   }
 
+  // Discards nothing, per this class's own header: the member name and
+  // the destination rect are everything an `OpImage` holds.
+  @override
+  void drawImage(ImageRef image, DBox dst) =>
+      calls.add('drawImage($image,$dst)');
+
   @override
   TextMetrics measureText(String text, TextStyleSpec style) =>
       const _FakeMeasurer().measureText(text, style);
