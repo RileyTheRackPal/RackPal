@@ -2,6 +2,45 @@
 
 ## 2026-09-07
 
+* **Build**: `PLAN-A` closes at `v0.6.5`. `DiagramCanvas` gains `drawImage`
+  under its own amendment clause (DR-029 §11.28.6), `OpImage` carries a
+  container-member REFERENCE and never pixels, and both backends draw it.
+* **Update**: [A stated cost is a hypothesis](/practices/a-stated-cost-is-a-hypothesis.md)
+  gains a fourth instance, and the fourth is not a number. docs/15 §7 listed
+  six things the op would touch. **Two were wrong**: hit-test, which reads
+  `DiagramScene.hits` and never an op type, and the op-count baselines, which
+  could not move because no scene emits the op yet. **And the one file that
+  did break was on nobody's list.** A list of impacted files fails the same
+  way a figure does, and worse: it is wrong in both directions at once, and
+  the omission is the half nothing warns you about.
+* **Note**: **THE COMPILE-ERROR TRAP FIRED IN THE DETERMINISM INSTRUMENT.**
+  `PLAN-A/2` expected every exhaustive switch over ops to stop compiling.
+  Measured: this repository has **exactly one** such switch and it is
+  `test/scene/op_digest.dart`, whose own header explains it is a switch
+  rather than a `toString()` for precisely this reason. So the compiler
+  demanded an answer to *what does an image contribute to "same document,
+  same display list"* before anything would build. Its reference and its
+  rect; the bytes behind the member are CR-117's question.
+* **Note**: **A MIRRORED FLOORPLAN HAS A CORRECT BOUNDING BOX.** A PDF image
+  occupies the unit square with its TOP row at `v = 1`, and the PDF canvas
+  carries one global Y-flip, so the naive call lands the picture upside down
+  inside exactly the right box and every dimensional assertion still passes.
+  Both backend tests therefore read CORNERS, and both were mutation-tested:
+  delete the counter-flip and three of four fail; flip the Flutter
+  destination and five of five fail.
+* **Note**: **A TEST FOUND A DEFECT TEN MINUTES OLD.**
+  `BoundsCanvas.drawImage` was written `_ink(_toRoot(dst))` and `_ink`
+  already maps through the CTM, so every underlay would have inked at twice
+  its own translation. **No sibling method makes that mistake**, so no
+  assertion about a rect could have caught it, and a bounds pass wrong in
+  the loose direction does not crash: it scales every sheet with a plan on
+  it to fit a box half again too big.
+* **Note**: **AN EXCLUSION THAT IS AN ABSENCE READS LIKE AN OVERSIGHT.** The
+  underlay was outside PAL-1 because `FAMILIES` is hand-written and nobody
+  had added it. It is now named with its reason, **checked** (an excluded id
+  appearing in `FAMILIES` fails the gate, verified by adding one), and
+  **printed on every run**, because a check nobody can see declining to check
+  something is indistinguishable from one that checked it and passed.
 * **Ruling**: [DR-135](/decisions/dr-135-m5-closes-and-the-minor-stops-being-a-milestone.md).
   **M5 is CLOSED** and **the Plan view is OPEN**, which is §8.9's condition met
   rather than assumed. The version band moves to `0.6`.
