@@ -3849,9 +3849,9 @@ final class PortDef {
   final List<PortKey> renamedFrom;        // what a UUID cannot express
   String label; String? designatorHint;
 
-  ConnectorTypeId connector;              // THREE ORTHOGONAL AXES. Never one enum.
-  SignalFamilyId  signalFamily;
-  List<SignalFamilyId> carriedProtocols, acceptedFamilies;
+  ConnectorTypeId connector;              // ORTHOGONAL AXES. Never one enum.
+  SignalFamilyId  signalFamily;           // `carriedProtocols` was a third
+  List<SignalFamilyId> acceptedFamilies;  // until DR-134 deleted it.
 
   PortDirection direction;                // source|sink|bidirectional|busNode|passive. CR-060.
   ReturnChannel? returnChannel;           // ARC / eARC
@@ -4128,8 +4128,9 @@ So there are four registries, not one:
 | `ConnectorTypeDef` | What plugs into what, and does gender apply? | Aliases only (CR-058) |
 | `MediaTypeDef` | What cable is pulled, how long may it be, what jacket? | **Yes**: the CSV import creates them (RJ-009) |
 
-`Port.connector`, `Port.signalFamily` and `Port.carriedProtocols` are three independent fields.
-`Link.media` is a fourth. `Service.signalFamily` is what a wire's colour resolves from, never
+`Port.connector` and `Port.signalFamily` are two independent fields, and `Link.media` is a third.
+**`Port.carriedProtocols` was a third axis here until DR-134 §11.133 deleted it**: it modelled two
+facts the model already carried, in `PortDef.returnChannel` and in the port's own family. `Service.signalFamily` is what a wire's colour resolves from, never
 `Link` (CR-009).
 
 ---

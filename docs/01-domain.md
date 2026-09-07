@@ -257,7 +257,7 @@ So there are four registries (CR-058, CR-078):
 | `ConnectorTypeDef` | What plugs into what, and whether gender applies | Aliases only |
 | `MediaTypeDef` | What cable is pulled, how long it may be, what jacket | **Yes**: CSV import creates them (RJ-009) |
 
-`Port.connector`, `Port.signalFamily` and `Port.carriedProtocols` are three independent fields; `Link.media` is a fourth. **`Service.signalFamily` is what a wire's colour resolves from: never `Link`** (CR-009). `Link.dominantSignalFamily` is derived and never serialized.
+`Port.connector` and `Port.signalFamily` are two independent fields; `Link.media` is a third. **`Port.carriedProtocols` was named here as a third axis until DR-134 §11.133 deleted it**, on the measurement that it was a second copy of two facts the model already carried: eARC over HDMI is `PortDef.returnChannel`, and Dante over RJ45 is the port's own signal family plus a device tag. **`Service.signalFamily` is what a wire's colour resolves from: never `Link`** (CR-009). `Link.dominantSignalFamily` is derived and never serialized.
 
 **A `Link` carries `List<Service>`** (CR-010, AC-021). One Cat5e to a TV location routinely carries an IR emitter run on one pair, a 12 V trigger on another and RS-232 on a third. *Rejected alternative: one cable, one service, which forces three Links on one physical cable, three pull rows and three lengths to keep in sync.*
 

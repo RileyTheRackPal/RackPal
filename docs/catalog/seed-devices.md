@@ -141,8 +141,10 @@ figure that disagrees with the arithmetic.
 
 ### P7: Three orthogonal axes on every port, and never one enum
 
-`Port.connector`, `Port.signalFamily` and `Port.carriedProtocols` are independent fields, and
-`Link.media` is a fourth (canon §6.1). RJ45 is a **connector**; Cat6a is a **medium**; Ethernet,
+`Port.connector` and `Port.signalFamily` are independent fields, and `Link.media` is a third
+(canon §6.1). **`Port.carriedProtocols` was a third such field until DR-134 §11.133 deleted it**,
+and nothing in this document's argument rests on it: the checkable claim below is about the
+family, which is the field the rule reads. RJ45 is a **connector**; Cat6a is a **medium**; Ethernet,
 HDBaseT, Dante and Cresnet are **signal families** that share both. Every catalog entry that puts
 HDBaseT on an RJ45 is therefore expressing something the model can check: `SIG-001` (HDBaseT
 output patched into an Ethernet switch port) is the single highest-value validation in the
@@ -384,7 +386,7 @@ free-text modifier; a value that has no field is a spec bug, not a note.
 | `[pair:1:1]` | `PassthroughPairDef{frontKey, rearKey, sameNet}` | Written by the "Pair front↔rear by order" action; a passthrough template with missing pairs is a **load warning**, not an error (CR-057) |
 | `[seq:N/Dms]` | `PortPowerSpec.sequenceStep`, `sequenceDelayMs` | Feeds `SEQ-001` |
 | `[ups]` `[surge]` `[unswitched]` | `PortPowerSpec.outletMode` / `backing` | Distinguishes battery-backed from surge-only outlets |
-| `[loop]` | `PortDef.notes` is *not* used: sets `carriedProtocols` passthrough intent | A loop-out is a real port with a real link |
+| `[loop]` | `PortDef.notes` is *not* used. **Set `carriedProtocols` passthrough intent until DR-134 deleted that field**; a loop-out's family already says what it carries | A loop-out is a real port with a real link |
 | `[arc]` `[earc]` | `ReturnChannel` | The only place `→ (+ARC ↔)` in canon §6.4 becomes model state |
 | `[1G]` `[10G]` `[25G]` | `linkSpeedMbps` | |
 | `[sfp]` `[sfp+]` `[sfp28]` | `SfpFormFactor` | |
@@ -1507,7 +1509,7 @@ it is only expressible because the axes are separate.
 | `ConnectorTypeDef` | What plugs into what, and does gender apply? | Aliases only (CR-058) |
 | `MediaTypeDef` | What cable is pulled, how long may it be, what jacket? | **Yes**: the CSV import creates them (RJ-009) |
 
-`Port.connector`, `Port.signalFamily` and `Port.carriedProtocols` are three independent fields.
+`Port.connector` and `Port.signalFamily` are two independent fields (`carriedProtocols` was a third until DR-134 §11.133).
 `Link.media` is a fourth. `Service.signalFamily` is what a wire's colour resolves from, never
 `Link` (CR-009).
 
@@ -2225,7 +2227,6 @@ one shown. The generator expands the §2 notation into exactly this.
         "acceptedFamilies": ["video.hdmi.1_4", "video.hdmi.2_0", "video.hdmi.2_1"],
         "balanced": null,
         "bankKey": "hdmi-in",
-        "carriedProtocols": ["hdcp.2_2", "cec", "edid"],
         "channelIndex": null,
         "conductorCount": 19,
         "connector": "conn.hdmi_a",
@@ -2253,7 +2254,6 @@ one shown. The generator expands the §2 notation into exactly this.
       {
         "acceptedFamilies": ["video.hdbaset"],
         "bankKey": "hdbt-out",
-        "carriedProtocols": ["hdcp.2_2", "cec", "ctl.ir_emitter", "ctl.rs232", "net.ethernet.100"],
         "conductorCount": 8,
         "connector": "conn.rj45",
         "designatorHint": "J09",
@@ -2276,7 +2276,6 @@ one shown. The generator expands the §2 notation into exactly this.
       {
         "acceptedFamilies": ["video.hdmi.1_4", "video.hdmi.2_0", "video.hdmi.2_1"],
         "bankKey": "hdmi-out",
-        "carriedProtocols": ["hdcp.2_2", "cec"],
         "conductorCount": 19,
         "connector": "conn.hdmi_a",
         "designatorHint": "J17",
@@ -2298,7 +2297,6 @@ one shown. The generator expands the §2 notation into exactly this.
         "acceptedFamilies": ["audio.line_bal", "audio.line_unbal"],
         "balanced": true,
         "bankKey": "aud-out",
-        "carriedProtocols": [],
         "conductorCount": 3,
         "connector": "conn.euroblock_3",
         "designatorHint": "J25",
@@ -2321,7 +2319,6 @@ one shown. The generator expands the §2 notation into exactly this.
       {
         "acceptedFamilies": ["ctl.ir_receiver"],
         "bankKey": "control",
-        "carriedProtocols": [],
         "conductorCount": 3,
         "connector": "conn.3_5mm_trs",
         "designatorHint": "J33",
@@ -2342,7 +2339,6 @@ one shown. The generator expands the §2 notation into exactly this.
       {
         "acceptedFamilies": ["ctl.ir_emitter"],
         "bankKey": "control",
-        "carriedProtocols": [],
         "conductorCount": 2,
         "connector": "conn.3_5mm_ts",
         "designatorHint": "J34",
@@ -2365,7 +2361,6 @@ one shown. The generator expands the §2 notation into exactly this.
       {
         "acceptedFamilies": ["net.ethernet"],
         "bankKey": "control",
-        "carriedProtocols": ["tcp", "http", "telnet"],
         "conductorCount": 8,
         "connector": "conn.rj45",
         "designatorHint": "J42",
@@ -2386,7 +2381,6 @@ one shown. The generator expands the §2 notation into exactly this.
       {
         "acceptedFamilies": ["ctl.rs232"],
         "bankKey": "control",
-        "carriedProtocols": [],
         "conductorCount": 3,
         "connector": "conn.de9",
         "designatorHint": "J43",
@@ -2406,7 +2400,6 @@ one shown. The generator expands the §2 notation into exactly this.
       {
         "acceptedFamilies": ["power.ac_iec"],
         "bankKey": "power",
-        "carriedProtocols": [],
         "conductorCount": 3,
         "connector": "conn.iec_c14",
         "designatorHint": "J44",

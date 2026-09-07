@@ -427,9 +427,9 @@ final class PortDef {
   final List<PortKey> renamedFrom;        // what a UUID cannot express
   String label; String? designatorHint;
 
-  ConnectorTypeId connector;              // THREE ORTHOGONAL AXES. Never one enum.
-  SignalFamilyId  signalFamily;
-  List<SignalFamilyId> carriedProtocols, acceptedFamilies;
+  ConnectorTypeId connector;              // ORTHOGONAL AXES. Never one enum.
+  SignalFamilyId  signalFamily;           // `carriedProtocols` was a third
+  List<SignalFamilyId> acceptedFamilies;  // until DR-134 deleted it.
 
   PortDirection direction;                // source|sink|bidirectional|busNode|passive. CR-060.
   ReturnChannel? returnChannel;           // ARC / eARC
@@ -1092,14 +1092,14 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
           "nominalSpanTwelfths": 12,
           "ports": [
             { "acceptedFamilies": ["video.hdmi.2_0", "video.hdmi.1_4"],
-              "bankKey": "in", "carriedProtocols": ["video.hdmi.2_0"],
+              "bankKey": "in",
               "connector": "conn.hdmi_a", "direction": "sink", "face": "rear",
               "gender": "female", "key": "hdmi_in_1", "label": "HDMI IN 1",
               "maxConnections": 1, "order": "a0", "renamedFrom": [],
               "signalFamily": "video.hdmi.2_0", "topology": "p2p" },
             "…hdmi_in_2 … hdmi_in_4 elided…",
             { "acceptedFamilies": [],
-              "bankKey": "out", "carriedProtocols": ["video.hdmi.2_0", "audio.earc"],
+              "bankKey": "out",
               "connector": "conn.hdmi_a", "direction": "source", "face": "rear",
               "gender": "female", "key": "hdmi_out_1", "label": "HDMI OUT 1",
               "maxConnections": 1, "order": "b0", "renamedFrom": [],
@@ -1152,7 +1152,6 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
           "mountMethod": "rackEars", "nominalSpanTwelfths": 12,
           "ports": [
             { "acceptedFamilies": ["net.ethernet"], "bankKey": "eth",
-              "carriedProtocols": ["net.ethernet", "audio.dante", "audio.aes67"],
               "connector": "conn.rj45", "direction": "bidirectional", "face": "front",
               "gender": "female", "key": "eth_01", "label": "1", "linkSpeedMbps": 1000,
               "maxConnections": 1, "order": "a0",
