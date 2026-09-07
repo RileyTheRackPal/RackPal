@@ -17584,6 +17584,88 @@ and the check is then gone for the files it was built for. **Only the migration 
 a file already at the current version is compared as written, so tamper evidence still means what it
 says for everything written from here on.
 
+### §11.134 DR-135 · M5 closes, the Plan view opens over it, and the minor stops being a milestone number
+
+**Settled by the user on 2026-09-07.** Three acts in one ruling because they are one decision: M5
+closes, its successor opens, and the successor is the first epic on this board that the version
+scheme cannot name.
+
+**11.134.1 M5 CLOSES ON ITS CRITERION, WHICH IS §8.1's TEST AND NOT AN EMPTY BACKLOG.** All three
+clauses are discharged (docs/12 §5.4): the AC-051 pair coverage is `DEMONSTRATED` at 29 of 29 with a
+gate whose subject is `kRuleCatalogue` rather than any evaluator's enum, the domain-expert sign-off
+is `CONFIRMED` on 2026-09-06, and *no rule prevents a PDF being written* is `DEMONSTRATED` by a
+sealed `ExportError` with three arms and none of them about a rule. **Every one of the twenty
+Stories under epic 23 is `Done`**, including all five DR-127 §11.126 added on the day of the review,
+and the count of `Done` Chapters beneath them is **61**, which is where `v0.5.61` comes from and why
+closing M5 owes no bump.
+
+**docs/12 §5.4 CARRIED A SENTENCE THAT STOPPED BEING TRUE WHILE IT SAT THERE**, and it is corrected
+rather than quietly deleted: *"DR-127 §11.126 amended M5's scope with five items on the day of the
+review, four of them unbuilt"*. All four closed between 2026-09-06 and 2026-09-07 (§5.4.12 to
+§5.4.15). **The paragraph beside it asked for M5's remaining cost to be re-measured before its
+successor opened; this ruling is that measurement**, and the number it found is zero.
+
+**11.134.2 THE SUCCESSOR IS THE PLAN VIEW AND NOT M6, AND THIS IS RECORDED BECAUSE THE REQUEST
+ARRIVED NAMING M6.** DR-029 §11.28.4 and roadmap §4 sequence the Plan view between M5 and M6, on the
+ground that M6's criterion is that all four starters export a *complete* set and a plan sheet
+arriving afterwards would make that criterion run twice. docs/12 §5.4 already states this in the
+section a person closing M5 would be reading. **The request self-corrected before any work started**,
+which is the outcome that note was written for, and it is kept here as evidence the note earns its
+place.
+
+**11.134.3 THE QUESTION THE EPIC EXPOSED, WHICH NO DOCUMENT COULD ANSWER.** docs/14 §14.0 defines the
+minor as *"the milestone epic under development"* and its own table spells the rule `M2 ⇒ 2, M3 ⇒ 3`.
+**The Plan view is an epic with no milestone number**, and DR-029 §11.28.4 withheld one on purpose,
+so §14.0 admits no answer for it: there is no digit to read off a name that has none. A scheme that
+cannot number the epic currently under development has stopped doing the one job §14.0 buys it,
+answering *is this the one with the plan work in it* without a changelog lookup.
+
+**11.134.4 THE ANSWER: THE PLAN VIEW TAKES `0.6`.** The minor is therefore **the epic's position in
+the plan's order, not the digit inside a milestone's name**, and §14.0's table is amended to say so.
+The consequence is written out here rather than left to be discovered one bump at a time:
+
+| Epic | Band |
+|---|---|
+| M5 Validation | `0.5` |
+| The Plan view | `0.6` |
+| M6 Full sheet set | `0.7` |
+| M7 Platform and access | `0.8` |
+| M8 Release engineering | `0.9` |
+| M9 Beta hardening | `0.10` |
+
+**WHAT THIS COSTS IS THE COINCIDENCE THAT MADE THE SCHEME EASY TO READ**, and the cost is named
+because it is real: from `0.7` onwards the minor no longer equals the milestone number, so a reader
+who learned the shortcut `Mn ⇒ n` is wrong by one for the rest of v1. That is the price of giving a
+band to an epic the plan deliberately refused to number, and the alternative was a scheme with a hole
+in it exactly where the current work sits.
+
+**11.134.5 WHY THIS RENUMBERING IS CHEAP AND DR-029's WAS NOT, WHICH IS THE PART WORTH KEEPING.**
+DR-029 §11.28.4 refused to renumber M6 to M10 for this same epic, and the two questions look
+identical. They are not, and the difference is entirely in what carries the number. **A milestone
+number is written into hundreds of `M6-A1`-shaped task titles, into docs/12 §5.3 to §5.8's headers,
+into §12.7's table and into dozens of canon references**, none of which any tool can rewrite safely.
+**A version minor is written in six files and one table**, and `version_parity_test.dart` fails the
+build the moment one of the six is missed. **The rule that generalises: renumbering costs whatever
+the number has been duplicated into**, so the same decision is right in one place and wrong in the
+other, and neither answer is evidence for the other. This is
+`counts written out in prose are a liability` read from the other end: the reason the version could
+move is that it has exactly one gated copy set and no prose copies at all.
+
+**11.134.6 THE VERSION AT OPEN IS `v0.6.0`, DERIVED THE TWO WAYS §14.0 REQUIRES.** The board query
+for `Done` Chapters under epic 588 returns **0 of 43**; and the epic's own record has no closed
+Chapter, `PLAN-0` (`#589`) being the Story that decomposed it rather than a Chapter that built
+anything. **A band's baseline is taken at the transition, not at the first commit inside it**, which
+is §14.0's own treatment of `v0.2.0`.
+
+**11.134.7 WHAT THIS DOES NOT RULE.** It does not renumber any milestone: **M6 stays M6** and every
+`M6-`, `M7-`, `M8-` and `M9-` task title is untouched, which is DR-029 §11.28.4 still standing. It
+does not re-price the Plan view: DR-029's `L` at 9 to 13 weeks stands, and §11.36.7 already refused
+to re-estimate at decomposition. It does not move scope between release bands, so it is **not a §8.3
+amendment** and edits no scope list; it is a process ruling in DR-017's class. It does not touch the
+major, which stays `0` until a public release whatever the feature set. And it does not discharge or
+park a single clause of the Plan view's own criterion, all seven of which remain `NOT BUILT` or
+`UNPERFORMED` (docs/12 §5.9).
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
