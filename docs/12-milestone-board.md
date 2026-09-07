@@ -6084,6 +6084,12 @@ without saying so, so the mechanical reading is kept: **the patch is the count o
 the epic, and the board is the register.** `#764` is unaffected either way and §5.4.5 already says
 why, being parentless.
 
+**THE WRINKLE IS RESOLVED AS OF §5.4.17, AND THIS PARAGRAPH IS LEFT STANDING RATHER THAN EDITED**,
+because it is the reasoning that made the fix findable. `#690` is re-parented to epic 21, `#587` goes
+with it, and **both readings now return the same number**, so the choice this paragraph made between
+them no longer has to be remembered. The mechanical reading is still the rule; it simply no longer
+disagrees with anything.
+
 **This is the second time an unpaid bump has been paid in a later commit**, after `7d61656` which
 records that `94a8f2c` said *"no version bump"* for the wrong reason. **The parity gate cannot see
 this class of error**: `version_parity_test.dart` compares the six files against each other and is
@@ -6361,6 +6367,64 @@ walks the whole document on every frame of this screen. The epoch machinery exis
 can recompute only when the epochs it reads bump, and wiring it is real work with a real payoff.
 **It is not this chapter**: `#847` is about the panel being reachable at all, and a correctness
 problem would be worse to ship than a performance one.
+
+#### 5.4.17 M3-O closes on evidence it already had, and a work item nobody could ever close · CLOSED · `#690`
+
+**DR-025 §11.24.** `#690` was the last item standing between M5 and its clause count, and **it had
+no work in it**. Its own description says so in its first sentence: *"Created 2026-08-13 as
+HIERARCHY REPAIR, not new scope. The work is `#587` and predates this issue."* It then sat `To Do`
+for twenty four days.
+
+**5.4.17.1 DEMONSTRATED RATHER THAN ASSERTED, BECAUSE §8.1 SAYS SO.** The item lists three missing
+things, *"the modifier and the Command behind it"* and the picker. All three are built, and the
+whole chain is reachable:
+
+| DR-025 clause | Where it lives | State |
+|---|---|---|
+| §11.24.3 `@signal=` names the family | `drop_line_parser.dart:191`, `drop_line_planner.dart:390` | built |
+| §11.24.3 an unresolved value REFUSES | `resolveSignalFamilyToken`, one resolver, three callers | built |
+| §11.24.5 a run can gain a family after the fact | `SetSignalFamilyCommand` | built |
+| §11.24.6 the family is stored TWICE, both or neither | the command writes `Service` and `Net` | built |
+| the SERVICE column becomes a picker | `FamilyPicker`, mounted at `structure_editor_screen.dart:2192` | built |
+| the cell reaches a command | `structure_edit_actions.dart:158` to `buildSetSignalFamily` | built |
+| §11.24.3's owed docs/07 §5.1 edit | the `service` row split from a new `signal` row | made |
+
+Run rather than read: `signal_modifier_test.dart` and `signal_family_command_test.dart` are twenty
+tests and pass, and `structure_editor_route_test.dart` is forty one including *"a bulk SERVICE set is
+one undo, and both fields come back"*, which is the end to end path through the real shell. **The
+closing commit is `8756c79`** (§8.8), over `b4cf8e7`, `48ae15b`, `515d61e`, `80fd007` and `ecb015c`.
+
+**5.4.17.2 THE FINDING IS A NEW SHAPE OF THE MILESTONE'S OWN THEME.** M5 found ten fields that were
+modelled and unreachable, and one panel. This is the same defect one level up: **a work item that
+nothing could ever close.** Every other item on this board closes when a commit cites it. `#690`'s
+work had already landed when it was created, so no future commit would ever name it, and the board
+offers no other way for a Story to become `Done`. It was not forgotten. **It was unreachable**, in
+exactly the sense the rest of this milestone has been using the word.
+
+The cheap check is the one `#841` reached for a field: **a hierarchy repair that wraps completed work
+must be closed in the same act that creates it**, because the act of creation is the last moment
+anybody has a reason to look at it.
+
+**5.4.17.3 THE PARENTAGE IS FIXED, AND §5.4.10's WRINKLE IS NOW RESOLVED RATHER THAN RECORDED.**
+`#690` is re-parented from epic 23 (M5) to epic **21** (M3), where its work was done and where its
+ruling belongs. That carries its Done child `#587` with it, and **that child is what §5.4.10 recorded
+as a wrinkle it could not resolve**: an M3 chapter counted in M5's patch digit, leaving *"the patch
+counts Done Chapters under the epic"* at 61 and *"the patch counts chapters whose work belongs to the
+milestone"* at 60, both defensible and neither correct.
+
+**RE-PARENTING DISSOLVES THE AMBIGUITY INSTEAD OF PICKING A SIDE OF IT**, which is a third option
+§5.4.10 did not have while the item's home was wrong. **Both readings now return 60**, so the two
+derivations agree again and neither is a rule anybody has to remember having chosen.
+
+**THE VERSION IS THEREFORE ONE AHEAD, AND THAT IS STATED HERE SO IT IS NOT READ AS A SKIPPED BUMP.**
+`v0.5.61` has shipped and a version does not count backwards. It stays at `v0.5.61` and does not move
+when `#846` closes, because that close takes the register from 60 to 61 and the two meet. This is
+§5.4.10's failure inverted, and it is written down for §5.4.10's own reason: **resolving it silently
+is how the next person inherits a number they cannot re-derive.**
+
+**5.4.17.4 SO M5's OPEN COUNT WAS WRONG, NOT ITS WORK.** The epic held two open Stories and one of
+them was M3's. **M5's only genuinely open item is `#846`**, under `#842`.
+
 
 ### 5.5 M6, The full sheet set · `M` · NOT STARTED, weakest mark `NOT BUILT` · blocked three ways
 
