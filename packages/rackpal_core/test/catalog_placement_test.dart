@@ -691,6 +691,97 @@ void main() {
     // reason, so a call with no target does not compile. A test asserting
     // a refusal here would be asserting a state the types forbid.
   });
+
+  group('PLAN-E/4: the room a plan drop writes (DR-142 §11.141.5)', () {
+    /// A document, a located underlay, and one device dropped on it.
+    (RackDocument, DeviceInstance) dropped() {
+      final rack = _rack();
+      final doc = _docWithCatalog(rack, {'F1': _fieldTemplate()});
+      doc.locations[const Uuid('loc-1')] = Location(
+        id: const Uuid('loc-1'),
+        kind: LocationKind.floor,
+        name: 'Level 1',
+        code: 'L1',
+        order: const FracIndex('a0'),
+        meta: _meta(),
+      );
+      final underlay = _underlay(doc, locationId: const Uuid('loc-1'));
+
+      final result = buildPlaceOnPlanCommand(
+        doc: doc,
+        catalogId: 'F1',
+        now: _now,
+        actor: 'tester',
+        onPlan: (
+          locationId: underlay.locationId,
+          pin: PlanPin(underlayId: underlay.id, at: const PxPt(120, 340)),
+        ),
+      );
+      (result as CatalogPlacementReady).command.apply(doc);
+      return (doc, doc.devices.values.single);
+    }
+
+    test('PRINTS THE ROOM ON THE EQUIPMENT LIST, which it did not', () {
+      // THE ARTIFACT AND NOT THE MECHANISM (house style), and here the
+      // artifact is the whole point: the two location fields disagreeing
+      // is invisible until something reads the one that was not written,
+      // and `equipment_list.dart` reads exactly that one.
+      final (doc, device) = dropped();
+
+      final row = buildEquipmentList(
+        doc,
+      ).rows.firstWhere((r) => r.deviceId == device.id);
+
+      expect(row.location, 'Level 1');
+    });
+
+    test(
+      'leaves the two location fields agreeing, which the model requires',
+      () {
+        // `AddStructureCommand` writes both and `RemoveLocationCommand`
+        // clears both, because "clearing one would leave the document
+        // disagreeing with itself". A third writer setting one of them is
+        // the same defect arriving by a different door.
+        final (_, device) = dropped();
+
+        expect((device.placement as OffRackPlacement).locationId, isNotNull);
+        expect(
+          device.locationId,
+          (device.placement as OffRackPlacement).locationId,
+        );
+      },
+    );
+
+    test('and a RACKED device still names no room, so the derivation '
+        'does not over-reach', () {
+      // The room comes from the placement only when the placement HAS
+      // one. A rail placement says where the device is with a rack, a U
+      // and a face; inventing a room from that would be a second answer
+      // to a question the rack already answers.
+      final rack = _rack();
+      final doc = _docWithCatalog(rack, {'F1': _fieldTemplate()});
+
+      AddDeviceCommand(
+        kind: DeviceKind.rackDevice,
+        templateRef: const TemplateRef(
+          templateId: TemplateId('F1'),
+          version: 1,
+          contentHash: 'sha256:test-F1',
+        ),
+        designator: 'AMP-1',
+        name: 'amp',
+        placement: RailPlacement(
+          rackId: rack.id,
+          ruIndex: 1,
+          face: Face.front,
+        ),
+        now: _now,
+        actor: 'tester',
+      ).apply(doc);
+
+      expect(doc.devices.values.single.locationId, isNull);
+    });
+  });
 }
 
 /// Adds one underlay to [doc] and returns it. Nothing here decodes an

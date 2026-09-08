@@ -28,6 +28,31 @@ import 'package:rackpal_core/src/util/id_gen.dart';
 /// identical, which is all the byte round-trip property (CR-117) needs;
 /// there is no "prior state" to preserve because the entity did not
 /// exist before this command's first `apply()`.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE ROOM IS TAKEN FROM THE PLACEMENT, AND `PLAN-E/2` IS WHY
+/// ═══════════════════════════════════════════════════════════════════════
+/// `DeviceInstance.locationId` and `OffRackPlacement.locationId` are
+/// different fields holding the same value, which the model states and
+/// gives the reason for: `AddStructureCommand` writes both,
+/// `RemoveLocationCommand` clears both (DR-021 §11.20.2), and *"clearing
+/// one would leave the document disagreeing with itself"*.
+///
+/// **This command had no way to write the instance's**, and
+/// `buildPlaceOnPlanCommand` wrote the placement's. So every device
+/// dropped on a plan since `PLAN-E/2` had a placement saying `Level 1` and
+/// an instance saying nothing, and `derived/equipment_list.dart` reads the
+/// instance: **the Equipment List printed no room for it**, with no repair
+/// available, because `locationId` is deliberately not a `DeviceField` and
+/// no editing gesture can set one (DR-142 §11.141.5).
+///
+/// **DERIVED HERE RATHER THAN ASKED OF THE CALLER**, on purpose. A new
+/// parameter is a thing a future call site can forget exactly the way this
+/// one did, and the answer is never the caller's to know better: when the
+/// placement names a room, that IS the device's room. The other four
+/// placement variants name none (a rail, shelf or 0U device says where it
+/// is with a rack, a U and a face, and a staged one is nowhere yet), so
+/// they are unchanged and still construct with `null`.
 final class AddDeviceCommand extends Command<RackDocument> {
   AddDeviceCommand({
     required this.kind,
@@ -58,6 +83,14 @@ final class AddDeviceCommand extends Command<RackDocument> {
   @override
   Iterable<Uuid> get affects => [id];
 
+  /// The room, when the placement names one. See the class header: this
+  /// is a derivation from this command's own field, so it stays as
+  /// deterministic as everything else `apply` constructs.
+  Uuid? get _locationId => switch (placement) {
+    final OffRackPlacement p => p.locationId,
+    _ => null,
+  };
+
   @override
   void apply(RackDocument doc) {
     doc.devices[id] = DeviceInstance(
@@ -68,6 +101,7 @@ final class AddDeviceCommand extends Command<RackDocument> {
       name: name,
       placement: placement,
       meta: EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor),
+      locationId: _locationId,
     );
   }
 

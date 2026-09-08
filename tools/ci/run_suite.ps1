@@ -505,7 +505,19 @@ $SuiteFloors = @{
     # over -- several fixtures use square coordinates like (10, 10) and
     # (500, 500), which cannot see a transposition at all. One case was
     # moved to (210, 45) once the mutation showed it.
-    'rackpal_core'   = 4281
+    # 4284 at PLAN-E/4 phase 1: +3 for the room a plan drop writes
+    # (DR-142 §11.141.5). A device has TWO location fields the model says
+    # must agree, and `buildPlaceOnPlanCommand` set one, so every device
+    # dropped on a plan since PLAN-E/2 printed no room on the Equipment
+    # List. Mutation-tested by dropping the `locationId` argument back out
+    # of `AddDeviceCommand.apply`, which is the state as shipped: two of
+    # the three fail. The third asserts a RACKED device still names no
+    # room and correctly survives, because it guards the derivation from
+    # over-reaching rather than the fix from being absent.
+    # The load-bearing case asserts the EQUIPMENT LIST CELL and not the
+    # field: two fields disagreeing is invisible until something reads the
+    # one that was not written, and that reader is the artifact.
+    'rackpal_core'   = 4284
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
