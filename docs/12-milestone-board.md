@@ -7771,6 +7771,78 @@ to stop. **`PLN-003` can be satisfied for the first time.**
 Owed: the inspector column (§5.9.11.3), calibration (`PLAN-F`), `planLowerBound` (`PLAN-G`), `T1.01`
 (`PLAN-H`), the `PLN-*` advisories (`PLAN-I`) and the marquee (`PLAN-E/6`).
 
+#### 5.9.12 PLAN-E/6: one marquee, on all three canvases · `DR-139` · `v0.6.27`
+
+Closed `2026-09-08`. Commits `e3e0388` (the geometry), `10cad2f` (the rack and the plan),
+`341c84c` (the schematic). Three commits, each gated green.
+
+##### 5.9.12.1 What was actually missing, and how PLAN-E/1 saw it
+
+`CR-102` has ruled a left-drag marquee **in every view** since M0 and nothing implemented it.
+docs/15 §6 promised the Plan editor one *"identical to the other two canvases"* and **neither of the
+other two had one**. `PLAN-E/1` found that by censusing the MECHANISM rather than the word: grepping
+`marquee` returns comments saying it is deferred, while **every `SelectMode` call in `lib/` passes
+exactly one id**. `SelectionController` has held a `Set<Uuid>` since M0 and no gesture had ever put
+more than one thing in it.
+
+##### 5.9.12.2 The `partKey` filter, which is the finding
+
+A schematic symbol contributes **one `HitRegion` per port**, each carrying the symbol's `entityId`,
+plus one for the body. A band tested against every region therefore **selects a whole device because
+it clipped one pin**, in WINDOW mode, where that device's body is nowhere near contained.
+
+> The rack elevation and the plan emit one region per entity and no parts, so that bug looks
+> perfectly correct on two of the three canvases. Only `partKey == null` counts.
+
+##### 5.9.12.3 Three defects the cases found, and one they could not
+
+**A band from pointer-down.** `begin` set both corners, so `band` was a zero-size box from contact
+and `MarqueeBand` painted a rectangle for every click on bare canvas. `_to` stays null until the
+first update, and the rule lives in the controller because the rack arms before its 4px slop check.
+
+**A band that outlived its gesture.** The rack's first draft asked `_marquee.isActive` in
+`_onUpdateDrag`, which is a question about the CONTROLLER and not about this drag. A second canvas
+pointer is DEFERRED rather than killed, so it inherits the route when the first gesture ends, and it
+inherited the band too: its move-drag stopped moving the device.
+`canvas_exclusivity_test.dart`'s rule 1 caught it, and the marquee is now scoped per gesture.
+
+**An expired premise in that same test.** Its finger A scrubbed empty canvas purely to hold the
+pointer claim, chosen because a drag on bare canvas did nothing. It now means something, and a band
+catching nothing REPLACES the selection with nothing. A now sweeps a window over the device the next
+step needs and the case asserts it, so the precondition is stated rather than assumed.
+
+**And one in the test rather than the code**: the rack numbers bottom-up, so AMP-1 at U4 is ABOVE
+UPS-1 at U1 while screen Y runs the other way. A band written as `ups.top` down to `amp.center` is
+inverted, catches nothing, and reads as the window rule being broken.
+
+##### 5.9.12.4 What the schematic's tests deliberately do not assert
+
+The band's arrival is asserted there; **the selection is not**. `SchematicCanvasScreen` builds its
+own private `SelectionController`, and on that fixture selecting a device changes nothing a widget
+test can read: the drawn-scope headline never renders in that harness, and the painted op count is
+**identical before and after a plain tap on a symbol, 831 either way, measured**.
+
+An assertion routed through a mechanism that does not report is the class of test this repository has
+already been bitten by, so the id count is asserted where it CAN be read (the rack elevation) and the
+rule itself in core. **Making it readable on the schematic means letting that screen take an external
+`SelectionController`, the way the plan canvas does.** That is a change to its API and is owed rather
+than done quietly here.
+
+##### 5.9.12.5 Evidence
+
+Ten mutations killed: seven on the geometry (a zero-width drag becoming a cross, reading Y instead of
+X, each convention behaving like the other, dropping the `partKey` filter, dropping the total order,
+an off-by-one containment edge) and three on the adoptions.
+
+**Two survived and are recorded rather than papered over.** Dropping `marquee.cancel()` from the
+schematic's click path survives **correctly**: `begin` resets `_from` on every press, so nothing can
+inherit a stale origin there, and that cancel is defensive. The rack's equivalent WAS load-bearing,
+because it consulted `isActive` across gestures. And feeding `update` the start point survives
+because the schematic file asserts the band's arrival rather than its extent, which is core's.
+
+Floors: `rackpal_core` 4296 to 4308, `rackpal_ui` 1622 to 1632. One analyzer info introduced and
+removed (a barrel export out of alphabetical order); the pin stays at 233.
+
 ---
 
 ## 6. The dependency graph, as it actually stands

@@ -1,5 +1,33 @@
 # Update Log
 
+## 2026-09-08 (eighth entry)
+
+* **Closed**: `PLAN-E/6` (#848) at `v0.6.27`, discharging
+  [DR-139](/decisions/dr-139-one-marquee-for-all-three-canvases.md) and
+  with it `CR-102`, ruled since M0 and implemented nowhere.
+* **Note**: **THE PRODUCT NOW HAS A MULTI-SELECTION.** `PLAN-E/1` found
+  the gap by censusing the MECHANISM: every `SelectMode` call in `lib/`
+  passed exactly one id, so `SelectionController`'s `Set<Uuid>` had never
+  held more than one thing.
+* **Note**: **THE `partKey` FILTER IS THE FINDING.** A schematic symbol
+  emits one `HitRegion` per PORT carrying the symbol's id plus one for its
+  body, so a band tested against every region selects a whole device
+  because it clipped ONE PIN, in the mode that means "fully contained".
+  The rack and the plan emit no parts, so that bug looks correct on two
+  canvases out of three.
+* **Note**: a test caught a real regression rather than a stylistic one.
+  The rack's first draft asked `_marquee.isActive` in the update, which is
+  a question about the CONTROLLER and not about this drag; a deferred
+  second pointer inherited the band and its move-drag stopped moving the
+  device.
+* **Note**: **THE SCHEMATIC'S TESTS ASSERT THE BAND AND NOT THE
+  SELECTION, ON PURPOSE.** That screen's selection is private and has no
+  readable consequence in its harness: the op count is identical before
+  and after a plain tap, 831 either way, measured. An assertion routed
+  through a mechanism that does not report is the shape this repo has
+  been bitten by, so the count is asserted where it can be read and the
+  gap is written down.
+
 ## 2026-09-08 (seventh entry)
 
 * **Closed**: `PLAN-E/5` (#632) at `v0.6.26`. The Plan view is in the
