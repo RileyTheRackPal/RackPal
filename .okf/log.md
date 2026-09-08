@@ -1,5 +1,36 @@
 # Update Log
 
+## 2026-09-08 (third entry)
+
+* **Ruling**: [DR-141](/decisions/dr-141-one-arm-one-pin.md). A pin arms one
+  drop at a time, and the fast path is the strip rather than the table.
+* **Note**: **THE BRIEF SAID WHAT THE GESTURE IS AND NOT WHAT FOLLOWS IT.**
+  docs/15 §6 gives *"click an outlet in the drop table, then click the
+  plan"* and stops; sixty drops means sixty pins. Settled: one arm, one
+  pin, mode stays on with nothing armed. **Auto-advance was declined on
+  the FAILURE MODE rather than the ergonomics**: a mis-click pins the
+  wrong drop AND advances, and the person going fast is the one who will
+  not notice the chip moved. The two-acts-per-drop cost is real and is
+  paid by DR-140, whose unpinned strip is already in the plan view, which
+  makes `PLAN-E/4` the primary pinning workflow and `PLAN-E/3` the
+  secondary entry point.
+* **Creation**: [When a gate refuses finished work, check the boundary
+  first](/practices/a-gate-can-move-a-chapter-boundary.md).
+  `StructureEditorActions.onPinOnPlan` was built, threaded to a row and
+  tested, and [callbacks-have-callers](/gates/callbacks-have-callers.md)
+  refused it because nothing in `lib/` supplies one. **The cheat was
+  available**: the call went through a local alias, so the scanner's
+  `\.name\s*\(` never matched and one rewording would have gone green.
+  The gate was right. A menu item arming a mode whose only surface is
+  unmounted is a control that does nothing, so the producer moved to
+  `PLAN-E/5`.
+* **Note**: **AND THE GATE EXPOSED SOMETHING LARGER THAN A CALLBACK.**
+  `PLAN-E/2`, `/3` and `/4` all build behaviour for a view `PLAN-E/5`
+  mounts, so each ends with code the product cannot reach. That is legal
+  and each chapter says so, but it means **`PLAN-E/5` is not a small
+  wiring chapter**: it is the one that makes three chapters' work true.
+  No amount of reading the briefs had found that; a gate did.
+
 ## 2026-09-08 (second entry)
 
 * **Ruling**: [DR-140](/decisions/dr-140-the-rack-is-pinned-from-the-unpinned-strip.md).

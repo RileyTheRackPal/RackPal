@@ -9,7 +9,7 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -110,6 +110,21 @@ DocumentController _controller({PxPt? pinnedAt}) {
 OffRackPlacement? _placementOf(DocumentController c) =>
     c.doc.devices[const Uuid('dev-1')]?.placement as OffRackPlacement?;
 
+const _outletId = Uuid('out-1');
+
+/// Adds one outlet, the subject the fast path arms.
+void _addOutlet(DocumentController c) {
+  c.doc.outlets[_outletId] = Outlet(
+    id: _outletId,
+    structureBodyId: const Uuid('body-1'),
+    designation: 'D-014',
+    order: const FracIndex('a0'),
+    meta: _meta(),
+  );
+}
+
+const _armedDrop = ArmedPin(outletId: _outletId, label: 'D-014');
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -128,7 +143,11 @@ void main() {
       List<String> refusals,
     })
   >
-  pump(WidgetTester tester, DocumentController controller) async {
+  pump(
+    WidgetTester tester,
+    DocumentController controller, {
+    PlanPinArmController? arm,
+  }) async {
     await tester.runAsync(() async {
       await cache.load(_member, await _png(600, 400));
     });
@@ -137,9 +156,13 @@ void main() {
     final key = GlobalKey<PlanCanvasScreenState>();
     final refusals = <String>[];
     await tester.pumpWidget(
-      Directionality(
-        textDirection: TextDirection.ltr,
-        child: Align(
+      // A `MaterialApp` RATHER THAN A BARE `Directionality`, and the
+      // reason is `PLAN-E/3`'s chip: it is a `Material` with a `Theme`
+      // lookup and an `IconButton`, none of which resolve without one.
+      // `Align(topLeft)` keeps the canvas at the window origin, so every
+      // coordinate below is still the underlay's own pixel space.
+      MaterialApp(
+        home: Align(
           alignment: Alignment.topLeft,
           child: SizedBox(
             width: 600,
@@ -152,6 +175,7 @@ void main() {
               measurer: const _ZeroMeasurer(),
               selection: selection,
               viewport: viewport,
+              arm: arm,
               onRefuse: refusals.add,
             ),
           ),
@@ -291,6 +315,109 @@ void main() {
       await tester.pump();
 
       expect(_placementOf(c)!.planPin!.at, const PxPt(300, 200));
+    });
+  });
+
+  group('the fast path (PLAN-E/3, DR-141)', () {
+    testWidgets('an armed click pins the armed OUTLET where it landed', (
+      tester,
+    ) async {
+      final c = _controller();
+      _addOutlet(c);
+      final arm = PlanPinArmController()..arm(_armedDrop);
+      final h = await pump(tester, c, arm: arm);
+
+      await tester.tapAt(const Offset(410, 260));
+      await tester.pump();
+
+      expect(c.doc.outlets[_outletId]!.planPin!.at, const PxPt(410, 260));
+      expect(h.selection.ids, {_outletId});
+    });
+
+    testWidgets('THE MODE OUTLIVES THE PIN, so the chip is still up', (
+      tester,
+    ) async {
+      // DR-141 §11.140.2, asserted through the real screen rather than
+      // only on the controller: a one-shot arm would leave no chip here.
+      final c = _controller();
+      _addOutlet(c);
+      final arm = PlanPinArmController()..arm(_armedDrop);
+      await pump(tester, c, arm: arm);
+
+      await tester.tapAt(const Offset(410, 260));
+      await tester.pump();
+
+      expect(arm.isActive, isTrue);
+      expect(arm.armed, isNull);
+      expect(find.byKey(PlanPinArmChip.chipKey), findsOneWidget);
+    });
+
+    testWidgets('a click while the mode is on but nothing armed still '
+        'CLEARS, rather than doing nothing', (tester) async {
+      // The state DR-141 creates deliberately. A click here has no pin to
+      // place, so it must fall back to the ordinary meaning of a click on
+      // empty plan; silently doing nothing is the no-op docs/04 §3.4
+      // forbids.
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addOutlet(c);
+      final arm = PlanPinArmController();
+      final h = await pump(tester, c, arm: arm);
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+      expect(h.selection.ids, isNotEmpty);
+
+      await tester.tapAt(const Offset(60, 40));
+      await tester.pump();
+
+      expect(h.selection.ids, isEmpty);
+      expect(c.doc.outlets[_outletId]!.planPin, isNull);
+    });
+
+    testWidgets('a click that HITS a pin selects it rather than pinning the '
+        'armed drop on top', (tester) async {
+      // An armed mode may not repurpose a click that already meant
+      // something. The user was pointing at that device for a reason.
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addOutlet(c);
+      final arm = PlanPinArmController()..arm(_armedDrop);
+      final h = await pump(tester, c, arm: arm);
+
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+
+      expect(h.selection.ids, {const Uuid('dev-1')});
+      expect(c.doc.outlets[_outletId]!.planPin, isNull);
+      expect(arm.armed, _armedDrop, reason: 'still armed for the next click');
+    });
+
+    testWidgets('an outlet deleted while armed is REFUSED, not pinned onto '
+        'nothing', (tester) async {
+      // The mode outlives the pin by design, so it also outlives an outlet
+      // removed in another tab while it was armed.
+      final c = _controller();
+      final arm = PlanPinArmController()..arm(_armedDrop);
+      final h = await pump(tester, c, arm: arm);
+
+      await tester.tapAt(const Offset(410, 260));
+      await tester.pump();
+
+      expect(h.refusals.single, contains('not in the project any more'));
+      expect(arm.armed, isNull, reason: 'the dead subject is cleared');
+      expect(arm.isActive, isTrue);
+    });
+
+    testWidgets('ONE undo puts the pinned outlet back', (tester) async {
+      final c = _controller();
+      _addOutlet(c);
+      final arm = PlanPinArmController()..arm(_armedDrop);
+      await pump(tester, c, arm: arm);
+
+      await tester.tapAt(const Offset(410, 260));
+      await tester.pump();
+      expect(c.doc.outlets[_outletId]!.planPin, isNotNull);
+
+      c.undo.undo(c.doc);
+      expect(c.doc.outlets[_outletId]!.planPin, isNull);
     });
   });
 
