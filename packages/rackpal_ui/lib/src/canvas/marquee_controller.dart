@@ -88,14 +88,23 @@ final class MarqueeController extends ChangeNotifier {
   /// whatever comes back with `SelectMode.replace`, and an empty list
   /// replacing a selection is exactly what dragging across bare canvas
   /// means.
-  List<String> end(DiagramScene scene) {
+  List<String> end(DiagramScene scene) => endIn(scene.hits);
+
+  /// The list-level form, on `marqueeSelectionIn`'s precedent: a canvas
+  /// holding bare regions reuses the identical rule.
+  ///
+  /// The schematic is that canvas. It already caches the BODY regions of
+  /// its symbols alone (`_bodyRegionsFor`), which is exactly the set the
+  /// band wants, and handing it a whole `DiagramScene` would make it
+  /// rebuild what it has.
+  List<String> endIn(List<HitRegion> regions) {
     final f = _from;
     final t = _to;
     _from = null;
     _to = null;
     notifyListeners();
     if (f == null || t == null) return const [];
-    return marqueeSelection(scene, f, t);
+    return marqueeSelectionIn(regions, f, t);
   }
 
   void cancel() {

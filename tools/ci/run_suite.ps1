@@ -717,7 +717,29 @@ $SuiteFloors = @{
     # that scrub is now a marquee that catches nothing, which DESELECTS.
     # The premise was unstated; the sweep now selects what the next step
     # needs and asserts it.
-    'rackpal_ui'     = 1629
+    # 1632 at PLAN-E/6 phase 3: +3 from canvas/schematic/schematic_marquee
+    # _test.dart, the THIRD adoption, which is what discharges DR-139: that
+    # ruling's whole content is that the gesture is uniform across views.
+    # WHAT THAT FILE ASSERTS IS THE BAND AND NOT THE SELECTION, and its
+    # header says why rather than leaving it to be discovered.
+    # SchematicCanvasScreen builds its own private SelectionController and
+    # on this fixture selecting a device changes nothing a widget test can
+    # read: the drawn-scope headline never renders in this harness and the
+    # painted op count is IDENTICAL before and after a plain tap on a
+    # symbol, 831 either way, measured. So a selection assertion here would
+    # pass through a mechanism that does not report. The id count is
+    # asserted where it CAN be read, on the rack elevation.
+    # TWO MUTATIONS SURVIVED AND BOTH ARE RECORDED RATHER THAN PAPERED
+    # OVER. Dropping `marquee.cancel()` from the click path survives, and
+    # correctly: `begin` resets `_from` on every press, so nothing can
+    # inherit a stale origin here, and that cancel is defensive rather than
+    # load-bearing. The rack's version of this WAS load-bearing because it
+    # consulted `isActive` across gestures. And feeding `update` the start
+    # point instead of the pointer survives, because it still yields a band
+    # widget and this file asserts the band's ARRIVAL rather than its
+    # extent; the extent is core's, in marquee_test.dart.
+    # The third mutation, never arming the band at all, is killed.
+    'rackpal_ui'     = 1632
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
