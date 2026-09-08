@@ -42,22 +42,45 @@ import 'package:rackpal/src/storage/file_store.dart';
 import 'package:rackpal/src/storage/import_guard.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 
-/// PDF import is chosen and not yet built (`PLAN-D/3`).
+/// A PDF reached the raster import path, which means the page picker was
+/// skipped.
 ///
 /// **ITS OWN ERROR RATHER THAN "unsupported format"**, because those are
 /// different sentences and only one of them is true: DR-029 §11.28.5
 /// bought PDF import deliberately, so a person handed "that is not a
 /// supported format" would be told the product has decided something it
-/// has not. "Not yet" is the honest word, and it stops somebody
-/// converting the file by hand in the belief that they must.
+/// has not.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THIS SAID "NOT YET BUILT" UNTIL 2026-09-08, AND THE SAME FILE ALREADY
+/// SAID OTHERWISE
+/// ═══════════════════════════════════════════════════════════════════════
+/// DR-138 built PDF import and DR-138's own sweep updated
+/// [PdfHasNoLiftablePageError] below, whose doc comment says this error
+/// "means the picker was skipped". It did not update this class, so one
+/// file carried both sentences: *the picker was skipped* and *the
+/// rasteriser is not built yet (PLAN-D/3). Export the page as PNG or JPEG
+/// for now.* The second is now false twice over, and it told somebody to
+/// go and convert by hand a file this product can open.
+///
+/// **A TEST WAS PINNING THE STALE SENTENCE**, asserting
+/// `contains('not built yet')`, which is this repository's own house rule
+/// about a test that survives the behaviour it was protecting. Found by
+/// `PLAN-E/1`'s census (docs/12 §5.9.7) rather than by anything watching
+/// this path.
+///
+/// The name is left alone deliberately: from the caller's side PDF import
+/// really is not available *on this route*, and renaming a thrown type to
+/// improve a comment is a bigger change than the comment was worth.
 final class PdfImportNotAvailableError implements Exception {
   const PdfImportNotAvailableError();
 
   @override
   String toString() =>
-      'PdfImportNotAvailableError: PDF floorplans are supported by design '
-      '(DR-029) and the rasteriser is not built yet (PLAN-D/3). Export '
-      'the page as PNG or JPEG for now.';
+      'PdfImportNotAvailableError: PDF floorplans are supported (DR-029, '
+      'DR-138) and a PDF must go through the page picker, which lifts one '
+      "page's image. This path takes PNG or JPEG bytes only, so reaching "
+      'it with a PDF means the picker was skipped.';
 }
 
 /// The image decoded to different dimensions than its header declared.

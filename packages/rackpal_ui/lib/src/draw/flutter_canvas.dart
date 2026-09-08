@@ -85,9 +85,20 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
   /// and this is only the lookup. A resolver that decoded on demand would
   /// decode a floorplan on every frame of a pan.
   ///
-  /// NULL IS THE ORDINARY STATE and stays so until PLAN-C: nothing in this
-  /// repository emits an `OpImage`, so every existing construction site is
-  /// correct without passing anything.
+  /// NULL IS THE ORDINARY STATE, and this sentence named the wrong chapter
+  /// as its end. It read "stays so until PLAN-C"; PLAN-C and PLAN-D have
+  /// both closed and it is still null, because what ends it is a SCENE
+  /// BUILDER and not a model or an importer. Nothing in this repository
+  /// emits an `OpImage` outside two test files, so every existing
+  /// construction site is still correct without passing anything.
+  ///
+  /// **IT ENDS AT `PLAN-E/2`, WHICH OWES AN IMPLEMENTATION AND NOT ONLY A
+  /// CALL SITE.** `PLAN-E/1`'s census found this typedef has no
+  /// implementation anywhere in the tree (docs/12 §5.9.7), and a plan
+  /// canvas that cannot draw the plan is not one. The decode-once cache
+  /// that satisfies it is shaped by the paragraph above rather than by
+  /// this one: the lookup is synchronous, so the decode happens at import
+  /// or at open.
   final FlutterImageResolver? images;
 
   /// M2-G's laid-out-run cache, or null to lay every run out afresh.
