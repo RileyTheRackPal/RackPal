@@ -133,6 +133,16 @@ enum KeyScope {
   /// would say the two stacks were one thing.
   builder,
 
+  /// `PlanCanvasScreen`'s `Shortcuts` (PLAN-E/5, DR-143 §11.142.6).
+  ///
+  /// ITS OWN SCOPE AND NOT `rack` OR `schematic`, on the reason those two
+  /// give for being separate: `Esc` means *"drop what this surface is
+  /// holding"* and each surface holds something different. Here it is an
+  /// armed pin (DR-141) and a selection of pins; on the rack it is a drag
+  /// and a caret. One scope shared between them would make one `Intent`
+  /// answer for both, and the arm mode does not exist on the other two.
+  plan,
+
   /// The modal dialogs' `CallbackShortcuts`.
   ///
   /// One scope for all three (unsaved changes, recovery prompt, file
@@ -208,6 +218,9 @@ enum KeyBindingId {
   beginWire,
   commitWire,
   toggleBankExpansion,
+
+  // --- plan (PLAN-E/5, DR-143) ----------------------------------------
+  planCancel,
 
   // --- builder (M4-G) -------------------------------------------------
   quickAddCommit,
@@ -436,6 +449,17 @@ final class FocusSelectionIntent extends Intent {
 /// Drop the focus set, then the selection (`Esc`, docs/05 §11.4).
 final class SchematicCancelIntent extends Intent {
   const SchematicCancelIntent();
+}
+
+/// Dismiss the pin-arm mode, then clear the selection (`Esc`, docs/15 §6).
+///
+/// THE FOURTH `Esc` AND THE SAME SENTENCE, which is what
+/// `KeymapConflictKind.meaningDrift` is checking: `rackCancel`,
+/// `schematicCancel` and `dialogDismiss` already share one label because
+/// they share one meaning, and a plan that spelled it differently would be
+/// a key that means four things in four places.
+final class PlanCancelIntent extends Intent {
+  const PlanCancelIntent();
 }
 
 /// Collapse or expand the bank the pin caret is in (`B`, CR-103, `#801`).
@@ -1328,6 +1352,25 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     note:
         'W is UNBOUND IN THE RACK, which KeymapConflictKind.letterCollision '
         'keeps true — canon §1.10 principle (c).',
+  ),
+  // ── the plan (PLAN-E/5, DR-143 §11.142.6) ────────────────────────────
+  KeyBinding(
+    id: KeyBindingId.planCancel,
+    scope: KeyScope.plan,
+    trigger: LogicalKeyboardKey.escape,
+    label: 'Cancel · dismiss · clear the selection',
+    intent: PlanCancelIntent(),
+    source: 'docs/15 §6 · docs/04 §8',
+    note:
+        'THE FOURTH Esc AND THE SAME LABEL, which is the point: '
+        'rackCancel, schematicCancel and dialogDismiss already share one '
+        'sentence because they share one meaning, and '
+        'KeymapConflictKind.meaningDrift fails if one of them is reworded. '
+        'It has two rungs here, in DR-141 order: an ARMED PIN is what Esc '
+        'drops first, because the arm is a mode the user turned on '
+        'deliberately and a mode whose exit also cleared the selection '
+        'would take away something they did not ask about. With nothing '
+        'armed it clears the selection, like the other two.',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddCommit,

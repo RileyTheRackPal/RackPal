@@ -72,6 +72,7 @@ import 'package:rackpal/src/storage/library_shelf.dart';
 import 'package:rackpal/src/storage/recents_store.dart';
 import 'package:rackpal_core/rackpal_core.dart'
     show
+        Err,
         LoadedLibrary,
         LocationRemovalPlan,
         TemplateBody,
@@ -120,7 +121,7 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 /// unbound no-op and *"the tab is absent from the strip"*. A tab that
 /// opens onto nothing is the untruth `shell_tabs_test.dart` already
 /// names, pointing the other way.
-const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 2, 2: 4, 4: 5};
+const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 2, 2: 4, 4: 6};
 
 /// The strip, in DR-091 §11.90.3's order, and the group each view is in.
 ///
@@ -141,6 +142,19 @@ enum ShellView {
     ShellViewGroup.design,
   ),
   schematic('Schematic', Icons.polyline_outlined, ShellViewGroup.design),
+  // THE SEVENTH TAB, AND DR-091 HAS BEEN WAITING FOR IT. That ruling
+  // keeps Plan out of the strip "until it is built, rather than adding a
+  // seventh tab onto nothing"; PLAN-E/5 is the chapter that earns it, and
+  // DR-143 §11.142.1 is why it could not have arrived one chapter sooner
+  // (nothing could put a floorplan in a project at all).
+  //
+  // POSITION 6, AFTER THE SCHEMATIC, WHICH IS §11.90.3's OWN TABLE. The
+  // job sentence there is "interconnect it, MARK WHERE IT PHYSICALLY
+  // SITS, hand over the paperwork", so the plan comes after the wiring
+  // and before the deliverable. A first draft of this line reasoned its
+  // own job order and put Plan before the Schematic, which is a ruling
+  // re-argued rather than read.
+  plan('Plan', Icons.map_outlined, ShellViewGroup.design),
   schedule('Schedule', Icons.table_rows_outlined, ShellViewGroup.deliverable);
 
   const ShellView(this.label, this.icon, this.group);
@@ -413,6 +427,9 @@ final class AppShellState extends State<AppShell>
 
   @override
   void dispose() {
+    _planImages.dispose();
+    _planArm.dispose();
+    _planSelection.dispose();
     _services.chrome.setHandler(null);
     _services.session.removeListener(_onSessionChanged);
     _services.degradedWarning.removeListener(_onWarningChanged);
@@ -612,6 +629,32 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  /// `File ▸ Import floorplan…` (DR-143 §11.142, PLAN-E/5).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE CALLER `PLAN-D` NEVER GOT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Every step of the import was built and tested at `PLAN-D` and had
+  /// zero call sites in `lib/`, so `AddPlanUnderlayCommand` had no
+  /// producer and no project could hold a floorplan at all. This method
+  /// is that producer.
+  ///
+  /// CANCELLED AND REFUSED SAY DIFFERENT THINGS, and only one of them
+  /// speaks. `null` is a closed dialog, from either the file picker or
+  /// the PDF page grid, and a person who closed a grid has not hit an
+  /// error. An `Err` is a file this product read and declined, and its
+  /// own `toString` is written for a person: the caps say their numbers
+  /// and `PdfHasNoLiftablePageError` says the page count.
+  Future<void> _importFloorplan() async {
+    final result = await _services.floorplanIo.import(
+      pickPage: (pages, fileName) async {
+        if (!mounted) return null;
+        return pickPdfPage(context, pages: pages, fileName: fileName);
+      },
+    );
+    if (result case Err(:final error)) _showRefusal('$error');
+  }
+
   /// `File ▸ Export device library…` (`#240`).
   Future<void> _exportLibrary() async {
     await _services.libraryIo.export(
@@ -728,6 +771,7 @@ final class AppShellState extends State<AppShell>
               onImportTemplate: _importTemplate,
               onExportLibrary: _exportLibrary,
               onImportLibrary: _importLibrary,
+              onImportFloorplan: _importFloorplan,
               onProjectSettings: _openProjectSettings,
               onOpenRecent: _openRecent,
             ),
@@ -871,6 +915,13 @@ final class AppShellState extends State<AppShell>
                 onDismissFilterCoachMark: _dismissFilterCoachMark,
               ),
               // THE SCHEDULE IS BUILT NOW, and the panel that used to sit
+              // POSITION 6, BEFORE THE SCHEDULE (DR-091 §11.90.3). Every
+              // piece of this view was built and unreachable: the canvas
+              // and its two gestures (PLAN-E/2), the arm mode and its
+              // chip (PLAN-E/3), the strip and armCarrierDrag (PLAN-E/4),
+              // and the importer that could put anything in it at all
+              // (PLAN-D, DR-143). This line is what makes them true.
+              _planTab(session),
               // here is gone rather than softened. Its copy said "no code
               // turns a Link into a row", which was true when it was
               // written and is false now that
@@ -933,6 +984,7 @@ final class AppShellState extends State<AppShell>
     actions: StructureEditorActions(
       dropEntry: buildDropEntryActions(controller: session.controller),
       onAddOutlet: (bodyId) => unawaited(_openOutletPicker(bodyId)),
+      onPinOnPlan: _armPinFromDropTable,
       onEdit: buildStructureEditAction(controller: session.controller),
       onSetCount: buildStructureMatrixAction(controller: session.controller),
       onEditPathways: buildPathwayEditAction(controller: session.controller),
@@ -1177,6 +1229,76 @@ final class AppShellState extends State<AppShell>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  // THE PLAN TAB (PLAN-E/5, DR-143, DR-091)
+  // ══════════════════════════════════════════════════════════════════
+
+  /// Decoded underlay rasters, for as long as this shell is up.
+  ///
+  /// OWNED HERE BECAUSE THE BYTES ARE THE SESSION'S. `rackpal_ui` has no
+  /// `FileStore` and must not grow one, and the container's members ride
+  /// on `DocumentSession`; the cache is the one place they become
+  /// `ui.Image`s. Same seam as `_libraries` two methods down.
+  final PlanImageCache _planImages = PlanImageCache();
+
+  /// Which members have been handed to [_planImages] already.
+  ///
+  /// A SET RATHER THAN A LENGTH CHECK. `PlanImageCache.load` is
+  /// idempotent, but the decode is not free and this build method runs on
+  /// every document change; without this an import would re-decode every
+  /// plan in the project.
+  final Set<String> _planImagesLoaded = <String>{};
+
+  /// docs/15 §6's fast path, owned ABOVE the tabs.
+  ///
+  /// It has to outlive a tab switch by construction: the whole gesture is
+  /// arm in the Structure editor, then click the plan, and a controller
+  /// owned by either view would be disposed by the move between them
+  /// (DR-141 §11.140.5).
+  final PlanPinArmController _planArm = PlanPinArmController();
+
+  /// Feeds the cache whatever the session is holding, once each.
+  void _loadPlanImages(DocumentSession session) {
+    for (final entry in session.members.entries) {
+      if (!_planImagesLoaded.add(entry.key)) continue;
+      unawaited(
+        _planImages.load(entry.key, entry.value).then((_) {
+          // A DECODE IS ASYNCHRONOUS AND THE CANVAS IS NOT. Without this
+          // the first frame after an import draws with the resolver
+          // returning null, which `FlutterDiagramCanvas` raises as
+          // `MissingImageError`; the rebuild is what makes the plan
+          // appear rather than the app report a missing member.
+          if (mounted) setState(() {});
+        }),
+      );
+    }
+  }
+
+  Widget _planTab(DocumentSession session) {
+    _loadPlanImages(session);
+    return PlanEditorScreen(
+      // KEYED ON THE CONTROLLER'S IDENTITY, on `_rackTab`'s reason:
+      // replacing the document must build a fresh `State`, and this one
+      // holds a per-underlay viewport and canvas key that belong to the
+      // document that made them.
+      key: ValueKey(session.controller),
+      controller: session.controller,
+      images: _planImages.resolver,
+      measurer: widget.measurer,
+      selection: _planSelection,
+      arm: _planArm,
+      onRefuse: _showRefusal,
+    );
+  }
+
+  /// The Plan view's selection, separate from the two canvases.
+  ///
+  /// ITS OWN CONTROLLER because a pin and a rack device are not the same
+  /// selection: selecting a speaker's pin on `Level 1` must not change
+  /// what the elevation has highlighted, and CR-105's cross-view
+  /// signposting is an explicit gesture rather than a shared set.
+  final SelectionController _planSelection = SelectionController();
+
   Widget _rackTab(DocumentSession session) {
     // A document with no racks is REACHABLE the moment the app can open a
     // file, and `RackCanvasScreen` reads `racks.values.first` while
@@ -1264,6 +1386,45 @@ final class AppShellState extends State<AppShell>
   /// the request as STATE and the screen drains it on its first frame.
   /// Notifying after the switch would work too — and would break the
   /// first time Flutter changed when that page is built.
+  /// docs/15 §6's secondary entry point: arm a drop here, click the plan
+  /// there (DR-141 §11.140.4, moved from PLAN-E/3 by DR-143 §11.142.4).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE SUBJECT IS AN OUTLET AND THE ROW IS A LINK
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `armSubjectFor` does the join through `Link.structureOrigin`, and
+  /// `armRefusalFor` is the same question asked for a sentence: a link
+  /// with no structure origin is a cable running to no outlet and there
+  /// is nothing to pin, which is refused BY NAME rather than by a menu
+  /// item that quietly does nothing.
+  void _armPinFromDropTable(Uuid linkId) {
+    final doc = _services.session.document;
+    final refusal = armRefusalFor(doc, linkId);
+    if (refusal != null) {
+      _showRefusal(refusal);
+      return;
+    }
+    final outletId = armSubjectFor(doc, linkId)!;
+    _planArm.arm(
+      ArmedPin(
+        outletId: outletId,
+        // THE LABEL THE USER JUST READ, carried rather than re-derived:
+        // the chip renders on a different tab from the table that armed
+        // it, and passing the string is what stops the two disagreeing.
+        label: doc.outlets[outletId]?.designation ?? outletId.v,
+      ),
+    );
+    // DEFERRED PAST THE CLICK, for the reason `_revealInSchematic` below
+    // spells out at length: `TabBarView` is a `PageView` and settles to
+    // the nearest page when the pointer that asked goes up, so a switch
+    // inside the gesture is undone by the settle. The ARM is set first
+    // and unconditionally, so the plan has it whichever frame it builds
+    // on.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) switchToTab(ShellView.plan.index);
+    });
+  }
+
   void _revealInSchematic(Uuid deviceId) {
     _reveal.reveal(deviceId);
     // ═════════════════════════════════════════════════════════════════
@@ -1306,6 +1467,7 @@ final class _FileMenu extends StatelessWidget {
     required this.onImportTemplate,
     required this.onExportLibrary,
     required this.onImportLibrary,
+    required this.onImportFloorplan,
     required this.onProjectSettings,
     required this.onOpenRecent,
   });
@@ -1323,6 +1485,9 @@ final class _FileMenu extends StatelessWidget {
   final Future<void> Function() onImportTemplate;
   final Future<void> Function() onExportLibrary;
   final Future<void> Function() onImportLibrary;
+
+  /// `File ▸ Import floorplan…` (DR-143 §11.142).
+  final Future<void> Function() onImportFloorplan;
 
   /// Opens the project settings editor (`#805`, RJ-012).
   final Future<void> Function() onProjectSettings;
@@ -1423,6 +1588,25 @@ final class _FileMenu extends StatelessWidget {
             MenuItemButton(
               onPressed: () => unawaited(onImportLibrary()),
               child: const Text('Import device library…'),
+            ),
+            // ═════════════════════════════════════════════════════════
+            // AND THE FLOORPLAN, WHICH IS THE IMPORT THAT HAD NO MENU
+            // ═════════════════════════════════════════════════════════
+            // `File` and not a `Plan` menu (DR-143 §11.142.4, the user's
+            // call): it sits with the two imports already here, and a
+            // second top-level menu holding one item is not worth the
+            // strip. `plan_import_actions.dart`'s own header says
+            // `Plan ▸ Import floorplan…`, which was a PLAN-D assumption
+            // and is superseded rather than a decision anybody made.
+            //
+            // THIS ITEM IS THE PRODUCER THE WHOLE PLAN VIEW WAS MISSING.
+            // Every step of the import was built, tested and reachable
+            // from nothing, so `AddPlanUnderlayCommand` had no caller and
+            // no project could hold a floorplan. No accelerator, for the
+            // ninth time and the same reason as the eight above.
+            MenuItemButton(
+              onPressed: () => unawaited(onImportFloorplan()),
+              child: const Text('Import floorplan…'),
             ),
             // ═════════════════════════════════════════════════════════
             // ON THE FILE MENU, BECAUSE SETTINGS LIVE IN THE FILE

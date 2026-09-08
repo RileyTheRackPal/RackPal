@@ -11,6 +11,7 @@
 // deleted panel got wrong in the direction that costs most. It names the
 // field that is on screen directly above it, and the test below drives
 // that exact instruction.
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -64,10 +65,19 @@ final class _Harness {
   final RackDocument doc;
   int outletPickerOpened = 0;
 
+  /// Every link the drop table's `Pin on plan` was asked to arm.
+  final List<Uuid> armedOnPlan = [];
+
+  /// Null makes the row menu ABSENT rather than inert, which is DR-091's
+  /// rule at the size of one menu item and is what a host with no Plan
+  /// view supplies.
+  bool offerPinOnPlan = true;
+
   /// The Structure body the last `Add outlet` was opened on (#158).
   Uuid? outletPickerBody;
 
   StructureEditorActions get actions => StructureEditorActions(
+    onPinOnPlan: offerPinOnPlan ? armedOnPlan.add : null,
     dropEntry: DropEntryActions(
       onCommit: (line, {structureBodyId}) {
         final plan = planDropLine(
@@ -2646,6 +2656,58 @@ void main() {
             'an option whose every use is refused is `#711` drawn on '
             'purpose',
       );
+    });
+  });
+
+  group('PLAN-E/5: the drop table arms a pin (DR-141, DR-143)', () {
+    testWidgets('A SECONDARY TAP ON A ROW ARMS THAT ROW, and no other', (
+      tester,
+    ) async {
+      // The gesture PLAN-E/3 built and a gate refused as unreachable
+      // (DR-141 §11.140.7). It is reachable now: the shell owns the arm
+      // controller above the tabs and the Plan view is in the strip.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+
+      final table = buildStructureTable(h.doc);
+      final wanted = table.groups.single.rows.last.linkId;
+
+      await tester.tapAt(
+        tester.getCenter(find.byKey(ValueKey(wanted))),
+        buttons: kSecondaryButton,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kPinOnPlanMenuLabel));
+      await tester.pumpAndSettle();
+
+      // THE ROW IT IS, not whichever row a bare finder reached first:
+      // every row in this table renders the same column headers and a
+      // `byType().first` would have located the wrong one and passed.
+      expect(h.armedOnPlan, [wanted]);
+    });
+
+    testWidgets('is ABSENT, not inert, when the host offers no plan', (
+      tester,
+    ) async {
+      // DR-091's rule at the size of one menu item. A row menu whose only
+      // entry does nothing is the untruth that ruling keeps tabs out of
+      // the strip to avoid.
+      final h = _Harness(_project())..offerPinOnPlan = false;
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+
+      final table = buildStructureTable(h.doc);
+      await tester.tapAt(
+        tester.getCenter(
+          find.byKey(ValueKey(table.groups.single.rows.last.linkId)),
+        ),
+        buttons: kSecondaryButton,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text(kPinOnPlanMenuLabel), findsNothing);
+      expect(h.armedOnPlan, isEmpty);
     });
   });
 }

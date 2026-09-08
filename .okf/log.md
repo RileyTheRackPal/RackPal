@@ -1,5 +1,66 @@
 # Update Log
 
+## 2026-09-08 (seventh entry)
+
+* **Closed**: `PLAN-E/5` (#632) at `v0.6.26`. The Plan view is in the
+  strip, and a person can put a floorplan in a project for the first
+  time.
+* **Note**: **THE CHAPTER MADE FIVE SURFACES REACHABLE, NOT THREE.** The
+  canvas and its gestures, the arm mode and its chip, the unpinned strip
+  and `armCarrierDrag`, the drop-table producer a gate had moved here,
+  and the whole `PLAN-D` importer that nothing called.
+  **`PLN-003` can be satisfied for the first time**: a rack can be
+  pinned, which no gesture in the product could do until now.
+* **Note**: **TWO RULINGS WERE READ RATHER THAN RE-DERIVED, AND BOTH
+  CAUGHT SOMETHING.** DR-091 §11.90.4 defers the `Ctrl+n` map past M6
+  and not "until Plan lands", so the tab ships with no accelerator; and
+  §11.90.3's own table puts Plan at position **6**, after the Schematic,
+  where a first draft had reasoned its own job order and put it at 4.
+* **Note**: **A GATE WAS WIDENED AND THE REASON IS STRUCTURAL.**
+  `actions_have_callers_test.dart` matched only `.name(`, the one shape a
+  NON-nullable callback can take. `onPinOnPlan` is the first nullable
+  `Function` field on any `*Actions` record here, and a nullable one is
+  `.name!(x)` or `.name?.call(x)`, so a fully wired gesture read as
+  uncalled. Nullable is what DR-091's "absent rather than inert"
+  produces for an optional gesture, so it recurs.
+* **Note**: **A MUTATION THAT CHANGES NOTHING MEASURES NOTHING**, which
+  is [the practice from PLAN-E/4](/practices/a-mutation-that-does-not-build-measures-nothing.md)
+  arriving in a new costume: `false ? null : X` compiles, reports
+  SURVIVED, and is `X`. Checked before it was believed, and recorded as
+  not counted.
+
+## 2026-09-08 (sixth entry)
+
+* **Ruling**: [DR-143](/decisions/dr-143-the-importer-had-no-caller.md). The
+  floorplan importer had no caller, so the Plan view had nothing to open.
+* **Note**: **A FIFTH UNREACHABLE SURFACE, AND IT IS UPSTREAM OF THE OTHER
+  FOUR.** `PLAN-D` built the import sequence, the caps, the PDF page
+  lifter and the picker, all tested, and `pickAndImportFloorplan`,
+  `importFloorplanFrom`, `importFloorplanBytes`, `readPdfPages`,
+  `importLiftedPdfPage` and `PdfPagePickerDialog` have **zero call sites
+  in `lib/`**. So `AddPlanUnderlayCommand` has no producer, the four
+  starters carry no `underlays` key, and `PlanCanvasScreen.underlay` is
+  required and non-null: the Plan tab would have opened onto content the
+  product cannot create.
+* **Note**: **THE PRODUCER IS TWO PIECES.** `DocumentSession._members` is
+  written only by `adopt`, wholesale, so there is no way to add a member
+  to an open session; a menu item would have had bytes and nowhere to put
+  them.
+* **Creation**: [A gate's scope is part of its
+  claim](/practices/a-gates-scope-is-part-of-its-claim.md). The
+  reachability gate refused a finished callback at `PLAN-E/3` and missed
+  an entire unreachable feature at `PLAN-E/5`, because it scans
+  function-typed fields on `*Actions` **records** in **`rackpal_ui/lib`**
+  and this is free functions in **`apps/rackpal/lib`**, in a file called
+  `plan_import_actions.dart`. Read the scan, not the name; census by call
+  site and write the zero down as a number.
+* **Note**: the ruling also records a near-miss of its own. A paraphrase
+  in `app_shell.dart` reads as though the `Ctrl+n` map is renumbered
+  *"until Plan lands"*; **DR-091 §11.90.4 defers it past M6**, so the Plan
+  view gets a tab and no accelerator and `Ctrl+3` stays reserved for
+  CR-071's Rear Panel. Reading the ruling rather than the paraphrase is
+  what caught it.
+
 ## 2026-09-08 (fifth entry)
 
 * **Closed**: `PLAN-E/4` (#631) at `v0.6.25`. The unpinned strip, its two

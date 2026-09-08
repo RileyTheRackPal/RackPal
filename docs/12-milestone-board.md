@@ -7673,6 +7673,104 @@ recorded this for `PLAN-E/2`, `/3` and `/4` together, and this chapter is the th
 than a new finding. **The count of unreachable surfaces `PLAN-E/5` has to make true is now: a canvas
 with two gestures, an arm mode with a chip, a drop-table producer, and a strip.**
 
+#### 5.9.11 PLAN-E/5: the shell home, and the importer that had no caller · `DR-143` · `v0.6.26`
+
+Closed `2026-09-08`. Commits `b1b3c45` (the ruling), `96126c0` (the importer's caller), `c70b6a4`
+(`Esc` and `KeyScope.plan`), `68e9a51` (the tab and the layout), `f3ce8cb` (the drop-table producer
+and a widened gate). Five commits, each gated green.
+
+##### 5.9.11.1 The census found a fifth unreachable surface, upstream of the other four
+
+`PLAN-E/5` was scheduled as the chapter that makes three chapters' work reachable, then four.
+**Nothing in the product could put a floorplan in a project at all.** Censused by call site, in
+`lib/` only, and every count is zero: `pickAndImportFloorplan`, `importFloorplanFrom`,
+`importFloorplanBytes`, `readPdfPages`, `importLiftedPdfPage`, `ImportedFloorplan` and
+`PdfPagePickerDialog`. The four starters carry no `underlays` key and `PlanCanvasScreen.underlay` is
+required and non-null, so the tab would have opened onto content the product cannot create.
+
+**The producer was two pieces.** `DocumentSession._members` is written only by `adopt`, wholesale, so
+there was no way to add a member to an open session: a menu item would have had bytes and nowhere to
+put them, and the save would have named a member the container does not hold.
+
+**The reachability gate could not see any of it**, because it scans function-typed fields on
+`*Actions` **records** in **`rackpal_ui/lib`** and this is **free functions** in **`apps/rackpal/lib`**,
+in a file called `plan_import_actions.dart`. DR-143 §11.142.3, and a new practice: **a gate's scope is
+part of its claim.**
+
+##### 5.9.11.2 Two rulings read rather than re-derived, and one of them caught an error
+
+**The `Ctrl+n` map is not renumbered here.** A paraphrase in `app_shell.dart` reads as though the
+mapping is deferred *"until Plan lands"*; DR-091 §11.90.4 defers it **past M6**, *"when there is
+nothing left to insert"*. So Plan gets a tab and **no accelerator**, joining Locations, Device
+Manager and Structured Wiring, and `Ctrl+3` stays reserved for CR-071's Rear Panel.
+
+**The tab is at position 6, and the first draft put it at 4.** That draft reasoned its own job order
+and placed Plan before the Schematic. §11.90.3 has a table, and its sentence is *"interconnect it,
+mark where it physically sits, hand over the paperwork"*. A comment in `shell_tabs_test.dart` said
+the same thing while recording Plan's absence. **Only the Schedule's index moves**, 5 to 6.
+
+##### 5.9.11.3 Three regions, not four, and the fourth is named rather than faked
+
+docs/15 §6 gives left the underlay list, centre the plan, right **the standard inspector**.
+`InspectorPanel` takes a `required Rack`; a pin's carrier is a rack, an **outlet** or an **off-rack
+device**, and two of the three have no rack to hand it.
+
+> **The column is absent rather than invented.** Building a plan-specific inspector would be a
+> surface nobody ruled, on the one view whose arrival is DR-091's rule that a tab must open onto
+> something built. **It is owed**, and this is where it is written down.
+
+The location tree is not embedded either: `LocationsPanel` has had its own tab since DR-091, and a
+second copy is the *"two routes to one surface"* that ruling deleted the `Project` menu to avoid.
+
+##### 5.9.11.4 The gate that refused PLAN-E/3's work now checks it, and had to be widened to do so
+
+`actions_have_callers_test.dart` matched exactly one shape, `.name(`, which is the only shape a
+**non-nullable** callback can take. `StructureEditorActions.onPinOnPlan` is the **first nullable
+`Function` field on any `*Actions` record in this package**, censused when it was added, and a
+nullable callback can only be written `.name!(x)` or `.name?.call(x)`. **The gate reported a fully
+wired gesture as uncalled.**
+
+Nullable is what DR-091's *"absent rather than present and inert"* produces for an optional gesture,
+so it will recur. Three shapes now, mutation-tested by unwiring the record call: it fails, so this is
+a widening rather than a gate reworded until it went quiet. **The call site invokes the record**
+rather than copying the callback onto a row and calling it through a local, which is the exact cheat
+§11.140.7 records declining.
+
+##### 5.9.11.5 Evidence, including a bug the comment found and a mutation that measured nothing
+
+**Fourteen mutations, all killed.** Import: never adding the member fails 4, never running the
+command fails 2, routing by extension fails 1, an `Err` for a cancelled page pick fails 1, the wall
+clock fails 1, keeping the extension in the name fails 2, writing the member on a refused file fails
+1. `Esc`: an always-open gate fails 1, dismissing and clearing together fails 1, dropping the
+autofocus fails 3. Layout: unwiring the strip fails 2, a `ValueKey` for the `GlobalKey` fails 2, an
+empty state that stops naming the route fails 1.
+
+**A REAL BUG WAS CAUGHT BY WRITING ITS COMMENT.** The layout held one `GlobalKey` and passed the
+canvas a `ValueKey(open.id)`: two jobs given to the wrong object, so the global key was never
+attached, `currentState` was always null and **every strip drag was a silent no-op**.
+
+**And one mutation is recorded as not counted.** `false ? null : X` compiles, reported SURVIVED, and
+is semantically identical to `X`. That is `PLAN-E/4`'s did-not-build lesson in a new costume: **a
+mutation that changes nothing measures nothing**, and the check is the same one, run before the
+result is believed.
+
+Two vacuous assertions were replaced rather than kept: the PDF cases used a stub beginning with
+`%PDF-` that lifts no pages, so `anyOf(isNull, isA<Err>())` and `pickerSawIt || underlays.isEmpty`
+both passed on a document nothing had been imported into.
+
+Floors: `rackpal_app` 954 to 964, `rackpal_ui` 1611 to 1622. Seven analyzer infos introduced across
+the chapter and **all seven removed** rather than pinned; the pin stays at 233.
+
+##### 5.9.11.6 What the Plan view can now do, and what it still owes
+
+A person can import a PNG, a JPEG or one page of a PDF; open the Plan tab; drag a device off the
+palette onto the plan; drag any pin to move it; drag a rack, an outlet or an off-rack device out of
+the unpinned strip to pin it; arm a drop from the Structure table and click the plan; and press `Esc`
+to stop. **`PLN-003` can be satisfied for the first time.**
+
+Owed: the inspector column (§5.9.11.3), calibration (`PLAN-F`), `planLowerBound` (`PLAN-G`), `T1.01`
+(`PLAN-H`), the `PLN-*` advisories (`PLAN-I`) and the marquee (`PLAN-E/6`).
+
 ---
 
 ## 6. The dependency graph, as it actually stands

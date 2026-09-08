@@ -54,6 +54,7 @@ import 'package:rackpal_ui/src/canvas/plan/render_plan_canvas.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
 import 'package:rackpal_ui/src/draw/flutter_canvas.dart';
+import 'package:rackpal_ui/src/keymap/keymap.dart';
 
 /// Resolves every pin on [underlayId] out of [doc], in a total order.
 ///
@@ -214,6 +215,16 @@ final class PlanCanvasScreen extends StatefulWidget {
 /// Public so a host can arm a palette drag into it. See the file header.
 final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     implements CanvasIntentHandler {
+  /// So `Esc` reaches this screen at all.
+  ///
+  /// A `Shortcuts` only sees a key pressed while focus is INSIDE its
+  /// subtree, which is `app_shell.dart`'s own post-mortem one level down:
+  /// a `Shortcuts` below the root focus scope made `Ctrl+S` work on the
+  /// Rack tab, whose canvas autofocuses, and silently do nothing on the
+  /// other two. Both shipped canvases hold a focus node and autofocus it;
+  /// this is the third.
+  final FocusNode _canvasFocus = FocusNode(debugLabel: 'planCanvas');
+
   /// The key on the canvas box, so a global pointer position can be turned
   /// into a scene point during a palette drag. The drag is tracked through
   /// `GestureBinding`'s router rather than through this widget's own
@@ -241,6 +252,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   @override
   void dispose() {
     _stopTrackingArmedPointer();
+    _canvasFocus.dispose();
     super.dispose();
   }
 
@@ -561,6 +573,40 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     });
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  // `Esc`, WHICH IS THIS SURFACE'S WHOLE KEYBOARD
+  // ══════════════════════════════════════════════════════════════════
+
+  /// Has this screen anything for `Esc` to mean?
+  ///
+  /// **THE GATE IS THE BINDING**, and it must be `isActionEnabled` rather
+  /// than an early return inside the callback. `Action.consumesKey`
+  /// defaults to true and maps a run to `KeyEventResult.handled`
+  /// regardless of what the body did, so a screen that "declined" inside
+  /// its callback would still eat the key: with nothing armed and nothing
+  /// selected, `Esc` has to reach whatever is behind this canvas, which is
+  /// a dialog or the shell. `schematic_canvas_screen.dart`'s
+  /// `_GatedAction` doc is the long version and this is the third canvas
+  /// to obey it.
+  bool get _hasSomethingToCancel =>
+      (widget.arm?.isActive ?? false) || widget.selection.ids.isNotEmpty;
+
+  /// Two rungs, in DR-141's order.
+  ///
+  /// AN ARMED MODE GOES FIRST because the user turned it on deliberately
+  /// and it is the thing on screen saying so. An `Esc` that dismissed the
+  /// mode AND cleared the selection would take away something they did not
+  /// ask about, on a keystroke whose whole meaning is "stop the last
+  /// thing".
+  void _cancel() {
+    final arm = widget.arm;
+    if (arm != null && arm.isActive) {
+      arm.dismiss();
+      return;
+    }
+    setState(() => widget.selection.apply(const [], SelectMode.replace));
+  }
+
   @override
   Widget build(BuildContext context) {
     final built = buildPlanScene(underlay: widget.underlay, pins: _pins);
@@ -575,6 +621,27 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
         images: widget.images,
       ),
     );
+    return Shortcuts(
+      shortcuts: keymapShortcuts(KeyScope.plan),
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          PlanCancelIntent: _PlanGatedAction<PlanCancelIntent>(
+            () => _hasSomethingToCancel,
+            (_) => _cancel(),
+          ),
+        },
+        child: Focus(
+          focusNode: _canvasFocus,
+          autofocus: true,
+          child: _withChip(canvas),
+        ),
+      ),
+    );
+  }
+
+  /// The arm chip over the canvas, or the canvas alone when the host
+  /// offers no fast path.
+  Widget _withChip(Widget canvas) {
     final arm = widget.arm;
     if (arm == null) return canvas;
     return AnimatedBuilder(
@@ -599,4 +666,23 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       ),
     );
   }
+}
+
+/// An `Action` that declines by being DISABLED rather than by returning.
+///
+/// A local copy of the schematic's `_GatedAction`, and the duplication is
+/// deliberate for the same reason `render_plan_canvas.dart` copies a render
+/// object: this is the second private copy, and a third is when to lift it
+/// into `keymap/`. Lifting it now would export a helper on one use.
+class _PlanGatedAction<T extends Intent> extends Action<T> {
+  _PlanGatedAction(this._enabled, this._run);
+
+  final bool Function() _enabled;
+  final void Function(T intent) _run;
+
+  @override
+  bool get isActionEnabled => _enabled();
+
+  @override
+  void invoke(T intent) => _run(intent);
 }

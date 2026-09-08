@@ -39,6 +39,7 @@
 // position on a picture moves.
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
+import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
@@ -206,6 +207,14 @@ final class ClearPlanPinCommand extends Command<RackDocument> {
     _writePin(doc, carrier, entityId, _previous);
   }
 }
+
+/// The next `order` for a new underlay.
+///
+/// PER DOCUMENT, on `nextPathwayOrder`'s precedent: underlays are a flat
+/// list and `order` decides which plan draws on top, not which room it is
+/// in. A new one goes last, which is what an import means.
+FracIndex nextUnderlayOrder(RackDocument doc) =>
+    nextOrder(doc.underlays.values.map((u) => u.order));
 
 /// Brings a floorplan into the project (docs/15 §3.1).
 ///

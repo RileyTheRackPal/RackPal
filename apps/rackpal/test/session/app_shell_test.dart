@@ -662,12 +662,20 @@ void main() {
           .widgetList<Tab>(find.byType(Tab))
           .map((t) => t.text)
           .toList();
+      //
+      // 6 -> 7 AT PLAN-E/5. `Plan` lands at position 6, between the
+      // Schematic and the Schedule, which is §11.90.3's own table rather
+      // than a fresh reading of it: "interconnect it, MARK WHERE IT
+      // PHYSICALLY SITS, hand over the paperwork". DR-091 kept Plan out
+      // of the strip "until it is built, rather than adding a seventh tab
+      // onto nothing", and this is the chapter that earns it (DR-143).
       expect(tabs, [
         'Locations',
         'Device Manager',
         'Rack',
         'Structured Wiring',
         'Schematic',
+        'Plan',
         'Schedule',
       ]);
     });

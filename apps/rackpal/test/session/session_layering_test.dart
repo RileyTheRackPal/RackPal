@@ -623,11 +623,27 @@ final class AppServices {
       // It also does not violate this rule's own warning that "a menu
       // item beside a tab is a second route to one surface": settings are
       // not a tab and have no other route at all, which was the defect.
-      [10, 4],
+      // 10 -> 11 at PLAN-E/5 (`#632`, DR-143 §11.142.4), and the
+      // accelerator count did not move for the TENTH time. The eleventh
+      // is `Import floorplan…`, and it is the item this product was
+      // missing rather than one it was adding: PLAN-D built the whole
+      // import path, tested it, and NOTHING in lib/ called any of it, so
+      // AddPlanUnderlayCommand had no producer and no project could hold
+      // a floorplan at all. It is on File beside the other two imports
+      // (the user's call) rather than on a new `Plan` menu holding one
+      // item, which is the same reasoning that deleted the Project menu
+      // above: a top-level menu is a place people must learn.
+      //
+      // No accelerator, for the reason every item since Locations has had
+      // none: a surface opened a few times per project does not pay for a
+      // row in `kKeymap`, M7's generated table and `arbitrate()`'s
+      // conflict checks on every platform.
+      [11, 4],
       reason:
-          'ten File-menu items — New, Open…, Save, Save As…, Export '
+          'eleven File-menu items — New, Open…, Save, Save As…, Export '
           'PDF…, Export/Import device template…, Export/Import device '
-          'library…, Project settings… — and four accelerators. '
+          'library…, Project settings…, Import floorplan… — and four '
+          'accelerators. '
           'The Project menu is gone: '
           'DR-091 §11.90 made Locations, Structured Wiring and Device '
           'Manager views in the strip, and a menu item beside a tab is a '
@@ -718,6 +734,19 @@ final class AppServices {
     // Schedule 2 -> 5, while Ctrl+1, Ctrl+2 and Ctrl+4 still mean exactly
     // what they meant. If a future edit "fixes" this to {1: 0, 2: 1,
     // 4: 2} it has renumbered the keys, which §11.90.4 defers past M6.
-    expect(kViewKeyToTabIndex, {1: 2, 2: 4, 4: 5});
+    //
+    // AND ONE MORE INDEX MOVED AT PLAN-E/5, WITH NO KEY MOVING AGAIN.
+    // The Plan tab lands at index 5, between the Schematic and the
+    // Schedule, which is §11.90.3's own table; only the Schedule moved,
+    // 5 -> 6. Ctrl+1, Ctrl+2 and Ctrl+4 still mean the same three views.
+    //
+    // PLAN GETS NO KEY AT ALL, and that is the ruling rather than an
+    // omission. §11.90.4 settles the mapping AFTER M6, "when there is
+    // nothing left to insert", not when Plan lands: a paraphrase in
+    // app_shell.dart reads the other way and DR-143 §11.142.5 records
+    // catching it. So Plan joins Locations, Device Manager and Structured
+    // Wiring, which have no accelerator either, and Ctrl+3 stays reserved
+    // and unbound for the Rear Panel.
+    expect(kViewKeyToTabIndex, {1: 2, 2: 4, 4: 6});
   });
 }

@@ -37,6 +37,7 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 import 'package:image/image.dart' as img;
+import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/storage/file_store.dart';
 import 'package:rackpal/src/storage/import_guard.dart';
@@ -131,6 +132,49 @@ final class ImportedFloorplan {
   final Uint8List memberBytes;
 }
 
+/// Steps 1 and 2 of the sequence: cap the file, then read it.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// EXTRACTED SO THE PDF BRANCH SHARES THEM RATHER THAN SKIPPING THEM
+/// ═══════════════════════════════════════════════════════════════════════
+/// A caller has to know whether the bytes are a PDF **before** it can
+/// choose between the page picker and the raster path, and it cannot know
+/// that from the extension: this file's own step 2 says a dialog filter is
+/// a courtesy and `plan.png` may be anything. So the bytes must be in hand
+/// first, and the only ways to get them are to share this or to write it
+/// again with the cap left out.
+///
+/// [maxBytes] IS INJECTABLE for `JsonLimits`' and `ContainerLimits`'
+/// reason, stated a third time: proving a size gate fires must not cost a
+/// fixture the size of the gate, and a test that allocates 64 MB to watch
+/// a refusal is a test somebody deletes.
+///
+/// THE CAP IS PASSED EXPLICITLY THOUGH IT EQUALS THE DEFAULT TODAY, and
+/// the lint is suppressed rather than obeyed. `kMaxImageBytes` and
+/// `kMaxDocumentBytes` are two caps over two different things that happen
+/// to agree at 64 MB; obeying the lint would make this call INHERIT the
+/// document cap, so moving either constant would silently move this path
+/// with it. Naming it is what makes a future divergence a one-line change
+/// instead of a discovery.
+Future<Outcome<Uint8List>> readImportedBytes({
+  required FileStore fs,
+  required String path,
+  int maxBytes = kMaxImageBytes,
+}) async {
+  // ---- 1. STAT, BEFORE READING (AC-058/D8). -------------------------
+  // ignore: avoid_redundant_argument_values
+  final sized = await checkImportedFileSize(fs, path, maxBytes: maxBytes);
+  if (sized case Err(:final error)) return Err(error);
+  try {
+    return Ok(await fs.readBytes(path));
+    // `on Object`, not `on Exception`: `FileStore.readBytes` declares no
+    // typed failure, so this catches the interface's contract rather than
+    // one implementation's exception class.
+  } on Object catch (e) {
+    return Err(ImageDecodeFailedError('could not read the file ($e)'));
+  }
+}
+
 /// Reads the floorplan at [path] and turns it into an underlay.
 ///
 /// Separate from the picking so a caller with bytes already in hand (a
@@ -149,32 +193,9 @@ Future<Outcome<ImportedFloorplan>> importFloorplanFrom({
   Uuid? locationId,
   int maxBytes = kMaxImageBytes,
 }) async {
-  // ---- 1. STAT, BEFORE READING (AC-058/D8). -------------------------
-  // [maxBytes] IS INJECTABLE for `JsonLimits`' and `ContainerLimits`'
-  // reason, stated a third time: proving a size gate fires must not cost
-  // a fixture the size of the gate, and a test that allocates 64 MB to
-  // watch a refusal is a test somebody deletes.
-  //
-  // THE CAP IS PASSED EXPLICITLY THOUGH IT EQUALS THE DEFAULT TODAY, and
-  // the lint is suppressed rather than obeyed. `kMaxImageBytes` and
-  // `kMaxDocumentBytes` are two caps over two different things that
-  // happen to agree at 64 MB; obeying the lint would make this call
-  // INHERIT the document cap, so moving either constant would silently
-  // move this path with it. Naming it is what makes a future divergence a
-  // one-line change instead of a discovery.
-  // ignore: avoid_redundant_argument_values
-  final sized = await checkImportedFileSize(fs, path, maxBytes: maxBytes);
-  if (sized case Err(:final error)) return Err(error);
-
-  final Uint8List bytes;
-  try {
-    bytes = await fs.readBytes(path);
-    // `on Object`, not `on Exception`: `FileStore.readBytes` declares no
-    // typed failure, so this catches the interface's contract rather than
-    // one implementation's exception class.
-  } on Object catch (e) {
-    return Err(ImageDecodeFailedError('could not read the file ($e)'));
-  }
+  final read = await readImportedBytes(fs: fs, path: path, maxBytes: maxBytes);
+  if (read case Err(:final error)) return Err(error);
+  final bytes = (read as Ok<Uint8List>).value;
 
   return importFloorplanBytes(
     bytes: bytes,
@@ -412,4 +433,145 @@ Future<Outcome<ImportedFloorplan>?> pickAndImportFloorplan({
     meta: meta,
     locationId: locationId,
   );
+}
+
+/// `File ▸ Import floorplan…`, the caller this whole file did not have
+/// (DR-143 §11.142).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A FOURTH SIBLING OF `ExportController`, ON `LibraryIo`'s PRECEDENT
+/// ═══════════════════════════════════════════════════════════════════════
+/// Every function above this line was built by `PLAN-D`, tested, and
+/// reachable from nothing: censused at `PLAN-E/5`, `pickAndImportFloorplan`,
+/// `importFloorplanFrom`, `importFloorplanBytes`, `readPdfPages`,
+/// `importLiftedPdfPage` and `PdfPagePickerDialog` had **zero call sites**
+/// in `lib/`. So `AddPlanUnderlayCommand` had no producer and no project
+/// could hold a floorplan.
+///
+/// This class is the shape the three existing import/export families
+/// already use: it holds the picker and the file store, takes the dialog
+/// as a CALLBACK so the sequence is testable with no `BuildContext`, and
+/// owns nothing else.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// TWO WRITES, ONE OF WHICH IS NOT UNDOABLE, AND THAT IS RULED
+/// ═══════════════════════════════════════════════════════════════════════
+/// The member goes to `DocumentSession.addMember` and the entity goes
+/// through `AddPlanUnderlayCommand`. Undo therefore removes the underlay
+/// and leaves the bytes, which `RemovePlanUnderlayCommand`'s own doc calls
+/// correct: *"the member is cheap, the bytes are the architect's, and
+/// deleting them on an undo would make a redo unable to find them."*
+///
+/// **THE MEMBER IS WRITTEN FIRST.** If the command ran first and the member
+/// write failed, the document would carry an underlay naming bytes the
+/// container does not hold, which is a dangling reference in a saved file.
+/// This order can only ever leave an orphaned member, which is the state
+/// the model already tolerates by name.
+final class FloorplanIo {
+  const FloorplanIo({
+    required this.session,
+    required this.picker,
+    required this.fs,
+    this.initialDirectory,
+  });
+
+  final DocumentSession session;
+  final FilePicker picker;
+  final FileStore fs;
+  final Future<String?> Function()? initialDirectory;
+
+  /// Asks for a file, imports it, and puts it in the open document.
+  ///
+  /// Returns the underlay on success, `null` when the user cancelled
+  /// either dialog, and an `Err` carrying the refusal when the file was
+  /// read and declined. **Cancelled and refused are different answers**
+  /// and the shell says something for only one of them.
+  ///
+  /// [pickPage] is called only for a PDF, with every page the lifter
+  /// produced. Returning null from it is a cancel, not a failure: a person
+  /// who opens an 80-page drawing set and closes the grid has not hit an
+  /// error.
+  Future<Outcome<PlanUnderlay>?> import({
+    required Future<LiftedPdfPage?> Function(
+      List<Outcome<LiftedPdfPage>> pages,
+      String fileName,
+    )
+    pickPage,
+  }) async {
+    // THE CONTROLLER'S OWN CLOCK AND ACTOR, not `DateTime.now()`. Every
+    // other command in this product stamps its `EntityMeta` from the
+    // injected clock, which is what makes a fixture's timestamps
+    // reproducible and a byte round-trip comparable (CR-117).
+    final controller = session.controller;
+    final now = controller.clock.nowUtc();
+    final actor = controller.actor;
+    final path = await picker.pickOpen(
+      initialDirectory: await initialDirectory?.call(),
+      type: FileDialogType.floorplan,
+    );
+    if (path == null) return null;
+
+    // THE CAP IS LEFT AT THE DEFAULT HERE, deliberately, and the reason it
+    // is NAMED one level down is the one `readImportedBytes` documents:
+    // that site distinguishes the image cap from the document cap, and
+    // this one has nothing to add by repeating it.
+    final read = await readImportedBytes(fs: fs, path: path);
+    if (read case Err(:final error)) return Err(error);
+    final bytes = (read as Ok<Uint8List>).value;
+
+    final doc = session.document;
+    final id = newEntityId();
+    // THE FILE'S OWN NAME, which is what the architect called it and what
+    // the person will look for in the list. `PlanUnderlay.name` is
+    // editable through the property table afterwards.
+    // `p.Context`, NOT A HAND-ROLLED SPLIT. The session already carries
+    // one and it is the platform's own, so a UNC path, a trailing
+    // separator and a name with dots in it all come out right. The first
+    // draft used a regex here and returned the whole path.
+    final ctx = session.context;
+    final fileName = ctx.basename(path);
+    final underlayName = ctx.basenameWithoutExtension(path);
+    final meta = EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor);
+    final order = nextUnderlayOrder(doc);
+
+    // SNIFFED BY CONTENT, NOT BY EXTENSION. Step 2 of this file's own
+    // sequence: a dialog filter is a courtesy, and `plan.png` that is
+    // really a PDF must reach the page picker rather than the raster path
+    // that would refuse it by name.
+    final Outcome<ImportedFloorplan> imported;
+    if (sniffImportKind(bytes) == SniffedImportKind.pdf) {
+      final pages = readPdfPages(bytes);
+      if (pages case Err(:final error)) return Err(error);
+      final chosen = await pickPage(
+        (pages as Ok<List<Outcome<LiftedPdfPage>>>).value,
+        fileName,
+      );
+      if (chosen == null) return null;
+      imported = importLiftedPdfPage(
+        page: chosen,
+        id: id,
+        name: underlayName,
+        order: order,
+        meta: meta,
+      );
+    } else {
+      imported = importFloorplanBytes(
+        bytes: bytes,
+        id: id,
+        name: underlayName,
+        order: order,
+        meta: meta,
+      );
+    }
+    if (imported case Err(:final error)) return Err(error);
+    final floorplan = (imported as Ok<ImportedFloorplan>).value;
+
+    // See the class header on why the member is written first.
+    session.addMember(
+      floorplan.underlay.imageMember,
+      floorplan.memberBytes,
+    );
+    controller.run(AddPlanUnderlayCommand(underlay: floorplan.underlay));
+    return Ok(floorplan.underlay);
+  }
 }

@@ -634,7 +634,54 @@ $SuiteFloors = @{
     # 44px horizontally at 220 wide once that was fixed. It pumps five
     # widths, because a RenderFlex reports an overflow once per render
     # object and one pump measures one layout.
-    'rackpal_ui'     = 1611
+    # 1614 at PLAN-E/5 phase 2: +3 for `Esc` on the third canvas, its own
+    # KeyScope.plan and the fourth row of an existing pattern (DR-143
+    # §11.142.6). rackCancel, schematicCancel and dialogDismiss are three
+    # ids, three scopes, one trigger and ONE LABEL, which
+    # KeymapConflictKind.meaningDrift enforces; planCancel continues it.
+    # THE LOAD-BEARING CASE IS THE FALL-THROUGH. Action.consumesKey
+    # defaults to true and maps a run to `handled` whatever the body did,
+    # so a screen declining INSIDE its callback still eats the key and a
+    # dialog behind the canvas stops closing. Only isActionEnabled == false
+    # yields `ignored`, and the case asserts it by putting a handler ABOVE
+    # the screen and watching the key arrive.
+    # Three mutations, all killed: an always-open gate fails 1, dismissing
+    # AND clearing in one press fails 1, and dropping the autofocus fails
+    # 3 -- that last is the app_shell post-mortem one level down, since a
+    # Shortcuts below the root focus scope only sees keys pressed inside
+    # its own subtree.
+    # 1620 at PLAN-E/5 phase 3: +6 from canvas/plan/plan_editor_screen_test
+    # .dart, the layout that finally puts four chapters on screen together.
+    # THE LOAD-BEARING CASE DRAGS A RACK OUT OF THE STRIP AND ONTO THE
+    # PLAN, through the real widget tree. Rack.planPin shipped at PLAN-C,
+    # SetPlanPinCommand has accepted PinCarrier.rack just as long,
+    # armCarrierDrag shipped at PLAN-E/4, and until this screen existed
+    # nothing could hand the one to the other; without a rack pin PLN-003
+    # fires and no length on the plan derives.
+    # Three mutations, all killed: unwiring the strip's onArmDrag fails 2,
+    # passing a ValueKey instead of the per-underlay GlobalKey fails 2 (the
+    # first draft's real bug, which left currentState null and every strip
+    # drag a silent no-op), and an empty state that stops naming the import
+    # route fails 1.
+    # A FOURTH IS RECORDED AS NOT COUNTED: `false ? null : X` compiles,
+    # reported SURVIVED, and is semantically identical to X. That is the
+    # same class as the PLAN-E/4 mutation that did not build -- a mutation
+    # that changes nothing measures nothing -- arriving in a new costume.
+    # 1622 at PLAN-E/5 phase 4: +2 for the drop table's `Pin on plan` row
+    # menu, the producer a gate MOVED here from PLAN-E/3 (DR-141 §11.140.7,
+    # DR-143 §11.142.4). It is reachable now: the shell owns the arm
+    # controller above the tabs and the Plan view is in the strip.
+    # AND THE GATE ITSELF WAS WIDENED, which is the finding worth the
+    # line. actions_have_callers_test.dart matched only `.name(`, the one
+    # shape a NON-nullable callback can take. `onPinOnPlan` is the FIRST
+    # nullable Function field on any *Actions record in this package,
+    # censused when it was added, and a nullable callback can only be
+    # written `.name!(x)` or `.name?.call(x)`, so the gate reported a
+    # fully wired gesture as uncalled. Three shapes now; a name never
+    # invoked in any of them still fails, and a name merely PASSED still
+    # does not count. Mutation-tested by unwiring the record call: it
+    # fails, so the widening is not a rewording.
+    'rackpal_ui'     = 1622
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -655,7 +702,27 @@ $SuiteFloors = @{
     # the ordinary import path, so PLAN-D/4's controls are asserted to
     # still fire on it. Exempting it because "we produced it" would be
     # exempting it because we trusted the stranger who sent the PDF.
-    'rackpal_app'    = 954
+    # 964 at PLAN-E/5 phase 1: +10 from session/floorplan_io_test.dart, the
+    # CALLER that whole import path did not have. PLAN-D built every step,
+    # tested each, and nothing in lib/ invoked any of it: censused at zero
+    # call sites per symbol (DR-143 §11.142.1), so AddPlanUnderlayCommand
+    # had no producer and no project could hold a floorplan.
+    # The load-bearing case asserts BOTH writes, because an underlay whose
+    # imageMember names bytes the container does not hold is a dangling
+    # reference in a saved file and a test counting doc.underlays cannot
+    # see it. Seven mutations run and all seven killed: never adding the
+    # member fails 4, never running the command fails 2, routing by
+    # extension instead of content fails 1, turning a cancelled page pick
+    # into an Err fails 1, the wall clock instead of the injected one
+    # fails 1, keeping the file extension in the name fails 2, and writing
+    # the member on a REFUSED file fails 1.
+    # TWO OF THESE CASES WERE VACUOUS IN THEIR FIRST DRAFT and are the
+    # reason the fixture is borrowed: they used a stub beginning with
+    # `%PDF-` that lifts no pages, so `anyOf(isNull, isA<Err>())` and
+    # `pickerSawIt || underlays.isEmpty` both passed on a document nothing
+    # was imported into. They now use pdf_page_import_test.dart's real
+    # onePagePdf and assert what the picker actually received.
+    'rackpal_app'    = 964
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

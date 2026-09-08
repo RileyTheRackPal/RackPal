@@ -5,11 +5,11 @@
 // test that pinned the live drag position would survive the command never
 // running at all.
 
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -487,6 +487,105 @@ void main() {
 
       expect(c.doc.devices, isEmpty);
       expect(h.refusals.single, contains('Unknown catalog template'));
+    });
+  });
+
+  group('PLAN-E/5: Esc, the whole keyboard this surface has', () {
+    testWidgets('DISMISSES THE ARM MODE FIRST, and leaves the selection', (
+      tester,
+    ) async {
+      // DR-141's order. The mode is the thing on screen saying it is on,
+      // and an Esc that took the selection with it would remove something
+      // the user did not ask about on a keystroke meaning "stop the last
+      // thing".
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addOutlet(c);
+      final arm = PlanPinArmController()..arm(_armedDrop);
+      final h = await pump(tester, c, arm: arm);
+      h.selection.apply([const Uuid('dev-1')], SelectMode.replace);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+
+      expect(arm.isActive, isFalse);
+      expect(
+        h.selection.ids,
+        {const Uuid('dev-1')},
+        reason: 'one Esc, one rung',
+      );
+    });
+
+    testWidgets('clears the selection when nothing is armed', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
+      h.selection.apply([const Uuid('dev-1')], SelectMode.replace);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+
+      expect(h.selection.ids, isEmpty);
+    });
+
+    testWidgets('FALLS THROUGH when there is nothing to cancel', (
+      tester,
+    ) async {
+      // THE GATE IS THE BINDING, not an early return in the callback.
+      // `Action.consumesKey` defaults to true and maps a run to
+      // `handled` whatever the body did, so a screen that declined
+      // INSIDE its callback would still eat the key and a dialog behind
+      // this canvas would stop closing. Only `isActionEnabled == false`
+      // yields `ignored`.
+      //
+      // Asserted by putting a handler ABOVE the screen and watching it
+      // receive the key, which is the only way to see a fall-through
+      // from outside.
+      var reachedTheAncestor = false;
+      final c = _controller();
+      await tester.runAsync(() async {
+        await cache.load(_member, await _png(600, 400));
+      });
+      final selection = SelectionController();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Shortcuts(
+            shortcuts: const <ShortcutActivator, Intent>{
+              SingleActivator(LogicalKeyboardKey.escape): DismissIntent(),
+            },
+            child: Actions(
+              actions: <Type, Action<Intent>>{
+                DismissIntent: CallbackAction<DismissIntent>(
+                  onInvoke: (_) {
+                    reachedTheAncestor = true;
+                    return null;
+                  },
+                ),
+              },
+              child: Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                  width: 600,
+                  height: 400,
+                  child: PlanCanvasScreen(
+                    controller: c,
+                    underlay: _underlay(),
+                    images: cache.resolver,
+                    measurer: const _ZeroMeasurer(),
+                    selection: selection,
+                    viewport: ViewportController(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+
+      // Nothing armed, nothing selected.
+      expect(selection.ids, isEmpty);
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+
+      expect(reachedTheAncestor, isTrue);
     });
   });
 
