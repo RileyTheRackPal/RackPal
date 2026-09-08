@@ -49,6 +49,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/canvas_intent.dart';
+import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/canvas/plan/render_plan_canvas.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
@@ -140,6 +141,7 @@ final class PlanCanvasScreen extends StatefulWidget {
     required this.measurer,
     required this.selection,
     required this.viewport,
+    this.arm,
     this.onRefuse,
     super.key,
   });
@@ -161,6 +163,14 @@ final class PlanCanvasScreen extends StatefulWidget {
 
   final SelectionController selection;
   final ViewportController viewport;
+
+  /// docs/15 §6's fast path, or null when the host does not offer it.
+  ///
+  /// NULL IS A SUPPORTED MODE and every render test uses it: the plan is a
+  /// complete editor without the Structure-table entry point, which DR-141
+  /// §11.140.4 demotes to the SECONDARY way in. The primary loop is
+  /// `PLAN-E/4`'s unpinned strip, in this view, with no tab change at all.
+  final PlanPinArmController? arm;
 
   /// Told when a gesture is refused, with the reason already worded for a
   /// person. Null means the host shows nothing, which is legal and is what
@@ -385,11 +395,59 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
         ),
       );
     } else if (grabbed == null && !_moved) {
-      // A press on empty plan that never moved is a click, and a click on
-      // empty canvas clears (docs/03 §4.4's focus rule).
-      widget.selection.apply(const [], SelectMode.replace);
+      // ═══════════════════════════════════════════════════════════════
+      // AN ARMED CLICK PINS. AN UNARMED ONE CLEARS.
+      // ═══════════════════════════════════════════════════════════════
+      // docs/15 §6's fast path: click a drop in the Structure table, then
+      // click the plan. This is the second half. It takes priority over
+      // the clear because the mode is the user's explicit, visible state
+      // and clearing a selection is the default behaviour of nothing in
+      // particular.
+      //
+      // ONLY ON EMPTY PLAN, and that is deliberate rather than
+      // incidental. A click that HIT an existing pin already means
+      // something ("select that"), and an armed mode silently repurposing
+      // it would pin the armed drop on top of another one at a point the
+      // user was pointing at for a different reason.
+      final pin = widget.arm?.armed;
+      if (pin != null) {
+        _pinArmed(pin, sceneEnd);
+      } else {
+        // A press on empty plan that never moved is a click, and a click
+        // on empty canvas clears (docs/03 §4.4's focus rule).
+        widget.selection.apply(const [], SelectMode.replace);
+      }
     }
     _endGesture();
+  }
+
+  /// Pins the armed drop at [at] and tells the mode it was used.
+  ///
+  /// ONE COMMAND, like every other pin on this surface. The mode stays on
+  /// afterwards with nothing armed (DR-141 §11.140.2), which is
+  /// `PlanPinArmController.pinned`'s whole job.
+  void _pinArmed(ArmedPin pin, DPt at) {
+    if (!_doc.outlets.containsKey(pin.outletId)) {
+      // ARMED, THEN DELETED. The mode outlives the pin by design, so it
+      // also outlives the outlet somebody removed in another tab while it
+      // was armed. Refuse by name and clear the subject rather than
+      // writing a pin onto nothing.
+      widget.onRefuse?.call('That outlet is not in the project any more.');
+      widget.arm?.pinned();
+      return;
+    }
+    _controller.run(
+      SetPlanPinCommand(
+        carrier: PinCarrier.outlet,
+        entityId: pin.outletId,
+        pin: PlanPin(
+          underlayId: widget.underlay.id,
+          at: PxPt(at.x.round(), at.y.round()),
+        ),
+      ),
+    );
+    widget.selection.apply([pin.outletId], SelectMode.replace);
+    widget.arm?.pinned();
   }
 
   @override
@@ -411,7 +469,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   @override
   Widget build(BuildContext context) {
     final built = buildPlanScene(underlay: widget.underlay, pins: _pins);
-    return CanvasIntentDetector(
+    final canvas = CanvasIntentDetector(
       viewport: widget.viewport,
       handler: this,
       child: PlanCanvasBody(
@@ -420,6 +478,29 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
         viewport: widget.viewport,
         measurer: widget.measurer,
         images: widget.images,
+      ),
+    );
+    final arm = widget.arm;
+    if (arm == null) return canvas;
+    return AnimatedBuilder(
+      animation: arm,
+      builder: (context, _) => Stack(
+        children: [
+          Positioned.fill(child: canvas),
+          // THE CHIP IS SCREEN CHROME AND NEVER SCENE, which `PLAN-E/3`'s
+          // brief states in terms and CR-086 is the reason for:
+          // `buildPlanScene` feeds the PDF as well as the screen, so an op
+          // added for a transient mode would print.
+          if (arm.isActive)
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: PlanPinArmChip(
+                armed: arm.armed,
+                onDismiss: arm.dismiss,
+              ),
+            ),
+        ],
       ),
     );
   }

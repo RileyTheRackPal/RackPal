@@ -575,7 +575,14 @@ $SuiteFloors = @{
     # second case grabbed 12 units off centre, MISSED the marker's hit box
     # entirely (its radius is the underlay's long side over 110, about 5.5
     # here) and asserted that nothing moved, which it dutifully did not.
-    'rackpal_ui'     = 1578
+    # 1597 at PLAN-E/3: +13 from canvas/plan/plan_pin_arm_test.dart and +6
+    # in plan_canvas_screen_test.dart, the drop-table-then-plan fast path.
+    # The ruling they protect is DR-141's: THE MODE OUTLIVES THE PIN. A
+    # one-shot arm (schematic_reveal.dart's `take()`) would pass any test
+    # that only pinned once, so the cases pin and then look at what is
+    # still on screen. Mutation-tested by ending the mode in `pinned()`:
+    # five fail.
+    'rackpal_ui'     = 1597
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
