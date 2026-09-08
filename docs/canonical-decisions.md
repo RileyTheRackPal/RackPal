@@ -18148,6 +18148,93 @@ Plan view in the strip, so `PLAN-E/3` builds the controller and both ends, and t
 > wiring chapter**: it is the one that makes three chapters' work true, and it should be read that way
 > when it is scheduled.
 
+### §11.141 DR-142 · What the unpinned strip lists, and the two location fields a device already had
+
+**Ruled 2026-09-08 at `PLAN-E/4`'s decomposition.** DR-140 §11.139 settled *what* the strip is for
+and left *what it contains* to this chapter. The sentence it left is docs/15 §6's: **"a strip along
+the bottom lists everything in this plan's location that could carry a pin and does not, with a
+count."** Every clause of that sentence turns out to hide a decision, and the model makes each one
+ambiguous rather than obvious.
+
+**11.141.1 THIS CHAPTER'S OWN BRIEF PREDICTED THE SHAPE OF THE MISTAKE AND NOT ITS LOCATION.** The
+board item warns, in terms, of *"the count that counts the wrong thing"*, citing the status bar that
+read **`0 pathways`** the keystroke after somebody made one because it counted only pathways with
+drops in them. DR-140 then supplied a second instance deliberately: a strip built from `doc.devices`
+alone gets the count wrong on any document with an unpinned rack. **Reading the model turned up three
+more**, and the fourth is a defect already shipped. The warning was right about the class and had no
+way to name the members.
+
+**11.141.2 "UNPINNED" MEANS NO PIN AT ALL, NOT "NO PIN ON THIS UNDERLAY".** A carrier has exactly one
+`planPin` field, and a `PlanPin` names the underlay it stands on. So a device pinned on `Level 1` and
+listed as unpinned while `Level 2` is open is not merely a wrong row: **dragging it out would move
+its pin off `Level 1`**, silently, as the answer to a gesture that presented itself as adding
+something. The per-underlay reading is only available at all because the model cannot express it, and
+a surface must not offer a state the document has no way to hold.
+
+The cost is stated rather than hidden: on a two-plan project, `Level 2`'s strip reads zero while
+`Level 2` has no pins on it, because everything is pinned on `Level 1`. **That is the truth**, and the
+remedy is the underlay's own emptiness, which is visible on the canvas the strip sits under.
+
+**11.141.3 AN UNDERLAY WITH NO LOCATION HAS NO FILTER, AND ITS STRIP LISTS EVERY UNPINNED CARRIER.**
+`PlanUnderlay.locationId` is nullable and the model says why in its own words: *"an underlay with no
+location is perfectly ordinary: a site plan depicts no room."* Three readings were available and two
+are wrong for reasons worth keeping:
+
+- **Nothing**, on "no location matches no carrier". A site plan would report a count of **zero**
+  while nothing on it is pinned, which is the 80%-complete plan this strip exists to refuse, arrived
+  at from the opposite direction.
+- **Only carriers whose location is also null**, joining unknown to unknown. That is G4's forbidden
+  move (`CR-114`): `null` is *unknown*, never a value, and two unknowns are not equal to each other.
+- **Everything unpinned**, which is what ships. It is **not** a null-join: an underlay with no
+  location is not a plan of an unknown room, it is a plan that is not scoped to a room, and a filter
+  that is absent filters nothing.
+
+**11.141.4 A CARRIER WHOSE OWN LOCATION IS UNKNOWN IS A COUNT AND NOT A ROW.** On a plan that *does*
+name a room, a device with `locationId == null` cannot be attributed to it. Listing it as a row would
+invite pinning a second-floor speaker onto `Level 1` and calling it placed; dropping it silently is
+the `0 pathways` defect exactly. **G4 gives the third answer and it is already this repo's rule**:
+report the unknown count rather than fabricating a total. `UnpinnedCarriers` therefore carries
+`unlocatedCount` beside its rows, and a surface showing the rows shows that number.
+
+**11.141.5 A DEVICE HAS TWO LOCATION FIELDS, AND `PLAN-E/2` LEFT THEM DISAGREEING.** This is a
+shipped defect found by reading the model rather than by a failing test, and it is the reason this
+subsection exists in a ruling about a strip.
+
+`DeviceInstance.locationId` and `OffRackPlacement.locationId` are **different fields holding the same
+value**. The model says so and says why: `AddStructureCommand` writes both, `RemoveLocationCommand`
+clears both (DR-021 §11.20.2), and *"clearing one would leave the document disagreeing with itself."*
+
+**`buildPlaceOnPlanCommand` writes one of them.** It hands `AddDeviceCommand` an `OffRackPlacement`
+carrying the underlay's `locationId`, and `AddDeviceCommand.apply` constructs its `DeviceInstance`
+with no `locationId` at all, because it has never had that parameter. So **every device dropped on a
+plan since `PLAN-E/2` has a placement that says `Level 1` and an instance that says nothing.**
+
+It is not inert. `derived/equipment_list.dart` reads `device.locationId`, so **the Equipment List
+prints no room for a device dropped on a plan**, and there is no later repair: `locationId` is
+deliberately not a `DeviceField` row, so no editing gesture can set it.
+
+The fix is in `AddDeviceCommand` rather than at the call site: **when the placement names a room, the
+instance is constructed with the same room**, derived from the command's own field, so a future
+caller cannot forget what this one did. Rail, shelf and 0U placements name no room and are unchanged.
+
+> **THE STRIP IS WHY THIS WAS FOUND AT ALL.** A surface that filters carriers by room has to choose
+> which of two fields is the room, and asking that question is what exposed a writer that sets one.
+> Neither choice would have been safe while the two disagreed: the strip would have been right about
+> half the documents either way.
+
+**11.141.6 THE ORDER AND THE RACK'S DISTINCTION ARE THE USER'S, AND A DEFAULT SHIPS RATHER THAN A
+BLANK.** §11.139.6 left both open and this ruling does not close them. What ships is **rack first,
+then outlets, then off-rack devices, each band by designator**, which is `pinsOnUnderlay`'s existing
+total order and is not a new opinion: the rack leads because `PLN-003` makes its absence cost every
+length on the plan, so the row that matters most is the row nobody has to scroll to. **One
+comparator, one place, changed in a line** when the user says otherwise.
+
+**11.141.7 WHAT THIS DOES NOT RULE.** Not the strip's appearance, height, or whether it collapses.
+Not whether a rack row is drawn differently from a device row, which §11.139.6 reserved and which
+remains reserved. Not `PLN-002` and `PLN-003`, which stay separate advisories with separate remedies
+(§11.139.5): **the strip is a surface, not a rule**, and it may show what two rules report without
+collapsing them into one.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

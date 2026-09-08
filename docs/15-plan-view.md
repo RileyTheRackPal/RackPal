@@ -385,6 +385,17 @@ with an unpinned rack. A strip built from `doc.devices` alone passes every test 
 rack, which is the trap `PLAN-E/4`'s own brief already names in the status bar that read *"0
 pathways"* the keystroke after somebody made one.
 
+**AND EVERY CLAUSE OF THAT SENTENCE HID A DECISION** (DR-142 §11.141), which is why it now has three
+more. **"Unpinned" is no pin AT ALL**, never "no pin on this underlay": a carrier holds one `planPin`
+and it names its plan, so a row listed as unpinned here while it is pinned on `Level 1` would MOVE
+that pin when dragged, silently, as the answer to a gesture that looked like adding something. **An
+underlay with no `locationId` has no filter and lists everything unpinned**, because a site plan is
+not a plan of an unknown room, it is a plan not scoped to a room; matching its null against a
+carrier's null would be the unknown-equals-unknown join G4 forbids. **And a carrier whose own
+location is unknown is a count rather than a row**, `unlocatedCount`, which is `CR-114` applied
+exactly: a row would invite pinning a second-floor speaker onto `Level 1`, and silence is the
+`0 pathways` defect again.
+
 ---
 
 ## 7. Rendering

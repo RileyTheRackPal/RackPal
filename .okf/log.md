@@ -1,5 +1,30 @@
 # Update Log
 
+## 2026-09-08 (fourth entry)
+
+* **Ruling**: [DR-142](/decisions/dr-142-what-the-unpinned-strip-lists.md).
+  What the unpinned strip lists, and the two location fields a device
+  already had.
+* **Note**: **EVERY CLAUSE OF ONE SENTENCE HID A DECISION.** docs/15 §6
+  gives the strip as *"everything in this plan's location that could carry
+  a pin and does not"*. **Unpinned is no pin AT ALL**, since a carrier
+  holds one `planPin` and a row listed as unpinned-here while pinned on
+  `Level 1` would MOVE that pin when dragged. **An underlay with no
+  location has no filter**, not a null to join on, so a site plan lists
+  everything unpinned. **A carrier with no location is a count, not a
+  row**, which is [G4](/invariants/g4-unknowns-are-counted.md) exactly.
+* **Note**: **AND THE THIRD QUESTION FOUND A SHIPPED DEFECT.** A device
+  has TWO location fields that the model says must agree, and
+  `buildPlaceOnPlanCommand` sets one: `AddDeviceCommand` has never had a
+  `locationId` parameter, so every device dropped on a plan since
+  `PLAN-E/2` prints **no room on the Equipment List**, unrepairable
+  because `locationId` is deliberately not a `DeviceField`. Nothing
+  failed and no test was going to.
+* **Note**: the chapter's own brief warned about *"the count that counts
+  the wrong thing"* and DR-140 supplied one instance deliberately. It was
+  right about the class and could not name the members: **reading the
+  model produced three more than the brief had.**
+
 ## 2026-09-08 (third entry)
 
 * **Ruling**: [DR-141](/decisions/dr-141-one-arm-one-pin.md). A pin arms one
