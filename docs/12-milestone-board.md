@@ -7266,6 +7266,142 @@ preset falls through to a refusal and reinstates the manual conversion step for 
 the step DR-029 spent 2 to 3 weeks buying out. That cost is stated rather than hidden, and the
 refusal path exists because the sample may be unrepresentative.
 
+#### 5.9.7 PLAN-E/1: the reuse claim, tested at last, and the piece nobody counted · `DR-029` · `v0.6.22`
+
+**Closed 2026-09-08** (`#628`, `PLAN-E`'s first Chapter). **No exit clause moves.** This chapter
+builds no product surface by design: it exists to price the rest of `PLAN-E` before the rest of
+`PLAN-E` is scheduled, which is the one thing §1's caveat on every decomposition asks for and the
+thing that decomposition itself flagged (§5.9's own closing line: the canvas row *"rests on the claim
+that the viewport, selection, hit-test and drag-preview machinery are reusable, and that claim has
+not been tested by anything except a read"*).
+
+**5.9.7.1 THE CLAIM HOLDS, AND THE ONE PIECE IT NAMED AS A RISK IS NOT THE ONE THAT COSTS.** The
+feasibility study named five pieces. Four reuse verbatim, the fifth does not apply at all, and the
+two that cost real work were **on nobody's list**.
+
+| Piece | The study said | Measured |
+|---|---|---|
+| Viewport | already exists | **FREE, verbatim.** `ViewportController` has no rack or schematic term in it and its own header already claimed *"any future editor can reuse"*. The spike pans, zooms about a pivot and maps screen to scene without touching it |
+| Selection | already exists | **FREE, verbatim.** `SelectionController` is a `Set<Uuid>` plus a focus. A `PlanPin` has no id of its own (it hangs off a `Placement`, an `Outlet` or a `Rack`), so a plan's selection IS its carrier's selection, which is the shape already stored |
+| Hit-test | already exists | **FREE, verbatim.** `hitTest` is pure, lives in core, ranks by nearest, and takes a `List<HitRegion>` |
+| Drag preview | already exists | **DOES NOT APPLY, AND THAT IS THE GOOD NEWS.** See §5.9.7.3 |
+| Command machinery | already exists | **FREE.** `Command<A>` was made generic at M4-A, and `SetPlanPinCommand` already ships from PLAN-C with its epoch mask, its move-versus-set label and its refusal of a pin naming an absent underlay |
+| The render object | **not named** | **A THIRD COPY.** See §5.9.7.4 |
+| The image resolver | **not named** | **A TYPEDEF WITH NO IMPLEMENTATION.** See §5.9.7.6 |
+| A plan scene builder | **not named** | **ABSENT.** Nothing in this repository emits an `OpImage` outside two test files |
+
+**5.9.7.2 THE SPIKE IS SIX CASES AND IT IS CHECKED IN**, at
+`packages/rackpal_ui/test/canvas/plan_canvas_reuse_spike_test.dart`. It stands a third canvas up out
+of shipped parts, pans it with the wheel, zooms it with a pinch, hit-tests one rectangle, drags that
+rectangle and declines to drag empty space. **It lives in `test/` on DR-091's reasoning**: that
+ruling keeps the Plan view out of the tab strip until it is built, and a half-canvas exported from
+`lib/` would be the same untruth one layer down. Here it is evidence rather than product, it is
+gated, and `PLAN-E/2` deletes it when the real surface arrives.
+
+**WHAT THE FILE DOES NOT DECLARE IS THE MEASUREMENT.** Every line in it that is not a test is a piece
+that did not come free, which is why the finding is a diff and not an opinion.
+
+**5.9.7.3 THE DRAG PREVIEW DOES NOT FIT, AND THE ROW SHRINKS RATHER THAN GROWS.** This was the piece
+the study flagged, and it is coupled exactly as feared: `DragPreviewController`'s vocabulary is
+`deviceH`, `Face`, a hard-snapped `ruIndex` and a blocked verdict carrying an occupant's rect and a
+sentence like *"Occupied by AMP-1 (U19-U20)."* Every one of those is a rack rail.
+
+**A PIN HAS NO U, NO FACE, AND NOTHING TO BE BLOCKED BY.** A floorplan is continuous: a pin lands
+where the pointer is, and there is no occupancy rule to refuse it. So the plan canvas does not need a
+generalised `DragPreviewController`, it needs **no** `DragPreviewController`, and the spike drives its
+drag straight off `CanvasIntentHandler`, which already reports scene points. **The estimate's biggest
+named risk turns out to be a line item that deletes itself**, and the correct conclusion is not that
+the controller should be generalised: it is that two of this product's three canvases have a
+snap-and-refuse model and the third does not.
+
+**5.9.7.4 THE PIECE NOBODY COUNTED IS THE RENDER OBJECT, AND IT IS THE THIRD COPY OF THE SAME FORTY
+LINES.** `RenderRackCanvas` takes a `DiagramScene` plus a `rackId` and hosts one `RenderDeviceBox`
+child per device. `RenderSchematicCanvas` takes a `SchematicPaintPlan`. **Neither will accept "replay
+this display list under this viewport"**, so the spike declares a third, and so will `PLAN-E/2`.
+
+This is not an accident and the second copy says so in its own header: it is *"a deliberate copy of
+`render_rack_canvas.dart`'s shape"*, made deliberately because the schematic canvas that was deleted
+at `b560a50` invented a second pattern and got all three of its load-bearing details wrong. **The
+copying was the right call twice and it is now a countable cost**, and the honest read is that the
+shared part (clip layer, transform layer, `LayerHandle` lifecycle, the viewport listener, the paint
+offset composition) is the same in all three while the typed part (what is replayed, and whether
+there are children) is genuinely different in all three. `PLAN-E/2` should copy it a third time
+rather than generalise it under deadline; a fourth would be the moment to extract a base.
+
+**5.9.7.5 A WIDGET TEST CANNOT SEE A DROPPED PAINT OFFSET, AND THIS WAS MEASURED RATHER THAN
+ASSUMED.** The spike's transform composes the render object's paint offset with the viewport, exactly
+as both shipped canvases do. **Deleting that offset term leaves all six cases green.**
+
+That is `b560a50`'s defect reproduced inside the spike on the first attempt: a canvas at the window's
+origin makes screen, local and scene coordinates agree, and a widget test does not composite.
+`render_schematic_canvas.dart` carries a `debugSceneToScreen` field for precisely this reason and
+says so. **`PLAN-E/2`'s render object owes the same escape hatch and a case that places the canvas
+below a toolbar**, or the product ships this defect a third time with a green suite over it.
+
+**THE SPIKE'S OWN OFFSET CASE COVERS THE INPUT PATH AND NOT THE PAINT PATH**, and the file says so
+rather than implying otherwise. A handler reading `event.position` instead of `event.localPosition`
+IS caught, because the spike drops its canvas below a 60px toolbar and pans before clicking. That is
+the hit-test sibling of the same defect, and it is worth having; it is not the same assertion.
+
+**5.9.7.6 `FlutterImageResolver` IS A TYPEDEF THAT NOTHING IMPLEMENTS, AND A PLAN CANVAS THAT CANNOT
+DRAW THE PLAN IS NOT ONE.** PLAN-A added `drawImage` to the interface, both backends draw it, and
+`FlutterDiagramCanvas` takes an optional resolver. **No caller anywhere supplies one**, because
+nothing yet emits an `OpImage`: the only two construction sites in the tree are in test files.
+
+So `PLAN-E/2` owes two things the brief does not mention: a **plan scene builder** that emits the
+underlay's `OpImage` with a destination rect honouring `ImageRef.aspectRatio` (DR-030's rule, since
+the canvas deliberately has no fit rule of its own), and a **decode-once cache** turning a container
+member into a `ui.Image`. The second is not optional and its shape is already ruled: the resolver is
+synchronous *"because painting is"*, so the decode happens at import or at open, and a resolver that
+decoded on demand would decode a floorplan on every frame of a pan.
+
+**AND ONE COMMENT IN THAT FILE HAS EXPIRED.** `flutter_canvas.dart` says *"NULL IS THE ORDINARY STATE
+and stays so until PLAN-C"*. PLAN-C and PLAN-D have both closed and it is still null, because the
+thing that ends it is a scene builder and not a model. Corrected in place.
+
+**5.9.7.7 THE MARQUEE ROW IN docs/15 §6 IS VACUOUS, AND IT WAS CENSUSED BY MECHANISM RATHER THAN BY
+ITS NAME.** That table promises the Plan editor pan, zoom and marquee-select *"identical to the other
+two canvases"*. **Neither of the other two canvases has a marquee.** CR-102 is normative, rules it
+left-drag in every view and specifies the CAD window/cross convention, and nothing implements it.
+
+**Grepping the word finds only comments saying it is deferred. The load-bearing finding is one layer
+down: every `SelectMode` call in `lib/` passes exactly one id.** `SelectionController` holds a set and
+supports add and subtract, and no gesture in this product has ever put more than one thing into it;
+`add` and `subtract` are reachable only by Ctrl+click. **A multi-selection nothing can multi-select
+is the shape a census by name would have missed**, and it is the third entry in this board's running
+tally of a design document and a ruling agreeing with each other without either having read the
+model (§11.36.5's own list).
+
+**SETTLED BY THE USER ON 2026-09-07: BUILD IT ONCE AND ADOPT IT ON ALL THREE.** Not the plan alone,
+and not deferred behind a corrected sentence. CR-102's entire content is that the gesture is uniform
+across views, and three separate later implementations is how a uniformity ruling stops being one.
+
+**IT IS ITS OWN CHAPTER, `#848` (`PLAN-E/6`), AND NOT PART OF `PLAN-E/2`.** E/2 is *"place, drag and
+select pins"* and was estimated as that; cross-canvas work touching two shipped surfaces carries
+regression risk of its own, and folding it in would be exactly the invisible growth this chapter
+exists to expose. **The growth is real and it is now a line somebody can read**, which is the
+difference between an estimate that moved and an estimate that was wrong.
+
+**5.9.7.8 WHAT THIS DOES TO THE 2-3 WEEK ROW, STATED WITHOUT RE-PRICING THE EPIC.** DR-037 §11.36.7
+declines to re-estimate at decomposition and this chapter declines for the same reason: a re-price
+here would be a scope amendment wearing a task's clothes (§8.3). What can be said is the direction of
+each term, which is what a spike is for.
+
+| | Direction | Why |
+|---|---|---|
+| Drag preview | **down** | Not generalised, not needed (§5.9.7.3) |
+| Viewport, selection, hit-test, commands | **unchanged** | Reused verbatim, as claimed |
+| Render object | **up, small** | A third copy of forty lines, plus the `debugSceneToScreen` case §5.9.7.5 says is owed |
+| Scene builder + image resolver | **up, real** | Neither was in the row's five pieces, and the plan cannot be drawn without both (§5.9.7.6) |
+| Marquee | **out of the row entirely** | Moved to `#848` rather than absorbed (§5.9.7.7) |
+
+**THE STUDY'S SENTENCE WAS RIGHT FOR THE WRONG REASON.** It said the row was *"the one most likely to
+be wrong in the optimistic direction"*, and it is: not because the shared machinery turned out
+coupled, but because the list of shared machinery was **incomplete**. Four of five pieces reused
+verbatim on the first attempt, which is a better result than the study expected; and three pieces it
+never mentioned have to be built. **Checking the named risks would have cleared the row.** The census
+that found the unnamed ones is what a week of E/1 actually bought.
+
 ---
 
 ## 6. The dependency graph, as it actually stands

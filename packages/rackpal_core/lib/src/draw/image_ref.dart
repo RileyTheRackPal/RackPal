@@ -32,9 +32,16 @@ import 'package:meta/meta.dart';
 /// The encodings a container member may hold.
 ///
 /// Two values, and the list is closed on purpose (docs/15 §2). A PDF
-/// floorplan is rasterised at IMPORT and the member written to the
-/// container is still PNG or JPEG, so no third value is owed by DR-029's
-/// PDF import and `rackpal_core` still needs no decoder.
+/// floorplan is resolved to one of these AT IMPORT and the member written
+/// to the container is still PNG or JPEG, so no third value is owed by
+/// DR-029's PDF import and `rackpal_core` still needs no decoder.
+///
+/// This said *"rasterised at IMPORT"* until DR-138, and the mechanism
+/// changed under it: a page that is one full-page image has that image
+/// **lifted** verbatim, and a page that is not is refused by name. The
+/// conclusion is untouched (what lands in the container is still PNG or
+/// JPEG) and only the verb was wrong, which is exactly the kind of
+/// sentence that survives a sweep aimed at the conclusion.
 ///
 /// The two are NOT interchangeable to the PDF backend and the difference
 /// is worth knowing here rather than discovering downstream: `PdfImage.jpeg`

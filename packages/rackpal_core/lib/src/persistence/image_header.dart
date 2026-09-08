@@ -130,16 +130,19 @@ enum SniffedImportKind {
   png,
   jpeg,
 
-  /// A PDF. Not an underlay on its own: it is rasterised at import and
-  /// the member written to the container is still PNG or JPEG (DR-029
-  /// §11.28.12), so this is the kind that routes to the page picker.
+  /// A PDF. Not an underlay on its own: a page is resolved to a raster at
+  /// import and the member written to the container is still PNG or JPEG
+  /// (DR-029 §11.28.12), so this is the kind that routes to the page
+  /// picker. **The resolution is a LIFT and not a render** (DR-138): the
+  /// page's own embedded image is taken verbatim, or the page is refused.
   pdf,
 
   /// None of the above. Refused.
   unknown;
 
   /// The stored format this kind becomes, or null for a PDF (which
-  /// becomes whichever the rasteriser emits) and for [unknown].
+  /// becomes whichever format the lifted page's own image already was)
+  /// and for [unknown].
   PlanImageFormat? get storedFormat => switch (this) {
     SniffedImportKind.png => PlanImageFormat.png,
     SniffedImportKind.jpeg => PlanImageFormat.jpeg,

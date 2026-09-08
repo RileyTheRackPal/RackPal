@@ -1,5 +1,50 @@
 # Update Log
 
+## 2026-09-08
+
+* **Ruling**: [DR-139](/decisions/dr-139-one-marquee-for-all-three-canvases.md).
+  The marquee CR-102 ruled is built once and adopted on all three canvases,
+  and the docs/15 row that promised it was vacuous.
+* **Note**: **NEITHER OF THE OTHER TWO CANVASES HAS A MARQUEE.** docs/15 §6
+  gave the Plan editor marquee-select *"identical to the other two
+  canvases"*, and CR-102 is normative about the gesture, and nothing
+  implements any of it. **The census that found this looked past the word.**
+  Grepping `marquee` returns comments and nothing else, each saying the
+  gesture is deferred; the finding is one layer down, that **every
+  `SelectMode` call in `lib/` passes exactly one id**. `SelectionController`
+  holds a set, supports add and subtract, and no gesture in this product has
+  ever put more than one thing into it at once. A multi-selection nothing
+  can multi-select is invisible to a census by name, because the type is
+  present, correct and tested.
+* **Creation**: [Audit what a reuse claim
+  OMITS](/practices/audit-what-a-reuse-claim-omits.md). `PLAN-E/1` was
+  written to test the claim that the plan canvas is cheap because the
+  viewport, selection, hit-test, drag-preview and command machinery already
+  exist. **Four of the five reused verbatim and the fifth deleted work
+  rather than adding it**: `DragPreviewController` speaks in rack rails and
+  a pin has no U, no face and nothing to be blocked by. Auditing the list
+  would have cleared the row. Every hour is in three pieces the list never
+  mentioned: a render object, an image resolver and a plan scene builder.
+  **A list of reusable pieces is a claim about what is present; an estimate
+  is a claim about what is needed**, and checking the first does not check
+  the second.
+* **Note**: **A SPIKE IS ONLY EVIDENCE IF ITS FAILURES ARE REPORTED AS
+  LOUDLY AS ITS PASSES.** The spike's six cases pass, and one deliberate
+  mutation **survived** them: dropping the paint offset out of its render
+  object leaves every case green, which is `b560a50`'s shipped defect
+  reproduced on the first attempt. A widget test does not composite, and a
+  canvas at the window's origin makes screen, local and scene coordinates
+  agree. That survival is the more useful half of the run.
+* **Note**: **PLAN-D/3's SWEEP UPDATED THE PREMISES AND MISSED THE
+  CONCLUSIONS.** DR-138 replaced rasterising a PDF page with lifting the
+  image it already contains. Six shipped comments still said "rasterised at
+  import", and one file carried both *"the picker was skipped"* and *"the
+  rasteriser is not built yet ... Export the page as PNG or JPEG for now"*.
+  The second was user-facing advice to hand-convert a file the product can
+  open, **and a test was pinning it** with `contains('not built yet')`. The
+  sentences that survive a sweep are the ones whose conclusion stayed true
+  while their premise stopped being.
+
 ## 2026-09-07
 
 * **Ruling**: [DR-138](/decisions/dr-138-lift-the-page-not-re-draw-it.md).

@@ -342,15 +342,25 @@ a settings field.
 
 ## 6. The Plan editor
 
-A third canvas. It reuses the viewport, selection, hit-test and drag-preview machinery that the
+A third canvas. It reuses the viewport, selection, hit-test and command machinery that the
 elevation and schematic canvases already share, and it introduces no new gesture vocabulary.
+
+**THAT LIST SAID "viewport, selection, hit-test and drag-preview" UNTIL `PLAN-E/1` TESTED IT**, and
+the drag-preview entry was wrong in the direction nobody expects. `DragPreviewController`'s
+vocabulary is `deviceH`, `Face`, a snapped `ruIndex` and a blocked verdict naming an occupant, all of
+which are rack rails; a pin on a floorplan has no U, no face and nothing to be blocked by, so this
+canvas needs **no** drag preview rather than a generalised one. The four that remain were assembled
+into a working third canvas and reused verbatim. docs/12 §5.9.7 carries the measurement, including
+the three pieces this sentence has never mentioned and which the canvas does need: a render object,
+an image resolver and a plan scene builder.
 
 | Gesture | Result |
 |---|---|
 | Drag from the device palette or staging bin onto the plan | Places the device and sets its pin in one command |
 | Drag an existing pin | Moves it. Any `planLowerBound` on that run recomputes |
 | Click an outlet in the Structure editor's drop table, then click the plan | Pins that outlet. This is the fast path for a 60-drop rough-in |
-| Pan, zoom, marquee-select | Identical to the other two canvases (AC-016 #23, `CanvasIntent`) |
+| Pan, zoom | Identical to the other two canvases (AC-016 #23, `CanvasIntent`). **Verified**, not assumed: `PLAN-E/1`'s spike drives both through the same `CanvasIntentDetector` both shipped canvases use |
+| Marquee-select | CR-102's left-drag, with the CAD window/cross convention. **It will be the product's FIRST**, and this row was combined with the one above and read *"identical to the other two canvases"* until 2026-09-07, when `PLAN-E/1` found that **neither of the other two has a marquee**. DR-139 §11.138 rules it built once and adopted on all three; `#848` |
 
 **Layout.** Left is the underlay list and the location tree, read-only with the same *"edit in
 `Project ▸ Locations…`"* affordance the Structure editor uses (CR-112). Centre is the plan. Right is

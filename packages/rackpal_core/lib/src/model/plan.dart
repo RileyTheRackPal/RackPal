@@ -48,9 +48,14 @@ import 'package:rackpal_core/src/units/px_pt.dart';
 /// The raster formats an underlay member may hold (docs/15 §2).
 ///
 /// Two values, closed on purpose. DR-029 buys PDF IMPORT, and a PDF is
-/// rasterised at import: the member written to the container is still PNG
-/// or JPEG, so PDF import owes this enum nothing and `rackpal_core` still
-/// needs no decoder.
+/// resolved to one of these at import: the member written to the container
+/// is still PNG or JPEG, so PDF import owes this enum nothing and
+/// `rackpal_core` still needs no decoder.
+///
+/// Read *"rasterised at import"* until DR-138 changed the mechanism to
+/// lifting the page's own embedded image. The enum is unaffected, which is
+/// why the stale verb survived: the sentence's conclusion stayed true
+/// while its premise stopped being.
 enum PlanImageFormat {
   png,
   jpeg;

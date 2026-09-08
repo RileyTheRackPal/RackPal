@@ -164,7 +164,16 @@ void main() {
       ]);
       final error = errorOf(importBytes(pdf));
       expect(error, isA<PdfImportNotAvailableError>());
-      expect(error.toString(), contains('not built yet'));
+      // THIS PINNED `contains('not built yet')` UNTIL 2026-09-08, which
+      // was the sentence DR-138 made false: PDF import IS built, and the
+      // message told the reader to go and convert the file by hand. A
+      // test that keeps asserting the copy it was written against
+      // survives the behaviour it was protecting, which is the house
+      // rule this is the newest instance of. Assert what the error means
+      // NOW -- the page picker was skipped -- so the next change to that
+      // meaning fails here.
+      expect(error.toString(), contains('page picker'));
+      expect(error.toString(), isNot(contains('not built yet')));
     });
 
     test('anything not PNG, JPEG or PDF is refused on its CONTENT', () {
