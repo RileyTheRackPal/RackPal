@@ -465,6 +465,11 @@ $SuiteFloors = @{
     # must NOT wake `EpochMask.rack`, and a mask that woke everything
     # would pass every positive assertion.
     # 4230 at PLAN-D part one: +27 from persistence/image_header_test.dart.
+    # 4262 at DR-138: +31 from persistence/pdf_page_lift_test.dart, most of
+    # them REFUSALS. A lifter that wrongly refuses costs one export; one
+    # that wrongly accepts hands an installer a drawing with the stamp or
+    # the redaction silently missing, so the case count is lopsided on
+    # purpose. Re-measured: `dart test` reports 4262.
     # 4231 at DR-137: net +1 in container_determinism_test.dart. The STORE
     # assertion became a DEFLATE one and stayed a single test; the
     # verbatim-bytes search was REPLACED by a byte-for-byte round trip
@@ -477,7 +482,7 @@ $SuiteFloors = @{
     # the property AC-058/D12 actually needs from a parser over hostile
     # input, and it is not expressible as a handful of hand-picked
     # malformed files.
-    'rackpal_core'   = 4231
+    'rackpal_core'   = 4262
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
