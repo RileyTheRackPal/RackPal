@@ -516,7 +516,13 @@ $SuiteFloors = @{
     # test asserts that drawImageRect got two rects, which passes with the
     # source and destination swapped. Mutation-tested by flipping the
     # destination rect: five of five fail.
-    'rackpal_ui'     = 1539
+    # 1552 at DR-138: +13 from project/pdf_page_picker_dialog_test.dart.
+    # EVERY CASE ANCHORS ON THE PAGE'S OWN LABEL, never on
+    # `byType().first`: a grid is exactly where the first-of-many finder
+    # locates the wrong cell and PASSES, since every tile is the same
+    # widget. Two cases click page 2 and page 3 and assert the index that
+    # comes back, so an off-by-one in the grid fails here.
+    'rackpal_ui'     = 1552
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -532,7 +538,12 @@ $SuiteFloors = @{
     # checked afterwards, so the cases use inputs a correct order survives
     # and an incorrect one does not. The 60000x60000 header in under a
     # hundred bytes is the one that separates them.
-    'rackpal_app'    = 945
+    # 954 at DR-138: +9 from session/pdf_page_import_test.dart. The point
+    # of that file is that A LIFTED PAGE IS NOT PRIVILEGED: it re-enters
+    # the ordinary import path, so PLAN-D/4's controls are asserted to
+    # still fire on it. Exempting it because "we produced it" would be
+    # exempting it because we trusted the stranger who sent the PDF.
+    'rackpal_app'    = 954
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

@@ -113,6 +113,7 @@ export 'src/library/library_io_dialogs.dart';
 export 'src/palette/device_palette_panel.dart';
 export 'src/project/delete_location_dialog.dart';
 export 'src/project/locations_panel.dart';
+export 'src/project/pdf_page_picker_dialog.dart';
 export 'src/schedule/schedule_screen.dart';
 // `src/shell/` — shell-shaped WIDGETS the app composes. Every one of the
 // persistence-stage additions below is PRESENTATIONAL: it takes a plain
