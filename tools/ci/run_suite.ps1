@@ -565,7 +565,17 @@ $SuiteFloors = @{
     # instantiateImageCodec are real engine work and never land inside
     # testWidgets' fake-async zone, which HANGS the file rather than
     # failing it.
-    'rackpal_ui'     = 1567
+    # 1578 at PLAN-E/2 phase 4: +11 from canvas/plan/plan_canvas_screen
+    # _test.dart, the two gestures through the real widget tree. Every case
+    # asserts the DOCUMENT rather than the controller's live drag state,
+    # which is what makes "one command per gesture" checkable at all.
+    # Mutation-tested twice, both killed: writing a SetPlanPinCommand per
+    # pointer-move fails "ONE undo puts it back", and dropping the grab
+    # offset fails the case written for it. An earlier draft of that
+    # second case grabbed 12 units off centre, MISSED the marker's hit box
+    # entirely (its radius is the underlay's long side over 110, about 5.5
+    # here) and asserted that nothing moved, which it dutifully did not.
+    'rackpal_ui'     = 1578
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
