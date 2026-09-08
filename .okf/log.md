@@ -1,5 +1,32 @@
 # Update Log
 
+## 2026-09-08 (fifth entry)
+
+* **Closed**: `PLAN-E/4` (#631) at `v0.6.25`. The unpinned strip, its two
+  counts, and the drag out of it that finally puts a pin on a RACK
+  (DR-140 §11.139), which no gesture in any of `PLAN-E`'s five chapters
+  could do.
+* **Creation**: [A mutation that does not build measures
+  nothing](/practices/a-mutation-that-does-not-build-measures-nothing.md).
+  The chapter's most important mutation, making the strip list devices
+  only, printed **SURVIVED (0 failing)**. It had not compiled: `Rack` is
+  not imported in that file. Rewritten as a runtime-false guard, the same
+  mutation killed four cases. **Zero failing tests is the same output for
+  "the suite is blind" and "the suite never ran"**, and the structural
+  mutations worth running are exactly the ones that stop compiling.
+* **Note**: **TWO LAYOUT DEFECTS, BOTH FOUND BY ONE CASE.** A named row is
+  two lines and the strip was 56 high: `RenderFlex overflowed by 6.0
+  pixels`. Fixing it exposed the counts block being unbounded, which
+  overflowed by 44 on the right at 220 wide. The case pumps FIVE widths,
+  because a `RenderFlex` reports an overflow once per render object and
+  one pump measures one layout while reading as clean for every width it
+  did not try.
+* **Note**: `PLAN-E/5` now owes four unreachable surfaces rather than
+  three: a canvas with two gestures, an arm mode with a chip, a
+  drop-table producer, and a strip. DR-141 §11.140.7 said this chapter
+  would be one of them and it is; the number is the part worth writing
+  down.
+
 ## 2026-09-08 (fourth entry)
 
 * **Ruling**: [DR-142](/decisions/dr-142-what-the-unpinned-strip-lists.md).
