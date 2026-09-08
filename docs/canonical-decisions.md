@@ -18328,6 +18328,155 @@ about a floorplan.
 
 ---
 
+### §11.143 DR-144 · A calibration carries its unit, and the number it reports back is not a length
+
+**Settled by the user on 2026-09-08**, at `PLAN-F`'s decomposition, before a line of the chapter was
+written. `PLAN-F` is three chapters over one sentence of docs/15 §5, *"two picked points and one
+typed distance"*, and the census found the same defect the last two chapters found, one field over,
+plus a hole in the chapter split that only shows from outside any one of the three.
+
+**11.143.1 `PlanScale`'s WHOLE DERIVATION API HAS NO CALLER, WHICH IS DR-143's SHAPE AGAIN.**
+`PLAN-C/2` built the calibration model with the rounding rule argued out in its own header, and
+`PLAN-C/5` serialized it. Censused by call site, in `lib/` only, excluding the file that declares
+them:
+
+| Built by `PLAN-C` | Call sites in `lib/` |
+|---|---|
+| `PlanScale.nanometresPerPixel` | **0** |
+| `PlanScale.pixelSpan` | **0** |
+| `PlanScale.isUsable` | **0** |
+| `PlanScale.lengthBetween` | **0** |
+| `PlanScale.lengthAlong` | **0** |
+| `PlanUnderlay.isCalibrated` | **0** |
+
+Every one is reached only from tests. **There is also no writer**: `plan_commands.dart` ships five
+command classes covering six acts, and not one of them sets a scale, so `PlanUnderlay.scale` is null
+in every document this product can produce. This is the third instance in three chapters (DR-140's
+rack with no pinning gesture, DR-143's importer with no menu item) and it is recorded because the
+pattern is now the expected finding rather than a surprise: **`PLAN-C` built a model, and a model is
+not a reachable field.**
+
+**11.143.2 SO `PLAN-F/2`'s "N LENGTHS" HAS NOTHING TO COUNT, AND THAT IS THE HOLE.** `#634`'s brief
+requires that *"a recalibrate that changes N lengths should say N, on the same G4 principle that
+makes every rollup report its unknown count"*. **At `PLAN-F` there are no derived lengths at all.**
+`planLowerBound` is not a `ScheduleLengthSource` value, nothing derives one, and docs/15 §6's own
+pin-drag row already carries the note that its recompute clause is forward-dated to `PLAN-G`. A
+report counting schedule rows would therefore print `0` on every calibration in the product, which is
+worse than silence: it is a G4 report whose number is an artifact of what has not been built yet.
+
+**11.143.3 RULED: THE COUNT IS OF MEASURABLE PINS, AND IT PRODUCES NO `Len`.** The report names how
+many pins on this plan a length could now be derived for, and when none can, it names the reason:
+
+> Calibrated Level 1. 12 pins can now be measured from the rack.
+
+> Calibrated Level 1. No rack is pinned on this plan, so no length derives yet.
+
+Three properties make this the honest version rather than a placeholder. It is **computable today**,
+from the scale's usability and whether any rack stands on this underlay. It is **the set `PLAN-G`
+will turn into rows**, so the number does not change meaning when the tier arrives. And the second
+sentence is **actionable in the view it appears in**: the unpinned strip is along the bottom of the
+same screen and the rack is its first row (DR-140 §11.139), so a person told no rack is pinned is
+told it eight inches from the control that fixes it.
+
+**IT MUST NOT PRODUCE A LENGTH, AND THAT BOUNDARY IS THE POINT OF THIS CLAUSE.** A derivation that
+returned a `Len` per pin would be `planLowerBound` shipped early under another name, without the
+rank, the `>=` prefix, the italic, the rollup exclusion or `LEN-001`'s reading, which are five
+decisions DR-037 §11.36.4 already took and `PLAN-G` already owns. **Which rack is the datum is
+likewise not decided here**: the count asks only whether a datum exists, and a document with two
+pinned racks is counted the same as a document with one. §4.1 says *"rack pin to device pin"* and
+does not say which rack when there are several; that question belongs to the chapter that derives the
+number, not to the one that counts what is derivable.
+
+**11.143.4 RULED: `Calibrate…` LIVES ON THE UNDERLAY ROW.** The user's call against a canvas toolbar
+and a canvas context menu. docs/15 §6 gives the view three regions and says *"there is no fourth
+region"*, so a toolbar would be new chrome over a layout ruled eight days ago; and this product has
+no context menu on any canvas, so a right-click affordance would be discoverable by nobody who had
+not been told. **A calibration is a property of an underlay**, the left rail is the list of
+underlays, and a row that already carries a name and a room can carry a state line and an action.
+
+The row therefore reads its state, and **the state line is present in both directions**: `Not
+calibrated` is a fact worth printing and not an absence worth hiding (§11.143.6 below). The action
+reads `Calibrate…` on an uncalibrated plan and `Recalibrate…` on a calibrated one, which is
+`SetPlanPinCommand`'s two-labels-one-command rule applied to an affordance instead of an undo entry:
+the word names the act the person is about to perform.
+
+**11.143.5 RULED: A TYPED DISTANCE CARRIES ITS UNIT, AND A BARE NUMBER IS REFUSED BY NAME.** The
+user's call against two boxes for feet and inches, and against a number field with a unit picker.
+
+**A bare `36` is 36 inches or 36 feet and the two differ by a factor of twelve**, applied to every
+length the plan will ever yield. This is G4 in the place it is cheapest to break and most expensive
+to have broken: a guessed unit does not degrade a number, it produces a confident number that is
+wrong by an order of magnitude, on a drawing an installer will trust. So the parser accepts
+`36"`, `36in`, `3'`, `3ft`, `3' 6"`, `3ft 6in`, `3' 6-1/2"`, `2.4m`, `2400mm` and `240cm`, and
+refuses a bare number with a sentence naming both readings rather than picking one.
+
+**AND IT DIVERGES FROM `parseLengthCell` DELIBERATELY, WHICH IS WHY THE DIVERGENCE IS RULED RATHER
+THAN LEFT TO A READER.** `derived/structure_table.dart`'s length-cell parser reads a bare number as
+**whole feet** and refuses everything else, including `62 ft 3`. Two parsers in one product
+disagreeing about what a bare number means is exactly the kind of near-duplicate this corpus keeps
+finding, so the difference is stated: **that column is whole feet of cable, ordered and cut in whole
+feet, and its refusal keeps the stored value equal to the displayed one**; this field is a distance
+on somebody else's drawing whose whole purpose is that its magnitude is not known in advance. The
+two are not candidates for harmonisation, and a later pass that unified them would silently give
+calibration a default unit.
+
+**THE PROJECT'S `displayUnits` SHAPES THE REFUSAL AND NOT THE GRAMMAR.** An explicitly united value
+is unambiguous whichever system the project is set to, so `2.4m` is accepted on an imperial project
+rather than refused for being metric; what `displayUnits` decides is which pair of readings the
+refusal sentence names, and which example the field's hint shows. CR-001 is untouched: the parse
+lands in `Len` nanometres and no floating-point millimetre is stored anywhere.
+
+**11.143.6 THE PICK IS A MODE, ON DR-141's PRECEDENT, AND `Esc` GROWS A THIRD RUNG.** The user's
+call: `Calibrate…` puts a chip on the canvas, the first click sets one end, a line follows the
+pointer, the second click opens the distance dialog. The alternatives were a modal that opens first
+and asks the user to click the canvas behind it, and an inline field at the second point.
+
+**IT REUSES `PlanPinArmController`'s SHAPE AND NOT ITS INSTANCE.** Both are canvas modes with a chip
+and an `Esc` exit, and there the resemblance stops: the arm mode outlives each pin by design
+(DR-141 §11.140.2) and a calibration pick is **consumed by its own second click**, because there is
+exactly one distance being described. A mode that stayed armed after a calibration would be offering
+to calibrate the same plan again, immediately, which is not a workflow anybody has.
+
+`Esc`'s rungs on this canvas become three, in this order: **the calibration pick, then the arm mode,
+then the selection.** The pick goes first for the reason the arm mode goes before the selection
+in §11.140: it is the most recently and most deliberately entered state, and it is the thing on
+screen saying so. The binding does not change; `planCancel` gains a third thing to mean, and its
+`isActionEnabled` gate gains a third clause, which is the same `_PlanGatedAction` that already
+refuses the key when there is nothing to cancel.
+
+**A REFUSED PICK IS NOT AN ERROR.** Two clicks in the same place span no distance, and
+`PlanScale.nanometresPerPixel` already answers null for that case rather than throwing, on the model
+header's own reasoning. The dialog refuses to commit and says why; the pick stays live so the second
+point can be moved rather than the whole mode restarted.
+
+**11.143.7 THE CHAPTER SPLIT INSIDE `PLAN-F` MOVES, BECAUSE `PLAN-F/1` CANNOT LAND WITHOUT A
+WRITER.** `#633` is the pick and the typed distance and `#634` is *"recalibration is a document
+command"*, read as though the command belonged to the second. It does not: a dialog that parses a
+distance and has nowhere to put it is the no-caller defect of §11.143.1 pointed the other way, and it
+could not be gated green, because `actions_have_callers_test.dart` and this repo's own standard both
+refuse a surface with no writer behind it.
+
+So **`PLAN-F/1` carries the parser, `SetPlanScaleCommand`, the row affordance, the pick mode and the
+dialog**, which is one reachable gesture end to end. **`PLAN-F/2` carries what a recalibration does
+to everything else**: the epoch mask tested against a listener rather than against itself, and the
+count of §11.143.3 with the sentence that reports it. **`PLAN-F/3` carries uncalibrated as a
+first-class fact**: the row's state line, and the proof in both directions that placement and
+calibration do not block each other. **This is not a §8.3 amendment.** Nothing enters or leaves
+roadmap §2, no chapter is added or removed, and the three briefs keep their subjects; what moves is
+which chapter carries the writer, on DR-143 §11.142.4's precedent for the same kind of move.
+
+**11.143.8 WHAT THIS DOES NOT RULE.** Not `PLN-001`'s wording, its severity or its band, which are
+`PLAN-I`'s and which this chapter only supplies the state for. Not whether a calibration can be
+**cleared** back to unknown: undo covers the mis-calibration a person notices immediately, docs/15
+§5 does not ask for a clear, and a `ClearPlanScaleCommand` built on nobody's request would be a
+sixth command for a gesture no surface offers. Not the scale bar, which is `PLAN-H/4`'s and which
+that chapter rules is **drawn and never printed as a ratio**, so nothing here prints one. Not which
+rack is the datum when two are pinned on one plan (§11.143.3). And not whether the underlay row
+should show anything else about the calibration, such as when it was taken or by whom;
+`EntityMeta` carries that and no surface asks for it.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

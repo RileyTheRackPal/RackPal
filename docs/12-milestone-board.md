@@ -117,7 +117,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
 | **M4** | Device builder | **`L`** *(was `M`)* | **2 of 2** | **CRITERION MET**: `CONFIRMED` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **CLAUSE 2 IS NOW CONFIRMED, performed on 2026-09-01** (§5.3.30), and it was performable only from §5.3.13: it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` demonstrated it: every unknown column printed `—` and said so, which is G4/CR-114 read off a printed sheet for the first time. **The archetype path ran the same day at 46 SECONDS against the DSL path's 93** (`#250`), which is what settled whether the generators earned their place. **EVERY M4 STORY IS NOW CLOSED** (§5.3.1–§5.3.30), the last being the drill itself (`#188`), and **95 chapters are Done under this epic with none left open or re-parented**, which is where `v0.4.95` comes from. **M4-P shipped RJ-012's two extensibility surfaces and found each chapter to be something else underneath**: the builder could not save a field device at all, the media-type editor's real gap was MERGE rather than create, and connector aliases were already resolved and only lacked a writer (§5.3.28, DR-107, `v0.4.93`). **RJ-012 stays two-thirds met**: its third surface, a per-family colour override row in settings, has nowhere to go because `ProjectSettings` has no editor and none is assigned to any milestone (`#805`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); **its parked nudge canvas was then un-parked by DR-106 and built** as a sixth `Panel` section, with its align/distribute arithmetic in core (§5.3.27, `v0.4.90`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moved this criterion**, and that was the point of the row for a fortnight: story after story closed while clause 2 remained a person with a document to read. **It was read on 2026-09-01** (§5.3.30), which is the only thing that could ever have closed it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **3 of 3** | **CRITERION MET**: `CONFIRMED` | **CLOSED 2026-09-07 (DR-135 §11.134).** All three clauses discharged. Clause 1 is `DEMONSTRATED` at **29 of 29** by `drc_corpus_test.dart`, which `run_local.ps1` runs as a step of its own and whose subject is `kRuleCatalogue` rather than any evaluator enum, so a registered rule without a pair fails the build; that is also why it moved from 28 to 29 when DR-132 restored `ELE-005` and no gate had to change (§5.4.7). Clause 3 was `VACUOUS` *because no rule existed* and that reason expired; it is `DEMONSTRATED` in a stronger form than `#310` asked for, since `ExportError` is **sealed with three arms and none of them is about a rule** (§5.4.8, DR-119). **Clause 2 was the whole gap for a fortnight and is `CONFIRMED` on 2026-09-06** (§5.4.11), signed by the reviewing integrator against a pack generated from the live catalogue: **twelve findings, four rulings, six fields the model has and no producer writes**, and the catalog half signed PROVISIONAL on the reviewer's own hedge. **All twenty Stories under epic 23 are `Done` and 61 Chapters beneath them**, which is where `v0.5.61` comes from and why the close itself owes no bump. The successor is **the Plan view, not M6** (DR-029 §11.28.4) |
-| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open and is **`v0.6.21`** with twenty-one chapters `Done` of 43. **PLAN-A through PLAN-D are closed.** The plan set answered `PLAN-D/5` (§5.9.5) and then refused `PLAN-D/1`'s rasteriser, so `PLAN-D/3` ships a pure-Dart page lifter and the picker instead, with pdfium deferred rather than cancelled (§5.9.6) |
+| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open. **THE COUNT IS NOT WRITTEN HERE**, on this file's own rule about a second copy of a moving number: it read *"`v0.6.21` with twenty-one chapters `Done` of 43"* through six chapter closes, and the fix is to read `az boards query` for Chapters under this epic's stories rather than a sentence. The chapter total is no longer 43 either, since `PLAN-F/0` was added by a defect. **PLAN-A through PLAN-E are closed**, and `PLAN-F` is open. The plan set answered `PLAN-D/5` (§5.9.5) and then refused `PLAN-D/1`'s rasteriser, so `PLAN-D/3` ships a pure-Dart page lifter and the picker instead, with pdfium deferred rather than cancelled (§5.9.6). `PLAN-E` closed on six chapters rather than five (§5.9.7 to §5.9.12), and `PLAN-F/1` gave `PlanScale` the writer it had lacked since `PLAN-C` (§5.9.14) |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
@@ -7842,6 +7842,153 @@ because the schematic file asserts the band's arrival rather than its extent, wh
 
 Floors: `rackpal_core` 4296 to 4308, `rackpal_ui` 1622 to 1632. One analyzer info introduced and
 removed (a barrel export out of alphabetical order); the pin stays at 233.
+
+---
+
+#### 5.9.13 PLAN-F/0: the band swallowed every click, and DR-141's fast path was dead · `DR-141` · `v0.6.28`
+
+Closed `2026-09-08`, `#849`. One commit, gated green. **Not a scheduled chapter**: it was found at
+`PLAN-F/1`'s first test run, because a calibration click sits on the branch the defect hid, and it is
+filed as its own Chapter rather than folded in so the regression is a line somebody can read.
+
+##### 5.9.13.1 The mechanism, which is one word in one condition
+
+`PlanCanvasScreenState.beginDrag` arms the band on **every press that misses a pin**, which is
+`PLAN-E/6`'s own design and correct. `commitDrag` then read:
+
+```dart
+if (marquee != null && marquee.isActive) { ...end the sweep...; return; }
+```
+
+`isActive` is true from the instant of contact, so **every click on empty plan took the sweep branch
+and returned** before the two branches below it could run: the armed-pin branch that DR-141
+§11.140's fast path depends on, and the click-to-clear branch that docs/03 §4.4 requires.
+
+**An armed drop could not be pinned at all**, on any mounting that supplies a band. Every mounting in
+the product supplies one: `PlanEditorScreen` passes `marquee: _marquee`, and `PLAN-E/5` is what put
+that screen in the shell.
+
+##### 5.9.13.2 Why nothing saw it, which is the part worth keeping
+
+Every case in `plan_canvas_screen_test.dart` **predates the band and passes `marquee: null`**, so the
+canvas's own arm-mode cases exercise a configuration the app never uses.
+`plan_editor_screen_test.dart` mounts the real pairing and has no arm-mode case, because arming is
+the canvas's subject. **Each file is coherent and the pair had a hole**, which is DR-140's finding
+about `PLAN-E`'s five chapters restated one layer down: the gap is only visible from outside either
+file.
+
+##### 5.9.13.3 The other two adoptions were right, and one of them says so in a comment
+
+Three canvases adopted `MarqueeController` at `PLAN-E/6`. The rack asks `if (!_dragMoved)` first and
+reaches its marquee branch only on a real drag. The schematic asks `travelled > slopPx` and its click
+path carries the comment:
+
+> A CLICK, so the band never had an extent; end it anyway rather than leaving the controller armed
+> for the next gesture to inherit, which is the defect the rack canvas's own adoption hit.
+
+**Both ask whether the POINTER MOVED. The plan asked the controller.** Two right, one wrong, and the
+wrong one is the canvas whose click branch does the most work.
+
+§5.9.12.5 records that dropping the schematic's `marquee.cancel()` survived mutation *"correctly"*,
+with an argument about `begin` resetting `_from`. That argument is sound and it is about the
+schematic; **the plan's own click path was never put to the same question**, and that is the shape of
+the miss rather than an error in the reasoning that was done.
+
+##### 5.9.13.4 The fix
+
+`_moved` now means the same thing on both drag paths, the pointer travelled during this gesture,
+where it previously meant a grabbed pin travelled and was left false by a marquee drag. `commitDrag`
+asks `_moved`, and an armed-but-unwidened band is cancelled so the click falls through as a click.
+
+##### 5.9.13.5 Evidence
+
+Four cases added, and **only one is load-bearing against this defect**, measured by restoring it:
+with the condition mutated back to `if (true)`, the armed-click case fails and the other three stay
+green, because a sweep clears the selection too and `end` clears the band as surely as `cancel` does.
+That asymmetry is written into the test file rather than left for the next reader to rediscover.
+
+The load-bearing case is `AN ARMED CLICK STILL PINS WITH A BAND SUPPLIED`, and the probe that found
+the defect was the same assertion against `PlanEditorScreen`: `planPin` came back `null`.
+
+Floor: `rackpal_ui` 1632 to 1636. No analyzer movement; the pin stays at 233.
+
+---
+
+#### 5.9.14 PLAN-F/1: the two-point pick, and the model that had neither a reader nor a writer · `DR-144` · `v0.6.29`
+
+Closed `2026-09-08`, `#633`. Commits `e40fcda` (the ruling), `f5e0f46` (the chapter), over
+`9538fa1` (`PLAN-F/0`). **No exit clause moves**, and the reason is worth stating: the criterion is a
+printed `T1.01` a stranger can use, and calibration is a prerequisite for a length rather than for a
+locator. What moves is that `PLAN-G` now has an input it can derive from.
+
+##### 5.9.14.1 The census, which found DR-143's shape one field over
+
+`PLAN-C/2` built `PlanScale`, argued its rounding rule out in its own header, and `PLAN-C/5`
+serialized it. Censused by call site, in `lib/` only and excluding the declaring file:
+
+| Built by `PLAN-C` | Call sites in `lib/` |
+|---|---|
+| `PlanScale.nanometresPerPixel` | **0** |
+| `PlanScale.pixelSpan` | **0** |
+| `PlanScale.isUsable` | **0** |
+| `PlanScale.lengthBetween` | **0** |
+| `PlanScale.lengthAlong` | **0** |
+| `PlanUnderlay.isCalibrated` | **0** |
+
+**And no writer**: `plan_commands.dart` shipped five classes over six acts and none set a scale, so
+`PlanUnderlay.scale` was null in every document this product could produce. Third chapter in a row
+(DR-140's rack, DR-143's importer). The finding is now expected rather than surprising, which is why
+the census ran before the code rather than after it.
+
+##### 5.9.14.2 The hole in the chapter split, and what "N lengths" became
+
+`#634` requires that a recalibration changing N lengths says N. **At `PLAN-F` there are no derived
+lengths at all**: `planLowerBound` is `PLAN-G`'s and docs/15 §6's own pin-drag row already
+forward-dates its recompute clause. A report counting schedule rows would print `0` on every
+calibration in the product, which is a G4 report whose number is an artifact of what is unbuilt.
+
+DR-144 §11.143.3 rules the count to be of **measurable pins**, producing **no `Len`**, and to name
+the unpinned rack when there is one. §11.143.7 moves the writer into `PLAN-F/1`, because a dialog
+that parses a distance and has nowhere to put it is `PLAN-D`'s no-caller defect pointed the other
+way and could not have been gated green.
+
+##### 5.9.14.3 A bare number is refused, and the divergence is ruled
+
+`36` is 36 inches or 36 feet, the two differ by twelve, and the number they scale is every length the
+plan will ever yield. `parseDistanceEntry` therefore refuses it and names both readings back.
+
+**It diverges from `parseLengthCell`**, which reads a bare number as whole feet, and DR-144
+§11.143.5 rules the divergence rather than leaving a reader to infer it: that column is whole feet of
+cable, and its refusal keeps the stored value equal to the displayed one; this field is a distance on
+somebody else's drawing whose magnitude is not known in advance.
+
+`displayUnits` shapes the refusal and not the grammar, so `2.4m` is accepted on an imperial project.
+The arithmetic is integer throughout: a magnitude is carried as a rational, so `3.5` is `35/10` and
+`6-1/2` is `13/2`, and `Len.fromInches` is avoided precisely because it takes a `num`.
+
+##### 5.9.14.4 Two things the implementation found
+
+**A `ListTile` cannot hold the row DR-144 describes.** The first draft put the state line and the
+action in a `Row` inside its `subtitle` and it **overflowed by 126 pixels** in a 240 wide rail: a
+`ListTile` hands its subtitle a fixed width, a `TextButton` carries a 64 pixel minimum and a padded
+tap target, and the two do not negotiate. A `Wrap` inside a `ListTile` fixes the horizontal half and
+leaves the vertical one, because a three-line subtitle is more than `isThreeLine` allots. The row is
+laid out by hand, where the widths are visible.
+
+**And a `MouseRegion` is the only source of a hover.** `CanvasIntentHandler` reports drags and never
+hovers, so the rubber line between the two clicks had nothing to follow. Wrapping rather than
+overlaying is what keeps the clicks working: a `MouseRegion` hit-tests its child first and adds
+itself after.
+
+##### 5.9.14.5 Evidence
+
+Floors: `rackpal_core` 4308 to 4341 (+26 on the parser, +7 on the commands), `rackpal_ui` 1636 to
+1658. Six analyzer infos were introduced and all six removed, including **the escaped inner quote in
+a test name for the fourth time in this repository**; the pin stays at 233.
+
+The parser was **run against real strings and its output printed** before the assertions were
+written, on this repository's own practice: `1/3"` reads `0' 0-5/16"`, `2.4m` reads `7' 10-1/2"`, and
+`36` reads back the refusal rather than a number.
 
 ---
 

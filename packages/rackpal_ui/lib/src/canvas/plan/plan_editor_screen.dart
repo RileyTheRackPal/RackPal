@@ -38,9 +38,12 @@
 // here would be the "two routes to one surface" that ruling deleted the
 // `Project` menu to avoid. What the plan needs from locations is which
 // room this underlay depicts, and that is one line of text on the row.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
+import 'package:rackpal_ui/src/canvas/plan/plan_calibrate.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_canvas_screen.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/canvas/plan/unpinned_strip.dart';
@@ -120,6 +123,18 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   /// no-op.
   final Map<Uuid, GlobalKey<PlanCanvasScreenState>> _canvasKeys = {};
 
+  /// docs/15 §5's two-point pick (DR-144 §11.143, `PLAN-F/1`).
+  ///
+  /// OWNED HERE for the reason the band is: the affordance that starts it
+  /// is on the underlay row in the left rail, and the dialog that ends it
+  /// is a route this widget pushes. The canvas takes the clicks and
+  /// reports the pair back; it does not decide what a pick means.
+  ///
+  /// ONE FOR ALL PLANS, like the band and unlike the viewports. A pick
+  /// describes a distance on one raster and cannot outlive a switch to
+  /// another; [_openPlan] cancels it for exactly that reason.
+  final PlanCalibrateController _calibrate = PlanCalibrateController();
+
   /// CR-102's band (DR-139 §11.138).
   ///
   /// OWNED HERE because the band is drawn OVER the canvas by a sibling,
@@ -143,6 +158,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   @override
   void dispose() {
     _controller.changes.removeListener(_onDocumentChanged);
+    _calibrate.dispose();
     _marquee.dispose();
     for (final v in _viewports.values) {
       v.dispose();
@@ -186,6 +202,54 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
 
   /// The canvas region, split out only so the band can be stacked over it
   /// without the build method growing a second level of nesting.
+  /// Opens another plan, and ENDS ANY PICK IN PROGRESS.
+  ///
+  /// A pick is two points in ONE raster's pixel space, so carrying it
+  /// across a switch would let the second click land on a different
+  /// picture and calibrate a wall that is not there. The chip going away
+  /// is what tells the user it stopped.
+  void _openPlan(Uuid id) {
+    _calibrate.cancel();
+    setState(() => _openId = id);
+  }
+
+  /// Starts a pick on the open plan.
+  void _beginCalibrate() => _calibrate.begin();
+
+  /// Both points are down: ask for the distance, then write it.
+  ///
+  /// **THE COMMAND IS RUN HERE AND NOT IN THE CANVAS**, which is the
+  /// division `onRefuse` already draws: this widget owns the document and
+  /// the routes, and a canvas that pushed a dialog would be a second
+  /// surface deciding what a gesture means.
+  Future<void> _askDistance(PlanUnderlay open, PxPt a, PxPt b) async {
+    final alreadyCalibrated = open.scale != null;
+    final distance = await showCalibrateDistanceDialog(
+      context,
+      planName: open.name,
+      units: _controller.doc.settings.displayUnits,
+      alreadyCalibrated: alreadyCalibrated,
+    );
+    // ALWAYS ENDS THE PICK, whichever way the dialog closed. Cancelling
+    // means "not doing this", and committing has nothing left to pick;
+    // DR-144 §11.143.6 gives the mode one exit for both.
+    _calibrate.cancel();
+    if (distance == null || !mounted) return;
+    // RE-READ RATHER THAN CLOSE OVER `open`. The dialog is asynchronous
+    // and another tab can remove the underlay while it is up, which is
+    // the same hazard `_pinExisting` guards one file over.
+    if (!_controller.doc.underlays.containsKey(open.id)) {
+      widget.onRefuse?.call('That plan is not in the project any more.');
+      return;
+    }
+    _controller.run(
+      SetPlanScaleCommand(
+        underlayId: open.id,
+        scale: PlanScale(a: a, b: b, distance: distance),
+      ),
+    );
+  }
+
   Widget _canvas(PlanUnderlay open) => PlanCanvasScreen(
     key: _canvasKeyFor(open.id),
     controller: _controller,
@@ -195,6 +259,8 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
     selection: widget.selection,
     viewport: _viewportFor(open.id),
     arm: widget.arm,
+    calibrate: _calibrate,
+    onCalibrationPicked: (a, b) => unawaited(_askDistance(open, a, b)),
     marquee: _marquee,
     onRefuse: widget.onRefuse,
   );
@@ -213,7 +279,8 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
             underlays: _underlays,
             openId: open.id,
             locations: _controller.doc.locations,
-            onOpen: (id) => setState(() => _openId = id),
+            onOpen: _openPlan,
+            onCalibrate: _beginCalibrate,
           ),
         ),
         const VerticalDivider(width: 1),
@@ -261,13 +328,28 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   }
 }
 
-/// The left rail: which plans this project holds, and which is open.
+/// The left rail: which plans this project holds, which is open, and
+/// whether each one is calibrated.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE CALIBRATION LIVES ON THE ROW, WHICH IS DR-144 §11.143.4
+/// ═══════════════════════════════════════════════════════════════════════
+/// A calibration is a property OF an underlay and this is the list of
+/// underlays. The alternatives were a toolbar over the canvas, which would
+/// be new chrome on a layout docs/15 §6 rules as three regions with "no
+/// fourth region", and a canvas context menu, which nothing in this
+/// product has and nobody would find.
+///
+/// THE STATE LINE IS ON EVERY ROW AND THE ACTION ONLY ON THE OPEN ONE. A
+/// list of buttons is not scannable, and the pick they start happens on
+/// the canvas, which is showing the open plan and nothing else.
 class _UnderlayList extends StatelessWidget {
   const _UnderlayList({
     required this.underlays,
     required this.openId,
     required this.locations,
     required this.onOpen,
+    required this.onCalibrate,
   });
 
   final List<PlanUnderlay> underlays;
@@ -275,31 +357,134 @@ class _UnderlayList extends StatelessWidget {
   final Map<Uuid, Location> locations;
   final void Function(Uuid id) onOpen;
 
+  /// Starts a pick on the OPEN plan. It takes no id, because the pick
+  /// happens on the canvas and the canvas is showing one underlay: a
+  /// button on a closed row that armed a pick over a different picture is
+  /// the bug this signature makes unspellable.
+  final VoidCallback onCalibrate;
+
+  /// A stable handle for tests, per row.
+  static String calibrateKeyFor(Uuid id) => 'underlay-calibrate-${id.v}';
+
+  /// Ditto for the row itself.
+  static String rowKeyFor(Uuid id) => 'underlay-row-${id.v}';
+
+  @override
+  Widget build(BuildContext context) => ListView.builder(
+    itemCount: underlays.length,
+    itemBuilder: (context, i) {
+      final u = underlays[i];
+      return _UnderlayRow(
+        key: ValueKey(_UnderlayList.rowKeyFor(u.id)),
+        underlay: u,
+        open: u.id == openId,
+        room: u.locationId == null ? null : locations[u.locationId]?.name,
+        onOpen: () => onOpen(u.id),
+        onCalibrate: onCalibrate,
+      );
+    },
+  );
+}
+
+/// One plan in the rail.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// NOT A `ListTile`, AND THE REASON IS A MEASUREMENT
+/// ═══════════════════════════════════════════════════════════════════════
+/// The first draft was one, with the state line and the action in a `Row`
+/// inside its `subtitle`. **It overflowed by 126 pixels** in a 240 wide
+/// rail: a `ListTile` hands its subtitle a fixed width and a `TextButton`
+/// carries a 64 pixel minimum and a padded tap target, and the two do not
+/// negotiate. A `Wrap` inside a `ListTile` would have fixed the horizontal
+/// half and left the vertical one, because a three-line subtitle is more
+/// than `isThreeLine` allots.
+///
+/// So the row is laid out here, where the widths are visible. The `Wrap`
+/// is what keeps DR-144's one-line reading when the rail is wide enough
+/// and drops the action below the state when it is not, rather than
+/// clipping either.
+class _UnderlayRow extends StatelessWidget {
+  const _UnderlayRow({
+    required this.underlay,
+    required this.open,
+    required this.room,
+    required this.onOpen,
+    required this.onCalibrate,
+    super.key,
+  });
+
+  final PlanUnderlay underlay;
+  final bool open;
+
+  /// The room this plan depicts, or null. A plan with no location is
+  /// perfectly ordinary and is not an error to report: the model says a
+  /// site plan depicts no room, so the line is absent rather than reading
+  /// "no location".
+  final String? room;
+
+  final VoidCallback onOpen;
+  final VoidCallback onCalibrate;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return ListView.builder(
-      itemCount: underlays.length,
-      itemBuilder: (context, i) {
-        final u = underlays[i];
-        final room = u.locationId == null
-            ? null
-            : locations[u.locationId]?.name;
-        return ListTile(
-          key: ValueKey('underlay-row-${u.id.v}'),
-          dense: true,
-          selected: u.id == openId,
-          title: Text(u.name, maxLines: 1, overflow: TextOverflow.ellipsis),
-          // THE ROOM, WHEN THERE IS ONE. A plan with no location is
-          // perfectly ordinary and is not an error to report: the model
-          // says a site plan depicts no room, so the line is simply
-          // absent rather than reading "no location".
-          subtitle: room == null
-              ? null
-              : Text(room, style: theme.textTheme.labelSmall),
-          onTap: () => onOpen(u.id),
-        );
-      },
+    final label = room;
+    return InkWell(
+      onTap: onOpen,
+      child: Container(
+        width: double.infinity,
+        color: open ? theme.colorScheme.primaryContainer : null,
+        padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              underlay.name,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium,
+            ),
+            if (label != null) Text(label, style: theme.textTheme.labelSmall),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              children: [
+                // PRINTED IN BOTH DIRECTIONS (G4, DR-144 §11.143.4).
+                // "Not calibrated" is a fact worth stating, and a row
+                // that said nothing would leave "no scale yet" and "a
+                // scale I have forgotten about" looking identical.
+                Text(
+                  calibrationStateLabel(underlay),
+                  style: theme.textTheme.labelSmall,
+                ),
+                if (open)
+                  TextButton(
+                    key: ValueKey(
+                      _UnderlayList.calibrateKeyFor(underlay.id),
+                    ),
+                    onPressed: onCalibrate,
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: Size.zero,
+                    ),
+                    child: Text(
+                      // THE SAME TWO WORDS THE UNDO ENTRY USES, from one
+                      // function, so the button and the Edit menu cannot
+                      // disagree about which act just happened.
+                      calibrateActionLabel(
+                        alreadyCalibrated: underlay.scale != null,
+                      ),
+                      style: theme.textTheme.labelSmall,
+                    ),
+                  ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

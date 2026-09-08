@@ -269,6 +269,7 @@ export 'src/structure/outlet_template_planner.dart';
 export 'src/structure/plate_arrange.dart';
 export 'src/units/box.dart';
 export 'src/units/constants.dart';
+export 'src/units/distance_entry.dart';
 export 'src/units/ids.dart';
 export 'src/units/len.dart';
 export 'src/units/mass.dart';

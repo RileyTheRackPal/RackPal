@@ -46,6 +46,22 @@ const _templateRef = TemplateRef(
 const _pin = PlanPin(underlayId: _underlayId, at: PxPt(742, 1183));
 const _movedPin = PlanPin(underlayId: _underlayId, at: PxPt(900, 400));
 
+/// 100 pixels spanning a 36 inch door: `PLAN-F/1`'s own example, and the
+/// numbers are chosen so the factor is a round 9,144,000 nm per pixel.
+const _scale = PlanScale(
+  a: PxPt(100, 100),
+  b: PxPt(200, 100),
+  distance: Len(36 * Len.nmPerInch),
+);
+
+/// The same wall measured again, half a pixel-span shorter, so a
+/// recalibration changes the factor rather than merely the object.
+const _recalibrated = PlanScale(
+  a: PxPt(100, 100),
+  b: PxPt(300, 100),
+  distance: Len(36 * Len.nmPerInch),
+);
+
 PlanUnderlay _underlay({Uuid id = _underlayId, String order = 'a0'}) =>
     PlanUnderlay(
       id: id,
@@ -372,6 +388,113 @@ void main() {
     });
   });
 
+  group('calibration, the writer PlanScale did not have', () {
+    test('sets the scale, and undo returns the plan to UNCALIBRATED', () {
+      // Not "to a 1:1 scale" and not "to an empty PlanScale": the model
+      // says null IS the uncalibrated state and never acquires a guessed
+      // value (G4, docs/15 §3.1), so an undo has exactly one right answer.
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(SetPlanScaleCommand(underlayId: _underlayId, scale: _scale));
+      expect(doc.underlays[_underlayId]!.scale, _scale);
+      expect(doc.underlays[_underlayId]!.isCalibrated, isTrue);
+
+      controller.undo.undo(doc);
+      expect(doc.underlays[_underlayId]!.scale, isNull);
+      expect(doc.underlays[_underlayId]!.isCalibrated, isFalse);
+    });
+
+    test('recalibrating, then undoing, restores the OLD scale and not '
+        'null', () {
+      // The case a `_previous`-less implementation gets wrong, and it is
+      // the same shape the pin's move/undo case protects one group up.
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(SetPlanScaleCommand(underlayId: _underlayId, scale: _scale))
+        ..run(
+          SetPlanScaleCommand(
+            underlayId: _underlayId,
+            scale: _recalibrated,
+          ),
+        );
+      expect(doc.underlays[_underlayId]!.scale, _recalibrated);
+
+      controller.undo.undo(doc);
+      expect(doc.underlays[_underlayId]!.scale, _scale);
+    });
+
+    test('calibratePlan the first time, recalibratePlan the second', () {
+      final doc = _doc();
+      final first = SetPlanScaleCommand(
+        underlayId: _underlayId,
+        scale: _scale,
+      );
+      final second = SetPlanScaleCommand(
+        underlayId: _underlayId,
+        scale: _recalibrated,
+      );
+      DocumentController(doc)
+        ..run(first)
+        ..run(second);
+
+      expect(first.label, LabelKey.calibratePlan);
+      expect(second.label, LabelKey.recalibratePlan);
+    });
+
+    test('replacing an UNUSABLE scale is still recalibration', () {
+      // The label names what HAPPENED, not what the previous value was
+      // worth. An underlay carrying two coincident points is calibrated as
+      // far as the document is concerned and useless as far as a length
+      // is concerned, and deciding the word from the value's usability
+      // would name the act by a property of the data.
+      final doc = _doc();
+      const degenerate = PlanScale(
+        a: PxPt(100, 100),
+        b: PxPt(100, 100),
+        distance: Len(36 * Len.nmPerInch),
+      );
+      expect(degenerate.isUsable, isFalse);
+      final second = SetPlanScaleCommand(
+        underlayId: _underlayId,
+        scale: _scale,
+      );
+      DocumentController(doc)
+        ..run(
+          SetPlanScaleCommand(underlayId: _underlayId, scale: degenerate),
+        )
+        ..run(second);
+
+      expect(second.label, LabelKey.recalibratePlan);
+    });
+
+    test('an underlay this document does not have is a NO-OP whose revert '
+        'throws rather than pretending', () {
+      final doc = _doc(withUnderlay: false);
+      final command = SetPlanScaleCommand(
+        underlayId: _underlayId,
+        scale: _scale,
+      )..apply(doc);
+      expect(doc.underlays, isEmpty, reason: 'nothing to write onto');
+      expect(() => command.revert(doc), throwsStateError);
+    });
+
+    test('THE FACTOR IS DERIVED AND NEVER STORED, so what round-trips is '
+        'the two points and the typed distance', () {
+      // CR-001: a ratio cannot be an integer and no floating-point length
+      // is stored, so the command carries exactly what the user supplied.
+      final doc = _doc();
+      DocumentController(
+        doc,
+      ).run(SetPlanScaleCommand(underlayId: _underlayId, scale: _scale));
+      final stored = doc.underlays[_underlayId]!.scale!;
+
+      expect(stored.a, const PxPt(100, 100));
+      expect(stored.b, const PxPt(200, 100));
+      expect(stored.distance.nm, 36 * Len.nmPerInch);
+      expect(stored.nanometresPerPixel, 9144000.0);
+    });
+  });
+
   group('THE EPOCH MASKS, AGAINST A LISTENER', () {
     ({int structure, int wires, int rack, int sheet, int meta}) snapshot(
       DocumentController c,
@@ -486,6 +609,33 @@ void main() {
       expect(after.structure, before.structure);
       expect(after.wires, before.wires);
       expect(after.rack, before.rack);
+      expect(after.meta, before.meta);
+    });
+
+    test('a calibration wakes structure AND wires, on the same chain a '
+        'pin runs', () {
+      // A scale turns a pixel distance into a Len, which feeds
+      // planLowerBound, which feeds a schedule row, which feeds a sheet:
+      // the identical chain a pin runs, so the identical mask. A mask
+      // that stopped at the plan would redraw the picture and leave the
+      // schedule printing the old length, which is DR-011.4's defect.
+      final doc = _doc();
+      final controller = DocumentController(doc);
+      final before = snapshot(controller);
+
+      controller.run(
+        SetPlanScaleCommand(underlayId: _underlayId, scale: _scale),
+      );
+      final after = snapshot(controller);
+
+      expect(after.structure, greaterThan(before.structure));
+      expect(after.wires, greaterThan(before.wires));
+      // NOT `rack`: a calibration changes no rail, no height and no
+      // depth. NOT `sheet`: `T1.01` does not exist and the pin commands
+      // feed the same future sheet without it, so adding it here would
+      // leave two commands on one chain disagreeing (PLAN-F/2 revisits).
+      expect(after.rack, before.rack);
+      expect(after.sheet, before.sheet);
       expect(after.meta, before.meta);
     });
 

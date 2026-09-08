@@ -14,8 +14,11 @@ and cites the governing ruling ID for every decision; the adjudications are in
 and its length model by **DR-020**, which voided §4's first draft one commit after it was written,
 on evidence from the trade rather than the corpus. **Moved into v1 and sequenced before M6 by
 DR-029**, which also buys PDF import. **Decomposed on 2026-08-10 by DR-037**, which settles this
-document's four remaining open points and corrects §4.1, §7 and §10 in place. Not built. The
-feasibility study and cost are in
+document's four remaining open points and corrects §4.1, §7 and §10 in place. **This line read
+*"Not built"* until 2026-09-08**, on a document whose own §2, §3 and §6 each say `BUILT AT` and name
+a chapter: `PLAN-A` through `PLAN-E` have closed and the container, the model, the import and the
+editor all ship. What is not built is the exit criterion, which is a printed `T1.01` a stranger can
+use (`PLAN-H`, `PLAN-J`). The feasibility study and cost are in
 [research/feasibility-plan-view.md](research/feasibility-plan-view.md); the exit criterion is
 roadmap §4 and canon §11.36.1, and the task breakdown is docs/12 §5.9.
 
@@ -325,10 +328,40 @@ models spaces. This document does not rule it.
 Two picked points and one typed distance. Nothing else, and specifically no attempt to read a scale
 bar out of the image.
 
+**BUILT AT `PLAN-F/1`, 2026-09-08** (`units/distance_entry.dart`, `commands/plan_commands.dart`'s
+`SetPlanScaleCommand`, `canvas/plan/plan_calibrate.dart`), and **RULED IN DETAIL BY DR-144 §11.143**
+at `PLAN-F`'s decomposition, because the census found that
+`PlanScale` had neither a reader nor a writer in `lib/`: `PLAN-C/2` built the model and argued its
+rounding rule out in its own header, and every one of `nanometresPerPixel`, `pixelSpan`, `isUsable`,
+`lengthBetween`, `lengthAlong` and `PlanUnderlay.isCalibrated` was reached only from tests. No
+command set a scale at all, so `scale` is null in every document this product can make. That is the
+third chapter in a row to find a modelled field nothing can reach (DR-140, DR-143).
+
 The interaction: `Calibrate…`, click two points that span a distance you know, type it. The obvious
 choice on a residential plan is a dimensioned wall; the fallback is a door, which is 32 or 36 inches
 in almost all of this work and is the one thing on every floorplan whose real size the user knows
 cold.
+
+**`Calibrate…` LIVES ON THE UNDERLAY ROW** (DR-144 §11.143.4), because a calibration is a property of
+an underlay, the left rail is the list of underlays, and §6 says there is no fourth region. The row
+carries a state line in both directions and an action that reads `Recalibrate…` once there is a
+scale to replace.
+
+**THE PICK IS A MODE, CONSUMED BY ITS OWN SECOND CLICK** (§11.143.6). A chip, a first click, a line
+following the pointer, a second click that opens the distance dialog. It borrows DR-141's shape and
+not its instance: the arm mode outlives each pin on purpose, and a calibration describes exactly one
+distance, so a mode that stayed armed afterwards would offer to recalibrate the plan immediately.
+`Esc` on this canvas has three rungs from here: the pick, then the arm mode, then the selection.
+
+**A TYPED DISTANCE CARRIES ITS UNIT, AND A BARE NUMBER IS REFUSED BY NAME** (§11.143.5). `36` is 36
+inches or 36 feet, and the two differ by a factor of twelve applied to every length the plan will
+ever yield; a guessed unit does not degrade a number, it produces a confident one that is wrong by
+an order of magnitude on a drawing an installer will trust. The grammar takes `36"`, `36in`, `3'`,
+`3ft`, `3' 6"`, `3' 6-1/2"`, `2.4m`, `2400mm` and `240cm`. **It diverges from `parseLengthCell`
+deliberately**, which reads a bare number as whole feet because its column is whole feet of cable;
+the two are not candidates for harmonisation, and a pass that unified them would silently give
+calibration a default unit. `displayUnits` shapes the refusal sentence and the field's hint, not the
+grammar: an explicitly united value is unambiguous on any project.
 
 **Until an underlay is calibrated, pins may be placed and no length derives.** Placement is useful on
 its own, because "which wall" does not require a scale. `PLN-001` reports the uncalibrated state as
@@ -337,6 +370,21 @@ an advisory rather than blocking anything (CR-022, G3).
 **Recalibration is a document command like any other** and is undoable. It changes every derived
 length on that plan at once, which is exactly why it goes through the command stack and not through
 a settings field.
+
+**AND WHAT IT REPORTS BACK IS A COUNT OF PINS, NOT OF LENGTHS** (§11.143.3), because at `PLAN-F`
+there are no derived lengths to change: `planLowerBound` is `PLAN-G`'s and §6's pin-drag row already
+forward-dates its recompute clause. A report counting schedule rows would print `0` on every
+calibration in the product, which is a G4 report whose number is an artifact of what is unbuilt. So
+the report names how many pins a length could now be derived for, and when none can, the reason:
+
+> Calibrated Level 1. 12 pins can now be measured from the rack.
+
+> Calibrated Level 1. No rack is pinned on this plan, so no length derives yet.
+
+**The derivation produces no `Len`.** One per pin would be `planLowerBound` shipped early under
+another name, without the rank, the `≥` prefix, the italic, the rollup exclusion or `LEN-001`'s
+reading, which are five decisions §4.1 already took and `PLAN-G` owns. Which rack is the datum when
+two are pinned on one plan is left to that chapter for the same reason.
 
 ---
 

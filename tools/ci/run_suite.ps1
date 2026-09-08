@@ -550,7 +550,12 @@ $SuiteFloors = @{
     # whole device because it clipped ONE PIN, in the mode that means
     # "fully contained". Three cases pin it, including the one that proves
     # the filter is not a blanket refusal.
-    'rackpal_core'   = 4308
+    # 4341 at PLAN-F/1: +26 from distance_entry_test.dart, whose
+    # load-bearing case is a REFUSAL rather than an acceptance (a bare
+    # `36` is 36 inches or 36 feet and the two differ by twelve), and +7
+    # on plan_commands_test.dart for SetPlanScaleCommand, the writer
+    # PlanScale did not have for two chapters.
+    'rackpal_core'   = 4341
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -739,7 +744,16 @@ $SuiteFloors = @{
     # widget and this file asserts the band's ARRIVAL rather than its
     # extent; the extent is core's, in marquee_test.dart.
     # The third mutation, never arming the band at all, is killed.
-    'rackpal_ui'     = 1632
+    # 1636 at PLAN-F/0: +4 from the band-and-click group in
+    # plan_canvas_screen_test.dart. Only ONE of the four is load-bearing
+    # against the defect, measured by restoring it: the other three stay
+    # green with the condition mutated back, because a sweep clears the
+    # selection too and `end` clears the band as surely as `cancel` does.
+    # 1658 at PLAN-F/1: +22 from plan_calibrate_test.dart. Its end-to-end
+    # cases assert the DOCUMENT, because a case asserting the pick
+    # controller would survive SetPlanScaleCommand never running, which is
+    # exactly how PlanScale sat reachable from nothing since PLAN-C.
+    'rackpal_ui'     = 1658
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

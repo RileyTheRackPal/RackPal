@@ -70,6 +70,7 @@ export 'src/canvas/editing_overlay_painter.dart';
 export 'src/canvas/grid_painter.dart';
 export 'src/canvas/insertion_caret.dart';
 export 'src/canvas/marquee_controller.dart';
+export 'src/canvas/plan/plan_calibrate.dart';
 export 'src/canvas/plan/plan_canvas_screen.dart';
 export 'src/canvas/plan/plan_editor_screen.dart';
 export 'src/canvas/plan/plan_pin_arm.dart';
