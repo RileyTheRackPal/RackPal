@@ -214,6 +214,38 @@ final class DocumentSession extends ChangeNotifier {
   /// The container members to write back on the next save. See [_members].
   Map<String, Uint8List> get members => _members;
 
+  /// Puts [bytes] in the container at [name], for the next save.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE PIECE THAT WAS MISSING, AND IT WAS THE QUIET HALF
+  /// ═══════════════════════════════════════════════════════════════════
+  /// [_members] rode from open to save from the day `PLAN-B` built the
+  /// container, and [adopt] was its only writer: wholesale, when a
+  /// different document replaces this one. So there was **no way to add a
+  /// member to an open session**, and `PLAN-D`'s importer would have had
+  /// bytes and nowhere to put them (DR-143 §11.142.2). A save would then
+  /// have written a `PlanUnderlay` naming a member the container does not
+  /// hold, which is the dangling reference DR-021 spends a ruling
+  /// avoiding elsewhere.
+  ///
+  /// **NOT ON THE UNDO STACK, AND THE MODEL ALREADY RULED THAT.**
+  /// Importing writes here and runs `AddPlanUnderlayCommand`; undoing
+  /// takes the underlay out and leaves the member.
+  /// `RemovePlanUnderlayCommand`'s own doc states the reason: *"the member
+  /// is cheap, the bytes are the architect's, and deleting them on an undo
+  /// would make a redo unable to find them."*
+  ///
+  /// A FRESH MAP RATHER THAN A MUTATION, because [_members] starts as a
+  /// `const {}` and adopts whatever the store handed over; neither is
+  /// promised to be growable.
+  void addMember(String name, Uint8List bytes) {
+    _members = {..._members, name: bytes};
+    // NO `notifyListeners`. This changes what the next SAVE writes and
+    // nothing any widget renders; the underlay that makes it visible
+    // arrives through the command, on the controller's own notification.
+    // Ringing this bell too would rebuild the shell twice per import.
+  }
+
   /// The (size, modified) the next save's external-change check compares
   /// against.
   FileBaseline get baseline => _baseline;

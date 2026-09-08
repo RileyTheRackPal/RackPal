@@ -54,6 +54,7 @@ import 'package:rackpal/src/session/export_controller.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/session/library_io_actions.dart';
+import 'package:rackpal/src/session/plan_import_actions.dart';
 import 'package:rackpal/src/session/session_controller.dart';
 import 'package:rackpal/src/session/session_prompts.dart';
 import 'package:rackpal/src/session/starter_projects.dart';
@@ -98,6 +99,7 @@ final class AppServices {
     required this.export,
     required this.templateIo,
     required this.libraryIo,
+    required this.floorplanIo,
     required this.chrome,
     required this.autosave,
     required this.titleWriter,
@@ -135,6 +137,18 @@ final class AppServices {
   /// has nowhere to put a library and says so, while EXPORT is
   /// unaffected because it writes to the user's chosen directory.
   final LibraryIo libraryIo;
+
+  /// `File ▸ Import floorplan…` (DR-143 §11.142, PLAN-E/5).
+  ///
+  /// A FOURTH SIBLING, for [export]'s reason, and the one that was
+  /// missing: `PLAN-D` built every step of the import and nothing in
+  /// `lib/` called any of it, so `AddPlanUnderlayCommand` had no producer
+  /// and a project could not hold a floorplan at all.
+  ///
+  /// No `dataRoot`, unlike [libraryIo]: a floorplan goes into the open
+  /// PROJECT's container rather than onto a shelf in the data folder, so
+  /// the degraded session imports one perfectly well.
+  final FloorplanIo floorplanIo;
 
   final WindowChrome chrome;
   final AutosaveScheduler autosave;
@@ -428,6 +442,14 @@ Future<AppServices> buildAppServices({
       dataRoot: ready?.path,
       initialDirectory: controller.exportInitialDirectory,
       context: ctx,
+    ),
+    floorplanIo: FloorplanIo(
+      session: session,
+      picker: picker,
+      fs: fs,
+      // The same MRU the other pickers use: a person who has just saved a
+      // project is usually importing from beside it.
+      initialDirectory: controller.exportInitialDirectory,
     ),
     templateIo: DeviceTemplateIo(
       session: session,

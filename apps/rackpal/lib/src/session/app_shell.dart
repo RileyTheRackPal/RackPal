@@ -72,6 +72,7 @@ import 'package:rackpal/src/storage/library_shelf.dart';
 import 'package:rackpal/src/storage/recents_store.dart';
 import 'package:rackpal_core/rackpal_core.dart'
     show
+        Err,
         LoadedLibrary,
         LocationRemovalPlan,
         TemplateBody,
@@ -612,6 +613,32 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  /// `File ▸ Import floorplan…` (DR-143 §11.142, PLAN-E/5).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE CALLER `PLAN-D` NEVER GOT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Every step of the import was built and tested at `PLAN-D` and had
+  /// zero call sites in `lib/`, so `AddPlanUnderlayCommand` had no
+  /// producer and no project could hold a floorplan at all. This method
+  /// is that producer.
+  ///
+  /// CANCELLED AND REFUSED SAY DIFFERENT THINGS, and only one of them
+  /// speaks. `null` is a closed dialog, from either the file picker or
+  /// the PDF page grid, and a person who closed a grid has not hit an
+  /// error. An `Err` is a file this product read and declined, and its
+  /// own `toString` is written for a person: the caps say their numbers
+  /// and `PdfHasNoLiftablePageError` says the page count.
+  Future<void> _importFloorplan() async {
+    final result = await _services.floorplanIo.import(
+      pickPage: (pages, fileName) async {
+        if (!mounted) return null;
+        return pickPdfPage(context, pages: pages, fileName: fileName);
+      },
+    );
+    if (result case Err(:final error)) _showRefusal('$error');
+  }
+
   /// `File ▸ Export device library…` (`#240`).
   Future<void> _exportLibrary() async {
     await _services.libraryIo.export(
@@ -728,6 +755,7 @@ final class AppShellState extends State<AppShell>
               onImportTemplate: _importTemplate,
               onExportLibrary: _exportLibrary,
               onImportLibrary: _importLibrary,
+              onImportFloorplan: _importFloorplan,
               onProjectSettings: _openProjectSettings,
               onOpenRecent: _openRecent,
             ),
@@ -1306,6 +1334,7 @@ final class _FileMenu extends StatelessWidget {
     required this.onImportTemplate,
     required this.onExportLibrary,
     required this.onImportLibrary,
+    required this.onImportFloorplan,
     required this.onProjectSettings,
     required this.onOpenRecent,
   });
@@ -1323,6 +1352,9 @@ final class _FileMenu extends StatelessWidget {
   final Future<void> Function() onImportTemplate;
   final Future<void> Function() onExportLibrary;
   final Future<void> Function() onImportLibrary;
+
+  /// `File ▸ Import floorplan…` (DR-143 §11.142).
+  final Future<void> Function() onImportFloorplan;
 
   /// Opens the project settings editor (`#805`, RJ-012).
   final Future<void> Function() onProjectSettings;
@@ -1423,6 +1455,25 @@ final class _FileMenu extends StatelessWidget {
             MenuItemButton(
               onPressed: () => unawaited(onImportLibrary()),
               child: const Text('Import device library…'),
+            ),
+            // ═════════════════════════════════════════════════════════
+            // AND THE FLOORPLAN, WHICH IS THE IMPORT THAT HAD NO MENU
+            // ═════════════════════════════════════════════════════════
+            // `File` and not a `Plan` menu (DR-143 §11.142.4, the user's
+            // call): it sits with the two imports already here, and a
+            // second top-level menu holding one item is not worth the
+            // strip. `plan_import_actions.dart`'s own header says
+            // `Plan ▸ Import floorplan…`, which was a PLAN-D assumption
+            // and is superseded rather than a decision anybody made.
+            //
+            // THIS ITEM IS THE PRODUCER THE WHOLE PLAN VIEW WAS MISSING.
+            // Every step of the import was built, tested and reachable
+            // from nothing, so `AddPlanUnderlayCommand` had no caller and
+            // no project could hold a floorplan. No accelerator, for the
+            // ninth time and the same reason as the eight above.
+            MenuItemButton(
+              onPressed: () => unawaited(onImportFloorplan()),
+              child: const Text('Import floorplan…'),
             ),
             // ═════════════════════════════════════════════════════════
             // ON THE FILE MENU, BECAUSE SETTINGS LIVE IN THE FILE

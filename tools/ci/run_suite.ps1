@@ -655,7 +655,27 @@ $SuiteFloors = @{
     # the ordinary import path, so PLAN-D/4's controls are asserted to
     # still fire on it. Exempting it because "we produced it" would be
     # exempting it because we trusted the stranger who sent the PDF.
-    'rackpal_app'    = 954
+    # 964 at PLAN-E/5 phase 1: +10 from session/floorplan_io_test.dart, the
+    # CALLER that whole import path did not have. PLAN-D built every step,
+    # tested each, and nothing in lib/ invoked any of it: censused at zero
+    # call sites per symbol (DR-143 §11.142.1), so AddPlanUnderlayCommand
+    # had no producer and no project could hold a floorplan.
+    # The load-bearing case asserts BOTH writes, because an underlay whose
+    # imageMember names bytes the container does not hold is a dangling
+    # reference in a saved file and a test counting doc.underlays cannot
+    # see it. Seven mutations run and all seven killed: never adding the
+    # member fails 4, never running the command fails 2, routing by
+    # extension instead of content fails 1, turning a cancelled page pick
+    # into an Err fails 1, the wall clock instead of the injected one
+    # fails 1, keeping the file extension in the name fails 2, and writing
+    # the member on a REFUSED file fails 1.
+    # TWO OF THESE CASES WERE VACUOUS IN THEIR FIRST DRAFT and are the
+    # reason the fixture is borrowed: they used a stub beginning with
+    # `%PDF-` that lifts no pages, so `anyOf(isNull, isA<Err>())` and
+    # `pickerSawIt || underlays.isEmpty` both passed on a document nothing
+    # was imported into. They now use pdf_page_import_test.dart's real
+    # onePagePdf and assert what the picker actually received.
+    'rackpal_app'    = 964
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
