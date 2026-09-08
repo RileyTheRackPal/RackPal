@@ -43,6 +43,25 @@ The failure mode is specific: **a green gate reads as "this is fast" when it
 only ever said "this is fast at N".** The larger N is never tested because the
 gate is green, and the gate is green because the larger N is never tested.
 
+# A second instance, and it is not about performance
+
+DR-138's PDF lifter was run against a real 18-sheet plan set **before a line of
+test was written**, and refused all 18 pages with *"has an unreadable image
+object"* while the parser was working perfectly. Its object reader scanned from
+`obj` to `endobj` inside a 64 KB bound; an image XObject is a dictionary
+followed by hundreds of kilobytes of JPEG, so it found neither terminator and
+returned null.
+
+**A hand-written fixture could not have found it**, because a fixture small
+enough to write by hand has its `endobj` well inside the bound. That is this
+practice's sentence exactly, in a correctness setting rather than a performance
+one: *every property that made the fixture good also made it comfortable.*
+
+**And the failure mode is the part to remember.** A parser bug presented as a
+*content* refusal, which is the one shape where the refusal is plausible and
+would have been believed. The synthetic suite that followed is 31 cases and every
+one of them passes against the broken version.
+
 # The check
 
 For any perf gate, ask two questions of the fixture rather than of the code:

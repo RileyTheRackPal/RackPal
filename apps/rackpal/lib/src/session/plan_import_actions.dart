@@ -173,6 +173,14 @@ Outcome<ImportedFloorplan> importFloorplanBytes({
   Uuid? locationId,
 }) {
   // ---- 2. SNIFF, BY CONTENT (PLAN-D/4, M4-M4's rule). ---------------
+  //
+  // A PDF DOES NOT ARRIVE HERE ANY MORE (DR-138). It goes through
+  // [liftPdfPages] and the page picker first, and what comes back is one
+  // page's embedded image, which re-enters this function as bytes. The arm
+  // is kept as a REFUSAL rather than deleted, because this function is the
+  // one every route reaches (a test, a drag and drop, a future caller),
+  // and a PDF reaching it means somebody skipped the picker rather than
+  // that PDFs are unsupported.
   final kind = sniffImportKind(bytes);
   if (kind == SniffedImportKind.pdf) {
     return const Err(PdfImportNotAvailableError());
@@ -264,6 +272,97 @@ Outcome<ImportedFloorplan> importFloorplanBytes({
     ),
   );
 }
+
+/// A PDF that was read but yielded no page anybody can use.
+///
+/// **SEPARATE FROM [PdfImportNotAvailableError] BECAUSE THE TWO SAY
+/// DIFFERENT THINGS.** That one means the picker was skipped. This one
+/// means the picker ran, read the file correctly, and every page needs a
+/// renderer that is not built yet (`PLAN-D/3`, DR-138). Telling somebody
+/// "PDF import is not available" about a file this product just parsed
+/// eighteen pages of would be false.
+final class PdfHasNoLiftablePageError implements Exception {
+  const PdfHasNoLiftablePageError({
+    required this.pageCount,
+    required this.firstReason,
+  });
+
+  final int pageCount;
+
+  /// Why the first page was refused, so the message is specific.
+  ///
+  /// **IT KEEPS THE UNDERLYING ERROR'S OWN WORDS WHEN THERE ARE ANY.** The
+  /// first draft collapsed everything that was not a
+  /// `PdfPageNotLiftableError` to "could not be read", which is how a page
+  /// refused by the PIXEL CAP came out sounding like a damaged file. Those
+  /// are different problems with different remedies, and the cap's message
+  /// already says which.
+  final String firstReason;
+
+  @override
+  String toString() =>
+      'PdfHasNoLiftablePageError: this PDF has $pageCount page'
+      '${pageCount == 1 ? '' : 's'} and none of them can be used as an '
+      'underlay (PLAN-D/3, DR-138). The first page $firstReason. Export '
+      'the page you want as PNG or JPEG for now.';
+}
+
+/// Every page of the PDF in [bytes], for the picker.
+///
+/// **THIN ON PURPOSE.** The lifting is `rackpal_core`'s and the picker is
+/// `rackpal_ui`'s; what lives here is the sentence the app says when the
+/// answer is "none of them", which needs the page count and a reason and
+/// is therefore neither layer's business alone.
+Outcome<List<Outcome<LiftedPdfPage>>> readPdfPages(Uint8List bytes) {
+  final lifted = liftPdfPages(bytes);
+  if (lifted case Err(:final error)) return Err(error);
+  final pages = (lifted as Ok<List<Outcome<LiftedPdfPage>>>).value;
+
+  if (pages.every((p) => p is Err)) {
+    final first = pages.first as Err<LiftedPdfPage>;
+    final error = first.error;
+    return Err(
+      PdfHasNoLiftablePageError(
+        pageCount: pages.length,
+        // A LIFTABILITY RULE READS AS A CLAUSE; ANYTHING ELSE KEEPS ITS
+        // OWN SENTENCE. `PdfPageNotLiftableError.reason` is written to
+        // follow "the first page", and an `ImageTooLargeError` is not, so
+        // flattening both into one phrase would either mangle the grammar
+        // or throw away the cap's numbers.
+        firstReason: error is PdfPageNotLiftableError
+            ? error.reason
+            : 'could not be read ($error)',
+      ),
+    );
+  }
+  return Ok(pages);
+}
+
+/// Turns a page the user picked into an underlay.
+///
+/// **IT GOES THROUGH [importFloorplanBytes] LIKE ANY OTHER FILE, AND THAT
+/// IS THE POINT** (DR-138 §11.137.6). Every control `PLAN-D/4` built runs
+/// on these bytes: the content sniff, the declared-size caps before any
+/// decode, the decoded-versus-declared re-check, and the alpha flatten. A
+/// lifted page is an untrusted image that happens to have come out of a
+/// file this product parsed, and exempting it from a check on the grounds
+/// that we produced it would be exempting it on the grounds that we
+/// trusted the stranger who sent it.
+Outcome<ImportedFloorplan> importLiftedPdfPage({
+  required LiftedPdfPage page,
+  required Uuid id,
+  required String name,
+  required FracIndex order,
+  required EntityMeta meta,
+  Uuid? locationId,
+}) => importFloorplanBytes(
+  bytes: page.bytes,
+  id: id,
+  name: name,
+  order: order,
+  meta: meta,
+  locationId: locationId,
+);
 
 /// Asks the user for a floorplan and imports it. Null means cancelled.
 Future<Outcome<ImportedFloorplan>?> pickAndImportFloorplan({

@@ -251,6 +251,7 @@ export 'src/persistence/json_limits.dart';
 // is internal plumbing and stays unexported.
 export 'src/persistence/json_util.dart' show JsonMap;
 export 'src/persistence/migrations.dart';
+export 'src/persistence/pdf_page_lift.dart';
 export 'src/persistence/schema.dart';
 export 'src/structure/csv_header_map.dart';
 export 'src/structure/csv_import_apply.dart';

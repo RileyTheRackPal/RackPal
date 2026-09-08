@@ -17844,6 +17844,77 @@ representative of what this trade is usually given, and that is trade knowledge 
 census. The deflate change is safe either way, since a member that will not compress simply does
 not.
 
+### §11.137 DR-138 · The page a PDF already contains is lifted, not re-drawn, and pdfium waits for a PDF that needs it
+
+**Settled by the user on 2026-09-07.** `PLAN-D/1` chose pdfium via `pdfrx` (DR-037 §11.36.8, docs/12
+§5.9.4.1) and recorded two things as **UNVERIFIED**: the Dart wrapper's licence, and whether its
+build fetches pdfium or accepts a vendored one. Verifying them refuses the choice twice.
+
+**11.137.1 THE LICENCE IS FINE AND THE BUILD IS NOT.** `pdfrx`, `pdfrx_engine`, `pdfium_dart` and
+`pdfium_flutter` are all **MIT**, which is clean under DR-036. But **every route obtains pdfium by
+downloading it at build time**: 2.3.0 and later through Dart native assets, which
+*"downloads binaries from bblanchon/pdfium-binaries"*, and earlier versions through a CMake
+download, which is the same mechanism this corpus already records for `printing` (docs/03 §10.1).
+
+**CR-100 REFUSES EXACTLY THAT, IN ITS OWN WORDS**: the pdfium binaries are *"vendored into the repo
+rather than downloaded at build time (a network-fetched binary in a signed release is a
+supply-chain and reproducibility problem, not just a CI problem)"*. So the package chosen to make
+the vendoring *"one problem paid once"* is a package that cannot accept a vendored binary.
+
+**AND A SECOND, INDEPENDENT REFUSAL.** `pdfrx` 2.x requires **Flutter 3.47 / Dart 3.13**; this repo
+is pinned at **3.44.4 / Dart 3.12.2** and the pin is a gate. Either refusal alone ends it.
+
+**11.137.2 THE MEASUREMENT THAT CHANGED THE ANSWER.** DR-137 §11.136.7 recorded a shortcut and
+declined to adopt it: because every page of the plan set is one full-page image, the JPEG could be
+lifted out without rasterising. It was declined as *"at most an optimisation with a fallback behind
+it"*. **The fallback has now been priced, and it costs a ruling amendment, a pin bump and a
+vendored binary.** That changes what the shortcut is.
+
+**IT IS ALSO STRUCTURALLY DETECTABLE RATHER THAN GUESSED**, which is the half that makes it safe.
+All 18 pages normalise to one content stream:
+
+```
+q BT N N Td ET Q q N N N N N N cm /imgN Do Q
+```
+
+An empty text block, then a single `Do` drawing one image XObject across the page. The test is a
+**parse**, not a heuristic: exactly one XObject in `/Resources`, that object is `/Subtype /Image`,
+the content stream shows exactly one `Do` naming it, no text-showing or path-painting operator
+appears, and the `cm` maps it to the MediaBox.
+
+**11.137.3 THE RULING.** The floorplan import **lifts the embedded image when the page is one
+full-page image, and refuses otherwise**, naming what it would take. `PLAN-D/3`'s page picker ships
+now over the lifted pages.
+
+**LIFTING IS NOT A CHEAPER RASTERISATION, IT IS A BETTER ONE.** Rasterising a page whose only
+content is a JPEG decodes that JPEG and re-encodes the result, which loses a generation and cannot
+gain a pixel: DR-137 §11.136.4 already established that rasterising above the source is pure cost.
+Lifting is **lossless by construction** and produces the exact bytes the architect's office
+exported. So on this input class the pure-Dart path is not a compromise pending pdfium; it is the
+outcome pdfium would be used to approximate.
+
+**11.137.4 WHAT IS REFUSED, AND IT IS REFUSED OUT LOUD.** Anything the lifter cannot prove it
+understands: a page with vector or text content, more than one image, an image filter other than
+`DCTDecode`, or a cross-reference stream, which is where PDF 1.5 and later may hide objects the
+lifter would have to decompress to see. Each returns its own error naming the reason, on
+`PdfImportNotAvailableError`'s precedent (DR-029 §11.28.5): **a refusal that says "not supported"
+would tell somebody the product decided something it has not.**
+
+**11.137.5 WHAT IT DOES NOT RULE, AND THE HONEST WEAKNESS.** **It does not cancel pdfium**, and
+DR-037 §11.36.2's page picker is unchanged. A vector PDF, which is what a different office's export
+preset would produce, falls through to a refusal and reinstates the manual conversion step for that
+file, which is precisely the step DR-029 spent 2 to 3 weeks buying out. **That is the cost of this
+ruling and it is not hidden**: pdfium arrives when a real file needs it, at a price this ruling does
+not change, and CR-100 will still be waiting with the vendoring problem it has always described.
+**n is one.** The user reports the set representative; that is trade knowledge and not a census, and
+the refusal path exists because it may be wrong.
+
+**11.137.6 IT DOES NOT MOVE THE STORED FORMAT.** `PlanUnderlay.format` keeps its two values
+(DR-029 §11.28.12), the lifted bytes go through `importFloorplanBytes` unchanged, and every control
+`PLAN-D/4` built runs on them: sniff by content, the declared-size caps before any decode, and the
+alpha flatten. **A lifted page is an untrusted image like any other**, and it is not exempted from
+one check on the grounds that this product produced it.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

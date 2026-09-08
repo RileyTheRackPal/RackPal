@@ -2,6 +2,76 @@
 
 ## 2026-09-07
 
+* **Ruling**: [DR-138](/decisions/dr-138-lift-the-page-not-re-draw-it.md).
+  The page a PDF already contains is LIFTED rather than re-drawn, and
+  pdfium waits for a PDF that needs it.
+* **Note**: **PLAN-D/1'S CHOICE DID NOT SURVIVE ITS OWN UNVERIFIED LIST.**
+  It picked pdfium via `pdfrx` and flagged two unknowns. The licence came
+  back clean, MIT throughout. The build **downloads pdfium at build time on
+  every route**, which CR-100 refuses in its own words, and `pdfrx` 2.x
+  needs Flutter 3.47 against this repo's pinned 3.44.4. **The package
+  chosen to make vendoring one problem paid once cannot accept a vendored
+  binary**, and either refusal alone ends it.
+* **Creation**: [Writing UNVERIFIED next to a decision is not pricing
+  it](/practices/flagged-is-not-handled.md). **The capitals made it worse
+  rather than better.** A decision with an unexamined assumption gets
+  challenged, because somebody eventually trips over it; a decision with a
+  prominently flagged unknown does not, because the flag looks like the
+  challenge already happened. So the honest note did the work of a
+  clearance and let the choice spread into four documents and three
+  chapters of planning, against a check that was two web pages and a
+  `dart --version`. **Sort them when you write them: an unknown that could
+  REVERSE the decision is a blocker, not a note.**
+* **Update**: [A performance criterion is only met at the size it was
+  measured at](/practices/measure-at-the-size-the-criterion-will-meet.md)
+  gains a second instance **outside performance**. The lifter was run
+  against the real plan set before any test existed and refused all 18
+  pages while the parser worked perfectly: its object reader scanned to
+  `endobj` inside a 64 KB bound, and an image XObject is a dict followed by
+  hundreds of kilobytes of JPEG. **A hand-written fixture could not have
+  found it**, because one small enough to write by hand has its `endobj`
+  inside the bound. The 31-case synthetic suite that followed passes
+  against the broken version.
+* **Note**: **THE DETECTION IS A PARSE, NOT A HEURISTIC, AND RULE 4 IS THE
+  ONE THAT EARNS ITS KEEP.** Five rules: one XObject, `/Subtype /Image` with
+  `/Filter /DCTDecode`, exactly one `Do` naming it, **no text-showing or
+  path-painting operator anywhere**, and a `cm` covering 90% of the
+  MediaBox. Rules 1 to 3 all hold on a page that ALSO carries a `VOID`
+  stamp, a revision cloud or a redaction box, and lifting the image alone
+  would hand an installer a superseded drawing that nothing downstream can
+  detect. **A wrong refusal costs one export; a wrong acceptance costs
+  somebody a wall**, which is why most of the test file is refusals.
+* **Note**: **THE 90% TOLERANCE IS MEASURED RATHER THAN CHOSEN.** The real
+  set places a 2484 pt image on a 2592 pt sheet, 95.8%, so a rule demanding
+  exact coverage would refuse every page of the only real file this project
+  has.
+* **Note**: **OBJECT ACCESS IS BY SCAN AND THAT IS DELIBERATE.** A classic
+  xref table is the correct way to read a PDF; the scan is strictly more
+  robust for the one question being asked, surviving a wrong offset, a
+  stale xref after an incremental update and a damaged trailer, all
+  ordinary in files that have been through three offices. Its real weakness
+  is OBJECT STREAMS, which are detected and refused **by their own name**:
+  *"this PDF hides its objects"* and *"this page has vector content"* are
+  different sentences with different remedies.
+* **Note**: **A LIFTED PAGE IS NOT PRIVILEGED.** It re-enters the ordinary
+  import path, so the content sniff, the declared-size caps before any
+  decode, the decoded-versus-declared re-check and the alpha flatten all
+  run on it. Exempting it because *"we produced it"* would be exempting it
+  because we trusted the stranger who sent the PDF, and there is a test
+  asserting the pixel cap still fires on the lifted path.
+* **Note**: **TWO UI READINGS WENT TO THE USER.** DR-037 §11.36.2's *"one
+  click, one page, one underlay"* admits click-to-import and
+  click-to-select; the user chose click-to-import, and the safety argument
+  is UNDO rather than a prompt, since a confirmation whose consequence is
+  one undo away is the nag that teaches people to click through prompts. A
+  PDF with no liftable page does **not** open the picker, also the user's
+  call: a grid where every tile is disabled reads as a broken dialog rather
+  than an unsupported file.
+* **Note**: **n IS STILL ONE.** A vector PDF from a different office falls
+  through to a refusal and reinstates the manual conversion step for that
+  file, which is the step DR-029 spent 2 to 3 weeks buying out. pdfium is
+  deferred rather than cancelled, and CR-100's vendoring problem waits
+  unchanged for the first file that needs it.
 * **Ruling**: [DR-137](/decisions/dr-137-a-floorplan-is-line-art.md).
   Underlay members are DEFLATED, not stored, and rasterisation never
   exceeds the source's own resolution. Both halves came from measuring the
