@@ -18129,6 +18129,25 @@ the tab switch**: arming from the Structure editor has nowhere to switch to unti
 Plan view in the strip, so `PLAN-E/3` builds the controller and both ends, and the shell wiring is
 `PLAN-E/5`'s.
 
+> **AND "BOTH ENDS" WAS WRONG, WHICH A GATE ESTABLISHED RATHER THAN AN ARGUMENT.** The drop table's
+> half was built: `StructureEditorActions.onPinOnPlan`, threaded to a row, opened by a secondary tap,
+> two cases green. `actions_have_callers_test.dart` then refused the whole thing, because **nothing
+> in `lib/` supplies one**. That gate exists for M3-H/5, where `OutletsActions.onRemoveGang` had a
+> command, an app-side implementation, tests for both and no caller, and it had just caught the same
+> shape again.
+>
+> **The call site could have been reworded until the regex stopped matching**, and that is exactly
+> what the gate is built to make somebody notice they are doing. The gesture really is unreachable: a
+> menu item that arms a mode whose only surface is a view the shell does not mount is a control that
+> does nothing, which is DR-091's own rule one level down. **So the producer moves to `PLAN-E/5`**,
+> where the Plan view gets a home and the whole path becomes reachable in one commit rather than two.
+>
+> **THE GENERAL POINT IS ABOUT THE DECOMPOSITION AND NOT ABOUT THIS CALLBACK.** `PLAN-E/2`, `/3` and
+> `/4` all build behaviour for a view `PLAN-E/5` mounts, so each of them ends with code the product
+> cannot reach. That is legal and is stated in each chapter, but it means **`PLAN-E/5` is not a small
+> wiring chapter**: it is the one that makes three chapters' work true, and it should be read that way
+> when it is scheduled.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

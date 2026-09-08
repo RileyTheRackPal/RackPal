@@ -7505,6 +7505,74 @@ somebody asked what produces each chapter's input. **The row is bigger than the 
 smaller than the study's own named risk implied**, which is the same finding `PLAN-E/1` reported one
 chapter earlier, now with code behind it.
 
+#### 5.9.9 PLAN-E/3: the fast path's mode, and a gate that moved a chapter boundary · `DR-141` · `v0.6.24`
+
+**Closed 2026-09-08** (`#630`). **No exit clause moves**: the clause this serves is *"rack and every
+drop pinned"*, which needs a person and a real rough-in.
+
+**5.9.9.1 THE BRIEF SAID WHAT THE GESTURE IS AND NOT WHAT FOLLOWS IT.** docs/15 §6 gives the fast
+path as *"click an outlet in the Structure editor's drop table, then click the plan"*, and stops
+there. Sixty drops means sixty pins, so the unspecified moment is the whole question. DR-141 settles
+it: **one arm, one pin, and the mode stays on with nothing armed**, chip up, `Esc` the only exit.
+
+**AUTO-ADVANCE WAS OFFERED AND DECLINED**, and the reasoning belongs on the record because it is the
+more obvious design: pin, advance to the next unpinned outlet, sixty drops in sixty clicks. It was
+declined on the failure mode rather than the ergonomics. A mis-click pins the wrong drop **and**
+advances, so the recovery is an undo plus a re-arm, and the person going fast is exactly the person
+who will not notice which subject the chip moved to. **An auto-advancing queue is a machine for
+producing confidently wrong pins on a drawing an installer will trust.**
+
+**5.9.9.2 THE COST OF THAT IS REAL AND IS PAID BY A DIFFERENT CHAPTER.** Two acts per drop, and
+across a tab boundary this ruling **is** the sixty round trips `PLAN-E/3`'s own brief cites AC-048
+and the tally surface as already refusing. It is not sixty round trips only because **DR-140 already
+put the picker in the plan view**: the unpinned strip is right there, so the ordinary loop is pick
+from the strip and click the plan, with no view change and a shrinking count for progress.
+
+**SO THE TWO CHAPTERS OVERLAP AND DR-141 SAYS WHICH IS PRIMARY.** `PLAN-E/4`'s strip is **the**
+pinning workflow; `PLAN-E/3` is the secondary entry point, for somebody already in the Structure
+editor. **The brief's own framing is superseded**, and `PLAN-E/3` shrinks accordingly: no queue, no
+ordering rule, no next-subject indicator.
+
+**5.9.9.3 A MODE IS A DIFFERENT TYPE FROM A REQUEST, AND THE ONE PRECEDENT IS THE WRONG ONE.**
+`SchematicRevealController` is the existing cross-tab mechanism (CR-105) and it is **one-shot**:
+`take()` empties it so one click reveals once. Reusing it was considered and is wrong, because the
+mode outlives the pin. Mutation-tested by ending the mode inside `pinned()`, which is precisely the
+one-shot design: **five cases fail**. A suite that only ever pinned once could not tell the two
+apart, so the cases pin and then look at what is still on screen.
+
+**5.9.9.4 A GATE MOVED THE CHAPTER BOUNDARY, AND IT WAS RIGHT TO.** The drop table's half was built:
+`StructureEditorActions.onPinOnPlan`, threaded to a row, opened by a secondary tap, two cases green.
+`actions_have_callers_test.dart` refused it, because **nothing in `lib/` supplies one**.
+
+| | |
+|---|---|
+| What the gate is for | M3-H/5, where `OutletsActions.onRemoveGang` had a command, an app-side implementation, tests for both **and no caller** |
+| What it caught | The same shape, in a chapter that had written the callback, the menu item and the tests before noticing nothing could supply it |
+| The available cheat | The call site was `pin(row.linkId)` through a local alias, so the scanner's `\.name\s*\(` never matched. **Rewording it until the regex matched would have satisfied the letter and left the gesture unreachable** |
+
+**IT REALLY IS UNREACHABLE.** A menu item that arms a mode whose only surface is a view the shell
+does not mount is a control that does nothing, which is DR-091's rule one level down. So the producer
+**moves to `PLAN-E/5`**, where the Plan view gets a home and the whole path becomes reachable in one
+commit. DR-141 §11.140.7 carries the amendment; that subsection had said `PLAN-E/3` builds *"both
+ends"*, and it does not.
+
+**5.9.9.5 THE GENERAL POINT IS ABOUT THE DECOMPOSITION, NOT ABOUT ONE CALLBACK.** `PLAN-E/2`, `/3`
+and `/4` all build behaviour for a view that `PLAN-E/5` mounts, so **each ends with code the product
+cannot reach**. That is legal, and each chapter says so in its own files rather than implying
+otherwise. What it means is that **`PLAN-E/5` is not a small wiring chapter**: it is the one that
+makes three chapters' work true, and it should be scheduled as that rather than as a tab and a
+keymap.
+
+**5.9.9.6 WHAT `PLAN-E/3` LEAVES BEHIND.** The mode (`PlanPinArmController`), the subject
+(`ArmedPin`), the link-to-outlet resolution with worded refusals, the chip, and the plan-side pin.
+**The row is not the subject**: the drop table is keyed by `linkId` and a pin hangs on an `Outlet`,
+the join being `Link.structureOrigin.outletId`, which `derived/structure_matrix.dart` already walks.
+A link with no `StructureOrigin` is a cable that runs to no outlet and is refused by name.
+
+**AND AN ARMED CLICK THAT HIT SOMETHING DOES NOT PIN.** A click landing on an existing pin already
+means *"select that"*, and an armed mode silently repurposing it would pin the armed drop on top of
+another one at a point the user was pointing at for a different reason. There is a case for it.
+
 ---
 
 ## 6. The dependency graph, as it actually stands
