@@ -50,6 +50,7 @@ import 'package:flutter/widgets.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/canvas_intent.dart';
 import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
+import 'package:rackpal_ui/src/canvas/plan/plan_calibrate.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/canvas/plan/render_plan_canvas.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
@@ -174,6 +175,8 @@ final class PlanCanvasScreen extends StatefulWidget {
     required this.selection,
     required this.viewport,
     this.arm,
+    this.calibrate,
+    this.onCalibrationPicked,
     this.marquee,
     this.onRefuse,
     super.key,
@@ -204,6 +207,23 @@ final class PlanCanvasScreen extends StatefulWidget {
   /// §11.140.4 demotes to the SECONDARY way in. The primary loop is
   /// `PLAN-E/4`'s unpinned strip, in this view, with no tab change at all.
   final PlanPinArmController? arm;
+
+  /// docs/15 §5's two-point pick, or null when the host offers no
+  /// calibration affordance (DR-144 §11.143.6, `PLAN-F/1`).
+  ///
+  /// NULL IS A SUPPORTED MODE, on `arm`'s precedent: the plan is a
+  /// complete pin editor without it, and every render test that predates
+  /// this chapter passes null.
+  final PlanCalibrateController? calibrate;
+
+  /// Told which two points were picked, in the underlay's pixel space.
+  ///
+  /// THE CANVAS DOES NOT OPEN THE DIALOG, and that is the same division
+  /// `onRefuse` already draws: asking for a distance and running a
+  /// command belong to whoever owns the document and the layout, and a
+  /// canvas that pushed a route would be a second surface deciding what a
+  /// gesture means.
+  final void Function(PxPt a, PxPt b)? onCalibrationPicked;
 
   /// CR-102's band, or null when the host does not offer one.
   ///
@@ -259,6 +279,17 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   // ── a drag armed outside this canvas ────────────────────────────────
   int? _armedPointer;
   _ArmedDrag? _armedSubject;
+
+  // ── the calibration pick ────────────────────────────────────────────
+
+  /// Where the pointer is between the two calibration clicks, in the
+  /// underlay's pixel space, or null when it is not over the canvas.
+  ///
+  /// **HELD HERE AND NOT ON THE CONTROLLER**, which is that file's own
+  /// note: this changes on every mouse move and has no meaning once the
+  /// gesture ends, so a mode carrying it would notify every listener at
+  /// pointer rate for a frame detail.
+  PxPt? _calibrateHover;
 
   @override
   void dispose() {
@@ -580,8 +611,19 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       // something ("select that"), and an armed mode silently repurposing
       // it would pin the armed drop on top of another one at a point the
       // user was pointing at for a different reason.
+      // ═══════════════════════════════════════════════════════════════
+      // A CALIBRATION CLICK OUTRANKS AN ARMED ONE, AND `Esc` AGREES
+      // ═══════════════════════════════════════════════════════════════
+      // DR-144 §11.143.6 orders the two modes the same way in both
+      // places: the pick is the most recently and most deliberately
+      // entered state, and it is the thing on screen saying so. A canvas
+      // that let an older armed pin win would answer a click the user
+      // made for the pick by pinning a drop somewhere else entirely.
+      final calibrate = widget.calibrate;
       final pin = widget.arm?.armed;
-      if (pin != null) {
+      if (calibrate != null && calibrate.isActive) {
+        _calibrateClick(calibrate, sceneEnd);
+      } else if (pin != null) {
         _pinArmed(pin, sceneEnd);
       } else {
         // A press on empty plan that never moved is a click, and a click
@@ -590,6 +632,31 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       }
     }
     _endGesture();
+  }
+
+  /// Takes one of the two calibration clicks.
+  ///
+  /// THE SECOND CLICK REPORTS UP AND ENDS NOTHING. Whether the pick
+  /// survives is decided by whoever asked for the distance: a dialog
+  /// dismissed cancels the mode, and a distance typed commits it, and
+  /// neither of those is a fact this canvas has.
+  void _calibrateClick(PlanCalibrateController calibrate, DPt at) {
+    final point = PxPt(at.x.round(), at.y.round());
+    final first = calibrate.first;
+    if (first == null) {
+      calibrate.pickFirst(point);
+      return;
+    }
+    if (first == point) {
+      // THE MODEL'S OWN CONDITION, NOT A SECOND RULE.
+      // `PlanScale.nanometresPerPixel` is null when the two points
+      // coincide, so a scale built from these would be stored,
+      // calibrated and useless. The pick STAYS LIVE, so the answer is to
+      // click elsewhere rather than to start again (DR-144 §11.143.6).
+      widget.onRefuse?.call(kCalibrateSamePointRefusal);
+      return;
+    }
+    widget.onCalibrationPicked?.call(first, point);
   }
 
   /// Pins the armed drop at [at] and tells the mode it was used.
@@ -654,16 +721,29 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// `_GatedAction` doc is the long version and this is the third canvas
   /// to obey it.
   bool get _hasSomethingToCancel =>
-      (widget.arm?.isActive ?? false) || widget.selection.ids.isNotEmpty;
+      (widget.calibrate?.isActive ?? false) ||
+      (widget.arm?.isActive ?? false) ||
+      widget.selection.ids.isNotEmpty;
 
-  /// Two rungs, in DR-141's order.
+  /// Three rungs, in DR-144's order, which extends DR-141's by one.
   ///
-  /// AN ARMED MODE GOES FIRST because the user turned it on deliberately
-  /// and it is the thing on screen saying so. An `Esc` that dismissed the
-  /// mode AND cleared the selection would take away something they did not
-  /// ask about, on a keystroke whose whole meaning is "stop the last
-  /// thing".
+  /// A MODE GOES BEFORE THE SELECTION because the user turned it on
+  /// deliberately and it is the thing on screen saying so. An `Esc` that
+  /// dismissed the mode AND cleared the selection would take away
+  /// something they did not ask about, on a keystroke whose whole meaning
+  /// is "stop the last thing".
+  ///
+  /// THE CALIBRATION PICK GOES BEFORE THE ARM MODE for the same reason
+  /// applied once more: a pick is started from a button press seconds
+  /// ago, and an arm mode is the state somebody may have left running
+  /// since the Structure editor (DR-144 §11.143.6).
   void _cancel() {
+    final calibrate = widget.calibrate;
+    if (calibrate != null && calibrate.isActive) {
+      calibrate.cancel();
+      setState(() => _calibrateHover = null);
+      return;
+    }
     final arm = widget.arm;
     if (arm != null && arm.isActive) {
       arm.dismiss();
@@ -675,15 +755,25 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   @override
   Widget build(BuildContext context) {
     final built = buildPlanScene(underlay: widget.underlay, pins: _pins);
-    final canvas = CanvasIntentDetector(
-      viewport: widget.viewport,
-      handler: this,
-      child: PlanCanvasBody(
-        key: _canvasKey,
-        scene: built.scene,
+    final canvas = MouseRegion(
+      // TRACKS THE POINTER ONLY WHILE A PICK IS WAITING FOR ITS SECOND
+      // CLICK. `CanvasIntentHandler` reports drags and never hovers, so
+      // the rubber line has no other source. Wrapping rather than
+      // overlaying is what keeps the clicks working: a `MouseRegion`
+      // hit-tests its child first and adds itself after, so the
+      // `Listener` below still sees every pointer event.
+      onHover: _onCalibrateHover,
+      onExit: _onCalibrateExit,
+      child: CanvasIntentDetector(
         viewport: widget.viewport,
-        measurer: widget.measurer,
-        images: widget.images,
+        handler: this,
+        child: PlanCanvasBody(
+          key: _canvasKey,
+          scene: built.scene,
+          viewport: widget.viewport,
+          measurer: widget.measurer,
+          images: widget.images,
+        ),
       ),
     );
     return Shortcuts(
@@ -698,27 +788,68 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
         child: Focus(
           focusNode: _canvasFocus,
           autofocus: true,
-          child: _withChip(canvas),
+          child: _withChrome(canvas),
         ),
       ),
     );
   }
 
-  /// The arm chip over the canvas, or the canvas alone when the host
-  /// offers no fast path.
-  Widget _withChip(Widget canvas) {
+  /// Records where the pointer is, but only while a pick is waiting for
+  /// its second click.
+  ///
+  /// THE GUARD IS NOT AN OPTIMISATION. Without it every mouse move over
+  /// an idle plan would `setState` the whole canvas, which on a 4000
+  /// pixel raster is the frame budget spent on nothing.
+  void _onCalibrateHover(PointerHoverEvent event) {
+    final calibrate = widget.calibrate;
+    if (calibrate == null || calibrate.first == null) return;
+    final at = _toPixel(event.position);
+    if (at == _calibrateHover) return;
+    setState(() => _calibrateHover = at);
+  }
+
+  void _onCalibrateExit(PointerExitEvent event) {
+    if (_calibrateHover == null) return;
+    setState(() => _calibrateHover = null);
+  }
+
+  /// The canvas with whatever transient chrome is running over it, or the
+  /// canvas alone when the host offers neither mode.
+  ///
+  /// EVERY LAYER HERE IS SCREEN CHROME AND NEVER SCENE, which `PLAN-E/3`'s
+  /// brief states in terms and CR-086 is the reason for: `buildPlanScene`
+  /// feeds the PDF as well as the screen, so an op added for a transient
+  /// mode would print on `T1.01`.
+  Widget _withChrome(Widget canvas) {
     final arm = widget.arm;
-    if (arm == null) return canvas;
+    final calibrate = widget.calibrate;
+    if (arm == null && calibrate == null) return canvas;
     return AnimatedBuilder(
-      animation: arm,
+      animation: Listenable.merge([arm, calibrate]),
       builder: (context, _) => Stack(
         children: [
           Positioned.fill(child: canvas),
-          // THE CHIP IS SCREEN CHROME AND NEVER SCENE, which `PLAN-E/3`'s
-          // brief states in terms and CR-086 is the reason for:
-          // `buildPlanScene` feeds the PDF as well as the screen, so an op
-          // added for a transient mode would print.
-          if (arm.isActive)
+          if (calibrate != null && calibrate.isActive)
+            Positioned.fill(
+              child: PlanCalibrateLine(
+                from: calibrate.first,
+                to: _calibrateHover,
+                viewport: widget.viewport,
+              ),
+            ),
+          // ONE CHIP AT A TIME, IN THE SAME ORDER `Esc` UNWINDS THEM.
+          // Two chips stacked in one corner would be two instructions
+          // competing, and the one the next click obeys is the pick.
+          if (calibrate != null && calibrate.isActive)
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: PlanCalibrateChip(
+                hasFirst: calibrate.first != null,
+                onDismiss: calibrate.cancel,
+              ),
+            )
+          else if (arm != null && arm.isActive)
             Positioned(
               left: 12,
               bottom: 12,

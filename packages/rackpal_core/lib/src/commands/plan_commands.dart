@@ -1,8 +1,9 @@
 // rackpal_core/src/commands/plan_commands.dart — the Plan view's writers
 // (PLAN-C/6, DR-029, DR-037).
 //
-// Six commands: add, remove and reorder an underlay; set, move and clear a
-// pin. Every one is a `Command` with a real `revert`, on M0's standard.
+// Seven acts over six classes: add, remove and reorder an underlay; set,
+// move and clear a pin; calibrate a plan (`PLAN-F/1`, DR-144). Every one
+// is a `Command` with a real `revert`, on M0's standard.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // THE EPOCH MASK IS THE PART THAT GOES WRONG, AND THIS PROJECT HAS THE
@@ -24,6 +25,10 @@
 //     `structure | wires`. **A mask that stopped at the plan would be
 //     DR-011.4's defect in a new place**: the plan scene would redraw and
 //     the schedule would keep printing the old length.
+//   * A CALIBRATION turns a pixel distance into a `Len` and feeds the
+//     same chain a pin does, so it carries the same mask. See
+//     `SetPlanScaleCommand`'s own header for why `sheet` is absent from
+//     it as well.
 //   * AN UNDERLAY changes what is behind the pins and, through
 //     calibration, every length derived on it. Adding or removing one is
 //     `structure | wires` for the same chain. Its NAME is `meta`, which is
@@ -393,5 +398,96 @@ final class ReorderPlanUnderlayCommand extends Command<RackDocument> {
       );
     }
     doc.underlays[underlayId]?.order = _previous;
+  }
+}
+
+/// Sets the calibration on an underlay, or replaces the one already there
+/// (docs/15 §5, DR-144 §11.143, PLAN-F/1).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE SEVENTH WRITER, AND `PlanScale` HAD NONE UNTIL IT
+/// ═══════════════════════════════════════════════════════════════════════
+/// `PLAN-C/2` built the model and `PLAN-C/5` serialized it, and no command
+/// on this page set a scale: `PlanUnderlay.scale` was null in every
+/// document this product could produce, and every one of `PlanScale`'s
+/// derivation methods had zero call sites in `lib/`. DR-144 §11.143.1 is
+/// the census, and it is the third chapter in a row to find a modelled
+/// field nothing can reach.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A COMMAND AND NOT A SETTINGS FIELD, WHICH IS docs/15 §5's OWN WORDING
+/// ═══════════════════════════════════════════════════════════════════════
+/// *"Recalibration is a document command like any other and is undoable.
+/// It changes every derived length on that plan at once, which is exactly
+/// why it goes through the command stack."* A settings field that silently
+/// rewrote sixty schedule rows would be unauditable and unundoable.
+///
+/// ONE COMMAND FOR SET AND REPLACE, with the label decided at [apply] from
+/// the document, on `SetPlanPinCommand`'s precedent one class up: "Undo
+/// Recalibrate" in front of somebody who has just calibrated a fresh plan
+/// names an act they did not perform.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE MASK MATCHES THE PINS', AND THAT IS A DERIVATION RATHER THAN A COPY
+/// ═══════════════════════════════════════════════════════════════════════
+/// A scale turns a pixel distance into a `Len`, which feeds
+/// `planLowerBound`, which feeds a schedule row's length, which feeds a
+/// sheet. That is the identical chain this file already derived for a pin,
+/// so the mask is the identical `structure | wires`.
+///
+/// **`sheet` IS ABSENT ON PURPOSE.** `T1.01`'s scale bar will read this
+/// value (`PLAN-H/4`), and adding `sheet` here while the pin commands feed
+/// the same sheet without it would leave two commands on one chain
+/// disagreeing about their own consequences. When that sheet exists, it is
+/// the whole chain that gets re-derived, not this one command. `PLAN-F/2`
+/// tests the mask against a listener rather than against itself, which is
+/// what DR-011.4's scar asks for.
+final class SetPlanScaleCommand extends Command<RackDocument> {
+  SetPlanScaleCommand({required this.underlayId, required this.scale});
+
+  final Uuid underlayId;
+
+  /// The calibration. **Never null**: there is no gesture that sets a
+  /// scale to unknown, and DR-144 §11.143.8 declines to invent one, so a
+  /// nullable field here would be a state nothing can produce and every
+  /// reader has to consider.
+  final PlanScale scale;
+
+  PlanScale? _previous;
+  bool _applied = false;
+  bool _wasRecalibration = false;
+
+  @override
+  LabelKey get label =>
+      _wasRecalibration ? LabelKey.recalibratePlan : LabelKey.calibratePlan;
+
+  @override
+  EpochMask get touches => EpochMask.structure | EpochMask.wires;
+
+  @override
+  Iterable<Uuid> get affects => [underlayId];
+
+  @override
+  void apply(RackDocument doc) {
+    final underlay = doc.underlays[underlayId];
+    if (underlay == null) return;
+    _previous = underlay.scale;
+    // A REPLACEMENT IS DECIDED FROM THE PREVIOUS VALUE'S PRESENCE, not
+    // from its usability. An underlay carrying a scale whose two points
+    // coincide is calibrated as far as the document is concerned and
+    // useless as far as a length is concerned; replacing it is still
+    // recalibration, and calling it a first calibration would name the
+    // act by a property of the value rather than by what happened.
+    _wasRecalibration = _previous != null;
+    underlay.scale = scale;
+    _applied = true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    if (!_applied) {
+      throw StateError('SetPlanScaleCommand.revert called before apply().');
+    }
+    doc.underlays[underlayId]?.scale = _previous;
   }
 }

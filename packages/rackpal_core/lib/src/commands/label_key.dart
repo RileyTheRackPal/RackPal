@@ -581,4 +581,18 @@ enum LabelKey {
   addPlanUnderlay,
   removePlanUnderlay,
   reorderPlanUnderlay,
+
+  // THE PLAN VIEW'S SEVENTH WRITER (commands/plan_commands.dart),
+  // PLAN-F/1, DR-144 §11.143. Two values on `setPlanPin`'s precedent
+  // exactly: ONE COMMAND, and which label it carries is decided at apply
+  // time from whether the underlay already had a scale.
+  //
+  // The affordance says the same two words for the same reason
+  // (§11.143.4), so the Edit menu and the button agree without either
+  // asking the other: "Undo Recalibrate" in front of somebody who has
+  // just calibrated a fresh plan names an act they did not perform, and
+  // `Calibrate…` on a row that already has a scale understates what
+  // pressing it will do.
+  calibratePlan,
+  recalibratePlan,
 }
