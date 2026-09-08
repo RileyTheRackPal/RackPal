@@ -131,6 +131,7 @@ import 'package:flutter/services.dart'
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/canvas_intent.dart';
 import 'package:rackpal_ui/src/canvas/grid_painter.dart';
+import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
 import 'package:rackpal_ui/src/canvas/schematic/connect_overlay.dart';
 import 'package:rackpal_ui/src/canvas/schematic/domain_filter_bar.dart';
 import 'package:rackpal_ui/src/canvas/schematic/link_hit_test.dart';
@@ -332,6 +333,8 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     viewport: _viewport,
     slopPx: _clickSlopPx,
     onClick: _selectAt,
+    marquee: _marquee,
+    onMarqueeCommit: _commitMarquee,
     requestFocus: _canvasFocus.requestFocus,
     claim: () => _claimPointerGesture(_PointerGesture.canvasDrag),
     release: () => _releasePointerGesture(_PointerGesture.canvasDrag),
@@ -431,6 +434,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   /// ranked by strict containment at every zoom.
   List<HitRegion>? _bodyRegions;
   SchematicScene? _bodyRegionsScene;
+
+  /// CR-102's band (DR-139 §11.138, PLAN-E/6).
+  ///
+  /// The third and last adoption, which is what discharges that ruling:
+  /// its whole content is that the gesture is uniform across views, and
+  /// two out of three would have been the ruling honoured in letter.
+  final MarqueeController _marquee = MarqueeController();
 
   /// Whether the viewport has already been framed on this sheet.
   bool _framed = false;
@@ -840,6 +850,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
   @override
   void dispose() {
+    _marquee.dispose();
     // THE CURVE BEFORE ITS PARENT: a `CurvedAnimation` unregisters from
     // the controller it was built on, so disposing the controller first
     // leaves it holding a dead parent.
@@ -1510,6 +1521,33 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   void _dismissCoachMark() {
     if (!widget.showFilterCoachMark) return;
     widget.onDismissFilterCoachMark?.call();
+  }
+
+  /// Applies whatever CR-102's band caught (DR-139 §11.138).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE BODY REGIONS, NOT THE WHOLE SCENE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A schematic symbol contributes one `HitRegion` per PORT as well as
+  /// one for its body, all carrying the same `entityId`. `marquee.dart`
+  /// filters parts out on its own, so either set gives the right answer;
+  /// this hands over the cached body list because the screen already has
+  /// it and rebuilding a scene's hits to ask one question is work for
+  /// nothing.
+  ///
+  /// A SWEEP REPLACES THE SELECTION EVEN WHEN IT CAUGHT NOTHING, which is
+  /// what makes dragging across bare sheet a deselect rather than a no-op
+  /// with a stuck rectangle.
+  void _commitMarquee() {
+    final scene = _scene;
+    if (scene == null) {
+      _marquee.cancel();
+      return;
+    }
+    final caught = _marquee.endIn(_bodyRegionsFor(scene));
+    setState(() {
+      _selection.apply(caught.map(Uuid.new).toList(), SelectMode.replace);
+    });
   }
 
   void _selectAt(DPt scenePoint) {
@@ -4409,6 +4447,15 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
                     viewport: _viewport,
                     measurer: widget.measurer,
                   ),
+                  // CR-102's band, over the sheet and hit-testing nothing.
+                  // SCREEN CHROME AND NEVER A SCENE OP: `buildSchematic
+                  // Scene` feeds the PDF as well as this display (CR-086),
+                  // so a band in the scene would print.
+                  MarqueeBand(
+                    marquee: _marquee,
+                    viewport: _viewport,
+                    color: scheme.primary,
+                  ),
                   // The transient status line, where the rack canvas puts
                   // its own (`rack_canvas_screen.dart`'s bottom-left
                   // `IgnorePointer`/`AnimatedBuilder` pair). NO static help
@@ -4585,6 +4632,8 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     required this.onConnectUpdate,
     required this.onConnectCommit,
     required this.onConnectCancel,
+    required this.marquee,
+    required this.onMarqueeCommit,
   });
 
   final ViewportController viewport;
@@ -4627,6 +4676,17 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   /// Asks the screen's arbiter for the canvas; false means another
   /// pointer-driven gesture is already live and this one starts NOTHING.
   /// The refusal is reported by the arbiter, not swallowed here.
+  /// CR-102's band (DR-139 §11.138, PLAN-E/6).
+  ///
+  /// A press that answers NO PIN and NO LANDING is either a click or a
+  /// marquee, and this class already knows which by the time it commits:
+  /// under the slop it is a click, over it, it was a drag. That drag did
+  /// nothing before this chapter.
+  final MarqueeController marquee;
+
+  /// Applies whatever the band caught. The screen owns the selection.
+  final VoidCallback onMarqueeCommit;
+
   final bool Function() claim;
 
   /// Gives the claim back. Called on exactly the paths that took it.
@@ -4715,7 +4775,15 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     _travelPx = 0;
     _connecting = false;
 
-    if (!wantsConnect) return;
+    if (!wantsConnect) {
+      // NEITHER A PIN NOR A PENNANT, so this press is a click or a band.
+      // Arming here rather than at the first move keeps the band's origin
+      // exactly where the pointer went down; `MarqueeController.begin`
+      // gives it no extent until something moves, so a click still draws
+      // nothing.
+      marquee.begin(sceneStart);
+      return;
+    }
     if (pin != null ? onConnectBegin(pin) : onLandingBegin(landing!)) {
       _connecting = true;
       return;
@@ -4759,7 +4827,14 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     // that wobbles is still a click; a cable is already committed to being
     // a cable by where it started, and holding its band still for the
     // first 4 px would read as the gesture not having begun.
-    if (_connecting) onConnectUpdate(sceneCurrent);
+    if (_connecting) {
+      onConnectUpdate(sceneCurrent);
+      return;
+    }
+    // THE BAND WIDENS WITH THE POINTER. It has no slop of its own for the
+    // reason stated above: `MarqueeController` withholds the extent until
+    // the first update, so a press that never moves never shows one.
+    if (marquee.isActive) marquee.update(sceneCurrent);
   }
 
   @override
@@ -4786,7 +4861,17 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
       onConnectCommit(sceneEnd, moved: travelled > slopPx);
       return;
     }
-    if (travelled > slopPx) return;
+    if (travelled > slopPx) {
+      // A DRAG ON EMPTY SHEET IS THE MARQUEE, and it did nothing at all
+      // before this chapter. The band is ended even when it caught
+      // nothing, which is what makes an empty sweep a deselect.
+      onMarqueeCommit();
+      return;
+    }
+    // A CLICK, so the band never had an extent; end it anyway rather than
+    // leaving the controller armed for the next gesture to inherit, which
+    // is the defect the rack canvas's own adoption hit.
+    marquee.cancel();
     onClick(sceneEnd);
   }
 
@@ -4795,6 +4880,7 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     if (gesture != _owned) return; // see `commitDrag`.
     final connecting = _connecting;
     _reset();
+    marquee.cancel();
     // A POINTER-CANCEL, NOT A RELEASE: nothing was dropped anywhere, so
     // there is nothing to evaluate and nothing to write. docs/05 §7's
     // cancel, reached through the third of its doors.

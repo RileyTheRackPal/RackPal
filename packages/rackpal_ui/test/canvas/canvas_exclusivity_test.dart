@@ -342,11 +342,28 @@ void main() {
       expect(_render(tester, 'dev-ups').selected, isTrue);
 
       // Finger A scrubs the empty canvas below the rack and holds.
+      //
+      // ═════════════════════════════════════════════════════════════════
+      // THAT SCRUB IS A MARQUEE AS OF PLAN-E/6, AND IT USED TO BE INERT
+      // ═════════════════════════════════════════════════════════════════
+      // This gesture was `moveBy(30, 30)` into empty space, chosen because
+      // a drag on bare canvas did nothing and the case is about POINTER
+      // ROUTING rather than about selection. CR-102 gives that drag a
+      // meaning (DR-139 §11.138): a band, and a band catching nothing
+      // REPLACES the selection with nothing. So the old scrub deselected
+      // UPS-1 and B had nothing to move, which is the marquee working and
+      // an unstated premise expiring.
+      //
+      // A now sweeps UP AND RIGHT over UPS-1, which is a WINDOW that
+      // contains it. The routing question is untouched (A starts on empty
+      // canvas, holds the claim, then lifts) and the precondition B needs
+      // is stated by the assertion below rather than assumed.
+      final ups = tester.getRect(_device('dev-ups'));
       final a = await tester.startGesture(
         emptyCanvasPoint(tester),
         pointer: 1,
       );
-      await a.moveBy(const Offset(30, 30));
+      await a.moveTo(ups.topRight + const Offset(24, -24));
       await tester.pump();
 
       // Finger B lands on UPS-1 WHILE A still owns the screen, so it gets no
@@ -363,6 +380,11 @@ void main() {
       // it.
       await a.up();
       await tester.pump();
+      expect(
+        _render(tester, 'dev-ups').selected,
+        isTrue,
+        reason: "A's window swept UPS-1, so B has something to move",
+      );
 
       await b.moveBy(sceneDelta(tester, 0, -10 * RackGeometry.unitsPerRu));
       await tester.pump();

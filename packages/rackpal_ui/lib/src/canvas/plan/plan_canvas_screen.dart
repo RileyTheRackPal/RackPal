@@ -49,6 +49,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/canvas_intent.dart';
+import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/canvas/plan/render_plan_canvas.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
@@ -173,6 +174,7 @@ final class PlanCanvasScreen extends StatefulWidget {
     required this.selection,
     required this.viewport,
     this.arm,
+    this.marquee,
     this.onRefuse,
     super.key,
   });
@@ -202,6 +204,15 @@ final class PlanCanvasScreen extends StatefulWidget {
   /// §11.140.4 demotes to the SECONDARY way in. The primary loop is
   /// `PLAN-E/4`'s unpinned strip, in this view, with no tab change at all.
   final PlanPinArmController? arm;
+
+  /// CR-102's band, or null when the host does not offer one.
+  ///
+  /// SUPPLIED RATHER THAN OWNED, on `arm`'s precedent and for a sharper
+  /// reason: the band is drawn OVER this canvas by a sibling widget, so
+  /// the thing that lays the two out has to hold the controller. Null is
+  /// a supported mode and the canvas then clears on an empty drag, which
+  /// is what it did before CR-102 was built.
+  final MarqueeController? marquee;
 
   /// Told when a gesture is refused, with the reason already worded for a
   /// person. Null means the host shows nothing, which is legal and is what
@@ -458,6 +469,10 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       _grabbed = null;
       _grabOffset = null;
       _livePin = null;
+      // CR-102's band begins on EMPTY canvas and nowhere else. A drag that
+      // grabbed a pin is a move, and a canvas where both could start would
+      // have to guess which the user meant from how far they dragged.
+      widget.marquee?.begin(sceneStart);
       return;
     }
     final subject = _pins.firstWhere((p) => p.entityId.v == hit.entityId);
@@ -477,7 +492,11 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   }) {
     if (gesture != _gesture) return;
     final offset = _grabOffset;
-    if (offset == null) return;
+    if (offset == null) {
+      // No pin was grabbed, so this is the band widening.
+      widget.marquee?.update(sceneCurrent);
+      return;
+    }
     _moved = true;
     setState(() {
       _livePin = PxPt(
@@ -492,6 +511,28 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     if (gesture != _gesture) return;
     final grabbed = _grabbed;
     final landed = _livePin;
+    final marquee = widget.marquee;
+    if (marquee != null && marquee.isActive) {
+      // A SWEEP REPLACES THE SELECTION, EVEN WHEN IT CAUGHT NOTHING, which
+      // is what makes dragging across bare canvas a deselect rather than a
+      // no-op with a stuck band. It runs before the click branches below
+      // because a drag that started on empty canvas is either this or the
+      // clear, and this is the more specific answer.
+      final caught = marquee.end(
+        buildPlanScene(
+          underlay: widget.underlay,
+          pins: _pins,
+        ).scene,
+      );
+      setState(() {
+        widget.selection.apply(
+          caught.map(Uuid.new).toList(),
+          SelectMode.replace,
+        );
+      });
+      _endGesture();
+      return;
+    }
     if (grabbed != null && landed != null && _moved) {
       // ONE COMMAND FOR THE WHOLE DRAG. See the file header.
       _controller.run(
@@ -560,6 +601,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   @override
   void cancel({required CanvasGestureToken gesture}) {
     if (gesture != _gesture) return;
+    widget.marquee?.cancel();
     _endGesture();
   }
 

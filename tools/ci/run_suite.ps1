@@ -532,7 +532,25 @@ $SuiteFloors = @{
     # <Rack>[])` reported zero failures because `Rack` is not imported
     # there, so it was a compile error wearing a survivor's clothes. A
     # mutation that does not build measures nothing.
-    'rackpal_core'   = 4296
+    # 4308 at PLAN-E/6 phase 1: +12 from draw/marquee_test.dart, CR-102's
+    # band as geometry and the product's FIRST marquee (DR-139 §11.138).
+    # EVERY FIXTURE IS BUILT SO WINDOW AND CROSS DISAGREE, which the
+    # chapter's brief asks for in terms: two boxes and a band that
+    # CONTAINS one and CLIPS the other, so window answers one and cross
+    # answers two. A band swallowing both whole passes under either rule
+    # and proves nothing about the convention.
+    # Seven mutations, all killed: a zero-width drag becoming a cross
+    # fails 1, reading Y instead of X fails 3, window behaving like cross
+    # fails 2, cross behaving like window fails 1, dropping the partKey
+    # filter fails 2, dropping the total order fails 1, and an off-by-one
+    # containment edge fails 2.
+    # THE partKey FILTER IS THE FINDING. A schematic symbol emits one
+    # region per PORT carrying the symbol's entityId plus a body region
+    # with none, so a band tested against every region would select a
+    # whole device because it clipped ONE PIN, in the mode that means
+    # "fully contained". Three cases pin it, including the one that proves
+    # the filter is not a blanket refusal.
+    'rackpal_core'   = 4308
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -681,7 +699,47 @@ $SuiteFloors = @{
     # invoked in any of them still fails, and a name merely PASSED still
     # does not count. Mutation-tested by unwiring the record call: it
     # fails, so the widening is not a rewording.
-    'rackpal_ui'     = 1622
+    # 1629 at PLAN-E/6 phase 2: +7 from canvas/marquee_adoption_test.dart,
+    # CR-102's band on a real canvas and THE PRODUCT'S FIRST MULTI-
+    # SELECTION. PLAN-E/1 censused the mechanism and found every SelectMode
+    # call in lib/ passing exactly one id, so the case that matters is not
+    # "a band appears" but "a band over two devices leaves TWO selected".
+    # The window/cross pair uses ONE band dragged both ways, which is the
+    # only arrangement that tests the convention rather than the geometry.
+    # TWO DEFECTS WERE FOUND BY THESE CASES. `begin` set both corners, so
+    # the band had a zero-size box from pointer-down and painted a
+    # rectangle for every click on bare canvas; `_to` is now null until the
+    # first update. And the rack numbers bottom-up, so a first draft's band
+    # ran from ups.top down to amp.center and was INVERTED, catching
+    # nothing and reading as a broken window rule.
+    # A THIRD came from canvas_exclusivity_test.dart rather than from here:
+    # its rule-1 case scrubbed empty canvas to hold the pointer claim, and
+    # that scrub is now a marquee that catches nothing, which DESELECTS.
+    # The premise was unstated; the sweep now selects what the next step
+    # needs and asserts it.
+    # 1632 at PLAN-E/6 phase 3: +3 from canvas/schematic/schematic_marquee
+    # _test.dart, the THIRD adoption, which is what discharges DR-139: that
+    # ruling's whole content is that the gesture is uniform across views.
+    # WHAT THAT FILE ASSERTS IS THE BAND AND NOT THE SELECTION, and its
+    # header says why rather than leaving it to be discovered.
+    # SchematicCanvasScreen builds its own private SelectionController and
+    # on this fixture selecting a device changes nothing a widget test can
+    # read: the drawn-scope headline never renders in this harness and the
+    # painted op count is IDENTICAL before and after a plain tap on a
+    # symbol, 831 either way, measured. So a selection assertion here would
+    # pass through a mechanism that does not report. The id count is
+    # asserted where it CAN be read, on the rack elevation.
+    # TWO MUTATIONS SURVIVED AND BOTH ARE RECORDED RATHER THAN PAPERED
+    # OVER. Dropping `marquee.cancel()` from the click path survives, and
+    # correctly: `begin` resets `_from` on every press, so nothing can
+    # inherit a stale origin here, and that cancel is defensive rather than
+    # load-bearing. The rack's version of this WAS load-bearing because it
+    # consulted `isActive` across gestures. And feeding `update` the start
+    # point instead of the pointer survives, because it still yields a band
+    # widget and this file asserts the band's ARRIVAL rather than its
+    # extent; the extent is core's, in marquee_test.dart.
+    # The third mutation, never arming the band at all, is killed.
+    'rackpal_ui'     = 1632
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
