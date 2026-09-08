@@ -1,5 +1,37 @@
 # Update Log
 
+## 2026-09-08 (sixth entry)
+
+* **Ruling**: [DR-143](/decisions/dr-143-the-importer-had-no-caller.md). The
+  floorplan importer had no caller, so the Plan view had nothing to open.
+* **Note**: **A FIFTH UNREACHABLE SURFACE, AND IT IS UPSTREAM OF THE OTHER
+  FOUR.** `PLAN-D` built the import sequence, the caps, the PDF page
+  lifter and the picker, all tested, and `pickAndImportFloorplan`,
+  `importFloorplanFrom`, `importFloorplanBytes`, `readPdfPages`,
+  `importLiftedPdfPage` and `PdfPagePickerDialog` have **zero call sites
+  in `lib/`**. So `AddPlanUnderlayCommand` has no producer, the four
+  starters carry no `underlays` key, and `PlanCanvasScreen.underlay` is
+  required and non-null: the Plan tab would have opened onto content the
+  product cannot create.
+* **Note**: **THE PRODUCER IS TWO PIECES.** `DocumentSession._members` is
+  written only by `adopt`, wholesale, so there is no way to add a member
+  to an open session; a menu item would have had bytes and nowhere to put
+  them.
+* **Creation**: [A gate's scope is part of its
+  claim](/practices/a-gates-scope-is-part-of-its-claim.md). The
+  reachability gate refused a finished callback at `PLAN-E/3` and missed
+  an entire unreachable feature at `PLAN-E/5`, because it scans
+  function-typed fields on `*Actions` **records** in **`rackpal_ui/lib`**
+  and this is free functions in **`apps/rackpal/lib`**, in a file called
+  `plan_import_actions.dart`. Read the scan, not the name; census by call
+  site and write the zero down as a number.
+* **Note**: the ruling also records a near-miss of its own. A paraphrase
+  in `app_shell.dart` reads as though the `Ctrl+n` map is renumbered
+  *"until Plan lands"*; **DR-091 §11.90.4 defers it past M6**, so the Plan
+  view gets a tab and no accelerator and `Ctrl+3` stays reserved for
+  CR-071's Rear Panel. Reading the ruling rather than the paraphrase is
+  what caught it.
+
 ## 2026-09-08 (fifth entry)
 
 * **Closed**: `PLAN-E/4` (#631) at `v0.6.25`. The unpinned strip, its two

@@ -18235,6 +18235,99 @@ remains reserved. Not `PLN-002` and `PLN-003`, which stay separate advisories wi
 (§11.139.5): **the strip is a surface, not a rule**, and it may show what two rules report without
 collapsing them into one.
 
+### §11.142 DR-143 · The floorplan importer had no caller, so the Plan view had nothing to open
+
+**Settled by the user on 2026-09-08**, at `PLAN-E/5`'s census, before a line of the shell was
+written. `PLAN-E/5` was scheduled as the chapter that makes three chapters' work reachable
+(DR-141 §11.140.7, then four at DR-142). **The census found a fifth surface, and it sits upstream of
+all of them.**
+
+**11.142.1 NOTHING IN THE PRODUCT CAN PUT A FLOORPLAN IN A PROJECT.** `PLAN-D` built the import
+sequence, the format allowlist, the byte and pixel caps, the PDF page lifter and the page picker,
+with tests for each. Censused by call site rather than by name, in `lib/` only:
+
+| Built by `PLAN-D` | Call sites outside its own file |
+|---|---|
+| `pickAndImportFloorplan` | **0** |
+| `importFloorplanFrom` | **0** |
+| `importFloorplanBytes` | **0** |
+| `readPdfPages` | **0** |
+| `importLiftedPdfPage` | **0** |
+| `ImportedFloorplan` | **0** |
+| `PdfPagePickerDialog` | **0** (exported from the barrel, imported by nothing) |
+
+So `AddPlanUnderlayCommand` has no producer. **The four starters contain no `underlays` key**, and
+`PlanCanvasScreen.underlay` is a required non-null parameter. Mounting the Plan tab on this tree
+would have mounted a view that can never hold anything, which is DR-091's own rule arriving from the
+one direction that ruling did not anticipate: not a tab onto an unbuilt view, but a **fully built
+view onto content the product cannot create**.
+
+**11.142.2 THE PRODUCER IS TWO PIECES, NOT ONE, AND THE SECOND IS QUIETER.**
+`DocumentSession._members` is the map of container members that rides from open to save, and it is
+written in exactly one place: `adopt`, wholesale, when a different document replaces this one.
+**There is no way to add a member to an open session.** A menu item calling the importer would
+therefore have had somewhere to get the bytes and nowhere to put them, and a save would have written
+a `PlanUnderlay` naming a member the container does not contain.
+
+**11.142.3 WHY THE REACHABILITY GATE DID NOT SEE IT, WHICH IS TWO BLIND SPOTS AND NOT ONE.**
+`actions_have_callers_test.dart` exists for exactly this defect and had just caught it again at
+`PLAN-E/3`. It scans **function-typed fields on `*Actions` records** in **`packages/rackpal_ui/lib`**.
+`plan_import_actions.dart` holds **free functions** in **`apps/rackpal/lib`**. It fails both
+predicates, so the gate was never going to fire, and the file's name ending in `_actions.dart` makes
+that easy to miss at a glance.
+
+> **A gate's scope is part of its claim.** Reading "actions have callers" as "reachable code has
+> callers" is how a green board coexists with a feature nothing can start. The gate is not wrong and
+> is not weakened here; what is recorded is that **its name is broader than its scan**, and
+> `PLAN-E/5` is where that cost showed up.
+
+**11.142.4 RULED: THE PRODUCER LANDS IN `PLAN-E/5`, AND THE COMMAND LIVES IN THE `File` MENU.** Both
+settled by the user against the alternatives.
+
+The producer **folds into `PLAN-E/5`** rather than becoming its own chapter or reopening `PLAN-D`.
+`PLAN-E/5` is already the reachability chapter and its brief says so in terms; the ordering is forced
+regardless, because DR-091 wants a tab to open onto something that can exist. Reopening `PLAN-D`
+would move a closed epic's mark under §8.9 for a defect that is cheaper to pay forward. **This is not
+a §8.3 scope amendment**: nothing is added to roadmap §2, and the work was always inside *"Import:
+PNG and JPEG, a PDF page LIFTED at import with a page picker"*. What moved is only which chapter
+carries it.
+
+**`File ▸ Import floorplan…`**, beside `Import Template` and `Import Library`, which are already
+there. `plan_import_actions.dart`'s own header says `Plan ▸ Import floorplan…` and **there is no
+`Plan` menu**: the shell has exactly one `MenuBar` with one `SubmenuButton`. A second top-level menu
+holding one item was rejected as premature, and the header's line is a `PLAN-D` assumption that this
+ruling supersedes rather than a decision anybody made.
+
+**11.142.5 THE `Ctrl+n` MAPPING IS NOT RENUMBERED HERE, AND THIS SUBSECTION EXISTS BECAUSE THE FIRST
+READING SAID IT WAS.** `app_shell.dart` says the mapping is deferred *"until Plan lands"* in one
+paraphrase, and that paraphrase is wrong. **DR-091 §11.90.4 defers it past M6**: *"the view set is
+not final until M6. Plan lands before M6 (DR-029) and Rear Panel in v1.1"*, and *"the mapping is
+settled after M6, when there is nothing left to insert."*
+
+So the Plan view **gets a tab and no accelerator**, joining Locations, Device Manager and Structured
+Wiring, which have none either. `Ctrl+3` stays reserved and unbound for CR-071's Rear Panel.
+Renumbering here would be the second relearning §11.90.4 spends its argument avoiding.
+
+**11.142.6 `Esc` IS THE FOURTH ROW OF AN EXISTING PATTERN AND NOT A NEW DECISION.** `rackCancel`,
+`schematicCancel` and `dialogDismiss` are three `KeyBindingId`s, three scopes, one trigger and one
+label, with `KeymapConflictKind.meaningDrift` failing if the labels diverge. `planCancel` in a new
+`KeyScope.plan` is that pattern continued: it dismisses the arm mode and clears the selection, which
+is what the other three mean.
+
+**11.142.7 THE MEMBER IS ADDED OUTSIDE THE UNDO STACK, AND THE MODEL ALREADY RULED THAT.** Importing
+writes bytes into the session's members and runs `AddPlanUnderlayCommand`; undoing removes the
+underlay and **leaves the member**. That asymmetry is not an oversight discovered here:
+`RemovePlanUnderlayCommand`'s own doc states it, because *"the member is cheap, the bytes are the
+architect's, and deleting them on an undo would make a redo unable to find them."*
+
+**11.142.8 WHAT THIS DOES NOT RULE.** Not the Plan view's own layout beyond docs/15 §6's three
+regions plus `PLAN-E/4`'s strip. Not what the underlay list looks like or whether it is orderable.
+Not the empty state's wording. Not whether `actions_have_callers_test.dart` should widen its scan,
+which is a real question this ruling deliberately leaves open rather than answering inside a chapter
+about a floorplan.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
