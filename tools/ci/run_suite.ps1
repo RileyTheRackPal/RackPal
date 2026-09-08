@@ -650,7 +650,24 @@ $SuiteFloors = @{
     # 3 -- that last is the app_shell post-mortem one level down, since a
     # Shortcuts below the root focus scope only sees keys pressed inside
     # its own subtree.
-    'rackpal_ui'     = 1614
+    # 1620 at PLAN-E/5 phase 3: +6 from canvas/plan/plan_editor_screen_test
+    # .dart, the layout that finally puts four chapters on screen together.
+    # THE LOAD-BEARING CASE DRAGS A RACK OUT OF THE STRIP AND ONTO THE
+    # PLAN, through the real widget tree. Rack.planPin shipped at PLAN-C,
+    # SetPlanPinCommand has accepted PinCarrier.rack just as long,
+    # armCarrierDrag shipped at PLAN-E/4, and until this screen existed
+    # nothing could hand the one to the other; without a rack pin PLN-003
+    # fires and no length on the plan derives.
+    # Three mutations, all killed: unwiring the strip's onArmDrag fails 2,
+    # passing a ValueKey instead of the per-underlay GlobalKey fails 2 (the
+    # first draft's real bug, which left currentState null and every strip
+    # drag a silent no-op), and an empty state that stops naming the import
+    # route fails 1.
+    # A FOURTH IS RECORDED AS NOT COUNTED: `false ? null : X` compiles,
+    # reported SURVIVED, and is semantically identical to X. That is the
+    # same class as the PLAN-E/4 mutation that did not build -- a mutation
+    # that changes nothing measures nothing -- arriving in a new costume.
+    'rackpal_ui'     = 1620
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

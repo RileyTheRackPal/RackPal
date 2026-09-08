@@ -121,7 +121,7 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 /// unbound no-op and *"the tab is absent from the strip"*. A tab that
 /// opens onto nothing is the untruth `shell_tabs_test.dart` already
 /// names, pointing the other way.
-const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 2, 2: 4, 4: 5};
+const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 2, 2: 4, 4: 6};
 
 /// The strip, in DR-091 §11.90.3's order, and the group each view is in.
 ///
@@ -142,6 +142,19 @@ enum ShellView {
     ShellViewGroup.design,
   ),
   schematic('Schematic', Icons.polyline_outlined, ShellViewGroup.design),
+  // THE SEVENTH TAB, AND DR-091 HAS BEEN WAITING FOR IT. That ruling
+  // keeps Plan out of the strip "until it is built, rather than adding a
+  // seventh tab onto nothing"; PLAN-E/5 is the chapter that earns it, and
+  // DR-143 §11.142.1 is why it could not have arrived one chapter sooner
+  // (nothing could put a floorplan in a project at all).
+  //
+  // POSITION 6, AFTER THE SCHEMATIC, WHICH IS §11.90.3's OWN TABLE. The
+  // job sentence there is "interconnect it, MARK WHERE IT PHYSICALLY
+  // SITS, hand over the paperwork", so the plan comes after the wiring
+  // and before the deliverable. A first draft of this line reasoned its
+  // own job order and put Plan before the Schematic, which is a ruling
+  // re-argued rather than read.
+  plan('Plan', Icons.map_outlined, ShellViewGroup.design),
   schedule('Schedule', Icons.table_rows_outlined, ShellViewGroup.deliverable);
 
   const ShellView(this.label, this.icon, this.group);
@@ -414,6 +427,9 @@ final class AppShellState extends State<AppShell>
 
   @override
   void dispose() {
+    _planImages.dispose();
+    _planArm.dispose();
+    _planSelection.dispose();
     _services.chrome.setHandler(null);
     _services.session.removeListener(_onSessionChanged);
     _services.degradedWarning.removeListener(_onWarningChanged);
@@ -899,6 +915,13 @@ final class AppShellState extends State<AppShell>
                 onDismissFilterCoachMark: _dismissFilterCoachMark,
               ),
               // THE SCHEDULE IS BUILT NOW, and the panel that used to sit
+              // POSITION 6, BEFORE THE SCHEDULE (DR-091 §11.90.3). Every
+              // piece of this view was built and unreachable: the canvas
+              // and its two gestures (PLAN-E/2), the arm mode and its
+              // chip (PLAN-E/3), the strip and armCarrierDrag (PLAN-E/4),
+              // and the importer that could put anything in it at all
+              // (PLAN-D, DR-143). This line is what makes them true.
+              _planTab(session),
               // here is gone rather than softened. Its copy said "no code
               // turns a Link into a row", which was true when it was
               // written and is false now that
@@ -1204,6 +1227,76 @@ final class AppShellState extends State<AppShell>
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
   }
+
+  // ══════════════════════════════════════════════════════════════════
+  // THE PLAN TAB (PLAN-E/5, DR-143, DR-091)
+  // ══════════════════════════════════════════════════════════════════
+
+  /// Decoded underlay rasters, for as long as this shell is up.
+  ///
+  /// OWNED HERE BECAUSE THE BYTES ARE THE SESSION'S. `rackpal_ui` has no
+  /// `FileStore` and must not grow one, and the container's members ride
+  /// on `DocumentSession`; the cache is the one place they become
+  /// `ui.Image`s. Same seam as `_libraries` two methods down.
+  final PlanImageCache _planImages = PlanImageCache();
+
+  /// Which members have been handed to [_planImages] already.
+  ///
+  /// A SET RATHER THAN A LENGTH CHECK. `PlanImageCache.load` is
+  /// idempotent, but the decode is not free and this build method runs on
+  /// every document change; without this an import would re-decode every
+  /// plan in the project.
+  final Set<String> _planImagesLoaded = <String>{};
+
+  /// docs/15 §6's fast path, owned ABOVE the tabs.
+  ///
+  /// It has to outlive a tab switch by construction: the whole gesture is
+  /// arm in the Structure editor, then click the plan, and a controller
+  /// owned by either view would be disposed by the move between them
+  /// (DR-141 §11.140.5).
+  final PlanPinArmController _planArm = PlanPinArmController();
+
+  /// Feeds the cache whatever the session is holding, once each.
+  void _loadPlanImages(DocumentSession session) {
+    for (final entry in session.members.entries) {
+      if (!_planImagesLoaded.add(entry.key)) continue;
+      unawaited(
+        _planImages.load(entry.key, entry.value).then((_) {
+          // A DECODE IS ASYNCHRONOUS AND THE CANVAS IS NOT. Without this
+          // the first frame after an import draws with the resolver
+          // returning null, which `FlutterDiagramCanvas` raises as
+          // `MissingImageError`; the rebuild is what makes the plan
+          // appear rather than the app report a missing member.
+          if (mounted) setState(() {});
+        }),
+      );
+    }
+  }
+
+  Widget _planTab(DocumentSession session) {
+    _loadPlanImages(session);
+    return PlanEditorScreen(
+      // KEYED ON THE CONTROLLER'S IDENTITY, on `_rackTab`'s reason:
+      // replacing the document must build a fresh `State`, and this one
+      // holds a per-underlay viewport and canvas key that belong to the
+      // document that made them.
+      key: ValueKey(session.controller),
+      controller: session.controller,
+      images: _planImages.resolver,
+      measurer: widget.measurer,
+      selection: _planSelection,
+      arm: _planArm,
+      onRefuse: _showRefusal,
+    );
+  }
+
+  /// The Plan view's selection, separate from the two canvases.
+  ///
+  /// ITS OWN CONTROLLER because a pin and a rack device are not the same
+  /// selection: selecting a speaker's pin on `Level 1` must not change
+  /// what the elevation has highlighted, and CR-105's cross-view
+  /// signposting is an explicit gesture rather than a shared set.
+  final SelectionController _planSelection = SelectionController();
 
   Widget _rackTab(DocumentSession session) {
     // A document with no racks is REACHABLE the moment the app can open a

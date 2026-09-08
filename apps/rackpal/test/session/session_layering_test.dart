@@ -734,6 +734,19 @@ final class AppServices {
     // Schedule 2 -> 5, while Ctrl+1, Ctrl+2 and Ctrl+4 still mean exactly
     // what they meant. If a future edit "fixes" this to {1: 0, 2: 1,
     // 4: 2} it has renumbered the keys, which §11.90.4 defers past M6.
-    expect(kViewKeyToTabIndex, {1: 2, 2: 4, 4: 5});
+    //
+    // AND ONE MORE INDEX MOVED AT PLAN-E/5, WITH NO KEY MOVING AGAIN.
+    // The Plan tab lands at index 5, between the Schematic and the
+    // Schedule, which is §11.90.3's own table; only the Schedule moved,
+    // 5 -> 6. Ctrl+1, Ctrl+2 and Ctrl+4 still mean the same three views.
+    //
+    // PLAN GETS NO KEY AT ALL, and that is the ruling rather than an
+    // omission. §11.90.4 settles the mapping AFTER M6, "when there is
+    // nothing left to insert", not when Plan lands: a paraphrase in
+    // app_shell.dart reads the other way and DR-143 §11.142.5 records
+    // catching it. So Plan joins Locations, Device Manager and Structured
+    // Wiring, which have no accelerator either, and Ctrl+3 stays reserved
+    // and unbound for the Rear Panel.
+    expect(kViewKeyToTabIndex, {1: 2, 2: 4, 4: 6});
   });
 }

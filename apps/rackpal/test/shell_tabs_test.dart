@@ -186,10 +186,15 @@ void main() {
     // equipment exists, mount it, pull cable to it, interconnect it, hand
     // over the paperwork.
     //
-    // PLAN IS ABSENT and this list says so by omission. DR-091 §11.90.3
-    // puts it between Schematic and Schedule; it is not built (DR-029,
-    // before M6), and CR-071 already sets the precedent that an unbuilt
-    // view is absent from the strip rather than present and empty.
+    // PLAN IS HERE AS OF PLAN-E/5, at the position §11.90.3 reserved for
+    // it: between Schematic and Schedule. This comment said it was ABSENT
+    // "by omission" and cited the same table for where it would go, which
+    // is the tidiest possible statement of a deferral now discharged.
+    //
+    // DR-091 kept it out "until it is built, rather than adding a seventh
+    // tab onto nothing", and CR-071's Rear Panel keeps that precedent
+    // alive: an unbuilt view is still absent from the strip rather than
+    // present and empty.
     await tester.pumpWidget((await buildTestApp(measurer)).app);
 
     final tabs = tester
@@ -202,14 +207,20 @@ void main() {
       'Rack',
       'Structured Wiring',
       'Schematic',
+      'Plan',
       'Schedule',
     ]);
+    // THE RULE THIS REPLACES IS NOT WEAKENED, IT IS DISCHARGED. What
+    // stood here asserted `isNot(contains('Plan'))`, because "a tab that
+    // opens onto nothing is the untruth this file already names, pointing
+    // the other way". The Plan tab now opens onto a real editor, and the
+    // rule keeps its teeth on the view that is still unbuilt.
     expect(
       tabs,
-      isNot(contains('Plan')),
+      isNot(contains('Rear Panel')),
       reason:
-          'a tab that opens onto nothing is the untruth this file '
-          'already names, pointing the other way',
+          'CR-071 defers the Rear Panel to v1.1, and an unbuilt view is '
+          'absent from the strip rather than present and empty',
     );
   });
 
