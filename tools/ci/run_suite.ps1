@@ -517,7 +517,22 @@ $SuiteFloors = @{
     # The load-bearing case asserts the EQUIPMENT LIST CELL and not the
     # field: two fields disagreeing is invisible until something reads the
     # one that was not written, and that reader is the artifact.
-    'rackpal_core'   = 4284
+    # 4296 at PLAN-E/4 phase 2: +12 from derived/unpinned_carriers_test.dart.
+    # EVERY FIXTURE IS BUILT SO THE TWO PLAUSIBLE ANSWERS DIFFER, which is
+    # the chapter's own brief: a count that counts the wrong thing passes on
+    # a document where the wrong thing and the right thing are the same
+    # number. Seven mutations run and all seven killed: a devices-only strip
+    # fails 4, dropping outlets as well (the pre-DR-140 shape exactly) fails
+    # 3, joining an unknown location to a named room fails 1, filtering
+    # everything out of a site plan fails 1, dropping the total order fails
+    # 2, reading "unpinned" as "no pin on THIS underlay" fails 1, and
+    # reading a device's room from the INSTANCE field instead of the
+    # placement's fails 1.
+    # An eighth was written and is NOT counted: `for (final rack in
+    # <Rack>[])` reported zero failures because `Rack` is not imported
+    # there, so it was a compile error wearing a survivor's clothes. A
+    # mutation that does not build measures nothing.
+    'rackpal_core'   = 4296
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

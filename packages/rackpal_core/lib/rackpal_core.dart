@@ -157,6 +157,7 @@ export 'src/derived/template_facts.dart';
 export 'src/derived/template_search.dart';
 export 'src/derived/template_usage.dart';
 export 'src/derived/totals.dart';
+export 'src/derived/unpinned_carriers.dart';
 export 'src/document_controller.dart';
 export 'src/draw/bounds_canvas.dart';
 export 'src/draw/brand.dart';
