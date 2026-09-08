@@ -72,6 +72,7 @@ export 'src/canvas/insertion_caret.dart';
 export 'src/canvas/plan/plan_canvas_screen.dart';
 export 'src/canvas/plan/plan_pin_arm.dart';
 export 'src/canvas/plan/render_plan_canvas.dart';
+export 'src/canvas/plan/unpinned_strip.dart';
 export 'src/canvas/port_chip.dart';
 export 'src/canvas/rack_canvas_screen.dart';
 export 'src/canvas/rack_header_bar.dart';

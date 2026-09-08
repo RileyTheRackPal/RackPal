@@ -489,4 +489,191 @@ void main() {
       expect(h.refusals.single, contains('Unknown catalog template'));
     });
   });
+
+  group('PLAN-E/4: a row dragged out of the unpinned strip', () {
+    const rackId = Uuid('rk-1');
+
+    /// The document DR-140 is about: a rack with no pin, which nothing in
+    /// any of PLAN-E's chapters could give one until this gesture.
+    DocumentController withRack() {
+      final c = _controller();
+      c.doc.racks[rackId] = Rack(
+        id: rackId,
+        name: 'Head end',
+        designator: 'RK-1',
+        heightU: 42,
+        order: const FracIndex('a0'),
+        meta: _meta(),
+      );
+      return c;
+    }
+
+    /// Arms [carrier]/[entityId] from off-canvas and releases at [at].
+    Future<void> dragOut(
+      WidgetTester tester,
+      PlanCanvasScreenState state,
+      PinCarrier carrier,
+      Uuid entityId, {
+      required Offset at,
+      int pointerId = 30,
+      Future<void> Function()? beforeRelease,
+    }) async {
+      final pointer = TestPointer(pointerId, PointerDeviceKind.mouse);
+      // The strip sits BELOW the canvas, so the down starts off it. The
+      // binding has to see the down for the same reason the palette case
+      // says: a route added for a pointer it never saw receives nothing.
+      final down = pointer.down(const Offset(300, 460));
+      await tester.sendEventToBinding(down);
+      state.armCarrierDrag(carrier, entityId, down);
+      await tester.sendEventToBinding(pointer.move(at));
+      await beforeRelease?.call();
+      await tester.sendEventToBinding(pointer.up());
+      await tester.pump();
+    }
+
+    testWidgets('PINS A RACK, which no gesture in this epic could do', (
+      tester,
+    ) async {
+      // DR-140 §11.139 in one case. `Rack.planPin` shipped at PLAN-C and
+      // `SetPlanPinCommand` has accepted `PinCarrier.rack` just as long:
+      // the model and the writer were ready and nothing could press the
+      // button. Without a rack pin `PLN-003` fires and NO length on the
+      // plan derives at all.
+      final c = withRack();
+      final h = await pump(tester, c);
+      expect(c.doc.racks[rackId]!.planPin, isNull);
+
+      await dragOut(
+        tester,
+        h.key.currentState!,
+        PinCarrier.rack,
+        rackId,
+        at: const Offset(210, 45),
+      );
+
+      final pin = c.doc.racks[rackId]!.planPin;
+      expect(pin!.underlayId, _underlayId);
+      expect(pin.at, const PxPt(210, 45));
+      expect(h.selection.ids, {rackId});
+    });
+
+    testWidgets('is ONE command, so one undo takes the pin back off', (
+      tester,
+    ) async {
+      final c = withRack();
+      final h = await pump(tester, c);
+
+      await dragOut(
+        tester,
+        h.key.currentState!,
+        PinCarrier.rack,
+        rackId,
+        at: const Offset(120, 200),
+        pointerId: 31,
+      );
+      expect(c.doc.racks[rackId]!.planPin, isNotNull);
+
+      c.undoLast();
+      expect(
+        c.doc.racks[rackId]!.planPin,
+        isNull,
+        reason: 'one gesture, one entry on the stack',
+      );
+    });
+
+    testWidgets('pins an OUTLET and an OFF-RACK DEVICE by the same path', (
+      tester,
+    ) async {
+      // The strip lists three kinds of carrier and the row carries which
+      // one it is, so this asserts the writer is chosen from the row
+      // rather than assumed.
+      final c = _controller();
+      _addOutlet(c);
+      c.doc.devices[const Uuid('dev-9')] = DeviceInstance(
+        id: const Uuid('dev-9'),
+        kind: DeviceKind.offRackPassive,
+        templateRef: const TemplateRef(
+          templateId: TemplateId('F1'),
+          version: 1,
+          contentHash: 'sha256:test-F1',
+        ),
+        designator: 'SPK-9',
+        name: 'speaker',
+        placement: const OffRackPlacement(),
+        meta: _meta(),
+      );
+      final h = await pump(tester, c);
+
+      await dragOut(
+        tester,
+        h.key.currentState!,
+        PinCarrier.outlet,
+        _outletId,
+        at: const Offset(80, 90),
+        pointerId: 32,
+      );
+      await dragOut(
+        tester,
+        h.key.currentState!,
+        PinCarrier.offRackDevice,
+        const Uuid('dev-9'),
+        at: const Offset(400, 300),
+        pointerId: 33,
+      );
+
+      expect(c.doc.outlets[_outletId]!.planPin!.at, const PxPt(80, 90));
+      expect(
+        (c.doc.devices[const Uuid('dev-9')]!.placement as OffRackPlacement)
+            .planPin!
+            .at,
+        const PxPt(400, 300),
+      );
+    });
+
+    testWidgets('a release OUTSIDE the canvas leaves it exactly where it '
+        'was, and says nothing', (tester) async {
+      // Doubly a no-op for a strip row: the carrier is already in the
+      // document, so dropping it nowhere leaves it in the strip, which is
+      // what the user can see. Nothing honest to announce.
+      final c = withRack();
+      final h = await pump(tester, c);
+
+      final pointer = TestPointer(34, PointerDeviceKind.mouse);
+      final down = pointer.down(const Offset(300, 460));
+      await tester.sendEventToBinding(down);
+      h.key.currentState!.armCarrierDrag(PinCarrier.rack, rackId, down);
+      await tester.sendEventToBinding(pointer.up());
+      await tester.pump();
+
+      expect(c.doc.racks[rackId]!.planPin, isNull);
+      expect(h.refusals, isEmpty);
+    });
+
+    testWidgets('a carrier DELETED under the pointer is refused by name, '
+        'and no dead command is pushed', (tester) async {
+      // The strip is built from a document another tab can edit
+      // mid-gesture. `SetPlanPinCommand` answers a missing entity by
+      // returning without writing, which is right for the command and
+      // wrong here: `run` would push an entry whose apply did nothing and
+      // whose revert THROWS, so the next undo fails on a step that undid
+      // nothing.
+      final c = withRack();
+      final h = await pump(tester, c);
+
+      await dragOut(
+        tester,
+        h.key.currentState!,
+        PinCarrier.rack,
+        rackId,
+        at: const Offset(210, 45),
+        pointerId: 35,
+        beforeRelease: () async => c.doc.racks.remove(rackId),
+      );
+
+      expect(h.refusals.single, contains('not in the project any more'));
+      // AND THE UNDO STACK IS UNTOUCHED, which is the half a refusal
+      // message would hide.
+      expect(c.undo.canUndo, isFalse);
+    });
+  });
 }

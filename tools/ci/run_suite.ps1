@@ -618,7 +618,23 @@ $SuiteFloors = @{
     # PLAN-E/5 gives the Plan view a home to arm INTO (DR-091), so the
     # producer moved to that chapter rather than being reworded until the
     # regex stopped matching. See docs/12 §5.9.9.
-    'rackpal_ui'     = 1597
+    # 1611 at PLAN-E/4: +9 from canvas/plan/unpinned_strip_test.dart and +5
+    # in plan_canvas_screen_test.dart for the drag OUT of the strip, which
+    # is how a RACK gets its pin (DR-140 §11.139) and was the one gesture
+    # docs/15's own table did not have.
+    # Six mutations run and all six killed: ignoring the row's carrier and
+    # pinning everything as a device fails 3, dropping the deleted-carrier
+    # guard fails 1, committing a release made outside the canvas fails 2,
+    # merging the unknown count into the total fails 1, dropping the
+    # unknown line from the strip fails 1, and giving every row the SAME
+    # key fails 4 -- that last one is the byType().first ambiguity this
+    # repo has been bitten by, run as a mutation rather than trusted.
+    # ONE OF THESE CASES EXISTS BECAUSE IT FIRED: the strip overflowed
+    # vertically by 6px the first time a NAMED row rendered, and again by
+    # 44px horizontally at 220 wide once that was fixed. It pumps five
+    # widths, because a RenderFlex reports an overflow once per render
+    # object and one pump measures one layout.
+    'rackpal_ui'     = 1611
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
