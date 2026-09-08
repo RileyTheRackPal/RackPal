@@ -495,7 +495,17 @@ $SuiteFloors = @{
     # draft relaxed `targetRack` to `Rack?`; a separate entry point makes
     # that state uncompilable, and a test for a state the types forbid is
     # worse than no test. The comment where it stood says so.
-    'rackpal_core'   = 4266
+    # 4281 at PLAN-E/2 phase 2: +15 from scene/plan_scene_test.dart, the
+    # third scene builder. Its subject is one coordinate rule -- one image
+    # pixel is one scene unit -- and the cases assert it through `hitTest`
+    # rather than by reading the mapping back, because being able to click
+    # the pin is the artifact and the mapping is the mechanism.
+    # Mutation-tested by transposing x and y in the marker centre: two
+    # cases fail. Only two, and that is recorded rather than smoothed
+    # over -- several fixtures use square coordinates like (10, 10) and
+    # (500, 500), which cannot see a transposition at all. One case was
+    # moved to (210, 45) once the mutation showed it.
+    'rackpal_core'   = 4281
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
