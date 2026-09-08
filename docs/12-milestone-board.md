@@ -7338,6 +7338,27 @@ origin makes screen, local and scene coordinates agree, and a widget test does n
 says so. **`PLAN-E/2`'s render object owes the same escape hatch and a case that places the canvas
 below a toolbar**, or the product ships this defect a third time with a green suite over it.
 
+> **THE SECOND HALF OF THAT PRESCRIPTION WAS WRONG, AND `PLAN-E/2` FOUND OUT BY WRITING IT.** The
+> toolbar case was written and **it cannot pass**. The reason is structural rather than incidental: a
+> render object that is `isRepaintBoundary` is painted at `Offset.zero` **always**, and its on-screen
+> position rides on the layer instead. Placing the canvas under a 60 pt toolbar and reading
+> `debugSceneToScreen` back gives **0, not 60**, because the offset genuinely is zero. The term is not
+> being dropped; there is nothing in it to drop.
+>
+> So a widget test cannot observe the composition **because at run time there is no composition to
+> observe**, which is a stronger statement than "a widget test does not composite" and the one that
+> should have been written. The protection that works is the one the schematic already had and this
+> paragraph looked straight past: `schematicSceneToScreen` **as a free function**, driven with the
+> offset a non-boundary would receive. `planSceneToScreen` is its twin and
+> `render_plan_canvas_test.dart`'s first case drives it on both axes with a scaled viewport, so a
+> composition written in the wrong order fails there.
+>
+> **THE ESCAPE HATCH IS STILL OWED AND STILL BUILT**; it simply protects a different thing than this
+> paragraph claimed. `debugSceneToScreen` is what lets a widget case assert that the **viewport**
+> reaches the matrix a paint actually used, which is the half that moves when a person pans, and
+> which a `paints..transform()` matcher cannot check because it compares a `Matrix4` against the raw
+> `Float64List` the canvas records and never matches.
+
 **THE SPIKE'S OWN OFFSET CASE COVERS THE INPUT PATH AND NOT THE PAINT PATH**, and the file says so
 rather than implying otherwise. A handler reading `event.position` instead of `event.localPosition`
 IS caught, because the spike drops its canvas below a 60px toolbar and pans before clicking. That is

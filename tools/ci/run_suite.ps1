@@ -553,7 +553,19 @@ $SuiteFloors = @{
     # own header asks for. Two of the six were mutation-tested; a third
     # mutation deliberately SURVIVED, which is the finding (docs/12
     # §5.9.7): a widget test cannot see a dropped paint offset.
-    'rackpal_ui'     = 1558
+    # 1567 at PLAN-E/2 phase 3: +9 from canvas/plan/render_plan_canvas
+    # _test.dart, the third render object and the image cache that finally
+    # implements `FlutterImageResolver`.
+    # THE PAINT-OFFSET CASE docs/12 §5.9.7.5 ASKED FOR IS NOT AMONG THEM,
+    # and the section now says why: a repaint boundary is painted at
+    # Offset.zero ALWAYS, so a canvas under a toolbar reads 0 rather than
+    # 60 and the case cannot pass. The composition is protected by the
+    # FREE FUNCTION case instead, which is what the schematic already did.
+    # Four of the nine need `tester.runAsync`: Picture.toImage and
+    # instantiateImageCodec are real engine work and never land inside
+    # testWidgets' fake-async zone, which HANGS the file rather than
+    # failing it.
+    'rackpal_ui'     = 1567
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
