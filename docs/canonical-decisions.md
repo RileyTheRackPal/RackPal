@@ -18063,6 +18063,72 @@ strip's contents.**
 drag as a row, since it is a gesture and the table is where gestures live; docs/09 §4's `PLAN-E`
 checklist row names it; docs/12 §5.9.8 records the decomposition hole and how it was found.
 
+### §11.140 DR-141 · A pin arms one drop at a time, and the fast path is the strip rather than the table
+
+**Settled by the user on 2026-09-08**, on a question `PLAN-E/3`'s brief leaves open and which decides
+whether that chapter is worth building.
+
+**11.140.1 THE BRIEF SAYS WHAT THE GESTURE IS AND NOT WHAT FOLLOWS IT.** docs/15 §6: *"Click an
+outlet in the Structure editor's drop table, then click the plan. Pins that outlet. This is the fast
+path for a 60-drop rough-in."* **What happens after that click is unspecified**, and sixty drops means
+sixty pins, so the answer is the difference between a fast path and a shortcut.
+
+**11.140.2 THE RULING: ONE ARM, ONE PIN, AND THE MODE STAYS VISIBLE.** Pinning the armed drop leaves
+the mode **on with nothing armed**. The chip stays up saying so and `Esc` dismisses it. Nothing is
+ever armed that the user did not explicitly choose.
+
+**AUTO-ADVANCE WAS OFFERED AND DECLINED**, and the reasoning is recorded because it is the more
+obvious design: pin, advance to the next unpinned outlet in table order, chip reads *"Next: D-014"*,
+sixty drops become sixty clicks with no view change. **It was declined for the failure mode rather
+than for the ergonomics**: a mis-click pins the wrong drop **and** advances the queue, so the
+recovery is an undo plus a re-arm, and a person going fast is exactly the person who will not notice
+which subject the chip had moved to. An auto-advancing queue is a machine for producing confidently
+wrong pins on a drawing an installer will trust.
+
+**11.140.3 THE COST OF THIS CHOICE, STATED PLAINLY AND NOT SOFTENED.** Two acts per drop rather than
+one, and `PLAN-E/3`'s own brief names the failure it is guarding against: *"an installer closing out
+sixty runs wants one table they tab down, not sixty inspector visits."* **Across a tab boundary this
+ruling IS sixty round trips**, which is that failure with a different shape, and the chapter's claim
+to be *"the reason the feature is usable rather than merely present"* would be false.
+
+**11.140.4 IT IS NOT SIXTY ROUND TRIPS, BECAUSE DR-140 ALREADY PUT THE PICKER IN THE PLAN VIEW.** The
+unpinned strip lists every unpinned carrier in this plan's location and a drag out of it pins that
+row (§11.139). So the ordinary loop is **pick from the strip, click the plan**: two acts, no view
+change, every pin deliberate, and the strip's count shrinking by one each time is the progress
+indicator an auto-advancing chip would have had to invent.
+
+**THE TWO CHAPTERS THEREFORE OVERLAP, AND THIS RULING SAYS WHICH IS PRIMARY.** `PLAN-E/4`'s strip is
+**the** pinning workflow. `PLAN-E/3`'s Structure-table arm is the **secondary entry point**, for
+somebody already in the Structure editor working down a drop list, and it is worth building for that
+reason and not as the sixty-drop path. **The brief's own framing is superseded here**: the fast path
+is the strip.
+
+**AND THAT REDUCES `PLAN-E/3`**, which is a scope observation rather than an amendment: the chapter
+builds an arm controller, one entry point on the drop table and the plan-side pin, and it no longer
+has to carry a queue, an ordering rule or a next-subject indicator. Roadmap §2 is untouched.
+
+**11.140.5 THE ARM IS A MODE, NOT A REQUEST, AND THAT IS A DIFFERENT TYPE FROM THE ONE PRECEDENT.**
+`SchematicRevealController` is the existing cross-tab mechanism (CR-105's *"clicking it switches to
+the schematic with that device selected"*) and it is **one-shot**: `take()` empties it so one click
+reveals once. This is not that. The mode outlives the pin, because *"stays on with nothing armed"* is
+what keeps the chip up telling the user where to go next, and a mode that ended silently after each
+pin would be indistinguishable from one that had failed. **`Esc` is the only thing that ends it**,
+which is `PLAN-E/3`'s own requirement that what is armed, what happens next and how to stop are all
+visible.
+
+**11.140.6 THE ROW IS NOT THE SUBJECT, AND THE JOIN ALREADY EXISTS.** The drop table's rows are keyed
+by `linkId`; a pin hangs on an `Outlet`. The join is `Link.structureOrigin.outletId`, which
+`derived/structure_matrix.dart` already walks. Two consequences the chapter must handle rather than
+discover: **a link with no `structureOrigin` has no outlet to pin** and is refused by name, and **a
+four-gang plate is four rows and one outlet**, so arming any of its rows arms the same subject and
+the strip must count outlets rather than rows or its number is wrong in the direction that flatters.
+
+**11.140.7 WHAT THIS DOES NOT RULE.** **Not the chip's appearance or wording**, which is UI/UX and is
+the user's, unasked. **Not whether the strip is orderable**, which §11.139.6 already left open. **Not
+the tab switch**: arming from the Structure editor has nowhere to switch to until `PLAN-E/5` puts the
+Plan view in the strip, so `PLAN-E/3` builds the controller and both ends, and the shell wiring is
+`PLAN-E/5`'s.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
