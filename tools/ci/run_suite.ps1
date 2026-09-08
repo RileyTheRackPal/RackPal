@@ -532,7 +532,25 @@ $SuiteFloors = @{
     # <Rack>[])` reported zero failures because `Rack` is not imported
     # there, so it was a compile error wearing a survivor's clothes. A
     # mutation that does not build measures nothing.
-    'rackpal_core'   = 4296
+    # 4308 at PLAN-E/6 phase 1: +12 from draw/marquee_test.dart, CR-102's
+    # band as geometry and the product's FIRST marquee (DR-139 §11.138).
+    # EVERY FIXTURE IS BUILT SO WINDOW AND CROSS DISAGREE, which the
+    # chapter's brief asks for in terms: two boxes and a band that
+    # CONTAINS one and CLIPS the other, so window answers one and cross
+    # answers two. A band swallowing both whole passes under either rule
+    # and proves nothing about the convention.
+    # Seven mutations, all killed: a zero-width drag becoming a cross
+    # fails 1, reading Y instead of X fails 3, window behaving like cross
+    # fails 2, cross behaving like window fails 1, dropping the partKey
+    # filter fails 2, dropping the total order fails 1, and an off-by-one
+    # containment edge fails 2.
+    # THE partKey FILTER IS THE FINDING. A schematic symbol emits one
+    # region per PORT carrying the symbol's entityId plus a body region
+    # with none, so a band tested against every region would select a
+    # whole device because it clipped ONE PIN, in the mode that means
+    # "fully contained". Three cases pin it, including the one that proves
+    # the filter is not a blanket refusal.
+    'rackpal_core'   = 4308
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
