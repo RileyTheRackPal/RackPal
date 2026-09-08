@@ -237,8 +237,17 @@ void main() {
       // two ways, while these are a create and a delete, which is also
       // why `LabelKey` splits them.
       expect(keyBindingsIn(KeyScope.builder), hasLength(16));
+      // ONE ROW IN ITS OWN SCOPE, at PLAN-E/5 (DR-143 §11.142.6). The
+      // Plan editor's whole keyboard is `Esc`, and that is not a
+      // placeholder: docs/15 §6 gives the view pan, zoom and marquee,
+      // which are pointer gestures on the shared `CanvasIntentDetector`,
+      // and the pin gestures are drags. There is nothing else here to
+      // bind yet, and a scope with one row still earns its own scope for
+      // the reason `structure` gives: `Esc` acts on what THIS surface is
+      // holding, which is an armed pin the other two do not have.
+      expect(keyBindingsIn(KeyScope.plan), hasLength(1));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(70));
+      expect(kKeymap, hasLength(71));
     });
   });
 
@@ -456,22 +465,29 @@ void main() {
     test('(b) one chord across scopes must carry one meaning', () {
       // `Esc` is the only chord in this tree that crosses scopes, and it
       // crosses four of them. It means cancel in all four — which is a
-      // claim, checked here, and not a coincidence three file headers
+      // claim, checked here, and not a coincidence four file headers
       // happened to agree on.
+      //
+      // THE SET SAID THREE UNTIL PLAN-E/5 and the comment above it already
+      // said four, which is the drift this file exists to refuse showing
+      // up in the file itself. The fourth is `plan` (DR-143 §11.142.6):
+      // Esc there drops an armed pin first and then the selection, and it
+      // carries the identical label, which is what the next expectation
+      // checks.
       final escapes = kKeymap.where(
         (b) => b.trigger == LogicalKeyboardKey.escape,
       );
       expect(
         escapes.map((b) => b.scope).toSet(),
-        {KeyScope.rack, KeyScope.schematic, KeyScope.dialog},
-        reason: 'Esc is bound on both canvases and in the dialogs',
+        {KeyScope.rack, KeyScope.schematic, KeyScope.plan, KeyScope.dialog},
+        reason: 'Esc is bound on all three canvases and in the dialogs',
       );
       expect(
         escapes.map((b) => b.label).toSet(),
         hasLength(1),
         reason:
             'canon §1.10 (b): a key means the same thing in every view or '
-            'it means nothing. Three Intents, one meaning.',
+            'it means nothing. Four Intents, one meaning.',
       );
 
       final mutant = <KeyBinding>[
@@ -571,7 +587,7 @@ void main() {
   });
 
   group('the framework defaults this app takes keys away from', () {
-    testWidgets('are exactly these seventeen, and no more', (tester) async {
+    testWidgets('are exactly these eighteen, and no more', (tester) async {
       // A REPORT WITH TEETH, NOT A FAILURE. `WidgetsApp` installs `Enter`
       // -> ActivateIntent, `Esc` -> DismissIntent, the arrows ->
       // DirectionalFocusIntent and the page keys -> ScrollIntent at the
@@ -582,11 +598,18 @@ void main() {
       // the rack canvas's caret, its compaction Enter, the universal
       // cancel, the schematic's whole keyboard connect route since M2-F,
       // and since M4-G the builder's Quick Add commit and its
-      // autocomplete. What must not happen is an EIGHTEENTH arriving
-      // unnoticed: an
+      // autocomplete. What must not happen is one arriving UNNOTICED: an
       // ungated binding on a framework chord does not merely shadow a
       // default, it took `Backspace` away from six text fields for nine
       // days (see `_GatedAction`).
+      //
+      // 17 -> 18 AT PLAN-E/5. The eighteenth is `planCancel`, the third
+      // canvas's `Esc` (DR-143 §11.142.6), and it is the cheapest kind of
+      // addition on this list: `Esc` is already taken off `DismissIntent`
+      // by three other rows carrying the identical label, so this shadows
+      // a default that is shadowed everywhere it matters already. It is
+      // NOT one of the expensive ones the paragraph above names, none of
+      // which is Esc.
       //
       // THE SEVEN M2-F ADDS ARE THE EXPENSIVE ONES, because two of them
       // are `Tab`. docs/05 §7 gives the keyboard route as "`Tab` to a
@@ -614,6 +637,7 @@ void main() {
           KeyBindingId.caretPageDown,
           KeyBindingId.rackCancel,
           KeyBindingId.schematicCancel,
+          KeyBindingId.planCancel,
           KeyBindingId.dialogDismiss,
           KeyBindingId.applyCompaction,
           // M2-F, docs/05 §7 — see the note above.

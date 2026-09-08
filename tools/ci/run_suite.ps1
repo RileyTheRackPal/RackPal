@@ -634,7 +634,23 @@ $SuiteFloors = @{
     # 44px horizontally at 220 wide once that was fixed. It pumps five
     # widths, because a RenderFlex reports an overflow once per render
     # object and one pump measures one layout.
-    'rackpal_ui'     = 1611
+    # 1614 at PLAN-E/5 phase 2: +3 for `Esc` on the third canvas, its own
+    # KeyScope.plan and the fourth row of an existing pattern (DR-143
+    # §11.142.6). rackCancel, schematicCancel and dialogDismiss are three
+    # ids, three scopes, one trigger and ONE LABEL, which
+    # KeymapConflictKind.meaningDrift enforces; planCancel continues it.
+    # THE LOAD-BEARING CASE IS THE FALL-THROUGH. Action.consumesKey
+    # defaults to true and maps a run to `handled` whatever the body did,
+    # so a screen declining INSIDE its callback still eats the key and a
+    # dialog behind the canvas stops closing. Only isActionEnabled == false
+    # yields `ignored`, and the case asserts it by putting a handler ABOVE
+    # the screen and watching the key arrive.
+    # Three mutations, all killed: an always-open gate fails 1, dismissing
+    # AND clearing in one press fails 1, and dropping the autofocus fails
+    # 3 -- that last is the app_shell post-mortem one level down, since a
+    # Shortcuts below the root focus scope only sees keys pressed inside
+    # its own subtree.
+    'rackpal_ui'     = 1614
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
