@@ -20,6 +20,7 @@ import 'package:rackpal_ui/src/canvas/drag_preview_controller.dart';
 import 'package:rackpal_ui/src/canvas/editing_overlay_painter.dart';
 import 'package:rackpal_ui/src/canvas/grid_painter.dart';
 import 'package:rackpal_ui/src/canvas/insertion_caret.dart';
+import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
 import 'package:rackpal_ui/src/canvas/port_chip.dart';
 import 'package:rackpal_ui/src/canvas/rack_header_bar.dart';
 import 'package:rackpal_ui/src/canvas/rack_metrics_row.dart';
@@ -614,6 +615,28 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// the pointer-agnostic `CanvasIntentHandler` interface.
   RackScene? _rackScene;
 
+  /// CR-102's band (DR-139 §11.138, PLAN-E/6).
+  ///
+  /// OWNED HERE rather than passed in, unlike the plan canvas: this screen
+  /// lays out its own canvas, palette and inspector, so nothing above it
+  /// needs a handle on the band. The plan canvas is a REGION whose host
+  /// stacks the band over it, which is why that one takes a controller.
+  final MarqueeController _marquee = MarqueeController();
+
+  /// True when THIS gesture began the band.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// SCOPED TO THE GESTURE, LIKE `_resizeDrag`, AND A TEST SAID WHY
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The first draft asked `_marquee.isActive` in `_onUpdateDrag`, which
+  /// is a question about the CONTROLLER and not about this drag. A second
+  /// canvas pointer is DEFERRED rather than killed (`canvas_exclusivity_
+  /// test.dart` rule 1), so it inherits the route when the first gesture
+  /// ends; with a band left live it inherited the band too, and its
+  /// move-drag stopped moving the device. That case failed, which is what
+  /// turned this from a tidy field into a necessary one.
+  bool _marqueeDrag = false;
+
   /// CR-105's chip content for every device, as of the last [build].
   ///
   /// CACHED FOR THE SAME REASON `_rackScene` IS: the pointer path decides
@@ -763,6 +786,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   @override
   void dispose() {
+    _marquee.dispose();
     _viewport
       ..removeListener(_onViewportChanged)
       ..dispose();
@@ -2205,6 +2229,15 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // matter once wires exist.
     final region = scene == null ? null : hitTest(scene, sceneStart);
     _dragDeviceId = region?.entityId;
+    // CR-102's band begins on EMPTY CANVAS and nowhere else (DR-139
+    // §11.138). The comment in `_commitDragBody` reserved this gesture and
+    // called it deferred; this is where the deferral ends. A drag that hit
+    // a device is a move or a click, and a canvas where both could start
+    // would have to guess which from how far the pointer travelled.
+    if (region == null) {
+      _marqueeDrag = true;
+      _marquee.begin(sceneStart);
+    }
     _dragDeviceHeightU = 0;
     _dragPlacement = null;
     final layout = region == null ? null : _layoutFor(region.entityId);
@@ -2250,6 +2283,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       } else {
         _armMovePreview();
       }
+    }
+    if (_marqueeDrag) {
+      // PAST THE SLOP, deliberately: this line sits below the threshold
+      // check above, so a click on bare canvas never flashes a band.
+      _marquee.update(sceneCurrent);
+      return;
     }
     if (_resizeDrag) {
       _updateResizePreview(sceneCurrent);
@@ -2299,11 +2338,25 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       _handleClick(deviceId);
     } else if (_moveDrag.isDragging) {
       _commitOrNoopMoveDrag(sceneEnd);
+    } else if (_marqueeDrag) {
+      // LEFT-DRAG-ON-EMPTY IS THE MARQUEE, and this branch is where the
+      // comment that stood here said "deferred, docs/04 §3.5". A sweep
+      // REPLACES the selection even when it caught nothing, which is what
+      // makes dragging across bare canvas a deselect rather than a no-op
+      // with a stuck band.
+      // THE SCENE MAY BE NULL on a frame where nothing has been built,
+      // and a `!` here would crash a gesture that is legal on an empty
+      // rack. Ending the band regardless is what keeps it from sticking.
+      final scene = _rackScene?.scene;
+      if (scene == null) {
+        _marquee.cancel();
+      } else {
+        final caught = _marquee.end(scene);
+        _selection.apply(caught.map(Uuid.new).toList(), SelectMode.replace);
+      }
     }
-    // else — a drag on empty canvas, or on an unselected device: a no-op this
-    // stage. Left-drag-on-empty is reserved for marquee (deferred, docs/04
-    // §3.5); grab-to-move-an-unselected-device is intentionally not a gesture
-    // (select first, then drag).
+    // else — a drag on an unselected device: a no-op, and intentionally not
+    // a gesture (select first, then drag).
     _resetDrag();
   }
 
@@ -2332,6 +2385,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     _dragRefused = false;
     _dragPlacement = null;
     _resizeDrag = false;
+    // THE BAND DIES WITH THE GESTURE THAT MADE IT. Every path out of a
+    // drag reaches here, including the early returns above `_commitDragBody`
+    // that skip the commit branches entirely.
+    _marqueeDrag = false;
+    _marquee.cancel();
     _releasePointerGesture(_PointerGesture.canvasDrag);
   }
 
@@ -4707,14 +4765,21 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                   onSecondaryTap: _onSecondaryTap,
                   key: _canvasBoxKey,
                   viewport: _viewport,
-                  // The editing handler now consumes primary drags (select /
+                  // The editing handler consumes primary drags (select /
                   // move). Panning is via scroll, trackpad, or middle-mouse
-                  // drag; primary-drag-on-empty is reserved for marquee
-                  // (deferred), so it no longer pans.
+                  // drag; primary-drag-on-empty IS THE MARQUEE as of
+                  // PLAN-E/6, which is what this comment said was
+                  // reserved and deferred.
                   handler: _handler,
                   child: Stack(
                     fit: StackFit.expand,
                     children: [
+                      // CR-102's band, over everything and hit-testing
+                      // nothing. SCREEN CHROME AND NEVER A SCENE OP:
+                      // `buildRackScene` feeds the PDF as well as this
+                      // display (CR-086), so a band in the scene prints.
+                      // It is LAST in the stack so it draws on top of the
+                      // devices it is sweeping.
                       CustomPaint(
                         painter: GridPainter(
                           viewport: _viewport,
@@ -4771,6 +4836,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                           ),
                           child: const SizedBox.expand(),
                         ),
+                      ),
+                      MarqueeBand(
+                        marquee: _marquee,
+                        viewport: _viewport,
+                        color: scheme.primary,
                       ),
                     ],
                   ),

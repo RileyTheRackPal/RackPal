@@ -699,7 +699,25 @@ $SuiteFloors = @{
     # invoked in any of them still fails, and a name merely PASSED still
     # does not count. Mutation-tested by unwiring the record call: it
     # fails, so the widening is not a rewording.
-    'rackpal_ui'     = 1622
+    # 1629 at PLAN-E/6 phase 2: +7 from canvas/marquee_adoption_test.dart,
+    # CR-102's band on a real canvas and THE PRODUCT'S FIRST MULTI-
+    # SELECTION. PLAN-E/1 censused the mechanism and found every SelectMode
+    # call in lib/ passing exactly one id, so the case that matters is not
+    # "a band appears" but "a band over two devices leaves TWO selected".
+    # The window/cross pair uses ONE band dragged both ways, which is the
+    # only arrangement that tests the convention rather than the geometry.
+    # TWO DEFECTS WERE FOUND BY THESE CASES. `begin` set both corners, so
+    # the band had a zero-size box from pointer-down and painted a
+    # rectangle for every click on bare canvas; `_to` is now null until the
+    # first update. And the rack numbers bottom-up, so a first draft's band
+    # ran from ups.top down to amp.center and was INVERTED, catching
+    # nothing and reading as a broken window rule.
+    # A THIRD came from canvas_exclusivity_test.dart rather than from here:
+    # its rule-1 case scrubbed empty canvas to hold the pointer claim, and
+    # that scrub is now a marquee that catches nothing, which DESELECTS.
+    # The premise was unstated; the sweep now selects what the next step
+    # needs and asserts it.
+    'rackpal_ui'     = 1629
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

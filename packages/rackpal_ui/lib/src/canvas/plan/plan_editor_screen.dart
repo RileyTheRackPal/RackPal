@@ -40,6 +40,7 @@
 // room this underlay depicts, and that is one line of text on the row.
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_canvas_screen.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/canvas/plan/unpinned_strip.dart';
@@ -119,6 +120,18 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   /// no-op.
   final Map<Uuid, GlobalKey<PlanCanvasScreenState>> _canvasKeys = {};
 
+  /// CR-102's band (DR-139 §11.138).
+  ///
+  /// OWNED HERE because the band is drawn OVER the canvas by a sibling,
+  /// and the widget that stacks the two is the one that must hold the
+  /// controller. The rack canvas owns its own for the mirror-image reason:
+  /// it lays out its own canvas, so nothing above it needs a handle.
+  ///
+  /// ONE FOR ALL PLANS, unlike the viewports. A viewport is a place on a
+  /// particular raster and must survive a switch; a band lives for the
+  /// length of one drag and cannot outlive the plan it was drawn on.
+  final MarqueeController _marquee = MarqueeController();
+
   DocumentController get _controller => widget.controller;
 
   @override
@@ -130,6 +143,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   @override
   void dispose() {
     _controller.changes.removeListener(_onDocumentChanged);
+    _marquee.dispose();
     for (final v in _viewports.values) {
       v.dispose();
     }
@@ -170,6 +184,21 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   GlobalKey<PlanCanvasScreenState> _canvasKeyFor(Uuid id) =>
       _canvasKeys.putIfAbsent(id, GlobalKey<PlanCanvasScreenState>.new);
 
+  /// The canvas region, split out only so the band can be stacked over it
+  /// without the build method growing a second level of nesting.
+  Widget _canvas(PlanUnderlay open) => PlanCanvasScreen(
+    key: _canvasKeyFor(open.id),
+    controller: _controller,
+    underlay: open,
+    images: widget.images,
+    measurer: widget.measurer,
+    selection: widget.selection,
+    viewport: _viewportFor(open.id),
+    arm: widget.arm,
+    marquee: _marquee,
+    onRefuse: widget.onRefuse,
+  );
+
   @override
   Widget build(BuildContext context) {
     final open = _open;
@@ -192,16 +221,20 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
           child: Column(
             children: [
               Expanded(
-                child: PlanCanvasScreen(
-                  key: _canvasKeyFor(open.id),
-                  controller: _controller,
-                  underlay: open,
-                  images: widget.images,
-                  measurer: widget.measurer,
-                  selection: widget.selection,
-                  viewport: _viewportFor(open.id),
-                  arm: widget.arm,
-                  onRefuse: widget.onRefuse,
+                child: Stack(
+                  children: [
+                    Positioned.fill(child: _canvas(open)),
+                    // SCREEN CHROME, NEVER A SCENE OP (CR-086):
+                    // `buildPlanScene` feeds the PDF as well as this
+                    // display, so a band in the scene would print.
+                    Positioned.fill(
+                      child: MarqueeBand(
+                        marquee: _marquee,
+                        viewport: _viewportFor(open.id),
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const Divider(height: 1),
