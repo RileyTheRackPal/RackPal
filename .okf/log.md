@@ -1,5 +1,48 @@
 # Update Log
 
+## 2026-09-08 (second entry)
+
+* **Ruling**: [DR-140](/decisions/dr-140-the-rack-is-pinned-from-the-unpinned-strip.md).
+  The rack is pinned from the unpinned strip, because nothing in `PLAN-E`
+  pinned it at all.
+* **Note**: **THE MODEL WAS READY AND NOBODY COULD PRESS THE BUTTON.**
+  `Rack.planPin` shipped at PLAN-C and `SetPlanPinCommand` has accepted
+  `PinCarrier.rack` just as long. docs/15 §3.4 marks the rack's pin *"not
+  optional to the design"* and `PLN-003` fires without it. And no gesture
+  in any of `PLAN-E`'s five chapters put one there: the palette places a
+  device, the drop table pins an outlet, the strip listed devices.
+  **Each chapter is coherent on its own; the SET had a hole, visible only
+  from outside any one of them.** The strip now lists every unpinned
+  carrier, so its count means everything the plan still owes.
+* **Creation**: [A test that hangs produces no failure to
+  diagnose](/practices/a-test-that-hangs-is-worse-than-one-that-fails.md).
+  `Picture.toImage` and `ui.instantiateImageCodec` are real engine work
+  and never land inside `testWidgets`' fake-async zone, so awaiting either
+  there waits forever and the file emits **nothing at all**, which reads
+  exactly like a slow suite. Two runs were killed at 7 and 9 minutes
+  before the cause was a hypothesis. `tester.runAsync` is the fix; the
+  general rule is that **silence from a test runner is a symptom, not a
+  wait**.
+* **Note**: **THE ANALYZER CAUGHT A DESIGN MISTAKE AND THE LINT WAS THE
+  SYMPTOM.** Adding an `onPlan:` argument to `buildPlaceFromCatalogCommand`
+  meant relaxing `targetRack` to `Rack?`, which turned nine existing
+  `targetRack: doc.racks[id]!` call sites into `unnecessary_null_check`
+  infos. Those `!` are load-bearing: they throw at the line that got it
+  wrong, and against a nullable parameter the same expression without one
+  compiles, passes null, and becomes a refusal several frames later.
+  **Relaxing a type to serve one new caller would have charged nine old
+  ones for it.** A separate entry point instead, and "called with neither
+  target" went back to being unrepresentable rather than refused.
+* **Note**: **A PRESCRIPTION FROM `PLAN-E/1` WAS WRONG AND `PLAN-E/2`
+  FOUND OUT BY WRITING IT.** docs/12 §5.9.7.5 said the plan render object
+  owed "a case that places the canvas below a toolbar". It cannot pass: a
+  render object that is `isRepaintBoundary` is painted at `Offset.zero`
+  **always** and its position rides on the layer, so the assertion reads 0
+  rather than 60 because the offset genuinely is zero. **A widget test
+  cannot observe the composition because at run time there is no
+  composition to observe**, and the protection that works is the free
+  function the schematic already had.
+
 ## 2026-09-08
 
 * **Ruling**: [DR-139](/decisions/dr-139-one-marquee-for-all-three-canvases.md).

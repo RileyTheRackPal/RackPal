@@ -356,8 +356,9 @@ an image resolver and a plan scene builder.
 
 | Gesture | Result |
 |---|---|
-| Drag from the device palette or staging bin onto the plan | Places the device and sets its pin in one command |
-| Drag an existing pin | Moves it. Any `planLowerBound` on that run recomputes |
+| Drag from the device palette or staging bin onto the plan | Places the device and sets its pin in one command. **The staging-bin half has no source yet**: `StagedPlacement`'s only writer in `lib/` is the JSON decoder, so nothing a person can reach puts a device in the bin. `PLAN-E/2` builds the palette drag; the bin's drag arrives with the bin's producer, which is the rack editor's and not this view's |
+| Drag an existing pin | Moves it. Any `planLowerBound` on that run recomputes. **The recompute clause is forward-dated**: `planLowerBound` is not a `ScheduleLengthSource` value yet and nothing derives one, so `PLAN-E/2` builds the move and `PLAN-G` makes the second sentence true |
+| Drag a row out of the unpinned strip onto the plan | Pins it. **This is how a RACK gets its pin** (DR-140 §11.139), and it was the gesture nothing in this table had: the palette places a device, the drop table pins an outlet, and no row put a pin on the one carrier docs/15 §3.4 calls mandatory |
 | Click an outlet in the Structure editor's drop table, then click the plan | Pins that outlet. This is the fast path for a 60-drop rough-in |
 | Pan, zoom | Identical to the other two canvases (AC-016 #23, `CanvasIntent`). **Verified**, not assumed: `PLAN-E/1`'s spike drives both through the same `CanvasIntentDetector` both shipped canvases use |
 | Marquee-select | CR-102's left-drag, with the CAD window/cross convention. **It will be the product's FIRST**, and this row was combined with the one above and read *"identical to the other two canvases"* until 2026-09-07, when `PLAN-E/1` found that **neither of the other two has a marquee**. DR-139 §11.138 rules it built once and adopted on all three; `#848` |
@@ -367,10 +368,22 @@ an image resolver and a plan scene builder.
 the standard inspector. There is no fourth region and no plan-specific palette; the device palette
 is the device palette.
 
-**Unpinned devices are visible, not hidden.** A strip along the bottom lists devices in this plan's
-location that carry no pin, with a count. That strip is the difference between a plan that is
-trusted and a plan that is 80% complete without saying so, and it is the same discipline the staging
-bin already applies to unplaced devices (CR-032).
+**Unpinned carriers are visible, not hidden.** A strip along the bottom lists everything in this
+plan's location that could carry a pin and does not, with a count. That strip is the difference
+between a plan that is trusted and a plan that is 80% complete without saying so, and it is the same
+discipline the staging bin already applies to unplaced devices (CR-032). Dragging a row out of it
+onto the plan pins that row.
+
+**THIS SAID "devices" UNTIL DR-140 §11.139, AND THE OMISSION WAS THE 80%-COMPLETE PLAN IT EXISTS TO
+REFUSE.** §3.4 names three carriers and marks the rack's pin *"not optional to the design"*, and no
+gesture in this document put one there: the palette places a device, the drop table pins an outlet,
+and the strip listed devices. So the one absent pin that costs **every** length on the plan was the
+one thing the count could not see. The strip lists off-rack devices, outlets and racks alike.
+
+**THE COUNT IS THEREFORE A COUNT OF CARRIERS, NOT OF DEVICES**, and the two differ on any document
+with an unpinned rack. A strip built from `doc.devices` alone passes every test whose fixture has no
+rack, which is the trap `PLAN-E/4`'s own brief already names in the status bar that read *"0
+pathways"* the keystroke after somebody made one.
 
 ---
 

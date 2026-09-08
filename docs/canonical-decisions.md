@@ -17990,6 +17990,79 @@ editor checklist row drops *"drag-preview"* from the list of reused machinery (d
 it is not reused) and gains the marquee row; docs/12 §5.9.7 carries the
 measurement.
 
+### §11.139 DR-140 · The rack is pinned from the unpinned strip, because nothing in PLAN-E pinned it at all
+
+**Settled by the user on 2026-09-08**, on a hole `PLAN-E/2`'s decomposition check found before any
+code was written.
+
+**11.139.1 THE RACK CARRIES A PIN, THE DESIGN CALLS IT MANDATORY, AND NO GESTURE PUT ONE THERE.**
+docs/15 §3.4 lists three carriers and marks the rack's *"**Not optional to the design.** A home run
+is measured *from the rack*. Without the rack pinned, no length on that plan is derivable at all"*.
+`PLN-003` exists to say so. The epic's exit criterion requires *"the rack plus every drop of a real
+rough-in"* to carry a pin.
+
+**docs/15 §6's gesture table has four rows and not one of them pins a rack.** The palette and
+staging-bin drag places a **device**; the drop-table fast path pins an **outlet**; the unpinned strip
+lists **devices**; pan, zoom and marquee select nothing new. `PLAN-C` built `Rack.planPin` and
+`SetPlanPinCommand` accepts `PinCarrier.rack`, so the model and the command have been ready since
+2026-09-07 and **the only missing piece was somebody able to press it.**
+
+**11.139.2 THE SHAPE OF THE MISS, WHICH IS THE FOURTH OF ITS KIND.** This is
+*"ask what produces each task's input"* again: five `PLAN-E` chapters between them build a canvas, a
+palette drop, a fast path, a strip and a shell home, and none of them creates a rack pin. Each
+chapter is coherent; the set has a hole, and the hole is only visible from outside any one of them.
+The precedents are M4's five tasks that built a grid and never created a port, `MediaTypeDef
+.maxLength`, and `Location.riseAllowance` (§11.36.5).
+
+**IT IS A HARD BLOCK ON THE EXIT CRITERION AND NOT A POLISH ITEM**, which is why it is ruled now
+rather than noted. A plan whose rack is unpinned yields no `planLowerBound` anywhere, so `PLAN-G`
+derives nothing, `PLAN-H`'s `T1.01` prints callouts with no lengths behind them, and `PLAN-J`'s drill
+puts a printed sheet in front of a stranger with the one measurement it promised missing.
+
+**11.139.3 THE RULING: THE UNPINNED STRIP LISTS EVERYTHING PINNABLE, AND THE RACK IS ONE OF THEM.**
+docs/15 §6 currently says the strip *"lists devices in this plan's location that carry no pin"*. It
+lists **every unpinned carrier** in that location instead: off-rack devices, outlets and racks alike.
+Dragging one out of the strip onto the plan pins it, which is the gesture the strip already implies
+and which `SetPlanPinCommand` already performs.
+
+Two options were declined:
+
+| Declined | Why |
+|---|---|
+| A dedicated *"Place rack"* control | Most discoverable for the first pin, which is the one that unlocks every length. But docs/15 §6's layout paragraph says in terms that there is **no fourth region and no plan-specific palette**, and a control that exists only to place one kind of thing is a second mechanism for a job the strip is already shaped for |
+| Drag it out of the left-hand location tree | Reuses a region that exists and already shows the hierarchy a rack belongs to. But CR-112 makes that tree **read-only with an "edit in `Project ▸ Locations…`" affordance**, and turning a read-only panel into a drag source changes its character for one case |
+
+**THE STRIP IS THE RIGHT HOME BECAUSE OF WHAT IT MAKES THE COUNT MEAN.** `PLAN-E/4`'s brief says the
+strip *"is the difference between a plan that is trusted and a plan that is 80% complete without
+saying so"*. A strip that omits the rack is exactly the 80%-complete plan it was built to refuse: the
+one absent pin that costs every length would be the one thing the count could not see. **One
+mechanism, one place to look, and a count that means "everything this plan still owes."**
+
+**11.139.4 THE COUNT IS THEREFORE A COUNT OF CARRIERS AND NOT OF DEVICES, AND `PLAN-E/4` MUST TEST
+IT ON A DOCUMENT WHERE THE TWO DIFFER.** That chapter's own brief already warns about a count that
+counts the wrong thing, citing the status bar that read *"0 pathways"* the keystroke after somebody
+made one and whose own test pinned the wrong number on a two-pathway document. **This ruling creates
+exactly that hazard on purpose**: a plan holding three unpinned devices and one unpinned rack has a
+device count of three and a carrier count of four, and a strip built from `doc.devices` alone passes
+every test that does not contain a rack. Assert on a document where the two answers differ.
+
+**11.139.5 `PLN-002` AND `PLN-003` STAY AS THEY ARE.** They are separate advisories and they remain
+separate: `PLN-002` counts unpinned devices and outlets, `PLN-003` fires on the missing rack pin
+specifically, and the reason for keeping them apart is that they have different remedies and
+different severities of consequence. The strip is a **surface**, not a rule, and it may show what two
+rules report without merging them. Nothing in §9's four advisories changes.
+
+**11.139.6 WHAT THIS DOES NOT RULE.** **Not the strip's appearance**: whether a rack row is visually
+distinguished from a device row, and how, is UI/UX and is the user's, unasked here. **Not whether a
+rack may be pinned on more than one underlay**, which is the same question every carrier already
+answers by holding exactly one `PlanPin`, and which no chapter has raised. **Not the order of the
+strip's contents.**
+
+**11.139.7 Derived edits owed and made with this ruling.** docs/15 §6's strip paragraph changes
+"devices" to every unpinned carrier and gains the rack's drag; §6's gesture table gains the strip
+drag as a row, since it is a gesture and the table is where gestures live; docs/09 §4's `PLAN-E`
+checklist row names it; docs/12 §5.9.8 records the decomposition hole and how it was found.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

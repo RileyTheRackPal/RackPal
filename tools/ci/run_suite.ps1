@@ -482,7 +482,30 @@ $SuiteFloors = @{
     # the property AC-058/D12 actually needs from a parser over hostile
     # input, and it is not expressible as a handful of hand-picked
     # malformed files.
-    'rackpal_core'   = 4262
+    # 4266 at PLAN-E/2: +4 from the plan-drop group in
+    # catalog_placement_test.dart, CR-104's third drop target. Two
+    # mutations were run and both were killed: discarding the pin from the
+    # placement fails three of the four, and removing the absent-underlay
+    # refusal fails the one written for it. The group's real subject is
+    # docs/15 §6's "in one command, so one undo restores both", which is
+    # asserted as an artifact -- one command comes back, and reverting it
+    # takes the pin with the device -- rather than by counting writes.
+    # It was BRIEFLY +5. The fifth asserted a refusal for "called with
+    # neither a rack nor a plan", which existed only because the first
+    # draft relaxed `targetRack` to `Rack?`; a separate entry point makes
+    # that state uncompilable, and a test for a state the types forbid is
+    # worse than no test. The comment where it stood says so.
+    # 4281 at PLAN-E/2 phase 2: +15 from scene/plan_scene_test.dart, the
+    # third scene builder. Its subject is one coordinate rule -- one image
+    # pixel is one scene unit -- and the cases assert it through `hitTest`
+    # rather than by reading the mapping back, because being able to click
+    # the pin is the artifact and the mapping is the mechanism.
+    # Mutation-tested by transposing x and y in the marker centre: two
+    # cases fail. Only two, and that is recorded rather than smoothed
+    # over -- several fixtures use square coordinates like (10, 10) and
+    # (500, 500), which cannot see a transposition at all. One case was
+    # moved to (210, 45) once the mutation showed it.
+    'rackpal_core'   = 4281
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -530,7 +553,29 @@ $SuiteFloors = @{
     # own header asks for. Two of the six were mutation-tested; a third
     # mutation deliberately SURVIVED, which is the finding (docs/12
     # §5.9.7): a widget test cannot see a dropped paint offset.
-    'rackpal_ui'     = 1558
+    # 1567 at PLAN-E/2 phase 3: +9 from canvas/plan/render_plan_canvas
+    # _test.dart, the third render object and the image cache that finally
+    # implements `FlutterImageResolver`.
+    # THE PAINT-OFFSET CASE docs/12 §5.9.7.5 ASKED FOR IS NOT AMONG THEM,
+    # and the section now says why: a repaint boundary is painted at
+    # Offset.zero ALWAYS, so a canvas under a toolbar reads 0 rather than
+    # 60 and the case cannot pass. The composition is protected by the
+    # FREE FUNCTION case instead, which is what the schematic already did.
+    # Four of the nine need `tester.runAsync`: Picture.toImage and
+    # instantiateImageCodec are real engine work and never land inside
+    # testWidgets' fake-async zone, which HANGS the file rather than
+    # failing it.
+    # 1578 at PLAN-E/2 phase 4: +11 from canvas/plan/plan_canvas_screen
+    # _test.dart, the two gestures through the real widget tree. Every case
+    # asserts the DOCUMENT rather than the controller's live drag state,
+    # which is what makes "one command per gesture" checkable at all.
+    # Mutation-tested twice, both killed: writing a SetPlanPinCommand per
+    # pointer-move fails "ONE undo puts it back", and dropping the grab
+    # offset fails the case written for it. An earlier draft of that
+    # second case grabbed 12 units off centre, MISSED the marker's hit box
+    # entirely (its radius is the underlay's long side over 110, about 5.5
+    # here) and asserted that nothing moved, which it dutifully did not.
+    'rackpal_ui'     = 1578
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

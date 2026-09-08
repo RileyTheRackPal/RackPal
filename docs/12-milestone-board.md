@@ -7338,6 +7338,27 @@ origin makes screen, local and scene coordinates agree, and a widget test does n
 says so. **`PLAN-E/2`'s render object owes the same escape hatch and a case that places the canvas
 below a toolbar**, or the product ships this defect a third time with a green suite over it.
 
+> **THE SECOND HALF OF THAT PRESCRIPTION WAS WRONG, AND `PLAN-E/2` FOUND OUT BY WRITING IT.** The
+> toolbar case was written and **it cannot pass**. The reason is structural rather than incidental: a
+> render object that is `isRepaintBoundary` is painted at `Offset.zero` **always**, and its on-screen
+> position rides on the layer instead. Placing the canvas under a 60 pt toolbar and reading
+> `debugSceneToScreen` back gives **0, not 60**, because the offset genuinely is zero. The term is not
+> being dropped; there is nothing in it to drop.
+>
+> So a widget test cannot observe the composition **because at run time there is no composition to
+> observe**, which is a stronger statement than "a widget test does not composite" and the one that
+> should have been written. The protection that works is the one the schematic already had and this
+> paragraph looked straight past: `schematicSceneToScreen` **as a free function**, driven with the
+> offset a non-boundary would receive. `planSceneToScreen` is its twin and
+> `render_plan_canvas_test.dart`'s first case drives it on both axes with a scaled viewport, so a
+> composition written in the wrong order fails there.
+>
+> **THE ESCAPE HATCH IS STILL OWED AND STILL BUILT**; it simply protects a different thing than this
+> paragraph claimed. `debugSceneToScreen` is what lets a widget case assert that the **viewport**
+> reaches the matrix a paint actually used, which is the half that moves when a person pans, and
+> which a `paints..transform()` matcher cannot check because it compares a `Matrix4` against the raw
+> `Float64List` the canvas records and never matches.
+
 **THE SPIKE'S OWN OFFSET CASE COVERS THE INPUT PATH AND NOT THE PAINT PATH**, and the file says so
 rather than implying otherwise. A handler reading `event.position` instead of `event.localPosition`
 IS caught, because the spike drops its canvas below a 60px toolbar and pans before clicking. That is
@@ -7401,6 +7422,88 @@ coupled, but because the list of shared machinery was **incomplete**. Four of fi
 verbatim on the first attempt, which is a better result than the study expected; and three pieces it
 never mentioned have to be built. **Checking the named risks would have cleared the row.** The census
 that found the unnamed ones is what a week of E/1 actually bought.
+
+#### 5.9.8 PLAN-E/2: pins are placed, dragged and selected, and the estimate moved in both directions · `DR-140` · `v0.6.23`
+
+**Closed 2026-09-08** (`#629`, four commits). **No exit clause moves**, and the reason is worth
+stating rather than assuming: the clause *"rack and every drop pinned"* asks for **a person pinning
+every drop of a real rough-in**, which needs `PLAN-E/5`'s shell home and `PLAN-J`'s real project. What
+this chapter builds is the machinery that makes the act possible.
+
+**5.9.8.1 THE HOLE THE DECOMPOSITION CHECK FOUND BEFORE ANY CODE WAS WRITTEN.** `Rack.planPin` has
+existed since PLAN-C and `SetPlanPinCommand` has accepted `PinCarrier.rack` just as long, so the
+model and the writer were both ready. **Nothing in any of `PLAN-E`'s five chapters could press the
+button.** The palette places a device, the drop table pins an outlet, the unpinned strip listed
+devices, and pan/zoom/marquee select nothing new.
+
+**IT IS A HARD BLOCK ON THE EXIT CRITERION, NOT A POLISH ITEM.** A plan whose rack is unpinned yields
+no `planLowerBound` anywhere, so `PLAN-G` derives nothing, `PLAN-H`'s `T1.01` prints callouts with no
+lengths behind them, and `PLAN-J` hands a stranger a sheet missing the one measurement it promised.
+DR-140 §11.139 routes it through the unpinned strip, which also makes `PLAN-E/4`'s count mean
+*"everything this plan still owes"* rather than *"devices only"*. **Each chapter was coherent; the
+set had a hole, and it was visible only from outside any one of them** (the fourth instance of
+§11.36.5's shape, and the first about a capability rather than a field).
+
+**5.9.8.2 WHAT WAS BUILT, IN FOUR COMMITS.**
+
+| | |
+|---|---|
+| `buildPlaceOnPlanCommand` | CR-104's third drop target. A device dropped on a floorplan is in no rack, so it is an `OffRackPlacement`, and the pin rides on the placement so **one undo restores both** |
+| `buildPlanScene` | The third scene builder. One image pixel is one scene unit, so aspect is preserved by construction and a `PxPt` is clickable at the same numbers |
+| `PlanImageCache` | The `FlutterImageResolver` implementation the tree never had. Synchronous lookup, asynchronous load, real `dispose` over native handles |
+| `RenderPlanCanvas` | The third copy of the same forty lines, with `planSceneToScreen` as a free function |
+| `PlanCanvasScreen` | The two gestures, with **no `DragPreviewController` anywhere in them** |
+
+**5.9.8.3 THE ANALYZER CAUGHT A DESIGN MISTAKE, AND THE LINT WAS THE SYMPTOM RATHER THAN THE
+DISEASE.** The first draft added an `onPlan:` argument to `buildPlaceFromCatalogCommand` and relaxed
+`targetRack` to `Rack?`, since a plan drop has no rack. That produced **nine
+`unnecessary_null_check` infos**, because nine call sites pass `targetRack: doc.racks[id]!`.
+
+Those `!` are load-bearing. `doc.racks[id]!` throws at the line that got it wrong; against a `Rack?`
+parameter the same expression without its `!` compiles, passes `null`, and turns an immediate throw
+into a refusal string several frames later. **Relaxing a type to serve one new caller would have
+charged nine old ones for it.** So the plan drop got its own entry point, both paths still end in one
+shared builder (CR-104 is about the insert, not the arity of the function computing its arguments),
+and *"called with neither target"* went back to being unrepresentable rather than refused. **A test
+asserting that refusal was deleted**, with a comment where it stood: a test for a state the types
+forbid is worse than no test.
+
+**5.9.8.4 §5.9.7.5's PRESCRIPTION WAS WRONG AND THIS CHAPTER FOUND OUT BY WRITING IT.** That section
+told `PLAN-E/2` it owed *"a case that places the canvas below a toolbar"*. The case was written and
+**it cannot pass**: a render object that is `isRepaintBoundary` is painted at `Offset.zero` **always**
+and its position rides on the layer, so the assertion reads 0 rather than 60 because the offset
+genuinely is zero. **A widget test cannot observe the composition because at run time there is no
+composition to observe**, which is a stronger claim than *"a widget test does not composite"* and the
+one that should have been made. §5.9.7.5 now carries the correction. The protection that works is the
+**free function** the schematic already had and which §5.9.7 quoted while looking straight past it.
+
+**5.9.8.5 A TRAP THAT HANGS RATHER THAN FAILS, AND COST THE MOST TIME IN THIS CHAPTER.**
+`Picture.toImage` and `ui.instantiateImageCodec` are real engine work and **never land inside
+`testWidgets`' fake-async zone**. Awaiting either there waits forever: the file produces **no output
+at all**, which reads exactly like a slow suite rather than like a deadlock, and there is no failure
+to diagnose. `tester.runAsync` is the fix and four cases need it. Recorded here because the next
+person to put an image in a widget test will lose the same hour.
+
+**5.9.8.6 TWO OF THE CHAPTER'S OWN TESTS WERE WRONG BEFORE THEY WERE RIGHT**, and both say so in
+place rather than being quietly corrected. The grab-offset case grabbed 12 scene units off centre,
+**missed the marker's hit box entirely** (its radius is the underlay's long side over 110, about 5.5
+units on the 600-pixel fixture) and asserted that nothing moved, which it dutifully did: a false pass
+wearing a green tick. And three palette cases armed a pointer whose `down` had never reached
+`GestureBinding`, so the global route received nothing.
+
+**5.9.8.7 WHAT `PLAN-E/2` DID NOT BUILD, LISTED SO IT IS NOT READ AS DONE.** **No layout**: docs/15
+§6's three regions and the view's home in the shell are `PLAN-E/5`'s, so
+`PlanCanvasScreenState.armPaletteDrag` is public and no left rail is invented. **No staging-bin
+drag**: `StagedPlacement`'s only writer in `lib/` is the JSON decoder, so half of docs/15 §6's first
+gesture row has no source, and that row now says so. **No `planLowerBound` recompute**: the enum value
+arrives at `PLAN-G`, and that row says so too. **No marquee**: DR-139 moved it to `#848`.
+
+**5.9.8.8 THE DIRECTION OF THE ESTIMATE, WHICH MOVED BOTH WAYS.** §5.9.7.8 predicted drag-preview
+down, render object up small, scene builder and image resolver up real. **All four held.** The
+unpredicted term is DR-140's rack pin, which is new work nobody had scoped and which exists because
+somebody asked what produces each chapter's input. **The row is bigger than the study said and
+smaller than the study's own named risk implied**, which is the same finding `PLAN-E/1` reported one
+chapter earlier, now with code behind it.
 
 ---
 
