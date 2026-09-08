@@ -522,7 +522,15 @@ $SuiteFloors = @{
     # locates the wrong cell and PASSES, since every tile is the same
     # widget. Two cases click page 2 and page 3 and assert the index that
     # comes back, so an off-by-one in the grid fails here.
-    'rackpal_ui'     = 1552
+    # 1558 at PLAN-E/1: +6 from canvas/plan_canvas_reuse_spike_test.dart,
+    # the third canvas stood up out of the shipped parts to test a reuse
+    # claim that had only ever been read. THE SPIKE IS THROWAWAY AND THE
+    # FLOOR MOVES ANYWAY: E/2 replaces it with the real surface, and
+    # lowering this back is then the visible line in a diff this file's
+    # own header asks for. Two of the six were mutation-tested; a third
+    # mutation deliberately SURVIVED, which is the finding (docs/12
+    # §5.9.7): a widget test cannot see a dropped paint offset.
+    'rackpal_ui'     = 1558
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
