@@ -17915,6 +17915,81 @@ the refusal path exists because it may be wrong.
 alpha flatten. **A lifted page is an untrusted image like any other**, and it is not exempted from
 one check on the grounds that this product produced it.
 
+### §11.138 DR-139 · The marquee CR-102 ruled is built once and adopted on all three canvases, and the row that promised it was vacuous
+
+**Settled by the user on 2026-09-07**, on a finding from `PLAN-E/1`'s reuse census.
+
+**11.138.1 THE PROMISE, AND WHAT WAS BEHIND IT.** docs/15 §6's gesture table gives the Plan editor
+*"Pan, zoom, marquee-select | Identical to the other two canvases (AC-016 #23, `CanvasIntent`)"*.
+Pan and zoom are exactly that, verified by `PLAN-E/1`'s spike, which drives both through the shipped
+`ViewportController` without touching it. **Marquee-select is not, because neither of the other two
+canvases has a marquee.** CR-102 is normative, rules it left-drag in every view, and specifies the
+CAD window/cross convention: left to right selects fully contained with a solid band, right to left
+selects intersecting with a dashed band. Nothing implements any of it.
+
+**11.138.2 THE CENSUS THAT FOUND IT LOOKED PAST THE WORD, AND THE WORD WOULD NOT HAVE BEEN ENOUGH.**
+Grepping `marquee` over the tree returns comments and nothing else, every one of them saying the
+gesture is deferred, and a reader could fairly conclude the machinery was present and merely unbound. **The
+finding is one layer down: every `SelectMode` call in `lib/` passes exactly one id.**
+`SelectionController` holds a `Set<Uuid>`, supports `add` and `subtract`, and is written against a
+multi-selection; `add` and `subtract` are reachable only by Ctrl+click, and **no gesture in this
+product has ever put more than one thing into that set at once.**
+
+**A MULTI-SELECTION NOTHING CAN MULTI-SELECT IS INVISIBLE TO A CENSUS BY NAME**, because the type is
+present, correct and tested. This is the fourth entry in the running list at §11.36.5 of a design
+document and a ruling agreeing with each other without either having read the model, and it is the
+first where the disagreement is about a **capability** rather than a field: `MediaTypeDef.maxLength`,
+`unknown` on `Placement` and `Location.riseAllowance` were all names that resolved to nothing, and
+this one is a name that resolves to something that has never been used.
+
+**11.138.3 THE RULING: BUILD IT ONCE, ADOPT IT ON ALL THREE.** Not on the plan alone, and not
+deferred behind a corrected sentence. Three options were put and the other two were declined:
+
+| Declined | Why |
+|---|---|
+| Build it on the plan only | It is where the gesture pays most, the 60-drop rough-in being the design case, and that is an argument for building it FIRST rather than for building it ONLY. It would also make docs/15 §6's *"identical to the other two canvases"* false in the other direction, which is not an improvement |
+| Ship the plan without it and correct docs/15 | Keeps `PLAN-E/2` at its estimate and costs sixty Ctrl+clicks to select a plan's worth of pins, which is the same failure AC-048's bulk-entry bar and DR-020 §11.19.2(5)'s tally surface both already exist to refuse at the other end of the job |
+
+**CR-102's ENTIRE CONTENT IS THAT THE GESTURE IS UNIFORM ACROSS VIEWS.** It exists because two design
+documents specified different buttons, and it settled the disagreement by ruling one. Discharging it
+three separate times, in three chapters, months apart, is how a uniformity ruling stops being one:
+the second implementation copies the first and the third copies whichever it happened to read. **The
+cost of building it once is paid at the moment the ruling is easiest to satisfy, which is before any
+of the three has one.**
+
+**11.138.4 THIS IS NOT A SCOPE AMENDMENT, AND THE DISTINCTION MATTERS UNDER §8.3.** Roadmap §2 is the
+scope list, and marquee is not a line on it: it is behaviour inside editors that are already scoped,
+already designed and already ruled. Nothing moves between release bands and no Epic changes Saga.
+**What this ruling does is assign never-built work to a named chapter**, which is the ordinary act
+§8.8 describes, not the amendment §8.3 governs. A reader looking for a scope change here will not
+find one.
+
+**11.138.5 IT IS ITS OWN CHAPTER, `#848` (`PLAN-E/6`), AND DELIBERATELY NOT PART OF `PLAN-E/2`.**
+`PLAN-E/2` is *"place, drag and select pins"* and was estimated as that. Cross-canvas work touching
+two shipped surfaces carries regression risk that has nothing to do with pins, and folding it into
+E/2 would be exactly the invisible growth `PLAN-E/1` exists to expose. **The row grows and the growth
+is a line somebody can read**, which is the whole difference between an estimate that moved and an
+estimate that was wrong.
+
+**THE RISK WAS STATED BEFORE THE CHOICE WAS MADE**, and it is recorded here rather than softened: the
+option chosen is the one that touches the most shipped code, and `PLAN-E/1`'s own brief warns that a
+coupling discovered late is what makes this row grow. The judgement is that a marquee expressed
+against `CanvasIntentHandler` is small, because the spike showed that interface carries a complete
+drag in scene space with no rack or schematic term in it, and that the hard part is CR-102's
+window/cross discrimination, which is one comparison on drag direction.
+
+**11.138.6 WHAT THIS DOES NOT RULE.** **Not the band's appearance** beyond CR-102's own solid/dashed
+distinction: line weight, colour and whether the band dims what it will catch are UI/UX and are the
+user's, unasked here. **Not gesture parity generally**: this ruling is about one gesture that was
+ruled and never built, and it does not open a review of what else the three canvases do differently.
+**Not the Plan view's own gesture set**, which docs/15 §6 governs and which `PLAN-E/2` builds.
+
+**11.138.7 Derived edits owed and made with this ruling.** docs/15 §6's gesture table splits its
+combined row so pan and zoom keep their verified claim and marquee names `#848`; docs/09 §4's Plan
+editor checklist row drops *"drag-preview"* from the list of reused machinery (docs/12 §5.9.7.3 records why
+it is not reused) and gains the marquee row; docs/12 §5.9.7 carries the
+measurement.
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
