@@ -984,6 +984,7 @@ final class AppShellState extends State<AppShell>
     actions: StructureEditorActions(
       dropEntry: buildDropEntryActions(controller: session.controller),
       onAddOutlet: (bodyId) => unawaited(_openOutletPicker(bodyId)),
+      onPinOnPlan: _armPinFromDropTable,
       onEdit: buildStructureEditAction(controller: session.controller),
       onSetCount: buildStructureMatrixAction(controller: session.controller),
       onEditPathways: buildPathwayEditAction(controller: session.controller),
@@ -1385,6 +1386,45 @@ final class AppShellState extends State<AppShell>
   /// the request as STATE and the screen drains it on its first frame.
   /// Notifying after the switch would work too — and would break the
   /// first time Flutter changed when that page is built.
+  /// docs/15 §6's secondary entry point: arm a drop here, click the plan
+  /// there (DR-141 §11.140.4, moved from PLAN-E/3 by DR-143 §11.142.4).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE SUBJECT IS AN OUTLET AND THE ROW IS A LINK
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `armSubjectFor` does the join through `Link.structureOrigin`, and
+  /// `armRefusalFor` is the same question asked for a sentence: a link
+  /// with no structure origin is a cable running to no outlet and there
+  /// is nothing to pin, which is refused BY NAME rather than by a menu
+  /// item that quietly does nothing.
+  void _armPinFromDropTable(Uuid linkId) {
+    final doc = _services.session.document;
+    final refusal = armRefusalFor(doc, linkId);
+    if (refusal != null) {
+      _showRefusal(refusal);
+      return;
+    }
+    final outletId = armSubjectFor(doc, linkId)!;
+    _planArm.arm(
+      ArmedPin(
+        outletId: outletId,
+        // THE LABEL THE USER JUST READ, carried rather than re-derived:
+        // the chip renders on a different tab from the table that armed
+        // it, and passing the string is what stops the two disagreeing.
+        label: doc.outlets[outletId]?.designation ?? outletId.v,
+      ),
+    );
+    // DEFERRED PAST THE CLICK, for the reason `_revealInSchematic` below
+    // spells out at length: `TabBarView` is a `PageView` and settles to
+    // the nearest page when the pointer that asked goes up, so a switch
+    // inside the gesture is undone by the settle. The ARM is set first
+    // and unconditionally, so the plan has it whichever frame it builds
+    // on.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) switchToTab(ShellView.plan.index);
+    });
+  }
+
   void _revealInSchematic(Uuid deviceId) {
     _reveal.reveal(deviceId);
     // ═════════════════════════════════════════════════════════════════

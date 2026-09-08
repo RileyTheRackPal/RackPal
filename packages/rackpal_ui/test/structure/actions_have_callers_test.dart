@@ -126,7 +126,30 @@ void main() {
             // `outlets` on its first run and is disbelieved thereafter.
             if (!type.contains('Function')) continue;
             checked++;
-            final callSite = RegExp('\\.${RegExp.escape(member)}\\s*\\(');
+            // THREE SHAPES, BECAUSE DART HAS THREE. `actions.onEdit(x)` is
+            // the only one a NON-nullable callback can take, and it was
+            // the only one this gate knew until PLAN-E/5. A NULLABLE
+            // callback cannot be written that way at all: it is
+            // `.name!(x)` or `.name?.call(x)`, and neither matched, so
+            // the gate reported a fully wired gesture as uncalled.
+            //
+            // THE GAP HAD NEVER SHOWN BECAUSE `onPinOnPlan` IS THE FIRST
+            // NULLABLE `Function` FIELD ON ANY `*Actions` RECORD, censused
+            // at the moment it was added: every other callback in this
+            // package is required. Nullable is what DR-091's "absent
+            // rather than present and inert" produces for an OPTIONAL
+            // gesture, so this will recur.
+            //
+            // THE WIDENING IS NARROW ON PURPOSE. A name never invoked in
+            // any of these shapes still fails, and a name merely PASSED
+            // somewhere (`onPinOnPlan: x`) still does not count, which is
+            // the property that makes this gate worth having at all.
+            final escaped = RegExp.escape(member);
+            final callSite = RegExp(
+              '\\.$escaped\\s*\\(|'
+              '\\.$escaped!\\s*\\(|'
+              '\\.$escaped\\?\\.call\\s*\\(',
+            );
             if (!callSite.hasMatch(allSource)) {
               uncalled.add('$name.$member');
             }

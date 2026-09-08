@@ -667,7 +667,21 @@ $SuiteFloors = @{
     # reported SURVIVED, and is semantically identical to X. That is the
     # same class as the PLAN-E/4 mutation that did not build -- a mutation
     # that changes nothing measures nothing -- arriving in a new costume.
-    'rackpal_ui'     = 1620
+    # 1622 at PLAN-E/5 phase 4: +2 for the drop table's `Pin on plan` row
+    # menu, the producer a gate MOVED here from PLAN-E/3 (DR-141 §11.140.7,
+    # DR-143 §11.142.4). It is reachable now: the shell owns the arm
+    # controller above the tabs and the Plan view is in the strip.
+    # AND THE GATE ITSELF WAS WIDENED, which is the finding worth the
+    # line. actions_have_callers_test.dart matched only `.name(`, the one
+    # shape a NON-nullable callback can take. `onPinOnPlan` is the FIRST
+    # nullable Function field on any *Actions record in this package,
+    # censused when it was added, and a nullable callback can only be
+    # written `.name!(x)` or `.name?.call(x)`, so the gate reported a
+    # fully wired gesture as uncalled. Three shapes now; a name never
+    # invoked in any of them still fails, and a name merely PASSED still
+    # does not count. Mutation-tested by unwiring the record call: it
+    # fails, so the widening is not a rewording.
+    'rackpal_ui'     = 1622
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

@@ -60,6 +60,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show Clipboard;
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
 import 'package:rackpal_ui/src/structure/connector_aliases_dialog.dart';
 import 'package:rackpal_ui/src/structure/csv_import_dialog.dart';
@@ -89,7 +90,27 @@ final class StructureEditorActions {
     required this.onImportCsv,
     required this.onRunMediaTypeCommands,
     required this.outlets,
+    this.onPinOnPlan,
   });
+
+  /// docs/15 §6's fast path, from the row a person is already looking at
+  /// (DR-141 §11.140.4, moved here from `PLAN-E/3` by DR-143 §11.142.4).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// NULLABLE, AND THE NULL IS THE INTERESTING HALF
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A host with no Plan view supplies none and the menu item is absent
+  /// rather than present and inert, which is DR-091's rule at the size of
+  /// one menu row. It was **written, tested and then REVERTED at
+  /// `PLAN-E/3`**, because `actions_have_callers_test.dart` refused a
+  /// callback nothing in `lib/` supplied: the Plan view had no home to
+  /// arm INTO. It has one now.
+  ///
+  /// THE ARGUMENT IS A `linkId` AND THE SUBJECT IS AN OUTLET. Rows are
+  /// keyed by link and a pin hangs on an `Outlet`, so the host resolves
+  /// one to the other through `armSubjectFor`; a four-gang plate is four
+  /// rows and one outlet, so arming any of them arms the same subject.
+  final void Function(Uuid linkId)? onPinOnPlan;
 
   /// M3-C/1's loop, unchanged. See `DropEntryActions.onCommit` for why
   /// the parsed LINE crosses this boundary and never the preview's
@@ -603,6 +624,15 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
           doc: doc,
           groups: visible,
           columns: _columns,
+          // INVOKED ON THE RECORD, not copied onto the row and called
+          // through a local. That is what `actions_have_callers_test.dart`
+          // can see, and the difference is not cosmetic: the local-alias
+          // shape is the exact cheat DR-141 §11.140.7 records declining at
+          // PLAN-E/3, so writing the real call here keeps the gate able to
+          // check this gesture for as long as it exists.
+          onPinOnPlan: widget.actions.onPinOnPlan == null
+              ? null
+              : (linkId) => widget.actions.onPinOnPlan!(linkId),
           onEdit: _edit,
           onCaret: (cell) => _caret = cell,
           isFiltered:
@@ -1501,6 +1531,7 @@ class _DropTable extends StatelessWidget {
     required this.onCaret,
     required this.selected,
     required this.onSelect,
+    required this.onPinOnPlan,
     required this.onSelectAll,
   });
 
@@ -1520,6 +1551,9 @@ class _DropTable extends StatelessWidget {
   /// Ticked rows, by link id (M3-L/3).
   final Set<Uuid> selected;
   final void Function(Uuid linkId, {required bool ticked}) onSelect;
+
+  /// See `StructureEditorActions.onPinOnPlan`.
+  final void Function(Uuid linkId)? onPinOnPlan;
   final ValueChanged<bool> onSelectAll;
 
   @override
@@ -1609,6 +1643,7 @@ class _DropTable extends StatelessWidget {
                                       group.rows[index].linkId,
                                     ),
                                     onSelect: onSelect,
+                                    onPinOnPlan: onPinOnPlan,
                                   ),
                                 ),
                               ],
@@ -2089,6 +2124,7 @@ class _DataRow extends StatelessWidget {
     required this.onCaret,
     required this.ticked,
     required this.onSelect,
+    required this.onPinOnPlan,
     super.key,
   });
 
@@ -2101,11 +2137,14 @@ class _DataRow extends StatelessWidget {
   final bool ticked;
   final void Function(Uuid linkId, {required bool ticked}) onSelect;
 
+  /// See `StructureEditorActions.onPinOnPlan`. Null means no menu.
+  final void Function(Uuid linkId)? onPinOnPlan;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final units = doc.settings.displayUnits;
-    return DecoratedBox(
+    final body = DecoratedBox(
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
@@ -2141,6 +2180,49 @@ class _DataRow extends StatelessWidget {
         ),
       ),
     );
+
+    final pin = onPinOnPlan;
+    if (pin == null) return body;
+    // ═══════════════════════════════════════════════════════════════════
+    // A SECONDARY TAP, NOT A COLUMN AND NOT A HOVER BUTTON
+    // ═══════════════════════════════════════════════════════════════════
+    // The table is already 16 columns wide at its widest and §4.1 makes
+    // every cell an input, so a 17th column of buttons costs width on
+    // every row to serve a gesture used on some of them. A right-click is
+    // also what the two canvases already use for their one row menu
+    // (`device_doors_menu.dart`), so this is the product's convention
+    // rather than a new one.
+    //
+    // IT DOES NOT ARM ANYTHING ITSELF. The host resolves the link to an
+    // outlet, refuses by name when there is none, and owns the mode; this
+    // widget knows only which row was clicked.
+    return GestureDetector(
+      onSecondaryTapDown: (details) => unawaited(
+        _showPinMenu(context, details.globalPosition, () => pin(row.linkId)),
+      ),
+      child: body,
+    );
+  }
+
+  /// One item, because there is one thing to offer here.
+  Future<void> _showPinMenu(
+    BuildContext context,
+    Offset at,
+    VoidCallback onPin,
+  ) async {
+    final overlay =
+        Overlay.of(context).context.findRenderObject()! as RenderBox;
+    final chosen = await showMenu<bool>(
+      context: context,
+      position: RelativeRect.fromRect(
+        at & Size.zero,
+        Offset.zero & overlay.size,
+      ),
+      items: const [
+        PopupMenuItem<bool>(value: true, child: Text(kPinOnPlanMenuLabel)),
+      ],
+    );
+    if (chosen ?? false) onPin();
   }
 
   Widget _cell(ThemeData theme, StructureColumnId id, UnitSystem units) {

@@ -159,6 +159,14 @@ Uuid? armSubjectFor(RackDocument doc, Uuid linkId) =>
 /// after a pin precisely so this stays on screen; a mode that ended
 /// silently would be indistinguishable from one that had failed. So it
 /// says what to do next rather than merely that it is on.
+/// The drop table's row menu, docs/15 §6's secondary entry point.
+///
+/// A CONSTANT so the menu and the test name the same string, and so the
+/// wording is one edit. DR-141 §11.140.4 demotes this to the secondary way
+/// in: the primary loop is the unpinned strip, in the plan view, with no
+/// tab change at all.
+const String kPinOnPlanMenuLabel = 'Pin on plan';
+
 const String kPinArmIdleLabel = 'Pick a drop in the Structure table';
 
 /// What the chip says before the word: the act, not the state.
