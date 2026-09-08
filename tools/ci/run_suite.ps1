@@ -505,7 +505,34 @@ $SuiteFloors = @{
     # over -- several fixtures use square coordinates like (10, 10) and
     # (500, 500), which cannot see a transposition at all. One case was
     # moved to (210, 45) once the mutation showed it.
-    'rackpal_core'   = 4281
+    # 4284 at PLAN-E/4 phase 1: +3 for the room a plan drop writes
+    # (DR-142 §11.141.5). A device has TWO location fields the model says
+    # must agree, and `buildPlaceOnPlanCommand` set one, so every device
+    # dropped on a plan since PLAN-E/2 printed no room on the Equipment
+    # List. Mutation-tested by dropping the `locationId` argument back out
+    # of `AddDeviceCommand.apply`, which is the state as shipped: two of
+    # the three fail. The third asserts a RACKED device still names no
+    # room and correctly survives, because it guards the derivation from
+    # over-reaching rather than the fix from being absent.
+    # The load-bearing case asserts the EQUIPMENT LIST CELL and not the
+    # field: two fields disagreeing is invisible until something reads the
+    # one that was not written, and that reader is the artifact.
+    # 4296 at PLAN-E/4 phase 2: +12 from derived/unpinned_carriers_test.dart.
+    # EVERY FIXTURE IS BUILT SO THE TWO PLAUSIBLE ANSWERS DIFFER, which is
+    # the chapter's own brief: a count that counts the wrong thing passes on
+    # a document where the wrong thing and the right thing are the same
+    # number. Seven mutations run and all seven killed: a devices-only strip
+    # fails 4, dropping outlets as well (the pre-DR-140 shape exactly) fails
+    # 3, joining an unknown location to a named room fails 1, filtering
+    # everything out of a site plan fails 1, dropping the total order fails
+    # 2, reading "unpinned" as "no pin on THIS underlay" fails 1, and
+    # reading a device's room from the INSTANCE field instead of the
+    # placement's fails 1.
+    # An eighth was written and is NOT counted: `for (final rack in
+    # <Rack>[])` reported zero failures because `Rack` is not imported
+    # there, so it was a compile error wearing a survivor's clothes. A
+    # mutation that does not build measures nothing.
+    'rackpal_core'   = 4296
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -591,7 +618,23 @@ $SuiteFloors = @{
     # PLAN-E/5 gives the Plan view a home to arm INTO (DR-091), so the
     # producer moved to that chapter rather than being reworded until the
     # regex stopped matching. See docs/12 §5.9.9.
-    'rackpal_ui'     = 1597
+    # 1611 at PLAN-E/4: +9 from canvas/plan/unpinned_strip_test.dart and +5
+    # in plan_canvas_screen_test.dart for the drag OUT of the strip, which
+    # is how a RACK gets its pin (DR-140 §11.139) and was the one gesture
+    # docs/15's own table did not have.
+    # Six mutations run and all six killed: ignoring the row's carrier and
+    # pinning everything as a device fails 3, dropping the deleted-carrier
+    # guard fails 1, committing a release made outside the canvas fails 2,
+    # merging the unknown count into the total fails 1, dropping the
+    # unknown line from the strip fails 1, and giving every row the SAME
+    # key fails 4 -- that last one is the byType().first ambiguity this
+    # repo has been bitten by, run as a mutation rather than trusted.
+    # ONE OF THESE CASES EXISTS BECAUSE IT FIRED: the strip overflowed
+    # vertically by 6px the first time a NAMED row rendered, and again by
+    # 44px horizontally at 220 wide once that was fixed. It pumps five
+    # widths, because a RenderFlex reports an overflow once per render
+    # object and one pump measures one layout.
+    'rackpal_ui'     = 1611
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

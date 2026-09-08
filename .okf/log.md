@@ -1,5 +1,57 @@
 # Update Log
 
+## 2026-09-08 (fifth entry)
+
+* **Closed**: `PLAN-E/4` (#631) at `v0.6.25`. The unpinned strip, its two
+  counts, and the drag out of it that finally puts a pin on a RACK
+  (DR-140 §11.139), which no gesture in any of `PLAN-E`'s five chapters
+  could do.
+* **Creation**: [A mutation that does not build measures
+  nothing](/practices/a-mutation-that-does-not-build-measures-nothing.md).
+  The chapter's most important mutation, making the strip list devices
+  only, printed **SURVIVED (0 failing)**. It had not compiled: `Rack` is
+  not imported in that file. Rewritten as a runtime-false guard, the same
+  mutation killed four cases. **Zero failing tests is the same output for
+  "the suite is blind" and "the suite never ran"**, and the structural
+  mutations worth running are exactly the ones that stop compiling.
+* **Note**: **TWO LAYOUT DEFECTS, BOTH FOUND BY ONE CASE.** A named row is
+  two lines and the strip was 56 high: `RenderFlex overflowed by 6.0
+  pixels`. Fixing it exposed the counts block being unbounded, which
+  overflowed by 44 on the right at 220 wide. The case pumps FIVE widths,
+  because a `RenderFlex` reports an overflow once per render object and
+  one pump measures one layout while reading as clean for every width it
+  did not try.
+* **Note**: `PLAN-E/5` now owes four unreachable surfaces rather than
+  three: a canvas with two gestures, an arm mode with a chip, a
+  drop-table producer, and a strip. DR-141 §11.140.7 said this chapter
+  would be one of them and it is; the number is the part worth writing
+  down.
+
+## 2026-09-08 (fourth entry)
+
+* **Ruling**: [DR-142](/decisions/dr-142-what-the-unpinned-strip-lists.md).
+  What the unpinned strip lists, and the two location fields a device
+  already had.
+* **Note**: **EVERY CLAUSE OF ONE SENTENCE HID A DECISION.** docs/15 §6
+  gives the strip as *"everything in this plan's location that could carry
+  a pin and does not"*. **Unpinned is no pin AT ALL**, since a carrier
+  holds one `planPin` and a row listed as unpinned-here while pinned on
+  `Level 1` would MOVE that pin when dragged. **An underlay with no
+  location has no filter**, not a null to join on, so a site plan lists
+  everything unpinned. **A carrier with no location is a count, not a
+  row**, which is [G4](/invariants/g4-unknowns-are-counted.md) exactly.
+* **Note**: **AND THE THIRD QUESTION FOUND A SHIPPED DEFECT.** A device
+  has TWO location fields that the model says must agree, and
+  `buildPlaceOnPlanCommand` sets one: `AddDeviceCommand` has never had a
+  `locationId` parameter, so every device dropped on a plan since
+  `PLAN-E/2` prints **no room on the Equipment List**, unrepairable
+  because `locationId` is deliberately not a `DeviceField`. Nothing
+  failed and no test was going to.
+* **Note**: the chapter's own brief warned about *"the count that counts
+  the wrong thing"* and DR-140 supplied one instance deliberately. It was
+  right about the class and could not name the members: **reading the
+  model produced three more than the brief had.**
+
 ## 2026-09-08 (third entry)
 
 * **Ruling**: [DR-141](/decisions/dr-141-one-arm-one-pin.md). A pin arms one

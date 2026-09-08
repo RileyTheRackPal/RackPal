@@ -7573,6 +7573,106 @@ A link with no `StructureOrigin` is a cable that runs to no outlet and is refuse
 means *"select that"*, and an armed mode silently repurposing it would pin the armed drop on top of
 another one at a point the user was pointing at for a different reason. There is a case for it.
 
+#### 5.9.10 PLAN-E/4: the unpinned strip, and a defect its own question found · `DR-142` · `v0.6.25`
+
+Closed `2026-09-08`. Commits `228bc79` (the ruling), `c065cb2` (the fix), `87cc2a5` (the
+derivation), `b484117` (the strip and the drag). Four commits, each gated green.
+
+##### 5.9.10.1 One sentence, and a decision hiding in every clause
+
+docs/15 §6 gives the strip as *"everything in this plan's location that could carry a pin and does
+not, with a count"*. **The brief predicted the shape of the mistake and could not name its
+location.** It warns in terms about *"the count that counts the wrong thing"*, citing the status bar
+that read `0 pathways` the keystroke after somebody made one; DR-140 then supplied a second instance
+deliberately, since a strip built from `doc.devices` is wrong on any document with an unpinned rack.
+
+**Reading the model turned up three more.** They are DR-142 §11.141 and each is one mutable line in
+`derived/unpinned_carriers.dart`:
+
+| Clause | The reading taken | The reading refused, and why |
+|---|---|---|
+| *"does not"* | No pin **at all** | *"No pin on this underlay"* is not a wrong row, it is a **destructive gesture**: a carrier holds one `planPin`, so dragging that row would MOVE the pin off the other plan while presenting itself as adding something |
+| *"this plan's location"*, when the plan has none | No filter, so a site plan lists everything unpinned | *Nothing* reports **zero** on a plan with nothing pinned. *Only carriers whose location is also null* joins unknown to unknown, which is G4's forbidden move |
+| *"everything"*, when a carrier's own room is unknown | A **count** beside the rows (`unlocatedCount`) | A **row** invites pinning a second-floor speaker onto `Level 1`. **Silence** is `0 pathways` again |
+
+##### 5.9.10.2 The defect the third question found, which nothing was going to fail on
+
+A device has **two** location fields, and the model says they hold the same value:
+`AddStructureCommand` writes both, `RemoveLocationCommand` clears both, *"clearing one would leave
+the document disagreeing with itself"*.
+
+`buildPlaceOnPlanCommand` writes one. It hands `AddDeviceCommand` an `OffRackPlacement` carrying the
+underlay's room, and `AddDeviceCommand.apply` builds its `DeviceInstance` with no `locationId`,
+because that command has never had the parameter.
+
+> **Every device dropped on a plan since `PLAN-E/2` printed no room on the Equipment List**, which
+> reads `device.locationId`. There was no later repair either: `locationId` is deliberately not a
+> `DeviceField`, so no editing gesture in the product can set one.
+
+Fixed in `AddDeviceCommand` and derived from the placement rather than asked of the caller, because
+a parameter is a thing the next call site can forget in exactly the way this one did. **The
+load-bearing test asserts the Equipment List cell and not the field**, on house style: two fields
+disagreeing is invisible until something reads the one that was not written, and that reader is the
+artifact. Starters unchanged, all four byte-identical.
+
+**Asking which of two fields is the room is the whole reason it was found.** A surface that filters
+carriers by room cannot avoid the question, and neither answer was safe while the two disagreed.
+
+##### 5.9.10.3 The gesture nothing in five chapters had
+
+`armCarrierDrag` is DR-140 §11.139 in code: `Rack.planPin` shipped at `PLAN-C` and
+`SetPlanPinCommand` has accepted `PinCarrier.rack` just as long, and **no gesture in the product
+could press the button**. Without a rack pin `PLN-003` fires and no length on the plan derives at
+all.
+
+The palette drag and the strip drag share the tracked pointer, the over-the-canvas test and the
+pixel conversion, and differ only at the commit, so a **sealed pair** carries what is armed: *armed
+with neither* and *armed with both* are unrepresentable rather than merely unlikely, and a third
+source stops the build.
+
+`_canCarryPin` guards **before** the command. `SetPlanPinCommand` answers a missing entity by
+returning without writing, which is right for the command and wrong for the caller: `run` would push
+an entry whose `apply` did nothing and whose `revert` throws, so the next undo fails on a step that
+undid nothing. The case asserts the undo stack is untouched, which is the half a refusal message
+would hide.
+
+##### 5.9.10.4 Two layout defects, and the case that found both
+
+**A named row is two lines.** The strip was 56 high, which leaves 28 after the list's padding and
+the chip's, and it overflowed by 6 pixels the first time a row with a name rendered. Fixing that
+exposed the second: **the counts block was unbounded**, so the `Expanded` beside it got negative
+width and overflowed by 44 on the right at 220px.
+
+The case pumps **five widths**, because a `RenderFlex` reports an overflow **once per render
+object**: one pump measures one layout and reads as clean for every width it did not try. That is
+this repo's own finding from `#808`, applied before it bit rather than after.
+
+##### 5.9.10.5 Evidence
+
+Twelve mutations, all twelve killed. Core: a devices-only strip fails 4, dropping outlets as well
+(the pre-DR-140 shape exactly) fails 3, joining an unknown location to a named room fails 1,
+filtering everything out of a site plan fails 1, no total order fails 2, *"no pin on THIS underlay"*
+fails 1, reading a device's room from the instance field fails 1. UI: ignoring the row's carrier
+fails 3, dropping the deleted-carrier guard fails 1, committing a release made outside the canvas
+fails 2, merging the unknown count into the total fails 1, dropping the unknown line fails 1, and
+**giving every row the same key fails 4**, which is the `byType().first` ambiguity this repo has
+been bitten by, run as a mutation rather than trusted.
+
+**A thirteenth is recorded as not counted.** `for (final rack in <Rack>[])` reported zero failures
+because `Rack` is not imported in that file, so it was a compile error wearing a survivor's clothes.
+**A mutation that does not build measures nothing**, and a mutation run that reports SURVIVED
+without checking is a green tick over an untested line.
+
+Floors re-measured: `rackpal_core` 4281 to 4296, `rackpal_ui` 1597 to 1611. Two analyzer infos were
+introduced and both **removed** rather than pinned; the pin stays at 233.
+
+##### 5.9.10.6 Still not reachable, and that is now three chapters deep
+
+Nothing mounts the strip and nothing supplies `armCarrierDrag` until `PLAN-E/5`. DR-141 §11.140.7
+recorded this for `PLAN-E/2`, `/3` and `/4` together, and this chapter is the third instance rather
+than a new finding. **The count of unreachable surfaces `PLAN-E/5` has to make true is now: a canvas
+with two gestures, an arm mode with a chip, a drop-table producer, and a strip.**
+
 ---
 
 ## 6. The dependency graph, as it actually stands

@@ -131,6 +131,36 @@ PinCarrier _writerFor(PlanPinCarrier c) => switch (c) {
   PlanPinCarrier.device => PinCarrier.offRackDevice,
 };
 
+/// What a drag that started outside this canvas is carrying.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// TWO SOURCES, ONE TRACKED POINTER, AND ONE PLACE THEY DIFFER
+/// ═══════════════════════════════════════════════════════════════════════
+/// The palette drag CREATES a device from a catalog id; the strip drag
+/// PINS one the document already has (docs/15 §6's third gesture row,
+/// DR-140 §11.139). Everything between the pointer-down and the drop is
+/// identical: the global router, the over-the-canvas test, the pixel
+/// conversion. Only the commit differs.
+///
+/// A sealed pair rather than two nullable fields, so "armed with neither"
+/// and "armed with both" are unrepresentable rather than merely unlikely,
+/// and so the switch at the drop is exhaustive: a third source stops the
+/// build here and somebody decides what it commits.
+sealed class _ArmedDrag {
+  const _ArmedDrag();
+}
+
+final class _ArmedCatalog extends _ArmedDrag {
+  const _ArmedCatalog(this.catalogId);
+  final String catalogId;
+}
+
+final class _ArmedCarrier extends _ArmedDrag {
+  const _ArmedCarrier(this.carrier, this.entityId);
+  final PinCarrier carrier;
+  final Uuid entityId;
+}
+
 /// The Plan editor's canvas: one underlay, its pins, and the two gestures
 /// that place and move them.
 final class PlanCanvasScreen extends StatefulWidget {
@@ -204,13 +234,13 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   PxPt? _livePin;
   bool _moved = false;
 
-  // ── the palette drag ────────────────────────────────────────────────
+  // ── a drag armed outside this canvas ────────────────────────────────
   int? _armedPointer;
-  String? _armedRowKey;
+  _ArmedDrag? _armedSubject;
 
   @override
   void dispose() {
-    _stopTrackingPalettePointer();
+    _stopTrackingArmedPointer();
     super.dispose();
   }
 
@@ -260,55 +290,79 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // THE PALETTE DRAG
+  // A DRAG THAT STARTS SOMEWHERE ELSE AND ENDS HERE
   // ══════════════════════════════════════════════════════════════════
 
   /// Arms a drag from a palette row. The host calls this from the
   /// palette's `onArmDrag`.
+  void armPaletteDrag(String rowKey, PointerDownEvent event) =>
+      _arm(_ArmedCatalog(rowKey), event);
+
+  /// Arms a drag from a row of the unpinned strip, which PINS a carrier
+  /// the document already has rather than creating one
+  /// (`unpinned_strip.dart`, docs/15 §6, DR-140 §11.139).
   ///
+  /// **THIS IS HOW A RACK GETS ITS PIN**, and it was the gesture nothing
+  /// in docs/15's own table had: the palette places a device and the drop
+  /// table pins an outlet, so the one carrier §3.4 calls mandatory had no
+  /// producer at all until DR-140 found it from outside every chapter.
+  void armCarrierDrag(
+    PinCarrier carrier,
+    Uuid entityId,
+    PointerDownEvent event,
+  ) => _arm(_ArmedCarrier(carrier, entityId), event);
+
   /// TRACKED THROUGH THE GLOBAL ROUTER, because the pointer starts over
-  /// the palette and ends over the canvas, and no single `Listener` sees
-  /// both halves. Same mechanism as the rack editor's palette drag, and
-  /// the same one exit: [_stopTrackingPalettePointer] is reached from
+  /// another widget and ends over the canvas, and no single `Listener`
+  /// sees both halves. Same mechanism as the rack editor's palette drag,
+  /// and the same one exit: [_stopTrackingArmedPointer] is reached from
   /// pointer-up, pointer-cancel and `dispose` alike.
-  void armPaletteDrag(String rowKey, PointerDownEvent event) {
-    _stopTrackingPalettePointer();
+  void _arm(_ArmedDrag subject, PointerDownEvent event) {
+    _stopTrackingArmedPointer();
     _armedPointer = event.pointer;
-    _armedRowKey = rowKey;
+    _armedSubject = subject;
     GestureBinding.instance.pointerRouter.addRoute(
       event.pointer,
-      _onPaletteGlobalPointerEvent,
+      _onArmedGlobalPointerEvent,
     );
   }
 
-  void _onPaletteGlobalPointerEvent(PointerEvent event) {
+  void _onArmedGlobalPointerEvent(PointerEvent event) {
     if (event is PointerUpEvent) {
-      final rowKey = _armedRowKey;
+      final subject = _armedSubject;
       final over = _isOverCanvas(event.position);
       final at = _toPixel(event.position);
-      _stopTrackingPalettePointer();
+      _stopTrackingArmedPointer();
       // RELEASED OUTSIDE THE CANVAS IS A NO-OP AND NOT AN ERROR. docs/04
       // §3.1's escape hatch is the staging bin, and the bin has no
       // producer (docs/15 §6), so there is nothing honest to offer here.
       // Saying nothing is better than a chip promising a bin that cannot
-      // take anything.
-      if (rowKey == null || !over || at == null) return;
-      _placeFromPalette(rowKey, at);
+      // take anything. It reads doubly true for a STRIP row: the carrier
+      // is already in the document and dropping it nowhere leaves it
+      // exactly where it was, in the strip, which is what the user can
+      // see.
+      if (subject == null || !over || at == null) return;
+      switch (subject) {
+        case _ArmedCatalog(:final catalogId):
+          _placeFromPalette(catalogId, at);
+        case _ArmedCarrier(:final carrier, :final entityId):
+          _pinExisting(carrier, entityId, at);
+      }
     } else if (event is PointerCancelEvent) {
-      _stopTrackingPalettePointer();
+      _stopTrackingArmedPointer();
     }
   }
 
-  void _stopTrackingPalettePointer() {
+  void _stopTrackingArmedPointer() {
     final pointer = _armedPointer;
     if (pointer != null) {
       GestureBinding.instance.pointerRouter.removeRoute(
         pointer,
-        _onPaletteGlobalPointerEvent,
+        _onArmedGlobalPointerEvent,
       );
     }
     _armedPointer = null;
-    _armedRowKey = null;
+    _armedSubject = null;
   }
 
   void _placeFromPalette(String rowKey, PxPt at) {
@@ -331,6 +385,47 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
           () => widget.selection.apply([command.id], SelectMode.replace),
         );
     }
+  }
+
+  /// Is [entityId] still a thing of this [carrier] kind that can hold a
+  /// pin?
+  ///
+  /// ASKED BEFORE THE COMMAND RATHER THAN LEFT TO IT. `SetPlanPinCommand`
+  /// answers a missing entity by returning without writing, which is right
+  /// for the command and wrong for the caller: `run` would push an entry
+  /// whose `apply` did nothing and whose `revert` throws, so the undo stack
+  /// grows a step that undoes nothing and then fails. `_pinArmed` guards
+  /// the same way for the same reason.
+  bool _canCarryPin(PinCarrier carrier, Uuid entityId) => switch (carrier) {
+    PinCarrier.rack => _doc.racks.containsKey(entityId),
+    PinCarrier.outlet => _doc.outlets.containsKey(entityId),
+    PinCarrier.offRackDevice =>
+      _doc.devices[entityId]?.placement is OffRackPlacement,
+  };
+
+  /// Pins a carrier the document already has, dragged out of the unpinned
+  /// strip (docs/15 §6, DR-140 §11.139).
+  ///
+  /// ONE COMMAND, and it is the same `SetPlanPinCommand` a pin MOVE runs:
+  /// the difference between setting and moving is decided inside `apply`
+  /// from the document, so this call site does not have to know which act
+  /// the Edit menu is about to name.
+  void _pinExisting(PinCarrier carrier, Uuid entityId, PxPt at) {
+    if (!_canCarryPin(carrier, entityId)) {
+      // DRAGGED, THEN DELETED UNDER THE POINTER. The strip is built from
+      // a document that another tab can edit mid-gesture, so refuse by
+      // name rather than writing a pin onto nothing.
+      widget.onRefuse?.call('That item is not in the project any more.');
+      return;
+    }
+    _controller.run(
+      SetPlanPinCommand(
+        carrier: carrier,
+        entityId: entityId,
+        pin: PlanPin(underlayId: widget.underlay.id, at: at),
+      ),
+    );
+    setState(() => widget.selection.apply([entityId], SelectMode.replace));
   }
 
   // ══════════════════════════════════════════════════════════════════
