@@ -147,6 +147,7 @@ void main() {
     WidgetTester tester,
     DocumentController controller, {
     PlanPinArmController? arm,
+    MarqueeController? marquee,
   }) async {
     await tester.runAsync(() async {
       await cache.load(_member, await _png(600, 400));
@@ -176,6 +177,7 @@ void main() {
               selection: selection,
               viewport: viewport,
               arm: arm,
+              marquee: marquee,
               onRefuse: refusals.add,
             ),
           ),
@@ -773,6 +775,103 @@ void main() {
       // AND THE UNDO STACK IS UNTOUCHED, which is the half a refusal
       // message would hide.
       expect(c.undo.canUndo, isFalse);
+    });
+  });
+
+  group('A BAND ARMED BY A CLICK MUST NOT SWALLOW THE CLICK', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // THE REGRESSION `PLAN-E/6` SHIPPED AND NOTHING SAW
+    // ═══════════════════════════════════════════════════════════════════
+    // `beginDrag` arms the band on every press that misses a pin, so
+    // `MarqueeController.isActive` is true from the instant of a plain
+    // click. `commitDrag` asked exactly that and returned, which put the
+    // armed-pin and click-to-clear branches out of reach on any mounting
+    // that supplies a band. `PlanEditorScreen` supplies one and every case
+    // in this file predated it and passed null, so DR-141's whole fast
+    // path was dead in the app with a green suite.
+    //
+    // The two other adoptions ask whether the POINTER MOVED and were
+    // right from the start. These cases pin that question rather than the
+    // controller's state.
+    //
+    // **ONLY THE FIRST CASE IS LOAD-BEARING AGAINST THE DEFECT**, measured
+    // by restoring it: the other three stay green with the condition
+    // mutated back, because a sweep clears the selection too and `end`
+    // clears the band as surely as `cancel` does. They are here for the
+    // regression's neighbours rather than for the regression, and saying
+    // which is which is the point of this paragraph.
+
+    testWidgets('AN ARMED CLICK STILL PINS WITH A BAND SUPPLIED', (
+      tester,
+    ) async {
+      final c = _controller();
+      _addOutlet(c);
+      final arm = PlanPinArmController()..arm(_armedDrop);
+      addTearDown(arm.dispose);
+      final marquee = MarqueeController();
+      addTearDown(marquee.dispose);
+      await pump(tester, c, arm: arm, marquee: marquee);
+
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+
+      expect(
+        c.doc.outlets[_outletId]!.planPin?.at,
+        const PxPt(300, 200),
+        reason: 'DR-141: an armed click on empty plan pins the drop',
+      );
+    });
+
+    testWidgets('a click on empty plan still CLEARS with a band supplied', (
+      tester,
+    ) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final marquee = MarqueeController();
+      addTearDown(marquee.dispose);
+      final h = await pump(tester, c, marquee: marquee);
+
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+      expect(h.selection.ids, isNotEmpty);
+
+      await tester.tapAt(const Offset(60, 40));
+      await tester.pump();
+      expect(h.selection.ids, isEmpty);
+    });
+
+    testWidgets('and the band is not left armed for the next gesture to '
+        'inherit', (tester) async {
+      final c = _controller();
+      final marquee = MarqueeController();
+      addTearDown(marquee.dispose);
+      await pump(tester, c, marquee: marquee);
+
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+
+      expect(marquee.isActive, isFalse);
+    });
+
+    testWidgets('A REAL SWEEP STILL SWEEPS, which is what makes the fix a '
+        'fix and not a deletion', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final marquee = MarqueeController();
+      addTearDown(marquee.dispose);
+      final h = await pump(tester, c, marquee: marquee);
+
+      final pointer = TestPointer(77, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(pointer.down(const Offset(100, 100)));
+      await tester.sendEventToBinding(pointer.move(const Offset(200, 150)));
+      await tester.sendEventToBinding(pointer.move(const Offset(400, 260)));
+      await tester.sendEventToBinding(pointer.up());
+      await tester.pump();
+
+      expect(
+        h.selection.ids,
+        {const Uuid('dev-1')},
+        reason: 'the band caught the pin it was drawn around',
+      );
+      expect(marquee.isActive, isFalse);
     });
   });
 }

@@ -739,7 +739,12 @@ $SuiteFloors = @{
     # widget and this file asserts the band's ARRIVAL rather than its
     # extent; the extent is core's, in marquee_test.dart.
     # The third mutation, never arming the band at all, is killed.
-    'rackpal_ui'     = 1632
+    # 1636 at PLAN-F/0: +4 from the band-and-click group in
+    # plan_canvas_screen_test.dart. Only ONE of the four is load-bearing
+    # against the defect, measured by restoring it: the other three stay
+    # green with the condition mutated back, because a sweep clears the
+    # selection too and `end` clears the band as surely as `cancel` does.
+    'rackpal_ui'     = 1636
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

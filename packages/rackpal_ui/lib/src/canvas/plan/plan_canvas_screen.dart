@@ -494,6 +494,13 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     final offset = _grabOffset;
     if (offset == null) {
       // No pin was grabbed, so this is the band widening.
+      //
+      // `_moved` IS SET HERE TOO, so the field means one thing on both
+      // paths: the pointer travelled during this gesture. It used to mean
+      // "a grabbed pin travelled", and `commitDrag` then had no way to
+      // tell a sweep from a click and asked the CONTROLLER instead. See
+      // that method for what the difference cost.
+      _moved = true;
       widget.marquee?.update(sceneCurrent);
       return;
     }
@@ -513,25 +520,41 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     final landed = _livePin;
     final marquee = widget.marquee;
     if (marquee != null && marquee.isActive) {
-      // A SWEEP REPLACES THE SELECTION, EVEN WHEN IT CAUGHT NOTHING, which
-      // is what makes dragging across bare canvas a deselect rather than a
-      // no-op with a stuck band. It runs before the click branches below
-      // because a drag that started on empty canvas is either this or the
-      // clear, and this is the more specific answer.
-      final caught = marquee.end(
-        buildPlanScene(
-          underlay: widget.underlay,
-          pins: _pins,
-        ).scene,
-      );
-      setState(() {
-        widget.selection.apply(
-          caught.map(Uuid.new).toList(),
-          SelectMode.replace,
+      if (_moved) {
+        // A SWEEP REPLACES THE SELECTION, EVEN WHEN IT CAUGHT NOTHING,
+        // which is what makes dragging across bare canvas a deselect
+        // rather than a no-op with a stuck band.
+        final caught = marquee.end(
+          buildPlanScene(underlay: widget.underlay, pins: _pins).scene,
         );
-      });
-      _endGesture();
-      return;
+        setState(() {
+          widget.selection.apply(
+            caught.map(Uuid.new).toList(),
+            SelectMode.replace,
+          );
+        });
+        _endGesture();
+        return;
+      }
+      // ═══════════════════════════════════════════════════════════════
+      // A CLICK, AND THIS BRANCH IS WHY DR-141's FAST PATH WAS DEAD
+      // ═══════════════════════════════════════════════════════════════
+      // The condition here was `marquee.isActive` alone. `beginDrag` arms
+      // the band on every press that misses a pin, and `isActive` is true
+      // from that instant, so **every click on empty plan took the sweep
+      // branch and returned** before the armed-pin and click-to-clear
+      // branches below could run. An armed drop could not be pinned at
+      // all once this screen was given a band, which is every mounting of
+      // it in the app: `PLAN-E/6` supplied one from `PlanEditorScreen`
+      // and no test did, because the canvas tests predate the band and
+      // pass null.
+      //
+      // The other two adoptions ask whether the POINTER MOVED and were
+      // right from the start; the schematic's own comment names the
+      // hazard by name. This is the third and it is now the same shape:
+      // end the band rather than leaving it armed for the next gesture to
+      // inherit, then let the click be a click.
+      marquee.cancel();
     }
     if (grabbed != null && landed != null && _moved) {
       // ONE COMMAND FOR THE WHOLE DRAG. See the file header.
