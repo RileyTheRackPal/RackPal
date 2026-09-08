@@ -482,7 +482,20 @@ $SuiteFloors = @{
     # the property AC-058/D12 actually needs from a parser over hostile
     # input, and it is not expressible as a handful of hand-picked
     # malformed files.
-    'rackpal_core'   = 4262
+    # 4266 at PLAN-E/2: +4 from the plan-drop group in
+    # catalog_placement_test.dart, CR-104's third drop target. Two
+    # mutations were run and both were killed: discarding the pin from the
+    # placement fails three of the four, and removing the absent-underlay
+    # refusal fails the one written for it. The group's real subject is
+    # docs/15 §6's "in one command, so one undo restores both", which is
+    # asserted as an artifact -- one command comes back, and reverting it
+    # takes the pin with the device -- rather than by counting writes.
+    # It was BRIEFLY +5. The fifth asserted a refusal for "called with
+    # neither a rack nor a plan", which existed only because the first
+    # draft relaxed `targetRack` to `Rack?`; a separate entry point makes
+    # that state uncompilable, and a test for a state the types forbid is
+    # worse than no test. The comment where it stood says so.
+    'rackpal_core'   = 4266
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

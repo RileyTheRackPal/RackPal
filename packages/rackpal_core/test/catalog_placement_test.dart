@@ -548,4 +548,167 @@ void main() {
       );
     });
   });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // PLAN-E/2: THE THIRD DROP TARGET (docs/15 §6, CR-104)
+  // ═════════════════════════════════════════════════════════════════════
+  // The property every case here is really about is docs/15 §6's "in one
+  // command, so one undo restores both". These assert the ARTIFACT that
+  // guarantees it: exactly one command comes back, and the pin is on the
+  // placement it creates rather than arriving behind a second write.
+  group('PLAN-E/2: a device dropped on a plan', () {
+    test('is placed off-rack with its pin, by one command', () {
+      final rack = _rack();
+      final doc = _docWithCatalog(rack, {'F1': _fieldTemplate()});
+      final underlay = _underlay(doc, locationId: const Uuid('loc-1'));
+
+      final result = buildPlaceOnPlanCommand(
+        doc: doc,
+        catalogId: 'F1',
+        now: _now,
+        actor: 'tester',
+        onPlan: (
+          locationId: underlay.locationId,
+          pin: PlanPin(underlayId: underlay.id, at: const PxPt(120, 340)),
+        ),
+      );
+
+      final command = (result as CatalogPlacementReady).command..apply(doc);
+      final device = doc.devices.values.single;
+      final placement = device.placement as OffRackPlacement;
+      expect(placement.planPin?.underlayId, underlay.id);
+      expect(placement.planPin?.at, const PxPt(120, 340));
+      expect(placement.locationId, const Uuid('loc-1'));
+
+      // ONE UNDO RESTORES BOTH. The pin rides on the placement, so there
+      // is no second write for a revert to miss and no window in which
+      // the device exists unpinned.
+      command.revert(doc);
+      expect(doc.devices, isEmpty);
+    });
+
+    test(
+      'takes the underlay location, and an unlocated plan gives no room',
+      () {
+        // G4: a site plan depicts no room, so `null` is an honest unknown
+        // rather than a room guessed from a picture (docs/15 §3.4).
+        final rack = _rack();
+        final doc = _docWithCatalog(rack, {'F1': _fieldTemplate()});
+        final underlay = _underlay(doc);
+        expect(underlay.locationId, isNull);
+
+        final result = buildPlaceOnPlanCommand(
+          doc: doc,
+          catalogId: 'F1',
+          now: _now,
+          actor: 'tester',
+          onPlan: (
+            locationId: underlay.locationId,
+            pin: PlanPin(underlayId: underlay.id, at: const PxPt(5, 6)),
+          ),
+        );
+        (result as CatalogPlacementReady).command.apply(doc);
+        final placement =
+            doc.devices.values.single.placement as OffRackPlacement;
+        expect(placement.locationId, isNull);
+        expect(placement.planPin?.at, const PxPt(5, 6));
+      },
+    );
+
+    test('a RACK-MOUNTABLE template lands off-rack too, because a plan is '
+        'not a rack', () {
+      // CR-104: the drop target decides. A 2U amplifier dropped on a
+      // floorplan is an off-rack amplifier, which is what a rack-shaped
+      // box in a credenza actually is. The interesting half is that the
+      // rack in this document is untouched: an rail-mount template plus a
+      // present rack is exactly the input that would take the RailPlacement
+      // branch if the plan target were ignored.
+      final rack = _rack();
+      final doc = _docWithCatalog(rack, {'A1': _rackTemplate(frontU: 2)});
+      final underlay = _underlay(doc);
+
+      final result = buildPlaceOnPlanCommand(
+        doc: doc,
+        catalogId: 'A1',
+        now: _now,
+        actor: 'tester',
+        onPlan: (
+          locationId: null,
+          pin: PlanPin(underlayId: underlay.id, at: const PxPt(9, 9)),
+        ),
+      );
+      (result as CatalogPlacementReady).command.apply(doc);
+      final device = doc.devices.values.single;
+      expect(device.placement, isA<OffRackPlacement>());
+      expect((device.placement as OffRackPlacement).planPin, isNotNull);
+    });
+
+    test('a pin naming an underlay the document lost is REFUSED, and no '
+        'device is created', () {
+      // SetPlanPinCommand answers this by returning without writing,
+      // which is right when the carrier already exists. Here the same
+      // silence would create a device and discard the one thing the
+      // gesture was about.
+      final rack = _rack();
+      final doc = _docWithCatalog(rack, {'F1': _fieldTemplate()});
+
+      final result = buildPlaceOnPlanCommand(
+        doc: doc,
+        catalogId: 'F1',
+        now: _now,
+        actor: 'tester',
+        onPlan: (
+          locationId: null,
+          pin: const PlanPin(
+            underlayId: Uuid('gone'),
+            at: PxPt(1, 1),
+          ),
+        ),
+      );
+      expect(result, isA<CatalogPlacementFailed>());
+      expect(
+        (result as CatalogPlacementFailed).reason,
+        contains(
+          'not in the '
+          'project any more',
+        ),
+      );
+      expect(doc.devices, isEmpty);
+    });
+
+    // NO "NEITHER TARGET" CASE, AND ITS ABSENCE IS THE POINT.
+    //
+    // The first draft of this feature put an `onPlan:` argument on
+    // `buildPlaceFromCatalogCommand` and relaxed `targetRack` to `Rack?`,
+    // which made "called with no target at all" reachable and therefore
+    // worth a test. It also made nine existing `targetRack: doc.racks[id]!`
+    // call sites carry an unnecessary `!` — and those `!` are the thing
+    // that turns a missing rack into an immediate throw at the line that
+    // got it wrong. The analyzer caught the redundancy; the design cost
+    // was the eager failure behind it.
+    //
+    // `buildPlaceOnPlanCommand` is a separate entry point for exactly that
+    // reason, so a call with no target does not compile. A test asserting
+    // a refusal here would be asserting a state the types forbid.
+  });
+}
+
+/// Adds one underlay to [doc] and returns it. Nothing here decodes an
+/// image: `PlanUnderlay` stores its own pixel size for exactly that
+/// reason (docs/15 §3.1).
+PlanUnderlay _underlay(RackDocument doc, {Uuid? locationId}) {
+  final underlay = PlanUnderlay(
+    id: const Uuid('ul-1'),
+    name: 'Level 1',
+    locationId: locationId,
+    imageMember: 'underlays/ul-1.png',
+    format: PlanImageFormat.png,
+    pixelWidth: 2000,
+    pixelHeight: 1400,
+    contentHash: 'sha256:test-underlay',
+    order: const FracIndex('a0'),
+    meta: _meta(),
+  );
+  doc.underlays[underlay.id] = underlay;
+  return underlay;
 }

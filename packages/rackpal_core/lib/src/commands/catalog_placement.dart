@@ -22,6 +22,7 @@ import 'package:rackpal_core/src/derived/placement_rules.dart';
 import 'package:rackpal_core/src/idformat/designator_allocator.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/placement.dart';
+import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/model/template.dart';
@@ -324,6 +325,35 @@ final class CatalogPlacementFailed extends CatalogPlacementResult {
   final String? ruleId;
 }
 
+/// Where a palette drag landed on a floorplan (docs/15 §6, `PLAN-E/2`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A THIRD DROP TARGET, WHICH IS EXACTLY WHAT CR-104 IS ABOUT
+/// ═══════════════════════════════════════════════════════════════════════
+/// CR-104 rules "one palette widget, one insert command, placement decided
+/// by the drop target", and names two targets: a rack gives a
+/// `RailPlacement`, the schematic canvas gives a `StagedPlacement` plus a
+/// `SheetItem`. The Plan view is the third and postdates that ruling. It
+/// needs no amendment because the rule it states answers the question:
+/// **a device dropped on a floorplan is not in a rack**, so it is an
+/// `OffRackPlacement`, and the pin says where on the page.
+///
+/// `locationId` IS THE ROOM AND THE PIN IS NOT. docs/15 §3.4 is explicit
+/// that `locationId` "remains the schedule's source of room truth and a
+/// pin never replaces it": a plan says WHERE on a page, a location says
+/// which room, and the schedule prints the room. So the caller passes the
+/// underlay's own location when it has one, and `null` is an honest
+/// unknown (G4) rather than a room guessed from a picture. A site plan
+/// depicts no room and an underlay is allowed to have no location at all.
+///
+/// A RACK-MOUNTABLE TEMPLATE IS NOT REFUSED HERE, and the choice is
+/// deliberate. Dragging a 2U amplifier onto a floorplan produces an
+/// off-rack amplifier, because that is what it is: it is in no rack.
+/// Refusing would be the product deciding that rack-shaped gear cannot sit
+/// in a credenza, which is a real installation and not an error, and
+/// CR-104's whole point is that the target decides.
+typedef PlanDropTarget = ({Uuid? locationId, PlanPin pin});
+
 /// Builds the [AddDeviceCommand] that places one new instance of the
 /// seeded template [catalogId] (e.g. `"V01"`) into [doc]. Rack-mountable
 /// templates (`frontU`/`rearU` > 0) go to [explicitRuIndex] when given —
@@ -520,6 +550,114 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
     );
   }
 
+  return _readyOffPlan(
+    doc: doc,
+    snapshot: snapshot,
+    catalogId: catalogId,
+    now: now,
+    actor: actor,
+    placement: placement,
+  );
+}
+
+/// Builds the [AddDeviceCommand] for a palette drag dropped on a floorplan
+/// (docs/15 §6, `PLAN-E/2`): the device and its pin, in ONE command, so one
+/// undo restores both.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// ITS OWN ENTRY POINT, AND THE FIRST ATTEMPT WAS A PARAMETER
+/// ═══════════════════════════════════════════════════════════════════════
+/// The obvious shape is an `onPlan:` argument on
+/// [buildPlaceFromCatalogCommand], with `targetRack` relaxed to `Rack?`
+/// because a plan drop has no rack. That was written, and the analyzer
+/// refused it in a way worth recording: **nine existing call sites pass
+/// `targetRack: doc.racks[id]!`, and every one of those `!` became an
+/// `unnecessary_null_check`.**
+///
+/// The lint is the symptom and the design was the disease. Those `!` are
+/// load-bearing: `doc.racks[id]!` throws at once if the rack is missing,
+/// which is a loud failure at the line that made the mistake. Against a
+/// `Rack?` parameter the same expression without its `!` compiles, passes
+/// `null`, and turns an immediate throw into a refusal string returned
+/// several frames later. **Relaxing the type to serve a new caller would
+/// have charged nine old ones for it**, and bought a runtime message where
+/// there had been a compile-time guarantee.
+///
+/// So the rack path keeps `required Rack` and this is a second entry
+/// point. "Neither target supplied" then goes back to being unrepresentable
+/// rather than refused, which is the better half of the trade.
+///
+/// CR-104 IS STILL SATISFIED, and it is worth being precise about how. It
+/// rules "one palette widget, one insert command, placement decided by the
+/// drop target" — a rule about the INSERT, not about the arity of the
+/// function that computes its arguments. Both paths end in [_readyOffPlan],
+/// so there is exactly one `AddDeviceCommand` construction, one designator
+/// allocation and one template-ref shape. What differs is only the question
+/// each path has to answer, and the plan's answer is that there is no
+/// question: a device dropped on a floorplan is in no rack, so it is an
+/// [OffRackPlacement] and none of the rail arithmetic has anything to be
+/// about.
+CatalogPlacementResult buildPlaceOnPlanCommand({
+  required RackDocument doc,
+  required String catalogId,
+  required PlanDropTarget onPlan,
+  required DateTime now,
+  required String actor,
+  TemplateSnapshot? using,
+}) {
+  final snapshot = using ?? resolveLatestTemplate(doc, catalogId);
+  if (snapshot == null) {
+    return CatalogPlacementFailed('Unknown catalog template "$catalogId".');
+  }
+  if (!doc.underlays.containsKey(onPlan.pin.underlayId)) {
+    // REFUSED, NOT DROPPED. `SetPlanPinCommand` answers the same question
+    // by returning without writing, which is right for a command that only
+    // sets a pin: the carrier survives unpinned. Here the same silence
+    // would CREATE A DEVICE and quietly discard the one thing the gesture
+    // was about, leaving a mystery device off-plan for somebody to find
+    // later.
+    return CatalogPlacementFailed(
+      'This plan is not in the project any more, so there is nothing to '
+      'pin $catalogId to.',
+    );
+  }
+  // ONE COMMAND, BECAUSE ONE UNDO HAS TO RESTORE BOTH (docs/15 §6). The
+  // pin rides in on the placement rather than arriving behind a second
+  // `SetPlanPinCommand`, so there is no window in which the device exists
+  // unpinned and no way for an undo to leave one behind.
+  return _readyOffPlan(
+    doc: doc,
+    snapshot: snapshot,
+    catalogId: catalogId,
+    now: now,
+    actor: actor,
+    placement: OffRackPlacement(
+      locationId: onPlan.locationId,
+      planPin: onPlan.pin,
+    ),
+  );
+}
+
+/// Allocates the designator and builds the `AddDeviceCommand`, for a
+/// placement whichever branch above decided.
+///
+/// **FACTORED OUT WHEN THE PLAN DROP ARRIVED, AND SHARED RATHER THAN
+/// COPIED.** The plan path skips every rack question and then needs the
+/// identical five lines about designators, template refs and device kind.
+/// Copying them is how the designator allocator acquires a second
+/// implementation that drifts, and this file's own header records what a
+/// second implementation of a shared decision costs: `PLC-001` was
+/// transcribed by hand into a planner here and had to be given back its
+/// rule id.
+CatalogPlacementResult _readyOffPlan({
+  required RackDocument doc,
+  required TemplateSnapshot snapshot,
+  required String catalogId,
+  required DateTime now,
+  required String actor,
+  required Placement placement,
+}) {
+  final body = snapshot.body;
   final typePrefix = body.typePrefix ?? catalogId;
   final designator = allocateDeviceDesignator(
     settings: doc.settings,
