@@ -328,7 +328,9 @@ models spaces. This document does not rule it.
 Two picked points and one typed distance. Nothing else, and specifically no attempt to read a scale
 bar out of the image.
 
-**RULED IN DETAIL BY DR-144 §11.143 at `PLAN-F`'s decomposition**, because the census found that
+**BUILT AT `PLAN-F/1`, 2026-09-08** (`units/distance_entry.dart`, `commands/plan_commands.dart`'s
+`SetPlanScaleCommand`, `canvas/plan/plan_calibrate.dart`), and **RULED IN DETAIL BY DR-144 §11.143**
+at `PLAN-F`'s decomposition, because the census found that
 `PlanScale` had neither a reader nor a writer in `lib/`: `PLAN-C/2` built the model and argued its
 rounding rule out in its own header, and every one of `nanometresPerPixel`, `pixelSpan`, `isUsable`,
 `lengthBetween`, `lengthAlong` and `PlanUnderlay.isCalibrated` was reached only from tests. No

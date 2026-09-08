@@ -1,5 +1,36 @@
 # Update Log
 
+## 2026-09-08 (tenth entry)
+
+* **Closed**: `PLAN-F/0` (#849) at `v0.6.28` and `PLAN-F/1` (#633) at
+  `v0.6.29`, discharging the pick-and-type half of
+  [DR-144](/decisions/dr-144-a-calibration-carries-its-unit.md).
+  **`PlanScale` has a writer for the first time**, two chapters after it
+  was modelled.
+* **Note**: **DR-141's FAST PATH HAD BEEN DEAD IN THE SHIPPED APP SINCE
+  `PLAN-E/6`.** The marquee arms a band on every press that misses a pin,
+  `commitDrag` asked `marquee.isActive`, and every click on empty plan
+  took the sweep branch and returned before the armed-pin branch could
+  run. Found by `PLAN-F/1`'s first test run, because a calibration click
+  sits on the same branch.
+* **Creation**: [a null collaborator in a test is a configuration](/practices/a-null-collaborator-in-a-test-is-a-configuration.md),
+  which is why nothing saw it: every case in the canvas's own file passes
+  `marquee: null` because they predate the band, and the only thing that
+  mounts that canvas in the product passes one.
+* **Note**: **THE OTHER TWO ADOPTIONS WERE RIGHT AND ONE SAYS SO IN A
+  COMMENT.** The rack asks `!_dragMoved`, the schematic asks
+  `travelled > slopPx`, and the schematic's click path names the hazard
+  by name. Two right, one wrong, and the wrong one is the canvas whose
+  click branch does the most work.
+* **Note**: **A `ListTile` COULD NOT HOLD THE ROW THE RULING DESCRIBES.**
+  It overflowed by 126 pixels in a 240 wide rail: a `ListTile` hands its
+  subtitle a fixed width and a `TextButton` carries a 64 pixel minimum
+  and a padded tap target. Measured rather than guessed, and the row is
+  now laid out where the widths are visible.
+* **Note**: the escaped inner quote in a Dart test name cost an analyzer
+  info **for the fourth time in this repository**. Reworded rather than
+  escaped, both times.
+
 ## 2026-09-08 (ninth entry)
 
 * **Ruled**: [DR-144](/decisions/dr-144-a-calibration-carries-its-unit.md) at
