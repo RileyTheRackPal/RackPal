@@ -1,5 +1,30 @@
 # Update Log
 
+## 2026-09-08 (ninth entry)
+
+* **Ruled**: [DR-144](/decisions/dr-144-a-calibration-carries-its-unit.md) at
+  `PLAN-F`'s decomposition, before a line of the chapter was written.
+* **Note**: **THE MODEL HAD NEITHER A READER NOR A WRITER.** `PlanScale`'s
+  whole derivation API is at zero call sites in `lib/`, and no command in
+  `plan_commands.dart` sets a scale, so `PlanUnderlay.scale` is null in
+  every document this product can make. Third chapter in a row to find it
+  (DR-140's rack, DR-143's importer), so it is now the expected finding
+  rather than a surprise: see
+  [a modelled field is not a reachable one](/practices/a-modelled-field-is-not-a-reachable-one.md).
+* **Note**: **`PLAN-F/2`'s "say N lengths changed" HAD NOTHING TO COUNT.**
+  `planLowerBound` is `PLAN-G`'s and nothing derives one, so the report
+  would print `0` on every calibration in the product: a G4 report whose
+  number is an artifact of what is unbuilt. The count becomes measurable
+  PINS, produces no `Len`, and names the unpinned rack when there is one.
+  Found by asking what consumes the chapter's output, not by reading it.
+* **Note**: **A BARE `36` IS WRONG BY TWELVE EITHER WAY.** The parser
+  refuses it by name rather than defaulting, and the divergence from
+  `parseLengthCell` (which reads a bare number as whole feet) is ruled
+  rather than left to a reader, so no later harmonisation pass gives
+  calibration a default unit.
+* **Correction**: docs/15's Status line read *"Not built"* on a document
+  whose own §2, §3 and §6 each say `BUILT AT` and name a chapter.
+
 ## 2026-09-08 (eighth entry)
 
 * **Closed**: `PLAN-E/6` (#848) at `v0.6.27`, discharging
