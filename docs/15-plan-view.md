@@ -558,6 +558,14 @@ lightening pass so that black callouts stay legible over it. This is ordinary dr
 a background reference, and it also protects the callouts' greyscale separation, which is what
 PAL-1 gates.
 
+**THE UNDERLAY PRINTS AT 25% AND THE NUMBER IS A LASER'S TO CONFIRM** (DR-149 §11.148.4).
+**BUILT AT `PLAN-H/1`** as `kUnderlayInkRetained` in `rackpal_export/src/draw/plan_image.dart`, one
+constant, integer per-mille (CR-001) so no float reaches a document two machines compare byte for
+byte. Chosen over 18%, the legend chip's tint, because a chip is a swatch behind one rule and a
+floorplan is line art whose walls and dimension strings must survive; and over 40%, because the
+callout has to win. **AC-054's standard is a print on a real greyscale laser at ANSI B**, so
+`PLAN-J`'s drill is the evidence and moving this afterwards is expected rather than a defect.
+
 **THE LIGHTENING PASS RUNS IN THE EXPORT BACKEND, AND THE STORED BYTES ARE THE ARCHITECT'S PAGE**
 (DR-037 §11.36.3). DR-029 §11.28.11 said *"pre-composited at import, the way palette tints already
 are"*, and a palette tint is composited at **definition** time, which would have meant the zip held a
@@ -569,7 +577,17 @@ forbids alpha absolutely, and reading `pdf-3.13.0` found that **`PdfImage(..., a
 an `/SMask`**: a PNG underlay carrying an alpha channel emits an alpha path into the document
 **without anybody calling `setGraphicState`**, which is not the failure row 9 was written about. So
 the underlay is flattened to opaque RGB before it becomes a `PdfImage`, `alpha: false` is the only
-call shape, and no `/SMask` and no `ExtGState` is ever emitted. Doing it here rather than at import
+call shape, and no `/SMask` and no `ExtGState` is ever emitted. **ASSERTED OVER THE FUNCTION THAT
+BUILDS ONE IN PRODUCTION**, which did not exist until `PLAN-H/1`: `PLAN-A/3` proved the canvas emits
+no alpha path when handed an opaque image, and `plan_image_test.dart` now proves the resolver never
+asks for one. **A transparent pixel becomes paper**, composited against white before the screen
+rather than discarded, because a PNG exported from CAD usually has black under its transparency and
+discarding it would print a solid bar across the sheet.
+
+**AND THE EXPORT PATH COULD NOT REACH AN UNDERLAY AT ALL UNTIL THAT CHAPTER** (DR-149 §11.148.1).
+`ExportRequest` carried the document JSON and the fonts and nothing else, so `PdfImageResolver` had
+**zero production call sites** from `PLAN-A` to `PLAN-H`, which is `PLAN-E/1`'s finding one package
+over. `ExportRequest.members` is the door and `planImageResolver` is the implementation. Doing it here rather than at import
 also means the screening percentage can be changed by editing code, instead of by re-importing every
 underlay in every project file a user owns.
 
@@ -590,7 +608,7 @@ One new sheet slot.
 
 | Slot | Sheet | Default | Contents |
 |---|---|---|---|
-| `T1.01…` | **Device Location Plan** | **AUTO** | One per `PlanUnderlay` that carries at least one pin. The screened underlay fitted to the sheet, device and outlet callouts with designators, the scale bar derived from calibration, a north arrow if set, and the per-plan device schedule below |
+| `T1.01…` | **Device Location Plan** | **AUTO** | One per `PlanUnderlay` that carries at least one pin. The screened underlay fitted to the sheet, device and outlet callouts with designators, the scale bar derived from calibration, a north arrow if set, and the per-plan device schedule below. **BUILT AT `PLAN-H/1`, 2026-09-09** (`draw/sheet/plan_sheet.dart`, `SheetRole.devicePlan`, ANSI B landscape): the slot, the fitted underlay, the screening and a marker per pin. **Owed**: the callouts (`PLAN-H/3`), the drawn bar (`PLAN-H/4`), the schedule (`PLAN-H/5`). A north arrow has no field on `PlanUnderlay` to read and is not scheduled |
 
 **`AUTO` is load-bearing, not a preference.** M6's exit criterion is that all four starter projects
 export a complete set, and the starters are checked-in byte-verified goldens that double as perf
@@ -607,6 +625,16 @@ agree on the day they are written and disagree by the end of the milestone.
 
 **Drawing index.** `T1.01` sheets resolve into the index like every other slot, after the sheet list
 resolves, so the index can never name a plan that is not in the file.
+
+**AND `AUTO` LIVES IN A DEFAULT ARGUMENT, WHICH IS WHY M6 IS UNTOUCHED.** `SheetSet.forRacks` takes
+`planUnderlays` defaulting to empty, so a project with no floorplan resolves the identical set it
+resolved before the role existed, and `ExportRequest.members` defaults the same way. The four
+starters are byte-verified goldens (AC-052) and none of them changes.
+
+**WHERE IT SITS IS A RULING AND NOT A NUMBER** (DR-149 §11.148.3): after `T0.02`, before the
+elevations, because a reader orients in the building before they open a rack. docs/08 §2.2's table
+is not ordered numerically anyway, `T5.01` sitting last at `n+5`, and **that table had no row for
+`T1.01` at all** until `PLAN-H/1` added one.
 
 **The scale bar is drawn, never printed as a ratio.** A sheet is scaled to fit, so a stated ratio
 like 1:50 would be wrong the moment the page size changed. A drawn bar stays correct because it

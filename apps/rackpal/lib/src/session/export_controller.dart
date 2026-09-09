@@ -178,6 +178,14 @@ final class ExportController {
       ExportRequest(
         documentJson: json,
         fontBytes: await fontLoader(),
+        // THE FLOORPLAN BYTES, AND THE EXPORT COULD NOT REACH THEM UNTIL
+        // `PLAN-H/1` (DR-149 §11.148.1). They ride from open to save on
+        // `DocumentSession.members` and had no third reader; `T1.01` is
+        // the first sheet that draws an image, so it is the first thing
+        // that ever needed them. Snapshotted with the JSON above, for the
+        // same reason: `members` is replaced wholesale rather than
+        // mutated, so an import racing an export cannot half-appear.
+        members: session.members,
         fileName: context.basename(chosen),
         // ONE clock value for the whole export (§8.4). Injected, never
         // `DateTime.now()` inside a sheet builder.

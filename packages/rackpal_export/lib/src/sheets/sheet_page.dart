@@ -35,6 +35,7 @@ pw.Page buildSheetPage({
   required DiagramScene scene,
   required Map<FontRef, PdfFont> fonts,
   required TextMeasurer measurer,
+  PdfImageResolver? images,
 }) {
   final format = pdfPageFormatFor(size);
   return pw.Page(
@@ -52,6 +53,10 @@ pw.Page buildSheetPage({
             boxHeight: boxSize.y, // size.y, NOT page height -- §7.4
             fonts: fonts,
             measurer: measurer,
+            // NULL ON EVERY SHEET THAT DRAWS NO IMAGE, which is every one
+            // but `T1.01`. `PdfDiagramCanvas.drawImage` throws when it has
+            // no resolver, and a sheet with no `OpImage` never calls it.
+            images: images,
           );
           scene.replay(canvas);
           canvas.dispose();

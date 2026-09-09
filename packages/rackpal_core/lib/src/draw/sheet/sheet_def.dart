@@ -20,6 +20,7 @@
 // M2. They are absent from [SheetRole] rather than stubbed.
 
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/print_units.dart';
@@ -42,7 +43,15 @@ enum SheetSize {
   ansiBPortrait(11 * kPdfPointsPerInch, 17 * kPdfPointsPerInch, 'B'),
 
   /// 792 × 612 pt. Equipment list and details (§6.1).
-  ansiALandscape(11 * kPdfPointsPerInch, 8.5 * kPdfPointsPerInch, 'A');
+  ansiALandscape(11 * kPdfPointsPerInch, 8.5 * kPdfPointsPerInch, 'A'),
+
+  /// 1224 × 792 pt. The device location plan (§6.1, `PLAN-H/1`).
+  ///
+  /// LANDSCAPE BECAUSE A BUILDING IS WIDE, and because the exit criterion
+  /// prints on ANSI B: DR-037 §11.36.1 requires the drill's `T1.01` on a
+  /// real greyscale laser at that size, so the sheet the drill judges and
+  /// the sheet this emits are the same paper.
+  ansiBLandscape(17 * kPdfPointsPerInch, 11 * kPdfPointsPerInch, 'B');
 
   const SheetSize(this.widthPt, this.heightPt, this.sizeCode);
 
@@ -59,8 +68,30 @@ enum SheetSize {
   bool get usesCompactTitleBlock => sizeCode == 'A';
 }
 
-/// The three sheet roles this build emits (§2.2 rows 4, 5 and n+4).
+/// The sheet roles this build emits (§2.2 rows 4, 5 and n+4, plus docs/15
+/// §8's `T1.01`).
+///
+/// **DECLARATION ORDER IS NOT SHEET ORDER.** [SheetSet.forRacks] decides
+/// where each role lands in the set, and DR-149 §11.148.3 puts the plans
+/// after `T0.02` and before the elevations: a reader orients in the
+/// building before they open a rack. `T0.00`–`T0.02` are M6's and are not
+/// emitted yet, so today the plans come first.
 enum SheetRole {
+  /// docs/15 §8's `T1.01`, one per `PlanUnderlay` that carries at least one
+  /// pin.
+  ///
+  /// **`AUTO`, AND THE DEFAULT IS WHERE THAT LIVES** (docs/15 §8).
+  /// [SheetSet.forRacks]'s `planUnderlays` defaults to empty, so a project
+  /// with no floorplan resolves the identical set it resolved before this
+  /// role existed. That is what keeps M6's exit criterion still true: the
+  /// four starters are byte-verified goldens (AC-052), and a sheet that
+  /// were `ON` would oblige all four to carry raster.
+  devicePlan(
+    'DEVICE LOCATION PLAN',
+    SheetSize.ansiBLandscape,
+    perRack: false,
+  ),
+
   rackElevationFront(
     'RACK ELEVATION — FRONT',
     SheetSize.ansiBPortrait,
@@ -178,6 +209,8 @@ final class SheetDef {
     required this.total,
     this.rackId,
     this.rackDesignator,
+    this.underlayId,
+    this.underlayName,
   });
 
   /// The stable NCS identity — `T2.01`, `T2.02`, `T6.30`.
@@ -197,6 +230,15 @@ final class SheetDef {
   /// it up to name the sheet.
   final String? rackDesignator;
 
+  /// The underlay this sheet draws, for [SheetRole.devicePlan].
+  final Uuid? underlayId;
+
+  /// That underlay's name — `Level 1`, `Basement` — carried on
+  /// [rackDesignator]'s precedent so the title block does not re-look it
+  /// up. A plan sheet's subtitle is the floor it depicts, and a set with
+  /// three of them is unreadable without one.
+  final String? underlayName;
+
   String get title => role.title;
   SheetSize get size => role.size;
 
@@ -208,11 +250,21 @@ final class SheetDef {
       other.index == index &&
       other.total == total &&
       other.rackId == rackId &&
-      other.rackDesignator == rackDesignator;
+      other.rackDesignator == rackDesignator &&
+      other.underlayId == underlayId &&
+      other.underlayName == underlayName;
 
   @override
-  int get hashCode =>
-      Object.hash(ncsId, role, index, total, rackId, rackDesignator);
+  int get hashCode => Object.hash(
+    ncsId,
+    role,
+    index,
+    total,
+    rackId,
+    rackDesignator,
+    underlayId,
+    underlayName,
+  );
 
   @override
   String toString() => 'SheetDef($ncsId, ${role.name}, $index/$total)';
@@ -252,6 +304,7 @@ final class SheetSet {
   factory SheetSet.forRacks(
     Iterable<Rack> racks, {
     int equipmentListSheets = 1,
+    Iterable<PlanUnderlay> planUnderlays = const <PlanUnderlay>[],
   }) {
     assert(
       equipmentListSheets >= 1,
@@ -264,9 +317,47 @@ final class SheetSet {
         return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
       });
 
-    final total = ordered.length * 2 + equipmentListSheets;
+    // PLAN ORDER IS `PlanUnderlay.order`, WHICH IS THE USER'S. A
+    // `FracIndex` on its string, with the id as the tiebreak, exactly as
+    // racks sort above: deterministic and never `Map` iteration order
+    // (§8.4). DR-149 §11.148.5 takes this rather than deciding it, because
+    // every other per-entity sheet in this product already sorts this way.
+    final plans = planUnderlays.toList()
+      ..sort((a, b) {
+        final byOrder = a.order.v.compareTo(b.order.v);
+        return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
+      });
+
+    final total = plans.length + ordered.length * 2 + equipmentListSheets;
     final sheets = <SheetDef>[];
     var index = 1;
+
+    // FIRST IN THE SET, AND THAT IS DR-149 §11.148.3 RATHER THAN A
+    // NUMERIC ACCIDENT. Plans go after `T0.02` and before the elevations
+    // because a reader orients in the building before they open a rack;
+    // `T0.00`–`T0.02` are M6's and are not emitted yet, so today "after
+    // the cover block" and "first" are the same position. docs/08 §2.2's
+    // own table is not numeric either — `T5.01` sits last.
+    //
+    // WHICH UNDERLAYS REACH HERE IS THE CALLER'S QUESTION, not this
+    // factory's. docs/15 §8 emits one sheet per underlay THAT CARRIES AT
+    // LEAST ONE PIN, and answering that needs the whole document; the
+    // caller passes the survivors, exactly as it passes a real
+    // `equipmentListSheets` from a real pagination. `planUnderlaysOf` is
+    // the derivation.
+    for (var i = 0; i < plans.length; i++) {
+      final plan = plans[i];
+      sheets.add(
+        SheetDef(
+          ncsId: 'T1.${(i + 1).toString().padLeft(2, '0')}',
+          role: SheetRole.devicePlan,
+          index: index++,
+          total: total,
+          underlayId: plan.id,
+          underlayName: plan.name,
+        ),
+      );
+    }
 
     for (var i = 0; i < ordered.length; i++) {
       final rack = ordered[i];

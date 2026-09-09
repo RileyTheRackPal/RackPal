@@ -1,5 +1,53 @@
 # Update Log
 
+## 2026-09-09 (fifteenth entry)
+
+* **Ruled**: [DR-148](/decisions/dr-148-the-rasteriser-is-deferred-a-second-time.md),
+  the scheduled pdfium review. **Its own stated reason did not survive the
+  census**: DR-145 booked it for `PLAN-H` because `T1.01` would be the first thing
+  needing an underlay RENDERED rather than STORED, and `PlanUnderlay.format` is
+  `png | jpeg` by construction, so `T1.01` renders a stored raster and is not
+  blocked. The rasteriser is an IMPORT gap. The review was held anyway, because
+  skipping a scheduled one on the grounds that its reason was wrong is a deferral
+  reached from the other side.
+* **Ruled**: **the new trigger is the EXIT CRITERION and not a date.** `PLAN-J`'s
+  drill is bound to the CAD plot rather than to whichever of the two real sets
+  imports, so the epic cannot close until the rasteriser exists. A review can be
+  held and deferred again; an exit criterion cannot be met by deciding to meet it
+  later. **And it adds no scope**: the criterion always said *"an architect's
+  floorplan PDF is imported without leaving the app"*, a CAD plot is one, and the
+  criterion has been unmeetable on that input since it was written.
+* **Ruled**: [DR-149](/decisions/dr-149-the-plan-sheet-and-the-export-path.md).
+  `T1.01` sits after `T0.02` and before the elevations, and the underlay prints at
+  **25%** with a laser named as the evidence rather than the ruling.
+* **Closed**: `PLAN-H/1` and `PLAN-H/2` (`#640`, `#641`) at `v0.6.38`.
+* **Note**: **THE EXPORT PATH COULD NOT REACH AN UNDERLAY, AND THAT IS PLAN-E/1's
+  FINDING ONE PACKAGE OVER.** `ExportRequest` carried no container members, so
+  `PdfImageResolver` had **zero production call sites** from `PLAN-A` to `PLAN-H`.
+  `plan_image_cache.dart`'s header already said it: *"a typedef with no
+  implementation is a seam, not a feature."* Sixth instance of the shape in this
+  epic.
+* **Update**: [A gate's scope is part of its claim](/practices/a-gates-scope-is-part-of-its-claim.md)
+  gains a fourth instance, and the useful half is the negative. THREE exhaustive
+  switches fired on the fourth `SheetRole`, only one of them designed as a trap,
+  and **not one of them could see the missing parameter**: an absent field is not
+  an unhandled case. The compiler catches the shape of what exists and says nothing
+  about what is missing, which is a regex-scanning gate's asymmetry arrived at from
+  the other end.
+* **Note**: **A MUTATION CORRECTED A COMMENT THAT WAS ALREADY WRITTEN.** Fitting the
+  sheet on `underlayBounds` rather than `scene.bounds` was commented as a defence
+  against a stray pin rescaling the drawing; `buildPlanScene` sets both to the same
+  box and says so in its own header, so the swap survives the case written to catch
+  it. The line is still right and now says what it is. Eleven of twelve mutations
+  killed and the twelfth is recorded rather than papered over.
+* **Note**: **192, NOT 191**, and `im.decodeImage` THROWS where its documentation
+  says it returns null. Both were found by tests written against exact bytes rather
+  than against "the output is lighter", which is the assertion that passes for 1%
+  and for 99%.
+* **Note**: the analyzer gate failed once at 235 against a pin of 233 and **the pin
+  did not move**: both infos were mine and were fixed. Per-package `dart analyze`
+  had called both files clean, which is the gate's scope being wider than a file's.
+
 ## 2026-09-08 (fourteenth entry)
 
 * **Ruled**: [DR-147](/decisions/dr-147-the-datum-is-the-runs-own-rack.md), settled

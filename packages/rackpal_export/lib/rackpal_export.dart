@@ -18,5 +18,6 @@ export 'src/document/build_document.dart';
 export 'src/document/export_request.dart';
 export 'src/draw/page_wiring.dart';
 export 'src/draw/pdf_canvas.dart';
+export 'src/draw/plan_image.dart';
 export 'src/sheets/page_sizes.dart';
 export 'src/sheets/sheet_page.dart';

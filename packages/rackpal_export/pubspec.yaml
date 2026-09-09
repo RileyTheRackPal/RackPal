@@ -3,7 +3,7 @@ description: >
   PdfDiagramCanvas, sheet furniture, schedule tables and document assembly.
   The isolate entry point for PDF generation. Pure Dart (isolate-safe).
 publish_to: none
-version: 0.6.36
+version: 0.6.38
 
 environment:
   sdk: ^3.12.0
@@ -11,6 +11,13 @@ environment:
 resolution: workspace
 
 dependencies:
+  # Transitive via `pdf` and now imported directly, pinned on the same
+  # rule as `vector_math` below. `plan_image.dart` decodes an underlay to
+  # screen it, which `pdf` cannot do for us: PdfImage.file returns an
+  # image built from the SOURCE pixels, and DR-037 section 11.36.3 puts
+  # the lightening pass in this backend. MIT, and already inside DR-036's
+  # licence census because it was already in the resolved tree.
+  image: ^4.9.1
   pdf: ^3.13.0
   rackpal_core:
     path: ../rackpal_core
