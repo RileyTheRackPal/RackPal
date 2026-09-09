@@ -1,5 +1,32 @@
 # Update Log
 
+## 2026-09-08 (eleventh entry)
+
+* **Ruled**: [DR-145](/decisions/dr-145-the-second-plan-set-is-all-vector.md),
+  after the user supplied a second real plan set and it was put through
+  the shipped importer rather than read.
+* **Note**: **THE TWO REAL SETS SIT AT OPPOSITE ENDS.** DR-137's eighteen
+  sheets were every-page JPEG with zero vector content; these three are
+  an AutoCAD plot with zero images and 39 fonts. The lifter handles one
+  and refuses the other, so the ordinary path forks and PDF import covers
+  one fork. Neither set alone could have shown that.
+* **Note**: **THE REFUSAL IS RIGHT FOR THE RIGHT REASON**, which is a
+  separate check from being right. `draws no image` sits after the
+  MediaBox and Resources checks in `liftPage`, so reaching it proves the
+  parser resolved a real AutoCAD classic xref and walked its page tree
+  first. A parse failure would have said something else.
+* **Note**: **THE SYNTHETIC CASE PREDICTED THE REAL FILE EXACTLY**, which
+  is the reverse of
+  [run the real input](/practices/run-the-real-input-before-writing-tests.md)'s
+  own founding case. Recorded so that practice reads as a rule of thumb
+  rather than a law: the fixtures were right this time, and checking is
+  what established which time it was.
+* **Note**: DR-029 is not wrong and **its purchase is half-delivered**. A
+  plot from CAD is vector by construction; flattening is an extra act
+  somebody chose. `PLAN-H` is where the pdfium deferral is re-examined,
+  because `T1.01` is the first thing that needs an underlay RENDERED
+  rather than stored.
+
 ## 2026-09-08 (tenth entry)
 
 * **Closed**: `PLAN-F/0` (#849) at `v0.6.28` and `PLAN-F/1` (#633) at

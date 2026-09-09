@@ -96,6 +96,64 @@ Uint8List pdfWith({
 const String kFullPageContent =
     'q\nBT\n36 1692 Td\nET\nQ\nq 2484 0 0 1656 54 36 cm /img0 Do Q\n';
 
+/// A page of a CAD plot: **ANSI B landscape** (17 x 11 in), which is what
+/// the real file declares on all three of its pages, and a `/Resources`
+/// that is **populated and image-free**, which is the whole point of the
+/// fixture.
+///
+/// One interpolated constant rather than adjacent literals, on
+/// [kImageProps]'s own precedent: PDF dictionary syntax has no whitespace
+/// between its tokens, and `missing_whitespace_between_adjacent_strings`
+/// would have a space added that changes the fixture.
+const String kCadFontRes =
+    '<</Font<</F1<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>>>>>';
+const String kCadPageDict = '/MediaBox[0 0 1224 792]/Resources$kCadFontRes';
+
+/// A CAD PLOT: several pages, fonts and linework, and **no image at all**
+/// (DR-145 §11.144.6).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A TWIN OF A REAL FILE, NOT THE MINIMUM THAT EXERCISES THE RULE
+/// ═══════════════════════════════════════════════════════════════════════
+/// The second real plan set this project has been given is an AutoCAD 2022
+/// plot: three ANSI B pages, a classic cross-reference table, 39 `/Font`
+/// occurrences and **zero `/XObject`**. It is not in the repository
+/// (DR-145 §11.144.6), so this reproduces its SIGNATURE.
+///
+/// It is deliberately not `pdfWith(resources: '<<>>')`, which is the same
+/// rule at its boundary. A drawing office emits a resource dictionary
+/// **populated with fonts** and holding no images, and the difference
+/// between an empty dict and a populated one is the difference between
+/// proving the branch exists and proving it is reached by the thing that
+/// will keep arriving.
+Uint8List cadPlotPdf({int pages = 3}) {
+  final buf = BytesBuilder();
+  void put(String s) => buf.add(latin1.encode(s));
+
+  // Page objects are 3, 5, 7 ...; their content streams 4, 6, 8 ...
+  final kids = [for (var i = 0; i < pages; i++) '${3 + i * 2} 0 R'].join(' ');
+  put('%PDF-1.7\n');
+  put('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n');
+  put('2 0 obj\n<</Type/Pages/Kids[$kids]/Count $pages>>\nendobj\n');
+  for (var i = 0; i < pages; i++) {
+    final pageObj = 3 + i * 2;
+    // Linework and a room name, which is what a plot is: path operators
+    // and text, and nothing else.
+    final content =
+        'q 0.5 w 100 100 m 1100 100 l S Q\n'
+        'BT /F1 10 Tf 120 120 Td (BEDROOM ${i + 1}) Tj ET\n';
+    put(
+      '$pageObj 0 obj\n<</Type/Page/Parent 2 0 R$kCadPageDict'
+      '/Contents ${pageObj + 1} 0 R>>\nendobj\n',
+    );
+    put('${pageObj + 1} 0 obj\n<</Length ${content.length}>>\nstream\n');
+    put(content);
+    put('\nendstream\nendobj\n');
+  }
+  put('trailer\n<</Root 1 0 R>>\n%%EOF\n');
+  return buf.toBytes();
+}
+
 List<Outcome<LiftedPdfPage>> pagesOf(Uint8List bytes) =>
     (liftPdfPages(bytes) as Ok<List<Outcome<LiftedPdfPage>>>).value;
 
@@ -209,6 +267,45 @@ void main() {
         pdfWith(content: 'q 1 0 0 1 0 0 cm Q', resources: '<<>>'),
       );
       expect(refusal, contains('draws no image'));
+    });
+
+    test('A REAL CAD PLOT IS REFUSED ON EVERY PAGE, and this fixture is a '
+        'twin of one rather than the rule at its boundary', () {
+      // DR-145 §11.144: the second real plan set this project has been
+      // given is an AutoCAD 2022 plot with zero image XObjects, and the
+      // shipped importer refuses all three of its pages. The measurement
+      // is docs/12 §5.9.15; this is the gate that keeps it true.
+      final pages = pagesOf(cadPlotPdf());
+      expect(pages, hasLength(3), reason: 'the page tree resolved');
+      for (var i = 0; i < pages.length; i++) {
+        final page = pages[i];
+        expect(page, isA<Err<LiftedPdfPage>>(), reason: 'page ${i + 1}');
+        final error = (page as Err<LiftedPdfPage>).error;
+        expect((error as PdfPageNotLiftableError).reason, 'draws no image');
+      }
+    });
+
+    test('AND FOR THE RIGHT REASON, having resolved a POPULATED resource '
+        'dictionary first', () {
+      // Being right and being right for the right reason are two checks,
+      // and docs/12 §5.9.6.4 is why the second is run: this lifter once
+      // refused all 18 pages of the FIRST real plan set with a plausible
+      // content refusal while the parser was the thing at fault.
+      //
+      // `draws no image` sits after the MediaBox, malformed-box and
+      // Resources checks, so reaching it on a page whose Resources hold a
+      // `/Font` proves those passed on real-shaped input.
+      final page = pagesOf(cadPlotPdf(pages: 1)).single;
+      final error = (page as Err<LiftedPdfPage>).error;
+      final refusal = (error as PdfPageNotLiftableError).reason;
+      expect(refusal, 'draws no image');
+      // The sentences a parse failure would have produced instead. A case
+      // asserting only the positive would still pass if the lifter began
+      // failing earlier for an unrelated reason, which is exactly the
+      // shape §5.9.6.4 records.
+      expect(refusal, isNot(contains('MediaBox')));
+      expect(refusal, isNot(contains('resources')));
+      expect(refusal, isNot(contains('unreadable')));
     });
   });
 

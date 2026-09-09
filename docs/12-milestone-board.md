@@ -7992,6 +7992,105 @@ written, on this repository's own practice: `1/3"` reads `0' 0-5/16"`, `2.4m` re
 
 ---
 
+#### 5.9.15 The second real plan set, and it inverts the first · `DR-145` · `v0.6.30`
+
+Closed `2026-09-08`, `#850`. **No exit clause moves**, and no code changes: what this chapter
+produces is a measurement, a ruling and a regression fixture. It is filed as a Chapter under
+`PLAN-F` rather than under `PLAN-D`, whose story is closed, on `PLAN-F/0`'s precedent one day old:
+unscheduled work goes to the open story rather than under a closed one.
+
+**5.9.15.1 THE METHOD, WHICH IS §5.9.5.1's AND IS REUSED RATHER THAN REINVENTED.** The file is not in
+the repository (DR-145 §11.144.6), so every figure below is taken by regex over the raw bytes and can
+be re-derived from anybody else's CAD plot. The importer figures are taken by running the shipped
+`liftPdfPages` and `readPdfPages` against the file, not by reading the code.
+
+**5.9.15.2 WHAT THE FILE IS.**
+
+| | Value |
+|---|---|
+| Producer | `pdfplot16.hdi`, from **AutoCAD 2022** |
+| Pages | **3**, `/MediaBox [0 0 1224 792]`, ANSI B (17 x 11 in) landscape |
+| `/XObject` occurrences | **0** |
+| `/Image`, `/DCTDecode` | **0** |
+| `/Font` occurrences | **39** |
+| Cross-reference | classic table; **no `/ObjStm`, no `/XRef` stream** |
+| Size | 1,169,090 bytes |
+
+**5.9.15.3 THE IMPORTER REFUSES ALL THREE PAGES, AND IT IS RIGHT FOR THE RIGHT REASON.** Every page
+returns `PdfPageNotLiftableError ... draws no image`, and `readPdfPages` turns that into the sentence
+a person sees:
+
+> this PDF has 3 pages and none of them can be used as an underlay (PLAN-D/3, DR-138). The first page
+> draws no image. Export the page you want as PNG or JPEG for now.
+
+**BEING RIGHT AND BEING RIGHT FOR THE RIGHT REASON ARE TWO CHECKS**, and §5.9.6.4 is why this one is
+run: the lifter once refused all 18 pages of the first real set with a plausible content refusal
+while the parser was the thing at fault. `draws no image` sits in `liftPage` **after** the MediaBox,
+the malformed-box and the Resources checks, so reaching it proves the parser resolved a real AutoCAD
+classic xref, walked its page tree, read a usable `/MediaBox` and resolved each page's resource
+dictionary before finding nothing to lift. A parse failure would have said
+`PdfCompressedCrossReferenceError`, `declares no usable MediaBox` or `has no resources`, by name.
+
+**AND THE SYNTHETIC CASE PREDICTED IT EXACTLY.** `pdf_page_lift_test.dart`'s
+*"no XObject at all is refused"* asserts the same string the real file produced, which is the reverse
+of §5.9.6.4's experience and is recorded so that practice reads as a rule of thumb rather than a law.
+The refusal reaches the user: `_importFloorplan` passes an `Err` straight to `_showRefusal`.
+
+**5.9.15.4 THE TWO REAL SETS SIT AT OPPOSITE ENDS, WHICH NEITHER ALONE COULD SHOW.**
+
+| | 2026-09-07 (§5.9.5, DR-137) | 2026-09-08 (this section) |
+|---|---|---|
+| Sheets | 18, ARCH D (36 x 24 in) | 3, ANSI B (17 x 11 in) |
+| Content | **every page one full-page JPEG**, zero fonts, zero vector | **zero images**, 39 fonts, all vector |
+| Origin | an office flattening a drawing at 60 dpi | a plot straight out of AutoCAD |
+| The importer | lifts it, losslessly | **refuses every page** |
+
+§5.9.5.3 wrote *"A vector PDF breaks it"* a day before this file arrived, so the mechanism is not the
+news. **The population is.** The ordinary path forks, both forks are ordinary, and PDF import covers
+one of them. DR-029 is not wrong and **its purchase is half-delivered**, which is a different
+sentence: a plot from CAD is vector by construction, and flattening is an extra act somebody chose.
+
+**ONE FILE IS ONE SAMPLE.** This board has generalised from a single run twice, in opposite
+directions, on the CI duration note. Nothing here claims a distribution across the trade; it claims
+that both classes are real and have now both been seen.
+
+**5.9.15.5 WHAT IS STILL UNPROVEN, STATED SO THE COVERAGE IS NOT READ AS THE SURFACE.** Neither real
+set carries an object stream, so `PdfCompressedCrossReferenceError` has still only ever fired against
+a hand-assembled fixture, and §5.9.6.6 names that as the scan's real weakness. Neither carries a page
+that is *partly* an image, so the picker's mixed grid, where some pages are offered and others greyed
+with a reason, has never met a real document. And no vector page has been rasterised at any
+resolution, so DR-137 §11.136.4's ceiling rule has no counterpart for this class.
+
+**5.9.15.6 THE FIXTURE IS A SYNTHETIC TWIN, AND IT WAS MEASURED THE SAME WAY THE REAL FILE WAS.**
+`cadPlotPdf()` is built to this file's signature rather than to the minimum that exercises the rule.
+The existing case passes an **empty** resource dictionary, which is the rule's boundary; a drawing
+office emits one **populated with fonts and holding no images**, and that is the shape that will keep
+arriving. Put through §5.9.15.1's regex method, the twin reads:
+
+| | real file | twin |
+|---|---|---|
+| Header | `%PDF-1.7` | `%PDF-1.7` |
+| `/Type/Page` | 4 (3 pages plus the tree node) | 4 |
+| `/XObject` | 0 | **0** |
+| `/Image`, `/DCTDecode` | 0 | **0** |
+| `/ObjStm`, `/Type/XRef` | 0 | **0** |
+| `/MediaBox` | `[0 0 1224 792]`, one distinct value | same |
+| `/Font` | 39 | **6** |
+
+**THE ONE ROW THAT DIFFERS IS SAID RATHER THAN ROUNDED.** A real plot carries 39 `/Font`
+occurrences because a plotter subsets and re-declares faces; the twin carries six, from one Type1
+resource per page. Nothing the lifter does reads the count, so the difference is an artifact of the
+real file rather than a property of the class, and stating it is what stops the twin being read as a
+byte-for-byte reproduction.
+
+**5.9.15.7 EVIDENCE.** Floors: `rackpal_core` 4341 to 4343, `rackpal_app` 964 to 965. **The app case
+covers something no fixture in that file could**: every other PDF there is ONE page, so
+`PdfHasNoLiftablePageError.pageCount` had only ever rendered as `1 page`, and the plural sentence a
+person actually sees was untested. No analyzer movement; the pin stays at 233. The measurement is the
+deliverable and is reproducible from §5.9.15.1's method.
+
+---
+
 ## 6. The dependency graph, as it actually stands
 
 ### 6.1 What can be worked on now

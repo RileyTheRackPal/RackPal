@@ -18477,6 +18477,114 @@ should show anything else about the calibration, such as when it was taken or by
 
 ---
 
+### §11.144 DR-145 · The second real plan set is all vector, so DR-138's trigger has fired and the deferral survives it
+
+**Settled by the user on 2026-09-08**, after the file was put through the shipped importer rather than
+read. DR-138 §11.137 deferred pdfium *"until a PDF needs it"* and stated the cost of the lifter in
+terms: *"a vector PDF falls through to a refusal and reinstates the manual step DR-029 bought out."*
+**A PDF now needs it.** This ruling records the measurement, keeps the deferral, and names where it
+is re-examined so a fired trigger and an unexplained wait do not sit side by side in the record.
+
+**11.144.1 WHAT THE FILE IS, MEASURED RATHER THAN DESCRIBED.** A three-page residential plan set,
+supplied by the user and **kept out of the repository** on DR-137 §11.136.6's precedent. Read by
+regex over the raw bytes, which is the method §5.9.5.1 wrote down so that any figure here can be
+re-derived from somebody else's plan set:
+
+| | Value |
+|---|---|
+| Producer | `pdfplot16.hdi`, from **AutoCAD 2022** |
+| Pages | **3**, `/MediaBox [0 0 1224 792]`, ANSI B (17 x 11 in) landscape |
+| `/XObject` occurrences | **0** |
+| `/Image`, `/DCTDecode` | **0** |
+| `/Font` occurrences | **39** |
+| Cross-reference | classic table; no `/ObjStm`, no `/XRef` stream |
+| Size | 1,169,090 bytes |
+
+**11.144.2 THE IMPORTER REFUSES IT, AND THE REFUSAL IS CORRECT FOR THE RIGHT REASON.** All three
+pages come back `PdfPageNotLiftableError ... draws no image`, and `readPdfPages` turns that into the
+document-level sentence a person sees:
+
+> this PDF has 3 pages and none of them can be used as an underlay (PLAN-D/3, DR-138). The first page
+> draws no image. Export the page you want as PNG or JPEG for now.
+
+**A REFUSAL CAN BE RIGHT FOR THE WRONG REASON AND THIS ONE IS NOT.** `draws no image` sits in
+`liftPage` **after** the MediaBox, the malformed-box and the Resources checks, so reaching it proves
+the parser resolved a real AutoCAD classic xref, walked its page tree, read a usable `/MediaBox` and
+resolved each page's resource dictionary before finding no image to lift. Had the parse failed the
+error would have been `PdfCompressedCrossReferenceError`, `declares no usable MediaBox` or
+`has no resources`, and it was none of them. **This is the first time the lifter's front end has run
+on a real vector PDF**; before today it had seen synthetic fixtures and one raster-flattened set.
+
+**AND THE SYNTHETIC CASE PREDICTED IT EXACTLY.** `pdf_page_lift_test.dart`'s
+*"no XObject at all is refused"* asserts the same string the real file produced. That is worth
+recording because the corpus carries the opposite experience as a practice: a parser whose synthetic
+cases all passed and which refused every page of the first real file it saw. Here the fixtures and
+the real input agree, and saying so is what makes the practice a rule of thumb rather than a law.
+
+**11.144.3 THE TWO REAL SETS SIT AT OPPOSITE ENDS, WHICH NEITHER ALONE COULD SHOW.** This project has
+now been given two plan sets by the trade rather than by a test:
+
+| | 2026-09-07 (DR-137 §11.136) | 2026-09-08 (this ruling) |
+|---|---|---|
+| Sheets | 18, ARCH D (36 x 24 in) | 3, ANSI B (17 x 11 in) |
+| Content | **every page one full-page JPEG**, zero fonts, zero vector | **zero images**, 39 fonts, all vector |
+| Origin | an office flattening a drawing at 60 dpi | a plot straight out of AutoCAD |
+| The importer | lifts it, losslessly | **refuses every page** |
+
+**docs/12 §5.9.5.3 wrote the sentence this confirms** a day before the file arrived: *"A vector PDF
+breaks it."* The lifter was shipped knowing that. What is new is not the mechanism but the
+**population**: the ordinary path forks, both forks are ordinary, and the import covers one.
+
+**11.144.4 DR-029 IS NOT WRONG AND ITS PURCHASE IS HALF-DELIVERED, WHICH IS A DIFFERENT SENTENCE.**
+DR-029 bought PDF import at a costed two to three weeks because *"architects send PDFs and a manual
+conversion step would sit on the ordinary path rather than the exceptional one."* That premise holds
+exactly: PDFs are the ordinary input, and for a raster-flattened set the manual step is gone. For a
+CAD plot it is back. **The honest statement is that half the ordinary path is bought**, and the half
+that is not is the one a drawing office produces without doing anything to it, since a plot from CAD
+is vector by construction and flattening is an extra act somebody chose.
+
+**ONE FILE IS ONE SAMPLE AND THE CLASS IS NOT.** The corpus has been wrong twice by generalising from
+a single run (the CI duration note, in both directions), so the claim is deliberately narrow: nothing
+here says how the two classes are distributed across the trade. What it says is that both classes are
+real, both have now been seen, and a mechanism covering one of them cannot be described as covering
+*"PDF import"* without qualification.
+
+**11.144.5 RULED: THE DEFERRAL STANDS, AND IT IS RE-EXAMINED AT `PLAN-H`.** The user's call against
+opening the rasteriser as scope now and against closing the question in favour of the manual step.
+
+**Not now**, because a vendored pdfium plus a direct FFI binding is the largest single piece left in
+this epic and would displace `PLAN-F` and `PLAN-G`, which are the chapters that make a plan yield a
+length at all. A plan that locates a drop is useful uncalibrated (§1); a rasteriser that arrives
+before the length model buys a prettier picture of the same missing number.
+
+**Not never**, because the trigger has fired and a deferral with a fired trigger and no review date is
+how a debt stops being visible. **`PLAN-H` is the review point** and the reason is structural rather
+than a guess at a date: `T1.01` is the first thing in this product that needs an underlay *rendered*
+rather than *stored*, so the chapter that builds it is the first one whose own work is blocked by the
+absence rather than merely inconvenienced by it.
+
+**The route is unchanged and is not `pdfrx`.** DR-138 §11.137 refused that package twice over, and
+docs/03's row is kept rather than deleted so the choice is not re-derived. When the review happens the
+candidate is a direct FFI binding over a **vendored** pdfium, which is what CR-100 requires.
+
+**11.144.6 RULED: THE FIXTURE IS A SYNTHETIC TWIN AND THE FILE STAYS OUT OF THE REPOSITORY.**
+DR-137 §11.136.6 kept the first set out because it carries a sealed engineer's licence number and
+DR-036 would publish every commit ever made. **This file is kept out for a plainer reason**: it is the
+user's reference material and nothing about the finding needs the bytes. What the regression needs is
+the *signature*, so the fixture is built to match it (a classic xref, three pages, an ANSI B
+`/MediaBox`, fonts and paths in the content stream, and no `/XObject`), and the measurements above are
+written out so anybody with their own CAD plot can re-derive them.
+
+**11.144.7 WHAT THIS DOES NOT RULE.** Not the resolution a rasterisation would use when one exists;
+DR-137 §11.136.4's *"never above the source's own effective resolution"* is a rule for a raster source
+and a vector source has no such ceiling, which is a question `PLAN-H` inherits along with the
+rasteriser. Not whether the page picker should show a grid of refused pages rather than a single
+sentence when **every** page is refused; the current behaviour is deliberate and this file did not
+test the mixed case, because it has none. Not whether a pure-Dart renderer for the subset a CAD plot
+emits is worth considering, which is named here only so that it is on the record as *not* costed.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
