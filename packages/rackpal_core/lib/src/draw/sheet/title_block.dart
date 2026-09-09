@@ -122,9 +122,19 @@ final class TitleBlockFields {
     required String fileName,
     required DateTime issuedAt,
   }) {
-    final projectLine = rack == null
+    // WHAT THIS SHEET IS ABOUT, WHICHEVER KIND OF SHEET IT IS. An
+    // elevation names its rack; a plan names the floor it depicts, read
+    // off `SheetDef.underlayName` rather than through a second parameter,
+    // because the sheet already knows its own subject and a set with
+    // three plans in it is unreadable without one (DR-149 §11.148).
+    final subject = rack != null
+        ? _rackTitle(rack)
+        : (sheet.underlayName?.trim().isEmpty ?? true)
+        ? null
+        : sheet.underlayName!.trim();
+    final projectLine = subject == null
         ? info.projectName
-        : '${info.projectName} — ${_rackTitle(rack)}';
+        : '${info.projectName} — $subject';
 
     final sheetNumberValue = switch (settings.sheetNumbering) {
       SheetNumbering.simple => '${sheet.index}/${sheet.total}',

@@ -44,8 +44,21 @@ const PdfPageFormat ansiALandscape = PdfPageFormat(
   8.5 * PdfPageFormat.inch,
 );
 
+/// ANSI B landscape, 1224 x 792 pt (17 x 11 in) -- the device location
+/// plan (§6.1, PLAN-H/1).
+///
+/// EXPLICITLY WIDE, never a rotated portrait: `sheet_def.dart`'s own note
+/// records that `pw.FullPage._getConstraints` reads `pageFormat.width` and
+/// `.height` UNROTATED, so a `PageOrientation.landscape` theme and a
+/// full-page painter disagree about which axis is which.
+const PdfPageFormat ansiBLandscape = PdfPageFormat(
+  17 * PdfPageFormat.inch,
+  11 * PdfPageFormat.inch,
+);
+
 /// The `PdfPageFormat` for a core [SheetSize].
 PdfPageFormat pdfPageFormatFor(SheetSize size) => switch (size) {
   SheetSize.ansiBPortrait => ansiBPortrait,
   SheetSize.ansiALandscape => ansiALandscape,
+  SheetSize.ansiBLandscape => ansiBLandscape,
 };

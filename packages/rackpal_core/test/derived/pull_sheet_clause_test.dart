@@ -315,6 +315,13 @@ void main() {
       expect(
         SheetRole.values.map((r) => r.name),
         orderedEquals([
+          // `devicePlan` ARRIVED AT `PLAN-H/1` AND IS NOT THIS CASE'S
+          // QUARRY. docs/15 §8 rules `T1.01` into v1 with the Plan view,
+          // so a fourth role is a ruling being applied rather than M6's
+          // work leaking into M3. The list is asserted whole, rather than
+          // the absence checked alone, precisely so an addition has to be
+          // looked at: this one was, and it is legitimate.
+          'devicePlan',
           'rackElevationFront',
           'rackElevationRear',
           'equipmentList',
@@ -322,6 +329,13 @@ void main() {
         reason:
             'M6 owes the sheet: the SheetRole, the layout, the initial '
             'boxes and the page',
+      );
+      // THE ACTUAL CLAIM, stated so it survives the next legitimate
+      // addition without anybody having to re-read the list above.
+      expect(
+        SheetRole.values.map((r) => r.name),
+        isNot(contains('pullSheet')),
+        reason: 'DR-027 §11.26.2: M3 owes the rows, M6 owns the sheet',
       );
     });
   });

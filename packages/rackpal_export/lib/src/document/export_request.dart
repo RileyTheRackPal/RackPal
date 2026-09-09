@@ -41,6 +41,7 @@ final class ExportRequest {
     required this.fontBytes,
     required this.fileName,
     required this.issuedAt,
+    this.members = const <String, Uint8List>{},
   });
 
   /// The document, encoded (`encodeJsonTreeBytes(encodeToJsonTree(doc))`).
@@ -63,6 +64,32 @@ final class ExportRequest {
   /// that against the source of every file under `document/` and
   /// `sheets/`.
   final DateTime issuedAt;
+
+  /// The container's binary members, keyed by member path
+  /// (`underlays/<uuid>.png`, docs/15 section 2).
+  ///
+  /// =====================================================================
+  /// THE EXPORT PATH COULD NOT REACH AN UNDERLAY UNTIL THIS FIELD EXISTED
+  /// =====================================================================
+  /// `DiagramCanvas.drawImage` shipped at PLAN-A, `PdfDiagramCanvas` draws
+  /// it, and `PdfImageResolver` has been a typedef with ZERO production
+  /// call sites ever since, because no sheet asked for an image. T1.01 is
+  /// the first caller, and it could not have worked: the bytes live in
+  /// `DocumentSession.members` and nothing carried them across. DR-149
+  /// section 11.148.1 records the census.
+  ///
+  /// It is `Uint8List` and a `String` key, so it crosses an isolate
+  /// exactly as `fontBytes` does and this file's whole argument is
+  /// untouched (section 8.2). It DEFAULTS TO EMPTY, which is the same
+  /// mechanism that makes T1.01 AUTO: a project with no floorplan builds
+  /// the identical request it built before this field existed, and every
+  /// existing caller compiles unchanged.
+  ///
+  /// A SNAPSHOT, LIKE THE JSON BESIDE IT. The map is passed by reference
+  /// and `DocumentSession` replaces it wholesale rather than mutating it
+  /// (`_members = {..._members, name: bytes}`), so an import racing an
+  /// export cannot half-appear.
+  final Map<String, Uint8List> members;
 }
 
 /// A finished export.

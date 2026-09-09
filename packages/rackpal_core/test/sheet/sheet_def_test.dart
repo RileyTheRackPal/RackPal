@@ -216,18 +216,39 @@ void main() {
   });
 
   group('SheetRole', () {
-    test('names the three sheets in this set, and no others', () {
-      expect(SheetRole.values, hasLength(3));
+    // FOUR SINCE `PLAN-H/1`, AND THE CANARY IS THE POINT RATHER THAN THE
+    // NUMBER. This read `hasLength(3)` and `names the three sheets` while
+    // `SheetRole` had three values; docs/15 §8 adds `T1.01` and the count
+    // moves with it. What it still refuses is a role appearing without
+    // anybody deciding: eight of §2.2's twelve slots are M6's and are
+    // absent from this enum rather than stubbed.
+    test('names the four sheets in this set, and no others', () {
+      expect(SheetRole.values, hasLength(4));
+      expect(SheetRole.devicePlan.title, 'DEVICE LOCATION PLAN');
       expect(SheetRole.rackElevationFront.title, 'RACK ELEVATION — FRONT');
       expect(SheetRole.rackElevationRear.title, 'RACK ELEVATION — REAR');
       expect(SheetRole.equipmentList.title, 'EQUIPMENT LIST AND MATERIALS');
     });
 
     test('assigns the paper of section 6.1: elevations ANSI B portrait, the '
-        'list ANSI A landscape', () {
+        'list ANSI A landscape, the plan ANSI B landscape', () {
       expect(SheetRole.rackElevationFront.size, SheetSize.ansiBPortrait);
       expect(SheetRole.rackElevationRear.size, SheetSize.ansiBPortrait);
       expect(SheetRole.equipmentList.size, SheetSize.ansiALandscape);
+      // A BUILDING IS WIDE, and the exit criterion prints at ANSI B
+      // (DR-037 §11.36.1), so the sheet the drill judges and the sheet
+      // this emits are the same paper.
+      expect(SheetRole.devicePlan.size, SheetSize.ansiBLandscape);
+      expect(SheetSize.ansiBLandscape.sizeCode, 'B');
+    });
+
+    test('only the elevations are per-rack', () {
+      // `perRack` drives the set resolution, and a plan that claimed it
+      // would emit one sheet per rack per underlay.
+      expect(SheetRole.devicePlan.perRack, isFalse);
+      expect(SheetRole.equipmentList.perRack, isFalse);
+      expect(SheetRole.rackElevationFront.perRack, isTrue);
+      expect(SheetRole.rackElevationRear.perRack, isTrue);
     });
 
     test('never says BOM', () {

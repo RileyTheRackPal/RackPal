@@ -38,6 +38,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_export/src/document/export_request.dart';
+import 'package:rackpal_export/src/draw/plan_image.dart';
 import 'package:rackpal_export/src/sheets/sheet_page.dart';
 import 'package:rackpal_text/rackpal_text.dart';
 
@@ -93,10 +94,24 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     measurer: measurer,
     units: doc.settings.displayUnits,
   );
+  // WHICH PLANS EARN A SHEET IS A DERIVATION, NOT A DRAWING DECISION
+  // (docs/15 section 8: one per underlay THAT CARRIES AT LEAST ONE PIN).
+  // Resolved here and handed in, exactly as `equipmentListSheets` is: the
+  // dry run has to know the total before any sheet is drawn, or
+  // "SHEET i OF n" is wrong.
+  final plans = planUnderlaysWithPins(doc);
   final set = SheetSet.forRacks(
     doc.racks.values,
     equipmentListSheets: schedulePages.length,
+    planUnderlays: plans,
   );
+
+  // ONE RESOLVER FOR THE WHOLE DOCUMENT, so a member decoded for sheet 1
+  // is not decoded again for sheet 2 and the document holds one XObject
+  // per underlay rather than one per sheet. Built even when `plans` is
+  // empty, which costs an empty map: the alternative is a nullable that
+  // every call site has to reason about.
+  final images = planImageResolver(pdf.document, request.members);
 
   // ---- step 4: render -------------------------------------------------
   final notices = <String>[...set.notices];
@@ -142,6 +157,20 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
         ]) {
           if (notice != null) notices.add('${sheet.ncsId}: $notice');
         }
+      case SheetRole.devicePlan:
+        final built = buildPlanSheet(
+          sheet: sheet,
+          underlay: doc.underlays[sheet.underlayId]!,
+          pins: planPinsFor(doc, sheet.underlayId!),
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+        );
+        scene = built.scene;
+        legibility = built.legibility;
       case SheetRole.equipmentList:
         final built = buildEquipmentSheet(
           sheet: sheet,
@@ -169,6 +198,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
         scene: scene,
         fonts: fonts,
         measurer: measurer,
+        images: images,
       ),
     );
   }

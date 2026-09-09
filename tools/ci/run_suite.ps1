@@ -594,7 +594,23 @@ $SuiteFloors = @{
     # is the rollup `_isQuantity`'s exhaustive switch does not guard:
     # `_footageOf` reads a `Len?` and never asks where it came from. Six
     # mutations killed.
-    'rackpal_core'   = 4392
+    # 4411 at PLAN-H/1: +18 from plan_sheet_test.dart and +1 for the
+    # perRack case in sheet_def_test.dart. Three of the eighteen are
+    # load-bearing and assert an ABSENCE, because AUTO is what keeps M6's
+    # four byte-verified starters from each growing a plan sheet: a
+    # document with no underlay must resolve the identical set it resolved
+    # before the role existed, and an imported underlay nobody pinned
+    # anything to must print nothing. The fourth is the stray-pin case: a
+    # drop dragged off the picture must not rescale the drawing, which is
+    # why the fit reads `underlayBounds` and not the scene's ink.
+    #
+    # TWO EXISTING CANARIES MOVED AND NEITHER WAS WEAKENED.
+    # sheet_def_test's `names the three sheets` and pull_sheet_clause_test's
+    # ordered role list both pinned a three-value enum. The second now also
+    # asserts the claim it was actually making, that no `pullSheet` role
+    # exists, so the next legitimate addition does not have to re-read a
+    # list to know what the case was for.
+    'rackpal_core'   = 4411
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -602,7 +618,16 @@ $SuiteFloors = @{
     # its top row at v = 1, so a vertically flipped placement produces an
     # IDENTICAL box and an upside-down floorplan. Mutation-tested by
     # deleting the counter-flip: three of the four orientation cases fail.
-    'rackpal_export' = 209
+    # 220 at PLAN-H/1: +11 from plan_image_test.dart. PLAN-A/3 already
+    # asserted no /SMask and no /ExtGState against a PdfImage the TEST
+    # built with `alpha: false`; that proves the canvas, not the thing
+    # which builds a PdfImage in production, and that function did not
+    # exist until now. Two cases are load-bearing beyond the alpha pair: a
+    # fully transparent pixel must become paper rather than black, since a
+    # pass that discarded alpha would print a solid bar across the sheet,
+    # and the deflate measurement, because "already-compressed rasters do
+    # not deflate" is true of photographs and false of line art.
+    'rackpal_export' = 220
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
     # presses the two new remedy buttons on chips raised by a real drag.
     # The core suites cannot see whether the SCREEN reaches the commands.
