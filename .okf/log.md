@@ -1,5 +1,58 @@
 # Update Log
 
+## 2026-09-08 (fourteenth entry)
+
+* **Ruled**: [DR-147](/decisions/dr-147-the-datum-is-the-runs-own-rack.md), settled
+  by the user at `PLAN-G`'s census before a line of the chapter was written. Four
+  calls: the datum is the rack the run lands in, the floor enters neither footage
+  `Σ` and is counted in both, a floor and a guess get two flags, and the rules read
+  the floor only where it proves a violation.
+* **Closed**: `PLAN-G` (`#603`) and all four Chapters (`#636`-`#639`) at `v0.6.36`,
+  which closes roadmap §4's `planLowerBound` bullet, the last unticked line of the
+  length model. **No exit clause moves**: the criterion is a printed `T1.01` a
+  stranger can use, and a length is not a locator.
+* **Note**: **TWO OF THE FOUR BRIEFS HAD EXPIRED, AND THE ONE THAT MATTERED NEEDED
+  THE CANON RATHER THAN THE TREE.** `#639` said *"M5 owns the rules, do not build
+  them here"* and M5 built them at M5-E; those rules read
+  `terminatedLength ?? cutLength` and have never touched the tier ladder the brief
+  describes them reading. Both were found by a census against the tree. The fourth
+  finding was not and could not have been: **DR-050 §11.49.2, two days after this
+  epic was decomposed, says *"`ScheduleLengthSource` gains nothing"***, and the tier
+  did not exist in the tree under either reading, so its absence is what both
+  predict. New practice:
+  [a brief expires](/practices/a-brief-expires.md).
+* **Update**: [DR-050](/decisions/dr-050-geometry-fills-the-room-estimate.md) is
+  **scoped rather than overturned**, and the clarification is written where a reader
+  MEETS the collision, in canon §11.49.2 itself, not only where it was resolved. Its
+  own §11.49.4 preserves `planLowerBound` by name, its table lists the value as *"not
+  built"* rather than removed, and its objection is to a PROVENANCE distinction
+  between figures that all sum, which a floor is not. **Its own two items are
+  entirely unbuilt**, which is why nothing in the tree had ever made the two rulings
+  disagree out loud.
+* **Update**: [A gate's scope is part of its claim](/practices/a-gates-scope-is-part-of-its-claim.md)
+  gains a third instance, and it is the most trusted mechanism in this repository.
+  `cable_footage.dart`'s exhaustive switch stopped the build exactly as its author
+  intended, seventeen months on. **In exactly one place**: `schedule.dart`'s
+  `_footageOf` builds the sheet footer's `Σ` by reading a `Len?` and never asking
+  where it came from, and the ticket said *"the footage rollup"*, singular. Being a
+  compile error buys certainty about the site it guards and says nothing about the
+  site beside it.
+* **Update**: [G4](/invariants/g4-unknowns-are-counted.md) gains the floor's row.
+  Excluding a bound from a total is the easy half and is also what a silently
+  shrinking `Σ` does; **counting the exclusion is the rule.**
+* **Note**: **TWO FIELDS WERE WRITTEN AND CUT, WHICH IS THE FOUR PREVIOUS NOTES
+  WORKING.** A `PlanBoundRefusal` enum naming six refusal reasons would have had zero
+  readers in `lib/`, and a `ScheduleEntry.planLowerBound` sidecar would have had none
+  either, because the rules take a `Link` and never build a schedule. DR-140, DR-143,
+  DR-144 and DR-146 each found one of these after it shipped; this is the first
+  chapter to find two and build neither.
+* **Note**: **A MUTATION NAMED THE CASE NOBODY HAD WRITTEN.** Relaxing *"exactly one
+  rack end"* to *"at least one"* survived both the jumper and the sub-feed cases,
+  because an ordinary rack-to-rack run's far end is rail-placed and carries no pin
+  under either rule: two tests passing for a reason they do not name. The case that
+  separates them is a run landing in two racks whose `structureOrigin` still names a
+  pinned outlet. Thirteen mutations killed across the chapter.
+
 ## 2026-09-08 (thirteenth entry)
 
 * **Ruled**: [DR-146](/decisions/dr-146-uncalibrated-states-what-it-costs.md),
