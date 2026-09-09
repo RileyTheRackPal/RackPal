@@ -1229,6 +1229,18 @@ final class AppShellState extends State<AppShell>
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(reason)));
   }
 
+  /// Something worked, and what it did is worth a sentence (`PLAN-F/2`).
+  ///
+  /// The same surface as [_showRefusal] and a separate method, because
+  /// the two are separate decisions: a later banner, log line or status
+  /// row for successes changes this one and leaves refusals alone.
+  void _showNotice(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   // ══════════════════════════════════════════════════════════════════
   // THE PLAN TAB (PLAN-E/5, DR-143, DR-091)
   // ══════════════════════════════════════════════════════════════════
@@ -1288,6 +1300,12 @@ final class AppShellState extends State<AppShell>
       selection: _planSelection,
       arm: _planArm,
       onRefuse: _showRefusal,
+      // THE SAME CHANNEL AS A REFUSAL, WHICH IS THIS SHELL'S DECISION AND
+      // NOT THE VIEW'S. `PlanEditorScreen` keeps the two callbacks apart
+      // because they carry opposite news; what a host does with them is
+      // its own business, and every transient notice in this window is a
+      // snack bar today.
+      onNotice: _showNotice,
     );
   }
 

@@ -8091,6 +8091,88 @@ deliverable and is reproducible from §5.9.15.1's method.
 
 ---
 
+#### 5.9.16 PLAN-F/2: what a calibration bought, and a mask whose consumers do not subscribe to it · `DR-144` · `v0.6.31`
+
+Closed `2026-09-08`, `#634`. **No exit clause moves.** The brief has three clauses and the census
+found one of them already discharged, one measurable only in a place the brief does not look, and one
+that needed a derivation built first.
+
+##### 5.9.16.1 The count, and why it is of pins
+
+DR-144 §11.143.3 ruled it: `derived/plan_measurability.dart` answers, for one underlay, how many pins
+a length could be derived for, **and produces no `Len`**. One per pin would be `planLowerBound`
+shipped early under another name, without the rank, the `>=` prefix, the italic, the rollup exclusion
+or `LEN-001`'s reading, which are five decisions DR-037 §11.36.4 already took.
+
+**THE TEST FOR THAT BOUNDARY IS A PROPERTY AND NOT A COMMENT.** Moving every pin from one corner of
+the raster to the other changes nothing the derivation reports, and so does multiplying the typed
+distance by twelve. Those two cases are the only ones in the file that can tell this derivation from
+one that computes distances; every counting case passes either way.
+
+**THE BLOCKER IS NAMED RATHER THAN COUNTED AS ZERO.** `PlanBlocker` is ordered by remedy, so a plan
+that is uncalibrated *and* rackless *and* empty reports the one act to do now rather than a list of
+chores. `Calibrated · 0 measurable` is a true sentence that tells nobody anything;
+`Calibrated · no rack pinned` names the act that unblocks every length on the plan, eight inches above
+the strip that performs it.
+
+##### 5.9.16.2 Two surfaces, because a recalibration changes nothing standing
+
+The user's call, and the reason is an asymmetry rather than a preference. A **first** calibration
+changes the row from `Not calibrated` to a count, so the act is visible. A **recalibration** leaves
+that line reading exactly the same, one measurable before and one after, **so nothing on screen would
+say the length just moved**, and that is the most consequential edit the feature has.
+
+So the row carries the standing fact, which is the half that still answers tomorrow, and a snack bar
+on commit carries the act, which is the only half that can report a recalibration. The wording is one
+function per surface so the two cannot drift, and `calibrateActionLabel` already makes the button and
+the undo entry agree on the same two words.
+
+**THE PLURAL IS HAND-WRITTEN**, because `1 pins re-derive` is the `0 pathways` status bar this
+repository already shipped once. Every sentence the chapter can emit was **printed and read** before
+any assertion was written, which is this corpus's own practice and which is how the singular
+`1 pin re-derives` was found rather than asserted around.
+
+##### 5.9.16.3 THE MASK CLAUSE WAS ALREADY DISCHARGED, AND THE CENSUS FOUND SOMETHING BETTER
+
+`#634` says the epoch mask *"must reach every consumer of a derived length"* and cites DR-011.4, whose
+first implementation silently did nothing. `PLAN-F/1` already tests `SetPlanScaleCommand`'s mask
+against a real `DocumentController` listener, so the clause as written was discharged one chapter
+early. Censusing who actually subscribes says more:
+
+| Consumer | Channel | Can it show a calibration? |
+|---|---|---|
+| Rack elevation | `epochs.structure`, `epochs.rack`, `epochs.meta` | **No.** No device moves |
+| Schematic | `epochs.structure`, `epochs.wires`, `epochs.meta`, `sheet`, `style` | **No.** No wire changes |
+| **Plan editor** | `DocumentController.changes` | **Yes**, and it is the only one |
+| Schedule | rebuilt from `session.document` on the shell's own notification | Not yet: `planLowerBound` is `PLAN-G`'s |
+| `T1.01` scale bar | does not exist | `PLAN-H` |
+
+**So the mask over-wakes two canvases and under-wakes nothing**, which is the safe direction and
+costs one scene rebuild on a gesture performed once per plan. The two surfaces that must refresh do
+not read epochs at all. **The mask is not changed**: `structure | wires` matches the pin commands on
+the same chain, and a calibration diverging from them would leave two commands feeding one future
+consumer disagreeing about their own consequences.
+
+**AND THE OBSERVABLE HALF IS THE ONE WORTH ASSERTING.** `plan_commands_test.dart` asserts the epoch
+counters move, which is the mask against a listener one layer up; `plan_calibrate_test.dart` now
+asserts the artifact, that the rail really does redraw, by running commands from **outside** the
+widget. One of those cases is the finding: **the row moves when a PIN changes and no calibration
+happened at all**, because pinning the rack is what turns `no rack pinned` into a count. A row wired
+only to a calibration would sit there naming a blocker the user had just cleared.
+
+##### 5.9.16.4 Evidence
+
+Floors: `rackpal_core` 4343 to 4354 (+11), `rackpal_ui` 1658 to 1665 (+7). **Five mutations killed**
+on the derivation: dropping the rack gate, counting racks as measurable, ignoring the underlay id,
+reading `scale != null` instead of `isCalibrated`, and reordering the blockers. Each was asserted
+present in the source before being applied, so none of them is a mutation that did not build. The
+analyzer pin stays at 233.
+
+Two `PLAN-F/1` cases were updated rather than deleted: they asserted the bare word `Calibrated`, and
+the line is now richer. The updated assertions name the whole string, which is what the row prints.
+
+---
+
 ## 6. The dependency graph, as it actually stands
 
 ### 6.1 What can be worked on now
