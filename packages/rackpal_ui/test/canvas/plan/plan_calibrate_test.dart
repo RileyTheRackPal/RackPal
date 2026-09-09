@@ -642,7 +642,14 @@ void main() {
         outletPinned: true,
       );
       final h = await pump(tester, c);
-      expect(find.text(kUncalibratedLabel), findsOneWidget);
+      // `PLAN-F/3` MADE THIS LINE RICHER TOO: this fixture has a pin on
+      // it, so the row names what that pin costs while there is no scale
+      // (DR-146 §11.145.4). The whole string is asserted, which is what
+      // the row prints.
+      expect(
+        find.text('$kUncalibratedLabel · 1 pin carries no measurable position'),
+        findsOneWidget,
+      );
 
       await calibrate(tester);
 
@@ -811,7 +818,130 @@ void main() {
 
       c.undoLast();
       await tester.pump();
+      // `PLAN-F/3` MADE THIS LINE RICHER TOO: this fixture has a pin on
+      // it, so the row names what that pin costs while there is no scale
+      // (DR-146 §11.145.4). The whole string is asserted, which is what
+      // the row prints.
+      expect(
+        find.text('$kUncalibratedLabel · 1 pin carries no measurable position'),
+        findsOneWidget,
+      );
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // PLAN-F/3: THE UNCALIBRATED ROW NAMES WHAT IT COSTS (DR-146 §11.145.4)
+  // ═════════════════════════════════════════════════════════════════════
+  group('DR-146: an uncalibrated row says what is stranded', () {
+    testWidgets('A PLAN CARRYING PINS DOES NOT READ LIKE AN EMPTY ONE', (
+      tester,
+    ) async {
+      // The defect this chapter was for. `Not calibrated` on its own left
+      // a plan with drops on it printing the same line as a plan with
+      // none, which is the flattering half G4 exists to refuse.
+      await pump(tester, _controller(outletPinned: true));
+
+      expect(
+        find.text('$kUncalibratedLabel · 1 pin carries no measurable position'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('and a plan with nothing stranded says only the state', (
+      tester,
+    ) async {
+      // The count is the COST, and a plan with no drops on it has not
+      // incurred one. `0 pins carry no measurable position` is the
+      // `Calibrated · 0 measurable` DR-144 §11.143.3 refused one state
+      // later.
+      await pump(tester, _controller());
+
       expect(find.text(kUncalibratedLabel), findsOneWidget);
+    });
+
+    testWidgets('THE NUMBER DOES NOT MOVE WHEN THE CALIBRATION LANDS, which '
+        'is the call the user made', (tester) async {
+      // One pin stranded before, one pin measurable after, and the rack
+      // is the datum in neither line. The refused alternative counted the
+      // rack too and would print `2 pins carry no measurable position`
+      // here and `1 measurable` below.
+      final c = _controller(
+        withRack: true,
+        rackPinned: true,
+        outletPinned: true,
+      );
+      await pump(tester, c);
+      expect(
+        find.text('$kUncalibratedLabel · 1 pin carries no measurable position'),
+        findsOneWidget,
+      );
+
+      c.run(
+        SetPlanScaleCommand(
+          underlayId: _ul1,
+          scale: const PlanScale(
+            a: PxPt(100, 100),
+            b: PxPt(200, 100),
+            distance: Len(36 * Len.nmPerInch),
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('$kCalibratedLabel · 1 measurable'), findsOneWidget);
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // PLAN-F/3: PLACEMENT AND CALIBRATION DO NOT BLOCK EACH OTHER
+  // ═════════════════════════════════════════════════════════════════════
+  group('DR-146 §11.145.7: the two facts are independent', () {
+    testWidgets('A CALIBRATION ON A PINNED PLAN MOVES NOTHING THAT IS ON IT', (
+      tester,
+    ) async {
+      // The direction the suite has never run. Every plan fixture in this
+      // package is uncalibrated, so "a pin survives a calibration" was
+      // asserted nowhere, and the gesture is where a gate would be added.
+      final c = _controller(
+        withRack: true,
+        rackPinned: true,
+        outletPinned: true,
+      );
+      await pump(tester, c);
+      final rackBefore = c.doc.racks[_rackId]!.planPin;
+      final outletBefore = c.doc.outlets[_outletId]!.planPin;
+
+      await tester.tap(calibrateButton(_ul1));
+      await tester.pump();
+      await tester.tapAt(const Offset(341, 100));
+      await tester.tapAt(const Offset(441, 100));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(CalibrateDistanceDialog.fieldKey),
+        '36in',
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(CalibrateDistanceDialog.commitKey));
+      await tester.pumpAndSettle();
+
+      expect(c.doc.underlays[_ul1]!.scale, isNotNull);
+      expect(c.doc.racks[_rackId]!.planPin, rackBefore);
+      expect(c.doc.outlets[_outletId]!.planPin, outletBefore);
+    });
+
+    testWidgets('AND THE PICK IS OFFERED ON A PLAN WITH NOTHING PINNED', (
+      tester,
+    ) async {
+      // The mirror: a calibration is not gated on having something to
+      // measure, because the obvious order of work is to scale the plan
+      // once it is imported and pin the drops afterwards.
+      final c = _controller();
+      await pump(tester, c);
+
+      expect(calibrateButton(_ul1), findsOneWidget);
+      await tester.tap(calibrateButton(_ul1));
+      await tester.pump();
+      expect(find.byKey(PlanCalibrateChip.chipKey), findsOneWidget);
     });
   });
 }

@@ -45,6 +45,18 @@ G4 of the four.
 authored, never estimated. A shipped catalog template must not reference such a
 connector, and CI asserts it.
 
+**An uncalibrated plan, where the unknown is a whole surface.** A plan with no
+scale derives no length, and the underlay row printed a bare `Not calibrated`, so
+a plan carrying thirty-nine stranded pins read exactly like a plan with none. That
+is this rule's flattering half: a state reported without the count of what it
+costs. The row now prints `PLN-001`'s own sentence,
+`Not calibrated · 39 pins carry no measurable position`, and it is the same
+population the calibrated line reports, so the number does not move when the
+calibration lands ([DR-146](/decisions/dr-146-uncalibrated-states-what-it-costs.md)).
+**The scale itself stays null and never acquires a default**: a guessed factor
+does not degrade a length, it produces a confident one that is wrong by an order
+of magnitude on a drawing an installer trusts.
+
 **Registry ids.** An id that resolves to nothing degrades to `unknown(rawId)`:
 round-trips, renders grey with the raw id as its tag, never throws. M2-B's
 `unresolvedSignalFamilyCount` equalling its row count was this rule *working*,

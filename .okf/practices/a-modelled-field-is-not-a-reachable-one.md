@@ -384,6 +384,29 @@ unreachable is often a thing that was SPECIFIED AND SKIPPED, not a thing
 nobody decided**, and the cheap check is to grep the spec for the surface
 before designing it.
 
+# And a COUNT with no reader, one chapter after the census that should have caught it
+
+**`PlanMeasurability.pinnedCarrierCount`** (DR-146, `PLAN-F/3`). Built at
+`PLAN-F/2` with a doc comment that named its own intended caller: *"a surface that
+had only the first would report a fully pinned plan as empty."* **Zero call sites
+in `lib/`.** The surface it named is the underlay row, and that row printed a bare
+`Not calibrated`.
+
+**The new half is WHY it was unread, and it is not scheduling.** Every earlier
+entry here is a field whose consumer was a milestone away. This one was built one
+day earlier, deliberately, for a row the same epic was about to write, **and it
+guessed that row's rule**: it counted racks plus subjects, and the ruling that
+settled the row chose the other population, because a count including the rack
+would print forty stranded pins before a calibration and thirty-nine measurable
+after it.
+
+So the honest move was to **replace** it rather than to wire it up or leave it.
+Making an unread field reachable is not automatically the fix, which
+`BankDef.order` above already showed; this adds the case where the field is not
+merely unread but **built on an assumption a later ruling contradicts**. A field
+authored for a surface nobody has ruled yet is a guess with a type on it, and the
+cheap habit is to build the count when the sentence that prints it is settled.
+
 # Citations
 
 [1] `packages/rackmate_core/lib/src/commands/pathway_commands.dart`, file header

@@ -367,6 +367,30 @@ grammar: an explicitly united value is unambiguous on any project.
 its own, because "which wall" does not require a scale. `PLN-001` reports the uncalibrated state as
 an advisory rather than blocking anything (CR-022, G3).
 
+**AND THE UNCALIBRATED ROW SAYS WHAT THAT COSTS** (DR-146 §11.145.4). **BUILT AT `PLAN-F/3`,
+2026-09-08.** The row read a bare `Not calibrated`, so a plan carrying thirty-nine stranded pins
+printed exactly the line a plan with none printed, which is the flattering half G4 exists to refuse.
+It now reads:
+
+> Not calibrated · 39 pins carry no measurable position
+
+which is §9's own `PLN-001` sentence, written once in `derived/plan_measurability.dart` so that the
+row and the advisory `PLAN-I` will file cannot drift apart. **A plan with nothing stranded says only
+the state**, because the count is the cost and an empty plan has not incurred one.
+
+**THE COUNT IS THE SAME POPULATION IN BOTH DIRECTIONS** (§11.145.5), so thirty-nine unmeasurable
+becomes thirty-nine measurable. Counting the rack as well would print forty and then thirty-nine,
+and a number that drops by one at the moment of a calibration reads as a pin the calibration ate;
+the rack is the datum on both sides and is in neither count.
+
+**AND NEITHER FACT BLOCKS THE OTHER, WHICH IS NOW PROVEN AS A GESTURE RATHER THAN AS A DEFAULT.**
+Every plan fixture in `rackpal_ui` is built without a scale, so every pin gesture the suite ran was
+already a pin on an uncalibrated plan and passed for a reason nobody had named, while a pin on a
+CALIBRATED plan was exercised nowhere. `PLAN-F/3` drags a rack out of the strip in both states: the
+pin lands either way, the uncalibrated plan is exactly as uncalibrated afterwards, and the scale
+comes back byte for byte. A gate would be a disabled strip row or a refused drop, and neither is
+visible to a case that talks to the document.
+
 **Recalibration is a document command like any other** and is undoable. It changes every derived
 length on that plan at once, which is exactly why it goes through the command stack and not through
 a settings field.
@@ -551,7 +575,7 @@ through the one `AckedFinding` mechanism (CR-019).
 
 | Rule | Fires when |
 |---|---|
-| `PLN-001` | An underlay is uncalibrated. *"N pins carry no measurable position"* |
+| `PLN-001` | An underlay is uncalibrated. *"N pins carry no measurable position"*. **The sentence and its count are built** (`PLAN-F/3`, `unmeasurablePinsSentence`), and the underlay row prints them today; what `PLAN-I` adds is the finding, its severity and its band |
 | `PLN-002` | Devices or outlets in a plan's location carry no pin. *"N devices in Level 1 are not on the plan"* |
 | `PLN-003` | An underlay has device pins but no rack pin, so no run length is derivable from it |
 | `PLN-004` | An underlay's `contentHash` does not match its stored bytes. A **warning**, never a load failure (AC-042) |

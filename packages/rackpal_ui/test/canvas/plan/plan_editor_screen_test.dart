@@ -59,24 +59,38 @@ Future<Uint8List> _png(int w, int h) async {
   }
 }
 
-PlanUnderlay _underlay(Uuid id, String member, String name, {Uuid? at}) =>
-    PlanUnderlay(
-      id: id,
-      name: name,
-      locationId: at,
-      imageMember: member,
-      format: PlanImageFormat.png,
-      pixelWidth: 600,
-      pixelHeight: 400,
-      contentHash: 'sha256:test',
-      order: FracIndex(id == _ul1 ? 'a0' : 'a1'),
-      meta: _meta(),
-    );
+PlanUnderlay _underlay(
+  Uuid id,
+  String member,
+  String name, {
+  Uuid? at,
+  PlanScale? scale,
+}) => PlanUnderlay(
+  id: id,
+  name: name,
+  locationId: at,
+  imageMember: member,
+  format: PlanImageFormat.png,
+  pixelWidth: 600,
+  pixelHeight: 400,
+  contentHash: 'sha256:test',
+  order: FracIndex(id == _ul1 ? 'a0' : 'a1'),
+  meta: _meta(),
+  scale: scale,
+);
+
+/// 36 inches over 100 pixels, which is `PLAN-F/1`'s own example.
+const _usable = PlanScale(
+  a: PxPt(100, 100),
+  b: PxPt(200, 100),
+  distance: Len(36 * Len.nmPerInch),
+);
 
 DocumentController _controller({
   bool withUnderlay = true,
   bool withSecond = false,
   bool withRack = true,
+  PlanScale? scale,
 }) {
   final doc = RackDocument(
     id: const Uuid('doc-1'),
@@ -94,7 +108,13 @@ DocumentController _controller({
     meta: _meta(),
   );
   if (withUnderlay) {
-    doc.underlays[_ul1] = _underlay(_ul1, _member1, 'Level 1', at: _level1);
+    doc.underlays[_ul1] = _underlay(
+      _ul1,
+      _member1,
+      'Level 1',
+      at: _level1,
+      scale: scale,
+    );
   }
   if (withSecond) {
     doc.underlays[_ul2] = _underlay(_ul2, _member2, 'Site');
@@ -252,6 +272,66 @@ void main() {
       await tester.pump();
 
       expect(find.text(kUnpinnedStripEmptyLabel), findsOneWidget);
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // PLAN-F/3: PLACEMENT DOES NOT WAIT FOR A SCALE, IN EITHER DIRECTION
+  // ═════════════════════════════════════════════════════════════════════
+  // DR-146 §11.145.7: the proof is a GESTURE and not a model call. A gate
+  // would be added on a surface, as a disabled strip row or a refused
+  // drop, and a case that ran `SetPlanPinCommand` against a document
+  // could not see one. Both cases below drag the rack out of the strip,
+  // which is the same gesture the group above proves, and differ only in
+  // whether the plan under it carries a scale.
+  group('DR-146: placement and calibration do not block each other', () {
+    /// Drags [row] out of the strip and drops it on the canvas.
+    Future<void> dragToCanvas(WidgetTester tester, Finder row) async {
+      final pointer = TestPointer(43, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(pointer.down(tester.getCenter(row)));
+      await tester.sendEventToBinding(pointer.move(const Offset(500, 120)));
+      await tester.sendEventToBinding(pointer.up());
+      await tester.pump();
+    }
+
+    testWidgets('A PIN LANDS ON AN UNCALIBRATED PLAN, AND NO LENGTH COMES '
+        'WITH IT', (tester) async {
+      // docs/15 §5: placement is useful on its own, because "which wall"
+      // does not require a scale, and that is the feature's primary job.
+      // Every fixture in this file already ran this way and none of them
+      // said so, which is a property nobody would notice losing.
+      final c = _controller();
+      await pump(tester, c);
+      expect(c.doc.underlays[_ul1]!.scale, isNull);
+
+      await dragToCanvas(tester, find.byKey(UnpinnedStrip.rowKey(_rackId)));
+
+      expect(c.doc.racks[_rackId]!.planPin, isNotNull);
+      // AND THE PIN BOUGHT NO SCALE. The plan is exactly as uncalibrated
+      // as it was, which is the half of "neither blocks the other" that a
+      // fabricated 1:1 default would break silently.
+      expect(c.doc.underlays[_ul1]!.scale, isNull);
+      final m = planMeasurabilityOf(c.doc, c.doc.underlays[_ul1]!);
+      expect(m.rackPinned, isTrue);
+      expect(m.measurableCount, 0);
+      expect(m.blockedBy, PlanBlocker.uncalibrated);
+    });
+
+    testWidgets('AND ON A CALIBRATED ONE, WHICH IS THE DIRECTION NO CASE '
+        'HAS EVER RUN', (tester) async {
+      // A scale is not a lock. The mirror of the case above, and the one
+      // that would fail the day somebody gated the strip on a calibration
+      // being present or absent.
+      final c = _controller(scale: _usable);
+      await pump(tester, c);
+
+      await dragToCanvas(tester, find.byKey(UnpinnedStrip.rowKey(_rackId)));
+
+      expect(c.doc.racks[_rackId]!.planPin, isNotNull);
+      // AND THE PIN LEFT THE CALIBRATION ALONE, byte for byte: a pin
+      // command that touched the scale would move every length on the
+      // plan at once.
+      expect(c.doc.underlays[_ul1]!.scale, _usable);
     });
   });
 }

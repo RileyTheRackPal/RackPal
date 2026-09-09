@@ -297,8 +297,24 @@ const String kUncalibratedLabel = 'Not calibrated';
 /// every length on the plan, eight inches above the strip that performs
 /// it. G4's rule that a rollup reports its unknown count is the same rule:
 /// a number with no account of what is missing is the flattering half.
+/// **AND THE UNCALIBRATED HALF NAMES WHAT IT COSTS** (`PLAN-F/3`, DR-146
+/// §11.145.4). A bare `Not calibrated` left a plan carrying thirty-nine
+/// stranded pins reading exactly like a plan with none, which is the
+/// flattering half G4 exists to refuse. The sentence is
+/// [unmeasurablePinsSentence], written once in core so that the row and
+/// the `PLN-001` advisory `PLAN-I` files cannot drift apart, and the
+/// count is the same population as `12 measurable` so that thirty-nine
+/// unmeasurable becomes thirty-nine measurable rather than forty becoming
+/// thirty-nine (§11.145.5).
 String calibrationStateLabel(PlanUnderlay underlay, PlanMeasurability m) {
-  if (!underlay.isCalibrated) return kUncalibratedLabel;
+  if (!underlay.isCalibrated) {
+    final stranded = unmeasurablePinsSentence(m);
+    // NOTHING STRANDED SAYS ONLY THE STATE. The count is the cost, and a
+    // plan with no drops on it has not incurred one.
+    return stranded == null
+        ? kUncalibratedLabel
+        : '$kUncalibratedLabel · $stranded';
+  }
   return switch (m.blockedBy) {
     PlanBlocker.noRackPinned => '$kCalibratedLabel · no rack pinned',
     // A CALIBRATED, RACKED, EMPTY PLAN IS NOT AN ERROR, and it is the

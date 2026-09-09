@@ -18585,6 +18585,123 @@ emits is worth considering, which is named here only so that it is on the record
 
 ---
 
+### §11.145 DR-146 · An uncalibrated plan states what it costs, and the count is one population in both directions
+
+**Settled by the user on 2026-09-08**, at `PLAN-F/3`'s census, before a line of the chapter was
+written. `PLAN-F/3` is the last of DR-144 §11.143.7's three chapters and its brief has three clauses;
+the census found one already discharged, one true but proven only by accident, and one hole of the
+shape this epic has now found four times.
+
+**11.145.1 CLAUSE ONE IS BUILT, AND IT IS THE ONE THE BRIEF LEADS WITH.** `#635` opens with
+*"`scale == null` means UNCALIBRATED. It does not mean 1:1 and it never acquires a guessed value."*
+Censused by site rather than read:
+
+| Where a default could enter | What is there |
+|---|---|
+| `PlanUnderlay.scale` | `PlanScale?`, documented *"null does not mean 1:1 and it never acquires a guessed value"* |
+| `PlanUnderlay.isCalibrated` | `scale?.isUsable ?? false`, so a stored scale that cannot yield a factor reads as uncalibrated |
+| `_encodePlanUnderlay` | `putIfNotNull`, so an uncalibrated plan writes **no `scale` key** (G4, CR-114) |
+| `_decodePlanUnderlay` | `json['scale'] == null ? null : …`, and never a fallback |
+| `SetPlanScaleCommand.scale` | non-nullable, so no gesture can write "unknown" over a scale |
+| `planMeasurabilityOf` | gates on `isCalibrated`, so an unusable scale counts nothing |
+
+**No site substitutes anything**, and `plan_serialization_test.dart` already asserts the absent key
+and the null read-back. **So the clause the brief leads with was discharged by `PLAN-C/5` and
+`PLAN-F/1`**, and this chapter neither re-implements nor re-litigates it.
+
+**11.145.2 CLAUSE TWO IS TRUE AND IS PROVEN BY ACCIDENT, WHICH IS NOT THE SAME AS PROVEN.** The brief
+asks that *"pins place, and no length derives, and neither fact is blocked by the other."* Nothing in
+`lib/` gates a pin on a scale: `plan_canvas_screen.dart`, `unpinned_strip.dart` and
+`unpinned_carriers.dart` mention calibration only for the pick mode that shares their canvas. The
+direction holds.
+
+**AND NOT ONE TEST IN THE SUITE SAYS SO.** Every plan fixture in `rackpal_ui` is built without a
+`PlanScale`, so every pin gesture the suite runs is already a pin on an uncalibrated plan, and the
+property passes because the fixture's default happens to be the interesting case. The mirror
+direction, **a pin placed on a plan that IS calibrated**, is exercised nowhere: `PlanScale` appears in
+no UI plan test outside `plan_calibrate_test.dart`. A property that is only ever satisfied by a
+default is a property nobody would notice losing, which is this repository's own standard applied to
+a fact rather than to a number.
+
+**11.145.3 CLAUSE THREE IS A HOLE, AND IT IS THE FOURTH OF ITS SHAPE IN FOUR CHAPTERS.** The brief
+ends *"`PLN-001` reports the state as an advisory rather than blocking anything. `PLAN-I` builds it;
+this task is the model and derived behaviour it reports on."* The state exists per underlay; what
+does not exist is any reader of the number it would report. `PlanMeasurability.pinnedCarrierCount`
+was built at `PLAN-F/2` with a doc comment naming its own intended caller, *"on an uncalibrated plan
+with forty pins the first is 0 and the second is 40, and a surface that had only the first would
+report a fully pinned plan as empty"*, and it has **zero call sites in `lib/`**. The surface it
+describes is the underlay row, and that row prints a bare `Not calibrated`: **a plan carrying
+thirty-nine stranded pins reads exactly like a plan with none.** DR-140, DR-143 and DR-144 each found
+a modelled thing nothing could reach; this one is a *count* nothing reads, which is the same defect
+with a smaller radius.
+
+**11.145.4 RULED: THE UNCALIBRATED ROW NAMES WHAT IS STRANDED.** The user's call, against three
+alternatives that were put with it.
+
+> Not calibrated · 39 pins carry no measurable position
+
+The words are **docs/15 §9's own `PLN-001` sentence**, chosen so that the row and the advisory
+`PLAN-I` will build say the same thing rather than two things about one state. G4 is the reason the
+line exists at all: a rollup reports its unknown count rather than presenting a flattering total, and
+an uncalibrated plan's unknown count is every drop standing on it. `Calibrated · 12 measurable`
+already tells a person what a calibration bought; this is the same sentence before the purchase.
+
+**A PLAN WITH NOTHING STRANDED SAYS ONLY `Not calibrated`.** The count is the cost, and a plan with
+no drops on it has not incurred one; `Not calibrated · 0 pins carry no measurable position` is the
+`Calibrated · 0 measurable` that DR-144 §11.143.3 already refused, one state earlier.
+
+**11.145.5 RULED: ONE POPULATION IN BOTH DIRECTIONS, WHICH DECIDES WHICH FIELD SURVIVES.** The
+alternative put to the user was to count every pin on the plan, the rack included, which is both what
+`pinnedCarrierCount` holds and what a person counts on screen. It was refused for a reason visible
+only across the two states: thirty-nine stranded pins would become `Calibrated · 39 measurable` under
+one reading and forty would become thirty-nine under the other, **and a number that drops by one at
+the moment of a calibration reads as a pin lost to it.** The rack is the datum in both directions
+(DR-144 §11.143.3) and belongs in neither count.
+
+**SO `pinnedCarrierCount` IS REPLACED RATHER THAN RETAINED.** `subjectPinCount` is what the row wants:
+the pins a length could be derived FOR, counted whether or not one currently can be. `PLAN-F/2`
+anticipated this row and guessed its population one chapter before it was ruled, which is the
+ordinary hazard of building a field for a surface that does not exist yet; keeping the unread one
+beside the read one would leave the next census to find it again.
+
+**AND `measurableCount` BECOMES A DERIVED GETTER, WHICH IS STRUCTURAL RATHER THAN TIDY.** It was
+stored as `calibrated && hasRack ? others : 0` beside the two booleans that decide it, so three
+fields could disagree and a constructor could be handed a count that its own flags forbid. With the
+subject count stored, the gate is written once and the disagreement is unspellable. `blockedBy`
+already worked this way and is the precedent.
+
+**11.145.6 RULED: THE SENTENCE LIVES IN `rackpal_core`, BESIDE THE DERIVATION.** DR-144 §11.143.3
+made the row and the snack bar one function each so the two could not drift; the same argument
+crosses a package here, and the package boundary is the reason it must be settled rather than left.
+`PLN-001` is a validation rule and `rackpal_core/src/validation/` is where rules live; the underlay
+row is `rackpal_ui`. A sentence written in the UI would have to be **copied** into core when
+`PLAN-I` arrives, and a copied sentence is a sentence that will disagree with its original the first
+time somebody edits one of them. So the phrase is core's, next to the count it reports, and the row
+composes it. **The plural is hand-written**, on `PLAN-F/2`'s own finding: `1 pins` is the `0 pathways`
+status bar this repository has already shipped once.
+
+**11.145.7 RULED: THE PROOF IS A GESTURE IN BOTH DIRECTIONS, NOT A MODEL CALL.** A test that runs
+`SetPlanPinCommand` against an uncalibrated document proves the command, and the command was never
+where a gate would be added. **A gate would be added on a surface**, as a disabled strip row, a
+refused drop or a `Calibrate first` chip, and every one of those is invisible to a test that talks to
+the document. So both directions are asserted through the shipped gestures: a carrier dragged out of
+the strip onto an uncalibrated plan lands a pin, and a plan carrying pins takes a calibration through
+the pick and the dialog without disturbing one of them.
+
+**11.145.8 WHAT THIS DOES NOT RULE.** Not `PLN-001`'s severity, its band or its behaviour as an
+advisory, which stay `PLAN-I`'s under DR-144 §11.143.8; this chapter supplies the state and the
+sentence and files no finding. **Not a document-level rollup over every underlay**, which `PLAN-I`
+can assemble by iterating the per-underlay derivation it already has: building one now, for a rule
+that does not exist, would be committing this epic's own recurring defect on purpose. Not whether a
+calibrated row should also name its subject total, which would put a second number on a line the user
+has just settled. And not the reading a **stored but unusable** scale produces, where the state line
+says `Not calibrated` while the action still says `Recalibrate…`: the first is DR-144 §11.143.4's
+rule that an unusable scale is not a calibration, the second is `SetPlanScaleCommand`'s rule that
+replacing a stored value is a recalibration whatever the value was worth, both are deliberate, and
+the combination is reachable only from a file this product cannot write.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

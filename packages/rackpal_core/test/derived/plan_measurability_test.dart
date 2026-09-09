@@ -114,9 +114,11 @@ void main() {
 
       expect(m.blockedBy, PlanBlocker.uncalibrated);
       expect(m.measurableCount, 0);
-      // AND THE SECOND COUNT STILL REPORTS THE PINS. A surface with only
-      // the first would call a fully pinned plan empty.
-      expect(m.pinnedCarrierCount, 2);
+      // AND THE STRANDED COUNT STILL REPORTS THE PINS. A surface with
+      // only the first would call a fully pinned plan empty, which is
+      // exactly what the underlay row did until DR-146 §11.145.4.
+      expect(m.subjectPinCount, 1, reason: 'the rack is not a subject');
+      expect(m.unmeasurablePinCount, 1);
     });
 
     test('calibrated with no rack: the blocker is the rack, which is what '
@@ -130,7 +132,8 @@ void main() {
       expect(m.rackPinned, isFalse);
       expect(m.blockedBy, PlanBlocker.noRackPinned);
       expect(m.measurableCount, 0, reason: 'no datum, so no length');
-      expect(m.pinnedCarrierCount, 2);
+      expect(m.subjectPinCount, 2);
+      expect(m.unmeasurablePinCount, 2);
     });
 
     test('calibrated with a rack and nothing else: the blocker is the '
@@ -141,7 +144,12 @@ void main() {
 
       expect(m.blockedBy, PlanBlocker.noPins);
       expect(m.measurableCount, 0);
-      expect(m.pinnedCarrierCount, 1, reason: 'the rack is still a pin');
+      expect(
+        m.subjectPinCount,
+        0,
+        reason: 'the rack is the datum and the subject of nothing',
+      );
+      expect(m.unmeasurablePinCount, 0, reason: 'nothing is stranded');
     });
 
     test('calibrated, racked and pinned: nothing blocks and the count is '
@@ -155,7 +163,8 @@ void main() {
 
       expect(m.blockedBy, isNull);
       expect(m.measurableCount, 3);
-      expect(m.pinnedCarrierCount, 4);
+      expect(m.subjectPinCount, 3);
+      expect(m.unmeasurablePinCount, 0, reason: 'nothing is left over');
     });
   });
 
@@ -227,7 +236,7 @@ void main() {
 
       expect(m.rackPinned, isFalse, reason: 'that rack is on Level 2');
       expect(m.blockedBy, PlanBlocker.noRackPinned);
-      expect(m.pinnedCarrierCount, 1);
+      expect(m.subjectPinCount, 1, reason: 'D-2 only; D-1 is on Level 2');
     });
 
     test('TWO PINNED RACKS COUNT THE SAME AS ONE, because which is the '
@@ -245,11 +254,12 @@ void main() {
 
       final a = planMeasurabilityOf(one, _underlay(scale: _usable));
       final b = planMeasurabilityOf(two, _underlay(scale: _usable));
-      expect(a.measurableCount, b.measurableCount);
-      expect(a.blockedBy, b.blockedBy);
-      // The SECOND count does see it, because it counts what stands on
-      // the plan rather than what can be measured.
-      expect(b.pinnedCarrierCount, a.pinnedCarrierCount + 1);
+      // NOT ONE NUMBER MOVES, and since DR-146 §11.145.5 that includes
+      // the second count: both are over the subjects, and a rack is a
+      // datum in either quantity. The whole value is compared rather than
+      // its members, so a fourth field added later is covered here too.
+      expect(a, b);
+      expect(b.subjectPinCount, a.subjectPinCount);
     });
 
     test('A RACK-PLACED DEVICE IS NOT A CARRIER even on a pinned rack', () {
@@ -275,15 +285,128 @@ void main() {
 
       final m = planMeasurabilityOf(doc, _underlay(scale: _usable));
       expect(m.measurableCount, 1);
-      expect(m.pinnedCarrierCount, 2);
+      expect(
+        m.subjectPinCount,
+        1,
+        reason:
+            'D-1, and neither the rack nor '
+            'the device on its rails',
+      );
     });
 
     test('an empty document reports every count as zero and blames the '
         'scale', () {
       final m = planMeasurabilityOf(_doc(), _underlay());
       expect(m.measurableCount, 0);
-      expect(m.pinnedCarrierCount, 0);
+      expect(m.subjectPinCount, 0);
+      expect(m.unmeasurablePinCount, 0);
       expect(m.blockedBy, PlanBlocker.uncalibrated);
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // PLAN-F/3: ONE POPULATION, ASSERTED ACROSS A CALIBRATION
+  // ═════════════════════════════════════════════════════════════════════
+  group('DR-146: the count means one thing on both sides of a '
+      'calibration', () {
+    test('THIRTY-NINE UNMEASURABLE BECOME THIRTY-NINE MEASURABLE, and the '
+        'subject count never moves', () {
+      // The user's call at §11.145.5, as the one case that can tell it
+      // from the alternative it was chosen over. Counting the rack as
+      // well would report forty before and thirty-nine after, and a
+      // number that drops by one at the moment of a calibration reads as
+      // a pin the calibration ate.
+      final doc = _doc();
+      _addRack(doc, pin: _pin(10, 10));
+      for (var i = 0; i < 39; i++) {
+        _addOutlet(doc, 'D-$i', pin: _pin(20 + i, 20));
+      }
+
+      final before = planMeasurabilityOf(doc, _underlay());
+      final after = planMeasurabilityOf(doc, _underlay(scale: _usable));
+
+      expect(before.unmeasurablePinCount, 39);
+      expect(after.measurableCount, 39);
+      expect(
+        before.subjectPinCount,
+        after.subjectPinCount,
+        reason: 'the population is the same question in both states',
+      );
+    });
+
+    test('the two counts are complements in EVERY state, which is what '
+        'stops either being read as the total', () {
+      final doc = _doc();
+      _addRack(doc, pin: _pin(10, 10));
+      _addOutlet(doc, 'D-1', pin: _pin(20, 20));
+      _addOutlet(doc, 'D-2', pin: _pin(30, 30));
+
+      final states = <String, PlanUnderlay>{
+        'uncalibrated': _underlay(),
+        'stored but unusable': _underlay(scale: _degenerate),
+        'calibrated': _underlay(scale: _usable),
+      };
+      for (final entry in states.entries) {
+        final m = planMeasurabilityOf(doc, entry.value);
+        expect(
+          m.measurableCount + m.unmeasurablePinCount,
+          m.subjectPinCount,
+          reason: entry.key,
+        );
+      }
+    });
+
+    test('A RACKLESS PLAN STRANDS ITS PINS TOO, which is a true answer to '
+        'this question and PLN-003s to report', () {
+      // The derivation answers "can a length be derived", and on a
+      // calibrated plan with no datum it cannot. Which advisory says so
+      // is `PLAN-I`'s: the row prints `no rack pinned` here (DR-144
+      // §11.143.3) rather than this count.
+      final doc = _doc();
+      _addOutlet(doc, 'D-1', pin: _pin(20, 20));
+      final m = planMeasurabilityOf(doc, _underlay(scale: _usable));
+
+      expect(m.blockedBy, PlanBlocker.noRackPinned);
+      expect(m.unmeasurablePinCount, 1);
+    });
+  });
+
+  group('PLN-001s sentence, written once in core (DR-146 §11.145.6)', () {
+    PlanMeasurability stranded(int n) => PlanMeasurability(
+      isCalibrated: false,
+      rackPinned: true,
+      subjectPinCount: n,
+    );
+
+    test('the plural is hand-written, and the VERB agrees with it', () {
+      // `1 pins carry` is the `0 pathways` status bar this repository has
+      // already shipped once, and the verb is the half a plural-only fix
+      // leaves behind.
+      expect(
+        unmeasurablePinsSentence(stranded(39)),
+        '39 pins carry no measurable position',
+      );
+      expect(
+        unmeasurablePinsSentence(stranded(1)),
+        '1 pin carries no measurable position',
+      );
+    });
+
+    test('NOTHING STRANDED IS NULL AND NOT A ZERO SENTENCE', () {
+      // `0 pins carry no measurable position` is the
+      // `Calibrated · 0 measurable` DR-144 §11.143.3 refused one state
+      // later: true, and it tells nobody anything.
+      expect(unmeasurablePinsSentence(stranded(0)), isNull);
+    });
+
+    test('and null once those pins really can be measured', () {
+      final doc = _doc();
+      _addRack(doc, pin: _pin(10, 10));
+      _addOutlet(doc, 'D-1', pin: _pin(20, 20));
+      final m = planMeasurabilityOf(doc, _underlay(scale: _usable));
+
+      expect(m.measurableCount, 1);
+      expect(unmeasurablePinsSentence(m), isNull);
     });
   });
 }
