@@ -117,7 +117,7 @@ way. Board item #92 is the scheduled full sweep.
 | **M3** | Structure + field | `M` | **4 of 5**, the fifth parked | **CRITERION MET**: `CONFIRMED` | **The header of §5.2 read `NOT STARTED` until 2026-08-27, and DR-095 §11.94.8 exists because a ruling was written on that staleness.** DR-040 (§11.39) and M3-K (`#661`, four tasks Done, 2026-08-11) built clauses 2b and 4: `BindEndpoint`, `@panel=` landing forty-six drops on a panel's rear port, and the rack label allocated through the one format engine. Clause 3's derivation ships and its **sheet is M6's** by DR-027, which is the parked one, `#574`. **Clause 1 is `CONFIRMED`**: the 60-drop drill, closed on the operator's confirmation 2026-08-27 (`#89`, `#163`–`#165`). Run 1 on 2026-08-13 is kept at §4.1 of docs/16 as `UNVERIFIABLE` because the app was closed without saving, and the procedure, not the operator, is what failed |
 | **M4** | Device builder | **`L`** *(was `M`)* | **2 of 2** | **CRITERION MET**: `CONFIRMED` | **The builder authors a device.** M4-A through M4-E (`#172`–`#176`) are closed: `Project ▸ New device template…` gives a full-window editor with five sections, real undo, a Save that lands a snapshot in the project, and a virtualised port grid with editable columns, seven column packs, live validation dots and a footer readout (§5.3.1–5.3.5). **THE EXIT CRITERION'S SHAPE IS DEMONSTRATED**: M4-G and M4-H (`#178`, `#179`) add a docked Quick Add bar whose mini-DSL and label patterns author whole banks from one typed line, and a test types docs/06 §9.1's eight commands to get **68 ports across 6 banks with focus never leaving the bar** (§5.3.6). **M4-G is feature-complete**, field mode and inline autocomplete included, so the DSL teaches itself. **CLAUSE 1 IS CONFIRMED: the user ran the drill on 2026-08-15 and authored the 68-port template, named and saved, IN 93 SECONDS against a 180-second criterion** (§5.3.7). The drill found `Ctrl+Enter` missing on its first run, which fourteen green gates could not. **CLAUSE 2 IS NOW CONFIRMED, performed on 2026-09-01** (§5.3.30), and it was performable only from §5.3.13: it could not be, for four days, because a template authored in the builder saved into the project and **no surface offered it for placement** (§5.3.8). M4-S (`#701`, DR-077) makes the palette list the DOCUMENT's own shelf, forks a version on a second `Save`, and resolves the newest version at placement; the equipment-list half is read through `File ▸ Export PDF…`, which is the criterion's own reading rather than a missing view. `#251` demonstrated it: every unknown column printed `—` and said so, which is G4/CR-114 read off a printed sheet for the first time. **The archetype path ran the same day at 46 SECONDS against the DSL path's 93** (`#250`), which is what settled whether the generators earned their place. **EVERY M4 STORY IS NOW CLOSED** (§5.3.1–§5.3.30), the last being the drill itself (`#188`), and **95 chapters are Done under this epic with none left open or re-parented**, which is where `v0.4.95` comes from. **M4-P shipped RJ-012's two extensibility surfaces and found each chapter to be something else underneath**: the builder could not save a field device at all, the media-type editor's real gap was MERGE rather than create, and connector aliases were already resolved and only lacked a writer (§5.3.28, DR-107, `v0.4.93`). **RJ-012 stays two-thirds met**: its third surface, a per-family colour override row in settings, has nowhere to go because `ProjectSettings` has no editor and none is assigned to any milestone (`#805`). **M4-K made the rear panel a derived drawing and gave the builder its right dock**, three previews all coming from the scene builders that print rather than from preview widgets (§5.3.26, DR-105, CR-086, `v0.4.89`); **its parked nudge canvas was then un-parked by DR-106 and built** as a sixth `Panel` section, with its align/distribute arithmetic in core (§5.3.27, `v0.4.90`). **M4-O made the Device Manager tab a real browser** and found, while doing it, that the `Project ▸ New device template…` menu item DR-104 assumed existed does not (§5.3.25, DR-104, `v0.4.86`). **M4-L gave three modelled-since-M0 fields their first producer** (`DeviceOverrides`, `derivedFrom`, `PortOverrides`, §5.3.22), **M4-M made `.rmdx` a real format with both file verbs, a real `contentHash` and a size cap on every import path** (§5.3.23, DR-100, DR-101, `v0.4.78`), and **M4-N built the whole library subsystem: the writable shelf, the `.rmda` archive, both file verbs, provenance as a sealed class and a palette that lists several libraries at once and can place from them** (§5.3.24, DR-102, DR-103, `v0.4.83`). **None of the three moved this criterion**, and that was the point of the row for a fortnight: story after story closed while clause 2 remained a person with a document to read. **It was read on 2026-09-01** (§5.3.30), which is the only thing that could ever have closed it. **Decomposed on 2026-08-02 into 17 issues and 63 tasks (#172–#251)**, which re-sized it: DR-015's library subsystem was never in the `M` |
 | **M5** | Validation | `M` | **3 of 3** | **CRITERION MET**: `CONFIRMED` | **CLOSED 2026-09-07 (DR-135 §11.134).** All three clauses discharged. Clause 1 is `DEMONSTRATED` at **29 of 29** by `drc_corpus_test.dart`, which `run_local.ps1` runs as a step of its own and whose subject is `kRuleCatalogue` rather than any evaluator enum, so a registered rule without a pair fails the build; that is also why it moved from 28 to 29 when DR-132 restored `ELE-005` and no gate had to change (§5.4.7). Clause 3 was `VACUOUS` *because no rule existed* and that reason expired; it is `DEMONSTRATED` in a stronger form than `#310` asked for, since `ExportError` is **sealed with three arms and none of them is about a rule** (§5.4.8, DR-119). **Clause 2 was the whole gap for a fortnight and is `CONFIRMED` on 2026-09-06** (§5.4.11), signed by the reviewing integrator against a pack generated from the live catalogue: **twelve findings, four rulings, six fields the model has and no producer writes**, and the catalog half signed PROVISIONAL on the reviewer's own hedge. **All twenty Stories under epic 23 are `Done` and 61 Chapters beneath them**, which is where `v0.5.61` comes from and why the close itself owes no bump. The successor is **the Plan view, not M6** (DR-029 §11.28.4) |
-| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open. **THE COUNT IS NOT WRITTEN HERE**, on this file's own rule about a second copy of a moving number: it read *"`v0.6.21` with twenty-one chapters `Done` of 43"* through six chapter closes, and the fix is to read `az boards query` for Chapters under this epic's stories rather than a sentence. The chapter total is no longer 43 either, since `PLAN-F/0` was added by a defect. **PLAN-A through PLAN-E are closed**, and `PLAN-F` is open. The plan set answered `PLAN-D/5` (§5.9.5) and then refused `PLAN-D/1`'s rasteriser, so `PLAN-D/3` ships a pure-Dart page lifter and the picker instead, with pdfium deferred rather than cancelled (§5.9.6). `PLAN-E` closed on six chapters rather than five (§5.9.7 to §5.9.12), and `PLAN-F/1` gave `PlanScale` the writer it had lacked since `PLAN-C` (§5.9.14) |
+| **Plan view** | *an epic, no number* | **`L`** | **0 of 7** | **IN PROGRESS**: `NOT BUILT` | **OPENED 2026-09-07 over a closed M5 (DR-135 §11.134), which is §8.9's condition met rather than assumed.** Added to v1 by DR-029 on 2026-08-09 and **sequenced before M6**. `SheetRole` has 3 values, `DocumentCodec` has one implementation and `looksLikeZip` still refuses; **`DiagramCanvas` gained its `drawImage` at PLAN-A** (§5.9.1), which is the root every other issue consumes and which moves **no clause**, because the criterion is about a printed `T1.01` that nothing yet builds. **Not one of the seven clauses has moved**, and opening an epic discharges nothing. **Decomposed 2026-08-10** into 10 issues and 43 chapters, exit criterion at DR-037 §11.36.1 (§5.9). **This epic takes the `0.6` band** (DR-135 §11.134.4); the version was `v0.6.0` at open. **THE COUNT IS NOT WRITTEN HERE**, on this file's own rule about a second copy of a moving number: it read *"`v0.6.21` with twenty-one chapters `Done` of 43"* through six chapter closes, and the fix is to read `az boards query` for Chapters under this epic's stories rather than a sentence. The chapter total is no longer 43 either, since `PLAN-F/0` was added by a defect. **PLAN-A through PLAN-E are closed**, and `PLAN-F` is open. The plan set answered `PLAN-D/5` (§5.9.5) and then refused `PLAN-D/1`'s rasteriser, so `PLAN-D/3` ships a pure-Dart page lifter and the picker instead, with pdfium deferred rather than cancelled (§5.9.6). `PLAN-E` closed on six chapters rather than five (§5.9.7 to §5.9.12), and `PLAN-F/1` gave `PlanScale` the writer it had lacked since `PLAN-C` (§5.9.14). **`PLAN-F` IS CLOSED** on `PLAN-F/3` (§5.9.17), which found a count with no reader one chapter after the census that should have caught it and a property that passed only because every fixture in the package defaults to the interesting state; roadmap §2's calibration bullet closes with it and **no exit clause moves** |
 | **M6** | Full sheet set | `M` | **0 of 5** | **NOT STARTED**, `NOT BUILT` | 3 of 12 sheet slots ship and are real work, but the criterion is *all four starters export a complete set*, and no clause of it is demonstrated (§5.5). **The set became 12 slots at DR-048**, which moved `T6.50` Network/IP Schedule into v1, and **becomes 13** when `T1.01` lands ahead of it |
 | **M7** | Platform + access | `M` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | Windows-only; no `Intent` registry; no l10n at all |
 | **M8** | Release engineering | `S` | **0 of 4** | **NOT STARTED**: `NOT BUILT` | No installer, no signing, no crash reporter. **Re-scoped by DR-006** |
@@ -8170,6 +8170,111 @@ analyzer pin stays at 233.
 
 Two `PLAN-F/1` cases were updated rather than deleted: they asserted the bare word `Calibrated`, and
 the line is now richer. The updated assertions name the whole string, which is what the row prints.
+
+---
+
+#### 5.9.17 PLAN-F/3: uncalibrated as a fact, and a count nothing read · `DR-146` · `v0.6.32`
+
+Closed `2026-09-08`, `#635`. Commits `ac2c6f6` (the ruling), `7c24d3b` (the derivation), `2ca74c6` (the
+row), `fa2a1cb` (the placement proof). **No exit clause moves**, for `PLAN-F/1`'s reason exactly: the
+criterion is a printed `T1.01` a stranger can use, and a calibration is a prerequisite for a length
+rather than for a locator. What closes is roadmap §2's calibration bullet, whose own text said it
+stayed open on this chapter's half.
+
+##### 5.9.17.1 The census: one clause built, one true by accident, one hole
+
+`#635` has three clauses and they came back in three different states.
+
+**CLAUSE ONE WAS ALREADY BUILT**, which is worth recording because it is the clause the brief leads
+with. Censused by site rather than read:
+
+| Where a default scale could enter | What is there |
+|---|---|
+| `PlanUnderlay.scale` | `PlanScale?`, documented *"null does not mean 1:1"* |
+| `PlanUnderlay.isCalibrated` | `scale?.isUsable ?? false`, so a stored unusable scale reads as uncalibrated |
+| `_encodePlanUnderlay` | `putIfNotNull`, so an uncalibrated plan writes **no `scale` key** |
+| `_decodePlanUnderlay` | `json['scale'] == null ? null : …`, with no fallback |
+| `SetPlanScaleCommand.scale` | non-nullable, so no gesture can write "unknown" over a scale |
+| `planMeasurabilityOf` | gates on `isCalibrated`, so an unusable scale counts nothing |
+
+Six sites, no substitution anywhere, and `plan_serialization_test.dart` already asserts both the
+absent key and the null read-back. `PLAN-C/5` and `PLAN-F/1` discharged it between them.
+
+**CLAUSE TWO WAS TRUE AND PROVEN BY ACCIDENT.** Nothing in `lib/` gates a pin on a scale. But every
+plan fixture in `rackpal_ui` is built without a `PlanScale`, so **every pin gesture the suite ran was
+already a pin on an uncalibrated plan**, passing for a reason nobody had named, and the mirror
+direction, a pin on a plan that IS calibrated, appeared in no case in the package. A property that
+only ever holds because a fixture's default happens to be the interesting case is a property nobody
+would notice losing, which is this board's own standard about numbers applied to a fact.
+
+**CLAUSE THREE WAS THE HOLE, AND IT IS THE FOURTH OF ITS SHAPE IN FOUR CHAPTERS.**
+`PlanMeasurability.pinnedCarrierCount` shipped at `PLAN-F/2` carrying a doc comment that named its
+own intended caller: *"a surface that had only the first would report a fully pinned plan as
+empty"*. **Zero call sites in `lib/`.** That surface is the underlay row, the row printed a bare
+`Not calibrated`, and a plan carrying thirty-nine stranded pins therefore read exactly like a plan
+with none. DR-140 found a model with no gesture, DR-143 an importer with no caller, DR-144 a whole
+derivation API with neither; this one is a *count* with no reader, which is the same defect with a
+smaller radius and the same cause.
+
+##### 5.9.17.2 The user's call, and the number that must not move
+
+Four wordings were put with the trade-off each carried. The one chosen is docs/15 §9's own `PLN-001`
+sentence:
+
+> Not calibrated · 39 pins carry no measurable position
+
+**AND THE POPULATION IS THE HALF THAT WAS ACTUALLY BEING DECIDED.** The alternative counted every pin
+including the rack, which is what `pinnedCarrierCount` held and what a person counts on screen. It
+fails across the two states rather than in either one: thirty-nine stranded would become
+`Calibrated · 39 measurable` under the chosen reading and **forty would become thirty-nine** under
+the other, and a number that drops by one at the moment of a calibration reads as a pin the
+calibration ate. The rack is the datum on both sides (DR-144 §11.143.3) and belongs in neither count.
+
+The test for that is the artifact and not a comment: one stranded pin becomes one measurable pin over
+a real `SetPlanScaleCommand`, and the refused reading would print two and then one.
+
+##### 5.9.17.3 So a field was replaced rather than kept, and a stored count became a derived one
+
+`subjectPinCount` is what the row wants, and it is now the only count stored. `measurableCount` is a
+getter over it and the two booleans, `unmeasurablePinCount` is its complement, and the two always sum
+to the subject count so neither can be read as the other's total.
+
+**KEEPING `pinnedCarrierCount` BESIDE THE NEW ONE WAS THE ALTERNATIVE AND IT WAS REFUSED.** It would
+have left an unread field beside a read one, one chapter after a census found it unread, which is
+this epic's own recurring defect preserved on purpose. Making `measurableCount` derived is the same
+argument at a smaller scale: stored, it sat next to the two flags that decide it and a constructor
+could be handed a count its own flags forbid.
+
+##### 5.9.17.4 The proof of both directions is a gesture, and the mutation says why
+
+A case that runs `SetPlanPinCommand` against a document proves the command, and **the command was
+never where a gate would be added.** A gate is a disabled strip row, a refused drop or a
+`Calibrate first` chip, and none of those is visible to a test that talks to the model. So both
+directions drag the rack out of the unpinned strip, which is the gesture `PLAN-E/5` already proves,
+and differ only in whether the plan under it carries a scale.
+
+Two mutations on `plan_editor_screen.dart` confirm the cases can see one: a strip drag gated on the
+plan being calibrated, and one gated on its not being. **Each kills exactly the case written for it**,
+which is what tells the pair apart from one case run twice.
+
+##### 5.9.17.5 Evidence
+
+Floors: `rackpal_core` 4354 to 4360 (+6), `rackpal_ui` 1665 to 1672 (+7).
+**Ten mutations killed**: seven on the derivation (dropping the complement, dropping the gate,
+dropping the rack half of the gate, counting racks as subjects, reading `scale != null` instead of
+`isCalibrated`, dropping the hand-written plural, and returning a zero sentence), one on the row
+(reverting to the bare label), and two on the strip drag. Each was asserted present in the source
+before being applied and the file restored in a `finally`, so none of them is a mutation that did not
+build. The analyzer pin stays at 233.
+
+**Every sentence the row can emit was printed and read before an assertion was written**, which is
+`PLAN-F/2`'s practice and which is how the singular `1 pin carries no measurable position` was found
+rather than asserted around: the plural and its VERB both move, and a plural-only fix leaves
+`1 pin carry`.
+
+Two `PLAN-F/2` assertions were updated rather than deleted, on that chapter's own precedent one day
+old: they named the bare `Not calibrated` on a fixture that has a pin, and they now name the whole
+string the row prints.
 
 ---
 

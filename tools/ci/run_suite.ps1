@@ -567,7 +567,13 @@ $SuiteFloors = @{
     # DERIVABLE and never what it is. A Len per pin would be
     # planLowerBound early under another name and would pass every
     # counting case in the file. Five mutations killed.
-    'rackpal_core'   = 4354
+    # 4360 at PLAN-F/3: +6 on plan_measurability_test.dart. Three on the
+    # population DR-146 settled (39 unmeasurable become 39 measurable and
+    # the subject count never moves; the two counts are complements in
+    # every state; a rackless plan strands its pins too) and three on
+    # PLN-001's sentence, whose VERB moves with its plural. Seven
+    # mutations killed.
+    'rackpal_core'   = 4360
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -770,7 +776,14 @@ $SuiteFloors = @{
     # The recalibration case is the pair's reason: the row reads
     # identically before and after, so only the message can report
     # the most consequential edit the feature has.
-    'rackpal_ui'     = 1665
+    # 1672 at PLAN-F/3: +5 on plan_calibrate_test.dart and +2 on
+    # plan_editor_screen_test.dart. The two on the editor are the ones
+    # that could not be written anywhere else: a pin dragged out of the
+    # strip onto an uncalibrated plan and onto a CALIBRATED one, which is
+    # a state no fixture in this package had ever carried. A gate would
+    # be added on a surface, so a case that ran the command would not see
+    # it; two mutations on the drag confirm each case kills its own.
+    'rackpal_ui'     = 1672
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

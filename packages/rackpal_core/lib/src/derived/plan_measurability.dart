@@ -127,7 +127,7 @@ final class PlanMeasurability {
   ///
   /// The complement of [measurableCount] over the same population, so the
   /// two always sum to [subjectPinCount] and neither can be read as the
-  /// other's total. This is the number `PLN-001` reports (docs/15 §7) and
+  /// other's total. This is the number `PLN-001` reports (docs/15 §9) and
   /// the number the underlay row prints while a plan is uncalibrated.
   int get unmeasurablePinCount => subjectPinCount - measurableCount;
 
@@ -159,7 +159,7 @@ final class PlanMeasurability {
       'measurable: $measurableCount of $subjectPinCount)';
 }
 
-/// docs/15 §7's `PLN-001` sentence, or null when nothing is stranded.
+/// docs/15 §9's `PLN-001` sentence, or null when nothing is stranded.
 ///
 /// ═══════════════════════════════════════════════════════════════════════
 /// THE SENTENCE IS CORE'S, AND THE PACKAGE BOUNDARY IS THE REASON

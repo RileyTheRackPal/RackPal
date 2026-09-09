@@ -18640,7 +18640,7 @@ alternatives that were put with it.
 
 > Not calibrated · 39 pins carry no measurable position
 
-The words are **docs/15 §7's own `PLN-001` sentence**, chosen so that the row and the advisory
+The words are **docs/15 §9's own `PLN-001` sentence**, chosen so that the row and the advisory
 `PLAN-I` will build say the same thing rather than two things about one state. G4 is the reason the
 line exists at all: a rollup reports its unknown count rather than presenting a flattering total, and
 an uncalibrated plan's unknown count is every drop standing on it. `Calibrated · 12 measurable`
