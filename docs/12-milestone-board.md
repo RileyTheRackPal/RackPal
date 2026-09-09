@@ -8417,6 +8417,123 @@ Import a floorplan, pin a rack, an outlet and an off-rack device, calibrate from
 report what the calibration bought, and **derive a length from it that reaches the Pull Sheet and the
 DRC**. Owed: `T1.01` (`PLAN-H`), the `PLN-*` advisories (`PLAN-I`), and the printed stranger test
 (`PLAN-J`).
+#### 5.9.19 PLAN-H/1 and PLAN-H/2: the twelfth slot, and the export path that could not reach an underlay · `DR-148`, `DR-149` · `v0.6.38`
+
+Closed `2026-09-09`, `#640` and `#641`. Commits `3c9c458` (the rasteriser review), `9c48af0` (the
+sheet's ruling), `a54a216` (the slot, the resolver, the screening and the sheet). **No exit clause
+moves**: the `T1.01` clause needs a callout per pinned drop printing its Pull Sheet designator, and
+this chapter draws a marker per pin and no designator at all. What it discharges is the slot the
+clause sits in.
+
+##### 5.9.19.1 The census: two findings and a scheduled review
+
+**THE EXPORT PATH STRUCTURALLY COULD NOT REACH AN UNDERLAY**, and no ticket says so.
+
+| Piece | State before `PLAN-H` |
+|---|---|
+| `DiagramCanvas.drawImage`, `ImageRef` | built at `PLAN-A` |
+| `PdfDiagramCanvas.drawImage` | built at `PLAN-A`, emits the `cm`/`Do` pair, counter-flips the raster |
+| `PdfImageResolver` | a typedef with **zero production call sites**; only `pdf_canvas_image_test.dart` supplies one |
+| `ExportRequest.members` | **did not exist** |
+
+`export_controller.dart` builds the request from `session.document` and never touched
+`session.members`, which have ridden from open to save since `PLAN-B`. **This is `PLAN-E/1`'s finding
+one package over**: that chapter found nothing supplied a `FlutterImageResolver` and wrote
+`plan_image_cache.dart`, whose header says *"a typedef with no implementation is a seam, not a
+feature."* The export backend has been in that state since `PLAN-A` and nothing noticed, because no
+sheet asked for an image. **`T1.01` is the first caller.** Sixth instance of this shape in the epic,
+after DR-140, DR-143, DR-144, DR-146 and `PLAN-G`'s pair.
+
+**AND THE THIRD, FOURTH AND FIFTH EXHAUSTIVE SWITCHES FIRED.** `PLAN-G/1` met the deliberate one in
+`cable_footage.dart`, whose header says it was left open on purpose. Adding `SheetRole.devicePlan`
+stopped the build in three more places, none of them designed as a trap:
+
+- `build_document.dart`'s `switch (sheet.role)`, exhaustive with no default and assigning a
+  definitely-assigned `final DiagramScene`;
+- `page_sizes.dart`'s `switch (size)`, a switch expression over `SheetSize`;
+- two role canaries in the suite, `sheet_def_test.dart`'s `hasLength(3)` and
+  `pull_sheet_clause_test.dart`'s ordered list.
+
+The first is what forces this chapter's shape. `#640` reads as though the enum value could land
+alone; it cannot, and a `case` drawing a frame over white paper would be the *"title block over white
+paper"* docs/15 §7 already names as indistinguishable from a plan with no drops on it. So the slot,
+the resolver, the screening and the sheet land together and `#641` keeps the evidence.
+
+##### 5.9.19.2 The rasteriser review, and a reason that did not survive it
+
+DR-145 §11.144.5 booked this review for `PLAN-H` because *"`T1.01` is the first thing in this product
+that needs an underlay rendered rather than stored, so the chapter that builds it is the first one
+whose own work is blocked by the absence."*
+
+**`T1.01` is not blocked.** `PlanUnderlay.format` is `png | jpeg` by construction and has been since
+`PLAN-C`; a PDF page is lifted to one of those at import. The rasteriser is an **import** gap and not
+a render gap. The review was held anyway, because skipping a scheduled review on the grounds that its
+stated reason was wrong is a deferral with no review date reached from the other side.
+
+Ruled (DR-148 §11.147): the deferral stands **a second time**, and the new trigger is **the exit
+criterion** rather than a date. `PLAN-J`'s drill is bound to the CAD plot, so the epic cannot close
+until the rasteriser exists. **That adds no scope**: the criterion already says *"an architect's
+floorplan PDF is imported without leaving the app"*, a CAD plot is one, and the criterion has been
+unmeetable on that input since it was written. The alternative the user was shown, and refused, was a
+green drill on the JPEG set standing as evidence about import coverage that it is not.
+
+##### 5.9.19.3 Two presentation calls, and the honest half of the second
+
+**`T1.01` sits after `T0.02` and before the elevations** (DR-149 §11.148.3), because a reader orients
+in the building before they open a rack. It was put to the user because the order is a choice: docs/08
+§2.2's table is not numeric, `T5.01` sitting last at `n+5`. **And that table had no `T1.01` row at
+all**, while docs/15 §8 has carried the slot since 2026-08-10; a derived document was missing a sheet
+the design document ships, and it now has one.
+
+**The underlay prints at 25%** (§11.148.4), one constant, integer per-mille so no float reaches a
+document `export_determinism_test.dart` compares byte for byte. Over 18%, the legend chip's tint,
+because a chip is a swatch behind one rule and a floorplan is line art whose walls and dimension
+strings must survive; over 40%, because the callout has to win.
+
+**NO NUMBER CHOSEN HERE IS EVIDENCE**, and the ruling says so rather than leaving it to be found out:
+AC-054's standard is a print on a real greyscale laser at ANSI B, `PLAN-J`'s drill is where that
+happens, and moving the value afterwards is expected rather than a defect.
+
+##### 5.9.19.4 Three things the tests found that reading did not
+
+**192, NOT 191.** Black carries 255 units of ink and a quarter is 63.75; CR-001's integer arithmetic
+truncates the **ink** rather than the result, so the sample is `255 - 63 = 192`. The hand calculation
+said 191. The literal now sits in the test with the reason beside it.
+
+**`im.decodeImage` THROWS** on bytes that look like a format it knows and then are not, rather than
+returning null as its documentation suggests. A container is on disk and CR-093 rules that reading one
+never throws, so both failures collapse into the single answer the resolver may give.
+
+**A MUTATION CORRECTED A COMMENT THAT WAS ALREADY WRITTEN.** Fitting on `underlayBounds` rather than
+`scene.bounds` was commented as a defence against a stray pin rescaling the drawing. `buildPlanScene`
+sets **both to the same box** and says so in its own header, so the swap survives the case written to
+catch it. The line is still right and now says what it is: a statement of what this sheet depends on,
+which becomes a defence the day a scene builder starts unioning markers into its bounds. **The test
+records that it cannot tell the two spellings apart**, which is cheaper than the next reader assuming
+it can.
+
+##### 5.9.19.5 Evidence
+
+Floors: `rackpal_core` 4392 to 4411 (+19), `rackpal_export` 209 to 220 (+11).
+
+**Eleven of twelve mutations killed.** The twelfth is §5.9.19.4's and is recorded as a finding rather
+than papered over. Three of the nineteen core cases assert an **absence**, because `AUTO` is what
+keeps M6's four byte-verified starters from each growing a plan sheet: a document with no underlay
+must resolve the identical set, and an imported underlay nobody pinned anything to must print nothing.
+
+**THE ANALYZER GATE FAILED ONCE AND THE PIN DID NOT MOVE.** 235 against a pin of 233. Both new infos
+were mine, a `DIRECTIVES_ORDERING` on the new barrel export and a `SORT_PUB_DEPENDENCIES` on the new
+dependency, and both were fixed rather than pinned over. **Per-package `dart analyze` had reported
+both files clean**, which is the gate's scope being wider than a file's, one more time.
+
+`image: ^4.9.1` becomes a direct dependency of `rackpal_export`, pinned on `vector_math`'s stated
+rule. It was already in the resolved tree transitively via `pdf` and is inside DR-036's licence
+census; a vendored pdfium would reopen that census and has not landed.
+
+**The size claim is measured, not argued.** dart_pdf has no embed-this-PNG path, so a screened
+underlay is raw RGB plus `/FlateDecode`. A 400 × 300 line-art plan through the real resolver emits a
+document under a tenth of its raw 360,000 bytes. *"Already-compressed rasters do not deflate"* is true
+of photographs and false of line art, and DR-137 already ruled that a floorplan is line art.
 ---
 
 ## 6. The dependency graph, as it actually stands
