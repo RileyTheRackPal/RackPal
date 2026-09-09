@@ -6,7 +6,7 @@ description: >-
   entire unreachable feature the next. It scans function-typed fields on *Actions
   records in one package; the importer was free functions in another. Both facts
   are in the gate's source and neither is in its name.
-tags: [practice, gates, reachability, census, plan-e, plan-g]
+tags: [practice, gates, reachability, census, plan-e, plan-g, plan-h]
 timestamp: 2026-09-08T00:00:00Z
 status: adopted
 ---
@@ -63,6 +63,21 @@ strength of the trap's reputation.
 function's argument type. The rule below is unchanged; what this adds is that being a
 compile error buys certainty about the site it guards and says nothing whatsoever
 about the site beside it.
+
+# And a fourth, where three fired at once and one was designed
+
+`PLAN-H/1` added a fourth `SheetRole` and stopped the build in **three** places:
+`build_document.dart`'s switch over the role, `page_sizes.dart`'s over the paper
+size, and two role canaries in the suite. Only the `cable_footage.dart` one from
+`PLAN-G/1` was ever *designed* as a trap; these are consequences of exhaustiveness
+and definite assignment, and they worked identically.
+
+**The useful half is what they did NOT catch.** `ExportRequest` had no field for
+the container's bytes and `PdfImageResolver` had zero production call sites, and no
+switch anywhere could see that: an absent parameter is not an unhandled case. The
+compiler catches the shape of what exists and says nothing about what is missing,
+which is the same asymmetry a regex-scanning gate has, arrived at from the other
+end.
 
 # The rule
 
