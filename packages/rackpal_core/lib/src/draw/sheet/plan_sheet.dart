@@ -30,9 +30,19 @@
 // even a calibrated plan: *"a sheet is scaled to fit, so a stated 1:50
 // would be wrong the moment the page size changed."*
 //
-// **The honest statement of scale is a DRAWN BAR** and it is `PLAN-H/4`'s.
-// Until it lands this sheet says `NTS`, which is true, rather than a
-// number that is not.
+// **The honest statement of scale is a DRAWN BAR**, and it arrives at
+// `PLAN-H/4` in `plan_scale_bar.dart`. The title block still says `NTS`,
+// which stays true: the FIELD states no ratio and the bar states the
+// scale, which are two different claims.
+//
+// AND THE SHEET'S OWN NOTE WAS A PLACEHOLDER THAT REACHED A DELIVERABLE.
+// `PLAN-H/1` printed `PLAN SCALED TO FIT · SEE BAR` with no bar on the
+// page. It was written as a forward pointer to the next chapter and it
+// printed as an instruction to a reader (DR-151 §11.150.1).
+// `unbuilt_copy_accuracy_test.dart` exists for that class and scans
+// `rackpal_ui` and `apps/rackpal`, so a sheet string in core is invisible
+// to it. The note is gone: a calibrated plan carries the bar, and an
+// uncalibrated one carries `kPlanNotToScaleNote`.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // WHAT IS NOT HERE YET, LISTED SO IT IS NOT READ AS AN OMISSION
@@ -60,6 +70,7 @@ import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/plan_scene.dart';
 import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
 import 'package:rackpal_core/src/draw/sheet/plan_callouts.dart';
+import 'package:rackpal_core/src/draw/sheet/plan_scale_bar.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_def.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_frame.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_furniture.dart';
@@ -71,10 +82,8 @@ import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:vector_math/vector_math_64.dart';
 
-/// What a plan sheet's SCALE field prints.
-///
-/// See the file header: a ratio here would relate the page to a scan.
-const String kPlanSheetScaleNote = 'PLAN SCALED TO FIT · SEE BAR';
+/// Where the scale bar's baseline sits below the drawing area.
+const double kPlanScaleBarBaselinePt = 13;
 
 /// One built `T1.01`.
 @immutable
@@ -84,6 +93,7 @@ final class PlanSheet {
     required this.legibility,
     required this.factor,
     required this.callouts,
+    required this.bar,
   });
 
   final DiagramScene scene;
@@ -96,6 +106,10 @@ final class PlanSheet {
   /// real foot is on this page, and a second fit computed there would be a
   /// second answer to one question.
   final SceneFactor factor;
+
+  /// The bar this sheet drew, or null when the plan is uncalibrated and
+  /// it printed [kPlanNotToScaleNote] instead.
+  final PlanScaleBar? bar;
 
   /// What the callout layer could and could not place.
   ///
@@ -210,6 +224,15 @@ PlanSheet buildPlanSheet({
     palette: palette,
   );
 
+  // CHOSEN FROM THE FIT THIS SHEET JUST MADE, never from a second one.
+  // Null means uncalibrated and nothing else (`plan_scale_bar.dart`).
+  final bar = choosePlanScaleBar(
+    underlay: underlay,
+    factor: factor,
+    available: area.width,
+    units: settings.displayUnits,
+  );
+
   final ops = <DiagramOp>[
     ...furniture.ops,
     const OpSave(),
@@ -221,18 +244,25 @@ PlanSheet buildPlanSheet({
     const OpRestore(),
     ...callouts.ops,
     // THE SHEET SAYS WHAT ITS SCALE FIELD CANNOT. `NTS` in a title block
-    // is a fact about the field; this line is the instruction a person
-    // reading the drawing needs, and it sits with the drawing.
-    OpText(
-      kPlanSheetScaleNote,
-      DPt(area.left, area.bottom + kPlanScaleNoteOffsetPt),
-      TextStyleSpec(
-        font: kSheetFont,
-        sizePt: kPlanNotePt,
-        argb: palette.mutedText,
-        anchor: TextAnchor.midLeft,
+    // is a fact about the FIELD; the bar is the scale itself, and on an
+    // uncalibrated plan the note is what a reader is owed instead.
+    if (bar != null)
+      ...planScaleBarOps(
+        bar: bar,
+        origin: DPt(area.left, area.bottom + kPlanScaleBarBaselinePt),
+        palette: palette,
+      )
+    else
+      OpText(
+        kPlanNotToScaleNote,
+        DPt(area.left, area.bottom + kPlanScaleNoteOffsetPt),
+        TextStyleSpec(
+          font: kSheetFont,
+          sizePt: kPlanNotePt,
+          argb: palette.mutedText,
+          anchor: TextAnchor.midLeft,
+        ),
       ),
-    ),
   ];
 
   // THE CALLOUT'S SIZE IS IN HERE NOW, and it is not scaled: the pills sit
@@ -244,6 +274,7 @@ PlanSheet buildPlanSheet({
     furniture.minTextSizePt,
     kPlanNotePt,
     if (callouts.ops.isNotEmpty) kCalloutTextPt,
+    if (bar != null) kScaleBarTextPt,
   ].reduce((a, b) => a < b ? a : b);
 
   return PlanSheet(
@@ -260,6 +291,7 @@ PlanSheet buildPlanSheet({
     ),
     factor: factor,
     callouts: callouts,
+    bar: bar,
   );
 }
 
