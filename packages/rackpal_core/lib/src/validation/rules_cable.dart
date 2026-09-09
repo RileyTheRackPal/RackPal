@@ -26,6 +26,26 @@
 // So the MESSAGE distinguishes the two cases and the severity does not.
 //
 // ═════════════════════════════════════════════════════════════════════
+// AND SINCE `PLAN-G`, THERE IS A THIRD CASE THAT IS NOT A SILENCE EITHER
+// ═════════════════════════════════════════════════════════════════════
+// An unmeasured run standing on a calibrated plan has a FLOOR: the
+// straight line from the rack's pin to its own (`plan_length.dart`). When
+// that floor already exceeds the limit, no route can rescue it, and the
+// rule says so rather than reporting a run it cannot verify.
+//
+// IT NEVER RUNS THE OTHER WAY (DR-147 §11.146.5). A floor UNDER the limit
+// proves nothing about the route that will be pulled, so those runs get
+// the unmeasured finding unchanged. `knownLengthOf` is deliberately not
+// where the floor was added: that function answers *"the length this run
+// is known to be"*, and a floor admitted to it would quietly turn a bound
+// into a compliance claim.
+//
+// THIS IS ALSO THE TEST OF A PREDICTION RATHER THAN A CITATION OF ONE.
+// The M5-H2 note below forecast that the over-length limb would sit idle
+// until the plan view's run estimation existed. This is that estimation,
+// and the limb now has an input on a document nobody has measured.
+//
+// ═════════════════════════════════════════════════════════════════════
 // `LEN-002` IS GENERIC BY CONSTRUCTION (DR-020)
 // ═════════════════════════════════════════════════════════════════════
 // *"One rule reading the registry, not one rule per medium, so a new
@@ -38,6 +58,7 @@
 // `maxRunLengthActive` BESIDE IT (canon §11.19.7). The two are one
 // character apart and only one of them is populated.
 
+import 'package:rackpal_core/src/derived/plan_length.dart';
 import 'package:rackpal_core/src/derived/structure_table.dart';
 import 'package:rackpal_core/src/model/conductor.dart';
 import 'package:rackpal_core/src/model/enums.dart' show Severity;
@@ -51,7 +72,53 @@ import 'package:rackpal_core/src/validation/finding.dart';
 /// `terminatedLength` FIRST. `link.dart`'s own note: the pull sheet's
 /// number is what to ORDER and the terminated figure is what is in the
 /// wall, and a channel-length rule is about the wall.
+///
+/// **A PLAN FLOOR IS DELIBERATELY NOT IN HERE** (DR-147 §11.146.5). This
+/// function is documented as *"the length this run is known to be"*, and a
+/// bound admitted to it would pass a run whose floor is under the limit,
+/// which is a compliance claim a plan may never make. The floor is read at
+/// the two call sites instead, in the one direction that proves something.
 Len? knownLengthOf(Link link) => link.terminatedLength ?? link.cutLength;
+
+/// The finding an over-limit plan floor produces, or null when this run's
+/// floor does not exceed [limit].
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// ONE DIRECTION ONLY, AND THAT ASYMMETRY IS THE WHOLE VALUE
+/// ═════════════════════════════════════════════════════════════════════
+/// DR-020 §11.19.2(2): *"a plan can prove a length violation and can never
+/// prove compliance"*. A straight line pin to pin is `≤` every real route,
+/// so a floor already past the limit cannot be rescued by any path the
+/// framing turns out to allow, and a floor under it says nothing at all
+/// about the route that will actually be pulled.
+///
+/// So the caller keeps its *"length unknown, cannot verify"* finding for
+/// every other unmeasured run (docs/02 §5.3: silence reads as approval),
+/// and this replaces it only where the plan has already settled the
+/// question. **The severity is the caller's**, on this file's own rule
+/// that a predicate inventing a second severity is inventing a rule
+/// (CR-021).
+Finding? _floorViolation(
+  RackDocument doc,
+  Link link, {
+  required String ruleId,
+  required Severity severity,
+  required Len limit,
+  required String subject,
+}) {
+  final floor = planLowerBoundOf(doc, link);
+  if (floor == null || floor.nm <= limit.nm) return null;
+  return Finding(
+    ruleId: ruleId,
+    severity: severity,
+    message:
+        '${link.designator} is unmeasured and its floorplan straight line '
+        'is already ${_metres(floor)} m, over $subject. No route is '
+        'shorter than the straight line.',
+    targets: [link.id],
+    primaryEntityId: link.id,
+  );
+}
 
 /// 100 m, the Ethernet channel limit docs/02 §5.3 names.
 ///
@@ -97,16 +164,25 @@ List<Finding> ruleLen001(RackDocument doc) {
 
     final length = knownLengthOf(link);
     if (length == null) {
+      final proven = _floorViolation(
+        doc,
+        link,
+        ruleId: 'LEN-001',
+        severity: Severity.error,
+        limit: kEthernetChannelLimit,
+        subject: 'the 100 m Ethernet channel limit',
+      );
       out.add(
-        Finding(
-          ruleId: 'LEN-001',
-          severity: Severity.error,
-          message:
-              '${link.designator} carries Ethernet and has no measured '
-              'length, so the 100 m channel limit cannot be verified.',
-          targets: [link.id],
-          primaryEntityId: link.id,
-        ),
+        proven ??
+            Finding(
+              ruleId: 'LEN-001',
+              severity: Severity.error,
+              message:
+                  '${link.designator} carries Ethernet and has no measured '
+                  'length, so the 100 m channel limit cannot be verified.',
+              targets: [link.id],
+              primaryEntityId: link.id,
+            ),
       );
       continue;
     }
@@ -139,17 +215,26 @@ List<Finding> ruleLen002(RackDocument doc) {
 
     final length = knownLengthOf(link);
     if (length == null) {
+      final proven = _floorViolation(
+        doc,
+        link,
+        ruleId: 'LEN-002',
+        severity: Severity.warning,
+        limit: limit,
+        subject: "${media.displayName}'s ${_metres(limit)} m rated maximum",
+      );
       out.add(
-        Finding(
-          ruleId: 'LEN-002',
-          severity: Severity.warning,
-          message:
-              '${link.designator} is ${media.displayName} and has no '
-              'measured length, so its ${_metres(limit)} m maximum cannot '
-              'be verified.',
-          targets: [link.id],
-          primaryEntityId: link.id,
-        ),
+        proven ??
+            Finding(
+              ruleId: 'LEN-002',
+              severity: Severity.warning,
+              message:
+                  '${link.designator} is ${media.displayName} and has no '
+                  'measured length, so its ${_metres(limit)} m maximum cannot '
+                  'be verified.',
+              targets: [link.id],
+              primaryEntityId: link.id,
+            ),
       );
       continue;
     }

@@ -573,7 +573,20 @@ $SuiteFloors = @{
     # every state; a rackless plan strands its pins too) and three on
     # PLN-001's sentence, whose VERB moves with its plural. Seven
     # mutations killed.
-    'rackpal_core'   = 4360
+    # 4384 at PLAN-G/2 and PLAN-G/4: +18 from plan_length_test.dart and +6
+    # in drc_rules_test.dart. Four of the eighteen are load-bearing and are
+    # marked in the file, because every arithmetic case there passes
+    # against a derivation that measures from the NEAREST pinned rack, from
+    # the FIRST one, or that falls back to a device beyond an unpinned
+    # outlet. The eighteenth was added BECAUSE A MUTATION SURVIVED: relaxing
+    # "exactly one rack end" to "at least one" changes nothing for an
+    # ordinary jumper or sub-feed, whose far end carries no pin either way,
+    # so it took a run landing in two racks whose origin still names a
+    # pinned outlet to tell the two rules apart. Seven mutations killed.
+    # The six in drc_rules_test.dart are three pairs of controls: the same
+    # unmeasured run on the same plan, over and under each limit, plus the
+    # measured run that ignores the plan entirely.
+    'rackpal_core'   = 4384
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

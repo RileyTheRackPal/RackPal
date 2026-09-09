@@ -90,6 +90,115 @@ void main() {
 
   Len metres(num m) => Len.fromMillimetres(m * 1000);
 
+  /// An Ethernet home run from a pinned rack to an outlet pinned
+  /// [pinAt] metres away, on a plan calibrated at one metre per pixel.
+  ///
+  /// UNMEASURED BY DEFAULT, which is the state the plan floor is about:
+  /// `knownLengthOf` outranks it whenever a length exists, so a fixture
+  /// with one would be testing the ladder rather than the floor.
+  ///
+  /// The medium is `media.cat6`, matching the group's other cases. It
+  /// declares its own passive limit, so these documents arm `LEN-002`
+  /// too; every assertion here scopes to one rule through [one] and
+  /// [ids], exactly as the measured cases above do.
+  Link planBoundedEthernet(
+    String designator, {
+    required int pinAt,
+    Len? terminated,
+  }) {
+    const underlayId = Uuid('ul-drc');
+    doc.underlays[underlayId] = PlanUnderlay(
+      id: underlayId,
+      name: 'Level 1',
+      imageMember: 'underlays/level-1.png',
+      format: PlanImageFormat.png,
+      pixelWidth: 400,
+      pixelHeight: 300,
+      contentHash: 'sha256:ul',
+      order: const FracIndex('a0'),
+      meta: meta(),
+      // ONE METRE PER PIXEL, so the pin coordinate IS the distance and
+      // the arithmetic is not what these cases are about.
+      scale: PlanScale(
+        a: const PxPt(0, 0),
+        b: const PxPt(1, 0),
+        distance: metres(1),
+      ),
+    );
+
+    final rackId = nextId();
+    doc.racks[rackId] = Rack(
+      id: rackId,
+      name: 'Head end',
+      designator: 'RK-1',
+      heightU: 42,
+      order: const FracIndex('a0'),
+      meta: meta(),
+      planPin: const PlanPin(underlayId: underlayId, at: PxPt(0, 0)),
+    );
+
+    final panelId = nextId();
+    doc.devices[panelId] = DeviceInstance(
+      id: panelId,
+      kind: DeviceKind.rackDevice,
+      templateRef: const TemplateRef(
+        templateId: TemplateId('tpl.pp'),
+        version: 1,
+        contentHash: 'sha256:tpl.pp',
+      ),
+      designator: 'PP-1',
+      name: 'patch panel',
+      placement: RailPlacement(rackId: rackId, ruIndex: 1, face: Face.rear),
+      meta: meta(),
+    );
+    final portId = nextId();
+    doc.ports[portId] = Port(
+      id: portId,
+      deviceId: panelId,
+      designator: '01',
+    );
+
+    final outletId = nextId();
+    doc.outlets[outletId] = Outlet(
+      id: outletId,
+      structureBodyId: const Uuid('structure-drc'),
+      designation: 'WP-1',
+      order: const FracIndex('a0'),
+      meta: meta(),
+      planPin: PlanPin(underlayId: underlayId, at: PxPt(pinAt, 0)),
+    );
+
+    final link = Link(
+      id: nextId(),
+      designator: designator,
+      media: const MediaTypeId('media.cat6'),
+      order: FracIndex('a$seq'),
+      conductors: [
+        Conductor(
+          role: 'pair',
+          from: PortEndpoint(portId),
+          to: const PlaceEndpoint(description: 'TV wall'),
+        ),
+      ],
+      services: [
+        Service(
+          id: 'svc-plan',
+          signalFamily: const SignalFamilyId('net.ethernet'),
+          netId: nextId(),
+        ),
+      ],
+      structureOrigin: StructureOrigin(
+        structureBodyId: const Uuid('structure-drc'),
+        outletId: outletId,
+        fieldLabel: 'GR-TV-1',
+      ),
+      meta: meta(),
+    );
+    if (terminated != null) link.terminatedLength = terminated;
+    doc.links[link.id] = link;
+    return link;
+  }
+
   // ═══════════════════════════════════════════════════════════════════
   group('LEN-001 — the Ethernet channel (#284)', () {
     test('KNOWN BAD: 120 m of Ethernet', () {
@@ -144,6 +253,58 @@ void main() {
         expect(one('LEN-001').message, contains('cannot be verified'));
       },
     );
+
+    // ═════════════════════════════════════════════════════════════════
+    // THE PLAN FLOOR, IN THE ONE DIRECTION IT PROVES ANYTHING
+    // ═════════════════════════════════════════════════════════════════
+    // DR-147 §11.146.5. These two are each other's control: the SAME
+    // unmeasured run, on the SAME calibrated plan, with the outlet's pin
+    // moved. Over the limit it is a violation; under it, it is still a
+    // run nobody has verified. A rule that fed the floor into
+    // `knownLengthOf` would report the second as fine, which is the
+    // compliance claim a plan may never make.
+    test('KNOWN BAD: unmeasured, but the plan floor is already 120 m', () {
+      planBoundedEthernet('W001', pinAt: 120);
+
+      final f = one('LEN-001');
+      expect(f.severity, Severity.error, reason: 'the catalogue decides');
+      expect(f.message, contains('120.0 m'));
+      expect(f.message, contains('unmeasured'));
+      expect(
+        f.message,
+        isNot(contains('cannot be verified')),
+        reason: 'the plan HAS verified it, in the only direction it can',
+      );
+    });
+
+    test('KNOWN GOOD (near miss): the same run with an 80 m floor is '
+        'still unverified, not passed', () {
+      planBoundedEthernet('W001', pinAt: 80);
+
+      final f = one('LEN-001');
+      expect(f.message, contains('no measured length'));
+      expect(f.message, contains('cannot be verified'));
+      expect(
+        f.message,
+        isNot(contains('80')),
+        reason: 'a floor under the limit proves nothing and is not quoted',
+      );
+    });
+
+    test('a floor EXACTLY at the limit takes the boundary the measured '
+        'case takes', () {
+      planBoundedEthernet('W001', pinAt: 100);
+      expect(one('LEN-001').message, contains('cannot be verified'));
+    });
+
+    test('a MEASURED run ignores the plan entirely, however long the '
+        'floor is', () {
+      // The floor is 120 m and the wall says 40 m. `knownLengthOf` wins
+      // and the rule is silent: a measured length is a fact and a floor
+      // is a floor, and this is the one case that could confuse them.
+      planBoundedEthernet('W001', pinAt: 120, terminated: metres(40));
+      expect(ids('LEN-001'), isEmpty);
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════
@@ -200,6 +361,29 @@ void main() {
         expect(ids('LEN-002'), isEmpty);
       },
     );
+
+    // THE FLOOR LIMB IS SHARED AND THIS IS WHERE THAT IS PROVEN. Both
+    // rules call one `_floorViolation`, so a version wired into `LEN-001`
+    // alone passes every case in that group and this rule silently keeps
+    // reporting a run the plan has already convicted. The medium here
+    // declares 100 m of its own, so one fixture arms both; the assertion
+    // is that this rule names ITS OWN limit rather than the channel's.
+    test('KNOWN BAD: unmeasured, and the plan floor is past the '
+        "medium's own rated maximum", () {
+      planBoundedEthernet('W001', pinAt: 120);
+
+      final f = one('LEN-002');
+      expect(f.severity, Severity.warning, reason: 'unchanged by the floor');
+      expect(f.message, contains('120.0 m'));
+      expect(f.message, contains('rated maximum'));
+      expect(f.message, isNot(contains('cannot be verified')));
+    });
+
+    test('KNOWN GOOD (near miss): an 80 m floor leaves this rule '
+        'unverified too', () {
+      planBoundedEthernet('W001', pinAt: 80);
+      expect(one('LEN-002').message, contains('cannot be verified'));
+    });
   });
 
   // ═══════════════════════════════════════════════════════════════════

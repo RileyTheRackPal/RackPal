@@ -484,9 +484,11 @@ enum ScheduleLengthSource {
   ///
   /// **THE RANK COSTS IT NOTHING, BECAUSE ITS VALUE WAS NEVER THE
   /// COLUMN.** `LEN-001` and `LEN-002` read the bound regardless of which
-  /// tier printed, which is why `ScheduleEntry.planLowerBound` is carried
-  /// separately from [ScheduleEntry.length] (`PLAN-G/2`). A plan can prove
-  /// a length violation and can never prove compliance.
+  /// tier printed, by calling `planLowerBoundOf` themselves rather than
+  /// through a row: they take a `Link` and never build a schedule, so a
+  /// second copy of the number on [ScheduleEntry] would have had no
+  /// reader. A plan can prove a length violation and can never prove
+  /// compliance.
   ///
   /// Prints ITALIC and prefixed `≥`. The flag is
   /// `ScheduleEntry.lengthIsBound` (`PLAN-G/3`) and is deliberately NOT
