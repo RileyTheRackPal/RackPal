@@ -131,7 +131,7 @@ fuller treatment; nothing here replaces them.
 | DR-047 | A gang can be fitted with a pass-through, and the plate follows from what is in it | canon §11.46 |
 | DR-048 | A network value is a dated as-built fact, and `T6.50` ships in v1 | canon §11.47 |
 | DR-049 | The tabular exports ship in v1: rows out, and a label sheet that is not a sheet | canon §11.48 |
-| DR-050 | Plan geometry fills the room estimate that already exists, and it buys cable | canon §11.49 |
+| DR-050 | Plan geometry fills the room estimate that already exists, and it buys cable | canon §11.49  **Its "no new tier" is scoped to ROOM GEOMETRY** and does not abolish `planLowerBound`, which its own §11.49.4 preserves by name: DR-147 §11.146.7 |
 | DR-051 | Documentation is referenced and never embedded | canon §11.50 |
 | DR-052 | Git sync is v1.2 and gated on evidence; live collaboration is never | canon §11.51 |
 | DR-053 | The typed line and the CSV agree on what identifies an outlet and a room | canon §11.52 |

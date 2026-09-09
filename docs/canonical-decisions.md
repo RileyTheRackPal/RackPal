@@ -10009,6 +10009,14 @@ does not pay here: *"it's used to estimate quotes, with a healthy margin for err
 companies, wire is a consumable."* **Machinery for a distinction nobody acts on is machinery that
 gets read as significant by the next person.**
 
+> **THIS PARAGRAPH IS SCOPED TO ROOM GEOMETRY AND DOES NOT ABOLISH `planLowerBound`** (DR-147
+> §11.146.7, settled 2026-09-08). Read alone, *"`ScheduleLengthSource` gains nothing"* collides head
+> on with DR-037 §11.36.4, which ruled the fifth tier and its rank two days before this, and a
+> `PLAN-G` census stopped on exactly that collision. The question this ruling was asked is whether a
+> figure derived from **room vertices** earns a tier; it does not. The **pin-to-pin floor** is a
+> different object, this ruling's own §11.49.4 preserves it by name, and §11.49.1's table lists it as
+> *"not built"* rather than as removed. The tier ships at `PLAN-G/1`.
+
 **11.49.3 A COMPUTED VALUE IS MARKED AS COMPUTED, AND THAT IS DR-046'S LESSON HONOURED RATHER THAN
 CONTRADICTED.** When geometry proposes the figure, the field records that it was **proposed rather
 than typed**. §11.45.2 ruled that nothing may copy a field termination into the rack termination,
@@ -18811,7 +18819,37 @@ understands it was priced. The allowance is read from **the subject carrier's ow
 outlet's or the off-rack device's, rather than from the schedule row's room fallback chain, because
 the rise is a fact about where the device is and the row's chain can land on the far end's room.
 
-**11.146.7 WHAT THIS DOES NOT RULE.** Not a bound between two underlays. A carrier holds exactly one
+**11.146.7 RULED: DR-050's "NO NEW TIER" IS SCOPED TO ROOM GEOMETRY, AND THE TIER STANDS.** Found by
+reading this chapter's brief against canon rather than against the tree, one commit after the tier had
+already been added on DR-037's authority. **§11.49.2 says, in terms, *"THEREFORE NO NEW TIER, AND THIS
+IS THE RULING. `ScheduleLengthSource` gains nothing"*, and it is dated 2026-08-12**: two days after
+DR-037 §11.36.4 ruled the rank and two days after `PLAN-G` was decomposed into a Story whose title is
+*"`planLowerBound`, the fifth tier"*. Neither ruling lists the other in §12. A reader meeting those
+words alone would stop, and one did.
+
+The user's call is that **DR-050 answers the question it was asked**, which was whether a figure
+derived from room vertices earns a tier of its own. It does not; it fills
+`Location.estimatedRunLengthFromRack`. It does not reach the pin-to-pin floor, and three things in
+DR-050's own text say so:
+
+- **§11.49.4 preserves `planLowerBound` by name**, *"remains forbidden from the rollup"*. A ruling
+  cannot forbid from a rollup a value it has just abolished.
+- **§11.49.1's table lists it as *"not built"*, not as abolished**, in a table whose whole purpose is
+  to separate the three sources that sum from the one that does not.
+- **§11.49.2's reason does not reach it.** The objection is that *"a fourth tier would buy a
+  provenance distinction"* between figures that all sum, and that wire is a consumable quoted with
+  margin. A floor is not a provenance distinction: it is excluded from every `Σ`, prefixed `≥` and
+  ranked below the estimate it can never replace. **The distinction it buys is behavioural**, and
+  §11.146.3 is the behaviour.
+
+**§11.49.5's two items are still owed and are still nobody's.** *"The geometry-to-estimate derivation
+and the computed-versus-typed marker"* have zero implementation in this tree: no `Location` ceiling
+height, no proposed-versus-typed flag, and no vertex gesture. They are not `PLAN-G`'s and this ruling
+does not adopt them; they are recorded here because the census that found the collision also found
+that the ruling on the other side of it is entirely unbuilt, which is why nothing in the tree had
+made the two disagree out loud.
+
+**11.146.8 WHAT THIS DOES NOT RULE.** Not a bound between two underlays. A carrier holds exactly one
 `PlanPin` (DR-142 §11.141), so a rack pinned on `Level 1` can never be the datum for a drop pinned on
 `Level 2`, and a two-storey job yields bounds only on the rack's floor. That is the honest answer and
 `PlanMeasurability` already reports it per underlay as `noRackPinned`; a cross-plan bound would need a
