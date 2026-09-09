@@ -18923,6 +18923,83 @@ vendored pdfium reopens that census when it lands and not before.
 
 ---
 
+### §11.148 DR-149 · The plan sheet's place in the set, how light it prints, and the export path that could not reach an underlay
+
+**Settled by the user on 2026-09-09**, at `PLAN-H/1`'s census. Two presentation calls the corpus had
+deliberately left open, and one finding that is upstream of every chapter in `PLAN-H`.
+
+**11.148.1 THE EXPORT PATH STRUCTURALLY CANNOT REACH AN UNDERLAY, AND NO TICKET SAYS SO.**
+`ExportRequest` carries `documentJson`, `fontBytes`, `fileName` and `issuedAt`. The underlay bytes
+live in `DocumentSession.members`, written by `adopt` and read by the Plan editor;
+`export_controller.dart` builds the request and **never passes them**. So:
+
+| Piece | State before `PLAN-H` |
+|---|---|
+| `DiagramCanvas.drawImage`, `ImageRef` | built at `PLAN-A` |
+| `PdfDiagramCanvas.drawImage` | built at `PLAN-A`, emits the `cm`/`Do` pair |
+| `PdfImageResolver` | a **typedef with zero production call sites**; only `pdf_canvas_image_test.dart` supplies one |
+| `ExportRequest.members` | **does not exist** |
+
+**This is `PLAN-E/1`'s finding one package over.** That chapter found `FlutterImageResolver` had no
+implementation and wrote `plan_image_cache.dart`, whose header says *"a typedef with no
+implementation is a seam, not a feature"*. The export backend has been in exactly that state since
+`PLAN-A` and nothing noticed, because no sheet asked for an image. **`T1.01` is the first caller**,
+and the screen's solution is the model rather than a design question: load once, resolve
+synchronously, because a paint callback cannot await and a decode per frame is tens of megabytes.
+
+**11.148.2 AND THE SECOND BOOBY TRAP FIRES HERE, THOUGH NOBODY LEFT IT ON PURPOSE.**
+`build_document.dart`'s `switch (sheet.role)` is exhaustive with no default and assigns a
+definitely-assigned `final DiagramScene scene`, so **adding a fourth `SheetRole` stops the export
+package compiling**. `PLAN-G/1` met the same shape in `cable_footage.dart`, where the arm was left
+open *on purpose* and its header said so. This one is a consequence of definite assignment rather
+than a decision, and the effect is identical and equally welcome: the slot cannot be added without a
+sheet behind it.
+
+**It also forces the chapter's shape.** `#640` reads as though the enum value could land alone; it
+cannot, and a `case` that drew a frame over white paper would be the *"title block over white
+paper"* docs/15 §7 already names as indistinguishable from a plan with no drops on it. So the slot,
+the resolver, the screening and the sheet land together, and what `#641` keeps is the **evidence**:
+the emitted bytes carry no `/SMask` and no `/ExtGState`.
+
+**11.148.3 RULED: `T1.01` SITS AFTER `T0.02` AND BEFORE THE ELEVATIONS.** Cover, Symbol Legend,
+Exceptions, **plans**, rack elevations, interconnect, schedules, details.
+
+**The order was a choice and not a consequence**, which is why it was put to the user: docs/08 §2.2's
+table is *not* numeric, `T5.01` sitting last at `n+5` after `T6.30`. The ground is the job rather than
+the number: **a reader orients in the building before they open a rack**, which is the order the work
+is walked, and it agrees with the NCS convention that puts `T1` plans ahead of `T2` elevations.
+
+*Last, beside `T5.01`* was refused, though it has a real argument (both are `AUTO`, and a set whose
+page count moves in the middle is harder to collate). *Immediately before the Pull Sheet* was refused
+too, and it is the closest call: it couples the locator to the deliverable it serves. The set is
+ordered by drawing type and not by errand, and `T6.10`'s callouts already carry the cross-reference.
+
+**11.148.4 RULED: THE UNDERLAY PRINTS AT 25%, AND THE NUMBER IS CONFIRMED BY A LASER RATHER THAN BY
+THIS RULING.** One named constant in the export backend, so changing it is a one-line edit and never a
+re-import (docs/15 §7's own reason for putting the pass here rather than at import).
+
+**25% and not 18%**, which is the legend chip's tint, because a chip is a swatch behind a single rule
+and an architect's floorplan is line art whose walls, doors and dimension strings must survive the
+pass. **25% and not 40%**, because the callout has to win: AC-054 requires every callout legible over
+the screened underlay, and PAL-1's own exclusion block records this as *"the only new legibility
+question this palette has met"*.
+
+**THE HONEST HALF IS THAT NO NUMBER CHOSEN HERE IS EVIDENCE.** AC-054 sets the standard as a print on
+a real greyscale laser at ANSI B, `PLAN-J`'s drill is where that happens, and this ruling names it as
+the confirmation point. A screening value argued from a monitor is a stated
+cost wearing a measurement's clothes.
+Moving it after the drill is a one-line change and is **expected rather than a defect**.
+
+**11.148.5 WHAT THIS DOES NOT RULE.** Not the callout pill's own geometry or colour, which is
+`PLAN-H/3`'s and which CR-078 already constrains to the signal **domain**. Not the leader-line rule.
+Not the scale bar (`PLAN-H/4`) or the per-plan device schedule (`PLAN-H/5`). Not whether a project
+with several underlays orders its plan sheets by `PlanUnderlay.order` or by location name: `order` is
+a `FracIndex` the user controls and every other per-entity sheet in this product sorts on it, so it is
+taken rather than decided. And not the resolution question DR-145 §11.144.7 left open, which belongs
+to whoever builds the rasteriser.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
