@@ -305,6 +305,11 @@ class _ScheduleSummary extends StatelessWidget {
             _Chip(label: 'Total ${_footageLabel(view.footage, units)}'),
             if (view.estimatedCount > 0)
               _Chip(label: '${view.estimatedCount} estimated'),
+            // BESIDE THE ESTIMATE COUNT AND NOT INSIDE IT (DR-147
+            // §11.146.4). These rows are excluded from the total above,
+            // so a reader seeing a smaller Σ on a more complete job has
+            // the reason on the same line.
+            if (view.boundCount > 0) _Chip(label: '${view.boundCount} bound'),
             if (view.footage.unknownCount > 0)
               _Chip(
                 label: '${view.footage.unknownCount} length unknown',
@@ -628,9 +633,14 @@ String _bandTrailing(ScheduleGroup group, UnitSystem units) {
   final footage = _footageLabel(group.footage, units);
   final unknown = group.footage.unknownCount;
   final estimated = group.estimatedCount;
+  final bound = group.boundCount;
   return <String>[
     footage,
     if (estimated > 0) '$estimated estimated',
+    // BEFORE `unknown`, because a bound row is inside that count and the
+    // narrower fact reads first: "2 bound · 5 unknown" says five rows
+    // know nothing and two of those five know a floor.
+    if (bound > 0) '$bound bound',
     if (unknown > 0) '$unknown unknown',
   ].join(' · ');
 }
@@ -688,11 +698,18 @@ class _DataRow extends StatelessWidget {
     }
     final text = entry.cell(column.id, units: units);
     final isUnknown = text == kUnknownCell;
-    // ITALIC MEANS ESTIMATED (§3.2 column 8), and it is the only thing
-    // italic means on this table. AC-024: "tagged as such so nobody bills
-    // off them".
+    // ITALIC MEANS "DO NOT BILL OFF THIS" (§3.2 column 8). AC-024:
+    // "tagged as such so nobody bills off them".
+    //
+    // IT COVERS TWO SOURCES AND THE CELL SAYS WHICH (DR-147 §11.146.4). A
+    // plan-derived FLOOR is not an estimate and `lengthIsEstimated` is
+    // false for it, because the footer's `N estimated` counts that flag
+    // and a floor is a different claim. Both print italic, and the floor
+    // additionally carries `≥` in the string itself, which is the part a
+    // plain-text export cannot lose.
     final estimated =
-        column.id == ScheduleColumnId.length && entry.lengthIsEstimated;
+        column.id == ScheduleColumnId.length &&
+        (entry.lengthIsEstimated || entry.lengthIsBound);
     return Text(
       text,
       maxLines: 2,

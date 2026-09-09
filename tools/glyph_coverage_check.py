@@ -58,7 +58,8 @@ REQUIRED = {0x2192: 'passthrough arrow, schedules T6.10/T6.11',
             0x2194: 'bidirectional',
             0x2032: 'feet', 0x2033: 'inches',
             0x2014: 'G4 unknown, the em dash', 0x00B7: 'separator',
-            0x2211: 'the structure matrix sum header'}
+            0x2211: 'the structure matrix sum header',
+            0x2265: "the plan floor's prefix, schedule LEN column"}
 
 # THE ONE EXEMPT SET, AND WHY IT IS SAFE TO HAVE ONE.
 #

@@ -6,7 +6,7 @@ description: >-
   entire unreachable feature the next. It scans function-typed fields on *Actions
   records in one package; the importer was free functions in another. Both facts
   are in the gate's source and neither is in its name.
-tags: [practice, gates, reachability, census, plan-e]
+tags: [practice, gates, reachability, census, plan-e, plan-g]
 timestamp: 2026-09-08T00:00:00Z
 status: adopted
 ---
@@ -43,6 +43,26 @@ to a case it never saw.
 
 This is [a-ticket-is-a-hypothesis-not-a-diagnosis](a-ticket-is-a-hypothesis-not-a-diagnosis.md)
 pointed at the tooling instead of at a brief.
+
+# And a third instance, where the gate is a compile error
+
+`PLAN-G` found the same shape in the most trusted mechanism this repository has.
+`cable_footage.dart`'s `_isQuantity` is an exhaustive `switch` with no default arm,
+left that way on purpose so that *"the day it is added this file stops compiling and
+somebody decides, rather than a bound silently joining a purchase."* **It worked**,
+seventeen months after the comment was written: adding
+`ScheduleLengthSource.planLowerBound` stopped the build in exactly one place.
+
+**In exactly one place.** `schedule.dart`'s `_footageOf` builds the sheet footer's
+`Σ 11 runs · 601 ft · 3 estimated` by reading a `Len?` and never asking where the
+number came from, so a plan-derived floor would have joined that total with nothing
+to stop it. `PLAN-G`'s own ticket said *"the footage rollup"*, singular, on the
+strength of the trap's reputation.
+
+**A gate that stops the build is still a gate with a scan**, and the scan here is one
+function's argument type. The rule below is unchanged; what this adds is that being a
+compile error buys certainty about the site it guards and says nothing whatsoever
+about the site beside it.
 
 # The rule
 

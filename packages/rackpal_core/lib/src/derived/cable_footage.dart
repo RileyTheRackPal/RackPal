@@ -46,8 +46,13 @@
 // undetermined" is not.
 //
 // ═════════════════════════════════════════════════════════════════════
-// ESTIMATES COUNT; BOUNDS WILL NOT
+// ESTIMATES COUNT; BOUNDS DO NOT
 // ═════════════════════════════════════════════════════════════════════
+// READ "WILL NOT" UNTIL `PLAN-G/1`, WHICH IS THE DAY THE SWITCH BELOW WAS
+// BUILT FOR. `ScheduleLengthSource.planLowerBound` now exists, this file
+// stopped compiling exactly as its author intended, and the arm is
+// answered `false`.
+//
 // AC-024's example says `2,140 ft ESTIMATED + 10%`, so an estimate is a
 // legitimate quantity here — a takeoff made before anybody has pulled
 // anything is the ordinary case and the whole reason the feature exists.
@@ -57,10 +62,16 @@
 // DR-020 §11.19.2(2) rules that a plan-derived `planLowerBound` "never
 // enters the footage rollup as a quantity", because a bound cannot be
 // summed into "how much Cat6 to order" without making a claim it is not
-// entitled to make. That source does not exist yet (the Plan view is
-// DR-029's, before M6). `_isQuantity` is therefore an EXHAUSTIVE switch
-// with no default arm, so the day it is added this file stops compiling
-// and somebody decides, rather than a bound silently joining a purchase.
+// entitled to make. `_isQuantity` is therefore an EXHAUSTIVE switch with
+// no default arm, so the day it was added this file stopped compiling and
+// somebody decided, rather than a bound silently joining a purchase.
+//
+// THE MECHANISM WORKED AND ITS SCOPE WAS SMALLER THAN ITS REPUTATION
+// (DR-147 §11.146.1). It guards this rollup and it does not guard
+// `schedule.dart`'s `_footageOf`, which builds the sheet footer's
+// `Σ 11 runs · 601 ft · 3 estimated` by summing `row.length` and never
+// asking where the number came from. Two rollups, one trap; the other is
+// closed by hand at `PLAN-G/3`.
 //
 // ═════════════════════════════════════════════════════════════════════
 // WHAT IS DELIBERATELY NOT HERE: THE BOX COUNT
@@ -99,6 +110,7 @@ final class CableFootageLine {
     required this.withWaste,
     required this.runCount,
     required this.estimatedCount,
+    required this.boundCount,
   });
 
   final MediaTypeId mediaId;
@@ -139,6 +151,20 @@ final class CableFootageLine {
   /// but a reader is entitled to know before ordering against it, and
   /// `ScheduleGroup.estimatedCount` carries the same number for a room.
   final int estimatedCount;
+
+  /// How many of this line's runs printed a plan-derived FLOOR, and are
+  /// therefore inside [footage]'s `unknownCount` rather than its sum
+  /// (DR-020 §11.19.2(2), DR-147 §11.146.3).
+  ///
+  /// **THE SUBSET OF THE IGNORANCE THAT HAS A FLOOR UNDER IT.** A bound
+  /// cannot be summed into "how much Cat6 to order" without becoming a
+  /// claim it is not entitled to make, so it is excluded exactly as a
+  /// missing length is; naming how many of the unknowns are bounds is
+  /// what keeps the exclusion visible rather than quietly shrinking the
+  /// order. [estimatedCount] is the precedent and the sibling: one says
+  /// how much of the number rests on guesses, this says how much of the
+  /// gap is measurable at all.
+  final int boundCount;
 }
 
 /// The whole materials takeoff: one line per media type actually used,
@@ -229,6 +255,7 @@ CableFootage cableFootageOf(Schedule schedule, {required RackDocument doc}) {
   final known = <MediaTypeId, int>{};
   final unknown = <MediaTypeId, int>{};
   final estimated = <MediaTypeId, int>{};
+  final bound = <MediaTypeId, int>{};
 
   for (final row in schedule.rows) {
     // UNDETERMINED IS NOT A CLASS and cannot be filtered as one; it is
@@ -254,6 +281,7 @@ CableFootage cableFootageOf(Schedule schedule, {required RackDocument doc}) {
 
     final id = row.mediaId;
     final length = _isQuantity(row.lengthSource) ? row.length : null;
+    if (row.lengthIsBound) bound[id] = (bound[id] ?? 0) + 1;
     if (length == null) {
       unknown[id] = (unknown[id] ?? 0) + 1;
     } else {
@@ -279,6 +307,7 @@ CableFootage cableFootageOf(Schedule schedule, {required RackDocument doc}) {
         withWaste: _withWaste(footage.value, waste),
         runCount: (known[id] ?? 0) + (unknown[id] ?? 0),
         estimatedCount: estimated[id] ?? 0,
+        boundCount: bound[id] ?? 0,
       ),
     );
   }
@@ -313,6 +342,13 @@ bool _isQuantity(ScheduleLengthSource source) => switch (source) {
   // figure's standing visible.
   ScheduleLengthSource.outletNominal => true,
   ScheduleLengthSource.roomEstimate => true,
+  // THE DAY ARRIVED, AND THE ANSWER IS NO (`PLAN-G/1`, DR-020
+  // §11.19.2(2)). Adding the value above stopped this file compiling,
+  // which is what the arm below was arranged to do; a `default: true`
+  // would have let a floor into somebody's purchase order silently.
+  // Excluded is not dropped: `PLAN-G/3` adds the count that says how
+  // many of this line's unknowns have a floor under them.
+  ScheduleLengthSource.planLowerBound => false,
   ScheduleLengthSource.none => false,
 };
 

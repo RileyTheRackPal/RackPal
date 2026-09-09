@@ -144,6 +144,7 @@ export 'src/derived/location_tree.dart';
 export 'src/derived/pathway_table.dart';
 export 'src/derived/placeable_templates.dart';
 export 'src/derived/placement_rules.dart';
+export 'src/derived/plan_length.dart';
 export 'src/derived/plan_measurability.dart';
 export 'src/derived/plate_fill.dart';
 export 'src/derived/plate_materials.dart';

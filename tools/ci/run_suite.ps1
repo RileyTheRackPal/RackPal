@@ -573,7 +573,28 @@ $SuiteFloors = @{
     # every state; a rackless plan strands its pins too) and three on
     # PLN-001's sentence, whose VERB moves with its plural. Seven
     # mutations killed.
-    'rackpal_core'   = 4360
+    # 4384 at PLAN-G/2 and PLAN-G/4: +18 from plan_length_test.dart and +6
+    # in drc_rules_test.dart. Four of the eighteen are load-bearing and are
+    # marked in the file, because every arithmetic case there passes
+    # against a derivation that measures from the NEAREST pinned rack, from
+    # the FIRST one, or that falls back to a device beyond an unpinned
+    # outlet. The eighteenth was added BECAUSE A MUTATION SURVIVED: relaxing
+    # "exactly one rack end" to "at least one" changes nothing for an
+    # ordinary jumper or sub-feed, whose far end carries no pin either way,
+    # so it took a run landing in two racks whose origin still names a
+    # pinned outlet to tell the two rules apart. Seven mutations killed.
+    # The six in drc_rules_test.dart are three pairs of controls: the same
+    # unmeasured run on the same plan, over and under each limit, plus the
+    # measured run that ignores the plan entirely.
+    # 4392 at PLAN-G/3: +5 in schedule_test.dart and +3 in
+    # cable_footage_test.dart. Two of the eight are load-bearing. The RANK
+    # is one: a floor is more specific than a room estimate and still ranks
+    # below it, so any derivation that put the plan above the room passes
+    # every other case in that group. The SHEET FOOTER is the other, and it
+    # is the rollup `_isQuantity`'s exhaustive switch does not guard:
+    # `_footageOf` reads a `Len?` and never asks where it came from. Six
+    # mutations killed.
+    'rackpal_core'   = 4392
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -783,7 +804,13 @@ $SuiteFloors = @{
     # a state no fixture in this package had ever carried. A gate would
     # be added on a surface, so a case that ran the command would not see
     # it; two mutations on the drag confirm each case kills its own.
-    'rackpal_ui'     = 1672
+    # 1674 at PLAN-G/3: +2 in schedule_screen_test.dart, the two things
+    # core cannot assert. The LEN cell renders `≥ 41` italic, and the
+    # summary chip reads `1 bound` rather than folding into `N estimated`.
+    # The fixture drops the home run's cut length, because `cut` outranks
+    # every tier and a document keeping `78` would render `78` and pass an
+    # assertion about a floor for a reason that has nothing to do with one.
+    'rackpal_ui'     = 1674
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

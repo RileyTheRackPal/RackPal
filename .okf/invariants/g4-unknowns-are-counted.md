@@ -57,6 +57,19 @@ calibration lands ([DR-146](/decisions/dr-146-uncalibrated-states-what-it-costs.
 does not degrade a length, it produces a confident one that is wrong by an order
 of magnitude on a drawing an installer trusts.
 
+**A plan floor is excluded from every footage total and COUNTED in each one**
+([DR-147](/decisions/dr-147-the-datum-is-the-runs-own-rack.md)). A bound cannot be
+summed into "how much Cat6 to order", so the row sits in `unknownCount` exactly as a
+lengthless row does and `boundCount` says how much of that ignorance has a floor under
+it. The alternative that was refused is instructive: excluding it *silently* is also
+"correct" arithmetic, and it makes the sheet's `Σ` shrink as more of the job gets
+planned with nothing on the page explaining the shrinkage. **Counting the exclusion is
+the whole rule; performing it is the easy half.**
+
+**And the floor never becomes an estimate.** `lengthIsEstimated` is false for it,
+because that flag is what the footer's `N estimated` counts, and one count cannot
+carry two claims: a guess and a measured floor fail differently.
+
 **Registry ids.** An id that resolves to nothing degrades to `unknown(rawId)`:
 round-trips, renders grey with the raw id as its tag, never throws. M2-B's
 `unresolvedSignalFamilyCount` equalling its row count was this rule *working*,

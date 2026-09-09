@@ -56,7 +56,7 @@ final class _Doc {
     return id;
   }
 
-  Uuid rack(String designator, {Uuid? locationId}) {
+  Uuid rack(String designator, {Uuid? locationId, PlanPin? planPin}) {
     final id = _mint('rack');
     doc.racks[id] = Rack(
       id: id,
@@ -66,6 +66,31 @@ final class _Doc {
       order: FracIndex('a$_seq'),
       meta: _meta(),
       locationId: locationId,
+      planPin: planPin,
+    );
+    return id;
+  }
+
+  /// A calibrated underlay at one foot per pixel, so a pin's x coordinate
+  /// IS its distance from the rack in feet and no case below has to do
+  /// arithmetic to say what it means.
+  Uuid underlay() {
+    const id = Uuid('ul-sched');
+    doc.underlays[id] = PlanUnderlay(
+      id: id,
+      name: 'Level 1',
+      imageMember: 'underlays/level-1.png',
+      format: PlanImageFormat.png,
+      pixelWidth: 400,
+      pixelHeight: 300,
+      contentHash: 'sha256:ul',
+      order: const FracIndex('a0'),
+      meta: _meta(),
+      scale: const PlanScale(
+        a: PxPt(0, 0),
+        b: PxPt(1, 0),
+        distance: Len(12 * Len.nmPerInch),
+      ),
     );
     return id;
   }
@@ -86,6 +111,7 @@ final class _Doc {
     Uuid? locationId,
     Len? nominalRunLength,
     Uuid? pathwayId,
+    PlanPin? planPin,
   }) {
     final id = _mint('outlet');
     doc.outlets[id] = Outlet(
@@ -97,6 +123,7 @@ final class _Doc {
       locationId: locationId,
       nominalRunLength: nominalRunLength,
       pathwayId: pathwayId,
+      planPin: planPin,
     );
     return id;
   }
@@ -1313,6 +1340,164 @@ void main() {
       expect(row.lengthSource, ScheduleLengthSource.none);
       expect(row.lengthCell(UnitSystem.imperial), '—');
       expect(row.cell(ScheduleColumnId.length, units: UnitSystem.metric), '—');
+    });
+
+    // ═════════════════════════════════════════════════════════════════
+    // THE FIFTH TIER: A FLOOR, WHICH IS NOT AN ESTIMATE AND NOT A LENGTH
+    // ═════════════════════════════════════════════════════════════════
+    // DR-020 §11.19.2(2), ranked by DR-037 §11.36.4, presented by DR-147
+    // §11.146.4. Every case here is a Pull Sheet row rather than a
+    // `_lengthOf` call, on this file's own rule: a test that pins the
+    // intermediate survives the behaviour it was protecting.
+
+    /// A home run from a pinned rack to an outlet pinned [feetAway] feet
+    /// along a calibrated plan, with whatever else the case needs.
+    ScheduleEntry boundedRow({Len? roomEstimate, Len? cutLength}) {
+      final d = _Doc()..underlay();
+      final where = d.room('Great Room', estimatedRunLength: roomEstimate);
+      final rk = d.rack(
+        'RK-1',
+        planPin: const PlanPin(
+          underlayId: Uuid('ul-sched'),
+          at: PxPt(0, 0),
+        ),
+      );
+      final panel = d.device('PP-1', rackId: rk);
+      final out = d.outlet(
+        'WP-1',
+        locationId: where,
+        planPin: const PlanPin(
+          underlayId: Uuid('ul-sched'),
+          at: PxPt(41, 0),
+        ),
+      );
+      _link(
+        d,
+        designator: 'W044',
+        from: PortEndpoint(d.port(panel, '01')),
+        to: PlaceEndpoint(description: 'TV wall', locationId: where),
+        fieldLabel: 'GR-TV-1',
+        outletId: out,
+        cutLength: cutLength,
+      );
+      return _pull(d.doc).rows.single;
+    }
+
+    test('a calibrated plan yields a floor, and the cell says it is one', () {
+      final row = boundedRow();
+
+      expect(row.lengthSource, ScheduleLengthSource.planLowerBound);
+      expect(row.lengthCell(UnitSystem.imperial), '≥ 41');
+      expect(
+        row.lengthIsBound,
+        isTrue,
+        reason: 'the flag the renderer and both rollups read',
+      );
+      expect(
+        row.lengthIsEstimated,
+        isFalse,
+        reason: 'a floor is not a guess, and the footer counts guesses',
+      );
+    });
+
+    /// LOAD-BEARING: THE RANK, WHICH IS THE HALF THAT IS NOT INTUITIVE.
+    ///
+    /// A floor is more specific than a room estimate and still ranks
+    /// below it, because a bound is excluded from the footage total and
+    /// ranking it higher would move every drop on a calibrated plan out
+    /// of the purchase quantity (DR-037 §11.36.4). Any derivation that
+    /// put the plan above the room passes every other case in this group.
+    test('the room estimate OUTRANKS the plan floor, and the reason is '
+        'the rollup', () {
+      final row = boundedRow(roomEstimate: const Len(62 * 12 * Len.nmPerInch));
+
+      expect(row.lengthSource, ScheduleLengthSource.roomEstimate);
+      expect(row.lengthCell(UnitSystem.imperial), '62');
+      expect(row.lengthIsBound, isFalse);
+    });
+
+    test('a cut length outranks it too, and the prefix goes with it', () {
+      final row = boundedRow(cutLength: const Len(51 * 12 * Len.nmPerInch));
+
+      expect(row.lengthSource, ScheduleLengthSource.cut);
+      expect(row.lengthCell(UnitSystem.imperial), '51');
+    });
+
+    test('the prefix is in the STRING, not only in a flag', () {
+      // Italic is a style a renderer applies and a plain-text export
+      // loses. `41` and `≥ 41` are different claims and the first is a
+      // number an installer cuts to.
+      final row = boundedRow();
+      expect(
+        row.cell(ScheduleColumnId.length, units: UnitSystem.imperial),
+        startsWith(kAtLeastPrefix),
+      );
+    });
+
+    /// LOAD-BEARING: THE ROLLUP THE BOOBY TRAP DID NOT GUARD.
+    ///
+    /// `cable_footage.dart`'s `_isQuantity` is an exhaustive switch that
+    /// stopped the build when the tier was added. `_footageOf` reads a
+    /// `Len?` and never asks where it came from, so nothing would have
+    /// stopped a floor joining §3.8's `Σ 11 runs · 601 ft` footer
+    /// (DR-147 §11.146.1). Two rollups, one trap.
+    test('a floor does not join the sheet footer Σ, and the footer says '
+        'how many did not', () {
+      final d = _Doc()..underlay();
+      final where = d.room('Great Room');
+      final rk = d.rack(
+        'RK-1',
+        planPin: const PlanPin(
+          underlayId: Uuid('ul-sched'),
+          at: PxPt(0, 0),
+        ),
+      );
+      final panel = d.device('PP-1', rackId: rk);
+      final out = d.outlet(
+        'WP-1',
+        locationId: where,
+        planPin: const PlanPin(
+          underlayId: Uuid('ul-sched'),
+          at: PxPt(41, 0),
+        ),
+      );
+      _link(
+        d,
+        designator: 'W044',
+        from: PortEndpoint(d.port(panel, '01')),
+        to: PlaceEndpoint(description: 'TV wall', locationId: where),
+        fieldLabel: 'GR-TV-1',
+        outletId: out,
+      );
+      _link(
+        d,
+        designator: 'W045',
+        from: PlaceEndpoint(description: 'kitchen', locationId: where),
+        to: const OpenEndpoint('coil'),
+        fieldLabel: 'K-1',
+        cutLength: const Len(30 * 12 * Len.nmPerInch),
+        order: 1,
+      );
+
+      final view = _pull(d.doc);
+      expect(view.rowCount, 2);
+      expect(
+        view.footage.value,
+        const Len(30 * 12 * Len.nmPerInch),
+        reason: 'the cut run only: 71 ft would be a Σ of a floor and a fact',
+      );
+      expect(view.boundCount, 1);
+      expect(
+        view.footage.unknownCount,
+        1,
+        reason: 'the floor row is inside the ignorance, not beside it',
+      );
+      expect(view.estimatedCount, 0, reason: 'a floor is not an estimate');
+      expect(
+        view.groups.single.boundCount,
+        1,
+        reason: 'the band carries it too, since the band prints a subtotal',
+      );
     });
 
     test('metric and imperial read the same stored integer (CR-097, '

@@ -8276,6 +8276,147 @@ Two `PLAN-F/2` assertions were updated rather than deleted, on that chapter's ow
 old: they named the bare `Not calibrated` on a fixture that has a pin, and they now name the whole
 string the row prints.
 
+#### 5.9.18 PLAN-G: the plan yields a length, and two of its four briefs had expired · `DR-147` · `v0.6.36`
+
+Closed `2026-09-08`, `#603` and all four Chapters `#636`–`#639`. Commits `1f2a97f` (the ruling),
+`2b133e8` (`PLAN-G/1`, the tier), `70d03f1` (`PLAN-G/2` and `PLAN-G/4`, the derivation and the
+rules), `263bec1` (the DR-050 scope), `2acdfe2` (`PLAN-G/3`, the column and both rollups).
+**No exit clause moves**, for `PLAN-F`'s reason exactly: the criterion is a printed `T1.01` a
+stranger can use, and a length is not a locator. What closes is roadmap §4's `planLowerBound`
+bullet, which was the last unticked line of the length model.
+
+##### 5.9.18.1 The census, which found three things and none was in a ticket
+
+`PLAN-G` was decomposed on 2026-08-10 and started on 2026-09-08. Four briefs, and half of them
+describe a tree that has moved since.
+
+| Found | Where | What the brief assumed |
+|---|---|---|
+| **`LEN-001` and `LEN-002` already ship** | `validation/rules_cable.dart`, M5-E | `#639`: *"M5 owns the rules; this task owns the input and the seam. Do not build the rules here."* Written before M5 built them |
+| **Neither rule has ever read the tier ladder** | `knownLengthOf` is `terminatedLength ?? cutLength` | docs/15 §4.1's *"`LEN-001` and `LEN-002` read the bound regardless of which tier printed"* describes a ladder those two functions do not consume |
+| **There are two footage rollups** | `cable_footage.dart`'s `_isQuantity` versus `schedule.dart`'s `_footageOf` | `#638` names *"the footage rollup"*, singular |
+
+**The booby trap worked and its scope is smaller than its reputation.** `cable_footage.dart:309`'s
+`_isQuantity` is the one place in this tree where a future decision was written into the build, an
+exhaustive switch with no default arm whose header says *"the day it is added this file stops
+compiling and somebody decides, rather than a bound silently joining a purchase."* Adding the enum
+value stopped the build in exactly one place, seventeen months after that comment was written.
+**And `_footageOf` is not behind it**: it reads a `Len?` and never asks where the number came from,
+and it builds `ScheduleView.footage` and `ScheduleGroup.footage`, which is docs/08 §3.8's
+`Σ 11 runs · 601 ft · 3 estimated` footer. A floor would have walked into the second `Σ` with
+nothing to stop it. Third instance in this epic of a gate whose name is broader than its scan, after
+`actions_have_callers_test.dart` at §5.9.11.4 and the `partKey` filter at §5.9.12.2.
+
+##### 5.9.18.2 The fourth finding needed the canon, and the tree could not have shown it
+
+**DR-050 §11.49.2, dated 2026-08-12, says in terms: *"THEREFORE NO NEW TIER, AND THIS IS THE RULING.
+`ScheduleLengthSource` gains nothing."*** That is two days after DR-037 §11.36.4 ruled the fifth
+tier and its rank, and two days after this epic was decomposed into a Story titled *"`planLowerBound`,
+the fifth tier that must never become an estimate"*. Neither ruling lists the other in canon §12.
+
+**A census against the tree cannot find this, and did not.** The tier did not exist in the tree under
+either reading, so its absence is what both predict. It surfaced only when the brief was read against
+the canon, one commit after the tier had already been added on DR-037's authority.
+
+Settled scoped (DR-147 §11.146.7): DR-050 answers whether a figure derived from **room vertices**
+earns a tier, and it does not. Three things in its own text say it does not reach the pin-to-pin
+floor: §11.49.4 preserves `planLowerBound` **by name**, §11.49.1's table lists it as *"not built"*
+rather than removed, and §11.49.2's objection is to a **provenance** distinction between figures that
+all sum, which a floor is not. **DR-050's own two items are unbuilt and are nobody's**: no `Location`
+ceiling height, no computed-versus-typed marker, no vertex gesture. That is why nothing in the tree
+had ever made the two rulings disagree out loud.
+
+##### 5.9.18.3 The datum, and the two exclusions that fall out of it
+
+DR-144 §11.143.3 left *"which rack is the datum when two are pinned"* here. The bound is the straight
+line from the pin on **the rack this link lands in** to the pin on this run's subject, and **no bound
+derives at all** when that rack carries no pin, even when another rack stands pinned on the same
+underlay. *Nearest* and *first* were both refused: each yields a bound more often and a wrong one on
+any job with a head end and a satellite rack.
+
+**One condition carries most of the design.** Exactly one end in a rack. A jumper has both ends in
+one rack and a sub-feed has them in two, so neither has a field end and neither has a subject, and
+both fail the gate without being named.
+
+**AND THAT CONDITION IS WHERE A MUTATION SURVIVED.** Relaxing it to *"at least one end in a rack"*
+changed nothing for an ordinary jumper or sub-feed, because their far end is a rail-placed device
+that carries no pin under either rule: **both tests passed for a reason they do not name.** The
+eighteenth case is the document that tells the two apart, a run landing in two racks whose
+`structureOrigin` still names a pinned outlet, and it exists because the mutation asked for it.
+
+##### 5.9.18.4 Two fields that were written and cut, which is the same lesson twice
+
+**A `PlanBoundRefusal` enum** naming the six ways a bound fails to derive was written into
+`plan_length.dart` and removed before the commit. It would have had zero call sites in `lib/`: the
+tests name the case they exercise by building it, and `PLN-003` is the surface that reports a reason,
+reads per underlay, and is `PLAN-I`'s.
+
+**A `ScheduleEntry.planLowerBound` sidecar** was the obvious shape for docs/15 §4.1's *"read the bound
+regardless of which tier printed"*, and it was cut for the same reason one step further in.
+`rules_cable.dart` takes a `RackDocument` and a `Link` and never builds a schedule, so it calls the
+derivation. Two callers, one function, and nothing stored that could disagree with it. The enum's own
+doc comment promised that field at `PLAN-G/1` and was corrected at `PLAN-G/2`.
+
+DR-140, DR-143, DR-144 and DR-146 each found a modelled thing nothing could reach. **This is the
+first chapter of the epic to find two and build neither**, which is what the four notes were for.
+
+##### 5.9.18.5 The rules, and a prediction under test
+
+An unmeasured run whose floor already exceeds the limit is a proven violation:
+
+> `W001` is unmeasured and its floorplan straight line is already 120.0 m, over the 100 m Ethernet
+> channel limit. No route is shorter than the straight line.
+
+A floor **under** the limit is unchanged, *"no measured length, so the 100 m channel limit cannot be
+verified"*. That is DR-020 §11.19.2(2)'s asymmetry as executable code. `knownLengthOf` is deliberately
+not where the floor went: it answers *"the length this run is known to be"*, and a floor admitted
+there would report a run under the limit as fine.
+
+**docs/02 §5.3's catalogue had already ruled this for `LEN-002` and not for `LEN-001`.** The
+`LEN-002` row reads *"fed by `cutLength`/`terminatedLength` when known, and by a `planLowerBound`
+when that alone already exceeds the limit"*; the `LEN-001` row said nothing of the kind. One shared
+`_floorViolation` serves both and the `LEN-001` row is corrected to match, which is the corpus
+already having it, arriving with one row of the pair missing.
+
+**`rules_cable.dart`'s header carries the M5-H2 forecast** (DR-125) that both rules *"will rarely
+fire before the plan view's run estimation exists"* and that the unmeasured limb would do nearly all
+the work until then. This is that estimation. The prediction is now testable rather than quotable,
+and nothing about it is claimed here: no real document in this tree carries a pin and a scale
+together yet, and `PLAN-H`'s printed sheet is the first one that will.
+
+##### 5.9.18.6 Evidence
+
+Floors: `rackpal_core` 4360 to 4392 (+32), `rackpal_ui` 1672 to 1674 (+2). The analyzer pin does not
+move.
+
+**Thirteen mutations killed**, in two runs. Seven on the derivation: the datum becoming the first
+pinned rack, an unpinned run-rack falling back to any pinned rack, an unpinned named outlet falling
+back to the device beyond it, *"exactly one"* relaxed to *"at least one"*, the two pins no longer
+needing one underlay, the rise allowance dropped, and the field end taken from the other end. Six on
+the presentation and the rollups: the bound joining the sheet footer `Σ`, the `≥` dropped, the floor
+ranked above the room estimate, the floor counted as an estimate, the takeoff's count switched off,
+and the floor summed into the purchase. Each was asserted present in the source before being applied
+and every file restored in a `finally`, so none is a mutation that did not build.
+
+**Every finding message was printed and read before an assertion was written**, which is `PLAN-F/2`'s
+practice. The three sentences the two rules can now emit were dumped from the test run and read
+whole; the assertions were written against what came out.
+
+**U+2265 was checked against the font binaries before the literal was written.** Both bundled Jost
+weights carry it, and it is added to `glyph_coverage_check.py`'s `REQUIRED` set because it now
+reaches a printed sheet. An absent codepoint maps to `.notdef` and draws as **nothing** rather than
+as a visible box, which has shipped in this repository twice.
+
+The `≥` is composed in `ScheduleEntry.lengthCell` and never in the shared `scheduleLengthCell`, which
+`pathway_table.dart` and three `structure_table.dart` columns read and one of which
+`parseLengthCell` reads back.
+
+##### 5.9.18.7 What the Plan view can now do, and what it still owes
+
+Import a floorplan, pin a rack, an outlet and an off-rack device, calibrate from a known distance,
+report what the calibration bought, and **derive a length from it that reaches the Pull Sheet and the
+DRC**. Owed: `T1.01` (`PLAN-H`), the `PLN-*` advisories (`PLAN-I`), and the printed stranger test
+(`PLAN-J`).
 ---
 
 ## 6. The dependency graph, as it actually stands

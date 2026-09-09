@@ -247,12 +247,35 @@ The ladder, in order, **most authoritative first** (the rank is DR-037 §11.36.4
 | `cut` | `Link.cutLength`, the measured figure | Upright |
 | `outletNominal` | `Outlet.nominalRunLength`, this drop's stored nominal | Italic, an estimate |
 | `roomEstimate` | `Location.estimatedRunLengthFromRack` (AC-024) | Italic, an estimate |
-| **`planLowerBound`** | **New.** Calibrated straight line, rack pin to device pin, plus the location's `riseAllowance` if one is set | **Italic, and prefixed `≥`** |
+| **`planLowerBound`** | **BUILT AT `PLAN-G`, 2026-09-08.** Calibrated straight line, the pin on the rack **this run lands in** to the pin on its subject, plus the subject's `riseAllowance` if one is set (`derived/plan_length.dart`) | **Italic, and prefixed `≥`** |
 | `none` | Nothing known | `—`, and `LEN-*` emits *"length unknown, cannot verify"* (G4) |
 
 **It is never a takeoff number and never enters the footage rollup as a quantity.** A bound cannot
 be summed into "how much Cat6 to order" without becoming a claim it is not entitled to make. The
 rollup counts bound-only rows the way `Rollup.unknownCount` already counts unknowns.
+
+**AND "THE FOOTAGE ROLLUP" IS TWO ROLLUPS, WHICH THIS SENTENCE SAID IN THE SINGULAR UNTIL `PLAN-G/3`**
+(DR-147 §11.146.1). `cable_footage.dart`'s takeoff is guarded by `_isQuantity`, an exhaustive switch
+with no default arm written so that adding this value stops the build until somebody decides; it
+worked. `schedule.dart`'s `_footageOf` builds `ScheduleView.footage` and `ScheduleGroup.footage`,
+which is docs/08 §3.8's `Σ 11 runs · 601 ft · 3 estimated` footer, and it reads a `Len?` without
+asking where the number came from. **A gate's scope is part of its claim**, and a floor would have
+walked into the second `Σ` with nothing to stop it. Both now refuse it and both now count it:
+
+> `Σ 11 runs · 601 ft · 3 estimated · 2 bound`
+
+**A BOUND ROW IS COUNTED AS AN UNKNOWN AND THAT IS NOT A DEMOTION.** The question a footage rollup
+answers is how much cable to order, and a floor answers it not at all, so the row sits in
+`unknownCount` exactly as a lengthless row does. `boundCount` beside it says how much of that
+ignorance has a floor under it, which is strictly more than the reader had before, and `runCount`
+and `unknownLengthCount` do not move.
+
+**A FLOOR AND A GUESS ARE TWO CLAIMS AND CARRY TWO FLAGS** (§11.146.4). `lengthIsEstimated` is
+**false** for a bound, because that flag is what §3.8's `3 estimated (italic)` counts, and a footer
+reading `5 estimated` on three guesses and two measured floors is wrong about the one thing it
+exists to say. `lengthIsBound` carries the `≥` and the exclusion, and a renderer italicises on
+either. **The `≥` is in the string and the italic is not**: italic is a style a plain-text export
+loses, and `41` is a number an installer cuts to.
 
 **IT RANKS BELOW `roomEstimate`, AND THE REASON IS THE ROLLUP RATHER THAN THE COLUMN.** Because a
 bound is excluded from the footage total, ranking it above the room estimate would make every drop on
@@ -266,17 +289,40 @@ that adding this value stops the build until somebody decides, and this is that 
 plan proves a violation and can never prove compliance. The bound is a rule input that happens to be
 printable, not a length that happens to be checkable.
 
-**`Location.riseAllowance` DOES NOT EXIST YET.** This section and DR-020 §11.19.2(1) have both been
-spending it since 2026-08-04 and a grep over every `.dart` file in the tree returns nothing.
-DR-037 §11.36.5 adds it as `Len? riseAllowance` on `Location`, null unknown and `0` a measured zero
-(G4, CR-114), written only when present so no file on disk changes a byte.
+**`Location.riseAllowance` READ *"DOES NOT EXIST YET"* UNTIL `PLAN-C/4` SHIPPED IT**, having been
+spent by this section and by DR-020 §11.19.2(1) since 2026-08-04 against a tree where a grep returned
+nothing. It is `Len? riseAllowance` on `Location`, null unknown and `0` a measured zero (G4, CR-114),
+written only when present so no file on disk changes a byte.
 
-**What it is good for is `LEN-001`.** That rule is already one of v1's 27 (docs/02 §5, tier 1,
-Ethernet channel over 100 m). A lower bound is exactly the right input for it, because **if the
-bound already exceeds the limit, the run is out of spec no matter which path it takes.** A plan can
-therefore prove a violation at design time even though it can never prove compliance. That
-asymmetry is the whole value, and it is stated here so nobody later "improves" the bound into an
-estimate.
+**AND A NULL ONE COSTS THE BOUND NOTHING IT IS ENTITLED TO** (DR-147 §11.146.6). The field is null on
+every location this product has ever written, so a null contributing zero is the whole of its
+behaviour today, and **the result is still a true lower bound**: dropping a non-negative term from a
+floor leaves a floor. That is not a G4 substitution and must not be "improved" into one. It is read
+from **the subject's own location**, the outlet's or the off-rack device's, and not from the schedule
+row's room, because the rise is a fact about where the device is and the row's room falls back
+through a chain that can land on the far end's.
+
+**What it is good for is `LEN-001`.** **BUILT AT `PLAN-G`, 2026-09-08** (`validation/rules_cable.dart`).
+A lower bound is exactly the right input for it, because **if the bound already exceeds the limit,
+the run is out of spec no matter which path it takes.** A plan can therefore prove a violation at
+design time even though it can never prove compliance. That asymmetry is the whole value, and it is
+stated here so nobody later "improves" the bound into an estimate.
+
+**AND IT RUNS IN THAT DIRECTION ONLY, WHICH IS THE SENTENCE ABOVE MADE EXECUTABLE** (DR-147
+§11.146.5). An unmeasured run whose floor already exceeds the limit is a proven violation with its
+own message; a floor **under** the limit still emits *"length unknown, cannot verify"*, because it
+says nothing about the route that will actually be pulled. The floor is deliberately **not** fed
+into `knownLengthOf`, which answers *"the length this run is known to be"*: a bound admitted there
+would report a run under the limit as fine, which is the compliance claim this whole section
+forbids.
+
+**THE RULES WERE NOT A HANDOFF, AND THIS PARAGRAPH USED TO IMPLY ONE.** `#639`'s brief reads *"M5
+owns the rules; this task owns the input and the seam. Do not build the rules here."* It was written
+on 2026-08-10 and M5 built both rules at M5-E, so the chapter is a change to shipped code. The seam
+it asked to be documented also did not exist in the direction the sentence implies: `knownLengthOf`
+is `terminatedLength ?? cutLength` and neither rule has ever read `ScheduleLengthSource` at all, so
+*"read the bound regardless of which tier printed"* is satisfied by both rules calling
+`planLowerBoundOf` themselves rather than by a second field on `ScheduleEntry`.
 
 `riseAllowance` survives from the first draft as the one allowance worth keeping, per `Location`,
 because a plan is flat and the drop from ceiling to device is the one dimension it structurally
@@ -444,7 +490,7 @@ an image resolver and a plan scene builder.
 | Gesture | Result |
 |---|---|
 | Drag from the device palette or staging bin onto the plan | Places the device and sets its pin in one command. **The staging-bin half has no source yet**: `StagedPlacement`'s only writer in `lib/` is the JSON decoder, so nothing a person can reach puts a device in the bin. `PLAN-E/2` builds the palette drag; the bin's drag arrives with the bin's producer, which is the rack editor's and not this view's |
-| Drag an existing pin | Moves it. Any `planLowerBound` on that run recomputes. **The recompute clause is forward-dated**: `planLowerBound` is not a `ScheduleLengthSource` value yet and nothing derives one, so `PLAN-E/2` builds the move and `PLAN-G` makes the second sentence true |
+| Drag an existing pin | Moves it. Any `planLowerBound` on that run recomputes. **Both sentences are true as of `PLAN-G`, 2026-09-08**, and the second was forward-dated until then: the tier now exists, `planLowerBoundOf` derives one, and the schedule is rebuilt from the document on the shell's own notification, so a moved pin moves the row |
 | Drag a row out of the unpinned strip onto the plan | Pins it. **This is how a RACK gets its pin** (DR-140 §11.139), and it was the gesture nothing in this table had: the palette places a device, the drop table pins an outlet, and no row put a pin on the one carrier docs/15 §3.4 calls mandatory |
 | Click an outlet in the Structure editor's drop table, then click the plan | Pins that outlet. This is the fast path for a 60-drop rough-in |
 | Pan, zoom | Identical to the other two canvases (AC-016 #23, `CanvasIntent`). **Verified**, not assumed: `PLAN-E/1`'s spike drives both through the same `CanvasIntentDetector` both shipped canvases use |

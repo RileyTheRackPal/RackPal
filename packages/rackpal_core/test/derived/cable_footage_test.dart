@@ -127,6 +127,100 @@ Uuid _run(
   return id;
 }
 
+/// A run whose only length is a plan-derived FLOOR: a pinned rack, a
+/// pinned outlet [feetAway] feet along a plan calibrated at one foot per
+/// pixel, and no cut length anywhere.
+///
+/// FOUR ENTITIES DEEP BECAUSE THE DERIVATION IS. `planLowerBoundOf`
+/// resolves the datum through the endpoint's device to its rack, which is
+/// what makes the bound belong to THIS run rather than to whichever rack
+/// happens to be pinned, so a fixture that skipped the rail placement
+/// would be measuring nothing.
+Uuid _planBoundedRun(_Doc d, {MediaTypeId media = _cat6, int feetAway = 41}) {
+  const underlayId = Uuid('ul-footage');
+  d.doc.underlays[underlayId] = PlanUnderlay(
+    id: underlayId,
+    name: 'Level 1',
+    imageMember: 'underlays/level-1.png',
+    format: PlanImageFormat.png,
+    pixelWidth: 400,
+    pixelHeight: 300,
+    contentHash: 'sha256:ul',
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    scale: const PlanScale(
+      a: PxPt(0, 0),
+      b: PxPt(1, 0),
+      distance: Len(12 * Len.nmPerInch),
+    ),
+  );
+
+  final rackId = d._mint('rack');
+  d.doc.racks[rackId] = Rack(
+    id: rackId,
+    name: 'Head end',
+    designator: 'RK-1',
+    heightU: 42,
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    planPin: const PlanPin(underlayId: underlayId, at: PxPt(0, 0)),
+  );
+
+  final deviceId = d._mint('dev');
+  d.doc.devices[deviceId] = DeviceInstance(
+    id: deviceId,
+    kind: DeviceKind.rackDevice,
+    templateRef: const TemplateRef(
+      templateId: TemplateId('tpl.pp'),
+      version: 1,
+      contentHash: 'sha256:tpl.pp',
+    ),
+    designator: 'PP-1',
+    name: 'patch panel',
+    placement: RailPlacement(rackId: rackId, ruIndex: 1, face: Face.rear),
+    meta: _meta(),
+  );
+  final portId = d._mint('port');
+  d.doc.ports[portId] = Port(
+    id: portId,
+    deviceId: deviceId,
+    designator: '01',
+  );
+
+  final where = d.room('Great Room');
+  final outletId = d._mint('outlet');
+  d.doc.outlets[outletId] = Outlet(
+    id: outletId,
+    structureBodyId: const Uuid('structure-1'),
+    designation: 'WP-1',
+    locationId: where,
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    planPin: PlanPin(underlayId: underlayId, at: PxPt(feetAway, 0)),
+  );
+
+  final id = d._mint('link');
+  d.doc.links[id] = Link(
+    id: id,
+    designator: 'W${d._seq.toString().padLeft(3, '0')}',
+    media: media,
+    order: FracIndex('a${d._seq.toString().padLeft(4, '0')}'),
+    meta: _meta(),
+    conductors: [
+      Conductor(
+        from: PortEndpoint(portId),
+        to: PlaceEndpoint(description: 'TV wall', locationId: where),
+      ),
+    ],
+    structureOrigin: StructureOrigin(
+      structureBodyId: const Uuid('structure-1'),
+      outletId: outletId,
+      fieldLabel: 'GR-TV-1',
+    ),
+  );
+  return id;
+}
+
 CableFootageLine _lineFor(CableFootage f, MediaTypeId id) =>
     f.lines.firstWhere((l) => l.mediaId == id);
 
@@ -364,6 +458,63 @@ void main() {
       final line = _lineFor(buildCableFootage(d.doc), _cat6);
       expect(line.footage.value, _ft(66));
       expect(line.estimatedCount, 0);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  group('a plan floor is not a quantity, and the gap is named', () {
+    /// The arm `_isQuantity` was left exhaustive to force somebody to
+    /// answer (DR-020 §11.19.2(2), answered at `PLAN-G/1`). A bound
+    /// cannot be summed into "how much Cat6 to order" without becoming a
+    /// claim it is not entitled to make.
+    test('a floor never enters the purchase quantity', () {
+      final d = _Doc();
+      _planBoundedRun(d);
+
+      final line = _lineFor(buildCableFootage(d.doc), _cat6);
+      expect(
+        line.footage.value,
+        isNull,
+        reason: 'no known contributor is NULL, never zero and never 41 ft',
+      );
+      expect(line.runCount, 1);
+      expect(line.footage.unknownCount, 1);
+      expect(line.boundCount, 1);
+      expect(line.estimatedCount, 0);
+    });
+
+    /// The half that makes the exclusion honest rather than quiet
+    /// (DR-147 §11.146.3). A takeoff that dropped the row would print a
+    /// smaller order on a more complete job with nothing saying why.
+    test('the floor row is counted inside the ignorance it belongs to', () {
+      final d = _Doc();
+      final kitchen = d.room('Kitchen');
+      _run(d, cutLength: _ft(66), locationId: kitchen);
+      _planBoundedRun(d);
+
+      final line = _lineFor(buildCableFootage(d.doc), _cat6);
+      expect(
+        line.footage.value,
+        _ft(66),
+        reason: '107 ft would be a purchase quantity containing a floor',
+      );
+      expect(line.runCount, 2, reason: 'the row is in the takeoff');
+      expect(line.footage.unknownCount, 1);
+      expect(line.boundCount, 1);
+      expect(buildCableFootage(d.doc).unknownLengthCount, 1);
+    });
+
+    test('a run with no length at all is unknown and NOT bound', () {
+      final d = _Doc();
+      _run(d, locationId: d.room('Kitchen'));
+
+      final line = _lineFor(buildCableFootage(d.doc), _cat6);
+      expect(line.footage.unknownCount, 1);
+      expect(
+        line.boundCount,
+        0,
+        reason: 'the two counts must not be readable as each other',
+      );
     });
   });
 
