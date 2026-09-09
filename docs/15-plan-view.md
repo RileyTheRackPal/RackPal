@@ -596,9 +596,48 @@ greyscale separation pairwise (canon §14). An underlay is not a signal family a
 that enumeration. What is *not* excluded is the requirement that callout glyphs remain separable
 against a non-white background, which is a new obligation the screening pass exists to satisfy.
 
-**Callouts** carry the device designator and reuse the schematic's tag-pill geometry and the signal
-domain's colour (CR-078: colour lives on the domain, never the family). A leader line is drawn only
-when the pill cannot sit within its own pin's clearance.
+**AND IT IS NOW CHECKED RATHER THAN OWED** (DR-150 §11.149.4). **BUILT AT `PLAN-H/3`.** The gate's
+own exclusion block carried `CALLOUT_OVER_UNDERLAY_IS_CHECKED_AT = 'PLAN-H/3'` from `PLAN-A/5`; this
+is that check. It is decidable because the screening is a constant, so the worst case is one number:
+
+> callout over the screened underlay: black on 192 (ink retained 250 per-mille) is 11.54:1, floor 4.5:1
+
+The gate **parses `kUnderlayInkRetained` out of `plan_image.dart`** rather than keeping a second copy,
+on `registry_parity.py`'s precedent for a Python gate reading Dart. The break-even is **550
+per-mille**: at 540 it passes, at 560 it fails at 4.30:1. canon §14.1 is why it is arithmetic and not
+an eye, since PAL-1 shipped collisions three times from being checked by inspection.
+
+**Callouts.** **BUILT AT `PLAN-H/3`, 2026-09-09** (`draw/sheet/plan_callouts.dart`). A leader line is
+drawn only when the pill cannot sit within its own pin's clearance.
+
+**THIS PARAGRAPH ASKED FOR TWO THINGS THAT DO NOT EXIST, AND DR-150 §11.149 RULED BOTH.** It read
+*"carry the device designator and reuse the schematic's tag-pill geometry and the signal domain's
+colour (CR-078)"*.
+
+**A pin carries no domain.** `Rack` and `Outlet` hold no `SignalFamilyId` at all and an off-rack
+device spans several, so a television is video **and** network; §6's own marker row already said so at
+`PLAN-E/2`, one chapter after this sentence was written. AC-054 prints the sheet greyscale in any
+case. So a callout has **no colour**: an opaque white stadium, a black hairline outline, black text.
+Carrier kind stays in the marker shape.
+
+**The fill is a knock-out and not a contrast device.** Black on the darkest sample the screening can
+leave is 11.5:1, so luminance was never the risk; dense line work is, and it fails by **pattern**. A
+dimension string crossing a designator is unreadable at any ratio.
+
+**And the pill could not be reused.** `_PillSizer` is private to `rackpal_ui`, which `rackpal_export`
+may never import: the layering debt recorded since 2026-07-28 that leaves M6's interconnect sheets
+unbuildable. The **reasoning** is taken and cited at each site, and the file stays M6's.
+
+**IT PRINTS THE CARRIER'S OWN DESIGNATOR**, `RK-1`, `WP-1`, `TV-1` (§11.149.3). The exit criterion
+asks for *"the designator its Pull Sheet row prints"*, and a pinned outlet has **several** such rows,
+because a row is a `Link` and a drop can carry three cables. A carrier whose designator is blank gets
+its marker and no pill: an empty pill is a white box that says nothing (G4).
+
+**A CALLOUT IS NEVER DROPPED, AND A CROWDED SHEET SAYS SO** (§11.149.5). Placement takes the preferred
+offset, walks a ring when that box overlaps one already placed, and draws a leader once it has moved.
+**Twenty coincident drops all place clear and crowding starts at twenty-four**, measured rather than
+argued. Past that the pill is drawn overlapping and the export raises a notice naming how many: an
+absent callout is a drop the stranger cannot find, an overlapping one is a drop they can read twice.
 
 ---
 

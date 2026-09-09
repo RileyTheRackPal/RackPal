@@ -27,7 +27,12 @@ The within-domain limb is a domain-equality check, never an allowlist of waived 
 An allowlist is how a real collision gets waived.
 """
 import itertools
+import pathlib
+import re
 import sys
+
+#: Repo root, for the one source file this gate parses.
+ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # --------------------------------------------------------------------------- colour
 
@@ -192,18 +197,80 @@ NOT_A_SIGNAL_FAMILY = {
         "DR-030's integrator logo, art rather than a signal (docs/08 row 17)",
 }
 
-#: WHAT IS *NOT* EXCLUDED, and what this script cannot check.
+#: WHAT IS *NOT* EXCLUDED, AND IS NOW CHECKED HERE (PLAN-H/3, DR-150
+#: section 11.149.4).
 #:
 #: docs/15 section 7 and feasibility section 3.5 add an obligation the
 #: underlay's exclusion does not cover: a callout glyph must stay legible
 #: against a NON-WHITE background. Every PAL-1 pair to date is drawn on
-#: white, so this is the first background in the corpus. The screening pass
-#: exists to satisfy it and it is checked at PLAN-H/3, against a rendered
-#: sheet rather than against a table of hues. Recorded here because the
-#: obvious reading of "the underlay is excluded from PAL-1" is that the
-#: underlay raises no legibility question at all, and it raises the only
-#: new one this palette has met.
-CALLOUT_OVER_UNDERLAY_IS_CHECKED_AT = 'PLAN-H/3'
+#: white, so this is the first background in the corpus. This constant read
+#: `CALLOUT_OVER_UNDERLAY_IS_CHECKED_AT = 'PLAN-H/3'` until that chapter
+#: arrived; the check below is what it was pointing at.
+#:
+#: IT IS DECIDABLE BECAUSE THE SCREENING IS A CONSTANT. A callout is black
+#: on an opaque white pill (DR-150 section 11.149.2), and the worst case is
+#: its outline and any glyph read against the DARKEST sample the screening
+#: can leave: pure architect ink, lightened to `kUnderlayInkRetained`. That
+#: is one number, so the obligation is arithmetic rather than an eye.
+#:
+#: canon section 14.1 IS WHY IT IS ARITHMETIC. PAL-1 shipped collisions
+#: three times because the rule was "checked by inspection" and read at the
+#: domain level rather than over rendered values. A legibility claim about
+#: a printed sheet, asserted by looking at one, is the same mistake in a
+#: new place.
+CALLOUT_INK = 0x000000
+"""The callout's outline and text (`SheetPalette.text`, opaque black)."""
+
+CALLOUT_MIN_CONTRAST = 4.5
+"""WCAG AA for text. The margin at the shipped screening is 2.6x."""
+
+#: Where the screening constant lives. PARSED RATHER THAN COPIED: a second
+#: copy of a moving number is a liability this corpus has swept five times,
+#: and `registry_parity.py` already sets the precedent for a Python gate
+#: reading Dart source rather than restating it.
+SCREEN_CONST_REL = 'packages/rackpal_export/lib/src/draw/plan_image.dart'
+SCREEN_CONST_RE = re.compile(
+    r'const\s+Permille\s+kUnderlayInkRetained\s*=\s*Permille\(\s*(\d+)\s*\)')
+
+
+def underlay_ink_retained():
+    """Per-mille of the architect's ink that survives the screening pass."""
+    path = ROOT / SCREEN_CONST_REL
+    m = SCREEN_CONST_RE.search(path.read_text(encoding='utf-8'))
+    if m is None:
+        raise SystemExit(
+            'pal1_check: could not find kUnderlayInkRetained in %s. The '
+            'callout-legibility check reads the screening constant from '
+            'source on purpose; if it moved, point this at the new home '
+            'rather than restating the number here.' % SCREEN_CONST_REL)
+    return int(m.group(1))
+
+
+def contrast(a, b):
+    """WCAG contrast ratio between two greyscale 0-255 samples."""
+    la, lb = luminance('%02x%02x%02x' % (a, a, a)), luminance(
+        '%02x%02x%02x' % (b, b, b))
+    hi, lo = max(la, lb), min(la, lb)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def check_callout_over_underlay():
+    """Failures for the callout against the worst screened sample."""
+    keep = underlay_ink_retained()
+    # The screening: value + (255 - value) * (1 - keep), integer, truncating
+    # the INK. Pure black is the darkest thing an architect's page holds, so
+    # it is the worst case by construction.
+    darkest = 255 - (255 * keep) // 1000
+    ink = CALLOUT_INK & 0xFF
+    ratio = contrast(ink, darkest)
+    if ratio < CALLOUT_MIN_CONTRAST:
+        return [
+            'CALLOUT: black on the darkest screened sample (%d, from '
+            'kUnderlayInkRetained = %d) is %.2f:1, below the %.1f:1 floor. '
+            'Lower the screening constant or change the callout treatment.'
+            % (darkest, keep, ratio, CALLOUT_MIN_CONTRAST)
+        ], keep, darkest, ratio
+    return [], keep, darkest, ratio
 
 def check_exclusions():
     """Ids that are excluded AND present. Any result is a contradiction."""
@@ -269,8 +336,11 @@ def main():
     # checked it and passed.
     print('  excluded (not signal families): %s'
           % ', '.join(sorted(NOT_A_SIGNAL_FAMILY)))
-    print('  callouts over a non-white underlay are checked at %s, not here'
-          % CALLOUT_OVER_UNDERLAY_IS_CHECKED_AT)
+    callout_failures, keep, darkest, ratio = check_callout_over_underlay()
+    print('  callout over the screened underlay: black on %d (ink retained '
+          '%d per-mille) is %.2f:1, floor %.1f:1'
+          % (darkest, keep, ratio, CALLOUT_MIN_CONTRAST))
+    failures = failures + callout_failures
     if not failures:
         print('PASS - no collisions.')
         return 0

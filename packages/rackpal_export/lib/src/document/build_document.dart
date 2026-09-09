@@ -158,19 +158,35 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
           if (notice != null) notices.add('${sheet.ncsId}: $notice');
         }
       case SheetRole.devicePlan:
+        final pins = planPinsFor(doc, sheet.underlayId!);
         final built = buildPlanSheet(
           sheet: sheet,
           underlay: doc.underlays[sheet.underlayId]!,
-          pins: planPinsFor(doc, sheet.underlayId!),
+          pins: pins,
           info: doc.info,
           settings: doc.settings,
           revisions: doc.revisionBlock,
           fileName: request.fileName,
           issuedAt: request.issuedAt,
           measurer: measurer,
+          labels: planPinLabelsFor(doc, pins),
         );
         scene = built.scene;
         legibility = built.legibility;
+        // A CROWDED CALLOUT IS A NOTICE, NEVER A GATE (CR-023, G3), on the
+        // elevation's own precedent three cases up. DR-150 §11.149.5 rules
+        // that a callout is never DROPPED, so a plan whose drops sit closer
+        // together than a pill is wide prints every designator and overlaps
+        // some of them. A reader deserves to be told which sheet that is;
+        // silently overlapping two designators looks exactly like a sheet
+        // with one drop on that wall.
+        if (built.callouts.crowdedCount > 0) {
+          final n = built.callouts.crowdedCount;
+          notices.add(
+            '${sheet.ncsId}: $n callout${n == 1 ? '' : 's'} could not be '
+            'placed clear of another and overlap.',
+          );
+        }
       case SheetRole.equipmentList:
         final built = buildEquipmentSheet(
           sheet: sheet,

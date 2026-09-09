@@ -195,7 +195,10 @@ void main() {
   });
 
   group('the sheet itself', () {
-    PlanSheet build({List<PlanPinSubject> pins = const []}) {
+    PlanSheet build({
+      List<PlanPinSubject> pins = const [],
+      Map<Uuid, String> labels = const {},
+    }) {
       final set = SheetSet.forRacks(
         <Rack>[testRack()],
         planUnderlays: [_underlay()],
@@ -204,6 +207,7 @@ void main() {
         sheet: set.sheets.first,
         underlay: _underlay(),
         pins: pins,
+        labels: labels,
         info: fullProjectInfo(),
         settings: ProjectSettings(),
         revisions: const <RevisionEntry>[],
@@ -301,6 +305,140 @@ void main() {
       );
     });
 
+    /// LOAD-BEARING. The callouts must NOT scale with the drawing.
+    ///
+    /// Scene units on a plan are image pixels, so a pill inside the
+    /// transform bracket would print six times larger on a 4000-pixel scan
+    /// than on a 600-pixel one. The check is that the pill's height is the
+    /// type size plus padding in POINTS, on a plan whose fit factor is
+    /// nowhere near 1.
+    test('a callout is laid out in page points, outside the bracket', () {
+      final built = build(
+        pins: const [
+          PlanPinSubject(
+            entityId: Uuid('rack-1'),
+            at: PxPt(1000, 750),
+            carrier: PlanPinCarrier.rack,
+          ),
+        ],
+        labels: const {Uuid('rack-1'): 'RK-1'},
+      );
+
+      expect(
+        built.factor.unitsToPoints,
+        lessThan(0.5),
+        reason: '2000 px into a landscape sheet is a heavy reduction',
+      );
+      final pill = built.scene.ops.whereType<OpRoundRect>().last;
+      expect(
+        pill.r.height,
+        closeTo(kCalloutTextPt + kCalloutPadPt * 2, 1e-9),
+        reason: 'unscaled: the pill is the same size on every plan',
+      );
+      expect(
+        built.scene.ops.whereType<OpText>().map((o) => o.text),
+        contains('RK-1'),
+      );
+    });
+
+    /// LOAD-BEARING, AND IT EXISTS BECAUSE A MUTATION SURVIVED.
+    ///
+    /// The case above pins the pill's SIZE and says nothing about where it
+    /// lands, so replacing the page mapping with raw image pixels left it
+    /// green: every callout moved to the wrong part of the sheet and no
+    /// assertion noticed. **A designator printed beside the wrong wall is
+    /// the one failure this whole sheet exists to prevent**, so the mapping
+    /// gets its own case.
+    test('a pin at the centre of the image lands at the centre of the '
+        'drawing', () {
+      // The underlay is 2000 x 1500 and the sheet centres it, so the pixel
+      // at its middle is the point at the middle of the fitted picture.
+      final built = build(
+        pins: const [
+          PlanPinSubject(
+            entityId: Uuid('rack-1'),
+            at: PxPt(1000, 750),
+            carrier: PlanPinCarrier.rack,
+          ),
+        ],
+        labels: const {Uuid('rack-1'): 'RK-1'},
+      );
+
+      final layout = sheetLayoutFor(
+        SheetSet.forRacks(
+          <Rack>[testRack()],
+          planUnderlays: [_underlay()],
+        ).sheets.first,
+        const <RevisionEntry>[],
+      );
+      final area = layout.drawingArea;
+      final pill = built.scene.ops.whereType<OpRoundRect>().last.r;
+
+      // The pill hangs off its pin by the callout offset, so it sits NEAR
+      // the centre rather than on it. Well inside a tenth of the area
+      // either way, and nowhere near where a raw-pixel mapping would put
+      // it.
+      expect(
+        pill.left + pill.width / 2,
+        closeTo(area.left + area.width / 2, area.width / 10),
+      );
+      expect(
+        pill.top + pill.height / 2,
+        closeTo(area.top + area.height / 2, area.height / 10),
+      );
+    });
+
+    test('a pin at the image origin lands at the fitted picture corner, '
+        'not at the page origin', () {
+      final built = build(
+        pins: const [
+          PlanPinSubject(
+            entityId: Uuid('rack-1'),
+            at: PxPt(0, 0),
+            carrier: PlanPinCarrier.rack,
+          ),
+        ],
+        labels: const {Uuid('rack-1'): 'RK-1'},
+      );
+      final pill = built.scene.ops.whereType<OpRoundRect>().last.r;
+
+      // 2000 x 1500 is width-bound on a landscape sheet, so the picture is
+      // letterboxed vertically: its top edge is BELOW the drawing area's.
+      final layout = sheetLayoutFor(
+        SheetSet.forRacks(
+          <Rack>[testRack()],
+          planUnderlays: [_underlay()],
+        ).sheets.first,
+        const <RevisionEntry>[],
+      );
+      expect(
+        pill.top,
+        greaterThan(layout.drawingArea.top),
+        reason: 'the pin is at the picture corner, not the paper corner',
+      );
+    });
+
+    /// LOAD-BEARING. A pin with nothing to say gets no white box.
+    test('a pin whose carrier has no designator keeps its marker and gets '
+        'no pill', () {
+      final built = build(
+        pins: const [
+          PlanPinSubject(
+            entityId: Uuid('rack-1'),
+            at: PxPt(1000, 750),
+            carrier: PlanPinCarrier.rack,
+          ),
+        ],
+      );
+
+      expect(built.callouts.ops, isEmpty);
+      expect(
+        built.scene.ops.whereType<OpImage>(),
+        hasLength(1),
+        reason: 'the plan is still drawn',
+      );
+    });
+
     test('two builds of one document are identical', () {
       expect(describeOps(build().scene.ops), describeOps(build().scene.ops));
     });
@@ -336,6 +474,36 @@ void main() {
           PlanPinCarrier.rack,
         ]),
       );
+    });
+
+    test('each carrier prints its OWN designator', () {
+      // DR-150 §11.149.3. Not the cable's: a pinned outlet has several
+      // Pull Sheet rows and a cable designator is not a function of a pin.
+      final doc = _doc()..underlays[_ul] = _underlay();
+      _addRack(doc, pin: _pin(10, 10));
+      _addOutlet(doc, 'WP-1', pin: _pin(20, 20));
+
+      final labels = planPinLabelsFor(doc, planPinsFor(doc, _ul));
+      expect(labels[const Uuid('rack-1')], 'RK-1');
+      expect(labels[const Uuid('WP-1')], 'WP-1');
+    });
+
+    /// LOAD-BEARING. G4: an empty pill is a white box that says nothing.
+    test('a carrier with a blank designator is ABSENT from the map, never '
+        'mapped to an empty string', () {
+      final doc = _doc()..underlays[_ul] = _underlay();
+      doc.outlets[const Uuid('blank')] = Outlet(
+        id: const Uuid('blank'),
+        structureBodyId: const Uuid('body-1'),
+        designation: '   ',
+        order: const FracIndex('a0'),
+        meta: testMeta(),
+        planPin: _pin(30, 30),
+      );
+
+      final labels = planPinLabelsFor(doc, planPinsFor(doc, _ul));
+      expect(labels.containsKey(const Uuid('blank')), isFalse);
+      expect(labels, isEmpty);
     });
 
     test('an unpinned carrier contributes nothing', () {

@@ -1,5 +1,45 @@
 # Update Log
 
+## 2026-09-09 (sixteenth entry)
+
+* **Ruled**: [DR-150](/decisions/dr-150-a-pin-has-no-domain.md). `PLAN-H/3`'s
+  brief asks callouts to reuse the schematic's tag pill and take the signal
+  domain's colour, and **neither exists**. No pin carrier resolves a domain, and
+  `plan_scene.dart` recorded that at `PLAN-E/2`, ONE CHAPTER AFTER the brief was
+  filed; `_PillSizer` is private to `rackpal_ui`, which `rackpal_export` may never
+  import. Third `PLAN-H` brief describing a tree that has moved.
+* **Closed**: `PLAN-H/3` (`#642`) at `v0.6.39`.
+* **Note**: **PAL-1's OPEN OBLIGATION IS NOW A NUMBER.** `pal1_check.py` has
+  carried `CALLOUT_OVER_UNDERLAY_IS_CHECKED_AT = 'PLAN-H/3'` since `PLAN-A/5`, and
+  the check is decidable because the screening is a constant: black on the darkest
+  sample 25% ink can leave is **11.54:1** against a 4.5:1 floor. **Proven not
+  vacuous by mutation**, 540 passes and 560 fails at 4.30:1, and the gate **parses
+  `kUnderlayInkRetained` out of the Dart** rather than keeping a second copy of a
+  moving number. canon §14.1 is why it is arithmetic: PAL-1 shipped collisions
+  three times from being checked by inspection, and a legibility claim about a
+  printed sheet asserted by looking at one is that mistake in a new place.
+* **Update**: [Package layering](/invariants/package-layering.md) gains the second
+  consumer of `wire_trace.dart`'s debt, which is **how a debt gets its price**. The
+  chapter did not move the file, and that is the decision rather than the omission:
+  a thousand-line relocation is M6's migration and would have arrived inside a
+  chapter about callouts. **A borrowed rule with its citation is not a copy of the
+  code.**
+* **Note**: **THE LEADER RULE WAS MEASURING THE WRONG DISTANCE.** Pin-centre to
+  pill-CENTRE made the rule a function of how long a designator happens to be: a
+  lone pin with four characters drew a leader to a pill at its preferred offset,
+  because the centre is half a pill-width away. docs/15 §7 says *"within its own
+  pin's clearance"*, which is the NEAR EDGE, and that is exactly the ring radius.
+* **Note**: **A MUTATION FOUND A TEST THAT PINNED SIZE AND NOT POSITION.** Swapping
+  the page mapping for raw image pixels moved every callout to the wrong part of
+  the sheet and left every assertion green. **A designator printed beside the wrong
+  wall is the one failure this sheet exists to prevent.** Two mapping cases now
+  kill it. Eleven mutations killed; the twelfth would not build, and that is a fact
+  rather than a gap.
+* **Note**: **THE RING'S CAPACITY WAS PROBED, NOT GUESSED.** A first case asserted
+  crowding on twelve coincident pins and the ring solved all twelve, because four
+  radii by eight directions is thirty-two slots. Twenty coincident drops place
+  clear and crowding starts at twenty-four.
+
 ## 2026-09-09 (fifteenth entry)
 
 * **Ruled**: [DR-148](/decisions/dr-148-the-rasteriser-is-deferred-a-second-time.md),

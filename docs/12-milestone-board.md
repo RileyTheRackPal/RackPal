@@ -8534,6 +8534,103 @@ census; a vendored pdfium would reopen that census and has not landed.
 underlay is raw RGB plus `/FlateDecode`. A 400 × 300 line-art plan through the real resolver emits a
 document under a tenth of its raw 360,000 bytes. *"Already-compressed rasters do not deflate"* is true
 of photographs and false of line art, and DR-137 already ruled that a floorplan is line art.
+#### 5.9.20 PLAN-H/3: a pin has no domain, and PAL-1's open obligation becomes a number · `DR-150` · `v0.6.39`
+
+Closed `2026-09-09`, `#642`. Commits `7bf4674` (the ruling), `0e3cb78` (the chapter). **No exit clause
+moves**, and it is the nearest miss so far: the `T1.01` clause wants *"a callout for every pinned
+drop, each printing the designator its Pull Sheet row prints"*, and that is now built. What it still
+needs is `PLAN-J`'s stranger holding the print, which is the clause's own second sentence.
+
+##### 5.9.20.1 Neither half of the brief's "reuse" existed
+
+`#642`: *"callouts carry the device designator and reuse the schematic's tag-pill geometry and the
+signal domain's colour (CR-078: colour lives on the DOMAIN, never the family)."*
+
+**A PIN CARRIES NO DOMAIN.**
+
+| Carrier | What it knows about signal |
+|---|---|
+| `Rack` | nothing. It is the datum, not a signal path |
+| `Outlet` | `designation`, `tia570Grade`, a `service` string on its gangs. No `SignalFamilyId`, no `SignalDomainId` |
+| `OffRackPlacement`'s device | ports across several domains. A television is video **and** network |
+
+`plan_scene.dart` recorded it at `PLAN-E/2`, **one chapter after this brief was filed**: the marker's
+kind *"is deliberately NOT a colour decision here: CR-078 puts colour on the signal domain, and a pin
+carries no domain."* Third `PLAN-H` brief to describe a tree that has moved, after `#639`'s expired
+handoff and `#638`'s singular rollup.
+
+**AND THE PILL IS IN THE WRONG PACKAGE.** `_PillSizer` is private to
+`rackpal_ui/src/canvas/schematic/wire_trace.dart` and `rackpal_export` may never import
+`rackpal_ui`. The bundle has carried that since 2026-07-28 as *"a violation in waiting"* that leaves
+M6's interconnect sheets unbuildable. **This chapter does not move it**: a thousand-line file relocated
+to borrow ninety of them is M6's migration inside a chapter about callouts. What is taken is the
+reasoning, cited at each of its three sites.
+
+##### 5.9.20.2 What the user ruled
+
+**One uniform callout, opaque, black.** The knock-out is not a contrast device: black on the darkest
+sample the screening can leave is 11.5:1. **Dense line work fails by PATTERN**, and a dimension string
+crossing a designator is unreadable at any ratio. Carrier kind stays in the marker shape, where DR-140
+already put the rack-is-not-a-device distinction.
+
+**The carrier's own designator.** A pinned outlet has **several** Pull Sheet rows, so a cable
+designator is not a function of a pin and would put three callouts on one dot.
+
+**A ring of offsets, then a leader, and a callout is never dropped.** Past the ring the pill is drawn
+overlapping with a leader, and `build_document.dart` raises a notice naming how many: an absent callout
+is a drop the stranger cannot find; an overlapping one is a drop they can read twice.
+
+##### 5.9.20.3 PAL-1's open obligation, discharged by arithmetic
+
+`tools/pal1_check.py` has carried `CALLOUT_OVER_UNDERLAY_IS_CHECKED_AT = 'PLAN-H/3'` since `PLAN-A/5`,
+recording that the underlay's exclusion from PAL-1 does **not** cover *"the requirement that callout
+glyphs remain separable against a non-white background ... the first background in the corpus."*
+
+**It is decidable because the screening is a constant.** The gate now prints:
+
+> callout over the screened underlay: black on 192 (ink retained 250 per-mille) is 11.54:1, floor 4.5:1
+
+**Proven not vacuous by mutation**, which is the half that matters: 540 per-mille passes, **560 fails
+at 4.30:1**, 700 fails at 2.48:1. The break-even is 550 and DR-149's 250 carries a 2.2× margin.
+
+**THE GATE PARSES THE CONSTANT AND NEVER COPIES IT**, on `registry_parity.py`'s precedent for a Python
+gate reading Dart source. A second copy of a moving number is a liability this corpus has swept five
+times, and a screening value in two places would have gone stale the first time `PLAN-J`'s print moved
+it.
+
+**canon §14.1 is why it is a number and not an eye.** PAL-1 shipped collisions three times because the
+rule was *"checked by inspection"* and read at the domain level rather than over rendered values. A
+legibility claim about a printed sheet, asserted by looking at one, is that mistake in a new place.
+
+##### 5.9.20.4 Three things measurement decided that reading did not
+
+**THE LEADER RULE WAS MEASURING THE WRONG DISTANCE.** The first draft compared pin-centre to
+pill-**centre**, and a lone pin with a four-character designator drew a leader to a pill sitting at its
+preferred offset: the centre is half a pill-width away and a pill is as wide as its text. Measuring the
+centre makes the rule a function of how long a designator happens to be. docs/15 §7 says *"within its
+own pin's clearance"*, which is the **near edge**, and that is exactly the ring radius, so no distance
+is computed at all now.
+
+**THE RING'S CAPACITY WAS PROBED, NOT GUESSED.** A first case asserted crowding on twelve coincident
+pins and the ring solved all twelve, because four radii by eight directions is thirty-two slots.
+**Twenty coincident drops all place clear; crowding starts at twenty-four**, well past any real wall,
+and those are the numbers the cases use.
+
+**A MUTATION FOUND A TEST THAT PINNED SIZE AND NOT POSITION.** Replacing the page mapping with raw
+image pixels moved every callout to the wrong part of the sheet and left every assertion green, because
+the case asserted the pill's height and never its location. **A designator printed beside the wrong wall
+is the one failure this sheet exists to prevent.** Two mapping cases were added and kill it.
+
+##### 5.9.20.5 Evidence
+
+Floor: `rackpal_core` 4411 to 4431 (+20).
+
+**Eleven mutations killed.** A twelfth would not build, and that is a fact rather than a gap:
+`height` must stay `const` for `const Radii.circular(height / 2)` to be legal, so it cannot come from
+measured metrics without a change elsewhere. Its buildable variant is killed by two cases.
+
+Six of the twenty new cases are load-bearing and every one is about the two ways a callout fails a
+stranger: it covers the thing it labels, or it names the wrong wall.
 ---
 
 ## 6. The dependency graph, as it actually stands

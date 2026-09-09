@@ -19000,6 +19000,119 @@ to whoever builds the rasteriser.
 
 ---
 
+### §11.149 DR-150 · A pin has no domain, so a callout has no colour, and the screening turns PAL-1's open obligation into arithmetic
+
+**Settled by the user on 2026-09-09**, at `PLAN-H/3`'s census. `#642` is one of the two `PLAN-H`
+briefs that describe a tree which has moved since 2026-08-10, and the movement is recorded in the
+tree itself.
+
+**11.149.1 THE BRIEF'S COLOUR RULE CANNOT BE APPLIED, AND THE FILE THAT SAYS SO IS ONE CHAPTER
+YOUNGER THAN THE BRIEF.** `#642` reads *"callouts carry the device designator and reuse the
+schematic's tag-pill geometry and the signal domain's colour (CR-078: colour lives on the DOMAIN,
+never the family)."*
+
+**A pin carries no domain.** It hangs on one of docs/15 §3.4's three carriers and none of them
+resolves one:
+
+| Carrier | What it knows about signal |
+|---|---|
+| `Rack` | nothing. It is the datum, not a signal path |
+| `Outlet` | `designation`, `tia570Grade`, a `service` string on its gangs. **No `SignalFamilyId`, no `SignalDomainId`** |
+| `OffRackPlacement`'s device | ports across several domains. A television is video **and** network |
+
+`plan_scene.dart` wrote this down at `PLAN-E/2`, one chapter after `#642` was filed: the marker's
+kind *"is deliberately NOT a colour decision here: CR-078 puts colour on the signal domain, and a pin
+carries no domain."* The brief asked for a colour from a fact the model does not hold.
+
+**AND THE DELIVERABLE IS GREYSCALE ANYWAY.** AC-054 sets the standard as a print on a real greyscale
+laser, and DR-037 §11.36.1's drill hands a person that print. A hue chosen here reaches the person the
+sheet is for as a grey.
+
+**11.149.2 RULED: ONE UNIFORM CALLOUT, OPAQUE, BLACK.** A white-filled stadium with a black hairline
+outline and black text, masking whatever is beneath it.
+
+**A KNOCK-OUT IS NOT A CONTRAST DECISION, WHICH §11.149.4 MAKES CLEAR.** Black text on the darkest
+sample the screening can leave is 11.5:1, so luminance was never the problem. **Dense line work is,**
+and it fails by pattern rather than by contrast: a dimension string crossing a designator is
+unreadable at any ratio. Masking is what a callout bubble is for in drafting, and it makes legibility
+unconditional rather than a function of what the architect drew at that spot.
+
+Carrier kind stays distinguished by the **marker shape** `plan_scene.dart` already draws, which is
+where DR-140's rack-is-not-a-device distinction already lives. The two refused alternatives were a
+tint by carrier kind, which buys on a colour printer what the marker already carries and buys nothing
+on the only printer the criterion names; and porting the schematic's translucent pill verbatim, which
+is right on the uniform paper the schematic has and puts a wash over walls here.
+
+**11.149.3 RULED: THE CALLOUT PRINTS THE CARRIER'S OWN DESIGNATOR.** `RK-1`, `WP-1`, `TV-1`.
+
+The exit criterion says *"a callout for every pinned drop, each printing the designator its Pull
+Sheet row prints"*, and a pinned outlet can have **several** Pull Sheet rows: a row is a `Link` and a
+drop can carry three cables. **The cable designator is therefore not a function of a pin**, and
+choosing it would put three overlapping callouts on one dot. The carrier's designator is one string
+per pin, it appears on every Pull Sheet row for that drop, and it names the wall rather than the
+cable, which is what somebody standing in the room is looking for.
+
+*Both, stacked* was refused on the sheet rather than on the principle: it doubles every pill's height,
+and on a 60-drop rough-in at ANSI B that is the difference between a plan and a field of boxes.
+
+**11.149.4 RULED BY ARITHMETIC: THE SCREENING DISCHARGES PAL-1's OPEN OBLIGATION, AND THE CHECK IS
+MECHANICAL.** `tools/pal1_check.py`'s own exclusion block has carried
+`CALLOUT_OVER_UNDERLAY_IS_CHECKED_AT = 'PLAN-H/3'` since `PLAN-A/5`, recording that the underlay's
+exclusion from PAL-1 does **not** cover *"the requirement that callout glyphs remain separable against
+a non-white background ... the first background in the corpus."*
+
+**It is decidable because the screening is a constant.** The darkest sample 25% ink can leave is
+`255 - ⌊255 × 250 / 1000⌋ = 192`, and black on 192 is **11.54:1**, past WCAG AAA. The break-even for
+4.5:1 is **550 per-mille**, so DR-149's 250 carries a 2.2× margin and even the 40% the user refused
+would have passed at 7.37:1.
+
+**THE CHECK IS COMPUTED FROM THE CONSTANT AND NEVER FROM A COPY OF IT.** `pal1_check.py` parses
+`kUnderlayInkRetained` out of `plan_image.dart`, on `registry_parity.py`'s precedent for a Python gate
+reading Dart source. A second copy of a moving number is a liability, and this corpus has swept that
+mistake five times. Raising the screening past 550 fails the gate rather than degrading a sheet
+quietly.
+
+**canon §14.1's LESSON IS WHY IT IS ARITHMETIC AND NOT AN EYE.** PAL-1 shipped collisions three times
+because *"the rule was checked by inspection"* and read at the domain level rather than over rendered
+values. The same discipline applied here means the obligation is discharged by a number the gate can
+recompute, not by looking at a proof.
+
+**11.149.5 RULED: A RING OF CANDIDATE OFFSETS, THEN A LEADER.** docs/15 §7: *"a leader line is drawn
+only when the pill cannot sit within its own pin's clearance."* The placement takes the preferred
+offset, walks a fixed ring of alternatives when that box overlaps one already placed, and draws a
+leader when the chosen spot is past the clearance radius.
+
+**IT IS A HEURISTIC AND THE RECORD SAYS SO**, rather than a layout solver. It is deterministic because
+`planPinsFor` already orders pins totally by entity id, which was built for the display-list
+comparison and pays a second time here.
+
+**AND A CALLOUT IS NEVER DROPPED.** When the ring is exhausted the pill is placed at its preferred
+offset anyway, overlapping, with a leader. **An absent callout is a drop the stranger cannot find and
+an overlapping one is a drop they can read twice**, which is G4's asymmetry: the sheet reports what it
+could not place cleanly rather than silently printing fewer callouts than there are pins.
+
+**11.149.6 THE PILL IS BUILT IN CORE, AND THE BRIEF'S "REUSE" WAS NOT AVAILABLE.** `#642` says to
+reuse the schematic's tag-pill geometry. `_PillSizer` is **private to
+`rackpal_ui/src/canvas/schematic/wire_trace.dart`**, and `rackpal_export` may never import
+`rackpal_ui` (docs/03 §7.1). The bundle has recorded this since 2026-07-28 as *"a violation in
+waiting"* that leaves M6's interconnect sheets unbuildable until the file moves.
+
+**This chapter does not move it.** `wire_trace.dart` is the drawn-wire staircase plus its pill, it is
+M6's blocker rather than this sheet's, and moving a thousand-line file to borrow ninety of them would
+put an unrelated migration inside a chapter about callouts. What is taken is the **reasoning**, which
+is what a shared rule actually is: near-edge anchoring rather than centring, height from the type size
+rather than from font metrics so screen and paper agree, and a stadium radius. Each is cited where it
+is used.
+
+**11.149.7 WHAT THIS DOES NOT RULE.** Not the leader's own arrowhead or terminal, which the drawing
+does without. Not a north arrow, which has no field on `PlanUnderlay` to read. Not the per-plan device
+schedule (`PLAN-H/5`) or the scale bar (`PLAN-H/4`). Not whether `wire_trace.dart` moves to core,
+which stays M6's and stays recorded. And not the callout's type size as a final figure: it is a
+starting value like `kPlanMarkerRadiusFraction`, and `PLAN-J`'s print drill is where a size read at
+arm's length is settled.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
