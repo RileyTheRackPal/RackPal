@@ -18860,6 +18860,69 @@ chapter's derivation.
 
 ---
 
+### §11.147 DR-148 · The rasteriser is deferred a second time, and the debt is wired into the exit criterion rather than into a review date
+
+**Settled by the user on 2026-09-09**, at `PLAN-H`'s census. DR-145 §11.144.5 named `PLAN-H` as the
+review point for a vendored pdfium, on the ground that a *"deferral with a fired trigger and no review
+date is how a debt stops being visible."* This is that review.
+
+**11.147.1 DR-145's STRUCTURAL REASON DOES NOT SURVIVE THE CENSUS, AND THE REVIEW STILL STOOD.**
+§11.144.5 chose `PLAN-H` because *"`T1.01` is the first thing in this product that needs an underlay
+**rendered** rather than **stored**, so the chapter that builds it is the first one whose own work is
+blocked by the absence rather than merely inconvenienced by it."*
+
+**`T1.01` is not blocked.** `PlanUnderlay.format` is `png | jpeg` by construction and has been since
+`PLAN-C`; a PDF page is **lifted to one of those at import** (DR-138) and the member written to the
+container is a raster. So the thing `T1.01` renders is a stored PNG or JPEG, which
+`DiagramCanvas.drawImage` and `PdfImage` have both done since `PLAN-A`. **The rasteriser is an IMPORT
+gap and not a RENDER gap**, and it belongs beside the importer rather than beside the sheet.
+
+The review was held anyway, because a scheduled review that is skipped on the grounds that its stated
+reason was wrong is a deferral with no review date by another route. What changed is the answer's
+shape rather than its timing.
+
+**11.147.2 RULED: THE DEFERRAL STANDS A SECOND TIME, AND THE SECOND TIME IS SAID OUT LOUD.** Nothing
+displaces `PLAN-H`, `PLAN-I` or `PLAN-J`. The route is unchanged and is still not `pdfrx` (DR-138
+§11.137): a direct FFI binding over a **vendored** pdfium, per CR-100.
+
+**This is the second deferral of the same debt and the record says so**, because two deferrals with
+one trigger between them is the shape a permanent omission takes when nobody counts.
+
+**11.147.3 RULED: THE NEW TRIGGER IS THE EXIT CRITERION, NOT A DATE AND NOT A CHAPTER.** `PLAN-J`'s
+drill is bound to **the CAD plot**, the three-page all-vector set of DR-145, rather than to whichever
+of the two real sets happens to import.
+
+**The epic therefore cannot close until the rasteriser exists.** That is the user's call and it is a
+stronger instrument than a review point: a review can be held and deferred again, and an exit
+criterion cannot be met by deciding to meet it later.
+
+**AND IT ADDS NO SCOPE, WHICH IS THE PART WORTH READING TWICE.** The exit criterion already says *"an
+architect's floorplan PDF is imported **without leaving the app**"* (DR-037 §11.36.1, roadmap §4). A
+plot from CAD **is** an architect's floorplan PDF, it is the form a drawing office produces without
+doing anything to it, and this product refuses it. **The criterion has been unmeetable on that input
+since the day it was written**, and nobody had noticed because the only set anybody had tried was the
+JPEG one. So this is not an §8.3 amendment: it is the criterion read against an input it always
+covered.
+
+**11.147.4 RULED: THE DRILL'S OWN RISK IS RECORDED RATHER THAN LEFT TO BE DISCOVERED.** Put to the
+user with the deferral: `PLAN-J` run on the JPEG set would **pass**, the exit criterion would read as
+discharged, and half of the real PDF inputs this product has met would remain unimportable. A green
+drill would have been evidence about callouts and legibility that a later reader would take as
+evidence about import coverage.
+
+Binding the drill to the harder input removes that reading rather than annotating it. **DR-145
+§11.144.4's *"half the ordinary path is bought"* stops being a note and becomes a gate.**
+
+**11.147.5 WHAT THIS DOES NOT RULE.** Not the resolution a rasterisation uses, which DR-145
+§11.144.7 already left open and which is still owed by whoever builds it: DR-137 §11.136.4's *"never
+above the source's own effective resolution"* is a rule for a raster source and a vector source has no
+such ceiling. Not the page picker's behaviour when every page is refused, likewise still DR-145's.
+Not `PLAN-H`'s own content, which is unaffected in every chapter. And **not a licence or vendoring
+question**: CR-100 governs the mechanism and DR-036's census covers what is in the tree today, so a
+vendored pdfium reopens that census when it lands and not before.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
