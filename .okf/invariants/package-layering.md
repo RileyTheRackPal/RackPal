@@ -43,6 +43,19 @@ construction, and `rackmate_export` may never import `rackmate_ui`.** So as
 things stand *the exporter cannot draw a wire*, and M6's sheets are unbuildable
 until it moves. Recorded before M6 starts rather than discovered during it.
 
+**AND IT HAS A SECOND CONSUMER NOW, WHICH IS HOW A DEBT GETS ITS PRICE.**
+`PLAN-H/3`'s brief told the plan sheet to *reuse the schematic's tag-pill
+geometry*, and `_PillSizer` is private to that same file. The sheet builders live
+in core, so the pill was unreachable from there too.
+
+**The chapter did not move the file, and that is the decision rather than the
+omission** ([DR-150](/decisions/dr-150-a-pin-has-no-domain.md) §11.149.6): a
+thousand-line relocation is M6's migration and would have arrived inside a chapter
+about callouts. What it took was the **reasoning**, cited at each site it is used:
+near-edge anchoring rather than centring, height from the type size rather than
+from font metrics, a stadium radius. **A borrowed rule with its citation is not a
+copy of the code**, and the debt is unchanged and still M6's.
+
 # Enforcement
 
 - `no_flutter_import_test.dart` fails the build on a Flutter import in core.
