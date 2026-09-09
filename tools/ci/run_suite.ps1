@@ -555,7 +555,13 @@ $SuiteFloors = @{
     # `36` is 36 inches or 36 feet and the two differ by twelve), and +7
     # on plan_commands_test.dart for SetPlanScaleCommand, the writer
     # PlanScale did not have for two chapters.
-    'rackpal_core'   = 4341
+    # 4343 at DR-145: +2 for the CAD-plot twin, a fixture built to the
+    # SECOND real plan set's signature (classic xref, ANSI B pages, a
+    # populated /Resources holding a font, and no /XObject) rather than
+    # to the rule's boundary. One case is that every page is refused;
+    # the other is that it is refused for the RIGHT reason, which is a
+    # separate check and is the one docs/12 5.9.6.4 exists for.
+    'rackpal_core'   = 4343
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -794,7 +800,12 @@ $SuiteFloors = @{
     # `pickerSawIt || underlays.isEmpty` both passed on a document nothing
     # was imported into. They now use pdf_page_import_test.dart's real
     # onePagePdf and assert what the picker actually received.
-    'rackpal_app'    = 964
+    # 965 at DR-145: +1 for the three-page CAD plot. Every other fixture
+    # in pdf_page_import_test.dart is ONE page, so
+    # PdfHasNoLiftablePageError.pageCount had only ever rendered as
+    # `1 page` and the plural sentence a person actually sees was
+    # untested.
+    'rackpal_app'    = 965
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

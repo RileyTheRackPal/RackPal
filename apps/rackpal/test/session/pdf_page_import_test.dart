@@ -42,6 +42,48 @@ const String _kImageDict = '$_kImageProps/BitsPerComponent 8/Filter/DCTDecode';
 const String _kPageDict =
     '/MediaBox[0 0 2592 1728]/Resources<</XObject<</img0 5 0 R>>>>';
 
+/// A page of a CAD plot: ANSI B, a Type1 font, and NO `/XObject` key.
+///
+/// One interpolated constant rather than adjacent literals, on
+/// `_kImageProps`'s own precedent a few lines up: PDF dictionary syntax has
+/// no whitespace between its tokens, and the analyzer's
+/// `missing_whitespace_between_adjacent_strings` would have a space added
+/// that changes the fixture.
+const String _kCadFontRes =
+    '<</Font<</F1<</Type/Font/Subtype/Type1/BaseFont/Helvetica>>>>>>';
+const String _kCadPageDict = '/MediaBox[0 0 1224 792]/Resources$_kCadFontRes';
+
+/// A CAD PLOT: several pages, a font, linework, and **no image at all**.
+///
+/// A twin of DR-145 §11.144's real file, which is not in the repository.
+/// `rackpal_core`'s `pdf_page_lift_test.dart` carries the same builder for
+/// the same reason; the duplication is deliberate, because a test package
+/// cannot import another package's tests and neither fixture belongs in
+/// shipping code.
+Uint8List cadPlotPdf({int pages = 3}) {
+  final buf = BytesBuilder();
+  void put(String s) => buf.add(latin1.encode(s));
+  final kids = [for (var i = 0; i < pages; i++) '${3 + i * 2} 0 R'].join(' ');
+  put('%PDF-1.7\n');
+  put('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n');
+  put('2 0 obj\n<</Type/Pages/Kids[$kids]/Count $pages>>\nendobj\n');
+  for (var i = 0; i < pages; i++) {
+    final pageObj = 3 + i * 2;
+    final content =
+        'q 0.5 w 100 100 m 1100 100 l S Q\n'
+        'BT /F1 10 Tf 120 120 Td (BEDROOM ${i + 1}) Tj ET\n';
+    put(
+      '$pageObj 0 obj\n<</Type/Page/Parent 2 0 R$_kCadPageDict'
+      '/Contents ${pageObj + 1} 0 R>>\nendobj\n',
+    );
+    put('${pageObj + 1} 0 obj\n<</Length ${content.length}>>\nstream\n');
+    put(content);
+    put('\nendstream\nendobj\n');
+  }
+  put('trailer\n<</Root 1 0 R>>\n%%EOF\n');
+  return buf.toBytes();
+}
+
 /// A one-page PDF wrapping [image], with [content] as the page's stream.
 Uint8List onePagePdf(Uint8List image, {String content = _kFullPage}) {
   final buf = BytesBuilder();
@@ -101,6 +143,28 @@ void main() {
       expect(text, contains('1 page '));
       expect(text, contains('paints its own content'));
       expect(text, contains('PLAN-D/3'));
+    });
+
+    test('A REAL CAD PLOT: three pages, all refused, and the sentence says '
+        'THREE', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THE COUNT HAD NEVER BEEN ANYTHING BUT ONE
+      // ═══════════════════════════════════════════════════════════════
+      // Every fixture in this file is a ONE-page PDF, so
+      // `PdfHasNoLiftablePageError.pageCount` had only ever rendered as
+      // `1 page`. DR-145 §11.144's real file is three pages, and the
+      // sentence a person sees is the plural one.
+      //
+      // The fixture is a twin of that file's signature rather than the
+      // minimum that trips the rule: a classic xref, ANSI B pages, a
+      // populated `/Resources` holding a font, path and text operators,
+      // and no `/XObject` anywhere.
+      final text = errorOf(readPdfPages(cadPlotPdf())).toString();
+      expect(text, contains('has 3 pages'));
+      expect(text, contains('draws no image'));
+      // AND THE WORKAROUND, because this is the sentence that has to
+      // stand in for the feature until PLAN-H revisits the rasteriser.
+      expect(text, contains('Export the page you want as PNG or JPEG'));
     });
 
     test('something that is not a PDF is refused before any of that', () {
