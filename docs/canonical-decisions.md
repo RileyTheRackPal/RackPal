@@ -19014,7 +19014,7 @@ never the family)."*
 **A pin carries no domain.** It hangs on one of docs/15 §3.4's three carriers and none of them
 resolves one:
 
-| Carrier | What it knows about signal | 
+| Carrier | What it knows about signal |
 |---|---|
 | `Rack` | nothing. It is the datum, not a signal path |
 | `Outlet` | `designation`, `tia570Grade`, a `service` string on its gangs. **No `SignalFamilyId`, no `SignalDomainId`** |
