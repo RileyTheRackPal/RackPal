@@ -111,6 +111,7 @@ import 'package:rackpal_core/src/derived/equipment_list.dart'
     show kUnknownCell, kUnplacedGroupTitle;
 import 'package:rackpal_core/src/derived/jacket_color_resolution.dart';
 import 'package:rackpal_core/src/derived/link_class.dart';
+import 'package:rackpal_core/src/derived/plan_length.dart';
 import 'package:rackpal_core/src/derived/totals.dart' show Rollup;
 import 'package:rackpal_core/src/model/conductor.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
@@ -339,6 +340,17 @@ final class ScheduleEnd {
 /// its tag, which is most of them.
 String signalFamilyCellLabel(SignalDomainDef domain, SignalFamilyDef family) =>
     '${domain.tagPrefix}·${family.displayName}';
+
+/// What a plan-derived floor carries in front of its number: `≥ 41`.
+///
+/// U+2265 AND NOT `>=`, and the choice is a gate rather than a taste.
+/// `tools/glyph_coverage_check.py` checks every non-ASCII literal against
+/// the intersection of both bundled Jost weights, and both carry U+2265;
+/// its `REQUIRED` set names this one so the gate still fails if the
+/// literal scan ever stops matching. The trailing space is the cell's,
+/// not the glyph's: at §3.2's 28 pt column `≥41` sets the bar tight
+/// against the digit.
+const String kAtLeastPrefix = '≥ ';
 
 /// What §3.3 prints for an `OpenEndpoint`. A distinct token from
 /// [kUnknownCell]: "nothing is landed here yet" is a fact, and "we do not
@@ -725,9 +737,28 @@ final class ScheduleEntry {
   bool get pathwayLabelIsDesignator => pathwayDesignator != null;
 
   /// Whether [length] is an estimate — §3.2 column 8's italic.
+  ///
+  /// **A PLAN FLOOR IS NOT AN ESTIMATE AND IS DELIBERATELY FALSE HERE**
+  /// (DR-147 §11.146.4). Both print italic, so a renderer wants
+  /// `lengthIsEstimated || lengthIsBound`; but this flag is also what
+  /// `ScheduleView.estimatedCount` and §3.8's `3 estimated (italic)`
+  /// footer count, and a footer reading `5 estimated` on a document
+  /// holding three guesses and two measured floors is wrong about the one
+  /// thing it exists to say. See [lengthIsBound].
   bool get lengthIsEstimated =>
       lengthSource == ScheduleLengthSource.outletNominal ||
       lengthSource == ScheduleLengthSource.roomEstimate;
+
+  /// Whether [length] is a plan-derived floor rather than a length.
+  ///
+  /// Prints italic like an estimate and prefixed `≥`, which is the part
+  /// that is not decoration: it is the difference between a number an
+  /// installer cuts to and a number an installer knows is a floor
+  /// (DR-020 §11.19.2(2)).
+  ///
+  /// **THE ROLLUPS READ THIS, NOT THE SOURCE**, so there is one predicate
+  /// rather than four comparisons that can drift apart.
+  bool get lengthIsBound => lengthSource == ScheduleLengthSource.planLowerBound;
 
   /// Conductors that state no colour. "Colours WHERE THEY EXIST" is the
   /// exit criterion's own hedge; this is the number that keeps it honest.
@@ -826,7 +857,24 @@ final class ScheduleEntry {
   /// ESTIMATE flag is [lengthIsEstimated] and is not encoded in this
   /// string — italic is the renderer's job, and a caller that reads the
   /// number without the flag would bill off an estimate (AC-024).
-  String lengthCell(UnitSystem units) => scheduleLengthCell(length, units);
+  ///
+  /// **THE `≥` IS THE ONE THING THAT IS IN THE STRING**, and the asymmetry
+  /// with the italic is deliberate. Italic is a *style* a renderer applies
+  /// and a plain-text export loses; `≥ 41` and `41` are different claims,
+  /// and the second is a number an installer cuts to. A bound that lost
+  /// its prefix on the way to a CSV would be indistinguishable from a
+  /// measurement (DR-147 §11.146.4).
+  ///
+  /// **IT IS COMPOSED HERE AND NOT IN `scheduleLengthCell`**, which is
+  /// shared with `pathway_table.dart`'s nominal length and three
+  /// `structure_table.dart` columns. None of those can hold a bound, and
+  /// one of them is parsed back by `parseLengthCell`: a prefix in the
+  /// shared speller would put a character into cells that must round-trip
+  /// and into cells that cannot mean it.
+  String lengthCell(UnitSystem units) {
+    final cell = scheduleLengthCell(length, units);
+    return lengthIsBound ? '$kAtLeastPrefix$cell' : cell;
+  }
 
   /// §3.3 column 12's conductor half — `L+ red · L- black`.
   String get conductorCell {
@@ -1055,6 +1103,12 @@ ScheduleEntry _row(RackDocument doc, Link link) {
     link,
     outletNominal: outlet?.nominalRunLength,
     roomEstimate: doc.locations[roomId]?.estimatedRunLengthFromRack,
+    // COMPUTED FOR EVERY ROW AND USED BY THE LAST TIER ONLY. It is not
+    // carried on the entry: `LEN-001` and `LEN-002` read the floor
+    // whichever tier printed, and they do it by calling
+    // `planLowerBoundOf` themselves, since they take a `Link` and never
+    // build a schedule.
+    planLowerBound: planLowerBoundOf(doc, link),
   );
 
   final familyId = link.services.isEmpty
@@ -1144,11 +1198,14 @@ TerminationType? _terminationOf(Link link, Conductor? first) {
 }
 
 /// §3.2 column 8's fallback chain, most specific first. See
-/// [ScheduleLengthSource] for why `Outlet.nominalRunLength` is in it.
+/// [ScheduleLengthSource] for why `Outlet.nominalRunLength` is in it and
+/// why the plan's floor ranks below the room estimate rather than above
+/// it.
 (Len?, ScheduleLengthSource) _lengthOf(
   Link link, {
   required Len? outletNominal,
   required Len? roomEstimate,
+  required Len? planLowerBound,
 }) {
   final cut = link.cutLength;
   if (cut != null) return (cut, ScheduleLengthSource.cut);
@@ -1157,6 +1214,9 @@ TerminationType? _terminationOf(Link link, Conductor? first) {
   }
   if (roomEstimate != null) {
     return (roomEstimate, ScheduleLengthSource.roomEstimate);
+  }
+  if (planLowerBound != null) {
+    return (planLowerBound, ScheduleLengthSource.planLowerBound);
   }
   return (null, ScheduleLengthSource.none);
 }
@@ -1515,6 +1575,7 @@ final class ScheduleGroup {
     required this.rows,
     required this.footage,
     required this.estimatedCount,
+    required this.boundCount,
     required this.isUndeterminedClass,
   });
 
@@ -1534,6 +1595,16 @@ final class ScheduleGroup {
   /// of measurements, and §3.8's own footer says so out loud:
   /// `Σ 11 runs · 601 ft · 3 estimated (italic)`.
   final int estimatedCount;
+
+  /// How many rows in this band print a plan-derived FLOOR rather than a
+  /// length (DR-147 §11.146.3).
+  ///
+  /// **NOT A SUBSET OF [estimatedCount] AND NOT A CONTRIBUTOR TO
+  /// [footage].** These rows are excluded from the `Σ` and counted here,
+  /// which is `Rollup.unknownCount`'s own discipline applied to a
+  /// narrower ignorance: the band does not know how much cable this is,
+  /// and it does know it is at least something.
+  final int boundCount;
 
   /// True for the [kUndeterminedClassGroupTitle] band.
   final bool isUndeterminedClass;
@@ -1621,6 +1692,7 @@ final class ScheduleView {
     required this.exclusions,
     required this.footage,
     required this.estimatedCount,
+    required this.boundCount,
     required this.undeterminedClassCount,
     required this.classDisagreementCount,
     required this.jacket,
@@ -1654,6 +1726,10 @@ final class ScheduleView {
   /// How many of those lengths are estimates (§3.8's
   /// `3 estimated (italic)`).
   final int estimatedCount;
+
+  /// How many shown rows print a plan-derived FLOOR rather than a length
+  /// (DR-147 §11.146.3). Excluded from [footage] and counted here.
+  final int boundCount;
 
   /// Rows whose class `effectiveLinkClassOf` could not determine. Shown
   /// in their own band AND stated as a number — see the file header.
@@ -1760,6 +1836,7 @@ ScheduleView buildScheduleView(
     ),
     footage: _footageOf(kept),
     estimatedCount: kept.where((r) => r.lengthIsEstimated).length,
+    boundCount: kept.where((r) => r.lengthIsBound).length,
     undeterminedClassCount: kept.where((r) => r.isClassUndetermined).length,
     classDisagreementCount: kept.where((r) => r.hasClassDisagreement).length,
     jacket: _jacketRollup(kept),
@@ -1906,6 +1983,7 @@ ScheduleGroup _band(
   rows: List.unmodifiable(rows),
   footage: _footageOf(rows),
   estimatedCount: rows.where((r) => r.lengthIsEstimated).length,
+  boundCount: rows.where((r) => r.lengthIsBound).length,
   isUndeterminedClass: isUndetermined,
 );
 
@@ -1917,7 +1995,20 @@ Rollup<Len> _footageOf(List<ScheduleEntry> rows) {
   var known = 0;
   var unknown = 0;
   for (final row in rows) {
-    final length = row.length;
+    // A BOUND IS NOT A QUANTITY HERE EITHER, AND THIS IS THE ROLLUP THE
+    // BOOBY TRAP DID NOT GUARD (DR-147 §11.146.1). `cable_footage.dart`'s
+    // `_isQuantity` is an exhaustive switch that stops the build when a
+    // source is added; this function reads a `Len?` and never asks where
+    // it came from, so a floor would have walked into §3.8's
+    // `Σ 11 runs · 601 ft` footer with nothing to stop it. A `Σ` holding
+    // one floor and ten totals is neither a floor nor a total.
+    //
+    // COUNTED AS UNKNOWN, WHICH IS NOT A DEMOTION: the question this
+    // rollup answers is how much cable this sheet is, and a floor answers
+    // it not at all. `ScheduleView.boundCount` says how much of that
+    // ignorance has a floor under it, which is strictly more than the
+    // reader had before.
+    final length = row.lengthIsBound ? null : row.length;
     if (length == null) {
       unknown++;
     } else {

@@ -586,7 +586,15 @@ $SuiteFloors = @{
     # The six in drc_rules_test.dart are three pairs of controls: the same
     # unmeasured run on the same plan, over and under each limit, plus the
     # measured run that ignores the plan entirely.
-    'rackpal_core'   = 4384
+    # 4392 at PLAN-G/3: +5 in schedule_test.dart and +3 in
+    # cable_footage_test.dart. Two of the eight are load-bearing. The RANK
+    # is one: a floor is more specific than a room estimate and still ranks
+    # below it, so any derivation that put the plan above the room passes
+    # every other case in that group. The SHEET FOOTER is the other, and it
+    # is the rollup `_isQuantity`'s exhaustive switch does not guard:
+    # `_footageOf` reads a `Len?` and never asks where it came from. Six
+    # mutations killed.
+    'rackpal_core'   = 4392
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -796,7 +804,13 @@ $SuiteFloors = @{
     # a state no fixture in this package had ever carried. A gate would
     # be added on a surface, so a case that ran the command would not see
     # it; two mutations on the drag confirm each case kills its own.
-    'rackpal_ui'     = 1672
+    # 1674 at PLAN-G/3: +2 in schedule_screen_test.dart, the two things
+    # core cannot assert. The LEN cell renders `≥ 41` italic, and the
+    # summary chip reads `1 bound` rather than folding into `N estimated`.
+    # The fixture drops the home run's cut length, because `cut` outranks
+    # every tier and a document keeping `78` would render `78` and pass an
+    # assertion about a floor for a reason that has nothing to do with one.
+    'rackpal_ui'     = 1674
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

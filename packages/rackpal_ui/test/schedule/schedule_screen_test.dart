@@ -172,7 +172,117 @@ RackDocument _populatedDoc() {
   return doc;
 }
 
+/// [_populatedDoc] with the home run's cut length removed, the rack
+/// pinned at the origin of a plan calibrated at one foot per pixel, and
+/// the outlet pinned 41 ft along it.
+///
+/// THE CUT LENGTH HAS TO GO, and that is the whole reason this is a
+/// second fixture rather than two lines added to the first. `cut`
+/// outranks every other tier, so a document keeping `78` would render
+/// `78` and pass an assertion about a floor for a reason that has nothing
+/// to do with one.
+RackDocument _planBoundedDoc() {
+  final doc = _populatedDoc();
+  const underlayId = Uuid('ul-1');
+  const room = Uuid('loc-great');
+
+  doc.underlays[underlayId] = PlanUnderlay(
+    id: underlayId,
+    name: 'Level 1',
+    imageMember: 'underlays/level-1.png',
+    format: PlanImageFormat.png,
+    pixelWidth: 400,
+    pixelHeight: 300,
+    contentHash: 'sha256:ul',
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    scale: const PlanScale(
+      a: PxPt(0, 0),
+      b: PxPt(1, 0),
+      distance: Len(12 * Len.nmPerInch),
+    ),
+  );
+  // REPLACED THROUGH THE CONSTRUCTOR, not assigned. `planPin`'s setter
+  // is `@internal` under the AC-013 retrofit, exactly as `cutLength`'s is
+  // above, so this package cannot write it and the analyzer says so at
+  // WARNING level, which the gate holds at zero.
+  const rackId = Uuid('rack-1');
+  final rack = doc.racks[rackId]!;
+  doc.racks[rackId] = Rack(
+    id: rack.id,
+    name: rack.name,
+    designator: rack.designator,
+    heightU: rack.heightU,
+    order: rack.order,
+    meta: _meta(),
+    planPin: const PlanPin(underlayId: underlayId, at: PxPt(0, 0)),
+  );
+  doc.outlets[const Uuid('outlet-1')] = Outlet(
+    id: const Uuid('outlet-1'),
+    structureBodyId: const Uuid('sb-1'),
+    designation: 'WP-1',
+    locationId: room,
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    planPin: const PlanPin(underlayId: underlayId, at: PxPt(41, 0)),
+  );
+
+  final home = doc.links[const Uuid('lnk-1')]!;
+  doc.links[home.id] = Link(
+    id: home.id,
+    designator: home.designator,
+    media: home.media,
+    order: home.order,
+    meta: _meta(),
+    conductors: const [
+      Conductor(
+        from: PlaceEndpoint(description: 'TV wall', locationId: room),
+        to: PortEndpoint(Uuid('port-a03')),
+      ),
+    ],
+    structureOrigin: StructureOrigin(
+      structureBodyId: const Uuid('sb-1'),
+      outletId: const Uuid('outlet-1'),
+      fieldLabel: 'GR-TV-1',
+      rackLabel: '1A-A03',
+      terminationField: TerminationType.keystone,
+    ),
+  );
+  return doc;
+}
+
 void main() {
+  // ═══════════════════════════════════════════════════════════════════
+  group('a plan floor reads as a floor on the table (DR-147 §11.146.4)', () {
+    testWidgets('the LEN cell carries the prefix and is italic', (
+      tester,
+    ) async {
+      await _pump(tester, _planBoundedDoc());
+
+      // ANCHORED ON THE STRING THE CORE COMPOSED, not on a cell index.
+      // `byType().first` in a table finds the wrong cell and passes.
+      final cell = find.text('≥ 41');
+      expect(cell, findsOneWidget, reason: 'the floor, prefixed');
+
+      expect(
+        tester.widget<Text>(cell).style?.fontStyle,
+        FontStyle.italic,
+        reason: 'italic means do not bill off this (AC-024)',
+      );
+    });
+
+    testWidgets('the summary says how many rows did not join the total', (
+      tester,
+    ) async {
+      await _pump(tester, _planBoundedDoc());
+
+      expect(find.text('1 bound'), findsOneWidget);
+      // AND NOT AS AN ESTIMATE. The two counts are different claims and
+      // the footer is the one place that says what the total rests on.
+      expect(find.textContaining('estimated'), findsNothing);
+    });
+  });
+
   group('zero rows is a state this tab is CORRECT in (CR-105, AC-035)', () {
     testWidgets('the column headers render before any data exists', (
       tester,

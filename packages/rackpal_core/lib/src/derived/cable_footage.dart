@@ -110,6 +110,7 @@ final class CableFootageLine {
     required this.withWaste,
     required this.runCount,
     required this.estimatedCount,
+    required this.boundCount,
   });
 
   final MediaTypeId mediaId;
@@ -150,6 +151,20 @@ final class CableFootageLine {
   /// but a reader is entitled to know before ordering against it, and
   /// `ScheduleGroup.estimatedCount` carries the same number for a room.
   final int estimatedCount;
+
+  /// How many of this line's runs printed a plan-derived FLOOR, and are
+  /// therefore inside [footage]'s `unknownCount` rather than its sum
+  /// (DR-020 §11.19.2(2), DR-147 §11.146.3).
+  ///
+  /// **THE SUBSET OF THE IGNORANCE THAT HAS A FLOOR UNDER IT.** A bound
+  /// cannot be summed into "how much Cat6 to order" without becoming a
+  /// claim it is not entitled to make, so it is excluded exactly as a
+  /// missing length is; naming how many of the unknowns are bounds is
+  /// what keeps the exclusion visible rather than quietly shrinking the
+  /// order. [estimatedCount] is the precedent and the sibling: one says
+  /// how much of the number rests on guesses, this says how much of the
+  /// gap is measurable at all.
+  final int boundCount;
 }
 
 /// The whole materials takeoff: one line per media type actually used,
@@ -240,6 +255,7 @@ CableFootage cableFootageOf(Schedule schedule, {required RackDocument doc}) {
   final known = <MediaTypeId, int>{};
   final unknown = <MediaTypeId, int>{};
   final estimated = <MediaTypeId, int>{};
+  final bound = <MediaTypeId, int>{};
 
   for (final row in schedule.rows) {
     // UNDETERMINED IS NOT A CLASS and cannot be filtered as one; it is
@@ -265,6 +281,7 @@ CableFootage cableFootageOf(Schedule schedule, {required RackDocument doc}) {
 
     final id = row.mediaId;
     final length = _isQuantity(row.lengthSource) ? row.length : null;
+    if (row.lengthIsBound) bound[id] = (bound[id] ?? 0) + 1;
     if (length == null) {
       unknown[id] = (unknown[id] ?? 0) + 1;
     } else {
@@ -290,6 +307,7 @@ CableFootage cableFootageOf(Schedule schedule, {required RackDocument doc}) {
         withWaste: _withWaste(footage.value, waste),
         runCount: (known[id] ?? 0) + (unknown[id] ?? 0),
         estimatedCount: estimated[id] ?? 0,
+        boundCount: bound[id] ?? 0,
       ),
     );
   }
