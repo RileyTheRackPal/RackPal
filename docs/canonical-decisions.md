@@ -18702,6 +18702,126 @@ the combination is reachable only from a file this product cannot write.
 
 ---
 
+### §11.146 DR-147 · The bound measures from the run's own rack, and the two rollups it must not enter are two
+
+**Settled by the user on 2026-09-08**, at `PLAN-G`'s census, before a line of the chapter was
+written. `PLAN-G` is four Chapters (`#636`–`#639`) decomposed on 2026-08-10, and the census found
+that two of the four briefs describe a tree that has since changed underneath them.
+
+**11.146.1 THE CENSUS, WHICH FOUND THREE THINGS AND NONE WAS IN A TICKET.**
+
+| Found | Where | What the brief assumed |
+|---|---|---|
+| `LEN-001` and `LEN-002` **already ship** | `validation/rules_cable.dart`, M5 | `#639`: *"M5 owns the rules; this task owns the input and the seam. Do not build the rules here."* Written before M5 built them |
+| The rules **do not read the tier ladder at all** | `knownLengthOf` is `terminatedLength ?? cutLength` | §4.1's *"`LEN-001` and `LEN-002` read the bound regardless of which tier printed"* describes a ladder those two functions have never consumed |
+| There are **two footage rollups** and the booby trap guards one | `cable_footage.dart`'s `_isQuantity` versus `schedule.dart`'s `_footageOf` | `#638` names *"the footage rollup"*. `_footageOf` sums `row.length` with no source check and builds `ScheduleView.footage` and `ScheduleGroup.footage`, which is §3.8's `Σ 11 runs · 601 ft · 3 estimated` footer |
+
+**THE BOOBY TRAP WORKED AND ITS SCOPE IS SMALLER THAN ITS REPUTATION.** `cable_footage.dart:309`'s
+`_isQuantity` is an exhaustive switch with no default arm and its header says why: *"the day it is
+added this file stops compiling and somebody decides, rather than a bound silently joining a
+purchase."* It does stop the build, and it is the one gate of its kind in this tree. **It guards the
+takeoff and it does not guard the sheet footer**, because `_footageOf` reads a `Len?` and never asks
+where the number came from. A gate's scope is part of its claim, and this one's claim was read one
+rollup too wide by its own ticket.
+
+**11.146.2 RULED: THE DATUM IS THE RUN'S OWN RACK.** DR-144 §11.143.3 left *"which rack is the datum
+when two are pinned on one plan"* to this chapter, and it is the question with the most ways to be
+quietly wrong. The user's call, against two alternatives put with it:
+
+> The bound is the straight line from the pin on **the rack this link lands in** to the pin on this
+> run's subject. When that rack carries no pin, **no bound derives**, even when another rack is
+> pinned on the same underlay.
+
+The two refused alternatives were *the nearest pinned rack* and *the first pinned rack in document
+order*. Both yield a bound more often and both yield a **wrong** one on any job with a head end and a
+satellite rack, which is the ordinary shape of the work this product is for. A distance to a rack the
+cable does not go to is not a weaker bound, it is a different building's number wearing a
+measurement's authority, and it is the G4 failure §4's opening paragraph forbids in the one place
+where the reader cannot see it happening.
+
+**AND IT MAKES THE RACK-TO-RACK RUN FALL OUT RATHER THAN BE EXCLUDED.** Exactly one end of a link may
+be in a rack for a bound to exist. A jumper has both ends in one rack and a sub-feed has them in two;
+neither has a field end, so neither has a subject, and the rule that finds the datum is the same rule
+that refuses those two. `plan_measurability.dart` already holds the other half of this: *"racks are
+the datum and not the subject"*, so a pinned rack is counted in neither population.
+
+**11.146.3 RULED: THE BOUND IS EXCLUDED FROM BOTH ROLLUPS AND COUNTED IN BOTH.** DR-020 §11.19.2(2)
+says a bound *"never enters the footage rollup as a quantity"*, and the finding is that the sentence
+reads on any rollup called footage. The user's call:
+
+> The bound enters neither `Σ`. Both rollups grow a bound count beside the estimated count they
+> already carry.
+
+`Σ 11 runs · 601 ft · 3 estimated · 2 bound`. Summing a floor with ten totals produces a number that
+is neither a floor nor a total, and the alternative put with it, *summed like an estimate*, would have
+given the sheet footer and the materials page two different answers for one document with nothing on
+either saying why. The third alternative, *excluded silently*, was refused for the reason
+`Rollup.unknownCount` exists at all: a `Σ` that shrinks as more of the job gets planned, with no
+count beside it explaining the shrinkage, is the flattering half.
+
+**A BOUND ROW IS STILL AN UNKNOWN TO THE TAKEOFF, AND THAT IS NOT A DEMOTION.** In
+`cable_footage.dart` a bound row lands in `footage.unknownCount` exactly as a lengthless row does,
+because the question that rollup answers is *how much cable to order* and a floor answers it not at
+all. `boundCount` sits beside it and says how much of that ignorance has a floor under it, which is
+strictly more than the reader had before. `runCount` and `unknownLengthCount` are unchanged, so no
+existing number moves.
+
+**11.146.4 RULED: A FLOOR AND A GUESS ARE TWO CLAIMS AND GET TWO FLAGS.** `lengthIsEstimated` is the
+italic flag and `ScheduleView.estimatedCount` is what §3.8's footer prints. The user's call:
+
+> `lengthIsEstimated` stays **false** for a bound. A new `lengthIsBound` carries the `≥` and the
+> exclusion. The renderer italicises on either.
+
+A footer reading `5 estimated` on a document holding three guesses and two measured floors is wrong
+about the one thing that footer exists to say, which is what the total rests on. The prefix is not
+decoration and is not optional: *italic only* was refused because it makes a floor indistinguishable
+in print from a room estimate, which is the confusion DR-020 was written to prevent.
+
+**THE `≥` GOES IN `ScheduleEntry.lengthCell` AND NOT IN `scheduleLengthCell`.** The shared speller is
+read by `pathway_table.dart`'s nominal length and by three `structure_table.dart` columns, none of
+which can hold a bound, and one of those columns is parsed back by `parseLengthCell`. A prefix in the
+shared function would put a character into cells that must round-trip and into cells that cannot
+mean it.
+
+**11.146.5 RULED: THE RULES READ THE FLOOR, AND ONLY IN THE DIRECTION THAT PROVES SOMETHING.** `#639`
+says *"do not build the rules here"* and that sentence has expired. The user's call:
+
+> An unmeasured run whose plan floor **already exceeds** the limit becomes a proven violation with its
+> own message. A floor **under** the limit still emits *"length unknown, cannot verify"*.
+
+That is DR-020 §11.19.2(2)'s asymmetry as executable code: *"a plan can prove a length violation and
+can never prove compliance"*, because if the floor is already over the limit no route rescues it, and
+if the floor is under it every route may still exceed it. The refused alternative was to feed the
+bound into `knownLengthOf`, which reads `terminatedLength ?? cutLength` and is documented as *"the
+length this run is known to be"*: a floor admitted there would pass a run under the limit, turning
+the one statement a plan may honestly make into the one it may not.
+
+**AND THIS TESTS DR-125's PREDICTION RATHER THAN CITING IT.** `rules_cable.dart`'s header records the
+M5-H2 domain review's forecast that both rules *"will rarely fire before the plan view's run
+estimation exists"*, and that the **unmeasured** limb would do nearly all the work until then. This
+is the chapter that gives the other limb an input on a document nobody has measured.
+
+**11.146.6 RULED BY CONSTRUCTION: A MISSING `riseAllowance` COSTS THE BOUND NOTHING IT IS ENTITLED
+TO.** docs/15 §4.1 gives the bound as the straight line *"plus the location's `riseAllowance` if one
+is set"*, and `Location.riseAllowance` is null on every location this product has ever written. A
+null contributes zero, and **the result is still a true lower bound**, because dropping a
+non-negative term from a floor leaves a floor. It is therefore not a G4 substitution and must not be
+"improved" into one: this paragraph exists so that the next reader who notices the omission
+understands it was priced. The allowance is read from **the subject carrier's own location**, the
+outlet's or the off-rack device's, rather than from the schedule row's room fallback chain, because
+the rise is a fact about where the device is and the row's chain can land on the far end's room.
+
+**11.146.7 WHAT THIS DOES NOT RULE.** Not a bound between two underlays. A carrier holds exactly one
+`PlanPin` (DR-142 §11.141), so a rack pinned on `Level 1` can never be the datum for a drop pinned on
+`Level 2`, and a two-storey job yields bounds only on the rack's floor. That is the honest answer and
+`PlanMeasurability` already reports it per underlay as `noRackPinned`; a cross-plan bound would need a
+vertical distance between floors that no floorplan carries. Not `PLN-003`'s severity or band, which
+stay `PLAN-I`'s. Not the as-built tally (§4.2), which DR-020 already put outside this feature. And not
+whether the Pull Sheet's footer prints the bound count, which is `PLAN-H`'s sheet and not this
+chapter's derivation.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
