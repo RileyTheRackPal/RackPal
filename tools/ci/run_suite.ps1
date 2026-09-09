@@ -610,7 +610,21 @@ $SuiteFloors = @{
     # asserts the claim it was actually making, that no `pullSheet` role
     # exists, so the next legitimate addition does not have to re-read a
     # list to know what the case was for.
-    'rackpal_core'   = 4411
+    # 4431 at PLAN-H/3: +14 from plan_callouts_test.dart and +6 in
+    # plan_sheet_test.dart. Six are load-bearing and all six are about the
+    # two ways a callout fails a stranger: it covers the thing it labels,
+    # or it names the wrong wall.
+    #
+    # TWO OF THEM EXIST BECAUSE A MUTATION SURVIVED OR DID NOT BUILD.
+    # Replacing the page mapping with raw image pixels left every
+    # assertion green, because the cases pinned the pill's SIZE and never
+    # its POSITION; two mapping cases were added and kill it. And the
+    # ring's capacity was PROBED rather than guessed: a first draft
+    # asserted crowding on twelve coincident pins and the ring solved all
+    # twelve, since four radii by eight directions is thirty-two slots.
+    # Twenty coincident drops all place clear and crowding starts at
+    # twenty-four, which is the number the cases now use.
+    'rackpal_core'   = 4431
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

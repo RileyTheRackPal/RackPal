@@ -116,3 +116,42 @@ List<PlanPinSubject> planPinsFor(RackDocument doc, Uuid underlayId) {
   out.sort((a, b) => a.entityId.v.compareTo(b.entityId.v));
   return out;
 }
+
+/// What each pinned carrier prints on its callout, keyed by entity id.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE CARRIER'S OWN DESIGNATOR, WHICH IS THE ONLY ONE THAT IS A FUNCTION
+/// OF A PIN (DR-150 §11.149.3)
+/// ═══════════════════════════════════════════════════════════════════════
+/// The exit criterion asks for *"a callout for every pinned drop, each
+/// printing the designator its Pull Sheet row prints"*. A pinned outlet can
+/// have **several** Pull Sheet rows, because a row is a `Link` and a drop
+/// can carry three cables, so the CABLE designator is not a function of a
+/// pin and choosing it would put three callouts on one dot.
+///
+/// The carrier's own designator is one string per pin and it appears on
+/// every Pull Sheet row for that drop, so a stranger matching plan to sheet
+/// finds it whichever row they are holding.
+///
+/// **AN ENTITY WITH NO DESIGNATOR IS ABSENT FROM THE MAP, NEVER BLANK**
+/// (G4, CR-114). `Outlet.designation` is non-nullable but may be empty, and
+/// an empty pill is a dot with a white box on it that says nothing. The
+/// caller draws the marker and no callout, which is the honest rendering of
+/// a drop nobody has designated.
+Map<Uuid, String> planPinLabelsFor(
+  RackDocument doc,
+  Iterable<PlanPinSubject> pins,
+) {
+  final out = <Uuid, String>{};
+  for (final pin in pins) {
+    final label = switch (pin.carrier) {
+      PlanPinCarrier.rack => doc.racks[pin.entityId]?.designator,
+      PlanPinCarrier.outlet => doc.outlets[pin.entityId]?.designation,
+      PlanPinCarrier.device => doc.devices[pin.entityId]?.designator,
+    };
+    final trimmed = label?.trim();
+    if (trimmed == null || trimmed.isEmpty) continue;
+    out[pin.entityId] = trimmed;
+  }
+  return out;
+}

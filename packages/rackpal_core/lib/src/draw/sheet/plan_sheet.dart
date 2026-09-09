@@ -37,11 +37,16 @@
 // ═══════════════════════════════════════════════════════════════════════
 // WHAT IS NOT HERE YET, LISTED SO IT IS NOT READ AS AN OMISSION
 // ═══════════════════════════════════════════════════════════════════════
-// No CALLOUT PILLS and no leader lines: docs/15 §7's designator treatment
-// is `PLAN-H/3`'s, and until then the markers `buildPlanScene` already
-// draws are what locates a drop. No SCALE BAR (`PLAN-H/4`). No per-plan
-// DEVICE SCHEDULE (`PLAN-H/5`). No north arrow, which has no field on
-// `PlanUnderlay` to read.
+// No SCALE BAR (`PLAN-H/4`). No per-plan DEVICE SCHEDULE (`PLAN-H/5`). No
+// north arrow, which has no field on `PlanUnderlay` to read.
+//
+// CALLOUTS ARRIVED AT `PLAN-H/3` and are drawn by `plan_callouts.dart`,
+// OUTSIDE the bracket. That is the one thing about them worth knowing
+// here: annotation inside the transform scales with the drawing, and
+// scene units on a plan are image pixels, so a pill sized in them would
+// print six times larger on a 4000-pixel scan than on a 600-pixel one.
+// The pins are mapped through the fit factor and the pills are laid out in
+// points.
 //
 // THE SCREENING IS NOT HERE EITHER, AND THAT IS STRUCTURAL RATHER THAN A
 // STAGE. `rackpal_core` has no image decoder and must not gain one
@@ -54,6 +59,7 @@ import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/plan_scene.dart';
 import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
+import 'package:rackpal_core/src/draw/sheet/plan_callouts.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_def.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_frame.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_furniture.dart';
@@ -62,6 +68,7 @@ import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 /// What a plan sheet's SCALE field prints.
@@ -76,6 +83,7 @@ final class PlanSheet {
     required this.scene,
     required this.legibility,
     required this.factor,
+    required this.callouts,
   });
 
   final DiagramScene scene;
@@ -88,6 +96,13 @@ final class PlanSheet {
   /// real foot is on this page, and a second fit computed there would be a
   /// second answer to one question.
   final SceneFactor factor;
+
+  /// What the callout layer could and could not place.
+  ///
+  /// Carried out so `build_document.dart` can raise a notice: a sheet that
+  /// quietly overlaps two designators looks exactly like a sheet with one
+  /// drop on that wall.
+  final PlanCalloutLayer callouts;
 }
 
 /// Builds `T1.01` for one underlay.
@@ -105,6 +120,7 @@ PlanSheet buildPlanSheet({
   required String fileName,
   required DateTime issuedAt,
   required TextMeasurer measurer,
+  Map<Uuid, String> labels = const <Uuid, String>{},
   SheetPalette palette = const SheetPalette(),
   PlanPalette planPalette = const PlanPalette(),
 }) {
@@ -171,6 +187,29 @@ PlanSheet buildPlanSheet({
   final originX = area.left + (area.width - bounds.width * s) / 2;
   final originY = area.top + (area.height - bounds.height * s) / 2;
 
+  // MAPPED THROUGH THE SAME TRANSFORM THE PICTURE GETS, by hand rather
+  // than by the bracket: a callout must not scale with the drawing (see
+  // the file header), so it cannot live inside it and has to be told where
+  // its pin landed.
+  //
+  // A PIN WITH NO LABEL GETS NO PILL AND KEEPS ITS MARKER. `labels` omits
+  // an entity whose designator is empty rather than mapping it to `''`
+  // (G4), and an empty pill is a white box that says nothing.
+  final callouts = buildPlanCallouts(
+    subjects: <CalloutSubject>[
+      for (final pin in pins)
+        if (labels[pin.entityId] case final text?)
+          CalloutSubject(
+            entityId: pin.entityId,
+            at: DPt(originX + pin.at.px * s, originY + pin.at.py * s),
+            text: text,
+          ),
+    ],
+    area: area,
+    measurer: measurer,
+    palette: palette,
+  );
+
   final ops = <DiagramOp>[
     ...furniture.ops,
     const OpSave(),
@@ -180,6 +219,7 @@ PlanSheet buildPlanSheet({
     ),
     ...plan.scene.ops,
     const OpRestore(),
+    ...callouts.ops,
     // THE SHEET SAYS WHAT ITS SCALE FIELD CANNOT. `NTS` in a title block
     // is a fact about the field; this line is the instruction a person
     // reading the drawing needs, and it sits with the drawing.
@@ -195,15 +235,16 @@ PlanSheet buildPlanSheet({
     ),
   ];
 
-  // THE PLAN'S OWN TEXT IS SCALED AND THE FURNITURE'S IS NOT, which is the
-  // asymmetry `elevation_sheet.dart` records: annotation inside the
-  // bracket shrinks with the drawing, and the title block does not. The
-  // scene carries no text today (markers are geometry), so the minimum is
-  // the furniture's; when `PLAN-H/3` adds designator pills this is the
-  // line that has to start folding them in through `factor`.
-  final minText = furniture.minTextSizePt < kPlanNotePt
-      ? furniture.minTextSizePt
-      : kPlanNotePt;
+  // THE CALLOUT'S SIZE IS IN HERE NOW, and it is not scaled: the pills sit
+  // outside the bracket, so `kCalloutTextPt` reaches paper unchanged and
+  // the legibility line reads it directly. This comment previously said
+  // the scene carried no text and that the day pills arrived was the day
+  // this had to fold them in; that day is `PLAN-H/3`.
+  final minText = <double>[
+    furniture.minTextSizePt,
+    kPlanNotePt,
+    if (callouts.ops.isNotEmpty) kCalloutTextPt,
+  ].reduce((a, b) => a < b ? a : b);
 
   return PlanSheet(
     scene: DiagramScene(
@@ -218,6 +259,7 @@ PlanSheet buildPlanSheet({
       scale: const SceneFactor(1),
     ),
     factor: factor,
+    callouts: callouts,
   );
 }
 
