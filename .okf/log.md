@@ -1,5 +1,41 @@
 # Update Log
 
+## 2026-09-08 (thirteenth entry)
+
+* **Ruled**: [DR-146](/decisions/dr-146-uncalibrated-states-what-it-costs.md),
+  settled by the user at `PLAN-F/3`'s census before a line of the chapter was
+  written. The row now prints `PLN-001`'s own sentence,
+  `Not calibrated · 39 pins carry no measurable position`.
+* **Closed**: `PLAN-F/3` (#635) at `v0.6.32`, which closes `PLAN-F` and roadmap
+  §2's calibration bullet. **No exit clause moves**: the criterion is a printed
+  `T1.01` a stranger can use, and a calibration is a prerequisite for a length
+  rather than for a locator.
+* **Note**: **A COUNT WITH NO READER, ONE CHAPTER AFTER THE CENSUS THAT SHOULD
+  HAVE CAUGHT IT.** `pinnedCarrierCount` shipped at `PLAN-F/2` with a doc comment
+  naming the underlay row as its intended caller and had zero call sites in
+  `lib/`. Fourth of the shape in four chapters and the smallest: a model with no
+  gesture, an importer with no caller, a derivation API with neither, and now a
+  count nothing reads.
+* **Note**: **A FIELD BUILT FOR A SURFACE THAT DOES NOT EXIST GUESSES THAT
+  SURFACE'S RULE.** The field held racks plus subjects; the user's call gives the
+  row the other population, so it was **replaced** rather than kept beside the new
+  one. Keeping it would have preserved this epic's own recurring defect on
+  purpose. New practice:
+  [a fixture's default is not a proof](/practices/a-fixture-default-is-not-a-proof.md).
+* **Note**: **THE POPULATION IS THE HALF THAT WAS BEING DECIDED**, and it is only
+  visible across two states. Thirty-nine unmeasurable becomes thirty-nine
+  measurable under the chosen reading; counting the rack too would print forty and
+  then thirty-nine, and a number that drops by one at the moment of a calibration
+  reads as a pin the calibration ate.
+* **Note**: **A PROPERTY PROVEN BY A FIXTURE'S DEFAULT IS NOT PROVEN.** Every plan
+  fixture in `rackpal_ui` is built without a scale, so every pin gesture the suite
+  ran was already the interesting case, and a pin on a CALIBRATED plan was
+  exercised nowhere. Both directions now drag the rack out of the strip, and two
+  mutations on the drag confirm each case kills its own.
+* **Update**: [G4](/invariants/g4-unknowns-are-counted.md) gains the plan's row:
+  an uncalibrated plan's unknown count is every drop standing on it, and the row
+  that said nothing was the flattering half.
+
 ## 2026-09-08 (twelfth entry)
 
 * **Closed**: `PLAN-F/2` (#634) at `v0.6.31`, building the report
