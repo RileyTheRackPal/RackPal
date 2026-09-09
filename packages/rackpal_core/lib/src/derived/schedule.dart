@@ -447,18 +447,56 @@ enum ScheduleLengthSource {
   /// more specific than the room estimate, less authoritative than a cut
   /// length, printed as an estimate and never as a measurement.
   ///
-  /// PROVISIONAL, AND THE PLAN VIEW IS THE NAMED TRIGGER. Whether a
+  /// THE PLAN VIEW WAS THE NAMED TRIGGER AND IT HAS LANDED, SO THIS
+  /// COMMENT IS ANSWERED RATHER THAN LEFT OPEN. It read *"whether a
   /// floorplan supersedes any of these four tiers is open and is owed
-  /// when it lands (DR-029 put it in v1, before M6). Note DR-020
-  /// §11.19.2(2) in advance: a plan yields a BOUND, and a bound "never
-  /// enters the footage rollup as a quantity", so the tier that arrives
-  /// will not behave like the three here.
+  /// when it lands"* until `PLAN-G/1`. **It supersedes none of them**
+  /// (DR-037 §11.36.4): [planLowerBound] ranks BELOW the room estimate
+  /// and the three tiers above it are untouched. A comment that stays
+  /// open after its question is answered is how the next reader
+  /// re-litigates it.
+  ///
+  /// The advance note it carried was right and is now the tier's own:
+  /// a plan yields a BOUND, a bound "never enters the footage rollup as
+  /// a quantity" (DR-020 §11.19.2(2)), and [planLowerBound] therefore
+  /// does not behave like the three here.
   outletNominal,
 
   /// `Location.estimatedRunLengthFromRack` — AC-024's "ONE number per
   /// room ... what makes 62 usable estimates possible". §3.2's named
   /// source for the italic figure.
   roomEstimate,
+
+  /// A calibrated plan's straight line from the rack's pin to this run's
+  /// subject pin, plus the subject's `Location.riseAllowance` where one
+  /// is set (docs/15 §4.1, DR-020 §11.19.2, DR-147 §11.146.2).
+  ///
+  /// **NOT AN ESTIMATE, AND THE RANK IS NOT ABOUT THE COLUMN.** It is the
+  /// one length statement a plan can make that survives whatever the
+  /// framing turns out to be, because a straight line is `≤` any real
+  /// route. It nonetheless ranks BELOW [roomEstimate], and DR-037
+  /// §11.36.4 gives the reason as the ROLLUP: a bound is excluded from
+  /// the footage total, so ranking it above the room estimate would move
+  /// every drop on a calibrated plan out of the purchase quantity and
+  /// into the unknown count. **The number an integrator orders cable from
+  /// would get worse in proportion to how much of the job had been
+  /// planned.**
+  ///
+  /// **THE RANK COSTS IT NOTHING, BECAUSE ITS VALUE WAS NEVER THE
+  /// COLUMN.** `LEN-001` and `LEN-002` read the bound regardless of which
+  /// tier printed, which is why `ScheduleEntry.planLowerBound` is carried
+  /// separately from [ScheduleEntry.length] (`PLAN-G/2`). A plan can prove
+  /// a length violation and can never prove compliance.
+  ///
+  /// Prints ITALIC and prefixed `≥`. The flag is
+  /// `ScheduleEntry.lengthIsBound` (`PLAN-G/3`) and is deliberately NOT
+  /// [ScheduleEntry.lengthIsEstimated]: a floor and a guess are two
+  /// claims, and one count cannot carry both (DR-147 §11.146.4).
+  ///
+  /// **NOTHING PRODUCES THIS VALUE YET.** `PLAN-G/1` adds the tier and
+  /// answers `cable_footage.dart`'s booby-trapped switch; `_lengthOf`
+  /// starts returning it at `PLAN-G/3`, once both rollups can refuse it.
+  planLowerBound,
 
   /// No length is known. §3.2: prints `—`, and the `LEN-*` rules emit
   /// "length unknown, cannot verify" rather than silently passing (G4).
