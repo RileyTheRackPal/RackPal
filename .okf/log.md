@@ -1,5 +1,38 @@
 # Update Log
 
+## 2026-09-08 (twelfth entry)
+
+* **Closed**: `PLAN-F/2` (#634) at `v0.6.31`, building the report
+  [DR-144](/decisions/dr-144-a-calibration-carries-its-unit.md) ruled and
+  `derived/plan_measurability.dart` behind it.
+* **Note**: **THE BOUNDARY IS TESTED AS A PROPERTY, NOT AS A COMMENT.**
+  Moving every pin from one corner of the raster to the other changes
+  nothing the derivation reports, and neither does multiplying the typed
+  distance by twelve. Those two cases are the only ones in the file that
+  can tell this derivation from one that computes distances; every
+  counting case passes either way. Five mutations killed.
+* **Note**: **TWO SURFACES, BECAUSE A RECALIBRATION CHANGES NOTHING
+  STANDING.** A first calibration moves the row from `Not calibrated` to
+  a count, so the act is visible; a recalibration leaves it identical,
+  and that is the most consequential edit the feature has. The row keeps
+  the standing fact, the snack bar reports the act, and neither is
+  redundant.
+* **Note**: **THE MASK CLAUSE WAS ALREADY DISCHARGED AND THE CENSUS FOUND
+  SOMETHING BETTER.** The two surfaces that must refresh after a
+  calibration read `DocumentController.changes`; the two that subscribe
+  to `structure | wires` are the rack elevation and the schematic, and
+  neither can show a calibration. So the mask over-wakes two canvases and
+  under-wakes nothing, which is the safe direction, and the observable
+  assertion is that the RAIL redraws rather than that a counter moved.
+* **Note**: the case worth keeping from that census is that **the row
+  moves when a PIN changes and no calibration happened at all**: pinning
+  the rack is what turns `no rack pinned` into a count, so a row wired
+  only to a calibration would name a blocker the user had just cleared.
+* **Note**: every sentence the chapter can emit was **printed and read**
+  before an assertion was written, which is how `1 pin re-derives` was
+  found rather than asserted around. `1 pins re-derive` is the
+  `0 pathways` status bar this repo already shipped once.
+
 ## 2026-09-08 (eleventh entry)
 
 * **Ruled**: [DR-145](/decisions/dr-145-the-second-plan-set-is-all-vector.md),

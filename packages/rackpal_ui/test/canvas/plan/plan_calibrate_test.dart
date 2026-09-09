@@ -1,5 +1,5 @@
-// PLAN-F/1: the two-point pick and the typed distance, through the real
-// widget tree (docs/15 §5, DR-144 §11.143).
+// PLAN-F/1 and PLAN-F/2: the two-point pick, the typed distance, and what
+// the calibration then says it bought (docs/15 §5, DR-144 §11.143).
 //
 // ═══════════════════════════════════════════════════════════════════════
 // EVERY END-TO-END CASE ASSERTS THE DOCUMENT
@@ -24,6 +24,7 @@ const _ul2 = Uuid('ul-2');
 const _member1 = 'underlays/ul-1.png';
 const _member2 = 'underlays/ul-2.png';
 const _outletId = Uuid('out-1');
+const _rackId = Uuid('rk-1');
 
 EntityMeta _meta() =>
     EntityMeta(createdAt: _now, updatedAt: _now, updatedBy: 'test');
@@ -75,6 +76,9 @@ PlanUnderlay _underlay(Uuid id, String member, String name, PlanScale? scale) =>
 DocumentController _controller({
   PlanScale? scale,
   bool withSecond = false,
+  bool withRack = false,
+  bool rackPinned = false,
+  bool outletPinned = false,
   UnitSystem units = UnitSystem.imperial,
 }) {
   final doc = RackDocument(
@@ -95,7 +99,23 @@ DocumentController _controller({
     designation: 'D-014',
     order: const FracIndex('a0'),
     meta: _meta(),
+    planPin: outletPinned
+        ? const PlanPin(underlayId: _ul1, at: PxPt(4, 4))
+        : null,
   );
+  if (withRack) {
+    doc.racks[_rackId] = Rack(
+      id: _rackId,
+      name: 'Head end',
+      designator: 'RK-1',
+      heightU: 42,
+      order: const FracIndex('a0'),
+      meta: _meta(),
+      planPin: rackPinned
+          ? const PlanPin(underlayId: _ul1, at: PxPt(9, 9))
+          : null,
+    );
+  }
   return DocumentController(doc, clock: FixedClock(_now), actor: 'test');
 }
 
@@ -115,7 +135,7 @@ void main() {
   /// is pixel `(n, m)` of the underlay under an identity viewport. The
   /// divider is one pixel and it is the difference between asserting
   /// `PxPt(100, 100)` and reading `PxPt(99, 100)` back.
-  Future<List<String>> pump(
+  Future<({List<String> refusals, List<String> notices})> pump(
     WidgetTester tester,
     DocumentController controller, {
     List<String> members = const [_member1],
@@ -127,6 +147,7 @@ void main() {
       }
     });
     final refusals = <String>[];
+    final notices = <String>[];
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
@@ -142,6 +163,7 @@ void main() {
                 selection: SelectionController(),
                 arm: arm,
                 onRefuse: refusals.add,
+                onNotice: notices.add,
               ),
             ),
           ),
@@ -149,7 +171,7 @@ void main() {
       ),
     );
     await tester.pump();
-    return refusals;
+    return (refusals: refusals, notices: notices);
   }
 
   Finder calibrateButton(Uuid id) =>
@@ -339,7 +361,11 @@ void main() {
           ),
         ),
       );
-      expect(find.text(kCalibratedLabel), findsOneWidget);
+      // `PLAN-F/2` MADE THIS LINE RICHER, and the bare word no longer
+      // appears on its own: the row names the one act still blocking a
+      // length. The fixture has no rack, so that act is pinning one.
+      expect(find.textContaining(kCalibratedLabel), findsOneWidget);
+      expect(find.text('$kCalibratedLabel · no rack pinned'), findsOneWidget);
     });
 
     testWidgets('A SCALE THAT CANNOT YIELD A LENGTH READS AS UNCALIBRATED', (
@@ -430,8 +456,10 @@ void main() {
       expect(scale.distance.nm, 36 * Len.nmPerInch);
       // 36 inches over 100 pixels.
       expect(scale.nanometresPerPixel, 9144000.0);
-      // And the row now says so, which is the only report the person gets.
-      expect(find.text(kCalibratedLabel), findsOneWidget);
+      // And the row now says so. `PLAN-F/2` gave it the rest of the
+      // sentence, and there is no rack in this fixture, so the line names
+      // the act that would unblock every length on the plan.
+      expect(find.text('$kCalibratedLabel · no rack pinned'), findsOneWidget);
 
       // `undoLast` AND NOT `undo.undo`, because the screen listens to the
       // controller's `changes` and the raw stack does not touch it: an
@@ -487,7 +515,7 @@ void main() {
       // on a second rule. The pick surviving is what makes the answer
       // "click somewhere else" instead of "start again".
       final c = _controller();
-      final refusals = await pump(tester, c);
+      final h = await pump(tester, c);
       await tester.tap(calibrateButton(_ul1));
       await tester.pump();
 
@@ -496,7 +524,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.byType(CalibrateDistanceDialog), findsNothing);
-      expect(refusals, [kCalibrateSamePointRefusal]);
+      expect(h.refusals, [kCalibrateSamePointRefusal]);
       expect(find.text(kCalibrateSecondLabel), findsOneWidget);
 
       // And it really is still live: a click elsewhere finishes it.
@@ -582,6 +610,208 @@ void main() {
         reason: 'the click belonged to the pick',
       );
       expect(find.text(kCalibrateSecondLabel), findsOneWidget);
+    });
+  });
+
+  group('PLAN-F/2: what a calibration says it bought', () {
+    /// Runs the whole pick and types [distance].
+    Future<void> calibrate(
+      WidgetTester tester, {
+      String distance = '36in',
+    }) async {
+      await tester.tap(calibrateButton(_ul1));
+      await tester.pump();
+      await tester.tapAt(const Offset(341, 100));
+      await tester.tapAt(const Offset(441, 100));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(CalibrateDistanceDialog.fieldKey),
+        distance,
+      );
+      await tester.pump();
+      await tester.tap(find.byKey(CalibrateDistanceDialog.commitKey));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('THE ROW COUNTS WHAT IS MEASURABLE once a rack is pinned', (
+      tester,
+    ) async {
+      final c = _controller(
+        withRack: true,
+        rackPinned: true,
+        outletPinned: true,
+      );
+      final h = await pump(tester, c);
+      expect(find.text(kUncalibratedLabel), findsOneWidget);
+
+      await calibrate(tester);
+
+      // One outlet pinned, and the rack is the datum rather than a
+      // subject, so the count is one.
+      expect(find.text('$kCalibratedLabel · 1 measurable'), findsOneWidget);
+      expect(h.notices, [
+        'Calibrated Level 1. 1 pin can now be measured from the rack.',
+      ]);
+    });
+
+    testWidgets('THE BLOCKER IS NAMED RATHER THAN COUNTED AS ZERO', (
+      tester,
+    ) async {
+      // `Calibrated · 0 measurable` is true and useless. The row names the
+      // one act that unblocks every length on this plan, and the strip
+      // that performs it is along the bottom of the same screen.
+      final c = _controller(withRack: true, outletPinned: true);
+      final h = await pump(tester, c);
+
+      await calibrate(tester);
+
+      expect(find.text('$kCalibratedLabel · no rack pinned'), findsOneWidget);
+      // Named rather than inlined, because `avoid_adjacent_string_
+      // concatenation_in_list` refuses a wrapped literal inside a list and
+      // this sentence does not fit on one line.
+      const expected =
+          'Calibrated Level 1. No rack is pinned on this plan, so no '
+          'length derives yet.';
+      expect(h.notices, [expected]);
+    });
+
+    testWidgets('a calibrated, racked, empty plan says so rather than '
+        'reporting zero', (tester) async {
+      final c = _controller(withRack: true, rackPinned: true);
+      final h = await pump(tester, c);
+
+      await calibrate(tester);
+
+      expect(find.text('$kCalibratedLabel · no pins yet'), findsOneWidget);
+      expect(h.notices, [
+        'Calibrated Level 1. Nothing is pinned on this plan yet.',
+      ]);
+    });
+
+    testWidgets('A RECALIBRATION LEAVES THE ROW IDENTICAL, WHICH IS WHY THE '
+        'MESSAGE EXISTS', (tester) async {
+      // ═══════════════════════════════════════════════════════════════
+      // THE ASYMMETRY THIS WHOLE PAIR OF SURFACES IS FOR
+      // ═══════════════════════════════════════════════════════════════
+      // A first calibration changes the row, so the act is visible. A
+      // recalibration does not: one measurable before, one after. Only
+      // the message can say the length just moved, and a design with the
+      // row alone would report the most consequential edit in the feature
+      // by changing nothing at all.
+      final c = _controller(
+        withRack: true,
+        rackPinned: true,
+        outletPinned: true,
+        scale: const PlanScale(
+          a: PxPt(100, 100),
+          b: PxPt(200, 100),
+          distance: Len(36 * Len.nmPerInch),
+        ),
+      );
+      final h = await pump(tester, c);
+      const line = '$kCalibratedLabel · 1 measurable';
+      expect(find.text(line), findsOneWidget);
+      // The button says the act too, from the same rule.
+      expect(find.text('Recalibrate…'), findsOneWidget);
+
+      await calibrate(tester, distance: '72in');
+
+      expect(
+        find.text(line),
+        findsOneWidget,
+        reason: 'the standing line is unchanged, which is the point',
+      );
+      expect(h.notices, ['Recalibrated Level 1. 1 pin re-derives.']);
+      // AND THE DOCUMENT REALLY DID MOVE, so the message is not the only
+      // thing that changed.
+      expect(c.doc.underlays[_ul1]!.scale!.distance.nm, 72 * Len.nmPerInch);
+    });
+
+    testWidgets('BACKING OUT SAYS NOTHING, because nothing happened', (
+      tester,
+    ) async {
+      final c = _controller(withRack: true, rackPinned: true);
+      final h = await pump(tester, c);
+      await tester.tap(calibrateButton(_ul1));
+      await tester.pump();
+      await tester.tapAt(const Offset(341, 100));
+      await tester.tapAt(const Offset(441, 100));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(h.notices, isEmpty);
+    });
+  });
+
+  group('PLAN-F/2: the mask, tested where it can be observed', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // THE CONSUMERS THAT CAN SHOW A CALIBRATION USE `changes`, NOT EPOCHS
+    // ═══════════════════════════════════════════════════════════════════
+    // `plan_commands_test.dart` asserts the epoch counters move, which is
+    // the mask against a listener one layer up. What THIS file can assert
+    // is the artifact: the surface that displays the consequence really
+    // does redraw. The plan editor subscribes to `DocumentController
+    // .changes`, so these cases run the commands from OUTSIDE the widget
+    // and read the rail.
+
+    testWidgets('THE ROW MOVES WHEN A PIN CHANGES, not only when the scale '
+        'does', (tester) async {
+      // The half a mask-shaped reading of this feature misses. Pinning
+      // the rack turns `no rack pinned` into a count and no calibration
+      // happened at all, so a row wired only to a calibration would sit
+      // there saying the plan is blocked by something the user has just
+      // fixed.
+      final c = _controller(
+        withRack: true,
+        outletPinned: true,
+        scale: const PlanScale(
+          a: PxPt(100, 100),
+          b: PxPt(200, 100),
+          distance: Len(36 * Len.nmPerInch),
+        ),
+      );
+      await pump(tester, c);
+      expect(find.text('$kCalibratedLabel · no rack pinned'), findsOneWidget);
+
+      c.run(
+        SetPlanPinCommand(
+          carrier: PinCarrier.rack,
+          entityId: _rackId,
+          pin: const PlanPin(underlayId: _ul1, at: PxPt(9, 9)),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('$kCalibratedLabel · 1 measurable'), findsOneWidget);
+    });
+
+    testWidgets('and UNDOING the calibration takes the count away with it', (
+      tester,
+    ) async {
+      final c = _controller(
+        withRack: true,
+        rackPinned: true,
+        outletPinned: true,
+      );
+      await pump(tester, c);
+
+      c.run(
+        SetPlanScaleCommand(
+          underlayId: _ul1,
+          scale: const PlanScale(
+            a: PxPt(100, 100),
+            b: PxPt(200, 100),
+            distance: Len(36 * Len.nmPerInch),
+          ),
+        ),
+      );
+      await tester.pump();
+      expect(find.text('$kCalibratedLabel · 1 measurable'), findsOneWidget);
+
+      c.undoLast();
+      await tester.pump();
+      expect(find.text(kUncalibratedLabel), findsOneWidget);
     });
   });
 }

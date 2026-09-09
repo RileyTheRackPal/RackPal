@@ -72,6 +72,7 @@ final class PlanEditorScreen extends StatefulWidget {
     required this.selection,
     this.arm,
     this.onRefuse,
+    this.onNotice,
     super.key,
   });
 
@@ -89,6 +90,19 @@ final class PlanEditorScreen extends StatefulWidget {
   final PlanPinArmController? arm;
 
   final void Function(String reason)? onRefuse;
+
+  /// Told when something WORKED and the person should know what it did
+  /// (`PLAN-F/2`, DR-144 §11.143.3).
+  ///
+  /// **A SECOND CALLBACK AND NOT A FLAG ON [onRefuse].** The two carry
+  /// opposite news and a host may well want to render them differently;
+  /// folding them together would make every caller ask which kind it had,
+  /// from a string. The shell happens to put both in a snack bar today,
+  /// and that is the shell's decision rather than this widget's.
+  ///
+  /// Null means the host says nothing, which is legal and is what every
+  /// render test uses.
+  final void Function(String message)? onNotice;
 
   @override
   State<PlanEditorScreen> createState() => _PlanEditorScreenState();
@@ -248,6 +262,28 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
         scale: PlanScale(a: a, b: b, distance: distance),
       ),
     );
+    // ═══════════════════════════════════════════════════════════════════
+    // TELL THE USER WHAT MOVED, WHICH IS `PLAN-F/2`'s THIRD CLAUSE
+    // ═══════════════════════════════════════════════════════════════════
+    // MEASURED AFTER THE COMMAND, NOT BEFORE. The count is a fact about
+    // the document the command has just produced, and taking it from the
+    // pre-command document would report the state the calibration
+    // replaced: on a FIRST calibration that is always "uncalibrated", so
+    // every message would name the blocker the user had just cleared.
+    //
+    // AND RE-READ OUT OF THE DOCUMENT rather than off `open`, which is the
+    // instance captured before the dialog. `SetPlanScaleCommand` mutates
+    // the underlay in place today and a copy-on-write model later would
+    // leave `open.scale` null here, which is the quiet kind of wrong.
+    final after = _controller.doc.underlays[open.id];
+    if (after == null) return;
+    widget.onNotice?.call(
+      calibrationCommitMessage(
+        planName: after.name,
+        wasRecalibration: alreadyCalibrated,
+        measurability: planMeasurabilityOf(_controller.doc, after),
+      ),
+    );
   }
 
   Widget _canvas(PlanUnderlay open) => PlanCanvasScreen(
@@ -278,7 +314,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
           child: _UnderlayList(
             underlays: _underlays,
             openId: open.id,
-            locations: _controller.doc.locations,
+            doc: _controller.doc,
             onOpen: _openPlan,
             onCalibrate: _beginCalibrate,
           ),
@@ -347,14 +383,19 @@ class _UnderlayList extends StatelessWidget {
   const _UnderlayList({
     required this.underlays,
     required this.openId,
-    required this.locations,
+    required this.doc,
     required this.onOpen,
     required this.onCalibrate,
   });
 
   final List<PlanUnderlay> underlays;
   final Uuid openId;
-  final Map<Uuid, Location> locations;
+
+  /// THE DOCUMENT AND NOT A PRE-DERIVED LIST, because each row needs two
+  /// different answers out of it (the room, and what this plan can
+  /// measure) and a caller assembling both would be a third place that
+  /// has to be kept in step with the two derivations.
+  final RackDocument doc;
   final void Function(Uuid id) onOpen;
 
   /// Starts a pick on the OPEN plan. It takes no id, because the pick
@@ -378,7 +419,13 @@ class _UnderlayList extends StatelessWidget {
         key: ValueKey(_UnderlayList.rowKeyFor(u.id)),
         underlay: u,
         open: u.id == openId,
-        room: u.locationId == null ? null : locations[u.locationId]?.name,
+        room: u.locationId == null ? null : doc.locations[u.locationId]?.name,
+        // DERIVED PER ROW AND PER BUILD, so the line answers for the
+        // document as it is now. It moves when the SCALE changes and
+        // equally when a PIN does, which is the half a mask-shaped
+        // reading of this feature misses: pinning the rack is what turns
+        // `no rack pinned` into a count, and no calibration happened.
+        measurability: planMeasurabilityOf(doc, u),
         onOpen: () => onOpen(u.id),
         onCalibrate: onCalibrate,
       );
@@ -408,6 +455,7 @@ class _UnderlayRow extends StatelessWidget {
     required this.underlay,
     required this.open,
     required this.room,
+    required this.measurability,
     required this.onOpen,
     required this.onCalibrate,
     super.key,
@@ -415,6 +463,9 @@ class _UnderlayRow extends StatelessWidget {
 
   final PlanUnderlay underlay;
   final bool open;
+
+  /// What this plan can measure, for the state line (`PLAN-F/2`).
+  final PlanMeasurability measurability;
 
   /// The room this plan depicts, or null. A plan with no location is
   /// perfectly ordinary and is not an error to report: the model says a
@@ -454,8 +505,14 @@ class _UnderlayRow extends StatelessWidget {
                 // "Not calibrated" is a fact worth stating, and a row
                 // that said nothing would leave "no scale yet" and "a
                 // scale I have forgotten about" looking identical.
+                //
+                // AND IT CARRIES WHAT THE CALIBRATION BOUGHT, or the one
+                // act still blocking it (`PLAN-F/2`). This is the half
+                // that still says it tomorrow; the snack bar on commit is
+                // the half that can report a RECALIBRATION, which leaves
+                // this line reading exactly the same.
                 Text(
-                  calibrationStateLabel(underlay),
+                  calibrationStateLabel(underlay, measurability),
                   style: theme.textTheme.labelSmall,
                 ),
                 if (open)

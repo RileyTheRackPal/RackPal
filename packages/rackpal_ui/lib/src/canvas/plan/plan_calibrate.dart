@@ -278,8 +278,79 @@ String calibrateActionLabel({required bool alreadyCalibrated}) =>
 const String kCalibratedLabel = 'Calibrated';
 const String kUncalibratedLabel = 'Not calibrated';
 
-String calibrationStateLabel(PlanUnderlay underlay) =>
-    underlay.isCalibrated ? kCalibratedLabel : kUncalibratedLabel;
+/// The row's line, with what the calibration bought after it
+/// (`PLAN-F/2`, DR-144 §11.143.3).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE ROW CARRIES THE STANDING FACT AND THE MESSAGE CARRIES THE ACT
+/// ═══════════════════════════════════════════════════════════════════════
+/// The two exist because of an asymmetry: a FIRST calibration changes this
+/// line, so the act is visible; a RECALIBRATION leaves it reading exactly
+/// the same, twelve measurable before and twelve after, so nothing on
+/// screen would say the twelve just moved. [calibrationCommitMessage] is
+/// the only thing that can report that, and this is the only thing that
+/// still says it tomorrow.
+///
+/// **THE BLOCKER IS NAMED RATHER THAN COUNTED AS ZERO.** `Calibrated · 0
+/// measurable` is a true sentence that tells somebody nothing about what
+/// to do; `Calibrated · no rack pinned` names the one act that unblocks
+/// every length on the plan, eight inches above the strip that performs
+/// it. G4's rule that a rollup reports its unknown count is the same rule:
+/// a number with no account of what is missing is the flattering half.
+String calibrationStateLabel(PlanUnderlay underlay, PlanMeasurability m) {
+  if (!underlay.isCalibrated) return kUncalibratedLabel;
+  return switch (m.blockedBy) {
+    PlanBlocker.noRackPinned => '$kCalibratedLabel · no rack pinned',
+    // A CALIBRATED, RACKED, EMPTY PLAN IS NOT AN ERROR, and it is the
+    // ordinary state of a plan somebody has just imported and scaled. It
+    // says "no pins yet" rather than "0 measurable" for the same reason
+    // the row above says "no rack pinned".
+    PlanBlocker.noPins => '$kCalibratedLabel · no pins yet',
+    // Unreachable while the first branch handles it, and kept exhaustive
+    // so a fourth blocker stops the build here rather than falling
+    // through to a count of zero.
+    PlanBlocker.uncalibrated => kUncalibratedLabel,
+    null => '$kCalibratedLabel · ${m.measurableCount} measurable',
+  };
+}
+
+/// What the snack bar says when a calibration commits.
+///
+/// **IT NAMES THE ACT, WHICH IS WHY IT IS NOT THE ROW'S STRING.** A first
+/// calibration made these pins measurable; a recalibration moved lengths
+/// that were already derivable. Those are different sentences about the
+/// same count, and a surface that used one for both would either tell a
+/// returning user something is new when it is not, or fail to tell them
+/// anything changed at all.
+String calibrationCommitMessage({
+  required String planName,
+  required bool wasRecalibration,
+  required PlanMeasurability measurability,
+}) {
+  final act = wasRecalibration ? 'Recalibrated' : 'Calibrated';
+  final n = measurability.measurableCount;
+  final tail = switch (measurability.blockedBy) {
+    // `PLN-003`'s substance, said at the moment it starts to matter. The
+    // person has just done the work that makes lengths possible and this
+    // is the only remaining thing between them and one.
+    PlanBlocker.noRackPinned =>
+      'No rack is pinned on this plan, so no length derives yet.',
+    PlanBlocker.noPins => 'Nothing is pinned on this plan yet.',
+    // Cannot happen from the commit path, since committing is what makes
+    // the plan calibrated. Exhaustive rather than defaulted, so the day a
+    // fourth blocker exists this stops compiling.
+    PlanBlocker.uncalibrated => 'This plan is still uncalibrated.',
+    null =>
+      wasRecalibration
+          // PLURALISED BY HAND because `1 pins re-derive` is the shape of
+          // the `0 pathways` status bar this repo already shipped once.
+          ? '${_pins(n)} re-${n == 1 ? 'derives' : 'derive'}.'
+          : '${_pins(n)} can now be measured from the rack.',
+  };
+  return '$act $planName. $tail';
+}
+
+String _pins(int n) => n == 1 ? '1 pin' : '$n pins';
 
 /// The helper line under the field, and the reason this dialog exists
 /// rather than an inline box on the canvas.

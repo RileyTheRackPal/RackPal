@@ -371,7 +371,8 @@ an advisory rather than blocking anything (CR-022, G3).
 length on that plan at once, which is exactly why it goes through the command stack and not through
 a settings field.
 
-**AND WHAT IT REPORTS BACK IS A COUNT OF PINS, NOT OF LENGTHS** (§11.143.3), because at `PLAN-F`
+**AND WHAT IT REPORTS BACK IS A COUNT OF PINS, NOT OF LENGTHS** (§11.143.3). **BUILT AT `PLAN-F/2`,
+2026-09-08** (`derived/plan_measurability.dart`), because at `PLAN-F`
 there are no derived lengths to change: `planLowerBound` is `PLAN-G`'s and §6's pin-drag row already
 forward-dates its recompute clause. A report counting schedule rows would print `0` on every
 calibration in the product, which is a G4 report whose number is an artifact of what is unbuilt. So
@@ -384,7 +385,21 @@ the report names how many pins a length could now be derived for, and when none 
 **The derivation produces no `Len`.** One per pin would be `planLowerBound` shipped early under
 another name, without the rank, the `≥` prefix, the italic, the rollup exclusion or `LEN-001`'s
 reading, which are five decisions §4.1 already took and `PLAN-G` owns. Which rack is the datum when
-two are pinned on one plan is left to that chapter for the same reason.
+two are pinned on one plan is left to that chapter for the same reason. **The test for that boundary
+is a property rather than a comment**: moving every pin changes nothing the derivation reports, and
+neither does multiplying the typed distance by twelve.
+
+**IT IS SAID TWICE, ON TWO SURFACES, BECAUSE OF AN ASYMMETRY.** The underlay row carries the standing
+fact, `Calibrated · 12 measurable` or the one act still blocking a length, and that is the half that
+still answers tomorrow. A snack bar on commit carries the act. A **first** calibration changes the row
+so the act is visible; a **recalibration leaves that line reading exactly the same**, twelve
+measurable before and twelve after, so only the message can report the most consequential edit the
+feature has. `PLAN-F/2` builds both and docs/12 §5.9.16 carries the reasoning.
+
+**THE BLOCKER IS NAMED RATHER THAN COUNTED AS ZERO.** `Calibrated · 0 measurable` is true and tells
+nobody anything; `Calibrated · no rack pinned` names the act that unblocks every length on the plan,
+directly above the strip that performs it. The blockers are ordered by remedy, so a plan that is
+uncalibrated and rackless and empty reports the one thing to do now.
 
 ---
 

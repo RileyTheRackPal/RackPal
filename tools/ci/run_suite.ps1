@@ -561,7 +561,13 @@ $SuiteFloors = @{
     # to the rule's boundary. One case is that every page is refused;
     # the other is that it is refused for the RIGHT reason, which is a
     # separate check and is the one docs/12 5.9.6.4 exists for.
-    'rackpal_core'   = 4343
+    # 4354 at PLAN-F/2: +11 from plan_measurability_test.dart. Its
+    # load-bearing case is a NEGATIVE: moving every pin changes
+    # nothing, because the derivation asks whether a length is
+    # DERIVABLE and never what it is. A Len per pin would be
+    # planLowerBound early under another name and would pass every
+    # counting case in the file. Five mutations killed.
+    'rackpal_core'   = 4354
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -759,7 +765,12 @@ $SuiteFloors = @{
     # cases assert the DOCUMENT, because a case asserting the pick
     # controller would survive SetPlanScaleCommand never running, which is
     # exactly how PlanScale sat reachable from nothing since PLAN-C.
-    'rackpal_ui'     = 1658
+    # 1665 at PLAN-F/2: +7 on plan_calibrate_test.dart, five on what
+    # the report says and two on where the mask can be OBSERVED.
+    # The recalibration case is the pair's reason: the row reads
+    # identically before and after, so only the message can report
+    # the most consequential edit the feature has.
+    'rackpal_ui'     = 1665
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
