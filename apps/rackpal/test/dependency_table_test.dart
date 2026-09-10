@@ -66,6 +66,11 @@
 //     unusual indentation, or inside a block-scalar, is invisible to it.
 //     The workspace's five pubspecs are conventionally formatted and a
 //     false negative here is acceptable; a flaky false positive is not.
+//   * IT SKIPS A ROW WHOSE NAME IS PARENTHESISED, which today is the
+//     vendored pdfium (DR-153). Such a row documents a dependency no
+//     pubspec can declare, so "resolves to a declared dependency" is not
+//     a question that can be asked of it. What governs that one instead
+//     is `pdfium_install_test.dart` and the pin its own test recomputes.
 //   * IT DOES NOT READ `pubspec.lock`, so a TRANSITIVE dependency is not
 //     required to have a row and is not reported. §10.1 documents direct
 //     choices. `flutter_dependency_test.dart` is the file that reasons
@@ -110,6 +115,7 @@ const List<String> _pubspecs = [
   'apps/rackpal/pubspec.yaml',
   'packages/rackpal_core/pubspec.yaml',
   'packages/rackpal_export/pubspec.yaml',
+  'packages/rackpal_pdfium/pubspec.yaml',
   'packages/rackpal_text/pubspec.yaml',
   'packages/rackpal_ui/pubspec.yaml',
 ];
@@ -217,6 +223,17 @@ List<_Row> _tableRows() {
     // absence of one. It is matched by shape (status `n/a`) rather than
     // by its text, so rewording it does not silently drop it.
     if (_unwrap(cells[1]) == 'n/a') continue;
+    // A PARENTHESISED NAME IS A DEPENDENCY THAT IS NOT A PUB PACKAGE, and
+    // the vendored pdfium is the first (DR-153 §11.152.3). It is the
+    // largest single thing this build depends on, so leaving it out of
+    // §10.1 would put the heaviest dependency in the tree in no table at
+    // all; but no pubspec can declare it, because CR-100 rules it
+    // committed rather than fetched.
+    //
+    // **THE SHAPE IS THE TEST, NOT THE TEXT**, on the row above's own
+    // precedent: a reworded label keeps being skipped and a package name
+    // that loses its backticks does not become invisible.
+    if (name.startsWith('(') && name.endsWith(')')) continue;
     rows.add(_Row(name, _unwrap(cells[1]), i + 1));
   }
   return rows;

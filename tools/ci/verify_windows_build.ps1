@@ -81,6 +81,16 @@ $expectedNative = [ordered]@{
         'supplies the display work-area list validateRestoredBounds needs; without it window position restore cannot decide whether a saved rectangle is still on a connected monitor, and every launch must centre.'
     'window_manager_plugin.dll' =
         'carries setPreventClose, without which the three-button close prompt (docs/03 section 9.5) cannot exist at all, because the OS closes the window before the app is asked.'
+    # THE ONE THAT IS NOT A PLUGIN, and the only one a person put here by
+    # hand (DR-153 section 11.152.3). It is vendored rather than fetched
+    # (CR-100), installed by a rule in windows/CMakeLists.txt that
+    # apps/rackpal/test/pdfium_install_test.dart exists to keep, and it is
+    # by far the heaviest thing in this list. Its absence does not break
+    # the app: it makes a CAD plot unimportable on a packaged copy while
+    # every developer build keeps working, which is the failure that only
+    # ever appears where nobody is looking.
+    'pdfium.dll' =
+        'renders a vector PDF page at import (DR-153). Without it a floorplan that is a CAD plot is refused with "draws no image", which is the state DR-138, DR-145 and DR-148 each deferred and PLAN-K ended.'
 }
 $actualNative = @(Get-ChildItem -Path $ReleaseDir -Filter '*.dll' -File |
     Select-Object -ExpandProperty Name | Sort-Object)
