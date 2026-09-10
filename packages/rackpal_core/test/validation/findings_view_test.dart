@@ -20,6 +20,9 @@ void main() {
   const deviceId = Uuid('0190e0dd-0001-7000-8000-000000000002');
   const linkId = Uuid('0190e0dd-0001-7000-8000-000000000003');
   const circuitId = Uuid('0190e0dd-0001-7000-8000-000000000004');
+  const netId = Uuid('0190e0dd-0001-7000-8000-000000000005');
+  const underlayId = Uuid('0190e0dd-0001-7000-8000-000000000006');
+  const namedNetId = Uuid('0190e0dd-0001-7000-8000-000000000007');
   const strangerId = Uuid('0190e0dd-0001-7000-8000-00000000000f');
 
   RackDocument build() {
@@ -45,6 +48,34 @@ void main() {
       designator: 'Panel A / Breaker 14',
       breakerAmps: 20,
       volts: 120,
+      meta: meta(),
+    );
+    // `ELE-005`'s locus, missing an arm since `#838` (DR-154 §11.153.8a).
+    d.nets[netId] = Net(
+      id: netId,
+      name: 'Net 12',
+      designator: 'SPK-A',
+      signalFamily: const SignalFamilyId('audio.speaker_cv'),
+      meta: meta(),
+    );
+    // A net with no designator, which is the ordinary case: CR-049 makes
+    // the name generated and editable and the designator optional.
+    d.nets[namedNetId] = Net(
+      id: namedNetId,
+      name: 'Net 13',
+      signalFamily: const SignalFamilyId('audio.speaker_cv'),
+      meta: meta(),
+    );
+    // Every `PLN-*`'s locus, missing an arm since `PLAN-I/1`.
+    d.underlays[underlayId] = PlanUnderlay(
+      id: underlayId,
+      name: 'Level 1',
+      imageMember: 'underlays/$underlayId.png',
+      format: PlanImageFormat.png,
+      pixelWidth: 8,
+      pixelHeight: 8,
+      contentHash: 'sha256:${'0' * 64}',
+      order: const FracIndex('a0'),
       meta: meta(),
     );
     return d;
@@ -116,7 +147,7 @@ void main() {
   });
 
   group('grouping by locus', () {
-    test('resolves the four types a rule can point at', () {
+    test('resolves the six types a rule can point at', () {
       final doc = build();
       doc.devices[deviceId] = _device(deviceId, 'AVR-1', rackId, at);
       doc.links[linkId] = _link(linkId, 'W001', at);
@@ -128,13 +159,36 @@ void main() {
           finding('SIG-001', Severity.error, primary: deviceId),
           finding('LEN-001', Severity.warning, primary: linkId),
           finding('PWR-001', Severity.warning, primary: circuitId),
+          finding('ELE-005', Severity.warning, primary: netId),
+          finding('PLN-001', Severity.advisory, primary: underlayId),
         ],
         by: FindingGrouping.locus,
       );
+      expect(groups.map((g) => g.label).toSet(), {
+        'RK-1',
+        'AVR-1',
+        'W001',
+        'Panel A / Breaker 14',
+        'SPK-A',
+        'Level 1',
+      });
+      // NOT `kNoLocusGroup` FOR ANY OF THEM, said separately because that
+      // is the failure this test was widened for: the last two grouped
+      // under "no location" for as long as the arms were missing, and a
+      // set assertion that happened to contain the right six labels
+      // alongside a seventh would not have said so.
       expect(
-        groups.map((g) => g.label).toSet(),
-        {'RK-1', 'AVR-1', 'W001', 'Panel A / Breaker 14'},
+        groups.map((g) => g.label),
+        isNot(contains(kNoLocusGroup)),
       );
+    });
+
+    test('a net with no designator falls back to its name, exactly as '
+        'ELE-005’s own message does', () {
+      // TWO NAMES FOR ONE THING ON ONE SCREEN is the failure here: the
+      // header and the sentence under it have to agree.
+      expect(locusLabel(build(), namedNetId), 'Net 13');
+      expect(locusLabel(build(), netId), 'SPK-A');
     });
 
     test('a null locus groups last, and says which kind of nothing', () {
@@ -153,9 +207,18 @@ void main() {
       expect(groups.first.label, 'RK-1');
     });
 
-    test('locusLabel returns null for an id no rule should produce', () {
-      // THE FIFTH-TYPE GUARD. A later rule pointing at a Port must fail
-      // here rather than draw a blank, unclickable group header.
+    test('locusLabel returns null for an id that names nothing at all', () {
+      // THIS USED TO CALL ITSELF THE FIFTH-TYPE GUARD AND IT NEVER WAS
+      // ONE (DR-154 §11.153.8a). An id belonging to no collection resolves
+      // to null, which is a statement about a stranger and NOT about a
+      // type some rule points at: two such types arrived, `Net` at `#838`
+      // and `PlanUnderlay` at `PLAN-I/1`, and this test passed through
+      // both.
+      //
+      // The real guard is in `drc_fixture.dart`, where every rule's
+      // known-bad runs and every finding it produces has to resolve. What
+      // is left here is the null path itself, which that census depends
+      // on still existing.
       expect(locusLabel(build(), strangerId), isNull);
     });
   });

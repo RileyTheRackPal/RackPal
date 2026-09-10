@@ -9,7 +9,7 @@
 // tier, default severity and governing ruling live here as rows, and its
 // predicate lives in Dart beside the thing it reasons about.
 //
-// THE 28 RULES DO NOT SHARE A SIGNATURE, and no amount of wishing makes
+// THE RULES DO NOT SHARE A SIGNATURE, and no amount of wishing makes
 // them. A tier-1 connect rule answers about a gesture that has not
 // happened yet and needs `(doc, from, to, ontoLink, freeing)`; `PLC-001`
 // answers about a placement; a tier-3 rule reads the whole document and
@@ -101,7 +101,7 @@ final class RuleMeta {
   /// is from `docs/research/design-data-model.md`, a priority-3 document,
   /// and was never built. This is the field that sentence assumed.
   ///
-  /// M5-H1 wants these same 28 rules *"in trade language, not model
+  /// M5-H1 wants these same rules *"in trade language, not model
   /// language"* for expert review, so this is ONE text serving both, and
   /// H2's corrections land on the words the product actually shows.
   final String rationale;
@@ -115,7 +115,7 @@ final class RuleMeta {
 
   /// The external code article this rule asks a person to verify against,
   /// e.g. `'NEC 800.154'`. Null for every rule that turns on nothing
-  /// outside this product, which is 26 of the 28.
+  /// outside this product, which is all but one of them.
   ///
   /// ═══════════════════════════════════════════════════════════════════
   /// A FIELD BECAUSE THE ARTICLE WAS PROSE, AND PROSE IS NOT FINDABLE
@@ -592,7 +592,94 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
   ),
 ];
 
-/// All 28, in tier order.
+/// docs/15 §9's four advisories, in id order.
+///
+/// **NOT PART OF `kRuleCatalogue`** (DR-154 §11.153.2). They are looked up
+/// through `kRulesById`, which spans both bands, so severity resolution
+/// and acknowledgement work identically; what they never do is move the
+/// number docs/02 §5 states.
+const List<RuleMeta> kPlanRules = <RuleMeta>[
+  RuleMeta(
+    ruleId: 'PLN-001',
+    tier: RuleTier.postHoc,
+    summary:
+        'An underlay is uncalibrated, so its pins carry no measurable '
+        'position.',
+    rationale:
+        'A plan locates every drop whether or not it is calibrated, which is '
+        'most of what a plan is for. What it cannot do uncalibrated is yield '
+        'a length: nothing on it can be measured, so no run on that floor '
+        'gets a figure from the drawing.',
+    governing: ['DR-144', 'DR-146'],
+    defaultSeverity: Severity.advisory,
+  ),
+  RuleMeta(
+    ruleId: 'PLN-002',
+    tier: RuleTier.postHoc,
+    summary: 'Devices or outlets on this plan’s floor carry no pin.',
+    rationale:
+        'A drop that is not on the plan is a drop the installer has to be '
+        'told about some other way. The strip along the bottom of the plan '
+        'lists exactly these, so the number here and the rows there are one '
+        'population.',
+    governing: ['DR-140', 'DR-142', 'DR-154'],
+    defaultSeverity: Severity.advisory,
+  ),
+  RuleMeta(
+    ruleId: 'PLN-003',
+    tier: RuleTier.postHoc,
+    summary:
+        'An underlay has pinned drops but no pinned rack, so no run '
+        'length derives from it.',
+    rationale:
+        'Every home run is measured FROM the head end. A plan with drops and '
+        'no rack has a set of positions and nothing to measure them to, so '
+        'the whole floor yields no length however well it is calibrated.',
+    governing: ['DR-140', 'DR-037'],
+    defaultSeverity: Severity.advisory,
+  ),
+  RuleMeta(
+    ruleId: 'PLN-004',
+    tier: RuleTier.postHoc,
+    summary:
+        'An underlay’s stored bytes are not the bytes its '
+        'contentHash was taken over.',
+    rationale:
+        'The image under the pins has changed since it was imported. The '
+        'pins, the calibration and every length derived from them were '
+        'placed against a different picture, so they may all be in the '
+        'wrong place. The file still opens: this says why it might not be '
+        'what you think.',
+    governing: ['AC-042', 'DR-154'],
+    // A WARNING, AND THE OTHER THREE ARE ADVISORIES (DR-154 §11.153.5).
+    // Three of these say "you have not done this yet"; this one says
+    // "what you are looking at may not be what you measured". It still
+    // blocks nothing (CR-022, G3), which is AC-042's own rule: a mismatch
+    // is a warning and never a load failure.
+    defaultSeverity: Severity.warning,
+  ),
+];
+
+// ═══════════════════════════════════════════════════════════════════════
+// THE PLAN BAND IS HERE FOR THE SAME REASON THE OTHER THREE TIERS ARE
+// ═══════════════════════════════════════════════════════════════════════
+// This file's own split: METADATA IS DATA, THE PREDICATE IS CODE. So the
+// four rows sit beside the twenty-nine and the four predicates sit in
+// `rules_plan.dart` beside the thing they reason about, exactly as
+// `rules_rack.dart` holds `RCK-*`.
+//
+// WHAT IT IS NOT is a fourth tier. `RuleTier` describes WHEN a rule runs
+// and all four of these are post-hoc; the band is about WHICH CATALOGUE
+// they belong to, which is a different question and is why it is a second
+// list rather than a fifth enum value (DR-154 §11.153.2).
+
+/// The v1 DRC catalogue, in tier order.
+///
+/// **NO TOTAL IS WRITTEN HERE** (DR-154 §11.153.1). It said *"All 28"*
+/// while the list held twenty-nine, because DR-132 restored `ELE-005` and
+/// a sentence does not move with a list. `rule_catalogue_test.dart` states
+/// the arithmetic tier by tier and checks it against docs/02 §5, which is
+/// the only copy that cannot drift from what it describes.
 ///
 /// EXPLICIT, NOT REFLECTIVE (`#253`). There is no scan of the source tree
 /// and no annotation: a rule that is not in one of the three lists above
@@ -604,10 +691,18 @@ const List<RuleMeta> kRuleCatalogue = <RuleMeta>[
   ...kTier3Rules,
 ];
 
-/// The catalogue keyed by `ruleId`, which is how `Finding`, `RuleOverride`
-/// and `AckedFinding` all join to it.
+/// Every rule in EVERY band, keyed by `ruleId`, which is how `Finding`,
+/// `RuleOverride` and `AckedFinding` all join to one.
+///
+/// **THE LOOKUP SPANS THE BANDS AND THE LISTS DO NOT** (DR-154 §11.153.3).
+/// A `PLN-*` finding resolves its severity, honours an override and takes
+/// an acknowledgement through exactly the machinery every other finding
+/// uses, because a second path is what `drc.dart`'s header forbids: *"the
+/// three steps have to happen in exactly this one."* What the plan band
+/// never does is move the number docs/02 §5 states.
 final Map<String, RuleMeta> kRulesById = <String, RuleMeta>{
   for (final rule in kRuleCatalogue) rule.ruleId: rule,
+  for (final rule in kPlanRules) rule.ruleId: rule,
 };
 
 /// The rules of one tier, in catalogue order.

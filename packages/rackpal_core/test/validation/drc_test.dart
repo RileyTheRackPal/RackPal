@@ -111,8 +111,14 @@ void main() {
       // BOTH DIRECTIONS, and the second is the one that matters: a row
       // with no predicate ships a catalogue that lies about what the
       // product checks, and nothing else in the tree would notice.
+      // THE DRC BAND ONLY. `kRulesById` spans both bands since DR-154,
+      // and the two are checked SEPARATELY on purpose: a `PLN-*` in
+      // `kDrcRules` would be a rule the v1 catalogue does not list, and
+      // a `RCK-*` in `kPlanDrcRules` would be one docs/15 §9 does not.
+      // Comparing the union against the union would let either mistake
+      // pass while the totals happened to agree.
       final rows = {
-        for (final m in kRulesById.values)
+        for (final m in kRuleCatalogue)
           if (m.tier == RuleTier.postHoc) m.ruleId,
       };
       final built = kDrcRules.keys.toSet();
@@ -144,11 +150,50 @@ void main() {
       );
     });
 
+    /// The same gate over the second band (DR-154 §11.153.2). Written as
+    /// its own case rather than folded above, because the two bands have
+    /// different normative tables and a single assertion could not name
+    /// which one a failure was about.
+    test('every plan row has a predicate, and every predicate a row', () {
+      final rows = {for (final m in kPlanRules) m.ruleId};
+      // `PLN-004` TAKES AN ARGUMENT AND SO IS NOT IN THE MAP. Its
+      // question is about container bytes the document does not hold, and
+      // `evaluateDocument` closes over the caller's answer to run it. It
+      // is named here so that the pair stays checkable in both
+      // directions: without this line the row would look predicate-less.
+      final built = {...kPlanDrcRules.keys, 'PLN-004'};
+
+      expect(built.difference(rows), isEmpty);
+      expect(
+        rows.difference(built),
+        isEmpty,
+        reason:
+            'a docs/15 §9 row with no predicate is a rule the product '
+            'claims to check and does not',
+      );
+      expect(built, hasLength(4));
+    });
+
+    test('the two bands do not overlap, which is what keeps the count '
+        'honest', () {
+      final drc = {for (final m in kRuleCatalogue) m.ruleId};
+      final plan = {for (final m in kPlanRules) m.ruleId};
+
+      expect(drc.intersection(plan), isEmpty);
+      expect(
+        kRulesById,
+        hasLength(drc.length + plan.length),
+        reason:
+            'the lookup spans both bands and loses nothing to a '
+            'collision',
+      );
+    });
+
     test('every rule this file builds carries the severity its row does', () {
       // The evaluator resolves severity through `projectSeverity`, so a
       // predicate stamping a different one would be silently overwritten
       // and the disagreement would never surface. Asserted here instead.
-      for (final id in kDrcRules.keys) {
+      for (final id in {...kDrcRules.keys, ...kPlanDrcRules.keys, 'PLN-004'}) {
         expect(kRulesById[id]!.defaultSeverity, isNotNull, reason: id);
       }
     });

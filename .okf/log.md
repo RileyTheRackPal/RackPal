@@ -1,5 +1,44 @@
 # Update Log
 
+## 2026-09-10 (twentieth entry)
+
+* **Ruled**: [DR-154](/decisions/dr-154-the-plan-advisories.md). The plan
+  advisories are a second band, the count they must not join was already wrong
+  by one, and the AC-051 pair gate follows the rule rather than the list.
+* **Closed**: `PLAN-I` (`#605`) with `#645` and `#646`, at `v0.6.48`.
+* **Note**: **THE COUNT THE CHAPTER WAS ABOUT WAS ALREADY WRONG.** `#645` opens
+  by naming the trap, *"AC-040 pins v1's catalogue at 27 and DR-020 made it
+  28"*, and it is 29: DR-132 restored `ELE-005` at `#838` and the table and the
+  test moved with it while twelve sentences in six documents did not. The
+  warning against writing a count down arrived inside a paragraph containing a
+  stale count.
+* **Note**: **THREE SWEEPS SAID "EVERY RULE" AND MEANT ONE CATALOGUE.** Once the
+  catalogue was two lists, the tests carrying *"every rule is
+  acknowledgeable"*, *"every rule that files a finding has a severity"* and
+  *"every severity still exports"* all kept looping over `kRuleCatalogue`. None
+  broke and none could: a `for` loop is correct about the collection it names
+  and has no way to say it expected more. Recorded as the fifth instance in
+  [a gate's scope is part of its claim](/practices/a-gates-scope-is-part-of-its-claim.md).
+* **Note**: **A GUARD WRITTEN AGAINST A STRANGER CANNOT SEE A NATIVE.**
+  `findings_view.dart` promised a fifth `primaryEntityId` type would be *"a test
+  failure, not a blank cell"*, and the test carrying that promise asserts
+  `locusLabel` returns null for an id belonging to no collection at all. Two real
+  types arrived and both shipped, so `ELE-005`'s findings were unclickable for
+  three epics. The census that replaced it runs the producers and found both on
+  its first run.
+* **Note**: **A SHIPPED SURFACE WAS WRONG UNDERNEATH `PLN-002`.**
+  `unpinnedCarriersFor` compared locations for equality, so on a `Level 1` plan an
+  outlet filed in `Great Room` was dropped by a comparison and appeared in no
+  count at all. That is the `0 pathways` failure `unlocatedCount` exists to
+  prevent, arriving through the door beside the one it was watching. The ruling
+  had said *"subtree"* from the design document alone; the code disagreed twenty
+  minutes later.
+* **Note**: **M5-I HAD ALREADY RUN, WHICH `#646` SAYS IT HAD NOT**, and the
+  correction did not retire the task: its three groups sweep the other
+  catalogue, so not one of them reached a `PLN-*`. A complete sheet set is now
+  read off the page rather than off a `sheetCount`, because four blank pages
+  satisfy a count of four.
+
 ## 2026-09-10 (nineteenth entry)
 
 * **Ruled**: [DR-153](/decisions/dr-153-the-rasteriser-is-built.md). The

@@ -670,7 +670,33 @@ $SuiteFloors = @{
     # something that draws vectors knows how big to draw it without
     # re-parsing the file; the second case is the other half, since the
     # three refusals ABOUT the box cannot report one.
-    'rackpal_core'   = 4480
+    # 4507 at PLAN-I/1: +27. The plan advisories (DR-154), their AC-051
+    # pairs, the hash comparator AC-042 had no verifying reader for, and
+    # the two gates that had to widen to hold a second band: the
+    # catalogue/predicate agreement and the fixture-pair coverage, each
+    # now reporting PER BAND so a failure names the table it is about.
+    #
+    # ONE CASE IS ABOUT A DEFECT THE RULING FOUND IN A SHIPPED SURFACE.
+    # `unpinnedCarriersFor` matched a location EXACTLY, so on a `Level 1`
+    # plan an outlet filed in `Great Room` was neither a row nor an
+    # unlocated count but dropped by a comparison; the strip and PLN-002
+    # now share one subtree scope (§11.153.7a).
+    # 4508 at PLAN-I/2 part one: +1 net. The locus census moved from a
+    # sentence to a run of the rules (DR-154 §11.153.8a), which cost one
+    # case for a net's designator fallback and widened three others.
+    # THE ARITHMETIC IS SMALL AND WHAT IT FOUND IS NOT: `locusLabel` knew
+    # four entity types and the rules point at six, so every `ELE-005`
+    # finding since `#838` and every `PLN-*` since `PLAN-I/1` grouped
+    # under "No single location" in the issues panel.
+    # 4528 at PLAN-I/2 part two: +20 from plan_acknowledgement_test.dart.
+    # CR-019's one mechanism, asserted END TO END over a document on which
+    # all four PLN-* are open at once, rather than only through the gate
+    # that admits a rule id. The load-bearing case is the fingerprint:
+    # every PLN-* message embeds `underlay.name` and an underlay is
+    # renamed by typing in a text field, so a name that reached the
+    # fingerprint would have rule 42 collecting the acknowledgement on the
+    # next load and reporting it as stale.
+    'rackpal_core'   = 4528
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -693,7 +719,13 @@ $SuiteFloors = @{
     # read. The control is the load-bearing half: it reads DEVICE SCHEDULE
     # and the sixtieth designator off the real PDF with the real font, so
     # an absent notice cannot be a sheet that was never drawn.
-    'rackpal_export' = 222
+    # 227 at PLAN-I/2 part three: +5 in findings_never_block_export_test.
+    # CR-022/G3 for the OTHER band. The three groups already there sweep
+    # `kRuleCatalogue`, which has been one catalogue of two since DR-154,
+    # so no PLN-* was inside any of them. "A complete sheet set" is read
+    # OFF THE PAGE and not off `sheetCount`: four blank pages satisfy a
+    # count, and `T1.01` is the sheet these four rules are about.
+    'rackpal_export' = 227
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

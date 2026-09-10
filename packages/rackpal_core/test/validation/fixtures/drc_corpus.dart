@@ -21,6 +21,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'connect_scenarios.dart';
 import 'drc_fixture.dart';
 import 'placement_scenarios.dart';
+import 'plan_scenarios.dart';
 import 'spring_back_scenarios.dart';
 import 'tier3_scenarios.dart';
 
@@ -68,6 +69,7 @@ List<DrcFixture> drcCorpus() => [
   ...placementFixtures(),
   ...springBackFixtures(),
   ...tier3Fixtures(),
+  ...planFixtures(),
 ];
 
 /// The corpus indexed by rule, for the coverage gate.
@@ -79,13 +81,26 @@ Map<String, Set<FixtureKind>> corpusCoverage() {
   return out;
 }
 
-/// Catalogue rules missing one or both halves of their AC-051 pair.
+/// Rules missing one or both halves of their AC-051 pair.
 ///
 /// THE SUBJECT IS `kRuleCatalogue`, not an enum. See this file's header.
-Map<String, List<FixtureKind>> corpusGaps() {
+///
+/// **AND SINCE DR-154 §11.153.4 IT IS BOTH BANDS**, because AC-051 is
+/// written about rules rather than about a catalogue: *"No rule ships
+/// without its pair."* A plan advisory shipped without one would not
+/// become acceptable by being filed under a different heading, and
+/// `corpusGapsIn` is what lets the report still name which band a gap is
+/// in.
+Map<String, List<FixtureKind>> corpusGaps() => <String, List<FixtureKind>>{
+  ...corpusGapsIn(kRuleCatalogue),
+  ...corpusGapsIn(kPlanRules),
+};
+
+/// The gaps in one band, so a failure says which catalogue it is about.
+Map<String, List<FixtureKind>> corpusGapsIn(List<RuleMeta> band) {
   final have = corpusCoverage();
   final gaps = <String, List<FixtureKind>>{};
-  for (final rule in kRuleCatalogue) {
+  for (final rule in band) {
     final got = have[rule.ruleId] ?? const <FixtureKind>{};
     final missing = [
       for (final k in FixtureKind.values)

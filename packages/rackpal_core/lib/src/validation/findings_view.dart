@@ -32,18 +32,34 @@
 // exactly the case a second, hand-written matcher would get wrong.
 //
 // ═══════════════════════════════════════════════════════════════════════
-// FOUR LOCUS TYPES, CENSUSED RATHER THAN ASSUMED
+// FIVE LOCUS TYPES, AND THE FIFTH ARRIVED EXACTLY AS PREDICTED
 // ═══════════════════════════════════════════════════════════════════════
 // `Finding.primaryEntityId` is nullable and could in principle name any
-// entity. Across all fourteen tier-3 rules it is set from exactly four:
-// `Link`, `Rack`, `DeviceInstance` and `Circuit`. All four carry a
-// `designator`, which is why [locusLabel] can be short and total rather
-// than a twelve-arm switch over types no rule produces.
+// entity. For the DRC catalogue it is set from exactly four: `Link`,
+// `Rack`, `DeviceInstance` and `Circuit`. All four carry a `designator`,
+// which is why [locusLabel] can be short and total rather than a
+// twelve-arm switch over types no rule produces.
 //
-// A FIFTH TYPE IS A TEST FAILURE, NOT A BLANK CELL. If a later rule
-// points at a `Port`, [locusLabel] returns null and
-// `findings_view_test.dart` fails on the census, rather than the panel
-// quietly drawing an empty group header that nobody can click.
+// **THE PARAGRAPH BELOW USED TO SAY A FIFTH TYPE WOULD BE A TEST
+// FAILURE, AND WHEN ONE ARRIVED NOTHING FAILED** (DR-154 §11.153.8a).
+// `PLAN-I/1` shipped four `PLN-*` rules whose primary is a
+// `PlanUnderlay`, and every one of them grouped under [kNoLocusGroup]:
+// the panel told a person that the most locatable object in the document
+// had no location. The guard that was supposed to catch it asserted
+// `locusLabel` returns null for a hand-written stranger id, which is a
+// statement about an id no rule produces and cannot see a fifth type that
+// rules DO produce.
+//
+// So the census is now taken over the corpus, where every rule's
+// known-bad already runs: `drc_fixture.dart` reports the locus of every
+// finding a fixture produces and `violationOf` fails on a null. A sixth
+// type is a test failure for real this time, because the thing that fails
+// is a run of the actual rules rather than a sentence about them.
+//
+// AN UNDERLAY CARRIES A `name` AND NOT A `designator`, and that is not an
+// inconsistency to paper over: a plan is a drawing of the building, not a
+// piece of equipment in it, so `RK-1` has a designator and `Level 1` has
+// the name that prints on its own sheet (docs/15 §8).
 import 'package:rackpal_core/src/model/acked_finding.dart';
 import 'package:rackpal_core/src/model/enums.dart' show Severity;
 import 'package:rackpal_core/src/model/rack_document.dart';
@@ -127,6 +143,24 @@ String? locusLabel(RackDocument doc, Uuid id) {
   if (device != null) return device.designator;
   final circuit = doc.circuits[id];
   if (circuit != null) return circuit.designator;
+  // THE FIFTH AND SIXTH, BOTH FOUND BY ONE CENSUS (DR-154 §11.153.8a).
+  //
+  // `ELE-005` has pointed at a `Net` since `#838` and `PLN-001..004` at a
+  // `PlanUnderlay` since `PLAN-I/1`, and neither had an arm here: two
+  // rules' findings and four more went to "no location" while the header
+  // above promised a fifth type would fail loudly.
+  //
+  // A NET PREFERS ITS DESIGNATOR AND FALLS BACK TO ITS NAME, which is
+  // what `ELE-005`'s own message does. A group header that said `Net 12`
+  // over a row reading `SPK-A carries 260 W` would be two names for one
+  // thing on one screen.
+  final net = doc.nets[id];
+  if (net != null) return net.designator ?? net.name;
+  // An underlay has no designator at all: it is a drawing of the
+  // building rather than equipment in it, and its name is what `T1.01`'s
+  // title block prints (docs/15 §8).
+  final underlay = doc.underlays[id];
+  if (underlay != null) return underlay.name;
   return null;
 }
 

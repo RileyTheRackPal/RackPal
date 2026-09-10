@@ -19411,6 +19411,230 @@ passthrough could offer.
 
 ---
 
+### §11.153 DR-154 · The plan advisories are a second band, the count they must not join is already wrong by one, and the pair gate follows the rule rather than the list
+
+**Settled by the user on 2026-09-10**, at `PLAN-I`'s census. DR-144 §11.143.8 left `PLN-001`'s
+*"wording, its severity or its band"* to this chapter and this is that ruling. The census found the
+band's subject in worse shape than the brief describes.
+
+**11.153.1 THE COUNT THE CHAPTER IS ABOUT IS ALREADY WRONG BY ONE, IN SIX DOCUMENTS.** `#645` opens
+with *"THE COUNT IS THE TRAP AND IT HAS BITTEN THIS CORPUS FIVE TIMES. AC-040 pins v1's catalogue at
+27 and DR-020 made it 28 (8 tier-1 + 6 tier-2 + 14 tier-3)."*
+
+**It is 29.** DR-132 §11.131 restored `ELE-005` by a §8.3 amendment at `#838`, and the tree moved with
+it: `rule_catalogue_test.dart` asserts **8 + 6 + 15 = 29** and PARSES docs/02 §5's table to check the
+ids one by one, which is the mechanism that keeps the code and the normative catalogue in step.
+
+**What that mechanism cannot see is prose.** The table has twenty-nine rows and the sentence above it
+says twenty-eight, and so does every other sentence that restates the total: across docs/00, docs/02,
+docs/05, docs/09, docs/10 and docs/11, including a box in an ASCII diagram. The number is correct in
+every place a test can reach and wrong in every place only a person can.
+
+**AND NO COUNT OF THE WRONG COUNTS IS WRITTEN HERE EITHER**, which is not a joke at this ruling's own
+expense so much as its point. The first draft of this clause said six documents, then twelve places,
+and both were wrong by the time the sweep finished. The sweep is one commit and `git show --stat` is
+what counts it; a number here would be a seventh copy of exactly the thing being fixed.
+
+**docs/12 IS LEFT ALONE.** Its entries record what was true when the work happened, and a milestone
+board rewritten to agree with today is a board that can no longer be read as evidence.
+
+**THIS IS THE SIXTH INSTANCE AND IT ARRIVED INSIDE THE WARNING ABOUT IT**, which is worth recording
+plainly: a brief that opens by naming a trap walked into it, because the brief was written from the
+prose. The remedy is the corpus's own and is applied here: the derived sentences are corrected to
+**cite the tier arithmetic rather than restate a total**, so the next rule moves one number in one
+place. No new ruling authorises the count itself; DR-132 already did.
+
+**11.153.2 RULED: THE PLAN ADVISORIES ARE A SECOND BAND, NOT FOUR MORE ROWS.** `PLN-001` to
+`PLN-004` live in `kPlanRules`, bound to **docs/15 §9** exactly as `kRuleCatalogue` is bound to
+docs/02 §5, by a test that parses the table and compares ids.
+
+The reason is CR-021's and not tidiness: *"a rule not listed there does not exist"*, and the catalogue
+docs/02 §5 governs is the v1 DRC catalogue that AC-040 sized and AC-051 gates. A plan advisory is not
+one of those and must not be counted as one, so it needs its own list and its own normative table,
+each with the same binding.
+
+**AND ANY DOCUMENT QUOTING A TOTAL SAYS WHICH BAND IT COUNTS.** A bare *"29 rules"* becomes a sentence
+that is true today and silently wrong the first time this band grows.
+
+**11.153.3 RULED: ONE LOOKUP, ONE EVALUATOR, ONE ACKNOWLEDGEMENT MECHANISM.** The band is separate;
+the machinery is not. `kRulesById` spans both lists, `evaluateDocument` runs both maps, and a
+`PLN-*` finding passes through the same three steps in the same order: the project's override, then
+`off`, then the acknowledgement.
+
+**A SECOND EVALUATION PATH IS THE THING `drc.dart` ALREADY FORBIDS** in its own header: a predicate
+that resolved its own severity *"would be a second copy of that order, and the three steps have to
+happen in exactly this one."* CR-019 says the same about the mute: **one** `AckedFinding` mechanism,
+not a per-rule opt-out and not a second one for a new band.
+
+**11.153.3a AND TWO SWEEPS THAT SAY "EVERY RULE" MEANT ONE CATALOGUE (`PLAN-I/2`, `#646`).**
+§11.153.3 is a claim about machinery, and the tests that would have failed if it were false were
+written before there were two bands. `rule_exception_test.dart`'s *"every tier-2 and tier-3 rule can
+be acknowledged"* and `severity_resolution_test.dart`'s *"every rule that files a finding has one"*
+both loop over `kRuleCatalogue`. Neither reached a `PLN-*` at all, so §11.153.3 shipped asserted by
+two tests that could not see the band it is about.
+
+**Both now loop over `kRulesById`, and both COUNT the plan rules they reached**, because a loop over
+an empty band passes silently: the guard is the same one `corpusGaps` carries, one file along.
+
+**THE SECOND ONE IS NOT COSMETIC.** `projectSeverity` returns null for a rule it cannot find and
+`evaluateDocument` DROPS a finding on a null rather than defaulting, which is G4 doing its job one
+layer up. A plan rule missing from `kRulesById` would therefore not throw and not warn. It would
+never fire, and the only thing standing between that and a silent release was a sweep that stopped
+at the other catalogue.
+
+**AND THE MECHANISM IS NOW PROVED END TO END, NOT ONLY AT ITS GATE.**
+`evaluateAcknowledgement` admitting a `PLN-*` id says the door opens. What
+`plan_acknowledgement_test.dart` adds is a real acknowledgement demoting a real finding on a document
+where all four are open at once, the project-wide `"*"` mute reaching an instance nobody named and
+not reaching the other three, and the acknowledgement still winning over an override.
+
+**THE FINGERPRINT IS THE PART THAT COULD HAVE GONE WRONG QUIETLY.** Every `PLN-*` message embeds
+`underlay.name`, and an underlay is renamed by typing in a text field. Had the name reached the
+fingerprint, renaming `Level 1` to `First Floor` would leave every acknowledgement about that plan
+matching nothing, and rule 42 would collect them on the next load and report them as stale: the
+exact failure `finding.dart` refuses designators for, arriving through a field nobody had thought of
+as an identifier. It does not, and that is now asserted rather than inherited.
+
+**`PLN-002`'S FINGERPRINT DOES MOVE, AND THAT IS THE SAME RULE RATHER THAN AN EXCEPTION TO IT.** It
+targets the carriers as well as the plan, on the contract `PWR-003` and `LNK-020` already wrote out:
+acknowledging *"1 device is not on the plan"* is not an acknowledgement of two. The other three are
+about the plan itself and adding an outlet leaves them alone.
+
+**11.153.4 RULED: THE AC-051 PAIR GATE FOLLOWS THE RULE, NOT THE LIST.** AC-051 is written about
+rules and not about a catalogue: *"No rule ships without its pair."* So each `PLN-*` rule gets a
+known-bad fixture producing exactly that finding and a known-good near-miss producing none, and the
+gate reports **per band** rather than adding four to twenty-nine.
+
+`#645` says the gate *"applies to 28 pairs and this does not move it"*, and that is honoured on the
+number: the DRC band's pair count is untouched. What the brief does not say, and what this rules, is
+that the new band is gated too. **A rule shipped without its pair is the failure AC-051 exists to
+prevent, and it does not become acceptable by being filed under a different heading** (`PLAN-H` found
+five gates in this epic whose scope was narrower than their subject; this is the first chance to
+avoid a sixth by construction).
+
+**11.153.5 RULED: `PLN-004` IS A WARNING AND THE OTHER THREE ARE ADVISORIES.** docs/15 §9 grades it a
+warning and `#646` says all four are advisory; the user settled it on the difference in what the four
+sentences claim.
+
+`PLN-001`, `PLN-002` and `PLN-003` say **you have not done this yet**: nothing is calibrated, these
+drops are not pinned, this plan has no rack to measure from. `PLN-004` says **what you are looking at
+may not be what you measured**: the bytes under a calibration and a set of pins have changed, so
+every pin may be in the wrong place and every length derived from them wrong.
+
+**IT STILL BLOCKS NOTHING** (CR-022, G3) and it stays acknowledgeable and overridable like any other
+row. AC-042's *"a mismatch is a warning and never a load failure"* is honoured exactly: the file
+opens, and the finding says why it might not be what its owner thinks.
+
+**11.153.5a AND "IT STILL BLOCKS NOTHING" IS NOW PROVED RATHER THAN RESTATED (`PLAN-I/2`, `#646`).**
+`#646` asks this epic to prove its own four *"before that milestone exists"*, naming M5-I as the
+milestone-level version that has not run. **M5-I HAS RUN**, at `c500cf5`; the correction does not
+retire the task. `findings_never_block_export_test.dart`'s three groups sweep `kRuleCatalogue`, which
+has been one catalogue of two since §11.153.2, so **not one of them reaches a `PLN-*`**. The brief is
+stale on the timing and exactly right on the obligation, which is the third `#645`/`#646` sentence
+this epic has found describing a tree that moved under it.
+
+**A COMPLETE SHEET SET IS READ OFF THE PAGE, NOT OFF A COUNT.** Four blank pages satisfy a
+`sheetCount` of four, and `T1.01` is the sheet these four rules are about: a plan whose advisories
+held it back would still have exported the elevations and the schedule and reported the same number.
+So the proof parses the PDF and finds the sheet number, the role's own title and the pinned drop's
+callout, and it is mutation-tested by making `planUnderlaysWithPins` return nothing.
+
+**THE WARNING GETS ITS OWN CASE, AND THIS CLAUSE IS WHY.** `#646` opens *"all four are `advisory`"*
+and §11.153.5 made one of them a warning. A run that scoped the three advisories off and left the
+warning open is precisely the case that sentence would have skipped, and it is the one somebody would
+most expect an exporter to refuse.
+
+**ACKNOWLEDGING CHANGES NOTHING**, which is CR-022 from the other side. An acknowledgement is for
+whoever reads `T0.02`; it is not a key that unlocks the exporter, and a product where muting a rule
+made an export succeed would have taught people to mute rules.
+
+**AND THE ABSENCE NAMES WHAT RETIRES IT**, which is the practice `#646` asks for by name.
+`T0.02` is M6's, so *"the reason prints on the exceptions sheet"* cannot be proved today and asserting
+it would be vacuous in the same shape `#310` refused for the `ISSUED FOR CONSTRUCTION` stamp. The
+guard is that `SheetRole` has no `exceptions` value: M6 landing one fails that test, and whoever lands
+it writes the real assertion in its place.
+
+**11.153.6 RULED: EACH RULE STATES ITS COUNT.** *"N pins carry no measurable position"*, *"N devices
+in Level 1 are not on the plan"*. G4's discipline in a findings list: a rule that fires without
+saying how much has told somebody there is a problem and left them to count it themselves.
+
+`PLN-001`'s sentence already exists and is not rewritten here. `unmeasurablePinsSentence` was built at
+`PLAN-F/3` and DR-146 §11.145.6 put it in core *"precisely so surfaces cannot drift"*; this chapter
+reads it rather than composing a second one.
+
+**11.153.7 RULED: `PLN-002` COUNTS THE LOCATION'S SUBTREE.** An underlay's `locationId` is *"the
+`Location` this depicts, usually a floor"* (docs/15 §3.1), and the drops on a floor are filed in the
+rooms under it. Counting only the exact location would make the rule silent on every plan filed the
+way the trade files them, which is the shape of a rule that exists and never fires.
+
+**11.153.7a AND THE SHIPPED STRIP ALREADY MADE THE OPPOSITE CHOICE, WHICH THIS CLAUSE DID NOT CHECK.**
+§11.153.7 was ruled from docs/15 §3.1 alone. `unpinnedCarriersFor` scopes with `where == scope`, an
+exact match, and `PLAN-E/4` shipped it that way: **on a `Level 1` plan an outlet filed in `Great Room`
+is neither in `rows` nor counted in `unlocatedCount`**, but dropped by a comparison. There is no case
+in `unpinned_carriers_test.dart` for a child room, so nothing said so.
+
+That is a defect in the strip and not merely a difference of opinion, on the strip's own stated
+standard: `unlocatedCount` exists so the count is never *"the `0 pathways` status bar: a number that
+flatters by counting only what it can see"*, and this path counts nothing and reports nothing.
+
+**Ruled by the user: both widen, to one scope.** A carrier is on this plan's floor when its location
+is the underlay's location or any descendant, `LocationTree.subtreeOf`, which
+`location_removal.dart` already uses for the same question about the same tree. **The strip is
+`PLN-002`'s remedy surface**, so the two must count one population: a person reading *"12 devices in
+Level 1 are not on the plan"*, opening the strip and finding it empty is the two-answers failure
+CR-107 keeps naming, one layer down.
+
+**THIS AMENDS DR-142's STRIP CLAUSE** on the scope only. The order, the `unlocatedCount` and the
+rack-leads default are untouched.
+
+**AND THE ORDER OF THE TWO FINDINGS IS THE LESSON.** A ruling drafted from a design document, checked
+against the shipped code twenty minutes later, disagreed with it. The corpus already carries that
+practice by name; this is its instance in a ruling rather than in a task.
+
+**11.153.8 WHAT THIS DOES NOT RULE.** Not the issues-list surface, which is M5's and which renders
+whatever `evaluateDocument` returns. Not whether `PLN-*` ever becomes v1 scope rather than v1.1;
+docs/15 §9 calls them v1.1 rules and nothing here moves that. Not the remedy actions a `PLN-*`
+finding might offer, which nothing asks for. And not `T0.02`'s rendering of an acknowledged plan
+advisory, which is M6's sheet.
+
+**11.153.8a THE ISSUES-LIST SURFACE COULD NOT RENDER WHAT `evaluateDocument` RETURNED, AND §11.153.8
+IS THE CLAUSE THAT SAID IT COULD (`PLAN-I/2`, `#646`).** That exclusion reads *"Not the issues-list
+surface, which is M5's and which renders whatever `evaluateDocument` returns."* It does not.
+`locusLabel` resolves a `Finding.primaryEntityId` through four collections, `Link`, `Rack`,
+`DeviceInstance` and `Circuit`, and returns null for anything else. Every `PLN-*` finding points at a
+`PlanUnderlay`, so **all four grouped under `No single location`**: the panel told a person that the
+most locatable object in their document had no location, and offered them nothing to click.
+
+**THE GUARD THAT PROMISED TO CATCH THIS SAT THROUGH IT.** `findings_view.dart`'s header said a fifth
+`primaryEntityId` type would be *"a test failure, not a blank cell"*, and the test carrying that
+promise asserts `locusLabel` returns null for a hand-written stranger id. **That is a statement about
+an id no rule produces**, and it cannot see a type that rules DO produce, which is the only way a
+fifth type was ever going to arrive.
+
+**AND IT WAS THE SIXTH, NOT THE FIFTH.** `ELE-005` has pointed at a `Net` since `#838` and had no arm
+either, so that rule's findings had been unclickable for three epics with the promise sitting above
+them the whole time. **Neither was found by looking; both were found by the census that replaced the
+sentence**, on its first run, one of them in work this epic had nothing to do with.
+
+**Ruled: the census is taken over the corpus, not over a sentence.** Every AC-051 fixture already
+evaluates a real document, so `FixtureOutcome` now reports the label the panel would print for every
+finding produced and `violationOf` fails on a null. Both halves of every pair, because a near-miss
+document still produces its neighbours' findings and a finding nobody can click is broken whichever
+fixture made it. A seventh type is a test failure for real this time, because the thing that fails is
+a run of the rules rather than a claim about them.
+
+**A NET PREFERS ITS DESIGNATOR AND FALLS BACK TO ITS NAME**, which is what `ELE-005`'s own message
+does: a group header reading `Net 12` over a row reading `SPK-A carries 260 W` is two names for one
+thing on one screen. **An underlay has no designator at all**, and that is not an inconsistency to
+paper over: a plan is a drawing of the building rather than equipment in it, so its locus is the name
+its own `T1.01` title block prints (docs/15 §8).
+
+**WHAT §11.153.8 MEANT SURVIVES.** The issues list is still M5's, its rendering is still not this
+ruling's to design, and nothing here adds a `PLN-*` remedy action. What it may no longer say is that
+the surface renders whatever the evaluator returns, because for the whole of `PLAN-I/1` it did not.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

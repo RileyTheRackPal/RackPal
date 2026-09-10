@@ -747,20 +747,49 @@ the page, and the plan still locates every drop: pins and callouts need no scale
 
 ## 9. Validation
 
-Four advisories. All are `advisory`, none blocks export (CR-022, G3), and all are acknowledgeable
-through the one `AckedFinding` mechanism (CR-019).
+Four rules, **in their own band** and not in docs/02 §5's catalogue (DR-154 §11.153.2). None blocks
+export (CR-022, G3) and all are acknowledgeable through the one `AckedFinding` mechanism (CR-019).
 
-| Rule | Fires when |
-|---|---|
-| `PLN-001` | An underlay is uncalibrated. *"N pins carry no measurable position"*. **The sentence and its count are built** (`PLAN-F/3`, `unmeasurablePinsSentence`), and the underlay row prints them today; what `PLAN-I` adds is the finding, its severity and its band |
-| `PLN-002` | Devices or outlets in a plan's location carry no pin. *"N devices in Level 1 are not on the plan"* |
-| `PLN-003` | An underlay has device pins but no rack pin, so no run length is derivable from it |
-| `PLN-004` | An underlay's `contentHash` does not match its stored bytes. A **warning**, never a load failure (AC-042) |
+**BUILT AT `PLAN-I/1`, 2026-09-10** (`validation/rules_plan.dart`, `kPlanRules`). The band is
+separate and the machinery is not: `kRulesById` spans both, `evaluateDocument` runs both, and a
+`PLN-*` finding takes an override, an `off` and an acknowledgement through exactly the steps every
+other finding does (§11.153.3).
 
-**These are v1.1 rules and do not touch the count of 27.** AC-040 pins v1's rule catalogue at 27
-(canon §12.6(b)); `PLN-*` ships with the Plan view, in its own band, and any document quoting a
-total says which band it is counting. Written-out counts in this corpus have needed three sweeps
-already.
+**PROVED AT `PLAN-I/2`, AND THE TWO SENTENCES ABOVE ARE WHY THAT IS NOT THE SAME THING** (§11.153.3a,
+§11.153.5a). *"None blocks export"* and *"all are acknowledgeable through the one mechanism"* were
+each asserted by a sweep over `kRuleCatalogue`, which is one catalogue of two: neither reached a
+`PLN-*`. Both sweeps now cover both bands and count what they reached, a real acknowledgement is
+shown demoting a real finding, and a document firing all four still exports a sheet set with `T1.01`
+read off the page.
+
+**AND THE ISSUES PANEL COULD NOT NAME ANY OF THEM** (§11.153.8a). `locusLabel` knew four entity kinds
+and the rules point at six, so every `PLN-*` grouped under `No single location` while the surface's
+own guard promised a fifth kind would fail loudly. A plan's locus is its `name`: it has no
+designator, because it is a drawing of the building rather than equipment in it.
+
+**THREE ARE ADVISORIES AND `PLN-004` IS A WARNING** (§11.153.5). The first three say *you have not
+done this yet*; the fourth says *what you are looking at may not be what you measured*.
+
+| Rule | Severity | Fires when |
+|---|---|---|
+| `PLN-001` | `advisory` | An underlay is uncalibrated. *"N pins carry no measurable position"*. **The sentence and its count are built** (`PLAN-F/3`, `unmeasurablePinsSentence`), and the underlay row prints them today; what `PLAN-I` adds is the finding, its severity and its band |
+| `PLN-002` | `advisory` | Devices or outlets on this plan's floor carry no pin. *"N devices in Level 1 are not on the plan"*. **THE SUBTREE, NOT THE EXACT LOCATION** (§11.153.7a): an underlay depicts a floor and the drops are filed in its rooms. The same population the unpinned strip lists, because the strip is where a person goes to fix this |
+| `PLN-003` | `advisory` | An underlay has device pins but no rack pin, so no run length is derivable from it. Fires whether or not the plan is calibrated: the missing datum is the fact |
+| `PLN-004` | `warning` | An underlay's `contentHash` does not match its stored bytes, so the pins and the calibration may no longer line up with the image. Never a load failure (AC-042) |
+
+**These are v1.1 rules and they do not touch the DRC catalogue's count.** AC-040 sized that
+catalogue and docs/02 §5 lists it; `PLN-*` ships with the Plan view, in its own band, and **any
+document quoting a total says which band it is counting**.
+
+**THE TOTAL IS NOT RESTATED HERE, AND THIS SENTENCE IS WHY** (DR-154 §11.153.1). It read *"do not
+touch the count of 27"* while the catalogue held twenty-nine, because DR-020 added `LEN-002` and
+DR-132 restored `ELE-005` and a sentence does not move with a list. The arithmetic lives in
+`rule_catalogue_test.dart`, which states it tier by tier and checks it against docs/02 §5.
+
+The plan band is gated the same way: `plan_rules_test.dart` parses this table and compares it with
+`kPlanRules`, and each of the four has an AC-051 pair of its own (§11.153.4). Each pair also reports
+the label the issues panel would print for every finding it produced, which is where `locusLabel`'s
+missing arms were found (§11.153.8a).
 
 ---
 

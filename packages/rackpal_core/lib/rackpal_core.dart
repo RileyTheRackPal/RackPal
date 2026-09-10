@@ -265,6 +265,7 @@ export 'src/persistence/migrations.dart';
 export 'src/persistence/pdf_page_lift.dart';
 export 'src/persistence/pdf_page_option.dart';
 export 'src/persistence/pdf_raster_plan.dart';
+export 'src/persistence/plan_hash.dart';
 export 'src/persistence/schema.dart';
 export 'src/structure/csv_header_map.dart';
 export 'src/structure/csv_import_apply.dart';

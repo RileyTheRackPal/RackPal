@@ -25,6 +25,14 @@
 //   3. AN UNDERLAY WITH NO LOCATION HAS NO FILTER, so a site plan lists
 //      everything unpinned. Matching its null against a carrier's null
 //      would be the unknown-equals-unknown join G4 forbids.
+//   3a. AND THE FILTER IS THE SUBTREE, WHICH IT WAS NOT UNTIL `PLAN-I`
+//      (DR-154 §11.153.7a). It compared locations for EQUALITY, and
+//      docs/15 §3.1 says an underlay's location is "usually a floor":
+//      an outlet filed in `Great Room` under `Level 1` matched neither
+//      the scope nor the unknown branch, so it was dropped by a
+//      comparison and appeared in no count at all. That is exactly the
+//      failure [UnpinnedCarriers.unlocatedCount] was written to prevent,
+//      arriving through the door beside the one it was watching.
 //   4. A CARRIER WHOSE OWN LOCATION IS UNKNOWN IS A COUNT, NOT A ROW
 //      (CR-114), so [UnpinnedCarriers.unlocatedCount] exists and every
 //      surface showing the rows shows that number too.
@@ -64,6 +72,7 @@
 // documents either way until it was.
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/commands/plan_commands.dart' show PinCarrier;
+import 'package:rackpal_core/src/derived/location_tree.dart';
 import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
@@ -158,16 +167,24 @@ UnpinnedCarriers unpinnedCarriersFor(RackDocument doc, PlanUnderlay underlay) {
   var unlocated = 0;
 
   // A CARRIER IS IN SCOPE WHEN THE PLAN NAMES NO ROOM (there is no
-  // filter), or when the two rooms are the same KNOWN room. A null
-  // carrier location never matches a named plan: unknown is not a value
-  // and two unknowns are not each other (G4).
+  // filter), or when the carrier's room is the plan's room OR ANY ROOM
+  // UNDER IT. A null carrier location never matches a named plan:
+  // unknown is not a value and two unknowns are not each other (G4).
+  //
+  // THE SUBTREE IS BUILT ONCE, and only when there is a scope to walk.
+  // `LocationTree.of` reads every location in the document, which is
+  // wasted work on a site plan that filters nothing.
+  final inScope = scope == null
+      ? const <Uuid>{}
+      : LocationTree.of(doc).subtreeOf(scope).toSet();
+
   bool take(Uuid? where) {
     if (scope == null) return true;
     if (where == null) {
       unlocated++;
       return false;
     }
-    return where == scope;
+    return inScope.contains(where);
   }
 
   for (final rack in doc.racks.values) {
