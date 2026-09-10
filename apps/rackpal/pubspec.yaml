@@ -1,7 +1,7 @@
 name: rackpal
 description: RackPal — A/V rack and wiring design for custom integration.
 publish_to: none
-version: 0.6.41
+version: 0.6.45
 
 environment:
   sdk: ^3.12.0
@@ -96,6 +96,11 @@ dependencies:
     path: ../../packages/rackpal_core
   rackpal_export:
     path: ../../packages/rackpal_export
+  # THE ONE PACKAGE WITH A NATIVE DEPENDENCY, and the app is the only
+  # thing allowed to depend on it (DR-153 §11.152.4): rackpal_core keeps
+  # its property of running anywhere a Dart SDK does.
+  rackpal_pdfium:
+    path: ../../packages/rackpal_pdfium
   rackpal_text:
     path: ../../packages/rackpal_text
   rackpal_ui:

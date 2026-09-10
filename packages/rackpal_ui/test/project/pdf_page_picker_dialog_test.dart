@@ -45,21 +45,36 @@ Uint8List stubJpeg(int w, int h) => Uint8List.fromList([
   0xD9,
 ]);
 
-Ok<LiftedPdfPage> liftable(int index, {int w = 2160, int h = 1440}) => Ok(
-  LiftedPdfPage(
-    pageIndex: index,
-    bytes: stubJpeg(w, h),
-    header: ImageHeader(
-      format: PlanImageFormat.jpeg,
-      pixelWidth: w,
-      pixelHeight: h,
+Ok<PdfPageOption> liftable(int index, {int w = 2160, int h = 1440}) => Ok(
+  LiftedPageOption(
+    LiftedPdfPage(
+      pageIndex: index,
+      bytes: stubJpeg(w, h),
+      header: ImageHeader(
+        format: PlanImageFormat.jpeg,
+        pixelWidth: w,
+        pixelHeight: h,
+      ),
+      sheetWidthPt: 2592,
+      sheetHeightPt: 1728,
     ),
-    sheetWidthPt: 2592,
-    sheetHeightPt: 1728,
   ),
 );
 
-Err<LiftedPdfPage> refused(int index, String reason) =>
+/// A page of vectors, drawn rather than lifted (DR-153, `PLAN-K/4`).
+///
+/// **THE TILE MUST NOT BE ABLE TO TELL.** The grid is handed both kinds
+/// and draws them the same, so the cases below mix them deliberately: a
+/// dialog that switched on the variant would pass a suite made of one.
+Ok<PdfPageOption> rendered(int index, {int w = 5100, int h = 3300}) => Ok(
+  RenderedPageOption(
+    pageIndex: index,
+    plan: PlanRasterPlan(width: w, height: h, effectiveDpi: 300),
+    previewBytes: stubJpeg(320, 207),
+  ),
+);
+
+Err<PdfPageOption> refused(int index, String reason) =>
     Err(PdfPageNotLiftableError(pageIndex: index, reason: reason));
 
 /// Opens the picker over a real route and hands back a handle on what it
@@ -73,13 +88,13 @@ Err<LiftedPdfPage> refused(int index, String reason) =>
 final class PickerHandle {
   PickerHandle();
 
-  LiftedPdfPage? result;
+  PdfPageOption? result;
   bool returned = false;
 }
 
 Future<PickerHandle> openPicker(
   WidgetTester tester,
-  List<Outcome<LiftedPdfPage>> pages, {
+  List<Outcome<PdfPageOption>> pages, {
   String fileName = 'House-Plan.pdf',
 }) async {
   final handle = PickerHandle();
@@ -147,6 +162,35 @@ void main() {
       await openPicker(tester, [liftable(0)]);
       expect(find.text('2160 x 1440, 60 dpi'), findsOneWidget);
     });
+
+    /// LOAD-BEARING (DR-153, `PLAN-K/4`). The grid draws a THUMBNAIL of a
+    /// rendered page, 320 px across, and the caption must describe the
+    /// page the person would get instead. A tile reading "320 x 207, 19
+    /// dpi" would be reporting the picture it just drew, which is a fact
+    /// about this dialog rather than about anything on offer.
+    testWidgets('a rendered page reports the size it WILL be, not its '
+        'preview', (tester) async {
+      await openPicker(tester, [rendered(0)]);
+
+      expect(find.text('5100 x 3300, 300 dpi'), findsOneWidget);
+      expect(find.textContaining('320 x'), findsNothing);
+    });
+
+    /// The grid is handed both kinds and must not be able to tell.
+    testWidgets('a lifted page and a rendered one are both live tiles', (
+      tester,
+    ) async {
+      await openPicker(tester, [liftable(0), rendered(1)]);
+
+      expect(find.text('House-Plan.pdf, 2 pages'), findsOneWidget);
+      expect(find.text('Page 1'), findsOneWidget);
+      expect(find.text('Page 2'), findsOneWidget);
+      expect(
+        find.textContaining('can be used'),
+        findsNothing,
+        reason: 'neither page is refused, so nothing is counted out',
+      );
+    });
   });
 
   group('ONE CLICK IMPORTS, and it must be the page that was clicked', () {
@@ -180,6 +224,21 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(handle.result!.pageIndex, 2);
+    });
+
+    /// A rendered tile is clicked the same way and comes back as itself,
+    /// because the flow renders it again at full size afterwards and
+    /// needs to know which kind it took.
+    testWidgets('clicking a RENDERED page returns a rendered option', (
+      tester,
+    ) async {
+      final handle = await openPicker(tester, [liftable(0), rendered(1)]);
+
+      await tester.tap(find.text('Page 2'));
+      await tester.pumpAndSettle();
+
+      expect(handle.result, isA<RenderedPageOption>());
+      expect(handle.result!.pageIndex, 1);
     });
 
     testWidgets('A REFUSED TILE IS NOT CLICKABLE, so a disabled page '

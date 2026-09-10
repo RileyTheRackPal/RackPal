@@ -1,5 +1,38 @@
 # Update Log
 
+## 2026-09-10 (nineteenth entry)
+
+* **Ruled**: [DR-153](/decisions/dr-153-the-rasteriser-is-built.md). The
+  rasteriser is built and the deferral ends. A CAD plot imports: a page of
+  vectors is drawn by a vendored pdfium instead of being refused at
+  `draws no image`.
+* **Closed**: `PLAN-K` (`#851`) with `#852` to `#855`, at `v0.6.45`.
+* **Note**: **THREE DEFERRALS, ONE TRIGGER, AND THE THING NONE OF THEM HAD.**
+  DR-138, DR-145 and DR-148 all deferred pdfium and all three named the same
+  missing thing: a population. DR-138 put it in one line, *"n is one."* The user
+  supplied it, and it is trade knowledge rather than a census, which is exactly
+  what DR-138 said it was waiting for.
+* **Creation**: [a vendored binary needs its own control](/practices/a-vendored-binary-needs-its-own-control.md).
+  A pub dependency arrives with a lockfile hash and a resolver; a committed
+  binary arrives with a path. Vendoring is the same dependency with its integrity
+  check removed, and the pin, the test that recomputes it and the licence in the
+  tree are what rebuild it.
+* **Note**: **THE LOAD-BEARING CASE IS THAT THE PAGE IS NOT UPSIDE DOWN.** A
+  vertically flipped render has the same size, the same ink and the same bytes
+  twice, so every other case in the binding passes against an upside-down
+  floorplan. `PLAN-A/3` met the identical defect one package over, where a PDF
+  image occupies the unit square with its top row at `v = 1` and a flipped
+  placement produces an identical bounding box.
+* **Note**: **A MUTATION FOUND A REAL HOLE IN THE RESOLUTION RULE.** Deleting the
+  non-positive guard looked harmless because every other malformed page fell out
+  at the one-pixel floor, but TWO NEGATIVES MULTIPLY TO A POSITIVE AREA: a
+  -1224 x -792 MediaBox took a negative dpi off the per-side cap and came back as
+  a plausible 30909 x 20000 raster, past the cap that had just been consulted.
+* **Note**: **TWO MORE SENTENCES OUTLIVED WHAT THEY DESCRIBED**, in the file that
+  already carries that scar twice. The lifter's message ended *"cannot be lifted
+  without a renderer ... Export the page as PNG or JPEG for now"*, which is advice
+  about a feature that now exists.
+
 ## 2026-09-09 (eighteenth entry)
 
 * **Ruled**: [DR-152](/decisions/dr-152-the-plan-schedule-projects-the-plan.md).

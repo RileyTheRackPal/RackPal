@@ -8,5 +8,6 @@ workspace:
   - packages/rackpal_core
   - packages/rackpal_text
   - packages/rackpal_export
+  - packages/rackpal_pdfium
   - packages/rackpal_ui
   - apps/rackpal

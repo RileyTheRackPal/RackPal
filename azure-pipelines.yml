@@ -663,6 +663,16 @@ jobs:
         displayName: 'Test: rackpal_export (pure Dart)'
         condition: succeededOrFailed()
 
+      # THE ONLY SUITE THAT NEEDS A FILE THE AGENT DID NOT BUILD. pdfium is
+      # vendored into the repository (CR-100, DR-153 §11.152.3), so a clean
+      # checkout has it and nothing is fetched here; if it is ever missing,
+      # the failure names the vendoring command rather than crashing.
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_pdfium -Runner dart -Name rackpal_pdfium -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackpal_pdfium (pure Dart, vendored native)'
+        condition: succeededOrFailed()
+
       - pwsh: |
           pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_ui -Runner flutter -Name rackpal_ui -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE

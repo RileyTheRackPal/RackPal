@@ -138,6 +138,15 @@ const String kDocumentMember = 'document.json';
 /// (docs/15 §2).
 const String kUnderlayMemberDir = 'underlays/';
 
+/// The directory prefix a rendered underlay's SOURCE PDF lives under,
+/// `sources/<id>.pdf` (DR-153 §11.152.6).
+///
+/// Its own prefix rather than a sibling in `underlays/`, because the two
+/// hold different things: one is what the sheet draws and the other is
+/// what it was drawn FROM. A reader listing the container can tell them
+/// apart without opening either.
+const String kPlanSourceMemberDir = 'sources/';
+
 /// The constant every entry's modification time is written with.
 ///
 /// The MS-DOS epoch, which is the conventional reproducible-build choice

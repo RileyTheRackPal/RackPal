@@ -12,8 +12,10 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
+import 'package:rackpal/src/session/pdf_rasteriser.dart';
 import 'package:rackpal/src/session/plan_import_actions.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 
@@ -39,8 +41,6 @@ const String _kFullPage =
 const String _kImageProps =
     '/Type/XObject/Subtype/Image/Width 100/Height 50/ColorSpace/DeviceRGB';
 const String _kImageDict = '$_kImageProps/BitsPerComponent 8/Filter/DCTDecode';
-const String _kPageDict =
-    '/MediaBox[0 0 2592 1728]/Resources<</XObject<</img0 5 0 R>>>>';
 
 /// A page of a CAD plot: ANSI B, a Type1 font, and NO `/XObject` key.
 ///
@@ -85,14 +85,19 @@ Uint8List cadPlotPdf({int pages = 3}) {
 }
 
 /// A one-page PDF wrapping [image], with [content] as the page's stream.
-Uint8List onePagePdf(Uint8List image, {String content = _kFullPage}) {
+Uint8List onePagePdf(
+  Uint8List image, {
+  String content = _kFullPage,
+  String mediaBox = '[0 0 2592 1728]',
+}) {
   final buf = BytesBuilder();
   void put(String s) => buf.add(latin1.encode(s));
   put('%PDF-1.4\n');
   put('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n');
   put('2 0 obj\n<</Type/Pages/Kids[3 0 R]/Count 1>>\nendobj\n');
   put(
-    '3 0 obj\n<</Type/Page/Parent 2 0 R$_kPageDict/Contents 4 0 R>>\nendobj\n',
+    '3 0 obj\n<</Type/Page/Parent 2 0 R/MediaBox$mediaBox'
+    '/Resources<</XObject<</img0 5 0 R>>>>/Contents 4 0 R>>\nendobj\n',
   );
   put('4 0 obj\n<</Length ${content.length}>>\nstream\n');
   put(content);
@@ -104,19 +109,72 @@ Uint8List onePagePdf(Uint8List image, {String content = _kFullPage}) {
   return buf.toBytes();
 }
 
-List<Outcome<LiftedPdfPage>> okPages(Uint8List pdf) =>
-    (readPdfPages(pdf) as Ok<List<Outcome<LiftedPdfPage>>>).value;
+List<Outcome<PdfPageOption>> okPages(Uint8List pdf, {PdfRasteriser? with_}) =>
+    (readPdfPages(pdf, rasteriser: with_) as Ok<List<Outcome<PdfPageOption>>>)
+        .value;
 
 Object errorOf(Outcome<Object?> o) => (o as Err).error;
+
+/// A one-page plot of vectors on a SMALL sheet: 144 x 72 pt, which is
+/// 600 x 300 px at DR-153's 300 dpi.
+///
+/// Small on purpose. The rule is the same at any size and the core suite
+/// asserts it on the real sheet sizes; a case here that rendered ANSI B
+/// would spend sixteen megapixels to prove a member name.
+/// One interpolated constant rather than adjacent literals, on the core
+/// fixture's own precedent: PDF dictionary syntax has no whitespace
+/// between its tokens, and `missing_whitespace_between_adjacent_strings`
+/// would have a space added that changes the fixture.
+const String _kSmallPageDict = '/MediaBox[0 0 144 72]/Resources$_kCadFontRes';
+
+Uint8List smallVectorPdf() {
+  final buf = BytesBuilder();
+  void put(String s) => buf.add(latin1.encode(s));
+  const content = 'q 1 w 10 10 m 130 60 l S Q\n';
+  put('%PDF-1.7\n');
+  put('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n');
+  put('2 0 obj\n<</Type/Pages/Kids[3 0 R]/Count 1>>\nendobj\n');
+  put(
+    '3 0 obj\n<</Type/Page/Parent 2 0 R$_kSmallPageDict'
+    '/Contents 4 0 R>>\nendobj\n',
+  );
+  put('4 0 obj\n<</Length ${content.length}>>\nstream\n');
+  put(content);
+  put('\nendstream\nendobj\n');
+  put('trailer\n<</Root 1 0 R>>\n%%EOF\n');
+  return buf.toBytes();
+}
+
+/// A real PNG of exactly [w] by [h], because `importFloorplanBytes`
+/// decodes what it is given and re-checks the decode against the header.
+Uint8List stubPng(int w, int h) {
+  final image = img.Image(width: w, height: h)
+    ..clear(img.ColorRgb8(255, 255, 255));
+  for (var x = 0; x < w; x++) {
+    image.setPixelRgb(x, h ~/ 2, 0, 0, 0);
+  }
+  return Uint8List.fromList(img.encodePng(image));
+}
+
+/// A renderer that draws one line and answers at exactly the size asked
+/// for. It proves the FLOW; `plan_import_pdfium_test.dart` proves pdfium.
+Outcome<Uint8List> _fakeRasteriser(
+  Uint8List pdf,
+  int pageIndex, {
+  required int width,
+  required int height,
+}) => Ok(stubPng(width, height));
 
 void main() {
   group('readPdfPages', () {
     test('a liftable page comes back for the picker', () {
       final pages = okPages(onePagePdf(realJpeg(100, 50)));
       expect(pages, hasLength(1));
-      final page = (pages.single as Ok<LiftedPdfPage>).value;
-      expect(page.header.pixelWidth, 100);
-      expect(page.effectiveDpi, closeTo(100 / 36, 0.01));
+      final page = (pages.single as Ok<PdfPageOption>).value;
+
+      expect(page, isA<LiftedPageOption>());
+      expect(page.resultWidth, 100);
+      expect(page.resultDpi, closeTo(100 / 36, 0.01));
     });
 
     test('A PDF WHOSE PAGES ARE ALL REFUSED IS ITS OWN ERROR, not '
@@ -142,7 +200,11 @@ void main() {
       final text = errorOf(readPdfPages(pdf)).toString();
       expect(text, contains('1 page '));
       expect(text, contains('paints its own content'));
-      expect(text, contains('PLAN-D/3'));
+      // THE CITATION MOVED WITH THE COPY. It read PLAN-D/3 while the
+      // sentence's job was to stand in for a missing rasteriser; the
+      // sentence now describes what happens when the rasteriser also
+      // declines, which is DR-153's.
+      expect(text, contains('DR-153'));
     });
 
     test('A REAL CAD PLOT: three pages, all refused, and the sentence says '
@@ -159,12 +221,20 @@ void main() {
       // minimum that trips the rule: a classic xref, ANSI B pages, a
       // populated `/Resources` holding a font, path and text operators,
       // and no `/XObject` anywhere.
+      // WITH NO RASTERISER, which is what this call means: the flow
+      // hands one in and every case below does. A CAD plot with nothing
+      // able to draw it is still three refused pages, and the count in
+      // the sentence is what this case is about.
       final text = errorOf(readPdfPages(cadPlotPdf())).toString();
       expect(text, contains('has 3 pages'));
       expect(text, contains('draws no image'));
-      // AND THE WORKAROUND, because this is the sentence that has to
-      // stand in for the feature until PLAN-H revisits the rasteriser.
-      expect(text, contains('Export the page you want as PNG or JPEG'));
+      // AND THE ADVICE IS NO LONGER "convert it yourself". A page that
+      // reaches this sentence is one the renderer also declined, so the
+      // remedy is a different viewer rather than a different format
+      // (DR-153). The old copy said "for now", about a feature that now
+      // exists.
+      expect(text, isNot(contains('for now')));
+      expect(text, contains('If another viewer opens this file'));
     });
 
     test('something that is not a PDF is refused before any of that', () {
@@ -174,7 +244,8 @@ void main() {
 
   group('importLiftedPdfPage: the lifted page is NOT privileged', () {
     LiftedPdfPage soleLifted(Uint8List pdf) =>
-        (okPages(pdf).single as Ok<LiftedPdfPage>).value;
+        ((okPages(pdf).single as Ok<PdfPageOption>).value as LiftedPageOption)
+            .page;
 
     Outcome<ImportedFloorplan> importIt(LiftedPdfPage page) =>
         importLiftedPdfPage(
@@ -273,6 +344,193 @@ void main() {
         meta: _meta(),
       );
       expect(errorOf(result), isA<PdfImportNotAvailableError>());
+    });
+  });
+
+  group('PLAN-K/4: a page of vectors is RENDERED rather than refused', () {
+    /// LOAD-BEARING, AND IT IS THE ONE THAT COULD ROT QUIETLY.
+    /// DR-138 §11.137.3 rules that lifting is not a cheaper rasterisation
+    /// but a better one: rasterising a page whose only content is a JPEG
+    /// decodes and re-encodes it, losing a generation and gaining no
+    /// pixel. A renderer that ran on a liftable page would pass every
+    /// other case in this file while quietly throwing that away.
+    test('a liftable page is still LIFTED, and the renderer is not asked', () {
+      var asked = 0;
+      final pages = okPages(
+        onePagePdf(realJpeg(100, 50)),
+        with_: (pdf, index, {required width, required height}) {
+          asked++;
+          return Ok(stubPng(width, height));
+        },
+      );
+
+      expect(pages.single, isA<Ok<PdfPageOption>>());
+      expect(
+        (pages.single as Ok<PdfPageOption>).value,
+        isA<LiftedPageOption>(),
+      );
+      expect(asked, 0, reason: 'lifting is preferred, not merely cheaper');
+    });
+
+    test('every page of a CAD plot comes back as a rendered option', () {
+      final pages = okPages(cadPlotPdf(), with_: _fakeRasteriser);
+
+      expect(pages, hasLength(3));
+      for (final page in pages) {
+        expect(page, isA<Ok<PdfPageOption>>());
+        expect((page as Ok<PdfPageOption>).value, isA<RenderedPageOption>());
+      }
+    });
+
+    test('the plan comes from the page MediaBox, at the ruled dpi', () {
+      final option =
+          (okPages(cadPlotPdf(), with_: _fakeRasteriser).first
+                  as Ok<PdfPageOption>)
+              .value;
+
+      // ANSI B at 300 dpi. The rule is asserted in the core suite; what
+      // this case proves is that the page's MediaBox reached it.
+      expect(option.resultWidth, 5100);
+      expect(option.resultHeight, 3300);
+      expect(option.resultDpi, closeTo(300, 0.001));
+    });
+
+    /// THE PREVIEW IS SMALL AND THE RESULT IS NOT. Rendering eighteen
+    /// ARCH D pages at 300 dpi to fill a grid of thumbnails would be four
+    /// hundred megapixels of work to draw pictures 320 px wide.
+    test('the PREVIEW is asked for at thumbnail width, not at the plan', () {
+      final asks = <List<int>>[];
+      okPages(
+        cadPlotPdf(pages: 1),
+        with_: (pdf, index, {required width, required height}) {
+          asks.add([width, height]);
+          return Ok(stubPng(width, height));
+        },
+      );
+
+      expect(asks, hasLength(1));
+      expect(asks.single.first, kPagePreviewWidth);
+      expect(
+        asks.single.last,
+        closeTo(kPagePreviewWidth * 792 / 1224, 1),
+        reason: 'the thumbnail keeps the shape of the sheet',
+      );
+    });
+
+    test('with no rasteriser it is refused exactly as it was before', () {
+      // The seam is what changed, and nothing else. A flow handed no
+      // renderer behaves as PLAN-D/3 shipped.
+      final error = errorOf(readPdfPages(cadPlotPdf()));
+      expect(error, isA<PdfHasNoLiftablePageError>());
+    });
+
+    test('a render that fails reports ITS reason and not the one the '
+        'lifter gave', () {
+      // One page, so the document-level guard fires and the sentence a
+      // person reads is the one under test.
+      final error = errorOf(
+        readPdfPages(
+          cadPlotPdf(pages: 1),
+          rasteriser: (pdf, index, {required width, required height}) =>
+              const Err('the renderer said no'),
+        ),
+      );
+
+      expect(error.toString(), contains('the renderer said no'));
+      expect(
+        error.toString(),
+        isNot(contains('draws no image')),
+        reason: 'the lift refusal was superseded by the render attempt',
+      );
+    });
+
+    /// A refusal ABOUT the MediaBox cannot be rendered: nothing knows how
+    /// big to draw it, and `PdfPageNotLiftableError.hasSheetSize` is what
+    /// says so.
+    test('a page with no usable MediaBox is not offered to the renderer', () {
+      var asked = 0;
+      final error = errorOf(
+        readPdfPages(
+          onePagePdf(realJpeg(10, 10), mediaBox: '[0 0 0 0]'),
+          rasteriser: (pdf, index, {required width, required height}) {
+            asked++;
+            return Ok(stubPng(width, height));
+          },
+        ),
+      );
+
+      expect(asked, 0, reason: 'nothing knows how big to draw it');
+      expect(error.toString(), contains('MediaBox'));
+    });
+  });
+
+  group('importRenderedPdfPage keeps the source (DR-153 §11.152.6)', () {
+    RenderedPageOption smallOption() =>
+        (okPages(smallVectorPdf(), with_: _fakeRasteriser).single
+                    as Ok<PdfPageOption>)
+                .value
+            as RenderedPageOption;
+
+    Outcome<ImportedFloorplan> importIt(Uint8List pdf) => importRenderedPdfPage(
+      pdf: pdf,
+      option: smallOption(),
+      rasteriser: _fakeRasteriser,
+      id: _id,
+      name: 'A-2.1 First Floor',
+      order: const FracIndex('a0'),
+      meta: _meta(),
+    );
+
+    test('the underlay is the page at the planned size, stored as PNG', () {
+      final pdf = smallVectorPdf();
+      final result = (importIt(pdf) as Ok<ImportedFloorplan>).value;
+
+      expect(result.underlay.format, PlanImageFormat.png);
+      expect(result.underlay.pixelWidth, smallOption().plan.width);
+      expect(result.underlay.pixelHeight, smallOption().plan.height);
+      expect(result.underlay.imageMember, 'underlays/${_id.v}.png');
+    });
+
+    /// LOAD-BEARING. The vector is gone once the page is drawn, and only
+    /// the source can bring it back.
+    test('it names the source PDF, the page inside it, and its hash', () {
+      final pdf = smallVectorPdf();
+      final underlay = (importIt(pdf) as Ok<ImportedFloorplan>).value.underlay;
+      final source = underlay.sourcePage;
+
+      expect(source, isNotNull);
+      expect(source!.member, 'sources/${_id.v}.pdf');
+      expect(source.pageIndex, 0);
+      expect(source.contentHash, '$kSha256Prefix${sha256.convert(pdf)}');
+    });
+
+    /// The other half of the asymmetry, and the reason it is a ruling
+    /// rather than an implementation detail: a lifted page's stored bytes
+    /// ARE the source, so a copy would store one drawing twice.
+    test('AND A LIFTED PAGE KEEPS NOTHING', () {
+      final page =
+          ((okPages(onePagePdf(realJpeg(120, 80))).single as Ok<PdfPageOption>)
+                      .value
+                  as LiftedPageOption)
+              .page;
+      final result =
+          (importLiftedPdfPage(
+                    page: page,
+                    id: _id,
+                    name: 'lifted',
+                    order: const FracIndex('a0'),
+                    meta: _meta(),
+                  )
+                  as Ok<ImportedFloorplan>)
+              .value;
+
+      expect(result.underlay.sourcePage, isNull);
+    });
+
+    test('AN IMPORTED PLAN IS STILL UNCALIBRATED, rendered or not', () {
+      final result =
+          (importIt(smallVectorPdf()) as Ok<ImportedFloorplan>).value;
+      expect(result.underlay.scale, isNull);
     });
   });
 }

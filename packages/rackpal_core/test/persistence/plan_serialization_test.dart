@@ -59,18 +59,28 @@ RackDocument _doc() => RackDocument(
   info: ProjectInfo(projectName: 'Ashford Residence'),
 );
 
-PlanUnderlay _underlay({PlanScale? scale}) => PlanUnderlay(
-  id: _underlayId,
-  name: 'Level 1',
-  imageMember: 'underlays/$_underlayId.png',
-  format: PlanImageFormat.png,
-  pixelWidth: 4000,
-  pixelHeight: 3000,
-  contentHash: 'sha256:abcdef',
-  order: const FracIndex('a0'),
-  meta: _meta(),
-  locationId: _locationId,
-  scale: scale,
+PlanUnderlay _underlay({PlanScale? scale, PlanSourcePage? sourcePage}) =>
+    PlanUnderlay(
+      id: _underlayId,
+      name: 'Level 1',
+      imageMember: 'underlays/$_underlayId.png',
+      format: PlanImageFormat.png,
+      pixelWidth: 4000,
+      pixelHeight: 3000,
+      contentHash: 'sha256:abcdef',
+      order: const FracIndex('a0'),
+      meta: _meta(),
+      locationId: _locationId,
+      scale: scale,
+      sourcePage: sourcePage,
+    );
+
+/// The page a rendered underlay came from. Page THREE, so an off-by-one
+/// in either direction is visible rather than symmetric.
+const _sourcePage = PlanSourcePage(
+  member: 'sources/$_underlayId.pdf',
+  pageIndex: 2,
+  contentHash: 'sha256:sourcepdf',
 );
 
 /// Deliberately not round: a scale that divides evenly would round-trip
@@ -93,9 +103,9 @@ Rack _rack({PlanPin? pin}) => Rack(
   planPin: pin,
 );
 
-RackDocument _withUnderlay({PlanScale? scale}) {
+RackDocument _withUnderlay({PlanScale? scale, PlanSourcePage? sourcePage}) {
   final doc = _doc();
-  doc.underlays[_underlayId] = _underlay(scale: scale);
+  doc.underlays[_underlayId] = _underlay(scale: scale, sourcePage: sourcePage);
   return doc;
 }
 
@@ -182,6 +192,64 @@ void main() {
 
       final back = (_codec.read(parts.documentBytes) as Ok<RackDocument>).value;
       expect(back.underlays[_underlayId]!.scale, _scale);
+    });
+  });
+
+  group('PLAN-K/3: a rendered page keeps its source (DR-153 §11.152.6)', () {
+    test('every field of the source page survives a write and a read', () {
+      final back = _reopen(
+        _withUnderlay(sourcePage: _sourcePage),
+      ).underlays[_underlayId]!;
+
+      expect(back.sourcePage, _sourcePage);
+      expect(back.sourcePage!.member, 'sources/$_underlayId.pdf');
+      expect(back.sourcePage!.pageIndex, 2);
+      expect(back.sourcePage!.contentHash, 'sha256:sourcepdf');
+    });
+
+    /// LOAD-BEARING. The asymmetry IS the ruling: a lifted page's stored
+    /// bytes already are the source, so a copy would store one drawing
+    /// twice. An absent key is what says "there is nothing to keep".
+    test('an underlay with no source writes no key at all', () {
+      final out = utf8.decode(_codec.write(_withUnderlay()));
+
+      expect(out, isNot(contains('sourcePage')));
+      expect(
+        _reopen(_withUnderlay()).underlays[_underlayId]!.sourcePage,
+        isNull,
+      );
+    });
+
+    test('CR-117: byte round trip over a document carrying a source page', () {
+      final first = _codec.write(_withUnderlay(sourcePage: _sourcePage));
+      final second = _codec.write(
+        _reopen(_withUnderlay(sourcePage: _sourcePage)),
+      );
+
+      expect(second, orderedEquals(first));
+    });
+
+    /// CR-093: a hostile file is an Err and never a throw, and the check
+    /// happens when the value ARRIVES rather than on the day something
+    /// finally reads it.
+    test('a negative page index is refused at the boundary', () {
+      final tree =
+          jsonDecode(
+                utf8.decode(
+                  _codec.write(_withUnderlay(sourcePage: _sourcePage)),
+                ),
+              )
+              as Map<String, Object?>;
+      final underlays =
+          (tree['document']! as Map<String, Object?>)['underlays']!
+              as Map<String, Object?>;
+      final underlay = underlays[_underlayId.v]! as Map<String, Object?>;
+      (underlay['sourcePage']! as Map<String, Object?>)['pageIndex'] = -1;
+
+      final result = _codec.read(
+        Uint8List.fromList(utf8.encode(jsonEncode(tree))),
+      );
+      expect(result, isA<Err<RackDocument>>());
     });
   });
 

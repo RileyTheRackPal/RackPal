@@ -650,7 +650,27 @@ $SuiteFloors = @{
     # One mutation DID NOT BUILD and is a fact rather than a gap: the
     # entity lookups are non-null because the label resolved from the same
     # map one line earlier, so deleting the `!` is a compile error.
-    'rackpal_core'   = 4464
+    # 4474 at PLAN-K/2: +10 from pdf_raster_plan_test.dart, the rule for
+    # how many pixels a vector page renders at (DR-153 §11.152.5), which
+    # discharges the question DR-145 §11.144.7 left owed. One case exists
+    # because a mutation survived and it is a real hole: deleting the
+    # non-positive guard looked harmless because every other case fell
+    # through the one-pixel floor, but TWO negatives multiply to a positive
+    # AREA, so a -1224 x -792 page took a negative dpi off the per-side cap
+    # and came back as a plausible 30909 x 20000 raster, past the cap that
+    # had just been consulted.
+    # 4478 at PLAN-K/3: +4 from plan_serialization_test.dart, where a
+    # rendered underlay keeps the PDF page it came from (DR-153 §11.152.6)
+    # and a LIFTED one deliberately does not, since its stored bytes
+    # already are the source. The load-bearing case is the absent key: the
+    # asymmetry is the ruling, so "no source to keep" has to be visible in
+    # the file rather than inferred.
+    # 4480 at PLAN-K/4: +2 from pdf_page_lift_test.dart. A refusal that
+    # happens after the /MediaBox is read now carries the page's size, so
+    # something that draws vectors knows how big to draw it without
+    # re-parsing the file; the second case is the other half, since the
+    # three refusals ABOUT the box cannot report one.
+    'rackpal_core'   = 4480
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -674,6 +694,20 @@ $SuiteFloors = @{
     # and the sixtieth designator off the real PDF with the real font, so
     # an absent notice cannot be a sheet that was never drawn.
     'rackpal_export' = 222
+    # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
+    # them run with no binary present, because they are about FINDING it:
+    # an override that points nowhere is an error rather than a fallback,
+    # and the message a missing binary produces has to name the command
+    # that fixes it. The rest need the vendored DLL, which a clean checkout
+    # has, since CR-100 puts it in the repository rather than in a build
+    # step.
+    #
+    # ONE OF THEM IS THE ONLY THING THAT CAN SEE A FLIPPED PAGE. A
+    # vertically flipped render has the same size, the same ink and the
+    # same bytes twice, so every other case passes against an upside-down
+    # floorplan; deleting the counter-flip fails that case and nothing
+    # else. PLAN-A/3 met the same defect one package over.
+    'rackpal_pdfium' = 22
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
     # presses the two new remedy buttons on chips raised by a real drag.
     # The core suites cannot see whether the SCREEN reaches the commands.
@@ -881,7 +915,13 @@ $SuiteFloors = @{
     # The fixture drops the home run's cut length, because `cut` outranks
     # every tier and a document keeping `78` would render `78` and pass an
     # assertion about a floor for a reason that has nothing to do with one.
-    'rackpal_ui'     = 1674
+    # 1677 at PLAN-K/4: +3 from pdf_page_picker_dialog_test.dart, where
+    # the grid is handed a page that was RENDERED as well as one that was
+    # lifted (DR-153). The load-bearing case is the caption: the tile
+    # draws a 320 px thumbnail and must report the size the person would
+    # GET, since "320 x 207, 19 dpi" is a fact about this dialog rather
+    # than about anything on offer.
+    'rackpal_ui'     = 1677
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -927,7 +967,15 @@ $SuiteFloors = @{
     # PdfHasNoLiftablePageError.pageCount had only ever rendered as
     # `1 page` and the plural sentence a person actually sees was
     # untested.
-    'rackpal_app'    = 965
+    # 981 at PLAN-K/4: +16, the import flow rendering a page of vectors
+    # instead of refusing it (DR-153). Three of them are
+    # plan_import_pdfium_test.dart, which runs the REAL binding end to
+    # end: the flow's own cases hand it a fake that returns a PNG of the
+    # size asked for, which proves the sequence and nothing about pdfium.
+    # The load-bearing case there counts DARK PIXELS in the stored
+    # member, because every failure short of a crash produces a plausible
+    # PNG of exactly the right size.
+    'rackpal_app'    = 981
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
