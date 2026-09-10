@@ -19411,6 +19411,98 @@ passthrough could offer.
 
 ---
 
+### §11.153 DR-154 · The plan advisories are a second band, the count they must not join is already wrong by one, and the pair gate follows the rule rather than the list
+
+**Settled by the user on 2026-09-10**, at `PLAN-I`'s census. DR-144 §11.143.8 left `PLN-001`'s
+*"wording, its severity or its band"* to this chapter and this is that ruling. The census found the
+band's subject in worse shape than the brief describes.
+
+**11.153.1 THE COUNT THE CHAPTER IS ABOUT IS ALREADY WRONG BY ONE, IN SIX DOCUMENTS.** `#645` opens
+with *"THE COUNT IS THE TRAP AND IT HAS BITTEN THIS CORPUS FIVE TIMES. AC-040 pins v1's catalogue at
+27 and DR-020 made it 28 (8 tier-1 + 6 tier-2 + 14 tier-3)."*
+
+**It is 29.** DR-132 §11.131 restored `ELE-005` by a §8.3 amendment at `#838`, and the tree moved with
+it: `rule_catalogue_test.dart` asserts **8 + 6 + 15 = 29** and PARSES docs/02 §5's table to check the
+ids one by one, which is the mechanism that keeps the code and the normative catalogue in step.
+
+**What that mechanism cannot see is prose.** The table has twenty-nine rows and the sentence above it
+says twenty-eight, and so do docs/00 §6, docs/05, docs/09 in four places and docs/10. The number is
+correct in every place a test can reach and wrong in every place only a person can.
+
+**THIS IS THE SIXTH INSTANCE AND IT ARRIVED INSIDE THE WARNING ABOUT IT**, which is worth recording
+plainly: a brief that opens by naming a trap walked into it, because the brief was written from the
+prose. The remedy is the corpus's own and is applied here: the derived sentences are corrected to
+**cite the tier arithmetic rather than restate a total**, so the next rule moves one number in one
+place. No new ruling authorises the count itself; DR-132 already did.
+
+**11.153.2 RULED: THE PLAN ADVISORIES ARE A SECOND BAND, NOT FOUR MORE ROWS.** `PLN-001` to
+`PLN-004` live in `kPlanRules`, bound to **docs/15 §9** exactly as `kRuleCatalogue` is bound to
+docs/02 §5, by a test that parses the table and compares ids.
+
+The reason is CR-021's and not tidiness: *"a rule not listed there does not exist"*, and the catalogue
+docs/02 §5 governs is the v1 DRC catalogue that AC-040 sized and AC-051 gates. A plan advisory is not
+one of those and must not be counted as one, so it needs its own list and its own normative table,
+each with the same binding.
+
+**AND ANY DOCUMENT QUOTING A TOTAL SAYS WHICH BAND IT COUNTS.** A bare *"29 rules"* becomes a sentence
+that is true today and silently wrong the first time this band grows.
+
+**11.153.3 RULED: ONE LOOKUP, ONE EVALUATOR, ONE ACKNOWLEDGEMENT MECHANISM.** The band is separate;
+the machinery is not. `kRulesById` spans both lists, `evaluateDocument` runs both maps, and a
+`PLN-*` finding passes through the same three steps in the same order: the project's override, then
+`off`, then the acknowledgement.
+
+**A SECOND EVALUATION PATH IS THE THING `drc.dart` ALREADY FORBIDS** in its own header: a predicate
+that resolved its own severity *"would be a second copy of that order, and the three steps have to
+happen in exactly this one."* CR-019 says the same about the mute: **one** `AckedFinding` mechanism,
+not a per-rule opt-out and not a second one for a new band.
+
+**11.153.4 RULED: THE AC-051 PAIR GATE FOLLOWS THE RULE, NOT THE LIST.** AC-051 is written about
+rules and not about a catalogue: *"No rule ships without its pair."* So each `PLN-*` rule gets a
+known-bad fixture producing exactly that finding and a known-good near-miss producing none, and the
+gate reports **per band** rather than adding four to twenty-nine.
+
+`#645` says the gate *"applies to 28 pairs and this does not move it"*, and that is honoured on the
+number: the DRC band's pair count is untouched. What the brief does not say, and what this rules, is
+that the new band is gated too. **A rule shipped without its pair is the failure AC-051 exists to
+prevent, and it does not become acceptable by being filed under a different heading** (`PLAN-H` found
+five gates in this epic whose scope was narrower than their subject; this is the first chance to
+avoid a sixth by construction).
+
+**11.153.5 RULED: `PLN-004` IS A WARNING AND THE OTHER THREE ARE ADVISORIES.** docs/15 §9 grades it a
+warning and `#646` says all four are advisory; the user settled it on the difference in what the four
+sentences claim.
+
+`PLN-001`, `PLN-002` and `PLN-003` say **you have not done this yet**: nothing is calibrated, these
+drops are not pinned, this plan has no rack to measure from. `PLN-004` says **what you are looking at
+may not be what you measured**: the bytes under a calibration and a set of pins have changed, so
+every pin may be in the wrong place and every length derived from them wrong.
+
+**IT STILL BLOCKS NOTHING** (CR-022, G3) and it stays acknowledgeable and overridable like any other
+row. AC-042's *"a mismatch is a warning and never a load failure"* is honoured exactly: the file
+opens, and the finding says why it might not be what its owner thinks.
+
+**11.153.6 RULED: EACH RULE STATES ITS COUNT.** *"N pins carry no measurable position"*, *"N devices
+in Level 1 are not on the plan"*. G4's discipline in a findings list: a rule that fires without
+saying how much has told somebody there is a problem and left them to count it themselves.
+
+`PLN-001`'s sentence already exists and is not rewritten here. `unmeasurablePinsSentence` was built at
+`PLAN-F/3` and DR-146 §11.145.6 put it in core *"precisely so surfaces cannot drift"*; this chapter
+reads it rather than composing a second one.
+
+**11.153.7 RULED: `PLN-002` COUNTS THE LOCATION'S SUBTREE.** An underlay's `locationId` is *"the
+`Location` this depicts, usually a floor"* (docs/15 §3.1), and the drops on a floor are filed in the
+rooms under it. Counting only the exact location would make the rule silent on every plan filed the
+way the trade files them, which is the shape of a rule that exists and never fires.
+
+**11.153.8 WHAT THIS DOES NOT RULE.** Not the issues-list surface, which is M5's and which renders
+whatever `evaluateDocument` returns. Not whether `PLN-*` ever becomes v1 scope rather than v1.1;
+docs/15 §9 calls them v1.1 rules and nothing here moves that. Not the remedy actions a `PLN-*`
+finding might offer, which nothing asks for. And not `T0.02`'s rendering of an acknowledged plan
+advisory, which is M6's sheet.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
