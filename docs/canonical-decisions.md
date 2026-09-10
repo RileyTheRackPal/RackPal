@@ -19244,24 +19244,49 @@ its header 14.
 every drop of a real rough-in"*, and sixty is the number this corpus has used for a rough-in since
 AC-048. A layout that cannot print sixty rows is a layout that cannot meet the criterion it is under.
 
-The band is 1122 pt wide and a four-field row needs roughly a third of that, so **three columns sit
-side by side**: sixty rows cost 254 pt instead of 734 and the plan keeps 313, more than half the
+The band is 1122 pt wide and a four-field row needs roughly a quarter of it, so **four blocks sit
+side by side**: sixty rows cost 194 pt instead of 734 and the plan keeps 373, more than half the
 sheet. It is also how a floor-plan device schedule is actually set.
 
 *Cap and count* was refused because forty references on the drawing would resolve to nothing.
 *Let the plan shrink* was refused because at forty rows the plan is a 73 pt strip and at sixty it is
 gone, which turns a locator into a table with a picture stuck on it.
 
-**A COUNTED OVERFLOW SURVIVES AS THE LAST RESORT AND IS EXPECTED NEVER TO FIRE.** Three columns at
-the band's cap hold roughly 180 rows. Past that the sheet prints what fits and **states how many it
-did not**, because a table quietly shorter than the plan above it is the failure this whole chapter
-is about (G4).
+**11.151.4a AMENDED THE SAME DAY: FOUR BLOCKS AND NOT THREE, BECAUSE THE CAP WAS MEASURED.** This
+clause was ruled as *"three columns"* on a drafted claim that the cap then held *"roughly 180 rows"*.
+**It held sixty.** The arithmetic multiplied rows-per-block by blocks in the wrong direction, and the
+number went into a normative clause without being run.
+
+Sixty is the exit criterion's own figure, so the overflow this clause calls a last resort fired on
+the sixty-first drop of an ordinary house. Measured at `kPlanBandColumnMinPt`:
+
+| Blocks | Block width | Cap | Plan keeps at 60 rows | DESCRIPTION |
+|---|---|---|---|---|
+| 3 | 365 pt | 60 rows | 313 pt | 37 characters |
+| 4 | 270 pt | 80 rows | 373 pt | 27 characters |
+
+**Four blocks give the plan MORE of the sheet at every row count**, not less, because the band takes
+what it needs: sixty rows over four blocks is fifteen rows down rather than twenty. What narrows is
+the fields, and those are already named below as `PLAN-J`'s print to settle.
+
+Ruled by the user on the measurement: four blocks. The refused readings are recorded for the same
+reason the rest of this section records them. *Raise the ceiling to 0.55 of the drawing area* would
+have capped at 72 and changed nothing on a sheet of sixty or fewer, but past 68 rows the table takes
+more than half the sheet and the plan becomes the strip this clause already refused. *Leave the cap
+at sixty and correct only the prose* was refused because a cap standing exactly on the criterion is a
+cap that omits a row from the scenario it was measured against.
+
+**A COUNTED OVERFLOW SURVIVES AS THE LAST RESORT.** Four blocks at the band's cap hold **eighty**
+rows, a third more than the criterion asks for. Past that the sheet prints what fits and **states how
+many it did not**, because a table quietly shorter than the plan above it is the failure this whole
+chapter is about (G4).
 
 **11.151.5 WHAT THIS DOES NOT RULE.** Not the column widths as final figures, which are `PLAN-J`'s
 print to settle along with the callout and bar type sizes. Not a per-plan footage or count strip,
 which nothing asks for. Not whether `T6.30`'s equipment list should gain outlet rows, which is a
 question about that sheet and is M6's. And not the sheet's behaviour past the overflow cap beyond
-stating the count, since no document this product can make comes near it.
+stating the count, since a plan that reaches eighty pinned carriers is already half again the
+criterion's own rough-in.
 
 ---
 
