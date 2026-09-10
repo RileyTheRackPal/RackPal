@@ -659,7 +659,13 @@ $SuiteFloors = @{
     # AREA, so a -1224 x -792 page took a negative dpi off the per-side cap
     # and came back as a plausible 30909 x 20000 raster, past the cap that
     # had just been consulted.
-    'rackpal_core'   = 4474
+    # 4478 at PLAN-K/3: +4 from plan_serialization_test.dart, where a
+    # rendered underlay keeps the PDF page it came from (DR-153 §11.152.6)
+    # and a LIFTED one deliberately does not, since its stored bytes
+    # already are the source. The load-bearing case is the absent key: the
+    # asymmetry is the ruling, so "no source to keep" has to be visible in
+    # the file rather than inferred.
+    'rackpal_core'   = 4478
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

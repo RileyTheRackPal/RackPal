@@ -1014,7 +1014,42 @@ JsonMap _encodePlanUnderlay(PlanUnderlay u) {
     'scale',
     u.scale == null ? null : _encodePlanScale(u.scale!),
   );
+  // ABSENT MEANS THERE IS NO SOURCE TO KEEP, which is a statement about
+  // HOW the underlay arrived rather than an unknown: an image imported
+  // directly, or a page lifted losslessly, whose stored bytes already are
+  // the source (DR-153 §11.152.6).
+  putIfNotNull(
+    json,
+    'sourcePage',
+    u.sourcePage == null ? null : _encodePlanSourcePage(u.sourcePage!),
+  );
   return json;
+}
+
+JsonMap _encodePlanSourcePage(PlanSourcePage p) => {
+  'member': p.member,
+  'pageIndex': p.pageIndex,
+  'contentHash': p.contentHash,
+};
+
+PlanSourcePage _decodePlanSourcePage(Object? raw, String context) {
+  final json = asJsonMap(raw, context);
+  final pageIndex = asInt(json['pageIndex'], '$context.pageIndex');
+  // A NEGATIVE PAGE IS REFUSED AT THE BOUNDARY. Nothing reads this field
+  // yet, and that is exactly why: the day something does, the value it
+  // meets was checked when it arrived rather than trusted because it had
+  // been in a file for a year.
+  if (pageIndex < 0) {
+    throw FormatException(
+      'Expected a page index >= 0 for $context, got: '
+      '$pageIndex',
+    );
+  }
+  return PlanSourcePage(
+    member: asStr(json['member'], '$context.member'),
+    pageIndex: pageIndex,
+    contentHash: asStr(json['contentHash'], '$context.contentHash'),
+  );
 }
 
 PlanUnderlay _decodePlanUnderlay(Uuid id, JsonMap json) => PlanUnderlay(
@@ -1035,6 +1070,9 @@ PlanUnderlay _decodePlanUnderlay(Uuid id, JsonMap json) => PlanUnderlay(
   scale: json['scale'] == null
       ? null
       : _decodePlanScale(json['scale'], 'PlanUnderlay.scale'),
+  sourcePage: json['sourcePage'] == null
+      ? null
+      : _decodePlanSourcePage(json['sourcePage'], 'PlanUnderlay.sourcePage'),
 );
 
 // --- Rack / ZeroUChannel -----------------------------------------------------
