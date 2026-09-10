@@ -1,5 +1,40 @@
 # Update Log
 
+## 2026-09-09 (seventeenth entry)
+
+* **Ruled**: [DR-151](/decisions/dr-151-the-bar-is-drawn.md). The scale bar is
+  drawn, and an uncalibrated `T1.01` says `NOT TO SCALE · PLAN NOT CALIBRATED`
+  itself, because `#643`'s plan (*"`PLN-001` is what tells the user why"*) does
+  not reach the reader: `PLN-001` is a FINDING and the person holding the print
+  has no findings list.
+* **Closed**: `PLAN-H/4` (`#643`) at `v0.6.40`.
+* **Note**: **A PLACEHOLDER REACHED A CLIENT DELIVERABLE.** `PLAN-H/1` printed
+  `PLAN SCALED TO FIT · SEE BAR` on `T1.01` with no bar on the page.
+  `unbuilt_copy_accuracy_test.dart` exists for that class and scans `rackpal_ui`
+  and `apps/rackpal`, so a sheet string in core is invisible to it. **Fifth gate
+  in this epic whose scope is narrower than its subject, and the first where the
+  missed surface is PRINTED**: in-app copy is wrong until you click away, a sheet
+  is wrong in a folder on a job site. Nothing referenced the constant either, so
+  removing it broke no test.
+* **Creation**: [a guard the model makes unreachable](/practices/a-guard-the-model-makes-unreachable.md).
+  A redundant `<= 0` beside a null check survived being deleted, because
+  `PlanScale` already refuses the state. **When a mutation survives, ask whether
+  the branch is REACHABLE before asking what test is missing**: one conclusion adds
+  a case, the other deletes a line.
+* **Update**: [a fixture's default is not a proof](/practices/a-fixture-default-is-not-a-proof.md)
+  gains a second instance, on a NUMBER rather than a flag and harder to see for it.
+  Every scale-bar case used one calibration, so a mutation replacing the ratio with
+  the literal that fixture produces passed all of them: nothing could tell a bar
+  that reads the scale from one with it baked in. The first instance was a field
+  left ABSENT; this one is a field set and uniform, which looks deliberate.
+* **Note**: **A TIE GOES TO THE LARGER BAR, AND THE EPSILON IS NOT A FUDGE.** The
+  drawn length is a double all the way down, so a bar that exactly fills its budget
+  lands at `250.00000000000003` and a bare `<=` picks the rung below. The budget is
+  an aesthetic limit and the last ulp is not a decision anybody made.
+* **Note**: two mutations **did not build**, and both are facts rather than gaps:
+  the uncalibrated return and the sheet's null check are enforced by the type
+  system rather than by a case, which is the strongest form those refusals take.
+
 ## 2026-09-09 (sixteenth entry)
 
 * **Ruled**: [DR-150](/decisions/dr-150-a-pin-has-no-domain.md). `PLAN-H/3`'s

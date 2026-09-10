@@ -8631,6 +8631,76 @@ measured metrics without a change elsewhere. Its buildable variant is killed by 
 
 Six of the twenty new cases are load-bearing and every one is about the two ways a callout fails a
 stranger: it covers the thing it labels, or it names the wrong wall.
+#### 5.9.21 PLAN-H/4: the drawn bar, and a placeholder that reached a deliverable · `DR-151` · `v0.6.40`
+
+Closed `2026-09-09`, `#643`. Commits `5338190` (the ruling), `c1604e8` (the chapter). **No exit clause
+moves.**
+
+##### 5.9.21.1 A placeholder reached a client deliverable
+
+`PLAN-H/1` shipped `kPlanSheetScaleNote = 'PLAN SCALED TO FIT · SEE BAR'` on `T1.01`, and there was
+no bar. It was written as a forward pointer to this chapter and it printed as an instruction to a
+reader.
+
+**`unbuilt_copy_accuracy_test.dart` exists for exactly this class and could not see it.** Its own
+header: *"the app's honest-absence copy is a factual claim about this codebase, so it is tested
+against this codebase."* It scans `rackpal_ui` and `apps/rackpal`; a sheet string lives in
+`rackpal_core`. **Fifth gate in this epic whose scope is narrower than its subject**, after
+`actions_have_callers_test.dart` (§5.9.11.4), the `partKey` filter (§5.9.12.2), `_isQuantity`
+(§5.9.18.1) and the three switches that could not see a missing parameter (§5.9.19.1).
+
+**And it is the first where the missed surface is PRINTED.** In-app copy is wrong until somebody
+clicks away; a sheet is wrong in a folder on a job site. **Nothing referenced the constant either**,
+so removing it broke no test, which is the same absence from the other side.
+
+##### 5.9.21.2 The brief's plan for the uncalibrated case does not reach the reader
+
+`#643`: *"an uncalibrated underlay gets no scale bar at all, not a bar with a guessed figure on it.
+G4, and `PLN-001` is what tells the user why."*
+
+`PLN-001` is a **finding**. It reaches the validation drawer and, at M6, `T0.02`. **The person
+holding the printed `T1.01` has neither**, and `SheetRole` has four values today, none of them
+`T0.02`. The half of the brief that is right is that no bar may be drawn; the half that does not work
+is who explains it.
+
+Ruled (§11.150.3): the sheet says it itself, `NOT TO SCALE · PLAN NOT CALIBRATED`. **The full
+`PLN-001` sentence was the closest call and was refused for a reason worth keeping**: DR-146
+§11.145.6 put that sentence in core precisely so surfaces cannot drift, so reusing it was the
+consistent move. But **its count is a designer's number**. `39 pins carry no measurable position`
+tells the person at the desk what a calibration would buy; the installer holding the print can
+already find all thirty-nine, and a sheet is read by the second person.
+
+##### 5.9.21.3 Three things measurement decided that reading did not
+
+**A TIE GOES TO THE LARGER BAR, AND THE EPSILON IS NOT A FUDGE.** The drawn length is a double all
+the way down: a real length in nanometres times a fit factor times a calibration ratio. A bar that
+exactly fills its budget lands at `250.00000000000003` and a bare `<=` picked the rung below. The
+budget is an **aesthetic** limit and the last ulp is not a decision anybody made, so the comparison
+is relative and the direction is chosen.
+
+**A GUARD THE MODEL MAKES UNREACHABLE IS NOT DEFENCE IN DEPTH.** `nmPerPixel <= 0` was written out of
+habit beside the null check and **survived being deleted**, because `PlanScale` already refuses a
+non-positive span and a non-positive distance and returns null for both. A branch no test can cover
+is a branch a reader has to reason about. Removed.
+
+**A MUTATION FOUND EVERY CASE CALIBRATED THE SAME WAY.** Replacing `nanometresPerPixel` with the
+literal value the fixture happens to produce passed everything, because nothing could tell a bar that
+**reads** the scale from one with it baked in. A second calibration at ten times the pixels per foot
+kills it. **A property proven by one fixture's number is not proven**, which is
+`a-fixture-default-is-not-a-proof` met at a number rather than at a flag.
+
+##### 5.9.21.4 Evidence
+
+Floor: `rackpal_core` 4431 to 4443 (+12).
+
+**The load-bearing case lays the bar against the drawing**: two pins exactly one bar-length apart in
+the building must be exactly `bar.lengthPt` apart on the page. Written that way rather than by
+recomputing the implementation's multiplication, which agrees with it whichever direction it is
+wrong in.
+
+**Eight mutations killed. Two did not build, and both are facts rather than gaps**: the uncalibrated
+return and the sheet's null check are enforced by the **type system** rather than by a case, which is
+the strongest form those two refusals could take.
 ---
 
 ## 6. The dependency graph, as it actually stands

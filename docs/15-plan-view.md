@@ -413,6 +413,11 @@ grammar: an explicitly united value is unambiguous on any project.
 its own, because "which wall" does not require a scale. `PLN-001` reports the uncalibrated state as
 an advisory rather than blocking anything (CR-022, G3).
 
+**THE PRINTED SHEET SAYS IT TOO, IN ITS OWN WORDS** (DR-151 §11.150.3). `T1.01` carries
+`NOT TO SCALE · PLAN NOT CALIBRATED` where its bar would be. That is deliberately **not**
+`PLN-001`'s sentence: the count is a designer's number, and the installer holding the print can
+already find every drop on it. §8 carries the reasoning.
+
 **AND THE UNCALIBRATED ROW SAYS WHAT THAT COSTS** (DR-146 §11.145.4). **BUILT AT `PLAN-F/3`,
 2026-09-08.** The row read a bare `Not calibrated`, so a plan carrying thirty-nine stranded pins
 printed exactly the line a plan with none printed, which is the flattering half G4 exists to refuse.
@@ -677,7 +682,24 @@ is not ordered numerically anyway, `T5.01` sitting last at `n+5`, and **that tab
 
 **The scale bar is drawn, never printed as a ratio.** A sheet is scaled to fit, so a stated ratio
 like 1:50 would be wrong the moment the page size changed. A drawn bar stays correct because it
-scales with the drawing.
+scales with the drawing. **BUILT AT `PLAN-H/4`, 2026-09-09** (`draw/sheet/plan_scale_bar.dart`):
+four alternating segments with `0` and the round total labelled, a length chosen from a ladder in the
+project's own units (CR-097), largest that fits a quarter of the drawing width.
+
+**AND IT IS NEVER REFUSED FOR SCALE** (DR-151 §11.150.5). When no ladder entry fits the budget the
+smallest is taken anyway: a bar longer than a quarter of the sheet is still true, and a bar refused
+for being awkward is a sheet with no bar on a plan that has a scale. The only refusal is the
+uncalibrated one.
+
+**AN UNCALIBRATED PLAN GETS NO BAR AND THE SHEET SAYS WHY ITSELF** (§11.150.2, §11.150.3):
+
+> `NOT TO SCALE · PLAN NOT CALIBRATED`
+
+**§9's plan for this did not reach the reader.** `PLN-001` is a **finding**: it lands in the
+validation drawer and, at M6, on `T0.02 Exceptions and Acknowledgements`. The person holding the
+printed `T1.01` has neither, and `SheetRole` has four values today, none of them `T0.02`. `NOT TO
+SCALE` is the half that matters to that reader because it names the one thing they must not do with
+the page, and the plan still locates every drop: pins and callouts need no scale at all (§1).
 
 ---
 

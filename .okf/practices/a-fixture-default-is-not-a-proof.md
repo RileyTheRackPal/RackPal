@@ -54,3 +54,19 @@ one corner of the state space.
 [Measure at the size the criterion will meet](measure-at-the-size-the-criterion-will-meet.md)
 is the same idea for magnitudes: there the fixture was comfortable, here it is
 one-sided.
+
+# And again at PLAN-H/4, on a number rather than a flag
+
+Every case in `plan_scale_bar_test.dart` used one calibration, 100 ft over
+1000 px. A mutation replacing `PlanScale.nanometresPerPixel` with the literal
+value that fixture happens to produce **passed all of them**: nothing in the file
+could tell a bar that READS the scale from one with the scale baked in.
+
+The first instance of this practice was a fixture default that was *absent* (no
+`PlanScale` at all, so every pin gesture was already the interesting case). This
+one is a fixture value that is *present and uniform*, which is harder to see,
+because the field is set and looks deliberate.
+
+**The check is the same and generalises to both**: ask which fixture field carries
+the property, then write the case that sets it to a DIFFERENT value rather than to
+none. A second calibration at ten times the pixels per foot kills the mutation.

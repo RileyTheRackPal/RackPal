@@ -195,6 +195,7 @@ export 'src/draw/sheet/drawing_scale.dart';
 export 'src/draw/sheet/elevation_sheet.dart';
 export 'src/draw/sheet/equipment_sheet.dart';
 export 'src/draw/sheet/plan_callouts.dart';
+export 'src/draw/sheet/plan_scale_bar.dart';
 export 'src/draw/sheet/plan_sheet.dart';
 export 'src/draw/sheet/revision_block.dart';
 export 'src/draw/sheet/sheet_def.dart';

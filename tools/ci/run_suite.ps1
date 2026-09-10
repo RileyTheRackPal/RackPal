@@ -624,7 +624,23 @@ $SuiteFloors = @{
     # twelve, since four radii by eight directions is thirty-two slots.
     # Twenty coincident drops all place clear and crowding starts at
     # twenty-four, which is the number the cases now use.
-    'rackpal_core'   = 4431
+    # 4443 at PLAN-H/4: +12 from plan_scale_bar_test.dart. The
+    # load-bearing one LAYS THE BAR AGAINST THE DRAWING: two pins exactly
+    # one bar-length apart in the building must be exactly bar.lengthPt
+    # apart on the page. Written that way rather than by recomputing the
+    # implementation's multiplication, which agrees with it whichever
+    # direction it is wrong in.
+    #
+    # AND ONE CASE EXISTS BECAUSE A MUTATION SURVIVED. Replacing
+    # nanometresPerPixel with the literal value the first fixture happens
+    # to produce passed everything, because every case was calibrated the
+    # same way: a property proven by one fixture's number is not proven. A
+    # second calibration at ten times the pixels per foot kills it.
+    #
+    # Two mutations DID NOT BUILD and both are facts rather than gaps: the
+    # uncalibrated return and the bar's null check are enforced by the type
+    # system, not by a case.
+    'rackpal_core'   = 4443
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

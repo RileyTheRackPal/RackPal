@@ -19113,6 +19113,82 @@ arm's length is settled.
 
 ---
 
+### §11.150 DR-151 · The bar is drawn, the uncalibrated sheet says so itself, and a placeholder string reached a deliverable
+
+**Settled by the user on 2026-09-09**, at `PLAN-H/4`'s census.
+
+**11.150.1 A PLACEHOLDER REACHED A CLIENT DELIVERABLE, AND THE GATE THAT EXISTS FOR THAT CLASS
+CANNOT SEE A SHEET.** `PLAN-H/1` shipped `kPlanSheetScaleNote = 'PLAN SCALED TO FIT · SEE BAR'` on
+`T1.01`, and there was no bar. It was written as a forward pointer to this chapter and it printed as
+a instruction to a reader.
+
+`unbuilt_copy_accuracy_test.dart` exists for exactly this failure and its own header says so: *"the
+app's honest-absence copy is a factual claim about this codebase, so it is tested against this
+codebase."* It scans `rackpal_ui` and `apps/rackpal`. **A sheet string lives in `rackpal_core` and is
+invisible to it**, which is a gate's scope being narrower than its subject for the fifth time in this
+epic, and the first where the surface it misses is *printed and handed to somebody*. In-app copy is
+wrong until somebody clicks away; a sheet is wrong in a folder on a job site.
+
+**The fix is this chapter, and the finding is the gate's reach.** `PLAN-H/5` inherits nothing here;
+what is recorded is that sheet copy has no honest-absence gate, and that the two surfaces differ in
+consequence rather than in kind.
+
+**11.150.2 THE BRIEF'S PLAN FOR THE UNCALIBRATED CASE DOES NOT REACH THE READER.** `#643`: *"an
+uncalibrated underlay gets no scale bar at all, not a bar with a guessed figure on it. G4, and
+`PLN-001` is what tells the user why."*
+
+`PLN-001` is a **finding**. It lands in the validation drawer and, at M6, on `T0.02 Exceptions and
+Acknowledgements`. **A person holding the printed `T1.01` has neither**, and `SheetRole` has four
+values today, none of them `T0.02`. The half of the brief that is right is that no bar may be drawn;
+the half that does not work is who explains it.
+
+**11.150.3 RULED: THE SHEET SAYS IT ITSELF.**
+
+> `NOT TO SCALE · PLAN NOT CALIBRATED`
+
+The drafting term for the fact, and the cause in the product's own words. **`NOT TO SCALE` is the
+part that matters to the person holding it**, because it names the one thing they must not do with
+the sheet, and the plan still locates every drop: pins and callouts work uncalibrated, which is
+docs/15 §1's first job.
+
+*The full `PLN-001` sentence with its count* was refused, and it was the closest call: DR-146
+§11.145.6 put that sentence in core precisely so surfaces cannot drift. **But its count is a
+designer's number.** `39 pins carry no measurable position` tells the person at the desk what a
+calibration would buy; the installer holding the print can already find all thirty-nine, and a
+sheet is read by the second person. *`NOT TO SCALE` alone* was refused for leaving a designer who
+picks the sheet up unable to tell an uncalibrated plan from an unscalable one.
+
+**11.150.4 RULED: ALTERNATING SEGMENTS, ENDS LABELLED.** Four equal divisions, filled and hollow
+alternating, `0` at the left and the round total at the right.
+
+**The alternation is the feature and not the decoration.** A plain rule can be read only at its full
+length; a divided one can be read by eye at a quarter, a half, three quarters. It survives greyscale
+by construction, being black and paper rather than two greys, which is the property AC-054's print
+tests and PAL-1 gates everywhere else.
+
+*Every division labelled* was refused on the sheet rather than on the principle: four more text runs
+at 6.5 pt under a drawing, and on a 20 ft bar at ANSI B the intermediate numbers crowd each other.
+
+**11.150.5 THE BAR'S LENGTH IS A ROUND NUMBER IN THE PROJECT'S UNITS, AND IS NEVER REFUSED FOR
+SCALE.** A ladder of round values in `ProjectSettings.displayUnits` (CR-097 makes that field
+authoritative), and the largest whose drawn length fits the budget wins. **When none fits, the
+smallest is taken anyway**: a bar that is longer than a quarter of the sheet is still true, and a
+bar refused for being awkward is a sheet with no bar on a plan that has a scale. The only refusal is
+§11.150.3's.
+
+**THE ARITHMETIC WAS ALREADY SEAMED.** `PlanSheet.factor` was carried out of `PLAN-H/1` with a doc
+comment naming this chapter: *"the scale bar needs exactly this number times the calibration to know
+how long a real foot is on this page, and a second fit computed there would be a second answer to one
+question."* Points per nanometre is `factor / PlanScale.nanometresPerPixel`, computed once.
+
+**11.150.6 WHAT THIS DOES NOT RULE.** Not a north arrow, which has no field on `PlanUnderlay` to
+read. Not the per-plan device schedule (`PLAN-H/5`). Not the bar's own type size as a final figure,
+which is `kCalloutTextPt`'s question and `PLAN-J`'s print to settle. And **not a gate for sheet
+copy**: §11.150.1 records that the absence exists and prices nothing, because the honest scope of a
+new gate is a question for whoever has met the failure twice rather than once.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
