@@ -640,7 +640,17 @@ $SuiteFloors = @{
     # Two mutations DID NOT BUILD and both are facts rather than gaps: the
     # uncalibrated return and the bar's null check are enforced by the type
     # system, not by a case.
-    'rackpal_core'   = 4443
+    # 4464 at PLAN-H/5: +21 from plan_schedule_test.dart, the Floor Plan
+    # Device Schedule's rows and its band. Four of the cases exist because
+    # a mutation survived: the id tiebreak needs FORTY rows sharing an
+    # area and a reference, since Dart sorts a shorter list by insertion
+    # and preserves order either way; the cap is pinned at eighty because
+    # DR-152's draft said 180 and the layout held 60; and two count what
+    # actually reached the ops, since `shown` is a claim about the sheet.
+    # One mutation DID NOT BUILD and is a fact rather than a gap: the
+    # entity lookups are non-null because the label resolved from the same
+    # map one line earlier, so deleting the `!` is a compile error.
+    'rackpal_core'   = 4464
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -657,7 +667,13 @@ $SuiteFloors = @{
     # pass that discarded alpha would print a solid bar across the sheet,
     # and the deflate measurement, because "already-compressed rasters do
     # not deflate" is true of photographs and false of line art.
-    'rackpal_export' = 220
+    # 222 at PLAN-H/5: +2 from plan_schedule_notice_test.dart. The band's
+    # `omitted` count reaches the user through `ExportedDocument.notices`,
+    # which is the channel scale_notice_test.dart exists because nothing
+    # read. The control is the load-bearing half: it reads DEVICE SCHEDULE
+    # and the sixtieth designator off the real PDF with the real font, so
+    # an absent notice cannot be a sheet that was never drawn.
+    'rackpal_export' = 222
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
     # presses the two new remedy buttons on chips raised by a real drag.
     # The core suites cannot see whether the SCREEN reaches the commands.

@@ -170,9 +170,30 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
           issuedAt: request.issuedAt,
           measurer: measurer,
           labels: planPinLabelsFor(doc, pins),
+          // THE EQUIPMENT LIST THIS EXPORT ALREADY BUILT, handed in rather
+          // than rebuilt per plan: CR-107's divergence is two derivations
+          // of one fact, and a second build would also pay for the whole
+          // device walk once per underlay.
+          scheduleRows: planScheduleFor(
+            doc,
+            sheet.underlayId!,
+            equipment: list,
+          ),
         );
         scene = built.scene;
         legibility = built.legibility;
+        // A TABLE SHORTER THAN THE DRAWING ABOVE IT IS THE DEAD END THIS
+        // SCHEDULE EXISTS TO CLOSE, so an omission is named rather than
+        // silent. Four blocks at the band's cap hold eighty rows, a third
+        // more than the exit criterion's sixty, so this is the last resort
+        // DR-152 §11.151.4 describes and not an ordinary path.
+        if (built.band.omitted > 0) {
+          notices.add(
+            '${sheet.ncsId}: the device schedule shows '
+            '${built.band.shown} of ${built.band.shown + built.band.omitted} '
+            'rows; the rest did not fit.',
+          );
+        }
         // A CROWDED CALLOUT IS A NOTICE, NEVER A GATE (CR-023, G3), on the
         // elevation's own precedent three cases up. DR-150 §11.149.5 rules
         // that a callout is never DROPPED, so a plan whose drops sit closer

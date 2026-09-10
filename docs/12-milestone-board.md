@@ -8701,6 +8701,91 @@ wrong in.
 **Eight mutations killed. Two did not build, and both are facts rather than gaps**: the uncalibrated
 return and the sheet's null check are enforced by the **type system** rather than by a case, which is
 the strongest form those two refusals could take.
+
+#### 5.9.22 PLAN-H/5: the schedule projects the plan, and a cap drafted at three times its size · `DR-152` · `v0.6.41`
+
+Closed `2026-09-09`, `#644`. Commits `6456064` (the ruling), `dc3b98f` (the amendment), `9b9511a`
+(the chapter). **No exit clause moves**, and `T1.01` is complete: the slot and the screening at
+`PLAN-H/1`, the callouts at `PLAN-H/3`, the bar at `PLAN-H/4`, the schedule here.
+
+##### 5.9.22.1 The derivation the brief names holds none of the rows
+
+`#644`: *"It is a PROJECTION of the derivation the equipment list already uses, not a second table
+builder."*
+
+`EquipmentList` is **one row per `DeviceInstance`** and its own header says so. A plan pins three
+carriers (docs/15 §3.4) and **two of them are not devices**: an `Outlet` and a `Rack` appear in that
+derivation nowhere at all. On the rough-in the exit criterion describes, outlets are most of what is
+pinned, so the named source holds a minority of the rows.
+
+**Fourth of `PLAN-H`'s five briefs to describe a tree that has moved**, after `#640`'s `SheetRole`
+switches, `#642`'s callout copy and `#643`'s `PLN-001`. The pattern is now the epic's rather than a
+coincidence: these briefs were written at decomposition on 2026-08-10 and the tree they describe is
+a month older than the tree they land in (`a-brief-expires`).
+
+**The principle behind the pointer is right and is CR-107's**, which is worth quoting because it is
+about this exact table: two entities carrying the same facts *"is guaranteed to diverge within one
+week of real use: the drop schedule says 78 ft and the wiring schedule says 90 ft, and nobody knows
+which to bill against."* What satisfies it is projecting the derivations the **plan** already has,
+which is what `planPinsFor` and `planPinLabelsFor` are, so the reference column is literally the
+string the pill prints and one designator cannot resolve to two spellings.
+
+##### 5.9.22.2 A cap drafted at 180 rows held 60, and 60 is the criterion
+
+`DR-152 §11.151.4` ruled the band **three columns** and called the overflow past it *"expected never
+to fire"*, on a drafted claim that three columns at the cap held *"roughly 180 rows"*.
+
+**It held sixty.** The arithmetic multiplied rows-per-block by blocks in the wrong direction, and the
+number reached a normative clause without being run. Sixty is DR-037 §11.36.1's own rough-in
+(AC-048), so the last resort fired on the sixty-first drop of an ordinary house.
+
+| Blocks | Block width | Cap | Plan keeps at 60 rows | DESCRIPTION |
+|---|---|---|---|---|
+| 3 | 365 pt | 60 rows | 313 pt | 37 characters |
+| 4 | 270 pt | 80 rows | 373 pt | 27 characters |
+
+Amended the same day to **four blocks** (§11.151.4a). The band takes what it needs, so four blocks
+give the **plan** more of the sheet at every row count and not less: sixty rows is fifteen rows down
+rather than twenty.
+
+**IT WAS FOUND BY MUTATION TESTING AND NOT BY REVIEW**, which is the part worth keeping. The number
+sat in a ruling, in a file header and in an export comment, three copies agreeing with each other,
+and nothing in the tree disagreed until a test was asked to name the row at which the band starts
+omitting. CLAUDE.md's own rule, that **a second copy of a moving number is a liability**, has an
+instance where the first copy was normative and no copy was ever measured
+(`a-normative-number-is-still-a-measurement`).
+
+##### 5.9.22.3 Two branches deleted rather than tested
+
+`PLAN-H/4` wrote `a-guard-the-model-makes-unreachable` and this chapter met the same shape twice.
+
+**`if (row != null) out.add(row)` survived being deleted.** The three row builders returned nullable
+because a map lookup does, but `planPinLabelsFor` had already resolved a designator out of those same
+three maps under that same key one line earlier: a pin whose entity is absent has no label and left
+through the `continue`. The lookups are now non-null, and **deleting the `!` is a compile error**,
+which is the strongest form that refusal can take.
+
+**The column cap at `kPlanScheduleHeaders.length` survived being raised to 99.** Four fields and four
+blocks was symmetry rather than a reason: a fifth block needs a drawing area 1,356 pt wide and ANSI B
+landscape gives 1122. The floor is real, because a caller may hand the band any box, and the ceiling
+was arithmetic nobody can reach.
+
+##### 5.9.22.4 Evidence
+
+Floors: `rackpal_core` 4443 to 4464 (+21), `rackpal_export` 220 to 222 (+2).
+
+**The tiebreak case needs forty rows and the count is the whole test.** Dart sorts a list shorter
+than about thirty-three by insertion, which happens to preserve order, and longer ones by a
+dual-pivot quicksort, which does not. Measured on this machine: ten rows survive a comparator with
+no tiebreak at all, forty do not. A two-row case would have proven nothing, which is
+`a-fixture-default-is-not-a-proof` met at a list length.
+
+**The export pair asserts the notice through the real entry point with the real font.** Its control
+is the load-bearing half: it reads `DEVICE SCHEDULE` and the sixtieth designator off the emitted PDF,
+because an absent notice proves nothing about a sheet that was never drawn.
+
+**Fourteen mutations killed, one did not build.** The one that did not build is §5.9.22.3's `!`.
+
 ---
 
 ## 6. The dependency graph, as it actually stands

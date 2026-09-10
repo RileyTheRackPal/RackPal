@@ -47,8 +47,14 @@
 // ═══════════════════════════════════════════════════════════════════════
 // WHAT IS NOT HERE YET, LISTED SO IT IS NOT READ AS AN OMISSION
 // ═══════════════════════════════════════════════════════════════════════
-// No SCALE BAR (`PLAN-H/4`). No per-plan DEVICE SCHEDULE (`PLAN-H/5`). No
-// north arrow, which has no field on `PlanUnderlay` to read.
+// No north arrow, which has no field on `PlanUnderlay` to read, and is the
+// only thing docs/15 §8's slot row still names that this sheet does not
+// draw.
+//
+// THE SCHEDULE BAND TAKES ITS HEIGHT OFF THE PLAN'S, which is the one
+// coupling worth knowing here: `PLAN-H/5`'s band is measured first, and
+// the picture is fitted into what is left. The other order would fit the
+// plan to the whole area and then draw a table over the bottom of it.
 //
 // CALLOUTS ARRIVED AT `PLAN-H/3` and are drawn by `plan_callouts.dart`,
 // OUTSIDE the bracket. That is the one thing about them worth knowing
@@ -65,12 +71,16 @@
 // backend's resolver (docs/15 §7, DR-037 §11.36.3). This file could not
 // screen anything if it wanted to.
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/derived/plan_schedule.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/plan_scene.dart';
 import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
+import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart'
+    show kSchedulePt;
 import 'package:rackpal_core/src/draw/sheet/plan_callouts.dart';
 import 'package:rackpal_core/src/draw/sheet/plan_scale_bar.dart';
+import 'package:rackpal_core/src/draw/sheet/plan_schedule_band.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_def.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_frame.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_furniture.dart';
@@ -82,7 +92,10 @@ import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:vector_math/vector_math_64.dart';
 
-/// Where the scale bar's baseline sits below the drawing area.
+/// The gap between the plan's own area and the schedule band.
+const double kPlanBandGapPt = 6;
+
+/// Where the scale bar's baseline sits below the plan's area.
 const double kPlanScaleBarBaselinePt = 13;
 
 /// One built `T1.01`.
@@ -94,6 +107,7 @@ final class PlanSheet {
     required this.factor,
     required this.callouts,
     required this.bar,
+    required this.band,
   });
 
   final DiagramScene scene;
@@ -110,6 +124,9 @@ final class PlanSheet {
   /// The bar this sheet drew, or null when the plan is uncalibrated and
   /// it printed [kPlanNotToScaleNote] instead.
   final PlanScaleBar? bar;
+
+  /// What the device schedule printed, and what it could not.
+  final PlanScheduleBand band;
 
   /// What the callout layer could and could not place.
   ///
@@ -135,6 +152,7 @@ PlanSheet buildPlanSheet({
   required DateTime issuedAt,
   required TextMeasurer measurer,
   Map<Uuid, String> labels = const <Uuid, String>{},
+  List<PlanScheduleRow> scheduleRows = const <PlanScheduleRow>[],
   SheetPalette palette = const SheetPalette(),
   PlanPalette planPalette = const PlanPalette(),
 }) {
@@ -145,6 +163,22 @@ PlanSheet buildPlanSheet({
 
   final layout = sheetLayoutFor(sheet, revisions);
   final area = layout.drawingArea;
+
+  // THE BAND FIRST, BECAUSE THE PLAN IS FITTED INTO WHAT IS LEFT. Fitting
+  // the picture to the whole area and then drawing a table over its bottom
+  // is the same sheet with the drawing partly hidden.
+  final band = buildPlanScheduleBand(
+    rows: scheduleRows,
+    area: area,
+    measurer: measurer,
+    palette: palette,
+  );
+  final planArea = DBox.fromLtwh(
+    area.left,
+    area.top,
+    area.width,
+    area.height - band.height - (band.height > 0 ? kPlanBandGapPt : 0),
+  );
 
   final furniture = buildSheetFurniture(
     sheet: sheet,
@@ -189,8 +223,8 @@ PlanSheet buildPlanSheet({
   final bounds = plan.underlayBounds;
   final factor = fitSceneFactor(
     bounds,
-    availableWidth: area.width,
-    availableHeight: area.height,
+    availableWidth: planArea.width,
+    availableHeight: planArea.height,
   );
   final s = factor.unitsToPoints;
 
@@ -198,8 +232,8 @@ PlanSheet buildPlanSheet({
   // because a rack stands on a floor and an absolute check catches a
   // Y-flip; a floorplan has no such edge, and a plan pushed into a corner
   // reads as a drawing that did not fit.
-  final originX = area.left + (area.width - bounds.width * s) / 2;
-  final originY = area.top + (area.height - bounds.height * s) / 2;
+  final originX = planArea.left + (planArea.width - bounds.width * s) / 2;
+  final originY = planArea.top + (planArea.height - bounds.height * s) / 2;
 
   // MAPPED THROUGH THE SAME TRANSFORM THE PICTURE GETS, by hand rather
   // than by the bracket: a callout must not scale with the drawing (see
@@ -219,7 +253,9 @@ PlanSheet buildPlanSheet({
             text: text,
           ),
     ],
-    area: area,
+    // THE PLAN'S AREA AND NOT THE SHEET'S: a callout pushed down into the
+    // schedule band would print over a row.
+    area: planArea,
     measurer: measurer,
     palette: palette,
   );
@@ -229,7 +265,7 @@ PlanSheet buildPlanSheet({
   final bar = choosePlanScaleBar(
     underlay: underlay,
     factor: factor,
-    available: area.width,
+    available: planArea.width,
     units: settings.displayUnits,
   );
 
@@ -249,13 +285,16 @@ PlanSheet buildPlanSheet({
     if (bar != null)
       ...planScaleBarOps(
         bar: bar,
-        origin: DPt(area.left, area.bottom + kPlanScaleBarBaselinePt),
+        origin: DPt(
+          planArea.left,
+          planArea.bottom + kPlanScaleBarBaselinePt,
+        ),
         palette: palette,
       )
     else
       OpText(
         kPlanNotToScaleNote,
-        DPt(area.left, area.bottom + kPlanScaleNoteOffsetPt),
+        DPt(planArea.left, planArea.bottom + kPlanScaleNoteOffsetPt),
         TextStyleSpec(
           font: kSheetFont,
           sizePt: kPlanNotePt,
@@ -263,6 +302,7 @@ PlanSheet buildPlanSheet({
           anchor: TextAnchor.midLeft,
         ),
       ),
+    ...band.ops,
   ];
 
   // THE CALLOUT'S SIZE IS IN HERE NOW, and it is not scaled: the pills sit
@@ -275,6 +315,7 @@ PlanSheet buildPlanSheet({
     kPlanNotePt,
     if (callouts.ops.isNotEmpty) kCalloutTextPt,
     if (bar != null) kScaleBarTextPt,
+    if (band.ops.isNotEmpty) kSchedulePt,
   ].reduce((a, b) => a < b ? a : b);
 
   return PlanSheet(
@@ -292,6 +333,7 @@ PlanSheet buildPlanSheet({
     factor: factor,
     callouts: callouts,
     bar: bar,
+    band: band,
   );
 }
 

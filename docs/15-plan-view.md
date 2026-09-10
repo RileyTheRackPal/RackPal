@@ -652,7 +652,7 @@ One new sheet slot.
 
 | Slot | Sheet | Default | Contents |
 |---|---|---|---|
-| `T1.01…` | **Device Location Plan** | **AUTO** | One per `PlanUnderlay` that carries at least one pin. The screened underlay fitted to the sheet, device and outlet callouts with designators, the scale bar derived from calibration, a north arrow if set, and the per-plan device schedule below. **BUILT AT `PLAN-H/1`, 2026-09-09** (`draw/sheet/plan_sheet.dart`, `SheetRole.devicePlan`, ANSI B landscape): the slot, the fitted underlay, the screening and a marker per pin. **Owed**: the callouts (`PLAN-H/3`), the drawn bar (`PLAN-H/4`), the schedule (`PLAN-H/5`). A north arrow has no field on `PlanUnderlay` to read and is not scheduled |
+| `T1.01…` | **Device Location Plan** | **AUTO** | One per `PlanUnderlay` that carries at least one pin. The screened underlay fitted to the sheet, device and outlet callouts with designators, the scale bar derived from calibration, a north arrow if set, and the per-plan device schedule below. **BUILT AT `PLAN-H/1`, 2026-09-09** (`draw/sheet/plan_sheet.dart`, `SheetRole.devicePlan`, ANSI B landscape): the slot, the fitted underlay, the screening and a marker per pin. The callouts landed at `PLAN-H/3`, the drawn bar at `PLAN-H/4` and the schedule at `PLAN-H/5`, all on 2026-09-09. A north arrow has no field on `PlanUnderlay` to read and is not scheduled |
 
 **`AUTO` is load-bearing, not a preference.** M6's exit criterion is that all four starter projects
 export a complete set, and the starters are checked-in byte-verified goldens that double as perf
@@ -663,9 +663,29 @@ about M6 changes. `T6.20` and `T5.01` are already `AUTO`, so this needs no new m
 
 **The per-plan device schedule** follows the standard's own sample columns for a Floor Plan Device
 Schedule: `Area Name | Reference | Item | Item Description` (research-domain-docs §). It is a
-projection of the same derivation the equipment list uses, not a second table builder, for the
-reason `derived/schedule.dart` states about the Pull Sheet and the Termination Schedule: two builders
-agree on the day they are written and disagree by the end of the milestone.
+projection rather than a second table builder, for the reason `derived/schedule.dart` states about
+the Pull Sheet and the Termination Schedule: two builders agree on the day they are written and
+disagree by the end of the milestone.
+
+**BUILT AT `PLAN-H/5`, 2026-09-09** (`derived/plan_schedule.dart`,
+`draw/sheet/plan_schedule_band.dart`), and **what it projects is not the equipment list**
+(DR-152 §11.151.1). `EquipmentList` is one row per `DeviceInstance`, and a plan pins three carriers
+(§3.4) of which two are not devices: on a rough-in, outlets are most of what is pinned. The row
+subject is a **pinned carrier**, so the schedule projects `planPinsFor` and `planPinLabelsFor`, which
+`PLAN-H/3` already built for the callouts. **The reference column is therefore literally the string
+the pill prints**, and a reader going from a callout to a row cannot meet two spellings of one
+designator. Each remaining column reads whichever derivation owns that carrier: `computePlateFill`
+for an outlet, `EquipmentRow` for a device, the rack's own height for the rack.
+
+**Every callout resolves, the rack included** (§11.151.3). A reader who finds `RK-1` on the plan and
+nothing in the table beneath it has hit the one dead end this sheet exists to prevent.
+
+**It is set in four blocks across, and the measurement is the argument** (§11.151.4): the drawing
+area is 1122 × 567 pt and a row is 12 pt, so a single column of sixty needs 734 pt and does not fit
+on a 567 pt area at all. Four blocks put sixty rows in 194 pt and leave the plan 373. The band takes
+what it needs and never more than 45% of the drawing area, and **past that cap of eighty rows it
+prints what fits and states how many it did not** (G4), which also reaches the export summary as a
+notice naming the sheet.
 
 **Drawing index.** `T1.01` sheets resolve into the index like every other slot, after the sheet list
 resolves, so the index can never name a plan that is not in the file.
