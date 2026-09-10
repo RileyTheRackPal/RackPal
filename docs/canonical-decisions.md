@@ -19290,6 +19290,127 @@ criterion's own rough-in.
 
 ---
 
+### §11.152 DR-153 · The rasteriser is built, the deferral ends on trade evidence, and the vector is kept rather than discarded
+
+**Settled by the user on 2026-09-09**, immediately after `PLAN-H` closed. DR-138 §11.137.5 deferred
+pdfium *"until a PDF needs it"*, DR-145 §11.144.5 kept the deferral when one did, and DR-148
+§11.147.2 kept it a second time and wired the debt into the exit criterion. **This is the ruling that
+ends it**, and it ends on the one thing all three said they did not have.
+
+**11.152.1 THE EVIDENCE THE CORPUS WAS MISSING IS A POPULATION, AND IT CAME FROM THE TRADE.**
+DR-145 §11.144.3 measured two real plan sets at opposite ends, one all raster and one all vector, and
+refused to generalise from them in terms: *"nothing here says how the two classes are distributed
+across the trade."* DR-138 §11.137.5 said the same thing more bluntly: *"**n is one.**"*
+
+The user has now supplied the distribution. **Raster sets are the more common of the two and vector
+plots are by no means uncommon**, and many plans arrive as CAD plots. That is trade knowledge rather
+than a census, which is exactly what DR-138 said it was waiting for, and it settles the question both
+prior rulings parked: the refused class is ordinary rather than exceptional. **DR-145 §11.144.4's
+*"half the ordinary path is bought"* is no longer a note about a possibility.**
+
+**AND THERE IS A SECOND REASON, WHICH IS ABOUT THE OUTPUT RATHER THAN THE INPUT.** The user's other
+ground is that vector scales better on a sheet somebody is presented with. That is a print-quality
+argument and it is independent of coverage: it would be true even if every plan imported today. It is
+why §11.152.6 keeps the source page rather than discarding it, and it is not by itself an argument
+for building a passthrough now (§11.152.7).
+
+**11.152.2 THE MECHANISM IS UNCHANGED, BECAUSE BOTH ORIGINAL REFUSALS STILL HOLD.** Re-checked
+rather than assumed. `pdfrx` and its siblings obtain pdfium by **downloading it at build time**,
+which CR-100 forbids in its own words, and 2.x requires **Flutter 3.47** against a repo pinned at
+3.44.4 by a gate (DR-138 §11.137.1). `printing` fetches the same way (docs/03 §10.1). Either refusal
+alone still ends it, and both stand.
+
+**A pure-Dart renderer is refused on the file itself.** DR-145 §11.144.7 put it on the record as *not
+costed*; costing it is one measurement, and it is in that same ruling's table: **the CAD plot carries
+39 fonts**. A renderer for that page is a font rasteriser plus a path engine plus a clipping model,
+which is a research project wearing a chapter's clothes.
+
+**Ruled: a direct FFI binding over a vendored pdfium**, which is what DR-138, DR-145 and DR-148 each
+named and none built.
+
+**11.152.3 RULED: WINDOWS X64 IS VENDORED NOW, PINNED BY VERSION AND CHECKSUM, AND A PERSON PLACES
+IT.** One `pdfium.dll`, its release version and SHA-256 written into the tree, and a script that
+verifies the checksum rather than trusting the download. macOS binaries when macOS work starts
+(DR-009), because an unused binary is an unverified one.
+
+**THE AGENT CANNOT FETCH IT, AND UNDER CR-100 THAT IS THE POINT.** The vendoring step is the
+supply-chain boundary that ruling describes, so it is a human act by construction rather than by
+accident. Everything above the binary is built and gated without it; the tests that need it are red
+until it is in the tree, which is the honest state for a suite that cannot run.
+
+**11.152.4 RULED: THE NATIVE DEPENDENCY IS A LEAF PACKAGE AND `rackpal_core` NEVER SEES IT.**
+`rackpal_pdfium`: pure Dart, `dart:ffi`, no Flutter, depended on by `apps/rackpal` alone. The
+importer calls it through an injected function, which is the seam `PdfImageResolver` and
+`FlutterImageResolver` already are.
+
+**The property being protected is not tidiness.** `rackpal_core` has zero native dependencies, and
+its 4,464 tests run on any machine with a Dart SDK and nothing else. A binding inside core makes a
+missing DLL a red core suite on somebody's laptop, which is a worse failure than the one it saves.
+
+**11.152.5 RULED: 300 DPI OF THE PAGE'S OWN SIZE, WITH A PIXEL BUDGET THAT STEPS DOWN RATHER THAN
+REFUSES.** This discharges the question DR-145 §11.144.7 opened and DR-148 §11.147.5 left owed: *"a
+rule for a raster source and a vector source has no such ceiling."*
+
+Measured rather than chosen by feel. `T1.01` fits the plan into **15.6 x 7.9 in**, so:
+
+| Source render | Pixels on ANSI B | Effective on the sheet |
+|---|---|---|
+| 200 dpi | 3400 x 2200, 7.5 MP | 218 dpi |
+| **300 dpi** | **5100 x 3300, 16.8 MP** | **327 dpi** |
+| 600 dpi | 10200 x 6600, 67 MP | 654 dpi |
+
+300 is the rung that prints above 300 on the sheet, which is where a laser stops being the limit.
+600 is refused as a default rather than as an idea: an ARCH D sheet at 600 is **311 MP** against a
+120 MP cap and a 20,000 px dimension cap, so it could never be the rule for both real sheet sizes.
+
+**THE BUDGET IS WHY THIS IS A RULE AND NOT A NUMBER.** ARCH D at 300 dpi is 78 MP and a 311 MB
+bitmap, which is inside the caps and outside what a desktop should allocate in one block. So the
+target is 300 dpi and the effective figure **steps down to fit a pixel budget**, rather than a large
+sheet being refused. A refusal here would reinstate the manual step for exactly the drawings most
+likely to be a whole floor.
+
+**Stored as PNG.** Line art deflates and a JPEG of line art rings around every wall, which is the
+domain half of the borrowed rule DR-137's own census got wrong once.
+
+**11.152.6 RULED: A RASTERISED PAGE KEEPS ITS SOURCE, A LIFTED PAGE DOES NOT, AND THE ASYMMETRY IS
+THE ARGUMENT.** A lifted page's stored bytes **are** the source (DR-138 §11.137.3: lossless by
+construction), so copying the PDF beside it would store the same drawing twice. A rasterised page has
+thrown the vector away, and only the source can bring it back.
+
+So the container keeps the originating PDF page for pages it rasterised. **The cost is one copy of a
+file the user already has** and the purchase is that §11.152.7 stays open without re-importing a
+single plan, which is the half of this decision that cannot be made later.
+
+**11.152.7 RULED: VECTOR PASSTHROUGH IS NOT BUILT NOW, AND `PLAN-J` DECIDES WHETHER IT IS BUILT AT
+ALL.** Embedding the architect's own page into the exported `T1.01` is the best possible print and it
+is a different job:
+
+- **It needs an object-graph copier**, which is a second and larger PDF reader than
+  `pdf_page_lift.dart`, whose header says in terms that it *"is not a PDF reader and must never
+  become one."*
+- **It collides with the screening.** `kUnderlayInkRetained` is 25% applied per pixel (DR-149
+  §11.148.4). A vector page cannot receive that: it needs a constant-alpha overlay, which is a
+  different mechanism from the image alpha `PLAN-H/2` asserts against, and it would need its own
+  ruling.
+
+**The drill is the evidence and it is already scheduled.** `PLAN-J` prints `T1.01` on a greyscale
+laser at ANSI B. A 327 dpi screened underlay either survives that or it does not, and building a
+subsystem before the print would be a spend against a guess.
+
+**11.152.8 AND `PLAN-K` IS THE GATE ON `PLAN-J`, WHICH REVERSES THE LETTER ORDER.** DR-148 §11.147.3
+bound the drill to the CAD plot, so `PLAN-J` cannot run until this work lands. `PLAN-I` is
+independent of both and its order is unchanged. **This is not an §8.3 amendment**: DR-148 §11.147.3
+already ruled that the exit criterion covers this input, so the scope list does not move.
+
+**11.152.9 WHAT THIS DOES NOT RULE.** Not the page picker's behaviour when every page is refused,
+which is still DR-145 §11.144.7's and is now less likely to arise. Not the licence census CR-100 says
+a vendored pdfium reopens; that is the vendoring chapter's own work and belongs beside the binary.
+Not whether the raster prints well enough, which is §11.152.7's and `PLAN-J`'s. Not macOS. And not
+text on the sheet remaining selectable or searchable, which no criterion asks for and which only a
+passthrough could offer.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
