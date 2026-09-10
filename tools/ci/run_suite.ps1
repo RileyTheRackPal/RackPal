@@ -688,7 +688,15 @@ $SuiteFloors = @{
     # four entity types and the rules point at six, so every `ELE-005`
     # finding since `#838` and every `PLN-*` since `PLAN-I/1` grouped
     # under "No single location" in the issues panel.
-    'rackpal_core'   = 4508
+    # 4528 at PLAN-I/2 part two: +20 from plan_acknowledgement_test.dart.
+    # CR-019's one mechanism, asserted END TO END over a document on which
+    # all four PLN-* are open at once, rather than only through the gate
+    # that admits a rule id. The load-bearing case is the fingerprint:
+    # every PLN-* message embeds `underlay.name` and an underlay is
+    # renamed by typing in a text field, so a name that reached the
+    # fingerprint would have rule 42 collecting the acknowledgement on the
+    # next load and reporting it as stale.
+    'rackpal_core'   = 4528
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

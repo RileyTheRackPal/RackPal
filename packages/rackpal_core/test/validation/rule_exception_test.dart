@@ -130,8 +130,15 @@ void main() {
 
     test('every tier-2 and tier-3 rule can be, which is CR-019 saying '
         'errors are acknowledgeable', () {
-      for (final rule in kRuleCatalogue) {
+      // `kRulesById` AND NOT `kRuleCatalogue`, WHICH IS BOTH BANDS
+      // (DR-154 §11.153.9). CR-019 says there is ONE mechanism; a loop
+      // over one catalogue would have proved it of one catalogue and left
+      // the plan band's four unasserted, which is the scope failure this
+      // epic has now met seven times.
+      var band = 0;
+      for (final rule in kRulesById.values) {
         if (rule.tier == RuleTier.modelIllegal) continue;
+        if (rule.ruleId.startsWith('PLN-')) band++;
         expect(
           evaluateAcknowledgement(
             ruleId: rule.ruleId,
@@ -142,6 +149,11 @@ void main() {
           reason: rule.ruleId,
         );
       }
+      expect(
+        band,
+        kPlanRules.length,
+        reason: 'a loop that reached no plan rule proves nothing about one',
+      );
     });
 
     test('a rule id the catalogue does not know is refused (CR-021)', () {

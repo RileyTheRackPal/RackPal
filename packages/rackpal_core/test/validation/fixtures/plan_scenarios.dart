@@ -27,11 +27,17 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'drc_fixture.dart';
 import 'fixture_docs.dart';
 
-const Uuid _underlayId = Uuid('0190e0dd-0f00-7000-8000-0000000000f0');
+/// The one underlay [planDoc] builds. Public because `PLN-004` is asked
+/// about a specific plan by id, and a test digging it out of the map
+/// would be relying on there being exactly one.
+const Uuid kPlanUnderlayId = Uuid('0190e0dd-0f00-7000-8000-0000000000f0');
+
+const Uuid _underlayId = kPlanUnderlayId;
 const Uuid _floorId = Uuid('0190e0dd-0f00-7000-8000-0000000000f1');
 const Uuid _roomId = Uuid('0190e0dd-0f00-7000-8000-0000000000f2');
 const Uuid _outletId = Uuid('0190e0dd-0f00-7000-8000-0000000000f3');
 const Uuid _basementId = Uuid('0190e0dd-0f00-7000-8000-0000000000f4');
+const Uuid _spareOutletId = Uuid('0190e0dd-0f00-7000-8000-0000000000f5');
 
 /// The bytes every fixture underlay claims to be.
 final Uint8List kPlanBytes = Uint8List.fromList([1, 2, 3, 4, 5]);
@@ -49,11 +55,16 @@ const PlanScale kUsableScale = PlanScale(
 /// THE ROOM IS A CHILD OF THE FLOOR, which is how the trade files a job
 /// and is the case DR-154 §11.153.7a widened the scope for: an outlet in
 /// `Great Room` is on `Level 1`'s plan.
+/// [spareOutlet] adds a SECOND drop in the same room with no pin on it,
+/// which is the only way `PLN-002` fires alongside `PLN-001` and
+/// `PLN-003`: those two need a pinned drop and this one needs an unpinned
+/// one, and one outlet cannot be both.
 RackDocument planDoc({
   PlanScale? scale,
   bool pinRack = false,
   bool pinOutlet = false,
   bool rackElsewhere = false,
+  bool spareOutlet = false,
   String? contentHash,
 }) {
   final d = fixtureDoc();
@@ -119,6 +130,17 @@ RackDocument planDoc({
         ? const PlanPin(underlayId: _underlayId, at: PxPt(400, 300))
         : null,
   );
+
+  if (spareOutlet) {
+    d.outlets[_spareOutletId] = Outlet(
+      id: _spareOutletId,
+      structureBodyId: fixtureId(91),
+      designation: 'WP-2',
+      order: const FracIndex('a1'),
+      meta: fixtureMeta(),
+      locationId: _roomId,
+    );
+  }
   return d;
 }
 
