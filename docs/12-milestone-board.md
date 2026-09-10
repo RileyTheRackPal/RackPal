@@ -9028,6 +9028,10 @@ the sentence, one of them in work this epic had nothing to do with.
 
 Floors: `rackpal_core` 4480 to 4528 (+48), `rackpal_export` 222 to 227 (+5). Gates: 17.
 
+**Commits** (§8.8). `PLAN-I/1`: `21e2315` the ruling, `2e8f512` the rules and the count sweep.
+`PLAN-I/2`: `e3c8f76` the six locus types, `5c8d1f3` the acknowledgement path, `90ae086` the
+export proof, `da9501d` the three amendments and this record, `826cfc2` `v0.6.48`.
+
 **A COMPLETE SHEET SET IS READ OFF THE PAGE.** Four blank pages satisfy a `sheetCount` of four, and
 `T1.01` is the sheet these four rules are about: a plan whose advisories held it back would still
 have exported the elevations and the schedule and reported the same number. The proof parses the PDF
