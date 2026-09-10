@@ -665,7 +665,12 @@ $SuiteFloors = @{
     # already are the source. The load-bearing case is the absent key: the
     # asymmetry is the ruling, so "no source to keep" has to be visible in
     # the file rather than inferred.
-    'rackpal_core'   = 4478
+    # 4480 at PLAN-K/4: +2 from pdf_page_lift_test.dart. A refusal that
+    # happens after the /MediaBox is read now carries the page's size, so
+    # something that draws vectors knows how big to draw it without
+    # re-parsing the file; the second case is the other half, since the
+    # three refusals ABOUT the box cannot report one.
+    'rackpal_core'   = 4480
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -910,7 +915,13 @@ $SuiteFloors = @{
     # The fixture drops the home run's cut length, because `cut` outranks
     # every tier and a document keeping `78` would render `78` and pass an
     # assertion about a floor for a reason that has nothing to do with one.
-    'rackpal_ui'     = 1674
+    # 1677 at PLAN-K/4: +3 from pdf_page_picker_dialog_test.dart, where
+    # the grid is handed a page that was RENDERED as well as one that was
+    # lifted (DR-153). The load-bearing case is the caption: the tile
+    # draws a 320 px thumbnail and must report the size the person would
+    # GET, since "320 x 207, 19 dpi" is a fact about this dialog rather
+    # than about anything on offer.
+    'rackpal_ui'     = 1677
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -956,7 +967,15 @@ $SuiteFloors = @{
     # PdfHasNoLiftablePageError.pageCount had only ever rendered as
     # `1 page` and the plural sentence a person actually sees was
     # untested.
-    'rackpal_app'    = 965
+    # 981 at PLAN-K/4: +16, the import flow rendering a page of vectors
+    # instead of refusing it (DR-153). Three of them are
+    # plan_import_pdfium_test.dart, which runs the REAL binding end to
+    # end: the flow's own cases hand it a fake that returns a PNG of the
+    # size asked for, which proves the sequence and nothing about pdfium.
+    # The load-bearing case there counts DARK PIXELS in the stored
+    # member, because every failure short of a crash produces a plausible
+    # PNG of exactly the right size.
+    'rackpal_app'    = 981
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

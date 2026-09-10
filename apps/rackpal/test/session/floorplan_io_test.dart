@@ -19,6 +19,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:rackpal/src/session/document_session.dart';
+import 'package:rackpal/src/session/pdf_rasteriser.dart';
 import 'package:rackpal/src/session/plan_import_actions.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 
@@ -28,7 +29,8 @@ import '../storage/fake_file_store.dart';
 // made both cases below pass on a document nothing was imported into: an
 // assertion that cannot fail. `onePagePdf` is the fixture
 // `pdf_page_import_test.dart` already builds and exercises.
-import 'pdf_page_import_test.dart' show onePagePdf, realJpeg;
+import 'pdf_page_import_test.dart'
+    show onePagePdf, realJpeg, smallVectorPdf, stubPng;
 import 'session_fakes.dart';
 
 final _fixed = DateTime.utc(2026, 9, 8, 9);
@@ -55,6 +57,7 @@ RackDocument _doc() => RackDocument(
   required Map<String, Uint8List> files,
   String? picked,
   List<String?>? picks,
+  PdfRasteriser? rasteriser,
 }) {
   final session = DocumentSession(
     controller: DocumentController(
@@ -72,13 +75,18 @@ RackDocument _doc() => RackDocument(
       session: session,
       picker: picker,
       fs: FakeFileStore(initialFiles: files),
+      // THE REAL ONE UNLESS A CASE SAYS OTHERWISE, which is what the app
+      // ships. It is never CALLED for a page the lifter can take, so the
+      // raster cases below neither need the vendored binary nor prove
+      // anything about it.
+      rasteriser: rasteriser ?? pdfiumRenderPng,
     ),
   );
 }
 
 /// The page picker, as a callback that never runs for a raster file.
-Future<LiftedPdfPage?> _neverPicks(
-  List<Outcome<LiftedPdfPage>> pages,
+Future<PdfPageOption?> _neverPicks(
+  List<Outcome<PdfPageOption>> pages,
   String fileName,
 ) async {
   fail('the page picker ran for a file that is not a PDF');
@@ -227,7 +235,7 @@ void main() {
           pickPage: (pages, fileName) async {
             sawPages = pages.length;
             expect(fileName, 'set.pdf', reason: 'the grid names the file');
-            return (pages.single as Ok<LiftedPdfPage>).value;
+            return (pages.single as Ok<PdfPageOption>).value;
           },
         );
 
@@ -255,6 +263,55 @@ void main() {
       expect(result, isNull);
       expect(h.session.document.underlays, isEmpty);
       expect(h.session.members, isEmpty);
+    });
+
+    /// LOAD-BEARING (DR-153 §11.152.6). A rendered page throws the vector
+    /// away, so the container keeps the PDF it came from. Asserting only
+    /// the underlay cannot see whether the member was written, which is
+    /// the same hole this file's first case exists for.
+    test(
+      'A RENDERED PAGE WRITES TWO MEMBERS: the image and its source',
+      () async {
+        final pdf = smallVectorPdf();
+        final h = _harness(
+          files: {r'C:\plans\cad.pdf': pdf},
+          picked: r'C:\plans\cad.pdf',
+          rasteriser: (bytes, index, {required width, required height}) =>
+              Ok(stubPng(width, height)),
+        );
+
+        final result = await h.io.import(
+          pickPage: (pages, fileName) async =>
+              (pages.single as Ok<PdfPageOption>).value,
+        );
+
+        final underlay = (result! as Ok<PlanUnderlay>).value;
+        final source = underlay.sourcePage;
+        expect(source, isNotNull);
+        expect(h.session.members, hasLength(2));
+        expect(h.session.members[underlay.imageMember], isNotNull);
+        expect(
+          h.session.members[source!.member],
+          pdf,
+          reason: 'the member holds the file the architect sent, byte for byte',
+        );
+      },
+    );
+
+    test('a LIFTED page writes one member and keeps no source', () async {
+      final h = _harness(
+        files: {r'C:\plans\set.pdf': onePagePdf(realJpeg(100, 50))},
+        picked: r'C:\plans\set.pdf',
+      );
+
+      final result = await h.io.import(
+        pickPage: (pages, fileName) async =>
+            (pages.single as Ok<PdfPageOption>).value,
+      );
+
+      final underlay = (result! as Ok<PlanUnderlay>).value;
+      expect(underlay.sourcePage, isNull);
+      expect(h.session.members, hasLength(1));
     });
 
     test('ROUTES BY CONTENT, so a PDF named .png reaches the picker', () async {

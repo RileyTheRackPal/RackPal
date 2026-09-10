@@ -22,12 +22,29 @@
 // `delete_device_dialog.dart` argues at greater length one folder over.
 //
 // ═══════════════════════════════════════════════════════════════════════
-// A PAGE THAT CANNOT BE LIFTED IS SHOWN, DISABLED, WITH ITS REASON
+// A PAGE ARRIVES TWO WAYS AND THE GRID DOES NOT SAY WHICH
+// ═══════════════════════════════════════════════════════════════════════
+// A page that is one full-page image is LIFTED whole; a page of vectors is
+// RENDERED by pdfium (DR-153, PLAN-K/4). Both produce a picture, a pixel
+// count and a resolution, so `PdfPageOption` answers all three and the
+// tile draws the same either way.
+//
+// **THE DIFFERENCE IS NOT SURFACED, AND THAT IS A CHOICE.** The person is
+// choosing a drawing, not an import mechanism, and a badge saying
+// "rendered" would be this product talking about itself. What is surfaced
+// is the resolution, which is the part that affects what they get.
+//
+// ═══════════════════════════════════════════════════════════════════════
+// A PAGE THAT CANNOT BE USED IS SHOWN, DISABLED, WITH ITS REASON
 // ═══════════════════════════════════════════════════════════════════════
 // DR-138 has the lifter return a reason per page precisely so this grid
 // can say which rule a page failed rather than dropping it. A set where
 // page 7 is a scan and the rest are exports should show seventeen live
 // tiles and one that says why, not seventeen tiles and a silence.
+//
+// **IT IS A RARER TILE THAN IT WAS.** Before PLAN-K a whole CAD plot came
+// back refused; now the refusals left are damage and the cases pdfium
+// itself declines.
 //
 // **THE ALL-REFUSED CASE DOES NOT REACH THIS DIALOG.** A grid where
 // nothing is clickable reads as a broken dialog rather than an unsupported
@@ -60,15 +77,15 @@ const int kPageThumbnailDecodeWidth = 320;
 /// CONVENIENCE.** A picker whose every tile is disabled tells somebody
 /// their dialog is broken; a sentence tells them their file needs a
 /// renderer that is not built yet. See the file header.
-bool pdfHasLiftablePage(List<Outcome<LiftedPdfPage>> pages) =>
-    pages.any((p) => p is Ok<LiftedPdfPage>);
+bool pdfHasLiftablePage(List<Outcome<PdfPageOption>> pages) =>
+    pages.any((p) => p is Ok<PdfPageOption>);
 
 /// Shows the grid and returns the chosen page, or null if cancelled.
-Future<LiftedPdfPage?> pickPdfPage(
+Future<PdfPageOption?> pickPdfPage(
   BuildContext context, {
-  required List<Outcome<LiftedPdfPage>> pages,
+  required List<Outcome<PdfPageOption>> pages,
   required String fileName,
-}) => showDialog<LiftedPdfPage>(
+}) => showDialog<PdfPageOption>(
   context: context,
   builder: (context) => PdfPagePickerDialog(pages: pages, fileName: fileName),
 );
@@ -81,13 +98,13 @@ class PdfPagePickerDialog extends StatelessWidget {
     super.key,
   });
 
-  final List<Outcome<LiftedPdfPage>> pages;
+  final List<Outcome<PdfPageOption>> pages;
   final String fileName;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final liftable = pages.whereType<Ok<LiftedPdfPage>>().length;
+    final usable = pages.whereType<Ok<PdfPageOption>>().length;
 
     return CallbackShortcuts(
       // Through the keymap registry rather than a literal `Esc`, so the row
@@ -105,9 +122,9 @@ class PdfPagePickerDialog extends StatelessWidget {
                 // THE COUNTS ARE BOTH STATED. "18 pages" alone hides that
                 // one of them cannot be used; "17 pages" would be a lie
                 // about the file.
-                liftable == pages.length
+                usable == pages.length
                     ? '$fileName, ${pages.length} pages'
-                    : '$fileName, $liftable of ${pages.length} pages can be '
+                    : '$fileName, $usable of ${pages.length} pages can be '
                           'used',
                 style: theme.textTheme.bodySmall,
               ),
@@ -149,9 +166,9 @@ class _PageTile extends StatelessWidget {
     required this.onPick,
   });
 
-  final Outcome<LiftedPdfPage> outcome;
+  final Outcome<PdfPageOption> outcome;
   final int pageNumber;
-  final void Function(LiftedPdfPage) onPick;
+  final void Function(PdfPageOption) onPick;
 
   @override
   Widget build(BuildContext context) {
@@ -162,8 +179,8 @@ class _PageTile extends StatelessWidget {
     };
   }
 
-  Widget _liveTile(BuildContext context, ThemeData theme, LiftedPdfPage page) {
-    final dpi = page.effectiveDpi;
+  Widget _liveTile(BuildContext context, ThemeData theme, PdfPageOption page) {
+    final dpi = page.resultDpi;
     return Tooltip(
       message: 'Page $pageNumber',
       child: InkWell(
@@ -178,7 +195,7 @@ class _PageTile extends StatelessWidget {
                   color: Colors.white,
                 ),
                 child: Image.memory(
-                  page.bytes,
+                  page.previewBytes,
                   cacheWidth: kPageThumbnailDecodeWidth,
                   fit: BoxFit.contain,
                   // A page whose bytes will not decode is not a crash: the
@@ -201,8 +218,8 @@ class _PageTile extends StatelessWidget {
               // person wondering why a 36-inch sheet looks soft is owed the
               // number rather than left to guess.
               dpi == null
-                  ? '${page.header.pixelWidth} x ${page.header.pixelHeight}'
-                  : '${page.header.pixelWidth} x ${page.header.pixelHeight}'
+                  ? '${page.resultWidth} x ${page.resultHeight}'
+                  : '${page.resultWidth} x ${page.resultHeight}'
                         ', ${dpi.round()} dpi',
               style: theme.textTheme.bodySmall,
             ),

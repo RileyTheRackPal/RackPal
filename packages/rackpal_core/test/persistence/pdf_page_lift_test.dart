@@ -171,6 +171,43 @@ String refusalOf(Uint8List bytes) {
 
 void main() {
   group('the shape the real corpus emits', () {
+    /// PLAN-K/4. A refusal that knows how big the page is can be handed
+    /// to something that draws vectors; one that does not, cannot.
+    test('a CAD plot is refused WITH its sheet size, so it can be '
+        'rendered', () {
+      final pages = pagesOf(cadPlotPdf());
+      expect(pages, hasLength(3));
+
+      for (final page in pages) {
+        final error = (page as Err<LiftedPdfPage>).error;
+        expect(error, isA<PdfPageNotLiftableError>());
+        final refusal = error as PdfPageNotLiftableError;
+        expect(refusal.reason, 'draws no image');
+        expect(refusal.hasSheetSize, isTrue);
+        expect(refusal.sheetWidthPt, 1224);
+        expect(refusal.sheetHeightPt, 792);
+      }
+    });
+
+    /// The other half, and it is the reason the fields are nullable: the
+    /// three refusals ABOUT the box cannot report one.
+    test('a refusal about the MediaBox itself reports no size', () {
+      final refusal =
+          (pagesOf(
+                        pdfWith(
+                          content: kFullPageContent,
+                          mediaBox: '[0 0 0 0]',
+                        ),
+                      ).single
+                      as Err<LiftedPdfPage>)
+                  .error
+              as PdfPageNotLiftableError;
+
+      expect(refusal.reason, 'has an empty MediaBox');
+      expect(refusal.hasSheetSize, isFalse);
+      expect(refusal.sheetWidthPt, isNull);
+    });
+
     test('a page that is one full-page image lifts', () {
       final page = soleLift(pdfWith(content: kFullPageContent));
 

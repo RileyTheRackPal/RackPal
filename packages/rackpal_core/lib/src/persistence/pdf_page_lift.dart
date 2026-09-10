@@ -143,17 +143,50 @@ final class PdfPageNotLiftableError implements Exception {
   const PdfPageNotLiftableError({
     required this.pageIndex,
     required this.reason,
+    this.sheetWidthPt,
+    this.sheetHeightPt,
   });
 
   /// Zero-based.
   final int pageIndex;
   final String reason;
 
+  /// The sheet in PostScript points, when the refusal came AFTER the
+  /// `/MediaBox` was read, and null for the three refusals that are about
+  /// the box itself.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A REFUSAL THAT CARRIES THE PAGE'S SIZE IS WHAT LETS SOMETHING ELSE
+  /// RENDER IT (DR-153, `PLAN-K/4`)
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `draws no image` is the ordinary answer for a CAD plot, and the
+  /// caller's next question is how many pixels that page should become,
+  /// which is a function of its size (§11.152.5). Reporting it here means
+  /// the rasteriser is asked to DRAW rather than to re-parse a file this
+  /// parser has already walked.
+  ///
+  /// It stays null for `declares no usable MediaBox`, `has a malformed
+  /// MediaBox` and `has an empty MediaBox`, because there the size is the
+  /// thing that failed.
+  final double? sheetWidthPt;
+  final double? sheetHeightPt;
+
+  /// True when this page could be rendered by something that can draw
+  /// vectors: the parse got far enough to know how big it is.
+  bool get hasSheetSize => sheetWidthPt != null && sheetHeightPt != null;
+
+  /// **IT SAYS WHAT THIS PARSER FOUND AND NOTHING ABOUT THE REMEDY**, and
+  /// it used to say both. Until `PLAN-K` it ended *"cannot be lifted
+  /// without a renderer ... Export the page as PNG or JPEG for now"*,
+  /// which was advice about a feature that did not exist. It exists now
+  /// (DR-153), and whether it is AVAILABLE is a fact about the caller
+  /// rather than about this page, so the caller's own sentence says so.
+  /// The same file one package over already carries a scar from copy that
+  /// told somebody to convert by hand a file this product can open.
   @override
   String toString() =>
-      'PdfPageNotLiftableError: page ${pageIndex + 1} $reason, so its image '
-      'cannot be lifted without a renderer (PLAN-D/3, DR-138). Export the '
-      'page as PNG or JPEG for now.';
+      'PdfPageNotLiftableError: page ${pageIndex + 1} $reason, so it has no '
+      'image to lift (PLAN-D/3, DR-138).';
 }
 
 /// One page of a PDF whose image can be lifted whole.
@@ -431,8 +464,20 @@ final class _PdfObjects {
   /// The five rules, in the order that makes a refusal say the most
   /// useful thing.
   Outcome<LiftedPdfPage> liftPage(Map<String, Object?> page, int index) {
-    Err<LiftedPdfPage> no(String reason) =>
-        Err(PdfPageNotLiftableError(pageIndex: index, reason: reason));
+    // SET ONCE THE BOX IS READ, so every refusal BELOW that point carries
+    // the page's size and something that can draw vectors knows how big
+    // to draw it (DR-153 §11.152.5). The three refusals above it leave
+    // these null, because there the size is what failed.
+    double? knownW;
+    double? knownH;
+    Err<LiftedPdfPage> no(String reason) => Err(
+      PdfPageNotLiftableError(
+        pageIndex: index,
+        reason: reason,
+        sheetWidthPt: knownW,
+        sheetHeightPt: knownH,
+      ),
+    );
 
     // ---- the sheet ---------------------------------------------------
     final box = resolve(page['MediaBox']);
@@ -444,6 +489,8 @@ final class _PdfObjects {
     final sheetW = (nums[2]! - nums[0]!).abs();
     final sheetH = (nums[3]! - nums[1]!).abs();
     if (sheetW <= 0 || sheetH <= 0) return no('has an empty MediaBox');
+    knownW = sheetW;
+    knownH = sheetH;
 
     // ---- rule 1: exactly one XObject ---------------------------------
     final resources = resolveDict(page['Resources']);

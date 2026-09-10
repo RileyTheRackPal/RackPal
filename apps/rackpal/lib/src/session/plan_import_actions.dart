@@ -39,6 +39,7 @@ import 'package:crypto/crypto.dart';
 import 'package:image/image.dart' as img;
 import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/file_picker.dart';
+import 'package:rackpal/src/session/pdf_rasteriser.dart';
 import 'package:rackpal/src/storage/file_store.dart';
 import 'package:rackpal/src/storage/import_guard.dart';
 import 'package:rackpal_core/rackpal_core.dart';
@@ -215,6 +216,7 @@ Outcome<ImportedFloorplan> importFloorplanBytes({
   required FracIndex order,
   required EntityMeta meta,
   Uuid? locationId,
+  PlanSourcePage? sourcePage,
 }) {
   // ---- 2. SNIFF, BY CONTENT (PLAN-D/4, M4-M4's rule). ---------------
   //
@@ -306,6 +308,10 @@ Outcome<ImportedFloorplan> importFloorplanBytes({
         order: order,
         meta: meta,
         locationId: locationId,
+        // PRESENT ONLY FOR A RENDERED PAGE (DR-153 §11.152.6). A lifted
+        // page's stored bytes already ARE the source, so a copy of the
+        // PDF beside it would store one drawing twice.
+        sourcePage: sourcePage,
         // NO SCALE. An imported plan is UNCALIBRATED and that is a fact
         // rather than a gap (G4): it locates every drop already, and it
         // yields no lengths until somebody picks two points and types a
@@ -343,13 +349,30 @@ final class PdfHasNoLiftablePageError implements Exception {
   /// already says which.
   final String firstReason;
 
+  /// **THE ADVICE CHANGED WHEN THE RENDERER LANDED.** It ended *"Export
+  /// the page you want as PNG or JPEG for now"* until `PLAN-K`, which was
+  /// the workaround for a missing rasteriser and read as an instruction
+  /// to go and convert by hand. A page that reaches this sentence now is
+  /// one pdfium ALSO declined, so the remedy is a different viewer rather
+  /// than a different format, and the "for now" is gone because there is
+  /// no longer anything being waited for.
   @override
   String toString() =>
       'PdfHasNoLiftablePageError: this PDF has $pageCount page'
       '${pageCount == 1 ? '' : 's'} and none of them can be used as an '
-      'underlay (PLAN-D/3, DR-138). The first page $firstReason. Export '
-      'the page you want as PNG or JPEG for now.';
+      'underlay (DR-153). The first page $firstReason. If another viewer '
+      'opens this file, exporting that page as PNG or JPEG will import.';
 }
+
+/// The width a page preview is rendered at for the picker's grid.
+///
+/// A LITTLE ABOVE THE TILE, matching what the dialog asks its decoder for
+/// (`kPageThumbnailDecodeWidth`), so a high-DPI screen is not painting an
+/// upscaled thumbnail. It is stated here rather than imported from
+/// `rackpal_ui` because this layer may not depend on that one, and the
+/// two being equal is a coincidence worth keeping rather than a coupling
+/// worth building.
+const int kPagePreviewWidth = 320;
 
 /// Every page of the PDF in [bytes], for the picker.
 ///
@@ -357,13 +380,34 @@ final class PdfHasNoLiftablePageError implements Exception {
 /// `rackpal_ui`'s; what lives here is the sentence the app says when the
 /// answer is "none of them", which needs the page count and a reason and
 /// is therefore neither layer's business alone.
-Outcome<List<Outcome<LiftedPdfPage>>> readPdfPages(Uint8List bytes) {
+Outcome<List<Outcome<PdfPageOption>>> readPdfPages(
+  Uint8List bytes, {
+  PdfRasteriser? rasteriser,
+  int previewWidth = kPagePreviewWidth,
+}) {
   final lifted = liftPdfPages(bytes);
   if (lifted case Err(:final error)) return Err(error);
-  final pages = (lifted as Ok<List<Outcome<LiftedPdfPage>>>).value;
+  final lifts = (lifted as Ok<List<Outcome<LiftedPdfPage>>>).value;
+
+  final pages = <Outcome<PdfPageOption>>[
+    for (final lift in lifts)
+      switch (lift) {
+        Ok(:final value) => Ok(LiftedPageOption(value)),
+        // A REFUSAL IS OFFERED TO THE RENDERER BEFORE IT IS PASSED ON.
+        // The lifter's job is unchanged and its answer is still preferred
+        // where it has one: lifting is lossless and rendering is not
+        // (DR-138 §11.137.3).
+        Err(:final error) => _renderOption(
+          bytes,
+          error,
+          rasteriser,
+          previewWidth,
+        ),
+      },
+  ];
 
   if (pages.every((p) => p is Err)) {
-    final first = pages.first as Err<LiftedPdfPage>;
+    final first = pages.first as Err<PdfPageOption>;
     final error = first.error;
     return Err(
       PdfHasNoLiftablePageError(
@@ -380,6 +424,49 @@ Outcome<List<Outcome<LiftedPdfPage>>> readPdfPages(Uint8List bytes) {
     );
   }
   return Ok(pages);
+}
+
+/// A refused page, rendered instead when something can draw it.
+///
+/// **THE REFUSAL IS RETURNED UNCHANGED WHEN IT CANNOT BE**, which is the
+/// three cases worth naming: there is no rasteriser (the flow was handed
+/// none), the refusal is about the `/MediaBox` itself so nothing knows how
+/// big to draw (`hasSheetSize`), or the render failed on its own terms.
+/// In each the person gets the reason the parser gave rather than a
+/// second, vaguer one from here.
+Outcome<PdfPageOption> _renderOption(
+  Uint8List pdf,
+  Object error,
+  PdfRasteriser? rasteriser,
+  int previewWidth,
+) {
+  if (rasteriser == null) return Err(error);
+  if (error is! PdfPageNotLiftableError) return Err(error);
+  if (!error.hasSheetSize) return Err(error);
+
+  final plan = planRasterFor(error.sheetWidthPt!, error.sheetHeightPt!);
+  if (plan == null) return Err(error);
+
+  // THE PREVIEW IS SMALL AND THE PLAN IS NOT. The grid draws thumbnails,
+  // and rendering every page of a drawing set at 300 dpi to fill it would
+  // be hundreds of megapixels of work to show pictures a few hundred
+  // pixels wide. The chosen page is rendered again at full size.
+  final previewHeight = (previewWidth * plan.height / plan.width).round();
+  final preview = rasteriser(
+    pdf,
+    error.pageIndex,
+    width: previewWidth,
+    height: previewHeight < 1 ? 1 : previewHeight,
+  );
+  if (preview case Err(:final error)) return Err(error);
+
+  return Ok(
+    RenderedPageOption(
+      pageIndex: error.pageIndex,
+      plan: plan,
+      previewBytes: (preview as Ok<Uint8List>).value,
+    ),
+  );
 }
 
 /// Turns a page the user picked into an underlay.
@@ -407,6 +494,52 @@ Outcome<ImportedFloorplan> importLiftedPdfPage({
   meta: meta,
   locationId: locationId,
 );
+
+/// The member a rendered page's source PDF is stored at.
+String planSourceMemberFor(Uuid id) => '$kPlanSourceMemberDir${id.v}.pdf';
+
+/// Renders a page at full size and imports it, keeping the source.
+///
+/// **IT GOES THROUGH [importFloorplanBytes] LIKE A LIFTED PAGE DOES**, for
+/// the reason that function's own header gives: the bytes are untrusted
+/// whoever produced them, and this product producing them is not a reason
+/// to skip the header, the caps or the decode re-check. They are PNG by
+/// the time they arrive (DR-153 §11.152.5).
+Outcome<ImportedFloorplan> importRenderedPdfPage({
+  required Uint8List pdf,
+  required RenderedPageOption option,
+  required PdfRasteriser rasteriser,
+  required Uuid id,
+  required String name,
+  required FracIndex order,
+  required EntityMeta meta,
+  Uuid? locationId,
+}) {
+  final rendered = rasteriser(
+    pdf,
+    option.pageIndex,
+    width: option.plan.width,
+    height: option.plan.height,
+  );
+  if (rendered case Err(:final error)) return Err(error);
+
+  return importFloorplanBytes(
+    bytes: (rendered as Ok<Uint8List>).value,
+    id: id,
+    name: name,
+    order: order,
+    meta: meta,
+    locationId: locationId,
+    // THE SOURCE IS KEPT BECAUSE THE VECTOR WAS THROWN AWAY
+    // (DR-153 §11.152.6). The hash is over the PDF rather than over the
+    // page, because the member holds the whole file.
+    sourcePage: PlanSourcePage(
+      member: planSourceMemberFor(id),
+      pageIndex: option.pageIndex,
+      contentHash: '$kSha256Prefix${sha256.convert(pdf)}',
+    ),
+  );
+}
 
 /// Asks the user for a floorplan and imports it. Null means cancelled.
 Future<Outcome<ImportedFloorplan>?> pickAndImportFloorplan({
@@ -473,12 +606,18 @@ final class FloorplanIo {
     required this.picker,
     required this.fs,
     this.initialDirectory,
+    this.rasteriser = pdfiumRenderPng,
   });
 
   final DocumentSession session;
   final FilePicker picker;
   final FileStore fs;
   final Future<String?> Function()? initialDirectory;
+
+  /// What draws a page of vectors (DR-153). Defaulted to the real one, so
+  /// the app wires nothing and a test that wants to run without the
+  /// vendored binary passes its own.
+  final PdfRasteriser rasteriser;
 
   /// Asks for a file, imports it, and puts it in the open document.
   ///
@@ -492,8 +631,8 @@ final class FloorplanIo {
   /// who opens an 80-page drawing set and closes the grid has not hit an
   /// error.
   Future<Outcome<PlanUnderlay>?> import({
-    required Future<LiftedPdfPage?> Function(
-      List<Outcome<LiftedPdfPage>> pages,
+    required Future<PdfPageOption?> Function(
+      List<Outcome<PdfPageOption>> pages,
       String fileName,
     )
     pickPage,
@@ -540,20 +679,33 @@ final class FloorplanIo {
     // that would refuse it by name.
     final Outcome<ImportedFloorplan> imported;
     if (sniffImportKind(bytes) == SniffedImportKind.pdf) {
-      final pages = readPdfPages(bytes);
+      final pages = readPdfPages(bytes, rasteriser: rasteriser);
       if (pages case Err(:final error)) return Err(error);
       final chosen = await pickPage(
-        (pages as Ok<List<Outcome<LiftedPdfPage>>>).value,
+        (pages as Ok<List<Outcome<PdfPageOption>>>).value,
         fileName,
       );
       if (chosen == null) return null;
-      imported = importLiftedPdfPage(
-        page: chosen,
-        id: id,
-        name: underlayName,
-        order: order,
-        meta: meta,
-      );
+      imported = switch (chosen) {
+        LiftedPageOption(:final page) => importLiftedPdfPage(
+          page: page,
+          id: id,
+          name: underlayName,
+          order: order,
+          meta: meta,
+        ),
+        // RENDERED AT FULL SIZE ONLY NOW. The grid showed a preview; what
+        // the document keeps is the page at DR-153 §11.152.5's resolution.
+        RenderedPageOption() => importRenderedPdfPage(
+          pdf: bytes,
+          option: chosen,
+          rasteriser: rasteriser,
+          id: id,
+          name: underlayName,
+          order: order,
+          meta: meta,
+        ),
+      };
     } else {
       imported = importFloorplanBytes(
         bytes: bytes,
@@ -571,6 +723,13 @@ final class FloorplanIo {
       floorplan.underlay.imageMember,
       floorplan.memberBytes,
     );
+    // AND THE SOURCE PDF WHEN THE PAGE WAS RENDERED, before the command
+    // for the same reason: a document naming a member the container does
+    // not hold is a dangling reference in a saved file. `sourcePage` is
+    // null for every other route, so this arm is the rendered one and
+    // needs no second test to say which (DR-153 §11.152.6).
+    final source = floorplan.underlay.sourcePage;
+    if (source != null) session.addMember(source.member, bytes);
     controller.run(AddPlanUnderlayCommand(underlay: floorplan.underlay));
     return Ok(floorplan.underlay);
   }
