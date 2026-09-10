@@ -1,6 +1,6 @@
 // PLAN-I/2: the plan band goes through the ONE acknowledgement
 // mechanism, and there is no second one (`#646`, CR-019, RJ-006,
-// DR-154 §11.153.9).
+// DR-154 §11.153.3a).
 //
 // ═══════════════════════════════════════════════════════════════════════
 // WHY THIS IS A FILE AND NOT A SENTENCE IN THE RULING
@@ -337,7 +337,7 @@ void main() {
     });
 
     test('and all four group under the PLAN, not under "no location"', () {
-      // The defect the locus census found (DR-154 §11.153.8). Stated here
+      // The defect the locus census found (DR-154 §11.153.8a). Stated here
       // too because this is the surface it was wrong on.
       final doc = _allFour();
       final groups = groupFindings(

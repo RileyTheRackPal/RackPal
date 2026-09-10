@@ -8932,6 +8932,119 @@ Floor: `rackpal_app` 981 to 985 (+4).
 
 ---
 
+#### 5.9.24 PLAN-I: four rules in their own band, and three sweeps that meant one catalogue · `DR-154` · `v0.6.48`
+
+`PLAN-I/1` (`#645`) and `PLAN-I/2` (`#646`), 2026-09-10.
+
+docs/15 §9's four advisories, built. The interesting part of both chapters is not the rules: it is
+that **every claim the epic inherited about them turned out to be asserted by a test whose scope was
+narrower than its subject**, and each was found by running something rather than by reading it.
+
+##### 5.9.24.1 The count the chapter was about was already wrong
+
+`#645` opens by naming the trap: *"AC-040 pins v1's catalogue at 27 and DR-020 made it 28 (8 + 6 +
+14)"*. It is **29**. DR-132 restored `ELE-005` at `#838`, the table and the test moved with it, and
+the prose did not.
+
+Twelve sentences in six documents said 28, including a box in an ASCII diagram. Every one now cites
+the tier arithmetic or points at `rule_catalogue_test.dart`, which states it once and checks it
+against docs/02 §5. docs/12 is deliberately untouched: its entries record what was true when the work
+happened.
+
+**This is the fourth chapter in this epic whose brief described a tree that had moved**, and the
+sixth stale count this corpus has swept. The warning against writing a count down was itself
+delivered in a paragraph containing a stale count.
+
+##### 5.9.24.2 A shipped surface was wrong underneath `PLN-002`
+
+`unpinnedCarriersFor` compared locations for equality. docs/15 §3.1 says an underlay's location is
+*"usually a floor"*, so on a `Level 1` plan an outlet filed in `Great Room` matched neither the scope
+nor the unknown branch: it was **dropped by a comparison and appeared in no count at all**. That is
+the `0 pathways` failure `unlocatedCount` exists to prevent, arriving through the door beside the one
+it was watching, and there was no child-room case in the whole test file.
+
+The ruling had said *"subtree"* from docs/15 alone; the shipped code disagreed twenty minutes later.
+The user ruled both onto one scope, and canon §11.153.7a carries the lesson about the order the two
+findings arrived in.
+
+##### 5.9.24.3 `PLN-004` cannot be a `DrcRule`, and that is a fact about where bytes live
+
+A `DrcRule` takes a `RackDocument`, which holds no bytes: an underlay names a container member and
+the members ride on the session. So the comparison happens where the bytes are, once, through
+`persistence/plan_hash.dart`, and `evaluateDocument` takes the answer.
+
+**A hash computed inside the evaluator would be a sha256 over every underlay on every widget build**,
+since `rack_canvas_screen.dart` recomputes findings in `build`. The comparator answers `null` rather
+than `false` for an unparseable hash, on `templateHashMatches`'s ruled precedent: `false` asserts
+*this was edited* and `null` says *there is nothing here to check against*.
+
+##### 5.9.24.4 Three sweeps that say "every rule" and mean one catalogue
+
+`PLAN-I/2`'s whole subject. `#646` asks for two proofs the corpus already believed it had:
+
+| Claim | The test that carried it | What it swept |
+|---|---|---|
+| Every rule is acknowledgeable (CR-019) | `rule_exception_test.dart` | `kRuleCatalogue` |
+| Every rule that files a finding has a severity | `severity_resolution_test.dart` | `kRuleCatalogue` |
+| No rule blocks export (CR-022, G3) | `findings_never_block_export_test.dart` | `kRuleCatalogue` |
+
+`kRuleCatalogue` has been one catalogue of two since §11.153.2, so **not one of the three reached a
+`PLN-*`**. All three now cover both bands and count what they reached, because a loop over an empty
+band passes silently.
+
+**The severity one is not cosmetic.** `projectSeverity` returns null for a rule it cannot find and
+`evaluateDocument` DROPS a finding on a null rather than defaulting, which is G4 one layer up. A plan
+rule missing from `kRulesById` would not throw and not warn: it would never fire.
+
+##### 5.9.24.5 The fingerprint nobody had thought of as an identifier
+
+Every `PLN-*` message embeds `underlay.name`, and an underlay is renamed by typing in a text field.
+Had the name reached the fingerprint, renaming `Level 1` to `First Floor` would leave every
+acknowledgement about that plan matching nothing, and **rule 42 would collect them on the next load
+and report them as stale**: the exact failure `finding.dart` refuses designators for.
+
+It does not, and that is now asserted with the message changing in the same case, so the test cannot
+pass by nothing having happened. `PLN-002`'s fingerprint DOES move when the population moves, on the
+contract `PWR-003` and `LNK-020` already wrote out, and the two behaviours are asserted side by side
+so they read as a distinction rather than an inconsistency.
+
+##### 5.9.24.6 And the issues panel could not name any of them
+
+The defect `PLAN-I/2` found in `PLAN-I/1`'s own work. `locusLabel` resolves a finding's primary
+through four collections and returns null for anything else; every `PLN-*` points at a
+`PlanUnderlay`, so **all four grouped under `No single location`**. The panel told a person that the
+most locatable object in their document had no location.
+
+**The guard that promised to catch this sat through it.** `findings_view.dart`'s header said a fifth
+type would be *"a test failure, not a blank cell"*, and the test carrying that promise asserts
+`locusLabel` returns null for a hand-written stranger id: a statement about an id **no** rule
+produces, which cannot see a type that rules **do** produce.
+
+**And it was the sixth, not the fifth.** `ELE-005` has pointed at a `Net` since `#838` and had no arm
+either. Neither was found by looking. Both were found on the first run of the census that replaced
+the sentence, one of them in work this epic had nothing to do with.
+
+##### 5.9.24.7 Evidence
+
+Floors: `rackpal_core` 4480 to 4528 (+48), `rackpal_export` 222 to 227 (+5). Gates: 17.
+
+**A COMPLETE SHEET SET IS READ OFF THE PAGE.** Four blank pages satisfy a `sheetCount` of four, and
+`T1.01` is the sheet these four rules are about: a plan whose advisories held it back would still
+have exported the elevations and the schedule and reported the same number. The proof parses the PDF
+for the sheet number, the role's title and the pinned drop's callout, and mutation-testing
+`planUnderlaysWithPins` down to nothing fails it.
+
+**THE `PLN-003` KNOWN-BAD PUTS THE HEAD END IN THE BASEMENT**, which is not a way around the harness
+but the rule's own scenario: an unpinned rack on THIS floor is itself a row in the strip `PLN-002`
+counts, so that is the only shape in which `PLN-003` fires alone.
+
+**AND ONE ABSENCE NAMES WHAT RETIRES IT**, which is the practice `#646` asks for. `T0.02` is M6's, so
+*"the reason prints on the exceptions sheet"* would be vacuous today in the shape `#310` refused for
+the `ISSUED FOR CONSTRUCTION` stamp. The guard is that `SheetRole` has no `exceptions` value, so M6
+landing one fails the test and whoever lands it writes the real assertion.
+
+---
+
 ## 6. The dependency graph, as it actually stands
 
 ### 6.1 What can be worked on now

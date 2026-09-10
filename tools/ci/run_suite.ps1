@@ -682,7 +682,7 @@ $SuiteFloors = @{
     # unlocated count but dropped by a comparison; the strip and PLN-002
     # now share one subtree scope (§11.153.7a).
     # 4508 at PLAN-I/2 part one: +1 net. The locus census moved from a
-    # sentence to a run of the rules (DR-154 §11.153.8), which cost one
+    # sentence to a run of the rules (DR-154 §11.153.8a), which cost one
     # case for a net's designator fallback and widened three others.
     # THE ARITHMETIC IS SMALL AND WHAT IT FOUND IS NOT: `locusLabel` knew
     # four entity types and the rules point at six, so every `ELE-005`

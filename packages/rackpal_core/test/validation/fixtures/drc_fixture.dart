@@ -65,7 +65,7 @@ enum FixtureKind {
 /// would be *"a test failure, not a blank cell"*. One arrived at
 /// `PLAN-I/1` and nothing failed, because the guard asserted `locusLabel`
 /// returns null for an id NO rule produces, which cannot see a type that
-/// rules DO produce (DR-154 §11.153.8).
+/// rules DO produce (DR-154 §11.153.8a).
 ///
 /// So every finding a fixture produces reports the label the issues panel
 /// would print for it, and [violationOf] fails on a null. One entry per

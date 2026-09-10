@@ -19466,6 +19466,40 @@ that resolved its own severity *"would be a second copy of that order, and the t
 happen in exactly this one."* CR-019 says the same about the mute: **one** `AckedFinding` mechanism,
 not a per-rule opt-out and not a second one for a new band.
 
+**11.153.3a AND TWO SWEEPS THAT SAY "EVERY RULE" MEANT ONE CATALOGUE (`PLAN-I/2`, `#646`).**
+§11.153.3 is a claim about machinery, and the tests that would have failed if it were false were
+written before there were two bands. `rule_exception_test.dart`'s *"every tier-2 and tier-3 rule can
+be acknowledged"* and `severity_resolution_test.dart`'s *"every rule that files a finding has one"*
+both loop over `kRuleCatalogue`. Neither reached a `PLN-*` at all, so §11.153.3 shipped asserted by
+two tests that could not see the band it is about.
+
+**Both now loop over `kRulesById`, and both COUNT the plan rules they reached**, because a loop over
+an empty band passes silently: the guard is the same one `corpusGaps` carries, one file along.
+
+**THE SECOND ONE IS NOT COSMETIC.** `projectSeverity` returns null for a rule it cannot find and
+`evaluateDocument` DROPS a finding on a null rather than defaulting, which is G4 doing its job one
+layer up. A plan rule missing from `kRulesById` would therefore not throw and not warn. It would
+never fire, and the only thing standing between that and a silent release was a sweep that stopped
+at the other catalogue.
+
+**AND THE MECHANISM IS NOW PROVED END TO END, NOT ONLY AT ITS GATE.**
+`evaluateAcknowledgement` admitting a `PLN-*` id says the door opens. What
+`plan_acknowledgement_test.dart` adds is a real acknowledgement demoting a real finding on a document
+where all four are open at once, the project-wide `"*"` mute reaching an instance nobody named and
+not reaching the other three, and the acknowledgement still winning over an override.
+
+**THE FINGERPRINT IS THE PART THAT COULD HAVE GONE WRONG QUIETLY.** Every `PLN-*` message embeds
+`underlay.name`, and an underlay is renamed by typing in a text field. Had the name reached the
+fingerprint, renaming `Level 1` to `First Floor` would leave every acknowledgement about that plan
+matching nothing, and rule 42 would collect them on the next load and report them as stale: the
+exact failure `finding.dart` refuses designators for, arriving through a field nobody had thought of
+as an identifier. It does not, and that is now asserted rather than inherited.
+
+**`PLN-002`'S FINGERPRINT DOES MOVE, AND THAT IS THE SAME RULE RATHER THAN AN EXCEPTION TO IT.** It
+targets the carriers as well as the plan, on the contract `PWR-003` and `LNK-020` already wrote out:
+acknowledging *"1 device is not on the plan"* is not an acknowledgement of two. The other three are
+about the plan itself and adding an outlet leaves them alone.
+
 **11.153.4 RULED: THE AC-051 PAIR GATE FOLLOWS THE RULE, NOT THE LIST.** AC-051 is written about
 rules and not about a catalogue: *"No rule ships without its pair."* So each `PLN-*` rule gets a
 known-bad fixture producing exactly that finding and a known-good near-miss producing none, and the
@@ -19490,6 +19524,35 @@ every pin may be in the wrong place and every length derived from them wrong.
 **IT STILL BLOCKS NOTHING** (CR-022, G3) and it stays acknowledgeable and overridable like any other
 row. AC-042's *"a mismatch is a warning and never a load failure"* is honoured exactly: the file
 opens, and the finding says why it might not be what its owner thinks.
+
+**11.153.5a AND "IT STILL BLOCKS NOTHING" IS NOW PROVED RATHER THAN RESTATED (`PLAN-I/2`, `#646`).**
+`#646` asks this epic to prove its own four *"before that milestone exists"*, naming M5-I as the
+milestone-level version that has not run. **M5-I HAS RUN**, at `c500cf5`; the correction does not
+retire the task. `findings_never_block_export_test.dart`'s three groups sweep `kRuleCatalogue`, which
+has been one catalogue of two since §11.153.2, so **not one of them reaches a `PLN-*`**. The brief is
+stale on the timing and exactly right on the obligation, which is the third `#645`/`#646` sentence
+this epic has found describing a tree that moved under it.
+
+**A COMPLETE SHEET SET IS READ OFF THE PAGE, NOT OFF A COUNT.** Four blank pages satisfy a
+`sheetCount` of four, and `T1.01` is the sheet these four rules are about: a plan whose advisories
+held it back would still have exported the elevations and the schedule and reported the same number.
+So the proof parses the PDF and finds the sheet number, the role's own title and the pinned drop's
+callout, and it is mutation-tested by making `planUnderlaysWithPins` return nothing.
+
+**THE WARNING GETS ITS OWN CASE, AND THIS CLAUSE IS WHY.** `#646` opens *"all four are `advisory`"*
+and §11.153.5 made one of them a warning. A run that scoped the three advisories off and left the
+warning open is precisely the case that sentence would have skipped, and it is the one somebody would
+most expect an exporter to refuse.
+
+**ACKNOWLEDGING CHANGES NOTHING**, which is CR-022 from the other side. An acknowledgement is for
+whoever reads `T0.02`; it is not a key that unlocks the exporter, and a product where muting a rule
+made an export succeed would have taught people to mute rules.
+
+**AND THE ABSENCE NAMES WHAT RETIRES IT**, which is the practice `#646` asks for by name.
+`T0.02` is M6's, so *"the reason prints on the exceptions sheet"* cannot be proved today and asserting
+it would be vacuous in the same shape `#310` refused for the `ISSUED FOR CONSTRUCTION` stamp. The
+guard is that `SheetRole` has no `exceptions` value: M6 landing one fails that test, and whoever lands
+it writes the real assertion in its place.
 
 **11.153.6 RULED: EACH RULE STATES ITS COUNT.** *"N pins carry no measurable position"*, *"N devices
 in Level 1 are not on the plan"*. G4's discipline in a findings list: a rule that fires without
@@ -19533,6 +19596,42 @@ whatever `evaluateDocument` returns. Not whether `PLN-*` ever becomes v1 scope r
 docs/15 §9 calls them v1.1 rules and nothing here moves that. Not the remedy actions a `PLN-*`
 finding might offer, which nothing asks for. And not `T0.02`'s rendering of an acknowledged plan
 advisory, which is M6's sheet.
+
+**11.153.8a THE ISSUES-LIST SURFACE COULD NOT RENDER WHAT `evaluateDocument` RETURNED, AND §11.153.8
+IS THE CLAUSE THAT SAID IT COULD (`PLAN-I/2`, `#646`).** That exclusion reads *"Not the issues-list
+surface, which is M5's and which renders whatever `evaluateDocument` returns."* It does not.
+`locusLabel` resolves a `Finding.primaryEntityId` through four collections, `Link`, `Rack`,
+`DeviceInstance` and `Circuit`, and returns null for anything else. Every `PLN-*` finding points at a
+`PlanUnderlay`, so **all four grouped under `No single location`**: the panel told a person that the
+most locatable object in their document had no location, and offered them nothing to click.
+
+**THE GUARD THAT PROMISED TO CATCH THIS SAT THROUGH IT.** `findings_view.dart`'s header said a fifth
+`primaryEntityId` type would be *"a test failure, not a blank cell"*, and the test carrying that
+promise asserts `locusLabel` returns null for a hand-written stranger id. **That is a statement about
+an id no rule produces**, and it cannot see a type that rules DO produce, which is the only way a
+fifth type was ever going to arrive.
+
+**AND IT WAS THE SIXTH, NOT THE FIFTH.** `ELE-005` has pointed at a `Net` since `#838` and had no arm
+either, so that rule's findings had been unclickable for three epics with the promise sitting above
+them the whole time. **Neither was found by looking; both were found by the census that replaced the
+sentence**, on its first run, one of them in work this epic had nothing to do with.
+
+**Ruled: the census is taken over the corpus, not over a sentence.** Every AC-051 fixture already
+evaluates a real document, so `FixtureOutcome` now reports the label the panel would print for every
+finding produced and `violationOf` fails on a null. Both halves of every pair, because a near-miss
+document still produces its neighbours' findings and a finding nobody can click is broken whichever
+fixture made it. A seventh type is a test failure for real this time, because the thing that fails is
+a run of the rules rather than a claim about them.
+
+**A NET PREFERS ITS DESIGNATOR AND FALLS BACK TO ITS NAME**, which is what `ELE-005`'s own message
+does: a group header reading `Net 12` over a row reading `SPK-A carries 260 W` is two names for one
+thing on one screen. **An underlay has no designator at all**, and that is not an inconsistency to
+paper over: a plan is a drawing of the building rather than equipment in it, so its locus is the name
+its own `T1.01` title block prints (docs/15 §8).
+
+**WHAT §11.153.8 MEANT SURVIVES.** The issues list is still M5's, its rendering is still not this
+ruling's to design, and nothing here adds a `PLN-*` remedy action. What it may no longer say is that
+the surface renders whatever the evaluator returns, because for the whole of `PLAN-I/1` it did not.
 
 ---
 

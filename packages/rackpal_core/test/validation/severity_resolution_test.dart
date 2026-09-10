@@ -70,7 +70,7 @@ void main() {
 
     test('every rule that files a finding has one, so the resolver can '
         'never be asked a question the catalogue cannot answer', () {
-      // BOTH BANDS (DR-154 §11.153.9). `projectSeverity` returns null for
+      // BOTH BANDS (DR-154 §11.153.3a). `projectSeverity` returns null for
       // a rule it cannot find, and `evaluateDocument` DROPS a finding on a
       // null: a plan rule missing from `kRulesById` would not throw, it
       // would silently never fire.

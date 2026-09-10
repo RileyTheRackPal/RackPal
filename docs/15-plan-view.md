@@ -755,6 +755,18 @@ separate and the machinery is not: `kRulesById` spans both, `evaluateDocument` r
 `PLN-*` finding takes an override, an `off` and an acknowledgement through exactly the steps every
 other finding does (§11.153.3).
 
+**PROVED AT `PLAN-I/2`, AND THE TWO SENTENCES ABOVE ARE WHY THAT IS NOT THE SAME THING** (§11.153.3a,
+§11.153.5a). *"None blocks export"* and *"all are acknowledgeable through the one mechanism"* were
+each asserted by a sweep over `kRuleCatalogue`, which is one catalogue of two: neither reached a
+`PLN-*`. Both sweeps now cover both bands and count what they reached, a real acknowledgement is
+shown demoting a real finding, and a document firing all four still exports a sheet set with `T1.01`
+read off the page.
+
+**AND THE ISSUES PANEL COULD NOT NAME ANY OF THEM** (§11.153.8a). `locusLabel` knew four entity kinds
+and the rules point at six, so every `PLN-*` grouped under `No single location` while the surface's
+own guard promised a fifth kind would fail loudly. A plan's locus is its `name`: it has no
+designator, because it is a drawing of the building rather than equipment in it.
+
 **THREE ARE ADVISORIES AND `PLN-004` IS A WARNING** (§11.153.5). The first three say *you have not
 done this yet*; the fourth says *what you are looking at may not be what you measured*.
 
@@ -775,7 +787,9 @@ DR-132 restored `ELE-005` and a sentence does not move with a list. The arithmet
 `rule_catalogue_test.dart`, which states it tier by tier and checks it against docs/02 §5.
 
 The plan band is gated the same way: `plan_rules_test.dart` parses this table and compares it with
-`kPlanRules`, and each of the four has an AC-051 pair of its own (§11.153.4).
+`kPlanRules`, and each of the four has an AC-051 pair of its own (§11.153.4). Each pair also reports
+the label the issues panel would print for every finding it produced, which is where `locusLabel`'s
+missing arms were found (§11.153.8a).
 
 ---
 

@@ -6,7 +6,7 @@ description: >-
   entire unreachable feature the next. It scans function-typed fields on *Actions
   records in one package; the importer was free functions in another. Both facts
   are in the gate's source and neither is in its name.
-tags: [practice, gates, reachability, census, plan-e, plan-g, plan-h]
+tags: [practice, gates, reachability, census, plan-e, plan-g, plan-h, plan-i]
 timestamp: 2026-09-08T00:00:00Z
 status: adopted
 ---
@@ -78,6 +78,50 @@ switch anywhere could see that: an absent parameter is not an unhandled case. Th
 compiler catches the shape of what exists and says nothing about what is missing,
 which is the same asymmetry a regex-scanning gate has, arrived at from the other
 end.
+
+# And a fifth, where the scan is a `for` loop and the scope is a list name
+
+`PLAN-I` split the rule catalogue in two: `kRuleCatalogue` and `kPlanRules`, one
+mechanism over two bands. **Three separate gates then went on proving things about
+one band while describing both**, and every one of them reads as a sweep over
+everything:
+
+| The sentence in the test name | What the loop said |
+|---|---|
+| every tier-2 and tier-3 rule can be acknowledged | `for (final rule in kRuleCatalogue)` |
+| every rule that files a finding has a severity | `for (final rule in kRuleCatalogue)` |
+| every severity, taken one at a time, still exports | `for (final rule in kRuleCatalogue)` |
+
+Nothing broke. Nothing could break: the loops were correct about the collection
+they named, the collection stopped being the whole subject, and **a `for` loop has
+no way to say it expected more**.
+
+**The tell is that the scope is a NAME rather than a predicate.** A regex gate at
+least fails visibly when a file moves. A loop over `kRuleCatalogue` keeps passing
+forever, and the fix is the same one `corpusGaps` already carried: sweep the joint
+registry, and **count what you reached**, so a loop over an empty band fails
+instead of passing silently.
+
+# And the sub-shape worth its own name: a guard written against a stranger
+
+`findings_view.dart` promised in capitals that a fifth `Finding.primaryEntityId`
+type would be *"a test failure, not a blank cell"*. The test carrying that promise
+asserts `locusLabel` returns null for a **hand-written id belonging to no
+collection at all**.
+
+That is a statement about a stranger. It cannot fail when a real type arrives,
+because a real type is exactly the thing that resolves. Two arrived, `Net` and
+`PlanUnderlay`, and both shipped: `ELE-005`'s findings had been unclickable for
+three epics with the promise sitting above them the whole time.
+
+**Replacing it cost nothing and found both on the first run.** Every AC-051 fixture
+already evaluates a real document, so the outcome record now carries the label the
+panel would print for each finding produced, and the harness fails on a null. The
+difference is not rigour. It is that **the census runs the producers**, where the
+old guard ran an example the producers cannot generate.
+
+> A guard built from an input you invented tests your imagination. A guard built
+> from the system's own output tests the system.
 
 # The rule
 

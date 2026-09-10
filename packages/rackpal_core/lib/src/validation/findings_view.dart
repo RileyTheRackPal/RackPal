@@ -41,7 +41,7 @@
 // twelve-arm switch over types no rule produces.
 //
 // **THE PARAGRAPH BELOW USED TO SAY A FIFTH TYPE WOULD BE A TEST
-// FAILURE, AND WHEN ONE ARRIVED NOTHING FAILED** (DR-154 §11.153.8).
+// FAILURE, AND WHEN ONE ARRIVED NOTHING FAILED** (DR-154 §11.153.8a).
 // `PLAN-I/1` shipped four `PLN-*` rules whose primary is a
 // `PlanUnderlay`, and every one of them grouped under [kNoLocusGroup]:
 // the panel told a person that the most locatable object in the document
@@ -143,7 +143,7 @@ String? locusLabel(RackDocument doc, Uuid id) {
   if (device != null) return device.designator;
   final circuit = doc.circuits[id];
   if (circuit != null) return circuit.designator;
-  // THE FIFTH AND SIXTH, BOTH FOUND BY ONE CENSUS (DR-154 §11.153.8).
+  // THE FIFTH AND SIXTH, BOTH FOUND BY ONE CENSUS (DR-154 §11.153.8a).
   //
   // `ELE-005` has pointed at a `Net` since `#838` and `PLN-001..004` at a
   // `PlanUnderlay` since `PLAN-I/1`, and neither had an arm here: two

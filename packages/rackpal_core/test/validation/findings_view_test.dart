@@ -50,7 +50,7 @@ void main() {
       volts: 120,
       meta: meta(),
     );
-    // `ELE-005`'s locus, missing an arm since `#838` (DR-154 §11.153.8).
+    // `ELE-005`'s locus, missing an arm since `#838` (DR-154 §11.153.8a).
     d.nets[netId] = Net(
       id: netId,
       name: 'Net 12',
@@ -209,7 +209,7 @@ void main() {
 
     test('locusLabel returns null for an id that names nothing at all', () {
       // THIS USED TO CALL ITSELF THE FIFTH-TYPE GUARD AND IT NEVER WAS
-      // ONE (DR-154 §11.153.8). An id belonging to no collection resolves
+      // ONE (DR-154 §11.153.8a). An id belonging to no collection resolves
       // to null, which is a statement about a stranger and NOT about a
       // type some rule points at: two such types arrived, `Net` at `#838`
       // and `PlanUnderlay` at `PLAN-I/1`, and this test passed through

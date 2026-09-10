@@ -149,7 +149,7 @@ RackDocument planDoc({
 /// `outcomeOf` RATHER THAN A SECOND RECORD LITERAL. This function was the
 /// second copy of how a finding becomes an outcome, and while it was one
 /// the corpus's locus census could not reach the band that needed it
-/// (DR-154 §11.153.8).
+/// (DR-154 §11.153.8a).
 FixtureOutcome fromPlanDocument(
   RackDocument doc, {
   Set<Uuid> changed = const <Uuid>{},
