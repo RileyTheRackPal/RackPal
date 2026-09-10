@@ -28,6 +28,14 @@
   at the one-pixel floor, but TWO NEGATIVES MULTIPLY TO A POSITIVE AREA: a
   -1224 x -792 MediaBox took a negative dpi off the per-side cap and came back as
   a plausible 30909 x 20000 raster, past the cap that had just been consulted.
+* **Note**: **AND IT SHIPPED A RENDERER THE PACKAGED APP COULD NOT FIND**
+  (`PLAN-K/5`, `#856`). The loader looks beside the executable and then in the
+  repository, and pdfium is not a plugin and not a native asset, so nothing
+  installed it into the bundle. **The third arm hid the absence of the second**:
+  every developer build walked up the working tree and found the committed DLL,
+  and the first failure would have been on somebody else's machine. Four chapters
+  were green on seventeen gates, because the two build gates only run without
+  `-SkipBuild`.
 * **Note**: **TWO MORE SENTENCES OUTLIVED WHAT THEY DESCRIBED**, in the file that
   already carries that scar twice. The lifter's message ended *"cannot be lifted
   without a renderer ... Export the page as PNG or JPEG for now"*, which is advice
