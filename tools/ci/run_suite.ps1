@@ -650,7 +650,16 @@ $SuiteFloors = @{
     # One mutation DID NOT BUILD and is a fact rather than a gap: the
     # entity lookups are non-null because the label resolved from the same
     # map one line earlier, so deleting the `!` is a compile error.
-    'rackpal_core'   = 4464
+    # 4474 at PLAN-K/2: +10 from pdf_raster_plan_test.dart, the rule for
+    # how many pixels a vector page renders at (DR-153 §11.152.5), which
+    # discharges the question DR-145 §11.144.7 left owed. One case exists
+    # because a mutation survived and it is a real hole: deleting the
+    # non-positive guard looked harmless because every other case fell
+    # through the one-pixel floor, but TWO negatives multiply to a positive
+    # AREA, so a -1224 x -792 page took a negative dpi off the per-side cap
+    # and came back as a plausible 30909 x 20000 raster, past the cap that
+    # had just been consulted.
+    'rackpal_core'   = 4474
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
