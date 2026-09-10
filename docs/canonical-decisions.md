@@ -19189,6 +19189,82 @@ new gate is a question for whoever has met the failure twice rather than once.
 
 ---
 
+### §11.151 DR-152 · The plan schedule projects the plan's own derivations, and it is set in columns because one column fails the exit criterion
+
+**Settled by the user on 2026-09-09**, at `PLAN-H/5`'s census. `PLAN-H`'s last chapter, and the
+fourth of its five briefs to describe something the tree does not hold.
+
+**11.151.1 THE DERIVATION THE BRIEF NAMES DOES NOT CONTAIN THE ROWS.** `#644`: *"It is a PROJECTION
+of the derivation the equipment list already uses, not a second table builder."*
+
+**`EquipmentList` is one row per `DeviceInstance`** and its own header says so. A plan pins three
+carriers (docs/15 §3.4) and **two of them are not devices**: an `Outlet` and a `Rack` appear in that
+derivation nowhere at all. On the rough-in the exit criterion describes, outlets are most of what is
+pinned, so the named source holds a minority of the rows.
+
+**The principle the brief is protecting is right and the pointer is wrong**, which is the same shape
+`#642` had one chapter earlier. CR-107 is the ruling behind it, and it is worth quoting because it is
+about exactly this table: two entities carrying the same facts *"is guaranteed to diverge within one
+week of real use: the drop schedule says 78 ft and the wiring schedule says 90 ft, and nobody knows
+which to bill against."*
+
+**11.151.2 RULED BY CONSTRUCTION: IT PROJECTS THE PLAN'S OWN DERIVATIONS.** The row subject is **a
+pinned carrier**, and `PLAN-H/3` already built that set: `planPinsFor` enumerates it and
+`planPinLabelsFor` resolves what each one prints. The schedule reuses both rather than walking the
+three collections a third time.
+
+Each column then reads what already exists: `Location.name` for the area, the callout's own
+designator for the reference, and for the description whichever derivation owns that carrier:
+`EquipmentRow` for a device, `plateFillOf` for an outlet, the rack's own height for the rack.
+**Nothing here re-derives anything**, which is what "not a second table builder" was asking for.
+
+**AND THE REFERENCE COLUMN IS THE JOIN.** It is the string the pill on the drawing prints, from one
+function, so a reader going from a callout to a row cannot meet two spellings of one designator.
+
+**11.151.3 RULED: EVERY CALLOUT RESOLVES, INCLUDING THE RACK.** The schedule's job is to turn a pill
+into a thing. A reader who finds `RK-1` on the plan and nothing in the table beneath it has hit the
+one dead end this sheet exists to prevent, and **the rack is the thing a stranger needs to find
+first**. It costs one row.
+
+*Drops only* was refused although it is truer to the sheet's name and to the standard's sample;
+*a rack row set apart in its own band* was refused for adding a grouping concept to a table that has
+none.
+
+**11.151.4 RULED: THE BAND IS SET IN COLUMNS, AND THE MEASUREMENT IS WHY.** Measured on the real
+sheet rather than estimated: `T1.01`'s drawing area is **1122 × 567 pt**, a schedule row is 12 pt and
+its header 14.
+
+| Rows | One column | Plan keeps |
+|---|---|---|
+| 20 | 254 pt | 313 pt |
+| 40 | 494 pt | 73 pt |
+| 60 | 734 pt | **does not fit** |
+
+**A single column fails the exit criterion's own scenario.** DR-037 §11.36.1 asks for *"the rack plus
+every drop of a real rough-in"*, and sixty is the number this corpus has used for a rough-in since
+AC-048. A layout that cannot print sixty rows is a layout that cannot meet the criterion it is under.
+
+The band is 1122 pt wide and a four-field row needs roughly a third of that, so **three columns sit
+side by side**: sixty rows cost 254 pt instead of 734 and the plan keeps 313, more than half the
+sheet. It is also how a floor-plan device schedule is actually set.
+
+*Cap and count* was refused because forty references on the drawing would resolve to nothing.
+*Let the plan shrink* was refused because at forty rows the plan is a 73 pt strip and at sixty it is
+gone, which turns a locator into a table with a picture stuck on it.
+
+**A COUNTED OVERFLOW SURVIVES AS THE LAST RESORT AND IS EXPECTED NEVER TO FIRE.** Three columns at
+the band's cap hold roughly 180 rows. Past that the sheet prints what fits and **states how many it
+did not**, because a table quietly shorter than the plan above it is the failure this whole chapter
+is about (G4).
+
+**11.151.5 WHAT THIS DOES NOT RULE.** Not the column widths as final figures, which are `PLAN-J`'s
+print to settle along with the callout and bar type sizes. Not a per-plan footage or count strip,
+which nothing asks for. Not whether `T6.30`'s equipment list should gain outlet rows, which is a
+question about that sheet and is M6's. And not the sheet's behaviour past the overflow cap beyond
+stating the count, since no document this product can make comes near it.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
