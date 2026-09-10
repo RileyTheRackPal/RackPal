@@ -70,3 +70,18 @@ because the field is set and looks deliberate.
 **The check is the same and generalises to both**: ask which fixture field carries
 the property, then write the case that sets it to a DIFFERENT value rather than to
 none. A second calibration at ten times the pixels per foot kills the mutation.
+
+# And a third time at PLAN-H/5, where the fixture default was a COUNT
+
+`plan_schedule_test.dart` asserted the sort's id tiebreak over two rows sharing
+an area and a reference, and deleting the tiebreak entirely **passed**. Dart
+sorts a list shorter than about thirty-three by insertion, which happens to
+preserve the order the rows arrived in, and longer lists by a dual-pivot
+quicksort, which does not. Measured: ten rows survive a comparator that returns
+zero, forty do not.
+
+**The fixture field here is the SIZE of the collection**, which is the easiest of
+the three to overlook because nobody thinks of it as a field. The same question
+answers it: which property of the fixture carries the behaviour, and what would a
+case that sets it differently look like. Two rows was a fixture default in
+everything but name.

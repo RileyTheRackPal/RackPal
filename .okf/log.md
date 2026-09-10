@@ -1,5 +1,44 @@
 # Update Log
 
+## 2026-09-09 (eighteenth entry)
+
+* **Ruled**: [DR-152](/decisions/dr-152-the-plan-schedule-projects-the-plan.md).
+  The per-plan device schedule projects `planPinsFor` and `planPinLabelsFor`
+  rather than the equipment list, which is one row per `DeviceInstance` and holds
+  neither an outlet nor a rack. **The reference column is therefore literally the
+  string the callout prints**, so a reader going from a pill to a row cannot meet
+  two spellings of one designator.
+* **Closed**: `PLAN-H/5` (`#644`) at `v0.6.41`, and `T1.01` is complete.
+* **Note**: **A CAP DRAFTED AT 180 ROWS HELD 60.** The ruling chose three columns
+  and called the overflow past the cap *"expected never to fire"*, on arithmetic
+  that multiplied rows-per-block by blocks in the wrong direction. Sixty is
+  DR-037 §11.36.1's own rough-in, so the last resort fired on the sixty-first
+  drop of an ordinary house. Amended the same day to **four blocks**, cap 80,
+  which also gives the PLAN more of the sheet at every row count: sixty rows is
+  fifteen rows down rather than twenty. **Found by mutation testing, not by
+  review**, after the wrong number had been copied into two more files.
+* **Creation**: [a number in a ruling is still a measurement](/practices/a-normative-number-is-still-a-measurement.md).
+  A figure in a normative clause is not a stale copy of a truth held elsewhere:
+  for a while it is the only copy, and it propagates as agreement. Run the
+  arithmetic before the clause is written and pin it in a test; the tell is a
+  superlative attached to an unmeasured figure.
+* **Update**: [a property proven by a fixture's default is not proven](/practices/a-fixture-default-is-not-a-proof.md)
+  gains a third instance, where the fixture default was a **count**. The id
+  tiebreak was asserted over two rows and deleting it passed: Dart sorts a list
+  shorter than about thirty-three by insertion and preserves order either way.
+  Forty rows kill it. The size of a collection is a fixture field nobody thinks
+  of as one.
+* **Note**: **TWO BRANCHES DELETED RATHER THAN TESTED**, on `PLAN-H/4`'s
+  [practice](/practices/a-guard-the-model-makes-unreachable.md). A `row != null`
+  arm survived deletion because `planPinLabelsFor` had already resolved a
+  designator out of the same maps under the same key, so the lookups are now
+  non-null and deleting the `!` is a compile error. A column cap at the field
+  count survived being raised to 99, because a fifth block needs a drawing area
+  1,356 pt wide and ANSI B landscape gives 1122.
+* **Note**: **FOURTH OF `PLAN-H`'s FIVE BRIEFS TO NAME SOMETHING THE TREE DOES
+  NOT HOLD**, after `#640`, `#642` and `#643`. The pattern is the epic's rather
+  than a coincidence: these briefs were written at decomposition on 2026-08-10.
+
 ## 2026-09-09 (seventeenth entry)
 
 * **Ruled**: [DR-151](/decisions/dr-151-the-bar-is-drawn.md). The scale bar is
