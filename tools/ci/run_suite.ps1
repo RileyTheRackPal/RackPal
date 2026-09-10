@@ -681,7 +681,14 @@ $SuiteFloors = @{
     # plan an outlet filed in `Great Room` was neither a row nor an
     # unlocated count but dropped by a comparison; the strip and PLN-002
     # now share one subtree scope (§11.153.7a).
-    'rackpal_core'   = 4507
+    # 4508 at PLAN-I/2 part one: +1 net. The locus census moved from a
+    # sentence to a run of the rules (DR-154 §11.153.8), which cost one
+    # case for a net's designator fallback and widened three others.
+    # THE ARITHMETIC IS SMALL AND WHAT IT FOUND IS NOT: `locusLabel` knew
+    # four entity types and the rules point at six, so every `ELE-005`
+    # finding since `#838` and every `PLN-*` since `PLAN-I/1` grouped
+    # under "No single location" in the issues panel.
+    'rackpal_core'   = 4508
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

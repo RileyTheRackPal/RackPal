@@ -123,16 +123,15 @@ RackDocument planDoc({
 }
 
 /// The evaluator's answer, with the byte fact `PLN-004` needs.
+///
+/// `outcomeOf` RATHER THAN A SECOND RECORD LITERAL. This function was the
+/// second copy of how a finding becomes an outcome, and while it was one
+/// the corpus's locus census could not reach the band that needed it
+/// (DR-154 §11.153.8).
 FixtureOutcome fromPlanDocument(
   RackDocument doc, {
   Set<Uuid> changed = const <Uuid>{},
-}) {
-  final findings = evaluateDocument(doc, changedUnderlays: changed);
-  return (
-    fired: {for (final f in findings) f.ruleId},
-    messages: [for (final f in findings) f.message],
-  );
-}
+}) => outcomeOf(doc, evaluateDocument(doc, changedUnderlays: changed));
 
 List<DrcFixture> planFixtures() => [
   DrcFixture(
