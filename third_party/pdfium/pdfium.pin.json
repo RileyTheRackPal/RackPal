@@ -1,0 +1,8 @@
+{
+  "release": "chromium/8044",
+  "artifact": "pdfium-win-x64.tgz",
+  "url": "https://github.com/bblanchon/pdfium-binaries/releases/download/chromium%2F8044/pdfium-win-x64.tgz",
+  "archiveSha256": "78a17d9a5f14467631c26a3ac8741b27a0471ecc05bd6a119b523598160a0537",
+  "dllSha256": "04100c03e41cac1f979e36e5e26fb860bcb5a7461f53830d3c098716624a27a9",
+  "recordedAt": "2026-09-10"
+}

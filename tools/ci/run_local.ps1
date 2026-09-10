@@ -125,6 +125,7 @@ try {
             @{ Package = 'packages/rackpal_core';   Runner = 'dart';    Name = 'rackpal_core' },
             @{ Package = 'packages/rackpal_text';   Runner = 'dart';    Name = 'rackpal_text' },
             @{ Package = 'packages/rackpal_export'; Runner = 'dart';    Name = 'rackpal_export' },
+            @{ Package = 'packages/rackpal_pdfium'; Runner = 'dart';    Name = 'rackpal_pdfium' },
             @{ Package = 'packages/rackpal_ui';     Runner = 'flutter'; Name = 'rackpal_ui' },
             @{ Package = 'apps/rackpal';            Runner = 'flutter'; Name = 'rackpal_app' }
         )

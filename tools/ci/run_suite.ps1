@@ -674,6 +674,20 @@ $SuiteFloors = @{
     # and the sixtieth designator off the real PDF with the real font, so
     # an absent notice cannot be a sheet that was never drawn.
     'rackpal_export' = 222
+    # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
+    # them run with no binary present, because they are about FINDING it:
+    # an override that points nowhere is an error rather than a fallback,
+    # and the message a missing binary produces has to name the command
+    # that fixes it. The rest need the vendored DLL, which a clean checkout
+    # has, since CR-100 puts it in the repository rather than in a build
+    # step.
+    #
+    # ONE OF THEM IS THE ONLY THING THAT CAN SEE A FLIPPED PAGE. A
+    # vertically flipped render has the same size, the same ink and the
+    # same bytes twice, so every other case passes against an upside-down
+    # floorplan; deleting the counter-flip fails that case and nothing
+    # else. PLAN-A/3 met the same defect one package over.
+    'rackpal_pdfium' = 22
     # 1489 at DR-128: +6 from schematic_remedy_dr128_test.dart, which
     # presses the two new remedy buttons on chips raised by a real drag.
     # The core suites cannot see whether the SCREEN reaches the commands.

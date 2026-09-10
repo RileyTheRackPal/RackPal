@@ -62,3 +62,12 @@
 *.ttf    binary
 *.otf    binary
 *.pdf    binary
+
+# ==================================================================
+# VENDORED NATIVE BINARIES
+# ==================================================================
+# A DLL rewritten by EOL normalisation is a corrupt DLL. `text=auto`
+# would in practice detect it as binary and leave it alone, which is a
+# guess about content rather than a rule about this path, and CR-100 put
+# the binary in the tree deliberately enough to say so.
+third_party/pdfium/** binary

@@ -170,6 +170,7 @@ a board task instructing weeks of work that a ruling had abolished.
 - `packages/rackpal_core` model, commands, derived, persistence, draw scene, catalog
 - `packages/rackpal_ui` Flutter widgets, canvas, inspector, palette
 - `packages/rackpal_export` PDF backend
+- `packages/rackpal_pdfium` the vendored pdfium binding (`dart:ffi`, DR-153). **The binary is committed, not downloaded** (CR-100) and is placed by a person: `pwsh -File tools/vendor_pdfium.ps1 -Verify` says whether the tree has it
 - `packages/rackpal_text` text metrics
 - `apps/rackpal` shell, session, storage
 

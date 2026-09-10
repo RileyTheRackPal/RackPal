@@ -1,4 +1,4 @@
-// ONE REPOSITORY, ONE VERSION — and six places it is written down.
+// ONE REPOSITORY, ONE VERSION — and every place it is written down.
 //
 // ═════════════════════════════════════════════════════════════════════
 // WHY THIS IS A GATE AND NOT A CONVENTION
@@ -10,7 +10,13 @@
 // PREVIOUS version permanently into files the user keeps. Nothing about
 // running the app would look wrong.
 //
-// The four library packages are unpublished and their `version:` is inert
+// THE COUNT USED TO BE IN THAT HEADLINE AND IS NOT ANY MORE. It read
+// "six places" until `rackpal_pdfium` made it seven (DR-153), which is
+// this repository's own rule about a second copy of a moving number
+// arriving in the file whose entire job is keeping one number in step.
+// The list below is the count.
+//
+// The library packages are unpublished and their `version:` is inert
 // TODAY — which is exactly why they drift. They are gated with the app
 // because "the repo is at 0.2.0" should be one fact, and a reader who
 // finds `rackpal_core` at 0.1.0 beside an app at 0.2.0 has to work out
@@ -53,6 +59,7 @@ void main() {
   const packages = <String>[
     '../../packages/rackpal_core/pubspec.yaml',
     '../../packages/rackpal_export/pubspec.yaml',
+    '../../packages/rackpal_pdfium/pubspec.yaml',
     '../../packages/rackpal_text/pubspec.yaml',
     '../../packages/rackpal_ui/pubspec.yaml',
   ];
