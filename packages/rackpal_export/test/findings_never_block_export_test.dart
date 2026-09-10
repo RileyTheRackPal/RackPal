@@ -27,14 +27,34 @@
 // with three arms, and the exhaustive switch below fails to COMPILE if a
 // fourth ever appears. When M6 adds the stamp, this file is where the
 // tightening lands.
+//
+// ═══════════════════════════════════════════════════════════════════════
+// AND THE PLAN BAND PROVES ITS OWN FOUR (`#646`, PLAN-I/2)
+// ═══════════════════════════════════════════════════════════════════════
+// `#646` reads *"M5-I ... does not run until M5. This epic ships four
+// rules before that milestone exists, so it proves its own four."* **M5-I
+// HAS RUN** — that is what the three groups above are — so the brief is
+// stale on the timing and right on the obligation: the groups above sweep
+// `kRuleCatalogue`, which is one band of two since DR-154, and a `PLN-*`
+// is outside every one of them.
+//
+// So the fourth group is the same property over the other band, and it is
+// not a copy: `PLN-004` is a WARNING and the other three are advisories
+// (DR-154 §11.153.5), the fixture needs a real raster member to resolve,
+// and "a complete sheet set" is asserted on the PAGE rather than on a
+// count, because `T1.01` is the sheet these four rules are about.
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:image/image.dart' as im;
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_export/rackpal_export.dart';
 import 'package:test/test.dart';
 
+import 'support/content_stream.dart';
+
 const FontRef _font = FontRef('Jost');
+const String _member = 'underlays/level-1.png';
 
 void main() {
   final at = DateTime.utc(2026, 9, 4, 12);
@@ -152,6 +172,102 @@ void main() {
     return doc;
   }
 
+  /// A 2x2 opaque PNG. The image is not the subject; the sheet only has
+  /// to resolve one, because an unresolvable underlay throws (docs/15
+  /// §7).
+  Uint8List png() {
+    final image = im.Image(width: 2, height: 2, numChannels: 4)
+      ..setPixelRgba(0, 0, 255, 255, 255, 255)
+      ..setPixelRgba(1, 0, 0, 0, 0, 255)
+      ..setPixelRgba(0, 1, 128, 128, 128, 255)
+      ..setPixelRgba(1, 1, 255, 255, 255, 255);
+    return Uint8List.fromList(im.encodePng(image));
+  }
+
+  const underlayId = Uuid('0190e0ff-0000-7000-8000-0000000000e0');
+  const floorId = Uuid('0190e0ff-0000-7000-8000-0000000000e1');
+  const roomId = Uuid('0190e0ff-0000-7000-8000-0000000000e2');
+  const basementId = Uuid('0190e0ff-0000-7000-8000-0000000000e3');
+
+  /// `#646`: ONE project on which all four `PLN-*` are open at once.
+  ///
+  /// Uncalibrated with a pinned drop (`PLN-001`), a second drop in the
+  /// same room with no pin (`PLN-002`), the head end in the basement so
+  /// nothing measures from the plan (`PLN-003`), and the bytes reported
+  /// changed (`PLN-004`). One outlet cannot be both pinned and unpinned,
+  /// which is why there are two.
+  RackDocument troubledPlan() {
+    final doc = RackDocument(
+      id: id(20),
+      appVersion: '0.6.46',
+      createdAt: at,
+      modifiedAt: at,
+      meta: meta(),
+      info: ProjectInfo(projectName: 'EVERY PLAN ADVISORY'),
+      registries: buildSeedRegistries(),
+    );
+    for (final entry in const <Uuid, List<String>>{
+      floorId: ['Level 1', 'L1'],
+      basementId: ['Basement', 'B1'],
+    }.entries) {
+      doc.locations[entry.key] = Location(
+        id: entry.key,
+        kind: LocationKind.floor,
+        name: entry.value[0],
+        code: entry.value[1],
+        order: FracIndex('a${entry.value[1]}'),
+        meta: meta(),
+      );
+    }
+    // THE ROOM IS A CHILD OF THE FLOOR, which is how the trade files a
+    // job and the scope DR-154 §11.153.7a widened `PLN-002` to.
+    doc.locations[roomId] = Location(
+      id: roomId,
+      kind: LocationKind.room,
+      name: 'Great Room',
+      code: 'GR',
+      order: const FracIndex('a2'),
+      parentId: floorId,
+      meta: meta(),
+    );
+    doc.underlays[underlayId] = PlanUnderlay(
+      id: underlayId,
+      name: 'Level 1',
+      imageMember: _member,
+      format: PlanImageFormat.png,
+      pixelWidth: 2,
+      pixelHeight: 2,
+      contentHash: 'sha256:${'0' * 64}',
+      order: const FracIndex('a0'),
+      meta: meta(),
+      locationId: floorId,
+    );
+    doc.racks[rackId] = Rack(
+      id: rackId,
+      name: 'HEAD END',
+      designator: 'RK-1',
+      heightU: 24,
+      order: const FracIndex('a0'),
+      meta: meta(),
+      locationId: basementId,
+    );
+    for (final (seq, pinned) in const <(int, bool)>[(30, true), (31, false)]) {
+      doc.outlets[id(seq)] = Outlet(
+        id: id(seq),
+        structureBodyId: id(40),
+        designation: 'WP-${seq - 29}',
+        order: FracIndex('a$seq'),
+        meta: meta(),
+        locationId: roomId,
+        gangs: <Gang>[Gang()],
+        planPin: pinned
+            ? const PlanPin(underlayId: underlayId, at: PxPt(1, 1))
+            : null,
+      );
+    }
+    return doc;
+  }
+
   late Uint8List fontBytes;
   setUpAll(() {
     fontBytes = File(
@@ -159,15 +275,18 @@ void main() {
     ).readAsBytesSync();
   });
 
-  Future<Outcome<ExportedDocument>> exportOf(RackDocument doc) =>
-      buildExportDocument(
-        ExportRequest(
-          documentJson: const JsonDocumentCodec().write(doc),
-          fontBytes: <FontRef, Uint8List>{_font: fontBytes},
-          fileName: 'every-severity.rmpj',
-          issuedAt: at,
-        ),
-      );
+  Future<Outcome<ExportedDocument>> exportOf(
+    RackDocument doc, {
+    Map<String, Uint8List> members = const <String, Uint8List>{},
+  }) => buildExportDocument(
+    ExportRequest(
+      documentJson: const JsonDocumentCodec().write(doc),
+      fontBytes: <FontRef, Uint8List>{_font: fontBytes},
+      fileName: 'every-severity.rmpj',
+      issuedAt: at,
+      members: members,
+    ),
+  );
 
   group('#308 — the fixture really does carry every severity', () {
     test('error, warning and advisory are all open on it', () {
@@ -244,7 +363,12 @@ void main() {
       ]) {
         final doc = troubled();
         // Turn the other two off, leaving exactly one severity open.
-        for (final rule in kRuleCatalogue) {
+        //
+        // `kRulesById` AND NOT `kRuleCatalogue`, WHICH IS BOTH BANDS. On
+        // this fixture the plan rules fire nothing, so the widening
+        // changes no result here; it is the difference between a loop
+        // that means "every rule" and one that happens to.
+        for (final rule in kRulesById.values) {
           if (rule.defaultSeverity == null) continue;
           if (rule.defaultSeverity == severity) continue;
           doc.settings.ruleOverrides[rule.ruleId] = RuleOverride(
@@ -306,6 +430,11 @@ void main() {
         for (final needle in const [
           'evaluateDocument',
           'kDrcRules',
+          // BOTH BANDS AND THE JOINT REGISTRY (DR-154). A scan naming one
+          // catalogue would let the exporter learn about the other.
+          'kPlanDrcRules',
+          'kPlanRules',
+          'kRulesById',
           'AckedFinding',
           'blockExportOnErrors',
         ]) {
@@ -318,6 +447,151 @@ void main() {
         offenders,
         isEmpty,
         reason: 'CR-022: the exporter must not read the rules',
+      );
+    });
+  });
+
+  group('#646 — and four open plan advisories cannot either', () {
+    const changed = <Uuid>{underlayId};
+
+    test('the fixture really does carry all four, by name', () {
+      // THE CONTROL, on `#308`'s reasoning one band over: a sheet set
+      // exported from a document with no plan findings proves nothing
+      // about a document with four.
+      final found = evaluateDocument(troubledPlan(), changedUnderlays: changed);
+      expect(
+        {for (final f in found) f.ruleId: f.severity.name},
+        {
+          'PLN-001': 'advisory',
+          'PLN-002': 'advisory',
+          'PLN-003': 'advisory',
+          'PLN-004': 'warning',
+        },
+      );
+    });
+
+    test('and a COMPLETE sheet set comes out: the plan is on the paper, '
+        'not merely counted', () async {
+      final result =
+          await exportOf(
+                troubledPlan(),
+                members: <String, Uint8List>{_member: png()},
+              )
+              as Ok<ExportedDocument>;
+
+      // ONE PLAN + TWO ELEVATIONS + ONE EQUIPMENT LIST. Derived rather
+      // than written as `4`, because `SheetSet.forRacks` is where that
+      // arithmetic lives and a literal here would be a second copy of it.
+      final doc = troubledPlan();
+      final expected = SheetSet.forRacks(
+        doc.racks.values,
+        planUnderlays: planUnderlaysWithPins(doc),
+      );
+      expect(result.value.sheetCount, expected.sheets.length);
+
+      // THE SHEET ITSELF, READ OFF THE PAGE. A `sheetCount` of four is
+      // satisfied by four blank pages, and `T1.01` is the sheet these
+      // four rules are about: a plan whose advisories held it back would
+      // still have exported the elevations and the schedule.
+      final cmap = parseToUnicodeCMap(result.value.bytes);
+      final texts = <String>[
+        for (final body in operatorStreams(result.value.bytes))
+          ...interpretContentStream(body, toUnicode: cmap).texts.map(
+            (t) => t.text,
+          ),
+      ];
+      // THE RUNS AS THEY ACTUALLY READ. The title block draws
+      // `SHEET NO.  T1.01` and the footer `SHEET 1 OF 4 · DEVICE LOCATION
+      // PLAN` as single runs, so a bare `contains('T1.01')` fails against
+      // a page that plainly has it. Asserted on the substring rather than
+      // rewritten to the exact string, which would pin the label's
+      // spacing and break on a title-block edit that changes nothing
+      // about this claim.
+      expect(texts, anyElement(contains('T1.01')));
+      expect(texts, anyElement(contains(SheetRole.devicePlan.title)));
+      expect(
+        texts,
+        contains('WP-1'),
+        reason: 'the pinned drop earns a callout, so the plan drew content',
+      );
+    });
+
+    test('the warning alone does not hold it either, which is the one that '
+        'is not an advisory', () async {
+      // DR-154 §11.153.5 made `PLN-004` a warning, and `#646`'s own brief
+      // says "all four are advisory". A loop that turned the advisories
+      // off and left the warning is the case that sentence would have
+      // skipped.
+      final doc = troubledPlan();
+      for (final id in const ['PLN-001', 'PLN-002', 'PLN-003']) {
+        doc.settings.ruleOverrides[id] = RuleOverride(
+          severity: Severity.off,
+          reason: 'scoped for this test',
+          by: 'test',
+          at: at,
+        );
+      }
+      final open = evaluateDocument(doc, changedUnderlays: changed);
+      expect(
+        open.map((f) => f.ruleId),
+        ['PLN-004'],
+        reason: 'the scoping left the wrong rule open',
+      );
+      expect(
+        await exportOf(doc, members: <String, Uint8List>{_member: png()}),
+        isA<Ok<ExportedDocument>>(),
+      );
+    });
+
+    test('nor does acknowledging change whether it exports, because '
+        'nothing was gating on it', () async {
+      // CR-022 from the other side. An acknowledgement is for the reader
+      // of `T0.02`, not a key that unlocks the exporter, and a product
+      // where muting a rule made an export succeed would have taught
+      // people to mute rules.
+      final doc = troubledPlan();
+      final finding = evaluateDocument(
+        doc,
+        changedUnderlays: changed,
+      ).firstWhere((f) => f.ruleId == 'PLN-004');
+      doc.ackedFindings[id(50)] = AckedFinding(
+        id: id(50),
+        ruleId: 'PLN-004',
+        targetFingerprint: finding.targetFingerprint,
+        reason: 'Re-imported from the same survey; the pins were re-checked.',
+        by: 'test',
+        at: at,
+        demotedTo: Severity.advisory,
+        meta: meta(),
+      );
+
+      final result = await exportOf(
+        doc,
+        members: <String, Uint8List>{_member: png()},
+      );
+      expect(result, isA<Ok<ExportedDocument>>());
+      expect(
+        (result as Ok<ExportedDocument>).value.sheetCount,
+        4,
+        reason: 'the same set as the unacknowledged run',
+      );
+    });
+
+    test('T0.02 IS NOT ASSERTED HERE, AND M6 IS WHY', () {
+      // THE PRACTICE `#646` ASKS FOR: a test asserting an absence names
+      // the item that retires it. `sheet_def.dart` says `T0.00`-`T0.02`
+      // are M6's and are not emitted, so "the acknowledgement prints on
+      // T0.02" cannot be proved today and asserting it would be vacuous
+      // in the exact shape `#310` refused for the ISSUED FOR CONSTRUCTION
+      // stamp.
+      //
+      // RETIRED BY: M6's exceptions sheet. When `SheetRole` gains an
+      // `exceptions` value, the group above gains the assertion that the
+      // reason above prints on it, and this test is deleted.
+      expect(
+        SheetRole.values.map((r) => r.name),
+        isNot(contains('exceptions')),
+        reason: 'M6 has landed T0.02; retire this test and assert the sheet',
       );
     });
   });

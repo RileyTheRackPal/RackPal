@@ -719,7 +719,13 @@ $SuiteFloors = @{
     # read. The control is the load-bearing half: it reads DEVICE SCHEDULE
     # and the sixtieth designator off the real PDF with the real font, so
     # an absent notice cannot be a sheet that was never drawn.
-    'rackpal_export' = 222
+    # 227 at PLAN-I/2 part three: +5 in findings_never_block_export_test.
+    # CR-022/G3 for the OTHER band. The three groups already there sweep
+    # `kRuleCatalogue`, which has been one catalogue of two since DR-154,
+    # so no PLN-* was inside any of them. "A complete sheet set" is read
+    # OFF THE PAGE and not off `sheetCount`: four blank pages satisfy a
+    # count, and `T1.01` is the sheet these four rules are about.
+    'rackpal_export' = 227
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
