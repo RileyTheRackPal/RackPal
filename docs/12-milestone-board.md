@@ -8902,6 +8902,34 @@ fake anywhere and counts DARK PIXELS in the stored member. Its fixture carries a
 cross-reference table, because pdfium falls into a damage-recovery path without one and **a fixture
 that exercises the recovery path of the thing under test passes for the wrong reason**.
 
+##### 5.9.23.8 And it shipped a renderer the packaged app could not find
+
+`PLAN-K/5` (`#856`), after the merge, at `v0.6.46`.
+
+`rackpal_pdfium` looks for its library in an environment override, then **beside the executable**,
+then the repository copy. pdfium is not a Flutter plugin and not a native asset, so nothing in
+`windows/CMakeLists.txt` carried it into the bundle.
+
+**THE THIRD ARM HID THE ABSENCE OF THE SECOND.** Every developer build kept working, because it walks
+up the working tree and finds the committed DLL; the first failure would have been on somebody else's
+machine, holding a packaged copy that cannot open a PDF. That is the worst shape a defect can have in
+this product, and it is the second time this epic has produced one: `PLAN-H/4`'s placeholder was
+wrong only on paper somebody was holding.
+
+**Four chapters were green on seventeen gates**, because the two build gates only run without
+`-SkipBuild`. CLAUDE.md already names that shape in terms: *"the two build gates are the ones nobody
+watches fail."*
+
+**AND TWO GATES REFUSED THE FIX FIRST, BOTH RIGHTLY.** `verify_windows_build.ps1` lists every DLL in
+the shipped output and demands a reason for an undeclared one, since each is another unsigned binary
+for an enterprise allowlist to refuse. `dependency_table_test.dart` then refused the docs/03 row that
+gate asked for, because no pubspec can declare a binary CR-100 rules committed rather than fetched.
+Both were widened deliberately: a parenthesised name is a dependency that is not a pub package,
+matched by **shape** rather than by its text on the file-dialog row's own precedent, and the
+dependency gate gained the sixth workspace pubspec without which `ffi` was governed by nothing.
+
+Floor: `rackpal_app` 981 to 985 (+4).
+
 ---
 
 ## 6. The dependency graph, as it actually stands

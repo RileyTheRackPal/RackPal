@@ -975,7 +975,14 @@ $SuiteFloors = @{
     # The load-bearing case there counts DARK PIXELS in the stored
     # member, because every failure short of a crash produces a plausible
     # PNG of exactly the right size.
-    'rackpal_app'    = 981
+    # 985 at PLAN-K, after the merge: +4 from pdfium_install_test.dart.
+    # The loader's third arm, the repository copy, HIDES THE ABSENCE OF
+    # THE SECOND: a build run from inside the working tree walks up and
+    # finds the committed DLL, so a missing install rule only fails on
+    # somebody else's machine holding a packaged copy. A source gate, and
+    # its limit is stated: it proves the rule is there and points at a
+    # real file, and the build gate proves CMake obeyed it.
+    'rackpal_app'    = 985
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

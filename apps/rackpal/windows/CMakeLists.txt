@@ -87,6 +87,34 @@ if(PLUGIN_BUNDLED_LIBRARIES)
     COMPONENT Runtime)
 endif()
 
+# THE VENDORED pdfium, BESIDE THE EXECUTABLE (DR-153 §11.152.3).
+#
+# It is not a Flutter plugin and not a native asset, so nothing above this
+# line carries it: `rackpal_pdfium` is a pure-Dart package that opens the
+# library by path at runtime, and its search order is an override, then
+# BESIDE THE EXE, then the repository copy.
+#
+# THAT THIRD ARM IS WHY THIS RULE IS EASY TO FORGET. A build run from
+# inside the working tree finds `third_party/pdfium/` by walking up, so a
+# developer's `flutter run` works with no install rule at all and only a
+# packaged copy on somebody else's machine would fail. `pdfium_install_
+# test.dart` in apps/rackpal asserts the rule is here rather than trusting
+# that somebody remembered.
+#
+# FATAL WHEN ABSENT, rather than a build that ships without it. A missing
+# binary is a person who has not run tools/vendor_pdfium.ps1, and the
+# message says so; producing an installable app that cannot open a PDF
+# would be the quieter failure.
+set(PDFIUM_DLL "${CMAKE_CURRENT_SOURCE_DIR}/../../../third_party/pdfium/win-x64/pdfium.dll")
+if(NOT EXISTS "${PDFIUM_DLL}")
+  message(FATAL_ERROR
+    "pdfium is not vendored at ${PDFIUM_DLL}. It is committed rather than "
+    "downloaded (CR-100) and placed by a person: run "
+    "pwsh -File tools/vendor_pdfium.ps1 -Release <tag> -Bootstrap")
+endif()
+install(FILES "${PDFIUM_DLL}" DESTINATION "${INSTALL_BUNDLE_LIB_DIR}"
+  COMPONENT Runtime)
+
 # Copy the native assets provided by the build.dart from all packages.
 set(NATIVE_ASSETS_DIR "${PROJECT_BUILD_DIR}native_assets/windows/")
 install(DIRECTORY "${NATIVE_ASSETS_DIR}"
