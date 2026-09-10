@@ -8786,6 +8786,122 @@ because an absent notice proves nothing about a sheet that was never drawn.
 
 **Fourteen mutations killed, one did not build.** The one that did not build is §5.9.22.3's `!`.
 
+#### 5.9.23 PLAN-K: the CAD plot imports, and a deferral ends on the population all three rulings said they lacked · `DR-153` · `v0.6.45`
+
+Closed `2026-09-10`, `#851` with `#852` to `#855`. Commits `e39676e` (the ruling), `161bdb0` (the
+binary and the binding), `7a5d1ff` (the resolution rule), `4156d5a` (the source), `dd19140` (the
+flow). **No exit clause moves by itself, and one becomes reachable**: DR-148 §11.147.3 bound
+`PLAN-J`'s drill to the DR-145 CAD plot, which the shipped importer refused, so `PLAN-J` could not
+run at all until this landed.
+
+##### 5.9.23.1 Three deferrals, one trigger, and the thing none of them had
+
+DR-138 §11.137.5 deferred pdfium *"until a PDF needs it"*. DR-145 §11.144.5 kept the deferral when
+one did. DR-148 §11.147.2 kept it a second time and wired the debt into the exit criterion rather
+than a date, on the ground that *"two deferrals with one trigger between them is the shape a
+permanent omission takes when nobody counts."*
+
+**All three named the same missing thing.** DR-145 §11.144.3: *"nothing here says how the two classes
+are distributed across the trade."* DR-138 §11.137.5, in one line: *"n is one."*
+
+The user supplied it: **raster sets are the more common of the two and vector plots are by no means
+uncommon**, and many plans arrive as CAD plots. That is trade knowledge rather than a census, which
+is what DR-138 said it was waiting for, and it settles what both prior rulings parked. DR-145
+§11.144.4's *"half the ordinary path is bought"* stopped being a note about a possibility.
+
+**AND THE SECOND REASON IS ABOUT THE OUTPUT.** Vector scales better on a sheet somebody is presented
+with, which would be true even if every plan imported today. It is why §11.152.6 keeps the source
+page, and it is not by itself an argument for building a passthrough now.
+
+##### 5.9.23.2 The mechanism was re-checked rather than assumed
+
+Both original refusals still hold. `pdfrx` and its siblings obtain pdfium by **downloading it at
+build time**, which CR-100 forbids in its own words, and 2.x requires **Flutter 3.47** against a repo
+pinned at 3.44.4 by a gate. `printing` fetches the same way.
+
+**A pure-Dart renderer was refused on the file itself.** DR-145 §11.144.7 put it on the record as
+*not costed*; costing it is one measurement and it is in that same ruling's table: the CAD plot
+carries **39 fonts**, so a renderer for that page is a font rasteriser plus a path engine plus a
+clipping model.
+
+##### 5.9.23.3 What a vendored binary needs that a package does not
+
+7.1 MB of `pdfium.dll` is now by some distance the largest file in this repository, and **nothing
+reviews it**. A pub dependency carries a lockfile hash; a committed binary in a diff carries nothing.
+
+So the pin records the release tag and the SHA-256 of both the archive and the DLL, and a test
+recomputes the second one. It cannot tell a good binary from a malicious one. What it tells you is
+that nobody swapped it after the day it was pinned, which is the question a supply chain actually
+asks.
+
+**The vendoring script is run once by a person and never by the build.** That is CR-100's
+supply-chain boundary made a fact rather than a policy: on a first run there is no checksum to verify
+against, because a checksum invented by the thing doing the downloading proves only that the bytes
+survived transit, so it prints what it got and asks a human to check the release page.
+
+##### 5.9.23.4 The resolution rule, and a mutation that found a real hole
+
+DR-145 §11.144.7 left the question owed and named why: DR-137's *"never above the source's own
+effective resolution"* is a rule for a raster source and **a vector source has no such ceiling**.
+
+Measured against the sheet rather than chosen: `T1.01` fits the plan into 15.6 x 7.9 in, so ANSI B at
+300 dpi is 5100 x 3300 and reaches the paper at **327 dpi**. 600 cannot be the rule for both real
+sheet sizes, since ARCH D at 600 is 311 megapixels against a 120 MP cap. The target steps DOWN to a
+40 MP budget rather than a large sheet being refused, because a refusal there would reinstate the
+manual step for exactly the drawings most likely to be a whole floor.
+
+**A MUTATION FOUND A DEFECT THE CASES WERE BLIND TO.** Deleting the non-positive guard looked
+harmless: every other malformed page fell out at the one-pixel floor anyway. But **two negatives
+multiply to a positive area**, so a `-1224 x -792` MediaBox passes the budget check untouched, takes
+a NEGATIVE dpi off the per-side cap, and comes back as a plausible `30909 x 20000` raster, past the
+cap that had just been consulted. Pinned.
+
+**And one arm was deleted rather than tested**, on `PLAN-H/4`'s practice: a second guard for
+`kMaxImagePixels` is unreachable by arithmetic, since the budget is 40 MP and that cap is 120. The
+invariant is asserted in the test instead.
+
+##### 5.9.23.5 A refusal that carries the page's size
+
+The lifter's job did not change and its answer is still preferred where it has one, because DR-138
+§11.137.3 is emphatic that lifting is not a cheaper rasterisation but a better one. **A case asserts
+the renderer is never even ASKED about a liftable page**, which is the half that would rot quietly.
+
+What changed is that `PdfPageNotLiftableError` now carries the sheet in points for every refusal
+after the `/MediaBox` is read, so the thing that draws it knows how big without re-parsing a file
+this parser has already walked. It stays null for the three refusals that are ABOUT the box, and
+`hasSheetSize` is what the flow tests rather than a reason string.
+
+##### 5.9.23.6 Two stale sentences, in a file that already carries that scar
+
+`PLAN-E/1` found this file telling somebody to convert by hand a file this product can open, and
+`PLAN-H/4` found a placeholder printed on a client deliverable. Both were copy that outlived the
+thing it described.
+
+The lifter's own message ended *"cannot be lifted without a renderer ... Export the page as PNG or
+JPEG for now"*, and the app's all-refused sentence said *"for now"* too. **A renderer exists now**,
+so the first says what the parser found and leaves the remedy to the caller, and the second says that
+a page reaching it is one pdfium ALSO declined, where the remedy is a different viewer rather than a
+different format.
+
+##### 5.9.23.7 Evidence
+
+Floors: `rackpal_core` 4474 to 4480 (+6), `rackpal_pdfium` 22 (a new suite), `rackpal_ui` 1674 to
+1677 (+3), `rackpal_app` 965 to 981 (+16). Gates: 17, since the suite list gained one.
+
+**THE LOAD-BEARING CASE IN THE BINDING IS THAT THE PAGE IS NOT UPSIDE DOWN**, and nothing else could
+see it. A vertically flipped render has the same size, the same ink and the same bytes twice, so
+every other case passes against an upside-down floorplan; deliberately reversing the rows fails that
+case and only that case. **`PLAN-A/3` met the same defect one package over**: a PDF image occupies
+the unit square with its top row at `v = 1`, so a flipped placement produces an IDENTICAL bounding
+box.
+
+**And the real binding is run end to end.** The flow's own cases hand it a fake returning a PNG of
+the size asked for, which proves the sequence and nothing about pdfium.
+`plan_import_pdfium_test.dart` imports a well-formed vector PDF through the shipping path with no
+fake anywhere and counts DARK PIXELS in the stored member. Its fixture carries a real
+cross-reference table, because pdfium falls into a damage-recovery path without one and **a fixture
+that exercises the recovery path of the thing under test passes for the wrong reason**.
+
 ---
 
 ## 6. The dependency graph, as it actually stands

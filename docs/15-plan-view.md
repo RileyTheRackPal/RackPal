@@ -105,11 +105,33 @@ still PNG or JPEG, so `PlanUnderlay.format` keeps its two values and `rackpal_co
 decoder. What it buys is a `docs/13` entry against DR-009, which DR-029 accepts and names, and which
 is now **D15** and is costed with **D9** rather than twice.
 
+**BOTH HALVES OF THE ORDINARY PATH ARE BOUGHT AS OF `PLAN-K`, 2026-09-10** (DR-153 §11.152). A page
+that is one full-page image is **lifted** whole, byte for byte as the drawing office exported it, and
+a page of **vectors is rendered** by a vendored pdfium: the second was refused until then, which
+DR-145 §11.144.3 measured on a real AutoCAD plot and DR-138, DR-145 and DR-148 each deferred. The
+population is what ended it: raster sets are the more common of the two and CAD plots are by no means
+uncommon, so the refused class was ordinary rather than exceptional.
+
+**Lifting is still preferred where it applies**, because rasterising a page whose only content is a
+JPEG decodes and re-encodes it, losing a generation and gaining no pixel (DR-138 §11.137.3). A
+rendered page is drawn at **300 dpi of the page's own size**, which prints at 327 dpi once `T1.01`
+has fitted it, stepping down to a pixel budget rather than refusing a large sheet (§11.152.5).
+
+**A rendered page keeps the PDF it came from** in `sources/<id>.pdf` and a lifted page does not
+(§11.152.6): a lifted page's stored bytes already ARE the source, while a rendered one has thrown the
+vector away and only the source can bring it back. What that keeps open is vector passthrough to the
+exported sheet, which is not built and which `PLAN-J`'s print decides.
+
+**The binary is vendored rather than downloaded** (CR-100) and is placed by a person, so nothing in a
+build or in CI fetches anything.
+
 **A multi-page PDF gets a page picker, and exactly one page becomes one underlay** (DR-037
 §11.36.2). Architectural sets are multi-page and the electrical sheet is not page 1, so importing
 only the first page would put the conversion step DR-029 spent 2–3 weeks buying out back on the
-ordinary path. The pages are rasterised at thumbnail size, shown as a grid, and the one clicked
-becomes the underlay. **This narrows §10's exclusion rather than reversing it**: no underlay is ever
+ordinary path. The pages are shown as a grid at thumbnail size, and the one clicked
+becomes the underlay. **A lifted page and a rendered one look the same in that grid**, because the
+person is choosing a drawing rather than an import mechanism; what the tile reports is the size and
+resolution they would GET, never the thumbnail it just drew. **This narrows §10's exclusion rather than reversing it**: no underlay is ever
 more than one page and nothing is tiled.
 
 ---
