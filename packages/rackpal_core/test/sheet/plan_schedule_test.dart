@@ -369,7 +369,7 @@ void main() {
       }
     });
 
-    /// LOAD-BEARING for three blocks across: a cell that overran its field
+    /// LOAD-BEARING for four blocks across: a cell that overran its field
     /// would print on top of the AREA of the block beside it.
     test('a long description is truncated to its own column', () {
       final long = 'AUDIO DROP ' * 40;

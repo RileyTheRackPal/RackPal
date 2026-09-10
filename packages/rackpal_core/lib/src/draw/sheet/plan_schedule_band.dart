@@ -272,7 +272,7 @@ List<DiagramOp> _block({
     for (var f = 0; f < cells.length; f++) {
       final width = block.width * kPlanScheduleFieldShares[f];
       // TRUNCATED TO ITS OWN COLUMN, never allowed to run into the next
-      // one: three blocks across leave no slack, and a description
+      // one: four blocks across leave no slack, and a description
       // overrunning its field would print on top of the AREA of the block
       // beside it.
       final text = fitTextToWidth(
