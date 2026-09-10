@@ -48,11 +48,13 @@
 
 import 'package:rackpal_core/src/model/enums.dart' show Severity;
 import 'package:rackpal_core/src/model/rack_document.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/validation/finding.dart';
 import 'package:rackpal_core/src/validation/rule_catalogue.dart';
 import 'package:rackpal_core/src/validation/rules_audio.dart';
 import 'package:rackpal_core/src/validation/rules_cable.dart';
 import 'package:rackpal_core/src/validation/rules_code.dart';
+import 'package:rackpal_core/src/validation/rules_plan.dart';
 import 'package:rackpal_core/src/validation/rules_power.dart';
 import 'package:rackpal_core/src/validation/rules_rack.dart';
 import 'package:rackpal_core/src/validation/severity_resolution.dart';
@@ -92,15 +94,63 @@ const Map<String, DrcRule> kDrcRules = <String, DrcRule>{
   'RCK-013': ruleRck013,
 };
 
+/// The plan band's rules, by id (DR-154 §11.153.2).
+///
+/// A SECOND MAP AND NOT FOUR MORE ENTRIES, because `kDrcRules` is checked
+/// against `kRuleCatalogue`'s post-hoc ids in both directions and a
+/// `PLN-*` in there would be a rule the v1 catalogue does not list, which
+/// is the thing CR-021 refuses.
+///
+/// `PLN-004` IS ABSENT AND THAT IS NOT AN OMISSION. Its question is about
+/// container bytes that `RackDocument` does not hold, so it takes an
+/// argument this signature has nowhere to put; [evaluateDocument] runs it
+/// separately from what the caller supplies.
+const Map<String, DrcRule> kPlanDrcRules = <String, DrcRule>{
+  'PLN-001': rulePln001,
+  'PLN-002': rulePln002,
+  'PLN-003': rulePln003,
+};
+
 /// Every finding this document carries, severity resolved and
 /// acknowledgements applied, in a deterministic order.
 ///
 /// [only] restricts the run to one rule, for a test or for a surface
 /// re-checking a single row. Null runs all of them, which is the case
 /// the issues list uses.
-List<Finding> evaluateDocument(RackDocument doc, {String? only}) {
+///
+/// ═══════════════════════════════════════════════════════════════════
+/// [changedUnderlays] IS A FACT THE DOCUMENT CANNOT KNOW
+/// ═══════════════════════════════════════════════════════════════════
+/// `PLN-004` reports an underlay whose stored bytes are not the ones its
+/// `contentHash` was taken over, and `RackDocument` holds no bytes: an
+/// underlay names a container member and the members ride on the session
+/// (DR-019, `PLAN-B`). So the comparison happens where the bytes are,
+/// through `planUnderlayHashMatches`, and its answer is handed in.
+///
+/// **AN EMPTY SET MEANS "NOBODY CHECKED" AS MUCH AS IT MEANS "NOTHING
+/// CHANGED", and this function cannot tell them apart.** That is why the
+/// checking belongs to the layer that reads the container and why
+/// `app_shell.dart` always supplies it: a default that quietly means
+/// "clean" is how a rule ends up existing and never firing.
+///
+/// It is also why the hash is NOT computed here. `_findings` in
+/// `rack_canvas_screen.dart` is a getter called from `build`, so a sha256
+/// over several megabytes of PNG would run on every frame that rebuilds
+/// the drawer.
+List<Finding> evaluateDocument(
+  RackDocument doc, {
+  String? only,
+  Set<Uuid> changedUnderlays = const <Uuid>{},
+}) {
   final out = <Finding>[];
-  for (final entry in kDrcRules.entries) {
+  final rules = <String, List<Finding> Function(RackDocument)>{
+    ...kDrcRules,
+    ...kPlanDrcRules,
+    // THE ONE RULE THAT TAKES AN ARGUMENT, closed over the caller's
+    // answer so the loop below stays one shape.
+    'PLN-004': (d) => rulePln004(d, changedUnderlays),
+  };
+  for (final entry in rules.entries) {
     if (only != null && entry.key != only) continue;
     for (final raw in entry.value(doc)) {
       // STEP 1 — the project's own severity for this rule.

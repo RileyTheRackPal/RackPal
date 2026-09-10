@@ -85,7 +85,7 @@ The **epoch-mask coverage test** (AC-014) is forty lines and is the highest valu
 
 ### 2.3 Validation rules, addressed by rule ID
 
-The v1 catalogue is **28 rules**, 8 tier-1, 6 tier-2, 14 tier-3, with `PLC-001..003` ratified (canon §12.6(b)) and `LEN-002` added (DR-020, canon §11.19), and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). The gate is AC-051, and it is absolute: **no rule ships without its fixture pair.**
+The v1 catalogue is **8 tier-1 + 6 tier-2 + 15 tier-3**, with `PLC-001..003` ratified (canon §12.6(b)), `LEN-002` added (DR-020, canon §11.19) and `ELE-005` restored (DR-132, canon §11.131), and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). **The plan advisories are a second band** and are not counted here (DR-154 §11.153.2). The gate is AC-051, it is absolute, and it follows the RULE rather than the list: **no rule in either band ships without its fixture pair.**
 
 ```text
 packages/rackpal_core/test/fixtures/drc/
@@ -393,7 +393,7 @@ A change is done when all of the following are true. This list is the PR checkli
 
 1. `pwsh -File tools/ci/run_local.ps1` is green: fourteen gates, including zero analyzer errors and warnings, an info count at or under the pin, and `dart format` clean.
 2. New behaviour has a test at the **lowest tier that can express it**: a rule gets fixtures, not a widget test; a layout change gets a display-list golden, not a screenshot.
-3. A new DRC rule ships with its `.bad`/`.near` fixture pair (AC-051). No exceptions; this is the gate that holds the v1 catalogue at 27, and it now covers 27 fixture pairs.
+3. A new rule ships with its `.bad`/`.near` fixture pair (AC-051). No exceptions; this is the gate that holds the catalogue to its size, and **it follows the rule rather than the list** (DR-154 §11.153.4), so it covers the plan band too and reports per band. `drc_corpus_test.dart` is where the coverage is asserted, and it is the only place a count of pairs is written down.
 4. A new command declares its `touches` mask and passes the epoch-coverage test (AC-014), and participates in the round-trip property test.
 5. A format change adds a schema fixture on the day it ships and never edits an existing one (§2.5).
 6. A change to any signal-family hue, dash or weight, in the registry **or** in a prose table, keeps `python tools/pal1_check.py` at exit 0, and the family list in that file was updated in the same commit. PAL-1 is never re-blessed by reading (§2.6).

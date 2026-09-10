@@ -19426,8 +19426,17 @@ it: `rule_catalogue_test.dart` asserts **8 + 6 + 15 = 29** and PARSES docs/02 §
 ids one by one, which is the mechanism that keeps the code and the normative catalogue in step.
 
 **What that mechanism cannot see is prose.** The table has twenty-nine rows and the sentence above it
-says twenty-eight, and so do docs/00 §6, docs/05, docs/09 in four places and docs/10. The number is
-correct in every place a test can reach and wrong in every place only a person can.
+says twenty-eight, and so does every other sentence that restates the total: across docs/00, docs/02,
+docs/05, docs/09, docs/10 and docs/11, including a box in an ASCII diagram. The number is correct in
+every place a test can reach and wrong in every place only a person can.
+
+**AND NO COUNT OF THE WRONG COUNTS IS WRITTEN HERE EITHER**, which is not a joke at this ruling's own
+expense so much as its point. The first draft of this clause said six documents, then twelve places,
+and both were wrong by the time the sweep finished. The sweep is one commit and `git show --stat` is
+what counts it; a number here would be a seventh copy of exactly the thing being fixed.
+
+**docs/12 IS LEFT ALONE.** Its entries record what was true when the work happened, and a milestone
+board rewritten to agree with today is a board that can no longer be read as evidence.
 
 **THIS IS THE SIXTH INSTANCE AND IT ARRIVED INSIDE THE WARNING ABOUT IT**, which is worth recording
 plainly: a brief that opens by naming a trap walked into it, because the brief was written from the
@@ -19494,6 +19503,30 @@ reads it rather than composing a second one.
 `Location` this depicts, usually a floor"* (docs/15 §3.1), and the drops on a floor are filed in the
 rooms under it. Counting only the exact location would make the rule silent on every plan filed the
 way the trade files them, which is the shape of a rule that exists and never fires.
+
+**11.153.7a AND THE SHIPPED STRIP ALREADY MADE THE OPPOSITE CHOICE, WHICH THIS CLAUSE DID NOT CHECK.**
+§11.153.7 was ruled from docs/15 §3.1 alone. `unpinnedCarriersFor` scopes with `where == scope`, an
+exact match, and `PLAN-E/4` shipped it that way: **on a `Level 1` plan an outlet filed in `Great Room`
+is neither in `rows` nor counted in `unlocatedCount`**, but dropped by a comparison. There is no case
+in `unpinned_carriers_test.dart` for a child room, so nothing said so.
+
+That is a defect in the strip and not merely a difference of opinion, on the strip's own stated
+standard: `unlocatedCount` exists so the count is never *"the `0 pathways` status bar: a number that
+flatters by counting only what it can see"*, and this path counts nothing and reports nothing.
+
+**Ruled by the user: both widen, to one scope.** A carrier is on this plan's floor when its location
+is the underlay's location or any descendant, `LocationTree.subtreeOf`, which
+`location_removal.dart` already uses for the same question about the same tree. **The strip is
+`PLN-002`'s remedy surface**, so the two must count one population: a person reading *"12 devices in
+Level 1 are not on the plan"*, opening the strip and finding it empty is the two-answers failure
+CR-107 keeps naming, one layer down.
+
+**THIS AMENDS DR-142's STRIP CLAUSE** on the scope only. The order, the `unlocatedCount` and the
+rack-leads default are untouched.
+
+**AND THE ORDER OF THE TWO FINDINGS IS THE LESSON.** A ruling drafted from a design document, checked
+against the shipped code twenty minutes later, disagreed with it. The corpus already carries that
+practice by name; this is its instance in a ruling rather than in a task.
 
 **11.153.8 WHAT THIS DOES NOT RULE.** Not the issues-list surface, which is M5's and which renders
 whatever `evaluateDocument` returns. Not whether `PLN-*` ever becomes v1 scope rather than v1.1;

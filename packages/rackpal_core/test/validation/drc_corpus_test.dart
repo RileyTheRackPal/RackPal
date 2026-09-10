@@ -33,4 +33,20 @@ void main() {
     expect(drcCorpus().length, greaterThan(20));
     expect(kRuleCatalogue, hasLength(29));
   });
+
+  /// DR-154 §11.153.4. The gate reports per band, so a failure names the
+  /// catalogue it is about, and the plan band's count moves on its own.
+  test('the plan band is gated too, and separately', () {
+    expect(corpusGapsIn(kPlanRules), isEmpty);
+    expect(
+      kPlanRules,
+      hasLength(4),
+      reason: 'docs/15 §9 gives four advisories',
+    );
+    expect(
+      corpusCoverage().keys.where((id) => id.startsWith('PLN-')),
+      hasLength(4),
+      reason: 'a band gated by a loop over an EMPTY band passes silently',
+    );
+  });
 }

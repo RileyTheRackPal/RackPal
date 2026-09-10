@@ -126,7 +126,12 @@ void main() {
         'RuleOverride and AckedFinding all use', () {
       final ids = kRuleCatalogue.map((r) => r.ruleId).toList();
       expect(ids.toSet(), hasLength(ids.length));
-      expect(kRulesById, hasLength(29));
+      // `kRulesById` SPANS BOTH BANDS SINCE DR-154, so it is 29 plus the
+      // four plan advisories. The lookup is shared because severity
+      // resolution and acknowledgement are; the LISTS stay separate,
+      // which is what keeps docs/02 §5's number from moving when docs/15
+      // §9 grows.
+      expect(kRulesById, hasLength(29 + kPlanRules.length));
     });
 
     test('every rule cites at least one ruling (§8.2)', () {

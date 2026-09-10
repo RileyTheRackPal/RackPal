@@ -670,7 +670,18 @@ $SuiteFloors = @{
     # something that draws vectors knows how big to draw it without
     # re-parsing the file; the second case is the other half, since the
     # three refusals ABOUT the box cannot report one.
-    'rackpal_core'   = 4480
+    # 4507 at PLAN-I/1: +27. The plan advisories (DR-154), their AC-051
+    # pairs, the hash comparator AC-042 had no verifying reader for, and
+    # the two gates that had to widen to hold a second band: the
+    # catalogue/predicate agreement and the fixture-pair coverage, each
+    # now reporting PER BAND so a failure names the table it is about.
+    #
+    # ONE CASE IS ABOUT A DEFECT THE RULING FOUND IN A SHIPPED SURFACE.
+    # `unpinnedCarriersFor` matched a location EXACTLY, so on a `Level 1`
+    # plan an outlet filed in `Great Room` was neither a row nor an
+    # unlocated count but dropped by a comparison; the strip and PLN-002
+    # now share one subtree scope (§11.153.7a).
+    'rackpal_core'   = 4507
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
