@@ -986,7 +986,17 @@ $SuiteFloors = @{
     # draws a 320 px thumbnail and must report the size the person would
     # GET, since "320 x 207, 19 dpi" is a fact about this dialog rather
     # than about anything on offer.
-    'rackpal_ui'     = 1677
+    # 1695 at LEN-A/4 part one: +18 from canvas/plan/plan_outline_test.dart.
+    # The room-outline draw is the THIRD mode on this canvas and the third
+    # LIFETIME: the arm outlives each pin, the calibration is consumed by
+    # its own second click, and this accumulates until the shape closes.
+    # The cases pin that difference, because the three look alike from
+    # outside and ending differently is why they are three classes.
+    # ONE IS A LAYOUT REGRESSION GUARD. The first draft of the chip's
+    # close label overflowed its Row by 70 points at an 800-point canvas,
+    # which a widget test reports as a failure and a shipped build reports
+    # as a barber pole nobody files.
+    'rackpal_ui'     = 1695
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
