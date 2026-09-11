@@ -43,6 +43,8 @@ Uuid _add(RackDocument doc, String name, {Uuid? parent, String? code}) =>
     )..apply(doc)).id;
 
 void main() {
+  _roomEstimateTests();
+
   group('AddLocationCommand', () {
     test('creates a node, and revert takes exactly it back out', () {
       final doc = _doc();
@@ -182,9 +184,21 @@ void main() {
       // through it throws at runtime, because the closure really is
       // `(Location, String) => void`. So the cases are written out, typed,
       // and the FIRST assertion here is that there is one per row.
+      //
+      // AND THE SET IS THE TABLE PLUS ONE SINCE `LEN-A/5`.
+      // `estimatedRunLengthFromRack` left `LocationField` because its
+      // origin marker has to move with it (DR-050 §11.49.3), and the
+      // byte round-trip is a claim about the FIELD rather than about the
+      // mechanism that writes it. Dropping the case with the row would
+      // have deleted coverage of a field that still exists and is still
+      // encoded. Named literally, so a SECOND field leaving the table
+      // fails here rather than silently losing its case.
       expect(
         _byteRoundTripCases.keys.toSet(),
-        {for (final f in LocationField.all) f.key},
+        {
+          for (final f in LocationField.all) f.key,
+          'estimatedRunLengthFromRack',
+        },
         reason:
             'a LocationField row has no byte round-trip case, or a case '
             'names a row that no longer exists',
@@ -432,19 +446,176 @@ void main() {
   });
 }
 
-/// One typed edit per [LocationField] row, each moving the field to a
-/// value a location created by `_add` does not already hold.
+// ═══════════════════════════════════════════════════════════════════════
+// LEN-A/5: THE ESTIMATE AND ITS ORIGIN MARKER MOVE AS ONE
+// ═══════════════════════════════════════════════════════════════════════
+// `estimatedRunLengthFromRack` left `LocationField` for this: a row writes
+// ONE field, so it could set the figure and leave a stale
+// `computedFromPlan` standing over a hand-typed number. DR-050 §11.49.3
+// buys the marker so a later reader can ask "did somebody measure this
+// room or did the software guess it", and a marker that drifts from the
+// value it marks answers that wrongly rather than not at all.
+void _roomEstimateTests() {
+  group('LEN-A/5: SetRoomEstimateCommand writes the pair', () {
+    test('typed records the figure AND that a person entered it', () {
+      final doc = _doc();
+      final id = _add(doc, 'Great Room');
+
+      SetRoomEstimateCommand.typed(
+        locationId: id,
+        length: Len.fromMillimetres(21000),
+      ).apply(doc);
+
+      expect(
+        doc.locations[id]!.estimatedRunLengthFromRack,
+        Len.fromMillimetres(21000),
+      );
+      expect(
+        doc.locations[id]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.typed,
+      );
+    });
+
+    test('computed records the other origin, same figure', () {
+      final doc = _doc();
+      final id = _add(doc, 'Great Room');
+
+      SetRoomEstimateCommand.computed(
+        locationId: id,
+        length: Len.fromMillimetres(21000),
+      ).apply(doc);
+
+      expect(
+        doc.locations[id]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.computedFromPlan,
+      );
+    });
+
+    test('cleared empties BOTH, because a marker over nothing describes '
+        'nothing', () {
+      final doc = _doc();
+      final id = _add(doc, 'Great Room');
+      SetRoomEstimateCommand.computed(
+        locationId: id,
+        length: Len.fromMillimetres(21000),
+      ).apply(doc);
+
+      SetRoomEstimateCommand.cleared(locationId: id).apply(doc);
+
+      expect(doc.locations[id]!.estimatedRunLengthFromRack, isNull);
+      expect(doc.locations[id]!.estimatedRunLengthOrigin, isNull);
+    });
+
+    test('LOAD-BEARING: undo restores BOTH fields', () {
+      // An undo that put the figure back and left the marker would be the
+      // drift this command exists to prevent, arriving through the door
+      // marked "undo".
+      final doc = _doc();
+      final id = _add(doc, 'Great Room');
+      SetRoomEstimateCommand.typed(
+        locationId: id,
+        length: Len.fromMillimetres(18000),
+      ).apply(doc);
+
+      final over = SetRoomEstimateCommand.computed(
+        locationId: id,
+        length: Len.fromMillimetres(21000),
+      )..apply(doc);
+      // THE INTERMEDIATE ASSERTION IS NOT DECORATION: without it a
+      // command that did nothing at all would pass this case, because
+      // the field would still hold what the undo is supposed to restore.
+      expect(
+        doc.locations[id]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.computedFromPlan,
+      );
+
+      over.revert(doc);
+      expect(
+        doc.locations[id]!.estimatedRunLengthFromRack,
+        Len.fromMillimetres(18000),
+      );
+      expect(
+        doc.locations[id]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.typed,
+        reason: 'the marker came back with the figure it marks',
+      );
+    });
+
+    test('and undoing a clear restores both too', () {
+      final doc = _doc();
+      final id = _add(doc, 'Great Room');
+      SetRoomEstimateCommand.computed(
+        locationId: id,
+        length: Len.fromMillimetres(21000),
+      ).apply(doc);
+
+      final clear = SetRoomEstimateCommand.cleared(locationId: id)..apply(doc);
+      expect(doc.locations[id]!.estimatedRunLengthFromRack, isNull);
+
+      clear.revert(doc);
+      expect(
+        doc.locations[id]!.estimatedRunLengthFromRack,
+        Len.fromMillimetres(21000),
+      );
+      expect(
+        doc.locations[id]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.computedFromPlan,
+      );
+    });
+
+    test('a location this document does not have is a no-op, and a revert '
+        'after it THROWS', () {
+      final doc = _doc();
+      final command = SetRoomEstimateCommand.typed(
+        locationId: const Uuid('no-such-room'),
+        length: Len.fromMillimetres(21000),
+      )..apply(doc);
+
+      expect(() => command.revert(doc), throwsStateError);
+    });
+
+    test('the label names the act that happened', () {
+      expect(
+        SetRoomEstimateCommand.typed(
+          locationId: const Uuid('x'),
+          length: Len.fromMillimetres(1),
+        ).label,
+        LabelKey.setRoomEstimate,
+      );
+      expect(
+        SetRoomEstimateCommand.cleared(locationId: const Uuid('x')).label,
+        LabelKey.clearRoomEstimate,
+      );
+    });
+
+    test('it touches structure AND wires, because it is a cable length '
+        'the schedule prints', () {
+      final command = SetRoomEstimateCommand.cleared(
+        locationId: const Uuid('x'),
+      );
+      expect(command.touches.has(EpochMask.structure), isTrue);
+      expect(command.touches.has(EpochMask.wires), isTrue);
+      expect(
+        command.touches.has(EpochMask.rack),
+        isFalse,
+        reason: 'the negative that makes the positives mean something',
+      );
+    });
+  });
+}
+
+/// One typed edit per editable [Location] field, each moving it to a value
+/// a location created by `_add` does not already hold.
 ///
-/// Keyed by the row's own `key`, so the test above can assert the two sets
-/// agree and a new row cannot be added without a case.
+/// Keyed by the field name, so the test above can assert the set agrees
+/// with the table and a new field cannot be added without a case.
+///
+/// `Command<RackDocument>` RATHER THAN THE PROPERTY COMMAND, since
+/// `LEN-A/5`: one of these fields is written by a command of its own and
+/// the round trip is a claim about the encoded bytes, which does not care
+/// which class moved them.
 final _byteRoundTripCases =
-    <
-      String,
-      SetEntityPropertyCommand<Location, dynamic> Function(
-        RackDocument doc,
-        Uuid id,
-      )
-    >{
+    <String, Command<RackDocument> Function(RackDocument doc, Uuid id)>{
       'name': (doc, id) => SetEntityPropertyCommand<Location, String>(
         id: id,
         field: LocationField.name,
@@ -496,13 +667,13 @@ final _byteRoundTripCases =
         now: _later,
         actor: 'tester',
       ),
-      'estimatedRunLengthFromRack': (doc, id) =>
-          SetEntityPropertyCommand<Location, Len?>(
-            id: id,
-            field: LocationField.estimatedRunLengthFromRack,
-            from: doc.locations[id]!.estimatedRunLengthFromRack,
-            to: Len.fromMillimetres(21000),
-            now: _later,
-            actor: 'tester',
-          ),
+      // NOT AN `EntityField` SINCE `LEN-A/5`. The figure and its origin
+      // marker move as one, so a row that wrote the figure alone could
+      // leave a stale `computedFromPlan` over a hand-typed number
+      // (DR-050 §11.49.3). The round trip is the same claim about the
+      // same field, through the command that now owns it.
+      'estimatedRunLengthFromRack': (doc, id) => SetRoomEstimateCommand.typed(
+        locationId: id,
+        length: Len.fromMillimetres(21000),
+      ),
     };

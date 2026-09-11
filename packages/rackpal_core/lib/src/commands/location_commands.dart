@@ -656,3 +656,98 @@ RemoveLocationCommand? buildRemoveLocation({
   if (plan.isEmpty) return null;
   return RemoveLocationCommand(plan: plan);
 }
+
+/// Writes `estimatedRunLengthFromRack` AND its origin marker, together
+/// (DR-050 §11.49.3, `LEN-A/5`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE PAIR MOVES AS ONE, WHICH IS WHY THIS IS A COMMAND AND NOT A ROW
+/// ═══════════════════════════════════════════════════════════════════════
+/// `estimatedRunLengthFromRack` WAS an `EntityField` row and is no longer.
+/// A row writes one field, so a project could set the figure and leave a
+/// stale `computedFromPlan` standing over a hand-typed number: the marker
+/// exists precisely so a later reader can ask *"did somebody measure this
+/// room or did the software guess it"*, and a marker that can drift from
+/// the value it marks answers that question wrongly rather than not at
+/// all.
+///
+/// `set_entity_property_command_test.dart` names the exclusion and this is
+/// the owner it names.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THREE CONSTRUCTORS, SO THE ILLEGAL STATE CANNOT BE BUILT
+/// ═══════════════════════════════════════════════════════════════════════
+/// An origin with no figure beside it says nothing about anything. Rather
+/// than assert against it at run time, the only ways in are the three that
+/// make sense: a person typed one, the plan proposed one, or the field was
+/// emptied.
+final class SetRoomEstimateCommand extends Command<RackDocument> {
+  /// A person entered the length.
+  SetRoomEstimateCommand.typed({
+    required this.locationId,
+    required Len this.length,
+  }) : origin = RunLengthOrigin.typed;
+
+  /// The plan geometry proposed it (`roomEstimateFor`).
+  SetRoomEstimateCommand.computed({
+    required this.locationId,
+    required Len this.length,
+  }) : origin = RunLengthOrigin.computedFromPlan;
+
+  /// The field was emptied. The marker goes with it: there is nothing left
+  /// for it to describe.
+  SetRoomEstimateCommand.cleared({required this.locationId})
+    : length = null,
+      origin = null;
+
+  final Uuid locationId;
+
+  /// The figure, or null when the field is being emptied.
+  final Len? length;
+
+  /// Where it came from. Null exactly when [length] is.
+  final RunLengthOrigin? origin;
+
+  Len? _previousLength;
+  RunLengthOrigin? _previousOrigin;
+  bool _applied = false;
+
+  @override
+  LabelKey get label =>
+      length == null ? LabelKey.clearRoomEstimate : LabelKey.setRoomEstimate;
+
+  /// `structure | wires`, which is the mask the row carried and for its
+  /// stated reason: this is a CABLE length the schedule prints, so a
+  /// consumer watching cable data subscribes to `wires`.
+  @override
+  EpochMask get touches => EpochMask.structure | EpochMask.wires;
+
+  @override
+  Iterable<Uuid> get affects => [locationId];
+
+  @override
+  void apply(RackDocument doc) {
+    final location = doc.locations[locationId];
+    if (location == null) return;
+    _previousLength = location.estimatedRunLengthFromRack;
+    _previousOrigin = location.estimatedRunLengthOrigin;
+    location
+      ..estimatedRunLengthFromRack = length
+      ..estimatedRunLengthOrigin = origin;
+    _applied = true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    if (!_applied) {
+      throw StateError('SetRoomEstimateCommand.revert called before apply().');
+    }
+    // BOTH FIELDS BACK, which is the whole reason one command owns them.
+    // An undo that restored the figure and left the marker would be the
+    // drift this class exists to prevent, arriving through the door
+    // marked "undo".
+    doc.locations[locationId]
+      ?..estimatedRunLengthFromRack = _previousLength
+      ..estimatedRunLengthOrigin = _previousOrigin;
+  }
+}

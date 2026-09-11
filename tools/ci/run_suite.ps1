@@ -729,7 +729,30 @@ $SuiteFloors = @{
     # ONE ASSERTS AN ABSENCE AND NAMES `#861` AS WHAT RETIRES IT: the
     # derivation has no production caller yet, which is the state
     # PdfImageResolver sat in from PLAN-A to PLAN-H.
-    'rackpal_core'   = 4583
+    # 4591 at LEN-A/5 part one: +8 from SetRoomEstimateCommand's cases.
+    # `estimatedRunLengthFromRack` LEFT `LocationField`, the first field to
+    # leave that table rather than never to have joined: a row writes ONE
+    # field, so it could set the figure and leave a stale
+    # `computedFromPlan` over a hand-typed number, which is the drift
+    # DR-050 11.49.3 buys the marker to make impossible. The load-bearing
+    # case is that UNDO restores both fields, since an undo that put the
+    # figure back and left the marker would be that drift arriving through
+    # the door marked undo.
+    # 4596 at LEN-A/5 part two: +5 for `computedEstimateCount`, the count
+    # that says how many of a takeoff's estimates the PLAN proposed rather
+    # than a person entering them (DR-050 11.49.3). A SUBSET of
+    # estimatedCount, unlike boundCount which is disjoint on purpose.
+    # The load-bearing case is that a row which did not USE the room
+    # estimate carries no marker even when the room has one: a run cut to
+    # a measured length owes nothing to the room's figure.
+    # 4599 at LEN-A/5 part three: +4 for `planEstimateMayFill`, less one
+    # retired. THE RETIRED ONE IS THE INSTRUCTIVE HALF: `LEN-A/3` left a
+    # case asserting `roomEstimateFor` had no production caller and naming
+    # this chapter as what would fail it. This chapter wired it up and the
+    # case DID NOT FAIL, because the scan walked rackpal_core/lib and the
+    # caller landed in rackpal_ui. A gate whose scope was narrower than
+    # its subject, written to guard against exactly that.
+    'rackpal_core'   = 4599
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1003,7 +1026,12 @@ $SuiteFloors = @{
     # six functions and a dialog with no caller, and PLAN-E/6 shipped a
     # gesture that was dead until PLAN-F/0 because the canvas tests
     # predated the band and passed null.
-    'rackpal_ui'     = 1712
+    # 1723 at LEN-A/5: +11. The run-length editor AC-024 named and nobody
+    # could type into (7), and the auto-fill on a closed outline (4). The
+    # marker reads in all THREE directions, because an absent origin is
+    # not "typed": every document written before LEN-A/1 carries a figure
+    # with no recorded provenance.
+    'rackpal_ui'     = 1723
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

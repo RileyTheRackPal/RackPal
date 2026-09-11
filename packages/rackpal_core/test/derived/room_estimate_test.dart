@@ -21,8 +21,6 @@
 // means every run in that room buys zero wire in the takeoff. Against a
 // trade that quotes conservatively, a silent zero is the worst available
 // direction of error.
-import 'dart:io';
-
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 
@@ -269,6 +267,53 @@ void main() {
     });
   });
 
+  group('planEstimateMayFill: the auto-fill never replaces a person', () {
+    Location room({Len? held, RunLengthOrigin? origin}) => Location(
+      id: const Uuid('loc-fill'),
+      kind: LocationKind.room,
+      name: 'Great Room',
+      code: 'GR',
+      order: const FracIndex('a0'),
+      meta: planMeta(),
+      estimatedRunLengthFromRack: held,
+      estimatedRunLengthOrigin: origin,
+    );
+
+    test('an EMPTY field fills', () {
+      expect(planEstimateMayFill(room()), isTrue);
+    });
+
+    test('the software’s OWN earlier guess is replaced', () {
+      // §11.49.3 licenses this: a length is a continuous estimate
+      // consumed with a margin, so a better derivation replacing a worse
+      // one costs nothing anybody measured.
+      expect(
+        planEstimateMayFill(
+          room(held: inches(120), origin: RunLengthOrigin.computedFromPlan),
+        ),
+        isTrue,
+      );
+    });
+
+    test('A TYPED FIGURE IS NEVER REPLACED', () {
+      expect(
+        planEstimateMayFill(
+          room(held: inches(120), origin: RunLengthOrigin.typed),
+        ),
+        isFalse,
+      );
+    });
+
+    test('AND AN UNRECORDED ORIGIN COUNTS AS A PERSON’S (G4)', () {
+      // LOAD-BEARING. Absent means nobody wrote down where the figure
+      // came from, which is every document written before `LEN-A/1`.
+      // Reading that as "not typed" would treat an unknown as a licence,
+      // and the figure it silently replaced might be the one somebody
+      // walked the house to get.
+      expect(planEstimateMayFill(room(held: inches(120))), isFalse);
+    });
+  });
+
   group('what this derivation is NOT', () {
     test('it adds no margin and no routing factor (DR-020, §11.49.4)', () {
       // The trade quotes several hundred feet over actual, and that
@@ -290,55 +335,23 @@ void main() {
       );
     });
 
-    test('IT HAS NO PRODUCTION CALLER YET, AND `#861` IS WHAT RETIRES '
-        'THIS CASE', () {
-      // ═══════════════════════════════════════════════════════════════
-      // A DERIVATION NOBODY CALLS IS A FAILURE THIS PROJECT HAS SHIPPED
-      // ═══════════════════════════════════════════════════════════════
-      // `PdfImageResolver` was a typedef with ZERO production call sites
-      // from PLAN-A until PLAN-H, `PortDef.bus.maxTapWatts` was declared
-      // on zero of 727 seeded ports, and `riseAllowance` was named by two
-      // rulings and a design document and written by nothing until
-      // PLAN-C. `roomEstimateFor` is in that state right now, on purpose:
-      // `LEN-A/5` owns the write path and the editor.
-      //
-      // So the absence is ASSERTED rather than left to be discovered.
-      // When `#861` wires it up this case fails, and whoever lands it
-      // deletes the case rather than wondering whether the scan was
-      // supposed to find something.
-      final lib = Directory('lib')
-          .listSync(recursive: true)
-          .whereType<File>()
-          .where((f) => f.path.endsWith('.dart'))
-          .toList();
-      expect(lib.length, greaterThan(50), reason: 'the scan found nothing');
-
-      // A CALL, NOT A MENTION. The first version of this scan matched
-      // `contains('roomEstimateFor')` and failed on a COMMENT in
-      // `schedule.dart` that names the function to explain why the room
-      // rule was extracted. A gate that cannot tell a call from a
-      // sentence about one reports the wrong thing on its first run.
-      bool callsIt(File f) {
-        for (final line in f.readAsLinesSync()) {
-          final code = line.trimLeft();
-          if (code.startsWith('//') || code.startsWith('*')) continue;
-          if (code.contains('roomEstimateFor(')) return true;
-        }
-        return false;
-      }
-
-      final callers = <String>[
-        for (final f in lib)
-          if (!f.path.endsWith('room_estimate.dart') && callsIt(f)) f.path,
-      ];
-      expect(
-        callers,
-        isEmpty,
-        reason:
-            '`#861` has wired roomEstimateFor up. Delete this case and '
-            'assert the write path instead',
-      );
-    });
+    // ═══════════════════════════════════════════════════════════════
+    // THE NO-CALLER CASE WAS HERE AND `LEN-A/5` RETIRED IT
+    // ═══════════════════════════════════════════════════════════════
+    // It asserted that `roomEstimateFor` had no production caller and
+    // named `#861` as what would fail it. `#861` wired the derivation up
+    // and the case DID NOT FAIL, because the scan walked
+    // `rackpal_core/lib` and the caller landed in `rackpal_ui`: a gate
+    // whose scope was narrower than its subject, written to guard against
+    // exactly that.
+    //
+    // It is deleted rather than widened. Its job was to tell the next
+    // person the derivation was not yet reachable, and it is now
+    // reachable: `plan_canvas_screen.dart` runs it when an outline
+    // closes, and `plan_canvas_screen_test.dart` presses the real button
+    // and reads the figure off the document. A cross-package source scan
+    // asserting an absence that is no longer true would be a worse
+    // version of the same mistake.
 
     test('it is not gated on LocationKind, because the field is not', () {
       // A person who drew an outline on a zone meant it. Refusing by kind

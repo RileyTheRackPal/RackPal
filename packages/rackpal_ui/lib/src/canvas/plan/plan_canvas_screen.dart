@@ -707,12 +707,33 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     if (outline.canClose && _withinCloseRadius(vertices.first, at)) {
       final closed = outline.takeClosed(widget.underlay.id);
       if (closed == null) return;
-      _controller.run(
-        SetRoomOutlineCommand(
-          locationId: closed.locationId,
-          outline: closed.outline,
-        ),
-      );
+      // ═══════════════════════════════════════════════════════════════
+      // ONE TRANSACTION, BECAUSE IT IS ONE ACT TO THE PERSON
+      // ═══════════════════════════════════════════════════════════════
+      // They drew a room and a figure followed. Two undo entries would
+      // make Ctrl+Z take the estimate away and leave the shape, which is
+      // a state they never asked for and did not create.
+      //
+      // `tx.add` APPLIES IMMEDIATELY, which is what lets the derivation
+      // below read the outline it is derived from.
+      _controller.transact(LabelKey.drawRoomOutline, (tx) {
+        tx.add(
+          SetRoomOutlineCommand(
+            locationId: closed.locationId,
+            outline: closed.outline,
+          ),
+        );
+        final room = _doc.locations[closed.locationId];
+        if (room == null || !planEstimateMayFill(room)) return;
+        final derived = roomEstimateFor(_doc, room);
+        if (derived == null) return;
+        tx.add(
+          SetRoomEstimateCommand.computed(
+            locationId: closed.locationId,
+            length: derived,
+          ),
+        );
+      });
       setState(() => _outlineHover = null);
       return;
     }

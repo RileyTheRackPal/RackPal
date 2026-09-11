@@ -98,6 +98,21 @@ LocationsPanelActions buildLocationsPanelActions({
         set(id, LocationField.floorNumber, floorNumber),
     onSetSpaceCode: (id, spaceCode) =>
         set(id, LocationField.spaceCode, spaceCode),
+    // NOT THROUGH `set`, BECAUSE THIS FIELD LEFT THE TABLE (`LEN-A/5`,
+    // DR-050 §11.49.3). The figure and its origin marker move as one, and
+    // a value arriving from the panel was typed by a person: that is the
+    // only provenance this surface can report, and the auto-fill uses
+    // `computed` from somewhere else entirely.
+    //
+    // NO NO-OP GUARD, unlike `set`. `SetRoomEstimateCommand` writes two
+    // fields, so "already that value" would have to compare both, and a
+    // figure retyped identically over a `computedFromPlan` marker is a
+    // REAL edit: the person is saying they meant it.
+    onSetEstimatedRunLength: (id, length) => controller.run(
+      length == null
+          ? SetRoomEstimateCommand.cleared(locationId: id)
+          : SetRoomEstimateCommand.typed(locationId: id, length: length),
+    ),
     onReparent: (id, newParentId) {
       final result = buildReparentLocation(
         doc: doc(),
