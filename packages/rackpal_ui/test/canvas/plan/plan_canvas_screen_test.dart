@@ -125,6 +125,24 @@ void _addOutlet(DocumentController c) {
 
 const _armedDrop = ArmedPin(outletId: _outletId, label: 'D-014');
 
+const _roomId = Uuid('room-1');
+
+/// Adds one room, the subject an outline hangs on (`LEN-A/4`).
+void _addRoom(DocumentController c, {RoomOutline? outline}) {
+  c.doc.locations[_roomId] = Location(
+    id: _roomId,
+    kind: LocationKind.room,
+    name: 'Great Room',
+    code: 'GR',
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    planOutline: outline,
+  );
+}
+
+RoomOutline? _outlineOf(DocumentController c) =>
+    c.doc.locations[_roomId]?.planOutline;
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -148,6 +166,7 @@ void main() {
     DocumentController controller, {
     PlanPinArmController? arm,
     MarqueeController? marquee,
+    PlanOutlineController? outline,
   }) async {
     await tester.runAsync(() async {
       await cache.load(_member, await _png(600, 400));
@@ -178,6 +197,7 @@ void main() {
               viewport: viewport,
               arm: arm,
               marquee: marquee,
+              outline: outline,
               onRefuse: refusals.add,
             ),
           ),
@@ -191,6 +211,211 @@ void main() {
       refusals: refusals,
     );
   }
+
+  group('LEN-A/4: the outline draw, through the real mounting', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // THE MOUNTING IS THE POINT, NOT THE CONTROLLER
+    // ═══════════════════════════════════════════════════════════════════
+    // `plan_outline_test.dart` proves the mode. What it cannot prove is
+    // that a click on the canvas reaches it, and this epic has already
+    // shipped a gesture that could not: the drop-table fast path was dead
+    // from `PLAN-E/6` to `PLAN-F/0` because the armed branch was
+    // unreachable on every mounting that supplies a band, and the canvas
+    // tests predated the band and passed null.
+    //
+    // So every case below drives the widget.
+
+    testWidgets('three clicks and a fourth on the first corner writes the '
+        'outline', (tester) async {
+      final c = _controller();
+      _addRoom(c);
+      final outline = PlanOutlineController()..begin(_roomId);
+      await pump(tester, c, outline: outline);
+
+      await tester.tapAt(const Offset(100, 100));
+      await tester.tapAt(const Offset(400, 100));
+      await tester.tapAt(const Offset(400, 300));
+      await tester.pump();
+      expect(_outlineOf(c), isNull, reason: 'not closed yet');
+
+      await tester.tapAt(const Offset(100, 100));
+      await tester.pump();
+
+      expect(_outlineOf(c), isNotNull);
+      expect(_outlineOf(c)!.vertices, hasLength(3));
+      expect(_outlineOf(c)!.underlayId, _underlayId);
+      expect(outline.isActive, isFalse, reason: 'the draw ended');
+    });
+
+    testWidgets('THE CLOSE HAS A RADIUS, so a click NEAR the first corner '
+        'closes rather than adding a fourth', (tester) async {
+      // Ten points of pointer travel. A person aiming at a three-point
+      // dot with a mouse does not land on it.
+      final c = _controller();
+      _addRoom(c);
+      await pump(tester, c, outline: PlanOutlineController()..begin(_roomId));
+
+      await tester.tapAt(const Offset(100, 100));
+      await tester.tapAt(const Offset(400, 100));
+      await tester.tapAt(const Offset(400, 300));
+      await tester.tapAt(const Offset(105, 104));
+      await tester.pump();
+
+      expect(_outlineOf(c)!.vertices, hasLength(3));
+    });
+
+    testWidgets('and a click OUTSIDE the radius is a fourth corner', (
+      tester,
+    ) async {
+      // The negative that makes the case above mean something: a radius
+      // large enough to swallow a deliberate corner would pass it.
+      final c = _controller();
+      _addRoom(c);
+      final outline = PlanOutlineController()..begin(_roomId);
+      await pump(tester, c, outline: outline);
+
+      await tester.tapAt(const Offset(100, 100));
+      await tester.tapAt(const Offset(400, 100));
+      await tester.tapAt(const Offset(400, 300));
+      await tester.tapAt(const Offset(130, 100));
+      await tester.pump();
+
+      expect(_outlineOf(c), isNull);
+      expect(outline.vertices, hasLength(4));
+    });
+
+    testWidgets('the write is ONE undoable command', (tester) async {
+      final c = _controller();
+      _addRoom(c);
+      await pump(tester, c, outline: PlanOutlineController()..begin(_roomId));
+
+      for (final at in const [
+        Offset(100, 100),
+        Offset(400, 100),
+        Offset(400, 300),
+        Offset(100, 100),
+      ]) {
+        await tester.tapAt(at);
+      }
+      await tester.pump();
+      expect(_outlineOf(c), isNotNull);
+
+      c.undo.undo(c.doc);
+      expect(_outlineOf(c), isNull);
+    });
+
+    testWidgets('RIGHT-CLICK TAKES ONE CORNER BACK and leaves the draw '
+        'running', (tester) async {
+      final c = _controller();
+      _addRoom(c);
+      final outline = PlanOutlineController()..begin(_roomId);
+      await pump(tester, c, outline: outline);
+
+      await tester.tapAt(const Offset(100, 100));
+      await tester.tapAt(const Offset(400, 100));
+      expect(outline.vertices, hasLength(2));
+
+      final gesture = await tester.startGesture(
+        const Offset(400, 100),
+        buttons: kSecondaryButton,
+      );
+      await gesture.up();
+      await tester.pump();
+
+      expect(outline.vertices, hasLength(1));
+      expect(outline.isActive, isTrue);
+    });
+
+    testWidgets('Esc cancels the whole draw, which is what it already '
+        'means on this canvas', (tester) async {
+      final c = _controller();
+      _addRoom(c);
+      final outline = PlanOutlineController()..begin(_roomId);
+      await pump(tester, c, outline: outline);
+
+      await tester.tapAt(const Offset(100, 100));
+      await tester.tapAt(const Offset(400, 100));
+      await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+      await tester.pump();
+
+      expect(outline.isActive, isFalse);
+      expect(outline.vertices, isEmpty);
+      expect(_outlineOf(c), isNull);
+    });
+
+    testWidgets('the chip is up while the draw runs, and it is the ONLY '
+        'chip', (tester) async {
+      final c = _controller();
+      _addRoom(c);
+      _addOutlet(c);
+      await pump(
+        tester,
+        c,
+        outline: PlanOutlineController()..begin(_roomId),
+        arm: PlanPinArmController()..arm(_armedDrop),
+      );
+
+      // TWO CHIPS STACKED IN ONE CORNER WOULD BE TWO INSTRUCTIONS
+      // COMPETING, and the one the next click obeys is the draw.
+      expect(find.byKey(PlanOutlineChip.chipKey), findsOneWidget);
+      expect(find.byKey(PlanPinArmChip.chipKey), findsNothing);
+    });
+
+    testWidgets('AND THE DRAW OUTRANKS AN ARMED PIN on the click itself, '
+        'not only on the chip', (tester) async {
+      // The chip case above would pass against a canvas that drew the
+      // right chrome and pinned the armed drop anyway.
+      final c = _controller();
+      _addRoom(c);
+      _addOutlet(c);
+      final outline = PlanOutlineController()..begin(_roomId);
+      await pump(
+        tester,
+        c,
+        outline: outline,
+        arm: PlanPinArmController()..arm(_armedDrop),
+      );
+
+      await tester.tapAt(const Offset(100, 100));
+      await tester.pump();
+
+      expect(outline.vertices, hasLength(1));
+      expect(c.doc.outlets[_outletId]!.planPin, isNull);
+    });
+
+    testWidgets('a FINISHED outline draws even where no draw mode is '
+        'offered', (tester) async {
+      // Otherwise a saved shape is invisible until somebody presses a
+      // button that is not there.
+      final c = _controller();
+      _addRoom(
+        c,
+        outline: RoomOutline(
+          underlayId: _underlayId,
+          vertices: const [PxPt(10, 10), PxPt(90, 10), PxPt(90, 60)],
+        ),
+      );
+      await pump(tester, c);
+
+      expect(find.byKey(PlanOutlineLayer.layerKey), findsOneWidget);
+    });
+
+    testWidgets('and an outline on ANOTHER underlay does not', (
+      tester,
+    ) async {
+      final c = _controller();
+      _addRoom(
+        c,
+        outline: RoomOutline(
+          underlayId: const Uuid('other-underlay'),
+          vertices: const [PxPt(10, 10), PxPt(90, 10), PxPt(90, 60)],
+        ),
+      );
+      await pump(tester, c);
+
+      expect(find.byKey(PlanOutlineLayer.layerKey), findsNothing);
+    });
+  });
 
   group('pinsOnUnderlay', () {
     test('is ordered rack first, then by id, so the display list is '

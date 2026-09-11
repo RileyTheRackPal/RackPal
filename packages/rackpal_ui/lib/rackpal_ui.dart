@@ -73,6 +73,7 @@ export 'src/canvas/marquee_controller.dart';
 export 'src/canvas/plan/plan_calibrate.dart';
 export 'src/canvas/plan/plan_canvas_screen.dart';
 export 'src/canvas/plan/plan_editor_screen.dart';
+export 'src/canvas/plan/plan_outline.dart';
 export 'src/canvas/plan/plan_pin_arm.dart';
 export 'src/canvas/plan/render_plan_canvas.dart';
 export 'src/canvas/plan/unpinned_strip.dart';

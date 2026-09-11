@@ -86,10 +86,14 @@ const _usable = PlanScale(
   distance: Len(36 * Len.nmPerInch),
 );
 
+const _roomId = Uuid('room-1');
+
 DocumentController _controller({
   bool withUnderlay = true,
   bool withSecond = false,
   bool withRack = true,
+  bool withRoom = false,
+  RoomOutline? outline,
   PlanScale? scale,
 }) {
   final doc = RackDocument(
@@ -114,6 +118,20 @@ DocumentController _controller({
       'Level 1',
       at: _level1,
       scale: scale,
+    );
+  }
+  if (withRoom) {
+    // A CHILD of the floor the plan depicts, which is how the trade files
+    // a job and the scope DR-154 §11.153.7a widened onto.
+    doc.locations[_roomId] = Location(
+      id: _roomId,
+      kind: LocationKind.room,
+      name: 'Great Room',
+      code: 'GR',
+      order: const FracIndex('a1'),
+      parentId: _level1,
+      meta: _meta(),
+      planOutline: outline,
     );
   }
   if (withSecond) {
@@ -173,6 +191,8 @@ void main() {
     await tester.pump();
     return selection;
   }
+
+  _roomListTests();
 
   group('with no floorplan', () {
     testWidgets('NAMES THE ROUTE, which did not exist until this chapter', (
@@ -332,6 +352,187 @@ void main() {
       // command that touched the scale would move every length on the
       // plan at once.
       expect(c.doc.underlays[_ul1]!.scale, _usable);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LEN-A/4: THE ROOM LIST, AND THE REACHABILITY THIS EPIC HAS MISSED TWICE
+// ═══════════════════════════════════════════════════════════════════════
+// `plan_outline_test.dart` proves the mode and `plan_canvas_screen_test`
+// proves a canvas click reaches it. Neither proves anybody can START one,
+// which is the failure `PLAN-E/5` found across six functions and a dialog
+// (DR-143) and `PLAN-E/6` shipped again in a gesture that was dead until
+// `PLAN-F/0`.
+//
+// So the load-bearing case below presses the real button and then clicks
+// the real canvas.
+void _roomListTests() {
+  late PlanImageCache cache;
+  setUp(() => cache = PlanImageCache());
+  tearDown(() => cache.dispose());
+
+  Future<void> pump(
+    WidgetTester tester,
+    DocumentController c, {
+    List<String> members = const [_member1],
+  }) async {
+    await tester.runAsync(() async {
+      for (final m in members) {
+        await cache.load(m, await _png(600, 400));
+      }
+    });
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+              width: 900,
+              height: 700,
+              child: PlanEditorScreen(
+                controller: c,
+                images: cache.resolver,
+                measurer: const _ZeroMeasurer(),
+                selection: SelectionController(),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+  }
+
+  Finder drawFor(Uuid id) => find.byKey(ValueKey('room-draw-${id.v}'));
+  Finder clearFor(Uuid id) => find.byKey(ValueKey('room-clear-${id.v}'));
+
+  group('LEN-A/4: the room list', () {
+    testWidgets('lists the plan’s location SUBTREE, not just its location', (
+      tester,
+    ) async {
+      // DR-154 §11.153.7a's scope, and the same one `unpinnedCarriersFor`
+      // was widened onto: an underlay depicts a floor and the rooms are
+      // under it. A list of the exact location would offer an outline on
+      // the floor and on none of the rooms in it.
+      await pump(tester, _controller(withRoom: true));
+
+      expect(find.text('Great Room'), findsOneWidget);
+      expect(drawFor(_roomId), findsOneWidget);
+      expect(drawFor(_level1), findsOneWidget);
+    });
+
+    testWidgets('a plan with no location says which fact is missing', (
+      tester,
+    ) async {
+      final c = _controller(withSecond: true);
+      await pump(tester, c, members: const [_member1, _member2]);
+      // `Site` is the underlay with no location; open it.
+      await tester.tap(find.text('Site'));
+      await tester.pump();
+
+      expect(find.text(kPlanNoRoomsDetail), findsOneWidget);
+    });
+
+    testWidgets('the row prints in BOTH directions (G4)', (tester) async {
+      await pump(tester, _controller(withRoom: true));
+      expect(find.text('No outline yet'), findsWidgets);
+
+      await pump(
+        tester,
+        _controller(
+          withRoom: true,
+          outline: RoomOutline(
+            underlayId: _ul1,
+            vertices: const [PxPt(10, 10), PxPt(90, 10), PxPt(90, 60)],
+          ),
+        ),
+      );
+      expect(find.text('Outline drawn'), findsOneWidget);
+    });
+
+    testWidgets('an outline drawn on ANOTHER plan is not this row’s', (
+      tester,
+    ) async {
+      // Offering `Clear` here would take away something the person is not
+      // looking at.
+      await pump(
+        tester,
+        _controller(
+          withRoom: true,
+          outline: RoomOutline(
+            underlayId: _ul2,
+            vertices: const [PxPt(10, 10), PxPt(90, 10), PxPt(90, 60)],
+          ),
+        ),
+      );
+
+      expect(clearFor(_roomId), findsNothing);
+    });
+
+    testWidgets('LOAD-BEARING: pressing Draw… then clicking the canvas '
+        'writes an outline', (tester) async {
+      // THE REACHABILITY PROOF. Everything else in this chapter passes
+      // against a mode nobody can start.
+      final c = _controller(withRoom: true);
+      await pump(tester, c);
+
+      await tester.tap(drawFor(_roomId));
+      await tester.pump();
+      expect(find.byKey(PlanOutlineChip.chipKey), findsOneWidget);
+
+      final canvas = tester.getTopLeft(find.byType(PlanCanvasScreen));
+      for (final at in const [
+        Offset(100, 100),
+        Offset(300, 100),
+        Offset(300, 250),
+        Offset(100, 100),
+      ]) {
+        await tester.tapAt(canvas + at);
+      }
+      await tester.pump();
+
+      final written = c.doc.locations[_roomId]!.planOutline;
+      expect(written, isNotNull);
+      expect(written!.vertices, hasLength(3));
+      expect(written.underlayId, _ul1);
+      expect(find.byKey(PlanOutlineChip.chipKey), findsNothing);
+    });
+
+    testWidgets('Clear takes it off, and the undo puts it back', (
+      tester,
+    ) async {
+      final c = _controller(
+        withRoom: true,
+        outline: RoomOutline(
+          underlayId: _ul1,
+          vertices: const [PxPt(10, 10), PxPt(90, 10), PxPt(90, 60)],
+        ),
+      );
+      await pump(tester, c);
+
+      await tester.tap(clearFor(_roomId));
+      await tester.pump();
+      expect(c.doc.locations[_roomId]!.planOutline, isNull);
+
+      c.undo.undo(c.doc);
+      expect(c.doc.locations[_roomId]!.planOutline, isNotNull);
+    });
+
+    testWidgets('and starting a draw CANCELS a live calibration, so no '
+        'mode is left unreachable underneath one', (tester) async {
+      final c = _controller(withRoom: true);
+      await pump(tester, c);
+
+      await tester.tap(find.byKey(ValueKey('underlay-calibrate-${_ul1.v}')));
+      await tester.pump();
+      expect(find.byKey(PlanCalibrateChip.chipKey), findsOneWidget);
+
+      await tester.tap(drawFor(_roomId));
+      await tester.pump();
+
+      expect(find.byKey(PlanOutlineChip.chipKey), findsOneWidget);
+      expect(find.byKey(PlanCalibrateChip.chipKey), findsNothing);
     });
   });
 }

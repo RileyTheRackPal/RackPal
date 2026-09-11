@@ -51,6 +51,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/canvas_intent.dart';
 import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_calibrate.dart';
+import 'package:rackpal_ui/src/canvas/plan/plan_outline.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/canvas/plan/render_plan_canvas.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
@@ -177,6 +178,7 @@ final class PlanCanvasScreen extends StatefulWidget {
     this.arm,
     this.calibrate,
     this.onCalibrationPicked,
+    this.outline,
     this.marquee,
     this.onRefuse,
     super.key,
@@ -224,6 +226,20 @@ final class PlanCanvasScreen extends StatefulWidget {
   /// canvas that pushed a route would be a second surface deciding what a
   /// gesture means.
   final void Function(PxPt a, PxPt b)? onCalibrationPicked;
+
+  /// DR-050's room-outline draw, or null when the host offers no
+  /// affordance for it (`LEN-A/4`).
+  ///
+  /// NULL IS A SUPPORTED MODE, on `arm`'s and `calibrate`'s precedent: the
+  /// plan is a complete pin editor without it, and every render test that
+  /// predates this chapter passes null.
+  ///
+  /// **THE CANVAS RUNS THE COMMAND ITSELF**, unlike [onCalibrationPicked],
+  /// and the difference is whether anybody has to be asked anything. A
+  /// calibration needs a typed distance, so the canvas reports two points
+  /// and somebody else opens a dialog; a closed outline is complete the
+  /// moment it closes, so this follows `_pinArmed` rather than the pick.
+  final PlanOutlineController? outline;
 
   /// CR-102's band, or null when the host does not offer one.
   ///
@@ -290,6 +306,13 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// gesture ends, so a mode carrying it would notify every listener at
   /// pointer rate for a frame detail.
   PxPt? _calibrateHover;
+
+  /// Where the pointer is while an outline draw has at least one corner
+  /// down, for the rubber segment. Its own field rather than a share of
+  /// [_calibrateHover], because the two modes guard their hover on
+  /// different conditions and one field would make each answer the
+  /// other's question.
+  PxPt? _outlineHover;
 
   @override
   void dispose() {
@@ -619,9 +642,22 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       // entered state, and it is the thing on screen saying so. A canvas
       // that let an older armed pin win would answer a click the user
       // made for the pick by pinning a drop somewhere else entirely.
+      // ═══════════════════════════════════════════════════════════════
+      // AN OUTLINE DRAW OUTRANKS BOTH, ON DR-144's OWN REASONING
+      // ═══════════════════════════════════════════════════════════════
+      // §11.143.6 orders these by how recently and how deliberately the
+      // state was entered, and a draw is started from a button press
+      // seconds ago exactly as a pick is. The host never offers both at
+      // once, so the order between the draw and the pick is a TIE-BREAK
+      // rather than a ruling; it is written down because a canvas cannot
+      // assume what a host does, and an unordered dispatch is how two
+      // modes come to answer one click.
+      final outline = widget.outline;
       final calibrate = widget.calibrate;
       final pin = widget.arm?.armed;
-      if (calibrate != null && calibrate.isActive) {
+      if (outline != null && outline.isActive) {
+        _outlineClick(outline, sceneEnd);
+      } else if (calibrate != null && calibrate.isActive) {
         _calibrateClick(calibrate, sceneEnd);
       } else if (pin != null) {
         _pinArmed(pin, sceneEnd);
@@ -657,6 +693,41 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       return;
     }
     widget.onCalibrationPicked?.call(first, point);
+  }
+
+  /// Takes one corner, or closes the shape when the click lands on the
+  /// first one.
+  ///
+  /// THE CLOSE TEST IS IN SCREEN SPACE. [kOutlineCloseRadiusPt] is ten
+  /// points of pointer travel at every zoom, which is what a person aims
+  /// with; ten raster pixels would be an easy target at 400% and an
+  /// impossible one on a plan fitted to the window.
+  void _outlineClick(PlanOutlineController outline, DPt at) {
+    final vertices = outline.vertices;
+    if (outline.canClose && _withinCloseRadius(vertices.first, at)) {
+      final closed = outline.takeClosed(widget.underlay.id);
+      if (closed == null) return;
+      _controller.run(
+        SetRoomOutlineCommand(
+          locationId: closed.locationId,
+          outline: closed.outline,
+        ),
+      );
+      setState(() => _outlineHover = null);
+      return;
+    }
+    outline.addVertex(PxPt(at.x.round(), at.y.round()));
+  }
+
+  /// Whether [at] is near enough to [corner] to mean "close it".
+  bool _withinCloseRadius(PxPt corner, DPt at) {
+    final a = widget.viewport.sceneToScreen(
+      DPt(corner.px.toDouble(), corner.py.toDouble()),
+    );
+    final b = widget.viewport.sceneToScreen(at);
+    final dx = a.x - b.x;
+    final dy = a.y - b.y;
+    return dx * dx + dy * dy <= kOutlineCloseRadiusPt * kOutlineCloseRadiusPt;
   }
 
   /// Pins the armed drop at [at] and tells the mode it was used.
@@ -721,6 +792,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// `_GatedAction` doc is the long version and this is the third canvas
   /// to obey it.
   bool get _hasSomethingToCancel =>
+      (widget.outline?.isActive ?? false) ||
       (widget.calibrate?.isActive ?? false) ||
       (widget.arm?.isActive ?? false) ||
       widget.selection.ids.isNotEmpty;
@@ -738,6 +810,14 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// ago, and an arm mode is the state somebody may have left running
   /// since the Structure editor (DR-144 §11.143.6).
   void _cancel() {
+    // THE DRAW UNWINDS FIRST, in the order the dispatch above ranks them.
+    // `Esc` means "stop the last thing", and the draw is it.
+    final outline = widget.outline;
+    if (outline != null && outline.isActive) {
+      outline.cancel();
+      setState(() => _outlineHover = null);
+      return;
+    }
     final calibrate = widget.calibrate;
     if (calibrate != null && calibrate.isActive) {
       calibrate.cancel();
@@ -767,6 +847,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       child: CanvasIntentDetector(
         viewport: widget.viewport,
         handler: this,
+        onSecondaryTap: _onSecondaryTap,
         child: PlanCanvasBody(
           key: _canvasKey,
           scene: built.scene,
@@ -801,6 +882,12 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// an idle plan would `setState` the whole canvas, which on a 4000
   /// pixel raster is the frame budget spent on nothing.
   void _onCalibrateHover(PointerHoverEvent event) {
+    final outline = widget.outline;
+    if (outline != null && outline.vertices.isNotEmpty) {
+      final at = _toPixel(event.position);
+      if (at != _outlineHover) setState(() => _outlineHover = at);
+      return;
+    }
     final calibrate = widget.calibrate;
     if (calibrate == null || calibrate.first == null) return;
     final at = _toPixel(event.position);
@@ -809,8 +896,21 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   }
 
   void _onCalibrateExit(PointerExitEvent event) {
+    if (_outlineHover != null) setState(() => _outlineHover = null);
     if (_calibrateHover == null) return;
     setState(() => _calibrateHover = null);
+  }
+
+  /// Right-click takes back the most recent corner (ruled by the user).
+  ///
+  /// A NO-OP WHEN NO DRAW IS RUNNING, so the plan keeps whatever
+  /// right-click comes to mean to a later host. The mode stays on at zero
+  /// corners: stepping back is not leaving, which is what separates this
+  /// from `Esc`.
+  void _onSecondaryTap(DPt scene, Offset global) {
+    final outline = widget.outline;
+    if (outline == null || !outline.isActive) return;
+    outline.removeLastVertex();
   }
 
   /// The canvas with whatever transient chrome is running over it, or the
@@ -823,12 +923,37 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   Widget _withChrome(Widget canvas) {
     final arm = widget.arm;
     final calibrate = widget.calibrate;
-    if (arm == null && calibrate == null) return canvas;
+    final outline = widget.outline;
+    final outlines = <RoomOutline>[
+      for (final loc in _doc.locations.values)
+        if (loc.planOutline case final RoomOutline o)
+          if (o.underlayId == widget.underlay.id) o,
+    ];
+    // AN OUTLINE ALREADY DRAWN STILL HAS TO SHOW where no host offers the
+    // draw mode, or a saved shape would be invisible until somebody
+    // pressed a button that is not there.
+    if (arm == null &&
+        calibrate == null &&
+        outline == null &&
+        outlines.isEmpty) {
+      return canvas;
+    }
     return AnimatedBuilder(
-      animation: Listenable.merge([arm, calibrate]),
+      animation: Listenable.merge([arm, calibrate, outline]),
       builder: (context, _) => Stack(
         children: [
           Positioned.fill(child: canvas),
+          if (outlines.isNotEmpty ||
+              (outline != null && outline.vertices.isNotEmpty))
+            Positioned.fill(
+              child: PlanOutlineLayer(
+                finished: outlines,
+                drawing: outline?.vertices ?? const <PxPt>[],
+                hover: _outlineHover,
+                viewport: widget.viewport,
+                canClose: outline?.canClose ?? false,
+              ),
+            ),
           if (calibrate != null && calibrate.isActive)
             Positioned.fill(
               child: PlanCalibrateLine(
@@ -840,7 +965,17 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
           // ONE CHIP AT A TIME, IN THE SAME ORDER `Esc` UNWINDS THEM.
           // Two chips stacked in one corner would be two instructions
           // competing, and the one the next click obeys is the pick.
-          if (calibrate != null && calibrate.isActive)
+          if (outline != null && outline.isActive)
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: PlanOutlineChip(
+                vertexCount: outline.vertices.length,
+                canClose: outline.canClose,
+                onDismiss: outline.cancel,
+              ),
+            )
+          else if (calibrate != null && calibrate.isActive)
             Positioned(
               left: 12,
               bottom: 12,

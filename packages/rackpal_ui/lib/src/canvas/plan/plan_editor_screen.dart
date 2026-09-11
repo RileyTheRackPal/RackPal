@@ -45,6 +45,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_calibrate.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_canvas_screen.dart';
+import 'package:rackpal_ui/src/canvas/plan/plan_outline.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/canvas/plan/unpinned_strip.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
@@ -148,6 +149,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   /// describes a distance on one raster and cannot outlive a switch to
   /// another; [_openPlan] cancels it for exactly that reason.
   final PlanCalibrateController _calibrate = PlanCalibrateController();
+  final PlanOutlineController _outline = PlanOutlineController();
 
   /// CR-102's band (DR-139 §11.138).
   ///
@@ -173,6 +175,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   void dispose() {
     _controller.changes.removeListener(_onDocumentChanged);
     _calibrate.dispose();
+    _outline.dispose();
     _marquee.dispose();
     for (final v in _viewports.values) {
       v.dispose();
@@ -229,6 +232,22 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
 
   /// Starts a pick on the open plan.
   void _beginCalibrate() => _calibrate.begin();
+
+  /// Starts a room draw, and STOPS WHATEVER ELSE WAS RUNNING first.
+  ///
+  /// The canvas ranks the draw above the pick and the arm, so without
+  /// this a plan could hold a live calibration underneath a live draw and
+  /// the older one would be unreachable until the newer ended: a mode
+  /// nobody can get back to is the state `PLAN-E/3`'s chip exists to
+  /// prevent.
+  void _beginOutline(Uuid locationId) {
+    _calibrate.cancel();
+    _outline.begin(locationId);
+  }
+
+  /// Takes a room's shape off. One command, its own Edit-menu label.
+  void _clearOutline(Uuid locationId) =>
+      _controller.run(ClearRoomOutlineCommand(locationId: locationId));
 
   /// Both points are down: ask for the distance, then write it.
   ///
@@ -296,6 +315,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
     viewport: _viewportFor(open.id),
     arm: widget.arm,
     calibrate: _calibrate,
+    outline: _outline,
     onCalibrationPicked: (a, b) => unawaited(_askDistance(open, a, b)),
     marquee: _marquee,
     onRefuse: widget.onRefuse,
@@ -311,12 +331,42 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
       children: [
         SizedBox(
           width: 240,
-          child: _UnderlayList(
-            underlays: _underlays,
-            openId: open.id,
-            doc: _controller.doc,
-            onOpen: _openPlan,
-            onCalibrate: _beginCalibrate,
+          // THE ROOM LIST SITS UNDER THE UNDERLAY LIST, which is the
+          // user's call (2026-09-11) against a button on the underlay row
+          // and an action over on the Locations tab. It mirrors the
+          // unpinned strip's logic: the thing you are working through is
+          // listed where you work, and "which rooms still need an
+          // outline" becomes answerable at a glance rather than by
+          // opening each one.
+          //
+          // **A FUTURE MERGE OF THE LOCATION AND PLAN VIEWS IS POSSIBLE
+          // BEFORE v1** and is deliberately NOT designed for here: the
+          // user ruled it out of this epic while naming it as something
+          // that may happen. Nothing below assumes this rail is the only
+          // place rooms are listed, which is the most that note is worth
+          // acting on today.
+          child: Column(
+            children: [
+              Expanded(
+                child: _UnderlayList(
+                  underlays: _underlays,
+                  openId: open.id,
+                  doc: _controller.doc,
+                  onOpen: _openPlan,
+                  onCalibrate: _beginCalibrate,
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: _RoomList(
+                  doc: _controller.doc,
+                  underlay: open,
+                  drawingId: _outline.isActive ? _outline.locationId : null,
+                  onDraw: _beginOutline,
+                  onClear: _clearOutline,
+                ),
+              ),
+            ],
           ),
         ),
         const VerticalDivider(width: 1),
@@ -570,6 +620,162 @@ class _EmptyPlan extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// What the rail says when this plan depicts no location.
+///
+/// A PLAN WITH NO LOCATION IS ORDINARY, not an error to report: a site
+/// plan depicts no room, which is why `_UnderlayRow` already prints its
+/// room line only when there is one. The rooms an outline could hang on
+/// are the ones UNDER the plan's own location, so with no location there
+/// is nothing to list and the honest thing is to say which fact is
+/// missing.
+const String kPlanNoRoomsDetail =
+    'Give this plan a location to draw rooms on it.';
+
+/// Every room this plan could carry an outline for (`LEN-A/4`, DR-050).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE SUBTREE, WHICH IS `PLN-002`'s SCOPE AND NOT A SECOND ONE
+/// ═══════════════════════════════════════════════════════════════════════
+/// DR-154 §11.153.7a ruled that an underlay depicts a floor and the drops
+/// are filed in its rooms, so the population a plan is about is its
+/// location's SUBTREE. `unpinnedCarriersFor` was widened onto exactly
+/// that scope, and this list asks the same question about the same tree.
+/// Listing only the exact location would offer an outline on the floor
+/// and on none of the rooms in it, which is the shape that ruling deleted.
+class _RoomList extends StatelessWidget {
+  const _RoomList({
+    required this.doc,
+    required this.underlay,
+    required this.drawingId,
+    required this.onDraw,
+    required this.onClear,
+  });
+
+  final RackDocument doc;
+  final PlanUnderlay underlay;
+
+  /// The room currently being drawn, or null when no draw is running.
+  final Uuid? drawingId;
+
+  final void Function(Uuid locationId) onDraw;
+  final void Function(Uuid locationId) onClear;
+
+  static String drawKeyFor(Uuid id) => 'room-draw-${id.v}';
+  static String clearKeyFor(Uuid id) => 'room-clear-${id.v}';
+  static const Key emptyKey = ValueKey('plan-no-rooms');
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scope = underlay.locationId;
+    final rooms = <Location>[
+      if (scope != null)
+        for (final id in LocationTree.of(doc).subtreeOf(scope))
+          if (doc.locations[id] case final Location l) l,
+    ];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Text('Rooms', style: theme.textTheme.labelLarge),
+        ),
+        if (rooms.isEmpty)
+          Padding(
+            key: emptyKey,
+            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+            child: Text(
+              kPlanNoRoomsDetail,
+              style: theme.textTheme.labelSmall,
+            ),
+          )
+        else
+          Expanded(
+            child: ListView(
+              primary: false,
+              children: [
+                for (final room in rooms)
+                  _RoomRow(
+                    room: room,
+                    // THE OUTLINE ON *THIS* PLAN. A room whose shape was
+                    // drawn on another underlay has none here, and
+                    // offering `Clear` for it would take away something
+                    // the person is not looking at.
+                    hasOutline: room.planOutline?.underlayId == underlay.id,
+                    drawing: room.id == drawingId,
+                    onDraw: () => onDraw(room.id),
+                    onClear: () => onClear(room.id),
+                  ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _RoomRow extends StatelessWidget {
+  const _RoomRow({
+    required this.room,
+    required this.hasOutline,
+    required this.drawing,
+    required this.onDraw,
+    required this.onClear,
+  });
+
+  final Location room;
+  final bool hasOutline;
+  final bool drawing;
+  final VoidCallback onDraw;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      color: drawing ? theme.colorScheme.primaryContainer : null,
+      padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            room.name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodyMedium,
+          ),
+          // PRINTED IN BOTH DIRECTIONS (G4), on the calibration row's own
+          // rule: "no outline yet" is a fact worth stating, and a row that
+          // said nothing would leave "not drawn" and "drawn and I have
+          // forgotten" looking identical.
+          Text(
+            hasOutline ? 'Outline drawn' : 'No outline yet',
+            style: theme.textTheme.labelSmall,
+          ),
+          Wrap(
+            spacing: 8,
+            children: [
+              TextButton(
+                key: ValueKey(_RoomList.drawKeyFor(room.id)),
+                onPressed: onDraw,
+                child: Text(hasOutline ? 'Redraw…' : 'Draw…'),
+              ),
+              if (hasOutline)
+                TextButton(
+                  key: ValueKey(_RoomList.clearKeyFor(room.id)),
+                  onPressed: onClear,
+                  child: const Text('Clear'),
+                ),
+            ],
+          ),
+        ],
       ),
     );
   }
