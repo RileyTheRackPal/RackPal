@@ -118,6 +118,7 @@ import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/enums.dart'
     show LifecycleStatus, TerminationType, UnitSystem;
 import 'package:rackpal_core/src/model/link.dart';
+import 'package:rackpal_core/src/model/location.dart';
 import 'package:rackpal_core/src/model/outlet.dart';
 import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/port.dart';
@@ -576,6 +577,7 @@ final class ScheduleEntry {
     // OPTIONAL AND LAST, so the twenty-two required names above it
     // keep the lint's required-first order (DR-070 §11.69).
     this.boxless = false,
+    this.estimateOrigin,
   });
 
   final Uuid linkId;
@@ -749,6 +751,26 @@ final class ScheduleEntry {
   bool get lengthIsEstimated =>
       lengthSource == ScheduleLengthSource.outletNominal ||
       lengthSource == ScheduleLengthSource.roomEstimate;
+
+  /// Where this row's ROOM ESTIMATE came from, or null when the length
+  /// did not come from one (DR-050 §11.49.3, `LEN-A/5`).
+  ///
+  /// **SET ONLY WHEN `roomEstimate` PRINTED**, not merely when the room
+  /// carries a marker. A run measured with a tape and cut to length has a
+  /// row whose number owes nothing to the room's estimate, and carrying
+  /// the marker onto it would report a provenance about a figure this row
+  /// never used.
+  final RunLengthOrigin? estimateOrigin;
+
+  /// Whether this row's length is a figure the PLAN proposed rather than
+  /// one a person entered.
+  ///
+  /// A STRICT SUBSET OF [lengthIsEstimated], unlike [lengthIsBound] which
+  /// is deliberately disjoint from it. §11.49.3's question is *"did
+  /// somebody measure this room or did the software guess it"*, and it is
+  /// asked ABOUT an estimate rather than instead of one.
+  bool get estimateIsComputed =>
+      estimateOrigin == RunLengthOrigin.computedFromPlan;
 
   /// Whether [length] is a plan-derived floor rather than a length.
   ///
@@ -1107,10 +1129,11 @@ ScheduleEntry _row(RackDocument doc, Link link) {
   // keeps naming.
   final roomId = _roomIdOf(from, to, outlet);
 
+  final room = doc.locations[roomId];
   final (Len? length, ScheduleLengthSource source) = _lengthOf(
     link,
     outletNominal: outlet?.nominalRunLength,
-    roomEstimate: doc.locations[roomId]?.estimatedRunLengthFromRack,
+    roomEstimate: room?.estimatedRunLengthFromRack,
     // COMPUTED FOR EVERY ROW AND USED BY THE LAST TIER ONLY. It is not
     // carried on the entry: `LEN-001` and `LEN-002` read the floor
     // whichever tier printed, and they do it by calling
@@ -1161,6 +1184,13 @@ ScheduleEntry _row(RackDocument doc, Link link) {
         : doc.registries.signalDomains[family.domain],
     length: length,
     lengthSource: source,
+    // ONLY WHEN THE ROOM ESTIMATE ACTUALLY PRINTED. See
+    // `ScheduleEntry.estimateOrigin`: a run cut to a measured length owes
+    // nothing to the room's figure, and carrying the marker onto it would
+    // report a provenance about a number this row never used.
+    estimateOrigin: source == ScheduleLengthSource.roomEstimate
+        ? room?.estimatedRunLengthOrigin
+        : null,
     routedLength: link.routedLength,
     terminatedLength: link.terminatedLength,
     conductors: List.unmodifiable(<ScheduleConductor>[
@@ -1621,6 +1651,7 @@ final class ScheduleGroup {
     required this.rows,
     required this.footage,
     required this.estimatedCount,
+    required this.computedEstimateCount,
     required this.boundCount,
     required this.isUndeterminedClass,
   });
@@ -1641,6 +1672,21 @@ final class ScheduleGroup {
   /// of measurements, and §3.8's own footer says so out loud:
   /// `Σ 11 runs · 601 ft · 3 estimated (italic)`.
   final int estimatedCount;
+
+  /// How many of [estimatedCount] the PLAN proposed rather than a person
+  /// entering them (DR-050 §11.49.3, `LEN-A/5`).
+  ///
+  /// **A SUBSET OF [estimatedCount], AND THE ONLY ONE OF THESE COUNTS
+  /// THAT IS.** `boundCount` is disjoint from it on purpose and says so;
+  /// this one narrows the same population rather than naming a different
+  /// one, because §11.49.3's question is asked ABOUT an estimate: *"did
+  /// somebody measure this room or did the software guess it"*.
+  ///
+  /// It reaches a takeoff for the reason `estimatedCount` does. That
+  /// figure exists so a reader knows how much of a total rests on
+  /// estimates; this is the same question one turn finer, in the place
+  /// somebody is about to spend money on the answer.
+  final int computedEstimateCount;
 
   /// How many rows in this band print a plan-derived FLOOR rather than a
   /// length (DR-147 §11.146.3).
@@ -1738,6 +1784,7 @@ final class ScheduleView {
     required this.exclusions,
     required this.footage,
     required this.estimatedCount,
+    required this.computedEstimateCount,
     required this.boundCount,
     required this.undeterminedClassCount,
     required this.classDisagreementCount,
@@ -1772,6 +1819,10 @@ final class ScheduleView {
   /// How many of those lengths are estimates (§3.8's
   /// `3 estimated (italic)`).
   final int estimatedCount;
+
+  /// How many of [estimatedCount] the PLAN proposed (DR-050 §11.49.3).
+  /// A SUBSET of it, unlike [boundCount], which is disjoint on purpose.
+  final int computedEstimateCount;
 
   /// How many shown rows print a plan-derived FLOOR rather than a length
   /// (DR-147 §11.146.3). Excluded from [footage] and counted here.
@@ -1882,6 +1933,7 @@ ScheduleView buildScheduleView(
     ),
     footage: _footageOf(kept),
     estimatedCount: kept.where((r) => r.lengthIsEstimated).length,
+    computedEstimateCount: kept.where((r) => r.estimateIsComputed).length,
     boundCount: kept.where((r) => r.lengthIsBound).length,
     undeterminedClassCount: kept.where((r) => r.isClassUndetermined).length,
     classDisagreementCount: kept.where((r) => r.hasClassDisagreement).length,
@@ -2029,6 +2081,7 @@ ScheduleGroup _band(
   rows: List.unmodifiable(rows),
   footage: _footageOf(rows),
   estimatedCount: rows.where((r) => r.lengthIsEstimated).length,
+  computedEstimateCount: rows.where((r) => r.estimateIsComputed).length,
   boundCount: rows.where((r) => r.lengthIsBound).length,
   isUndeterminedClass: isUndetermined,
 );

@@ -42,7 +42,12 @@ final class _Doc {
 
   Uuid _mint(String prefix) => Uuid('$prefix-${_seq++}');
 
-  Uuid room(String name, {Len? estimatedRunLength, String code = 'RM'}) {
+  Uuid room(
+    String name, {
+    Len? estimatedRunLength,
+    RunLengthOrigin? estimateOrigin,
+    String code = 'RM',
+  }) {
     final id = _mint('loc');
     doc.locations[id] = Location(
       id: id,
@@ -52,6 +57,7 @@ final class _Doc {
       order: FracIndex('a$_seq'),
       meta: _meta(),
       estimatedRunLengthFromRack: estimatedRunLength,
+      estimatedRunLengthOrigin: estimateOrigin,
     );
     return id;
   }
@@ -278,7 +284,153 @@ ScheduleView _term(
 ScheduleEntry _rowFor(ScheduleView view, String designator) =>
     view.rows.firstWhere((r) => r.designator == designator);
 
+// ═══════════════════════════════════════════════════════════════════════
+// LEN-A/5: HOW MANY OF THE ESTIMATES THE PLAN PROPOSED (DR-050 §11.49.3)
+// ═══════════════════════════════════════════════════════════════════════
+// `estimatedCount` exists so a reader knows how much of a total rests on
+// estimates. This is the same question one turn finer, in the place
+// somebody is about to spend money on the answer: did a person measure
+// these rooms, or did the software work them out from a drawing?
+void _computedEstimateTests() {
+  group('LEN-A/5: computedEstimateCount', () {
+    test('counts the rows whose room estimate the PLAN proposed', () {
+      final d = _Doc();
+      final where = d.room(
+        'Great Room',
+        estimatedRunLength: const Len(60 * 12 * Len.nmPerInch),
+        estimateOrigin: RunLengthOrigin.computedFromPlan,
+      );
+      final outlet = d.outlet('WP-1', locationId: where);
+      _link(
+        d,
+        designator: 'W001',
+        from: PlaceEndpoint(description: 'a', locationId: where),
+        to: const OpenEndpoint('coil'),
+        outletId: outlet,
+        fieldLabel: 'K-1',
+      );
+
+      final view = _pull(d.doc);
+      expect(view.estimatedCount, 1);
+      expect(view.computedEstimateCount, 1);
+      expect(view.groups.single.computedEstimateCount, 1);
+    });
+
+    test('A TYPED ESTIMATE IS COUNTED AS AN ESTIMATE AND NOT AS A '
+        'COMPUTED ONE, which is the whole distinction', () {
+      final d = _Doc();
+      final where = d.room(
+        'Great Room',
+        estimatedRunLength: const Len(60 * 12 * Len.nmPerInch),
+        estimateOrigin: RunLengthOrigin.typed,
+      );
+      final outlet = d.outlet('WP-1', locationId: where);
+      _link(
+        d,
+        designator: 'W001',
+        from: PlaceEndpoint(description: 'a', locationId: where),
+        to: const OpenEndpoint('coil'),
+        outletId: outlet,
+        fieldLabel: 'K-1',
+      );
+
+      final view = _pull(d.doc);
+      expect(view.estimatedCount, 1);
+      expect(view.computedEstimateCount, 0);
+    });
+
+    test('and an UNMARKED estimate counts as neither computed nor typed, '
+        'because absent means nobody recorded it (G4)', () {
+      // Every document written before `LEN-A/1` is in this state, and
+      // claiming those figures were typed would be inventing a fact.
+      final d = _Doc();
+      final where = d.room(
+        'Great Room',
+        estimatedRunLength: const Len(60 * 12 * Len.nmPerInch),
+      );
+      final outlet = d.outlet('WP-1', locationId: where);
+      _link(
+        d,
+        designator: 'W001',
+        from: PlaceEndpoint(description: 'a', locationId: where),
+        to: const OpenEndpoint('coil'),
+        outletId: outlet,
+        fieldLabel: 'K-1',
+      );
+
+      final view = _pull(d.doc);
+      expect(view.estimatedCount, 1);
+      expect(view.computedEstimateCount, 0);
+    });
+
+    test('A ROW THAT DID NOT USE THE ROOM ESTIMATE CARRIES NO MARKER, '
+        'even when the room has one', () {
+      // LOAD-BEARING. A run cut to a measured length owes nothing to the
+      // room's figure, and reporting its provenance would be describing a
+      // number this row never used.
+      final d = _Doc();
+      final where = d.room(
+        'Great Room',
+        estimatedRunLength: const Len(60 * 12 * Len.nmPerInch),
+        estimateOrigin: RunLengthOrigin.computedFromPlan,
+      );
+      _link(
+        d,
+        designator: 'W002',
+        from: PlaceEndpoint(description: 'b', locationId: where),
+        to: const OpenEndpoint('coil'),
+        cutLength: const Len(30 * 12 * Len.nmPerInch),
+      );
+
+      final view = _pull(d.doc);
+      expect(view.estimatedCount, 0, reason: 'a cut length is not an estimate');
+      expect(view.computedEstimateCount, 0);
+      expect(view.groups.single.rows.single.estimateOrigin, isNull);
+    });
+
+    test('it is a SUBSET of estimatedCount, unlike boundCount', () {
+      // `boundCount` is disjoint from `estimatedCount` on purpose and says
+      // so; this one narrows the same population rather than naming a
+      // different one.
+      final d = _Doc();
+      final computed = d.room(
+        'Great Room',
+        estimatedRunLength: const Len(60 * 12 * Len.nmPerInch),
+        estimateOrigin: RunLengthOrigin.computedFromPlan,
+      );
+      final typed = d.room(
+        'Study',
+        estimatedRunLength: const Len(40 * 12 * Len.nmPerInch),
+        estimateOrigin: RunLengthOrigin.typed,
+        code: 'ST',
+      );
+      for (final (i, where) in [computed, typed].indexed) {
+        final outlet = d.outlet('WP-$i', locationId: where);
+        _link(
+          d,
+          designator: 'W00$i',
+          from: PlaceEndpoint(description: 'a', locationId: where),
+          to: const OpenEndpoint('coil'),
+          outletId: outlet,
+          fieldLabel: 'K-$i',
+          order: i,
+        );
+      }
+
+      final view = _pull(d.doc);
+      expect(view.estimatedCount, 2);
+      expect(view.computedEstimateCount, 1);
+      expect(
+        view.computedEstimateCount,
+        lessThanOrEqualTo(view.estimatedCount),
+      );
+    });
+  });
+}
+
 void main() {
+  _computedEstimateTests();
+
   // ═══════════════════════════════════════════════════════════════════
   // CR-105 / AC-035 — CORRECT AT ZERO ROWS
   // ═══════════════════════════════════════════════════════════════════

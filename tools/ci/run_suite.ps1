@@ -738,7 +738,14 @@ $SuiteFloors = @{
     # case is that UNDO restores both fields, since an undo that put the
     # figure back and left the marker would be that drift arriving through
     # the door marked undo.
-    'rackpal_core'   = 4591
+    # 4596 at LEN-A/5 part two: +5 for `computedEstimateCount`, the count
+    # that says how many of a takeoff's estimates the PLAN proposed rather
+    # than a person entering them (DR-050 11.49.3). A SUBSET of
+    # estimatedCount, unlike boundCount which is disjoint on purpose.
+    # The load-bearing case is that a row which did not USE the room
+    # estimate carries no marker even when the room has one: a run cut to
+    # a measured length owes nothing to the room's figure.
+    'rackpal_core'   = 4596
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
