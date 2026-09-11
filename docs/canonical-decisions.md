@@ -10050,6 +10050,95 @@ calibration live, and it is already a v1 epic sequenced before M6 (DR-029). `Loc
 ceiling height if the derivation needs one, which is a field question for the task rather than a
 ruling.
 
+**11.49.5a THE VERTICES WERE NOT THERE, AND v1 GREW BY MORE THAN TWO ITEMS (`LEN-A`, 2026-09-11).**
+This clause says the work lands with the Plan view *"which is where the vertices and the calibration
+live"*. The calibration lived there. **A census on 2026-09-10 found no polygon, no outline and no
+room geometry of any kind**: the Plan view shipped underlays, calibration, pins and the unpinned
+strip, and nothing ever drew a room. The two items were real and the tree they were to land in was
+not.
+
+So the actual scope is six: a `RoomOutline` model and its codec entry, a command that writes it, a
+polygon tool on the plan canvas, the derivation, the marker, and **an editor for
+`estimatedRunLengthFromRack`, which had none anywhere**. That last one is the one nobody had
+noticed: `locations_panel.dart` recorded it in its own comment as *"a table row with no editor here"*
+and had done since M3-D, so AC-024's one number per room was the only one of its three a person could
+not enter.
+
+**THE CEILING QUESTION THIS CLAUSE LEFT OPEN IS ALREADY ANSWERED.** *"`Location` gains a ceiling
+height if the derivation needs one"* is `riseAllowance`, which shipped at `PLAN-C` and already means
+*"the vertical drop a plan structurally cannot see: ceiling to device, or floor to device"*. No field
+is owed, and this sentence exists so a reader does not ask the question a second time.
+
+**THIS IS A CORRECTION OF A MIS-PRICING, NOT A SCOPE CHANGE** (roadmap §8.3). Nothing moved between
+release bands: DR-050 put this work in v1 on 2026-08-12 and it is in v1 still. What was wrong was the
+count of what it takes.
+
+**11.49.6 RULED: THE FORMULA, AND THE DATUM IT MEASURES FROM.** §11.49.5 left both to the task, and
+the task put both to the user on 2026-09-10 and 2026-09-11.
+
+**THE FIGURE IS THE FARTHEST CORNER PLUS THE RISE.** The straight line from the datum rack's pin to
+the room's most distant vertex, plus `Location.riseAllowance`. Every term is measured and nothing is
+invented, which is the posture DR-020 takes throughout, and it over-estimates, which is the safe
+direction for a consumable bought with a margin.
+
+**AND THE SHAPE IS A CLOSED POLYGON DRAWN VERTEX BY VERTEX**, chosen over a two-corner rectangle
+because a rectangle cannot express an L-shaped great room or an open plan, which is most of
+residential A/V, and a rectangle is four vertices anyway.
+
+**THE DATUM IS THE RACK THIS ROOM'S RUNS LAND IN**, and the reason is better than the three
+alternatives put with it. DR-147 §11.146.2 ruled that the BOUND measures from *"the rack this link
+lands in"* and refused both *the nearest pinned rack* and *the first in document order*; a room
+estimate has no single run, so that answer does not transfer verbatim. **It transfers in substance
+because of where the field is read**: `estimatedRunLengthFromRack` is consumed PER RUN, in
+`schedule.dart`'s length ladder, so nothing reads the estimate until a run exists and a run is
+exactly the thing that names the rack it lands in. The estimate and the bound therefore measure from
+one rack by one rule and cannot disagree about a room's head end.
+
+> **The objection put against this was wrong and the code refuted it.** It was argued that deriving
+> from the runs fails because the estimate is for quoting and quoting happens before the runs are
+> drawn. A schedule row IS a run and the schedule is the quote basis, which the length ladder's own
+> call site shows. Recorded because the reasoning, not the conclusion, is what a later reader needs.
+
+**A ROOM SERVED BY TWO HEAD ENDS TAKES THE LARGER FIGURE RATHER THAN REFUSING**, which reverses what
+this task first drafted. A refusal was drafted on DR-147's reasoning and changed after measuring what
+it costs: `_lengthOf` falls through `roomEstimate` to `planLowerBound` to `none`, and
+`cable_footage.dart`'s `_isQuantity` is FALSE for both, so **a refused estimate means every run in
+that room buys zero wire in the takeoff**. The user's trade ground is that quotes are built
+conservatively, commonly several hundred feet over the actual totals, so a silent zero is the worst
+available direction of error. The larger figure is still entirely measured and is conservative the
+way the quote already leans.
+
+**DR-147 IS NOT CONTRADICTED**, because it governs a different object. §11.49.1 is the clause whose
+whole point is that the rollup *"forbids a BOUND, which is not the same object"*: a bound claims to
+be a floor, so a wrong one is a false claim, while an estimate says it is an estimate and
+`estimatedCount` keeps its standing visible.
+
+**AND NO MARGIN IS FOLDED IN.** The trade's conservatism is the estimator's and stays theirs. DR-020
+killed `routingFactor` and `slackAllowance` as the product guessing at building geometry it cannot
+observe and §11.49.4 says they are *"still deleted and still not to be re-argued from"*, so a waste
+factor on this tier would be an amendment with its own ID rather than a decision a task may take.
+
+**11.49.7 RULED: THE AUTO-FILL MAY REPLACE THE SOFTWARE AND NEVER A PERSON.** §11.49.3 permits an
+auto-fill here that §11.45.2 refused for terminations, on the cost of being wrong: a termination is a
+discrete part and a wrong one orders the wrong object, while a length is a continuous estimate
+consumed with a margin. **That argument licenses filling an empty field and replacing the software's
+own earlier guess. It does not license replacing a person.**
+
+Closing an outline writes the shape and the figure in ONE transaction, because it is one act to the
+person who drew it; two undo entries would let `Ctrl+Z` take the estimate away and leave the shape,
+which is a state nobody asked for.
+
+**AN UNRECORDED ORIGIN COUNTS AS A PERSON'S** (G4). Absent means nobody wrote down where the figure
+came from, which is the state of every document written before this work, and reading that as *"not
+typed"* would treat an unknown as a licence to overwrite a figure somebody may have walked the house
+to get.
+
+**11.49.8 Where the marker reads.** The room's own row, which is where the value is edited, and the
+takeoff as `computedEstimateCount` beside `estimatedCount`. **A SUBSET of that count and not a
+sibling of it**, unlike `boundCount`, which is disjoint on purpose: §11.49.3's question is asked
+ABOUT an estimate rather than instead of one. It reaches a takeoff for the reason `estimatedCount`
+does, which is that somebody is about to spend money on the answer.
+
 **What it does not rule.** The formula. Whether a rise is added per storey, whether the figure is
 straight-line or perimeter, and what margin if any is folded in are all decisions for the task, and
 all of them are cheaper to change than a provenance tier. It also does not touch `LEN-002` or the

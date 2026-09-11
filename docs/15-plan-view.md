@@ -232,6 +232,43 @@ A device pinned on a plan is still off-rack in a room; those are not mutually ex
 the union's five members are (CR-032, docs/02 §4.3). Placement variants keep all-`final` fields, so
 setting a pin replaces the placement object, per `placement.dart`'s own header.
 
+### 3.5 `RoomOutline`, and the room estimate it fills
+
+**BUILT AT `LEN-A`, 2026-09-11** (DR-050 §11.49). A room's shape, drawn on
+one underlay as a closed polygon, stored on `Location` rather than on the
+underlay because it is a fact about the ROOM.
+
+| Field | What it is |
+|---|---|
+| `underlayId` | Which plan it was drawn on, for `PlanPin`'s reason |
+| `vertices` | The corners, in the order drawn. **Order is the shape**: the same four points reordered is a bow tie rather than a rectangle, so it compares as a sequence |
+
+**IMPLICITLY CLOSED.** The edge from the last corner back to the first is
+implied and always exists. A stored closing vertex is a second copy of the
+first, and a file whose last vertex drifted by a pixel would describe a
+polygon with a hairline gap no reader would think to look for.
+
+**THE TOOL.** Click each corner; click the first corner again to close;
+right-click takes one back; `Esc` cancels the draw. The close test is in
+SCREEN space, because a person aims with a mouse at what they can see and
+a radius in raster pixels would be an easy target at 400% and impossible
+on a plan fitted to the window.
+
+**THE OUTLINE IS SCREEN CHROME AND DOES NOT PRINT ON `T1.01`** (§11.49,
+`LEN-A/4`). An outline is an estimating aid, and `T1.01`'s criterion is
+that a stranger locates every drop from the printed sheet. Whether it
+should print is its own chapter, to be decided with a printed sheet in
+hand rather than on screen, which is AC-054's own standard.
+
+**WHAT IT FILLS.** `Location.estimatedRunLengthFromRack`, which already
+ranks below `outletNominal` and already sums, with
+`estimatedRunLengthOrigin` recording that the software proposed the figure
+rather than a person. The derivation is the straight line from the datum
+rack's pin to the room's most distant vertex plus `riseAllowance`, and the
+datum is the rack this room's runs land in (§11.49.6). **The auto-fill
+never replaces a person**, and an unrecorded origin counts as a person's
+(§11.49.7).
+
 ---
 
 ## 4. Length: the one thing a plan may honestly claim

@@ -6,7 +6,7 @@ description: >-
   entire unreachable feature the next. It scans function-typed fields on *Actions
   records in one package; the importer was free functions in another. Both facts
   are in the gate's source and neither is in its name.
-tags: [practice, gates, reachability, census, plan-e, plan-g, plan-h, plan-i]
+tags: [practice, gates, reachability, census, plan-e, plan-g, plan-h, plan-i, len-a]
 timestamp: 2026-09-08T00:00:00Z
 status: adopted
 ---
@@ -122,6 +122,28 @@ old guard ran an example the producers cannot generate.
 
 > A guard built from an input you invented tests your imagination. A guard built
 > from the system's own output tests the system.
+
+# And a sixth, where the gate was written BY the chapter it failed
+
+`LEN-A/3` shipped a derivation with no production caller on purpose, because
+the chapter that would wire it up was two along. It left a case saying so and
+naming that chapter as what would break it, which is the practice this corpus
+calls *a test asserting an absence names its due date*.
+
+`LEN-A/5` wired it up. **The case stayed green.** The scan walked
+`rackpal_core/lib` and the caller landed in `rackpal_ui`.
+
+This is the same failure as the five above with one difference worth naming:
+**the author of the gate and the author of the thing that escaped it were the
+same person, two chapters apart, and the gate was written specifically to catch
+this.** Knowing the rule is not the same as applying it to the gate you are
+writing at that moment.
+
+The cheap check, and it is one question: **does the thing this gate is about
+live where the gate is looking?** A derivation in `rackpal_core` has callers in
+`rackpal_ui` and `apps/rackpal` by construction, because that is what the layering
+is for; a scan rooted at the package that DECLARES a symbol can only ever find
+the callers that are least likely to exist.
 
 # The rule
 

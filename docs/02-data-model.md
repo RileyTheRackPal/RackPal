@@ -253,9 +253,43 @@ final class Location {
   String code;                    // "MBR" — feeds {ROOM_ABBR}. CR-046.
   int? floorNumber; String? spaceCode;
   Len? estimatedRunLengthFromRack;   // ONE number per room ⇒ 62 usable estimates. AC-024.
+  RunLengthOrigin? estimatedRunLengthOrigin;  // typed | computedFromPlan. Absent
+                                  // is UNKNOWN, never "typed" (G4). DR-050 §11.49.3.
+  Len? riseAllowance;             // the vertical drop a plan cannot see. DR-020 §11.19.2(1).
+  RoomOutline? planOutline;       // this room's shape, drawn on one plan. DR-050 §11.49.
   FracIndex order;
   EntityMeta meta;
 }
+
+/// The room's shape as drawn on a plan (DR-050 §11.49, `LEN-A/1`).
+///
+/// It hangs off `Location` and not off `PlanUnderlay` because it is a fact
+/// about the ROOM; the plan is where it was captured, not what it is
+/// about. It carries `underlayId` for `PlanPin`'s reason: a document may
+/// hold several plans and a bare list of `PxPt` means nothing without the
+/// raster it indexes.
+///
+/// **IMPLICITLY CLOSED.** The first vertex is not repeated at the end: a
+/// stored closing point is a second copy of the first, and two copies of a
+/// number are two numbers that can disagree.
+///
+/// **FEWER THAN THREE VERTICES IS HELD AND REPORTED, NOT REFUSED**, on
+/// `PlanScale`'s answer to the same question about a calibration whose two
+/// points coincide. The decoder must read whatever is on disk (CR-093);
+/// `isUsable` says so and `SetRoomOutlineCommand` declines to author one.
+final class RoomOutline {
+  final Uuid underlayId;
+  final List<PxPt> vertices;      // ORDER IS THE SHAPE, compared as a sequence.
+  bool get isUsable => vertices.length >= 3;
+}
+
+/// Where `Location.estimatedRunLengthFromRack` came from (DR-050 §11.49.3).
+///
+/// An enum rather than a `bool?`, though both are one nullable field: a
+/// `false` would carry either "a person typed it" or "nobody recorded it"
+/// while looking identical either way, and those are different answers to
+/// the question the field exists to ask.
+enum RunLengthOrigin { typed, computedFromPlan }
 
 final class Rack {
   final Uuid id;
