@@ -118,6 +118,7 @@ import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/enums.dart'
     show LifecycleStatus, TerminationType, UnitSystem;
 import 'package:rackpal_core/src/model/link.dart';
+import 'package:rackpal_core/src/model/outlet.dart';
 import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/port.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
@@ -1097,7 +1098,14 @@ ScheduleEntry _row(RackDocument doc, Link link) {
   // end there when there is one. A run's room is where its drop is, not
   // where its rack is — AC-025's "the order the tech walks the house"
   // means nothing if every row groups under the equipment room.
-  final roomId = from.locationId ?? outlet?.locationId ?? to.locationId;
+  //
+  // THROUGH THE SHARED RULE, NOT INLINE (`LEN-A/3`). `roomEstimateFor`
+  // has to find the runs belonging to a room, and the room whose estimate
+  // applies to a run is BY DEFINITION the one this line picks: the
+  // consumer is four lines below. A second spelling would let the two
+  // disagree about the same run, which is the two-answers failure CR-107
+  // keeps naming.
+  final roomId = _roomIdOf(from, to, outlet);
 
   final (Len? length, ScheduleLengthSource source) = _lengthOf(
     link,
@@ -1219,6 +1227,44 @@ TerminationType? _terminationOf(Link link, Conductor? first) {
     return (planLowerBound, ScheduleLengthSource.planLowerBound);
   }
   return (null, ScheduleLengthSource.none);
+}
+
+/// The room a run belongs to, or null when nothing says.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE RULE ITSELF, SO THERE IS ONE OF IT
+/// ═══════════════════════════════════════════════════════════════════════
+/// Takes the ends ALREADY ORIENTED and the outlet already resolved,
+/// because `_row` has both and re-deriving them would double `_endOf` on
+/// a path that runs once per link. [roomOfLink] is the same rule for a
+/// caller holding only a `Link`.
+Uuid? _roomIdOf(ScheduleEnd from, ScheduleEnd to, Outlet? outlet) =>
+    from.locationId ?? outlet?.locationId ?? to.locationId;
+
+/// The room [link] belongs to, by the rule the schedule itself uses.
+///
+/// **THE SAME ANSWER `_row` COMPUTES**, which is the point: a run's
+/// `roomEstimate` is read from `doc.locations[roomId]`, so a derivation
+/// looking for "the runs of this room" has to agree with the line that
+/// will consume its answer (`LEN-A/3`, DR-050).
+///
+/// Costs one `_endOf` pair, so it is for callers that have a `Link` and
+/// no row. Building a whole schedule to ask this would be the expensive
+/// way round.
+Uuid? roomOfLink(RackDocument doc, Link link) {
+  final conductors = link.conductors;
+  if (conductors.isEmpty) return null;
+  final first = conductors.first;
+  final endA = _endOf(doc, first.from);
+  final endB = _endOf(doc, first.to);
+  // ORIENTATION, spelled as `_row` spells it: exactly one end in a rack
+  // means that end is TO.
+  final flip = endA.isInRack && !endB.isInRack;
+  final from = flip ? endB : endA;
+  final to = flip ? endA : endB;
+  final origin = link.structureOrigin;
+  final outlet = origin == null ? null : doc.outlets[origin.outletId];
+  return _roomIdOf(from, to, outlet);
 }
 
 ScheduleEnd _endOf(RackDocument doc, Endpoint endpoint) => switch (endpoint) {

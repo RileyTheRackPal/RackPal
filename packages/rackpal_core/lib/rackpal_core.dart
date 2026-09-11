@@ -153,6 +153,7 @@ export 'src/derived/plate_materials.dart';
 export 'src/derived/port_facts.dart';
 export 'src/derived/port_fill.dart';
 export 'src/derived/port_set_resolution.dart';
+export 'src/derived/room_estimate.dart';
 export 'src/derived/schedule.dart';
 export 'src/derived/spring_back_rules.dart';
 export 'src/derived/structure_matrix.dart';

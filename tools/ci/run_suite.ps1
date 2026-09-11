@@ -718,7 +718,18 @@ $SuiteFloors = @{
     # throws. Probed on the shipped SetPlanPinCommand, so it has been true
     # since PLAN-C and is command machinery rather than a plan bug. The
     # case records what happens and names the item that inverts it.
-    'rackpal_core'   = 4563
+    # 4583 at LEN-A/3: +20 from derived/room_estimate_test.dart, and the
+    # plan fixture builder moved to derived/fixtures/plan_doc.dart rather
+    # than being copied (no net cases from the move).
+    # FOUR OF THE TWENTY ARE ABOUT PICKING THE WRONG RACK, on
+    # plan_length_test.dart's own rule: every arithmetic case passes
+    # against a derivation measuring from the nearest pinned rack, or any
+    # pinned rack, or the farthest, so the decoy sits on the OPPOSITE
+    # side of correct in each and no single wrong rule survives both.
+    # ONE ASSERTS AN ABSENCE AND NAMES `#861` AS WHAT RETIRES IT: the
+    # derivation has no production caller yet, which is the state
+    # PdfImageResolver sat in from PLAN-A to PLAN-H.
+    'rackpal_core'   = 4583
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
