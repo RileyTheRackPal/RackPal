@@ -68,6 +68,13 @@ class _Harness {
     onSetKind: (id, kind) => _set(id, LocationField.kind, kind),
     onSetFloorNumber: (id, v) => _set(id, LocationField.floorNumber, v),
     onSetSpaceCode: (id, v) => _set(id, LocationField.spaceCode, v),
+    // `LEN-A/5`: not a table row, because the figure and its origin
+    // marker move together and a value from this surface was typed.
+    onSetEstimatedRunLength: (id, length) => controller.run(
+      length == null
+          ? SetRoomEstimateCommand.cleared(locationId: id)
+          : SetRoomEstimateCommand.typed(locationId: id, length: length),
+    ),
     onReparent: (id, newParentId) {
       final result = buildReparentLocation(
         doc: doc,
@@ -113,12 +120,18 @@ class _Harness {
 
   /// Seeds a location directly, bypassing the panel, so a test can set up
   /// a shape without twenty taps.
-  Uuid seed(String name, {Uuid? parent, String code = ''}) {
+  Uuid seed(
+    String name, {
+    Uuid? parent,
+    String code = '',
+    Len? estimatedRunLength,
+  }) {
     final cmd = AddLocationCommand(
       name: name,
       code: code,
       order: nextLocationOrder(doc, parentId: parent),
       parentId: parent,
+      estimatedRunLengthFromRack: estimatedRunLength,
       now: _when,
       actor: 'seed',
     );
@@ -141,7 +154,171 @@ double _indentOf(WidgetTester tester, String name) {
   return (container.padding! as EdgeInsets).left;
 }
 
+// ═══════════════════════════════════════════════════════════════════════
+// LEN-A/5: THE FIELD AC-024 NAMED AND NOBODY COULD TYPE INTO
+// ═══════════════════════════════════════════════════════════════════════
+// This panel's own comment said `estimatedRunLengthFromRack` was "a table
+// row with no editor here", and it had been since M3-D. `LEN-A/3` met the
+// same gap from the other side: a derivation proposing a figure had no
+// surface to propose it into and no control to be compared against.
+//
+// The marker ships with its reader in the same chapter, because a field
+// whose stated purpose is to answer a question nobody can ask is the shape
+// `riseAllowance` and `PortDef.bus.maxTapWatts` both had for months.
+void _estimateFieldTests() {
+  Finder estimateField(Uuid id) => find.byKey(ValueKey('estimate-${id.v}'));
+
+  Future<void> open(WidgetTester tester, _Harness h, String name) async {
+    await tester.pumpWidget(h.app);
+    await tester.tap(find.text(name));
+    await tester.pump();
+  }
+
+  Future<void> commit(
+    WidgetTester tester,
+    Finder field,
+    String text,
+  ) async {
+    await tester.enterText(field, text);
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+  }
+
+  group('LEN-A/5: the run-length field', () {
+    testWidgets('a typed figure reaches the document, in whole feet', (
+      tester,
+    ) async {
+      final h = _Harness();
+      final id = h.seed('Great Room');
+      await open(tester, h, 'Great Room');
+
+      await commit(tester, estimateField(id), '62');
+
+      expect(
+        h.doc.locations[id]!.estimatedRunLengthFromRack,
+        const Len(62 * 12 * Len.nmPerInch),
+      );
+    });
+
+    testWidgets('AND IT IS MARKED AS TYPED, which is the only provenance '
+        'this surface can report', (tester) async {
+      final h = _Harness();
+      final id = h.seed('Great Room');
+      await open(tester, h, 'Great Room');
+
+      await commit(tester, estimateField(id), '62');
+
+      expect(
+        h.doc.locations[id]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.typed,
+      );
+    });
+
+    testWidgets('emptying it clears the marker too', (tester) async {
+      final h = _Harness();
+      final id = h.seed('Great Room');
+      await open(tester, h, 'Great Room');
+
+      await commit(tester, estimateField(id), '62');
+      await commit(tester, estimateField(id), '');
+
+      expect(h.doc.locations[id]!.estimatedRunLengthFromRack, isNull);
+      expect(h.doc.locations[id]!.estimatedRunLengthOrigin, isNull);
+    });
+
+    testWidgets('a value it cannot read REFUSES and writes nothing', (
+      tester,
+    ) async {
+      // `parseLengthCell`'s grammar, which DR-144 §11.143.5 distinguishes
+      // from the calibration's on purpose: that field is a distance on
+      // somebody else's drawing whose magnitude is unknown, so it refuses
+      // a bare number; THIS is cable ordered and cut in whole feet, so a
+      // bare number is exactly what it reads and prose is not.
+      final h = _Harness();
+      final id = h.seed('Great Room');
+      await open(tester, h, 'Great Room');
+
+      await commit(tester, estimateField(id), 'about sixty');
+
+      expect(h.doc.locations[id]!.estimatedRunLengthFromRack, isNull);
+      expect(h.refusals, isNotEmpty);
+    });
+
+    testWidgets('THE MARKER READS IN ALL THREE DIRECTIONS (G4)', (
+      tester,
+    ) async {
+      // PRINTED, NOT ASSUMED. Twelve green `contains` assertions once
+      // passed over a line reading "1 ports", so the words come off the
+      // widget.
+      for (final (origin, expected) in <(RunLengthOrigin?, String)>[
+        // ABSENT IS NOT "TYPED". Every document written before `LEN-A/1`
+        // carries a figure with no recorded provenance, and saying a
+        // person entered it would invent a fact about somebody's project.
+        (null, 'was not recorded'),
+        (RunLengthOrigin.typed, 'Entered by hand'),
+        (RunLengthOrigin.computedFromPlan, 'outline on the plan'),
+      ]) {
+        final h = _Harness();
+        // THE ABSENT CASE IS SEEDED AT CREATION, not by clearing a
+        // marker, because that is how it really arises: every document
+        // written before `LEN-A/1` holds a figure and no origin, and
+        // `AddLocationCommand` is the one writer that can still produce
+        // that pair.
+        final id = h.seed(
+          'Great Room',
+          estimatedRunLength: const Len(60 * 12 * Len.nmPerInch),
+        );
+        if (origin != null) {
+          h.controller.run(
+            origin == RunLengthOrigin.typed
+                ? SetRoomEstimateCommand.typed(
+                    locationId: id,
+                    length: const Len(60 * 12 * Len.nmPerInch),
+                  )
+                : SetRoomEstimateCommand.computed(
+                    locationId: id,
+                    length: const Len(60 * 12 * Len.nmPerInch),
+                  ),
+          );
+        }
+
+        await open(tester, h, 'Great Room');
+        expect(
+          find.textContaining(expected),
+          findsOneWidget,
+          reason: '${origin?.name}',
+        );
+      }
+    });
+
+    testWidgets('and an EMPTY field says what the number is FOR rather '
+        'than where it came from', (tester) async {
+      final h = _Harness()..seed('Great Room');
+      await open(tester, h, 'Great Room');
+
+      expect(find.textContaining('one number per room'), findsOneWidget);
+    });
+
+    test('the cell text round-trips through the parser that reads it', () {
+      // The property that keeps the stored value equal to the value its
+      // own field displays.
+      for (final units in UnitSystem.values) {
+        const stored = Len(62 * 12 * Len.nmPerInch);
+        final text = lengthCellText(stored, units);
+        switch (parseLengthCell(text, units)) {
+          case CellParsed<Len>(:final value):
+            expect(lengthCellText(value!, units), text, reason: units.name);
+          case CellRefused<Len>(:final reason):
+            fail('${units.name}: $reason');
+        }
+      }
+    });
+  });
+}
+
 void main() {
+  _estimateFieldTests();
+
   group('never a fixed hierarchy (CR-047)', () {
     testWidgets('a five-deep chain renders, each level further in', (
       tester,

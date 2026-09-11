@@ -167,3 +167,26 @@ Set<Uuid> _datumRacksFor(RackDocument doc, Uuid roomId) {
   }
   return out;
 }
+
+/// Whether a plan-derived figure may be written over what [location]
+/// already holds (DR-050 §11.49.3, `LEN-A/5`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A TYPED VALUE IS NEVER OVERWRITTEN, WHICH IS THE USER'S CALL AND
+/// §11.45.2's LINE
+/// ═══════════════════════════════════════════════════════════════════════
+/// §11.49.3 permits an auto-fill here that §11.45.2 refused for
+/// terminations, and the reason is the cost of being wrong: a termination
+/// is a discrete part and a wrong one orders the wrong object, while a
+/// length is a continuous estimate consumed with a margin. **That argument
+/// licenses filling an EMPTY field and replacing the software's own
+/// earlier guess. It does not license replacing a person.**
+///
+/// **AN UNRECORDED ORIGIN COUNTS AS A PERSON'S** (G4). Absent means nobody
+/// wrote down where the figure came from, which is the state of every
+/// document written before `LEN-A/1`; treating that as "not typed" would
+/// read an unknown as a licence, and the figure it silently replaced might
+/// be the one somebody walked the house to get.
+bool planEstimateMayFill(Location location) =>
+    location.estimatedRunLengthFromRack == null ||
+    location.estimatedRunLengthOrigin == RunLengthOrigin.computedFromPlan;

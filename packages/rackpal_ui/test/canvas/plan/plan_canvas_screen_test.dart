@@ -127,6 +127,72 @@ const _armedDrop = ArmedPin(outletId: _outletId, label: 'D-014');
 
 const _roomId = Uuid('room-1');
 
+/// A calibration that yields a factor: 100 px to 36 in, so one pixel is
+/// 0.36 in and the arithmetic below is readable (`LEN-A/5`).
+const _scale = PlanScale(
+  a: PxPt(0, 0),
+  b: PxPt(100, 0),
+  distance: Len(36 * Len.nmPerInch),
+);
+
+/// Calibrates the fixture's underlay, so `roomEstimateFor` can measure.
+void _calibrate(DocumentController c) =>
+    c.doc.underlays[_underlayId]!.scale = _scale;
+
+/// Pins the rack and wires one run from it to a drop in [roomId], which is
+/// what makes that rack the room's DATUM (DR-147 §11.146.2 as applied by
+/// `LEN-A/3`).
+void _servedByRack(DocumentController c, Uuid roomId) {
+  const rackId = Uuid('rk-est');
+  c.doc.racks[rackId] = Rack(
+    id: rackId,
+    name: 'Head end',
+    designator: 'RK-1',
+    heightU: 42,
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    planPin: const PlanPin(underlayId: _underlayId, at: PxPt(0, 0)),
+  );
+  const devId = Uuid('dev-est');
+  c.doc.devices[devId] = DeviceInstance(
+    id: devId,
+    kind: DeviceKind.rackDevice,
+    templateRef: const TemplateRef(
+      templateId: TemplateId('F1'),
+      version: 1,
+      contentHash: 'sha256:test-F1',
+    ),
+    designator: 'PP-1',
+    name: 'patch panel',
+    placement: const RailPlacement(
+      rackId: rackId,
+      ruIndex: 1,
+      face: Face.rear,
+    ),
+    meta: _meta(),
+  );
+  const portId = Uuid('port-est');
+  c.doc.ports[portId] = Port(
+    id: portId,
+    deviceId: devId,
+    designator: 'J01',
+  );
+  const linkId = Uuid('link-est');
+  c.doc.links[linkId] = Link(
+    id: linkId,
+    designator: 'W001',
+    media: const MediaTypeId('media.cat6_utp'),
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    conductors: [
+      Conductor(
+        from: const PortEndpoint(portId),
+        to: PlaceEndpoint(locationId: roomId, description: 'TV wall'),
+      ),
+    ],
+  );
+}
+
 /// Adds one room, the subject an outline hangs on (`LEN-A/4`).
 void _addRoom(DocumentController c, {RoomOutline? outline}) {
   c.doc.locations[_roomId] = Location(
@@ -381,6 +447,130 @@ void main() {
 
       expect(outline.vertices, hasLength(1));
       expect(c.doc.outlets[_outletId]!.planPin, isNull);
+    });
+
+    // ═══════════════════════════════════════════════════════════════
+    // LEN-A/5: CLOSING A ROOM FILLS ITS ESTIMATE, IN ONE UNDO ENTRY
+    // ═══════════════════════════════════════════════════════════════
+    // Ruled by the user: the figure lands automatically, marked as
+    // computed, and never over a value a person entered.
+
+    testWidgets('closing an outline WRITES the derived estimate, marked '
+        'as computed', (tester) async {
+      final c = _controller();
+      _addRoom(c);
+      _calibrate(c);
+      _servedByRack(c, _roomId);
+      await pump(tester, c, outline: PlanOutlineController()..begin(_roomId));
+
+      for (final at in const [
+        Offset(100, 100),
+        Offset(400, 100),
+        Offset(400, 300),
+        Offset(100, 100),
+      ]) {
+        await tester.tapAt(at);
+      }
+      await tester.pump();
+
+      // 400 by 300 px from the rack pin at (0, 0) is 500 px, at 0.36 in.
+      expect(
+        c.doc.locations[_roomId]!.estimatedRunLengthFromRack,
+        const Len(180 * Len.nmPerInch),
+      );
+      expect(
+        c.doc.locations[_roomId]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.computedFromPlan,
+      );
+    });
+
+    testWidgets('ONE UNDO TAKES BOTH BACK, because it was one act', (
+      tester,
+    ) async {
+      // Two entries would make Ctrl+Z remove the estimate and leave the
+      // shape: a state the person never asked for and did not create.
+      final c = _controller();
+      _addRoom(c);
+      _calibrate(c);
+      _servedByRack(c, _roomId);
+      await pump(tester, c, outline: PlanOutlineController()..begin(_roomId));
+
+      for (final at in const [
+        Offset(100, 100),
+        Offset(400, 100),
+        Offset(400, 300),
+        Offset(100, 100),
+      ]) {
+        await tester.tapAt(at);
+      }
+      await tester.pump();
+
+      c.undo.undo(c.doc);
+      expect(_outlineOf(c), isNull);
+      expect(c.doc.locations[_roomId]!.estimatedRunLengthFromRack, isNull);
+      expect(c.doc.locations[_roomId]!.estimatedRunLengthOrigin, isNull);
+    });
+
+    testWidgets('A TYPED FIGURE SURVIVES THE DRAW, which is the case the '
+        'auto-fill is not allowed to win', (tester) async {
+      final c = _controller();
+      _addRoom(c);
+      _calibrate(c);
+      _servedByRack(c, _roomId);
+      // THROUGH THE REAL WRITER, not the model's `@internal` setters:
+      // those are package-private, and reaching past them would also let
+      // this case set a pair the product cannot produce.
+      c.run(
+        SetRoomEstimateCommand.typed(
+          locationId: _roomId,
+          length: const Len(999 * Len.nmPerInch),
+        ),
+      );
+      await pump(tester, c, outline: PlanOutlineController()..begin(_roomId));
+
+      for (final at in const [
+        Offset(100, 100),
+        Offset(400, 100),
+        Offset(400, 300),
+        Offset(100, 100),
+      ]) {
+        await tester.tapAt(at);
+      }
+      await tester.pump();
+
+      expect(_outlineOf(c), isNotNull, reason: 'the shape still landed');
+      expect(
+        c.doc.locations[_roomId]!.estimatedRunLengthFromRack,
+        const Len(999 * Len.nmPerInch),
+      );
+      expect(
+        c.doc.locations[_roomId]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.typed,
+      );
+    });
+
+    testWidgets('and an UNMEASURABLE plan writes the shape and no figure', (
+      tester,
+    ) async {
+      // No calibration, so `roomEstimateFor` refuses. The outline is
+      // still a thing the person drew and is still theirs.
+      final c = _controller();
+      _addRoom(c);
+      _servedByRack(c, _roomId);
+      await pump(tester, c, outline: PlanOutlineController()..begin(_roomId));
+
+      for (final at in const [
+        Offset(100, 100),
+        Offset(400, 100),
+        Offset(400, 300),
+        Offset(100, 100),
+      ]) {
+        await tester.tapAt(at);
+      }
+      await tester.pump();
+
+      expect(_outlineOf(c), isNotNull);
+      expect(c.doc.locations[_roomId]!.estimatedRunLengthFromRack, isNull);
     });
 
     testWidgets('a FINISHED outline draws even where no draw mode is '

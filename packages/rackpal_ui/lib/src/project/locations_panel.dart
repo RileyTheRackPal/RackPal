@@ -94,6 +94,7 @@ class LocationsPanelActions {
     required this.onSetKind,
     required this.onSetFloorNumber,
     required this.onSetSpaceCode,
+    required this.onSetEstimatedRunLength,
     required this.onReparent,
     required this.onDelete,
     required this.onRefuse,
@@ -122,8 +123,12 @@ class LocationsPanelActions {
   /// label preset unreachable**, so `{FLOOR}{SPACE}-{PANEL}{PORT:2}` could
   /// not render on any document this product had ever written.
   ///
-  /// `estimatedRunLengthFromRack` is still a table row with no editor here,
-  /// and that one is still M3-D's.
+  /// **`estimatedRunLengthFromRack` GOT ITS EDITOR AT `LEN-A/5`**, and
+  /// this paragraph said it had none since M3-D. It was the only one of
+  /// AC-024's three numbers a person could not enter anywhere, which
+  /// `LEN-A/3` ran into from the other side: a derivation proposing a
+  /// figure had no surface to propose it into and no control to be
+  /// compared against.
   final void Function(Uuid id, String name) onRename;
   final void Function(Uuid id, String code) onSetCode;
   final void Function(Uuid id, LocationKind kind) onSetKind;
@@ -138,6 +143,20 @@ class LocationsPanelActions {
   /// never as `''`, which is `LinkField.notes`' stated rule: `''` is a
   /// third state every reader downstream would have to guess about.
   final void Function(Uuid id, String? spaceCode) onSetSpaceCode;
+
+  /// AC-024's ONE number per room, and the third of the three CR-047 and
+  /// CR-046 are about (DR-050, `LEN-A/5`).
+  ///
+  /// ALREADY PARSED, on `onSetFloorNumber`'s rule: the panel runs
+  /// `parseLengthCell` and hands over a `Len?`, because a row cannot
+  /// refuse and does not transform.
+  ///
+  /// **THE MARKER MOVES WITH IT AND IS NOT A SECOND PARAMETER.** A value
+  /// arriving here was typed by a person, which is the only provenance
+  /// this surface can report; `SetRoomEstimateCommand.typed` is what the
+  /// host runs, and `LEN-A/6`'s auto-fill uses `computed` from somewhere
+  /// else entirely (DR-050 §11.49.3).
+  final void Function(Uuid id, Len? length) onSetEstimatedRunLength;
 
   /// Moves `id` under `newParentId`, or to the top level when null.
   /// Returns a refusal sentence, or null when it went through.
@@ -612,6 +631,36 @@ class _Detail extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
+          _CommitField(
+            key: ValueKey('estimate-${location.id.v}'),
+            label: 'Run length from rack',
+            // WHOLE FEET, WHICH IS `parseLengthCell`'s GRAMMAR AND NOT A
+            // CHOICE MADE HERE. DR-144 §11.143.5 states the split between
+            // this parser and the calibration's: that field is a distance
+            // on somebody else's drawing whose magnitude is unknown, so it
+            // refuses a bare number; THIS is cable, ordered and cut in
+            // whole feet, so a bare number is what it reads.
+            helper: estimateHelperFor(location),
+            value: location.estimatedRunLengthFromRack == null
+                ? ''
+                : lengthCellText(
+                    location.estimatedRunLengthFromRack!,
+                    doc.settings.displayUnits,
+                  ),
+            onCommit: (text) {
+              switch (parseLengthCell(text, doc.settings.displayUnits)) {
+                case CellParsed<Len>(:final value):
+                  onEdit(
+                    () => actions.onSetEstimatedRunLength(location.id, value),
+                  );
+                  return true;
+                case CellRefused<Len>(:final reason):
+                  actions.onRefuse(reason);
+                  return false;
+              }
+            },
+          ),
+          const SizedBox(height: 12),
           DropdownButtonFormField<LocationKind>(
             key: ValueKey('kind-${location.id.v}'),
             initialValue: location.kind,
@@ -829,4 +878,44 @@ class _Footer extends StatelessWidget {
       ],
     ),
   );
+}
+
+/// What the run-length field says under itself.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE MARKER'S READER, AND IT IS HERE BECAUSE §11.49.3 ASKED A QUESTION
+/// ═══════════════════════════════════════════════════════════════════════
+/// DR-050 buys `estimatedRunLengthOrigin` so that *"a later reader asking
+/// 'did somebody measure this room or did the software guess it' has an
+/// answer"*. A field with no reader is the failure this project keeps
+/// meeting: `riseAllowance` was named by two rulings and a design document
+/// and written by nothing until `PLAN-C`, and `PortDef.bus.maxTapWatts`
+/// was declared on zero of 727 seeded ports. The marker ships with this.
+///
+/// **PRINTED IN ALL THREE DIRECTIONS** (G4). An absent marker is not
+/// "typed": every document written before `LEN-A/1` carries a figure with
+/// no recorded provenance, and saying a person entered it would be
+/// inventing a fact about somebody else's project.
+String estimateHelperFor(Location location) {
+  if (location.estimatedRunLengthFromRack == null) {
+    return 'AC-024\u2019s one number per room. Blank is unknown.';
+  }
+  return switch (location.estimatedRunLengthOrigin) {
+    RunLengthOrigin.computedFromPlan =>
+      'Worked out from this room\u2019s outline on the plan.',
+    RunLengthOrigin.typed => 'Entered by hand.',
+    null => 'Where this figure came from was not recorded.',
+  };
+}
+
+/// [length] as the whole-unit text `parseLengthCell` reads back.
+///
+/// ROUND-TRIPS WITH THE PARSER, which is the property that keeps the
+/// stored value equal to the value its own field displays: that function
+/// reads whole feet and this writes them.
+String lengthCellText(Len length, UnitSystem units) {
+  final divisor = units == UnitSystem.imperial
+      ? Len.nmPerInch * 12
+      : Len.nmPerMillimetre * 1000;
+  return (length.nm / divisor).round().toString();
 }
