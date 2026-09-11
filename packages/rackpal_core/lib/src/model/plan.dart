@@ -182,6 +182,101 @@ final class PlanPin {
   String toString() => 'PlanPin(${underlayId.v} @ $at)';
 }
 
+/// A room's shape, drawn on one underlay (DR-050 §11.49, `LEN-A/1`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// `RoomOutline` AND NOT `PlanOutline`, BECAUSE IT IS ABOUT THE ROOM
+/// ═══════════════════════════════════════════════════════════════════════
+/// Every other type in this file names the drawing: a `PlanScale` is the
+/// drawing's calibration and a `PlanPin` is a position in it. This one is
+/// a fact about the BUILDING that happens to have been captured on a
+/// drawing, which is why it hangs off `Location` rather than off
+/// `PlanUnderlay` and why it is named for what it describes.
+///
+/// It carries [underlayId] for [PlanPin]'s reason, spelled the same way: a
+/// document may hold several plans and a bare list of [PxPt] means nothing
+/// without the raster it indexes.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// IMPLICITLY CLOSED. THE FIRST VERTEX IS NOT REPEATED AT THE END
+/// ═══════════════════════════════════════════════════════════════════════
+/// A stored closing point is a second copy of the first one, and two
+/// copies of a number are two numbers that can disagree: a file whose
+/// last vertex drifted by one pixel would describe a polygon with a
+/// hairline gap that no reader would think to look for. The edge from the
+/// last vertex back to the first is implied, and it always exists.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// FEWER THAN THREE VERTICES IS HELD AND REPORTED, NOT REFUSED
+/// ═══════════════════════════════════════════════════════════════════════
+/// [PlanScale] settled this exact question one class up, for a calibration
+/// whose two points coincide: it is *"deliberately NOT a constructor
+/// assertion, because the decoder must be able to read whatever is on disk
+/// (CR-093, 'read never throws') and an assert that fires in a debug build
+/// and vanishes in a release one is the worst of both."* Two points are
+/// not a room, so [isUsable] says so and the derivation refuses; nothing
+/// throws and nothing is silently dropped.
+@immutable
+final class RoomOutline {
+  /// [vertices] is COPIED, and the copy is what this object holds.
+  ///
+  /// Both directions, which is one lesson from `acceptedFamilies`: a
+  /// constructor that stored the caller's list would let two locations
+  /// share one object, so editing one room's shape would edit another's,
+  /// and a getter handing back the live list would let a caller edit
+  /// through a read. `List.unmodifiable` once, here, means the field is a
+  /// stable object rather than a fresh one per call, which is the other
+  /// half of that lesson: a getter that copies breaks every alias census
+  /// written against it.
+  RoomOutline({required this.underlayId, required List<PxPt> vertices})
+    : vertices = List<PxPt>.unmodifiable(vertices);
+
+  final Uuid underlayId;
+
+  /// The corners, in the order they were drawn, in the underlay's own
+  /// pixel space. Unmodifiable.
+  final List<PxPt> vertices;
+
+  /// True when this outline describes an area at all.
+  ///
+  /// Three vertices is the floor, and it is geometry rather than policy: a
+  /// point has no extent and two points are a line. [PlanScale.isUsable]
+  /// is the same idea about the same kind of input.
+  bool get isUsable => vertices.length >= 3;
+
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A SEQUENCE, NOT A SET, AND THE COMMENT IS THE RULING
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Dart compares a `List` by IDENTITY, so the default `==` here would
+  /// report two identical outlines as different and every no-op check
+  /// reading it would fire. `acceptedFamilies` shipped that defect into
+  /// four places at once.
+  ///
+  /// **Order carries meaning here, unlike there.** `acceptedFamilies` is
+  /// read with `contains`, so re-ticking two families in the other order
+  /// is not an edit. A polygon's vertex order IS its shape: the same four
+  /// points in a different order is a bow tie rather than a rectangle. So
+  /// this compares as a sequence, and a redraw that starts from a
+  /// different corner really is a different stored value.
+  @override
+  bool operator ==(Object other) {
+    if (other is! RoomOutline) return false;
+    if (other.underlayId != underlayId) return false;
+    if (other.vertices.length != vertices.length) return false;
+    for (var i = 0; i < vertices.length; i++) {
+      if (other.vertices[i] != vertices[i]) return false;
+    }
+    return true;
+  }
+
+  @override
+  int get hashCode => Object.hash(underlayId, Object.hashAll(vertices));
+
+  @override
+  String toString() =>
+      'RoomOutline(${underlayId.v}, ${vertices.length} vertices)';
+}
+
 /// The PDF page a RENDERED underlay came from (DR-153 §11.152.6).
 ///
 /// ═══════════════════════════════════════════════════════════════════════
