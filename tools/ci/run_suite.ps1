@@ -696,7 +696,19 @@ $SuiteFloors = @{
     # renamed by typing in a text field, so a name that reached the
     # fingerprint would have rule 42 collecting the acknowledgement on the
     # next load and reporting it as stale.
-    'rackpal_core'   = 4528
+    # 4547 at LEN-A/1: +19 from persistence/room_outline_test.dart.
+    # `RoomOutline` is the FIRST list-bearing value type in model/, and
+    # seven of the nineteen are about that alone: Dart compares a List by
+    # identity, and the last time a collection entered machinery built for
+    # scalars it broke four sites at once and every one failed silently.
+    # Equality, aliasing in both directions and the getter's object
+    # identity are asserted before anything is built on them.
+    # THE OTHER LOAD-BEARING ONE IS THE STAMP. A document carrying an
+    # outline and no underlay is reachable only by hand-editing (CR-093),
+    # and without its own check in `documentMinReaderVersion` an older
+    # build would open that file read-write and delete the drawing on
+    # save, which is DR-019 11.18.1's hazard exactly.
+    'rackpal_core'   = 4547
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

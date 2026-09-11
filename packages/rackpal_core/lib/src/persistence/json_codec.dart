@@ -135,9 +135,9 @@ final class JsonDocumentCodec extends DocumentCodec {
 /// The `minReaderVersion` [doc] must be stamped with.
 ///
 /// [kMinReaderVersion] for an ordinary document, and
-/// [kPlanMinReaderVersion] for one carrying PLAN DATA: any underlay, or
-/// any pin on a `Rack`, an `Outlet` or an `OffRackPlacement`
-/// (DR-136 §11.135.2).
+/// [kPlanMinReaderVersion] for one carrying PLAN DATA: any underlay, any
+/// room outline, or any pin on a `Rack`, an `Outlet` or an
+/// `OffRackPlacement` (DR-136 §11.135.2, DR-050).
 ///
 /// ═══════════════════════════════════════════════════════════════════════
 /// WHY THE STAMP AND NOT THE PASSTHROUGH
@@ -164,6 +164,24 @@ final class JsonDocumentCodec extends DocumentCodec {
 /// of what `kMinReaderVersion` exists for.
 int documentMinReaderVersion(RackDocument doc) {
   if (doc.underlays.isNotEmpty) return kPlanMinReaderVersion;
+  // A ROOM OUTLINE COUNTS, AND THE ARGUMENT IS THIS PREDICATE'S OWN
+  // (DR-050, `LEN-A/1`). `riseAllowance` is excluded below because *"a
+  // number somebody can retype is not a drawing somebody spent an
+  // afternoon making"*. An outline is the drawing.
+  //
+  // **IT IS NOT COVERED BY THE UNDERLAY CHECK ABOVE, THOUGH IT VERY NEARLY
+  // IS.** An outline names an underlay, so while one is present that line
+  // already returns 5. `RemovePlanUnderlayCommand` clears the pins it
+  // orphans and `LEN-A/2` gives outlines the same treatment, so through
+  // the command path an outline cannot outlive its underlay. That is an
+  // invariant of the COMMANDS, not of the format, and CR-093 lets a
+  // hand-edited file carry an outline with no underlay beside it. Relying
+  // on the line above would make this predicate correct by coincidence and
+  // silently wrong the first time the coincidence broke, which is exactly
+  // why the four checks below exist rather than one.
+  for (final loc in doc.locations.values) {
+    if (loc.planOutline != null) return kPlanMinReaderVersion;
+  }
   for (final rack in doc.racks.values) {
     if (rack.planPin != null) return kPlanMinReaderVersion;
   }
@@ -914,6 +932,18 @@ JsonMap _encodeLocation(Location loc) {
   // wire name says its unit and a reader cannot mistake nanometres for
   // millimetres (docs/02 §6.1).
   putIfNotNull(json, 'riseAllowanceNm', loc.riseAllowance?.nm);
+  putIfNotNull(
+    json,
+    'estimatedRunLengthOrigin',
+    loc.estimatedRunLengthOrigin == null
+        ? null
+        : encodeEnumName(loc.estimatedRunLengthOrigin!),
+  );
+  putIfNotNull(
+    json,
+    'planOutline',
+    loc.planOutline == null ? null : _encodeRoomOutline(loc.planOutline!),
+  );
   return json;
 }
 
@@ -938,6 +968,20 @@ Location _decodeLocation(Uuid id, JsonMap json) => Location(
   riseAllowance: _decodeLenOrNull(
     json['riseAllowanceNm'],
     'Location.riseAllowanceNm',
+  ),
+  estimatedRunLengthOrigin: json['estimatedRunLengthOrigin'] == null
+      ? null
+      : decodeEnumStrict(
+          RunLengthOrigin.values,
+          asStr(
+            json['estimatedRunLengthOrigin'],
+            'Location.estimatedRunLengthOrigin',
+          ),
+          'Location.estimatedRunLengthOrigin',
+        ),
+  planOutline: _decodeRoomOutlineOrNull(
+    json['planOutline'],
+    'Location.planOutline',
   ),
 );
 
@@ -993,6 +1037,40 @@ PlanPin _decodePlanPin(Object? raw, String context) {
 
 PlanPin? _decodePlanPinOrNull(Object? raw, String context) =>
     raw == null ? null : _decodePlanPin(raw, context);
+
+/// A room's shape (DR-050 §11.49, `LEN-A/1`).
+///
+/// AN ARRAY HERE, WHERE `_encodePxPt` REFUSED ONE, and the two are not in
+/// tension. That function takes named keys because *"an array is one
+/// transposition away from silently swapping the axes"*, which is about
+/// the two numbers INSIDE a point. The vertices are an ordered sequence of
+/// whole points, and a JSON array is what an ordered sequence is: the
+/// order is the polygon's shape, so it is the one thing the format must
+/// preserve exactly, and each element still carries its own named keys.
+JsonMap _encodeRoomOutline(RoomOutline outline) => {
+  'underlayId': outline.underlayId.v,
+  'vertices': [for (final v in outline.vertices) _encodePxPt(v)],
+};
+
+/// **NOTHING IS REFUSED HERE, INCLUDING A TWO-POINT OUTLINE** (CR-093,
+/// `read never throws`). `RoomOutline.isUsable` reports it and the
+/// derivation declines to measure it, which is `PlanScale`'s answer to the
+/// same question about a calibration whose two points coincide. Dropping
+/// it on load would be a silent edit to somebody's file.
+RoomOutline _decodeRoomOutline(Object? raw, String context) {
+  final json = asJsonMap(raw, context);
+  final vertices = asJsonList(json['vertices'], '$context.vertices');
+  return RoomOutline(
+    underlayId: _decodeUuid(json['underlayId'], '$context.underlayId'),
+    vertices: [
+      for (var i = 0; i < vertices.length; i++)
+        _decodePxPt(vertices[i], '$context.vertices[$i]'),
+    ],
+  );
+}
+
+RoomOutline? _decodeRoomOutlineOrNull(Object? raw, String context) =>
+    raw == null ? null : _decodeRoomOutline(raw, context);
 
 JsonMap _encodePlanUnderlay(PlanUnderlay u) {
   final json = <String, Object?>{

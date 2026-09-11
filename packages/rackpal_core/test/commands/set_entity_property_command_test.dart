@@ -990,19 +990,39 @@ void main() {
       });
     });
 
-    test('every @internal Location setter has a table row, except the one '
-        'DR-021 keeps out', () {
+    test('every @internal Location setter has a table row, except the '
+        'three that are kept out', () {
       // `parentId` IS an `@internal` setter and is deliberately NOT a
       // table row: DR-021 §11.20.5 makes a reparent refuse a cycle, and a
       // row's `set` writes and returns with no way to refuse.
       // `ReparentLocationCommand` owns it, behind `buildReparentLocation`.
       //
+      // `planOutline` IS OUT ON `planPin`'s EXEMPTION ABOVE, WORD FOR
+      // WORD (DR-050, `LEN-A/1`). A `RoomOutline` names an underlay by id,
+      // so a row would let a caller give a room a shape on an underlay
+      // this document does not hold, and a dangling reference in a drawing
+      // is what DR-021's cascade spends a ruling avoiding.
+      // `SetRoomOutlineCommand` owns it (`LEN-A/2`) and can refuse.
+      //
+      // `estimatedRunLengthOrigin` IS OUT FOR A THIRD REASON, AND IT IS
+      // THE RULING'S OWN. It is a marker on `estimatedRunLengthFromRack`
+      // and the two must move together: as separate rows, setting the
+      // figure would leave a stale `computedFromPlan` standing over a
+      // hand-typed number, which is exactly the *"schedule that fills the
+      // second column can no longer tell a stated value from an assumed
+      // one"* failure DR-050 §11.49.3 buys the marker to prevent. A field
+      // whose whole job is to keep two things distinguishable must not be
+      // writable apart from the thing it distinguishes. `LEN-A/5` owns the
+      // pair.
+      //
       // Named literally here rather than filtered out by a predicate, so
-      // that a SECOND field escaping the table fails this case instead of
-      // slipping through a rule that was written for one.
+      // that a FOURTH field escaping the table fails this case instead of
+      // slipping through a rule that was written for three.
       expect(_internalSetters('location.dart'), {
         for (final f in LocationField.all) f.key,
         'parentId',
+        'planOutline',
+        'estimatedRunLengthOrigin',
       });
     });
 
