@@ -39,6 +39,7 @@
 // what it does in the tools this is imitating.
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
 
 /// The room-outline draw: which room, and the corners so far.
 ///
@@ -226,4 +227,186 @@ final class PlanOutlineChip extends StatelessWidget {
       ),
     );
   }
+}
+
+/// How near the first corner a click has to land to CLOSE the shape.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// SCREEN POINTS, NOT PIXELS OF THE RASTER, AND THAT IS THE WHOLE POINT
+/// ═══════════════════════════════════════════════════════════════════════
+/// A person aims with a mouse at what they can see. Ten raster pixels is
+/// an easy target on a plan zoomed to 400% and an impossible one on the
+/// same plan fitted to the window, so a radius in the underlay's own
+/// space would make closing a shape harder the further out you were
+/// looking. Measured against the viewport, it is the same ten points of
+/// travel at every zoom.
+///
+/// TEN, which is the ordinary desktop hit slop and is larger than the
+/// four-point marker `plan_scene.dart` draws: the target a person aims at
+/// is the corner, and the dot is only how it is advertised.
+const double kOutlineCloseRadiusPt = 10;
+
+/// The room outlines on this plan, and the one being drawn.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// CHROME, NOT SCENE, AND FOR BOTH HALVES (CR-086)
+/// ═══════════════════════════════════════════════════════════════════════
+/// The in-progress shape is chrome for the reason every transient mode on
+/// this canvas is: `buildPlanScene` feeds `T1.01` as well as the display,
+/// so an op added for a live gesture would print on somebody's sheet.
+///
+/// **THE FINISHED OUTLINE IS CHROME TOO, AND THAT IS A RULING RATHER THAN
+/// AN OVERSIGHT.** An outline is an estimating aid, and `T1.01`'s exit
+/// criterion is that a stranger locates every drop from the printed
+/// sheet; a room boundary does not serve that and a wrong-weight line
+/// over a screened underlay works against AC-054's legibility standard.
+/// Ruled by the user on 2026-09-11: screen now, and printing it is its
+/// own chapter (`#864`). Keeping it out of the scene is also what leaves
+/// the four byte-verified starter goldens alone.
+final class PlanOutlineLayer extends StatelessWidget {
+  const PlanOutlineLayer({
+    required this.finished,
+    required this.drawing,
+    required this.hover,
+    required this.viewport,
+    required this.canClose,
+    super.key,
+  });
+
+  /// Every outline already stored on this underlay.
+  final List<RoomOutline> finished;
+
+  /// The corners of the draw in progress, oldest first. Empty when no
+  /// draw is running.
+  final List<PxPt> drawing;
+
+  /// Where the pointer is, for the rubber segment from the last corner.
+  final PxPt? hover;
+
+  final ViewportController viewport;
+
+  /// Whether a click on the first corner would close the shape, which is
+  /// what the first corner's ring advertises.
+  final bool canClose;
+
+  /// A stable handle for tests.
+  static const Key layerKey = ValueKey('plan-outline-layer');
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return IgnorePointer(
+      child: AnimatedBuilder(
+        animation: viewport,
+        builder: (context, _) => CustomPaint(
+          key: layerKey,
+          painter: _OutlinePainter(
+            finished: finished,
+            drawing: drawing,
+            hover: hover,
+            viewport: viewport,
+            canClose: canClose,
+            settled: scheme.tertiary,
+            live: scheme.primary,
+          ),
+          size: Size.infinite,
+        ),
+      ),
+    );
+  }
+}
+
+class _OutlinePainter extends CustomPainter {
+  const _OutlinePainter({
+    required this.finished,
+    required this.drawing,
+    required this.hover,
+    required this.viewport,
+    required this.canClose,
+    required this.settled,
+    required this.live,
+  });
+
+  final List<RoomOutline> finished;
+  final List<PxPt> drawing;
+  final PxPt? hover;
+  final ViewportController viewport;
+  final bool canClose;
+  final Color settled;
+  final Color live;
+
+  Offset _at(PxPt p) {
+    // MAPPED AT PAINT TIME from pixel space, so a pan or a zoom mid-draw
+    // leaves each corner on the same wall rather than the same part of
+    // the screen. `PlanCalibrateLine` does the same and for the same
+    // reason.
+    final s = viewport.sceneToScreen(DPt(p.px.toDouble(), p.py.toDouble()));
+    return Offset(s.x, s.y);
+  }
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    for (final outline in finished) {
+      if (!outline.isUsable) continue;
+      canvas.drawPath(
+        _closedPath(outline.vertices),
+        Paint()
+          ..color = settled
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2,
+      );
+    }
+    if (drawing.isEmpty) return;
+
+    final pen = Paint()
+      ..color = live
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2;
+    for (var i = 1; i < drawing.length; i++) {
+      canvas.drawLine(_at(drawing[i - 1]), _at(drawing[i]), pen);
+    }
+    // THE RUBBER SEGMENT, from the last corner to the pointer. Null when
+    // the pointer is off the canvas, which is not a state worth drawing a
+    // line into.
+    final to = hover;
+    if (to != null) canvas.drawLine(_at(drawing.last), _at(to), pen);
+
+    for (final v in drawing) {
+      canvas.drawCircle(_at(v), 3, pen);
+    }
+    // THE FIRST CORNER WEARS A RING ONCE CLOSING IS LEGAL, which is the
+    // affordance the copy describes: the target is advertised where the
+    // person is about to aim rather than only in the chip.
+    if (canClose) {
+      canvas.drawCircle(
+        _at(drawing.first),
+        kOutlineCloseRadiusPt,
+        Paint()
+          ..color = live
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5,
+      );
+    }
+  }
+
+  Path _closedPath(List<PxPt> vertices) {
+    final path = Path()..moveTo(_at(vertices.first).dx, _at(vertices.first).dy);
+    for (var i = 1; i < vertices.length; i++) {
+      path.lineTo(_at(vertices[i]).dx, _at(vertices[i]).dy);
+    }
+    // `close()` IS THE MODEL'S IMPLICIT EDGE MADE VISIBLE. `RoomOutline`
+    // stores no closing vertex, so the segment from the last corner back
+    // to the first exists in exactly one place: here, and in whatever
+    // else ever draws one.
+    return path..close();
+  }
+
+  @override
+  bool shouldRepaint(_OutlinePainter old) =>
+      old.hover != hover ||
+      old.canClose != canClose ||
+      old.drawing.length != drawing.length ||
+      !identical(old.finished, finished) ||
+      old.settled != settled ||
+      old.live != live;
 }

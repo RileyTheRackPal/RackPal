@@ -996,7 +996,14 @@ $SuiteFloors = @{
     # close label overflowed its Row by 70 points at an 800-point canvas,
     # which a widget test reports as a failure and a shipped build reports
     # as a barber pole nobody files.
-    'rackpal_ui'     = 1695
+    # 1712 at LEN-A/4 part two: +17. The canvas wiring (10) and the room
+    # list in the left rail (7). THE LOAD-BEARING ONE PRESSES THE REAL
+    # BUTTON AND THEN CLICKS THE REAL CANVAS, because everything else in
+    # this chapter passes against a mode nobody can start: PLAN-E/5 found
+    # six functions and a dialog with no caller, and PLAN-E/6 shipped a
+    # gesture that was dead until PLAN-F/0 because the canvas tests
+    # predated the band and passed null.
+    'rackpal_ui'     = 1712
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

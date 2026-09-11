@@ -39,6 +39,11 @@ void main() {
         ..begin(_room)
         ..addVertex(const PxPt(1, 1))
         ..addVertex(const PxPt(2, 2));
+      expect(
+        c.vertices,
+        hasLength(2),
+        reason: 'two corners before the restart',
+      );
 
       c.begin(_room);
       expect(c.vertices, isEmpty);
@@ -54,9 +59,8 @@ void main() {
 
     test('it notifies on every act a surface has to redraw for', () {
       var notifications = 0;
-      final c = PlanOutlineController()..addListener(() => notifications++);
-
-      c
+      PlanOutlineController()
+        ..addListener(() => notifications++)
         ..begin(_room)
         ..addVertex(const PxPt(1, 1))
         ..removeLastVertex()
@@ -130,8 +134,8 @@ void main() {
       // A person who clicked the first corner again with two down meant to
       // close, and the answer is that they cannot yet, not that they have
       // to start over.
-      final c = PlanOutlineController()..begin(_room);
-      c
+      final c = PlanOutlineController()
+        ..begin(_room)
         ..addVertex(const PxPt(0, 0))
         ..addVertex(const PxPt(10, 0));
 
@@ -147,8 +151,8 @@ void main() {
 
   group('right-click takes one back; Esc leaves', () {
     test('the last corner goes and the mode STAYS ON', () {
-      final c = PlanOutlineController()..begin(_room);
-      c
+      final c = PlanOutlineController()
+        ..begin(_room)
         ..addVertex(const PxPt(0, 0))
         ..addVertex(const PxPt(10, 0))
         ..removeLastVertex();
@@ -159,8 +163,8 @@ void main() {
 
     test('STEPPING BACK TO ZERO IS STILL IN THE DRAW, which is the whole '
         'difference from Esc', () {
-      final c = PlanOutlineController()..begin(_room);
-      c
+      final c = PlanOutlineController()
+        ..begin(_room)
         ..addVertex(const PxPt(0, 0))
         ..removeLastVertex()
         ..removeLastVertex();
@@ -171,8 +175,8 @@ void main() {
     });
 
     test('Esc ends it and forgets the room', () {
-      final c = PlanOutlineController()..begin(_room);
-      c
+      final c = PlanOutlineController()
+        ..begin(_room)
         ..addVertex(const PxPt(0, 0))
         ..cancel();
 
@@ -186,8 +190,9 @@ void main() {
     test('a caller cannot edit the draw through a read', () {
       // `acceptedFamilies`' lesson one layer up: a getter handing back the
       // live list lets a caller edit through a read.
-      final c = PlanOutlineController()..begin(_room);
-      c.addVertex(const PxPt(0, 0));
+      final c = PlanOutlineController()
+        ..begin(_room)
+        ..addVertex(const PxPt(0, 0));
 
       expect(
         () => c.vertices.add(const PxPt(9, 9)),
