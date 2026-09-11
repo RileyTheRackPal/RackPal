@@ -935,27 +935,21 @@ abstract final class LocationField {
   /// AC-024's ONE number per room, which seeds every home run in that room
   /// (`ScheduleLengthSource.roomEstimate`).
   ///
-  /// `structure | wires` for [OutletField.nominalRunLength]'s reason: it is
-  /// a CABLE length the schedule prints, and a consumer watching cable data
-  /// subscribes to `wires`. Null stays UNKNOWN and the rollup counts it
-  /// (G4, CR-114); it is never a measured zero.
-  static final estimatedRunLengthFromRack = EntityField<Location, Len?>(
-    access: EntityAccess.location,
-    key: 'estimatedRunLengthFromRack',
-    get: (l) => l.estimatedRunLengthFromRack,
-    set: (l, v) => l.estimatedRunLengthFromRack = v,
-    touches: EpochMask.structure | EpochMask.wires,
-  );
 
   /// The vertical drop a plan cannot see, added to a plan-derived
   /// straight line so the result stays a LOWER BOUND (DR-020 §11.19.2(1),
   /// DR-037 §11.36.5, PLAN-C).
   ///
-  /// SAME MASK AS [estimatedRunLengthFromRack] and for the identical
-  /// reason: it is an input to a CABLE length the schedule prints, so a
-  /// consumer watching cable data subscribes to `wires`. Null stays
-  /// UNKNOWN and `0` is a measured zero, which are different statements
-  /// about a room (G4, CR-114).
+  /// `structure | wires`, because it is an input to a CABLE length the
+  /// schedule prints and a consumer watching cable data subscribes to
+  /// `wires`. Null stays UNKNOWN and `0` is a measured zero, which are
+  /// different statements about a room (G4, CR-114).
+  ///
+  /// IT STAYS A ROW WHERE `estimatedRunLengthFromRack` LEFT, and the
+  /// difference is that this field marks nothing. A rise is a number a
+  /// person supplies and nothing else has to agree with it; the estimate
+  /// carries an origin marker that must move with it, so `LEN-A/5` gave
+  /// that pair a command of its own (DR-050 §11.49.3).
   static final riseAllowance = EntityField<Location, Len?>(
     access: EntityAccess.location,
     key: 'riseAllowance',
@@ -971,7 +965,6 @@ abstract final class LocationField {
     kind,
     floorNumber,
     spaceCode,
-    estimatedRunLengthFromRack,
     riseAllowance,
   ];
 }

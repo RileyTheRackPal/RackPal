@@ -729,7 +729,16 @@ $SuiteFloors = @{
     # ONE ASSERTS AN ABSENCE AND NAMES `#861` AS WHAT RETIRES IT: the
     # derivation has no production caller yet, which is the state
     # PdfImageResolver sat in from PLAN-A to PLAN-H.
-    'rackpal_core'   = 4583
+    # 4591 at LEN-A/5 part one: +8 from SetRoomEstimateCommand's cases.
+    # `estimatedRunLengthFromRack` LEFT `LocationField`, the first field to
+    # leave that table rather than never to have joined: a row writes ONE
+    # field, so it could set the figure and leave a stale
+    # `computedFromPlan` over a hand-typed number, which is the drift
+    # DR-050 11.49.3 buys the marker to make impossible. The load-bearing
+    # case is that UNDO restores both fields, since an undo that put the
+    # figure back and left the marker would be that drift arriving through
+    # the door marked undo.
+    'rackpal_core'   = 4591
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

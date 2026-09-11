@@ -820,13 +820,13 @@ void main() {
       final doc = _freshDoc();
       final id = _seedLocation(doc, 'Living Room', 'LR');
 
-      final set = SetEntityPropertyCommand<Location, Len?>(
-        id: id,
-        field: LocationField.estimatedRunLengthFromRack,
-        from: null,
-        to: Len.fromMillimetres(21000),
-        now: DateTime.utc(2026, 1, 2),
-        actor: 'tester',
+      // THROUGH `SetRoomEstimateCommand` SINCE `LEN-A/5`, which is the
+      // one writer of the figure and its origin marker (DR-050
+      // §11.49.3). The claim is unchanged: the mask has to cover every
+      // top-level key the write actually moves.
+      final set = SetRoomEstimateCommand.typed(
+        locationId: id,
+        length: Len.fromMillimetres(21000),
       );
       _expectTouchesCoversChanges(
         set,
@@ -834,14 +834,7 @@ void main() {
         expectAtLeast: {'locations'},
       );
 
-      final clear = SetEntityPropertyCommand<Location, Len?>(
-        id: id,
-        field: LocationField.estimatedRunLengthFromRack,
-        from: Len.fromMillimetres(21000),
-        to: null,
-        now: DateTime.utc(2026, 1, 3),
-        actor: 'tester',
-      );
+      final clear = SetRoomEstimateCommand.cleared(locationId: id);
       _expectTouchesCoversChanges(
         clear,
         _changedTopLevelKeys(doc, () => clear.apply(doc)),

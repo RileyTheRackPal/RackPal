@@ -611,4 +611,17 @@ enum LabelKey {
   drawRoomOutline,
   reshapeRoomOutline,
   clearRoomOutline,
+
+  // THE ROOM ESTIMATE'S PAIR (commands/location_commands.dart), `LEN-A/5`,
+  // DR-050 §11.49.3. Two values on `clearPlanPin`'s precedent: "Undo Set
+  // Room Estimate" in front of somebody who has just emptied the field
+  // names the opposite act.
+  //
+  // A COMPUTED FILL CARRIES `setRoomEstimate` TOO, and does not get a
+  // third value. It happens inside the outline's own transaction, so what
+  // the Edit menu offers to take back is `drawRoomOutline`: the person
+  // drew a room and a figure followed, which is one act to them and is one
+  // undo entry. The label here is for the field edited on its own.
+  setRoomEstimate,
+  clearRoomEstimate,
 }

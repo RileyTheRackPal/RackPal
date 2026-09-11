@@ -991,7 +991,7 @@ void main() {
     });
 
     test('every @internal Location setter has a table row, except the '
-        'three that are kept out', () {
+        'four that are kept out', () {
       // `parentId` IS an `@internal` setter and is deliberately NOT a
       // table row: DR-021 §11.20.5 makes a reparent refuse a cycle, and a
       // row's `set` writes and returns with no way to refuse.
@@ -1015,14 +1015,22 @@ void main() {
       // writable apart from the thing it distinguishes. `LEN-A/5` owns the
       // pair.
       //
+      // `estimatedRunLengthFromRack` LEFT THE TABLE AT `LEN-A/5`, and it
+      // is the first field to do so rather than never to have joined. A
+      // row writes ONE field, so it could set the figure and leave a
+      // stale `computedFromPlan` standing over a hand-typed number, which
+      // is the drift the marker exists to make impossible.
+      // `SetRoomEstimateCommand` writes the pair.
+      //
       // Named literally here rather than filtered out by a predicate, so
-      // that a FOURTH field escaping the table fails this case instead of
-      // slipping through a rule that was written for three.
+      // that a FIFTH field escaping the table fails this case instead of
+      // slipping through a rule that was written for four.
       expect(_internalSetters('location.dart'), {
         for (final f in LocationField.all) f.key,
         'parentId',
         'planOutline',
         'estimatedRunLengthOrigin',
+        'estimatedRunLengthFromRack',
       });
     });
 
