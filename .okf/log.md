@@ -1,5 +1,47 @@
 # Update Log
 
+## 2026-09-11 (twenty-first entry)
+
+* **Ruled**: [DR-050](/decisions/dr-050-plan-geometry-fills-the-room-estimate.md)
+  is BUILT. Plan geometry fills the room estimate that already exists: a room's
+  shape drawn as a closed polygon, the farthest corner from the datum rack's
+  pin plus the rise, into a field that already ranks below `outletNominal` and
+  already sums. No new tier.
+* **Closed**: `LEN-A` (`#687`) with `#857` to `#862`, at `v0.6.54`.
+* **Note**: **THE RULING PRICED A TREE THAT WAS NOT THERE.** §11.49.5 says the
+  work lands with the Plan view *"which is where the vertices and the
+  calibration live"*. The calibration lived there; a census found no polygon,
+  no outline and no room geometry of any kind. Six items rather than two, and
+  the one nobody had noticed is not geometry at all: the field it fills had
+  **no editor anywhere** since M3-D, so AC-024's one number per room was the
+  only one of its three a person could not type.
+* **Note**: **AN OBJECTION OF MINE WAS REFUTED BY THE CODE.** I recommended
+  refusing unless exactly one rack was pinned, arguing that deriving the datum
+  from a room's runs fails because quoting happens before the runs are drawn.
+  `estimatedRunLengthFromRack` is read PER RUN in the schedule's length ladder,
+  so nothing consumes the estimate until a run exists and a schedule row IS a
+  run. The user's answer was right and the refutation was sitting in the file
+  the whole time.
+* **Note**: **A REFUSAL WOULD HAVE BOUGHT ZERO WIRE.** The two-rack case was
+  drafted as a refusal and reversed after measuring one: the ladder falls
+  through to `none` and `_isQuantity` is false for it, so a refused estimate
+  means every run in that room contributes nothing to the takeoff. Against a
+  trade that quotes several hundred feet over actual, a silent zero is the
+  worst available direction of error.
+* **Note**: **TWO DEFECTS IN COMMAND MACHINERY, BOTH FILED RATHER THAN FIXED.**
+  A refused command still lands on the undo stack and undoing it throws
+  (`#863`), and every second-act undo label is unreachable because the
+  transaction reads the label before `apply` (`#866`), so `movePlanPin`,
+  `recalibratePlan` and `reshapeRoomOutline` never reach the Edit menu. Each
+  repair changes the `Command` protocol every command implements.
+* **Note**: **AND A GATE OF THIS EPIC'S OWN FAILED TO FAIL.** `LEN-A/3` left a
+  case asserting the derivation had no production caller and named `LEN-A/5` as
+  what would break it. `LEN-A/5` wired it up and the case stayed green, because
+  the scan walked one package and the caller landed in another. Recorded as the
+  eighth instance in
+  [a gate's scope is part of its claim](/practices/a-gates-scope-is-part-of-its-claim.md),
+  and the first where the author and the victim are the same chapter.
+
 ## 2026-09-10 (twentieth entry)
 
 * **Ruled**: [DR-154](/decisions/dr-154-the-plan-advisories.md). The plan

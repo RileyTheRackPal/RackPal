@@ -9049,6 +9049,124 @@ landing one fails the test and whoever lands it writes the real assertion.
 
 ---
 
+#### 5.9.25 LEN-A: plan geometry fills the room estimate, and the ruling had priced a tree that was not there · `DR-050` · `v0.6.54`
+
+`#857` to `#862`, 2026-09-10 to 2026-09-11.
+
+DR-050 was settled on 2026-08-12 from the request that *"room dimensions can be derived from the user
+placing vertices on the plan view"*, and §11.49.5 priced **two items**: the derivation and the
+computed-versus-typed marker. Both were real. The tree they were to land in was not.
+
+##### 5.9.25.1 The census, which corrected the scope before it wrote a line
+
+§11.49.5 says the work lands with the Plan view *"which is where the vertices and the calibration
+live"*. The calibration lived there. **There was no polygon, no outline and no room geometry of any
+kind** in `rackpal_core` or `rackpal_ui`: the Plan view shipped underlays, calibration, pins and the
+unpinned strip, and nothing ever drew a room.
+
+Six items rather than two, and **the one nobody had noticed is not geometry at all**:
+`estimatedRunLengthFromRack` had no editor anywhere. `locations_panel.dart` recorded it in its own
+comment as *"a table row with no editor here"* and had done since M3-D, so AC-024's one number per
+room was the only one of its three a person could not type. `LEN-A/3` met the same gap from the
+other side: a derivation proposing a figure had nowhere to propose it and no control to be compared
+against.
+
+Two things the ruling left open were already answered. The *"ceiling height if the derivation needs
+one"* is `riseAllowance`, shipped at `PLAN-C`. And `parseLengthCell` already existed, with DR-144
+§11.143.5 already stating why it and the calibration's parser differ, so the field's grammar was a
+citation rather than a decision.
+
+##### 5.9.25.2 The first list this model has had to compare
+
+`RoomOutline` is the first list-bearing value type in `model/`, which is seven of `#857`'s nineteen
+cases. Dart compares a `List` by IDENTITY, and the last time a collection entered machinery built for
+scalars it broke four sites at once and every one failed silently.
+
+**Order is the shape here, which is where it diverges from `acceptedFamilies`.** That field is read
+with `contains`, so re-ticking two families in the other order is not an edit; the same four points
+in a different order is a bow tie rather than a rectangle.
+
+##### 5.9.25.3 A brief of mine was wrong about the stamp, and the test says so
+
+`#857`'s own brief said `documentMinReaderVersion` needed no new check, because an outline names an
+underlay and `underlays.isNotEmpty` already returns 5. **That holds only while
+`RemovePlanUnderlayCommand` clears what it orphans**, which is an invariant of the COMMANDS and not
+of the format: CR-093 lets a hand-edited file carry an outline with no underlay, and on that file an
+older build opens read-write and deletes the drawing on save. DR-019 §11.18.1's hazard exactly, and
+the reason the four existing checks are per-pin rather than one.
+
+##### 5.9.25.4 The datum, and an objection the code refuted
+
+DR-147 §11.146.2 ruled the BOUND measures from *"the rack this link lands in"* and refused both *the
+nearest pinned rack* and *the first in document order*. A room estimate has no single run.
+
+The chapter recommended refusing unless exactly one rack was pinned, and **objected to deriving from
+the room's runs on the ground that quoting happens before the runs are drawn. That objection was
+wrong.** `estimatedRunLengthFromRack` is read PER RUN at `schedule.dart`'s length ladder, so nothing
+consumes the estimate until a run exists, and a schedule row IS a run. The user ruled the runs, and
+it buys a consistency neither side had named: the estimate and the bound now measure from one rack by
+one rule and cannot disagree about a room's head end.
+
+##### 5.9.25.5 A refusal that would have bought zero wire
+
+The two-rack case was drafted as a refusal on DR-147's reasoning and reversed after measuring what
+one costs. `_lengthOf` falls through `roomEstimate` to `planLowerBound` to `none`, and
+`cable_footage.dart`'s `_isQuantity` is FALSE for both: **a refused estimate means every run in that
+room buys zero wire in the takeoff.**
+
+The user's trade ground is that quotes are built conservatively, commonly several hundred feet over
+the actual totals, and that trunk lines move without moving the quote much unless a run has to get
+around an LVL or structural steel. Against that, a silent zero is the worst available direction of
+error, and the larger of two measured figures is conservative the way the quote already leans.
+
+**No margin is folded in.** That conservatism is the estimator's and stays theirs (§11.49.4).
+
+##### 5.9.25.6 Two defects found in machinery this epic does not own
+
+**`#863`: a refused command still lands on the undo stack, and undoing it throws.** Measured on the
+shipped `SetPlanPinCommand`, so it has been true since `PLAN-C`: `canUndo` is true after a refusal
+and the next undo throws `StateError`. Twenty-nine commands carry an `_applied` bit.
+
+**`#866`: every second-act undo label is unreachable.** `run(c) => transact(c.label, …)` reads the
+label BEFORE `apply`, so `movePlanPin`, `recalibratePlan` and `reshapeRoomOutline` never reach the
+Edit menu. Nothing caught it because the existing test asserts the COMMAND's getter and the artifact
+is what the menu shows, which is house style's own rule read from the wrong side.
+
+Both were filed rather than fixed in flight: each repair changes the `Command` protocol every command
+in the product implements, which wants a ruling ID rather than a commit.
+
+##### 5.9.25.7 And a gate of this epic's own failed to fail
+
+`LEN-A/3` left a case asserting `roomEstimateFor` had no production caller, naming `LEN-A/5` as what
+would break it. `LEN-A/5` wired the derivation up and **the case stayed green**, because its scan
+walked `rackpal_core/lib` while the caller landed in `rackpal_ui`.
+
+A gate whose scope was narrower than its subject, written to guard against exactly that. It is the
+eighth instance this corpus has recorded and the first where the author and the victim are the same
+chapter.
+
+##### 5.9.25.8 Evidence
+
+Floors: `rackpal_core` 4528 to 4599, `rackpal_ui` 1677 to 1723, `rackpal_export` unchanged.
+Gates: 17.
+
+**Commits** (§8.8). `#857` `265ee42`, `67b3bbf`. `#858` `9a4b4e4`, `e371269`. `#859` `d7c8d94`,
+`159fbf1`, `e442ce9`. `#860` `610a62b`, `7413225`, `dce5e45`. `#861` `73c1889`, `0eb1806`,
+`38047bd`, `c43cf2d`.
+
+**THE LOAD-BEARING TEST IN THE TOOL PRESSES THE REAL BUTTON AND THEN CLICKS THE REAL CANVAS.**
+Everything else in `#860` passes against a mode nobody can start, and this epic has shipped that
+twice: `PLAN-E/5` found six functions and a dialog with no caller, and `PLAN-E/6` shipped a gesture
+dead until `PLAN-F/0` because the canvas tests predated the band and passed null.
+
+**AND THE VERSION DERIVATION WAS RE-RUNNABLE TO THE WRONG ANSWER FOR THREE COMMITS.** `v0.6.49`
+through `v0.6.51` each wrote their first derivation as *"Done Chapters whose title carries `PLAN-`"*,
+which returns 48: LEN-A's chapters are titled `LEN-A/n` and were never in it. The numbers were right
+because the second derivation carried them, which is what a second derivation is for. Corrected at
+`dce5e45`, naming both title families and confirmed against the epic's story list.
+
+---
+
 ## 6. The dependency graph, as it actually stands
 
 ### 6.1 What can be worked on now
