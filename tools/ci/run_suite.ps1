@@ -708,7 +708,17 @@ $SuiteFloors = @{
     # and without its own check in `documentMinReaderVersion` an older
     # build would open that file read-write and delete the drawing on
     # save, which is DR-019 11.18.1's hazard exactly.
-    'rackpal_core'   = 4547
+    # 4563 at LEN-A/2: +16 in commands/plan_commands_test.dart. Draw,
+    # reshape and clear a room outline; three refusals; the underlay
+    # removal that now takes outlines with it; DR-021's cascade asserted
+    # rather than assumed; and the epoch masks against a listener.
+    # ONE OF THE SIXTEEN ASSERTS A DEFECT RATHER THAN A CONTRACT (`#863`).
+    # It set out to prove a refused command wakes nothing and found it
+    # wakes everything AND lands on the undo stack, where the next undo
+    # throws. Probed on the shipped SetPlanPinCommand, so it has been true
+    # since PLAN-C and is command machinery rather than a plan bug. The
+    # case records what happens and names the item that inverts it.
+    'rackpal_core'   = 4563
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

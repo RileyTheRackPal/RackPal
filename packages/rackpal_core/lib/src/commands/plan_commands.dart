@@ -1,9 +1,17 @@
 // rackpal_core/src/commands/plan_commands.dart — the Plan view's writers
 // (PLAN-C/6, DR-029, DR-037).
 //
-// Seven acts over six classes: add, remove and reorder an underlay; set,
-// move and clear a pin; calibrate a plan (`PLAN-F/1`, DR-144). Every one
-// is a `Command` with a real `revert`, on M0's standard.
+// Add, remove and reorder an underlay; set, move and clear a pin;
+// calibrate a plan (`PLAN-F/1`, DR-144); draw, reshape and clear a room
+// outline (`LEN-A/2`, DR-050). Every one is a `Command` with a real
+// `revert`, on M0's standard.
+//
+// **THE COUNT IS NOT WRITTEN HERE.** This sentence read *"seven acts over
+// six classes"* until `LEN-A/2` made it ten over eight, and a second copy
+// of a moving number is a liability rather than a convenience: the acts
+// are the `LabelKey` values these classes return and the classes are the
+// ones below, both of which a reader can count and neither of which can go
+// stale.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // THE EPOCH MASK IS THE PART THAT GOES WRONG, AND THIS PROJECT HAS THE
@@ -37,6 +45,13 @@
 //   * REORDERING changes which plan draws on top and nothing else, so it
 //     is `sheet`: the same class of fact as a `SheetItem` position, which
 //     is what that flag was defined for.
+//   * A ROOM OUTLINE is the one whose consumer does not exist yet, and it
+//     carries `structure | wires` anyway. Its only purpose is to produce
+//     `Location.estimatedRunLengthFromRack`, which feeds the same chain a
+//     pin feeds; `LEN-A/3` builds the derivation. **A spurious wake costs
+//     a redraw and a missed wake ships a stale length**, so the narrow
+//     mask is the one that would have to be remembered later. See
+//     `SetRoomOutlineCommand` for the argument in full.
 //
 // `EpochMask.rack` is deliberately absent from all six. It means heightU,
 // rails and depth (see `command.dart`), and pinning a rack on a plan
@@ -213,6 +228,131 @@ final class ClearPlanPinCommand extends Command<RackDocument> {
   }
 }
 
+/// Gives a room its shape, or changes the one it has (DR-050 §11.49,
+/// `LEN-A/2`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A COMMAND AND NOT A PROPERTY-TABLE ROW, FOR `planPin`'s REASON
+/// ═══════════════════════════════════════════════════════════════════════
+/// `set_entity_property_command_test.dart` keeps `Location.planOutline`
+/// out of the table and names this command as the owner. The reason is
+/// the one [SetPlanPinCommand] already carries: a row's `set` writes and
+/// returns **with no way to refuse**, and a `RoomOutline` names an
+/// underlay by id, so a row would let a caller shape a room on a plan
+/// this document does not hold.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// AND IT REFUSES A SHAPE THE PRODUCT COULD NOT MEASURE
+/// ═══════════════════════════════════════════════════════════════════════
+/// `RoomOutline` HOLDS a two-vertex outline rather than throwing, because
+/// the decoder must read whatever is on disk (CR-093). That is a rule
+/// about READING somebody else's file. **This is the product's own
+/// writer**, and authoring a shape it has already said it cannot measure
+/// would put a degenerate polygon in a document with nobody to blame for
+/// it. The two facts are not in tension: one is tolerance of the world,
+/// the other is discipline about what we ourselves write.
+final class SetRoomOutlineCommand extends Command<RackDocument> {
+  SetRoomOutlineCommand({required this.locationId, required this.outline});
+
+  final Uuid locationId;
+
+  /// The shape. Never null: clearing is [ClearRoomOutlineCommand], which
+  /// carries its own label so the Edit menu can say which act it is
+  /// offering to take back.
+  final RoomOutline outline;
+
+  RoomOutline? _previous;
+  bool _applied = false;
+  bool _wasReshape = false;
+
+  @override
+  LabelKey get label =>
+      _wasReshape ? LabelKey.reshapeRoomOutline : LabelKey.drawRoomOutline;
+
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `wires` IS OWED BY WHAT AN OUTLINE IS FOR, NOT BY WHAT READS IT
+  /// TODAY
+  /// ═══════════════════════════════════════════════════════════════════
+  /// This file's header says masks are *"DERIVED FROM WHAT EACH COMMAND
+  /// CHANGES rather than chosen to look plausible"*, and on the day this
+  /// lands the derivation reads nothing: `LEN-A/3` builds the consumer.
+  ///
+  /// It is `wires` anyway, and the asymmetry is the argument. An outline's
+  /// only purpose is to produce `Location.estimatedRunLengthFromRack`,
+  /// which feeds a schedule row's length, which feeds a sheet: the exact
+  /// chain a pin feeds. **A spurious wake costs a redraw. A missed wake
+  /// ships a stale length**, which is DR-011.4's defect, and shipping the
+  /// narrow mask now would mean `LEN-A/3` has to remember to widen it.
+  @override
+  EpochMask get touches => EpochMask.structure | EpochMask.wires;
+
+  @override
+  Iterable<Uuid> get affects => [locationId];
+
+  @override
+  void apply(RackDocument doc) {
+    final location = doc.locations[locationId];
+    if (location == null) return;
+    if (!doc.underlays.containsKey(outline.underlayId)) return;
+    if (!outline.isUsable) return;
+    _previous = location.planOutline;
+    _wasReshape = _previous != null;
+    location.planOutline = outline;
+    _applied = true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    if (!_applied) {
+      throw StateError('SetRoomOutlineCommand.revert called before apply().');
+    }
+    doc.locations[locationId]?.planOutline = _previous;
+  }
+}
+
+/// Takes a room's shape off (DR-050 §11.49, `LEN-A/2`).
+///
+/// Its own command and its own label rather than a [SetRoomOutlineCommand]
+/// with a null outline, on [ClearPlanPinCommand]'s precedent exactly.
+final class ClearRoomOutlineCommand extends Command<RackDocument> {
+  ClearRoomOutlineCommand({required this.locationId});
+
+  final Uuid locationId;
+
+  RoomOutline? _previous;
+  bool _applied = false;
+
+  @override
+  LabelKey get label => LabelKey.clearRoomOutline;
+
+  @override
+  EpochMask get touches => EpochMask.structure | EpochMask.wires;
+
+  @override
+  Iterable<Uuid> get affects => [locationId];
+
+  @override
+  void apply(RackDocument doc) {
+    final location = doc.locations[locationId];
+    _previous = location?.planOutline;
+    // NOTHING TO DO IS NOT AN ERROR, but it must not look like a done
+    // thing either: `_applied` stays false, so a `revert` that follows
+    // throws instead of writing a null over whatever is there by then.
+    // [ClearPlanPinCommand]'s own comment, and its own reasoning.
+    if (location == null || _previous == null) return;
+    location.planOutline = null;
+    _applied = true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    if (!_applied) {
+      throw StateError('ClearRoomOutlineCommand.revert called before apply().');
+    }
+    doc.locations[locationId]?.planOutline = _previous;
+  }
+}
+
 /// The next `order` for a new underlay.
 ///
 /// PER DOCUMENT, on `nextPathwayOrder`'s precedent: underlays are a flat
@@ -294,6 +434,26 @@ final class RemovePlanUnderlayCommand extends Command<RackDocument> {
   /// is also honest, because before [apply] runs there is no answer to
   /// "which pins did this clear" and an empty map claims there were none.
   late final Map<(PinCarrier, Uuid), PlanPin> _clearedPins = {};
+
+  /// The room outlines this removal cleared, by location id, so [revert]
+  /// can put them back.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// AN OUTLINE DANGLING IS WORSE THAN A PIN DANGLING, AND `LEN-A/1`
+  /// PROVED IT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A pin left over a removed underlay is a stray point.
+  /// `documentMinReaderVersion` checks every pin individually, so a
+  /// document carrying one still stamps `kPlanMinReaderVersion` and an
+  /// older build opens it read-only.
+  ///
+  /// **The outline is checked the same way and for the same reason, and
+  /// `room_outline_test.dart` says in capitals what happens without it**:
+  /// an older build opens the file read-write and deletes the drawing on
+  /// save, which is DR-019 §11.18.1's hazard. Clearing here is the other
+  /// half of that: the stamp makes the orphan survivable, and this makes
+  /// the product stop producing one.
+  late final Map<Uuid, RoomOutline> _clearedOutlines = {};
   bool _applied = false;
 
   @override
@@ -306,6 +466,7 @@ final class RemovePlanUnderlayCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [
     underlayId,
     ..._clearedPins.keys.map((k) => k.$2),
+    ..._clearedOutlines.keys,
   ];
 
   @override
@@ -338,6 +499,14 @@ final class RemovePlanUnderlayCommand extends Command<RackDocument> {
       }
     }
 
+    for (final location in doc.locations.values) {
+      final outline = location.planOutline;
+      if (outline != null && outline.underlayId == underlayId) {
+        _clearedOutlines[location.id] = outline;
+        location.planOutline = null;
+      }
+    }
+
     doc.underlays.remove(underlayId);
     _applied = true;
   }
@@ -352,6 +521,9 @@ final class RemovePlanUnderlayCommand extends Command<RackDocument> {
     doc.underlays[underlayId] = _removed;
     for (final entry in _clearedPins.entries) {
       _writePin(doc, entry.key.$1, entry.key.$2, entry.value);
+    }
+    for (final entry in _clearedOutlines.entries) {
+      doc.locations[entry.key]?.planOutline = entry.value;
     }
   }
 }

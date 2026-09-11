@@ -46,6 +46,27 @@ const _templateRef = TemplateRef(
 const _pin = PlanPin(underlayId: _underlayId, at: PxPt(742, 1183));
 const _movedPin = PlanPin(underlayId: _underlayId, at: PxPt(900, 400));
 
+/// A square room, and the same room with one corner pulled out so a
+/// reshape is a real change rather than a rewrite of the same value.
+final _outline = RoomOutline(
+  underlayId: _underlayId,
+  vertices: const [
+    PxPt(100, 100),
+    PxPt(400, 100),
+    PxPt(400, 300),
+    PxPt(100, 300),
+  ],
+);
+final _reshaped = RoomOutline(
+  underlayId: _underlayId,
+  vertices: const [
+    PxPt(100, 100),
+    PxPt(500, 100),
+    PxPt(400, 300),
+    PxPt(100, 300),
+  ],
+);
+
 /// 100 pixels spanning a 36 inch door: `PLAN-F/1`'s own example, and the
 /// numbers are chosen so the factor is a round 9,144,000 nm per pixel.
 const _scale = PlanScale(
@@ -87,6 +108,17 @@ RackDocument _doc({bool withUnderlay = true}) {
     info: ProjectInfo(projectName: 'Ashford Residence'),
   );
   if (withUnderlay) doc.underlays[_underlayId] = _underlay();
+  // The room `_locationId` names. It was referenced by the off-rack
+  // placement below and never existed as an entity until `LEN-A/2` needed
+  // somewhere to put an outline.
+  doc.locations[_locationId] = Location(
+    id: _locationId,
+    kind: LocationKind.room,
+    name: 'Great Room',
+    code: 'GR',
+    order: const FracIndex('a0'),
+    meta: _meta(),
+  );
   doc.racks[_rackId] = Rack(
     id: _rackId,
     name: 'AV Rack',
@@ -495,6 +527,206 @@ void main() {
     });
   });
 
+  group('the room outline: draw, reshape and clear (`LEN-A/2`)', () {
+    test('draws a shape where there was none, and the label says so', () {
+      final doc = _doc();
+      final command = SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _outline,
+      )..apply(doc);
+
+      expect(doc.locations[_locationId]!.planOutline, _outline);
+      expect(command.label, LabelKey.drawRoomOutline);
+    });
+
+    test('reshaping carries the OTHER label, decided from the document '
+        'rather than by the caller', () {
+      // `setPlanPin`/`movePlanPin`'s reasoning: "Undo Reshape Room" in
+      // front of somebody who has just drawn their first outline names an
+      // act they did not perform.
+      final doc = _doc();
+      SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _outline,
+      ).apply(doc);
+      final second = SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _reshaped,
+      )..apply(doc);
+
+      expect(second.label, LabelKey.reshapeRoomOutline);
+      expect(doc.locations[_locationId]!.planOutline, _reshaped);
+    });
+
+    test('revert puts the previous shape back, and null back on a first '
+        'draw', () {
+      final doc = _doc();
+      final first = SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _outline,
+      )..apply(doc);
+      final second = SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _reshaped,
+      )..apply(doc);
+      expect(doc.locations[_locationId]!.planOutline, _reshaped);
+
+      second.revert(doc);
+      expect(doc.locations[_locationId]!.planOutline, _outline);
+
+      first.revert(doc);
+      expect(doc.locations[_locationId]!.planOutline, isNull);
+    });
+
+    test('clearing takes it off and revert brings it back', () {
+      final doc = _doc();
+      SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _outline,
+      ).apply(doc);
+      final clear = ClearRoomOutlineCommand(locationId: _locationId)
+        ..apply(doc);
+
+      expect(doc.locations[_locationId]!.planOutline, isNull);
+      expect(clear.label, LabelKey.clearRoomOutline);
+      clear.revert(doc);
+      expect(doc.locations[_locationId]!.planOutline, _outline);
+    });
+
+    test('clearing nothing is not a done thing, so a later revert THROWS '
+        'rather than writing a null over whatever is there by then', () {
+      final doc = _doc();
+      final clear = ClearRoomOutlineCommand(locationId: _locationId)
+        ..apply(doc);
+
+      expect(doc.locations[_locationId]!.planOutline, isNull);
+      expect(() => clear.revert(doc), throwsStateError);
+    });
+  });
+
+  group('THE THREE REFUSALS, which are why this is not a table row', () {
+    test('an outline naming an underlay this document does not have', () {
+      // `SetPlanPinCommand`'s refusal, word for word one entity over: a
+      // dangling reference in a drawing is what DR-021's cascade spends a
+      // ruling avoiding.
+      final doc = _doc(withUnderlay: false);
+      final command = SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _outline,
+      )..apply(doc);
+
+      expect(doc.locations[_locationId]!.planOutline, isNull);
+      expect(() => command.revert(doc), throwsStateError);
+    });
+
+    test('a location this document does not have', () {
+      final doc = _doc();
+      SetRoomOutlineCommand(
+        locationId: const Uuid('0190e3c1-9999-7000-8000-000000000099'),
+        outline: _outline,
+      ).apply(doc);
+
+      expect(doc.locations, hasLength(1));
+    });
+
+    test('AND A SHAPE THE PRODUCT COULD NOT MEASURE, which is the one '
+        'the decoder deliberately does NOT refuse', () {
+      // The distinction `SetRoomOutlineCommand`'s header draws.
+      // `room_outline_test.dart` proves a two-vertex outline READS,
+      // because CR-093 is about tolerating somebody else's file. This is
+      // the product's own writer, and authoring a polygon it has already
+      // said it cannot measure would put a degenerate shape in a document
+      // with nobody to blame for it.
+      final doc = _doc();
+      final command = SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: RoomOutline(
+          underlayId: _underlayId,
+          vertices: const [PxPt(10, 10), PxPt(20, 20)],
+        ),
+      )..apply(doc);
+
+      expect(doc.locations[_locationId]!.planOutline, isNull);
+      expect(() => command.revert(doc), throwsStateError);
+    });
+  });
+
+  group('removing an underlay takes the outlines drawn on it', () {
+    test('the outline is cleared and revert puts it back', () {
+      // The obligation `room_outline_test.dart` made explicit: without
+      // this, a document can carry an outline whose underlay is gone, and
+      // the stamp is the only thing then standing between that file and
+      // an older build deleting the drawing on save.
+      final doc = _doc();
+      SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _outline,
+      ).apply(doc);
+      final remove = RemovePlanUnderlayCommand(underlayId: _underlayId)
+        ..apply(doc);
+
+      expect(doc.locations[_locationId]!.planOutline, isNull);
+      remove.revert(doc);
+      expect(doc.locations[_locationId]!.planOutline, _outline);
+    });
+
+    test('and it names the room in `affects`, so a listener scoped to '
+        'that entity is woken', () {
+      final doc = _doc();
+      SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _outline,
+      ).apply(doc);
+      final remove = RemovePlanUnderlayCommand(underlayId: _underlayId)
+        ..apply(doc);
+
+      expect(remove.affects, contains(_locationId));
+    });
+
+    test('an outline drawn on a DIFFERENT underlay is untouched', () {
+      // The negative that makes the positive mean something: a removal
+      // that cleared every outline would pass the case above.
+      final doc = _doc()..underlays[_otherUnderlayId] = _underlay();
+      SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: RoomOutline(
+          underlayId: _otherUnderlayId,
+          vertices: _outline.vertices,
+        ),
+      ).apply(doc);
+
+      RemovePlanUnderlayCommand(underlayId: _underlayId).apply(doc);
+
+      expect(
+        doc.locations[_locationId]!.planOutline?.underlayId,
+        _otherUnderlayId,
+      );
+    });
+  });
+
+  group('DR-021: the outline dies with its room, and nothing new is owed', () {
+    test('removing the location takes its outline, and undo brings both '
+        'back', () {
+      // ASSERTED RATHER THAN ASSUMED. The outline is a FIELD on
+      // `Location`, so the cascade already carries it and
+      // `RemoveLocationCommand` keeps *"the SAME objects, not equivalent
+      // ones"*. That is a reason to believe it works, not evidence.
+      final doc = _doc();
+      SetRoomOutlineCommand(
+        locationId: _locationId,
+        outline: _outline,
+      ).apply(doc);
+
+      final remove = RemoveLocationCommand(
+        plan: planLocationRemoval(doc, _locationId),
+      )..apply(doc);
+
+      expect(doc.locations[_locationId], isNull);
+      remove.revert(doc);
+      expect(doc.locations[_locationId]!.planOutline, _outline);
+    });
+  });
+
   group('THE EPOCH MASKS, AGAINST A LISTENER', () {
     ({int structure, int wires, int rack, int sheet, int meta}) snapshot(
       DocumentController c,
@@ -572,6 +804,111 @@ void main() {
 
       expect(after.structure, greaterThan(before.structure));
       expect(after.wires, greaterThan(before.wires));
+    });
+
+    test('AN OUTLINE WAKES `wires`, THOUGH NOTHING READS IT YET', () {
+      // THE ONE MASK ON THIS PAGE WHOSE CONSUMER DOES NOT EXIST.
+      // `LEN-A/3` builds the derivation; today an outline changes no
+      // length, so `wires` wakes a listener over a number that has not
+      // moved.
+      //
+      // That is deliberate and the asymmetry is the argument: a spurious
+      // wake costs a redraw, and a missed wake ships a stale length, which
+      // is DR-011.4's defect. Shipping `structure` alone would be correct
+      // today and would put the burden on `LEN-A/3` to remember.
+      final doc = _doc();
+      final controller = DocumentController(doc);
+      final before = snapshot(controller);
+
+      controller.run(
+        SetRoomOutlineCommand(locationId: _locationId, outline: _outline),
+      );
+      final after = snapshot(controller);
+
+      expect(after.structure, greaterThan(before.structure));
+      expect(
+        after.wires,
+        greaterThan(before.wires),
+        reason: 'an outline feeds the same chain a pin feeds',
+      );
+    });
+
+    test('and it does NOT wake `rack` or `meta`, which is the negative '
+        'that makes the positive mean something', () {
+      final doc = _doc();
+      final controller = DocumentController(doc);
+      final before = snapshot(controller);
+
+      controller.run(
+        SetRoomOutlineCommand(locationId: _locationId, outline: _outline),
+      );
+
+      expect(snapshot(controller).rack, before.rack);
+      expect(snapshot(controller).meta, before.meta);
+    });
+
+    test('clearing an outline wakes the same two', () {
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(
+          SetRoomOutlineCommand(locationId: _locationId, outline: _outline),
+        );
+      final before = snapshot(controller);
+
+      controller.run(ClearRoomOutlineCommand(locationId: _locationId));
+      final after = snapshot(controller);
+
+      expect(after.structure, greaterThan(before.structure));
+      expect(after.wires, greaterThan(before.wires));
+    });
+
+    test('A REFUSED OUTLINE STILL WAKES BOTH, WHICH IS A DEFECT THIS CASE '
+        'RECORDS RATHER THAN ENDORSES (`#863`)', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THIS ASSERTS WHAT THE SYSTEM DOES, NOT WHAT IT SHOULD DO
+      // ═══════════════════════════════════════════════════════════════
+      // `LEN-A/2` set out to assert that a refusal wakes nothing and
+      // found it wakes everything, because `DocumentController.run` is
+      // `transact(label, (tx) => tx.add(c))` and `_commit` pushes any
+      // non-empty child list. A command that self-refuses inside `apply`
+      // is still a child, so the transaction is recorded and the epochs
+      // bump over a document that did not change.
+      //
+      // **THE WORSE HALF IS THE UNDO STACK.** Probed on the shipped
+      // `SetPlanPinCommand`, which has had this shape since PLAN-C: after
+      // a refusal `canUndo` is true and the next undo throws
+      // `StateError: revert called before apply()`. Twenty-nine commands
+      // carry an `_applied` bit and every one that can return early from
+      // `apply` is the same shape, so this is command machinery rather
+      // than a plan-view bug.
+      //
+      // It is not fixed here because the honest fix changes the `Command`
+      // protocol every command in this product implements, which wants a
+      // ruling ID rather than a commit. `#863` carries it.
+      //
+      // RETIRED BY `#863`: when a refusal stops reaching the stack, this
+      // case fails and whoever fixed it inverts it to the assertion it
+      // was originally written as.
+      final doc = _doc(withUnderlay: false);
+      final controller = DocumentController(doc);
+      final before = snapshot(controller);
+
+      controller.run(
+        SetRoomOutlineCommand(locationId: _locationId, outline: _outline),
+      );
+      final after = snapshot(controller);
+
+      expect(
+        doc.locations[_locationId]!.planOutline,
+        isNull,
+        reason: 'the refusal itself works: nothing was written',
+      );
+      expect(
+        after.structure,
+        greaterThan(before.structure),
+        reason: '#863: a refusal should wake nothing, and today it does',
+      );
+      expect(controller.undo.canUndo, isTrue, reason: '#863');
     });
 
     test('adding and removing an underlay wake structure and wires', () {

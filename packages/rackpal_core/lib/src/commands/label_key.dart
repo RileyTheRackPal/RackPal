@@ -595,4 +595,20 @@ enum LabelKey {
   // pressing it will do.
   calibratePlan,
   recalibratePlan,
+
+  // THE ROOM OUTLINE'S THREE (commands/plan_commands.dart), `LEN-A/2`,
+  // DR-050 §11.49. Three values and not one, on `setPlanPin`'s two
+  // precedents applied together rather than re-argued.
+  //
+  // `drawRoomOutline` AND `reshapeRoomOutline` ARE ONE COMMAND WITH TWO
+  // LABELS, chosen at apply time from whether the room already had a
+  // shape. "Undo Reshape Room" in front of somebody who has just drawn
+  // their first outline names an act they did not perform, which is
+  // exactly what `movePlanPin`'s comment says about a first pin.
+  //
+  // `clearRoomOutline` is its own value because "Undo Draw Room Outline"
+  // in front of somebody who has just deleted one names the opposite act.
+  drawRoomOutline,
+  reshapeRoomOutline,
+  clearRoomOutline,
 }
