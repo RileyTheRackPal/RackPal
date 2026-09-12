@@ -160,9 +160,9 @@ final class AddGangCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [outletId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final outlet = doc.outlets[outletId];
-    if (outlet == null) return;
+    if (outlet == null) return false;
     final w = width;
     final h = height;
     outlet.gangs.add(
@@ -170,6 +170,7 @@ final class AddGangCommand extends Command<RackDocument> {
         fitting: w == null || h == null ? null : Strap(width: w, height: h),
       ),
     );
+    return true;
   }
 
   @override
@@ -202,11 +203,14 @@ final class RemoveGangCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [outletId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final outlet = doc.outlets[outletId];
-    if (outlet == null || index < 0 || index >= outlet.gangs.length) return;
+    if (outlet == null || index < 0 || index >= outlet.gangs.length) {
+      return false;
+    }
     _removed = _copyGang(outlet.gangs[index]);
     outlet.gangs.removeAt(index);
+    return true;
   }
 
   @override
@@ -264,9 +268,11 @@ final class SetStrapSizeCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [outletId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final outlet = doc.outlets[outletId];
-    if (outlet == null || index < 0 || index >= outlet.gangs.length) return;
+    if (outlet == null || index < 0 || index >= outlet.gangs.length) {
+      return false;
+    }
     final gang = outlet.gangs[index];
     _before = _copyFitting(gang.fitting);
     _applied = true;
@@ -275,7 +281,7 @@ final class SetStrapSizeCommand extends Command<RackDocument> {
     final h = height;
     if (w == null || h == null) {
       gang.fitting = null;
-      return;
+      return false;
     }
     final next = Strap(width: w, height: h);
     // KEPT BY INDEX, not by (column, row). A cell's index is its
@@ -297,6 +303,7 @@ final class SetStrapSizeCommand extends Command<RackDocument> {
       if (next.holdsIndex(entry.key)) next.cells[entry.key] = entry.value;
     }
     gang.fitting = next;
+    return _applied;
   }
 
   @override
@@ -344,13 +351,16 @@ final class SetGangPassThroughCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [outletId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final outlet = doc.outlets[outletId];
-    if (outlet == null || index < 0 || index >= outlet.gangs.length) return;
+    if (outlet == null || index < 0 || index >= outlet.gangs.length) {
+      return false;
+    }
     final gang = outlet.gangs[index];
     _before = _copyFitting(gang.fitting);
     _applied = true;
     gang.fitting = PassThrough(style);
+    return _applied;
   }
 
   @override
@@ -406,13 +416,13 @@ final class SetCellOccupantCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [outletId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final outlet = doc.outlets[outletId];
     if (outlet == null || gangIndex < 0 || gangIndex >= outlet.gangs.length) {
-      return;
+      return false;
     }
     final strap = _strapOf(outlet.gangs[gangIndex]);
-    if (strap == null || !strap.holdsIndex(cellIndex)) return;
+    if (strap == null || !strap.holdsIndex(cellIndex)) return false;
 
     _hadBefore = strap.cells.containsKey(cellIndex);
     _before = strap.cells[cellIndex];
@@ -432,7 +442,7 @@ final class SetCellOccupantCommand extends Command<RackDocument> {
     } else {
       strap.cells[cellIndex] = next;
     }
-    _applied = true;
+    return _applied = true;
   }
 
   void _vacateDuplicatesOf(Outlet outlet, CellOccupant occupant) {

@@ -34,9 +34,32 @@ final class TxnScope<A> {
   final List<Command<A>> _children;
   final A _aggregate;
 
-  void add(Command<A> c) {
-    c.apply(_aggregate);
-    _children.add(c);
+  /// Applies [c] and keeps it ONLY IF IT CHANGED anything (DR-156
+  /// §11.155.1). Returns what [Command.apply] returned, so a caller that
+  /// needs to know can ask.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A REFUSAL MUST NOT REACH THE UNDO STACK, AND THIS IS THE ONE PLACE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A command that self-refuses inside `apply` used to become a child
+  /// anyway: the transaction was recorded, the epochs bumped over a
+  /// document that did not change, and the next `Ctrl+Z` called `revert`
+  /// on a command that never applied, which throws. Probed on the shipped
+  /// `SetPlanPinCommand` at `LEN-A/2` and filed as `#863`.
+  ///
+  /// **`_commit` ALREADY HAD THE CONCEPT AND COULD NOT SEE THIS CASE.** It
+  /// reads `if (b.children.isEmpty) return; // no-op edits add no
+  /// history`. What was missing was any way for a command to say it
+  /// declined, so a refusal was indistinguishable from a write. Dropping
+  /// it here is what makes that guard reach the case it was written for.
+  ///
+  /// **SHARED BY BOTH UNDO STACKS**, which is why the fix lands once:
+  /// `TemplateEditSession` carries its own `_TxnBuilder` and `_commit` but
+  /// imports this class.
+  bool add(Command<A> c) {
+    final changed = c.apply(_aggregate);
+    if (changed) _children.add(c);
+    return changed;
   }
 }
 

@@ -8,9 +8,19 @@
 //     SnapshotCommand(this.label, this.touches, this.affects, this.before,
 //         this.after);
 //     final Map<Uuid, JsonMap?> before, after;   // null value == absent
-//     @override void apply(RackDocument doc) => doc.restoreEntities(after);
+//     @override bool apply(RackDocument doc) {
+//       doc.restoreEntities(after);
+//       return true;                            // DR-156 §11.155.1
+//     }
 //     @override void revert(RackDocument doc) => doc.restoreEntities(before);
 //   }
+//
+// THE SKETCH ABOVE RETURNS `true` UNCONDITIONALLY AND THAT IS A QUESTION
+// FOR WHOEVER BUILDS IT, not an answer. A snapshot whose `after` map is
+// equal to what is already there changed nothing, and DR-156 §11.155.1
+// says a command that changed nothing must say so. `restoreEntities`
+// would have to report whether it wrote anything for this to be honest,
+// and it does not exist yet either.
 //
 // None of M0's commands need it — AddDevice/RemoveDevice/MoveDevice/
 // AddLink/RemoveLink/RenameEntity/SetRackHeight all have small, precise

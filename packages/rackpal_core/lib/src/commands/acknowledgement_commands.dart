@@ -106,7 +106,7 @@ final class AcknowledgeFindingCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     doc.ackedFindings[id] = AckedFinding(
       id: id,
       ruleId: ruleId,
@@ -118,6 +118,7 @@ final class AcknowledgeFindingCommand extends Command<RackDocument> {
       demotedTo: demotedTo,
       meta: EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor),
     );
+    return true;
   }
 
   @override
@@ -150,8 +151,9 @@ final class UnacknowledgeFindingCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     _removed = doc.ackedFindings.remove(id) ?? _removed;
+    return true;
   }
 
   @override

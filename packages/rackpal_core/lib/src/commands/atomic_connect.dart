@@ -591,7 +591,7 @@ final class AtomicConnectCommand extends Command<RackDocument> {
   ];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     // ═══════════════════════════════════════════════════════════════
     // THE PINS FIRST — DR-011.1, and the same idempotent shape
     // `ConnectPortsCommand` has carried since Phase 0.
@@ -633,6 +633,7 @@ final class AtomicConnectCommand extends Command<RackDocument> {
       // The plan's conductors, verbatim and in declared order.
       conductors: [...plan.conductors],
     );
+    return true;
   }
 
   @override

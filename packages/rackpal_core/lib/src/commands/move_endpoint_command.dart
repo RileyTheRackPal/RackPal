@@ -133,7 +133,7 @@ final class MoveEndpointCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId, port.portId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     // Cleared, not appended to: `apply` runs again on every redo and must
     // describe THIS run.
     _materialised.clear();
@@ -148,7 +148,7 @@ final class MoveEndpointCommand extends Command<RackDocument> {
     }
 
     final link = doc.links[linkId];
-    if (link == null) return;
+    if (link == null) return false;
     final conductor = link.conductors.first;
     final landed = PortEndpoint(port.portId);
     _previousEnd = switch (end) {
@@ -179,6 +179,7 @@ final class MoveEndpointCommand extends Command<RackDocument> {
       updatedAt: now,
       updatedBy: actor,
     );
+    return _applied;
   }
 
   @override
@@ -402,10 +403,10 @@ final class UnlandEndpointCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final link = doc.links[linkId];
-    if (link == null) return;
-    if (link.conductors.isEmpty) return;
+    if (link == null) return false;
+    if (link.conductors.isEmpty) return false;
     final conductor = link.conductors.first;
     _previousEnd = switch (end) {
       LinkEnd.field => conductor.from,
@@ -441,6 +442,7 @@ final class UnlandEndpointCommand extends Command<RackDocument> {
       updatedAt: now,
       updatedBy: actor,
     );
+    return _applied;
   }
 
   @override

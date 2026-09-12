@@ -1144,7 +1144,7 @@ final class SetEntityPropertyCommand<E, T> extends Command<RackDocument> {
   );
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final entity = _resolve(doc);
     final meta = field.access.metaOf(entity);
     _prevUpdatedAt = meta.updatedAt;
@@ -1152,6 +1152,7 @@ final class SetEntityPropertyCommand<E, T> extends Command<RackDocument> {
     _prevLocalRevision = meta.localRevision;
     field.set(entity, to);
     meta.touch(now, actor);
+    return true;
   }
 
   @override

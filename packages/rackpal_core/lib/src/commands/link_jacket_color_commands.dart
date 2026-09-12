@@ -60,12 +60,13 @@ final class SetLinkJacketColorCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final link = doc.links[linkId];
-    if (link == null) return;
+    if (link == null) return false;
     _previous = link.jacketColorId;
     _applied = true;
     link.jacketColorId = conventionId;
+    return _applied;
   }
 
   @override
@@ -128,9 +129,9 @@ final class SetLinkPulledJacketColorCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final link = doc.links[linkId];
-    if (link == null) return;
+    if (link == null) return false;
     _previous = link.jacketColorPulledId;
     _applied = true;
     // STORED ABSOLUTELY. `pulledId` is a PHYSICAL OBSERVATION — "the cable
@@ -168,6 +169,7 @@ final class SetLinkPulledJacketColorCommand extends Command<RackDocument> {
     // — it simply never fired, because the write path had pre-normalised
     // every matching case away.
     link.jacketColorPulledId = pulledId;
+    return _applied;
   }
 
   @override

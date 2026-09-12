@@ -146,7 +146,7 @@ final class SaveTemplateToProjectCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => const [];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     doc.templates[key] = TemplateSnapshot(
       templateId: templateId,
       version: version,
@@ -154,6 +154,7 @@ final class SaveTemplateToProjectCommand extends Command<RackDocument> {
       body: body,
       capturedAt: capturedAt,
     );
+    return true;
   }
 
   /// Removes only what this command added.

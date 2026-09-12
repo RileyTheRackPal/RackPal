@@ -163,17 +163,17 @@ final class SetPlanPinCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [entityId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     // REFUSES A PIN NAMING AN UNDERLAY THIS DOCUMENT DOES NOT HAVE, which
     // is the whole reason `Outlet.planPin` is kept out of the property
     // table (`set_entity_property_command_test.dart`): a table row's
     // `set` writes and returns with no way to refuse, and a dangling
     // reference in a drawing is what DR-021's cascade spends a ruling
     // avoiding elsewhere.
-    if (!doc.underlays.containsKey(pin.underlayId)) return;
+    if (!doc.underlays.containsKey(pin.underlayId)) return false;
     _previous = _pinOf(doc, carrier, entityId);
     _wasMove = _previous != null;
-    _applied = _writePin(doc, carrier, entityId, pin);
+    return _applied = _writePin(doc, carrier, entityId, pin);
   }
 
   @override
@@ -210,13 +210,13 @@ final class ClearPlanPinCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [entityId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     _previous = _pinOf(doc, carrier, entityId);
     // NOTHING TO DO IS NOT AN ERROR, but it must not look like a done
     // thing either: `_applied` stays false, so a `revert` that follows
     // throws instead of writing a null over whatever is there by then.
-    if (_previous == null) return;
-    _applied = _writePin(doc, carrier, entityId, null);
+    if (_previous == null) return false;
+    return _applied = _writePin(doc, carrier, entityId, null);
   }
 
   @override
@@ -290,15 +290,15 @@ final class SetRoomOutlineCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [locationId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final location = doc.locations[locationId];
-    if (location == null) return;
-    if (!doc.underlays.containsKey(outline.underlayId)) return;
-    if (!outline.isUsable) return;
+    if (location == null) return false;
+    if (!doc.underlays.containsKey(outline.underlayId)) return false;
+    if (!outline.isUsable) return false;
     _previous = location.planOutline;
     _wasReshape = _previous != null;
     location.planOutline = outline;
-    _applied = true;
+    return _applied = true;
   }
 
   @override
@@ -332,16 +332,16 @@ final class ClearRoomOutlineCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [locationId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final location = doc.locations[locationId];
     _previous = location?.planOutline;
     // NOTHING TO DO IS NOT AN ERROR, but it must not look like a done
     // thing either: `_applied` stays false, so a `revert` that follows
     // throws instead of writing a null over whatever is there by then.
     // [ClearPlanPinCommand]'s own comment, and its own reasoning.
-    if (location == null || _previous == null) return;
+    if (location == null || _previous == null) return false;
     location.planOutline = null;
-    _applied = true;
+    return _applied = true;
   }
 
   @override
@@ -386,10 +386,10 @@ final class AddPlanUnderlayCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [underlay.id];
 
   @override
-  void apply(RackDocument doc) {
-    if (doc.underlays.containsKey(underlay.id)) return;
+  bool apply(RackDocument doc) {
+    if (doc.underlays.containsKey(underlay.id)) return false;
     doc.underlays[underlay.id] = underlay;
-    _applied = true;
+    return _applied = true;
   }
 
   @override
@@ -470,9 +470,9 @@ final class RemovePlanUnderlayCommand extends Command<RackDocument> {
   ];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final underlay = doc.underlays[underlayId];
-    if (underlay == null) return;
+    if (underlay == null) return false;
     _removed = underlay;
 
     for (final rack in doc.racks.values) {
@@ -508,7 +508,7 @@ final class RemovePlanUnderlayCommand extends Command<RackDocument> {
     }
 
     doc.underlays.remove(underlayId);
-    _applied = true;
+    return _applied = true;
   }
 
   @override
@@ -554,12 +554,12 @@ final class ReorderPlanUnderlayCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [underlayId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final underlay = doc.underlays[underlayId];
-    if (underlay == null) return;
+    if (underlay == null) return false;
     _previous = underlay.order;
     underlay.order = order;
-    _applied = true;
+    return _applied = true;
   }
 
   @override
@@ -640,9 +640,9 @@ final class SetPlanScaleCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [underlayId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final underlay = doc.underlays[underlayId];
-    if (underlay == null) return;
+    if (underlay == null) return false;
     _previous = underlay.scale;
     // A REPLACEMENT IS DECIDED FROM THE PREVIOUS VALUE'S PRESENCE, not
     // from its usability. An underlay carrying a scale whose two points
@@ -652,7 +652,7 @@ final class SetPlanScaleCommand extends Command<RackDocument> {
     // act by a property of the value rather than by what happened.
     _wasRecalibration = _previous != null;
     underlay.scale = scale;
-    _applied = true;
+    return _applied = true;
   }
 
   @override

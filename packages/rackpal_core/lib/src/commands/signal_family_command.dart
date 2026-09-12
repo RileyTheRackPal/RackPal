@@ -150,9 +150,9 @@ final class SetSignalFamilyCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final link = doc.links[linkId];
-    if (link == null) return;
+    if (link == null) return false;
     _servicesBefore.clear();
     _netsBefore.clear();
     for (final service in link.services) {
@@ -171,6 +171,7 @@ final class SetSignalFamilyCommand extends Command<RackDocument> {
     _prevUpdatedBy = link.meta.updatedBy;
     _prevLocalRevision = link.meta.localRevision;
     link.meta.touch(now, actor);
+    return true;
   }
 
   @override

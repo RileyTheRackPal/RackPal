@@ -147,13 +147,14 @@ final class AddMediaTypeCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => const [];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     doc.registries.mediaTypes[id] = MediaTypeDef(
       id: id,
       displayName: displayName,
       shortTag: shortTag,
       aliases: aliases,
     );
+    return true;
   }
 
   @override
@@ -202,7 +203,10 @@ final class EditMediaTypeCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => const [];
 
   @override
-  void apply(RackDocument doc) => doc.registries.mediaTypes[to.id] = to;
+  bool apply(RackDocument doc) {
+    doc.registries.mediaTypes[to.id] = to;
+    return true;
+  }
 
   @override
   void revert(RackDocument doc) => doc.registries.mediaTypes[from.id] = from;
@@ -275,7 +279,7 @@ final class MergeMediaTypesCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [..._links, ..._pathways];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     _links.clear();
     _drops.clear();
     _pathways.clear();
@@ -339,6 +343,7 @@ final class MergeMediaTypesCommand extends Command<RackDocument> {
       );
     }
     types.remove(loser);
+    return true;
   }
 
   @override

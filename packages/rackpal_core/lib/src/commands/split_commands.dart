@@ -104,7 +104,7 @@ final class SplitConductorCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     _removed = null;
     final link = doc.links[linkId];
     // OUT OF RANGE IS THE SAME ANSWER AS ABSENT. Both mean the conductor
@@ -115,6 +115,7 @@ final class SplitConductorCommand extends Command<RackDocument> {
       _removed = link.conductors.removeAt(index);
     }
     _applied = true;
+    return true;
   }
 
   @override

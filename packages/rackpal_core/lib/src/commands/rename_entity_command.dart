@@ -106,13 +106,14 @@ final class RenameEntityCommand extends Command<RackDocument> {
   }
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final triple = _metaTriple(doc);
     _prevUpdatedAt = triple.updatedAt;
     _prevUpdatedBy = triple.updatedBy;
     _prevLocalRevision = triple.localRevision;
     _setName(doc, to);
     _touch(doc);
+    return true;
   }
 
   @override

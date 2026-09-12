@@ -140,7 +140,7 @@ final class AddPathwayCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     doc.pathways[id] = Pathway(
       id: id,
       name: name,
@@ -154,6 +154,7 @@ final class AddPathwayCommand extends Command<RackDocument> {
       toLocationId: toLocationId,
       notes: notes,
     );
+    return true;
   }
 
   @override
@@ -199,7 +200,7 @@ final class RemovePathwayCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id, ..._clearedLinks];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     _removed = doc.pathways.remove(id);
     _clearedLinks.clear();
     for (final link in doc.links.values) {
@@ -210,6 +211,7 @@ final class RemovePathwayCommand extends Command<RackDocument> {
           ..meta.touch(now, 'removePathway');
       }
     }
+    return true;
   }
 
   @override

@@ -862,33 +862,23 @@ void main() {
       expect(after.wires, greaterThan(before.wires));
     });
 
-    test('A REFUSED OUTLINE STILL WAKES BOTH, WHICH IS A DEFECT THIS CASE '
-        'RECORDS RATHER THAN ENDORSES (`#863`)', () {
+    test('A REFUSED OUTLINE WAKES NOTHING AT ALL, which is the assertion '
+        'this case was originally written as (`#863`, DR-156 §11.155.1)', () {
       // ═══════════════════════════════════════════════════════════════
-      // THIS ASSERTS WHAT THE SYSTEM DOES, NOT WHAT IT SHOULD DO
+      // UN-INVERTED 2026-09-12, ON ITS OWN INSTRUCTIONS
       // ═══════════════════════════════════════════════════════════════
-      // `LEN-A/2` set out to assert that a refusal wakes nothing and
-      // found it wakes everything, because `DocumentController.run` is
-      // `transact(label, (tx) => tx.add(c))` and `_commit` pushes any
-      // non-empty child list. A command that self-refuses inside `apply`
-      // is still a child, so the transaction is recorded and the epochs
-      // bump over a document that did not change.
+      // `LEN-A/2` set out to assert exactly this and found the opposite,
+      // so it shipped the case asserting the DEFECT with a comment saying
+      // what would retire it: *"when a refusal stops reaching the stack,
+      // this case fails and whoever fixed it inverts it to the assertion
+      // it was originally written as."* It came due. `bool apply` landed,
+      // `TxnScope.add` began dropping a child that returned false, and
+      // this was the one case in the repository that failed.
       //
-      // **THE WORSE HALF IS THE UNDO STACK.** Probed on the shipped
-      // `SetPlanPinCommand`, which has had this shape since PLAN-C: after
-      // a refusal `canUndo` is true and the next undo throws
-      // `StateError: revert called before apply()`. Twenty-nine commands
-      // carry an `_applied` bit and every one that can return early from
-      // `apply` is the same shape, so this is command machinery rather
-      // than a plan-view bug.
-      //
-      // It is not fixed here because the honest fix changes the `Command`
-      // protocol every command in this product implements, which wants a
-      // ruling ID rather than a commit. `#863` carries it.
-      //
-      // RETIRED BY `#863`: when a refusal stops reaching the stack, this
-      // case fails and whoever fixed it inverts it to the assertion it
-      // was originally written as.
+      // **A TEST THAT ASSERTS AN ABSENCE NAMES ITS DUE DATE**, and this
+      // is the cleanest instance the practice has: the due date was a
+      // ruling ID, the ruling landed, and the test failed on the commit
+      // that made it wrong rather than being found by a person.
       final doc = _doc(withUnderlay: false);
       final controller = DocumentController(doc);
       final before = snapshot(controller);
@@ -905,10 +895,57 @@ void main() {
       );
       expect(
         after.structure,
-        greaterThan(before.structure),
-        reason: '#863: a refusal should wake nothing, and today it does',
+        before.structure,
+        reason: 'a refusal changed nothing, so nothing was invalidated',
       );
-      expect(controller.undo.canUndo, isTrue, reason: '#863');
+      expect(after.wires, before.wires);
+      expect(
+        controller.undo.canUndo,
+        isFalse,
+        reason: 'and it left no entry for Ctrl+Z to land on',
+      );
+    });
+
+    test('AND A REFUSAL DOES NOT COME BETWEEN A PERSON AND THEIR LAST REAL '
+        'EDIT, which is what the defect actually cost', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THE ARTIFACT, WHICH THE CASE ABOVE CANNOT REACH
+      // ═══════════════════════════════════════════════════════════════
+      // An empty stack is a weak proof: it says a refusal added nothing
+      // when there was nothing to add it to. The shape that cost
+      // somebody their work is a real edit, THEN a refusal, THEN
+      // `Ctrl+Z` — which used to throw `StateError: revert called before
+      // apply()` and take the undo stack with it, leaving the real edit
+      // unreachable.
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(
+          SetPlanPinCommand(
+            carrier: PinCarrier.rack,
+            entityId: _rackId,
+            pin: _pin,
+          ),
+        );
+      expect(doc.racks[_rackId]!.planPin, isNotNull, reason: 'the real edit');
+
+      // A pin naming an underlay this document does not have. Reachable
+      // by a stale reference: an underlay removed between a gesture and
+      // its commit.
+      controller.run(
+        SetPlanPinCommand(
+          carrier: PinCarrier.rack,
+          entityId: _rackId,
+          pin: const PlanPin(underlayId: Uuid('ul-gone'), at: PxPt(1, 1)),
+        ),
+      );
+
+      controller.undo.undo(doc);
+
+      expect(
+        doc.racks[_rackId]!.planPin,
+        isNull,
+        reason: 'one Ctrl+Z reached the real edit rather than throwing',
+      );
     });
 
     test('adding and removing an underlay wake structure and wires', () {

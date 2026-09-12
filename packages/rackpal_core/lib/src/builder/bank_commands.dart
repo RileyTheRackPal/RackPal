@@ -81,7 +81,7 @@ final class RenameBankCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) {
+  bool apply(TemplateBody aggregate) {
     final at = aggregate.banks.indexWhere((b) => b.key == bankKey);
     if (at < 0) throw StateError('no bank $bankKey to rename');
     final bank = aggregate.banks[at];
@@ -90,6 +90,7 @@ final class RenameBankCommand extends Command<TemplateBody> {
     bank
       ..label = toLabel
       ..abbr = toAbbr;
+    return true;
   }
 
   @override
@@ -134,7 +135,7 @@ final class RemoveBankCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) {
+  bool apply(TemplateBody aggregate) {
     final at = aggregate.banks.indexWhere((b) => b.key == bankKey);
     if (at < 0) throw StateError('no bank $bankKey to remove');
     _at = at;
@@ -146,6 +147,7 @@ final class RemoveBankCommand extends Command<TemplateBody> {
         port.bankKey = null;
       }
     }
+    return true;
   }
 
   @override

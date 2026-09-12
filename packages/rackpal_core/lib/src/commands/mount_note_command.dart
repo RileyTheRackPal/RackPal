@@ -152,7 +152,7 @@ final class SetMountNoteCommand extends Command<RackDocument> {
   Object? get mergeKey => (SetMountNoteCommand, id);
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final d = doc.devices[id]!;
     final base = _requireOffRack(d);
     _prevUpdatedAt = d.meta.updatedAt;
@@ -160,6 +160,7 @@ final class SetMountNoteCommand extends Command<RackDocument> {
     _prevLocalRevision = d.meta.localRevision;
     d.placement = base.withMountNote(to);
     d.meta.touch(now, actor);
+    return true;
   }
 
   @override

@@ -68,7 +68,7 @@ class SelectionController extends ChangeNotifier {
   /// * [SelectMode.subtract] — focus is cleared iff it was among the ids
   ///   just removed; otherwise it is left as-is. A minimal, honest choice:
   ///   moving focus to some other surviving member would be guessing which.
-  void apply(Iterable<Uuid> hits, SelectMode mode) {
+  bool apply(Iterable<Uuid> hits, SelectMode mode) {
     final hitList = hits.toList(growable: false);
     switch (mode) {
       case SelectMode.replace:
@@ -83,6 +83,7 @@ class SelectionController extends ChangeNotifier {
         if (_focus != null && removed.contains(_focus)) _focus = null;
     }
     notifyListeners();
+    return true;
   }
 
   /// Clears the selection entirely (equivalent to `apply(const [],

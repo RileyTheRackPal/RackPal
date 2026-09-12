@@ -168,7 +168,7 @@ final class BindEndpointCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId, port.portId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     // Cleared, not appended to: `apply` runs again on every redo and must
     // describe THIS run.
     _materialised.clear();
@@ -183,7 +183,7 @@ final class BindEndpointCommand extends Command<RackDocument> {
     }
 
     final link = doc.links[linkId];
-    if (link == null) return;
+    if (link == null) return false;
     final conductor = link.conductors.first;
     final landed = PortEndpoint(port.portId);
     // THE OTHER END IS UNTOUCHED, WHICHEVER ONE THIS IS. Rebuilding both
@@ -214,6 +214,7 @@ final class BindEndpointCommand extends Command<RackDocument> {
       updatedAt: now,
       updatedBy: actor,
     );
+    return true;
   }
 
   @override

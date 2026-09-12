@@ -109,7 +109,7 @@ final class AddRackCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     doc.racks[id] = Rack(
       id: id,
       name: name,
@@ -125,6 +125,7 @@ final class AddRackCommand extends Command<RackDocument> {
       isSwingFrame: isSwingFrame,
       hingeSide: hingeSide,
     );
+    return true;
   }
 
   @override

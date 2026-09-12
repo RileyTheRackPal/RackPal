@@ -76,7 +76,10 @@ final class SetConnectorAliasesCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => const [];
 
   @override
-  void apply(RackDocument doc) => _write(doc, to);
+  bool apply(RackDocument doc) {
+    _write(doc, to);
+    return true;
+  }
 
   @override
   void revert(RackDocument doc) => _write(doc, from);

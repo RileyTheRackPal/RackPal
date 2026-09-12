@@ -297,7 +297,7 @@ final class ConnectPortsCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id, netId, from.portId, to.portId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     // Cleared, not appended to: `apply` runs again on every redo and this
     // must describe THIS run, not the union of all of them.
     _materialised.clear();
@@ -336,6 +336,7 @@ final class ConnectPortsCommand extends Command<RackDocument> {
         ),
       ],
     );
+    return true;
   }
 
   @override

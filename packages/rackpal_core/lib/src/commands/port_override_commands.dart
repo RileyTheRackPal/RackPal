@@ -144,7 +144,7 @@ final class SetPortFactCommand extends Command<RackDocument> {
   Object? get mergeKey => (SetPortFactCommand, portId, field);
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     _materialised = false;
     var port = doc.ports[portId];
     if (port == null) {
@@ -159,6 +159,7 @@ final class SetPortFactCommand extends Command<RackDocument> {
     }
     _previous = _read(port);
     _write(port, value);
+    return true;
   }
 
   @override

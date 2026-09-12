@@ -158,7 +158,7 @@ final class AddStructureCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [deviceId, bodyId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final meta = EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor);
     doc.devices[deviceId] = DeviceInstance(
       id: deviceId,
@@ -184,6 +184,7 @@ final class AddStructureCommand extends Command<RackDocument> {
       distributionDeviceLocationId: locationId,
       enclosureModel: enclosureModel,
     );
+    return true;
   }
 
   @override
@@ -224,13 +225,14 @@ final class RemoveStructureCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [bodyId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     // Reassigned, not accumulated: `apply` runs again on every redo and
     // each run must describe THAT run.
     _removedBody = doc.structures.remove(bodyId);
     final deviceId = _removedBody?.deviceId;
     _removedDevice = deviceId == null ? null : doc.devices.remove(deviceId);
     _applied = true;
+    return true;
   }
 
   @override
@@ -306,7 +308,7 @@ final class AddOutletCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     doc.outlets[id] = Outlet(
       id: id,
       structureBodyId: structureBodyId,
@@ -323,6 +325,7 @@ final class AddOutletCommand extends Command<RackDocument> {
       pathwayId: pathwayId,
       nominalRunLength: nominalRunLength,
     );
+    return true;
   }
 
   @override
@@ -356,9 +359,10 @@ final class RemoveOutletCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     _removed = doc.outlets.remove(id);
     _applied = true;
+    return true;
   }
 
   @override

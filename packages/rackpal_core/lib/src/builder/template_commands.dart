@@ -550,7 +550,10 @@ final class SetTemplateFieldCommand<T> extends Command<TemplateBody> {
   Object? get mergeKey => (SetTemplateFieldCommand, field.key);
 
   @override
-  void apply(TemplateBody aggregate) => field.set(aggregate, to);
+  bool apply(TemplateBody aggregate) {
+    field.set(aggregate, to);
+    return true;
+  }
 
   @override
   void revert(TemplateBody aggregate) => field.set(aggregate, from);
