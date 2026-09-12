@@ -19823,6 +19823,83 @@ because it is inconvenient**, and the half of it that `T1.01` alone can answer i
 moves from the Plan view epic's criterion to M6's, and the Plan view epic's remaining criterion is
 discharged by `PLAN-J/1` and `PLAN-J/2`.
 
+### §11.155 DR-156 · A command reports whether it applied, and a transaction may take its label from its first child
+
+**Settled by the user on 2026-09-12**, closing `#863` and `#866`. Both were filed rather than fixed
+in flight because each changes the `Command` protocol every command in this product implements, and
+roadmap §8.3 makes that a ruling rather than a commit.
+
+**§11.155.1 RULED: `apply` RETURNS WHETHER IT CHANGED THE AGGREGATE, AND A REFUSAL NEVER REACHES THE
+UNDO STACK.**
+
+A command that self-refuses inside `apply` still becomes a child of its transaction, so the
+transaction is recorded, the epochs bump over a document that did not change, and the next `Ctrl+Z`
+calls `revert` on a command that never applied. Probed on the shipped `SetPlanPinCommand`:
+`canUndo` is true after a refusal and the undo throws
+`StateError: revert called before apply()`.
+
+**THE CONCEPT WAS ALREADY IN `_commit` AND COULD NOT SEE THIS CASE.** It reads
+`if (b.children.isEmpty) return; // no-op edits add no history`. What was missing was any way for a
+command to say it declined, so a refusal was indistinguishable from a write. `TxnScope.add` now
+drops a child that returned false, and that existing guard handles the rest.
+
+**THE RETURN TYPE RATHER THAN A SECOND MEMBER, AND THE USER CHOSE IT.** A `bool get applied` beside a
+`void apply` was offered and refused: it is two members that can drift, and a default of `true` is a
+hole every future refusing command falls into silently. **`bool apply` has no default to fall
+through.** The compiler stops at every implementation and each author decides.
+
+*Measured, not estimated:* **78 `apply` implementations across 40 files, of which 24 carry a refusal
+path today.** The ticket said twenty-nine, counting `_applied` bits rather than refusal paths; the
+two questions are different and the second is the one this clause is about.
+
+**THE `StateError` IN `revert` STAYS.** It catches *revert called before apply*, which is a real
+programming error, and softening it would trade a loud bug for a silent one. The defect was never the
+throw; it was that a refusal reached the stack at all.
+
+**§11.155.2 RULED: A TRANSACTION'S LABEL MAY BE DEFERRED TO ITS FIRST CHILD, AND IS THEN READ AFTER
+`apply`.**
+
+`DocumentController.run` is `transact(c.label, (tx) => tx.add(c))`. Dart evaluates `c.label` before
+the closure runs and the closure is what calls `apply`, so a command that decides its label from what
+it found in the document is asked for that label while the document still holds the old state.
+
+**THE AFFECTED SET IS THREE COMMANDS AND THEY ARE NAMED HERE**, because a fix cannot be tested
+against *"every second act"*: `SetPlanPinCommand` (`movePlanPin`), `SetRoomOutlineCommand`
+(`reshapeRoomOutline`) and `SetPlanScaleCommand` (`recalibratePlan`). Two further commands look
+dynamic and are not: `SetRoomEstimateCommand` and `SetEntityPropertyCommand` both discriminate on
+state known at construction, so their labels were always right.
+
+`transact`'s label becomes **nullable, meaning the first child names this entry**, resolved at commit
+after every child has applied. `run` passes null. **A caller that names the act still wins**, which
+is what keeps `Undo Import CSV` from becoming `Undo Set Property`.
+
+> **THE OBVIOUS MIRROR WAS DRAFTED AND REJECTED, AND THE REASON IS RECORDED BECAUSE IT IS NOT
+> OBVIOUS.** `Transaction.mergeKey` already forwards to a single child, with a comment explaining
+> that the wrapper `run` adds would otherwise make every `mergeKey` declaration dead code, and the
+> same three lines would have fixed this. They would also silently override a caller who named the
+> act, and shipped code shows the cost: `LEN-A/4`'s outline close names its own transaction and adds
+> **one child or two** depending on whether the estimate auto-filled, so one gesture would produce
+> two different menu entries depending on a derivation nobody can see.
+
+**§11.155.3 Why one ruling and not two.** The two defects are one subject: what a command tells its
+transaction, and when the transaction listens. `TxnScope` is shared by both undo stacks, so the
+refusal fix lands **once**; `TemplateEditSession` carries its own `_TxnBuilder` and `_commit`, so the
+label fix lands **twice**. That asymmetry is only visible from a census and is why one is recorded
+here rather than assumed symmetrical.
+
+**§11.155.4 What it does not rule.**
+
+- **Whether `revert` should also report.** It should not: `revert` is only ever reached by a command
+  that applied, which is exactly what §11.155.1 makes true.
+- **Whether a refusal should be shown to a person.** `onRefuse` already exists at the UI layer and
+  several commands already word their own refusals. Whether the machinery should surface one that
+  nobody worded is a separate question with no ticket.
+- **Three call sites that pass a command's own `.label` into `transact`** carry the defect's shape
+  with no symptom, because the commands they pass have static labels: `app_shell.dart` and
+  `pathway_actions.dart` (both `commands.first.label`) move to the deferred form, and
+  `rack_canvas_screen.dart` keeps its explicit label because it names its transaction after its
+  **second** child deliberately.
+
 ---
 
 ## 12. Superseded rulings
