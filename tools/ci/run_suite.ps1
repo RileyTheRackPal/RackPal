@@ -758,7 +758,15 @@ $SuiteFloors = @{
     # comment could not reach: an empty undo stack proves a refusal added
     # nothing to nothing, while a real edit THEN a refusal THEN Ctrl+Z is
     # the shape that used to throw and take the stack with it.
-    'rackpal_core'   = 4600
+    # 4605 at DR-156/2: +5, and every one reads `UndoStack.undoLabelKey`
+    # rather than `command.label`. The existing label cases assert the
+    # COMMAND, which is correct after apply and is exactly why nothing
+    # caught #866 for three chapters: the artifact a person sees was
+    # never read. One of the five was rewritten after a mutation SURVIVED
+    # -- nothing in the repository distinguished `children.first` from
+    # `children.last`, so the case now stacks three children and asserts
+    # which end names the entry.
+    'rackpal_core'   = 4605
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

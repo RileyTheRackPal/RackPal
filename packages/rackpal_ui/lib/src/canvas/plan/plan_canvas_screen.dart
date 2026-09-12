@@ -821,15 +821,16 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// would press `Ctrl+Z` forty times to put it back.
   ///
   /// ═══════════════════════════════════════════════════════════════════
-  /// AND THE LABEL IS PASSED EXPLICITLY, WHICH IS `#866` WORKED AROUND
+  /// AND THE COMMAND NAMES THE ENTRY, WHICH IS `#866` FIXED RATHER THAN
+  /// WORKED AROUND
   /// ═══════════════════════════════════════════════════════════════════
   /// `SetRoomOutlineCommand` decides between `drawRoomOutline` and
   /// `reshapeRoomOutline` inside `apply`, from what the document held.
-  /// `DocumentController.run` is `transact(c.label, …)` and reads the
-  /// label BEFORE that, so a bare `run` here would put "Undo Draw Room
-  /// Outline" in the Edit menu in front of somebody who drew nothing. The
-  /// transaction's own label is what the menu shows, so naming it is both
-  /// the fix and the proof the defect is real.
+  /// This chapter shipped with `LabelKey.reshapeRoomOutline` passed by
+  /// hand, because `transact` read its label before `apply` ran and a
+  /// bare `run` would have said "Undo Draw Room Outline" to somebody who
+  /// drew nothing. DR-156 §11.155.2 moved that read to commit time, so
+  /// the hand-written label is gone and the command answers for itself.
   void _commitReshape() {
     final index = _grabbedVertex;
     final reshaping = _reshaping;
@@ -842,7 +843,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     // twice to reach the edit they meant.
     if (landed == reshaping.outline.vertices[index]) return;
     final moved = _liveVerticesOf(reshaping.outline);
-    _controller.transact(LabelKey.reshapeRoomOutline, (tx) {
+    _controller.transact(null, (tx) {
       tx.add(
         SetRoomOutlineCommand(
           locationId: reshaping.locationId,
@@ -916,7 +917,18 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       //
       // `tx.add` APPLIES IMMEDIATELY, which is what lets the derivation
       // below read the outline it is derived from.
-      _controller.transact(LabelKey.drawRoomOutline, (tx) {
+      //
+      // ═══════════════════════════════════════════════════════════════
+      // NULL: THE OUTLINE COMMAND NAMES THIS ENTRY (DR-156 §11.155.2)
+      // ═══════════════════════════════════════════════════════════════
+      // This passed `LabelKey.drawRoomOutline` by hand, which was right
+      // for a first draw and WRONG for the `Redraw…` button beside it:
+      // somebody who pressed Redraw and closed a new shape got "Undo Draw
+      // Room Outline". `SetRoomOutlineCommand` decides between the two
+      // from what the document held, and now that the transaction reads
+      // its label after `apply`, letting it answer is both the simpler
+      // code and the correct menu entry.
+      _controller.transact(null, (tx) {
         tx.add(
           SetRoomOutlineCommand(
             locationId: closed.locationId,

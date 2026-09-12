@@ -719,7 +719,12 @@ final class AppShellState extends State<AppShell>
       doc: session.document,
       onEdit: (commands) {
         if (commands.isEmpty) return;
-        session.controller.transact(commands.first.label, (tx) {
+        // NULL: THE FIRST CHILD NAMES IT, read after it has applied
+        // (DR-156 §11.155.2). This passed `commands.first.label`, which is
+        // the same intent evaluated a moment too early; no command here
+        // decides its label from the document today, so this was the
+        // defect's SHAPE without its symptom.
+        session.controller.transact(null, (tx) {
           for (final command in commands) {
             tx.add(command);
           }

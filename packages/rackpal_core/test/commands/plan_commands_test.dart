@@ -527,6 +527,142 @@ void main() {
     });
   });
 
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-156 §11.155.2: THE UNDO STACK, WHICH IS THE ARTIFACT
+  // ═══════════════════════════════════════════════════════════════════
+  // Every case in this file that checks a label reads `command.label`,
+  // which is correct after `apply` and is EXACTLY WHY NOTHING CAUGHT
+  // `#866`. What a person sees is `UndoStack.undoLabelKey`, and for the
+  // whole life of these three commands it reported the FIRST half of each
+  // pair: the transaction read its label before the closure that applies
+  // the command had run.
+  //
+  // House style says assert the artifact and not the mechanism. These are
+  // the artifact.
+  group('DR-156: the Edit menu reads the label the document decided', () {
+    test('A PIN MOVE REPORTS `movePlanPin`, not `setPlanPin`', () {
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(
+          SetPlanPinCommand(
+            carrier: PinCarrier.rack,
+            entityId: _rackId,
+            pin: _pin,
+          ),
+        );
+      expect(
+        controller.undo.undoLabelKey,
+        LabelKey.setPlanPin.name,
+        reason: 'the first pin is a set, and always reported correctly',
+      );
+
+      controller.run(
+        SetPlanPinCommand(
+          carrier: PinCarrier.rack,
+          entityId: _rackId,
+          pin: const PlanPin(underlayId: _underlayId, at: PxPt(40, 50)),
+        ),
+      );
+
+      expect(controller.undo.undoLabelKey, LabelKey.movePlanPin.name);
+    });
+
+    test('A REDRAWN OUTLINE REPORTS `reshapeRoomOutline`', () {
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(
+          SetRoomOutlineCommand(locationId: _locationId, outline: _outline),
+        );
+      expect(controller.undo.undoLabelKey, LabelKey.drawRoomOutline.name);
+
+      controller.run(
+        SetRoomOutlineCommand(locationId: _locationId, outline: _reshaped),
+      );
+
+      expect(controller.undo.undoLabelKey, LabelKey.reshapeRoomOutline.name);
+    });
+
+    test('A RECALIBRATION REPORTS `recalibratePlan`', () {
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(
+          SetPlanScaleCommand(underlayId: _underlayId, scale: _scale),
+        );
+      expect(controller.undo.undoLabelKey, LabelKey.calibratePlan.name);
+
+      controller.run(
+        SetPlanScaleCommand(underlayId: _underlayId, scale: _recalibrated),
+      );
+
+      expect(controller.undo.undoLabelKey, LabelKey.recalibratePlan.name);
+    });
+
+    test('AND A CALLER THAT NAMES THE ACT STILL WINS, which is what keeps '
+        'a bulk operation from being named after its first row', () {
+      // The null is "nobody named this", not "always ask the child". A
+      // transaction whose caller chose a label keeps it however many
+      // children it has and whatever they would have said.
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..transact(LabelKey.importCsv, (tx) {
+          tx.add(
+            SetRoomOutlineCommand(locationId: _locationId, outline: _outline),
+          );
+        });
+
+      expect(
+        controller.undo.undoLabelKey,
+        LabelKey.importCsv.name,
+        reason: 'a single child does not override a caller who named it',
+      );
+    });
+
+    test('THE FIRST SURVIVING CHILD NAMES IT, and a REFUSED one is not a '
+        'child by then (`#863` and `#866` composing)', () {
+      // ═══════════════════════════════════════════════════════════════
+      // THREE CHILDREN, AND THE MIDDLE ONE IS THE POINT
+      // ═══════════════════════════════════════════════════════════════
+      // Two children were not enough: the first draft of this case had a
+      // refusal then one real command, so `children.first` and
+      // `children.last` were the SAME object and a mutation swapping them
+      // SURVIVED. Nothing in the repository pinned which end names a
+      // transaction, and the two-child case is real — the rack canvas
+      // stacks a library copy under an add and is named after the add.
+      //
+      // So: a refusal, then a draw, then a clear. The refusal must not
+      // name it, and the DRAW must, not the clear.
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..transact(null, (tx) {
+          tx
+            // Refuses: no such underlay.
+            ..add(
+              SetPlanPinCommand(
+                carrier: PinCarrier.rack,
+                entityId: _rackId,
+                pin: const PlanPin(
+                  underlayId: Uuid('ul-gone'),
+                  at: PxPt(1, 1),
+                ),
+              ),
+            )
+            ..add(
+              SetRoomOutlineCommand(
+                locationId: _locationId,
+                outline: _outline,
+              ),
+            )
+            ..add(ClearRoomOutlineCommand(locationId: _locationId));
+        });
+
+      expect(
+        controller.undo.undoLabelKey,
+        LabelKey.drawRoomOutline.name,
+        reason: 'the first SURVIVING child, not the refusal and not the last',
+      );
+    });
+  });
+
   group('the room outline: draw, reshape and clear (`LEN-A/2`)', () {
     test('draws a shape where there was none, and the label says so', () {
       final doc = _doc();

@@ -68,7 +68,10 @@ final class TxnScope<A> {
 final class _TxnBuilder {
   _TxnBuilder(this.label, this.selectionBefore);
 
-  final LabelKey label;
+  /// The name the Edit menu shows, or **null meaning the first child names
+  /// this entry** (DR-156 §11.155.2), resolved in [DocumentController._commit]
+  /// after every child has applied.
+  final LabelKey? label;
   final Selection selectionBefore;
   final List<Command<RackDocument>> children = [];
 }
@@ -166,9 +169,32 @@ class DocumentController {
   /// captured before serializing.
   void markSaved() => markSavedAt(doc.stateId);
 
-  void run(Command<RackDocument> c) => transact(c.label, (tx) => tx.add(c));
+  /// Runs one command as one undo entry, **named by that command after it
+  /// has applied** (DR-156 §11.155.2).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE NULL IS THE FIX, AND THIS LINE IS WHERE `#866` LIVED
+  /// ═══════════════════════════════════════════════════════════════════
+  /// This read `transact(c.label, (tx) => tx.add(c))`. Dart evaluates
+  /// `c.label` BEFORE the closure runs and the closure is what calls
+  /// `apply`, so a command that decides its label from what it found in
+  /// the document was asked for that label while the document still held
+  /// the old state. Three commands decide that way and every one of them
+  /// names the SECOND half of a deliberate pair, so half of each pair
+  /// never reached a person: `movePlanPin`, `reshapeRoomOutline` and
+  /// `recalibratePlan`.
+  void run(Command<RackDocument> c) => transact(null, (tx) => tx.add(c));
 
-  T transact<T>(LabelKey label, T Function(TxnScope<RackDocument> tx) body) {
+  /// Runs [body] as ONE undo entry.
+  ///
+  /// [label] names it. **NULL MEANS THE FIRST CHILD NAMES IT**, read at
+  /// commit time, which is the only moment every child has applied and so
+  /// the only moment a label decided from the document is right.
+  ///
+  /// A CALLER THAT NAMES THE ACT STILL WINS, and that is not a detail: it
+  /// is what keeps "Undo Import CSV" from becoming "Undo Set Property"
+  /// when a bulk operation's first child happens to be a property write.
+  T transact<T>(LabelKey? label, T Function(TxnScope<RackDocument> tx) body) {
     final open = _open;
     if (open != null) {
       // Flatten: nested transactions share the outermost's children list,
@@ -192,8 +218,15 @@ class DocumentController {
 
   void _commit(_TxnBuilder b) {
     if (b.children.isEmpty) return; // no-op edits add no history
+    // RESOLVED HERE AND NOWHERE EARLIER (DR-156 §11.155.2). Every child
+    // has applied by this line, so a command that decides its label from
+    // the document has seen the document. `children` is non-empty by the
+    // guard above, and by `TxnScope.add` every one of them CHANGED
+    // something, so the first child is a real edit rather than a refusal
+    // that happened to be listed first.
+    final label = b.label ?? b.children.first.label;
     final txn = Transaction<RackDocument>(
-      b.label,
+      label,
       b.children,
       b.selectionBefore,
       selection.snapshot(),

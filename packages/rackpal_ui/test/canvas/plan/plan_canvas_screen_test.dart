@@ -1374,14 +1374,15 @@ void main() {
       expect(back!.vertices.first, const PxPt(100, 100));
     });
 
-    testWidgets('THE EDIT MENU NAMES A RESHAPE, which a bare run would '
-        'have called a draw (`#866`)', (tester) async {
-      // `SetRoomOutlineCommand` decides its own label inside `apply`, and
-      // `DocumentController.run` reads `c.label` before that, so the
-      // command's answer is always the `drawRoomOutline` it starts as.
-      // The canvas names the transaction instead, which is what the menu
-      // shows, and this case is the proof the defect is real as well as
-      // the proof it was worked around.
+    testWidgets('THE EDIT MENU NAMES A RESHAPE, which the transaction now '
+        'asks the command for (`#866`, DR-156 §11.155.2)', (tester) async {
+      // WRITTEN AS A WORKAROUND AND KEPT AS A REGRESSION. When this case
+      // shipped at `LEN-A/8` the canvas passed `reshapeRoomOutline` by
+      // hand, because `transact` read its label before `apply` ran and a
+      // bare `run` would have said "Undo Draw Room Outline" to somebody
+      // who drew nothing. DR-156 moved that read to commit time and the
+      // hand-written label is gone; this case did not change, because the
+      // artifact it asserts did not.
       final c = _controller();
       _addRoom(c, outline: _triangle());
       await pump(tester, c, reshape: _reshaping());
