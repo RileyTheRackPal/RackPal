@@ -9370,6 +9370,103 @@ Board: `#649` re-parented from `PLAN-J` (`#606`) to `M6-J` (`#357`), the story t
 this project's physical print tests on real hardware, which keeps the Saga → Epic → Story → Chapter
 hierarchy legal and puts the drill beside the three tests it most resembles.
 
+#### 5.9.29 `#863` and `#866`: the command machinery gets its contract · `DR-156` · no version move
+
+`DR-156/1` (`#867`) and `DR-156/2` (`#868`), 2026-09-12. Both were found by `LEN-A`, filed rather
+than fixed in flight, and both change the `Command` protocol every command in this product
+implements.
+
+**NO VERSION BUMP, AND THAT IS THE RULE RATHER THAN AN OMISSION.** docs/14 §14.0 makes the patch
+*"major tasks completed within that epic"*, and the epic under development is the Plan view. These
+close under `#786`, the cross-cutting debt epic. The precedent is in the tree: `477bc2e` closed
+`PERF-G` under the same epic and touched no `pubspec.yaml` and no `kAppVersion`.
+
+##### 5.9.29.1 The compiler was the census, and that was the point of the choice
+
+Three shapes were put to the user. `bool apply(A)` changes 78 implementations across 40 files and
+the compiler finds every one; an abstract `bool get applied` is additive but leaves two members that
+can drift; a defaulted `applied` touches only the 24 that refuse and leaves a hole. **The user chose
+the return type**, and the run bore the argument out: changing it produced **53 errors in exactly the
+24 classes that can refuse**, each decided by reading it.
+
+**19 of the 24 return their own `_applied` bit rather than a literal `true`**, which a regex would
+have got wrong: `_writePin` can fail after every guard has passed, so `return true` there is a claim
+where `_applied` is a fact.
+
+##### 5.9.29.2 The sweep's first run ate a method
+
+It treated the abstract declaration `void apply(A aggregate);` as an arrow body, walked past the
+semicolon to the next `=>` in the file, and consumed `mergeWith`. The tree was reverted whole and the
+script taught the case.
+
+**A global rename also reached a commented-out sketch** in `snapshot_command.dart`, which is corrected
+rather than reverted: the sketch now returns `true` unconditionally, and the comment says in terms
+that this is a question for whoever builds it, because a snapshot whose `after` map equals what is
+already there changed nothing.
+
+##### 5.9.29.3 Thirteen analyzer infos fixed rather than pinned
+
+Ten `join_return_with_assignment` became `return _applied = <expr>;`, which reads as *record and
+report* and is better than what it replaced. Three `curly_braces_in_flow_control_structures` appeared
+only because `return false;` is longer than `return;` and made an `if` wrap onto its own line. The
+pin stays at 233.
+
+##### 5.9.29.4 A test came due on a ruling ID
+
+`LEN-A/2` shipped a case asserting the DEFECT, with an instruction: *"when a refusal stops reaching
+the stack, this case fails and whoever fixed it inverts it to the assertion it was originally written
+as."* It was **the one case in the repository that failed** when the drop landed.
+
+That is the cleanest instance
+[a test that asserts an absence names its due date](/practices/a-test-that-asserts-an-absence-names-its-due-date.md)
+has: the due date was a ruling ID, and the test failed on the commit that made it wrong rather than
+being found by a person reading old comments.
+
+**One case was added beside it**, because an empty undo stack is a weak proof: it says a refusal
+added nothing to nothing. The shape that cost somebody their work is a real edit, then a refusal,
+then `Ctrl+Z`, which used to throw and take the stack with it.
+
+##### 5.9.29.5 A mutation survived, and it found a rule nothing pinned
+
+Four mutations were run against `#868`. Restoring the early label read killed three cases; ignoring
+the caller's label killed one; keeping a refused child killed three. **Reading `children.last`
+instead of `children.first` SURVIVED.**
+
+The case meant to pin it had a refusal and one real command, so after the refusal was dropped
+`children.first` and `children.last` were **the same object**. Nothing in the repository
+distinguished which end of a transaction names it, and the two-child case is real: the rack canvas
+stacks a library copy under an add and is named after the add. The case now stacks three children and
+the mutation dies.
+
+Recorded against
+[a property proven by a fixture's default is not proven](/practices/a-fixture-default-is-not-a-proof.md),
+whose scope this widens: it was about a fixture's default VALUE, and this is a fixture's SHAPE.
+
+##### 5.9.29.6 What the tests read, and why it matters
+
+Every existing label case in `plan_commands_test.dart` reads `command.label`, which is **correct
+after apply** and is exactly why nothing caught `#866` for three chapters. The artifact a person sees
+is `UndoStack.undoLabelKey`, and no case read it for a paired label. House style says assert the
+artifact and not the mechanism; here the mechanism was asserted and the artifact was not.
+
+##### 5.9.29.7 What was found that neither ticket named
+
+- **Three more call sites pass a command's own `.label` into `transact`**, so they carry the defect's
+  shape. None had the symptom, because the commands they pass have static labels. Two moved to the
+  deferred form; `rack_canvas_screen.dart` keeps its explicit label because it names its transaction
+  after its **second** child deliberately, and that is now written down where it happens.
+- **`_outlineClick` was reporting the wrong act and nobody had filed it.** It passed
+  `drawRoomOutline` by hand, so pressing `Redraw…` and closing a new shape said *"Undo Draw Room
+  Outline"*. Deferring to the command fixed it as a side effect.
+- **docs/14 §14.0's count of where the version lives was stale by one** since `rackpal_pdfium` joined
+  the workspace at `PLAN-K`. The paragraph now names the gate instead of the number.
+
+##### 5.9.29.8 Evidence
+
+Floors: `rackpal_core` 4599 to 4605. Gates: 17. Analyzer pin unmoved at 233.
+
+**Commits** (§8.8). The ruling `60fbc99`. `#867` `c4c314d`. `#868` `48b32f7`.
+
 ---
 
 ## 6. The dependency graph, as it actually stands

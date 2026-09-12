@@ -1,5 +1,39 @@
 # Update Log
 
+## 2026-09-12 (twenty-third entry)
+
+* **Ruled**: [DR-156](/decisions/dr-156-a-command-reports-whether-it-applied.md).
+  `apply` returns whether it changed the aggregate, and a transaction's label may
+  be deferred to its first child and read after `apply`.
+* **Closed**: `#863` and `#866` with `#867` and `#868`. **No version move**: they
+  close under the cross-cutting debt epic and the patch counts tasks in the epic
+  under development (docs/14 §14.0). `477bc2e` is the precedent in the tree.
+* **Note**: **THE COMPILER WAS THE CENSUS, WHICH IS WHY THE USER PICKED THAT
+  SHAPE.** Three were offered: a `bool` return across 78 implementations, an
+  abstract `applied` getter, or a defaulted one across 24. The return type has no
+  default to fall through, and the run bore it out: 53 errors in exactly the 24
+  classes that can refuse, each decided by reading it. **19 return their own
+  `_applied` bit rather than a literal `true`**, which a regex would have got
+  wrong, because `_writePin` can fail after every guard has passed.
+* **Note**: **A TEST CAME DUE ON A RULING ID.** `LEN-A/2` shipped a case
+  asserting the DEFECT and naming what would retire it. It was the one case in
+  the repository that failed when the drop landed, which is the cleanest instance
+  [a test that asserts an absence names its due date](/practices/a-test-that-asserts-an-absence-names-its-due-date.md)
+  has.
+* **Note**: **A MUTATION SURVIVED AND FOUND A RULE NOTHING PINNED.** Reading
+  `children.last` instead of `children.first` passed every case, because the one
+  meant to pin it had a refusal and one real command and the refusal is dropped,
+  so first and last were the same object. Recorded as a fourth instance in
+  [a fixture's default is not a proof](/practices/a-fixture-default-is-not-a-proof.md),
+  widening it from a fixture's VALUE to a fixture's SHAPE.
+* **Note**: **THE SWEEP'S FIRST RUN ATE A METHOD.** It read the abstract
+  declaration `void apply(A aggregate);` as an arrow body, walked past the
+  semicolon to the next `=>` and consumed `mergeWith`. Reverted whole, the script
+  taught the case, and the second run is what landed.
+* **Note**: **AND ONE DEFECT NOBODY HAD FILED** fell out of the label fix: the
+  plan canvas passed `drawRoomOutline` by hand, so pressing `Redraw…` and closing
+  a new shape reported *"Undo Draw Room Outline"*.
+
 ## 2026-09-11 (twenty-second entry)
 
 * **Closed**: `LEN-A`'s two deferred chapters, `#864` and `#865`, at `v0.6.55`
