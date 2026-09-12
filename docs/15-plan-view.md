@@ -263,6 +263,14 @@ is which and a boundary of ours would spend ink on what the sheet carries.
 `buildPlanScene` therefore grows no parameter and the four byte-verified
 starter goldens stay shut.
 
+**CORRECTING ONE** is `Reshape…` on the room's row, which is a MODE and
+not a live handle (§11.49.10, `LEN-A/8`). While it runs, that room's
+corners drag and the canvas answers nothing else: no pin moves, no band
+opens, no selection clears. A corner and a pin are both points, so a live
+handle would make one of the two unreachable wherever a plate sits near a
+room corner, and a stray drag would move a figure somebody is about to
+quote. One command per drag, and the figure is re-derived with it.
+
 **WHAT IT FILLS.** `Location.estimatedRunLengthFromRack`, which already
 ranks below `outletNominal` and already sums, with
 `estimatedRunLengthOrigin` recording that the software proposed the figure
