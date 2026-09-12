@@ -101,14 +101,35 @@ warm-cache path at 18m28s.
   not**, and that is now nobody's gate.
 - Queue a run against any branch:
   `az pipelines run --org https://{org}.visualstudio.com --project RackMate --id 1 --branch <name>`
-- **THE SERVICE HAS GONE RED EXACTLY ONCE, AND THIS BULLET SAID IT NEVER HAD.** It read
-  *"Nothing has ever gone red on the service"* until 2026-09-02. Measured over the
-  whole run list on that date: 50 completed runs, 48 succeeded, one cancelled, and
-  **one failed**, run 11 / build `20260829.7` on `refs/pull/5/merge`, 2026-08-29.
-  **So a failing gate STEP is proven end to end**: it failed the analyzer gate with
-  `info count rose by 2` on a tree whose fifteen local gates were green (a staged file
-  edited after `git add`, so only a clean checkout saw it), the service surfaced it, and
-  the PR was blocked.
+- **THE SERVICE HAS GONE RED MORE THAN ONCE AND THE COUNT IS NOT WRITTEN HERE**, on this
+  file's own rule. This bullet read *"Nothing has ever gone red"*, then
+  **"EXACTLY ONCE"** from 2026-09-02, and both were true when written and wrong within
+  days. **Measure it**: `GET /_apis/build/builds?api-version=7.0&$top=500` and count by
+  `result`.
+- **A FAILING GATE STEP IS PROVEN END TO END, AND THE BUILD THAT PROVES IT IS GONE.**
+  Run 11 / build `20260829.7` on `refs/pull/5/merge` failed the analyzer gate with
+  `info count rose by 2`, on a tree whose local gates were green (a staged file edited
+  after `git add`, so only a clean checkout saw it); the service surfaced it and the PR
+  was blocked. **That build has since aged out of retention**: on 2026-09-12 the service
+  held 190 records over ids 1 to 211, with 21 gaps, and `20260829.7` is one of them. The
+  claim stands on this paragraph now rather than on anything anybody can open, which is
+  the argument for writing down what a run PROVED rather than only its number.
+- **BOTH REDS CURRENTLY VISIBLE ARE THE MACHINE, NOT THE TREE**, and telling those apart
+  is the useful skill. Builds 195 (2026-09-11) and 207 (2026-09-12), both
+  `refs/heads/main`, both **overnight**, both a system crash on the agent's own machine:
+  - **195's signature is a TORN WORKSPACE.** `flutter pub get` exits 1, and the analyzer
+    then reports `Target of URI doesn't exist: 'dart:ui'`. A missing `dart:ui` is not a
+    code defect; it is a workspace with no resolved packages.
+  - **207's signature is AN AGENT THAT WENT AWAY.** The job exceeds the 120-minute
+    maximum and `Agent {agent-host} did not respond to a cancelation request`. Read
+    with this file's own note that an unexplained queue is a stopped agent rather than a
+    busy one.
+- **THE DIAGNOSTIC, WHICH COSTS ONE QUERY.** A red on `refs/heads/main` whose commit
+  passed as a `refs/pull/*/merge` build is **the environment, not the tree**: the same
+  bytes were green minutes earlier. `195` was `c28ae95`, PR 94's merge, whose own policy
+  build passed and whose two successors on `main` passed. Check that before reading a
+  single log line, and do not reach for a load or contention theory that the failure's
+  own signature does not support.
 - **A FAILING TEST is still not proven, and that is a different path sharing a word.**
   No test has ever failed on a run, so the JUnit converter's output has only ever been
   parsed in the green direction: **do not yet treat a green Tests tab as proof the
