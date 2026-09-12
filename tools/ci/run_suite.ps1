@@ -766,7 +766,12 @@ $SuiteFloors = @{
     # -- nothing in the repository distinguished `children.first` from
     # `children.last`, so the case now stacks three children and asserts
     # which end names the entry.
-    'rackpal_core'   = 4605
+    # 4612 at the DR-156 follow-up: +7. THREE COMMANDS WROTE AND THEN
+    # REPORTED THEY HAD NOT, which is the sweep's own blind spot: it read
+    # every bare `return;` in an `apply` as a refusal, and three of the
+    # twenty-four sat AFTER a write. Each case here reads the CONTROLLER,
+    # because calling `apply` directly is exactly what could not see it.
+    'rackpal_core'   = 4612
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
