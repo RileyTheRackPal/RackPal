@@ -493,4 +493,99 @@ void main() {
       expect(find.byType(PortGrid), findsNothing);
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-157 §11.156.5: A HEIGHT IMPLIES A SIDE, AND THE FORM READS IT
+  // ═══════════════════════════════════════════════════════════════════
+  // `side` defaults to `none` and this form never asked for it, so a
+  // person could type `4` into RU height, watch Save light, and author a
+  // body that `buildPlaceFromCatalogCommand` routes OFF-RACK: created,
+  // not in the rack, nothing drawn. Reported from the `PLAN-J` demo
+  // (`#869`).
+  //
+  // A SAVE GATE WAS TRIED FIRST AND WAS WRONG. It broke the case above
+  // asserting AC-049's three-field flow, and that case was right: a
+  // fourth interaction is the stall AC-049 exists to prevent.
+  //
+  // These read the body handed to `onSave`, which is what placement
+  // reads. The visible `Occupies` row binds to the same `body.side`, so
+  // it cannot disagree with what is asserted here; driving the navigation
+  // to that section is not what these cases are about.
+  group('DR-157: a rack height fills in the side it implies', () {
+    testWidgets('AC-049 STILL LIGHTS SAVE ON THREE FIELDS, which is the '
+        'thing the first attempt at this broke', (tester) async {
+      await _pump(tester);
+
+      await _type(tester, 'Display name *', 'Patch Panel');
+      await _type(tester, 'Designator prefix *', 'PP');
+      await _type(tester, 'RU height (front) *', '2');
+
+      expect(_saveEnabled(tester), isTrue);
+    });
+
+    testWidgets('a FRONT height alone implies front', (tester) async {
+      final saved = await _pump(tester);
+
+      await _type(tester, 'Display name *', 'Patch Panel');
+      await _type(tester, 'Designator prefix *', 'PP');
+      await _type(tester, 'RU height (front) *', '2');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.side, OccupancySide.front);
+    });
+
+    testWidgets('AND A BODY SAVED THIS WAY IS ONE A RACK WILL TAKE, which '
+        'is the whole point', (tester) async {
+      // The assertion the report is actually about: not "a field got a
+      // value" but "the thing placement checks is now satisfied".
+      final saved = await _pump(tester);
+
+      await _type(tester, 'Display name *', 'Patch Panel');
+      await _type(tester, 'Designator prefix *', 'PP');
+      await _type(tester, 'RU height (front) *', '2');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.side, isNot(OccupancySide.none));
+      expect(saved.single.frontU, 2);
+    });
+
+    testWidgets('AN EXPLICIT SIDE IS NEVER OVERWRITTEN', (tester) async {
+      final saved = await _pump(
+        tester,
+        template: _blank()
+          ..displayName = 'Rear Box'
+          ..typePrefix = 'RB'
+          ..frontU = 1
+          ..side = OccupancySide.rear,
+      );
+
+      await _type(tester, 'RU height (front) *', '3');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(
+        saved.single.side,
+        OccupancySide.rear,
+        reason: 'it fills a blank and never argues with a choice',
+      );
+    });
+
+    testWidgets('and `notInRack` is not contradicted', (tester) async {
+      final saved = await _pump(
+        tester,
+        template: _blank()
+          ..displayName = 'Wall Box'
+          ..typePrefix = 'WB'
+          ..mountMethod = MountMethod.notInRack,
+      );
+
+      await _type(tester, 'RU height (front) *', '2');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.side, OccupancySide.none);
+    });
+  });
 }

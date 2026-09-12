@@ -1063,7 +1063,12 @@ $SuiteFloors = @{
     # one plan survived a switch and closed a shape on another).
     # ELEVEN MUTATIONS, ELEVEN KILLS, including the two that matter most:
     # the canvas handed a null mode, and the button wired to nothing.
-    'rackpal_ui'     = 1753
+    # 1758 at DR-157: +5. A rack height fills in the side it implies, so
+    # AC-049's three fields still light Save and the body they produce is
+    # one a rack will take. The first of the five is the guard on the fix
+    # itself: the save gate tried before this BROKE AC-049's flow, and
+    # that case was right to break.
+    'rackpal_ui'     = 1758
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

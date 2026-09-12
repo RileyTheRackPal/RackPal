@@ -396,15 +396,61 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
   void _run<T>(TemplateField<T> field, T value) {
     if (field.get(_session.body) == value) return;
     setState(() {
-      _session.run(
-        SetTemplateFieldCommand<T>(
-          field: field,
-          from: field.get(_session.body),
-          to: value,
-        ),
-      );
+      // ONE UNDO ENTRY, because typing a height and the side it implies is
+      // one act to the person who typed it. Null names the entry after the
+      // field write, which is the act they performed (DR-156 §11.155.2).
+      _session.transact(null, (tx) {
+        tx.add(
+          SetTemplateFieldCommand<T>(
+            field: field,
+            from: field.get(_session.body),
+            to: value,
+          ),
+        );
+        final derived = _impliedSide();
+        if (derived != null) {
+          tx.add(
+            SetTemplateFieldCommand<OccupancySide>(
+              field: TemplateBodyField.side,
+              from: _session.body.side,
+              to: derived,
+            ),
+          );
+        }
+      });
       _refusal = null;
     });
+  }
+
+  /// The side a rack height implies, or null when nothing should be
+  /// written (DR-157 §11.156.5, the user's call on 2026-09-12).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// DERIVED RATHER THAN DEMANDED, BECAUSE AC-049 FORBIDS A FOURTH FIELD
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `side` defaults to `none` and this form never asked for it, so a
+  /// person could type `4` into RU height, watch `Save` light, and author
+  /// a body `buildPlaceFromCatalogCommand` routes OFF-RACK: created, not
+  /// in the rack, nothing drawn. Reported from the `PLAN-J` demo
+  /// (`#869`).
+  ///
+  /// **The first fix attempted was a save gate, and it was wrong.** It
+  /// broke the case asserting AC-049's *"three required fields then ports,
+  /// then done"*, and that case was right: a fourth interaction is the
+  /// stall AC-049 exists to prevent. Typing a front height IS saying the
+  /// device mounts on the front, so the answer is to read it rather than
+  /// ask for it again.
+  ///
+  /// **IT ONLY EVER FILLS A BLANK.** A person who has chosen a side keeps
+  /// it, whatever they type afterwards, and one who has said `notInRack`
+  /// is not contradicted.
+  OccupancySide? _impliedSide() {
+    final b = _session.body;
+    if (b.side != OccupancySide.none) return null;
+    if (b.mountMethod == MountMethod.notInRack) return null;
+    if (b.frontU <= 0 && b.rearU <= 0) return null;
+    if (b.frontU > 0 && b.rearU > 0) return OccupancySide.both;
+    return b.rearU > 0 ? OccupancySide.rear : OccupancySide.front;
   }
 
   /// Runs one command that is not a field write, and repaints.

@@ -19939,18 +19939,28 @@ that guard **by returning before it**.
 nothing in that work is involved. It was found while auditing DR-156's sweep against this report, and
 the audit did find three real defects of its own; they are not these.
 
-**§11.156.5 What it does not rule: HOW THE BUILDER SHOULD STOP PRODUCING ONE.** The obvious move is to
-require a side before `Save` lights, and **AC-049 forbids it in terms**: *"three required fields
-(name, RU height, designator prefix) then ports, then done."* A fourth interaction is the stall that
-ruling exists to prevent, and an existing case asserts the three-field flow enables `Save`.
+**§11.156.5 RULED: THE BUILDER DERIVES THE SIDE AS THE HEIGHT IS TYPED.** Settled by the user on
+2026-09-12, from three options.
 
-So the builder's half is a live question with at least three answers, and it is the user's: derive
-`side` from the heights as they are typed, so the field the person can see fills itself in and can be
-overridden; derive it only at save, which leaves the visible field disagreeing with what is stored;
-or leave the builder alone and let the refusal above be the whole remedy, which means a template can
-be authored that no rack will take. **The derivation itself is unambiguous either way** and is
-already spelled out in this repository's own test fixture: both heights is `both`, a rear height
-alone is `rear`, otherwise `front`.
+**A SAVE GATE WAS TRIED FIRST AND WAS WRONG.** Requiring a side before `Save` lights broke the
+existing case asserting AC-049's *"three required fields (name, RU height, designator prefix) then
+ports, then done"*, and **that case was right**: a fourth interaction is precisely the stall AC-049
+exists to prevent. The attempt is recorded because the reasoning is what stops somebody trying it
+again.
+
+**Typing a front height IS saying the device mounts on the front**, so the answer is to read it
+rather than ask for it a second time. The derivation is unambiguous and was already spelled out in
+this repository's own test fixture before anybody needed it as a rule: both heights is `both`, a rear
+height alone is `rear`, otherwise `front`.
+
+**IT ONLY EVER FILLS A BLANK.** A person who has chosen a side keeps it whatever they type
+afterwards, and one who has said `notInRack` is not contradicted. The write rides in the field
+edit's own transaction, so a height and the side it implies are one undo entry: it is one act to the
+person who typed it.
+
+**The rejected third option was to leave the builder alone** and let §11.156.2's refusal be the whole
+remedy. It was refused because it leaves a template that can be authored, saved, and taken by no
+rack, with the person finding out at placement time rather than at the moment they could fix it.
 
 ---
 
