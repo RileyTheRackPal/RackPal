@@ -65,7 +65,7 @@ final class AddLinkCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id, netId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     doc.nets[netId] = Net(
       id: netId,
       name: netName,
@@ -92,6 +92,7 @@ final class AddLinkCommand extends Command<RackDocument> {
         ),
       ],
     );
+    return true;
   }
 
   @override
@@ -173,11 +174,12 @@ final class RemoveLinkCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id, if (netId case final n?) n];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     _removedLink = doc.links.remove(id);
     final net = netId;
     _removedNet = net == null ? null : doc.nets.remove(net);
     _applied = true;
+    return true;
   }
 
   @override

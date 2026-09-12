@@ -364,7 +364,12 @@ abstract base class Command<A> {                  // generic over the aggregate 
   /// Non-null makes this eligible to coalesce with an adjacent equal-mergeKey command.
   Object? get mergeKey => null;
 
-  void apply(A aggregate);
+  /// Applies, and returns whether it CHANGED anything (DR-156 §11.155.1).
+  /// False is a refusal and not an error: the thing named is gone, or the
+  /// shape is one this product will not author. `TxnScope.add` drops a child
+  /// that returned false, so a refusal reaches neither the undo stack nor the
+  /// epochs, and `revert` is only ever called on a command that applied.
+  bool apply(A aggregate);
   void revert(A aggregate);
 
   Command<A>? mergeWith(Command<A> next) => null;
@@ -375,6 +380,7 @@ abstract base class Command<A> {                  // generic over the aggregate 
 
 Three properties worth defending:
 
+- **`apply` REPORTS, and a refusal is not an error (DR-156 §11.155.1).** It returns whether it changed the aggregate, so `TxnScope.add` can drop a child that declined. Before that ruling a refused command still became a child: the transaction was recorded, the epochs bumped over an unchanged document, and the next undo threw `StateError: revert called before apply()`. The `StateError` is correct and stays; what was wrong is that a refusal reached the stack. **The return type rather than a second `applied` getter**, because two members can drift and a defaulted one is a hole a future refusing command falls into silently.
 - **`apply`/`revert`, not `undo`/`redo`.** Redo is `apply` again. A command must be idempotent under alternation: `apply; revert; apply` lands in the identical state as a single `apply`. That is the invariant the property test asserts.
 - **Commands store before-values, not whole entities.** `MoveDeviceCommand` holds `{id, fromRuIndex, toRuIndex, fromFace, toFace}`, tens of bytes. A 200-entry history is single-digit MB.
 - **Commands never allocate IDs at `apply` time.** `AddDeviceCommand` generates its UUIDv7 in its *constructor*, so redo recreates the entity with the identical ID and commands stacked on top of it still resolve. This is the most common command-pattern bug and it is invisible until someone does add → connect → undo → undo → redo → redo.

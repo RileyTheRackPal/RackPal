@@ -38,7 +38,7 @@ final class SetRackHeightCommand extends Command<RackDocument> {
   Object? get mergeKey => (SetRackHeightCommand, id);
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final r = doc.racks[id]!;
     _prevUpdatedAt = r.meta.updatedAt;
     _prevUpdatedBy = r.meta.updatedBy;
@@ -46,6 +46,7 @@ final class SetRackHeightCommand extends Command<RackDocument> {
     r
       ..heightU = toHeightU
       ..meta.touch(now, actor);
+    return true;
   }
 
   @override

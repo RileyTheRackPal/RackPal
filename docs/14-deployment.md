@@ -60,12 +60,19 @@ That asymmetry is the whole reason DR-029 refused the one and DR-135 allowed the
 and `PLAN-0` (`#589`) moves nothing because it is the Story that decomposed the epic rather than a
 Chapter that built anything.
 
-**The number is written in six places and gated in one.** `apps/rackpal/pubspec.yaml`, the four
-library `pubspec.yaml`s, and `kAppVersion` in `app_services.dart`, which is the one that matters,
-because it is stamped into `RackDocument.appVersion` on every new document and into every recovery
-sidecar. A release that bumps the pubspec and forgets the constant writes the PREVIOUS version
-permanently into files the user keeps, and nothing about running the app looks wrong.
-`apps/rackpal/test/version_parity_test.dart` compares all six and asserts the leading `0`.
+**The number is written in the app's `pubspec.yaml`, in every library package's `pubspec.yaml`, and
+in `kAppVersion` in `app_services.dart`.** That last one is the one that matters, because it is
+stamped into `RackDocument.appVersion` on every new document and into every recovery sidecar: a
+release that bumps the pubspec and forgets the constant writes the PREVIOUS version permanently into
+files the user keeps, and nothing about running the app looks wrong.
+`apps/rackpal/test/version_parity_test.dart` compares them and asserts the leading `0`.
+
+**THE COUNT IS NOT WRITTEN HERE**, on this corpus's own rule about a second copy of a moving number.
+This paragraph read *"six places"* and *"the four library `pubspec.yaml`s"* until 2026-09-12, and had
+been wrong since `rackpal_pdfium` joined the workspace at `PLAN-K` (DR-153): a package added to the
+workspace is a place the number lives, and nothing connects adding one to editing this sentence.
+**Read the list from `version_parity_test.dart`**, which is the gate and cannot go stale without
+going red.
 
 ---
 

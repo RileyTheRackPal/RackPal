@@ -37,7 +37,10 @@ import 'package:rackpal_core/src/persistence/json_codec.dart'
 final class _TxnBuilder {
   _TxnBuilder(this.label);
 
-  final LabelKey label;
+  /// Null means the first child names this entry (DR-156 §11.155.2). See
+  /// `DocumentController` for why, and see this file's `run` for why the
+  /// fix had to be written twice.
+  final LabelKey? label;
   final List<Command<TemplateBody>> children = [];
 }
 
@@ -130,9 +133,21 @@ final class TemplateEditSession {
     _bumpChanges();
   }
 
-  void run(Command<TemplateBody> c) => transact(c.label, (tx) => tx.add(c));
+  /// Runs one command as one undo entry, named by that command AFTER it
+  /// has applied (DR-156 §11.155.2).
+  ///
+  /// **THE SECOND COPY OF THE SAME FIX, AND THE CENSUS IS WHY IT IS HERE.**
+  /// `TxnScope` is shared with the document's controller, so `#863`'s
+  /// refusal fix landed once and covered both stacks. This one does not
+  /// share: `_TxnBuilder` and `_commit` are this file's own, so the label
+  /// fix lands twice. No command on this stack decides its label from the
+  /// template today, which is exactly the condition under which a defect
+  /// gets fixed in one place and left in the other.
+  void run(Command<TemplateBody> c) => transact(null, (tx) => tx.add(c));
 
-  T transact<T>(LabelKey label, T Function(TxnScope<TemplateBody> tx) body) {
+  /// Runs [body] as one undo entry. [label] names it; **null means the
+  /// first child names it**, read at commit.
+  T transact<T>(LabelKey? label, T Function(TxnScope<TemplateBody> tx) body) {
     if (_closed) {
       throw StateError('TemplateEditSession.transact after close().');
     }
@@ -158,7 +173,10 @@ final class TemplateEditSession {
 
   void _commit(_TxnBuilder b) {
     if (b.children.isEmpty) return; // no-op edits add no history
-    final txn = Transaction<TemplateBody>(b.label, b.children, null, null);
+    // Resolved here, after every child has applied. See the document
+    // controller's `_commit` for the argument in full.
+    final label = b.label ?? b.children.first.label;
+    final txn = Transaction<TemplateBody>(label, b.children, null, null);
     final stateIdBefore = _stateId;
     final stateIdAfter = _nextStateId++;
     undo.push(txn, null, null, clock.nowUtc(), stateIdBefore, stateIdAfter);

@@ -862,8 +862,10 @@ final class SetPortFieldCommand<T> extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) =>
-      field.set(portByKey(aggregate, port), to);
+  bool apply(TemplateBody aggregate) {
+    field.set(portByKey(aggregate, port), to);
+    return true;
+  }
 
   @override
   void revert(TemplateBody aggregate) =>
@@ -906,7 +908,10 @@ final class AddPortCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) => aggregate.ports.add(port);
+  bool apply(TemplateBody aggregate) {
+    aggregate.ports.add(port);
+    return true;
+  }
 
   @override
   void revert(TemplateBody aggregate) {
@@ -947,7 +952,10 @@ final class AddBankCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) => aggregate.banks.add(bank);
+  bool apply(TemplateBody aggregate) {
+    aggregate.banks.add(bank);
+    return true;
+  }
 
   @override
   void revert(TemplateBody aggregate) {
@@ -988,7 +996,7 @@ final class RemovePortCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) {
+  bool apply(TemplateBody aggregate) {
     final at = aggregate.ports.indexWhere((p) => p.key.v == port.v);
     if (at < 0) throw StateError('no port ${port.v} to remove');
     _at = at;
@@ -997,6 +1005,7 @@ final class RemovePortCommand extends Command<TemplateBody> {
     aggregate.passthroughPairs.removeWhere(
       (pair) => pair.frontKey.v == port.v || pair.rearKey.v == port.v,
     );
+    return true;
   }
 
   @override
@@ -1057,15 +1066,18 @@ final class RenamePortKeyCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) => _rename(
-    aggregate,
-    was: from,
-    now: to,
-    aliases: (existing) => [
-      ...existing,
-      if (recordAlias && !existing.any((k) => k.v == from.v)) from,
-    ],
-  );
+  bool apply(TemplateBody aggregate) {
+    _rename(
+      aggregate,
+      was: from,
+      now: to,
+      aliases: (existing) => [
+        ...existing,
+        if (recordAlias && !existing.any((k) => k.v == from.v)) from,
+      ],
+    );
+    return true;
+  }
 
   @override
   void revert(TemplateBody aggregate) => _rename(

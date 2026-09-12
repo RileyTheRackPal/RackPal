@@ -92,7 +92,7 @@ final class AddDeviceCommand extends Command<RackDocument> {
   };
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     doc.devices[id] = DeviceInstance(
       id: id,
       kind: kind,
@@ -103,6 +103,7 @@ final class AddDeviceCommand extends Command<RackDocument> {
       meta: EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor),
       locationId: _locationId,
     );
+    return true;
   }
 
   @override
@@ -200,7 +201,7 @@ final class RemoveDeviceCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     // Cleared, not appended to: `apply` runs again on every redo and each
     // run must describe THAT run rather than the union of all of them —
     // `ConnectPortsCommand._materialised`'s rule, for the same reason.
@@ -232,6 +233,7 @@ final class RemoveDeviceCommand extends Command<RackDocument> {
     // TemplateSnapshot refcount. Deferred deliberately by DR-013 §11.13.5,
     // which is a ruling rather than an omission: an unreferenced snapshot
     // is inert, so it is file size and not correctness.
+    return true;
   }
 
   @override
@@ -338,7 +340,7 @@ final class MoveDeviceCommand extends Command<RackDocument> {
       );
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final d = doc.devices[id]!;
     final base = _requireRail(d);
     _prevUpdatedAt = d.meta.updatedAt;
@@ -346,6 +348,7 @@ final class MoveDeviceCommand extends Command<RackDocument> {
     _prevLocalRevision = d.meta.localRevision;
     d.placement = _rebuild(base, toRuIndex, toFace);
     d.meta.touch(now, actor);
+    return true;
   }
 
   @override

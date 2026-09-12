@@ -57,7 +57,10 @@ final class AddPassthroughPairCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) => aggregate.passthroughPairs.add(pair);
+  bool apply(TemplateBody aggregate) {
+    aggregate.passthroughPairs.add(pair);
+    return true;
+  }
 
   @override
   void revert(TemplateBody aggregate) {
@@ -95,13 +98,14 @@ final class RemovePassthroughPairCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) {
+  bool apply(TemplateBody aggregate) {
     final at = aggregate.passthroughPairs.indexWhere(
       (p) => p.frontKey.v == portKey.v || p.rearKey.v == portKey.v,
     );
     if (at < 0) throw StateError('no pair naming ${portKey.v}');
     _at = at;
     _removed = aggregate.passthroughPairs.removeAt(at);
+    return true;
   }
 
   @override

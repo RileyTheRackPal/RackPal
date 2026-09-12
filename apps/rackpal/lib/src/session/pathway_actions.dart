@@ -431,7 +431,10 @@ void Function(List<Command<RackDocument>>) buildMediaTypeAction({
   required DocumentController controller,
 }) => (commands) {
   if (commands.isEmpty) return;
-  controller.transact(commands.first.label, (tx) {
+  // NULL: the first child names it, read after it has applied (DR-156
+  // §11.155.2). Was `commands.first.label`: the same intent, evaluated
+  // before `apply`.
+  controller.transact(null, (tx) {
     for (final command in commands) {
       tx.add(command);
     }

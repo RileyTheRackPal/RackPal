@@ -204,7 +204,7 @@ final class AddLocationCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [id];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     doc.locations[id] = Location(
       id: id,
       kind: kind,
@@ -217,6 +217,7 @@ final class AddLocationCommand extends Command<RackDocument> {
       spaceCode: spaceCode,
       estimatedRunLengthFromRack: estimatedRunLengthFromRack,
     );
+    return true;
   }
 
   @override
@@ -272,7 +273,7 @@ final class ReparentLocationCommand extends Command<RackDocument> {
   /// user can want to unpick separately, and merging them would offer one
   /// "undo move" that jumped a subtree two levels.
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final location = _resolve(doc);
     final meta = location.meta;
     _prevUpdatedAt = meta.updatedAt;
@@ -280,6 +281,7 @@ final class ReparentLocationCommand extends Command<RackDocument> {
     _prevLocalRevision = meta.localRevision;
     location.parentId = to;
     meta.touch(now, actor);
+    return true;
   }
 
   @override
@@ -463,7 +465,7 @@ final class RemoveLocationCommand extends Command<RackDocument> {
   ];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     // CLEARED, not accumulated: `apply` runs again on every redo and each
     // run must describe THAT run. `RemoveStructureCommand` carries the
     // same note for the same reason.
@@ -483,6 +485,7 @@ final class RemoveLocationCommand extends Command<RackDocument> {
       if (location != null) _removed.add(location);
     }
     _applied = true;
+    return true;
   }
 
   @override
@@ -726,15 +729,15 @@ final class SetRoomEstimateCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [locationId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final location = doc.locations[locationId];
-    if (location == null) return;
+    if (location == null) return false;
     _previousLength = location.estimatedRunLengthFromRack;
     _previousOrigin = location.estimatedRunLengthOrigin;
     location
       ..estimatedRunLengthFromRack = length
       ..estimatedRunLengthOrigin = origin;
-    _applied = true;
+    return _applied = true;
   }
 
   @override

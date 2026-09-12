@@ -68,11 +68,27 @@ final class Transaction<A> extends Command<A> {
   @override
   Iterable<Uuid> get affects => children.expand((c) => c.affects);
 
+  /// Applies every child and reports whether ANY of them changed
+  /// [aggregate] (DR-156 §11.155.1).
+  ///
+  /// **`any` AND NOT `every`**, because a transaction is a composite and a
+  /// composite that did one of the two things it was asked to do still did
+  /// something. `TxnScope.add` has already dropped the children that
+  /// refused on the way in, so a transaction reaching here with children
+  /// at all is one that changed the document; this answers honestly for
+  /// the REDO path, where a nested transaction applies again as a unit.
+  ///
+  /// EVERY CHILD IS APPLIED BEFORE THE ANSWER IS COMPUTED, which is why
+  /// this is not a `children.any(...)` one-liner: that short-circuits on
+  /// the first `true` and would leave the rest of the transaction
+  /// unapplied.
   @override
-  void apply(A aggregate) {
+  bool apply(A aggregate) {
+    var changed = false;
     for (final c in children) {
-      c.apply(aggregate);
+      if (c.apply(aggregate)) changed = true;
     }
+    return changed;
   }
 
   @override

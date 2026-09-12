@@ -352,7 +352,7 @@ final class AddHomeRunCommand extends Command<RackDocument> {
       signalFamily ?? const SignalFamilyId('structure.undetermined');
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final meta = EntityMeta(createdAt: now, updatedAt: now, updatedBy: actor);
     doc.nets[netId] = Net(
       id: netId,
@@ -401,6 +401,7 @@ final class AddHomeRunCommand extends Command<RackDocument> {
         mountHeightAff: mountHeightAff,
       ),
     );
+    return true;
   }
 
   @override
@@ -950,10 +951,10 @@ final class SetRackLabelCommand extends Command<RackDocument> {
   Object? get mergeKey => (SetRackLabelCommand, linkId);
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final link = doc.links[linkId];
     final origin = link?.structureOrigin;
-    if (link == null || origin == null) return;
+    if (link == null || origin == null) return false;
     _previousLabel = origin.rackLabel;
     _previousLocked = origin.rackLabelLocked;
     _previousMeta = link.meta;
@@ -968,6 +969,7 @@ final class SetRackLabelCommand extends Command<RackDocument> {
       updatedAt: now,
       updatedBy: actor,
     );
+    return _applied;
   }
 
   @override

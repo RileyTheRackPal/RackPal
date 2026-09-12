@@ -212,7 +212,7 @@ final class SetDeviceWidthCommand extends Command<RackDocument> {
   Object? get mergeKey => (SetDeviceWidthCommand, id);
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final d = doc.devices[id]!;
     final base = _requireRail(d);
     _prevUpdatedAt = d.meta.updatedAt;
@@ -220,6 +220,7 @@ final class SetDeviceWidthCommand extends Command<RackDocument> {
     _prevLocalRevision = d.meta.localRevision;
     d.placement = _rebuild(base, toStartTwelfth, toSpanTwelfths);
     d.meta.touch(now, actor);
+    return true;
   }
 
   @override

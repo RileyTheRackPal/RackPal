@@ -123,7 +123,7 @@ abstract base class Command<A> {
   Iterable<Uuid> get affects;
   Object? get mergeKey => null;
 
-  void apply(A aggregate);
+  bool apply(A aggregate);
   void revert(A aggregate);
 
   Command<A>? mergeWith(Command<A> next) => null;

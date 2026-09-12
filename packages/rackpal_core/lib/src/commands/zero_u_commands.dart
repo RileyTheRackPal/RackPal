@@ -149,7 +149,10 @@ final class AddZeroUChannelCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [rackId];
 
   @override
-  void apply(RackDocument doc) => doc.racks[rackId]?.zeroUChannels.add(channel);
+  bool apply(RackDocument doc) {
+    doc.racks[rackId]?.zeroUChannels.add(channel);
+    return true;
+  }
 
   @override
   void revert(RackDocument doc) =>
@@ -222,8 +225,10 @@ final class RemoveZeroUChannelCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [rackId];
 
   @override
-  void apply(RackDocument doc) =>
-      doc.racks[rackId]?.zeroUChannels.removeWhere((c) => c.id == channel.id);
+  bool apply(RackDocument doc) {
+    doc.racks[rackId]?.zeroUChannels.removeWhere((c) => c.id == channel.id);
+    return true;
+  }
 
   @override
   void revert(RackDocument doc) =>
@@ -321,13 +326,14 @@ final class SetZeroUPositionCommand extends Command<RackDocument> {
   Object? get mergeKey => (SetZeroUPositionCommand, id);
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final d = doc.devices[id]!;
     _prevUpdatedAt = d.meta.updatedAt;
     _prevUpdatedBy = d.meta.updatedBy;
     _prevLocalRevision = d.meta.localRevision;
     d.placement = to;
     d.meta.touch(now, actor);
+    return true;
   }
 
   @override

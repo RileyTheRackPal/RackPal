@@ -69,15 +69,16 @@ final class SetLinkClassCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final link = doc.links[linkId];
-    if (link == null) return;
+    if (link == null) return false;
     _previousClass = link.linkClass;
     _previousLocked = link.linkClassLocked;
     _applied = true;
     link
       ..linkClass = linkClass
       ..linkClassLocked = true;
+    return _applied;
   }
 
   @override
@@ -122,12 +123,13 @@ final class ClearLinkClassOverrideCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final link = doc.links[linkId];
-    if (link == null) return;
+    if (link == null) return false;
     _previousLocked = link.linkClassLocked;
     _applied = true;
     link.linkClassLocked = false;
+    return _applied;
   }
 
   @override

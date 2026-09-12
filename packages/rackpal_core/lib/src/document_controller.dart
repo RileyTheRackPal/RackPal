@@ -34,9 +34,32 @@ final class TxnScope<A> {
   final List<Command<A>> _children;
   final A _aggregate;
 
-  void add(Command<A> c) {
-    c.apply(_aggregate);
-    _children.add(c);
+  /// Applies [c] and keeps it ONLY IF IT CHANGED anything (DR-156
+  /// §11.155.1). Returns what [Command.apply] returned, so a caller that
+  /// needs to know can ask.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A REFUSAL MUST NOT REACH THE UNDO STACK, AND THIS IS THE ONE PLACE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A command that self-refuses inside `apply` used to become a child
+  /// anyway: the transaction was recorded, the epochs bumped over a
+  /// document that did not change, and the next `Ctrl+Z` called `revert`
+  /// on a command that never applied, which throws. Probed on the shipped
+  /// `SetPlanPinCommand` at `LEN-A/2` and filed as `#863`.
+  ///
+  /// **`_commit` ALREADY HAD THE CONCEPT AND COULD NOT SEE THIS CASE.** It
+  /// reads `if (b.children.isEmpty) return; // no-op edits add no
+  /// history`. What was missing was any way for a command to say it
+  /// declined, so a refusal was indistinguishable from a write. Dropping
+  /// it here is what makes that guard reach the case it was written for.
+  ///
+  /// **SHARED BY BOTH UNDO STACKS**, which is why the fix lands once:
+  /// `TemplateEditSession` carries its own `_TxnBuilder` and `_commit` but
+  /// imports this class.
+  bool add(Command<A> c) {
+    final changed = c.apply(_aggregate);
+    if (changed) _children.add(c);
+    return changed;
   }
 }
 
@@ -45,7 +68,10 @@ final class TxnScope<A> {
 final class _TxnBuilder {
   _TxnBuilder(this.label, this.selectionBefore);
 
-  final LabelKey label;
+  /// The name the Edit menu shows, or **null meaning the first child names
+  /// this entry** (DR-156 §11.155.2), resolved in [DocumentController._commit]
+  /// after every child has applied.
+  final LabelKey? label;
   final Selection selectionBefore;
   final List<Command<RackDocument>> children = [];
 }
@@ -143,9 +169,32 @@ class DocumentController {
   /// captured before serializing.
   void markSaved() => markSavedAt(doc.stateId);
 
-  void run(Command<RackDocument> c) => transact(c.label, (tx) => tx.add(c));
+  /// Runs one command as one undo entry, **named by that command after it
+  /// has applied** (DR-156 §11.155.2).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE NULL IS THE FIX, AND THIS LINE IS WHERE `#866` LIVED
+  /// ═══════════════════════════════════════════════════════════════════
+  /// This read `transact(c.label, (tx) => tx.add(c))`. Dart evaluates
+  /// `c.label` BEFORE the closure runs and the closure is what calls
+  /// `apply`, so a command that decides its label from what it found in
+  /// the document was asked for that label while the document still held
+  /// the old state. Three commands decide that way and every one of them
+  /// names the SECOND half of a deliberate pair, so half of each pair
+  /// never reached a person: `movePlanPin`, `reshapeRoomOutline` and
+  /// `recalibratePlan`.
+  void run(Command<RackDocument> c) => transact(null, (tx) => tx.add(c));
 
-  T transact<T>(LabelKey label, T Function(TxnScope<RackDocument> tx) body) {
+  /// Runs [body] as ONE undo entry.
+  ///
+  /// [label] names it. **NULL MEANS THE FIRST CHILD NAMES IT**, read at
+  /// commit time, which is the only moment every child has applied and so
+  /// the only moment a label decided from the document is right.
+  ///
+  /// A CALLER THAT NAMES THE ACT STILL WINS, and that is not a detail: it
+  /// is what keeps "Undo Import CSV" from becoming "Undo Set Property"
+  /// when a bulk operation's first child happens to be a property write.
+  T transact<T>(LabelKey? label, T Function(TxnScope<RackDocument> tx) body) {
     final open = _open;
     if (open != null) {
       // Flatten: nested transactions share the outermost's children list,
@@ -169,8 +218,15 @@ class DocumentController {
 
   void _commit(_TxnBuilder b) {
     if (b.children.isEmpty) return; // no-op edits add no history
+    // RESOLVED HERE AND NOWHERE EARLIER (DR-156 §11.155.2). Every child
+    // has applied by this line, so a command that decides its label from
+    // the document has seen the document. `children` is non-empty by the
+    // guard above, and by `TxnScope.add` every one of them CHANGED
+    // something, so the first child is a real edit rather than a refusal
+    // that happened to be listed first.
+    final label = b.label ?? b.children.first.label;
     final txn = Transaction<RackDocument>(
-      b.label,
+      label,
       b.children,
       b.selectionBefore,
       selection.snapshot(),

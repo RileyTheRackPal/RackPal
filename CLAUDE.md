@@ -245,7 +245,20 @@ The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.
   refuses the whole call over it, having already validated everything else. The
   work-item description has no such cap, so the habit that works there does not
   transfer. Measure the file before the call; a commit message is the place for
-  the long version, and it is under no cap at all.
+  the long version, and it is under no cap at all. **The refusal is
+  `ERROR: Invalid argument value.` and names nothing**, so a call that fails
+  right after you shortened it is probably still over.
+- **`az repos pr create` SILENTLY STRIPS EVERY NON-ASCII CHARACTER** from a
+  description passed by `@file`, even though the file is UTF-8 and the same file
+  posts correctly over REST. Measured on PR 101, 2026-09-12: `§` vanished from
+  every canon citation, `…` from every menu name, every em dash inside a
+  blockquote, and the attribution line's emoji. Nothing warns and the PR is
+  created. **Post the description over REST** (`PATCH
+  .../pullrequests/{id}?api-version=7.0` with `{"description": ...}` and
+  `Content-Type: application/json; charset=utf-8`), or create with `az` and
+  immediately PATCH the description back. Same root as the `UnicodeDecodeError`
+  on `0xa7` when READING: the CLI is transcoding through cp1252 in both
+  directions.
 
 ## Committing
 

@@ -166,7 +166,7 @@ final class ForkTemplateFromDeviceCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [deviceId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final device = doc.devices[deviceId];
     if (device == null) {
       throw StateError('ForkTemplateFromDeviceCommand: no device $deviceId.');
@@ -228,6 +228,7 @@ final class ForkTemplateFromDeviceCommand extends Command<RackDocument> {
       // and this is why it has to.
       ..overrides = DeviceOverrides();
     meta.touch(now, actor);
+    return true;
   }
 
   @override

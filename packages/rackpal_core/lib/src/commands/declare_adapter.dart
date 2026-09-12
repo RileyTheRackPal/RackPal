@@ -98,9 +98,9 @@ final class DeclareInlineAdapterCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => [linkId];
 
   @override
-  void apply(RackDocument doc) {
+  bool apply(RackDocument doc) {
     final link = doc.links[linkId];
-    if (link == null) return;
+    if (link == null) return false;
     final adapter = InlineAdapter(
       fromConnector: fromConnector,
       toConnector: toConnector,
@@ -109,6 +109,7 @@ final class DeclareInlineAdapterCommand extends Command<RackDocument> {
     );
     _added = adapter;
     link.inlineAdapters.add(adapter);
+    return true;
   }
 
   @override

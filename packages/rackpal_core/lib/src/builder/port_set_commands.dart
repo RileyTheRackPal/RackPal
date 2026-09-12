@@ -71,7 +71,10 @@ final class AddPortSetCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) => aggregate.portSets.add(set);
+  bool apply(TemplateBody aggregate) {
+    aggregate.portSets.add(set);
+    return true;
+  }
 
   @override
   void revert(TemplateBody aggregate) {
@@ -110,11 +113,12 @@ final class RemovePortSetCommand extends Command<TemplateBody> {
   Iterable<Uuid> get affects => const <Uuid>[];
 
   @override
-  void apply(TemplateBody aggregate) {
+  bool apply(TemplateBody aggregate) {
     final at = aggregate.portSets.indexWhere((s) => s.key == setKey);
     if (at < 0) throw StateError('no port set $setKey to remove');
     _at = at;
     _removed = aggregate.portSets.removeAt(at);
+    return true;
   }
 
   @override

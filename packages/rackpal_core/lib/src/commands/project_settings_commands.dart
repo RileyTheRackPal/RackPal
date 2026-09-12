@@ -324,7 +324,10 @@ final class SetProjectSettingCommand<T> extends Command<RackDocument> {
   Iterable<Uuid> get affects => const [];
 
   @override
-  void apply(RackDocument doc) => field.set(doc.settings, to);
+  bool apply(RackDocument doc) {
+    field.set(doc.settings, to);
+    return true;
+  }
 
   @override
   void revert(RackDocument doc) => field.set(doc.settings, from);
@@ -368,7 +371,10 @@ final class SetFamilyColorOverrideCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => const [];
 
   @override
-  void apply(RackDocument doc) => _write(doc, to);
+  bool apply(RackDocument doc) {
+    _write(doc, to);
+    return true;
+  }
 
   @override
   void revert(RackDocument doc) => _write(doc, from);
@@ -432,7 +438,10 @@ final class SetRuleOverrideCommand extends Command<RackDocument> {
   Iterable<Uuid> get affects => const [];
 
   @override
-  void apply(RackDocument doc) => _write(doc, to);
+  bool apply(RackDocument doc) {
+    _write(doc, to);
+    return true;
+  }
 
   @override
   void revert(RackDocument doc) => _write(doc, from);

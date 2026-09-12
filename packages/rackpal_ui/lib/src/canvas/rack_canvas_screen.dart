@@ -3593,6 +3593,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     if (copy == null) {
       _controller.run(command);
     } else {
+      // NAMED EXPLICITLY AND NOT DEFERRED, which is deliberate: this
+      // transaction's first child is the library COPY and its second is
+      // the add, and the act a person performed is the add. DR-156
+      // §11.155.2's null would name it after the copy. `AddDeviceCommand`
+      // has a static label, so nothing here was ever affected by `#866`.
       _controller.transact(command.label, (tx) {
         tx
           ..add(copy)

@@ -6,7 +6,7 @@ description: >-
   suite ran was already the interesting case and passed for a reason nobody had named,
   while the mirror state was exercised nowhere. Ask which fixture field carries the
   property, then write the case that sets it the other way.
-tags: [practice, testing, fixtures, verification, dr-146, plan-f]
+tags: [practice, testing, fixtures, verification, mutation, dr-146, dr-156, plan-f]
 timestamp: 2026-09-08T00:00:00Z
 status: adopted
 ---
@@ -85,3 +85,28 @@ the three to overlook because nobody thinks of it as a field. The same question
 answers it: which property of the fixture carries the behaviour, and what would a
 case that sets it differently look like. Two rows was a fixture default in
 everything but name.
+
+# And a FOURTH, which is a different shape: a fixture too small to tell two rules apart
+
+**DR-156 §11.155.2, 2026-09-12.** A transaction may take its label from its
+first child. The case written to pin that had a refused command followed by one
+real one, and `#863`'s fix drops the refusal, so by the time the rule ran
+`children.first` and `children.last` were **the same object**.
+
+The case passed. It would have passed against the opposite rule. **A mutation
+reading `children.last` SURVIVED**, and it was the only one of four that did.
+
+Nothing in the repository distinguished which end of a transaction names it, and
+the two-child case is real: the rack canvas stacks a library copy under an add
+and is named after the add, so an implementation that picked the wrong end would
+have mislabelled a shipping gesture.
+
+**This widens the practice from a fixture's DEFAULT to a fixture's SHAPE.** The
+original instance is a field whose default happened to be the interesting case.
+This one is a collection whose length made two different rules indistinguishable.
+Same root: the fixture decided the outcome, and the code was never asked.
+
+**The check, for a rule that picks one of N:** does the fixture have at least two
+candidates, and are they distinguishable in the assertion? A rule about *the
+first* needs a case where first and last are different objects, or it is a rule
+about *the only*.

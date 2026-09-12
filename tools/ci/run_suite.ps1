@@ -752,7 +752,21 @@ $SuiteFloors = @{
     # case DID NOT FAIL, because the scan walked rackpal_core/lib and the
     # caller landed in rackpal_ui. A gate whose scope was narrower than
     # its subject, written to guard against exactly that.
-    'rackpal_core'   = 4599
+    # 4600 at DR-156/1: +1 net. A case that asserted the DEFECT was
+    # UN-INVERTED rather than added, on its own written instructions, and
+    # one case was added beside it. The new one is the artifact the old
+    # comment could not reach: an empty undo stack proves a refusal added
+    # nothing to nothing, while a real edit THEN a refusal THEN Ctrl+Z is
+    # the shape that used to throw and take the stack with it.
+    # 4605 at DR-156/2: +5, and every one reads `UndoStack.undoLabelKey`
+    # rather than `command.label`. The existing label cases assert the
+    # COMMAND, which is correct after apply and is exactly why nothing
+    # caught #866 for three chapters: the artifact a person sees was
+    # never read. One of the five was rewritten after a mutation SURVIVED
+    # -- nothing in the repository distinguished `children.first` from
+    # `children.last`, so the case now stacks three children and asserts
+    # which end names the entry.
+    'rackpal_core'   = 4605
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
