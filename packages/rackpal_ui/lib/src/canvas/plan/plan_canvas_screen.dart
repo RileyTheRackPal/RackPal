@@ -179,6 +179,7 @@ final class PlanCanvasScreen extends StatefulWidget {
     this.calibrate,
     this.onCalibrationPicked,
     this.outline,
+    this.reshape,
     this.marquee,
     this.onRefuse,
     super.key,
@@ -240,6 +241,15 @@ final class PlanCanvasScreen extends StatefulWidget {
   /// and somebody else opens a dialog; a closed outline is complete the
   /// moment it closes, so this follows `_pinArmed` rather than the pick.
   final PlanOutlineController? outline;
+
+  /// DR-050's reshape mode, or null when the host offers no affordance
+  /// for it (`LEN-A/8`).
+  ///
+  /// NULL IS A SUPPORTED MODE, on the precedent of the three above it.
+  ///
+  /// **AND IT TAKES THE WHOLE CANVAS WHILE IT RUNS**, which none of the
+  /// other three do. See [PlanCanvasScreenState.beginDrag].
+  final PlanReshapeController? reshape;
 
   /// CR-102's band, or null when the host does not offer one.
   ///
@@ -314,6 +324,26 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// other's question.
   PxPt? _outlineHover;
 
+  // ── the reshape drag ────────────────────────────────────────────────
+
+  /// True for the whole life of one gesture that began while a reshape was
+  /// running, whether or not it grabbed anything.
+  ///
+  /// **A FIELD RATHER THAN A CONDITION EACH CALLBACK RE-ASKS**, which is
+  /// `rack_canvas_screen.dart`'s `_resizeDrag` and its reason: it is what
+  /// makes the reshape and every other gesture on this canvas mutually
+  /// exclusive AT THE SOURCE rather than by three handlers each testing
+  /// something the others might disagree about mid-drag.
+  bool _reshapeGesture = false;
+
+  /// Which corner this gesture grabbed, as an index into the reshaping
+  /// room's outline, or null when it grabbed none.
+  int? _grabbedVertex;
+
+  /// Where that corner sits THIS FRAME. UI state and never a command, on
+  /// [_livePin]'s rule exactly: the write happens once, on release.
+  PxPt? _liveVertex;
+
   @override
   void dispose() {
     _stopTrackingArmedPointer();
@@ -339,6 +369,67 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
         else
           p,
     ];
+  }
+
+  /// The room being reshaped and the shape it is being reshaped from, or
+  /// null when there is nothing to grab.
+  ///
+  /// **THE `isUsable` GUARD IS NOT DEFENSIVE, IT AVOIDS `#863`.** A
+  /// two-vertex outline can be READ from somebody else's file (CR-093)
+  /// while `SetRoomOutlineCommand` refuses to WRITE one, so offering
+  /// handles on one would build a transaction whose only child declined to
+  /// apply, and a later undo of that entry throws.
+  ({Uuid locationId, RoomOutline outline})? get _reshaping {
+    final mode = widget.reshape;
+    if (mode == null || !mode.isActive) return null;
+    final id = mode.locationId;
+    if (id == null) return null;
+    final outline = _doc.locations[id]?.planOutline;
+    if (outline == null) return null;
+    if (outline.underlayId != widget.underlay.id) return null;
+    if (!outline.isUsable) return null;
+    return (locationId: id, outline: outline);
+  }
+
+  /// [outline]'s corners as they should DRAW this frame, with the grabbed
+  /// one at its live position.
+  List<PxPt> _liveVerticesOf(RoomOutline outline) {
+    final index = _grabbedVertex;
+    final live = _liveVertex;
+    if (index == null || live == null || index >= outline.vertices.length) {
+      return outline.vertices;
+    }
+    return <PxPt>[
+      for (var i = 0; i < outline.vertices.length; i++)
+        if (i == index) live else outline.vertices[i],
+    ];
+  }
+
+  /// Which corner of [vertices] a press at [at] grabs, or null for none.
+  ///
+  /// NEAREST WITHIN THE RADIUS, not the first within it: two corners of a
+  /// small room can both be inside ten points at a fitted zoom, and taking
+  /// the first would hand a person the corner they were not pointing at
+  /// on an ordering they cannot see.
+  int? _vertexNear(List<PxPt> vertices, DPt at) {
+    final b = widget.viewport.sceneToScreen(at);
+    const limit = kOutlineGrabRadiusPt * kOutlineGrabRadiusPt;
+    int? best;
+    var bestDistance = double.infinity;
+    for (var i = 0; i < vertices.length; i++) {
+      final v = vertices[i];
+      final a = widget.viewport.sceneToScreen(
+        DPt(v.px.toDouble(), v.py.toDouble()),
+      );
+      final dx = a.x - b.x;
+      final dy = a.y - b.y;
+      final d = dx * dx + dy * dy;
+      if (d <= limit && d < bestDistance) {
+        best = i;
+        bestDistance = d;
+      }
+    }
+    return best;
   }
 
   /// Screen (global) position to the underlay's pixel space.
@@ -517,6 +608,31 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   }) {
     _gesture = gesture;
     _moved = false;
+    _reshapeGesture = false;
+    _grabbedVertex = null;
+    _liveVertex = null;
+    // ═══════════════════════════════════════════════════════════════════
+    // A RESHAPE TAKES THE WHOLE CANVAS, AND THAT IS THE RULING
+    // ═══════════════════════════════════════════════════════════════════
+    // Ruled by the user on 2026-09-11, against making every finished
+    // corner draggable all the time. While the mode runs a press grabs a
+    // corner or does nothing at all: no pin moves, no band opens, no
+    // selection clears. `plan_outline.dart` carries the two reasons in
+    // full, and the one that decided it is that a room's shape is a number
+    // on a quote, so an accidental nudge moves a figure somebody is about
+    // to spend money on.
+    //
+    // TESTED BEFORE THE SCENE HIT-TEST, on `rack_canvas_screen.dart`'s own
+    // precedent: its 8px resize band is read before the device hit-test so
+    // a resize can never also select or move a device.
+    final reshaping = _reshaping;
+    if (widget.reshape?.isActive ?? false) {
+      _reshapeGesture = true;
+      if (reshaping != null) {
+        _grabbedVertex = _vertexNear(reshaping.outline.vertices, sceneStart);
+      }
+      return;
+    }
     final built = buildPlanScene(underlay: widget.underlay, pins: _pins);
     final hit = hitTest(built.scene, sceneStart);
     if (hit == null) {
@@ -545,6 +661,23 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     required CanvasGestureToken gesture,
   }) {
     if (gesture != _gesture) return;
+    if (_reshapeGesture) {
+      if (_grabbedVertex == null) return;
+      _moved = true;
+      // THE CORNER GOES TO THE POINTER, and it does NOT keep the offset
+      // `_livePin` keeps. The difference is what is being held: a pin is a
+      // marker with a body, grabbed anywhere on it, and a corner IS the
+      // point. Somebody dragging one is putting it on a wall junction they
+      // can see, and a handle that trailed the cursor by the few points
+      // they happened to press off-centre would have to be aimed twice.
+      setState(
+        () => _liveVertex = PxPt(
+          sceneCurrent.x.round(),
+          sceneCurrent.y.round(),
+        ),
+      );
+      return;
+    }
     final offset = _grabOffset;
     if (offset == null) {
       // No pin was grabbed, so this is the band widening.
@@ -570,6 +703,14 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   @override
   void commitDrag(DPt sceneEnd, {required CanvasGestureToken gesture}) {
     if (gesture != _gesture) return;
+    if (_reshapeGesture) {
+      // THE MODE SWALLOWS A PRESS THAT GRABBED NOTHING, which is the other
+      // half of `beginDrag`'s ruling: a click on bare plan during a
+      // reshape is not a deselect and not a pin.
+      _commitReshape();
+      _endGesture();
+      return;
+    }
     final grabbed = _grabbed;
     final landed = _livePin;
     final marquee = widget.marquee;
@@ -668,6 +809,65 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       }
     }
     _endGesture();
+  }
+
+  /// Writes the dragged corner, and re-derives the figure it changed.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// ONE COMMAND FOR THE WHOLE DRAG, WHICH IS WHAT UNDO IS FOR
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A corner dragged across a room is forty frames. One command per frame
+  /// would file forty undo entries, and the person who dragged it once
+  /// would press `Ctrl+Z` forty times to put it back.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// AND THE LABEL IS PASSED EXPLICITLY, WHICH IS `#866` WORKED AROUND
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `SetRoomOutlineCommand` decides between `drawRoomOutline` and
+  /// `reshapeRoomOutline` inside `apply`, from what the document held.
+  /// `DocumentController.run` is `transact(c.label, …)` and reads the
+  /// label BEFORE that, so a bare `run` here would put "Undo Draw Room
+  /// Outline" in the Edit menu in front of somebody who drew nothing. The
+  /// transaction's own label is what the menu shows, so naming it is both
+  /// the fix and the proof the defect is real.
+  void _commitReshape() {
+    final index = _grabbedVertex;
+    final reshaping = _reshaping;
+    final landed = _liveVertex;
+    if (index == null || reshaping == null || landed == null) return;
+    if (index >= reshaping.outline.vertices.length) return;
+    // A CORNER PUT BACK WHERE IT STARTED IS NOT AN EDIT. `_moved` says the
+    // pointer travelled, which a drag out and back also satisfies, and an
+    // undo entry that changes nothing is one the user has to press through
+    // twice to reach the edit they meant.
+    if (landed == reshaping.outline.vertices[index]) return;
+    final moved = _liveVerticesOf(reshaping.outline);
+    _controller.transact(LabelKey.reshapeRoomOutline, (tx) {
+      tx.add(
+        SetRoomOutlineCommand(
+          locationId: reshaping.locationId,
+          outline: RoomOutline(
+            underlayId: widget.underlay.id,
+            vertices: moved,
+          ),
+        ),
+      );
+      // THE FIGURE FOLLOWS THE SHAPE, in the same transaction, exactly as
+      // it does when the shape is first drawn (§11.49.7). A reshape that
+      // left the old estimate behind would leave a room quoting a wall
+      // that has moved, and `planEstimateMayFill` is what keeps the
+      // auto-fill off a number a person typed.
+      final room = _doc.locations[reshaping.locationId];
+      if (room == null || !planEstimateMayFill(room)) return;
+      final derived = roomEstimateFor(_doc, room);
+      if (derived == null) return;
+      tx.add(
+        SetRoomEstimateCommand.computed(
+          locationId: reshaping.locationId,
+          length: derived,
+        ),
+      );
+    });
   }
 
   /// Takes one of the two calibration clicks.
@@ -789,6 +989,9 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
 
   void _endGesture() {
     setState(() {
+      _reshapeGesture = false;
+      _grabbedVertex = null;
+      _liveVertex = null;
       _gesture = null;
       _grabbed = null;
       _grabOffset = null;
@@ -814,6 +1017,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// to obey it.
   bool get _hasSomethingToCancel =>
       (widget.outline?.isActive ?? false) ||
+      (widget.reshape?.isActive ?? false) ||
       (widget.calibrate?.isActive ?? false) ||
       (widget.arm?.isActive ?? false) ||
       widget.selection.ids.isNotEmpty;
@@ -837,6 +1041,17 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     if (outline != null && outline.isActive) {
       outline.cancel();
       setState(() => _outlineHover = null);
+      return;
+    }
+    // THE RESHAPE UNWINDS SECOND, AND THE ORDER IS A TIE-BREAK RATHER
+    // THAN A RULING. A reshape and a draw are both started from a button
+    // press seconds ago, so DR-144 §11.143.6's "most recently and most
+    // deliberately entered" does not separate them; the host never offers
+    // both at once, which is what makes the tie unreachable. It is written
+    // down because a canvas cannot assume what a host does.
+    final reshape = widget.reshape;
+    if (reshape != null && reshape.isActive) {
+      reshape.cancel();
       return;
     }
     final calibrate = widget.calibrate;
@@ -945,22 +1160,39 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     final arm = widget.arm;
     final calibrate = widget.calibrate;
     final outline = widget.outline;
+    final reshape = widget.reshape;
+    final reshaping = _reshaping;
+    // THE RESHAPING ROOM DRAWS FROM THE LIVE SHAPE AND NOT THE STORED
+    // ONE, which is what makes the drag visible: the document is not
+    // written until release, so a layer reading it would show the corner
+    // sitting where it was for the whole gesture.
     final outlines = <RoomOutline>[
       for (final loc in _doc.locations.values)
         if (loc.planOutline case final RoomOutline o)
-          if (o.underlayId == widget.underlay.id) o,
+          if (o.underlayId == widget.underlay.id)
+            if (reshaping != null && loc.id == reshaping.locationId)
+              RoomOutline(
+                underlayId: o.underlayId,
+                vertices: _liveVerticesOf(o),
+              )
+            else
+              o,
     ];
+    final handles = reshaping == null
+        ? const <PxPt>[]
+        : _liveVerticesOf(reshaping.outline);
     // AN OUTLINE ALREADY DRAWN STILL HAS TO SHOW where no host offers the
     // draw mode, or a saved shape would be invisible until somebody
     // pressed a button that is not there.
     if (arm == null &&
         calibrate == null &&
         outline == null &&
+        reshape == null &&
         outlines.isEmpty) {
       return canvas;
     }
     return AnimatedBuilder(
-      animation: Listenable.merge([arm, calibrate, outline]),
+      animation: Listenable.merge([arm, calibrate, outline, reshape]),
       builder: (context, _) => Stack(
         children: [
           Positioned.fill(child: canvas),
@@ -969,6 +1201,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
             Positioned.fill(
               child: PlanOutlineLayer(
                 finished: outlines,
+                handles: handles,
                 drawing: outline?.vertices ?? const <PxPt>[],
                 hover: _outlineHover,
                 viewport: widget.viewport,
@@ -995,6 +1228,12 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
                 canClose: outline.canClose,
                 onDismiss: outline.cancel,
               ),
+            )
+          else if (reshape != null && reshape.isActive)
+            Positioned(
+              left: 12,
+              bottom: 12,
+              child: PlanReshapeChip(onDismiss: reshape.cancel),
             )
           else if (calibrate != null && calibrate.isActive)
             Positioned(

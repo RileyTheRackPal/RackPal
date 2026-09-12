@@ -1,4 +1,5 @@
-// LEN-A/4: the room-outline draw mode (`#860`, DR-050 §11.49).
+// LEN-A/4: the room-outline draw mode (`#860`, DR-050 §11.49), and
+// `LEN-A/8`'s reshape mode beside it (`#865`).
 //
 // ═══════════════════════════════════════════════════════════════════════
 // THE THIRD LIFETIME, ASSERTED AGAINST THE OTHER TWO
@@ -19,6 +20,8 @@ const _underlay = Uuid('0190e200-0000-7000-8000-0000000000b0');
 void _noop() {}
 
 void main() {
+  _reshapeTests();
+
   group('the mode', () {
     test('is off until it begins, and knows which room it is drawing', () {
       final c = PlanOutlineController();
@@ -288,6 +291,133 @@ void main() {
               canClose: false,
               onDismiss: () => dismissed++,
             ),
+          ),
+        ),
+      );
+
+      await tester.tap(find.byType(IconButton));
+      expect(dismissed, 1);
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// LEN-A/8: THE FOURTH LIFETIME, ASSERTED AGAINST THE THIRD
+// ═══════════════════════════════════════════════════════════════════════
+// The draw is consumed by its own close. This one is not consumed by
+// anything but an explicit exit, because somebody correcting one corner of
+// a room is usually correcting the one beside it. That difference is the
+// reason there are two classes, so it is what these cases pin.
+//
+// The DRAG itself is not here. This controller holds no geometry at all,
+// on purpose (see its own doc), so every claim about what a corner does
+// lives in `plan_canvas_screen_test.dart` where a real pointer can make
+// one move.
+void _reshapeTests() {
+  group('LEN-A/8: the reshape mode', () {
+    test('is off until it begins, and knows which room it is on', () {
+      final c = PlanReshapeController();
+      expect(c.isActive, isFalse);
+      expect(c.locationId, isNull);
+
+      c.begin(_room);
+      expect(c.isActive, isTrue);
+      expect(c.locationId, _room);
+    });
+
+    test('BEGINNING ON ANOTHER ROOM SWITCHES, because the mode describes '
+        'exactly one', () {
+      const other = Uuid('0190e200-0000-7000-8000-0000000000a1');
+      final c = PlanReshapeController()
+        ..begin(_room)
+        ..begin(other);
+
+      expect(c.locationId, other);
+      expect(c.isActive, isTrue);
+    });
+
+    test('Esc ends it and forgets the room', () {
+      final c = PlanReshapeController()
+        ..begin(_room)
+        ..cancel();
+
+      expect(c.isActive, isFalse);
+      expect(c.locationId, isNull);
+    });
+
+    test('cancelling an idle mode notifies NOBODY, so a keystroke with '
+        'nothing to cancel does not repaint a canvas', () {
+      var notified = 0;
+      final c = PlanReshapeController()..addListener(() => notified++);
+      expect(c.isActive, isFalse, reason: 'nothing to cancel');
+
+      c.cancel();
+      expect(notified, 0);
+
+      c
+        ..begin(_room)
+        ..cancel();
+      expect(notified, 2);
+    });
+  });
+
+  group('LEN-A/8: the reshape chip', () {
+    testWidgets('says what to drag rather than naming the mode', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: PlanReshapeChip(onDismiss: _noop)),
+        ),
+      );
+
+      expect(find.text(kReshapeLabel), findsOneWidget);
+    });
+
+    testWidgets('the copy NAMES THE WAY OUT, because a mode nobody can '
+        'leave is worse than no mode', (tester) async {
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(body: PlanReshapeChip(onDismiss: _noop)),
+        ),
+      );
+
+      expect(
+        tester.widget<IconButton>(find.byType(IconButton)).tooltip,
+        contains('Esc'),
+      );
+    });
+
+    testWidgets('AND IT DOES NOT OVERFLOW ON A NARROW CANVAS', (
+      tester,
+    ) async {
+      // `PlanOutlineChip`'s own lesson, applied to the fourth chip before
+      // it can be learned a second time: the first draft of that one
+      // overflowed its Row by 70 pixels at an 800-point canvas.
+      tester.view.physicalSize = const Size(420, 300);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: Scaffold(
+            body: Align(
+              alignment: Alignment.topLeft,
+              child: PlanReshapeChip(onDismiss: _noop),
+            ),
+          ),
+        ),
+      );
+
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('and the dismiss button reports', (tester) async {
+      var dismissed = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: PlanReshapeChip(onDismiss: () => dismissed++),
           ),
         ),
       );
