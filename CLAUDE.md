@@ -130,6 +130,16 @@ warm-cache path at 18m28s.
   build passed and whose two successors on `main` passed. Check that before reading a
   single log line, and do not reach for a load or contention theory that the failure's
   own signature does not support.
+- **AND AN ABSENCE IS NOT AN OBSERVATION UNTIL YOU HAVE WAITED.** A merge to `main`
+  queues its own build, and it appears **tens of seconds to a couple of minutes after
+  the PR completes**, not instantly. On 2026-09-12 that gap was polled for about two
+  minutes after each of two merges, found empty, and reported first as a broken trigger
+  and then as *"a pattern rather than a hiccup"*. **Both builds existed**: `210` on
+  `d16af1da` and `213` on `ea58cf26`, both `individualCI`, both queued shortly after
+  their merges, and a manual build was queued on the false premise and duplicated `210`
+  for nothing. **Read `reason` on the newest build for that branch before concluding
+  anything**: `individualCI` means the trigger fired and `manual` means a person did.
+  Two negative polls are not a pattern; they are two polls.
 - **A FAILING TEST is still not proven, and that is a different path sharing a word.**
   No test has ever failed on a run, so the JUnit converter's output has only ever been
   parsed in the green direction: **do not yet treat a green Tests tab as proof the
