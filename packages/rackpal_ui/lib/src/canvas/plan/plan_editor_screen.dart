@@ -51,6 +51,7 @@ import 'package:rackpal_ui/src/canvas/plan/unpinned_strip.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
 import 'package:rackpal_ui/src/draw/flutter_canvas.dart';
+import 'package:rackpal_ui/src/project/remove_underlay_dialog.dart';
 
 /// What the view says when the project has no floorplan in it.
 ///
@@ -251,6 +252,37 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   /// Starts a pick on the open plan.
   void _beginCalibrate() => _calibrate.begin();
 
+  /// Removes the open plan, after saying what it costs (`#870`).
+  ///
+  /// **THE COUNTS AND THE REMOVAL READ ONE OBJECT.** `planUnderlayRemoval`
+  /// is what the dialog counts and what `RemovePlanUnderlayCommand.apply`
+  /// clears, which is `delete_location_dialog.dart`'s rule: a dialog that
+  /// said "3 pins" and cleared four would be worse than no dialog.
+  ///
+  /// EVERY MODE ENDS FIRST, on `_openPlan`'s reasoning: a draw or a pick
+  /// left running over a page that is about to stop existing is a mode
+  /// pointing at nothing.
+  Future<void> _removeOpenPlan() async {
+    final open = _open;
+    if (open == null) return;
+    final plan = planUnderlayRemoval(_controller.doc, open.id);
+    final confirmed = await confirmUnderlayRemoval(
+      context,
+      plan: plan,
+      name: open.name,
+    );
+    if (!confirmed || !mounted) return;
+    _calibrate.cancel();
+    _outline.cancel();
+    _reshape.cancel();
+    _controller.run(RemovePlanUnderlayCommand(underlayId: open.id));
+    // THE OPEN ID IS NOT CLEARED HERE. `_open` resolves against the
+    // document every build and already falls back when the id is gone,
+    // which is the same path a removal performed from anywhere else would
+    // take; setting it would be a second rule that could disagree.
+    setState(() {});
+  }
+
   /// Starts a room draw, and STOPS WHATEVER ELSE WAS RUNNING first.
   ///
   /// The canvas ranks the draw above the pick and the arm, so without
@@ -394,6 +426,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
                   doc: _controller.doc,
                   onOpen: _openPlan,
                   onCalibrate: _beginCalibrate,
+                  onRemove: () => unawaited(_removeOpenPlan()),
                 ),
               ),
               const Divider(height: 1),
@@ -478,6 +511,7 @@ class _UnderlayList extends StatelessWidget {
     required this.doc,
     required this.onOpen,
     required this.onCalibrate,
+    required this.onRemove,
   });
 
   final List<PlanUnderlay> underlays;
@@ -496,8 +530,17 @@ class _UnderlayList extends StatelessWidget {
   /// the bug this signature makes unspellable.
   final VoidCallback onCalibrate;
 
+  /// Removes the OPEN plan, for [onCalibrate]'s reason exactly: the
+  /// confirmation counts what is on one page, and a button on a closed
+  /// row that removed a different picture is the bug this signature makes
+  /// unspellable.
+  final VoidCallback onRemove;
+
   /// A stable handle for tests, per row.
   static String calibrateKeyFor(Uuid id) => 'underlay-calibrate-${id.v}';
+
+  /// Ditto for the removal.
+  static String removeKeyFor(Uuid id) => 'underlay-remove-${id.v}';
 
   /// Ditto for the row itself.
   static String rowKeyFor(Uuid id) => 'underlay-row-${id.v}';
@@ -520,6 +563,7 @@ class _UnderlayList extends StatelessWidget {
         measurability: planMeasurabilityOf(doc, u),
         onOpen: () => onOpen(u.id),
         onCalibrate: onCalibrate,
+        onRemove: onRemove,
       );
     },
   );
@@ -550,6 +594,7 @@ class _UnderlayRow extends StatelessWidget {
     required this.measurability,
     required this.onOpen,
     required this.onCalibrate,
+    required this.onRemove,
     super.key,
   });
 
@@ -567,6 +612,7 @@ class _UnderlayRow extends StatelessWidget {
 
   final VoidCallback onOpen;
   final VoidCallback onCalibrate;
+  final VoidCallback onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -628,6 +674,25 @@ class _UnderlayRow extends StatelessWidget {
                       ),
                       style: theme.textTheme.labelSmall,
                     ),
+                  ),
+                // REMOVE SITS BESIDE CALIBRATE, and only on the open row.
+                // `RemovePlanUnderlayCommand` shipped at `PLAN-C/6` with a
+                // real revert, a pin cascade and seven tests, and NOTHING
+                // EVER BUILT ONE (`#870`): the only way to not have a page
+                // was to never have imported it, which makes a wrong page
+                // picked out of a multi-page PDF permanent.
+                if (open)
+                  TextButton(
+                    key: ValueKey(_UnderlayList.removeKeyFor(underlay.id)),
+                    onPressed: onRemove,
+                    style: TextButton.styleFrom(
+                      visualDensity: VisualDensity.compact,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      minimumSize: Size.zero,
+                      foregroundColor: theme.colorScheme.error,
+                    ),
+                    child: Text('Remove…', style: theme.textTheme.labelSmall),
                   ),
               ],
             ),

@@ -354,6 +354,155 @@ void main() {
       expect(c.doc.underlays[_ul1]!.scale, _usable);
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // `#870`: A FLOORPLAN PAGE CAN BE REMOVED, WHICH IT COULD NOT
+  // ═══════════════════════════════════════════════════════════════════
+  // `RemovePlanUnderlayCommand` shipped at `PLAN-C/6` with a real revert,
+  // a pin cascade, a room-outline cascade and seven tests, and NOTHING IN
+  // ANY `lib/` EVER BUILT ONE. The only way to not have a page was to
+  // never have imported it, so a wrong page picked out of a multi-page
+  // PDF was permanent for the life of the project.
+  //
+  // These press the real button, because a test that called the command
+  // would assert exactly what was already true for four months.
+  group('#870: removing a floorplan page', () {
+    Finder removeFor(Uuid id) =>
+        find.byKey(ValueKey('underlay-remove-${id.v}'));
+
+    testWidgets('LOAD-BEARING: the button exists on the open row and the '
+        'page goes', (tester) async {
+      final c = _controller();
+      await pump(tester, c);
+      expect(c.doc.underlays, hasLength(1));
+
+      await tester.tap(removeFor(_ul1));
+      await tester.pumpAndSettle();
+
+      expect(c.doc.underlays, isEmpty);
+    });
+
+    testWidgets('A BARE PAGE IS NOT ASKED ABOUT, because a prompt for a '
+        'consequence-free delete teaches people to click through prompts', (
+      tester,
+    ) async {
+      final c = _controller();
+      await pump(tester, c);
+
+      await tester.tap(removeFor(_ul1));
+      await tester.pump();
+
+      expect(find.byType(RemoveUnderlayDialog), findsNothing);
+      expect(c.doc.underlays, isEmpty);
+    });
+
+    testWidgets('AND UNDO PUTS THE PAGE BACK', (tester) async {
+      final c = _controller();
+      await pump(tester, c);
+
+      await tester.tap(removeFor(_ul1));
+      await tester.pumpAndSettle();
+      c.undo.undo(c.doc);
+
+      expect(c.doc.underlays, hasLength(1));
+    });
+
+    testWidgets('A PAGE CARRYING A PIN SAYS SO FIRST, and Cancel leaves it '
+        'alone', (tester) async {
+      final c = _controller()
+        // THROUGH THE REAL WRITER, not the model's `@internal` setter: a
+        // fixture built by reaching past the package boundary is a state
+        // the product cannot produce, and the analyzer says so.
+        ..run(
+          SetPlanPinCommand(
+            carrier: PinCarrier.rack,
+            entityId: _rackId,
+            pin: const PlanPin(underlayId: _ul1, at: PxPt(10, 10)),
+          ),
+        );
+      await pump(tester, c);
+
+      await tester.tap(removeFor(_ul1));
+      await tester.pumpAndSettle();
+      expect(find.byType(RemoveUnderlayDialog), findsOneWidget);
+      expect(find.textContaining('1 item loses its position'), findsOneWidget);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(c.doc.underlays, hasLength(1), reason: 'Cancel means cancel');
+      expect(c.doc.racks[_rackId]!.planPin, isNotNull);
+    });
+
+    testWidgets('and confirming clears the pin with the page, in ONE undo '
+        'entry', (tester) async {
+      final c = _controller()
+        // THROUGH THE REAL WRITER, not the model's `@internal` setter: a
+        // fixture built by reaching past the package boundary is a state
+        // the product cannot produce, and the analyzer says so.
+        ..run(
+          SetPlanPinCommand(
+            carrier: PinCarrier.rack,
+            entityId: _rackId,
+            pin: const PlanPin(underlayId: _ul1, at: PxPt(10, 10)),
+          ),
+        );
+      await pump(tester, c);
+
+      await tester.tap(removeFor(_ul1));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(RemoveUnderlayDialog.confirmKey));
+      await tester.pumpAndSettle();
+
+      expect(c.doc.underlays, isEmpty);
+      expect(c.doc.racks[_rackId]!.planPin, isNull);
+
+      c.undo.undo(c.doc);
+      expect(c.doc.underlays, hasLength(1));
+      expect(
+        c.doc.racks[_rackId]!.planPin,
+        isNotNull,
+        reason: 'one Ctrl+Z restores the page AND what was on it',
+      );
+    });
+
+    testWidgets('THE COUNT THE DIALOG SHOWS IS THE COUNT THE COMMAND '
+        'CLEARS, which is why both read one object', (tester) async {
+      final c = _controller(withRoom: true)
+        // THROUGH THE REAL WRITER, not the model's `@internal` setter: a
+        // fixture built by reaching past the package boundary is a state
+        // the product cannot produce, and the analyzer says so.
+        ..run(
+          SetPlanPinCommand(
+            carrier: PinCarrier.rack,
+            entityId: _rackId,
+            pin: const PlanPin(underlayId: _ul1, at: PxPt(10, 10)),
+          ),
+        )
+        ..run(
+          SetRoomOutlineCommand(
+            locationId: _roomId,
+            outline: RoomOutline(
+              underlayId: _ul1,
+              vertices: const [PxPt(1, 1), PxPt(9, 1), PxPt(9, 6)],
+            ),
+          ),
+        );
+      await pump(tester, c);
+
+      await tester.tap(removeFor(_ul1));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('1 item loses its position'), findsOneWidget);
+      expect(find.textContaining('1 room outline is erased'), findsOneWidget);
+
+      await tester.tap(find.byKey(RemoveUnderlayDialog.confirmKey));
+      await tester.pumpAndSettle();
+
+      expect(c.doc.racks[_rackId]!.planPin, isNull);
+      expect(c.doc.locations[_roomId]!.planOutline, isNull);
+    });
+  });
 }
 
 // ═══════════════════════════════════════════════════════════════════════
