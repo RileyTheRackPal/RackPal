@@ -9629,6 +9629,104 @@ project-authored check kills four.
 
 ---
 
+#### 5.9.32 `#872`: the reachability gate, and what it found on its first run · no ruling · no version move
+
+2026-09-12, asked for by the user immediately after `#870`. It closes under `#786` and moves no
+number.
+
+##### 5.9.32.1 A gate for a shape that has shipped five times
+
+`DR-143`, `#674`, `PLAN-E/5`, `LEN-A/3`, `#870`. Every one compiles, analyses clean and has green
+tests, because the class **is** used: its own suite constructs it. Nothing in Dart can require that a
+person can get to it, and every one of the five was found by somebody using the product rather than
+by anything in the repository.
+
+##### 5.9.32.2 Three greps were wrong before the graph was right
+
+Each was caught only by checking an answer somebody already knew, which is why the shipped gate
+asserts five of them before it reports anything:
+
+| Attempt | What it did | How it was wrong |
+|---|---|---|
+| 1 | matched `Name(` | missed every **named** constructor; reported `SetRoomEstimateCommand` unreachable on the day it was wired, with six production references |
+| 2 | counted any mention in another lib file | a name in a **comment** counted as use, and `RemovePlanUnderlayCommand` fell off the list entirely |
+| 3 | counted constructions by name | 24 of 72, still wrong: this codebase builds most commands through `buildXCommand`, so a command built only by its own builder reads as unreachable while the **builder** is what has callers |
+
+The shipped model is a graph: a node is a top-level declaration in any `*/lib/**.dart`, an edge is
+"D's body names E" outside comments and strings, roots are every declaration in a UI package, and a
+Command is reachable when some declaration that **constructs** it is reachable from a root.
+`addTemplateRemoval` is the worked example, and the transitive hop attempt 3 could not make.
+
+##### 5.9.32.3 The prototype's own splitter was wrong, and the COUNT is what caught it
+
+A character class containing a whitespace class let an **indented method** match as a top-level
+function. 439 files produced **18,222** "top-level" declarations, 41 per file, and **49 of 73**
+commands came back unreachable with **zero** construction sites, `MoveDeviceCommand` among them,
+which the rack canvas builds on every drag.
+
+Nothing about the output said "broken". It said "49 unreachable", which is a number somebody in a
+hurry would have believed and filed 49 tickets against. The corpus-size band in the shipped file is
+that failure written down as an assertion, and it is asserted from **both** directions: too few
+declarations means the splitter stopped matching, too many means it is matching methods.
+
+##### 5.9.32.4 Twelve are unreachable, and the largest finding is not a command
+
+Each was verified by hand before it was filed. `#875` through `#881`.
+
+**`#875` is the one worth reading.** `ValidationDrawer` declares `onAcknowledge`, `onWithdraw` and
+`onRemedy`, passes all three to `DrcPanel`, and `DrcPanel` renders a button for each when it is
+non-null. There is **exactly one mount** of `ValidationDrawer` in the product, at
+`rack_canvas_screen.dart:4602`, and it passes **none of the three**. Each is nullable and documented
+as *"null shows no button rather than a dead one"*, so the buttons are absent and nothing fails.
+
+What that makes unreachable: `AcknowledgeFindingCommand` and `UnacknowledgeFindingCommand` (M5-B2,
+with a real revert and a signed reason), and PWR-003's entire remedy chain. `addOutletsToRack` is
+declared in `add_outlets.dart`, **tested in two suites including one in `rackpal_ui`**, and called by
+no lib code at all, which takes `AddZeroUChannelCommand` down with it.
+
+The rest: `#876` 0U channels have no surface at all, though AC-044 names the inspector as the only
+route; `#877` an outlet and a structure can be added and neither removed; `#878` a plan pin cannot be
+cleared and pages cannot be reordered, while `LabelKey.clearPlanPin` exists and argues for its own
+value; `#879` `ruleOverrides` rows carry a reason, an author and a date, all persisted, none
+writable; `#880` `SnapshotCommand`, the only one of the twelve with **no tests either**, so the first
+question is whether it should exist; `#881` `AddLinkCommand`, 21 test constructions and the
+hypothesis that it is superseded rather than missing.
+
+##### 5.9.32.5 The gate's scope is stated, because a scope is part of a claim
+
+**Every declaration in a UI package is a root**, which is an over-approximation and a deliberate one:
+deciding which widget is actually mounted needs a build graph this scan does not have, and a gate
+that guessed would cry wolf.
+
+So a command built by a UI method nothing calls reads as reachable, and so does one behind a callback
+parameter no mount supplies. The gate sees `#875`'s commands only because nothing constructs them
+anywhere, not because it understood the mount.
+
+That half belongs to `actions_have_callers_test.dart`. **Between them they still leave a hole**: that
+gate reads `*Actions` records in `rackpal_ui/lib` only, so a widget taking loose callback parameters
+is outside both. `#875`'s second half closes it.
+
+##### 5.9.32.6 The exemption list is the risk, so three cases guard the list rather than the tree
+
+`.okf/practices/a-tests-exemption-list-is-where-the-bug-lives.md`. An exemption whose value is not a
+board item fails; an exemption that has become **reachable** fails, so the list cannot rot into a
+record of things that were true once; and an exemption for a deleted class fails, because a line
+nobody can act on is worse than no line.
+
+##### 5.9.32.7 Evidence
+
+Floor: `rackpal_app` 991 to 996. Gates: 17, unchanged, because this runs inside the `rackpal_app`
+suite rather than as its own `Invoke-Gate` step.
+
+Five mutations, five kills. The second is the one the item asked for by name: **the construction site
+stays and only the path from a person to the builder is removed**, which is the transitive case. Also
+killed: un-wiring `#870` again, a stale exemption, an exemption naming no board item, and the
+splitter regaining its indented-method bug.
+
+**Commits** (§8.8). `#872` `5f9f7c9`.
+
+---
+
 ## 6. The dependency graph, as it actually stands
 
 ### 6.1 What can be worked on now

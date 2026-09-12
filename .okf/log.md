@@ -33,6 +33,25 @@
   a value in the model. `device_browser_screen_test`'s helper defaulted `onEdit` to
   null, which builds no `DoubleTapGestureRecognizer`, so every press in the file
   landed while the same press through the shipped shell did nothing.
+* **Gate**: [commands have callers](/gates/commands-have-callers.md), `#872`.
+  A Command with no path from a person to it fails the build. Twelve are exempt
+  today, each against the board item that retires it (`#875` to `#881`), and an
+  exemption that BECOMES reachable fails too, so the list cannot rot into a
+  record of what was true once. Five mutations, five kills, including the
+  transitive one: the construction site stays and only the path to the builder
+  goes.
+* **Note**: **THE GATE'S PROTOTYPE WAS WRONG AND THE COUNT IS WHAT CAUGHT IT.**
+  A splitter that matched INDENTED methods as top-level functions turned 439
+  files into 18,222 "top-level" declarations and reported 49 of 73 commands
+  unreachable with ZERO construction sites, `MoveDeviceCommand` among them.
+  Nothing in the output said "broken"; it said "49", which is a number somebody
+  in a hurry would have filed 49 tickets against.
+* **Note**: **THE LARGEST THING THE GATE FOUND IS NOT A COMMAND.**
+  `ValidationDrawer` is mounted ONCE in the product and passes none of
+  `onAcknowledge`, `onWithdraw` or `onRemedy`, so acknowledging a finding,
+  withdrawing an acknowledgement and PWR-003's whole remedy chain are
+  unreachable. `addOutletsToRack` is tested in two suites, one of them in
+  `rackpal_ui`, and called by no lib code at all.
 * **Filed**: `#874`. `UndoIntent` and `RedoIntent` have exactly one handler in the
   entire tree, inside `RackCanvasScreen`, and the application has one menu with no
   Undo item. The strip is six tabs and undo works on one. `rack_canvas_screen.dart`
