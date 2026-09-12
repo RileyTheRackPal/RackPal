@@ -150,6 +150,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   /// another; [_openPlan] cancels it for exactly that reason.
   final PlanCalibrateController _calibrate = PlanCalibrateController();
   final PlanOutlineController _outline = PlanOutlineController();
+  final PlanReshapeController _reshape = PlanReshapeController();
 
   /// CR-102's band (DR-139 §11.138).
   ///
@@ -176,6 +177,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
     _controller.changes.removeListener(_onDocumentChanged);
     _calibrate.dispose();
     _outline.dispose();
+    _reshape.dispose();
     _marquee.dispose();
     for (final v in _viewports.values) {
       v.dispose();
@@ -219,14 +221,30 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
 
   /// The canvas region, split out only so the band can be stacked over it
   /// without the build method growing a second level of nesting.
-  /// Opens another plan, and ENDS ANY PICK IN PROGRESS.
+  /// Opens another plan, and ENDS EVERY MODE IN PROGRESS.
   ///
   /// A pick is two points in ONE raster's pixel space, so carrying it
   /// across a switch would let the second click land on a different
   /// picture and calibrate a wall that is not there. The chip going away
   /// is what tells the user it stopped.
+  ///
+  /// **THE DRAW HAD THE SAME DEFECT AND THIS LINE IS ITS FIX** (found at
+  /// `LEN-A/8`). `LEN-A/4` gave this screen one outline controller for all
+  /// plans, on the calibration's own "cannot outlive the raster"
+  /// reasoning, and then did not cancel it here: two corners placed on one
+  /// plan, a switch, and a third click closed a shape whose first two
+  /// vertices were measured on a different picture. Nothing refused it,
+  /// because the vertices are integers and every raster has those.
+  ///
+  /// The reshape is cancelled for a softer reason. Its corners are read
+  /// from the document and checked against the open underlay, so a mode
+  /// carried across a switch is inert rather than wrong; what it would do
+  /// is leave a chip up over a plan with no handles under it, which is the
+  /// surface telling the user something untrue.
   void _openPlan(Uuid id) {
     _calibrate.cancel();
+    _outline.cancel();
+    _reshape.cancel();
     setState(() => _openId = id);
   }
 
@@ -242,12 +260,33 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
   /// prevent.
   void _beginOutline(Uuid locationId) {
     _calibrate.cancel();
+    _reshape.cancel();
     _outline.begin(locationId);
   }
 
+  /// Starts a reshape, and stops whatever else was running first.
+  ///
+  /// [_beginOutline]'s rule applied to the fourth mode, and the canvas
+  /// depends on it: a reshape SWALLOWS every press on the canvas, so a
+  /// draw left running underneath one could not take a single corner until
+  /// the reshape ended, which is a mode nobody can get back to.
+  void _beginReshape(Uuid locationId) {
+    _calibrate.cancel();
+    _outline.cancel();
+    _reshape.begin(locationId);
+  }
+
   /// Takes a room's shape off. One command, its own Edit-menu label.
-  void _clearOutline(Uuid locationId) =>
-      _controller.run(ClearRoomOutlineCommand(locationId: locationId));
+  ///
+  /// **AND IT ENDS A RESHAPE OF THAT ROOM**, because there is nothing left
+  /// to grab. The canvas would offer no handles either way, so this is
+  /// about the chip: a mode that stays up saying to drag a corner, over a
+  /// plan whose corners the same button press just deleted, is the surface
+  /// contradicting itself.
+  void _clearOutline(Uuid locationId) {
+    if (_reshape.locationId == locationId) _reshape.cancel();
+    _controller.run(ClearRoomOutlineCommand(locationId: locationId));
+  }
 
   /// Both points are down: ask for the distance, then write it.
   ///
@@ -316,6 +355,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
     arm: widget.arm,
     calibrate: _calibrate,
     outline: _outline,
+    reshape: _reshape,
     onCalibrationPicked: (a, b) => unawaited(_askDistance(open, a, b)),
     marquee: _marquee,
     onRefuse: widget.onRefuse,
@@ -362,7 +402,9 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
                   doc: _controller.doc,
                   underlay: open,
                   drawingId: _outline.isActive ? _outline.locationId : null,
+                  reshapingId: _reshape.isActive ? _reshape.locationId : null,
                   onDraw: _beginOutline,
+                  onReshape: _beginReshape,
                   onClear: _clearOutline,
                 ),
               ),
@@ -652,7 +694,9 @@ class _RoomList extends StatelessWidget {
     required this.doc,
     required this.underlay,
     required this.drawingId,
+    required this.reshapingId,
     required this.onDraw,
+    required this.onReshape,
     required this.onClear,
   });
 
@@ -662,10 +706,15 @@ class _RoomList extends StatelessWidget {
   /// The room currently being drawn, or null when no draw is running.
   final Uuid? drawingId;
 
+  /// The room currently being reshaped, or null when none is.
+  final Uuid? reshapingId;
+
   final void Function(Uuid locationId) onDraw;
+  final void Function(Uuid locationId) onReshape;
   final void Function(Uuid locationId) onClear;
 
   static String drawKeyFor(Uuid id) => 'room-draw-${id.v}';
+  static String reshapeKeyFor(Uuid id) => 'room-reshape-${id.v}';
   static String clearKeyFor(Uuid id) => 'room-clear-${id.v}';
   static const Key emptyKey = ValueKey('plan-no-rooms');
 
@@ -708,7 +757,9 @@ class _RoomList extends StatelessWidget {
                     // the person is not looking at.
                     hasOutline: room.planOutline?.underlayId == underlay.id,
                     drawing: room.id == drawingId,
+                    reshaping: room.id == reshapingId,
                     onDraw: () => onDraw(room.id),
+                    onReshape: () => onReshape(room.id),
                     onClear: () => onClear(room.id),
                   ),
               ],
@@ -724,14 +775,18 @@ class _RoomRow extends StatelessWidget {
     required this.room,
     required this.hasOutline,
     required this.drawing,
+    required this.reshaping,
     required this.onDraw,
+    required this.onReshape,
     required this.onClear,
   });
 
   final Location room;
   final bool hasOutline;
   final bool drawing;
+  final bool reshaping;
   final VoidCallback onDraw;
+  final VoidCallback onReshape;
   final VoidCallback onClear;
 
   @override
@@ -739,7 +794,11 @@ class _RoomRow extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
-      color: drawing ? theme.colorScheme.primaryContainer : null,
+      // ONE HIGHLIGHT FOR BOTH MODES, because the row is answering one
+      // question: is the canvas currently about THIS room? The two modes
+      // are mutually exclusive by construction, so a second colour would
+      // be a distinction the user never sees two of at once.
+      color: drawing || reshaping ? theme.colorScheme.primaryContainer : null,
       padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -767,6 +826,16 @@ class _RoomRow extends StatelessWidget {
                 onPressed: onDraw,
                 child: Text(hasOutline ? 'Redraw…' : 'Draw…'),
               ),
+              // RESHAPE ONLY WHERE THERE IS A SHAPE, which is `Clear`'s
+              // own condition and reads the same way: a button offering
+              // to correct a room that has no outline would be offering
+              // an act with nothing to perform it on.
+              if (hasOutline)
+                TextButton(
+                  key: ValueKey(_RoomList.reshapeKeyFor(room.id)),
+                  onPressed: onReshape,
+                  child: const Text('Reshape…'),
+                ),
               if (hasOutline)
                 TextButton(
                   key: ValueKey(_RoomList.clearKeyFor(room.id)),

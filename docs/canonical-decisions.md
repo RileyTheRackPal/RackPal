@@ -10164,6 +10164,33 @@ to authorise.
 **WHAT WOULD REOPEN IT** is a plan whose rooms are NOT labelled. The question returns then as a
 different one, about printing the room's NAME rather than its boundary, and it needs its own ID.
 
+**11.49.10 RULED: A FINISHED CORNER DRAGS ONLY IN A MODE.** Settled by the user on 2026-09-11, from
+three options put with their costs, and built as `LEN-A/8`.
+
+**THE CHEAP OPTION WAS EVERY CORNER DRAGGABLE ALL THE TIME**, and it was refused on two grounds. **A
+pin and a corner are both points**, so a plate pinned within the grab radius of a room corner makes
+one of the two unreachable whichever way the tie is broken, and the loser is a gesture the person can
+see sitting in front of them. **And a stray drag would reshape a room silently.** §11.49.7 has the
+estimate re-derived from the shape, so an accidental nudge moves a figure somebody is about to spend
+money on. A mode cannot be entered by accident, and that is the whole of what it buys.
+
+**SO THE MODE TAKES THE WHOLE CANVAS WHILE IT RUNS.** A press grabs a corner or does nothing at all:
+no pin moves, no band opens, no selection clears. That is the ruling rather than an implementation
+convenience, because a mode that outranked the other gestures only sometimes would put the same tie
+in a smaller place where nobody would look for it.
+
+**ONE COMMAND PER DRAG AND NOT ONE PER FRAME.** A corner dragged across a room is forty frames, and
+forty undo entries would make the person who dragged it once press `Ctrl+Z` forty times to put it
+back. The Edit menu names a reshape, which takes passing the transaction's label explicitly: the
+command decides its own label inside `apply` and `DocumentController.run` reads it before that
+(`#866`).
+
+**What this clause does not rule.** Whether a corner may be ADDED or REMOVED after the fact, which is
+a different gesture and has no ticket. The appearance of a handle, which is UI/UX and is the user's
+under `kPlanMarkerRadiusFraction`'s own note. And whether a dragged corner tracks the pointer exactly
+or keeps the offset it was grabbed with: it shipped tracking, on the argument that a pin is a marker
+with a body and a corner IS the point, and that is a judgement of the task rather than a ruling.
+
 **What it does not rule.** The formula. Whether a rise is added per storey, whether the figure is
 straight-line or perimeter, and what margin if any is folded in are all decisions for the task, and
 all of them are cheaper to change than a provenance tier. It also does not touch `LEN-002` or the

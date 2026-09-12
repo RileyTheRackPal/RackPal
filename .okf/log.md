@@ -1,5 +1,50 @@
 # Update Log
 
+## 2026-09-11 (twenty-second entry)
+
+* **Closed**: `LEN-A`'s two deferred chapters, `#864` and `#865`, at `v0.6.55`
+  and `v0.6.56`. The Plan view epic now has one story open, which is `PLAN-J`,
+  the exit-criterion drill, and that one is a person's.
+* **Ruled**: [DR-050](/decisions/dr-050-plan-geometry-fills-the-room-estimate.md)
+  §11.49.9, **the outline does not print on `T1.01`**, and §11.49.10, **a
+  finished corner drags only in a mode**.
+* **Note**: **A TICKET REQUIRED PAPER AND THE ANSWER DELETED THE METHOD.**
+  `#864` said to decide the printing question *"with a printed sheet in hand"*,
+  on AC-054's standard, and priced a print run into its own `DONE WHEN`. The
+  drill could not have supplied one: an outline is chrome, so `PLAN-J`'s
+  `T1.01` has none on it, and deciding from paper needed the parameter the
+  decision was supposed to authorise. The user answered with a fact about the
+  drawings instead: **almost every floorplan already labels its rooms**, so the
+  architect's own titles say which space is which. Recorded as the fifth
+  instance in
+  [trade objections are questions](/practices/trade-knowledge-beats-workflow-reasoning.md),
+  with a second half added to the rule: **ask the trade question before you
+  write down how you are going to find out.**
+* **Note**: **A MODE, BECAUSE A PIN AND A CORNER ARE BOTH POINTS.** The cheap
+  option for `#865` was every finished corner draggable all the time. A plate
+  pinned within the grab radius of a room corner makes one of the two
+  unreachable whichever way the tie is broken, and a stray drag would reshape a
+  room silently, which moves a figure somebody is about to quote. The mode takes
+  the whole canvas while it runs, and that is the ruling rather than an
+  implementation convenience.
+* **Note**: **`#866` IS PROVED AS WELL AS WORKED AROUND.** The reshape passes
+  its transaction label explicitly, because `DocumentController.run` reads a
+  command's label before `apply` decides it; without that line the Edit menu
+  says *"Undo Draw Room Outline"* to somebody who drew nothing. A case pins the
+  label and a mutation restoring the bare form kills it.
+* **Note**: **AND A DEFECT `LEN-A/4` SHIPPED, FOUND BY ADDING A FOURTH MODE TO
+  THE SAME METHOD.** `PlanEditorScreen` holds ONE outline controller for all
+  plans and `_openPlan` cancelled the calibration beside it and not the draw, so
+  two corners placed on one plan survived a switch and closed a shape measured
+  on two rasters. Nothing refused it, because vertices are integers and every
+  raster has those. New practice:
+  [a field added beside a documented one inherits nothing](/practices/a-field-beside-a-documented-one-inherits-nothing.md).
+* **Note**: **ELEVEN MUTATIONS, ELEVEN KILLS**, and one of them was SKIPPED on
+  its first run because its anchor appeared twice, in the draw path and the
+  reshape path. Re-run with a unique anchor and killed. A skip reported as a
+  pass is the shape this corpus already names as a measurement that measured
+  nothing.
+
 ## 2026-09-11 (twenty-first entry)
 
 * **Ruled**: [DR-050](/decisions/dr-050-plan-geometry-fills-the-room-estimate.md)

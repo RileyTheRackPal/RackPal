@@ -9218,8 +9218,87 @@ different one, about printing the room's NAME rather than its boundary, and it n
 Floors unchanged, no test added: there is no behaviour here to assert, and a test that pinned *"the
 scene has no outline op"* would pin the absence of a parameter nobody wrote. Gates: 17.
 
-**Commits** (§8.8). Listed with `LEN-A/8`'s below, which is the first commit that can
-know both of this chapter's.
+**Commits** (§8.8). `#864` `dfe99c9`, `86c4802`.
+
+#### 5.9.27 `#865`: a corner drags, in a mode, and one defect `LEN-A/4` shipped · `DR-050` · `v0.6.56`
+
+`LEN-A/8`, 2026-09-11. Deferred by the user at `LEN-A/4`, and the last of LEN-A's chapters.
+
+##### 5.9.27.1 The mode is the ruling, and the tie is why
+
+Three options were put to the user with their costs. The cheap one, every finished corner draggable
+all the time, was refused on two grounds.
+
+**A pin and a corner are both points.** `kPlanMarkerRadiusFraction` puts a marker at roughly 18 scene
+units on a 2000 pixel plan, which at a fitted zoom is about seven screen points, against a ten-point
+grab radius. They overlap, and whichever way that tie is broken the loser is a gesture sitting in
+front of the person who wanted it.
+
+**And a stray drag would reshape a room silently**, which is the one that decided it. §11.49.7 has
+the estimate re-derived from the shape on release, so an accidental nudge moves a figure somebody is
+about to spend money on. A mode cannot be entered by accident.
+
+So the mode **takes the whole canvas** while it runs. Four cases assert exactly that, and each is a
+gesture that does something on this canvas the rest of the time: a click on a pin does not select it,
+a pin under a corner does not move when the corner is dragged, no band opens on bare plan, and a
+click on bare plan does not clear a selection made before the mode started.
+
+##### 5.9.27.2 `#866` proved in one line, and worked around in another
+
+`SetRoomOutlineCommand` decides between `drawRoomOutline` and `reshapeRoomOutline` inside `apply`,
+from what the document held. `DocumentController.run` is `transact(c.label, …)` and reads the label
+BEFORE that, so a bare `run` here would put **"Undo Draw Room Outline" in the Edit menu in front of
+somebody who drew nothing**.
+
+The canvas names the transaction instead, which is what the menu shows. A case pins the label and a
+mutation restoring the bare form kills it, so this chapter carries both the workaround and the
+evidence that the defect is real rather than theorised. `#866` is still owed: every second-act label
+in this product is unreachable the same way, and the repair changes the `Command` protocol.
+
+##### 5.9.27.3 A defect `LEN-A/4` shipped, found by wiring a fourth mode into the same method
+
+`PlanEditorScreen` holds **one** outline controller for all plans. The field directly above it,
+`_calibrate`, carries the reasoning in its own doc: *"A pick describes a distance on ONE raster and
+cannot outlive a switch to another; `_openPlan` cancels it for exactly that reason."* The outline
+controller was declared on the next line with no doc, and `_openPlan` was not extended.
+
+So: two corners placed on one plan, a switch to another, a third click, and the shape closed with its
+first two vertices measured on a different picture. **Nothing refused it**, because vertices are
+integers and every raster has those.
+
+Fixed here rather than filed, because it is one line in the method this chapter had to edit anyway,
+and a test fails when it is reverted. Recorded in OKF as
+[a field added beside a documented one inherits nothing](/practices/a-field-beside-a-documented-one-inherits-nothing.md).
+
+##### 5.9.27.4 Eleven mutations, eleven kills
+
+`#865` asks for the gesture proved *"through the real mounting rather than through a constructor the
+product never calls, which is the failure this epic already shipped once at `PLAN-E/6`"*. Every case
+went green on its first run, which is exactly when to distrust them, so eleven mutations were run
+with the file restored in a `finally`.
+
+The two that matter are the reachability pair: **the canvas handed a null mode**, and **the
+`Reshape…` button wired to nothing.** Both killed four cases each. The other nine cover the label,
+the `isUsable` guard that avoids `#863`, the no-op guard, nearest-corner selection, the swallow, the
+re-derivation, and `planEstimateMayFill`.
+
+One mutation was **skipped rather than counted**, on its first run, because its anchor appeared twice:
+the estimate re-derivation reads identically in the draw path and the reshape path. It was re-run with
+a unique anchor and killed. A skipped mutation reported as a pass would have been the shape this
+corpus already names, which is a measurement that measured nothing.
+
+##### 5.9.27.5 A judgement of the task, flagged as one
+
+**A dragged corner tracks the pointer exactly** and does not keep the offset `_livePin` keeps. The
+argument is that a pin is a marker with a body, grabbed anywhere on it, while a corner IS the point,
+so a handle trailing the cursor by however far off-centre the press landed would have to be aimed
+twice. It is a line to reverse, and §11.49.10 records it as the task's call rather than a ruling.
+
+##### 5.9.27.6 Evidence
+
+Floors: `rackpal_ui` 1723 to 1753, +30. Gates: 17.
+
+**Commits** (§8.8). `#865` `50006b3`, and the two that follow it.
 
 ---
 

@@ -3,6 +3,7 @@
 Working conventions that earned their place; each is here because it was tested
 by something going wrong.
 
+* [A field added beside a documented one inherits nothing](a-field-beside-a-documented-one-inherits-nothing.md) - the comment explaining the neighbour's contract is four lines up and applies word for word, so nobody asks which lines ENFORCE it; a live draw survived a switch to another plan for four chapters.
 * [A test that asserts an absence names its due date](a-test-that-asserts-an-absence-names-its-due-date.md) - three came due in one task and cost five minutes between them, because each comment said which item would retire it.
 * [A deferred action needs a frame](defer-past-the-gesture.md) - addPostFrameCallback queues but does not schedule, and a TabBarView settles the page under a tab switch made mid-click.
 * [Assert the artifact, not the mechanism](assert-the-artifact-not-the-mechanism.md) - a test counted corridors, passed, and the sheet painted a fifth of its ink twice.

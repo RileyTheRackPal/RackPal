@@ -1031,7 +1031,15 @@ $SuiteFloors = @{
     # marker reads in all THREE directions, because an absent origin is
     # not "typed": every document written before LEN-A/1 carries a figure
     # with no recorded provenance.
-    'rackpal_ui'     = 1723
+    # 1753 at LEN-A/8: +30. The reshape mode (8), the chip (4), the drag
+    # through the real canvas (16) and the reachability proof through the
+    # real screen (6, one of which found a defect LEN-A/4 shipped: this
+    # screen holds ONE outline controller for all plans and _openPlan
+    # cancelled the calibration and not the draw, so two corners placed on
+    # one plan survived a switch and closed a shape on another).
+    # ELEVEN MUTATIONS, ELEVEN KILLS, including the two that matter most:
+    # the canvas handed a null mode, and the button wired to nothing.
+    'rackpal_ui'     = 1753
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

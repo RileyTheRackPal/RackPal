@@ -209,6 +209,33 @@ void _addRoom(DocumentController c, {RoomOutline? outline}) {
 RoomOutline? _outlineOf(DocumentController c) =>
     c.doc.locations[_roomId]?.planOutline;
 
+/// The shape `LEN-A/8`'s cases start from. Its far corner is 500 px from
+/// the rack pin at the origin, which is the figure `LEN-A/5`'s own case
+/// already reads as 180 inches.
+RoomOutline _triangle() => RoomOutline(
+  underlayId: _underlayId,
+  vertices: const [PxPt(100, 100), PxPt(400, 100), PxPt(400, 300)],
+);
+
+/// One corner dragged with a real pointer, through `CanvasIntentDetector`.
+Future<void> _drag(WidgetTester tester, Offset from, Offset to) async {
+  final pointer = TestPointer(91, PointerDeviceKind.mouse);
+  await tester.sendEventToBinding(pointer.down(from));
+  // TWO MOVES, because one is what a test writes and several is what a
+  // mouse sends. The count is also the subject of the one-command case.
+  await tester.sendEventToBinding(pointer.move(Offset.lerp(from, to, .5)!));
+  await tester.sendEventToBinding(pointer.move(to));
+  await tester.sendEventToBinding(pointer.up());
+  await tester.pump();
+}
+
+/// A reshape already running on the fixture's room, disposed with the test.
+PlanReshapeController _reshaping() {
+  final mode = PlanReshapeController()..begin(_roomId);
+  addTearDown(mode.dispose);
+  return mode;
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -233,6 +260,7 @@ void main() {
     PlanPinArmController? arm,
     MarqueeController? marquee,
     PlanOutlineController? outline,
+    PlanReshapeController? reshape,
   }) async {
     await tester.runAsync(() async {
       await cache.load(_member, await _png(600, 400));
@@ -264,6 +292,7 @@ void main() {
               arm: arm,
               marquee: marquee,
               outline: outline,
+              reshape: reshape,
               onRefuse: refusals.add,
             ),
           ),
@@ -1287,6 +1316,340 @@ void main() {
         reason: 'the band caught the pin it was drawn around',
       );
       expect(marquee.isActive, isFalse);
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // LEN-A/8: DRAGGING A CORNER, THROUGH THE REAL MOUNTING
+  // ═════════════════════════════════════════════════════════════════════
+  // `#865` asks for the gesture proved "through the real mounting rather
+  // than through a constructor the product never calls, which is the
+  // failure this epic already shipped once at PLAN-E/6". So the controller
+  // below is handed to a real canvas and every corner is dragged with a
+  // real pointer through `CanvasIntentDetector`.
+  group('LEN-A/8: the reshape drag', () {
+    testWidgets('A CORNER DRAGS, and the rest of the shape stays put', (
+      tester,
+    ) async {
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      await pump(tester, c, reshape: _reshaping());
+
+      await _drag(tester, const Offset(100, 100), const Offset(150, 160));
+
+      expect(_outlineOf(c)!.vertices, const [
+        PxPt(150, 160),
+        PxPt(400, 100),
+        PxPt(400, 300),
+      ]);
+    });
+
+    testWidgets('ONE COMMAND FOR THE WHOLE DRAG, not one per frame', (
+      tester,
+    ) async {
+      // A corner dragged across a room is forty frames. Forty entries
+      // would make the person who dragged it once press Ctrl+Z forty
+      // times to put it back.
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      await pump(tester, c, reshape: _reshaping());
+      final before = c.undo.depth;
+
+      await _drag(tester, const Offset(100, 100), const Offset(150, 160));
+
+      expect(c.undo.depth, before + 1);
+    });
+
+    testWidgets('and UNDO PUTS THE CORNER BACK rather than removing the '
+        'outline', (tester) async {
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      await pump(tester, c, reshape: _reshaping());
+
+      await _drag(tester, const Offset(100, 100), const Offset(150, 160));
+      c.undo.undo(c.doc);
+
+      final back = _outlineOf(c);
+      expect(back, isNotNull, reason: 'the outline is still there');
+      expect(back!.vertices.first, const PxPt(100, 100));
+    });
+
+    testWidgets('THE EDIT MENU NAMES A RESHAPE, which a bare run would '
+        'have called a draw (`#866`)', (tester) async {
+      // `SetRoomOutlineCommand` decides its own label inside `apply`, and
+      // `DocumentController.run` reads `c.label` before that, so the
+      // command's answer is always the `drawRoomOutline` it starts as.
+      // The canvas names the transaction instead, which is what the menu
+      // shows, and this case is the proof the defect is real as well as
+      // the proof it was worked around.
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      await pump(tester, c, reshape: _reshaping());
+
+      await _drag(tester, const Offset(100, 100), const Offset(150, 160));
+
+      expect(c.undo.undoLabelKey, LabelKey.reshapeRoomOutline.name);
+    });
+
+    testWidgets('a corner put back where it started is NOT AN EDIT', (
+      tester,
+    ) async {
+      // The pointer travelled, so `_moved` is true; nothing changed, so
+      // an entry here is one the user has to press through twice to reach
+      // the edit they meant.
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      await pump(tester, c, reshape: _reshaping());
+      final before = c.undo.depth;
+
+      await _drag(tester, const Offset(100, 100), const Offset(100, 100));
+
+      expect(c.undo.depth, before);
+    });
+
+    testWidgets('THE NEAREST CORNER WINS, not the first one in the list', (
+      tester,
+    ) async {
+      // Two corners of a small room are both inside ten points at a
+      // fitted zoom. Taking the first would hand somebody the corner they
+      // were not pointing at, on an ordering they cannot see.
+      final c = _controller();
+      _addRoom(
+        c,
+        outline: RoomOutline(
+          underlayId: _underlayId,
+          vertices: const [PxPt(100, 100), PxPt(108, 100), PxPt(400, 300)],
+        ),
+      );
+      await pump(tester, c, reshape: _reshaping());
+
+      await _drag(tester, const Offset(105, 100), const Offset(200, 250));
+
+      expect(_outlineOf(c)!.vertices, const [
+        PxPt(100, 100),
+        PxPt(200, 250),
+        PxPt(400, 300),
+      ]);
+    });
+
+    testWidgets('A TWO-VERTEX OUTLINE OFFERS NO HANDLES, which is `#863` '
+        'avoided rather than met', (tester) async {
+      // `RoomOutline` HOLDS a degenerate shape because a decoder must
+      // read whatever is on disk (CR-093), and `SetRoomOutlineCommand`
+      // refuses to WRITE one. A drag offered here would build a
+      // transaction whose only child declined to apply, and undoing that
+      // entry throws.
+      final c = _controller();
+      _addRoom(
+        c,
+        outline: RoomOutline(
+          underlayId: _underlayId,
+          vertices: const [PxPt(100, 100), PxPt(400, 100)],
+        ),
+      );
+      await pump(tester, c, reshape: _reshaping());
+      final before = c.undo.depth;
+
+      await _drag(tester, const Offset(100, 100), const Offset(150, 160));
+
+      expect(c.undo.depth, before, reason: 'nothing was written');
+      expect(_outlineOf(c)!.vertices, const [PxPt(100, 100), PxPt(400, 100)]);
+    });
+
+    testWidgets('A COMMITTED DRAG DOES NOT END THE MODE, so the second '
+        'corner costs no button press', (tester) async {
+      // The difference between this lifetime and the draw's, which is
+      // consumed by its own close. A room has as many corners as it has
+      // and somebody correcting one is usually correcting its neighbour.
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      final mode = _reshaping();
+      await pump(tester, c, reshape: mode);
+
+      await _drag(tester, const Offset(100, 100), const Offset(150, 160));
+      expect(mode.isActive, isTrue, reason: 'still reshaping');
+
+      await _drag(tester, const Offset(400, 100), const Offset(420, 140));
+
+      expect(_outlineOf(c)!.vertices, const [
+        PxPt(150, 160),
+        PxPt(420, 140),
+        PxPt(400, 300),
+      ]);
+    });
+
+    testWidgets('AN OUTLINE ON ANOTHER PLAN IS NOT THIS CANVAS’S to '
+        'reshape', (tester) async {
+      final c = _controller();
+      _addRoom(
+        c,
+        outline: RoomOutline(
+          underlayId: const Uuid('ul-elsewhere'),
+          vertices: const [PxPt(100, 100), PxPt(400, 100), PxPt(400, 300)],
+        ),
+      );
+      await pump(tester, c, reshape: _reshaping());
+      final before = c.undo.depth;
+
+      await _drag(tester, const Offset(100, 100), const Offset(150, 160));
+
+      expect(c.undo.depth, before);
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // LEN-A/8: THE MODE TAKES THE WHOLE CANVAS, WHICH IS WHAT IT BUYS
+  // ═════════════════════════════════════════════════════════════════════
+  // Ruled by the user on 2026-09-11 against making every finished corner
+  // draggable all the time. These are the cases that would be impossible
+  // to write if it were: each one is a gesture that DOES something on this
+  // canvas and must do nothing while a reshape runs.
+  group('LEN-A/8: a reshape swallows the canvas', () {
+    testWidgets('a click on a pin does not select it', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addRoom(c, outline: _triangle());
+      final h = await pump(tester, c, reshape: _reshaping());
+
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+
+      expect(h.selection.ids, isEmpty);
+    });
+
+    testWidgets('A PIN UNDER A CORNER DOES NOT MOVE, which is the tie the '
+        'mode exists to avoid', (tester) async {
+      // A plate pinned within the grab radius of a room corner is the
+      // collision that made "every corner draggable all the time" cost
+      // somebody a gesture they can see sitting there.
+      final c = _controller(pinnedAt: const PxPt(100, 100));
+      _addRoom(c, outline: _triangle());
+      await pump(tester, c, reshape: _reshaping());
+
+      await _drag(tester, const Offset(100, 100), const Offset(200, 220));
+
+      expect(_placementOf(c)!.planPin!.at, const PxPt(100, 100));
+      expect(_outlineOf(c)!.vertices.first, const PxPt(200, 220));
+    });
+
+    testWidgets('and no band opens on bare plan', (tester) async {
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      final marquee = MarqueeController();
+      addTearDown(marquee.dispose);
+      await pump(tester, c, marquee: marquee, reshape: _reshaping());
+
+      final pointer = TestPointer(92, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(pointer.down(const Offset(50, 350)));
+      await tester.sendEventToBinding(pointer.move(const Offset(200, 380)));
+      await tester.sendEventToBinding(pointer.up());
+      await tester.pump();
+
+      expect(marquee.isActive, isFalse);
+    });
+
+    testWidgets('nor does a click on bare plan clear the selection', (
+      tester,
+    ) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addRoom(c, outline: _triangle());
+      final mode = PlanReshapeController();
+      addTearDown(mode.dispose);
+      final h = await pump(tester, c, reshape: mode);
+
+      // Select it BEFORE the mode starts, which is the state a person
+      // arrives in: they clicked the drop, then pressed Reshape.
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+      expect(h.selection.ids, isNotEmpty);
+
+      mode.begin(_roomId);
+      await tester.pump();
+      await tester.tapAt(const Offset(50, 350));
+      await tester.pump();
+
+      expect(h.selection.ids, isNotEmpty);
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // LEN-A/8: THE FIGURE FOLLOWS THE SHAPE (§11.49.7)
+  // ═════════════════════════════════════════════════════════════════════
+  group('LEN-A/8: a reshape re-derives what the shape produced', () {
+    testWidgets('THE ESTIMATE MOVES WITH THE CORNER, marked as computed', (
+      tester,
+    ) async {
+      // A reshape that left the old figure behind would leave a room
+      // quoting a wall that has moved.
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      _calibrate(c);
+      _servedByRack(c, _roomId);
+      await pump(tester, c, reshape: _reshaping());
+
+      // (480, 360) is 600 px from the rack pin at the origin, at 0.36 in
+      // the pixel: 216 inches, up from the 180 the triangle started at.
+      await _drag(tester, const Offset(400, 300), const Offset(480, 360));
+
+      expect(
+        c.doc.locations[_roomId]!.estimatedRunLengthFromRack,
+        const Len(216 * Len.nmPerInch),
+      );
+      expect(
+        c.doc.locations[_roomId]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.computedFromPlan,
+      );
+    });
+
+    testWidgets('ONE UNDO TAKES BOTH BACK, because it was one act', (
+      tester,
+    ) async {
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      _calibrate(c);
+      _servedByRack(c, _roomId);
+      await pump(tester, c, reshape: _reshaping());
+
+      await _drag(tester, const Offset(400, 300), const Offset(480, 360));
+      c.undo.undo(c.doc);
+
+      expect(_outlineOf(c)!.vertices.last, const PxPt(400, 300));
+      expect(
+        c.doc.locations[_roomId]!.estimatedRunLengthFromRack,
+        isNull,
+        reason: 'the room had no estimate before the drag',
+      );
+    });
+
+    testWidgets('A TYPED FIGURE SURVIVES THE RESHAPE, which is the case '
+        'the auto-fill is not allowed to win', (tester) async {
+      final c = _controller();
+      _addRoom(c, outline: _triangle());
+      _calibrate(c);
+      _servedByRack(c, _roomId);
+      // THROUGH THE REAL WRITER, not the model's `@internal` setters.
+      c.run(
+        SetRoomEstimateCommand.typed(
+          locationId: _roomId,
+          length: const Len(42 * Len.nmPerInch),
+        ),
+      );
+      await pump(tester, c, reshape: _reshaping());
+
+      await _drag(tester, const Offset(400, 300), const Offset(480, 360));
+
+      expect(
+        c.doc.locations[_roomId]!.estimatedRunLengthFromRack,
+        const Len(42 * Len.nmPerInch),
+      );
+      expect(
+        c.doc.locations[_roomId]!.estimatedRunLengthOrigin,
+        RunLengthOrigin.typed,
+      );
+      expect(
+        _outlineOf(c)!.vertices.last,
+        const PxPt(480, 360),
+        reason: 'the SHAPE still moved; only the figure is protected',
+      );
     });
   });
 }

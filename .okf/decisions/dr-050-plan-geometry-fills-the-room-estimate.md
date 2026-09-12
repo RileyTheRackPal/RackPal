@@ -98,6 +98,22 @@ printing the room's NAME rather than its boundary. See
 [trade objections are questions](/practices/trade-knowledge-beats-workflow-reasoning.md),
 whose fifth instance this is.
 
+# Correcting a corner is a MODE, not a live handle
+
+§11.49.10, settled 2026-09-11 and built as `LEN-A/8`. `Reshape…` on the room's
+row starts it; while it runs that room's corners drag and **the canvas answers
+nothing else**.
+
+Two reasons, and the second decided it. **A pin and a corner are both points**,
+so a plate pinned within the grab radius of a room corner makes one of the two
+unreachable whichever way the tie is broken. **And a stray drag would reshape a
+room silently**, which moves the estimate, which is a number somebody is about
+to quote. A mode cannot be entered by accident.
+
+One command per drag and not one per frame. The Edit menu names a reshape only
+because the transaction's label is passed explicitly, `DocumentController.run`
+reading a command's label before `apply` decides it (`#866`).
+
 # What this cost that nobody had priced
 
 Two defects in command machinery, both filed rather than fixed in flight

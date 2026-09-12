@@ -16,6 +16,11 @@
 // controller with a flag, it is the same shape with a different lifetime,
 // and saying so is what stops somebody merging the three.
 //
+// `PlanReshapeController` is the FOURTH, added at `LEN-A/8`, and it is the
+// emptiest of them: two fields and no geometry at all. It outlives each
+// drag the way the arm mode outlives each pin, because a person correcting
+// one corner of a room is usually correcting two.
+//
 // ═══════════════════════════════════════════════════════════════════════
 // CLOSING IS A CLICK ON THE FIRST VERTEX (ruled by the user, 2026-09-11)
 // ═══════════════════════════════════════════════════════════════════════
@@ -141,6 +146,73 @@ final class PlanOutlineController extends ChangeNotifier {
   }
 }
 
+/// Which room's corners are grabbable right now (DR-050 §11.49,
+/// `LEN-A/8`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// TWO FIELDS AND NO GEOMETRY, WHICH IS THE POINT
+/// ═══════════════════════════════════════════════════════════════════════
+/// A drag's live corner moves at pointer rate and has no meaning once the
+/// pointer comes up, so it lives on the canvas beside `_calibrateHover`
+/// and `_outlineHover` for the reason those do: a mode carrying it would
+/// notify every listener at pointer rate for a frame detail.
+///
+/// What is left is exactly what somebody other than the canvas needs: is
+/// the mode on, so the chip shows and `Esc` has something to mean, and
+/// which room is it on, so the canvas knows whose corners to offer.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// WHY THERE IS A MODE AT ALL, WHICH IS A RULING (the user, 2026-09-11)
+/// ═══════════════════════════════════════════════════════════════════════
+/// The cheap alternative was to make every finished corner draggable all
+/// the time. It was put to the user with its costs and refused, on two
+/// counts:
+///
+///   * **A pin and a corner are both points.** A plate pinned within the
+///     grab radius of a corner makes one of the two unreachable, and
+///     whichever way that tie is broken somebody loses a gesture they can
+///     see sitting there.
+///   * **A stray drag would reshape a room silently, and a room's shape is
+///     a number on a quote.** `estimatedRunLengthFromRack` is re-derived
+///     from the shape on release, so an accidental nudge moves a figure
+///     somebody is about to spend money on. A mode cannot be entered by
+///     accident, and that is the whole of what it buys.
+final class PlanReshapeController extends ChangeNotifier {
+  bool _active = false;
+  Uuid? _locationId;
+
+  /// Whether a reshape is running. True from [begin] until [cancel].
+  bool get isActive => _active;
+
+  /// The room whose corners are grabbable, or null when the mode is off.
+  Uuid? get locationId => _locationId;
+
+  /// Starts a reshape on [locationId].
+  ///
+  /// Idempotent on `PlanCalibrateController.begin`'s reasoning, and
+  /// switching rooms mid-mode is the same call: the mode describes exactly
+  /// one room and the most recent press names it.
+  void begin(Uuid locationId) {
+    _active = true;
+    _locationId = locationId;
+    notifyListeners();
+  }
+
+  /// Ends the reshape: `Esc`, the chip, or a mode the host opens instead.
+  ///
+  /// **A COMMITTED DRAG DOES NOT END IT**, unlike
+  /// [PlanOutlineController.takeClosed].
+  /// A room has as many corners as it has, and somebody who is correcting
+  /// one is usually correcting the one beside it; ending on the first
+  /// release would make the ordinary case a button press per corner.
+  void cancel() {
+    if (!_active && _locationId == null) return;
+    _active = false;
+    _locationId = null;
+    notifyListeners();
+  }
+}
+
 /// What the chip says before any corner is down.
 ///
 /// **THE AFFORDANCE IS DOMAIN KNOWLEDGE AND BELONGS IN THE COPY**
@@ -229,6 +301,61 @@ final class PlanOutlineChip extends StatelessWidget {
   }
 }
 
+/// What the reshape chip says.
+///
+/// **THE AFFORDANCE IS DOMAIN KNOWLEDGE AND BELONGS IN THE COPY**
+/// (`#633`), on [kOutlineFirstLabel]'s rule. "Reshaping" would name the
+/// mode rather than the act; naming the corner as the thing to drag is the
+/// whole instruction, and there is only one.
+const String kReshapeLabel = 'Drag a corner to correct the room';
+
+/// `LEN-A/8`'s signpost: what to do, and how to stop.
+final class PlanReshapeChip extends StatelessWidget {
+  const PlanReshapeChip({required this.onDismiss, super.key});
+
+  final VoidCallback onDismiss;
+
+  /// A stable handle for tests, so a case can tell this chip from the
+  /// other three: all four are `Material` widgets in the same corner.
+  static const Key chipKey = ValueKey('plan-reshape-chip');
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      key: chipKey,
+      color: theme.colorScheme.secondaryContainer,
+      borderRadius: BorderRadius.circular(6),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 4, 6),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // FLEXIBLE, for the reason `PlanOutlineChip` carries in full:
+            // a chip sits on a canvas whose width is the window's, and on
+            // a narrow one the text is the only thing that can give.
+            Flexible(
+              child: Text(
+                kReshapeLabel,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSecondaryContainer,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: const Icon(Icons.close, size: 16),
+              tooltip: 'Stop reshaping (Esc)',
+              onPressed: onDismiss,
+              visualDensity: VisualDensity.compact,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 /// How near the first corner a click has to land to CLOSE the shape.
 ///
 /// ═══════════════════════════════════════════════════════════════════════
@@ -245,6 +372,19 @@ final class PlanOutlineChip extends StatelessWidget {
 /// four-point marker `plan_scene.dart` draws: the target a person aims at
 /// is the corner, and the dot is only how it is advertised.
 const double kOutlineCloseRadiusPt = 10;
+
+/// How near a corner a PRESS has to land to GRAB it (`LEN-A/8`).
+///
+/// SCREEN POINTS, for [kOutlineCloseRadiusPt]'s reason exactly, and that
+/// comment is the long version.
+///
+/// **ITS OWN CONSTANT THOUGH IT HOLDS THE SAME NUMBER**, deliberately.
+/// *Is this click closing the shape* and *is this press grabbing a corner*
+/// are two questions that happen to share an answer today. One constant
+/// serving both would mean a change made for either silently moves the
+/// other, and this file already carries a note about three modes that look
+/// like one another and must not be merged.
+const double kOutlineGrabRadiusPt = 10;
 
 /// The room outlines on this plan, and the one being drawn.
 ///
@@ -276,11 +416,22 @@ final class PlanOutlineLayer extends StatelessWidget {
     required this.hover,
     required this.viewport,
     required this.canClose,
+    this.handles = const <PxPt>[],
     super.key,
   });
 
   /// Every outline already stored on this underlay.
+  ///
+  /// **WITH THE RESHAPING ROOM'S SHAPE ALREADY SUBSTITUTED** for the live
+  /// one, which is why this list arrives built rather than read here.
   final List<RoomOutline> finished;
+
+  /// The corners to advertise as grabbable, empty when no reshape runs.
+  ///
+  /// PASSED IN RATHER THAN LOOKED UP FROM A ROOM ID, for the same reason
+  /// [finished] is: a layer that read the document would draw the handles
+  /// at the COMMITTED corners while the outline under them moved.
+  final List<PxPt> handles;
 
   /// The corners of the draw in progress, oldest first. Empty when no
   /// draw is running.
@@ -308,6 +459,7 @@ final class PlanOutlineLayer extends StatelessWidget {
           key: layerKey,
           painter: _OutlinePainter(
             finished: finished,
+            handles: handles,
             drawing: drawing,
             hover: hover,
             viewport: viewport,
@@ -325,6 +477,7 @@ final class PlanOutlineLayer extends StatelessWidget {
 class _OutlinePainter extends CustomPainter {
   const _OutlinePainter({
     required this.finished,
+    required this.handles,
     required this.drawing,
     required this.hover,
     required this.viewport,
@@ -334,6 +487,7 @@ class _OutlinePainter extends CustomPainter {
   });
 
   final List<RoomOutline> finished;
+  final List<PxPt> handles;
   final List<PxPt> drawing;
   final PxPt? hover;
   final ViewportController viewport;
@@ -360,6 +514,21 @@ class _OutlinePainter extends CustomPainter {
           ..color = settled
           ..style = PaintingStyle.stroke
           ..strokeWidth = 2,
+      );
+    }
+    // THE GRAB HANDLES, drawn over the settled outlines and under the
+    // live draw. Filled rather than stroked, which is how they read as
+    // something to take hold of next to the draw mode's hollow corners.
+    //
+    // **A STARTING VALUE AND NOT A RULING**, on `kPlanMarkerRadiusFraction`'s
+    // own note: the appearance of a mark is UI/UX and is the user's.
+    for (final h in handles) {
+      canvas.drawCircle(
+        _at(h),
+        4,
+        Paint()
+          ..color = live
+          ..style = PaintingStyle.fill,
       );
     }
     if (drawing.isEmpty) return;
@@ -409,6 +578,7 @@ class _OutlinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_OutlinePainter old) =>
+      !identical(old.handles, handles) ||
       old.hover != hover ||
       old.canClose != canClose ||
       old.drawing.length != drawing.length ||

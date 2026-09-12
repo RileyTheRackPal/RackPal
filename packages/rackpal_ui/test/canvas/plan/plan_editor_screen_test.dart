@@ -406,6 +406,45 @@ void _roomListTests() {
 
   Finder drawFor(Uuid id) => find.byKey(ValueKey('room-draw-${id.v}'));
   Finder clearFor(Uuid id) => find.byKey(ValueKey('room-clear-${id.v}'));
+  Finder reshapeFor(Uuid id) => find.byKey(ValueKey('room-reshape-${id.v}'));
+
+  /// A triangle whose corners this file's cases drag.
+  RoomOutline triangle() => RoomOutline(
+    underlayId: _ul1,
+    vertices: const [PxPt(100, 100), PxPt(400, 100), PxPt(400, 300)],
+  );
+
+  /// Where [p] sits on the screen, read from the viewport the REAL screen
+  /// built rather than from one a test made up.
+  ///
+  /// A test that assumed the identity would be asserting about a viewport
+  /// this widget does not necessarily give itself, which is the shape of
+  /// several failures this epic has already had: measure the thing that
+  /// shipped.
+  Offset screenOf(WidgetTester tester, PxPt p) {
+    final canvas = tester.widget<PlanCanvasScreen>(
+      find.byType(PlanCanvasScreen),
+    );
+    final s = canvas.viewport.sceneToScreen(
+      DPt(p.px.toDouble(), p.py.toDouble()),
+    );
+    return tester.getTopLeft(find.byType(PlanCanvasScreen)) + Offset(s.x, s.y);
+  }
+
+  Future<void> dragCorner(
+    WidgetTester tester,
+    PxPt from,
+    PxPt to,
+  ) async {
+    final a = screenOf(tester, from);
+    final b = screenOf(tester, to);
+    final pointer = TestPointer(64, PointerDeviceKind.mouse);
+    await tester.sendEventToBinding(pointer.down(a));
+    await tester.sendEventToBinding(pointer.move(Offset.lerp(a, b, .5)!));
+    await tester.sendEventToBinding(pointer.move(b));
+    await tester.sendEventToBinding(pointer.up());
+    await tester.pump();
+  }
 
   group('LEN-A/4: the room list', () {
     testWidgets('lists the plan’s location SUBTREE, not just its location', (
@@ -517,6 +556,125 @@ void _roomListTests() {
 
       c.undo.undo(c.doc);
       expect(c.doc.locations[_roomId]!.planOutline, isNotNull);
+    });
+
+    testWidgets('LOAD-BEARING: pressing Reshape… then dragging a corner '
+        'moves it', (tester) async {
+      // THE REACHABILITY PROOF, and `#865` asks for it in terms: the
+      // gesture is to be proved "through the real mounting rather than
+      // through a constructor the product never calls, which is the
+      // failure this epic already shipped once at PLAN-E/6". Everything
+      // in `plan_canvas_screen_test.dart` passes against a mode nobody
+      // can start. This is the button that starts it.
+      final c = _controller(withRoom: true, outline: triangle());
+      await pump(tester, c);
+
+      await tester.tap(reshapeFor(_roomId));
+      await tester.pump();
+      expect(find.byKey(PlanReshapeChip.chipKey), findsOneWidget);
+
+      await dragCorner(tester, const PxPt(100, 100), const PxPt(150, 160));
+
+      expect(c.doc.locations[_roomId]!.planOutline!.vertices, const [
+        PxPt(150, 160),
+        PxPt(400, 100),
+        PxPt(400, 300),
+      ]);
+    });
+
+    testWidgets('Reshape… is offered only where there is a shape', (
+      tester,
+    ) async {
+      await pump(tester, _controller(withRoom: true));
+      expect(reshapeFor(_roomId), findsNothing);
+
+      await pump(
+        tester,
+        _controller(withRoom: true, outline: triangle()),
+      );
+      expect(reshapeFor(_roomId), findsOneWidget);
+    });
+
+    testWidgets('starting a DRAW ends a live reshape, and starting a '
+        'RESHAPE ends a live draw', (tester) async {
+      // The canvas depends on this: a reshape swallows every press, so a
+      // draw left running underneath one could not take a corner until
+      // the reshape ended, which is a mode nobody can get back to.
+      final c = _controller(withRoom: true, outline: triangle());
+      await pump(tester, c);
+
+      await tester.tap(reshapeFor(_roomId));
+      await tester.pump();
+      await tester.tap(drawFor(_roomId));
+      await tester.pump();
+      expect(find.byKey(PlanOutlineChip.chipKey), findsOneWidget);
+      expect(find.byKey(PlanReshapeChip.chipKey), findsNothing);
+
+      await tester.tap(reshapeFor(_roomId));
+      await tester.pump();
+      expect(find.byKey(PlanReshapeChip.chipKey), findsOneWidget);
+      expect(find.byKey(PlanOutlineChip.chipKey), findsNothing);
+    });
+
+    testWidgets('CLEAR ENDS A RESHAPE OF THAT ROOM, so the chip stops '
+        'naming corners the same press deleted', (tester) async {
+      final c = _controller(withRoom: true, outline: triangle());
+      await pump(tester, c);
+
+      await tester.tap(reshapeFor(_roomId));
+      await tester.pump();
+      expect(find.byKey(PlanReshapeChip.chipKey), findsOneWidget);
+
+      await tester.tap(clearFor(_roomId));
+      await tester.pump();
+
+      expect(find.byKey(PlanReshapeChip.chipKey), findsNothing);
+    });
+
+    testWidgets('SWITCHING PLANS ENDS THE DRAW, which `LEN-A/4` did not '
+        'and this chapter found', (tester) async {
+      // The defect, in full: this screen holds ONE outline controller for
+      // all plans, on the calibration's own "cannot outlive the raster"
+      // reasoning, and `_openPlan` cancelled the calibration and not the
+      // draw. Two corners placed on one plan, a switch, and a third click
+      // closed a shape whose first two vertices were measured on a
+      // different picture. Nothing refused it, because the vertices are
+      // integers and every raster has those.
+      final c = _controller(withRoom: true, withSecond: true);
+      await pump(tester, c, members: const [_member1, _member2]);
+
+      await tester.tap(drawFor(_roomId));
+      await tester.pump();
+      final canvas = tester.getTopLeft(find.byType(PlanCanvasScreen));
+      await tester.tapAt(canvas + const Offset(100, 100));
+      await tester.tapAt(canvas + const Offset(300, 100));
+      await tester.pump();
+
+      await tester.tap(find.text('Site'));
+      await tester.pump();
+
+      expect(find.byKey(PlanOutlineChip.chipKey), findsNothing);
+    });
+
+    testWidgets('and switching plans ends a reshape too', (tester) async {
+      final c = _controller(
+        withRoom: true,
+        withSecond: true,
+        outline: RoomOutline(
+          underlayId: _ul1,
+          vertices: const [PxPt(100, 100), PxPt(400, 100), PxPt(400, 300)],
+        ),
+      );
+      await pump(tester, c, members: const [_member1, _member2]);
+
+      await tester.tap(reshapeFor(_roomId));
+      await tester.pump();
+      expect(find.byKey(PlanReshapeChip.chipKey), findsOneWidget);
+
+      await tester.tap(find.text('Site'));
+      await tester.pump();
+
+      expect(find.byKey(PlanReshapeChip.chipKey), findsNothing);
     });
 
     testWidgets('and starting a draw CANCELS a live calibration, so no '
