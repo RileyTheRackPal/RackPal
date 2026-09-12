@@ -1161,7 +1161,14 @@ $SuiteFloors = @{
     # control REMOVES a template rather than firing a callback. One of
     # them walks to the Rack tab to press Ctrl+Z, because that is the only
     # tab undo is bound on (`#874`).
-    'rackpal_app'    = 991
+    # 996 at `#872`: +5. The Command reachability gate. Five cases and
+    # not one, because three of them guard the GATE rather than the tree:
+    # a corpus-size band that catches a splitter matching indented
+    # methods, a self-check on five known answers (three earlier censuses
+    # were confidently wrong), and a staleness check so an exemption that
+    # becomes reachable FAILS rather than rotting into a record of what
+    # was true once.
+    'rackpal_app'    = 996
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
