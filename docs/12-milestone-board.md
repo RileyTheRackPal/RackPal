@@ -9165,6 +9165,62 @@ which returns 48: LEN-A's chapters are titled `LEN-A/n` and were never in it. Th
 because the second derivation carried them, which is what a second derivation is for. Corrected at
 `dce5e45`, naming both title families and confirmed against the epic's story list.
 
+#### 5.9.26 `#864`: the outline does not print, and the answer was on the architect's drawing · `DR-050` · `v0.6.55`
+
+`LEN-A/7`, 2026-09-11. Deferred by the user at `LEN-A/4`, closed with no code change beyond a
+comment, and the interesting part is the method it did not need.
+
+##### 5.9.26.1 The ticket required paper, and the drill could not have supplied it
+
+`#864` said to decide it *"with a printed sheet in hand"*, on AC-054's own standard, and `PLAN-J` was
+being arranged at that moment with a real plan and a greyscale laser at ANSI B. That looked like one
+trip to the printer answering two questions.
+
+It was not. **An outline is chrome, so the drill's `T1.01` has no outline on it.** Deciding from
+paper needed a sheet built for the purpose, which needed the parameter on `buildPlanScene` that the
+decision was supposed to authorise. The deferral had priced a method that could not run without the
+thing it was deferring.
+
+##### 5.9.26.2 The user answered with a fact about the drawings
+
+*"It does not show up on the plan. Almost all plans have the room names labeled."*
+
+That deletes the question rather than answering it. The chapter was filed on the argument that a
+boundary tells an installer which space is which, and that *"on an open plan with no interior walls
+drawn it may be the only thing that does"*. **The architect's own room titles do it, on the sheet the
+underlay already is.** Recorded as canon §11.49.9, with the fact in it rather than only the outcome,
+which is what stops the same case being made again in six months by somebody equally reasonable.
+
+So: no print run, no parameter, and the four byte-verified starter goldens stay shut. The estimate
+this chapter carried was a parameter on `buildPlanScene`, a decision at every caller, a weight chosen
+against a screened underlay, and four goldens deliberately regenerated. **None of it is owed.**
+
+##### 5.9.26.3 The cost was a trade question asked late
+
+The OKF practice says to put *"how the work happens in the field"* as a question rather than a
+finding, and the question **was** put. What was not is that the ticket had already chosen its method
+a chapter earlier, and the method was expensive: `#864` was filed at `LEN-A/4` with a print run
+priced into its `DONE WHEN`, and nothing in it asked whether the thing it proposed to measure
+mattered.
+
+**A trade question asked early can delete the method you were about to pay for.** That is the fifth
+instance in the practice and a new shape: the four before it are objections of mine that were
+overruled or simply wrong, and this one is a question whose ANSWER was cheap and whose TIMING was
+the whole cost.
+
+##### 5.9.26.4 What would reopen it
+
+A plan whose rooms are not labelled, recorded in the clause itself. The question returns then as a
+different one, about printing the room's NAME rather than its boundary, and it needs its own ID.
+
+##### 5.9.26.5 Evidence
+
+Floors unchanged, no test added: there is no behaviour here to assert, and a test that pinned *"the
+scene has no outline op"* would pin the absence of a parameter nobody wrote. Gates: 17.
+
+**Commits** (§8.8). Listed with `LEN-A/8`'s below, which is the first commit that can
+know both of this chapter's.
+
 ---
 
 ## 6. The dependency graph, as it actually stands

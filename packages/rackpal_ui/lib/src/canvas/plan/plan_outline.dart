@@ -260,9 +260,15 @@ const double kOutlineCloseRadiusPt = 10;
 /// criterion is that a stranger locates every drop from the printed
 /// sheet; a room boundary does not serve that and a wrong-weight line
 /// over a screened underlay works against AC-054's legibility standard.
-/// Ruled by the user on 2026-09-11: screen now, and printing it is its
-/// own chapter (`#864`). Keeping it out of the scene is also what leaves
-/// the four byte-verified starter goldens alone.
+///
+/// **AND IT IS SETTLED RATHER THAN DEFERRED** (§11.49.9, `LEN-A/7`). The
+/// chapter that was to decide it with a printed sheet in hand was
+/// answered without one, on a fact about the drawings rather than about
+/// our ink: **almost every floorplan already labels its rooms**, so the
+/// architect's own titles say which space is which and a boundary of ours
+/// would spend ink on what the sheet already carries. `buildPlanScene`
+/// grows no parameter, every caller is unchanged, and the four
+/// byte-verified starter goldens stay shut.
 final class PlanOutlineLayer extends StatelessWidget {
   const PlanOutlineLayer({
     required this.finished,

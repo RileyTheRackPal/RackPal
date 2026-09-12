@@ -10139,6 +10139,31 @@ sibling of it**, unlike `boundCount`, which is disjoint on purpose: §11.49.3's 
 ABOUT an estimate rather than instead of one. It reaches a takeoff for the reason `estimatedCount`
 does, which is that somebody is about to spend money on the answer.
 
+**11.49.9 RULED: THE OUTLINE DOES NOT PRINT, AND THE REASON IS ON THE ARCHITECT'S DRAWING.** Settled
+by the user on 2026-09-11, against a chapter filed to decide it (`LEN-A/7`) whose own ticket required
+a printed sheet in hand before anybody did.
+
+**ALMOST EVERY FLOORPLAN ALREADY LABELS ITS ROOMS.** The drawing that came from the architect says
+which space is which, in the architect's own titles, and a boundary drawn by this product over it
+would spend ink on a fact the sheet already carries. That answers the one argument the chapter was
+filed on: it put the case for printing as *"on an open plan with no interior walls drawn it may be
+the only thing that does"* tell an installer which space is which, and the room title does it, on
+paper, already.
+
+So the finished outline stays screen chrome under CR-086. `buildPlanScene` grows no parameter, every
+caller of it is unchanged, and the four byte-verified starter goldens stay shut.
+
+**AND IT WAS DECIDED WITHOUT THE PRINT RUN ITS OWN TICKET DEMANDED, WHICH IS NOT A GATE SKIPPED.**
+The ticket asked for paper because it framed the question as AC-054 legibility, which is what weight
+of line survives over a screened underlay; this answer makes the weight moot, and there is no need to
+print a line to find out that you do not want to draw one. **The drill could not have answered it in
+any case**: an outline is chrome, so `PLAN-J`'s `T1.01` has no outline on it, and deciding from paper
+would have needed a sheet built for the purpose, which needed the parameter the decision was supposed
+to authorise.
+
+**WHAT WOULD REOPEN IT** is a plan whose rooms are NOT labelled. The question returns then as a
+different one, about printing the room's NAME rather than its boundary, and it needs its own ID.
+
 **What it does not rule.** The formula. Whether a rise is added per storey, whether the figure is
 straight-line or perimeter, and what margin if any is folded in are all decisions for the task, and
 all of them are cheaper to change than a provenance tier. It also does not touch `LEN-002` or the

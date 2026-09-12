@@ -7,7 +7,7 @@ description: >-
   and the two kinds of objection are indistinguishable in output unless they are
   labelled. The newest instance inverts the usual shape: the trade fact was
   written down, at the declaration site, and was walked past anyway.
-tags: [practice, process, rulings, trade, g4, dr-048, dr-055, dr-056, dr-060]
+tags: [practice, process, rulings, trade, g4, dr-048, dr-050, dr-055, dr-056, dr-060]
 timestamp: 2026-08-14T00:00:00Z
 status: adopted
 ---
@@ -64,6 +64,31 @@ So the trade fact was not missing from the corpus this time. **It was present, a
 the exact site, and the failure was not looking.** A trade objection is a question
 to ask the user; a trade hazard written in the source is a thing to read before
 touching it.
+
+# A fifth, where the question was asked and the TIMING was the cost
+
+**[DR-050](/decisions/dr-050-plan-geometry-fills-the-room-estimate.md) §11.49.9,
+2026-09-11.** Should a room outline print on `T1.01`? The chapter that was to
+decide it required *"a printed sheet in hand"*, on AC-054's standard, and priced
+a print run into its own `DONE WHEN`: a parameter on `buildPlanScene`, a decision
+at every caller, a line weight chosen against a screened underlay, and four
+byte-verified goldens deliberately regenerated.
+
+The question was put to the user, correctly, which is what the four instances
+above are for. **The answer cost one sentence and deleted the method**: almost
+every floorplan already labels its rooms, so the architect's own titles say which
+space is which and a boundary of ours would spend ink on a fact the sheet already
+carries.
+
+The four instances above are objections of mine that were outweighed or were
+simply wrong. This one inverts it again: nothing about the asking was wrong, and
+**the ticket had chosen an expensive method a chapter before anybody asked whether
+the thing it proposed to measure mattered.**
+
+So the shape has a second half. Put the trade objection as a question, and **ask
+it before you write down how you are going to find out.** A ticket that names a
+method has already spent the decision; the trade question belongs in front of it,
+not behind it.
 
 # Why the corpus cannot catch this
 

@@ -254,11 +254,14 @@ SCREEN space, because a person aims with a mouse at what they can see and
 a radius in raster pixels would be an easy target at 400% and impossible
 on a plan fitted to the window.
 
-**THE OUTLINE IS SCREEN CHROME AND DOES NOT PRINT ON `T1.01`** (§11.49,
-`LEN-A/4`). An outline is an estimating aid, and `T1.01`'s criterion is
-that a stranger locates every drop from the printed sheet. Whether it
-should print is its own chapter, to be decided with a printed sheet in
-hand rather than on screen, which is AC-054's own standard.
+**THE OUTLINE IS SCREEN CHROME AND DOES NOT PRINT ON `T1.01`** (§11.49.9,
+`LEN-A/4`, settled at `LEN-A/7`). An outline is an estimating aid, and
+`T1.01`'s criterion is that a stranger locates every drop from the printed
+sheet. **The deciding fact is on the architect's drawing**: almost every
+floorplan already labels its rooms, so the titles already say which space
+is which and a boundary of ours would spend ink on what the sheet carries.
+`buildPlanScene` therefore grows no parameter and the four byte-verified
+starter goldens stay shut.
 
 **WHAT IT FILLS.** `Location.estimatedRunLengthFromRack`, which already
 ranks below `outletNominal` and already sums, with

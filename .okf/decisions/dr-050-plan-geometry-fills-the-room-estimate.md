@@ -85,6 +85,19 @@ unrecorded origin counts as a person's (G4).
 Closing an outline writes the shape and the figure in ONE transaction,
 because it is one act to whoever drew it.
 
+# And it does not print, because the drawing already says it
+
+`T1.01` shows no outline, settled 2026-09-11 (§11.49.9) without the print run the
+chapter demanded. **Almost every floorplan already labels its rooms**, so the
+architect's own titles say which space is which and a boundary of ours would
+spend ink on a fact the sheet already carries. `buildPlanScene` grows no
+parameter and the four byte-verified starter goldens stay shut.
+
+A plan whose rooms are NOT labelled reopens it, as a different question about
+printing the room's NAME rather than its boundary. See
+[trade objections are questions](/practices/trade-knowledge-beats-workflow-reasoning.md),
+whose fifth instance this is.
+
 # What this cost that nobody had priced
 
 Two defects in command machinery, both filed rather than fixed in flight
