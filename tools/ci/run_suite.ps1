@@ -771,7 +771,12 @@ $SuiteFloors = @{
     # every bare `return;` in an `apply` as a refusal, and three of the
     # twenty-four sat AFTER a write. Each case here reads the CONTROLLER,
     # because calling `apply` directly is exactly what could not see it.
-    'rackpal_core'   = 4612
+    # 4615 at DR-157: +3. A rack height with no side is refused by name
+    # instead of coming back as a SUCCESSFUL OffRackPlacement. The two
+    # companions are the ones that keep the fix honest: AC-031's field
+    # templates still go off-rack, and notInRack is still the escape
+    # hatch, because the distinguishing fact is the HEIGHT not the side.
+    'rackpal_core'   = 4615
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

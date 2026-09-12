@@ -782,6 +782,104 @@ void main() {
       expect(doc.devices.values.single.locationId, isNull);
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-157 §11.156: A RACK HEIGHT WITH NO SIDE IS REFUSED, NOT OFF-RACKED
+  // ═══════════════════════════════════════════════════════════════════
+  // Reported from the `PLAN-J` demo as devices that "act as though they
+  // are present, but don't appear to do anything" (`#869`). The builder
+  // permits `{frontU: 2, side: none}` because AC-049's save gate never
+  // consults `side`, and this function checked `side` BEFORE the height,
+  // so the body came back as a SUCCESSFUL `OffRackPlacement`: created,
+  // not in the rack, nothing drawn.
+  //
+  // The distinguishing fact is the HEIGHT, not the side, which is what
+  // keeps AC-031's eighteen field templates landing where they always
+  // did.
+  group('DR-157: an incoherent occupancy is refused by name', () {
+    test('A RACK HEIGHT WITH NO SIDE IS REFUSED, and the reason says what '
+        'to change', () {
+      final rack = _rack();
+      // Exactly what the device builder lets a person save today.
+      final authored = TemplateBody(
+        manufacturer: 'Mine',
+        model: 'authored',
+        displayName: 'My Authored Box',
+        typePrefix: 'AUT',
+        frontU: 2,
+      );
+      final doc = _docWithCatalog(rack, {'A1': authored});
+
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: 'A1',
+        targetRack: rack,
+        now: _now,
+        actor: 'tester',
+      );
+
+      expect(result, isA<CatalogPlacementFailed>());
+      expect(
+        (result as CatalogPlacementFailed).reason,
+        allOf(contains('2U'), contains('side')),
+        reason: 'it names the height and the field to change',
+      );
+    });
+
+    test('A FIELD DEVICE IS UNCHANGED, because it has no rack height at '
+        'all', () {
+      // AC-031's eighteen are `{front: 0, rear: 0, side: none}`. The
+      // refusal above must not reach them, and the fact that separates
+      // them is the height.
+      final rack = _rack();
+      final doc = _docWithCatalog(rack, {'F1': _fieldTemplate()});
+
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: 'F1',
+        targetRack: rack,
+        now: _now,
+        actor: 'tester',
+      );
+
+      expect(result, isA<CatalogPlacementReady>());
+      expect(
+        (result as CatalogPlacementReady).command.placement,
+        isA<OffRackPlacement>(),
+      );
+    });
+
+    test('AND `notInRack` IS STILL THE ESCAPE HATCH, height or no height', () {
+      final rack = _rack();
+      final declared = TemplateBody(
+        manufacturer: 'Mine',
+        model: 'wall-box',
+        displayName: 'Wall Box',
+        typePrefix: 'WB',
+        frontU: 2,
+        mountMethod: MountMethod.notInRack,
+      );
+      final doc = _docWithCatalog(rack, {'W1': declared});
+
+      final result = buildPlaceFromCatalogCommand(
+        doc: doc,
+        catalogId: 'W1',
+        targetRack: rack,
+        now: _now,
+        actor: 'tester',
+      );
+
+      expect(
+        result,
+        isA<CatalogPlacementReady>(),
+        reason: 'saying "not in a rack" is a coherent answer',
+      );
+      expect(
+        (result as CatalogPlacementReady).command.placement,
+        isA<OffRackPlacement>(),
+      );
+    });
+  });
 }
 
 /// Adds one underlay to [doc] and returns it. Nothing here decodes an

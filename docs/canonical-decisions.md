@@ -19900,6 +19900,58 @@ here rather than assumed symmetrical.
   `rack_canvas_screen.dart` keeps its explicit label because it names its transaction after its
   **second** child deliberately.
 
+### §11.156 DR-157 · A rack height with no side is incoherent, and placement says so instead of quietly putting the device somewhere else
+
+**Reported by the user on 2026-09-12**, running the `PLAN-J` demo project: *"I can't seem to
+actually see rack devices as I populate a rack. They act as though they are present, but don't
+appear to do anything."* Devices they had AUTHORED failed; seeded catalog devices worked.
+
+**§11.156.1 What was measured.** A probe built the exact body the device builder permits,
+`{frontU: 2, side: none}`, and ran `buildPlaceFromCatalogCommand` against a rack. The result is
+`CatalogPlacementReady` carrying an **`OffRackPlacement`**. The placement succeeds, reports success,
+and puts the device somewhere the person is not looking. Nothing is drawn in the rack because
+nothing is in the rack.
+
+**TWO SURFACES DISAGREE ABOUT ONE FACT.** The builder's save gate requires `frontU > 0` or
+`zeroUVertical` or `notInRack`, and **never consults `side`**. `buildPlaceFromCatalogCommand`
+requires `side != OccupancySide.none`, and **checks it before it ever looks at the height**. `side`
+defaults to `none`, so a body the builder calls complete is one placement routes off-rack.
+
+**§11.156.2 RULED: A BODY WITH A RACK HEIGHT AND NO SIDE IS REFUSED BY NAME.** `frontU > 0` or
+`rearU > 0`, with `side == none` and a `mountMethod` other than `notInRack`, is an incoherent
+occupancy rather than a field device. Placement refuses it and the reason names the height and the
+field to change.
+
+**THE DISTINGUISHING FACT IS THE HEIGHT, NOT THE SIDE**, and that is what keeps AC-031's eighteen
+shipped field templates landing exactly where they always did: they are `{front: 0, rear: 0, side:
+none}`, and a body with no rack height at all is a field device by construction. `notInRack` remains
+the explicit escape hatch at any height, because saying *"this does not go in a rack"* is a coherent
+answer.
+
+**§11.156.3 It is the guard beside it, catching up.** `catalog_placement.dart` already refuses
+`deviceH <= 0`, and its comment says why in terms this ruling adopts: the device *"is never painted,
+cannot be clicked, cannot be selection-chromed, and landed on the REAR face while the user was
+looking at the front. A reported success for a device that does not exist on screen is the worst
+possible outcome of the three."* The `side == none` path produced the same outcome and slipped past
+that guard **by returning before it**.
+
+**§11.156.4 NOT A REGRESSION, and the check was worth running.** The disagreement predates DR-156 and
+nothing in that work is involved. It was found while auditing DR-156's sweep against this report, and
+the audit did find three real defects of its own; they are not these.
+
+**§11.156.5 What it does not rule: HOW THE BUILDER SHOULD STOP PRODUCING ONE.** The obvious move is to
+require a side before `Save` lights, and **AC-049 forbids it in terms**: *"three required fields
+(name, RU height, designator prefix) then ports, then done."* A fourth interaction is the stall that
+ruling exists to prevent, and an existing case asserts the three-field flow enables `Save`.
+
+So the builder's half is a live question with at least three answers, and it is the user's: derive
+`side` from the heights as they are typed, so the field the person can see fills itself in and can be
+overridden; derive it only at save, which leaves the visible field disagreeing with what is stored;
+or leave the builder alone and let the refusal above be the whole remedy, which means a template can
+be authored that no rack will take. **The derivation itself is unambiguous either way** and is
+already spelled out in this repository's own test fixture: both heights is `both`, a rear height
+alone is `rear`, otherwise `front`.
+
 ---
 
 ## 12. Superseded rulings
