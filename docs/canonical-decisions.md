@@ -19964,6 +19964,96 @@ rack, with the person finding out at placement time rather than at the moment th
 
 ---
 
+### §11.157 DR-158 · A template is removed from a project as a whole, and it takes the devices standing on it
+
+**Reported by the user on 2026-09-12**, running the `PLAN-J` demo project: *"I also have no way to
+delete device templates, or to delete floor plan pages."* The floorplan half is `#870` and needed no
+ruling: the command existed and nothing built one. This half needed one, because **nothing existed at
+all**: there is no `RemoveTemplate` class anywhere in the tree, and `doc.templates.remove` appears
+only inside revert bodies undoing a save or a fork.
+
+**THE RULE WAS ALREADY WRITTEN AND THE SURFACE WAS MISSING.** docs/06 §7.1: *"Library operations
+(delete a template, import, set favourite) are not undoable and are therefore individually
+confirmable or trivially reversible."* That sentence governs the **shelf**, which is M4-N and does not
+exist. What this ruling governs is the **per-project embedded snapshot**, which has existed since M0
+and is what `TemplateRef` resolves against (CR-054).
+
+**§11.157.1 RULED: THIS IS A DOCUMENT EDIT AND IT IS UNDOABLE.** `SaveTemplateToProjectCommand`'s
+header already made this argument for the other direction and it holds in both: *"CR-106's 'library
+operations are not undoable' is about acts on the SHELF and there is no shelf here."* A snapshot in
+`RackDocument.templates` is project data, it is persisted in the `.rmpj`, and removing it is an edit
+to the project. It therefore goes on the document's undo stack like every other edit, and the
+confirmation can honestly say so.
+
+**§11.157.2 RULED: THE UNIT IS THE TEMPLATE ID, NOT THE SNAPSHOT.** Every version of the id goes, in
+one command.
+
+The product already thinks in ids everywhere the user can see: `buildPlaceableTemplates` reduces to
+the newest version per id, the palette and the browser each list one row per id, a placement gesture
+carries an id and never a version (DR-077 §11.76.3), and `countDevicesOnTemplate` counts by id
+because *"a count that split by version would understate what the badge is reassuring the user
+about"*. **A removal that took one snapshot would be the first gesture in the product to address a
+version**, and its visible effect would be a row that disappears and then silently comes back at the
+previous version. Versions are an archival mechanism CR-050 keeps resolvable; they are not a thing a
+person picks between.
+
+**§11.157.3 RULED: PROJECT-AUTHORED ONLY.** Settled by the user on 2026-09-12. The control is offered
+on rows tagged `This project` and on no others.
+
+A library row is somebody else's shelf and this project does not hold it. A **seeded** row is
+removable in the narrow technical sense, because the 48 catalog snapshots are written into the
+document once at creation (`blank_document.dart`) and would not grow back. It is refused anyway: the
+seeded set is what the build ships and is identical in every project, so a per-project hole in it is
+a difference carried in the file forever, discovered later by somebody who did not make it, and
+repairable by nothing in the product. Pruning a palette down to what a shop installs is a **filtering**
+question and belongs to the shelf (`#817`), not to a delete.
+
+**§11.157.4 RULED: THE DEVICES GO WITH IT, AFTER A CONFIRMATION THAT COUNTS BOTH.** Settled by the
+user on 2026-09-12, from three options. The alternative recommended here was a refusal naming the
+count, and it was not taken.
+
+`DeviceInstance.templateRef` is **the only referent in the entire model**: no other field anywhere
+points at a template. So the cascade has exactly one edge, and the choice is what to do along it.
+Removing the template while leaving the devices was never on the table, because CR-054 says a
+`TemplateRef` *"ALWAYS resolves to one"* and a device whose snapshot is gone has no body, no
+footprint and nothing to draw.
+
+**THE BLAST RADIUS IS THE COST AND IT IS STATED RATHER THAN DISCOVERED.** A template delete becomes a
+device delete, behind a small control, and those devices take their cables with them under DR-013
+§11.13.1. What makes it acceptable is the same thing that makes every other destructive gesture in
+this product acceptable: the dialog names what goes, in the units it goes in, and one undo puts all
+of it back.
+
+**§11.157.5 THE CONFIRMATION COUNTS THREE THINGS, IN THREE UNITS.** On `LocationRemovalPlan`'s
+reasoning, restated once more because this is the fourth plan to need it: numbers in different units
+are not summed. **Templates** removed, **devices** removed, **cables** cut. A device is a thing that
+leaves the project; a cable is a row that leaves the schedule, which is the deliverable and is what
+makes DR-013 §11.13.2 expensive.
+
+**AND A TEMPLATE NOTHING STANDS ON IS STILL ASKED ABOUT**, which is where this departs from
+`confirmUnderlayRemoval` and `confirmDeviceRemoval`. DR-013 §11.13.2's last sentence exempts the
+*consequence-free* delete, and this one is not: authoring a device template is minutes of work that
+exists nowhere else in the project, so removing an unused one still destroys something the person
+cannot get back by any route but undo. The prompt is shorter when nothing stands on it; it is
+not absent.
+
+**§11.157.6 ONE TRANSACTION, ONE UNDO.** The gesture is a `Transaction` holding one
+`RemoveDeviceCommand` per device and then the template removal, which is exactly the shape
+`_deleteSelection` already uses for a multi-device delete. Each `RemoveDeviceCommand` plans itself
+against the aggregate as it stands when it applies, so the plans compose correctly in sequence: a
+cable between two departing devices is removed at the first of them, and a net carried only by
+departing cables is collected at the last one that could still have carried it.
+
+**§11.157.7 The count the dialog states must be the count the edit delivers, and that was already
+broken elsewhere.** `#873`, found while building this: `DeleteDeviceDialog` summed one
+`DeviceRemovalPlan` per selected device, and a cable landing on two selected devices is in **both**
+plans while the transaction removes it once. Selecting both ends of a run said two cables and removed
+one. The arithmetic was wrong, not the plans; `cablesAcrossPlans` is the union and lives in core
+beside the planner. It is named here because this ruling's dialog counts the same way and would have
+inherited the same defect.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
