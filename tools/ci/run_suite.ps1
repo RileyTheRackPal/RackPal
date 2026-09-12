@@ -776,7 +776,13 @@ $SuiteFloors = @{
     # companions are the ones that keep the fix honest: AC-031's field
     # templates still go off-rack, and notInRack is still the escape
     # hatch, because the distinguishing fact is the HEIGHT not the side.
-    'rackpal_core'   = 4615
+    # 4619 at `#873`: +4. A cable between two DEPARTING devices is in both
+    # their plans, because planDeviceRemoval asks "which links land on
+    # this device" and the answer is yes at each end; the delete removes
+    # it once. cablesAcrossPlans is the union. The fourth case is the
+    # empty one, which is the shape a fold gets right for free and a set
+    # walk does not.
+    'rackpal_core'   = 4619
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1073,7 +1079,12 @@ $SuiteFloors = @{
     # revert, a pin cascade and seven tests, and NOTHING IN ANY lib EVER
     # BUILT ONE. Every case presses the real button, because a case that
     # called the command would assert what was already true for months.
-    'rackpal_ui'     = 1764
+    # 1766 at `#873`: +2. One pumps the dialog with both ends of a run and
+    # reads the sentence; the other performs the whole gesture through
+    # Ctrl+click and Delete and asserts the stated number EQUALS the
+    # number the transaction removes, which a dialog test alone cannot
+    # see and which is the entire content of DR-013 §11.13.2's promise.
+    'rackpal_ui'     = 1766
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

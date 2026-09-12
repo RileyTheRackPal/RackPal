@@ -179,6 +179,46 @@ void main() {
       expect(find.text('This also deletes 1 cable.'), findsOneWidget);
     });
 
+    // `#873` — DR-013 §11.13.2 in the other direction.
+    //
+    // A cable between TWO selected devices is in BOTH their plans, because
+    // `planDeviceRemoval` asks "which links land on this device" and the
+    // answer is yes at each end. The transaction removes it once. A sum
+    // over the plans therefore states a number the edit does not deliver,
+    // which is the promise the ruling exists to keep: "a dialog that said
+    // 4 cables and removed 5 would be worse than no dialog". Saying 6 and
+    // removing 3 is the same broken promise wearing a friendlier face.
+    testWidgets('counts a cable BETWEEN two selected devices ONCE', (
+      tester,
+    ) async {
+      final doc = _document();
+      final wired = planDeviceRemoval(doc, _wired);
+      final far = planDeviceRemoval(doc, _far);
+
+      // The fixture's three cables run WIR-1 to FAR-1, so each plan sees
+      // all three and the union is still three.
+      expect(wired.cableCount, 3);
+      expect(far.cableCount, 3);
+
+      await tester.pumpWidget(
+        MaterialApp(
+          home: DeleteDeviceDialog(
+            plans: [wired, far],
+            designators: const {_wired: 'WIR-1', _far: 'FAR-1'},
+            totalDevices: 2,
+          ),
+        ),
+      );
+
+      expect(
+        find.text('This also deletes 3 cables.'),
+        findsOneWidget,
+        reason:
+            'three cables exist and three go; six is a number no '
+            'gesture produces',
+      );
+    });
+
     testWidgets('and it says undo puts them back, because it does', (
       tester,
     ) async {
@@ -363,6 +403,54 @@ void main() {
       );
       // And the far end survives, with its own ports.
       expect(doc.devices.containsKey(_far), isTrue);
+    });
+
+    // `#873`, end to end and through the real mounting. The number in
+    // the sentence has to be the number the transaction delivers, which
+    // is the whole of what §11.13.2 promises; a widget test on the dialog
+    // alone cannot see whether the delete agrees with it.
+    testWidgets('selecting BOTH ends of a run states 3 and removes 3', (
+      tester,
+    ) async {
+      final doc = _document();
+      final linksBefore = doc.links.length;
+      await pump(tester, doc);
+
+      await tester.tap(find.byKey(ValueKey(_wired.v)).first);
+      await tester.pumpAndSettle();
+      // Ctrl+click ADDS, which is `_dragModifierToggle`'s whole job. The
+      // modifier is read at beginDrag, so it must be down before the tap.
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.tap(find.byKey(ValueKey(_far.v)).first);
+      await tester.pumpAndSettle();
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DeleteDeviceDialog), findsOneWidget);
+      expect(find.text('Delete 2 devices?'), findsOneWidget);
+      expect(find.text('This also deletes 3 cables.'), findsOneWidget);
+      expect(
+        find.textContaining('run between devices in this list'),
+        findsOneWidget,
+        reason:
+            'the per-device breakdown says 3 and 3, so the headline '
+            'saying 3 needs its one missing sentence',
+      );
+
+      await tester.tap(find.text('Delete'));
+      await tester.pumpAndSettle();
+
+      expect(
+        linksBefore - doc.links.length,
+        3,
+        reason:
+            'the stated count IS the count removed, which is the only '
+            'thing the dialog promises',
+      );
+      expect(doc.devices.containsKey(_wired), isFalse);
+      expect(doc.devices.containsKey(_far), isFalse);
     });
 
     testWidgets('and Ctrl+Z puts the device and every cable back', (

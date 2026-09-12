@@ -133,6 +133,47 @@ DeviceRemovalPlan planDeviceRemoval(RackDocument doc, Uuid deviceId) {
   );
 }
 
+/// How many cables a multi-device delete removes, counting a cable that
+/// lands on two of those devices ONCE (`#873`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A SUM OVER THE PLANS IS THE WRONG ARITHMETIC, AND IT SHIPPED
+/// ═══════════════════════════════════════════════════════════════════════
+/// [planDeviceRemoval] asks "which links land on this device", and a link
+/// between two selected devices answers yes at each end, so it is in both
+/// plans. The transaction removes it once. `DeleteDeviceDialog` summed
+/// `cableCount` across the plans and therefore stated a number no gesture
+/// produces: select a switch and the access point it feeds, and a dialog
+/// built on DR-013 §11.13.2's promise that the stated count IS the count
+/// removed said two where one goes.
+///
+/// Selecting both ends of a run is an ordinary gesture rather than an edge
+/// case, which is why this is a union and not a caveat.
+int cablesAcrossPlans(Iterable<DeviceRemovalPlan> plans) {
+  final seen = <Uuid>{};
+  for (final plan in plans) {
+    seen.addAll(plan.linkIds);
+  }
+  return seen.length;
+}
+
+/// How many of those cables run BETWEEN devices in [plans] rather than out
+/// to something that survives.
+///
+/// Zero for the ordinary single-device delete and for any selection whose
+/// devices are not cabled to each other, which is what lets the dialog
+/// say nothing at all in the common case.
+int cablesSharedAcrossPlans(Iterable<DeviceRemovalPlan> plans) {
+  final seen = <Uuid>{};
+  final shared = <Uuid>{};
+  for (final plan in plans) {
+    for (final id in plan.linkIds) {
+      if (!seen.add(id)) shared.add(id);
+    }
+  }
+  return shared.length;
+}
+
 /// Whether any conductor lands on one of [portIds].
 ///
 /// `PortEndpoint` only. A `PlaceEndpoint` names a location and an

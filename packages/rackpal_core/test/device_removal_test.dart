@@ -201,6 +201,45 @@ void main() {
     });
   });
 
+  group('`#873` — a cable between two departing devices is ONE cable', () {
+    test('the union counts it once where a sum counted it twice', () {
+      final f = _fixture();
+      final src = planDeviceRemoval(f.doc, _src);
+      final sink = planDeviceRemoval(f.doc, _sink);
+
+      // Each end sees all three, which is correct: `planDeviceRemoval`
+      // asks "which links land on THIS device" and the answer is yes at
+      // both ends.
+      expect(src.cableCount, 3);
+      expect(sink.cableCount, 3);
+
+      expect(cablesAcrossPlans([src, sink]), 3);
+      expect(cablesSharedAcrossPlans([src, sink]), 3);
+    });
+
+    test('and nothing is shared when the devices are not cabled together', () {
+      final f = _fixture();
+      final src = planDeviceRemoval(f.doc, _src);
+      final other = planDeviceRemoval(f.doc, _other);
+
+      // Three on the run plus the bystander's own one.
+      expect(cablesAcrossPlans([src, other]), 4);
+      expect(cablesSharedAcrossPlans([src, other]), 0);
+    });
+
+    test('one plan is its own cable count, which is the ordinary delete', () {
+      final f = _fixture();
+      final src = planDeviceRemoval(f.doc, _src);
+      expect(cablesAcrossPlans([src]), src.cableCount);
+      expect(cablesSharedAcrossPlans([src]), 0);
+    });
+
+    test('the union of nothing is nothing, not a crash', () {
+      expect(cablesAcrossPlans(const []), 0);
+      expect(cablesSharedAcrossPlans(const []), 0);
+    });
+  });
+
   group('§11.13.1 — the cascade', () {
     test('removing a wired device removes its cables, its ports and its '
         'nets, and leaves the bystander alone', () {
