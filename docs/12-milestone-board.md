@@ -9298,7 +9298,13 @@ twice. It is a line to reverse, and §11.49.10 records it as the task's call rat
 
 Floors: `rackpal_ui` 1723 to 1753, +30. Gates: 17.
 
-**Commits** (§8.8). `#865` `50006b3`, and the two that follow it.
+**Commits** (§8.8). `#865` `50006b3`, `886b73d`, `61cf595`.
+
+**LEN-A closed with this**, at `v0.6.56`, on its criterion rather than on its children running
+out (§8.1): DR-050's deliverable is that plan geometry fills the room estimate, and it does.
+Eight chapters rather than the six it was decomposed into, and **no child was re-parented
+because none was open.** The Plan view epic has one story left, `PLAN-J`, which is a drill and
+needs a person.
 
 ---
 

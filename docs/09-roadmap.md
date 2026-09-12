@@ -361,7 +361,13 @@ is what this corpus keeps learning to do with counts (§11.153.1).
   `outletNominal` and already sums, with a marker recording that the software proposed it rather than
   a person. **THIS ROW WAS MISSING UNTIL `LEN-A/6`**, though DR-050 put the work in v1 on 2026-08-12
   and the board has carried it as a Story under this epic ever since: a derived-document edit owed
-  under canon §12 rather than a scope change (§11.49.5a)
+  under canon §12 rather than a scope change (§11.49.5a). **CORRECTING A SHAPE IS A MODE**
+  (`Reshape…` on the room's row, §11.49.10): a pin and a corner are both points, so a live handle
+  would make one of the two unreachable wherever a plate sits near a room corner, and a stray drag
+  would silently move a figure somebody is about to quote. **AND THE OUTLINE DOES NOT PRINT ON
+  `T1.01`** (§11.49.9), because almost every floorplan already labels its rooms, so a boundary of
+  ours would spend ink on a fact the sheet already carries. Closed 2026-09-11 at `v0.6.56`, eight
+  chapters
 
 **Exit criterion.** An architect's floorplan PDF is imported **without leaving the app**, calibrated from one known dimension, and the rack plus every drop of a real rough-in carries a pin. The project exports a sheet set whose `T1.01` places a callout for every pinned drop, each printing the designator its Pull Sheet row prints. **A person who has never seen the building is handed the printed `T1.01` and the printed Pull Sheet, and locates every drop without asking a question.** The set is printed on a real greyscale laser at ANSI B and every callout stays legible over the screened underlay (AC-054). `write(read(bytes)) == bytes` holds on the zip path across a write, a reopen and a second write, and a project with **no** underlay writes bytes identical to what the plain-JSON path writes today. See [Plan view](15-plan-view.md), [feasibility](research/feasibility-plan-view.md), and canon §11.28 / §11.36.
 
