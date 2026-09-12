@@ -9469,6 +9469,264 @@ Floors: `rackpal_core` 4599 to 4605. Gates: 17. Analyzer pin unmoved at 233.
 
 ---
 
+#### 5.9.30 `#869` and `#870`: the demo project finds two holes, and one command had been unreachable for four months · `DR-157`, `DR-029` · `v0.6.57`
+
+Both reported by the user on 2026-09-12 while running the `PLAN-J` demo, which is the first time
+this product has been driven end to end by somebody building a real project in it. Neither was found
+by a test, a sweep or a census.
+
+##### 5.9.30.1 `#869`: a reported success for a device that is not on screen
+
+*"I can't seem to actually see rack devices as I populate a rack. They act as though they are
+present, but don't appear to do anything."* Devices they had **authored** failed; seeded ones worked,
+which is the fact that made it findable.
+
+A probe built the body the device builder permits, `{frontU: 2, side: none}`, and ran
+`buildPlaceFromCatalogCommand`. The result is `CatalogPlacementReady` carrying an
+**`OffRackPlacement`**: the placement succeeds, reports success, and puts the device where nobody is
+looking. Two surfaces disagreed about one fact, and the disagreement predates `DR-156` entirely.
+
+`DR-157` refuses the body by name, and `§11.156.5` makes the builder derive the side as the height
+is typed. **A save gate was tried first and broke `AC-049`'s three-required-fields case, which was
+right to break**: a fourth required interaction is the stall that clause exists to prevent. The
+attempt is recorded in the ruling rather than only reverted.
+
+##### 5.9.30.2 `#870`: `RemovePlanUnderlayCommand` shipped at `PLAN-C/6` and nothing ever built one
+
+*"I also have no way to delete device templates, or to delete floor plan pages."*
+
+The command is declared, fully implemented, has a real revert, cascades the pins it orphans, clears
+the room outlines drawn on it (`LEN-A/2`), carries the right epoch mask, and is constructed **seven
+times in `plan_commands_test.dart` and zero times in any `lib/`**. The only way to not have a page
+was to never have imported one, which makes a wrong page picked out of a multi-page PDF permanent for
+the life of the project.
+
+**THE FOURTH INSTANCE OF THE SHAPE**, after `DR-143`, `#674`, `PLAN-E/5` and `LEN-A/3`. The `#674`
+gate (`actions_have_callers_test.dart`) covers function-typed fields on `*Actions` records in
+`rackpal_ui/lib`; a `Command` class is neither a callback nor in that package, so nothing could see
+it. `#872` is the widening.
+
+`planUnderlayRemoval` is new and the command now clears from it rather than walking the four
+collections inline, which is `delete_location_dialog.dart`'s rule: the number the dialog states and
+the set the edit removes are one object. The refactor is behaviour-preserving, and all fifty-five
+existing plan-command cases pass untouched.
+
+##### 5.9.30.3 Evidence
+
+Floors: `rackpal_core` 4612 to 4615, `rackpal_ui` 1758 to 1764. Gates: 17. Analyzer pin unmoved at
+233. Three mutations on `#870`, three kills, the first being the Remove button wired to nothing,
+which kills five cases.
+
+**Commits** (§8.8). `#869`'s refusal `1feb958`, its builder half `7e9b662`. `#870` `ff0707e`. The
+version `55c837b`.
+
+**THE VERSION RULE NEEDED RESTATING TO COVER `#870`.** `#865`'s bump counted *"Done Chapters under
+`#588`"* and got 56, which was correct and is not general: `#870` is a leaf **Story** under the Plan
+view epic and counting Chapters alone would have shipped a feature with no version move. docs/14
+§14.0's own words are *"major tasks completed within that epic"*, which does not say Chapter. The
+re-runnable count is **Done items under `#588` with no children, less the `PLAN-0` decomposition
+item**: 57 - 1 = 56 before, 57 after. Both readings reproduce 56 for the previous build, which is the
+check that makes this a clarification rather than a change.
+
+---
+
+#### 5.9.31 `#873` and `#871`: two delete counts, one of them already shipped wrong · `DR-013`, `DR-158` · no version move
+
+2026-09-12, the second half of the `PLAN-J` demo report. `#871` is the template half of *"I also have
+no way to delete device templates"*; `#873` was found while building it.
+
+**NO VERSION BUMP.** Both close under `#786`, the cross-cutting debt epic, which is not the epic
+under development. The precedent is `477bc2e` and the reasoning is §5.9.29's.
+
+##### 5.9.31.1 `#873`: the dialog said six and the delete removed three
+
+`DeleteDeviceDialog._cableTotal` was `plans.fold((sum, plan) => sum + plan.cableCount)` over one
+`DeviceRemovalPlan` per selected device. `planDeviceRemoval` asks *"which links land on THIS
+device"*, and a `Link` terminating on ports of two selected devices answers yes at each end, so it is
+in **both** plans. The transaction removes it once.
+
+**THIS IS THE FAILURE `§11.13.2` NAMES, ARRIVING FROM THE FRIENDLY SIDE.** The ruling: *"a dialog
+that said '4 cables' and removed 5 would be worse than no dialog."* Saying 6 and removing 3 is the
+same broken promise, and frightening the reader is not better than surprising them. Selecting both
+ends of a run is an ordinary gesture: a switch and the access point it feeds, an amplifier and its
+speaker.
+
+**PROVEN BEFORE IT WAS CLAIMED.** The widget case was written first and watched fail on the old code,
+against a fixture whose three cables run between the two devices under test. The plans were right and
+the arithmetic was wrong: `cablesAcrossPlans` is the union and lives in core beside the planner, so
+`delete_device_dialog.dart`'s own rule that *"the count is not computed here"* still holds.
+
+The per-device breakdown keeps its honest per-device numbers and gains one sentence, shown only when
+there is an overlap: *"2 of them run between devices in this list, and are counted once."*
+
+Three mutations, three kills. The third, a shared count stuck at zero, is killed **only** by the
+end-to-end case that presses `Ctrl+click` and `Delete` through the real screen and then asserts the
+stated number equals the number the transaction removed. A dialog test alone cannot see that, and it
+is the entire content of what the ruling promises.
+
+##### 5.9.31.2 `#871`: nothing existed at all, which is what separates it from `#870`
+
+No `Remove`/`DeleteTemplate` class anywhere in the tree; `doc.templates.remove` appears only inside
+revert bodies undoing a save or a fork. So this needed a ruling and not a wire.
+
+`DR-158` settles four things, three of them the user's, and §11.157 carries the arguments. The one
+that is mine to state rather than to choose is §11.157.1: docs/06 §7.1's *"library operations are not
+undoable"* governs the **shelf**, which is M4-N and does not exist, and a per-project embedded
+snapshot is project data, so removing one is a document edit.
+
+**THE CASCADE WAS OFFERED WITH ITS COST AND THE USER TOOK IT.** The recommendation here was a refusal
+naming the count; the answer was to remove the devices too. `DeviceInstance.templateRef` is the
+**only referent in the entire model**, so the cascade has exactly one edge, and leaving the devices
+was never available: CR-054 says a `TemplateRef` always resolves and a device with no snapshot has no
+body to draw.
+
+**AND IT ALWAYS ASKS**, which is where this departs from the four removal plans before it.
+§11.157.5: authoring a template is minutes of work that exists nowhere else in the project, so
+DR-013 §11.13.2's exemption for the consequence-free delete does not reach it. The prompt is shorter
+when nothing stands on the template. It is not absent.
+
+##### 5.9.31.3 A fixture's default stood in for a proof, for the fourth time
+
+The browser card's `InkWell` carries `onDoubleTap` whenever `onEdit` is non-null, which puts a
+`DoubleTapGestureRecognizer` in the gesture arena and holds it open past a bare `pumpAndSettle`.
+`device_browser_screen_test`'s own fixture defaulted `onEdit` to **null**, so it built no such
+recognizer, every press in it landed, and the same press through the shipped shell did **nothing**.
+
+That is `#872`'s shape arriving as a false positive from the other side: a control that tests as
+wired and behaves as unwired. Both suites now press through the arena the product actually builds,
+and the helper that does it carries the reason.
+
+##### 5.9.31.4 And undo turned out to be reachable from one tab (`#874`)
+
+Found when the `#871` shell case pressed `Ctrl+Z` on the Device Manager and nothing happened.
+`UndoIntent` and `RedoIntent` each have **exactly one handler in the entire tree**, inside
+`RackCanvasScreen`'s own `Shortcuts`, and the application has one menu, `File`, with no Undo item
+anywhere. The strip is six tabs; undo works on one.
+
+**THE CODEBASE ALREADY KNEW AND ITS NOTE IS STALE BY THREE.** `rack_canvas_screen.dart` carries
+*"`Ctrl+Z` still reaches nothing at all on the Schematic and Schedule tabs. Widening the scope is a
+rebinding and belongs to a ruling; the note exists so it is a decision somebody takes rather than a
+fact nobody noticed."* It names two. It has been five since `DR-091` reordered and extended the
+strip. A count written in prose went stale exactly the way this corpus keeps finding.
+
+It matters more now than when the note was written, because **every** destructive confirmation in the
+product ends by promising undo, and three of the four are reached from tabs where `Ctrl+Z` does
+nothing. The promise is true of the stack and unreachable from where the person is standing, which is
+worse than either. This is very likely what the user meant on 2026-09-12 by *"undo doesn't appear to
+work anywhere across the program currently"*, which was recorded as a side observation during the
+`#869` investigation and not followed up.
+
+##### 5.9.31.5 Evidence
+
+Floors: `rackpal_core` 4615 to 4636, `rackpal_ui` 1764 to 1781, `rackpal_app` 985 to 991. Gates: 17.
+Analyzer pin unmoved at 233.
+
+Mutations: three on `#873` with three kills, six on `#871` with six kills. `#871`'s first two are the
+ones the item exists for: the control wired to nothing kills five cases, and a row that skips the
+project-authored check kills four.
+
+**Commits** (§8.8). The ruling `77ff3bc`. `#873` `cd75b69`. `#871` `d81ef0b`.
+
+---
+
+#### 5.9.32 `#872`: the reachability gate, and what it found on its first run · no ruling · no version move
+
+2026-09-12, asked for by the user immediately after `#870`. It closes under `#786` and moves no
+number.
+
+##### 5.9.32.1 A gate for a shape that has shipped five times
+
+`DR-143`, `#674`, `PLAN-E/5`, `LEN-A/3`, `#870`. Every one compiles, analyses clean and has green
+tests, because the class **is** used: its own suite constructs it. Nothing in Dart can require that a
+person can get to it, and every one of the five was found by somebody using the product rather than
+by anything in the repository.
+
+##### 5.9.32.2 Three greps were wrong before the graph was right
+
+Each was caught only by checking an answer somebody already knew, which is why the shipped gate
+asserts five of them before it reports anything:
+
+| Attempt | What it did | How it was wrong |
+|---|---|---|
+| 1 | matched `Name(` | missed every **named** constructor; reported `SetRoomEstimateCommand` unreachable on the day it was wired, with six production references |
+| 2 | counted any mention in another lib file | a name in a **comment** counted as use, and `RemovePlanUnderlayCommand` fell off the list entirely |
+| 3 | counted constructions by name | 24 of 72, still wrong: this codebase builds most commands through `buildXCommand`, so a command built only by its own builder reads as unreachable while the **builder** is what has callers |
+
+The shipped model is a graph: a node is a top-level declaration in any `*/lib/**.dart`, an edge is
+"D's body names E" outside comments and strings, roots are every declaration in a UI package, and a
+Command is reachable when some declaration that **constructs** it is reachable from a root.
+`addTemplateRemoval` is the worked example, and the transitive hop attempt 3 could not make.
+
+##### 5.9.32.3 The prototype's own splitter was wrong, and the COUNT is what caught it
+
+A character class containing a whitespace class let an **indented method** match as a top-level
+function. 439 files produced **18,222** "top-level" declarations, 41 per file, and **49 of 73**
+commands came back unreachable with **zero** construction sites, `MoveDeviceCommand` among them,
+which the rack canvas builds on every drag.
+
+Nothing about the output said "broken". It said "49 unreachable", which is a number somebody in a
+hurry would have believed and filed 49 tickets against. The corpus-size band in the shipped file is
+that failure written down as an assertion, and it is asserted from **both** directions: too few
+declarations means the splitter stopped matching, too many means it is matching methods.
+
+##### 5.9.32.4 Twelve are unreachable, and the largest finding is not a command
+
+Each was verified by hand before it was filed. `#875` through `#881`.
+
+**`#875` is the one worth reading.** `ValidationDrawer` declares `onAcknowledge`, `onWithdraw` and
+`onRemedy`, passes all three to `DrcPanel`, and `DrcPanel` renders a button for each when it is
+non-null. There is **exactly one mount** of `ValidationDrawer` in the product, at
+`rack_canvas_screen.dart:4602`, and it passes **none of the three**. Each is nullable and documented
+as *"null shows no button rather than a dead one"*, so the buttons are absent and nothing fails.
+
+What that makes unreachable: `AcknowledgeFindingCommand` and `UnacknowledgeFindingCommand` (M5-B2,
+with a real revert and a signed reason), and PWR-003's entire remedy chain. `addOutletsToRack` is
+declared in `add_outlets.dart`, **tested in two suites including one in `rackpal_ui`**, and called by
+no lib code at all, which takes `AddZeroUChannelCommand` down with it.
+
+The rest: `#876` 0U channels have no surface at all, though AC-044 names the inspector as the only
+route; `#877` an outlet and a structure can be added and neither removed; `#878` a plan pin cannot be
+cleared and pages cannot be reordered, while `LabelKey.clearPlanPin` exists and argues for its own
+value; `#879` `ruleOverrides` rows carry a reason, an author and a date, all persisted, none
+writable; `#880` `SnapshotCommand`, the only one of the twelve with **no tests either**, so the first
+question is whether it should exist; `#881` `AddLinkCommand`, 21 test constructions and the
+hypothesis that it is superseded rather than missing.
+
+##### 5.9.32.5 The gate's scope is stated, because a scope is part of a claim
+
+**Every declaration in a UI package is a root**, which is an over-approximation and a deliberate one:
+deciding which widget is actually mounted needs a build graph this scan does not have, and a gate
+that guessed would cry wolf.
+
+So a command built by a UI method nothing calls reads as reachable, and so does one behind a callback
+parameter no mount supplies. The gate sees `#875`'s commands only because nothing constructs them
+anywhere, not because it understood the mount.
+
+That half belongs to `actions_have_callers_test.dart`. **Between them they still leave a hole**: that
+gate reads `*Actions` records in `rackpal_ui/lib` only, so a widget taking loose callback parameters
+is outside both. `#875`'s second half closes it.
+
+##### 5.9.32.6 The exemption list is the risk, so three cases guard the list rather than the tree
+
+`.okf/practices/a-tests-exemption-list-is-where-the-bug-lives.md`. An exemption whose value is not a
+board item fails; an exemption that has become **reachable** fails, so the list cannot rot into a
+record of things that were true once; and an exemption for a deleted class fails, because a line
+nobody can act on is worse than no line.
+
+##### 5.9.32.7 Evidence
+
+Floor: `rackpal_app` 991 to 996. Gates: 17, unchanged, because this runs inside the `rackpal_app`
+suite rather than as its own `Invoke-Gate` step.
+
+Five mutations, five kills. The second is the one the item asked for by name: **the construction site
+stays and only the path from a person to the builder is removed**, which is the transitive case. Also
+killed: un-wiring `#870` again, a stale exemption, an exemption naming no board item, and the
+splitter regaining its indented-method bug.
+
+**Commits** (§8.8). `#872` `5f9f7c9`.
+
+---
+
 ## 6. The dependency graph, as it actually stands
 
 ### 6.1 What can be worked on now

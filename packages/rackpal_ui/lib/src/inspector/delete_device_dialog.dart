@@ -27,6 +27,16 @@
 // answer.
 //
 // ═══════════════════════════════════════════════════════════════════════
+// AND THE TOTAL IS A UNION, NOT A SUM
+// ═══════════════════════════════════════════════════════════════════════
+// `#873`. A cable between two SELECTED devices lands on both, so it is in
+// both plans and the delete removes it once. This file summed the plans'
+// counts and so overstated exactly when a person selects both ends of a
+// run, which is an ordinary gesture. `cablesAcrossPlans` is the union and
+// lives in core beside the planner, so the rule above still holds: the
+// sentence and the edit read one answer.
+//
+// ═══════════════════════════════════════════════════════════════════════
 // AND A DEVICE CARRYING NOTHING IS NOT ASKED ABOUT
 // ═══════════════════════════════════════════════════════════════════════
 // §11.13.2's last sentence. [confirmDeviceRemoval] returns true WITHOUT
@@ -85,7 +95,17 @@ class DeleteDeviceDialog extends StatelessWidget {
   /// looks like it has lost track.
   final int totalDevices;
 
-  int get _cableTotal => plans.fold(0, (sum, plan) => sum + plan.cableCount);
+  /// A UNION, NOT A SUM (`#873`). A cable between two selected devices is
+  /// in both their plans and is removed once; `plans.fold(sum +
+  /// cableCount)` therefore stated a number no gesture produces, which is
+  /// §11.13.2's own failure arriving from the friendly side. Computed in
+  /// core beside `planDeviceRemoval` so the sentence and the edit still
+  /// read one answer.
+  int get _cableTotal => cablesAcrossPlans(plans);
+
+  /// How many of them run between devices in this list. Zero for the
+  /// ordinary delete, and the dialog says nothing when it is.
+  int get _shared => cablesSharedAcrossPlans(plans);
 
   String _nameOf(DeviceRemovalPlan plan) =>
       designators[plan.deviceId] ?? plan.deviceId.v;
@@ -128,6 +148,23 @@ class DeleteDeviceDialog extends StatelessWidget {
                         : 'This also deletes $cables cables.',
                     style: theme.textTheme.titleSmall,
                   ),
+                  // ONLY WHEN THE ARITHMETIC NEEDS IT. The breakdown below
+                  // prints what lands on each device, which is the honest
+                  // per-device answer and does not add up to the headline
+                  // when a cable is shared. This line is the missing
+                  // sentence, and it is absent whenever it would be "0 of
+                  // them".
+                  if (_shared > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      _shared == 1
+                          ? '1 of them runs between devices in this list, '
+                                'and is counted once.'
+                          : '$_shared of them run between devices in this '
+                                'list, and are counted once.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                  ],
                   const SizedBox(height: 8),
                   Text(
                     'They will come off the schedule. Undo puts them back.',

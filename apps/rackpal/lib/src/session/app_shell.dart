@@ -73,15 +73,18 @@ import 'package:rackpal/src/storage/recents_store.dart';
 import 'package:rackpal_core/rackpal_core.dart'
     show
         Err,
+        LabelKey,
         LoadedLibrary,
         LocationRemovalPlan,
         TemplateBody,
         TemplateId,
         TextMeasurer,
         Uuid,
+        addTemplateRemoval,
         buildPlaceableTemplates,
         buildRackPresets,
         copyTemplateBody,
+        planTemplateRemoval,
         resolveLatestTemplate;
 import 'package:rackpal_ui/rackpal_ui.dart';
 
@@ -1045,6 +1048,7 @@ final class AppShellState extends State<AppShell>
         // (DR-104 §11.103.2's corrected clause).
         onNew: () => setState(() => _authoringNew = true),
         onEdit: _openTemplateForEditing,
+        onRemove: (id) => unawaited(_removeTemplate(session, id)),
       );
     }
     // DOOR 2's SUBJECT, when one was asked for. `resolveLatestTemplate`
@@ -1399,6 +1403,48 @@ final class AppShellState extends State<AppShell>
         );
       }
     });
+  }
+
+  /// Removes a template from THIS PROJECT, with the devices standing on
+  /// it (`#871`, DR-158 §11.157).
+  ///
+  /// **THE COUNTS AND THE REMOVAL READ ONE OBJECT.** `planTemplateRemoval`
+  /// is what the dialog counts and what `addTemplateRemoval` consumes,
+  /// which is `delete_location_dialog.dart`'s rule: a dialog that said
+  /// "3 devices" and removed four would be worse than no dialog.
+  ///
+  /// **ONE TRANSACTION, ONE UNDO** (§11.157.6), which is the same shape
+  /// `_deleteSelection` uses for a multi-device delete. The label is
+  /// `removeTemplateFromProject` and not `removeDevice`, because what the
+  /// person did was get rid of a template and the devices are a
+  /// consequence of it.
+  Future<void> _removeTemplate(DocumentSession session, TemplateId id) async {
+    final controller = session.controller;
+    final plan = planTemplateRemoval(controller.doc, id);
+    if (!plan.isRemovable) return;
+    final name =
+        resolveLatestTemplate(controller.doc, id.v)?.body.displayName ?? id.v;
+
+    final confirmed = await confirmTemplateRemoval(
+      context,
+      plan: plan,
+      name: name,
+    );
+    if (!confirmed || !mounted) return;
+
+    // RE-PLANNED AFTER THE AWAIT, on `_deleteSelection`'s rule: the
+    // document is not frozen while a dialog is open, and an undo from a
+    // menu or a second window could have moved it. The plan the person
+    // ANSWERED is the one above; the plan that runs is this one, and if
+    // they disagree the honest thing is to remove what is actually there
+    // rather than what was there a moment ago.
+    final live = planTemplateRemoval(controller.doc, id);
+    if (!live.isRemovable) return;
+    controller.transact(
+      LabelKey.removeTemplateFromProject,
+      (tx) => addTemplateRemoval(tx, live),
+    );
+    setState(() {});
   }
 
   /// The elevation's chip, answered: park the request, then switch tabs.

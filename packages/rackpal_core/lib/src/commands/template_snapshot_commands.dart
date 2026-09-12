@@ -169,3 +169,97 @@ final class SaveTemplateToProjectCommand extends Command<RackDocument> {
     doc.templates.remove(key);
   }
 }
+
+/// Removes EVERY version of one template id from `RackDocument.templates`
+/// (`#871`, DR-158 §11.157).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// IT REMOVES THE TEMPLATE AND NOTHING ELSE
+/// ═════════════════════════════════════════════════════════════════════
+/// The devices standing on it go too (§11.157.4), and they go through one
+/// `RemoveDeviceCommand` each in the same `Transaction`, not from here.
+/// That is not tidiness: `RemoveDeviceCommand` already cascades links,
+/// ports and orphaned nets under DR-013 §11.13.1, plans itself against
+/// the aggregate as it stands when it applies, and restores every one of
+/// them under the SAME ids on revert. A second implementation of that
+/// inside this command would be a second thing to keep correct.
+///
+/// **APPLIED ALONE IT ORPHANS DEVICES, AND IT IS NOT THIS COMMAND'S JOB
+/// TO REFUSE.** `planTemplateRemoval` is the answer the caller builds its
+/// transaction from, and `buildRemoveTemplateCommand` is the only spelling
+/// a surface should use.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// EVERY VERSION, WHICH IS THE UNIT (§11.157.2)
+/// ═════════════════════════════════════════════════════════════════════
+/// CR-050 forks a version rather than mutating one, so an edited template
+/// leaves earlier snapshots in the file. Removing the newest alone would
+/// make the palette row vanish and come back at the previous version.
+final class RemoveTemplateCommand extends Command<RackDocument> {
+  RemoveTemplateCommand({required this.templateId});
+
+  final TemplateId templateId;
+
+  /// Every snapshot this run removed, under the key it sat at.
+  ///
+  /// **THE SAME OBJECTS UNDER THE SAME KEYS**, which is the discipline
+  /// `RemoveDeviceCommand` holds for the links it takes: a
+  /// `TemplateSnapshot` carries a `contentHash` every `TemplateRef`
+  /// resolving it compares against (AC-042), so anything less than the
+  /// same object makes delete-then-undo a lossy round trip through the
+  /// entity CR-117's byte gate is about.
+  final Map<String, TemplateSnapshot> _removed = <String, TemplateSnapshot>{};
+
+  bool _applied = false;
+
+  @override
+  LabelKey get label => LabelKey.removeTemplateFromProject;
+
+  /// The same mask `SaveTemplateToProjectCommand` carries, for the same
+  /// two reasons read backwards: `structure` because the set of things
+  /// that can be placed changed, `meta` because the template's
+  /// `displayName` printed in the equipment list for every instance.
+  @override
+  EpochMask get touches => EpochMask.structure | EpochMask.meta;
+
+  /// EMPTY, on `SaveTemplateToProjectCommand`'s call: `affects` names
+  /// entities a selection can hold and a template key is not one.
+  @override
+  Iterable<Uuid> get affects => const [];
+
+  @override
+  bool apply(RackDocument doc) {
+    // Cleared, not appended to: `apply` runs again on every redo and each
+    // run must describe THAT run rather than the union of all of them.
+    _removed.clear();
+
+    final keys = <String>[
+      for (final entry in doc.templates.entries)
+        if (entry.value.templateId == templateId) entry.key,
+    ];
+    for (final key in keys) {
+      final snapshot = doc.templates.remove(key);
+      if (snapshot != null) _removed[key] = snapshot;
+    }
+    _applied = true;
+    // A template the document does not hold is a NO-OP and says so
+    // (DR-156): returning true would put an entry on the undo stack for
+    // an edit that changed nothing.
+    return _removed.isNotEmpty;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    if (!_applied) {
+      throw StateError('RemoveTemplateCommand.revert called before apply().');
+    }
+    // Insertion order moves these to the end, which is harmless:
+    // `deepSortKeys` canonicalises every map before encoding, so CR-117's
+    // byte round trip depends on the keys and values and never on the
+    // order they were put back in.
+    _removed
+      ..forEach((key, snapshot) => doc.templates[key] = snapshot)
+      ..clear();
+    _applied = false;
+  }
+}

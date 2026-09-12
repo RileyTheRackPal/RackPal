@@ -624,4 +624,18 @@ enum LabelKey {
   // undo entry. The label here is for the field edited on its own.
   setRoomEstimate,
   clearRoomEstimate,
+
+  // REMOVING A TEMPLATE FROM THE PROJECT (commands/
+  // template_snapshot_commands.dart), `#871`, DR-158 §11.157. Its own
+  // value and not `removeDevice`, even though the transaction removes
+  // devices too and usually more of them than anything else: what the
+  // person did was get rid of a TEMPLATE, and "Undo Delete Device" in
+  // front of somebody who deleted a template names one consequence of
+  // the act instead of the act. The same split `commitPortSort` and
+  // `unacknowledgeFinding` are made on.
+  //
+  // Nor is it `saveTemplateToProject` inverted. Those are opposite acts
+  // and the undo entry has to say which one is coming back, which is
+  // exactly `clearPlanPin`'s and `clearRoomEstimate`'s reasoning.
+  removeTemplateFromProject,
 }

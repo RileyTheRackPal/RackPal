@@ -776,7 +776,19 @@ $SuiteFloors = @{
     # companions are the ones that keep the fix honest: AC-031's field
     # templates still go off-rack, and notInRack is still the escape
     # hatch, because the distinguishing fact is the HEIGHT not the side.
-    'rackpal_core'   = 4615
+    # 4619 at `#873`: +4. A cable between two DEPARTING devices is in both
+    # their plans, because planDeviceRemoval asks "which links land on
+    # this device" and the answer is yes at each end; the delete removes
+    # it once. cablesAcrossPlans is the union. The fourth case is the
+    # empty one, which is the shape a fold gets right for free and a set
+    # walk does not.
+    # 4636 at `#871`: +17. A template is removed from the project as a
+    # whole, with the devices standing on it (DR-158 §11.157). Five of the
+    # seventeen are the clauses; the one that earns the file is the BYTE
+    # round trip, because a TemplateSnapshot carries the contentHash every
+    # TemplateRef compares against and anything but the same object makes
+    # delete-then-undo lossy in the entity CR-117 is about.
+    'rackpal_core'   = 4636
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1073,7 +1085,17 @@ $SuiteFloors = @{
     # revert, a pin cascade and seven tests, and NOTHING IN ANY lib EVER
     # BUILT ONE. Every case presses the real button, because a case that
     # called the command would assert what was already true for months.
-    'rackpal_ui'     = 1764
+    # 1766 at `#873`: +2. One pumps the dialog with both ends of a run and
+    # reads the sentence; the other performs the whole gesture through
+    # Ctrl+click and Delete and asserts the stated number EQUALS the
+    # number the transaction removes, which a dialog test alone cannot
+    # see and which is the entire content of DR-013 §11.13.2's promise.
+    # 1781 at `#871`: +15. Six on the browser's remove control and nine on
+    # the dialog. The six press the REAL control through the real gesture
+    # arena: this file's fixture defaulted `onEdit` to null, which builds
+    # no double-tap recognizer, so a press that landed in the test did
+    # nothing in the shipped shell.
+    'rackpal_ui'     = 1781
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1134,7 +1156,19 @@ $SuiteFloors = @{
     # somebody else's machine holding a packaged copy. A source gate, and
     # its limit is stated: it proves the rule is there and points at a
     # real file, and the build gate proves CMake obeyed it.
-    'rackpal_app'    = 985
+    # 991 at `#871`: +6. The whole gesture through the real mounting,
+    # which is the only place anything can assert that pressing the
+    # control REMOVES a template rather than firing a callback. One of
+    # them walks to the Rack tab to press Ctrl+Z, because that is the only
+    # tab undo is bound on (`#874`).
+    # 996 at `#872`: +5. The Command reachability gate. Five cases and
+    # not one, because three of them guard the GATE rather than the tree:
+    # a corpus-size band that catches a splitter matching indented
+    # methods, a self-check on five known answers (three earlier censuses
+    # were confidently wrong), and a staleness check so an exemption that
+    # becomes reachable FAILS rather than rotting into a record of what
+    # was true once.
+    'rackpal_app'    = 996
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

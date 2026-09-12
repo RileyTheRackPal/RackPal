@@ -1,5 +1,64 @@
 # Update Log
 
+## 2026-09-12 (twenty-fourth entry)
+
+* **Ruled**: [DR-157](/decisions/dr-157-a-rack-height-with-no-side-is-refused.md).
+  A rack height with no mounting side is refused by name instead of coming back as
+  a successful `OffRackPlacement`, and the device builder derives the side as the
+  height is typed.
+* **Ruled**: [DR-158](/decisions/dr-158-a-template-is-removed-as-a-whole.md). A
+  device template is removed from the project as a whole, every version of it, and
+  it takes the devices standing on it after a confirmation counting three things
+  in three units.
+* **Closed**: `#869` with `1feb958` and `7e9b662`; `#870` with `ff0707e`; `#873`
+  with `cd75b69`; `#871` with `d81ef0b`. **`v0.6.57`** for `#870` alone: it is a
+  leaf Story under the Plan view epic, which is the one under development. The
+  other three close under `#786` and move no number.
+* **Note**: **THE VERSION RULE HAD TO BE RESTATED, AND BOTH READINGS REPRODUCE THE
+  OLD NUMBER.** `#865`'s bump counted Done *Chapters* under `#588` and got 56,
+  which was correct and not general: `#870` is a leaf Story, and counting Chapters
+  alone would have shipped a feature with no version move. docs/14 §14.0 says
+  *"major tasks completed within that epic"*, which does not say Chapter. The
+  re-runnable count is Done items under `#588` with no children, less the `PLAN-0`
+  decomposition item.
+* **Note**: **THE DEMO PROJECT IS FINDING WHAT THE SUITES CANNOT.** All four of
+  these came out of one person building a real project for the first time, and
+  none was found by a test, a sweep or a census. Two of them (`#870`, `#871`) are
+  capabilities that were never reachable at all; one (`#869`) is a success report
+  for a device that is not on screen; one (`#873`) is a dialog stating a number no
+  gesture produces.
+* **Note**: **A FIFTH INSTANCE OF
+  [a fixture's default standing in for a proof](/practices/a-fixture-default-is-not-a-proof.md)**,
+  and the first where the default changed the SHAPE OF THE WIDGET TREE rather than
+  a value in the model. `device_browser_screen_test`'s helper defaulted `onEdit` to
+  null, which builds no `DoubleTapGestureRecognizer`, so every press in the file
+  landed while the same press through the shipped shell did nothing.
+* **Gate**: [commands have callers](/gates/commands-have-callers.md), `#872`.
+  A Command with no path from a person to it fails the build. Twelve are exempt
+  today, each against the board item that retires it (`#875` to `#881`), and an
+  exemption that BECOMES reachable fails too, so the list cannot rot into a
+  record of what was true once. Five mutations, five kills, including the
+  transitive one: the construction site stays and only the path to the builder
+  goes.
+* **Note**: **THE GATE'S PROTOTYPE WAS WRONG AND THE COUNT IS WHAT CAUGHT IT.**
+  A splitter that matched INDENTED methods as top-level functions turned 439
+  files into 18,222 "top-level" declarations and reported 49 of 73 commands
+  unreachable with ZERO construction sites, `MoveDeviceCommand` among them.
+  Nothing in the output said "broken"; it said "49", which is a number somebody
+  in a hurry would have filed 49 tickets against.
+* **Note**: **THE LARGEST THING THE GATE FOUND IS NOT A COMMAND.**
+  `ValidationDrawer` is mounted ONCE in the product and passes none of
+  `onAcknowledge`, `onWithdraw` or `onRemedy`, so acknowledging a finding,
+  withdrawing an acknowledgement and PWR-003's whole remedy chain are
+  unreachable. `addOutletsToRack` is tested in two suites, one of them in
+  `rackpal_ui`, and called by no lib code at all.
+* **Filed**: `#874`. `UndoIntent` and `RedoIntent` have exactly one handler in the
+  entire tree, inside `RackCanvasScreen`, and the application has one menu with no
+  Undo item. The strip is six tabs and undo works on one. `rack_canvas_screen.dart`
+  already carried a note saying so, naming **two** tabs; it has been five since
+  DR-091 reordered the strip, which is a count in prose going stale exactly the way
+  this corpus keeps finding.
+
 ## 2026-09-12 (twenty-third entry)
 
 * **Ruled**: [DR-156](/decisions/dr-156-a-command-reports-whether-it-applied.md).
