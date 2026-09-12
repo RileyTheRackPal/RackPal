@@ -739,4 +739,49 @@ void main() {
       throwsA(isA<StateError>()),
     );
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-156 §11.155.1: A REFUSAL MUST HAVE WRITTEN NOTHING
+  // ═══════════════════════════════════════════════════════════════════
+  // The link lookup used to sit BELOW the port materialisation, so a
+  // missing link returned `false` having already put a `Port` in the
+  // document. `TxnScope.add` then dropped the command and the port
+  // stayed: an orphan nothing references, with no undo entry to take it
+  // back and no epoch bump to redraw anything.
+  //
+  // The route is a stale reference, the same one every other refusal in
+  // this product has: the link is deleted between the gesture that built
+  // the command and the commit that runs it.
+  group('DR-156 regression: a refused move leaves no orphan port', () {
+    test('THE PORT IS NOT MATERIALISED WHEN THE LINK IS GONE', () {
+      final p = _project();
+      // A MOVE NEEDS A LANDED END to be a move at all.
+      _land(p.doc, p.linkId);
+      final command = _ready(_move(p.doc, p.linkId, _pin('rear.2', '02')));
+      final portsBefore = p.doc.ports.keys.toSet();
+
+      // Deleted under the pending gesture, from another surface.
+      p.doc.links.remove(p.linkId);
+      final changed = command.apply(p.doc);
+
+      expect(changed, isFalse, reason: 'it refused');
+      expect(
+        p.doc.ports.keys.toSet(),
+        portsBefore,
+        reason: 'and wrote nothing on the way out',
+      );
+    });
+
+    test('and nothing reaches the undo stack', () {
+      final p = _project();
+      _land(p.doc, p.linkId);
+      final command = _ready(_move(p.doc, p.linkId, _pin('rear.2', '02')));
+      p.doc.links.remove(p.linkId);
+      final controller = DocumentController(p.doc);
+
+      controller.run(command);
+
+      expect(controller.undo.canUndo, isFalse);
+    });
+  });
 }

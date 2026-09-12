@@ -432,8 +432,38 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
       return CatalogPlacementFailed(verdict.message, ruleId: verdict.ruleId);
     }
     placement = proposed;
+  } else if (body.side == OccupancySide.none &&
+      (body.frontU > 0 || body.rearU > 0) &&
+      body.mountMethod != MountMethod.notInRack) {
+    // ═══════════════════════════════════════════════════════════════════
+    // A RACK HEIGHT WITH NO SIDE IS INCOHERENT, AND SILENCE WAS THE BUG
+    // (DR-157 §11.156)
+    // ═══════════════════════════════════════════════════════════════════
+    // This body used to fall into the branch below and come back as a
+    // `CatalogPlacementReady` carrying an `OffRackPlacement`: a reported
+    // SUCCESS that put the device somewhere the person was not looking.
+    // Reported from the `PLAN-J` demo as *"they act as though they are
+    // present, but don't appear to do anything"*, and measured: the
+    // builder permits `{frontU: 2, side: none}` because `_canSave` never
+    // consults `side`, and this function checked `side` before it ever
+    // looked at the height.
+    //
+    // It is the same outcome the `deviceH <= 0` guard below was written
+    // for, and it slipped past that guard by RETURNING FIRST. The comment
+    // there calls it "the worst possible outcome of the three" and it was
+    // right.
+    return CatalogPlacementFailed(
+      '$catalogId declares ${body.frontU > 0 ? body.frontU : body.rearU}U '
+      'in the rack but no mounting side. Open it in the device builder and '
+      'set Side to front, rear or both.',
+    );
   } else if (body.side == OccupancySide.none ||
       body.mountMethod == MountMethod.notInRack) {
+    // A BODY WITH NO RACK HEIGHT AT ALL IS A FIELD DEVICE, and stays
+    // off-rack. AC-031's eighteen shipped field templates are
+    // `{front: 0, rear: 0, side: none}` and must keep landing here: the
+    // fact that separates them from the case above is the HEIGHT, not the
+    // side.
     placement = const OffRackPlacement();
   } else {
     final face = body.frontU > 0 ? Face.front : Face.rear;

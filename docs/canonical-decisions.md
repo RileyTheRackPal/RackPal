@@ -19900,6 +19900,68 @@ here rather than assumed symmetrical.
   `rack_canvas_screen.dart` keeps its explicit label because it names its transaction after its
   **second** child deliberately.
 
+### §11.156 DR-157 · A rack height with no side is incoherent, and placement says so instead of quietly putting the device somewhere else
+
+**Reported by the user on 2026-09-12**, running the `PLAN-J` demo project: *"I can't seem to
+actually see rack devices as I populate a rack. They act as though they are present, but don't
+appear to do anything."* Devices they had AUTHORED failed; seeded catalog devices worked.
+
+**§11.156.1 What was measured.** A probe built the exact body the device builder permits,
+`{frontU: 2, side: none}`, and ran `buildPlaceFromCatalogCommand` against a rack. The result is
+`CatalogPlacementReady` carrying an **`OffRackPlacement`**. The placement succeeds, reports success,
+and puts the device somewhere the person is not looking. Nothing is drawn in the rack because
+nothing is in the rack.
+
+**TWO SURFACES DISAGREE ABOUT ONE FACT.** The builder's save gate requires `frontU > 0` or
+`zeroUVertical` or `notInRack`, and **never consults `side`**. `buildPlaceFromCatalogCommand`
+requires `side != OccupancySide.none`, and **checks it before it ever looks at the height**. `side`
+defaults to `none`, so a body the builder calls complete is one placement routes off-rack.
+
+**§11.156.2 RULED: A BODY WITH A RACK HEIGHT AND NO SIDE IS REFUSED BY NAME.** `frontU > 0` or
+`rearU > 0`, with `side == none` and a `mountMethod` other than `notInRack`, is an incoherent
+occupancy rather than a field device. Placement refuses it and the reason names the height and the
+field to change.
+
+**THE DISTINGUISHING FACT IS THE HEIGHT, NOT THE SIDE**, and that is what keeps AC-031's eighteen
+shipped field templates landing exactly where they always did: they are `{front: 0, rear: 0, side:
+none}`, and a body with no rack height at all is a field device by construction. `notInRack` remains
+the explicit escape hatch at any height, because saying *"this does not go in a rack"* is a coherent
+answer.
+
+**§11.156.3 It is the guard beside it, catching up.** `catalog_placement.dart` already refuses
+`deviceH <= 0`, and its comment says why in terms this ruling adopts: the device *"is never painted,
+cannot be clicked, cannot be selection-chromed, and landed on the REAR face while the user was
+looking at the front. A reported success for a device that does not exist on screen is the worst
+possible outcome of the three."* The `side == none` path produced the same outcome and slipped past
+that guard **by returning before it**.
+
+**§11.156.4 NOT A REGRESSION, and the check was worth running.** The disagreement predates DR-156 and
+nothing in that work is involved. It was found while auditing DR-156's sweep against this report, and
+the audit did find three real defects of its own; they are not these.
+
+**§11.156.5 RULED: THE BUILDER DERIVES THE SIDE AS THE HEIGHT IS TYPED.** Settled by the user on
+2026-09-12, from three options.
+
+**A SAVE GATE WAS TRIED FIRST AND WAS WRONG.** Requiring a side before `Save` lights broke the
+existing case asserting AC-049's *"three required fields (name, RU height, designator prefix) then
+ports, then done"*, and **that case was right**: a fourth interaction is precisely the stall AC-049
+exists to prevent. The attempt is recorded because the reasoning is what stops somebody trying it
+again.
+
+**Typing a front height IS saying the device mounts on the front**, so the answer is to read it
+rather than ask for it a second time. The derivation is unambiguous and was already spelled out in
+this repository's own test fixture before anybody needed it as a rule: both heights is `both`, a rear
+height alone is `rear`, otherwise `front`.
+
+**IT ONLY EVER FILLS A BLANK.** A person who has chosen a side keeps it whatever they type
+afterwards, and one who has said `notInRack` is not contradicted. The write rides in the field
+edit's own transaction, so a height and the side it implies are one undo entry: it is one act to the
+person who typed it.
+
+**The rejected third option was to leave the builder alone** and let §11.156.2's refusal be the whole
+remedy. It was refused because it leaves a template that can be authored, saved, and taken by no
+rack, with the person finding out at placement time rather than at the moment they could fix it.
+
 ---
 
 ## 12. Superseded rulings

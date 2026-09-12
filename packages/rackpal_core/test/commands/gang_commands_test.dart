@@ -451,4 +451,81 @@ void main() {
       expect(result, isA<Err<RackDocument>>());
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-156's SWEEP BROKE THIS ONE AND NOTHING CAUGHT IT
+  // ═══════════════════════════════════════════════════════════════════
+  // `SetStrapSizeCommand` with a null width and height "takes the gang
+  // back to undecided", which its own doc calls a state a person can get
+  // back to. The DR-156 sweep read that branch's early `return;` as a
+  // refusal, like the twenty-three others, and it was the one that had
+  // already written: the strap came off, the transaction dropped the
+  // command, nothing repainted and Ctrl+Z had nothing to take back.
+  //
+  // Every case here reads the CONTROLLER rather than calling `apply`
+  // directly, because calling `apply` is exactly what could not see it.
+  group('DR-156 regression: un-choosing a fitting is a change', () {
+    test('CLEARING A STRAP REACHES THE UNDO STACK, and one Ctrl+Z puts it '
+        'back', () {
+      final doc = _doc(gangs: [Gang(fitting: Strap(width: 2, height: 1))]);
+      final controller = DocumentController(doc)
+        ..run(
+          SetStrapSizeCommand(
+            outletId: _outletId,
+            index: 0,
+            width: null,
+            height: null,
+          ),
+        );
+
+      expect(
+        _outletOf(doc).gangs[0].fitting,
+        isNull,
+        reason: 'the strap really did come off',
+      );
+      expect(
+        controller.undo.canUndo,
+        isTrue,
+        reason: 'and the act reached the stack, which is what broke',
+      );
+
+      controller.undo.undo(doc);
+      expect(_outletOf(doc).gangs[0].fitting, isA<Strap>());
+    });
+
+    test('and it wakes `structure`, so the plate repaints', () {
+      final doc = _doc(gangs: [Gang(fitting: Strap(width: 2, height: 1))]);
+      final controller = DocumentController(doc);
+      final before = controller.epochs.structure.value;
+
+      controller.run(
+        SetStrapSizeCommand(
+          outletId: _outletId,
+          index: 0,
+          width: null,
+          height: null,
+        ),
+      );
+
+      expect(controller.epochs.structure.value, greaterThan(before));
+    });
+
+    test('A REFUSAL STILL REFUSES, so the fix is not "always true"', () {
+      // The gang index does not exist: nothing is written and nothing
+      // reaches the stack.
+      final doc = _doc(gangs: [Gang(fitting: Strap(width: 2, height: 1))]);
+      final controller = DocumentController(doc)
+        ..run(
+          SetStrapSizeCommand(
+            outletId: _outletId,
+            index: 7,
+            width: null,
+            height: null,
+          ),
+        );
+
+      expect(controller.undo.canUndo, isFalse);
+      expect(_outletOf(doc).gangs[0].fitting, isA<Strap>());
+    });
+  });
 }

@@ -280,8 +280,15 @@ final class SetStrapSizeCommand extends Command<RackDocument> {
     final w = width;
     final h = height;
     if (w == null || h == null) {
+      // UN-CHOOSING THE FITTING IS A CHANGE, AND `false` HERE SAID IT WAS
+      // NOT. This class's own doc calls a null pair *"takes the gang back
+      // to undecided"*, which is a state a person asks for and can undo.
+      // DR-156's sweep read the early `return;` here as a refusal, like
+      // the twenty-three others, and it was the one that had already
+      // written: the strap came off, `TxnScope.add` dropped the command,
+      // nothing repainted and `Ctrl+Z` had nothing to take back.
       gang.fitting = null;
-      return false;
+      return _applied;
     }
     final next = Strap(width: w, height: h);
     // KEPT BY INDEX, not by (column, row). A cell's index is its

@@ -134,6 +134,23 @@ final class MoveEndpointCommand extends Command<RackDocument> {
 
   @override
   bool apply(RackDocument doc) {
+    // ═══════════════════════════════════════════════════════════════
+    // THE REFUSAL COMES FIRST, BECAUSE A REFUSAL MUST HAVE WRITTEN
+    // NOTHING (DR-156 §11.155.1)
+    // ═══════════════════════════════════════════════════════════════
+    // The link lookup used to sit BELOW the port materialisation, so a
+    // missing link returned `false` having already put a `Port` in the
+    // document. `TxnScope.add` then dropped the command, and the port
+    // stayed: an orphan nothing references, with no undo entry to take it
+    // back and no epoch bump to redraw anything.
+    //
+    // The order is the fix. A command that reports `false` must be one a
+    // reader can trust changed nothing, and the cheapest way to be
+    // trustworthy is to check every precondition before touching the
+    // aggregate at all.
+    final link = doc.links[linkId];
+    if (link == null) return false;
+
     // Cleared, not appended to: `apply` runs again on every redo and must
     // describe THIS run.
     _materialised.clear();
@@ -146,9 +163,6 @@ final class MoveEndpointCommand extends Command<RackDocument> {
       );
       _materialised.add(port.portId);
     }
-
-    final link = doc.links[linkId];
-    if (link == null) return false;
     final conductor = link.conductors.first;
     final landed = PortEndpoint(port.portId);
     _previousEnd = switch (end) {

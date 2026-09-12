@@ -766,7 +766,17 @@ $SuiteFloors = @{
     # -- nothing in the repository distinguished `children.first` from
     # `children.last`, so the case now stacks three children and asserts
     # which end names the entry.
-    'rackpal_core'   = 4605
+    # 4612 at the DR-156 follow-up: +7. THREE COMMANDS WROTE AND THEN
+    # REPORTED THEY HAD NOT, which is the sweep's own blind spot: it read
+    # every bare `return;` in an `apply` as a refusal, and three of the
+    # twenty-four sat AFTER a write. Each case here reads the CONTROLLER,
+    # because calling `apply` directly is exactly what could not see it.
+    # 4615 at DR-157: +3. A rack height with no side is refused by name
+    # instead of coming back as a SUCCESSFUL OffRackPlacement. The two
+    # companions are the ones that keep the fix honest: AC-031's field
+    # templates still go off-rack, and notInRack is still the escape
+    # hatch, because the distinguishing fact is the HEIGHT not the side.
+    'rackpal_core'   = 4615
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1053,7 +1063,12 @@ $SuiteFloors = @{
     # one plan survived a switch and closed a shape on another).
     # ELEVEN MUTATIONS, ELEVEN KILLS, including the two that matter most:
     # the canvas handed a null mode, and the button wired to nothing.
-    'rackpal_ui'     = 1753
+    # 1758 at DR-157: +5. A rack height fills in the side it implies, so
+    # AC-049's three fields still light Save and the body they produce is
+    # one a rack will take. The first of the five is the guard on the fix
+    # itself: the save gate tried before this BROKE AC-049's flow, and
+    # that case was right to break.
+    'rackpal_ui'     = 1758
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
