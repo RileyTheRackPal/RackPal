@@ -60,6 +60,7 @@
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
 import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
+import 'package:rackpal_core/src/derived/underlay_removal.dart';
 import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
@@ -475,36 +476,22 @@ final class RemovePlanUnderlayCommand extends Command<RackDocument> {
     if (underlay == null) return false;
     _removed = underlay;
 
-    for (final rack in doc.racks.values) {
-      final pin = rack.planPin;
-      if (pin != null && pin.underlayId == underlayId) {
-        _clearedPins[(PinCarrier.rack, rack.id)] = pin;
-        rack.planPin = null;
-      }
-    }
-    for (final outlet in doc.outlets.values) {
-      final pin = outlet.planPin;
-      if (pin != null && pin.underlayId == underlayId) {
-        _clearedPins[(PinCarrier.outlet, outlet.id)] = pin;
-        outlet.planPin = null;
-      }
-    }
-    for (final device in doc.devices.values) {
-      final placement = device.placement;
-      if (placement is! OffRackPlacement) continue;
-      final pin = placement.planPin;
-      if (pin != null && pin.underlayId == underlayId) {
-        _clearedPins[(PinCarrier.offRackDevice, device.id)] = pin;
-        device.placement = placement.withPlanPin(null);
-      }
-    }
+    // ONE ANSWER READ TWICE (`#870`). This used to walk the four
+    // collections inline, which was correct and unshareable: the
+    // confirmation that has to say "3 pins" before the fact would have
+    // been a second walk that could drift from this one.
+    // `planUnderlayRemoval` is now the only place that decides what a
+    // page carries, and the dialog counts THIS object.
+    final plan = planUnderlayRemoval(doc, underlayId);
+    _clearedPins.addAll(plan.pins);
+    _clearedOutlines.addAll(plan.outlines);
 
-    for (final location in doc.locations.values) {
-      final outline = location.planOutline;
-      if (outline != null && outline.underlayId == underlayId) {
-        _clearedOutlines[location.id] = outline;
-        location.planOutline = null;
-      }
+    for (final entry in plan.pins.keys) {
+      final (carrier, id) = entry;
+      _writePin(doc, carrier, id, null);
+    }
+    for (final locationId in plan.outlines.keys) {
+      doc.locations[locationId]?.planOutline = null;
     }
 
     doc.underlays.remove(underlayId);

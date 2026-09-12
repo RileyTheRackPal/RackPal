@@ -1068,7 +1068,12 @@ $SuiteFloors = @{
     # one a rack will take. The first of the five is the guard on the fix
     # itself: the save gate tried before this BROKE AC-049's flow, and
     # that case was right to break.
-    'rackpal_ui'     = 1758
+    # 1764 at #870: +6. A floorplan page can be removed, which it could
+    # not: RemovePlanUnderlayCommand shipped at PLAN-C/6 with a real
+    # revert, a pin cascade and seven tests, and NOTHING IN ANY lib EVER
+    # BUILT ONE. Every case presses the real button, because a case that
+    # called the command would assert what was already true for months.
+    'rackpal_ui'     = 1764
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
