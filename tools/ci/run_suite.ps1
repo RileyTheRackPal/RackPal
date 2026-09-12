@@ -782,7 +782,13 @@ $SuiteFloors = @{
     # it once. cablesAcrossPlans is the union. The fourth case is the
     # empty one, which is the shape a fold gets right for free and a set
     # walk does not.
-    'rackpal_core'   = 4619
+    # 4636 at `#871`: +17. A template is removed from the project as a
+    # whole, with the devices standing on it (DR-158 §11.157). Five of the
+    # seventeen are the clauses; the one that earns the file is the BYTE
+    # round trip, because a TemplateSnapshot carries the contentHash every
+    # TemplateRef compares against and anything but the same object makes
+    # delete-then-undo lossy in the entity CR-117 is about.
+    'rackpal_core'   = 4636
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1084,7 +1090,12 @@ $SuiteFloors = @{
     # Ctrl+click and Delete and asserts the stated number EQUALS the
     # number the transaction removes, which a dialog test alone cannot
     # see and which is the entire content of DR-013 §11.13.2's promise.
-    'rackpal_ui'     = 1766
+    # 1781 at `#871`: +15. Six on the browser's remove control and nine on
+    # the dialog. The six press the REAL control through the real gesture
+    # arena: this file's fixture defaulted `onEdit` to null, which builds
+    # no double-tap recognizer, so a press that landed in the test did
+    # nothing in the shipped shell.
+    'rackpal_ui'     = 1781
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1145,7 +1156,12 @@ $SuiteFloors = @{
     # somebody else's machine holding a packaged copy. A source gate, and
     # its limit is stated: it proves the rule is there and points at a
     # real file, and the build gate proves CMake obeyed it.
-    'rackpal_app'    = 985
+    # 991 at `#871`: +6. The whole gesture through the real mounting,
+    # which is the only place anything can assert that pressing the
+    # control REMOVES a template rather than firing a callback. One of
+    # them walks to the Rack tab to press Ctrl+Z, because that is the only
+    # tab undo is bound on (`#874`).
+    'rackpal_app'    = 991
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

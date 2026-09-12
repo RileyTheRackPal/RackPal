@@ -91,6 +91,7 @@ Widget _app({
   RackDocument? document,
   Set<String> favourites = const <String>{},
   void Function(String)? onToggleFavourite,
+  void Function(TemplateId)? onRemove,
 }) => MaterialApp(
   home: Scaffold(
     body: DeviceBrowserScreen(
@@ -101,8 +102,19 @@ Widget _app({
       onToggleFavourite: onToggleFavourite,
       onNew: onNew ?? () {},
       onEdit: onEdit,
+      onRemove: onRemove,
     ),
   ),
+);
+
+/// A row for one of the 48 the build ships, which DR-158 §11.157.3 puts
+/// out of reach. Read from the catalog rather than spelled, so a renamed
+/// archetype fails here instead of quietly making this a test about an id
+/// nobody ships.
+PlaceableTemplate _seededRow() => _row(
+  kSeedCatalogIds.first,
+  _body(name: 'Shipped Thing'),
+  provenance: TemplateProvenance.seeded,
 );
 
 RackDocument _doc() {
@@ -508,6 +520,116 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.byIcon(Icons.star), findsOneWidget);
       expect(_names(tester).first, 'Edge Switch');
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // `#871`, DR-158 §11.157 — removing a template from THIS project
+  // ═══════════════════════════════════════════════════════════════════
+  group('`#871`: the remove control', () {
+    Finder removeFor(String id) =>
+        find.byKey(ValueKey(DeviceBrowserScreen.removeKeyFor(id)));
+
+    /// Presses it, and then lets the GESTURE ARENA settle.
+    ///
+    /// **A BARE `pumpAndSettle` IS NOT ENOUGH HERE AND THE REASON IS NOT
+    /// OBVIOUS.** The card's `InkWell` carries `onDoubleTap` whenever
+    /// [onEdit] is non-null, so a `DoubleTapGestureRecognizer` joins the
+    /// arena and holds it open for its own timeout; the inner tap cannot
+    /// win until that expires. `pumpAndSettle` returns as soon as no
+    /// frame is scheduled, which is immediately, so the press simply
+    /// never lands and the test reads as "the button is wired to
+    /// nothing".
+    ///
+    /// **THIS FILE'S FIXTURE HID IT.** `_app` defaulted `onEdit` to null,
+    /// which builds NO double-tap recognizer, so every press in this
+    /// group passed while the same press through the real shell did
+    /// nothing. A fixture's default is not a proof: these cases now pass
+    /// a real `onEdit` so the arena they exercise is the shipped one.
+    Future<void> press(WidgetTester tester, Finder button) async {
+      await tester.tap(button);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a `This project` row offers it', (tester) async {
+      await tester.pumpWidget(_app(onRemove: (_) {}));
+      await tester.pumpAndSettle();
+      expect(removeFor('tpl.matrix'), findsOneWidget);
+    });
+
+    testWidgets("a LIBRARY row does not: it names somebody else's shelf", (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app(onRemove: (_) {}));
+      await tester.pumpAndSettle();
+      expect(
+        removeFor('tpl.panel'),
+        findsNothing,
+        reason:
+            'this project does not hold it, so there is nothing here '
+            'to remove',
+      );
+    });
+
+    testWidgets('and a SEEDED row does not — §11.157.3', (tester) async {
+      final rows = [..._rows(), _seededRow()];
+      await tester.pumpWidget(_app(rows: rows, onRemove: (_) {}));
+      await tester.pumpAndSettle();
+
+      expect(removeFor('tpl.matrix'), findsOneWidget);
+      expect(
+        removeFor(kSeedCatalogIds.first),
+        findsNothing,
+        reason:
+            'the seeded 48 are what the build ships, and a '
+            'per-project hole in them is carried in the file forever',
+      );
+    });
+
+    testWidgets('no callback, no control anywhere', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pumpAndSettle();
+      expect(removeFor('tpl.matrix'), findsNothing);
+    });
+
+    testWidgets('pressing it reports WHICH template', (tester) async {
+      final asked = <TemplateId>[];
+      // A REAL `onEdit`, which is what puts the double-tap recognizer in
+      // the arena. See `press`.
+      await tester.pumpWidget(_app(onEdit: (_) {}, onRemove: asked.add));
+      await tester.pumpAndSettle();
+
+      await press(tester, removeFor('tpl.switch'));
+
+      expect(
+        asked,
+        [const TemplateId('tpl.switch')],
+        reason:
+            'the browser reports the id and the host does the work; a '
+            'control wired to nothing is exactly the shape `#870` found',
+      );
+    });
+
+    testWidgets('and it survives the switch to the LIST layout', (
+      tester,
+    ) async {
+      // THE CARD AND THE ROW ARE ONE CONTROL IN TWO LAYOUTS, which is
+      // why they share a key. A remove that only existed on the grid
+      // would be missing for anybody who prefers the list, and nothing
+      // else in this file would notice.
+      final asked = <TemplateId>[];
+      await tester.pumpWidget(_app(onEdit: (_) {}, onRemove: asked.add));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byIcon(Icons.view_list));
+      await tester.pumpAndSettle();
+
+      expect(removeFor('tpl.matrix'), findsOneWidget);
+      expect(removeFor('tpl.panel'), findsNothing);
+
+      await press(tester, removeFor('tpl.matrix'));
+      expect(asked, [const TemplateId('tpl.matrix')]);
     });
   });
 }

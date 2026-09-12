@@ -134,6 +134,7 @@ class DeviceBrowserScreen extends StatefulWidget {
     this.registries,
     this.unreadableLibraries = const [],
     this.onEdit,
+    this.onRemove,
     super.key,
   });
 
@@ -169,6 +170,22 @@ class DeviceBrowserScreen extends StatefulWidget {
   /// which the shell already does by template id). Null hides the action,
   /// which is what a render test that does not care about it wants.
   final void Function(TemplateId templateId)? onEdit;
+
+  /// Removes a template from the PROJECT (`#871`, DR-158 §11.157), with
+  /// the devices standing on it. Null hides the control, which is what a
+  /// render test that does not care about it wants.
+  ///
+  /// **OFFERED ON `This project` ROWS ONLY** (§11.157.3), which is
+  /// decided in `_Results` rather than here: a library row names somebody
+  /// else's shelf, and a seeded row is what the build ships, so a
+  /// per-project hole in it is a difference carried in the file forever
+  /// and found later by somebody who did not make it.
+  final void Function(TemplateId templateId)? onRemove;
+
+  /// A stable handle for tests, per row. The card and the list row carry
+  /// the SAME key, because they are one control in two layouts and a
+  /// test should not have to know which is showing.
+  static String removeKeyFor(String templateId) => 'browser-remove-$templateId';
 
   @override
   State<DeviceBrowserScreen> createState() => _DeviceBrowserScreenState();
@@ -329,6 +346,7 @@ class _DeviceBrowserScreenState extends State<DeviceBrowserScreen> {
                           favourites: widget.favourites,
                           onEdit: widget.onEdit,
                           onToggleFavourite: widget.onToggleFavourite,
+                          onRemove: widget.onRemove,
                         ),
                 ),
               ],
@@ -523,6 +541,7 @@ class _Results extends StatelessWidget {
     required this.favourites,
     this.onEdit,
     this.onToggleFavourite,
+    this.onRemove,
   });
 
   final List<PlaceableTemplate> rows;
@@ -531,6 +550,14 @@ class _Results extends StatelessWidget {
   final Set<String> favourites;
   final void Function(TemplateId templateId)? onEdit;
   final void Function(String templateId)? onToggleFavourite;
+  final void Function(TemplateId templateId)? onRemove;
+
+  /// The remove callback for [row], or null when this row must not offer
+  /// one: DR-158 §11.157.3 confines it to templates authored in THIS
+  /// project. Decided once, here, so the card and the list row cannot
+  /// disagree about which rows are removable.
+  void Function(TemplateId)? _removeFor(PlaceableTemplate row) =>
+      row.isProjectAuthored ? onRemove : null;
 
   @override
   Widget build(BuildContext context) {
@@ -543,6 +570,7 @@ class _Results extends StatelessWidget {
           starred: favourites.contains(rows[i].id),
           onEdit: onEdit,
           onToggleFavourite: onToggleFavourite,
+          onRemove: _removeFor(rows[i]),
         ),
       );
     }
@@ -568,6 +596,7 @@ class _Results extends StatelessWidget {
         starred: favourites.contains(rows[i].id),
         onEdit: onEdit,
         onToggleFavourite: onToggleFavourite,
+        onRemove: _removeFor(rows[i]),
       ),
     );
   }
@@ -599,6 +628,7 @@ class _Card extends StatelessWidget {
     this.facts,
     this.onEdit,
     this.onToggleFavourite,
+    this.onRemove,
   });
 
   final PlaceableTemplate row;
@@ -606,6 +636,7 @@ class _Card extends StatelessWidget {
   final bool starred;
   final void Function(TemplateId templateId)? onEdit;
   final void Function(String templateId)? onToggleFavourite;
+  final void Function(TemplateId templateId)? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -639,6 +670,16 @@ class _Card extends StatelessWidget {
                     _Star(
                       starred: starred,
                       onPressed: () => onToggleFavourite!(row.id),
+                    ),
+                  // REMOVE SITS BESIDE THE STAR, which is the other
+                  // per-row verb, and only on a `This project` row
+                  // (DR-158 §11.157.3). Drawn in the error colour: it is
+                  // the one control on this surface that destroys
+                  // anything.
+                  if (onRemove != null)
+                    _RemoveTemplateButton(
+                      templateId: row.templateId,
+                      onPressed: () => onRemove!(row.templateId),
                     ),
                 ],
               ),
@@ -676,6 +717,7 @@ class _Row extends StatelessWidget {
     this.facts,
     this.onEdit,
     this.onToggleFavourite,
+    this.onRemove,
   });
 
   final PlaceableTemplate row;
@@ -683,6 +725,7 @@ class _Row extends StatelessWidget {
   final bool starred;
   final void Function(TemplateId templateId)? onEdit;
   final void Function(String templateId)? onToggleFavourite;
+  final void Function(TemplateId templateId)? onRemove;
 
   @override
   Widget build(BuildContext context) {
@@ -709,6 +752,11 @@ class _Row extends StatelessWidget {
             _Star(
               starred: starred,
               onPressed: () => onToggleFavourite!(row.id),
+            ),
+          if (onRemove != null)
+            _RemoveTemplateButton(
+              templateId: row.templateId,
+              onPressed: () => onRemove!(row.templateId),
             ),
         ],
       ),
@@ -740,6 +788,39 @@ class _Star extends StatelessWidget {
     visualDensity: VisualDensity.compact,
     padding: EdgeInsets.zero,
     constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+    onPressed: onPressed,
+  );
+}
+
+/// The one destructive control on this surface (`#871`, DR-158 §11.157).
+///
+/// **THE TOOLTIP ENDS IN AN ELLIPSIS BECAUSE IT ALWAYS ASKS.** §11.157.5
+/// rules that authoring a template is work that exists nowhere else in
+/// the project, so even a template nothing stands on gets a prompt. A
+/// control that sometimes asks and sometimes does not is how people learn
+/// to click through the prompt, including on the day it matters.
+class _RemoveTemplateButton extends StatelessWidget {
+  const _RemoveTemplateButton({
+    required this.templateId,
+    required this.onPressed,
+  });
+
+  final TemplateId templateId;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) => IconButton(
+    key: ValueKey(DeviceBrowserScreen.removeKeyFor(templateId.v)),
+    icon: const Icon(Icons.delete_outline, size: 16),
+    // THE TOOLTIP SAYS WHICH SHELF, on `_Star`'s rule that a control says
+    // what pressing it does. "Remove" alone would read as deleting the
+    // template everywhere, and there is no everywhere yet: the shelf is
+    // M4-N and this acts on the project's own embedded copy.
+    tooltip: 'Remove from this project…',
+    visualDensity: VisualDensity.compact,
+    padding: EdgeInsets.zero,
+    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+    color: Theme.of(context).colorScheme.error,
     onPressed: onPressed,
   );
 }
