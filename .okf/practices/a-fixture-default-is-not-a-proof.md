@@ -6,7 +6,7 @@ description: >-
   suite ran was already the interesting case and passed for a reason nobody had named,
   while the mirror state was exercised nowhere. Ask which fixture field carries the
   property, then write the case that sets it the other way.
-tags: [practice, testing, fixtures, verification, mutation, dr-146, dr-156, plan-f]
+tags: [practice, testing, fixtures, verification, mutation, dr-146, dr-156, dr-158, plan-f]
 timestamp: 2026-09-08T00:00:00Z
 status: adopted
 ---
@@ -110,3 +110,39 @@ Same root: the fixture decided the outcome, and the code was never asked.
 candidates, and are they distinguishable in the assertion? A rule about *the
 first* needs a case where first and last are different objects, or it is a rule
 about *the only*.
+
+# And a FIFTH: a fixture default that removed a WIDGET from the tree
+
+**`#871`, DR-158, 2026-09-12.** A trash icon was added to the device browser's
+card and list row, and `device_browser_screen_test.dart` asserted that pressing
+it reports the template id. Six cases, all green.
+
+**The same press through the real shell did nothing at all.**
+
+The card's `InkWell` carries `onDoubleTap` **only when `onEdit` is non-null**, and
+that is what puts a `DoubleTapGestureRecognizer` in the gesture arena. A
+double-tap recogniser holds the arena open for its own timeout, so the inner tap
+cannot win until it expires; `pumpAndSettle` returns as soon as no frame is
+scheduled, which is immediately, and the press never lands.
+
+**The test file's `_app` helper defaulted `onEdit` to null.** No recogniser, no
+arena contention, every press landed. The shipped shell always passes an `onEdit`,
+because the browser's primary verb is opening a template, so the arena the tests
+exercised was one the product never builds.
+
+**This is the first instance where the fixture default changed the SHAPE OF THE
+WIDGET TREE rather than a value in the model.** The three before it are a field's
+default, a collection's length and a collection's contents; all of those are data
+the code reads. This one is a callback whose nullness decides whether a competing
+gesture recogniser exists, which no assertion in the file could have mentioned.
+
+It is also the exact false positive [a control with no
+caller](a-modelled-field-is-not-a-reachable-one.md) is about, arriving from the
+other side: a control that tests as wired and behaves as unwired.
+
+**The check, for any press on a surface with optional callbacks:** ask which
+callbacks the SHIPPED host passes, and pass those. A widget test's helper is a
+second configuration of the product, and a configuration nothing ships is a
+configuration nothing is learned from. When the press goes through a gesture
+arena at all, follow `tap` with a timed `pump` rather than a bare `pumpAndSettle`,
+and say why in the helper.
