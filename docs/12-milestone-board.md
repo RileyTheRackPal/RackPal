@@ -9306,6 +9306,70 @@ Eight chapters rather than the six it was decomposed into, and **no child was re
 because none was open.** The Plan view epic has one story left, `PLAN-J`, which is a drill and
 needs a person.
 
+#### 5.9.28 `#649` parks on M6: the exit criterion named a sheet that does not exist · `DR-155`
+
+2026-09-11. Not a chapter; a clause moving between two criteria, recorded here because §8.9 makes a
+park a thing with a reason rather than a thing with a date.
+
+##### 5.9.28.1 What was found, and when
+
+The Plan view epic's exit criterion reads, in part: *"A person who has never seen the building is
+handed the printed `T1.01` and the printed Pull Sheet, and locates every drop without asking a
+question."*
+
+**The Pull Sheet does not print.** Measured rather than assumed:
+
+| Where a Pull Sheet would be | What is there |
+|---|---|
+| `SheetRole` | Four values: `devicePlan`, `rackElevationFront`, `rackElevationRear`, `equipmentList` |
+| The rows | `SchedulePreset.pullSheet`, sorted `ScheduleSort.roomThenPathway`, a derivation |
+| The renderer | `ScheduleScreen`, on screen |
+| `rackpal_export` | Does not reference `ScheduleView` anywhere |
+| A tabular export instead | `EXP-A`, DR-049, unstarted |
+
+docs/12 already carried the fact in one sentence, written at DR-027's time: *"The sheet, the initial
+boxes and the page are M6's under DR-027."*
+
+**It was surfaced before the drill rather than during it**, which is the only part of this worth
+congratulating: the alternative was a person with a printed `T1.01` in one hand discovering there is
+nothing to put in the other.
+
+##### 5.9.28.2 Why it is a ruling and not a board move
+
+Roadmap §8.9 makes parking a formal act: **reassigned by ruling ID to a named later milestone, with
+the structural reason.** A clause quietly moved on the board would be the deferral that rule exists
+to prevent, and §8.1's *"the exit criterion is the unit of truth"* is what makes moving one an
+amendment (§8.3).
+
+DR-027 is the precedent the rule itself names, and it fits exactly: it split M3's Pull Sheet clause
+on 2026-08-09, giving M6 the sheet and M3 the derivation. **The Plan view's criterion was written a
+month after that split and named both printed artifacts anyway**, which is the ordinary way a
+criterion goes stale: it was drafted against what the product ought to have, and the seam that said
+otherwise lived in a different ruling.
+
+##### 5.9.28.3 Where it differs from its precedent
+
+DR-027 §11.26.3 concluded that *"M6's criterion needs no addition"*, because *"all four starter
+projects export a complete set"* already contained the sheet. That reasoning does not carry here. A
+**walkthrough is a demonstration, not an export**, and nothing in M6's criterion contains one, so M6
+gains a clause rather than inheriting an obligation it already had.
+
+Stating that explicitly is the difference between a park and a deletion. A clause moved to a
+milestone whose criterion does not mention it is a clause nobody will run.
+
+##### 5.9.28.4 What did not move
+
+`PLAN-J/1` and `PLAN-J/2` stay, and with them every physical obligation this epic has: a real plan
+and a real rough-in rather than a synthetic fixture, a real greyscale laser at ANSI B, and every
+callout legible over the screened underlay (AC-054). **The stranger test moves because its second
+artifact does not exist, not because it is inconvenient.**
+
+##### 5.9.28.5 Evidence
+
+Board: `#649` re-parented from `PLAN-J` (`#606`) to `M6-J` (`#357`), the story that already holds
+this project's physical print tests on real hardware, which keeps the Saga → Epic → Story → Chapter
+hierarchy legal and puts the drill beside the three tests it most resembles.
+
 ---
 
 ## 6. The dependency graph, as it actually stands
