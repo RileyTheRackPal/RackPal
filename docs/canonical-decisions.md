@@ -19774,6 +19774,55 @@ its own `T1.01` title block prints (docs/15 §8).
 ruling's to design, and nothing here adds a `PLN-*` remedy action. What it may no longer say is that
 the surface renders whatever the evaluator returns, because for the whole of `PLAN-I/1` it did not.
 
+### §11.154 DR-155 · The Plan view's walkthrough clause is parked on M6, because the Pull Sheet does not print
+
+**Settled by the user on 2026-09-11**, from *"defer 649 to M6"*, after this task reported that the
+clause names an artifact the product has no way to produce.
+
+**§11.154.1 The tension, and it is not a matter of appetite.** The Plan view epic's exit criterion
+(docs/09, DR-029) says: *"A person who has never seen the building is handed the printed `T1.01` and
+the printed Pull Sheet, and locates every drop without asking a question."* **The Pull Sheet does
+not print.** `SheetRole` has four values, `devicePlan`, `rackElevationFront`, `rackElevationRear`
+and `equipmentList`; the Pull Sheet exists only as a derivation, `SchedulePreset.pullSheet` sorted
+`roomThenPathway` and rendered on screen by `ScheduleScreen`, and `rackpal_export` does not
+reference `ScheduleView` anywhere. There is no tabular export either: `EXP-A` is DR-049's and is
+unstarted.
+
+**So the clause could not have been discharged at any point in this epic's life**, and no amount of
+drilling would have changed that. It is not a clause the Plan view failed to reach; it is a clause
+that named somebody else's sheet.
+
+**§11.154.2 THIS IS DR-027's SEAM REACHING A SECOND CRITERION, NOT A NEW DECISION.** §11.26.2 ruled
+that M6 owns *"the `SheetRole`, the layout, the initial boxes and the page"* of the Pull Sheet, and
+§11.26.3 gave the reason in terms that apply here word for word: **a milestone cannot discharge a
+clause about a sheet it does not own**, and reading such a clause loosely enough to call it met
+*"would be precisely the checklist-ticking §8.1 refuses."* docs/12 already records the split. The
+Plan view's criterion was written a month later naming both printed artifacts, and one of them had
+been M6's since 2026-08-09.
+
+**§11.154.3 The ruling.** `PLAN-J/3`'s walkthrough is **parked on M6** under roadmap §8.9, which
+requires a park to be reassigned by ruling ID to a named later milestone with its structural reason:
+this is that ID and that reason. Board `#649` moves from `PLAN-J` to **`M6-J`**, the story that
+already holds this epic's physical print tests on real hardware.
+
+**AND M6's CRITERION DOES GAIN A CLAUSE**, which is where this differs from DR-027. That ruling
+found M6's *"all four starter projects export a complete set"* already contained the sheet, so
+nothing was owed. A **walkthrough** is a demonstration rather than an export, and no M6 clause
+contains it. M6 therefore owes: the stranger test, run against the printed `T1.01` and the printed
+Pull Sheet together, once the Pull Sheet renders.
+
+**§11.154.4 WHAT DOES NOT MOVE, so this is not read as deferring the hard part.** The print itself
+stays. `PLAN-J/2` still demands a real greyscale laser at ANSI B with every callout legible over the
+screened underlay (AC-054), and `PLAN-J/1` still demands a real plan and a real rough-in rather than
+a synthetic fixture. **The stranger test moves because its second artifact does not exist, not
+because it is inconvenient**, and the half of it that `T1.01` alone can answer is already inside
+`PLAN-J/2`'s legibility clause.
+
+**§11.154.5 Scope.** **A milestone-boundary amendment; no change to roadmap §2's contents**
+(§11.26.5's own words, and for the same reason). Nothing leaves v1 and nothing joins it. One clause
+moves from the Plan view epic's criterion to M6's, and the Plan view epic's remaining criterion is
+discharged by `PLAN-J/1` and `PLAN-J/2`.
+
 ---
 
 ## 12. Superseded rulings
