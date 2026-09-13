@@ -118,6 +118,7 @@ Future<List<WidthPosition>> _pump(
                 onZeroU: (_) {},
                 onMoveZeroU: (_, _, _) {},
                 onAddZeroUDevice: (_, _) {},
+                onResizeZeroU: (_, _) {},
                 onSetProperty: <T>(field, value) {},
                 onRename: (_) {},
                 onRequestHeight: (_) {},

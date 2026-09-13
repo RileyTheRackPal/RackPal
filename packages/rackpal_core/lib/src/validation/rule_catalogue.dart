@@ -278,11 +278,13 @@ const List<RuleMeta> kTier1Rules = <RuleMeta>[
     tier: RuleTier.modelIllegal,
     summary:
         'ZeroUPlacement.channelId resolves in rack.zeroUChannels and the '
-        'offset lies within the channel.',
+        'occupant lies within the channel.',
     rationale:
         'Zero-U gear mounts in a channel down the side of the rack. A device '
         'in a channel this rack does not have, or past the end of one, has '
-        'nothing to screw into.',
+        'nothing to screw into. That covers the tail as well as the start: '
+        'an occupant whose span runs off the end is hanging in the air, and '
+        'a span the file does not record is unknown rather than illegal.',
     governing: ['CR-031'],
   ),
 ];

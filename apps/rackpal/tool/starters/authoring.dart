@@ -340,6 +340,7 @@ final class StarterAuthor {
     required Uuid rackId,
     required String channelId,
     Len offsetFromChannelStart = const Len(0),
+    Len? spanAlongChannel,
     Uuid? locationId,
     String? notes,
   }) {
@@ -354,6 +355,13 @@ final class StarterAuthor {
         rackId: rackId,
         channelId: channelId,
         offsetFromChannelStart: offsetFromChannelStart,
+        // A LENGTH, BECAUSE THESE ARE THE SHIPPED FIXTURES (`#883`,
+        // DR-166 §11.165.2). A starter written with no span would draw
+        // the hollow "length not recorded" stub, which is the honest
+        // rendering of a document that does not know and the wrong
+        // demonstration for four files whose whole job is to show what a
+        // finished project looks like.
+        spanAlongChannel: spanAlongChannel,
         orientation: ZeroUOrientation.vertical,
       ),
       meta: meta(),

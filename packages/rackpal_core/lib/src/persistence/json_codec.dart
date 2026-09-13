@@ -1478,6 +1478,7 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
     :final rackId,
     :final channelId,
     :final offsetFromChannelStart,
+    :final spanAlongChannel,
     :final orientation,
     :final locked,
   ) =>
@@ -1486,6 +1487,11 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
       'rackId': rackId.v,
       'channelId': channelId,
       'offsetFromChannelStartNm': offsetFromChannelStart.nm,
+      // ABSENT WHEN UNKNOWN, never an explicit null (G4, CR-114, DR-166
+      // §11.165.2). A reader that finds no key knows the file does not
+      // say how long this occupant is; a reader that finds `null` cannot
+      // tell that from a writer that meant zero.
+      if (spanAlongChannel != null) 'spanAlongChannelNm': spanAlongChannel.nm,
       'orientation': encodeEnumName(orientation),
       'locked': locked,
       ...?_placementUnknown(placement),
@@ -1575,6 +1581,10 @@ Placement _decodePlacement(JsonMap json) {
         offsetFromChannelStart: _decodeLen(
           json['offsetFromChannelStartNm'],
           'ZeroUPlacement.offsetFromChannelStartNm',
+        ),
+        spanAlongChannel: _decodeLenOrNull(
+          json['spanAlongChannelNm'],
+          'ZeroUPlacement.spanAlongChannelNm',
         ),
         orientation: decodeEnumStrict(
           ZeroUOrientation.values,

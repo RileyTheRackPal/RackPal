@@ -133,6 +133,7 @@ Future<List<String>> _pump(
             onZeroU: (_) {},
             onMoveZeroU: (_, _, _) {},
             onAddZeroUDevice: (_, _) {},
+            onResizeZeroU: (_, _) {},
           ),
         ),
       ),

@@ -319,6 +319,7 @@ RackDocument buildWholeHouseStarter() {
       name: 'Rear PDU, left',
       rackId: rackId,
       channelId: 'ch-rear-left',
+      spanAlongChannel: kRackUnit * 42,
       locationId: equip,
     )
     ..addZeroUDevice(
@@ -328,6 +329,7 @@ RackDocument buildWholeHouseStarter() {
       name: 'Rear PDU, right',
       rackId: rackId,
       channelId: 'ch-rear-right',
+      spanAlongChannel: kRackUnit * 42,
       locationId: equip,
     );
 

@@ -127,6 +127,7 @@ final class ZeroUPlacement extends Placement {
     required this.channelId,
     required this.offsetFromChannelStart,
     required this.orientation,
+    this.spanAlongChannel,
     this.locked = false,
     super.unknown,
   });
@@ -134,6 +135,35 @@ final class ZeroUPlacement extends Placement {
   final Uuid rackId;
   final String channelId;
   final Len offsetFromChannelStart;
+
+  /// How far this occupant runs ALONG its channel, or **null when the
+  /// file does not say** (`#883`, DR-166 §11.165.1).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE FIELD AC-044 HAS NAMED SINCE THE CRITIQUE AND NOBODY BUILT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// That ruling puts *"channel, start U, span"* in the v1 inspector and
+  /// *"renders as a plain bar"* in the v1 elevation, and neither could be
+  /// finished without this: `TemplateBody` has `bodyDepth`,
+  /// `chassisWidth` and `frontU`/`rearU`, both **0** for a 0U body, and
+  /// no physical length anywhere. `zero_u_commands.dart` recorded the gap
+  /// the day those commands were written and said closing it was a ruling
+  /// rather than a code review.
+  ///
+  /// **A `Len`, NOT A COUNT OF U**, on [offsetFromChannelStart]'s
+  /// precedent and CR-001's: the field beside it is a `Len`, the
+  /// channel's own length is computed as one, and a vertical PDU is not a
+  /// whole number of rack units long. The inspector edits it in U,
+  /// because the channel's bounds and the start are in U, and the two
+  /// converters that already do that arithmetic do it in one place.
+  ///
+  /// **NULL IS UNKNOWN AND NOT ZERO (G4, CR-114).** Every document that
+  /// existed before `#883` is in this state, so it is the common case
+  /// rather than an edge: it serializes as an ABSENT key, never an
+  /// explicit null, and the elevation draws such an occupant as a one-U
+  /// stub carrying the unknown marker rather than a bar whose length
+  /// nothing in the file supports.
+  final Len? spanAlongChannel;
   final ZeroUOrientation orientation;
   final bool locked;
 }

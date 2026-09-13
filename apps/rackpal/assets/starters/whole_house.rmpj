@@ -1026,6 +1026,7 @@
           "offsetFromChannelStartNm": 0,
           "orientation": "vertical",
           "rackId": "019bb13c-a3e0-7000-8000-000000000013",
+          "spanAlongChannelNm": 1866900000,
           "type": "zeroU"
         },
         "templateRef": {
@@ -1057,6 +1058,7 @@
           "offsetFromChannelStartNm": 0,
           "orientation": "vertical",
           "rackId": "019bb13c-a3e0-7000-8000-000000000013",
+          "spanAlongChannelNm": 1866900000,
           "type": "zeroU"
         },
         "templateRef": {

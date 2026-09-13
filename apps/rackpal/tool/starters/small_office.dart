@@ -193,6 +193,7 @@ RackDocument buildSmallOfficeStarter() {
       name: 'Rear PDU',
       rackId: main,
       channelId: 'ch-rear-left',
+      spanAlongChannel: kRackUnit * 18,
       locationId: serverRoom,
     );
 

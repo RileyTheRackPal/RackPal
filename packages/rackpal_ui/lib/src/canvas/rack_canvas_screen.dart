@@ -1749,6 +1749,30 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     );
   }
 
+  /// Sets how far a 0U occupant runs, or clears it to UNKNOWN (`#883`,
+  /// DR-166 §11.165.1).
+  ///
+  /// **TWO PLAIN VALUES AND A SIGNATURE FROM THE SESSION**, on
+  /// `_moveZeroUOccupant`'s reasoning: `planSetZeroUSpan` records who
+  /// resized the device and when, and a panel that invented either would
+  /// write a signature that is not the person's.
+  ///
+  /// The U-to-`Len` conversion happens HERE and not in the row, because
+  /// the model stores a length and the field edits rack units: one place
+  /// does that arithmetic, the same way `zeroUOffsetFor` does it for the
+  /// start.
+  void _resizeZeroUOccupant(Uuid deviceId, int? spanU) {
+    _runZeroU(
+      planSetZeroUSpan(
+        doc: _doc,
+        id: deviceId,
+        span: spanU == null ? null : kRackUnit * spanU,
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+      ),
+    );
+  }
+
   /// Puts [catalogId] into this rack's channel [channelId] (`#884`,
   /// DR-164 §11.163).
   ///
@@ -4641,6 +4665,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
                       onZeroU: _runZeroU,
                       onMoveZeroU: _moveZeroUOccupant,
                       onAddZeroUDevice: _addZeroUOccupant,
+                      onResizeZeroU: _resizeZeroUOccupant,
                       firstFieldFocus: _inspectorFirstFieldFocus,
                     ),
                   ),

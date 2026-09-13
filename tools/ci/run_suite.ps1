@@ -802,7 +802,14 @@ $SuiteFloors = @{
     # and nothing else in the tree states: a plate takes its home runs
     # because `StructureOriginField` cannot re-home one, and a body takes
     # its plates because `Outlet.structureBodyId` is non-nullable.
-    'rackpal_core'   = 4667
+    # 4682 at `#883`: +15. AC-044's plain bar, which needed the model
+    # field that ruling has named since the critique: ten cases over the
+    # scene (a rack-mounted AND a 0U device both hit-testable, which is
+    # what the ticket asked for by name and no test asserted), and five
+    # over the span planner. TWO OF THE FIFTEEN ARE THE AC-051 PAIR for a
+    # widened `PLC-003`, which treated a 0U occupant as a POINT because
+    # the model had no extent to check.
+    'rackpal_core'   = 4682
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1175,7 +1182,12 @@ $SuiteFloors = @{
     # key never reaches the `Shortcuts` that maps it. It asserts from an
     # INSPECTOR field now, which is inside the canvas subtree where the
     # binding is in scope.
-    'rackpal_ui'     = 1868
+    # 1874 at `#883`: +6. Four over AC-044's third inspector field, which
+    # `#876` could not build, and two through the real screen: a typed
+    # span reaching the document SIGNED by the session, and the bar being
+    # SELECTABLE, which is the whole of `#883` and the reason DR-163
+    # §11.162.1 had to put the occupant fields on the rack panel.
+    'rackpal_ui'     = 1874
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

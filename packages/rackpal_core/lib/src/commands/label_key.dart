@@ -546,6 +546,7 @@ enum LabelKey {
   addZeroUChannel,
   removeZeroUChannel,
   setZeroUPosition,
+  setZeroUSpan,
 
   // DECLARING AN IN-LINE ADAPTER (commands/declare_adapter.dart),
   // M5-J/`#837`, DR-128. Its own value and not `addLink`: the cable

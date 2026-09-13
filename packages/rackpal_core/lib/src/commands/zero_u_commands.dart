@@ -297,6 +297,12 @@ ZeroUResult planSetZeroUPosition({
     rackId: placement.rackId,
     channelId: channelId,
     offsetFromChannelStart: offsetFromChannelStart,
+    // CARRIED, AND THIS LINE IS WHY `#883` READ THIS FUNCTION FIRST. A
+    // rebuilt placement that omits a field ERASES it, silently and on
+    // every move, and the span is the one field here a person cannot see
+    // being lost: the bar would simply go back to a one-U stub the next
+    // time somebody retyped a start U.
+    spanAlongChannel: placement.spanAlongChannel,
     orientation: placement.orientation,
     locked: placement.locked,
   );
@@ -318,6 +324,140 @@ ZeroUResult planSetZeroUPosition({
       actor: actor,
     ),
   );
+}
+
+/// Plans a change to how far [id] runs along its channel (`#883`,
+/// DR-166 §11.165.1).
+///
+/// **AC-044's THIRD FIELD**, and the one `#876` could not build: that
+/// ruling has the inspector editing *"channel, start U, span"* and the
+/// model had nowhere to put the third of them.
+///
+/// **NULL CLEARS IT BACK TO UNKNOWN**, which is a real edit and not a
+/// no-op: a person who does not know how long a PDU is should be able to
+/// say so, and G4's whole argument is that "not recorded" must be
+/// expressible. The elevation then draws the stub again.
+///
+/// `PLC-003` decides whether the span fits, from `evaluatePlacement`, and
+/// it is the same call the move makes: there is one predicate about an
+/// occupant lying inside its channel and this is not a second copy of it.
+ZeroUResult planSetZeroUSpan({
+  required RackDocument doc,
+  required Uuid id,
+  required Len? span,
+  required DateTime now,
+  required String actor,
+}) {
+  final device = doc.devices[id];
+  if (device == null) {
+    return const ZeroURefused('That device is not in this document.');
+  }
+  final placement = device.placement;
+  if (placement is! ZeroUPlacement) {
+    return ZeroURefused(
+      '${device.designator} is not mounted in a 0U channel.',
+    );
+  }
+  if (span != null && span.nm <= 0) {
+    return const ZeroURefused(
+      'A 0U device has to be longer than nothing. Clear the field to say '
+      'its length is unknown.',
+    );
+  }
+  final resized = ZeroUPlacement(
+    rackId: placement.rackId,
+    channelId: placement.channelId,
+    offsetFromChannelStart: placement.offsetFromChannelStart,
+    spanAlongChannel: span,
+    orientation: placement.orientation,
+    locked: placement.locked,
+  );
+  final verdict = evaluatePlacement(
+    doc: doc,
+    placement: resized,
+    body: bodyFor(device, doc.templates),
+    designator: device.designator,
+  );
+  if (verdict is PlacementRefused) {
+    return ZeroURefused(verdict.message, ruleId: verdict.ruleId);
+  }
+  return ZeroUReady(
+    SetZeroUSpanCommand(
+      id: id,
+      from: placement,
+      to: resized,
+      now: now,
+      actor: actor,
+    ),
+  );
+}
+
+/// Writes how far a 0U occupant runs along its channel (`#883`).
+///
+/// **A SECOND COMMAND AND NOT A FLAG ON THE FIRST**, because the two are
+/// different acts with different undo labels: `Move 0U device` and
+/// `Resize 0U device` are what a person reads in the Edit menu, and a
+/// single command covering both would have to pick one of those names and
+/// be wrong half the time. Everything else is identical to
+/// `SetZeroUPositionCommand`, deliberately: same meta cache for the same
+/// CR-117 reason, same `mergeKey` shape so a retyped span coalesces.
+final class SetZeroUSpanCommand extends Command<RackDocument> {
+  SetZeroUSpanCommand({
+    required this.id,
+    required this.from,
+    required this.to,
+    required this.now,
+    required this.actor,
+  });
+
+  final Uuid id;
+  final ZeroUPlacement from;
+  final ZeroUPlacement to;
+  final DateTime now;
+  final String actor;
+
+  DateTime? _prevUpdatedAt;
+  String? _prevUpdatedBy;
+  int? _prevLocalRevision;
+
+  @override
+  LabelKey get label => LabelKey.setZeroUSpan;
+
+  @override
+  EpochMask get touches => EpochMask.structure;
+
+  @override
+  Iterable<Uuid> get affects => [id];
+
+  @override
+  Object? get mergeKey => (SetZeroUSpanCommand, id);
+
+  @override
+  bool apply(RackDocument doc) {
+    final d = doc.devices[id]!;
+    _prevUpdatedAt = d.meta.updatedAt;
+    _prevUpdatedBy = d.meta.updatedBy;
+    _prevLocalRevision = d.meta.localRevision;
+    d.placement = to;
+    d.meta.touch(now, actor);
+    return true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    final d = doc.devices[id]!..placement = from;
+    final prevAt = _prevUpdatedAt;
+    final prevBy = _prevUpdatedBy;
+    final prevRev = _prevLocalRevision;
+    if (prevAt == null || prevBy == null || prevRev == null) {
+      throw StateError('SetZeroUSpanCommand.revert called before apply().');
+    }
+    d.meta.restoreTo(
+      updatedAt: prevAt,
+      updatedBy: prevBy,
+      localRevision: prevRev,
+    );
+  }
 }
 
 /// Writes a 0U occupant's channel and offset.

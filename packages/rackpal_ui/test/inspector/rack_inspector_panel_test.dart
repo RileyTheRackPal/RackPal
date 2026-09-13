@@ -1262,13 +1262,17 @@ void main() {
 
     /// The demo document with a full-height channel, and a PDU already in
     /// it when asked, so the allocator has something to count past.
-    RackDocument docWith0U({bool withPdu = false}) {
+    RackDocument docWith0U({
+      bool withPdu = false,
+      ZeroUChannelSide side = ZeroUChannelSide.rearLeft,
+      Len? span,
+    }) {
       final doc = buildDemoRackDocument();
       final rack = doc.racks.values.first;
       rack.zeroUChannels.add(
         ZeroUChannel(
           id: 'ch-1',
-          side: ZeroUChannelSide.rearLeft,
+          side: side,
           startU: 1,
           endU: rack.heightU,
           name: 'Left rail',
@@ -1289,6 +1293,7 @@ void main() {
             rackId: rack.id,
             channelId: 'ch-1',
             offsetFromChannelStart: zeroUOffsetFor(rack.zeroUChannels.first, 3),
+            spanAlongChannel: span,
             orientation: ZeroUOrientation.vertical,
           ),
           meta: EntityMeta(
@@ -1404,6 +1409,87 @@ void main() {
             'the picker could invent',
       );
       expect(placed.meta.createdAt, at, reason: 'and the session clock');
+    });
+
+    testWidgets('AND A TYPED SPAN REACHES THE DOCUMENT, signed by the '
+        'session', (tester) async {
+      // `#879`'s lesson a third time: the panel hands over two plain
+      // values and the screen converts U to a `Len` and signs the edit.
+      final at = DateTime.utc(2026, 9, 13, 16);
+      await tester.pumpWidget(
+        _app(clock: FixedClock(at), document: docWith0U(withPdu: true)),
+      );
+      await tester.pump();
+      await _openInspector(tester);
+      final key = ValueKey(zeroUSpanKeyFor(const Uuid('dev-pdu')));
+      await _reveal(tester, find.byKey(key));
+
+      await tester.enterText(find.byKey(key), '5');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      final device = _doc(tester).devices[const Uuid('dev-pdu')]!;
+      expect(
+        (device.placement as ZeroUPlacement).spanAlongChannel,
+        kRackUnit * 5,
+        reason:
+            'the field edits U and the model stores a length, and one '
+            'place does that arithmetic',
+      );
+      expect(device.meta.updatedBy, 'local');
+      expect(device.meta.updatedAt, at);
+    });
+
+    testWidgets('THE BAR IS SELECTABLE, which is the whole of `#883`', (
+      tester,
+    ) async {
+      // ═════════════════════════════════════════════════════════════════
+      // AC-044's OTHER HALF, AND WHY `#876` HAD TO WORK AROUND IT
+      // ═════════════════════════════════════════════════════════════════
+      // `scene_builder.dart` read `if (placement is! RailPlacement)
+      // continue;`, so a 0U device was never in the scene, never
+      // hit-tested and never selectable. That is why DR-163 §11.162.1 put
+      // the occupant fields on the RACK panel: the device panel could not
+      // be opened on a device nothing could click.
+      //
+      // Clicking the bar now selects it, which the inspector shows by
+      // swapping off the rack panel.
+      // A FRONT channel, because the screen opens on the front face and a
+      // rear-left bar correctly does not draw there, which the core suite
+      // pins. The face toggle is not what this case is about.
+      await tester.pumpWidget(
+        _app(
+          document: docWith0U(
+            withPdu: true,
+            side: ZeroUChannelSide.frontLeft,
+          ),
+        ),
+      );
+      await tester.pump();
+      await _openInspector(tester);
+      expect(find.byType(RackInspectorPanel), findsOneWidget);
+
+      // The front-left rail at U 3, where `docWith0U` mounts the PDU. The
+      // geometry is asked rather than guessed, the same way every other
+      // pointer case in this file asks it.
+      final rack = _rack(tester);
+      final geo = RackGeometry(rack.heightU);
+      await tester.tapAt(
+        sceneToScreen(
+          tester,
+          geo.railLeft + RackGeometry.railWidth / 2,
+          geo.yBottomOfU(3) - RackGeometry.unitsPerRu / 2,
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.byType(RackInspectorPanel),
+        findsNothing,
+        reason:
+            'the click selected the PDU, so the inspector moved off '
+            'the rack and onto the selection',
+      );
     });
 
     testWidgets('ONE UNDO TAKES IT BACK OUT', (tester) async {

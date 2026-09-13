@@ -280,6 +280,30 @@ PlacementVerdict _evaluateZeroU(
       '"${placement.channelId}", which is ${_mm(channelLength)} long.',
     );
   }
+  // ═════════════════════════════════════════════════════════════════════
+  // AND THE TAIL, WHICH THIS RULE COULD NOT SEE UNTIL `#883`
+  // ═════════════════════════════════════════════════════════════════════
+  // `PLC-003` treated a 0U occupant as a POINT, because the model had no
+  // extent to check: it asked where the device STARTS and nothing about
+  // what comes after. DR-166 §11.165.3 widens it rather than adding a
+  // second rule, on the strength of this rule's own rationale, which has
+  // always read "or past the end of one, has nothing to screw into". A
+  // device whose tail hangs off the end is that sentence exactly, and an
+  // unnumbered refusal sitting beside a numbered one about the same
+  // physical fact is the drift CR-021 exists to stop.
+  //
+  // **AN UNKNOWN SPAN IS NOT A REFUSAL** (G4). Every document written
+  // before `#883` has none, and a rule that refused them all would make
+  // an absent key mean "illegal" when CR-114 says it means "not
+  // recorded".
+  final span = placement.spanAlongChannel;
+  if (span != null && offset.nm + span.nm > channelLength.nm) {
+    return PlacementRefused(
+      PlacementRule.zeroUChannelResolves,
+      '$what runs ${_mm(span)} from ${_mm(offset)} along 0U channel '
+      '"${placement.channelId}", which ends after ${_mm(channelLength)}.',
+    );
+  }
   return const PlacementAllowed();
 }
 
