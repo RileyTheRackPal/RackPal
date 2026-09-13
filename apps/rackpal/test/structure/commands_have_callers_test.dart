@@ -3,6 +3,28 @@
 // constructed by no code a person can reach.
 //
 // ═════════════════════════════════════════════════════════════════════
+// AND TWO OF ITS OWN ROWS WERE ABOUT THE GATE (`#880`, `#881`, DR-161)
+// ═════════════════════════════════════════════════════════════════════
+// Of the twelve it reported on its first run, ten were real. The other
+// two failed in opposite directions and both were filed as tickets
+// against the tree on this gate's word:
+//
+//   * `SnapshotCommand` DOES NOT EXIST. The inventory read raw files
+//     while the declaration scan read stripped ones, so a sketch inside
+//     a `//` comment entered the corpus (§11.160.1);
+//   * `AddLinkCommand` EXISTS AND IS NOT FOR A PERSON. It is the only
+//     Link-minting command needing no device, port or panel, which is
+//     what makes it right for a property sweep and wrong in front of
+//     somebody (§11.160.2). `_infrastructure` below is where that kind
+//     of row now lives.
+//
+// A GATE'S OUTPUT IS READ AS A FACT ABOUT THE PRODUCT, which is the
+// lesson worth keeping. Both rows became board items, with a DONE WHEN
+// clause each, on nothing but this file's say-so; `#880`'s first
+// sentence asserts that `SnapshotCommand` "is declared in
+// snapshot_command.dart", and opening that file is what settled it.
+//
+// ═════════════════════════════════════════════════════════════════════
 // THE FIVE, AND WHY EACH WAS FOUND BY A HUMAN RATHER THAN A SUITE
 // ═════════════════════════════════════════════════════════════════════
 // `DR-143` (the importer with no caller), `#674` (`onRemoveGang` declared
@@ -120,11 +142,17 @@ const List<String> _libRoots = [
 const List<String> _uiRoots = ['../../packages/rackpal_ui/lib', 'lib'];
 
 /// Commands with no reachable construction site that are ALLOWED to have
-/// none for now, each against the board item that retires it.
+/// none FOR NOW, each against the board item that retires it.
 ///
 /// **A ROW HERE IS A DEBT WITH A NAME, NOT A DISPENSATION.** Adding one
 /// without an item is the failure this map exists to prevent, and the
 /// test below refuses a row whose value does not look like one.
+///
+/// **"FOR NOW" IS WHAT SEPARATES THIS FROM [_infrastructure]** (DR-161
+/// §11.160.2). A row here says somebody will wire this and here is who; a
+/// row there says nobody should, and here is why. A command belongs to
+/// exactly one of them, which a test below enforces, because in both it
+/// is whichever a reader happens to find first.
 const Map<String, String> _exempt = {
   // `#875` CLOSED THESE THREE ROWS, AND THE STALENESS CHECK IS WHAT
   // FOUND THE THIRD. Wiring `ValidationDrawer`'s callbacks made
@@ -163,18 +191,48 @@ const Map<String, String> _exempt = {
   // severities` section beside `Signal colours`, which is where a
   // standing decision about the whole project belongs.
 
-  // `#880` — the only one of the twelve with NO TESTS EITHER, so the
-  // first question is whether it should exist at all. DR-039 made
-  // project history a journal first; this may be a sketch that outlived
-  // its brief. Deleting it is a legitimate outcome.
-  'SnapshotCommand': '#880',
+  // `#880` AND `#881` CLOSED THEIR ROWS, AND NEITHER WAS ABOUT THE TREE
+  // (DR-161 §11.160). `SnapshotCommand` does not exist: the file
+  // declares nothing and this gate was reading a sketch inside a
+  // comment, which the strip above now fixes. `AddLinkCommand` exists,
+  // is used twenty-one times, and is deliberately not reachable, so it
+  // moved to `_infrastructure` below rather than leaving the list.
+};
 
-  // `#881` — 21 test constructions, the most of any unreachable command,
-  // and the hypothesis is that it is SUPERSEDED rather than missing:
-  // connections are made through `buildConnectPortsCommand`, which
-  // materialises ports under DR-011.1. If so its tests are fixture
-  // convenience that reads as coverage.
-  'AddLinkCommand': '#881',
+/// Commands that are NOT reachable from a person and are not supposed to
+/// be, each against the sentence that says why (DR-161 §11.160.2).
+///
+/// **A SECOND MAP RATHER THAN A SECOND KIND OF VALUE IN THE FIRST**, so
+/// the two cannot be confused by a reader skimming for a `#`. [_exempt]
+/// is a DEBT and every row there is owed to a board item. A row HERE is a
+/// standing claim that no person should be able to reach the command, and
+/// it is refused if its reason looks like a board item, for the mirror of
+/// the reason the other map refuses a reason that is not one.
+///
+/// **THE STALENESS CHECK BINDS THIS MAP EXACTLY AS HARD** (§11.160.3).
+/// The permanence is in the reason, not in the checking: the day somebody
+/// wires one of these, the claim above is false and this test says so.
+const Map<String, String> _infrastructure = {
+  // Settled by the user on 2026-09-13, closing `#881` after a census.
+  //
+  // It mints a `Link` with two open ends and an implicit `Net` needing no
+  // device, no port and no panel, which `link_commands.dart`'s own M0
+  // header states as the design: "usable anywhere in a command sequence
+  // rather than only after a device has been placed". Nothing in docs/
+  // asks for a gesture that creates an unattached cable, and there is no
+  // picture of one: the schematic draws links between ports and this has
+  // none, so it would surface only as a schedule row with both ends
+  // unbound.
+  //
+  // What it IS reached by is tests, twenty-one of them, and nine could
+  // not be rebuilt cheaply: `allocateNetNameFor`'s two properties (a
+  // revert frees the name, a redo reuses it) have NO other coverage, and
+  // `command_roundtrip_test`'s thousand-sequence CR-117 sweep has no
+  // other link-creating step.
+  'AddLinkCommand':
+      'the only Link-minting command needing no device, port or panel, '
+      'which is what makes it the right step in a property sweep and the '
+      'wrong thing to put in front of a person',
 };
 
 /// `class Foo extends Command<Bar>`.
@@ -277,8 +335,31 @@ void main() {
       }
 
       // 1. every Command class, and where it is declared.
+      //
+      // ═══════════════════════════════════════════════════════════════
+      // STRIPPED, WHICH IT WAS NOT UNTIL `#880` (DR-161 §11.160.1)
+      // ═══════════════════════════════════════════════════════════════
+      // This read `entry.value`, the RAW file, while step 2 below has
+      // always read `_strip(entry.value)`. So the inventory admitted a
+      // class the declaration scan could never match:
+      // `snapshot_command.dart` declares NOTHING and holds an indented
+      // sketch of `SnapshotCommand` inside a `//` comment, and the gate
+      // reported it unreachable, correctly and uselessly, because it
+      // does not exist. It was then filed as `#880`.
+      //
+      // THE SAME MISTAKE, IN THE OTHER DIRECTION, IS IN THIS FILE'S OWN
+      // HEADER: attempt 2 of three "let a name in a COMMENT count as
+      // reachable". That was fixed on the EDGE side and survived here on
+      // the NODE side. A bug found in one direction of a scan is a reason
+      // to check the other direction.
+      //
+      // Measured when this changed: 73 commands raw, 72 stripped, one
+      // phantom, and nothing is lost by stripping.
+      final stripped = {
+        for (final entry in raw.entries) entry.key: _strip(entry.value),
+      };
       commandHome = <String, String>{};
-      for (final entry in raw.entries) {
+      for (final entry in stripped.entries) {
         for (final m in _commandClass.allMatches(entry.value)) {
           commandHome[m.group(1)!] = entry.key;
         }
@@ -286,8 +367,8 @@ void main() {
 
       // 2. every top-level declaration.
       decls = [
-        for (final entry in raw.entries)
-          ..._blocksIn(entry.key, _strip(entry.value)),
+        for (final entry in stripped.entries)
+          ..._blocksIn(entry.key, entry.value),
       ];
       final declsByName = <String, List<String>>{};
       for (final d in decls) {
@@ -362,6 +443,39 @@ void main() {
             'the Command class regex stopped matching. Fix the regex; '
             'do not lower the expectation.',
       );
+      // MEASURED AT 72 WHEN `#880` MADE THE INVENTORY STRIP COMMENTS,
+      // down from 73: the one it lost was never a class. The number is
+      // not pinned here on this repository's own rule about a second
+      // copy of a moving number; the band is.
+    });
+
+    test('a Command declared only inside a COMMENT is not counted', () {
+      // `#880`, DR-161 §11.160.1. `snapshot_command.dart` declares
+      // nothing and holds an indented sketch of the class inside a `//`
+      // comment, written at M0 to record what building it would need.
+      // Until the inventory stripped comments, this gate reported it
+      // unreachable: true, useless, and filed as a ticket against the
+      // code.
+      expect(
+        commandHome.containsKey('SnapshotCommand'),
+        isFalse,
+        reason:
+            'the Command inventory is reading comments again. It is the '
+            "same mistake this file's own header records as attempt 2, "
+            'fixed there on the edge side and not here on the node side.',
+      );
+      expect(
+        File(
+          '../../packages/rackpal_core/lib/src/commands/snapshot_command.dart',
+        ).readAsStringSync(),
+        contains('class SnapshotCommand extends Command<'),
+        reason:
+            'THE CASE ABOVE IS NOW VACUOUS. That sketch is what made the '
+            'phantom, so a test asserting it is absent from the inventory '
+            'proves nothing once the text is gone. If somebody built the '
+            'class for real, delete both halves of this case and let it '
+            'join the corpus.',
+      );
     });
 
     test('the graph answers five known questions correctly', () {
@@ -416,6 +530,38 @@ void main() {
       );
     });
 
+    test('and every infrastructure row gives a REASON, not a board item', () {
+      // THE MIRROR OF THE TEST ABOVE, and it is what keeps the second map
+      // from becoming the hiding place the first one refuses to be
+      // (DR-161 §11.160.2). A `#nnn` here would be a debt filed in the
+      // map that says nothing is owed.
+      final malformed = [
+        for (final e in _infrastructure.entries)
+          if (RegExp(r'^#\d+$').hasMatch(e.value.trim()) ||
+              e.value.trim().length < 40)
+            '${e.key} -> ${e.value}',
+      ];
+      expect(
+        malformed,
+        isEmpty,
+        reason:
+            'a permanent exemption is a standing claim that no person '
+            'should reach this command, and a claim needs a sentence. A '
+            'board item here belongs in _exempt instead.',
+      );
+
+      final both = _exempt.keys.toSet().intersection(
+        _infrastructure.keys.toSet(),
+      );
+      expect(
+        both,
+        isEmpty,
+        reason:
+            'a command is either a debt or a deliberate absence. In both '
+            'maps it is whichever the reader happens to find first.',
+      );
+    });
+
     test('no exemption has gone stale', () {
       // WITHOUT THIS THE LIST ROTS INTO A RECORD OF THINGS THAT WERE TRUE
       // ONCE, and the next person reads it as the current state. A
@@ -436,17 +582,37 @@ void main() {
             'and close the board items they name.',
       );
 
+      // BOTH MAPS, AND THE SECOND ONE HARDER (DR-161 §11.160.3). A
+      // permanent exemption is a standing claim that no person should
+      // reach this command; the day somebody wires one, the claim is
+      // false and the row is a lie rather than a debt that came due.
+      final wiredAnyway = [
+        for (final name in _infrastructure.keys)
+          if ((constructedBy[name] ?? const <String>{}).any(
+            reachableDecls.contains,
+          ))
+            name,
+      ];
+      expect(
+        wiredAnyway,
+        isEmpty,
+        reason:
+            'these are in _infrastructure, which claims no person should '
+            'be able to reach them, and a person can. Either the wiring '
+            'is wrong or the claim is: decide which, in a ruling, rather '
+            'than deleting whichever is cheaper.',
+      );
+
       final gone = [
-        for (final name in _exempt.keys)
+        for (final name in {..._exempt.keys, ..._infrastructure.keys})
           if (!commandHome.containsKey(name)) name,
       ];
       expect(
         gone,
         isEmpty,
         reason:
-            'these commands no longer exist. Delete their rows from '
-            '_exempt: an exemption for a deleted class is a line nobody '
-            'can act on.',
+            'these commands no longer exist. Delete their rows: an '
+            'exemption for a deleted class is a line nobody can act on.',
       );
     });
 
@@ -455,6 +621,7 @@ void main() {
       for (final entry in commandHome.entries) {
         final name = entry.key;
         if (_exempt.containsKey(name)) continue;
+        if (_infrastructure.containsKey(name)) continue;
         final sites = constructedBy[name] ?? const <String>{};
         if (sites.any(reachableDecls.contains)) continue;
         final where = entry.value.split('/lib/').last;
@@ -475,8 +642,9 @@ void main() {
             'DR-143, `#674`, `PLAN-E/5`, `LEN-A/3` and `#870`, where a '
             'command with a real revert, a correct cascade and seven '
             'tests was built by nothing in any lib for four months. '
-            'Either wire it, or add it to _exempt against the board item '
-            'that will.',
+            'Either wire it, add it to _exempt against the board item '
+            'that will, or, if it is deliberately not for a person, add '
+            'it to _infrastructure with the sentence that says why.',
       );
     });
   });
