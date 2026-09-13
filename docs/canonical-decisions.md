@@ -20672,6 +20672,73 @@ palette* becomes a fact about those views rather than a flag passed down from ab
 table and has been since the chapter brief; this is an unbuilt clause reaching its producer, exactly
 as the floorplan importer did. Board `#885` cites it.
 
+
+### 11.165 DR-166 · A 0U occupant has a span, and it draws as a bar on its rail
+
+**The question.** AC-044 keeps two things in v1: a 0U occupant is *"created and edited from the
+inspector (channel, start U, span)"* and *"renders as a plain bar"*. `#876` built two of those three
+fields and `#883` is the bar. **Neither could be finished, for one reason: the model has no extent
+for a 0U occupant.**
+
+**MEASURED.** `ZeroUPlacement` carries `channelId`, `offsetFromChannelStart` and `orientation`.
+`TemplateBody` carries `bodyDepth`, `chassisWidth` and `frontU`/`rearU`, both **0** for a 0U body,
+and no physical length at all. `PLC-003` treats the occupant as a POINT: it checks the offset lies
+within `[0, channelLength]` and asks nothing about what comes after it.
+`zero_u_commands.dart` recorded the gap in its own header the day those commands were written, and
+said closing it *"is a ruling and not a code review"*. This is that ruling.
+
+**11.165.1 RULED: `ZeroUPlacement` GAINS A SPAN ALONG THE CHANNEL.** Settled by the user on
+2026-09-13, against two alternatives that both invent a length the file does not hold. Running the
+bar *"from its start U to the end of its channel"* is honest only while one occupant is in a
+channel, and `#884`'s `Add device…` puts every occupant at offset 0, so two in one channel would
+draw two identical bars. Spanning *the whole channel* is simpler still and makes `#876`'s **Start U**
+field change nothing visible, which is docs/04 §3.4's silently-does-nothing defect arriving through
+the back door.
+
+**A `Len` and not a count of U**, on `offsetFromChannelStart`'s precedent and CR-001's: the field
+beside it is a `Len`, the channel's own length is computed as one, and a vertical PDU is not a whole
+number of rack units long. The inspector edits it in U because the channel's bounds and the start
+are in U, and the two existing converters already do that arithmetic in one place.
+
+**11.165.2 ABSENT IS UNKNOWN, WHICH IS G4 AND NOT A DEFAULT.** Every document that exists today has
+no span, so this is the common case rather than an edge. An occupant with no span **draws as a
+one-U stub carrying G4's unknown marker**, not as a bar whose length nothing in the file supports:
+the drawing says *"this device is here and its length is not recorded"*, which is exactly what G4
+asks of a rollup and had never been asked of a rendering. It serializes as an **absent key**, never
+an explicit null (CR-114). The four starters are regenerated with real spans, so the only documents
+left in that state are ones made before this shipped.
+
+**11.165.3 `PLC-003` IS WIDENED, NOT JOINED BY A SECOND RULE.** Its rationale already reads *"A
+device in a channel this rack does not have, or past the end of one, has nothing to screw into"*,
+and an occupant whose TAIL hangs off the end is that sentence exactly. A second, unnumbered refusal
+sitting beside a numbered rule about the same physical fact is the drift CR-021 exists to stop, and
+this file has already paid for it once, when `PLC-001` was transcribed by hand into a planner and
+had to be given its rule id back. The summary becomes *"the occupant lies within the channel"* and
+the widened predicate gets its own AC-051 pair.
+
+**11.165.4 THE BAR SITS ON THE RAIL**, which is where a 0U PDU is screwed in. Each rail is ≈7.9
+diagram units wide at zoom 1, derived from the real EIA-19 flange of 15.875 mm rather than from a
+figure in a spec, and `ZeroUChannelSide` already names front/rear × left/right, which is precisely
+the two rails of the face being drawn. **No new width and no layout change**, so every elevation and
+every printed sheet keeps its geometry, and v1.1's 16 px gutters can still be added outside the
+panel when that half lands.
+
+**11.165.5 WHAT THIS DOES NOT BUILD.** AC-044's deferred half stays deferred and this ruling does
+not quietly take a bite of it: no 16 px gutters, no **rotated** bar rendering, no drag-into-gutter,
+no resize handles, no `G` toggle and no channel-overlap warnings. `ZeroUOrientation` is still
+written and still unread; the bar runs ALONG its channel whichever value it holds, and the rotation
+that value exists for is v1.1's.
+
+**11.165.6 AND §11.162.1's REASON IS NOW SPENT.** The occupant's channel and start U were moved to
+the rack panel because a 0U device **could not be selected**. It can now. They stay where they are,
+because the rack panel lists occupants under the channel they sit in and that is how the work is
+done, but the reason on the record no longer holds: the next reader should know this was re-decided
+rather than inherited.
+
+**11.165.7 Scope.** **No scope change for the bar or the inspector field**, both of which AC-044 puts
+in v1 in as many words. **The MODEL FIELD is new and is ruled here**: it is CR-117's byte surface, it
+is additive, and `Placement.unknown` carries it unharmed through a reader that does not know it.
+Board `#883` cites it.
 ---
 
 ## 12. Superseded rulings
