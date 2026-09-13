@@ -75,6 +75,39 @@ import 'package:rackpal_core/src/units/ids.dart';
 /// switch over this stops compiling and somebody decides.
 enum PinCarrier { rack, outlet, offRackDevice }
 
+/// Which kind of carrier [entityId] is, or NULL when it is nothing that
+/// can hold a pin.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// IT ASKS THE DOCUMENT RATHER THAN TRANSLATING `PlanPinCarrier`
+/// ═══════════════════════════════════════════════════════════════════════
+/// `draw/scene/plan_scene.dart` has a second three-value enum for the same
+/// three carriers, and its own header says the duplication is deliberate:
+/// one says which collection a WRITER reaches into, the other says which
+/// mark to DRAW. `draw_source_gate_test.dart` keeps the drawing concern
+/// out of this layer, so a converter between them would be exactly the
+/// import that gate refuses.
+///
+/// **NOTHING NEEDED THIS UNTIL `#878`** (DR-162 §11.161.1), and the reason
+/// is worth recording: every writer so far knew its carrier before it
+/// started. The palette drag places a device, the drop table pins an
+/// outlet, the strip row carries its own kind. Clearing a pin is the first
+/// gesture that begins from a mark somebody is LOOKING AT and has to work
+/// back to what it hangs on.
+///
+/// **A RACKED DEVICE ANSWERS NULL**, not `offRackDevice`. Only
+/// `OffRackPlacement` carries a `planPin` (docs/15 §3.4), so a device in a
+/// rack is not a carrier at all, and saying so here is what stops a caller
+/// building a command `_writePin` would refuse.
+PinCarrier? pinCarrierFor(RackDocument doc, Uuid entityId) {
+  if (doc.racks.containsKey(entityId)) return PinCarrier.rack;
+  if (doc.outlets.containsKey(entityId)) return PinCarrier.outlet;
+  if (doc.devices[entityId]?.placement is OffRackPlacement) {
+    return PinCarrier.offRackDevice;
+  }
+  return null;
+}
+
 /// Reads the pin currently on [entityId], or null when there is none or
 /// the entity is gone.
 PlanPin? _pinOf(RackDocument doc, PinCarrier carrier, Uuid entityId) =>

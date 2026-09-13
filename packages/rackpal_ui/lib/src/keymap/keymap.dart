@@ -219,8 +219,10 @@ enum KeyBindingId {
   commitWire,
   toggleBankExpansion,
 
-  // --- plan (PLAN-E/5, DR-143) ----------------------------------------
+  // --- plan (PLAN-E/5, DR-143; `#878`, DR-162) ------------------------
   planCancel,
+  clearPlanPin,
+  clearPlanPinBackspace,
 
   // --- builder (M4-G) -------------------------------------------------
   quickAddCommit,
@@ -1372,6 +1374,38 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'deliberately and a mode whose exit also cleared the selection '
         'would take away something they did not ask about. With nothing '
         'armed it clears the selection, like the other two.',
+  ),
+  // `#878`, DR-162 §11.161.1. THE THIRD CANVAS TAKES THE SAME PAIR, and
+  // the label is the one `meaningDrift` already holds identical across
+  // the rack and the schematic.
+  //
+  // **THE COST IS REAL AND IS NOT HIDDEN HERE.** On the rack this key
+  // removes a device from the project; here it removes only a pin, and
+  // DR-011.6's note refused to widen `meaningDrift` for per-scope labels
+  // because "a keyboard-only user cannot see a scope boundary". What
+  // makes it right anyway is that THE LABEL NAMES THE SELECTION, and the
+  // selection is a different kind of thing on each canvas: devices on the
+  // rack, cables on the schematic, pins here. A person looking at a plan
+  // is looking at pins.
+  //
+  // What makes it SAFE is §11.161.2: the carrier reappears in the
+  // unpinned strip in the same frame, so the answer to "did I just delete
+  // my rack" is visible three inches below the pointer.
+  KeyBinding(
+    id: KeyBindingId.clearPlanPin,
+    scope: KeyScope.plan,
+    trigger: LogicalKeyboardKey.delete,
+    label: 'Delete the selection',
+    intent: DeleteSelectionIntent(),
+    source: 'docs/04 §8 · docs/15 §6',
+  ),
+  KeyBinding(
+    id: KeyBindingId.clearPlanPinBackspace,
+    scope: KeyScope.plan,
+    trigger: LogicalKeyboardKey.backspace,
+    label: 'Delete the selection',
+    intent: DeleteSelectionIntent(),
+    source: 'docs/04 §8 · docs/15 §6',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddCommit,

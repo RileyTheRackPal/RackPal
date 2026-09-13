@@ -606,6 +606,23 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     Set<PointerDeviceKind> sourceKinds, {
     required CanvasGestureToken gesture,
   }) {
+    // ═══════════════════════════════════════════════════════════════════
+    // THE FOCUS REQUEST THIS CANVAS NEVER HAD (`#878`, DR-162)
+    // ═══════════════════════════════════════════════════════════════════
+    // `rack_canvas_screen.dart` calls this in eight places and this file
+    // called it in NONE, relying on `autofocus: true` alone. That is
+    // enough in a widget test, where the canvas is the only thing in the
+    // tree and wins the first focus by default, and it is enough for
+    // nothing else: in the app the shell is already holding focus when
+    // the Plan tab opens, so the `Shortcuts` wrapped around this canvas
+    // never saw a key.
+    //
+    // **WHICH MEANS `Esc` HAS NEVER WORKED HERE EITHER.** `planCancel`
+    // shipped at `PLAN-E/5` as this scope's only binding, is covered by
+    // its own passing cases, and could not fire in the product. Found by
+    // an app-level test written for `#878`'s `Delete`, which failed for
+    // this reason rather than its own.
+    _canvasFocus.requestFocus();
     _gesture = gesture;
     _moved = false;
     _reshapeGesture = false;
@@ -1034,6 +1051,57 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       (widget.arm?.isActive ?? false) ||
       widget.selection.ids.isNotEmpty;
 
+  /// The pins on THIS underlay that the selection is holding.
+  ///
+  /// **READ FROM `_pins` AND NOT FROM THE DOCUMENT**, which is what keeps
+  /// the key honest about the page somebody is looking at: a carrier
+  /// pinned on `Level 2` can be selected here (the strip and the drop
+  /// table both select by entity), and `Delete` must not reach across to
+  /// a plan that is not on screen. `pinsOnUnderlay` is the one place that
+  /// question is answered.
+  ///
+  /// It also carries the CARRIER, which `ClearPlanPinCommand` needs and
+  /// which an entity id alone cannot give: a pin hangs on a rack, an
+  /// outlet or an off-rack device, and `_pinOf` switches on which.
+  List<PlanPinSubject> get _selectedPins {
+    final selected = widget.selection.ids.toSet();
+    return [
+      for (final pin in _pins)
+        if (selected.contains(pin.entityId)) pin,
+    ];
+  }
+
+  /// Takes the selected pins off this plan (DR-162 §11.161.1).
+  ///
+  /// **ONE TRANSACTION FOR HOWEVER MANY**, on DR-158 §11.157.6's rule
+  /// (§11.161.3): CR-102's marquee can hold several, and undoing a
+  /// marquee clear one pin at a time is not undoing a marquee clear.
+  ///
+  /// **THE SELECTION SURVIVES THE CLEAR**, deliberately. The carrier is
+  /// still in the project and is now a row in the unpinned strip, so
+  /// leaving it selected is what lets somebody drag it straight back if
+  /// they did not mean it. `rack_canvas_screen.dart` clears its selection
+  /// after a delete because there is nothing left to select.
+  void _clearSelectedPins() {
+    final going = _selectedPins;
+    if (going.isEmpty) return;
+    _controller.transact(LabelKey.clearPlanPin, (tx) {
+      for (final pin in going) {
+        // THE CARRIER COMES FROM THE DOCUMENT, not from `pin.carrier`.
+        // `PlanPinSubject` carries the SCENE's `PlanPinCarrier`, which
+        // says which mark to draw; a command needs the writer's
+        // `PinCarrier`, which says which collection to reach into. Their
+        // duplication is deliberate and `draw_source_gate_test.dart`
+        // keeps them apart, so this asks `pinCarrierFor` rather than
+        // translating one into the other.
+        final carrier = pinCarrierFor(_doc, pin.entityId);
+        if (carrier == null) continue;
+        tx.add(ClearPlanPinCommand(carrier: carrier, entityId: pin.entityId));
+      }
+    });
+    setState(() {});
+  }
+
   /// Three rungs, in DR-144's order, which extends DR-141's by one.
   ///
   /// A MODE GOES BEFORE THE SELECTION because the user turned it on
@@ -1112,6 +1180,14 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
           PlanCancelIntent: _PlanGatedAction<PlanCancelIntent>(
             () => _hasSomethingToCancel,
             (_) => _cancel(),
+          ),
+          // `#878`, DR-162 §11.161.1. DISABLED RATHER THAN NO-OP when
+          // nothing selected carries a pin, which is `_PlanGatedAction`'s
+          // whole reason and `#863`'s: a transaction whose only child
+          // declines to apply leaves an undo entry that throws.
+          DeleteSelectionIntent: _PlanGatedAction<DeleteSelectionIntent>(
+            () => _selectedPins.isNotEmpty,
+            (_) => _clearSelectedPins(),
           ),
         },
         child: Focus(
