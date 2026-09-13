@@ -119,7 +119,48 @@ DocumentController _controller({
   return DocumentController(doc, clock: FixedClock(_now), actor: 'test');
 }
 
+/// A `LocationsPanelActions` that refuses everything, for cases about the
+/// PLAN half of this view (`#891`, DR-168).
+///
+/// The view edits the location tree since the merge, so it takes the same
+/// record `LocationsPanel` does. These cases are about underlays, pins and
+/// outlines; `locations_panel_test.dart` and `site_view_test.dart` are
+/// where the tree's own edits are proved.
+LocationsPanelActions _noLocationEdits() => LocationsPanelActions(
+  onAdd: (_) => const Uuid('unused'),
+  onRename: (_, _) {},
+  onSetCode: (_, _) {},
+  onSetKind: (_, _) {},
+  onSetFloorNumber: (_, _) {},
+  onSetSpaceCode: (_, _) {},
+  onSetEstimatedRunLength: (_, _) {},
+  onReparent: (_, _) => null,
+  onDelete: (_) async => false,
+  onRefuse: (_) {},
+);
+
 void main() {
+  // A WINDOW THE PRODUCT SUPPORTS (`#892`). This view gained the third
+  // region docs/15 §6 ruled and `PLAN-E/5` did not build, and the default
+  // 800px test surface CLAMPS the `SizedBox` below: the canvas came back
+  // 238 units wide and every click aimed at the plan missed it. docs/04
+  // §1 treats anything under 1080 as the unbuilt tablet-collapse case.
+  setUp(() {
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
+      ..physicalSize = const Size(1600, 1000)
+      ..devicePixelRatio = 1;
+  });
+
+  tearDown(() {
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
+      ..resetPhysicalSize()
+      ..resetDevicePixelRatio();
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late PlanImageCache cache;
@@ -154,9 +195,13 @@ void main() {
           body: Align(
             alignment: Alignment.topLeft,
             child: SizedBox(
-              width: 900,
+              // WIDENED AT `#892` FROM 900, for the sibling suite's
+              // reason: the view gained a third region and 900 is under
+              // the 1080 docs/04 §1 treats as the supported minimum.
+              width: 1400,
               height: 500,
               child: PlanEditorScreen(
+                locations: _noLocationEdits(),
                 controller: controller,
                 images: cache.resolver,
                 measurer: const _ZeroMeasurer(),

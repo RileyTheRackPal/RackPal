@@ -272,33 +272,22 @@ class _LocationsPanelState extends State<LocationsPanel> {
                 children: [
                   SizedBox(
                     width: 320,
-                    child: nodes.isEmpty
-                        ? _EmptyTree(theme: theme)
-                        : ListView.builder(
-                            itemCount: nodes.length,
-                            itemBuilder: (context, i) => _TreeRow(
-                              key: ValueKey(nodes[i].v),
-                              location: widget.doc.locations[nodes[i]]!,
-                              depth: tree.depthOf(nodes[i]),
-                              selected: nodes[i] == _selected,
-                              fault: _faultOf(tree, nodes[i]),
-                              onTap: () => setState(() => _selected = nodes[i]),
-                            ),
-                          ),
+                    child: LocationTreeList(
+                      doc: widget.doc,
+                      selectedId: _selected,
+                      onSelect: (id) => setState(() => _selected = id),
+                    ),
                   ),
                   const VerticalDivider(width: 1),
                   Expanded(
-                    child: _selectedLocation == null
-                        ? _NoSelection(theme: theme)
-                        : _Detail(
-                            location: _selectedLocation!,
-                            doc: widget.doc,
-                            tree: tree,
-                            actions: widget.actions,
-                            onEdit: _edit,
-                            onReparent: _reparent,
-                            onDelete: _delete,
-                          ),
+                    child: LocationDetailPane(
+                      location: _selectedLocation,
+                      doc: widget.doc,
+                      actions: widget.actions,
+                      onEdit: _edit,
+                      onReparent: _reparent,
+                      onDelete: _delete,
+                    ),
                   ),
                 ],
               ),
@@ -315,6 +304,95 @@ class _LocationsPanelState extends State<LocationsPanel> {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// The location tree, as a list somebody can select a row of (`#891`,
+/// DR-168 §11.167.4).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// EXTRACTED SO TWO HOSTS CAN SHOW IT, NOT SO IT COULD BE REUSED
+/// ═══════════════════════════════════════════════════════════════════════
+/// `LocationsPanel` put this in a 320px column beside a detail pane, which
+/// is a whole view. The `Site` view needs the same list in a RAIL, with
+/// the detail somewhere else entirely and the plan canvas between them, so
+/// the tree and the detail had to stop being one widget's private layout.
+///
+/// **IT OWNS NO SELECTION.** Both hosts hold the selected id, because in
+/// the `Site` view the tree is in one region and what it selects is drawn
+/// in another; a selection private to this widget could not reach across
+/// that gap and would have to be mirrored, which is two answers to one
+/// question.
+class LocationTreeList extends StatelessWidget {
+  const LocationTreeList({
+    required this.doc,
+    required this.selectedId,
+    required this.onSelect,
+    super.key,
+  });
+
+  final RackDocument doc;
+  final Uuid? selectedId;
+  final ValueChanged<Uuid> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tree = LocationTree.of(doc);
+    final nodes = tree.preOrder;
+    if (nodes.isEmpty) return _EmptyTree(theme: theme);
+    return ListView.builder(
+      itemCount: nodes.length,
+      itemBuilder: (context, i) => _TreeRow(
+        key: ValueKey(nodes[i].v),
+        location: doc.locations[nodes[i]]!,
+        depth: tree.depthOf(nodes[i]),
+        selected: nodes[i] == selectedId,
+        fault: _faultOf(tree, nodes[i]),
+        onTap: () => onSelect(nodes[i]),
+      ),
+    );
+  }
+}
+
+/// The selected room's fields, or the sentence that says none is selected.
+///
+/// **THE NULL CASE IS INSIDE, not left to each host.** Two hosts now draw
+/// this and both have to answer "nothing selected"; answering it here is
+/// one sentence in one place rather than two that can come to differ about
+/// what an empty selection looks like.
+class LocationDetailPane extends StatelessWidget {
+  const LocationDetailPane({
+    required this.location,
+    required this.doc,
+    required this.actions,
+    required this.onEdit,
+    required this.onReparent,
+    required this.onDelete,
+    super.key,
+  });
+
+  final Location? location;
+  final RackDocument doc;
+  final LocationsPanelActions actions;
+  final void Function(VoidCallback edit) onEdit;
+  final void Function(Uuid id, Uuid? newParentId) onReparent;
+  final Future<void> Function(Uuid id) onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final here = location;
+    if (here == null) return _NoSelection(theme: theme);
+    return _Detail(
+      location: here,
+      doc: doc,
+      tree: LocationTree.of(doc),
+      actions: actions,
+      onEdit: onEdit,
+      onReparent: onReparent,
+      onDelete: onDelete,
     );
   }
 }

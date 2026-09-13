@@ -1194,7 +1194,16 @@ $SuiteFloors = @{
     # meaning, reaching the fields by clicking the bar; the one new case
     # is that the fields MOVED rather than multiplied, since two surfaces
     # writing one fact is the drift most of this corpus exists to close.
-    'rackpal_ui'     = 1875
+    # 1874 at `#891`/`#892`: -1, and a floor going DOWN is worth the
+    # sentence this file's own header asks for. The Location and Plan
+    # views merged (DR-168), so `_RoomList` is gone and two cases about
+    # that list went with it: one asserted it showed the open underlay's
+    # location SUBTREE, a question about a list that no longer exists,
+    # and one asserted its empty state. What replaced both is per-room
+    # and is still asserted: the SELECTED room says whether it has an
+    # outline on THIS plan, in both directions (G4). Net of one case
+    # added for the rail.
+    'rackpal_ui'     = 1874
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

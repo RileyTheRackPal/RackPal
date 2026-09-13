@@ -151,7 +151,48 @@ DocumentController _controller({
   return DocumentController(doc, clock: FixedClock(_now), actor: 'test');
 }
 
+/// A `LocationsPanelActions` that refuses everything, for cases about the
+/// PLAN half of this view (`#891`, DR-168).
+///
+/// The view edits the location tree since the merge, so it takes the same
+/// record `LocationsPanel` does. These cases are about underlays, pins and
+/// outlines; `locations_panel_test.dart` and `site_view_test.dart` are
+/// where the tree's own edits are proved.
+LocationsPanelActions _noLocationEdits() => LocationsPanelActions(
+  onAdd: (_) => const Uuid('unused'),
+  onRename: (_, _) {},
+  onSetCode: (_, _) {},
+  onSetKind: (_, _) {},
+  onSetFloorNumber: (_, _) {},
+  onSetSpaceCode: (_, _) {},
+  onSetEstimatedRunLength: (_, _) {},
+  onReparent: (_, _) => null,
+  onDelete: (_) async => false,
+  onRefuse: (_) {},
+);
+
 void main() {
+  // A WINDOW THE PRODUCT SUPPORTS (`#892`). This view gained the third
+  // region docs/15 §6 ruled and `PLAN-E/5` did not build, and the default
+  // 800px test surface CLAMPS the `SizedBox` below: the canvas came back
+  // 238 units wide and every click aimed at the plan missed it. docs/04
+  // §1 treats anything under 1080 as the unbuilt tablet-collapse case.
+  setUp(() {
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
+      ..physicalSize = const Size(1600, 1000)
+      ..devicePixelRatio = 1;
+  });
+
+  tearDown(() {
+    TestWidgetsFlutterBinding.ensureInitialized()
+          .platformDispatcher
+          .implicitView!
+      ..resetPhysicalSize()
+      ..resetDevicePixelRatio();
+  });
+
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late PlanImageCache cache;
@@ -178,6 +219,7 @@ void main() {
               width: 900,
               height: 500,
               child: PlanEditorScreen(
+                locations: _noLocationEdits(),
                 controller: controller,
                 images: cache.resolver,
                 measurer: const _ZeroMeasurer(),
@@ -537,9 +579,16 @@ void _roomListTests() {
           body: Align(
             alignment: Alignment.topLeft,
             child: SizedBox(
-              width: 900,
+              // WIDENED AT `#892` FROM 900. The view gained the third
+              // region docs/15 §6 ruled and `PLAN-E/5` did not build, so
+              // 900 left the canvas 338 wide and the clicks below fell
+              // off it. docs/04 §1 treats anything under 1080 as the
+              // unbuilt tablet-collapse case, so 900 was never a window
+              // this product supports.
+              width: 1400,
               height: 700,
               child: PlanEditorScreen(
+                locations: _noLocationEdits(),
                 controller: c,
                 images: cache.resolver,
                 measurer: const _ZeroMeasurer(),
@@ -551,6 +600,18 @@ void _roomListTests() {
       ),
     );
     await tester.pump();
+  }
+
+  /// Selects [id] in the rail's location tree.
+  ///
+  /// **THE OUTLINE ACTS MOVED TO THE INSPECTOR AT `#892`** (DR-168): they
+  /// were three buttons on every row of a read-only room list, and they
+  /// are now the SELECTED room's, beside its other properties. So a case
+  /// about drawing an outline has to say which room first, which is one
+  /// tap and is what a person does.
+  Future<void> selectRoom(WidgetTester tester, Uuid id) async {
+    await tester.tap(find.byKey(ValueKey(id.v)));
+    await tester.pumpAndSettle();
   }
 
   Finder drawFor(Uuid id) => find.byKey(ValueKey('room-draw-${id.v}'));
@@ -595,35 +656,42 @@ void _roomListTests() {
     await tester.pump();
   }
 
-  group('LEN-A/4: the room list', () {
-    testWidgets('lists the plan’s location SUBTREE, not just its location', (
-      tester,
-    ) async {
-      // DR-154 §11.153.7a's scope, and the same one `unpinnedCarriersFor`
-      // was widened onto: an underlay depicts a floor and the rooms are
-      // under it. A list of the exact location would offer an outline on
-      // the floor and on none of the rooms in it.
+  group('LEN-A/4: the outline acts, which moved at `#892`', () {
+    // ═════════════════════════════════════════════════════════════════
+    // THE ROOM LIST IS GONE AND ITS JOB IS SPLIT (DR-168)
+    // ═════════════════════════════════════════════════════════════════
+    // `_RoomList` showed the open underlay's location SUBTREE, each row
+    // with Draw, Reshape and Clear. The merged view's rail is the
+    // project's whole tree, and a room's outline is one of its
+    // properties, so the three acts moved to the inspector beside the
+    // rest of them.
+    //
+    // TWO CASES WENT WITH THE LIST rather than being rewritten, and both
+    // are named here so nobody looks for them: one asserted the list
+    // showed the subtree and not the bare location, which is a question
+    // about a list that no longer exists, and one asserted the empty
+    // state of that list. What replaced both is per-room and is the case
+    // below: the selected room says whether IT has an outline on THIS
+    // plan.
+    testWidgets('THE RAIL LISTS THE WHOLE PROJECT TREE, not the subtree '
+        'of the open plan', (tester) async {
+      // The deliberate change. `_RoomList` showed the underlay's location
+      // subtree, because it was a list ABOUT that underlay; the rail is
+      // the project's tree, because the view is about the project and a
+      // floorplan is one thing in it. A room outside the open plan's
+      // subtree is still selectable, and its outline acts simply do not
+      // offer to draw on a plan it is not on.
       await pump(tester, _controller(withRoom: true));
 
       expect(find.text('Great Room'), findsOneWidget);
-      expect(drawFor(_roomId), findsOneWidget);
-      expect(drawFor(_level1), findsOneWidget);
+      expect(find.byKey(const ValueKey('site-add-room')), findsOneWidget);
     });
 
-    testWidgets('a plan with no location says which fact is missing', (
+    testWidgets('the outline state prints in BOTH directions (G4)', (
       tester,
     ) async {
-      final c = _controller(withSecond: true);
-      await pump(tester, c, members: const [_member1, _member2]);
-      // `Site` is the underlay with no location; open it.
-      await tester.tap(find.text('Site'));
-      await tester.pump();
-
-      expect(find.text(kPlanNoRoomsDetail), findsOneWidget);
-    });
-
-    testWidgets('the row prints in BOTH directions (G4)', (tester) async {
       await pump(tester, _controller(withRoom: true));
+      await selectRoom(tester, _roomId);
       expect(find.text('No outline yet'), findsWidgets);
 
       await pump(
@@ -636,6 +704,7 @@ void _roomListTests() {
           ),
         ),
       );
+      await selectRoom(tester, _roomId);
       expect(find.text('Outline drawn'), findsOneWidget);
     });
 
@@ -665,6 +734,8 @@ void _roomListTests() {
       final c = _controller(withRoom: true);
       await pump(tester, c);
 
+      await selectRoom(tester, _roomId);
+
       await tester.tap(drawFor(_roomId));
       await tester.pump();
       expect(find.byKey(PlanOutlineChip.chipKey), findsOneWidget);
@@ -680,6 +751,14 @@ void _roomListTests() {
       }
       await tester.pump();
 
+      debugPrint(
+        'PROBE canvas rect: '
+        '${tester.getRect(find.byType(PlanCanvasScreen))}',
+      );
+      debugPrint(
+        'PROBE chip still up: '
+        '${find.byKey(PlanOutlineChip.chipKey).evaluate().length}',
+      );
       final written = c.doc.locations[_roomId]!.planOutline;
       expect(written, isNotNull);
       expect(written!.vertices, hasLength(3));
@@ -698,6 +777,8 @@ void _roomListTests() {
         ),
       );
       await pump(tester, c);
+
+      await selectRoom(tester, _roomId);
 
       await tester.tap(clearFor(_roomId));
       await tester.pump();
@@ -718,6 +799,8 @@ void _roomListTests() {
       final c = _controller(withRoom: true, outline: triangle());
       await pump(tester, c);
 
+      await selectRoom(tester, _roomId);
+
       await tester.tap(reshapeFor(_roomId));
       await tester.pump();
       expect(find.byKey(PlanReshapeChip.chipKey), findsOneWidget);
@@ -735,12 +818,14 @@ void _roomListTests() {
       tester,
     ) async {
       await pump(tester, _controller(withRoom: true));
+      await selectRoom(tester, _roomId);
       expect(reshapeFor(_roomId), findsNothing);
 
       await pump(
         tester,
         _controller(withRoom: true, outline: triangle()),
       );
+      await selectRoom(tester, _roomId);
       expect(reshapeFor(_roomId), findsOneWidget);
     });
 
@@ -752,12 +837,17 @@ void _roomListTests() {
       final c = _controller(withRoom: true, outline: triangle());
       await pump(tester, c);
 
+      await selectRoom(tester, _roomId);
+
       await tester.tap(reshapeFor(_roomId));
       await tester.pump();
+      await selectRoom(tester, _roomId);
       await tester.tap(drawFor(_roomId));
       await tester.pump();
       expect(find.byKey(PlanOutlineChip.chipKey), findsOneWidget);
       expect(find.byKey(PlanReshapeChip.chipKey), findsNothing);
+
+      await selectRoom(tester, _roomId);
 
       await tester.tap(reshapeFor(_roomId));
       await tester.pump();
@@ -770,9 +860,13 @@ void _roomListTests() {
       final c = _controller(withRoom: true, outline: triangle());
       await pump(tester, c);
 
+      await selectRoom(tester, _roomId);
+
       await tester.tap(reshapeFor(_roomId));
       await tester.pump();
       expect(find.byKey(PlanReshapeChip.chipKey), findsOneWidget);
+
+      await selectRoom(tester, _roomId);
 
       await tester.tap(clearFor(_roomId));
       await tester.pump();
@@ -791,6 +885,8 @@ void _roomListTests() {
       // integers and every raster has those.
       final c = _controller(withRoom: true, withSecond: true);
       await pump(tester, c, members: const [_member1, _member2]);
+
+      await selectRoom(tester, _roomId);
 
       await tester.tap(drawFor(_roomId));
       await tester.pump();
@@ -816,6 +912,8 @@ void _roomListTests() {
       );
       await pump(tester, c, members: const [_member1, _member2]);
 
+      await selectRoom(tester, _roomId);
+
       await tester.tap(reshapeFor(_roomId));
       await tester.pump();
       expect(find.byKey(PlanReshapeChip.chipKey), findsOneWidget);
@@ -834,6 +932,8 @@ void _roomListTests() {
       await tester.tap(find.byKey(ValueKey('underlay-calibrate-${_ul1.v}')));
       await tester.pump();
       expect(find.byKey(PlanCalibrateChip.chipKey), findsOneWidget);
+
+      await selectRoom(tester, _roomId);
 
       await tester.tap(drawFor(_roomId));
       await tester.pump();

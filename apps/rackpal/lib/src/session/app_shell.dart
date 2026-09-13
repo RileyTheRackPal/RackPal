@@ -1549,6 +1549,14 @@ final class AppShellState extends State<AppShell>
         images: _planImages.resolver,
         measurer: widget.measurer,
         selection: _planSelection,
+        // THE SAME RECORD THE LOCATIONS TAB TAKES (`#891`, DR-168). This
+        // view edits the tree now; `MERGE/4` removes the other tab and
+        // this becomes the only caller.
+        locations: buildLocationsPanelActions(
+          controller: session.controller,
+          confirmRemoval: _confirmLocationRemoval,
+          onRefuse: _showRefusal,
+        ),
         arm: _planArm,
         onRefuse: _showRefusal,
         // THE SAME CHANNEL AS A REFUSAL, WHICH IS THIS SHELL'S DECISION AND
