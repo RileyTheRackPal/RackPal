@@ -68,6 +68,8 @@ import 'package:rackpal_ui/src/structure/drop_entry_panel.dart';
 import 'package:rackpal_ui/src/structure/media_types_dialog.dart';
 import 'package:rackpal_ui/src/structure/outlets_view.dart';
 import 'package:rackpal_ui/src/structure/pathways_view.dart';
+import 'package:rackpal_ui/src/structure/remove_structure_dialog.dart'
+    show kRemoveStructureLabel;
 import 'package:rackpal_ui/src/structure/structure_matrix_view.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 import 'package:rackpal_ui/src/widgets/family_picker.dart';
@@ -89,6 +91,7 @@ final class StructureEditorActions {
     required this.onRemovePathway,
     required this.onImportCsv,
     required this.onRunMediaTypeCommands,
+    required this.onRemoveStructure,
     required this.outlets,
     this.onPinOnPlan,
   });
@@ -120,6 +123,14 @@ final class StructureEditorActions {
   /// Opens M3-C/5's outlet-template picker, on the Structure body the
   /// editor's picker is currently showing (M3-E/3, #158).
   final void Function(Uuid? structureBodyId) onAddOutlet;
+
+  /// Removes the whole Structure body, with its plates and every home run
+  /// out of it (`#877`, DR-160 §11.159.3).
+  ///
+  /// **`void` AND NOT `String?`**, on `OutletsActions.onRemove`'s
+  /// reasoning: it opens a confirmation, so the answer arrives after a
+  /// frame and there is nothing to hand back.
+  final void Function(Uuid structureBodyId) onRemoveStructure;
 
   /// Applies cell edits as ONE undo step, and returns a refusal sentence
   /// or null.
@@ -474,6 +485,13 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
               },
             ),
           ),
+          // NULL WHEN THERE IS NO BODY, so the menu row is absent rather
+          // than present and inert, which is DR-091's rule at the size of
+          // one item. A project with no Structure device has nothing to
+          // remove and the quick-add loop offers to create one.
+          onRemoveStructure: _bodyIdFor(doc) == null
+              ? null
+              : () => widget.actions.onRemoveStructure(_bodyIdFor(doc)!),
         ),
         _TabStrip(
           tab: _tab,
@@ -1003,6 +1021,22 @@ bool _isLanded(ScheduleEntry row) => switch (row.to.kind) {
   _ => false,
 };
 
+/// Every act the editor header's overflow menu offers.
+///
+/// AN ENUM WITH ONE VALUE, on `RackHeaderAction`'s shape rather than a
+/// bare `VoidCallback` per item: the exhaustive `switch` at the call site
+/// is what makes a second act impossible to add without handling it, and
+/// this menu will grow (renumber and export are both M3-F).
+enum _HeaderAction { removeStructure }
+
+/// A stable handle for the header's overflow menu, so a test can reach it
+/// without competing with the rack header bar's own `more_vert`.
+const Key kStructureHeaderMenuKey = Key('structure-header-menu');
+
+/// What the header's overflow button says it is (a `PopupMenuButton` gets
+/// a tooltip rather than a label).
+const String kStructureActionsTooltip = 'Structure actions';
+
 /// `Structure  STR-1 · "Media Panel — Garage"   52 drops · 41 connected`.
 class _EditorHeader extends StatelessWidget {
   const _EditorHeader({
@@ -1014,6 +1048,7 @@ class _EditorHeader extends StatelessWidget {
     required this.onImportCsv,
     required this.onManageMediaTypes,
     required this.onConnectorAliases,
+    required this.onRemoveStructure,
   });
 
   final RackDocument doc;
@@ -1031,6 +1066,10 @@ class _EditorHeader extends StatelessWidget {
 
   /// Opens the connector-alias editor (`#248`, RJ-012, CR-058).
   final VoidCallback onConnectorAliases;
+
+  /// Removes the whole body (`#877`, DR-160 §11.159.3), or NULL when
+  /// there is no body to remove.
+  final VoidCallback? onRemoveStructure;
 
   /// Choose which body the editor is working on (M3-E/3, #158).
   final ValueChanged<Uuid> onBody;
@@ -1106,6 +1145,36 @@ class _EditorHeader extends StatelessWidget {
             onPressed: onConnectorAliases,
             child: const Text(kConnectorAliasesLabel),
           ),
+          // ═════════════════════════════════════════════════════════════
+          // A MENU AND NOT A FOURTH TEXT BUTTON, SETTLED BY THE USER
+          // ═════════════════════════════════════════════════════════════
+          // DR-160 §11.159.6. This is the largest delete in the product:
+          // the panel, its paired device, every plate on it and every
+          // home run out of it. The three buttons to its left are
+          // harmless and sit a few pixels away, and a fourth in that row
+          // is one mis-click from all of it.
+          //
+          // NOT A TRASH ICON BESIDE THE BODY PICKER, which was the other
+          // idea and carries a defect: that picker is built only when
+          // `doc.structures.length > 1`, so a one-panel project would
+          // have had no control at all, and a one-panel project is both
+          // the ordinary case and exactly where somebody wants a
+          // wrongly-created panel gone.
+          if (onRemoveStructure != null)
+            PopupMenuButton<_HeaderAction>(
+              key: kStructureHeaderMenuKey,
+              tooltip: kStructureActionsTooltip,
+              icon: const Icon(Icons.more_vert, size: 18),
+              onSelected: (action) => switch (action) {
+                _HeaderAction.removeStructure => onRemoveStructure!(),
+              },
+              itemBuilder: (context) => const [
+                PopupMenuItem(
+                  value: _HeaderAction.removeStructure,
+                  child: Text(kRemoveStructureLabel),
+                ),
+              ],
+            ),
           if (onDone != null)
             TextButton(onPressed: onDone, child: const Text('Done')),
         ],

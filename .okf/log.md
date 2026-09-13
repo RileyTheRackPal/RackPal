@@ -1,5 +1,42 @@
 # Update Log
 
+## 2026-09-13 (twenty-eighth entry)
+
+* **Closed**: `#877` with `7baabc98`. A wall plate and a whole Structure body can be
+  removed, from a trash icon on the Outlets rail and an overflow menu in the
+  editor header. **No version move**: it closes under `#786`.
+* **Note**: **THE SIXTH CAPABILITY IN FIVE DAYS FOUND COMPLETE AND
+  UNREACHABLE**, after `#674`, `#870`, `#871`, `#875` and `#879`.
+  `RemoveOutletCommand` and `RemoveStructureCommand` shipped at M3-A/1 with real
+  reverts and eight and nine test constructions between them, and nothing in
+  `lib/` constructed either. Add was wired for both.
+* **Note**: **HALF THE CASCADE WAS A DECISION AND HALF WAS NOT**, and DR-160
+  §11.159.4 exists to say which. A plate takes its home runs because
+  `StructureOriginField` has no entry for `outletId`, so a cable left behind
+  could never be re-homed by any surface in the product; a panel takes its plates
+  because `Outlet.structureBodyId` and `StructureOrigin.structureBodyId` are both
+  non-nullable and `final`, so there is no version of "leave them" that is not a
+  dangling reference. A later reader who makes `outletId` editable may reopen the
+  first and not the second.
+* **Note**: **THE OUTLETS TAB HAD NEVER BEEN MOUNTED IN THE EDITOR IT LIVES IN.**
+  The first app-level test to open it threw on its first frame: a `ListTile`
+  paints on the nearest `Material` ANCESTOR and `StructureEditorScreen._body`
+  wraps the editor in a `ColoredBox`, so every ink splash and every selected tint
+  on the plate rail had been landing under the background since M3-H/2. Two green
+  files read like coverage between them: one pumps the tab with no editor above
+  it, the other pumps the editor and only asserts `Outlets` is in the tab strip.
+  **The strip was tested as an index and never as a route.**
+* **Note**: **SIXTEEN MUTATIONS AND THE SURVIVOR WAS REACHABLE**, which is the
+  less common answer. Replacing the shell's re-plan-after-the-await with the plan
+  the person answered changed nothing any test could see, and probing found
+  `Ctrl+Z` reaching `undoFromShell` from inside the modal route: the document
+  went from two links to three with the confirmation still up. DR-159's own
+  `KeyScope.global` move is what made that possible three tickets earlier.
+* **Creation**: [A surface tested alone has never met its
+  host](/practices/a-surface-tested-alone-has-no-host.md), from the above.
+* **Creation**: [DR-160, removing a Structure body or an
+  outlet](/decisions/dr-160-structure-removal.md), eight clauses closing `#877`.
+
 ## 2026-09-12 (twenty-seventh entry)
 
 * **Closed**: `#879` with `56d96565`. A rule's severity can be overridden for a

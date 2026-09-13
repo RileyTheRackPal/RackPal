@@ -143,11 +143,12 @@ const Map<String, String> _exempt = {
   'RemoveZeroUChannelCommand': '#876',
   'SetZeroUPositionCommand': '#876',
 
-  // `#877` — the Structured Wiring tab can add an outlet and a structure
-  // and can remove neither, so a wrong drop is permanent past the undo
-  // window.
-  'RemoveOutletCommand': '#877',
-  'RemoveStructureCommand': '#877',
+  // `#877` CLOSED ITS ROWS. `RemoveOutletCommand` and
+  // `RemoveStructureCommand` shipped at M3-A/1 with real reverts and no
+  // caller, so a wrong drop or a wrong panel was permanent past the undo
+  // window. DR-160 §11.159 wires both through `structure_removal_txn`:
+  // the Outlets rail has a trash icon per plate and the editor header an
+  // overflow menu, each behind a confirmation that counts what it takes.
 
   // `#878` — a pin cannot be cleared (only re-placed) and pages cannot
   // be reordered. `LabelKey.clearPlanPin` exists and carries a comment

@@ -20169,6 +20169,111 @@ answered can only get it wrong.
 
 ---
 
+### 11.159 DR-160 · Removing a Structure body or an outlet, and what each takes with it
+
+**The question.** `#872`'s reachability gate found `RemoveOutletCommand` and `RemoveStructureCommand`
+declared in `structure_commands.dart` with real reverts, eight and nine test constructions between
+them, and **no caller anywhere in `lib/`**. `AddStructureCommand` and `AddOutletCommand` are both
+wired, so the Structured Wiring tab could create a panel and a wall plate and could never take either
+back: a wrong drop or a duplicate panel was permanent for the life of the project unless the person
+noticed in time to press `Ctrl+Z`. That is the shape `#674`, `#870`, `#871`, `#875` and `#879` each
+found, and it is the sixth instance.
+
+**11.159.1 RULED: BOTH ARE REACHABLE FROM THE STRUCTURE EDITOR.** Where they are created is where
+they are destroyed, which is docs/04 §3.1's rule and the answer `#871` already gave for a template.
+Nothing else in the product shows a Structure body or a plate as an object a person owns.
+
+**11.159.2 RULED: REMOVING A PLATE TAKES ITS HOME RUNS, AND THE MODEL IS WHY.** Settled by the user
+on 2026-09-13, against the alternative of leaving the cables and blanking their box.
+
+`RemoveOutletCommand`'s own doc comment argues the other way: *"silently deleting a user's home runs
+because they removed a wall plate is a much larger edit than the gesture asked for. A caller that
+means both composes a `Transaction`."* Both halves of that stand. This ruling supplies the caller the
+sentence asks for, and §11.159.5 is what makes the larger edit legitimate rather than silent.
+
+**BLANKING THE BOX WAS THE TEMPTING ANSWER AND IT IS A TRAP.** `StructureOrigin.outletId` is
+nullable, and DR-046's reasoning gives the null a real meaning: *"nobody has said"* which box, as
+distinct from `boxless`, which is *"there is no box"*. So a drop whose plate was deleted and whose
+`outletId` was cleared would be a legal document saying something true. It would also be
+**unrepairable**: `StructureOriginField` lists seven editable properties and `outletId` is not one of
+them, `AddHomeRunCommand` sets it at creation, and no surface in the product can move a drop onto a
+different plate. The cable would sit on the Structure table with an empty box column forever, looking
+like an oversight, and the only way out would be to delete it and type it again. Deleting it now, in
+one undoable step, with the count stated first, is the smaller loss.
+
+**11.159.3 RULED: REMOVING A STRUCTURE TAKES ITS PLATES AND EVERY HOME RUN OUT OF IT.** Here there is
+no choice to make, and recording why is the point of the clause.
+
+`Outlet.structureBodyId` is non-nullable and `final`. `StructureOrigin.structureBodyId` is
+non-nullable and `final`. Neither an outlet nor a home run can be repaired to point at a surviving
+panel or at none, so leaving them behind does not produce a document saying something true: it
+produces two classes of entity naming a body that is not there. G4's whole discipline is that an
+absent value has exactly one meaning, and a dangling id has none.
+
+**REFUSAL WAS NOT RECONSIDERED.** DR-013 §11.13.3 settled it for the device delete in terms that
+reach here verbatim: CR-017 reserves refusal for the five tier-1 topology rules, whose escape docs/02
+§5 gives as *"None. There is nothing to escape to."* Wanting a panel gone is not that.
+
+**11.159.4 THE CASCADE IS ASYMMETRIC AND THAT IS THE MODEL SPEAKING.** A plate's drops go because
+they cannot be re-homed; a body's plates and drops go because they cannot exist without it. Those are
+different reasons reaching the same act, and a later reader who makes `outletId` editable should
+revisit §11.159.2 and must not touch §11.159.3.
+
+**11.159.5 THE PLAN IS COMPUTED ONCE AND THE CONFIRMATION STATES IT.** DR-013 §11.13.2 and DR-021
+§11.20.3, which `delete_location_dialog.dart` and `#871` both already obey: the number the person
+answers and the set the edit removes are ONE object, because two walks over the same document asking
+the same question is how a dialog and its edit drift apart. `planOutletRemoval` and
+`planStructureRemoval` live in `derived/structure_removal.dart`; the dialogs read them and
+`addOutletRemoval` / `addStructureRemoval` consume them.
+
+**THE UNITS ARE PLATES, CABLES AND PINS**, and the third is not decoration. `Outlet.planPin` is
+walked-site work: somebody stood in the room and dotted the floorplan, `plan_length.dart` derives a
+cable length from it, and it travels with the outlet when the outlet goes. A count that named only
+cables would understate what a pinned plate costs.
+
+**AND THE PLAN IS TAKEN TWICE, WHICH IS THE ONE PLACE THAT RULE BENDS.** The document is not frozen
+while a confirmation is open, and `#877` MEASURED that rather than assuming it: `Ctrl+Z` reaches
+`undoFromShell` from inside a modal route, because DR-159 §11.158.4 put undo on `KeyScope.global`
+with its `Shortcuts` above the `Navigator`. Probed on the plate dialog, the document went from two
+links to three with the confirmation still up and still saying one. So the edit re-plans after the
+await and removes **what is actually there**, which is DR-158's recorded choice and is the smaller of
+two costs: the alternative leaves the restored drop naming a plate that is gone, which is the state
+§11.159.2 exists to prevent. A dialog that dismissed itself when the document moved would be better
+than both and is not ruled here.
+
+**A PLATE WITH NOTHING ON IT IS NOT ASKED ABOUT.** `needsConfirmation` is false for an outlet with no
+drops and no pin, exactly as it is false for a bare leaf location, and for DR-013 §11.13.2's own
+reason: a prompt for a consequence-free delete is the nag that teaches people to click through
+prompts, including this one on the day it matters. **A Structure body is always asked about**, even
+an empty one, because it is the container the tab is named for and re-creating one is a different
+order of work from re-typing a drop.
+
+**11.159.6 RULED: WHERE THE TWO CONTROLS LIVE.** Settled by the user on 2026-09-13.
+
+**THE PLATE GETS A TRASH ICON ON ITS ROW IN THE LEFT RAIL** of the `[ Outlets ]` tab, which is where
+a person already picks one, and which is the shape the user chose for `#871`'s template removal the day
+before.
+
+**THE STRUCTURE GETS AN OVERFLOW MENU IN THE EDITOR HEADER**, after `Connector aliases…`. The largest
+delete in the product does not sit as a fourth text button in a row of three benign ones. **A trash
+icon beside the body picker was refused on a defect**: `_EditorHeader` builds that picker only when
+`doc.structures.length > 1`, so a one-panel project would have had no control at all, and a one-panel
+project is both the ordinary case and exactly the case where somebody wants a wrongly-created panel
+gone.
+
+**11.159.7 ONE TRANSACTION, ONE UNDO, AND IT NAMES THE GESTURE.** DR-158 §11.157.6's rule. The
+transaction's label is `removeOutlet` or `removeStructure` and never `removeLink`, because what the
+person did was get rid of a plate or a panel and the cables are a consequence of it. DR-013 §11.13.4
+binds the revert: every `Link`, `Net`, `Outlet`, `StructureBody` and `DeviceInstance` that applying
+removed comes back with the SAME ids, so delete-then-undo is not a lossy round trip through the
+entities CR-117's byte gate is about.
+
+**11.159.8 Scope.** **No scope change.** Both commands are M3-A/1 work that shipped without a caller;
+this rules how they are reached and what they take, inside scope M3 already owns. Board `#877` cites
+it, and `#872`'s exemption list loses both rows.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

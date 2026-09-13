@@ -10207,6 +10207,95 @@ and not-doing be **an edit to roadmap §2 with a new ruling ID, in its own commi
 additionally supersede a standing user ruling (DR-003 and DR-005 respectively), which per canon §11
 preamble is the user's call and nobody else's.
 
+#### 5.9.36 `#877`: a plate and a panel can be removed, the cascade is asymmetric, and the Outlets tab had never been opened · `DR-160` · no version move
+
+2026-09-13. Found by `#872`'s reachability gate. It closes under `#786` and moves no number.
+
+##### 5.9.36.1 Built at M3-A/1, reachable from nowhere
+
+`RemoveOutletCommand` and `RemoveStructureCommand` were declared in `structure_commands.dart` with
+real reverts and eight and nine test constructions between them, and **nothing in `lib/` constructed
+either**. `AddStructureCommand` and `AddOutletCommand` are both wired, so the Structured Wiring tab
+could create a panel and a wall plate and could never take either back: a wrong drop or a duplicate
+panel was permanent for the life of the project unless somebody noticed in time to press `Ctrl+Z`.
+
+Sixth capability in five days found complete and unreachable, after `#674`, `#870`, `#871`, `#875`
+and `#879`.
+
+##### 5.9.36.2 The plate's cascade was a decision; the panel's was not
+
+`RemoveOutletCommand`'s own doc comment argues for leaving the cables: *"silently deleting a user's
+home runs because they removed a wall plate is a much larger edit than the gesture asked for. A
+caller that means both composes a `Transaction`."* Both halves of that sentence stand. This ticket
+supplies the caller the second half asks for, and the confirmation is what makes the larger edit
+legitimate rather than silent.
+
+**BLANKING THE BOX WAS THE TEMPTING ALTERNATIVE AND IT IS A TRAP.** `StructureOrigin.outletId` is
+nullable and DR-046 gives the null a ruled meaning, so a drop whose plate was deleted and whose
+`outletId` was cleared would be a legal document saying something true. It would also be
+**unrepairable**: `StructureOriginField` lists seven editable properties and `outletId` is not one of
+them, `AddHomeRunCommand` sets it at creation, and no surface in the product can move a drop onto a
+different plate. The cable would sit on the Structure table with an empty box column forever, and the
+only way out would be to delete it and type it again.
+
+**THE PANEL'S CASCADE HAD NO DECISION IN IT.** `Outlet.structureBodyId` and
+`StructureOrigin.structureBodyId` are both non-nullable and `final`, so neither an outlet nor a home
+run can be repaired to point at a surviving panel or at none. Leaving them behind does not produce a
+true document; it produces two classes of entity naming a body that is not there.
+
+So the cascade is asymmetric, and DR-160 §11.159.4 says which clause a later reader may reopen:
+make `outletId` editable and §11.159.2 is back open, §11.159.3 is not.
+
+##### 5.9.36.3 The user placed both controls, and refused one on a defect
+
+A **trash icon on the plate's row in the left rail**, matching the shape chosen for `#871`'s template
+removal the day before, and an **overflow menu in the editor header** for the panel. A trash icon
+beside the body picker was refused on a defect found while writing the question: `_EditorHeader`
+builds that picker only when `doc.structures.length > 1`, so a one-panel project would have had no
+control at all, and a one-panel project is both the ordinary case and exactly where somebody wants a
+wrongly-created panel gone.
+
+##### 5.9.36.4 THE OUTLETS TAB HAD NEVER BEEN OPENED INSIDE THE THING IT LIVES IN
+
+The app-level test would not run: `ListTile background color or ink splashes may be invisible`,
+thrown on every row of the plate rail. `StructureEditorScreen._body` wraps the whole editor in a
+`ColoredBox(surface)`, and a `ListTile` paints its selected tint and its ink splash on the nearest
+`Material` **ancestor**, so every splash and every selected tint on that rail landed under the
+background and was invisible. Shipped that way since M3-H/2.
+
+**THE REASON NOTHING SAW IT IS THE PAIRING OF TWO GREEN FILES.**
+`outlets_view_test.dart` pumps the tab on its own, with no editor and therefore no `ColoredBox`.
+`structure_editor_screen_test.dart` pumps the editor but only ever asserts that `Outlets` is in the
+tab strip, never switching to it. So the tab had never been mounted inside its own host, by a test or
+by the app, and the first thing that did so found this in its first run.
+`.okf/practices/a-null-collaborator-in-a-test-is-a-configuration.md` is the same shape and the
+generalisation is now written there.
+
+##### 5.9.36.5 A stale finder, broken by a control it knew nothing about
+
+Three cases in `outlets_view_test.dart` read `find.byType(Tooltip).first`, and the rail is built
+before the plate pane, so the moment it grew a trash icon those three started asserting about a
+control they were not about. The cell's own `InkWell` already carries `plate-cell-<gang>-<cell>` and
+its comment says why, in as many words, about a finder picking the wrong `InkWell`; the tooltip above
+it had the identical hole and no such anchor. All three now anchor on the cell they name.
+
+##### 5.9.36.6 And a comment that had become a product claim
+
+`command_roundtrip_test.dart` reads *"A cable that vanished from the schedule because someone deleted
+a wall plate is the failure this whole no-cascade rule prevents."* The test is still right about the
+COMMAND, which takes exactly what it says. The sentence had become wrong about the PRODUCT, which now
+takes the cable and says how many first. The group carries a header saying which of the two it is
+about and where the other is proved.
+
+##### 5.9.36.7 Evidence
+
+Floors: `rackpal_core` 4639 to 4667, `rackpal_ui` 1805 to 1824, `rackpal_app` 1022 to 1028.
+Gates: 17. Analyzer pin unmoved at 233.
+
+`#872`'s exemption list loses two rows, its fourth and fifth retirements in three days.
+
+**Commits** (§8.8). `#877` `80fd95e0` (DR-160) and `7baabc98` (the feature).
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·

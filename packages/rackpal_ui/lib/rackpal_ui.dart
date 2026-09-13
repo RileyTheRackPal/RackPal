@@ -151,6 +151,8 @@ export 'src/structure/media_types_dialog.dart';
 export 'src/structure/outlet_template_picker.dart';
 export 'src/structure/outlets_view.dart';
 export 'src/structure/pathways_view.dart';
+export 'src/structure/remove_outlet_dialog.dart';
+export 'src/structure/remove_structure_dialog.dart';
 export 'src/structure/structure_editor_screen.dart';
 export 'src/structure/structure_matrix_view.dart';
 export 'src/theme/console_theme.dart';

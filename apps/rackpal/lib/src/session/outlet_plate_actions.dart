@@ -40,11 +40,20 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 
 /// Builds the whole [OutletsActions] group against a live [controller].
 ///
-/// ONE BUILDER FOR FIVE CALLBACKS, unlike `pathway_actions.dart`'s three
-/// separate ones. They share every guard: the same outlet lookup, the
-/// same gang-index bounds check, the same refusal sentences. Five
-/// builders would be five copies of `_outletOr`.
-OutletsActions buildOutletsActions({required DocumentController controller}) {
+/// ONE BUILDER FOR THE SIX PLATE EDITS, unlike `pathway_actions.dart`'s
+/// three separate ones. They share every guard: the same outlet lookup,
+/// the same gang-index bounds check, the same refusal sentences. Six
+/// builders would be six copies of `_outletOr`.
+///
+/// **[onRemove] IS PASSED THROUGH AND NOT BUILT HERE** (`#877`, DR-160
+/// §11.159). It shares none of those guards, because it is the one
+/// gesture that asks a question before it acts: the confirmation needs a
+/// `BuildContext` and this file has none, which is the seam
+/// `buildLocationsPanelActions` already draws for the same reason.
+OutletsActions buildOutletsActions({
+  required DocumentController controller,
+  required void Function(Uuid outletId) onRemove,
+}) {
   Outlet? outletOf(Uuid id) => controller.doc.outlets[id];
 
   String? gangGuard(Uuid outletId, int gangIndex) {
@@ -57,6 +66,7 @@ OutletsActions buildOutletsActions({required DocumentController controller}) {
   }
 
   return OutletsActions(
+    onRemove: onRemove,
     onAddGang: (outletId) {
       if (outletOf(outletId) == null) {
         return 'That outlet is not in this project.';

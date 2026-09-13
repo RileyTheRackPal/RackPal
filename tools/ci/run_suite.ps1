@@ -794,7 +794,15 @@ $SuiteFloors = @{
     # below the fold is never built and `findsNothing` passes whether the
     # rule was excluded or merely out of sight. Moved here, a test reads
     # every rule in the catalogue and cannot be fooled that way.
-    'rackpal_core'   = 4639
+    # 4667 at `#877`: +28. `structure_removal.dart`'s two plans and the
+    # transactions that consume them, which is where the CASCADE lives:
+    # `structure_commands_test.dart` already held the three `Command`
+    # contract properties on both removals, and neither command cascades
+    # by design. Seven of the 28 are the asymmetry DR-160 §11.159.4 rules
+    # and nothing else in the tree states: a plate takes its home runs
+    # because `StructureOriginField` cannot re-home one, and a body takes
+    # its plates because `Outlet.structureBodyId` is non-nullable.
+    'rackpal_core'   = 4667
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1121,7 +1129,14 @@ $SuiteFloors = @{
     # mutation found it: "use the default" REMOVES an override rather
     # than recording one that agrees with it, which is the distinction
     # the dialog's own typedef draws.
-    'rackpal_ui'     = 1805
+    # 1824 at `#877`: +19. The two confirmations and the two controls
+    # DR-160 §11.159.6 places. Eleven are the dialogs, whose counts come
+    # off a REAL plan rather than a hand-made one, because a dialog test
+    # that builds its own plan proves the sentence and nothing about
+    # whether the sentence is true of the document. Four of the rail's
+    # cases needed a SECOND plate in the fixture: a rail with one row
+    # cannot tell a per-row control from a per-selection one.
+    'rackpal_ui'     = 1824
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1210,7 +1225,20 @@ $SuiteFloors = @{
     # session, and nothing anywhere asserted that until blanking the
     # actor survived a mutation. The second walks the Edit menu, which is
     # `#874`'s machinery meeting `#879`'s command.
-    'rackpal_app'    = 1022
+    # 1028 at `#877`: +6. Both removals through the real shell, because
+    # both widget harnesses SUPPLY THE CALLBACK THEMSELVES and so cover
+    # nothing past the control: the same hole `#879`'s actor mutation
+    # opened. Opening the Outlets tab inside the app for the first time
+    # is also what found the rail's missing `Material`, which had been
+    # swallowing every splash and selected tint on that tab since M3-H/2.
+    # 1029 at `#877` part two: +1, WRITTEN BY THE ONE MUTATION THAT
+    # SURVIVED. Replacing the shell's re-plan with the plan the person
+    # answered changed nothing any test could see, and the branch turned
+    # out to be reachable: `Ctrl+Z` reaches `undoFromShell` from inside a
+    # modal route, because DR-159 put undo on `KeyScope.global` above the
+    # `Navigator`. Probed at 2 links going to 3 with the confirmation
+    # still up.
+    'rackpal_app'    = 1029
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
