@@ -162,8 +162,12 @@ void _seedTemplate(
 ///
 /// AC-044 makes the inspector the only way a person creates a 0U
 /// occupant, and this is not a person: it is a remedy the person asked
-/// for by name. The channel it adds is an ordinary one they can edit or
-/// remove afterwards.
+/// for by name. The channel it adds is an ordinary one they can remove
+/// afterwards, from the rack inspector (`#876`).
+///
+/// **"OR EDIT" USED TO BE IN THAT SENTENCE AND WAS NEVER TRUE.** There is
+/// no command that changes a channel's bounds, only add and remove, so a
+/// channel whose extent is wrong is replaced rather than corrected.
 String _channelFor(
   TxnScope<RackDocument> tx,
   RackDocument doc,
@@ -181,9 +185,30 @@ String _channelFor(
         // the cords are, not down the front where the gear is read.
         side: ZeroUChannelSide.rearLeft,
         // THE WHOLE RACK, which is what a vertical channel is: a rail
-        // down its full height. `startU` is 0-based (CR-025).
-        startU: 0,
-        endU: rack.heightU - 1,
+        // down its full height.
+        //
+        // ═══════════════════════════════════════════════════════════
+        // 1-BASED, AND THIS READ `startU: 0` CITING CR-025 FOR IT
+        // ═══════════════════════════════════════════════════════════
+        // CR-025 rules the opposite in as many words: "1-based, bottom
+        // origin. `ruIndex` in [1, heightU]", and calls itself the
+        // contradiction that "will actually hurt". So the comment named
+        // the ruling that forbids the line it was defending.
+        //
+        // NOTHING ELSE IN THE TREE AGREED WITH IT. Every shipped starter
+        // writes `startU: 1`, every test in `zero_u_commands_test.dart`
+        // does, `placement_rules.dart` derives a channel's length as
+        // `endU - startU + 1` "from U 1 to U 42 is 42 U of rail", and
+        // `rack_shrink.dart` normalises "an inverted or SUB-1 channel"
+        // on read, which is this defect described by a file that had
+        // never seen it.
+        //
+        // AND `planAddZeroUChannel` WOULD HAVE REFUSED IT. It rejects
+        // `startU < 1`. This is the only producer in the product and it
+        // builds the command directly, so the guard never ran on the one
+        // path that ships (`#876`, DR-163).
+        startU: 1,
+        endU: rack.heightU,
         name: 'Rear left',
       ),
     ),
