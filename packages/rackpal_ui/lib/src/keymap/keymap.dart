@@ -972,23 +972,24 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
   // and they are gone. Nothing else about the Windows keymap moves.
   KeyBinding(
     id: KeyBindingId.undo,
-    scope: KeyScope.rack,
+    scope: KeyScope.global,
     trigger: LogicalKeyboardKey.keyZ,
     primary: true,
     label: 'Undo',
     intent: UndoIntent(),
     source: 'docs/03 §5',
     note:
-        'SCOPED TO THE RACK TAB, while its own handler is gated on "no '
-        'text field has focus" — which reads as document-global and is '
-        'not. The Shortcuts subtree is RackCanvasScreen, so Ctrl+Z does '
-        'nothing on the Schematic and Schedule tabs. That is the same '
-        'failure app_shell.dart post-mortems for Ctrl+S; promoting it to '
-        'KeyScope.global is a rebinding and belongs to a ruling.',
+        'GLOBAL SINCE DR-159 §11.158.3, and it was scoped to the rack tab '
+        'for five milestones while its own handler was gated on "no text '
+        'field has focus" — which reads as document-global and was not. '
+        'THIS NOTE ALSO SAID "the Schematic and Schedule tabs", written '
+        'when the strip had four; DR-091 reordered and extended it and '
+        'PLAN-E/5 added Plan, and the count moved neither time. The tabs '
+        'are not counted here: ShellView.values is the list.',
   ),
   KeyBinding(
     id: KeyBindingId.redo,
-    scope: KeyScope.rack,
+    scope: KeyScope.global,
     trigger: LogicalKeyboardKey.keyZ,
     primary: true,
     shift: true,
@@ -998,7 +999,7 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
   ),
   KeyBinding(
     id: KeyBindingId.redoAlternate,
-    scope: KeyScope.rack,
+    scope: KeyScope.global,
     trigger: LogicalKeyboardKey.keyY,
     primary: true,
     label: 'Redo',

@@ -1,5 +1,35 @@
 # Update Log
 
+## 2026-09-12 (twenty-fifth entry)
+
+* **Ruled**: [DR-159](/decisions/dr-159-undo-is-document-global.md). Undo is
+  document-global, the Edit menu says what it will take back, and the device
+  builder keeps its own stack.
+* **Closed**: `#874` with `241222a`. **No version move**: it closes under `#786`.
+* **Note**: **THE INTENT WAS ALWAYS RIGHT AND ONLY THE INSTALLATION POINT WAS
+  WRONG.** `RackCanvasScreen`'s own handler comment said the key was
+  DOCUMENT-global and the registry row named promoting it to `KeyScope.global` as
+  a rebinding owed a ruling. Nobody was wrong about the design; the binding sat in
+  the wrong place for five milestones and nothing in the repository could see it.
+* **Note**: **A TAB COUNT WENT STALE IN FOUR PLACES AND THE FOURTH WAS WRITTEN THE
+  SAME DAY.** Two source comments said "the Schematic and Schedule tabs",
+  `main.dart`'s header still described a three-tab strip with two inert tabs, and
+  the first draft of the ruling said six. It is seven. None of the four now
+  carries a number.
+* **Note**: **THE EDIT MENU WAS SPECIFIED AT M0.** docs/03 §13.3 asked for "Undo
+  Move device" and `LabelKey` grew to 101 values, many of which exist ONLY so that
+  menu could tell two acts apart, against a surface nobody ever built. The map is
+  explicit and gated rather than derived, because de-camel-casing is wrong for
+  precisely the values that were split.
+* **Note**: **THE SWEEP FOUND THE FIX INCOMPLETE, WHICH IS WHY IT IS A SWEEP.**
+  Structured Wiring's autofocused `Add drops` box still held `Ctrl+Z`, so the
+  complaint survived inside its own fix on the one tab whose primary verb is bulk
+  data entry. An empty box now forwards it.
+* **Note**: **THIRTY-NINE CASES WERE GREEN IN A CONFIGURATION THE PRODUCT DOES NOT
+  SHIP**, pumping `RackCanvasScreen` under a bare `MaterialApp`. Fourth instance
+  this week of
+  [a fixture's default standing in for a proof](/practices/a-fixture-default-is-not-a-proof.md).
+
 ## 2026-09-12 (twenty-fourth entry)
 
 * **Ruled**: [DR-157](/decisions/dr-157-a-rack-height-with-no-side-is-refused.md).
@@ -54,7 +84,8 @@
   `rackpal_ui`, and called by no lib code at all.
 * **Filed**: `#874`. `UndoIntent` and `RedoIntent` have exactly one handler in the
   entire tree, inside `RackCanvasScreen`, and the application has one menu with no
-  Undo item. The strip is six tabs and undo works on one. `rack_canvas_screen.dart`
+  Undo item. The strip is SEVEN tabs and undo works on
+  one (this line said six; DR-159 corrected it). `rack_canvas_screen.dart`
   already carried a note saying so, naming **two** tabs; it has been five since
   DR-091 reordered the strip, which is a count in prose going stale exactly the way
   this corpus keeps finding.

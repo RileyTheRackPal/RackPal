@@ -1095,7 +1095,14 @@ $SuiteFloors = @{
     # arena: this file's fixture defaulted `onEdit` to null, which builds
     # no double-tap recognizer, so a press that landed in the test did
     # nothing in the shipped shell.
-    'rackpal_ui'     = 1781
+    # 1790 at `#874`: +9. The LabelKey-to-menu-text parity gate. Three
+    # of the nine guard the GATE: the map must cover the enum in both
+    # directions, and its size is asserted because both of those pass
+    # vacuously over an empty enum. Two more pin the SPLIT values, which
+    # are the reason the map is written out rather than de-camel-cased:
+    # `setRoomEstimate` and `clearRoomEstimate` are two LabelKey values
+    # precisely so the menu never names the opposite act.
+    'rackpal_ui'     = 1790
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1168,7 +1175,13 @@ $SuiteFloors = @{
     # were confidently wrong), and a staleness check so an exemption that
     # becomes reachable FAILS rather than rotting into a record of what
     # was true once.
-    'rackpal_app'    = 996
+    # 1015 at `#874`: +19. Undo is global, and the sweep is over
+    # `ShellView.values` rather than a list of tab names: seven of the
+    # nineteen are one per tab, so a tab added later is covered the day
+    # it is added. That sweep is what found the fix INCOMPLETE on
+    # Structured Wiring, where an autofocused quick-entry box still held
+    # the key; two more cases pin the condition that fixed it.
+    'rackpal_app'    = 1015
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

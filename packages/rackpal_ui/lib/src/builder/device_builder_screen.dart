@@ -70,6 +70,7 @@ import 'package:rackpal_ui/src/builder/port_grid.dart';
 import 'package:rackpal_ui/src/builder/preview_dock.dart';
 import 'package:rackpal_ui/src/draw/device_glyph_mark.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
+import 'package:rackpal_ui/src/menu/undo_target.dart';
 
 /// What the app does when the builder asks for something.
 ///
@@ -208,6 +209,7 @@ class DeviceBuilderScreen extends StatefulWidget {
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     this.onDone,
     this.onDirtyChanged,
+    this.onUndoTargetChanged,
     super.key,
   });
 
@@ -259,6 +261,21 @@ class DeviceBuilderScreen extends StatefulWidget {
   /// commit, undo, redo AND save-point move, which is exactly the set of
   /// events that can flip `isDirty`.
   final ValueChanged<bool>? onDirtyChanged;
+
+  /// Hands this window's OWN undo stack up to the shell, so the global
+  /// `Ctrl+Z` acts on it while the builder is open (DR-159 §11.158.5).
+  ///
+  /// **THE CLOSURES INSIDE IT ARE THIS SCREEN'S OWN METHODS**, which is
+  /// the whole point: handing up the `TemplateEditSession` would let the
+  /// shell call `undoLast` without this screen's `setState`, and the
+  /// window would not repaint. Pressing the key from anywhere therefore
+  /// goes through exactly the path the toolbar button does.
+  ///
+  /// Reported on the same notification `onDirtyChanged` uses, and NOT
+  /// from `dispose`, for the reason that method's comment gives. The
+  /// shell clears it itself when it stops showing this screen, which it
+  /// knows because it is what decided to.
+  final ValueChanged<UndoTarget?>? onUndoTargetChanged;
 
   @override
   State<DeviceBuilderScreen> createState() => _DeviceBuilderScreenState();
@@ -315,14 +332,27 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
   /// itself and the shell never has to assume.
   bool? _reportedDirty;
 
+  /// The last value handed to [DeviceBuilderScreen.onUndoTargetChanged].
+  UndoTarget? _reportedUndo;
+
   @override
   void initState() {
     super.initState();
-    _session.changes.addListener(_reportDirty);
+    _session.changes.addListener(_reportUp);
     // ANNOUNCE THE OPENING STATE, once the frame this screen was built in
     // has finished. A fresh window is clean and the shell's flag may be
-    // stale from a window that just closed dirty.
-    WidgetsBinding.instance.addPostFrameCallback((_) => _reportDirty());
+    // stale from a window that just closed dirty. The undo target is
+    // announced on the same frame and for the same reason: an EMPTY
+    // stack is a fact the shell has to hear, or its Edit menu offers to
+    // take back whatever the last window was holding.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _reportUp());
+  }
+
+  /// Named `_reportUp` and not `_report`, because this class already
+  /// has a `_report` field holding the live `TemplateChangeReport`.
+  void _reportUp() {
+    _reportDirty();
+    _reportUndo();
   }
 
   void _reportDirty() {
@@ -332,9 +362,29 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
     widget.onDirtyChanged?.call(dirty);
   }
 
+  void _reportUndo() {
+    final report = widget.onUndoTargetChanged;
+    if (report == null) return;
+    final target = UndoTarget(
+      canUndo: _session.undo.canUndo,
+      canRedo: _session.undo.canRedo,
+      undoLabelKey: _session.undo.undoLabelKey,
+      redoLabelKey: _session.undo.redoLabelKey,
+      // THIS SCREEN'S OWN METHODS, not the session's. See the field doc.
+      undo: () => setState(_session.undoLast),
+      redo: () => setState(_session.redoLast),
+    );
+    // `UndoTarget`'s equality deliberately ignores the closures, which
+    // are freshly allocated here every time; without that this guard
+    // would never hold and the shell would rebuild on every keystroke.
+    if (target == _reportedUndo) return;
+    _reportedUndo = target;
+    report(target);
+  }
+
   @override
   void dispose() {
-    _session.changes.removeListener(_reportDirty);
+    _session.changes.removeListener(_reportUp);
     // NOTHING IS REPORTED FROM HERE, and the first draft did report
     // `false`. `dispose` runs while the tree is being finalised, so a
     // listener that calls `setState` (which the shell's does, because the
@@ -638,6 +688,28 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
     ),
     child: Actions(
       actions: <Type, Action<Intent>>{
+        // THE BUILDER'S OWN STACK, AND NEAREST-ACTION-WINS IS THE
+        // ROUTING (DR-159 §11.158.5). `Ctrl+Z` is a global binding since
+        // that ruling; Flutter resolves the `Action` from the focused
+        // context upward, so while focus is anywhere inside this screen
+        // these two win over the shell's fallback and the template's
+        // stack is what moves.
+        //
+        // The shell ALSO declines while this screen is showing, because
+        // focus can legitimately be nowhere and the fallback would then
+        // undo something in the project behind the window.
+        UndoIntent: CallbackAction<UndoIntent>(
+          onInvoke: (_) {
+            if (_session.undo.canUndo) setState(_session.undoLast);
+            return null;
+          },
+        ),
+        RedoIntent: CallbackAction<RedoIntent>(
+          onInvoke: (_) {
+            if (_session.undo.canRedo) setState(_session.redoLast);
+            return null;
+          },
+        ),
         JumpToPortsIntent: CallbackAction<JumpToPortsIntent>(
           onInvoke: (_) {
             // NOT GATED ON THE REQUIRED FIELDS. AC-049 took the metadata

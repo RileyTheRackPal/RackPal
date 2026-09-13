@@ -28,15 +28,24 @@ import 'package:screen_retriever/screen_retriever.dart';
 // is still built once from the bundled Jost TTF and injected into the UI
 // so on-screen layout matches the PDF backend.
 //
-// THE THREE-TAB STRIP, AND WHY TWO OF ITS TABS ARE INERT. docs/05 §12
-// (line 780) fixes the v1 strip at Rack / Schematic / Schedule, so the
-// strip has three tabs. docs/09 M1 is equally explicit that the schematic
-// and the schedule are not M1 work and that pretending otherwise is a
-// lie. So the Schematic and Schedule tabs render `UnbuiltView` — a panel
-// whose first line is that the view is not built, containing no control
-// of any kind. That strip now lives in `src/session/app_shell.dart`,
-// which is also where the document lives, because persistence is a
-// property of the DOCUMENT and not of one tab.
+// THE STRIP LIVES IN `src/session/app_shell.dart`, which is also where
+// the document lives, because persistence is a property of the DOCUMENT
+// and not of one tab.
+//
+// **THIS PARAGRAPH DESCRIBED A THREE-TAB STRIP WITH TWO INERT TABS UNTIL
+// DR-159 §11.158.2**, and both halves had been false for milestones. It
+// read that docs/05 §12 fixes the v1 strip at Rack / Schematic / Schedule
+// and that the last two render `UnbuiltView`, "a panel whose first line
+// is that the view is not built". M2-E built the schematic and its
+// `UnbuiltView` is gone rather than softened; the schedule's went the
+// same way; DR-091 §11.90.3 reordered the strip into job order and added
+// Locations, Device Manager and Structured Wiring; `PLAN-E/5` added Plan.
+//
+// **THE NUMBER IS NOT WRITTEN HERE**, on the rule DR-159 §11.158.2
+// states after this file, `rack_canvas_screen.dart` and the keymap
+// registry all carried a tab count that went stale without moving.
+// `ShellView.values` is the list and `app_shell.dart` builds the strip
+// from it.
 //
 // `Ctrl+1` / `Ctrl+2` / `Ctrl+4` ARE BOUND NOW, as a complete group, and
 // `Ctrl+3` is DELIBERATELY DEAD: docs/04 §8 line 456 and docs/10 :516
@@ -290,6 +299,13 @@ class RackPalApp extends StatelessWidget {
         ...WidgetsApp.defaultActions,
         ...buildFileActions(services.controller),
         ...buildViewActions(shellKey),
+        // UNDO AND REDO ARE GLOBAL SINCE DR-159 §11.158.3, and were
+        // handled in exactly one screen for five milestones. This is the
+        // FALLBACK: `RackCanvasScreen` and `DeviceBuilderScreen` each
+        // keep their own, and Flutter resolves an `Action` from the
+        // focused context upward, so the nearer one wins where it
+        // matters.
+        ...buildUndoActions(shellKey),
       },
       // DR-090, both halves. Every value lives in `console_palette.dart`
       // in `rackpal_core`, where `contrast.dart` can check it; this call

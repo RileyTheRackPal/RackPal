@@ -6,7 +6,7 @@ description: >-
   suite ran was already the interesting case and passed for a reason nobody had named,
   while the mirror state was exercised nowhere. Ask which fixture field carries the
   property, then write the case that sets it the other way.
-tags: [practice, testing, fixtures, verification, mutation, dr-146, dr-156, dr-158, plan-f]
+tags: [practice, testing, fixtures, verification, mutation, dr-146, dr-156, dr-158, dr-159, plan-f]
 timestamp: 2026-09-08T00:00:00Z
 status: adopted
 ---
@@ -146,3 +146,22 @@ second configuration of the product, and a configuration nothing ships is a
 configuration nothing is learned from. When the press goes through a gesture
 arena at all, follow `tap` with a timed `pump` rather than a bare `pumpAndSettle`,
 and say why in the helper.
+
+# And a SIXTH, at scale: thirty-nine cases in a configuration nothing ships
+
+**`#874`, DR-159, 2026-09-12.** Undo and redo were `KeyScope.rack` rows, so a
+widget test that pumped `RackCanvasScreen` under a bare `MaterialApp` got
+`Ctrl+Z` from the screen's own `Shortcuts`. **Thirty-nine cases across nine files
+passed**, proving undo worked on a screen mounted a way the product never mounts
+it, while six of the seven tabs in the real app were dead.
+
+The fifth instance, hours earlier, was one widget's `onEdit` default. This one is
+the same mistake made by every rack-canvas test in the package at once, which is
+what makes it worth a second entry: **the configuration was not one fixture's
+oversight, it was the package's house style for pumping a screen.**
+
+**The check that generalises:** when a test pumps a screen rather than the app,
+ask what the APP wraps it in, and whether the behaviour under test comes from the
+screen or from that wrapper. Here the answer was the wrapper, and nothing said so
+until the binding moved. `packages/rackpal_ui/test/app_like.dart` now hands the
+root's shortcut map to any test that needs it, and says why in its header.

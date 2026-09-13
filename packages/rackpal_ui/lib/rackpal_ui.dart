@@ -120,6 +120,8 @@ export 'src/keymap/keymap.dart';
 export 'src/library/device_template_io_dialogs.dart';
 export 'src/library/library_io_dialogs.dart';
 export 'src/library/remove_template_dialog.dart';
+export 'src/menu/undo_labels.dart';
+export 'src/menu/undo_target.dart';
 export 'src/palette/device_palette_panel.dart';
 export 'src/project/delete_location_dialog.dart';
 export 'src/project/locations_panel.dart';
