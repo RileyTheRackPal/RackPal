@@ -40,6 +40,8 @@ import 'package:rackpal_ui/src/keymap/keymap.dart';
 import 'package:rackpal_ui/src/palette/device_palette_panel.dart';
 import 'package:rackpal_ui/src/shell/no_racks_view.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
+import 'package:rackpal_ui/src/validation/acknowledge_finding_dialog.dart';
+import 'package:rackpal_ui/src/validation/add_outlets_choice_dialog.dart';
 import 'package:rackpal_ui/src/validation/validation_drawer.dart';
 import 'package:rackpal_ui/src/widgets/document_memo.dart';
 
@@ -4612,6 +4614,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                 _doc,
                 _findings,
                 by: _drcGrouping,
+                severities: _drcSeverities,
+                includeAcknowledged: _drcIncludeAcknowledged,
               ),
               grouping: _drcGrouping,
               onGroupingChanged: (FindingGrouping g) =>
@@ -4621,6 +4625,34 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
               height: _drcHeight,
               onHeightChanged: (double h) => setState(() => _drcHeight = h),
               onReveal: _revealFinding,
+              // ═══════════════════════════════════════════════════════
+              // SUPPLIED SINCE `#875`, AND THE THIRD TIME ROUND FOR THIS
+              // FEATURE
+              // ═══════════════════════════════════════════════════════
+              // DR-128 §11.127.5 said the panel "renders it as a button"
+              // and it did not; DR-129 §11.128.4 recorded that and built
+              // the button. This is the SAME defect one layer up: the
+              // button existed, the dialogs existed, the commands
+              // existed with real reverts and their own suites, and THIS
+              // MOUNT — the only one in the product — passed none of the
+              // three callbacks. Each is nullable and documented as
+              // "null shows no button rather than a dead one", so
+              // nothing rendered, nothing failed, and acknowledging a
+              // finding was unreachable from anywhere.
+              severityFilter: _drcSeverities,
+              onSeverityFilterChanged: (s) => setState(
+                // THE EMPTY SET MEANS "no filter", not "hide everything".
+                // `DrcPanel`'s chips deselect down to none, and a person
+                // who has turned every chip off has asked to stop
+                // filtering rather than to see an empty panel.
+                () => _drcSeverities = s.isEmpty ? null : s,
+              ),
+              includeAcknowledged: _drcIncludeAcknowledged,
+              onIncludeAcknowledgedChanged: (v) =>
+                  setState(() => _drcIncludeAcknowledged = v),
+              onAcknowledge: (f) => unawaited(_acknowledgeFinding(f)),
+              onWithdraw: _withdrawAcknowledgement,
+              onRemedy: (f) => unawaited(_applyFindingRemedy(f)),
             ),
           ],
         ),
@@ -4641,6 +4673,13 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   List<Finding> get _findings => evaluateDocument(_doc);
 
   FindingGrouping _drcGrouping = FindingGrouping.severity;
+
+  /// docs/05 §8's two filters, which were built and unreachable until
+  /// `#875`. Null means "every severity", which is not the same as the
+  /// empty set: an empty set would hide everything, and a filter whose
+  /// default hid the findings would be a panel that opens onto nothing.
+  Set<Severity>? _drcSeverities;
+  bool _drcIncludeAcknowledged = true;
   bool _drcExpanded = false;
   double _drcHeight = kDrawerAutoHeight;
 
@@ -4682,6 +4721,115 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   /// Selects the entity a finding points at, so "reveal" means the same
   /// thing here as it does everywhere else in this screen.
+  /// CR-019's acknowledgement, at whichever of its two scopes the
+  /// person chose (`#875`).
+  ///
+  /// **A RE-CHECK OF THE VERDICT WAS WRITTEN HERE AND DELETED**, on
+  /// `.okf/practices/a-guard-the-model-makes-unreachable.md`. It survived
+  /// being mutated away, which is the finding: `_AcknowledgeDialog`
+  /// computes `evaluateAcknowledgement` from the same three inputs and
+  /// makes its confirm `onPressed` null on a refusal, so a choice that
+  /// comes back from it is allowed by construction. That invariant is
+  /// pinned where it lives, by
+  /// `acknowledge_finding_dialog_test.dart`'s *"a project-wide mute is
+  /// refused until a reason is written"*, rather than re-asked here where
+  /// nothing could cover it.
+  Future<void> _acknowledgeFinding(Finding finding) async {
+    final choice = await showAcknowledgeFindingDialog(
+      context: context,
+      finding: finding,
+    );
+    if (choice == null || !mounted) return;
+
+    final fingerprint = choice.projectWide
+        ? kProjectWideFingerprint
+        : finding.targetFingerprint;
+
+    _controller.run(
+      AcknowledgeFindingCommand(
+        ruleId: finding.ruleId,
+        targetFingerprint: fingerprint,
+        reason: choice.reason,
+        demotedTo: choice.demotedTo,
+        // NULL FOR A PROJECT-WIDE MUTE, which is the command's own
+        // contract: "a project-wide mute is about no entity at all", so
+        // clicking its row must not select the rack that happened to
+        // raise the finding first.
+        targetEntityId: choice.projectWide ? null : finding.primaryEntityId,
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+      ),
+    );
+    setState(() {});
+  }
+
+  /// Takes one back. Never both directions on one row: `DrcPanel` offers
+  /// whichever matches the state, because a row offering both would be
+  /// asking which way the state already is.
+  void _withdrawAcknowledgement(FindingRow row) {
+    final acknowledgement = row.acknowledgement;
+    if (acknowledgement == null) return;
+    _controller.run(UnacknowledgeFindingCommand(id: acknowledgement.id));
+    setState(() {});
+  }
+
+  /// PWR-003's remedy: give the rack somewhere to plug things in
+  /// (`#875`, DR-128 §11.127.5).
+  ///
+  /// **IT ASKS ONLY WHEN THE RACK HAS NOTHING.** `addOutletsToRack`
+  /// extends distribution that already exists without a question, and
+  /// returns an `AddOutletsChoice` when there is none, because a strip on
+  /// a shelf and a 0U vertical PDU are two different jobs and the
+  /// difference is the installer's to make.
+  ///
+  /// **AN UNANSWERED CHOICE WRITES NOTHING.** The first transaction adds
+  /// no child in that case, and `TxnScope.add` drops a command that
+  /// changed nothing (DR-156 §11.155.1), so an empty one leaves no undo
+  /// entry to press `Ctrl+Z` past.
+  Future<void> _applyFindingRemedy(Finding finding) async {
+    final rackId = finding.primaryEntityId;
+    if (rackId == null || !_doc.racks.containsKey(rackId)) return;
+
+    final first = _runRemedy(rackId, null);
+    switch (first) {
+      case AddOutletsDone():
+        setState(() {});
+      case AddOutletsRefused(:final message):
+        _status.show(message);
+      case AddOutletsChoice(:final question):
+        final source = await showAddOutletsChoiceDialog(
+          context: context,
+          question: question,
+        );
+        if (source == null || !mounted) return;
+        // RE-CHECKED AFTER THE AWAIT, on `_deleteSelection`'s rule: the
+        // document is not frozen while a dialog is open.
+        if (!_doc.racks.containsKey(rackId)) return;
+        final second = _runRemedy(rackId, source);
+        if (second is AddOutletsRefused) {
+          _status.show(second.message);
+        } else {
+          setState(() {});
+        }
+    }
+  }
+
+  /// One attempt, in one transaction, so the shelf and the strip and the
+  /// 0U channel a remedy mints are all ONE undo entry.
+  AddOutletsResult _runRemedy(Uuid rackId, OutletSource? source) {
+    return _controller.transact(
+      LabelKey.insertRemedyDevice,
+      (tx) => addOutletsToRack(
+        tx,
+        doc: _doc,
+        rackId: rackId,
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+        source: source,
+      ),
+    );
+  }
+
   void _revealFinding(Uuid id) {
     // A FINDING'S LOCUS IS NOT ALWAYS A DEVICE: it can be a rack, a net
     // or a circuit, and selecting one of those here would be a silent
