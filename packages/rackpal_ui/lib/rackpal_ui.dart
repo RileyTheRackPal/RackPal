@@ -103,6 +103,7 @@ export 'src/draw/device_glyph_mark.dart';
 export 'src/draw/flutter_canvas.dart';
 export 'src/draw/plan_image_cache.dart';
 export 'src/draw/text_run_cache.dart';
+export 'src/inspector/add_zero_u_channel_dialog.dart';
 export 'src/inspector/delete_device_dialog.dart';
 export 'src/inspector/device_overrides_section.dart';
 export 'src/inspector/device_ports_section.dart';
@@ -111,6 +112,7 @@ export 'src/inspector/mount_note_field.dart';
 export 'src/inspector/new_rack_dialog.dart';
 export 'src/inspector/rack_inspector_panel.dart';
 export 'src/inspector/shrink_rack_dialog.dart';
+export 'src/inspector/zero_u_occupant_row.dart';
 // `src/keymap/` — THE ONE KEYMAP REGISTRY (macOS debt D7, M7's generated
 // table, CR-101's arbitration). Exported rather than kept private because
 // the app layer binds the global scope on `MaterialApp` and renders the

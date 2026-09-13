@@ -162,14 +162,11 @@ const Map<String, String> _exempt = {
   // was exempted against `#876` and which nobody was thinking about.
   // This test went red naming all three.
 
-  // `#876` — AC-044 makes the inspector the only way a person creates a
-  // 0U occupant and the inspector has no such surface. Two of the three
-  // builders in `zero_u_commands.dart` are still callerless; the third
-  // is reached only by `#875`'s remedy, which mints a channel as a
-  // remedy rather than as a person's gesture, so AC-044's clause is
-  // still owed.
-  'RemoveZeroUChannelCommand': '#876',
-  'SetZeroUPositionCommand': '#876',
+  // `#876` CLOSED THE LAST TWO ROWS ON THIS LIST. AC-044 rules that a 0U
+  // occupant is "created and edited from the inspector (channel, start U,
+  // span)" and the inspector half was never built: the rack panel now has
+  // a `0U channels` section that adds and removes, and a 0U-mounted
+  // device gets a `0U mounting` section (DR-163 §11.162).
 
   // `#877` CLOSED ITS ROWS. `RemoveOutletCommand` and
   // `RemoveStructureCommand` shipped at M3-A/1 with real reverts and no

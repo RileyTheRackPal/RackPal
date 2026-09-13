@@ -130,6 +130,8 @@ Future<List<String>> _pump(
             onSetOverride: <T>(_, _) {},
             onSetPortFact: (_, _, _, _, _) {},
             onSetMountNote: wired ? typed.add : null,
+            onZeroU: (_) {},
+            onMoveZeroU: (_, _, _) {},
           ),
         ),
       ),

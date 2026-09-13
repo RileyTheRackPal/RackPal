@@ -964,6 +964,28 @@ void main() {
       expect(find.text('Floor enclosure 18U'), findsWidgets);
 
       await _pickDropdown(tester, 'Rail type', 'M6');
+
+      // REVEALED BEFORE IT IS ASSERTED ON. This read the value straight
+      // off the screen, which held only while `Preset` and `Rail type`
+      // happened to fit in the viewport together: `_reveal` scrolls in
+      // 120px steps and stops as soon as its target is visible, so how
+      // far it goes depends on how much list there is BELOW the target.
+      // `#876` added a section at the bottom, the scroll went further,
+      // and `Preset` left the viewport and was disposed. The case is
+      // about what the Preset dropdown says, so it now looks at it.
+      // BACK TO THE TOP BEFORE ASSERTING, and the reason is worth a
+      // sentence. This read `Custom` straight off the screen, which held
+      // only while `Preset` and `Rail type` fitted in the viewport
+      // together: `_reveal` uses `scrollUntilVisible`, which scrolls ONE
+      // WAY and stops as soon as its target appears, so how far it goes
+      // depends on how much list sits BELOW that target. `#876` added a
+      // section at the bottom, the scroll to `Rail type` went further,
+      // and `Preset` left the viewport and was disposed.
+      //
+      // `_reveal` cannot fix it: it only scrolls down. The case is about
+      // what the Preset dropdown SAYS, so it goes and looks at it.
+      await tester.drag(_inspectorScrollable, const Offset(0, 2000));
+      await tester.pumpAndSettle();
       expect(find.text('Custom'), findsWidgets);
     });
 
@@ -1023,6 +1045,204 @@ void main() {
       expect(
         find.textContaining('arrives with the power stage'),
         findsOneWidget,
+      );
+    });
+  });
+  group('`#876`: 0U channels, through the real screen (DR-163)', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // THE SCREEN AND NOT A HARNESS, WHICH IS THE WHOLE POINT OF THIS FILE
+    // ═══════════════════════════════════════════════════════════════════
+    // `zero_u_inspector_test.dart` proves the panel HANDS OVER the right
+    // `ZeroUResult` and the right three values, against callbacks it
+    // supplies itself. What that cannot see is whether the screen runs
+    // the command, prints the planner's refusal, or SIGNS the move with
+    // the session's clock and actor: `#879`'s second mutation blanked
+    // exactly that and survived, because the widget test passed its own.
+    //
+    // `_app()` mounts the real `RackCanvasScreen` with a real
+    // `DocumentController` and an injectable clock, so all three are the
+    // product's here.
+
+    /// A demo document whose rack carries a full-height channel, and a
+    /// PDU in it when asked.
+    RackDocument docWith0U({bool withPdu = false}) {
+      final doc = buildDemoRackDocument();
+      final rack = doc.racks.values.first;
+      rack.zeroUChannels.add(
+        ZeroUChannel(
+          id: 'ch-1',
+          side: ZeroUChannelSide.rearLeft,
+          startU: 1,
+          endU: rack.heightU,
+        ),
+      );
+      if (withPdu) {
+        doc.devices[const Uuid('dev-pdu')] = DeviceInstance(
+          id: const Uuid('dev-pdu'),
+          kind: DeviceKind.rackDevice,
+          templateRef: const TemplateRef(
+            templateId: TemplateId('tpl.pdu'),
+            version: 1,
+            contentHash: 'sha256:pdu',
+          ),
+          designator: 'PDU-1',
+          name: 'Vertical PDU',
+          placement: ZeroUPlacement(
+            rackId: rack.id,
+            channelId: 'ch-1',
+            offsetFromChannelStart: zeroUOffsetFor(rack.zeroUChannels.first, 3),
+            orientation: ZeroUOrientation.vertical,
+          ),
+          meta: EntityMeta(
+            createdAt: DateTime.utc(2026),
+            updatedAt: DateTime.utc(2026),
+            updatedBy: 'seed',
+          ),
+        );
+      }
+      return doc;
+    }
+
+    testWidgets('THE SECTION IS THERE, which it never was before `#876`', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await _openInspector(tester);
+      await _reveal(tester, find.text(kAddZeroUChannelLabel));
+
+      expect(find.text(kNoZeroUChannels), findsOneWidget);
+      expect(find.text(kAddZeroUChannelLabel), findsOneWidget);
+    });
+
+    testWidgets('adding one reaches the document, 1-BASED (CR-025)', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await _openInspector(tester);
+      await _reveal(tester, find.text(kAddZeroUChannelLabel));
+
+      await tester.tap(find.text(kAddZeroUChannelLabel));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(AddZeroUChannelDialog.endKey), '12');
+      await tester.tap(find.byKey(AddZeroUChannelDialog.confirmKey));
+      await tester.pumpAndSettle();
+
+      final channel = _rack(tester).zeroUChannels.single;
+      expect(
+        channel.startU,
+        1,
+        reason: 'the only producer in the product wrote U 0 until c95224d',
+      );
+      expect(channel.endU, 12);
+      expect(channel.side, ZeroUChannelSide.rearLeft);
+    });
+
+    testWidgets('removing an EMPTY channel takes it out', (tester) async {
+      await tester.pumpWidget(_app(document: docWith0U()));
+      await tester.pump();
+      await _openInspector(tester);
+      await _reveal(tester, find.byKey(ValueKey(zeroURemoveKeyFor('ch-1'))));
+
+      await tester.tap(find.byKey(ValueKey(zeroURemoveKeyFor('ch-1'))));
+      await tester.pumpAndSettle();
+
+      expect(_rack(tester).zeroUChannels, isEmpty);
+    });
+
+    testWidgets("AN OCCUPIED ONE REFUSES, IN THE PLANNER'S OWN WORDS", (
+      tester,
+    ) async {
+      // The screen prints the refusal unchanged, which is what makes the
+      // planner the only thing that decides (§11.162.3).
+      await tester.pumpWidget(_app(document: docWith0U(withPdu: true)));
+      await tester.pump();
+      await _openInspector(tester);
+      await _reveal(tester, find.byKey(ValueKey(zeroURemoveKeyFor('ch-1'))));
+
+      await tester.tap(find.byKey(ValueKey(zeroURemoveKeyFor('ch-1'))));
+      await tester.pumpAndSettle();
+
+      expect(_rack(tester).zeroUChannels, hasLength(1));
+      expect(
+        find.textContaining('PDU-1 is mounted in that channel'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('THE MOVE IS SIGNED BY THE SESSION, not by the panel', (
+      tester,
+    ) async {
+      // `#879`'s lesson, and the reason the row hands over three plain
+      // values rather than planning for itself.
+      final at = DateTime.utc(2026, 9, 13, 11, 30);
+      await tester.pumpWidget(
+        _app(clock: FixedClock(at), document: docWith0U(withPdu: true)),
+      );
+      await tester.pump();
+      await _openInspector(tester);
+      await _reveal(
+        tester,
+        find.byKey(ValueKey(zeroUStartKeyFor(const Uuid('dev-pdu')))),
+      );
+
+      await tester.enterText(
+        find.byKey(ValueKey(zeroUStartKeyFor(const Uuid('dev-pdu')))),
+        '11',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      final device = _doc(tester).devices[const Uuid('dev-pdu')]!;
+      final placement = device.placement as ZeroUPlacement;
+      expect(
+        zeroUStartUOf(
+          _rack(tester).zeroUChannels.single,
+          placement.offsetFromChannelStart,
+        ),
+        11,
+      );
+      expect(
+        device.meta.updatedBy,
+        // `DocumentController`'s default, which is what the screen is
+        // holding. The fixture seeded `'seed'` and the panel cannot
+        // produce either: the one mutation this catches is the shell
+        // handing over nothing, which is what SURVIVED at `#879`.
+        'local',
+        reason:
+            'the author came from the screen controller. It is not the '
+            'fixture seed, and no value the panel could invent',
+      );
+      expect(
+        device.meta.updatedAt,
+        at,
+        reason: 'and the date is the session clock, not DateTime.now()',
+      );
+    });
+
+    testWidgets('a U past the end of the channel is REFUSED and nothing '
+        'moves', (tester) async {
+      await tester.pumpWidget(_app(document: docWith0U(withPdu: true)));
+      await tester.pump();
+      await _openInspector(tester);
+      final key = ValueKey(zeroUStartKeyFor(const Uuid('dev-pdu')));
+      await _reveal(tester, find.byKey(key));
+      final before =
+          (_doc(tester).devices[const Uuid('dev-pdu')]!.placement
+                  as ZeroUPlacement)
+              .offsetFromChannelStart;
+
+      await tester.enterText(find.byKey(key), '999');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(
+        (_doc(tester).devices[const Uuid('dev-pdu')]!.placement
+                as ZeroUPlacement)
+            .offsetFromChannelStart,
+        before,
+        reason: 'the planner refused it, so nothing moved',
       );
     });
   });

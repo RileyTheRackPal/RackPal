@@ -1143,7 +1143,15 @@ $SuiteFloors = @{
     # while nothing else has claimed focus. True in every case in its own
     # file, where the canvas is the whole tree; false after one click
     # anywhere else, which is why `Esc` had never worked here either.
-    'rackpal_ui'     = 1838
+    # 1857 at `#876`: +19. AC-044's inspector half, which was ruled for
+    # v1 and never built: the rack panel adds and removes 0U channels and
+    # each channel lists what is mounted in it with a start U.
+    # SIX OF THE NINETEEN GO THROUGH THE REAL `RackCanvasScreen` rather
+    # than a harness, because what a harness supplying its own callbacks
+    # cannot see is whether the screen runs the command, prints the
+    # planner's refusal, or SIGNS the move from the session: `#879`'s
+    # second mutation blanked exactly that and survived.
+    'rackpal_ui'     = 1857
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

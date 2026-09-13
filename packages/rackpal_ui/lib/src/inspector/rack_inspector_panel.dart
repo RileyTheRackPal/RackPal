@@ -64,10 +64,14 @@
 //     are fully editable and undoable here; reducing them displaces nothing
 //     and — until a validation engine exists — files nothing.
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
     show FilteringTextInputFormatter, KeyDownEvent, LogicalKeyboardKey;
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/inspector/add_zero_u_channel_dialog.dart';
+import 'package:rackpal_ui/src/inspector/zero_u_occupant_row.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 
 /// §4's `RackInspector`. Stateless in its own right; the mutable buffers
@@ -83,6 +87,8 @@ class RackInspectorPanel extends StatelessWidget {
     required this.onRequestHeight,
     required this.onApplyPreset,
     required this.onRefuse,
+    required this.onZeroU,
+    required this.onMoveZeroU,
     this.firstFieldFocus,
     super.key,
   });
@@ -121,6 +127,25 @@ class RackInspectorPanel extends StatelessWidget {
   /// Focused when the panel is opened via `Ctrl+Alt+U`, so the keyboard
   /// path lands somewhere useful rather than nowhere.
   final FocusNode? firstFieldFocus;
+
+  /// Moves a 0U occupant: device, channel, start U (`#876`).
+  ///
+  /// **HERE AND NOT ON THE DEVICE PANEL**, which is where AC-044's wording
+  /// pointed and where it could not be reached: `scene_builder.dart` drops
+  /// every placement that is not a `RailPlacement`, so a 0U occupant is
+  /// never drawn, never hit-tested and never selectable.
+  final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
+
+  /// Runs a planned 0U channel edit, or reports its refusal (`#876`,
+  /// DR-163 §11.162.3).
+  ///
+  /// **A `ZeroUResult` AND NOT A COMMAND.** The panel calls the planner,
+  /// which already refuses a duplicate id, an inverted span, a span that
+  /// does not fit and a removal while occupied, each with a sentence
+  /// naming the rack and the numbers. Handing the RESULT over keeps the
+  /// host as the only thing that runs commands and keeps the surface from
+  /// growing a second copy of any of those checks.
+  final ValueChanged<ZeroUResult> onZeroU;
 
   @override
   Widget build(BuildContext context) {
@@ -256,6 +281,14 @@ class RackInspectorPanel extends StatelessWidget {
 
         const _SectionHeader('Circuits'),
         _CircuitsSection(rack: rack, doc: doc),
+
+        const _SectionHeader(kZeroUSectionLabel),
+        _ZeroUSection(
+          rack: rack,
+          doc: doc,
+          onZeroU: onZeroU,
+          onMoveZeroU: onMoveZeroU,
+        ),
       ],
     );
   }
@@ -1013,6 +1046,164 @@ class _PresetField extends StatelessWidget {
 ///
 /// Membership-by-walking-power-`Link`s (CR-028's other half) is untouched:
 /// this filters, which is all CR-028 asks of an inspector.
+/// What the 0U section is called on screen.
+const String kZeroUSectionLabel = '0U channels';
+
+/// What it says when the rack has none.
+const String kNoZeroUChannels = 'No 0U channels on this rack.';
+
+/// A stable handle for a channel's remove control, per row.
+String zeroURemoveKeyFor(String channelId) => 'zero-u-remove-$channelId';
+
+/// AC-044's inspector half, for the CHANNEL (`#876`, DR-163 §11.162.1).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE OCCUPANT COUNT IS NOT DECORATION
+/// ═══════════════════════════════════════════════════════════════════════
+/// `planRemoveZeroUChannel` REFUSES while occupied, naming the device, and
+/// a row that offered Remove with no hint of why it was about to refuse
+/// would be a control that fails for a reason the panel could see and did
+/// not say. `occupantsOfZeroUChannel` is the one walk that answers it, and
+/// its own doc says it is public "because the inspector needs to say
+/// 'AMP-1 is in this channel' before offering to delete it".
+///
+/// **THE BUTTON IS STILL OFFERED, NOT DISABLED.** The refusal carries the
+/// device's designator and the instruction to move it out first, which is
+/// more use than a greyed control with a tooltip; and it is the surface's
+/// one rule that the planner decides (§11.162.3).
+class _ZeroUSection extends StatelessWidget {
+  const _ZeroUSection({
+    required this.rack,
+    required this.doc,
+    required this.onZeroU,
+    required this.onMoveZeroU,
+  });
+
+  final Rack rack;
+  final RackDocument doc;
+  final ValueChanged<ZeroUResult> onZeroU;
+  final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (rack.zeroUChannels.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            child: Text(
+              kNoZeroUChannels,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: scheme.onSurfaceVariant,
+              ),
+            ),
+          )
+        else
+          for (final channel in rack.zeroUChannels) ...[
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          // THE NAME IF THERE IS ONE, else the side. A row
+                          // reading `` for an unnamed channel would be a
+                          // gap where the model has a default.
+                          channel.name.isEmpty
+                              ? zeroUSideLabel(channel.side)
+                              : channel.name,
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        Text(
+                          _subtitleFor(channel),
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: scheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    key: ValueKey(zeroURemoveKeyFor(channel.id)),
+                    icon: const Icon(Icons.delete_outline, size: 16),
+                    tooltip: 'Remove this channel',
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => onZeroU(
+                      planRemoveZeroUChannel(
+                        doc: doc,
+                        rackId: rack.id,
+                        id: channel.id,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // THE OCCUPANTS UNDER THEIR OWN CHANNEL (§11.162.1). A 0U
+            // device cannot be selected on the canvas, so this is the
+            // only place its channel and start U can be edited.
+            for (final device in occupantsOfZeroUChannel(
+              doc,
+              rack.id,
+              channel.id,
+            ))
+              ZeroUOccupantRow(
+                key: ValueKey('zero-u-occupant-${device.id.v}'),
+                device: device,
+                channel: channel,
+                channels: rack.zeroUChannels,
+                onMove: onMoveZeroU,
+              ),
+          ],
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: TextButton(
+            key: const ValueKey('zero-u-add'),
+            onPressed: () => unawaited(_add(context)),
+            child: const Text(kAddZeroUChannelLabel),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// `Rear left · U 1 to 42`, plus what is mounted in it.
+  String _subtitleFor(ZeroUChannel channel) {
+    final occupants = occupantsOfZeroUChannel(doc, rack.id, channel.id);
+    final summary = zeroUChannelSummary(channel);
+    if (occupants.isEmpty) return summary;
+    // NAMED WHEN THERE IS ONE, COUNTED WHEN THERE ARE MORE. The refusal
+    // names the first occupant, so a single-occupant row says the same
+    // word the sentence will.
+    return occupants.length == 1
+        ? '$summary · ${occupants.single.designator}'
+        : '$summary · ${occupants.length} devices';
+  }
+
+  Future<void> _add(BuildContext context) async {
+    final draft = await showAddZeroUChannel(context, rack: rack);
+    if (draft == null) return;
+    onZeroU(
+      planAddZeroUChannel(
+        doc: doc,
+        rackId: rack.id,
+        id: draft.id,
+        side: draft.side,
+        startU: draft.startU,
+        endU: draft.endU,
+        name: draft.name,
+      ),
+    );
+  }
+}
+
 class _CircuitsSection extends StatelessWidget {
   const _CircuitsSection({required this.rack, required this.doc});
 
