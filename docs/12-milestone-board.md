@@ -9601,7 +9601,9 @@ and the helper that does it carries the reason.
 Found when the `#871` shell case pressed `Ctrl+Z` on the Device Manager and nothing happened.
 `UndoIntent` and `RedoIntent` each have **exactly one handler in the entire tree**, inside
 `RackCanvasScreen`'s own `Shortcuts`, and the application has one menu, `File`, with no Undo item
-anywhere. The strip is six tabs; undo works on one.
+anywhere. **The strip is SEVEN tabs**; undo works on one. This paragraph said six when it
+was written, hours before `#874` was built, which makes it the fourth copy of a tab count to go
+stale in this repository and the only one whose subject was tab counts going stale (§5.9.33.2).
 
 **THE CODEBASE ALREADY KNEW AND ITS NOTE IS STALE BY THREE.** `rack_canvas_screen.dart` carries
 *"`Ctrl+Z` still reaches nothing at all on the Schematic and Schedule tabs. Widening the scope is a
@@ -9724,6 +9726,129 @@ killed: un-wiring `#870` again, a stale exemption, an exemption naming no board 
 splitter regaining its indented-method bug.
 
 **Commits** (§8.8). `#872` `5f9f7c9`.
+
+---
+
+#### 5.9.33 `#874`: undo reaches every tab, the Edit menu arrives five milestones late, and a count went stale in four places · `DR-159` · no version move
+
+2026-09-12. Reported by the user while running the `PLAN-J` demo: *"Undo doesn't appear to work
+anywhere across the program currently."* It closes under `#786` and moves no number.
+
+##### 5.9.33.1 One handler, seven tabs
+
+`UndoIntent` and `RedoIntent` had **exactly one handler in the entire tree**, inside
+`RackCanvasScreen`'s own `Shortcuts`, and the application had one menu, `File`, with no Undo item
+anywhere. So the only route to undo in the product was the Rack tab.
+
+**THE INTENT WAS ALWAYS RIGHT AND ONLY THE INSTALLATION POINT WAS WRONG**, which is what makes this a
+five-minute fix that took five milestones to reach. That handler's own comment: *"the key is
+DOCUMENT-GLOBAL. Undo and redo must keep working from the palette, the inspector and the toolbar;
+scoping them to the canvas would reintroduce the exact defect app_shell.dart's header post-mortems
+for `Ctrl+S`."* The registry row said the same thing from the other side and named the remedy:
+*"promoting it to `KeyScope.global` is a rebinding and belongs to a ruling."*
+
+##### 5.9.33.2 The count that went stale in four places, one of them written today
+
+| Where | What it said | What was true |
+|---|---|---|
+| `rack_canvas_screen.dart` | *"`Ctrl+Z` still reaches nothing at all on the Schematic and Schedule tabs"* | six of seven |
+| the keymap registry's `undo` note | the same sentence | the same |
+| `main.dart`'s header | *"THE THREE-TAB STRIP, AND WHY TWO OF ITS TABS ARE INERT"*, with Schematic and Schedule rendering `UnbuiltView` | seven tabs, none inert, both `UnbuiltView`s gone at M2-E |
+| this ruling's first draft | six tabs | seven |
+
+All four were true when written. `DR-091 §11.90.3` reordered the strip into job order and added
+Locations, Device Manager and Structured Wiring; `PLAN-E/5` added Plan. **No copy moved either time.**
+
+The fourth row is the one worth keeping: a count went stale inside the paragraph being written about
+counts going stale. None of the four now carries a number. `ShellView.values` is the list and
+`app_shell.dart` builds the strip from it.
+
+##### 5.9.33.3 Two handlers stay, and neither is a duplicate
+
+Flutter resolves an `Action` from the focused context upward, so a nearer one wins and the shell's is
+the fallback.
+
+**`RackCanvasScreen`** keeps its own because `undoLast` returns the selection as it was and only that
+screen can restore it: without it, undoing a delete leaves somebody staring at an empty inspector.
+
+**`DeviceBuilderScreen`** keeps its own because there are **two undo stacks**. CR-106 scopes the
+builder's to the `TemplateBody` and it dies with the window; `KeyScope.builder`'s note already refused
+to share a scope with the canvas because *"a scope shared with the document's canvas would say the two
+stacks were one thing"*. It had Undo and Redo **buttons** since M4-A/4 and no key binding at all, so
+`Ctrl+Z` was dead there too, on a second stack.
+
+**So one key means two things on one tab**, chosen by the user over the alternative of always taking
+the document's stack, which would have undone something in the project behind the window. The Edit
+menu makes the mode readable: while the builder shows, the menu names a template act.
+
+##### 5.9.33.4 The Edit menu was specified at M0 and never built
+
+docs/03 §13.3: *"The Edit menu shows a localized 'Undo Move device'; the log shows the stable enum
+name."*
+
+**`LabelKey` HAS 101 VALUES AND MANY EXIST ONLY BECAUSE OF THIS MENU.** `commitPortSort` is its own
+value rather than `reorderPorts` because *"'Undo Reorder' in front of somebody who has just been
+through a confirm dialog names the wrong act"*. `clearRoomEstimate` is split from `setRoomEstimate` so
+the menu cannot name the opposite act. `drawRoomOutline` and `reshapeRoomOutline` are one command with
+two labels chosen at apply time. That is a great deal of careful argument about the wording of a
+surface nobody could see.
+
+The map is **explicit and gated** rather than derived. De-camel-casing is one line and produces
+*"Remove Template From Project"*; it is worse than useless for precisely the values above, whose whole
+point is that the obvious wording names the wrong act. A parity gate fails when a value has no entry,
+and there is no fallback, on DR-156 §11.155.1's argument that a default is a hole.
+
+**IT IS NOT LOCALIZED AND THE RULING SAYS SO.** §13.3 also asks for `AppLocalizations` from the first
+commit and `l10n.yaml` in CI; neither exists in this tree. A menu built against half a specification
+has to record which half, or the built half reads as the whole.
+
+##### 5.9.33.5 The per-tab sweep found the fix incomplete, which is why it is a sweep
+
+The Structured Wiring tab still did nothing. Its `Add drops` box carries `autofocus: true`, because
+typing a drop is what somebody comes to that tab to do, and `_submit` refocuses and clears it after
+every entry. So a text field held focus permanently, `DefaultTextEditingShortcuts` sits nearer a
+focused field than the app's own `Shortcuts` and claimed `Ctrl+Z` for `UndoTextIntent`, and with
+nothing typed there was nothing to restore.
+
+**The complaint survived inside its own fix**, on the one tab whose primary verb is bulk data entry.
+An empty box now forwards the key; a box with text keeps it. The user chose that over dropping the
+autofocus, which would have bought a flat rule by taking away the reason the tab is fast.
+
+**AND THE SHELL'S OWN TEXT-FIELD GUARD WAS REMOVED RATHER THAN WEAKENED.** The first draft of
+`undoFromShell` copied `RackCanvasScreen`'s `!_textFieldHasFocus`. It is **redundant**, because a
+focused field's nearer binding consumes the key before `UndoIntent` is ever raised, so reaching that
+method already proves no field claimed it; and it is **harmful**, because it would have caught the
+forward above and thrown it away. A guard that re-asks a question the dispatch has already answered
+can only get it wrong.
+
+##### 5.9.33.6 Thirty-nine cases were green in a configuration the product does not ship
+
+They pumped `RackCanvasScreen` under a bare `MaterialApp` and got `Ctrl+Z` from the rack scope, so
+they proved undo worked on a screen mounted a way nothing mounts it. `test/app_like.dart` now hands
+them the root's shortcut map.
+
+That is the **fourth instance in a week** of a fixture standing in for a proof, and the second this
+session: `#871`'s browser card built no double-tap recogniser because the fixture left `onEdit` null,
+so every press landed in the test and none in the shell.
+
+##### 5.9.33.7 Two gates caught the move and both were right to
+
+`keymap_arbitration_test`'s per-scope counts moved **10 to 13 and 16 to 13**, in opposite directions
+by the same three, which is the shape of a move rather than a growth.
+
+`session_layering_test`'s **RULE 14** failed because a global binding is a decision and adding one
+means taking it again. Its own name said *"exactly two complete keybinding groups"* while the comment
+beneath it said three, and neither moved when `#847` made it three; the count now lives only in the
+list it asserts.
+
+##### 5.9.33.8 Evidence
+
+Floors: `rackpal_ui` 1781 to 1790, `rackpal_app` 996 to 1015. Gates: 17. Analyzer pin unmoved at 233.
+
+Six mutations, six kills. The first is the defect itself put back, the binding returning to
+`KeyScope.rack`, and four tabs go red.
+
+**Commits** (§8.8). `#874` `241222a`.
 
 ---
 
