@@ -74,3 +74,21 @@ NOT BUILD, and the third must be detected rather than inferred from a zero.
 See [assert-the-artifact-not-the-mechanism](assert-the-artifact-not-the-mechanism.md):
 mutation testing is how that rule gets checked, so a mutation run that lies is a
 check on the checker going quiet.
+
+# And it is direction-independent, which `#879` showed
+
+**2026-09-12.** A mutation against the rule-severity section wrote
+`Severity.info`, which is not a value in that enum. The run failed to
+**compile**, the runner saw a non-zero exit, and it printed **KILLED**.
+
+The original instance is the opposite: a non-building mutation that reports
+SURVIVED. Both are the same fact wearing different clothes, and the useful
+statement is neither of the two readings but the one under them: **a mutation
+that does not build has not been run**, so whatever the runner prints about it
+is noise.
+
+**The cheap check**, whichever way your runner reports: when a mutation's result
+is reported by a LOAD or COMPILE failure rather than by a named case, it counts
+for nothing. A runner that lists which cases went red makes this obvious for
+free, and one that reports only an exit code hides it.
+

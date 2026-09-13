@@ -27,9 +27,12 @@
 // user-authored validation rules. This edits a document's own settings. It
 // is not a registry editor, and `refused_surfaces_test.dart` fails if one
 // ever appears.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
+import 'package:rackpal_ui/src/validation/rule_severity_dialog.dart';
 
 /// What the dialog hands back: commands for the session's undo stack.
 typedef ProjectSettingEdit =
@@ -42,20 +45,39 @@ const Key kProjectSettingsListKey = Key('project-settings-list');
 const String kProjectSettingsLabel = 'Project settings...';
 
 /// Opens the settings editor over [doc].
+///
+/// [clock] and [actor] are here for ONE section: a `RuleOverride` carries
+/// a reason, an author and a date, all three persisted and all three
+/// printed on `T0.02` (`#879`). Nothing else in this dialog signs
+/// anything, which is why they arrived late rather than at `#805`.
 Future<void> showProjectSettingsDialog(
   BuildContext context, {
   required RackDocument doc,
   required ProjectSettingEdit onEdit,
+  required Clock clock,
+  required String actor,
 }) => showDialog<void>(
   context: context,
-  builder: (context) => _SettingsDialog(doc: doc, onEdit: onEdit),
+  builder: (context) => _SettingsDialog(
+    doc: doc,
+    onEdit: onEdit,
+    clock: clock,
+    actor: actor,
+  ),
 );
 
 class _SettingsDialog extends StatefulWidget {
-  const _SettingsDialog({required this.doc, required this.onEdit});
+  const _SettingsDialog({
+    required this.doc,
+    required this.onEdit,
+    required this.clock,
+    required this.actor,
+  });
 
   final RackDocument doc;
   final ProjectSettingEdit onEdit;
+  final Clock clock;
+  final String actor;
 
   @override
   State<_SettingsDialog> createState() => _SettingsDialogState();
@@ -98,6 +120,16 @@ class _SettingsDialogState extends State<_SettingsDialog> {
             const Divider(height: 32),
             _FamilyColours(
               doc: widget.doc,
+              onEdit: (commands) {
+                widget.onEdit(commands);
+                setState(() {});
+              },
+            ),
+            const Divider(height: 32),
+            _RuleSeverities(
+              doc: widget.doc,
+              clock: widget.clock,
+              actor: widget.actor,
               onEdit: (commands) {
                 widget.onEdit(commands);
                 setState(() {});
@@ -588,6 +620,233 @@ class _FamilyColours extends StatelessWidget {
                     ]);
                   },
           ),
+        ),
+      ],
+    );
+  }
+}
+
+/// docs/05 §8's per-project rule severities (`#879`, CR-019, `#297`).
+///
+/// ═══════════════════════════════════════════════════════════════════
+/// WHY HERE AND NOT ON THE FINDING THAT ANNOYED SOMEBODY
+/// ═══════════════════════════════════════════════════════════════════
+/// `evaluateRuleOverride`'s own words: *"An override is a standing
+/// decision about a rule for the whole project."* The issues drawer
+/// already offers a project-wide MUTE one click from a per-finding
+/// acknowledgement, and putting a second project-wide hammer beside it
+/// invites reaching for the bigger one. This dialog is where a reader
+/// looks for what the project has decided, and its own header already
+/// says these *"live in the project file, so they travel with it"*.
+///
+/// ═══════════════════════════════════════════════════════════════════
+/// THE COMMAND, THE DIALOG AND THE MODEL WERE ALL BUILT ALREADY
+/// ═══════════════════════════════════════════════════════════════════
+/// `SetRuleOverrideCommand` shipped at M5-B3 with a real revert and
+/// eight test constructions; `showRuleSeverityDialog` shipped with its
+/// own suite; `RuleOverride` carries the reason, the author and the
+/// date, all persisted. **None of it had a caller** (`#872`, `#879`).
+class _RuleSeverities extends StatelessWidget {
+  const _RuleSeverities({
+    required this.doc,
+    required this.clock,
+    required this.actor,
+    required this.onEdit,
+  });
+
+  final RackDocument doc;
+  final Clock clock;
+  final String actor;
+  final ProjectSettingEdit onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final overrides = doc.settings.ruleOverrides;
+    // CORE'S ANSWER, NOT A FILTER HERE. Tier 1 refuses the edit outright
+    // and files no finding, so an override of one would sit in the file
+    // forever meaning nothing; `overridableRules` is where that is
+    // decided and where a test can read every rule rather than whichever
+    // rows a virtualised list happened to build.
+    final rules = overridableRules();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Rule severities', style: theme.textTheme.titleSmall),
+        Text(
+          'What a rule counts as in THIS project. Every override needs a '
+          'reason, because it prints on sheet T0.02 for whoever reads the '
+          'drawings, and clearing one returns that rule to its default.',
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        if (overrides.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'No rule is overridden. Every rule counts as the catalogue '
+              'says.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: kConsoleEmphasis,
+              ),
+            ),
+          ),
+        for (final rule in rules)
+          if (overrides.containsKey(rule.ruleId))
+            _OverrideRow(
+              rule: rule,
+              current: overrides[rule.ruleId]!,
+              onEdit: (to) => _write(rule.ruleId, overrides[rule.ruleId], to),
+              onOpen: () => unawaited(_edit(context, rule)),
+            ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            icon: const Icon(Icons.add, size: 18),
+            label: const Text(kOverrideARule),
+            onPressed: rules.every((r) => overrides.containsKey(r.ruleId))
+                ? null
+                : () => unawaited(_add(context, rules, overrides)),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// Picks a rule, then asks what it should count as.
+  Future<void> _add(
+    BuildContext context,
+    List<RuleMeta> rules,
+    Map<String, RuleOverride> overrides,
+  ) async {
+    final picked = await showDialog<RuleMeta>(
+      context: context,
+      builder: (context) => _RulePicker(
+        rules: [
+          for (final r in rules)
+            if (!overrides.containsKey(r.ruleId)) r,
+        ],
+      ),
+    );
+    if (picked == null || !context.mounted) return;
+    await _edit(context, picked);
+  }
+
+  /// Opens the severity control for [rule], pre-filled when it already
+  /// has an override.
+  Future<void> _edit(BuildContext context, RuleMeta rule) async {
+    final current = doc.settings.ruleOverrides[rule.ruleId];
+    final choice = await showRuleSeverityDialog(
+      context: context,
+      ruleId: rule.ruleId,
+      current: current,
+    );
+    if (choice == null) return;
+    _write(
+      rule.ruleId,
+      current,
+      // NULL SEVERITY IS "use the default", which REMOVES the override
+      // rather than recording one that agrees with it. The dialog's own
+      // typedef draws that distinction and this is the half of it that
+      // writes.
+      choice.severity == null
+          ? null
+          : RuleOverride(
+              severity: choice.severity!,
+              reason: choice.reason,
+              by: actor,
+              at: clock.nowUtc(),
+            ),
+    );
+  }
+
+  void _write(String ruleId, RuleOverride? from, RuleOverride? to) =>
+      onEdit([SetRuleOverrideCommand(ruleId: ruleId, from: from, to: to)]);
+}
+
+/// The label on the control that starts one. Spelled once so the section
+/// and its tests agree.
+const String kOverrideARule = "Override a rule's severity";
+
+/// One standing decision, with the sentence that justifies it.
+class _OverrideRow extends StatelessWidget {
+  const _OverrideRow({
+    required this.rule,
+    required this.current,
+    required this.onEdit,
+    required this.onOpen,
+  });
+
+  final RuleMeta rule;
+
+  /// NAMED `current` AND NOT `override`, which is not style: a field
+  /// called `override` shadows the top-level `override` annotation
+  /// inside its own class, so `@override` on `build` below stops
+  /// resolving. The analyzer says "Undefined name 'override' used as an
+  /// annotation", which names the symptom and not the cause.
+  final RuleOverride current;
+  final ValueChanged<RuleOverride?> onEdit;
+  final VoidCallback onOpen;
+
+  /// A stable handle for tests, per rule.
+  static String keyFor(String ruleId) => 'rule-override-$ruleId';
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      key: ValueKey(keyFor(rule.ruleId)),
+      dense: true,
+      title: Text('${rule.ruleId}  ${current.severity.name}'),
+      // THE REASON IS THE SUBTITLE AND NOT A TOOLTIP. It is the whole
+      // point of CR-019 replacing a bare severity map, and it is what
+      // prints on the sheet; a reader of this list is exactly the person
+      // who needs to see whether the decision still holds.
+      subtitle: Text(current.reason, style: theme.textTheme.bodySmall),
+      onTap: onOpen,
+      trailing: TextButton(
+        onPressed: () => onEdit(null),
+        child: const Text('Clear'),
+      ),
+    );
+  }
+}
+
+/// Which rule to override. Mirrors `_FamilyPicker` deliberately.
+class _RulePicker extends StatelessWidget {
+  const _RulePicker({required this.rules});
+
+  final List<RuleMeta> rules;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return AlertDialog(
+      title: const Text('Which rule'),
+      content: SizedBox(
+        width: 520,
+        height: 420,
+        child: ListView(
+          children: [
+            for (final rule in rules)
+              ListTile(
+                dense: true,
+                title: Text(rule.ruleId),
+                subtitle: Text(
+                  rule.summary,
+                  style: theme.textTheme.bodySmall,
+                ),
+                onTap: () => Navigator.of(context).pop(rule),
+              ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
         ),
       ],
     );
