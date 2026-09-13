@@ -1,5 +1,39 @@
 # Update Log
 
+## 2026-09-12 (twenty-seventh entry)
+
+* **Closed**: `#879` with `56d96565`. A rule's severity can be overridden for a
+  project, from a `Rule severities` section in project settings beside `Signal
+  colours`. **No version move**: it closes under `#786`.
+* **Note**: **THE FOURTH CAPABILITY IN THREE DAYS FOUND COMPLETE AND
+  UNREACHABLE**, after `#870`, `#871` and `#875`. `SetRuleOverrideCommand`,
+  `showRuleSeverityDialog` and `RuleOverride`'s reason, author and date all
+  shipped at M5-B3 with their own suites, and nothing opened the dialog. The
+  shape does not vary: each piece is tested by somebody who supplied the piece
+  above it.
+* **Note**: **THE PLACEMENT ARGUMENT WAS ALREADY IN THE CORPUS.**
+  `evaluateRuleOverride`'s own comment calls an override "a standing decision
+  about a rule for the whole project", which is what put it in project settings
+  rather than on the finding that annoyed somebody. `#875` had just made the
+  acknowledge dialog reachable, and that dialog already offers a project-wide
+  MUTE; a second project-wide hammer one click away invites reaching for the
+  bigger one, and the two are not the same act.
+* **Note**: **THREE MUTATIONS WROTE THREE OF THE TESTS, AND THE FIRST MOVED CODE
+  RATHER THAN ADDING A CASE.** The tier-1 filter lived inside a virtualised
+  picker, so `findsNothing` passed whether a rule was excluded or merely below
+  the fold; "which rules may carry a standing decision" is a fact about the
+  catalogue and is now `overridableRules`, tested over every rule in both
+  directions. The others found the shell's signature untested and the dialog's
+  own default-versus-equal-to-default distinction untested.
+* **Note**: **A MUTATION THAT DOES NOT BUILD MEASURES NOTHING IN EITHER
+  DIRECTION**, which widens
+  [that practice](/practices/a-mutation-that-does-not-build-measures-nothing.md).
+  Its original instance reports SURVIVED; this one used a non-existent enum
+  value, failed to compile, and reported KILLED. Same fact, opposite clothes.
+* **Note**: **A FIELD NAMED `override` SHADOWS THE `@override` ANNOTATION** in
+  its own class, and the analyzer reports it as "Undefined name 'override' used
+  as an annotation" pointing at the annotation rather than at the field.
+
 ## 2026-09-12 (twenty-sixth entry)
 
 * **Gate**: [callbacks have suppliers](/gates/callbacks-have-suppliers.md),

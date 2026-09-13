@@ -9951,6 +9951,74 @@ callbacks and six cases go red across two packages.
 
 ---
 
+#### 5.9.35 `#879`: a rule's severity can be overridden, and three mutations wrote three of the tests · `CR-019`, `RJ-006` · no version move
+
+2026-09-12. Found by `#872`'s reachability gate. It closes under `#786` and moves no number.
+
+##### 5.9.35.1 Built at M5-B3, reachable from nowhere
+
+`SetRuleOverrideCommand` shipped with a real revert and eight test constructions.
+`showRuleSeverityDialog` shipped with its own suite. `RuleOverride` carries a severity, a reason, an
+author and a date, all four persisted and all four printed on `T0.02`. **Nothing opened the dialog.**
+
+That is the fourth capability in three days found complete and unreachable, after `#870`, `#871` and
+`#875`. The shape does not vary: the model, the command and the surface are each tested by somebody
+who supplied the piece above them.
+
+##### 5.9.35.2 Project settings, and the argument is in the corpus already
+
+Three places were put to the user. `evaluateRuleOverride`'s own comment settles it: *"An override is a
+standing decision about a rule for the whole project."*
+
+The issues drawer was the tempting one, because that is where the rule annoys you. It was refused on
+a hazard worth naming: `#875` had just made the acknowledge dialog reachable, and that dialog already
+offers a **project-wide mute**. Putting a second project-wide hammer one click away invites reaching
+for the bigger one, and the two are not the same act. A mute says *this finding is noted*; an
+override says *this rule counts as X here*.
+
+The settings dialog is where a reader looks for what the project has decided, and its own header
+already says these *"live in the project file, so they travel with it. Every change is undoable."*
+
+##### 5.9.35.3 Three mutations wrote three of the tests
+
+| Mutation | What it exposed |
+|---|---|
+| the picker stops filtering tier 1 | **the UI test was vacuous.** That list is virtualised, so a tier-1 row below the fold is never built and `findsNothing` passes whether the rule was excluded or merely out of sight |
+| the shell hands over no author | **nothing asserted the signature.** The widget test passes its own actor, so the shell's wiring was covered by nobody |
+| `use the default` records an override | **the dialog's own distinction was untested.** Its typedef says a severity equal to the default is a different act from choosing the default |
+
+**THE FIRST ONE MOVED CODE RATHER THAN ADDING A CASE.** The question "which rules may carry a
+standing decision" is a fact about the catalogue, not about a widget, so `overridableRules` now lives
+in `rule_exception.dart` beside `ruleAcceptsAnException` and is tested over every rule **in both
+directions**: no tier-1 rule is offered, and every rule that is not tier 1 is. An exclusion check
+alone would pass over an empty list.
+
+##### 5.9.35.4 A fourth mutation measured nothing and was repaired rather than counted
+
+It wrote `Severity.info`, which is not a value in that enum. The run failed to **compile** and the
+runner reported it as a kill. `.okf/practices/a-mutation-that-did-not-build.md` records the same
+hazard pointing the other way, where a non-building mutation reports as SURVIVED; the rule is
+direction-independent. It was fixed to use `Severity.off` and re-run.
+
+##### 5.9.35.5 A name collision worth writing down
+
+The row widget's field was called `override`, which **shadows the top-level `override` annotation
+inside its own class**, so `@override` on `build` stopped resolving. The analyzer's message is
+*"Undefined name 'override' used as an annotation"*, which names the symptom and not the cause, and
+points at the annotation rather than at the field twelve lines above it. It is `current` now, matching
+`showRuleSeverityDialog`'s own parameter, and the comment says why so nobody renames it back.
+
+##### 5.9.35.6 Evidence
+
+Floors: `rackpal_core` 4636 to 4639, `rackpal_ui` 1799 to 1805, `rackpal_app` 1020 to 1022. Gates: 17.
+Analyzer pin unmoved at 233.
+
+Six mutations, six kills. `#872`'s exemption list loses another row, its third retirement in two days.
+
+**Commits** (§8.8). `#879` `56d96565`.
+
+---
+
 ## 6. The dependency graph, as it actually stands
 
 ### 6.1 What can be worked on now
