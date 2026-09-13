@@ -13429,13 +13429,19 @@ actually done, in three groups with a divider between them:
 
 | | View | Group |
 |---|---|---|
-| 1 | Locations | **the project**: what exists and where |
+| 1 | ~~Locations~~ **Site** | **the project**: what exists and where |
 | 2 | Device Manager | |
 | 3 | Rack | **the design**: what is built |
 | 4 | Structured Wiring | |
 | 5 | Schematic | |
-| 6 | Plan | |
-| 7 | Schedule | **the deliverable** |
+| 6 | ~~Plan~~ | |
+| 7 → 6 | Schedule | **the deliverable** |
+
+**SEVEN ROWS BECAME SIX ON 2026-09-13 (DR-168 §11.167).** `Locations` and `Plan` are one view called
+`Site`, at position 1. The job order below is unchanged and no other view moved; what changed is that
+the sequence's first step and its sixth turned out to be one surface, which docs/15 §6 had half-said
+from the start by putting the location tree in the Plan view's own rail. **§11.90.4 is what permits
+it**: *"the view set is not final until M6."*
 
 The sequence is a job: survey the site, decide what equipment exists, mount it, pull cable to it,
 interconnect it, mark where it physically sits, hand over the paperwork. Each view's inputs come
@@ -20770,6 +20776,63 @@ channel while no longer editing it.
 
 **11.166.3 Scope.** **No scope change.** AC-044 puts these fields on the inspector in v1 and always
 did; this is the surface arriving where that ruling pointed. Board `#887` cites it.
+
+### 11.167 DR-168 · The Location and Plan views are one view, called Site
+
+**The question.** Two tabs do adjacent halves of one job: `Locations` holds the project's location
+tree, and `Plan` holds floorplan underlays, the room outlines drawn on them, and the pins. The user
+asked for them merged, and `plan_editor_screen.dart` has carried a note since `PLAN-E/5` saying a
+merge *"IS POSSIBLE BEFORE v1"* and was deliberately not designed for in that chapter.
+
+**11.167.1 THE MERGE IS HALF-DONE ALREADY, AND docs/15 §6 SAYS SO.** That section's layout paragraph
+reads: *"Left is the underlay list and the location tree, read-only with the same 'edit in
+`Project ▸ Locations…`' affordance the Structure editor uses (CR-112)."* **The tree has been in the
+Plan view's rail since the chapter brief.** What the design withheld was EDITING it there, and the
+affordance it named instead **points at a menu the application does not have**: there is no `Project`
+menu, Locations was promoted to a tab by DR-091 §11.90, and three on-screen strings still send people
+to look for it (`#888`). The room list in that rail today was added on the user's own call on
+2026-09-11, on the reasoning that *"the thing you are working through is listed where you work"*.
+
+**11.167.2 RULED: ONE VIEW, CALLED `Site`, AT POSITION 1.** Settled by the user on 2026-09-13. The
+name is neither half's: a site HAS rooms, and some of those rooms are drawn on a floorplan. It
+survives a project that never imports a plan, which is the state CR-112 exists to protect, and it
+does not read as though one of the two views won.
+
+**POSITION 1 IS `Locations`' PLACE, and the job order is otherwise untouched.** §11.90.3's sequence
+is *"survey the site, decide what equipment exists, mount it, pull cable to it, interconnect it, mark
+where it physically sits, hand over the paperwork"*, and the surveying end is where a merged view
+belongs: the rooms are the first thing anybody enters and the last thing a plan gets drawn onto.
+
+**11.167.3 §11.90.3's TABLE GOES FROM SEVEN ROWS TO SIX, and §11.90.4 is what permits it.** That
+clause refuses to freeze the strip, in terms: *"the view set is not final until M6."* It is written
+about Plan arriving and Rear Panel arriving in v1.1, and it reads the same way for two views
+becoming one. **The order is not re-argued and no other view moves.**
+
+**11.167.4 THE RAIL IS THE TREE, AND THE UNDERLAY LIST APPEARS WHEN THERE IS AN UNDERLAY.** A project
+with no floorplan is an ordinary project, not an empty view with an import button, which is CR-112 and
+docs/04 §7.5 read as a layout requirement rather than a data one: *"a project with racks and no
+Structure device must still be able to say which room a rack is in."*
+
+**11.167.5 THE TREE CREATES A ROOM; AN OUTLINE IS AN ATTRIBUTE OF ONE.** Drawing-creates-a-room was
+put to the user and refused. **One producer**, and the reason is CR-047: an arbitrary-depth tree makes
+a new room answer *which parent, which kind, where in the order*, and a drag on a floorplan has
+nowhere to ask. The tree stays the source of truth for a project that has no plan at all, and the
+merge buys adjacency and a shared selection rather than a second way to make a room.
+
+**11.167.6 WHAT IS NOT AMENDED.** **CR-112 stands**: the tree is not owned by the Structure editor or
+the rack editor, and it still is not. **CR-047 stands**: one arbitrary-depth tree of which every other
+surface is a view. **docs/15 §6's "no fourth region" stands** and is restated for a view that holds a
+tree, an underlay list, a plan and the standard inspector; the rail is one region whose contents
+depend on the document, not two regions.
+
+**11.167.7 AND `showLocationsPanel` IS DELETED RATHER THAN PORTED.** It has **no caller in `lib/` and
+none in any test**: it is the modal route CR-112's ellipsis promised, superseded when DR-091 promoted
+Locations to a tab, and left behind. Seventh instance of the no-producer shape after DR-143, `#674`,
+`PLAN-E/5`, `LEN-A/3`, `#870` and `#885`.
+
+**11.167.8 Scope.** **No scope change.** Both jobs stay in v1 and neither loses a clause; what changes
+is how many tabs they are behind, which §11.90.4 already declined to fix before M6. Board `#889`
+cites it, and its five Chapters carry the work.
 ---
 
 ## 12. Superseded rulings
