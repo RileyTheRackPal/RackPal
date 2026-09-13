@@ -41,6 +41,7 @@
 // what it must not do EITHER is swallow a sentence core produced.
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/keymap/keymap.dart';
 
 /// The loop with its "just added" tail.
 ///
@@ -302,16 +303,46 @@ class _DropEntryPanelState extends State<DropEntryPanel> {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        TextField(
-          controller: _text,
-          focusNode: _focus,
-          autofocus: true,
-          decoration: const InputDecoration(
-            labelText: 'Add drops',
-            hintText: 'Living Room: 4x Cat6, 2x RG6',
-            border: OutlineInputBorder(),
+        // ═══════════════════════════════════════════════════════════
+        // AN EMPTY BOX HANDS `Ctrl+Z` BACK TO THE DOCUMENT (DR-159
+        // §11.158.8)
+        // ═══════════════════════════════════════════════════════════
+        // This field AUTOFOCUSES, because typing a drop is what somebody
+        // comes to this tab to do, and `_submit` refocuses it and clears
+        // it after every entry. So on the one tab whose primary verb is
+        // bulk data entry, a text field held focus permanently, and
+        // `DefaultTextEditingShortcuts` therefore claimed `Ctrl+Z` for
+        // `UndoTextIntent`. With nothing typed there was nothing to
+        // restore, so the key did nothing at all: the very complaint
+        // `#874` was filed about, surviving inside its own fix.
+        //
+        // **THE CONDITION IS THE WHOLE DESIGN.** A box with text in it
+        // has typing worth taking back and keeps the key. An EMPTY one
+        // has none, so it forwards, and this `Shortcuts` sits nearer the
+        // field than `DefaultTextEditingShortcuts` does and therefore
+        // wins. The panel already rebuilds on every keystroke
+        // (`_text.addListener(_replan)`), so the swap tracks the box.
+        Shortcuts(
+          shortcuts: _text.text.isEmpty
+              ? <ShortcutActivator, Intent>{
+                  keymapActivator(KeyBindingId.undo): const UndoIntent(),
+                  keymapActivator(KeyBindingId.redo): const RedoIntent(),
+                  keymapActivator(
+                    KeyBindingId.redoAlternate,
+                  ): const RedoIntent(),
+                }
+              : const <ShortcutActivator, Intent>{},
+          child: TextField(
+            controller: _text,
+            focusNode: _focus,
+            autofocus: true,
+            decoration: const InputDecoration(
+              labelText: 'Add drops',
+              hintText: 'Living Room: 4x Cat6, 2x RG6',
+              border: OutlineInputBorder(),
+            ),
+            onSubmitted: (_) => _submit(),
           ),
-          onSubmitted: (_) => _submit(),
         ),
         const SizedBox(height: 8),
         _Preview(plan: _plan, text: _text.text),

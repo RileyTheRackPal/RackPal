@@ -216,6 +216,49 @@ Map<Type, Action<Intent>> buildViewActions(GlobalKey<AppShellState> shell) =>
       ),
     };
 
+/// The handlers for undo and redo, which are GLOBAL bindings since
+/// DR-159 §11.158.3.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// INSTALLED AT THE APP ROOT, AND THAT IS THE WHOLE FIX
+/// ═════════════════════════════════════════════════════════════════════
+/// `UndoIntent` and `RedoIntent` had exactly ONE handler in the entire
+/// tree, inside `RackCanvasScreen`'s own `Shortcuts`, so `Ctrl+Z` did
+/// nothing on six of the seven tabs. The intent was always right and only
+/// the installation point was wrong: that handler's own comment says the
+/// key is document-global, and this is `buildFileActions`' post-mortem
+/// applied to the pair of keys it did not cover.
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THIS IS THE FALLBACK, NOT THE ONLY HANDLER
+/// ═════════════════════════════════════════════════════════════════════
+/// Flutter resolves an `Action` from the FOCUSED context upward, so a
+/// nearer one wins. Two screens keep their own on purpose (§11.158.4,
+/// §11.158.5):
+///
+///   * `RackCanvasScreen`, because `undoLast` returns the selection as it
+///     was and only that screen can restore it;
+///   * `DeviceBuilderScreen`, because CR-106 gives it a second undo stack
+///     and `Ctrl+Z` must reach THAT one while it is open.
+///
+/// So this runs for every surface that has neither, which is most of
+/// them.
+Map<Type, Action<Intent>> buildUndoActions(GlobalKey<AppShellState> shell) =>
+    <Type, Action<Intent>>{
+      UndoIntent: CallbackAction<UndoIntent>(
+        onInvoke: (_) {
+          shell.currentState?.undoFromShell();
+          return null;
+        },
+      ),
+      RedoIntent: CallbackAction<RedoIntent>(
+        onInvoke: (_) {
+          shell.currentState?.redoFromShell();
+          return null;
+        },
+      ),
+    };
+
 /// The handlers for the registry's four file bindings, bound to one
 /// session.
 Map<Type, Action<Intent>> buildFileActions(SessionController controller) =>
@@ -506,6 +549,64 @@ final class AppShellState extends State<AppShell>
     }
   }
 
+  /// The Device Builder's own undo stack, while that screen is showing
+  /// (DR-159 §11.158.5). Null whenever it is not.
+  ///
+  /// **CLEARED HERE RATHER THAN REPORTED FROM `dispose`.** That screen
+  /// cannot notify from `dispose` without throwing "setState() called
+  /// when widget tree was locked", which its own comment records. It does
+  /// not have to: this shell is what decides to stop showing it, so this
+  /// shell is what clears the field, in the same `setState`.
+  UndoTarget? _builderUndo;
+
+  /// Whether the Device Manager tab is showing the EDITOR rather than the
+  /// browser. The one place that question is asked, so the tab body and
+  /// the undo routing cannot come to disagree about it.
+  bool get _builderIsShowing => _editingTemplateId != null || _authoringNew;
+
+  /// The stack the Edit menu describes and the shell's own `Ctrl+Z` acts
+  /// on: the builder's while it is open, the document's otherwise.
+  UndoTarget get activeUndoTarget {
+    final builder = _builderUndo;
+    if (_builderIsShowing && builder != null) return builder;
+    final controller = _services.session.controller;
+    return UndoTarget(
+      canUndo: controller.undo.canUndo,
+      canRedo: controller.undo.canRedo,
+      undoLabelKey: controller.undo.undoLabelKey,
+      redoLabelKey: controller.undo.redoLabelKey,
+      undo: controller.undoLast,
+      redo: controller.redoLast,
+    );
+  }
+
+  /// `Ctrl+Z` arriving at the app root. Public so `buildUndoActions` can
+  /// reach it through the shell key.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THERE IS NO TEXT-FIELD GUARD HERE, AND THAT IS DELIBERATE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `RackCanvasScreen` gates its own undo on `!_textFieldHasFocus` and
+  /// has since M1. The first draft of this method copied it, and the copy
+  /// was redundant AND harmful.
+  ///
+  /// **REDUNDANT**, because `DefaultTextEditingShortcuts` sits BELOW the
+  /// app's own `Shortcuts` and therefore nearer any focused field: it
+  /// maps `Ctrl+Z` to `UndoTextIntent`, `EditableText` handles it, and
+  /// the key is consumed. By the time `UndoIntent` reaches this method,
+  /// no text field claimed it, which is the same fact the guard was
+  /// asking about and a more reliable way of asking.
+  ///
+  /// **HARMFUL**, because a field can decline on purpose. The Structured
+  /// Wiring tab's `Add drops` box autofocuses and clears itself on every
+  /// submit, so it forwards `Ctrl+Z` to the document while it is empty
+  /// (DR-159 §11.158.8). A guard here would have caught that forward and
+  /// thrown it away, leaving the key dead on the one tab whose primary
+  /// verb is bulk data entry.
+  void undoFromShell() => activeUndoTarget.undo();
+
+  void redoFromShell() => activeUndoTarget.redo();
+
   void _onSessionChanged() {
     // The title is recomputed on every change notification and DIFFED
     // inside the writer, so a 60 Hz drag does not become 60 platform
@@ -765,7 +866,7 @@ final class AppShellState extends State<AppShell>
         titleSpacing: 8,
         title: Row(
           children: [
-            _FileMenu(
+            _AppMenuBar(
               controller: _fileMenu,
               recents: _recents,
               recentStates: _recentStates,
@@ -782,6 +883,7 @@ final class AppShellState extends State<AppShell>
               onImportFloorplan: _importFloorplan,
               onProjectSettings: _openProjectSettings,
               onOpenRecent: _openRecent,
+              undoTarget: activeUndoTarget,
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -1074,6 +1176,13 @@ final class AppShellState extends State<AppShell>
           : copyTemplateBody(snapshot.body),
       onDirtyChanged: (dirty) {
         if (mounted) setState(() => _builderDirty = dirty);
+      },
+      // ITS OWN STACK, HANDED UP (DR-159 §11.158.5). The shell's global
+      // `Ctrl+Z` and the Edit menu both act on whatever this reports
+      // while the editor is showing, so the key reaches the template's
+      // stack and the menu names a template act.
+      onUndoTargetChanged: (target) {
+        if (mounted) setState(() => _builderUndo = target);
       },
       // SAVE-AND-CLOSE RETURNS TO THE BROWSER (`#243`). The draft is
       // saved by definition on this path, so nothing is lost, and this
@@ -1521,8 +1630,14 @@ final class AppShellState extends State<AppShell>
 /// text, so the menu and the bindings are declared from the same place
 /// and cannot drift apart into a menu that advertises a key nothing
 /// listens for.
-final class _FileMenu extends StatelessWidget {
-  const _FileMenu({
+/// The application's whole menu bar.
+///
+/// **NAMED `_FileMenu` UNTIL DR-159 §11.158.6**, which was accurate for
+/// as long as `File` was the only menu there was. It now builds `File`
+/// and `Edit`, and a class named after one of its two children is the
+/// kind of name a reader trusts and should not.
+final class _AppMenuBar extends StatelessWidget {
+  const _AppMenuBar({
     required this.controller,
     required this.recents,
     required this.recentStates,
@@ -1539,7 +1654,12 @@ final class _FileMenu extends StatelessWidget {
     required this.onImportFloorplan,
     required this.onProjectSettings,
     required this.onOpenRecent,
+    required this.undoTarget,
   });
+
+  /// What `Edit` describes and acts on: the document's stack, or the
+  /// Device Builder's while that screen is showing (DR-159 §11.158.5).
+  final UndoTarget undoTarget;
 
   final MenuController controller;
   final List<RecentEntry> recents;
@@ -1693,6 +1813,38 @@ final class _FileMenu extends StatelessWidget {
             ),
           ],
           child: const Text('File'),
+        ),
+        // ═══════════════════════════════════════════════════════════════
+        // THE EDIT MENU, SPECIFIED AT M0 AND BUILT AT DR-159 §11.158.6
+        // ═══════════════════════════════════════════════════════════════
+        // docs/03 §13.3: "The Edit menu shows a localized 'Undo Move
+        // device'; the log shows the stable enum name." `LabelKey` has
+        // 101 values and many exist ONLY because of this menu —
+        // `commitPortSort` is its own value because "Undo Reorder ports"
+        // in front of somebody who has just been through a confirm dialog
+        // names the wrong act. All of that reasoning was written against
+        // a surface that did not exist.
+        //
+        // **A KEYBOARD-ONLY BINDING IS INVISIBLE**, which is why fixing
+        // the key alone was refused: a person who does not already know
+        // the chord has no way to learn the product has undo at all.
+        SubmenuButton(
+          menuChildren: [
+            MenuItemButton(
+              shortcut: keymapActivator(KeyBindingId.undo),
+              // NULL DISABLES IT, which is the honest render of an empty
+              // stack: a live row that does nothing teaches a person the
+              // menu lies.
+              onPressed: undoTarget.canUndo ? undoTarget.undo : null,
+              child: Text(undoMenuLabel(undoTarget.undoLabelKey)),
+            ),
+            MenuItemButton(
+              shortcut: keymapActivator(KeyBindingId.redo),
+              onPressed: undoTarget.canRedo ? undoTarget.redo : null,
+              child: Text(redoMenuLabel(undoTarget.redoLabelKey)),
+            ),
+          ],
+          child: const Text('Edit'),
         ),
       ],
     );

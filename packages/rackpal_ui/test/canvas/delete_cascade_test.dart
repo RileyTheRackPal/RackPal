@@ -16,6 +16,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
+import '../app_like.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -331,6 +333,10 @@ void main() {
     Future<void> pump(WidgetTester tester, RackDocument doc) async {
       await tester.pumpWidget(
         MaterialApp(
+          // DR-159 §11.158.3: undo and redo are GLOBAL bindings, so a
+          // screen pumped without the root's map is a configuration
+          // the product does not ship. See test/app_like.dart.
+          shortcuts: appGlobalShortcuts(),
           home: Scaffold(
             body: RackCanvasScreen(
               measurer: _FakeMeasurer(),

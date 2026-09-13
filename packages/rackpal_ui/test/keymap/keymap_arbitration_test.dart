@@ -186,8 +186,17 @@ void main() {
       // previous. The first draft bound two and left F7 out; RULE 14 in
       // session_layering_test.dart failed it, on its own rule that a
       // partial keymap reads as a whole one.
-      expect(keyBindingsIn(KeyScope.global), hasLength(10));
-      expect(keyBindingsIn(KeyScope.rack), hasLength(16));
+      // THIRTEEN SINCE DR-159 (`#874`), which moved undo, redo and the
+      // Ctrl+Y redo alternate out of `rack` and into `global`. Those
+      // three had been rack rows for five milestones while their own
+      // handler's comment said the key was DOCUMENT-global, so `Ctrl+Z`
+      // reached nothing on six of the seven tabs. The counts move in
+      // opposite directions by the same three, which is the shape of a
+      // MOVE rather than a growth, and RULE 14 in
+      // session_layering_test.dart is where the decision to add a global
+      // binding is taken again.
+      expect(keyBindingsIn(KeyScope.global), hasLength(13));
+      expect(keyBindingsIn(KeyScope.rack), hasLength(13));
       // TWENTY-FIVE SINCE `#801`, which added `B` for CR-103's other
       // half. A click on a collapsed pin expands the bank, because
       // selecting a pin that stands for forty-eight ports means nothing;

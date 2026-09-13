@@ -473,11 +473,25 @@ final class AppServices {
   // — the row it names is the binding. What is left to catch is an
   // accelerator appearing on an item that was decided not to have one, or
   // one vanishing from a file item, and that is a count.
-  test('RULE 14 — exactly two complete keybinding groups are registered', () {
+  test('RULE 14 — the global scope is exactly the groups that were '
+      'decided', () {
     // docs/04 §8's ~40-binding table is NOT bound wholesale: a partial
     // keymap reads as a whole one, so a group lands only when it is
-    // complete. THREE are complete: the four FILE bindings, the VIEW
-    // switch, and DR-133's VALIDATION keys.
+    // complete. FOUR are complete: the four FILE bindings, the VIEW
+    // switch, DR-133's VALIDATION keys, and DR-159's UNDO pair plus its
+    // Ctrl+Y alternate.
+    //
+    // **THE COUNT IS NO LONGER IN THE TEST'S NAME**, because it was
+    // wrong there: the name said "exactly two" while the comment under
+    // it said three, and neither moved when `#847` made it three. The
+    // list below is the count, and it is the only copy.
+    //
+    // AND IT DID ITS JOB A SECOND TIME. DR-159 moved undo, redo and the
+    // redo alternate out of `KeyScope.rack`, where they had sat for five
+    // milestones while their own handler's comment said the key was
+    // DOCUMENT-global. This test failed on that move, which is exactly
+    // what it is for: a global binding is a decision, and adding one
+    // means taking it again.
     //
     // THIS RULE DID ITS JOB ON THE THIRD GROUP. `#847` first bound `F8`
     // and `Shift+F8` and deliberately left `F7` out, on the argument
@@ -496,16 +510,19 @@ final class AppServices {
         KeyBindingId.switchViewRack,
         KeyBindingId.switchViewSchematic,
         KeyBindingId.switchViewSchedule,
+        KeyBindingId.undo,
+        KeyBindingId.redo,
+        KeyBindingId.redoAlternate,
         KeyBindingId.recheck,
         KeyBindingId.nextIssue,
         KeyBindingId.previousIssue,
       ]),
       reason:
           'the app binds Ctrl/Cmd+N / +O / +S / +Shift+S, '
-          'Ctrl/Cmd+1 / +2 / +4 and F7 / F8 / Shift+F8, and nothing else '
-          'above the root focus scope. An eleventh is either a new '
-          'binding or a group that grew without the decision being taken '
-          'again.',
+          'Ctrl/Cmd+1 / +2 / +4, Ctrl/Cmd+Z / +Shift+Z / +Y and '
+          'F7 / F8 / Shift+F8, and nothing else above the root focus '
+          'scope. One more is either a new binding or a group that grew '
+          'without the decision being taken again.',
     );
 
     final shell = _stripComments(
@@ -638,7 +655,13 @@ final class AppServices {
       // none: a surface opened a few times per project does not pay for a
       // row in `kKeymap`, M7's generated table and `arbitrate()`'s
       // conflict checks on every platform.
-      [11, 4],
+      // 11 -> 13 AND 4 -> 6 AT DR-159 (`#874`), which built the Edit
+      // menu docs/03 §13.3 has specified since M0 and nobody made. Its
+      // two items, Undo and Redo, are the first menu rows in this app
+      // whose LABEL is computed: they read "Undo Move device" from the
+      // command's own `LabelKey`, which is the whole reason that enum
+      // has 101 values with comments arguing about wording.
+      [13, 6],
       reason:
           'eleven File-menu items — New, Open…, Save, Save As…, Export '
           'PDF…, Export/Import device template…, Export/Import device '

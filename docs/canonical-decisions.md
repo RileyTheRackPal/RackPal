@@ -20054,6 +20054,121 @@ inherited the same defect.
 
 ---
 
+### §11.158 DR-159 · Undo is document-global, it says what it will take back, and the builder keeps its own stack
+
+**Reported by the user on 2026-09-12**, running the `PLAN-J` demo: *"Undo doesn't appear to work
+anywhere across the program currently."* It was recorded as a side observation during `#869`'s
+investigation and not followed up. Found again by a `#871` shell case that pressed `Ctrl+Z` on the
+Device Manager and watched nothing happen.
+
+**§11.158.1 What was measured.** `UndoIntent` and `RedoIntent` have **exactly one handler in the
+entire tree**, inside `RackCanvasScreen`'s own `Shortcuts`. The application has **one menu**, `File`,
+and no Undo item anywhere in it. The strip is **seven** tabs. Undo works on one of them.
+
+**AND THE INTENT WAS ALWAYS RIGHT; ONLY THE INSTALLATION POINT WAS WRONG.** That handler's own
+comment reads: *"the key is DOCUMENT-GLOBAL. Undo and redo must keep working from the palette, the
+inspector and the toolbar; scoping them to the canvas would reintroduce the exact defect
+app_shell.dart's header post-mortems for `Ctrl+S`."* The registry row says the same thing from the
+other side, and names *"promoting it to `KeyScope.global`"* as a rebinding owed a ruling. This is that
+ruling.
+
+**§11.158.2 TWO COUNTS IN THIS REPOSITORY SAID TWO TABS AND IT WAS SIX.** `rack_canvas_screen.dart`
+and the keymap registry each carried *"`Ctrl+Z` still reaches nothing at all on the Schematic and
+Schedule tabs"*, written when the strip had four. DR-091 reordered and extended it and `PLAN-E/5`
+added Plan; neither number moved. **The first draft of this ruling said six tabs and it is seven**,
+which is the same failure a third time, in the document about the failure. The tabs are not counted
+here: `ShellView.values` is the list, `app_shell.dart` builds the strip from it, and a count in prose
+is a liability.
+
+**§11.158.3 RULED: THE BINDING IS `KeyScope.global`.** The document is global, so its keys are too,
+which is `buildFileActions`' own post-mortem applied to the pair of keys it did not cover. Installed
+at the app root beside the File and view actions, above the root focus scope, because a `Shortcuts`
+below it only ever sees keys pressed while focus is inside its own subtree.
+
+**THE TEXT-FIELD GUARD LIFTS UNCHANGED**, and that is a fact rather than a design: it already reads
+`FocusManager.instance.primaryFocus`, which is a global query. A person typing in a field gets their
+typing back, everywhere, as they do today on the rack.
+
+**THE SCHEDULE TAB IS READ-ONLY** and still gets the key. Nothing under `schedule/` constructs a
+command, so there is no edit to take back from there; the edit a person wants back was made
+elsewhere on the same document, and a key that declined on the deliverable view would be a second
+rule to explain.
+
+**§11.158.4 RULED: THE RACK KEEPS ITS OWN HANDLER, AND THAT IS NOT A DUPLICATE.** Flutter resolves an
+`Action` from the focused context upward, so the nearest one wins. The rack's does something the
+global one cannot: `undoLast` returns the selection as it was, and restoring it is what makes undo of
+a delete put the selection back rather than leaving the user staring at an empty inspector. The
+global handler is the fallback for every surface that has no selection of its own.
+
+**§11.158.5 RULED: THE DEVICE BUILDER KEEPS ITS OWN STACK, AND `Ctrl+Z` REACHES IT THERE.** Settled by
+the user on 2026-09-12.
+
+CR-106 makes the builder a full-window editor over a `TemplateBody` with an undo stack that dies with
+the window, and `KeyScope.builder`'s own note already refuses to share a scope with the canvas
+because *"a scope shared with the document's canvas would say the two stacks were one thing."* The
+builder has had Undo and Redo **buttons** since M4-A/4 and no key binding at all, so `Ctrl+Z` was dead
+there too, on a second stack.
+
+**SO ONE KEY MEANS TWO THINGS ON ONE TAB**, depending on whether the browser or the editor is showing,
+and that is the cost of the choice rather than an oversight. It is mitigated by §11.158.6: the menu
+says which stack it is about, so the mode is read rather than felt.
+
+**THE ALTERNATIVE WAS ONE KEY, ONE STACK, ALWAYS THE DOCUMENT'S**, and it was refused because
+`Ctrl+Z` while editing a template would silently undo something in the project behind the window. A
+larger blast radius, invisible from where the person is standing, is the shape DR-013 §11.13.2 exists
+to prevent.
+
+**§11.158.6 RULED: THE EDIT MENU IS BUILT, AND IT NAMES THE ACT.** docs/03-architecture.md §13.3 has
+specified it since M0: *"The Edit menu shows a localized 'Undo Move device'; the log shows the stable
+enum name."* It was never built, and `LabelKey` has **101 values whose comments argue about what that
+menu should say**. `commitPortSort` exists rather than reusing `reorderPorts` because *"'Undo
+Reorder' in front of somebody who has just been through a confirm dialog names the wrong act"*;
+`clearRoomEstimate` is separate from `setRoomEstimate` because the opposite act must not be named;
+`drawRoomOutline` and `reshapeRoomOutline` are one command with two labels chosen at apply time. That
+is a great deal of careful reasoning about a surface that does not exist.
+
+**A KEYBOARD-ONLY BINDING IS INVISIBLE**, which is why fixing the key alone was refused. A person who
+does not already know the chord has no way to learn that the product has undo at all.
+
+**§11.158.7 THE MAP IS EXPLICIT AND GATED, NOT DERIVED.** A label could be de-camel-cased from the
+enum name, and `removeTemplateFromProject` would read *"Remove Template From Project"*. That is worse
+than useless for the values above, whose whole point is that the obvious wording names the wrong act.
+
+So `rackpal_ui` holds one `LabelKey` to text map, and **a parity gate fails when a value has no
+entry**. Not a fallback: a default is a hole a future `LabelKey` falls into silently, which is the
+argument DR-156 §11.155.1 already made about `applied`. The gate is the same shape as registry
+parity and AC-051's pair gate.
+
+**IT IS NOT LOCALIZED, AND THIS RULING DOES NOT PRETEND OTHERWISE.** docs/03 §13.3 also says
+`AppLocalizations` from the first commit with one locale and `l10n.yaml` in CI. **There is no
+`l10n.yaml` in this tree and no `AppLocalizations`**, so the map holds English strings and the
+localisation half of that paragraph stays owed. Saying so here is the point: a menu built against
+half a specification must record which half.
+
+**§11.158.8 RULED: AN EMPTY QUICK-ENTRY BOX HANDS THE KEY BACK TO THE DOCUMENT.** Settled by the user
+on 2026-09-12, after the per-tab sweep this ruling required found the fix incomplete on one tab.
+
+**THE COMPLAINT SURVIVED INSIDE ITS OWN FIX.** The Structured Wiring tab's `Add drops` box carries
+`autofocus: true`, because typing a drop is what somebody comes to that tab to do, and `_submit`
+refocuses and clears it after every entry. So a text field held focus there permanently,
+`DefaultTextEditingShortcuts` sits nearer a focused field than the app's own `Shortcuts` and claimed
+`Ctrl+Z` for `UndoTextIntent`, and with nothing typed there was nothing to restore. The key did
+nothing at all, on the one tab whose primary verb is bulk data entry.
+
+**THE CONDITION IS THE WHOLE DESIGN.** A box with text in it has typing worth taking back and keeps
+the key, which is the general rule and stays the general rule. An **empty** box has none, so it
+forwards. Dropping the autofocus was the alternative and was refused: it buys a flat rule by taking
+away the reason the tab is fast.
+
+**AND THE SHELL'S OWN TEXT-FIELD GUARD IS REMOVED, NOT WEAKENED.** The first draft of
+`undoFromShell` copied `RackCanvasScreen`'s `!_textFieldHasFocus`. That copy is **redundant**,
+because a focused field's nearer binding consumes the key before `UndoIntent` is ever raised, so
+reaching this method already proves no field claimed it; and it is **harmful**, because it would have
+caught the forward above and thrown it away. A guard that re-asks a question the dispatch has already
+answered can only get it wrong.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

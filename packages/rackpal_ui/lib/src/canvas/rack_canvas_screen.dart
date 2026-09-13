@@ -4382,14 +4382,21 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
           // Document-global: a rack rename typed in the inspector and an
           // undo pressed from the palette are both legitimate.
           //
-          // "Document-global" DESCRIBES THE GATE, NOT THE REACH, and the
-          // registry now says so out loud (`kKeymap`'s undo note). The
-          // `Shortcuts` these bindings live in is this screen's, so the
-          // gate lets undo through from the palette and the inspector —
-          // and `Ctrl+Z` still reaches nothing at all on the Schematic and
-          // Schedule tabs. Widening the scope is a rebinding and belongs
-          // to a ruling; the note exists so it is a decision somebody
-          // takes rather than a fact nobody noticed.
+          // THE REACH CAUGHT UP WITH THE GATE AT DR-159 §11.158.3. This
+          // comment used to end "and `Ctrl+Z` still reaches nothing at
+          // all on the Schematic and Schedule tabs", which was a count
+          // written when the strip had four; DR-091 reordered and
+          // extended it and `PLAN-E/5` added Plan, and it moved neither
+          // time. It was six of seven by the time a person hit it.
+          //
+          // **THIS HANDLER STAYS, AND IT IS NOT A DUPLICATE OF THE GLOBAL
+          // ONE** (§11.158.4). Flutter resolves an `Action` from the
+          // focused context upward, so this wins whenever focus is inside
+          // this screen, and it does something the shell's fallback
+          // cannot: `undoLast` returns the selection as it was, and
+          // restoring it is what makes undoing a delete put the selection
+          // back instead of leaving somebody staring at an empty
+          // inspector.
           UndoIntent: _GatedAction<UndoIntent>(
             () => !_textFieldHasFocus,
             _undo,
