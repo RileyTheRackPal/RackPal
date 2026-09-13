@@ -1238,7 +1238,14 @@ $SuiteFloors = @{
     # modal route, because DR-159 put undo on `KeyScope.global` above the
     # `Navigator`. Probed at 2 links going to 3 with the confirmation
     # still up.
-    'rackpal_app'    = 1029
+    # 1031 at `#880`/`#881`: +2, both on `#872`'s own gate (DR-161). One
+    # pins that a Command declared only inside a COMMENT is not counted,
+    # which is what `SnapshotCommand` was, AND carries its own vacuity
+    # guard: the case proves nothing once the sketch it reads is gone.
+    # The other is the mirror of the exemption-format test, refusing a
+    # board item in the map that says nothing is owed. Nine mutations,
+    # nine kills.
+    'rackpal_app'    = 1031
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

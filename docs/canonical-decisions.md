@@ -20274,6 +20274,75 @@ it, and `#872`'s exemption list loses both rows.
 
 ---
 
+### 11.160 DR-161 · What the reachability gate counts, and when an exemption may be permanent
+
+**The question.** `#872`'s gate reported twelve unreachable `Command` classes. Two of its rows turned
+out to be about the GATE rather than about the tree, and they fail in opposite directions:
+**`SnapshotCommand` does not exist** and was counted anyway, and **`AddLinkCommand` exists, is used
+twenty-one times, and is not reachable by design**. Both were filed as tickets against the code
+(`#880`, `#881`) on the gate's own word. A gate whose output is read as a fact about the product must
+be right about what it is counting.
+
+**11.160.1 RULED: THE GATE COUNTS DECLARATIONS, AND A COMMENT IS NOT ONE.**
+
+`snapshot_command.dart` **declares nothing**. Its own header says so in as many words: it *"exists,
+per the directory tree in docs/03-architecture.md §2.2, purely as a marker for where that lands; it
+deliberately defines no class so nothing here reads as more built than it is"*. What the file holds
+is a SKETCH of the class, indented inside a `//` comment, written at M0 to record what building it
+would need.
+
+The gate's own pipeline already knew better and applied the knowledge unevenly: step 2, the
+declaration scan, runs over `_strip`ped text with comments and string literals removed; step 1, the
+Command inventory, ran over the RAW file. So the inventory admitted a class the declaration scan
+could never match, it was correctly found to have no construction site, and it was filed as a
+capability awaiting a decision. **Measured over the three scan roots: 73 commands raw, 72 stripped,
+one phantom, and stripping loses nothing.** Step 1 now strips, and a named case pins the answer.
+
+**THIS IS THE SECOND TIME THIS CENSUS COUNTED A COMMENT.** `#872`'s own record lists, as attempt 2 of
+three, *"counting any MENTION in another lib file let a name in a COMMENT count as reachable"*. That
+was fixed on the EDGE side and the same mistake survived on the NODE side, which is the shape worth
+naming: a bug found in one direction of a scan is a reason to check the other direction, not evidence
+that the scan is now clean.
+
+**11.160.2 RULED: AN EXEMPTION MAY BE PERMANENT, AND IT MUST SAY WHY IN A SENTENCE.** Settled by the
+user on 2026-09-13.
+
+`_exempt` held one kind of row: a command name against the board item that will retire it, and a test
+refusing any value that does not look like one, *"a list of names is a place to hide; a list of due
+dates is a debt somebody can collect."* That rule is right for a debt and has no room for a command
+that is deliberately not reachable.
+
+**`AddLinkCommand` IS SUCH A COMMAND, AND THE CENSUS IS WHY.** It mints a `Link` with two open ends
+and an implicit `Net`, needing no device, no port and no panel, which its M0 header states as the
+design: *"which keeps this command usable anywhere in a command sequence rather than only after a
+device has been placed."* Nothing in docs/ asks for a gesture that creates an unattached cable, and
+there is no picture of one: the schematic draws links between ports and such a link has none, so it
+would surface only as a schedule row with both ends unbound. Meanwhile twenty-one test sites use it,
+and nine of them could not be rebuilt cheaply: the two `allocateNetNameFor` properties (a revert
+frees the name, a redo reuses it) have **no other coverage**, and `command_roundtrip_test`'s
+thousand-sequence CR-117 sweep has **no other link-creating step**.
+
+So it stays, in a **second map** whose values are sentences rather than board items, and whose format
+test refuses anything shaped like a board item for the same reason the first map refuses anything
+that is not.
+
+**11.160.3 THE STALENESS CHECK BINDS BOTH MAPS, AND THAT IS THE PRICE OF THE CARVE-OUT.** A permanent
+exemption is a standing claim that no person can reach the command, and the day somebody wires one
+that claim is false. Both maps therefore fail when a row becomes reachable and when a row names a
+class that no longer exists. **The permanence is in the reason, not in the checking.**
+
+**11.160.4 WHAT THIS DOES NOT DO.** It does not delete `snapshot_command.dart`. The file is a marker
+that names two things building it would need (`RackDocument.restoreEntities` and an encode/decode
+dispatch table `json_codec.dart` deliberately does not export), and that record is worth more than
+the tidiness of removing it. It also does not rule on whether snapshots are in scope, which `#880`
+asked for: **there was never a question, because there is no class.** docs/03 §5.5 deferred the shape
+and nothing has since claimed otherwise.
+
+**11.160.5 Scope.** **No scope change.** Both tickets close as corrections to a gate, inside scope
+M5 already owns. Board `#880` and `#881` cite this.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

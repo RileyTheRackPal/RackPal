@@ -9694,6 +9694,12 @@ writable; `#880` `SnapshotCommand`, the only one of the twelve with **no tests e
 question is whether it should exist; `#881` `AddLinkCommand`, 21 test constructions and the
 hypothesis that it is superseded rather than missing.
 
+**TEN OF THE TWELVE WERE REAL, AND THE LAST TWO WERE THIS GATE'S OWN BUGS** (DR-161, §5.9.37).
+`SnapshotCommand` is not declared anywhere: the inventory read raw files while the declaration scan
+read stripped ones, so a sketch inside a `//` comment entered the corpus. `AddLinkCommand` is
+declared, is used twenty-one times, and is deliberately not for a person. Both were filed as tickets
+against the tree on this gate's word, which is the cost of a census that is read as a fact.
+
 ##### 5.9.32.5 The gate's scope is stated, because a scope is part of a claim
 
 **Every declaration in a UI package is a root**, which is an over-approximation and a deliberate one:
@@ -10295,6 +10301,88 @@ Gates: 17. Analyzer pin unmoved at 233.
 `#872`'s exemption list loses two rows, its fourth and fifth retirements in three days.
 
 **Commits** (§8.8). `#877` `80fd95e0` (DR-160) and `7baabc98` (the feature).
+
+#### 5.9.37 `#880` and `#881`: two of the reachability gate's twelve rows were about the gate · `DR-161` · no version move
+
+2026-09-13. Both close under `#786` and move no number. Neither was a defect in the product.
+
+##### 5.9.37.1 `#880`'s first sentence was false, and reading one file settled it
+
+The ticket opens *"`SnapshotCommand` is declared in `snapshot_command.dart`"*. **It is not.** That
+file declares nothing at all, which its own header states as the point: it exists *"per the directory
+tree in docs/03-architecture.md §2.2, purely as a marker for where that lands; it deliberately
+defines no class so nothing here reads as more built than it is"*. What it holds is an indented
+sketch of the class inside a `//` comment, written at M0 to record that building it needs
+`RackDocument.restoreEntities` and an encode/decode dispatch table `json_codec.dart` deliberately
+does not export.
+
+So the ticket's `DONE WHEN` (*"a ruling says whether snapshots are in scope; the class is either
+wired with tests or deleted"*) had no subject. There was never a question, because there is no class.
+
+##### 5.9.37.2 The gate applied its own rule to one half of itself
+
+`#872`'s pipeline has three steps. Step 2, the declaration scan, has always run over `_strip`ped text
+with comments and string literals removed. **Step 1, the Command inventory, ran over the raw file.**
+So the inventory admitted a name the declaration scan could never match, the name correctly had no
+construction site, and it was reported as an unreachable capability.
+
+Measured over the three scan roots when this changed: **73 commands raw, 72 stripped, exactly one
+phantom, and nothing is lost by stripping.**
+
+**THE IDENTICAL MISTAKE IS RECORDED IN THAT FILE'S OWN HEADER, POINTING THE OTHER WAY.** Attempt 2 of
+the three failed censuses *"let a name in a COMMENT count as reachable"*, and
+`RemovePlanUnderlayCommand` fell off the list because of it. That was fixed on the EDGE side. The same
+mistake on the NODE side survived the whole life of the gate. **A bug found in one direction of a scan
+is a reason to check the other direction, not evidence that the scan is now clean.**
+
+##### 5.9.37.3 `#881` is the opposite: it exists, and it is not for a person
+
+`AddLinkCommand` mints a `Link` with two open ends and an implicit `Net`, needing no device, no port
+and no panel. `link_commands.dart`'s M0 header states that as the design: *"usable anywhere in a
+command sequence rather than only after a device has been placed."*
+
+The ticket's hypothesis was that `buildConnectPortsCommand` superseded it. **The census says
+otherwise.** Four things mint a `Link` in `lib/`: `atomic_connect.dart`, `connect_commands.dart`,
+`home_run_commands.dart` and this. The other three attach the cable to something. This one does not,
+and nothing in docs/ asks for a gesture that makes an unattached cable: there is no picture of one,
+because the schematic draws links between ports and such a link has none, so it would surface only as
+a schedule row with both ends unbound.
+
+**AND ITS TWENTY-ONE TEST SITES ARE NOT ALL FIXTURE CONVENIENCE**, which is what the ticket
+suspected. Twelve are. The other nine could not be rebuilt cheaply: `allocateNetNameFor`'s two
+properties (a revert frees the name, a redo reuses it) have **no other coverage**, and
+`command_roundtrip_test`'s thousand-sequence CR-117 sweep has **no other link-creating step** that
+works without first building a device.
+
+##### 5.9.37.4 So an exemption may be permanent, in a second map
+
+Settled by the user. `_exempt` held one kind of row and a test refusing any value that did not look
+like a board item, *"a list of names is a place to hide; a list of due dates is a debt somebody can
+collect."* That is right for a debt and has no room for a command that is deliberately unreachable.
+
+`_infrastructure` is the second map: values are sentences, a test refuses anything shaped like a
+board item, another refuses a name appearing in both, and **the staleness check binds it exactly as
+hard.** The permanence is in the reason, not in the checking: the day somebody wires one of these the
+standing claim is false, and the failure message says to decide in a ruling which of the wiring and
+the claim is wrong rather than deleting whichever is cheaper.
+
+##### 5.9.37.5 The new case guards its own vacuity
+
+*"A Command declared only inside a COMMENT is not counted"* asserts `SnapshotCommand` is absent from
+the inventory, and then reads `snapshot_command.dart` and asserts the sketch is **still there**. The
+first half proves nothing the day somebody deletes the text that made the phantom, and a test that
+has quietly stopped testing is the failure this repository has already met twice: in
+`a-fixture-default-is-not-a-proof.md`, and in `#879`'s virtualised picker.
+
+##### 5.9.37.6 Evidence
+
+Nine mutations, nine kills, including reverting step 1 to raw and wiring `AddLinkCommand` from the
+shell. Floors: `rackpal_app` 1029 to 1031. Gates: 17. Analyzer pin unmoved at 233.
+
+Nothing was deleted. The marker file stays: it names what building the class would need, and that
+record is worth more than the tidiness of removing it.
+
+**Commits** (§8.8). `#880` and `#881` `2460d462` (DR-161) and `4878134f` (the gate).
 
 ---
 

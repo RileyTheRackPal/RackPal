@@ -1,5 +1,37 @@
 # Update Log
 
+## 2026-09-13 (twenty-ninth entry)
+
+* **Closed**: `#880` and `#881` with `4878134f`. **Neither was a defect in the
+  product.** Both were rows in `#872`'s reachability gate that were about the
+  gate. **No version move**: they close under `#786`.
+* **Note**: **`#880`'s FIRST SENTENCE WAS FALSE AND ONE `cat` SETTLED IT.** The
+  ticket says `SnapshotCommand` "is declared in `snapshot_command.dart`". That
+  file declares nothing and says so in its own header: it is a marker for where
+  the class would land, holding an indented sketch inside a `//` comment. The
+  gate's declaration scan had always stripped comments; its Command INVENTORY
+  read the raw file. Measured: 73 commands raw, 72 stripped, one phantom.
+* **Note**: **THE IDENTICAL BUG WAS ALREADY IN THAT GATE'S OWN HEADER, POINTING
+  THE OTHER WAY.** Attempt 2 of its three failed censuses "let a name in a
+  COMMENT count as reachable", and a real command fell off the list for it. That
+  was fixed on the EDGE side and the same mistake survived on the NODE side for
+  the whole life of the gate. A bug found in one direction of a scan is a reason
+  to check the other direction.
+* **Note**: **`#881` IS THE OPPOSITE AND THE CENSUS REFUTED ITS HYPOTHESIS.**
+  The ticket guessed `AddLinkCommand` was superseded by `buildConnectPortsCommand`
+  and that its 21 tests were fixture convenience. Four things mint a `Link` in
+  `lib/`; the other three attach the cable to something and this one does not, on
+  purpose. Twelve of the 21 sites are fixture convenience. The other nine are not:
+  `allocateNetNameFor`'s two properties have no other coverage, and the
+  thousand-sequence CR-117 sweep has no other link-creating step.
+* **Creation**: [DR-161, what the reachability gate
+  counts](/decisions/dr-161-what-the-gate-counts.md), five clauses. An exemption
+  may now be permanent, in a second map whose values are sentences and which the
+  staleness check binds exactly as hard: the permanence is in the reason, not in
+  the checking.
+* **Creation**: [A gate's output is read as a
+  fact](/practices/a-gate-is-read-as-a-fact.md), from the above.
+
 ## 2026-09-13 (twenty-eighth entry)
 
 * **Closed**: `#877` with `7baabc98`. A wall plate and a whole Structure body can be
