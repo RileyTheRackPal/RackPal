@@ -236,6 +236,28 @@ PlanReshapeController _reshaping() {
   return mode;
 }
 
+/// The palette row for [id], resolved the way `PaletteHost` resolves it.
+PlaceableTemplate _row(RackDocument doc, String id) =>
+    buildPlaceableTemplates(doc).firstWhere((r) => r.id == id);
+
+/// A row for a template the document does not hold.
+///
+/// **THE RACE, NOT A TYPO.** The palette offered it, the drag armed, and
+/// the template left the document before the drop: `PaletteHost` cannot
+/// hand over a row it failed to resolve, so this is the only way the
+/// refusal below is still reachable.
+PlaceableTemplate _goneRow() => PlaceableTemplate(
+  templateId: const TemplateId('GONE'),
+  version: 1,
+  contentHash: 'sha256:gone',
+  body: TemplateBody(
+    manufacturer: 'Test',
+    model: 'gone',
+    displayName: 'Gone',
+  ),
+  provenance: TemplateProvenance.project,
+);
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
@@ -885,7 +907,7 @@ void main() {
       // the time `onArmDrag` fires; a route added for a pointer the
       // binding never saw receives nothing.
       await tester.sendEventToBinding(down);
-      h.key.currentState!.armPaletteDrag('F1', down);
+      h.key.currentState!.armPaletteDrag(_row(c.doc, 'F1'), down);
       await tester.sendEventToBinding(pointer.move(const Offset(220, 150)));
       await tester.sendEventToBinding(pointer.up());
       await tester.pump();
@@ -909,7 +931,7 @@ void main() {
       final pointer = TestPointer(8, PointerDeviceKind.mouse);
       final down = pointer.down(const Offset(-40, 10));
       await tester.sendEventToBinding(down);
-      h.key.currentState!.armPaletteDrag('F1', down);
+      h.key.currentState!.armPaletteDrag(_row(c.doc, 'F1'), down);
       await tester.sendEventToBinding(pointer.up());
       await tester.pump();
 
@@ -917,22 +939,97 @@ void main() {
       expect(h.refusals, isEmpty);
     });
 
-    testWidgets('an unknown row is REFUSED by name, and nothing is made', (
-      tester,
-    ) async {
+    testWidgets('A ROW WHOSE TEMPLATE HAS GONE is refused by name, and '
+        'nothing is made', (tester) async {
+      // WHAT THIS CASE IS ABOUT CHANGED AT `#885`, and it is worth saying
+      // why rather than quietly renaming it. It used to pass the string
+      // `'NOPE'` as a `rowKey`, which the canvas handed straight to
+      // `buildPlaceOnPlanCommand` as a `catalogId`: a row that does not
+      // exist. `PaletteHost` resolves the key now and simply does not
+      // call an arm for a row it cannot find, so "an unknown row" is
+      // unrepresentable from the product's own surface.
+      //
+      // What IS still reachable is the race the refusal was really for:
+      // the row was offered, the drag was armed, and the template left
+      // the document before the drop. A hand-built row is exactly that
+      // state, and the sentence it gets is the same one.
       final c = _controller();
       final h = await pump(tester, c);
 
       final pointer = TestPointer(9, PointerDeviceKind.mouse);
       final down = pointer.down(const Offset(-40, 10));
       await tester.sendEventToBinding(down);
-      h.key.currentState!.armPaletteDrag('NOPE', down);
+      h.key.currentState!.armPaletteDrag(_goneRow(), down);
       await tester.sendEventToBinding(pointer.move(const Offset(100, 100)));
       await tester.sendEventToBinding(pointer.up());
       await tester.pump();
 
       expect(c.doc.devices, isEmpty);
       expect(h.refusals.single, contains('Unknown catalog template'));
+    });
+
+    testWidgets('A LIBRARY ROW IS COPIED INTO THE PROJECT AND THEN PLACED, '
+        'in one undo step', (tester) async {
+      // ═════════════════════════════════════════════════════════════════
+      // COPY-ON-PLACE IS A PROPERTY OF PLACEMENT (DR-103 §11.102.2)
+      // ═════════════════════════════════════════════════════════════════
+      // Not of the surface the placement was started from. A library row
+      // is not in the document, so dragging one onto a floorplan is a
+      // copy AND an add, exactly as it is on the rails. Without this the
+      // row would come back "Unknown catalog template", blaming the
+      // catalog for a copy nobody made, and `#885` would have put a
+      // palette in the Plan view that half its rows refuse.
+      final c = _controller();
+      final h = await pump(tester, c);
+      final row = PlaceableTemplate(
+        templateId: const TemplateId('LIB1'),
+        version: 1,
+        contentHash: 'sha256:lib1',
+        body: TemplateBody(
+          manufacturer: 'Shelf',
+          model: 'lib1',
+          displayName: 'Shelf Speaker',
+          typePrefix: 'SPK',
+        ),
+        provenance: const LibraryProvenance(
+          libraryId: 'lib-a',
+          libraryName: 'Library A',
+        ),
+      );
+
+      final pointer = TestPointer(11, PointerDeviceKind.mouse);
+      final down = pointer.down(const Offset(-40, 10));
+      await tester.sendEventToBinding(down);
+      h.key.currentState!.armPaletteDrag(row, down);
+      await tester.sendEventToBinding(pointer.move(const Offset(180, 120)));
+      await tester.sendEventToBinding(pointer.up());
+      await tester.pump();
+
+      expect(h.refusals, isEmpty, reason: 'the copy is what makes it place');
+      final device = c.doc.devices.values.single;
+      expect(
+        (device.placement as OffRackPlacement).planPin!.at,
+        const PxPt(180, 120),
+      );
+      expect(
+        c.doc.templates.values.map((t) => t.templateId.v),
+        contains('LIB1'),
+        reason: 'the template was copied into the project (DR-103)',
+      );
+
+      c.undo.undo(c.doc);
+      await tester.pump();
+      expect(
+        c.doc.devices,
+        isEmpty,
+        reason:
+            'ONE undo takes back both halves, because they are one '
+            'transaction',
+      );
+      expect(
+        c.doc.templates.values.map((t) => t.templateId.v),
+        isNot(contains('LIB1')),
+      );
     });
   });
 

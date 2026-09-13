@@ -10672,6 +10672,99 @@ zero inside a resolved channel, no refusal `PLC-003` can return is reachable thr
 **Commits** (§8.8). `#884` `f04392a4` (DR-164) and `d688d0d7` (the producer, carrying §11.163.4's
 correction). `#882` `868bbcdf`.
 
+#### 5.9.41 `#885`: the palette moves to the shell, and three findings about hiding a widget · `DR-165` · no version move
+
+2026-09-13. The user's own report, one ticket on from `#884`: *"Device templates are only pulled in
+from the rack view ... field devices need to be accessible from the plan view; it improves the UX
+workflow significantly."* It closes under `#786` and moves no number.
+
+##### 5.9.41.1 A GESTURE THAT WAS RULED, BUILT, TESTED AND UNMOUNTED
+
+docs/15 §6's gesture table opens with *"drag from the device palette or staging bin onto the plan:
+places the device and sets its pin in one command"*, and has since the chapter brief. Both halves
+existed. `buildPlaceOnPlanCommand` carries the pin ON the placement so one undo restores both;
+`PlanCanvasScreenState.armPaletteDrag` is public with a comment saying exactly why it is public:
+*"the host that owns a palette hands the armed pointer down, and `PLAN-E/5` wires the real one."*
+
+**Censused by call site: `armPaletteDrag` had three, and all three were tests.**
+`DevicePalettePanel` had exactly one mount in the whole tree, inside `RackCanvasScreen`, as a 280px
+column, so the palette was not on screen when the Plan tab was. `PLAN-E/5` shipped the tab and the
+layout and did not bring it, which makes it the sixth instance of the no-producer shape after
+DR-143, `#674`, `PLAN-E/5`, `LEN-A/3` and `#870`, and the first where the chapter scheduled to close
+the gap is the one that left it.
+
+**What it cost is what the user reported.** A field device can only be born in the Rack tab, where
+its palette row REFUSES TO DRAG (`mountable = frontU > 0 || rearU > 0`, deliberate, because docs/04
+§3.1 is *"drag from palette to RAILS"*). So it is created by double-click, lands as an
+`OffRackPlacement`, and is invisible in the view that created it; it reappears only after a tab
+change, in the Plan view's unpinned strip.
+
+##### 5.9.41.2 The row, not the key, and a defect that had never been given a real value
+
+`PaletteHost` hands over a resolved `PlaceableTemplate`. A `rowKey` is `source/id@version` and a
+template id is not (DR-102 §11.101.4), and **`_placeFromPalette` took a rowKey and passed it straight
+to `buildPlaceOnPlanCommand` as a `catalogId`**, which resolves nothing for any real row. Its three
+tests all passed a bare id, so that parameter had never once been given the value its own name
+promised. The type makes the wrong call unrepresentable now.
+
+**Copy-on-place came with it** (DR-103 §11.102.2). A library row is not in the document, so dragging
+one onto a floorplan is a copy AND an add, exactly as it is on the rails: the rule is a property of
+PLACEMENT, not of the surface a placement was started from. Without it the Plan view would have had
+a palette whose library rows all refused.
+
+##### 5.9.41.3 THREE FINDINGS ABOUT HIDING A WIDGET, AND THEY ARE ONE FINDING
+
+All three came from one afternoon and all three are the same mistake: **treating a layout change as
+a visual decision when Flutter reconciles by position and identity.**
+
+**The column cannot be a sibling of the `TabBarView`.** A `TabBarView` is a `PageView`, and a
+`PageView` positions by PIXEL OFFSET: `index * viewportWidth`. Hiding a 280px column widens the
+viewport by 280, so an offset animated for the old width lands between pages. Tapping `Schematic`
+from the Rack tab showed `Structured Wiring`, one page short, on every run.
+
+**A conditional child in a `Row` shifts its siblings.** `if (showColumn) ...[column, divider]` emits
+one child on the tabs with no palette and three on the two that have one, so the canvas moved from
+slot 2 to slot 0 and its whole subtree was destroyed and rebuilt with every tab change.
+
+**An `InheritedWidget` carrying a `State` OBJECT must notify on every rebuild.** `updateShouldNotify`
+as `state != old.state` asks *"was this widget replaced"* and never *"did anything change"*: the
+`State` instance is the same for the life of the host, so the column never rebuilt and a template
+saved while the canvas was open never reached the palette.
+
+The practice is [hiding a widget is a structural
+change](../.okf/practices/hiding-a-widget-is-a-structural-change.md).
+
+##### 5.9.41.4 What the suite was for, and the one case that could not fail
+
+**Nine harnesses in `test/canvas` now pump the composition rather than the screen**, and their ~128
+existing cases are the evidence that a wide refactor changed no behaviour. That is the whole
+argument for doing it this way: the palette's search keys, its drag arming, its quick-add, the
+caret's hand-off and the staging bin overlay were all already pinned, so the move either kept them
+or was caught.
+
+**One new case was written twice.** The `/` gate (*"the only thing `/` must never do is fail to type
+a slash into a field"*) had never been tested, which a mutation found. The first attempt pressed `/`
+with the PALETTE's own field focused and passed with the gate deleted: after the hoist the palette
+sits ABOVE the canvas, so a key pressed in its field never reaches the `Shortcuts` that maps `/` at
+all. It asserts from an INSPECTOR field now, which is inside the canvas subtree where the binding is
+in scope. Same lesson as `#884` §11.163.4, one ticket later: a test that cannot fail is not evidence.
+
+##### 5.9.41.5 Evidence
+
+Floors: `rackpal_ui` 1866 to 1868, `rackpal_app` 1033 to 1037. Gates: 17. Analyzer pin unmoved at
+233.
+
+**The four app-level cases are the half `rackpal_ui` cannot prove.** Its palette cases pump
+`test/canvas/rack_with_palette.dart`, a helper that composes the column and a canvas the way the
+shell does, which shows only that the two agree with each other. Which views carry a column, whether
+the state survives a tab change, and whether a row activated on the Plan tab reaches the plan editor
+are questions only the real `AppShell` answers.
+
+**Seven mutations, seven killed**, two of them only after the case defending them was rewritten.
+
+**Commits** (§8.8). `#885` `72f22723` (DR-165) and `a1bdc029` (the move, carrying §11.164.1, .3 and
+.5's corrections).
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·

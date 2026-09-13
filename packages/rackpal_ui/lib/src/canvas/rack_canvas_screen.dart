@@ -39,13 +39,11 @@ import 'package:rackpal_ui/src/inspector/inspector_panel.dart';
 import 'package:rackpal_ui/src/inspector/new_rack_dialog.dart';
 import 'package:rackpal_ui/src/inspector/shrink_rack_dialog.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
-import 'package:rackpal_ui/src/palette/device_palette_panel.dart';
 import 'package:rackpal_ui/src/shell/no_racks_view.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 import 'package:rackpal_ui/src/validation/acknowledge_finding_dialog.dart';
 import 'package:rackpal_ui/src/validation/add_outlets_choice_dialog.dart';
 import 'package:rackpal_ui/src/validation/validation_drawer.dart';
-import 'package:rackpal_ui/src/widgets/document_memo.dart';
 
 /// The rack editor canvas: the pannable/zoomable grid (L0) with a real rack
 /// chassis (L1) and device bodies (L2) rendered on top, per CR-086 — the
@@ -93,40 +91,51 @@ class RackCanvasScreen extends StatefulWidget {
     this.clock = const SystemClock(),
     this.document,
     this.controller,
-    this.libraries = const [],
-    this.unreadableLibraries = const [],
-    this.favourites = const <String>{},
+    this.paletteSearchFocus,
+    this.paletteDragRow,
     this.onRevealInSchematic,
     this.onEditTemplate,
     super.key,
   });
 
-  /// The device libraries on the shelf, decoded (`#242`, DR-102
-  /// §11.101.3). Their templates join the document's in the palette,
-  /// tagged with which library offered them.
+  /// The palette's search field, LENT by `PaletteHost` (`#885`, DR-165
+  /// §11.164.3).
   ///
-  /// **PUSHED DOWN RATHER THAN READ HERE**, for `measurer`'s reason:
-  /// reading the shelf is filesystem work and `rackpal_ui` has no
-  /// `FileStore` and must not grow one. The app reads it
-  /// (`library_shelf.dart`) and hands over the answer.
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THIS SCREEN NO LONGER OWNS A PALETTE, AND THAT IS THE WHOLE TICKET
+  /// ═══════════════════════════════════════════════════════════════════
+  /// It owned the only `DevicePalettePanel` in the tree, along with the
+  /// row list, its memo, its index, the search field and three
+  /// parameters (`libraries`, `unreadableLibraries`, `favourites`) that
+  /// existed solely to feed it. All of that is `PaletteHost`'s, so the
+  /// Plan view can place a device through the same column: docs/15 §6's
+  /// first gesture row had a command and a public `armPaletteDrag` and
+  /// no palette on screen to start one.
   ///
-  /// Empty is the honest default and covers three real sessions: a
-  /// degraded data root, an empty shelf, and every widget test that is
-  /// not about libraries.
-  final List<LoadedLibrary> libraries;
+  /// **WHAT STAYS IS THE CARET'S RULE**, which is this canvas's own.
+  /// `_recomputeCaret` counts the palette filter as canvas focus,
+  /// because arming a placement from the search box is a placement
+  /// gesture and the caret must stay lit across the hand-off. Reading
+  /// `.hasFocus` off a borrowed node keeps that rule in one place; a
+  /// notifier reporting focus upward plus a copy of the rule in the host
+  /// would be two things that can disagree about one fact.
+  ///
+  /// **NULL IS LEGAL AND MEANS NO PALETTE**, which is what a render test
+  /// or a screenshot harness mounts. The caret then activates on canvas
+  /// focus alone, which is the truth in that tree.
+  final FocusNode? paletteSearchFocus;
 
-  /// Libraries on the shelf that would not decode (DR-103 §11.102.7).
-  /// They draw as disabled chips and contribute no rows.
-  final List<UnreadableLibrary> unreadableLibraries;
-
-  /// The starred template ids (`#245`, DR-104 §11.103.4). They pin as a
-  /// group above `This project`, and the group is ABSENT when empty, so
-  /// a user who has starred nothing sees the palette that shipped.
+  /// Which palette row this screen is dragging out, WRITTEN for the host
+  /// (`#885`, DR-165).
   ///
-  /// Per USER, so the shell reads it from `AppPrefs` and pushes it down
-  /// exactly as it pushes `libraries`: `rackpal_ui` has no prefs store
-  /// and must not grow one.
-  final Set<String> favourites;
+  /// **INJECTED RATHER THAN OWNED**, for the same reason the focus node
+  /// is borrowed: `PaletteHost` needs it while it builds and this screen
+  /// is its child, so a notifier created here would be one frame late for
+  /// the whole gesture. It replaces a field, a hand-written equality
+  /// compare and a screen-wide `setState`; `ValueNotifier` already
+  /// refuses to fire on an equal value, so the coarse filter this needed
+  /// is the type rather than the code.
+  final ValueNotifier<String?>? paletteDragRow;
 
   /// The shared `TextMeasurer` (CR-081) used to build the scene AND to paint
   /// it, so on-screen layout matches what the PDF backend would measure. The
@@ -204,10 +213,10 @@ class RackCanvasScreen extends StatefulWidget {
   final void Function(TemplateId templateId)? onEditTemplate;
 
   @override
-  State<RackCanvasScreen> createState() => _RackCanvasScreenState();
+  State<RackCanvasScreen> createState() => RackCanvasScreenState();
 }
 
-class _RackCanvasScreenState extends State<RackCanvasScreen>
+class RackCanvasScreenState extends State<RackCanvasScreen>
     with TickerProviderStateMixin {
   /// Net pointer travel (screen px) below which a drag is treated as a click
   /// (docs/04 §3.1 step 1: "Nothing until 4 px of movement, so a click still
@@ -231,19 +240,6 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 
   /// Focus for the canvas so its Shortcuts/Actions receive Del/undo/redo.
   final FocusNode _canvasFocus = FocusNode(debugLabel: 'rackCanvas');
-
-  /// `/` focuses the palette search field (docs/04 §3.2, §8 keymap).
-  final FocusNode _paletteSearchFocus = FocusNode(debugLabel: 'paletteSearch');
-
-  /// The palette filter's text, owned HERE rather than inside
-  /// `DevicePalettePanel`, for the same reason [_paletteSearchFocus] is:
-  /// the screen has keyboard obligations toward that field which it cannot
-  /// discharge without touching its content. `/` must be able to select the
-  /// existing query so the next keystroke replaces it, and `Esc` must be
-  /// able to empty it — both recovery paths out of a bad filter, and
-  /// neither expressible from outside the widget that holds the controller.
-  final TextEditingController _paletteSearchController =
-      TextEditingController();
 
   /// The insertion caret (docs/04 §3.4) — UI-owned, observed, sibling to
   /// [_selection] in every respect (see insertion_caret.dart's header).
@@ -398,7 +394,14 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   // `_paletteDrag` directly (the same repaint-not-rebuild precedent
   // `ShakeController`/`RenderDeviceBox` already established).
   bool _lastPaletteDragInProgress = false;
-  String? _lastPaletteDragDimId;
+
+  /// The row the live palette drag was armed with (`#885`).
+  ///
+  /// `DragPreviewController.subjectId` still carries the `rowKey`,
+  /// because that is what the palette matches to dim a row; this is the
+  /// same drag's ROW, kept so the commit does not have to resolve a key
+  /// against a list this screen no longer owns.
+  PlaceableTemplate? _armedPaletteRow;
 
   /// The same coarse filter for `_moveDrag`: the id of the device that
   /// should currently paint at 30% opacity in place (docs/04 §3.3 step 1),
@@ -417,8 +420,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// what the palette listed, which is what made a template authored in
   /// the Device Builder unplaceable: it saved into the document and the
   /// palette was reading a constant beside it (DR-077 §11.76.1, docs/12
-  /// §5.3.8). The palette reads [_placeable]; a body needed for a message
-  /// or a gesture is resolved out of the document.
+  /// §5.3.8). The palette reads `PaletteHost`'s own memo since `#885`; a
+  /// body needed for a message or a gesture is resolved out of the
+  /// document.
   late final Map<String, TemplateBody> _catalog = buildSeedCatalog();
 
   /// What the palette lists: the DOCUMENT's own shelf, newest version of
@@ -430,50 +434,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// screen qualifies for it: it owns the `DocumentController` that
   /// maintains `stateId`, so a save moves the key and the palette shows
   /// the new template without a reopen.
-  final DocumentMemo<List<PlaceableTemplate>> _placeable = DocumentMemo();
-
-  /// The merged palette rows by `rowKey`, rebuilt whenever [_placeable]
-  /// is (see [_rows]).
   ///
-  /// **THE PALETTE HANDS BACK A `rowKey` AND THIS IS WHAT RESOLVES IT.**
-  /// Since `#242` a template id can name two rows, the document's and a
-  /// library's (DR-102 §11.101.4), so the id the palette used to pass was
-  /// no longer an answer to "which row did they click".
-  Map<String, PlaceableTemplate> _rowsByKey = const {};
-
-  /// The list [_rowsByKey] was built from, compared by IDENTITY. The memo
-  /// hands back the same instance on a hit and a fresh one on a miss, so
-  /// this is an exact "is my index stale" test rather than a heuristic
-  /// over lengths, which would miss a rebuild that happened to produce the
-  /// same number of rows.
-  List<PlaceableTemplate>? _rowsIndexedFrom;
-
-  /// A memo keyed on the document alone would go stale the moment the app
-  /// re-read the shelf, showing a palette that has forgotten a library
-  /// somebody just imported. `DocumentMemo.clear` exists for exactly this
-  /// (its own doc comment says so), and identity is the right test: the
-  /// app builds a fresh list only when it has actually re-read.
-  @override
-  void didUpdateWidget(RackCanvasScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.libraries, widget.libraries)) _placeable.clear();
-  }
-
-  /// What the palette lists, and the map that resolves its callbacks.
-  List<PlaceableTemplate> get _rows {
-    final rows = _placeable.of(
-      _doc,
-      () => buildPlaceableTemplates(_doc, libraries: widget.libraries),
-    );
-    // REBUILT WHENEVER THE LIST IS, not memoised separately: two caches
-    // over one answer is two things that can disagree, and this one is
-    // O(rows) over a list that was just built.
-    if (!identical(_rowsIndexedFrom, rows)) {
-      _rowsIndexedFrom = rows;
-      _rowsByKey = {for (final row in rows) row.rowKey: row};
-    }
-    return rows;
-  }
+  /// **THE ROW LIST, ITS MEMO AND ITS INDEX MOVED TO `PaletteHost`**
+  /// (`#885`, DR-165 §11.164.2), along with the `rowKey` lookup that
+  /// resolved every palette callback. This screen is handed a
+  /// `PlaceableTemplate` now, so the string that could name the wrong
+  /// thing never reaches it.
 
   // Four hand-built demo devices (see _buildDemoDocument) still seed the
   // INITIAL rack contents — kept for continuity with earlier stages rather
@@ -774,7 +740,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // THE PALETTE FILTER COUNTS AS CANVAS FOCUS FOR THE CARET — see
     // `_recomputeCaret`. Without this listener that widening would be inert,
     // because nothing else fires when focus moves between the two.
-    _paletteSearchFocus.addListener(_onFocusChanged);
+    widget.paletteSearchFocus?.addListener(_onFocusChanged);
     // The palette drag's phase feeds the caret's `dragInProgress` input
     // AND the palette's own dimmed-row rendering — see the field's own
     // doc comment for why this is coarse-filtered rather than a repaint
@@ -841,10 +807,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       ..dispose();
     _gridCache.dispose();
     _canvasFocus.dispose();
-    _paletteSearchFocus
-      ..removeListener(_onFocusChanged)
-      ..dispose();
-    _paletteSearchController.dispose();
+    // RELEASED, NOT DISPOSED. The node belongs to `PaletteHost`, which
+    // outlives a tab change; disposing a borrowed node here would leave
+    // the palette with a dead field the moment somebody opened the Plan
+    // tab and came back.
+    widget.paletteSearchFocus?.removeListener(_onFocusChanged);
     super.dispose();
   }
 
@@ -1142,7 +1109,9 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       // wrapping the `Row` in a `FocusScope` and asking whether focus is
       // anywhere within it. The inspector's five text fields are in that
       // `Row` too, and typing a rack name is not a placement gesture.
-      canvasHasFocus: _canvasFocus.hasFocus || _paletteSearchFocus.hasFocus,
+      canvasHasFocus:
+          _canvasFocus.hasFocus ||
+          (widget.paletteSearchFocus?.hasFocus ?? false),
       // EITHER drag suppresses the caret (docs/04 §3.4: the caret and an
       // in-flight drag are mutually exclusive) — in practice a move drag
       // already implies a non-empty selection, which suppresses it anyway,
@@ -3093,12 +3062,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// correct for fields that do not exist yet — which is the property that
   /// matters, since the defect it closes was introduced by adding a text
   /// field to a subtree whose keymap predated it.
-  bool get _textFieldHasFocus {
-    final ctx = FocusManager.instance.primaryFocus?.context;
-    if (ctx == null) return false;
-    return ctx.widget is EditableText ||
-        ctx.findAncestorWidgetOfExactType<EditableText>() != null;
-  }
+  /// **THE PREDICATE MOVED TO `keymap.dart`** (`#885`, DR-165), because
+  /// `PaletteHost` gates `/` on the same question and two spellings would
+  /// answer differently the first time either grew a case.
+  bool get _textFieldHasFocus => aTextFieldHasFocus();
 
   /// SECOND LINE OF DEFENCE, deliberately redundant with the
   /// `isActionEnabled` gate on `DeleteSelectionIntent`.
@@ -3272,31 +3239,6 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   void _onPageUp() => _dispatchVertical(10);
   void _onPageDown() => _dispatchVertical(-10);
 
-  /// `/` (docs/04 §3.2 / §8) — focus the palette filter AND SELECT WHAT IS
-  /// ALREADY IN IT.
-  ///
-  /// The select-all is not a flourish. `/` used to call `requestFocus()`
-  /// alone, which meant that pressing it with a stale query already in the
-  /// box dropped the user into a field whose content they then had to clear
-  /// by hand — and during the period when `Backspace` was being eaten by
-  /// this screen's own keymap, BY HAND WAS NOT POSSIBLE. Selecting the
-  /// existing text makes the next keystroke replace it, so `/` is itself
-  /// the way out of a bad filter rather than another way into one.
-  ///
-  /// Retargeting the whole query is also simply what `/`-to-search does
-  /// everywhere else it exists: it means "start a new search", not "resume
-  /// editing the last one".
-  void _focusPaletteSearch() {
-    _paletteSearchFocus.requestFocus();
-    final text = _paletteSearchController.text;
-    if (text.isNotEmpty) {
-      _paletteSearchController.selection = TextSelection(
-        baseOffset: 0,
-        extentOffset: text.length,
-      );
-    }
-  }
-
   /// `Esc` inside the palette filter: clear the query and hand focus back to
   /// the canvas.
   ///
@@ -3310,10 +3252,17 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   ///
   /// Returning focus to the canvas also re-lights the insertion caret for
   /// free, through `_onFocusChanged`.
-  void _dismissPaletteSearch() {
-    _paletteSearchController.clear();
-    _canvasFocus.requestFocus();
-  }
+  void focusCanvas() => _canvasFocus.requestFocus();
+
+  /// Says [message] on this canvas's status line (`#885`, DR-165).
+  ///
+  /// **THE PALETTE'S REFUSALS STILL LAND HERE.** "No device matches" was
+  /// `onRefuse: _status.show` when this screen owned the palette, and a
+  /// hoist that quietly rerouted it to a snack bar would have moved a
+  /// sentence the user reads mid-keystroke into a surface that covers the
+  /// thing they are typing into. The host asks the OPEN canvas where its
+  /// refusals go, exactly as it asks it to place and to arm.
+  void showStatus(String message) => _status.show(message);
 
   /// `Esc` (docs/04 §3.3 step 4): reverts an in-flight move drag — the
   /// source device returns to full opacity at its original U, the ghost and
@@ -3497,15 +3446,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   // unchanged) — see the caret-targeting note below for exactly what
   // "exists" means here.
 
-  void _placeFromCatalog(String rowKey) {
-    // WHICH ROW, and it can no longer be inferred from an id (`#242`).
-    // A row that has gone away between the pointer-down and this call
-    // (the shelf was re-read, the document moved) is a no-op rather than
-    // a crash: the palette is a projection of a list this screen owns and
-    // a projection can be one row short for a frame.
-    final row = _rowsByKey[rowKey];
-    if (row == null) return;
-
+  void placeFromPalette(PlaceableTemplate row) {
     // DR-103 §11.102.2: a library row is COPIED INTO THE PROJECT and then
     // placed. The plan is computed here, before anything is committed,
     // precisely so the refusals below can still happen with the document
@@ -3859,7 +3800,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   // -only (Part 1's unchanged behaviour); nothing regresses for them.
 
   /// docs/04 §3.1 step 1: "Arm — pointer down on a palette row."
-  void _onPaletteArmDrag(String rowKey, PointerDownEvent event) {
+  void armPaletteDrag(PlaceableTemplate row, PointerDownEvent event) {
     // THE "CAN THIS ROW ARM AT ALL" TESTS COME FIRST, before the claim: a
     // press on a field-device row is not a gesture, so it must not take the
     // screen from an open compaction preview for a drag that was never going
@@ -3874,8 +3815,11 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // in the document, so the document lookup would answer null and a
     // drag from a library row would refuse to start, silently. The row
     // the palette drew is the answer, and now it is what is consulted.
-    final row = _rowsByKey[rowKey];
-    if (row == null) return;
+    //
+    // **HANDED IN SINCE `#885`** (DR-165 §11.164.2): `PaletteHost` owns
+    // the list and resolves the key, so the string that could name the
+    // wrong template never reaches this screen at all.
+    _armedPaletteRow = row;
     final body = row.body;
     // Field devices: click/double-click-only, see above.
     final mountable = body.frontU > 0 || body.rearU > 0;
@@ -3917,7 +3861,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       // reads this back to find the row, and a template id can name two
       // rows (DR-102 §11.101.4). `subjectId` is opaque to
       // `DragPreviewController`, which is why this needed no change there.
-      subjectId: rowKey,
+      subjectId: row.rowKey,
       deviceH: deviceH,
       face: face,
       displayName: body.displayName,
@@ -4170,7 +4114,13 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
     // double-clicking it. One placement mechanism, two entry points, and
     // the copy-on-place rule is a property of the first rather than of
     // either entry.
-    final row = _rowsByKey[rowKey];
+    // THE ROW THIS DRAG WAS ARMED WITH. It used to be re-resolved out of
+    // this screen's own index from `subjectId`; the index is
+    // `PaletteHost`'s now, and re-asking would mean asking a second
+    // owner. Null is unreachable after an arm and is handled rather than
+    // asserted, on this file's habit: a projection can be one row short
+    // for a frame and that is not a crash.
+    final row = _armedPaletteRow;
     if (row == null) {
       _removePaletteDragOverlay();
       _paletteDrag.reset();
@@ -4371,11 +4321,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
       _lastPaletteDragInProgress = inProgress;
       _recomputeCaret();
     }
-    final dimId = _paletteDrag.isSourceEngaged ? _paletteDrag.subjectId : null;
-    if (dimId != _lastPaletteDragDimId) {
-      _lastPaletteDragDimId = dimId;
-      if (mounted) setState(() {});
-    }
+    // PUBLISHED, NOT REBUILT. Only the palette ever read this, and the
+    // palette is `PaletteHost`'s now. `ValueNotifier` does the equality
+    // filter the hand-written compare used to do.
+    widget.paletteDragRow?.value = _paletteDrag.isSourceEngaged
+        ? _paletteDrag.subjectId
+        : null;
   }
 
   /// The same coarse filter for `_moveDrag`: rebuild ONLY when which device
@@ -4525,15 +4476,12 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
             () => !_textFieldHasFocus,
             _redo,
           ),
-          // NOT gated on canvas focus. `keyboard_only_placement_test.dart`
-          // presses `/` right after `receiveAction(done)` has unfocused the
-          // search field, at a moment when canvas focus is not guaranteed;
-          // `!_textFieldHasFocus` is the honest condition (the only thing
-          // `/` must never do is fail to type a slash into a field).
-          FocusPaletteSearchIntent: _GatedAction<FocusPaletteSearchIntent>(
-            () => !_textFieldHasFocus,
-            _focusPaletteSearch,
-          ),
+          // `FocusPaletteSearchIntent` IS NOT HANDLED HERE ANY MORE
+          // (`#885`, DR-165 §11.164.4). The keymap still maps `/` to it
+          // in this scope, and the intent now bubbles to `PaletteHost`,
+          // which is the only thing in the tree holding the field. Its
+          // gate travelled with it: the one thing `/` must never do is
+          // fail to type a slash into a field.
           // Each of these already tested `_canvasFocus.hasFocus` in its own
           // body. The test MOVES to the gate — same condition, but now it
           // releases the key instead of eating it, so a focused header
@@ -4646,35 +4594,10 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  SizedBox(
-                    width: 280,
-                    child: DevicePalettePanel(
-                      // WHAT THE DOCUMENT CAN PLACE, not what this build ships
-                      // (DR-077 §11.76.1). `_catalog` is still the seed data
-                      // this screen's demo document is built FROM; it is no
-                      // longer what the palette lists, because a template
-                      // authored in the Device Builder is in the document and
-                      // was in no catalog.
-                      templates: _rows,
-                      // `#244`, DR-104 §11.103.5. The registries only WIDEN the
-                      // search: without them `hdbaset` still lands on
-                      // `video.hdbaset` by substring, and what they add is the
-                      // vocabulary that is not a substring of the id, `hdbt`
-                      // being DR-060's own example.
-                      registries: _doc.registries,
-                      favourites: widget.favourites,
-                      unreadableLibraries: widget.unreadableLibraries,
-                      categoryOrder: kCatalogCategoryOrder,
-                      searchFocusNode: _paletteSearchFocus,
-                      searchController: _paletteSearchController,
-                      onDismissSearch: _dismissPaletteSearch,
-                      onRefuse: _status.show,
-                      onPlace: _placeFromCatalog,
-                      onArmDrag: _onPaletteArmDrag,
-                      draggingRowKey: _lastPaletteDragDimId,
-                    ),
-                  ),
-                  const VerticalDivider(width: 1),
+                  // THE PALETTE COLUMN IS `PaletteHost`'s (`#885`,
+                  // DR-165 §11.164.1). It stood here, 280px wide, and it
+                  // was the only one in the tree, so the Plan tab had a
+                  // built gesture and nothing on screen to start it.
                   Expanded(
                     child: Focus(
                       focusNode: _canvasFocus,
@@ -5295,7 +5218,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
 }
 
 /// The pointer-driven gestures this screen arbitrates between (see
-/// `_RackCanvasScreenState`'s "the exclusivity rule, in one place").
+/// `RackCanvasScreenState`'s "the exclusivity rule, in one place").
 ///
 /// TWO VALUES, NOT FOUR, and the grouping is the point. The move drag and the
 /// top-edge resize are ONE value because they are the same pointer arriving
@@ -5373,7 +5296,7 @@ enum _HeightOutcome {
 class _ApplyCompactionAction extends Action<ApplyCompactionIntent> {
   _ApplyCompactionAction(this._state);
 
-  final _RackCanvasScreenState _state;
+  final RackCanvasScreenState _state;
 
   @override
   bool get isActionEnabled =>
@@ -5446,7 +5369,7 @@ class _GatedAction<T extends Intent> extends Action<T> {
 class _RackCanvasHandler implements CanvasIntentHandler {
   _RackCanvasHandler(this._state);
 
-  final _RackCanvasScreenState _state;
+  final RackCanvasScreenState _state;
 
   @override
   void beginDrag(

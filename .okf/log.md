@@ -1,5 +1,39 @@
 # Update Log
 
+## 2026-09-13 (thirty-third entry)
+
+* **Closed**: `#885` with `72f22723` and `a1bdc029`. The device palette moved out
+  of `RackCanvasScreen` to a `PaletteHost` above the tab view, and the Plan view
+  can place a device onto a floorplan. **No version move**: it closes under
+  `#786`.
+* **Note**: **A GESTURE RULED, BUILT, TESTED AND UNMOUNTED.** docs/15 §6's
+  gesture table has opened with "drag from the device palette onto the plan"
+  since the chapter brief; `buildPlaceOnPlanCommand` and a public
+  `armPaletteDrag` were both built, and **all three of `armPaletteDrag`'s call
+  sites were tests**. `PLAN-E/5`, the chapter scheduled to make the Plan view's
+  work reachable, shipped the tab and the layout and did not bring the palette.
+* **Note**: **A PARAMETER THAT HAD NEVER BEEN GIVEN A REAL VALUE.**
+  `_placeFromPalette` took a `rowKey` (`source/id@version`) and passed it to
+  `buildPlaceOnPlanCommand` as a `catalogId`, which resolves nothing for any real
+  row; its three tests all passed a bare template id. Handing over the resolved
+  `PlaceableTemplate` makes the wrong call unrepresentable.
+* **Note**: **THREE BUGS IN ONE AFTERNOON WITH ONE CAUSE.** A hidden 280px column
+  changed a `PageView`'s page width, so tapping `Schematic` from the Rack tab
+  showed `Structured Wiring`. A conditional child in a `Row` shifted its siblings
+  and destroyed every tab's `State`. And an `InheritedWidget` comparing a `State`
+  OBJECT never notified, so a template saved while the canvas was open never
+  reached the palette. Hiding a widget is a structural change.
+* **Note**: **THE ~128 EXISTING PALETTE CASES WERE THE POINT.** Nine harnesses
+  now pump the composition rather than the screen, and what they prove is that a
+  wide refactor changed no behaviour. Two new cases and a `/` gate that had never
+  been tested at all; **the first version of that case could not fail**, because
+  after the hoist a key pressed in the palette's own field never reaches the
+  `Shortcuts` that maps `/`.
+* **Creation**: [DR-165, the palette is the
+  shell's](/decisions/dr-165-the-palette-is-the-shells.md).
+* **Creation**: [Hiding a widget is a structural
+  change](/practices/hiding-a-widget-is-a-structural-change.md).
+
 ## 2026-09-13 (thirty-second entry)
 
 * **Closed**: `#884`, the producer `#876`'s 0U list never had, with `f04392a4`

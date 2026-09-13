@@ -23,6 +23,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
+import 'rack_with_palette.dart';
+
 final class _FakeMeasurer implements TextMeasurer {
   @override
   TextMetrics measureText(String text, TextStyleSpec style) => TextMetrics(
@@ -35,9 +37,23 @@ final class _FakeMeasurer implements TextMeasurer {
   );
 }
 
-Widget _app() => MaterialApp(
-  home: Scaffold(body: RackCanvasScreen(measurer: _FakeMeasurer())),
-);
+Widget _app() {
+  final controller = DocumentController(buildDemoRackDocument());
+  return MaterialApp(
+    home: Scaffold(
+      body: RackWithPalette(
+        controller: controller,
+        canvas: (key, searchFocus, dragRow) => RackCanvasScreen(
+          key: key,
+          measurer: _FakeMeasurer(),
+          controller: controller,
+          paletteSearchFocus: searchFocus,
+          paletteDragRow: dragRow,
+        ),
+      ),
+    ),
+  );
+}
 
 /// See rack_canvas_screen_test.dart's copy: the palette row's pointer-down
 /// also reaches a double-tap recognizer whose internal timer the binding

@@ -107,10 +107,10 @@ final class PlanEditorScreen extends StatefulWidget {
   final void Function(String message)? onNotice;
 
   @override
-  State<PlanEditorScreen> createState() => _PlanEditorScreenState();
+  PlanEditorScreenState createState() => PlanEditorScreenState();
 }
 
-class _PlanEditorScreenState extends State<PlanEditorScreen> {
+class PlanEditorScreenState extends State<PlanEditorScreen> {
   /// Which plan is open. **Held here and not in the document**, because it
   /// is a view state and not a fact about the project: two windows on one
   /// file would disagree about it, and a saved file recording which tab
@@ -250,6 +250,37 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
 
   ViewportController _viewportFor(Uuid id) =>
       _viewports.putIfAbsent(id, ViewportController.new);
+
+  /// Hands the shell's palette down to the open canvas (`#885`, DR-165).
+  ///
+  /// **NULL WHEN NO PLAN IS OPEN**, which is a real state: the Plan tab
+  /// shows `_EmptyPlan` in a project with no floorplan, and a drag armed
+  /// against nothing must not arm anything.
+  void armPaletteDrag(PlaceableTemplate row, PointerDownEvent event) {
+    final open = _open;
+    if (open == null) return;
+    _canvasKeyFor(open.id).currentState?.armPaletteDrag(row, event);
+  }
+
+  /// A double-click or `Enter` in the palette, which this view REFUSES.
+  ///
+  /// docs/15 §6's gesture is a DRAG, and it is a drag because the act
+  /// places the device AND sets its pin in one command: a floorplan has
+  /// no caret and no default spot, so an activated row has nowhere to
+  /// mean. Refusing by name beats both alternatives, which are doing
+  /// nothing (docs/04 §3.4) and placing the device somewhere the person
+  /// was not looking, the exact defect DR-157 §11.156 closed on the
+  /// rails.
+  void placeFromPalette(PlaceableTemplate row) => widget.onRefuse?.call(
+    'Drag ${row.body.displayName} onto the plan to place it.',
+  );
+
+  /// Gives the keyboard back to the open canvas (`#885`).
+  void focusCanvas() {
+    final open = _open;
+    if (open == null) return;
+    _canvasKeyFor(open.id).currentState?.focusCanvas();
+  }
 
   GlobalKey<PlanCanvasScreenState> _canvasKeyFor(Uuid id) =>
       _canvasKeys.putIfAbsent(id, GlobalKey<PlanCanvasScreenState>.new);

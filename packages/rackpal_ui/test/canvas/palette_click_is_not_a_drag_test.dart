@@ -35,6 +35,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
+import 'rack_with_palette.dart';
+
 final DateTime _when = DateTime.utc(2026, 8, 30, 11);
 
 const String _released = 'Released outside the rack';
@@ -106,10 +108,16 @@ void main() {
     await tester.pumpWidget(
       MaterialApp(
         home: Scaffold(
-          body: RackCanvasScreen(
-            measurer: _FakeMeasurer(),
+          body: RackWithPalette(
             controller: controller,
-            clock: FixedClock(_when),
+            canvas: (key, searchFocus, dragRow) => RackCanvasScreen(
+              key: key,
+              measurer: _FakeMeasurer(),
+              controller: controller,
+              clock: FixedClock(_when),
+              paletteSearchFocus: searchFocus,
+              paletteDragRow: dragRow,
+            ),
           ),
         ),
       ),

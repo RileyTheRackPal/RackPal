@@ -28,8 +28,8 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
 import '../app_like.dart';
-
 import 'rack_scene_to_screen.dart';
+import 'rack_with_palette.dart';
 
 final class _FakeMeasurer implements TextMeasurer {
   @override
@@ -81,15 +81,27 @@ RenderDeviceBox _render(WidgetTester tester, String id) =>
 bool _isDragSource(WidgetTester tester, String id) =>
     _render(tester, id).fadeOpacity == RenderDeviceBox.dragSourceOpacity;
 
-Widget _app({Clock clock = const SystemClock()}) => MaterialApp(
-  // DR-159 §11.158.3: undo and redo are GLOBAL bindings, so a
-  // screen pumped without the root's map is a configuration
-  // the product does not ship. See test/app_like.dart.
-  shortcuts: appGlobalShortcuts(),
-  home: Scaffold(
-    body: RackCanvasScreen(measurer: _FakeMeasurer(), clock: clock),
-  ),
-);
+Widget _app({Clock clock = const SystemClock()}) {
+  final controller = DocumentController(buildDemoRackDocument(), clock: clock);
+  return MaterialApp(
+    // DR-159 §11.158.3: undo and redo are GLOBAL bindings, so a
+    // screen pumped without the root's map is a configuration
+    // the product does not ship. See test/app_like.dart.
+    shortcuts: appGlobalShortcuts(),
+    home: Scaffold(
+      body: RackWithPalette(
+        controller: controller,
+        canvas: (key, searchFocus, dragRow) => RackCanvasScreen(
+          key: key,
+          measurer: _FakeMeasurer(),
+          controller: controller,
+          paletteSearchFocus: searchFocus,
+          paletteDragRow: dragRow,
+        ),
+      ),
+    ),
+  );
+}
 
 // Demo front-face devices: UPS-1 @U1 (2U), AMP-1 @U4 (2U), SW-1 @U7 (1U).
 Offset _ampCentre(WidgetTester tester) => _centreOf(tester, 4, 2);

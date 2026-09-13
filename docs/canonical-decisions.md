@@ -20589,6 +20589,89 @@ opening an empty dialog.
 **11.163.6 Scope.** **No scope change.** AC-044's *"created and edited from the inspector"* is v1
 scope, and this is the half of it `#876` deferred to a path that refuses. Board `#884` cites it.
 
+### 11.164 DR-165 · The device palette is the shell's, so the Plan view can place a device
+
+**The question.** docs/15 §6's gesture table opens with *"Drag from the device palette or staging bin
+onto the plan: places the device and sets its pin in one command."* **The command half is built**
+(`buildPlaceOnPlanCommand`, which carries the pin on the placement so one undo restores both) and
+**the gesture half is built** (`PlanCanvasScreenState.armPaletteDrag`, public, whose own comment says
+*"the host that owns a palette hands the armed pointer down, and `PLAN-E/5` wires the real one"*).
+
+**MEASURED: `armPaletteDrag` has three call sites and all three are tests.** `DevicePalettePanel`
+has exactly one mount in the tree, inside `RackCanvasScreen`, so when the Plan tab is open the
+palette is not on screen at all. `PLAN-E/5` shipped the tab and the layout and did not bring it.
+
+**What it costs today.** A field device can only be born in the Rack tab. Its palette row **refuses
+to drag** there, deliberately, because docs/04 §3.1 is *"drag from palette to RAILS"* and a
+`notInRack` body has no rails to snap to; so it is created by double-click, lands as an
+`OffRackPlacement`, and is **invisible in the view that created it**. It reappears only after a tab
+change, in the Plan view's unpinned strip. Three surfaces and a tab change for *"put a camera in the
+living room"*.
+
+**11.164.1 RULED: THE PALETTE IS HOISTED, AND `RackCanvasScreen` STOPS OWNING ONE.** Settled by the
+user on 2026-09-13, against a second mount in the Plan view's own layout. docs/15 §6 says there is
+*"no fourth region and no plan-specific palette; the device palette is the device palette"*, and two
+instances of one widget is the sentence obeyed in the letter and broken in the spirit: the search
+query would not survive a tab change, and *"the palette"* would have two code paths for the rest of
+the product's life.
+
+**A `PaletteHost` OWNS WHAT IS IN THE COLUMN**: the row list and its memo, the search field's
+controller, and the `/` handler. It wraps the whole tab view, so there is one search query and one
+memo rather than one per tab. **It lays nothing out** (§11.164.5), and the COLUMN itself is placed
+by each view that wants one, in that view's own layout: the Rack tab and the Plan tab, and no other.
+The Structure editor places outlets and plates from surfaces of its own, and a device palette there
+would be a control that cannot act on anything in view, which is docs/04 §3.4's rule about a control
+that silently does nothing.
+
+**11.164.2 THE HOST HANDS OVER A RESOLVED ROW, NOT A KEY**, and that removes a defect rather than
+only some duplication. A `rowKey` is `source/id@version` and a template id is not (DR-102
+§11.101.4), and the two are different strings that both read as *"which template"*.
+`PlanCanvasScreenState._placeFromPalette` took a `rowKey` and passed it straight to
+`buildPlaceOnPlanCommand` as a **`catalogId`**, which would have resolved nothing for any real row;
+its three tests pass a bare id, so the parameter was never given the value its own name promised.
+**Handing over the `PlaceableTemplate` makes the wrong call unrepresentable**, and it leaves the row
+list with one owner instead of two.
+
+**11.164.3 THE SEARCH FIELD'S FOCUS NODE IS OWNED BY THE COMMON ANCESTOR**, which is the shell. The
+insertion caret's activation reads `_canvasFocus.hasFocus || _paletteSearchFocus.hasFocus`, because
+arming a placement from the search box is a placement gesture and the caret must stay lit across the
+hand-off. That is the CANVAS's rule about its own caret, so the canvas keeps it and reads a node it
+was handed. The alternative, a notifier reporting focus upward and a second copy of the rule in the
+host, is two things that can disagree about one fact.
+
+**THIS CLAUSE FIRST SAID THE HOST OWNS IT AND LENDS IT DOWN, AND THAT CANNOT WORK.** The shell
+builds the tab bodies during its own `build`, before `PaletteHostState` exists, so a node created in
+the host is not there to lend and the canvas spends its first frame reading null. Two widgets need
+the node and neither is the other's parent, so its owner is the one above both. The same argument
+already governs the drag-row notifier, which the palette reads while it builds and the canvas writes
+from a drag that starts after.
+
+**11.164.4 AND `/` REACHES THE PALETTE FROM BOTH VIEWS.** `focusPaletteSearch` is `KeyScope.rack`
+today and gains `KeyScope.plan`, since a palette a person can see and cannot reach from the keyboard
+is half a surface. Same binding, same intent, one more scope.
+
+**11.164.5 AND THE COLUMN IS PLACED BY THE VIEW, NOT BESIDE THE TAB VIEW.** Found by a test, and the
+mechanism is worth keeping. The first build drew the column as a sibling of the shell's `TabBarView`
+with a `showColumn` flag, which is the obvious shape and the wrong one: **a `TabBarView` is a
+`PageView`, and a `PageView` positions by PIXEL OFFSET**, `index * viewportWidth`. Hiding a 280px
+column widens the viewport by 280, so an offset animated for the old width lands between pages.
+Tapping `Schematic` from the Rack tab showed `Structured Wiring`, one page short, every time.
+
+Two smaller versions of the same mistake were passed through on the way, and both are the kind that
+a suite catches and a person does not. A conditional child in a `Row` shifts its siblings, because
+multi-child elements are matched BY POSITION: `if (showColumn) ...[column, divider]` moved the canvas
+from slot 2 to slot 0 and destroyed every tab's `State`. And an `InheritedWidget` carrying a `State`
+OBJECT must notify on every rebuild, since comparing `state != old.state` asks "was this widget
+replaced" and never "did anything change": with that comparison a template saved while the canvas
+was open never reached the palette.
+
+**So the host provides and the view places.** The page width never moves, and *which views have a
+palette* becomes a fact about those views rather than a flag passed down from above.
+
+**11.164.6 Scope.** **No scope change, on DR-143's precedent.** The gesture is in docs/15 §6's own
+table and has been since the chapter brief; this is an unbuilt clause reaching its producer, exactly
+as the floorplan importer did. Board `#885` cites it.
+
 ---
 
 ## 12. Superseded rulings

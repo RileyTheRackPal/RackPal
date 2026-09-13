@@ -16,8 +16,8 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
 import '../app_like.dart';
-
 import 'rack_scene_to_screen.dart';
+import 'rack_with_palette.dart';
 
 final class _FakeMeasurer implements TextMeasurer {
   @override
@@ -33,13 +33,27 @@ final class _FakeMeasurer implements TextMeasurer {
 
 const _geo = RackGeometry(12);
 
-Widget _app() => MaterialApp(
-  // DR-159 §11.158.3: undo and redo are GLOBAL bindings, so a
-  // screen pumped without the root's map is a configuration
-  // the product does not ship. See test/app_like.dart.
-  shortcuts: appGlobalShortcuts(),
-  home: Scaffold(body: RackCanvasScreen(measurer: _FakeMeasurer())),
-);
+Widget _app() {
+  final controller = DocumentController(buildDemoRackDocument());
+  return MaterialApp(
+    // DR-159 §11.158.3: undo and redo are GLOBAL bindings, so a
+    // screen pumped without the root's map is a configuration
+    // the product does not ship. See test/app_like.dart.
+    shortcuts: appGlobalShortcuts(),
+    home: Scaffold(
+      body: RackWithPalette(
+        controller: controller,
+        canvas: (key, searchFocus, dragRow) => RackCanvasScreen(
+          key: key,
+          measurer: _FakeMeasurer(),
+          controller: controller,
+          paletteSearchFocus: searchFocus,
+          paletteDragRow: dragRow,
+        ),
+      ),
+    ),
+  );
+}
 
 Finder _device(String id) => find.descendant(
   of: find.byKey(ValueKey(id)),
@@ -384,7 +398,15 @@ void main() {
               }
               return KeyEventResult.ignored;
             },
-            child: RackCanvasScreen(measurer: _FakeMeasurer()),
+            child: RackWithPalette(
+              controller: DocumentController(buildDemoRackDocument()),
+              canvas: (key, searchFocus, dragRow) => RackCanvasScreen(
+                key: key,
+                measurer: _FakeMeasurer(),
+                paletteSearchFocus: searchFocus,
+                paletteDragRow: dragRow,
+              ),
+            ),
           ),
         ),
       ),
