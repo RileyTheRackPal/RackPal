@@ -276,9 +276,15 @@ The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.
   refuses the whole call over it, having already validated everything else. The
   work-item description has no such cap, so the habit that works there does not
   transfer. Measure the file before the call; a commit message is the place for
-  the long version, and it is under no cap at all. **The refusal is
-  `ERROR: Invalid argument value.` and names nothing**, so a call that fails
-  right after you shortened it is probably still over.
+  the long version, and it is under no cap at all. **THIS BULLET SAID THE
+  REFUSAL "NAMES NOTHING" AND THAT IS NO LONGER TRUE**: on 2026-09-13 it printed
+  `ERROR: Invalid argument value.` followed by a blank line and
+  `Parameter name: A description for a pull request must not be longer than 4000
+  characters.`, three times running. The second line is easy to lose if the
+  output is piped through anything that keeps only the first, which is the most
+  likely reason it was recorded as silent. **Measure in CHARACTERS, not bytes**:
+  `§`, `→` and `▸` are multi-byte, so a file `wc -c` calls 4,164 can be 4,142
+  characters, and trimming to the byte count overshoots.
 - **`az repos pr create` SILENTLY STRIPS EVERY NON-ASCII CHARACTER** from a
   description passed by `@file`, even though the file is UTF-8 and the same file
   posts correctly over REST. Measured on PR 101, 2026-09-12: `§` vanished from
