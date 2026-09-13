@@ -10844,6 +10844,59 @@ devices, mirroring ignored, an unknown span drawn full height, a move erasing th
 **Commits** (§8.8). `#883` `6fc22a29` (DR-166) and `6fe267d6` (the bar, the field and the widened
 rule).
 
+#### 5.9.43 `#887`: the 0U occupant's fields move to the device inspector, once the reason for moving them away expired · `DR-167` · no version move
+
+2026-09-13. The follow-on `#883` left open, asked for by the user the same day. It closes under
+`#786` and moves no number.
+
+##### 5.9.43.1 A placement argued from an obstacle that is gone
+
+AC-044 puts a 0U occupant's *"channel, start U, span"* on the inspector, and every other device
+property is edited on the DEVICE inspector. DR-163 §11.162.1 put these three on the RACK panel and
+said exactly why: **a 0U device could not be selected**. `#883` drew the bar and made it
+hit-testable; DR-166 §11.165.6 recorded that the fields stayed put on a fresh decision and put the
+placement back to the user as a live question.
+
+**Both earlier clauses are corrected in place rather than left to read as current**, which is the
+part worth keeping. A reader who finds a placement argued from an obstacle that no longer exists
+does not conclude "this was re-decided"; they conclude that the obstacle is still there. §11.162.1's
+own closing paragraph is about that failure pointed the other way, and it would have become an
+example of itself.
+
+##### 5.9.43.2 What did NOT move, and why that is not a compromise
+
+A channel is a rail on a rack. Adding one, removing one, and the occupant count that makes a Remove
+about to refuse say so first are all facts about the RACK, and `occupantsOfZeroUChannel`'s own doc
+says it is public *"because the inspector needs to say 'AMP-1 is in this channel' before offering to
+delete it"*. What moved is the occupant's own three fields, which are facts about the DEVICE.
+
+**Nothing is editable in two places**, which is the point of moving them rather than copying them,
+and a case pins both halves: the rack panel no longer offers the start-U field and still names the
+occupant, and selecting the bar produces the field exactly once.
+
+##### 5.9.43.3 Two test-harness facts, and the first one is general
+
+`_rack` and `_doc` read their values off `RackInspectorPanel`, which is mounted **only while the
+inspector is on the rack**. A case that selects a device in order to edit it swaps that panel away,
+so every assertion after the selection died on `Bad state: No element` rather than on anything it
+was about. They read `InspectorPanel` now, which is mounted for both targets and carries the same
+two fields.
+
+That is worth stating generally: **a test accessor keyed on a widget that only exists in one state
+is a test accessor that breaks the moment a case changes state on purpose.** The second is smaller:
+`_reveal` scrolls the rack panel, so three cases that used it had to stop, since the device panel
+puts these fields with the other placement controls and above the fold.
+
+##### 5.9.43.4 Evidence
+
+Floor: `rackpal_ui` 1874 to 1875. Gates: 17. Analyzer pin unmoved at 233.
+
+**Three existing screen cases changed ROUTE rather than meaning**, reaching the fields by clicking
+the bar, which is `#883`'s gesture doing real work in three more places rather than being asserted
+once and left alone.
+
+**Commits** (§8.8). `#887` `e077860c`.
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·

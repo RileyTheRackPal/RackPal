@@ -85,6 +85,11 @@ they are, because the rack panel lists occupants under the channel they sit in
 and that is how the work is done, but the next reader should know it was
 re-decided rather than inherited.
 
+**AND THE FIELDS HAVE SINCE MOVED BACK**, by
+[DR-167](/decisions/dr-167-the-occupant-fields-move.md), once `#883` made a 0U
+device selectable. What is above is the record of why they were ever anywhere
+else.
+
 # Related
 
 * [When a ruling has two clauses, check whether one is load-bearing for the

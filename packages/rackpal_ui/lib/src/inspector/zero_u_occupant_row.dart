@@ -56,6 +56,7 @@ class ZeroUOccupantRow extends StatefulWidget {
     required this.channels,
     required this.onMove,
     required this.onResize,
+    this.showDesignator = true,
     super.key,
   });
 
@@ -80,6 +81,16 @@ class ZeroUOccupantRow extends StatefulWidget {
   /// long a PDU is must be able to say so, and the elevation then draws
   /// the hollow stub rather than a bar it cannot support.
   final void Function(Uuid deviceId, int? spanU) onResize;
+
+  /// Whether to print the device's designator above the fields.
+  ///
+  /// **TRUE IN A LIST, FALSE ON THE DEVICE PANEL** (`#887`). The rack
+  /// panel stacks one of these under each channel and nothing else there
+  /// says which device a pair of fields belongs to; the device inspector
+  /// has the designator in its own header two lines up, and printing it
+  /// again is the kind of duplication that makes a panel read as a form
+  /// rather than as facts about one thing.
+  final bool showDesignator;
 
   @override
   State<ZeroUOccupantRow> createState() => _ZeroUOccupantRowState();
@@ -196,8 +207,10 @@ class _ZeroUOccupantRowState extends State<ZeroUOccupantRow> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(widget.device.designator, style: theme.textTheme.bodySmall),
-          const SizedBox(height: 4),
+          if (widget.showDesignator) ...[
+            Text(widget.device.designator, style: theme.textTheme.bodySmall),
+            const SizedBox(height: 4),
+          ],
           Row(
             children: [
               SizedBox(

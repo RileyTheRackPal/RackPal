@@ -118,6 +118,8 @@ Future<void> _pump(
             SizedBox(
               width: 320,
               child: InspectorPanel(
+                onMoveZeroU: (_, _, _) {},
+                onResizeZeroU: (_, _) {},
                 target: InspectorTarget.selection,
                 rack: doc.racks[_rackId]!,
                 doc: doc,
@@ -125,9 +127,7 @@ Future<void> _pump(
                 selectedIds: const {_deviceId},
                 focusedId: _deviceId,
                 onZeroU: (_) {},
-                onMoveZeroU: (_, _, _) {},
                 onAddZeroUDevice: (_, _) {},
-                onResizeZeroU: (_, _) {},
                 onSetProperty: <T>(field, value) {},
                 onRename: (_) {},
                 onRequestHeight: (_) {},
@@ -214,6 +214,8 @@ void main() {
                 SizedBox(
                   width: 320,
                   child: InspectorPanel(
+                    onMoveZeroU: (_, _, _) {},
+                    onResizeZeroU: (_, _) {},
                     target: InspectorTarget.selection,
                     rack: doc.racks[_rackId]!,
                     doc: doc,
@@ -221,9 +223,7 @@ void main() {
                     selectedIds: const {},
                     focusedId: null,
                     onZeroU: (_) {},
-                    onMoveZeroU: (_, _, _) {},
                     onAddZeroUDevice: (_, _) {},
-                    onResizeZeroU: (_, _) {},
                     onSetProperty: <T>(field, value) {},
                     onRename: (_) {},
                     onRequestHeight: (_) {},

@@ -45,6 +45,7 @@ import 'package:rackpal_ui/src/inspector/device_ports_section.dart';
 import 'package:rackpal_ui/src/inspector/mount_note_field.dart';
 import 'package:rackpal_ui/src/inspector/rack_inspector_panel.dart'
     show InspectorDropdown, RackInspectorPanel;
+import 'package:rackpal_ui/src/inspector/zero_u_occupant_row.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 
 /// Which of the two things the inspector column is currently showing.
@@ -183,9 +184,7 @@ class InspectorPanel extends StatelessWidget {
           onApplyPreset: onApplyPreset,
           onRefuse: onRefuse,
           onZeroU: onZeroU,
-          onMoveZeroU: onMoveZeroU,
           onAddZeroUDevice: onAddZeroUDevice,
-          onResizeZeroU: onResizeZeroU,
           firstFieldFocus: firstFieldFocus,
         ),
         InspectorTarget.selection => _SelectionSummary(
@@ -197,6 +196,8 @@ class InspectorPanel extends StatelessWidget {
           onSetOverride: onSetOverride,
           onSetPortFact: onSetPortFact,
           onSetMountNote: onSetMountNote,
+          onMoveZeroU: onMoveZeroU,
+          onResizeZeroU: onResizeZeroU,
         ),
       },
     );
@@ -215,6 +216,8 @@ class _SelectionSummary extends StatelessWidget {
     required this.onSetOverride,
     required this.onSetPortFact,
     required this.onSetMountNote,
+    required this.onMoveZeroU,
+    required this.onResizeZeroU,
   });
 
   final RackDocument doc;
@@ -239,6 +242,25 @@ class _SelectionSummary extends StatelessWidget {
 
   final ValueChanged<String>? onSetMountNote;
 
+  /// AC-044's three occupant fields, HERE SINCE `#887`.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THEY WERE ON THE RACK PANEL FOR A REASON THAT EXPIRED
+  /// ═══════════════════════════════════════════════════════════════════
+  /// DR-163 §11.162.1 put them there because **a 0U device could not be
+  /// selected**: `scene_builder.dart` dropped every non-rail placement,
+  /// so this panel could never open on one. `#883` drew the bar and made
+  /// it hit-testable, DR-166 §11.165.6 recorded that the fields stayed
+  /// put on a fresh decision rather than an inherited one, and the user
+  /// then made the other call.
+  ///
+  /// **THE CHANNELS THEMSELVES STAY ON THE RACK PANEL**, which is not a
+  /// compromise: a channel is a rail on a rack and belongs to the rack,
+  /// while the occupant's channel, start U and span are facts about the
+  /// DEVICE. Nothing is editable in two places.
+  final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
+  final void Function(Uuid deviceId, int? spanU) onResizeZeroU;
+
   /// The one selected device that is OFF-RACK, or null. Mirrors
   /// [_railPlacements] one control up: the width dropdown appears only
   /// for a rail placement because only a rail placement HAS a lateral
@@ -248,6 +270,30 @@ class _SelectionSummary extends StatelessWidget {
     final OffRackPlacement p => p,
     _ => null,
   };
+
+  /// The sole selected device's 0U placement, its channel, and every
+  /// channel on its rack, or null when the selection is not exactly one
+  /// 0U occupant (`#887`).
+  ///
+  /// **NULL ALSO WHEN THE CHANNEL HAS GONE**, which is a real state: a
+  /// rack can lose a channel while a device still names it, and
+  /// `PLC-003` reports that as a finding. A row rendered against no
+  /// channel would have nothing to convert an offset into a start U
+  /// with.
+  ({DeviceInstance device, ZeroUChannel channel, List<ZeroUChannel> all})?
+  get _soleZeroU {
+    final device = _soleDevice;
+    final placement = device?.placement;
+    if (device == null || placement is! ZeroUPlacement) return null;
+    final rack = doc.racks[placement.rackId];
+    if (rack == null) return null;
+    for (final c in rack.zeroUChannels) {
+      if (c.id == placement.channelId) {
+        return (device: device, channel: c, all: rack.zeroUChannels);
+      }
+    }
+    return null;
+  }
 
   /// The single selected device door 1 edits, or null whenever the
   /// selection is not exactly one device that still exists.
@@ -391,6 +437,23 @@ class _SelectionSummary extends StatelessWidget {
             MountNoteField(
               value: offRack.mountNote,
               onChanged: onSetMountNote!,
+            ),
+          // AC-044's occupant fields (`#887`), beside the two controls
+          // above rather than anywhere else: a rail placement says where
+          // it sits with a U and a face, an off-rack one says it in
+          // prose, and this is the third arm of that same sealed type
+          // answering the same question.
+          if (_soleZeroU case final zeroU?)
+            ZeroUOccupantRow(
+              device: zeroU.device,
+              channel: zeroU.channel,
+              channels: zeroU.all,
+              onMove: onMoveZeroU,
+              onResize: onResizeZeroU,
+              // THE DESIGNATOR IS ALREADY ABOVE, in this panel's own
+              // header. The row prints it when it lives in a LIST, where
+              // nothing else says which device a pair of fields is for.
+              showDesignator: false,
             ),
           // DOOR 1, ON ONE DEVICE ONLY (CR-054, DR-098 §11.97.5). `#183`
           // describes right-clicking A device, and the amber badge counts

@@ -20470,6 +20470,11 @@ and it is owed whether or not these fields exist.
 out to be false, and a ruling that silently ended up somewhere else would leave the next reader
 believing the device inspector had been considered and rejected on its merits.
 
+**AND THE FIELDS HAVE SINCE MOVED BACK, BY DR-167 §11.166 (2026-09-13).** `#883` drew the bar and
+made a 0U device selectable, so the obstacle this clause reasons from is gone. Everything above
+stands as the record of why they were ever anywhere else; where they ARE is the device inspector,
+which is where AC-044 put them all along.
+
 **11.162.2 RULED: ADDING A CHANNEL TAKES ITS BOUNDS UP FRONT**, in a form of side, start U, end U and
 an optional name, rather than a one-click default the person then corrects.
 
@@ -20730,15 +20735,41 @@ written and still unread; the bar runs ALONG its channel whichever value it hold
 that value exists for is v1.1's.
 
 **11.165.6 AND §11.162.1's REASON IS NOW SPENT.** The occupant's channel and start U were moved to
-the rack panel because a 0U device **could not be selected**. It can now. They stay where they are,
-because the rack panel lists occupants under the channel they sit in and that is how the work is
-done, but the reason on the record no longer holds: the next reader should know this was re-decided
-rather than inherited.
+the rack panel because a 0U device **could not be selected**. It can now, so the reason on the
+record no longer holds and the placement went back to the user as a live question rather than being
+inherited.
+
+**ANSWERED THE SAME DAY BY DR-167 §11.166**: they move to the device inspector. This clause said
+they would stay, which was true for as long as it took to ask.
 
 **11.165.7 Scope.** **No scope change for the bar or the inspector field**, both of which AC-044 puts
 in v1 in as many words. **The MODEL FIELD is new and is ruled here**: it is CR-117's byte surface, it
 is additive, and `Placement.unknown` carries it unharmed through a reader that does not know it.
 Board `#883` cites it.
+
+### 11.166 DR-167 · The 0U occupant's fields move to the device inspector
+
+**The question.** AC-044 puts a 0U occupant's *"channel, start U, span"* on the inspector, and every
+other device property is edited on the DEVICE inspector. §11.162.1 put these three on the RACK panel
+and said exactly why: **a 0U device could not be selected**, because `scene_builder.dart` dropped
+every non-rail placement, so the device panel could never open on one. §11.165.6 recorded that
+`#883` removed that reason and that the fields stayed put on a fresh decision rather than an
+inherited one.
+
+**11.166.1 RULED: THEY MOVE.** Settled by the user on 2026-09-13, once the bar existed and the
+device could be clicked. Both earlier clauses are corrected in place rather than left to read as
+current, because a reader who finds a placement argued from an obstacle that is gone will re-derive
+the wrong conclusion from it.
+
+**11.166.2 THE CHANNELS STAY ON THE RACK PANEL, and that is not a compromise.** A channel is a rail
+on a rack: adding one, removing one, and the occupant count that makes a Remove about to refuse say
+so first are all facts about the RACK. What moved is the occupant's own channel, start U and span,
+which are facts about the DEVICE. **Nothing is editable in two places**, which is the point of
+moving them rather than copying them, and a case pins that the rack panel still NAMES what is in a
+channel while no longer editing it.
+
+**11.166.3 Scope.** **No scope change.** AC-044 puts these fields on the inspector in v1 and always
+did; this is the surface arriving where that ruling pointed. Board `#887` cites it.
 ---
 
 ## 12. Superseded rulings

@@ -1,5 +1,29 @@
 # Update Log
 
+## 2026-09-13 (thirty-fifth entry)
+
+* **Closed**: `#887` with `e077860c`. The 0U occupant's channel, start U and
+  span moved from the rack panel to the DEVICE inspector, where AC-044 puts
+  them. **No version move**: it closes under `#786`.
+* **Note**: **A PLACEMENT ARGUED FROM AN OBSTACLE THAT IS GONE.** DR-163
+  §11.162.1 put the fields on the rack panel because a 0U device could not be
+  selected; `#883` removed that. **Both earlier clauses are corrected in
+  place**, because a reader who finds such an argument does not conclude it was
+  re-decided, they conclude the obstacle is still there.
+* **Note**: **THE CHANNELS STAY, and that is not a compromise.** Adding one,
+  removing one and the occupant count that makes a Remove about to refuse say so
+  first are facts about the RACK; the occupant's three fields are facts about the
+  DEVICE. Nothing is editable in two places.
+* **Note**: **A TEST ACCESSOR KEYED ON A ONE-STATE WIDGET BREAKS ON PURPOSE.**
+  `_rack` and `_doc` read `RackInspectorPanel`, which is mounted only while the
+  inspector is on the rack, so every assertion after a deliberate selection died
+  on `Bad state: No element` rather than on what it was about.
+* **Creation**: [DR-167, the occupant fields
+  move](/decisions/dr-167-the-occupant-fields-move.md).
+* **Update**: [DR-163](/decisions/dr-163-zero-u-from-the-inspector.md) and
+  [DR-166](/decisions/dr-166-a-zero-u-occupant-has-a-span.md) both carry the
+  correction.
+
 ## 2026-09-13 (thirty-fourth entry)
 
 * **Closed**: `#883` with `6fc22a29` and `6fe267d6`. AC-044's plain bar: a 0U

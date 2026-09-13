@@ -76,11 +76,18 @@ RackDocument _docWithOneLocation(String name) {
 /// The live `Rack` the screen is editing, reached through the widget tree
 /// rather than a private field: these tests observe the DOCUMENT, which is
 /// the thing the undo guarantee is actually about.
+///
+/// **READ OFF `InspectorPanel`, NOT `RackInspectorPanel`, SINCE `#887`.**
+/// The rack panel is only mounted while the inspector is on the RACK, and
+/// a case that selects a device to edit it swaps that panel away: every
+/// assertion afterwards then died on `Bad state: No element` rather than
+/// on anything it was about. `InspectorPanel` is mounted for both
+/// targets and carries the same two fields.
 Rack _rack(WidgetTester tester) =>
-    tester.widget<RackInspectorPanel>(find.byType(RackInspectorPanel)).rack;
+    tester.widget<InspectorPanel>(find.byType(InspectorPanel)).rack;
 
 RackDocument _doc(WidgetTester tester) =>
-    tester.widget<RackInspectorPanel>(find.byType(RackInspectorPanel)).doc;
+    tester.widget<InspectorPanel>(find.byType(InspectorPanel)).doc;
 
 /// The `TextField` whose `InputDecoration.labelText` is [label]. The panel
 /// has several, and the palette has one of its own, so a bare
@@ -1065,13 +1072,16 @@ void main() {
 
     /// A demo document whose rack carries a full-height channel, and a
     /// PDU in it when asked.
-    RackDocument docWith0U({bool withPdu = false}) {
+    RackDocument docWith0U({
+      bool withPdu = false,
+      ZeroUChannelSide side = ZeroUChannelSide.rearLeft,
+    }) {
       final doc = buildDemoRackDocument();
       final rack = doc.racks.values.first;
       rack.zeroUChannels.add(
         ZeroUChannel(
           id: 'ch-1',
-          side: ZeroUChannelSide.rearLeft,
+          side: side,
           startU: 1,
           endU: rack.heightU,
         ),
@@ -1101,6 +1111,32 @@ void main() {
         );
       }
       return doc;
+    }
+
+    /// Selects the PDU by clicking its bar, which is the route `#887`
+    /// moved the occupant fields onto.
+    ///
+    /// **THE FIELDS ARE NOT IN THE RACK PANEL ANY MORE.** They were there
+    /// only because a 0U device could not be selected (DR-163 §11.162.1);
+    /// `#883` drew the bar and made it hit-testable, so AC-044's three
+    /// fields went where every other device property is edited.
+    Future<void> selectTheBar(WidgetTester tester) async {
+      // THE RACK PANEL IS OPENED FIRST ONLY TO READ THE GEOMETRY from the
+      // tree rather than hard-coding the demo rack's height, which is the
+      // second-copy-of-a-moving-number trap this repo keeps paying for.
+      // The click below then swaps the inspector onto the selection,
+      // which is what the assertions are about.
+      await _openInspector(tester);
+      final rack = _rack(tester);
+      final geo = RackGeometry(rack.heightU);
+      await tester.tapAt(
+        sceneToScreen(
+          tester,
+          geo.railLeft + RackGeometry.railWidth / 2,
+          geo.yBottomOfU(3) - RackGeometry.unitsPerRu / 2,
+        ),
+      );
+      await tester.pumpAndSettle();
     }
 
     testWidgets('THE SECTION IS THERE, which it never was before `#876`', (
@@ -1178,14 +1214,22 @@ void main() {
       // values rather than planning for itself.
       final at = DateTime.utc(2026, 9, 13, 11, 30);
       await tester.pumpWidget(
-        _app(clock: FixedClock(at), document: docWith0U(withPdu: true)),
+        _app(
+          clock: FixedClock(at),
+          document: docWith0U(
+            withPdu: true,
+            side: ZeroUChannelSide.frontLeft,
+          ),
+        ),
       );
       await tester.pump();
-      await _openInspector(tester);
-      await _reveal(
-        tester,
-        find.byKey(ValueKey(zeroUStartKeyFor(const Uuid('dev-pdu')))),
-      );
+      // THE DEVICE PANEL, reached by clicking the bar (`#887`). This case
+      // used to open the RACK panel, which is where the fields lived
+      // while a 0U device could not be selected.
+      await selectTheBar(tester);
+      // NO `_reveal`: that scrolls the RACK panel, which the click above
+      // just swapped away. The device panel puts these fields with the
+      // other placement controls, above the fold.
 
       await tester.enterText(
         find.byKey(ValueKey(zeroUStartKeyFor(const Uuid('dev-pdu')))),
@@ -1223,11 +1267,17 @@ void main() {
 
     testWidgets('a U past the end of the channel is REFUSED and nothing '
         'moves', (tester) async {
-      await tester.pumpWidget(_app(document: docWith0U(withPdu: true)));
+      await tester.pumpWidget(
+        _app(
+          document: docWith0U(
+            withPdu: true,
+            side: ZeroUChannelSide.frontLeft,
+          ),
+        ),
+      );
       await tester.pump();
-      await _openInspector(tester);
+      await selectTheBar(tester);
       final key = ValueKey(zeroUStartKeyFor(const Uuid('dev-pdu')));
-      await _reveal(tester, find.byKey(key));
       final before =
           (_doc(tester).devices[const Uuid('dev-pdu')]!.placement
                   as ZeroUPlacement)
@@ -1304,6 +1354,32 @@ void main() {
         );
       }
       return doc;
+    }
+
+    /// Selects the PDU by clicking its bar, which is the route `#887`
+    /// moved the occupant fields onto.
+    ///
+    /// **THE FIELDS ARE NOT IN THE RACK PANEL ANY MORE.** They were there
+    /// only because a 0U device could not be selected (DR-163 §11.162.1);
+    /// `#883` drew the bar and made it hit-testable, so AC-044's three
+    /// fields went where every other device property is edited.
+    Future<void> selectTheBar(WidgetTester tester) async {
+      // THE RACK PANEL IS OPENED FIRST ONLY TO READ THE GEOMETRY from the
+      // tree rather than hard-coding the demo rack's height, which is the
+      // second-copy-of-a-moving-number trap this repo keeps paying for.
+      // The click below then swaps the inspector onto the selection,
+      // which is what the assertions are about.
+      await _openInspector(tester);
+      final rack = _rack(tester);
+      final geo = RackGeometry(rack.heightU);
+      await tester.tapAt(
+        sceneToScreen(
+          tester,
+          geo.railLeft + RackGeometry.railWidth / 2,
+          geo.yBottomOfU(3) - RackGeometry.unitsPerRu / 2,
+        ),
+      );
+      await tester.pumpAndSettle();
     }
 
     /// Opens the rack inspector and runs the picker to its confirm.
@@ -1417,12 +1493,17 @@ void main() {
       // values and the screen converts U to a `Len` and signs the edit.
       final at = DateTime.utc(2026, 9, 13, 16);
       await tester.pumpWidget(
-        _app(clock: FixedClock(at), document: docWith0U(withPdu: true)),
+        _app(
+          clock: FixedClock(at),
+          document: docWith0U(
+            withPdu: true,
+            side: ZeroUChannelSide.frontLeft,
+          ),
+        ),
       );
       await tester.pump();
-      await _openInspector(tester);
+      await selectTheBar(tester);
       final key = ValueKey(zeroUSpanKeyFor(const Uuid('dev-pdu')));
-      await _reveal(tester, find.byKey(key));
 
       await tester.enterText(find.byKey(key), '5');
       await tester.testTextInput.receiveAction(TextInputAction.done);
@@ -1438,6 +1519,57 @@ void main() {
       );
       expect(device.meta.updatedBy, 'local');
       expect(device.meta.updatedAt, at);
+    });
+
+    testWidgets('THE FIELDS MOVED, THEY DID NOT MULTIPLY (`#887`)', (
+      tester,
+    ) async {
+      // ═════════════════════════════════════════════════════════════════
+      // ONE PLACE TO EDIT A FACT, WHICH IS THE POINT OF MOVING THEM
+      // ═════════════════════════════════════════════════════════════════
+      // The occupant's channel, start U and span were on the RACK panel
+      // because a 0U device could not be selected (DR-163 §11.162.1).
+      // `#883` made it selectable and `#887` moved them to the device
+      // inspector, where every other device property is edited. Leaving a
+      // copy behind would be two surfaces writing one fact, which is the
+      // drift this corpus spends most of its rulings closing.
+      await tester.pumpWidget(
+        _app(
+          document: docWith0U(
+            withPdu: true,
+            side: ZeroUChannelSide.frontLeft,
+          ),
+        ),
+      );
+      await tester.pump();
+      await _openInspector(tester);
+      await _reveal(tester, find.text(kAddZeroUChannelLabel));
+
+      final startU = find.byKey(
+        ValueKey(zeroUStartKeyFor(const Uuid('dev-pdu'))),
+      );
+      expect(
+        startU,
+        findsNothing,
+        reason:
+            'the rack panel lists the channels and names what is in '
+            'them; it does not edit the occupant any more',
+      );
+      expect(
+        find.textContaining('PDU-1'),
+        findsWidgets,
+        reason:
+            'and it still NAMES the occupant, which is load-bearing: '
+            'planRemoveZeroUChannel refuses while occupied and the row '
+            'has to say so before the button is pressed',
+      );
+
+      await selectTheBar(tester);
+      expect(
+        startU,
+        findsOneWidget,
+        reason: 'the one place the field now lives',
+      );
     });
 
     testWidgets('THE BAR IS SELECTABLE, which is the whole of `#883`', (
