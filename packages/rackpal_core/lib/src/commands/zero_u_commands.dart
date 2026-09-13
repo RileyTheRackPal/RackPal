@@ -40,6 +40,7 @@ import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/model/zero_u_channel.dart';
+import 'package:rackpal_core/src/units/constants.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 
@@ -238,6 +239,35 @@ final class RemoveZeroUChannelCommand extends Command<RackDocument> {
 // ─────────────────────────────────────────────────────────────────────
 // OCCUPANTS
 // ─────────────────────────────────────────────────────────────────────
+
+/// The U an occupant sitting at [offsetFromChannelStart] starts on.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE ARITHMETIC LIVES HERE BECAUSE THE INCLUSIVE SPAN DOES (`#876`)
+/// ═══════════════════════════════════════════════════════════════════════
+/// A channel's bounds are 1-based and INCLUSIVE (CR-025, and
+/// `placement_rules.dart`: *"from U 1 to U 42 is 42 U of rail, not 41"*),
+/// and an occupant's offset is a `Len` from the channel's start. AC-044
+/// says the inspector asks for a **start U**, so something has to convert,
+/// and a widget doing it would be a second place that has to know the span
+/// is inclusive.
+///
+/// The pair is exact: `zeroUStartUOf(c, zeroUOffsetFor(c, u)) == u` for
+/// every U in the channel, because `kRackUnit` is an integer number of
+/// nanometres and the division truncates a value the other half built.
+int zeroUStartUOf(ZeroUChannel channel, Len offsetFromChannelStart) =>
+    channel.startU + offsetFromChannelStart.nm ~/ kRackUnit.nm;
+
+/// The offset that puts an occupant at [startU] in [channel].
+///
+/// **NOT CLAMPED.** An out-of-range U produces an out-of-range offset and
+/// `planSetZeroUPosition` refuses it through `evaluatePlacement`, with
+/// `PLC-003`'s own sentence naming the channel and its length. Clamping
+/// here would silently move a device somewhere the person did not ask for,
+/// which is docs/04 §3.4's "never silently do nothing" read from the other
+/// side.
+Len zeroUOffsetFor(ZeroUChannel channel, int startU) =>
+    kRackUnit * (startU - channel.startU);
 
 /// Plans a move of [id] along its channel, or into another one.
 ///

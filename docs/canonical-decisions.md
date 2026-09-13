@@ -20431,6 +20431,97 @@ it, and `#872`'s exemption list loses both rows.
 
 ---
 
+### 11.162 DR-163 · A 0U channel is added, removed and occupied from the inspector
+
+**The question.** AC-044 rules that in v1 *"a 0U occupant is created and edited from the inspector
+(channel, start U, span) and renders as a plain bar; there is simply no drag gesture."* **The
+inspector half was never built.** `zero_u_commands.dart` holds three commands with real reverts,
+three plan functions with real refusals, and `occupantsOfZeroUChannel`, whose own doc says it is
+*"Public because the inspector needs to say 'AMP-1 is in this channel' before offering to delete
+it"*. Nothing in `lib/` constructed two of the three commands or called any of the three planners.
+
+`#875` made the third reachable by wiring PWR-003's remedy, which mints a channel so a 0U PDU has
+somewhere to sit. `add_outlets.dart` quotes AC-044 while doing it and says why it is not the same
+thing: *"this is not a person: it is a remedy the person asked for by name."* So a channel could
+appear in a rack and nobody could add one deliberately, move the PDU inside it, or take it away.
+
+**11.162.1 RULED: THE RACK INSPECTOR OWNS BOTH, AND THE SECOND HALF OF THAT WAS A CORRECTION.**
+Settled by the user on 2026-09-13, twice.
+
+A channel is a rail on a rack and belongs to the rack's panel, which was never in doubt. The
+occupant's channel and start U were ruled onto the DEVICE inspector first, because that is where
+AC-044 puts them (*"created and edited from the inspector (channel, start U, span)"*) and where every
+other device property is edited. **It was built there and it could not be reached.**
+
+**A 0U OCCUPANT CANNOT BE SELECTED.** `draw/scene/scene_builder.dart` reads
+`if (placement is! RailPlacement) continue;`, so a 0U device is never in the elevation's scene, never
+hit-tested and never selectable. AC-044's other half, *"renders as a plain bar"*, was never built
+either, which is what makes the first half unreachable: **the ruling's two clauses depend on each
+other and only one of them shipped.**
+
+So a section on the device inspector would have been a surface nothing could open, which is the exact
+defect `#872` exists to catch, in the ticket closing `#872`'s last two rows. The fields moved under
+their channel in the rack panel, which `Ctrl+Alt+U` reaches with nothing selected. **The alternative
+was building the bar first**, and it was refused as a separate body of work rather than as a bad idea:
+it is scene geometry, a hit-test and selection for a placement the scene builder drops on one line,
+and it is owed whether or not these fields exist.
+
+**RECORDED RATHER THAN QUIETLY RE-AIMED.** The first answer was given against a premise that turned
+out to be false, and a ruling that silently ended up somewhere else would leave the next reader
+believing the device inspector had been considered and rejected on its merits.
+
+**11.162.2 RULED: ADDING A CHANNEL TAKES ITS BOUNDS UP FRONT**, in a form of side, start U, end U and
+an optional name, rather than a one-click default the person then corrects.
+
+**THE REASON IS A CONSTRAINT AND NOT A PREFERENCE: THERE IS NO COMMAND THAT EDITS A CHANNEL'S
+BOUNDS.** `zero_u_commands.dart` has add and remove and nothing else, so a channel whose extent is
+wrong is replaced rather than corrected. A one-click full-height default would therefore be a claim
+about the rack that somebody who wanted U 1 to U 12 has to delete and retype, and
+`add_outlets.dart`'s own comment promised an editability that has never existed (*"an ordinary one
+they can edit or remove afterwards"*), which is now corrected to say what is true.
+
+**A FOURTH COMMAND WAS CONSIDERED AND REFUSED HERE.** `SetZeroUChannelBoundsCommand` would remove the
+constraint rather than design around it, and it carries a question this ruling does not want to
+answer in passing: a channel shrinking under an occupant has to re-run `PLC-003` for every device in
+it, which is `planSetZeroUPosition`'s job pointed backwards. It is a legitimate later chapter.
+
+**11.162.3 THE PLANNERS ARE THE VALIDATION, AND THE SURFACE ADDS NONE.** `planAddZeroUChannel`
+already refuses a duplicate id, an inverted span and a span that does not fit the rack, each with a
+sentence naming the rack and the numbers. `planRemoveZeroUChannel` refuses while occupied and names
+the occupant. `planSetZeroUPosition` re-runs `evaluatePlacement` and returns `PLC-003`'s own message.
+A second copy of any of those checks in a widget is how the dialog and the edit come to disagree,
+which is DR-013 §11.13.2's rule arriving at a different surface.
+
+**11.162.4 AND THE ONE CHANNEL THE PRODUCT COULD MAKE WAS OUT BY ONE.** Found on the way.
+`add_outlets.dart` wrote `startU: 0, endU: heightU - 1` and cited **CR-025** for it; CR-025 rules
+*"1-based, bottom origin, `ruIndex` in [1, heightU]"* and calls itself the contradiction that *"will
+actually hurt"*. Every starter, every other test, `placement_rules.dart`'s inclusive length and
+`rack_shrink.dart`'s normalisation of *"an inverted or sub-1 channel"* all disagreed with it, and
+`planAddZeroUChannel` would have refused it outright.
+
+**THE SHARP PART IS THAT THE GUARD EXISTED AND THE PRODUCER BYPASSED IT.** The remedy builds
+`AddZeroUChannelCommand` directly, so the planner's `startU < 1` check never ran on the only path
+that ships. **A validated planner beside an unvalidated producer protects the callers it does not
+have**, and `#876` is what gave it one. Fixed, with the test that had pinned the defect as intended
+behaviour corrected in the same commit.
+
+**11.162.5 WHAT THIS DOES NOT DO.** It does not build AC-044's deferred half: no gutter rendering, no
+drag-into-gutter, no resize handles, no `G` toggle and no overlap warnings, all of which that ruling
+sends to v1.1. It does not let a person CREATE a 0U occupant from nothing either: placing a device
+into a channel is `catalog_placement.dart`'s, and AC-044's *"created"* is satisfied by the palette
+placing a 0U-capable device, not by a control in this panel.
+
+**AND IT DOES NOT BUILD THE PLAIN BAR, WHICH IS STILL OWED.** AC-044 puts that in v1 and
+§11.162.1 is why it matters: a 0U occupant is invisible in the elevation and unselectable, so the
+only place it can be seen or edited is the rack inspector's list. Board `#883` carries it, with the
+one line in `scene_builder.dart` that drops it.
+
+**11.162.6 Scope.** **No scope change.** AC-044 already scopes the inspector surface to v1 and this
+builds the part of it that was owed. Board `#876` cites it, and `#872`'s exemption list loses its
+last two rows.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

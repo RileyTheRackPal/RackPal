@@ -229,7 +229,13 @@ void main() {
         ZeroUChannelSide.rearLeft,
         reason: 'a 0U PDU goes down the back where the cords are',
       );
-      expect(channels.single.endU, doc.racks[kFixtureRackId]!.heightU - 1);
+      // 1-BASED, CR-025 (`#876`, DR-163). This asserted `heightU - 1`,
+      // which pinned a sub-1 channel as intended behaviour: the only
+      // producer in the product wrote `startU: 0` and cited CR-025, which
+      // rules the opposite. A full-height channel on a 42 U rack runs
+      // U 1 to U 42.
+      expect(channels.single.startU, 1);
+      expect(channels.single.endU, doc.racks[kFixtureRackId]!.heightU);
     });
 
     test('a second PDU reuses the channel rather than adding another', () {

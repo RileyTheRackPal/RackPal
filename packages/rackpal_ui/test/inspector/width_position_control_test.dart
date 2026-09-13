@@ -115,6 +115,8 @@ Future<List<WidthPosition>> _pump(
                 presets: const {},
                 selectedIds: selected,
                 focusedId: selected.isEmpty ? null : selected.first,
+                onZeroU: (_) {},
+                onMoveZeroU: (_, _, _) {},
                 onSetProperty: <T>(field, value) {},
                 onRename: (_) {},
                 onRequestHeight: (_) {},

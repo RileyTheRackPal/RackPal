@@ -73,6 +73,8 @@ class InspectorPanel extends StatelessWidget {
     required this.onRequestHeight,
     required this.onApplyPreset,
     required this.onRefuse,
+    required this.onZeroU,
+    required this.onMoveZeroU,
     required this.onSetLifecycle,
     required this.onSetWidth,
     required this.onSetOverride,
@@ -130,6 +132,20 @@ class InspectorPanel extends StatelessWidget {
 
   final FocusNode? firstFieldFocus;
 
+  /// Runs a planned 0U CHANNEL edit, or reports its refusal (`#876`).
+  final ValueChanged<ZeroUResult> onZeroU;
+
+  /// Moves a 0U OCCUPANT: device, channel, start U.
+  ///
+  /// **ON THE RACK PANEL AND NOT THE DEVICE PANEL** (`#876`, DR-163
+  /// §11.162.1). A 0U occupant cannot be selected: `scene_builder.dart`
+  /// drops every placement that is not a `RailPlacement`, so it is never
+  /// drawn and never hit-tested. The fields live under their channel.
+  ///
+  /// **THREE PLAIN VALUES**, because `planSetZeroUPosition` is signed and
+  /// the session owns the clock and the actor (`#879`'s lesson).
+  final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -150,6 +166,8 @@ class InspectorPanel extends StatelessWidget {
           onRequestHeight: onRequestHeight,
           onApplyPreset: onApplyPreset,
           onRefuse: onRefuse,
+          onZeroU: onZeroU,
+          onMoveZeroU: onMoveZeroU,
           firstFieldFocus: firstFieldFocus,
         ),
         InspectorTarget.selection => _SelectionSummary(

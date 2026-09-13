@@ -1,5 +1,35 @@
 # Update Log
 
+## 2026-09-13 (thirty-first entry)
+
+* **Closed**: `#876`, the LAST of the eight `#872` filed. AC-044's inspector half
+  for 0U channels: the rack panel adds and removes them, and each channel lists
+  what is mounted in it with a start U. **No version move**: it closes under
+  `#786`.
+* **Note**: **`#872`'s EXEMPTION LIST IS NOW EMPTY.** Every `Command` in the tree
+  is reachable from a person, for the first time since that gate filed twelve.
+  Two of the twelve were the gate's own bugs (`#880`, `#881`, DR-161), ten were
+  real, and the ten closed in eleven days.
+* **Note**: **THE ONLY 0U CHANNEL THE PRODUCT COULD MAKE STARTED AT U 0**, with
+  the comment "`startU` is 0-based (CR-025)". CR-025 rules the opposite in as
+  many words and calls itself the contradiction that "will actually hurt". Every
+  starter, every other test, `placement_rules.dart`'s inclusive length and
+  `rack_shrink.dart`'s normalisation of "an inverted or SUB-1 channel" disagreed
+  with it. **And `planAddZeroUChannel` refuses `startU < 1`**: the guard existed
+  and the only producer built the command directly, so it never ran. A validated
+  planner beside an unvalidated producer protects the callers it does not have.
+* **Note**: **AC-044'S TWO CLAUSES DEPEND ON EACH OTHER AND ONLY ONE SHIPPED.**
+  The occupant fields were ruled onto the device inspector, built there, and
+  could not be reached: `scene_builder.dart` drops every non-rail placement, so a
+  0U device is never drawn and never selectable. Put back to the user with the
+  measurement; the fields moved under their channel in the rack panel. The plain
+  bar AC-044 also keeps in v1 is `#883`.
+* **Creation**: [DR-163, a 0U channel from the
+  inspector](/decisions/dr-163-zero-u-from-the-inspector.md), six clauses, one of
+  which is a correction recorded rather than quietly re-aimed.
+* **Creation**: [When a ruling has two clauses, check whether one is load-bearing
+  for the other](/practices/two-clauses-that-depend-on-each-other.md).
+
 ## 2026-09-13 (thirtieth entry)
 
 * **Closed**: `#878` with `fb4544be`. A pin can be taken off the plan with `Delete`

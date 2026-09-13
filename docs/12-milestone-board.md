@@ -10469,6 +10469,107 @@ reason beside the number.
 
 **Commits** (§8.8). `#878` `199131c4` (DR-162) and `fb4544be` (the feature).
 
+#### 5.9.39 `#876`: AC-044's inspector half, a channel that started at U 0, and a surface that could not be opened · `DR-163`, `CR-025` · no version move
+
+2026-09-13. The last of the eight `#872` filed. It closes under `#786` and moves no number.
+
+##### 5.9.39.1 The ruling was explicit and half of it was never built
+
+AC-044: *"In v1 a 0U occupant is created and edited from the inspector (channel, start U, span) and
+renders as a plain bar; there is simply no drag gesture."* Neither half existed.
+`zero_u_commands.dart` holds three commands with real reverts, three planners with real refusals,
+and `occupantsOfZeroUChannel`, whose own doc says it is *"Public because the inspector needs to say
+'AMP-1 is in this channel' before offering to delete it"*. **The inspector was anticipated in the
+code and never arrived.**
+
+`#875` made one of the three reachable by wiring PWR-003's remedy, which mints a channel so a 0U PDU
+has somewhere to sit. `add_outlets.dart` quotes AC-044 while doing it and says why it is not the same
+thing: *"this is not a person: it is a remedy the person asked for by name."*
+
+##### 5.9.39.2 THE ONLY CHANNEL THE PRODUCT COULD MAKE STARTED AT A U THAT DOES NOT EXIST
+
+Found before any of the UI. That remedy wrote `startU: 0, endU: heightU - 1`, with the comment
+*"`startU` is 0-based (CR-025)"*.
+
+**CR-025 rules the opposite in as many words**: *"1-based, bottom origin. `ruIndex` in [1, heightU]"*,
+and it calls itself the contradiction that *"will actually hurt"*. The comment named the ruling that
+forbids the line it was defending.
+
+Nothing else in the tree agreed with it. Every shipped starter writes `startU: 1`; every case in
+`zero_u_commands_test.dart` does; `placement_rules.dart` derives length as `endU - startU + 1`
+(*"from U 1 to U 42 is 42 U of rail, not 41"*); and `rack_shrink.dart` normalises *"an inverted or
+SUB-1 channel"* on read, which is this defect described by a file that had never met it.
+
+**AND `planAddZeroUChannel` WOULD HAVE REFUSED IT.** It rejects `startU < 1`. The remedy builds
+`AddZeroUChannelCommand` directly, so the guard never ran on the one path that ships. **A validated
+planner beside an unvalidated producer protects the callers it does not have**, and `#876` is what
+gave it one. The test had pinned the defect as intended behaviour, asserting `endU == heightU - 1`
+and nothing about `startU`; it now asserts both.
+
+The length was right either way, since 0..41 and 1..42 are both 42 U, so nothing visible was wrong:
+the channel covered a U that does not exist and missed the top one, and a shrink would have moved it
+silently through `_atLeastOne`.
+
+##### 5.9.39.3 The occupant fields were built where they could not be reached
+
+The user placed them on the DEVICE inspector, which is where AC-044 puts them and where every other
+device property is edited. **A 0U occupant cannot be selected.** `scene_builder.dart` reads
+`if (placement is! RailPlacement) continue;`, so it is never in the elevation's scene, never
+hit-tested and never selectable.
+
+So AC-044's two clauses depend on each other and only one of them shipped: *"edited from the
+inspector"* is unreachable without *"renders as a plain bar"*. A section on the device panel would
+have been a surface nothing could open, **which is the exact defect `#872` exists to catch, in the
+ticket closing `#872`'s last two rows.**
+
+Put back to the user with the measurement; the fields moved under their channel in the rack panel,
+which `Ctrl+Alt+U` reaches with nothing selected. Building the bar first was refused as a separate
+body of work rather than as a bad idea, and is `#883`.
+
+##### 5.9.39.4 The form takes the bounds up front, because nothing can edit them
+
+`zero_u_commands.dart` has add and remove and no third command, so a channel whose extent is wrong is
+replaced rather than corrected. **Two comments promised otherwise**: the remedy's *"an ordinary one
+they can edit or remove afterwards"* and `new_rack_dialog.dart`'s *"0U channels ... All of it is
+editable afterwards from the rack inspector"*. Both are corrected; `#876` makes the *remove* half of
+each true for the first time.
+
+##### 5.9.39.5 The surface validates nothing, and the planners say so
+
+`planAddZeroUChannel` refuses a duplicate id, an inverted span and a span that does not fit;
+`planRemoveZeroUChannel` refuses while occupied and NAMES the occupant; `planSetZeroUPosition`
+re-runs `evaluatePlacement` and returns `PLC-003`'s own sentence. The panel collects values and hands
+over a `ZeroUResult`; the screen runs it or prints it. The one thing the panel adds is the occupant
+name on a channel row, so a Remove button that is about to refuse says why before it is pressed.
+
+##### 5.9.39.6 Two defects the tests found in the new code
+
+**The start-U field committed twice.** `onSubmitted` and the focus listener both fired, so pressing
+Enter asked the host to move the device twice. It was invisible in the product, because the first
+move updates the document and the already-there guard swallows the second, and it would have come
+back the moment an edit was REFUSED: nothing changes, the guard passes, and the refusal prints twice.
+Enter now unfocuses and the listener is the one commit.
+
+**And an old case depended on two fields sharing a viewport.** `rack_inspector_panel_test`'s
+*"Custom"* case read the Preset dropdown straight off the screen after editing `Rail type`.
+`scrollUntilVisible` scrolls ONE WAY and stops as soon as its target appears, so how far it goes
+depends on how much list sits BELOW that target; a section at the bottom pushed the scroll further
+and `Preset` left the viewport. The case now goes and looks at the field it is about.
+
+##### 5.9.39.7 Evidence
+
+Floors: `rackpal_ui` 1838 to 1857. Gates: 17. Analyzer pin unmoved at 233.
+
+**Six of the nineteen new cases go through the real `RackCanvasScreen`**, because a harness supplying
+its own callbacks cannot see whether the screen runs the command, prints the planner's refusal, or
+SIGNS the move from the session, which is `#879`'s surviving mutation exactly.
+
+**`#872`'s exemption list is now EMPTY.** Every `Command` in the tree is reachable from a person, for
+the first time since that gate filed twelve.
+
+**Commits** (§8.8). `#876` `c95224d2` (the CR-025 fix), `9a0186a1` (DR-163) and `33d7a2b6` (the
+inspector). **Twelve mutations, twelve kills.**
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·

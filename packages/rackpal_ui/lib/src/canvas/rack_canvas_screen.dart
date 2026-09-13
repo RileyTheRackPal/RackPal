@@ -1726,6 +1726,58 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
   /// one undo entry rather than one per character. That is why the field
   /// can afford to commit on every change instead of on submit, which
   /// loses the note when the panel is dismissed by clicking away.
+  /// Runs a planned 0U channel edit, or shows its refusal (`#876`,
+  /// DR-163 §11.162.3).
+  ///
+  /// **THE PLANNER DECIDED, THIS ONLY DISPATCHES.** Both outcomes are its
+  /// words: a `ZeroURefused` carries a sentence naming the rack, the
+  /// numbers, or the occupant that is in the way, and printing it
+  /// unchanged is what docs/04 §3.4's "never silently do nothing" asks
+  /// for.
+  void _runZeroU(ZeroUResult result) {
+    switch (result) {
+      case ZeroUReady(:final command):
+        _controller.run(command);
+      case ZeroURefused(:final reason):
+        _status.show(reason);
+    }
+  }
+
+  /// Moves a 0U occupant to [channelId] at [startU] (`#876`).
+  ///
+  /// **THE SIGNATURE COMES FROM THE SESSION**, which is `#879`'s lesson:
+  /// `planSetZeroUPosition` records who moved the device and when, and a
+  /// surface that invented either would write a signature that is not the
+  /// person's. The section hands over three plain values for that reason.
+  ///
+  /// The channel lookup here is not a second validation: it is what turns
+  /// a START U into the `Len` the model stores, and it CANNOT be done
+  /// without the channel. A missing one is a stale panel rather than a
+  /// refusable edit, so it says so and stops.
+  void _moveZeroUOccupant(Uuid deviceId, String channelId, int startU) {
+    final placement = _doc.devices[deviceId]?.placement;
+    if (placement is! ZeroUPlacement) return;
+    final rack = _doc.racks[placement.rackId];
+    ZeroUChannel? channel;
+    for (final c in rack?.zeroUChannels ?? const <ZeroUChannel>[]) {
+      if (c.id == channelId) channel = c;
+    }
+    if (channel == null) {
+      _status.show('That rack has no 0U channel "$channelId".');
+      return;
+    }
+    _runZeroU(
+      planSetZeroUPosition(
+        doc: _doc,
+        id: deviceId,
+        channelId: channelId,
+        offsetFromChannelStart: zeroUOffsetFor(channel, startU),
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+      ),
+    );
+  }
+
   void _setMountNote(String note) {
     final id = _soleSelectedDeviceId;
     if (id == null) return;
@@ -4597,6 +4649,8 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                       onSetOverride: _setDeviceOverride,
                       onSetPortFact: _setPortFact,
                       onSetMountNote: _setMountNote,
+                      onZeroU: _runZeroU,
+                      onMoveZeroU: _moveZeroUOccupant,
                       firstFieldFocus: _inspectorFirstFieldFocus,
                     ),
                   ),
