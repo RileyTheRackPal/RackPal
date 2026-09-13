@@ -1,5 +1,41 @@
 # Update Log
 
+## 2026-09-13 (thirty-fourth entry)
+
+* **Closed**: `#883` with `6fc22a29` and `6fe267d6`. AC-044's plain bar: a 0U
+  occupant is drawn on the rail it is screwed to, and it can be selected.
+  **No version move**: it closes under `#786`.
+* **Note**: **ONE LINE MADE HALF A RULING UNREACHABLE.**
+  `if (placement is! RailPlacement) continue;` kept a 0U device out of the
+  scene, so it was never hit-tested and never SELECTABLE, which is why `#876`
+  had to put AC-044's occupant fields on the rack panel rather than the device
+  inspector that ruling names.
+* **Note**: **THE MODEL FIELD HAD TO COME FIRST.** AC-044 has named "channel,
+  start U, span" since the critique and `#876` shipped two: `ZeroUPlacement`
+  had no extent, `TemplateBody` has no physical length for a body whose
+  `frontU` and `rearU` are 0, and `PLC-003` treated the occupant as a POINT.
+  Both alternatives invent a length the file does not hold.
+* **Note**: **ABSENT IS UNKNOWN, NOT ZERO**, and that is the ordinary case
+  rather than an edge: every document written before this has no span. An
+  absent key, an empty field hinted `unknown`, and a one-U HOLLOW stub instead
+  of a filled bar. G4's rule given a shape rather than a number.
+* **Note**: **A MOVE SILENTLY ERASED THE NEW FIELD.**
+  `planSetZeroUPosition` rebuilds the placement and knew nothing about the
+  fifth field, so the span went every time a start U was retyped, with no error
+  and nothing on screen but a bar quietly reverting to a stub.
+* **Note**: **AND A COMMENT SAID A BAR NEEDED NO SCENE FRAGMENT**, reasoning it
+  is "one absolute rect with no local origin worth having". The canvas builds a
+  leaf per entry in `RackScene.devices` and `fragmentFor` THROWS on an id with
+  no range, so the first run painted an `ArgumentError` where the elevation
+  should have been.
+* **Creation**: [DR-166, a 0U occupant has a
+  span](/decisions/dr-166-a-zero-u-occupant-has-a-span.md).
+* **Creation**: [A new field on a value object is erased by every
+  rebuilder](/practices/a-new-field-is-erased-by-every-rebuilder.md).
+* **Update**: [DR-163](/decisions/dr-163-zero-u-from-the-inspector.md): its
+  §11.162.1 reason for the rack panel is now spent, since a 0U device can be
+  selected. The fields stay there on a fresh decision.
+
 ## 2026-09-13 (thirty-third entry)
 
 * **Closed**: `#885` with `72f22723` and `a1bdc029`. The device palette moved out

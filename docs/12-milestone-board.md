@@ -10765,6 +10765,85 @@ are questions only the real `AppShell` answers.
 **Commits** (§8.8). `#885` `72f22723` (DR-165) and `a1bdc029` (the move, carrying §11.164.1, .3 and
 .5's corrections).
 
+#### 5.9.42 `#883`: AC-044's plain bar, the model field it needed, and a field erased by every rebuilder · `DR-166` · no version move
+
+2026-09-13. The last of the three the user reported against this run of tickets. It closes under
+`#786` and moves no number.
+
+##### 5.9.42.1 One line made half a ruling unreachable
+
+`scene_builder.dart` read `if (placement is! RailPlacement) continue;`. A 0U device was therefore
+never in the elevation's scene, never hit-tested and **never selectable**, which is why `#876` had
+to put AC-044's occupant fields on the RACK panel rather than on the device inspector that ruling
+names: the device panel could not be opened on a device nothing could click. An installer reading
+the drawing could not see the PDU at all.
+
+##### 5.9.42.2 THE MODEL FIELD CAME FIRST, because otherwise the bar's length is invented
+
+AC-044 has named *"channel, start U, span"* as the inspector's three fields since the critique, and
+`#876` shipped two. The third had nowhere to go: `ZeroUPlacement` carried a channel, an offset and
+an orientation; `TemplateBody` has `bodyDepth` and `chassisWidth` and **no physical length at all**
+for a body whose `frontU` and `rearU` are both 0; and `PLC-003` treated the occupant as a POINT,
+checking where it starts and asking nothing about what comes after.
+
+Two alternatives were offered and both invent a length the file does not hold. Running the bar *to
+the end of its channel* is honest only while one occupant is in a channel, and `#884`'s
+`Add device…` puts every occupant at offset 0, so two in one channel would draw two identical bars.
+Spanning *the whole channel* makes `#876`'s **Start U** field change nothing visible, which is
+docs/04 §3.4's silently-does-nothing defect arriving through the back door.
+
+**Absent is unknown and not zero.** Every document written before this has no span, so it is the
+ordinary case rather than an edge: an absent key (CR-114), an empty field hinted `unknown`, and a
+one-U **hollow** stub in the elevation rather than a filled bar. That is G4's rule given a shape
+instead of a number, and the semantic label says it in words for anybody not looking at the picture.
+
+##### 5.9.42.3 A NEW FIELD ON A REBUILT OBJECT IS ERASED BY EVERY REBUILDER
+
+`planSetZeroUPosition` constructs a fresh `ZeroUPlacement` from the old one to move it. It copied
+four fields and knew nothing about the fifth, so **every move silently erased the span**, with no
+error and nothing on screen except a bar that quietly went back to being a stub.
+
+This is the cost a value object charges for each new field, and it is paid by whoever adds the
+field rather than by whoever wrote the rebuilder. The practice is
+[a new field is erased by every rebuilder](../.okf/practices/a-new-field-is-erased-by-every-rebuilder.md);
+the census is one grep for the constructor's own name.
+
+##### 5.9.42.4 And a comment that said a fragment was not needed
+
+The first version of the scene wiring recorded no fragment for a bar, on the reasoning that *"a bar
+is one absolute rect with no local origin worth having"*. That is a confident sentence and it was
+wrong: the canvas builds a `_DeviceBoxLeaf` for every entry in `RackScene.devices` and calls
+`fragmentFor(id)`, which **throws** on an id it has no range for. The first run painted an
+`ArgumentError` where the elevation should have been. The bar's ops are local and bracketed like any
+device's now, and the comment records what it used to claim.
+
+##### 5.9.42.5 PLC-003 widened rather than joined
+
+Its rationale already read *"A device in a channel this rack does not have, **or past the end of
+one**, has nothing to screw into"*, and an occupant whose tail hangs off the end is that sentence
+exactly. A second, unnumbered refusal beside a numbered rule about one physical fact is the drift
+CR-021 exists to stop, and this area paid for it once when `PLC-001` was transcribed into a planner
+and had to be given its id back. The AC-051 pair gains the new predicate; an unknown span is not a
+refusal, because a rule that refused every document written before today would make an absent key
+mean *illegal* when CR-114 says it means *not recorded*.
+
+##### 5.9.42.6 Evidence
+
+Floors: `rackpal_core` 4667 to 4682, `rackpal_ui` 1866 to 1874. Gates: 17. Analyzer pin unmoved at
+233.
+
+**The case the ticket asked for by name** is in `zero_u_bar_test.dart`: a rack-mounted and a 0U
+device are both in the scene and both hit-testable, which no test asserted. And the one that closes
+the ticket is in `rack_inspector_panel_test.dart`, through the real screen: clicking the bar selects
+the device, which the inspector shows by swapping off the rack panel.
+
+**Eight mutations, eight killed**, among them the bar drawn in the opening over the rack-mounted
+devices, mirroring ignored, an unknown span drawn full height, a move erasing the span, and
+`PLC-003` back to treating the occupant as a point.
+
+**Commits** (§8.8). `#883` `6fc22a29` (DR-166) and `6fe267d6` (the bar, the field and the widened
+rule).
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·
