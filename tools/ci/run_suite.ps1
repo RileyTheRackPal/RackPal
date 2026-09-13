@@ -1187,7 +1187,14 @@ $SuiteFloors = @{
     # span reaching the document SIGNED by the session, and the bar being
     # SELECTABLE, which is the whole of `#883` and the reason DR-163
     # §11.162.1 had to put the occupant fields on the rack panel.
-    'rackpal_ui'     = 1874
+    # 1875 at `#887`: +1. The occupant fields moved from the rack panel
+    # to the DEVICE inspector, now that `#883` makes a 0U device
+    # selectable and DR-163 §11.162.1's reason for putting them elsewhere
+    # is spent. Three existing screen cases changed ROUTE rather than
+    # meaning, reaching the fields by clicking the bar; the one new case
+    # is that the fields MOVED rather than multiplied, since two surfaces
+    # writing one fact is the drift most of this corpus exists to close.
+    'rackpal_ui'     = 1875
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

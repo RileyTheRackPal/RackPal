@@ -72,7 +72,6 @@ import 'package:flutter/services.dart'
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/inspector/add_zero_u_channel_dialog.dart';
 import 'package:rackpal_ui/src/inspector/add_zero_u_occupant_dialog.dart';
-import 'package:rackpal_ui/src/inspector/zero_u_occupant_row.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 
 /// §4's `RackInspector`. Stateless in its own right; the mutable buffers
@@ -89,9 +88,7 @@ class RackInspectorPanel extends StatelessWidget {
     required this.onApplyPreset,
     required this.onRefuse,
     required this.onZeroU,
-    required this.onMoveZeroU,
     required this.onAddZeroUDevice,
-    required this.onResizeZeroU,
     this.firstFieldFocus,
     super.key,
   });
@@ -131,29 +128,16 @@ class RackInspectorPanel extends StatelessWidget {
   /// path lands somewhere useful rather than nowhere.
   final FocusNode? firstFieldFocus;
 
-  /// Moves a 0U occupant: device, channel, start U (`#876`).
-  ///
-  /// **HERE AND NOT ON THE DEVICE PANEL**, which is where AC-044's wording
-  /// pointed and where it could not be reached: `scene_builder.dart` drops
-  /// every placement that is not a `RailPlacement`, so a 0U occupant is
-  /// never drawn, never hit-tested and never selectable.
-  final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
-
   /// Puts a device from the project's shelf into a channel (`#884`,
   /// DR-164 §11.163.2).
   ///
-  /// **TWO PLAIN VALUES, on `onMoveZeroU`'s reasoning.**
+  /// **TWO PLAIN VALUES, and the signature comes from the session.**
   /// `buildPlaceFromCatalogCommand` allocates a designator and stamps the
   /// device with a `now` and an `actor`, and a surface that invented
   /// either would sign the placement with something that is not the
   /// person's. The channel and the chosen id are what this panel knows;
   /// the rest comes from the session.
   final void Function(String channelId, String catalogId) onAddZeroUDevice;
-
-  /// Sets how far a 0U occupant runs along its channel, or clears it to
-  /// UNKNOWN (`#883`, DR-166). AC-044's third inspector field, and the one
-  /// `#876` could not build because the model had nowhere to put a span.
-  final void Function(Uuid deviceId, int? spanU) onResizeZeroU;
 
   /// Runs a planned 0U channel edit, or reports its refusal (`#876`,
   /// DR-163 §11.162.3).
@@ -306,9 +290,7 @@ class RackInspectorPanel extends StatelessWidget {
           rack: rack,
           doc: doc,
           onZeroU: onZeroU,
-          onMoveZeroU: onMoveZeroU,
           onAddZeroUDevice: onAddZeroUDevice,
-          onResizeZeroU: onResizeZeroU,
         ),
       ],
     );
@@ -1100,17 +1082,13 @@ class _ZeroUSection extends StatelessWidget {
     required this.rack,
     required this.doc,
     required this.onZeroU,
-    required this.onMoveZeroU,
     required this.onAddZeroUDevice,
-    required this.onResizeZeroU,
   });
 
   final Rack rack;
   final RackDocument doc;
   final ValueChanged<ZeroUResult> onZeroU;
-  final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
   final void Function(String channelId, String catalogId) onAddZeroUDevice;
-  final void Function(Uuid deviceId, int? spanU) onResizeZeroU;
 
   @override
   Widget build(BuildContext context) {
@@ -1184,22 +1162,19 @@ class _ZeroUSection extends StatelessWidget {
                 ],
               ),
             ),
-            // THE OCCUPANTS UNDER THEIR OWN CHANNEL (§11.162.1). A 0U
-            // device cannot be selected on the canvas, so this is the
-            // only place its channel and start U can be edited.
-            for (final device in occupantsOfZeroUChannel(
-              doc,
-              rack.id,
-              channel.id,
-            ))
-              ZeroUOccupantRow(
-                key: ValueKey('zero-u-occupant-${device.id.v}'),
-                device: device,
-                channel: channel,
-                channels: rack.zeroUChannels,
-                onMove: onMoveZeroU,
-                onResize: onResizeZeroU,
-              ),
+            // THE OCCUPANTS ARE NAMED HERE AND EDITED ON THE DEVICE
+            // PANEL (`#887`). This list held their channel, start U and
+            // span because §11.162.1 could not put them anywhere else: a
+            // 0U device could not be SELECTED, so the device inspector
+            // never opened on one. `#883` drew the bar and made it
+            // hit-testable, and the fields went where AC-044 always put
+            // them.
+            //
+            // **WHAT STAYS IS THE NAMING, WHICH IS LOAD-BEARING.**
+            // `planRemoveZeroUChannel` refuses while occupied and names
+            // the device, and `_subtitleFor` above is what lets the row
+            // say so BEFORE the button is pressed. That is a fact about
+            // the CHANNEL, which is what this section is about.
           ],
         Padding(
           padding: const EdgeInsets.only(top: 8),

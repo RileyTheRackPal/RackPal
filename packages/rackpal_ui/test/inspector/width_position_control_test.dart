@@ -109,6 +109,8 @@ Future<List<WidthPosition>> _pump(
             SizedBox(
               width: 320,
               child: InspectorPanel(
+                onMoveZeroU: (_, _, _) {},
+                onResizeZeroU: (_, _) {},
                 target: InspectorTarget.selection,
                 rack: doc.racks[_rackId]!,
                 doc: doc,
@@ -116,9 +118,7 @@ Future<List<WidthPosition>> _pump(
                 selectedIds: selected,
                 focusedId: selected.isEmpty ? null : selected.first,
                 onZeroU: (_) {},
-                onMoveZeroU: (_, _, _) {},
                 onAddZeroUDevice: (_, _) {},
-                onResizeZeroU: (_, _) {},
                 onSetProperty: <T>(field, value) {},
                 onRename: (_) {},
                 onRequestHeight: (_) {},
