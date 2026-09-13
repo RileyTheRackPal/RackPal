@@ -20589,6 +20589,63 @@ opening an empty dialog.
 **11.163.6 Scope.** **No scope change.** AC-044's *"created and edited from the inspector"* is v1
 scope, and this is the half of it `#876` deferred to a path that refuses. Board `#884` cites it.
 
+### 11.164 DR-165 · The device palette is the shell's, so the Plan view can place a device
+
+**The question.** docs/15 §6's gesture table opens with *"Drag from the device palette or staging bin
+onto the plan: places the device and sets its pin in one command."* **The command half is built**
+(`buildPlaceOnPlanCommand`, which carries the pin on the placement so one undo restores both) and
+**the gesture half is built** (`PlanCanvasScreenState.armPaletteDrag`, public, whose own comment says
+*"the host that owns a palette hands the armed pointer down, and `PLAN-E/5` wires the real one"*).
+
+**MEASURED: `armPaletteDrag` has three call sites and all three are tests.** `DevicePalettePanel`
+has exactly one mount in the tree, inside `RackCanvasScreen`, so when the Plan tab is open the
+palette is not on screen at all. `PLAN-E/5` shipped the tab and the layout and did not bring it.
+
+**What it costs today.** A field device can only be born in the Rack tab. Its palette row **refuses
+to drag** there, deliberately, because docs/04 §3.1 is *"drag from palette to RAILS"* and a
+`notInRack` body has no rails to snap to; so it is created by double-click, lands as an
+`OffRackPlacement`, and is **invisible in the view that created it**. It reappears only after a tab
+change, in the Plan view's unpinned strip. Three surfaces and a tab change for *"put a camera in the
+living room"*.
+
+**11.164.1 RULED: THE PALETTE IS HOISTED, AND `RackCanvasScreen` STOPS OWNING ONE.** Settled by the
+user on 2026-09-13, against a second mount in the Plan view's own layout. docs/15 §6 says there is
+*"no fourth region and no plan-specific palette; the device palette is the device palette"*, and two
+instances of one widget is the sentence obeyed in the letter and broken in the spirit: the search
+query would not survive a tab change, and *"the palette"* would have two code paths for the rest of
+the product's life.
+
+**A `PaletteHost` OWNS THE COLUMN AND WHAT IS IN IT**: the row list and its memo, the search field's
+focus node and controller, and the 280px column with its divider. It wraps **the Rack tab and the
+Plan tab, and no other**. The Structure editor places outlets and plates from surfaces of its own,
+and a device palette there would be a control that cannot act on anything in view, which is docs/04
+§3.4's rule about a control that silently does nothing.
+
+**11.164.2 THE HOST HANDS OVER A RESOLVED ROW, NOT A KEY**, and that removes a defect rather than
+only some duplication. A `rowKey` is `source/id@version` and a template id is not (DR-102
+§11.101.4), and the two are different strings that both read as *"which template"*.
+`PlanCanvasScreenState._placeFromPalette` took a `rowKey` and passed it straight to
+`buildPlaceOnPlanCommand` as a **`catalogId`**, which would have resolved nothing for any real row;
+its three tests pass a bare id, so the parameter was never given the value its own name promised.
+**Handing over the `PlaceableTemplate` makes the wrong call unrepresentable**, and it leaves the row
+list with one owner instead of two.
+
+**11.164.3 THE SEARCH FIELD'S FOCUS NODE IS PASSED DOWN**, which is the one place this ruling accepts
+a seam rather than a move. The insertion caret's activation reads
+`_canvasFocus.hasFocus || _paletteSearchFocus.hasFocus`, because arming a placement from the search
+box is a placement gesture and the caret must stay lit across the hand-off. That is the CANVAS's
+rule about its own caret, so the canvas keeps it and the host lends it the node. The alternative, a
+notifier reporting focus upward and a second copy of the rule in the host, is two things that can
+disagree about one fact.
+
+**11.164.4 AND `/` REACHES THE PALETTE FROM BOTH VIEWS.** `focusPaletteSearch` is `KeyScope.rack`
+today and gains `KeyScope.plan`, since a palette a person can see and cannot reach from the keyboard
+is half a surface. Same binding, same intent, one more scope.
+
+**11.164.5 Scope.** **No scope change, on DR-143's precedent.** The gesture is in docs/15 §6's own
+table and has been since the chapter brief; this is an unbuilt clause reaching its producer, exactly
+as the floorplan importer did. Board `#885` cites it.
+
 ---
 
 ## 12. Superseded rulings
