@@ -84,6 +84,7 @@ final class OutletsActions {
     required this.onSetPassThrough,
     required this.onSetCell,
     required this.onArrange,
+    required this.onRemove,
   });
 
   final String? Function(Uuid outletId) onAddGang;
@@ -115,6 +116,17 @@ final class OutletsActions {
 
   /// Commits a whole [PlateArrangement] as ONE undo step.
   final String? Function(Uuid outletId, PlateArrangement plan) onArrange;
+
+  /// Removes one plate, with the home runs that land on it (`#877`,
+  /// DR-160 §11.159.2).
+  ///
+  /// **`void` AND NOT `String?`, UNLIKE THE SIX ABOVE IT.** Those six are
+  /// synchronous edits that either happen or refuse with a sentence this
+  /// tab prints. This one opens a confirmation, so the answer arrives
+  /// after a frame and there is nothing to return; and the only refusal it
+  /// could produce is "that plate is not in this project", which is the
+  /// state where the row the person clicked does not exist either.
+  final void Function(Uuid outletId) onRemove;
 }
 
 /// What a [PassThroughStyle] is called on screen (DR-047 §11.46.3).
@@ -194,6 +206,7 @@ class _OutletsViewState extends State<OutletsView> {
             outlets: outlets,
             selected: outlet.id,
             links: links,
+            onRemove: widget.actions.onRemove,
             onSelect: (id) => setState(() {
               _selected = id;
               _refusal = null;
@@ -217,6 +230,12 @@ class _OutletsViewState extends State<OutletsView> {
   }
 }
 
+/// What the rail's trash icon says it will do (DR-160 §11.159.2).
+const String kRemovePlateTooltip = 'Remove this plate and its cables';
+
+/// A stable handle for the rail's remove control, per row.
+String outletRemoveKeyFor(Uuid outletId) => 'outlet-remove-${outletId.v}';
+
 /// The left rail: every plate in this body, with what each still owes.
 class _OutletList extends StatelessWidget {
   const _OutletList({
@@ -224,27 +243,67 @@ class _OutletList extends StatelessWidget {
     required this.selected,
     required this.links,
     required this.onSelect,
+    required this.onRemove,
   });
 
   final List<Outlet> outlets;
   final Uuid selected;
   final List<Link> links;
   final ValueChanged<Uuid> onSelect;
+  final ValueChanged<Uuid> onRemove;
 
   @override
-  Widget build(BuildContext context) => ListView.builder(
-    itemCount: outlets.length,
-    itemBuilder: (context, i) {
-      final outlet = outlets[i];
-      final fill = computePlateFill(outlet, links);
-      return ListTile(
-        dense: true,
-        selected: outlet.id == selected,
-        title: Text(outlet.designation),
-        subtitle: Text(_subtitleFor(fill)),
-        onTap: () => onSelect(outlet.id),
-      );
-    },
+  Widget build(BuildContext context) => Material(
+    // ═══════════════════════════════════════════════════════════════════
+    // A `Material` THE RAIL DID NOT HAVE, AND NOTHING HAD EVER NOTICED
+    // ═══════════════════════════════════════════════════════════════════
+    // `StructureEditorScreen._body` wraps the whole editor in a
+    // `ColoredBox(surface)`, and a `ListTile` paints its selected tint and
+    // its ink splash on the NEAREST `Material` ANCESTOR. With that box in
+    // between, the nearest one is the app's, so every splash and every
+    // selected tint on this rail landed UNDER the background and was
+    // invisible. Flutter asserts about exactly this, in as many words.
+    //
+    // **IT TOOK `#877` TO SEE IT, AND THE REASON IS WORTH WRITING DOWN.**
+    // `outlets_view_test.dart` pumps this tab on its own, with no editor
+    // and therefore no `ColoredBox`; `structure_editor_screen_test.dart`
+    // pumps the editor but only ever asserts that the `Outlets` label is
+    // in the tab strip, never switching to it. So the tab had never been
+    // mounted inside the thing it lives in, by a test or by the app, until
+    // an app-level test opened it.
+    //
+    // `transparency` RATHER THAN A COLOUR, so the rail keeps the editor's
+    // own background and this changes the ancestry and nothing else.
+    type: MaterialType.transparency,
+    child: ListView.builder(
+      itemCount: outlets.length,
+      itemBuilder: (context, i) {
+        final outlet = outlets[i];
+        final fill = computePlateFill(outlet, links);
+        return ListTile(
+          dense: true,
+          selected: outlet.id == selected,
+          title: Text(outlet.designation),
+          subtitle: Text(_subtitleFor(fill)),
+          onTap: () => onSelect(outlet.id),
+          // ON THE ROW AND NOT IN THE PLATE PANE, settled by the user on
+          // 2026-09-13 (DR-160 §11.159.6): this rail is where a person
+          // already picks a plate, and it is the shape they chose for
+          // `#871`'s template removal the day before.
+          trailing: IconButton(
+            key: ValueKey(outletRemoveKeyFor(outlet.id)),
+            icon: const Icon(Icons.delete_outline, size: 16),
+            // THE TOOLTIP SAYS WHAT GOES WITH IT, on `_Star`'s rule that a
+            // control says what pressing it does. "Remove" alone would
+            // read as removing a plate and leaving its cables, which is
+            // the one thing §11.159.2 ruled out.
+            tooltip: kRemovePlateTooltip,
+            visualDensity: VisualDensity.compact,
+            onPressed: () => onRemove(outlet.id),
+          ),
+        );
+      },
+    ),
   );
 
   /// **THE UNKNOWN COUNT IS NEVER FOLDED INTO THE SHORTFALL.** A plate

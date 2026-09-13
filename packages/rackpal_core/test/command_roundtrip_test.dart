@@ -1382,6 +1382,22 @@ RackDocument _oneDrop(DateTime at) {
 
 void _pinDanglingOrigin() {
   group('a home run whose outlet is removed under it', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // THESE ARE ABOUT THE COMMANDS, NOT ABOUT THE GESTURE (`#877`)
+    // ═══════════════════════════════════════════════════════════════════
+    // `RemoveOutletCommand` and `RemoveStructureCommand` each take
+    // exactly what they say and no more, which is their own doc comment's
+    // promise, and these three pin the state that leaves behind: the
+    // codec has to survive a dangling reference, because a document can
+    // arrive holding one.
+    //
+    // **WHAT A PERSON CLICKING REMOVE GETS IS DIFFERENT, AND IT IS NOT
+    // THIS.** DR-160 §11.159 composes each command with the removals its
+    // subject cannot outlive, so the plate takes its home runs and the
+    // panel takes both. `derived/structure_removal_test.dart` is where
+    // that is proved. The two are not in tension: the commands stay
+    // honest about their own reach, and the transaction is the caller the
+    // comment in `structure_commands.dart` asks for.
     test('still writes, and the removal round-trips byte-exactly', () {
       final at = DateTime.utc(2026);
       final doc = _oneDrop(at);
@@ -1407,8 +1423,11 @@ void _pinDanglingOrigin() {
     });
 
     test('the schedule still carries the row, with its W number', () {
-      // A cable that vanished from the schedule because someone deleted a
-      // wall plate is the failure this whole no-cascade rule prevents.
+      // THE COMMAND ALONE DROPS NO SCHEDULE ROW, which is what makes it
+      // safe to compose. DR-160 §11.159.2 rules that the GESTURE does
+      // take the row, having said how many first, because nothing in the
+      // product can move a drop onto another plate and a cable left here
+      // could never be re-homed.
       final at = DateTime.utc(2026);
       final doc = _oneDrop(at);
       RemoveOutletCommand(id: _seedOutletId).apply(doc);
@@ -1420,6 +1439,10 @@ void _pinDanglingOrigin() {
 
     test('removing the whole Structure body leaves both the outlet and '
         'the drop', () {
+      // AND THAT IS WHY `addStructureRemoval` EXISTS. Both survivors name
+      // this body in a field that is not nullable, so the state pinned
+      // below is one nothing may leave a document in (§11.159.3); it is
+      // pinned because the codec must still be able to write it.
       final at = DateTime.utc(2026);
       final doc = _oneDrop(at);
       final before = _codec.write(doc);

@@ -54,6 +54,21 @@ RackDocument _project({
   return doc;
 }
 
+/// A SECOND plate on the same body (`#877`).
+///
+/// A rail with one row cannot tell a per-row control from a
+/// per-selection one, because the row and the selection are the same
+/// thing. Two rows is the smallest fixture that can.
+void _addOutlet(RackDocument doc, Uuid id, String designation) {
+  doc.outlets[id] = Outlet(
+    id: id,
+    structureBodyId: _bodyId,
+    designation: designation,
+    order: const FracIndex('a1'),
+    meta: _meta(),
+  );
+}
+
 Link _addDrop(
   RackDocument doc, {
   required String fieldLabel,
@@ -100,6 +115,11 @@ final List<RemoveGangCommand> _appliedRemovals = <RemoveGangCommand>[];
 /// and this package may not reach for a `DocumentController`.
 OutletsActions _actions(RackDocument doc, {List<String>? log}) =>
     OutletsActions(
+      // `#877`: the harness records the ASK rather than performing it.
+      // Removal opens a confirmation the shell owns, so what this tab can
+      // be tested for is that the trash icon reaches the host with the
+      // right plate.
+      onRemove: (outletId) => log?.add('remove ${outletId.v}'),
       onAddGang: (outletId) {
         log?.add('addGang');
         AddGangCommand(outletId: outletId).apply(doc);
@@ -199,6 +219,21 @@ Future<void> _pump(
   );
   await tester.pumpAndSettle();
 }
+
+/// The `Tooltip` wrapping ONE cell of the plate, named by position.
+///
+/// **NOT `find.byType(Tooltip).first`**, which is what these three tests
+/// used until `#877` and which broke the day the outlet rail grew a
+/// trash icon: the rail is built before the plate pane, so its tooltip
+/// became the first one and three assertions started reading a control
+/// they were not about. The cell's own `InkWell` already carries
+/// `plate-cell-<gang>-<cell>` for exactly this reason, and its comment
+/// says so about a finder picking the wrong `InkWell`; the tooltip
+/// above it had the same hole and no such anchor.
+Finder _cellTip(int gangIndex, int cellIndex) => find.ancestor(
+  of: find.byKey(ValueKey('plate-cell-$gangIndex-$cellIndex')),
+  matching: find.byType(Tooltip),
+);
 
 void main() {
   group('the tab opens something', () {
@@ -773,7 +808,7 @@ void main() {
       // THE EXCEPTION IS TEXT AND NEVER A HUE. The keystone is fitted
       // weeks after the pull out of the box the convention calls for, so
       // it is BLU on a run that went in yellow.
-      final tip = tester.widget<Tooltip>(find.byType(Tooltip).first);
+      final tip = tester.widget<Tooltip>(_cellTip(0, 0));
       expect(tip.message, contains('BLU'));
       expect(tip.message, contains('PULLED YEL'));
       // And the drop list says the same thing in the same order.
@@ -797,7 +832,7 @@ void main() {
       // NOT A DEFAULT GREY. Grey is a colour somebody could have chosen,
       // and six grey jacks would be indistinguishable from six nobody
       // specified (G4).
-      final tip = tester.widget<Tooltip>(find.byType(Tooltip).first);
+      final tip = tester.widget<Tooltip>(_cellTip(0, 0));
       expect(tip.message, contains('no jacket colour recorded'));
     });
 
@@ -819,7 +854,7 @@ void main() {
       // "Somebody said blue and the entry is gone" is a different fact
       // from "nobody said", and the resolver keeps them apart, so the
       // surface has to as well.
-      final tip = tester.widget<Tooltip>(find.byType(Tooltip).first);
+      final tip = tester.widget<Tooltip>(_cellTip(0, 0));
       expect(tip.message, contains('not in this project'));
     });
   });
@@ -932,6 +967,77 @@ void main() {
         find.textContaining('no recorded field termination'),
         findsOneWidget,
       );
+    });
+  });
+  group('the rail removes a plate (`#877`, DR-160 §11.159.6)', () {
+    testWidgets('every row carries a trash icon, keyed to ITS plate', (
+      tester,
+    ) async {
+      // ON THE ROW, settled by the user on 2026-09-13: the rail is where
+      // a plate is already picked, and it is the shape `#871` used.
+      final doc = _project();
+      _addOutlet(doc, const Uuid('outlet-2'), 'KIT-1');
+      await _pump(tester, doc);
+
+      expect(
+        find.byKey(ValueKey(outletRemoveKeyFor(_outletId))),
+        findsOneWidget,
+      );
+      expect(
+        find.byKey(ValueKey(outletRemoveKeyFor(const Uuid('outlet-2')))),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('and it asks the host for THAT plate, not the selected one', (
+      tester,
+    ) async {
+      // The failure this catches is the one a rail invites: a control
+      // built per row that closes over the SELECTION instead of over its
+      // own row removes whatever happens to be highlighted.
+      final log = <String>[];
+      final doc = _project();
+      _addOutlet(doc, const Uuid('outlet-2'), 'KIT-1');
+      await _pump(tester, doc, log: log);
+
+      // The first row is the selected one; press the SECOND row's icon.
+      await tester.tap(
+        find.byKey(ValueKey(outletRemoveKeyFor(const Uuid('outlet-2')))),
+      );
+      await tester.pumpAndSettle();
+
+      expect(log, ['remove outlet-2']);
+    });
+
+    testWidgets('the tooltip says what goes with it', (tester) async {
+      // "Remove" alone would read as removing a plate and leaving its
+      // cables, which is the one thing §11.159.2 ruled out.
+      final doc = _project();
+      await _pump(tester, doc);
+
+      final tip = tester.widget<IconButton>(
+        find.byKey(ValueKey(outletRemoveKeyFor(_outletId))),
+      );
+      expect(tip.tooltip, kRemovePlateTooltip);
+      expect(kRemovePlateTooltip, contains('cables'));
+    });
+
+    testWidgets('the tab itself removes NOTHING, which is the seam', (
+      tester,
+    ) async {
+      // A confirmation needs a `BuildContext` the session owns and this
+      // package may not reach the session layer, so the tab asks and the
+      // shell acts. `structure_removal_route_test.dart` is what proves
+      // the other half.
+      final log = <String>[];
+      final doc = _project();
+      await _pump(tester, doc, log: log);
+
+      await tester.tap(find.byKey(ValueKey(outletRemoveKeyFor(_outletId))));
+      await tester.pumpAndSettle();
+
+      expect(doc.outlets, hasLength(1));
+      expect(find.byType(AlertDialog), findsNothing);
     });
   });
 }

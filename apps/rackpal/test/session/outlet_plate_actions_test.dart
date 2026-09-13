@@ -78,7 +78,7 @@ void main() {
   group('a pass-through is fitted through the session (DR-047)', () {
     test('the action reaches the command and lands one undo entry', () {
       final c = _controller(gangs: [Gang()]);
-      final actions = buildOutletsActions(controller: c);
+      final actions = buildOutletsActions(controller: c, onRemove: (_) {});
 
       expect(
         actions.onSetPassThrough(_outletId, 0, PassThroughStyle.brush),
@@ -93,7 +93,7 @@ void main() {
 
     test('a gang index nobody has is refused, and says which', () {
       final c = _controller(gangs: [Gang()]);
-      final actions = buildOutletsActions(controller: c);
+      final actions = buildOutletsActions(controller: c, onRemove: (_) {});
       expect(
         actions.onSetPassThrough(_outletId, 4, PassThroughStyle.brush),
         'That outlet has no gang 5.',
@@ -109,7 +109,7 @@ void main() {
           Gang(),
         ],
       );
-      final actions = buildOutletsActions(controller: c);
+      final actions = buildOutletsActions(controller: c, onRemove: (_) {});
       expect(
         actions.onSetCell(_outletId, 0, 0, const BlankInsert()),
         'Gang 1 is a pass-through, so it has no cells.',
@@ -132,7 +132,10 @@ void main() {
       final outlet = c.doc.outlets[_outletId]!;
       final plan = planPlateArrangement(outlet, c.doc.links.values);
       expect(
-        buildOutletsActions(controller: c).onArrange(_outletId, plan),
+        buildOutletsActions(
+          controller: c,
+          onRemove: (_) {},
+        ).onArrange(_outletId, plan),
         isNull,
       );
 
@@ -157,7 +160,10 @@ void main() {
         c.doc.outlets[_outletId]!,
         c.doc.links.values,
       );
-      buildOutletsActions(controller: c).onArrange(_outletId, plan);
+      buildOutletsActions(
+        controller: c,
+        onRemove: (_) {},
+      ).onArrange(_outletId, plan);
       expect(c.undo.undoLabelKey, LabelKey.arrangePlate.name);
 
       c.undo.undo(c.doc);
@@ -184,7 +190,10 @@ void main() {
         c.doc.links.values,
       );
       expect(
-        buildOutletsActions(controller: c).onArrange(_outletId, plan),
+        buildOutletsActions(
+          controller: c,
+          onRemove: (_) {},
+        ).onArrange(_outletId, plan),
         'There is nothing to arrange on this plate.',
       );
       expect(

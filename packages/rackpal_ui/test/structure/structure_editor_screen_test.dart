@@ -29,6 +29,12 @@ RackDocument _project({
     ('Living Room', 'LR'),
     ('Kitchen', 'KIT'),
   ],
+  // A PROJECT WITH NO PANEL IS THE STATE EVERY NEW PROJECT IS IN, and
+  // until `#877` nothing in this file needed one: every case here starts
+  // from a body because every case here was about the table inside it.
+  // A control that is absent until there is something to act on can only
+  // be tested against the absence.
+  bool withBody = true,
 }) {
   final doc = RackDocument(
     id: const Uuid('doc-editor'),
@@ -38,12 +44,14 @@ RackDocument _project({
     meta: _meta(),
   )..registries = buildSeedRegistries();
 
-  AddStructureCommand(
-    title: 'Media Panel',
-    designator: 'STR-1',
-    now: _now,
-    actor: 't',
-  ).apply(doc);
+  if (withBody) {
+    AddStructureCommand(
+      title: 'Media Panel',
+      designator: 'STR-1',
+      now: _now,
+      actor: 't',
+    ).apply(doc);
+  }
 
   for (final (name, code) in rooms) {
     AddLocationCommand(
@@ -127,8 +135,19 @@ final class _Harness {
         c.apply(doc);
       }
     },
+    onRemoveStructure: removedStructures.add,
     outlets: outletsActions,
   );
+
+  /// What the header's overflow menu asked for (`#877`, DR-160 §11.159).
+  ///
+  /// RECORDED RATHER THAN PERFORMED, like every other destructive gesture
+  /// this harness sees: the confirmation and the transaction are the
+  /// shell's, and `app_shell`'s own test is what proves they run.
+  final List<Uuid> removedStructures = [];
+
+  /// What the Outlets tab's trash icon asked for.
+  final List<Uuid> removedOutlets = [];
 
   /// M3-H/2 (#167). The Outlets tab's five gestures, applied straight to
   /// [doc] the way every other callback in this harness is: the commands
@@ -136,6 +155,7 @@ final class _Harness {
   /// `outlets_view_test.dart` drives the tab itself; this exists so the
   /// editor's own tests can reach it.
   OutletsActions get outletsActions => OutletsActions(
+    onRemove: removedOutlets.add,
     onAddGang: (outletId) {
       AddGangCommand(outletId: outletId).apply(doc);
       return null;
@@ -2708,6 +2728,86 @@ void main() {
 
       expect(find.text(kPinOnPlanMenuLabel), findsNothing);
       expect(h.armedOnPlan, isEmpty);
+    });
+  });
+  group('the header removes the whole Structure (`#877`, DR-160)', () {
+    testWidgets('the menu is ABSENT until there is a body to remove', (
+      tester,
+    ) async {
+      // DR-091's rule at the size of one item: a control with nothing to
+      // act on is absent rather than present and inert. A blank project
+      // has no Structure device and the quick-add loop offers to create
+      // one.
+      await _pump(tester, _Harness(_project(withBody: false)));
+      expect(find.byKey(kStructureHeaderMenuKey), findsNothing);
+      expect(
+        find.text('No Structure device yet'),
+        findsOneWidget,
+        reason:
+            'the header names the empty case rather than rendering '
+            'blank, so the absence above is the control and not the tab',
+      );
+
+      // TWO FIXTURES AND NOT A GESTURE BETWEEN THEM. Creating a body from
+      // here is the quick-add loop's two-press offer, which
+      // `structure_removal_route_test.dart` drives against the real
+      // session; what this case is about is the control, and the shortest
+      // honest way to show it appears is to pump a project that has one.
+      await _pump(tester, _Harness(_project()));
+      expect(find.byKey(kStructureHeaderMenuKey), findsOneWidget);
+    });
+
+    testWidgets('and it asks the host for the body the editor is SHOWING', (
+      tester,
+    ) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+
+      await tester.tap(find.byKey(kStructureHeaderMenuKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kRemoveStructureLabel));
+      await tester.pumpAndSettle();
+
+      expect(h.removedStructures, [h.doc.structures.keys.single]);
+    });
+
+    testWidgets('the editor itself removes NOTHING, which is the seam', (
+      tester,
+    ) async {
+      // The confirmation and the transaction are the shell's, for the
+      // reason `OutletsActions.onRemove` gives: a dialog needs a
+      // `BuildContext` the session owns.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+
+      await tester.tap(find.byKey(kStructureHeaderMenuKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kRemoveStructureLabel));
+      await tester.pumpAndSettle();
+
+      expect(h.doc.structures, hasLength(1));
+      expect(find.byType(AlertDialog), findsNothing);
+    });
+
+    testWidgets('IT IS A MENU AND NOT A FOURTH BUTTON IN THE ROW', (
+      tester,
+    ) async {
+      // §11.159.6, settled by the user. The three text buttons beside it
+      // are harmless and sit a few pixels away; the largest delete in the
+      // product does not join that row. A test that only checked the
+      // label would pass on either layout, so this asserts the label is
+      // NOT in the tree until the menu is opened.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 2x Cat6');
+
+      expect(find.text(kRemoveStructureLabel), findsNothing);
+
+      await tester.tap(find.byKey(kStructureHeaderMenuKey));
+      await tester.pumpAndSettle();
+      expect(find.text(kRemoveStructureLabel), findsOneWidget);
     });
   });
 }

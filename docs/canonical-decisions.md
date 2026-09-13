@@ -20231,6 +20231,16 @@ walked-site work: somebody stood in the room and dotted the floorplan, `plan_len
 cable length from it, and it travels with the outlet when the outlet goes. A count that named only
 cables would understate what a pinned plate costs.
 
+**AND THE PLAN IS TAKEN TWICE, WHICH IS THE ONE PLACE THAT RULE BENDS.** The document is not frozen
+while a confirmation is open, and `#877` MEASURED that rather than assuming it: `Ctrl+Z` reaches
+`undoFromShell` from inside a modal route, because DR-159 §11.158.4 put undo on `KeyScope.global`
+with its `Shortcuts` above the `Navigator`. Probed on the plate dialog, the document went from two
+links to three with the confirmation still up and still saying one. So the edit re-plans after the
+await and removes **what is actually there**, which is DR-158's recorded choice and is the smaller of
+two costs: the alternative leaves the restored drop naming a plate that is gone, which is the state
+§11.159.2 exists to prevent. A dialog that dismissed itself when the document moved would be better
+than both and is not ruled here.
+
 **A PLATE WITH NOTHING ON IT IS NOT ASKED ABOUT.** `needsConfirmation` is false for an outlet with no
 drops and no pin, exactly as it is false for a bare leaf location, and for DR-013 §11.13.2's own
 reason: a prompt for a consequence-free delete is the nag that teaches people to click through

@@ -76,14 +76,19 @@ import 'package:rackpal_core/rackpal_core.dart'
         LabelKey,
         LoadedLibrary,
         LocationRemovalPlan,
+        RackDocument,
         TemplateBody,
         TemplateId,
         TextMeasurer,
         Uuid,
+        addOutletRemoval,
+        addStructureRemoval,
         addTemplateRemoval,
         buildPlaceableTemplates,
         buildRackPresets,
         copyTemplateBody,
+        planOutletRemoval,
+        planStructureRemoval,
         planTemplateRemoval,
         resolveLatestTemplate;
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -1111,9 +1116,98 @@ final class AppShellState extends State<AppShell>
       onRunMediaTypeCommands: buildMediaTypeAction(
         controller: session.controller,
       ),
-      outlets: buildOutletsActions(controller: session.controller),
+      onRemoveStructure: (bodyId) =>
+          unawaited(_removeStructure(session, bodyId)),
+      outlets: buildOutletsActions(
+        controller: session.controller,
+        onRemove: (outletId) => unawaited(_removeOutlet(session, outletId)),
+      ),
     ),
   );
+
+  /// Removes one wall plate, with the home runs that land on it (`#877`,
+  /// DR-160 §11.159.2).
+  ///
+  /// **THE COUNTS AND THE REMOVAL READ ONE OBJECT**, which is
+  /// `delete_location_dialog.dart`'s rule and `_removeTemplate`'s: a
+  /// dialog that said "3 cables" and removed four would be worse than no
+  /// dialog.
+  ///
+  /// **A BARE PLATE IS REMOVED WITH NO PROMPT AT ALL.**
+  /// `confirmOutletRemoval` returns true without showing anything when the
+  /// plan costs nothing (DR-013 §11.13.2), so the gesture stays one click
+  /// in the case where a prompt would only teach somebody to click through
+  /// prompts.
+  Future<void> _removeOutlet(DocumentSession session, Uuid outletId) async {
+    final controller = session.controller;
+    final plan = planOutletRemoval(controller.doc, outletId);
+    if (plan.isEmpty) return;
+    // Read BEFORE the delete, obviously, but also before the
+    // confirmation: the dialog is describing a document that still has
+    // this plate in it.
+    final designation = controller.doc.outlets[outletId]?.designation ?? '';
+
+    final confirmed = await confirmOutletRemoval(
+      context,
+      plan: plan,
+      designation: designation,
+    );
+    if (!confirmed || !mounted) return;
+
+    // RE-PLANNED AFTER THE AWAIT, on `_removeTemplate`'s rule: the
+    // document is not frozen while a dialog is open, and an undo from the
+    // Edit menu could have moved it. The plan the person ANSWERED is the
+    // one above; the plan that runs is this one.
+    final live = planOutletRemoval(controller.doc, outletId);
+    if (live.isEmpty) return;
+    controller.transact(
+      LabelKey.removeOutlet,
+      (tx) => addOutletRemoval(tx, live),
+    );
+    setState(() {});
+  }
+
+  /// Removes a whole Structure body, with its plates and every home run
+  /// out of it (`#877`, DR-160 §11.159.3).
+  ///
+  /// **THE LABEL IS `removeStructure` AND NOT `removeLink`**, on
+  /// `_removeTemplate`'s reasoning (§11.159.7): what the person did was
+  /// get rid of a panel, and the plates and cables are a consequence of
+  /// it.
+  Future<void> _removeStructure(DocumentSession session, Uuid bodyId) async {
+    final controller = session.controller;
+    final plan = planStructureRemoval(controller.doc, bodyId);
+    if (plan.isEmpty) return;
+
+    final confirmed = await confirmStructureRemoval(
+      context,
+      plan: plan,
+      name: _structureName(controller.doc, bodyId),
+    );
+    if (!confirmed || !mounted) return;
+
+    final live = planStructureRemoval(controller.doc, bodyId);
+    if (live.isEmpty) return;
+    controller.transact(
+      LabelKey.removeStructure,
+      (tx) => addStructureRemoval(tx, live),
+    );
+    setState(() {});
+  }
+
+  /// `STR-1 · Media Panel`, exactly as the editor header prints it.
+  ///
+  /// THE DESIGNATOR IS THE DEVICE'S, not the body's, which is
+  /// `_EditorHeader._subtitle`'s rule: a `StructureBody` has none, so
+  /// there is no second copy of it to go stale.
+  static String _structureName(RackDocument doc, Uuid bodyId) {
+    final body = doc.structures[bodyId];
+    if (body == null) return 'this Structure';
+    final designator = doc.devices[body.deviceId]?.designator ?? '';
+    final title = body.title.trim();
+    if (designator.isEmpty) return title.isEmpty ? 'this Structure' : title;
+    return title.isEmpty ? designator : '$designator · $title';
+  }
 
   /// The Device Manager. DR-091 §11.90.5 renamed it from `New device
   /// template`, because a tab names a place and that named an action.
