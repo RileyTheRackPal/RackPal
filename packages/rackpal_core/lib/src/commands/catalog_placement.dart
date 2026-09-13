@@ -285,6 +285,24 @@ int _blockerEndRu(
   return placement.ruIndex + h - 1;
 }
 
+/// Does [body] mount in a vertical channel rather than in rail holes?
+///
+/// **PUBLIC BECAUSE THE PICKER ASKS THE SAME QUESTION** (`#884`, DR-164
+/// §11.163.5). The rack inspector's `Add device…` offers exactly the rows
+/// [buildPlaceFromCatalogCommand] will accept a `zeroU` target for, and a
+/// dialog spelling this predicate a second time is how a picker comes to
+/// offer a row the placer refuses, or to hide one it would have taken.
+/// Same reasoning as `PLC-001`'s, one file up: the DECISION is shared
+/// because that is the half which can drift into a bug.
+///
+/// **TWO FIELDS AND NOT ONE.** `P01` sets both, and either alone is
+/// enough to mean it: `side` says where it sits and `mountMethod` says how
+/// it attaches, and a body carrying one without the other is still not
+/// something with a rail footprint.
+bool isZeroUBody(TemplateBody body) =>
+    body.side == OccupancySide.zeroUVertical ||
+    body.mountMethod == MountMethod.zeroU;
+
 /// Where in a rack's 0U channel an occupant is being put (AC-044).
 ///
 /// A RECORD RATHER THAN THREE PARAMETERS, because all three are
@@ -405,9 +423,7 @@ CatalogPlacementResult buildPlaceFromCatalogCommand({
   // and stays pinned to it for life (CR-050).
   final body = snapshot.body;
 
-  final isZeroU =
-      body.side == OccupancySide.zeroUVertical ||
-      body.mountMethod == MountMethod.zeroU;
+  final isZeroU = isZeroUBody(body);
 
   final Placement placement;
   // THE CHANNEL PATH, WHICH THE REFUSAL BELOW HAS BEEN NAMING SINCE M4.

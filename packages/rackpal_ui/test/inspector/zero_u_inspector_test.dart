@@ -110,6 +110,7 @@ void main() {
                 onRefuse: (_) {},
                 onZeroU: handed.add,
                 onMoveZeroU: (_, _, _) {},
+                onAddZeroUDevice: (_, _) {},
               ),
             ),
           ),
@@ -395,6 +396,167 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(moves, [(_pduId, 'ch-2', 12)]);
+    });
+  });
+
+  group('the channel row puts a device IN it (`#884`, DR-164 §11.163)', () {
+    // ════════════════════════════════════════════════════════════════
+    // THE PRODUCER NOTHING IN THE PRODUCT HAD
+    // ════════════════════════════════════════════════════════════════
+    // `ZeroUTarget` had ZERO call sites, so the occupant list the cases
+    // above exercise was a view over a set nothing could add to. What the
+    // PANEL owes is two values, the channel and the chosen template; the
+    // screen signs and places, and `rack_inspector_panel_test.dart` is
+    // where that half is proven against the real one.
+
+    /// The rack, one named channel, and a shelf holding one 0U template
+    /// and one that is emphatically not.
+    RackDocument docWithShelf({bool withZeroU = true}) {
+      final doc = _doc(channels: [_channel(name: 'Left rail')]);
+      if (withZeroU) {
+        doc.templates['P01@1'] = TemplateSnapshot(
+          templateId: const TemplateId('P01'),
+          version: 1,
+          contentHash: 'sha256:p01',
+          capturedAt: _when,
+          body: TemplateBody(
+            manufacturer: 'Demo',
+            model: 'pdu',
+            displayName: 'Vertical PDU',
+            side: OccupancySide.zeroUVertical,
+            mountMethod: MountMethod.zeroU,
+          ),
+        );
+      }
+      doc.templates['sw@1'] = TemplateSnapshot(
+        templateId: const TemplateId('sw'),
+        version: 1,
+        contentHash: 'sha256:sw',
+        capturedAt: _when,
+        body: TemplateBody(
+          manufacturer: 'Demo',
+          model: 'sw',
+          displayName: 'Network switch',
+          frontU: 1,
+        ),
+      );
+      return doc;
+    }
+
+    /// Pumps the rack panel, recording every (channel, template) pair it
+    /// hands over.
+    Future<List<(String, String)>> pumpPicker(
+      WidgetTester tester,
+      RackDocument doc,
+    ) async {
+      final placed = <(String, String)>[];
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 320,
+              height: 900,
+              child: RackInspectorPanel(
+                rack: doc.racks[_rackId]!,
+                doc: doc,
+                presets: const {},
+                onSetProperty: <T>(_, _) {},
+                onRename: (_) {},
+                onRequestHeight: (_) {},
+                onApplyPreset: (_) {},
+                onRefuse: (_) {},
+                onZeroU: (_) {},
+                onMoveZeroU: (_, _, _) {},
+                onAddZeroUDevice: (c, t) => placed.add((c, t)),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      return placed;
+    }
+
+    Future<void> openPicker(WidgetTester tester) async {
+      final add = find.byKey(const ValueKey('zero-u-add-device-ch-1'));
+      await tester.scrollUntilVisible(
+        add,
+        120,
+        scrollable: find
+            .descendant(
+              of: find.byType(RackInspectorPanel),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(add);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('THE CONTROL IS THERE, and the picker lists the 0U '
+        'template and nothing else', (tester) async {
+      await pumpPicker(tester, docWithShelf());
+      await openPicker(tester);
+
+      expect(find.text(kAddZeroUOccupantTitle), findsOneWidget);
+      expect(find.text('Vertical PDU'), findsOneWidget);
+      expect(
+        find.text('Network switch'),
+        findsNothing,
+        reason:
+            'a 1U rack-mount body has a rail footprint and is not '
+            'offered for a vertical channel',
+      );
+      expect(
+        find.textContaining('Left rail'),
+        findsWidgets,
+        reason: 'the dialog names the channel it is filling',
+      );
+    });
+
+    testWidgets('choosing one hands the host the channel and the id', (
+      tester,
+    ) async {
+      final placed = await pumpPicker(tester, docWithShelf());
+      await openPicker(tester);
+
+      await tester.tap(find.byKey(AddZeroUOccupantDialog.confirmKey));
+      await tester.pumpAndSettle();
+
+      expect(placed, [('ch-1', 'P01')]);
+    });
+
+    testWidgets('cancelling hands over NOTHING, which is the trap a '
+        'dialog returning a default falls into', (tester) async {
+      final placed = await pumpPicker(tester, docWithShelf());
+      await openPicker(tester);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(placed, isEmpty);
+    });
+
+    testWidgets('a project with no 0U device SAYS SO and cannot confirm', (
+      tester,
+    ) async {
+      final placed = await pumpPicker(
+        tester,
+        docWithShelf(withZeroU: false),
+      );
+      await openPicker(tester);
+
+      expect(find.text(kNoZeroUTemplates), findsOneWidget);
+      final confirm = tester.widget<FilledButton>(
+        find.byKey(AddZeroUOccupantDialog.confirmKey),
+      );
+      expect(
+        confirm.onPressed,
+        isNull,
+        reason: 'docs/04 3.4: a control that cannot act does not act',
+      );
+      expect(placed, isEmpty);
     });
   });
 }

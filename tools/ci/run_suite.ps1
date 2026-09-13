@@ -1151,7 +1151,19 @@ $SuiteFloors = @{
     # cannot see is whether the screen runs the command, prints the
     # planner's refusal, or SIGNS the move from the session: `#879`'s
     # second mutation blanked exactly that and survived.
-    'rackpal_ui'     = 1857
+    # 1866 at `#884`: +9. The PRODUCER that list never had: `ZeroUTarget`
+    # had zero call sites, so `#876` shipped a view over a set nothing
+    # could add to. Four cases prove the picker offers the rows the placer
+    # will accept and hands over two values; five go through the real
+    # screen for the half a panel test cannot see.
+    # ONE OF THE NINE REPLACED A CASE THAT COULD NOT FAIL. It asserted the
+    # rack panel stayed open after a placement, on the belief that
+    # selecting the new device would swap the inspector. It would not:
+    # `_inspectorTarget` moves on canvas GESTURES and never on
+    # `_selection.apply`. A mutation passed straight through it. What the
+    # case asserts now is the artifact, that the next `Delete` does not
+    # destroy what was just placed.
+    'rackpal_ui'     = 1866
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

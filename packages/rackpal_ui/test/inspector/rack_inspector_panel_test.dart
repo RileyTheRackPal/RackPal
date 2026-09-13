@@ -1246,4 +1246,178 @@ void main() {
       );
     });
   });
+
+  group('`#884`: a device goes INTO a channel, through the real screen '
+      '(DR-164)', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // WHAT A PANEL-ONLY TEST CANNOT SEE, WHICH IS MOST OF THIS
+    // ═══════════════════════════════════════════════════════════════════
+    // `zero_u_inspector_test.dart` proves the picker offers the right rows
+    // and hands over two values. It cannot see whether the screen actually
+    // places, whether the designator comes from the allocator rather than
+    // from the picker, whether the placement is SIGNED by the session, or
+    // whether the person is left looking at the surface that shows what
+    // they did. All four live here, against the real `RackCanvasScreen`
+    // and its real `DocumentController`.
+
+    /// The demo document with a full-height channel, and a PDU already in
+    /// it when asked, so the allocator has something to count past.
+    RackDocument docWith0U({bool withPdu = false}) {
+      final doc = buildDemoRackDocument();
+      final rack = doc.racks.values.first;
+      rack.zeroUChannels.add(
+        ZeroUChannel(
+          id: 'ch-1',
+          side: ZeroUChannelSide.rearLeft,
+          startU: 1,
+          endU: rack.heightU,
+          name: 'Left rail',
+        ),
+      );
+      if (withPdu) {
+        doc.devices[const Uuid('dev-pdu')] = DeviceInstance(
+          id: const Uuid('dev-pdu'),
+          kind: DeviceKind.rackDevice,
+          templateRef: TemplateRef(
+            templateId: const TemplateId('P01'),
+            version: 1,
+            contentHash: doc.templates[catalogTemplateKey('P01')]!.contentHash,
+          ),
+          designator: 'PDU-1',
+          name: 'Vertical PDU',
+          placement: ZeroUPlacement(
+            rackId: rack.id,
+            channelId: 'ch-1',
+            offsetFromChannelStart: zeroUOffsetFor(rack.zeroUChannels.first, 3),
+            orientation: ZeroUOrientation.vertical,
+          ),
+          meta: EntityMeta(
+            createdAt: DateTime.utc(2026),
+            updatedAt: DateTime.utc(2026),
+            updatedBy: 'seed',
+          ),
+        );
+      }
+      return doc;
+    }
+
+    /// Opens the rack inspector and runs the picker to its confirm.
+    Future<void> placeOne(WidgetTester tester) async {
+      await _openInspector(tester);
+      final add = find.byKey(const ValueKey('zero-u-add-device-ch-1'));
+      await _reveal(tester, add);
+      await tester.tap(add);
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(AddZeroUOccupantDialog.confirmKey));
+      await tester.pumpAndSettle();
+    }
+
+    /// Every 0U occupant of `ch-1`, newest last.
+    List<DeviceInstance> occupants(WidgetTester tester) {
+      final doc = _doc(tester);
+      return occupantsOfZeroUChannel(doc, _rack(tester).id, 'ch-1');
+    }
+
+    testWidgets('IT REACHES THE DOCUMENT, in that channel and at its '
+        'start U', (tester) async {
+      await tester.pumpWidget(_app(document: docWith0U()));
+      await tester.pump();
+      await placeOne(tester);
+
+      final placed = occupants(tester).single;
+      final placement = placed.placement as ZeroUPlacement;
+      expect(placement.channelId, 'ch-1');
+      expect(
+        zeroUStartUOf(
+          _rack(tester).zeroUChannels.single,
+          placement.offsetFromChannelStart,
+        ),
+        1,
+        reason:
+            'DR-164 11.163.3: it lands at the channel start, because a '
+            '0U occupant has no extent and "first free" has no meaning',
+      );
+      expect(find.textContaining('Left rail'), findsWidgets);
+    });
+
+    testWidgets('AND THE NEXT Delete DOES NOT DESTROY IT (11.163.4)', (
+      tester,
+    ) async {
+      // ═════════════════════════════════════════════════════════════════
+      // THIS CASE REPLACES ONE THAT COULD NOT FAIL
+      // ═════════════════════════════════════════════════════════════════
+      // It asserted that the RACK PANEL stayed open, on the reasoning that
+      // selecting the new device would swap the inspector. That reasoning
+      // was wrong: `_inspectorTarget` is moved by canvas GESTURES and
+      // never by `_selection.apply`, so the panel stays either way, and
+      // the case passed with the mutation applied.
+      //
+      // The artifact is this instead. `_finalizeCatalogPlacement` takes
+      // canvas focus AND selects, and together those aim the keyboard at a
+      // device the elevation never draws, where `_deleteSelection` removes
+      // an unwired one with no confirmation at all.
+      await tester.pumpWidget(_app(document: docWith0U()));
+      await tester.pump();
+      await placeOne(tester);
+      expect(occupants(tester), hasLength(1));
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+
+      expect(
+        occupants(tester),
+        hasLength(1),
+        reason:
+            'nothing invisible was selected, and no dialog stood between '
+            'the keystroke and the document',
+      );
+      expect(find.byType(RackInspectorPanel), findsOneWidget);
+    });
+
+    testWidgets('THE DESIGNATOR COMES FROM THE ALLOCATOR, not the picker', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app(document: docWith0U(withPdu: true)));
+      await tester.pump();
+      await placeOne(tester);
+
+      final designators = [for (final d in occupants(tester)) d.designator];
+      expect(designators, containsAll(<String>['PDU-1', 'PDU-2']));
+    });
+
+    testWidgets('AND THE PLACEMENT IS SIGNED BY THE SESSION', (tester) async {
+      // `#879`'s lesson, which is why the panel hands over two plain
+      // values and not a command.
+      final at = DateTime.utc(2026, 9, 13, 14, 15);
+      await tester.pumpWidget(
+        _app(clock: FixedClock(at), document: docWith0U()),
+      );
+      await tester.pump();
+      await placeOne(tester);
+
+      final placed = occupants(tester).single;
+      expect(
+        placed.meta.updatedBy,
+        'local',
+        reason:
+            'the actor came from the screen controller, and is no value '
+            'the picker could invent',
+      );
+      expect(placed.meta.createdAt, at, reason: 'and the session clock');
+    });
+
+    testWidgets('ONE UNDO TAKES IT BACK OUT', (tester) async {
+      await tester.pumpWidget(_app(document: docWith0U()));
+      await tester.pump();
+      await placeOne(tester);
+      expect(occupants(tester), hasLength(1));
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+
+      expect(occupants(tester), isEmpty);
+    });
+  });
 }

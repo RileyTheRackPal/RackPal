@@ -20564,11 +20564,22 @@ offset search would be arithmetic dressed as a rule. `PLC-003` still checks the 
 the channel, which is the check that exists.
 
 **11.163.4 AND THE NEW OCCUPANT IS NOT SELECTED**, which every other placement in this product does.
-`_finalizeCatalogPlacement` makes the placed device the sole selection (docs/04 §3.1 step 6), and
-doing that here would swap the inspector from the rack panel to a device panel **for a device the
-elevation never draws**, taking the person off the one surface that can show what they just did. The
-rack panel stays and the new row appears under its channel. **This is `#883` shaping a decision
-rather than blocking one**, and it reverses when the bar lands.
+`_finalizeCatalogPlacement` does two things in one breath: it requests CANVAS FOCUS and it makes the
+placed device the sole selection (docs/04 §3.1 step 6). Pairing those here would leave the keyboard
+aimed at the canvas with **a device the elevation never draws** selected, and the next `Delete` or
+arrow key would act on something nobody can see. `Delete` is the sharp one: `_deleteSelection`
+removes an unwired device with **no confirmation at all**, by design, because `confirmDeviceRemoval`
+only builds a dialog when something would be cascaded. So the rack panel keeps the keyboard, the new
+row appears under its channel, and this is `#883` shaping a decision rather than blocking one: it
+reverses when the bar lands.
+
+**THE FIRST DRAFT OF THIS CLAUSE GAVE THE WRONG REASON AND A MUTATION CAUGHT IT.** It said selecting
+would swap the inspector from the rack panel to a device panel. **It would not.** `_inspectorTarget`
+is moved by canvas GESTURES and never by `_selection.apply`, so the rack panel stays either way; the
+case asserting it stayed passed with the mutation applied, which is how the error surfaced. **A test
+that cannot fail is not evidence**, and that one was defending a mechanism rather than an artifact.
+What it defends now is the artifact: after a placement, `Delete` does not destroy what was just
+placed.
 
 **11.163.5 THE PICKER READS THE DOCUMENT**, not the seed catalog, on DR-077 §11.76.1: a 0U template
 authored in the Device Builder is in the document and in no catalog. One 0U template ships (`P01`,

@@ -117,6 +117,7 @@ Future<List<WidthPosition>> _pump(
                 focusedId: selected.isEmpty ? null : selected.first,
                 onZeroU: (_) {},
                 onMoveZeroU: (_, _, _) {},
+                onAddZeroUDevice: (_, _) {},
                 onSetProperty: <T>(field, value) {},
                 onRename: (_) {},
                 onRequestHeight: (_) {},

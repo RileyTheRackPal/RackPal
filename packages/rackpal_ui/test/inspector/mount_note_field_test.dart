@@ -132,6 +132,7 @@ Future<List<String>> _pump(
             onSetMountNote: wired ? typed.add : null,
             onZeroU: (_) {},
             onMoveZeroU: (_, _, _) {},
+            onAddZeroUDevice: (_, _) {},
           ),
         ),
       ),
