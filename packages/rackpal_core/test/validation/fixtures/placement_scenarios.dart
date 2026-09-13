@@ -67,18 +67,20 @@ FixtureOutcome _rail({
   ),
 );
 
-FixtureOutcome _zeroU(String channelId, Len offset) => fromPlacement(
-  evaluatePlacement(
-    doc: _doc(),
-    placement: ZeroUPlacement(
-      rackId: _rackId,
-      channelId: channelId,
-      offsetFromChannelStart: offset,
-      orientation: ZeroUOrientation.vertical,
-    ),
-    designator: 'PDU-1',
-  ),
-);
+FixtureOutcome _zeroU(String channelId, Len offset, {Len? span}) =>
+    fromPlacement(
+      evaluatePlacement(
+        doc: _doc(),
+        placement: ZeroUPlacement(
+          rackId: _rackId,
+          channelId: channelId,
+          offsetFromChannelStart: offset,
+          spanAlongChannel: span,
+          orientation: ZeroUOrientation.vertical,
+        ),
+        designator: 'PDU-1',
+      ),
+    );
 
 /// The three PLC rules' pairs.
 List<DrcFixture> placementFixtures() => [
@@ -120,5 +122,20 @@ List<DrcFixture> placementFixtures() => [
     kind: FixtureKind.nearMiss,
     what: 'the id the rack does have, at the near end',
     run: () => _zeroU('left', const Len(0)),
+  ),
+  // THE TAIL, which this rule could not see until `#883` gave a 0U
+  // occupant an extent (DR-166 §11.165.3). The channel is 12 U long, so
+  // 13 U of PDU starting at its near end hangs a unit off the top.
+  DrcFixture(
+    ruleId: 'PLC-003',
+    kind: FixtureKind.knownBad,
+    what: 'a span that runs off the end of the channel',
+    run: () => _zeroU('left', const Len(0), span: kRackUnit * 13),
+  ),
+  DrcFixture(
+    ruleId: 'PLC-003',
+    kind: FixtureKind.nearMiss,
+    what: 'a span that fills the channel exactly',
+    run: () => _zeroU('left', const Len(0), span: kRackUnit * 12),
   ),
 ];

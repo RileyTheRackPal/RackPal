@@ -35,6 +35,7 @@ import 'package:rackpal_core/src/draw/scene/rack_geometry.dart';
 import 'package:rackpal_core/src/draw/scene/rack_layer.dart';
 import 'package:rackpal_core/src/draw/scene/rack_load_gutter.dart';
 import 'package:rackpal_core/src/draw/scene/rack_style.dart';
+import 'package:rackpal_core/src/draw/scene/zero_u_layer.dart';
 import 'package:rackpal_core/src/draw/text.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/enums.dart' show UnitSystem;
@@ -374,6 +375,56 @@ RackScene buildRackScene({
     );
   }
 
+  // ── 0U bars (absolute, on the rails) ─────────────────────────────────
+  //
+  // AC-044's plain bar (`#883`, DR-166 §11.165). These go in the same
+  // three lists a rail device does, because "selectable" is exactly what
+  // being in `hits` and `layouts` MEANS on this canvas: `#876` had to put
+  // its inspector fields on the rack panel rather than the device panel
+  // because a 0U device could not be selected, and this is the line that
+  // was missing.
+  //
+  // A FRAGMENT IS RECORDED, AND THE FIRST VERSION SAID IT DID NOT NEED
+  // ONE. That comment reasoned that a bar is one absolute rect with no
+  // local origin worth having. It is not optional: the canvas builds a
+  // `_DeviceBoxLeaf` for every entry in `devices` and calls
+  // `fragmentFor(id)`, which THROWS on an id it has no range for, so the
+  // first run painted an `ArgumentError` instead of an elevation. The
+  // bar's ops are local and bracketed like any device's.
+  for (final bar in zeroUBars(
+    rack: rack,
+    devices: devices,
+    face: face,
+    geo: geo,
+    mirrored: mirrored,
+  )) {
+    final built = buildZeroUBarLayer(bar: bar, palette: palette);
+    ops
+      ..add(const OpSave())
+      ..add(
+        OpTransform(
+          Matrix4.translationValues(bar.rect.left, bar.rect.top, 0),
+        ),
+      );
+    final localStart = ops.length;
+    ops.addAll(built.ops);
+    final localEnd = ops.length;
+    ops.add(const OpRestore());
+    fragments[bar.device.id.v] = IntRange(localStart, localEnd);
+    hits.add(HitRegion(bar.device.id.v, bar.rect));
+    layouts.add(
+      DeviceLayout(
+        deviceId: bar.device.id,
+        rect: bar.rect,
+        semanticLabel: _zeroUSemanticLabel(bar),
+      ),
+    );
+    bounds = _grow(
+      bounds.union(bar.rect),
+      built.inkBounds?.shift(bar.rect.left, bar.rect.top),
+    );
+  }
+
   // ── load gutter (absolute, outside the chassis box) ──────────────────
   //
   // Composed here rather than being a second scene the sheet concatenates,
@@ -477,6 +528,18 @@ List<_VisibleDevice> _visibleDevices(
     return byRu != 0 ? byRu : a.device.id.v.compareTo(b.device.id.v);
   });
   return out;
+}
+
+/// What a screen reader hears for a 0U bar (`#883`).
+///
+/// **IT SAYS WHEN THE LENGTH IS NOT RECORDED**, because the drawing says
+/// it with a hollow outline and an outline is not available to somebody
+/// who is not looking at it. G4's rule is that an unknown is reported
+/// rather than filled in, and a semantic label is a report.
+String _zeroUSemanticLabel(ZeroUBar bar) {
+  final d = bar.device;
+  final who = d.name.isEmpty ? d.designator : '${d.designator} ${d.name}';
+  return bar.lengthKnown ? '$who, 0U' : '$who, 0U, length not recorded';
 }
 
 String _semanticLabel(DeviceInstance device, TemplateBody body) {

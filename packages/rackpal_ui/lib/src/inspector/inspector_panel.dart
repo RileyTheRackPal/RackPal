@@ -76,6 +76,7 @@ class InspectorPanel extends StatelessWidget {
     required this.onZeroU,
     required this.onMoveZeroU,
     required this.onAddZeroUDevice,
+    required this.onResizeZeroU,
     required this.onSetLifecycle,
     required this.onSetWidth,
     required this.onSetOverride,
@@ -156,6 +157,11 @@ class InspectorPanel extends StatelessWidget {
   /// the chosen template and nothing else it should be trusted with.
   final void Function(String channelId, String catalogId) onAddZeroUDevice;
 
+  /// AC-044's third inspector field (`#883`, DR-166): how far a 0U
+  /// occupant runs along its channel, or null for the unknown every
+  /// document written before that ticket records.
+  final void Function(Uuid deviceId, int? spanU) onResizeZeroU;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -179,6 +185,7 @@ class InspectorPanel extends StatelessWidget {
           onZeroU: onZeroU,
           onMoveZeroU: onMoveZeroU,
           onAddZeroUDevice: onAddZeroUDevice,
+          onResizeZeroU: onResizeZeroU,
           firstFieldFocus: firstFieldFocus,
         ),
         InspectorTarget.selection => _SelectionSummary(

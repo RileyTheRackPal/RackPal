@@ -548,6 +548,7 @@
           "offsetFromChannelStartNm": 0,
           "orientation": "vertical",
           "rackId": "019c6bcb-1fc0-7000-8000-000000000008",
+          "spanAlongChannelNm": 800100000,
           "type": "zeroU"
         },
         "templateRef": {

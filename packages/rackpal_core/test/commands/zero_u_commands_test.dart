@@ -70,7 +70,7 @@ RackDocument _doc({bool withChannel = true}) {
   return doc;
 }
 
-void _mountPdu(RackDocument doc, {Len offset = Len.zero}) {
+void _mountPdu(RackDocument doc, {Len offset = Len.zero, Len? span}) {
   doc.devices[_pdu] = DeviceInstance(
     id: _pdu,
     kind: DeviceKind.rackDevice,
@@ -85,6 +85,7 @@ void _mountPdu(RackDocument doc, {Len offset = Len.zero}) {
       rackId: _rackId,
       channelId: 'ch-left',
       offsetFromChannelStart: offset,
+      spanAlongChannel: span,
       orientation: ZeroUOrientation.vertical,
     ),
     meta: _meta(),
@@ -387,6 +388,119 @@ void main() {
         occupantsOfZeroUChannel(doc, const Uuid('rk-other'), 'ch-left'),
         isEmpty,
       );
+    });
+  });
+
+  group('the span AC-044 named and `#876` could not build (DR-166)', () {
+    test('SETTING IT WRITES A LENGTH, and one undo takes it back', () {
+      final doc = _doc();
+      _mountPdu(doc);
+      final planned = planSetZeroUSpan(
+        doc: doc,
+        id: _pdu,
+        span: kRackUnit * 6,
+        now: _now,
+        actor: 'tester',
+      );
+
+      final command = (planned as ZeroUReady).command..apply(doc);
+      expect(
+        (doc.devices[_pdu]!.placement as ZeroUPlacement).spanAlongChannel,
+        kRackUnit * 6,
+      );
+
+      command.revert(doc);
+      expect(
+        (doc.devices[_pdu]!.placement as ZeroUPlacement).spanAlongChannel,
+        isNull,
+        reason:
+            'it was unknown before, and undo restores the unknown '
+            'rather than a zero',
+      );
+    });
+
+    test('CLEARING IT IS AN EDIT, not a refusal (G4)', () {
+      // Somebody who does not know how long a PDU is has to be able to
+      // say so, and every document written before `#883` is in exactly
+      // that state.
+      final doc = _doc();
+      _mountPdu(doc, span: kRackUnit * 6);
+      final planned = planSetZeroUSpan(
+        doc: doc,
+        id: _pdu,
+        span: null,
+        now: _now,
+        actor: 'tester',
+      );
+
+      (planned as ZeroUReady).command.apply(doc);
+      expect(
+        (doc.devices[_pdu]!.placement as ZeroUPlacement).spanAlongChannel,
+        isNull,
+      );
+    });
+
+    test('A SPAN THAT RUNS OFF THE END IS REFUSED BY `PLC-003` ITSELF, '
+        'not by a second rule beside it', () {
+      // §11.165.3. The channel is U 1 to 12, so 13 U starting at its near
+      // end hangs a unit off the top.
+      final doc = _doc();
+      _mountPdu(doc);
+      final planned = planSetZeroUSpan(
+        doc: doc,
+        id: _pdu,
+        span: kRackUnit * 13,
+        now: _now,
+        actor: 'tester',
+      );
+
+      expect(planned, isA<ZeroURefused>());
+      expect((planned as ZeroURefused).ruleId, 'PLC-003');
+    });
+
+    test('and a span of nothing is refused in WORDS, with the way out', () {
+      final doc = _doc();
+      _mountPdu(doc);
+      final planned = planSetZeroUSpan(
+        doc: doc,
+        id: _pdu,
+        span: Len.zero,
+        now: _now,
+        actor: 'tester',
+      );
+
+      expect(planned, isA<ZeroURefused>());
+      expect((planned as ZeroURefused).reason, contains('unknown'));
+      expect(
+        planned.ruleId,
+        isNull,
+        reason:
+            'no rule in docs/02 §5 covers it, and inventing an id '
+            'would put a rule in the product no fixture pair covers',
+      );
+    });
+
+    test('MOVING AN OCCUPANT KEEPS ITS SPAN, which a rebuilt placement '
+        'silently erases', () {
+      // The one-line defect a new field on a rebuilt object always
+      // invites: `planSetZeroUPosition` constructs a fresh
+      // `ZeroUPlacement`, and a field it forgets to copy is gone with no
+      // sign that anything happened.
+      final doc = _doc();
+      _mountPdu(doc, span: kRackUnit * 6);
+      final planned = planSetZeroUPosition(
+        doc: doc,
+        id: _pdu,
+        channelId: 'ch-left',
+        offsetFromChannelStart: kRackUnit * 2,
+        now: _now,
+        actor: 'tester',
+      );
+
+      (planned as ZeroUReady).command.apply(doc);
+      final p = doc.devices[_pdu]!.placement as ZeroUPlacement;
+      expect(p.offsetFromChannelStart, kRackUnit * 2);
+      expect(p.spanAlongChannel, kRackUnit * 6);
     });
   });
 }

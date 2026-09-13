@@ -76,6 +76,15 @@ panel.** Each surface deferred to the other and nothing could place at all;
 and the clause stands as written in canon because what it got wrong is the
 point.
 
+# The reason for the rack panel is spent
+
+The occupant's channel and start U moved there because a 0U device **could not
+be selected**. [DR-166](/decisions/dr-166-a-zero-u-occupant-has-a-span.md) draws
+the bar and makes it selectable, so that reason no longer holds. They stay where
+they are, because the rack panel lists occupants under the channel they sit in
+and that is how the work is done, but the next reader should know it was
+re-decided rather than inherited.
+
 # Related
 
 * [When a ruling has two clauses, check whether one is load-bearing for the

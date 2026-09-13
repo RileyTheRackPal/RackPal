@@ -85,6 +85,13 @@ ZeroUChannel _channel({
   name: name,
 );
 
+/// What the row hands over when the SPAN field commits (`#883`, DR-166).
+///
+/// Module-level because `pumpRow` already returns the move list and a
+/// second return value would make every existing caller destructure a
+/// record to ignore half of it.
+final resizes = <(Uuid, int?)>[];
+
 void main() {
   group('the rack panel adds and removes a channel (§11.162.1)', () {
     /// Pumps just the rack inspector, recording what it hands over.
@@ -111,6 +118,7 @@ void main() {
                 onZeroU: handed.add,
                 onMoveZeroU: (_, _, _) {},
                 onAddZeroUDevice: (_, _) {},
+                onResizeZeroU: (_, _) {},
               ),
             ),
           ),
@@ -285,6 +293,7 @@ void main() {
       RackDocument doc,
     ) async {
       final moves = <(Uuid, String, int)>[];
+      resizes.clear();
       final rack = doc.racks[_rackId]!;
       await tester.pumpWidget(
         MaterialApp(
@@ -297,6 +306,7 @@ void main() {
                 channel: rack.zeroUChannels.first,
                 channels: rack.zeroUChannels,
                 onMove: (d, c, u) => moves.add((d, c, u)),
+                onResize: (d, u) => resizes.add((d, u)),
               ),
             ),
           ),
@@ -467,6 +477,7 @@ void main() {
                 onRefuse: (_) {},
                 onZeroU: (_) {},
                 onMoveZeroU: (_, _, _) {},
+                onResizeZeroU: (_, _) {},
                 onAddZeroUDevice: (c, t) => placed.add((c, t)),
               ),
             ),
@@ -557,6 +568,110 @@ void main() {
         reason: 'docs/04 3.4: a control that cannot act does not act',
       );
       expect(placed, isEmpty);
+    });
+  });
+
+  group('AC-044 THIRD FIELD: the span (`#883`, DR-166)', () {
+    /// Pumps the occupant row exactly as the group above does.
+    Future<void> pumpSpanRow(WidgetTester tester, RackDocument doc) async {
+      resizes.clear();
+      final rack = doc.racks[_rackId]!;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SizedBox(
+              width: 320,
+              height: 600,
+              child: ZeroUOccupantRow(
+                device: doc.devices[_pduId]!,
+                channel: rack.zeroUChannels.first,
+                channels: rack.zeroUChannels,
+                onMove: (_, _, _) {},
+                onResize: (d, u) => resizes.add((d, u)),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+    }
+
+    Finder spanField() => find.byKey(ValueKey(zeroUSpanKeyFor(_pduId)));
+
+    testWidgets('AN UNRECORDED SPAN SHOWS AS EMPTY AND SAYS `unknown`, '
+        'not as a zero', (tester) async {
+      // G4, and every document written before `#883` is in this state.
+      await pumpSpanRow(tester, _doc(channels: [_channel()], withPdu: true));
+
+      expect(tester.widget<TextField>(spanField()).controller!.text, '');
+      expect(
+        tester.widget<TextField>(spanField()).decoration!.hintText,
+        'unknown',
+        reason:
+            'a blank box with no hint reads as a value nobody has '
+            'typed yet rather than as a fact about the document',
+      );
+      expect(resizes, isEmpty);
+    });
+
+    testWidgets('typing a number hands over THE U COUNT, and the screen '
+        'converts', (tester) async {
+      await pumpSpanRow(tester, _doc(channels: [_channel()], withPdu: true));
+
+      await tester.enterText(spanField(), '6');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(resizes, [(_pduId, 6)]);
+    });
+
+    testWidgets('CLEARING IT HANDS OVER NULL, which is an edit and not a '
+        'no-op', (tester) async {
+      final doc = _doc(channels: [_channel()], withPdu: true);
+      final pdu = doc.devices[_pduId]!;
+      doc.devices[_pduId] = DeviceInstance(
+        id: pdu.id,
+        kind: pdu.kind,
+        templateRef: pdu.templateRef,
+        designator: pdu.designator,
+        name: pdu.name,
+        placement: ZeroUPlacement(
+          rackId: _rackId,
+          channelId: 'ch-1',
+          offsetFromChannelStart:
+              (pdu.placement as ZeroUPlacement).offsetFromChannelStart,
+          spanAlongChannel: kRackUnit * 6,
+          orientation: ZeroUOrientation.vertical,
+        ),
+        meta: pdu.meta,
+      );
+      await pumpSpanRow(tester, doc);
+      expect(tester.widget<TextField>(spanField()).controller!.text, '6');
+
+      await tester.enterText(spanField(), '');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(
+        resizes,
+        [(_pduId, null)],
+        reason:
+            'somebody who does not know how long a PDU is has to be '
+            'able to say so',
+      );
+    });
+
+    testWidgets('RETYPING THE SAME SPAN IS NOT AN EDIT', (tester) async {
+      // A commit-on-blur field fires every time focus leaves it, and an
+      // undo entry that changed nothing is `#863`'s shape arriving
+      // through a text box.
+      await pumpSpanRow(tester, _doc(channels: [_channel()], withPdu: true));
+
+      await tester.enterText(spanField(), '');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      expect(resizes, isEmpty);
     });
   });
 }

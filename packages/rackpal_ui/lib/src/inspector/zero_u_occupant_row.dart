@@ -45,6 +45,9 @@ import 'package:rackpal_ui/src/inspector/add_zero_u_channel_dialog.dart'
 String zeroUStartKeyFor(Uuid deviceId) => 'zero-u-start-${deviceId.v}';
 String zeroUChannelKeyFor(Uuid deviceId) => 'zero-u-channel-${deviceId.v}';
 
+/// A stable handle for the occupant's span field (`#883`, DR-166).
+String zeroUSpanKeyFor(Uuid deviceId) => 'zero-u-span-${deviceId.v}';
+
 /// `PDU-1` with its start U, and a channel picker when there is a choice.
 class ZeroUOccupantRow extends StatefulWidget {
   const ZeroUOccupantRow({
@@ -52,6 +55,7 @@ class ZeroUOccupantRow extends StatefulWidget {
     required this.channel,
     required this.channels,
     required this.onMove,
+    required this.onResize,
     super.key,
   });
 
@@ -67,6 +71,16 @@ class ZeroUOccupantRow extends StatefulWidget {
   /// Asks the host to move the device to a channel at a start U.
   final void Function(Uuid deviceId, String channelId, int startU) onMove;
 
+  /// Sets how many U this occupant runs, or clears it to UNKNOWN
+  /// (`#883`, DR-166 §11.165.1). This is AC-044's third inspector field,
+  /// and `#876` could not build it because the model had nowhere to put
+  /// a span.
+  ///
+  /// **NULL IS AN EDIT**, not a no-op: somebody who does not know how
+  /// long a PDU is must be able to say so, and the elevation then draws
+  /// the hollow stub rather than a bar it cannot support.
+  final void Function(Uuid deviceId, int? spanU) onResize;
+
   @override
   State<ZeroUOccupantRow> createState() => _ZeroUOccupantRowState();
 }
@@ -74,11 +88,14 @@ class ZeroUOccupantRow extends StatefulWidget {
 class _ZeroUOccupantRowState extends State<ZeroUOccupantRow> {
   final TextEditingController _start = TextEditingController();
   final FocusNode _focus = FocusNode();
+  final TextEditingController _span = TextEditingController();
+  final FocusNode _spanFocus = FocusNode();
 
   @override
   void initState() {
     super.initState();
     _focus.addListener(_onFocusChange);
+    _spanFocus.addListener(_onSpanFocusChange);
     _syncFromModel();
   }
 
@@ -89,7 +106,7 @@ class _ZeroUOccupantRowState extends State<ZeroUOccupantRow> {
     // its reason: an undo changes the document without touching this
     // buffer, so without it the field keeps showing the value the person
     // just took back.
-    if (!_focus.hasFocus) _syncFromModel();
+    if (!_focus.hasFocus && !_spanFocus.hasFocus) _syncFromModel();
   }
 
   @override
@@ -98,6 +115,10 @@ class _ZeroUOccupantRowState extends State<ZeroUOccupantRow> {
       ..removeListener(_onFocusChange)
       ..dispose();
     _start.dispose();
+    _spanFocus
+      ..removeListener(_onSpanFocusChange)
+      ..dispose();
+    _span.dispose();
     super.dispose();
   }
 
@@ -111,6 +132,35 @@ class _ZeroUOccupantRowState extends State<ZeroUOccupantRow> {
     _start.text = p == null
         ? ''
         : '${zeroUStartUOf(widget.channel, p.offsetFromChannelStart)}';
+    // AN EMPTY FIELD IS THE UNKNOWN (G4, CR-114). It is not a zero and it
+    // is not a placeholder: the file does not record a length, the
+    // elevation draws a hollow stub, and this box is where that is fixed.
+    final span = p?.spanAlongChannel;
+    _span.text = span == null ? '' : '${span.nm ~/ kRackUnit.nm}';
+  }
+
+  void _onSpanFocusChange() {
+    if (_spanFocus.hasFocus) return;
+    _commitSpan();
+  }
+
+  void _commitSpan() {
+    final p = _placement;
+    if (p == null) return;
+    final text = _span.text.trim();
+    final typed = text.isEmpty ? null : int.tryParse(text);
+    if (text.isNotEmpty && typed == null) {
+      _syncFromModel();
+      return;
+    }
+    // ALREADY THERE IS NOT AN EDIT, on the start field's reasoning: a
+    // commit-on-blur field fires every time focus leaves it, and an undo
+    // entry that changes nothing is `#863`'s shape arriving through a
+    // text box.
+    final current = p.spanAlongChannel;
+    final currentU = current == null ? null : current.nm ~/ kRackUnit.nm;
+    if (currentU == typed) return;
+    widget.onResize(widget.device.id, typed);
   }
 
   void _onFocusChange() {
@@ -172,8 +222,42 @@ class _ZeroUOccupantRowState extends State<ZeroUOccupantRow> {
                   onSubmitted: (_) => _focus.unfocus(),
                 ),
               ),
-              if (widget.channels.length > 1) ...[
-                const SizedBox(width: 8),
+              const SizedBox(width: 8),
+              SizedBox(
+                width: 92,
+                child: TextField(
+                  key: ValueKey(zeroUSpanKeyFor(widget.device.id)),
+                  controller: _span,
+                  focusNode: _spanFocus,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                  decoration: const InputDecoration(
+                    labelText: 'Span U',
+                    // WHAT AN EMPTY BOX MEANS, said rather than left to be
+                    // inferred. G4's rule is that an unknown is reported,
+                    // and a blank field with no hint reads as a value
+                    // nobody has typed yet rather than as a fact about
+                    // the document.
+                    hintText: 'unknown',
+                    isDense: true,
+                  ),
+                  onSubmitted: (_) => _spanFocus.unfocus(),
+                ),
+              ),
+            ],
+          ),
+          // ═════════════════════════════════════════════════════════════
+          // THE CHANNEL PICKER GETS ITS OWN LINE SINCE `#883`
+          // ═════════════════════════════════════════════════════════════
+          // It sat beside the fields, and AC-044's third one (Span U)
+          // made three controls where the inspector is 320 px wide: the
+          // dropdown overflowed by 65 px, which a case caught rather than
+          // a person. Two numbers read as a pair anyway, and the channel
+          // is a different question from where along it the device sits.
+          if (widget.channels.length > 1) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     key: ValueKey(zeroUChannelKeyFor(widget.device.id)),
@@ -210,8 +294,8 @@ class _ZeroUOccupantRowState extends State<ZeroUOccupantRow> {
                   ),
                 ),
               ],
-            ],
-          ),
+            ),
+          ],
         ],
       ),
     );

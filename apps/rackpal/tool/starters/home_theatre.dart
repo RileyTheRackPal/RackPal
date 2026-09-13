@@ -199,6 +199,7 @@ RackDocument buildHomeTheatreStarter() {
       name: 'Rear PDU',
       rackId: rackId,
       channelId: 'ch-rear-left',
+      spanAlongChannel: kRackUnit * 24,
       locationId: closet,
     );
 

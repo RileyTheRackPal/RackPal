@@ -91,6 +91,7 @@ class RackInspectorPanel extends StatelessWidget {
     required this.onZeroU,
     required this.onMoveZeroU,
     required this.onAddZeroUDevice,
+    required this.onResizeZeroU,
     this.firstFieldFocus,
     super.key,
   });
@@ -148,6 +149,11 @@ class RackInspectorPanel extends StatelessWidget {
   /// person's. The channel and the chosen id are what this panel knows;
   /// the rest comes from the session.
   final void Function(String channelId, String catalogId) onAddZeroUDevice;
+
+  /// Sets how far a 0U occupant runs along its channel, or clears it to
+  /// UNKNOWN (`#883`, DR-166). AC-044's third inspector field, and the one
+  /// `#876` could not build because the model had nowhere to put a span.
+  final void Function(Uuid deviceId, int? spanU) onResizeZeroU;
 
   /// Runs a planned 0U channel edit, or reports its refusal (`#876`,
   /// DR-163 §11.162.3).
@@ -302,6 +308,7 @@ class RackInspectorPanel extends StatelessWidget {
           onZeroU: onZeroU,
           onMoveZeroU: onMoveZeroU,
           onAddZeroUDevice: onAddZeroUDevice,
+          onResizeZeroU: onResizeZeroU,
         ),
       ],
     );
@@ -1095,6 +1102,7 @@ class _ZeroUSection extends StatelessWidget {
     required this.onZeroU,
     required this.onMoveZeroU,
     required this.onAddZeroUDevice,
+    required this.onResizeZeroU,
   });
 
   final Rack rack;
@@ -1102,6 +1110,7 @@ class _ZeroUSection extends StatelessWidget {
   final ValueChanged<ZeroUResult> onZeroU;
   final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
   final void Function(String channelId, String catalogId) onAddZeroUDevice;
+  final void Function(Uuid deviceId, int? spanU) onResizeZeroU;
 
   @override
   Widget build(BuildContext context) {
@@ -1189,6 +1198,7 @@ class _ZeroUSection extends StatelessWidget {
                 channel: channel,
                 channels: rack.zeroUChannels,
                 onMove: onMoveZeroU,
+                onResize: onResizeZeroU,
               ),
           ],
         Padding(

@@ -72,6 +72,7 @@ const Map<LabelKey, String> kUndoLabels = <LabelKey, String>{
   LabelKey.addZeroUChannel: 'Add 0U channel',
   LabelKey.removeZeroUChannel: 'Remove 0U channel',
   LabelKey.setZeroUPosition: 'Move 0U device',
+  LabelKey.setZeroUSpan: 'Resize 0U device',
 
   // ── links, ports and the schematic ──────────────────────────────────
   LabelKey.addLink: 'Add cable',
