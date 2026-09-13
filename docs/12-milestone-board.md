@@ -9852,6 +9852,105 @@ Six mutations, six kills. The first is the defect itself put back, the binding r
 
 ---
 
+#### 5.9.34 `#875`: the validation drawer had three callbacks and one mount that passed none, and the feature had been built three times · `DR-128`, `DR-129`, `CR-019` · no version move
+
+2026-09-12. Found by `#872`'s reachability gate on the day it landed, which is the first thing in this
+repository that could see it. It closes under `#786` and moves no number.
+
+##### 5.9.34.1 One mount, three callbacks, none supplied
+
+`ValidationDrawer` declares `onAcknowledge`, `onWithdraw` and `onRemedy`, passes all three to
+`DrcPanel`, and `DrcPanel` renders a control for each when it is non-null. There is **exactly one
+mount of `ValidationDrawer` in the product** and it supplied none of them.
+
+Each is nullable and documented as *"null shows no button rather than a dead one"*, which is a good
+rule and is what made this invisible: the controls were **absent**, not broken. Nothing rendered,
+nothing threw, and every suite stayed green.
+
+##### 5.9.34.2 The feature was built three times and reachable none of them
+
+| Round | What was ruled | What shipped |
+|---|---|---|
+| DR-128 §11.127.5 | the issues panel *"renders it as a button"* | `drc_panel.dart` never read `Finding.remedy` |
+| DR-129 §11.128.4 | recorded that, built the button, added `remedy_pairing_test.dart` as the backstop | the button had nothing behind it |
+| `#875` | the mount supplies all three | and a gate for the layer above |
+
+**THE BACKSTOP WAS WRITTEN AT THE WRONG LAYER, WHICH IS THE LESSON.**
+`remedy_pairing_test.dart` asserts that every `FindingRemedy` value reaches a row a person can press,
+and it passes: the row does render the button. What it cannot see is whether the callback behind the
+button was ever handed over, because it constructs `DrcPanel` itself and supplies one.
+
+##### 5.9.34.3 What was unreachable
+
+`AcknowledgeFindingCommand` and `UnacknowledgeFindingCommand` (M5-B2), both with real reverts and
+their own suites. `showAcknowledgeFindingDialog`, `showWhyRuleDialog` and `showRuleSeverityDialog`,
+all three built, exported from the barrel, and called by nothing. And PWR-003's whole remedy chain:
+`addOutletsToRack` is tested in **two** suites, one of them in `rackpal_ui`, and called by no lib code
+at all, which took `AddZeroUChannelCommand` down with it.
+
+**AND THE TWO FILTERS WERE THE SAME DEFECT AGAIN, IN THE SAME FEATURE.** `DrcPanel` renders the
+severity chips and the `Acknowledged` toggle, `groupFindings` already takes `severities` and
+`includeAcknowledged`, and the drawer passed neither the state nor the callbacks. Both controls were
+drawn and neither could move. `SpringBackChipCard.onWhy` makes six: its viewer and
+`RuleMeta.rationale` were built at `#296` against a button nobody supplied.
+
+##### 5.9.34.4 A third gate, and it lands with an empty exemption list
+
+Three questions, three gates, and none of them subsumes another:
+
+| Gate | Asks |
+|---|---|
+| `actions_have_callers_test.dart` (`#674`) | is a declared callback **invoked**? `*Actions` records in `rackpal_ui/lib` only |
+| `commands_have_callers_test.dart` (`#872`) | is a Command **constructed** on a path from a UI package? every UI declaration is a root |
+| `callbacks_have_suppliers_test.dart` (`#875`) | is a widget's nullable callback ever **handed over** by a mount? |
+
+`#872`'s own header already named the hole this fills, which is why it took a day rather than a
+milestone to find.
+
+**MATCHING BY PARAMETER NAME ALONE WOULD HAVE MISSED THE VERY DEFECT IT IS FOR.** `onRemedy:` *is*
+supplied somewhere: the schematic passes one to `SpringBackChipCard`. A gate that grepped the name
+would have called the drawer's supplied. So a supplier is a construction **of that widget** whose
+argument list names the parameter, taken by counting parentheses, and a case asserts that property
+rather than describing it.
+
+The first run found six. **All six were wired rather than exempted**, so the list is empty on the day
+it ships, which is the strongest state a new gate can be in: nobody has to be talked out of believing
+it.
+
+##### 5.9.34.5 `#872`'s staleness check earned its keep on its first outing
+
+Wiring the drawer made three exempted commands reachable, and the check named all three. Two were the
+ones being worked on. The third was **`AddZeroUChannelCommand`, exempted against `#876`**, which
+nobody was thinking about: PWR-003's remedy mints a 0U channel.
+
+Its row is gone. `#876`'s two remaining rows now say what is still owed, because a channel minted as a
+**remedy** is not AC-044's clause about a person creating one, and the ticket says so rather than
+being quietly narrowed.
+
+##### 5.9.34.6 One mutation became a deletion and the other became a case
+
+A re-check of `evaluateAcknowledgement` written into the shell **survived being mutated away**.
+`.okf/practices/a-guard-the-model-makes-unreachable.md` is explicit about which way that reads: the
+dialog computes the same verdict from the same three inputs and makes its confirm `onPressed` null on
+a refusal, so a choice coming back from it is allowed by construction, and that invariant is pinned
+where it lives by `acknowledge_finding_dialog_test.dart`'s *"a project-wide mute is refused until a
+reason is written"*. The guard is deleted and the invariant is named in its place.
+
+The second survivor read the other way. Dropping the `projectWide ? null` ternary, so a project-wide
+mute kept the rack it happened to be raised on, survived because **nothing exercised CR-019's second
+scope at all**. That got a case.
+
+##### 5.9.34.7 Evidence
+
+Floors: `rackpal_ui` 1790 to 1799, `rackpal_app` 1015 to 1020. Gates: 17. Analyzer pin unmoved at 233.
+
+Six mutations, six kills. The first is the defect itself put back: the mount stops supplying the three
+callbacks and six cases go red across two packages.
+
+**Commits** (§8.8). `#875` `ccde720b`.
+
+---
+
 ## 6. The dependency graph, as it actually stands
 
 ### 6.1 What can be worked on now
