@@ -75,6 +75,7 @@ class InspectorPanel extends StatelessWidget {
     required this.onRefuse,
     required this.onZeroU,
     required this.onMoveZeroU,
+    required this.onAddZeroUDevice,
     required this.onSetLifecycle,
     required this.onSetWidth,
     required this.onSetOverride,
@@ -146,6 +147,15 @@ class InspectorPanel extends StatelessWidget {
   /// the session owns the clock and the actor (`#879`'s lesson).
   final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
 
+  /// Puts a device from the project's shelf INTO a channel (`#884`,
+  /// DR-164 §11.163.2).
+  ///
+  /// **TWO PLAIN VALUES, for the reason above.**
+  /// `buildPlaceFromCatalogCommand` allocates a designator and stamps the
+  /// device with a `now` and an `actor`; the panel knows the channel and
+  /// the chosen template and nothing else it should be trusted with.
+  final void Function(String channelId, String catalogId) onAddZeroUDevice;
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -168,6 +178,7 @@ class InspectorPanel extends StatelessWidget {
           onRefuse: onRefuse,
           onZeroU: onZeroU,
           onMoveZeroU: onMoveZeroU,
+          onAddZeroUDevice: onAddZeroUDevice,
           firstFieldFocus: firstFieldFocus,
         ),
         InspectorTarget.selection => _SelectionSummary(

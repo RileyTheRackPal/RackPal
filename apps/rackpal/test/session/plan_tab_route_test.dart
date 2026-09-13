@@ -29,9 +29,27 @@
 // this same harness, so it is specific to this tab rather than a general
 // limit on driving a canvas from an app test.
 //
-// Whether that is a product defect or an artifact of how this tab is
-// hosted is NOT settled, and it is not guessed at here. `#878`'s two
-// gestures are proved in `plan_canvas_screen_test.dart` and
+// **SETTLED 2026-09-13: IT IS THIS HARNESS, NOT THE PRODUCT.** The user
+// opened a project with a floorplan and dragged a pin, which works. `#882`
+// is closed as not a defect, and the paragraph above stands because the
+// measurement is still true OF THIS FILE: do not write a pointer assertion
+// here and do not read a green run as evidence that a gesture works.
+//
+// The focus half is answered by reading, and answered the same way. Every
+// pointer-down on a canvas arrives through `CanvasIntentHandler.beginDrag`
+// (a tap is a begin plus a commit with no movement), and `#878` put
+// `_canvasFocus.requestFocus()` at the top of that method. So a plain
+// CLICK on the plan already takes the keyboard, which is what
+// `KeyScope.plan` needs: `Delete`, `Backspace` and `Esc` are live after
+// any click on the canvas and not only after a drag.
+//
+// **AND THE LESSON IS THE FILING.** `#882` was filed as measured and
+// deliberately not diagnosed, which was right, but what it measured was a
+// harness while its title named the tab. The ticket itself named the
+// one-minute check that settled it, and that check should have been taken
+// before the ticket was written.
+//
+// `#878`'s two gestures are proved in `plan_canvas_screen_test.dart` and
 // `plan_editor_screen_test.dart`; what this file pins is the half that
 // does not need a pointer.
 import 'dart:io';

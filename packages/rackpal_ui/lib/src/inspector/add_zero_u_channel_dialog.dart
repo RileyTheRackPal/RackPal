@@ -52,6 +52,15 @@ String zeroUSideLabel(ZeroUChannelSide side) => switch (side) {
   ZeroUChannelSide.rearRight => 'Rear right',
 };
 
+/// What a channel is CALLED: its name if it has one, else its side.
+///
+/// **ONE FUNCTION, because three surfaces now answer it.** A row reading
+/// nothing for an unnamed channel is a gap where the model has a default,
+/// and the inspector's row, the occupant picker's header and the status
+/// line that reports a placement into it must all pick the same word.
+String zeroUChannelLabel(ZeroUChannel channel) =>
+    channel.name.isEmpty ? zeroUSideLabel(channel.side) : channel.name;
+
 /// What one channel reads as in a list: `Rear left · U 1 to 42`.
 String zeroUChannelSummary(ZeroUChannel channel) =>
     '${zeroUSideLabel(channel.side)} · U ${channel.startU} to ${channel.endU}';

@@ -32,6 +32,8 @@ import 'package:rackpal_ui/src/canvas/shake_animation.dart';
 import 'package:rackpal_ui/src/canvas/staging_bin_overlay.dart';
 import 'package:rackpal_ui/src/canvas/status_message_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
+import 'package:rackpal_ui/src/inspector/add_zero_u_channel_dialog.dart'
+    show zeroUChannelLabel;
 import 'package:rackpal_ui/src/inspector/delete_device_dialog.dart';
 import 'package:rackpal_ui/src/inspector/inspector_panel.dart';
 import 'package:rackpal_ui/src/inspector/new_rack_dialog.dart';
@@ -1776,6 +1778,70 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
         actor: _controller.actor,
       ),
     );
+  }
+
+  /// Puts [catalogId] into this rack's channel [channelId] (`#884`,
+  /// DR-164 §11.163).
+  ///
+  /// **THE OCCUPANT LANDS AT THE CHANNEL START** (§11.163.3), not at a
+  /// first free offset. A 0U occupant has no extent anywhere in the
+  /// format, which `zero_u_commands.dart` records as a known model gap, so
+  /// there is no overlap to compute and "free" has no meaning here. The
+  /// person retypes the start U on the row the placement produces.
+  ///
+  /// **AND IT DOES NOT GO THROUGH `_finalizeCatalogPlacement`**
+  /// (§11.163.4), which every other placement on this screen does. That
+  /// method requests CANVAS FOCUS and makes the placed device the sole
+  /// selection in one breath, and pairing those here would aim the
+  /// keyboard at the canvas with a device the elevation never draws
+  /// selected (`#883`). `Delete` is the sharp end: `_deleteSelection`
+  /// removes an unwired device with no confirmation at all, so the next
+  /// keystroke would destroy something nobody can see.
+  ///
+  /// **THE FIRST VERSION OF THIS COMMENT GAVE THE WRONG REASON.** It said
+  /// selecting would swap the inspector to a device panel. It would not:
+  /// `_inspectorTarget` is moved by canvas gestures and never by
+  /// `_selection.apply`. A mutation found it, because the case asserting
+  /// the panel stayed passed with the mutation applied.
+  void _addZeroUOccupant(String channelId, String catalogId) {
+    ZeroUChannel? channel;
+    for (final c in _rack.zeroUChannels) {
+      if (c.id == channelId) channel = c;
+    }
+    if (channel == null) {
+      // A STALE PANEL RATHER THAN A REFUSABLE EDIT, on
+      // `_moveZeroUOccupant`'s reasoning: the channel is gone from under
+      // an open dialog, so there is nothing to refuse and nothing to
+      // place.
+      _status.show('That rack has no 0U channel "$channelId".');
+      return;
+    }
+    final result = buildPlaceFromCatalogCommand(
+      doc: _doc,
+      catalogId: catalogId,
+      targetRack: _rack,
+      now: _controller.clock.nowUtc(),
+      actor: _controller.actor,
+      // VERTICAL, because a 0U channel is a vertical rail and the one 0U
+      // archetype that ships is a vertical PDU. `ZeroUOrientation` exists
+      // for a horizontal occupant in a channel and nothing in v1 produces
+      // one; when something does, it is a control on this picker rather
+      // than a guess made here.
+      zeroU: (
+        channelId: channelId,
+        offsetFromChannelStart: const Len(0),
+        orientation: ZeroUOrientation.vertical,
+      ),
+    );
+    switch (result) {
+      case CatalogPlacementReady(:final command):
+        _controller.run(command);
+        _status.show(
+          'Placed ${command.designator} in ${zeroUChannelLabel(channel)}.',
+        );
+      case CatalogPlacementFailed(:final reason):
+        _status.show(reason);
+    }
   }
 
   void _setMountNote(String note) {
@@ -4651,6 +4717,7 @@ class _RackCanvasScreenState extends State<RackCanvasScreen>
                       onSetMountNote: _setMountNote,
                       onZeroU: _runZeroU,
                       onMoveZeroU: _moveZeroUOccupant,
+                      onAddZeroUDevice: _addZeroUOccupant,
                       firstFieldFocus: _inspectorFirstFieldFocus,
                     ),
                   ),

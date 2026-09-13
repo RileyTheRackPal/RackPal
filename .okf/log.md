@@ -1,5 +1,42 @@
 # Update Log
 
+## 2026-09-13 (thirty-second entry)
+
+* **Closed**: `#884`, the producer `#876`'s 0U list never had, with `f04392a4`
+  and `d688d0d7`. A device is put into a channel from that channel's own row.
+  **No version move**: it closes under `#786`.
+* **Closed**: `#882` as NOT A DEFECT, with `868bbcdf`. The user dragged a pin on
+  the Plan tab in the running app. What the ticket measured was a HARNESS while
+  its title named the tab; the measurement stays in
+  `plan_tab_route_test.dart`'s header, where it is still true and stops the next
+  person writing a pointer assertion that cannot fail. The focus half is
+  answered by reading: every pointer-down arrives through
+  `CanvasIntentHandler.beginDrag`, where `#878` put `requestFocus`, so a plain
+  CLICK already takes the keyboard.
+* **Note**: **`ZeroUTarget` HAD ZERO CALL SITES.** The only reachable writer of
+  a `ZeroUPlacement` in the whole product was `planSetZeroUPosition`, which
+  MOVES one that already exists, so `#876` shipped a list, a remove and a move
+  over a set nothing could add to. The three starters that show a PDU get it
+  from the authoring tool writing the placement directly, which is why it looked
+  alive to everything that tested it.
+* **Note**: **THE GAP WAS RECORDED AND RECORDED AS HANDLED.** §11.162.5 deferred
+  creating an occupant to `catalog_placement.dart`; that file refuses a 0U row
+  with "Add it from the rack inspector". Each surface deferred to the other.
+* **Note**: **A MUTATION PROVED THE RULING'S OWN REASONING WRONG.** §11.163.4
+  said the new occupant is not selected because selecting it would swap the
+  inspector to a device panel. It would not: `_inspectorTarget` moves on canvas
+  GESTURES and never on `_selection.apply`, and the case defending the clause
+  passed with the mutation applied. The decision survived with a better reason
+  and the case now asserts an artifact: after a placement, `Delete` does not
+  destroy what was just placed.
+* **Creation**: [DR-164, a device goes into a
+  channel](/decisions/dr-164-a-device-goes-into-a-channel.md).
+* **Creation**: [A deferral reads as a
+  decision](/practices/each-surface-deferred-to-the-other.md).
+* **Update**: [DR-163](/decisions/dr-163-zero-u-from-the-inspector.md) carries
+  the correction to §11.162.5, which stands as written because what it got wrong
+  is the point.
+
 ## 2026-09-13 (thirty-first entry)
 
 * **Closed**: `#876`, the LAST of the eight `#872` filed. AC-044's inspector half

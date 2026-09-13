@@ -104,6 +104,7 @@ export 'src/draw/flutter_canvas.dart';
 export 'src/draw/plan_image_cache.dart';
 export 'src/draw/text_run_cache.dart';
 export 'src/inspector/add_zero_u_channel_dialog.dart';
+export 'src/inspector/add_zero_u_occupant_dialog.dart';
 export 'src/inspector/delete_device_dialog.dart';
 export 'src/inspector/device_overrides_section.dart';
 export 'src/inspector/device_ports_section.dart';

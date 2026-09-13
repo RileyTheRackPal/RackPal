@@ -20511,6 +20511,14 @@ sends to v1.1. It does not let a person CREATE a 0U occupant from nothing either
 into a channel is `catalog_placement.dart`'s, and AC-044's *"created"* is satisfied by the palette
 placing a 0U-capable device, not by a control in this panel.
 
+**CORRECTED 2026-09-13, AND THE SECOND HALF OF THAT SENTENCE WAS FALSE WHEN IT WAS WRITTEN.** The
+palette cannot place a 0U-capable device. `catalog_placement.dart`, the file this clause defers to,
+refuses one with *"P01 is a 0U occupant: it mounts in a vertical channel, not rail holes. **Add it
+from the rack inspector** (AC-044)."* **So this panel deferred to the palette and the palette defers
+to this panel**, and between the two of them nothing in the product could put a device in a channel
+at all. DR-164 §11.163 rules the control, and the sentence above stands as written because what it
+got wrong is the point.
+
 **AND IT DOES NOT BUILD THE PLAIN BAR, WHICH IS STILL OWED.** AC-044 puts that in v1 and
 §11.162.1 is why it matters: a 0U occupant is invisible in the elevation and unselectable, so the
 only place it can be seen or edited is the rack inspector's list. Board `#883` carries it, with the
@@ -20519,6 +20527,67 @@ one line in `scene_builder.dart` that drops it.
 **11.162.6 Scope.** **No scope change.** AC-044 already scopes the inspector surface to v1 and this
 builds the part of it that was owed. Board `#876` cites it, and `#872`'s exemption list loses its
 last two rows.
+
+### 11.163 DR-164 · A device is put into a 0U channel from the channel's own row
+
+**The question.** `#876` built the rack inspector's 0U list and this is the hole underneath it:
+**nothing in the product can put a device in a channel.** Reported by the user on 2026-09-13 as
+*"the rack inspector list doesn't actually show a 0U device at all"*, which is true of every project
+a person made and always was.
+
+**MEASURED.** `buildPlaceFromCatalogCommand` takes a `ZeroUTarget? zeroU`, and the branch behind it
+is complete: it builds the `ZeroUPlacement`, runs `evaluatePlacement` and returns `PLC-003`'s
+refusal by name. **`ZeroUTarget` has one definition, one mention in an `add_outlets.dart` comment
+and zero call sites.** The only reachable writer of a `ZeroUPlacement` in the product is
+`planSetZeroUPosition`, which MOVES one that already exists. The three starters that do show a PDU
+get it from `tool/starters/authoring.dart` writing the placement directly, bypassing every command.
+
+**11.163.1 THE GAP WAS RECORDED, AND RECORDED AS HANDLED.** §11.162.5 says placing into a channel
+*"is `catalog_placement.dart`'s"* and that AC-044's *"created"* is *"satisfied by the palette"*. The
+file it names is where the falsehood is visible: the palette's 0U row is refused there with *"Add it
+from the rack inspector (AC-044)."* **Each surface deferred to the other.** A deferral reads as a
+decision and not as a gap, so `#876` shipped a list, a remove that refuses while occupied, and a
+move between channels, over a set that nothing could ever add to.
+
+**11.163.2 RULED: AN `Add device…` CONTROL ON THE CHANNEL'S OWN ROW.** Settled by the user on
+2026-09-13, against dragging from the palette onto the rendered bar. The bar does not exist
+(`#883`), so the drag would put the only producer behind the one clause AC-044 has already left
+unbuilt, which is §11.162.1's trap a second time and in the same feature. The control is reachable
+today, it makes the refusal sentence above TRUE for the first time, and it makes this ruling's own
+title true rather than needing it walked back.
+
+**11.163.3 THE OCCUPANT LANDS AT THE CHANNEL START**, and is moved afterwards with `#876`'s row.
+Not "the first free offset": **a 0U occupant has no extent anywhere in the format**, which
+`zero_u_commands.dart` records as a known model gap and the seed catalog's one 0U device confirms
+with `frontU: 0, rearU: 0`. With no extent there is no overlap, so "free" has no meaning and an
+offset search would be arithmetic dressed as a rule. `PLC-003` still checks the offset lands inside
+the channel, which is the check that exists.
+
+**11.163.4 AND THE NEW OCCUPANT IS NOT SELECTED**, which every other placement in this product does.
+`_finalizeCatalogPlacement` does two things in one breath: it requests CANVAS FOCUS and it makes the
+placed device the sole selection (docs/04 §3.1 step 6). Pairing those here would leave the keyboard
+aimed at the canvas with **a device the elevation never draws** selected, and the next `Delete` or
+arrow key would act on something nobody can see. `Delete` is the sharp one: `_deleteSelection`
+removes an unwired device with **no confirmation at all**, by design, because `confirmDeviceRemoval`
+only builds a dialog when something would be cascaded. So the rack panel keeps the keyboard, the new
+row appears under its channel, and this is `#883` shaping a decision rather than blocking one: it
+reverses when the bar lands.
+
+**THE FIRST DRAFT OF THIS CLAUSE GAVE THE WRONG REASON AND A MUTATION CAUGHT IT.** It said selecting
+would swap the inspector from the rack panel to a device panel. **It would not.** `_inspectorTarget`
+is moved by canvas GESTURES and never by `_selection.apply`, so the rack panel stays either way; the
+case asserting it stayed passed with the mutation applied, which is how the error surfaced. **A test
+that cannot fail is not evidence**, and that one was defending a mechanism rather than an artifact.
+What it defends now is the artifact: after a placement, `Delete` does not destroy what was just
+placed.
+
+**11.163.5 THE PICKER READS THE DOCUMENT**, not the seed catalog, on DR-077 §11.76.1: a 0U template
+authored in the Device Builder is in the document and in no catalog. One 0U template ships (`P01`,
+`catalog_power.dart`), so most projects list one row, and a project with none says so rather than
+opening an empty dialog.
+
+**11.163.6 Scope.** **No scope change.** AC-044's *"created and edited from the inspector"* is v1
+scope, and this is the half of it `#876` deferred to a path that refuses. Board `#884` cites it.
 
 ---
 

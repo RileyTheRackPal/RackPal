@@ -66,6 +66,16 @@ with it, and `planAddZeroUChannel` refuses `startU < 1`.
 directly. A validated planner beside an unvalidated producer protects the callers
 it does not have.
 
+# Corrected by DR-164
+
+This ruling said, at §11.162.5, that creating a 0U occupant *"is
+`catalog_placement.dart`'s"* and that AC-044's *"created"* is satisfied by the
+palette. **The palette refuses a 0U row and tells the reader to use this very
+panel.** Each surface deferred to the other and nothing could place at all;
+[DR-164](/decisions/dr-164-a-device-goes-into-a-channel.md) builds the control,
+and the clause stands as written in canon because what it got wrong is the
+point.
+
 # Related
 
 * [When a ruling has two clauses, check whether one is load-bearing for the

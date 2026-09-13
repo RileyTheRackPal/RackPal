@@ -71,6 +71,7 @@ import 'package:flutter/services.dart'
     show FilteringTextInputFormatter, KeyDownEvent, LogicalKeyboardKey;
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/inspector/add_zero_u_channel_dialog.dart';
+import 'package:rackpal_ui/src/inspector/add_zero_u_occupant_dialog.dart';
 import 'package:rackpal_ui/src/inspector/zero_u_occupant_row.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 
@@ -89,6 +90,7 @@ class RackInspectorPanel extends StatelessWidget {
     required this.onRefuse,
     required this.onZeroU,
     required this.onMoveZeroU,
+    required this.onAddZeroUDevice,
     this.firstFieldFocus,
     super.key,
   });
@@ -135,6 +137,17 @@ class RackInspectorPanel extends StatelessWidget {
   /// every placement that is not a `RailPlacement`, so a 0U occupant is
   /// never drawn, never hit-tested and never selectable.
   final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
+
+  /// Puts a device from the project's shelf into a channel (`#884`,
+  /// DR-164 §11.163.2).
+  ///
+  /// **TWO PLAIN VALUES, on `onMoveZeroU`'s reasoning.**
+  /// `buildPlaceFromCatalogCommand` allocates a designator and stamps the
+  /// device with a `now` and an `actor`, and a surface that invented
+  /// either would sign the placement with something that is not the
+  /// person's. The channel and the chosen id are what this panel knows;
+  /// the rest comes from the session.
+  final void Function(String channelId, String catalogId) onAddZeroUDevice;
 
   /// Runs a planned 0U channel edit, or reports its refusal (`#876`,
   /// DR-163 §11.162.3).
@@ -288,6 +301,7 @@ class RackInspectorPanel extends StatelessWidget {
           doc: doc,
           onZeroU: onZeroU,
           onMoveZeroU: onMoveZeroU,
+          onAddZeroUDevice: onAddZeroUDevice,
         ),
       ],
     );
@@ -1055,6 +1069,9 @@ const String kNoZeroUChannels = 'No 0U channels on this rack.';
 /// A stable handle for a channel's remove control, per row.
 String zeroURemoveKeyFor(String channelId) => 'zero-u-remove-$channelId';
 
+/// A stable handle for a channel's `Add device` control, per row.
+String zeroUAddDeviceKeyFor(String channelId) => 'zero-u-add-device-$channelId';
+
 /// AC-044's inspector half, for the CHANNEL (`#876`, DR-163 §11.162.1).
 ///
 /// ═══════════════════════════════════════════════════════════════════════
@@ -1077,12 +1094,14 @@ class _ZeroUSection extends StatelessWidget {
     required this.doc,
     required this.onZeroU,
     required this.onMoveZeroU,
+    required this.onAddZeroUDevice,
   });
 
   final Rack rack;
   final RackDocument doc;
   final ValueChanged<ZeroUResult> onZeroU;
   final void Function(Uuid deviceId, String channelId, int startU) onMoveZeroU;
+  final void Function(String channelId, String catalogId) onAddZeroUDevice;
 
   @override
   Widget build(BuildContext context) {
@@ -1113,12 +1132,10 @@ class _ZeroUSection extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          // THE NAME IF THERE IS ONE, else the side. A row
-                          // reading `` for an unnamed channel would be a
-                          // gap where the model has a default.
-                          channel.name.isEmpty
-                              ? zeroUSideLabel(channel.side)
-                              : channel.name,
+                          // THE NAME IF THERE IS ONE, else the side, and
+                          // the rule lives in one function because the
+                          // picker and the status line ask it too.
+                          zeroUChannelLabel(channel),
                           style: theme.textTheme.bodySmall,
                         ),
                         Text(
@@ -1129,6 +1146,18 @@ class _ZeroUSection extends StatelessWidget {
                         ),
                       ],
                     ),
+                  ),
+                  // ON THE CHANNEL'S OWN ROW (`#884`, DR-164 §11.163.2),
+                  // and not on a drag from the palette onto the rendered
+                  // bar: the bar is `#883` and does not exist, so that
+                  // gesture would put the only producer behind the one
+                  // AC-044 clause already left unbuilt.
+                  IconButton(
+                    key: ValueKey(zeroUAddDeviceKeyFor(channel.id)),
+                    icon: const Icon(Icons.add, size: 16),
+                    tooltip: kAddZeroUOccupantTooltip,
+                    visualDensity: VisualDensity.compact,
+                    onPressed: () => unawaited(_addOccupant(context, channel)),
                   ),
                   IconButton(
                     key: ValueKey(zeroURemoveKeyFor(channel.id)),
@@ -1185,6 +1214,24 @@ class _ZeroUSection extends StatelessWidget {
     return occupants.length == 1
         ? '$summary · ${occupants.single.designator}'
         : '$summary · ${occupants.length} devices';
+  }
+
+  /// Asks which device goes in [channel] and hands the answer to the host
+  /// (`#884`, DR-164 §11.163).
+  ///
+  /// **THE PICKER IS NOT ASKED WHETHER THE CHANNEL FITS IT.** `PLC-003`
+  /// decides that, from `buildPlaceFromCatalogCommand`, and it is the one
+  /// rule in this whole area with a fixture pair behind it. What comes
+  /// back here is an id.
+  Future<void> _addOccupant(BuildContext context, ZeroUChannel channel) async {
+    final catalogId = await showAddZeroUOccupant(
+      context,
+      rack: rack,
+      channel: channel,
+      doc: doc,
+    );
+    if (catalogId == null) return;
+    onAddZeroUDevice(channel.id, catalogId);
   }
 
   Future<void> _add(BuildContext context) async {
