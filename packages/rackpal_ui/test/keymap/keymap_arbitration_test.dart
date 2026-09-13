@@ -261,9 +261,15 @@ void main() {
       // for the reason `structure` gives, and that is unchanged: `Esc`
       // acts on what THIS surface is holding, which is an armed pin the
       // other two do not have.
-      expect(keyBindingsIn(KeyScope.plan), hasLength(3));
+      //
+      // FOUR SINCE `#885`. The palette moved to the shell (DR-165
+      // §11.164.4) and this view now shows a column, so `/` reaches it
+      // from here as well. Same trigger, same intent and the same LABEL
+      // as the rack's, which is what principle (b) below is about: one
+      // chord across scopes carries one meaning.
+      expect(keyBindingsIn(KeyScope.plan), hasLength(4));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(73));
+      expect(kKeymap, hasLength(74));
     });
   });
 

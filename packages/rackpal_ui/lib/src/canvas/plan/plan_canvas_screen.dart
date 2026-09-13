@@ -155,8 +155,16 @@ sealed class _ArmedDrag {
 }
 
 final class _ArmedCatalog extends _ArmedDrag {
-  const _ArmedCatalog(this.catalogId);
-  final String catalogId;
+  const _ArmedCatalog(this.row);
+
+  /// **THE ROW, NOT A KEY OR AN ID** (`#885`, DR-165 §11.164.2). This
+  /// field was a `String catalogId` filled from the palette's `rowKey`,
+  /// which is `source/id@version` and resolves nothing; the three tests
+  /// that exercised it all passed a bare template id, so the parameter
+  /// was never given the value its own name promised. `PaletteHost`
+  /// resolves the key and hands the row over, which makes the wrong call
+  /// unrepresentable rather than merely unlikely.
+  final PlaceableTemplate row;
 }
 
 final class _ArmedCarrier extends _ArmedDrag {
@@ -463,8 +471,16 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
 
   /// Arms a drag from a palette row. The host calls this from the
   /// palette's `onArmDrag`.
-  void armPaletteDrag(String rowKey, PointerDownEvent event) =>
-      _arm(_ArmedCatalog(rowKey), event);
+  /// Gives the keyboard back to this canvas (`#885`, DR-165).
+  ///
+  /// `Esc` in the palette filter empties it and hands focus back, and
+  /// only the open canvas can take it. Public for the same reason
+  /// [armPaletteDrag] is: the host that owns the palette is not this
+  /// widget's parent chain to shout down.
+  void focusCanvas() => _canvasFocus.requestFocus();
+
+  void armPaletteDrag(PlaceableTemplate row, PointerDownEvent event) =>
+      _arm(_ArmedCatalog(row), event);
 
   /// Arms a drag from a row of the unpinned strip, which PINS a carrier
   /// the document already has rather than creating one
@@ -511,8 +527,8 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       // see.
       if (subject == null || !over || at == null) return;
       switch (subject) {
-        case _ArmedCatalog(:final catalogId):
-          _placeFromPalette(catalogId, at);
+        case _ArmedCatalog(:final row):
+          _placeFromPalette(row, at);
         case _ArmedCarrier(:final carrier, :final entityId):
           _pinExisting(carrier, entityId, at);
       }
@@ -533,12 +549,25 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     _armedSubject = null;
   }
 
-  void _placeFromPalette(String rowKey, PxPt at) {
+  /// Places [row] on the plan and pins it where it was dropped.
+  ///
+  /// **COPY-ON-PLACE APPLIES HERE TOO** (DR-103 §11.102.2). A library row
+  /// is not in the document, so placing it is a copy AND an add, exactly
+  /// as it is on the rails: the rule is a property of PLACEMENT, not of
+  /// the surface a placement was started from. Without this a library row
+  /// dragged onto a floorplan would come back "Unknown catalog template",
+  /// blaming the catalog for a copy nobody made.
+  void _placeFromPalette(PlaceableTemplate row, PxPt at) {
+    final now = _controller.clock.nowUtc();
+    final plan = row.provenance is LibraryProvenance
+        ? planLibraryPlacement(_doc, row, capturedAt: now)
+        : null;
     final result = buildPlaceOnPlanCommand(
       doc: _doc,
-      catalogId: rowKey,
-      now: _controller.clock.nowUtc(),
+      catalogId: plan?.templateId ?? row.id,
+      now: now,
       actor: _controller.actor,
+      using: plan?.snapshot,
       onPlan: (
         locationId: widget.underlay.locationId,
         pin: PlanPin(underlayId: widget.underlay.id, at: at),
@@ -548,7 +577,19 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       case CatalogPlacementFailed(:final reason):
         widget.onRefuse?.call(reason);
       case CatalogPlacementReady(:final command):
-        _controller.run(command);
+        final copy = plan?.copy;
+        if (copy == null) {
+          _controller.run(command);
+        } else {
+          // NAMED AFTER THE ADD, not the copy, on DR-156 §11.155.2's
+          // reasoning as `_finalizeCatalogPlacement` applies it: the act
+          // a person performed is the placement.
+          _controller.transact(command.label, (tx) {
+            tx
+              ..add(copy)
+              ..add(command);
+          });
+        }
         setState(
           () => widget.selection.apply([command.id], SelectMode.replace),
         );

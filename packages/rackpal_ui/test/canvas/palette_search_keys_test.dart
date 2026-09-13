@@ -43,6 +43,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
 import 'rack_scene_to_screen.dart';
+import 'rack_with_palette.dart';
 
 final class _FakeMeasurer implements TextMeasurer {
   @override
@@ -158,7 +159,22 @@ void main() {
   });
 
   Widget app({List<LogicalKeyboardKey>? escaped}) {
-    final screen = RackCanvasScreen(measurer: _FakeMeasurer());
+    // THE PALETTE IS THE HOST'S SINCE `#885` (DR-165), so the composition
+    // is what this file has to pump: the filter these cases are about is
+    // no longer inside the screen. `_KeyEscapeCounter` wraps the WHOLE
+    // composition for the same reason, since "did this key escape" is a
+    // question about the palette and the canvas together.
+    final controller = DocumentController(buildDemoRackDocument());
+    final screen = RackWithPalette(
+      controller: controller,
+      canvas: (key, searchFocus, dragRow) => RackCanvasScreen(
+        key: key,
+        measurer: _FakeMeasurer(),
+        controller: controller,
+        paletteSearchFocus: searchFocus,
+        paletteDragRow: dragRow,
+      ),
+    );
     return MaterialApp(
       home: Scaffold(
         body: escaped == null
@@ -400,6 +416,66 @@ void main() {
             '/ used to only requestFocus, dropping the user into a box '
             'holding a stale query they then had to clear by hand — which '
             'was impossible while Backspace was being eaten',
+      );
+    });
+
+    testWidgets('AND `/` DECLINES WHILE AN INSPECTOR FIELD HAS THE '
+        'KEYBOARD', (tester) async {
+      // ═════════════════════════════════════════════════════════════════
+      // THE GATE THAT NOTHING TESTED, FOUND BY A MUTATION AT `#885`
+      // ═════════════════════════════════════════════════════════════════
+      // `RackCanvasScreen` gated this binding on `!_textFieldHasFocus`
+      // with a comment saying "the only thing `/` must never do is fail to
+      // type a slash into a field", and the gate moved to `PaletteHost`
+      // with the palette. Deleting it left every case in this file green,
+      // so the sentence was a promise and not a test.
+      //
+      // **IT IS ASSERTED FROM AN INSPECTOR FIELD, AND THE FIRST DRAFT
+      // ASSERTED IT FROM THE SEARCH BOX**, which proves nothing now: the
+      // palette sits ABOVE the canvas since the hoist, so a key pressed
+      // in its own field never passes through the canvas `Shortcuts` that
+      // maps `/` at all. That draft passed with the gate deleted. The
+      // inspector's fields are inside the canvas subtree, which is where
+      // the binding is in scope and the gate is the only thing standing
+      // between a person and a lost keystroke.
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      await _focusSearch(tester, 'cat');
+      await _focusCanvas(tester);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.control);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.alt);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyU);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.alt);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.control);
+      await tester.pumpAndSettle();
+
+      final fields = find.byType(TextField);
+      expect(
+        fields,
+        findsAtLeast(2),
+        reason:
+            'the RackInspector did not open, so this case would assert '
+            'nothing about a field being protected',
+      );
+      final name = fields.at(1);
+      await tester.tap(name);
+      await tester.pump();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.slash);
+      await tester.pumpAndSettle();
+
+      // THE PALETTE'S OWN FIELD, named rather than taken by position: the
+      // inspector is open, so `find.byType(TextField)` is now several and
+      // `_searchController` cannot say which.
+      final search = tester.widget<TextField>(fields.first).controller!;
+      expect(
+        search.selection,
+        isNot(const TextSelection(baseOffset: 0, extentOffset: 3)),
+        reason:
+            'the binding declined: it did not retarget the query, which '
+            'is what firing looks like, so the key belongs to the '
+            'inspector field that has the keyboard',
       );
     });
 

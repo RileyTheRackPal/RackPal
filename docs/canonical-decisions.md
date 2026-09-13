@@ -20615,11 +20615,13 @@ instances of one widget is the sentence obeyed in the letter and broken in the s
 query would not survive a tab change, and *"the palette"* would have two code paths for the rest of
 the product's life.
 
-**A `PaletteHost` OWNS THE COLUMN AND WHAT IS IN IT**: the row list and its memo, the search field's
-focus node and controller, and the 280px column with its divider. It wraps **the Rack tab and the
-Plan tab, and no other**. The Structure editor places outlets and plates from surfaces of its own,
-and a device palette there would be a control that cannot act on anything in view, which is docs/04
-§3.4's rule about a control that silently does nothing.
+**A `PaletteHost` OWNS WHAT IS IN THE COLUMN**: the row list and its memo, the search field's
+controller, and the `/` handler. It wraps the whole tab view, so there is one search query and one
+memo rather than one per tab. **It lays nothing out** (§11.164.5), and the COLUMN itself is placed
+by each view that wants one, in that view's own layout: the Rack tab and the Plan tab, and no other.
+The Structure editor places outlets and plates from surfaces of its own, and a device palette there
+would be a control that cannot act on anything in view, which is docs/04 §3.4's rule about a control
+that silently does nothing.
 
 **11.164.2 THE HOST HANDS OVER A RESOLVED ROW, NOT A KEY**, and that removes a defect rather than
 only some duplication. A `rowKey` is `source/id@version` and a template id is not (DR-102
@@ -20630,19 +20632,43 @@ its three tests pass a bare id, so the parameter was never given the value its o
 **Handing over the `PlaceableTemplate` makes the wrong call unrepresentable**, and it leaves the row
 list with one owner instead of two.
 
-**11.164.3 THE SEARCH FIELD'S FOCUS NODE IS PASSED DOWN**, which is the one place this ruling accepts
-a seam rather than a move. The insertion caret's activation reads
-`_canvasFocus.hasFocus || _paletteSearchFocus.hasFocus`, because arming a placement from the search
-box is a placement gesture and the caret must stay lit across the hand-off. That is the CANVAS's
-rule about its own caret, so the canvas keeps it and the host lends it the node. The alternative, a
-notifier reporting focus upward and a second copy of the rule in the host, is two things that can
-disagree about one fact.
+**11.164.3 THE SEARCH FIELD'S FOCUS NODE IS OWNED BY THE COMMON ANCESTOR**, which is the shell. The
+insertion caret's activation reads `_canvasFocus.hasFocus || _paletteSearchFocus.hasFocus`, because
+arming a placement from the search box is a placement gesture and the caret must stay lit across the
+hand-off. That is the CANVAS's rule about its own caret, so the canvas keeps it and reads a node it
+was handed. The alternative, a notifier reporting focus upward and a second copy of the rule in the
+host, is two things that can disagree about one fact.
+
+**THIS CLAUSE FIRST SAID THE HOST OWNS IT AND LENDS IT DOWN, AND THAT CANNOT WORK.** The shell
+builds the tab bodies during its own `build`, before `PaletteHostState` exists, so a node created in
+the host is not there to lend and the canvas spends its first frame reading null. Two widgets need
+the node and neither is the other's parent, so its owner is the one above both. The same argument
+already governs the drag-row notifier, which the palette reads while it builds and the canvas writes
+from a drag that starts after.
 
 **11.164.4 AND `/` REACHES THE PALETTE FROM BOTH VIEWS.** `focusPaletteSearch` is `KeyScope.rack`
 today and gains `KeyScope.plan`, since a palette a person can see and cannot reach from the keyboard
 is half a surface. Same binding, same intent, one more scope.
 
-**11.164.5 Scope.** **No scope change, on DR-143's precedent.** The gesture is in docs/15 §6's own
+**11.164.5 AND THE COLUMN IS PLACED BY THE VIEW, NOT BESIDE THE TAB VIEW.** Found by a test, and the
+mechanism is worth keeping. The first build drew the column as a sibling of the shell's `TabBarView`
+with a `showColumn` flag, which is the obvious shape and the wrong one: **a `TabBarView` is a
+`PageView`, and a `PageView` positions by PIXEL OFFSET**, `index * viewportWidth`. Hiding a 280px
+column widens the viewport by 280, so an offset animated for the old width lands between pages.
+Tapping `Schematic` from the Rack tab showed `Structured Wiring`, one page short, every time.
+
+Two smaller versions of the same mistake were passed through on the way, and both are the kind that
+a suite catches and a person does not. A conditional child in a `Row` shifts its siblings, because
+multi-child elements are matched BY POSITION: `if (showColumn) ...[column, divider]` moved the canvas
+from slot 2 to slot 0 and destroyed every tab's `State`. And an `InheritedWidget` carrying a `State`
+OBJECT must notify on every rebuild, since comparing `state != old.state` asks "was this widget
+replaced" and never "did anything change": with that comparison a template saved while the canvas
+was open never reached the palette.
+
+**So the host provides and the view places.** The page width never moves, and *which views have a
+palette* becomes a fact about those views rather than a flag passed down from above.
+
+**11.164.6 Scope.** **No scope change, on DR-143's precedent.** The gesture is in docs/15 §6's own
 table and has been since the chapter brief; this is an unbuilt clause reaching its producer, exactly
 as the floorplan importer did. Board `#885` cites it.
 

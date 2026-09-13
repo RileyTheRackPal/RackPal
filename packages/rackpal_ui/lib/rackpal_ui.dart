@@ -126,6 +126,7 @@ export 'src/library/remove_template_dialog.dart';
 export 'src/menu/undo_labels.dart';
 export 'src/menu/undo_target.dart';
 export 'src/palette/device_palette_panel.dart';
+export 'src/palette/palette_host.dart';
 export 'src/project/delete_location_dialog.dart';
 export 'src/project/locations_panel.dart';
 export 'src/project/pdf_page_picker_dialog.dart';

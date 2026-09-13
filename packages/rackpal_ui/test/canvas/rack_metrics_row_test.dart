@@ -18,6 +18,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
 import 'rack_scene_to_screen.dart';
+import 'rack_with_palette.dart';
 
 final class _FakeMeasurer implements TextMeasurer {
   @override
@@ -339,9 +340,23 @@ void main() {
         ..resetDevicePixelRatio();
     });
 
-    Widget app() => MaterialApp(
-      home: Scaffold(body: RackCanvasScreen(measurer: _FakeMeasurer())),
-    );
+    Widget app() {
+      final controller = DocumentController(buildDemoRackDocument());
+      return MaterialApp(
+        home: Scaffold(
+          body: RackWithPalette(
+            controller: controller,
+            canvas: (key, searchFocus, dragRow) => RackCanvasScreen(
+              key: key,
+              measurer: _FakeMeasurer(),
+              controller: controller,
+              paletteSearchFocus: searchFocus,
+              paletteDragRow: dragRow,
+            ),
+          ),
+        ),
+      );
+    }
 
     testWidgets('the demo rack reads 5/12 on the front, not 12/12', (
       tester,

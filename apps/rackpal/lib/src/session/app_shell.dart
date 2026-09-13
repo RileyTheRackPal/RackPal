@@ -76,6 +76,7 @@ import 'package:rackpal_core/rackpal_core.dart'
         LabelKey,
         LoadedLibrary,
         LocationRemovalPlan,
+        PlaceableTemplate,
         RackDocument,
         TemplateBody,
         TemplateId,
@@ -490,6 +491,8 @@ final class AppShellState extends State<AppShell>
       ..removeListener(_onTabChanged)
       ..dispose();
     _reveal.dispose();
+    _paletteDragRow.dispose();
+    _paletteSearchFocus.dispose();
     super.dispose();
   }
 
@@ -976,93 +979,123 @@ final class AppShellState extends State<AppShell>
             onDismiss: () => setState(() => _dismissedWarning = warning),
           ),
         Expanded(
-          child: TabBarView(
-            controller: _tabController,
-            // ═════════════════════════════════════════════════════════
-            // THE VIEW IS NOT A THING YOU SCROLL TO — #96, from the field
-            // ═════════════════════════════════════════════════════════
-            // `TabBarView` is a `PageView` and takes page-scroll physics
-            // by default, so a horizontal wheel or a two-finger sideways
-            // trackpad swipe drags the whole view sideways. On a phone
-            // that is the affordance; here it is a collision, because
-            // BOTH canvases already claim exactly that gesture for
-            // panning.
-            //
-            // AN IndexedStack WAS TRIED AT DR-091 AND REVERTED. It keeps
-            // every child mounted, which is what the Device Manager's
-            // draft wants, but mounting all six at once puts every hidden
-            // view's text in front of every global finder in the suite.
-            // The draft is kept by `AutomaticKeepAliveClientMixin` on the
-            // one screen that needs it instead, which is the standard
-            // mechanism and touches nothing else.
-            physics: const NeverScrollableScrollPhysics(),
-            children: [
-              _locationsTab(session),
-              _deviceManagerTab(session),
-              _rackTab(session),
-              _structuredWiringTab(session),
-              // THE SCHEMATIC IS BUILT NOW (M2-E), and the `UnbuiltView`
-              // that stood here is gone rather than softened — the same
-              // move, for the same reason, as the Schedule's one tab over.
+          // ═══════════════════════════════════════════════════════════
+          // ONE PALETTE STATE, ABOVE THE TAB VIEW (`#885`, DR-165)
+          // ═══════════════════════════════════════════════════════════
+          // It wraps the whole `TabBarView` rather than the two tabs that
+          // use it, because a host per tab is two hosts: two search
+          // queries, two row memos, and a filter that does not survive
+          // the tab change it was typed before.
+          //
+          // **IT LAYS NOTHING OUT.** The COLUMN is placed by each view
+          // that wants one, in that view's own `Row` (`_withPalette`).
+          // This wrapper drawing it beside the `TabBarView` is what broke
+          // every tab switch, and §11.164.5 records why.
+          child: PaletteHost(
+            doc: session.document,
+            // `#242`, DR-102 §11.101.3 and `#245`: the shell reads the
+            // shelf and the prefs because `rackpal_ui` has no
+            // `FileStore` and no prefs store and must not grow either.
+            // These were three of `RackCanvasScreen`'s parameters and
+            // they existed only to feed the palette, so they came with
+            // it.
+            libraries: _libraries,
+            unreadableLibraries: _unreadableLibraries,
+            favourites: _favourites,
+            draggingRowKey: _paletteDragRow,
+            onRefuse: _refusePaletteSearch,
+            onPlace: _placeFromPalette,
+            onArmDrag: _armPaletteDrag,
+            onDismissSearch: _focusOpenCanvas,
+            searchFocus: _paletteSearchFocus,
+            child: TabBarView(
+              controller: _tabController,
+              // ═════════════════════════════════════════════════════════
+              // THE VIEW IS NOT A THING YOU SCROLL TO — #96, from the field
+              // ═════════════════════════════════════════════════════════
+              // `TabBarView` is a `PageView` and takes page-scroll physics
+              // by default, so a horizontal wheel or a two-finger sideways
+              // trackpad swipe drags the whole view sideways. On a phone
+              // that is the affordance; here it is a collision, because
+              // BOTH canvases already claim exactly that gesture for
+              // panning.
               //
-              // ITS COPY WAS READ BEFORE IT WAS REPLACED, and four of its
-              // five clauses had become false: a sheet IS laid out (M2-C's
-              // Sugiyama phases 0–3), symbols ARE placed on it, net labels
-              // ARE drawn (M2-D, DR-001's default render) and a wire IS
-              // routed once a domain is soloed, hovered with `Alt`, or
-              // focused. Its own summary — "The gap is the view, not the
-              // data" — was the sentence that expired first.
-              //
-              // THE ONE CLAUSE THAT IS STILL TRUE was carried across
-              // rather than dropped: "nothing in this build creates a
-              // connection, so a document edited here holds zero Links".
-              // It now lives on the sheet itself as
-              // `kNoLinksHeadline`/`kNoLinksDetail`, where the reader who
-              // needs it is, and `unbuilt_copy_accuracy_test.dart` still
-              // proves it against the source of both UI packages and this
-              // app rather than against a comment.
-              SchematicCanvasScreen(
-                // KEYED ON THE CONTROLLER'S IDENTITY, as both siblings
-                // are: replacing the document must reset the domain
-                // filter, the selection, the focus scope and the framed
-                // viewport, because every one of them is an answer about
-                // a document and this is a different one.
-                key: ValueKey(session.controller),
-                measurer: widget.measurer,
-                controller: session.controller,
-                reveal: _reveal,
-                showFilterCoachMark: _showFilterCoachMark,
-                onDismissFilterCoachMark: _dismissFilterCoachMark,
-              ),
-              // THE SCHEDULE IS BUILT NOW, and the panel that used to sit
-              // POSITION 6, BEFORE THE SCHEDULE (DR-091 §11.90.3). Every
-              // piece of this view was built and unreachable: the canvas
-              // and its two gestures (PLAN-E/2), the arm mode and its
-              // chip (PLAN-E/3), the strip and armCarrierDrag (PLAN-E/4),
-              // and the importer that could put anything in it at all
-              // (PLAN-D, DR-143). This line is what makes them true.
-              _planTab(session),
-              // here is gone rather than softened. Its copy said "no code
-              // turns a Link into a row", which was true when it was
-              // written and is false now that
-              // `rackpal_core/derived/schedule.dart` exists — and the
-              // one panel in the app whose entire purpose is accuracy
-              // about what exists must not be the last thing to hear.
-              //
-              // What survives is the sentence it was defending: a table
-              // with no rows must not read as "you have not wired
-              // anything". `ScheduleScreen`'s zero-row state says the
-              // DOCUMENT holds no cables and names the missing gesture —
-              // see `kNoCablesDetail`.
-              ScheduleScreen(
-                // KEYED ON THE CONTROLLER'S IDENTITY, as the rack tab is:
-                // replacing the document must reset the preset and the
-                // filter, because those are answers about a document and
-                // this is a different one.
-                key: ValueKey(session.controller),
-                document: session.document,
-              ),
-            ],
+              // AN IndexedStack WAS TRIED AT DR-091 AND REVERTED. It keeps
+              // every child mounted, which is what the Device Manager's
+              // draft wants, but mounting all six at once puts every hidden
+              // view's text in front of every global finder in the suite.
+              // The draft is kept by `AutomaticKeepAliveClientMixin` on the
+              // one screen that needs it instead, which is the standard
+              // mechanism and touches nothing else.
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _locationsTab(session),
+                _deviceManagerTab(session),
+                _rackTab(session),
+                _structuredWiringTab(session),
+                // THE SCHEMATIC IS BUILT NOW (M2-E), and the `UnbuiltView`
+                // that stood here is gone rather than softened — the same
+                // move, for the same reason, as the Schedule's one tab over.
+                //
+                // ITS COPY WAS READ BEFORE IT WAS REPLACED, and four of its
+                // five clauses had become false: a sheet IS laid out (M2-C's
+                // Sugiyama phases 0–3), symbols ARE placed on it, net labels
+                // ARE drawn (M2-D, DR-001's default render) and a wire IS
+                // routed once a domain is soloed, hovered with `Alt`, or
+                // focused. Its own summary — "The gap is the view, not the
+                // data" — was the sentence that expired first.
+                //
+                // THE ONE CLAUSE THAT IS STILL TRUE was carried across
+                // rather than dropped: "nothing in this build creates a
+                // connection, so a document edited here holds zero Links".
+                // It now lives on the sheet itself as
+                // `kNoLinksHeadline`/`kNoLinksDetail`, where the reader who
+                // needs it is, and `unbuilt_copy_accuracy_test.dart` still
+                // proves it against the source of both UI packages and this
+                // app rather than against a comment.
+                SchematicCanvasScreen(
+                  // KEYED ON THE CONTROLLER'S IDENTITY, as both siblings
+                  // are: replacing the document must reset the domain
+                  // filter, the selection, the focus scope and the framed
+                  // viewport, because every one of them is an answer about
+                  // a document and this is a different one.
+                  key: ValueKey(session.controller),
+                  measurer: widget.measurer,
+                  controller: session.controller,
+                  reveal: _reveal,
+                  showFilterCoachMark: _showFilterCoachMark,
+                  onDismissFilterCoachMark: _dismissFilterCoachMark,
+                ),
+                // THE SCHEDULE IS BUILT NOW, and the panel that used to sit
+                // POSITION 6, BEFORE THE SCHEDULE (DR-091 §11.90.3). Every
+                // piece of this view was built and unreachable: the canvas
+                // and its two gestures (PLAN-E/2), the arm mode and its
+                // chip (PLAN-E/3), the strip and armCarrierDrag (PLAN-E/4),
+                // and the importer that could put anything in it at all
+                // (PLAN-D, DR-143). This line is what makes them true.
+                _planTab(session),
+                // here is gone rather than softened. Its copy said "no code
+                // turns a Link into a row", which was true when it was
+                // written and is false now that
+                // `rackpal_core/derived/schedule.dart` exists — and the
+                // one panel in the app whose entire purpose is accuracy
+                // about what exists must not be the last thing to hear.
+                //
+                // What survives is the sentence it was defending: a table
+                // with no rows must not read as "you have not wired
+                // anything". `ScheduleScreen`'s zero-row state says the
+                // DOCUMENT holds no cables and names the missing gesture —
+                // see `kNoCablesDetail`.
+                ScheduleScreen(
+                  // KEYED ON THE CONTROLLER'S IDENTITY, as the rack tab is:
+                  // replacing the document must reset the preset and the
+                  // filter, because those are answers about a document and
+                  // this is a different one.
+                  key: ValueKey(session.controller),
+                  document: session.document,
+                ),
+              ],
+            ),
           ),
         ),
         if (status != null) ShellStatusLine(message: status),
@@ -1505,25 +1538,100 @@ final class AppShellState extends State<AppShell>
 
   Widget _planTab(DocumentSession session) {
     _loadPlanImages(session);
-    return PlanEditorScreen(
-      // KEYED ON THE CONTROLLER'S IDENTITY, on `_rackTab`'s reason:
-      // replacing the document must build a fresh `State`, and this one
-      // holds a per-underlay viewport and canvas key that belong to the
-      // document that made them.
-      key: ValueKey(session.controller),
-      controller: session.controller,
-      images: _planImages.resolver,
-      measurer: widget.measurer,
-      selection: _planSelection,
-      arm: _planArm,
-      onRefuse: _showRefusal,
-      // THE SAME CHANNEL AS A REFUSAL, WHICH IS THIS SHELL'S DECISION AND
-      // NOT THE VIEW'S. `PlanEditorScreen` keeps the two callbacks apart
-      // because they carry opposite news; what a host does with them is
-      // its own business, and every transient notice in this window is a
-      // snack bar today.
-      onNotice: _showNotice,
+    return _withPalette(
+      PlanEditorScreen(
+        // KEYED ON THE CONTROLLER'S IDENTITY, on `_rackTab`'s reason:
+        // replacing the document must build a fresh `State`, and this one
+        // holds a per-underlay viewport and canvas key that belong to the
+        // document that made them.
+        key: GlobalObjectKey<PlanEditorScreenState>(session.controller),
+        controller: session.controller,
+        images: _planImages.resolver,
+        measurer: widget.measurer,
+        selection: _planSelection,
+        arm: _planArm,
+        onRefuse: _showRefusal,
+        // THE SAME CHANNEL AS A REFUSAL, WHICH IS THIS SHELL'S DECISION AND
+        // NOT THE VIEW'S. `PlanEditorScreen` keeps the two callbacks apart
+        // because they carry opposite news; what a host does with them is
+        // its own business, and every transient notice in this window is
+        // a snack bar today.
+        onNotice: _showNotice,
+      ),
     );
+  }
+
+  /// Which palette row is being dragged out (`#885`, DR-165).
+  ///
+  /// THE SHELL OWNS IT because both ends need it and neither is the
+  /// other's parent: `PaletteHost` reads it to dim a row while it builds,
+  /// and `RackCanvasScreen` writes it from a drag that starts after that
+  /// build. A notifier created by either would be one frame late for the
+  /// whole gesture.
+  final ValueNotifier<String?> _paletteDragRow = ValueNotifier<String?>(null);
+
+  /// The palette filter's focus node, for the same reason (DR-165
+  /// §11.164.3). `PaletteHost` gives the field its focus and
+  /// `RackCanvasScreen` reads `.hasFocus` for the caret; the shell builds
+  /// the tab bodies before the host's `State` exists, so a node created
+  /// down there would not be there to lend.
+  final FocusNode _paletteSearchFocus = FocusNode(
+    debugLabel: 'paletteSearch',
+  );
+
+  /// The open canvas, as whatever can take a palette row.
+  ///
+  /// RESOLVED PER CALL rather than latched on a tab change: the keys are
+  /// `GlobalObjectKey`s on the session controller, so asking is a map
+  /// lookup and a latched field would be one more thing to invalidate
+  /// when the document is replaced.
+  RackCanvasScreenState? get _openRack =>
+      _tabController.index == ShellView.rack.index
+      ? GlobalObjectKey<RackCanvasScreenState>(
+          _services.session.controller,
+        ).currentState
+      : null;
+
+  PlanEditorScreenState? get _openPlan =>
+      _tabController.index == ShellView.plan.index
+      ? GlobalObjectKey<PlanEditorScreenState>(
+          _services.session.controller,
+        ).currentState
+      : null;
+
+  /// A double-click or `Enter` on a palette row.
+  void _placeFromPalette(PlaceableTemplate row) {
+    _openRack?.placeFromPalette(row);
+    _openPlan?.placeFromPalette(row);
+  }
+
+  /// docs/04 §3.1 step 1, handed down to whichever canvas is open.
+  void _armPaletteDrag(PlaceableTemplate row, PointerDownEvent event) {
+    _openRack?.armPaletteDrag(row, event);
+    _openPlan?.armPaletteDrag(row, event);
+  }
+
+  /// Where a palette refusal is said.
+  ///
+  /// **THE OPEN CANVAS DECIDES, which keeps it where it was.** "No device
+  /// matches" was the rack's own status line for four milestones, read
+  /// mid-keystroke a few inches from the field it is about; a snack bar
+  /// would cover the canvas to say it. The Plan view has no status line,
+  /// so there it falls through to this window's ordinary refusal channel.
+  void _refusePaletteSearch(String message) {
+    final rack = _openRack;
+    if (rack != null) {
+      rack.showStatus(message);
+      return;
+    }
+    _showRefusal(message);
+  }
+
+  /// `Esc` in the filter: the host empties it, and this is the half only
+  /// the open canvas can do.
+  void _focusOpenCanvas() {
+    _openRack?.focusCanvas();
+    _openPlan?.focusCanvas();
   }
 
   /// The Plan view's selection, separate from the two canvases.
@@ -1544,33 +1652,63 @@ final class AppShellState extends State<AppShell>
         onNewRack: () => unawaited(_newRackFromEmptyPanel(session)),
       );
     }
-    return RackCanvasScreen(
-      // KEYED ON THE CONTROLLER'S IDENTITY. Replacing the document must
-      // build a fresh `State`: the screen's controller, rack, geometry
-      // cache and scene are all `late final` or derived, and reusing the
-      // old `State` would leave every one of them pointing at the
-      // previous document.
-      key: ValueKey(session.controller),
-      measurer: widget.measurer,
-      controller: session.controller,
-      // `#242`, DR-102 §11.101.3. The palette answers for the document
-      // AND these; the shell reads the shelf because `rackpal_ui` has no
-      // `FileStore` and must not grow one.
-      libraries: _libraries,
-      unreadableLibraries: _unreadableLibraries,
-      // `#245`: the same per-user set the browser stars into, so the
-      // two surfaces cannot show different favourites.
-      favourites: _favourites,
-      // CR-105, joined up. Supplying this callback is ALSO what makes the
-      // chip appear at all (`RackCanvasScreen.onRevealInSchematic`): the
-      // elevation refuses to draw a signpost nobody is listening to, and
-      // this shell is the only listener that can exist.
-      onRevealInSchematic: _revealInSchematic,
-      // Door 2 (CR-054, DR-099). Routing is the shell's because the shell
-      // owns the six-view stack and the Device Manager's single draft.
-      onEditTemplate: _openTemplateForEditing,
+    return _withPalette(
+      RackCanvasScreen(
+        // KEYED ON THE CONTROLLER'S IDENTITY. Replacing the document must
+        // build a fresh `State`: the screen's controller, rack, geometry
+        // cache and scene are all `late final` or derived, and reusing the
+        // old `State` would leave every one of them pointing at the
+        // previous document.
+        //
+        // A `GlobalObjectKey` DOES BOTH JOBS AT ONCE (`#885`). It still
+        // changes when the document is replaced, so the State is rebuilt
+        // for the reason the `ValueKey` here was written; and it is a
+        // `GlobalKey`, so the palette can reach this screen's
+        // `armPaletteDrag` without a second field to keep in step. Two
+        // tabs may key on the same controller, because a
+        // `GlobalObjectKey`'s identity includes its type argument.
+        key: GlobalObjectKey<RackCanvasScreenState>(session.controller),
+        measurer: widget.measurer,
+        controller: session.controller,
+        // LENT BY THE PALETTE HOST (DR-165 §11.164.3). The caret counts
+        // the filter as canvas focus, because arming a placement from the
+        // search box is a placement gesture, and that rule is the
+        // canvas's own.
+        paletteSearchFocus: _paletteSearchFocus,
+        paletteDragRow: _paletteDragRow,
+        // CR-105, joined up. Supplying this callback is ALSO what makes
+        // the chip appear at all (`RackCanvasScreen.onRevealInSchematic`):
+        // the elevation refuses to draw a signpost nobody is listening to,
+        // and this shell is the only listener that can exist.
+        onRevealInSchematic: _revealInSchematic,
+        // Door 2 (CR-054, DR-099). Routing is the shell's because the
+        // shell owns the six-view stack and the Device Manager's single
+        // draft.
+        onEditTemplate: _openTemplateForEditing,
+      ),
     );
   }
+
+  /// Puts docs/04 §1's palette column to the left of [view].
+  ///
+  /// **THE COLUMN IS PLACED BY THE VIEW, NOT BESIDE THE TAB VIEW**
+  /// (DR-165 §11.164.5). It was a sibling of `TabBarView` with a
+  /// `showColumn` flag, and that broke every tab switch: a `TabBarView` is
+  /// a `PageView` and positions by PIXEL OFFSET, so hiding a 280px column
+  /// widened the viewport and an offset animated for the old width landed
+  /// between pages. Tapping `Schematic` from the Rack tab showed
+  /// `Structured Wiring`, one page short, on every run.
+  ///
+  /// Placed here the page width never changes, and "which views have a
+  /// palette" is a fact about those views rather than a flag from above.
+  Widget _withPalette(Widget view) => Row(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      const PaletteColumn(),
+      const VerticalDivider(width: 1),
+      Expanded(child: view),
+    ],
+  );
 
   /// Door 2: open [templateId] in the Device Manager, which forks
   /// `version + 1` on save (DR-099 §11.98).

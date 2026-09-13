@@ -84,6 +84,8 @@ import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter/widgets.dart'
     show
         AxisDirection,
+        EditableText,
+        FocusManager,
         Intent,
         ShortcutActivator,
         SingleActivator,
@@ -176,6 +178,7 @@ enum KeyBindingId {
   redo,
   redoAlternate,
   focusPaletteSearch,
+  focusPaletteSearchOnPlan,
   caretUp,
   caretDown,
   caretHome,
@@ -357,6 +360,25 @@ final class RedoIntent extends Intent {
 }
 
 /// Focus the palette search field (`/`).
+/// Does a text field currently hold the keyboard?
+///
+/// **ONE IMPLEMENTATION, because two surfaces now gate on it** (`#885`,
+/// DR-165 §11.164.4). `RackCanvasScreen` has always asked this before
+/// letting a bare-key binding through, and `PaletteHost` must ask exactly
+/// the same question before `/` steals a keystroke that was meant to be a
+/// slash. Spelled twice, the two would answer differently the first time
+/// either grew a case.
+///
+/// It asks the FOCUS MANAGER rather than tracking focus changes, because
+/// the answer is needed at the instant a key arrives and nothing else
+/// about it is stateful.
+bool aTextFieldHasFocus() {
+  final ctx = FocusManager.instance.primaryFocus?.context;
+  if (ctx == null) return false;
+  return ctx.widget is EditableText ||
+      ctx.findAncestorWidgetOfExactType<EditableText>() != null;
+}
+
 final class FocusPaletteSearchIntent extends Intent {
   const FocusPaletteSearchIntent();
 }
@@ -1020,6 +1042,21 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     label: 'Focus the palette search field',
     intent: FocusPaletteSearchIntent(),
     source: 'docs/04 §3.2 · §8',
+  ),
+  // ONE CHORD, ONE MEANING, TWO SCOPES (`#885`, DR-165 §11.164.4). The
+  // palette is the shell's now and both canvases that show a column can
+  // reach it, so a binding that stopped at the rack would leave a surface
+  // a person can see and cannot reach from the keyboard. Same trigger,
+  // same intent and the SAME LABEL, which is what the registry's
+  // one-chord-one-meaning check is about: `PaletteHost` services the
+  // intent from above either canvas.
+  KeyBinding(
+    id: KeyBindingId.focusPaletteSearchOnPlan,
+    scope: KeyScope.plan,
+    trigger: LogicalKeyboardKey.slash,
+    label: 'Focus the palette search field',
+    intent: FocusPaletteSearchIntent(),
+    source: 'docs/15 §6 · DR-165 §11.164.4',
   ),
   // docs/04 §3.4: the insertion caret (no selection) / keyboard nudge (a
   // selection exists). Every activator here is BARE, and

@@ -1163,7 +1163,19 @@ $SuiteFloors = @{
     # `_selection.apply`. A mutation passed straight through it. What the
     # case asserts now is the artifact, that the next `Delete` does not
     # destroy what was just placed.
-    'rackpal_ui'     = 1866
+    # 1868 at `#885`: +2 net over a WIDE refactor. The palette left
+    # `RackCanvasScreen` for `PaletteHost`, so nine harnesses in
+    # test/canvas now pump the composition rather than the screen, and
+    # their ~128 cases are the regression proof that the move changed no
+    # behaviour. The two new ones are the plan's copy-on-place and the `/`
+    # gate.
+    # THE `/` CASE WAS WRITTEN TWICE AND THE FIRST COULD NOT FAIL. It
+    # pressed `/` with the palette's OWN field focused, which proves
+    # nothing after the hoist: the palette sits above the canvas, so the
+    # key never reaches the `Shortcuts` that maps it. It asserts from an
+    # INSPECTOR field now, which is inside the canvas subtree where the
+    # binding is in scope.
+    'rackpal_ui'     = 1868
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1278,7 +1290,13 @@ $SuiteFloors = @{
     # The tab switch runs inside `runAsync` because the underlay's decode
     # cannot complete in the fake-async zone. Neither case uses a pointer:
     # no gesture reaches this tab at this mounting, which is `#882`.
-    'rackpal_app'    = 1033
+    # 1037 at `#885`: +4, and they are the half `rackpal_ui` cannot prove.
+    # Its palette cases pump a helper that composes the column and a
+    # canvas the way this shell does, which shows the two agree with each
+    # other; only the real `AppShell` can say which views carry a column,
+    # whether the state survives a tab change, and whether a row activated
+    # on the Plan tab reaches the plan editor at all.
+    'rackpal_app'    = 1037
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
