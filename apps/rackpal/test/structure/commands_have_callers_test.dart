@@ -178,12 +178,12 @@ const Map<String, String> _exempt = {
   // the Outlets rail has a trash icon per plate and the editor header an
   // overflow menu, each behind a confirmation that counts what it takes.
 
-  // `#878` — a pin cannot be cleared (only re-placed) and pages cannot
-  // be reordered. `LabelKey.clearPlanPin` exists and carries a comment
-  // arguing why it deserves its own value, which is a menu entry for a
-  // gesture nobody can perform.
-  'ClearPlanPinCommand': '#878',
-  'ReorderPlanUnderlayCommand': '#878',
+  // `#878` CLOSED ITS ROWS. Both were the halves that UNDO a placement:
+  // `SetPlanPinCommand` and `RemovePlanUnderlayCommand` in the same file
+  // had callers and these did not, so a rack pinned to the wrong room
+  // could only be fixed by pinning it somewhere else. DR-162 §11.161
+  // binds `Delete` and `Backspace` on the plan canvas and gives the rail
+  // a drag handle.
 
   // `#879` CLOSED ITS ROW. The command, `showRuleSeverityDialog` and
   // `RuleOverride`'s reason/author/date were all built at M5-B3 and

@@ -246,17 +246,24 @@ void main() {
       // two ways, while these are a create and a delete, which is also
       // why `LabelKey` splits them.
       expect(keyBindingsIn(KeyScope.builder), hasLength(16));
-      // ONE ROW IN ITS OWN SCOPE, at PLAN-E/5 (DR-143 §11.142.6). The
-      // Plan editor's whole keyboard is `Esc`, and that is not a
-      // placeholder: docs/15 §6 gives the view pan, zoom and marquee,
-      // which are pointer gestures on the shared `CanvasIntentDetector`,
-      // and the pin gestures are drags. There is nothing else here to
-      // bind yet, and a scope with one row still earns its own scope for
-      // the reason `structure` gives: `Esc` acts on what THIS surface is
-      // holding, which is an armed pin the other two do not have.
-      expect(keyBindingsIn(KeyScope.plan), hasLength(1));
+      // ONE ROW IN ITS OWN SCOPE, at PLAN-E/5 (DR-143 §11.142.6), AND
+      // THREE SINCE `#878`. That paragraph read "there is nothing else
+      // here to bind yet", on the grounds that docs/15 §6 gives the view
+      // pan, zoom and marquee as pointer gestures and the pin gestures as
+      // drags. **It was right about every gesture that CREATES a pin and
+      // silent about the one that removes one**, which was not a drag,
+      // had no binding, and had no control either: `ClearPlanPinCommand`
+      // shipped at `PLAN-C` and was constructed by nothing in `lib/`.
+      //
+      // So `Delete` and `Backspace` join it (DR-162 §11.161.1), under the
+      // label `meaningDrift` already holds identical across the rack and
+      // the schematic. A scope with one row still earned its own scope
+      // for the reason `structure` gives, and that is unchanged: `Esc`
+      // acts on what THIS surface is holding, which is an armed pin the
+      // other two do not have.
+      expect(keyBindingsIn(KeyScope.plan), hasLength(3));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(71));
+      expect(kKeymap, hasLength(73));
     });
   });
 

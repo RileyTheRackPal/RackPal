@@ -1,5 +1,39 @@
 # Update Log
 
+## 2026-09-13 (thirtieth entry)
+
+* **Closed**: `#878` with `fb4544be`. A pin can be taken off the plan with `Delete`
+  and floorplan pages reorder by a drag handle. **No version move**: it closes
+  under `#786`.
+* **Note**: **BOTH MISSING COMMANDS WERE THE UNDO OF SOMETHING.**
+  `SetPlanPinCommand` and `RemovePlanUnderlayCommand` had callers;
+  `ClearPlanPinCommand` and `ReorderPlanUnderlayCommand`, in the same file, did
+  not. Every gesture that PLACED something was wired and neither that took it
+  back was, so a rack pinned to the wrong room could only be fixed by pinning it
+  somewhere else.
+* **Note**: **THE PLAN CANVAS NEVER CALLED `requestFocus`, AND `Esc` HAS NEVER
+  WORKED THERE.** It relied on `autofocus: true`, which wins only while nothing
+  else has claimed focus: true in every case in its own test file, where the
+  canvas is the whole tree, false after one click anywhere else. `planCancel`
+  shipped at `PLAN-E/5` as that scope's only binding, is green in its own cases,
+  and could not fire in the product.
+* **Note**: **AND NO POINTER GESTURE REACHES THE PLAN TAB AT THE APP MOUNTING**,
+  found by the first app-level test ever to open it. A tap does not select a pin,
+  a drag does not move one, a drag on the rail's grip does not reorder; all three
+  work in `rackpal_ui`'s own suites and `signposting_test.dart` taps the RACK
+  canvas in the same harness. Filed as `#882` with the one-minute check that
+  tells a product defect from a harness artifact. **Not diagnosed, because
+  guessing between those two is what a ticket is for.**
+* **Note**: `pinCarrierFor` is new and asks the DOCUMENT rather than translating
+  the scene's `PlanPinCarrier`, which `draw_source_gate_test.dart` refuses.
+  Nothing had needed to cross between the two enums since `PLAN-C`, because every
+  writer so far knew its carrier before it started; clearing a pin is the first
+  gesture that begins from a mark somebody is looking at.
+* **Creation**: [DR-162, taking something off the
+  plan](/decisions/dr-162-taking-something-off-the-plan.md), seven clauses.
+* **Creation**: [autofocus is not a focus
+  policy](/practices/autofocus-is-not-a-focus-policy.md), from the above.
+
 ## 2026-09-13 (twenty-ninth entry)
 
 * **Closed**: `#880` and `#881` with `4878134f`. **Neither was a defect in the

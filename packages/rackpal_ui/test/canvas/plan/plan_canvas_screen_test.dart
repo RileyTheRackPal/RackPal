@@ -1653,4 +1653,268 @@ void main() {
       );
     });
   });
+  group('`#878`: Delete takes the selection off the plan (DR-162)', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // THE MOUNTING IS THE POINT, AGAIN
+    // ═══════════════════════════════════════════════════════════════════
+    // `plan_commands_test.dart` proves `ClearPlanPinCommand` applies and
+    // reverts. What it cannot prove is that a key reaches it, and that
+    // gap is the whole of `#878`: the command shipped at `PLAN-C` with a
+    // real revert, its own `LabelKey` and four test constructions, and
+    // nothing in any `lib/` built one for months.
+
+    Future<void> pressDelete(WidgetTester tester) async {
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('a selected pin goes, and the CARRIER stays', (tester) async {
+      // §11.161.2, which is what makes the key safe rather than merely
+      // consistent with the other two canvases.
+      final c = _controller(pinnedAt: const PxPt(120, 90));
+      final h = await pump(tester, c);
+      h.selection.apply([const Uuid('dev-1')], SelectMode.replace);
+      await tester.pumpAndSettle();
+
+      await pressDelete(tester);
+
+      expect(_placementOf(c)!.planPin, isNull);
+      expect(
+        c.doc.devices.containsKey(const Uuid('dev-1')),
+        isTrue,
+        reason:
+            'the device is still in the project. On the rack this key '
+            'would have removed it, which is the cost DR-162 §11.161.1 '
+            'states rather than hides',
+      );
+    });
+
+    testWidgets('Backspace does the same thing', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(120, 90));
+      final h = await pump(tester, c);
+      h.selection.apply([const Uuid('dev-1')], SelectMode.replace);
+      await tester.pumpAndSettle();
+
+      await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+      await tester.pumpAndSettle();
+
+      expect(_placementOf(c)!.planPin, isNull);
+    });
+
+    testWidgets('one undo puts it back where it was', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(120, 90));
+      final h = await pump(tester, c);
+      h.selection.apply([const Uuid('dev-1')], SelectMode.replace);
+      await tester.pumpAndSettle();
+
+      await pressDelete(tester);
+      c.undo.undo(c.doc);
+      await tester.pumpAndSettle();
+
+      expect(_placementOf(c)!.planPin?.at, const PxPt(120, 90));
+      expect(_placementOf(c)!.planPin?.underlayId, _underlayId);
+    });
+
+    testWidgets('a MARQUEE of two pins is ONE undo step', (tester) async {
+      // §11.161.3. Undoing a marquee clear one pin at a time is not
+      // undoing a marquee clear.
+      final c = _controller(pinnedAt: const PxPt(120, 90));
+      _addOutlet(c);
+      // THROUGH THE COMMAND, because `Outlet.planPin`'s setter is
+      // `@internal` to `rackpal_core` (AC-013) and a package that reached
+      // past it would be writing a field the product cannot.
+      c.run(
+        SetPlanPinCommand(
+          carrier: PinCarrier.outlet,
+          entityId: _outletId,
+          pin: const PlanPin(underlayId: _underlayId, at: PxPt(300, 200)),
+        ),
+      );
+      final h = await pump(tester, c);
+      h.selection.apply([
+        const Uuid('dev-1'),
+        _outletId,
+      ], SelectMode.replace);
+      await tester.pumpAndSettle();
+
+      final before = c.undo.depth;
+      await pressDelete(tester);
+
+      expect(_placementOf(c)!.planPin, isNull);
+      expect(c.doc.outlets[_outletId]!.planPin, isNull);
+      expect(c.undo.depth, before + 1);
+
+      c.undo.undo(c.doc);
+      expect(_placementOf(c)!.planPin?.at, const PxPt(120, 90));
+      expect(c.doc.outlets[_outletId]!.planPin?.at, const PxPt(300, 200));
+    });
+
+    testWidgets('a selection holding NO pin leaves the document alone', (
+      tester,
+    ) async {
+      // The action is DISABLED rather than running an empty transaction,
+      // which is `#863`: a transaction whose only child declines to apply
+      // leaves an undo entry that throws on the next Ctrl+Z.
+      final c = _controller();
+      _addOutlet(c);
+      final h = await pump(tester, c);
+      h.selection.apply([_outletId], SelectMode.replace);
+      await tester.pumpAndSettle();
+
+      final before = c.undo.depth;
+      await pressDelete(tester);
+
+      expect(c.undo.depth, before);
+      expect(c.doc.outlets[_outletId]!.planPin, isNull);
+    });
+
+    testWidgets('A PIN ON ANOTHER PAGE IS NOT REACHED', (tester) async {
+      // The canvas shows one underlay, and the drop table and the strip
+      // both select by ENTITY, so a carrier pinned on a page that is not
+      // on screen can be in the selection. Clearing it from here would be
+      // an edit to a drawing nobody is looking at.
+      final c = _controller();
+      _addOutlet(c);
+      // A REAL SECOND PAGE. `SetPlanPinCommand` refuses a pin naming an
+      // underlay the document does not hold, which is its own first line
+      // and which the first draft of this case tripped over: pinning to
+      // an invented id wrote nothing, so the case passed while proving
+      // that a pin nobody had set was not cleared.
+      const otherPage = Uuid('ul-2');
+      c.doc.underlays[otherPage] = PlanUnderlay(
+        id: otherPage,
+        name: 'Level 2',
+        imageMember: 'underlays/ul-2.png',
+        format: PlanImageFormat.png,
+        pixelWidth: 600,
+        pixelHeight: 400,
+        contentHash: 'sha256:test-2',
+        order: const FracIndex('a1'),
+        meta: _meta(),
+      );
+      c.run(
+        SetPlanPinCommand(
+          carrier: PinCarrier.outlet,
+          entityId: _outletId,
+          pin: const PlanPin(underlayId: otherPage, at: PxPt(10, 10)),
+        ),
+      );
+      expect(
+        c.doc.outlets[_outletId]!.planPin,
+        isNotNull,
+        reason: 'the control: the pin is actually set before Delete runs',
+      );
+      final h = await pump(tester, c);
+      h.selection.apply([_outletId], SelectMode.replace);
+      await tester.pumpAndSettle();
+
+      await pressDelete(tester);
+
+      expect(
+        c.doc.outlets[_outletId]!.planPin,
+        isNotNull,
+        reason: 'that pin is on `Level 2`, which is not the open page',
+      );
+    });
+
+    testWidgets('and the selection SURVIVES, so it can be dragged back', (
+      tester,
+    ) async {
+      // Deliberately unlike the rack canvas, which clears its selection
+      // after a delete because there is nothing left to select. Here the
+      // carrier is still in the project and is now a row in the unpinned
+      // strip.
+      final c = _controller(pinnedAt: const PxPt(120, 90));
+      final h = await pump(tester, c);
+      h.selection.apply([const Uuid('dev-1')], SelectMode.replace);
+      await tester.pumpAndSettle();
+
+      await pressDelete(tester);
+
+      expect(h.selection.ids, [const Uuid('dev-1')]);
+    });
+  });
+  group('`#878`: the canvas takes focus when it is touched', () {
+    // ═══════════════════════════════════════════════════════════════════
+    // IT NEVER DID, AND `autofocus` HID IT FROM EVERY CASE ABOVE
+    // ═══════════════════════════════════════════════════════════════════
+    // `rack_canvas_screen.dart` calls `_canvasFocus.requestFocus()` in
+    // eight places. This canvas called it in NONE and relied on
+    // `autofocus: true`, which wins only while nothing else has claimed
+    // focus: true in every case in this file, where the canvas is the
+    // whole tree, and false the moment a person clicks anything else
+    // first. `Shortcuts` sits above the focus node, so a canvas without
+    // focus never sees a key.
+    //
+    // **WHICH MEANS `Esc` HAS NEVER WORKED HERE AFTER ONE CLICK
+    // ELSEWHERE.** `planCancel` shipped at `PLAN-E/5` as this scope's only
+    // binding and is green in its own cases, all of which autofocus.
+    testWidgets('a press on the canvas takes focus back from a sibling', (
+      tester,
+    ) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final elsewhere = FocusNode(debugLabel: 'elsewhere');
+      addTearDown(elsewhere.dispose);
+
+      await tester.runAsync(() async {
+        await cache.load(_member, await _png(600, 400));
+      });
+      final selection = SelectionController();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Align(
+            alignment: Alignment.topLeft,
+            child: Column(
+              children: [
+                // THE SIBLING IS THE POINT. Without something else able to
+                // hold focus, `autofocus` answers for the canvas and the
+                // case proves nothing.
+                Focus(
+                  focusNode: elsewhere,
+                  autofocus: true,
+                  child: const SizedBox(width: 600, height: 40),
+                ),
+                SizedBox(
+                  width: 600,
+                  height: 400,
+                  child: PlanCanvasScreen(
+                    controller: c,
+                    underlay: _underlay(),
+                    images: cache.resolver,
+                    measurer: const _ZeroMeasurer(),
+                    selection: selection,
+                    viewport: ViewportController(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(
+        elsewhere.hasFocus,
+        isTrue,
+        reason: 'the sibling autofocused, which is the state under test',
+      );
+
+      // The canvas sits 40 pixels down, so the pin is at 200 + 40.
+      await tester.tapAt(const Offset(300, 240));
+      await tester.pumpAndSettle();
+
+      expect(selection.ids, {const Uuid('dev-1')});
+      expect(
+        elsewhere.hasFocus,
+        isFalse,
+        reason:
+            'a press on a canvas moves focus to it, which is what makes '
+            'the keyboard work after a click anywhere else',
+      );
+
+      // AND THE KEY LANDS, which is the whole reason focus matters.
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+      expect(_placementOf(c)!.planPin, isNull);
+    });
+  });
 }

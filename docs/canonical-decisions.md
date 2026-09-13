@@ -20343,6 +20343,94 @@ M5 already owns. Board `#880` and `#881` cite this.
 
 ---
 
+### 11.161 DR-162 · Taking something off the plan, and putting the pages in order
+
+**The question.** `#872`'s gate found `ClearPlanPinCommand` and `ReorderPlanUnderlayCommand` declared
+in `plan_commands.dart` with real reverts, six test constructions between them, and no caller.
+`SetPlanPinCommand` and `RemovePlanUnderlayCommand` in the same file both have callers, so the
+missing halves are the ones that UNDO a placement rather than make one. **A rack pinned to the wrong
+room could only be fixed by pinning it somewhere else**: there was no way to say it is not on the plan
+after all. And docs/15 §6's gesture table has a row for every way to CREATE a pin and none for
+removing one.
+
+**11.161.1 RULED: `Delete` AND `Backspace` CLEAR THE PIN, ON THE SELECTION.** Settled by the user on
+2026-09-13, against a visible control instead of a key and against having both.
+
+The rack canvas and the schematic already bind both keys to `DeleteSelectionIntent` under one label,
+*"Delete the selection"*, which `KeymapConflictKind.meaningDrift` holds identical across scopes. The
+plan is the third canvas and takes the same pair.
+
+**THE COST IS REAL AND IS STATED RATHER THAN DISCOVERED LATER.** On the rack that key removes a
+device from the project; here it removes only a pin, and DR-011.6's note already refused to widen
+`meaningDrift` for per-scope labels because *"a keyboard-only user cannot see a scope boundary"*. The
+reason it is nonetheless right is that **the label names the SELECTION, and the selection is a
+different kind of thing on each canvas**: devices on the rack, cables on the schematic, pins here.
+*"Delete the selection"* is true in all three, and a person looking at a plan is looking at pins.
+
+**11.161.2 THE CARRIER SURVIVES, AND THE STRIP IS WHAT SAYS SO.** This is what makes §11.161.1 safe
+rather than merely consistent. A cleared pin puts its carrier straight back into the unpinned strip
+along the bottom, which docs/15 §6 calls *"the difference between a plan that is trusted and a plan
+that is 80% complete without saying so"*. So the visible answer to *"did I just delete my rack"* is a
+row appearing three inches below the pointer, in the same frame.
+
+A rack that is neither pinned nor listed would be the state that makes this key frightening, and
+`unpinned_carriers.dart` makes it unreachable: **"unpinned" is no pin AT ALL**, so the moment the pin
+goes the row is owed.
+
+**11.161.3 A MULTI-PIN SELECTION IS ONE UNDO STEP.** CR-102's marquee can take several pins at once,
+and DR-158 §11.157.6's rule applies unchanged: undoing a marquee clear one pin at a time is not
+undoing a marquee clear. The label stays `clearPlanPin` for one and for many, because what the person
+did was take things off the plan.
+
+**AND A SELECTION WITH NO PINS IN IT DISABLES THE ACTION** rather than running an empty transaction.
+`_PlanGatedAction` declines by being disabled, which is the shape this canvas already uses for
+`PlanCancelIntent`, and `#863` is why it matters: a transaction whose only child declines to apply
+leaves an undo entry that throws.
+
+**11.161.4 RULED: PAGES REORDER BY A DEDICATED DRAG HANDLE.** Settled by the user on 2026-09-13,
+against dragging anywhere on the row and against a pair of up/down buttons.
+
+The rail's rows already carry tap-to-open, `Calibrate` and `Remove`. **Whole-row drag was refused
+because those controls live inside the drag target**: a slow tap becomes a drag and a missed button
+press reorders the set. **Up/down buttons were refused on a measurement**, not a preference: the row
+overflowed by 126 pixels at 240 wide when it held one button, and the `Wrap` that fixed it is what
+two more would have to negotiate with.
+
+`port_grid.dart` already reorders with `ReorderableDragStartListener` and records why
+`onReorderItem` beats the older `onReorder`; this is the second use of the same mechanism.
+
+**11.161.5 A REORDER IS ONE FIELD WRITE, NEVER A RENUMBER.** `orderBetween` mints a `FracIndex`
+between the two neighbours, which is docs/06 §4.6's rule for the port table restated for a rail of
+pages, and `ReorderPlanUnderlayCommand` already takes exactly one id and one order. **Where
+`orderBetween` returns null the reorder is REFUSED in words**, because the one shape it cannot answer
+is reachable only from a hand-edited file and renumbering the whole rail behind somebody's back is a
+larger edit than the gesture asked for. `nextOrder`'s own header carries that argument.
+
+**11.161.6 WHAT BUILDING THIS FOUND, WHICH THE TICKET DID NOT NAME.** Two things, and both are
+older than `#878`.
+
+**THE PLAN CANVAS NEVER TOOK FOCUS.** `rack_canvas_screen.dart` calls `_canvasFocus.requestFocus()`
+in eight places; this one called it nowhere and relied on `autofocus: true`, which wins only while
+nothing else has claimed focus. That is true in every case in its own test file, where the canvas is
+the whole tree, and false after one click anywhere else. `Shortcuts` sits above the focus node, **so
+`Esc` has never worked on this surface either**: `planCancel` shipped at `PLAN-E/5` as the scope's
+only binding, is green in its own cases, and could not fire. Fixed here, because §11.161.1's key
+would have been dead on arrival for the same reason.
+
+**AND NO POINTER GESTURE REACHES THE PLAN TAB AT THE APP MOUNTING**, measured by the first
+app-level test ever to open it: a tap does not select a pin, a drag does not move one, and a drag on
+the rail's grip does not reorder. All three work in `rackpal_ui`'s own suites, and
+`signposting_test.dart` taps the RACK canvas in the same harness, so it is specific to this tab.
+**Whether that is the product or the test harness is NOT settled here and is not guessed at.** Board
+`#882` carries the evidence and the one-minute check that tells them apart. This ruling's two
+gestures are proved at the widget level; the app-level proof is owed and is named as owed.
+
+**11.161.7 Scope.** **No scope change.** Both commands are `PLAN-C` work that shipped without a
+caller; this rules how they are reached, inside scope the Plan view already owns. Board `#878` cites
+it, and `#872`'s exemption list loses both rows.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

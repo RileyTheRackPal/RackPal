@@ -200,6 +200,40 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
     return out;
   }
 
+  /// Moves the page at [from] to [at] (`#878`, DR-162 §11.161.4).
+  ///
+  /// **THE NEIGHBOURS ARE READ FROM THE LIST AFTER THE MOVE**, which is
+  /// what `onReorderItem` makes safe: it has already subtracted for the
+  /// row leaving its old position, so `at` indexes the list as it will
+  /// look. Computing against the pre-move list is the off-by-one Flutter
+  /// deprecated `onReorder` over, and `port_grid.dart` carries the same
+  /// note.
+  ///
+  /// **ONE FIELD WRITE, NEVER A RENUMBER** (§11.161.5).
+  void _reorderPlan(int from, int at) {
+    final all = _underlays;
+    if (from < 0 || from >= all.length || at < 0 || at >= all.length) return;
+    if (from == at) return;
+
+    final moving = all[from];
+    final without = [...all]..removeAt(from);
+    final before = at == 0 ? null : without[at - 1].order;
+    final after = at < without.length ? without[at].order : null;
+
+    final order = orderBetween(before, after);
+    if (order == null) {
+      // NAMED RATHER THAN RENUMBERED. `orderBetween`'s own header says
+      // the one pair it cannot answer is unreachable in a document this
+      // program wrote, so a person meeting this is holding a file from
+      // somewhere else and deserves to be told which.
+      widget.onRefuse?.call(kReorderPagesRefused);
+      return;
+    }
+    _controller.run(
+      ReorderPlanUnderlayCommand(underlayId: moving.id, order: order),
+    );
+  }
+
   /// The plan on screen, or null when the project has none.
   ///
   /// FALLS BACK TO THE FIRST rather than holding a dangling id: an
@@ -427,6 +461,7 @@ class _PlanEditorScreenState extends State<PlanEditorScreen> {
                   onOpen: _openPlan,
                   onCalibrate: _beginCalibrate,
                   onRemove: () => unawaited(_removeOpenPlan()),
+                  onReorder: _reorderPlan,
                 ),
               ),
               const Divider(height: 1),
@@ -512,6 +547,7 @@ class _UnderlayList extends StatelessWidget {
     required this.onOpen,
     required this.onCalibrate,
     required this.onRemove,
+    required this.onReorder,
   });
 
   final List<PlanUnderlay> underlays;
@@ -536,6 +572,15 @@ class _UnderlayList extends StatelessWidget {
   /// unspellable.
   final VoidCallback onRemove;
 
+  /// Moves the page at `from` to `at` (`#878`, DR-162 §11.161.4).
+  ///
+  /// TWO INDICES AND NOT AN ID, because that is what the reorderable list
+  /// speaks and the caller has the ordered list in front of it. The order
+  /// itself is minted by `orderBetween` against the two NEIGHBOURS, which
+  /// is a single field write rather than a renumber of the rail
+  /// (§11.161.5).
+  final void Function(int from, int at) onReorder;
+
   /// A stable handle for tests, per row.
   static String calibrateKeyFor(Uuid id) => 'underlay-calibrate-${id.v}';
 
@@ -545,15 +590,42 @@ class _UnderlayList extends StatelessWidget {
   /// Ditto for the row itself.
   static String rowKeyFor(Uuid id) => 'underlay-row-${id.v}';
 
+  /// Ditto for the grip a reorder starts from.
+  static String dragKeyFor(Uuid id) => 'underlay-drag-${id.v}';
+
   @override
-  Widget build(BuildContext context) => ListView.builder(
+  Widget build(BuildContext context) => ReorderableListView.builder(
     itemCount: underlays.length,
+    // ═════════════════════════════════════════════════════════════════
+    // A HANDLE, NOT THE WHOLE ROW (`#878`, DR-162 §11.161.4)
+    // ═════════════════════════════════════════════════════════════════
+    // Settled by the user. These rows carry tap-to-open plus `Calibrate`
+    // and `Remove`, and all three live INSIDE what a whole-row drag would
+    // claim: a slow tap becomes a drag and a missed button press reorders
+    // the set. `buildDefaultDragHandles: false` is what hands the gesture
+    // to the grip instead.
+    //
+    // UP AND DOWN BUTTONS WERE THE OTHER OPTION AND WERE REFUSED ON A
+    // MEASUREMENT. This row overflowed by 126 pixels at 240 wide holding
+    // ONE button (see `_UnderlayRow`), and the `Wrap` that fixed it is
+    // what two more would have had to negotiate with.
+    buildDefaultDragHandles: false,
+    // `onReorderItem` and not `onReorder`, which `port_grid.dart` already
+    // records: the older callback reports a `to` measured against the
+    // list BEFORE the dragged row leaves it, so dropping row 0 at the
+    // foot answers `length` rather than `length - 1`.
+    onReorderItem: onReorder,
+    // THE DEFAULT PROXY IS RIGHT HERE, unlike the port grid's. A rail row
+    // is a card-shaped thing already, so lifting and elevating it reads
+    // as being carried rather than as coming apart.
     itemBuilder: (context, i) {
       final u = underlays[i];
       return _UnderlayRow(
         key: ValueKey(_UnderlayList.rowKeyFor(u.id)),
         underlay: u,
         open: u.id == openId,
+        dragIndex: i,
+        reorderable: underlays.length > 1,
         room: u.locationId == null ? null : doc.locations[u.locationId]?.name,
         // DERIVED PER ROW AND PER BUILD, so the line answers for the
         // document as it is now. It moves when the SCALE changes and
@@ -568,6 +640,19 @@ class _UnderlayList extends StatelessWidget {
     },
   );
 }
+
+/// What the rail's grip says it does.
+const String kReorderPagesTooltip = 'Drag to reorder the pages';
+
+/// What a reorder says when `orderBetween` cannot mint a value.
+///
+/// **REFUSED IN WORDS RATHER THAN RENUMBERING THE RAIL** (DR-162
+/// §11.161.5). The one pair it cannot answer is reachable only from a
+/// hand-edited file, and rewriting every page's order behind somebody's
+/// back is a much larger edit than the gesture asked for.
+const String kReorderPagesRefused =
+    'These two pages are ordered too close together to fit another '
+    'between them. This can only happen in a file another program wrote.';
 
 /// One plan in the rail.
 ///
@@ -595,11 +680,23 @@ class _UnderlayRow extends StatelessWidget {
     required this.onOpen,
     required this.onCalibrate,
     required this.onRemove,
+    required this.dragIndex,
+    required this.reorderable,
     super.key,
   });
 
   final PlanUnderlay underlay;
   final bool open;
+
+  /// This row's position in the rail, which is what
+  /// `ReorderableDragStartListener` speaks.
+  final int dragIndex;
+
+  /// **FALSE ON A ONE-PAGE SET**, where the grip would be a control that
+  /// cannot do anything. A rail with a single row has no order to change,
+  /// and `#872`'s whole family of findings is about surfaces that offer
+  /// what they cannot perform.
+  final bool reorderable;
 
   /// What this plan can measure, for the state line (`PLAN-F/2`).
   final PlanMeasurability measurability;
@@ -628,11 +725,39 @@ class _UnderlayRow extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              underlay.name,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodyMedium,
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    underlay.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodyMedium,
+                  ),
+                ),
+                // ON THE NAME LINE AND NOT IN THE `Wrap` BELOW, which is
+                // where the two buttons live. That `Wrap` exists because
+                // this row overflowed by 126 pixels at 240 wide, and it
+                // works by DROPPING its children onto a second line: a
+                // grip that moved under the state text when the rail
+                // narrowed would be a drag target that changes place.
+                if (reorderable)
+                  ReorderableDragStartListener(
+                    key: ValueKey(_UnderlayList.dragKeyFor(underlay.id)),
+                    index: dragIndex,
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.grab,
+                      child: Tooltip(
+                        message: kReorderPagesTooltip,
+                        child: Icon(
+                          Icons.drag_indicator,
+                          size: 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ),
+                  ),
+              ],
             ),
             if (label != null) Text(label, style: theme.textTheme.labelSmall),
             Wrap(

@@ -842,4 +842,148 @@ void _roomListTests() {
       expect(find.byKey(PlanCalibrateChip.chipKey), findsNothing);
     });
   });
+  group('`#878`: the rail reorders the pages (DR-162 §11.161.4)', () {
+    /// A third page, added straight to the document. It is never OPENED,
+    /// so it needs no image in the cache: a rail row is text.
+    void addThird(DocumentController c) {
+      c.doc.underlays[const Uuid('ul-3')] = PlanUnderlay(
+        id: const Uuid('ul-3'),
+        name: 'Roof',
+        imageMember: 'underlays/ul-3.png',
+        format: PlanImageFormat.png,
+        pixelWidth: 600,
+        pixelHeight: 400,
+        contentHash: 'sha256:test',
+        order: const FracIndex('a2'),
+        meta: _meta(),
+      );
+    }
+
+    List<String> railOrder(DocumentController c) {
+      final all = c.doc.underlays.values.toList()
+        ..sort((a, b) {
+          final byOrder = a.order.v.compareTo(b.order.v);
+          return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
+        });
+      return [for (final u in all) u.name];
+    }
+
+    /// Drags the grip on [id] down by [dy], in six steps.
+    ///
+    /// ═════════════════════════════════════════════════════════════════
+    /// `pumpAndSettle` BETWEEN THE MOVES, AND THAT IS THE WHOLE TRICK
+    /// ═════════════════════════════════════════════════════════════════
+    /// The first draft pumped a fixed 16ms between moves and the reorder
+    /// NEVER HAPPENED, silently: the gesture ran, the list never moved a
+    /// row, and the assertion failed on the document rather than on
+    /// anything that named the cause. A reorderable list animates the
+    /// other rows out of the way and decides the drop index from where
+    /// they have got to, so a pointer that keeps moving while those
+    /// animations are mid-flight is asking a list that has not finished
+    /// answering the last question.
+    ///
+    /// `port_grid_test.dart` had the working shape already, and this is
+    /// the second file to need it. `tester.drag` does not work at all:
+    /// one synthetic move lands the pointer before the list has decided
+    /// anything.
+    ///
+    /// **THE STEP IS 30 AND THE ROWS ARE 100 AND 52 PIXELS TALL.** The
+    /// open row carries the two action buttons and the closed one does
+    /// not, so a single move sized to "one row" would be right for one
+    /// direction and wrong for the other.
+    Future<void> dragRow(WidgetTester tester, Uuid id, double dy) async {
+      final grip = find.byKey(ValueKey('underlay-drag-${id.v}'));
+      expect(grip, findsOneWidget, reason: 'no grip on that row');
+      final gesture = await tester.startGesture(tester.getCenter(grip));
+      await tester.pump(const Duration(milliseconds: 50));
+      for (var step = 0; step < 6; step++) {
+        await gesture.moveBy(Offset(0, dy / 6));
+        await tester.pumpAndSettle();
+      }
+      await gesture.up();
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('THE GRIP IS ABSENT ON A ONE-PAGE SET', (tester) async {
+      // A control that cannot do anything is the shape `#872`'s whole
+      // family of findings is about, pointed at ourselves.
+      await pump(tester, _controller());
+
+      expect(find.byIcon(Icons.drag_indicator), findsNothing);
+    });
+
+    testWidgets('and present on every row once there are two', (tester) async {
+      await pump(
+        tester,
+        _controller(withSecond: true),
+        members: const [_member1, _member2],
+      );
+
+      expect(find.byIcon(Icons.drag_indicator), findsNWidgets(2));
+    });
+
+    testWidgets('dragging the first page below the second reorders them', (
+      tester,
+    ) async {
+      final c = _controller(withSecond: true);
+      await pump(tester, c, members: const [_member1, _member2]);
+      expect(railOrder(c), ['Level 1', 'Site']);
+
+      await dragRow(tester, _ul1, 180);
+
+      expect(railOrder(c), ['Site', 'Level 1']);
+    });
+
+    testWidgets('ONE FIELD WRITE, NEVER A RENUMBER (§11.161.5)', (
+      tester,
+    ) async {
+      // The property that makes this cheap and makes undo one step. A
+      // reorder that rewrote every page's order would touch three rows
+      // to move one, and `orderBetween` exists precisely so it does not.
+      final c = _controller(withSecond: true);
+      addThird(c);
+      await pump(tester, c, members: const [_member1, _member2]);
+      final before = {
+        for (final u in c.doc.underlays.values) u.id: u.order.v,
+      };
+
+      await dragRow(tester, _ul1, 180);
+
+      final moved = [
+        for (final u in c.doc.underlays.values)
+          if (u.order.v != before[u.id]) u.name,
+      ];
+      expect(moved, ['Level 1'], reason: 'exactly one row changed its order');
+    });
+
+    testWidgets('one undo puts the pages back', (tester) async {
+      final c = _controller(withSecond: true);
+      await pump(tester, c, members: const [_member1, _member2]);
+
+      await dragRow(tester, _ul1, 180);
+      expect(railOrder(c), ['Site', 'Level 1']);
+
+      c.undo.undo(c.doc);
+      await tester.pumpAndSettle();
+      expect(railOrder(c), ['Level 1', 'Site']);
+    });
+
+    testWidgets('THE OPEN PAGE STAYS OPEN when the rail is reordered', (
+      tester,
+    ) async {
+      // Reordering is a change to the SET, not to what somebody is
+      // looking at, and a canvas that switched pictures under a drag
+      // would be the surprise this gesture must not have.
+      final c = _controller(withSecond: true);
+      await pump(tester, c, members: const [_member1, _member2]);
+
+      await dragRow(tester, _ul1, 180);
+
+      expect(find.byType(PlanCanvasScreen), findsOneWidget);
+      expect(
+        find.byKey(ValueKey('underlay-row-${_ul1.v}')),
+        findsOneWidget,
+      );
+    });
+  });
 }

@@ -1136,7 +1136,14 @@ $SuiteFloors = @{
     # whether the sentence is true of the document. Four of the rail's
     # cases needed a SECOND plate in the fixture: a rail with one row
     # cannot tell a per-row control from a per-selection one.
-    'rackpal_ui'     = 1824
+    # 1838 at `#878`: +14. `Delete` and `Backspace` take the selection
+    # off the plan, and the rail reorders by a drag handle (DR-162).
+    # ONE OF THE FOURTEEN IS NOT ABOUT `#878` AT ALL: this canvas never
+    # called `requestFocus` and relied on `autofocus`, which wins only
+    # while nothing else has claimed focus. True in every case in its own
+    # file, where the canvas is the whole tree; false after one click
+    # anywhere else, which is why `Esc` had never worked here either.
+    'rackpal_ui'     = 1838
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1245,7 +1252,13 @@ $SuiteFloors = @{
     # The other is the mirror of the exemption-format test, refusing a
     # board item in the map that says nothing is owed. Nine mutations,
     # nine kills.
-    'rackpal_app'    = 1031
+    # 1033 at `#878`: +2, the first thing in this suite ever to OPEN the
+    # Plan tab. `shell_tabs_test.dart` asserts `Plan` is in the strip and
+    # never switches to it, which is `#877`'s index-not-route gap again.
+    # The tab switch runs inside `runAsync` because the underlay's decode
+    # cannot complete in the fake-async zone. Neither case uses a pointer:
+    # no gesture reaches this tab at this mounting, which is `#882`.
+    'rackpal_app'    = 1033
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
