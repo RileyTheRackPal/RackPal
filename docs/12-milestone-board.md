@@ -10384,6 +10384,91 @@ record is worth more than the tidiness of removing it.
 
 **Commits** (§8.8). `#880` and `#881` `2460d462` (DR-161) and `4878134f` (the gate).
 
+#### 5.9.38 `#878`: the two commands that UNDO a placement, and a canvas that never took focus · `DR-162` · no version move
+
+2026-09-13. Found by `#872`'s reachability gate. It closes under `#786` and moves no number.
+
+##### 5.9.38.1 The missing halves were both the undo of something
+
+`ClearPlanPinCommand` and `ReorderPlanUnderlayCommand` shipped at `PLAN-C` with real reverts, their
+own `LabelKey` values and six test constructions between them, and no caller. `SetPlanPinCommand` and
+`RemovePlanUnderlayCommand` live in the same file and both had callers, which is the shape worth
+naming: **every gesture that PLACED something was wired and neither gesture that took it back was.**
+A rack pinned to the wrong room could only be fixed by pinning it somewhere else, and docs/15 §6's
+gesture table has a row for every way to create a pin and none for removing one.
+
+##### 5.9.38.2 One key, three canvases, and the cost stated rather than discovered
+
+`Delete` and `Backspace` were the user's choice over a visible control. The keymap's `meaningDrift`
+rule forces one label per key across scopes, so this reads *"Delete the selection"* while the rack's
+`Delete` removes a device from the project outright, and DR-011.6 had already refused to widen that
+rule because *"a keyboard-only user cannot see a scope boundary"*.
+
+**The reason it is right anyway is that the label names the SELECTION**, and the selection is a
+different kind of thing on each canvas: devices on the rack, cables on the schematic, pins here. What
+makes it SAFE is the strip: a cleared pin puts its carrier straight back into the unpinned rail along
+the bottom, so the answer to *"did I just delete my rack"* appears three inches below the pointer in
+the same frame, and `unpinned_carriers.dart` makes the frightening state unreachable because
+*"unpinned" is no pin AT ALL*.
+
+##### 5.9.38.3 `pinCarrierFor`, and the converter that could not be written
+
+The scene's `PlanPinCarrier` and the command layer's `PinCarrier` have coexisted since `PLAN-C` with
+no converter between them, and `plan_scene.dart`'s own header says the duplication is deliberate: one
+says which collection a WRITER reaches into, the other which mark to DRAW.
+
+**Nothing had needed to cross between them, and the reason is the interesting half.** Every writer so
+far knew its carrier before it started: the palette places a device, the drop table pins an outlet,
+the strip row carries its own kind. Clearing a pin is the first gesture that begins from a mark
+somebody is LOOKING AT and has to work back to what it hangs on. A converter is exactly what
+`draw_source_gate_test.dart` refuses, so `pinCarrierFor` asks the document instead.
+
+##### 5.9.38.4 THE PLAN CANVAS NEVER CALLED `requestFocus`, AND `Esc` HAS NEVER WORKED
+
+`rack_canvas_screen.dart` calls `_canvasFocus.requestFocus()` in **eight** places. This canvas called
+it in **none**, relying on `autofocus: true`, which wins only while nothing else has claimed focus:
+true in every case in its own test file, where the canvas is the whole tree, and false after one
+click anywhere else.
+
+`Shortcuts` sits above the focus node, so **`planCancel` has been dead since `PLAN-E/5`**. It is that
+scope's only binding, it is green in its own cases, and it could not fire in the product. The new
+case mounts the canvas beside a focusable sibling and **fails without the fix**, which is what the
+cases above it could not do.
+
+##### 5.9.38.5 And no pointer gesture reaches the Plan tab at the app mounting
+
+The first app-level test ever to open the Plan tab (`shell_tabs_test.dart` asserts `Plan` is in the
+strip and never switches to it, which is `#877`'s index-not-route gap again) found that a tap does
+not select a pin, a drag does not move one, and a drag on the rail's grip does not reorder. All three
+work in `rackpal_ui`'s own suites; `signposting_test.dart` taps the RACK canvas in the same harness.
+
+**Whether that is the product or the harness is not settled and is not guessed at.** `#882` carries
+the measurement and the one-minute check that tells them apart. The two gestures are proved at the
+widget level and the app-level proof is recorded as owed, in the test file's own header.
+
+##### 5.9.38.6 The reorder, and what the row's width history decided
+
+A dedicated grip, over whole-row drag and over up/down buttons. Whole-row drag puts tap-to-open and
+two buttons inside the drag target; **up/down buttons were refused on a measurement**, since that row
+overflowed by 126 pixels at 240 wide holding ONE button and the `Wrap` that fixed it is what two more
+would have had to negotiate with.
+
+The drag itself needed `pumpAndSettle` BETWEEN the moves, which `port_grid_test.dart` already knew
+and which cost a probe to rediscover: a reorderable list animates the other rows aside and decides
+the drop index from where they have got to, so a pointer that keeps moving mid-animation is asking a
+list that has not finished answering. A fixed 16ms pump produced a gesture that ran and reordered
+nothing, silently.
+
+##### 5.9.38.7 Evidence
+
+Floors: `rackpal_ui` 1824 to 1838, `rackpal_app` 1031 to 1033. Gates: 17. Analyzer pin unmoved at
+233. `KeyScope.plan` goes from one binding to three and `kKeymap` from 71 to 73, each with its
+reason beside the number.
+
+`#872`'s exemption list loses both rows.
+
+**Commits** (§8.8). `#878` `199131c4` (DR-162) and `fb4544be` (the feature).
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·

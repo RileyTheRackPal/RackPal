@@ -20406,7 +20406,26 @@ pages, and `ReorderPlanUnderlayCommand` already takes exactly one id and one ord
 is reachable only from a hand-edited file and renumbering the whole rail behind somebody's back is a
 larger edit than the gesture asked for. `nextOrder`'s own header carries that argument.
 
-**11.161.6 Scope.** **No scope change.** Both commands are `PLAN-C` work that shipped without a
+**11.161.6 WHAT BUILDING THIS FOUND, WHICH THE TICKET DID NOT NAME.** Two things, and both are
+older than `#878`.
+
+**THE PLAN CANVAS NEVER TOOK FOCUS.** `rack_canvas_screen.dart` calls `_canvasFocus.requestFocus()`
+in eight places; this one called it nowhere and relied on `autofocus: true`, which wins only while
+nothing else has claimed focus. That is true in every case in its own test file, where the canvas is
+the whole tree, and false after one click anywhere else. `Shortcuts` sits above the focus node, **so
+`Esc` has never worked on this surface either**: `planCancel` shipped at `PLAN-E/5` as the scope's
+only binding, is green in its own cases, and could not fire. Fixed here, because §11.161.1's key
+would have been dead on arrival for the same reason.
+
+**AND NO POINTER GESTURE REACHES THE PLAN TAB AT THE APP MOUNTING**, measured by the first
+app-level test ever to open it: a tap does not select a pin, a drag does not move one, and a drag on
+the rail's grip does not reorder. All three work in `rackpal_ui`'s own suites, and
+`signposting_test.dart` taps the RACK canvas in the same harness, so it is specific to this tab.
+**Whether that is the product or the test harness is NOT settled here and is not guessed at.** Board
+`#882` carries the evidence and the one-minute check that tells them apart. This ruling's two
+gestures are proved at the widget level; the app-level proof is owed and is named as owed.
+
+**11.161.7 Scope.** **No scope change.** Both commands are `PLAN-C` work that shipped without a
 caller; this rules how they are reached, inside scope the Plan view already owns. Board `#878` cites
 it, and `#872`'s exemption list loses both rows.
 
