@@ -55,7 +55,9 @@ the first run painted an error where the elevation should have been.
 # Related
 
 * [DR-163](/decisions/dr-163-zero-u-from-the-inspector.md) is what this
-  completes: §11.162.1's reason for the rack panel is now spent.
+  completes: §11.162.1's reason for the rack panel is now spent, and
+  [DR-167](/decisions/dr-167-the-occupant-fields-move.md) is the answer the user
+  gave when it was put back to them.
 * [Assert the artifact, not the
   mechanism](/practices/assert-the-artifact-not-the-mechanism.md) is what the
   closing case obeys: clicking the bar selects the device, which the inspector
