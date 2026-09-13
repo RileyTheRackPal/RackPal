@@ -20445,10 +20445,30 @@ somewhere to sit. `add_outlets.dart` quotes AC-044 while doing it and says why i
 thing: *"this is not a person: it is a remedy the person asked for by name."* So a channel could
 appear in a rack and nobody could add one deliberately, move the PDU inside it, or take it away.
 
-**11.162.1 RULED: THE RACK INSPECTOR OWNS THE CHANNEL, THE DEVICE INSPECTOR OWNS THE OCCUPANT.**
-Settled by the user on 2026-09-13. A channel is a rail on a rack and belongs to the rack's panel; an
-occupant's channel and offset are properties of the DEVICE, which is where AC-044 puts them and where
-every other device property is edited.
+**11.162.1 RULED: THE RACK INSPECTOR OWNS BOTH, AND THE SECOND HALF OF THAT WAS A CORRECTION.**
+Settled by the user on 2026-09-13, twice.
+
+A channel is a rail on a rack and belongs to the rack's panel, which was never in doubt. The
+occupant's channel and start U were ruled onto the DEVICE inspector first, because that is where
+AC-044 puts them (*"created and edited from the inspector (channel, start U, span)"*) and where every
+other device property is edited. **It was built there and it could not be reached.**
+
+**A 0U OCCUPANT CANNOT BE SELECTED.** `draw/scene/scene_builder.dart` reads
+`if (placement is! RailPlacement) continue;`, so a 0U device is never in the elevation's scene, never
+hit-tested and never selectable. AC-044's other half, *"renders as a plain bar"*, was never built
+either, which is what makes the first half unreachable: **the ruling's two clauses depend on each
+other and only one of them shipped.**
+
+So a section on the device inspector would have been a surface nothing could open, which is the exact
+defect `#872` exists to catch, in the ticket closing `#872`'s last two rows. The fields moved under
+their channel in the rack panel, which `Ctrl+Alt+U` reaches with nothing selected. **The alternative
+was building the bar first**, and it was refused as a separate body of work rather than as a bad idea:
+it is scene geometry, a hit-test and selection for a placement the scene builder drops on one line,
+and it is owed whether or not these fields exist.
+
+**RECORDED RATHER THAN QUIETLY RE-AIMED.** The first answer was given against a premise that turned
+out to be false, and a ruling that silently ended up somewhere else would leave the next reader
+believing the device inspector had been considered and rejected on its merits.
 
 **11.162.2 RULED: ADDING A CHANNEL TAKES ITS BOUNDS UP FRONT**, in a form of side, start U, end U and
 an optional name, rather than a one-click default the person then corrects.
@@ -20490,6 +20510,11 @@ drag-into-gutter, no resize handles, no `G` toggle and no overlap warnings, all 
 sends to v1.1. It does not let a person CREATE a 0U occupant from nothing either: placing a device
 into a channel is `catalog_placement.dart`'s, and AC-044's *"created"* is satisfied by the palette
 placing a 0U-capable device, not by a control in this panel.
+
+**AND IT DOES NOT BUILD THE PLAIN BAR, WHICH IS STILL OWED.** AC-044 puts that in v1 and
+§11.162.1 is why it matters: a 0U occupant is invisible in the elevation and unselectable, so the
+only place it can be seen or edited is the rack inspector's list. Board `#883` carries it, with the
+one line in `scene_builder.dart` that drops it.
 
 **11.162.6 Scope.** **No scope change.** AC-044 already scopes the inspector surface to v1 and this
 builds the part of it that was owed. Board `#876` cites it, and `#872`'s exemption list loses its
