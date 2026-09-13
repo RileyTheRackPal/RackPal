@@ -146,6 +146,7 @@ import 'package:rackpal_ui/src/canvas/status_message_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
 import 'package:rackpal_ui/src/shell/coach_mark.dart';
+import 'package:rackpal_ui/src/validation/why_rule_dialog.dart';
 
 /// The headline shown when the document draws symbols but holds no cable.
 ///
@@ -4406,6 +4407,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
         onConnectAnyway: () => _commitWire(overriding: true),
         onPickAnother: _dismissChip,
         onRemedy: _applyRemedy,
+        // `[ Why? ]` (`#875`). DR-114 §11.113.3 made the button optional
+        // and absent when this is null, and `#296` built both the viewer
+        // and the `RuleMeta.rationale` under it. Nothing supplied it, so
+        // the deeper explanation this chip's own header promises was
+        // reachable from nowhere.
+        onWhy: () {
+          // NOT AWAITED, and not wrapped: the viewer is read-only, so
+          // nothing here depends on it closing.
+          showWhyRuleDialog(context: context, ruleId: chip.ruleId);
+        },
       ),
     );
   }

@@ -1102,7 +1102,13 @@ $SuiteFloors = @{
     # are the reason the map is written out rather than de-camel-cased:
     # `setRoomEstimate` and `clearRoomEstimate` are two LabelKey values
     # precisely so the menu never names the opposite act.
-    'rackpal_ui'     = 1790
+    # 1799 at `#875`: +9. Acknowledging a finding, withdrawing that, and
+    # PWR-003's remedy, all through `RackCanvasScreen` rather than through
+    # `DrcPanel`. That distinction is the whole item: every case that
+    # could have caught this was written against the panel, which is
+    # where the callbacks ARRIVE, and the defect was at the mount, which
+    # is where they come from.
+    'rackpal_ui'     = 1799
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1181,7 +1187,12 @@ $SuiteFloors = @{
     # it is added. That sweep is what found the fix INCOMPLETE on
     # Structured Wiring, where an autofocused quick-entry box still held
     # the key; two more cases pin the condition that fixed it.
-    'rackpal_app'    = 1015
+    # 1020 at `#875`: +5. The callback-supplier gate, which asks the
+    # third question neither existing gate could: `#674`'s asks whether a
+    # declared callback is INVOKED, `#872`'s follows Command construction
+    # with every UI declaration as a root, and this one asks whether any
+    # mount ever HANDS ONE OVER. Two of the five guard the gate itself.
+    'rackpal_app'    = 1020
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

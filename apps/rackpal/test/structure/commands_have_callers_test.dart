@@ -126,20 +126,20 @@ const List<String> _uiRoots = ['../../packages/rackpal_ui/lib', 'lib'];
 /// without an item is the failure this map exists to prevent, and the
 /// test below refuses a row whose value does not look like one.
 const Map<String, String> _exempt = {
-  // `#875` — `ValidationDrawer` is mounted once, at
-  // `rack_canvas_screen.dart:4602`, with none of `onAcknowledge`,
-  // `onWithdraw` or `onRemedy` supplied. Each is nullable and documented
-  // as "null shows no button rather than a dead one", so the buttons are
-  // absent and nothing fails.
-  'AcknowledgeFindingCommand': '#875',
-  'UnacknowledgeFindingCommand': '#875',
+  // `#875` CLOSED THESE THREE ROWS, AND THE STALENESS CHECK IS WHAT
+  // FOUND THE THIRD. Wiring `ValidationDrawer`'s callbacks made
+  // `AcknowledgeFindingCommand` and `UnacknowledgeFindingCommand`
+  // reachable, which was the point; it ALSO made
+  // `AddZeroUChannelCommand` reachable through PWR-003's remedy, which
+  // was exempted against `#876` and which nobody was thinking about.
+  // This test went red naming all three.
 
   // `#876` — AC-044 makes the inspector the only way a person creates a
-  // 0U occupant and the inspector has no such surface. All three
-  // builders in `zero_u_commands.dart` are callerless too. The remedy
-  // path that would have added one (`addOutletsToRack`) is itself
-  // unreachable, which is `#875`.
-  'AddZeroUChannelCommand': '#876',
+  // 0U occupant and the inspector has no such surface. Two of the three
+  // builders in `zero_u_commands.dart` are still callerless; the third
+  // is reached only by `#875`'s remedy, which mints a channel as a
+  // remedy rather than as a person's gesture, so AC-044's clause is
+  // still owed.
   'RemoveZeroUChannelCommand': '#876',
   'SetZeroUPositionCommand': '#876',
 

@@ -115,6 +115,10 @@ class ValidationDrawer extends StatefulWidget {
     this.height = kDrawerAutoHeight,
     this.onHeightChanged,
     this.onReveal,
+    this.severityFilter,
+    this.onSeverityFilterChanged,
+    this.includeAcknowledged = true,
+    this.onIncludeAcknowledgedChanged,
     this.onAcknowledge,
     this.onWithdraw,
     this.onRemedy,
@@ -142,6 +146,20 @@ class ValidationDrawer extends StatefulWidget {
 
   /// Takes the locus id: the panel reveals an ENTITY, not a finding.
   final ValueChanged<Uuid>? onReveal;
+
+  /// The severity chips and the `Acknowledged` toggle (`#875`).
+  ///
+  /// **THE WHOLE FILTER WAS BUILT AND UNREACHABLE.** `DrcPanel` renders
+  /// both controls, `groupFindings` takes `severities` and
+  /// `includeAcknowledged`, and this widget passed neither the state nor
+  /// its callbacks, so the panel drew controls that could not move. Same
+  /// defect as the three callbacks below, in the same feature, found by
+  /// the same gate.
+  final Set<Severity>? severityFilter;
+  final ValueChanged<Set<Severity>>? onSeverityFilterChanged;
+  final bool includeAcknowledged;
+  final ValueChanged<bool>? onIncludeAcknowledgedChanged;
+
   final ValueChanged<Finding>? onAcknowledge;
   final ValueChanged<FindingRow>? onWithdraw;
   final ValueChanged<Finding>? onRemedy;
@@ -219,6 +237,11 @@ class _ValidationDrawerState extends State<ValidationDrawer> {
                   grouping: widget.grouping,
                   onGroupingChanged: widget.onGroupingChanged,
                   hasAnyFindings: widget.findings.isNotEmpty,
+                  severityFilter: widget.severityFilter,
+                  onSeverityFilterChanged: widget.onSeverityFilterChanged,
+                  includeAcknowledged: widget.includeAcknowledged,
+                  onIncludeAcknowledgedChanged:
+                      widget.onIncludeAcknowledgedChanged,
                   onReveal: widget.onReveal,
                   onAcknowledge: widget.onAcknowledge,
                   onWithdraw: widget.onWithdraw,

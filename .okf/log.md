@@ -1,5 +1,41 @@
 # Update Log
 
+## 2026-09-12 (twenty-sixth entry)
+
+* **Gate**: [callbacks have suppliers](/gates/callbacks-have-suppliers.md),
+  `#875`. A widget's nullable callback that NO mount ever passes fails the build.
+  Its exemption list is EMPTY, because all six the first run found were wired
+  rather than exempted.
+* **Closed**: `#875` with `ccde720b`. **No version move**: it closes under
+  `#786`.
+* **Note**: **THE FEATURE WAS BUILT THREE TIMES AND REACHABLE NONE OF THEM.**
+  DR-128 §11.127.5 said the panel renders the remedy as a button and it did not;
+  DR-129 §11.128.4 recorded that and built the button; the button then had
+  nothing behind it, because the one `ValidationDrawer` mount in the product
+  passed none of its three callbacks. Each is nullable and documented as "null
+  shows no button rather than a dead one", so the controls were ABSENT rather
+  than broken and every suite stayed green.
+* **Note**: **THE BACKSTOP WAS WRITTEN AT THE WRONG LAYER**, which is the part
+  that generalises. `remedy_pairing_test.dart` asserts every `FindingRemedy`
+  reaches a row a person can press, and it passes: the row does render the
+  button. It constructs `DrcPanel` itself and supplies the callback, so it could
+  not see that no mount did.
+* **Note**: **A NAME GREP WOULD HAVE MISSED THE DEFECT THE GATE IS FOR.**
+  `onRemedy:` IS supplied somewhere, to `SpringBackChipCard`. A supplier has to
+  be a construction of THAT widget, and a case asserts that rather than the
+  header describing it.
+* **Note**: **`#872`'s STALENESS CHECK EARNED ITS KEEP ON ITS FIRST OUTING.**
+  Wiring the drawer made three exempted commands reachable and it named all
+  three, including `AddZeroUChannelCommand`, exempted against `#876` and not on
+  anybody's mind: PWR-003's remedy mints a 0U channel.
+* **Note**: **ONE MUTATION BECAME A DELETION AND THE OTHER BECAME A CASE.** A
+  re-check of `evaluateAcknowledgement` in the shell survived being mutated away,
+  and
+  [a guard the model makes unreachable](/practices/a-guard-the-model-makes-unreachable.md)
+  says which way that reads: the dialog computes the same verdict and disables its
+  confirm, and that invariant is pinned where it lives. The second survivor was a
+  real gap, because nothing exercised CR-019's project-wide scope at all.
+
 ## 2026-09-12 (twenty-fifth entry)
 
 * **Ruled**: [DR-159](/decisions/dr-159-undo-is-document-global.md). Undo is

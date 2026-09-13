@@ -156,6 +156,7 @@ export 'src/structure/structure_matrix_view.dart';
 export 'src/theme/console_theme.dart';
 export 'src/theme/status_marker.dart';
 export 'src/validation/acknowledge_finding_dialog.dart';
+export 'src/validation/add_outlets_choice_dialog.dart';
 export 'src/validation/drc_panel.dart';
 export 'src/validation/rule_severity_dialog.dart';
 export 'src/validation/validation_drawer.dart';
