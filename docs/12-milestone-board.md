@@ -10570,6 +10570,108 @@ the first time since that gate filed twelve.
 **Commits** (§8.8). `#876` `c95224d2` (the CR-025 fix), `9a0186a1` (DR-163) and `33d7a2b6` (the
 inspector). **Twelve mutations, twelve kills.**
 
+#### 5.9.40 `#884` and `#882`: the producer that 0U list never had, and a ticket that measured a harness · `DR-164` · no version move
+
+2026-09-13. Both reported by the user against the previous entry's work, one confirming a gap and
+one disproving a filing. Both close under `#786` and move no number.
+
+##### 5.9.40.1 NOTHING IN THE PRODUCT COULD PUT A DEVICE IN A 0U CHANNEL
+
+Reported as *"the rack inspector list doesn't actually show a 0U device at all"*, which is true of
+every project a person made and always was.
+
+Censused by call site, in `lib/` only. `buildPlaceFromCatalogCommand` takes a `ZeroUTarget? zeroU`
+and the branch behind it is complete: it builds the `ZeroUPlacement`, runs `evaluatePlacement` and
+returns `PLC-003`'s refusal by name. **`ZeroUTarget` has one definition, one mention in an
+`add_outlets.dart` comment, and zero call sites.** The only reachable writer of a `ZeroUPlacement` in
+the whole product is `planSetZeroUPosition`, which MOVES one that already exists.
+
+The three starters that do show a PDU get it from `tool/starters/authoring.dart` writing the
+placement directly, which is why the surface looked alive to everything that tested it.
+
+##### 5.9.40.2 THE GAP WAS RECORDED, AND RECORDED AS HANDLED
+
+This is the part worth keeping. §11.162.5, written one ticket earlier, says `#876` *"does not let a
+person CREATE a 0U occupant from nothing either: placing a device into a channel is
+`catalog_placement.dart`'s, and AC-044's 'created' is satisfied by the palette placing a 0U-capable
+device."*
+
+**The file it defers to refuses exactly that**, with *"P01 is a 0U occupant: it mounts in a vertical
+channel, not rail holes. Add it from the rack inspector (AC-044)."* So the panel deferred to the
+palette, the palette deferred to the panel, and between them nothing could place at all.
+
+**A deferral reads as a decision.** The clause is not a TODO, carries no board id, and names a real
+file with a real function in it; everything about its shape says somebody checked. That is the tell,
+and the practice is [each surface deferred to the
+other](../.okf/practices/each-surface-deferred-to-the-other.md).
+
+##### 5.9.40.3 What shipped, and the two things the ruling decided rather than leaving to the code
+
+An `Add device…` control on each channel row, opening a picker over the document's shelf. Ruled
+against a drag from the palette onto the rendered bar, because the bar is `#883`: that gesture would
+put the only producer behind the one AC-044 clause already left unbuilt, which is §11.162.1's trap a
+second time and inside the same feature.
+
+**The occupant lands at the CHANNEL START**, not at a first free offset. A 0U occupant has no extent
+anywhere in the format, which `zero_u_commands.dart` already recorded as a known model gap and the
+one shipped 0U archetype confirms with `frontU: 0, rearU: 0`. With no extent there is no overlap, so
+"free" has no meaning and an offset search would be arithmetic dressed as a rule.
+
+**The predicate moved rather than being copied.** `isZeroUBody` is public in `catalog_placement.dart`
+and both the picker and the placer read it, so the picker cannot come to offer a row the placer
+refuses. Same reasoning the same file records for `PLC-001`, which was transcribed by hand into a
+planner and had to be given back its rule id.
+
+##### 5.9.40.4 A MUTATION PROVED THE RULING'S OWN REASONING WRONG
+
+§11.163.4 was drafted saying the new occupant is not selected because selecting it would swap the
+inspector from the rack panel to a device panel. **It would not.** `_inspectorTarget` is moved by
+canvas GESTURES and never by `_selection.apply`, so the panel stays either way.
+
+The case written to defend that clause asserted the rack panel was still on screen, and it **passed
+with the mutation applied**. A test that cannot fail is not evidence, and that one was defending a
+mechanism rather than an artifact.
+
+**The decision survives with a better reason**, which is the useful outcome. `_finalizeCatalogPlacement`
+requests CANVAS FOCUS and selects in one breath, and pairing those aims the keyboard at a device the
+elevation never draws. `Delete` is the sharp end: `_deleteSelection` removes an unwired device with
+no confirmation at all, because `confirmDeviceRemoval` only builds a dialog when something would
+cascade. The case now asserts that, and the mutation that routes the placement through
+`_finalizeCatalogPlacement` kills it.
+
+##### 5.9.40.5 `#882` closed as not a defect, and the filing is the lesson
+
+Filed while building `#878`: at the app mounting, a tap on a plan pin does not select it and a drag
+does not move it. **The user opened a project with a floorplan and dragged a pin.** It works.
+
+The focus half is answered by reading, and answered the same way. Every pointer-down on a canvas
+arrives through `CanvasIntentHandler.beginDrag`, a tap being a begin plus a commit with no movement,
+and `#878` put `_canvasFocus.requestFocus()` at the top of that method. **So a plain CLICK on the
+plan already takes the keyboard**, and `Delete`, `Backspace` and `Esc` are live after one, not only
+after a drag.
+
+The ticket was filed as MEASURED and deliberately not diagnosed, which was the right instinct. What
+it measured was a HARNESS, and its title named the tab. It also named the one-minute manual check
+that settled it, and that check was the cheaper first move. The measurement is kept in
+`plan_tab_route_test.dart`'s header, where it is still true and where it stops the next person
+writing a pointer assertion that cannot fail.
+
+##### 5.9.40.6 Evidence
+
+Floors: `rackpal_ui` 1857 to 1866. Gates: 17. Analyzer pin unmoved at 233.
+
+**Five of the nine new cases go through the real `RackCanvasScreen`**, which is the only thing that
+can see the designator coming from the allocator rather than the picker, the signature coming from
+the session, and what the keystroke after a placement does.
+
+**Seven mutations, seven killed**, one of them only after the case defending it was rewritten to
+assert an artifact. **Not covered, and measured rather than omitted**: the `CatalogPlacementFailed`
+arm and the stale-channel guard are defensive. With a template the picker offered and an offset of
+zero inside a resolved channel, no refusal `PLC-003` can return is reachable through this surface.
+
+**Commits** (§8.8). `#884` `f04392a4` (DR-164) and `d688d0d7` (the producer, carrying §11.163.4's
+correction). `#882` `868bbcdf`.
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·
