@@ -788,7 +788,13 @@ $SuiteFloors = @{
     # round trip, because a TemplateSnapshot carries the contentHash every
     # TemplateRef compares against and anything but the same object makes
     # delete-then-undo lossy in the entity CR-117 is about.
-    'rackpal_core'   = 4636
+    # 4639 at `#879`: +3. `overridableRules` and its two directions.
+    # The filter lived inside the settings picker first and a mutation
+    # that deleted it SURVIVED: that list is virtualised, so a tier-1 row
+    # below the fold is never built and `findsNothing` passes whether the
+    # rule was excluded or merely out of sight. Moved here, a test reads
+    # every rule in the catalogue and cannot be fooled that way.
+    'rackpal_core'   = 4639
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1108,7 +1114,14 @@ $SuiteFloors = @{
     # could have caught this was written against the panel, which is
     # where the callbacks ARRIVE, and the defect was at the mount, which
     # is where they come from.
-    'rackpal_ui'     = 1799
+    # 1805 at `#879`: +6. The `Rule severities` section in project
+    # settings, which is the first route to `SetRuleOverrideCommand` and
+    # to `showRuleSeverityDialog`, both shipped at M5-B3 with their own
+    # suites and neither reachable. One of the six exists because a
+    # mutation found it: "use the default" REMOVES an override rather
+    # than recording one that agrees with it, which is the distinction
+    # the dialog's own typedef draws.
+    'rackpal_ui'     = 1805
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1192,7 +1205,12 @@ $SuiteFloors = @{
     # declared callback is INVOKED, `#872`'s follows Command construction
     # with every UI declaration as a root, and this one asks whether any
     # mount ever HANDS ONE OVER. Two of the five guard the gate itself.
-    'rackpal_app'    = 1020
+    # 1022 at `#879`: +2. A rule override is a SIGNED decision, so these
+    # go through the shell: the author and the date come from the
+    # session, and nothing anywhere asserted that until blanking the
+    # actor survived a mutation. The second walks the Edit menu, which is
+    # `#874`'s machinery meeting `#879`'s command.
+    'rackpal_app'    = 1022
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

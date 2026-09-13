@@ -156,9 +156,11 @@ const Map<String, String> _exempt = {
   'ClearPlanPinCommand': '#878',
   'ReorderPlanUnderlayCommand': '#878',
 
-  // `#879` — `ruleOverrides` rows carry a reason, an author and a date,
-  // all persisted, none writable by any gesture.
-  'SetRuleOverrideCommand': '#879',
+  // `#879` CLOSED ITS ROW. The command, `showRuleSeverityDialog` and
+  // `RuleOverride`'s reason/author/date were all built at M5-B3 and
+  // nothing opened the dialog. Project settings now has a `Rule
+  // severities` section beside `Signal colours`, which is where a
+  // standing decision about the whole project belongs.
 
   // `#880` — the only one of the twelve with NO TESTS EITHER, so the
   // first question is whether it should exist at all. DR-039 made

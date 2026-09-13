@@ -152,4 +152,49 @@ void main() {
       }
     });
   });
+
+  group('`#879`: which rules may carry a standing decision', () {
+    test('every tier-1 rule is excluded, and the list reads ALL of them', () {
+      // THIS EXISTS BECAUSE A UI TEST COULD NOT SAY IT. The project
+      // settings picker filtered tier 1 out inside the widget, and a
+      // mutation that removed the filter SURVIVED: that list is
+      // virtualised, so a tier-1 row below the fold is never built and
+      // `findsNothing` passes whether it was excluded or merely out of
+      // sight. The filter moved to `overridableRules` so this test can
+      // read every rule in the catalogue.
+      final offered = overridableRules().map((r) => r.ruleId).toSet();
+      final tierOne = kRulesById.values
+          .where((r) => r.tier == RuleTier.modelIllegal)
+          .map((r) => r.ruleId)
+          .toSet();
+
+      expect(tierOne, isNotEmpty, reason: 'the catalogue has tier-1 rules');
+      expect(
+        offered.intersection(tierOne),
+        isEmpty,
+        reason:
+            'a tier-1 rule refuses the edit outright and files no finding, '
+            'so an override of one would sit in the file forever matching '
+            'nothing, which is a person believing they decided something',
+      );
+    });
+
+    test('and every rule that is NOT tier 1 IS offered', () {
+      // The other direction, which an exclusion check alone cannot see: a
+      // filter that returned the empty list would pass the test above.
+      final offered = overridableRules().map((r) => r.ruleId).toSet();
+      final expected = kRulesById.values
+          .where((r) => r.tier != RuleTier.modelIllegal)
+          .map((r) => r.ruleId)
+          .toSet();
+      expect(offered, expected);
+      expect(offered.length, greaterThan(10));
+    });
+
+    test('the order is total, so two runs agree', () {
+      final ids = overridableRules().map((r) => r.ruleId).toList();
+      expect(ids, orderedEquals([...ids]..sort()));
+      expect(overridableRules().map((r) => r.ruleId).toList(), ids);
+    });
+  });
 }

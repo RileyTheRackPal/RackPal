@@ -49,6 +49,10 @@ Future<List<Command<RackDocument>>> _open(
             onPressed: () => showProjectSettingsDialog(
               context,
               doc: doc,
+              // `#879`: a RuleOverride is signed, so the dialog needs a
+              // clock and an author for that one section.
+              clock: FixedClock(DateTime.utc(2026, 9, 12)),
+              actor: 'test',
               onEdit: (commands) {
                 ran.addAll(commands);
                 for (final c in commands) {
@@ -80,6 +84,20 @@ final Finder _list = find
       matching: find.byType(Scrollable),
     )
     .first;
+
+/// The rule the PICKER shows first, sorted the way it sorts.
+///
+/// `_firstShown`'s reasoning, for the other list: both are virtualised,
+/// so a row chosen for being recognisable is very often below the fold
+/// and never built.
+RuleMeta _firstOverridable() =>
+    (kRulesById.values
+            .where(
+              (r) => ruleAcceptsAnException(r.ruleId, 'overridden') == null,
+            )
+            .toList()
+          ..sort((a, b) => a.ruleId.compareTo(b.ruleId)))
+        .first;
 
 /// The family the surfaces show FIRST, sorted the way they sort.
 ///
@@ -282,6 +300,216 @@ void main() {
       final cmd = ran.single as SetFamilyColorOverrideCommand;
       expect(cmd.to, isNull);
       expect(doc.settings.familyColorOverrides, isEmpty);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // `#879` — the per-project rule severity, which had no route at all
+  // ═══════════════════════════════════════════════════════════════════
+  // `SetRuleOverrideCommand` shipped at M5-B3 with a real revert and
+  // eight test constructions. `showRuleSeverityDialog` shipped with its
+  // own suite. `RuleOverride` carries the severity, the reason, the
+  // author and the date, all persisted and all printed on `T0.02`.
+  // NOTHING OPENED THE DIALOG, so none of it could be reached.
+  group('`#879`: a rule severity is a standing decision, taken here', () {
+    /// Scrolls the SETTINGS list, using the `_list` finder this file
+    /// already worked out: a descendant finder matching several
+    /// scrollables throws "Bad state: Too many elements", which is the
+    /// mistake its own comment records and the one this helper repeated
+    /// on its first draft.
+    Future<void> scrollToSection(WidgetTester tester) async {
+      await tester.scrollUntilVisible(
+        find.text(kOverrideARule),
+        200,
+        scrollable: _list,
+      );
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('an untouched project says so, rather than showing an '
+        'empty box', (tester) async {
+      final doc = _doc();
+      await _open(tester, doc);
+      await scrollToSection(tester);
+
+      expect(
+        find.textContaining('No rule is overridden'),
+        findsOneWidget,
+        reason: 'an empty list with no sentence reads as a broken panel',
+      );
+    });
+
+    testWidgets('overriding one emits the command, with the reason and the '
+        'author on it', (tester) async {
+      final doc = _doc();
+      final ran = await _open(tester, doc);
+      await scrollToSection(tester);
+
+      await tester.tap(find.text(kOverrideARule));
+      await tester.pumpAndSettle();
+
+      // THE FIRST ROW THE PICKER SHOWS, not a rule id chosen for being
+      // familiar. This file's `_firstShown` already records why: the
+      // list is virtualised, so a row below the fold is never built and
+      // `tap` reports "found 0 widgets" rather than tapping the wrong
+      // one. The first draft here asked for PWR-003 and met exactly
+      // that.
+      final rule = _firstOverridable();
+      await tester.tap(find.text(rule.ruleId));
+      await tester.pumpAndSettle();
+
+      // THE SEVERITY DIALOG, NOT THE SETTINGS ONE UNDERNEATH IT. Both
+      // are `AlertDialog`s and the settings dialog is still in the tree,
+      // so `find.byType(AlertDialog)` matches two and a descendant
+      // finder throws "Bad state: Too many elements". Anchoring on the
+      // confirm button names the one that is on top without depending on
+      // overlay order.
+      final severityDialog = find.ancestor(
+        of: find.text(kSeverityApply),
+        matching: find.byType(AlertDialog),
+      );
+      await tester.tap(
+        find.descendant(
+          of: severityDialog,
+          matching: find.text(Severity.warning.name),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.descendant(
+          of: severityDialog,
+          matching: find.byType(TextField),
+        ),
+        'Existing strip stays; agreed with the owner.',
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kSeverityApply));
+      await tester.pumpAndSettle();
+
+      expect(ran.whereType<SetRuleOverrideCommand>(), hasLength(1));
+      final written = doc.settings.ruleOverrides[rule.ruleId];
+      expect(written, isNotNull);
+      expect(written!.severity, Severity.warning);
+      expect(written.reason, 'Existing strip stays; agreed with the owner.');
+      expect(
+        written.by,
+        'test',
+        reason: 'the author is half of what makes it a signed decision',
+      );
+    });
+
+    testWidgets('the row shows the REASON, because that is what prints on '
+        'T0.02', (tester) async {
+      final doc = _doc();
+      doc.settings.ruleOverrides['PWR-003'] = RuleOverride(
+        severity: Severity.warning,
+        reason: 'Existing strip stays.',
+        by: 'test',
+        at: DateTime.utc(2026, 9, 12),
+      );
+      await _open(tester, doc);
+      await scrollToSection(tester);
+
+      expect(find.text('Existing strip stays.'), findsOneWidget);
+      expect(find.textContaining('PWR-003'), findsWidgets);
+    });
+
+    testWidgets('and clearing it removes the entry rather than writing the '
+        'default back', (tester) async {
+      final doc = _doc();
+      doc.settings.ruleOverrides['PWR-003'] = RuleOverride(
+        severity: Severity.warning,
+        reason: 'Existing strip stays.',
+        by: 'test',
+        at: DateTime.utc(2026, 9, 12),
+      );
+      final ran = await _open(tester, doc);
+      await scrollToSection(tester);
+
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const ValueKey('rule-override-PWR-003')),
+          matching: find.text('Clear'),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(ran.whereType<SetRuleOverrideCommand>(), hasLength(1));
+      expect(
+        doc.settings.ruleOverrides.containsKey('PWR-003'),
+        isFalse,
+        reason:
+            'an override that AGREES with the default still reports as '
+            'overridden and still prints its reason, so clearing has to '
+            'remove the row',
+      );
+    });
+
+    testWidgets('choosing "use the default" REMOVES the override rather '
+        'than recording one that agrees with it', (tester) async {
+      // A MUTATION NAMED THIS GAP. Making the null severity write an
+      // override instead of clearing one SURVIVED, because nothing here
+      // opened an existing row and chose the default.
+      //
+      // The distinction is the dialog's own typedef: *"a severity that
+      // happens to equal the default is a different act from choosing
+      // the default: the first removes the override, the second records
+      // a standing decision that agrees with it and prints its reason on
+      // T0.02."*
+      final rule = overridableRules().first;
+      final doc = _doc();
+      doc.settings.ruleOverrides[rule.ruleId] = RuleOverride(
+        severity: Severity.warning,
+        reason: 'Was agreed; no longer applies.',
+        by: 'test',
+        at: DateTime.utc(2026, 9, 12),
+      );
+      final ran = await _open(tester, doc);
+      await scrollToSection(tester);
+
+      // TAPPING THE ROW re-opens the control pre-filled, which is the
+      // only route to the default option.
+      await tester.tap(find.byKey(ValueKey('rule-override-${rule.ruleId}')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(severityUseDefault(rule.defaultSeverity)));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kSeverityApply));
+      await tester.pumpAndSettle();
+
+      expect(ran.whereType<SetRuleOverrideCommand>(), hasLength(1));
+      expect(
+        doc.settings.ruleOverrides.containsKey(rule.ruleId),
+        isFalse,
+        reason:
+            'an override that agrees with the default still reports as '
+            'overridden and still prints, so the default option has to '
+            'remove the row rather than rewrite it',
+      );
+    });
+
+    testWidgets('the picker lists what CORE says is overridable, in its '
+        'order', (tester) async {
+      // THE FIRST DRAFT ASSERTED A TIER-1 RULE WAS ABSENT AND WAS
+      // VACUOUS. The picker is virtualised, so a tier-1 row below the
+      // fold is never built and `findsNothing` passes whether the rule
+      // was excluded or merely out of sight; a mutation that deleted the
+      // filter SURVIVED. The exclusion is now `overridableRules()` and
+      // `rule_override_command_test.dart` reads every rule to prove it.
+      // What is left for THIS file is that the picker shows that list,
+      // which its first row can say without being built lazily.
+      final doc = _doc();
+      await _open(tester, doc);
+      await scrollToSection(tester);
+
+      await tester.tap(find.text(kOverrideARule));
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text(overridableRules().first.ruleId),
+        findsOneWidget,
+        reason: "the picker renders core's list, in core's order",
+      );
     });
   });
 }

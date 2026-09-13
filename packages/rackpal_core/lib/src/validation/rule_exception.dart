@@ -127,6 +127,25 @@ RuleExceptionVerdict evaluateRuleOverride({
   return const RuleExceptionAllowed();
 }
 
+/// Every rule a person may write a standing decision about, in catalogue
+/// order (`#879`).
+///
+/// **THE LIST IS A FACT ABOUT THE CATALOGUE, NOT ABOUT A WIDGET**, which
+/// is why it lives here. It was a filter inside the project-settings
+/// picker first, and a mutation that removed the filter SURVIVED: that
+/// picker is a virtualised list, so a tier-1 row below the fold is never
+/// built and `findsNothing` passes whether the rule was excluded or
+/// merely out of sight. A test of this function cannot be fooled that
+/// way, because it reads every rule in the catalogue.
+List<RuleMeta> overridableRules() =>
+    <RuleMeta>[
+        for (final rule in kRulesById.values)
+          if (ruleAcceptsAnException(rule.ruleId, 'overridden') == null) rule,
+      ]
+      // TOTAL ORDER, on `_FamilyColours`' reasoning: `List.sort` is not
+      // stable, and a map's order is not a display order.
+      ..sort((a, b) => a.ruleId.compareTo(b.ruleId));
+
 /// The refusal shared by both kinds of exception, or null when [ruleId]
 /// can carry one. [verb] completes the sentence: "acknowledged",
 /// "overridden".

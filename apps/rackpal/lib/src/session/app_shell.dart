@@ -821,6 +821,11 @@ final class AppShellState extends State<AppShell>
     await showProjectSettingsDialog(
       context,
       doc: session.document,
+      // FOR ONE SECTION ONLY (`#879`): a `RuleOverride` carries a reason,
+      // an author and a date, and all three print on `T0.02`. Nothing
+      // else in that dialog signs anything.
+      clock: session.controller.clock,
+      actor: session.controller.actor,
       onEdit: (commands) {
         if (commands.isEmpty) return;
         // NULL: THE FIRST CHILD NAMES IT, read after it has applied
