@@ -28,6 +28,12 @@
 * **Note**: **AN 800px DEFAULT SURFACE CLAMPS A 900px BOX.** Two harnesses got a
   238-unit-wide canvas and every plan click missed. Three guesses about scene
   mapping went first; a probe printing the rects found it in one run.
+* **Note**: **TWO PRIVATE CLASSES THAT REFERENCE EACH OTHER ARE NOT DEAD TO
+  THE ANALYZER.** `#891`'s commit said `_RoomList` was gone and it was not:
+  183 lines nothing constructed, kept alive in the analyzer's eyes because
+  it builds `_RoomRow` and `_RoomRow` keys off its statics. Ask what
+  CONSTRUCTS a thing, not what mentions it; `_RoomList(` returns one hit,
+  its own constructor. Deleting it changed no test, which is the proof.
 * **Creation**: [DR-168, one view called
   Site](/decisions/dr-168-one-view-called-site.md).
 * **Creation**: [Copy outlives the route it

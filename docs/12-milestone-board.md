@@ -10977,7 +10977,29 @@ found it in one run. They set a 1600x1000 surface now, which is also the honest 
 §1 treats anything under 1080 as the tablet-collapse case nobody has built, so 900 was never a
 window this product supports.
 
-##### 5.9.44.6 Evidence
+##### 5.9.44.6 Two private classes that reference each other are not dead to the analyzer
+
+`45d4d058`'s message says *"The `_RoomList` is gone."* **It was not.** The class was still in
+`plan_editor_screen.dart`, 183 lines of it with `_RoomRow` and `kPlanNoRoomsDetail`, and nothing
+built it: the rail stopped constructing it when `#891` moved the outline acts, and the declaration
+stayed.
+
+**`unused_element` could not see it, and the reason generalises.** `_RoomList` builds `_RoomRow`,
+and `_RoomRow` keys its buttons off `_RoomList.drawKeyFor`. Each is referenced, so neither is
+unused, and **a reference cycle between two private declarations is invisible to a rule that asks
+only whether a name is mentioned.** The analyzer was at its pin through both commits and had
+nothing to say. So was `dart format`, which formatted it faithfully.
+
+The check that would have caught it is the one this repository already owns for `Command` classes:
+**ask what CONSTRUCTS a thing, not what mentions it.** `_RoomList(` returns one hit, its own
+constructor. That is the same one-grep census `#884` used on a parameter with no caller, pointed at
+a widget instead.
+
+**The deletion changed no test**, which is the proof rather than the convenience: three cases drive
+`room-draw-<id>`, `room-reshape-<id>` and `room-clear-<id>`, and they were following
+`_OutlineActions`' copies of those keys all along.
+
+##### 5.9.44.7 Evidence
 
 Floors, re-measured in the commit that moved them rather than assumed: `rackpal_ui` 1875 to 1874
 (two cases went with the deleted room list, replaced by per-room assertions in both directions),
@@ -10998,7 +11020,7 @@ and `Ctrl+3` is still bound to nothing (CR-071's Rear Panel).
 17 gates green. Analyzer pin unmoved at 233.
 
 **Commits** (§8.8). `#890` `bb39e122`. `#891`, `#892` `45d4d058`. `#893`, `#888` `f00d6c46`.
-`#894` PENDING.
+`#894` `8058825c`, and the dead-list deletion above.
 
 
 ---
