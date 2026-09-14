@@ -20983,6 +20983,57 @@ domain is authored or read from its member links, which is a different question 
 and is `#896`'s first chapter to answer with a measurement. And the callout treatment docs/15 §7
 schedules for `PLAN-H`, which this touches but does not close.
 
+### 11.169 DR-170 · Editor chrome is drawn at its authored screen width at every zoom, and a canvas is told the zoom its layer applies
+
+**The question.** Found while building `#905` and measured at `#906`, 2026-09-14. The plan, rack and
+schematic canvases push the viewport as a `pushTransform` layer above a cached picture, so a pan
+re-projects a texture, and `FlutterDiagramCanvas` starts its own transform stack at identity every
+paint. Its stroke rules therefore read scale 1 at every zoom. `#905` told the plan canvas its zoom;
+the other two were measured before anything here was ruled.
+
+**11.169.1 MEASURED FIRST.** Through `TestRecordingCanvas`, as each stroke's recorded width times the
+transforms it was painted under, on the real render objects:
+
+| Chrome | Authored | Rack at open, 3.02x | Rack at 12.1x | Schematic at 4x |
+|---|---|---|---|---|
+| Selection outline | 2 px | 6.0 px | 24.2 px | n/a |
+| Hover ring | 1.5 px | 4.5 px | 18.1 px | n/a |
+| Port chip | 1 px | 3.0 px | 12.1 px | n/a |
+| Caret, source, candidate and selection rings | 2 px | n/a | n/a | 8 px |
+| Connect band | 1.5 px | n/a | n/a | 6 px |
+
+The port chip and the connect overlay mark their strokes `scaleWithGeometry: false`, CR-082's *"UI
+chrome, selection halos and hit slop do not"* scale, **and the layer defeated the flag**: the overlay's
+own comment says the flag *"handles the STROKE WIDTH"*, and it did not. `RenderDeviceBox`'s hover,
+focus and selection rings are raw `Paint` strokes that no flag ever reached. The grid painter and the
+editing overlay painter already divide by `viewport.scale`, and are correct.
+
+**11.169.2 RULED: CHROME IS DRAWN AT ITS AUTHORED SCREEN WIDTH, AT EVERY ZOOM.** Settled by the user.
+Selection and focus at 2 pixels, hover 1.5, the port chip 1, the connect rings 2 and the band 1.5, on
+the rack and the schematic alike. docs/04 §3.5 already says *"a 2 px outline per member"* and CR-082
+already says chrome does not scale, so this makes the product agree with both. **It is visibly thinner
+when a rack first opens**, because the rack opens fitted at about 3x and its chrome was three times its
+authored width there. Freezing that opening look instead was offered and refused: it contradicts
+docs/04, and the schematic opens at a different zoom, so the two canvases would not have matched.
+
+**11.169.3 RULED: A LINE NEVER PAINTS THINNER THAN HALF A PHYSICAL PIXEL.** Also the user's. Telling a
+canvas its zoom moves `FlutterDiagramCanvas`'s 0.5 floor from scene units to physical pixels for
+strokes that DO scale, so zoomed out, a 0.7-unit wire at 30% goes from 0.21 pixels to 0.5. That is what
+CR-082's floor already means on paper, and what the plan canvas has done since `#905`. Keeping
+zoomed-out hairlines was offered and refused, because it needs one canvas to treat one zoom two ways,
+for the width and for the floor, which is a rule the PDF backend does not have.
+
+**11.169.4 ONE SCALE PER CANVAS, PASSED WHERE ITS LAYER IS PUSHED.** A canvas that zooms in a layer
+tells the `FlutterDiagramCanvas` it replays through, and anything it paints as a child reads the same
+scale at paint time rather than a copy held somewhere that repaints on a different schedule.
+
+**11.169.5 Scope.** **No scope change.** Appearance of surfaces already in v1; no model field, no file
+format, no printed output. Board `#906` cites this ruling.
+
+**What this does not rule.** The rubber band's colour, weight and dash, which docs/05 §7.5 gives to the
+source domain and the overlay draws in a style colour at a fixed width. That is a separate gap and is
+not touched here. Nor any chrome width other than those measured above.
+
 ---
 
 ## 12. Superseded rulings

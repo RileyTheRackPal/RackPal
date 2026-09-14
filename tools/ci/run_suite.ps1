@@ -1262,7 +1262,12 @@ $SuiteFloors = @{
     # at 1x, 4x and 16x, read off `TestRecordingCanvas` as stroke width times
     # the transforms it was painted under. It found the zoom sitting in a
     # layer the canvas's floor could not see before any fix was written.
-    'rackpal_ui'     = 1898
+    # 1904 at `#906`: +6, every one reading what was painted. Two in
+    # render_schematic_canvas_test (the connect overlay at 1x and 4x, and
+    # the sheet at 0.1x), two in port_chip_test (rings and chip at the
+    # opening zoom and four times it, and the rack at 0.1x, the only case
+    # that sees the chassis canvas), and two in stroke_scaling_test.
+    'rackpal_ui'     = 1904
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

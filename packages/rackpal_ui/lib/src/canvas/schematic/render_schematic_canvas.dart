@@ -286,6 +286,13 @@ final class RenderSchematicCanvas extends RenderBox {
       context.canvas,
       measurer: _measurer,
       runs: _runs,
+      // THE ZOOM IS IN THE LAYER ABOVE THIS PICTURE (`#906`, DR-170), so the
+      // canvas has to be told it. Without it the connect overlay's chrome,
+      // which is `scaleWithGeometry: false`, painted at its width times the
+      // zoom (a 2-pixel ring at 8 pixels at 4x), and the 0.5 floor was
+      // decided in scene units, so a zoomed-out wire thinned below half a
+      // pixel.
+      outerScale: _viewport.scale,
     );
     for (final op in _plan.ops) {
       op.replay(canvas);

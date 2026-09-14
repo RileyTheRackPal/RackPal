@@ -191,4 +191,61 @@ void main() {
       }
     });
   });
+
+  group('outerScale takes BOTH decisions against a zoom applied above the '
+      'canvas (`#905`, `#906`)', () {
+    /// As [widthOnCanvas], but the scale is a transform LAYER above the
+    /// canvas, the way the editor canvases zoom, so the canvas's own stack
+    /// stays at 1 and only [outerScale] can tell it. Returned as the
+    /// physical width, recorded width times that layer's scale.
+    double widthUnderLayer(Stroke stroke, double outerScale) {
+      final recording = TestRecordingCanvas();
+      FlutterDiagramCanvas(
+        recording,
+        measurer: measurer,
+        outerScale: outerScale,
+      ).drawRect(const DBox.fromLtwh(0, 0, 100, 100), stroke: stroke);
+      final drawn = recording.invocations
+          .where((i) => i.invocation.memberName == #drawPath)
+          .toList();
+      expect(drawn, hasLength(1), reason: 'nothing was drawn to measure');
+      return (drawn.single.invocation.positionalArguments[1] as ui.Paint)
+              .strokeWidth *
+          outerScale;
+    }
+
+    test('a non-scaling stroke is its own width after the layer', () {
+      for (final zoom in const [0.25, 1.0, 4.0, 32.0]) {
+        expect(
+          widthUnderLayer(
+            const Stroke(
+              argb: 0xFF000000,
+              widthPt: 2,
+              scaleWithGeometry: false,
+            ),
+            zoom,
+          ),
+          _closeToPaint(2),
+          reason: 'at ${zoom}x',
+        );
+      }
+    });
+
+    test('zoomed out, a scaling stroke floors at half a physical pixel and a '
+        'hairline at a quarter (DR-170 §11.169.3)', () {
+      // 0.7 at 0.1x is 0.07 of a pixel. Without `outerScale` the floor
+      // compared 0.7 against 0.5 in scene units and let it through.
+      expect(
+        widthUnderLayer(const Stroke(argb: 0xFF000000, widthPt: 0.7), 0.1),
+        _closeToPaint(0.5),
+      );
+      expect(
+        widthUnderLayer(
+          const Stroke(argb: 0xFF000000, widthPt: 0.7, hairlineFloor: true),
+          0.1,
+        ),
+        _closeToPaint(0.25),
+      );
+    });
+  });
 }
