@@ -170,6 +170,11 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
           issuedAt: request.issuedAt,
           measurer: measurer,
           labels: planPinLabelsFor(doc, pins),
+          // THE PROJECT'S OWN DOMAINS, not the seed's (`#901`). A document
+          // carries the registry subset written at creation (DR-010), so
+          // reading the seed here would colour a printed mark from a
+          // catalogue the project never saw.
+          domains: doc.registries.signalDomains,
           // THE EQUIPMENT LIST THIS EXPORT ALREADY BUILT, handed in rather
           // than rebuilt per plan: CR-107's divergence is two derivations
           // of one fact, and a second build would also pay for the whole

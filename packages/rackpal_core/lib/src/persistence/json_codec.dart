@@ -3251,6 +3251,10 @@ JsonMap _encodeOutletTemplate(OutletTemplate t) {
   // `tia570Grade`, and CR-117 holds only because reading yields null and
   // writing omits the key. The six named templates never write it.
   putIfNotNull(json, 'tia570Grade', t.tia570Grade);
+  // The same contract a third time (`#900`, DR-169 §11.168.4). The three
+  // TIA grades never write it, because a grade is a cabling standard
+  // rather than a service and has no domain to author.
+  putIfNotNull(json, 'primaryDomain', t.primaryDomain?.v);
   return json;
 }
 
@@ -3259,6 +3263,13 @@ OutletTemplate _decodeOutletTemplate(String id, JsonMap json) => OutletTemplate(
   name: asStr(json['name'], 'OutletTemplate.name'),
   tag: asStrOrNull(json['tag'], 'OutletTemplate.tag'),
   tia570Grade: asStrOrNull(json['tia570Grade'], 'OutletTemplate.tia570Grade'),
+  primaryDomain: switch (asStrOrNull(
+    json['primaryDomain'],
+    'OutletTemplate.primaryDomain',
+  )) {
+    final String v => SignalDomainId(v),
+    null => null,
+  },
   drops: decodeObjectList(
     json['drops'],
     'OutletTemplate.drops',

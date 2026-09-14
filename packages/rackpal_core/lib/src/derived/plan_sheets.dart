@@ -98,7 +98,14 @@ List<PlanPinSubject> planPinsFor(RackDocument doc, Uuid underlayId) {
 
   void take(Uuid id, PlanPin? pin, PlanPinCarrier carrier) {
     if (pin == null || pin.underlayId != underlayId) return;
-    out.add(PlanPinSubject(entityId: id, at: pin.at, carrier: carrier));
+    out.add(
+      PlanPinSubject(
+        entityId: id,
+        at: pin.at,
+        carrier: carrier,
+        domain: planPinDomainFor(doc, id, carrier),
+      ),
+    );
   }
 
   for (final rack in doc.racks.values) {
@@ -115,6 +122,48 @@ List<PlanPinSubject> planPinsFor(RackDocument doc, Uuid underlayId) {
 
   out.sort((a, b) => a.entityId.v.compareTo(b.entityId.v));
   return out;
+}
+
+/// What the thing on the end of a pin mostly IS, or null when nobody has
+/// said (`#901`, DR-169 §11.168.4).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THREE CARRIERS, THREE LOOKUPS, AND ONE OF THEM IS DELIBERATELY NONE
+/// ═══════════════════════════════════════════════════════════════════════
+/// A **device** reads its template's `primaryDomain` out of the document's
+/// own template shelf, so a project carries the answer that was current
+/// when the device was placed rather than whatever the catalogue says now.
+/// An **outlet** reads the recipe it was made from, through its nullable
+/// `outletTemplateId`: an outlet built by hand, or one whose template has
+/// been removed from the registries, has no domain and that is honest.
+/// A **rack** has none at all. It is the datum every length on the plan is
+/// measured from (`PLN-003`), not a ninth domain (§11.168.8).
+///
+/// **THIS EXISTS BECAUSE THERE ARE TWO PIN GATHERS.** `planPinsFor` is
+/// this package's and `pinsOnUnderlay` is the editor's, and the header
+/// above already records what a second hand-rolled gather costs. The
+/// resolution at least is written once, so the sheet and the screen cannot
+/// disagree about what colour a mark is.
+SignalDomainId? planPinDomainFor(
+  RackDocument doc,
+  Uuid entityId,
+  PlanPinCarrier carrier,
+) {
+  switch (carrier) {
+    case PlanPinCarrier.rack:
+      return null;
+    case PlanPinCarrier.outlet:
+      final outlet = doc.outlets[entityId];
+      final templateId = outlet?.outletTemplateId;
+      if (templateId == null) return null;
+      return doc.registries.outletTemplates[templateId]?.primaryDomain;
+    case PlanPinCarrier.device:
+      final device = doc.devices[entityId];
+      if (device == null) return null;
+      final ref = device.templateRef;
+      final snapshot = doc.templates['${ref.templateId.v}@${ref.version}'];
+      return snapshot?.body.primaryDomain;
+  }
 }
 
 /// What each pinned carrier prints on its callout, keyed by entity id.

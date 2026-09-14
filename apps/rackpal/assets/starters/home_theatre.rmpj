@@ -50,7 +50,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:9523d14759a0f2482ce2ea6c058c481da1cffdec963e63b12de69da4e7559613",
+          "contentHash": "sha256:df2a324a5a8b0a8d380a087e4a415262a41903fdd597f3255214dc2ccc99bc9f",
           "templateId": "P02",
           "version": 1
         }
@@ -83,7 +83,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:8436045c8aaac80aaa6561b76ac6118ddf2994e8bca80598f229016aca7bb2ff",
+          "contentHash": "sha256:c2af1bd4d8099fd8702c1bf03b5f0b8124d1f970cfcbf3a1175b2abdf59b421f",
           "templateId": "A04",
           "version": 1
         }
@@ -149,7 +149,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:413706c42416adc80ffc1914bf5e062f0ce7106cfb60072da73c2eaff967e226",
+          "contentHash": "sha256:e31c77549b4a09533952b80d4836176f51882dde0979a48562819ef0ab3ffaac",
           "templateId": "V03",
           "version": 1
         }
@@ -182,7 +182,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:b91e8dca34d73f706338a7009fab83e5a6154bbcde7db1bf8e177dad8dcc9a2a",
+          "contentHash": "sha256:a580e501fdd7edc684e3bf87a614429b6f26e65b256af507cf0c9851c2fa9f82",
           "templateId": "V04",
           "version": 1
         }
@@ -215,7 +215,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:038eb11e159f23f969c1041dff62859f09a31e991c7b328136eac8a6e49af33e",
+          "contentHash": "sha256:65a5df44b70ff40a5345bcf359b74bd20fe59c83e4e9d19810064c01d9c2d839",
           "templateId": "N01",
           "version": 1
         }
@@ -248,7 +248,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:c74ad186c9cebfd425182ac0e4b1b433f6cdd6a38d261b91f3cb6df40afbfc73",
+          "contentHash": "sha256:680419f03a7810efa4dd861e214599a32bf76a725a36a6ea08adc2932f5d7fab",
           "templateId": "N02",
           "version": 1
         }
@@ -281,7 +281,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:03930691d4f4ffc17ea9987347be95bd53df0a3da27126c7d4cfb311825109f4",
+          "contentHash": "sha256:266f142d038c27df61337b52d0a1c7929bfc8bd59c613b67e8a80cd01b67a594",
           "templateId": "C01",
           "version": 1
         }
@@ -314,7 +314,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:21d3ff2bdf0089939eacc09b75b1eba8a0622088b0c2a8eb6c5633196773de32",
+          "contentHash": "sha256:ada2d45007956dc45cace7e56a3dc9ec5e007be17ce9b36bf8c32e1f28a23152",
           "templateId": "C02",
           "version": 1
         }
@@ -380,7 +380,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:1ffb6ec0780ad900196085e63e5151f34862e240e1fad25e47fd4031929438ee",
+          "contentHash": "sha256:c75fede2569e91158da31bfb1b899a60ebfd19fb8f1d2682311afd4485b6dc5a",
           "templateId": "N03",
           "version": 1
         }
@@ -442,7 +442,7 @@
           "type": "shelf"
         },
         "templateRef": {
-          "contentHash": "sha256:c98e7e0054c8079b68cf21a7425e5de8a2ea309787db6176361ab582aaaf1f65",
+          "contentHash": "sha256:e0196d99f0a8f8ad6bc35fd458108d9663fccbdd8546cbb63869a8c6d0fe112a",
           "templateId": "A02",
           "version": 1
         }
@@ -471,7 +471,7 @@
           "type": "shelf"
         },
         "templateRef": {
-          "contentHash": "sha256:b7e863f61330bb09fceef40b6256d709993847ed4aeca20694f54dbc1e20e1b7",
+          "contentHash": "sha256:6c09c02e79bfee7ff8ec2b3924150a177253f706fa2ab23a8ca72314df1c132f",
           "templateId": "S01",
           "version": 1
         }
@@ -503,7 +503,7 @@
           "type": "zeroU"
         },
         "templateRef": {
-          "contentHash": "sha256:fcefae1e1efcd9708318c5657cda1c6489512c12fa7c186236ea9eb443a82c3a",
+          "contentHash": "sha256:0013b49c68f93badc9ba71b83e7edc7729199ba24899546ad34fade38aa1df51",
           "templateId": "P01",
           "version": 1
         }
@@ -531,7 +531,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:cdedbf9aa49bc66b596d40dc33da2b3e82055a83e210f0e7e9d40ffe1c5b2cb7",
+          "contentHash": "sha256:2e68174eb0037db778f6cc65ad8d82ebca25b64d499d97fa475a89349d7a6f50",
           "templateId": "F02",
           "version": 1
         }
@@ -559,7 +559,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:264ab324de77c50eab7bbc695c96a47af634658759d4a6ddb13a5dd4eb30fd13",
+          "contentHash": "sha256:d647a030943d1b9e0502f27a3b1890cfd474ea4819f8ee80cc0c4253744c4c2d",
           "templateId": "F03",
           "version": 1
         }
@@ -587,7 +587,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:31515f325fa1e0daf81e17ce0c9e399709995bf3e349a3bcd10582702120f2e9",
+          "contentHash": "sha256:3e13ed03ea56eba80bc2261bf4b17bf59b43b478d0187575f3d583eb25c54333",
           "templateId": "F01",
           "version": 1
         }
@@ -615,7 +615,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:b9997d7508430e35af1835ca6531a868eb7b74bfd009a0c4b397901870519997",
+          "contentHash": "sha256:3d9889c4082db28a26fe20d4e19ba5de82c3d0be5fd9c5aed44feb9d417949f0",
           "templateId": "F05",
           "version": 1
         }
@@ -643,7 +643,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:b9997d7508430e35af1835ca6531a868eb7b74bfd009a0c4b397901870519997",
+          "contentHash": "sha256:3d9889c4082db28a26fe20d4e19ba5de82c3d0be5fd9c5aed44feb9d417949f0",
           "templateId": "F05",
           "version": 1
         }
@@ -671,7 +671,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:b9997d7508430e35af1835ca6531a868eb7b74bfd009a0c4b397901870519997",
+          "contentHash": "sha256:3d9889c4082db28a26fe20d4e19ba5de82c3d0be5fd9c5aed44feb9d417949f0",
           "templateId": "F05",
           "version": 1
         }
@@ -699,7 +699,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:6a3fb6ab82130a455ee6c9e68bb5e47f68ebc4a48229d24ef6e1bf3b8a537779",
+          "contentHash": "sha256:f22efe3964b7048a3eaafec767453903180aa2f798fe1ce6f80a63358b878d0e",
           "templateId": "F04",
           "version": 1
         }
@@ -727,7 +727,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:6a3fb6ab82130a455ee6c9e68bb5e47f68ebc4a48229d24ef6e1bf3b8a537779",
+          "contentHash": "sha256:f22efe3964b7048a3eaafec767453903180aa2f798fe1ce6f80a63358b878d0e",
           "templateId": "F04",
           "version": 1
         }
@@ -755,7 +755,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:8d7d60da6aa8920a3c04fb41dc866f130c7044fc1a4369894b195446c33ae967",
+          "contentHash": "sha256:55d7368a8ba1d45381759006afe2a0b9c8f8568788693139f731ad2c7f6754fb",
           "templateId": "F06",
           "version": 1
         }
@@ -783,7 +783,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:71dc390ec22e3c053903e8a533d2c65e0b6d7ff223f1eb37a817a4179820fcdf",
+          "contentHash": "sha256:baa676825d3668bb22e2ecb2b7e456b68f509761807ea7ec40076a64d166aee7",
           "templateId": "F12",
           "version": 1
         }
@@ -811,7 +811,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:9740a9d7f444453d954e1ac7dbd467e791eb711444eb8d22b8da06f8f89959d1",
+          "contentHash": "sha256:d3e014bb47d819de7897b9ad27b5c8552a3dc57013b7e8e38e46ee32124c6120",
           "templateId": "F15",
           "version": 1
         }
@@ -839,7 +839,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:7d89b2895eb54f9d0eb272a97c4b80b0cce4fae9501835842daf2ecb938cc6d0",
+          "contentHash": "sha256:1714e413beac4020cdeddc09ebb349063526c0aed727133693659e200c4c63a8",
           "templateId": "F13",
           "version": 1
         }
@@ -867,7 +867,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:14bdeac630254558c03886532f1935f0354c7f0685c9ccc4ab885ff1a62e440f",
+          "contentHash": "sha256:f15426d9b2cd975968c83f56e1812d48ec7f8f1baf26d69b0aeadb2052d1f71c",
           "templateId": "F11",
           "version": 1
         }
@@ -895,7 +895,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:d84b366ea92a2b0e6d263cdc668a2a981effdf7bbdfd83fedf0d2b33a0e5cb31",
+          "contentHash": "sha256:d4f4ed084aa59090c73474070f3014b917cf3a044c13e98e4840ecdc0a81be69",
           "templateId": "F16",
           "version": 1
         }
@@ -1946,6 +1946,7 @@
           ],
           "id": "outlet.ap",
           "name": "AP",
+          "primaryDomain": "net",
           "tag": "AP"
         },
         "outlet.camera": {
@@ -1959,6 +1960,7 @@
           ],
           "id": "outlet.camera",
           "name": "Camera",
+          "primaryDomain": "video.digital",
           "tag": "CAM"
         },
         "outlet.ceiling_speaker_pair": {
@@ -1972,6 +1974,7 @@
           ],
           "id": "outlet.ceiling_speaker_pair",
           "name": "Ceiling speaker pair",
+          "primaryDomain": "audio.analog",
           "tag": "SPK"
         },
         "outlet.data_only": {
@@ -1985,6 +1988,7 @@
           ],
           "id": "outlet.data_only",
           "name": "Data only",
+          "primaryDomain": "net",
           "tag": "DATA"
         },
         "outlet.keypad": {
@@ -1998,6 +2002,7 @@
           ],
           "id": "outlet.keypad",
           "name": "Keypad",
+          "primaryDomain": "ctl",
           "tag": "KEY"
         },
         "outlet.tia570d_grade1": {
@@ -2080,6 +2085,7 @@
           ],
           "id": "outlet.tv_location",
           "name": "TV location",
+          "primaryDomain": "video.digital",
           "tag": "TV"
         }
       },
@@ -4170,6 +4176,7 @@
             "powerFactor": 650,
             "typicalWatts": 340
           },
+          "primaryDomain": "audio.analog",
           "rearU": 3,
           "requiresClearanceAboveU": 1,
           "requiresClearanceBelowU": 0,
@@ -4184,7 +4191,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:50206ed44cef20b201a945e67e1d6b175e5b0154fc1801f7ea600170e2162663",
+        "contentHash": "sha256:02807be413bfd0142295137ca88287909f5e6af08f1801a1225cdb18cff5adc1",
         "templateId": "A01",
         "version": 1
       },
@@ -5213,6 +5220,7 @@
             "powerFactor": 680,
             "typicalWatts": 280
           },
+          "primaryDomain": "audio.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -5228,7 +5236,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:c98e7e0054c8079b68cf21a7425e5de8a2ea309787db6176361ab582aaaf1f65",
+        "contentHash": "sha256:e0196d99f0a8f8ad6bc35fd458108d9663fccbdd8546cbb63869a8c6d0fe112a",
         "templateId": "A02",
         "version": 1
       },
@@ -5857,6 +5865,7 @@
             "powerFactor": 950,
             "typicalWatts": 35
           },
+          "primaryDomain": "audio.digital",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -5872,7 +5881,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:caa97708dafb871ae121d092dc412a143bc205255442db88ed7d92569aba2068",
+        "contentHash": "sha256:7f13889df3fbaf04e5909e1bd5fef59ec7558970680c2acdf1de149dbb7fbcc6",
         "templateId": "A03",
         "version": 1
       },
@@ -6149,6 +6158,7 @@
             "powerFactor": 650,
             "typicalWatts": 380
           },
+          "primaryDomain": "audio.analog",
           "rearU": 2,
           "requiresClearanceAboveU": 1,
           "requiresClearanceBelowU": 0,
@@ -6163,7 +6173,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:8436045c8aaac80aaa6561b76ac6118ddf2994e8bca80598f229016aca7bb2ff",
+        "contentHash": "sha256:c2af1bd4d8099fd8702c1bf03b5f0b8124d1f970cfcbf3a1175b2abdf59b421f",
         "templateId": "A04",
         "version": 1
       },
@@ -6393,6 +6403,7 @@
             "powerFactor": 650,
             "typicalWatts": 300
           },
+          "primaryDomain": "audio.analog",
           "rearU": 2,
           "requiresClearanceAboveU": 1,
           "requiresClearanceBelowU": 0,
@@ -6408,7 +6419,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:e40bd91c4f2e65cce306dd60e5f4b827291519613c9e56553580c35c8afb16ea",
+        "contentHash": "sha256:4b60024a383dc733da2584c73b480e2703b06b2dd22dea578f27cf999cd0dcc5",
         "templateId": "A05",
         "version": 1
       },
@@ -6801,6 +6812,7 @@
             "powerFactor": 950,
             "typicalWatts": 20
           },
+          "primaryDomain": "audio.digital",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -6815,7 +6827,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:34493d8eb315ebb44fe8723d5953b9762f61d0a5a5ca3094bdddac79e04c91b9",
+        "contentHash": "sha256:aefc28ecb76eabfffc86a2cfb921107f8385e56cbe0f8369c79c94143b853842",
         "templateId": "A06",
         "version": 1
       },
@@ -7416,6 +7428,7 @@
             "powerFactor": 950,
             "typicalWatts": 30
           },
+          "primaryDomain": "ctl",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -7430,7 +7443,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:03930691d4f4ffc17ea9987347be95bd53df0a3da27126c7d4cfb311825109f4",
+        "contentHash": "sha256:266f142d038c27df61337b52d0a1c7929bfc8bd59c613b67e8a80cd01b67a594",
         "templateId": "C01",
         "version": 1
       },
@@ -7857,6 +7870,7 @@
             "powerFactor": 900,
             "typicalWatts": 6
           },
+          "primaryDomain": "ctl",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -7871,7 +7885,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:21d3ff2bdf0089939eacc09b75b1eba8a0622088b0c2a8eb6c5633196773de32",
+        "contentHash": "sha256:ada2d45007956dc45cace7e56a3dc9ec5e007be17ce9b36bf8c32e1f28a23152",
         "templateId": "C02",
         "version": 1
       },
@@ -8102,6 +8116,7 @@
             "powerFactor": 950,
             "typicalWatts": 15
           },
+          "primaryDomain": "ctl",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -8116,7 +8131,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:fd3d5571136aca9aef49842d3e8e9a2998952db1980e0e49203c3ea4e3e568a6",
+        "contentHash": "sha256:9c8a2110e8768b646073ee31554a9028a4816966b32b87bf41a0add20d33bd64",
         "templateId": "C03",
         "version": 1
       },
@@ -8327,6 +8342,7 @@
             "powerFactor": 950,
             "typicalWatts": 120
           },
+          "primaryDomain": "video.digital",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -8341,7 +8357,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:31515f325fa1e0daf81e17ce0c9e399709995bf3e349a3bcd10582702120f2e9",
+        "contentHash": "sha256:3e13ed03ea56eba80bc2261bf4b17bf59b43b478d0187575f3d583eb25c54333",
         "templateId": "F01",
         "version": 1
       },
@@ -8529,6 +8545,7 @@
             "powerFactor": 950,
             "typicalWatts": 280
           },
+          "primaryDomain": "video.digital",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -8543,7 +8560,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:cdedbf9aa49bc66b596d40dc33da2b3e82055a83e210f0e7e9d40ffe1c5b2cb7",
+        "contentHash": "sha256:2e68174eb0037db778f6cc65ad8d82ebca25b64d499d97fa475a89349d7a6f50",
         "templateId": "F02",
         "version": 1
       },
@@ -8643,6 +8660,7 @@
             "powerFactor": 900,
             "typicalWatts": 90
           },
+          "primaryDomain": "ctl",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -8657,7 +8675,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:264ab324de77c50eab7bbc695c96a47af634658759d4a6ddb13a5dd4eb30fd13",
+        "contentHash": "sha256:d647a030943d1b9e0502f27a3b1890cfd474ea4819f8ee80cc0c4253744c4c2d",
         "templateId": "F03",
         "version": 1
       },
@@ -8784,6 +8802,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "audio.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -8799,7 +8818,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:6a3fb6ab82130a455ee6c9e68bb5e47f68ebc4a48229d24ef6e1bf3b8a537779",
+        "contentHash": "sha256:f22efe3964b7048a3eaafec767453903180aa2f798fe1ce6f80a63358b878d0e",
         "templateId": "F04",
         "version": 1
       },
@@ -8882,6 +8901,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "audio.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -8897,7 +8917,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:b9997d7508430e35af1835ca6531a868eb7b74bfd009a0c4b397901870519997",
+        "contentHash": "sha256:3d9889c4082db28a26fe20d4e19ba5de82c3d0be5fd9c5aed44feb9d417949f0",
         "templateId": "F05",
         "version": 1
       },
@@ -9023,6 +9043,7 @@
             "powerFactor": 650,
             "typicalWatts": 150
           },
+          "primaryDomain": "audio.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -9037,7 +9058,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:8d7d60da6aa8920a3c04fb41dc866f130c7044fc1a4369894b195446c33ae967",
+        "contentHash": "sha256:55d7368a8ba1d45381759006afe2a0b9c8f8568788693139f731ad2c7f6754fb",
         "templateId": "F06",
         "version": 1
       },
@@ -9120,6 +9141,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "audio.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -9135,7 +9157,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:80718487f7161f63e133fc8c3bbc182b6e3ef1736569776fc6841420ac5aed35",
+        "contentHash": "sha256:9cd7745a4f8216e291b9bf44ae495e7721725cc064d5bd92e59da38c7699f8f8",
         "templateId": "F07",
         "version": 1
       },
@@ -9216,6 +9238,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "audio.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -9231,7 +9254,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:fcd6ba98e4778707a66133be60f379a6d2833e21283e984983a60b9f10d13a37",
+        "contentHash": "sha256:236a8640dd20cbfecb213072bffda30289f9e8db8de108ead0c7e9fd6881e07b",
         "templateId": "F08",
         "version": 1
       },
@@ -9345,6 +9368,7 @@
             "outletsProvided": 0,
             "typicalWatts": 8
           },
+          "primaryDomain": "video.digital",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -9360,7 +9384,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:cd7623a991905c0d3c7426dd0d43d4460caf696ea72b72a08a52e3ea686ab760",
+        "contentHash": "sha256:0374dd78baf70250be00f17d2c8c808c8b2895a9c203e4c7acda1afae9c6e715",
         "templateId": "F09",
         "version": 1
       },
@@ -9654,6 +9678,7 @@
             "powerFactor": 950,
             "typicalWatts": 65
           },
+          "primaryDomain": "video.digital",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -9669,7 +9694,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:c93697a9bb980523106157141ebd66067383fedf181cf3ee1cbef70721fc9852",
+        "contentHash": "sha256:b39251b925c194dfdcaf18053ec6261deb8ad09fbc7d66b87a6eef7835c8bb69",
         "templateId": "F10",
         "version": 1
       },
@@ -9760,6 +9785,7 @@
             "outletsProvided": 0,
             "typicalWatts": 18
           },
+          "primaryDomain": "net",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -9775,7 +9801,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:14bdeac630254558c03886532f1935f0354c7f0685c9ccc4ab885ff1a62e440f",
+        "contentHash": "sha256:f15426d9b2cd975968c83f56e1812d48ec7f8f1baf26d69b0aeadb2052d1f71c",
         "templateId": "F11",
         "version": 1
       },
@@ -9888,6 +9914,7 @@
             "outletsProvided": 0,
             "typicalWatts": 15
           },
+          "primaryDomain": "ctl",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -9903,7 +9930,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:71dc390ec22e3c053903e8a533d2c65e0b6d7ff223f1eb37a817a4179820fcdf",
+        "contentHash": "sha256:baa676825d3668bb22e2ecb2b7e456b68f509761807ea7ec40076a64d166aee7",
         "templateId": "F12",
         "version": 1
       },
@@ -9960,6 +9987,7 @@
             "outletsProvided": 0,
             "typicalWatts": 2
           },
+          "primaryDomain": "ctl",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -9975,7 +10003,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:7d89b2895eb54f9d0eb272a97c4b80b0cce4fae9501835842daf2ecb938cc6d0",
+        "contentHash": "sha256:1714e413beac4020cdeddc09ebb349063526c0aed727133693659e200c4c63a8",
         "templateId": "F13",
         "version": 1
       },
@@ -10106,6 +10134,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "audio.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -10121,7 +10150,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:5ba2213db7ee5b6e23f76d1180735ec0aa11d5e1dfa341d862a6ea37f477b999",
+        "contentHash": "sha256:ae19485d72e1e7dc5681461dde3251287972da0f24fb0f7cb81ca9df0810da56",
         "templateId": "F14",
         "version": 1
       },
@@ -10175,6 +10204,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "ctl",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -10190,7 +10220,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:9740a9d7f444453d954e1ac7dbd467e791eb711444eb8d22b8da06f8f89959d1",
+        "contentHash": "sha256:d3e014bb47d819de7897b9ad27b5c8552a3dc57013b7e8e38e46ee32124c6120",
         "templateId": "F15",
         "version": 1
       },
@@ -10355,6 +10385,7 @@
             "outletsProvided": 0,
             "typicalWatts": 15
           },
+          "primaryDomain": "net",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -10370,7 +10401,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:d84b366ea92a2b0e6d263cdc668a2a981effdf7bbdfd83fedf0d2b33a0e5cb31",
+        "contentHash": "sha256:d4f4ed084aa59090c73474070f3014b917cf3a044c13e98e4840ecdc0a81be69",
         "templateId": "F16",
         "version": 1
       },
@@ -10424,6 +10455,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "video.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -10439,7 +10471,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:01a89ecdb56a97b94979765c954c515fba141dc750b19da0bb7beb6bcd8d6585",
+        "contentHash": "sha256:3355431ade63ba2244d8b85e756cc7dae5b9bccc6f623d2ec15e038e9b1bdc0c",
         "templateId": "F17",
         "version": 1
       },
@@ -10532,6 +10564,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "video.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -10547,7 +10580,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:c2a0a14482bd2295e64bb79cfa7e8b4a31776cf2c96cb1f71a2867e62825d114",
+        "contentHash": "sha256:32d5d9bd7853cbfe14f500943b2df4103dbd7949cff100210d133c58a6dbe3e8",
         "templateId": "F18",
         "version": 1
       },
@@ -10626,6 +10659,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "ctl",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -10642,7 +10676,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:28df2882658cfedee95aa8558da5ea798b06a1b77f48d5b4721efcfb4a86ce30",
+        "contentHash": "sha256:0547626e6ce16f069f28042ebb0140998410073427e514db4fc208c308c1be25",
         "templateId": "F19",
         "version": 1
       },
@@ -10723,6 +10757,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "audio.analog",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -10740,7 +10775,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:4219bd914168cd505afad9d89036062ef871d1d7bfde2ed1eb8b9d4a38002fe0",
+        "contentHash": "sha256:06f343105194cd855056eacfd44d7e2a36215331fcf89c8cdc017e034886d55d",
         "templateId": "F20",
         "version": 1
       },
@@ -11907,6 +11942,7 @@
             "powerFactor": 950,
             "typicalWatts": 380
           },
+          "primaryDomain": "net",
           "rearU": 1,
           "requiresClearanceAboveU": 1,
           "requiresClearanceBelowU": 0,
@@ -11921,7 +11957,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:038eb11e159f23f969c1041dff62859f09a31e991c7b328136eac8a6e49af33e",
+        "contentHash": "sha256:65a5df44b70ff40a5345bcf359b74bd20fe59c83e4e9d19810064c01d9c2d839",
         "templateId": "N01",
         "version": 1
       },
@@ -12242,6 +12278,7 @@
             "powerFactor": 950,
             "typicalWatts": 55
           },
+          "primaryDomain": "net",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -12256,7 +12293,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:c74ad186c9cebfd425182ac0e4b1b433f6cdd6a38d261b91f3cb6df40afbfc73",
+        "contentHash": "sha256:680419f03a7810efa4dd861e214599a32bf76a725a36a6ea08adc2932f5d7fab",
         "templateId": "N02",
         "version": 1
       },
@@ -13144,6 +13181,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "net",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -13158,7 +13196,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:1ffb6ec0780ad900196085e63e5151f34862e240e1fad25e47fd4031929438ee",
+        "contentHash": "sha256:c75fede2569e91158da31bfb1b899a60ebfd19fb8f1d2682311afd4485b6dc5a",
         "templateId": "N03",
         "version": 1
       },
@@ -13782,6 +13820,7 @@
           "power": {
             "isContinuousLoad": false
           },
+          "primaryDomain": "net",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -13796,7 +13835,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:b4244cb581459f9e3f5f1483598521d080992761eb43e4e15e60b8bdd1109e47",
+        "contentHash": "sha256:ece027b0f87e6c7791b675205ae7736474d1502c27374e3173973ea98ac443f0",
         "templateId": "N04",
         "version": 1
       },
@@ -14346,6 +14385,7 @@
             "powerFactor": 1000,
             "typicalWatts": 10
           },
+          "primaryDomain": "pwr",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -14360,7 +14400,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:fcefae1e1efcd9708318c5657cda1c6489512c12fa7c186236ea9eb443a82c3a",
+        "contentHash": "sha256:0013b49c68f93badc9ba71b83e7edc7729199ba24899546ad34fade38aa1df51",
         "templateId": "P01",
         "version": 1
       },
@@ -14823,6 +14863,7 @@
             "powerFactor": 1000,
             "typicalWatts": 12
           },
+          "primaryDomain": "pwr",
           "rearU": 2,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -14837,7 +14878,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:9523d14759a0f2482ce2ea6c058c481da1cffdec963e63b12de69da4e7559613",
+        "contentHash": "sha256:df2a324a5a8b0a8d380a087e4a415262a41903fdd597f3255214dc2ccc99bc9f",
         "templateId": "P02",
         "version": 1
       },
@@ -15180,6 +15221,7 @@
             "powerFactor": 900,
             "typicalWatts": 45
           },
+          "primaryDomain": "pwr",
           "rearU": 3,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -15195,7 +15237,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:c884318cdb950e1f422ab7c457722e9ad992591d4a480826121b27045eb2f055",
+        "contentHash": "sha256:cdd7de32054a56821d8cadd0b1beaa61e1dca2ae3a5231ea38be7d0288cb4d12",
         "templateId": "P03",
         "version": 1
       },
@@ -15371,6 +15413,7 @@
             "outletsConsumed": 1,
             "outletsProvided": 6
           },
+          "primaryDomain": "pwr",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -15386,7 +15429,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:8b1d7eec40b85bef9fbae092df2993a834fd59ad47918b05bd9e68521a128ed0",
+        "contentHash": "sha256:03ecb07a0f757eea71d6ac26b4905d997f33f5bb889a9e0ec97fdac654811b45",
         "templateId": "P04",
         "version": 1
       },
@@ -15582,6 +15625,7 @@
             "outletsProvided": 0,
             "typicalWatts": 0
           },
+          "primaryDomain": "video.analog",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -15597,7 +15641,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:f3d805d38dc5bddf2f73919e4c26b9d40b10cbf081a886ea29370183f0002adc",
+        "contentHash": "sha256:db54bac6ec3bdcdfc5edd31e41963bc586a56633c9d247db3e365a596eda1fa6",
         "templateId": "R01",
         "version": 1
       },
@@ -16030,6 +16074,7 @@
             "powerFactor": 900,
             "typicalWatts": 22
           },
+          "primaryDomain": "video.analog",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -16044,7 +16089,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:de44b88ec62425abc4f00583e0099d340089673dae67e0ae4e190e0904884e36",
+        "contentHash": "sha256:bc2113990de5dcf11dcf1e3f728bc9f344ca1f58d9036053f06e9dcbe2be91bf",
         "templateId": "R02",
         "version": 1
       },
@@ -16308,6 +16353,7 @@
             "powerFactor": 900,
             "typicalWatts": 22
           },
+          "primaryDomain": "video.digital",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -16322,7 +16368,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:b7e863f61330bb09fceef40b6256d709993847ed4aeca20694f54dbc1e20e1b7",
+        "contentHash": "sha256:6c09c02e79bfee7ff8ec2b3924150a177253f706fa2ab23a8ca72314df1c132f",
         "templateId": "S01",
         "version": 1
       },
@@ -16533,6 +16579,7 @@
             "powerFactor": 950,
             "typicalWatts": 160
           },
+          "primaryDomain": "video.digital",
           "rearU": 2,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -16547,7 +16594,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:78878e170f7c676edefad38296e549d9488d4e8eb3e01716e1a19417cce9c599",
+        "contentHash": "sha256:91181379f9d05e02a67ee2ff1861e9b5039b2e1feaabcd2c3177eb829c071c07",
         "templateId": "S02",
         "version": 1
       },
@@ -17320,6 +17367,7 @@
             "standbyWatts": 8,
             "typicalWatts": 55
           },
+          "primaryDomain": "video.digital",
           "rearU": 3,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -17335,7 +17383,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:ef8b81749938664feb53eeb8f0dbce829c3ac2c13e0ee09d19137b69675a927f",
+        "contentHash": "sha256:244175e59107ed70fdf3975309d988442e4c43853dce9b24630d94dfde3d0895",
         "templateId": "V01",
         "version": 1
       },
@@ -17665,6 +17713,7 @@
             "powerFactor": 950,
             "typicalWatts": 18
           },
+          "primaryDomain": "video.digital",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -17679,7 +17728,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:94e31f12ff627d795df29b5cc19d1dec65694e45163b6e27e640f189d9238aee",
+        "contentHash": "sha256:c51ae34569211e7a0241e2b4afbd74e83e4ff02549add1883eef3645ca7c1741",
         "templateId": "V02",
         "version": 1
       },
@@ -18561,6 +18610,7 @@
             "powerFactor": 950,
             "typicalWatts": 110
           },
+          "primaryDomain": "video.digital",
           "rearU": 4,
           "requiresClearanceAboveU": 1,
           "requiresClearanceBelowU": 0,
@@ -18576,7 +18626,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:413706c42416adc80ffc1914bf5e062f0ce7106cfb60072da73c2eaff967e226",
+        "contentHash": "sha256:e31c77549b4a09533952b80d4836176f51882dde0979a48562819ef0ab3ffaac",
         "templateId": "V03",
         "version": 1
       },
@@ -18794,6 +18844,7 @@
             "powerFactor": 900,
             "typicalWatts": 15
           },
+          "primaryDomain": "video.digital",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -18808,7 +18859,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:b91e8dca34d73f706338a7009fab83e5a6154bbcde7db1bf8e177dad8dcc9a2a",
+        "contentHash": "sha256:a580e501fdd7edc684e3bf87a614429b6f26e65b256af507cf0c9851c2fa9f82",
         "templateId": "V04",
         "version": 1
       },
@@ -19090,6 +19141,7 @@
             "powerFactor": 950,
             "typicalWatts": 28
           },
+          "primaryDomain": "video.digital",
           "rearU": 1,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -19104,7 +19156,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:4b56d843b29cacbf216babdbab20a7378a8dcd9c298aab7ab5b0bedb48324ec1",
+        "contentHash": "sha256:ec72b3d929d27f63065c45385ed155d468fb1cc27d2c48e9aef1fda80d6f3c02",
         "templateId": "V05",
         "version": 1
       },
@@ -19284,6 +19336,7 @@
             "powerFactor": 900,
             "typicalWatts": 8
           },
+          "primaryDomain": "video.digital",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -19298,7 +19351,7 @@
           "widthClass": "half"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:ef28e7ee132a15209a336f4bdfe0e87f0b1ab8caa315bd1a4174cf258d1bd23f",
+        "contentHash": "sha256:11f3a9741ac5eeabb803b27b139dee735a76d04981fb66e180ca1d080aca7456",
         "templateId": "V06",
         "version": 1
       },
@@ -19505,6 +19558,7 @@
             "outletsProvided": 0,
             "typicalWatts": 9
           },
+          "primaryDomain": "video.digital",
           "rearU": 0,
           "requiresClearanceAboveU": 0,
           "requiresClearanceBelowU": 0,
@@ -19519,7 +19573,7 @@
           "widthClass": "half"
         },
         "capturedAt": "2026-03-02T09:15:00.000Z",
-        "contentHash": "sha256:b92f906d6359f1f8e6d3dc8b933d5f4c4c03b9ba534caee5a859f27152138bb4",
+        "contentHash": "sha256:7250d13a740ea6a26bf8e14b1708e9c35e8dca0da12ea083ef5ca737ff11b49d",
         "templateId": "V07",
         "version": 1
       },

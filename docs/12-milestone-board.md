@@ -11023,6 +11023,119 @@ and `Ctrl+3` is still bound to nothing (CR-071's Rear Panel).
 `#894` `8058825c` and `12f63883`, the second being §5.9.44.6's deletion. Merged as `0264b5e9`.
 
 
+#### 5.9.45 `#895` and `#896`: a draw that could not cross a pin, and a mark nobody could read · `DR-169` · no version move
+
+2026-09-13 and 14. Four reports in one message from the user, after drawing rooms in the product for
+the first time since the Site view merged. Two were defects and two were decisions. Board `#895`
+closes under `#786`; `#896` and its six chapters `#897`-`#902` close under it too, and none moves the
+version.
+
+##### 5.9.45.1 The draw lost to a pin, and §11.49.10 had already ruled it
+
+*"If the user clicks on a pinned item, the pin is dragged instead of a vertex being placed."* Then:
+*"left click will no longer place a vertex or close the outline."*
+
+**Both are one line.** The draw mode outranked the other gestures in `commitDrag`'s dispatch chain
+and NOT in `beginDrag`, so the scene hit test ran first and a press landing on a pin grabbed the pin.
+§11.49.10 ruled the reshape mode above every other gesture and gave its reason in general terms:
+*"a mode that outranked the other gestures only sometimes would put the same tie in a smaller place
+where nobody would look for it."* **The draw was that smaller place**, so the fix is a correction
+under an existing ruling rather than a new decision.
+
+The second symptom is the same line seen from the other end. Every click inside the marker's hit box
+was swallowed identically, and that box was **60 points across on a 3300-unit plan**: a person
+drawing the room around their head end was clicking into a dead zone the size of the mark.
+
+**THE THIRD REPORT DID NOT REPRODUCE**, and that is recorded rather than quietly dropped. *"If the
+outline is cancelled, clicking Draw will not allow the user to start drawing one again"* was tried
+by both cancel routes, `Esc` and the chip's dismiss, at the widget level; the mode restarted cleanly
+each time. `plan_tab_route_test.dart` records that no pointer gesture reaches that tab in the app
+harness, so the app-level check was not available. The likeliest explanation is the same dead zone
+swallowing the restart clicks, and the user has been asked to re-test.
+
+##### 5.9.45.2 "Massive" is a number, and so is the thing next to it
+
+`kPlanMarkerRadiusFraction` sized a marker at 1/110 of the underlay's longer side, in SCENE units,
+which are image pixels. That is a 30-unit radius on an architectural sheet, so a 60-point mark at
+1:1 and four times that at 400%. **And the plan canvas never called `fitToContent`**, where the rack
+editor and the schematic both do, so a plan opened at 100% anchored to its top-left corner showing
+about a quarter of the drawing with the marks at their largest. Neither fact was inferred.
+
+**THE SEAM FOR THE FIX ALREADY EXISTED WITH NO PRODUCER.** `buildPlanScene` takes a `markerRadius`
+override and no caller anywhere passed it, which is the eighth instance of the shape §11.167.7 lists
+seven of. So each caller computes from its own scale and the scene builder never learns what a zoom
+is.
+
+##### 5.9.45.3 The census that refused a derivation
+
+The user's answer to telling marks apart was colour by the device's primary signal domain. The
+obvious implementation is to read the domains off the ports, and **the census killed it**: of 51
+seeded templates, **13 have ports in exactly one domain**. Excluding `pwr`, `ctl` and `str`, which
+sit on nearly everything, it rises to 26 and **nine then have none at all**, a control keypad among
+them, because the excluded ones were all it had. A television reads as
+`(video.digital, audio.analog, net)`.
+
+**A set of port domains answers what can be PLUGGED INTO a device. It does not answer what the
+device IS**, and G4 forbids estimating it, so the field is authored.
+
+**The outlet half went the other way and still landed on authoring.** A drop's `service` IS a signal
+family, so an outlet's domains can be read off its recipe: five of the nine resolve to one, three to
+two, and one is `structure.undetermined`. But the one that breaks it is **the most common outlet in
+the trade**: `TV location` is two Cat6 and two RG6, so it reads as `net` and `video.analog` at once.
+Deriving would have coloured `Data only` and left the flagship recipe grey.
+
+##### 5.9.45.4 The glyph is not decoration, and the greyscale case caught itself
+
+`plan_sheet.dart` SPLICES the plan scene, so every mark on screen is a mark on `T1.01`, and the
+Installer preset exports greyscale. §14 records that the eight hues **collide in greyscale by
+design**: analog video against analog audio at L ≈ 0.40, and digital audio, network and control
+together at L ≈ 0.22-0.29. PAL-3 resolves that for a LINE with dash class and line weight. **A filled
+dot has neither.** So the mark carries the domain's own glyph, which the product already draws.
+
+**The case that proves it caught its own first version.** It compares marks with every colour
+stripped out, and it first summarised each path by its COMMAND COUNT: a square and a diamond are
+both five commands, so it reported two identical grey dots as distinct. It reads the path geometry
+now. A proxy for *"a human can tell these apart"* has to be chosen at the level the reader sees.
+
+##### 5.9.45.5 Three guards fired, and each was doing its job
+
+**`template_change_class.dart` throws rather than defaulting**: `no change class for
+"primaryDomain"`, so the field could not reach the Device Builder until somebody decided what class
+of change it is. Safe, in the end: it changes a mark's colour and nothing placed, wired, scheduled or
+measured.
+
+**`designator` is `@internal` to `rackpal_core`** (AC-013), so a `rackpal_ui` case cannot blank one
+to test the no-name path. The fixture builds it that way instead, which is the honest route and one
+the analyzer gate insisted on at zero warnings.
+
+**And `plan_scene_test.dart` asserted the MECHANISM.** It read `hasLength(2)` circles, because a
+device was a circle plus an inner dot and that dot was how it differed from a drop. The dot is where
+the glyph goes now, so the difference moved to the ring's weight. The case asserts the artifact
+since: two carriers must not draw the same mark.
+
+##### 5.9.45.6 A guard whose condition did not name everything it hides
+
+The designator bubble was first mounted inside `_withChrome`, which returns the BARE canvas when all
+four mode controllers are null and no room has an outline. That is a real mounting and it is what
+this file's own tests use, so the bubble was built by nothing and four cases said so at once. It
+lives in the always-present layer with the zoom card now. **An early return is an optimisation whose
+condition has to name every thing the branch it skips can show**, and this one named four
+controllers while the branch had grown a fifth subject.
+
+##### 5.9.45.7 Evidence
+
+Floors: `rackpal_core` 4682 to 4707, `rackpal_ui` 1874 to 1895. 17 gates green throughout. Analyzer
+pin unmoved at 233.
+
+**Authoring 48 templates moved 48 content hashes**, exactly as `#899`'s wire test predicted before
+`#900` ran into it: the four starters regenerate and `e_three_hundred_links.rmpj.json` gains 16
+lines. **The op-count baselines in `schematic_perf_test.dart` did not move**, which is the check that
+matters, because a key on a template body is not a drawing op.
+
+**Commits** (§8.8). `#895` `31442e90`. `#896` the ruling `1023e53e`. `#897`, `#898` `8eb783fa`.
+`#899` `a47ff9df`. `#900` `392578d`. `#901` `ffc9169`. `#902` and this record, pending.
+
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·

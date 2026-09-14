@@ -3,6 +3,7 @@
 import 'package:rackpal_core/src/catalog/catalog_ports.dart';
 import 'package:rackpal_core/src/model/device_glyph.dart';
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/mass.dart';
 
@@ -81,6 +82,7 @@ Map<String, TemplateBody> buildPowerCatalog() {
         'this is why 0U occupants are created and edited from the '
         'inspector in v1 rather than dragged (AC-044).',
     category: kCatPower,
+    primaryDomain: const SignalDomainId('pwr'),
     typePrefix: 'PDU',
     tags: const ['pdu', 'zerou'],
     frontU: 0,
@@ -185,6 +187,7 @@ Map<String, TemplateBody> buildPowerCatalog() {
         'reads them — amplifiers must be last-on/first-off or a reversed '
         'sequence thumps and blows drivers (AC-033).',
     category: kCatPower,
+    primaryDomain: const SignalDomainId('pwr'),
     typePrefix: 'SEQ',
     tags: const ['sequencer', 'conditioner'],
     frontU: 2,
@@ -310,6 +313,7 @@ Map<String, TemplateBody> buildPowerCatalog() {
         'capacity is checked VA against VA, never W against W (CR-056) — '
         'the 3000 VA is outputCapacityVA, not a draw.',
     category: kCatPower,
+    primaryDomain: const SignalDomainId('pwr'),
     typePrefix: 'UPS',
     glyph: DeviceGlyph.battery,
     tags: const ['ups', 'battery', 'placeLow'],
@@ -429,6 +433,7 @@ Map<String, TemplateBody> buildPowerCatalog() {
         'outlet so the gear on it can be power-cycled remotely. It draws '
         'nothing itself.',
     category: kCatPower,
+    primaryDomain: const SignalDomainId('pwr'),
     typePrefix: 'PS',
     tags: const ['strip', 'shelf', 'passive'],
     // NO RAIL HOLES AND NO U OF ITS OWN, WHICH IS THE SHELF'S JOB. A

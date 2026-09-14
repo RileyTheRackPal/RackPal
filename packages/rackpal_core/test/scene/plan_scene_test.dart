@@ -154,9 +154,23 @@ void main() {
       expect(ops.whereType<OpRect>(), isEmpty);
     });
 
-    test('a device carries a core, so it reads apart from an outlet', () {
-      final ops = opsFor(PlanPinCarrier.device);
-      expect(ops.whereType<OpCircle>(), hasLength(2));
+    test('a device reads apart from an outlet', () {
+      // THIS ASSERTED THE MECHANISM AND NOW ASSERTS THE ARTIFACT
+      // (`#901`, DR-169 §11.168.6). It read `hasLength(2)`, because a
+      // device was a circle plus an inner dot at `r / 3` and that dot was
+      // how it differed. The dot is the space the domain glyph occupies
+      // now, so the difference moved to the ring's WEIGHT. What the case
+      // is for did not move: two carriers must not draw the same mark.
+      final device = opsFor(PlanPinCarrier.device);
+      final outlet = opsFor(PlanPinCarrier.outlet);
+
+      // The ops carry no `toString`, so comparing the LISTS compares two
+      // `Instance of 'OpCircle'` strings and passes over anything. The
+      // weight is the difference, so the weight is what the case reads.
+      expect(
+        device.whereType<OpCircle>().single.stroke!.widthPt,
+        greaterThan(outlet.whereType<OpCircle>().single.stroke!.widthPt),
+      );
     });
   });
 

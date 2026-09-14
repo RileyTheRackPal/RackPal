@@ -89,6 +89,7 @@ import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
+import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:vector_math/vector_math_64.dart';
 
@@ -155,6 +156,7 @@ PlanSheet buildPlanSheet({
   List<PlanScheduleRow> scheduleRows = const <PlanScheduleRow>[],
   SheetPalette palette = const SheetPalette(),
   PlanPalette planPalette = const PlanPalette(),
+  Map<SignalDomainId, SignalDomainDef> domains = const {},
 }) {
   assert(
     sheet.role == SheetRole.devicePlan,
@@ -203,6 +205,12 @@ PlanSheet buildPlanSheet({
     underlay: underlay,
     pins: pins,
     palette: planPalette,
+    // THE SHEET COLOURS ITS MARKS TOO (`#901`, DR-169 §11.168.6), and it
+    // is the reason the glyph exists: the Installer preset exports
+    // greyscale, canon §14 records that the eight hues collide there by
+    // design, and a filled dot has neither a dash class nor a line weight
+    // for PAL-3 to separate them with.
+    domains: domains,
   );
 
   // FITTED ON THE UNDERLAY'S OWN BOX. A pin dragged off the edge of the

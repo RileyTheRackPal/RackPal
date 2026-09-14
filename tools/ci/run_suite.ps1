@@ -815,7 +815,20 @@ $SuiteFloors = @{
     # `templateContentHash` hashes `templateBodyToJson`, and a key written
     # unconditionally would have re-hashed all 51 seeded templates for a
     # value nobody had authored.
-    'rackpal_core'   = 4691
+    # 4698 at `#900`: +7, `primary_domain_authored_test.dart`. It asserts
+    # the SHAPE of the answer rather than a copy of it: every template
+    # that can have a domain has one, the ones that cannot are exactly the
+    # three passive panels, every value names a domain the registry
+    # defines, and the 35 templates whose ports span several domains still
+    # carry a single answer, which no derivation could have produced.
+    # 4707 at `#901`: +9, `plan_mark_domain_test.dart`. The case worth
+    # naming is the greyscale one: canon 14 records that the eight domain
+    # hues COLLIDE in greyscale by design, three inside one luminance
+    # band, so it strips every colour out of the marks and asserts the
+    # three still draw three different things. Its first version compared
+    # a command COUNT and passed over a square and a diamond, which is
+    # why it now compares the path geometry.
+    'rackpal_core'   = 4707
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1225,7 +1238,12 @@ $SuiteFloors = @{
     # field whose only writer is a codec is the no-producer shape this
     # repository has now recorded eight times, so the field and the
     # control that sets it land together.
-    'rackpal_ui'     = 1891
+    # 1895 at `#902`: +4, the designator bubble. One of them is why the
+    # bubble does not live in `_withChrome`: that method returns the BARE
+    # canvas when all four mode controllers are null and no room has an
+    # outline, which is what this file's own harness pumps, so a bubble
+    # put inside it was built by nothing.
+    'rackpal_ui'     = 1895
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

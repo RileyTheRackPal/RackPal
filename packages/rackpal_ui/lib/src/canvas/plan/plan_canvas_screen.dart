@@ -55,6 +55,7 @@ import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_calibrate.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_outline.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
+import 'package:rackpal_ui/src/canvas/plan/plan_pin_bubble.dart';
 import 'package:rackpal_ui/src/canvas/plan/render_plan_canvas.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
@@ -119,6 +120,9 @@ List<PlanPinSubject> pinsOnUnderlay(RackDocument doc, Uuid underlayId) {
           entityId: rack.id,
           at: pin.at,
           carrier: PlanPinCarrier.rack,
+          // THE SAME RESOLUTION THE SHEET USES (`#901`). Two gathers
+          // exist; one answer to what colour a mark is.
+          domain: planPinDomainFor(doc, rack.id, PlanPinCarrier.rack),
         ),
       );
     }
@@ -131,6 +135,9 @@ List<PlanPinSubject> pinsOnUnderlay(RackDocument doc, Uuid underlayId) {
           entityId: outlet.id,
           at: pin.at,
           carrier: PlanPinCarrier.outlet,
+          // THE SAME RESOLUTION THE SHEET USES (`#901`). Two gathers
+          // exist; one answer to what colour a mark is.
+          domain: planPinDomainFor(doc, outlet.id, PlanPinCarrier.outlet),
         ),
       );
     }
@@ -145,6 +152,9 @@ List<PlanPinSubject> pinsOnUnderlay(RackDocument doc, Uuid underlayId) {
           entityId: device.id,
           at: pin.at,
           carrier: PlanPinCarrier.device,
+          // THE SAME RESOLUTION THE SHEET USES (`#901`). Two gathers
+          // exist; one answer to what colour a mark is.
+          domain: planPinDomainFor(doc, device.id, PlanPinCarrier.device),
         ),
       );
     }
@@ -425,10 +435,14 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     return [
       for (final p in resolved)
         if (p.entityId == grabbed.entityId)
+          // THE DRAGGED PIN KEEPS ITS DOMAIN, which is a rebuild and
+          // therefore the field this repository has already watched a new
+          // one get silently dropped by (`#883`'s span). Only `at` moves.
           PlanPinSubject(
             entityId: p.entityId,
             at: live,
             carrier: p.carrier,
+            domain: p.domain,
           )
         else
           p,
@@ -761,6 +775,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       underlay: widget.underlay,
       pins: _pins,
       markerRadius: _markerRadius,
+      domains: _doc.registries.signalDomains,
     );
     final hit = hitTest(built.scene, sceneStart);
     if (hit == null) {
@@ -867,6 +882,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
             underlay: widget.underlay,
             pins: _pins,
             markerRadius: _markerRadius,
+            domains: _doc.registries.signalDomains,
           ).scene,
         );
         setState(() {
@@ -1032,6 +1048,22 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     widget.underlay.pixelWidth,
     widget.underlay.pixelHeight,
   );
+
+  /// The designator of the mark under the pointer, and where it sits, or
+  /// null when the pointer is over none (`#902`, DR-169 §11.168.7).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A HOVER AND NOT A LABEL BESIDE EVERY MARK, WHICH IS THE RULING
+  /// ═══════════════════════════════════════════════════════════════════
+  /// §11.168.7: sixty drops in one room is sixty labels, drawn over
+  /// somebody else's drawing. Colour answers *what kind of thing is
+  /// this* at a glance and this answers *which one* on demand.
+  ///
+  /// **IT IS CHROME, NOT SCENE.** `plan_sheet.dart` splices the scene, so
+  /// a designator emitted into it would print on `T1.01` under whatever
+  /// the pointer happened to be over when the export ran. docs/15 §7's
+  /// printed callout is `PLAN-H`'s and is a different thing.
+  ({String label, PxPt at})? _hoveredPin;
 
   /// The marker radius in SCENE units that draws [kPlanMarkerRadiusPt] on
   /// screen at the current zoom.
@@ -1372,6 +1404,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       underlay: widget.underlay,
       pins: _pins,
       markerRadius: _markerRadius,
+      domains: _doc.registries.signalDomains,
     );
     final canvas = MouseRegion(
       // TRACKS THE POINTER ONLY WHILE A PICK IS WAITING FOR ITS SECOND
@@ -1422,6 +1455,19 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
               return Stack(
                 children: [
                   Positioned.fill(child: _withChrome(canvas)),
+                  // THE DESIGNATOR UNDER THE POINTER (`#902`, §11.168.7),
+                  // AND IT LIVES HERE RATHER THAN IN `_withChrome`.
+                  // That method returns the bare canvas when all four
+                  // mode controllers are null and no room has an outline,
+                  // which is a real mounting: the bubble put inside it
+                  // was built by nothing and four cases said so.
+                  if (_hoveredPin case final hovered?)
+                    PlanPinBubble(
+                      label: hovered.label,
+                      at: hovered.at,
+                      viewport: widget.viewport,
+                      radiusPt: kPlanMarkerRadiusPt,
+                    ),
                   // THE SAME HUD THE RACK HAS, in the same corner, saying
                   // the same three things (`#898`, DR-169 §11.168.3). A
                   // second control doing this job in a different shape
@@ -1452,6 +1498,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// an idle plan would `setState` the whole canvas, which on a 4000
   /// pixel raster is the frame budget spent on nothing.
   void _onCalibrateHover(PointerHoverEvent event) {
+    _updateHoveredPin(event.position);
     final outline = widget.outline;
     if (outline != null && outline.vertices.isNotEmpty) {
       final at = _toPixel(event.position);
@@ -1465,7 +1512,45 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     setState(() => _calibrateHover = at);
   }
 
+  /// Reads the mark under [global] and remembers its designator.
+  ///
+  /// **THROUGH THE SAME SCENE THE CLICKS USE**, so what a hover names and
+  /// what a press grabs cannot disagree: both come from `hitTest` over a
+  /// scene built with [_markerRadius].
+  void _updateHoveredPin(Offset global) {
+    final at = _toPixel(global);
+    if (at == null) {
+      if (_hoveredPin != null) setState(() => _hoveredPin = null);
+      return;
+    }
+    final built = buildPlanScene(
+      underlay: widget.underlay,
+      pins: _pins,
+      markerRadius: _markerRadius,
+      domains: _doc.registries.signalDomains,
+    );
+    final hit = hitTest(
+      built.scene,
+      DPt(at.px.toDouble(), at.py.toDouble()),
+    );
+    if (hit == null) {
+      if (_hoveredPin != null) setState(() => _hoveredPin = null);
+      return;
+    }
+    final subject = _pins.firstWhere((p) => p.entityId.v == hit.entityId);
+    // THE SHEET'S OWN RESOLVER, not a fourth spelling of "what is this
+    // called". A pin whose carrier has no designator yet is named by
+    // nothing, and shows nothing, rather than an empty bubble.
+    final label = planPinLabelsFor(_doc, [subject])[subject.entityId];
+    final next = label == null ? null : (label: label, at: subject.at);
+    if (next?.label == _hoveredPin?.label && next?.at == _hoveredPin?.at) {
+      return;
+    }
+    setState(() => _hoveredPin = next);
+  }
+
   void _onCalibrateExit(PointerExitEvent event) {
+    if (_hoveredPin != null) setState(() => _hoveredPin = null);
     if (_outlineHover != null) setState(() => _outlineHover = null);
     if (_calibrateHover == null) return;
     setState(() => _calibrateHover = null);

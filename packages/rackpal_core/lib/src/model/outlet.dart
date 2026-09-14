@@ -239,6 +239,7 @@ final class OutletTemplate {
     required this.name,
     this.tag,
     this.tia570Grade,
+    this.primaryDomain,
     List<OutletDrop>? drops,
   }) : drops = drops ?? [];
 
@@ -248,6 +249,35 @@ final class OutletTemplate {
   // retrofit (AC-013). Converted as each is wired to a Command. See
   // internal_setter_grep_test.dart.
   String name;
+
+  /// What an outlet made from this recipe mostly serves, as one of the
+  /// eight signal domains (`#900`, DR-169 §11.168.4). Null is unknown.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// AUTHORED, AND THE CENSUS FOR IT IS SMALLER AND CLEARER
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A drop's `service` IS a signal family, so unlike a device template
+  /// an outlet's domains CAN be read off its recipe. Measured over the
+  /// nine shipped templates: **five resolve to exactly one domain, three
+  /// resolve to two, and one is `structure.undetermined`**, which is the
+  /// state docs/07 calls first-class at rough-in.
+  ///
+  /// **The one that breaks it is the most common outlet in the trade.**
+  /// `TV location` is two Cat6 and two RG6, so it reads as `net` and
+  /// `video.analog` at once, and a TV outlet is about the television.
+  /// Deriving would leave the flagship recipe neutral while colouring
+  /// `Data only`, which is the wrong way round.
+  ///
+  /// **The three TIA-570-D grades are deliberately null**, and that is
+  /// not an omission: a grade is a CABLING STANDARD rather than a
+  /// service, so *"which domain is a Grade 2 outlet"* has no answer to
+  /// author. They are the same three that carry no `tag` for the same
+  /// reason.
+  ///
+  /// An `Outlet` resolves this through [Outlet.outletTemplateId], which
+  /// is nullable: an outlet whose template has been removed, or which
+  /// was never made from one, has no domain and draws the neutral mark.
+  SignalDomainId? primaryDomain;
 
   /// The label segment `{SERVICE}` renders — `TV`, `KEY`, `CAM`
   /// (DR-022 §11.21.4, DR-023 step 2).

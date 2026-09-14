@@ -8,6 +8,7 @@ import 'package:rackpal_core/src/catalog/catalog_ports.dart';
 import 'package:rackpal_core/src/catalog/catalog_roles.dart';
 import 'package:rackpal_core/src/model/device_glyph.dart';
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/mass.dart';
 
 const String kCatField = 'Field Devices';
@@ -21,6 +22,7 @@ TemplateBody _field({
   required String typePrefix,
   List<String> tags = const [],
   DeviceGlyph? glyph,
+  SignalDomainId? primaryDomain,
   required Mass weight,
   PowerProfile? power,
   required List<PortDef> ports,
@@ -32,6 +34,7 @@ TemplateBody _field({
   displayName: displayName,
   description: description,
   category: kCatField,
+  primaryDomain: primaryDomain,
   typePrefix: typePrefix,
   tags: tags,
   glyph: glyph,
@@ -115,6 +118,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F01'] = _field(
     model: 'DISP-1',
     displayName: 'Display (flat panel)',
+    primaryDomain: const SignalDomainId('video.digital'),
     description:
         'ARC on HDMI 1 is the only mechanism for audio travelling up a '
         'link whose defaultDirection is source->sink.',
@@ -210,6 +214,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F02'] = _field(
     model: 'PROJ-1',
     displayName: 'Projector',
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'PROJ',
     tags: const ['projector', 'field'],
     weight: _kg(7.3),
@@ -261,6 +266,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F03'] = _field(
     model: 'SCRN-MOTOR-1',
     displayName: 'Projection Screen, motorised',
+    primaryDomain: const SignalDomainId('ctl'),
     description:
         'Takes both a trigger AND a hardwired line-voltage feed — '
         'integrators forget the second one.',
@@ -315,6 +321,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F04'] = _field(
     model: 'SPK-CEIL-PAIR',
     displayName: 'In-Ceiling Speaker Pair',
+    primaryDomain: const SignalDomainId('audio.analog'),
     description:
         'One ceiling location, one 16/4 pull, four conductors, one '
         'gesture — the canonical atomicConnect case (AC-053, RJ-016).',
@@ -358,6 +365,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F05'] = _field(
     model: 'SPK-WALL-1',
     displayName: 'In-Wall Speaker',
+    primaryDomain: const SignalDomainId('audio.analog'),
     typePrefix: 'SPK',
     glyph: DeviceGlyph.speaker,
     tags: const ['speaker', 'wall', 'field'],
@@ -410,6 +418,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F06'] = _field(
     model: 'SUB-POWERED-1',
     displayName: 'Subwoofer, powered',
+    primaryDomain: const SignalDomainId('audio.analog'),
     description: 'Needs a signal run AND a receptacle at the same location.',
     typePrefix: 'SUB',
     glyph: DeviceGlyph.speaker,
@@ -461,6 +470,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F07'] = _field(
     model: 'SPK-OUTDOOR-1',
     displayName: 'Outdoor / Landscape Speaker',
+    primaryDomain: const SignalDomainId('audio.analog'),
     description: 'Runs to this device default to a directBurial jacket.',
     typePrefix: 'SPK',
     glyph: DeviceGlyph.speaker,
@@ -501,6 +511,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F08'] = _field(
     model: 'SPK-70V-PENDANT',
     displayName: '70V Pendant Speaker',
+    primaryDomain: const SignalDomainId('audio.analog'),
     description:
         'tapWatts is a per-installation selector, not a per-device fact: '
         'the transformer tap is set on the ladder at install. Typed '
@@ -552,6 +563,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F09'] = _field(
     model: 'CAM-IP-1',
     displayName: 'IP Camera',
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'CAM',
     glyph: DeviceGlyph.camera,
     tags: const ['camera', 'poe', 'field'],
@@ -624,6 +636,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F10'] = _field(
     model: 'NVR-8CH',
     displayName: 'NVR',
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'NVR',
     glyph: DeviceGlyph.source,
     tags: const ['nvr', 'video-surveillance', 'field'],
@@ -671,6 +684,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F11'] = _field(
     model: 'AP-1',
     displayName: 'Wireless Access Point',
+    primaryDomain: const SignalDomainId('net'),
     description:
         'The AP and the camera together make NET-001 meaningful: eight '
         'class-4 PDs against a switch budget well below ports x max class.',
@@ -725,6 +739,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F12'] = _field(
     model: 'TP-1',
     displayName: 'Touchpanel',
+    primaryDomain: const SignalDomainId('ctl'),
     typePrefix: 'TP',
     tags: const ['touchpanel', 'control', 'field'],
     weight: _kg(1.4),
@@ -798,6 +813,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F14'] = _field(
     model: 'VC-1',
     displayName: 'Volume Control',
+    primaryDomain: const SignalDomainId('audio.analog'),
     typePrefix: 'VC',
     glyph: DeviceGlyph.control,
     tags: const ['volume-control', 'passive', 'field'],
@@ -823,6 +839,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F15'] = _field(
     model: 'IRR-EYE-1',
     displayName: 'IR Receiver Eye',
+    primaryDomain: const SignalDomainId('ctl'),
     description:
         'Tip=signal, ring=GND, sleeve=+12V. Shares an identical 3.5 mm '
         'connector with an emitter — pinoutVariant is the only thing '
@@ -892,6 +909,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F16'] = _field(
     model: 'ONT-1',
     displayName: 'ISP Gateway / ONT',
+    primaryDomain: const SignalDomainId('net'),
     description:
         'Physically present in essentially every North American '
         'residential rack, and the device the whole network hangs off.',
@@ -925,6 +943,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F17'] = _field(
     model: 'ANT-OTA-1',
     displayName: 'OTA Antenna',
+    primaryDomain: const SignalDomainId('video.analog'),
     typePrefix: 'ANT',
     glyph: DeviceGlyph.antenna,
     tags: const ['antenna', 'ota', 'field'],
@@ -966,6 +985,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F18'] = _field(
     model: 'GB-COAX-1',
     displayName: 'F-Type Ground Block',
+    primaryDomain: const SignalDomainId('video.analog'),
     description:
         'A code item and an actual lightning-damage liability (AC-034/m21).',
     typePrefix: 'GB',
@@ -1025,6 +1045,7 @@ Map<String, TemplateBody> buildFieldCatalog() {
   out['F20'] = _field(
     model: 'SPK-DUALMODE-1',
     displayName: 'Dual-Mode Speaker, 70V tapped or 8 ohm',
+    primaryDomain: const SignalDomainId('audio.analog'),
     description:
         'A transformer with a bypass position, which is where a Low-Z/CV '
         'switch actually lives: amplifiers are rarely switchable and one '
@@ -1083,6 +1104,7 @@ TemplateBody _keypad({
   return _field(
     model: loadControlling ? 'KP-HV-1' : 'KP-1',
     displayName: loadControlling ? 'Keypad, load-controlling' : 'Keypad',
+    primaryDomain: const SignalDomainId('ctl'),
     description: loadControlling
         ? 'Wired directly to the load it switches, so its box carries '
               'line voltage as well as the control bus. The low-voltage '
