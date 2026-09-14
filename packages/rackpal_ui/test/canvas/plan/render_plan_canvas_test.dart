@@ -190,7 +190,11 @@ void main() {
       // during paint, so a render object that dropped `images` on the way
       // to `FlutterDiagramCanvas` fails here rather than drawing a blank.
       await _loadInto(tester, cache, 'underlays/ul-1.png', 400, 300);
-      final built = buildPlanScene(underlay: _underlay(), pins: const []);
+      final built = buildPlanScene(
+        underlay: _underlay(),
+        pins: const [],
+        markerRadius: 7,
+      );
 
       await tester.pumpWidget(
         _host(
@@ -213,7 +217,11 @@ void main() {
       // the half that moves when a person pans.
       await _loadInto(tester, cache, 'underlays/ul-1.png', 400, 300);
       final viewport = ViewportController();
-      final built = buildPlanScene(underlay: _underlay(), pins: const []);
+      final built = buildPlanScene(
+        underlay: _underlay(),
+        pins: const [],
+        markerRadius: 7,
+      );
       await tester.pumpWidget(
         _host(
           scene: built.scene,
@@ -236,7 +244,11 @@ void main() {
     testWidgets('a pan repaints it', (tester) async {
       await _loadInto(tester, cache, 'underlays/ul-1.png', 400, 300);
       final viewport = ViewportController();
-      final built = buildPlanScene(underlay: _underlay(), pins: const []);
+      final built = buildPlanScene(
+        underlay: _underlay(),
+        pins: const [],
+        markerRadius: 7,
+      );
       await tester.pumpWidget(
         _host(scene: built.scene, viewport: viewport, images: cache.resolver),
       );

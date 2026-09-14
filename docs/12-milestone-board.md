@@ -11219,6 +11219,88 @@ later change moved the gesture path to the built scene.
 
 **Commit** (§8.8): `#903` `60893c0`.
 
+#### 5.9.47 `#904`: a printed mark is the round end of its pill, and the chapter that asked was wrong twice · `DR-169` · no version move
+
+**DEMONSTRATED** by `plan_sheet_test.dart`, group *"the printed mark"*. §11.168.2's sheet half, which
+§5.9.46.4 left open, is built, and the size it builds to is the user's decision, recorded as canon
+§11.168.10.
+
+##### 5.9.47.1 The question and the answer
+
+`#904` asked what radius, in points, a mark should measure on a printed sheet, and named the callout
+pills as the obvious thing to read it against. The user answered by pointing at them. A pill is a
+stadium, so its ends have a radius of half its height, and `kPlanMarkPrintRadiusPt` is
+`kCalloutHeightPt / 2`. **Derived and not typed**, because `kCalloutTextPt` is itself a starting
+value that `PLAN-J`'s print will settle (DR-150 §11.149.7), and the user ruled a relation rather
+than a number.
+
+##### 5.9.47.2 Measured before it moved
+
+Off the rendered `T1.01` ops on ANSI B landscape, one outlet and one device per plan, 2026-09-14:
+
+| Underlay | Fit, pt per px | Radius under the fraction, pt | Outline, pt | Device ring, pt |
+|---|---|---|---|---|
+| 600x450 | 1.2600 | 6.87 | 2.52 | 4.41 |
+| 2000x1500 | 0.3780 | 6.87 | 0.76 | 1.32 |
+| 1500x2000 | 0.2835 | 5.15 | 0.57 | 0.99 |
+| 3300x2550 | 0.2224 | 6.67 | 0.50 | 0.78 |
+| 2550x3300 | 0.1718 | 5.15 | 0.50 | 0.60 |
+| 4000x1000 | 0.2805 | 10.20 | 0.56 | 0.98 |
+| 6600x5100 | 0.1112 | 6.67 | 0.50 | 0.50 |
+
+The outline and ring columns are printed widths with both backends' 0.5-point floor applied, and
+`#904` changes neither. The radius column is what it replaced: every row now prints the pill's end.
+
+##### 5.9.47.3 The chapter was a hypothesis, twice
+
+1. **"About 5.3pt."** That figure was computed against a 700x450-point area. The sheet's drawing area
+   is larger, and the ordinary 4:3 landscape plan printed at 6.87 points, so matching the pill
+   **visibly shrinks the common case**, by about a quarter. That is the decision working, and it is
+   written here so nobody files it as a regression.
+2. **"The seam is three lines away."** The chapter said `s` was computed *"immediately before the
+   `buildPlanScene` call"*. It was computed after it, from `plan.underlayBounds`, so the fit read the
+   scene and a radius taken from the fit would have been an argument to the scene it depended on.
+   `planUnderlayBounds(underlay)` is now the one answer both read, and the sheet fits before it
+   builds.
+
+##### 5.9.47.4 The default went, because the default was the defect
+
+`buildPlanScene`'s `markerRadius` defaulted to 1/110 of the underlay's longer side. The canvas
+stopped taking that default at `#897`; the sheet never did, and nothing said so. **The parameter is
+required now**, so a surface that forgets to state its scale does not compile, and
+`kPlanMarkerRadiusFraction` is deleted.
+
+**A case went with it that had been certifying the retired rule.** `plan_scene_test.dart`'s *"a
+4000px plan and a 600px plan get proportionate marks"* asserted exactly the property §11.168.2
+retired, and stayed green because the sheet kept the default alive. Deleting the default is what
+turns such a case red, so it argued for keeping what the ruling had removed. The OKF practice on
+tests that certify a defect records it as a fifth mouth.
+
+##### 5.9.47.5 What did not move: the line weight
+
+The outline is `Stroke(widthPt: 2)` in scene units with `scaleWithGeometry` at its default, so it
+still rides the fit, as the table shows. On a 6600x5100 scan a device's ring and an outlet's outline
+both print at the floor, and **a device prints exactly like a drop**, which is the distinction `#901`
+put in the ring weight.
+
+On screen the same stroke paints at twice the zoom in physical pixels. **That half is read from the
+code and not yet measured**: `RenderPlanCanvas` applies the viewport as a layer transform and
+`FlutterDiagramCanvas` starts its own stack at identity, so its `_k` is 1. The same reading says
+**flipping `scaleWithGeometry` would fix paper and not the screen**, since the zoom never reaches
+`_k`. What a mark's line weighs is the user's, and is `#905`, created before this section cites it.
+
+##### 5.9.47.6 Evidence
+
+Floor: `rackpal_core` 4707 to 4708, net +1 over two cases added and one removed. 17 gates green.
+Analyzer pin unmoved at 233.
+
+**Mutation-tested.** Restoring the fraction in `plan_sheet.dart` puts both new cases red: *"two plans
+of different proportions print the same mark"* at `Expected: 5.1545 / Actual: 6.8727`, and the pill
+case at `5.25 / 6.8727`. Replacing the derived constant with a literal `5` puts the pill case red at
+`5.25 / 5.0` and leaves the proportions case green, which is correct, since a constant is constant.
+
+**Commit** (§8.8): `#904` `77eab81`.
+
 
 ---
 

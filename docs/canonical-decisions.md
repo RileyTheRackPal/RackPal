@@ -20914,8 +20914,38 @@ surface already in v1, plus one nullable model field that writes a key only when
 `kSchemaVersion` does not move on DR-026's own precedent. Board `#896` cites this ruling and its
 chapters carry the work.
 
-**What this does not rule.** The exact point size of the mark, the glyph inventory per domain, and
-the rack asset, all of which are appearance and are the user's as they arrive. Whether an OUTLET's
+**11.168.10 A PRINTED MARK IS THE ROUND END OF THE CALLOUT PILL BESIDE IT.**
+
+*Added 2026-09-14, on `#904`. Settled by the user, answering that chapter's question by pointing at
+the callout pills it named as the obvious thing to read a printed mark against.*
+
+§11.168.2 ruled that each surface computes the radius from its own scale, *"the canvas from the
+viewport and the sheet from its page mapping"*, and said nothing about how big a mark is on PAPER.
+The canvas half shipped at `#897` and was corrected at `#903`. The sheet passed no radius and kept
+the retired fraction, and **measured on ANSI B landscape before anything moved** it printed at 6.87
+points on a 2000x1500 plan, 5.15 on 1500x2000 and 10.20 on a 4000x1000 panorama, because the fit
+binds on the tighter axis while the fraction read the longer one.
+
+**RULED: a mark on `T1.01` is the size of the round end of its callout pill**, a stadium whose ends
+have a radius of half its height. A sheet then carries one size of round thing where it would have
+carried two nearly-equal ones for a reader to reconcile, and the mark reads as the same family of
+object as the designator it is labelled with.
+
+**THE CLAUSE RULES A RELATION, NOT A NUMBER.** The pill's type size is itself a starting value that
+`PLAN-J`'s print will settle (DR-150 §11.149.7), so the radius is derived from the pill and moves
+with it; a figure written here would be a second copy of a moving number. **Nor is it the screen's
+point size.** A canvas mark is aimed at with a pointer and a printed one is read at arm's length,
+and a screen figure borrowed for paper would be a guess wearing a measurement's clothes.
+
+**IT DOES NOT RULE THE MARK'S LINE WEIGHT.** The outline is still in scene units and rides the fit,
+measured on the same sheets at 2.52 and 4.41 points for an outlet and a device on a 600x450 scan and
+at **0.50 and 0.50** on a 6600x5100 one, where both reach the print floor and a device prints exactly
+like a drop. That is a separate appearance question and is `#905`. No scope change, on §11.168.9's
+reasoning.
+
+**What this does not rule.** The exact point size of the mark ON SCREEN (on paper it is
+§11.168.10's), the glyph inventory per domain, the mark's line weight (`#905`), and the rack asset,
+all of which are appearance and are the user's as they arrive. Whether an OUTLET's
 domain is authored or read from its member links, which is a different question from a template's
 and is `#896`'s first chapter to answer with a measurement. And the callout treatment docs/15 §7
 schedules for `PLAN-H`, which this touches but does not close.

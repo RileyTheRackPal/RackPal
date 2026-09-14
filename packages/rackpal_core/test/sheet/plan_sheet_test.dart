@@ -270,14 +270,15 @@ void main() {
       expect(m.entry(1, 3), greaterThan(0));
     });
 
-    /// AN END-TO-END PROPERTY, AND NOT A LOAD-BEARING CASE, WHICH A
-    /// MUTATION ESTABLISHED RATHER THAN A READING.
+    /// AN END-TO-END PROPERTY, AND NOT A LOAD-BEARING CASE.
     ///
-    /// Swapping `underlayBounds` for `scene.bounds` in `plan_sheet.dart`
-    /// SURVIVES this case, because `buildPlanScene` sets both to the same
-    /// box. The property is real and worth pinning; what it cannot do is
-    /// tell the two spellings apart, and saying so here is cheaper than
-    /// the next reader assuming it can.
+    /// This said that swapping `underlayBounds` for `scene.bounds` in
+    /// `plan_sheet.dart` survived it, because `buildPlanScene` sets both to
+    /// one box. Since `#904` the sheet fits on `planUnderlayBounds` BEFORE
+    /// any scene exists, since the marks are sized from that fit, so the
+    /// swap is no longer something that file can spell. The property is
+    /// still real, and this is what fails the day a fit reads anything that
+    /// unions in the marks.
     test('a pin dragged off the picture does not shrink the plan', () {
       final inside = build(
         pins: const [
@@ -447,6 +448,75 @@ void main() {
       final built = build();
       expect(built.scene.bounds.width, SheetSize.ansiBLandscape.widthPt);
       expect(built.scene.bounds.height, SheetSize.ansiBLandscape.heightPt);
+    });
+  });
+
+  /// `#904`, DR-169 §11.168.10: a printed mark is the size of the callout
+  /// pill's round end, whatever the underlay's proportions.
+  ///
+  /// EVERY READING COMES OFF THE SHEET'S OWN OPS: a circle's radius times
+  /// the bracket's scale, and a pill's height off its round rect. No case
+  /// here types the production expression, which is the trap `#903` found
+  /// one surface over, where five green cases re-derived the canvas's
+  /// formula and proved that it divides.
+  group('the printed mark', () {
+    ({double mark, double pillEnd, double scale}) printed(int w, int h) {
+      final underlay = _underlay(width: w, height: h);
+      final built = buildPlanSheet(
+        sheet: SheetSet.forRacks(
+          <Rack>[testRack()],
+          planUnderlays: [underlay],
+        ).sheets.first,
+        underlay: underlay,
+        pins: [
+          PlanPinSubject(
+            entityId: const Uuid('outlet-1'),
+            at: PxPt(w ~/ 2, h ~/ 2),
+            carrier: PlanPinCarrier.outlet,
+          ),
+        ],
+        labels: const {Uuid('outlet-1'): 'WP-1'},
+        info: fullProjectInfo(),
+        settings: ProjectSettings(),
+        revisions: const <RevisionEntry>[],
+        fileName: 'smith.rmpj',
+        issuedAt: DateTime.utc(2026, 9, 14),
+        measurer: FakeMeasurer(),
+      );
+      final ops = built.scene.ops;
+      final scale = ops.whereType<OpTransform>().last.m.entry(0, 0);
+      return (
+        mark: ops.whereType<OpCircle>().single.radius * scale,
+        pillEnd: ops.whereType<OpRoundRect>().last.r.height / 2,
+        scale: scale,
+      );
+    }
+
+    /// LOAD-BEARING, AND IT IS THE EXIT CRITERION.
+    ///
+    /// One scan size turned on its side, so the fit binds on a DIFFERENT
+    /// axis for each. That is what the retired fraction could not survive:
+    /// it read the longer side while the fit bound the tighter one.
+    test('two plans of different proportions print the same mark', () {
+      final landscape = printed(2000, 1500);
+      final portrait = printed(1500, 2000);
+
+      expect(
+        (landscape.scale - portrait.scale).abs(),
+        greaterThan(0.01),
+        reason: 'the two fits must differ, or this case proves nothing',
+      );
+      expect(landscape.mark, closeTo(portrait.mark, 1e-9));
+    });
+
+    /// LOAD-BEARING. The user's rule is "the same size as the pills", so
+    /// the mark is read against a pill ON THE SAME SHEET, and neither side
+    /// of the comparison is a number this file wrote down.
+    test('a printed mark is the size of the round end of its pill', () {
+      for (final (w, h) in const [(2000, 1500), (1500, 2000), (4000, 1000)]) {
+        final sheet = printed(w, h);
+        expect(sheet.mark, closeTo(sheet.pillEnd, 1e-9), reason: '${w}x$h');
+      }
     });
   });
 

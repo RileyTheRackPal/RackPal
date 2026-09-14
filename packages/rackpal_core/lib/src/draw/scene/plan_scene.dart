@@ -151,19 +151,23 @@ final class PlanScene {
   final DBox underlayBounds;
 }
 
-/// The radius a marker gets when the caller does not choose one, as a
-/// fraction of the underlay's longer side.
+/// The underlay's own extent, in scene units, which are image pixels.
 ///
-/// PROPORTIONAL AND NOT ABSOLUTE, because scene units are image pixels
-/// (see the file header) and a fixed radius would draw a dot on a 4000
-/// pixel scan and a blot on a 600 pixel one. 1/110 of the long side puts a
-/// marker at roughly 18 units on a 2000 pixel plan, which is legible
-/// against architectural line work without covering the room it is in.
-///
-/// **A STARTING VALUE, NOT A RULING.** The mark's appearance is UI/UX and
-/// is the user's; docs/15 §7's callout treatment is PLAN-H's and will
-/// revisit it with the designator pill.
-const double kPlanMarkerRadiusFraction = 1 / 110;
+/// ═══════════════════════════════════════════════════════════════════════
+/// A FUNCTION OF THE UNDERLAY, BECAUSE THE SHEET NEEDS IT FIRST
+/// ═══════════════════════════════════════════════════════════════════════
+/// `plan_sheet.dart` fits the plan to its page from this box, sizes the
+/// mark from that fit, and only then can build a scene (`#904`, DR-169
+/// §11.168.10). Reading the box off a built [PlanScene] would make the
+/// radius depend on the scene it is an argument to. So the sheet and
+/// [buildPlanScene] read this one answer, and the fit cannot drift from
+/// [PlanScene.underlayBounds].
+DBox planUnderlayBounds(PlanUnderlay underlay) => DBox.fromLtwh(
+  0,
+  0,
+  underlay.pixelWidth.toDouble(),
+  underlay.pixelHeight.toDouble(),
+);
 
 /// How much heavier a device's outline is than an outlet's (`#901`,
 /// DR-169 §11.168.6).
@@ -182,24 +186,33 @@ const double kPlanGlyphSideFactor = 1.15;
 
 /// Composes [underlay] and [pins] into one scene (docs/15 §6).
 ///
-/// [markerRadius] overrides [kPlanMarkerRadiusFraction]'s derived default.
+/// ═══════════════════════════════════════════════════════════════════════
+/// [markerRadius] IS REQUIRED, AND IT IS IN SCENE UNITS
+/// ═══════════════════════════════════════════════════════════════════════
+/// Each surface states it from its own scale (DR-169 §11.168.2): the
+/// canvas divides a screen size by its zoom, and the sheet divides a paper
+/// size by its fit. It used to default to 1/110 of the underlay's longer
+/// side, and **the sheet kept taking that default after the canvas had
+/// stopped**, because a caller that passed nothing got the retired rule
+/// and nothing said so (`#904`). Required, a caller that forgets does not
+/// compile.
 PlanScene buildPlanScene({
   required PlanUnderlay underlay,
   required Iterable<PlanPinSubject> pins,
+  required double markerRadius,
   PlanPalette palette = const PlanPalette(),
-  double? markerRadius,
   Map<SignalDomainId, SignalDomainDef> domains = const {},
 }) {
+  assert(
+    markerRadius > 0 && markerRadius.isFinite,
+    'buildPlanScene: a marker radius of $markerRadius draws nothing a '
+    'person can read or click',
+  );
   final ops = <DiagramOp>[];
   final fragments = <String, IntRange>{};
   final hits = <HitRegion>[];
 
-  final bounds = DBox.fromLtwh(
-    0,
-    0,
-    underlay.pixelWidth.toDouble(),
-    underlay.pixelHeight.toDouble(),
-  );
+  final bounds = planUnderlayBounds(underlay);
 
   // ── the underlay, op zero ────────────────────────────────────────────
   //
@@ -224,12 +237,7 @@ PlanScene buildPlanScene({
   );
   fragments[underlay.id.v] = IntRange(0, ops.length);
 
-  final r =
-      markerRadius ??
-      (underlay.pixelWidth > underlay.pixelHeight
-              ? underlay.pixelWidth
-              : underlay.pixelHeight) *
-          kPlanMarkerRadiusFraction;
+  final r = markerRadius;
 
   // ── one fragment per pin ─────────────────────────────────────────────
   //

@@ -39,6 +39,28 @@ Both facts were measured on the day, not inferred from the complaint.
 - **The mark carries the domain's GLYPH**, which is what survives the print.
 - **The designator is a HOVER**, not a label beside every mark.
 - **The rack mark is unchanged**: it is the datum, not a ninth domain.
+- **On paper, a mark is the round end of its callout pill** (§11.168.10, added
+  2026-09-14 at `#904`). A relation and not a number: the pill's own type size
+  awaits `PLAN-J`'s print, so the mark is derived from the pill and follows it.
+
+# The printed half, which arrived a day later
+
+`plan_sheet.dart` passed no radius, so a printed mark kept the retired fraction
+after the screen had dropped it. Measured on ANSI B landscape, it printed at
+6.87 points on a 2000x1500 plan and 5.15 on 1500x2000: the fit binds on the
+tighter axis while the fraction read the longer one.
+
+**The chapter that found it was wrong twice**, and both were caught by reading
+the code rather than the chapter. It estimated today's mark at about 5.3 points
+against a page area the sheet does not use, and it put the fit "immediately
+before" the scene build when the fit was computed FROM the scene. The fix fits
+first, and `markerRadius` is now required, so a surface that forgets to state
+its scale does not compile.
+
+**The outline did not come with the radius.** It is still in scene units, so a
+device's ring and an outlet's outline both print at the 0.5-point floor on a
+6600x5100 scan and a device prints like a drop. That weight is the user's call,
+and is `#905`.
 
 # The census that refused the derivation
 
