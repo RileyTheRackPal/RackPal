@@ -140,6 +140,17 @@ warm-cache path at 18m28s.
   for nothing. **Read `reason` on the newest build for that branch before concluding
   anything**: `individualCI` means the trigger fired and `manual` means a person did.
   Two negative polls are not a pattern; they are two polls.
+- **AND THE SECOND TIME IT WAS THE QUERY, NOT THE SERVICE.** On 2026-09-13 a poller on
+  `GET /builds?$top=3&branchName=refs/heads/main` printed *"no build yet"* eight times
+  after PR 119 merged, and the build **existed for all eight of them**: `249` queued at
+  `00:35:04`, three seconds after the merge, and ran 7m52s. It appeared in the poll the
+  moment it FINISHED. **The list API's default order puts a build with no `finishTime`
+  last**, so a running build falls off the end of a small `$top` and a poll watching for
+  it reports an absence it structurally cannot see. Pass
+  **`queryOrder=queueTimeDescending`**, or ask for the build by `sourceVersion`, or make
+  `$top` bigger than the number of builds that can finish while yours runs. The same
+  poller watching `refs/pull/119/merge` with `$top=10` saw `inProgress` fine, which is
+  why this looked like a service delay rather than a filter.
 - **A FAILING TEST is still not proven, and that is a different path sharing a word.**
   No test has ever failed on a run, so the JUnit converter's output has only ever been
   parsed in the green direction: **do not yet treat a green Tests tab as proof the
