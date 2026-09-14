@@ -21030,9 +21030,24 @@ scale at paint time rather than a copy held somewhere that repaints on a differe
 **11.169.5 Scope.** **No scope change.** Appearance of surfaces already in v1; no model field, no file
 format, no printed output. Board `#906` cites this ruling.
 
-**What this does not rule.** The rubber band's colour, weight and dash, which docs/05 §7.5 gives to the
-source domain and the overlay draws in a style colour at a fixed width. That is a separate gap and is
-not touched here. Nor any chrome width other than those measured above.
+**11.169.6 THE RUBBER BAND IS SOLID, AND ITS COLOUR WAS NEVER OPEN.**
+
+*Added 2026-09-14, on `#907`. Settled by the user.*
+
+Until `#907` the paragraph below said that the rubber band's colour, weight and dash were an open gap,
+because docs/05 §7.5 gives them to the source domain. **That was wrong, and it was written without
+reading DR-114.** §11.113.2 had already ruled the band cursor chrome, naming *"the caret ring, the
+source ring, the rubber band"* among the marks that keep theme roles, so a cursor reads in both
+brightnesses and against the theme its owner chose. Its width is §11.169.2's. **docs/05 §7.5 item 5 was
+the stale sentence**, and it is corrected to match both rulings.
+
+**RULED: the band is SOLID**, the one channel neither ruling had reached. A dashed band on this canvas
+already means something: a right-to-left marquee draws dashed to select what it intersects (CR-102's
+solid and dashed distinction), so a dashed rubber band would borrow a selection's look in the middle of
+a wiring gesture. The band still previews what the user will get where that matters, which is the
+PATH: it routes through the same `orthogonalTrace` a committed wire does (DR-072 §11.72.2).
+
+**What this does not rule.** Any chrome width other than those measured above.
 
 ---
 
