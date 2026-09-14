@@ -91,6 +91,28 @@ import 'package:rackpal_ui/src/keymap/keymap.dart';
 /// (`#904`, §11.168.10), and neither constant is derived from the other.
 const double kPlanMarkerRadiusPt = 7;
 
+/// The width of a plan mark's outline on screen, in logical pixels, at
+/// EVERY zoom (`#905`, DR-169 §11.168.11). A device's ring is
+/// `kPlanDeviceRingFactor` times this.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// ONE PIXEL, BECAUSE A SCREEN IS A GRID
+/// ═══════════════════════════════════════════════════════════════════════
+/// The user's ruling was drafting weights: a drop at one and a device at
+/// two. Whole pixels land on the grid at 100% scaling and draw crisp, where
+/// the pill-matched alternative, about 0.7 and 1.2, would have drawn grey.
+/// Until `#905` the outline was 2 SCENE units and grew with the zoom:
+/// measured through the render object at 0.5 pixels at 25% and 8 at 400%,
+/// where a 14-pixel device ring covered the fill and the glyph of a mark 7
+/// pixels in radius.
+///
+/// **NOT DIVIDED BY THE ZOOM HERE**, unlike [kPlanMarkerRadiusPt]. A radius
+/// is geometry and has to arrive in scene units. A weight is emitted with
+/// `scaleWithGeometry: false`, and `RenderPlanCanvas` tells its canvas the
+/// zoom, which is also what keeps a one-pixel line clear of the 0.5 floor
+/// at 32x.
+const double kPlanMarkerWeightPt = 1;
+
 /// The height the floating chrome occupies at the top of this canvas.
 ///
 /// The zoom card sits at `top: 12` and is about 48 points tall, so a plan
@@ -834,6 +856,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       underlay: widget.underlay,
       pins: _pins,
       markerRadius: _markerRadius,
+      markerWeight: kPlanMarkerWeightPt,
       domains: _doc.registries.signalDomains,
     );
     final hit = hitTest(built.scene, sceneStart);
@@ -941,6 +964,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
             underlay: widget.underlay,
             pins: _pins,
             markerRadius: _markerRadius,
+            markerWeight: kPlanMarkerWeightPt,
             domains: _doc.registries.signalDomains,
           ).scene,
         );
@@ -1475,6 +1499,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       underlay: widget.underlay,
       pins: _pins,
       markerRadius: _markerRadius,
+      markerWeight: kPlanMarkerWeightPt,
       domains: _doc.registries.signalDomains,
     );
     final canvas = MouseRegion(
@@ -1598,6 +1623,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       underlay: widget.underlay,
       pins: _pins,
       markerRadius: _markerRadius,
+      markerWeight: kPlanMarkerWeightPt,
       domains: _doc.registries.signalDomains,
     );
     final hit = hitTest(

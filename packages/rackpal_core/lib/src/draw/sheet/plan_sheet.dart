@@ -75,6 +75,8 @@ import 'package:rackpal_core/src/derived/plan_schedule.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/plan_scene.dart';
+import 'package:rackpal_core/src/draw/scene/signal_style.dart'
+    show kSignalBaseWeightPt;
 import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
 import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart'
     show kSchedulePt;
@@ -126,6 +128,22 @@ const double kPlanScaleBarBaselinePt = 13;
 /// 1500x2000 one and 10.20 on a 4000x1000 panorama, because the fit binds
 /// on the tighter axis and the fraction read the longer one.
 const double kPlanMarkPrintRadiusPt = kCalloutHeightPt / 2;
+
+/// The width a plan mark's outline prints at on `T1.01`, in points
+/// (`#905`, DR-169 §11.168.11). A device's ring is `kPlanDeviceRingFactor`
+/// times it.
+///
+/// **THE PRODUCT'S OWN BASE LINE.** The user ruled drafting weights: a drop
+/// outlined at [kSignalBaseWeightPt], the weight a cable already prints at,
+/// and a device at twice it, which is docs/05 §5's `2.00x` row. A mark drawn
+/// at the weight of the lines around it reads as part of the same drawing,
+/// and both weights clear the 0.5-point floor that the pill-matched
+/// alternative would have sat exactly on.
+///
+/// WHAT IT REPLACED, MEASURED ON ANSI B LANDSCAPE: a 2-unit outline riding
+/// the fit, which printed a drop and a device at 2.52 and 4.41 points on a
+/// 600x450 scan and at 0.50 and 0.50 on a 6600x5100 one.
+const double kPlanMarkPrintWeightPt = kSignalBaseWeightPt;
 
 /// One built `T1.01`.
 @immutable
@@ -258,6 +276,11 @@ PlanSheet buildPlanSheet({
     // of the underlay's longer side, so two plans of different proportions
     // printed different marks for the same kind of thing.
     markerRadius: kPlanMarkPrintRadiusPt / s,
+    // AND ITS LINE WEIGHT, WHICH IS NOT DIVIDED HERE (`#905`, §11.168.11).
+    // A weight is emitted with `scaleWithGeometry: false`, so the PDF
+    // canvas divides by the fit it reads off this sheet's own transform
+    // bracket. Dividing here as well would print it at the fit squared.
+    markerWeight: kPlanMarkPrintWeightPt,
     // THE SHEET COLOURS ITS MARKS TOO (`#901`, DR-169 §11.168.6), and it
     // is the reason the glyph exists: the Installer preset exports
     // greyscale, canon §14 records that the eight hues collide there by

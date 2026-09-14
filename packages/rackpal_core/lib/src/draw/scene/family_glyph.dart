@@ -198,12 +198,18 @@ double familyGlyphAdvance(double sizePt) =>
 /// STROKED AT A HAIRLINE WHEN HOLLOW, filled when native — docs/05 §5's
 /// "fill encodes tier", and the reason [FamilyGlyph.filled] is carried
 /// this far rather than resolved at the mapping.
+///
+/// [hollowScalesWithGeometry] is false for a plan mark's glyph, whose line
+/// weight is constant on the surface (`#905`, DR-169 §11.168.11). A label
+/// layer's glyph scales with its diagram, as it always has, and takes the
+/// default.
 DiagramOp familyGlyphOp(
   FamilyGlyph glyph,
   DPt leftMid,
   double sizePt,
   int argb, {
   required double hollowWidthPt,
+  bool hollowScalesWithGeometry = true,
 }) {
   final side = sizePt * kFamilyGlyphCapFactor;
   final r = side / 2;
@@ -215,7 +221,13 @@ DiagramOp familyGlyphOp(
   return OpPath(
     path,
     fill: glyph.filled ? Fill(argb) : null,
-    stroke: glyph.filled ? null : Stroke(argb: argb, widthPt: hollowWidthPt),
+    stroke: glyph.filled
+        ? null
+        : Stroke(
+            argb: argb,
+            widthPt: hollowWidthPt,
+            scaleWithGeometry: hollowScalesWithGeometry,
+          ),
   );
 }
 

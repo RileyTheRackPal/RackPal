@@ -832,7 +832,10 @@ $SuiteFloors = @{
     # mark off the sheet's own ops against a pill on the same sheet, and -1
     # in `plan_scene_test.dart`, whose "proportionate marks" case asserted
     # the rule DR-169 11.168.2 retired and went with the default it pinned.
-    'rackpal_core'   = 4708
+    # 4709 at `#905`: +1 in `plan_sheet_test.dart`, a printed Network device
+    # keeping its ring clear of its square glyph, whose corners reach 0.813
+    # of the radius. It reads the vertices off the glyph's own path.
+    'rackpal_core'   = 4709
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -861,7 +864,11 @@ $SuiteFloors = @{
     # so no PLN-* was inside any of them. "A complete sheet set" is read
     # OFF THE PAGE and not off `sheetCount`: four blank pages satisfy a
     # count, and `T1.01` is the sheet these four rules are about.
-    'rackpal_export' = 227
+    # 229 at `#905`: +2, `plan_mark_weight_test.dart`. A plan mark's printed
+    # weight read off the PDF content stream the real backend writes, where
+    # the 0.5-point floor lives: the same weights on a 600x450 and a
+    # 6600x5100 scan, and a device still 1.4x a drop on the large one.
+    'rackpal_export' = 229
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1251,7 +1258,11 @@ $SuiteFloors = @{
     # re-derived the production formula inside the test became five that
     # read the render object's own scene. The old ones were green while
     # the mark on screen was four times too big at 400%.
-    'rackpal_ui'     = 1897
+    # 1898 at `#905`: +1, the mark's outline paints the same physical width
+    # at 1x, 4x and 16x, read off `TestRecordingCanvas` as stroke width times
+    # the transforms it was painted under. It found the zoom sitting in a
+    # layer the canvas's floor could not see before any fix was written.
+    'rackpal_ui'     = 1898
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

@@ -20,6 +20,11 @@ final _now = DateTime.utc(2026, 9, 8);
 /// fixture, so no hit test moved.
 const _markR = 18.0;
 
+/// The line weight every case here draws at, in surface units (DR-169
+/// §11.168.11, required since `#905`). Like [_markR], any value serves for
+/// cases about position and carrier.
+const _markW = 1.0;
+
 PlanUnderlay _underlay({
   int width = 2000,
   int height = 1400,
@@ -52,6 +57,7 @@ void main() {
     test('is op zero, so every mark is drawn over it', () {
       final scene = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(),
         pins: [_pin('d1', 100, 100)],
       ).scene;
@@ -68,6 +74,7 @@ void main() {
       // whether or not the argument reached the builder.
       final scene = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(width: 1600, height: 900),
         pins: const [],
       ).scene;
@@ -80,6 +87,7 @@ void main() {
     test('carries the member and format the container actually holds', () {
       final scene = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(format: PlanImageFormat.jpeg),
         pins: const [],
       ).scene;
@@ -96,6 +104,7 @@ void main() {
       // the point a click lands on.
       final built = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(),
         pins: [_pin('dev-7', 640, 480)],
       );
@@ -109,6 +118,7 @@ void main() {
       // carrier's id or the inspector has nothing to show.
       final built = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(),
         // Asymmetric on purpose: a square coordinate cannot see a
         // transposed x and y, and three of this file's fixtures are square.
@@ -120,6 +130,7 @@ void main() {
     test('a click well away from every mark hits nothing', () {
       final built = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(),
         pins: [_pin('d1', 100, 100)],
       );
@@ -134,6 +145,7 @@ void main() {
       // dishonest.
       final built = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(width: 800, height: 600),
         pins: [_pin('stray', 900, 700)],
       );
@@ -146,6 +158,7 @@ void main() {
     List<DiagramOp> opsFor(PlanPinCarrier carrier) {
       final built = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(),
         pins: [_pin('e', 500, 500, carrier: carrier)],
       );
@@ -201,6 +214,7 @@ void main() {
     test('the radius drawn is the one the caller passed', () {
       final built = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(),
         pins: [_pin('e', 10, 10, carrier: PlanPinCarrier.outlet)],
       );
@@ -213,6 +227,7 @@ void main() {
     test('gives every pin its own replayable fragment (CR-086)', () {
       final built = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(),
         pins: [_pin('a', 10, 10), _pin('b', 20, 20)],
       );
@@ -225,6 +240,7 @@ void main() {
       // legibility trigger. Zero would read as "something illegible".
       final built = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(),
         pins: const [],
       );
@@ -235,6 +251,7 @@ void main() {
     test('an empty plan is the underlay and nothing else', () {
       final built = buildPlanScene(
         markerRadius: _markR,
+        markerWeight: _markW,
         underlay: _underlay(),
         pins: const [],
       );

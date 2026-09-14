@@ -169,37 +169,59 @@ DBox planUnderlayBounds(PlanUnderlay underlay) => DBox.fromLtwh(
   underlay.pixelHeight.toDouble(),
 );
 
-/// How much heavier a device's outline is than an outlet's (`#901`,
-/// DR-169 §11.168.6).
+/// How much heavier a device's ring is than a drop's outline (`#901`,
+/// DR-169 §11.168.6 and §11.168.11).
 ///
 /// The device mark carried an inner dot at `r / 3` to tell it from a
 /// drop, and that is exactly the space the domain glyph now occupies. A
 /// stroke weight is the cheapest channel left that survives a greyscale
 /// print, which is the same argument PAL-1 makes for lines.
-const double kPlanDeviceRingFactor = 1.75;
+///
+/// **TWO, AND IT WAS 1.75** (`#905`). The user ruled drafting weights: a
+/// drop at the product's base line and a device at twice it, which is
+/// docs/05 §5's own `2.00x` row. The ratio clears PAL-1's 1.4 with room,
+/// and it only holds because the weights stopped riding the fit: at 1.75
+/// of a scene-unit stroke, a 6600-pixel scan printed both at the 0.5-point
+/// floor and a device exactly like a drop.
+const double kPlanDeviceRingFactor = 2;
 
 /// The glyph's box as a fraction of the marker's radius.
 ///
 /// Big enough to read at the mark's shipped size and small enough to
 /// leave the fill visible around it, which is what carries the colour.
+///
+/// **AND IT BOUNDS THE RING** (§11.168.11). A square glyph fills its box,
+/// so its corners reach 0.813 of the radius, and a device ring whose inner
+/// edge crosses that point runs black into black. Growing this factor or
+/// the ring has to keep the ring under about 37% of the radius on every
+/// surface; `plan_sheet_test.dart` reads that clearance off a printed
+/// Network device.
 const double kPlanGlyphSideFactor = 1.15;
 
 /// Composes [underlay] and [pins] into one scene (docs/15 §6).
 ///
 /// ═══════════════════════════════════════════════════════════════════════
-/// [markerRadius] IS REQUIRED, AND IT IS IN SCENE UNITS
+/// [markerRadius] IS IN SCENE UNITS; [markerWeight] IS IN SURFACE UNITS
 /// ═══════════════════════════════════════════════════════════════════════
-/// Each surface states it from its own scale (DR-169 §11.168.2): the
-/// canvas divides a screen size by its zoom, and the sheet divides a paper
-/// size by its fit. It used to default to 1/110 of the underlay's longer
-/// side, and **the sheet kept taking that default after the canvas had
-/// stopped**, because a caller that passed nothing got the retired rule
-/// and nothing said so (`#904`). Required, a caller that forgets does not
-/// compile.
+/// The radius is geometry, so each surface states it from its own scale
+/// (DR-169 §11.168.2): the canvas divides a screen size by its zoom, and
+/// the sheet divides a paper size by its fit. It used to default to 1/110
+/// of the underlay's longer side, and **the sheet kept taking that default
+/// after the canvas had stopped**, because a caller that passed nothing
+/// got the retired rule and nothing said so (`#904`). Required, a caller
+/// that forgets does not compile.
+///
+/// The weight is a drop outline's width ON THE SURFACE, points on paper
+/// and logical pixels on screen (§11.168.11), and every mark stroke is
+/// emitted with `scaleWithGeometry: false`, which is CR-082's own spelling
+/// of "constant on the surface": each backend divides by its own scale.
+/// It was a 2-unit `Stroke` in the palette until `#905`, in scene units,
+/// so it rode the fit on paper and the zoom on screen.
 PlanScene buildPlanScene({
   required PlanUnderlay underlay,
   required Iterable<PlanPinSubject> pins,
   required double markerRadius,
+  required double markerWeight,
   PlanPalette palette = const PlanPalette(),
   Map<SignalDomainId, SignalDomainDef> domains = const {},
 }) {
@@ -207,6 +229,10 @@ PlanScene buildPlanScene({
     markerRadius > 0 && markerRadius.isFinite,
     'buildPlanScene: a marker radius of $markerRadius draws nothing a '
     'person can read or click',
+  );
+  assert(
+    markerWeight > 0 && markerWeight.isFinite,
+    'buildPlanScene: a marker weight of $markerWeight is not a line',
   );
   final ops = <DiagramOp>[];
   final fragments = <String, IntRange>{};
@@ -239,6 +265,21 @@ PlanScene buildPlanScene({
 
   final r = markerRadius;
 
+  // ONE INK AND TWO WEIGHTS, NEITHER OF THEM IN SCENE UNITS (§11.168.11).
+  // `scaleWithGeometry: false` hands the division to the backend, which
+  // knows its own scale: the PDF canvas reads the sheet's fit off its
+  // transform stack, and the plan canvas is told its zoom.
+  final outline = Stroke(
+    argb: palette.markerInk,
+    widthPt: markerWeight,
+    scaleWithGeometry: false,
+  );
+  final ring = Stroke(
+    argb: palette.markerInk,
+    widthPt: markerWeight * kPlanDeviceRingFactor,
+    scaleWithGeometry: false,
+  );
+
   // ── one fragment per pin ─────────────────────────────────────────────
   //
   // KEYED BY THE ENTITY ID, matching `buildRackScene`'s per-device
@@ -268,19 +309,19 @@ PlanScene buildPlanScene({
         // through it rather than one more dot in a field of dots.
         final box = DBox.fromLtwh(centre.x - r, centre.y - r, r * 2, r * 2);
         ops
-          ..add(OpRect(box, fill: palette.markerFill, stroke: palette.marker))
+          ..add(OpRect(box, fill: palette.markerFill, stroke: outline))
           ..add(
             OpLine(
               DPt(box.left, centre.y),
               DPt(box.right, centre.y),
-              palette.marker,
+              outline,
             ),
           )
           ..add(
             OpLine(
               DPt(centre.x, box.top),
               DPt(centre.x, box.bottom),
-              palette.marker,
+              outline,
             ),
           );
       case PlanPinCarrier.outlet:
@@ -288,24 +329,14 @@ PlanScene buildPlanScene({
         // §3.4), and there are sixty of them on the design case, so it is
         // the plainest mark of the three: one circle, and the domain's
         // colour costs no extra ink.
-        ops.add(OpCircle(centre, r, fill: fill, stroke: palette.marker));
+        ops.add(OpCircle(centre, r, fill: fill, stroke: outline));
       case PlanPinCarrier.device:
         // THE HEAVIER RING IS WHAT KEEPS A DEVICE FROM READING AS A DROP
         // once both carry a glyph. It was an inner dot at `r / 3`, which
         // is the space the glyph now occupies; a weight is the cheapest
         // channel left that survives greyscale, and docs/15 §3.4's three
         // marks stay three.
-        ops.add(
-          OpCircle(
-            centre,
-            r,
-            fill: fill,
-            stroke: Stroke(
-              argb: palette.marker.argb,
-              widthPt: palette.marker.widthPt * kPlanDeviceRingFactor,
-            ),
-          ),
-        );
+        ops.add(OpCircle(centre, r, fill: fill, stroke: ring));
     }
     // THE GLYPH GOES IN BOTH, AND IN THE RACK'S NEITHER. A rack has no
     // domain to draw (§11.168.8) and its square already carries a cross.
@@ -317,7 +348,10 @@ PlanScene buildPlanScene({
           DPt(centre.x - side / 2, centre.y),
           side / kFamilyGlyphCapFactor,
           palette.markerCore.argb,
-          hollowWidthPt: palette.marker.widthPt,
+          // A HOLLOW GLYPH IS OUTLINED AT THE MARK'S OWN WEIGHT, and on
+          // the surface rather than in scene units, for the ring's reason.
+          hollowWidthPt: markerWeight,
+          hollowScalesWithGeometry: false,
         ),
       );
     }
@@ -364,13 +398,19 @@ PlanScene buildPlanScene({
 @immutable
 final class PlanPalette {
   const PlanPalette({
-    this.marker = const Stroke(argb: 0xFF101010, widthPt: 2),
+    this.markerInk = 0xFF101010,
     this.markerFill = const Fill(0xE6FFFFFF),
     this.markerCore = const Fill(0xFF101010),
   });
 
-  /// The mark's outline.
-  final Stroke marker;
+  /// The ink every mark is outlined in, as packed ARGB.
+  ///
+  /// **A COLOUR AND NOTHING ELSE** (`#905`, DR-169 §11.168.11). This was a
+  /// `Stroke` with a width of 2, and a palette is shared by every surface,
+  /// so that width was in scene units by construction and rode the fit on
+  /// paper and the zoom on screen. The weight is each surface's now, passed
+  /// to `buildPlanScene` as `markerWeight`.
+  final int markerInk;
 
   /// Its interior. Nearly opaque white rather than transparent, so a mark
   /// over dense line work is still a mark; a plan is not a blank page.

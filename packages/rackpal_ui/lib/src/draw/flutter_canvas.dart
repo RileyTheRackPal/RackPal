@@ -65,6 +65,7 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
     required TextMeasurer measurer,
     this.runs,
     this.images,
+    this.outerScale = 1,
   }) : _measurer = measurer {
     _stack.add(Matrix4.identity());
   }
@@ -72,6 +73,24 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
   final ui.Canvas _c;
   final TextMeasurer _measurer;
   final List<Matrix4> _stack = [];
+
+  /// The uniform scale a transform LAYER applies above this canvas, which
+  /// its own transform stack cannot see (`#905`).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE EDITOR CANVASES ZOOM ABOVE THE PICTURE, SO `_k` READ 1 AT ALL ZOOMS
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The plan, rack and schematic canvases push the viewport as a
+  /// `pushTransform` layer, so a pan re-projects a cached picture. The
+  /// stroke rule below reads `_k` for two decisions, whether a width is
+  /// constant on the surface and where the 0.5-point floor sits, and with
+  /// the zoom outside the stack both were taken at scale 1. Measured on
+  /// the plan canvas through `TestRecordingCanvas`: a 2-unit outline
+  /// painted at 0.5, 2 and 8 physical pixels at 25%, 100% and 400%.
+  ///
+  /// A caller that knows its layer's scale passes it. The default of 1 is
+  /// every other caller's behaviour, unchanged.
+  final double outerScale;
 
   /// Resolves an [ImageRef] to an already-decoded `ui.Image`, or null when
   /// no scene this canvas replays contains an `OpImage`.
@@ -304,11 +323,16 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
   /// Uniform scale of the CTM -- powers hairlineFloor and the width clamp.
   /// Mirrors `PdfDiagramCanvas._k` exactly (rackpal_export/src/draw/
   /// pdf_canvas.dart) so both backends clamp hairlines identically.
+  ///
+  /// TIMES [outerScale], which is the part of the CTM a transform layer
+  /// holds and this stack never sees. The PDF canvas has no such layer, so
+  /// the mirror still holds wherever the two can meet.
   double get _k {
     final m = _stack.last;
-    return math.sqrt(
-      (m.entry(0, 0) * m.entry(1, 1) - m.entry(0, 1) * m.entry(1, 0)).abs(),
-    );
+    return outerScale *
+        math.sqrt(
+          (m.entry(0, 0) * m.entry(1, 1) - m.entry(0, 1) * m.entry(1, 0)).abs(),
+        );
   }
 
   // ── clip ──────────────────────────────────────────────────────────────
