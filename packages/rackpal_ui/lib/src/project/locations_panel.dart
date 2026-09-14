@@ -1,4 +1,8 @@
-// `Project ▸ Locations…` — the project-level location tree editor.
+// The project's location tree, in two panes the `Site` view composes.
+//
+// It was `Project ▸ Locations…`, then a tab of its own, and since `#893`
+// it is one region of the merged view (DR-168). The file keeps its name
+// because the two panes and the actions record are what it always held.
 // Board M3-B/2, CR-047, CR-112, DR-021.
 //
 // ═══════════════════════════════════════════════════════════════════════
@@ -10,7 +14,7 @@
 // a rack is in"*. Filing it beside the rack inspector's dialogs would put
 // the ruling's own counterexample in the directory name. docs/07 §107 has
 // the Structure editor showing this tree READ-ONLY with an "edit in
-// `Project ▸ Locations…`" affordance, which only means anything if there
+// Site tab" affordance, which only means anything if there
 // is somewhere else for it to live.
 //
 // ═══════════════════════════════════════════════════════════════════════

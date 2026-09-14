@@ -20,7 +20,7 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 ///
 /// The guess is INITIALS, upper-cased: "Living Room" becomes `LR`,
 /// "Attic" becomes `A`. It is visible in the preview before a single
-/// label is committed, editable in `Project ▸ Locations…`, and wrong in a
+/// label is committed, editable on the Site tab, and wrong in a
 /// way the user can see rather than wrong in a way they find at the
 /// panel.
 String initialsFor(String name) {

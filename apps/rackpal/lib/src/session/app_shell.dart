@@ -1360,12 +1360,6 @@ final class AppShellState extends State<AppShell>
     }
   }
 
-  /// `Project ▸ Locations…` (CR-112).
-  ///
-  /// PROJECT-LEVEL, which is the whole ruling: a project with racks and no
-  /// Structure device must still be able to say which room a rack is in,
-  /// so this hangs off the menu bar rather than off either editor.
-
   /// `Project ▸ Structured wiring…` — docs/07 §4's editor (M3-C/2,
   /// AC-048).
   ///

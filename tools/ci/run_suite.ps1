@@ -1330,7 +1330,11 @@ $SuiteFloors = @{
     # when a view is added. The Location and Plan views merged into `Site`
     # (DR-168), so there are six tabs and six cases where there were seven
     # of each. Nothing was removed by hand.
-    'rackpal_app'    = 1036
+    # 1037 at `#894`: +1, `menu_route_copy_test.dart`. It lives HERE and not
+    # in either UI package because it reads the real menu bar, which only
+    # the assembled app has, and scans all three `lib/` trees for a menu
+    # path written into a string.
+    'rackpal_app'    = 1037
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

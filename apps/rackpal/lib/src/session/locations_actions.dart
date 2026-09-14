@@ -1,4 +1,5 @@
-// What `Project ▸ Locations…` means, in commands. Board M3-B/2, CR-112,
+// What editing the location tree means, in commands. Board M3-B/2,
+// CR-112,
 // DR-021.
 //
 // ─────────────────────────────────────────────────────────────────────────

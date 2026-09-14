@@ -61,7 +61,7 @@ A home run is therefore: a `Link` whose field end is a `PlaceEndpoint` (or, once
 
 The bare word `Bundle` appears nowhere in code, JSON, or prose.
 
-**Rooms are not owned here.** The location tree is an arbitrary-depth `Location` hierarchy (site ▸ building ▸ floor ▸ room ▸ zone ▸ outdoor) edited from a **project-level** `Project ▸ Locations…` panel, not from the Structure editor (CR-047, CR-112). A project with racks and no Structure device must still be able to say which room a rack is in. `Outlet` is *not* a location level. Each `Location` carries `code`, never `abbr` (CR-046), and `estimatedRunLengthFromRack: Len?`, one number per room that seeds every home run in that room with a per-link override (AC-024).
+**Rooms are not owned here.** The location tree is an arbitrary-depth `Location` hierarchy (site ▸ building ▸ floor ▸ room ▸ zone ▸ outdoor) edited from the **Site view**, the first tab, not from the Structure editor (CR-047, CR-112). A project with racks and no Structure device must still be able to say which room a rack is in. `Outlet` is *not* a location level. Each `Location` carries `code`, never `abbr` (CR-046), and `estimatedRunLengthFromRack: Len?`, one number per room that seeds every home run in that room with a per-link override (AC-024).
 
 **Conduit is not a cable.** A media type with `MediaTypeDef.isPathwayOnly == true` (`media.conduit_emt`, `media.conduit_ent`, `media.pull_string`) creates a `Pathway`, never a `Link` and never a `Port` (CR-109). It appears in the drop table and on the Pull Sheet, you still pull the smurf tube and it still costs money, and never appears in the netlist. Rejected alternative: conduit as a connectable drop like any other, which produces a port you can wire an HDMI cable into.
 
@@ -104,7 +104,7 @@ The editor **opens in table mode**; the room × media matrix is a tab beside it 
 └───────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-Four regions. **Left** is the location tree, shown read-only with an inline "edit in `Project ▸ Locations…`" affordance; it is a view of the project vocabulary, not an editor for it (CR-112). **Top** is the dual-mode bulk entry bar. **Centre** is the drop table, grouped by room with a sticky group header carrying the room `code`, the estimated run length, and the drop/connected counts. **Right** (collapsed in the wireframe) is the inspector and batch inspector, with the same ergonomics as the device builder's, see [Device builder](06-device-builder.md).
+Four regions. **Left** is the location tree, shown read-only with an inline "edit on the Site tab" affordance; it is a view of the project vocabulary, not an editor for it (CR-112). **Top** is the dual-mode bulk entry bar. **Centre** is the drop table, grouped by room with a sticky group header carrying the room `code`, the estimated run length, and the drop/connected counts. **Right** (collapsed in the wireframe) is the inspector and batch inspector, with the same ergonomics as the device builder's, see [Device builder](06-device-builder.md).
 
 **The strip is three tabs and this wireframe draws four** (M3-E/1). `[▶ Table]`,
 `[ Matrix ]` and `[ Pathways ]` are built; `[ Outlets ]` opens nothing, and a tab
@@ -267,7 +267,7 @@ Structure device at all, because a `Pathway` hangs off the document as a
 `+ Media column` has no "create new type" row, because creating a media type is
 the media-type editor (M4-P2). There is no `+ Room` either, and that one is not
 owed: the loop above the grid already creates a room on `Enter` and CR-112 puts
-the second path in `Project ▸ Locations…`, so a third would be a third place
+the second path in the Site view, so a third would be a third place
 one rule lives. The grid opens on this section's own eight columns, minus
 `EMT`.
 

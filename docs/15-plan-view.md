@@ -571,10 +571,17 @@ an image resolver and a plan scene builder.
 | Pan, zoom | Identical to the other two canvases (AC-016 #23, `CanvasIntent`). **Verified**, not assumed: `PLAN-E/1`'s spike drives both through the same `CanvasIntentDetector` both shipped canvases use |
 | Marquee-select | CR-102's left-drag, with the CAD window/cross convention. **It WAS the product's first**, and this row was combined with the one above and read *"identical to the other two canvases"* until 2026-09-07, when `PLAN-E/1` found that **neither of the other two had a marquee**. DR-139 §11.138 ruled it built once and adopted on all three, and `#848` did that: the geometry is `rackpal_core/draw/marquee.dart`, the gesture and the band are `MarqueeController`, and the rack elevation, the schematic and this canvas each contribute four lines. The row is true now, and it says which files make it so |
 
-**Layout.** Left is the underlay list and the location tree, read-only with the same *"edit in
-`Project ▸ Locations…`"* affordance the Structure editor uses (CR-112). Centre is the plan. Right is
-the standard inspector. There is no fourth region and no plan-specific palette; the device palette
-is the device palette.
+**Layout.** Left is the location tree, with the underlay list above it once the project has a
+floorplan. Centre is the plan. Right is the standard inspector, showing the selected room and, when
+a plan is open, its outline on that plan. There is no fourth region and no plan-specific palette;
+the device palette is the device palette.
+
+**THIS PARAGRAPH SAID THE TREE WAS READ-ONLY HERE, with an *"edit in `Project ▸ Locations…`"*
+affordance, until DR-168 §11.167 (2026-09-13).** It had the tree in this rail from the chapter
+brief, which is most of the merge already decided; what it withheld was the editing, and the route
+it named instead had been deleted when DR-091 §11.90 promoted Locations to a tab. The view is
+called `Site` now and is the first tab, the tree is edited in it, and the three regions are
+unchanged in number.
 
 **Unpinned carriers are visible, not hidden.** A strip along the bottom lists everything in this
 plan's location that could carry a pin and does not, with a count. That strip is the difference
