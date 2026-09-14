@@ -20943,9 +20943,42 @@ at **0.50 and 0.50** on a 6600x5100 one, where both reach the print floor and a 
 like a drop. That is a separate appearance question and is `#905`. No scope change, on §11.168.9's
 reasoning.
 
+**11.168.11 A MARK'S LINE WEIGHT IS THE DRAFTING WEIGHT, CONSTANT ON EVERY SURFACE.**
+
+*Added 2026-09-14, on `#905`. Settled by the user, choosing among three weights drawn side by side at
+the same enlargement.*
+
+§11.168.10 ruled the printed radius and said in terms that it did not rule the line weight, which
+was still a stroke of 2 scene units riding the fit on paper and the zoom on screen. **Both halves
+were measured before anything moved.** On paper, off the rendered ops: 2.52 and 4.41 points for a
+drop and a device on a 600x450 scan, and **0.50 and 0.50** on a 6600x5100 one, where both reach the
+print floor and a device prints exactly like a drop. On screen, through `TestRecordingCanvas`: a drop
+at 0.5, 2 and 8 pixels at 25%, 100% and 400%, and at 400% a 14-pixel device ring covering the fill
+and the glyph of a mark 7 pixels in radius.
+
+**RULED: a drop is outlined at the product's base line and a device is ringed at twice it, at every
+zoom and on every scan.** On paper that is `kSignalBaseWeightPt` and docs/05 §5's own `2.00x` row,
+so a mark prints at the weight of the cables around it. On screen it is one and two logical pixels,
+which land on the grid and draw crisp. A ratio of two clears PAL-1's 1.4 with room.
+
+**THE CORNER IS WHY THE RING HAS A CEILING.** A square glyph fills its box of 1.15 radii, so its
+corners reach 0.813 of the radius, and a ring whose inner edge crosses that point runs black into
+black. Network carries the square. The ceiling is therefore about 37% of the radius, which the
+drafting weights clear on both surfaces. Of the two alternatives shown, **matching the pill's
+hairline** (0.5 and 0.875 points) cleared it but put a drop exactly on the print floor and a device
+0.375 points from it, and **freezing today's look at 100%** (2 and 3.5 pixels) ran the ring into the
+square's corners on both surfaces. That ring already crossed them at 100% before this clause.
+
+**THE WEIGHT IS NOT DIVIDED BY A SCALE, AND THE CANVAS IS TOLD ITS ZOOM.** A mark's strokes are
+emitted with `scaleWithGeometry: false`, CR-082's own spelling of "constant on the surface", so each
+backend divides by its own scale. The plan canvas zooms in a transform layer above its cached
+picture, which `FlutterDiagramCanvas`'s stack cannot see, so it now takes that layer's scale as
+`outerScale`. Without it a one-pixel line at 400% would have been floored back to two. **No scope
+change**, on §11.168.9's reasoning.
+
 **What this does not rule.** The exact point size of the mark ON SCREEN (on paper it is
-§11.168.10's), the glyph inventory per domain, the mark's line weight (`#905`), and the rack asset,
-all of which are appearance and are the user's as they arrive. Whether an OUTLET's
+§11.168.10's), the glyph inventory per domain, and the rack asset, all of which are appearance and
+are the user's as they arrive. Whether an OUTLET's
 domain is authored or read from its member links, which is a different question from a template's
 and is `#896`'s first chapter to answer with a measurement. And the callout treatment docs/15 §7
 schedules for `PLAN-H`, which this touches but does not close.

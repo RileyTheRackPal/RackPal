@@ -1936,6 +1936,67 @@ void main() {
             'underlay measures',
       );
     });
+
+    /// Every stroke the render object paints, as PHYSICAL widths.
+    ///
+    /// The recorded `strokeWidth` times the scale of the transforms it was
+    /// painted under, both read off `TestRecordingCanvas` as the paint made
+    /// them, so nothing here knows how the width was computed.
+    List<double> paintedStrokeWidths(WidgetTester tester) {
+      final canvas = TestRecordingCanvas();
+      tester
+          .renderObject<RenderPlanCanvas>(find.byType(PlanCanvasBody))
+          .paint(TestRecordingPaintingContext(canvas), Offset.zero);
+      final widths = <double>[];
+      final saved = <double>[];
+      var scale = 1.0;
+      for (final call in canvas.invocations) {
+        final inv = call.invocation;
+        switch (inv.memberName) {
+          case #save:
+            saved.add(scale);
+          case #restore:
+            scale = saved.removeLast();
+          case #transform:
+            scale *= (inv.positionalArguments[0] as List<double>)[0];
+          case #drawPath:
+            final paint = inv.positionalArguments[1] as ui.Paint;
+            if (paint.style == ui.PaintingStyle.stroke) {
+              widths.add(paint.strokeWidth * scale);
+            }
+        }
+      }
+      return widths;
+    }
+
+    testWidgets('AND ITS OUTLINE IS THE SAME WEIGHT ON SCREEN AT EVERY ZOOM '
+        '(`#905`, §11.168.11)', (tester) async {
+      // Measured through this same recording before it was fixed: the
+      // device ring painted at 0.875, 3.5 and 14 physical pixels at 25%,
+      // 100% and 400%, because its width was in scene units and the zoom
+      // sits in a transform layer above the canvas, where the canvas's own
+      // floor and width rules could not see it.
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
+      final atOne = paintedStrokeWidths(tester);
+      expect(atOne, isNotEmpty, reason: 'the mark has to be painted at all');
+
+      for (final zoom in const [4.0, 16.0]) {
+        h.viewport.zoomBy(4, screenPivot: const Offset(300, 200));
+        await tester.pump();
+        expect(h.viewport.scale, closeTo(zoom, 1e-9));
+
+        final widths = paintedStrokeWidths(tester);
+        expect(widths, hasLength(atOne.length));
+        for (var i = 0; i < widths.length; i++) {
+          expect(
+            widths[i],
+            closeTo(atOne[i], 1e-4),
+            reason: 'stroke $i at ${zoom}x, against ${atOne[i]} at 1x',
+          );
+        }
+      }
+    });
   });
 
   // ═════════════════════════════════════════════════════════════════════

@@ -41,6 +41,7 @@ PlanScene _scene(
   underlay: _underlay(),
   // Any radius serves: every case here compares one mark with another.
   markerRadius: 7,
+  markerWeight: 1,
   pins: [
     PlanPinSubject(
       entityId: const Uuid('e1'),

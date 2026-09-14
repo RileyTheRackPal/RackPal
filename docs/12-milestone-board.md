@@ -11301,6 +11301,85 @@ case at `5.25 / 6.8727`. Replacing the derived constant with a literal `5` puts 
 
 **Commit** (§8.8): `#904` `77eab81`.
 
+#### 5.9.48 `#905`: a mark's line weight is the drafting weight, and the zoom was in a layer the canvas could not see · `DR-169` · no version move
+
+**DEMONSTRATED** by `plan_mark_weight_test.dart`, by `plan_sheet_test.dart`'s *"a printed Network
+device keeps its ring clear of its glyph"*, and by `plan_canvas_screen_test.dart`'s *"AND ITS OUTLINE
+IS THE SAME WEIGHT ON SCREEN AT EVERY ZOOM"*. The weight is the user's decision, recorded as canon
+§11.168.11.
+
+##### 5.9.48.1 The question, the options and the answer
+
+`#905` asked what a mark's outline weighs, fixed at every zoom and on every scan. Three were drawn
+side by side at one enlargement: **drafting weights** (0.7 and 1.4 points, one and two pixels), **the
+pill's hairline** (0.5 and 0.875 points), and **today's look at 100%, frozen** (2 and 3.5 pixels, so
+1.5 and 2.6 points). The user chose the drafting weights.
+
+##### 5.9.48.2 Measured before it moved, on both surfaces
+
+On paper the table in §5.9.47.2 already carries it: a drop and a device at 2.52 and 4.41 points on a
+600x450 scan and **0.50 and 0.50** on a 6600x5100 one. On screen, painted through
+`TestRecordingCanvas` with the real render object:
+
+| Zoom | Drop outline, px | Device ring, px | Mark radius, px |
+|---|---|---|---|
+| 25% | 0.5 | 0.875 | 7 |
+| 100% | 2 | 3.5 | 7 |
+| 400% | 8 | 14 | 7 |
+
+**The first probe recorded no stroked circle at all**, because `drawEllipse` fills with `drawOval`
+and strokes through `drawPath`. A probe watching the wrong call reports a clean screen, so it was
+rewritten to log every call before any reading was believed.
+
+##### 5.9.48.3 The corner that caps the ring
+
+Network's glyph is a filled square (`'■'` in `family_glyph.dart`'s `_shapes`), and a square fills its
+box of 1.15 radii, so its corners reach 0.813 of the radius. A ring whose inner edge crosses that
+point runs black into black, which puts a ceiling of about 37% of the radius on the ring: 1.96 points
+on paper and 2.6 pixels on screen. **The 3.5-pixel ring was already over it at 100%.** The drafting
+weights clear it on both surfaces, the pill's hairline clears it, and today's look frozen does not.
+
+##### 5.9.48.4 The obvious fix would have failed on screen
+
+The radius is divided by the zoom, so the obvious weight fix is the same division, and **it would
+have painted a one-pixel line at two pixels from 400% up.** The plan, rack and schematic canvases
+push the viewport as a `pushTransform` layer so a pan re-projects a cached picture, and
+`FlutterDiagramCanvas` starts its own transform stack at identity every paint. Its `_k` therefore
+reads 1 at every zoom, and its 0.5 floor, taken against that `_k`, lifts a quarter-unit stroke back to
+half a unit. At the viewport's 32x limit, a one-pixel line would have painted at sixteen.
+
+So the marks are `scaleWithGeometry: false`, CR-082's existing spelling of "constant on the surface",
+and the canvas gains `outerScale`, which `RenderPlanCanvas` sets to its zoom. The rack and schematic
+canvases have the same layer and pass nothing, so nothing of theirs moves. **Whether their own
+non-scaling strokes carry the same blind spot is not measured here** and should not be read as
+cleared.
+
+##### 5.9.48.5 The weight left the palette
+
+`PlanPalette.marker` was a `Stroke` of width 2, and a palette is shared by every surface, so that
+width was in scene units by construction. It is `markerInk` now, a colour. `buildPlanScene` takes a
+required `markerWeight` in SURFACE units beside `markerRadius` in SCENE units, and its doc comment
+says so in its heading because the two parameters sit side by side. `familyGlyphOp` gains an optional
+`hollowScalesWithGeometry`, and `kPlanDeviceRingFactor` is 2, from 1.75. The rack datum's square and
+cross take the drop's weight, which is the relation they had before (§11.168.8).
+
+##### 5.9.48.6 Evidence
+
+Floors: `rackpal_core` 4708 to 4709, `rackpal_export` 227 to 229, `rackpal_ui` 1897 to 1898. 17
+gates green on the code commit's own tree with this record held aside, and again over this record.
+Analyzer pin unmoved at 233.
+
+**Mutation-tested four ways, all killed**, every file restored and checked byte-identical:
+
+| Mutation | What goes red | Reading |
+|---|---|---|
+| Weights scale with geometry again | both paper cases, the clearance case, the screen case | paper 0.882 against 0.500 and a ratio of 1.0; screen 8.0 against 2.0 |
+| The plan canvas is not told its zoom | the screen case | 8.0 against 2.0 |
+| Option C on paper, a 1.5-point drop | the clearance case | ring inner edge at 3.75 points inside a corner at 4.27 |
+| Ring factor 1 | the paper ratio case, and *"a device reads apart from an outlet"* | 1.0 against 1.4 |
+
+**Commit** (§8.8): `#905` `222cf31`.
+
 
 ---
 

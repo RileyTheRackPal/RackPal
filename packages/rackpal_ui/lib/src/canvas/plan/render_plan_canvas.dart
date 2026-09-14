@@ -261,6 +261,11 @@ final class RenderPlanCanvas extends RenderBox {
         measurer: _measurer,
         runs: _runs,
         images: _images,
+        // THE ZOOM IS ABOVE THIS PICTURE, in `_paintTransformed`'s layer, so
+        // the canvas has to be told it. A plan mark's outline is constant on
+        // screen (`#905`, DR-169 §11.168.11), and both that division and the
+        // 0.5 floor are decided against this scale.
+        outerScale: _viewport.scale,
       ),
     );
   }

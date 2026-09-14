@@ -518,6 +518,81 @@ void main() {
         expect(sheet.mark, closeTo(sheet.pillEnd, 1e-9), reason: '${w}x$h');
       }
     });
+
+    /// LOAD-BEARING, AND IT IS WHY THE WEIGHT IS WHAT IT IS (`#905`,
+    /// DR-169 §11.168.11).
+    ///
+    /// A square glyph fills its box, so its corners reach further from the
+    /// centre than any other glyph's, and Network carries the square. A ring
+    /// whose inner edge crosses a corner runs black into black, which was
+    /// the option the user was shown and did not take. Read off the ops:
+    /// the circle's printed radius, its stroke (constant on paper, so its
+    /// printed width is its own), and the glyph path's own vertices.
+    test('a printed Network device keeps its ring clear of its glyph', () {
+      final underlay = _underlay(width: 3300, height: 2550);
+      final built = buildPlanSheet(
+        sheet: SheetSet.forRacks(
+          <Rack>[testRack()],
+          planUnderlays: [underlay],
+        ).sheets.first,
+        underlay: underlay,
+        pins: const [
+          PlanPinSubject(
+            entityId: Uuid('device-1'),
+            at: PxPt(1650, 1275),
+            carrier: PlanPinCarrier.device,
+            domain: SignalDomainId('net'),
+          ),
+        ],
+        domains: buildSeedRegistries().signalDomains,
+        info: fullProjectInfo(),
+        settings: ProjectSettings(),
+        revisions: const <RevisionEntry>[],
+        fileName: 'smith.rmpj',
+        issuedAt: DateTime.utc(2026, 9, 14),
+        measurer: FakeMeasurer(),
+      );
+      final ops = built.scene.ops;
+      final s = ops.whereType<OpTransform>().last.m.entry(0, 0);
+      final ring = ops.whereType<OpCircle>().single;
+      // The glyph is emitted straight after its mark's circle.
+      final glyph = ops[ops.indexOf(ring) + 1] as OpPath;
+
+      expect(
+        ring.stroke!.scaleWithGeometry,
+        isFalse,
+        reason: 'a weight that rides the fit is the defect #905 removed',
+      );
+      final xs = <double>[];
+      final ys = <double>[];
+      for (final cmd in glyph.p.commands) {
+        if (cmd case MoveTo(:final x, :final y) || LineTo(:final x, :final y)) {
+          xs.add(x);
+          ys.add(y);
+        }
+      }
+      expect(xs, isNotEmpty, reason: 'a glyph with no vertices proves nothing');
+      double least(double a, double b) => a < b ? a : b;
+      double most(double a, double b) => a > b ? a : b;
+      final cx = (xs.reduce(least) + xs.reduce(most)) / 2;
+      final cy = (ys.reduce(least) + ys.reduce(most)) / 2;
+      // COMPARED SQUARED, both sides in printed points squared.
+      var cornerSq = 0.0;
+      for (var i = 0; i < xs.length; i++) {
+        final dx = (xs[i] - cx) * s;
+        final dy = (ys[i] - cy) * s;
+        cornerSq = most(cornerSq, dx * dx + dy * dy);
+      }
+      final ringInner = ring.radius * s - ring.stroke!.widthPt / 2;
+
+      expect(
+        ringInner * ringInner,
+        greaterThan(cornerSq),
+        reason:
+            "the ring's inner edge sits at $ringInner pt from the centre and "
+            'the glyph reaches the square root of $cornerSq',
+      );
+    });
   });
 
   group('the pins one sheet draws', () {

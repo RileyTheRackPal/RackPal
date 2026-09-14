@@ -194,6 +194,7 @@ void main() {
         underlay: _underlay(),
         pins: const [],
         markerRadius: 7,
+        markerWeight: 1,
       );
 
       await tester.pumpWidget(
@@ -221,6 +222,7 @@ void main() {
         underlay: _underlay(),
         pins: const [],
         markerRadius: 7,
+        markerWeight: 1,
       );
       await tester.pumpWidget(
         _host(
@@ -248,6 +250,7 @@ void main() {
         underlay: _underlay(),
         pins: const [],
         markerRadius: 7,
+        markerWeight: 1,
       );
       await tester.pumpWidget(
         _host(scene: built.scene, viewport: viewport, images: cache.resolver),
