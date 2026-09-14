@@ -11380,6 +11380,78 @@ Analyzer pin unmoved at 233.
 
 **Commit** (§8.8): `#905` `222cf31`.
 
+#### 5.9.49 `#906`: the rack and the schematic zoomed in the same layer, and their chrome grew with it · `DR-170` · no version move
+
+**DEMONSTRATED** by the chrome-width groups in `render_schematic_canvas_test.dart` and
+`port_chip_test.dart`, and by `stroke_scaling_test.dart`'s *"outerScale takes BOTH decisions"*. The
+widths and the floor are the user's decisions, ruled as canon §11.169 (DR-170) in `fb63fab` and pushed
+ahead of the code to claim the number.
+
+##### 5.9.49.1 Found at `#905`, measured before it was ruled
+
+`#905` found the plan canvas zooming in a `pushTransform` layer above a cached picture, where
+`FlutterDiagramCanvas`'s stroke rules read scale 1, and fixed that canvas alone. The rack and the
+schematic canvases zoom the same way, and were probed through `TestRecordingCanvas` on the real render
+objects before any width was chosen:
+
+| Chrome | Authored | Rack at open, 3.02x | Rack at 12.1x | Schematic at 4x |
+|---|---|---|---|---|
+| Selection outline | 2 px | 6.0 px | 24.2 px | n/a |
+| Hover ring | 1.5 px | 4.5 px | 18.1 px | n/a |
+| Port chip | 1 px | 3.0 px | 12.1 px | n/a |
+| Caret, source, candidate and selection rings | 2 px | n/a | n/a | 8 px |
+| Connect band | 1.5 px | n/a | n/a | 6 px |
+
+**The census by flag could not have found the rack's rings.** Searching for
+`scaleWithGeometry: false` found the port chip and the connect overlay; the hover, focus and selection
+rings are raw `Paint` strokes, and only the probe found them, because it measured every stroke painted
+rather than every stroke flagged. The grid painter and the editing overlay painter already divide by
+`viewport.scale` and were right.
+
+##### 5.9.49.2 The two decisions
+
+Chrome at its authored width at every zoom (§11.169.2), which is visibly thinner when a rack first
+opens because it opens at about 3x; and no line thinner than half a physical pixel (§11.169.3), which
+moves the floor to physical pixels for lines that scale too, so a 0.7-unit wire at 30% zoom goes from
+0.21 pixels to 0.5. Both alternatives were put to the user, and the reason each lost is in the canon.
+
+##### 5.9.49.3 The first channel landed on a wrapper
+
+The schematic and rack canvases pass `outerScale: _viewport.scale`. The device box holds no viewport,
+so the first build handed it the scale in `RackParentData`, written in the parent's paint loop. **The
+new rack case went red at 4.54 against 18.14, which are the pre-fix numbers exactly.**
+`RackDevicePlacement` gives its parent data to the rack canvas's DIRECT child, and that child is the
+`FocusableActionDetector` which `DeviceBox.build` puts above `RenderDeviceBox`, so the scale was
+written to a wrapper and the box read its default of 1. It now walks to its nearest `RenderRackCanvas`
+at paint and reads the viewport there. Its ring widths AND insets divide by that scale, because the
+inset is half the ring's width and a ring thinned without it would drift inside the body.
+
+##### 5.9.49.4 A selector that picked the right colour and the wrong stroke
+
+The rack case first picked the chip's strokes by `PortChipStyle.strokeArgb` and found a 3.63-pixel
+stroke among them: the device body's own 1.2-unit outline, which shares that colour and is right to
+scale. It now paints the rack with the chip and again without it, and takes the run of strokes only the
+first paint made.
+
+##### 5.9.49.5 Evidence
+
+Floor: `rackpal_ui` 1898 to 1904. 17 gates green on the code commit's own tree, and again over this
+record. Analyzer pin unmoved at 233.
+
+**Mutation-tested four ways, all killed**, every file restored and checked byte-identical:
+
+| Mutation | What goes red | Reading |
+|---|---|---|
+| The schematic canvas is not told its zoom | both schematic cases | band 6.0 against 1.5; thinnest line 0.05 |
+| The device box never finds its rack canvas | both rack cases | rings 18.14 against 4.54; thinnest line 0.10 |
+| The rack chassis canvas is not told its zoom | the zoomed-out rack case, and nothing else | thinnest line 0.08 |
+| `FlutterDiagramCanvas` ignores `outerScale` | both unit cases and both schematic cases | a non-scaling stroke at 0.5 against 2.0; the floor at 0.07 against 0.5 |
+
+**The third row would have survived** without the zoomed-out rack case, which was added for that reason:
+the rings and the chip are drawn by the boxes, and no other case looked at the chassis canvas.
+
+**Commits** (§8.8): `#906` `d257104`, with the ruling in `fb63fab`.
+
 
 ---
 

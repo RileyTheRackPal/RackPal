@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-09-14 (forty-first entry)
+
+* **Closed**: `#906` with `d257104`, ruled as
+  [DR-170](/decisions/dr-170-editor-chrome-keeps-its-width.md) in `fb63fab`.
+  Rack and schematic chrome keeps its authored width at every zoom, and no
+  line paints thinner than half a physical pixel. **No version move**: it
+  closes under `#786`.
+* **Creation**: [DR-170](/decisions/dr-170-editor-chrome-keeps-its-width.md),
+  with the table measured on both canvases before either width was ruled.
+* **Note**: **A CENSUS BY FLAG CANNOT FIND WHAT NOBODY FLAGGED.** Searching for
+  `scaleWithGeometry: false` found the port chip and the connect overlay. The
+  rack's hover, focus and selection rings are raw `Paint` strokes, and only a
+  probe measuring every painted stroke found them.
+* **Note**: **PARENT DATA LANDS ON THE DIRECT CHILD**, which is not always the
+  render object meant. The scale written into `RackParentData` reached the
+  `FocusableActionDetector` above `RenderDeviceBox`, the box read 1, and a test
+  caught it at the pre-fix number.
+* **Note**: **A SELECTOR BY COLOUR PICKS EVERY STROKE OF THAT COLOUR.** The
+  chip's outline shares its colour with the device body's, so the case paints
+  with and without the chip instead and takes the difference.
+
 ## 2026-09-14 (fortieth entry)
 
 * **Closed**: `#905` with `222cf31`. A plan mark's line weight is the drafting
