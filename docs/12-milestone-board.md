@@ -11452,6 +11452,40 @@ the rings and the chip are drawn by the boxes, and no other case looked at the c
 
 **Commits** (§8.8): `#906` `d257104`, with the ruling in `fb63fab`.
 
+#### 5.9.50 `#907`: the gap DR-170 named was already ruled, and the band stays solid · `DR-170` · no version move
+
+**CONFIRMED** by the user's decision, and shown by the corpus itself: no document now gives the band the
+source domain's styling, and canon §11.169.6 states that the band is solid. No product change.
+
+##### 5.9.50.1 The claim, and what canon already said
+
+DR-170's own scope note, written at `#906`, called the rubber band's colour, weight and dash an open gap
+because docs/05 §7.5 item 5 gives them to the source domain, and `#907` was filed on it. **Canon had
+ruled the colour weeks earlier.** DR-114 §11.113.2 names *"the caret ring, the source ring, the rubber
+band"* among the cursor chrome that keeps theme roles, and the width is DR-170 §11.169.2's. docs/05 was
+the stale sentence, and the note was written without grepping canon for the noun.
+
+##### 5.9.50.2 The citation nearly failed the same day
+
+The clause sits under a heading written `### §11.113 DR-114`. A search for `^### 11\.` skipped the
+section sign and reported DR-105, and the clause number 11.113 invites reading it as DR-113. It was
+resolved against the heading line itself and against this document's M5-D row, which names DR-114 for
+*"a verdict is not a cursor"*.
+
+##### 5.9.50.3 The decision
+
+Three options were put to the user: close as ruled; the family's dash only; and full domain styling,
+which would have reversed DR-114 and DR-170. **The user chose to close as ruled, with the band solid**,
+recorded as §11.169.6, because a dashed band on this canvas already means a right-to-left marquee: CR-102,
+*"right→left selects intersecting (dashed band, `CROSS`)"*.
+
+##### 5.9.50.4 Evidence
+
+Docs only. DR-170's scope note and docs/10's row are corrected in place in `46e3adb`, gated green on its
+own tree; docs/05 §7.5 item 5, this section and the OKF follow in the next commit.
+
+**Commit** (§8.8): `#907` `46e3adb`, the ruling and the correction.
+
 
 ---
 
