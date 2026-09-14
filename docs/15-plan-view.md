@@ -615,6 +615,37 @@ exactly: a row would invite pinning a second-floor speaker onto `Level 1`, and s
 
 ## 7. Rendering
 
+### 7.0 The mark, which is what a person actually reads
+
+**BUILT AT `#897`, `#901` and `#902`, 2026-09-14** (DR-169 §11.168). Three facts, three channels,
+and each answers a different question.
+
+| Channel | What it says | Why that channel |
+|---|---|---|
+| **Shape** | Which CARRIER: a rack is a square with a cross, an outlet a plain circle, a device a circle at a heavier ring weight | The rack is the datum every length is measured from (`PLN-003`), so it must not read as one more dot. The device's ring replaced an inner dot, which is where the glyph now sits |
+| **Colour** | Which signal DOMAIN, from CR-078's own hue | Colour lives on the domain and nowhere else. The value is authored on the template, never derived: of 51 seeded templates only 13 have ports in one domain (§11.168.5) |
+| **Glyph** | The same domain again, in ink | Canon §14 records that the eight hues **collide in greyscale by design**, three inside one luminance band, and `plan_sheet.dart` splices this scene into a `T1.01` the Installer preset prints greyscale. PAL-3 separates a LINE by dash and weight; a filled dot has neither |
+
+**THE MARK IS A CONSTANT SIZE IN SCREEN POINTS**, at every zoom, and it was 1/110 of the underlay's
+longer side in SCENE units until `#897`. On a 3300-unit architectural sheet that was a **60-point
+mark at 1:1** with a hit box to match, reported from the product as *"the pin size on the room view
+is massive"*. Zooming in shows more PLAN, not a bigger dot, which is the rule
+`kOutlineCloseRadiusPt` already states for the close test.
+
+**AN UNKNOWN DOMAIN DRAWS THE NEUTRAL MARK AND NO GLYPH** (G4/CR-114), and is never filled in from
+the ports. That is a real state: the three passive panels carry no signal at all, an outlet built by
+hand belongs to no recipe, and the three TIA-570-D grades are cabling standards rather than services.
+
+**THE DESIGNATOR IS A HOVER, NOT A LABEL BESIDE EVERY MARK** (§11.168.7). Sixty drops in one room is
+sixty labels over somebody else's drawing. It is **chrome and not scene**: a designator emitted into
+the display list would print on `T1.01` for whichever mark the pointer was over when the export ran,
+and §7's printed callout is a different thing with a different lifetime.
+
+**And the plan opens FITTED**, with a `Fit` control to return to (§11.168.3). It opened at 100%
+anchored to its top-left corner until `#898`, where the rack editor and the schematic have both
+called `fitToContent` since M2.
+
+
 The underlay draws through a `drawImage` op on `DiagramCanvas`. **It exists as of PLAN-A, 2026-09-07**,
 and this paragraph said *"that op does not exist"* until then. It was added under the interface's own
 amendment clause, DR-029 §11.28.6 being the amendment; RJ-017 is superseded in part (canon §12.32) and
@@ -701,6 +732,19 @@ device spans several, so a television is video **and** network; §6's own marker
 `PLAN-E/2`, one chapter after this sentence was written. AC-054 prints the sheet greyscale in any
 case. So a callout has **no colour**: an opaque white stadium, a black hairline outline, black text.
 Carrier kind stays in the marker shape.
+
+> **THE FIRST SENTENCE EXPIRED ON 2026-09-14 AND THE CONCLUSION DID NOT** (DR-169 §11.168.5,
+> `#900`). A pin carries a domain now: `TemplateBody.primaryDomain` and
+> `OutletTemplate.primaryDomain` are **authored** fields, and `planPinDomainFor` resolves one for
+> every pin through the carrier it hangs on. The observation that a television *spans* several
+> domains is exactly why the field is authored rather than derived, and the census is on the model
+> field: of 51 seeded templates only **13** have ports in a single domain.
+>
+> **The callout stays colourless, on its OTHER leg.** *"AC-054 prints the sheet greyscale in any
+> case"* is untouched, and it was always sufficient on its own. What changed is that the MARKER is
+> now coloured on screen and carries the domain's **glyph**, which is what survives the greyscale
+> the callout was already conceding to (§11.168.6). Carrier kind still stays in the marker shape,
+> and that sentence is untouched too.
 
 **The fill is a knock-out and not a contrast device.** Black on the darkest sample the screening can
 leave is 11.5:1, so luminance was never the risk; dense line work is, and it fails by **pattern**. A

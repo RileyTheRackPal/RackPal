@@ -1,5 +1,40 @@
 # Update Log
 
+## 2026-09-14 (thirty-seventh entry)
+
+* **Closed**: `#895` with `01bb9494`, and `#896` with its six chapters
+  `#897`-`#902`. A room outline can be drawn over a pinned item; a plan mark is
+  a constant size on screen, coloured by its signal domain and carrying that
+  domain's glyph; a plan opens fitted; the designator is a hover.
+  **No version move**: they close under `#786`.
+* **Note**: **A MODE THAT OUTRANKS THE OTHERS ONLY SOMETIMES.** The draw won in
+  `commitDrag`'s dispatch chain and lost in `beginDrag`, so a press on a pin
+  grabbed the pin. §11.49.10 had already ruled that general case for the
+  reshape, in words that named this one: *"the same tie in a smaller place
+  where nobody would look for it."*
+* **Note**: **A CENSUS ENDED AN ARGUMENT IN BOTH DIRECTIONS.** Reading a
+  device's domain off its ports answers 13 of 51 templates; excluding the
+  infrastructure domains raises it to 26 and leaves nine with nothing, a keypad
+  among them. The same census showed the OUTLET recipes nearly work, five of
+  nine, which made that half a judgement rather than a guess.
+* **Note**: **THE GLYPH IS NOT DECORATION.** `plan_sheet.dart` splices the plan
+  scene and the Installer preset prints greyscale, where §14 says the eight
+  hues collide by design. PAL-3 separates a LINE by dash and weight; a filled
+  dot has neither.
+* **Note**: **A GREYSCALE CASE CAUGHT ITS OWN FIRST VERSION.** It summarised
+  each path by its command COUNT, and a square and a diamond are both five
+  commands, so it reported two identical grey dots as distinct. Choose the
+  proxy at the level the reader actually sees.
+* **Note**: **AN EARLY RETURN IS A CONDITION THAT HAS TO NAME EVERYTHING.**
+  `_withChrome` returns the bare canvas when four controllers are null, and the
+  new hover bubble put inside it was built by nothing.
+* **Creation**: [DR-169, a plan mark says what it
+  is](/decisions/dr-169-a-plan-mark-says-what-it-is.md).
+* **Creation**: [Count the data before you believe a
+  derivation](/practices/a-census-beats-a-plausible-derivation.md).
+* **Update**: docs/15 §7's callout paragraph, whose first premise (*"a pin
+  carries no domain"*) expired while its conclusion stood on the other leg.
+
 ## 2026-09-13 (thirty-sixth entry)
 
 * **Closed**: `#889` with `bb39e122`, `45d4d058`, `f00d6c46` and this commit,

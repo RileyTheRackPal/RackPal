@@ -66,7 +66,13 @@ PlanUnderlay _underlay({Uuid? locationId}) => PlanUnderlay(
 
 /// A document with one field template in the catalog and, optionally, one
 /// already-pinned off-rack device.
-DocumentController _controller({PxPt? pinnedAt}) {
+DocumentController _controller({
+  PxPt? pinnedAt,
+  // A DEVICE WITH NO NAME YET, for `#902`'s bubble. Set at construction
+  // because `designator` is `@internal` to `rackpal_core` (AC-013), so a
+  // case in this package cannot assign one after the fact.
+  String deviceDesignator = 'SPK-1',
+}) {
   final doc = RackDocument(
     id: const Uuid('doc-1'),
     appVersion: '0.1.0',
@@ -96,7 +102,7 @@ DocumentController _controller({PxPt? pinnedAt}) {
         version: 1,
         contentHash: 'sha256:test-F1',
       ),
-      designator: 'SPK-1',
+      designator: deviceDesignator,
       name: 'speaker',
       placement: OffRackPlacement(
         planPin: PlanPin(underlayId: _underlayId, at: pinnedAt),
@@ -1707,6 +1713,89 @@ void main() {
             'the top of the plan is under the zoom card, so a mark in '
             'that corner cannot be clicked',
       );
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // THE DESIGNATOR IS A HOVER (`#902`, DR-169 §11.168.7)
+  // ═════════════════════════════════════════════════════════════════════
+  // Ruled against a label beside every mark: sixty drops in one room is
+  // sixty labels over somebody else's drawing. Colour says what KIND of
+  // thing a mark is; this says WHICH one, on demand.
+  group('the designator is a hover (`#902`, §11.168.7)', () {
+    /// ONE MOUSE PER CASE, MOVED, not a new pointer each time.
+    /// `addPointer` twice without a `removePointer` between trips
+    /// `mouse_tracker.dart`'s own assertion, which reports as a framework
+    /// bug rather than as a test mistake.
+    Future<TestGesture> mouseAt(WidgetTester tester, Offset at) async {
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(at);
+      await tester.pumpAndSettle();
+      return mouse;
+    }
+
+    Future<void> moveTo(
+      WidgetTester tester,
+      TestGesture mouse,
+      Offset at,
+    ) async {
+      await mouse.moveTo(at);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('hovering a mark names it', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      await pump(tester, c);
+
+      await mouseAt(tester, const Offset(300, 200));
+
+      expect(find.byKey(PlanPinBubble.bubbleKey), findsOneWidget);
+      expect(find.text('SPK-1'), findsOneWidget);
+    });
+
+    testWidgets('AND BARE PLAN NAMES NOTHING, so the bubble is not a '
+        'permanent fixture', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      await pump(tester, c);
+
+      final mouse = await mouseAt(tester, const Offset(300, 200));
+      expect(find.byKey(PlanPinBubble.bubbleKey), findsOneWidget);
+
+      await moveTo(tester, mouse, const Offset(80, 360));
+
+      expect(find.byKey(PlanPinBubble.bubbleKey), findsNothing);
+    });
+
+    testWidgets('IT DOES NOT SWALLOW THE CLICK IT WAS LEADING UP TO', (
+      tester,
+    ) async {
+      // A bubble that sat between the person and the mark would appear on
+      // hover and then eat the press that hover was aiming at.
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
+
+      await mouseAt(tester, const Offset(300, 200));
+      expect(find.byKey(PlanPinBubble.bubbleKey), findsOneWidget);
+
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+
+      expect(h.selection.ids, isNotEmpty);
+    });
+
+    testWidgets('a carrier with no designator shows nothing rather than an '
+        'empty bubble', (tester) async {
+      final c = _controller(
+        pinnedAt: const PxPt(300, 200),
+        deviceDesignator: '',
+      );
+      await pump(tester, c);
+
+      await mouseAt(tester, const Offset(300, 200));
+
+      expect(find.byKey(PlanPinBubble.bubbleKey), findsNothing);
     });
   });
 

@@ -1238,7 +1238,12 @@ $SuiteFloors = @{
     # field whose only writer is a codec is the no-producer shape this
     # repository has now recorded eight times, so the field and the
     # control that sets it land together.
-    'rackpal_ui'     = 1891
+    # 1895 at `#902`: +4, the designator bubble. One of them is why the
+    # bubble does not live in `_withChrome`: that method returns the BARE
+    # canvas when all four mode controllers are null and no room has an
+    # outline, which is what this file's own harness pumps, so a bubble
+    # put inside it was built by nothing.
+    'rackpal_ui'     = 1895
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
