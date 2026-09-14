@@ -171,11 +171,29 @@ void main() {
   /// and the pick is on the canvas: a case that pumped the canvas alone
   /// would prove the gesture and not the route to it.
   ///
-  /// The rail is 240 wide and a `VerticalDivider(width: 1)` sits beside
-  /// it, so the canvas starts at **x=241** and a point at `(241 + n, m)`
-  /// is pixel `(n, m)` of the underlay under an identity viewport. The
-  /// divider is one pixel and it is the difference between asserting
-  /// `PxPt(100, 100)` and reading `PxPt(99, 100)` back.
+  /// **THE OFFSETS WERE ARITHMETIC AND ARE NOW A LOOKUP** (`#898`). This
+  /// paragraph read: the rail is 240 wide with a one-pixel divider beside
+  /// it, so the canvas starts at x=241 and `(241 + n, m)` is pixel
+  /// `(n, m)` of the underlay *under an identity viewport*. That last
+  /// clause was the load-bearing one, and DR-169 §11.168.3 made it false:
+  /// a plan now opens FRAMED, so the scale is not 1 and the origin is not
+  /// the canvas corner.
+  ///
+  /// [screenOf] reads the viewport the screen actually built, which is
+  /// what `plan_editor_screen_test.dart`'s own helper already does and
+  /// says why: *"a test that assumed the identity would be asserting
+  /// about a viewport this widget does not necessarily give itself."*
+  /// Where underlay pixel [p] sits on screen, through the LIVE viewport.
+  Offset screenOf(WidgetTester tester, PxPt p) {
+    final canvas = tester.widget<PlanCanvasScreen>(
+      find.byType(PlanCanvasScreen),
+    );
+    final s = canvas.viewport.sceneToScreen(
+      DPt(p.px.toDouble(), p.py.toDouble()),
+    );
+    return tester.getTopLeft(find.byType(PlanCanvasScreen)) + Offset(s.x, s.y);
+  }
+
   Future<({List<String> refusals, List<String> notices})> pump(
     WidgetTester tester,
     DocumentController controller, {
@@ -476,13 +494,13 @@ void main() {
       expect(find.byKey(PlanCalibrateChip.chipKey), findsOneWidget);
       expect(find.text(kCalibrateFirstLabel), findsOneWidget);
 
-      // Pixels (100, 100) and (200, 100) of a 600x400 underlay: see
-      // `pump` for where the 241 comes from.
-      await tester.tapAt(const Offset(341, 100));
+      // Pixels (100, 100) and (200, 100) of a 600x400 underlay, mapped
+      // through the viewport the screen built rather than assumed.
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
       await tester.pump();
       expect(find.text(kCalibrateSecondLabel), findsOneWidget);
 
-      await tester.tapAt(const Offset(441, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(200, 100)));
       await tester.pumpAndSettle();
       expect(find.byType(CalibrateDistanceDialog), findsOneWidget);
 
@@ -521,8 +539,8 @@ void main() {
       await pump(tester, c);
       await tester.tap(calibrateButton(_ul1));
       await tester.pump();
-      await tester.tapAt(const Offset(341, 100));
-      await tester.tapAt(const Offset(441, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
+      await tester.tapAt(screenOf(tester, const PxPt(200, 100)));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(CalibrateDistanceDialog.fieldKey),
@@ -541,8 +559,8 @@ void main() {
       await pump(tester, c);
       await tester.tap(calibrateButton(_ul1));
       await tester.pump();
-      await tester.tapAt(const Offset(341, 100));
-      await tester.tapAt(const Offset(441, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
+      await tester.tapAt(screenOf(tester, const PxPt(200, 100)));
       await tester.pumpAndSettle();
 
       await tester.tap(find.text('Cancel'));
@@ -564,8 +582,8 @@ void main() {
       await tester.tap(calibrateButton(_ul1));
       await tester.pump();
 
-      await tester.tapAt(const Offset(341, 100));
-      await tester.tapAt(const Offset(341, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
       await tester.pumpAndSettle();
 
       expect(find.byType(CalibrateDistanceDialog), findsNothing);
@@ -573,7 +591,7 @@ void main() {
       expect(find.text(kCalibrateSecondLabel), findsOneWidget);
 
       // And it really is still live: a click elsewhere finishes it.
-      await tester.tapAt(const Offset(441, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(200, 100)));
       await tester.pumpAndSettle();
       expect(find.byType(CalibrateDistanceDialog), findsOneWidget);
     });
@@ -585,7 +603,7 @@ void main() {
       await pump(tester, c, members: const [_member1, _member2]);
       await tester.tap(calibrateButton(_ul1));
       await tester.pump();
-      await tester.tapAt(const Offset(341, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
       await tester.pump();
 
       await tester.tap(find.byKey(const ValueKey('underlay-row-ul-2')));
@@ -646,7 +664,7 @@ void main() {
 
       await tester.tap(calibrateButton(_ul1));
       await tester.pump();
-      await tester.tapAt(const Offset(341, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
       await tester.pump();
 
       expect(
@@ -666,8 +684,8 @@ void main() {
     }) async {
       await tester.tap(calibrateButton(_ul1));
       await tester.pump();
-      await tester.tapAt(const Offset(341, 100));
-      await tester.tapAt(const Offset(441, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
+      await tester.tapAt(screenOf(tester, const PxPt(200, 100)));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(CalibrateDistanceDialog.fieldKey),
@@ -786,8 +804,8 @@ void main() {
       final h = await pump(tester, c);
       await tester.tap(calibrateButton(_ul1));
       await tester.pump();
-      await tester.tapAt(const Offset(341, 100));
-      await tester.tapAt(const Offset(441, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
+      await tester.tapAt(screenOf(tester, const PxPt(200, 100)));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
@@ -958,8 +976,8 @@ void main() {
 
       await tester.tap(calibrateButton(_ul1));
       await tester.pump();
-      await tester.tapAt(const Offset(341, 100));
-      await tester.tapAt(const Offset(441, 100));
+      await tester.tapAt(screenOf(tester, const PxPt(100, 100)));
+      await tester.tapAt(screenOf(tester, const PxPt(200, 100)));
       await tester.pumpAndSettle();
       await tester.enterText(
         find.byKey(CalibrateDistanceDialog.fieldKey),

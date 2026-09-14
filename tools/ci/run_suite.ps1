@@ -1209,7 +1209,13 @@ $SuiteFloors = @{
     # the marker's box, the pin gets selected, and the shape never
     # closes. The other two are the band and the deselect, which mirror
     # the reshape group and guard rather than reproduce.
-    'rackpal_ui'     = 1880
+    # 1887 at `#897`/`#898`: +3 for the mark being a constant size on
+    # screen and +4 for the plan opening framed with a Fit control. The
+    # framing cases pump an UNPOSITIONED viewport on purpose: the shared
+    # harness now states that its own is positioned at the identity, so
+    # the rest of the file can keep writing coordinates in the underlay's
+    # own pixels.
+    'rackpal_ui'     = 1887
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

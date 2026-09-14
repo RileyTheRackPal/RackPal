@@ -99,6 +99,7 @@ export 'src/canvas/shake_animation.dart';
 export 'src/canvas/staging_bin_overlay.dart';
 export 'src/canvas/status_message_controller.dart';
 export 'src/canvas/viewport_controller.dart';
+export 'src/canvas/viewport_hud.dart';
 export 'src/draw/device_glyph_mark.dart';
 export 'src/draw/flutter_canvas.dart';
 export 'src/draw/plan_image_cache.dart';

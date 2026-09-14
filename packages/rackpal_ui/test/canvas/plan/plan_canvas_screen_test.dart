@@ -283,12 +283,22 @@ void main() {
     MarqueeController? marquee,
     PlanOutlineController? outline,
     PlanReshapeController? reshape,
+    // A VIEWPORT THE CASE OWNS, for the ones about framing: `#898` has to
+    // pump a plan somebody has ALREADY positioned, which means setting the
+    // transform before the first layout.
+    ViewportController? viewport,
   }) async {
     await tester.runAsync(() async {
       await cache.load(_member, await _png(600, 400));
     });
     final selection = SelectionController();
-    final viewport = ViewportController();
+    // THE IDENTITY VIEWPORT THIS HARNESS DOCUMENTS, STATED RATHER THAN
+    // ASSUMED (`#898`). The screen frames a plan nobody has positioned, so
+    // a harness that wants scene, local and global points to coincide has
+    // to say that this one IS positioned, at the identity. Before this the
+    // property was true by luck: nothing framed anything.
+    final vp =
+        viewport ?? (ViewportController()..setTransform(Matrix4.identity()));
     final key = GlobalKey<PlanCanvasScreenState>();
     final refusals = <String>[];
     await tester.pumpWidget(
@@ -310,7 +320,7 @@ void main() {
               images: cache.resolver,
               measurer: const _ZeroMeasurer(),
               selection: selection,
-              viewport: viewport,
+              viewport: vp,
               arm: arm,
               marquee: marquee,
               outline: outline,
@@ -323,7 +333,7 @@ void main() {
     );
     return (
       selection: selection,
-      viewport: viewport,
+      viewport: vp,
       key: key,
       refusals: refusals,
     );
@@ -707,7 +717,7 @@ void main() {
       await tester.tapAt(const Offset(300, 200));
       await tester.pump();
 
-      await tester.tapAt(const Offset(60, 40));
+      await tester.tapAt(const Offset(60, 340));
       await tester.pump();
 
       expect(h.selection.ids, isEmpty);
@@ -776,7 +786,7 @@ void main() {
       final c = _controller(pinnedAt: const PxPt(300, 200));
       await pump(tester, c);
 
-      final gesture = await tester.startGesture(const Offset(60, 40));
+      final gesture = await tester.startGesture(const Offset(60, 340));
       await gesture.moveBy(const Offset(50, 50));
       await tester.pump();
       await gesture.up();
@@ -834,7 +844,7 @@ void main() {
       await tester.pump();
       expect(h.selection.ids, isNotEmpty);
 
-      await tester.tapAt(const Offset(60, 40));
+      await tester.tapAt(const Offset(60, 340));
       await tester.pump();
 
       expect(h.selection.ids, isEmpty);
@@ -1114,7 +1124,12 @@ void main() {
                     images: cache.resolver,
                     measurer: const _ZeroMeasurer(),
                     selection: selection,
-                    viewport: ViewportController(),
+                    // POSITIONED AT THE IDENTITY, like the shared harness
+                    // (`#898`): these cases write coordinates in the
+                    // underlay's own pixels, and a framed plan would move
+                    // everything out from under them.
+                    viewport: ViewportController()
+                      ..setTransform(Matrix4.identity()),
                   ),
                 ),
               ),
@@ -1375,7 +1390,7 @@ void main() {
       await tester.pump();
       expect(h.selection.ids, isNotEmpty);
 
-      await tester.tapAt(const Offset(60, 40));
+      await tester.tapAt(const Offset(60, 340));
       await tester.pump();
       expect(h.selection.ids, isEmpty);
     });
@@ -1592,6 +1607,191 @@ void main() {
       await _drag(tester, const Offset(100, 100), const Offset(150, 160));
 
       expect(c.undo.depth, before);
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // THE PLAN OPENS FRAMED, AND FIT COMES BACK TO IT (`#898`, §11.168.3)
+  // ═════════════════════════════════════════════════════════════════════
+  // This canvas built a bare `ViewportController` per plan and never
+  // called `fitToContent`, where the rack editor and the schematic both
+  // do. A 3300-unit architectural sheet therefore opened at 100% anchored
+  // to its top-left corner, showing about a quarter of the drawing.
+  group('the plan opens framed (`#898`, §11.168.3)', () {
+    testWidgets('THE WHOLE PICTURE IS ON SCREEN, which it was not', (
+      tester,
+    ) async {
+      final c = _controller();
+      // UNPOSITIONED ON PURPOSE: the harness's default viewport states
+      // that it IS positioned, at the identity, so the rest of this file
+      // can write coordinates in the underlay's own pixels. A case about
+      // framing has to pump the state a real plan opens in.
+      final viewport = ViewportController();
+      addTearDown(viewport.dispose);
+      final h = await pump(tester, c, viewport: viewport);
+      await tester.pumpAndSettle();
+
+      // The fixture underlay is 600x400 in a 600x400 canvas, so an
+      // unframed view sits at exactly 1.0 and a framed one is under it.
+      expect(
+        h.viewport.scale,
+        lessThan(1),
+        reason:
+            'the plan opened at 1:1 in its own corner, which is what '
+            'made an architectural sheet unusable',
+      );
+      final farCorner = h.viewport.sceneToScreen(const DPt(600, 400));
+      expect(farCorner.x, lessThanOrEqualTo(600));
+      expect(farCorner.y, lessThanOrEqualTo(400));
+    });
+
+    testWidgets('A VIEW SOMEBODY POSITIONED IS NOT RE-FRAMED, because the '
+        'per-plan viewport is remembered', (tester) async {
+      final c = _controller();
+      final viewport = ViewportController();
+      addTearDown(viewport.dispose);
+      // Somebody has already zoomed this plan, so it is not at the
+      // identity and the opening frame must leave it alone.
+      viewport.zoomBy(2, screenPivot: const Offset(300, 200));
+      final before = viewport.transform.clone();
+
+      await pump(tester, c, viewport: viewport);
+      await tester.pumpAndSettle();
+
+      expect(viewport.transform, before);
+    });
+
+    testWidgets('AND FIT RETURNS TO THE OPENING VIEW rather than to a '
+        'slightly different one', (tester) async {
+      final c = _controller();
+      final viewport = ViewportController();
+      addTearDown(viewport.dispose);
+      final h = await pump(tester, c, viewport: viewport);
+      await tester.pumpAndSettle();
+      final framed = h.viewport.transform.clone();
+
+      h.viewport.zoomBy(3, screenPivot: const Offset(100, 100));
+      expect(h.viewport.transform, isNot(framed));
+
+      await tester.tap(find.byTooltip('Fit the plan'));
+      await tester.pumpAndSettle();
+
+      expect(
+        h.viewport.transform,
+        framed,
+        reason:
+            'one method computes the opening frame and the button, so '
+            'these cannot drift apart',
+      );
+    });
+
+    testWidgets('the picture clears the chrome pinned over it', (
+      tester,
+    ) async {
+      // `rack_canvas_screen.dart` records what framing into the raw box
+      // costs: an 8px band landed under a `Card` and a shipped gesture
+      // became unreachable. A plan is worse off, since a mark may sit in
+      // the corner the card covers.
+      final c = _controller();
+      final viewport = ViewportController();
+      addTearDown(viewport.dispose);
+      final h = await pump(tester, c, viewport: viewport);
+      await tester.pumpAndSettle();
+
+      final hud = tester.getRect(find.byType(ViewportHud));
+      final topLeft = h.viewport.sceneToScreen(const DPt(0, 0));
+      expect(
+        topLeft.y,
+        greaterThanOrEqualTo(hud.bottom - 12),
+        reason:
+            'the top of the plan is under the zoom card, so a mark in '
+            'that corner cannot be clicked',
+      );
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // THE MARK IS A CONSTANT SIZE ON SCREEN (`#897`, DR-169 §11.168.2)
+  // ═════════════════════════════════════════════════════════════════════
+  // Reported from the product as "the pin size on the room view is
+  // massive" and measured: the old radius was 1/110 of the underlay's
+  // longer side in SCENE units, so a 60-point mark at 1:1 on a 3300-unit
+  // sheet and four times that at 400%.
+  //
+  // THESE ASSERT THE AGREEMENT, NOT THE NUMBER. §11.168's closing clause
+  // makes the point size appearance and the user's, so a case pinning `7`
+  // would go red the first time they ask for a different mark. What must
+  // hold is that the hit box is where the mark is, at every zoom.
+  group('the mark is a constant size on screen (`#897`, §11.168.2)', () {
+    /// The scene-space half-width of the marker, read from the hit region
+    /// the product actually builds rather than from a constant.
+    double markerSceneRadius(ViewportController viewport) {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final scene = buildPlanScene(
+        underlay: _underlay(),
+        pins: pinsOnUnderlay(c.doc, _underlayId),
+        markerRadius: kPlanMarkerRadiusPt / viewport.scale,
+      ).scene;
+      return scene.hits.single.bounds.width / 2;
+    }
+
+    testWidgets('THE HIT BOX FOLLOWS THE MARK AT EVERY ZOOM, which is the '
+        'property a person feels', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
+
+      // At 1:1, a click one point inside the mark selects it.
+      await tester.tapAt(const Offset(300 + 4, 200));
+      await tester.pump();
+      expect(h.selection.ids, isNotEmpty, reason: 'a click ON the mark');
+
+      // And a click well outside it does not, at the same zoom.
+      h.selection.apply(const [], SelectMode.replace);
+      await tester.tapAt(const Offset(300 + 40, 200));
+      await tester.pump();
+      expect(
+        h.selection.ids,
+        isEmpty,
+        reason:
+            'forty points away is off the mark at 1:1, and used to be '
+            'ON it whenever the plan was large enough',
+      );
+    });
+
+    testWidgets('THE SCENE RADIUS SHRINKS AS THE ZOOM GROWS, so the screen '
+        'size does not', (tester) async {
+      final viewport = ViewportController();
+      addTearDown(viewport.dispose);
+      final atOne = markerSceneRadius(viewport);
+
+      viewport.zoomBy(4, screenPivot: const Offset(300, 200));
+      final atFour = markerSceneRadius(viewport);
+
+      expect(viewport.scale, closeTo(4, 1e-9));
+      expect(
+        atFour,
+        closeTo(atOne / 4, 1e-9),
+        reason:
+            'the mark is drawn in scene units, so holding its SCREEN '
+            'size means dividing by the zoom. A constant scene radius is '
+            'the defect this replaced, four times bigger at 400%',
+      );
+    });
+
+    testWidgets('AND IT NO LONGER DEPENDS ON HOW BIG THE PLAN IS, which is '
+        'what made an architectural sheet unusable', (tester) async {
+      // The old rule read the underlay's longer side, so the same mark was
+      // 5 units on this fixture and 30 on a 3300-unit scan.
+      final viewport = ViewportController();
+      addTearDown(viewport.dispose);
+
+      expect(
+        markerSceneRadius(viewport),
+        closeTo(kPlanMarkerRadiusPt, 1e-9),
+        reason:
+            'at 1:1 the scene radius IS the point radius, whatever the '
+            'underlay measures',
+      );
     });
   });
 
@@ -2123,7 +2323,12 @@ void main() {
                     images: cache.resolver,
                     measurer: const _ZeroMeasurer(),
                     selection: selection,
-                    viewport: ViewportController(),
+                    // POSITIONED AT THE IDENTITY, like the shared harness
+                    // (`#898`): these cases write coordinates in the
+                    // underlay's own pixels, and a framed plan would move
+                    // everything out from under them.
+                    viewport: ViewportController()
+                      ..setTransform(Matrix4.identity()),
                   ),
                 ),
               ],

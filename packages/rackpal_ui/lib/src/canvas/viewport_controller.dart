@@ -55,6 +55,24 @@ class ViewportController extends ChangeNotifier {
   Matrix4 get transform => _transform;
   final Matrix4 _transform = Matrix4.identity();
 
+  /// Whether anything has ever pointed this viewport at something.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A FACT ABOUT THE CONTROLLER, NOT ABOUT ITS MATRIX (`#898`, DR-169)
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The Plan editor frames a plan the first time it is laid out and must
+  /// leave alone one somebody has already positioned (§11.168.3). The
+  /// obvious test, "is the transform still the identity", answers a
+  /// DIFFERENT question: a view deliberately set to 100% at the origin is
+  /// positioned, and a caller cannot say so.
+  ///
+  /// It also has to outlive the widget. The editor keys a canvas per
+  /// underlay, so switching plans disposes that `State` and any flag on
+  /// it, while the controller lives on in the editor's map. This is the
+  /// object whose lifetime the question is about.
+  bool get hasBeenPositioned => _positioned;
+  bool _positioned = false;
+
   /// Screen -> scene. Lazily inverted and cached; the cache is invalidated on
   /// every mutation, so the (relatively expensive) inversion happens at most
   /// once per frame regardless of how many times it is read.
@@ -83,6 +101,7 @@ class ViewportController extends ChangeNotifier {
   /// the zoom. Post-multiplying instead would scale the delta by the zoom.
   void panBy(Offset screenDelta) {
     if (screenDelta == Offset.zero) return;
+    _positioned = true;
     _transform.leftTranslateByDouble(screenDelta.dx, screenDelta.dy, 0, 1);
     _inverse = null;
     notifyListeners();
@@ -103,6 +122,7 @@ class ViewportController extends ChangeNotifier {
     if (target == current) return; // already at the clamp in this direction.
     final k = target / current;
     final pivot = screenToScene(DPt(screenPivot.dx, screenPivot.dy));
+    _positioned = true;
     _transform
       ..translateByDouble(pivot.x, pivot.y, 0, 1)
       ..scaleByDouble(k, k, 1, 1)
@@ -148,6 +168,7 @@ class ViewportController extends ChangeNotifier {
   /// here would let a later pan mutate the very thing somebody is holding
   /// as a remembered view.
   void setTransform(Matrix4 value) {
+    _positioned = true;
     _transform.setFrom(value);
     _inverse = null;
     notifyListeners();
@@ -161,6 +182,7 @@ class ViewportController extends ChangeNotifier {
   }
 
   void _setScaleTranslation(double s, double tx, double ty) {
+    _positioned = true;
     _transform.setIdentity();
     final m = _transform.storage;
     m[0] = s; // scale x
