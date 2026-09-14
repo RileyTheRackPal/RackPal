@@ -815,7 +815,13 @@ $SuiteFloors = @{
     # `templateContentHash` hashes `templateBodyToJson`, and a key written
     # unconditionally would have re-hashed all 51 seeded templates for a
     # value nobody had authored.
-    'rackpal_core'   = 4691
+    # 4698 at `#900`: +7, `primary_domain_authored_test.dart`. It asserts
+    # the SHAPE of the answer rather than a copy of it: every template
+    # that can have a domain has one, the ones that cannot are exactly the
+    # three passive panels, every value names a domain the registry
+    # defines, and the 35 templates whose ports span several domains still
+    # carry a single answer, which no derivation could have produced.
+    'rackpal_core'   = 4698
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

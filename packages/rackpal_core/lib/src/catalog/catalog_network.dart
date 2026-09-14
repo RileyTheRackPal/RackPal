@@ -113,6 +113,7 @@ Map<String, TemplateBody> buildNetworkCatalog() {
         'chip strip outlet rollup depends on every template being honest '
         'about that.',
     category: kCatNetwork,
+    primaryDomain: const SignalDomainId('net'),
     typePrefix: 'SW',
     tags: const ['poe', 'switch'],
     frontU: 1,
@@ -214,6 +215,7 @@ Map<String, TemplateBody> buildNetworkCatalog() {
     model: 'FW-RTR-1',
     displayName: 'Router / Firewall',
     category: kCatNetwork,
+    primaryDomain: const SignalDomainId('net'),
     typePrefix: 'FW',
     tags: const ['router', 'firewall'],
     frontU: 1,
@@ -272,6 +274,7 @@ Map<String, TemplateBody> buildNetworkCatalog() {
         'RJ45 is the error that makes the Termination Schedule wrong on '
         'the one column the trim tech actually needs (AC-025).',
     category: kCatNetwork,
+    primaryDomain: const SignalDomainId('net'),
     typePrefix: 'PP',
     glyph: DeviceGlyph.patchPanel,
     tags: const ['patchpanel', 'structured-cabling'],
@@ -320,6 +323,7 @@ Map<String, TemplateBody> buildNetworkCatalog() {
     model: 'LIU-24-SM',
     displayName: 'Fibre Enclosure / LIU, 24-fibre',
     category: kCatNetwork,
+    primaryDomain: const SignalDomainId('net'),
     typePrefix: 'LIU',
     glyph: DeviceGlyph.patchPanel,
     tags: const ['fibre', 'liu'],

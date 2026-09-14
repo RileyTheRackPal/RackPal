@@ -3,6 +3,7 @@
 import 'package:rackpal_core/src/catalog/catalog_ports.dart';
 import 'package:rackpal_core/src/model/placement.dart' show Face;
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/mass.dart';
 
@@ -129,6 +130,7 @@ Map<String, TemplateBody> buildSourcesCatalog() {
     model: 'STB-1',
     displayName: 'Cable / Satellite Set-Top Box',
     category: kCatSources,
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'STB',
     tags: const ['source', 'hosted'],
     frontU: 0,
@@ -251,6 +253,7 @@ Map<String, TemplateBody> buildSourcesCatalog() {
         'The only extraDeep template in the catalog; exercises RCK-012 '
         '(front + rear depth + 50 mm allowance against usableDepth).',
     category: kCatSources,
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'NAS',
     tags: const ['nas', 'server'],
     frontU: 2,

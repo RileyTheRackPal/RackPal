@@ -3,6 +3,7 @@
 import 'package:rackpal_core/src/catalog/catalog_ports.dart';
 import 'package:rackpal_core/src/model/device_glyph.dart';
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/mass.dart';
 
@@ -55,6 +56,7 @@ Map<String, TemplateBody> buildRfCatalog() {
         'All ports are PAS (passive) — a splitter leg is a physical tee, '
         'not a driven output. Exactly one output DC-passes toward the LNB.',
     category: kCatRf,
+    primaryDomain: const SignalDomainId('video.analog'),
     typePrefix: 'SPL',
     tags: const ['rf', 'splitter', 'passive'],
     frontU: 1,
@@ -137,6 +139,7 @@ Map<String, TemplateBody> buildRfCatalog() {
         'Hard budget: 16 tuners across all 16 outputs, not 16 receivers '
         '(a v1.2 count rule; maxDevicesPerSegment is carried as data now).',
     category: kCatRf,
+    primaryDomain: const SignalDomainId('video.analog'),
     typePrefix: 'SWM',
     glyph: DeviceGlyph.switcher,
     tags: const ['satellite', 'multiswitch'],

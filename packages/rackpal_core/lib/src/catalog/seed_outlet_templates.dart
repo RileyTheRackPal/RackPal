@@ -214,11 +214,13 @@ OutletTemplate _template(
   String? tag,
   List<OutletDrop> drops, {
   String? grade,
+  String? domain,
 }) => OutletTemplate(
   id: id,
   name: name,
   tag: tag,
   tia570Grade: grade,
+  primaryDomain: domain == null ? null : SignalDomainId(domain),
   drops: drops,
 );
 
@@ -237,28 +239,34 @@ Map<String, OutletTemplate> buildSeedOutletTemplates() {
     _template('outlet.tv_location', 'TV location', 'TV', [
       _drop(_cat6, _ethernet, 2, _punchdown),
       _drop(_rg6q, _catv, 2, _fBarrel),
-    ]),
+    ], domain: 'video.digital'),
     // AN AP MOUNTS DIRECTLY TO THE BOX, so its run ends in a crimped
     // plug and the box needs no plate and no strap (DR-045 §11.44.3).
     // This was `punchdown` between DR-044 and DR-045.
     _template('outlet.ap', 'AP', 'AP', [
       _drop(_cat6, _ethernet, 1, _rj45Plug),
-    ]),
+    ], domain: 'net'),
     _template('outlet.keypad', 'Keypad', 'KEY', [
       _drop('media.22_4', _undetermined, 1, _euroblock),
-    ]),
-    _template('outlet.ceiling_speaker_pair', 'Ceiling speaker pair', 'SPK', [
-      // ONE cable, not two. A 16/4 carries both channels of the pair on
-      // four conductors; docs/08's `GR-CLG-1` row says so in its own
-      // note, "1 `Link`, 2 `Conductor`s".
-      _drop('media.16_4', 'audio.speaker_lowz', 1, _bindingPost),
-    ]),
+    ], domain: 'ctl'),
+    _template(
+      'outlet.ceiling_speaker_pair',
+      'Ceiling speaker pair',
+      'SPK',
+      [
+        // ONE cable, not two. A 16/4 carries both channels of the pair on
+        // four conductors; docs/08's `GR-CLG-1` row says so in its own
+        // note, "1 `Link`, 2 `Conductor`s".
+        _drop('media.16_4', 'audio.speaker_lowz', 1, _bindingPost),
+      ],
+      domain: 'audio.analog',
+    ),
     _template('outlet.camera', 'Camera', 'CAM', [
       _drop(_cat6, _ethernet, 1, _punchdown),
-    ]),
+    ], domain: 'video.digital'),
     _template('outlet.data_only', 'Data only', 'DATA', [
       _drop(_cat6, _ethernet, 1, _punchdown),
-    ]),
+    ], domain: 'net'),
 
     // --- the three TIA-570-D grades (docs/07 §1's table) --------------
     //

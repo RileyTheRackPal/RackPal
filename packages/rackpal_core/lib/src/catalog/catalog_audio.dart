@@ -4,6 +4,7 @@ import 'package:rackpal_core/src/catalog/catalog_ports.dart';
 import 'package:rackpal_core/src/model/device_glyph.dart';
 import 'package:rackpal_core/src/model/placement.dart' show Face;
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/mass.dart';
 
@@ -170,6 +171,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
         'Generic 16-channel/8-zone distributed audio amplifier with '
         'per-zone IR and 20 A captive-cord service.',
     category: kCatAudio,
+    primaryDomain: const SignalDomainId('audio.analog'),
     typePrefix: 'AMP',
     tags: const ['multizone', 'residential'],
     frontU: 3,
@@ -442,6 +444,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
         'real conductor and the phono ground path prints on the schedule '
         '(AC-034/m21).',
     category: kCatAudio,
+    primaryDomain: const SignalDomainId('audio.analog'),
     typePrefix: 'AVR',
     tags: const ['avr', 'hosted', 'residential'],
     frontU: 0,
@@ -578,6 +581,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
     model: 'DSP-8X8-DANTE',
     displayName: 'DSP Audio Processor, 8x8 + Dante',
     category: kCatAudio,
+    primaryDomain: const SignalDomainId('audio.digital'),
     typePrefix: 'DSP',
     glyph: DeviceGlyph.processor,
     tags: const ['dsp', 'dante', 'commercial'],
@@ -700,6 +704,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
     model: 'AMP-2X200',
     displayName: 'Stereo Power Amplifier, 2x200W',
     category: kCatAudio,
+    primaryDomain: const SignalDomainId('audio.analog'),
     typePrefix: 'AMP',
     tags: const ['stereo', 'poweramp'],
     frontU: 2,
@@ -823,6 +828,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
         'The only rack-side source of audio.speaker_cv — a constant- '
         'voltage BUS output, not OUT (a 70V run is a multi-tap bus).',
     category: kCatAudio,
+    primaryDomain: const SignalDomainId('audio.analog'),
     typePrefix: 'AMP',
     tags: const ['70v', 'commercial', 'paging'],
     frontU: 2,
@@ -939,6 +945,7 @@ Map<String, TemplateBody> buildAudioCatalog() {
         'Typed prefix STRM, not STR — STR is the Structure device system '
         'prefix (CR-043).',
     category: kCatAudio,
+    primaryDomain: const SignalDomainId('audio.digital'),
     typePrefix: 'STRM',
     glyph: DeviceGlyph.source,
     tags: const ['streaming', 'multizone'],

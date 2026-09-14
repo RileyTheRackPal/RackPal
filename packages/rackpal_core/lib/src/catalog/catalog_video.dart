@@ -7,6 +7,7 @@ import 'package:rackpal_core/src/catalog/catalog_ports.dart';
 import 'package:rackpal_core/src/model/device_glyph.dart';
 import 'package:rackpal_core/src/model/placement.dart' show Face;
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/mass.dart';
 
@@ -151,6 +152,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
         'outputs, de-embedded balanced zone audio, per-output IR, LAN and '
         'RS-232 control.',
     category: kCatVideo,
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'MTX',
     tags: const ['hdbaset', '4k60', 'matrix'],
     frontU: 3,
@@ -249,6 +251,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
     model: 'MTX-4X4-HDMI',
     displayName: 'HDMI Matrix 4x4',
     category: kCatVideo,
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'MTX',
     tags: const ['hdmi', 'matrix'],
     frontU: 1,
@@ -343,6 +346,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
     model: 'MTX-16X16-HDMI',
     displayName: 'HDMI Matrix 16x16',
     category: kCatVideo,
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'MTX',
     tags: const ['hdmi', 'matrix', 'commercial'],
     frontU: 4,
@@ -397,6 +401,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
     model: 'DA-1X8-HDMI',
     displayName: 'HDMI Distribution Amplifier 1x8',
     category: kCatVideo,
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'DA',
     glyph: DeviceGlyph.distribution,
     tags: const ['hdmi', 'distribution'],
@@ -522,6 +527,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
     model: 'SCL-4X1',
     displayName: 'Presentation Switcher / Scaler 4x1',
     category: kCatVideo,
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'SCL',
     glyph: DeviceGlyph.switcher,
     tags: const ['presentation', 'commercial'],
@@ -644,6 +650,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
         'of this shape (P4 — the role parameter is used for extender '
         'halves only).',
     category: kCatVideo,
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'TX',
     glyph: DeviceGlyph.extender,
     tags: const ['hdbaset', 'extender'],
@@ -749,6 +756,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
         'Sold as an ENC/DEC kit; the decoder half is a Device Builder fork '
         'of this shape.',
     category: kCatVideo,
+    primaryDomain: const SignalDomainId('video.digital'),
     typePrefix: 'ENC',
     glyph: DeviceGlyph.extender,
     tags: const ['avoip', 'sdvoe'],

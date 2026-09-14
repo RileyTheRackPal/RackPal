@@ -4,6 +4,7 @@ import 'package:rackpal_core/src/catalog/catalog_ports.dart';
 import 'package:rackpal_core/src/model/device_glyph.dart';
 import 'package:rackpal_core/src/model/placement.dart' show Face;
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/mass.dart';
 
@@ -133,6 +134,7 @@ Map<String, TemplateBody> buildControlCatalog() {
         'IR and RS-232 requirement-4 types are reachable without a second '
         'control device.',
     category: kCatControl,
+    primaryDomain: const SignalDomainId('ctl'),
     typePrefix: 'CTL',
     tags: const ['control', 'automation'],
     frontU: 1,
@@ -209,6 +211,7 @@ Map<String, TemplateBody> buildControlCatalog() {
         'receiver jack destroys it. pinoutVariant is mandatory on every '
         '3.5 mm IR port here and is safety-adjacent (AC-052).',
     category: kCatControl,
+    primaryDomain: const SignalDomainId('ctl'),
     typePrefix: 'IRB',
     glyph: DeviceGlyph.distribution,
     tags: const ['ir', 'distribution'],
@@ -274,6 +277,7 @@ Map<String, TemplateBody> buildControlCatalog() {
         'ctl.rs232 is P2P only — the one control family with no multi-drop '
         'story.',
     category: kCatControl,
+    primaryDomain: const SignalDomainId('ctl'),
     typePrefix: 'SER',
     tags: const ['serial', 'gateway'],
     frontU: 1,
