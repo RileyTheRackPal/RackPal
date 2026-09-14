@@ -202,12 +202,16 @@ void main() {
         .map((t) => t.text)
         .toList();
     expect(tabs, [
-      'Locations',
+      // SIX SINCE `#893` (DR-168 §11.167.3). `Locations` and `Plan` are
+      // one view called `Site`, at position 1: they did adjacent halves
+      // of one job, and the surveying end is where the pair belongs.
+      // §11.90.4 permitted it by refusing to freeze the view set before
+      // M6, and no other view moved.
+      'Site',
       'Device Manager',
       'Rack',
       'Structured Wiring',
       'Schematic',
-      'Plan',
       'Schedule',
     ]);
     // THE RULE THIS REPLACES IS NOT WEAKENED, IT IS DISCHARGED. What

@@ -195,7 +195,7 @@ const String kNoRoomsHeadline = 'This project has no rooms yet.';
 const String kNoRoomsDetail =
     'Type a room and what it needs into the field above, then press Enter: '
     '"Living Room: 4x Cat6". The room is created with the drops. Rooms are '
-    'also named in Project ▸ Locations…';
+    'also named on the Site tab';
 
 class _HeaderRow extends StatelessWidget {
   const _HeaderRow({

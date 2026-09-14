@@ -1324,7 +1324,13 @@ $SuiteFloors = @{
     # other; only the real `AppShell` can say which views carry a column,
     # whether the state survives a tab change, and whether a row activated
     # on the Plan tab reaches the plan editor at all.
-    'rackpal_app'    = 1037
+    # 1036 at `#893`: -1, and the reason is data rather than a deletion.
+    # `global_undo_test.dart` generates one case per `ShellView` value, so
+    # that DR-159 §11.158.3's "the key works on EVERY tab" cannot go stale
+    # when a view is added. The Location and Plan views merged into `Site`
+    # (DR-168), so there are six tabs and six cases where there were seven
+    # of each. Nothing was removed by hand.
+    'rackpal_app'    = 1036
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

@@ -1409,8 +1409,7 @@ class _LocationPane extends StatelessWidget {
 }
 
 /// What the left pane says about why it cannot be typed into.
-const String kLocationsAreReadOnlyHere =
-    'Rooms are named in Project ▸ Locations…';
+const String kLocationsAreReadOnlyHere = 'Rooms are named on the Site tab';
 
 class _TreeRow extends StatelessWidget {
   const _TreeRow({

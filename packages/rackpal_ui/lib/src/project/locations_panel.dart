@@ -53,32 +53,6 @@
 // not swallow it.
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
-import 'package:rackpal_ui/src/keymap/keymap.dart' show dialogDismissShortcut;
-
-/// Opens the panel as a modal dialog.
-///
-/// MODAL, which is what the ellipsis in `Project ▸ Locations…` promises and
-/// what the package's three existing dialogs do. The alternative, a window
-/// left open while rooms are assigned in the inspector, needs a surface the
-/// app does not have.
-Future<void> showLocationsPanel(
-  BuildContext context, {
-  required RackDocument doc,
-  required LocationsPanelActions actions,
-}) => showDialog<void>(
-  context: context,
-  builder: (context) => Dialog(
-    child: SizedBox(
-      width: 720,
-      height: 520,
-      child: LocationsPanel(
-        doc: doc,
-        actions: actions,
-        onClose: () => Navigator.of(context).pop(),
-      ),
-    ),
-  ),
-);
 
 /// What the panel can ask the application to do.
 ///
@@ -170,143 +144,20 @@ class LocationsPanelActions {
   final void Function(String reason) onRefuse;
 }
 
-/// The tree, the detail form, and the four gestures.
-class LocationsPanel extends StatefulWidget {
-  const LocationsPanel({
-    required this.doc,
-    required this.actions,
-    this.onClose,
-    super.key,
-  });
-
-  final RackDocument doc;
-  final LocationsPanelActions actions;
-
-  /// How to dismiss, or NULL when there is nothing to dismiss.
-  ///
-  /// DR-091 §11.90 made this a view in the strip as well as a dialog, and
-  /// the two hosts differ in exactly one way: a dialog can be closed and a
-  /// tab cannot. Both the `Close` button and the Escape binding are
-  /// therefore conditional rather than hardcoded to `Navigator.pop`, which
-  /// is what they were: as a tab that call popped the APPLICATION's route.
-  ///
-  /// Null is not "no way out". It is "the way out is the strip", which is
-  /// the same answer Rack and Schematic give.
-  final VoidCallback? onClose;
-
-  @override
-  State<LocationsPanel> createState() => _LocationsPanelState();
-}
-
-class _LocationsPanelState extends State<LocationsPanel> {
-  Uuid? _selected;
-
-  /// Rebuilt on every edit rather than cached across one. The document is
-  /// a mutable aggregate, so a tree held across a command would describe
-  /// the shape before it.
-  LocationTree get _tree => LocationTree.of(widget.doc);
-
-  Location? get _selectedLocation =>
-      _selected == null ? null : widget.doc.locations[_selected!];
-
-  void _add() {
-    // UNDER THE SELECTION. This is the whole of the panel's depth policy:
-    // the user picks the parent by picking a row, and nothing here decides
-    // that a room may not contain a room.
-    final id = widget.actions.onAdd(_selected);
-    setState(() => _selected = id);
-  }
-
-  void _addAtTop() {
-    final id = widget.actions.onAdd(null);
-    setState(() => _selected = id);
-  }
-
-  void _reparent(Uuid id, Uuid? newParentId) {
-    final refusal = widget.actions.onReparent(id, newParentId);
-    if (refusal != null) {
-      widget.actions.onRefuse(refusal);
-      return;
-    }
-    setState(() {});
-  }
-
-  Future<void> _delete(Uuid id) async {
-    final removed = await widget.actions.onDelete(id);
-    if (!removed || !mounted) return;
-    // Only cleared when the delete actually happened: a cancelled
-    // confirmation that dropped the selection would make Cancel feel like
-    // it did something.
-    setState(() => _selected = null);
-  }
-
-  /// Runs [edit] and rebuilds. Every field edit goes through here so the
-  /// tree list re-renders as a name is typed; the document is a mutable
-  /// aggregate, so there is nothing to re-read, only to redraw.
-  void _edit(VoidCallback edit) {
-    edit();
-    setState(() {});
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final tree = _tree;
-    final nodes = tree.preOrder;
-
-    final onClose = widget.onClose;
-    return CallbackShortcuts(
-      bindings: onClose == null
-          ? const <ShortcutActivator, VoidCallback>{}
-          : dialogDismissShortcut(onClose),
-      child: Focus(
-        autofocus: true,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _Header(theme: theme, count: nodes.length),
-            const Divider(height: 1),
-            Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  SizedBox(
-                    width: 320,
-                    child: LocationTreeList(
-                      doc: widget.doc,
-                      selectedId: _selected,
-                      onSelect: (id) => setState(() => _selected = id),
-                    ),
-                  ),
-                  const VerticalDivider(width: 1),
-                  Expanded(
-                    child: LocationDetailPane(
-                      location: _selectedLocation,
-                      doc: widget.doc,
-                      actions: widget.actions,
-                      onEdit: _edit,
-                      onReparent: _reparent,
-                      onDelete: _delete,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const Divider(height: 1),
-            _Footer(
-              onAdd: _add,
-              onAddAtTop: _addAtTop,
-              addUnderLabel: _selectedLocation == null
-                  ? null
-                  : _displayName(_selectedLocation),
-              onClose: onClose,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
+// ═══════════════════════════════════════════════════════════════════════
+// `LocationsPanel` AND `showLocationsPanel` ARE GONE (`#893`, DR-168)
+// ═══════════════════════════════════════════════════════════════════════
+// The composite panel was a whole view: a header, a 320px tree column, a
+// detail pane and a footer. Its two panes are below, and the `Site` view
+// composes them at its own proportions with the plan canvas between.
+//
+// **THE MODAL HAD NO CALLER AND HAD NOT FOR SOME TIME.**
+// `showLocationsPanel` was the route CR-112's ellipsis promised, in
+// `Project ▸ Locations…`; DR-091 §11.90 promoted Locations to a tab and
+// deleted that menu, and the function stayed behind with no caller in
+// `lib/` and none in any test. Three on-screen strings still name the
+// menu (`#888`), which is the shape a dead route leaves when only the
+// code is removed.
 
 /// The location tree, as a list somebody can select a row of (`#891`,
 /// DR-168 §11.167.4).
@@ -407,31 +258,6 @@ String? _faultOf(LocationTree tree, Uuid id) {
 String _displayName(Location? location) {
   final name = location?.name.trim() ?? '';
   return name.isEmpty ? kUnnamedLocation : name;
-}
-
-class _Header extends StatelessWidget {
-  const _Header({required this.theme, required this.count});
-
-  final ThemeData theme;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('Locations', style: theme.textTheme.titleMedium),
-        const SizedBox(height: 4),
-        Text(
-          count == 1 ? '1 location' : '$count locations',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 /// The empty state. GUIDANCE ONLY, with no button of its own: the footer
@@ -905,56 +731,6 @@ class _CommitFieldState extends State<_CommitField> {
       helperText: widget.helper,
     ),
     onSubmitted: (_) => _commit(),
-  );
-}
-
-class _Footer extends StatelessWidget {
-  const _Footer({
-    required this.onAdd,
-    required this.onAddAtTop,
-    required this.addUnderLabel,
-    required this.onClose,
-  });
-
-  final VoidCallback onAdd;
-  final VoidCallback onAddAtTop;
-
-  /// The selected node's name, or null when nothing is selected. The
-  /// button SAYS where the new location will land, because "New location"
-  /// on a panel with a selection is ambiguous about exactly the thing this
-  /// panel is for.
-  final String? addUnderLabel;
-  final VoidCallback? onClose;
-
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.all(12),
-    child: Row(
-      children: [
-        // FLEXIBLE AND ELLIPSISED. The label carries a user-supplied room
-        // name, so its width is unbounded, and a fixed Row overflowed at
-        // 800px on a name as short as "Main House". A dialog that renders
-        // a yellow overflow stripe the first time someone names a room is
-        // not a styling problem.
-        Flexible(
-          child: FilledButton(
-            onPressed: onAdd,
-            child: Text(
-              addUnderLabel == null ? 'New location' : 'New in $addUnderLabel',
-              overflow: TextOverflow.ellipsis,
-              maxLines: 1,
-            ),
-          ),
-        ),
-        if (addUnderLabel != null) ...[
-          const SizedBox(width: 8),
-          TextButton(onPressed: onAddAtTop, child: const Text('New at top')),
-        ],
-        const Spacer(),
-        if (onClose != null)
-          TextButton(onPressed: onClose, child: const Text('Close')),
-      ],
-    ),
   );
 }
 
