@@ -821,7 +821,14 @@ $SuiteFloors = @{
     # three passive panels, every value names a domain the registry
     # defines, and the 35 templates whose ports span several domains still
     # carry a single answer, which no derivation could have produced.
-    'rackpal_core'   = 4698
+    # 4707 at `#901`: +9, `plan_mark_domain_test.dart`. The case worth
+    # naming is the greyscale one: canon 14 records that the eight domain
+    # hues COLLIDE in greyscale by design, three inside one luminance
+    # band, so it strips every colour out of the marks and asserts the
+    # three still draw three different things. Its first version compared
+    # a command COUNT and passed over a square and a diamond, which is
+    # why it now compares the path geometry.
+    'rackpal_core'   = 4707
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

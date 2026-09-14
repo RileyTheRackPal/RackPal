@@ -48,8 +48,10 @@ import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/image_ref.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
+import 'package:rackpal_core/src/draw/scene/family_glyph.dart';
 import 'package:rackpal_core/src/draw/spec.dart';
 import 'package:rackpal_core/src/model/plan.dart';
+import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/px_pt.dart';
 
@@ -67,6 +69,7 @@ final class PlanPinSubject {
     required this.entityId,
     required this.at,
     required this.carrier,
+    this.domain,
   });
 
   /// The entity the pin hangs on: a device, an outlet or a rack. This is
@@ -82,20 +85,43 @@ final class PlanPinSubject {
   /// Carried through to the scene because the marker differs by kind: a
   /// rack is the datum every length is measured FROM (`PLN-003`), and a
   /// plan on which the rack is indistinguishable from a speaker is one
-  /// somebody has to count on. It is deliberately NOT a colour decision
-  /// here: CR-078 puts colour on the signal domain, and a pin carries no
-  /// domain.
+  /// somebody has to count on.
+  ///
+  /// **THIS CLAUSE SAID THE CARRIER WAS NOT A COLOUR DECISION** *"here:
+  /// CR-078 puts colour on the signal domain, and a pin carries no
+  /// domain"* until `#901` (DR-169 §11.168.4). The first half still
+  /// holds and is why [domain] exists beside this field rather than
+  /// instead of it: colour is the DOMAIN's, shape is the CARRIER's, and
+  /// they answer different questions. What expired is the second half.
   final PlanPinCarrier carrier;
+
+  /// What the thing on the end of this pin mostly IS, or null when
+  /// nobody has said (`#901`, DR-169 §11.168.4).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// RESOLVED AT THE CALL SITE, like everything else on this struct
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A device reads its template's `primaryDomain`, an outlet reads the
+  /// recipe it was made from, and a rack has none at all: it is the
+  /// datum, not a ninth domain (§11.168.8). Three different lookups
+  /// through three different collections, which is a QUERY, and this
+  /// file's header keeps queries out of it.
+  ///
+  /// **NULL DRAWS THE NEUTRAL MARK** (G4/CR-114). It is never filled in
+  /// from the ports: a census over the 51 seeded templates found only 13
+  /// whose ports belong to a single domain.
+  final SignalDomainId? domain;
 
   @override
   bool operator ==(Object other) =>
       other is PlanPinSubject &&
       other.entityId == entityId &&
       other.at == at &&
-      other.carrier == carrier;
+      other.carrier == carrier &&
+      other.domain == domain;
 
   @override
-  int get hashCode => Object.hash(entityId, at, carrier);
+  int get hashCode => Object.hash(entityId, at, carrier, domain);
 }
 
 /// The three things a pin can hang on, as the SCENE sees them.
@@ -139,6 +165,21 @@ final class PlanScene {
 /// revisit it with the designator pill.
 const double kPlanMarkerRadiusFraction = 1 / 110;
 
+/// How much heavier a device's outline is than an outlet's (`#901`,
+/// DR-169 §11.168.6).
+///
+/// The device mark carried an inner dot at `r / 3` to tell it from a
+/// drop, and that is exactly the space the domain glyph now occupies. A
+/// stroke weight is the cheapest channel left that survives a greyscale
+/// print, which is the same argument PAL-1 makes for lines.
+const double kPlanDeviceRingFactor = 1.75;
+
+/// The glyph's box as a fraction of the marker's radius.
+///
+/// Big enough to read at the mark's shipped size and small enough to
+/// leave the fill visible around it, which is what carries the colour.
+const double kPlanGlyphSideFactor = 1.15;
+
 /// Composes [underlay] and [pins] into one scene (docs/15 §6).
 ///
 /// [markerRadius] overrides [kPlanMarkerRadiusFraction]'s derived default.
@@ -147,6 +188,7 @@ PlanScene buildPlanScene({
   required Iterable<PlanPinSubject> pins,
   PlanPalette palette = const PlanPalette(),
   double? markerRadius,
+  Map<SignalDomainId, SignalDomainDef> domains = const {},
 }) {
   final ops = <DiagramOp>[];
   final fragments = <String, IntRange>{};
@@ -197,6 +239,20 @@ PlanScene buildPlanScene({
   for (final pin in pins) {
     final start = ops.length;
     final centre = DPt(pin.at.px.toDouble(), pin.at.py.toDouble());
+    // ═════════════════════════════════════════════════════════════════
+    // COLOUR IS THE DOMAIN'S AND THE GLYPH IS WHAT SURVIVES THE PRINT
+    // ═════════════════════════════════════════════════════════════════
+    // CR-078 puts hue on the domain, so a mark filled with it needs no
+    // new palette. The GLYPH is not decoration: `plan_sheet.dart`
+    // splices this scene, the Installer preset exports greyscale, and
+    // canon §14 records that the eight hues COLLIDE in greyscale by
+    // design, three of them inside one luminance band. PAL-3 resolves
+    // that for a line with dash and weight; a filled dot has neither, so
+    // the domain's own glyph is what separates them on paper
+    // (DR-169 §11.168.6).
+    final def = pin.domain == null ? null : domains[pin.domain];
+    final fill = def == null ? palette.markerFill : Fill(def.color.argb);
+    final glyph = def == null ? null : familyGlyphFor(def.glyph);
     switch (pin.carrier) {
       case PlanPinCarrier.rack:
         // THE DATUM READS AS A DATUM. Every length on this plan is
@@ -222,26 +278,40 @@ PlanScene buildPlanScene({
       case PlanPinCarrier.outlet:
         // A drop is the thing a designer is actually dotting (docs/15
         // §3.4), and there are sixty of them on the design case, so it is
-        // the plainest mark of the three.
+        // the plainest mark of the three: one circle, and the domain's
+        // colour costs no extra ink.
+        ops.add(OpCircle(centre, r, fill: fill, stroke: palette.marker));
+      case PlanPinCarrier.device:
+        // THE HEAVIER RING IS WHAT KEEPS A DEVICE FROM READING AS A DROP
+        // once both carry a glyph. It was an inner dot at `r / 3`, which
+        // is the space the glyph now occupies; a weight is the cheapest
+        // channel left that survives greyscale, and docs/15 §3.4's three
+        // marks stay three.
         ops.add(
           OpCircle(
             centre,
             r,
-            fill: palette.markerFill,
-            stroke: palette.marker,
+            fill: fill,
+            stroke: Stroke(
+              argb: palette.marker.argb,
+              widthPt: palette.marker.widthPt * kPlanDeviceRingFactor,
+            ),
           ),
         );
-      case PlanPinCarrier.device:
-        ops
-          ..add(
-            OpCircle(
-              centre,
-              r,
-              fill: palette.markerFill,
-              stroke: palette.marker,
-            ),
-          )
-          ..add(OpCircle(centre, r / 3, fill: palette.markerCore));
+    }
+    // THE GLYPH GOES IN BOTH, AND IN THE RACK'S NEITHER. A rack has no
+    // domain to draw (§11.168.8) and its square already carries a cross.
+    if (glyph != null && pin.carrier != PlanPinCarrier.rack) {
+      final side = r * kPlanGlyphSideFactor;
+      ops.add(
+        familyGlyphOp(
+          glyph,
+          DPt(centre.x - side / 2, centre.y),
+          side / kFamilyGlyphCapFactor,
+          palette.markerCore.argb,
+          hollowWidthPt: palette.marker.widthPt,
+        ),
+      );
     }
     fragments[pin.entityId.v] = IntRange(start, ops.length);
     // THE HIT BOX IS THE MARKER'S SQUARE, for all three kinds. A circular

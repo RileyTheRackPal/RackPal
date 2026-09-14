@@ -119,6 +119,9 @@ List<PlanPinSubject> pinsOnUnderlay(RackDocument doc, Uuid underlayId) {
           entityId: rack.id,
           at: pin.at,
           carrier: PlanPinCarrier.rack,
+          // THE SAME RESOLUTION THE SHEET USES (`#901`). Two gathers
+          // exist; one answer to what colour a mark is.
+          domain: planPinDomainFor(doc, rack.id, PlanPinCarrier.rack),
         ),
       );
     }
@@ -131,6 +134,9 @@ List<PlanPinSubject> pinsOnUnderlay(RackDocument doc, Uuid underlayId) {
           entityId: outlet.id,
           at: pin.at,
           carrier: PlanPinCarrier.outlet,
+          // THE SAME RESOLUTION THE SHEET USES (`#901`). Two gathers
+          // exist; one answer to what colour a mark is.
+          domain: planPinDomainFor(doc, outlet.id, PlanPinCarrier.outlet),
         ),
       );
     }
@@ -145,6 +151,9 @@ List<PlanPinSubject> pinsOnUnderlay(RackDocument doc, Uuid underlayId) {
           entityId: device.id,
           at: pin.at,
           carrier: PlanPinCarrier.device,
+          // THE SAME RESOLUTION THE SHEET USES (`#901`). Two gathers
+          // exist; one answer to what colour a mark is.
+          domain: planPinDomainFor(doc, device.id, PlanPinCarrier.device),
         ),
       );
     }
@@ -425,10 +434,14 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     return [
       for (final p in resolved)
         if (p.entityId == grabbed.entityId)
+          // THE DRAGGED PIN KEEPS ITS DOMAIN, which is a rebuild and
+          // therefore the field this repository has already watched a new
+          // one get silently dropped by (`#883`'s span). Only `at` moves.
           PlanPinSubject(
             entityId: p.entityId,
             at: live,
             carrier: p.carrier,
+            domain: p.domain,
           )
         else
           p,
@@ -761,6 +774,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       underlay: widget.underlay,
       pins: _pins,
       markerRadius: _markerRadius,
+      domains: _doc.registries.signalDomains,
     );
     final hit = hitTest(built.scene, sceneStart);
     if (hit == null) {
@@ -867,6 +881,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
             underlay: widget.underlay,
             pins: _pins,
             markerRadius: _markerRadius,
+            domains: _doc.registries.signalDomains,
           ).scene,
         );
         setState(() {
@@ -1372,6 +1387,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       underlay: widget.underlay,
       pins: _pins,
       markerRadius: _markerRadius,
+      domains: _doc.registries.signalDomains,
     );
     final canvas = MouseRegion(
       // TRACKS THE POINTER ONLY WHILE A PICK IS WAITING FOR ITS SECOND
