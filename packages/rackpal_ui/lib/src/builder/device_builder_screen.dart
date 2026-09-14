@@ -802,6 +802,7 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
                 child: switch (_liveSection) {
                   BuilderSection.identity => _IdentitySection(
                     body: _session.body,
+                    registries: widget.registries,
                     onEdit: _run,
                   ),
                   BuilderSection.ports => PortGrid(
@@ -1578,10 +1579,23 @@ class _SectionNote extends StatelessWidget {
 
 /// docs/06 §3.1.
 class _IdentitySection extends StatelessWidget {
-  const _IdentitySection({required this.body, required this.onEdit});
+  const _IdentitySection({
+    required this.body,
+    required this.onEdit,
+    this.registries,
+  });
 
   final TemplateBody body;
   final void Function<T>(TemplateField<T> field, T value) onEdit;
+
+  /// The project's registries, for the signal-domain picker.
+  ///
+  /// **NULLABLE BECAUSE THE SCREEN'S IS** (see `DeviceBuilderScreen
+  /// .registries`, whose own comment refuses to substitute an empty set:
+  /// *"passing empty registries would say the project has none"*). The
+  /// picker says which fact is missing rather than showing eight options
+  /// it made up.
+  final Registries? registries;
 
   @override
   Widget build(BuildContext context) => ListView(
@@ -1638,6 +1652,11 @@ class _IdentitySection extends StatelessWidget {
             }
           }
         },
+      ),
+      _PrimaryDomainRow(
+        value: body.primaryDomain,
+        registries: registries,
+        onChanged: (v) => onEdit(TemplateBodyField.primaryDomain, v),
       ),
       _TextRow(
         label: 'Designator prefix',
@@ -2249,6 +2268,87 @@ class _CategoryRow extends StatelessWidget {
       onChanged: (v) => onChanged(v ?? ''),
     ),
   );
+}
+
+/// The signal-domain picker's handle, public so a case can drive the
+/// control the product shows rather than one it rebuilt.
+const Key kPrimaryDomainFieldKey = ValueKey('template-primary-domain');
+
+/// Which of the eight signal domains this device mostly IS (`#899`,
+/// DR-169 §11.168.5).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// WHY THIS IS TYPED AND NOT DERIVED FROM THE PORT LIST
+/// ═══════════════════════════════════════════════════════════════════════
+/// The port list answers *what can be plugged into this*. It does not
+/// answer *what is it*, and the census that settled the question is on
+/// the model field: of 51 seeded templates only 13 have ports in a single
+/// domain, because nearly everything has a power lead and a control port,
+/// and a television reads as video, audio and network at once.
+///
+/// **NOT SET IS AN OPTION AND IT IS FIRST** (G4). An unknown domain draws
+/// the neutral mark on a plan; it is not "general" and not the first
+/// domain in some order.
+class _PrimaryDomainRow extends StatelessWidget {
+  const _PrimaryDomainRow({
+    required this.value,
+    required this.onChanged,
+    this.registries,
+  });
+
+  final SignalDomainId? value;
+  final Registries? registries;
+  final ValueChanged<SignalDomainId?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final domains = registries?.signalDomains.values.toList() ?? const [];
+    if (domains.isEmpty) {
+      // SAYS WHICH FACT IS MISSING, rather than offering a made-up list
+      // or a control that silently does nothing (docs/04 §3.4).
+      return const Padding(
+        padding: EdgeInsets.only(bottom: 16),
+        child: InputDecorator(
+          decoration: InputDecoration(
+            labelText: 'Signal domain',
+            helperText:
+                'The project registries were not supplied, so the '
+                'domains cannot be listed here.',
+            border: OutlineInputBorder(),
+            enabled: false,
+          ),
+          child: Text('Not available'),
+        ),
+      );
+    }
+    // A TOTAL ORDER, because `Map` iteration is insertion order and a
+    // reopened file enumerates differently: the picker must not reshuffle
+    // between sessions.
+    domains.sort((a, b) => a.id.v.compareTo(b.id.v));
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: DropdownButtonFormField<String>(
+        key: kPrimaryDomainFieldKey,
+        initialValue: value?.v,
+        decoration: const InputDecoration(
+          labelText: 'Signal domain',
+          helperText:
+              'Optional. Colours this device on a floorplan, and '
+              'is what it mostly IS rather than everything it carries.',
+          border: OutlineInputBorder(),
+        ),
+        items: [
+          // NO `value:`, WHICH IS THE NULL OPTION. Writing `value: null`
+          // says the same thing and is an analyzer info against an exact
+          // pin; the name of the item is what carries the meaning.
+          const DropdownMenuItem(child: Text('Not set')),
+          for (final d in domains)
+            DropdownMenuItem(value: d.id.v, child: Text(d.displayName)),
+        ],
+        onChanged: (v) => onChanged(v == null ? null : SignalDomainId(v)),
+      ),
+    );
+  }
 }
 
 class _TagsRow extends StatefulWidget {

@@ -112,6 +112,19 @@ abstract final class TemplateBodyField {
     set: _setTypePrefix,
   );
 
+  /// What the device mostly IS, as one of the eight signal domains
+  /// (`#899`, DR-169 §11.168.5).
+  ///
+  /// **AUTHORED AND NEVER DERIVED.** A census over the 51 seeded
+  /// templates found 13 whose ports belong to exactly one domain; the
+  /// rest read as mixtures, because nearly everything has a power lead
+  /// and a control port. Null is unknown and draws the neutral mark.
+  static const primaryDomain = TemplateField<SignalDomainId?>(
+    key: 'primaryDomain',
+    get: _getPrimaryDomain,
+    set: _setPrimaryDomain,
+  );
+
   /// Rack units on the front face. The second of M4-D's three required
   /// fields, and the one a user gets wrong most cheaply: `0` is a
   /// MEASURED zero here (a zero-U device), never an unknown, so this
@@ -408,6 +421,10 @@ void _setDisplayName(TemplateBody b, String v) => b.displayName = v;
 
 String? _getTypePrefix(TemplateBody b) => b.typePrefix;
 void _setTypePrefix(TemplateBody b, String? v) => b.typePrefix = v;
+
+SignalDomainId? _getPrimaryDomain(TemplateBody b) => b.primaryDomain;
+void _setPrimaryDomain(TemplateBody b, SignalDomainId? v) =>
+    b.primaryDomain = v;
 
 int _getFrontU(TemplateBody b) => b.frontU;
 void _setFrontU(TemplateBody b, int v) => b.frontU = v;

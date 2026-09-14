@@ -55,6 +55,11 @@ Future<List<TemplateBody>> _pump(
   WidgetTester tester, {
   TemplateBody? template,
   String? refuseWith,
+  // THE PROJECT'S REGISTRIES, which the signal-domain picker lists
+  // (`#899`). Null is a real state the screen supports and its own
+  // comment defends: passing empty registries would claim the project has
+  // none.
+  Registries? registries,
 }) async {
   // THE APP'S OWN MINIMUM, not the 800x600 default. `kMinWindowWidth` is
   // 1000 and `kMinWindowHeight` is 720 (`prefs_store.dart`), enforced
@@ -72,6 +77,7 @@ Future<List<TemplateBody>> _pump(
       home: Scaffold(
         body: DeviceBuilderScreen(
           measurer: _ProportionalMeasurer(),
+          registries: registries,
           template: template ?? _blank(),
           actions: DeviceBuilderActions(
             onSave: (b) {
@@ -586,6 +592,84 @@ void main() {
       await tester.pump();
 
       expect(saved.single.side, OccupancySide.none);
+    });
+  });
+  // ═══════════════════════════════════════════════════════════════════
+  // THE SIGNAL DOMAIN, WHICH IS THE PRODUCER THE FIELD MUST NOT SHIP
+  // WITHOUT (`#899`, DR-169 §11.168.5)
+  // ═══════════════════════════════════════════════════════════════════
+  // This repository has now recorded eight surfaces ruled, built, tested
+  // and left with nothing that reaches them. A nullable model field whose
+  // only writer is a codec is the same shape: it would read back exactly
+  // what it was given, for ever, because nothing could give it anything.
+  group('the signal-domain picker (`#899`)', () {
+    Registries withDomains() => buildSeedRegistries();
+
+    testWidgets('sets the domain, and it reaches the saved body', (
+      tester,
+    ) async {
+      final saved = await _pump(tester, registries: withDomains());
+
+      await _type(tester, 'Display name *', 'Managed Switch');
+      await _type(tester, 'Designator prefix *', 'SW');
+      await _type(tester, 'RU height (front) *', '1');
+
+      await tester.tap(find.byKey(kPrimaryDomainFieldKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Network').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.primaryDomain, const SignalDomainId('net'));
+    });
+
+    testWidgets('STARTS UNSET AND SAVES UNSET, because nobody has said '
+        'and G4 does not guess', (tester) async {
+      final saved = await _pump(tester, registries: withDomains());
+
+      await _type(tester, 'Display name *', 'Mystery Box');
+      await _type(tester, 'Designator prefix *', 'MB');
+      await _type(tester, 'RU height (front) *', '1');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.primaryDomain, isNull);
+    });
+
+    testWidgets('CAN BE PUT BACK TO UNSET, which is a value and not a '
+        'missing one', (tester) async {
+      final saved = await _pump(
+        tester,
+        registries: withDomains(),
+        template: _blank()..primaryDomain = const SignalDomainId('net'),
+      );
+
+      await _type(tester, 'Display name *', 'Managed Switch');
+      await _type(tester, 'Designator prefix *', 'SW');
+      await _type(tester, 'RU height (front) *', '1');
+
+      await tester.tap(find.byKey(kPrimaryDomainFieldKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Not set').last);
+      await tester.pumpAndSettle();
+
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.primaryDomain, isNull);
+    });
+
+    testWidgets('WITH NO REGISTRIES IT SAYS SO rather than offering a list '
+        'it made up', (tester) async {
+      await _pump(tester);
+
+      expect(find.byKey(kPrimaryDomainFieldKey), findsNothing);
+      expect(
+        find.textContaining('registries were not supplied'),
+        findsOneWidget,
+      );
     });
   });
 }
