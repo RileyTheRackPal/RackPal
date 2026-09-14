@@ -11133,7 +11133,91 @@ lines. **The op-count baselines in `schematic_perf_test.dart` did not move**, wh
 matters, because a key on a template body is not a drawing op.
 
 **Commits** (§8.8). `#895` `31442e90`. `#896` the ruling `1023e53e`. `#897`, `#898` `8eb783fa`.
-`#899` `a47ff9df`. `#900` `392578d`. `#901` `ffc9169`. `#902` and this record, pending.
+`#899` `a47ff9df`. `#900` `392578d`. `#901` `ffc9169`. `#902` `51d9ad32`. `#903` `60893c0`, and see
+§5.9.46: `#897`'s clause was not met and this section said it was.
+
+#### 5.9.46 `#903`: the mark still grew with the zoom, and the test that said otherwise · `DR-169` · no version move
+
+2026-09-14. Reported from the product one day after `#896` closed: *"Pin sizes are changing with
+zoom; I thought we set them to a fixed size?"* They were, and they were not. **`#896` was reopened**
+rather than leaving §5.9.45 standing as a closed record of an unmet clause, and `#903` closes it.
+
+##### 5.9.46.1 A repaint is not a rebuild
+
+`_markerRadius` divides `kPlanMarkerRadiusPt` by the zoom, and it is read in `build`. But
+`RenderPlanCanvas` listens to the viewport with **`markNeedsPaint`**, so a zoom REPAINTS the scene
+already in the tree under a new transform and never asks for a new one. The mark therefore keeps the
+scene radius its last build gave it and grows with the zoom exactly as the proportional rule
+§11.168.2 retired did, snapping back to 7 points the next time anything else calls `setState`: a
+hover, a selection, a command.
+
+**Measured through the render object's own scene before anything was changed: 7.0 points at 1:1 and
+28.0 at 400%.** The same two numbers are what the mutation prints when the listener is removed.
+
+**THE FIX WAS ALREADY IN THE FILE, TWICE.** `PlanOutlineLayer`, the sibling layer in
+`plan_outline.dart`, wraps itself in an `AnimatedBuilder` over the viewport, and
+`rack_canvas_screen.dart` has carried `_viewport.addListener(_onViewportChanged)` since its LOD work.
+The plan canvas now listens too, on **scale only**, so a pan stays a repaint of an unchanged picture
+and a case asserts that by object identity on the scene.
+
+##### 5.9.46.2 One place is not the same as one moment
+
+§11.168.2's closing clause is explicit that a hit box disagreeing with the drawn mark *"cannot be
+seen"*, and it ruled that **one place computes the radius**. One place did. What the clause does not
+say is WHEN: two of the three readers build their scene inside the gesture and the third builds it in
+`build`, so at 400% the mark **looked 28 points across and answered clicks over 7**. The gesture path
+was right the whole time, which is why nothing felt wrong enough to investigate until somebody
+looked at it.
+
+So this is a correction under an existing ruling, not a new decision: §11.168.2's reasoning reaches
+the case without its words doing so.
+
+##### 5.9.46.3 The test proved the formula, not the product
+
+The group certifying the clause read the radius from a scene **it built itself**:
+
+```dart
+markerRadius: kPlanMarkerRadiusPt / viewport.scale,
+```
+
+That is the production expression, retyped into the test. Five green cases over a product drawing the
+mark four times too big, and **the defect was structurally invisible to them**: the formula was
+right, and what was wrong was the moment it was read. A test that calls the builder itself cannot
+fail that way.
+
+**And one case was named `THE HIT BOX FOLLOWS THE MARK AT EVERY ZOOM` and never zoomed.** A name
+claiming a range its body never visits is the cheapest audit in the suite.
+
+Every reading now comes off `RenderPlanCanvas.scene` through the live viewport, and the group gained
+the two properties nothing had asserted: the screen size survives a zoom, and a pan replaces no
+scene.
+
+##### 5.9.46.4 A clause of the ruling is still unbuilt, and it is the sheet's
+
+§11.168.2 says each caller computes the radius from its own scale, *"the canvas from the viewport and
+**the sheet from its page mapping**"*. `plan_sheet.dart` passes no `markerRadius` at all, so the
+printed mark still takes `kPlanMarkerRadiusFraction`. **It is not visibly wrong today**, because
+fitting a plan to a page turns a fraction of the underlay into a roughly fixed fraction of the page:
+on a 3300x2550 scan fitted into a 700x450pt area it prints at about a **5.3pt radius**. But the fit
+binds on whichever axis is tighter while the fraction reads the longer side, so the printed mark
+**varies with the underlay's aspect ratio**, which is the property the clause exists to remove. The
+sheet already holds `s = factor.unitsToPoints` three lines above the call.
+
+Left open deliberately: what size a mark should be **on paper** is the user's call, not a number to
+infer from the screen's 7 points. Raised with them rather than guessed.
+
+##### 5.9.46.5 Evidence
+
+Floor: `rackpal_ui` 1895 to 1897, net +2 over three cases removed and five added. 17 gates green.
+Analyzer pin unmoved at 233.
+
+**Mutation-tested**: removing `widget.viewport.addListener(_onViewportChanged)` puts the new case red
+at `Expected: a numeric value within <1e-9> of <7.0> / Actual: <28.0>`, which is the report in two
+numbers. The `AND THE CLICKS AGREE AT 400%` case **passes under that mutation**, and that is correct
+rather than a weak case: it documents the half that was never broken, and it is what would fail if a
+later change moved the gesture path to the built scene.
+
+**Commit** (§8.8): `#903` `60893c0`.
 
 
 ---

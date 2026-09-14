@@ -1,5 +1,31 @@
 # Update Log
 
+## 2026-09-14 (thirty-eighth entry)
+
+* **Reopened**: `#896`, and closed again with `#903` (`60893c0`). §11.168.2's
+  clause was reported met and was not: the plan mark was still four times too
+  big at 400%. **Closing on a false demonstration is worse than leaving a
+  clause open**, so the story's state went back rather than a new item quietly
+  carrying the correction.
+* **Note**: **A REPAINT IS NOT A REBUILD.** The radius divides by the zoom and
+  is read in `build`; `RenderPlanCanvas` listens to the viewport with
+  `markNeedsPaint`, so a zoom repainted the scene already in the tree and never
+  asked for a new one. Measured off the render object: **7 points at 1:1, 28 at
+  400%**. `PlanOutlineLayer` in the same file, and `rack_canvas_screen`, had
+  both listened from the start.
+* **Note**: **ONE PLACE IS NOT THE SAME AS ONE MOMENT.** §11.168.2 forbids the
+  hit box disagreeing with the drawn mark and ruled that one place computes the
+  radius. One place did. Two of its three readers build their scene inside the
+  gesture and the third builds it in `build`, so at 400% the mark looked 28
+  points across and answered clicks over 7.
+* **Note**: **A TEST THAT RE-DERIVES THE PRODUCTION FORMULA PROVES THE
+  FORMULA.** The group certifying the clause called `buildPlanScene` with
+  `kPlanMarkerRadiusPt / viewport.scale` written out in the test, so it checked
+  that an expression divides. Its "AT EVERY ZOOM" case never zoomed.
+* **Update**: [A test that counts the mechanism will certify the
+  defect](/practices/assert-the-artifact-not-the-mechanism.md) gains a fourth
+  mouth to the trap, and the grep that catches the name drift.
+
 ## 2026-09-14 (thirty-seventh entry)
 
 * **Closed**: `#895` with `01bb9494`, and `#896` with its six chapters

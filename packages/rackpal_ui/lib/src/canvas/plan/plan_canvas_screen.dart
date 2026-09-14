@@ -418,11 +418,66 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// [_livePin]'s rule exactly: the write happens once, on release.
   PxPt? _liveVertex;
 
+  /// The zoom [build] last built the scene at.
+  ///
+  /// See [_onViewportChanged] for what it is for.
+  double _builtAtScale = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.viewport.addListener(_onViewportChanged);
+  }
+
+  @override
+  void didUpdateWidget(PlanCanvasScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (identical(oldWidget.viewport, widget.viewport)) return;
+    oldWidget.viewport.removeListener(_onViewportChanged);
+    widget.viewport.addListener(_onViewportChanged);
+  }
+
   @override
   void dispose() {
+    widget.viewport.removeListener(_onViewportChanged);
     _stopTrackingArmedPointer();
     _canvasFocus.dispose();
     super.dispose();
+  }
+
+  /// Rebuilds the scene when the ZOOM changes, and not when the plan is
+  /// merely panned.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A REPAINT IS NOT A REBUILD, AND THAT IS HOW `#897` SHIPPED BROKEN
+  /// ═══════════════════════════════════════════════════════════════════
+  /// [_markerRadius] divides by the zoom, and it is read in [build]. But
+  /// `RenderPlanCanvas` listens to the viewport with `markNeedsPaint`, so
+  /// a zoom REPAINTED THE SCENE IT ALREADY HELD under a new transform and
+  /// never asked for a new one. The mark therefore kept the scene radius
+  /// it was built with and grew with the zoom exactly as the proportional
+  /// rule it replaced did, snapping back to [kPlanMarkerRadiusPt] the next
+  /// time anything else called `setState`.
+  ///
+  /// **MEASURED, 2026-09-14**, through the render object's own scene: 7
+  /// points at 1:1 and 28 at 400%. Reported from the product.
+  ///
+  /// **AND THE HIT BOX DID NOT FOLLOW IT**, which is the same divergence
+  /// [_markerRadius] warns about arriving by a route that comment did not
+  /// name. `beginDrag` and [_updateHoveredPin] build a FRESH scene on the
+  /// spot, so those were right at every zoom while the drawing was not: at
+  /// 400% the mark looked 28 points across and answered clicks over 7.
+  ///
+  /// `PlanOutlineLayer` had this right from the start, in this same file's
+  /// sibling: it wraps itself in an `AnimatedBuilder` over the viewport.
+  ///
+  /// **THE SCALE AND NOT THE TRANSFORM**, so a pan stays what it has
+  /// always been, a repaint of an unchanged picture. Only the zoom can
+  /// change what the scene should contain.
+  void _onViewportChanged() {
+    if (!mounted) return;
+    if (widget.viewport.scale == _builtAtScale) return;
+    setState(() {});
   }
 
   /// The pins as the scene should draw them THIS FRAME, with the dragged
@@ -1075,6 +1130,13 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// disagreement is invisible: the mark looks right and the clicks land
   /// somewhere else. `#895` was the same class of defect with the two
   /// still in agreement.
+  ///
+  /// **ONE PLACE WAS NOT ENOUGH, AND THE PARAGRAPH ABOVE SAYS WHY WITHOUT
+  /// SAYING WHEN.** Two of the three readers build their scene inside the
+  /// gesture and the third builds it in [build], so the same expression
+  /// gave two answers whenever a zoom had happened since the last
+  /// rebuild. [_onViewportChanged] is what makes "one place" also mean one
+  /// moment.
   double get _markerRadius => kPlanMarkerRadiusPt / widget.viewport.scale;
 
   /// Writes the dragged corner, and re-derives the figure it changed.
@@ -1400,6 +1462,11 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
 
   @override
   Widget build(BuildContext context) {
+    // WRITTEN WHERE THE SCENE IS ACTUALLY BUILT, so the field means what
+    // it says whatever caused the rebuild. Recording it in
+    // [_onViewportChanged] instead would leave it lying after any other
+    // `setState`, and the next zoom to that stale value would be skipped.
+    _builtAtScale = widget.viewport.scale;
     final built = buildPlanScene(
       underlay: widget.underlay,
       pins: _pins,

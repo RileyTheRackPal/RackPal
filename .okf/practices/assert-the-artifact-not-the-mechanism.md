@@ -86,6 +86,39 @@ three values, so if a Pull Sheet role ever appears the case fails and whoever
 added it has to say whether M3's clause or M6's now owns the sheet
 ([DR-027](/decisions/dr-027-m3-owes-rows-m6-owns-sheets.md)).
 
+# And a fourth: the test that re-derives the production formula
+
+DR-169 ruled a plan marker a constant number of SCREEN POINTS, so the canvas
+divides the point size by the zoom. The group that certified the clause read:
+
+```dart
+buildPlanScene(
+  pins: ...,
+  markerRadius: kPlanMarkerRadiusPt / viewport.scale,
+).scene.hits.single.bounds.width / 2;
+```
+
+**The test computed the production expression itself and then checked that it
+divides.** Five cases, every one green, over a product that drew the mark at 7
+points at 1:1 and **28 at 400%**. The user found it by zooming.
+
+The defect could not be seen from a formula, because the formula was right and
+was read at the wrong MOMENT: the screen builds its scene in `build`, and a
+zoom only ever repainted the scene already in the tree. Nothing that calls the
+builder itself can fail that way, so this test was structurally incapable of
+seeing the whole class of defect it was written for.
+
+**The tell is a test that names a production constant on the right-hand side of
+its own arithmetic.** A reading taken off the render object, or the widget, or
+the file on disk, can be wrong in ways the test did not think of. A reading the
+test computes can only be wrong in ways the test thought of, and the reason to
+write it down is the ones nobody thought of.
+
+**And the case names drifted where the assertions could not follow.** One was
+called `THE HIT BOX FOLLOWS THE MARK AT EVERY ZOOM` and never zoomed. A name
+claiming a range that the body never visits is the cheapest audit there is:
+grep the suite for `every`, `any` and `at all` and check each one moves.
+
 # Where this does not apply
 
 An artifact-level assertion is not always available, and inventing a bad one is
@@ -103,3 +136,6 @@ mechanisms on principle.
     replaced the count)
 [4] `packages/rackmate_core/test/derived/pull_sheet_clause_test.dart`, and
     `docs/12-milestone-board.md` §5.2's M3-D/4 close
+[5] `packages/rackpal_ui/test/canvas/plan/plan_canvas_screen_test.dart`, the
+    group headed *"the mark is a constant size on screen"*, and commit
+    `60893c0` (`#903`), which carries the 7-and-28 measurement
