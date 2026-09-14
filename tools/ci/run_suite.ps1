@@ -1203,7 +1203,13 @@ $SuiteFloors = @{
     # and is still asserted: the SELECTED room says whether it has an
     # outline on THIS plan, in both directions (G4). Net of one case
     # added for the rail.
-    'rackpal_ui'     = 1874
+    # 1880 at `#895`: +6, the draw mode taking the canvas. Four of the
+    # six fail against the code before it, each with one of the symptoms
+    # reported from the product: the pin moves, no corner lands inside
+    # the marker's box, the pin gets selected, and the shape never
+    # closes. The other two are the band and the deselect, which mirror
+    # the reshape group and guard rather than reproduce.
+    'rackpal_ui'     = 1880
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
