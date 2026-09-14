@@ -11020,7 +11020,7 @@ and `Ctrl+3` is still bound to nothing (CR-071's Rear Panel).
 17 gates green. Analyzer pin unmoved at 233.
 
 **Commits** (§8.8). `#890` `bb39e122`. `#891`, `#892` `45d4d058`. `#893`, `#888` `f00d6c46`.
-`#894` `8058825c`, and the dead-list deletion above.
+`#894` `8058825c` and `12f63883`, the second being §5.9.44.6's deletion. Merged as `0264b5e9`.
 
 
 ---
