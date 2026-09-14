@@ -1811,17 +1811,25 @@ void main() {
   // makes the point size appearance and the user's, so a case pinning `7`
   // would go red the first time they ask for a different mark. What must
   // hold is that the hit box is where the mark is, at every zoom.
+  // ═════════════════════════════════════════════════════════════════════
+  // AND THE FIRST VERSION OF THIS GROUP DID THE ARITHMETIC ITSELF
+  // ═════════════════════════════════════════════════════════════════════
+  // It called `buildPlanScene` with `kPlanMarkerRadiusPt / viewport.scale`
+  // written out in the test, so it proved that expression divides and not
+  // that the product draws anything. It was green while the mark on screen
+  // was four times too big at 400%, reported from the product on
+  // 2026-09-14, because the screen builds its scene in `build` and a zoom
+  // only ever REPAINTED the scene already in the tree. Every reading below
+  // comes off the render object.
   group('the mark is a constant size on screen (`#897`, §11.168.2)', () {
-    /// The scene-space half-width of the marker, read from the hit region
-    /// the product actually builds rather than from a constant.
-    double markerSceneRadius(ViewportController viewport) {
-      final c = _controller(pinnedAt: const PxPt(300, 200));
-      final scene = buildPlanScene(
-        underlay: _underlay(),
-        pins: pinsOnUnderlay(c.doc, _underlayId),
-        markerRadius: kPlanMarkerRadiusPt / viewport.scale,
-      ).scene;
-      return scene.hits.single.bounds.width / 2;
+    /// The marker's half-width ON SCREEN, in points, read from the scene
+    /// the render object is actually holding and mapped through the live
+    /// viewport exactly as the paint does.
+    double markerScreenRadius(WidgetTester tester, ViewportController vp) {
+      final ro = tester.renderObject<RenderPlanCanvas>(
+        find.byType(PlanCanvasBody),
+      );
+      return ro.scene.hits.single.bounds.width / 2 * vp.scale;
     }
 
     testWidgets('THE HIT BOX FOLLOWS THE MARK AT EVERY ZOOM, which is the '
@@ -1847,23 +1855,68 @@ void main() {
       );
     });
 
-    testWidgets('THE SCENE RADIUS SHRINKS AS THE ZOOM GROWS, so the screen '
-        'size does not', (tester) async {
-      final viewport = ViewportController();
-      addTearDown(viewport.dispose);
-      final atOne = markerSceneRadius(viewport);
+    testWidgets('THE MARK IS THE SAME SIZE ON SCREEN AFTER A ZOOM, which is '
+        'the whole of what was asked for', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
+      final atOne = markerScreenRadius(tester, h.viewport);
 
-      viewport.zoomBy(4, screenPivot: const Offset(300, 200));
-      final atFour = markerSceneRadius(viewport);
+      h.viewport.zoomBy(4, screenPivot: const Offset(300, 200));
+      await tester.pump();
 
-      expect(viewport.scale, closeTo(4, 1e-9));
+      expect(h.viewport.scale, closeTo(4, 1e-9));
       expect(
-        atFour,
-        closeTo(atOne / 4, 1e-9),
+        markerScreenRadius(tester, h.viewport),
+        closeTo(atOne, 1e-9),
         reason:
-            'the mark is drawn in scene units, so holding its SCREEN '
-            'size means dividing by the zoom. A constant scene radius is '
-            'the defect this replaced, four times bigger at 400%',
+            'measured at 7 and 28 before this was fixed. A zoom repaints '
+            'the scene the render object holds, so the screen has to '
+            'REBUILD it or the radius stays the one the last build '
+            'divided by a different zoom',
+      );
+    });
+
+    testWidgets('AND A PAN IS STILL A REPAINT, so the rebuild costs nothing '
+        'on the gesture that happens most', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
+      final before = tester
+          .renderObject<RenderPlanCanvas>(find.byType(PlanCanvasBody))
+          .scene;
+
+      h.viewport.panBy(const Offset(37, 11));
+      await tester.pump();
+
+      expect(
+        tester
+            .renderObject<RenderPlanCanvas>(find.byType(PlanCanvasBody))
+            .scene,
+        same(before),
+        reason:
+            'only the ZOOM can change what the scene should contain, and '
+            '`buildPlanScene` returns a fresh object every call, so a pan '
+            'that rebuilt would replace this one',
+      );
+    });
+
+    testWidgets('AND THE CLICKS AGREE WITH IT AT 400%, which is the '
+        'divergence nothing could see', (tester) async {
+      // The gesture path builds its own scene on the spot, so it was
+      // right at every zoom while the drawing was not: the mark looked 28
+      // points across and answered clicks over 7.
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
+      h.viewport.zoomBy(4, screenPivot: const Offset(300, 200));
+      await tester.pump();
+
+      final centre = h.viewport.sceneToScreen(const DPt(300, 200));
+      await tester.tapAt(Offset(centre.x + 4, centre.y));
+      await tester.pump();
+
+      expect(
+        h.selection.ids,
+        isNotEmpty,
+        reason: 'four points off centre is inside a seven-point mark',
       );
     });
 
@@ -1871,11 +1924,11 @@ void main() {
         'what made an architectural sheet unusable', (tester) async {
       // The old rule read the underlay's longer side, so the same mark was
       // 5 units on this fixture and 30 on a 3300-unit scan.
-      final viewport = ViewportController();
-      addTearDown(viewport.dispose);
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
 
       expect(
-        markerSceneRadius(viewport),
+        markerScreenRadius(tester, h.viewport),
         closeTo(kPlanMarkerRadiusPt, 1e-9),
         reason:
             'at 1:1 the scene radius IS the point radius, whatever the '

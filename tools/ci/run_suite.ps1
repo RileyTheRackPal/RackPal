@@ -1243,7 +1243,11 @@ $SuiteFloors = @{
     # canvas when all four mode controllers are null and no room has an
     # outline, which is what this file's own harness pumps, so a bubble
     # put inside it was built by nothing.
-    'rackpal_ui'     = 1895
+    # 1897 at `#903`: net +2, and the churn is the point. Three cases that
+    # re-derived the production formula inside the test became five that
+    # read the render object's own scene. The old ones were green while
+    # the mark on screen was four times too big at 400%.
+    'rackpal_ui'     = 1897
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
