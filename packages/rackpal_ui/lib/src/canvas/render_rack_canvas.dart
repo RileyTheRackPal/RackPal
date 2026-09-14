@@ -289,6 +289,9 @@ class RenderRackCanvas extends RenderBox
         context.canvas,
         measurer: _measurer,
         runs: _runs,
+        // THE ZOOM IS IN `_paintTransformed`'s LAYER, above this picture
+        // (`#906`, DR-170), so the canvas has to be told it.
+        outerScale: _viewport.scale,
       );
       _scene.fragmentFor(_rackId).replay(canvas);
     }

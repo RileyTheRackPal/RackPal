@@ -478,4 +478,148 @@ void main() {
       expect(widthFor('0/128'), greaterThan(widthFor('0/4')));
     });
   });
+
+  // CHROME IS ITS AUTHORED WIDTH AT EVERY ZOOM (`#906`, DR-170 §11.169).
+  // Measured before the fix, painting the rack canvas at the zoom it opens
+  // at (3.02x in this harness) and at 12.1x: the chip's 1-pixel outline at
+  // 3.0 and 12.1 physical pixels, the hover ring at 4.5 and 18.1, and the
+  // selection outline at 6.0 and 24.2, against docs/04's 2.
+  group('chrome keeps its authored width on screen at every zoom (`#906`)', () {
+    /// Every stroke one paint of the rack canvas makes, in order, as
+    /// `(drawn as a rect, physical width)`.
+    List<(bool, double)> rackStrokes(WidgetTester tester) {
+      final canvas = TestRecordingCanvas();
+      // THE PARENT, NOT THE BOX: the zoom is the rack canvas's transform
+      // layer, and a box painted alone would never see it.
+      tester.allRenderObjects.whereType<RenderRackCanvas>().single.paint(
+        TestRecordingPaintingContext(canvas),
+        Offset.zero,
+      );
+      final out = <(bool, double)>[];
+      final saved = <double>[];
+      var scale = 1.0;
+      for (final call in canvas.invocations) {
+        final inv = call.invocation;
+        switch (inv.memberName) {
+          case #save:
+            saved.add(scale);
+          case #restore:
+            scale = saved.removeLast();
+          case #transform:
+            scale *= (inv.positionalArguments[0] as List<double>)[0];
+          case #scale:
+            scale *= inv.positionalArguments[0] as double;
+          case #drawRect || #drawPath:
+            final paint = inv.positionalArguments[1] as Paint;
+            if (paint.style == PaintingStyle.stroke) {
+              out.add((
+                inv.memberName == #drawRect,
+                paint.strokeWidth * scale,
+              ));
+            }
+        }
+      }
+      return out;
+    }
+
+    testWidgets('zoomed out, no rack line paints thinner than its floor, and '
+        'a signal line stops at half a pixel', (tester) async {
+      // §11.169.3 on the rack. Before the fix the floor was decided in scene
+      // units, so at 0.1x the chassis's 0.5-unit rails painted at a
+      // twentieth of a pixel. This case is also the only one that sees the
+      // chassis canvas: the rings and the chip are drawn by the boxes.
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      final rack = tester.allRenderObjects.whereType<RenderRackCanvas>().single;
+      rack.viewport.zoomBy(0.1 / rack.viewport.scale, screenPivot: Offset.zero);
+      await tester.pump();
+      expect(rack.viewport.scale, closeTo(0.1, 1e-9));
+
+      final widths = [for (final (_, width) in rackStrokes(tester)) width];
+      expect(widths, isNotEmpty, reason: 'the rack has to be painted');
+      final thinnest = widths.fold(
+        double.infinity,
+        (a, b) => a < b ? a : b,
+      );
+      expect(thinnest, greaterThanOrEqualTo(0.25 - 1e-4));
+      expect(
+        widths.where((w) => (w - 0.5).abs() < 1e-3),
+        isNotEmpty,
+        reason: 'the half-pixel signal floor has to have engaged somewhere',
+      );
+    });
+
+    testWidgets('the rings and the chip paint at the same width at the '
+        'opening zoom and at four times it', (tester) async {
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      final rack = tester.allRenderObjects.whereType<RenderRackCanvas>().single;
+      expect(
+        _render(tester, _amp).portChip,
+        isNotNull,
+        reason: 'the chip has to be drawn at all',
+      );
+
+      List<(bool, double)> strokes() => rackStrokes(tester);
+
+      /// The rings (the only `drawRect` strokes) and the chip's strokes, as
+      /// PHYSICAL widths.
+      ///
+      /// THE CHIP IS FOUND BY PAINTING WITHOUT IT, NOT BY ITS COLOUR. The
+      /// first version picked strokes in the chip style's colour and swept
+      /// in the device body's own outline, which shares that colour and is
+      /// right to scale. So the rack is painted with the chip and again
+      /// without it, and the run of strokes only the first paint made is the
+      /// chip's.
+      ({List<double> rings, List<double> chip}) painted() {
+        final box = _render(tester, _amp)
+          ..hovered = true
+          ..selected = true;
+        final withChip = strokes();
+        final fill = box.portChip;
+        box.portChip = null;
+        final without = strokes();
+        box.portChip = fill;
+        var prefix = 0;
+        while (prefix < without.length && withChip[prefix] == without[prefix]) {
+          prefix++;
+        }
+        final chipCount = withChip.length - without.length;
+        return (
+          rings: [
+            for (final (isRect, width) in withChip)
+              if (isRect) width,
+          ],
+          chip: [
+            for (final (_, width) in withChip.sublist(
+              prefix,
+              prefix + chipCount,
+            ))
+              width,
+          ],
+        );
+      }
+
+      final atOpen = painted();
+      rack.viewport.zoomBy(4, screenPivot: Offset.zero);
+      await tester.pump();
+      final atFour = painted();
+
+      expect(atOpen.rings, hasLength(2), reason: 'hover and selection');
+      expect(atOpen.chip, isNotEmpty, reason: "the chip's outline");
+      expect(atFour.rings, hasLength(atOpen.rings.length));
+      expect(atFour.chip, hasLength(atOpen.chip.length));
+      for (var i = 0; i < atOpen.rings.length; i++) {
+        expect(atFour.rings[i], closeTo(atOpen.rings[i], 1e-4));
+      }
+      final style = _render(tester, _amp).portChipStyle!;
+      for (final width in [...atOpen.chip, ...atFour.chip]) {
+        expect(
+          width,
+          closeTo(style.strokeWidth, 1e-4),
+          reason: "the chip is its own style's width in physical pixels",
+        );
+      }
+    });
+  });
 }

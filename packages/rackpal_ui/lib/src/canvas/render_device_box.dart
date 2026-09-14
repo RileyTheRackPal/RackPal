@@ -39,6 +39,8 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/port_chip.dart';
+import 'package:rackpal_ui/src/canvas/render_rack_canvas.dart'
+    show RenderRackCanvas;
 import 'package:rackpal_ui/src/canvas/shake_animation.dart';
 import 'package:rackpal_ui/src/draw/flutter_canvas.dart';
 import 'package:rackpal_ui/src/draw/text_run_cache.dart';
@@ -479,8 +481,33 @@ class RenderDeviceBox extends RenderBox {
     // local-coordinate fragment, and the shake.
     final shakeOffset = _shake?.offsetFor(Uuid(_deviceId)) ?? Offset.zero;
     final paintOffset = offset + shakeOffset;
+    // THE ZOOM OF THE RACK CANVAS THIS BOX IS PAINTED UNDER (`#906`, DR-170).
+    // It is that canvas's transform layer, which this box's own canvas and
+    // raw `Paint`s cannot see, so the chip's non-scaling outline and the
+    // rings below painted at their width times the zoom: measured at 3 and
+    // 12 physical pixels for the 1-pixel chip, and at 6 and 24 for the
+    // 2-pixel selection outline, at 3x and 12x.
+    //
+    // READ OFF THE ANCESTOR, NOT HANDED DOWN IN PARENT DATA, which is what
+    // the first version did and a test caught. `RackDevicePlacement` sets
+    // its parent data on the child of the rack canvas, and that child is
+    // whatever `DeviceBox.build` puts above this render object, so the
+    // scale landed on a wrapper and this box read 1. A box painted outside
+    // any rack canvas, a preview say, has no layer above it and gets 1.
+    var k = 1.0;
+    for (var p = parent; p != null; p = p.parent) {
+      if (p is RenderRackCanvas) {
+        k = p.viewport.scale;
+        break;
+      }
+    }
     final canvas =
-        FlutterDiagramCanvas(context.canvas, measurer: _measurer, runs: _runs)
+        FlutterDiagramCanvas(
+            context.canvas,
+            measurer: _measurer,
+            runs: _runs,
+            outerScale: k,
+          )
           ..save()
           ..translate(paintOffset.dx, paintOffset.dy);
     _scene.fragmentFor(_deviceId).replay(canvas);
@@ -493,12 +520,15 @@ class RenderDeviceBox extends RenderBox {
     _paintChip(canvas);
     canvas.restore();
 
+    // SCREEN PIXELS, SO BOTH THE WIDTH AND THE INSET ARE DIVIDED BY [k]
+    // (DR-170 §11.169.2): the inset is half the ring's own width, and a ring
+    // thinned without it would drift inside the body as the zoom rose.
     if (_focused || _hovered) {
       final ring = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = _focused ? 2.0 : 1.5
+        ..strokeWidth = (_focused ? 2.0 : 1.5) / k
         ..color = Color(_focused ? _palette.focus : _palette.hover);
-      context.canvas.drawRect((paintOffset & size).deflate(0.75), ring);
+      context.canvas.drawRect((paintOffset & size).deflate(0.75 / k), ring);
     }
 
     // The third state (docs/04 §3.5: "a 2px outline per member"), drawn AS
@@ -509,9 +539,9 @@ class RenderDeviceBox extends RenderBox {
     if (_selected) {
       final outline = Paint()
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2
+        ..strokeWidth = 2 / k
         ..color = Color(_palette.selection);
-      context.canvas.drawRect((paintOffset & size).deflate(1.5), outline);
+      context.canvas.drawRect((paintOffset & size).deflate(1.5 / k), outline);
     }
   }
 

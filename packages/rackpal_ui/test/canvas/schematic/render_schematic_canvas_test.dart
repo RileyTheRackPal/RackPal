@@ -334,4 +334,124 @@ void main() {
       expect(ro.debugNeedsPaint, isTrue);
     });
   });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // CHROME IS ITS AUTHORED WIDTH AT EVERY ZOOM (`#906`, DR-170 §11.169)
+  // ═════════════════════════════════════════════════════════════════════
+  // The viewport is a transform LAYER above this picture, and the canvas's
+  // stroke rules could not see it. Measured through this same recording
+  // before the fix: the caret and source rings, authored at 2 pixels,
+  // painted at 8 at 4x, and the band, authored at 1.5, at 6.
+  group('chrome is its authored width on screen at every zoom (`#906`)', () {
+    /// Every stroke painted, as a PHYSICAL width: the recorded width times
+    /// the scale of the transforms it was painted under, both read off the
+    /// recording as the paint made them.
+    List<double> paintedStrokeWidths(WidgetTester tester) {
+      final canvas = TestRecordingCanvas();
+      renderObjectIn(tester).paint(
+        TestRecordingPaintingContext(canvas),
+        Offset.zero,
+      );
+      final widths = <double>[];
+      final saved = <double>[];
+      var scale = 1.0;
+      for (final call in canvas.invocations) {
+        final inv = call.invocation;
+        switch (inv.memberName) {
+          case #save:
+            saved.add(scale);
+          case #restore:
+            scale = saved.removeLast();
+          case #transform:
+            scale *= (inv.positionalArguments[0] as List<double>)[0];
+          case #scale:
+            scale *= inv.positionalArguments[0] as double;
+          default:
+            for (final arg in inv.positionalArguments) {
+              if (arg is Paint && arg.style == PaintingStyle.stroke) {
+                widths.add(arg.strokeWidth * scale);
+              }
+            }
+        }
+      }
+      return widths;
+    }
+
+    const style = ConnectOverlayStyle(
+      caretArgb: 0xFF0000FF,
+      sourceArgb: 0xFF00FF00,
+      bandArgb: 0xFF0000FF,
+      candidateArgb: 0x800000FF,
+      selectionArgb: 0xFFFF00FF,
+    );
+
+    PinRef pinOn(String designator) {
+      final device = deviceNamed(doc, designator);
+      final symbol = scene.symbols.firstWhere((s) => s.id == device.id.v);
+      return PinRef(
+        deviceId: symbol.id,
+        portKey: symbol.allPorts.elementAt(0).key,
+      );
+    }
+
+    testWidgets("the connect overlay's rings and band paint at the same "
+        'width at 1x and 4x', (tester) async {
+      // THE OVERLAY IS APPENDED LAST (`SchematicPaintPlan.withOverlay`), so
+      // its strokes are the last ones recorded, one per op.
+      Future<List<double>> overlayStrokesAt(double zoom) async {
+        final vp = ViewportController();
+        if (zoom != 1) vp.zoomBy(zoom, screenPivot: Offset.zero);
+        final overlay = buildConnectOverlay(
+          scene: scene,
+          style: style,
+          scale: vp.scale,
+          caret: pinOn('AMP-1'),
+          source: pinOn('MTX-1'),
+        );
+        expect(
+          overlay.ops.every((op) => op is OpCircle || op is OpPolyline),
+          isTrue,
+          reason: 'every overlay op here is one stroke',
+        );
+        await pump(tester, planFor().withOverlay(overlay.ops), viewport: vp);
+        final widths = paintedStrokeWidths(tester);
+        return widths.sublist(widths.length - overlay.ops.length);
+      }
+
+      final atOne = await overlayStrokesAt(1);
+      final atFour = await overlayStrokesAt(4);
+
+      expect(atOne, hasLength(3), reason: 'a band and two rings');
+      for (var i = 0; i < atOne.length; i++) {
+        expect(
+          atFour[i],
+          closeTo(atOne[i], 1e-4),
+          reason: 'overlay stroke $i at 4x, against ${atOne[i]} at 1x',
+        );
+      }
+    });
+
+    testWidgets('zoomed out, no line paints thinner than its floor, and a '
+        'signal line stops at half a pixel', (tester) async {
+      // §11.169.3. Before the fix the floor was decided in scene units, so
+      // at 0.1x a 0.7-unit line painted at 0.07 of a pixel. Signal geometry
+      // floors at half a pixel; hairline rules keep their quarter.
+      final vp = ViewportController()..zoomBy(0.1, screenPivot: Offset.zero);
+      await pump(tester, planFor(), viewport: vp);
+      expect(vp.scale, closeTo(0.1, 1e-9));
+
+      final widths = paintedStrokeWidths(tester);
+      expect(widths, isNotEmpty, reason: 'the sheet has to be painted');
+      final thinnest = widths.fold(
+        double.infinity,
+        (a, b) => a < b ? a : b,
+      );
+      expect(thinnest, greaterThanOrEqualTo(0.25 - 1e-4));
+      expect(
+        widths.where((w) => (w - 0.5).abs() < 1e-3),
+        isNotEmpty,
+        reason: 'the half-pixel signal floor has to have engaged somewhere',
+      );
+    });
+  });
 }
