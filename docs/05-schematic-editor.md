@@ -475,7 +475,7 @@ Drag-to-connect and click-click ("sticky") share one state machine; the drag thr
 2. **Compatible ports illuminate**: a 3 gu ring in `#F0E442` with a 900 ms breathing pulse (0.6 → 1.0 alpha). "Compatible" means the connector × signal-family matrix admits the pair and no spring-back rule fires.
 3. **Ports that would spring back** get the same ring in amber `#E69F00`, no pulse. They remain droppable, the chip and `[ Connect anyway ]` are what handles them.
 4. **Ports with no legal relationship** hold at 35% with no ring. Not red: red at 40 simultaneous ports is noise, and absence-of-affordance is the clearer signal.
-5. **Rubber band** renders in the source domain's colour, weight and dash, as a live two-bend orthogonal staple, preview what you will get, not a straight line.
+5. **Rubber band** renders as a live two-bend orthogonal staple, preview what you will get, not a straight line: it routes through the same `orthogonalTrace` a committed wire uses (DR-072 §11.72.2). **It is cursor chrome and not cable ink** (DR-114 §11.113.2): the theme's primary colour, 1.5 screen px at every zoom (DR-170 §11.169.2), solid (§11.169.6). This item said *"in the source domain's colour, weight and dash"* until `#907`, which DR-114 had already overruled.
 6. **Magnetic snap.** Within 12 screen px the band locks to a port's glyph centre and the glyph scales to 1.15×. Snap is **type-weighted**: an HDMI band prefers an HDMI port even if an RJ45 port is 3 px nearer. This is the single biggest usability win in the editor.
 7. **Auto-pan** within 40 px of the viewport edge, up to 800 px/s, ramped quadratically by proximity.
 8. **Hovering a collapsed bank** auto-expands it after 400 ms so a specific member can be targeted.

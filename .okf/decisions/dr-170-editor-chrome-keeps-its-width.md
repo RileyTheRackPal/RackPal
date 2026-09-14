@@ -56,6 +56,11 @@ right.
   what CR-082's floor already means on paper.
 - **One scale per canvas, passed where its layer is pushed**, and read at
   paint time by anything painted under it.
+- **The rubber band is solid, and its colour was never open** (§11.169.6,
+  added at `#907`). This ruling's own scope note first called the band's
+  styling an open gap; DR-114 §11.113.2 had already ruled it cursor chrome in a
+  theme role, and a dashed band on this canvas already means a right-to-left
+  marquee (CR-102).
 
 # The channel that looked right and was not
 

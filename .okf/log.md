@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-09-14 (forty-second entry)
+
+* **Closed**: `#907`, a records correction with no product change. DR-170's
+  scope note called the rubber band's colour, weight and dash an open gap;
+  DR-114 §11.113.2 had ruled the band cursor chrome. The user chose to close it
+  as ruled with the band solid, recorded as
+  [DR-170](/decisions/dr-170-editor-chrome-keeps-its-width.md) §11.169.6.
+* **Note**: **A SCOPE NOTE IS A CLAIM ABOUT CANON, AND IT NEEDS A GREP.** "What
+  this does not rule" reads as the ruling saying a thing is still open. Grep
+  canon for the noun itself before writing one.
+* **Note**: **`### §11.x` HEADINGS DEFEAT `^### 11\.`.** The search skipped the
+  section sign and named the wrong ruling, and section numbers run one behind
+  DR numbers: clause 11.113.2 belongs to DR-114.
+
 ## 2026-09-14 (forty-first entry)
 
 * **Closed**: `#906` with `d257104`, ruled as
