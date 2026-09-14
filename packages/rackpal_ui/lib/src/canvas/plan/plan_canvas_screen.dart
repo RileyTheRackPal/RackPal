@@ -344,6 +344,28 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// something the others might disagree about mid-drag.
   bool _reshapeGesture = false;
 
+  /// True for the whole life of one gesture that began while an outline
+  /// DRAW was running.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE DRAW TAKES THE CANVAS TOO, AND §11.49.10 ALREADY SAID SO
+  /// ═══════════════════════════════════════════════════════════════════
+  /// That clause rules the reshape mode above every other gesture and
+  /// gives the reason in general terms: *"a mode that outranked the other
+  /// gestures only sometimes would put the same tie in a smaller place
+  /// where nobody would look for it."* The draw was exactly that smaller
+  /// place. It outranked the others at COMMIT time, in `commitDrag`'s
+  /// dispatch chain, and not at PRESS time, so `beginDrag`'s scene hit
+  /// test ran first and a press that landed on a pin grabbed the pin.
+  ///
+  /// **MEASURED, 2026-09-13.** With a draw live, dragging a pinned rack
+  /// moved it and placed no corner, and every click inside the marker's
+  /// box placed no corner either: on a 3300-unit plan that box is 60
+  /// points across, so a person drawing a room around their head end was
+  /// clicking into a dead zone the size of the mark. Reported from the
+  /// product, reproduced here.
+  bool _outlineGesture = false;
+
   /// Which corner this gesture grabbed, as an index into the reshaping
   /// room's outline, or null when it grabbed none.
   int? _grabbedVertex;
@@ -691,6 +713,16 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       }
       return;
     }
+    // AND SO DOES A DRAW, for §11.49.10's own reason. See
+    // `_outlineGesture`. The press is swallowed here and answered in
+    // `commitDrag`: no pin is grabbed, no band opens, and no selection
+    // changes, so a corner may be put down anywhere on the plan
+    // INCLUDING on top of something already pinned there, which is where
+    // walls and equipment actually are.
+    if (widget.outline?.isActive ?? false) {
+      _outlineGesture = true;
+      return;
+    }
     final built = buildPlanScene(underlay: widget.underlay, pins: _pins);
     final hit = hitTest(built.scene, sceneStart);
     if (hit == null) {
@@ -719,6 +751,10 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     required CanvasGestureToken gesture,
   }) {
     if (gesture != _gesture) return;
+    // A DRAW ANSWERS ON RELEASE AND IGNORES THE TRAVEL IN BETWEEN. A
+    // person clicking a corner moves the mouse a point or two while the
+    // button is down, and every one of those used to widen a marquee.
+    if (_outlineGesture) return;
     if (_reshapeGesture) {
       if (_grabbedVertex == null) return;
       _moved = true;
@@ -761,6 +797,17 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   @override
   void commitDrag(DPt sceneEnd, {required CanvasGestureToken gesture}) {
     if (gesture != _gesture) return;
+    // THE CORNER LANDS WHERE THE BUTTON CAME UP, which is the same answer
+    // for a click and for a press that slid two points, and is why this
+    // branch does not ask `_moved`. The dispatch chain further down used
+    // to hold the draw's only entry point and could only be reached by a
+    // gesture that grabbed nothing AND never moved.
+    if (_outlineGesture) {
+      final outline = widget.outline;
+      if (outline != null && outline.isActive) _outlineClick(outline, sceneEnd);
+      _endGesture();
+      return;
+    }
     if (_reshapeGesture) {
       // THE MODE SWALLOWS A PRESS THAT GRABBED NOTHING, which is the other
       // half of `beginDrag`'s ruling: a click on bare plan during a
@@ -842,21 +889,16 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       // that let an older armed pin win would answer a click the user
       // made for the pick by pinning a drop somewhere else entirely.
       // ═══════════════════════════════════════════════════════════════
-      // AN OUTLINE DRAW OUTRANKS BOTH, ON DR-144's OWN REASONING
+      // THE DRAW IS NOT IN THIS CHAIN ANY MORE, AND THAT IS THE FIX
       // ═══════════════════════════════════════════════════════════════
-      // §11.143.6 orders these by how recently and how deliberately the
-      // state was entered, and a draw is started from a button press
-      // seconds ago exactly as a pick is. The host never offers both at
-      // once, so the order between the draw and the pick is a TIE-BREAK
-      // rather than a ruling; it is written down because a canvas cannot
-      // assume what a host does, and an unordered dispatch is how two
-      // modes come to answer one click.
-      final outline = widget.outline;
+      // It was first here, on DR-144 §11.143.6's ordering, and being
+      // first in a chain this branch could not always reach is what
+      // made it lose to a pin. It is answered at the top of this method
+      // now, from a press §11.49.10 says the mode already owned, and the
+      // ordering just above is untouched.
       final calibrate = widget.calibrate;
       final pin = widget.arm?.armed;
-      if (outline != null && outline.isActive) {
-        _outlineClick(outline, sceneEnd);
-      } else if (calibrate != null && calibrate.isActive) {
+      if (calibrate != null && calibrate.isActive) {
         _calibrateClick(calibrate, sceneEnd);
       } else if (pin != null) {
         _pinArmed(pin, sceneEnd);
@@ -1059,6 +1101,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
 
   void _endGesture() {
     setState(() {
+      _outlineGesture = false;
       _reshapeGesture = false;
       _grabbedVertex = null;
       _liveVertex = null;

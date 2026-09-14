@@ -1596,6 +1596,149 @@ void main() {
   });
 
   // ═════════════════════════════════════════════════════════════════════
+  // A DRAW TAKES THE WHOLE CANVAS TOO, AND §11.49.10 ALREADY SAID SO
+  // ═════════════════════════════════════════════════════════════════════
+  // Reported from the product on 2026-09-13: *"if the user clicks on a
+  // pinned item, the pin is dragged instead of a vertex being placed"*,
+  // and then *"left click will no longer place a vertex"*.
+  //
+  // Both are one defect. The draw outranked the other gestures in
+  // `commitDrag`'s dispatch chain and NOT in `beginDrag`, so the scene hit
+  // test ran first and a press that landed on a pin grabbed the pin. Every
+  // click inside the marker's box was swallowed the same way, and that box
+  // is the marker's full width: on a 3300-unit plan, sixty points of dead
+  // zone around the head end, which is exactly where somebody drawing the
+  // rack room aims.
+  //
+  // §11.49.10 gave the general rule when it ruled the reshape above the
+  // other gestures: *"a mode that outranked the other gestures only
+  // sometimes would put the same tie in a smaller place where nobody would
+  // look for it."* The draw was that smaller place.
+  //
+  // THESE MIRROR THE RESHAPE'S GROUP BELOW, case for case, because the
+  // rule is the same rule and a reader comparing them should find the same
+  // shape rather than two ways of saying it.
+  group('a draw swallows the canvas (`#895`, §11.49.10)', () {
+    PlanOutlineController drawing() {
+      final mode = PlanOutlineController();
+      addTearDown(mode.dispose);
+      return mode..begin(_roomId);
+    }
+
+    testWidgets('A PIN UNDER A CORNER DOES NOT MOVE, and the corner lands', (
+      tester,
+    ) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addRoom(c);
+      final mode = drawing();
+      await pump(tester, c, outline: mode);
+
+      // A PRESS THAT SLID, which is what a mouse does under a finger. It
+      // used to be a pin drag; the vertex is what it means now.
+      await _drag(tester, const Offset(300, 200), const Offset(306, 204));
+
+      expect(
+        _placementOf(c)!.planPin!.at,
+        const PxPt(300, 200),
+        reason:
+            'the pin moved instead of a corner going down, which is '
+            'the defect reported from the product',
+      );
+      expect(mode.vertices, const [PxPt(306, 204)]);
+    });
+
+    testWidgets('a click INSIDE the marker places a corner, which is the '
+        'dead zone the report was about', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addRoom(c);
+      final mode = drawing();
+      await pump(tester, c, outline: mode);
+
+      // Three corners around the pin, each within the marker's box on a
+      // plan this size, and one of them dead centre on it.
+      await tester.tapAt(const Offset(300, 200));
+      await tester.tapAt(const Offset(303, 197));
+      await tester.tapAt(const Offset(297, 203));
+      await tester.pump();
+
+      expect(mode.vertices.length, 3);
+      expect(mode.canClose, isTrue);
+    });
+
+    testWidgets('a click on a pin does not select it', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addRoom(c);
+      final h = await pump(tester, c, outline: drawing());
+
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+
+      expect(h.selection.ids, isEmpty);
+    });
+
+    testWidgets('and no band opens on bare plan', (tester) async {
+      final c = _controller();
+      _addRoom(c);
+      final marquee = MarqueeController();
+      addTearDown(marquee.dispose);
+      await pump(tester, c, marquee: marquee, outline: drawing());
+
+      final pointer = TestPointer(93, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(pointer.down(const Offset(50, 350)));
+      await tester.sendEventToBinding(pointer.move(const Offset(200, 380)));
+      await tester.sendEventToBinding(pointer.up());
+      await tester.pump();
+
+      expect(marquee.isActive, isFalse);
+    });
+
+    testWidgets('nor does a click on bare plan clear the selection', (
+      tester,
+    ) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addRoom(c);
+      final mode = PlanOutlineController();
+      addTearDown(mode.dispose);
+      final h = await pump(tester, c, outline: mode);
+
+      await tester.tapAt(const Offset(300, 200));
+      await tester.pump();
+      expect(h.selection.ids, isNotEmpty);
+
+      mode.begin(_roomId);
+      await tester.pump();
+      await tester.tapAt(const Offset(50, 350));
+      await tester.pump();
+
+      expect(h.selection.ids, isNotEmpty);
+    });
+
+    testWidgets('THE WHOLE SHAPE CLOSES OVER A PIN, which is the report end '
+        'to end', (tester) async {
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      _addRoom(c);
+      final mode = drawing();
+      await pump(tester, c, outline: mode);
+
+      // A room drawn AROUND the head end, with one corner on the mark and
+      // a press that slid at every corner.
+      await _drag(tester, const Offset(200, 120), const Offset(203, 122));
+      await _drag(tester, const Offset(420, 120), const Offset(422, 118));
+      await _drag(tester, const Offset(420, 300), const Offset(421, 301));
+      await tester.tapAt(const Offset(203, 122));
+      await tester.pump();
+
+      expect(mode.isActive, isFalse, reason: 'the close never fired');
+      expect(_outlineOf(c)!.vertices.length, 3);
+      expect(
+        _placementOf(c)!.planPin!.at,
+        const PxPt(300, 200),
+        reason: 'the pin was dragged around while the room was drawn',
+      );
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
   // LEN-A/8: THE MODE TAKES THE WHOLE CANVAS, WHICH IS WHAT IT BUYS
   // ═════════════════════════════════════════════════════════════════════
   // Ruled by the user on 2026-09-11 against making every finished corner
