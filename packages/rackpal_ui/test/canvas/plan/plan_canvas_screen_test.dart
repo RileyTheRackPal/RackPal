@@ -758,10 +758,11 @@ void main() {
       // centred under the pointer at (333, 222).
       //
       // THE GRAB IS ONLY 3px OFF CENTRE BECAUSE THE MARKER IS SMALL. Its
-      // radius is a fraction of the underlay's long side (600 / 110, so
-      // about 5.5 scene units here), and an earlier draft of this case
-      // grabbed 12 units out, missed the hit box entirely and asserted
-      // that nothing moved -- which it dutifully did not.
+      // radius is `kPlanMarkerRadiusPt` at this harness's 1:1, and was a
+      // fraction of the underlay's long side (600 / 110, about 5.5 units)
+      // when an earlier draft of this case grabbed 12 units out, missed
+      // the hit box entirely and asserted that nothing moved -- which it
+      // dutifully did not.
       final c = _controller(pinnedAt: const PxPt(300, 200));
       await pump(tester, c);
 

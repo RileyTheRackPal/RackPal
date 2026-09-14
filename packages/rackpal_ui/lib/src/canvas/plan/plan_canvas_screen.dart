@@ -69,8 +69,8 @@ import 'package:rackpal_ui/src/keymap/keymap.dart';
 /// ═══════════════════════════════════════════════════════════════════════
 /// POINTS, BECAUSE A MARK IS AIMED AT WITH A POINTER AND NOT WITH A PLAN
 /// ═══════════════════════════════════════════════════════════════════════
-/// `kPlanMarkerRadiusFraction` sizes a marker as 1/110 of the underlay's
-/// longer side, in SCENE units, which are image pixels. That is a 30-unit
+/// `kPlanMarkerRadiusFraction` sized a marker as 1/110 of the underlay's
+/// longer side, in SCENE units, which are image pixels. That was a 30-unit
 /// radius on a 3300-unit architectural sheet, so a **60-point mark at
 /// 1:1** with a hit box to match, and four times that again at 400%. It
 /// was reported from the product as *"the pin size on the room view is
@@ -85,6 +85,10 @@ import 'package:rackpal_ui/src/keymap/keymap.dart';
 /// clause), exactly as `kPlanMarkerRadiusFraction`'s note said of the
 /// fraction before it. Seven points is a starting value chosen to sit
 /// between the close radius and a mark that covers a doorway.
+///
+/// **THE PRINTED MARK IS A DIFFERENT NUMBER FOR A DIFFERENT READER.**
+/// `kPlanMarkPrintRadiusPt`, in core, is the callout pill's round end
+/// (`#904`, §11.168.10), and neither constant is derived from the other.
 const double kPlanMarkerRadiusPt = 7;
 
 /// The height the floating chrome occupies at the top of this canvas.

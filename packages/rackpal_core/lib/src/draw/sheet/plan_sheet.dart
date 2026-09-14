@@ -99,6 +99,34 @@ const double kPlanBandGapPt = 6;
 /// Where the scale bar's baseline sits below the plan's area.
 const double kPlanScaleBarBaselinePt = 13;
 
+/// The radius a plan mark prints at on `T1.01`, in points (`#904`,
+/// DR-169 §11.168.10).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE CALLOUT PILL'S OWN ROUND END, DERIVED FROM IT RATHER THAN EQUAL TO IT
+/// ═══════════════════════════════════════════════════════════════════════
+/// The user's ruling, 2026-09-14: a printed mark matches the callout pills
+/// beside it. A pill is a stadium whose ends have a radius of half its
+/// height, so a mark that size reads as the same family of round thing as
+/// the designator it is labelled with, and a sheet does not carry two
+/// nearly-equal sizes of circle for the eye to reconcile.
+///
+/// **DERIVED, BECAUSE THE PILL IS NOT SETTLED.** [kCalloutTextPt] is a
+/// starting value awaiting `PLAN-J`'s print (DR-150 §11.149.7). The rule
+/// the user gave is "the same size as the pill" and not a number, so a
+/// pill the print re-tunes carries the mark with it.
+///
+/// **NOT THE SCREEN'S POINT SIZE.** `kPlanMarkerRadiusPt` lives in
+/// `rackpal_ui` and is aimed at with a pointer. A printed mark is read at
+/// arm's length and aimed at with nothing, and a screen figure borrowed for
+/// paper would be a guess wearing a measurement's clothes.
+///
+/// WHAT IT REPLACED, MEASURED ON ANSI B LANDSCAPE: 1/110 of the underlay's
+/// longer side printed at 6.87 points on a 2000x1500 plan, 5.15 on a
+/// 1500x2000 one and 10.20 on a 4000x1000 panorama, because the fit binds
+/// on the tighter axis and the fraction read the longer one.
+const double kPlanMarkPrintRadiusPt = kCalloutHeightPt / 2;
+
 /// One built `T1.01`.
 @immutable
 final class PlanSheet {
@@ -201,10 +229,35 @@ PlanSheet buildPlanSheet({
     palette: palette,
   );
 
+  // FITTED ON THE UNDERLAY'S OWN BOX, AND FITTED BEFORE THE SCENE IS
+  // BUILT, because the scene's marks are sized from this fit (`#904`).
+  //
+  // A pin dragged off the edge of the picture must not shrink the plan to
+  // make room for it: one stray drop would rescale the drawing every other
+  // sheet in the set is read against. `planUnderlayBounds` is a function
+  // of the underlay alone and is the same answer `buildPlanScene` returns
+  // as `underlayBounds`, so no mark can reach the fit. This comment used
+  // to explain why reading `plan.underlayBounds` rather than
+  // `plan.scene.bounds` was a statement and not a defence; there is no
+  // scene yet at this line, so neither is available to misread.
+  final bounds = planUnderlayBounds(underlay);
+  final factor = fitSceneFactor(
+    bounds,
+    availableWidth: planArea.width,
+    availableHeight: planArea.height,
+  );
+  final s = factor.unitsToPoints;
+
   final plan = buildPlanScene(
     underlay: underlay,
     pins: pins,
     palette: planPalette,
+    // THE SHEET'S HALF OF DR-169 §11.168.2. A mark is a constant size on
+    // paper as it is on screen: points divided by this sheet's own fit,
+    // exactly as the canvas divides by its zoom. Until `#904` it took 1/110
+    // of the underlay's longer side, so two plans of different proportions
+    // printed different marks for the same kind of thing.
+    markerRadius: kPlanMarkPrintRadiusPt / s,
     // THE SHEET COLOURS ITS MARKS TOO (`#901`, DR-169 §11.168.6), and it
     // is the reason the glyph exists: the Installer preset exports
     // greyscale, canon §14 records that the eight hues collide there by
@@ -212,29 +265,6 @@ PlanSheet buildPlanSheet({
     // for PAL-3 to separate them with.
     domains: domains,
   );
-
-  // FITTED ON THE UNDERLAY'S OWN BOX. A pin dragged off the edge of the
-  // picture must not shrink the plan to make room for it: one stray drop
-  // would rescale the drawing every other sheet in the set is read
-  // against.
-  //
-  // AND THAT GUARANTEE IS NOT THIS LINE'S, WHICH A MUTATION HAD TO SAY
-  // OUT LOUD. `buildPlanScene` sets `scene.bounds` and `underlayBounds`
-  // to the SAME box, the underlay's pixel extent, and its header states
-  // it: *"it follows that the scene's bounds are the underlay's pixel
-  // extent."* So swapping this for `plan.scene.bounds` changes nothing
-  // today, and the stray-pin case in `plan_sheet_test.dart` passes either
-  // way. Reading `underlayBounds` is a statement of what this sheet
-  // depends on, not a defence it performs: the day a scene builder starts
-  // unioning markers into its bounds, this line is already right and that
-  // case is what fails.
-  final bounds = plan.underlayBounds;
-  final factor = fitSceneFactor(
-    bounds,
-    availableWidth: planArea.width,
-    availableHeight: planArea.height,
-  );
-  final s = factor.unitsToPoints;
 
   // CENTRED IN BOTH AXES. An elevation anchors on the rack's bottom edge
   // because a rack stands on a floor and an absolute check catches a

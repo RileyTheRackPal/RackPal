@@ -520,8 +520,9 @@ class _OutlinePainter extends CustomPainter {
     // live draw. Filled rather than stroked, which is how they read as
     // something to take hold of next to the draw mode's hollow corners.
     //
-    // **A STARTING VALUE AND NOT A RULING**, on `kPlanMarkerRadiusFraction`'s
-    // own note: the appearance of a mark is UI/UX and is the user's.
+    // **A STARTING VALUE AND NOT A RULING**, on the retired marker
+    // fraction's own note: the appearance of a mark is UI/UX and is the
+    // user's.
     for (final h in handles) {
       canvas.drawCircle(
         _at(h),

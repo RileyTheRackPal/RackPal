@@ -828,7 +828,11 @@ $SuiteFloors = @{
     # three still draw three different things. Its first version compared
     # a command COUNT and passed over a square and a diamond, which is
     # why it now compares the path geometry.
-    'rackpal_core'   = 4707
+    # 4708 at `#904`: +2 in `plan_sheet_test.dart`, which read a printed
+    # mark off the sheet's own ops against a pill on the same sheet, and -1
+    # in `plan_scene_test.dart`, whose "proportionate marks" case asserted
+    # the rule DR-169 11.168.2 retired and went with the default it pinned.
+    'rackpal_core'   = 4708
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a

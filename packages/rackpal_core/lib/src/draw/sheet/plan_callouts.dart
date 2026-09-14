@@ -111,14 +111,28 @@ final class PlanCalloutLayer {
 
 /// The pill's type size, in points.
 ///
-/// **A STARTING VALUE, NOT A RULING** (DR-150 §11.149.7), on
-/// `kPlanMarkerRadiusFraction`'s precedent. What settles it is `PLAN-J`'s
-/// print: a designator is read at arm's length off an ANSI B sheet, and no
-/// number chosen on a monitor is evidence about that.
+/// **A STARTING VALUE, NOT A RULING** (DR-150 §11.149.7), on the retired
+/// marker fraction's precedent. What settles it is `PLAN-J`'s print: a
+/// designator is read at arm's length off an ANSI B sheet, and no number
+/// chosen on a monitor is evidence about that.
+///
+/// **AND MOVING IT MOVES THE PRINTED MARK** (`#904`, DR-169 §11.168.10).
+/// A mark on `T1.01` is ruled to be the size of this pill's round end, so
+/// `kPlanMarkPrintRadiusPt` is derived from [kCalloutHeightPt] rather than
+/// written out beside it, and a print drill that re-tunes the pill carries
+/// the mark with it.
 const double kCalloutTextPt = 6.5;
 
 /// Inset of the pill's text from its own outline, in points.
 const double kCalloutPadPt = 2;
+
+/// The pill's height, in points, which is twice the radius of its ends.
+///
+/// From the type size and not from font metrics, for the reason given where
+/// the pill is laid out. Named rather than left a local because the printed
+/// plan mark reads it (§11.168.10), and two spellings of one sum are two
+/// answers the day either term moves.
+const double kCalloutHeightPt = kCalloutTextPt + kCalloutPadPt * 2;
 
 /// The pill outline's width, in points.
 const double kCalloutOutlinePt = 0.5;
@@ -177,7 +191,7 @@ PlanCalloutLayer buildPlanCallouts({
     // reason transfers exactly: the two backends agree on `sizePt` and on
     // ascent/descent only up to their font tables, and a pill a different
     // height on screen than on paper is a parity defect.
-    const height = kCalloutTextPt + kCalloutPadPt * 2;
+    const height = kCalloutHeightPt;
 
     final spot = _place(
       pin: subject.at,
