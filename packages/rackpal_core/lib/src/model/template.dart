@@ -292,6 +292,7 @@ final class TemplateBody {
     required this.displayName,
     this.description = '',
     this.category = '',
+    this.primaryDomain,
     this.typePrefix,
     List<String>? tags,
     this.frontU = 0,
@@ -346,6 +347,32 @@ final class TemplateBody {
   String displayName;
   String description;
   String category;
+
+  /// What this device mostly IS, as one of the eight signal domains
+  /// (`#899`, DR-169 §11.168.5). Null is unknown and is never guessed.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// AUTHORED, BECAUSE A CENSUS SAID IT CANNOT BE DERIVED
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The obvious derivation is the set of domains its [ports] belong to,
+  /// and it does not work. Measured over the 51 seeded templates on
+  /// 2026-09-13: **13 have ports in exactly one domain**. Excluding
+  /// `pwr`, `ctl` and `str`, which sit on nearly everything, it rises to
+  /// 26 and **nine then have no domain at all**, a control keypad among
+  /// them, because the excluded ones were all it had. A television reads
+  /// as `(video.digital, audio.analog, net)`.
+  ///
+  /// A set of port domains answers *what can be plugged into this*. This
+  /// field answers *what is it*, and only a person knows.
+  ///
+  /// **NULL IS UNKNOWN, NOT "GENERAL"** (G4/CR-114). An unknown domain
+  /// draws the neutral mark on a plan rather than being assigned the
+  /// first domain in some order, and the codec writes no key at all.
+  ///
+  /// The `category` string was considered for this job and refused: its
+  /// nine values include `Sources`, which covers both audio and video
+  /// sources, so the mapping would lie for some of them.
+  SignalDomainId? primaryDomain;
 
   /// "MTX" — seeds the designator format.
   String? typePrefix;

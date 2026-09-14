@@ -197,6 +197,12 @@ const Map<String, _Rule> _bodyRules = {
   'description': _safe,
   'category': _safe,
   'tags': _safe,
+  // WHAT THE DEVICE MOSTLY IS (`#899`, DR-169 §11.168.5). SAFE, because
+  // it changes a MARK's colour on a floorplan and nothing that is placed,
+  // wired, scheduled or measured: no instance moves, no port changes, no
+  // length is re-derived. It is `accentColor` and `glyph`'s class of
+  // change rather than `category`'s, which also seeds a prefix.
+  'primaryDomain': _safe,
   // Seeds the designator FORMAT for newly placed instances. Designators
   // already assigned are stored on the `Port`, so nothing already drawn
   // is renamed by this.

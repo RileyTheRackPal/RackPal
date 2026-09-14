@@ -3925,6 +3925,9 @@ JsonMap _encodeTemplateBody(TemplateBody b) {
     'portSets': [for (final s in b.portSets) _encodePortSetDef(s)],
     'panelGraphics': [for (final g in b.panelGraphics) _encodePanelGraphic(g)],
   };
+  // ABSENT WHEN UNKNOWN, which is G4's spelling and what keeps every
+  // document written before `#899` byte-identical (CR-117).
+  putIfNotNull(json, 'primaryDomain', b.primaryDomain?.v);
   putIfNotNull(json, 'typePrefix', b.typePrefix);
   putIfNotNull(json, 'customPanelWidthNm', b.customPanelWidth?.nm);
   putIfNotNull(json, 'bodyDepthNm', b.bodyDepth?.nm);
@@ -3963,6 +3966,13 @@ TemplateBody _decodeTemplateBody(JsonMap json) => TemplateBody(
   displayName: asStr(json['displayName'], 'TemplateBody.displayName'),
   description: asStr(json['description'] ?? '', 'TemplateBody.description'),
   category: asStr(json['category'] ?? '', 'TemplateBody.category'),
+  primaryDomain: switch (asStrOrNull(
+    json['primaryDomain'],
+    'TemplateBody.primaryDomain',
+  )) {
+    final String v => SignalDomainId(v),
+    null => null,
+  },
   typePrefix: asStrOrNull(json['typePrefix'], 'TemplateBody.typePrefix'),
   tags: [
     for (final v in asJsonList(

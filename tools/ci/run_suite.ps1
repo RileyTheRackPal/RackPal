@@ -809,7 +809,13 @@ $SuiteFloors = @{
     # over the span planner. TWO OF THE FIFTEEN ARE THE AC-051 PAIR for a
     # widened `PLC-003`, which treated a 0U occupant as a POINT because
     # the model had no extent to check.
-    'rackpal_core'   = 4682
+    # 4691 at `#899`: +9, `primary_domain_wire_test.dart`. The property
+    # worth the file is that an UNSET domain writes no key, so no document
+    # on disk gains one and no template's content hash moves:
+    # `templateContentHash` hashes `templateBodyToJson`, and a key written
+    # unconditionally would have re-hashed all 51 seeded templates for a
+    # value nobody had authored.
+    'rackpal_core'   = 4691
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1215,7 +1221,11 @@ $SuiteFloors = @{
     # harness now states that its own is positioned at the identity, so
     # the rest of the file can keep writing coordinates in the underlay's
     # own pixels.
-    'rackpal_ui'     = 1887
+    # 1891 at `#899`: +4, the signal-domain picker. A nullable model
+    # field whose only writer is a codec is the no-producer shape this
+    # repository has now recorded eight times, so the field and the
+    # control that sets it land together.
+    'rackpal_ui'     = 1891
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
