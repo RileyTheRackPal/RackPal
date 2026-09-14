@@ -28,12 +28,12 @@ Do all of this first. It is the state a real job is in when somebody sits down t
 and timing it would be timing the wrong thing.
 
 1. Launch RackPal. `File ▸ New` for a blank project.
-2. `Project ▸ Locations…`. Create **one telecom room** and set three fields on it:
+2. The **`Site`** tab, the first one. Create **one telecom room** and set three fields on it:
    - Name `Media Closet`, Code `MC`
    - **Floor** `1`, **Space** `A`
    These two feed `{FLOOR}` and `{SPACE}`. Without them every rack label comes out blank and the
    drill is refuted on clause 2 (this is exactly what the census found).
-3. Still in Locations, create the **ten rooms** in §2's table, each with its Code. Codes are what
+3. Still on `Site`, create the **ten rooms** in §2's table, each with its Code. Codes are what
    make the by-code line 16% cheaper; the drill uses full names, so the codes are for the label
    only.
 4. On the Rack tab, place a **48-port patch panel**, or two 24-port panels. Give it the designator

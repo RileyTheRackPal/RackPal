@@ -52,7 +52,7 @@
 // THE TREE IS READ-ONLY HERE, AND THAT IS CR-112
 // ═════════════════════════════════════════════════════════════════════
 // docs/07 §4: the left pane is "a view of the project vocabulary, not an
-// editor for it". Rooms are named once, in `Project ▸ Locations…`, and
+// editor for it". Rooms are named once, on the Site tab, and
 // the affordance below the tree says so rather than the pane silently
 // refusing a double-click.
 import 'dart:async';
@@ -1409,8 +1409,7 @@ class _LocationPane extends StatelessWidget {
 }
 
 /// What the left pane says about why it cannot be typed into.
-const String kLocationsAreReadOnlyHere =
-    'Rooms are named in Project ▸ Locations…';
+const String kLocationsAreReadOnlyHere = 'Rooms are named on the Site tab';
 
 class _TreeRow extends StatelessWidget {
   const _TreeRow({

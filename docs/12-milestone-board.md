@@ -1786,7 +1786,8 @@ afternoon.
 *What the tab strip did to #148's absent-controls test.* `Matrix` left the list and `Outlets`
 joined it, which is the bookkeeping that test is for: the day one is built it says the others still
 are not. `+ Room` is absent and is **not** owed, because the loop above the grid already creates a
-room on `Enter` and CR-112 puts the second path in `Project ▸ Locations…`; a third would be a third
+room on `Enter` and CR-112 puts the second path in the top-level location surface, the `Site` view
+since DR-168 (it read `Project ▸ Locations…` here until then); a third would be a third
 place one rule lives. `+ Media column` has no "create new type" row, which is M4-P2's editor.
 
 *And §4.2's tinted `EMT` column is absent, which corrects a pointer rather than deferring a
@@ -10896,6 +10897,131 @@ the bar, which is `#883`'s gesture doing real work in three more places rather t
 once and left alone.
 
 **Commits** (§8.8). `#887` `e077860c`.
+
+#### 5.9.44 `#889` and `#888`: the Location and Plan views become one, and a phrase repeated eighteen times reads as vocabulary · `DR-168` · no version move
+
+2026-09-13. Asked for by the user the same day, in the same message as `#886`: the two views *"do
+very similar functions and it would make more sense to have both together"*. Five chapters,
+`#890`-`#894`, plus `#888`, which was found while reading for the first of them. It closes under
+`#786` and moves no number, on CLAUDE.md's rule that the version tracks the CURRENT milestone
+rather than the epic an issue is filed under.
+
+##### 5.9.44.1 The merge was already in the design, and what the design withheld was the editing
+
+docs/15 §6's layout paragraph has said since the chapter brief that the Plan view's left region is
+*"the underlay list and the location tree"*. The tree was there from the start. Two things it also
+said are why this reads as a merge rather than a rename: the tree was **read-only**, and the route
+it named for editing was `Project ▸ Locations…`, a menu the application does not have.
+
+So the question the user asked was not *"should these be one view"* so much as *"why are they
+two"*, and the honest answer is that nobody re-read the layout paragraph after DR-091 §11.90
+promoted Locations to a tab. **§11.90.4 is what makes the merge legal without re-opening DR-091**:
+it declined to freeze the view set before M6, in as many words, and this is the first change to
+spend that deferral. The table goes from seven rows to six and is corrected in place, because the
+rule it exists for is that the strip is ordered by JOB, and that is untouched.
+
+##### 5.9.44.2 Three strings sent people to a menu that does not exist, and fifteen comments hid them
+
+`Project ▸ Locations…` appeared **eighteen times** across the two UI packages and the app. Fifteen
+were comments. **Three were on screen**, and each fired exactly when somebody had no rooms and
+needed one: *"This project has no rooms yet. Add one in Project ▸ Locations…"*, *"Rooms are named
+in Project ▸ Locations…"*, *"also named in Project ▸ Locations…"*.
+
+docs/04 §3.4's rule is about a control that silently does nothing; **an instruction that cannot be
+followed is a step past that**, because the user does the work of hunting for the route before
+concluding the software is wrong. The mechanism that hid it is worth naming: **a phrase repeated
+eighteen times reads as vocabulary.** Any one of the fifteen comments, read alone, looks like
+somebody establishing where locations live, and a reader checking a fourth instance finds three
+that agree with it.
+
+The case that now gates this reads the REAL menu bar rather than a list kept beside it, so it
+notices a menu being REMOVED, which is precisely what happened. `▸` is how this corpus writes a
+menu path and appears in no other context, so its presence in a string is the whole signal.
+**Comments are deliberately exempt**: fifteen of the eighteen were history, and a history that may
+not name the route it is about is a history that cannot be written.
+
+##### 5.9.44.3 The third region, and why `PLAN-E/5` was right not to invent it
+
+docs/15 §6 gives this view three regions with the standard inspector on the right. `PLAN-E/5` built
+two and said why in its own header: *"there is no standard inspector to put there … the column is
+absent rather than invented"*, because `InspectorPanel` requires a `Rack` and a pin's carrier may
+be an outlet or an off-rack device. That was correct, and it is the same shape §5.9.11 records
+one view over: **a thing ruled, built and left with nothing that reaches it**, there an importer
+with no caller, here a region with nothing it could honestly show. The deferral was honest both
+times, and both times the answer arrived from a change made for another reason.
+
+The merge is what supplies the missing thing, and it is not a workaround: the selected **room** is
+a subject both halves of this view are about, it has properties worth a column, and one of those
+properties is its outline on the open plan. The outline acts moved there from three buttons on
+every row of a read-only room list, on the reasoning that **a room's shape on a plan is one of its
+properties**, and the list itself is gone.
+
+##### 5.9.44.4 A decomposition seam the code did not have
+
+`#891` and `#892` landed in one commit. The two panes share one selection, so extracting the tree
+without the detail ships a control that selects something nothing shows, and moving the outline
+acts without the inspector to put them in ships them unreachable. **Either order ships a dead
+control for one commit to satisfy a boundary drawn before reading the file.** Atomic means one
+logical change, and this was one.
+
+Neither pane owns the selection, for a structural reason rather than taste: in this view the tree
+is in one region and what it selects is drawn in another, so a selection private to the list would
+have to be mirrored across the gap.
+
+##### 5.9.44.5 The 800px default surface, which clamps a `SizedBox` and mislays every click
+
+Two harnesses pumped a `SizedBox(width: 900)` inside the default 800px test surface. That CLAMPS:
+the canvas came back **238 units wide** and every click aimed at the plan missed the thing it was
+aimed at. Three guesses about scene mapping went first, and a probe printing the actual rects
+found it in one run. They set a 1600x1000 surface now, which is also the honest window: docs/04
+§1 treats anything under 1080 as the tablet-collapse case nobody has built, so 900 was never a
+window this product supports.
+
+##### 5.9.44.6 Two private classes that reference each other are not dead to the analyzer
+
+`45d4d058`'s message says *"The `_RoomList` is gone."* **It was not.** The class was still in
+`plan_editor_screen.dart`, 183 lines of it with `_RoomRow` and `kPlanNoRoomsDetail`, and nothing
+built it: the rail stopped constructing it when `#891` moved the outline acts, and the declaration
+stayed.
+
+**`unused_element` could not see it, and the reason generalises.** `_RoomList` builds `_RoomRow`,
+and `_RoomRow` keys its buttons off `_RoomList.drawKeyFor`. Each is referenced, so neither is
+unused, and **a reference cycle between two private declarations is invisible to a rule that asks
+only whether a name is mentioned.** The analyzer was at its pin through both commits and had
+nothing to say. So was `dart format`, which formatted it faithfully.
+
+The check that would have caught it is the one this repository already owns for `Command` classes:
+**ask what CONSTRUCTS a thing, not what mentions it.** `_RoomList(` returns one hit, its own
+constructor. That is the same one-grep census `#884` used on a parameter with no caller, pointed at
+a widget instead.
+
+**The deletion changed no test**, which is the proof rather than the convenience: three cases drive
+`room-draw-<id>`, `room-reshape-<id>` and `room-clear-<id>`, and they were following
+`_OutlineActions`' copies of those keys all along.
+
+##### 5.9.44.7 Evidence
+
+Floors, re-measured in the commit that moved them rather than assumed: `rackpal_ui` 1875 to 1874
+(two cases went with the deleted room list, replaced by per-room assertions in both directions),
+`rackpal_app` 1037 to 1036 and back up for the new case. **The app floor's fall is DATA rather
+than slack**: `global_undo_test.dart` generates one case per `ShellView` value so DR-159
+§11.158.3's *"the key works on EVERY tab"* cannot go stale when a view is added, and six tabs make
+six cases. Nothing was removed by hand.
+
+`LocationsPanel` and `showLocationsPanel` are both DELETED. The modal had no caller in `lib/` and
+none in any test: it was the route CR-112's ellipsis promised, superseded when DR-091 promoted
+Locations to a tab, and left standing. Its thirty cases did not go with it; the harness composes
+the two extracted panes the way the `Site` view composes them.
+
+No key changed. `kViewKeyToTabIndex` moved the one entry that had to, `4: 6` to `4: 5`, because
+the strip lost a tab BEFORE the Schedule. Rack is still `Ctrl+1`, the Schematic still `Ctrl+2`,
+and `Ctrl+3` is still bound to nothing (CR-071's Rear Panel).
+
+17 gates green. Analyzer pin unmoved at 233.
+
+**Commits** (§8.8). `#890` `bb39e122`. `#891`, `#892` `45d4d058`. `#893`, `#888` `f00d6c46`.
+`#894` `8058825c`, and the dead-list deletion above.
+
 
 ---
 

@@ -298,10 +298,14 @@ void main() {
         reason: 'the Project menu held only views and went with them',
       );
 
-      await tester.tap(find.text(ShellView.locations.label));
+      await tester.tap(find.text(ShellView.site.label));
       await tester.pumpAndSettle();
 
-      expect(find.byType(LocationsPanel), findsOneWidget);
+      // THE TREE, NOT A PANEL (`#893`, DR-168). `LocationsPanel` was a
+      // whole view with a tab of its own; the tree is one region of the
+      // `Site` view now, and what this case is about is that the strip
+      // reaches it.
+      expect(find.byType(LocationTreeList), findsOneWidget);
     });
 
     testWidgets('a location created there lands in the real document', (
@@ -311,9 +315,9 @@ void main() {
       await tester.pumpWidget(built.app);
       await tester.pumpAndSettle();
 
-      await tester.tap(find.text(ShellView.locations.label));
+      await tester.tap(find.text(ShellView.site.label));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('New location'));
+      await tester.tap(find.text(kAddRoom));
       await tester.pumpAndSettle();
 
       expect(

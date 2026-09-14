@@ -69,7 +69,7 @@ void main() {
     // The app opens on the Rack tab.
     expect(palette(), findsOneWidget, reason: 'the Rack tab places on rails');
 
-    await openTab(tester, 'Plan');
+    await openTab(tester, 'Site');
     expect(
       palette(),
       findsOneWidget,
@@ -80,7 +80,6 @@ void main() {
     );
 
     for (final absent in const [
-      'Locations',
       'Device Manager',
       'Structured Wiring',
       'Schematic',
@@ -109,7 +108,7 @@ void main() {
     await tester.enterText(find.byType(TextField).first, 'matrix');
     await tester.pumpAndSettle();
 
-    await openTab(tester, 'Plan');
+    await openTab(tester, 'Site');
 
     expect(
       tester.widget<TextField>(find.byType(TextField).first).controller!.text,
@@ -156,7 +155,7 @@ void main() {
     // `PlanEditorScreenState` rather than the rack screen or nothing.
     final built = await buildTestApp(measurer);
     await tester.pumpWidget(built.app);
-    await openTab(tester, 'Plan');
+    await openTab(tester, 'Site');
 
     final before = built.session.services.session.document.devices.length;
     // THE FILTER-AND-ENTER PATH, which docs/04 §3.2 makes equal to a

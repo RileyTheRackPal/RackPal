@@ -777,7 +777,7 @@ final class OutletTemplate {              // first-class recipe. CR-108.
 | `Outlet.roughInStatus` is derived as the **minimum** across member Links | CR-111, CR-115 | Derived-max, and persisting it. A max would report an outlet "tested" when three of its four cables are still coiled. Not serialized. |
 | Multiple Structure bodies are supported | CR-113 | One per project. Media panel, exterior/cameras and service entrance are different bodies; `sheetEdge` routes each to layer 0 or layer N. |
 | Removed from the rack palette | CR-110 | A palette entry that cannot be placed. A body is created from `Project ▸ Structured wiring…`, or implicitly on first use of the Structure editor. |
-| `Project ▸ Locations…` is a top-level panel | CR-112 | The location tree owned by the Structure editor. A project with racks and no Structure device must still be able to say which room a rack is in. |
+| The location tree is a **top-level surface**, today the `Site` view | CR-112; renamed by DR-168 | The location tree owned by the Structure editor. A project with racks and no Structure device must still be able to say which room a rack is in. |
 
 A drop's signal family may legitimately be `structure.undetermined` at rough-in, at rough-in a Cat6 is just a Cat6. The Link assigns a family later and the DRC re-validates retroactively. That state being first-class is a genuine differentiator; no competitor models it.
 

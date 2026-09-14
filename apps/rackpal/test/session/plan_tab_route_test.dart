@@ -162,7 +162,7 @@ void main() {
     await tester.pumpWidget(built.app);
     await tester.pumpAndSettle();
     await tester.runAsync(() async {
-      await tester.tap(find.text(ShellView.plan.label));
+      await tester.tap(find.text(ShellView.site.label));
       await tester.pump();
       await Future<void>.delayed(const Duration(milliseconds: 50));
     });

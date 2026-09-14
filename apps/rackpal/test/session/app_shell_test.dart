@@ -670,12 +670,14 @@ void main() {
       // of the strip "until it is built, rather than adding a seventh tab
       // onto nothing", and this is the chapter that earns it (DR-143).
       expect(tabs, [
-        'Locations',
+        // SIX SINCE `#893` (DR-168): `Locations` and `Plan` merged into
+        // `Site` at position 1, which §11.90.4 permitted by refusing to
+        // freeze the view set before M6.
+        'Site',
         'Device Manager',
         'Rack',
         'Structured Wiring',
         'Schematic',
-        'Plan',
         'Schedule',
       ]);
     });

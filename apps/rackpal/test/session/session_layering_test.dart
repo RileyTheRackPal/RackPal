@@ -770,6 +770,12 @@ final class AppServices {
     // catching it. So Plan joins Locations, Device Manager and Structured
     // Wiring, which have no accelerator either, and Ctrl+3 stays reserved
     // and unbound for the Rear Panel.
-    expect(kViewKeyToTabIndex, {1: 2, 2: 4, 4: 6});
+    // `4` MOVED FROM 6 TO 5 AT `#893` and is the only entry that did.
+    // The Location and Plan views merged into `Site` at position 1
+    // (DR-168), so the strip lost a tab BEFORE the Schedule. **No KEY
+    // changed**: `Ctrl+1` is still the Rack and `Ctrl+2` the Schematic,
+    // which is §11.90.4's deferral still being paid for rather than
+    // spent, and `Ctrl+3` is still bound to nothing.
+    expect(kViewKeyToTabIndex, {1: 2, 2: 4, 4: 5});
   });
 }

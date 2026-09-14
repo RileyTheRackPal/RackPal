@@ -416,7 +416,7 @@ Format is `{TYPE_PREFIX}{SEP}{SEQ}` through the one format engine in `rackpal_co
 
 `Ctrl+R` opens **Renumber**, always presented as a diff (`6 change · 12 unchanged · 3 locked`), because renumbering rewrites labels on schedules that may already be printed and cables that may already be physically labelled. It **refuses locked designators by default and reports how many it skipped** (CR-034). `Link.designatorLocked` is auto-set once `roughInStatus >= pulled`: sixty physically labelled cables renumbered by accident is a day of relabelling (AC-034/m22). One undo entry.
 
-Locations come from the **project-level Locations panel** (`Project ▸ Locations…`), not from this editor and not from the Structure editor (CR-112). Racks carry `locationId`; devices inherit and may override. Renaming a location propagates to every label, schedule row and PDF callout in one undoable command.
+Locations come from the **Site view**, the first tab, not from this editor and not from the Structure editor (CR-112). It was `Project ▸ Locations…`, then a `Locations` tab, and since DR-168 §11.167 it is the same view that holds the floorplans, because the two did adjacent halves of one job. Racks carry `locationId`; devices inherit and may override. Renaming a location propagates to every label, schedule row and PDF callout in one undoable command.
 
 ---
 

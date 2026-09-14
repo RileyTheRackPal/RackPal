@@ -1,4 +1,5 @@
-// What `Project ▸ Locations…` means, in commands. Board M3-B/2, CR-112,
+// What editing the location tree means, in commands. Board M3-B/2,
+// CR-112,
 // DR-021.
 //
 // ─────────────────────────────────────────────────────────────────────────
@@ -41,7 +42,11 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 /// like the create had half-failed.
 const String kNewLocationName = 'New location';
 
-/// Wires [LocationsPanel]'s gestures to commands on [controller].
+/// Wires the location tree's gestures to commands on [controller].
+///
+/// It was `LocationsPanel`'s, which `#893` deleted when the Location and
+/// Plan views merged (DR-168). The record it returns is unchanged and now
+/// feeds the `Site` view's rail and inspector.
 ///
 /// [confirmRemoval] is asked before a delete that costs anything, and is
 /// the seam the widget test replaces: `confirmLocationRemoval` needs a

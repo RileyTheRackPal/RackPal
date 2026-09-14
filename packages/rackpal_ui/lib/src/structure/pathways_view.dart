@@ -25,7 +25,7 @@
 // line, and the same medium in the matrix), so the entity is not
 // hypothetical; what this button covers is the trunk somebody walked and
 // wants to record before any cable goes through it. It is the same
-// affordance `Project ▸ Locations…` gives a room the drop line would
+// affordance the Site tab gives a room the drop line would
 // otherwise have to invent.
 //
 // ═════════════════════════════════════════════════════════════════════

@@ -130,7 +130,14 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 /// unbound no-op and *"the tab is absent from the strip"*. A tab that
 /// opens onto nothing is the untruth `shell_tabs_test.dart` already
 /// names, pointing the other way.
-const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 2, 2: 4, 4: 6};
+const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 2, 2: 4, 4: 5};
+
+// `4` MOVED FROM 6 TO 5 AT `#893`, and it is the only entry that moved.
+// The Location and Plan views merged into `Site` at position 1 (DR-168),
+// so the strip lost a tab BEFORE the Schedule and kept its order: Rack is
+// still the third tab and `Ctrl+1`, the Schematic still the fifth and
+// `Ctrl+2`. **No KEY changed**, which is §11.90.4's deferral still being
+// paid for rather than spent.
 
 /// The strip, in DR-091 §11.90.3's order, and the group each view is in.
 ///
@@ -138,7 +145,7 @@ const Map<int, int> kViewKeyToTabIndex = <int, int>{1: 2, 2: 4, 4: 6};
 /// do; the divider between them is what stops the strip reading as one
 /// undifferentiated run, which is the thing the amendment set out to fix.
 enum ShellView {
-  locations('Locations', Icons.place_outlined, ShellViewGroup.project),
+  site('Site', Icons.place_outlined, ShellViewGroup.project),
   deviceManager(
     'Device Manager',
     Icons.developer_board_outlined,
@@ -151,19 +158,16 @@ enum ShellView {
     ShellViewGroup.design,
   ),
   schematic('Schematic', Icons.polyline_outlined, ShellViewGroup.design),
-  // THE SEVENTH TAB, AND DR-091 HAS BEEN WAITING FOR IT. That ruling
-  // keeps Plan out of the strip "until it is built, rather than adding a
-  // seventh tab onto nothing"; PLAN-E/5 is the chapter that earns it, and
-  // DR-143 §11.142.1 is why it could not have arrived one chapter sooner
-  // (nothing could put a floorplan in a project at all).
+  // PLAN IS NOT A TAB ANY MORE (`#893`, DR-168 §11.167.2). It was the
+  // seventh, at position 6, because §11.90.3's job sentence puts "mark
+  // where it physically sits" after the wiring. It is the FIRST view now,
+  // merged with Locations and called `Site`, because the two did adjacent
+  // halves of one job and the surveying end is where the pair belongs:
+  // the rooms are the first thing anybody enters and the last thing a
+  // plan gets drawn onto.
   //
-  // POSITION 6, AFTER THE SCHEMATIC, WHICH IS §11.90.3's OWN TABLE. The
-  // job sentence there is "interconnect it, MARK WHERE IT PHYSICALLY
-  // SITS, hand over the paperwork", so the plan comes after the wiring
-  // and before the deliverable. A first draft of this line reasoned its
-  // own job order and put Plan before the Schematic, which is a ruling
-  // re-argued rather than read.
-  plan('Plan', Icons.map_outlined, ShellViewGroup.design),
+  // §11.90.4 IS WHAT PERMITTED IT, having refused to freeze the strip
+  // before M6 in as many words: "the view set is not final until M6."
   schedule('Schedule', Icons.table_rows_outlined, ShellViewGroup.deliverable);
 
   const ShellView(this.label, this.icon, this.group);
@@ -1029,7 +1033,7 @@ final class AppShellState extends State<AppShell>
               // mechanism and touches nothing else.
               physics: const NeverScrollableScrollPhysics(),
               children: [
-                _locationsTab(session),
+                _siteTab(session),
                 _deviceManagerTab(session),
                 _rackTab(session),
                 _structuredWiringTab(session),
@@ -1067,13 +1071,6 @@ final class AppShellState extends State<AppShell>
                   onDismissFilterCoachMark: _dismissFilterCoachMark,
                 ),
                 // THE SCHEDULE IS BUILT NOW, and the panel that used to sit
-                // POSITION 6, BEFORE THE SCHEDULE (DR-091 §11.90.3). Every
-                // piece of this view was built and unreachable: the canvas
-                // and its two gestures (PLAN-E/2), the arm mode and its
-                // chip (PLAN-E/3), the strip and armCarrierDrag (PLAN-E/4),
-                // and the importer that could put anything in it at all
-                // (PLAN-D, DR-143). This line is what makes them true.
-                _planTab(session),
                 // here is gone rather than softened. Its copy said "no code
                 // turns a Link into a row", which was true when it was
                 // written and is false now that
@@ -1116,16 +1113,6 @@ final class AppShellState extends State<AppShell>
   // the document must reset a selection, a draft or an expanded tree,
   // because each of those is an answer about a document and a replacement
   // is a different one.
-
-  Widget _locationsTab(DocumentSession session) => LocationsPanel(
-    key: ValueKey(session.controller),
-    doc: session.document,
-    actions: buildLocationsPanelActions(
-      controller: session.controller,
-      confirmRemoval: _confirmLocationRemoval,
-      onRefuse: _showRefusal,
-    ),
-  );
 
   Widget _structuredWiringTab(DocumentSession session) => StructureEditorScreen(
     key: ValueKey(session.controller),
@@ -1373,12 +1360,6 @@ final class AppShellState extends State<AppShell>
     }
   }
 
-  /// `Project ▸ Locations…` (CR-112).
-  ///
-  /// PROJECT-LEVEL, which is the whole ruling: a project with racks and no
-  /// Structure device must still be able to say which room a rack is in,
-  /// so this hangs off the menu bar rather than off either editor.
-
   /// `Project ▸ Structured wiring…` — docs/07 §4's editor (M3-C/2,
   /// AC-048).
   ///
@@ -1536,7 +1517,13 @@ final class AppShellState extends State<AppShell>
     }
   }
 
-  Widget _planTab(DocumentSession session) {
+  /// The `Site` view (`#893`, DR-168): the project's rooms, the
+  /// floorplans some of them are drawn on, and the pins.
+  ///
+  /// **IT WAS TWO TABS**, `_locationsTab` at position 1 and `_planTab` at
+  /// position 6. The tree's editor is inside this view now, so the other
+  /// method and the `LocationsPanel` it mounted are both gone.
+  Widget _siteTab(DocumentSession session) {
     _loadPlanImages(session);
     return _withPalette(
       PlanEditorScreen(
@@ -1549,6 +1536,14 @@ final class AppShellState extends State<AppShell>
         images: _planImages.resolver,
         measurer: widget.measurer,
         selection: _planSelection,
+        // THE SAME RECORD THE LOCATIONS TAB TAKES (`#891`, DR-168). This
+        // view edits the tree now; `MERGE/4` removes the other tab and
+        // this becomes the only caller.
+        locations: buildLocationsPanelActions(
+          controller: session.controller,
+          confirmRemoval: _confirmLocationRemoval,
+          onRefuse: _showRefusal,
+        ),
         arm: _planArm,
         onRefuse: _showRefusal,
         // THE SAME CHANNEL AS A REFUSAL, WHICH IS THIS SHELL'S DECISION AND
@@ -1593,7 +1588,7 @@ final class AppShellState extends State<AppShell>
       : null;
 
   PlanEditorScreenState? get _openPlan =>
-      _tabController.index == ShellView.plan.index
+      _tabController.index == ShellView.site.index
       ? GlobalObjectKey<PlanEditorScreenState>(
           _services.session.controller,
         ).currentState
@@ -1836,7 +1831,7 @@ final class AppShellState extends State<AppShell>
     // and unconditionally, so the plan has it whichever frame it builds
     // on.
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) switchToTab(ShellView.plan.index);
+      if (mounted) switchToTab(ShellView.site.index);
     });
   }
 

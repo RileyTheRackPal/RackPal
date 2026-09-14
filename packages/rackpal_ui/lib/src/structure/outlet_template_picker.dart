@@ -234,7 +234,7 @@ class _OutletTemplatePickerState extends State<OutletTemplatePicker> {
         const SizedBox(height: 12),
         if (rooms.isEmpty)
           Text(
-            'This project has no rooms yet. Add one in Project ▸ Locations…',
+            'This project has no rooms yet. Add one on the Site tab.',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.error,
             ),

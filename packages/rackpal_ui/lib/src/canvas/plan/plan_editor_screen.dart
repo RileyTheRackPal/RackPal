@@ -51,6 +51,7 @@ import 'package:rackpal_ui/src/canvas/plan/unpinned_strip.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
 import 'package:rackpal_ui/src/draw/flutter_canvas.dart';
+import 'package:rackpal_ui/src/project/locations_panel.dart';
 import 'package:rackpal_ui/src/project/remove_underlay_dialog.dart';
 
 /// What the view says when the project has no floorplan in it.
@@ -66,12 +67,23 @@ const String kPlanEmptyDetail =
 
 /// The Plan editor: one underlay, its pins, and everything that has been
 /// waiting for a home.
+/// What the rail's add button says with nothing selected, and with a room
+/// selected (`#891`).
+///
+/// TWO STRINGS, because the button does two different things and a single
+/// `Add room` would be a lie half the time: `LocationsPanelActions.onAdd`
+/// puts the new room UNDER the selection, which is how CR-047's
+/// arbitrary-depth tree gets its depth at all.
+const String kAddRoom = 'Add room';
+const String kAddRoomUnder = 'Add room under selection';
+
 final class PlanEditorScreen extends StatefulWidget {
   const PlanEditorScreen({
     required this.controller,
     required this.images,
     required this.measurer,
     required this.selection,
+    required this.locations,
     this.arm,
     this.onRefuse,
     this.onNotice,
@@ -86,6 +98,14 @@ final class PlanEditorScreen extends StatefulWidget {
 
   final TextMeasurer measurer;
   final SelectionController selection;
+
+  /// What editing a room MEANS, in commands (`#891`, DR-168 §11.167.4).
+  ///
+  /// The same record `LocationsPanel` takes, built by the app, because
+  /// `rackpal_ui` holds no controller: this view edits the tree now, and
+  /// the tree's edits were already expressed this way for the panel that
+  /// is about to be deleted.
+  final LocationsPanelActions locations;
 
   /// docs/15 §6's fast path, or null. Null is supported and every render
   /// test uses it (DR-141 §11.140.4).
@@ -111,6 +131,45 @@ final class PlanEditorScreen extends StatefulWidget {
 }
 
 class PlanEditorScreenState extends State<PlanEditorScreen> {
+  /// Which room the rail has selected, and therefore what the inspector
+  /// shows (`#891`, DR-168 §11.167.4).
+  ///
+  /// **HELD HERE AND NOT IN THE TREE**, because the tree is in one region
+  /// and what it selects is drawn in another. A selection private to the
+  /// list could not reach across that gap and would have to be mirrored,
+  /// which is two answers to one question.
+  Uuid? _selectedLocation;
+
+  /// The four editing wrappers `LocationsPanel` holds, which both hosts
+  /// need for as long as both exist. `MERGE/4` deletes that panel and
+  /// with it the second copy.
+  void _addLocation() {
+    final id = widget.locations.onAdd(_selectedLocation);
+    setState(() => _selectedLocation = id);
+  }
+
+  void _editLocation(VoidCallback edit) {
+    edit();
+    setState(() {});
+  }
+
+  void _reparentLocation(Uuid id, Uuid? newParentId) {
+    final refusal = widget.locations.onReparent(id, newParentId);
+    if (refusal != null) {
+      widget.onRefuse?.call(refusal);
+      return;
+    }
+    setState(() {});
+  }
+
+  Future<void> _deleteLocation(Uuid id) async {
+    final removed = await widget.locations.onDelete(id);
+    if (!removed) return;
+    // THE SELECTION GOES WITH THE ROOM. A rail pointing at a deleted id
+    // would leave the inspector showing nothing with no way to say why.
+    setState(() => _selectedLocation = null);
+  }
+
   /// Which plan is open. **Held here and not in the document**, because it
   /// is a view state and not a fact about the project: two windows on one
   /// file would disagree about it, and a saved file recording which tab
@@ -461,94 +520,166 @@ class PlanEditorScreenState extends State<PlanEditorScreen> {
   @override
   Widget build(BuildContext context) {
     final open = _open;
-    if (open == null) return const _EmptyPlan();
-
-    final strip = unpinnedCarriersFor(_controller.doc, open);
+    // ═══════════════════════════════════════════════════════════════════
+    // THE RAIL AND THE INSPECTOR ARE ALWAYS HERE (`#891`/`#892`, DR-168)
+    // ═══════════════════════════════════════════════════════════════════
+    // This method opened `if (open == null) return const _EmptyPlan();`,
+    // which made a project with no floorplan a DEAD END: nothing on this
+    // view could be done until somebody imported a PDF. CR-112 and
+    // docs/04 §7.5 rule the opposite — *"a project with racks and no
+    // Structure device must still be able to say which room a rack is
+    // in"* — so only the CENTRE depends on there being an underlay.
     return Row(
       children: [
-        SizedBox(
-          width: 240,
-          // THE ROOM LIST SITS UNDER THE UNDERLAY LIST, which is the
-          // user's call (2026-09-11) against a button on the underlay row
-          // and an action over on the Locations tab. It mirrors the
-          // unpinned strip's logic: the thing you are working through is
-          // listed where you work, and "which rooms still need an
-          // outline" becomes answerable at a glance rather than by
-          // opening each one.
-          //
-          // **A FUTURE MERGE OF THE LOCATION AND PLAN VIEWS IS POSSIBLE
-          // BEFORE v1** and is deliberately NOT designed for here: the
-          // user ruled it out of this epic while naming it as something
-          // that may happen. Nothing below assumes this rail is the only
-          // place rooms are listed, which is the most that note is worth
-          // acting on today.
-          child: Column(
-            children: [
-              Expanded(
-                child: _UnderlayList(
-                  underlays: _underlays,
-                  openId: open.id,
-                  doc: _controller.doc,
-                  onOpen: _openPlan,
-                  onCalibrate: _beginCalibrate,
-                  onRemove: () => unawaited(_removeOpenPlan()),
-                  onReorder: _reorderPlan,
-                ),
+        SizedBox(width: 240, child: _rail(open)),
+        const VerticalDivider(width: 1),
+        Expanded(
+          child: open == null ? const _EmptyPlan() : _planColumn(context, open),
+        ),
+        const VerticalDivider(width: 1),
+        SizedBox(width: 320, child: _inspector(open)),
+      ],
+    );
+  }
+
+  /// The left rail: the floorplans of this project when it has any, and
+  /// its rooms always (`#891`, DR-168 §11.167.4).
+  ///
+  /// **THE TREE IS THE PRIMARY LIST AND THE UNDERLAY LIST IS THE GUEST.**
+  /// It was the other way round, with a read-only room list beneath, and
+  /// the affordance for editing a room pointed at `Project ▸ Locations…`,
+  /// a menu the application does not have. A project with no floorplan
+  /// now shows its rooms at full rail height rather than an empty list of
+  /// a thing most projects never have.
+  Widget _rail(PlanUnderlay? open) {
+    final underlays = _underlays;
+    return Column(
+      children: [
+        if (underlays.isNotEmpty && open != null) ...[
+          Expanded(
+            child: _UnderlayList(
+              underlays: underlays,
+              openId: open.id,
+              doc: _controller.doc,
+              onOpen: _openPlan,
+              onCalibrate: _beginCalibrate,
+              onRemove: () => unawaited(_removeOpenPlan()),
+              onReorder: _reorderPlan,
+            ),
+          ),
+          const Divider(height: 1),
+        ],
+        Expanded(
+          child: LocationTreeList(
+            doc: _controller.doc,
+            selectedId: _selectedLocation,
+            onSelect: (id) => setState(() => _selectedLocation = id),
+          ),
+        ),
+        const Divider(height: 1),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: TextButton.icon(
+              key: const ValueKey('site-add-room'),
+              onPressed: _addLocation,
+              icon: const Icon(Icons.add, size: 16),
+              label: Text(
+                _selectedLocation == null ? kAddRoom : kAddRoomUnder,
               ),
-              const Divider(height: 1),
-              Expanded(
-                child: _RoomList(
-                  doc: _controller.doc,
-                  underlay: open,
-                  drawingId: _outline.isActive ? _outline.locationId : null,
-                  reshapingId: _reshape.isActive ? _reshape.locationId : null,
-                  onDraw: _beginOutline,
-                  onReshape: _beginReshape,
-                  onClear: _clearOutline,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// The right region docs/15 §6 ruled and `PLAN-E/5` did not build
+  /// (`#892`, DR-168).
+  ///
+  /// **ITS OWN HEADER NAMED THIS AS OWED**: *"there is no standard
+  /// inspector to put there ... the column is absent rather than
+  /// invented"*, because `InspectorPanel` takes a `required Rack` and a
+  /// pin's carrier may be an outlet or an off-rack device. The merge is
+  /// what finally gives the region something it can honestly show: the
+  /// selected ROOM, which is a thing both halves of this view are about.
+  Widget _inspector(PlanUnderlay? open) {
+    final selected = _selectedLocation;
+    final location = selected == null
+        ? null
+        : _controller.doc.locations[selected];
+    return Material(
+      color: Theme.of(context).colorScheme.surfaceContainerLow,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          // THE OUTLINE ACTIONS LIVE WITH THE ROOM THEY ACT ON. They were
+          // three buttons on a read-only room list in the rail; a room's
+          // shape on a plan is a property of that room, and this is where
+          // its properties are.
+          if (location != null && open != null)
+            _OutlineActions(
+              location: location,
+              underlay: open,
+              doc: _controller.doc,
+              drawingId: _outline.isActive ? _outline.locationId : null,
+              reshapingId: _reshape.isActive ? _reshape.locationId : null,
+              onDraw: _beginOutline,
+              onReshape: _beginReshape,
+              onClear: _clearOutline,
+            ),
+          Expanded(
+            child: LocationDetailPane(
+              location: location,
+              doc: _controller.doc,
+              actions: widget.locations,
+              onEdit: _editLocation,
+              onReparent: _reparentLocation,
+              onDelete: _deleteLocation,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _planColumn(BuildContext context, PlanUnderlay open) {
+    final strip = unpinnedCarriersFor(_controller.doc, open);
+    return Column(
+      children: [
+        Expanded(
+          child: Stack(
+            children: [
+              Positioned.fill(child: _canvas(open)),
+              // SCREEN CHROME, NEVER A SCENE OP (CR-086):
+              // `buildPlanScene` feeds the PDF as well as this
+              // display, so a band in the scene would print.
+              Positioned.fill(
+                child: MarqueeBand(
+                  marquee: _marquee,
+                  viewport: _viewportFor(open.id),
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               ),
             ],
           ),
         ),
-        const VerticalDivider(width: 1),
-        Expanded(
-          child: Column(
-            children: [
-              Expanded(
-                child: Stack(
-                  children: [
-                    Positioned.fill(child: _canvas(open)),
-                    // SCREEN CHROME, NEVER A SCENE OP (CR-086):
-                    // `buildPlanScene` feeds the PDF as well as this
-                    // display, so a band in the scene would print.
-                    Positioned.fill(
-                      child: MarqueeBand(
-                        marquee: _marquee,
-                        viewport: _viewportFor(open.id),
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ],
-                ),
+        const Divider(height: 1),
+        UnpinnedStrip(
+          carriers: strip,
+          // THE WIRING DR-140 EXISTS FOR. A row dragged out of here
+          // lands on the canvas above and pins that carrier, which
+          // is how a RACK gets a pin at all; without one `PLN-003`
+          // fires and no length on the plan derives.
+          onArmDrag: (row, event) =>
+              _canvasKeyFor(
+                open.id,
+              ).currentState?.armCarrierDrag(
+                row.carrier,
+                row.entityId,
+                event,
               ),
-              const Divider(height: 1),
-              UnpinnedStrip(
-                carriers: strip,
-                // THE WIRING DR-140 EXISTS FOR. A row dragged out of here
-                // lands on the canvas above and pins that carrier, which
-                // is how a RACK gets a pin at all; without one `PLN-003`
-                // fires and no length on the plan derives.
-                onArmDrag: (row, event) =>
-                    _canvasKeyFor(
-                      open.id,
-                    ).currentState?.armCarrierDrag(
-                      row.carrier,
-                      row.entityId,
-                      event,
-                    ),
-              ),
-            ],
-          ),
         ),
       ],
     );
@@ -888,32 +1019,26 @@ class _EmptyPlan extends StatelessWidget {
   }
 }
 
-/// What the rail says when this plan depicts no location.
-///
-/// A PLAN WITH NO LOCATION IS ORDINARY, not an error to report: a site
-/// plan depicts no room, which is why `_UnderlayRow` already prints its
-/// room line only when there is one. The rooms an outline could hang on
-/// are the ones UNDER the plan's own location, so with no location there
-/// is nothing to list and the honest thing is to say which fact is
-/// missing.
-const String kPlanNoRoomsDetail =
-    'Give this plan a location to draw rooms on it.';
-
-/// Every room this plan could carry an outline for (`LEN-A/4`, DR-050).
+/// The selected room's outline on the OPEN plan, and the three acts that
+/// change it (`#892`, DR-168).
 ///
 /// ═══════════════════════════════════════════════════════════════════════
-/// THE SUBTREE, WHICH IS `PLN-002`'s SCOPE AND NOT A SECOND ONE
+/// THESE WERE THREE BUTTONS ON A ROW IN A LIST IN THE RAIL
 /// ═══════════════════════════════════════════════════════════════════════
-/// DR-154 §11.153.7a ruled that an underlay depicts a floor and the drops
-/// are filed in its rooms, so the population a plan is about is its
-/// location's SUBTREE. `unpinnedCarriersFor` was widened onto exactly
-/// that scope, and this list asks the same question about the same tree.
-/// Listing only the exact location would offer an outline on the floor
-/// and on none of the rooms in it, which is the shape that ruling deleted.
-class _RoomList extends StatelessWidget {
-  const _RoomList({
-    required this.doc,
+/// `_RoomList` showed every room of the open plan's location subtree, each
+/// with Draw, Reshape and Clear. A room's shape on a plan is a property of
+/// that room, and since `#891` its properties are in this column, so the
+/// list stopped earning the rail height it took: the tree lists the rooms,
+/// and the room that is selected is the one these act on.
+///
+/// **THE UNDERLAY IS PART OF THE QUESTION.** A room whose shape was drawn
+/// on another plan has none HERE, and offering `Clear` for it would take
+/// away something the person is not looking at.
+class _OutlineActions extends StatelessWidget {
+  const _OutlineActions({
+    required this.location,
     required this.underlay,
+    required this.doc,
     required this.drawingId,
     required this.reshapingId,
     required this.onDraw,
@@ -921,119 +1046,39 @@ class _RoomList extends StatelessWidget {
     required this.onClear,
   });
 
-  final RackDocument doc;
+  final Location location;
   final PlanUnderlay underlay;
-
-  /// The room currently being drawn, or null when no draw is running.
+  final RackDocument doc;
   final Uuid? drawingId;
-
-  /// The room currently being reshaped, or null when none is.
   final Uuid? reshapingId;
-
   final void Function(Uuid locationId) onDraw;
   final void Function(Uuid locationId) onReshape;
   final void Function(Uuid locationId) onClear;
 
+  /// A stable handle per act, kept at the names `_RoomList` used so the
+  /// cases that drive them did not have to be rewritten to follow the
+  /// buttons across the view.
   static String drawKeyFor(Uuid id) => 'room-draw-${id.v}';
   static String reshapeKeyFor(Uuid id) => 'room-reshape-${id.v}';
   static String clearKeyFor(Uuid id) => 'room-clear-${id.v}';
-  static const Key emptyKey = ValueKey('plan-no-rooms');
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final scope = underlay.locationId;
-    final rooms = <Location>[
-      if (scope != null)
-        for (final id in LocationTree.of(doc).subtreeOf(scope))
-          if (doc.locations[id] case final Location l) l,
-    ];
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
-          child: Text('Rooms', style: theme.textTheme.labelLarge),
-        ),
-        if (rooms.isEmpty)
-          Padding(
-            key: emptyKey,
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: Text(
-              kPlanNoRoomsDetail,
-              style: theme.textTheme.labelSmall,
-            ),
-          )
-        else
-          Expanded(
-            child: ListView(
-              primary: false,
-              children: [
-                for (final room in rooms)
-                  _RoomRow(
-                    room: room,
-                    // THE OUTLINE ON *THIS* PLAN. A room whose shape was
-                    // drawn on another underlay has none here, and
-                    // offering `Clear` for it would take away something
-                    // the person is not looking at.
-                    hasOutline: room.planOutline?.underlayId == underlay.id,
-                    drawing: room.id == drawingId,
-                    reshaping: room.id == reshapingId,
-                    onDraw: () => onDraw(room.id),
-                    onReshape: () => onReshape(room.id),
-                    onClear: () => onClear(room.id),
-                  ),
-              ],
-            ),
-          ),
-      ],
-    );
-  }
-}
-
-class _RoomRow extends StatelessWidget {
-  const _RoomRow({
-    required this.room,
-    required this.hasOutline,
-    required this.drawing,
-    required this.reshaping,
-    required this.onDraw,
-    required this.onReshape,
-    required this.onClear,
-  });
-
-  final Location room;
-  final bool hasOutline;
-  final bool drawing;
-  final bool reshaping;
-  final VoidCallback onDraw;
-  final VoidCallback onReshape;
-  final VoidCallback onClear;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final hasOutline = location.planOutline?.underlayId == underlay.id;
+    final busy = location.id == drawingId || location.id == reshapingId;
     return Container(
       width: double.infinity,
-      // ONE HIGHLIGHT FOR BOTH MODES, because the row is answering one
-      // question: is the canvas currently about THIS room? The two modes
-      // are mutually exclusive by construction, so a second colour would
-      // be a distinction the user never sees two of at once.
-      color: drawing || reshaping ? theme.colorScheme.primaryContainer : null,
-      padding: const EdgeInsets.fromLTRB(16, 6, 8, 6),
+      color: busy ? theme.colorScheme.primaryContainer : null,
+      padding: const EdgeInsets.fromLTRB(16, 10, 8, 6),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            room.name,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: theme.textTheme.bodyMedium,
-          ),
+          Text('On ${underlay.name}', style: theme.textTheme.labelLarge),
           // PRINTED IN BOTH DIRECTIONS (G4), on the calibration row's own
-          // rule: "no outline yet" is a fact worth stating, and a row that
-          // said nothing would leave "not drawn" and "drawn and I have
+          // rule: "no outline yet" is a fact worth stating, and saying
+          // nothing would leave "not drawn" and "drawn and I have
           // forgotten" looking identical.
           Text(
             hasOutline ? 'Outline drawn' : 'No outline yet',
@@ -1043,8 +1088,8 @@ class _RoomRow extends StatelessWidget {
             spacing: 8,
             children: [
               TextButton(
-                key: ValueKey(_RoomList.drawKeyFor(room.id)),
-                onPressed: onDraw,
+                key: ValueKey(drawKeyFor(location.id)),
+                onPressed: () => onDraw(location.id),
                 child: Text(hasOutline ? 'Redraw…' : 'Draw…'),
               ),
               // RESHAPE ONLY WHERE THERE IS A SHAPE, which is `Clear`'s
@@ -1053,18 +1098,19 @@ class _RoomRow extends StatelessWidget {
               // an act with nothing to perform it on.
               if (hasOutline)
                 TextButton(
-                  key: ValueKey(_RoomList.reshapeKeyFor(room.id)),
-                  onPressed: onReshape,
+                  key: ValueKey(reshapeKeyFor(location.id)),
+                  onPressed: () => onReshape(location.id),
                   child: const Text('Reshape…'),
                 ),
               if (hasOutline)
                 TextButton(
-                  key: ValueKey(_RoomList.clearKeyFor(room.id)),
-                  onPressed: onClear,
+                  key: ValueKey(clearKeyFor(location.id)),
+                  onPressed: () => onClear(location.id),
                   child: const Text('Clear'),
                 ),
             ],
           ),
+          const Divider(height: 17),
         ],
       ),
     );

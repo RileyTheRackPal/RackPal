@@ -139,10 +139,82 @@ class _Harness {
     return cmd.id;
   }
 
-  Widget get app => MaterialApp(
-    home: Scaffold(
-      body: LocationsPanel(doc: doc, actions: actions),
-    ),
+  /// The two panes, composed the way the `Site` view composes them
+  /// (`#893`, DR-168).
+  ///
+  /// **`LocationsPanel` IS GONE.** It was a whole view: a header, a 320px
+  /// tree column, a detail pane and a footer, with a tab of its own. The
+  /// tree and the detail are `LocationTreeList` and `LocationDetailPane`
+  /// now, and the `Site` view holds the selection between them because
+  /// they sit in different regions with the plan canvas in between. This
+  /// harness holds it the same way, so every case below still exercises
+  /// the same two widgets doing the same work.
+  Widget get app => MaterialApp(home: Scaffold(body: _Composed(this)));
+}
+
+class _Composed extends StatefulWidget {
+  const _Composed(this.h);
+  final _Harness h;
+
+  @override
+  State<_Composed> createState() => _ComposedState();
+}
+
+class _ComposedState extends State<_Composed> {
+  Uuid? _selected;
+
+  @override
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      SizedBox(
+        width: 320,
+        child: Column(
+          children: [
+            Expanded(
+              child: LocationTreeList(
+                doc: widget.h.doc,
+                selectedId: _selected,
+                onSelect: (id) => setState(() => _selected = id),
+              ),
+            ),
+            // THE RAIL'S OWN LABELS, not a stand-in: `#893` moved the
+            // add affordance out of the deleted footer and it says which
+            // of two things it will do, because
+            // `LocationsPanelActions.onAdd` puts the new room UNDER the
+            // selection.
+            TextButton(
+              onPressed: () =>
+                  setState(() => _selected = widget.h.actions.onAdd(_selected)),
+              child: Text(_selected == null ? kAddRoom : kAddRoomUnder),
+            ),
+          ],
+        ),
+      ),
+      const VerticalDivider(width: 1),
+      Expanded(
+        child: LocationDetailPane(
+          location: _selected == null
+              ? null
+              : widget.h.doc.locations[_selected],
+          doc: widget.h.doc,
+          actions: widget.h.actions,
+          onEdit: (edit) {
+            edit();
+            setState(() {});
+          },
+          onReparent: (id, parent) {
+            widget.h.actions.onReparent(id, parent);
+            setState(() {});
+          },
+          onDelete: (id) async {
+            if (await widget.h.actions.onDelete(id)) {
+              setState(() => _selected = null);
+            }
+          },
+        ),
+      ),
+    ],
   );
 }
 
@@ -367,7 +439,12 @@ void main() {
 
       await tester.tap(find.text('Main House'));
       await tester.pump();
-      await tester.tap(find.text('New in Main House'));
+      // THE LABEL CHANGED WITH THE AFFORDANCE (`#893`). The deleted
+      // footer said `New in <room>`, naming the parent; the rail says
+      // `Add room under selection`, which says the same thing without
+      // having to interpolate a name into a button that has to fit a
+      // 240px column.
+      await tester.tap(find.text(kAddRoomUnder));
       await tester.pump();
 
       expect(h.doc.locations, hasLength(2));
@@ -382,8 +459,8 @@ void main() {
       final h = _Harness()..seed('Main House');
       await tester.pumpWidget(h.app);
 
-      expect(find.text('New location'), findsOneWidget);
-      await tester.tap(find.text('New location'));
+      expect(find.text(kAddRoom), findsOneWidget);
+      await tester.tap(find.text(kAddRoom));
       await tester.pump();
 
       expect(LocationTree.of(h.doc).roots, hasLength(2));
@@ -579,7 +656,10 @@ void main() {
               child: SizedBox(
                 width: 720,
                 height: 520,
-                child: LocationsPanel(doc: h.doc, actions: h.actions),
+                // THE REAL GEOMETRY, still: the `Site` view gives this
+                // pane a 320px column, and the case below is about the
+                // detail's own scroll behaviour at a realistic size.
+                child: _Composed(h),
               ),
             ),
           ),
@@ -826,7 +906,7 @@ void main() {
     await tester.pumpWidget(h.app);
 
     expect(find.text('No locations yet.'), findsOneWidget);
-    await tester.tap(find.text('New location'));
+    await tester.tap(find.text(kAddRoom));
     await tester.pump();
 
     expect(h.doc.locations, hasLength(1));

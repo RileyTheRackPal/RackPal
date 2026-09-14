@@ -1,5 +1,44 @@
 # Update Log
 
+## 2026-09-13 (thirty-sixth entry)
+
+* **Closed**: `#889` with `bb39e122`, `45d4d058`, `f00d6c46` and this commit,
+  and `#888` with `f00d6c46`. The Location and Plan views are one view called
+  `Site`, at position 1. **No version move**: it closes under `#786`.
+* **Note**: **THE MERGE WAS HALF-DONE IN THE DESIGN.** docs/15 §6 has put the
+  location tree in the Plan view's rail since the chapter brief. What it
+  withheld was EDITING it there, and the route it named instead,
+  `Project ▸ Locations…`, had been deleted underneath it by DR-091.
+* **Note**: **A PHRASE REPEATED EIGHTEEN TIMES READS AS VOCABULARY.** Fifteen of
+  the eighteen sites were comments, which is why the three that were ON SCREEN
+  were invisible, and each of those three fired exactly when somebody had no
+  rooms and needed one. Copy has no callers, so deleting a menu does not lead
+  anybody to them.
+* **Note**: **§11.90.4 IS WHAT PERMITTED THIS.** DR-091 declined to freeze the
+  view set before M6, in as many words, and this is the first change to spend
+  that deferral. Its tab table goes from seven rows to six and is corrected in
+  place, because the rule it exists for is the ORDERING and that is untouched.
+* **Note**: **THE THIRD REGION FINALLY HAS A SUBJECT.** `PLAN-E/5` built two of
+  docs/15 §6's three regions and said honestly that there was no standard
+  inspector to put in the third. The merge supplies one: the selected ROOM,
+  whose outline on the open plan is one of its properties.
+* **Note**: **THE DECOMPOSITION HAD A SEAM THE CODE DID NOT.** `#891` and `#892`
+  landed together, because the tree and the detail share one selection and
+  either order ships a dead control for one commit.
+* **Note**: **AN 800px DEFAULT SURFACE CLAMPS A 900px BOX.** Two harnesses got a
+  238-unit-wide canvas and every plan click missed. Three guesses about scene
+  mapping went first; a probe printing the rects found it in one run.
+* **Note**: **TWO PRIVATE CLASSES THAT REFERENCE EACH OTHER ARE NOT DEAD TO
+  THE ANALYZER.** `#891`'s commit said `_RoomList` was gone and it was not:
+  183 lines nothing constructed, kept alive in the analyzer's eyes because
+  it builds `_RoomRow` and `_RoomRow` keys off its statics. Ask what
+  CONSTRUCTS a thing, not what mentions it; `_RoomList(` returns one hit,
+  its own constructor. Deleting it changed no test, which is the proof.
+* **Creation**: [DR-168, one view called
+  Site](/decisions/dr-168-one-view-called-site.md).
+* **Creation**: [Copy outlives the route it
+  names](/practices/copy-outlives-the-route-it-names.md).
+
 ## 2026-09-13 (thirty-fifth entry)
 
 * **Closed**: `#887` with `e077860c`. The 0U occupant's channel, start U and

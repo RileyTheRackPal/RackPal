@@ -15,7 +15,7 @@
 // draws one. The loop directly above this grid already creates a room
 // on `Enter` and then puts drops in it, and a third path to creating a
 // room would be a third place that rule lives (CR-112 puts the second
-// in `Project ▸ Locations…`).
+// on the Site tab).
 //
 // ═════════════════════════════════════════════════════════════════════
 // THE SPINNER IS A NUMBER BOX, AND THAT IS #148'S ARGUMENT AGAIN
@@ -195,7 +195,7 @@ const String kNoRoomsHeadline = 'This project has no rooms yet.';
 const String kNoRoomsDetail =
     'Type a room and what it needs into the field above, then press Enter: '
     '"Living Room: 4x Cat6". The room is created with the drops. Rooms are '
-    'also named in Project ▸ Locations…';
+    'also named on the Site tab';
 
 class _HeaderRow extends StatelessWidget {
   const _HeaderRow({
