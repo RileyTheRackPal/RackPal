@@ -32,6 +32,7 @@ import 'package:rackpal_ui/src/canvas/shake_animation.dart';
 import 'package:rackpal_ui/src/canvas/staging_bin_overlay.dart';
 import 'package:rackpal_ui/src/canvas/status_message_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
+import 'package:rackpal_ui/src/canvas/viewport_hud.dart';
 import 'package:rackpal_ui/src/inspector/add_zero_u_channel_dialog.dart'
     show zeroUChannelLabel;
 import 'package:rackpal_ui/src/inspector/delete_device_dialog.dart';
@@ -5078,8 +5079,9 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
               Positioned(
                 left: 12,
                 top: 12,
-                child: _ViewportHud(
+                child: ViewportHud(
                   viewport: _viewport,
+                  fitTooltip: 'Fit the rack',
                   onReset: _viewport.reset,
                   onFit: () => _viewport.fitToContent(
                     Box.fromLtwh(
@@ -5650,52 +5652,6 @@ class _FaceToggle extends StatelessWidget {
 }
 
 /// Small floating readout: live zoom percentage plus reset / fit controls.
-class _ViewportHud extends StatelessWidget {
-  const _ViewportHud({
-    required this.viewport,
-    required this.onReset,
-    required this.onFit,
-  });
-
-  final ViewportController viewport;
-  final VoidCallback onReset;
-  final VoidCallback onFit;
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            AnimatedBuilder(
-              animation: viewport,
-              builder: (context, _) => Text(
-                '${(viewport.scale * 100).round()}%',
-                style: Theme.of(context).textTheme.labelLarge,
-              ),
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              tooltip: 'Fit the rack',
-              visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.fit_screen_outlined),
-              onPressed: onFit,
-            ),
-            IconButton(
-              tooltip: 'Reset view (100%)',
-              visualDensity: VisualDensity.compact,
-              icon: const Icon(Icons.restart_alt),
-              onPressed: onReset,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 // ── the drag screen-space chrome (docs/04 §3.1, and §3.3 step 3) ──────────
 //

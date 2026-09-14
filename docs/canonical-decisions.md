@@ -20833,6 +20833,93 @@ Locations to a tab, and left behind. Seventh instance of the no-producer shape a
 **11.167.8 Scope.** **No scope change.** Both jobs stay in v1 and neither loses a clause; what changes
 is how many tabs they are behind, which §11.90.4 already declined to fix before M6. Board `#889`
 cites it, and its five Chapters carry the work.
+
+### 11.168 DR-169 · A plan mark is sized in screen points, coloured by domain, and says which one it is
+
+**The question.** Three complaints in one message from the user, 2026-09-13, after drawing rooms in
+the product: *"the pin size on the room view is massive, and there's no way to differentiate objects
+currently."* The third, a room outline refusing to draw over a pinned item, is `#895` and is a defect
+under §11.49.10 rather than a decision.
+
+**11.168.1 MEASURED FIRST, BECAUSE "MASSIVE" IS A NUMBER.** `kPlanMarkerRadiusFraction` is 1/110 of
+the underlay's longer side and is expressed in SCENE units, which are image pixels. On a 3300-unit
+architectural sheet that is a 30-unit radius, so a **60-point mark** at 1:1, and the hit box is the
+same square. **And the plan canvas never fits to its window**: `ViewportController.new` with no
+`fitToContent`, where the rack editor and the schematic both call it. So a plan opens at 100%
+anchored to its top-left corner, showing about a quarter of an architectural sheet with marks at
+their largest. Both facts were measured on 2026-09-13, not inferred.
+
+**11.168.2 RULED: THE MARK IS A CONSTANT SIZE IN SCREEN POINTS.** Settled by the user. A marker is a
+fixed number of points at every zoom, which is what `_withinCloseRadius` already does for the
+outline's close radius and what its own comment argues for: *"ten points of pointer travel at every
+zoom, which is what a person aims with."* Zooming in shows more PLAN rather than a bigger dot, and
+the hit target stops depending on how far in somebody happens to be. **The proportional rule is
+retired, not re-tuned**: shrinking the fraction keeps the property that caused the complaint, since
+at 400% the mark and its hit box would still be four times what they are at 100%.
+`kPlanMarkerRadiusFraction`'s own note called itself *"a starting value, not a ruling"* and named the
+user as the decider; this is that decision.
+
+**AND THE SEAM FOR IT ALREADY EXISTS WITH NO PRODUCER.** `buildPlanScene` takes a `double?
+markerRadius` that overrides the fraction, and **no caller anywhere passes it**: not the three in the
+canvas, not the sheet. Eighth instance of the no-producer shape after the seven §11.167.7 lists. So
+each caller computes the radius from ITS OWN scale, the canvas from the viewport and the sheet from
+its page mapping, and a mark is a constant size on screen and a constant size on paper without the
+scene builder learning what a zoom is.
+
+**ONE PLACE COMPUTES IT PER SURFACE, NOT THREE.** The canvas builds the scene in three methods (the
+hit test, the marquee's catch and the paint). A radius computed separately in each is a hit box that
+can disagree with the mark drawn, which is invisible on screen and is exactly the defect class
+`#895` just cost: there the drawn mark and the clickable area were the same square and the tie was
+still wrong. This clause is a rule and not an implementation note, because a disagreement here
+cannot be seen.
+
+**11.168.3 RULED: THE PLAN FITS ON OPEN, AND GAINS A FIT CONTROL.** Also the user's. Each plan opens
+fitted to the window with the rack editor's own margin, and a Fit affordance returns to it. The
+per-plan viewport is still remembered, so this is what an UNVISITED plan does rather than a reset of
+one somebody has already positioned.
+
+**11.168.4 RULED: COLOUR ENCODES THE CARRIER'S PRIMARY SIGNAL DOMAIN.** The user's answer to telling
+marks apart, and it is CR-078's rule rather than a new one: colour lives on the DOMAIN. The eight
+seeded domains carry the hues already.
+
+**11.168.5 AND THE DOMAIN IS AUTHORED, BECAUSE THE CENSUS SAYS IT CANNOT BE DERIVED.** Measured over
+the 51 seeded templates: **13 have ports in exactly one domain**. Excluding `pwr`, `ctl` and `str`,
+which sit on almost everything, it rises to 26 and **nine templates then have no domain at all**,
+including a control keypad whose only ports are the ones excluded. A television reads as
+`(video.digital, audio.analog, net)`. **A set of port domains does not answer what a device IS**, and
+G4 forbids estimating it. So `TemplateBody` gains a **nullable `primaryDomain`**, absent meaning
+unknown and drawing a neutral mark, the Device Builder gains a picker, and the 51 seeded templates
+are authored. The `category` string was considered and refused: its nine values include `Sources`,
+which covers both audio and video sources, so the mapping would lie.
+
+**11.168.6 THE MARK CARRIES THE DOMAIN'S GLYPH, AND THAT IS WHAT SURVIVES THE PRINT.** Also ruled by
+the user, against colour alone. `plan_sheet.dart` SPLICES `buildPlanScene`, so every mark on screen
+is a mark on `T1.01`, and the Installer preset exports greyscale. **§14 records that the eight hues
+collide in greyscale by design**, three of them inside one luminance band, and PAL-3 resolves that
+for a LINE with dash and weight. **A filled dot has neither.** The glyph channel already exists
+(`family_glyph.dart`, and §6.2.2's verdict table cites glyphs), so the mark carries it and the sheet
+stays legible without a second rule and without the screen and the print showing different things.
+
+**11.168.7 THE DESIGNATOR IS A HOVER.** The user's, over a label drawn beside every mark: sixty drops
+in one room is sixty labels, and the plan is somebody else's drawing to begin with. Colour answers
+*what kind of thing is this* at a glance; hover answers *which one* on demand.
+
+**11.168.8 THE RACK MARK IS UNCHANGED.** A rack has no signal domain: it is the datum every length on
+the plan is measured from (`PLN-003`), which is why it is a square with a cross rather than one more
+dot. It stays black and uncoloured, so it reads as a different KIND of thing rather than a ninth
+domain. **The user has an asset in hand for it by launch**, which this clause does not pre-empt.
+
+**11.168.9 Scope.** **No scope change.** Every clause is the appearance or the reachability of a
+surface already in v1, plus one nullable model field that writes a key only when present, so
+`kSchemaVersion` does not move on DR-026's own precedent. Board `#896` cites this ruling and its
+chapters carry the work.
+
+**What this does not rule.** The exact point size of the mark, the glyph inventory per domain, and
+the rack asset, all of which are appearance and are the user's as they arrive. Whether an OUTLET's
+domain is authored or read from its member links, which is a different question from a template's
+and is `#896`'s first chapter to answer with a measurement. And the callout treatment docs/15 §7
+schedules for `PLAN-H`, which this touches but does not close.
+
 ---
 
 ## 12. Superseded rulings

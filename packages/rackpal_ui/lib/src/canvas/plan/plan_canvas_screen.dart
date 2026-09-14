@@ -45,6 +45,8 @@
 // UI state until the pointer lifts; `SetPlanPinCommand` runs once, on
 // commit, and its own label already reads "Move Pin" when it replaces an
 // existing one.
+import 'dart:math' as math;
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rackpal_core/rackpal_core.dart';
@@ -56,8 +58,40 @@ import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/canvas/plan/render_plan_canvas.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
+import 'package:rackpal_ui/src/canvas/viewport_hud.dart';
 import 'package:rackpal_ui/src/draw/flutter_canvas.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
+
+/// The radius a plan marker is drawn at, in logical points, at EVERY zoom
+/// (`#897`, DR-169 §11.168.2).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// POINTS, BECAUSE A MARK IS AIMED AT WITH A POINTER AND NOT WITH A PLAN
+/// ═══════════════════════════════════════════════════════════════════════
+/// `kPlanMarkerRadiusFraction` sizes a marker as 1/110 of the underlay's
+/// longer side, in SCENE units, which are image pixels. That is a 30-unit
+/// radius on a 3300-unit architectural sheet, so a **60-point mark at
+/// 1:1** with a hit box to match, and four times that again at 400%. It
+/// was reported from the product as *"the pin size on the room view is
+/// massive"* and measured on 2026-09-13.
+///
+/// This is the rule [kOutlineCloseRadiusPt] already states for the close
+/// test, in that constant's own words: *"ten points of pointer travel at
+/// every zoom, which is what a person aims with."* Zooming in now shows
+/// more PLAN rather than a bigger dot.
+///
+/// **THE NUMBER IS APPEARANCE AND IS THE USER'S** (§11.168's closing
+/// clause), exactly as `kPlanMarkerRadiusFraction`'s note said of the
+/// fraction before it. Seven points is a starting value chosen to sit
+/// between the close radius and a mark that covers a doorway.
+const double kPlanMarkerRadiusPt = 7;
+
+/// The height the floating chrome occupies at the top of this canvas.
+///
+/// The zoom card sits at `top: 12` and is about 48 points tall, so a plan
+/// framed into the raw box would open with its top edge under it. See
+/// [PlanCanvasScreenState._fitPlan].
+const double _kPlanTopChromeInset = 72;
 
 /// Resolves every pin on [underlayId] out of [doc], in a total order.
 ///
@@ -723,7 +757,11 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       _outlineGesture = true;
       return;
     }
-    final built = buildPlanScene(underlay: widget.underlay, pins: _pins);
+    final built = buildPlanScene(
+      underlay: widget.underlay,
+      pins: _pins,
+      markerRadius: _markerRadius,
+    );
     final hit = hitTest(built.scene, sceneStart);
     if (hit == null) {
       _grabbed = null;
@@ -825,7 +863,11 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
         // which is what makes dragging across bare canvas a deselect
         // rather than a no-op with a stuck band.
         final caught = marquee.end(
-          buildPlanScene(underlay: widget.underlay, pins: _pins).scene,
+          buildPlanScene(
+            underlay: widget.underlay,
+            pins: _pins,
+            markerRadius: _markerRadius,
+          ).scene,
         );
         setState(() {
           widget.selection.apply(
@@ -910,6 +952,98 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     }
     _endGesture();
   }
+
+  /// Frames the whole plan the first time one is laid out (`#898`,
+  /// DR-169 §11.168.3).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THIS CANVAS NEVER FRAMED ANYTHING, WHERE BOTH OTHERS DO
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `rack_canvas_screen.dart` and the schematic both call `fitToContent`;
+  /// the Plan editor built a bare `ViewportController` per plan and left
+  /// it at the identity. So a 3300-unit architectural sheet opened at
+  /// 100% anchored to its top-left corner, showing about a quarter of the
+  /// drawing with the marks at their largest, and nothing on screen
+  /// offered to fix it.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE GUARD IS THE TRANSFORM ITSELF, NOT A FLAG
+  /// ═══════════════════════════════════════════════════════════════════
+  /// §11.168.3 keeps the per-plan viewport remembered, so this must frame
+  /// a plan nobody has positioned and leave alone one somebody has. A
+  /// `bool` on this `State` cannot tell the difference: the editor keys a
+  /// canvas per underlay, so switching plans DISPOSES this state and the
+  /// flag with it, while the `ViewportController` lives on in the
+  /// editor's map. `hasBeenPositioned` is that fact kept on the object
+  /// whose lifetime the question is actually about.
+  ///
+  /// **AND IT IS NOT "is the transform still the identity"**, which was
+  /// the first spelling and answers a different question: a view somebody
+  /// deliberately set to 100% at the origin is positioned, and a matrix
+  /// cannot say so. It also broke every case in
+  /// `plan_canvas_screen_test.dart`, whose harness documents an identity
+  /// viewport so its coordinates can be written in the underlay's own
+  /// pixels.
+  void _seedViewport(Size viewportSize) {
+    if (viewportSize.isEmpty) return;
+    if (widget.viewport.hasBeenPositioned) return;
+    // DEFERRED PAST THE FRAME, on the rack's own reason: a
+    // `ChangeNotifier` notified during layout rebuilds its listeners
+    // mid-pass.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (widget.viewport.hasBeenPositioned) return;
+      _fitPlan(viewportSize);
+    });
+  }
+
+  /// Frames the whole picture, clear of the chrome pinned over it.
+  ///
+  /// **BELOW THE HUD, WHICH THE RACK LEARNED THE EXPENSIVE WAY.** Framing
+  /// into the raw box puts the top edge of the picture underneath the
+  /// floating zoom card, and `rack_canvas_screen.dart` records what that
+  /// cost there: an 8px resize band landed under a `Card` and a shipped
+  /// gesture became unreachable, because the pointer never arrived. A plan
+  /// is worse off than a rack for it, since a mark may sit anywhere in the
+  /// picture including the corner the card covers.
+  ///
+  /// ONE METHOD FOR THE OPENING FRAME AND THE BUTTON, so `Fit` returns to
+  /// the view a plan opens in rather than to a slightly different one.
+  void _fitPlan(Size viewportSize) {
+    final free = Size(
+      viewportSize.width,
+      math.max(1, viewportSize.height - _kPlanTopChromeInset),
+    );
+    widget.viewport
+      ..fitToContent(_underlayBox, free)
+      ..panBy(const Offset(0, _kPlanTopChromeInset));
+  }
+
+  /// The underlay's own pixel extent, which is what Fit frames.
+  ///
+  /// **THE PICTURE, NOT THE SCENE'S BOUNDS.** They are the same box today
+  /// and `plan_sheet.dart` carries the argument in full: a pin dragged off
+  /// the edge must not rescale the drawing, so the day a scene builder
+  /// starts unioning markers into its bounds, framing the picture is
+  /// already the right answer here.
+  Box get _underlayBox => Box.fromLtwh(
+    0,
+    0,
+    widget.underlay.pixelWidth,
+    widget.underlay.pixelHeight,
+  );
+
+  /// The marker radius in SCENE units that draws [kPlanMarkerRadiusPt] on
+  /// screen at the current zoom.
+  ///
+  /// **ONE PLACE COMPUTES IT, WHICH IS A RULING AND NOT A TIDINESS**
+  /// (§11.168.2). This screen builds the scene in three methods: the hit
+  /// test, the marquee's catch and the paint. A radius computed separately
+  /// in each is a hit box that can disagree with the mark drawn, and that
+  /// disagreement is invisible: the mark looks right and the clicks land
+  /// somewhere else. `#895` was the same class of defect with the two
+  /// still in agreement.
+  double get _markerRadius => kPlanMarkerRadiusPt / widget.viewport.scale;
 
   /// Writes the dragged corner, and re-derives the figure it changed.
   ///
@@ -1234,7 +1368,11 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
 
   @override
   Widget build(BuildContext context) {
-    final built = buildPlanScene(underlay: widget.underlay, pins: _pins);
+    final built = buildPlanScene(
+      underlay: widget.underlay,
+      pins: _pins,
+      markerRadius: _markerRadius,
+    );
     final canvas = MouseRegion(
       // TRACKS THE POINTER ONLY WHILE A PICK IS WAITING FOR ITS SECOND
       // CLICK. `CanvasIntentHandler` reports drags and never hovers, so
@@ -1277,7 +1415,31 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
         child: Focus(
           focusNode: _canvasFocus,
           autofocus: true,
-          child: _withChrome(canvas),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final viewportSize = constraints.biggest;
+              _seedViewport(viewportSize);
+              return Stack(
+                children: [
+                  Positioned.fill(child: _withChrome(canvas)),
+                  // THE SAME HUD THE RACK HAS, in the same corner, saying
+                  // the same three things (`#898`, DR-169 §11.168.3). A
+                  // second control doing this job in a different shape
+                  // would be two answers to one question.
+                  Positioned(
+                    left: 12,
+                    top: 12,
+                    child: ViewportHud(
+                      viewport: widget.viewport,
+                      fitTooltip: 'Fit the plan',
+                      onReset: widget.viewport.reset,
+                      onFit: () => _fitPlan(viewportSize),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
       ),
     );
