@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-09-14 (thirty-ninth entry)
+
+* **Closed**: `#904` with `77eab81`. A printed plan mark is the round end of
+  its callout pill, the user's decision, recorded as canon §11.168.10 and as a
+  relation rather than a number, since the pill itself awaits `PLAN-J`'s print.
+  **No version move**: it closes under `#786`.
+* **Created**: `#905`, the mark's line weight, which did not move with its
+  radius. On a 6600x5100 scan a device's ring and an outlet's outline both
+  print at the 0.5-point floor, so a device prints like a drop.
+* **Note**: **THE CHAPTER WAS WRONG TWICE, AND THE CODE SAID SO.** It put
+  today's printed mark at about 5.3 points against a page area `T1.01` does not
+  use (the common 4:3 plan printed at 6.87), and it said the fit was computed
+  just before the scene build when it was computed from the scene.
+* **Note**: **A TEST THAT PINS A DEFAULT KEEPS A RETIRED RULE ALIVE.**
+  `plan_scene_test.dart` went on asserting proportionate marks after §11.168.2
+  retired them, because the sheet was still the default's caller.
+* **Update**: [DR-169](/decisions/dr-169-a-plan-mark-says-what-it-is.md) gains
+  the printed half, and [A test that counts the mechanism will certify the
+  defect](/practices/assert-the-artifact-not-the-mechanism.md) gains a fifth
+  mouth.
+
 ## 2026-09-14 (thirty-eighth entry)
 
 * **Reopened**: `#896`, and closed again with `#903` (`60893c0`). §11.168.2's

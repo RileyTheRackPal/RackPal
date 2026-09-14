@@ -1,7 +1,7 @@
 ---
 type: Playbook
 title: A test that counts the mechanism will certify the defect
-description: A test asserted "one corridor per pin", passed, and the sheet drew a fifth of its ink twice — because the reader sees overlapping wires, not corridor counts. Three mouths to the trap, the third being parts that are each right while the compound claim is never asserted.
+description: A test asserted "one corridor per pin", passed, and the sheet drew a fifth of its ink twice — because the reader sees overlapping wires, not corridor counts. Several mouths to the trap, among them parts that are each right while the compound claim is never asserted, and a test that pins a default a later ruling retired.
 tags: [practice, testing, mutation-testing, schematic, exit-criteria]
 timestamp: 2026-08-09T00:00:00Z
 status: adopted
@@ -119,6 +119,21 @@ called `THE HIT BOX FOLLOWS THE MARK AT EVERY ZOOM` and never zoomed. A name
 claiming a range that the body never visits is the cheapest audit there is:
 grep the suite for `every`, `any` and `at all` and check each one moves.
 
+# And a fifth: the test that keeps a retired rule alive
+
+DR-169 §11.168.2 retired the proportional marker, and said *"retired, not
+re-tuned"*. The scene builder kept it as a DEFAULT, and `plan_scene_test.dart`
+went on asserting it: *"a 4000px plan and a 600px plan get proportionate
+marks"*. Green, and accurate about the code, for as long as the sheet stayed
+that default's silent last caller (`#904`).
+
+**A test that pins a default protects the default, not the ruling.** Deleting
+the retired rule is exactly what turns that case red, so the suite argued for
+keeping the thing the ruling had removed, and anybody reading it would take the
+property as intended. The tell is a case whose NAME states a property a later
+ruling reverses. When a ruling retires a rule, grep the case names for it the
+same way the census greps the tree.
+
 # Where this does not apply
 
 An artifact-level assertion is not always available, and inventing a bad one is
@@ -139,3 +154,6 @@ mechanisms on principle.
 [5] `packages/rackpal_ui/test/canvas/plan/plan_canvas_screen_test.dart`, the
     group headed *"the mark is a constant size on screen"*, and commit
     `60893c0` (`#903`), which carries the 7-and-28 measurement
+[6] `packages/rackpal_core/test/scene/plan_scene_test.dart`, the group headed
+    *"the marker is the size its caller says"*, and commit `77eab81` (`#904`),
+    which deleted the case that certified the retired rule

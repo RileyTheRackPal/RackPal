@@ -636,9 +636,16 @@ is massive"*. Zooming in shows more PLAN, not a bigger dot, which is the rule
 point size by the zoom in `build`, and `RenderPlanCanvas` listens to the viewport with
 `markNeedsPaint`, so a zoom redrew the scene already in the tree and the mark was **7 points at 1:1
 and 28 at 400%** for a day. `#903` made the canvas rebuild on a change of scale, as
-`PlanOutlineLayer` and the rack canvas both already did. **The sheet's half of the same clause is not
-built**: `plan_sheet.dart` passes no radius and still takes the fraction, so a printed mark varies
-with the underlay's aspect ratio (docs/12 §5.9.46.4).
+`PlanOutlineLayer` and the rack canvas both already did.
+
+**ON PAPER A MARK IS THE ROUND END OF ITS CALLOUT PILL** (§11.168.10, `#904`). This paragraph said
+the sheet's half of the clause was unbuilt, and it was: `plan_sheet.dart` passed no radius and took
+1/110 of the underlay's longer side, which printed at 6.87 points on a 2000x1500 plan and 5.15 on
+1500x2000. The sheet now divides `kPlanMarkPrintRadiusPt` by its own fit, and that constant is
+derived from the pill's height rather than written beside it, so a pill `PLAN-J`'s print re-tunes
+carries the mark with it. **The outline's weight did not move with the radius**: it is still in
+scene units and rides the fit, which on a 6600x5100 scan prints a device's ring and an outlet's
+outline at the same 0.5-point floor (`#905`).
 
 **AN UNKNOWN DOMAIN DRAWS THE NEUTRAL MARK AND NO GLYPH** (G4/CR-114), and is never filled in from
 the ports. That is a real state: the three passive panels carry no signal at all, an outlet built by
