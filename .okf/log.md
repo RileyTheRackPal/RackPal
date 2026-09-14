@@ -1,5 +1,27 @@
 # Update Log
 
+## 2026-09-14 (fortieth entry)
+
+* **Closed**: `#905` with `222cf31`. A plan mark's line weight is the drafting
+  weight, the user's decision, recorded as canon §11.168.11: a drop at the base
+  signal line and a device at twice it, constant on paper and on screen. **No
+  version move**: it closes under `#786`.
+* **Note**: **A TRANSFORM LAYER HIDES THE ZOOM FROM THE CANVAS.** The editor
+  canvases zoom in a `pushTransform` layer above a cached picture, so
+  `FlutterDiagramCanvas`'s stroke rules read scale 1 at every zoom. Dividing a
+  width by the zoom, the way the radius works, would have been floored back up
+  from 400%. Found by a probe before any fix was written, and `outerScale` now
+  tells the canvas.
+* **Note**: **A PROBE THAT WATCHES THE WRONG CALL REPORTS A CLEAN SCREEN.** The
+  first recorded no stroked circle, because a circle strokes through `drawPath`
+  and not `drawCircle`. It was rewritten to log every call before any reading
+  was believed.
+* **Note**: **THE OPTIONS WERE DRAWN, AND THEY LOST ON ARITHMETIC.** Network's
+  square glyph reaches 0.813 of the radius, which caps a ring at about 37% of
+  it, and today's look at 100% had already crossed that.
+* **Update**: [DR-169](/decisions/dr-169-a-plan-mark-says-what-it-is.md) gains
+  the line weight and the corner that caps it.
+
 ## 2026-09-14 (thirty-ninth entry)
 
 * **Closed**: `#904` with `77eab81`. A printed plan mark is the round end of

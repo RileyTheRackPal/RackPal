@@ -42,6 +42,9 @@ Both facts were measured on the day, not inferred from the complaint.
 - **On paper, a mark is the round end of its callout pill** (§11.168.10, added
   2026-09-14 at `#904`). A relation and not a number: the pill's own type size
   awaits `PLAN-J`'s print, so the mark is derived from the pill and follows it.
+- **A mark's line weight is the drafting weight** (§11.168.11, added
+  2026-09-14 at `#905`): a drop at the base signal line and a device at twice
+  it, constant on paper and on screen, at every zoom and on every scan.
 
 # The printed half, which arrived a day later
 
@@ -57,10 +60,25 @@ before" the scene build when the fit was computed FROM the scene. The fix fits
 first, and `markerRadius` is now required, so a surface that forgets to state
 its scale does not compile.
 
-**The outline did not come with the radius.** It is still in scene units, so a
-device's ring and an outlet's outline both print at the 0.5-point floor on a
-6600x5100 scan and a device prints like a drop. That weight is the user's call,
-and is `#905`.
+**The outline did not come with the radius**, and became `#905`. It was still
+in scene units, so a device's ring and an outlet's outline both printed at the
+0.5-point floor on a 6600x5100 scan and a device printed like a drop.
+
+# The line weight, and the corner that caps it
+
+The user chose drafting weights from three drawn side by side: a drop at the
+base signal line and a device at twice it, which is 0.7 and 1.4 points on paper
+and one and two pixels on screen. **The alternatives lost on arithmetic, not
+taste.** Matching the pill's 0.5-point hairline put a drop exactly on the print
+floor and a device 0.375 points from it. Freezing today's look at 100% ran the
+ring into the corners of the square glyph, which reach 0.813 of the radius and
+belong to Network, the commonest drop there is.
+
+**The screen half hid behind a transform layer.** The plan canvas zooms above
+its cached picture, so `FlutterDiagramCanvas` decided stroke widths and the 0.5
+floor at scale 1 whatever the zoom. Dividing a pixel by the zoom in the caller
+would have been floored back to two pixels at 400%. The canvas now takes the
+layer's scale as `outerScale`, and the marks use `scaleWithGeometry: false`.
 
 # The census that refused the derivation
 

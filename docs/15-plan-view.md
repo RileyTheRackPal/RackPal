@@ -643,9 +643,15 @@ the sheet's half of the clause was unbuilt, and it was: `plan_sheet.dart` passed
 1/110 of the underlay's longer side, which printed at 6.87 points on a 2000x1500 plan and 5.15 on
 1500x2000. The sheet now divides `kPlanMarkPrintRadiusPt` by its own fit, and that constant is
 derived from the pill's height rather than written beside it, so a pill `PLAN-J`'s print re-tunes
-carries the mark with it. **The outline's weight did not move with the radius**: it is still in
-scene units and rides the fit, which on a 6600x5100 scan prints a device's ring and an outlet's
-outline at the same 0.5-point floor (`#905`).
+carries the mark with it.
+
+**AND ITS LINE WEIGHT IS CONSTANT ON BOTH SURFACES** (§11.168.11, `#905`). A drop is outlined at the
+base signal weight on paper and one pixel on screen, and a device is ringed at twice that, at every
+zoom and on every scan. Both were a stroke of 2 scene units that rode the fit and the zoom, and on a
+6600x5100 scan a device printed exactly like a drop. The strokes are emitted with
+`scaleWithGeometry: false`, and `RenderPlanCanvas` passes its zoom to `FlutterDiagramCanvas` as
+`outerScale`, because the zoom sits in a transform layer the canvas's own stack cannot see. The ring
+stays under about 37% of the radius, so it never reaches the corners of Network's square glyph.
 
 **AN UNKNOWN DOMAIN DRAWS THE NEUTRAL MARK AND NO GLYPH** (G4/CR-114), and is never filled in from
 the ports. That is a real state: the three passive panels carry no signal at all, an outlet built by
