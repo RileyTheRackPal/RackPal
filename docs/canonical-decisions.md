@@ -21320,6 +21320,55 @@ sits; a set inside a collapsed bank, which draws no pin to bracket; the drawn-wi
 gesture that drags an unwired member onto a wired one (DR-014 §11.14.7), which needs its own ruling if
 this work shows it is wanted.
 
+### 11.174 DR-175 · The registry parity gate holds the seed to the specification's family table for the descriptive fields
+
+**The question.** Board `#81`, filed on 2026-07-28 from the DR-010 agent's mutation M13.
+`tools/registry_parity.py` checks the Dart seed against `tools/pal1_check.py` on hue, dash and weight,
+and its own record calls it *"deliberately blind"* to a family's display name, short tag, default
+connector, default direction, default topology and glyph, because that authority carries none of them.
+Those fields were pinned only by the starter and fixture goldens, and a golden failure says to
+regenerate the asset, which is how a typo ships.
+
+**11.174.1 MEASURED FIRST**, on 2026-09-15 over `e9c7200`:
+
+- `docs/catalog/seed-devices.md` §4.4 tabulates every seeded family: 57 rows against the seed's 57
+  `_family` calls, with columns for display name, default connector, direction, topology, tag and
+  glyph.
+- **The table and the seed already agree** on every id in both directions, every tag and every
+  display name. Nine names differ only by markdown bold, and one connector cell is `—`, stating
+  nothing (`structure.pathway`).
+- **The Dir and Topo cells are prose around a leading symbol or word**, such as *"→ (+ARC ↔)"* and
+  *"BUS, topology-free"*. The leading one names the seed's value on every row: `→` src, `←` snk, `↔`
+  and `⤳` bi, `passive` pas; `P2P` p2p, `STAR` star, `MD` and `BUS` md.
+- **The seed stores no glyph per family** (DR-010 §11.10.3). The table's Glyph column is the domain's
+  glyph in its native or transported form.
+- The four starters and five core fixtures carry all 57 families' descriptive fields, which is why
+  their goldens were the only thing a change there moved.
+
+**11.174.2 RULED 2026-09-15: THE GATE COMPARES THE SEED WITH §4.4 FOR THE DESCRIPTIVE FIELDS.** Settled
+by the user. `registry_parity.py` reads the §4.4 table and fails when the seed and the table disagree
+on a family's display name, default connector or tag, compared exactly once markdown emphasis and code
+marks are removed, or on its direction or topology, read from the cell's leading symbol or word. The
+id sets must match in both directions, so a table the gate cannot read fails rather than passing. A
+typo now has to be made in both the specification and the code to get through, and the failure names
+both files instead of a starter. Offered and refused:
+
+- **A committed snapshot of the descriptive fields** with its own failure message: a new copy of 285
+  values that can still be regenerated past.
+- **Rewording the golden failures only**: no gate, and it relies on the message being read.
+- **Keeping the gate blind** and closing `#81`: the laundering path its own record describes stays
+  open.
+
+**11.174.3 THE GATE DOES NOT SAY WHICH FILE IS WRONG.** For the numeric half `pal1_check.py` is the
+authority and the seed yields to it. For the descriptive half neither file is: a disagreement is fixed
+in whichever of the two is wrong, in one commit, and never by regenerating a starter.
+
+**11.174.4 Scope.** **No scope change**: a CI gate's coverage. Board `#81` cites this ruling.
+
+**What this does not rule.** The glyph, which the seed does not store per family; the numeric half,
+which stays with `pal1_check.py`; the `SignalFamilyDef` fields §4.4 does not tabulate, such as typical
+media and run lengths; and the starter golden's own failure wording.
+
 ---
 
 ## 12. Superseded rulings
