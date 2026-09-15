@@ -25,14 +25,22 @@
 // says, which `schematic_remedy_test.dart`'s own header records happening
 // to its first draft.
 //
-//   CON-001  V01.aud.out.1 (audio.line_bal / euroblock_3)
-//              -> A04.bal.l (audio.line_bal / xlr3)
+//   CON-001  V05.audio.out (audio.line_bal / euroblock_5)
+//              -> A03.in.1 (audio.line_bal / euroblock_3)
 //   SIG-002  V01.hdbt.out.1 (video.hdbaset / rj45)
 //              -> V02.hdmi.in.1 (video.hdmi.2_0 / hdmi_a)
 //
 // Same family and different connector for the first; different family for
 // the second. That is the split CR-015 makes, arriving from the catalogue
 // rather than from an argument.
+//
+// THE CON-001 PAIR MOVED AT DR-173 (#112), AND THE RE-RUN CENSUS CHOSE IT.
+// It was V01.aud.out.1 -> A04.bal.l until V01's zone audio became an
+// atomic L/R pair. A drag from a set member takes the SET gesture, and
+// that gesture does not consult tier 2 at all (#909), so no chip could be
+// raised through it. Swept again over ports in no atomic set, same family
+// and different connector, the audio domain has exactly one shape left:
+// V05's 5-pin stereo output into a 3-pin input, on A03 or A05.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -79,7 +87,7 @@ void main() {
       meta: EntityMeta(createdAt: at, updatedAt: at, updatedBy: 'test'),
     );
     final catalog = buildSeedCatalog();
-    for (final id in ['V01', 'V02', 'A04']) {
+    for (final id in ['V01', 'V02', 'V05', 'A03']) {
       d.templates[templateKey(id, 1)] = TemplateSnapshot(
         templateId: TemplateId(id),
         version: 1,
@@ -168,7 +176,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  const conPair = (('V01', 'aud.out.1'), ('A04', 'bal.l'));
+  const conPair = (('V05', 'audio.out'), ('A03', 'in.1'));
   const sigPair = (('V01', 'hdbt.out.1'), ('V02', 'hdmi.in.1'));
 
   group('CON-001 offers to declare the adapter, and does', () {
@@ -199,8 +207,8 @@ void main() {
       final link = doc.links.values.single;
       expect(link.inlineAdapters, hasLength(1));
       final adapter = link.inlineAdapters.single;
-      expect(adapter.fromConnector.v, 'conn.euroblock_3');
-      expect(adapter.toConnector.v, 'conn.xlr3');
+      expect(adapter.fromConnector.v, 'conn.euroblock_5');
+      expect(adapter.toConnector.v, 'conn.euroblock_3');
       expect(adapter.satisfiesRuleIds, ['CON-001']);
       expect(
         adapter.model,
@@ -212,13 +220,13 @@ void main() {
       // cable it produced.
       final from = resolveConnectTarget(
         doc,
-        deviceId: deviceOf('V01').id,
-        portKey: 'aud.out.1',
+        deviceId: deviceOf('V05').id,
+        portKey: 'audio.out',
       )!;
       final to = resolveConnectTarget(
         doc,
-        deviceId: deviceOf('A04').id,
-        portKey: 'bal.l',
+        deviceId: deviceOf('A03').id,
+        portKey: 'in.1',
       )!;
       expect(
         evaluateSpringBack(doc, from, to, ontoLink: link.id),

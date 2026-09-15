@@ -3819,7 +3819,7 @@
         "conductors": [
           {
             "from": {
-              "portId": "dce1689b-e2cd-5d45-8b9c-bbd9ac2593a5",
+              "portId": "dcc644da-d922-5774-b628-44cda2b3b48a",
               "type": "port"
             },
             "role": "",
@@ -3853,7 +3853,7 @@
         "conductors": [
           {
             "from": {
-              "portId": "2bbbf136-2e46-545e-ba50-8b81e95e21de",
+              "portId": "692aedda-b9c9-57e1-a1ec-030dc5614875",
               "type": "port"
             },
             "role": "",
@@ -3887,7 +3887,7 @@
         "conductors": [
           {
             "from": {
-              "portId": "f8262fc5-d50b-5daf-89d9-a0f6f2d885da",
+              "portId": "d951fbb8-ac79-51ec-8e10-2580cdf94281",
               "type": "port"
             },
             "role": "",
@@ -3921,7 +3921,7 @@
         "conductors": [
           {
             "from": {
-              "portId": "897acb45-a238-5e17-8d73-e2340e9d419f",
+              "portId": "21dde8df-7bb4-528d-8871-6ed739be377a",
               "type": "port"
             },
             "role": "",
@@ -3955,7 +3955,7 @@
         "conductors": [
           {
             "from": {
-              "portId": "1ed83732-7525-50ea-a08e-19f787dc5b71",
+              "portId": "65053f05-6a0b-5f28-a433-cd703f00593e",
               "type": "port"
             },
             "role": "",
@@ -3989,7 +3989,7 @@
         "conductors": [
           {
             "from": {
-              "portId": "5f8023f6-7b15-5b71-a901-4c56ef1b501a",
+              "portId": "1c9835ea-04dc-5da6-8f79-6d39c2e57e26",
               "type": "port"
             },
             "role": "",
@@ -4023,7 +4023,7 @@
         "conductors": [
           {
             "from": {
-              "portId": "520bf7f8-650b-5751-909e-71ff14827d42",
+              "portId": "21ab5160-3d68-5677-8a90-11f2bc3bde04",
               "type": "port"
             },
             "role": "",
@@ -4057,7 +4057,7 @@
         "conductors": [
           {
             "from": {
-              "portId": "fa3b399a-35a9-54b9-bf36-8a1a46861308",
+              "portId": "fb8ae2a3-dd3f-5864-80ad-f41f9611472e",
               "type": "port"
             },
             "role": "",
@@ -13960,6 +13960,16 @@
         "templatePortKey": "rear.17",
         "unknown": {}
       },
+      "1c9835ea-04dc-5da6-8f79-6d39c2e57e26": {
+        "designator": "J32",
+        "deviceId": "0190f002-0000-7000-8000-000000000003",
+        "id": "1c9835ea-04dc-5da6-8f79-6d39c2e57e26",
+        "orphaned": false,
+        "overrides": {},
+        "reserved": false,
+        "templatePortKey": "aud.out.3.r",
+        "unknown": {}
+      },
       "1da0ddc0-2741-522c-ac39-5e97fe1991db": {
         "designator": "J01",
         "deviceId": "0190f003-0000-7000-8000-000000000093",
@@ -13998,16 +14008,6 @@
         "overrides": {},
         "reserved": false,
         "templatePortKey": "hdmi.out",
-        "unknown": {}
-      },
-      "1ed83732-7525-50ea-a08e-19f787dc5b71": {
-        "designator": "J31",
-        "deviceId": "0190f002-0000-7000-8000-000000000003",
-        "id": "1ed83732-7525-50ea-a08e-19f787dc5b71",
-        "orphaned": false,
-        "overrides": {},
-        "reserved": false,
-        "templatePortKey": "aud.out.5",
         "unknown": {}
       },
       "1f1122af-0afb-5726-b591-fd8055a863ae": {
@@ -14090,6 +14090,16 @@
         "templatePortKey": "spk.neg",
         "unknown": {}
       },
+      "21ab5160-3d68-5677-8a90-11f2bc3bde04": {
+        "designator": "J33",
+        "deviceId": "0190f002-0000-7000-8000-000000000003",
+        "id": "21ab5160-3d68-5677-8a90-11f2bc3bde04",
+        "orphaned": false,
+        "overrides": {},
+        "reserved": false,
+        "templatePortKey": "aud.out.4.l",
+        "unknown": {}
+      },
       "21b12ded-94b5-5f7f-93fe-348ae1bd295d": {
         "designator": "J35",
         "deviceId": "0190f002-0000-7000-8000-000000000010",
@@ -14098,6 +14108,16 @@
         "overrides": {},
         "reserved": false,
         "templatePortKey": "front.18",
+        "unknown": {}
+      },
+      "21dde8df-7bb4-528d-8871-6ed739be377a": {
+        "designator": "J30",
+        "deviceId": "0190f002-0000-7000-8000-000000000003",
+        "id": "21dde8df-7bb4-528d-8871-6ed739be377a",
+        "orphaned": false,
+        "overrides": {},
+        "reserved": false,
+        "templatePortKey": "aud.out.2.r",
         "unknown": {}
       },
       "22626eb6-fb0d-538f-993e-c708f2b4e05e": {
@@ -14358,16 +14378,6 @@
         "overrides": {},
         "reserved": false,
         "templatePortKey": "hdmi.3",
-        "unknown": {}
-      },
-      "2bbbf136-2e46-545e-ba50-8b81e95e21de": {
-        "designator": "J28",
-        "deviceId": "0190f002-0000-7000-8000-000000000003",
-        "id": "2bbbf136-2e46-545e-ba50-8b81e95e21de",
-        "orphaned": false,
-        "overrides": {},
-        "reserved": false,
-        "templatePortKey": "aud.out.2",
         "unknown": {}
       },
       "2d3b1e0a-b155-58ab-a149-8115fcd2e518": {
@@ -15080,16 +15090,6 @@
         "templatePortKey": "access.36",
         "unknown": {}
       },
-      "520bf7f8-650b-5751-909e-71ff14827d42": {
-        "designator": "J33",
-        "deviceId": "0190f002-0000-7000-8000-000000000003",
-        "id": "520bf7f8-650b-5751-909e-71ff14827d42",
-        "orphaned": false,
-        "overrides": {},
-        "reserved": false,
-        "templatePortKey": "aud.out.7",
-        "unknown": {}
-      },
       "5248c7ba-d466-5691-88d5-24579a4e7132": {
         "designator": "J02",
         "deviceId": "0190f002-0000-7000-8000-000000000014",
@@ -15460,16 +15460,6 @@
         "templatePortKey": "cresnet",
         "unknown": {}
       },
-      "5f8023f6-7b15-5b71-a901-4c56ef1b501a": {
-        "designator": "J32",
-        "deviceId": "0190f002-0000-7000-8000-000000000003",
-        "id": "5f8023f6-7b15-5b71-a901-4c56ef1b501a",
-        "orphaned": false,
-        "overrides": {},
-        "reserved": false,
-        "templatePortKey": "aud.out.6",
-        "unknown": {}
-      },
       "5fb44642-74b5-5523-9efc-57f960fa1f93": {
         "designator": "J02",
         "deviceId": "0190f003-0000-7000-8000-000000000029",
@@ -15610,6 +15600,16 @@
         "templatePortKey": "step3.out.3",
         "unknown": {}
       },
+      "65053f05-6a0b-5f28-a433-cd703f00593e": {
+        "designator": "J31",
+        "deviceId": "0190f002-0000-7000-8000-000000000003",
+        "id": "65053f05-6a0b-5f28-a433-cd703f00593e",
+        "orphaned": false,
+        "overrides": {},
+        "reserved": false,
+        "templatePortKey": "aud.out.3.l",
+        "unknown": {}
+      },
       "651ae436-ca02-57ad-a0d1-d83e6645d301": {
         "designator": "J02",
         "deviceId": "0190f003-0000-7000-8000-000000000047",
@@ -15678,6 +15678,16 @@
         "overrides": {},
         "reserved": false,
         "templatePortKey": "front.3",
+        "unknown": {}
+      },
+      "692aedda-b9c9-57e1-a1ec-030dc5614875": {
+        "designator": "J28",
+        "deviceId": "0190f002-0000-7000-8000-000000000003",
+        "id": "692aedda-b9c9-57e1-a1ec-030dc5614875",
+        "orphaned": false,
+        "overrides": {},
+        "reserved": false,
+        "templatePortKey": "aud.out.1.r",
         "unknown": {}
       },
       "6977d546-ce58-5acb-be28-ba6c45d311da": {
@@ -16388,16 +16398,6 @@
         "overrides": {},
         "reserved": false,
         "templatePortKey": "rf.in",
-        "unknown": {}
-      },
-      "897acb45-a238-5e17-8d73-e2340e9d419f": {
-        "designator": "J30",
-        "deviceId": "0190f002-0000-7000-8000-000000000003",
-        "id": "897acb45-a238-5e17-8d73-e2340e9d419f",
-        "orphaned": false,
-        "overrides": {},
-        "reserved": false,
-        "templatePortKey": "aud.out.4",
         "unknown": {}
       },
       "8a02325b-a111-5608-877a-db870f537afa": {
@@ -18190,6 +18190,16 @@
         "templatePortKey": "access.33",
         "unknown": {}
       },
+      "d951fbb8-ac79-51ec-8e10-2580cdf94281": {
+        "designator": "J29",
+        "deviceId": "0190f002-0000-7000-8000-000000000003",
+        "id": "d951fbb8-ac79-51ec-8e10-2580cdf94281",
+        "orphaned": false,
+        "overrides": {},
+        "reserved": false,
+        "templatePortKey": "aud.out.2.l",
+        "unknown": {}
+      },
       "d98dbb1e-9611-5904-89a7-f98101e8c120": {
         "designator": "J35",
         "deviceId": "0190f002-0000-7000-8000-000000000006",
@@ -18290,14 +18300,14 @@
         "templatePortKey": "uplink.1",
         "unknown": {}
       },
-      "dce1689b-e2cd-5d45-8b9c-bbd9ac2593a5": {
+      "dcc644da-d922-5774-b628-44cda2b3b48a": {
         "designator": "J27",
         "deviceId": "0190f002-0000-7000-8000-000000000003",
-        "id": "dce1689b-e2cd-5d45-8b9c-bbd9ac2593a5",
+        "id": "dcc644da-d922-5774-b628-44cda2b3b48a",
         "orphaned": false,
         "overrides": {},
         "reserved": false,
-        "templatePortKey": "aud.out.1",
+        "templatePortKey": "aud.out.1.l",
         "unknown": {}
       },
       "dd0ea122-feea-528f-9839-9e6d96d91d79": {
@@ -18920,16 +18930,6 @@
         "templatePortKey": "hdmi.out",
         "unknown": {}
       },
-      "f8262fc5-d50b-5daf-89d9-a0f6f2d885da": {
-        "designator": "J29",
-        "deviceId": "0190f002-0000-7000-8000-000000000003",
-        "id": "f8262fc5-d50b-5daf-89d9-a0f6f2d885da",
-        "orphaned": false,
-        "overrides": {},
-        "reserved": false,
-        "templatePortKey": "aud.out.3",
-        "unknown": {}
-      },
       "f8b8f7d3-7efd-5c67-9f3b-9ce77865b1bb": {
         "designator": "J30",
         "deviceId": "0190f002-0000-7000-8000-000000000006",
@@ -18980,16 +18980,6 @@
         "templatePortKey": "front.4",
         "unknown": {}
       },
-      "fa3b399a-35a9-54b9-bf36-8a1a46861308": {
-        "designator": "J34",
-        "deviceId": "0190f002-0000-7000-8000-000000000003",
-        "id": "fa3b399a-35a9-54b9-bf36-8a1a46861308",
-        "orphaned": false,
-        "overrides": {},
-        "reserved": false,
-        "templatePortKey": "aud.out.8",
-        "unknown": {}
-      },
       "fa8e7c67-9445-5572-beb7-144e458d585c": {
         "designator": "J22",
         "deviceId": "0190f002-0000-7000-8000-000000000010",
@@ -19008,6 +18998,16 @@
         "overrides": {},
         "reserved": false,
         "templatePortKey": "ir.2",
+        "unknown": {}
+      },
+      "fb8ae2a3-dd3f-5864-80ad-f41f9611472e": {
+        "designator": "J34",
+        "deviceId": "0190f002-0000-7000-8000-000000000003",
+        "id": "fb8ae2a3-dd3f-5864-80ad-f41f9611472e",
+        "orphaned": false,
+        "overrides": {},
+        "reserved": false,
+        "templatePortKey": "aud.out.4.r",
         "unknown": {}
       },
       "fb9cbbf6-beeb-53f3-bb5a-5fc5f39e3aeb": {
@@ -25828,7 +25828,7 @@
               "collapseInSymbol": true,
               "key": "control",
               "label": "Control",
-              "order": "a0051",
+              "order": "a0067",
               "symbolSide": "left"
             },
             {
@@ -25836,7 +25836,7 @@
               "collapseInSymbol": true,
               "key": "power",
               "label": "Power",
-              "order": "a0055",
+              "order": "a0071",
               "symbolSide": "left"
             }
           ],
@@ -25857,7 +25857,104 @@
           "nominalSpanTwelfths": 12,
           "panelGraphics": [],
           "passthroughPairs": [],
-          "portSets": [],
+          "portSets": [
+            {
+              "atomicConnect": true,
+              "key": "zone1",
+              "kind": "stereoPair",
+              "label": "Output 1 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone2",
+              "kind": "stereoPair",
+              "label": "Output 2 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone3",
+              "kind": "stereoPair",
+              "label": "Output 3 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone4",
+              "kind": "stereoPair",
+              "label": "Output 4 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone5",
+              "kind": "stereoPair",
+              "label": "Output 5 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone6",
+              "kind": "stereoPair",
+              "label": "Output 6 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone7",
+              "kind": "stereoPair",
+              "label": "Output 7 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone8",
+              "kind": "stereoPair",
+              "label": "Output 8 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone9",
+              "kind": "stereoPair",
+              "label": "Output 9 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone10",
+              "kind": "stereoPair",
+              "label": "Output 10 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone11",
+              "kind": "stereoPair",
+              "label": "Output 11 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone12",
+              "kind": "stereoPair",
+              "label": "Output 12 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone13",
+              "kind": "stereoPair",
+              "label": "Output 13 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone14",
+              "kind": "stereoPair",
+              "label": "Output 14 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone15",
+              "kind": "stereoPair",
+              "label": "Output 15 audio pair"
+            },
+            {
+              "atomicConnect": true,
+              "key": "zone16",
+              "kind": "stereoPair",
+              "label": "Output 16 audio pair"
+            }
+          ],
           "ports": [
             {
               "acceptedFamilies": [],
@@ -26347,11 +26444,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.1",
-              "label": "AUD OUT 01",
+              "key": "aud.out.1.l",
+              "label": "AUD OUT 1 L",
               "maxConnections": 1,
               "order": "a0035",
               "renamedFrom": [],
+              "setKey": "zone1",
+              "setRole": "L",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26363,11 +26462,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.2",
-              "label": "AUD OUT 02",
+              "key": "aud.out.1.r",
+              "label": "AUD OUT 1 R",
               "maxConnections": 1,
               "order": "a0036",
               "renamedFrom": [],
+              "setKey": "zone1",
+              "setRole": "R",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26379,11 +26480,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.3",
-              "label": "AUD OUT 03",
+              "key": "aud.out.2.l",
+              "label": "AUD OUT 2 L",
               "maxConnections": 1,
               "order": "a0037",
               "renamedFrom": [],
+              "setKey": "zone2",
+              "setRole": "L",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26395,11 +26498,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.4",
-              "label": "AUD OUT 04",
+              "key": "aud.out.2.r",
+              "label": "AUD OUT 2 R",
               "maxConnections": 1,
               "order": "a0038",
               "renamedFrom": [],
+              "setKey": "zone2",
+              "setRole": "R",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26411,11 +26516,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.5",
-              "label": "AUD OUT 05",
+              "key": "aud.out.3.l",
+              "label": "AUD OUT 3 L",
               "maxConnections": 1,
               "order": "a0039",
               "renamedFrom": [],
+              "setKey": "zone3",
+              "setRole": "L",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26427,11 +26534,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.6",
-              "label": "AUD OUT 06",
+              "key": "aud.out.3.r",
+              "label": "AUD OUT 3 R",
               "maxConnections": 1,
               "order": "a0040",
               "renamedFrom": [],
+              "setKey": "zone3",
+              "setRole": "R",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26443,11 +26552,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.7",
-              "label": "AUD OUT 07",
+              "key": "aud.out.4.l",
+              "label": "AUD OUT 4 L",
               "maxConnections": 1,
               "order": "a0041",
               "renamedFrom": [],
+              "setKey": "zone4",
+              "setRole": "L",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26459,11 +26570,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.8",
-              "label": "AUD OUT 08",
+              "key": "aud.out.4.r",
+              "label": "AUD OUT 4 R",
               "maxConnections": 1,
               "order": "a0042",
               "renamedFrom": [],
+              "setKey": "zone4",
+              "setRole": "R",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26475,11 +26588,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.9",
-              "label": "AUD OUT 09",
+              "key": "aud.out.5.l",
+              "label": "AUD OUT 5 L",
               "maxConnections": 1,
               "order": "a0043",
               "renamedFrom": [],
+              "setKey": "zone5",
+              "setRole": "L",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26491,11 +26606,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.10",
-              "label": "AUD OUT 10",
+              "key": "aud.out.5.r",
+              "label": "AUD OUT 5 R",
               "maxConnections": 1,
               "order": "a0044",
               "renamedFrom": [],
+              "setKey": "zone5",
+              "setRole": "R",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26507,11 +26624,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.11",
-              "label": "AUD OUT 11",
+              "key": "aud.out.6.l",
+              "label": "AUD OUT 6 L",
               "maxConnections": 1,
               "order": "a0045",
               "renamedFrom": [],
+              "setKey": "zone6",
+              "setRole": "L",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26523,11 +26642,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.12",
-              "label": "AUD OUT 12",
+              "key": "aud.out.6.r",
+              "label": "AUD OUT 6 R",
               "maxConnections": 1,
               "order": "a0046",
               "renamedFrom": [],
+              "setKey": "zone6",
+              "setRole": "R",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26539,11 +26660,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.13",
-              "label": "AUD OUT 13",
+              "key": "aud.out.7.l",
+              "label": "AUD OUT 7 L",
               "maxConnections": 1,
               "order": "a0047",
               "renamedFrom": [],
+              "setKey": "zone7",
+              "setRole": "L",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26555,11 +26678,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.14",
-              "label": "AUD OUT 14",
+              "key": "aud.out.7.r",
+              "label": "AUD OUT 7 R",
               "maxConnections": 1,
               "order": "a0048",
               "renamedFrom": [],
+              "setKey": "zone7",
+              "setRole": "R",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26571,11 +26696,13 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.15",
-              "label": "AUD OUT 15",
+              "key": "aud.out.8.l",
+              "label": "AUD OUT 8 L",
               "maxConnections": 1,
               "order": "a0049",
               "renamedFrom": [],
+              "setKey": "zone8",
+              "setRole": "L",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26587,11 +26714,301 @@
               "direction": "source",
               "face": "rear",
               "gender": "genderless",
-              "key": "aud.out.16",
-              "label": "AUD OUT 16",
+              "key": "aud.out.8.r",
+              "label": "AUD OUT 8 R",
               "maxConnections": 1,
               "order": "a0050",
               "renamedFrom": [],
+              "setKey": "zone8",
+              "setRole": "R",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.9.l",
+              "label": "AUD OUT 9 L",
+              "maxConnections": 1,
+              "order": "a0051",
+              "renamedFrom": [],
+              "setKey": "zone9",
+              "setRole": "L",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.9.r",
+              "label": "AUD OUT 9 R",
+              "maxConnections": 1,
+              "order": "a0052",
+              "renamedFrom": [],
+              "setKey": "zone9",
+              "setRole": "R",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.10.l",
+              "label": "AUD OUT 10 L",
+              "maxConnections": 1,
+              "order": "a0053",
+              "renamedFrom": [],
+              "setKey": "zone10",
+              "setRole": "L",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.10.r",
+              "label": "AUD OUT 10 R",
+              "maxConnections": 1,
+              "order": "a0054",
+              "renamedFrom": [],
+              "setKey": "zone10",
+              "setRole": "R",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.11.l",
+              "label": "AUD OUT 11 L",
+              "maxConnections": 1,
+              "order": "a0055",
+              "renamedFrom": [],
+              "setKey": "zone11",
+              "setRole": "L",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.11.r",
+              "label": "AUD OUT 11 R",
+              "maxConnections": 1,
+              "order": "a0056",
+              "renamedFrom": [],
+              "setKey": "zone11",
+              "setRole": "R",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.12.l",
+              "label": "AUD OUT 12 L",
+              "maxConnections": 1,
+              "order": "a0057",
+              "renamedFrom": [],
+              "setKey": "zone12",
+              "setRole": "L",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.12.r",
+              "label": "AUD OUT 12 R",
+              "maxConnections": 1,
+              "order": "a0058",
+              "renamedFrom": [],
+              "setKey": "zone12",
+              "setRole": "R",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.13.l",
+              "label": "AUD OUT 13 L",
+              "maxConnections": 1,
+              "order": "a0059",
+              "renamedFrom": [],
+              "setKey": "zone13",
+              "setRole": "L",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.13.r",
+              "label": "AUD OUT 13 R",
+              "maxConnections": 1,
+              "order": "a0060",
+              "renamedFrom": [],
+              "setKey": "zone13",
+              "setRole": "R",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.14.l",
+              "label": "AUD OUT 14 L",
+              "maxConnections": 1,
+              "order": "a0061",
+              "renamedFrom": [],
+              "setKey": "zone14",
+              "setRole": "L",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.14.r",
+              "label": "AUD OUT 14 R",
+              "maxConnections": 1,
+              "order": "a0062",
+              "renamedFrom": [],
+              "setKey": "zone14",
+              "setRole": "R",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.15.l",
+              "label": "AUD OUT 15 L",
+              "maxConnections": 1,
+              "order": "a0063",
+              "renamedFrom": [],
+              "setKey": "zone15",
+              "setRole": "L",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.15.r",
+              "label": "AUD OUT 15 R",
+              "maxConnections": 1,
+              "order": "a0064",
+              "renamedFrom": [],
+              "setKey": "zone15",
+              "setRole": "R",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.16.l",
+              "label": "AUD OUT 16 L",
+              "maxConnections": 1,
+              "order": "a0065",
+              "renamedFrom": [],
+              "setKey": "zone16",
+              "setRole": "L",
+              "signalFamily": "audio.line_bal",
+              "topology": "p2p"
+            },
+            {
+              "acceptedFamilies": [],
+              "balanced": true,
+              "bankKey": "audOut",
+              "connector": "conn.euroblock_3",
+              "direction": "source",
+              "face": "rear",
+              "gender": "genderless",
+              "key": "aud.out.16.r",
+              "label": "AUD OUT 16 R",
+              "maxConnections": 1,
+              "order": "a0066",
+              "renamedFrom": [],
+              "setKey": "zone16",
+              "setRole": "R",
               "signalFamily": "audio.line_bal",
               "topology": "p2p"
             },
@@ -26605,7 +27022,7 @@
               "key": "lan",
               "label": "LAN",
               "maxConnections": 1,
-              "order": "a0052",
+              "order": "a0068",
               "renamedFrom": [],
               "signalFamily": "net.ethernet",
               "topology": "p2p"
@@ -26620,7 +27037,7 @@
               "key": "rs232",
               "label": "RS-232",
               "maxConnections": 1,
-              "order": "a0053",
+              "order": "a0069",
               "renamedFrom": [],
               "signalFamily": "ctl.rs232",
               "topology": "p2p"
@@ -26637,7 +27054,7 @@
               "key": "ir.in",
               "label": "IR IN",
               "maxConnections": 1,
-              "order": "a0054",
+              "order": "a0070",
               "pinoutVariant": "mono-tip-sleeve",
               "renamedFrom": [],
               "signalFamily": "ctl.ir_direct",
@@ -26653,7 +27070,7 @@
               "key": "ac.in",
               "label": "AC IN",
               "maxConnections": 1,
-              "order": "a0056",
+              "order": "a0072",
               "power": {
                 "role": "inlet"
               },

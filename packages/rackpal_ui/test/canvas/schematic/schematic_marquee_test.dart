@@ -77,6 +77,26 @@ void main() {
       .firstWhere((s) => s.id == deviceNamed(doc, designator).id.v)
       .bodyRect;
 
+  /// A point on BARE SHEET above and to the left of [b], asserted to be ON
+  /// the canvas rather than assumed to be.
+  ///
+  /// It was `b.top - 400`, which sat on the canvas until DR-173 (`#112`)
+  /// doubled the matrix's zone ports. The sheet refitted to the taller
+  /// symbol, that point moved above the canvas into the toolbar, and the
+  /// drag raised no band there. The click test beside it went on passing,
+  /// because a click on the toolbar raises no band either: it had stopped
+  /// proving anything. A start that is not on the canvas now fails here,
+  /// with a reason, instead of reading as a marquee regression or a pass.
+  Offset bareStart(WidgetTester tester, DBox b) {
+    final start = toScreen(tester, DPt(b.left - 400, b.top - 300));
+    expect(
+      tester.getRect(find.byType(SchematicCanvasBody)).contains(start),
+      isTrue,
+      reason: 'the gesture must start ON the canvas, or it tests the toolbar',
+    );
+    return start;
+  }
+
   group('the schematic adopts the band (DR-139)', () {
     testWidgets('A DRAG ON THE BARE SHEET RAISES A BAND', (tester) async {
       // Before this chapter that drag reached `if (travelled > slopPx)
@@ -85,7 +105,7 @@ void main() {
       final b = bodyOf('MTX-1');
 
       final g = await tester.startGesture(
-        toScreen(tester, DPt(b.left - 400, b.top - 400)),
+        bareStart(tester, b),
       );
       await g.moveTo(toScreen(tester, DPt(b.left - 100, b.top - 100)));
       await tester.pump();
@@ -113,7 +133,7 @@ void main() {
       final b = bodyOf('MTX-1');
 
       final g = await tester.startGesture(
-        toScreen(tester, DPt(b.left - 400, b.top - 400)),
+        bareStart(tester, b),
       );
       await tester.pump();
       expect(find.byKey(MarqueeBand.bandKey), findsNothing);

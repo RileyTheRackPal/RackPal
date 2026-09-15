@@ -476,7 +476,7 @@ reachable: it puts `video.hdbaset` on `conn.rj45` in the same project as a switc
 8x HDMI-IN            "HDMI IN {n}"          @"HDMI Inputs"
 8x HDBT-OUT           "HDBT OUT {n}"         @"HDBaseT Outputs"        [poh:pse]
 8x HDMI-OUT           "HDMI OUT {n}"         @"Mirrored HDMI Outputs"
-8x EURO3-OUT          "AUD OUT {n}"          @"Zone Audio"             [bal]
+16x EURO3-OUT         "AUD OUT {n@2} {L,R}"  @"Zone Audio"             [bal, set:zone{n@2}/{L,R}, atomic]
 1x IRRX-IN            "IR IN"                @Control                  [pin:xantech-stereo]
 8x IR-OUT             "IR OUT {n}"           @Control                  [pin:mono-tip-sleeve]
 1x RJ45-BI            "LAN"                  @Control
@@ -489,6 +489,10 @@ reachable: it puts `video.hdbaset` on `conn.rj45` in the same project as a switc
 > who cannot draw that connection will not believe the rest of the catalog. Per AC-031 the
 > de-embedded zone audio, the eight IR outputs and the single IR input are equally
 > non-negotiable — a matrix modelled as 8 in + 8 out is a shape, not a device.
+>
+> Each zone's audio is an L/R pair on two 3-pin blocks in one atomic set (DR-173), because a
+> matrix de-embeds a zone in stereo. A device that splits a zone into independent channels is
+> authored as numbered mono channels instead.
 
 **V02 · HDMI Matrix 4×4**: `MTX` · `{1, 1, both}` · standard (280 mm + 62 mm) · 5.4 kg ·
 30 / 18 W · PF 950
@@ -513,7 +517,7 @@ reachable: it puts `video.hdbaset` on `conn.rj45` in the same project as a switc
 ```text
 16x HDMI-IN           "HDMI IN {n:2}"        @"HDMI Inputs"
 16x HDMI-OUT          "HDMI OUT {n:2}"       @"HDMI Outputs"
-16x EURO3-OUT         "AUD OUT {n:2}"        @"De-embedded Audio"      [bal]
+32x EURO3-OUT         "AUD OUT {n@2} {L,R}"  @"De-embedded Audio"      [bal, set:zone{n@2}/{L,R}, atomic]
 1x RJ45-BI            "LAN"                  @Control
 1x 232-BI             "RS-232"               @Control                  [dte]
 1x IRRX-IN            "IR IN"                @Control                  [pin:xantech-stereo]
@@ -2221,7 +2225,10 @@ one shown. The generator expands the §2 notation into exactly this.
       { "abbr": "PWR",  "collapseInSymbol": false, "key": "power",     "label": "Power",                  "order": "a5", "symbolSide": "bottom", "unknown": {} }
     ],
 
-    "portSets": [],
+    "portSets": [
+      { "atomicConnect": true, "key": "zone1", "kind": "stereoPair", "label": "Zone 1 audio pair", "unknown": {} }
+      // sets zone2 … zone8 differ only in key and label
+    ],
 
     "ports": [
       {
@@ -2305,17 +2312,19 @@ one shown. The generator expands the §2 notation into exactly this.
         "face": "rear",
         "gender": "male",
         "impedanceOhms": null,
-        "key": "aud.out.1",
-        "label": "AUD OUT 1",
+        "key": "aud.out.1.l",
+        "label": "AUD OUT 1 L",
         "level": "line",
         "maxConnections": 1,
         "order": "d0",
         "renamedFrom": [],
+        "setKey": "zone1",
+        "setRole": "L",
         "signalFamily": "audio.line_bal",
         "topology": "p2p",
         "unknown": {}
       },
-      // ports aud.out.2 … aud.out.8 differ only in key, label, designatorHint and order
+      // ports aud.out.1.r … aud.out.8.r differ only in key, label, setKey, setRole, designatorHint and order
 
       {
         "acceptedFamilies": ["ctl.ir_receiver"],
@@ -2429,7 +2438,7 @@ one shown. The generator expands the §2 notation into exactly this.
 ```
 
 > JSON does not permit comments. The `//` lines above are documentation of an elision in this
-> document only; the shipped file contains all 44 port objects. A generator test asserts that
+> document only; the shipped file contains all 52 port objects. A generator test asserts that
 > expanding the §3.1 V01 notation produces exactly this file, and a round-trip test asserts that
 > reading and re-emitting it is byte-identical.
 
@@ -2449,6 +2458,7 @@ one shown. The generator expands the §2 notation into exactly this.
 | `maxUnsupportedMassUg: 7000000000` with `weightUg: 7300000000` | 7.3 kg against a 7 kg front-ear limit: `RCK-013` warns on this template the moment it is rail-mounted without support (AC-028) |
 | `chassisWidthNm: 432000000` | Not 482.6 mm. The auto panel layout flows inside the chassis, not across the ears (AC-032) |
 | `connectorProjectionNm: 68000000` | Derived from the deepest rear connector on this panel, a C14 inlet at 60 mm and an HDMI plug at 100 mm would push it further; this template's deepest is the DE-9 shell plus cable bend |
+| `setKey: "zone1"`, `setRole: "L"` on `aud.out.1.l`, and `zone1` in `portSets` | A zone's left and right are one cable: `atomicConnect` makes one drag land both conductors, and dragging one half to another device splits the set (DR-173, DR-014) |
 | `key: "hdmi.in.1"`, `renamedFrom: []` | The migration join. A port renamed in v2 carries its old key here, and a removed port with conductors is **orphaned, never deleted**: there is no `[Del]` in the Update Manager (CR-052) |
 | `order: "a0"`, `"b0"`, `"e1"` | `FracIndex` strings, so inserting a port between two others never renumbers anything (CR-027) |
 | `unknown: {}` on every object | Forward compatibility. A v1 reader preserves and re-emits v2 keys it does not understand |
