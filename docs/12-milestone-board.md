@@ -11672,6 +11672,53 @@ the ruling's bound.
 
 **Commits** (§8.8): `#112` `a7c412b` (the ruling), `1788e3e` (the build).
 
+#### 5.9.54 `#111`: a set on one cable draws one pennant on a bracket · `DR-174` · no version move
+
+**DEMONSTRATED** by `net_label_layer_test.dart`'s DR-174 group: an intact pair draws one pennant per
+end, centred between its pins, with a spine at each end; a split set draws a pennant per pin and no
+spine; a partly wired two-conductor cable draws none; a top-edge set draws exactly what a one-conductor
+cable on its first pin draws; the pennant sits as far out as a split pin's; and the bracket's ink is
+inside the scene bounds.
+
+##### 5.9.54.1 A board ruling, recorded, then two questions
+
+The ticket said *"one pennant on a bracket spanning the set pins"*, only when the whole set is one
+cable, ruled by the user on 2026-08-01. Canon mentioned `#111` only as DR-014's deferral, so the
+ruling was recorded as DR-174 §11.173.2, as `#558`'s was. Two questions went to the user with the
+measured geometry, and both answers were the recommended option: the pennant centred on the bracket,
+and the bracket in the leader's signal colour.
+
+##### 5.9.54.2 What building it found
+
+- **One NUL byte hid the file from grep.** `_edgeKey` joined its parts with a raw 0x00 inside a
+  string, so grep and ripgrep read all 76 KB of `net_label_layer.dart` as binary. The first census for
+  "pennant" missed the file that draws them. Fixed first, in its own commit, with the escape `_pinKey`
+  already used.
+- **The label layer never saw an intact pair's second pin.** `_endsOf` labels a link by
+  `conductors.first`, so the bracket test has to read the document, not the drawing.
+- **The census's first figure was the default, not the edge.** It put all 70 seeded sets on the left,
+  because 155 of 159 banks store the undeclared `left` and `symbolSideForPort` falls through that
+  default to direction. Recomputed: 46 right, 24 left, none top or bottom, every set two adjacent pins
+  in one bank, 52 in banks that may collapse.
+- **The bracket fits inside the leader's room.** The spine sits halfway along the leader and the
+  pennant lands as far out as any other, so `netLabelGutterGu` needed no second formula.
+  `RenderedNetLabel.pinCentre` stays the first conductor's pin, which the wire trace and the hit tests
+  read; only the pennant box moves.
+- **No committed drawing moves.** The six multi-conductor links in the starters and fixtures all end
+  at field or unterminated endpoints, and the 300-link fixture has none.
+- **A dry run of the edit script caught a duplicated anchor.** `_pennantPath` opens with the same
+  statement as `emit`'s pennant line, so the script refused on the copy before touching the tree.
+- **Two analyzer infos, both copied or written in.** A doc reference to a record field, and a
+  redundant default argument copied from the existing fixture builder, whose original already sits
+  inside the pin.
+
+##### 5.9.54.3 Evidence
+
+- 17 gates green on the ruling alone, on the NUL fix alone, and on the build, every suite
+  exactly at its floor: rackpal_core 4747 -> 4753. Analyzer pin unmoved at 233.
+
+**Commits** (§8.8): `#111` `4550282` (the ruling), `4c08f9c` (the NUL fix), `28e2d35` (the build).
+
 
 ---
 

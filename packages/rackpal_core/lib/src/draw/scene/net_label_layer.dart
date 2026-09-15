@@ -178,6 +178,7 @@
 import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/derived/device_loads.dart' show templateKeyFor;
 import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
@@ -192,8 +193,10 @@ import 'package:rackpal_core/src/draw/spec.dart';
 import 'package:rackpal_core/src/draw/text.dart';
 import 'package:rackpal_core/src/model/conductor.dart';
 import 'package:rackpal_core/src/model/link.dart';
+import 'package:rackpal_core/src/model/port.dart' show Port, derivePortId;
 import 'package:rackpal_core/src/model/rack_document.dart';
-import 'package:rackpal_core/src/model/template.dart' show SymbolSide;
+import 'package:rackpal_core/src/model/template.dart'
+    show PortSetDef, SymbolSide;
 import 'package:rackpal_core/src/units/ids.dart';
 
 /// The stub and pennant figures, in the units each one is naturally
@@ -572,6 +575,7 @@ NetLabelLayerBuild buildNetLabelLayer({
           port: end.port,
           style: signal,
           netName: name ?? kUnknownCell,
+          bracket: end.bracket,
         ),
       );
     }
@@ -697,6 +701,7 @@ final class _Stub {
     required this.port,
     required this.style,
     required this.netName,
+    required this.bracket,
   });
 
   final Link link;
@@ -704,9 +709,19 @@ final class _Stub {
   final SymbolPort port;
   final SignalStyle style;
   final String netName;
+
+  /// The pins a DR-174 bracket spans at this end, in edge order, or empty.
+  final List<SymbolPort> bracket;
 }
 
-typedef _End = ({RenderedSymbol symbol, SymbolPort port});
+/// One end of a link that landed on a drawn pin. `bracket` is the pins a
+/// DR-174 bracket spans there, in edge order, or empty when it draws none;
+/// see [_bracketOf].
+typedef _End = ({
+  RenderedSymbol symbol,
+  SymbolPort port,
+  List<SymbolPort> bracket,
+});
 
 /// [link]'s ends that landed on a drawn pin, in conductor order (from,
 /// then to).
@@ -739,9 +754,87 @@ List<_End> _endsOf(
     final symbol = symbolById[port.deviceId.v];
     final pin = pinsOf[port.deviceId.v]?[key.v];
     if (symbol == null || pin == null) continue;
-    out.add((symbol: symbol, port: pin));
+    out.add((
+      symbol: symbol,
+      port: pin,
+      bracket: _bracketOf(link, doc, port, pin, pinsOf[port.deviceId.v]!),
+    ));
   }
   return out;
+}
+
+/// The pins a bracket spans at [port]'s end of [link], in edge order, or
+/// empty when that end draws no bracket (DR-174, canon §11.173).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A BRACKET ONLY WHEN THE WHOLE SET IS ONE CABLE, READ FROM THE DOCUMENT
+/// ═══════════════════════════════════════════════════════════════════════
+/// §11.173.2: every member of [port]'s atomic set must have a conductor end
+/// on [link]. The drawing cannot answer that, because this layer labels a
+/// link by its first conductor alone ([_endsOf]) and so never sees the
+/// second pin of an intact pair. A set split across cables (DR-014) or only
+/// partly wired fails the test and keeps a pennant per wired pin.
+///
+/// AND ONLY WHERE THE RULING REACHES: every member drawn as its own pin, on
+/// one LEFT or RIGHT edge. A top or bottom edge combs its pennants in lanes,
+/// and a collapsed bank draws no member pin to span, so both keep today's
+/// rendering, which §11.173 names as not ruled.
+List<SymbolPort> _bracketOf(
+  Link link,
+  RackDocument doc,
+  Port port,
+  SymbolPort pin,
+  Map<String, SymbolPort> pins,
+) {
+  const none = <SymbolPort>[];
+  if (link.conductors.length < 2) return none;
+  if (pin.side != SymbolSide.left && pin.side != SymbolSide.right) return none;
+  final key = port.templatePortKey;
+  final device = doc.devices[port.deviceId];
+  if (key == null || device == null) return none;
+  final body = doc.templates[templateKeyFor(device.templateRef)]?.body;
+  if (body == null) return none;
+
+  String? setKey;
+  for (final def in body.ports) {
+    if (def.key.v == key.v) {
+      setKey = def.setKey;
+      break;
+    }
+  }
+  if (setKey == null || setKey.isEmpty) return none;
+  PortSetDef? set;
+  for (final candidate in body.portSets) {
+    if (candidate.key == setKey) {
+      set = candidate;
+      break;
+    }
+  }
+  if (set == null || !set.atomicConnect) return none;
+
+  final landed = <Uuid>{};
+  for (final conductor in link.conductors) {
+    for (final endpoint in <Endpoint>[conductor.from, conductor.to]) {
+      if (endpoint is PortEndpoint) landed.add(endpoint.portId);
+    }
+  }
+  final members = <SymbolPort>[];
+  for (final def in body.ports) {
+    if (def.setKey != setKey) continue;
+    if (!landed.contains(derivePortId(device.id, def.key))) return none;
+    final member = pins[def.key.v];
+    if (member == null || member.side != pin.side) return none;
+    members.add(member);
+  }
+  if (members.length < 2) return none;
+  return members..sort((a, b) => a.offset.compareTo(b.offset));
+}
+
+/// The midpoint of [stub]'s first and last bracketed pins.
+DPt _bracketMidpoint(_Stub stub) {
+  final first = symbolPortCentre(stub.symbol, stub.bracket.first);
+  final last = symbolPortCentre(stub.symbol, stub.bracket.last);
+  return DPt((first.x + last.x) / 2, (first.y + last.y) / 2);
 }
 
 /// The family whose four channels [link] renders in.
@@ -1022,7 +1115,8 @@ int netLabelNodeGapGu({
 String _pinKey(String deviceId, String portKey) => '$deviceId\u0000$portKey';
 
 /// One symbol's one edge — the scope a comb's lane count is measured over.
-String _edgeKey(String deviceId, SymbolSide side) => '$deviceId ${side.index}';
+String _edgeKey(String deviceId, SymbolSide side) =>
+    '$deviceId\u0000${side.index}';
 
 /// How many depths [ports]' pennants must be spread across so that no two
 /// on this edge overprint.
@@ -1325,8 +1419,23 @@ final class _Emitter {
     final base = _consumed[pinKey] ?? 0.0;
     final edge = stub.port.size / 2;
 
-    final start = _along(centre, outward, edge + base);
-    final anchor = _along(centre, outward, edge + base + _leader + comb);
+    // ═══════════════════════════════════════════════════════════════
+    // A SET ON ONE CABLE HANGS ITS PENNANT FROM A BRACKET (DR-174)
+    // ═══════════════════════════════════════════════════════════════
+    // §11.173.3: the one pennant is centred on the bracket, so the leader
+    // runs out from the MIDPOINT of the member pins, not from this stub's
+    // own pin. How far out is unchanged, which is why [netLabelGutterGu]
+    // needs no second formula: the bracket's spine sits halfway along the
+    // leader, in room the leader already had.
+    //
+    // THE FIRST STUB ON A PIN ONLY. A second cable on the same pin marches
+    // outward as it always did, and a bracket under it would claim the set
+    // was on that cable too.
+    final bracketed = stub.bracket.isNotEmpty && base == 0;
+    final origin = bracketed ? _bracketMidpoint(stub) : centre;
+    final spine = edge + _leader / 2;
+    final start = _along(origin, outward, bracketed ? spine : edge + base);
+    final anchor = _along(origin, outward, edge + base + _leader + comb);
     _consumed[pinKey] = base + _leader + comb + extent + _gap;
 
     // ── channel 1/2/3: the leader ────────────────────────────────────
@@ -1341,6 +1450,34 @@ final class _Emitter {
         ),
       ),
     );
+
+    // §11.173.4: the bracket takes the leader's own stroke, so it reads as
+    // part of the cable's label and adds nothing PAL-1 reads. Ticks from
+    // each member pin out to the spine, then the spine joining them.
+    DBox? bracketInk;
+    if (bracketed) {
+      final stroke = Stroke(
+        argb: stub.style.argb,
+        widthPt: stub.style.widthPt,
+        dash: stub.style.dash,
+      );
+      final ends = <DPt>[
+        for (final member in stub.bracket)
+          symbolPortCentre(stub.symbol, member),
+      ];
+      for (var i = 0; i < ends.length; i++) {
+        final tick = _along(ends[i], outward, stub.bracket[i].size / 2);
+        final foot = _along(ends[i], outward, spine);
+        _leaders.add(OpLine(tick, foot, stroke));
+        final segment = DBox.fromCorners(tick, foot);
+        bracketInk = bracketInk?.union(segment) ?? segment;
+      }
+      final near = _along(ends.first, outward, spine);
+      final far = _along(ends.last, outward, spine);
+      _leaders.add(OpLine(near, far, stroke));
+      final spineBox = DBox.fromCorners(near, far);
+      bracketInk = bracketInk?.union(spineBox) ?? spineBox;
+    }
 
     final box = _pennantBox(anchor, side, width);
 
@@ -1496,7 +1633,10 @@ final class _Emitter {
         .union(
           DBox.fromCorners(start, anchor).inflate(stub.style.widthPt / 2),
         );
-    bounds = bounds == null ? ink : bounds!.union(ink);
+    final inked = bracketInk == null
+        ? ink
+        : ink.union(bracketInk.inflate(stub.style.widthPt / 2));
+    bounds = bounds == null ? inked : bounds!.union(inked);
   }
 
   TextStyleSpec _tokenStyle(int argb) =>
