@@ -450,7 +450,7 @@ final class PowerProfile {
   int? apparentVA;                        // circuit loading is computed in VA. CR-056, AC-020.
   int? powerFactor;                       // permille. 650 for a linear-supply amp.
   bool isContinuousLoad;
-  int outletsProvided, outletsConsumed;
+  // outletsProvided, outletsConsumed: NOT STORED. Derived from ports and cords. DR-171.
   PlugType? inletPlug;
   int? poeBudgetWatts;                    // now declared. NET-001 depends on it. CR-056.
   int? btuPerHourOverride;                // else typicalWatts × kBtuPerWattHour. CR-005.
@@ -1155,8 +1155,8 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
           ],
           "portSets": [],
           "power": { "apparentVA": 52, "inletPlug": "C14", "isContinuousLoad": true,
-                     "nameplateWatts": 60, "nominalVolts": 120, "outletsConsumed": 1,
-                     "outletsProvided": 0, "powerFactor": 950, "typicalWatts": 34 },
+                     "nameplateWatts": 60, "nominalVolts": 120,
+                     "powerFactor": 950, "typicalWatts": 34 },
           "rearU": 2,
           "requiresClearanceAboveU": 0, "requiresClearanceBelowU": 0,
           "side": "both",
@@ -1196,7 +1196,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
           ],
           "portSets": [],
           "power": { "apparentVA": 190, "inletPlug": "C14", "isContinuousLoad": true,
-                     "nameplateWatts": 440, "outletsConsumed": 1, "outletsProvided": 0,
+                     "nameplateWatts": 440,
                      "poeBudgetWatts": 370, "powerFactor": 950, "typicalWatts": 180 },
           "rearU": 0,
           "requiresClearanceAboveU": 1, "requiresClearanceBelowU": 0,
@@ -1225,8 +1225,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
           ],
           "ports": [ "…pp_f_01 … pp_f_24, pp_r_01 … pp_r_24 elided…" ],
           "portSets": [],
-          "power": { "isContinuousLoad": false, "outletsConsumed": 0,
-                     "outletsProvided": 0 },
+          "power": { "isContinuousLoad": false },
           "rearU": 1,
           "requiresClearanceAboveU": 0, "requiresClearanceBelowU": 0,
           "side": "both", "tags": ["infrastructure"], "thermalClass": "passive",
@@ -1246,8 +1245,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
           "manufacturer": "RackPal", "model": "Structure",
           "mountMethod": "notInRack", "nominalSpanTwelfths": 0,
           "ports": [], "portSets": [],
-          "power": { "isContinuousLoad": false, "outletsConsumed": 0,
-                     "outletsProvided": 0 },
+          "power": { "isContinuousLoad": false },
           "rearU": 0, "requiresClearanceAboveU": 0, "requiresClearanceBelowU": 0,
           "side": "none", "tags": ["system"], "thermalClass": "passive",
           "typePrefix": "STR", "weightUg": 0, "widthClass": "none"

@@ -21106,7 +21106,8 @@ SAID.** Per device, in order:
    arrives over the data run. This covers `F09`, `F11`, `F12`, `V07` and the `V06` receiver's PoH input.
 3. Otherwise it consumes one outlet per inlet-role power port, and it is **counted from its ports**, a
    separate figure every surface that shows the total also states.
-4. A template that does not resolve is unknown for both counts (G4).
+4. A template that does not resolve is unknown for both counts (G4), and so is one that resolves
+   with no ports at all (§11.170.8).
 
 **The trade fact that made it per device.** Asked how often power cords are drawn, the user answered:
 for PDU-fed gear, where sequencing or remote reboot matters, and not for everything. A rack therefore
@@ -21132,8 +21133,27 @@ and consumes one by clause 3, and the net gain of five that §11.127.8 states is
 **11.170.7 Scope.** **No scope change.** A stored model field is removed and three file formats advance
 to drop it; every surface it reached already existed. Board `#558` cites this ruling.
 
-**What this does not rule.** How the chip strip marks a count taken from ports; the power-cord
-classifier (`#908`); and whether a device may declare that an inlet is deliberately unused.
+**11.170.8 AN EMPTY PORT LIST IS UNKNOWN, NOT A MEASURED ZERO.**
+
+*Added 2026-09-14, while building `#558`.*
+
+§11.170.2 reads the port list as a complete description of the hardware, and that presupposes somebody
+described it. AC-049 lets a template be saved with three fields and no ports, so an empty list cannot
+tell a blank panel from an amplifier nobody has entered yet, and reading it as `outlets 0/0` is the
+confident chip `derived/totals.dart` was rewritten to stop. **A template with ports and no power port is
+a real zero**: its ports were described, and none of them takes power. The three passive templates
+(`X01`, `X02`, `X03`) carry no ports and were already counted unknown, and they stay unknown.
+
+**11.170.9 RULED 2026-09-14: THE CHIP SAYS THE SPLIT ON HOVER, AND ONLY THERE.** Settled by the user.
+The outlets chip reads `outlets 24/74`, and hovering adds *"21 devices have no cord drawn and are
+counted from their power inlets"*. The superscript keeps its one meaning on every chip, a device missing
+from the total (docs/04 §5), and a device counted from its inlets is in the total. Offered and refused:
+**a tilde**, `outlets ~24/74`, which on a drawing where only PDU-fed cords are drawn nearly every rack
+would wear for good; and **dimming the consumed figure**, a colour-only signal that CR-078 argues
+against and greyscale erases. `PWR-003`'s sentence carries the same clause.
+
+**What this does not rule.** The power-cord classifier (`#908`), and whether a device may declare that
+an inlet is deliberately unused.
 
 ---
 

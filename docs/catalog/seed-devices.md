@@ -503,7 +503,8 @@ reachable: it puts `video.hdbaset` on `conn.rj45` in the same project as a switc
 1x DC-IN              "12V DC IN"            @Power
 ```
 
-> ⚠ External power brick. `PowerProfile.outletsConsumed: 1` — a wall wart still eats a PDU
+> ⚠ External power brick. Its `DC-IN` inlet counts one outlet until a cord says otherwise
+> (DR-171) — a wall wart still eats a PDU
 > outlet, and the outlet rollup in the chip strip is wrong if the template pretends otherwise.
 
 **V03 · HDMI Matrix 16×16**: `MTX` · `{4, 4, both}` · deep (430 mm + 72 mm) · 14.1 kg ·
@@ -578,7 +579,8 @@ every physical fact; two templates would spend two of thirty rack-side slots on 
 1x DC-IN              "12V DC IN (opt)"      @Power
 ```
 
-> The receiver draws 0 W from the rack and its `outletsConsumed` is 0 — its power comes down the
+> The receiver draws 0 W from the rack and consumes no outlet once its run is drawn (DR-171) — its
+> power comes down the
 > `net.poh` conductor from the transmitter. That is a genuinely different power topology from
 > everything else in the catalog and the power rollup has to get it right, which is why `net.poh`
 > is its own family with its own glyph rather than a flag on `net.poe`.
@@ -791,7 +793,8 @@ directly: a switch's budget is almost always well below `ports × max class`, an
 Variant deltas: the 8-port ships `[poe:at/pse, 1G, budget:130]` with `2x SFP-BI` uplinks and a
 single `conn.usb_c` console; the 24-port ships `[poe:at/pse, 1G, budget:370]` with `4x SFP+-BI`.
 
-> Two inlets means `outletsConsumed: 2`. Redundant PSUs are two cords and two outlets, and a rack
+> Two inlets means two outlets until the cords are drawn (DR-171). Redundant PSUs are two cords and
+> two outlets, and a rack
 > whose outlet rollup does not know that runs out of PDU on install day.
 
 **N02 · Router / Firewall**: `FW` · `{1,1,both}` · standard (330 mm + 60 mm) · 4.1 kg ·
@@ -975,7 +978,7 @@ RG6 shows all three families rather than a single meaningless "RG6" swatch (cano
 ---
 
 **R01 · RF Splitter Panel, 8-way**: `SPL` · `{1,1,both}` · shallow (120 mm + 50 mm) · 0.9 kg ·
-**0 W, passive** · `outletsConsumed: 0`
+**0 W, passive** · no power inlet
 
 ```text
 1x F-PAS              "IN"                   @Input                    [z75]
@@ -1024,8 +1027,8 @@ RG6 shows all three families rather than a single meaningless "RG6" swatch (cano
 **P01 · Rack PDU, N-outlet**: `PDU` · *parametric `{heightU, outlets} ∈ {(1,8), (2,16), (0,24)}`* ·
 shallow · 3.2 / 5.4 / 6.4 kg · 5 / 8 / 10 W own draw · PF 1000
 
-The 0U vertical variant shown. `outletsProvided` is what the chip strip's outlet count reads;
-`outletsConsumed: 1` on the PDU itself, because it plugs into the wall.
+The 0U vertical variant shown. Its outlet ports are what the chip strip's outlet count reads
+(DR-171), and its own inlet counts one, because it plugs into the wall.
 
 ```text
 1x L5-30P-IN          "AC IN (captive cord)" @Inlet
@@ -1104,7 +1107,7 @@ The 3000 VA variant shown.
 > both kinds, and an integrator needs the drawing to say which outlets survive an outage.
 
 **P04 · Rack Power Strip, 6-outlet, shelf**: `PS` · shelf-mounted, no rail holes · 45 mm ·
-0.7 kg · `outletsProvided` 6, `outletsConsumed` 1, no wattage of its own
+0.7 kg · six outlet ports and one inlet, no wattage of its own
 
 ```text
 1x 5-15P-IN           "AC IN (captive cord)"  @Inlet
@@ -1127,11 +1130,11 @@ The 3000 VA variant shown.
 > installer screws in.
 >
 > **It closes a shortfall by FIVE, not six**, because it eats an outlet to give six. That
-> arithmetic needed no change to `PWR-003`: `outletsConsumed: 1` with `outletsProvided: N` is the
-> shape all four power templates already use.
+> arithmetic needed no change to `PWR-003`: one inlet and N outlet ports is the shape all four power
+> templates already use, and since DR-171 the rule reads those ports.
 >
 > **No wattage, and that is a fact rather than an omission.** A passive strip draws nothing, so
-> `PowerProfile` states its outlets and stays silent on the rest (G4/CR-114, AC-039). What it is
+> `PowerProfile` states nothing, since its outlets are its ports (G4/CR-114, AC-039, DR-171). What it is
 > usually plugged INTO is a PDU or sequencer outlet, so the gear on it can be power-cycled
 > remotely (BlueBOLT, OvrC); that is a fact about the job and lives on the cable, not here.
 
@@ -2202,8 +2205,6 @@ one shown. The generator expands the §2 notation into exactly this.
       "isContinuousLoad": true,
       "nameplateWatts": 90,
       "nominalVolts": 120,
-      "outletsConsumed": 1,
-      "outletsProvided": 0,
       "poeBudgetWatts": null,
       "powerFactor": 950,
       "standbyWatts": 8,
@@ -2442,7 +2443,7 @@ one shown. The generator expands the §2 notation into exactly this.
 | `pinoutVariant` present and non-null on **both** IR ports | Safety-adjacent, so an uncited value blocks the template from shipping (AC-052) |
 | `gender: "genderless"` on HDMI, `"female"` on RJ45 and DE-9, `"male"` on the C14 inlet | `ConnectorTypeDef.genderApplies` decides whether `CON-002` evaluates. `jack` and `plug` do not exist (CR-059) |
 | `power.role: "inlet"` on a `sink` port | Inlet and outlet are **roles on a `power.*` family**, not directions (CR-060) |
-| `outletsConsumed: 1` | Even a device with no outlets consumes one. The chip strip's outlet count depends on every template being honest about this |
+| `power.role: "inlet"` declared on the C14 port | Since DR-171 the chip strip's outlet count reads the ports: an undeclared inlet is an outlet nobody counts |
 | `apparentVA: 58` alongside `typicalWatts: 55` and `powerFactor: 950` | Circuit loading is computed in VA. A switch-mode supply at 950‰ is close; an amplifier at 650‰ is not, and that gap is how a rack that "calculated fine" trips a breaker |
 | `btuPerHourOverride: null` | Heat is derived, `typicalWatts × 3.412142`, never stored (CR-005) |
 | `maxUnsupportedMassUg: 7000000000` with `weightUg: 7300000000` | 7.3 kg against a 7 kg front-ear limit: `RCK-013` warns on this template the moment it is rail-mounted without support (AC-028) |
@@ -2520,7 +2521,7 @@ that reaches a drawing.
 | C8 | Every port whose family is `audio.spdif_coax` has `impedanceOhms == 75`; every `audio.aes3` has `110` | Intermittent dropouts that look like a bad cable |
 | C9 | Every `PortSetDef` referenced by a `setKey` exists, and every `atomicConnect` set has ≥ 2 members | A half-declared stereo pair, which makes the connect gesture undefined |
 | C10 | Every `isPassthrough` template has a `passthroughPairs` entry for every front port | A patch panel whose trace dead-ends at the panel |
-| C11 | Every template with `outletsProvided > 0` has at least one `power.*` port with `role: outlet`, and every template with an AC inlet has `outletsConsumed >= 1` | The outlet rollup being quietly wrong, which shows up on install day |
+| C11 | Every template with an AC inlet declares it as a `power.*` port with `role: inlet`, and every outlet it provides as `role: outlet` (the counts are read off those ports, DR-171) | The outlet rollup being quietly wrong, which shows up on install day |
 | C12 | Every `mountMethod: rackEars` template with `weightUg > maxUnsupportedMassUg` is reachable by an `RCK-013` fixture | A rule with no object to fire on |
 | C13 | Every one of requirement 4's ten named types is produced by at least one shipped template port | The §4.5 coverage table becoming aspirational |
 | C14 | Every field-device template has `frontU == 0 && rearU == 0 && side == "none" && mountMethod == "notInRack"` and **no** `bodyDepthNm` | A ceiling speaker being asked for a thermal class |

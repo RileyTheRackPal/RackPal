@@ -1,5 +1,30 @@
 # Update Log
 
+## 2026-09-14 (forty-third entry)
+
+* **Closed**: `#558` with `de9a2f7` and `1f21c1f`, ruled as
+  [DR-171](/decisions/dr-171-outlet-counts-are-derived.md) in `355d553`.
+  Outlet counts are read off ports and the cords drawn to them, and
+  `PowerProfile`'s two stored counts are gone from the model and from every
+  file format. **No version move**: it closes under `#786`.
+* **Creation**: [DR-171](/decisions/dr-171-outlet-counts-are-derived.md).
+* **Creation**: board `#908`, because `LinkClass.powerCord` is documented as
+  auto-classified and nothing ever derives it.
+* **Note**: **A BOARD ITEM MARKED RULED IS NOT A RULING UNTIL CANON SAYS IT.**
+  `#558` carried RULED for six weeks with nothing in canon, and its own text
+  left the unwired case open. Grep canon for the item before treating its
+  label as settled.
+* **Note**: **THE CLASS A LINK IS CALLED IS NOT THE TEST.** The ruling leaned
+  on `LinkClass.powerCord` as the data already present; the classifier never
+  returns it. The port a conductor lands on says what the connection is.
+* **Note**: **A MIGRATION STEP THAT DECODES IS RIGHT ONLY UNTIL THE NEXT
+  STEP.** Once a chain has two steps, a body decoded by this build's decoder
+  in the first is a newer reading of an older map. Each step hashes its own
+  raw output.
+* **Note**: **AN EMPTY LIST IS NOT A COMPLETE DESCRIPTION.** "The port list
+  describes the hardware" reads a template with no ports as a measured zero;
+  AC-049 lets a template be saved before its ports are entered.
+
 ## 2026-09-14 (forty-second entry)
 
 * **Closed**: `#907`, a records correction with no product change. DR-170's
