@@ -21051,6 +21051,92 @@ PATH: it routes through the same `orthogonalTrace` a committed wire does (DR-072
 
 ---
 
+### 11.170 DR-171 · Outlet counts are derived, never stored: provided from outlet ports, consumed from the cords drawn and from inlet ports where none is
+
+**The question.** Board `#558` (96-K) was ruled by the user on 2026-08-03 and marked RULED on the board
+that day, and **the ruling never reached this document.** docs/06 §3.3 has said since M0 that
+`outletsProvided` and `outletsConsumed` are read-only and counted from ports; the code read two
+authored `PowerProfile` integers instead, and the rack chip strip, `PWR-003` and its remedy all summed
+them. The board ruling decided what the two counts mean and left two things open: what becomes of the
+stored fields, and what a rack reads before anyone has drawn a cord. Both were put to the user on
+2026-09-14, after the measurement below.
+
+**11.170.1 MEASURED FIRST**, on 2026-09-14 over the tree at `d4479d8`:
+
+- **The 51 seed templates.** `outletsProvided` is stated on 35 and agrees with the template's
+  outlet-role `power.*` ports on all 35; the 16 that state nothing have no outlet port. `outletsConsumed`
+  is stated on 35 and agrees with the inlet-role ports on 29. **The six that disagree are the six the
+  board item named in 2026-08** (`F09`, `F11`, `F12`, `F16`, `V06`, `V07`), each stating 0 against one
+  inlet port, and four of the six also carry a PoE powered-device port.
+- **The four starters.** Five racks, 27 links, and **not one conductor lands on a power inlet.** Their
+  chips read `outlets 5/16`, `12/40`, `11/40`, `3/16` and `23/74` from the authored figures.
+- **`LinkClass.powerCord` is never derived.** The board ruling pointed at it as the data already
+  present, and `linkClassOf` answers only `jumper` or `fieldCable`: a cord from an amplifier to a PDU in
+  the same rack is a jumper. Filed as `#908`. So the test for a power connection cannot be the link's
+  class; **it is a conductor landing on an inlet-role power port**, which says what it is by being one.
+
+**11.170.2 RULED 2026-08-03, RECORDED HERE: CAPACITY FROM THE HARDWARE, USAGE FROM THE GRAPH.**
+`outletsProvided` is a count of the device's `power.*` ports whose `PortPowerSpec.role` is `outlet`: a
+24-outlet PDU provides 24 whether or not any are used. `outletsConsumed` is usage, counted from the
+power connections that land on its inlets. The principle the user gave, which generalises past power:
+**the port list is a complete description of the hardware, not a statement of what is in use.** A
+PoE-fed camera still has its barrel jack; it simply is not fed through it, so counting inlet ports as
+usage over-counts exactly that case.
+
+**11.170.3 RULED 2026-09-14: THE STORED FIELDS ARE DELETED, AND OLDER FILES DROP THEIR KEYS ON READ.**
+`PowerProfile.outletsProvided` and `outletsConsumed` are removed from the model. A stored count beside a
+derived one is a trap for the next reader, and six shipped templates already disagreed with their own
+ports. The project format advances to `schemaVersion` 6 and the device template and device archive
+formats to 3; each migration strips both keys from every template body. `minReaderVersion` does not
+move, because a reader that knew the keys meets their absence as unknown and loses nothing.
+
+**THE CONTENT HASH IS RECOMPUTED ONLY WHERE IT ATTESTED THE OLD BYTES.** Stripping a key changes a
+body's canonical bytes and therefore its `contentHash`. DR-134's `.rmdx` step recomputed the hash
+unconditionally, and said the cost out loud: a recomputed hash cannot attest to what the exporter wrote.
+These steps first check the stored hash against the body as stored, and re-hash only when it matched;
+a mismatch or a placeholder is carried unchanged, so a body edited outside the product still reports
+as edited after the migration. A device's `TemplateRef.contentHash` that equalled its snapshot's old
+hash moves with it.
+
+**11.170.4 RULED 2026-09-14: CORDS WHERE THEY ARE DRAWN, INLET PORTS WHERE THEY ARE NOT, AND THE SPLIT IS
+SAID.** Per device, in order:
+
+1. If any inlet-role power port has a conductor landing on it, the device consumes that many outlets.
+2. Otherwise, if a PoE powered-device port has a conductor landing on it, it consumes none: its power
+   arrives over the data run. This covers `F09`, `F11`, `F12`, `V07` and the `V06` receiver's PoH input.
+3. Otherwise it consumes one outlet per inlet-role power port, and it is **counted from its ports**, a
+   separate figure every surface that shows the total also states.
+4. A template that does not resolve is unknown for both counts (G4).
+
+**The trade fact that made it per device.** Asked how often power cords are drawn, the user answered:
+for PDU-fed gear, where sequencing or remote reboot matters, and not for everything. A rack therefore
+mixes drawn and undrawn cords as a matter of course, so the rule reads each device's own evidence and
+never switches a whole rack from one mode to the other. A redundant-supply switch with one cord drawn
+counts one, by clause 1, because the drawing says one.
+
+Offered and refused: **cords only, the rest unknown**, the board ruling read literally, under which every
+starter rack reads `outlets 0/N` and `PWR-003` cannot fire until a person draws cords most people never
+draw; and **both figures on the chip**, the widest chip on a strip that already scales itself down,
+while `PWR-003` would still have had to pick one.
+
+**11.170.5 WHY CLAUSE 3 IS NOT AN ESTIMATE IN G4's SENSE.** The inlet is a hardware fact, stated on the
+template. What clause 3 assumes is that it will be fed from an outlet, and that assumption is **stated
+beside the number**, never blended into it, which is the shape `ScheduleView.estimatedCount` already
+has for lengths. G4 forbids a figure that pretends to be measured, and this one says what it is.
+
+**11.170.6 `PWR-003` AND ITS REMEDY READ THE SAME FIGURES AS THE CHIP.** One resolution serves the chip
+strip, the rule and the remedy's branch, so the button can never answer a different question from the
+finding it sits on. The remedy's six-outlet strip is placed with its cord undrawn, so it provides six
+and consumes one by clause 3, and the net gain of five that §11.127.8 states is unchanged.
+
+**11.170.7 Scope.** **No scope change.** A stored model field is removed and three file formats advance
+to drop it; every surface it reached already existed. Board `#558` cites this ruling.
+
+**What this does not rule.** How the chip strip marks a count taken from ports; the power-cord
+classifier (`#908`); and whether a device may declare that an inlet is deliberately unused.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
