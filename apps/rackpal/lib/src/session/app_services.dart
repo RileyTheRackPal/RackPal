@@ -361,8 +361,17 @@ Future<AppServices> buildAppServices({
           portable: ready.portable,
         );
 
+  // PREFS BEFORE THE FIRST DOCUMENT, so its undo stack is built at the
+  // depth this machine chose (DR-172) rather than at the default and
+  // resized a moment later.
+  final prefs = stores == null ? const AppPrefs() : await stores.prefs.load();
+
   final session = DocumentSession(
-    controller: DocumentController(initialDocument, clock: clock),
+    controller: DocumentController(
+      initialDocument,
+      clock: clock,
+      undoDepth: prefs.undoDepth ?? kDefaultUndoDepth,
+    ),
     context: ctx,
     recoveryEnabled: stores != null,
   );
@@ -408,10 +417,7 @@ Future<AppServices> buildAppServices({
     starterLoader: starterLoader,
     pathProbeTimeout: pathProbeTimeout,
     context: ctx,
-  );
-
-  final prefs = stores == null ? const AppPrefs() : await stores.prefs.load();
-  controller.seedLastSaveDirectory(prefs.lastSaveDirectory);
+  )..seedLastSaveDirectory(prefs.lastSaveDirectory);
 
   services = AppServices(
     session: session,

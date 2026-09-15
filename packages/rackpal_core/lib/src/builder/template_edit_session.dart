@@ -62,8 +62,12 @@ final class _TxnBuilder {
 final class TemplateEditSession {
   /// Opens a session over a deep copy of [original], which is left
   /// untouched for the life of the session.
-  TemplateEditSession(TemplateBody original, {this.clock = const SystemClock()})
-    : body = copyTemplateBody(original);
+  TemplateEditSession(
+    TemplateBody original, {
+    this.clock = const SystemClock(),
+    int undoDepth = kDefaultUndoDepth,
+  }) : body = copyTemplateBody(original),
+       undo = UndoStack<TemplateBody>(maxEntries: undoDepth);
 
   /// The working copy. Mutated only through [run]/[transact], which is
   /// what makes [undo] exact — the same rule `DocumentController` states
@@ -77,7 +81,9 @@ final class TemplateEditSession {
   /// coalescing window instead of sleeping through it.
   final Clock clock;
 
-  final undo = UndoStack<TemplateBody>();
+  /// The session's history, at the same per-machine depth as the
+  /// document's (DR-172): one depth a person chose, everywhere they undo.
+  final UndoStack<TemplateBody> undo;
 
   /// Bumped for every commit, undo, redo and save-point move — the
   /// events that can change [isDirty] or the window title. Pure Dart, so
@@ -236,6 +242,19 @@ final class TemplateEditSession {
     _stateId = restoreStateId;
     _bumpChanges();
     return true;
+  }
+
+  /// Changes how many steps [undo] keeps, dropping the oldest at once when
+  /// it holds more (DR-172), and returns how many went.
+  ///
+  /// THROUGH HERE RATHER THAN [UndoStack.resize], for
+  /// `DocumentController.resizeUndo`'s reason: dropping the entry the save
+  /// point sits on changes what the builder's dirty guard reads, so
+  /// [changes] rings when something went.
+  int resizeUndo(int depth) {
+    final dropped = undo.resize(depth);
+    if (dropped > 0) _bumpChanges();
+    return dropped;
   }
 
   void _bumpChanges() {

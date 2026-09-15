@@ -15,6 +15,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:rackpal/src/storage/atomic_writer.dart';
 import 'package:rackpal/src/storage/prefs_store.dart';
+import 'package:rackpal_core/rackpal_core.dart'
+    show kMaxUndoDepth, kMinUndoDepth;
 
 import 'atomicity.dart';
 import 'fake_file_store.dart';
@@ -457,6 +459,66 @@ void main() {
         }).favouriteTemplateIds,
         isEmpty,
       );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-172: the undo depth is per MACHINE, not per project.
+  // ═══════════════════════════════════════════════════════════════════
+  group('undo depth', () {
+    test('an absent key is null, which means the default depth', () {
+      expect(const AppPrefs().undoDepth, isNull);
+      expect(
+        AppPrefs.fromJson(<String, Object?>{
+          'window': <String, Object?>{},
+        }).undoDepth,
+        isNull,
+      );
+    });
+
+    test('a chosen depth round-trips, and the default writes no key', () {
+      final json = const AppPrefs().copyWith(undoDepth: 500).toJson();
+      expect(json['undoDepth'], 500);
+      expect(AppPrefs.fromJson(jsonDecode(jsonEncode(json))).undoDepth, 500);
+      expect(const AppPrefs().toJson().containsKey('undoDepth'), isFalse);
+    });
+
+    test('a depth the dialog would refuse reads as ABSENT, not clamped', () {
+      // A hand-edited file is not a choice anybody made in the dialog, so
+      // the default stands in rather than the nearest bound.
+      for (final raw in <Object?>[
+        kMinUndoDepth - 1,
+        kMaxUndoDepth + 1,
+        '300',
+        300.5,
+      ]) {
+        expect(
+          AppPrefs.fromJson(<String, Object?>{'undoDepth': raw}).undoDepth,
+          isNull,
+          reason: '$raw',
+        );
+      }
+      expect(
+        AppPrefs.fromJson(<String, Object?>{
+          'undoDepth': kMinUndoDepth,
+        }).undoDepth,
+        kMinUndoDepth,
+      );
+      expect(
+        AppPrefs.fromJson(<String, Object?>{
+          'undoDepth': kMaxUndoDepth,
+        }).undoDepth,
+        kMaxUndoDepth,
+      );
+    });
+
+    test('other writes keep the depth, and a depth write keeps the rest', () {
+      final prefs = const AppPrefs(
+        lastSaveDirectory: r'C:\jobs',
+      ).copyWith(undoDepth: 80).withFavouriteToggled('V03');
+      expect(prefs.undoDepth, 80);
+      expect(prefs.lastSaveDirectory, r'C:\jobs');
+      expect(prefs.isFavourite('V03'), isTrue);
     });
   });
 }

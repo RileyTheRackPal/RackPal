@@ -314,6 +314,85 @@ void main() {
       );
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // AC-058 D5, DR-172: the full notice, once per document
+  // ═══════════════════════════════════════════════════════════════════
+  group('undo history on the status line', () {
+    // A CLOCK THAT MOVES BETWEEN EDITS. `_edit` sets the rack's height, and
+    // `SetRackHeightCommand` merges repeated edits to one rack inside the
+    // 400 ms window, so on a still clock five edits would be one step.
+    late MutableClock clock;
+
+    DocumentController controllerAt(int depth) =>
+        DocumentController(_doc(), clock: clock, undoDepth: depth);
+
+    DocumentSession shallow(int depth) {
+      clock = MutableClock(DateTime.utc(2026));
+      return DocumentSession(
+        controller: controllerAt(depth),
+        context: _windows,
+      );
+    }
+
+    void edits(DocumentSession session, int count) {
+      for (var i = 0; i < count; i++) {
+        clock.advance(const Duration(seconds: 1));
+        _edit(session.controller);
+      }
+    }
+
+    test('says ONCE that history is full, the first time a step drops', () {
+      final session = shallow(2);
+      edits(session, 2);
+      expect(session.status, isNull, reason: 'full, but nothing dropped yet');
+
+      edits(session, 1);
+      expect(session.status, undoHistoryFullStatus(2));
+
+      session.setStatus('Saved.');
+      edits(session, 2);
+      expect(
+        session.status,
+        'Saved.',
+        reason: 'once: the line never clears itself, so a repeat would own it',
+      );
+    });
+
+    test('and again for the next document it adopts', () {
+      final session = shallow(2);
+      edits(session, 3);
+      expect(session.status, undoHistoryFullStatus(2));
+
+      session.adopt(
+        controller: controllerAt(2),
+        filePath: null,
+        openReadOnly: false,
+        baseline: FileBaseline.absent,
+      );
+      expect(session.status, isNull);
+
+      edits(session, 3);
+      expect(session.status, undoHistoryFullStatus(2));
+    });
+
+    test('applyUndoDepth says what it did, and a resize that drops steps is '
+        'the full notice', () {
+      final session = shallow(10);
+      edits(session, 5);
+
+      session.applyUndoDepth(3);
+      const said = 'Undo history now keeps 3 steps. The oldest 2 were dropped.';
+      expect(session.status, said);
+      expect(session.controller.undo.maxEntries, 3);
+
+      edits(session, 1);
+      expect(session.status, said, reason: 'no second notice');
+
+      session.applyUndoDepth(50);
+      expect(session.status, 'Undo history now keeps 50 steps.');
+    });
+  });
 }
 
 /// A minimal `SavedFile`, built here rather than by running a real save,

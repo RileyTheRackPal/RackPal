@@ -210,6 +210,7 @@ class DeviceBuilderScreen extends StatefulWidget {
     this.onDone,
     this.onDirtyChanged,
     this.onUndoTargetChanged,
+    this.undoDepth = kDefaultUndoDepth,
     super.key,
   });
 
@@ -277,6 +278,12 @@ class DeviceBuilderScreen extends StatefulWidget {
   /// knows because it is what decided to.
   final ValueChanged<UndoTarget?>? onUndoTargetChanged;
 
+  /// How many steps this window's undo keeps: the per-machine depth the
+  /// document uses too (DR-172). A new value reaches an open window
+  /// through `didUpdateWidget`, because the depth takes effect
+  /// immediately.
+  final int undoDepth;
+
   @override
   State<DeviceBuilderScreen> createState() => _DeviceBuilderScreenState();
 }
@@ -285,12 +292,23 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
     with AutomaticKeepAliveClientMixin {
   late final TemplateEditSession _session = TemplateEditSession(
     widget.template,
+    undoDepth: widget.undoDepth,
   );
 
   /// The body as it was when the window opened, for the change class.
   /// A COPY, because `_session.body` is the live one and diffing a thing
   /// against itself always answers "unchanged".
   late final TemplateBody _opened = copyTemplateBody(widget.template);
+
+  @override
+  void didUpdateWidget(DeviceBuilderScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // DR-172: a depth changed in Preferences takes effect now, on the
+    // draft that is open, and not at the next template.
+    if (widget.undoDepth != oldWidget.undoDepth) {
+      _session.resizeUndo(widget.undoDepth);
+    }
+  }
 
   BuilderSection _section = BuilderSection.identity;
   String? _refusal;

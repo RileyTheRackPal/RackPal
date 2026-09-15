@@ -191,6 +191,10 @@ final class DocumentSession extends ChangeNotifier {
   bool _recoveryEnabled;
   String? _status;
 
+  /// Whether this document has already said its undo history is full.
+  /// Once per document (DR-172), so [adopt] resets it.
+  bool _historyFullSaid = false;
+
   /// THE one mutation entry point for the current document.
   DocumentController get controller => _controller;
 
@@ -306,6 +310,7 @@ final class DocumentSession extends ChangeNotifier {
     _openReadOnly = openReadOnly;
     _baseline = baseline;
     _status = status;
+    _historyFullSaid = false;
     // A property of the FILE, so adopting a different document replaces
     // it. The default is empty, which is what makes every existing caller
     // correct without naming it.
@@ -352,6 +357,18 @@ final class DocumentSession extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Applies a new undo depth to the open document now (DR-172), and says
+  /// on the status line what it did.
+  ///
+  /// A RESIZE THAT DROPS STEPS IS THE DOCUMENT'S ONE "FULL" NOTICE. Its
+  /// sentence already says steps went, and a second notice would push it
+  /// off the line at the next edit.
+  void applyUndoDepth(int depth) {
+    if (_controller.undo.depth > depth) _historyFullSaid = true;
+    final dropped = _controller.resizeUndo(depth);
+    setStatus(undoDepthChangedStatus(depth, dropped));
+  }
+
   void setStatus(String? status) {
     if (_status == status) return;
     _status = status;
@@ -366,7 +383,21 @@ final class DocumentSession extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _onDocumentChanged() => notifyListeners();
+  /// Rings the shell on every document change, and says ONCE per document
+  /// that its undo history has started dropping its oldest step (AC-058
+  /// D5, DR-172).
+  ///
+  /// ONCE, BECAUSE THE STATUS LINE NEVER CLEARS ITSELF. Said on every
+  /// dropped step, it would be re-set on every edit past the cap and never
+  /// show anything else again, "Saved." included.
+  void _onDocumentChanged() {
+    final undo = _controller.undo;
+    if (!_historyFullSaid && undo.droppedCount > 0) {
+      _historyFullSaid = true;
+      _status = undoHistoryFullStatus(undo.maxEntries);
+    }
+    notifyListeners();
+  }
 
   @override
   void dispose() {
@@ -374,3 +405,17 @@ final class DocumentSession extends ChangeNotifier {
     super.dispose();
   }
 }
+
+/// The status line's one notice that a document's undo history is full
+/// (AC-058 D5, DR-172).
+String undoHistoryFullStatus(int depth) =>
+    'Undo history is full at $depth steps. Each new edit now drops the '
+    'oldest.';
+
+/// The status line after the undo depth is changed in Preferences
+/// (DR-172).
+String undoDepthChangedStatus(int depth, int dropped) => switch (dropped) {
+  0 => 'Undo history now keeps $depth steps.',
+  1 => 'Undo history now keeps $depth steps. The oldest step was dropped.',
+  _ => 'Undo history now keeps $depth steps. The oldest $dropped were dropped.',
+};

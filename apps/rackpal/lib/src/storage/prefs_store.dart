@@ -40,6 +40,8 @@ import 'package:rackpal/src/storage/atomic_writer.dart';
 import 'package:rackpal/src/storage/file_store.dart';
 import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal/src/storage/storage_log.dart';
+import 'package:rackpal_core/rackpal_core.dart'
+    show kMaxUndoDepth, kMinUndoDepth;
 
 /// The file name inside the data root.
 const String kPrefsFileName = 'prefs.json';
@@ -157,6 +159,7 @@ final class AppPrefs {
     this.coachMarksSeen = const <String>{},
     this.portColumnPacks = const <String, Set<String>>{},
     this.favouriteTemplateIds = const <String>{},
+    this.undoDepth,
   });
 
   /// Parses `prefs.json`'s decoded root, defaulting anything missing or
@@ -170,12 +173,14 @@ final class AppPrefs {
     final seen = _coachMarksFromJson(raw['coachMarksSeen']);
     final packs = _packsFromJson(raw['portColumnPacks']);
     final favourites = _coachMarksFromJson(raw['favouriteTemplateIds']);
+    final undoDepth = _undoDepthFromJson(raw['undoDepth']);
     if (window is! Map) {
       return AppPrefs(
         lastSaveDirectory: lastDir,
         coachMarksSeen: seen,
         portColumnPacks: packs,
         favouriteTemplateIds: favourites,
+        undoDepth: undoDepth,
       );
     }
     final displayId = window['displayId'];
@@ -187,6 +192,7 @@ final class AppPrefs {
       coachMarksSeen: seen,
       portColumnPacks: packs,
       favouriteTemplateIds: favourites,
+      undoDepth: undoDepth,
     );
   }
 
@@ -205,6 +211,14 @@ final class AppPrefs {
           },
     };
   }
+
+  /// A depth inside [kMinUndoDepth]..[kMaxUndoDepth], or null.
+  ///
+  /// OUTSIDE THE RANGE READS AS ABSENT, NOT AS A CLAMP. A hand-edited 5 or
+  /// 1000000 is not a depth anybody chose in the dialog, which refuses
+  /// both, so the default stands in rather than the nearest bound.
+  static int? _undoDepthFromJson(Object? raw) =>
+      raw is int && raw >= kMinUndoDepth && raw <= kMaxUndoDepth ? raw : null;
 
   static Set<String> _coachMarksFromJson(Object? raw) {
     if (raw is! List) return const <String>{};
@@ -304,6 +318,18 @@ final class AppPrefs {
   /// domain's value types to parse.
   final Set<String> favouriteTemplateIds;
 
+  /// How many undo steps a document and the Device Builder keep, or null
+  /// for `kDefaultUndoDepth` (DR-172).
+  ///
+  /// ══════════════════════════════════════════════════════════════════
+  /// HERE, AND NOT IN THE DOCUMENT
+  /// ══════════════════════════════════════════════════════════════════
+  /// Canon §10.12(a) made the depth a setting, and the user put it here.
+  /// It is a property of THIS MACHINE'S memory budget, not of the design,
+  /// so it must not travel to whoever receives the file or enter CR-117's
+  /// byte surface, which `ProjectSettings` would do on both counts.
+  final int? undoDepth;
+
   /// Whether [id] has already been shown to this user.
   bool hasSeenCoachMark(String id) => coachMarksSeen.contains(id);
 
@@ -336,6 +362,7 @@ final class AppPrefs {
     Set<String>? coachMarksSeen,
     Map<String, Set<String>>? portColumnPacks,
     Set<String>? favouriteTemplateIds,
+    int? undoDepth,
   }) => AppPrefs(
     window: window ?? this.window,
     maximized: maximized ?? this.maximized,
@@ -344,6 +371,7 @@ final class AppPrefs {
     coachMarksSeen: coachMarksSeen ?? this.coachMarksSeen,
     portColumnPacks: portColumnPacks ?? this.portColumnPacks,
     favouriteTemplateIds: favouriteTemplateIds ?? this.favouriteTemplateIds,
+    undoDepth: undoDepth ?? this.undoDepth,
   );
 
   Map<String, Object?> toJson() => <String, Object?>{
@@ -371,6 +399,8 @@ final class AppPrefs {
     // churns is one whose diffs nobody reads.
     if (favouriteTemplateIds.isNotEmpty)
       'favouriteTemplateIds': favouriteTemplateIds.toList()..sort(),
+    // OMITTED AT THE DEFAULT, so a machine nobody changed writes no key.
+    if (undoDepth != null) 'undoDepth': undoDepth,
   };
 }
 

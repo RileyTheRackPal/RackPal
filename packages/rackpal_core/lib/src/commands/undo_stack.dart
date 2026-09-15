@@ -51,17 +51,44 @@ final class _Entry<A> {
   final int stateIdAfter;
 }
 
+/// How many steps a stack keeps when nobody chose a depth: canon
+/// §10.12(a)'s 200, and docs/03 §11.1's scale target.
+const int kDefaultUndoDepth = 200;
+
+/// The shallowest depth a person may choose (DR-172). It keeps a slip of
+/// the keyboard from leaving a handful of steps behind.
+const int kMinUndoDepth = 50;
+
+/// The deepest depth a person may choose (DR-172). docs/03 §11.1 budgets
+/// 200 entries and sets no hard cap and no memory figure, so the ceiling
+/// keeps the setting within reach of measured ground.
+const int kMaxUndoDepth = 1000;
+
 /// The undo/redo history for one aggregate. Linear undo — no undo tree in
 /// v1 (§5.4): pushing a new command after some undos discards the redo
 /// tail.
 class UndoStack<A> {
   UndoStack({
-    this.maxEntries = 200,
+    int maxEntries = kDefaultUndoDepth,
     this.mergeWindow = const Duration(milliseconds: 400),
-  });
+  }) : assert(maxEntries > 0, 'an undo stack must keep at least one step'),
+       _maxEntries = maxEntries;
 
-  final int maxEntries;
+  /// How many steps this stack keeps. Changed after construction only by
+  /// [resize], because DR-172 makes a new depth take effect immediately.
+  int get maxEntries => _maxEntries;
+  int _maxEntries;
+
   final Duration mergeWindow;
+
+  /// How many of the oldest steps this stack has dropped since it was
+  /// built, by [push] past [maxEntries] or by [resize] below [depth].
+  ///
+  /// AC-058 D5 gives the cap a signal instead of a silent drop, and this is
+  /// what the signal reads. A COUNT RATHER THAN A FLAG, so a caller can tell
+  /// the first drop from a later one and a resize can say how many went.
+  int get droppedCount => _droppedCount;
+  int _droppedCount = 0;
 
   final List<_Entry<A>> _done = [];
   final List<_Entry<A>> _undone = [];
@@ -145,8 +172,28 @@ class UndoStack<A> {
       }
     }
     _done.add(_Entry(c, before, after, now, stateIdBefore, stateIdAfter));
-    if (_done.length > maxEntries) _done.removeAt(0);
+    if (_done.length > _maxEntries) {
+      _done.removeAt(0);
+      _droppedCount++;
+    }
     return c.touches;
+  }
+
+  /// Makes [maxEntries] [entries], dropping the oldest steps at once when
+  /// the stack holds more, and returns how many went: 0 when it grew or
+  /// already fitted.
+  ///
+  /// THE REDO TAIL IS NOT TRIMMED. It holds steps undone from the top, not
+  /// the oldest history, and the cap has only ever bounded the done stack,
+  /// which is what [push] enforces too.
+  int resize(int entries) {
+    assert(entries > 0, 'an undo stack must keep at least one step');
+    _maxEntries = entries;
+    final over = _done.length - entries;
+    if (over <= 0) return 0;
+    _done.removeRange(0, over);
+    _droppedCount += over;
+    return over;
   }
 
   /// How many undo (or redo) steps separate the state identified by
