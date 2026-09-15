@@ -9,7 +9,7 @@ tags: [ruling, ci, gates, performance, dr-076, dr-178]
 timestamp: 2026-09-15T00:00:00Z
 ruling_id: DR-178
 canon_section: "11.177"
-status: ruled
+status: built
 ---
 
 Ruled by the user on 2026-09-15 on board `#843`.
@@ -37,3 +37,19 @@ operation counts, which are deterministic, beside stopwatch readings, which are 
   workload.
 
 It does not protect the timed step from another program on the same machine.
+
+# What building it found
+
+- The two one-frame budgets asserted op counts and the stopwatch in one helper, so each became two
+  tests; the file went from 15 tests to 17, five of them timed.
+- A timed test re-asserts the precondition its number depends on, because the shape tests now run in
+  a different step.
+- `paint_budget_test.dart` carried the tag and asserted no time, so it lost the tag.
+- Only core is split: a `perf` tag anywhere else still runs in its own suite, never in none.
+- Proved by breaking each half: a 0.001 ms frame failed 3 timed tests and no untimed one; an op count off by one failed 2 untimed tests and no timed one.
+
+# Where it lives
+
+- `packages/rackpal_core/test/scene/schematic_perf_test.dart`: the five timed tests.
+- `tools/ci/run_suite.ps1`: `-Tests all|untimed|timed`.
+- `tools/ci/run_local.ps1` and `azure-pipelines.yml`: the core suite untimed, then the timed step.

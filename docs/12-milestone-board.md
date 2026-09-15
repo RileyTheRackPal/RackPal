@@ -893,8 +893,8 @@ this class is **at least one and unknown**.
 |---|---|---|
 | 60 connections without touching a menu | **CONFIRMED**: by the user, 2026-08-01 | **Performed and passed: sixty connections, roughly 5–7 minutes, reported against this clause and therefore under its own menu-free constraint.** THE OPERATOR'S CONDITION IS PART OF THE MEASUREMENT AND IS RECORDED RATHER THAN DROPPED, as M1's clause 3 records its own: *"after a bit of practice"*. **The clause carries no time bound**: it asks for sixty connections without a menu, and 5–7 minutes is a data point rather than a threshold met, so nothing here is graded against a number the criterion does not state. **It was done WITHOUT multi-draw**, which is still unbuilt (#93): the figure is what the pin-to-pin, chain-draw and atomic-set gestures deliver on their own, and it is therefore a floor. **A CONFIRMED mark is not a gate**: no CI job re-runs this and it does not survive a change to the keymap; the regression net named below is what guards the mechanism between drills |
 | Schedule shows 60 sorted rows, both labels both ends, conductor colours | **DEMONSTRATED** | `packages/rackpal_core/test/derived/schedule_test.dart:806`, a test named for this clause and asserting it verbatim: sixty rows fed in deliberately out of room order so the sort has to do the work, AC-025's room-then-pathway ordering, both labels on both ends, and `['red', 'black']` off a real speaker pair's conductors |
-| Deterministic re-layout ⇒ byte-identical display list | **DEMONSTRATED** | `packages/rackpal_core/test/scene/schematic_perf_test.dart:150` and `:158`, the same 300-link document twice, and **a separately decoded copy of the same bytes**, both through `op_digest.dart`, which is the instrument written for this clause's word *byte-identical*. `sugiyama_test.dart:470` holds the layer beneath it |
-| 300-connection fixture within one frame; **label-layer cost measured and recorded** | **DEMONSTRATED, on both halves, as of M2-G** | `schematic_perf_test.dart:173`/`:182` for the COMMIT path (`@Tags(['perf'])` and deliberately not excluded, `run_suite.ps1` does no tag filtering, so the number is defended on every push), and `packages/rackpal_ui/test/draw/paint_budget_test.dart` for the PAINT path. **The paint half was unmeasured when this row was first marked, and measuring it found 64 ms: nearly four frames.** See the note below the table: the mark stood on a scene build of ~3 ms while the thing that put it on screen took twenty times longer, which no reading of "within one frame at commit" survives. It is 10.6 ms now |
+| Deterministic re-layout ⇒ byte-identical display list | **DEMONSTRATED** | `packages/rackpal_core/test/scene/schematic_perf_test.dart:234` and `:242`, the same 300-link document twice, and **a separately decoded copy of the same bytes**, both through `op_digest.dart`, which is the instrument written for this clause's word *byte-identical*. `sugiyama_test.dart:470` holds the layer beneath it |
+| 300-connection fixture within one frame; **label-layer cost measured and recorded** | **DEMONSTRATED, on both halves, as of M2-G** | `schematic_perf_test.dart:279`/`:312` for the COMMIT path, timed in a gate step of their own, one test at a time, with the op counts they print asserted in the core suite at `:265`/`:284` (DR-178 §11.177; both steps block a merge, so the number is still defended on every push), and `packages/rackpal_ui/test/draw/paint_budget_test.dart` for the PAINT path. **The paint half was unmeasured when this row was first marked, and measuring it found 64 ms: nearly four frames.** See the note below the table: the mark stood on a scene build of ~3 ms while the thing that put it on screen took twenty times longer, which no reading of "within one frame at commit" survives. It is 10.6 ms now |
 | Keyboard path + screen-reader announcements | **DEMONSTRATED: at the channel, not with a screen reader** | `packages/rackpal_ui/test/canvas/schematic/schematic_keyboard_connect_test.dart:151` walks arrows → `W` → `Enter` to one `Link`, and `:639` intercepts `SystemChannels.accessibility` to assert a commit is announced **once** and never as a cancellation. The limit is stated rather than assumed: what is verified is the platform message, not NVDA reading it aloud, and M7's accessibility criterion is where a real reader meets this |
 
 **The paint half of clause 4, and why this row was half-right for a week.**
@@ -11803,6 +11803,44 @@ as DR-176 §11.175.
 
 **Commits** (§8.8): `#561` `e09eda7` (the ruling), `07784cf` (core), `2331c05` (storage), `a1f70f7`
 (the UI).
+
+#### 5.9.57 `#843`: a test that asserts a time runs in its own gate step, one test at a time · `DR-178` · no version move
+
+**DEMONSTRATED** by the gates themselves: `run_local.ps1` and `azure-pipelines.yml` run the core
+suite with `-Tests untimed` and then `rackpal_core_timed` with `-Tests timed`, after every other
+suite. 5 tests ran in the timed step and 4,759 in the core suite, each exactly at its
+floor.
+
+##### 5.9.57.1 The false red, and the ruling
+
+On 2026-09-05 a commit touching three markdown files failed the core suite: the text-bound schematic
+budget read 20.877 ms against a 16.67 ms frame, and 6.355 ms run alone. The file asserted op counts
+and stopwatch readings in one call, under a file-wide `perf` tag that nothing filtered. Measured
+before the user was asked: 184 builds since, two failures, both the machine; alone, about 5 ms. The
+user ruled the recommended option, recorded as DR-178 §11.177.
+
+##### 5.9.57.2 What building it found
+
+- **The two one-frame budgets asserted both halves in one helper**, `_measure`, so they became four
+  tests: two that assert op counts, in the suite, and two that assert the stopwatch, in the timed step.
+  The file went from 15 tests to 17, of which 5 are timed.
+- **A timed test cannot lean on a shape test it no longer runs beside.** The augmented document's nets
+  and the twelve-pod link count are re-asserted inside the timed tests, because a precondition checked
+  in another step is not a precondition of this measurement.
+- **`paint_budget_test.dart` carried the tag and asserted no time.** It prints its timings and checks
+  cache counts, so it lost the tag and stays in the ui suite.
+- **Only core is split.** A `perf` tag written in any other package still runs in its own suite: an
+  exclusion with no step running what it excludes would drop a test silently, which is what the old
+  "no tag filtering" note existed to prevent, and `run_suite.ps1` now says so.
+- **The partition was proved by breaking each half.** With nothing broken, the timed run passed 5 and the untimed run 12. Setting the frame budget to 0.001 ms failed 3 of the 5 timed tests, the ratchet and the tier comparison not reading the frame, and left all 12 untimed tests green; putting the symbol-layer op count off by one failed 2 of the 12 untimed tests and left all 5 timed tests green.
+
+##### 5.9.57.3 Evidence
+
+- 17 gates green on the test commit, rackpal_core 4762 -> 4764, and 18 on the step commit, rackpal_core 4764 -> 4759 with rackpal_core_timed at 5, every suite exactly at its floor. Analyzer pin unmoved at 233.
+- docs/12 §5.1's M2 rows now cite the timed tests and the op-count tests by their new lines, and say
+  where each runs.
+
+**Commits** (§8.8): `#843` `8d97776` (the ruling), `4054b2f` (the tests), `f6f1b22` (the step).
 
 
 ---
