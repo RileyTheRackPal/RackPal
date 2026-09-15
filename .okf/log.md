@@ -1,5 +1,30 @@
 # Update Log
 
+## 2026-09-15 (forty-ninth entry)
+
+* **Creation**: [DR-177](/decisions/dr-177-a-passthrough-pair-stays-one-to-one.md), answering the
+  question DR-087 §11.86.4 left open: no one-to-many passthrough pair.
+* **Note**: **FIVE OF EIGHT TICKETS WERE OLDER THAN THE CODE.** Measuring the queue of items waiting on
+  a ruling before bringing options found `#557` already ruled by DR-087, three of `#80`'s four fields
+  settled, `#91`'s pricing reason answered by DR-036, `#92`'s orphaned-ports question ruled by DR-013,
+  and `#782` naming extensions DR-015 had renamed. The options would have been wrong without it.
+* **Creation**: [DR-178](/decisions/dr-178-a-test-that-asserts-a-time-runs-alone.md): a test that
+  asserts a time runs in its own gate step, one test at a time.
+* **Creation**: [DR-179](/decisions/dr-179-the-rp-extensions.md): `.rppj`, `.rpdx` and `.rpda`, with
+  every extension a build has written still opening.
+* **Note**: **THE RENAME SWEEP REWROTE A LEGACY EXTENSION, AND §11.95.8's RESTORATION MISSED IT.**
+  `0e2c5bb` turned DR-015's still-opened `.rackmate` into `.rackpal` in the code and in the canon
+  clause, a fact about the old name that no build ever made true.
+* **Creation**: [DR-180](/decisions/dr-180-a-project-states-its-wiring-standard.md): a project states
+  its wiring standard, and a cable may override it.
+* **Creation**: [DR-181](/decisions/dr-181-a-family-may-override-its-glyph.md): a signal family may
+  override its domain's glyph.
+* **Note**: **THE TICKET NAMED TWO FAMILIES AND THE TABLE HELD TWENTY-SIX.** `#82` and the seed's own
+  header named `audio.speaker_cv` and `power.bonding`; comparing every family's glyph in the family
+  table with its domain's native glyph found 26 drawn with the wrong shape.
+* **Creation**: [DR-182](/decisions/dr-182-sizes-stay-and-the-week-total-retires.md): the roadmap keeps
+  its sizes and retires its week total.
+
 ## 2026-09-15 (forty-eighth entry)
 
 * **Closed**: `#561` with ``a1f70f7``, ruled as

@@ -7106,12 +7106,12 @@ device, `.rmda` device archive.**
 does not advance, and the migration chain is not involved. This is a rename, and calling it
 anything more would put a format change in the record that did not happen.
 
-**11.15.2 `.rackpal` is still opened, and still saved in place.** Not deprecated, not migrated
+**11.15.2 `.rackmate` is still opened, and still saved in place.** Not deprecated, not migrated
 on open, not renamed underneath the user. `kDocumentExtensions` lists both spellings; the path
 normaliser appends the first and treats every entry as already-correct. The consequence that
 forced this shape: `SessionController.save()` runs the ALREADY-OPEN path back through that
-normaliser, so a single-entry list would turn a team's `Smith.rackpal` into
-`Smith.rackpal.rmpj` on `Ctrl+S`, a second file, the first left holding older bytes and still
+normaliser, so a single-entry list would turn a team's `Smith.rackmate` into
+`Smith.rackmate.rmpj` on `Ctrl+S`, a second file, the first left holding older bytes and still
 in the recents list, and nothing looking wrong until they open the wrong one. **Save As and a
 never-saved document still reach for `.rmpj`, so the old spelling is accepted and never
 propagated.**
@@ -21419,6 +21419,237 @@ surface, store and rules. Board `#561` cites DR-016 and this ruling.
 project file; editing a preset's values after it is saved, beyond its name; and the milestone
 bookkeeping for a scope addition whose cell still reads M1.
 
+### 11.176 DR-177 · A passthrough pair stays one front port to one rear port, and N04 stays unpaired
+
+**The question.** Board `#557`. DR-087 §11.86.4 ruled that the seeded 24-fibre LIU, `N04`, ships
+unpaired, and left one thing open in terms: *"Whether `PassthroughPairDef` should ever become 1:N is
+not ruled here and is not M4's question."*
+
+**11.176.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- Of the **51** seeded templates, two are passthroughs. `N03`, the 24-port patch panel, has 24 front
+  ports, 24 rear ports and 24 pairs. `N04` has 12 `conn.lc_duplex` front adapters, 24 rear splices
+  and no pairs. **`N04` is the only template whose two faces differ in count.**
+- `passthrough_commands_test.dart` pins `N04` unpaired, and its 36 ports carry the unpaired notice at
+  notice severity, which docs/06 §4.6 makes a load warning rather than an error.
+- Pair by order, run over `N04` anyway, pairs twelve ports and reports the twelve rear ports it left
+  over (`PairByOrderResult.leftOverRear`).
+
+**11.176.2 RULED 2026-09-15: NO ONE-TO-MANY PAIR.** Settled by the user. `PassthroughPairDef` keeps one
+`frontKey` and one `rearKey`. `N04` stays unpaired, and its notice stays the honest report of a device
+the model cannot express. **The cost is the reason**: a one-to-many pair is a codec change, a migration
+and a new Termination Schedule column, for one seeded device. Offered and refused: parking the question
+under the v1.1 community catalog (`#592`), where a contributed fibre cassette fanning one trunk out to
+several ports would first need it; and keeping `#557` open as that question.
+
+**What this does not rule.** A template a user authors with unequal faces gets the same unpaired notice
+and the same leftover count, and nothing new is built for it. A real device that needs a fan-out is a
+new question with its own evidence.
+
+### 11.177 DR-178 · A test that asserts a time runs in its own gate step, one test at a time
+
+**The question.** Board `#843`. On 2026-09-05 a docs-only commit failed the core suite on
+`schematic_perf_test.dart`'s text-bound case: 20.877 ms against a 16.67 ms frame, where the same test
+run alone took 6.355 ms. The file asserts deterministic operation counts and stopwatch readings side
+by side, and only the second can fail for a reason outside the change under test.
+
+**11.177.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- **The service has run 184 builds since 2026-09-05**: 174 succeeded, 8 were cancelled and 2 failed.
+  Both failures were the machine and not this test: build 195 a torn workspace, build 207 an agent that
+  stopped responding.
+- **Run alone today**, the 300-link case takes 5.032 ms, the text-bound case 4.434 ms and a wires-only
+  edit 0.485 ms, against a 16.67 ms frame. The twelve-pod cold build takes 67.874 ms against its 400 ms
+  ratchet.
+- **Two test files carry the `perf` tag**, `schematic_perf_test.dart` in core and
+  `paint_budget_test.dart` in ui, and **only the first asserts a time**: five `lessThan` checks, three
+  against a fixed number (the frame, in two places, and the ratchet) and two comparing one timing with
+  another. `paint_budget_test.dart` starts a stopwatch but asserts only cache counts.
+- **The tag filters nothing.** `run_suite.ps1` runs every test in a package, so a timed case shares the
+  machine with the rest of its own suite.
+
+**11.177.2 RULED 2026-09-15: A TEST THAT ASSERTS A TIME RUNS IN ITS OWN GATE STEP.** Settled by the
+user. Every assertion on a stopwatch reading leaves the package suites and runs in one gate step of its
+own, one test at a time, in `run_local.ps1` and in the pipeline alike. Everything that asserts a count,
+a digest or a shape stays in its suite, so M2-C's operation-count record and the determinism checks
+keep running beside everything else. **The budgets do not move**: §11.75.4 still binds an edit to one
+frame and keeps the cold build's ratchet. Offered and refused: closing `#843` on the evidence above;
+re-timing once before failing; and timing a reference workload in the same process and asserting the
+ratio, which survives any machine and is the most work. Widening the budget was refused by the ticket
+itself.
+
+**What this does not rule.** It does not protect the timed step from another program loading the same
+machine, which a self-hosted agent shares: it removes competition with the test's own suite, and that
+is all. It changes no budget's value.
+
+### 11.178 DR-179 · The file extensions are `.rppj`, `.rpdx` and `.rpda`, and every extension a build has written still opens
+
+**The question.** Board `#782`. DR-096 §11.95.3 deferred re-cutting the `rm`-prefixed extensions to
+match RackPal, with M8 as the trigger, and did not rule the letters.
+
+**11.178.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- **The ticket and §11.95.3 name the wrong set.** Both name `.rmdev` and `.rmlib`, which DR-015 had
+  already renamed. The extensions the app writes are `.rmpj` (project), `.rmdx` (device template) and
+  `.rmda` (device library), in 424, 88 and 103 places across code and tests.
+- **No file stores its own extension.** The four starter projects, the only files in the tree carrying
+  any of these extensions, contain none of the three strings, and the `.rmda` codec names `.rmdx` only
+  in comments. So CR-117's byte round-trip is not in play: this is a rename, not a migration.
+- **The deadline is earlier than M8.** MSIX-7 (`#171`, under the Store alpha epic `#100`) registers
+  these three extensions in the package manifest, and the Store alpha puts a package in the team's
+  hands.
+- **The old project extension that still opens is the wrong one.** DR-015 §11.15.2 kept `.rackmate`,
+  which every build before `dc22ddc` wrote, opening and saving in place. The product rename (`#781`,
+  `0e2c5bb`) rewrote that constant to `.rackpal`, in the code and in §11.15.2's own text. No build ever
+  wrote `.rackpal`, so a project saved before 2026-08-02 no longer appears in the Open dialog, and a
+  Save would give it a second name. It is the class §11.95.8 names, prose asserting a fact about the
+  old name, and it survived that section's restoration.
+- Web searches found no existing format using `.rppj`, `.rpdx` or `.rpda`; the nearest are REAPER's
+  `.rpp` and Axure's `.rpprj`.
+
+**11.178.2 RULED 2026-09-15: `.rppj`, `.rpdx` AND `.rpda`, NOW.** Settled by the user. The project,
+device template and device library extensions become `.rppj`, `.rpdx` and `.rpda`, keeping the letters
+after the prefix so DR-015's family stays recognisable. It lands as its own change, before MSIX-7
+writes a manifest, rather than at M8.
+
+**11.178.3 RULED 2026-09-15: EVERY EXTENSION A BUILD HAS WRITTEN STILL OPENS.** A project opens as
+`.rppj`, `.rmpj` or `.rackmate`; a device template as `.rpdx` or `.rmdx`; a device library as `.rpda` or
+`.rmda`, in the libraries folder as well as through a dialog. Save keeps the name a file was opened
+with, which is §11.15.2's rule unchanged. `.rackpal` comes off the list, because nothing ever wrote it.
+§11.15.2's text is restored to `.rackmate` in the same commit as this ruling. Offered and refused:
+renaming at the M8 trigger, which costs the same plus every file saved in the meantime; and keeping
+`rm`.
+
+**What this does not rule.** File-type registration, its icons and whether the portable build
+registers anything, all of which stay MSIX-7's. The file format, the schema version and every byte
+inside a file are untouched.
+
+### 11.179 DR-180 · A project states its wiring standard, and a cable may override it
+
+**The question.** Board `#80`, from M2-B: four fields docs/08 §3 names that the model did not have.
+Three have since been settled, `SignalFamilyDef.shortTag` by DR-010 §11.10.3, `Pathway.designator` by
+DR-026 §11.25.1 and `Outlet.nominalRunLength` by §11.25.2. The fourth is T568A or T568B.
+
+**11.179.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- **Nothing in the model states a wiring standard.** `TerminationType` is keystone, punchdown, F barrel,
+  euroblock, unterminated, field connector, binding post and RJ45 plug. The schedule's `TERM` cell
+  prints the termination type and the port designator, and the Structure view's `FIELD TERM` and
+  `RACK TERM` cells print the termination type alone.
+- **The corpus asks for it in three places and overloads a field for it in a fourth.** docs/08 §3.3's
+  examples print `T568B` in both termination columns; docs/08 §3's sheet list turns `T5.01` Plate, Panel
+  & Pinout Details on for a *"non-default T568A"*; and `schedule.dart` has said since 2026-07-28 that a
+  `Link.wiringStandard` is owed. docs/02 and `byte_roundtrip_test.dart` store `"colorCode": "T568B"` on a
+  `Conductor`, whose field is the pair colour.
+- `ProjectSettings` already holds project-wide defaults of the same kind: display units, sheet
+  numbering, designator formats and the default network media.
+- `T5.01` is not built; only comments in `sheet_def.dart` name it.
+- The seed's four-pair twisted-pair media are `media.cat5e`, `media.cat6`, `media.cat6_futp` and
+  `media.cat6a_futp`, and its only RJ45 connector is `conn.rj45`.
+
+**11.179.2 RULED 2026-09-15: THE PROJECT STATES A STANDARD, AND A CABLE MAY OVERRIDE IT.** Settled by
+the user. `ProjectSettings` gains a wiring standard, T568A or T568B, and a `Link` gains an optional
+override with the same two values. A cable's standard is its override, else the project's, else
+unknown. **Unset is unknown, never T568B** (G4, CR-114): both keys are absent when unset, and nothing
+prints a standard nobody stated. One entry per job replaces one per drop. Offered and refused: a field
+per cable with no project value; one per end, beside `FIELD TERM` and `RACK TERM`, which could show an
+accidental crossover at twice the entry; and not modelling it.
+
+**11.179.3 IT IS SHOWN ONLY WHERE IT CAN BE TRUE.** A wiring standard is a fact about a four-pair cable
+on an RJ45, so a cable shows, edits and prints one only when its media is a four-pair twisted-pair type
+or one of its ends is an RJ45 port or plug. A coax or speaker run never prints one, whatever the
+project says.
+
+**11.179.4 WHERE IT PRINTS.** The termination cells print a known standard beside the termination type,
+as docs/08 §3.3's examples already do. **A cable whose standard differs from the project's is what turns
+`T5.01` on**, which is docs/08 §3's *"non-default T568A"* stated against the project instead of against
+an assumed default. `T5.01` itself stays M6's.
+
+**What this does not rule.** A crossover cable, T568A at one end and T568B at the other, which the
+refused one-per-end option could have expressed. `Conductor.colorCode` keeps its meaning, the pair
+colour, and the docs/02 example that stores `T568B` there is a derived edit owed with the build.
+
+### 11.180 DR-181 · A signal family may override its domain's glyph
+
+**The question.** Board `#82`: six disagreements the registry seed hit. The one with teeth was that
+`audio.analog` and `pwr` each have three glyphs and `SignalDomainDef` has two slots, so
+`audio.speaker_cv` and `power.bonding` draw the wrong shape.
+
+**11.180.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- **Twenty-six of the 57 seeded families draw the wrong shape, not two.** `docs/catalog/seed-devices.md`
+  §4.4 gives every family a glyph, and §4.3 gives each domain a native glyph and one or two more.
+  `signal_style.dart` draws only the domain's native glyph, so every family whose §4.4 glyph is another
+  of its domain's shapes is drawn with the native one: 2 in digital video, 4 in analog video, 2 in analog
+  audio, 4 in digital audio, 4 in network, 7 in control, 2 in power and 1 in structure. The renderer
+  already flags every family whose shape it cannot verify (`SchematicScene.underGlyphedFamilyIds`),
+  a wider set that includes all 26, rather than hiding them.
+- **DR-010 §11.10.3 added exactly three render fields** to `SignalFamilyDef`, `shortTag`, `dashOverride`
+  and a weight override, and §11.10.4 kept the rest of the corpus shape out. §4.1's entity table lists
+  an optional `glyphOverride` all the same.
+- **A document carries its own copy of the registries.** Every starter embeds all 57 families, and the
+  seed is copied in only when a document is created (`blank_document.dart`) and when the starters are
+  generated (`authoring.dart`).
+- Of the other disagreements, the empty aliases are resolved (DR-060). Four need no ruling: docs/02
+  §6.2's worked JSON still shows one-letter tag prefixes where docs/08 §3.5 and the seed use `VID`, `NET`
+  and the rest; `structure.pathway`'s connector (`conn.unterminated`) and topology (`p2p`) are declared
+  in code and in no document; `topologyFree` (AC-030) is not on the class; and the logical-flow
+  direction of `video.avoip`, `audio.dante` and `audio.aes67` is recorded as bidirectional.
+
+**11.180.2 RULED 2026-09-15: A FAMILY MAY OVERRIDE ITS DOMAIN'S GLYPH.** Settled by the user.
+`SignalFamilyDef` gains an optional `glyphOverride`, absent when unset, and a family draws its override
+when it has one and its domain's native glyph otherwise. The seed sets it on every family whose §4.4
+glyph differs from its domain's native glyph, the 26 above, so `audio.speaker_cv` draws ○ and
+`power.bonding` draws ⏚. The glyph geometry gains the two shapes no domain slot holds, ○ and ⏚, and
+`registry_parity.py` compares the glyph column as it compares the others (DR-175). **The reason is the
+greyscale print**: shape is one of the channels that survives it (docs/05 §6.1), and a constant-voltage
+speaker line is not interchangeable with a low-impedance one. Offered and refused: ruling the glyph a
+domain property and letting dash, weight and tag separate the families; and deciding it with signal
+family authoring (DR-122, `#816`).
+
+**What this does not rule.** Refreshing a saved project's registries from the seed. The override is an
+additive key, so `kSchemaVersion` does not move and an older file still loads unchanged (CR-117); new
+projects and the regenerated starters get the overrides, and a project saved before this keeps drawing
+its domain's shape and keeps reporting the families it cannot verify, as with every earlier registry
+addition. Nor the logical-flow direction, which stays owed a field.
+
+### 11.181 DR-182 · The roadmap keeps its sizes and retires its week total
+
+**The question.** Board `#796`, with `#797`, `#798` and `#799`. docs/09 §6 prices ten milestones at 44
+to 67 weeks and names only DR-001, DR-005 and DR-015 as absorbed. On 2026-08-30 the user chose to leave
+it alone and file the gap.
+
+**11.181.1 MEASURED FIRST**, on 2026-09-15:
+
+- **M0 to M5 are closed.** §6 priced them at 29 to 44 weeks cumulative, and they took about 7.3 weeks,
+  from 2026-07-18 to M5's close on 2026-09-07: four to six times faster than estimates written for a
+  human team.
+- **The v1 saga holds 20 epics**, where `#796` counted seventeen on 2026-08-30; signal family authoring
+  (`#816`) and authored devices reaching the shelf (`#817`) were created on 2026-09-05. §6 has rows for
+  ten.
+- **The Plan view has a size and no row.** docs/09 §4 sizes it `L`, §6 does not count it, and 13 of its
+  14 board children are Done.
+- **Nine epics have no size anywhere**: macOS (`#55`, 2 of 15 children Done), the Store alpha (`#100`,
+  1 of 8), project history (`#655`, 0 of 5), NET-A (`#681`, 0 of 4), EXP-A (`#686`) and DOC-A (`#688`),
+  neither yet decomposed, cross-cutting debt (`#786`, 37 of 52), and `#816` (0 of 3) and `#817` (0 of
+  1).
+- docs/09 §4's M4 heading reads `M` where §6 reads `L` (`#799`).
+
+**11.181.2 RULED 2026-09-15: THE SIZES STAY AND THE WEEK TOTAL RETIRES.** Settled by the user. §6 gives
+every v1 epic a size, `S`, `M` or `L`, including the Plan view and the nine that have none, each sized
+from its stories with the evidence named. A closed milestone shows its actual duration beside its
+estimate. **The week total is withdrawn rather than re-estimated**, with a sentence saying why: relative
+sizes still order the work, and the weeks described a team that is not the one building it. The M4
+heading is corrected in the same change, and §6's two levers are re-read against the withdrawn total
+there. Offered and refused: a full re-cost in weeks with a new total; marking the gap and keeping 44 to
+67 with a caveat; and leaving docs/09 as it is.
+
+**11.181.3 Scope.** **No scope changes.** This amends how roadmap §6 states cost, under §8.3, and moves
+no epic between Sagas.
+
+**What this does not rule.** A release date, any milestone's scope, and the size letters themselves,
+which the docs change assigns from evidence.
+
 ---
 
 ## 12. Superseded rulings
@@ -22038,6 +22269,20 @@ label onto two drops.
 | **CR-112** | "**Ruling: `Project ▸ Locations…` is a top-level panel.** Consequent on CR-047. A project with racks and no Structure device must still be able to say which room a rack is in." | **The substance is untouched and the name is not.** Top-level, not owned by the Structure editor, over CR-047's arbitrary-depth tree: all of that stands, and the reason stands with it. What the ruling has is a **route in its title**, and that route died at DR-091 §11.90 when Locations became a tab and the `Project` menu was deleted. The surface is the **`Site` view**, the first tab, holding the tree and the floorplans (DR-168 §11.167). **The menu path is how the ruling is spelled, not what it decided**, and reading the title as the decision is what let eighteen strings go on naming a menu the bar does not have. |
 | **CR-112's affordance**, as DR-140 §11.139's options table reads it | The tree shown in the Structure editor is read-only, with an *"edit in `Project ▸ Locations…`"* affordance. | **Split, because the two trees are no longer the same case.** In the **Structure editor** the tree is still read-only and the affordance is repointed at the Site tab: the rule there is about ownership, and ownership has not moved. In the **Site view** there is no affordance, because that rail IS the editor. docs/15 §6 described the Plan view's copy of the tree as read-only with the same affordance from the chapter brief onward, which is the merge most of the way decided and pointed at a route that had been deleted underneath it. |
 | **DR-091 §11.90.3**, the tab strip | Seven rows: `Site`, `Rack`, `Schematic`, `Schedule`, `Structure`, `Locations`, `Plan`. | **Six rows**, `Locations` and `Plan` having become one view at `Locations`' position (DR-168 §11.167). **§11.90.4 is what permits it**, having declined to freeze the view set before M6; the table is corrected in place rather than superseded, because the ordering rule it states (by job, not by build order) is the thing it was ruled for and is unchanged. |
+
+### 12.34 Superseded by DR-179 (the `rp` extensions)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-015 §11.15.1** | The project, device and library extensions are `.rmpj`, `.rmdx` and `.rmda`. | **`.rppj`, `.rpdx` and `.rpda` are written**, and the three `rm` extensions still open (§11.178.3). |
+| **DR-015 §11.15.2**, as the product rename left it | `.rackpal` is still opened, and still saved in place. | **`.rackmate` is**, which is what the clause said before `0e2c5bb`; its text is restored. `.rackpal` is not accepted, since nothing wrote it (§11.178.1). |
+| **DR-096 §11.95.3** | Matching the extensions is deferred with M8 as the trigger; which letters is not ruled; `.rackmate` goes. | **Ruled and scheduled before MSIX-7** (§11.178.2), and `.rackmate` opens again (§11.178.3). |
+
+### 12.35 Amended by DR-181 (a family may override its glyph)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-010 §11.10.3 and §11.10.4** | `SignalFamilyDef` gains exactly three render fields, `shortTag`, `dashOverride` and a weight override, and the rest of the corpus field list stays absent. | **A fourth render field, `glyphOverride`**, is added and seeded on the 26 families whose §4.4 glyph is not their domain's native one (§11.180.2). The rest of the list still stays absent. |
 
 
 ## 13. Resolved §10 questions
