@@ -1,5 +1,22 @@
 # Update Log
 
+## 2026-09-15 (forty-seventh entry)
+
+* **Closed**: `#81` with ``b50412c``, ruled as
+  [DR-175](/decisions/dr-175-registry-parity-reads-the-family-table.md) in ``2dac125``. Registry
+  parity now holds each family's name, connector, tag, direction and topology to seed-devices §4.4.
+  **No version move**: it closes under `#786`.
+* **Creation**: [DR-175](/decisions/dr-175-registry-parity-reads-the-family-table.md).
+* **Update**: [Registry parity](/gates/registry-parity.md) is no longer blind to the descriptive
+  half; its blind spot is now the glyph and the fields §4.4 does not tabulate.
+* **Note**: **A QUEUE LABEL IS NOT A RULING.** `#81` sat in the "ruled" queue and nothing in canon,
+  the board or the ticket said how to close it. Read the ticket before building from the label.
+* **Note**: **A CI GATE THAT PRINTS TABLE TEXT MUST SURVIVE A CP1252 CONSOLE.** The table's arrows
+  and `Ω` cannot be encoded there, so every new drift message is ASCII and escapes the cell text.
+* **Note**: **A MUTATION HARNESS CAN FAIL ON ITS OWN ANCHOR.** The first run stopped at case three
+  because the seed puts each argument on its own line; the gate was never reached. Read which
+  assertion fired before reading the result.
+
 ## 2026-09-15 (forty-sixth entry)
 
 * **Closed**: `#111` with ``28e2d35``, ruled as

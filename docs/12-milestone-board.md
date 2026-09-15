@@ -11719,6 +11719,46 @@ and the bracket in the leader's signal colour.
 
 **Commits** (§8.8): `#111` `4550282` (the ruling), `4c08f9c` (the NUL fix), `28e2d35` (the build).
 
+#### 5.9.55 `#81`: registry parity holds the descriptive fields to the specification's family table · `DR-175` · no version move
+
+**DEMONSTRATED** by `python tools/registry_parity.py` at exit 0 on the tree, and by mutation on copies
+of its four inputs before it landed. A changed tag, connector, direction or name, a removed row and an
+unreadable Dir cell each exit 1 with a named drift, a removed §4.4 heading exits 1 as a parse failure,
+and a name wrapped in bold still passes. Every case ran under a cp1252 console encoding.
+
+##### 5.9.55.1 Not ruled, then asked
+
+`#81` was listed in this session's queue as ruled. It was not: the ticket, filed from the DR-010
+agent's mutation M13, describes a gap, and the gate's own OKF record calls the blindness deliberate
+and the gap open work. Measured before asking: seed-devices §4.4 tabulates all 57 seeded families
+with the display name, default connector, direction, topology, tag and glyph, and it agrees with the
+seed on every id, every tag and every name once markdown bold is removed. Four options went to the
+user; the recommended one was chosen.
+
+##### 5.9.55.2 What building it found
+
+- **The table already agreed.** Nine names differ only by bold and one connector cell is `—`, so the
+  gate starts green and its first commit reconciles nothing.
+- **The Dir and Topo cells are prose.** *"→ (+ARC ↔)"* and *"BUS, topology-free"* carry a leading
+  symbol or word that maps onto the seed on every row, including `⤳`, which §4.4's key calls logical
+  flow riding a network and the seed stores as bidirectional.
+- **The glyph cannot be compared.** The seed stores none per family (DR-010 §11.10.3); the table's
+  Glyph column is the domain's glyph, native or transported.
+- **A console encoding decides whether the gate can print.** CI prints to a console that cannot
+  encode `→` or `Ω`, so every new message is ASCII and cell text is escaped.
+- **The first mutation run tested the harness, not the gate.** It stopped at case three on its own
+  anchor, because the seed puts each argument on its own line.
+- **The failure advice is conditional.** A drift ending "(section 4.4)" gets the "fix whichever is
+  wrong, do not regenerate" advice, and the palette advice prints only when a palette drift is
+  present.
+
+##### 5.9.55.3 Evidence
+
+- 17 gates green on the ruling alone and on the build, every suite exactly at its floor, with no
+  test floor moved. Analyzer pin unmoved at 233.
+
+**Commits** (§8.8): `#81` `2dac125` (the ruling), `b50412c` (the build).
+
 
 ---
 
