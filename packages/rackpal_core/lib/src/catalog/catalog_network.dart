@@ -18,7 +18,6 @@ PowerProfile _power({
   required int nameplate,
   required int typical,
   required int pf,
-  int outletsConsumed = 1,
   int? poeBudget,
 }) => PowerProfile(
   nameplateWatts: nameplate,
@@ -27,8 +26,6 @@ PowerProfile _power({
   apparentVA: (typical * 1000 / pf).round(),
   powerFactor: pf,
   isContinuousLoad: true,
-  outletsProvided: 0,
-  outletsConsumed: outletsConsumed,
   inletPlug: PlugType.c14,
   poeBudgetWatts: poeBudget,
 );
@@ -109,9 +106,8 @@ Map<String, TemplateBody> buildNetworkCatalog() {
     model: 'SW-48-POE',
     displayName: 'PoE Switch, 48-port',
     description:
-        'Redundant dual PSU — two inlets means outletsConsumed: 2, and the '
-        'chip strip outlet rollup depends on every template being honest '
-        'about that.',
+        'Redundant dual PSU: two inlets, so it takes two outlets until its '
+        'cords are drawn.',
     category: kCatNetwork,
     primaryDomain: const SignalDomainId('net'),
     typePrefix: 'SW',
@@ -134,7 +130,6 @@ Map<String, TemplateBody> buildNetworkCatalog() {
       nameplate: 900,
       typical: 380,
       pf: 950,
-      outletsConsumed: 2,
       poeBudget: 740,
     ),
     ports: n01.ports,

@@ -575,7 +575,7 @@ void main() {
           frontU: 1,
           rearU: 1,
           side: OccupancySide.both,
-          power: PowerProfile(apparentVA: va, outletsConsumed: 1),
+          power: PowerProfile(apparentVA: va),
           ports: const [],
           banks: const [],
         ),

@@ -167,7 +167,14 @@ void main() {
       // are simply not present in an ordinary document at all, so it
       // opens everywhere. The document that carries plan data is the one
       // that stamps 5, and it stamps it from its CONTENT.
-      expect(kSchemaVersion, equals(5));
+      //
+      // 6, not 5: `PowerProfile.outletsProvided` and `outletsConsumed` were
+      // DELETED (DR-171 §11.170.3). Every starter loses both keys from
+      // every template body, and the hashes that attested those bodies
+      // are re-taken, so files stop re-encoding byte for byte. And
+      // `minReaderVersion` STAYS AT 3 again: a reader since v2 meets the
+      // absent keys as unknown and loses nothing.
+      expect(kSchemaVersion, equals(6));
       expect(kMinReaderVersion, equals(3));
       expect(kPlanMinReaderVersion, equals(5));
     });

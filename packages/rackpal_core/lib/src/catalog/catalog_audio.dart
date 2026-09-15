@@ -26,8 +26,6 @@ PowerProfile _power({
   apparentVA: (typical * 1000 / pf).round(),
   powerFactor: pf,
   isContinuousLoad: true,
-  outletsProvided: 0,
-  outletsConsumed: 1,
   inletPlug: PlugType.nema515p,
 );
 

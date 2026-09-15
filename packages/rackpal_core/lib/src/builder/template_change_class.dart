@@ -268,8 +268,6 @@ const Map<String, _Rule> _powerRules = {
   'apparentVA': _safe,
   'powerFactor': _safe,
   'isContinuousLoad': _safe,
-  'outletsProvided': _safe,
-  'outletsConsumed': _safe,
   'outputCapacityVA': _safe,
   'outputCapacityWatts': _safe,
   'inletPlug': _safe,
