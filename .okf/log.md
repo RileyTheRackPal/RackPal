@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-09-15 (fiftieth entry)
+
+* **Closed**: `#843` with ``f6f1b22``, ruled as
+  [DR-178](/decisions/dr-178-a-test-that-asserts-a-time-runs-alone.md) in ``8d97776``. The tests
+  tagged `perf` assert a stopwatch reading and run in a gate step of their own, one test at a time;
+  the core suite leaves them out. **No version move**: it closes under `#786`.
+* **Update**: [DR-178](/decisions/dr-178-a-test-that-asserts-a-time-runs-alone.md) is built.
+* **Note**: **A TIMED TEST RE-ASSERTS ITS PRECONDITION.** Splitting a measurement from the shape
+  checks it stood on moves them into different steps, so each timed test checks the one fact its
+  number depends on before it starts the stopwatch.
+
 ## 2026-09-15 (forty-ninth entry)
 
 * **Creation**: [DR-177](/decisions/dr-177-a-passthrough-pair-stays-one-to-one.md), answering the

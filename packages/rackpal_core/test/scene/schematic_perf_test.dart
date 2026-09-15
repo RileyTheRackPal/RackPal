@@ -1,15 +1,20 @@
-@Tags(['perf'])
-library;
-
 // M2's PERFORMANCE exit criterion, measured rather than asserted:
 // "routes a 300-connection fixture within one frame at commit"
 // (docs/09, docs/12 §5.1).
 //
 // docs/12 §4 records that there was "no perf test and no CI to run one in",
 // and names the missing instrument: "Grep for `@Tags` / `Tags([` across every
-// Dart file returns nothing." This file is the first one. It is TAGGED but
-// NOT EXCLUDED — `tools/ci/run_suite.ps1` does no tag filtering, deliberately
-// — so it runs on every push and the number is defended, not just recorded.
+// Dart file returns nothing." This file is the first one.
+//
+// ── WHERE IT RUNS, AND WHY IN TWO PLACES (DR-178, `#843`) ──────────────
+// A test here asserts a COUNT, a DIGEST or a SHAPE, or it asserts a
+// STOPWATCH READING, and never both. The first kind runs in the core suite
+// on every push. The second kind carries [_timed] and runs in a gate step
+// of its own, one test at a time, because a stopwatch shares the machine
+// with whatever else is running: on 2026-09-05 the text-bound budget read
+// 6.355 ms alone and 20.877 ms under its own suite's load, and failed a
+// commit that touched three markdown files. Both steps block a merge, so
+// the budget is still defended on every push, not just recorded.
 //
 // ── WHAT IS AND IS NOT MEASURED, STATED PLAINLY ─────────────────────────
 // MEASURED: the whole commit-path recompute — the document projected onto
@@ -43,6 +48,16 @@ import 'schematic_fixture.dart';
 
 /// One frame at 60 Hz. The criterion's own unit; not a tuned threshold.
 const double _oneFrameMs = 1000 / 60;
+
+/// The tag every STOPWATCH assertion in this file carries, and nothing else
+/// here does (DR-178, `#843`).
+///
+/// `tools/ci/run_suite.ps1 -Tests untimed` leaves these out of the core
+/// suite, and `-Tests timed` runs only these, one test at a time, in a gate
+/// step of their own. A test that asserts an op count or a digest must NOT
+/// carry it: that half of the record is machine-independent, and it belongs
+/// in the suite beside everything else.
+const String _timed = 'perf';
 
 /// M2-C's recorded symbol-layer figures on THIS fixture: 4,155 ops, best
 /// of 15 = 3.052 ms. Written down rather than re-derived, because the
@@ -238,13 +253,19 @@ void main() {
     });
   });
 
+  // ══════════════════════════════════════════════════════════════════════
+  // EACH BUDGET IS TWO TESTS (DR-178, `#843`)
+  // ══════════════════════════════════════════════════════════════════════
+  // The first asserts the display list's op counts, which are the same on
+  // every machine, and runs in the core suite. The second asserts the
+  // stopwatch and carries [_timed], so it runs alone in its own gate step.
+  // They used to be one call that asserted both, which is how a budget
+  // with three times the headroom it needed failed a docs-only commit.
   group('the budget', () {
-    test('a 300-connection fixture lays out and emits its display list '
-        'within ONE FRAME at commit', () {
-      _measure(
+    test('a 300-connection fixture emits exactly the display list its '
+        'budget is measured over', () {
+      _expectOps(
         readSchematicFixture(),
-        'AS COMMITTED (no nets, no '
-        'registries)',
         // FOUR, AND THAT IS #124's FALLBACK BEING EXERCISED. This document
         // seeds no registries, so no family resolves, so `SignalStyle
         // .glyph` is empty and there is no shape to draw — channel 4 stays
@@ -255,8 +276,13 @@ void main() {
       );
     });
 
-    test('…and still does with every link named and every family resolved '
-        '— the case DR-001 §11.1.5 calls TEXT-BOUND', () {
+    test('a 300-connection fixture lays out and emits its display list '
+        'within ONE FRAME at commit', () {
+      _measure(readSchematicFixture(), 'AS COMMITTED (no nets, no registries)');
+    }, tags: _timed);
+
+    test('…and still emits exactly its display list with every link named '
+        'and every family resolved', () {
       // THE COMMITTED FIXTURE UNDERSTATES THIS LAYER BY CONSTRUCTION, and
       // the understatement is exactly where the cost is. Its own header
       // says `Service`s and `Net`s are "deliberately NOT in it" because
@@ -279,35 +305,19 @@ void main() {
       // `Net` behind it, named `N001`… by `ProjectSettings.netNameFormat`'s
       // own default template.
       final doc = _withNetsAndRegistries();
-
-      // THE AUGMENTATION IS ASSERTED BEFORE IT IS TIMED. A measurement of
-      // a document that quietly failed to gain its nets would be the same
-      // floor again wearing a different label.
-      final scene = buildSchematicScene(doc: doc, measurer: _Measurer());
-      expect(scene.unnamedLinkIds, isEmpty);
-      expect(scene.unresolvedDomainFragment, isNull);
-      expect(
-        scene.domainFragments.length,
-        greaterThan(3),
-        reason:
-            'the point of seeding the registries is that the labels spread '
-            'across real sub-pictures — one bucket would measure the same '
-            'single-picture case as the floor run',
-      );
-      expect(
-        scene.netLabels.map((l) => l.netName),
-        everyElement(
-          anyOf(
-            startsWith('N0'),
-            startsWith('N1'),
-            startsWith('N2'),
-            startsWith('N3'),
-          ),
-        ),
-      );
-
-      _measure(doc, 'AUGMENTED (300 nets, seeded registries)', opsPerFlag: 5);
+      _expectAugmented(doc);
+      _expectOps(doc, opsPerFlag: 5);
     });
+
+    test('…and still does with every link named and every family resolved '
+        '— the case DR-001 §11.1.5 calls TEXT-BOUND', () {
+      final doc = _withNetsAndRegistries();
+      // ASSERTED HERE AS WELL AS IN THE SUITE, because this test runs in a
+      // different step and a precondition checked somewhere else is not a
+      // precondition of this measurement.
+      _expectAugmented(doc);
+      _measure(doc, 'AUGMENTED (300 nets, seeded registries)');
+    }, tags: _timed);
   });
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -401,6 +411,13 @@ void main() {
         'rather than leaving it to be rediscovered (#702)', () {
       final doc = buildSchematicFixture(pods: _kHeadroomPods);
       final measurer = _Measurer();
+      // The shape test above runs in the suite; this runs in the timed
+      // step, so the one figure the ceiling depends on is checked here too.
+      expect(
+        doc.links,
+        hasLength(kSchematicFixtureLinkCount * _kHeadroomPods),
+        reason: 'a ceiling met by a smaller graph is not met',
+      );
 
       buildSchematicScene(doc: doc, measurer: measurer);
       var bestUs = 1 << 30;
@@ -448,7 +465,7 @@ void main() {
       // through. A cold build over one frame is therefore no longer a
       // debt to be tripped over, and the group below asserts the budget
       // where the ruling puts it.
-    });
+    }, tags: _timed);
 
     test('AN EDIT at this size is what the tiers actually changed', () {
       // The running total for the INCREMENTAL path, printed for the same
@@ -514,7 +531,7 @@ void main() {
             'and holding the layout must beat the `holdAt` path it '
             'replaced, which lays out and then overrides',
       );
-    });
+    }, tags: _timed);
   });
 
   // ══════════════════════════════════════════════════════════════════════
@@ -567,7 +584,7 @@ void main() {
             'frame, which is the budget M2 states and the one DR-076 '
             '§11.75.4 keeps',
       );
-    });
+    }, tags: _timed);
   });
 
   group('M2-G — the text-run census', () {
@@ -658,10 +675,89 @@ void _census(String label, List<DiagramOp> ops) {
   );
 }
 
+/// The augmented document gained what [_withNetsAndRegistries] says it adds.
+///
+/// THE AUGMENTATION IS ASSERTED BEFORE IT IS COUNTED OR TIMED. A measurement
+/// of a document that quietly failed to gain its nets would be the same
+/// floor again wearing a different label.
+void _expectAugmented(RackDocument doc) {
+  final scene = buildSchematicScene(doc: doc, measurer: _Measurer());
+  expect(scene.unnamedLinkIds, isEmpty);
+  expect(scene.unresolvedDomainFragment, isNull);
+  expect(
+    scene.domainFragments.length,
+    greaterThan(3),
+    reason:
+        'the point of seeding the registries is that the labels spread '
+        'across real sub-pictures — one bucket would measure the same '
+        'single-picture case as the floor run',
+  );
+  expect(
+    scene.netLabels.map((l) => l.netName),
+    everyElement(
+      anyOf(
+        startsWith('N0'),
+        startsWith('N1'),
+        startsWith('N2'),
+        startsWith('N3'),
+      ),
+    ),
+  );
+}
+
+/// The machine-independent half of the record: the display list's op
+/// counts, asserted in the core suite (DR-178). [_measure] is the other half
+/// and asserts only the stopwatch.
+void _expectOps(RackDocument doc, {required int opsPerFlag}) {
+  final measurer = _Measurer();
+  final scene = buildSchematicScene(doc: doc, measurer: measurer);
+  final layer = buildNetLabelLayer(
+    doc: doc,
+    symbols: scene.symbols,
+    measurer: measurer,
+    palette: const SchematicPalette(),
+    unitsPerGrid: kSchematicUnitsPerGrid,
+  );
+  final labels = scene.netLabels.length;
+  final labelOps = layer.ops.length;
+  expect(
+    labels,
+    greaterThan(0),
+    reason: 'a per-flag identity over zero flags agrees with every number',
+  );
+  // FIVE ops per flag — leader, pennant, family glyph, family tag, net
+  // name — and two flags per link.
+  //
+  // IT WENT TO FIVE, CAME BACK TO FOUR, AND HAS GONE TO FIVE AGAIN FOR A
+  // DIFFERENT REASON, which is why this number is worth watching.
+  //
+  //   * the first five was ACCIDENTAL: making the flag opaque with a
+  //     second `OpPath` behind the tint. Compositing the two colours at
+  //     build time gives identical pixels in one op, so that one was given
+  //     back (`ff712d2`);
+  //   * this five is STRUCTURAL (#124). Channel 4 used to be one text run
+  //     carrying a glyph the app's font does not have — measured near-zero
+  //     by Jost and painted full width by the screen's fallback face, which
+  //     is what put the net name on top of the token. The glyph is geometry
+  //     now, so channel 4 is a path plus a shorter run. There is no
+  //     arithmetic that gives this one back: the fix is that the two are
+  //     separate objects.
+  //
+  // A flag whose family glyph has no shape stays at FOUR — the defined
+  // fallback to the measured run. Every family in this fixture resolves,
+  // which is what makes the figure a single number here.
+  expect(labelOps, opsPerFlag * labels);
+  expect(scene.scene.ops.length, _kSymbolOps + labelOps);
+}
+
 /// Times [doc] end to end, times the label layer alone in the same
 /// process, and PRINTS both. docs/12 §5.1 asks for the commit cost to be
 /// measured and recorded, and a green test records nothing.
-void _measure(RackDocument doc, String label, {required int opsPerFlag}) {
+///
+/// ASSERTS ONLY THE STOPWATCH (DR-178). The op counts it prints are
+/// [_expectOps]'s to assert, in the suite, where a busy machine cannot fail
+/// them.
+void _measure(RackDocument doc, String label) {
   final measurer = _Measurer();
 
   // Warm up: the first call on the VM pays JIT compilation for the whole
@@ -734,30 +830,6 @@ void _measure(RackDocument doc, String label, {required int opsPerFlag}) {
         'one frame (60 Hz). This is an M2 exit criterion, not a '
         'nice-to-have.',
   );
-  // The op delta is the machine-independent half of the record, so it is
-  // asserted rather than only printed: FIVE ops per flag — leader,
-  // pennant, family glyph, family tag, net name — and two flags per link.
-  //
-  // IT WENT TO FIVE, CAME BACK TO FOUR, AND HAS GONE TO FIVE AGAIN FOR A
-  // DIFFERENT REASON, which is why this number is worth watching.
-  //
-  //   * the first five was ACCIDENTAL: making the flag opaque with a
-  //     second `OpPath` behind the tint. Compositing the two colours at
-  //     build time gives identical pixels in one op, so that one was given
-  //     back (`ff712d2`);
-  //   * this five is STRUCTURAL (#124). Channel 4 used to be one text run
-  //     carrying a glyph the app's font does not have — measured near-zero
-  //     by Jost and painted full width by the screen's fallback face, which
-  //     is what put the net name on top of the token. The glyph is geometry
-  //     now, so channel 4 is a path plus a shorter run. There is no
-  //     arithmetic that gives this one back: the fix is that the two are
-  //     separate objects.
-  //
-  // A flag whose family glyph has no shape stays at FOUR — the defined
-  // fallback to the measured run. Every family in this fixture resolves,
-  // which is what makes the figure a single number here.
-  expect(labelOps, opsPerFlag * labels);
-  expect(ops, _kSymbolOps + labelOps);
 }
 
 /// The committed fixture with the registries DR-010 seeds and one
@@ -802,9 +874,7 @@ RackDocument _withNetsAndRegistries() {
       signalFamily: family,
       meta: meta,
     );
-    link.services.add(
-      Service(id: 's$i', signalFamily: family, netId: netId),
-    );
+    link.services.add(Service(id: 's$i', signalFamily: family, netId: netId));
   }
   return doc;
 }

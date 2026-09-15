@@ -9,10 +9,12 @@
 # dart_test.yaml" on every run. A warning nobody can act on is the thing
 # docs/11 section 8 says trains people to ignore output.
 #
-# The three tags below MIRROR the root file verbatim. Nothing here filters
-# anything: run_suite.ps1 deliberately does no tag filtering ("there are
-# zero tagged tests in this repository today"), and the perf budget is an
-# exit criterion, so it runs on every push like everything else.
+# The three tags below MIRROR the root file verbatim. ONE OF THEM IS
+# FILTERED, and in this package only: `perf` marks a test that asserts a
+# stopwatch reading, the core suite runs `--exclude-tags perf`, and a gate
+# step of its own runs `--tags perf` one test at a time (DR-178, #843). The
+# budgets are exit criteria, so that step blocks a merge exactly as the
+# suite does.
 
 tags:
   golden:
@@ -20,4 +22,4 @@ tags:
   slow:
     description: "Property tests and large fixture sweeps"
   perf:
-    description: "Benchmark-harness performance budget tests"
+    description: "Asserts a stopwatch reading; runs alone in its own gate step, not in the suite (DR-178)"
