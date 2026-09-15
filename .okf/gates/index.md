@@ -6,6 +6,7 @@ gate's blind spot is as worth knowing as its coverage.
 
 * [Analyzer info ratchet](analyzer-baseline.md) - 0 errors, 0 warnings, and an exactly pinned info count. Scans tests too.
 * [Registry parity](registry-parity.md) - the Dart seed agrees with the palette authority on hue, dash and weight, and with seed-devices §4.4 on each family's name, connector, tag, direction and topology (DR-175).
+* [Milestone completeness](milestone-completeness.md) - roadmap section 8.9 as a check (DR-095): no milestone before the current one may hold an exit clause that is neither discharged nor parked on a later milestone by a ruling. It runs twelve planted cases before it reads the board, and its first real run failed on M1's goal line, which the prose called no exit clause and the table counted as one.
 * [Byte-exactness sweep](byte-exactness-sweep.md) - .gitattributes pins every extension in a byte-exact root; also the traversal bug worth not repeating.
 * [Catalog port order](catalog-port-order.md) - declared order must equal ranked order; FracIndex sorts as a string and 678 of 727 ports were scrambled.
 * [Release signature](release-signature.md) - signed, timestamped, and still valid after the certificate expires; canon's recipe for the last one has an unstated precondition.
