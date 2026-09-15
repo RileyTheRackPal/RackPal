@@ -610,6 +610,18 @@ jobs:
         displayName: 'Gate: palette code/registry parity'
         condition: succeededOrFailed()
 
+      # The fourth gate that reads the corpus (#780, DR-095 section 11.94.9):
+      # roadmap section 8.9 as a check. No milestone before the current one
+      # may hold an exit clause that is neither DEMONSTRATED/CONFIRMED nor
+      # parked on a named later milestone by a ruling. No Dart and no
+      # dependencies; it reads docs/12's clause tables and runs its own
+      # planted cases first, so a green run is evidence that it can fail.
+      - pwsh: |
+          python tools/milestone_gate.py
+          exit $LASTEXITCODE
+        displayName: 'Gate: milestone completeness (section 8.9)'
+        condition: succeededOrFailed()
+
       # ==================================================================
       # GATE 3 — THE REPORTING PATH ITSELF
       # ==================================================================

@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-09-15 (fifty-first entry)
+
+* **Closed**: `#780` with ``1e75efc`` and `#92` with ``1a48354``, under
+  [DR-095](/decisions/dr-095-a-milestone-closes-on-clauses-discharged-or-parked.md). Every clause table
+  before the current milestone carries section 0's marks, and roadmap section 8.9 is a gate. **No version
+  move**: they close under `#786`.
+* **Creation**: [Milestone completeness](/gates/milestone-completeness.md).
+* **Update**: [DR-095](/decisions/dr-095-a-milestone-closes-on-clauses-discharged-or-parked.md) is built.
+* **Note**: **A GATE WRITTEN AFTER THE CLEAN-UP PASSES BY CONSTRUCTION.** It was run on the real board
+  and failed on a row nobody had looked at, M1's goal line, and it runs planted cases before every real
+  read so that green means it can still fail.
+* **Note**: **A TEST'S NAME IS A CLAIM.** `drop_entry_panel_test.dart` was named for sixty drops, typed
+  nine, and was cited as sixty; the sixty-drop evidence was a different test the table never named.
+
 ## 2026-09-15 (fiftieth entry)
 
 * **Closed**: `#843` with ``f6f1b22``, ruled as

@@ -417,10 +417,15 @@ void main() {
       expect(keystrokes, lessThan(349));
     });
 
-    testWidgets('and every one of the sixty carries both a W number and a '
+    testWidgets('and every drop it makes carries both a W number and a '
         'field label', (tester) async {
       // AC-018's clause, at the artifact. A drop that reaches the
       // document without a label is a cable nobody can find on the wall.
+      //
+      // NINE DROPS, NOT SIXTY. This test was named for the sixty and
+      // docs/12 section 5.2 cited it at that size until 2026-09-15 (#92).
+      // The sixty-drop document is `drop_line_planner_test.dart`'s whole
+      // drill, in core, which asserts the same fields on all sixty.
       final h = _Harness(
         _project(rooms: const [('Living Room', 'LR'), ('Attic', 'ATT')]),
       );

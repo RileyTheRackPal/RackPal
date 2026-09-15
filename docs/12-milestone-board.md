@@ -55,6 +55,13 @@ weakest, and that order is what "weakest" means below.** Every clause carries ex
 seven; a mark that reads "demonstrated in spirit" or "demonstrated but" is not a mark, it is a
 negotiation.
 
+**A clause that is not discharged may be parked, and its mark cell then says where it went:**
+`**NOT BUILT**, parked on M6 by DR-027`. That is roadmap §8.9's park (DR-095 §11.94.5): a ruling ID
+and a named later milestone, written in the one cell the milestone-completeness gate (`#780`) reads.
+**A park keeps the clause's true mark.** It moves who owes the clause, not what has been shown, so a
+parked clause never reads as discharged. **A row that is not an exit clause says so in its Clause
+cell**, as M1's goal line and M8's licence row do, and is counted neither discharged nor owed.
+
 **Why `CONFIRMED` and `REFUTED` exist, and why they are not `DEMONSTRATED` and `UNPERFORMED`.**
 The first draft of this legend had five marks and assumed every undischarged clause was a flavour
 of *not yet*. Two of M1's clauses then met a human on 2026-07-27 and broke that assumption in both
@@ -299,7 +306,7 @@ Its **goal** line carries a clause the criterion does not: *"The smallest genuin
 | 6 | Equipment list matches rack contents **exactly** | **DEMONSTRATED** | `packages/rackpal_export/test/starters_export_test.dart` asserts a **bijection in both directions** over all four real starter files: designator multiset equality against the document, **plus** every designator recovered as actual text from a `T6.30` content stream |
 | 7 | Baseline-y parity within 0.5% on a kerning-heavy string | **DEMONSTRATED** | `apps/rackpal/test/baseline_parity_test.dart`, fixture `AV Wa To Ty`, `tol = 0.005 * m.lineHeight` at line 208. Both backends' baselines are recovered **independently from real output**: PDF `cm`/`Td` operators out of the emitted stream; Flutter's recorded translate + `paintOffset` + `paragraph.alphabeticBaseline`, and it additionally pins Skia's line width to `PdfFont.stringMetrics` within 1%. This is `RISK-01`'s stop-the-line gate and it is genuinely green |
 | 8 | Undo restores every operation in that sequence | **DEMONSTRATED** | `command_roundtrip_test.dart` at the core level, plus UI-level coverage in `packages/rackpal_ui/test/canvas/{rack_canvas_screen,rack_compaction,rack_resize_drag}_test.dart` and `test/inspector/{rack_inspector_panel,shrink_rack_dialog}_test.dart`, including *"Preset and Apply lands the preset AND the resize AND every displacement as ONE undo entry"* |
-| — | *Goal clause:* **"and it ships to real users"** | **NOT BUILT** | No installer, no signing, no release artefact of any kind. See M8 and DR-006 |
+| — | *Goal clause, not an exit clause:* **"and it ships to real users"** | **NOT BUILT** | No installer, no signing, no release artefact of any kind. See M8 and DR-006. §1 counts M1's exit clauses as eight, and this goal line is not one of them; board `#66` sits under M8 by DR-097, although its description still reads *"EXIT CLAUSE of M1"* |
 
 The exporter demonstration is recorded in the closing commit `0fa532d`.
 
@@ -2084,15 +2091,23 @@ which is 2026-08-10. **DR-040 superseded two of these rows on 2026-08-11, the fo
 caption was still accurate the moment it was written and stopped being so before anyone read it
 again; DR-095 §11.94.8 took it as current on 2026-08-26 and built a ruling on it.*
 
-| # | Clause | State | Evidence |
+**THE MARKS BELOW REPLACED A `State` COLUMN ON 2026-09-15 (`#92`, DR-095 §11.94.6).** It read
+`needs a person`, `BUILT`, `BUILT as derivation`, `REACHABLE` and `M6's`, and none of those is one of
+§0's seven. Each row was re-read against a named run rather than renamed: `BUILT` became
+`DEMONSTRATED` only where a test asserts the clause itself on one document, which
+`drop_line_planner_test.dart`'s whole-drill test does for four rows at sixty drops, and a row that
+could not name one would have been marked `BELIEVED`. None had to be.
+
+| # | Clause | Mark | Evidence |
 |---|---|---|---|
-| 1 | 60 drops entered in under fifteen minutes | **needs a person** | 349 keystrokes, 5.82 per drop, gated in `drop_entry_panel_test.dart:293`. The surface cannot make it impossible; only a clock can say whether a human is on pace |
-| 2 | 60 `Link`s each with one `fieldLabel` | **BUILT** | `drop_build.dart:124` allocates every one through `allocateOutletFieldLabel` |
-| 2b | ...and one `rackLabel` | **BUILT** *(was `NOTHING ALLOCATES ONE`)* | **DR-040 §11.39, shipped as M3-K `#661` with `#663`–`#666` Done, 2026-08-11.** The allocator's callers are now `bind_endpoint_command.dart` and `home_run_commands.dart`, not only its own test |
-| 3 | Pull Sheet sorted by room then pathway, per-room footage subtotals | **BUILT as derivation** | `SchedulePreset.pullSheet`, `ScheduleSort.roomThenPathway`, `ScheduleGrouping.room` (`schedule.dart:1239`). The sheet, the initial boxes and the page are M6's under DR-027 |
-| 4 | fourteen of them have unbound far ends | **REACHABLE** *(was `sixty of sixty are unbound`)* | **DR-040 §11.39 / M3-K.** `@panel=` on the drop line lands forty-six and leaves fourteen open, which is what the clause asks. The unlanded path in `drop_build.dart` is now the fourteen case rather than the only case |
-| 4b | ...and each still schedules and carries a `W` number | **BUILT** | gated at `drop_entry_panel_test.dart:420`, asserted as a set |
-| 4c | ...and prints | **M6's** | #574, parked there by DR-027 |
+| 1 | 60 drops entered in under fifteen minutes | **CONFIRMED**: by the user, closed 2026-08-27 | The 60-drop drill (`#89`, `#163`–`#165`), closed on the operator's confirmation that it was run and verified. **What the record does not hold**, and says so rather than infers it: the run's date and elapsed time, `verify_drill.dart`'s output, and `#164`'s operator conditions. **Asked on 2026-09-15, the operator does not remember the time**, so it is not recoverable. docs/16 §4.1 records only run 1, 2026-08-13, as `UNVERIFIABLE`. The surface half is gated: the script is 433 keystrokes, 7.22 per drop (`drop_line_planner_test.dart:874`) |
+| 2 | 60 `Link`s each with one `fieldLabel` | **DEMONSTRATED** | `packages/rackpal_core/test/structure/drop_line_planner_test.dart:874`, *"THE WHOLE DRILL, MINUS THE HUMAN"*: docs/16 §2's ten lines through the real planner on one document, sixty links, sixty distinct field labels asserted as a set |
+| 2b | ...and one `rackLabel` | **DEMONSTRATED** | The same test: forty-six distinct rack labels on the landed drops and none on the fourteen open ones, which DR-022 §11.21 rules have none. Built by DR-040 §11.39 (M3-K, `#661`, `#663`–`#666`) |
+| 3 | Pull Sheet sorted by room then pathway, per-room footage subtotals | **DEMONSTRATED** | The derivation M3 owes under DR-027 §11.26.2, asserted on one rough-in by `packages/rackpal_core/test/derived/pull_sheet_clause_test.dart:218` (room, then pathway, then designator) and `:249` (per-room subtotals that state what they could not measure) |
+| 3b | ...as a sheet, with initial boxes | **NOT BUILT**, parked on M6 by DR-027 | `SheetRole` has no Pull Sheet value; the sheet, its initial boxes and the page are M6's (§11.26.2) |
+| 4 | fourteen of them have unbound far ends | **DEMONSTRATED** | `drop_line_planner_test.dart:874`: fourteen open and forty-six landed, from `@panel=` on seven of the ten lines (DR-040 §11.39.2) |
+| 4b | ...and each still schedules and carries a `W` number | **DEMONSTRATED** | `drop_line_planner_test.dart:874` asserts a `W` number on all sixty, and `pull_sheet_clause_test.dart:201` puts every drop on the sheet, unbound far ends included. `drop_entry_panel_test.dart:420`, cited here until 2026-09-15, was named for sixty drops and types nine; its name now says what it checks |
+| 4c | ...and prints | **NOT BUILT**, parked on M6 by DR-027 | `#574` |
 
 *Clause 2b and clause 4 are one hole wearing two numbers.* The shipped rack-label pattern is
 `{FLOOR}{SPACE}-{PANEL}{PORT:2}` (`project_settings.dart:31`), and `{PANEL}` and `{PORT}` are facts
@@ -2668,8 +2683,17 @@ test says so where a later reader would otherwise tidy the absurd length away.
 > ports places into a rack and appears correctly in the equipment list with `—` in every unknown
 > column and an accurate unknown count in the rollup.
 
-**M4 IS CLOSED. BOTH CLAUSES OF THE CRITERION ARE DEMONSTRATED**, the second of them on
-2026-09-01, and §5.3.1 through §5.3.30 below are the record. **95 chapters are Done under this
+*The criterion, clause by clause (`#92`, DR-095 §11.94.6).* **This section had no clause table until
+2026-09-15.** Both marks were already recorded, in §5.3.7 and §5.3.30, and are gathered here rather
+than re-judged.
+
+| # | Clause | Mark | Evidence |
+|---|---|---|---|
+| 1 | A 16×16 matrix template authored from scratch in under three minutes by a user who has seen the tool once | **CONFIRMED**: by the user, 2026-08-15 | §5.3.7: **93 seconds** on the build carrying `ce5f70f`, checked in the footer at 68 ports across 6 banks. The archetype path (`#250`) took 46 seconds on 2026-09-01 (§5.3.30) |
+| 2 | A template saved with exactly three fields plus ports places into a rack and appears in the equipment list with `—` in every unknown column and an accurate unknown count | **CONFIRMED**: by the user, 2026-09-01 | §5.3.30, `#251`: a dash in every unknown column, each stated as unknown, read off a printed sheet. `clause2_drill_expectations_test.dart` checks the drill's script and says in terms that it does not discharge the clause |
+
+**M4 IS CLOSED. BOTH CLAUSES OF THE CRITERION ARE CONFIRMED**, each by a drill a person ran, the
+second of them on 2026-09-01, and §5.3.1 through §5.3.30 below are the record. **95 chapters are Done under this
 epic and none was left open or re-parented**, which is the count `v0.4.95` is derived from.
 The last story to close was M4-Q (`#188`, the drill, which is a person and not a chapter). M4-K closed at §5.3.26 with `#227` parked by DR-105 §11.104.6;
 **DR-106 §11.105.1 then lifted the park and `#227` was built at §5.3.27**, under `#804` rather than
@@ -11841,6 +11865,65 @@ user ruled the recommended option, recorded as DR-178 §11.177.
   where each runs.
 
 **Commits** (§8.8): `#843` `8d97776` (the ruling), `4054b2f` (the tests), `f6f1b22` (the step).
+
+#### 5.9.58 `#92` and `#780`: the clause tables carry marks, and roadmap §8.9 is a gate · `DR-095` · no version move
+
+**DEMONSTRATED** by `tools/milestone_gate.py`, which runs twelve planted cases and then reads this
+board: the Plan view is current, and M0 to M5 hold 8, 8, 5, 8, 2 and 3 exit clauses with none owed,
+M3's two parked on M6 by DR-027. It runs in `run_local.ps1` and in the pipeline beside registry
+parity.
+
+##### 5.9.58.1 What `#92` still held
+
+`#92` was a checkpoint written after M2. By 2026-09-15 most of it had been answered elsewhere, and
+the user ruled its remaining scope as unblocking the milestone gate:
+
+- **The full-tree code review** had moved to `#97`, deferred until after the smoke test.
+- **`RemoveDeviceCommand`'s orphaned ports and links** were ruled by DR-013 (§11.13, cascade) on
+  2026-08-01 and built.
+- **`wire_trace.dart` in `rackpal_ui`** is M6's blocker, recorded by DR-150 §11.149.6 and §11.149.7.
+- **The documentation re-sweep for M3** became the normalisation DR-095 §11.94.6 made a prerequisite
+  of `#780`: every clause table in §0's seven marks.
+
+##### 5.9.58.2 What re-marking the tables found
+
+- **M3's four `BUILT` rows were already demonstrated, by a test the table never cited.**
+  `drop_line_planner_test.dart`'s whole-drill test drives docs/16's ten lines through the real planner
+  on one document and asserts every field the clauses name, at sixty. The table cited code lines and
+  a UI test named for sixty drops that types nine; that test is renamed (`927d935`).
+- **M3's clause 1 is `CONFIRMED` on a one-sentence record.** `#89` and `#163` to `#165` closed on
+  2026-08-27 on the operator's confirmation that the drill was run and verified, and nothing records
+  the run's date, its time or `verify_drill.dart`'s output. Asked on 2026-09-15, the operator does not
+  remember the time, so the figure is not recoverable. The mark stands, because a person performed the
+  drill and closed it, and the row says what was never written down rather than supplying it.
+- **M4 had no clause table,** and its section opened by calling both clauses `DEMONSTRATED` when both
+  were drills a person ran. They are `CONFIRMED`, as §5.3.7 and §5.3.30 had already recorded.
+- **§0 had no way to write a park.** A park now reads `**NOT BUILT**, parked on M6 by DR-027` and keeps
+  the clause's true mark, so a parked clause cannot read as discharged.
+- **The gate's first run on the real board failed, on M1's goal line.** docs/12 said three times in
+  prose that *"and it ships to real users"* is not an exit clause, and §1 counts M1's clauses as eight,
+  while the table carried it as a ninth row marked `NOT BUILT`. The row now says it is not an exit
+  clause, and the gate counts such rows and skips them. Board `#66` still describes itself as *"EXIT
+  CLAUSE of M1"* and has a comment saying otherwise.
+- **M2's keyboard row reads `DEMONSTRATED: at the channel, not with a screen reader`.** The gate accepts
+  it by its leading word. Whether that qualifier is a note on scope or §0's *"demonstrated but"* is a
+  judgement about the clause; it was put to the user on 2026-09-15 and the row is left as it reads.
+- **`run_local.ps1` runs the glyph coverage gate and the pipeline never has.** Found while wiring this
+  gate into both lists; filed as its own task rather than folded in.
+
+##### 5.9.58.3 Evidence
+
+- The gate's planted cases: every clause discharged passes; a note after a mark passes; `BELIEVED`
+  unparked fails; parked on a later milestone by a real ruling passes; parked on itself fails; parked
+  by a ruling canon lacks fails; a word that is not a mark fails; a closed milestone with no table
+  fails; a marked goal line passes and an unmarked one fails; the current milestone owing clauses
+  passes; a `CLOSED` status counts as closed.
+- On the real board it also failed when a closed M5 row was made `BELIEVED`, when M3's park pointed
+  at M2, and when M1's goal line lost its marker.
+- 18 gates green on the rename and on the marks, and 19 on the gate commit, which is the new gate counting itself. Every suite exactly at its floor: core 4759, text 1, export 229, pdfium 22, ui 1932, app 1052, and the timed step 5. Analyzer pin unmoved at 233.
+
+**Commits** (§8.8): `#92` `927d935` (the rename), `1a48354` (the marks); `#780` `1e75efc` (the
+gate).
 
 
 ---

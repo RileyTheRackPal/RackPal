@@ -10,7 +10,7 @@ tags: [ruling, process, milestone, exit-criterion, dr-095, dr-017, dr-027, dr-04
 timestamp: 2026-08-26T00:00:00Z
 ruling_id: DR-095
 canon_section: "11.94"
-status: ruled
+status: built
 ---
 
 # DR-095 · A milestone closes on clauses discharged or parked, and parking costs a ruling
@@ -65,3 +65,10 @@ See [a confident paragraph is a
 tell](/practices/two-documents-agreeing-is-not-verification.md) and
 [DR-097](dr-097-the-tracker-grows-a-fourth-level.md), which found the same class on the
 tracker: three milestones whose criteria were met and whose board rows still read `To Do`.
+# Built
+
+The gate section 11.94.9 sequenced behind the normalisation shipped on 2026-09-15 as
+[milestone completeness](/gates/milestone-completeness.md) (`#780`, `1e75efc`), after `#92`
+re-marked M3's clause table and gave M4 one (`1a48354`). Re-marking found M3's `BUILT` rows already
+demonstrated by a whole-drill test the table never cited, and the gate's first real run failed on
+M1's goal line, a row the prose said was not an exit clause.
