@@ -22,6 +22,8 @@
 * **Note**: **THE TICKET NAMED TWO FAMILIES AND THE TABLE HELD TWENTY-SIX.** `#82` and the seed's own
   header named `audio.speaker_cv` and `power.bonding`; comparing every family's glyph in the family
   table with its domain's native glyph found 26 drawn with the wrong shape.
+* **Creation**: [DR-182](/decisions/dr-182-sizes-stay-and-the-week-total-retires.md): the roadmap keeps
+  its sizes and retires its week total.
 
 ## 2026-09-15 (forty-eighth entry)
 

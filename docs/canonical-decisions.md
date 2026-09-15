@@ -21613,6 +21613,43 @@ projects and the regenerated starters get the overrides, and a project saved bef
 its domain's shape and keeps reporting the families it cannot verify, as with every earlier registry
 addition. Nor the logical-flow direction, which stays owed a field.
 
+### 11.181 DR-182 · The roadmap keeps its sizes and retires its week total
+
+**The question.** Board `#796`, with `#797`, `#798` and `#799`. docs/09 §6 prices ten milestones at 44
+to 67 weeks and names only DR-001, DR-005 and DR-015 as absorbed. On 2026-08-30 the user chose to leave
+it alone and file the gap.
+
+**11.181.1 MEASURED FIRST**, on 2026-09-15:
+
+- **M0 to M5 are closed.** §6 priced them at 29 to 44 weeks cumulative, and they took about 7.3 weeks,
+  from 2026-07-18 to M5's close on 2026-09-07: four to six times faster than estimates written for a
+  human team.
+- **The v1 saga holds 20 epics**, where `#796` counted seventeen on 2026-08-30; signal family authoring
+  (`#816`) and authored devices reaching the shelf (`#817`) were created on 2026-09-05. §6 has rows for
+  ten.
+- **The Plan view has a size and no row.** docs/09 §4 sizes it `L`, §6 does not count it, and 13 of its
+  14 board children are Done.
+- **Nine epics have no size anywhere**: macOS (`#55`, 2 of 15 children Done), the Store alpha (`#100`,
+  1 of 8), project history (`#655`, 0 of 5), NET-A (`#681`, 0 of 4), EXP-A (`#686`) and DOC-A (`#688`),
+  neither yet decomposed, cross-cutting debt (`#786`, 37 of 52), and `#816` (0 of 3) and `#817` (0 of
+  1).
+- docs/09 §4's M4 heading reads `M` where §6 reads `L` (`#799`).
+
+**11.181.2 RULED 2026-09-15: THE SIZES STAY AND THE WEEK TOTAL RETIRES.** Settled by the user. §6 gives
+every v1 epic a size, `S`, `M` or `L`, including the Plan view and the nine that have none, each sized
+from its stories with the evidence named. A closed milestone shows its actual duration beside its
+estimate. **The week total is withdrawn rather than re-estimated**, with a sentence saying why: relative
+sizes still order the work, and the weeks described a team that is not the one building it. The M4
+heading is corrected in the same change, and §6's two levers are re-read against the withdrawn total
+there. Offered and refused: a full re-cost in weeks with a new total; marking the gap and keeping 44 to
+67 with a caveat; and leaving docs/09 as it is.
+
+**11.181.3 Scope.** **No scope changes.** This amends how roadmap §6 states cost, under §8.3, and moves
+no epic between Sagas.
+
+**What this does not rule.** A release date, any milestone's scope, and the size letters themselves,
+which the docs change assigns from evidence.
+
 ---
 
 ## 12. Superseded rulings
