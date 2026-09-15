@@ -95,6 +95,7 @@ Rollup<Mass> _mass(RackDocument doc) => computeRackRollups(
   devices: doc.devices.values,
   templates: doc.templates,
   face: Face.front,
+  landings: PortLandings.of(doc),
 ).weight;
 
 ForkTemplateFromDeviceCommand _fork(RackDocument doc) {

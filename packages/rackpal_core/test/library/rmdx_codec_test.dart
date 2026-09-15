@@ -21,6 +21,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_core/src/persistence/outlet_key_retirement.dart'
+    show canonicalBodyHash;
 import 'package:test/test.dart';
 
 DeviceTemplateFile _file(
@@ -404,7 +406,8 @@ void main() {
       },
     );
 
-    test('a v2 file is not touched, so the check still MEANS something', () {
+    test('a current file is not touched, so the check still MEANS '
+        'something', () {
       // The half that makes the case above safe. Recomputing on every
       // read would make the hash verify by construction and stop being
       // tamper evidence at all; only the migration recomputes.
@@ -431,6 +434,59 @@ void main() {
         'body': <String, Object?>{'ports': 'not a list'},
       };
       expect(readRmdxJsonTree(broken), isA<Err<DeviceTemplateFile>>());
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // v2 -> v3: the outlet counts leave device files too (DR-171 §11.170.3)
+  // ═══════════════════════════════════════════════════════════════════
+  group('v2 -> v3, the step .rmpj and .rmda share', () {
+    /// A v2 tree carrying both retired keys, under a hash either taken
+    /// over that body as stored or belonging to something else.
+    JsonMap v2Tree({required bool attested}) {
+      final body = templateBodyToJson(_seed('P04'));
+      final power = body['power']! as Map;
+      power['outletsProvided'] = 6;
+      power['outletsConsumed'] = 1;
+      return <String, Object?>{
+        'kind': kRmdxKind,
+        'schemaVersion': 2,
+        'templateId': 'P04',
+        'version': 1,
+        'contentHash': attested
+            ? canonicalBodyHash(body)
+            : 'sha256:${'c' * 64}',
+        'body': body,
+      };
+    }
+
+    test('the fixture really carries both keys, under a hash over them', () {
+      final raw = v2Tree(attested: true);
+      final power = (raw['body']! as Map)['power']! as Map;
+      expect(power.containsKey('outletsProvided'), isTrue);
+      expect(power.containsKey('outletsConsumed'), isTrue);
+      expect(raw['contentHash'], isNot(templateContentHash(_seed('P04'))));
+    });
+
+    test('a v2 file opens stripped, and its re-taken hash verifies', () {
+      switch (readRmdxJsonTree(v2Tree(attested: true))) {
+        case Err(:final error):
+          fail('expected Ok, got Err($error)');
+        case Ok(value: final file):
+          expect(file.contentHash, templateContentHash(_seed('P04')));
+          expect(templateHashMatches(file.body, file.contentHash), isTrue);
+      }
+    });
+
+    test('a hash that never attested its body is CARRIED, so the file still '
+        'reports as edited', () {
+      switch (readRmdxJsonTree(v2Tree(attested: false))) {
+        case Err(:final error):
+          fail('expected Ok, got Err($error)');
+        case Ok(value: final file):
+          expect(file.contentHash, 'sha256:${'c' * 64}');
+          expect(templateHashMatches(file.body, file.contentHash), isFalse);
+      }
     });
   });
 }

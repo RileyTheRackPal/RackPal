@@ -97,8 +97,6 @@ Map<String, TemplateBody> buildPowerCatalog() {
       nominalVolts: 120,
       apparentVA: 10,
       powerFactor: 1000,
-      outletsProvided: 24,
-      outletsConsumed: 1,
       inletPlug: PlugType.hardwired,
     ),
     ports: p01.ports,
@@ -205,8 +203,6 @@ Map<String, TemplateBody> buildPowerCatalog() {
       nominalVolts: 120,
       apparentVA: 12,
       powerFactor: 1000,
-      outletsProvided: 16,
-      outletsConsumed: 1,
       inletPlug: PlugType.nema515p,
     ),
     ports: p02.ports,
@@ -355,8 +351,6 @@ Map<String, TemplateBody> buildPowerCatalog() {
       nominalVolts: 120,
       apparentVA: 50,
       powerFactor: 900,
-      outletsProvided: 10,
-      outletsConsumed: 1,
       outputCapacityVA: 3000,
       outputCapacityWatts: 2700,
       inletPlug: PlugType.hardwired,
@@ -383,11 +377,11 @@ Map<String, TemplateBody> buildPowerCatalog() {
   // and "these small power strips are commonly just set on a shelf in the
   // rack", which is why `mountMethod` is `shelf` and not `zeroU`.
   //
-  // THE MODEL ALREADY EXPRESSED IT. `outletsConsumed: 1` with
-  // `outletsProvided: 6` is exactly a strip, and it is the shape the
-  // other three already use, so `PWR-003`'s arithmetic needed no change:
-  // the strip closes a shortfall by FIVE, not six, because it eats an
-  // outlet to give six.
+  // THE MODEL ALREADY EXPRESSED IT. One inlet and six outlet ports is
+  // exactly a strip, the shape the other three already have, so
+  // `PWR-003`'s arithmetic needed no change: the strip closes a shortfall
+  // by FIVE, not six, because it eats an outlet to give six. Since DR-171
+  // those counts are read off the ports below rather than authored.
   //
   // SIX CITES A PRODUCT, WHICH IS AC-052 IN THE FORM THE RULE WANTS.
   // The user's source: "6 outlets is standard on the most basic Wattbox
@@ -396,9 +390,9 @@ Map<String, TemplateBody> buildPowerCatalog() {
   // not a WattBox; the brand records where the number came from.
   //
   // NO WATTAGE OF ITS OWN, and that is a fact rather than an omission: a
-  // passive strip draws nothing. `outletsProvided`/`Consumed` are the
-  // only power facts it has, so `PowerProfile` states those and stays
-  // silent on the rest (G4/CR-114, AC-039).
+  // passive strip draws nothing. Its outlet counts are its ports
+  // (DR-171), so `PowerProfile` states nothing at all (G4/CR-114,
+  // AC-039).
   final p04 = PortBuilder()
     ..p(
       'ac.in',
@@ -449,8 +443,6 @@ Map<String, TemplateBody> buildPowerCatalog() {
     weight: _kg(0.7),
     power: PowerProfile(
       nominalVolts: 120,
-      outletsProvided: 6,
-      outletsConsumed: 1,
       inletPlug: PlugType.nema515p,
     ),
     ports: p04.ports,

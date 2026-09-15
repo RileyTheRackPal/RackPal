@@ -575,7 +575,7 @@ void main() {
           frontU: 1,
           rearU: 1,
           side: OccupancySide.both,
-          power: PowerProfile(apparentVA: va, outletsConsumed: 1),
+          power: PowerProfile(apparentVA: va),
           ports: const [],
           banks: const [],
         ),
@@ -695,7 +695,7 @@ void main() {
       // THE NEAR MISS IS THE SAME RACK WITH A PDU IN IT, which is the
       // fix a person would actually make.
       final pdu = catalog.entries.firstWhere(
-        (e) => (e.value.power.outletsProvided ?? 0) > 0,
+        (e) => outletPortCount(e.value) > 0,
       );
       put(pdu.key, 8);
       expect(ids('PWR-003'), isEmpty);

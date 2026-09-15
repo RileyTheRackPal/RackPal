@@ -128,13 +128,14 @@ void main() {
     });
 
     test('0 W is MEASURED ZERO, not unknown (G4/CR-114, §540)', () {
-      // §540: *"The receiver draws 0 W from the rack and its
-      // `outletsConsumed` is 0 — its power comes down the `net.poh`
-      // conductor."* Absent would put this device in the power rollup's
-      // UNKNOWN column, which is the opposite of what is true about it.
+      // §540: the receiver draws 0 W from the rack, because its power comes
+      // down the `net.poh` conductor. Absent would put this device in the
+      // power rollup's UNKNOWN column, which is the opposite of what is
+      // true about it. Its outlet count is no longer a field (DR-171);
+      // `device_outlets_test.dart` resolves it to zero once the run is
+      // drawn.
       expect(rx.power.typicalWatts, 0);
       expect(rx.power.nameplateWatts, 0);
-      expect(rx.power.outletsConsumed, 0);
     });
 
     test(

@@ -10,6 +10,8 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_core/src/persistence/outlet_key_retirement.dart'
+    show canonicalBodyHash;
 import 'package:test/test.dart';
 
 DeviceTemplateFile _entry(String id, TemplateBody body, {int version = 1}) =>
@@ -219,6 +221,47 @@ void main() {
           }),
         ),
         isNotNull,
+      );
+    });
+  });
+
+  group('v2 -> v3: every entry sheds the outlet counts (DR-171)', () {
+    test('a v2 library opens, each entry stripped and still verifying', () {
+      final tree = rmdaToJsonTree(_seedLibrary());
+      tree['schemaVersion'] = 2;
+      final entries = tree['templates']! as List;
+      expect(entries, isNotEmpty);
+      for (final entry in entries) {
+        final e = entry! as Map;
+        final body = e['body']! as Map<Object?, Object?>;
+        (body['power']! as Map)['outletsConsumed'] = 1;
+        e['contentHash'] = canonicalBodyHash(body);
+      }
+      switch (readRmdaJsonTree(tree)) {
+        case Err(:final error):
+          fail('expected Ok, got Err($error)');
+        case Ok(value: final library):
+          for (final t in library.templates) {
+            expect(
+              templateHashMatches(t.body, t.contentHash),
+              isTrue,
+              reason: t.body.displayName,
+            );
+          }
+      }
+    });
+
+    test('a v1 library is still refused: the chain starts at 2', () {
+      expect(
+        _readErr(
+          readRmdaJsonTree(<String, Object?>{
+            'kind': kRmdaKind,
+            'schemaVersion': 1,
+            'name': 'x',
+            'templates': <Object?>[],
+          }),
+        ),
+        isA<MalformedRmdaError>(),
       );
     });
   });

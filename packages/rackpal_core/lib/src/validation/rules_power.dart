@@ -28,6 +28,7 @@
 // rather than leaving it to a comment nobody reads at 2am.
 
 import 'package:rackpal_core/src/derived/device_loads.dart';
+import 'package:rackpal_core/src/derived/device_outlets.dart';
 import 'package:rackpal_core/src/model/circuit.dart';
 import 'package:rackpal_core/src/model/conductor.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
@@ -64,6 +65,21 @@ String _unknownClause(List<DeviceInstance> unknown) {
       '($said), so the real total is higher than this.';
 }
 
+/// The clause saying how much of `PWR-003`'s demand is counted from inlet
+/// ports with no cord drawn to them, or `''` (DR-171 §11.170.5).
+///
+/// THE ASSUMPTION IS SAID, NOT BLENDED. Those are real inlets on real
+/// templates; what is assumed is that each will be fed from an outlet in
+/// this rack, and a person deciding whether to buy a strip should know how
+/// much of the shortfall rests on that.
+String _fromPortsClause(int fromPorts) {
+  if (fromPorts == 0) return '';
+  return fromPorts == 1
+      ? ' One of them is counted from an inlet port with no cord drawn.'
+      : ' $fromPorts of them are counted from inlet ports with no cord '
+            'drawn.';
+}
+
 /// The clause naming devices charged their IEEE class ceiling rather
 /// than a stated draw (M5-H2, DR-125).
 ///
@@ -96,30 +112,37 @@ String _estimatedClause(List<DeviceInstance> estimated) {
 /// `PWR-003` — a rack's devices want more outlets than it provides.
 List<Finding> rulePwr003(RackDocument doc) {
   final out = <Finding>[];
+  // ONE WALK OF THE LINKS FOR THE WHOLE DOCUMENT, read per device below.
+  // DR-171 §11.170.4 counts a device's cords from the graph, and this is
+  // the same resolution the chip strip over the rack reads.
+  final landings = PortLandings.of(doc);
   for (final rack in doc.racks.values) {
     var provided = 0;
     var consumed = 0;
+    var fromPorts = 0;
     final unknown = <DeviceInstance>[];
     final members = <Uuid>[];
     for (final device in doc.devices.values) {
       if (!belongsToRack(device, rack.id, doc.devices)) continue;
       members.add(device.id);
-      final loads = resolveDeviceLoads(
+      final outlets = resolveDeviceOutlets(
         device,
         bodyFor(device, doc.templates),
+        landings,
       );
-      provided += loads.outletsProvided ?? 0;
-      // AN ABSENT `outletsConsumed` IS UNKNOWN, NOT ZERO. A PDU provides
-      // and a device consumes; a device whose template says nothing
-      // about either is a device nobody has counted, and adding zero for
-      // it is how a rack reads as comfortable while three of its boxes
-      // are unaccounted for.
-      final want = loads.outletsConsumed;
-      if (want == null) {
+      // A TEMPLATE THAT DID NOT RESOLVE IS UNKNOWN, NOT ZERO. Adding zero
+      // for it is how a rack reads as comfortable while one of its boxes
+      // is unaccounted for. It is the only unknown left: a resolved
+      // template's ports say what it provides and what it will consume.
+      final have = outlets.provided;
+      final want = outlets.consumed;
+      if (have == null || want == null) {
         unknown.add(device);
-      } else {
-        consumed += want;
+        continue;
       }
+      provided += have;
+      consumed += want;
+      if (outlets.consumedFromPorts) fromPorts += want;
     }
     if (consumed <= provided) continue;
     out.add(
@@ -128,7 +151,8 @@ List<Finding> rulePwr003(RackDocument doc) {
         severity: Severity.error,
         message:
             '${rack.designator} provides $provided outlets and its devices '
-            'need $consumed.${_unknownClause(unknown)}',
+            'need $consumed.${_fromPortsClause(fromPorts)}'
+            '${_unknownClause(unknown)}',
         // THE RACK AND ITS MEMBERS. The fingerprint has to move when the
         // population does: acknowledging "this rack is over" while three
         // devices are in it should not survive somebody adding a fourth.

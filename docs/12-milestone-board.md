@@ -11486,6 +11486,87 @@ own tree; docs/05 §7.5 item 5, this section and the OKF follow in the next comm
 
 **Commit** (§8.8): `#907` `46e3adb`, the ruling and the correction.
 
+#### 5.9.51 `#558`: outlet counts are read off ports and cords, and the stored fields leave every format · `DR-171` · no version move
+
+**DEMONSTRATED** by `device_outlets_test.dart`, by `totals_test.dart`'s outlets group, by
+`migration_corpus_test.dart`'s *"v5 -> v6"* group run over a real starter's bytes, and by the four
+regenerated starters. Board `#558`'s ruling of 2026-08-03 is recorded as canon DR-171, together with the
+two sub-decisions it left open and the chip's presentation, all three the user's.
+
+##### 5.9.51.1 A ruled item that canon never heard of
+
+`#558` carried RULED on the board from 2026-08-03 and had no canon section. docs/06 §3.3 said both counts
+were read-only and counted from ports; `derived/device_loads.dart` read two authored `PowerProfile`
+integers instead, and the chip strip, `PWR-003` (M5-E) and its remedy (DR-128) were all built on them
+afterwards. The item's own text named the unwired design as open.
+
+##### 5.9.51.2 Measured before anything was ruled
+
+Over the tree at `d4479d8`:
+
+| What | Found |
+|---|---|
+| Seed templates stating `outletsProvided` | 35 of 51, all agreeing with their outlet-role ports |
+| Seed templates stating `outletsConsumed` | 35 of 51; 29 agree with their inlet ports, and 6 state 0 against one inlet (`F09`, `F11`, `F12`, `F16`, `V06`, `V07`) |
+| Conductors landing on a power inlet in the four starters | none, over five racks and 27 links |
+| Links the classifier calls `powerCord` | none can be: `linkClassOf` answers `jumper` or `fieldCable` (`#908`) |
+
+So the ruling as written would have read `outlets 0/N` on every starter rack and left `PWR-003` unable to
+fire before somebody drew cords.
+
+##### 5.9.51.3 The decisions
+
+Put to the user with that measurement, and all four answered:
+
+- **Before a cord is drawn**: cords where drawn, else inlet ports, said so (chosen); cords only with the
+  rest unknown; or both figures on the chip.
+- **How often cords are drawn**: for PDU-fed gear, where sequencing or remote reboot matters. That made
+  the rule per device rather than per rack.
+- **The stored fields**: delete them now, with migrations.
+- **The chip**: the hover sentence only, over a tilde or a dimmed figure.
+
+Recorded as §11.170.2 to §11.170.4 and §11.170.9.
+
+##### 5.9.51.4 What building it found
+
+- **An empty port list would have read as a measured zero.** §11.170.2's "complete description"
+  presupposes a described template, and AC-049 lets one be saved with no ports. Ruled on G4 as unknown,
+  §11.170.8. The three passive templates have no ports and stay unknown, as they were; a template with
+  ports and no power port, such as the patch panel, becomes a measured zero.
+- **The census covered the seed templates, not their variants.** The `V06` receiver, whose PoH input is
+  clause 2's own case, is a role variant, and the first draft of its test found null.
+- **The rollups now depend on the graph.** `epoch_mask_test`'s permissive mapping gains `wires` for them,
+  and `computeRackRollups` takes the document's landings as a required argument rather than a default.
+- **`drawer_is_wired_test` authored a count and no ports**, which under §11.170.8 is a device nobody
+  described, so all nine of its cases failed on the first gate run. Its fixture has a real inlet now.
+- **A migration step that decodes is right only while it is the last step.** `.rmdx`'s v1 -> v2 step
+  decoded its body to recompute the hash; with v2 -> v3 behind it, that is a newer reading of an older
+  map. Every step now hashes its own raw output, and the v5 group asserts on a real starter that this is
+  the hash `templateContentHash` takes.
+- **`.rmda` had no chain.** It refused every version but its own; v2 now migrates entry by entry.
+
+##### 5.9.51.5 Evidence
+
+Each starter rack's outlet chip, measured through `computeRackRollups` on the regenerated starters:
+
+| Starter rack | Before (authored counts) | After (DR-171) | Counted from ports | `PWR-003` |
+|---|---|---|---|---|
+| `apartment` RK-1 | `outlets 5/16` ⁽²⁾ | `outlets 5/16` ⁽¹⁾ | 4 devices | none |
+| `home_theatre` RK-1 | `outlets 12/40` ⁽⁴⁾ | `outlets 12/40` ⁽³⁾ | 11 devices | none |
+| `small_office` RK-1 | `outlets 11/40` ⁽⁵⁾ | `outlets 13/40` ⁽³⁾ | 11 devices | none |
+| `small_office` RK-2 | `outlets 3/16` ⁽²⁾ | `outlets 3/16` ⁽¹⁾ | 2 devices | none |
+| `whole_house` RK-1 | `outlets 23/74` ⁽⁹⁾ | `outlets 24/74` ⁽⁵⁾ | 21 devices | none |
+
+The superscripts fall because a template with ports and no power port is now a measured zero rather than a silence; the port-less blanks, vents and shelves stay unknown. Consumed rises where a shipped template stated 0 against a real inlet. No starter drew a single cord, so every consumed figure is counted from ports, which the hover now says.
+
+- In each starter, the 35 template bodies that stated counts are re-hashed and the other 16 keep their
+  hashes. `v5_outlet_counts.rmpj.json` is `apartment.rmpj` as shipped at `de9a2f7`, captured before the
+  regeneration.
+- 17 gates green on each of `355d553`, `de9a2f7` and `1f21c1f`, every suite exactly at its floor: rackpal_core 4709 -> 4724 -> 4734, rackpal_ui 1904 -> 1907. Analyzer pin unmoved at 233.
+
+**Commits** (§8.8): `#558` `355d553` (the ruling), `de9a2f7` (the derivation), `1f21c1f` (the
+format).
+
 
 ---
 

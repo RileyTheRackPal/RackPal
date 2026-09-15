@@ -101,7 +101,7 @@ Depth and weight are **optional, with a visible `unknown` state**: the fields ar
 
 ### 3.3 Power & thermal
 
-`PowerProfile` fields are all nullable `int` and all optional: `nameplateWatts`, `typicalWatts`, `standbyWatts`, `nominalVolts`, `apparentVA`, `powerFactor` (permille), `poeBudgetWatts`, `btuPerHourOverride`, `outletsProvided`, `outletsConsumed`, `isContinuousLoad`, `inletPlug`.
+`PowerProfile` fields are all nullable `int` and all optional: `nameplateWatts`, `typicalWatts`, `standbyWatts`, `nominalVolts`, `apparentVA`, `powerFactor` (permille), `poeBudgetWatts`, `btuPerHourOverride`, `isContinuousLoad`, `inletPlug`.
 
 Three things the form does **not** do:
 
@@ -109,7 +109,7 @@ Three things the form does **not** do:
 2. It does not store heat. BTU/h is derived as `typicalWatts × kBtuPerWattHour` where the constant is `3.412142`, defined once in `rackpal_core/units/thermal.dart` (CR-005). `btuPerHourOverride` exists only for the rare manufacturer figure that disagrees with the arithmetic.
 3. It does not compute circuit loading in watts. Loading is computed in **VA**, because a linear-supply amplifier at PF 0.65 under-reports current by 35% on exactly the gear where it matters (CR-056, AC-020).
 
-`outletsProvided` and `outletsConsumed` are read-only, counted from ports whose family is `power.*` with `PortPowerSpec.role` of `outlet` / `inlet`. External power bricks count: a 4×4 matrix with a 12 V barrel jack still eats a PDU outlet.
+`outletsProvided` and `outletsConsumed` are **not fields** and are edited nowhere (DR-171, canon §11.170). Provided is the count of `power.*` ports whose `PortPowerSpec.role` is `outlet`. Consumed is resolved per device in a document: the cords drawn to its inlets where any are, none where only a PoE powered-device run is drawn to it, and otherwise one per inlet port, which the chip strip says on hover. External power bricks count: a 4×4 matrix with a 12 V barrel jack still eats a PDU outlet until a run says otherwise. A template with no ports at all states nothing, and is counted unknown.
 
 ### 3.4 Appearance
 

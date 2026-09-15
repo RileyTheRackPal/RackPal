@@ -4,6 +4,7 @@
 // shapes alive forever" (§9.2). json_codec.dart's typed decode always
 // runs on the OUTPUT of migrateToCurrent, never on a raw map directly.
 import 'package:rackpal_core/src/persistence/json_util.dart';
+import 'package:rackpal_core/src/persistence/outlet_key_retirement.dart';
 import 'package:rackpal_core/src/persistence/schema.dart';
 import 'package:rackpal_core/src/util/outcome.dart';
 
@@ -132,7 +133,66 @@ const Map<int, Migration> migrations = <int, Migration>{
   2: migrateV2ToV3,
   3: migrateV3ToV4,
   4: migrateV4ToV5,
+  5: migrateV5ToV6,
 };
+
+/// v5 -> v6: `PowerProfile.outletsProvided` and `outletsConsumed` are
+/// DELETED (DR-171 §11.170.3). Outlet counts are read off ports and the
+/// cords drawn to them instead.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE STRIP IS v3 -> v4's; THE HASH IS WHAT v4 NEVER HAD TO CONSIDER
+/// ═══════════════════════════════════════════════════════════════════════
+/// Every template body loses the two keys, as every port lost
+/// `carriedProtocols` at v4. What v4 did not face is a real
+/// `contentHash`: those arrived at `#795`, and every shipped starter
+/// carries them over bodies that state both keys. `retireOutletKeys`
+/// re-takes a hash only where it attested the body as stored, and a
+/// device's `TemplateRef.contentHash` that equalled its snapshot's old
+/// hash moves with it, so a template nobody edited is never reported as
+/// edited and a device never disagrees with the snapshot it names.
+///
+/// `minReaderVersion` DOES NOT MOVE. A v5 reader meets the absent keys as
+/// unknown, which every reader since v2 has understood, so refusing it
+/// would refuse a file it opens perfectly.
+JsonMap migrateV5ToV6(JsonMap raw) {
+  final migrated = JsonMap.of(raw);
+  final document = migrated[kKeyDocument];
+  if (document is Map) {
+    // "templateId@version" to the hash before and the hash after.
+    final moved = <String, (Object?, Object?)>{};
+    final templates = document['templates'];
+    if (templates is Map) {
+      for (final snapshot in templates.values) {
+        if (snapshot is! Map) continue;
+        final body = snapshot['body'];
+        if (body is! Map<Object?, Object?>) continue;
+        final before = snapshot['contentHash'];
+        final after = retireOutletKeys(body, before);
+        if (after == before) continue;
+        snapshot['contentHash'] = after;
+        moved['${snapshot['templateId']}@${snapshot['version']}'] = (
+          before,
+          after,
+        );
+      }
+    }
+    final devices = document['devices'];
+    if (moved.isNotEmpty && devices is Map) {
+      for (final device in devices.values) {
+        if (device is! Map) continue;
+        final ref = device['templateRef'];
+        if (ref is! Map) continue;
+        final change = moved['${ref['templateId']}@${ref['version']}'];
+        if (change != null && ref['contentHash'] == change.$1) {
+          ref['contentHash'] = change.$2;
+        }
+      }
+    }
+  }
+  migrated[kKeySchemaVersion] = 6;
+  return migrated;
+}
 
 /// v4 -> v5: the Plan view's model arrives, and NOTHING IN A v4 FILE
 /// CHANGES (DR-037, DR-136 §11.135.3).

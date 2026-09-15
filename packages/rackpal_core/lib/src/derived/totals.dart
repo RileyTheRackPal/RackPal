@@ -42,6 +42,7 @@
 // layer through `unit_formatter.dart`; nothing here converts.
 
 import 'package:rackpal_core/src/derived/device_loads.dart';
+import 'package:rackpal_core/src/derived/device_outlets.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/rack.dart';
@@ -133,6 +134,7 @@ final class RackRollups {
     required this.outletsConsumed,
     required this.outletsProvided,
     required this.outletsUnknownCount,
+    required this.outletsCountedFromPorts,
   });
 
   /// The face [ruUsed]/[ruFree] describe. Presentation MUST surface this;
@@ -183,16 +185,27 @@ final class RackRollups {
   /// rejected "half of nameplate" behaviour, restated).
   final Rollup<int> apparentVA;
 
-  /// Σ `PowerProfile.outletsConsumed`, rack-wide — the `14` of §5's
-  /// `outlets 14/16`.
+  /// Σ of every contributor's consumed outlets, rack-wide, the `14` of
+  /// §5's `outlets 14/16`. Resolved per device by `resolveDeviceOutlets`
+  /// (DR-171 §11.170.4): the cords drawn to its inlets where any are, none
+  /// where only a PoE powered-device port is wired, and otherwise one per
+  /// inlet port. [outletsCountedFromPorts] says how many devices took the
+  /// last of those.
   final Rollup<int> outletsConsumed;
 
-  /// Σ `PowerProfile.outletsProvided`, rack-wide — the `16`.
+  /// Σ of every contributor's outlet-role power ports, rack-wide, the
+  /// `16`. Capacity, which no cord changes (§11.170.2).
   final Rollup<int> outletsProvided;
 
   /// How many contributing devices are missing from the COMBINED
-  /// `consumed/provided` figure — i.e. devices whose template stated
-  /// neither outlet count, or only one of the two.
+  /// `consumed/provided` figure.
+  ///
+  /// SINCE DR-171 THE TWO HALVES GO SILENT TOGETHER. Both are read off one
+  /// template's ports, so a device is missing from both exactly when its
+  /// template does not resolve. The union is still counted, because it is
+  /// the number the one chip displays and counting it honestly costs
+  /// nothing; the reasoning below dates from when they were two authored
+  /// integers that a template could state one of.
   ///
   /// WHY THIS EXISTS AS ITS OWN FIELD, and is not a presentation concern.
   /// docs/04 §5 renders `outlets 14/16` as ONE chip carrying ONE unknown
@@ -217,6 +230,16 @@ final class RackRollups {
   /// widget would be the fabricated number G4 forbids, so the scan reports
   /// it.
   final int outletsUnknownCount;
+
+  /// How many contributing devices [outletsConsumed] charged one outlet
+  /// per inlet port, because no cord is drawn to them and no PoE run lands
+  /// on them (DR-171 §11.170.4, clause 3).
+  ///
+  /// NOT AN UNKNOWN COUNT, and it never feeds the superscript: the inlet
+  /// is a fact on the template. What it records is the ASSUMPTION that
+  /// each inlet will be fed from an outlet, which §11.170.5 requires a
+  /// surface showing the total to state beside it.
+  final int outletsCountedFromPorts;
 }
 
 /// Computes docs/04 §5's chip-strip rollups for [rack] with the elevation
@@ -233,11 +256,19 @@ final class RackRollups {
 /// shelf does. Off-rack and staged (`StagedPlacement`, the Staging Bin —
 /// CR-032) devices contribute to no rack, which is the whole point of
 /// those variants.
+///
+/// [landings] ARE THE DOCUMENT'S CORDS, and the one argument here that is
+/// not a fact about the rack's own contents: a device's consumed outlets
+/// are the cords drawn to it (DR-171 §11.170.4). REQUIRED RATHER THAN
+/// DEFAULTED, because a default of "nothing is wired" would let a screen
+/// that owns a document forget to pass it and read every drawn cord as
+/// absent.
 RackRollups computeRackRollups({
   required Rack rack,
   required Iterable<DeviceInstance> devices,
   required Map<String, TemplateSnapshot> templates,
   required Face face,
+  required PortLandings landings,
 }) {
   final byId = <Uuid, DeviceInstance>{for (final d in devices) d.id: d};
 
@@ -264,6 +295,11 @@ RackRollups computeRackRollups({
   // union of the two silences, counted here because only this loop can see
   // it (see `RackRollups.outletsUnknownCount`).
   var outletsUnknown = 0;
+
+  // Devices charged one outlet per inlet port because nothing is wired to
+  // their power (DR-171 §11.170.4, clause 3). Not an unknown: see
+  // `RackRollups.outletsCountedFromPorts`.
+  var outletsFromPorts = 0;
 
   for (final device in devices) {
     // THE SHARED PREDICATE (`derived/device_loads.dart`), not a private
@@ -335,18 +371,22 @@ RackRollups computeRackRollups({
       vaKnown++;
     }
 
-    // `outletsProvided`/`outletsConsumed` ARE nullable now, and this is the
-    // reason. They shipped as non-nullable `int`s defaulting to 0, so a
-    // resolved-but-never-authored template (the app's own four demo
-    // templates; `catalog_passive.dart`'s three, whose header states in so
-    // many words that they carry no power data) was counted as a MEASURED
-    // zero and the chip strip read a confident `outlets 0/0` with no
-    // superscript — rule 2 of this file's header, broken on first launch.
+    // DR-171: BOTH COUNTS ARE READ OFF THE TEMPLATE'S PORTS AND THE CORDS
+    // DRAWN TO THEM, never off authored integers, through the one
+    // resolution `PWR-003` and its remedy also use.
     //
-    // Counted SEPARATELY per rollup, because a template may state one and
-    // not the other, and a shared count would silently attribute one
-    // rollup's ignorance to the other.
-    final consumed = loads.outletsConsumed;
+    // They were two authored `int`s that shipped non-nullable and
+    // defaulting to 0, so a resolved-but-never-authored template was
+    // counted as a MEASURED zero and the chip strip read a confident
+    // `outlets 0/0` with no superscript on first launch. A template with no
+    // ports at all is the same silence under DR-171, and
+    // `resolveDeviceOutlets` answers it as unknown for that reason.
+    //
+    // Still counted SEPARATELY per rollup, although the two halves now go
+    // silent together: the day they diverge again, a shared count would
+    // silently attribute one rollup's ignorance to the other.
+    final outlets = resolveDeviceOutlets(device, body, landings);
+    final consumed = outlets.consumed;
     if (consumed == null) {
       consumedUnknown++;
     } else {
@@ -354,7 +394,7 @@ RackRollups computeRackRollups({
       consumedKnown++;
     }
 
-    final provided = loads.outletsProvided;
+    final provided = outlets.provided;
     if (provided == null) {
       providedUnknown++;
     } else {
@@ -365,6 +405,7 @@ RackRollups computeRackRollups({
     // ONE increment for a device that is silent about either half, which is
     // the whole reason this is counted here rather than combined afterwards.
     if (consumed == null || provided == null) outletsUnknown++;
+    if (outlets.consumedFromPorts) outletsFromPorts++;
   }
 
   return RackRollups(
@@ -394,6 +435,7 @@ RackRollups computeRackRollups({
       unknownCount: providedUnknown,
     ),
     outletsUnknownCount: outletsUnknown,
+    outletsCountedFromPorts: outletsFromPorts,
   );
 }
 

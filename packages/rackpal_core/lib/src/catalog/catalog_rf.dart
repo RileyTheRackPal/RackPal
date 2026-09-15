@@ -69,8 +69,6 @@ Map<String, TemplateBody> buildRfCatalog() {
     power: PowerProfile(
       nameplateWatts: 0,
       typicalWatts: 0,
-      outletsProvided: 0,
-      outletsConsumed: 0,
     ),
     ports: r01.ports,
     banks: r01.banks,
@@ -157,8 +155,6 @@ Map<String, TemplateBody> buildRfCatalog() {
       apparentVA: 24,
       powerFactor: 900,
       isContinuousLoad: true,
-      outletsProvided: 0,
-      outletsConsumed: 1,
       inletPlug: PlugType.nema515p,
     ),
     ports: r02.ports,

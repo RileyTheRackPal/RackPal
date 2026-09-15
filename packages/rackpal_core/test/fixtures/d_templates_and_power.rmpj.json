@@ -171,9 +171,7 @@
           "ports": [],
           "power": {
             "apparentVA": 840,
-            "isContinuousLoad": false,
-            "outletsConsumed": 1,
-            "outletsProvided": 0
+            "isContinuousLoad": false
           },
           "rearU": 0,
           "requiresClearanceAboveU": 0,
@@ -247,9 +245,7 @@
           "power": {
             "apparentVA": 120,
             "inletPlug": "c20",
-            "isContinuousLoad": false,
-            "outletsConsumed": 1,
-            "outletsProvided": 16
+            "isContinuousLoad": false
           },
           "rearU": 0,
           "requiresClearanceAboveU": 0,
@@ -271,7 +267,7 @@
   "id": "0190e3c1-0000-7000-8000-000000000003",
   "minReaderVersion": 3,
   "modifiedAt": "2026-07-18T11:05:00.000Z",
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "sequence": 0,
   "unknown": {}
 }

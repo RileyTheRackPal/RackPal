@@ -40,13 +40,12 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:rackpal_core/src/library/template_hash.dart'
-    show templateContentHash;
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/persistence/codec.dart';
 import 'package:rackpal_core/src/persistence/json_codec.dart';
 import 'package:rackpal_core/src/persistence/json_limits.dart';
 import 'package:rackpal_core/src/persistence/json_util.dart';
+import 'package:rackpal_core/src/persistence/outlet_key_retirement.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/util/outcome.dart';
 
@@ -64,7 +63,11 @@ import 'package:rackpal_core/src/util/outcome.dart';
 /// `contentHash` taken over bytes that include it. Left alone, every such
 /// file would import reporting a content mismatch, which is a false alarm
 /// that trains a person to ignore a real one.
-const int kRmdxSchemaVersion = 2;
+///
+/// **3 SINCE DR-171 §11.170.3**, which deleted `PowerProfile`'s two outlet
+/// counts. The step is the one `.rmpj` and `.rmda` share: strip both keys,
+/// and re-take the hash only where it attested the body as stored.
+const int kRmdxSchemaVersion = 3;
 
 /// The root `kind` tag every `.rmdx` carries (docs/06 §7.3).
 ///
@@ -332,7 +335,13 @@ Outcome<JsonMap> migrateRmdxToCurrent(
   required int storedSchemaVersion,
 }) {
   if (storedSchemaVersion == kRmdxSchemaVersion) return Ok(raw);
-  if (storedSchemaVersion == 1) return _migrateRmdxV1ToV2(raw);
+  if (storedSchemaVersion == 2) return Ok(_migrateRmdxV2ToV3(raw));
+  if (storedSchemaVersion == 1) {
+    return switch (_migrateRmdxV1ToV2(raw)) {
+      Ok(value: final v2) => Ok(_migrateRmdxV2ToV3(v2)),
+      Err(:final error) => Err(error),
+    };
+  }
   return Err(
     MalformedRmdxError(
       'no migration from $_kSchemaVersion $storedSchemaVersion to '
@@ -356,10 +365,12 @@ Outcome<JsonMap> migrateRmdxToCurrent(
 /// still means what it says for anything written at v2, which is every
 /// file from here on.
 ///
-/// **IT DECODES TO RECOMPUTE, RATHER THAN HASHING THE STRIPPED MAP.**
-/// The two agree today and would stop agreeing the first time the codec
-/// normalises anything on read; `templateContentHash` is the one speller
-/// of this value and going through it is what keeps that true.
+/// **IT HASHES ITS OWN RAW OUTPUT, AND IT USED TO DECODE INSTEAD.** Until
+/// DR-171 this step decoded the body with this build's decoder and hashed
+/// that, which is right only while it is the chain's last step. With
+/// v2 to v3 behind it, a decoded v1 body is a v3 reading of a v2 map,
+/// the hazard docs/03 §9.2 keeps migration on raw maps to avoid. Each
+/// step now hashes the canonical bytes of what it hands on.
 Outcome<JsonMap> _migrateRmdxV1ToV2(JsonMap raw) {
   try {
     final migrated = JsonMap.of(raw);
@@ -372,11 +383,9 @@ Outcome<JsonMap> _migrateRmdxV1ToV2(JsonMap raw) {
           port.remove('carriedProtocols');
         }
       }
-      migrated[_kContentHash] = templateContentHash(
-        templateBodyFromJson(asJsonMap(body, 'rmdx.$_kBody')),
-      );
+      migrated[_kContentHash] = canonicalBodyHash(body);
     }
-    migrated[_kSchemaVersion] = kRmdxSchemaVersion;
+    migrated[_kSchemaVersion] = 2;
     return Ok(migrated);
   } on Object catch (e) {
     // A MALFORMED BODY IS THE DECODER'S ERROR TO REPORT, not this
@@ -384,4 +393,16 @@ Outcome<JsonMap> _migrateRmdxV1ToV2(JsonMap raw) {
     // the real key path.
     return Err(e);
   }
+}
+
+/// v2 to v3: `PowerProfile`'s two outlet counts are gone (DR-171
+/// §11.170.3), through the step `.rmpj` and `.rmda` share.
+JsonMap _migrateRmdxV2ToV3(JsonMap raw) {
+  final migrated = JsonMap.of(raw);
+  final body = migrated[_kBody];
+  if (body is Map) {
+    migrated[_kContentHash] = retireOutletKeys(body, migrated[_kContentHash]);
+  }
+  migrated[_kSchemaVersion] = 3;
+  return migrated;
 }

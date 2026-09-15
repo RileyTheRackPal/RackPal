@@ -19,6 +19,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_core/src/persistence/outlet_key_retirement.dart'
+    show canonicalBodyHash;
 // The src path on purpose: `asJsonMap` is internal plumbing, and the
 // "never throws" group below proves its cast really does raise an ERROR
 // rather than asserting that from memory.
@@ -166,32 +168,23 @@ void main() {
       );
     });
 
-    test('every outlet count survives the migration EXACTLY — v1 zeros are '
-        'not reinterpreted', () {
-      // The migration deliberately does not translate v1's explicit `0`
-      // into v2's absent key. v1's own catalogs authored `outletsProvided:
-      // 0` on most entries as a real measurement (an amplifier provides no
-      // outlets), and the file records no way to tell those from the old
-      // non-nullable default. Rewriting them would destroy true
-      // measurements to recover a minority of fabricated ones, and
-      // "this was never authored" is as much a guess as "this was
-      // measured" (G4). See `migrateV1ToV2`.
-      final doc = openV1();
-      PowerProfile power(String key) => doc.templates[key]!.body.power;
+    test("v1's explicit counts pass v1 -> v2 untouched, and v5 -> v6 is "
+        'the step that removes them (DR-171)', () {
+      // Until DR-171 this case asserted that every count survived the WHOLE
+      // chain exactly, v1's zeros included, because the fields existed. The
+      // v1 -> v2 half is still true and still asserted: that step does not
+      // reinterpret a zero. The chain as a whole now ends with no count at
+      // all, because no template stores one.
+      final raw = jsonDecode(utf8.decode(v1Bytes())) as _JsonMap;
+      final v2 = migrateV1ToV2(raw);
+      final templates = (v2['document']! as _JsonMap)['templates']! as _JsonMap;
+      final amp =
+          (templates['tpl.demo.amp@1']! as _JsonMap)['body']! as _JsonMap;
+      expect((amp['power']! as _JsonMap)['outletsProvided'], 0);
 
-      expect(power('tpl.demo.pdu@1').outletsProvided, 16);
-      expect(power('tpl.demo.pdu@1').outletsConsumed, 1);
-      expect(power('tpl.demo.amp@1').outletsProvided, 0);
-      expect(power('tpl.demo.amp@1').outletsConsumed, 1);
-      expect(power('tpl.demo.blank@1').outletsProvided, 0);
-      expect(power('tpl.demo.blank@1').outletsConsumed, 0);
-      for (final key in doc.templates.keys) {
-        expect(
-          power(key).outletsProvided,
-          isNotNull,
-          reason: '$key stated a count in v1; migrating must not erase it',
-        );
-      }
+      final written = utf8.decode(codec.write(openV1()));
+      expect(written, isNot(contains('"outletsProvided"')));
+      expect(written, isNot(contains('"outletsConsumed"')));
     });
 
     test('re-saving a migrated v1 document writes v2 bytes that '
@@ -751,18 +744,17 @@ void main() {
       expect(openV4().underlays, isEmpty);
     });
 
-    test('THE CONTENT DOES NOT MOVE: only the stamp changes', () {
-      // The whole of DR-136 §11.135.3, as an artifact assertion. If any
-      // plan key were written unconditionally this fails, and the ruling
-      // in the same commit would be false.
-      final before = utf8.decode(v4Bytes());
-      final after = utf8.decode(codec.write(openV4()));
-
-      expect(
-        after.replaceAll('"schemaVersion": 5', '"schemaVersion": 4'),
-        before,
-        reason: 'a v4 file re-encodes byte for byte apart from its stamp',
+    test('THE STEP MOVES NOTHING BUT THE STAMP', () {
+      // The whole of DR-136 §11.135.3, as an artifact of the step itself.
+      // This compared the v4 file with its re-encoding while v5 ended the
+      // chain. DR-171's v6 strips the outlet keys this fixture carries, so
+      // the claim is asserted where it lives: in `migrateV4ToV5`.
+      final before = jsonDecode(utf8.decode(v4Bytes())) as _JsonMap;
+      final after = migrateV4ToV5(
+        jsonDecode(utf8.decode(v4Bytes())) as _JsonMap,
       );
+      expect(after['schemaVersion'], 5);
+      expect(jsonEncode({...after, 'schemaVersion': 4}), jsonEncode(before));
     });
 
     test('and it does NOT gain an underlays key, which is what keeps the '
@@ -778,6 +770,156 @@ void main() {
       final raw =
           jsonDecode(utf8.decode(codec.write(doc))) as Map<String, Object?>;
       expect(raw['minReaderVersion'], 3);
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // v5 -> v6: the stored outlet counts leave the file (DR-171 §11.170.3)
+  // ═══════════════════════════════════════════════════════════════════
+  group('v5 -> v6: the outlet counts leave, and every hash that attested '
+      'them moves with them', () {
+    const codec = JsonDocumentCodec();
+    // A v5 STARTER, copied before the regeneration that retired its keys.
+    const path = 'test/fixtures/v5_outlet_counts.rmpj.json';
+
+    Uint8List v5Bytes() => File(path).readAsBytesSync();
+    _JsonMap v5Tree() => jsonDecode(utf8.decode(v5Bytes())) as _JsonMap;
+
+    Map<String, _JsonMap> snapshotsOf(_JsonMap tree) {
+      final document = tree['document']! as _JsonMap;
+      return {
+        for (final e in (document['templates']! as _JsonMap).entries)
+          e.key: e.value! as _JsonMap,
+      };
+    }
+
+    bool isRealHash(Object? h) =>
+        h is String && RegExp(r'^sha256:[0-9a-f]{64}$').hasMatch(h);
+
+    bool carriesKeys(_JsonMap snapshot) {
+      final power = (snapshot['body']! as _JsonMap)['power']! as _JsonMap;
+      return power.containsKey('outletsProvided') ||
+          power.containsKey('outletsConsumed');
+    }
+
+    RackDocument openTree(_JsonMap tree) {
+      final result = readFromJsonTree(tree);
+      expect(result, isA<Ok<RackDocument>>(), reason: '$result');
+      return (result as Ok<RackDocument>).value;
+    }
+
+    test('the fixture really is a v5 file whose real hashes attest bodies '
+        'carrying the keys', () {
+      // THE CONTROL. Without keys, or with placeholder hashes, this group
+      // would prove that the strip compiles and nothing about the re-hash.
+      final tree = v5Tree();
+      expect(tree['schemaVersion'], 5);
+      final attested = snapshotsOf(tree).values.where(
+        (s) =>
+            carriesKeys(s) &&
+            isRealHash(s['contentHash']) &&
+            s['contentHash'] == canonicalBodyHash(s['body']! as _JsonMap),
+      );
+      expect(attested, isNotEmpty);
+    });
+
+    test('it opens, and nothing it writes carries either key', () {
+      // THE QUOTED KEY, NOT THE WORD. The stored `N01` snapshot still
+      // describes itself as "two inlets means outletsConsumed: 2", and a
+      // snapshot is a record of the template as it was placed, which no
+      // migration rewrites. The first draft of this case asserted the word
+      // and failed on that prose while every key was gone.
+      final written = utf8.decode(codec.write(openTree(v5Tree())));
+      expect(written, isNot(contains('"outletsProvided"')));
+      expect(written, isNot(contains('"outletsConsumed"')));
+      expect(
+        (jsonDecode(written) as _JsonMap)['schemaVersion'],
+        kSchemaVersion,
+      );
+    });
+
+    test('EVERY HASH THAT ATTESTED ITS BODY STILL DOES, re-taken over the '
+        'stripped body', () {
+      // The migration hashes the raw stripped map; verification hashes the
+      // decoded body through `templateBodyToJson`. This is the assertion
+      // that the two agree on a real file rather than in an argument.
+      final before = snapshotsOf(v5Tree());
+      final doc = openTree(v5Tree());
+      var checked = 0;
+      for (final entry in before.entries) {
+        final hash = entry.value['contentHash'];
+        final body = entry.value['body']! as _JsonMap;
+        if (!carriesKeys(entry.value) || !isRealHash(hash)) continue;
+        if (hash != canonicalBodyHash(body)) continue;
+        final migrated = doc.templates[entry.key]!;
+        expect(migrated.contentHash, isNot(hash), reason: entry.key);
+        expect(
+          templateHashMatches(migrated.body, migrated.contentHash),
+          isTrue,
+          reason: entry.key,
+        );
+        checked++;
+      }
+      expect(checked, greaterThan(0));
+    });
+
+    test('a device that named its snapshot by hash still does', () {
+      final tree = v5Tree();
+      final snapshots = snapshotsOf(tree);
+      final devices = (tree['document']! as _JsonMap)['devices']! as _JsonMap;
+      final matchedBefore = <String>[];
+      for (final e in devices.entries) {
+        final ref = (e.value! as _JsonMap)['templateRef']! as _JsonMap;
+        final snapshot = snapshots['${ref['templateId']}@${ref['version']}'];
+        if (snapshot == null || !carriesKeys(snapshot)) continue;
+        if (isRealHash(ref['contentHash']) &&
+            ref['contentHash'] == snapshot['contentHash']) {
+          matchedBefore.add(e.key);
+        }
+      }
+      expect(matchedBefore, isNotEmpty);
+
+      final doc = openTree(v5Tree());
+      for (final id in matchedBefore) {
+        final device = doc.devices[Uuid(id)]!;
+        final snapshot = doc.templates[templateKeyFor(device.templateRef)]!;
+        expect(
+          device.templateRef.contentHash,
+          snapshot.contentHash,
+          reason: device.designator,
+        );
+      }
+    });
+
+    test('A BODY EDITED OUTSIDE THE PRODUCT STILL READS AS EDITED', () {
+      // The half that makes the re-hash safe: a hash that did not attest
+      // its body is carried, never refreshed into agreement with it.
+      final tree = v5Tree();
+      final entry = snapshotsOf(tree).entries.firstWhere(
+        (e) => carriesKeys(e.value) && isRealHash(e.value['contentHash']),
+      );
+      final stale = entry.value['contentHash'];
+      (entry.value['body']! as _JsonMap)['displayName'] = 'Edited by hand';
+
+      final migrated = openTree(tree).templates[entry.key]!;
+      expect(migrated.contentHash, stale);
+      expect(templateHashMatches(migrated.body, migrated.contentHash), isFalse);
+    });
+
+    test(
+      'minReaderVersion does not move, because a v5 reader loses nothing',
+      () {
+        final written =
+            jsonDecode(utf8.decode(codec.write(openTree(v5Tree()))))
+                as _JsonMap;
+        expect(written['minReaderVersion'], v5Tree()['minReaderVersion']);
+      },
+    );
+
+    test('the step alone re-stamps a tree with nothing to strip', () {
+      final migrated = migrateV5ToV6({'schemaVersion': 5, 'keep': 'me'});
+      expect(migrated['schemaVersion'], 6);
+      expect(migrated['keep'], 'me');
     });
   });
 }

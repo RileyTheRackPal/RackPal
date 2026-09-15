@@ -51,6 +51,7 @@ import 'package:rackpal_core/src/persistence/codec.dart';
 import 'package:rackpal_core/src/persistence/json_codec.dart';
 import 'package:rackpal_core/src/persistence/json_limits.dart';
 import 'package:rackpal_core/src/persistence/json_util.dart';
+import 'package:rackpal_core/src/persistence/outlet_key_retirement.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/util/outcome.dart';
 
@@ -220,10 +221,13 @@ Outcome<DeviceLibraryFile> readRmdaJsonTree(JsonMap raw) {
       ),
     );
   }
-  if (stored != kRmdaSchemaVersion) {
-    // The same empty chain `.rmdx` has, and built for the same reason:
-    // one version means one step and it is the identity, so what this
-    // buys is the SEAM plus a loud refusal for a hand-edited `0`.
+  // v2 TO v3 IS THE CHAIN'S FIRST STEP: `.rmdx`'s entry step, run over
+  // every entry (DR-171 §11.170.3). Anything older is still refused,
+  // because no `.rmda` was ever written below 2.
+  var tree = raw;
+  if (stored == 2) {
+    tree = _migrateRmdaV2ToV3(raw);
+  } else if (stored != kRmdaSchemaVersion) {
     return Err(
       MalformedRmdaError(
         'no migration from $_kSchemaVersion $stored to $kRmdaSchemaVersion',
@@ -232,8 +236,8 @@ Outcome<DeviceLibraryFile> readRmdaJsonTree(JsonMap raw) {
   }
 
   try {
-    final name = asStr(raw[_kName], 'rmda.$_kName');
-    final entries = asJsonList(raw[_kTemplates], 'rmda.$_kTemplates');
+    final name = asStr(tree[_kName], 'rmda.$_kName');
+    final entries = asJsonList(tree[_kTemplates], 'rmda.$_kTemplates');
     final templates = <DeviceTemplateFile>[];
     for (var i = 0; i < entries.length; i++) {
       final e = asJsonMap(entries[i], 'rmda.$_kTemplates[$i]');
@@ -257,4 +261,21 @@ Outcome<DeviceLibraryFile> readRmdaJsonTree(JsonMap raw) {
   } on Object catch (e) {
     return Err(e);
   }
+}
+
+/// v2 to v3 over every entry: `.rmdx`'s step, so the two formats cannot
+/// disagree about which bodies were edited (DR-171 §11.170.3).
+JsonMap _migrateRmdaV2ToV3(JsonMap raw) {
+  final migrated = JsonMap.of(raw);
+  final entries = migrated[_kTemplates];
+  if (entries is List) {
+    for (final entry in entries) {
+      if (entry is! Map) continue;
+      final body = entry['body'];
+      if (body is! Map) continue;
+      entry['contentHash'] = retireOutletKeys(body, entry['contentHash']);
+    }
+  }
+  migrated[_kSchemaVersion] = 3;
+  return migrated;
 }

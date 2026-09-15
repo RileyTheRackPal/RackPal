@@ -10,7 +10,9 @@
 // `outletsConsumed` stopped being non-nullable ints defaulting to 0:
 // watts and VA were correctly absent, but outlets read as a measured
 // `0/0` on the chip strip, superscript and all — the exact fabrication
-// this comment claimed the category was avoiding.
+// this comment claimed the category was avoiding. Since DR-171 the
+// counts are not fields; a template with no ports at all, which all
+// three are, is counted unknown for that reason.
 //
 // One representative U height is shipped per id (P4's parametric
 // U-height variants are a picker/Device-Builder concern, not three

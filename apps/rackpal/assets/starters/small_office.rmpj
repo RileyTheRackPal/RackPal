@@ -66,7 +66,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:df2a324a5a8b0a8d380a087e4a415262a41903fdd597f3255214dc2ccc99bc9f",
+          "contentHash": "sha256:4aec1479ea0be079c45b32d2b41c0a3f3227fa3cfc07f3d7d57e2c60f79e8c81",
           "templateId": "P02",
           "version": 1
         }
@@ -99,7 +99,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:4b60024a383dc733da2584c73b480e2703b06b2dd22dea578f27cf999cd0dcc5",
+          "contentHash": "sha256:c2e8d6afc36db6411d3f0c55167c24adc6634cadd99db37d9ea6be5c662c4751",
           "templateId": "A05",
           "version": 1
         }
@@ -132,7 +132,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:7f13889df3fbaf04e5909e1bd5fef59ec7558970680c2acdf1de149dbb7fbcc6",
+          "contentHash": "sha256:11490ebb97aa31930eeb43f914310b09ac831b892e7ca51e99e3cd07116a67ab",
           "templateId": "A03",
           "version": 1
         }
@@ -165,7 +165,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:65a5df44b70ff40a5345bcf359b74bd20fe59c83e4e9d19810064c01d9c2d839",
+          "contentHash": "sha256:1f32cf4f0c10bd13e883650e78def244c64dfb95fb5dd1d3be9271203d4ac260",
           "templateId": "N01",
           "version": 1
         }
@@ -198,7 +198,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:680419f03a7810efa4dd861e214599a32bf76a725a36a6ea08adc2932f5d7fab",
+          "contentHash": "sha256:1484da247f180eba2c91ece7cee8e9dec505be02cc0ef91b2dc4fcf3c951d2e8",
           "templateId": "N02",
           "version": 1
         }
@@ -231,7 +231,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:266f142d038c27df61337b52d0a1c7929bfc8bd59c613b67e8a80cd01b67a594",
+          "contentHash": "sha256:c2ec0759c3706e7642525b9ebc7ac0c244f8b76ad7ff151241677f3883efaaad",
           "templateId": "C01",
           "version": 1
         }
@@ -429,7 +429,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:65a5df44b70ff40a5345bcf359b74bd20fe59c83e4e9d19810064c01d9c2d839",
+          "contentHash": "sha256:1f32cf4f0c10bd13e883650e78def244c64dfb95fb5dd1d3be9271203d4ac260",
           "templateId": "N01",
           "version": 1
         }
@@ -462,7 +462,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:9c8a2110e8768b646073ee31554a9028a4816966b32b87bf41a0add20d33bd64",
+          "contentHash": "sha256:78f88e43f789ed43e0f4f1a5192dcf159c7828b78b3052de0bd32141c8fd48bf",
           "templateId": "C03",
           "version": 1
         }
@@ -491,7 +491,7 @@
           "type": "shelf"
         },
         "templateRef": {
-          "contentHash": "sha256:11f3a9741ac5eeabb803b27b139dee735a76d04981fb66e180ca1d080aca7456",
+          "contentHash": "sha256:acd92f897436d8320a131a1565b3a40841016b160363acd90b975ef0b532cc48",
           "templateId": "V06",
           "version": 1
         }
@@ -520,7 +520,7 @@
           "type": "shelf"
         },
         "templateRef": {
-          "contentHash": "sha256:7250d13a740ea6a26bf8e14b1708e9c35e8dca0da12ea083ef5ca737ff11b49d",
+          "contentHash": "sha256:e33273e54add0644dbc42adeac384cef361aa876b7f198cec7130e87db10752d",
           "templateId": "V07",
           "version": 1
         }
@@ -552,7 +552,7 @@
           "type": "zeroU"
         },
         "templateRef": {
-          "contentHash": "sha256:0013b49c68f93badc9ba71b83e7edc7729199ba24899546ad34fade38aa1df51",
+          "contentHash": "sha256:927e0adfec6c282a4a29cb3e48b346975f9e4fbf38ee0f34ae8d570b602ba975",
           "templateId": "P01",
           "version": 1
         }
@@ -585,7 +585,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:df2a324a5a8b0a8d380a087e4a415262a41903fdd597f3255214dc2ccc99bc9f",
+          "contentHash": "sha256:4aec1479ea0be079c45b32d2b41c0a3f3227fa3cfc07f3d7d57e2c60f79e8c81",
           "templateId": "P02",
           "version": 1
         }
@@ -618,7 +618,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:65a5df44b70ff40a5345bcf359b74bd20fe59c83e4e9d19810064c01d9c2d839",
+          "contentHash": "sha256:1f32cf4f0c10bd13e883650e78def244c64dfb95fb5dd1d3be9271203d4ac260",
           "templateId": "N01",
           "version": 1
         }
@@ -711,7 +711,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:3e13ed03ea56eba80bc2261bf4b17bf59b43b478d0187575f3d583eb25c54333",
+          "contentHash": "sha256:0ae921fa83066e36cd08f894de8c7a8a25429d65925f78bf5ba89b53e892c5de",
           "templateId": "F01",
           "version": 1
         }
@@ -738,7 +738,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:3e13ed03ea56eba80bc2261bf4b17bf59b43b478d0187575f3d583eb25c54333",
+          "contentHash": "sha256:0ae921fa83066e36cd08f894de8c7a8a25429d65925f78bf5ba89b53e892c5de",
           "templateId": "F01",
           "version": 1
         }
@@ -873,7 +873,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:f15426d9b2cd975968c83f56e1812d48ec7f8f1baf26d69b0aeadb2052d1f71c",
+          "contentHash": "sha256:480035a5ae7fca0bb2a8ab1dad58f8868b7280f5ea9ec9bc5f2acea113fdece9",
           "templateId": "F11",
           "version": 1
         }
@@ -900,7 +900,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:f15426d9b2cd975968c83f56e1812d48ec7f8f1baf26d69b0aeadb2052d1f71c",
+          "contentHash": "sha256:480035a5ae7fca0bb2a8ab1dad58f8868b7280f5ea9ec9bc5f2acea113fdece9",
           "templateId": "F11",
           "version": 1
         }
@@ -927,7 +927,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:baa676825d3668bb22e2ecb2b7e456b68f509761807ea7ec40076a64d166aee7",
+          "contentHash": "sha256:6534e0a699307ec260581a7bee879535ae28cdd6e541e10ea369632ee8967240",
           "templateId": "F12",
           "version": 1
         }
@@ -954,7 +954,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:0374dd78baf70250be00f17d2c8c808c8b2895a9c203e4c7acda1afae9c6e715",
+          "contentHash": "sha256:5f401f390f532c4c76bf0eb99112f4982cdeb0b96b069f24e1c11a55b0e5c9d6",
           "templateId": "F09",
           "version": 1
         }
@@ -981,7 +981,7 @@
           "type": "offRack"
         },
         "templateRef": {
-          "contentHash": "sha256:d4f4ed084aa59090c73474070f3014b917cf3a044c13e98e4840ecdc0a81be69",
+          "contentHash": "sha256:18ed52786d830499142bccac1e579ddc05ff5ba266a4db28f26f9a2b7526de17",
           "templateId": "F16",
           "version": 1
         }
@@ -4296,8 +4296,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 800,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 650,
             "typicalWatts": 340
           },
@@ -4316,7 +4314,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:02807be413bfd0142295137ca88287909f5e6af08f1801a1225cdb18cff5adc1",
+        "contentHash": "sha256:a49901c6263370fc4faa8b20eb0e4ccc64da63a67e4389ebe36a9f7b3a3e6b52",
         "templateId": "A01",
         "version": 1
       },
@@ -5340,8 +5338,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 750,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 680,
             "typicalWatts": 280
           },
@@ -5361,7 +5357,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:e0196d99f0a8f8ad6bc35fd458108d9663fccbdd8546cbb63869a8c6d0fe112a",
+        "contentHash": "sha256:3c2aef5560406a56d6d808b9109813238078af002920c55655de9e10460896e5",
         "templateId": "A02",
         "version": 1
       },
@@ -5985,8 +5981,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 60,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 35
           },
@@ -6006,7 +6000,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:7f13889df3fbaf04e5909e1bd5fef59ec7558970680c2acdf1de149dbb7fbcc6",
+        "contentHash": "sha256:11490ebb97aa31930eeb43f914310b09ac831b892e7ca51e99e3cd07116a67ab",
         "templateId": "A03",
         "version": 1
       },
@@ -6278,8 +6272,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 900,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 650,
             "typicalWatts": 380
           },
@@ -6298,7 +6290,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:c2af1bd4d8099fd8702c1bf03b5f0b8124d1f970cfcbf3a1175b2abdf59b421f",
+        "contentHash": "sha256:453dc415758544e5d15e637797e77cd5a26d6af2c159fdf85d6b8a8f2df0bb3c",
         "templateId": "A04",
         "version": 1
       },
@@ -6523,8 +6515,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 700,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 650,
             "typicalWatts": 300
           },
@@ -6544,7 +6534,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:4b60024a383dc733da2584c73b480e2703b06b2dd22dea578f27cf999cd0dcc5",
+        "contentHash": "sha256:c2e8d6afc36db6411d3f0c55167c24adc6634cadd99db37d9ea6be5c662c4751",
         "templateId": "A05",
         "version": 1
       },
@@ -6932,8 +6922,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 35,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 20
           },
@@ -6952,7 +6940,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:aefc28ecb76eabfffc86a2cfb921107f8385e56cbe0f8369c79c94143b853842",
+        "contentHash": "sha256:92dcbae80f2a881b1bdc6ee90370fa24e2b3009469fbf524e127263c48212114",
         "templateId": "A06",
         "version": 1
       },
@@ -7548,8 +7536,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 60,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 30
           },
@@ -7568,7 +7554,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:266f142d038c27df61337b52d0a1c7929bfc8bd59c613b67e8a80cd01b67a594",
+        "contentHash": "sha256:c2ec0759c3706e7642525b9ebc7ac0c244f8b76ad7ff151241677f3883efaaad",
         "templateId": "C01",
         "version": 1
       },
@@ -7990,8 +7976,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 12,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 900,
             "typicalWatts": 6
           },
@@ -8010,7 +7994,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:ada2d45007956dc45cace7e56a3dc9ec5e007be17ce9b36bf8c32e1f28a23152",
+        "contentHash": "sha256:ed45469c6756e530fc7960eaa9fe1197bd444e6c611ca80c96589f88683e5c5a",
         "templateId": "C02",
         "version": 1
       },
@@ -8236,8 +8220,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 30,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 15
           },
@@ -8256,7 +8238,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:9c8a2110e8768b646073ee31554a9028a4816966b32b87bf41a0add20d33bd64",
+        "contentHash": "sha256:78f88e43f789ed43e0f4f1a5192dcf159c7828b78b3052de0bd32141c8fd48bf",
         "templateId": "C03",
         "version": 1
       },
@@ -8462,8 +8444,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 200,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 120
           },
@@ -8482,7 +8462,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:3e13ed03ea56eba80bc2261bf4b17bf59b43b478d0187575f3d583eb25c54333",
+        "contentHash": "sha256:0ae921fa83066e36cd08f894de8c7a8a25429d65925f78bf5ba89b53e892c5de",
         "templateId": "F01",
         "version": 1
       },
@@ -8665,8 +8645,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 400,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 280
           },
@@ -8685,7 +8663,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:2e68174eb0037db778f6cc65ad8d82ebca25b64d499d97fa475a89349d7a6f50",
+        "contentHash": "sha256:ed938437d9f699cedb982a5dcb7b9f48019c90ad3eece5b79e1e193d8cbd1965",
         "templateId": "F02",
         "version": 1
       },
@@ -9163,8 +9141,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 500,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 650,
             "typicalWatts": 150
           },
@@ -9183,7 +9159,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:55d7368a8ba1d45381759006afe2a0b9c8f8568788693139f731ad2c7f6754fb",
+        "contentHash": "sha256:a3d7f37991b96f1ae2119227ef7ceae75cc055eca54f6af8268c5e2dee095b7a",
         "templateId": "F06",
         "version": 1
       },
@@ -9489,8 +9465,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 12,
             "nominalVolts": 48,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 8
           },
           "primaryDomain": "video.digital",
@@ -9509,7 +9483,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:0374dd78baf70250be00f17d2c8c808c8b2895a9c203e4c7acda1afae9c6e715",
+        "contentHash": "sha256:5f401f390f532c4c76bf0eb99112f4982cdeb0b96b069f24e1c11a55b0e5c9d6",
         "templateId": "F09",
         "version": 1
       },
@@ -9797,8 +9771,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 120,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "poeBudgetWatts": 120,
             "powerFactor": 950,
             "typicalWatts": 65
@@ -9819,7 +9791,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:b39251b925c194dfdcaf18053ec6261deb8ad09fbc7d66b87a6eef7835c8bb69",
+        "contentHash": "sha256:23630ad925dc368a30f2c09dd37fd16362190e13753f0e29de0425a1b347ddd6",
         "templateId": "F10",
         "version": 1
       },
@@ -9906,8 +9878,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 30,
             "nominalVolts": 48,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 18
           },
           "primaryDomain": "net",
@@ -9926,7 +9896,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:f15426d9b2cd975968c83f56e1812d48ec7f8f1baf26d69b0aeadb2052d1f71c",
+        "contentHash": "sha256:480035a5ae7fca0bb2a8ab1dad58f8868b7280f5ea9ec9bc5f2acea113fdece9",
         "templateId": "F11",
         "version": 1
       },
@@ -10035,8 +10005,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 25,
             "nominalVolts": 24,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 15
           },
           "primaryDomain": "ctl",
@@ -10055,7 +10023,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:baa676825d3668bb22e2ecb2b7e456b68f509761807ea7ec40076a64d166aee7",
+        "contentHash": "sha256:6534e0a699307ec260581a7bee879535ae28cdd6e541e10ea369632ee8967240",
         "templateId": "F12",
         "version": 1
       },
@@ -10108,8 +10076,6 @@
           "power": {
             "isContinuousLoad": false,
             "nameplateWatts": 3,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 2
           },
           "primaryDomain": "ctl",
@@ -10128,7 +10094,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:1714e413beac4020cdeddc09ebb349063526c0aed727133693659e200c4c63a8",
+        "contentHash": "sha256:ef1354bd826dd0565d1a4b8e14f6938c267206065d60109f35c3f34de0df74b6",
         "templateId": "F13",
         "version": 1
       },
@@ -10506,8 +10472,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 25,
             "nominalVolts": 12,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 15
           },
           "primaryDomain": "net",
@@ -10526,7 +10490,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:d4f4ed084aa59090c73474070f3014b917cf3a044c13e98e4840ecdc0a81be69",
+        "contentHash": "sha256:18ed52786d830499142bccac1e579ddc05ff5ba266a4db28f26f9a2b7526de17",
         "templateId": "F16",
         "version": 1
       },
@@ -10946,7 +10910,7 @@
           "chassisWidthNm": 432000000,
           "connectorProjectionNm": 50000000,
           "containerVented": false,
-          "description": "Redundant dual PSU — two inlets means outletsConsumed: 2, and the chip strip outlet rollup depends on every template being honest about that.",
+          "description": "Redundant dual PSU: two inlets, so it takes two outlets until its cords are drawn.",
           "displayName": "PoE Switch, 48-port",
           "frontU": 1,
           "isContainer": false,
@@ -12061,8 +12025,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 900,
             "nominalVolts": 120,
-            "outletsConsumed": 2,
-            "outletsProvided": 0,
             "poeBudgetWatts": 740,
             "powerFactor": 950,
             "typicalWatts": 380
@@ -12082,7 +12044,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:65a5df44b70ff40a5345bcf359b74bd20fe59c83e4e9d19810064c01d9c2d839",
+        "contentHash": "sha256:1f32cf4f0c10bd13e883650e78def244c64dfb95fb5dd1d3be9271203d4ac260",
         "templateId": "N01",
         "version": 1
       },
@@ -12398,8 +12360,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 120,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 55
           },
@@ -12418,7 +12378,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:680419f03a7810efa4dd861e214599a32bf76a725a36a6ea08adc2932f5d7fab",
+        "contentHash": "sha256:1484da247f180eba2c91ece7cee8e9dec505be02cc0ef91b2dc4fcf3c951d2e8",
         "templateId": "N02",
         "version": 1
       },
@@ -14505,8 +14465,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 10,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 24,
             "powerFactor": 1000,
             "typicalWatts": 10
           },
@@ -14525,7 +14483,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:0013b49c68f93badc9ba71b83e7edc7729199ba24899546ad34fade38aa1df51",
+        "contentHash": "sha256:927e0adfec6c282a4a29cb3e48b346975f9e4fbf38ee0f34ae8d570b602ba975",
         "templateId": "P01",
         "version": 1
       },
@@ -14983,8 +14941,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 12,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 16,
             "powerFactor": 1000,
             "typicalWatts": 12
           },
@@ -15003,7 +14959,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:df2a324a5a8b0a8d380a087e4a415262a41903fdd597f3255214dc2ccc99bc9f",
+        "contentHash": "sha256:4aec1479ea0be079c45b32d2b41c0a3f3227fa3cfc07f3d7d57e2c60f79e8c81",
         "templateId": "P02",
         "version": 1
       },
@@ -15339,8 +15295,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 50,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 10,
             "outputCapacityVA": 3000,
             "outputCapacityWatts": 2700,
             "powerFactor": 900,
@@ -15362,7 +15316,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:cdd7de32054a56821d8cadd0b1beaa61e1dca2ae3a5231ea38be7d0288cb4d12",
+        "contentHash": "sha256:68f686e5a50ce3932f59817e2a8347399a7d1e62384dbfb84cf2de72c832f957",
         "templateId": "P03",
         "version": 1
       },
@@ -15534,9 +15488,7 @@
           "power": {
             "inletPlug": "nema515p",
             "isContinuousLoad": false,
-            "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 6
+            "nominalVolts": 120
           },
           "primaryDomain": "pwr",
           "rearU": 0,
@@ -15554,7 +15506,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:03ecb07a0f757eea71d6ac26b4905d997f33f5bb889a9e0ec97fdac654811b45",
+        "contentHash": "sha256:4d70eec781bffbc24612629a244fc99234ce3ed1fc90e9902937a092b933e332",
         "templateId": "P04",
         "version": 1
       },
@@ -15746,8 +15698,6 @@
           "power": {
             "isContinuousLoad": false,
             "nameplateWatts": 0,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 0
           },
           "primaryDomain": "video.analog",
@@ -15766,7 +15716,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:db54bac6ec3bdcdfc5edd31e41963bc586a56633c9d247db3e365a596eda1fa6",
+        "contentHash": "sha256:7a90187c17bd4acc12091caec73cdf5b465bb4d4e72fdb00eb2713cb192b5a68",
         "templateId": "R01",
         "version": 1
       },
@@ -16194,8 +16144,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 30,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 900,
             "typicalWatts": 22
           },
@@ -16214,7 +16162,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:bc2113990de5dcf11dcf1e3f728bc9f344ca1f58d9036053f06e9dcbe2be91bf",
+        "contentHash": "sha256:d7b6620eb1c3375c8cf1cabd01782fde70bb95d67e29a894c5704dfbb79493de",
         "templateId": "R02",
         "version": 1
       },
@@ -16473,8 +16421,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 35,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 900,
             "typicalWatts": 22
           },
@@ -16493,7 +16439,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:6c09c02e79bfee7ff8ec2b3924150a177253f706fa2ab23a8ca72314df1c132f",
+        "contentHash": "sha256:2879542abddd93f62c18f1be03e522a3257cd9eac28005243f81aeb4dcfaa97e",
         "templateId": "S01",
         "version": 1
       },
@@ -16699,8 +16645,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 350,
             "nominalVolts": 120,
-            "outletsConsumed": 2,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 160
           },
@@ -16719,7 +16663,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:91181379f9d05e02a67ee2ff1861e9b5039b2e1feaabcd2c3177eb829c071c07",
+        "contentHash": "sha256:72eaa48e4b4df0698cd7bf154a5bda445925f071e0055eb57f9e8c47e39a43be",
         "templateId": "S02",
         "version": 1
       },
@@ -17486,8 +17430,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 90,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "standbyWatts": 8,
             "typicalWatts": 55
@@ -17508,7 +17450,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:244175e59107ed70fdf3975309d988442e4c43853dce9b24630d94dfde3d0895",
+        "contentHash": "sha256:6a039178e06ad3b616500de8da5d8343aedbadd53e7cb8fc9bdb6fd1d117a0ec",
         "templateId": "V01",
         "version": 1
       },
@@ -17833,8 +17775,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 30,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 18
           },
@@ -17853,7 +17793,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:c51ae34569211e7a0241e2b4afbd74e83e4ff02549add1883eef3645ca7c1741",
+        "contentHash": "sha256:6e287560bf61fbbce1266abf1a72e3e034972563e9f62fc3fc7e2c9efffe6f68",
         "templateId": "V02",
         "version": 1
       },
@@ -18730,8 +18670,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 180,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 110
           },
@@ -18751,7 +18689,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:e31c77549b4a09533952b80d4836176f51882dde0979a48562819ef0ab3ffaac",
+        "contentHash": "sha256:ef95ea97b2cbb180960c0adcc59c59fc5fed51f3c5667049ffe3cd0c988b81af",
         "templateId": "V03",
         "version": 1
       },
@@ -18964,8 +18902,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 25,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 900,
             "typicalWatts": 15
           },
@@ -18984,7 +18920,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:a580e501fdd7edc684e3bf87a614429b6f26e65b256af507cf0c9851c2fa9f82",
+        "contentHash": "sha256:edc75f6184d69f55f4bdf3131cae78b18c8b4ab3a91a7db6eec744b80c211d11",
         "templateId": "V04",
         "version": 1
       },
@@ -19261,8 +19197,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 45,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 28
           },
@@ -19281,7 +19215,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:ec72b3d929d27f63065c45385ed155d468fb1cc27d2c48e9aef1fda80d6f3c02",
+        "contentHash": "sha256:e012ff12f305b4aab21284126eddb0f84afbffb2245d8f30d78141165dac2b6b",
         "templateId": "V05",
         "version": 1
       },
@@ -19456,8 +19390,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 12,
             "nominalVolts": 120,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "powerFactor": 900,
             "typicalWatts": 8
           },
@@ -19476,7 +19408,7 @@
           "widthClass": "half"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:11f3a9741ac5eeabb803b27b139dee735a76d04981fb66e180ca1d080aca7456",
+        "contentHash": "sha256:acd92f897436d8320a131a1565b3a40841016b160363acd90b975ef0b532cc48",
         "templateId": "V06",
         "version": 1
       },
@@ -19679,8 +19611,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 12,
             "nominalVolts": 48,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 9
           },
           "primaryDomain": "video.digital",
@@ -19698,7 +19628,7 @@
           "widthClass": "half"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:7250d13a740ea6a26bf8e14b1708e9c35e8dca0da12ea083ef5ca737ff11b49d",
+        "contentHash": "sha256:e33273e54add0644dbc42adeac384cef361aa876b7f198cec7130e87db10752d",
         "templateId": "V07",
         "version": 1
       },
@@ -19839,7 +19769,7 @@
   "id": "019c6bcb-1fc0-7000-8000-000000000001",
   "minReaderVersion": 3,
   "modifiedAt": "2026-05-06T10:12:00.000Z",
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "sequence": 604,
   "unknown": {}
 }

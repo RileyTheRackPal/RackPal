@@ -21,7 +21,6 @@ PowerProfile _power({
   required int typical,
   required int pf,
   int? standby,
-  int outletsConsumed = 1,
 }) => PowerProfile(
   nameplateWatts: nameplate,
   typicalWatts: typical,
@@ -30,8 +29,6 @@ PowerProfile _power({
   apparentVA: (typical * 1000 / pf).round(),
   powerFactor: pf,
   isContinuousLoad: true,
-  outletsProvided: 0,
-  outletsConsumed: outletsConsumed,
   inletPlug: PlugType.c14,
 );
 
@@ -261,7 +258,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
     bodyDepth: _mm(280),
     connectorProjection: _mm(62),
     weight: _kg(5.4),
-    power: _power(nameplate: 30, typical: 18, pf: 950, outletsConsumed: 1),
+    power: _power(nameplate: 30, typical: 18, pf: 950),
     ports: v02.ports,
     banks: v02.banks,
   );
@@ -663,7 +660,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
     bodyDepth: _mm(110),
     connectorProjection: _mm(55),
     weight: _kg(0.55),
-    power: _power(nameplate: 12, typical: 8, pf: 900, outletsConsumed: 0),
+    power: _power(nameplate: 12, typical: 8, pf: 900),
     ports: v06.ports,
     banks: v06.banks,
   );
@@ -773,8 +770,6 @@ Map<String, TemplateBody> buildVideoCatalog() {
       nameplateWatts: 12,
       typicalWatts: 9,
       nominalVolts: 48,
-      outletsProvided: 0,
-      outletsConsumed: 0,
       poeBudgetWatts: null,
     ),
     ports: v07.ports,
@@ -907,12 +902,12 @@ Map<String, TemplateBody> buildVideoRoleVariants() {
     // That is a genuinely different power topology from everything else in
     // the catalog and the power rollup has to get it right."* An absent
     // figure would make the rollup count this device in its UNKNOWN column,
-    // which is the opposite of what is true about it.
+    // which is the opposite of what is true about it. The quoted outlet
+    // count is no longer a field (DR-171): `hdbt.in`'s PoE powered-device
+    // role is what makes a drawn run consume no outlet.
     power: PowerProfile(
       nameplateWatts: 0,
       typicalWatts: 0,
-      outletsProvided: 0,
-      outletsConsumed: 0,
     ),
     ports: v06rx.ports,
     banks: v06rx.banks,
@@ -1005,8 +1000,6 @@ Map<String, TemplateBody> buildVideoRoleVariants() {
       nameplateWatts: 12,
       typicalWatts: 9,
       nominalVolts: 48,
-      outletsProvided: 0,
-      outletsConsumed: 0,
     ),
     ports: v07dec.ports,
     banks: v07dec.banks,

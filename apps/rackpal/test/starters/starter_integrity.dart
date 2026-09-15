@@ -394,6 +394,7 @@ void _expectRackWithinItsLimits(RackDocument doc, Rack rack, String of) {
     devices: doc.devices.values,
     templates: doc.templates,
     face: Face.front,
+    landings: PortLandings.of(doc),
   );
 
   expect(

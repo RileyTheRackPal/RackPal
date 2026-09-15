@@ -99,6 +99,7 @@ RackRollups _rollups(DeviceInstance device, TemplateBody body) =>
       devices: [device],
       templates: {'amp@1': _snapshot(body)},
       face: Face.front,
+      landings: PortLandings.none,
     );
 
 /// The `overrides` object exactly as it lands in the file.

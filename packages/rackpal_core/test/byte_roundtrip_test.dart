@@ -446,13 +446,12 @@ RackDocument _templatesAndPowerFixture() {
       mountMethod: MountMethod.rackEars,
       power: PowerProfile(
         apparentVA: 120,
-        outletsProvided: 16,
-        outletsConsumed: 1,
         inletPlug: PlugType.c20,
       ),
     ),
   );
-  // Authored AS ZERO — a measurement, and it must stay a key on disk.
+  // Its outlet counts were authored as ZERO here until DR-171 deleted the
+  // fields; the group below pins that no body writes either key now.
   doc.templates['tpl.demo.amp@1'] = snapshot(
     'tpl.demo.amp',
     TemplateBody(
@@ -464,8 +463,6 @@ RackDocument _templatesAndPowerFixture() {
       mountMethod: MountMethod.rackEars,
       power: PowerProfile(
         apparentVA: 840,
-        outletsProvided: 0,
-        outletsConsumed: 1,
       ),
     ),
   );
@@ -828,22 +825,21 @@ void main() {
       return body['power']! as Map<String, Object?>;
     }
 
-    test('an authored count is written', () {
-      final power = powerOf('tpl.demo.pdu@1');
-      expect(power['outletsProvided'], 16);
-      expect(power['outletsConsumed'], 1);
-    });
-
-    test('an authored ZERO is written as a zero, not omitted', () {
-      final power = powerOf('tpl.demo.amp@1');
-      expect(power.containsKey('outletsProvided'), isTrue);
-      expect(power['outletsProvided'], 0);
-    });
-
-    test('an unauthored count has NO key at all', () {
-      final power = powerOf('tpl.demo.blank@1');
-      expect(power.containsKey('outletsProvided'), isFalse);
-      expect(power.containsKey('outletsConsumed'), isFalse);
+    test('NO TEMPLATE WRITES EITHER RETIRED OUTLET KEY (DR-171)', () {
+      // This group pinned three shapes on disk (authored, authored as
+      // zero, absent) while the counts were fields. DR-171 derives them
+      // from ports and cords, so the one shape left is absent, for every
+      // body, and a codec that still wrote either key would be carrying
+      // a number nothing reads.
+      for (final key in [
+        'tpl.demo.pdu@1',
+        'tpl.demo.amp@1',
+        'tpl.demo.blank@1',
+      ]) {
+        final power = powerOf(key);
+        expect(power.containsKey('outletsProvided'), isFalse, reason: key);
+        expect(power.containsKey('outletsConsumed'), isFalse, reason: key);
+      }
     });
 
     test('and THAT is why the file stamps a minReaderVersion a v1 build '

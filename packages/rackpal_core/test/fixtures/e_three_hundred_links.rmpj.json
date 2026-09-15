@@ -20236,8 +20236,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 800,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 650,
             "typicalWatts": 340
           },
@@ -21280,8 +21278,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 750,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 680,
             "typicalWatts": 280
           },
@@ -21897,8 +21893,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 60,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 30
           },
@@ -22123,8 +22117,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 200,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 120
           },
@@ -22495,8 +22487,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 12,
             "nominalVolts": 48,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 8
           },
           "primaryDomain": "video.digital",
@@ -22602,8 +22592,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 30,
             "nominalVolts": 48,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 18
           },
           "primaryDomain": "net",
@@ -22731,8 +22719,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 25,
             "nominalVolts": 24,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 15
           },
           "primaryDomain": "ctl",
@@ -22804,8 +22790,6 @@
           "power": {
             "isContinuousLoad": false,
             "nameplateWatts": 3,
-            "outletsConsumed": 0,
-            "outletsProvided": 0,
             "typicalWatts": 2
           },
           "primaryDomain": "ctl",
@@ -23017,7 +23001,7 @@
           "chassisWidthNm": 432000000,
           "connectorProjectionNm": 50000000,
           "containerVented": false,
-          "description": "Redundant dual PSU — two inlets means outletsConsumed: 2, and the chip strip outlet rollup depends on every template being honest about that.",
+          "description": "Redundant dual PSU: two inlets, so it takes two outlets until its cords are drawn.",
           "displayName": "PoE Switch, 48-port",
           "frontU": 1,
           "isContainer": false,
@@ -24132,8 +24116,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 900,
             "nominalVolts": 120,
-            "outletsConsumed": 2,
-            "outletsProvided": 0,
             "poeBudgetWatts": 740,
             "powerFactor": 950,
             "typicalWatts": 380
@@ -25514,8 +25496,6 @@
             "isContinuousLoad": false,
             "nameplateWatts": 12,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 16,
             "powerFactor": 1000,
             "typicalWatts": 12
           },
@@ -25793,8 +25773,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 35,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 900,
             "typicalWatts": 22
           },
@@ -26690,8 +26668,6 @@
             "isContinuousLoad": true,
             "nameplateWatts": 180,
             "nominalVolts": 120,
-            "outletsConsumed": 1,
-            "outletsProvided": 0,
             "powerFactor": 950,
             "typicalWatts": 110
           },
@@ -26810,7 +26786,7 @@
   "id": "0190f000-0000-7000-8000-000000000000",
   "minReaderVersion": 3,
   "modifiedAt": "2026-07-28T09:00:00.000Z",
-  "schemaVersion": 5,
+  "schemaVersion": 6,
   "sequence": 0,
   "unknown": {}
 }

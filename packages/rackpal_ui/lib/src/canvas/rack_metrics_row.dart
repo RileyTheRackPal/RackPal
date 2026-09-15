@@ -133,11 +133,7 @@ class RackMetricsRow extends StatelessWidget {
         // `outlets 1/24` with no superscript for a rack whose consumed total
         // had two silent contributors.
         unknownCount: rollups.outletsUnknownCount,
-        tooltip: _tooltip(
-          'Outlets ${_outletsValue()}',
-          rollups.outletsUnknownCount,
-          'outlet count',
-        ),
+        tooltip: _outletsTooltip(),
         valueStyle: valueStyle,
         dimStyle: dimStyle,
       ),
@@ -274,6 +270,30 @@ class RackMetricsRow extends StatelessWidget {
     final subject = unknownCount == 1 ? 'device has' : 'devices have';
     return '$summary · $unknownCount $subject no $noun '
         '— not counted';
+  }
+
+  /// The outlets chip's hover sentence: §5's unknown count, and DR-171's
+  /// count of devices charged from their inlet ports (§11.170.8).
+  ///
+  /// THE SECOND NEVER GETS A SUPERSCRIPT. The superscript means one thing
+  /// on every chip, a device missing from the total, and a device counted
+  /// from its inlets is IN the total. The user chose the hover over a
+  /// tilde or a dimmed figure, because on a drawing where only PDU-fed
+  /// cords are drawn, nearly every rack would wear the mark for good.
+  String? _outletsTooltip() {
+    final summary = 'Outlets ${_outletsValue()}';
+    final unknown = _tooltip(
+      summary,
+      rollups.outletsUnknownCount,
+      'outlet count',
+    );
+    final fromPorts = rollups.outletsCountedFromPorts;
+    if (fromPorts == 0) return unknown;
+    final said = fromPorts == 1
+        ? '1 device has no cord drawn and is counted from its power inlets'
+        : '$fromPorts devices have no cord drawn and are counted from '
+              'their power inlets';
+    return '${unknown ?? summary} · $said';
   }
 }
 

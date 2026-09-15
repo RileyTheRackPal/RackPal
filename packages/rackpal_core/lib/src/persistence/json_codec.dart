@@ -3494,11 +3494,8 @@ PortPowerSpec _decodePortPowerSpec(JsonMap json) => PortPowerSpec(
 
 JsonMap _encodePowerProfile(PowerProfile p) {
   final json = <String, Object?>{'isContinuousLoad': p.isContinuousLoad};
-  // Omitted when unauthored, not written as 0: `outletsProvided: 0` is a
-  // measurement and must survive the round trip as one, while an absent key
-  // must come back absent so the rollups keep counting it unknown (CR-114).
-  putIfNotNull(json, 'outletsProvided', p.outletsProvided);
-  putIfNotNull(json, 'outletsConsumed', p.outletsConsumed);
+  // NO OUTLET COUNTS. DR-171 retired both keys; `migrateV5ToV6` and the
+  // device-file steps strip them from older files.
   // A CAPACITY, not a draw — see `PowerProfile`'s class doc. Omitted when
   // unauthored like every other optional figure, so a document written
   // before these two existed round-trips byte-for-byte (CR-117).
@@ -3529,14 +3526,6 @@ PowerProfile _decodePowerProfile(JsonMap json) => PowerProfile(
   isContinuousLoad: asBool(
     json['isContinuousLoad'],
     'PowerProfile.isContinuousLoad',
-  ),
-  outletsProvided: asIntOrNull(
-    json['outletsProvided'],
-    'PowerProfile.outletsProvided',
-  ),
-  outletsConsumed: asIntOrNull(
-    json['outletsConsumed'],
-    'PowerProfile.outletsConsumed',
   ),
   outputCapacityVA: asIntOrNull(
     json['outputCapacityVA'],

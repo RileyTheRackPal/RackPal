@@ -49,7 +49,15 @@ const kMaxRackHeightU = 60; // CR-038
 /// declaring `kSchemaVersion` 4 while writing that stamp would refuse its
 /// own file. `migrateV4ToV5` re-stamps and converts nothing, because
 /// there is nothing in a v4 file to convert.
-const kSchemaVersion = 5;
+///
+/// v6 DELETES `PowerProfile.outletsProvided` AND `outletsConsumed`
+/// (DR-171 §11.170.3). The trigger is v4's: every file on disk stops
+/// re-encoding byte for byte, losing both keys from every template body,
+/// and the content hashes that attested those bodies are re-taken.
+/// [kMinReaderVersion] stays at 3 on v4's reasoning: every reader since v2
+/// meets the absent keys as unknown and loses nothing. `migrateV5ToV6`
+/// strips, re-hashes where the hash attested the body, and re-stamps.
+const kSchemaVersion = 6;
 
 /// The `minReaderVersion` stamped into a document that carries PLAN DATA
 /// (DR-136 §11.135.2).

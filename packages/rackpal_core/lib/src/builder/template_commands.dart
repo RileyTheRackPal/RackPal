@@ -281,10 +281,9 @@ abstract final class TemplateBodyField {
   // damage: it is what the BTU/hr on the elevations is computed from.
   //
   // `outletsProvided` and `outletsConsumed` are absent from this table
-  // ON PURPOSE. docs/06 §3.3 makes them READ-ONLY, counted from ports
-  // whose family is `power.*`, so a text box for them would let a user
-  // author a count that disagrees with the ports beside it. Counting
-  // them needs the port grid, which is M4-E.
+  // because they are not fields at all (DR-171). Both are read off the
+  // port grid and the cords drawn in a document, so there is nothing for
+  // a text box to author.
 
   static const nameplateWatts = TemplateField<int?>(
     key: 'nameplateWatts',

@@ -20,11 +20,15 @@ import 'package:test/test.dart';
 import '../validation/fixtures/fixture_docs.dart';
 
 /// A rack wanting four outlets and offered [provided].
+///
+/// PORTS, NOT AUTHORED COUNTS (DR-171). The amplifier has four inlets and
+/// no cord drawn to any, so it wants four by §11.170.4's third clause, and
+/// the PDU provides one outlet per outlet port.
 RackDocument _short({required int provided}) {
   final doc = fixtureDoc();
   fixturePlaceBody(
     doc,
-    fixtureBody(power: PowerProfile(outletsConsumed: 4)),
+    fixtureBody(ports: fixturePowerPorts(inlets: 4)),
     1,
     seq: 1,
     designator: 'AMP-1',
@@ -32,7 +36,7 @@ RackDocument _short({required int provided}) {
   if (provided > 0) {
     fixturePlaceBody(
       doc,
-      fixtureBody(power: PowerProfile(outletsProvided: provided)),
+      fixtureBody(ports: fixturePowerPorts(outlets: provided)),
       3,
       seq: 2,
       designator: 'PDU-1',

@@ -118,7 +118,7 @@ Set<String> _changedTopLevelKeys(RackDocument doc, void Function() mutate) {
 /// MEASURED FROM SOURCE by [_projectionCoversEveryField], never trusted.
 const _projectedFieldCounts = <String, int>{
   'EquipmentRow': 14,
-  'RackRollups': 10,
+  'RackRollups': 11,
   'Rollup<T>': 3,
 };
 
@@ -172,6 +172,7 @@ Map<String, Object?> _derivedProjection(RackDocument doc) {
             devices: doc.devices.values,
             templates: doc.templates,
             face: face,
+            landings: PortLandings.of(doc),
           );
           return <String, Object?>{
             'rack': rack.id.v,
@@ -185,6 +186,7 @@ Map<String, Object?> _derivedProjection(RackDocument doc) {
             'outletsConsumed': rollup(r.outletsConsumed),
             'outletsProvided': rollup(r.outletsProvided),
             'outletsUnknownCount': r.outletsUnknownCount,
+            'outletsCountedFromPorts': r.outletsCountedFromPorts,
           };
         }(),
   ];
@@ -264,14 +266,21 @@ bool _epochPlausiblyCovers(EpochMask touches, String key) => switch (key) {
   'pathways' => touches.has(EpochMask.structure) || touches.has(EpochMask.meta),
   // THE DERIVED OUTPUTS. The equipment list is a row per device carrying
   // its designator, its placement and its loads, so it moves under
-  // `structure`, `meta` or `rack`. The rollups are per rack and per face
-  // and sum what is mounted, so they move under the same three. Permissive
-  // in this function's own sense: AC-014 wants a superset, never the
-  // minimal set.
-  'derived:equipmentList' || 'derived:rackRollups' =>
+  // `structure`, `meta` or `rack`. Permissive in this function's own sense:
+  // AC-014 wants a superset, never the minimal set.
+  'derived:equipmentList' =>
     touches.has(EpochMask.structure) ||
         touches.has(EpochMask.meta) ||
         touches.has(EpochMask.rack),
+  // The rollups are per rack and per face and sum what is mounted, so they
+  // move under the same three, AND UNDER `wires` SINCE DR-171: a device's
+  // consumed outlets are the cords drawn to it (§11.170.4), so drawing a
+  // cord on the schematic moves the outlet chip over the rack.
+  'derived:rackRollups' =>
+    touches.has(EpochMask.structure) ||
+        touches.has(EpochMask.meta) ||
+        touches.has(EpochMask.rack) ||
+        touches.has(EpochMask.wires),
   _ => false,
 };
 
