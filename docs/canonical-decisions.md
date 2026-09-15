@@ -21222,6 +21222,55 @@ it. Board `#560` cites this ruling.
 **What this does not rule.** A full-history notice inside the Device Builder, which has no status line;
 a keyboard shortcut for Preferences; and any second preference.
 
+### 11.172 DR-173 · A matrix's de-embedded zone audio is a stereo pair per zone, on two balanced 3-pin blocks
+
+**The question.** Board `#112` (96-E), deferred by DR-014 §11.14.7 beside `#111`. V01 (8×8) and V03
+(16×16) modelled each zone's de-embedded audio as one mono balanced 3-pin block, and
+`docs/catalog/seed-devices.md` specified exactly that (*"8x EURO3-OUT"*). A matrix de-embeds a zone in
+stereo, so the model could not say that a zone's left and right are two conductors of one feed, and the
+connect gesture had no pair to land.
+
+**11.172.1 MEASURED FIRST**, on 2026-09-15 over `b4d02c6`:
+
+- V01 declares 8 zone outputs and V03 16, each `conn.euroblock_3` on `audio.line_bal` in an `audOut`
+  bank.
+- V02 (4×4) de-embeds to S/PDIF coax, which carries both channels on one connector, so one port per
+  output is already right.
+- V05, the presentation switcher, already models a stereo balanced output as ONE port on
+  `conn.euroblock_5`, with no set.
+- No starter materialises a port on a matrix zone output. The 300-link performance fixture wires eight
+  of V03's zone outputs to two amplifiers.
+
+**11.172.2 RULED 2026-09-15: AN L/R PAIR PER ZONE, ON TWO BALANCED 3-PIN BLOCKS.** Settled by the user.
+Each zone is a `stereoPair` set of `AUD OUT n L` and `AUD OUT n R`: one drag lands both as a single
+two-conductor cable, and dragging one half to a different device splits the set (DR-014). V01 goes from
+8 zone ports to 16, and V03 from 16 to 32. Offered and refused: **one 5-pin block per zone**, V05's
+shape, under which a zone's two channels can never land on different devices and the pair stays
+invisible inside one port.
+
+**11.172.3 THE TRADE FACT THAT BOUNDS IT.** The user's answer was an L/R pair per zone, with a
+qualification: some amplifiers and matrices list their channels 1 to 16 or 1 to 32 without
+distinguishing left from right, and the more capable of those can split a zone into individual
+channels. The user's own examples: the Triad TS-AMS8 and TS-AMS16 cannot split zones, and the ELAN
+(Nice) EL-IPD-MTX-8CH can. **An HDMI matrix de-embeds a stereo zone, which is the Triad case**, and that
+is what the seeded V01 and V03 are. A device of the ELAN kind is authored as numbered mono channels,
+which the Device Builder already expresses; nothing in the model has to know which kind a template is.
+
+**11.172.4 DECIDED BUILDING IT: THE PAIRS ARE NUMBERED WITHOUT PADDING.** V03's video banks read
+`HDMI OUT 01`, and its zone pairs read `AUD OUT 1 L`. The label grammar (docs/06 §4.2) cannot write a
+counter that is both zero-padded and grouped: `{n@2:2}` is a parse error by design, because roadmap §2's
+M4 Risks names generalising that grammar as the milestone's scope hazard. A padded pair would be a label
+the Device Builder cannot reproduce. docs/06 §4.2's own worked example, `ZONE {n@2} {L,R}`, is unpadded,
+and so is every pair the catalogue specification seeds.
+
+**11.172.5 Scope.** **No scope change**: a catalogue data correction and the specification it follows.
+Board `#112` cites this ruling.
+
+**What this does not rule.** The set bracket that tells a pair on one cable from one that has been split
+(`#111`); V02's S/PDIF outputs, which stay one port each; the seeded amplifiers, whose zone sets are
+unchanged; and the set gesture's missing tier-2 check (`#909`), which DR-116 §11.115.3 already rules on
+and which this ruling puts two more templates in reach of.
+
 ---
 
 ## 12. Superseded rulings
