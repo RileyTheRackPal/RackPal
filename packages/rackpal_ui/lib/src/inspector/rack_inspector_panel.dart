@@ -72,6 +72,7 @@ import 'package:flutter/services.dart'
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/inspector/add_zero_u_channel_dialog.dart';
 import 'package:rackpal_ui/src/inspector/add_zero_u_occupant_dialog.dart';
+import 'package:rackpal_ui/src/inspector/save_rack_preset_dialog.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 
 /// §4's `RackInspector`. Stateless in its own right; the mutable buffers
@@ -89,6 +90,7 @@ class RackInspectorPanel extends StatelessWidget {
     required this.onRefuse,
     required this.onZeroU,
     required this.onAddZeroUDevice,
+    this.onSaveAsPreset,
     this.firstFieldFocus,
     super.key,
   });
@@ -99,8 +101,10 @@ class RackInspectorPanel extends StatelessWidget {
   /// (the Circuits list). Never mutated here — see the file header.
   final RackDocument doc;
 
-  /// `buildRackPresets()`'s result, injected rather than built here so the
-  /// panel has no hidden data source and a test can supply a small set.
+  /// The presets the Preset row lists: `buildRackPresets()`'s, or those merged
+  /// with yours by `mergeRackPresets` (DR-176). Injected rather than built
+  /// here so the panel has no hidden data source and a test can supply a
+  /// small set.
   final Map<String, RackPreset> presets;
 
   /// Runs one `SetEntityPropertyCommand`. Generic so the twelve call sites
@@ -119,6 +123,11 @@ class RackInspectorPanel extends StatelessWidget {
   final ValueChanged<int> onRequestHeight;
 
   final ValueChanged<RackPreset> onApplyPreset;
+
+  /// Save as preset... under the Preset row (DR-176 §11.175.2), handed this
+  /// rack. Null hides the button: a host with nowhere to keep a preset gets
+  /// no control that would answer by doing nothing.
+  final ValueChanged<Rack>? onSaveAsPreset;
 
   /// Reports a refused edit on the status line (§3.4's "never silently do
   /// nothing").
@@ -187,6 +196,15 @@ class RackInspectorPanel extends StatelessWidget {
           presets: presets,
           onApplyPreset: onApplyPreset,
         ),
+        if (onSaveAsPreset != null)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              key: const ValueKey('rack-inspector.save-as-preset'),
+              onPressed: () => onSaveAsPreset!(rack),
+              child: const Text(kSaveAsPresetLabel),
+            ),
+          ),
         _InspectorTextField(
           label: 'Height (U)',
           helper: rack.heightU > 50
@@ -775,6 +793,7 @@ class InspectorDropdown<T> extends StatelessWidget {
     required this.onChanged,
     this.hintText,
     this.enabled = true,
+    this.isHeader,
     super.key,
   });
 
@@ -791,6 +810,11 @@ class InspectorDropdown<T> extends StatelessWidget {
   final ValueChanged<T> onChanged;
   final String? hintText;
   final bool enabled;
+
+  /// Values drawn as a group heading: shown, never selectable (DR-176
+  /// §11.175.2). Null means every value is a choice, which is every
+  /// dropdown but the Preset one.
+  final bool Function(T value)? isHeader;
 
   @override
   Widget build(BuildContext context) {
@@ -813,7 +837,14 @@ class InspectorDropdown<T> extends StatelessWidget {
           for (final v in values)
             DropdownMenuItem<T>(
               value: v,
-              child: Text(labelOf(v), overflow: TextOverflow.ellipsis),
+              enabled: !(isHeader?.call(v) ?? false),
+              child: Text(
+                labelOf(v),
+                overflow: TextOverflow.ellipsis,
+                style: (isHeader?.call(v) ?? false)
+                    ? Theme.of(context).textTheme.labelSmall
+                    : null,
+              ),
             ),
         ],
         onChanged: enabled
@@ -1004,6 +1035,46 @@ class _RadioPair<T> extends StatelessWidget {
   }
 }
 
+/// The Preset dropdowns' group headings (DR-176 §11.175.2), as values no
+/// preset id can take: seeded ids are camelCase and yours start with
+/// [kUserPresetIdPrefix].
+const String kSeededPresetsHeader = '#seeded';
+
+/// See [kSeededPresetsHeader].
+const String kYourPresetsHeader = '#yours';
+
+/// Whether [id] is a group heading rather than a preset.
+bool isPresetGroupHeader(String? id) =>
+    id == kSeededPresetsHeader || id == kYourPresetsHeader;
+
+/// The label a group heading shows.
+String presetGroupLabel(String id) =>
+    id == kYourPresetsHeader ? 'Yours' : 'Seeded';
+
+/// The rows a Preset dropdown over [presets] lists, in order, without the
+/// "Custom" or "No preset" row each caller puts first.
+///
+/// THE HEADINGS APPEAR ONLY ONCE ONE OF YOURS IS AMONG THEM. With none, this
+/// is exactly the seeded list the dropdown has always shown, so a machine
+/// that never saved a preset reads as it did before DR-176. And "Seeded" is
+/// left out when every seeded preset is hidden, rather than heading nothing.
+List<String> presetDropdownValues(Map<String, RackPreset> presets) {
+  final yours = [
+    for (final id in presets.keys)
+      if (id.startsWith(kUserPresetIdPrefix)) id,
+  ];
+  final seeded = [
+    for (final id in presets.keys)
+      if (!id.startsWith(kUserPresetIdPrefix)) id,
+  ];
+  if (yours.isEmpty) return seeded;
+  return [
+    if (seeded.isNotEmpty) ...[kSeededPresetsHeader, ...seeded],
+    kYourPresetsHeader,
+    ...yours,
+  ];
+}
+
 /// §4's Preset dropdown. Write-only in the honest sense — see the file
 /// header on why "Custom" appears after any manual divergence.
 class _PresetField extends StatelessWidget {
@@ -1023,8 +1094,13 @@ class _PresetField extends StatelessWidget {
     return InspectorDropdown<String?>(
       label: 'Preset',
       value: current,
-      values: [null, ...presets.keys],
-      labelOf: (id) => id == null ? 'Custom' : presets[id]?.displayName ?? id,
+      values: [null, ...presetDropdownValues(presets)],
+      isHeader: isPresetGroupHeader,
+      labelOf: (id) => id == null
+          ? 'Custom'
+          : isPresetGroupHeader(id)
+          ? presetGroupLabel(id)
+          : presets[id]?.displayName ?? id,
       onChanged: (id) {
         // Selecting "Custom" is not an edit — it is the display state that
         // means "this rack matches no preset". Applying it would have no

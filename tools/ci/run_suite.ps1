@@ -1267,7 +1267,7 @@ $SuiteFloors = @{
     # the sheet at 0.1x), two in port_chip_test (rings and chip at the
     # opening zoom and four times it, and the rack at 0.1x, the only case
     # that sees the chassis canvas), and two in stroke_scaling_test.
-    'rackpal_ui'     = 1916
+    'rackpal_ui'     = 1932
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

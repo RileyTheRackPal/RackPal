@@ -77,10 +77,14 @@ import 'package:rackpal_core/rackpal_core.dart'
         LoadedLibrary,
         LocationRemovalPlan,
         PlaceableTemplate,
+        Rack,
         RackDocument,
+        RackPreset,
+        RackWidthClass,
         TemplateBody,
         TemplateId,
         TextMeasurer,
+        UserRackPresets,
         Uuid,
         addOutletRemoval,
         addStructureRemoval,
@@ -89,6 +93,8 @@ import 'package:rackpal_core/rackpal_core.dart'
         buildRackPresets,
         copyTemplateBody,
         kDefaultUndoDepth,
+        kUserPresetIdPrefix,
+        mergeRackPresets,
         planOutletRemoval,
         planStructureRemoval,
         planTemplateRemoval,
@@ -360,6 +366,16 @@ final class AppShellState extends State<AppShell>
   /// open window takes a new value at once.
   int _undoDepth = kDefaultUndoDepth;
 
+  /// Your rack presets and the seeded ones you hid (DR-176), seeded from
+  /// `rackPresetsStore.current` at startup like [_undoDepth]. A DEGRADED
+  /// SESSION HAS NO STORE, and then there is nothing of yours to list and no
+  /// Save as preset... to offer.
+  UserRackPresets _rackPresets = const UserRackPresets();
+
+  /// What every Preset surface lists: seeded presets not hidden, then yours.
+  Map<String, RackPreset> get _mergedRackPresets =>
+      mergeRackPresets(buildRackPresets(), _rackPresets);
+
   /// Flips a star and persists it (`#245`).
   void _toggleFavourite(String templateId) {
     final store = _services.prefsStore;
@@ -473,6 +489,8 @@ final class AppShellState extends State<AppShell>
     _favourites =
         _services.prefsStore?.current.favouriteTemplateIds ?? const <String>{};
     _undoDepth = _services.prefsStore?.current.undoDepth ?? kDefaultUndoDepth;
+    _rackPresets =
+        _services.rackPresetsStore?.current ?? const UserRackPresets();
     _services.session.addListener(_onSessionChanged);
     // Persistence can fail at any point in the session, not only at
     // startup — see app_services.dart's header.
@@ -867,10 +885,16 @@ final class AppShellState extends State<AppShell>
   /// this machine, written to `prefs.json` and nowhere in the document, so
   /// there is nothing for `Ctrl+Z` to take back.
   Future<void> _openPreferences() async {
+    final presetsStore = _services.rackPresetsStore;
     await showPreferencesDialog(
       context,
       undoDepth: _undoDepth,
       onUndoDepthChanged: _setUndoDepth,
+      // THE PRESETS SECTION NEEDS SOMEWHERE TO KEEP A CHANGE (DR-176), so a
+      // degraded session shows the undo depth alone.
+      seededPresets: presetsStore == null ? null : buildRackPresets(),
+      rackPresets: presetsStore == null ? null : _rackPresets,
+      onRackPresetsChanged: presetsStore == null ? null : _setRackPresets,
     );
   }
 
@@ -891,6 +915,69 @@ final class AppShellState extends State<AppShell>
     // `_dismissFilterCoachMark`'s reason. `save` updates that cache before
     // it writes, so the next document opened reads the new depth.
     unawaited(store.save(store.current.copyWith(undoDepth: depth)));
+  }
+
+  /// Applies and remembers your rack presets (DR-176 §11.175.3): every Preset
+  /// surface in this shell rebuilds with them at once, and the store keeps
+  /// them. Nothing is remembered in a degraded session, which offers no way
+  /// to change them anyway.
+  void _setRackPresets(UserRackPresets next) {
+    setState(() => _rackPresets = next);
+    final store = _services.rackPresetsStore;
+    if (store == null) return;
+    unawaited(store.save(next));
+  }
+
+  /// Save as preset... from the rack inspector (DR-176 §11.175.2).
+  ///
+  /// A CUSTOM-WIDTH RACK IS REFUSED, WITH A REASON. A preset keeps a width
+  /// class and no panel width, so it could not bring that rack back, and
+  /// saving it anyway would store a preset that applies something else.
+  Future<void> _saveAsPreset(Rack rack) async {
+    if (rack.widthClass == RackWidthClass.customWidth) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'A custom-width rack cannot be saved as a preset: a preset keeps '
+            'a width class, not a panel width.',
+          ),
+        ),
+      );
+      return;
+    }
+    // EVERY SEEDED NAME, HIDDEN ONES INCLUDED: a hidden preset can be shown
+    // again, and then two rows would read the same.
+    final name = await showSaveRackPreset(
+      context,
+      rack: rack,
+      existingNames: [
+        for (final p in buildRackPresets().values) p.displayName,
+        for (final p in _rackPresets.presets) p.displayName,
+      ],
+    );
+    if (name == null || !mounted) return;
+    _setRackPresets(
+      UserRackPresets(
+        presets: [
+          ..._rackPresets.presets,
+          RackPreset(
+            id: _freshPresetId(name, {
+              for (final p in _rackPresets.presets) p.id,
+            }),
+            displayName: name,
+            heightU: rack.heightU,
+            formFactor: rack.formFactor,
+            widthClass: rack.widthClass,
+            railType: rack.railType,
+            usableDepth: rack.usableDepth,
+            weightCapacity: rack.weightCapacity,
+            isSwingFrame: rack.isSwingFrame,
+            hingeSide: rack.hingeSide,
+          ),
+        ],
+        hiddenSeedIds: _rackPresets.hiddenSeedIds,
+      ),
+    );
   }
 
   /// Runs the bounded probe when the File menu opens. NEVER at startup,
@@ -1390,7 +1477,7 @@ final class AppShellState extends State<AppShell>
     final outcome = await showNewRack(
       context: context,
       controller: session.controller,
-      presets: buildRackPresets(),
+      presets: _mergedRackPresets,
     );
     if (!mounted) return;
     // Cancel is nothing at all. A refusal is not: it must not vanish.
@@ -1721,6 +1808,12 @@ final class AppShellState extends State<AppShell>
         // shell owns the six-view stack and the Device Manager's single
         // draft.
         onEditTemplate: _openTemplateForEditing,
+        // DR-176: what every Preset surface lists, and Save as preset...,
+        // which a degraded session does not offer because it cannot keep one.
+        presets: _mergedRackPresets,
+        onSaveAsPreset: _services.rackPresetsStore == null
+            ? null
+            : (rack) => unawaited(_saveAsPreset(rack)),
       ),
     );
   }
@@ -2188,4 +2281,20 @@ final class NavigatorSessionPrompts implements SessionPrompts {
       unsavedEditCount: unsavedEditCount,
     );
   }
+}
+
+/// `user:` and a slug of [name], with `-2`, `-3`... while [taken] holds it
+/// (DR-176). Names are already unique, because the save dialog refuses a
+/// duplicate, but two names can slug alike.
+String _freshPresetId(String name, Set<String> taken) {
+  final slug = name
+      .toLowerCase()
+      .replaceAll(RegExp('[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+|-+$'), '');
+  final base = '$kUserPresetIdPrefix${slug.isEmpty ? 'preset' : slug}';
+  var id = base;
+  for (var n = 2; taken.contains(id); n++) {
+    id = '$base-$n';
+  }
+  return id;
 }

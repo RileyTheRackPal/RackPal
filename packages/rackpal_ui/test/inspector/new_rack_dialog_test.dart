@@ -52,6 +52,7 @@ Finder _heightField() => _dialogFields().at(1);
 Future<DocumentController> _pumpHost(
   WidgetTester tester, {
   void Function(NewRackOutcome)? onOutcome,
+  Map<String, RackPreset>? presets,
 }) async {
   final controller = DocumentController(_doc());
   await tester.pumpWidget(
@@ -63,7 +64,7 @@ Future<DocumentController> _pumpHost(
               final outcome = await showNewRack(
                 context: context,
                 controller: controller,
-                presets: buildRackPresets(),
+                presets: presets ?? buildRackPresets(),
               );
               onOutcome?.call(outcome);
             },
@@ -78,7 +79,69 @@ Future<DocumentController> _pumpHost(
   return controller;
 }
 
+/// The dialog's Preset items AS CONFIGURED, for `_presetItems`' reason in
+/// `rack_inspector_panel_test.dart`: an open menu builds only what fits.
+List<({String? value, bool enabled})> _presetItems(WidgetTester tester) {
+  final button = tester.widget<DropdownButton<String?>>(
+    find.descendant(
+      of: find.byType(NewRackDialog),
+      matching: find.byType(DropdownButton<String?>),
+    ),
+  );
+  return [
+    for (final item in button.items!)
+      (value: item.value, enabled: item.enabled),
+  ];
+}
+
 void main() {
+  group('your presets (DR-176)', () {
+    testWidgets('with none of yours there are no headings', (tester) async {
+      await _pumpHost(tester);
+
+      expect(
+        _presetItems(tester).where((i) => isPresetGroupHeader(i.value)),
+        isEmpty,
+      );
+    });
+
+    testWidgets('one of yours brings both headings, never chosen, and is '
+        'offered last', (tester) async {
+      await _pumpHost(
+        tester,
+        presets: mergeRackPresets(
+          buildRackPresets(),
+          const UserRackPresets(
+            presets: [
+              RackPreset(
+                id: '${kUserPresetIdPrefix}studio-16u',
+                displayName: 'Studio 16U',
+                heightU: 16,
+                formFactor: RackFormFactor.floorEnclosure,
+                widthClass: RackWidthClass.eia19,
+                railType: RailType.squareCageNut,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      final items = _presetItems(tester);
+      expect(items.first.value, isNull, reason: 'No preset (custom) leads');
+      expect(
+        [
+          for (final i in items)
+            if (isPresetGroupHeader(i.value)) (i.value, i.enabled),
+        ],
+        [(kSeededPresetsHeader, false), (kYourPresetsHeader, false)],
+      );
+      expect(
+        items.last,
+        (value: '${kUserPresetIdPrefix}studio-16u', enabled: true),
+      );
+    });
+  });
+
   group('the three fields (docs/04 §9)', () {
     testWidgets('Name, Preset and Height — and nothing else; no Location '
         'combobox (AC-048)', (tester) async {

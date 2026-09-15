@@ -36,20 +36,56 @@ final class _FakeMeasurer implements TextMeasurer {
 
 const _geo = RackGeometry(12);
 
-Widget _app({Clock clock = const SystemClock(), RackDocument? document}) =>
-    MaterialApp(
-      // DR-159 §11.158.3: undo and redo are GLOBAL bindings, so a
-      // screen pumped without the root's map is a configuration
-      // the product does not ship. See test/app_like.dart.
-      shortcuts: appGlobalShortcuts(),
-      home: Scaffold(
-        body: RackCanvasScreen(
-          measurer: _FakeMeasurer(),
-          clock: clock,
-          document: document,
-        ),
-      ),
-    );
+Widget _app({
+  Clock clock = const SystemClock(),
+  RackDocument? document,
+  Map<String, RackPreset>? presets,
+  ValueChanged<Rack>? onSaveAsPreset,
+}) => MaterialApp(
+  // DR-159 §11.158.3: undo and redo are GLOBAL bindings, so a
+  // screen pumped without the root's map is a configuration
+  // the product does not ship. See test/app_like.dart.
+  shortcuts: appGlobalShortcuts(),
+  home: Scaffold(
+    body: RackCanvasScreen(
+      measurer: _FakeMeasurer(),
+      clock: clock,
+      document: document,
+      presets: presets,
+      onSaveAsPreset: onSaveAsPreset,
+    ),
+  ),
+);
+
+/// One preset of yours, unlike any seeded one (DR-176).
+const _mine = RackPreset(
+  id: '${kUserPresetIdPrefix}studio-16u',
+  displayName: 'Studio 16U',
+  heightU: 16,
+  formFactor: RackFormFactor.floorEnclosure,
+  widthClass: RackWidthClass.eia19,
+  railType: RailType.squareCageNut,
+);
+
+/// The Preset dropdown's items AS CONFIGURED: each value, and whether it can
+/// be chosen.
+///
+/// READ FROM THE WIDGET, NOT FROM AN OPEN MENU. A dropdown menu builds only
+/// the rows that fit on screen, so a heading below them would be missing
+/// from the tree and a test looking for it would pass or fail on the window
+/// size rather than on what the dropdown offers.
+List<({String? value, bool enabled})> _presetItems(WidgetTester tester) {
+  final button = tester.widget<DropdownButton<String?>>(
+    find.descendant(
+      of: find.ancestor(of: find.text('Preset'), matching: _anyDropdown).first,
+      matching: find.byType(DropdownButton<String?>),
+    ),
+  );
+  return [
+    for (final item in button.items!)
+      (value: item.value, enabled: item.enabled),
+  ];
+}
 
 /// The demo document plus one real `Location`, created the way the app
 /// creates one.
@@ -233,6 +269,70 @@ Future<void> _tapTile(WidgetTester tester, String text) async {
 }
 
 void main() {
+  group('your presets (DR-176)', () {
+    testWidgets('with only seeded presets the Preset list has no headings', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await _openInspector(tester);
+
+      expect(
+        _presetItems(tester).where((i) => isPresetGroupHeader(i.value)),
+        isEmpty,
+      );
+    });
+
+    testWidgets('one of yours brings both headings, shown and never chosen, '
+        'with yours below them', (tester) async {
+      await tester.pumpWidget(
+        _app(
+          presets: mergeRackPresets(
+            buildRackPresets(),
+            const UserRackPresets(presets: [_mine]),
+          ),
+        ),
+      );
+      await tester.pump();
+      await _openInspector(tester);
+
+      final items = _presetItems(tester);
+      expect(items.first.value, isNull, reason: 'Custom still leads');
+      expect(
+        [
+          for (final i in items)
+            if (isPresetGroupHeader(i.value)) (i.value, i.enabled),
+        ],
+        [(kSeededPresetsHeader, false), (kYourPresetsHeader, false)],
+      );
+      expect(items.last, (value: _mine.id, enabled: true));
+    });
+
+    testWidgets('no Save as preset... without somewhere to keep one', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await _openInspector(tester);
+
+      expect(find.text(kSaveAsPresetLabel), findsNothing);
+    });
+
+    testWidgets('Save as preset... hands over the rack the inspector shows', (
+      tester,
+    ) async {
+      Rack? saved;
+      await tester.pumpWidget(_app(onSaveAsPreset: (rack) => saved = rack));
+      await tester.pump();
+      await _openInspector(tester);
+      await _reveal(tester, find.text(kSaveAsPresetLabel));
+      await tester.tap(find.text(kSaveAsPresetLabel));
+      await tester.pumpAndSettle();
+
+      expect(saved?.id, _rack(tester).id);
+    });
+  });
+
   setUp(() {
     TestWidgetsFlutterBinding.ensureInitialized()
           .platformDispatcher

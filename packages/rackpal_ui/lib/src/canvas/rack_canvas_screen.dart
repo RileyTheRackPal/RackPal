@@ -96,6 +96,8 @@ class RackCanvasScreen extends StatefulWidget {
     this.paletteDragRow,
     this.onRevealInSchematic,
     this.onEditTemplate,
+    this.presets,
+    this.onSaveAsPreset,
     super.key,
   });
 
@@ -212,6 +214,22 @@ class RackCanvasScreen extends StatefulWidget {
   /// Manager's single draft, and this screen is mounted bare in widget
   /// tests. Null means the row refuses out loud rather than doing nothing.
   final void Function(TemplateId templateId)? onEditTemplate;
+
+  /// What this screen's Preset dropdown and New rack dialog list: the seeded
+  /// presets you have not hidden, then yours (DR-176 §11.175.2).
+  ///
+  /// READ ON EVERY BUILD, NOT CAPTURED, because a preset saved from this
+  /// screen's own inspector has to reach this screen's own dropdown: the
+  /// shell saves it and rebuilds this widget with the new map. Null means
+  /// the seeded presets alone, which is every widget test that mounts this
+  /// screen bare.
+  final Map<String, RackPreset>? presets;
+
+  /// Save as preset... (DR-176 §11.175.2), handed the rack the inspector
+  /// shows. NULL HIDES THE BUTTON, for [onRevealInSchematic]'s reason: a
+  /// host with nowhere to keep a preset, whether a widget test or a
+  /// degraded session, gets no control that would answer by doing nothing.
+  final ValueChanged<Rack>? onSaveAsPreset;
 
   @override
   State<RackCanvasScreen> createState() => RackCanvasScreenState();
@@ -337,10 +355,14 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     debugLabel: 'inspectorFirstField',
   );
 
-  /// docs/04 §4's rack presets, built once (`buildRackPresets()` returns a
-  /// fresh map per call by contract, so a caller cannot mutate a shared
-  /// singleton).
-  late final Map<String, RackPreset> _presets = buildRackPresets();
+  /// docs/04 §4's seeded rack presets, built once (`buildRackPresets()`
+  /// returns a fresh map per call by contract, so a caller cannot mutate a
+  /// shared singleton). Used only when the host passes no presets.
+  late final Map<String, RackPreset> _seedPresets = buildRackPresets();
+
+  /// What every Preset surface on this screen lists. See
+  /// [RackCanvasScreen.presets] on why this is read, never captured.
+  Map<String, RackPreset> get _presets => widget.presets ?? _seedPresets;
 
   /// The `CanvasIntentDetector`'s own `RenderBox`, looked up on every
   /// palette-drag pointer move to test "is the pointer inside the canvas
@@ -4657,6 +4679,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
                       onRename: _renameRack,
                       onRequestHeight: _requestHeight,
                       onApplyPreset: _applyPreset,
+                      onSaveAsPreset: widget.onSaveAsPreset,
                       onRefuse: _status.show,
                       onSetLifecycle: _setSelectionLifecycle,
                       onSetWidth: _setSelectionWidth,
