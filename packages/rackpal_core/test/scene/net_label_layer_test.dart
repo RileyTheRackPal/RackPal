@@ -259,6 +259,166 @@ RackDocument _document({
   return doc;
 }
 
+/// A source and a sink, each with a stereo pair `l`/`r` in one atomic set,
+/// an unset port `x` beside it, and a control pair `c1`/`c2` whose `ctl.`
+/// family puts it on the TOP edge. Each entry of [cables] is one `Link`
+/// whose conductors run `from` key to `to` key, SRC-1 to SNK-1.
+RackDocument _pairDocument(List<List<(String, String)>> cables) {
+  final doc = RackDocument(
+    id: const Uuid('0190f210-0000-7000-8000-000000000000'),
+    appVersion: 'test',
+    createdAt: DateTime.utc(2026, 9, 15),
+    modifiedAt: DateTime.utc(2026, 9, 15),
+    meta: _meta(),
+  );
+  doc.registries.signalDomains.addAll(buildSeedSignalDomains());
+  doc.registries.signalFamilies.addAll(buildSeedSignalFamilies());
+  final rack = Rack(
+    id: const Uuid('0190f211-0000-7000-8000-000000000001'),
+    name: 'RACK',
+    designator: 'RK-1',
+    heightU: 12,
+    order: const FracIndex('a0'),
+    meta: _meta(),
+  );
+  doc.racks[rack.id] = rack;
+
+  const audio = 'audio.line_unbal';
+  const control = 'ctl.rs232';
+  TemplateBody body(PortDirection direction) => TemplateBody(
+    manufacturer: 'Generic',
+    model: direction == PortDirection.source ? 'PSRC' : 'PSNK',
+    displayName: 'P',
+    frontU: 1,
+    side: OccupancySide.front,
+    ports: [
+      _port('l', audio, direction: direction, order: 0)
+        ..setKey = 'st'
+        ..setRole = 'L',
+      _port('r', audio, direction: direction, order: 1)
+        ..setKey = 'st'
+        ..setRole = 'R',
+      _port('x', audio, direction: direction, order: 2),
+      _port('c1', control, direction: direction, order: 3)
+        ..setKey = 'ctl'
+        ..setRole = '1',
+      _port('c2', control, direction: direction, order: 4)
+        ..setKey = 'ctl'
+        ..setRole = '2',
+    ],
+    portSets: [
+      PortSetDef(key: 'st', label: 'Stereo', kind: SetKind.stereoPair),
+      PortSetDef(key: 'ctl', label: 'Control', kind: SetKind.stereoPair),
+    ],
+  );
+  final devices = <String, DeviceInstance>{};
+  for (final (n, (designator, template, ru)) in const [
+    ('SRC-1', 'PSRC', 10),
+    ('SNK-1', 'PSNK', 9),
+  ].indexed) {
+    doc.templates['$template@1'] = TemplateSnapshot(
+      templateId: TemplateId(template),
+      version: 1,
+      contentHash: 'sha256:$template',
+      body: body(
+        template == 'PSRC' ? PortDirection.source : PortDirection.sink,
+      ),
+      capturedAt: DateTime.utc(2026, 9, 15),
+    );
+    final id = Uuid('0190f212-0000-7000-8000-${n.toString().padLeft(12, '0')}');
+    devices[designator] = doc.devices[id] = DeviceInstance(
+      id: id,
+      kind: DeviceKind.rackDevice,
+      templateRef: TemplateRef(
+        templateId: TemplateId(template),
+        version: 1,
+        contentHash: 'sha256:$template',
+      ),
+      designator: designator,
+      name: '',
+      placement: RailPlacement(rackId: rack.id, ruIndex: ru, face: Face.front),
+      meta: _meta(),
+    );
+  }
+  Port materialise(String designator, String key) {
+    final device = devices[designator]!;
+    final id = derivePortId(device.id, PortKey(key));
+    return doc.ports[id] ??= Port(
+      id: id,
+      deviceId: device.id,
+      designator: key,
+      templatePortKey: PortKey(key),
+    );
+  }
+
+  for (final (index, cable) in cables.indexed) {
+    final pad = index.toString().padLeft(12, '0');
+    final netId = Uuid('0190f214-0000-7000-8000-$pad');
+    final family = cable.first.$1.startsWith('c') ? control : audio;
+    doc.nets[netId] = Net(
+      id: netId,
+      name: 'N${(index + 1).toString().padLeft(3, '0')}',
+      signalFamily: SignalFamilyId(family),
+      meta: _meta(),
+    );
+    final id = Uuid('0190f213-0000-7000-8000-$pad');
+    doc.links[id] = Link(
+      id: id,
+      designator: 'W${index.toString().padLeft(3, '0')}',
+      media: const MediaTypeId('media.cat6'),
+      order: FracIndex('a$index'),
+      meta: _meta(),
+      services: [
+        Service(
+          id: 's$index',
+          signalFamily: SignalFamilyId(family),
+          netId: netId,
+        ),
+      ],
+      conductors: [
+        for (final (from, to) in cable)
+          Conductor(
+            from: PortEndpoint(materialise('SRC-1', from).id),
+            to: PortEndpoint(materialise('SNK-1', to).id),
+          ),
+      ],
+    );
+  }
+  return doc;
+}
+
+/// The drawn centre of [key] on the device designated [designator].
+DPt _pinCentreOf(
+  SchematicScene built,
+  RackDocument doc,
+  String designator,
+  String key,
+) {
+  final device = doc.devices.values.firstWhere(
+    (d) => d.designator == designator,
+  );
+  final symbol = built.symbols.firstWhere((s) => s.id == device.id.v);
+  return symbolPortCentre(
+    symbol,
+    symbol.allPorts.firstWhere((p) => p.key == key),
+  );
+}
+
+/// Leader-hue lines running ALONG a left or right edge. On those edges a
+/// leader runs across the edge, so a line along it can only be a bracket's
+/// spine.
+List<OpLine> _spines(SchematicScene built, RackDocument doc) {
+  final hue = _styleOf(doc, 'audio.line_unbal').argb;
+  return [
+    for (final op in built.scene.ops.sublist(_symbolOps(built)))
+      if (op is OpLine && op.s.argb == hue && (op.a.x - op.b.x).abs() < 1e-9)
+        op,
+  ];
+}
+
+/// The vertical middle of [box]. `DBox` has no centre getter.
+double _midY(DBox box) => (box.top + box.bottom) / 2;
+
 SchematicScene _build(RackDocument doc) =>
     buildSchematicScene(doc: doc, measurer: _Measurer());
 
@@ -1105,6 +1265,151 @@ void main() {
       final built = _build(_document(seedRegistries: false));
       expect(built.underGlyphedFamilyIds, isEmpty);
       expect(built.netLabels, isNotEmpty);
+    });
+  });
+
+  group('DR-174: a set on one cable draws one pennant on a bracket', () {
+    test('an intact pair draws ONE pennant per end, centred between its '
+        'two pins, and a spine across them', () {
+      final doc = _pairDocument([
+        [('l', 'l'), ('r', 'r')],
+      ]);
+      final built = _build(doc);
+
+      expect(
+        built.netLabels,
+        hasLength(2),
+        reason: 'one flag per END of the one cable, not one per conductor',
+      );
+      for (final (designator, label) in [
+        (
+          'SRC-1',
+          built.netLabels.firstWhere((l) => l.side == SymbolSide.right),
+        ),
+        (
+          'SNK-1',
+          built.netLabels.firstWhere((l) => l.side == SymbolSide.left),
+        ),
+      ]) {
+        final l = _pinCentreOf(built, doc, designator, 'l');
+        final r = _pinCentreOf(built, doc, designator, 'r');
+        expect(
+          _midY(label.pennant),
+          closeTo((l.y + r.y) / 2, 1e-9),
+          reason: '§11.173.3: centred on the bracket, not on the L pin',
+        );
+        expect(
+          label.pinCentre,
+          l,
+          reason:
+              "the label still names the first conductor's pin, which is "
+              'what the wire trace and hit tests read',
+        );
+      }
+      expect(
+        _spines(built, doc),
+        hasLength(2),
+        reason: 'one bracket at each end',
+      );
+    });
+
+    test('a SPLIT set draws a pennant per pin and no bracket (DR-014)', () {
+      final doc = _pairDocument([
+        [('l', 'l')],
+        [('r', 'r')],
+      ]);
+      final built = _build(doc);
+
+      expect(built.netLabels, hasLength(4));
+      for (final label in built.netLabels) {
+        final designator = label.side == SymbolSide.right ? 'SRC-1' : 'SNK-1';
+        expect(
+          _midY(label.pennant),
+          closeTo(_pinCentreOf(built, doc, designator, label.portKey).y, 1e-9),
+        );
+      }
+      expect(_spines(built, doc), isEmpty);
+    });
+
+    test('a PARTLY wired set draws no bracket, even on a two-conductor '
+        'cable', () {
+      // The cable has two conductors, so the cheap early return does not
+      // fire: this reaches the member check, which is the one that has to
+      // notice `r` has no conductor on this cable.
+      final doc = _pairDocument([
+        [('l', 'l'), ('x', 'x')],
+      ]);
+      final built = _build(doc);
+
+      expect(_spines(built, doc), isEmpty);
+      final source = built.netLabels.firstWhere(
+        (l) => l.side == SymbolSide.right,
+      );
+      expect(
+        _midY(source.pennant),
+        closeTo(_pinCentreOf(built, doc, 'SRC-1', 'l').y, 1e-9),
+      );
+    });
+
+    test('a set on a TOP edge draws exactly what a one-conductor cable on '
+        'its first pin draws, since §11.173 does not reach it', () {
+      final pair = _build(
+        _pairDocument([
+          [('c1', 'c1'), ('c2', 'c2')],
+        ]),
+      );
+      final single = _build(
+        _pairDocument([
+          [('c1', 'c1')],
+        ]),
+      );
+      expect(pair.netLabels.map((l) => l.pennant), [
+        for (final l in single.netLabels) l.pennant,
+      ]);
+      // LABEL ops only: a second conductor may change how the SYMBOL
+      // layer draws a connected pin, which is not what this asserts.
+      expect(
+        pair.scene.ops.length - _symbolOps(pair),
+        single.scene.ops.length - _symbolOps(single),
+      );
+    });
+
+    test("the bracket lives inside the leader's room: the pennant sits as "
+        "far out as a split pin's, and the layer gutter does not grow", () {
+      final intact = _build(
+        _pairDocument([
+          [('l', 'l'), ('r', 'r')],
+        ]),
+      );
+      final split = _build(
+        _pairDocument([
+          [('l', 'l')],
+          [('r', 'r')],
+        ]),
+      );
+      final a = intact.netLabels.firstWhere((l) => l.side == SymbolSide.right);
+      final b = split.netLabels.firstWhere(
+        (l) => l.side == SymbolSide.right && l.portKey == 'l',
+      );
+      expect(a.pennant.left, closeTo(b.pennant.left, 1e-9));
+      expect(a.pennant.right, closeTo(b.pennant.right, 1e-9));
+    });
+
+    test("the bracket's ink is inside the scene bounds", () {
+      final built = _build(
+        _pairDocument([
+          [('l', 'l'), ('r', 'r')],
+        ]),
+      );
+      final replayed = inkBoundsOf(
+        built.scene.ops.sublist(_symbolOps(built)),
+        measurer: _Measurer(),
+      )!;
+      final bounds = built.scene.bounds;
+      expect(bounds.left, lessThanOrEqualTo(replayed.left + 1e-9));
+      expect(bounds.top, lessThanOrEqualTo(replayed.top + 1e-9));
+      expect(bounds.right, greaterThanOrEqualTo(replayed.right - 1e-9));
+      expect(bounds.bottom, greaterThanOrEqualTo(replayed.bottom - 1e-9));
     });
   });
 }
