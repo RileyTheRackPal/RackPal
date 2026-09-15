@@ -82,6 +82,7 @@ export 'src/builder/template_edit_session.dart';
 export 'src/catalog/catalog_roles.dart';
 export 'src/catalog/rack_presets.dart';
 export 'src/catalog/seed_catalog.dart';
+export 'src/catalog/user_rack_presets.dart';
 export 'src/commands/acknowledgement_commands.dart';
 export 'src/commands/add_outlets.dart';
 export 'src/commands/atomic_connect.dart';
