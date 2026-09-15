@@ -1,5 +1,23 @@
 # Update Log
 
+## 2026-09-15 (forty-fifth entry)
+
+* **Closed**: `#112` with ``1788e3e``, ruled as
+  [DR-173](/decisions/dr-173-matrix-zone-audio-is-a-stereo-pair.md) in ``a7c412b``. V01 and V03's
+  de-embedded zone audio is an L/R pair per zone on two 3-pin blocks. **No version move**: it closes
+  under `#786`, through `#96`.
+* **Creation**: [DR-173](/decisions/dr-173-matrix-zone-audio-is-a-stereo-pair.md).
+* **Creation**: board `#909`, the set gesture's missing tier-2 check, under DR-116 §11.115.3.
+* **Note**: **A BUILDER'S SETS ARE NOT THE TEMPLATE'S UNTIL THE BODY PASSES THEM.** V03's
+  `TemplateBody` left out `portSets:`, and only `port_set_integrity_test` noticed.
+* **Note**: **A PORT THAT JOINS A SET CHANGES WHICH GESTURE A TEST DRIVES.** The DR-128 test's drag
+  stopped reaching tier 2, and the reason was a gap in the product, not in the test.
+* **Note**: **A GESTURE START IN SCENE UNITS CAN LEAVE THE CANVAS.** A refit moved a marquee test's
+  bare-sheet point into the toolbar; the drag failed, and the click test sharing it passed for nothing.
+  Assert the point is on the canvas.
+* **Note**: **A CENSUS WITHOUT A FAMILY FILTER COUNTS NOISE.** CON-001 fires on any connector mismatch
+  no earlier rule caught, so the first sweep found 119,008 pairs, LAN into an AC inlet among them.
+
 ## 2026-09-15 (forty-fourth entry)
 
 * **Closed**: `#560` with ``7151178``, ruled as

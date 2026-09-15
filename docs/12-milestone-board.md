@@ -11617,6 +11617,61 @@ one setting for the document and the Device Builder.
 
 **Commits** (§8.8): `#560` `7d10974` (the ruling), `7151178` (the build).
 
+#### 5.9.53 `#112`: a matrix's zone audio is a stereo pair per zone · `DR-173` · no version move
+
+**DEMONSTRATED** by `matrix_zone_audio_test.dart`, which asserts each of V01's 8 and V03's 16 zones as
+an L and an R balanced 3-pin block in one atomic `stereoPair` set, and V02's four S/PDIF outputs as
+unchanged; by `port_set_integrity_test.dart`, over the whole seeded catalogue; and by the regenerated
+starters and 300-link fixture.
+
+##### 5.9.53.1 Asked, with the trade answer
+
+The measured facts went to the user: V01 declared 8 mono zone ports and V03 16, V02 de-embeds to S/PDIF
+on one connector, and V05 already models a stereo output as one 5-pin block. The answer was an L/R pair
+per zone, with a qualification: some matrices and amplifiers number their channels without L and R. The
+Triad TS-AMS kind cannot split zones and the ELAN EL-IPD-MTX-8CH kind can. Canon §11.172.3 records it as
+the ruling's bound.
+
+##### 5.9.53.2 What building it found
+
+- **V03's sets were declared and dropped.** Its `TemplateBody` never passed `portSets: v03.portSets`,
+  which V01's did. `port_set_integrity_test` named all 32 ports as dangling, the failure its own reason
+  string predicts.
+- **The label grammar cannot pad a grouped counter**, so V03's pairs read `AUD OUT 1 L` beside
+  `HDMI OUT 01` (§11.172.4).
+- **V01's zone bank now collapses**, at 16 ports against `kBankCollapseThreshold`'s 8. A probe of the
+  failing DR-128 test found its drag had expanded the bank and drawn no cable.
+- **The set gesture never asks tier 2.** Expanded or not, the DR-128 test's CON-001 pair could not
+  raise its chip: `_commitSet` runs `planAtomicConnect`, which is tier 1, and commits. The pin connect
+  and the bind both call `evaluateSpringBack`, and DR-116 §11.115.3 rules that a rule is about the
+  resulting state. Filed as `#909`, not folded in. The test's pair moved to V05's 5-pin output into
+  A03's `in.1`, the only same-family audio shape a census over non-atomic ports found. The first sweep,
+  with no family filter, counted 119,008 CON-001 pairs and was noise.
+- **The 300-link fixture's two amplifier runs now take zones 1 to 4, L and R**, where they took eight
+  mono outputs. Eight endpoints moved, and the op counts did not: total 3463, labels 948, symbols 2515.
+- **All four starters embed both matrix templates**, so all four regenerate with 48 new pair ports.
+  No starter wires a zone output.
+- **A saved project keeps its mono matrices, and no cable orphans.** Placement resolves through
+  `resolveLatestTemplate`, the project's own newest snapshot, and `SaveTemplateToProjectCommand` writes
+  only a key `nextTemplateVersion` proved free. A project already holding V01 at version 1 goes on
+  placing its 8-port body, so a seeded port that disappears reaches no existing cable. That is CR-050's
+  pinning working as designed, and `renamedFrom` owes nothing until the Update Manager (AC-041, v1.2).
+- **A marquee test had stopped proving anything, and a second was about to.** `schematic_marquee_test`
+  started its drag 400 scene units above-left of MTX-1. The taller matrix refitted the sheet, and that
+  point moved to screen y 49.5, above the canvas's top edge at 61, into the toolbar: the drag raised no
+  band and failed. The click test beside it used the same point and kept passing, because a click on the
+  toolbar raises no band either. Both now start through `bareStart`, which asserts the point is on the
+  canvas, and a control run with the old point failed on that reason.
+- **§6.3's worked example moves from 44 port objects to 52**, measured from V01's template in a
+  starter before and after.
+
+##### 5.9.53.3 Evidence
+
+- 17 gates green on the ruling alone and on the build, every suite exactly at its floor:
+  rackpal_core 4742 -> 4747. Analyzer pin unmoved at 233.
+
+**Commits** (§8.8): `#112` `a7c412b` (the ruling), `1788e3e` (the build).
+
 
 ---
 
