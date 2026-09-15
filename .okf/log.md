@@ -1,5 +1,22 @@
 # Update Log
 
+## 2026-09-15 (forty-eighth entry)
+
+* **Closed**: `#561` with ``a1f70f7``, ruled as
+  [DR-176](/decisions/dr-176-rack-presets-are-saved-from-a-rack.md) in ``e09eda7``, on DR-016's
+  scope addition of 2026-08-03. Your rack presets are saved from a rack, kept per machine, and sit
+  beside seeded presets you can hide. **No version move**: it closes under `#786`, through `#96`.
+* **Creation**: [DR-176](/decisions/dr-176-rack-presets-are-saved-from-a-rack.md).
+* **Note**: **A RULING DRAFT'S "ONE MAP" WAS TWO.** Reading the callers before canon found the app
+  shell building its own preset map for the empty-project New rack dialog. A claim that one value
+  feeds every surface is a census, not a sentence.
+* **Note**: **A CENSUS TEST DID ITS JOB ON THE FIRST RUN.** `import_hardening_test` refused a new
+  byte reader nobody had listed; the store reads only this machine's own file, and says so in the
+  list now.
+* **Note**: **STAGE A NEW LIB FILE BEFORE THE GATE.** `tracked sources` went red on the core and the
+  storage commits for an unstaged file that every other gate had passed; the UI commit was staged
+  first and did not.
+
 ## 2026-09-15 (forty-seventh entry)
 
 * **Closed**: `#81` with ``b50412c``, ruled as
