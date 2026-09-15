@@ -21419,6 +21419,33 @@ surface, store and rules. Board `#561` cites DR-016 and this ruling.
 project file; editing a preset's values after it is saved, beyond its name; and the milestone
 bookkeeping for a scope addition whose cell still reads M1.
 
+### 11.176 DR-177 · A passthrough pair stays one front port to one rear port, and N04 stays unpaired
+
+**The question.** Board `#557`. DR-087 §11.86.4 ruled that the seeded 24-fibre LIU, `N04`, ships
+unpaired, and left one thing open in terms: *"Whether `PassthroughPairDef` should ever become 1:N is
+not ruled here and is not M4's question."*
+
+**11.176.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- Of the **51** seeded templates, two are passthroughs. `N03`, the 24-port patch panel, has 24 front
+  ports, 24 rear ports and 24 pairs. `N04` has 12 `conn.lc_duplex` front adapters, 24 rear splices
+  and no pairs. **`N04` is the only template whose two faces differ in count.**
+- `passthrough_commands_test.dart` pins `N04` unpaired, and its 36 ports carry the unpaired notice at
+  notice severity, which docs/06 §4.6 makes a load warning rather than an error.
+- Pair by order, run over `N04` anyway, pairs twelve ports and reports the twelve rear ports it left
+  over (`PairByOrderResult.leftOverRear`).
+
+**11.176.2 RULED 2026-09-15: NO ONE-TO-MANY PAIR.** Settled by the user. `PassthroughPairDef` keeps one
+`frontKey` and one `rearKey`. `N04` stays unpaired, and its notice stays the honest report of a device
+the model cannot express. **The cost is the reason**: a one-to-many pair is a codec change, a migration
+and a new Termination Schedule column, for one seeded device. Offered and refused: parking the question
+under the v1.1 community catalog (`#592`), where a contributed fibre cassette fanning one trunk out to
+several ports would first need it; and keeping `#557` open as that question.
+
+**What this does not rule.** A template a user authors with unequal faces gets the same unpaired notice
+and the same leftover count, and nothing new is built for it. A real device that needs a fan-out is a
+new question with its own evidence.
+
 ---
 
 ## 12. Superseded rulings

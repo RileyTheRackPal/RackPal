@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-09-15 (forty-ninth entry)
+
+* **Creation**: [DR-177](/decisions/dr-177-a-passthrough-pair-stays-one-to-one.md), answering the
+  question DR-087 §11.86.4 left open: no one-to-many passthrough pair.
+* **Note**: **FIVE OF EIGHT TICKETS WERE OLDER THAN THE CODE.** Measuring the queue of items waiting on
+  a ruling before bringing options found `#557` already ruled by DR-087, three of `#80`'s four fields
+  settled, `#91`'s pricing reason answered by DR-036, `#92`'s orphaned-ports question ruled by DR-013,
+  and `#782` naming extensions DR-015 had renamed. The options would have been wrong without it.
+
 ## 2026-09-15 (forty-eighth entry)
 
 * **Closed**: `#561` with ``a1f70f7``, ruled as
