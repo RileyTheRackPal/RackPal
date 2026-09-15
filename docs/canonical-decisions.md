@@ -21271,6 +21271,55 @@ Board `#112` cites this ruling.
 unchanged; and the set gesture's missing tier-2 check (`#909`), which DR-116 §11.115.3 already rules on
 and which this ruling puts two more templates in reach of.
 
+### 11.173 DR-174 · A set on one cable draws one pennant on a bracket, and a split set draws a pennant per pin
+
+**The question.** Board `#111` (96-D). The user ruled it on the board on 2026-08-01, and the ruling never
+reached canon. The board item's title is *"draw a set bracket only when the whole set is one cable"*,
+and its description reads *"one pennant on a bracket spanning the set pins"*. DR-014 §11.14.7 then
+deferred it with a new obligation: a drag can now lift one member out of a set's cable, so the bracket
+must tell a set that is one cable from one that has been split.
+
+**11.173.1 MEASURED FIRST**, on 2026-09-15 over `3ca1328`:
+
+- **No set bracket exists.** The net-label layer labels a link by `Link.conductors.first` alone. So a
+  stereo pair on one cable draws its pennant on the first conductor's pin, and the other pin carries
+  no mark at all.
+- **The seeded catalogue has 70 atomic sets, every one two adjacent pins in one bank.** 46 sit on a
+  symbol's right edge and 24 on its left; none sits on a top or bottom edge, and none mixes directions.
+  52 of the 70 are in banks over `kBankCollapseThreshold`, where a collapsed bank draws no individual
+  pin.
+- **The pennant fits the pair.** It is 13.5 units tall against a pin pitch of 2 gu, which is 14.173
+  units, so a pennant centred between two adjacent pins stays inside those two rows.
+
+**11.173.2 RULED 2026-08-01, RECORDED NOW: A BRACKET ONLY WHEN THE WHOLE SET IS ONE CABLE.** Settled by
+the user on the board. An atomic set draws a bracket across its pins when every member has a conductor
+end on one and the same link. **The test reads the document, not the drawing**, because the drawing
+labels only a link's first conductor and would report an intact pair's second pin as unconnected. Two
+other states follow from the ruling as written:
+
+- **A split set** (DR-014), whose members are on two or more cables, draws no bracket. Each wired
+  member draws its own pennant, as today.
+- **A partly wired set**, where some members have no cable, draws no bracket either.
+
+**11.173.3 RULED 2026-09-15: THE ONE PENNANT IS CENTRED ON THE BRACKET.** Settled by the user. Its
+leader leaves the bracket's midpoint, so the flag names the cable and not its first conductor. Offered
+and refused: the pennant on the first member's pin with the bracket beside it, which changes least but
+still reads as belonging to that pin.
+
+**11.173.4 RULED 2026-09-15: THE BRACKET TAKES THE CABLE'S SIGNAL COLOUR.** Settled by the user. It is
+drawn in the leader's own hue and stroke (CR-078), so it reads as part of the cable's label. It adds no
+colour, dash or weight that the leader does not already use, which leaves PAL-1's inputs unchanged.
+Offered and refused: a neutral grey bracket, which reads as symbol structure and adds a second line
+style beside every coloured leader.
+
+**11.173.5 Scope.** **No scope change**: a presentation rule inside the schematic's net labels, with no
+model or file-format change. docs/05 §11.5 is amended to match. Board `#111` cites this ruling.
+
+**What this does not rule.** A set on a top or bottom edge, where pennants run in lanes and no seeded set
+sits; a set inside a collapsed bank, which draws no pin to bracket; the drawn-wire render mode; and the
+gesture that drags an unwired member onto a wired one (DR-014 §11.14.7), which needs its own ruling if
+this work shows it is wanted.
+
 ---
 
 ## 12. Superseded rulings
