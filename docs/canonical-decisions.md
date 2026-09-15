@@ -21446,6 +21446,42 @@ several ports would first need it; and keeping `#557` open as that question.
 and the same leftover count, and nothing new is built for it. A real device that needs a fan-out is a
 new question with its own evidence.
 
+### 11.177 DR-178 · A test that asserts a time runs in its own gate step, one test at a time
+
+**The question.** Board `#843`. On 2026-09-05 a docs-only commit failed the core suite on
+`schematic_perf_test.dart`'s text-bound case: 20.877 ms against a 16.67 ms frame, where the same test
+run alone took 6.355 ms. The file asserts deterministic operation counts and stopwatch readings side
+by side, and only the second can fail for a reason outside the change under test.
+
+**11.177.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- **The service has run 184 builds since 2026-09-05**: 174 succeeded, 8 were cancelled and 2 failed.
+  Both failures were the machine and not this test: build 195 a torn workspace, build 207 an agent that
+  stopped responding.
+- **Run alone today**, the 300-link case takes 5.032 ms, the text-bound case 4.434 ms and a wires-only
+  edit 0.485 ms, against a 16.67 ms frame. The twelve-pod cold build takes 67.874 ms against its 400 ms
+  ratchet.
+- **Two test files carry the `perf` tag**, `schematic_perf_test.dart` in core and
+  `paint_budget_test.dart` in ui, and **only the first asserts a time**: five `lessThan` checks, three
+  against a fixed number (the frame, in two places, and the ratchet) and two comparing one timing with
+  another. `paint_budget_test.dart` starts a stopwatch but asserts only cache counts.
+- **The tag filters nothing.** `run_suite.ps1` runs every test in a package, so a timed case shares the
+  machine with the rest of its own suite.
+
+**11.177.2 RULED 2026-09-15: A TEST THAT ASSERTS A TIME RUNS IN ITS OWN GATE STEP.** Settled by the
+user. Every assertion on a stopwatch reading leaves the package suites and runs in one gate step of its
+own, one test at a time, in `run_local.ps1` and in the pipeline alike. Everything that asserts a count,
+a digest or a shape stays in its suite, so M2-C's operation-count record and the determinism checks
+keep running beside everything else. **The budgets do not move**: §11.75.4 still binds an edit to one
+frame and keeps the cold build's ratchet. Offered and refused: closing `#843` on the evidence above;
+re-timing once before failing; and timing a reference workload in the same process and asserting the
+ratio, which survives any machine and is the most work. Widening the budget was refused by the ticket
+itself.
+
+**What this does not rule.** It does not protect the timed step from another program loading the same
+machine, which a self-hosted agent shares: it removes competition with the test's own suite, and that
+is all. It changes no budget's value.
+
 ---
 
 ## 12. Superseded rulings

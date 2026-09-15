@@ -8,6 +8,8 @@
   a ruling before bringing options found `#557` already ruled by DR-087, three of `#80`'s four fields
   settled, `#91`'s pricing reason answered by DR-036, `#92`'s orphaned-ports question ruled by DR-013,
   and `#782` naming extensions DR-015 had renamed. The options would have been wrong without it.
+* **Creation**: [DR-178](/decisions/dr-178-a-test-that-asserts-a-time-runs-alone.md): a test that
+  asserts a time runs in its own gate step, one test at a time.
 
 ## 2026-09-15 (forty-eighth entry)
 
