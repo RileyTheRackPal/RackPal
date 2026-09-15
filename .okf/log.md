@@ -17,6 +17,11 @@
   clause, a fact about the old name that no build ever made true.
 * **Creation**: [DR-180](/decisions/dr-180-a-project-states-its-wiring-standard.md): a project states
   its wiring standard, and a cable may override it.
+* **Creation**: [DR-181](/decisions/dr-181-a-family-may-override-its-glyph.md): a signal family may
+  override its domain's glyph.
+* **Note**: **THE TICKET NAMED TWO FAMILIES AND THE TABLE HELD TWENTY-SIX.** `#82` and the seed's own
+  header named `audio.speaker_cv` and `power.bonding`; comparing every family's glyph in the family
+  table with its domain's native glyph found 26 drawn with the wrong shape.
 
 ## 2026-09-15 (forty-eighth entry)
 

@@ -21569,6 +21569,50 @@ an assumed default. `T5.01` itself stays M6's.
 refused one-per-end option could have expressed. `Conductor.colorCode` keeps its meaning, the pair
 colour, and the docs/02 example that stores `T568B` there is a derived edit owed with the build.
 
+### 11.180 DR-181 · A signal family may override its domain's glyph
+
+**The question.** Board `#82`: six disagreements the registry seed hit. The one with teeth was that
+`audio.analog` and `pwr` each have three glyphs and `SignalDomainDef` has two slots, so
+`audio.speaker_cv` and `power.bonding` draw the wrong shape.
+
+**11.180.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- **Twenty-six of the 57 seeded families draw the wrong shape, not two.** `docs/catalog/seed-devices.md`
+  §4.4 gives every family a glyph, and §4.3 gives each domain a native glyph and one or two more.
+  `signal_style.dart` draws only the domain's native glyph, so every family whose §4.4 glyph is another
+  of its domain's shapes is drawn with the native one: 2 in digital video, 4 in analog video, 2 in analog
+  audio, 4 in digital audio, 4 in network, 7 in control, 2 in power and 1 in structure. The renderer
+  already flags every family whose shape it cannot verify (`SchematicScene.underGlyphedFamilyIds`),
+  a wider set that includes all 26, rather than hiding them.
+- **DR-010 §11.10.3 added exactly three render fields** to `SignalFamilyDef`, `shortTag`, `dashOverride`
+  and a weight override, and §11.10.4 kept the rest of the corpus shape out. §4.1's entity table lists
+  an optional `glyphOverride` all the same.
+- **A document carries its own copy of the registries.** Every starter embeds all 57 families, and the
+  seed is copied in only when a document is created (`blank_document.dart`) and when the starters are
+  generated (`authoring.dart`).
+- Of the other disagreements, the empty aliases are resolved (DR-060). Four need no ruling: docs/02
+  §6.2's worked JSON still shows one-letter tag prefixes where docs/08 §3.5 and the seed use `VID`, `NET`
+  and the rest; `structure.pathway`'s connector (`conn.unterminated`) and topology (`p2p`) are declared
+  in code and in no document; `topologyFree` (AC-030) is not on the class; and the logical-flow
+  direction of `video.avoip`, `audio.dante` and `audio.aes67` is recorded as bidirectional.
+
+**11.180.2 RULED 2026-09-15: A FAMILY MAY OVERRIDE ITS DOMAIN'S GLYPH.** Settled by the user.
+`SignalFamilyDef` gains an optional `glyphOverride`, absent when unset, and a family draws its override
+when it has one and its domain's native glyph otherwise. The seed sets it on every family whose §4.4
+glyph differs from its domain's native glyph, the 26 above, so `audio.speaker_cv` draws ○ and
+`power.bonding` draws ⏚. The glyph geometry gains the two shapes no domain slot holds, ○ and ⏚, and
+`registry_parity.py` compares the glyph column as it compares the others (DR-175). **The reason is the
+greyscale print**: shape is one of the channels that survives it (docs/05 §6.1), and a constant-voltage
+speaker line is not interchangeable with a low-impedance one. Offered and refused: ruling the glyph a
+domain property and letting dash, weight and tag separate the families; and deciding it with signal
+family authoring (DR-122, `#816`).
+
+**What this does not rule.** Refreshing a saved project's registries from the seed. The override is an
+additive key, so `kSchemaVersion` does not move and an older file still loads unchanged (CR-117); new
+projects and the regenerated starters get the overrides, and a project saved before this keeps drawing
+its domain's shape and keeps reporting the families it cannot verify, as with every earlier registry
+addition. Nor the logical-flow direction, which stays owed a field.
+
 ---
 
 ## 12. Superseded rulings
@@ -22196,6 +22240,12 @@ label onto two drops.
 | **DR-015 §11.15.1** | The project, device and library extensions are `.rmpj`, `.rmdx` and `.rmda`. | **`.rppj`, `.rpdx` and `.rpda` are written**, and the three `rm` extensions still open (§11.178.3). |
 | **DR-015 §11.15.2**, as the product rename left it | `.rackpal` is still opened, and still saved in place. | **`.rackmate` is**, which is what the clause said before `0e2c5bb`; its text is restored. `.rackpal` is not accepted, since nothing wrote it (§11.178.1). |
 | **DR-096 §11.95.3** | Matching the extensions is deferred with M8 as the trigger; which letters is not ruled; `.rackmate` goes. | **Ruled and scheduled before MSIX-7** (§11.178.2), and `.rackmate` opens again (§11.178.3). |
+
+### 12.35 Amended by DR-181 (a family may override its glyph)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-010 §11.10.3 and §11.10.4** | `SignalFamilyDef` gains exactly three render fields, `shortTag`, `dashOverride` and a weight override, and the rest of the corpus field list stays absent. | **A fourth render field, `glyphOverride`**, is added and seeded on the 26 families whose §4.4 glyph is not their domain's native one (§11.180.2). The rest of the list still stays absent. |
 
 
 ## 13. Resolved §10 questions
