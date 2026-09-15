@@ -1,7 +1,9 @@
-@Tags(['perf'])
-library;
-
 // M2-G — the PAINT half of M2's budget, measured and recorded.
+//
+// NOT TAGGED `perf` (DR-178, `#843`). That tag now means "asserts a
+// stopwatch reading", and it moves a test out of its suite into a timed
+// gate step. This file prints its timings and asserts only cache counts and
+// the fixture's shape, so it stays in the ui suite.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // WHY THIS FILE EXISTS BESIDE `schematic_perf_test.dart`

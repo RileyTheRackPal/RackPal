@@ -4,4 +4,4 @@ tags:
   slow:
     description: "Property tests and large fixture sweeps"
   perf:
-    description: "Benchmark-harness performance budget tests"
+    description: "Asserts a stopwatch reading; runs alone in its own gate step, not in the suite (DR-178)"

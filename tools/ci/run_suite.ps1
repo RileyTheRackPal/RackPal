@@ -835,7 +835,10 @@ $SuiteFloors = @{
     # 4709 at `#905`: +1 in `plan_sheet_test.dart`, a printed Network device
     # keeping its ring clear of its square glyph, whose corners reach 0.813
     # of the radius. It reads the vertices off the glyph's own path.
-    'rackpal_core'   = 4762
+    # 4764 at `#843` (DR-178): +2 in `schematic_perf_test.dart`, where each
+    # one-frame budget became an op-count test and a timed test, so no test
+    # asserts a count and a stopwatch at once. Nothing is filtered yet.
+    'rackpal_core'   = 4764
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
