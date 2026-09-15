@@ -948,7 +948,7 @@ Two things this pin does **not** yet cover, stated so neither is mistaken for do
 | `DeviceInstance` | 200 | 500 |
 | Ports (mostly unmaterialised: AC-006) | 2 000 | 6 000 |
 | `Link` | 1 000 | 3 000 |
-| Undo history | 200 entries | — |
+| Undo history | 200 entries by default; 50 to 1000 per machine (DR-172) | — |
 | `.rmpj` file size | ~600 KB | 3 MB |
 | Distinct text runs | ~10 000 | ~30 000 |
 

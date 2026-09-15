@@ -1,5 +1,21 @@
 # Update Log
 
+## 2026-09-15 (forty-fourth entry)
+
+* **Closed**: `#560` with ``7151178``, ruled as
+  [DR-172](/decisions/dr-172-undo-depth-is-a-preference.md) in ``7d10974``. The undo depth is a
+  per-machine preference edited in Edit > Preferences, and a full history says so once per document.
+  **No version move**: it closes under `#786`.
+* **Creation**: [DR-172](/decisions/dr-172-undo-depth-is-a-preference.md).
+* **Note**: **THE LAST BRACE OF A TEST FILE IS NOT ALWAYS `main`'S.** Two appended groups landed in a
+  helper and a fixture class defined after `main`; one declared tests while tests ran and the other
+  stopped the file compiling. Find `void main()`'s own closing brace.
+* **Note**: **A FIELD THAT COMMITS ON BLUR IS WRONG WHEN COMMITTING DESTROYS SOMETHING.** The project
+  dialog's rows commit when focus leaves them; the depth field would have dropped history on a
+  half-typed value.
+* **Note**: **CHECK A COMMAND'S `mergeKey` BEFORE COUNTING UNDO STEPS IN A TEST.** `SetRackHeightCommand`
+  coalesces inside 400 ms, and five quick edits are one step.
+
 ## 2026-09-14 (forty-third entry)
 
 * **Closed**: `#558` with `de9a2f7` and `1f21c1f`, ruled as
