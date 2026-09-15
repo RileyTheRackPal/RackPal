@@ -5594,7 +5594,7 @@ touches it. Recommendations only.
 
 | # | Question | Recommendation | Needed by |
 |---|---|---|---|
-| a | Undo depth: the cap is 200 with a status-bar signal (AC-058 D5). Is 200 right? | **ANSWERED 2026-08-03: keep 200, and make it a setting.** Confirms the recommendation. The cap is already 200 (`undo_stack.dart`'s `maxEntries`) but is a **constructor parameter, not a user setting**: exposing it is owed work, board #560 | M0 |
+| a | Undo depth: the cap is 200 with a status-bar signal (AC-058 D5). Is 200 right? | **ANSWERED 2026-08-03: keep 200, and make it a setting.** Confirms the recommendation. The cap is already 200 (`undo_stack.dart`'s `maxEntries`) but is a **constructor parameter, not a user setting**: exposing it is owed work, board #560. **Built 2026-09-15 as DR-172** (§11.171): a per-machine preference in Edit > Preferences, 50 to 1000, applied at once, with the full-history notice once per document | M0 |
 | b | Autosave interval and whether recovery is silent or prompted | **ANSWERED 2026-08-03, and it revises the recommendation: autosave runs while the user is WORKING, never while they are idle.** The 30 s interval stands; what changes is that a tick with nothing new to protect must write nothing. **This exposed a live defect**: suppression carried a 2 s expiry, so a document left dirty and idle rewrote an identical ~600 KB snapshot every 30 s indefinitely (the dirty check cannot catch it: a recovery snapshot is not a save, so the document stays dirty against disk forever). Suppression now keys on `stateId` alone. **The prompt-on-recovery half is UNCHANGED and still stands**: a silent restore of a file the user thought they had abandoned is its own data-loss event | M1 |
 | c | Default rack height in the new-rack dialog | **ANSWERED 2026-08-03, and it supersedes the recommendation rather than confirming it: the starting racks become EDITABLE PRESETS the user tailors to their own inventory.** 42U remains the shipped default, so the recommendation's substance survives as a seed value; what changes is that the preset set stops being fixed. This is a **scope addition under §8.3** and is ruled as **DR-016**. `rack_presets.dart` already anticipates it in so many words, *"a future editable-presets UI has the same shape to hang off"*, and presets are deliberately **not persisted on `Rack`** (no `presetRef`), so a user-authored preset store is a new writable location and not a document-format change. Board #561 | M1 |
 | d | Whether the four starter projects are residential-only | Three residential, one small commercial: they double as the domain-coverage argument for 10.2 | M1 |
@@ -21154,6 +21154,73 @@ against and greyscale erases. `PWR-003`'s sentence carries the same clause.
 
 **What this does not rule.** The power-cord classifier (`#908`), and whether a device may declare that
 an inlet is deliberately unused.
+
+---
+
+### 11.171 DR-172 · The undo depth is a per-machine preference from 50 to 1000, applied at once, and a full history says so once per document
+
+**The question.** Canon §10.12(a) was answered on 2026-08-03: keep 200, and make it a setting. Board
+`#560` found the cap enforced and unreachable. `UndoStack.maxEntries` was a constructor default that
+neither `DocumentController` nor `TemplateEditSession` ever passed, and the oldest entry dropped
+silently, against AC-058 D5's *"the undo cap at 200 gains a status-bar signal instead of silently
+dropping the oldest entry"*. The answer also left open where the setting lives and how a person edits
+it, and the app had no surface for a setting that belongs to the machine: File > Project settings
+(`#805`) edits what travels in the file.
+
+**11.171.1 MEASURED FIRST**, on 2026-09-15 over the tree at `4e57b7b`:
+
+- Both undo stacks were built with no argument, so nothing anywhere could set the cap.
+- `DocumentSession`'s status line never clears itself. An edit repaints it, and a message stays until
+  another replaces it.
+- docs/03 §11.1 sets 200 undo entries as the scale target, with no hard cap and no memory figure.
+- No settings surface for this machine existed anywhere in the app.
+
+**11.171.2 RULED: A PER-MACHINE PREFERENCE, EDITED IN EDIT > PREFERENCES.** Settled by the user. The
+depth is a property of this machine's memory budget, not of the design, so it lives in `prefs.json`
+beside the coach marks and the favourites, never travels with a file, and never enters CR-117's byte
+surface. It is edited in a new Edit > Preferences dialog, the app's first surface for this machine's
+settings; File > Project settings keeps what travels in the file.
+
+**11.171.3 RULED: A WHOLE NUMBER FROM 50 TO 1000**, defaulting to 200. The ceiling keeps the setting
+within reach of docs/03's measured target, since nothing budgets memory past it, and the floor keeps a
+slip of the keyboard from leaving a handful of steps. Offered and refused: **preset choices**, under
+which a depth of 300 cannot be expressed, and **any whole number**, which is memory nothing has
+budgeted. A value outside the range in a hand-edited `prefs.json` reads as absent, not clamped.
+
+**11.171.4 RULED: A NEW DEPTH TAKES EFFECT IMMEDIATELY**, on the open document and on an open Device
+Builder window. Lowering it drops the oldest steps at once and the status line says how many went;
+raising it keeps more from then on. Offered and refused: **taking effect at the next document opened**,
+under which lowering it to free memory does nothing until a reopen.
+
+**11.171.5 RULED: A FULL HISTORY SAYS SO ONCE PER DOCUMENT.** The first time a step drops, the status
+line reads *"Undo history is full at N steps. Each new edit now drops the oldest."* Once, because the
+line never clears itself: said on every dropped step, it would own the line from then on, "Saved."
+included. A resize that drops steps is that document's notice. Offered and refused: **a notice on every
+dropped step**, and **a menu hint as well**, which would change a label the keymap and tests read.
+
+**11.171.6 RULED: ONE SETTING CAPS BOTH STACKS.** The Device Builder's history takes the same depth as
+the document's, so a person who chose a depth gets it everywhere they undo. Offered and refused: **the
+builder keeping a fixed 200**.
+
+**11.171.7 DECIDED BUILDING IT, NOT ASKED.**
+
+- **The field commits on Enter or Close, never on clicking away.** The project dialog's number rows
+  commit when focus leaves them, which is harmless for a sheet number and wrong here: the depth takes
+  effect at once and lowering it drops history, so typing "60" on the way to "600" and clicking
+  elsewhere would lose steps nobody meant to lose. Escape and a click outside the dialog discard what
+  was typed.
+- **A resize goes through the controller, not the stack.** Dropping the entry the save point sits on
+  changes `editsSinceSave`, which the window title and the close prompt read, so the controller rings
+  its change notifier when anything went.
+- **The first document is built at the chosen depth**, by loading the preferences before it rather than
+  resizing a moment later.
+
+**11.171.8 Scope.** **A scope addition under roadmap §8.3**: the app's first surface for this machine's
+settings, holding one setting. §10.12(a) asked for the setting, and no ruling had placed a surface for
+it. Board `#560` cites this ruling.
+
+**What this does not rule.** A full-history notice inside the Device Builder, which has no status line;
+a keyboard shortcut for Preferences; and any second preference.
 
 ---
 
