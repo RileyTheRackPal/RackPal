@@ -21524,6 +21524,51 @@ renaming at the M8 trigger, which costs the same plus every file saved in the me
 registers anything, all of which stay MSIX-7's. The file format, the schema version and every byte
 inside a file are untouched.
 
+### 11.179 DR-180 · A project states its wiring standard, and a cable may override it
+
+**The question.** Board `#80`, from M2-B: four fields docs/08 §3 names that the model did not have.
+Three have since been settled, `SignalFamilyDef.shortTag` by DR-010 §11.10.3, `Pathway.designator` by
+DR-026 §11.25.1 and `Outlet.nominalRunLength` by §11.25.2. The fourth is T568A or T568B.
+
+**11.179.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- **Nothing in the model states a wiring standard.** `TerminationType` is keystone, punchdown, F barrel,
+  euroblock, unterminated, field connector, binding post and RJ45 plug. The schedule's `TERM` cell
+  prints the termination type and the port designator, and the Structure view's `FIELD TERM` and
+  `RACK TERM` cells print the termination type alone.
+- **The corpus asks for it in three places and overloads a field for it in a fourth.** docs/08 §3.3's
+  examples print `T568B` in both termination columns; docs/08 §3's sheet list turns `T5.01` Plate, Panel
+  & Pinout Details on for a *"non-default T568A"*; and `schedule.dart` has said since 2026-07-28 that a
+  `Link.wiringStandard` is owed. docs/02 and `byte_roundtrip_test.dart` store `"colorCode": "T568B"` on a
+  `Conductor`, whose field is the pair colour.
+- `ProjectSettings` already holds project-wide defaults of the same kind: display units, sheet
+  numbering, designator formats and the default network media.
+- `T5.01` is not built; only comments in `sheet_def.dart` name it.
+- The seed's four-pair twisted-pair media are `media.cat5e`, `media.cat6`, `media.cat6_futp` and
+  `media.cat6a_futp`, and its only RJ45 connector is `conn.rj45`.
+
+**11.179.2 RULED 2026-09-15: THE PROJECT STATES A STANDARD, AND A CABLE MAY OVERRIDE IT.** Settled by
+the user. `ProjectSettings` gains a wiring standard, T568A or T568B, and a `Link` gains an optional
+override with the same two values. A cable's standard is its override, else the project's, else
+unknown. **Unset is unknown, never T568B** (G4, CR-114): both keys are absent when unset, and nothing
+prints a standard nobody stated. One entry per job replaces one per drop. Offered and refused: a field
+per cable with no project value; one per end, beside `FIELD TERM` and `RACK TERM`, which could show an
+accidental crossover at twice the entry; and not modelling it.
+
+**11.179.3 IT IS SHOWN ONLY WHERE IT CAN BE TRUE.** A wiring standard is a fact about a four-pair cable
+on an RJ45, so a cable shows, edits and prints one only when its media is a four-pair twisted-pair type
+or one of its ends is an RJ45 port or plug. A coax or speaker run never prints one, whatever the
+project says.
+
+**11.179.4 WHERE IT PRINTS.** The termination cells print a known standard beside the termination type,
+as docs/08 §3.3's examples already do. **A cable whose standard differs from the project's is what turns
+`T5.01` on**, which is docs/08 §3's *"non-default T568A"* stated against the project instead of against
+an assumed default. `T5.01` itself stays M6's.
+
+**What this does not rule.** A crossover cable, T568A at one end and T568B at the other, which the
+refused one-per-end option could have expressed. `Conductor.colorCode` keeps its meaning, the pair
+colour, and the docs/02 example that stores `T568B` there is a derived edit owed with the build.
+
 ---
 
 ## 12. Superseded rulings

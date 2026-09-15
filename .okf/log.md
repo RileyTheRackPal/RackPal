@@ -15,6 +15,8 @@
 * **Note**: **THE RENAME SWEEP REWROTE A LEGACY EXTENSION, AND §11.95.8's RESTORATION MISSED IT.**
   `0e2c5bb` turned DR-015's still-opened `.rackmate` into `.rackpal` in the code and in the canon
   clause, a fact about the old name that no build ever made true.
+* **Creation**: [DR-180](/decisions/dr-180-a-project-states-its-wiring-standard.md): a project states
+  its wiring standard, and a cable may override it.
 
 ## 2026-09-15 (forty-eighth entry)
 
