@@ -11759,6 +11759,51 @@ user; the recommended one was chosen.
 
 **Commits** (§8.8): `#81` `2dac125` (the ruling), `b50412c` (the build).
 
+#### 5.9.56 `#561`: your rack presets are saved from a rack, kept per machine, and sit beside seeded presets you can hide · `DR-016`, `DR-176` · no version move
+
+**DEMONSTRATED** by `user_rack_presets_test.dart` (the file's round trip, what a reader skips and the
+merged order), `rack_presets_store_test.dart` (a missing or unreadable file, an atomic write on a
+first save and on a second), `save_rack_preset_dialog_test.dart`, and the your-presets groups in
+`rack_inspector_panel_test.dart`, `new_rack_dialog_test.dart` and `preferences_dialog_test.dart`.
+
+##### 5.9.56.1 A scope addition nobody built, then three questions
+
+DR-016 was ruled inside canon §10.12(c) on 2026-08-03, with a milestone cell of M1, and named no
+surface, store or rule for the seeded presets. Three questions went to the user with the measured
+seam, and all three answers were the recommended option: save from a rack in the inspector; a
+per-machine `rack_presets.json` beside `prefs.json`; the seeded eleven hidden, never edited. Recorded
+as DR-176 §11.175.
+
+##### 5.9.56.2 What building it found
+
+- **Two places build the preset map, not one.** The rack canvas built it for its inspector and its
+  New rack dialog, and the app shell built another for the same dialog opened from a project with no
+  rack. A draft of DR-176 said one map fed every surface; reading the callers corrected it before it
+  reached canon, and the shell now hands both the same merged map.
+- **A byte-reader census failed the first storage gate.** `import_hardening_test` lists every lib file
+  that reads bytes and whether it is an import path in D8's sense. `RackPresetsStore` reads only this
+  machine's own file, so it is listed beside `PrefsStore` as not one.
+- **`tracked sources` went red twice for an unstaged new lib file**, on the core and the storage
+  commits, with every other gate green. Staging and re-running that check alone cleared both; the UI
+  commit was staged before its gate.
+- **A custom-width rack is refused with a reason.** A preset keeps a width class and no panel width,
+  so it could not bring that rack back.
+- **The headings appear only once one of yours exists**, so with none both Preset lists are exactly
+  what they were and no existing dropdown test moved. They are asserted from the dropdown's configured
+  items, because an open menu builds only the rows that fit.
+- **A preset's id is `user:` plus a slug of its name.** No id generator existed to reuse, and names are
+  already unique because the dialog refuses a duplicate.
+- **Every new parameter is optional.** Tests build the rack canvas 29 times and the inspector panels 6.
+
+##### 5.9.56.3 Evidence
+
+- 17 gates green on the ruling alone and on each of the core, storage and UI commits, every suite
+  exactly at its floor: rackpal_core 4753 -> 4762, rackpal_app 1045 -> 1052, rackpal_ui 1916 -> 1932.
+  Analyzer pin unmoved at 233.
+
+**Commits** (§8.8): `#561` `e09eda7` (the ruling), `07784cf` (core), `2331c05` (storage), `a1f70f7`
+(the UI).
+
 
 ---
 

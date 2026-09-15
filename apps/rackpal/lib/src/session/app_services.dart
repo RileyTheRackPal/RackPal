@@ -65,6 +65,7 @@ import 'package:rackpal/src/storage/data_root.dart';
 import 'package:rackpal/src/storage/document_store.dart';
 import 'package:rackpal/src/storage/file_store.dart';
 import 'package:rackpal/src/storage/prefs_store.dart';
+import 'package:rackpal/src/storage/rack_presets_store.dart';
 import 'package:rackpal/src/storage/recents_store.dart';
 import 'package:rackpal/src/storage/recovery_store.dart';
 import 'package:rackpal/src/storage/serialization.dart';
@@ -106,6 +107,7 @@ final class AppServices {
     required this.prefs,
     required this.startupWarning,
     this.prefsStore,
+    this.rackPresetsStore,
   }) : degradedWarning = ValueNotifier<String?>(startupWarning);
 
   final DocumentSession session;
@@ -196,6 +198,16 @@ final class AppServices {
   /// and only the store holds a cache that cannot go stale — the defect
   /// [prefs]'s own doc comment records.
   final PrefsStore? prefsStore;
+
+  /// Your rack presets and the seeded ones you hid, or null in the
+  /// degraded session (DR-176 §11.175.3).
+  ///
+  /// NULL FOR [prefsStore]'s REASON: no data root, nowhere to write. The
+  /// shell then offers the seeded presets alone and says why Save as
+  /// preset... is unavailable, rather than accepting a preset it cannot
+  /// keep. The live value lives on the store, for the same stale-copy
+  /// reason [prefsStore]'s doc records.
+  final RackPresetsStore? rackPresetsStore;
 
   /// The persistent status-bar warning, or null when persistence is
   /// healthy RIGHT NOW.
@@ -351,6 +363,12 @@ Future<AppServices> buildAppServices({
             dataRoot: ready.path,
             context: ctx,
           ),
+          rackPresets: RackPresetsStore(
+            fs: fs,
+            writer: writer,
+            dataRoot: ready.path,
+            context: ctx,
+          ),
           snapshots: SnapshotStore(
             fs: fs,
             writer: writer,
@@ -365,6 +383,10 @@ Future<AppServices> buildAppServices({
   // depth this machine chose (DR-172) rather than at the default and
   // resized a moment later.
   final prefs = stores == null ? const AppPrefs() : await stores.prefs.load();
+  // YOUR RACK PRESETS BEFORE THE SHELL BUILDS A RACK CANVAS (DR-176), so
+  // the first Preset dropdown already lists them. Its cache is what every
+  // later reader and writer goes through.
+  await stores?.rackPresets.load();
 
   final session = DocumentSession(
     controller: DocumentController(
@@ -476,6 +498,7 @@ Future<AppServices> buildAppServices({
     titleWriter: WindowTitleWriter(chrome),
     prefs: prefs,
     prefsStore: stores?.prefs,
+    rackPresetsStore: stores?.rackPresets,
     startupWarning: unusable == null
         ? null
         : describeDegradedPersistence(portable: unusable.portable),

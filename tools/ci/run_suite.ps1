@@ -835,7 +835,7 @@ $SuiteFloors = @{
     # 4709 at `#905`: +1 in `plan_sheet_test.dart`, a printed Network device
     # keeping its ring clear of its square glyph, whose corners reach 0.813
     # of the radius. It reads the vertices off the glyph's own path.
-    'rackpal_core'   = 4753
+    'rackpal_core'   = 4762
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1267,7 +1267,7 @@ $SuiteFloors = @{
     # the sheet at 0.1x), two in port_chip_test (rings and chip at the
     # opening zoom and four times it, and the rack at 0.1x, the only case
     # that sees the chassis canvas), and two in stroke_scaling_test.
-    'rackpal_ui'     = 1916
+    'rackpal_ui'     = 1932
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1398,7 +1398,7 @@ $SuiteFloors = @{
     # in either UI package because it reads the real menu bar, which only
     # the assembled app has, and scans all three `lib/` trees for a menu
     # path written into a string.
-    'rackpal_app'    = 1045
+    'rackpal_app'    = 1052
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

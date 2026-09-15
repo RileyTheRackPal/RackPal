@@ -82,6 +82,7 @@ class InspectorPanel extends StatelessWidget {
     required this.onSetWidth,
     required this.onSetOverride,
     required this.onSetPortFact,
+    this.onSaveAsPreset,
     this.onSetMountNote,
     this.firstFieldFocus,
     super.key,
@@ -97,6 +98,13 @@ class InspectorPanel extends StatelessWidget {
   final ValueChanged<String> onRename;
   final ValueChanged<int> onRequestHeight;
   final ValueChanged<RackPreset> onApplyPreset;
+
+  /// Save as preset... on the rack view (DR-176 §11.175.2). Null hides the
+  /// button, on [onSetMountNote]'s precedent: a dead control invites the
+  /// question of what would make it live, and a degraded session has
+  /// nowhere to keep a preset.
+  final ValueChanged<Rack>? onSaveAsPreset;
+
   final ValueChanged<String> onRefuse;
 
   /// Sets `lifecycleStatus` on EVERY selected device as one undo entry.
@@ -182,6 +190,7 @@ class InspectorPanel extends StatelessWidget {
           onRename: onRename,
           onRequestHeight: onRequestHeight,
           onApplyPreset: onApplyPreset,
+          onSaveAsPreset: onSaveAsPreset,
           onRefuse: onRefuse,
           onZeroU: onZeroU,
           onAddZeroUDevice: onAddZeroUDevice,

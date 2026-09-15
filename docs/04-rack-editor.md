@@ -261,6 +261,14 @@ Three entry points to one `RackInspector`, which replaces the Selection section:
 
 Presets are the fast path and are seed data in the same editable format as device templates: `Wall box 6U/12 in`, `Swing gate 12U/18 in`, `Pivot cabinet 10U`, `Floor enclosure 18/21/27/35/44U`, `Open frame 4-post 44U`, `Credenza bay 8U`, `Data 42U/36 in`. Each carries height, depth, capacity, rail type and `RackFormFactor`, which also gates `RCK-004` and `RCK-007`, both v1.2 rules, and when they land, both **advisory and default off** for wall and credenza form factors where they would otherwise be permanent noise (CR-020, AC-034/m19). `RackFormFactor` itself is v1 data; only the two rules that read it defer.
 
+**Your own presets** (DR-016, DR-176). With a rack selected, **Save as preset...** under the Preset row
+names that rack's height, form factor, width, rails, depth, capacity and swing-frame settings as a
+preset of yours. Yours appear under a **Yours** heading below the **Seeded** ones, in this dropdown and
+in the New rack dialog; the headings appear only once you have one. Rename and delete them, and hide
+the seeded presets you never stock, under **Edit > Preferences**. They are kept on this computer in
+`rack_presets.json`, never in a project. A custom-width rack cannot be saved as a preset, because a
+preset keeps a width class and no panel width.
+
 ### 4.1 Changing height, and the shrink-below-occupancy case
 
 Three ways to set height, all producing one `ResizeRackCommand`: the header stepper (`⌄ 24U ⌃`, hold to repeat at 8/s after 400 ms), the inspector field (commits on blur or `Enter`), and dragging the rack's top edge (8 px band, snaps to whole U, a `24U (+3)` readout follows the cursor). While dragging *smaller*, any occupied U about to be removed is hatched in red **in real time**, so the collision is visible before release. Growing is always safe: new U appear at the top and existing `ruIndex` values are untouched.

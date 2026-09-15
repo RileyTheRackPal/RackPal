@@ -114,6 +114,7 @@ export 'src/inspector/inspector_panel.dart';
 export 'src/inspector/mount_note_field.dart';
 export 'src/inspector/new_rack_dialog.dart';
 export 'src/inspector/rack_inspector_panel.dart';
+export 'src/inspector/save_rack_preset_dialog.dart';
 export 'src/inspector/shrink_rack_dialog.dart';
 export 'src/inspector/zero_u_occupant_row.dart';
 // `src/keymap/` — THE ONE KEYMAP REGISTRY (macOS debt D7, M7's generated

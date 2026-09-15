@@ -43,6 +43,7 @@ import 'package:rackpal/src/storage/errors.dart';
 import 'package:rackpal/src/storage/file_store.dart';
 import 'package:rackpal/src/storage/import_guard.dart';
 import 'package:rackpal/src/storage/prefs_store.dart';
+import 'package:rackpal/src/storage/rack_presets_store.dart';
 import 'package:rackpal/src/storage/recents_store.dart';
 import 'package:rackpal/src/storage/recovery_store.dart';
 import 'package:rackpal/src/storage/save_paths.dart';
@@ -63,6 +64,7 @@ final class OutOfDocumentStores {
   const OutOfDocumentStores({
     required this.recents,
     required this.prefs,
+    required this.rackPresets,
     required this.snapshots,
     required this.dataRootPath,
     required this.portable,
@@ -70,6 +72,11 @@ final class OutOfDocumentStores {
 
   final RecentsStore recents;
   final PrefsStore prefs;
+
+  /// Your rack presets and the seeded ones you hid (DR-176 §11.175.3).
+  /// Under the same data root, so it fails together with the rest.
+  final RackPresetsStore rackPresets;
+
   final SnapshotStore snapshots;
   final String dataRootPath;
   final bool portable;

@@ -68,6 +68,8 @@ const Map<String, String> _knownByteReaders = <String, String>{
       'the seam itself, not a path: it reads bytes for every caller above',
   'apps/rackpal/lib/src/storage/prefs_store.dart':
       "the app's own prefs.json, never user-picked. See the header.",
+  'apps/rackpal/lib/src/storage/rack_presets_store.dart':
+      "the app's own rack_presets.json, never user-picked. See the header.",
   'apps/rackpal/lib/src/storage/recents_store.dart':
       "the app's own recents.json, never user-picked. See the header.",
   'apps/rackpal/lib/src/storage/recovery_store.dart':

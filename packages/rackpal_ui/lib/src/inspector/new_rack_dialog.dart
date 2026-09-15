@@ -46,6 +46,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart' show FilteringTextInputFormatter;
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/inspector/rack_inspector_panel.dart'
+    show isPresetGroupHeader, presetDropdownValues, presetGroupLabel;
 
 /// What the dialog pops: the three fields, unvalidated against the document
 /// (that is [buildAddRackCommand]'s job).
@@ -140,9 +142,10 @@ class NewRackDialog extends StatefulWidget {
   /// as it stands then (docs/04 §7, CR-048).
   final RackDocument doc;
 
-  /// `buildRackPresets()`'s result, injected rather than built here for the
-  /// same reason `RackInspectorPanel` takes it injected: a test wants to
-  /// pump this against two presets, not eleven.
+  /// The presets to offer: `buildRackPresets()`'s, or those merged with yours
+  /// (DR-176). Injected rather than built here for the same reason
+  /// `RackInspectorPanel` takes it injected: a test wants to pump this
+  /// against two presets, not eleven.
   final Map<String, RackPreset> presets;
 
   /// The height the dialog opens on — 42U, matching what a blank project's
@@ -276,12 +279,20 @@ class _NewRackDialogState extends State<NewRackDialog> {
                 const DropdownMenuItem<String?>(
                   child: Text('No preset (custom)'),
                 ),
-                for (final entry in widget.presets.entries)
+                // Headings only once one of yours is listed (DR-176); they
+                // are shown and never chosen.
+                for (final id in presetDropdownValues(widget.presets))
                   DropdownMenuItem<String?>(
-                    value: entry.key,
+                    value: id,
+                    enabled: !isPresetGroupHeader(id),
                     child: Text(
-                      entry.value.displayName,
+                      isPresetGroupHeader(id)
+                          ? presetGroupLabel(id)
+                          : widget.presets[id]!.displayName,
                       overflow: TextOverflow.ellipsis,
+                      style: isPresetGroupHeader(id)
+                          ? theme.textTheme.labelSmall
+                          : null,
                     ),
                   ),
               ],
