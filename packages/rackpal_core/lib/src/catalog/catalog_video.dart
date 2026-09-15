@@ -71,17 +71,37 @@ Map<String, TemplateBody> buildVideoCatalog() {
       bankLabel: 'Mirrored HDMI Outputs',
     );
   }
+  // ZONE AUDIO IS A STEREO PAIR PER ZONE (DR-173, #112). Each zone is an
+  // L and an R balanced 3-pin block in one set, so one drag lands both as a
+  // single two-conductor cable and dragging one half to another device
+  // splits it (DR-014). A matrix de-embeds a zone in stereo; a single mono
+  // port per zone was the under-modelling #112 named.
   for (var i = 1; i <= 8; i++) {
-    v01.p(
-      'aud.out.$i',
-      'AUD OUT $i',
-      connector: 'conn.euroblock_3',
-      family: 'audio.line_bal',
-      dir: PortDirection.source,
-      bank: 'audOut',
-      bankLabel: 'Zone Audio',
-      balanced: true,
-    );
+    v01
+      ..set('zone$i', 'Zone $i audio pair', SetKind.stereoPair)
+      ..p(
+        'aud.out.$i.l',
+        'AUD OUT $i L',
+        connector: 'conn.euroblock_3',
+        family: 'audio.line_bal',
+        dir: PortDirection.source,
+        bank: 'audOut',
+        bankLabel: 'Zone Audio',
+        balanced: true,
+        setKey: 'zone$i',
+        setRole: 'L',
+      )
+      ..p(
+        'aud.out.$i.r',
+        'AUD OUT $i R',
+        connector: 'conn.euroblock_3',
+        family: 'audio.line_bal',
+        dir: PortDirection.source,
+        bank: 'audOut',
+        balanced: true,
+        setKey: 'zone$i',
+        setRole: 'R',
+      );
   }
   v01..p(
     'ir.in',
@@ -287,17 +307,33 @@ Map<String, TemplateBody> buildVideoCatalog() {
       bankLabel: 'HDMI Outputs',
     );
   }
+  // A STEREO PAIR PER OUTPUT, for V01's reason (DR-173, #112).
   for (var i = 1; i <= 16; i++) {
-    v03.p(
-      'aud.out.$i',
-      'AUD OUT ${i.toString().padLeft(2, '0')}',
-      connector: 'conn.euroblock_3',
-      family: 'audio.line_bal',
-      dir: PortDirection.source,
-      bank: 'audOut',
-      bankLabel: 'De-embedded Audio',
-      balanced: true,
-    );
+    v03
+      ..set('zone$i', 'Output $i audio pair', SetKind.stereoPair)
+      ..p(
+        'aud.out.$i.l',
+        'AUD OUT $i L',
+        connector: 'conn.euroblock_3',
+        family: 'audio.line_bal',
+        dir: PortDirection.source,
+        bank: 'audOut',
+        bankLabel: 'De-embedded Audio',
+        balanced: true,
+        setKey: 'zone$i',
+        setRole: 'L',
+      )
+      ..p(
+        'aud.out.$i.r',
+        'AUD OUT $i R',
+        connector: 'conn.euroblock_3',
+        family: 'audio.line_bal',
+        dir: PortDirection.source,
+        bank: 'audOut',
+        balanced: true,
+        setKey: 'zone$i',
+        setRole: 'R',
+      );
   }
   v03
     ..p(
@@ -358,6 +394,7 @@ Map<String, TemplateBody> buildVideoCatalog() {
     power: _power(nameplate: 180, typical: 110, pf: 950),
     ports: v03.ports,
     banks: v03.banks,
+    portSets: v03.portSets,
   );
 
   // V04 · HDMI Distribution Amplifier 1x8.
