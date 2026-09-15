@@ -1030,7 +1030,13 @@ final class SessionController {
     _backupSuppressedFor = null;
     _recoveredSlot = null;
     session.adopt(
-      controller: DocumentController(document, clock: clock),
+      controller: DocumentController(
+        document,
+        clock: clock,
+        // THIS MACHINE'S DEPTH (DR-172). A degraded session has no store
+        // and keeps the default.
+        undoDepth: stores?.prefs.current.undoDepth ?? kDefaultUndoDepth,
+      ),
       filePath: filePath,
       openReadOnly: openReadOnly,
       baseline: baseline,

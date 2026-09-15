@@ -84,8 +84,10 @@ class DocumentController {
     this.doc, {
     this.clock = const SystemClock(),
     this.actor = 'local',
+    int undoDepth = kDefaultUndoDepth,
   }) : _savedStateId = doc.stateId,
-       _nextStateId = doc.stateId + 1;
+       _nextStateId = doc.stateId + 1,
+       undo = UndoStack<RackDocument>(maxEntries: undoDepth);
 
   final RackDocument doc;
 
@@ -101,7 +103,11 @@ class DocumentController {
   final String actor;
 
   final epochs = DocEpochs();
-  final undo = UndoStack<RackDocument>();
+
+  /// The document's history. Its depth is the caller's: in the app, the
+  /// per-machine undo depth preference (DR-172), which
+  /// [UndoStack.resize] applies while the document stays open.
+  final UndoStack<RackDocument> undo;
 
   /// M0 minimal shape (selection.dart) — the real `SelectionController`
   /// lives in `rackpal_ui`. Plain mutable so a future caller can just
@@ -250,6 +256,19 @@ class DocumentController {
   }
 
   int _changeTick = 0;
+
+  /// Changes how many steps [undo] keeps, dropping the oldest at once when
+  /// it holds more (DR-172: a new depth takes effect immediately), and
+  /// returns how many went.
+  ///
+  /// THROUGH HERE RATHER THAN [UndoStack.resize], because dropping the entry
+  /// the save point sits on changes [editsSinceSave], which the window title
+  /// and the close prompt read. [changes] rings only when something went.
+  int resizeUndo(int depth) {
+    final dropped = undo.resize(depth);
+    if (dropped > 0) _bumpChanges();
+    return dropped;
+  }
 
   void _bumpChanges() {
     changes.value = ++_changeTick;

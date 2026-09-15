@@ -426,6 +426,49 @@ void main() {
       }
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-172: one depth, everywhere a person undoes
+  // ═══════════════════════════════════════════════════════════════════
+  // Three edits to three FIELDS: `SetTemplateFieldCommand` merges only on
+  // one field, so each of these is its own step.
+  group('the builder takes the same undo depth (DR-172)', () {
+    test('a session given a depth keeps it, drops past it, and resizes', () {
+      final session = TemplateEditSession(_body(), undoDepth: 2)
+        ..run(
+          const SetTemplateFieldCommand<String?>(
+            field: TemplateBodyField.typePrefix,
+            from: 'MTX',
+            to: 'SW',
+          ),
+        )
+        ..run(
+          const SetTemplateFieldCommand<int>(
+            field: TemplateBodyField.frontU,
+            from: 2,
+            to: 4,
+          ),
+        )
+        ..run(
+          const SetTemplateFieldCommand<String>(
+            field: TemplateBodyField.displayName,
+            from: 'DTP CrossPoint 84 IPCP MA 70',
+            to: 'Matrix',
+          ),
+        );
+
+      expect(session.undo.maxEntries, 2);
+      expect(session.undo.depth, 2);
+      expect(session.undo.droppedCount, 1);
+
+      expect(session.resizeUndo(1), 1);
+      expect(session.undo.depth, 1);
+    });
+
+    test('given no depth it keeps the document default', () {
+      expect(TemplateEditSession(_body()).undo.maxEntries, kDefaultUndoDepth);
+    });
+  });
 }
 
 /// Writes a value into [subject] that is guaranteed to differ from what

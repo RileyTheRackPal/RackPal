@@ -419,4 +419,105 @@ void main() {
       expect(controller.redoLast(), isNull);
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-172: the undo depth is a setting, and a dropped step is counted
+  // ═══════════════════════════════════════════════════════════════════
+  // `AddDeviceCommand` declares no `mergeKey`, so every add below is its
+  // own undo step and the counts are counts of edits.
+  group('undo depth (canon §10.12(a), AC-058 D5, DR-172)', () {
+    DocumentController withDevices(
+      int count, {
+      int depth = kDefaultUndoDepth,
+    }) {
+      final controller = DocumentController(
+        _docWithRack(fixed),
+        clock: FixedClock(fixed),
+        undoDepth: depth,
+      );
+      for (var i = 1; i <= count; i++) {
+        controller.run(_addDevice(fixed, id: Uuid('dev-$i'), ruIndex: i));
+      }
+      return controller;
+    }
+
+    test('a controller given no depth keeps the canon default of 200', () {
+      expect(kDefaultUndoDepth, 200);
+      expect(DocumentController(_docWithRack(fixed)).undo.maxEntries, 200);
+    });
+
+    test('past its depth the stack drops the OLDEST step, and counts it', () {
+      final controller = withDevices(5, depth: 3);
+      expect(controller.undo.depth, 3);
+      expect(controller.undo.droppedCount, 2);
+
+      for (var i = 0; i < 3; i++) {
+        expect(controller.undoLast(), isNotNull);
+      }
+      expect(controller.undo.canUndo, isFalse);
+      expect(
+        controller.doc.devices.keys.toList(),
+        [
+          const Uuid('dev-1'),
+          const Uuid('dev-2'),
+        ],
+        reason: 'the two oldest adds are beyond reach, not undone',
+      );
+    });
+
+    test('resizeUndo below the depth drops the oldest at once and says how '
+        'many', () {
+      final controller = withDevices(5, depth: 10);
+
+      expect(controller.resizeUndo(2), 3);
+
+      expect(controller.undo.depth, 2);
+      expect(controller.undo.maxEntries, 2);
+      expect(controller.undo.droppedCount, 3);
+    });
+
+    test('when the save point goes with them, editsSinceSave becomes '
+        'UNKNOWN and changes rings (G4)', () {
+      final controller = withDevices(1, depth: 10)..markSaved();
+      for (var i = 2; i <= 5; i++) {
+        controller.run(_addDevice(fixed, id: Uuid('dev-$i'), ruIndex: i));
+      }
+      expect(controller.editsSinceSave, 4);
+      final before = controller.changes.value;
+
+      controller.resizeUndo(2);
+
+      expect(
+        controller.editsSinceSave,
+        isNull,
+        reason: 'the save point aged out, and a count would be a guess',
+      );
+      expect(controller.changes.value, greaterThan(before));
+    });
+
+    test('resizeUndo above the depth drops nothing and stays quiet', () {
+      final controller = withDevices(5, depth: 10);
+      final before = controller.changes.value;
+
+      expect(controller.resizeUndo(500), 0);
+
+      expect(controller.undo.depth, 5);
+      expect(controller.undo.droppedCount, 0);
+      expect(controller.changes.value, before);
+    });
+
+    test('the redo tail survives a resize, because it is not the oldest '
+        'history', () {
+      final controller = withDevices(5, depth: 10)
+        ..undoLast()
+        ..undoLast();
+      expect(controller.undo.canRedo, isTrue);
+
+      controller.resizeUndo(1);
+
+      expect(controller.undo.depth, 1);
+      expect(controller.redoLast(), isNotNull);
+      expect(controller.doc.devices.containsKey(const Uuid('dev-4')), isTrue);
+    });
+  });
 }

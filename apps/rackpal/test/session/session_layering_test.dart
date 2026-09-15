@@ -661,12 +661,24 @@ final class AppServices {
       // whose LABEL is computed: they read "Undo Move device" from the
       // command's own `LabelKey`, which is the whole reason that enum
       // has 101 values with comments arguing about wording.
-      [13, 6],
+      //
+      // 13 -> 14 AT DR-172 (`#560`), and the accelerator count did not move
+      // for the ELEVENTH time. The fourteenth is `Edit ▸ Preferences...`,
+      // the app's first surface for settings that belong to THIS MACHINE
+      // rather than to the file, which is why it is on Edit and not beside
+      // `Project settings...` on File: `#805` put those there because they
+      // travel in the document, and the undo depth must not. No
+      // accelerator, for the reason every item since Locations has had
+      // none, and DR-172 §11.171 leaves a shortcut unruled rather than
+      // deciding one here.
+      [14, 6],
       reason:
           'eleven File-menu items — New, Open…, Save, Save As…, Export '
           'PDF…, Export/Import device template…, Export/Import device '
           'library…, Project settings…, Import floorplan… — and four '
           'accelerators. '
+          'Edit holds Undo and Redo, which carry the other two, and '
+          'Preferences..., which carries none. '
           'The Project menu is gone: '
           'DR-091 §11.90 made Locations, Structured Wiring and Device '
           'Manager views in the strip, and a menu item beside a tab is a '

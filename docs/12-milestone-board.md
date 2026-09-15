@@ -11567,6 +11567,56 @@ The superscripts fall because a template with ports and no power port is now a m
 **Commits** (§8.8): `#558` `355d553` (the ruling), `de9a2f7` (the derivation), `1f21c1f` (the
 format).
 
+#### 5.9.52 `#560`: the undo depth is a per-machine preference, and a full history says so once · `DR-172` · no version move
+
+**DEMONSTRATED** by `document_controller_test.dart`'s *"undo depth"* group, by
+`document_session_test.dart`'s *"undo history on the status line"*, by `preferences_dialog_test.dart`, and
+by `preferences_menu_test.dart`, which drives Edit > Preferences through the real shell to the open
+document, the status line and `prefs.json`. Canon §10.12(a)'s answer of 2026-08-03 is built as DR-172,
+with four decisions the user made and three made while building it.
+
+##### 5.9.52.1 A setting nothing could set
+
+§10.12(a) answered *"keep 200, and make it a setting"*. The 200 was `UndoStack`'s constructor default,
+and both stacks, `DocumentController`'s and `TemplateEditSession`'s, were built with no argument, so no
+path anywhere could set it. The oldest entry dropped with no signal, which AC-058 D5 had ruled out in
+so many words. And the app had no surface for a setting that belongs to the machine: `#805` closed the
+project-settings editor under File, because those settings travel in the file.
+
+##### 5.9.52.2 Measured, then asked
+
+The status line never clears itself, docs/03 §11.1 sets 200 entries as the scale target with no hard
+cap and no memory figure, and #805's File > Project settings keeps what travels. Four questions went to
+the user with those facts, and all four answers were the recommended option: `prefs.json` edited in a
+new Edit > Preferences; a whole number from 50 to 1000; immediately; the full notice once per document;
+one setting for the document and the Device Builder.
+
+##### 5.9.52.3 What building it found
+
+- **The first document was built before the preferences loaded.** `app_services.dart` constructed the
+  session's controller and only then read `prefs.json`, so the starting document would have taken the
+  default. The load moved ahead of it.
+- **The project dialog's number rows commit when focus leaves them**, and copying that here would drop
+  history on a half-typed value. The depth field commits on Enter or Close only.
+- **Dropping the entry the save point sits on changes `editsSinceSave`**, so a resize goes through the
+  controller, which rings its change notifier when anything went.
+- **`SetRackHeightCommand` coalesces inside the 400 ms merge window**, so the session tests count steps
+  on a clock that moves between edits. A test that counts undo steps has to check `mergeKey` first.
+- **Two appended test groups landed outside `main`.** The inserter took a file's last closing brace as
+  `main`'s, and in two files a helper and a fixture class follow `main`: one group declared tests while
+  tests ran, the other stopped the file compiling. Both were moved.
+- **A new menu item is a decision `session_layering_test` makes you record.** RULE 14 pins the shell's
+  `MenuItemButton` and accelerator counts as a dated history, and Edit > Preferences... moved it from
+  `[13, 6]` to `[14, 6]`. The rule gained a "13 -> 14 AT DR-172" entry saying why the item is on Edit
+  and carries no accelerator, and its reason string now names the Edit menu, which DR-159's entry had
+  left out. The same run caught an untyped test constant that raised the analyzer count to 234.
+
+##### 5.9.52.4 Evidence
+
+- 17 gates green on the ruling alone and on the build, every suite exactly at its floor: rackpal_core 4734 -> 4742, rackpal_ui 1907 -> 1916, rackpal_app 1037 -> 1045. Analyzer pin unmoved at 233.
+
+**Commits** (§8.8): `#560` `7d10974` (the ruling), `7151178` (the build).
+
 
 ---
 

@@ -88,6 +88,7 @@ import 'package:rackpal_core/rackpal_core.dart'
         buildPlaceableTemplates,
         buildRackPresets,
         copyTemplateBody,
+        kDefaultUndoDepth,
         planOutletRemoval,
         planStructureRemoval,
         planTemplateRemoval,
@@ -354,6 +355,11 @@ final class AppShellState extends State<AppShell>
   /// working and the memory does not.
   Set<String> _favourites = const <String>{};
 
+  /// This machine's undo depth (DR-172), seeded from `prefsStore.current`
+  /// at startup like [_favourites], and handed to the Device Builder so an
+  /// open window takes a new value at once.
+  int _undoDepth = kDefaultUndoDepth;
+
   /// Flips a star and persists it (`#245`).
   void _toggleFavourite(String templateId) {
     final store = _services.prefsStore;
@@ -466,6 +472,7 @@ final class AppShellState extends State<AppShell>
     // than per document (DR-104 §11.103.4).
     _favourites =
         _services.prefsStore?.current.favouriteTemplateIds ?? const <String>{};
+    _undoDepth = _services.prefsStore?.current.undoDepth ?? kDefaultUndoDepth;
     _services.session.addListener(_onSessionChanged);
     // Persistence can fail at any point in the session, not only at
     // startup — see app_services.dart's header.
@@ -854,6 +861,38 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  /// Opens Edit > Preferences, this computer's settings (DR-172).
+  ///
+  /// ON NO UNDO STACK, unlike project settings: a preference is a fact about
+  /// this machine, written to `prefs.json` and nowhere in the document, so
+  /// there is nothing for `Ctrl+Z` to take back.
+  Future<void> _openPreferences() async {
+    await showPreferencesDialog(
+      context,
+      undoDepth: _undoDepth,
+      onUndoDepthChanged: _setUndoDepth,
+    );
+  }
+
+  /// Applies and remembers a new undo depth, IMMEDIATELY (DR-172): on the
+  /// open document through its session, which says what went on the status
+  /// line, and on an open Device Builder window through the value it is
+  /// built with.
+  void _setUndoDepth(int depth) {
+    if (depth == _undoDepth) return;
+    setState(() => _undoDepth = depth);
+    _services.session.applyUndoDepth(depth);
+    final store = _services.prefsStore;
+    // A DEGRADED SESSION HAS NO STORE. The open document and builder take
+    // the depth; a document opened later takes the default, because the
+    // open path reads the store, and nothing is remembered.
+    if (store == null) return;
+    // LOAD-MODIFY-WRITE THROUGH THE STORE'S OWN CACHE, for
+    // `_dismissFilterCoachMark`'s reason. `save` updates that cache before
+    // it writes, so the next document opened reads the new depth.
+    unawaited(store.save(store.current.copyWith(undoDepth: depth)));
+  }
+
   /// Runs the bounded probe when the File menu opens. NEVER at startup,
   /// and it removes nothing — a slow share is not a broken entry.
   Future<void> _refreshRecents() async {
@@ -899,6 +938,7 @@ final class AppShellState extends State<AppShell>
               onImportLibrary: _importLibrary,
               onImportFloorplan: _importFloorplan,
               onProjectSettings: _openProjectSettings,
+              onPreferences: _openPreferences,
               onOpenRecent: _openRecent,
               undoTarget: activeUndoTarget,
             ),
@@ -1282,6 +1322,7 @@ final class AppShellState extends State<AppShell>
         : resolveLatestTemplate(doc, editing.v);
     return DeviceBuilderScreen(
       measurer: widget.measurer,
+      undoDepth: _undoDepth,
       // KEYED ON THE CONTROLLER **AND** THE TEMPLATE, and the second half
       // is what makes door 2 work at all: `TemplateEditSession` is
       // `late final`, so handing this screen a different `template` on the
@@ -1885,6 +1926,7 @@ final class _AppMenuBar extends StatelessWidget {
     required this.onImportLibrary,
     required this.onImportFloorplan,
     required this.onProjectSettings,
+    required this.onPreferences,
     required this.onOpenRecent,
     required this.undoTarget,
   });
@@ -1912,6 +1954,9 @@ final class _AppMenuBar extends StatelessWidget {
 
   /// Opens the project settings editor (`#805`, RJ-012).
   final Future<void> Function() onProjectSettings;
+
+  /// Edit > Preferences (DR-172).
+  final Future<void> Function() onPreferences;
   final Future<void> Function(String path) onOpenRecent;
 
   @override
@@ -2074,6 +2119,14 @@ final class _AppMenuBar extends StatelessWidget {
               shortcut: keymapActivator(KeyBindingId.redo),
               onPressed: undoTarget.canRedo ? undoTarget.redo : null,
               child: Text(redoMenuLabel(undoTarget.redoLabelKey)),
+            ),
+            const Divider(),
+            // EDIT, NOT FILE (DR-172). File > Project settings edits what
+            // travels in the file (`#805`); this edits what stays on this
+            // computer, which is where Windows applications keep it.
+            MenuItemButton(
+              onPressed: () => unawaited(onPreferences()),
+              child: const Text(kPreferencesLabel),
             ),
           ],
           child: const Text('Edit'),
