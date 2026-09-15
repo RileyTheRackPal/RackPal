@@ -1,5 +1,23 @@
 # Update Log
 
+## 2026-09-15 (forty-sixth entry)
+
+* **Closed**: `#111` with ``28e2d35``, ruled as
+  [DR-174](/decisions/dr-174-a-set-on-one-cable-draws-one-pennant.md) in ``4550282``. A set on one
+  cable draws one pennant on a bracket, and a split set draws a pennant per pin. **No version move**:
+  it closes under `#786`, through `#96`.
+* **Creation**: [DR-174](/decisions/dr-174-a-set-on-one-cable-draws-one-pennant.md).
+* **Note**: **A RULING ON THE BOARD IS NOT A RULING IN CANON, TWICE NOW.** `#111`'s was given on
+  2026-08-01 and never recorded, exactly as `#558`'s was. Grep canon for the ruling before building
+  from a ticket that says "user ruling".
+* **Note**: **ONE NUL BYTE HIDES A WHOLE FILE FROM GREP.** `net_label_layer.dart` carried a raw 0x00
+  inside a string, and every census for "pennant" skipped the one file that draws pennants.
+* **Note**: **A DEFAULT THAT MEANS "UNDECLARED" COUNTS AS A VALUE IN A CENSUS.** 155 of 159 seeded
+  banks store `symbolSide: left` because nobody chose, and the drawing falls through to direction;
+  a census that read the stored value put every output on the input edge.
+* **Note**: **DRY-RUN AN EDIT SCRIPT ON COPIES.** It caught an anchor that occurred twice, because
+  `_pennantPath` opens with the same statement as `emit`'s pennant line.
+
 ## 2026-09-15 (forty-fifth entry)
 
 * **Closed**: `#112` with ``1788e3e``, ruled as
