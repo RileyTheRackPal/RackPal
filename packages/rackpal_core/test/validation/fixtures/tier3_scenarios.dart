@@ -359,16 +359,18 @@ RackDocument _circuitLoad(int va) {
 /// [provided].
 RackDocument _outlets({required int consumed, required int provided}) {
   final doc = fixtureDoc();
+  // Ports, not authored counts (DR-171): [consumed] inlets with no cord
+  // drawn, against a PDU with [provided] outlet ports.
   fixturePlaceBody(
     doc,
-    fixtureBody(power: PowerProfile(outletsConsumed: consumed)),
+    fixtureBody(ports: fixturePowerPorts(inlets: consumed)),
     1,
     seq: 1,
     designator: 'AMP-1',
   );
   fixturePlaceBody(
     doc,
-    fixtureBody(power: PowerProfile(outletsProvided: provided)),
+    fixtureBody(ports: fixturePowerPorts(outlets: provided)),
     3,
     seq: 2,
     designator: 'PDU-1',

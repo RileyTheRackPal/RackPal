@@ -186,6 +186,7 @@ void main() {
         devices: doc.devices.values,
         templates: doc.templates,
         face: Face.front,
+        landings: PortLandings.of(doc),
       );
 
       expect(rollups().weight.value, Mass.fromKilograms(13.6));

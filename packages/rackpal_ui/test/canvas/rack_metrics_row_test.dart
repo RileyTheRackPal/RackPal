@@ -47,6 +47,7 @@ RackRollups _rollups({
   int outletsUnknown = 0,
   int? outletsConsumedUnknown,
   int? outletsCombinedUnknown,
+  int outletsFromPorts = 0,
 }) => RackRollups(
   face: face,
   ruCapacity: ruCapacity,
@@ -79,6 +80,7 @@ RackRollups _rollups({
   // overridable so the divergent shape — which no template in this build
   // can author — is still reachable from a test.
   outletsUnknownCount: outletsCombinedUnknown ?? outletsUnknown,
+  outletsCountedFromPorts: outletsFromPorts,
 );
 
 Future<void> _pumpStrip(
@@ -277,6 +279,71 @@ void main() {
       );
       expect(tooltip.message, contains('Outlets 1/24'));
       expect(tooltip.message, contains('2 devices have no outlet count'));
+    });
+
+    testWidgets('a count taken from inlet ports is SAID on hover, and gets '
+        'no superscript (DR-171)', (tester) async {
+      await _pumpStrip(
+        tester,
+        _rollups(outletsUsed: 24, outletsProvided: 74, outletsFromPorts: 21),
+      );
+
+      expect(find.text('outlets 24/74'), findsOneWidget);
+      expect(
+        find.textContaining('⁽'),
+        findsNothing,
+        reason: 'nothing is unknown, and the superscript means only that',
+      );
+      final tooltip = tester.widget<Tooltip>(
+        find.ancestor(
+          of: find.text('outlets 24/74'),
+          matching: find.byType(Tooltip),
+        ),
+      );
+      expect(
+        tooltip.message,
+        'Outlets 24/74 · 21 devices have no cord drawn and are counted '
+        'from their power inlets',
+      );
+    });
+
+    testWidgets('one port-counted device reads in the singular', (
+      tester,
+    ) async {
+      await _pumpStrip(tester, _rollups(outletsFromPorts: 1));
+      final tooltip = tester.widget<Tooltip>(
+        find.ancestor(
+          of: find.text('outlets 14/16'),
+          matching: find.byType(Tooltip),
+        ),
+      );
+      expect(
+        tooltip.message,
+        contains(
+          '1 device has no cord drawn and is counted from its power inlets',
+        ),
+      );
+    });
+
+    testWidgets('an unknown device and a port-counted one are both said, '
+        'unknown first', (tester) async {
+      await _pumpStrip(
+        tester,
+        _rollups(
+          outletsUsed: 5,
+          outletsUnknown: 2,
+          outletsFromPorts: 4,
+        ),
+      );
+      final tooltip = tester.widget<Tooltip>(
+        find.ancestor(of: find.text('⁽²⁾'), matching: find.byType(Tooltip)),
+      );
+      expect(
+        tooltip.message,
+        'Outlets 5/16 · 2 devices have no outlet count — not counted · '
+        '4 devices have no cord drawn and are counted from their power '
+        'inlets',
+      );
     });
   });
 

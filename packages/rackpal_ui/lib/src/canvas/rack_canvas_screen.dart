@@ -5156,6 +5156,10 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
                           devices: _doc.devices.values,
                           templates: _doc.templates,
                           face: _face,
+                          // The cords drawn in THIS document, so a cord
+                          // drawn on the schematic moves the outlet chip
+                          // (DR-171 §11.170.4).
+                          landings: PortLandings.of(_doc),
                         ),
                         units: _doc.settings.displayUnits,
                       ),

@@ -640,6 +640,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(profile.totalMass.value?.ug, rollups.weight.value?.ug);
@@ -684,6 +685,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(profile.totalMass.value?.ug, rollups.weight.value?.ug);

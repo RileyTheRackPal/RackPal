@@ -46,13 +46,29 @@ EntityMeta _meta() =>
 const _rack = Uuid('rk-1');
 
 /// A template that consumes an outlet and provides none.
+///
+/// ONE INLET AND NO CORD DRAWN TO IT, which is how a body consumes an
+/// outlet since DR-171 (§11.170.4, clause 3). It used to author
+/// `outletsConsumed: 1` with no ports, which now reads as a device nobody
+/// described, so `PWR-003` would never fire and this file would test an
+/// empty drawer.
 TemplateBody _hungry() => TemplateBody(
   manufacturer: 'Demo',
   model: 'Hungry',
   displayName: 'Hungry box',
   frontU: 1,
   side: OccupancySide.front,
-  power: PowerProfile(outletsProvided: 0, outletsConsumed: 1),
+  ports: [
+    PortDef(
+      key: const PortKey('ac.in'),
+      label: 'AC IN',
+      connector: const ConnectorTypeId('conn.nema_5_15p'),
+      signalFamily: const SignalFamilyId('power.ac_branch'),
+      face: Face.rear,
+      order: const FracIndex('a0'),
+      power: PortPowerSpec(role: PortPowerRole.inlet),
+    ),
+  ],
 );
 
 /// A rack whose devices need outlets nothing in it provides, which is

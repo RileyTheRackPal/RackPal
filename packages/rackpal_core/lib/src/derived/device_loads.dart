@@ -101,8 +101,6 @@ final class DeviceLoads {
     required this.apparentVA,
     required this.typicalWatts,
     required this.btuPerHour,
-    required this.outletsProvided,
-    required this.outletsConsumed,
   });
 
   /// Nothing at all is known about this device — the template snapshot did
@@ -112,8 +110,6 @@ final class DeviceLoads {
     apparentVA: null,
     typicalWatts: null,
     btuPerHour: null,
-    outletsProvided: null,
-    outletsConsumed: null,
   );
 
   /// `DeviceOverrides.weight` falling back to `TemplateBody.weight`.
@@ -132,9 +128,6 @@ final class DeviceLoads {
   /// `btuPerHourOverride ?? wattsToBtuPerHour(typicalWatts)`, or `null`.
   /// See the file header.
   final double? btuPerHour;
-
-  final int? outletsProvided;
-  final int? outletsConsumed;
 
   @override
   String toString() =>
@@ -168,8 +161,6 @@ DeviceLoads resolveDeviceLoads(DeviceInstance device, TemplateBody? body) {
     btuPerHour:
         override?.toDouble() ??
         (watts == null ? null : wattsToBtuPerHour(watts)),
-    outletsProvided: power?.outletsProvided,
-    outletsConsumed: power?.outletsConsumed,
   );
 }
 

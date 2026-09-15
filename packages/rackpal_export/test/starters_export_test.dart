@@ -170,6 +170,7 @@ void main() {
             devices: doc.devices.values,
             templates: doc.templates,
             face: Face.front,
+            landings: PortLandings.of(doc),
           );
 
           expect(

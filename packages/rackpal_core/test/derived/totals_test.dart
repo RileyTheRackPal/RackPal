@@ -44,8 +44,9 @@ TemplateBody _body({
   int rearU = 0,
   Mass? weight,
   int? apparentVA,
-  int? outletsProvided,
-  int? outletsConsumed,
+  int outlets = 0,
+  int inlets = 0,
+  bool poePd = false,
   String model = 'dev',
 }) => TemplateBody(
   manufacturer: 'Test',
@@ -58,11 +59,35 @@ TemplateBody _body({
       : OccupancySide.front,
   mountMethod: MountMethod.rackEars,
   weight: weight,
-  power: PowerProfile(
-    apparentVA: apparentVA,
-    outletsProvided: outletsProvided,
-    outletsConsumed: outletsConsumed,
-  ),
+  power: PowerProfile(apparentVA: apparentVA),
+  // PORTS, NOT AUTHORED COUNTS (DR-171). A body with no ports at all states
+  // nothing about outlets, which is what every non-outlet case here wants.
+  ports: [
+    for (var i = 1; i <= outlets; i++)
+      _powerPort('ac.out.$i', PortPowerRole.outlet, i),
+    for (var i = 1; i <= inlets; i++)
+      _powerPort('ac.in.$i', PortPowerRole.inlet, 100 + i),
+    if (poePd)
+      PortDef(
+        key: const PortKey('lan.poe'),
+        label: 'PoE',
+        connector: const ConnectorTypeId('conn.rj45'),
+        signalFamily: const SignalFamilyId('net.ethernet'),
+        face: Face.rear,
+        order: const FracIndex('z000'),
+        poe: PoeSpec(role: PoeRole.pd),
+      ),
+  ],
+);
+
+PortDef _powerPort(String key, PortPowerRole role, int order) => PortDef(
+  key: PortKey(key),
+  label: key,
+  connector: const ConnectorTypeId('conn.nema_5_15p'),
+  signalFamily: const SignalFamilyId('power.ac_branch'),
+  face: Face.rear,
+  order: FracIndex('a${order.toString().padLeft(3, '0')}'),
+  power: PortPowerSpec(role: role),
 );
 
 TemplateSnapshot _snapshot(String id, TemplateBody body) => TemplateSnapshot(
@@ -100,6 +125,46 @@ RailPlacement _rail(
   String rack = 'rk-1',
 }) => RailPlacement(rackId: Uuid(rack), ruIndex: ruIndex, face: face);
 
+/// The cords a case draws, as `PortLandings`: each pair is a device id and
+/// the template port key one conductor lands on (DR-171 §11.170.4).
+///
+/// THROUGH `PortLandings.of` ON A REAL DOCUMENT, because a hand-built
+/// landing set would prove the arithmetic and not the reading of the graph.
+PortLandings _landed(List<(String, String)> ends) {
+  final doc = RackDocument(
+    id: const Uuid('doc-landings'),
+    appVersion: 'test',
+    createdAt: _now,
+    modifiedAt: _now,
+    meta: _meta(),
+    info: ProjectInfo(projectName: 'landings'),
+    registries: buildSeedRegistries(),
+  );
+  var n = 0;
+  for (final (deviceId, key) in ends) {
+    n++;
+    final port = Port(
+      id: Uuid('port-$n'),
+      deviceId: Uuid(deviceId),
+      designator: 'P$n',
+      templatePortKey: PortKey(key),
+    );
+    doc.ports[port.id] = port;
+    final linkId = Uuid('link-$n');
+    doc.links[linkId] = Link(
+      id: linkId,
+      designator: 'W$n',
+      media: const MediaTypeId('media.cat6_utp'),
+      order: FracIndex('a$n'),
+      meta: _meta(),
+      conductors: [
+        Conductor(from: PortEndpoint(port.id), to: const OpenEndpoint('wall')),
+      ],
+    );
+  }
+  return PortLandings.of(doc);
+}
+
 void main() {
   group(
     'RU on the ACTIVE FACE (docs/04 §5: front and rear are two answers)',
@@ -120,6 +185,7 @@ void main() {
           devices: devices,
           templates: templates,
           face: Face.front,
+          landings: PortLandings.none,
         );
 
         expect(r.ruCapacity, 12);
@@ -144,12 +210,14 @@ void main() {
           devices: devices,
           templates: templates,
           face: Face.front,
+          landings: PortLandings.none,
         );
         final rear = computeRackRollups(
           rack: rack,
           devices: devices,
           templates: templates,
           face: Face.rear,
+          landings: PortLandings.none,
         );
 
         expect(
@@ -186,6 +254,7 @@ void main() {
             devices: devices,
             templates: templates,
             face: Face.front,
+            landings: PortLandings.none,
           ).ruUsed,
           2,
         );
@@ -194,6 +263,7 @@ void main() {
           devices: devices,
           templates: templates,
           face: Face.rear,
+          landings: PortLandings.none,
         );
         expect(rear.ruUsed, 1, reason: 'the rear elevation draws its 1U');
         expect(
@@ -222,12 +292,14 @@ void main() {
           devices: devices,
           templates: templates,
           face: Face.front,
+          landings: PortLandings.none,
         );
         final rear = computeRackRollups(
           rack: rack,
           devices: devices,
           templates: templates,
           face: Face.rear,
+          landings: PortLandings.none,
         );
 
         expect(front.ruUsed, 0);
@@ -255,6 +327,7 @@ void main() {
           devices: devices,
           templates: templates,
           face: Face.front,
+          landings: PortLandings.none,
         );
 
         expect(r.ruUsed, 3);
@@ -273,6 +346,7 @@ void main() {
           devices: devices,
           templates: templates,
           face: Face.front,
+          landings: PortLandings.none,
         );
 
         expect(r.ruUsed, 2, reason: 'U3 and U4 exist; U5 does not');
@@ -290,6 +364,7 @@ void main() {
           devices: devices,
           templates: const {},
           face: Face.front,
+          landings: PortLandings.none,
         );
 
         expect(r.ruUsed, 0);
@@ -302,6 +377,7 @@ void main() {
           devices: const [],
           templates: const {},
           face: Face.front,
+          landings: PortLandings.none,
         );
 
         expect(r.ruUsed, 0);
@@ -329,6 +405,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.ruUsed, 0);
@@ -357,6 +434,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.ruUsed, 0);
@@ -386,6 +464,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.ruUsed, 0);
@@ -418,6 +497,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.ruUsed, 1, reason: 'the shelf occupies U5; its guest does not');
@@ -455,6 +535,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.weight.knownCount, 0);
@@ -487,6 +568,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.ruUsed, 0);
@@ -554,6 +636,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.weight.value, isNull);
@@ -570,6 +653,7 @@ void main() {
         devices: const [],
         templates: const {},
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.weight.value, Mass.zero);
@@ -598,6 +682,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.weight.value, const Mass(4_000_000_000));
@@ -627,6 +712,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.weight.value, const Mass(9_000_000_000));
@@ -648,6 +734,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.weight.value, const Mass(1_500_000_000));
@@ -661,6 +748,7 @@ void main() {
           devices: const [],
           templates: const {},
           face: Face.front,
+          landings: PortLandings.none,
         ).weightCapacity,
         isNull,
       );
@@ -670,6 +758,7 @@ void main() {
           devices: const [],
           templates: const {},
           face: Face.front,
+          landings: PortLandings.none,
         ).weightCapacity,
         const Mass(90_718_474_000),
       );
@@ -694,6 +783,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.apparentVA.value, 1240);
@@ -713,6 +803,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.apparentVA.value, isNull);
@@ -736,6 +827,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.ruUsed, 0, reason: 'RU is per-face');
@@ -743,24 +835,13 @@ void main() {
     });
   });
 
-  group('outlets', () {
-    test('sums provided and consumed across both faces', () {
-      // All three templates AUTHOR both counts — including the zeros. A
-      // seeded template with no outlets says `outletsProvided: 0`
-      // explicitly (catalog_*.dart), and that is a measurement.
+  group('outlets (DR-171: read off ports and cords, never authored)', () {
+    test('provided counts outlet ports and consumed counts inlets, across '
+        'both faces, when no cord is drawn', () {
       final templates = {
-        'pdu@1': _snapshot(
-          'pdu',
-          _body(frontU: 1, outletsProvided: 16, outletsConsumed: 0),
-        ),
-        'amp@1': _snapshot(
-          'amp',
-          _body(frontU: 2, outletsProvided: 0, outletsConsumed: 1),
-        ),
-        'pp@1': _snapshot(
-          'pp',
-          _body(rearU: 1, outletsProvided: 0, outletsConsumed: 1),
-        ),
+        'pdu@1': _snapshot('pdu', _body(frontU: 1, outlets: 16, inlets: 1)),
+        'amp@1': _snapshot('amp', _body(frontU: 2, inlets: 1)),
+        'pp@1': _snapshot('pp', _body(rearU: 1, inlets: 1)),
       };
       final devices = [
         _device('d1', templateId: 'pdu', placement: _rail(1)),
@@ -777,21 +858,74 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.outletsProvided.value, 16);
-      expect(r.outletsConsumed.value, 2);
-      expect(r.outletsProvided.unknownCount, 0);
-      expect(r.outletsConsumed.unknownCount, 0);
+      expect(r.outletsConsumed.value, 3);
+      expect(r.outletsUnknownCount, 0);
+      expect(
+        r.outletsCountedFromPorts,
+        3,
+        reason:
+            'no cord is drawn to any of them, so all three are charged '
+            'from their inlets (clause 3)',
+      );
     });
 
-    test('a RESOLVED but unauthored outlet count is unknown, not a measured '
-        'zero (rule 1)', () {
-      // The defect: `outletsProvided`/`outletsConsumed` were non-nullable
-      // ints defaulting to 0, so this rack of two perfectly-resolvable
-      // templates rendered `outlets 0/0` with no superscript — a rack
-      // stating as FACT that it provides zero outlets when the truth is
-      // that nobody authored outlet data for either template.
+    test('a cord drawn to one of two inlets counts the cord, and only the '
+        'undrawn device is counted from ports', () {
+      final templates = {
+        'pdu@1': _snapshot('pdu', _body(frontU: 1, outlets: 8)),
+        'sw@1': _snapshot('sw', _body(frontU: 1, inlets: 2)),
+        'amp@1': _snapshot('amp', _body(frontU: 2, inlets: 1)),
+      };
+      final devices = [
+        _device('d1', templateId: 'pdu', placement: _rail(1)),
+        _device('d2', templateId: 'sw', placement: _rail(2)),
+        _device('d3', templateId: 'amp', placement: _rail(4)),
+      ];
+
+      final r = computeRackRollups(
+        rack: _rack(),
+        devices: devices,
+        templates: templates,
+        face: Face.front,
+        landings: _landed([('d2', 'ac.in.1')]),
+      );
+
+      expect(r.outletsConsumed.value, 2, reason: 'one drawn cord, one inlet');
+      expect(r.outletsCountedFromPorts, 1, reason: 'only the amplifier');
+    });
+
+    test('a PoE-fed device consumes nothing once its run is drawn', () {
+      final templates = {
+        'cam@1': _snapshot('cam', _body(frontU: 1, inlets: 1, poePd: true)),
+      };
+      final devices = [_device('d1', templateId: 'cam', placement: _rail(1))];
+      RackRollups rollup(PortLandings landings) => computeRackRollups(
+        rack: _rack(),
+        devices: devices,
+        templates: templates,
+        face: Face.front,
+        landings: landings,
+      );
+
+      final unwired = rollup(PortLandings.none);
+      expect(unwired.outletsConsumed.value, 1);
+      expect(unwired.outletsCountedFromPorts, 1);
+
+      final fed = rollup(_landed([('d1', 'lan.poe')]));
+      expect(fed.outletsConsumed.value, 0);
+      expect(fed.outletsCountedFromPorts, 0);
+    });
+
+    test('a template with no ports states nothing, so both halves are '
+        'unknown rather than a measured 0/0 (G4)', () {
+      // The defect this group used to guard, asked again under DR-171. An
+      // empty port list cannot tell a blank panel from an amplifier nobody
+      // has described, and reading it as zero is the confident
+      // `outlets 0/0` this file was rewritten to stop.
       final templates = {
         'ups@1': _snapshot('ups', _body(frontU: 2)),
         'amp@1': _snapshot('amp', _body(frontU: 2)),
@@ -806,79 +940,24 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.outletsProvided.value, isNull);
-      expect(r.outletsProvided.isUnknown, isTrue);
       expect(r.outletsProvided.unknownCount, 2);
-      expect(r.outletsProvided.knownCount, 0);
       expect(r.outletsConsumed.value, isNull);
       expect(r.outletsConsumed.unknownCount, 2);
-    });
-
-    test('provided and consumed carry INDEPENDENT unknown counts', () {
-      // A template may state one and not the other. Sharing one count
-      // attributes one rollup's ignorance to the other.
-      final templates = {
-        'pdu@1': _snapshot('pdu', _body(frontU: 1, outletsProvided: 24)),
-        'amp@1': _snapshot('amp', _body(frontU: 2, outletsConsumed: 1)),
-      };
-      final devices = [
-        _device('d1', templateId: 'pdu', placement: _rail(1)),
-        _device('d2', templateId: 'amp', placement: _rail(4)),
-      ];
-
-      final r = computeRackRollups(
-        rack: _rack(),
-        devices: devices,
-        templates: templates,
-        face: Face.front,
-      );
-
-      expect(r.outletsProvided.value, 24);
-      expect(r.outletsProvided.knownCount, 1);
-      expect(r.outletsProvided.unknownCount, 1, reason: 'the amp is silent');
-      expect(r.outletsConsumed.value, 1);
-      expect(r.outletsConsumed.knownCount, 1);
-      expect(r.outletsConsumed.unknownCount, 1, reason: 'the PDU is silent');
-    });
-
-    test('outletsUnknownCount counts a device silent about EITHER half — '
-        'the number the one-chip `outlets a/b` has to state', () {
-      // The same divergent shape as the test above, read the way the chip
-      // strip reads it: ONE chip showing `outlets 1/24`, so ONE unknown
-      // count, and it is neither rollup's own. Both `unknownCount`s are 1
-      // (max = 1, which UNDER-counts and is what the chip used to show,
-      // superscript-free), while TWO of the two devices are missing from
-      // the figure on screen.
-      final templates = {
-        'pdu@1': _snapshot('pdu', _body(frontU: 1, outletsProvided: 24)),
-        'amp@1': _snapshot('amp', _body(frontU: 2, outletsConsumed: 1)),
-      };
-      final devices = [
-        _device('d1', templateId: 'pdu', placement: _rail(1)),
-        _device('d2', templateId: 'amp', placement: _rail(4)),
-      ];
-
-      final r = computeRackRollups(
-        rack: _rack(),
-        devices: devices,
-        templates: templates,
-        face: Face.front,
-      );
-
       expect(r.outletsUnknownCount, 2);
+      expect(r.outletsCountedFromPorts, 0);
     });
 
-    test('a device silent about BOTH halves is ONE incomplete contributor, '
-        'not two', () {
-      // The other bound: the SUM of the two counts is 2 here, and 2 would
-      // be a fabricated number — there is one device and it is silent once.
+    test('outletsUnknownCount is one per silent device, not one per silent '
+        'half', () {
+      // The two halves go silent together now, so the SUM of the two
+      // rollups' counts is exactly the over-count this field exists to
+      // refuse.
       final templates = {
-        'pdu@1': _snapshot(
-          'pdu',
-          _body(frontU: 1, outletsProvided: 24, outletsConsumed: 1),
-        ),
+        'pdu@1': _snapshot('pdu', _body(frontU: 1, outlets: 24, inlets: 1)),
         'blank@1': _snapshot('blank', _body(frontU: 1)),
       };
       final devices = [
@@ -891,6 +970,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.outletsProvided.unknownCount, 1);
@@ -898,36 +978,13 @@ void main() {
       expect(
         r.outletsUnknownCount,
         1,
-        reason: 'one device, one silence — the sum of the two counts is 2',
+        reason: 'one device, one silence; the sum of the two counts is 2',
       );
-    });
-
-    test('a rack where every device states both outlet counts has nothing '
-        'unknown', () {
-      final templates = {
-        'pdu@1': _snapshot(
-          'pdu',
-          _body(frontU: 1, outletsProvided: 24, outletsConsumed: 1),
-        ),
-      };
-      final devices = [_device('d1', templateId: 'pdu', placement: _rail(1))];
-
-      final r = computeRackRollups(
-        rack: _rack(),
-        devices: devices,
-        templates: templates,
-        face: Face.front,
-      );
-
-      expect(r.outletsUnknownCount, 0);
     });
 
     test('an unresolvable template makes outlets unknown for that device', () {
       final templates = {
-        'pdu@1': _snapshot(
-          'pdu',
-          _body(frontU: 1, outletsProvided: 16, outletsConsumed: 1),
-        ),
+        'pdu@1': _snapshot('pdu', _body(frontU: 1, outlets: 16, inlets: 1)),
       };
       final devices = [
         _device('d1', templateId: 'pdu', placement: _rail(1)),
@@ -939,14 +996,16 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.none,
       );
 
       expect(r.outletsProvided.value, 16);
       expect(
         r.outletsProvided.unknownCount,
         1,
-        reason: 'only the ghost; the PDU states its outlets',
+        reason: 'only the ghost; the PDU has ports to count',
       );
+      expect(r.outletsConsumed.value, 1);
       expect(r.outletsConsumed.unknownCount, 1);
       // Weight and VA are unknown for BOTH: the PDU template authors
       // neither, and the ghost authors nothing at all.
@@ -981,6 +1040,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.rear,
+        landings: PortLandings.none,
       );
 
       expect(r.ruUsed, 0);
@@ -1002,6 +1062,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.rear,
+        landings: PortLandings.none,
       );
 
       expect(r.ruUsed, 0);
@@ -1035,6 +1096,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: face,
+        landings: PortLandings.none,
       );
     }
 

@@ -32,8 +32,8 @@
 // and `PWR-003` is an error-severity finding, so that decision would look
 // like the product's opinion rather than a choice.
 //
-// The rule already knows which case it is: `rulePwr003` summed
-// `outletsProvided` to decide the rack was short, so the branch below
+// The rule already knows which case it is: `rulePwr003` counted the rack's
+// outlet ports to decide it was short (DR-171), so the branch below
 // re-reads a number the finding was computed from.
 import 'package:rackpal_core/src/catalog/seed_catalog.dart';
 import 'package:rackpal_core/src/commands/catalog_placement.dart';
@@ -42,6 +42,7 @@ import 'package:rackpal_core/src/commands/shelf_placement.dart';
 import 'package:rackpal_core/src/commands/template_snapshot_commands.dart';
 import 'package:rackpal_core/src/commands/zero_u_commands.dart';
 import 'package:rackpal_core/src/derived/device_loads.dart';
+import 'package:rackpal_core/src/derived/device_outlets.dart';
 import 'package:rackpal_core/src/derived/placeable_templates.dart';
 import 'package:rackpal_core/src/document_controller.dart';
 import 'package:rackpal_core/src/model/placement.dart';
@@ -117,18 +118,26 @@ final class AddOutletsRefused extends AddOutletsResult {
   final String message;
 }
 
-/// True when anything in [rackId] declares outlets it provides.
+/// True when anything in [rackId] has an outlet port.
 ///
 /// WALKS THE RACK THE SAME WAY `rulePwr003` DOES, through
-/// `belongsToRack` and `resolveDeviceLoads`, because this answer decides
+/// `belongsToRack` and `resolveDeviceOutlets`, because this answer decides
 /// which remedy that rule's finding offers. Two different traversals
 /// would eventually disagree about which devices are in a rack, and the
 /// disagreement would show up as a button that fixes the wrong thing.
+///
+/// [PortLandings.none] IS HONEST HERE AND NOWHERE ELSE IN THIS FILE:
+/// what a device provides is its outlet ports, which no cord changes
+/// (DR-171 §11.170.2), so the graph has nothing to add to this answer.
 bool rackProvidesOutlets(RackDocument doc, Uuid rackId) {
   for (final device in doc.devices.values) {
     if (!belongsToRack(device, rackId, doc.devices)) continue;
-    final loads = resolveDeviceLoads(device, bodyFor(device, doc.templates));
-    if ((loads.outletsProvided ?? 0) > 0) return true;
+    final outlets = resolveDeviceOutlets(
+      device,
+      bodyFor(device, doc.templates),
+      PortLandings.none,
+    );
+    if ((outlets.provided ?? 0) > 0) return true;
   }
   return false;
 }
@@ -254,16 +263,19 @@ AddOutletsResult addOutletsToRack(
       'This build has no ${chosen.catalogId} to place.',
     );
   }
-  final provided = body.power.outletsProvided;
-  final consumed = body.power.outletsConsumed ?? 0;
-  if (provided == null) {
-    // G4 ON A PRECONDITION. A template that does not say how many outlets
-    // it provides cannot be offered as the fix for not having enough, and
-    // guessing a number here would be the fabrication the invariant
-    // forbids.
+  // BY THE COUNT THE RULE USES (DR-171 §11.170.6). The device is placed
+  // with its cord undrawn, so it provides its outlet ports and consumes
+  // one outlet per inlet port, which is clause 3's figure.
+  final provided = outletPortCount(body);
+  final consumed = inletPortCount(body);
+  if (provided == 0) {
+    // A candidate with no outlet port cannot be offered as the fix for not
+    // having enough. Unreachable with the seeded `P01` and `P04`, and kept
+    // so a catalogue edit that broke either says so here rather than
+    // inserting a device that closes nothing.
     return AddOutletsRefused(
-      '${body.displayName} does not state how many outlets it provides, '
-      'so it cannot be offered as the answer to a shortfall.',
+      '${body.displayName} has no outlet ports, so it cannot be offered '
+      'as the answer to a shortfall.',
     );
   }
 

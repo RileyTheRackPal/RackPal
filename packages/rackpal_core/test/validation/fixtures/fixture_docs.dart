@@ -115,6 +115,7 @@ TemplateBody fixtureBody({
   Mass? maxUnsupportedMass,
   Len? bodyDepth,
   PowerProfile? power,
+  List<PortDef>? ports,
   String displayName = 'Fixture device',
 }) => TemplateBody(
   manufacturer: 'FX',
@@ -129,7 +130,36 @@ TemplateBody fixtureBody({
   maxUnsupportedMass: maxUnsupportedMass,
   bodyDepth: bodyDepth,
   power: power,
+  ports: ports ?? [],
 );
+
+/// Bare power ports for a body that has to provide or consume outlets,
+/// which since DR-171 is the only way a body can (§11.170.2).
+///
+/// `power.ac_branch` on NEMA 5-15, `P04`'s own spelling, so a fixture port
+/// is one the registry knows and no other rule has a reason to look at.
+List<PortDef> fixturePowerPorts({int outlets = 0, int inlets = 0}) => [
+  for (var i = 1; i <= inlets; i++)
+    PortDef(
+      key: PortKey('ac.in.$i'),
+      label: 'AC IN $i',
+      connector: const ConnectorTypeId('conn.nema_5_15p'),
+      signalFamily: const SignalFamilyId('power.ac_branch'),
+      face: Face.rear,
+      order: FracIndex('a${i.toString().padLeft(3, '0')}'),
+      power: PortPowerSpec(role: PortPowerRole.inlet),
+    ),
+  for (var i = 1; i <= outlets; i++)
+    PortDef(
+      key: PortKey('ac.out.$i'),
+      label: 'OUT $i',
+      connector: const ConnectorTypeId('conn.nema_5_15r'),
+      signalFamily: const SignalFamilyId('power.ac_branch'),
+      face: Face.rear,
+      order: FracIndex('b${i.toString().padLeft(3, '0')}'),
+      power: PortPowerSpec(role: PortPowerRole.outlet),
+    ),
+];
 
 /// Places a device built from [body] at [ru], bypassing the planner.
 DeviceInstance fixturePlaceBody(

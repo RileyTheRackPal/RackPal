@@ -307,6 +307,7 @@ void main() {
         devices: devices,
         templates: templates,
         face: Face.front,
+        landings: PortLandings.of(doc),
       );
 
       expect(group.mass.value?.ug, rollups.weight.value?.ug);

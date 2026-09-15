@@ -135,6 +135,7 @@ export 'src/derived/cable_footage.dart';
 export 'src/derived/connect_rules.dart';
 export 'src/derived/connect_target.dart';
 export 'src/derived/device_loads.dart';
+export 'src/derived/device_outlets.dart';
 export 'src/derived/device_removal.dart';
 export 'src/derived/endpoint_resolution.dart';
 export 'src/derived/equipment_list.dart';

@@ -116,23 +116,22 @@ void main() {
       expect(loads.apparentVA, isNull);
       expect(loads.typicalWatts, isNull);
       expect(loads.btuPerHour, isNull);
-      expect(loads.outletsProvided, isNull);
-      expect(loads.outletsConsumed, isNull);
     });
 
     test('an authored ZERO is a measurement and stays one', () {
+      // The outlet counts this case also pinned are no longer loads: DR-171
+      // derives them from ports and cords, and `device_outlets_test.dart`
+      // carries that half.
       final loads = resolveDeviceLoads(
         _device(id: 'd', placement: const StagedPlacement()),
         TemplateBody(
           manufacturer: 'M',
           model: 'X',
           displayName: 'X',
-          power: PowerProfile(outletsProvided: 0, outletsConsumed: 0),
           weight: Mass.zero,
         ),
       );
 
-      expect(loads.outletsProvided, 0);
       expect(loads.mass, Mass.zero);
     });
   });
