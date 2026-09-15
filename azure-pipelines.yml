@@ -647,10 +647,12 @@ jobs:
       # reader of this file knows the order of magnitude. Going ABOVE a
       # floor is logged and nothing more; tests going up is the point, and a
       # gate that nags on every good day is ignored on the bad one.
+      # UNTIMED (DR-178, #843): the tests tagged `perf` assert a stopwatch
+      # reading and run in their own step after apps/rackpal, below.
       - pwsh: |
-          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_core -Runner dart -Name rackpal_core -OutDir '$(ciOutDir)'
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_core -Runner dart -Name rackpal_core -Tests untimed -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE
-        displayName: 'Test: rackpal_core (pure Dart)'
+        displayName: 'Test: rackpal_core (pure Dart, untimed)'
         condition: succeededOrFailed()
 
       - pwsh: |
@@ -689,6 +691,19 @@ jobs:
           pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package apps/rackpal -Runner flutter -Name rackpal_app -OutDir '$(ciOutDir)'
           exit $LASTEXITCODE
         displayName: 'Test: apps/rackpal (Flutter)'
+        condition: succeededOrFailed()
+
+      # DR-178 (#843). THE TESTS THAT ASSERT A STOPWATCH READING, ALONE. The
+      # core suite above runs with `-Tests untimed`; this runs only the tests
+      # tagged `perf`, one at a time, after every other suite has finished,
+      # so a one-frame budget does not share the agent with the rest of its
+      # own suite. On 2026-09-05 that sharing read 20.877 ms against 6.355 ms
+      # alone and failed a docs-only commit. It blocks exactly as a suite
+      # does and has its own floor in `$SuiteFloors`.
+      - pwsh: |
+          pwsh -NoProfile -File tools/ci/run_suite.ps1 -Package packages/rackpal_core -Runner dart -Name rackpal_core_timed -Tests timed -OutDir '$(ciOutDir)'
+          exit $LASTEXITCODE
+        displayName: 'Test: rackpal_core timed budgets (one at a time)'
         condition: succeededOrFailed()
 
       # ==================================================================

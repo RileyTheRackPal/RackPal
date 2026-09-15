@@ -121,19 +121,24 @@ try {
     }
 
     if (-not $SkipTests) {
+        # DR-178 (#843). The core suite runs UNTIMED and its stopwatch
+        # assertions run LAST, alone, one test at a time, so a one-frame
+        # budget does not share the machine with its own suite. The last
+        # entry is that step; drop it and the budgets run nowhere.
         $suites = @(
-            @{ Package = 'packages/rackpal_core';   Runner = 'dart';    Name = 'rackpal_core' },
-            @{ Package = 'packages/rackpal_text';   Runner = 'dart';    Name = 'rackpal_text' },
-            @{ Package = 'packages/rackpal_export'; Runner = 'dart';    Name = 'rackpal_export' },
-            @{ Package = 'packages/rackpal_pdfium'; Runner = 'dart';    Name = 'rackpal_pdfium' },
-            @{ Package = 'packages/rackpal_ui';     Runner = 'flutter'; Name = 'rackpal_ui' },
-            @{ Package = 'apps/rackpal';            Runner = 'flutter'; Name = 'rackpal_app' }
+            @{ Package = 'packages/rackpal_core';   Runner = 'dart';    Name = 'rackpal_core';       Tests = 'untimed' },
+            @{ Package = 'packages/rackpal_text';   Runner = 'dart';    Name = 'rackpal_text';       Tests = 'all' },
+            @{ Package = 'packages/rackpal_export'; Runner = 'dart';    Name = 'rackpal_export';     Tests = 'all' },
+            @{ Package = 'packages/rackpal_pdfium'; Runner = 'dart';    Name = 'rackpal_pdfium';     Tests = 'all' },
+            @{ Package = 'packages/rackpal_ui';     Runner = 'flutter'; Name = 'rackpal_ui';         Tests = 'all' },
+            @{ Package = 'apps/rackpal';            Runner = 'flutter'; Name = 'rackpal_app';        Tests = 'all' },
+            @{ Package = 'packages/rackpal_core';   Runner = 'dart';    Name = 'rackpal_core_timed'; Tests = 'timed' }
         )
         foreach ($suite in $suites) {
             Invoke-Gate "suite: $($suite.Name)" {
                 pwsh -NoProfile -File (Join-Path $ci 'run_suite.ps1') `
                     -Package $suite.Package -Runner $suite.Runner `
-                    -Name $suite.Name -OutDir $outDir
+                    -Name $suite.Name -Tests $suite.Tests -OutDir $outDir
             }
         }
     }

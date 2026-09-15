@@ -26,11 +26,19 @@
       * EXIT CODES SURVIVE THE PIPELINE. `$LASTEXITCODE` is captured
         immediately after the native command and returned unaltered.
 
-    NO TAG FILTERING. docs/11 section 7 sketches `--exclude-tags golden` for
-    the main job. This runs every test in every suite instead, deliberately:
-    there are zero tagged tests in this repository today, so an exclusion
-    would exclude nothing now and would silently drop the first golden
-    somebody writes -- the precise failure the pipeline header warns about.
+    ONE TAG IS FILTERED, AND ONLY WHERE A STEP RUNS WHAT IT LEAVES OUT
+    (DR-178, #843). A test tagged `perf` asserts a stopwatch reading.
+    `-Tests untimed` leaves those out of a suite and `-Tests timed` runs only
+    those, one test at a time, so a budget does not compete with the rest of
+    its own suite for the machine. The default, `all`, filters nothing, and
+    only the core suite is split, because it is the only package with a timed
+    step: a `perf` tag written anywhere else still runs, in its own suite,
+    rather than silently in none.
+
+    No other tag is filtered. docs/11 section 7 sketches `--exclude-tags
+    golden` for the main job, and an exclusion with no step running what it
+    excludes would silently drop the first golden somebody writes -- the
+    precise failure the pipeline header warns about.
 
 .PARAMETER Package
     Repo-relative directory of the package, e.g. packages/rackpal_core.
@@ -52,6 +60,12 @@
     none, because a suite the pipeline narrows is a suite the pipeline is not
     running. Handy for `-ExtraArgs test/byte_roundtrip_test.dart` while
     debugging one file.
+
+.PARAMETER Tests
+    'all' (the default) runs every test. 'untimed' leaves out the tests
+    tagged `perf`, and 'timed' runs only those, with `--concurrency=1`
+    (DR-178). A suite run 'untimed' must have a 'timed' step beside it in
+    both run_local.ps1 and azure-pipelines.yml, or its budgets run nowhere.
 
 .PARAMETER MinTests
     THE SUITE IS NOT VACUOUS. Fail if fewer than this many cases ran AND
@@ -82,6 +96,7 @@ param(
     [string]$RepoRoot = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)),
     [string]$OutDir,
     [string[]]$ExtraArgs = @(),
+    [ValidateSet('all', 'untimed', 'timed')][string]$Tests = 'all',
     [int]$MinTests = 0
 )
 
@@ -838,7 +853,16 @@ $SuiteFloors = @{
     # 4764 at `#843` (DR-178): +2 in `schematic_perf_test.dart`, where each
     # one-frame budget became an op-count test and a timed test, so no test
     # asserts a count and a stopwatch at once. Nothing is filtered yet.
-    'rackpal_core'   = 4764
+    # 4759 at `#843`'s step (DR-178): -5, the tests that assert a stopwatch
+    # reading. They left this suite for `rackpal_core_timed` below, which
+    # runs them one at a time after every other suite.
+    'rackpal_core'   = 4759
+    # THE TIMED STEP (DR-178, #843). The five tests in
+    # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
+    # the twelve-pod ratchet, the tier comparison and the wires-only edit.
+    # A floor here means a tag deleted by accident fails the step rather
+    # than leaving a green step that timed nothing.
+    'rackpal_core_timed' = 5
     'rackpal_text'   = 1
     # 209 at PLAN-A: +9 from pdf_canvas_image_test.dart and +5 from the
     # harness self-test's new XObject group. Both are about ONE fact a
@@ -1431,12 +1455,20 @@ if (-not (Test-Path $packageDir)) {
 $jsonPath  = Join-Path $OutDir "$Name.jsonl"
 $junitPath = Join-Path $OutDir "$Name.junit.xml"
 
+# DR-178: a split suite leaves its stopwatch assertions to a timed step, and
+# the timed step runs them one at a time. See -Tests above.
+$tagArgs = switch ($Tests) {
+    'untimed' { @('--exclude-tags', 'perf') }
+    'timed'   { @('--tags', 'perf', '--concurrency=1') }
+    default   { @() }
+}
+
 # `dart test --reporter=json` and `flutter test --machine` emit the SAME
 # event protocol; only the flag differs.
 $testArgs = if ($Runner -eq 'flutter') {
-    @('test', '--machine') + $ExtraArgs
+    @('test', '--machine') + $tagArgs + $ExtraArgs
 } else {
-    @('test', '--reporter=json') + $ExtraArgs
+    @('test', '--reporter=json') + $tagArgs + $ExtraArgs
 }
 
 Write-Host "== $Name =="
