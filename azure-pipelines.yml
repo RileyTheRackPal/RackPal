@@ -602,6 +602,8 @@ jobs:
       # project four times already. palette_parity proves the docs agree with
       # the authority; this proves the code does. Still no Dart and no
       # dependencies: it parses the seed source rather than running it.
+      # Since DR-175 it also holds each family's name, connector, tag,
+      # direction and topology to the table in seed-devices.md section 4.4.
       - pwsh: |
           python tools/registry_parity.py
           exit $LASTEXITCODE

@@ -1645,6 +1645,10 @@ value so this table is self-contained. `dashOverride` is the type-within-domain 
 by AC-054 and is what makes each of the brief's ten named types individually identifiable.
 `ProjectSettings.familyColorOverrides` lets a user override any hue in v1.
 
+**This table is gated** (DR-175). `tools/registry_parity.py` fails when the Dart seed and a row
+here disagree on the display name, default connector or tag, or on the leading symbol or word of
+the Dir or Topo cell. Fix whichever of the two is wrong; do not regenerate the starters to pass.
+
 Direction key: **→** unidirectional source→sink · **↔** bidirectional · **BUS** multi-drop shared
 medium · **⤳** logical flow riding a network. Topology: **P2P** · **MD** multi-drop · **STAR**.
 

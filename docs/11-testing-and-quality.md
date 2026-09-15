@@ -349,7 +349,7 @@ A three-item manual checklist catches what nothing automated will: `debugRepaint
 | 5 | `dart format --output=none --set-exit-if-changed .` | Any file is unformatted |
 | 6 | `python tools/pal1_check.py` | A palette collision ships. **Blocking**, and it needs no Dart, so a Dart refactor cannot break it |
 | 7 | `python tools/palette_parity.py` | The documented dashes and weights disagree with the checker |
-| 8 | `python tools/registry_parity.py` | The Dart seed disagrees with either (DR-010) |
+| 8 | `python tools/registry_parity.py` | The Dart seed disagrees with `pal1_check.py` on hue, dash or weight (DR-010), or with seed-devices §4.4 on a family's name, connector, tag, direction or topology (DR-175) |
 | 9 | `tools/ci/junit_converter_selftest.py` | The JUnit converter regresses. 13 mutants, 13 caught |
 | 10–14 | Five suites via `tools/ci/run_suite.ps1` | Any test fails, **or** a suite falls below its non-vacuity floor: core 976, text 1, export 183, ui 382, app 664. The floor counts **non-skipped** cases, so silencing a flaky batch cannot buy a green run |
 | + | `flutter build windows --release`, then `tools/ci/verify_windows_build.ps1` | The build fails, or the release output has a plugin DLL removed, the exe missing, a packaged starter CRLF-corrupted, or a `dartjni.dll` **planted** (it must not be there) |

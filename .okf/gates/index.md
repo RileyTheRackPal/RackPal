@@ -5,7 +5,7 @@ below records what its gate defends **and what it deliberately does not**: a
 gate's blind spot is as worth knowing as its coverage.
 
 * [Analyzer info ratchet](analyzer-baseline.md) - 0 errors, 0 warnings, and an exactly pinned info count. Scans tests too.
-* [Registry parity](registry-parity.md) - the Dart seed agrees with the palette authority on hue, dash and weight. Blind to descriptive fields, on purpose.
+* [Registry parity](registry-parity.md) - the Dart seed agrees with the palette authority on hue, dash and weight, and with seed-devices §4.4 on each family's name, connector, tag, direction and topology (DR-175).
 * [Byte-exactness sweep](byte-exactness-sweep.md) - .gitattributes pins every extension in a byte-exact root; also the traversal bug worth not repeating.
 * [Catalog port order](catalog-port-order.md) - declared order must equal ranked order; FracIndex sorts as a string and 678 of 727 ports were scrambled.
 * [Release signature](release-signature.md) - signed, timestamped, and still valid after the certificate expires; canon's recipe for the last one has an unstated precondition.
