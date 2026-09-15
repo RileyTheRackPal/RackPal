@@ -21369,6 +21369,56 @@ in whichever of the two is wrong, in one commit, and never by regenerating a sta
 which stays with `pal1_check.py`; the `SignalFamilyDef` fields §4.4 does not tabulate, such as typical
 media and run lengths; and the starter golden's own failure wording.
 
+### 11.175 DR-176 · Your rack presets are saved from a rack, kept per machine, and sit beside seeded presets you can hide
+
+**The question.** Board `#561`. DR-016 was ruled inside §10.12(c) on 2026-08-03: *"the starting racks
+become EDITABLE PRESETS the user tailors to their own inventory"*, a scope addition under §8.3 with a
+milestone cell of M1. It named no surface, no store and no rule for the seeded presets, and nothing
+was built.
+
+**11.175.1 MEASURED FIRST**, on 2026-09-15 over `e9c7200`:
+
+- `buildRackPresets()` seeds eleven archetypes, and `rack_presets_test.dart` pins exactly those eleven,
+  their ids, their heights, depths in whole inches and capacities in whole kilograms, as docs/04 §4's
+  named list.
+- **Two places build the preset map, not one.** The rack canvas builds it for the rack inspector's
+  Preset dropdown and its new-rack dialog. The app shell builds its own for the same new-rack dialog,
+  opened from a project that has no rack yet. Applying a preset is one undo step either way. A draft of
+  this ruling said one map fed every surface; reading the callers found the second.
+- **A rack never records its preset** (no `presetRef`), so a user's presets cannot reach a project file.
+  The inspector's dropdown shows whichever preset a rack's values match, derived and never stored, and
+  "Custom" when none does.
+- The app already keeps per-machine state beside the executable when portable, through one data-root
+  seam: `prefs.json`, recents, and a `libraries` folder of device archives.
+
+**11.175.2 RULED 2026-09-15: A PRESET IS SAVED FROM A RACK.** Settled by the user. The rack inspector
+gains **Save as preset...**, which captures the selected rack's height, form factor, width class, rail
+type, usable depth, weight capacity and swing-frame settings under a name. Your presets appear in the
+Preset dropdown in their own group below the seeded ones, and in the new-rack dialog. They are renamed
+and deleted in a list under Edit > Preferences. Offered and refused: a Preferences editor with a form
+for every field, which types in by hand what a real rack already holds; and both surfaces, which is
+twice the building for the same result.
+
+**11.175.3 RULED 2026-09-15: THEY ARE KEPT PER MACHINE, IN THEIR OWN FILE.** Settled by the user.
+`rack_presets.json` sits beside `prefs.json` under the data root, so it follows a portable install and
+never travels in a project. Offered and refused: inside `prefs.json`, which mixes authored content with
+settings; and a library file, which would need a second kind of library in a loader that reads only
+device archives.
+
+**11.175.4 RULED 2026-09-15: SEEDED PRESETS CAN BE HIDDEN, NOT EDITED.** Settled by the user. The
+eleven archetypes stay as shipped. You can hide the ones you never stock, and show them again; the
+hidden set is kept in the same file. To vary a seeded preset, save a rack that started from it under
+your own name. Offered and refused: seeded presets always shown, which cannot trim the list to an
+inventory; and editing them in place, which needs an override layer and a reset action over a list
+the tests pin.
+
+**11.175.5 Scope.** **No new scope**: DR-016 already added it under §8.3. This ruling settles its
+surface, store and rules. Board `#561` cites DR-016 and this ruling.
+
+**What this does not rule.** Sharing presets between machines or people; a preset carried into a
+project file; editing a preset's values after it is saved, beyond its name; and the milestone
+bookkeeping for a scope addition whose cell still reads M1.
+
 ---
 
 ## 12. Superseded rulings
