@@ -10,6 +10,11 @@
   and `#782` naming extensions DR-015 had renamed. The options would have been wrong without it.
 * **Creation**: [DR-178](/decisions/dr-178-a-test-that-asserts-a-time-runs-alone.md): a test that
   asserts a time runs in its own gate step, one test at a time.
+* **Creation**: [DR-179](/decisions/dr-179-the-rp-extensions.md): `.rppj`, `.rpdx` and `.rpda`, with
+  every extension a build has written still opening.
+* **Note**: **THE RENAME SWEEP REWROTE A LEGACY EXTENSION, AND §11.95.8's RESTORATION MISSED IT.**
+  `0e2c5bb` turned DR-015's still-opened `.rackmate` into `.rackpal` in the code and in the canon
+  clause, a fact about the old name that no build ever made true.
 
 ## 2026-09-15 (forty-eighth entry)
 

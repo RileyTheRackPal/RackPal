@@ -7106,12 +7106,12 @@ device, `.rmda` device archive.**
 does not advance, and the migration chain is not involved. This is a rename, and calling it
 anything more would put a format change in the record that did not happen.
 
-**11.15.2 `.rackpal` is still opened, and still saved in place.** Not deprecated, not migrated
+**11.15.2 `.rackmate` is still opened, and still saved in place.** Not deprecated, not migrated
 on open, not renamed underneath the user. `kDocumentExtensions` lists both spellings; the path
 normaliser appends the first and treats every entry as already-correct. The consequence that
 forced this shape: `SessionController.save()` runs the ALREADY-OPEN path back through that
-normaliser, so a single-entry list would turn a team's `Smith.rackpal` into
-`Smith.rackpal.rmpj` on `Ctrl+S`, a second file, the first left holding older bytes and still
+normaliser, so a single-entry list would turn a team's `Smith.rackmate` into
+`Smith.rackmate.rmpj` on `Ctrl+S`, a second file, the first left holding older bytes and still
 in the recents list, and nothing looking wrong until they open the wrong one. **Save As and a
 never-saved document still reach for `.rmpj`, so the old spelling is accepted and never
 propagated.**
@@ -21482,6 +21482,48 @@ itself.
 machine, which a self-hosted agent shares: it removes competition with the test's own suite, and that
 is all. It changes no budget's value.
 
+### 11.178 DR-179 · The file extensions are `.rppj`, `.rpdx` and `.rpda`, and every extension a build has written still opens
+
+**The question.** Board `#782`. DR-096 §11.95.3 deferred re-cutting the `rm`-prefixed extensions to
+match RackPal, with M8 as the trigger, and did not rule the letters.
+
+**11.178.1 MEASURED FIRST**, on 2026-09-15 over `d75508e`:
+
+- **The ticket and §11.95.3 name the wrong set.** Both name `.rmdev` and `.rmlib`, which DR-015 had
+  already renamed. The extensions the app writes are `.rmpj` (project), `.rmdx` (device template) and
+  `.rmda` (device library), in 424, 88 and 103 places across code and tests.
+- **No file stores its own extension.** The four starter projects, the only files in the tree carrying
+  any of these extensions, contain none of the three strings, and the `.rmda` codec names `.rmdx` only
+  in comments. So CR-117's byte round-trip is not in play: this is a rename, not a migration.
+- **The deadline is earlier than M8.** MSIX-7 (`#171`, under the Store alpha epic `#100`) registers
+  these three extensions in the package manifest, and the Store alpha puts a package in the team's
+  hands.
+- **The old project extension that still opens is the wrong one.** DR-015 §11.15.2 kept `.rackmate`,
+  which every build before `dc22ddc` wrote, opening and saving in place. The product rename (`#781`,
+  `0e2c5bb`) rewrote that constant to `.rackpal`, in the code and in §11.15.2's own text. No build ever
+  wrote `.rackpal`, so a project saved before 2026-08-02 no longer appears in the Open dialog, and a
+  Save would give it a second name. It is the class §11.95.8 names, prose asserting a fact about the
+  old name, and it survived that section's restoration.
+- Web searches found no existing format using `.rppj`, `.rpdx` or `.rpda`; the nearest are REAPER's
+  `.rpp` and Axure's `.rpprj`.
+
+**11.178.2 RULED 2026-09-15: `.rppj`, `.rpdx` AND `.rpda`, NOW.** Settled by the user. The project,
+device template and device library extensions become `.rppj`, `.rpdx` and `.rpda`, keeping the letters
+after the prefix so DR-015's family stays recognisable. It lands as its own change, before MSIX-7
+writes a manifest, rather than at M8.
+
+**11.178.3 RULED 2026-09-15: EVERY EXTENSION A BUILD HAS WRITTEN STILL OPENS.** A project opens as
+`.rppj`, `.rmpj` or `.rackmate`; a device template as `.rpdx` or `.rmdx`; a device library as `.rpda` or
+`.rmda`, in the libraries folder as well as through a dialog. Save keeps the name a file was opened
+with, which is §11.15.2's rule unchanged. `.rackpal` comes off the list, because nothing ever wrote it.
+§11.15.2's text is restored to `.rackmate` in the same commit as this ruling. Offered and refused:
+renaming at the M8 trigger, which costs the same plus every file saved in the meantime; and keeping
+`rm`.
+
+**What this does not rule.** File-type registration, its icons and whether the portable build
+registers anything, all of which stay MSIX-7's. The file format, the schema version and every byte
+inside a file are untouched.
+
 ---
 
 ## 12. Superseded rulings
@@ -22101,6 +22143,14 @@ label onto two drops.
 | **CR-112** | "**Ruling: `Project ▸ Locations…` is a top-level panel.** Consequent on CR-047. A project with racks and no Structure device must still be able to say which room a rack is in." | **The substance is untouched and the name is not.** Top-level, not owned by the Structure editor, over CR-047's arbitrary-depth tree: all of that stands, and the reason stands with it. What the ruling has is a **route in its title**, and that route died at DR-091 §11.90 when Locations became a tab and the `Project` menu was deleted. The surface is the **`Site` view**, the first tab, holding the tree and the floorplans (DR-168 §11.167). **The menu path is how the ruling is spelled, not what it decided**, and reading the title as the decision is what let eighteen strings go on naming a menu the bar does not have. |
 | **CR-112's affordance**, as DR-140 §11.139's options table reads it | The tree shown in the Structure editor is read-only, with an *"edit in `Project ▸ Locations…`"* affordance. | **Split, because the two trees are no longer the same case.** In the **Structure editor** the tree is still read-only and the affordance is repointed at the Site tab: the rule there is about ownership, and ownership has not moved. In the **Site view** there is no affordance, because that rail IS the editor. docs/15 §6 described the Plan view's copy of the tree as read-only with the same affordance from the chapter brief onward, which is the merge most of the way decided and pointed at a route that had been deleted underneath it. |
 | **DR-091 §11.90.3**, the tab strip | Seven rows: `Site`, `Rack`, `Schematic`, `Schedule`, `Structure`, `Locations`, `Plan`. | **Six rows**, `Locations` and `Plan` having become one view at `Locations`' position (DR-168 §11.167). **§11.90.4 is what permits it**, having declined to freeze the view set before M6; the table is corrected in place rather than superseded, because the ordering rule it states (by job, not by build order) is the thing it was ruled for and is unchanged. |
+
+### 12.34 Superseded by DR-179 (the `rp` extensions)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-015 §11.15.1** | The project, device and library extensions are `.rmpj`, `.rmdx` and `.rmda`. | **`.rppj`, `.rpdx` and `.rpda` are written**, and the three `rm` extensions still open (§11.178.3). |
+| **DR-015 §11.15.2**, as the product rename left it | `.rackpal` is still opened, and still saved in place. | **`.rackmate` is**, which is what the clause said before `0e2c5bb`; its text is restored. `.rackpal` is not accepted, since nothing wrote it (§11.178.1). |
+| **DR-096 §11.95.3** | Matching the extensions is deferred with M8 as the trigger; which letters is not ruled; `.rackmate` goes. | **Ruled and scheduled before MSIX-7** (§11.178.2), and `.rackmate` opens again (§11.178.3). |
 
 
 ## 13. Resolved §10 questions
