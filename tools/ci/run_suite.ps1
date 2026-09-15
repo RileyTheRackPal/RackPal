@@ -1398,7 +1398,7 @@ $SuiteFloors = @{
     # in either UI package because it reads the real menu bar, which only
     # the assembled app has, and scans all three `lib/` trees for a menu
     # path written into a string.
-    'rackpal_app'    = 1045
+    'rackpal_app'    = 1052
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
