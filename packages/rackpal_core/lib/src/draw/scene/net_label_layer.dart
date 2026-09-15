@@ -1022,7 +1022,8 @@ int netLabelNodeGapGu({
 String _pinKey(String deviceId, String portKey) => '$deviceId\u0000$portKey';
 
 /// One symbol's one edge — the scope a comb's lane count is measured over.
-String _edgeKey(String deviceId, SymbolSide side) => '$deviceId ${side.index}';
+String _edgeKey(String deviceId, SymbolSide side) =>
+    '$deviceId\u0000${side.index}';
 
 /// How many depths [ports]' pennants must be spread across so that no two
 /// on this edge overprint.
