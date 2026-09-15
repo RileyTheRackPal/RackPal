@@ -98,6 +98,11 @@ try {
     # made packages/rackpal_core/.../seed_registries.dart a fourth copy of
     # the same 8 hues and 55 dash/weight pairs.
     Invoke-Gate 'registry parity'     { python tools/registry_parity.py }
+    # The fourth gate that reads the corpus (#780, DR-095 section 11.94.9):
+    # no milestone before the current one may hold an exit clause that is
+    # neither discharged nor parked on a named later milestone by a ruling.
+    # It runs its own planted cases first, so a green run means it can fail.
+    Invoke-Gate 'milestone completeness' { python tools/milestone_gate.py }
     # DR-090 section 11.89.8. The only gate here that reads a font BINARY,
     # because it is the only one that can: the two backends emit IDENTICAL
     # ops for a missing glyph and differ solely in what a rasteriser does
