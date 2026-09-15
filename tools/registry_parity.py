@@ -43,6 +43,18 @@ reason. The parser below is whitespace- and format-insensitive (it reads
 balanced parentheses, not columns), so `dart format` cannot break it, and the
 id-set equality checks below make a parser that silently matched NOTHING fail
 rather than pass vacuously -- which is the only way a checker like this lies.
+
+THE DESCRIPTIVE HALF, HELD TO THE SPECIFICATION (DR-175). pal1_check.py carries
+no display name, tag, connector, direction or topology, so for those the seed
+is compared with the family table in docs/catalog/seed-devices.md section 4.4,
+which tabulates every one of them. Name, connector and tag must match exactly
+once markdown emphasis and code marks are removed. A Dir or Topo cell is read
+by its leading symbol or word, because the table writes prose around it. A cell
+that is only a dash states nothing and is skipped. Until DR-175 these fields
+were pinned only by the starter goldens, whose failure says to regenerate, which
+is how a typo would have shipped. The glyph is not compared: the seed stores
+none per family (DR-010 section 11.10.3). Neither file is the authority for
+this half; a disagreement is fixed in whichever of the two is wrong.
 """
 import importlib.util
 import os
@@ -206,7 +218,8 @@ def parse_seed(path):
     """(domains, families) from the Dart seed.
 
     domains  -> {id: {'hex', 'dash', 'weight'}}
-    families -> [{'id', 'domain', 'dash', 'weight'}] with dash/weight EFFECTIVE
+    families -> [{'id', 'domain', 'dash', 'weight', 'name', 'connector',
+                  'dir', 'topo', 'tag'}] with dash/weight EFFECTIVE
     """
     with open(path, encoding='utf-8') as fh:
         src = strip_comments(fh.read())
@@ -248,8 +261,96 @@ def parse_seed(path):
         weight = (int(named['weight']) if 'weight' in named
                   else domains[dom]['weight'])
         families.append({'id': fid, 'domain': dom, 'dash': dash,
-                         'weight': weight})
+                         'weight': weight,
+                         'name': parse_str(positional[1]),
+                         'connector': parse_str(positional[3]),
+                         'dir': positional[4].strip(),
+                         'topo': positional[5].strip(),
+                         'tag': parse_str(positional[6])})
     return domains, families
+
+# ------------------------------------------------------- specification table
+
+SPEC = os.path.join(ROOT, 'docs', 'catalog', 'seed-devices.md')
+SPEC_REL = 'docs/catalog/seed-devices.md'
+SPEC_HEADING = '### 4.4 '
+
+#: A Dir cell's leading symbol, and the seed direction it names. Section 4.4's
+#: key gives the wavy arrow as "logical flow riding a network", and the seed
+#: stores every family that uses it as bidirectional.
+DIR_LEADS = (('→', 'src'), ('←', 'snk'), ('↔', 'bi'), ('⤳', 'bi'),
+             ('passive', 'pas'))
+
+#: A Topo cell's leading word, and the seed topology it names. The table writes
+#: a multi-drop shared medium as BUS or as MD.
+TOPO_LEADS = (('P2P', 'p2p'), ('STAR', 'star'), ('MD', 'md'), ('BUS', 'md'))
+
+#: A cell that is only this states nothing, and is skipped rather than read.
+NOT_STATED = '—'
+
+
+def plain(cell):
+    """A table cell with markdown emphasis and code marks removed."""
+    return re.sub(r'[*`]', '', cell).strip()
+
+
+def lead(cell, leads):
+    """The seed value a Dir or Topo cell's leading symbol or word names.
+
+    None when the cell states nothing. Raises on a lead it does not know, so an
+    unreadable cell fails the gate rather than being skipped.
+    """
+    text = plain(cell)
+    if text == NOT_STATED:
+        return None
+    for token, value in leads:
+        if text.startswith(token):
+            return value
+    raise ValueError('unreadable cell %s' % ascii(text))
+
+
+def parse_spec(path):
+    """{family id: {'name', 'connector', 'dir', 'topo', 'tag'}} from section 4.4.
+
+    Columns are found by their HEADER, not their position. A missing section, a
+    header without one of the columns, a family listed twice and a section with
+    no rows all raise: a table this cannot read must fail the gate, never pass
+    it by comparing nothing.
+    """
+    with open(path, encoding='utf-8') as fh:
+        lines = fh.read().split('\n')
+    start = next((i for i, line in enumerate(lines)
+                  if line.startswith(SPEC_HEADING)), None)
+    if start is None:
+        raise ValueError('%s has no section 4.4' % SPEC_REL)
+    end = next((i for i in range(start + 1, len(lines))
+                if re.match(r'^#{1,3} ', lines[i])), len(lines))
+    wanted = (('name', 'display name'), ('connector', 'default connector'),
+              ('dir', 'dir'), ('topo', 'topo'), ('tag', 'tag'))
+    rows, cols = {}, None
+    for line in lines[start:end]:
+        if not line.lstrip().startswith('|'):
+            cols = None                       # a table ended
+            continue
+        cells = [c.strip() for c in line.strip().strip('|').split('|')]
+        low = [plain(c).lower() for c in cells]
+        if 'id' in low and 'display name' in low:
+            missing = [h for _, h in wanted if h not in low]
+            if missing:
+                raise ValueError('%s section 4.4 header lacks %s'
+                                 % (SPEC_REL, ', '.join(missing)))
+            cols = {k: low.index(h) for k, h in wanted}
+            continue
+        if cols is None or not cells[0].startswith('`'):
+            continue
+        fid = plain(cells[0])
+        if fid in rows:
+            raise ValueError('%s section 4.4 lists %s twice' % (SPEC_REL, fid))
+        rows[fid] = {k: (cells[i] if i < len(cells) else '')
+                     for k, i in cols.items()}
+    if not rows:
+        raise ValueError('%s section 4.4 yielded no family rows' % SPEC_REL)
+    return rows
 
 # ------------------------------------------------------------------ conversions
 
@@ -323,6 +424,39 @@ def check():
             drifts.append('family %-24s weight   %-16s -> %s'
                           % (f['id'], '%.2fx' % got_wt, '%.2fx' % want_wt))
 
+    # -- families against section 4.4: the descriptive half (DR-175) -------
+    # pal1_check.py carries none of these, so the specification table is what
+    # the seed is held to. Every drift here ends "(section 4.4)", and main()
+    # gives it different advice from a palette drift.
+    spec = parse_spec(SPEC)
+    for extra in sorted(seed_fam_ids - set(spec)):
+        drifts.append('family %s is in the Dart seed and not in %s '
+                      '(section 4.4)' % (extra, SPEC_REL))
+    for missing in sorted(set(spec) - seed_fam_ids):
+        drifts.append('family %s is in %s and not in the Dart seed '
+                      '(section 4.4)' % (missing, SPEC_REL))
+    for f in families:
+        row = spec.get(f['id'])
+        if row is None:
+            continue
+        for field in ('name', 'connector', 'tag'):
+            want = plain(row[field])
+            if want == NOT_STATED:
+                continue
+            if f[field] != want:
+                drifts.append('family %-24s %-9s %s -> %s (section 4.4)'
+                              % (f['id'], field, ascii(f[field]), ascii(want)))
+        for field, leads in (('dir', DIR_LEADS), ('topo', TOPO_LEADS)):
+            try:
+                want = lead(row[field], leads)
+            except ValueError as exc:
+                drifts.append('family %-24s %-9s %s (section 4.4)'
+                              % (f['id'], field, exc))
+                continue
+            if want is not None and f[field] != want:
+                drifts.append('family %-24s %-9s %s -> %s (section 4.4)'
+                              % (f['id'], field, f[field], want))
+
     return drifts, domains, families
 
 
@@ -333,7 +467,8 @@ def main():
         # A PARSE FAILURE IS A GATE FAILURE, never a silent pass. If the seed
         # file moves or its helper shape changes, this must go red and be
         # fixed -- a checker that quietly matches nothing is worse than none.
-        print('FAIL - could not read the Dart seed (%s):' % SEED_REL)
+        print('FAIL - could not read the Dart seed (%s) or the family '
+              'table in %s:' % (SEED_REL, SPEC_REL))
         print('  %s: %s' % (type(exc).__name__, exc))
         return 1
 
@@ -341,17 +476,27 @@ def main():
           % (len(domains), len(families), SEED_REL))
     if not drifts:
         print('PASS - the Dart seed matches tools/pal1_check.py on every '
-              'domain hue, family domain, effective dash and effective weight.')
+              'domain hue, family domain, effective dash and effective weight,')
+        print('       and %s section 4.4 on every family name, '
+              'connector, tag, direction and topology.' % SPEC_REL)
         return 0
-    print('FAIL - %d disagreement(s) with tools/pal1_check.py:' % len(drifts))
+    print('FAIL - %d disagreement(s):' % len(drifts))
     for d in drifts:
         print('  DRIFT  ' + d)
-    print()
-    print('tools/pal1_check.py is the authority (DR-010 section 11.10.1). Fix')
-    print('%s, not the authority -- unless the palette' % SEED_REL)
-    print('itself is changing, in which case change both in one commit, run')
-    print('tools/pal1_check.py and tools/palette_parity.py, and update')
-    print('docs/catalog/seed-devices.md sections 4.3/4.4 to match.')
+    descriptive = [d for d in drifts if d.endswith('(section 4.4)')]
+    if len(descriptive) < len(drifts):
+        print()
+        print('tools/pal1_check.py is the authority (DR-010 section 11.10.1). Fix')
+        print('%s, not the authority -- unless the palette' % SEED_REL)
+        print('itself is changing, in which case change both in one commit, run')
+        print('tools/pal1_check.py and tools/palette_parity.py, and update')
+        print('docs/catalog/seed-devices.md sections 4.3/4.4 to match.')
+    if descriptive:
+        print()
+        print('A drift ending (section 4.4) is the Dart seed disagreeing with the')
+        print('family table in %s (DR-175). Fix whichever' % SPEC_REL)
+        print('of the two is wrong, in one commit. Do NOT regenerate the starters')
+        print('to make this pass: that is how a typo would ship.')
     return 1
 
 

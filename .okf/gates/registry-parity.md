@@ -1,7 +1,7 @@
 ---
 type: CI Gate
 title: Registry parity — the code agrees with the palette authority
-description: Checks the seeded Dart registry against tools/pal1_check.py on hue, dash and weight. Gates the numeric half of the palette; deliberately blind to the descriptive half.
+description: Checks the seeded Dart registry against tools/pal1_check.py on hue, dash and weight, and against seed-devices.md section 4.4 on each family's name, connector, tag, direction and topology (DR-175).
 tags: [gate, ci, palette, registries]
 timestamp: 2026-07-28T00:00:00Z
 resource: tools/registry_parity.py
@@ -43,17 +43,31 @@ Verified by mutation, not by reading: it exits **1** on a missing seed file and 
 a parse error, and it catches a **single hex digit** of hue drift. A gate that
 silently passes when its input disappears is worse than no gate.
 
+# The descriptive half, since DR-175
+
+**It used to be blind to it, on purpose**, because `pal1_check.py` carries no
+`displayName`, `shortTag`, `defaultConnector`, `defaultDirection` or
+`defaultTopology`. Those fields were pinned only by the starter goldens, and a
+golden failure reads as *"regenerate the asset"*, which launders a typo into the
+shipped starters. `#81` recorded that as open work.
+
+**Now the seed is held to the family table in `docs/catalog/seed-devices.md`
+§4.4**, which tabulates every one of those fields for all 57 families. Name,
+connector and tag match exactly once markdown emphasis and code marks are
+removed; a Dir or Topo cell is read by its leading symbol or word; a cell that is
+only a dash states nothing and is skipped. The id sets must match both ways.
+**Neither file is the authority for this half**: a drift is fixed in whichever of
+the two is wrong, and the failure says not to regenerate the starters.
+
+Verified by mutation on copies before it landed: a changed tag, connector,
+direction or name, a removed row, an unreadable Dir cell and a missing §4.4
+heading each exit **1**; a name wrapped in bold still passes.
+
 # Its blind spot, stated
 
-It is deliberately blind to `displayName`, `shortTag`, `defaultConnector`,
-`defaultDirection`, `defaultTopology` and `glyph`, because `pal1_check.py`, the
-authority, carries none of those.
-
-**Those fields are pinned only by the starter goldens**, and a golden failure
-reads as *"regenerate the asset"*, which is what a developer would do, laundering
-a typo into the shipped starters. The numeric half of the palette is gated; the
-descriptive half has a tripwire whose signal invites the wrong fix. Recorded as
-open work rather than left as a surprise.
+The **glyph**, which the seed does not store per family (DR-010 §11.10.3), and
+every `SignalFamilyDef` field §4.4 does not tabulate, such as typical media and
+run lengths.
 
 # Citations
 
