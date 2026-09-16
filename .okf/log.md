@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-09-16 (fifty-fourth entry)
+
+* **Closed**: `#82` with ``adbd07af``, ruled as
+  [DR-181](/decisions/dr-181-a-family-may-override-its-glyph.md) in ``6663525``. A signal family
+  states which of its domain's shapes it draws; the seed sets it on the 26 that were drawing the
+  wrong one. **No version move**: it closes under `#786`.
+* **Update**: [DR-181](/decisions/dr-181-a-family-may-override-its-glyph.md) is built.
+* **Update**: [Registry parity](/gates/registry-parity.md) compares the glyph column, through the
+  same inheritance rule the renderer reads.
+* **Note**: **A NEAR-ENOUGH MAPPING IS HOW A CHANNEL GOES QUIET.** The geometry mapped a half-filled
+  circle to a hollow one and said so in a comment, which was true and harmless while nothing drew the
+  hollow circle. The day a family took that shape, two speaker types would have become one drawing.
+  A documented approximation is still a defect waiting for its second caller.
+* **Note**: **A COUNT NOTHING READS IS A COUNT NOBODY HAS.** The renderer had flagged every family
+  whose shape it could not verify since M2, a superset of the 26 that were actually wrong, and the
+  number was never read. G4 is about attention as well as data.
+* **Note**: **A POST-CONDITION SHOULD FAIL IN THE SAFE DIRECTION.** The script that inserted the 26
+  seed lines refused its own correct output, because the check popped indices that its own
+  back-to-front insertion had made stale. It cost one run; the same error the other way passes a
+  mangled file.
+
 ## 2026-09-16 (fifty-third entry)
 
 * **Closed**: `#80` with ``1445d547`` and ``5ae8180f``, ruled as

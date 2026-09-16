@@ -12086,7 +12086,91 @@ named in §11.179's own "what this does not rule" as owed with the build.
   key anywhere in the document, and a set one survives write, read and write again byte-identically.
 
 **Commits** (§8.8): `#80` `1445d547` (the model, the file, the commands and the settings row),
-`5ae8180f` (the printed cell and the `WIRING` column).
+`5ae8180f` (the printed cell and the `WIRING` column), `6b3ef339` (the derived documents and
+these records).
+
+#### 5.9.61 `#82`: a signal family may override its domain's glyph · `DR-181` · no version move
+
+2026-09-16. It closes under `#786` and moves no number.
+
+**DEMONSTRATED** by the suites at their floors, by `registry_parity.py` comparing the glyph column
+and failing a planted mutation with exit 1, by `glyph_coverage_check.py` reporting 17 path-backed
+codepoints where it reported 15, and by the four starters gaining exactly 26 keys each and nothing
+else.
+
+##### 5.9.61.1 The ticket said two families; it was twenty-six
+
+`#82` was filed over `audio.speaker_cv` and `power.bonding`, the two whose shape had nowhere to go
+at all: `audio.analog` and `pwr` carry THREE glyphs each against `SignalDomainDef`'s two slots.
+Measuring §4.3 against §4.4 found a wider fault with the same root. `signal_style.dart` drew only the
+domain's NATIVE glyph, so every family whose §4.4 glyph is another of its own domain's shapes was
+drawn with the native one: 2 in digital video, 4 in analog video, 2 in analog audio, 4 in digital
+audio, 4 in network, 7 in control, 2 in power, 1 in structure. Twenty-six of fifty-seven, in all
+eight domains.
+
+**THE NUMBER WAS ALREADY BEING REPORTED AND NOBODY HAD READ IT.**
+`SchematicScene.underGlyphedFamilyIds` has counted every family whose shape the renderer could not
+verify since M2, which is a superset of the 26. A count nothing reads is a count nobody has, which is
+the half of G4 that is about attention rather than about data.
+
+##### 5.9.61.2 The answer was never a selector
+
+`signal_style.dart`'s header has carried the argument since M2 and it is worth keeping: there is no
+`tier` field, and all three candidate proxies contradict docs/05 §6.4's own table. A weight override
+would make `video.hdmi.1_4` hollow where §6.4 prints ▲ for all three generations; a dash override
+would make `audio.spdif_coax` hollow where §6.4 prints the filled ◆; an id-namespace rule is true of
+`video.analog` and says nothing about the other seven. §4.4 gives every family a glyph OUTRIGHT, so
+DR-181 made it an authored fact. A fourth heuristic would have failed against the same table.
+
+`glyphIsUnderdetermined` is emptied of its seeded cases rather than retired: a family that states its
+shape is not a guess, and one in a multi-glyph domain that states none still inherits the native
+shape and is still unverifiable, which is what a registry entry a user adds later can be.
+
+##### 5.9.61.3 `◐` had been drawing as `○`, and that mattered only from today
+
+`family_glyph.dart` mapped U+25D0 CIRCLE WITH LEFT HALF BLACK to the HOLLOW CIRCLE, with a comment
+saying so and calling it *"the closest honest reading of not the native tier"*. That was true and
+harmless for exactly as long as nothing drew `○`. `audio.speaker_cv` draws `○` now, so seeding the
+26 without touching the geometry would have made a constant-voltage speaker run and a low-impedance
+one **the same picture** on every sheet. Those two are the pair on a job that must never be confused,
+which is the whole reason a glyph channel exists. A near-enough mapping is how a channel goes quiet
+with nothing reporting it.
+
+So the fill became three-valued, `◐` is a real half-disc, `○` is the hollow circle, and `⏚` is a new
+shape: a stem and three bars, because the trade draws an earth symbol for a bond and no hexagon
+variant says that.
+
+##### 5.9.61.4 The half tier is filled and NOT stroked, and that is a constraint
+
+`net_label_layer_test`'s `_isGlyphPath` tells a glyph from a pennant by one property: a pennant is
+the only path carrying BOTH a fill and a stroke. A half-disc outlined for crispness reads as a
+pennant to three scene tests, which would then count the wrong paths and still pass.
+`family_glyph_test` sweeps all three tiers for that property now rather than the two it knew about.
+
+##### 5.9.61.5 Evidence
+
+- The seed's 26 were generated from §4.4 rather than transcribed, under post-conditions that the
+  insertions are the ONLY change: taking the inserted lines back out must give the original file
+  byte for byte. The first draft of that check was wrong in the safe direction (it popped stale
+  indices) and cost a run, which is the direction a post-condition should fail in.
+- `registry_parity.py` re-derives the same 26 from the markdown independently and compares them
+  through `effectiveGlyph`'s own fallback, so it checks the inheritance rule as well as the values.
+- 19 gates green on each commit. Core floor re-measured 4799 → 4801; two tests were rewritten in
+  place and move no number, both of which recorded the gap this ruling closed.
+
+##### 5.9.61.6 What did not change
+
+- **`kSchemaVersion` does not move.** The key is absent when unset, so a document written before this
+  re-encodes byte for byte (CR-117). The starters changed because a document embeds its own
+  registries, which is the ruling's own "what this does not rule": a project saved earlier keeps
+  drawing its domain's shape and keeps reporting what it cannot verify.
+- **The glyph is still not a per-family discriminator.** docs/05's sentence about there being no set
+  of 50 shapes legible at 6 pt stands, and is what limits this: a domain has two or three shapes and
+  the family says which one it takes.
+- **The logical-flow direction is still owed a field**, and `topologyFree` is still absent from the
+  Dart class. Both are named in §11.180.1 and neither is in this.
+
+**Commits** (§8.8): `#82` `adbd07af` (the field, the seed's 26, the geometry and the gate).
 
 
 ---
