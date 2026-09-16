@@ -12170,7 +12170,77 @@ pennant to three scene tests, which would then count the wrong paths and still p
 - **The logical-flow direction is still owed a field**, and `topologyFree` is still absent from the
   Dart class. Both are named in §11.180.1 and neither is in this.
 
-**Commits** (§8.8): `#82` `adbd07af` (the field, the seed's 26, the geometry and the gate).
+**Commits** (§8.8): `#82` `adbd07af` (the field, the seed's 26, the geometry and the gate),
+`3f7bc1c7` (the derived documents and these records).
+
+#### 5.9.62 `#796`: the roadmap keeps its sizes and retires its week total · `DR-182` · no version move
+
+2026-09-16, with `#799`. It closes under `#786` and moves no number.
+
+**DEMONSTRATED** by roadmap §6 carrying a size for all 20 v1 epics against the board read on
+2026-09-16, and by the 19 gates, which is not nothing for a docs-only change: the corpus is under
+test and a docs commit has failed this gate set before.
+
+##### 5.9.62.1 Wrong by four to six times, and drifting between three documents
+
+§6 priced M0 through M5 at **29 to 44 weeks cumulative**. They are closed and took **about 7.3
+weeks**, 2026-07-18 to M5's close on 2026-09-07. The three offers that kept a number in some form
+were refused on that: a full re-cost in weeks, a caveat on 44 to 67, and leaving it alone.
+
+**The total had already drifted between the three places that stated it.** DR-029 added the Plan view
+and moved canon §12.7's totals to **53 to 80**; §6 never gained the row and went on saying **44 to
+67**; roadmap's own header said **42 to 65** for longer still. Three numbers, one cost, none of them
+measured, and this repository's standing rule about a second copy of a moving number had never been
+pointed at the cost. A relative ordering cannot drift that way because it has nothing to add up.
+
+##### 5.9.62.2 The durations that are not offered, and why that is a measurement
+
+DR-182 asks a closed milestone to show its actual duration. Five of six do not have a separable one,
+and saying so is the honest answer rather than the missing half of the job:
+
+- **These milestones did not run end to end.** M0's last two exit clauses were `VACUOUS` until M4's
+  work expired their reasons, so its criterion was met on 2026-08-27, long after its code shipped.
+  M3's clause 1 was confirmed by a drill on the same day. M1's two human clauses were discharged on
+  2026-07-27 and 2026-07-28, inside the first fortnight.
+- **THE BOARD'S OWN `ClosedDate` CANNOT SUPPLY THEM EITHER, AND IT LOOKS LIKE IT CAN.** M0, M1 and
+  M3 all carry **2026-08-28**, which is the day every work item migrated from Issue/Task to
+  Story/Chapter (§1). That is a migration artefact wearing a date. Reading six durations off that
+  column would have produced three confident wrong numbers in a section whose whole point is that a
+  confident wrong number is worse than none. M2 (2026-08-01), M4 (2026-09-02) and M5 (2026-09-07)
+  agree with their evidence here and are used.
+
+The clean figure is the span, and it is the one that matters. The Plan view is the second data point
+and agrees: `L`, opened the day M5 closed, **13 of its 14 stories closed in nine days**.
+
+##### 5.9.62.3 Every v1 epic sized, and what the sizes are not
+
+Twenty epics, each with a size. The Plan view had one in §4 and no row in §6; nine had none anywhere.
+Each is argued from its stories, and **the two that are not decomposed say so**: EXP-A and DOC-A are
+sized from their rulings' descriptions, which is weaker evidence than stories and should not be able
+to hide behind the same letter.
+
+**THE LETTERS ARE NOT A FUNCTION OF ANY COUNT.** M1 is `L` with 9 stories, M5 is `M` with 20. The
+counts are printed beside the letters so a reader sees that rather than trusting it, and so a future
+re-size argues with evidence. **M6 is left at `M` with 33 stories**, more than either: DR-182
+authorises sizing the epics that have none and refuses a re-cost, so the tension goes on the row
+rather than into an unruled change.
+
+##### 5.9.62.4 What else the change had to touch
+
+- **`#799`**: §4's M4 heading read `M` against §6's `L`, and had since DR-015. The document sized one
+  milestone two ways for a month.
+- §4's "how to read it" line carried the week range per letter (`S` ≈ 2–3, and so on) and follows the
+  withdrawal; docs/00's cost paragraph follows it too; canon §12.7 gains a note that its week columns
+  are withdrawn and keeps the table as the record of what four rulings did to an estimate.
+- The two levers are re-read against no total. **Lever 1 was deferred rather than pulled**: M1 closed
+  with its goal line *"and it ships to real users"* unmet, and that clause is a story under M8 now.
+  **Lever 2 was taken, by the mechanism it named**: AC-052's provenance gate set the catalogue nearer
+  40 than 80, which is what its own Cost column predicted.
+- One count fixed in passing because it sits inside the paragraph lever 2 is about: docs/09 said "the
+  50 seeded templates" against a catalogue of 51, and now names the test that holds the number.
+
+**Commits** (§8.8): `#796` `1f0c5bb1` (roadmap §6, §4's heading and scale, docs/00, the canon §12.7
+note).
 
 
 ---

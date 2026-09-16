@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-09-16 (fifty-fifth entry)
+
+* **Closed**: `#796` with `#799` in ``1f0c5bb1``, ruled as
+  [DR-182](/decisions/dr-182-sizes-stay-and-the-week-total-retires.md) in ``6663525``. The roadmap
+  states cost as relative sizes over all twenty v1 epics; the week total is withdrawn rather than
+  re-estimated. **No version move**: it closes under `#786`.
+* **Update**: [DR-182](/decisions/dr-182-sizes-stay-and-the-week-total-retires.md) is built.
+* **Note**: **AN ESTIMATE IS A MOVING NUMBER AND NOBODY APPLIED THE RULE TO IT.** This repository has
+  a standing rule against a second copy of a moving number and has corrected test floors, analyzer
+  pins and gate counts under it for months. The project's own cost sat in three documents saying
+  three different things, and the rule had never been pointed at it.
+* **Note**: **A COLUMN THAT LOOKS LIKE THE ANSWER.** The board carries a `ClosedDate` per epic, which
+  is exactly the field a per-milestone duration wants, and for three of six milestones it holds the
+  day the whole board migrated between work-item types. Reading it would have produced three
+  confident wrong numbers in the one section written because a confident wrong number is worse than
+  none.
+* **Note**: **NOT EVERY QUESTION HAS A SEPARABLE ANSWER.** Five of six closed milestones have no
+  duration of their own, because one milestone's exit clauses were discharged by another
+  milestone's work. Saying so is the measurement; inventing six numbers would have been the same
+  error the ruling removed, one level down.
+
 ## 2026-09-16 (fifty-fourth entry)
 
 * **Closed**: `#82` with ``adbd07af``, ruled as
