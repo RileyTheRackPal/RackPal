@@ -77,7 +77,7 @@ import 'package:rackpal_core/src/commands/label_key.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/entity_meta.dart';
 import 'package:rackpal_core/src/model/enums.dart'
-    show LifecycleStatus, MountSurface, RuNumbering, Wall;
+    show LifecycleStatus, MountSurface, RuNumbering, Wall, WiringStandard;
 import 'package:rackpal_core/src/model/link.dart';
 import 'package:rackpal_core/src/model/location.dart';
 import 'package:rackpal_core/src/model/outlet.dart';
@@ -776,6 +776,25 @@ abstract final class LinkField {
     touches: EpochMask.wires | EpochMask.meta,
   );
 
+  /// This cable's own pair-to-pin standard, when it differs from the
+  /// project's (DR-180 §11.179.2).
+  ///
+  /// `WiringStandard?` AND NOT A THREE-VALUE ENUM: null is "the job's",
+  /// which is a different fact from either standard and is the ordinary
+  /// case, since one entry per job replaces one per drop. Clearing the
+  /// cell hands the cable back to the project rather than declaring
+  /// anything about it.
+  ///
+  /// `wires | meta` like every other fact the schedule prints in this
+  /// cable's row.
+  static final wiringStandard = EntityField<Link, WiringStandard?>(
+    access: EntityAccess.link,
+    key: 'wiringStandard',
+    get: (l) => l.wiringStandard,
+    set: (l, v) => l.wiringStandard = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
   // ── the other two lengths (AC-024, M3-D/2) ─────────────────────────
   // THREE FIELDS, THREE COLUMNS, THREE READERS: takeoff, pull sheet,
   // as-built. They are three rows here for the same reason they are
@@ -858,6 +877,7 @@ abstract final class LinkField {
     roughInStatus,
     notes,
     terminatedLength,
+    wiringStandard,
     routedLength,
     cutLength,
     test,

@@ -170,6 +170,7 @@ export 'src/derived/template_usage.dart';
 export 'src/derived/totals.dart';
 export 'src/derived/underlay_removal.dart';
 export 'src/derived/unpinned_carriers.dart';
+export 'src/derived/wiring_standard.dart';
 export 'src/document_controller.dart';
 export 'src/draw/bounds_canvas.dart';
 export 'src/draw/brand.dart';

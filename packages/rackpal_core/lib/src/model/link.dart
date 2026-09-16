@@ -5,7 +5,8 @@
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/conductor.dart';
 import 'package:rackpal_core/src/model/entity_meta.dart';
-import 'package:rackpal_core/src/model/enums.dart' show LifecycleStatus;
+import 'package:rackpal_core/src/model/enums.dart'
+    show LifecycleStatus, WiringStandard;
 import 'package:rackpal_core/src/model/service.dart';
 import 'package:rackpal_core/src/model/structure_body.dart'
     show StructureOrigin;
@@ -148,6 +149,7 @@ final class Link {
     this.slack,
     this.pathwayId,
     this.crossover,
+    WiringStandard? wiringStandard,
     LifecycleStatus lifecycleStatus = LifecycleStatus.new_,
     int? spliceCount,
     RoughInStatus roughInStatus = RoughInStatus.planned,
@@ -171,6 +173,7 @@ final class Link {
        _routedLength = routedLength,
        _cutLength = cutLength,
        _terminatedLength = terminatedLength,
+       _wiringStandard = wiringStandard,
        _test = test,
        _installedBy = installedBy,
        _terminatedAt = terminatedAt,
@@ -361,6 +364,30 @@ final class Link {
   Len? get terminatedLength => _terminatedLength;
   @internal
   set terminatedLength(Len? v) => _terminatedLength = v;
+
+  /// This cable's own pair-to-pin standard, when it differs from the
+  /// project's (DR-180 §11.179.2).
+  ///
+  /// **NULL MEANS "WHATEVER THE JOB SAYS", NOT "UNKNOWN FOR THIS CABLE".**
+  /// `effectiveWiringStandard` reads this first and falls back to
+  /// `ProjectSettings.wiringStandard`, so an ordinary run carries nothing
+  /// and a whole job is typed once. A value here that DIFFERS from the
+  /// project's is what turns `T5.01` on (§11.179.4), which is also why it
+  /// is stored rather than derived from the termination type: an exception
+  /// is a decision somebody made, not a shape of the hardware.
+  ///
+  /// It is meaningless on a cable that has no 8P8C end, and
+  /// `wiringStandardApplies` is the one place that decides which those
+  /// are.
+  ///
+  /// IT SITS IN THE CONVERTED REGION, not beside [crossover] where it
+  /// first landed, because `LinkField.wiringStandard` writes it: AC-013
+  /// makes a table-written property a public getter and an `@internal`
+  /// setter, so the undo stack is the only way in.
+  WiringStandard? _wiringStandard;
+  WiringStandard? get wiringStandard => _wiringStandard;
+  @internal
+  set wiringStandard(WiringStandard? v) => _wiringStandard = v;
 
   // ─────────────────────────────────────────────────────────────────
   // AND THE OTHER TWO OF AC-024'S THREE (M3-D/2).

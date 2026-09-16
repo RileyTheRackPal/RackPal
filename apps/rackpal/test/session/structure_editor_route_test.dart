@@ -487,7 +487,13 @@ void main() {
 
   group('the as-built columns (M3-J/3, DR-020 §11.19.2(5))', () {
     /// A body with [count] drops in one room, through the real commands.
-    (RackDocument, List<Uuid>) job(int count) {
+    ///
+    /// [media] IS THE DROP LINE'S OWN TOKEN, so a coax fixture is a coax
+    /// drop rather than a Cat6 one with its media reassigned afterwards:
+    /// the planner picks the terminations to match, and a hand-edited
+    /// fixture would keep keystone ends on a cable the test needs to have
+    /// none (DR-180 §11.179.3).
+    (RackDocument, List<Uuid>) job(int count, {String media = 'Cat6'}) {
       final doc = _project(rooms: [('Living Room', 'LR')]);
       AddStructureCommand(
         title: 'Rough-In',
@@ -496,7 +502,7 @@ void main() {
         actor: 'test',
       ).apply(doc);
       final parsed =
-          parseDropLine('Living Room: ${count}x Cat6') as DropLineParsed;
+          parseDropLine('Living Room: ${count}x $media') as DropLineParsed;
       final plan =
           planDropLine(doc: doc, line: parsed, now: _when, actor: 'test')
               as DropLinePlanReady;
@@ -747,6 +753,72 @@ void main() {
         ),
       ]);
       expect(doc.links[ids.first]!.structureOrigin!.terminationField, isNull);
+    });
+
+    testWidgets("WIRING writes this cable's override, and the dash hands it "
+        'back to the job (DR-180 §11.179.2)', (tester) async {
+      final (doc, ids) = job(1);
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final edit = buildStructureEditAction(
+        controller: built.session.services.session.controller,
+      );
+
+      expect(doc.links[ids.first]!.wiringStandard, isNull);
+      expect(
+        edit([
+          StructureCellEdit(
+            linkId: ids.first,
+            column: StructureColumnId.wiringStandard,
+            value: wiringStandardLabel(WiringStandard.t568a),
+          ),
+        ]),
+        isNull,
+      );
+      expect(doc.links[ids.first]!.wiringStandard, WiringStandard.t568a);
+
+      // THE DASH IS NOT THIS COLUMN'S UNKNOWN. It clears the override so
+      // the cable follows the project again, which is a different
+      // sentence from the one the two termination columns write.
+      edit([
+        StructureCellEdit(
+          linkId: ids.first,
+          column: StructureColumnId.wiringStandard,
+          value: kUnknownCell,
+        ),
+      ]);
+      expect(doc.links[ids.first]!.wiringStandard, isNull);
+    });
+
+    testWidgets('and it REFUSES a cable with no 8P8C end, by name, rather '
+        'than storing an override nothing will read (§11.179.3)', (
+      tester,
+    ) async {
+      // A REAL COAX DROP, planned by the same planner, rather than a Cat6
+      // one with its media reassigned. The terminations come with it: a
+      // hand-edited fixture would have left the keystone ends in place
+      // and qualified the cable through a different clause, which is a
+      // test passing for the wrong reason.
+      final (doc, ids) = job(1, media: 'RG6');
+
+      final built = await buildTestApp(measurer, document: doc);
+      await tester.pumpWidget(built.app);
+      await tester.pumpAndSettle();
+      final edit = buildStructureEditAction(
+        controller: built.session.services.session.controller,
+      );
+
+      final refusal = edit([
+        StructureCellEdit(
+          linkId: ids.first,
+          column: StructureColumnId.wiringStandard,
+          value: wiringStandardLabel(WiringStandard.t568b),
+        ),
+      ]);
+      expect(refusal, contains('no 8P8C end'));
+      expect(refusal, contains(doc.links[ids.first]!.designator));
+      expect(doc.links[ids.first]!.wiringStandard, isNull);
     });
 
     testWidgets('RACK TERM writes the RACK end, and does not refuse itself '

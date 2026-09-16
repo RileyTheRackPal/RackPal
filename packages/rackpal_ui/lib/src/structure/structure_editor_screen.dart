@@ -2179,8 +2179,39 @@ List<String>? structureCellChoices(
   // 48, and the row is already there to be corrected.
   StructureColumnId.landingPort =>
     row == null ? null : landingPortCellOptions(doc, row),
+  // THE SECOND MENU THAT DIFFERS PER ROW, and for a different reason than
+  // `PORT`'s. That one varies in CONTENT; this one is either the same
+  // three entries or nothing at all, because §11.179.3 says a cable shows
+  // and edits a standard only where one can be true. A coax run gets no
+  // dropdown, and the cell says `— NO RJ45 —` instead of offering a
+  // choice the write path would only refuse.
+  //
+  // THE BATCH BAR (`row == null`) GETS THE FULL MENU. It is aimed at a
+  // selection rather than at a row, so it cannot ask this question here;
+  // `_wiringStandard` asks it per cable on the way in and names any row
+  // it refuses.
+  //
+  // [kUnknownCell] FIRST, meaning "follow the job", on the two
+  // termination arms' precedent: the entry that clears opens the list.
+  StructureColumnId.wiringStandard =>
+    row != null && !_rowTakesAWiringStandard(doc, row)
+        ? null
+        : <String>[
+            kUnknownCell,
+            ...WiringStandard.values.map(wiringStandardLabel),
+          ],
   _ => null,
 };
+
+/// Does this ROW's cable have an 8P8C end (DR-180 §11.179.3)?
+///
+/// A row whose link is gone answers false rather than throwing: the table
+/// can outlive a deletion by a frame, and a dropdown is not the place to
+/// find that out.
+bool _rowTakesAWiringStandard(RackDocument doc, ScheduleEntry row) {
+  final link = doc.links[row.linkId];
+  return link != null && wiringStandardApplies(doc, link);
+}
 
 class _DataRow extends StatelessWidget {
   const _DataRow({
@@ -2348,9 +2379,25 @@ class _DataRow extends StatelessWidget {
             onFocused: () => onCaret((row.linkId, id)),
           );
         }
+      } else if (id == StructureColumnId.wiringStandard && options == null) {
+        // NO MENU MEANS NO 8P8C END (DR-180 §11.179.3), and the cell then
+        // says so rather than becoming a text box. The generic `else`
+        // below builds a `_TextCell` for any editable column with no
+        // options, which is right for `NOTES` and would be a trap here:
+        // it would invite somebody to type a standard onto a speaker run,
+        // and `_wiringStandard` would refuse every keystroke's worth of
+        // it.
+        return Text(
+          text,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        );
       } else if (id == StructureColumnId.landing) {
         // ═══════════════════════════════════════════════════════════════
-        // THE ONLY CELL WHOSE MENU DIFFERS PER ROW (DR-071, DR-074)
+        // THE CELL WHOSE MENU DIFFERS PER ROW IN CONTENT (DR-071, DR-074)
         // ═══════════════════════════════════════════════════════════════
         // A landed row used to show TEXT, because `buildBindEndpointCommand`
         // refuses an end that is already landed and a dropdown whose every

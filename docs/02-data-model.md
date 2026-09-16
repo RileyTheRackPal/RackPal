@@ -237,6 +237,10 @@ final class ProjectSettings {
   MediaTypeId defaultNetworkMedia;
   int defaultRackHeightU;                  // 12
   int defaultLineVolts;                    // 120 — seeds new Circuits. CR-039.
+  WiringStandard? wiringStandard;          // t568a|t568b — THE JOB'S. Null is
+                                           // unknown, never an assumed t568b,
+                                           // and the key is absent when unset
+                                           // (G4, CR-114). DR-180 §11.179.2.
 }
 ```
 
@@ -621,6 +625,14 @@ final class Link {                        // ONE PHYSICAL CABLE. One W###. One s
   Permille? slack;
   Uuid? pathwayId;                        // → Pathway
   CrossoverKind? crossover;               // straight|nullModem|fiberPolarityAB
+  WiringStandard? wiringStandard;         // t568a|t568b — THIS CABLE'S, when it
+                                          // differs from the job's. Null means
+                                          // "whatever the project says", the
+                                          // ordinary case: one entry per job
+                                          // replaces one per drop. Shown only
+                                          // on a four-pair or RJ45 cable, and a
+                                          // value differing from the project's
+                                          // is what turns T5.01 on. DR-180.
 
   LifecycleStatus lifecycleStatus;        // existing|new|future|removed|designIntent — the
                                           // same five values. CR-064, CR-065, AC-018.
@@ -645,7 +657,14 @@ final class Conductor {
   final String role;                      // "" | "Y" | "Pb" | "Pr" | "L+" | "L−" | "+" | "−"
   final Endpoint from, to;                // EXACTLY two ends. CR-014.
   final int? pairNumber;
-  final String? colorCode;                // "blue/white" — PRINTS on the termination schedule
+  final String? colorCode;                // "blue/white" — PRINTS on the termination schedule.
+                                          // THE PAIR COLOUR INSIDE THE SHEATH, and nothing
+                                          // else. This document's own worked example stored
+                                          // "T568B" here until DR-180 §11.179, which is one
+                                          // field asked to hold two facts; the wiring standard
+                                          // is now Link.wiringStandard and the example says
+                                          // "blue/white". The exporter never re-reads a stored
+                                          // colour to decide it means a standard (G4).
 }
 
 sealed class Endpoint { }                                        // AC-018
@@ -1036,7 +1055,8 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
                      "reason": "Every amp in this job sits on a shelf.",
                      "severity": "advisory" }
       },
-      "sheetNumbering": "simple"
+      "sheetNumbering": "simple",
+      "wiringStandard": "t568b"
     },
 
     "locations": {
@@ -1407,7 +1427,7 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
       "0190e3c1-cf80-75bb-96ac-d3b7ef294cab": {
         "breakouts": [],
         "conductors": [
-          { "colorCode": "T568B", "pairNumber": null, "role": "",
+          { "colorCode": "blue/white", "pairNumber": 1, "role": "",
             "from": { "portId": "5c1a9e34-77b2-5c68-9f31-0a4b6d2e8c15", "type": "port" },
             "to":   { "description": "LR TV wall plate, north wall, 60 in AFF",
                       "intendedTermination": "keystone",

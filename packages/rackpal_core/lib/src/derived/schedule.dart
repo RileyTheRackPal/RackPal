@@ -67,17 +67,23 @@
 // ═════════════════════════════════════════════════════════════════════
 // WHAT IS DELIBERATELY NOT DERIVED — AND WHY EACH IS A GAP, NOT A BUG
 // ═════════════════════════════════════════════════════════════════════
-//  * **T568A/B.** §3.3's `TERM` column wants it and NOTHING IN THE MODEL
-//    STATES IT. The corpus's own worked example overloads a different
-//    field with it — docs/02-data-model.md:1377 and
-//    `byte_roundtrip_test.dart` both store `"colorCode": "T568B"` on a
-//    `Conductor`, whose doc comment says the field is the pair colour
-//    inside the sheath, and whose §3.3 column is `CONDUCTOR / NOTES`. One
-//    field is being asked to hold two facts. This file prints
-//    `Conductor.colorCode` EXACTLY AS STORED in the conductor column and
-//    never re-reads a stored string to decide it means a wiring standard;
-//    guessing from the shape of a value is the fabrication G4 forbids.
-//    A `Link.wiringStandard` field is owed.
+//  * **T568A/B WAS HERE AND IS NOT ANY MORE** (DR-180 §11.179, `#80`).
+//    This bullet read "§3.3's `TERM` column wants it and NOTHING IN THE
+//    MODEL STATES IT", and it was right for four milestones. The model
+//    states it now: a project-wide `ProjectSettings.wiringStandard` with
+//    an optional `Link.wiringStandard` override, and
+//    [ScheduleEntry.wiringStandard] carries what
+//    `effectiveWiringStandard` resolved for this cable.
+//    WHAT DID NOT CHANGE is the part that made the gap a gap: the
+//    corpus's own worked example overloads a DIFFERENT field with it —
+//    docs/02-data-model.md:1377 and `byte_roundtrip_test.dart` both store
+//    `"colorCode": "T568B"` on a `Conductor`, whose doc comment says the
+//    field is the pair colour inside the sheath, and whose §3.3 column is
+//    `CONDUCTOR / NOTES`. This file still prints `Conductor.colorCode`
+//    EXACTLY AS STORED in the conductor column and still never re-reads a
+//    stored string to decide it means a wiring standard. The `TERM`
+//    column now has a real field to print, so guessing from the shape of
+//    a value is not merely forbidden (G4) but unnecessary.
 //  * **`SignalFamilyDef.shortTag`.** §3.2's `TYPE` column asks for
 //    "domain tag + family `shortTag`". THE FIELD NOW EXISTS — DR-010
 //    §11.10.3 added it, and the seeded registry populates it on all 55
@@ -113,10 +119,11 @@ import 'package:rackpal_core/src/derived/jacket_color_resolution.dart';
 import 'package:rackpal_core/src/derived/link_class.dart';
 import 'package:rackpal_core/src/derived/plan_length.dart';
 import 'package:rackpal_core/src/derived/totals.dart' show Rollup;
+import 'package:rackpal_core/src/derived/wiring_standard.dart';
 import 'package:rackpal_core/src/model/conductor.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/enums.dart'
-    show LifecycleStatus, TerminationType, UnitSystem;
+    show LifecycleStatus, TerminationType, UnitSystem, WiringStandard;
 import 'package:rackpal_core/src/model/link.dart';
 import 'package:rackpal_core/src/model/location.dart';
 import 'package:rackpal_core/src/model/outlet.dart';
@@ -578,6 +585,7 @@ final class ScheduleEntry {
     // keep the lint's required-first order (DR-070 §11.69).
     this.boxless = false,
     this.estimateOrigin,
+    this.wiringStandard,
   });
 
   final Uuid linkId;
@@ -697,6 +705,21 @@ final class ScheduleEntry {
   /// both RG6 terminations and the model states which one this is or it
   /// does not.
   final TerminationType? terminationType;
+
+  /// What this cable is wired to, ALREADY RESOLVED (DR-180 §11.179.2).
+  ///
+  /// `effectiveWiringStandard` answered this: the cable's own override,
+  /// else the project's, else null. Null carries two distinct facts that
+  /// no printed cell needs to tell apart, which is why one field holds
+  /// both: nobody has stated a standard, or this is not a cable a
+  /// standard is a fact about (a coax run, a speaker run). Either way
+  /// nothing prints, which is G4's answer and the ruling's.
+  ///
+  /// RESOLVED HERE RATHER THAN AT THE CELL because §11.179.3's "only
+  /// where it can be true" test reads the whole document (a port's
+  /// connector is a template join), and a projection that re-derived it
+  /// per cell would ask that question once per column per row.
+  final WiringStandard? wiringStandard;
 
   /// `Link.notes` — the USER'S words, kept strictly apart from
   /// [derivedNotes] so a sheet can never present one as the other.
@@ -853,16 +876,35 @@ final class ScheduleEntry {
     return '${convention ?? kUnknownCell}→$pulled';
   }
 
-  /// §3.3 column 11 — `PUNCHDOWN A03`, `KEYSTONE`.
+  /// §3.3 column 11 — `PUNCHDOWN A03 T568B`, `KEYSTONE T568A`, `F BARREL`.
   ///
   /// Assembled from what the model states: the termination type on the
-  /// home run's origin (or the field end's intent) and the near end's
-  /// port designator, which on a punchdown IS the punch position. T568A/B
-  /// is NOT here; see the file header.
+  /// home run's origin (or the field end's intent), the near end's port
+  /// designator, which on a punchdown IS the punch position, and the
+  /// wiring standard (DR-180 §11.179.4).
+  ///
+  /// THE STANDARD GOES LAST, BEHIND THE PUNCH POSITION, and that is a
+  /// choice rather than an accident. `PUNCHDOWN A03` is one thing an
+  /// installer reads at the panel: the type and the hole. Putting the
+  /// standard between them splits a pair of words that belong together to
+  /// satisfy a literal reading of "beside the termination type", which
+  /// the ruling meant as "in this cell" rather than as an ordering.
+  ///
+  /// IT PRINTS ONLY BESIDE A TERMINATION THAT LANDS PAIRS ON PINS
+  /// ([kPairOrderTerminations]). [wiringStandard] is already null for a
+  /// cable that has no 8P8C end at all, so this second test catches the
+  /// remaining case: a genuinely four-pair run whose recorded termination
+  /// at THIS end is a euroblock or a binding post. `EUROBLOCK T568B` is a
+  /// sentence about hardware that has no pins, which is the fabrication
+  /// §11.179.3 exists to prevent, one end down.
   String get terminationCell {
     final parts = <String>[
       if (terminationType != null) terminationLabel(terminationType!),
       if (nearEnd.portDesignator != null) nearEnd.portDesignator!,
+      if (wiringStandard != null &&
+          terminationType != null &&
+          kPairOrderTerminations.contains(terminationType))
+        wiringStandardLabel(wiringStandard!),
     ];
     return parts.isEmpty ? kUnknownCell : parts.join(' ');
   }
@@ -1206,6 +1248,7 @@ ScheduleEntry _row(RackDocument doc, Link link) {
     crossover: link.crossover,
     terminationType: _terminationOf(link, first),
     notes: _trimToNull(link.notes),
+    wiringStandard: effectiveWiringStandard(doc, link),
   );
 }
 

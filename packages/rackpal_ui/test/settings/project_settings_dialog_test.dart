@@ -161,6 +161,71 @@ void main() {
     });
   });
 
+  group("DR-180: the job's wiring standard", () {
+    // THE CASE THIS GROUP EXISTS FOR is the LAST one: getting back to
+    // unset. A three-item dropdown was chosen over a two-item one for
+    // exactly that, so a test that only proved a standard can be PICKED
+    // would pass just as happily against the one-way door the user turned
+    // down.
+
+    Future<void> pick(WidgetTester tester, String item) async {
+      await tester.tap(find.byKey(kWiringStandardSettingKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(item).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('an untouched project reads "Not stated" rather than showing '
+        'an empty box or assuming T568B', (tester) async {
+      final doc = _doc();
+      await _open(tester, doc);
+      await tester.scrollUntilVisible(
+        find.byKey(kWiringStandardSettingKey),
+        120,
+        scrollable: _list,
+      );
+      expect(
+        find.descendant(
+          of: find.byKey(kWiringStandardSettingKey),
+          matching: find.text(kNotStatedLabel),
+        ),
+        findsOneWidget,
+      );
+      expect(doc.settings.wiringStandard, isNull);
+    });
+
+    testWidgets('picking one writes it', (tester) async {
+      final doc = _doc();
+      final ran = await _open(tester, doc);
+      await tester.scrollUntilVisible(
+        find.byKey(kWiringStandardSettingKey),
+        120,
+        scrollable: _list,
+      );
+      await pick(tester, 'T568B');
+
+      expect(doc.settings.wiringStandard, WiringStandard.t568b);
+      expect(ran, hasLength(1));
+      final cmd = ran.single as SetProjectSettingCommand<WiringStandard?>;
+      expect(cmd.field.key, ProjectSettingFields.wiringStandard.key);
+    });
+
+    testWidgets('and "Not stated" takes it BACK OFF, which is the whole '
+        'reason unset is an item rather than a blank', (tester) async {
+      final doc = _doc()..settings.wiringStandard = WiringStandard.t568a;
+      final ran = await _open(tester, doc);
+      await tester.scrollUntilVisible(
+        find.byKey(kWiringStandardSettingKey),
+        120,
+        scrollable: _list,
+      );
+      await pick(tester, kNotStatedLabel);
+
+      expect(doc.settings.wiringStandard, isNull);
+      expect(ran, hasLength(1));
+    });
+  });
+
   group('an IdFormat is refused rather than stored', () {
     testWidgets('a pattern the parser cannot read shows ITS error and emits '
         'nothing', (tester) async {

@@ -48,6 +48,7 @@ import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
 import 'package:rackpal_core/src/derived/link_class.dart';
 import 'package:rackpal_core/src/derived/location_tree.dart';
 import 'package:rackpal_core/src/derived/schedule.dart';
+import 'package:rackpal_core/src/derived/wiring_standard.dart';
 import 'package:rackpal_core/src/model/conductor.dart' show PortEndpoint;
 import 'package:rackpal_core/src/model/enums.dart'
     show TerminationType, UnitSystem;
@@ -353,6 +354,19 @@ enum StructureColumnId {
   // what a person hit. So [landing] still allocates and sixty drops stay
   // cheap; this column overrides ONE of them afterwards.
   landingPort,
+
+  // DR-180 §11.179.2, `#80`. THIS CABLE'S OWN pair-to-pin standard, and
+  // only its own: a blank cell means "whatever the job says", not
+  // "unknown". The job's value is a project setting and the RESOLVED
+  // answer is what the printed `TERM` cell carries (§11.179.4), so a
+  // column that showed the effective standard would be a second place to
+  // read one fact and, worse, a control whose every use writes an
+  // override. Picking the value already showing would pin this cable to a
+  // standard the project might later change away from, silently.
+  //
+  // LAST, like the three above it: `values` order is the order `⚙
+  // Columns` presents, and appending is how a reader sees the history.
+  wiringStandard,
 }
 
 /// §4.1's eight, in the wireframe's own left-to-right order.
@@ -411,6 +425,12 @@ const List<StructureColumnId> kStructureOptionalColumns = <StructureColumnId>[
   // right, so a column carrying it by default would spend width teaching
   // people a fact the classifier already knows.
   StructureColumnId.linkClass,
+  // OPTIONAL, AND ON MOST JOBS IT STAYS OFF (DR-180 §11.179.2). The
+  // ruling's whole trade is one entry per JOB replacing one per drop, so
+  // the ordinary project states a standard in settings and never opens
+  // this column. It exists for the run that really differs, which is also
+  // the run `T5.01` will be about.
+  StructureColumnId.wiringStandard,
 ];
 
 /// The as-built set, as one thing to switch on (DR-020 §11.19.2(5)).
@@ -468,6 +488,10 @@ String structureColumnHeader(StructureColumnId id) => switch (id) {
   StructureColumnId.linkClass => 'CLASS',
   StructureColumnId.landing => 'LANDS ON',
   StructureColumnId.landingPort => 'PORT',
+  // NOT `T568`, WHICH NAMES THE STANDARD RATHER THAN THE QUESTION. The
+  // cell answers "how is this one wired", and a header reading `T568`
+  // over a column of dashes would look like a field nobody filled in.
+  StructureColumnId.wiringStandard => 'WIRING',
 };
 
 /// Points, at the same scale `kPullSheetColumns` uses, so the editor and
@@ -502,6 +526,9 @@ double structureColumnWidth(StructureColumnId id) => switch (id) {
   // because it carries two identifiers rather than one.
   StructureColumnId.landing => 104,
   StructureColumnId.landingPort => 64,
+  // Sized for `— NO RJ45 —`, which is the widest thing this cell says.
+  // `T568A` and the dash both fit in half of it.
+  StructureColumnId.wiringStandard => 76,
 };
 
 /// Whether a person can type into this column.
@@ -599,8 +626,26 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   StructureColumnId.landing => true,
   StructureColumnId.landingPort => true,
 
+  // THE CABLE'S OWN WIRING STANDARD (DR-180 §11.179.2, board `#80`).
+  // Editable per COLUMN and refused per ROW: §11.179.3 says a cable shows
+  // and edits one only where it can be true, and whether a given run has
+  // an 8P8C end is a fact about that run. `structureCellChoices` is where
+  // that per-row answer lives, exactly as it does for `LANDS ON`.
+  StructureColumnId.wiringStandard => true,
+
   _ => false,
 };
+
+/// What the `WIRING` cell says for a cable a standard is not a fact about
+/// (DR-180 §11.179.3).
+///
+/// **NOT [kUnknownCell].** A dash in this column already means something
+/// else and something editable: "this cable states no override, so it
+/// follows the job". A coax run is not an unfilled cell, it is a cable
+/// with no pairs to order, and saying so is what stops somebody typing a
+/// standard into it. Shaped like `— NO BOX —`, which is the same
+/// distinction one entity over.
+const String kNoRj45Cell = '— NO RJ45 —';
 
 /// Resolves a typed termination token to its `TerminationType`, or null
 /// when nothing matches (DR-043 §11.42.4).
@@ -1048,6 +1093,29 @@ String structureCell(
     StructureColumnId.linkClass => switch (link) {
       final l? => switch (effectiveLinkClassOf(doc, l)) {
         final c? => linkClassLabel(c),
+        null => kUnknownCell,
+      },
+      null => kUnknownCell,
+    },
+
+    // THIS CABLE'S OVERRIDE, AND NOT THE EFFECTIVE STANDARD (DR-180
+    // §11.179.2). Three states, and the middle one is why the column is
+    // not `linkClass` in a different hat:
+    //
+    //   * a standard, meaning this run is an exception somebody typed;
+    //   * the dash, meaning it states none and follows the job; and
+    //   * [kNoRj45Cell], meaning a standard is not a fact about it.
+    //
+    // Showing the RESOLVED value instead would read better and would put
+    // a trap in every row: the control writes what it shows, so picking
+    // the value already on screen would pin this cable to a standard the
+    // project might later be changed away from, with nothing to say it
+    // had happened. The resolved answer is what the printed `TERM` cell
+    // carries (§11.179.4), which is the surface an installer reads.
+    StructureColumnId.wiringStandard => switch (link) {
+      final l? when !wiringStandardApplies(doc, l) => kNoRj45Cell,
+      final l? => switch (l.wiringStandard) {
+        final w? => wiringStandardLabel(w),
         null => kUnknownCell,
       },
       null => kUnknownCell,

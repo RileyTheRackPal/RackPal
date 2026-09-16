@@ -1,7 +1,7 @@
 import 'package:rackpal_core/src/idformat/collision_policy.dart';
 import 'package:rackpal_core/src/idformat/id_format.dart';
 import 'package:rackpal_core/src/model/enums.dart'
-    show RuNumbering, SheetNumbering, UnitSystem;
+    show RuNumbering, SheetNumbering, UnitSystem, WiringStandard;
 import 'package:rackpal_core/src/model/jacket_color.dart';
 import 'package:rackpal_core/src/model/rule_override.dart';
 import 'package:rackpal_core/src/units/ids.dart';
@@ -43,6 +43,7 @@ final class ProjectSettings {
     this.defaultNetworkMedia = const MediaTypeId('media.cat6a_futp'),
     this.defaultRackHeightU = 12,
     this.defaultLineVolts = 120,
+    this.wiringStandard,
   }) : ruleOverrides = ruleOverrides ?? {},
        familyColorOverrides = familyColorOverrides ?? {},
        jacketColorConventions = jacketColorConventions ?? {},
@@ -118,4 +119,14 @@ final class ProjectSettings {
 
   /// Seeds new `Circuit`s (CR-039).
   int defaultLineVolts;
+
+  /// What this job wires its 8P8C jacks to, if anybody has said (DR-180
+  /// §11.179.2).
+  ///
+  /// **NULL IS UNKNOWN AND NEVER AN ASSUMED `t568b`** (G4, CR-114). One
+  /// entry per job replaces one per drop; a cable that really differs
+  /// carries `Link.wiringStandard`, and `effectiveWiringStandard` reads
+  /// the two in that order. A project nobody has told prints nothing,
+  /// which is why this is not defaulted here.
+  WiringStandard? wiringStandard;
 }

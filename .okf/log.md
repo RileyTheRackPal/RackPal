@@ -1,5 +1,24 @@
 # Update Log
 
+## 2026-09-16 (fifty-third entry)
+
+* **Closed**: `#80` with ``1445d547`` and ``5ae8180f``, ruled as
+  [DR-180](/decisions/dr-180-a-project-states-its-wiring-standard.md) in ``6663525``. A project
+  states T568A or T568B once and a cable may override it; unset is unknown and both keys are absent
+  when unset. **No version move**: it closes under `#786`.
+* **Update**: [DR-180](/decisions/dr-180-a-project-states-its-wiring-standard.md) is built.
+* **Note**: **A PREDICATE THAT READS ONE ENTITY CAN BE A NARROWER RULE WEARING THE RULING'S WORDS.**
+  "Its media is four-pair OR one of its ends is an RJ45 port" reads like a question about a cable,
+  and half of it is a template join through the document. The `Link`-only draft compiled, passed its
+  own tests, and answered false in silence for exactly the cables a shop's own media entry produces.
+* **Note**: **A CONTROL WRITES WHAT IT SHOWS.** A column showing a RESOLVED value, with a menu that
+  writes an OVERRIDE, turns "confirming what is already on screen" into pinning that row away from
+  the project default. The cell shows the override and the printed sheet carries the resolved
+  answer.
+* **Note**: **AN OPTION CAN BE OFFERED WITH NO HOST.** The user was asked where a cable's override
+  should be typed and chose a column AND an inspector row; there is no cable inspector in this
+  product, and the offer did not say so. Check that a surface exists before naming it in a question.
+
 ## 2026-09-15 (fifty-second entry)
 
 * **Closed**: `#782` with ``04c8eb95``, ruled as
