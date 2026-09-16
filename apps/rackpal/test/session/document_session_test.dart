@@ -59,7 +59,7 @@ void main() {
       expect(
         displayNameFor(
           projectName: 'Smith Residence',
-          filePath: r'C:\jobs\smith-v3.rmpj',
+          filePath: r'C:\jobs\smith-v3.rppj',
           context: _windows,
         ),
         'Smith Residence',
@@ -70,7 +70,7 @@ void main() {
       expect(
         displayNameFor(
           projectName: '   ',
-          filePath: r'C:\jobs\smith-v3.rmpj',
+          filePath: r'C:\jobs\smith-v3.rppj',
           context: _windows,
         ),
         'smith-v3',
@@ -190,7 +190,7 @@ void main() {
     test('requiresSaveAs when there is no path', () {
       expect(_session().requiresSaveAs, isTrue);
       expect(
-        _session(filePath: r'C:\jobs\Smith.rmpj').requiresSaveAs,
+        _session(filePath: r'C:\jobs\Smith.rppj').requiresSaveAs,
         isFalse,
       );
     });
@@ -200,7 +200,7 @@ void main() {
       // A file this build only partly understands must not be overwritten
       // by it — but the user must never be blocked from keeping work.
       final session = _session(
-        filePath: r'C:\jobs\Smith.rmpj',
+        filePath: r'C:\jobs\Smith.rppj',
         openReadOnly: true,
       );
       expect(session.requiresSaveAs, isTrue);
@@ -209,18 +209,18 @@ void main() {
     test('recordSave clears read-only, because the bytes on disk are now '
         'ours', () {
       final session = _session(
-        filePath: r'C:\jobs\Smith.rmpj',
+        filePath: r'C:\jobs\Smith.rppj',
         openReadOnly: true,
       );
       expect(session.requiresSaveAs, isTrue);
 
       session.recordSave(
-        SavedFileFixture.at(r'C:\jobs\Copy.rmpj'),
+        SavedFileFixture.at(r'C:\jobs\Copy.rppj'),
         status: 'Saved.',
       );
 
       expect(session.openReadOnly, isFalse);
-      expect(session.filePath, r'C:\jobs\Copy.rmpj');
+      expect(session.filePath, r'C:\jobs\Copy.rppj');
       expect(session.status, 'Saved.');
     });
 
@@ -245,7 +245,7 @@ void main() {
 
       session.adopt(
         controller: replacement,
-        filePath: r'C:\jobs\Jones.rmpj',
+        filePath: r'C:\jobs\Jones.rppj',
         openReadOnly: false,
         baseline: FileBaseline.absent,
       );
@@ -287,7 +287,7 @@ void main() {
       expect(
         displayNameFor(
           projectName: kDefaultProjectName,
-          filePath: r'C:\jobs\Smith.rmpj',
+          filePath: r'C:\jobs\Smith.rppj',
           context: _windows,
         ),
         'Smith',
@@ -307,10 +307,10 @@ void main() {
   });
 
   group('copySuggestionFor', () {
-    test('a read-only document saves as "<name> (copy).rmpj"', () {
+    test('a read-only document saves as "<name> (copy).rppj"', () {
       expect(
         copySuggestionFor('Smith Residence'),
-        'Smith Residence (copy).rmpj',
+        'Smith Residence (copy).rppj',
       );
     });
   });

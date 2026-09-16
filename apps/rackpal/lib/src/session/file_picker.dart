@@ -28,7 +28,7 @@
 // — the chosen file's name and full path land in `OpenSavePidlMRU` —
 // plus a shortcut under `%APPDATA%\Microsoft\Windows\Recent` and a
 // jump-list entry. So running the portable build on a client's PC and
-// opening `E:\Jobs\Smith Residence.rackpal` once seeded that PC's
+// opening `E:\Jobs\Smith Residence.rppj` once seeded that PC's
 // recent-documents list with the customer's project name.
 //
 // AND IT COULD NOT BE FIXED THROUGH THE PACKAGE, read off the resolved
@@ -121,7 +121,7 @@
 //
 // SO, PLAINLY: running the portable build on a client's machine leaves
 // shell-owned HKCU entries naming this executable and the folders it
-// browsed — `E:\Jobs`, and not `E:\Jobs\Smith Residence.rackpal` — and
+// browsed — `E:\Jobs`, and not `E:\Jobs\Smith Residence.rppj` — and
 // they survive the stick being pulled. It does not leave project FILE
 // NAMES, and it does not leave anything RackPal's own code wrote.
 //
@@ -165,13 +165,13 @@ const MethodChannel kFileDialogChannel = MethodChannel(
 /// `windows/runner/file_dialog_channel.cpp`; an unrecognised kind falls
 /// back to [project] there rather than showing the user nothing.
 enum FileDialogType {
-  /// `.rmpj` and `.rackpal` in one entry (DR-015).
+  /// `.rppj`, `.rmpj` and `.rackmate` in one entry (DR-015, DR-179).
   project,
 
   /// `.csv`, for M3-F's import.
   csv,
 
-  /// `.rmdx`, a single device template (docs/06 §7.3).
+  /// `.rpdx` and `.rmdx`, a single device template (docs/06 §7.3, DR-179).
   ///
   /// **DECLARED AHEAD OF ITS CALLER, AND THAT IS THE POINT OF `#234`.**
   /// The import and export surface is `#236` and does not exist; the
@@ -187,7 +187,7 @@ enum FileDialogType {
   /// field, so it is written down: **`#236`**.
   device,
 
-  /// `.rmda`, a device library (DR-015 §11.15.3).
+  /// `.rpda` and `.rmda`, a device library (DR-015 §11.15.3, DR-179).
   ///
   /// **THE FOURTH KIND, AND THE TABLE IS WHY IT COSTS ONE ROW.** `#234`
   /// replaced two parallel ternaries with `kFileKinds` precisely so the
@@ -292,7 +292,7 @@ final class Win32FilePicker implements FilePicker {
   }
 }
 
-/// The `.rackpal` filter both dialogs offer, as the native side spells
+/// The `.rppj` filter both dialogs offer, as the native side spells
 /// it. Declared here so a reader of this file can see what the dialog
 /// shows without opening the C++.
 const String kRackPalFilterLabel = 'RackPal project';

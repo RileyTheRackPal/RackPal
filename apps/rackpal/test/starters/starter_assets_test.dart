@@ -293,7 +293,7 @@ void main() {
 
     test('whole_house pulls colour on its category runs and NOT on the '
         'others', () async {
-      final doc = await read('whole_house.rmpj');
+      final doc = await read('whole_house.rppj');
       final coloured = [
         for (final l in doc.links.values)
           if (l.jacketColorId != null) l,
@@ -343,7 +343,7 @@ void main() {
       // that derived colour from `media` — the obvious wrong shortcut —
       // would give all fifteen the same one and still pass every
       // referential check above.
-      final doc = await read('whole_house.rmpj');
+      final doc = await read('whole_house.rppj');
       String colourOf(String fieldLabel) => doc.links.values
           .firstWhere((l) => l.structureOrigin?.fieldLabel == fieldLabel)
           .jacketColorId!
@@ -433,7 +433,7 @@ void main() {
       // a family the file does not carry renders grey with the raw id as
       // its tag (§6.2's `unknown(rawId)`), which is correct behaviour and
       // the wrong outcome for a shipped fixture.
-      final doc = await read('whole_house.rmpj');
+      final doc = await read('whole_house.rppj');
       final used = {
         for (final link in doc.links.values)
           for (final service in link.services) service.signalFamily,

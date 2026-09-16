@@ -13,21 +13,21 @@ void main() {
   group('SavePaths.forTarget derives four siblings in ONE directory', () {
     test('the happy path', () {
       final paths = SavePaths.forTarget(
-        r'C:\jobs\Smith.rmpj',
+        r'C:\jobs\Smith.rppj',
         context: _windows,
       );
 
-      expect(paths.target, r'C:\jobs\Smith.rmpj');
-      expect(paths.temp, r'C:\jobs\Smith.rmpj.tmp');
-      expect(paths.backup, r'C:\jobs\Smith.rmpj.bak');
-      expect(paths.backupTemp, r'C:\jobs\Smith.rmpj.bak.tmp');
+      expect(paths.target, r'C:\jobs\Smith.rppj');
+      expect(paths.temp, r'C:\jobs\Smith.rppj.tmp');
+      expect(paths.backup, r'C:\jobs\Smith.rppj.bak');
+      expect(paths.backupTemp, r'C:\jobs\Smith.rppj.bak.tmp');
       expect(paths.directory, r'C:\jobs');
     });
 
     test('all four are in the SAME directory — same volume, so the '
         'promote rename is atomic', () {
       final paths = SavePaths.forTarget(
-        r'C:\jobs\Smith.rmpj',
+        r'C:\jobs\Smith.rppj',
         context: _windows,
       );
       for (final path in paths.allPaths) {
@@ -47,8 +47,8 @@ void main() {
       // "Smith". An extensionless project will not reopen on a
       // double-click and the open dialog's filter will not show it.
       final paths = SavePaths.forTarget(r'C:\jobs\Smith', context: _windows);
-      expect(paths.target, r'C:\jobs\Smith.rmpj');
-      expect(paths.temp, r'C:\jobs\Smith.rmpj.tmp');
+      expect(paths.target, r'C:\jobs\Smith.rppj');
+      expect(paths.temp, r'C:\jobs\Smith.rppj.tmp');
     });
 
     test('a deliberate other extension is APPENDED TO, not replaced', () {
@@ -58,41 +58,45 @@ void main() {
         r'C:\jobs\Smith.v2',
         context: _windows,
       );
-      expect(paths.target, r'C:\jobs\Smith.v2.rmpj');
+      expect(paths.target, r'C:\jobs\Smith.v2.rppj');
     });
 
     test('the extension check is case-insensitive', () {
       expect(
         SavePaths.forTarget(
-          r'C:\jobs\Smith.RMPJ',
+          r'C:\jobs\Smith.RPPJ',
           context: _windows,
         ).target,
-        r'C:\jobs\Smith.RMPJ',
+        r'C:\jobs\Smith.RPPJ',
       );
       expect(
         SavePaths.forTarget(
-          r'C:\jobs\Smith.RmPj',
+          r'C:\jobs\Smith.RpPj',
           context: _windows,
         ).target,
-        r'C:\jobs\Smith.RmPj',
+        r'C:\jobs\Smith.RpPj',
       );
     });
 
-    test('SAVE KEEPS THE NAME IT OPENED — a pre-DR-015 project is not '
+    test('SAVE KEEPS THE NAME IT OPENED — an older project is not '
         'renamed by pressing Ctrl+S', () {
       // ── THE WHOLE BACK-COMPAT PROMISE, AND IT IS ONE LINE OF CODE ────
       // `SessionController.save()` runs the already-open path back through
       // `forTarget`. If that appended the current extension to anything
       // that is not the current extension, a team mid-job on
-      // `Smith.rackpal` would press Ctrl+S and get `Smith.rackpal.rmpj`
+      // `Smith.rmpj` would press Ctrl+S and get `Smith.rmpj.rppj`
       // — a SECOND file, with the first one left holding the older bytes
       // and still sitting in their recents. Nothing about that is
       // recoverable by the user, because nothing about it looks wrong
       // until they open the wrong one.
+      //
+      // BOTH OLDER SPELLINGS, because DR-179 renamed the extension a
+      // second time: `.rmpj` is DR-015's and `.rackmate` is what the
+      // builds before it wrote.
       for (final legacy in <String>[
-        r'C:\jobs\Smith.rackpal',
-        r'C:\jobs\Smith.RACKPAL',
-        r'C:\jobs\Smith.RackPal',
+        r'C:\jobs\Smith.rmpj',
+        r'C:\jobs\Smith.RMPJ',
+        r'C:\jobs\Smith.rackmate',
       ]) {
         final paths = SavePaths.forTarget(legacy, context: _windows);
         expect(
@@ -110,41 +114,53 @@ void main() {
 
     test('a NEW document still gets the current extension, so the legacy '
         'one is accepted and never propagated', () {
-      // The other half. Accepting `.rackpal` must not mean writing it:
+      // The other half. Accepting `.rmpj` must not mean writing it:
       // Save As and a never-saved document both reach for `.first`.
       expect(
         SavePaths.forTarget(r'C:\jobs\Smith', context: _windows).target,
-        r'C:\jobs\Smith.rmpj',
+        r'C:\jobs\Smith.rppj',
       );
       expect(kDocumentExtensions.first, kDocumentExtension);
-      expect(kDocumentExtensions, contains(kLegacyDocumentExtension));
+      expect(kDocumentExtensions, containsAll(kLegacyDocumentExtensions));
+      expect(
+        kLegacyDocumentExtensions,
+        containsAll(<String>['.rmpj', '.rackmate']),
+        reason:
+            'every spelling a build has written stays openable '
+            '(DR-179 §11.178.3)',
+      );
+      expect(
+        kDocumentExtensions,
+        isNot(contains('.rackpal')),
+        reason: 'no build ever wrote one (DR-179 §11.178.1)',
+      );
     });
 
     test("the PDF path does not inherit the project's legacy spelling", () {
       // `extensions` is a list per-caller rather than one extension plus a
       // shared "also accept" set, and this is the difference: an export
-      // told to make a `.pdf` must not decide that `Smith.rackpal` is
+      // told to make a `.pdf` must not decide that `Smith.rmpj` is
       // already correctly named and write the PDF bytes into it.
       final paths = SavePaths.forTarget(
-        r'C:\jobs\Smith.rackpal',
+        r'C:\jobs\Smith.rmpj',
         context: _windows,
         extensions: const <String>[kPdfExtension],
       );
-      expect(paths.target, r'C:\jobs\Smith.rackpal.pdf');
+      expect(paths.target, r'C:\jobs\Smith.rmpj.pdf');
     });
 
     test('a name that merely CONTAINS the word is still given the '
         'extension', () {
       expect(
-        SavePaths.forTarget(r'C:\jobs\rackpal', context: _windows).target,
-        r'C:\jobs\rackpal.rmpj',
+        SavePaths.forTarget(r'C:\jobs\rppj', context: _windows).target,
+        r'C:\jobs\rppj.rppj',
       );
     });
 
     test('POSIX paths derive identically', () {
       final paths = SavePaths.forTarget('/home/j/Smith', context: _posix);
-      expect(paths.target, '/home/j/Smith.rmpj');
-      expect(paths.backupTemp, '/home/j/Smith.rmpj.bak.tmp');
+      expect(paths.target, '/home/j/Smith.rppj');
+      expect(paths.backupTemp, '/home/j/Smith.rppj.bak.tmp');
       expect(paths.directory, '/home/j');
     });
 
@@ -160,7 +176,7 @@ void main() {
     test('stemOf strips both directory and extension', () {
       expect(
         SavePaths.forTarget(
-          r'C:\jobs\Smith Residence.rmpj',
+          r'C:\jobs\Smith Residence.rppj',
           context: _windows,
         ).stemOf(_windows),
         'Smith Residence',
@@ -173,7 +189,7 @@ void main() {
     /// A target that is exactly [target] characters long.
     SavePaths pathsOfLength(int target) => SavePaths.forTarget(
       r'C:\jobs\'
-      '${'x' * (target - r'C:\jobs\'.length - '.rmpj'.length)}',
+      '${'x' * (target - r'C:\jobs\'.length - '.rppj'.length)}',
       context: _windows,
     );
 
@@ -226,7 +242,7 @@ void main() {
 
     test('a comfortably short path does not trip it either way', () {
       final paths = SavePaths.forTarget(
-        r'C:\jobs\Smith.rmpj',
+        r'C:\jobs\Smith.rppj',
         context: _windows,
       );
       expect(paths.exceedsWindowsMaxPath(keepBackup: true), isFalse);
@@ -240,7 +256,7 @@ void main() {
 
     test('allPaths is ordered longest first', () {
       final paths = SavePaths.forTarget(
-        r'C:\jobs\Smith.rmpj',
+        r'C:\jobs\Smith.rppj',
         context: _windows,
       );
       for (var i = 1; i < paths.allPaths.length; i++) {
@@ -253,7 +269,7 @@ void main() {
 
     test('pathsWritten omits exactly the two backup names', () {
       final paths = SavePaths.forTarget(
-        r'C:\jobs\Smith.rmpj',
+        r'C:\jobs\Smith.rppj',
         context: _windows,
       );
       expect(paths.pathsWritten(keepBackup: true), paths.allPaths);

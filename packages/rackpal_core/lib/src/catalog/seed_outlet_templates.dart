@@ -6,7 +6,7 @@
 // ═════════════════════════════════════════════════════════════════════
 // SEVENTEEN OUTLETS ALREADY POINT AT THESE IDS
 // ═════════════════════════════════════════════════════════════════════
-// `apps/rackpal/assets/starters/whole_house.rmpj` carries seventeen
+// `apps/rackpal/assets/starters/whole_house.rppj` carries seventeen
 // outlets whose `outletTemplateId` reads `outlet.tv_location`,
 // `outlet.ap`, `outlet.camera`, `outlet.data_only` or
 // `outlet.ceiling_speaker_pair`, and the same file's

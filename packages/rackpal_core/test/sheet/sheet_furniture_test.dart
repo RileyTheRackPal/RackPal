@@ -33,7 +33,7 @@ SheetFurniture furnitureFor({
     rack: noRack ? null : (rack ?? testRack()),
     revisions: revisions,
     scale: scale ?? DrawingScale.standard(8),
-    fileName: 'smith.rmpj',
+    fileName: 'smith.rppj',
     issuedAt: issuedAt ?? _issued,
     measurer: FakeMeasurer(),
   );

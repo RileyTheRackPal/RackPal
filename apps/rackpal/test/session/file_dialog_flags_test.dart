@@ -180,12 +180,12 @@ void main() {
     );
     expect(
       source,
-      contains('*.rmpj;*.rackpal'),
+      contains('*.rppj;*.rmpj;*.rackmate'),
       reason: 'DR-015 keeps both project spellings in ONE entry',
     );
     expect(
       source,
-      contains('*.rmdx'),
+      contains('*.rpdx'),
       reason:
           'M4-M1 (#234): the device-template filter has to exist, or the '
           'import surface #236 builds will reach for a second hard-coded '
@@ -263,7 +263,7 @@ void main() {
     );
     expect(
       nativeKinds(),
-      containsPair('project', 'rmpj'),
+      containsPair('project', 'rppj'),
       reason: 'DR-015: a Save with no extension typed is a .rmpj',
     );
     expect(nativeKinds(), containsPair('csv', 'csv'));

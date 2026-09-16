@@ -149,30 +149,36 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
     const wchar_t* default_extension;   // no `*.`, unlike the pattern
   };
 
-  // `.rmpj` has no registered UTI and no MIME type, so a filter is an
-  // extension and a label, and `.rmdx` is in the same position.
+  // `.rppj` has no registered UTI and no MIME type, so a filter is an
+  // extension and a label, and `.rpdx` is in the same position.
+  //
+  // EVERY SPELLING A BUILD HAS WRITTEN IS IN THE PATTERN (DR-179
+  // section 11.178.3): `.rppj` today, `.rmpj` from DR-015, and the
+  // pre-DR-015 `.rackmate`. `.rackpal` is gone from it, because the
+  // product rename invented that one and no build ever wrote it.
   static const COMDLG_FILTERSPEC kProjectFilters[] = {
-      {L"RackPal project", L"*.rmpj;*.rackpal"},
+      {L"RackPal project", L"*.rppj;*.rmpj;*.rackmate"},
       {L"All files", L"*.*"},
   };
   static const COMDLG_FILTERSPEC kCsvFilters[] = {
       {L"Comma-separated values", L"*.csv"},
       {L"All files", L"*.*"},
   };
-  // ONE ENTRY AND NO LEGACY SPELLING, unlike the project row above: no
-  // build has ever written a device template, so there is nothing on any
-  // disk for a second spelling to rescue (docs/06 §7.3).
+  // THIS ROW SAID IT NEEDED NO LEGACY SPELLING, ON THE GROUND THAT NO
+  // BUILD HAD EVER WRITTEN A DEVICE TEMPLATE. That was true when it was
+  // written and stopped being true when template export shipped, so
+  // `.rmdx` is on a user's disk and DR-179 section 11.178.3 keeps it
+  // opening (docs/06 section 7.3).
   static const COMDLG_FILTERSPEC kDeviceFilters[] = {
-      {L"RackPal device template", L"*.rmdx"},
+      {L"RackPal device template", L"*.rpdx;*.rmdx"},
       {L"All files", L"*.*"},
   };
-  // ONE ENTRY AND NO LEGACY SPELLING, for the device row's reason. `.rmlib`
-  // was the pre-DR-015 name and was NEVER SHIPPED IN ANY FORM: it was
-  // specified as a zip and cut by AC-042 before anything wrote one, so
-  // unlike `.rackpal` there is nothing on any disk for a second spelling
-  // to rescue.
+  // The archive is in the same position, for the same reason: the shelf
+  // under the data root is full of `.rmda` files this app wrote. `.rmlib`
+  // is still absent, and that one is genuine: it was the pre-DR-015 name,
+  // specified as a zip and cut by AC-042 before anything wrote one.
   static const COMDLG_FILTERSPEC kLibraryFilters[] = {
-      {L"RackPal device library", L"*.rmda"},
+      {L"RackPal device library", L"*.rpda;*.rmda"},
       {L"All files", L"*.*"},
   };
 
@@ -202,10 +208,10 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
   };
 
   static const FileKind kFileKinds[] = {
-      {L"project", kProjectFilters, ARRAYSIZE(kProjectFilters), L"rmpj"},
+      {L"project", kProjectFilters, ARRAYSIZE(kProjectFilters), L"rppj"},
       {L"csv", kCsvFilters, ARRAYSIZE(kCsvFilters), L"csv"},
-      {L"device", kDeviceFilters, ARRAYSIZE(kDeviceFilters), L"rmdx"},
-      {L"library", kLibraryFilters, ARRAYSIZE(kLibraryFilters), L"rmda"},
+      {L"device", kDeviceFilters, ARRAYSIZE(kDeviceFilters), L"rpdx"},
+      {L"library", kLibraryFilters, ARRAYSIZE(kLibraryFilters), L"rpda"},
       {L"floorplan", kFloorplanFilters, ARRAYSIZE(kFloorplanFilters), L"png"},
   };
 

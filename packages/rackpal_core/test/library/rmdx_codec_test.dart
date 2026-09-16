@@ -201,7 +201,7 @@ void main() {
     });
 
     test('kind is checked BEFORE the version', () {
-      // A `.rmpj` also carries a schemaVersion, and version-first would
+      // A `.rppj` also carries a schemaVersion, and version-first would
       // report a project as a device template from the wrong era.
       final err = _readErr(
         readRmdxJsonTree(<String, Object?>{
@@ -214,7 +214,7 @@ void main() {
     });
 
     test('a newer schemaVersion is REFUSED, never opened read-only', () {
-      // The asymmetry with `.rmpj` is deliberate: AC-012 makes
+      // The asymmetry with `.rppj` is deliberate: AC-012 makes
       // `TemplateBody` closed with no `unknown` passthrough, so there is
       // nothing to open read-only WITH.
       final err = _readErr(
@@ -255,7 +255,7 @@ void main() {
       expect(err, isA<UnsupportedZipContainerError>());
     });
 
-    test('the import limits run on THIS path, not only on .rmpj', () {
+    test('the import limits run on THIS path, not only on .rppj', () {
       // AC-058/D8 says every import path. #237 censuses them; this one
       // is paid on the day it lands.
       final bytes = encodeRmdxBytes(
@@ -440,7 +440,7 @@ void main() {
   // ═══════════════════════════════════════════════════════════════════
   // v2 -> v3: the outlet counts leave device files too (DR-171 §11.170.3)
   // ═══════════════════════════════════════════════════════════════════
-  group('v2 -> v3, the step .rmpj and .rmda share', () {
+  group('v2 -> v3, the step .rppj and .rmda share', () {
     /// A v2 tree carrying both retired keys, under a hash either taken
     /// over that body as stored or belonging to something else.
     JsonMap v2Tree({required bool attested}) {

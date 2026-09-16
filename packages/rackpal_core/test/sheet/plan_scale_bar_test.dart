@@ -79,7 +79,7 @@ PlanSheet _build({
   info: fullProjectInfo(),
   settings: ProjectSettings()..displayUnits = units,
   revisions: const <RevisionEntry>[],
-  fileName: 'smith.rmpj',
+  fileName: 'smith.rppj',
   issuedAt: DateTime.utc(2026, 9, 9),
   measurer: FakeMeasurer(),
   labels: labels,

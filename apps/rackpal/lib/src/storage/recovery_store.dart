@@ -6,7 +6,7 @@
 // NEVER AUTOSAVE OVER THE USER'S FILE. "CAD users expect explicit saves
 // and will file a bug the first time an autosave clobbers something." A
 // snapshot goes to the app's own data root under a uuid name. The ONLY
-// writer of <target>.rackpal is an explicit user Save or Save As.
+// writer of <target>.rppj is an explicit user Save or Save As.
 //
 // ==================================================================
 // CR-096 — RECOVERY FILES ARE NEVER AUTO-ATTACHED TO A CRASH REPORT
@@ -53,7 +53,7 @@
 // Nothing prevents a second instance of this app, and both of the rules
 // above are stated as if this process were the only one that had ever
 // written here. It is not. Instance B is running with twenty minutes of
-// unsaved work behind `recovery/<doc>~<B>.rackpal`; instance C launches
+// unsaved work behind `recovery/<doc>~<B>.rppj`; instance C launches
 // and its scan used to CLAIM that pair and OFFER it — describing live
 // in-flight work as a crash survivor, and turning the user's entirely
 // reasonable "Discard" into the deletion of a running instance's only
@@ -105,10 +105,10 @@ const String kLeaseExtension = '.lease';
 /// Snapshots carry the ordinary document extension because they ARE
 /// ordinary documents — a recovered file must open in any build.
 ///
-/// Which means DR-015 renamed this too, and that the SCAN has to know
-/// both spellings. A recovery pair exists only across a crash, so the one
-/// window in which a `.rackpal` snapshot meets a `.rmpj` build is exactly
-/// the window this feature exists for: the user's last build died with
+/// Which means DR-015 and DR-179 renamed this too, and that the SCAN has
+/// to know every spelling. A recovery pair exists only across a crash, so
+/// the one window in which a `.rmpj` snapshot meets a `.rppj` build is
+/// exactly the window this feature exists for: the user's last build died with
 /// unsaved work and they installed this one before reopening. Recognising
 /// only the current spelling would orphan the sidecar, and `scan` deletes
 /// orphans silently — a crash recovery lost without a word, which is the
@@ -603,8 +603,8 @@ final class RecoveryStore {
   /// makes concurrent writers safe, is a per-process object that does not
   /// span processes.
   ///
-  /// So: instance A and B both have Smith.rackpal open. B has twenty
-  /// minutes of unsaved work protected by `recovery/<docId>.rackpal`. A
+  /// So: instance A and B both have Smith.rppj open. B has twenty
+  /// minutes of unsaved work protected by `recovery/<docId>.rppj`. A
   /// saves — a save with nothing to do with B — and step 7 removed B's
   /// sidecar and snapshot. B's work then had no safety net at all, and
   /// nothing anywhere said so. The same happened when A simply quit.

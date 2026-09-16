@@ -1,9 +1,9 @@
 // Pre-update snapshots (docs/03-architecture.md §9.3): "Pre-update
-// snapshots go to <appSupport>/snapshots/<docUuid>/<sequence>.rackpal,
+// snapshots go to <appSupport>/snapshots/<docUuid>/<sequence>.rppj,
 // pruned to the last 10."
 //
 // Distinct from the RECOVERY store next door, and the distinction is
-// worth stating because both write a .rackpal into the data root:
+// worth stating because both write a .rppj into the data root:
 //   * a RECOVERY snapshot is unsaved work rescued from a crash. There is
 //     at most one per document and it is deleted the moment the work is
 //     safely on disk.
@@ -36,7 +36,7 @@ const String kSnapshotsDirName = 'snapshots';
 /// §9.3: "pruned to the last 10".
 const int kMaxSnapshotsPerDocument = 10;
 
-/// Writes and prunes `<dataRoot>/snapshots/<docUuid>/<sequence>.rackpal`.
+/// Writes and prunes `<dataRoot>/snapshots/<docUuid>/<sequence>.rppj`.
 final class SnapshotStore {
   SnapshotStore({
     required this.fs,
@@ -60,7 +60,7 @@ final class SnapshotStore {
   String pathFor(String docId, int sequence) =>
       context.join(directoryFor(docId), '$sequence$kDocumentExtension');
 
-  /// Stores [bytes] as `<docId>/<sequence>.rmpj`, then prunes.
+  /// Stores [bytes] as `<docId>/<sequence>.rppj`, then prunes.
   ///
   /// Failure is reported but is NEVER fatal to the operation that
   /// triggered it: a snapshot that could not be taken is a lost safety
@@ -112,9 +112,10 @@ final class SnapshotStore {
   /// The snapshots stored for [docId] with the path each ACTUALLY has,
   /// ascending by sequence.
   ///
-  /// THE PATH IS CARRIED RATHER THAN REBUILT, and after DR-015 it has to
-  /// be. A snapshot written by an earlier build is `<sequence>.rackpal`;
-  /// `pathFor` now spells `.rmpj`. A prune that rebuilt the name would
+  /// THE PATH IS CARRIED RATHER THAN REBUILT, and after DR-015 and DR-179
+  /// it has to be. A snapshot written by an earlier build is
+  /// `<sequence>.rmpj` or `<sequence>.rackmate`; `pathFor` now spells
+  /// `.rppj`. A prune that rebuilt the name would
   /// COUNT the old file and then fail to delete it — so the ten-per-
   /// document cap would apply to the new files only, the old ones would
   /// sit in AppData forever, and the failure would be silent because a
@@ -134,7 +135,7 @@ final class SnapshotStore {
     final found = <({int sequence, String path})>[];
     for (final entry in entries) {
       final name = context.basename(entry);
-      // EVERY SPELLING THIS APP HAS EVER WRITTEN (DR-015), because a
+      // EVERY SPELLING THIS APP HAS EVER WRITTEN (DR-015, DR-179), because a
       // snapshot IS an ordinary document and the rename did not touch a
       // byte inside one.
       final ext = kDocumentExtensions.firstWhere(

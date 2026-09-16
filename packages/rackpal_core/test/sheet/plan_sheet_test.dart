@@ -211,7 +211,7 @@ void main() {
         info: fullProjectInfo(),
         settings: ProjectSettings(),
         revisions: const <RevisionEntry>[],
-        fileName: 'smith.rmpj',
+        fileName: 'smith.rppj',
         issuedAt: DateTime.utc(2026, 9, 9),
         measurer: FakeMeasurer(),
       );
@@ -479,7 +479,7 @@ void main() {
         info: fullProjectInfo(),
         settings: ProjectSettings(),
         revisions: const <RevisionEntry>[],
-        fileName: 'smith.rmpj',
+        fileName: 'smith.rppj',
         issuedAt: DateTime.utc(2026, 9, 14),
         measurer: FakeMeasurer(),
       );
@@ -548,7 +548,7 @@ void main() {
         info: fullProjectInfo(),
         settings: ProjectSettings(),
         revisions: const <RevisionEntry>[],
-        fileName: 'smith.rmpj',
+        fileName: 'smith.rppj',
         issuedAt: DateTime.utc(2026, 9, 14),
         measurer: FakeMeasurer(),
       );

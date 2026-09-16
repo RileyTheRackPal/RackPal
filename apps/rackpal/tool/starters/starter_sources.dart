@@ -23,8 +23,8 @@ typedef StarterSource = ({
 
 /// The four, in start-card order.
 const List<StarterSource> kStarterSources = [
-  (fileName: 'home_theatre.rmpj', build: buildHomeTheatreStarter),
-  (fileName: 'whole_house.rmpj', build: buildWholeHouseStarter),
-  (fileName: 'small_office.rmpj', build: buildSmallOfficeStarter),
-  (fileName: 'apartment.rmpj', build: buildApartmentStarter),
+  (fileName: 'home_theatre.rppj', build: buildHomeTheatreStarter),
+  (fileName: 'whole_house.rppj', build: buildWholeHouseStarter),
+  (fileName: 'small_office.rppj', build: buildSmallOfficeStarter),
+  (fileName: 'apartment.rppj', build: buildApartmentStarter),
 ];

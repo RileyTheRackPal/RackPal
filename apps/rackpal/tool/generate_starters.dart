@@ -1,4 +1,4 @@
-// Regenerates `assets/starters/*.rmpj`.
+// Regenerates `assets/starters/*.rppj`.
 //
 //     dart run tool/generate_starters.dart          # from apps/rackpal
 //     dart run tool/generate_starters.dart --check  # CI-style, no writes

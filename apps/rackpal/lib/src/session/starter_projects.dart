@@ -77,7 +77,7 @@ const List<StarterProject> kStarterProjects = [
         'A dedicated cinema head-end: matrix, amplifier, a source shelf '
         'and a 0U PDU, with the projector, screen, speakers and keypads '
         'placed in the rooms they live in.',
-    assetPath: '$kStarterAssetDirectory/home_theatre.rmpj',
+    assetPath: '$kStarterAssetDirectory/home_theatre.rppj',
   ),
   StarterProject(
     id: 'whole_house',
@@ -87,7 +87,7 @@ const List<StarterProject> kStarterProjects = [
         'A full residential head-end with the structured wiring modelled '
         'end to end — 17 outlet locations, four pathways, and 27 home '
         'runs that are terminated, pulled or still only planned.',
-    assetPath: '$kStarterAssetDirectory/whole_house.rmpj',
+    assetPath: '$kStarterAssetDirectory/whole_house.rppj',
   ),
   StarterProject(
     id: 'small_office',
@@ -97,7 +97,7 @@ const List<StarterProject> kStarterProjects = [
         'A commercial fit-out across a server room and a reception wall '
         'box, with rear-mounted equipment, a shelf of hosted '
         'transmitters and a 70 V paging system.',
-    assetPath: '$kStarterAssetDirectory/small_office.rmpj',
+    assetPath: '$kStarterAssetDirectory/small_office.rppj',
   ),
   StarterProject(
     id: 'apartment',
@@ -107,7 +107,7 @@ const List<StarterProject> kStarterProjects = [
         'A small swing-frame rack in a hall cupboard, with room left on '
         'the rails — the quickest of the four to open and the easiest to '
         'take apart.',
-    assetPath: '$kStarterAssetDirectory/apartment.rmpj',
+    assetPath: '$kStarterAssetDirectory/apartment.rppj',
   ),
 ];
 
