@@ -21757,6 +21757,14 @@ exactly the contradiction §12 exists to prevent.
 
 ### 12.7 The plan, re-costed
 
+> **THE WEEK COLUMNS ARE WITHDRAWN — see §11.181 (DR-182), 2026-09-16.** The table below is kept as
+> the record of what DR-001, DR-005, DR-015 and DR-029 did to an estimate, and it is no longer the
+> project's statement of cost. M0 through M5 are closed: this table priced them at 29–44 weeks
+> cumulative and they took about 7.3, 2026-07-18 to 2026-09-07. **The sizes stay** and roadmap §6
+> carries them, one for every v1 epic, with what the closed milestones actually took beside them.
+> The totals here read 53–80 after DR-029 while roadmap §6 still read 44–67, which is a second
+> reason the number was not worth keeping: it had drifted between the two documents that stated it.
+
 DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6; **DR-015 adds 2 weeks to M4**.
 
 | Milestone | Size | Weeks | Cumulative |

@@ -1,6 +1,6 @@
 # Roadmap
 
-This document is the binding answer to "what ships when". It reproduces the scope ruling of canon §7 (what is in v1, v1.1, v1.2, v2, and what is ruled out permanently) and the milestone plan of canon §9 (M0–M9, each with a goal, a work checklist, a binary exit criterion, a size, and its risks), adds the dependency graph between milestones, a risk register, and the walking-skeleton argument for build order. It states a cost (42–65 weeks of implementation, 11–17 months to a shipped v1) because per AC-017 a detailed design set with no cost attached reliably stalls at 40%, and a *wrong* cost stalls it at 40% while also destroying trust in the plan. Nothing here may be re-litigated without an amendment to [the canonical decision record](canonical-decisions.md).
+This document is the binding answer to "what ships when". It reproduces the scope ruling of canon §7 (what is in v1, v1.1, v1.2, v2, and what is ruled out permanently) and the milestone plan of canon §9 (M0–M9, each with a goal, a work checklist, a binary exit criterion, a size, and its risks), adds the dependency graph between milestones, a risk register, and the walking-skeleton argument for build order. It states a cost **as relative sizes rather than as weeks** (DR-182 §11.181.2, `#796`). AC-017 says a detailed design set with no cost attached reliably stalls at 40%, and that **a *wrong* cost stalls it at 40% while also destroying trust in the plan** — which is the reason for the change and not an exception to it. This line quoted 42–65 weeks and 11–17 months against a §6 that said 44–67 and 11–18, so the document disagreed with itself about its own headline; both were written before any of it was built, and M0 through M5 came in four to six times under. §6 carries the sizes, the evidence behind each, and what the closed milestones actually took. Nothing here may be re-litigated without an amendment to [the canonical decision record](canonical-decisions.md).
 
 ---
 
@@ -68,7 +68,7 @@ Grouped by subsystem; the **Why** column names the governing ruling. See [Data m
 
 **A signal-family editor, clone-only** (DR-122, amendment of 2026-09-05): a family may be **cloned from a shipped one** and never authored from blank, which is how RJ-012's objection is satisfied rather than overruled. It refused a signal-family editor because *"a hand-rolled one produces silently wrong validation"*, and that is true: a family drives `defaultDirection`, `defaultTopology`, `defaultConnector` and `acceptedFamilies`, which `TOP-003`, `DIR-001`, `SIG-002` and `CON-001` all read, so a wrong topology yields **confident wrong validation** rather than a gap. A clone inherits every field a rule reads; the author renames it, sets a `shortTag` and picks a dash and weight. `ctl.vantage` (DR-120) would have been *clone Cresnet, rename, change the connector*. **PAL-1 moves from CI into the app for this case**, because a user-created family does not exist when CI runs: the editor runs PAL-1's arithmetic live and refuses a colliding dash and weight, which requires those rules to live in `rackpal_core` and not only in `tools/pal1_check.py`. **CR-078 is untouched structurally**, since a clone inherits its parent's domain and colour lives on the domain, so no clone can introduce a hue. The family is written into the project **and** onto the user's shelf, the project copy being authoritative for the drawing (AC-041, DR-103). **Still refused**: a connector-type editor, a colour-scheme editor and user-authored rules (RJ-012, AC-011). Canon §11.121, §12.30.
 
-**An authored device reaches the shelf** (DR-123, amendment of 2026-09-05): the builder's `Save` writes the device into the project **and** onto the user's library shelf, so requirement 2's *"author the long tail once and use it everywhere"* holds for devices a person CREATES and not only for devices that arrive by import. **Most of the surrounding request already shipped in M4-N** and the ruling records that census rather than re-specifying it: per-device selection on export and a palette listing every shelf library with source chips are both built. **The project copy stays authoritative for the drawing** (AC-041, DR-103): a document never resolves a device out of a shelf, because that is the live library reference docs/02 refuses and prices as drawings that change silently across machines. **The shelf write is not a `Command`** and does not enter the `UndoStack`, since AC-014's single mutation gate is scoped to the document and the shelf is shared across projects; an undo that quietly removed an asset from a personal library is the more damaging surprise. **A shelf failure is a notice, never a refusal**, and the project save completes first. Only authored devices are shelved, the 50 seeded templates ship with the app. Canon §11.122.
+**An authored device reaches the shelf** (DR-123, amendment of 2026-09-05): the builder's `Save` writes the device into the project **and** onto the user's library shelf, so requirement 2's *"author the long tail once and use it everywhere"* holds for devices a person CREATES and not only for devices that arrive by import. **Most of the surrounding request already shipped in M4-N** and the ruling records that census rather than re-specifying it: per-device selection on export and a palette listing every shelf library with source chips are both built. **The project copy stays authoritative for the drawing** (AC-041, DR-103): a document never resolves a device out of a shelf, because that is the live library reference docs/02 refuses and prices as drawings that change silently across machines. **The shelf write is not a `Command`** and does not enter the `UndoStack`, since AC-014's single mutation gate is scoped to the document and the shelf is shared across projects; an undo that quietly removed an asset from a personal library is the more damaging surprise. **A shelf failure is a notice, never a refusal**, and the project save completes first. Only authored devices are shelved; the seeded templates ship with the app, and their count lives in `seed_catalog_test.dart` rather than in this sentence, which said 50 against a catalogue of 51. Canon §11.122.
 
 **Project history** (DR-039, amendment of 2026-08-11): an **in-file journal** of saves, bulk acts and issued revisions, each with actor, generated summary and optional comment, finishing CR-095's tombstones on the way; an **operation panel** over the existing `UndoStack` that undoes to a point and does not pretend to be a parametric timeline; **promote-not-overwrite snapshots** in application support, retention user-set; and a **document diff** between any two snapshots, computed over the codec's key-sorted output so it is total. The ZIP container is NOT in this line and needs its own ruling (canon §11.38).
 
@@ -216,7 +216,7 @@ Two further sequencing constraints are binding, from AC-059:
 
 ## 4. Milestone plan
 
-**How to read it.** `S` ≈ 2–3 weeks, `M` ≈ 4–7 weeks, `L` ≈ 8–12 weeks, for one experienced engineer, implementation only, excluding design iteration, the bug tail, and anything in the open questions that changes an answer. **Exit criteria are binary and demonstrable**; "works well" is not an exit criterion, and each one below can be checked by running something. **Every milestone ends green**: CI passes, goldens pass, the app opens the four starter projects. A milestone that ends with a known-broken build has not ended.
+**How to read it.** `S` < `M` < `L`, **relative sizes and not weeks** (DR-182 §11.181.2). The letters used to carry a week range each: `S` ≈ 2–3, `M` ≈ 4–7, `L` ≈ 8–12, for one experienced engineer. §6 withdraws the weeks and keeps the letters, because M0 through M5 were priced at 29–44 weeks cumulative and took about 7.3. The ordering they give is the part that survived; §6.1 sizes every v1 epic on it and §6.2 records what the closed ones actually took. **Exit criteria are binary and demonstrable**; "works well" is not an exit criterion, and each one below can be checked by running something. **Every milestone ends green**: CI passes, goldens pass, the app opens the four starter projects. A milestone that ends with a known-broken build has not ended.
 
 **Which milestone meets which brief requirement.** "Requirement N is met" appears as an exit criterion only for R6 and R7 below; this table is the rest of the map, so no reader has to infer it.
 
@@ -273,7 +273,7 @@ Two further sequencing constraints are binding, from AC-059:
 
 **Goal.** Requirements 3, 4 and 5. The schedule becomes a thing the user watches fill up rather than discovers at export.
 
-**M2 was `L`.** DR-001 removes interval-graph channel routing, the crossing sweep, hop arcs and junction staggering, 4–5 weeks and the three hardest correctness problems in the corpus (canon §11.1.5). **M1 is now the only `L` milestone and the sole long pole.**
+**M2 was `L`.** DR-001 removes interval-graph channel routing, the crossing sweep, hop arcs and junction staggering, 4–5 weeks and the three hardest correctness problems in the corpus (canon §11.1.5). That sentence's own tail read *"M1 is now the only `L` milestone and the sole long pole"*, which was true when written and stopped being true at **DR-015**, which made M4 an `L`, and again when **DR-029** added the Plan view at `L`. §6.1 is the size table; this paragraph is about what DR-001 removed.
 
 - [ ] `Link` / `Service` / `Conductor` / `Net` with the `Endpoint` sealed union and `Link.class` auto-classification
 - [ ] The schematic canvas: symbols with banks, vector-pin collapse, Sugiyama phases 0–3 (cycle-break, layer, barycentre, coordinate assign) placing the symbols, a deterministic layer-ordered orthogonal trace drawing the wires in `drawn` mode, full deterministic recompute
@@ -304,9 +304,11 @@ Two further sequencing constraints are binding, from AC-059:
 
 **Risks.** CSV synonym mapping is an infinite-tail feature; cap it at the shipped synonym table and let unmapped columns fall through to a manual assign step.
 
-### M4: The device builder · M
+### M4: The device builder · L
 
 **Goal.** Requirement 2 in full, the long tail the catalog cannot cover.
+
+> **This heading read `M` until 2026-09-16** (`#799`, DR-182), against §6's `L`. DR-015 re-sized the milestone when it put the device-library subsystem on its checklist and §6 was updated; this heading was not, so the document sized one milestone two ways for a month. §6 is the size table and this heading agrees with it.
 
 - [ ] The three-required-field form, everything else optional with a visible `unknown` state
 - [ ] The virtualised port grid: fill-down, TSV paste, multi-row edit, archetype generators, the pattern DSL with autocomplete and designed parse errors
@@ -317,7 +319,7 @@ Two further sequencing constraints are binding, from AC-059:
 
 **Exit criterion.** A 16×16 matrix template is authored from scratch **in under three minutes by a user who has seen the tool once**, and a template saved with exactly three fields plus ports places into a rack and appears correctly in the equipment list with `—` in every unknown column and an accurate unknown count in the rollup. See [Device builder](06-device-builder.md).
 
-**Risks.** The pattern DSL is the scope hazard, not the grid. Ship the documented subset with designed parse errors and resist generalising it. **§6 was re-derived at this milestone's decomposition and M4 is now `L`, 7–9 weeks**: the `M`/5–7 predated DR-015 putting the library subsystem on the checklist above. Two further items decomposition surfaced and no estimate had ever held: making `Command` generic so the builder can own an undo stack (CR-106), which touches every command in `commands/`, and authoring `ConnectorTypeDef.pitch`, without which §5's auto-layout algorithm cannot be written at all (docs/12 §5.3).
+**Risks.** The pattern DSL is the scope hazard, not the grid. Ship the documented subset with designed parse errors and resist generalising it. **§6 was re-derived at this milestone's decomposition and M4 is now `L`**: the `M` predated DR-015 putting the library subsystem on the checklist above. The week figure that came with it, 7–9 against a bottom-up 10–15, is withdrawn with every other (DR-182); the milestone closed on **2026-09-02**, which is inside what both of them would have called its first fortnight. Two further items decomposition surfaced and no estimate had ever held: making `Command` generic so the builder can own an undo stack (CR-106), which touches every command in `commands/`, and authoring `ConnectorTypeDef.pitch`, without which §5's auto-layout algorithm cannot be written at all (docs/12 §5.3).
 
 ### M5: Validation · M
 
@@ -509,35 +511,65 @@ The two structural facts in that graph: **M4 is not on the critical path**: it h
 
 ---
 
-## 6. The honest total
+## 6. What this costs, in sizes
 
-Re-costed per canon §12.7. DR-001 removes 4–5 weeks from M2; DR-005 adds 0.5–1 week to M6; **DR-015 adds 2 weeks to M4**, counted at that milestone's decomposition (#71) and not before.
+**THE WEEK TOTAL IS WITHDRAWN** (DR-182 §11.181.2, board `#796`). This section said **44–67 weeks of implementation; 11–18 months to a shipped v1** and carried a per-milestone week column behind it. M0 through M5 are closed. That table priced them at **29–44 weeks cumulative** and they took **about 7.3 weeks**, 2026-07-18 to M5's close on 2026-09-07: four to six times faster. A number wrong by that factor is not a number with a caveat on it, and re-estimating from one run of evidence would swap a stale invention for a fresh one.
 
-| Milestone | Size | Weeks | Cumulative |
-|---|---|---|---|
-| M0 Foundations | `S` | 2–3 | 2–3 |
-| M1 Elevation release | **`L`** | 8–12 | 10–15 |
-| M2 Wiring and the live schedule | **`M`** *(was `L`)* | 4–7 | 14–22 |
-| M3 Structure and the field | `M` | 4–7 | 18–29 |
-| M4 Device builder | **`L`** *(was `M`)* | **7–9** *(was 5–7)* | 25–38 |
-| M5 Validation | `M` | 4–6 | 29–44 |
-| M6 Full sheet set | `M` | 5–7 | 34–51 |
-| M7 Platform and access | `M` | 4–6 | 38–57 |
-| M8 Release engineering | `S` | 2–3 | 40–60 |
-| M9 Beta hardening | `M` | 4–7 | 44–67 |
+**The sizes stay.** `S`, `M` and `L` still order the work, still say which epics are the heavy ones, and are the thing anybody planning actually reads. The weeks described a team that is not the one building this, and no re-cost is offered here. Three shapes were considered and refused: a full re-cost in weeks with a new total, marking the gap and keeping 44–67 with a caveat, and leaving the section as it was.
 
-**44–67 weeks of implementation; 11–18 months to a shipped v1 with normal overhead.** The reduction from the previously stated 45–69 / 12–18 is DR-001's removal of the channel router, the crossing sweep and the hop arcs from M2, partly offset by DR-005's revision clouds in M6. (The pre-DR-001 figure is **45–69**, the final cumulative row of canon §9.11's own table; the "41–69" that section's prose quotes is an arithmetic slip against that table and is not the historical number.) Better than the 16–22 months `critique-feasibility.md` priced the unreduced design at, and not the 5–6 months its cut table promised, because that table cut a requirement (RJ-008). **M1 and M4 are the two `L` milestones.** M4 became one when DR-015 put the device-library subsystem on its checklist; the +2 is the library directory service, the `.rmda` codec and its import/export, template provenance, the palette filter, the library browser and the file-dialog parameterisation, none of which the 5–7 ever contained.
+**AND THE TOTAL HAD ALREADY DRIFTED BETWEEN THE TWO DOCUMENTS THAT STATED IT.** DR-029 added the Plan view at `L` and moved canon §12.7's totals to **53–80 weeks**; this section never gained the row and went on saying 44–67 for five weeks, while the header of this document said 42–65 for longer than that. Three numbers, one cost, none of them measured. That is a second reason to carry sizes: a relative ordering cannot drift apart in three places, because it has nothing to add up.
 
-> **The bottom-up sum came out higher than this, and the difference is on the record rather than buried in it.** Summing the 17 issues M4 decomposed into gives roughly **10–15 weeks**, and the part of that attributable to DR-015 is only ~1.5–2. The rest says the pre-DR-015 base of 5–7 was already optimistic. **Only the DR-015 delta is adopted above**, because it is the one change with a ruling behind it; re-pricing the base needs velocity evidence this project does not yet have, and swapping a stale number for a differently-invented one buys nothing. Flagged in docs/12 §5.3 as an open question for the first M4 task to answer with real data.
+**How to read a size.** `S` < `M` < `L`, relative to each other and to the closed milestones below, which is what makes them checkable: M1 and M4 are what an `L` looks like in this repository, M0 is what an `S` looks like. **The letters are not a function of any count**, and the counts are printed beside them so the next person can see that for themselves: M1 is `L` with 9 stories and M5 is `M` with 20.
 
-**Two levers exist if that number is unacceptable.** Pull them explicitly rather than by drift.
+### 6.1 The v1 saga: 20 epics, every one sized
 
-| # | Lever | Effect | Cost |
-|---|---|---|---|
-| 1 | **Ship M1 as a public v0.9** | Converts 10–15 weeks of invisible work into user evidence that would resolve half the remaining open questions | None. M1 is a real product (§4) |
-| 2 | **Cut the catalog to 40 archetypes at full fidelity** rather than 80 | Removes catalog authoring weeks from M1 | None to quality: the provenance gate (AC-052) sets the count, and 40 sourced templates beat 80 guessed ones. Lower *fidelity* is not the lever (RJ-007) |
+Counts are Stories under the epic, Done of that, read off the board on 2026-09-16. A milestone's letter is the one canon §12.7 set and is **not re-estimated here**; the nine epics that had no size anywhere get one, argued from their stories.
+
+| Epic | Size | Stories | Actual | Sized from |
+|---|---|---|---|---|
+| M0 Foundations | `S` | 10 / 10 | see 6.2 | closed |
+| M1 Elevation release | `L` | 9 / 9 | see 6.2 | closed |
+| M2 Wiring and the live schedule | `M` *(was `L`)* | 16 / 16 | closed 2026-08-01 | closed |
+| M3 Structure and the field | `M` | 18 / 18 | see 6.2 | closed |
+| M4 Device builder | `L` *(was `M`)* | 23 / 23 | closed 2026-09-02 | closed |
+| M5 Validation | `M` | 20 / 20 | closed 2026-09-07 | closed |
+| Plan view (DR-029) | `L` | 14 / 13 | opened 2026-09-07 | §4 already sized it `L`; 13 of 14 stories closed in **nine days**, which is a calibration point and not an estimate |
+| M6 Full sheet set | `M` | 33 / 15 | — | canon §12.7. **The largest open epic by stories**, more than M3 or M5 at the same letter; the counts are here so a re-size has evidence rather than a feeling |
+| M7 Platform and access | `M` | 14 / 1 | — | canon §12.7 |
+| M8 Release engineering | `S` | 12 / 2 | — | canon §12.7 |
+| M9 Beta hardening | `M` | 10 / 1 | — | canon §12.7 |
+| macOS support (DR-009) | `M` | 15 / 2 | — | the D1–D14 debt register: a platform directory, the native dialog, `path_provider`, the gate scripts, per-platform pdfium, window geometry, path length, a second CI job, signing. **Ports of things that already work**, no new product surface, and two long poles: a second print matrix and signing on a second platform |
+| Microsoft Store alpha | `S` | 8 / 1 | — | MSIX-0 to MSIX-7: account, identity, packaging script, listing assets, flight group, CD, file-type registration. Packaging and submission plumbing; the critical path (`runFullTrust` justification) is **waiting on a review rather than building** |
+| Cross-cutting debt (DR-097) | `L` | 45 / 35 | — | the largest epic on the board by stories. **A standing lane rather than a milestone**: its size is a running total of what reviews, drills and bug hunts have found, so the letter describes what it has already absorbed and predicts nothing |
+| Project history (DR-039) | `M` | 5 / 0 | — | five stories, none yet decomposed: the operation panel, the tombstone gesture, the in-file journal, interval snapshots, the document diff. Each is a subsystem, and each reuses something built (the undo stack, CR-095's tombstones, the codec's key-sorted output) |
+| NET-A (DR-048) | `S` | 4 / 0 | — | a writer for a modelled field, its columns plus a batch bar and a read-only inspector row, `T6.50` as an AUTO sheet **counted in M6 rather than here**, and one confirmation dialog |
+| Signal family authoring (DR-122) | `M` | 3 / 0 | — | three stories, eleven chapters: PAL-1 moving into core so the gate and the editor share one implementation, the clone command, and the editor surface with a provenance picker |
+| Authored devices reach the shelf (DR-123) | `S` | 1 / 0 | — | one story, four chapters, over machinery M4-N already built |
+| EXP-A (DR-049) | `S` | 0 | — | **NOT DECOMPOSED**, so this is sized from the ruling and not from stories, which is weaker evidence and says so. A CSV writer against a reader stack that already ships, a round-trip property, and a label sheet as its own export action |
+| DOC-A (DR-051) | `S` | 0 | — | **NOT DECOMPOSED**, same caveat. A reference block on `TemplateBody` printing on two sheets that already exist, reusing CR-061's provenance machinery |
+
+### 6.2 What the closed milestones actually took
+
+**M0 through M5: 2026-07-18 to 2026-09-07, about 7.3 weeks**, against 29–44 weeks cumulative.
+
+**Per-milestone durations are not separable, and inventing them would be the same error one level down.** These milestones did not run end to end in sequence. M0's last two exit clauses were `VACUOUS` until M4's work expired the reasons, so its criterion was met on 2026-08-27, months of calendar after its code shipped; M3's clause 1 was confirmed on 2026-08-27 by a drill; M1's two human clauses were discharged on 2026-07-27 and 2026-07-28, inside the first fortnight.
+
+**AND THE BOARD'S OWN CLOSE DATES CANNOT BE USED FOR THREE OF THEM.** M0, M1 and M3 all carry a `ClosedDate` of **2026-08-28**, which is the day every work item migrated from Issue/Task to Story/Chapter (docs/12 §1). That is a migration artefact wearing a date, and reading six durations off that column would have produced three confident wrong numbers. M2 (2026-08-01), M4 (2026-09-02) and M5 (2026-09-07) agree with their evidence in docs/12 and are used above.
+
+The one figure that is clean is the span, and it is the one that matters: **four to six times faster than a table written for a human team.** The Plan view is the second data point, and it agrees: `L`, opened the day M5 closed, 13 of its 14 stories closed in nine days.
+
+### 6.3 The levers, re-read
+
+Both were written against a total that no longer exists. Neither is a week-saving lever now, and both have been overtaken, which is worth saying rather than deleting.
+
+| # | Lever | Where it stands |
+|---|---|---|
+| 1 | **Ship M1 as a public v0.9** | **Effectively deferred rather than pulled.** M1 closed with its goal line *"and it ships to real users"* explicitly not met, and that clause is now a story under M8 (`#66`). The lever was about converting invisible work into user evidence; the work is no longer invisible, and the evidence is still owed |
+| 2 | **Cut the catalog to 40 archetypes rather than 80** | **Taken, and by the mechanism the lever named.** The shipped catalogue is nearer 40 than 80 and its exact count lives in `seed_catalog_test.dart` rather than here; AC-052's provenance gate set it, which is exactly what the Cost column said would happen. Lower *fidelity* was never the lever (RJ-007) |
 
 A third lever, **moving M4 after M6**, was available until DR-003 ruled the device builder into v1. It is withdrawn.
+
+> **The bottom-up sum that came out higher is kept, because it was right.** Summing the 17 issues M4 decomposed into gave roughly **10–15 weeks** against the table's 7–9, and the note said the pre-DR-015 base "was already optimistic" and that re-pricing needed velocity evidence this project did not have. The evidence arrived and says something stronger than either number: the whole of M0–M5 took less calendar than M4's estimate alone. Both figures were wrong, in the same direction, for the same reason, which is why §6 now carries sizes and not weeks.
 
 ---
 
