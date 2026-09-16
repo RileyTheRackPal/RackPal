@@ -363,6 +363,97 @@ void main() {
       expect(wiringStandardLabel(WiringStandard.t568a), 'T568A');
       expect(wiringStandardLabel(WiringStandard.t568b), 'T568B');
     });
+
+    ScheduleEntry rowFor(RackDocument doc, String id) => buildSchedule(
+      doc,
+    ).rows.firstWhere((r) => r.linkId == Uuid(id));
+
+    test('§3.3 column 11 carries the standard beside the termination, '
+        'which is the sentence §11.179.4 rules', () {
+      final doc = _doc()..settings.wiringStandard = WiringStandard.t568b;
+      _link(doc, origin: _origin(field: TerminationType.keystone));
+      expect(rowFor(doc, 'lnk').terminationCell, 'KEYSTONE T568B');
+    });
+
+    test('and a PUNCHDOWN keeps its punch position welded to its type, '
+        'with the standard behind both', () {
+      // `PUNCHDOWN A03` is one thing an installer reads at the panel.
+      // This case is here so a later tidy that "puts the standard beside
+      // the type" literally has to change a test rather than a habit.
+      final doc = _doc()..settings.wiringStandard = WiringStandard.t568a;
+      final link = _link(doc, origin: _origin(field: TerminationType.punchdown))
+        ..conductors.add(_toPort('lan'));
+      expect(link.conductors, hasLength(1));
+      expect(rowFor(doc, 'lnk').terminationCell, startsWith('PUNCHDOWN'));
+      expect(rowFor(doc, 'lnk').terminationCell, endsWith('T568A'));
+    });
+
+    test('a EUROBLOCK on a four-pair run prints NO standard, which is '
+        '§11.179.3 one end down', () {
+      // The cable qualifies (Cat6), so `effectiveWiringStandard` answers.
+      // This end still has no pins to order, and `EUROBLOCK T568B` would
+      // be the fabrication the ruling exists to stop.
+      final doc = _doc()..settings.wiringStandard = WiringStandard.t568b;
+      _link(doc, origin: _origin(field: TerminationType.euroblock));
+      expect(rowFor(doc, 'lnk').terminationCell, 'EUROBLOCK');
+    });
+
+    test('a project that has stated nothing prints the termination alone', () {
+      final doc = _doc();
+      _link(doc, origin: _origin(field: TerminationType.keystone));
+      expect(rowFor(doc, 'lnk').terminationCell, 'KEYSTONE');
+    });
+  });
+
+  group('the WIRING column shows the OVERRIDE, never the resolved value', () {
+    // THE CASE THIS GROUP EXISTS FOR is the first one. A column showing
+    // the effective standard would read better and would put a trap in
+    // every row: the control writes what it shows, so picking the value
+    // already on screen would pin that cable to a standard the project
+    // might later be changed away from, silently.
+
+    String cellFor(RackDocument doc, String id) => structureCell(
+      doc,
+      buildSchedule(doc).rows.firstWhere((r) => r.linkId == Uuid(id)),
+      StructureColumnId.wiringStandard,
+      units: UnitSystem.imperial,
+    );
+
+    test('a cable that states nothing shows the dash even when the job '
+        'has stated a standard', () {
+      final doc = _doc()..settings.wiringStandard = WiringStandard.t568b;
+      _link(doc);
+      expect(cellFor(doc, 'lnk'), kUnknownCell);
+    });
+
+    test('a cable that states one shows ITS value', () {
+      final doc = _doc()..settings.wiringStandard = WiringStandard.t568b;
+      _link(doc, standard: WiringStandard.t568a);
+      expect(cellFor(doc, 'lnk'), 'T568A');
+    });
+
+    test('a coax run says NO RJ45 rather than a dash, because a dash here '
+        'means "follows the job" and invites typing', () {
+      final doc = _doc()..settings.wiringStandard = WiringStandard.t568b;
+      _link(doc, media: 'media.rg6');
+      expect(cellFor(doc, 'lnk'), kNoRj45Cell);
+    });
+
+    test('the column is optional, editable, and last in the gear menu', () {
+      expect(
+        kStructureOptionalColumns,
+        contains(StructureColumnId.wiringStandard),
+      );
+      expect(
+        kStructureDefaultColumns,
+        isNot(contains(StructureColumnId.wiringStandard)),
+      );
+      expect(
+        structureColumnIsEditable(StructureColumnId.wiringStandard),
+        isTrue,
+      );
+      expect(StructureColumnId.values.last, StructureColumnId.wiringStandard);
+    });
   });
 
   group('the file, which is where G4 is actually testable', () {

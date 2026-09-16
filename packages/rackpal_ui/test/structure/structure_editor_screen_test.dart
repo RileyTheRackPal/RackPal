@@ -508,6 +508,33 @@ final class _Harness {
             case SetSignalFamilyReady(:final command):
               commands.add(command);
           }
+        // DR-180 §11.179.2, `#80`. ADDED WITH THE COLUMN, on the lesson
+        // the two comments above record: this harness reimplements
+        // `buildStructureEditAction`, and a column the product can write
+        // and this one cannot is a surface test failing for a reason the
+        // product does not have. The REFUSAL for a cable with no 8P8C end
+        // is the app's and is driven in `structure_editor_route_test`;
+        // what this arm buys is that a pick on a qualifying row reaches
+        // the document, which is what the surface case asserts.
+        case StructureColumnId.wiringStandard:
+          final value = e.value.trim().toUpperCase();
+          final standard = value == kUnknownCell || value.isEmpty
+              ? null
+              : WiringStandard.values
+                    .where((w) => wiringStandardLabel(w) == value)
+                    .firstOrNull;
+          if (standard == null && value != kUnknownCell && value.isNotEmpty) {
+            return '"${e.value}" is not a wiring standard.';
+          }
+          final wiring = buildSetEntityProperty<Link, WiringStandard?>(
+            doc: doc,
+            id: e.linkId,
+            field: LinkField.wiringStandard,
+            to: standard,
+            now: _now,
+            actor: 'editor',
+          );
+          if (wiring != null) commands.add(wiring);
         case StructureColumnId.notes:
           final c = buildSetEntityProperty<Link, String?>(
             doc: doc,
@@ -1158,6 +1185,87 @@ void main() {
         links.map((l) => l.structureOrigin!.fieldLabel),
         before,
         reason: 'the first edit must not have been applied either',
+      );
+    });
+  });
+
+  group('the WIRING column (DR-180 §11.179, board `#80`)', () {
+    // THE CASE THIS GROUP EXISTS FOR is the coax row. The column is
+    // editable per COLUMN, and whether a standard is a fact about a given
+    // cable is per ROW (§11.179.3). Get that wrong and the cell is an
+    // enabled control whose every use the write path refuses, which is
+    // `#711`'s defect drawn on purpose.
+
+    /// Turns `WIRING` on the way a person does, through `⚙ Columns`.
+    Future<void> showWiring(WidgetTester tester) async {
+      await tester.tap(find.text('Columns'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('WIRING'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('WIRING'));
+      await tester.pumpAndSettle();
+      await tester.tapAt(const Offset(4, 4));
+      await tester.pumpAndSettle();
+    }
+
+    /// The `WIRING` menu, found by the pair of options no other column
+    /// offers together.
+    Finder wiringMenu() => find.byWidgetPredicate(
+      (w) =>
+          w is DropdownButton<String> &&
+          (w.items ?? const <DropdownMenuItem<String>>[]).any(
+            (i) => i.value == wiringStandardLabel(WiringStandard.t568a),
+          ),
+      description: 'the WIRING menu',
+    );
+
+    testWidgets('it is off until asked for, and a Cat6 drop then gets a '
+        'real control', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      expect(find.text('WIRING'), findsNothing);
+
+      await showWiring(tester);
+      expect(find.text('WIRING'), findsOneWidget, reason: 'the header');
+      expect(wiringMenu(), findsOneWidget);
+    });
+
+    testWidgets('a COAX drop gets NO control and says so, rather than an '
+        'enabled cell the write path would refuse', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x RG6');
+      await showWiring(tester);
+
+      expect(find.text('WIRING'), findsOneWidget, reason: 'the header');
+      expect(wiringMenu(), findsNothing);
+      expect(find.text(kNoRj45Cell), findsOneWidget);
+    });
+
+    testWidgets('picking one writes THIS cable and leaves the project '
+        'setting alone', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await _addLine(tester, 'Living Room: 1x Cat6');
+      await showWiring(tester);
+
+      await tester.tap(wiringMenu());
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text(wiringStandardLabel(WiringStandard.t568a)).last,
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        _rows(h).single.wiringStandard,
+        WiringStandard.t568a,
+        reason: 'the cable carries the exception',
+      );
+      expect(
+        h.doc.settings.wiringStandard,
+        isNull,
+        reason: 'and the job was never told anything',
       );
     });
   });

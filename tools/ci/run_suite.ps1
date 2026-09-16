@@ -860,7 +860,11 @@ $SuiteFloors = @{
     # is where the rule that a speaker run never gets a standard is
     # actually held, and +4 for the Link field's own write, clear and
     # byte-identical revert.
-    'rackpal_core'   = 4791
+    # 4799 at `#80`'s second half: +8. Four for what the printed `TERM`
+    # cell says (including the EUROBLOCK case, which is §11.179.3 read one
+    # END down) and four for the `WIRING` column showing the override
+    # rather than the resolved value.
+    'rackpal_core'   = 4799
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1302,7 +1306,10 @@ $SuiteFloors = @{
     # third is the one worth having: "Not stated" has to take a standard
     # back OFF, which is why unset is an item in that dropdown rather than
     # an empty box.
-    'rackpal_ui'     = 1935
+    # 1938 at `#80`'s second half: +3 for the `WIRING` column. The one
+    # worth having is the COAX row, which gets read-only text: an enabled
+    # control whose every use the write path refuses is `#711` again.
+    'rackpal_ui'     = 1938
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1433,7 +1440,10 @@ $SuiteFloors = @{
     # in either UI package because it reads the real menu bar, which only
     # the assembled app has, and scans all three `lib/` trees for a menu
     # path written into a string.
-    'rackpal_app'    = 1052
+    # 1054 at `#80` (DR-180): +2 for the `WIRING` column's write path. The
+    # second is the refusal: a cable with no 8P8C end is named rather than
+    # quietly given an override nothing would read.
+    'rackpal_app'    = 1054
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

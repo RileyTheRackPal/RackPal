@@ -150,6 +150,11 @@ StructureEditFn buildStructureEditAction({
         end: 'rack',
         into: commands,
       ),
+      StructureColumnId.wiringStandard => _wiringStandard(
+        controller: controller,
+        edit: edit,
+        into: commands,
+      ),
       StructureColumnId.testResult => _testResult(
         controller: controller,
         edit: edit,
@@ -426,6 +431,54 @@ String? _termination({
       return null;
     }(),
   };
+}
+
+/// `WIRING`: this cable's own pair-to-pin standard (DR-180 §11.179.2).
+///
+/// **THE DASH CLEARS IT, AND THAT IS NOT THIS COLUMN'S UNKNOWN.** On the
+/// two termination arms above, clearing means "nobody has decided how
+/// this end is finished". Here it means "this cable states nothing, so it
+/// follows the job", and the job's standard is a project setting. The
+/// gesture is the same and the sentence it writes into the document is a
+/// different one, which is why this is its own arm rather than a third
+/// caller of `_termination`.
+///
+/// **IT REFUSES A CABLE A STANDARD IS NOT A FACT ABOUT** (§11.179.3),
+/// rather than storing an override nothing will ever read. The cell for
+/// such a row is not a dropdown at all, so reaching this is either the
+/// batch bar aimed at a mixed selection or a caller bypassing the table:
+/// both deserve the sentence rather than a silent write.
+String? _wiringStandard({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required List<Command<RackDocument>> into,
+}) {
+  final link = controller.doc.links[edit.linkId];
+  if (link == null) return 'That cable is not in this project.';
+  if (!wiringStandardApplies(controller.doc, link)) {
+    return '${link.designator} has no 8P8C end, so a wiring standard is '
+        'not a fact about it.';
+  }
+
+  final wanted = edit.value.trim().toUpperCase();
+  WiringStandard? value;
+  if (wanted.isNotEmpty && wanted != kUnknownCell) {
+    value = WiringStandard.values
+        .where((w) => wiringStandardLabel(w) == wanted)
+        .firstOrNull;
+    if (value == null) {
+      return '"${edit.value}" is not a wiring standard. Use one of: '
+          '$kUnknownCell, '
+          '${WiringStandard.values.map(wiringStandardLabel).join(', ')}.';
+    }
+  }
+  return _plain<WiringStandard?>(
+    controller: controller,
+    edit: edit,
+    field: LinkField.wiringStandard,
+    to: value,
+    into: into,
+  );
 }
 
 /// `SERVICE`, the signal family (DR-025 §11.24.5, board #587).

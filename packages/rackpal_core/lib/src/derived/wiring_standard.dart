@@ -79,6 +79,26 @@ const Set<TerminationType> kRj45Terminations = <TerminationType>{
   TerminationType.rj45Plug,
 };
 
+/// The terminations a wiring standard actually describes.
+///
+/// WIDER THAN [kRj45Terminations] BY EXACTLY ONE, AND THE DIFFERENCE IS
+/// TWO DIFFERENT QUESTIONS. [kRj45Terminations] asks *is this cable
+/// four-pair data at all*, and there a punchdown proves nothing: a 66
+/// block carries voice. This asks *does the standard describe what
+/// happens at THIS end*, of a cable already known to be four-pair data,
+/// and there a punchdown is a 110 block or a patch panel, where pair
+/// order is exactly what lands.
+///
+/// So the same value is excluded from one set and included in the other,
+/// on purpose, and a future reader tidying them into one would quietly
+/// either print `T568B` beside a voice punchdown or stop printing it
+/// beside a patch panel.
+const Set<TerminationType> kPairOrderTerminations = <TerminationType>{
+  TerminationType.keystone,
+  TerminationType.punchdown,
+  TerminationType.rj45Plug,
+};
+
 /// Whether a wiring standard is a fact about [link] at all (§11.179.3).
 ///
 /// See the file header for the four qualifiers and why `punchdown` is not
