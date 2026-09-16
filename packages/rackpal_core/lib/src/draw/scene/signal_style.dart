@@ -59,12 +59,13 @@
 // build on the names that would carry it here.
 //
 // ═════════════════════════════════════════════════════════════════════
-// THE GLYPH CHANNEL IS DEGRADED, AND THE DEGRADATION IS COUNTED
+// THE GLYPH CHANNEL WAS DEGRADED, THE DEGRADATION WAS COUNTED, AND
+// DR-181 CLOSED IT WITH A FIELD RATHER THAN A RULE
 // ═════════════════════════════════════════════════════════════════════
 // `SignalDomainDef` carries `glyph`/`glyphAlt` — "native / transported",
 // filled versus hollow (docs/05 §5: "fill encodes tier"). NOTHING IN THE
-// MODEL SAYS WHICH TIER A FAMILY IS. There is no `tier` field, and all
-// three candidate proxies fail against docs/05 §6.4's own table:
+// MODEL SAID WHICH TIER A FAMILY IS, and all three candidate proxies fail
+// against docs/05 §6.4's own table:
 //
 //   * "a family with a weight override is the transported one" makes
 //     `video.hdmi.1_4` (750) hollow △, but §6.4 prints ▲ for all three
@@ -74,21 +75,31 @@
 //   * an id-namespace rule (`rf.` inside `video.analog` ⇒ ▽) is true of
 //     that one domain and says nothing about the other seven.
 //
-// So this file draws `SignalDomainDef.glyph` — the native shape — for
-// every family, and raises [SignalStyle.glyphIsUnderdetermined] on every
-// family whose domain declares a DIFFERENT `glyphAlt`: every family whose
-// shape this renderer cannot verify. `SchematicScene.underGlyphedFamilyIds`
-// counts them, so the wrongness is REPORTED rather than silent (G4).
+// So this file drew `SignalDomainDef.glyph` — the native shape — for every
+// family, and raised [SignalStyle.glyphIsUnderdetermined] on every family
+// whose domain declared a DIFFERENT `glyphAlt`.
+// `SchematicScene.underGlyphedFamilyIds` counted them, so the wrongness
+// was REPORTED rather than silent (G4). **It was 26 of the 57 seeded
+// families**, which nobody knew until `#82` counted it: the flag reported
+// a superset and the number was never read.
 //
-// THIS IS WIDER THAN THE DEFECT USUALLY NAMED. `audio.analog` and `pwr`
-// each carry THREE shapes in docs/05 §6.2 (● / ◐ / ○ and ⬢ / ⬡ / ⏚)
-// against two slots, so `audio.speaker_cv` and `power.bonding` have
-// nowhere to put their third — but the missing SELECTOR above means the
-// second slot is unreachable too, in all eight domains. Neither is fixed
-// here: DR-010 §11.10.4 deliberately keeps a per-family glyph out of
-// scope, and that is a ruling, not an implementation detail. Inventing a
-// third slot, or a tier heuristic, would be fabricating a fact the model
-// cannot express.
+// **THE ANSWER WAS NEVER A SELECTOR** (DR-181 §11.180.2). §4.4 gives every
+// family a glyph outright, so the fact is authored rather than inferred:
+// `SignalFamilyDef.glyphOverride` states it and `effectiveGlyph` falls
+// back to the domain's native shape. The three failed proxies above are
+// why it had to be a field; a fourth heuristic would have failed the same
+// way, against the same table.
+//
+// THE FLAG STAYS, EMPTIED OF ITS SEEDED CASES. A family that states its
+// glyph is not a guess and drops out; a family in a multi-glyph domain
+// that states none still inherits the native shape and is still
+// unverifiable, which is what a registry a user adds later can be.
+//
+// AND THE THIRD SHAPES ARE DRAWN NOW. `audio.analog` and `pwr` each carry
+// THREE glyphs in docs/05 §6.2 (● / ◐ / ○ and ⬢ / ⬡ / ⏚) against two
+// domain slots; the third lives on the family, so `audio.speaker_cv` draws
+// ○ and `power.bonding` draws ⏚. `family_glyph.dart` gained the two shapes
+// and a real half-fill for ◐, which it had been drawing as ○.
 
 import 'dart:math' as math;
 
@@ -196,9 +207,13 @@ final class SignalStyle {
   /// [kMinSignalStrokePt].
   final double widthPt;
 
-  /// CHANNEL 4a, the domain glyph — always the NATIVE shape. Empty when
-  /// the domain does not resolve. See the file header on why `glyphAlt`
-  /// is never selected.
+  /// CHANNEL 4a: the family's own glyph when it states one, and its
+  /// domain's NATIVE shape otherwise (DR-181 §11.180.2). Empty when the
+  /// domain does not resolve.
+  ///
+  /// `SignalFamilyDef.effectiveGlyph` is what answers, so this field and
+  /// `registry_parity.py`'s glyph column read the same rule. See the file
+  /// header on why `glyphAlt` is still never selected by inference.
   final String glyph;
 
   /// CHANNEL 4b, the family tag token — `HD20`, `SPK`, `232`.
@@ -224,9 +239,18 @@ final class SignalStyle {
   /// be a second answer to a question resolved here.
   final bool hueIsOverridden;
 
-  /// See the file header. True when the domain declares a `glyphAlt` that
-  /// differs from `glyph`, i.e. when this family's shape cannot be
-  /// verified because no model field selects a tier.
+  /// True when this family's shape cannot be VERIFIED: its domain declares
+  /// an alternate glyph and the family states none of its own, so the
+  /// native shape is drawn and may be the wrong one.
+  ///
+  /// **DR-181 §11.180.2 EMPTIED THIS OF ITS 26 REAL CASES AND DID NOT
+  /// RETIRE IT.** A family that states a `glyphOverride` is no longer a
+  /// guess and drops out; every other family in a multi-glyph domain still
+  /// draws the native shape by inheritance, which is right for the 31 the
+  /// catalogue gives the native glyph to and is still unverifiable for any
+  /// family a later registry adds without one. Deleting the flag would
+  /// hand that case back to silence, which is what the seed's 26 were
+  /// before anybody counted them (G4).
   final bool glyphIsUnderdetermined;
 
   /// True when the family AND its domain both resolved. False means this
@@ -338,13 +362,20 @@ SignalStyle resolveSignalStyle({
       kMinSignalStrokePt,
       kSignalBaseWeightPt * permille / 1000,
     ),
-    glyph: domain?.glyph ?? '',
+    // THE FAMILY'S OWN SHAPE WHEN IT STATES ONE (DR-181 §11.180.2). The
+    // fallback rule is `effectiveGlyph`'s, beside the other two, so a
+    // renderer reading `glyphOverride` directly cannot draw a domain's
+    // families all alike the way this line did until `#82`.
+    glyph: domain == null ? '' : (def?.effectiveGlyph(domain) ?? domain.glyph),
     tag: _tagFor(def, domain, family),
     hueIsOverridden: override != null,
-    // See the file header: a domain that declares a second shape has a
-    // tier this renderer cannot select, so every one of its families is
-    // drawn with a glyph that may be the wrong one.
-    glyphIsUnderdetermined: domain != null && domain.glyphAlt != domain.glyph,
+    // A domain that declares a second shape has a tier no field selects,
+    // so a family inheriting the native one may be drawn wrong. A family
+    // that STATES its shape is not a guess and drops out; see the field.
+    glyphIsUnderdetermined:
+        domain != null &&
+        domain.glyphAlt != domain.glyph &&
+        def?.glyphOverride == null,
     resolved: domain != null,
   );
 }

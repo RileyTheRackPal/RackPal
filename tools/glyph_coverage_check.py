@@ -63,26 +63,35 @@ REQUIRED = {0x2192: 'passthrough arrow, schedules T6.10/T6.11',
 
 # THE ONE EXEMPT SET, AND WHY IT IS SAFE TO HAVE ONE.
 #
-# These codepoints never reach a font. They are `SignalDomainDef.glyph` and
-# `DeviceGlyph` REGISTRY DATA, and both are drawn as geometry by
-# `family_glyph.dart` and `device_glyph_art.dart`, whose advance is COMPUTED
-# from the type size so that measurer and emitter cannot disagree. That is the
-# fix those files exist to be; requiring them in the font would be requiring a
-# font for something deliberately taken out of the font's hands.
+# These codepoints never reach a font. They are `SignalDomainDef.glyph`,
+# `SignalFamilyDef.glyphOverride` and `DeviceGlyph` REGISTRY DATA, and all are
+# drawn as geometry by `family_glyph.dart` and `device_glyph_art.dart`, whose
+# advance is COMPUTED from the type size so that measurer and emitter cannot
+# disagree. That is the fix those files exist to be; requiring them in the font
+# would be requiring a font for something deliberately taken out of the font's
+# hands.
 #
 # This project's own practice is that a test's exemption list is where the bug
 # lives, so the mitigation is that this list is CLOSED and reasoned, anything
 # absent from it fails, and a codepoint that migrates from data into a widget
 # label will fail the moment it appears in a `rackpal_ui` literal.
+#
+# TWO ENTRIES ARRIVED WITH DR-181 (`#82`), and they are the two shapes no
+# DOMAIN slot held: `audio.analog` and `pwr` each carry three glyphs against
+# two slots, so the third of each lived only in the specification until the
+# families could state their own. Both are exempt on exactly the reasoning
+# above, and the mitigation is the same one: `family_glyph.dart` gained real
+# geometry for both in the same commit, and a glyph with geometry for nobody
+# falls back to a measured text run in a font that carries neither.
 PATH_BACKED = {
     0x25A0, 0x25A1,          # net, native / transported
     0x25B3,                  # video.digital, transported
     0x25BC, 0x25BD,          # video.analog
     0x25C6, 0x25C7,          # audio.digital
-    0x25CF, 0x25D0,          # audio.analog
+    0x25CF, 0x25D0, 0x25CB,  # audio.analog: line / speaker low-Z / CV
     0x2605, 0x2606,          # str
     0x271A, 0x2733,          # ctl
-    0x2B21, 0x2B22,          # pwr
+    0x2B21, 0x2B22, 0x23DA,  # pwr: DC / AC / bonding, the earth symbol
 }
 
 # EMPTY, AND THE STORY OF HOW IT EMPTIED IS THE REASON IT STAYS HERE.

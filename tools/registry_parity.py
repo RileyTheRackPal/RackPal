@@ -52,9 +52,17 @@ once markdown emphasis and code marks are removed. A Dir or Topo cell is read
 by its leading symbol or word, because the table writes prose around it. A cell
 that is only a dash states nothing and is skipped. Until DR-175 these fields
 were pinned only by the starter goldens, whose failure says to regenerate, which
-is how a typo would have shipped. The glyph is not compared: the seed stores
-none per family (DR-010 section 11.10.3). Neither file is the authority for
-this half; a disagreement is fixed in whichever of the two is wrong.
+is how a typo would have shipped. Neither file is the authority for this half; a
+disagreement is fixed in whichever of the two is wrong.
+
+THE GLYPH JOINED THEM AT DR-181 (section 11.180.2, board #82). This paragraph
+used to end "the glyph is not compared: the seed stores none per family", which
+was a true statement about the code and read like a footnote. What it meant was
+that 26 of the 57 families drew a shape the specification does not give them, in
+all eight domains, and no gate could see it. The seed stores one per family now
+and what is compared is the EFFECTIVE glyph -- the family's own, else its
+domain's NATIVE one -- on exactly the dash and weight rule above, so this file
+checks the inheritance as well as the values.
 """
 import importlib.util
 import os
@@ -234,6 +242,7 @@ def parse_seed(path):
             'hex': parse_str(args[3]).upper(),
             'dash': parse_int_list(args[5]),
             'weight': int(args[6].strip()),
+            'glyph': parse_str(args[7]),
         }
 
     families = []
@@ -260,8 +269,13 @@ def parse_seed(path):
                 else domains[dom]['dash'])
         weight = (int(named['weight']) if 'weight' in named
                   else domains[dom]['weight'])
+        # SignalFamilyDef.effectiveGlyph: the family's own, else the domain's
+        # NATIVE glyph. `glyphAlt` is never the fallback -- which alternate a
+        # family takes is exactly what the override states (DR-181).
+        glyph = (parse_str(named['glyph']) if 'glyph' in named
+                 else domains[dom]['glyph'])
         families.append({'id': fid, 'domain': dom, 'dash': dash,
-                         'weight': weight,
+                         'weight': weight, 'glyph': glyph,
                          'name': parse_str(positional[1]),
                          'connector': parse_str(positional[3]),
                          'dir': positional[4].strip(),
@@ -326,7 +340,8 @@ def parse_spec(path):
     end = next((i for i in range(start + 1, len(lines))
                 if re.match(r'^#{1,3} ', lines[i])), len(lines))
     wanted = (('name', 'display name'), ('connector', 'default connector'),
-              ('dir', 'dir'), ('topo', 'topo'), ('tag', 'tag'))
+              ('dir', 'dir'), ('topo', 'topo'), ('tag', 'tag'),
+              ('glyph', 'glyph'))
     rows, cols = {}, None
     for line in lines[start:end]:
         if not line.lstrip().startswith('|'):
@@ -439,7 +454,7 @@ def check():
         row = spec.get(f['id'])
         if row is None:
             continue
-        for field in ('name', 'connector', 'tag'):
+        for field in ('name', 'connector', 'tag', 'glyph'):
             want = plain(row[field])
             if want == NOT_STATED:
                 continue
@@ -478,7 +493,8 @@ def main():
         print('PASS - the Dart seed matches tools/pal1_check.py on every '
               'domain hue, family domain, effective dash and effective weight,')
         print('       and %s section 4.4 on every family name, '
-              'connector, tag, direction and topology.' % SPEC_REL)
+              'connector, tag, direction, topology and effective glyph.'
+              % SPEC_REL)
         return 0
     print('FAIL - %d disagreement(s):' % len(drifts))
     for d in drifts:

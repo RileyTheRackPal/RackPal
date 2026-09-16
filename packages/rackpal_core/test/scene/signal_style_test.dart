@@ -325,41 +325,68 @@ void main() {
       );
     });
 
-    test('the NATIVE glyph is always what is drawn, and every affected '
-        'family is flagged (DR-010 §11.10.4)', () {
-      // THE DEFECT, PINNED. `SignalDomainDef` carries two shapes and
-      // NOTHING SELECTS BETWEEN THEM: there is no tier field, and the
-      // three candidate proxies each contradict docs/05 §6.4 (see
-      // `signal_style.dart`'s header). So the native glyph is drawn and
-      // the whole set is reported.
+    test('a family draws its OWN glyph when it states one, and its domain’s '
+        'native shape otherwise (DR-181 §11.180.2)', () {
+      // WHAT THIS CASE USED TO SAY IS THE POINT OF IT. It read "the NATIVE
+      // glyph is always what is drawn, and every affected family is
+      // flagged", and it passed, because `SignalDomainDef` carries two
+      // shapes and nothing selected between them: there is no tier field
+      // and the three candidate proxies each contradict docs/05 §6.4 (see
+      // `signal_style.dart`'s header). The answer was never a selector.
+      // §4.4 gives every family a glyph outright, so DR-181 made it a
+      // stated fact rather than an inferred one.
       final registries = _seeded();
+      var overridden = 0;
       var flagged = 0;
       for (final id in registries.signalFamilies.keys) {
         final def = registries.signalFamilies[id]!;
         final domain = registries.signalDomains[def.domain]!;
         final style = _style(id.v, registries: registries);
-        expect(style.glyph, domain.glyph);
-        expect(style.glyph, isNot(domain.glyphAlt));
+        expect(style.glyph, def.glyphOverride ?? domain.glyph, reason: id.v);
+        expect(
+          style.glyphIsUnderdetermined,
+          def.glyphOverride == null,
+          reason: id.v,
+        );
+        if (def.glyphOverride != null) overridden++;
         if (style.glyphIsUnderdetermined) flagged++;
       }
-      // All 55, because all eight domains declare a second shape. That is
-      // the honest number and it is deliberately not narrowed: a count
-      // that named only the two families with a missing THIRD shape would
-      // under-report the gap by 53.
-      expect(flagged, registries.signalFamilies.length);
+      // THE 26 THE RULING COUNTED, asserted rather than described: `#82`
+      // was filed over two families and measuring found thirteen times
+      // that many.
+      expect(overridden, 26);
+      // The flag is not retired, it is emptied of its seeded cases. What
+      // is left is what is genuinely unverified: a family in a
+      // multi-glyph domain that states no shape of its own, which is what
+      // a registry entry added later can be (G4).
+      expect(flagged, registries.signalFamilies.length - overridden);
     });
 
-    test('the two families docs/05 §6.4 gives a THIRD shape are drawn with '
-        'the domain’s first — recorded, not fixed', () {
+    test('the two families docs/05 §6.4 gives a THIRD shape now draw it, and '
+        'the middle tier is its own picture', () {
       // §6.2 gives `audio.analog` ● / ◐ / ○ and `pwr` ⬢ / ⬡ / ⏚ against
-      // two stored slots, so `audio.speaker_cv` (○) and `power.bonding`
-      // (⏚) have nowhere to put their shape at all. DR-010 §11.10.4 keeps
-      // a per-family glyph out of scope; this test exists so the wrong
-      // shape is a KNOWN wrong shape.
-      expect(_style('audio.speaker_cv').glyph, '●');
-      expect(_style('power.bonding').glyph, '⬢');
-      expect(_style('audio.speaker_cv').glyphIsUnderdetermined, isTrue);
-      expect(_style('power.bonding').glyphIsUnderdetermined, isTrue);
+      // two stored domain slots, so these two had nowhere to put their
+      // shape at all and were drawn with the domain's first. This case
+      // asserted that wrong shape, so that it would be a KNOWN wrong one.
+      expect(_style('audio.speaker_cv').glyph, '○');
+      expect(_style('power.bonding').glyph, '⏚');
+      expect(_style('audio.speaker_cv').glyphIsUnderdetermined, isFalse);
+      expect(_style('power.bonding').glyphIsUnderdetermined, isFalse);
+
+      // AND THE GEOMETRY MUST AGREE, which is the half of this that a
+      // codepoint assertion cannot see. `◐` mapped to the HOLLOW circle
+      // until DR-181: harmless while nothing drew `○`, and the same
+      // drawing for a low-impedance speaker run and a constant-voltage one
+      // the moment something did. Those two are the pair on a job that
+      // must never be confused for each other.
+      expect(_style('audio.speaker_lowz').glyph, '◐');
+      expect(
+        familyGlyphFor('◐'),
+        isNot(familyGlyphFor('○')),
+        reason: 'the two speaker tiers must not be one drawing',
+      );
+      expect(familyGlyphFor('○'), isNotNull);
+      expect(familyGlyphFor('⏚'), isNotNull);
     });
   });
 

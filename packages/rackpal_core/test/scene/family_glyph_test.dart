@@ -81,13 +81,54 @@ void main() {
       expect(shapes, hasLength(8));
     });
 
+    test('EVERY seeded FAMILY glyph resolves a shape too (DR-181)', () {
+      // The domains' sixteen were covered above from the day this file
+      // existed. DR-181 gave 26 families a glyph of their own, and two of
+      // those codepoints — `○` and `⏚` — were in no domain slot and so in
+      // no shape table: they would have fallen back to a measured text
+      // run in a font that carries neither, which is `#124` arriving
+      // again on a different row.
+      final domains = buildSeedSignalDomains();
+      final unmapped = <String>[];
+      var stated = 0;
+      for (final def in buildSeedSignalFamilies().values) {
+        final glyph = def.effectiveGlyph(domains[def.domain]!);
+        if (def.glyphOverride != null) stated++;
+        if (familyGlyphFor(glyph) == null) {
+          unmapped.add('${def.id.v}: "$glyph"');
+        }
+      }
+      expect(stated, 26, reason: 'the overrides DR-181 §11.180.2 counted');
+      expect(unmapped, isEmpty);
+    });
+
     test('fill encodes tier — native is filled, the alternate is not', () {
-      // docs/05 §5. `signal_style.dart` draws only the native glyph today
-      // and says why; this keeps the alternate half honest for when
-      // something can select it.
+      // docs/05 §5.
       for (final domain in buildSeedSignalDomains().values) {
         expect(familyGlyphFor(domain.glyph)!.filled, isTrue);
         expect(familyGlyphFor(domain.glyphAlt)!.filled, isFalse);
+      }
+    });
+
+    test('the three tiers of a THREE-glyph domain are three DISTINCT '
+        'drawings, not two (DR-181)', () {
+      // THE CASE THIS GROUP GAINED AT `#82`. `◐` was mapped to the hollow
+      // circle, which is `○`'s drawing. That was harmless for as long as
+      // nothing drew `○` — and `audio.speaker_cv` draws it now, so the
+      // mapping would have made a constant-voltage speaker run and a
+      // low-impedance one THE SAME PICTURE. They are the pair on a job
+      // that must never be confused, which is why the channel exists.
+      for (final trio in [
+        ['●', '◐', '○'],
+        ['⬢', '⬡', '⏚'],
+      ]) {
+        final drawn = <FamilyGlyph>{};
+        for (final g in trio) {
+          final shape = familyGlyphFor(g);
+          expect(shape, isNotNull, reason: g);
+          drawn.add(shape!);
+        }
+        expect(drawn, hasLength(3), reason: trio.join(' '));
       }
     });
 
@@ -116,10 +157,25 @@ void main() {
       // being run over. Asserted over every shape, because the star and
       // the cross are the two whose extremes are not obvious from the
       // construction.
+      //
+      // OVER EVERY FAMILY GLYPH TOO SINCE DR-181, which is what puts the
+      // new shapes under this: `⏚` is an open figure of four subpaths and
+      // `◐` is the one shape whose geometry depends on its own tier, so
+      // both are exactly the kind that could sit outside the box the
+      // advance reserves without anything else noticing.
       const sizePt = 8.0;
       final advance = familyGlyphAdvance(sizePt);
-      for (final domain in buildSeedSignalDomains().values) {
-        for (final glyph in [domain.glyph, domain.glyphAlt]) {
+      final domains = buildSeedSignalDomains();
+      final everyGlyph = <String>{
+        for (final domain in domains.values) ...[
+          domain.glyph,
+          domain.glyphAlt,
+        ],
+        for (final def in buildSeedSignalFamilies().values)
+          def.effectiveGlyph(domains[def.domain]!),
+      };
+      for (final glyph in everyGlyph) {
+        {
           final op =
               familyGlyphOp(
                     familyGlyphFor(glyph)!,
@@ -155,7 +211,7 @@ void main() {
               if (y > maxY) maxY = y;
             }
           }
-          final reason = '${domain.id.v} "$glyph"';
+          final reason = '"$glyph"';
           expect(minX, greaterThanOrEqualTo(-1e-9), reason: reason);
           expect(maxX, lessThanOrEqualTo(advance + 1e-9), reason: reason);
           // AND VERTICALLY CENTRED on the line it was placed at, so it
@@ -169,37 +225,48 @@ void main() {
       }
     });
 
-    test('a filled glyph carries a fill and NO stroke; a hollow one the '
-        'reverse', () {
+    test('an INKED glyph carries a fill and NO stroke; a hollow one the '
+        'reverse, and NEITHER carries both', () {
       // The invariant `net_label_layer_test`'s `_isGlyphPath` reads to
       // tell a glyph from a pennant — a pennant is the only path carrying
       // both. Pinned here so a change to the emitter breaks this rather
       // than quietly turning those tests into assertions about the wrong
       // shape.
-      final filled =
+      //
+      // DR-181's HALF TIER IS WHY THIS CASE NOW SWEEPS ALL THREE. A
+      // half-disc outlined for crispness carries both paints and would
+      // have made every `audio.speaker_lowz` flag read as a pennant to
+      // three scene tests, which would have counted the wrong paths and
+      // still passed.
+      OpPath opFor(FamilyGlyphFill fill) =>
           familyGlyphOp(
-                const FamilyGlyph(FamilyGlyphShape.square, filled: true),
+                FamilyGlyph(FamilyGlyphShape.square, fill: fill),
                 const DPt(0, 0),
                 8,
                 0xFF102030,
                 hollowWidthPt: 0.5,
               )
               as OpPath;
-      expect(filled.fill?.argb, 0xFF102030);
-      expect(filled.stroke, isNull);
 
-      final hollow =
-          familyGlyphOp(
-                const FamilyGlyph(FamilyGlyphShape.square, filled: false),
-                const DPt(0, 0),
-                8,
-                0xFF102030,
-                hollowWidthPt: 0.5,
-              )
-              as OpPath;
+      for (final fill in [FamilyGlyphFill.filled, FamilyGlyphFill.half]) {
+        final op = opFor(fill);
+        expect(op.fill?.argb, 0xFF102030, reason: fill.name);
+        expect(op.stroke, isNull, reason: fill.name);
+      }
+
+      final hollow = opFor(FamilyGlyphFill.hollow);
       expect(hollow.fill, isNull);
       expect(hollow.stroke?.argb, 0xFF102030);
       expect(hollow.stroke?.widthPt, 0.5);
+
+      for (final fill in FamilyGlyphFill.values) {
+        final op = opFor(fill);
+        expect(
+          op.fill != null && op.stroke != null,
+          isFalse,
+          reason: '${fill.name}: a glyph carrying both reads as a pennant',
+        );
+      }
     });
   });
 

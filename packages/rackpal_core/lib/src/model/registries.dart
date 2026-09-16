@@ -85,6 +85,7 @@ final class SignalFamilyDef {
     this.shortTag,
     this.dashOverride,
     this.lineWeightPermilleOverride,
+    this.glyphOverride,
   });
 
   final SignalFamilyId id;
@@ -126,6 +127,28 @@ final class SignalFamilyDef {
   /// (b) rescues a shared dash class only at a ratio ≥ 1.4.
   final int? lineWeightPermilleOverride;
 
+  /// The type-within-domain SHAPE (DR-181 §11.180.2). Null inherits the
+  /// domain's native [SignalDomainDef.glyph].
+  ///
+  /// THE FOURTH RENDER FIELD, AND DR-010 §11.10.4 KEPT IT OUT ON PURPOSE.
+  /// That ruling added three and said the rest arrive when something needs
+  /// them; what needed this is `#82`'s measurement. §4.4 gives every
+  /// family a glyph and §4.3 gives each domain a native one and one or two
+  /// more, so **26 of the 57 seeded families drew a shape the catalogue
+  /// does not give them**: every family whose §4.4 glyph is another of its
+  /// domain's shapes was drawn with the native one.
+  ///
+  /// THE REASON IS THE GREYSCALE PRINT. Shape is one of the channels that
+  /// survives it (docs/05 §6.1), and a constant-voltage speaker line is
+  /// not interchangeable with a low-impedance one.
+  ///
+  /// A `String` AND NOT AN ENUM, like the domain's two: a glyph is a
+  /// codepoint the catalogue authors, and `family_glyph.dart` maps the
+  /// ones it can draw to geometry and falls back to a measured text run
+  /// for any it cannot. An enum here would make a registry entry a code
+  /// change.
+  final String? glyphOverride;
+
   /// The dash this family actually draws, given its resolved [domain].
   ///
   /// The fallback rule lives here rather than at each call site because
@@ -140,6 +163,17 @@ final class SignalFamilyDef {
   /// [effectiveDashPattern] for why the rule is here.
   int effectiveLineWeightPermille(SignalDomainDef resolvedDomain) =>
       lineWeightPermilleOverride ?? resolvedDomain.lineWeightPermille;
+
+  /// The glyph this family actually draws. See [effectiveDashPattern] for
+  /// why the rule lives here rather than at each call site.
+  ///
+  /// THE DOMAIN'S NATIVE GLYPH IS THE FALLBACK AND `glyphAlt` IS NEVER IT.
+  /// Which of a domain's alternates a family takes is exactly the fact
+  /// [glyphOverride] exists to state, and picking one by rule is the
+  /// heuristic `signal_style.dart`'s header shows failing against docs/05
+  /// §6.4's own table three different ways.
+  String effectiveGlyph(SignalDomainDef resolvedDomain) =>
+      glyphOverride ?? resolvedDomain.glyph;
 }
 
 /// What plugs into what, and whether gender applies. Aliases only,
