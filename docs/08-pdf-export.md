@@ -48,7 +48,7 @@ This is the v1 sheet set. Canon §7.2.7's eight-item list is a summary, not a ce
 | n+2 | **Termination Schedule** | `T6.11` | ON | §3. Landscape, sorted rack then panel then port. |
 | n+3 | **Unused Home Runs** | `T6.20` | AUTO | Home-run `Link`s whose rack end is an `OpenEndpoint`, a real deliverable and a differentiator; keep the name (canon §4.3). On iff ≥1 exists. |
 | n+4 | **Equipment List and Materials** | `T6.30` | ON | Qty · designators · manufacturer · model · description · RU · rack · location · face · mass · draw · `lifecycleStatus` · notes, grouped by rack then RU descending. Plus the **cable footage rollup by media with waste factor** (AC-024), the hardware implied by rules (ear kits, rear supports), the jumper/power-cord rollup by media + length + colour, and the PDU **outlet map** that AC-026 keeps off the cable schedule. **No pricing**: `Money`, `cost`, `supplier` and `purchaseOrder` do not exist in v1 (AC-055). Never called a BOM. |
-| n+5 | **Plate, Panel & Pinout Details** | `T5.01` | AUTO | On iff any non-standard pinout exists: null-modem RS-232, IR pinout variant, Euroblock role map, non-default T568A. |
+| n+5 | **Plate, Panel & Pinout Details** | `T5.01` | AUTO | On iff any non-standard pinout exists: null-modem RS-232, IR pinout variant, Euroblock role map, or a cable whose wiring standard DIFFERS FROM THE PROJECT'S (DR-180 §11.179.4; `wiringStandardExceptions` is that list). This row read "non-default T568A" until that ruling, which is the same test stated against an assumed default: a job that states T568A everywhere is not a job full of exceptions, and a job that has stated nothing has no default for a cable to be non-. |
 
 **How the interconnect sheets render.** Interconnect sheets render **`drawn`**, orthogonal polylines with a tag pill at each end, because a domain partition is a domain filter (DR-001, canon §11.1.2). The unfiltered all-domains schematic, which renders as net labels on screen, is not an exported sheet. `ExportSpec.wireRender: auto | netLabels | drawn`, default `auto`; `drawn` degrades to `netLabels` above a per-sheet `Link` count **and prints a note on the sheet saying so**: never silently.
 
@@ -168,8 +168,8 @@ ANSI A landscape, 792 × 612 pt, usable 690 pt, body 479 pt, **30 rows per page*
 | 8 | `FAR END` | 84 | left | `RackBody` 7.5 | device, `Outlet`, or `— OPEN —` for an `OpenEndpoint` |
 | 9 | `FAR PORT` | 46 | left | `RackMono` 7.5 | |
 | 10 | `MEDIA` | 42 | left | `RackCond` 7 | |
-| 11 | `FIELD TERM` | 44 | left | `RackMono` 7 | `T568B` · `F BARREL` · `LC-A` · `EURO 3` |
-| 12 | `RACK TERM` | 44 | left | `RackMono` 7 | `110 A03` · `T568B` · `LC-A`; `—` when undecided |
+| 11 | `FIELD TERM` | 44 | left | `RackMono` 7 | `KEYSTONE T568B` · `F BARREL` · `LC-A` · `EURO 3` |
+| 12 | `RACK TERM` | 44 | left | `RackMono` 7 | `PUNCHDOWN A03 T568B` · `LC-A`; `—` when undecided |
 | 13 | `CONDUCTOR / NOTES` | 44 | left | `RackBody` 6.5 | `Conductor.colorCode` per role; wraps to 2 lines then ellipsis |
 
 **Thirteen columns since DR-055 (§11.54), and the widths above are that ruling's.** `TERM` was one
@@ -182,6 +182,20 @@ collapsed into one column. Width came from §3.4's own donor order, `CONDUCTOR /
 
 **Neither column ever falls back to the other.** An end nobody has decided prints `—` (G4, CR-114).
 Copying the field value across would reproduce on paper the defect DR-046 removed from the model.
+
+**The wiring standard is IN these cells and not in a column of its own (DR-180 §11.179.4).** The cell
+is the termination type, then the punch position where there is one, then the standard: `PUNCHDOWN
+A03 T568B`. The standard goes last so the type and the hole stay the one thing an installer reads at
+the panel. It prints only beside a termination that lands pairs on pins, which is a keystone, a
+punchdown or a crimped RJ45 plug, so a genuinely four-pair run with a euroblock recorded at one end
+prints `EUROBLOCK` and no standard rather than a sentence about hardware with no pins. A cable that
+is not four-pair at all never reaches this question: §11.179.3 answers it one level up. A job nobody
+has told prints the termination alone, never an assumed `T568B`.
+
+**WHAT IS BUILT TODAY IS STILL ONE `TERM` COLUMN**, 52 pt, carrying the field end. DR-055's split
+above is ruled and unbuilt, and that was already true before DR-180; the wiring standard prints in
+the column that exists. Nothing here is waiting on the standard, and the split is not waiting on
+anything but the work.
 
 **Rule weights**: grouping without colspan, which `pw.Table` cannot do. 0.8 pt vertical rules at the block boundaries (identity ┃ ends ┃ spec ┃ notes); 0.35 pt between all other columns and between rows; 0.8 pt above and below the header; **no outer border**: the drawing border supplies it.
 

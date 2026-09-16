@@ -11991,6 +11991,103 @@ a rename expensive. DR-179 §11.178.2 ruled the letters and the timing; this is 
 **Commits** (§8.8): `#782` `04c8eb95` (the app and the native dialog), `2aef2906` (the derived
 documents), `05d60281` (these records), `9ce583ee` (the library comments).
 
+#### 5.9.60 `#80`: a project states its wiring standard, and a cable may override it · `DR-180` · no version move
+
+2026-09-16. The fourth and last of the four fields docs/08 §3 names and the model did not have.
+`SignalFamilyDef.shortTag` closed at DR-010 §11.10.3, `Pathway.designator` and
+`Outlet.nominalRunLength` at DR-026; this one is T568A or T568B. It closes under `#786` and moves no
+number.
+
+**DEMONSTRATED** by the suites at their floors, by `wiring_standard_test.dart`'s 36 cases, by the
+`WIRING` column's three widget cases in `structure_editor_screen_test.dart`, and by the write path's
+two in `structure_editor_route_test.dart`.
+
+##### 5.9.60.1 One entry per job, not one per drop
+
+`ProjectSettings.wiringStandard` holds the job's; `Link.wiringStandard` holds the run that really
+differs. Three shapes were offered and refused (§11.179.2): a field per cable with no project value,
+a field per END, and not modelling it. The middle one is the interesting refusal, because it could
+express a cable wired A at the plate and B at the panel, which is a real defect; the ruling took the
+cheaper entry and left that case to `CrossoverKind`'s territory.
+
+**Both fields are nullable and neither defaults.** Unset is unknown, never an assumed `t568b` (G4,
+CR-114), and both keys are ABSENT when unset rather than written as an explicit null. That is not
+tidiness: an unconditional key would move the bytes of every `.rppj` already on disk the moment it
+was opened and saved, which is the CR-117 property M0's exit criterion names. `kSchemaVersion` does
+not move.
+
+##### 5.9.60.2 The predicate reads the document, and the first draft did not
+
+§11.179.3 gives two qualifiers: the media is a four-pair twisted-pair type, OR one of the cable's
+ends is an RJ45 port or plug. A first draft of `wiring_standard.dart` took only the `Link`, so it
+could see the media and the two `StructureOrigin` terminations and nothing else. A port's connector
+is a template join, so that draft answers FALSE, silently, for a run on a shop's own media entry
+landing on two patch-panel jacks: a cable any installer would expect a standard on. It looked
+cheaper and was a narrower rule wearing the ruling's words. `wiringStandardApplies` takes the
+`RackDocument`.
+
+**A `punchdown` does not qualify a cable and does qualify an END**, which is the one place this file
+holds the same value in two sets on purpose. `kRj45Terminations` answers "is this four-pair data at
+all", where a punchdown proves nothing because a 66 block carries voice. `kPairOrderTerminations`
+answers "does the standard describe what happens at this end" of a cable already known to be data,
+where a punchdown is a 110 block or a patch panel and pair order is exactly what lands. Without the
+second set, a four-pair run with a euroblock recorded at one end would print `EUROBLOCK T568B`.
+
+##### 5.9.60.3 Two surfaces, and one of them is a control decision
+
+- **The settings row makes unset an ITEM**, not a blank. Settled by the user from three offers. A
+  T568A/T568B pair with a `Clear` beside it reads truest and is a control shape nothing else in that
+  dialog uses; a two-item dropdown that starts blank is a ONE-WAY DOOR, since picking a standard
+  would leave no way back to unset short of editing the file. "Not stated" can be chosen, chosen
+  again, and read off the closed dropdown.
+- **The `WIRING` column shows the OVERRIDE and never the resolved value.** Showing the effective
+  standard reads better and puts a trap in every row: the control writes what it shows, so picking
+  the value already on screen would pin that cable to a standard the project might later be changed
+  away from, with nothing to say it had happened. Three states instead: a standard, the dash meaning
+  "follows the job", and `— NO RJ45 —` meaning a standard is not a fact about this cable.
+- **AND THAT THIRD STATE IS `#711` WAITING TO HAPPEN AGAIN.** The column is editable per COLUMN and
+  §11.179.3 is per ROW, so a coax run gets read-only text where a Cat6 run gets a dropdown. `#711`
+  shipped an enabled `RACK TERM` dropdown whose every pick the write path refused, on every line;
+  the same shape here would have been the same defect. `structureCellChoices` returns no menu for
+  such a row, and the app's arm refuses one by designator if anything reaches it anyway.
+
+##### 5.9.60.4 What the printed cell says
+
+The `TERM` cell is the termination type, then the punch position where there is one, then the
+standard: `PUNCHDOWN A03 T568B`. The standard goes LAST, behind the position, because `PUNCHDOWN A03`
+is one thing an installer reads at the panel and splitting it would serve a literal reading of
+"beside the termination type" rather than the person holding the sheet. A test pins both ends of the
+cell so a later tidy argues with a case rather than with a habit.
+
+`schedule.dart`'s header has said since 2026-07-28 that a `Link.wiringStandard` was owed. That bullet
+now records a gap that CLOSED, and it keeps the half that did not: `Conductor.colorCode` is still
+printed exactly as stored and still never re-read to decide it means a standard. docs/02's worked
+example, which stored `"colorCode": "T568B"` on a conductor, says `"blue/white"` now: that edit is
+named in §11.179's own "what this does not rule" as owed with the build.
+
+##### 5.9.60.5 What is NOT built, and is not hidden
+
+- **`T5.01` stays M6's**, as §11.179.4 says in terms. What exists is its trigger:
+  `wiringStandardExceptions(doc)` is the list the sheet will be about, and docs/08 §3's row now
+  states the condition against the project rather than against an assumed default.
+- **THERE IS NO CABLE INSPECTOR IN THE PRODUCT.** Asked where a cable's override should be typed,
+  the user chose an optional column AND an inspector row. The column is built. The row has no host:
+  the schematic canvas selects a cable for `Del` and nothing else, and `InspectorPanel` is devices
+  and racks. Building one is a new surface rather than a row, and it is reported rather than
+  invented.
+- **DR-055's `FIELD TERM` / `RACK TERM` split is still unbuilt**, which was true before this and is
+  unrelated to it. The standard prints in the `TERM` column that exists.
+
+##### 5.9.60.6 Evidence
+
+- 19 gates green on each commit, every suite exactly at its floor. Floors re-measured twice: core
+  4759 → 4791 → 4799, ui 1932 → 1935 → 1938, app 1052 → 1054.
+- The file shape is gated in the same file as the rule: an unset project writes no `wiringStandard`
+  key anywhere in the document, and a set one survives write, read and write again byte-identically.
+
+**Commits** (§8.8): `#80` `1445d547` (the model, the file, the commands and the settings row),
+`5ae8180f` (the printed cell and the `WIRING` column).
+
 
 ---
 
