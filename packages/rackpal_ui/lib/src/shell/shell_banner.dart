@@ -33,7 +33,7 @@ import 'package:flutter/material.dart';
 final class ReadOnlyBanner extends StatelessWidget {
   const ReadOnlyBanner({required this.onSaveCopy, super.key});
 
-  /// Opens Save As with a `<name> (copy).rackpal` suggestion.
+  /// Opens Save As with a `<name> (copy).rppj` suggestion.
   final VoidCallback onSaveCopy;
 
   /// The banner's sentence, exposed so a test can assert the copy without
@@ -152,7 +152,7 @@ final class ShellWarningBanner extends StatelessWidget {
 ///
 /// Carries the outcomes that are REPORTED but are not failures: "Saved."
 /// / "Saved. The backup copy could not be updated." / "Recovered from
-/// 14:32. Not yet written to Smith.rackpal." A save that worked must not
+/// 14:32. Not yet written to Smith.rppj." A save that worked must not
 /// raise a dialog, and a save whose backup did not must not be silent —
 /// this line is where the difference lives.
 final class ShellStatusLine extends StatelessWidget {

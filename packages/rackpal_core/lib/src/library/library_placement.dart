@@ -16,7 +16,7 @@
 // placed. docs/02's rejected-alternatives table is blunter: the
 // alternative to an embedded snapshot is *"a live library reference"*,
 // costing *"non-reproducible deliverables; drawings that change silently
-// across machines"*. A device resolving out of a `.rmda` on one person's
+// across machines"*. A device resolving out of a `.rpda` on one person's
 // shelf IS that alternative. The copy is the format's standing promise;
 // the only open question was where it gets paid, and it is paid here.
 //

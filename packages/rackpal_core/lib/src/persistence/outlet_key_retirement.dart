@@ -3,7 +3,7 @@
 // ═════════════════════════════════════════════════════════════════════════
 // ONE STEP, THREE FORMATS
 // ═════════════════════════════════════════════════════════════════════════
-// `.rmpj` v5 to v6, and `.rmdx` and `.rmda` v2 to v3, all carry the same
+// `.rppj` v5 to v6, and `.rpdx` and `.rpda` v2 to v3, all carry the same
 // template body as `templateBodyToJson` writes it, so they strip the same
 // keys and re-hash by the same rule. Three copies would be three chances to
 // disagree about whether an older file was edited.
@@ -12,7 +12,7 @@
 // THE HASH MOVES ONLY WHERE IT ATTESTED THE BYTES IT WAS TAKEN OVER
 // ═════════════════════════════════════════════════════════════════════════
 // A stored `contentHash` is tamper evidence over the body's canonical bytes,
-// and stripping a key changes those bytes. DR-134's `.rmdx` step recomputed
+// and stripping a key changes those bytes. DR-134's `.rpdx` step recomputed
 // unconditionally and stated the cost: a recomputed hash cannot attest to
 // what the exporter wrote. This step checks first. A hash that matched the
 // body as stored is re-taken over the body as it will be stored; one that

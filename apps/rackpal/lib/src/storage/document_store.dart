@@ -122,7 +122,7 @@ final class SavedFile {
   final bool backupUpdated;
 }
 
-/// Opens and saves `.rackpal` documents.
+/// Opens and saves `.rppj` documents.
 final class DocumentStore {
   DocumentStore({
     required this.fs,
@@ -199,7 +199,7 @@ final class DocumentStore {
     final label = path ?? '';
 
     // ---- THE ENVELOPE COMES OFF FIRST (DR-019 §11.18.2, PLAN-B). ------
-    // `.rmpj` is plain JSON with no binary member and a zip container with
+    // `.rppj` is plain JSON with no binary member and a zip container with
     // one, and this is the discriminator. It runs BEFORE the deserializer
     // rather than inside it for two reasons: the `Deserializer` typedef
     // returns a JSON tree and has nowhere to put members, and unzipping is
@@ -245,7 +245,7 @@ final class DocumentStore {
     // the raw envelope, before the typed decode. The caller that needs
     // this is the start card: a starter asset is opened as an UNTITLED
     // COPY, and two copies sharing a document id would share a recovery
-    // snapshot path (`recovery/<docUuid>.rackpal`) — so recovering one
+    // snapshot path (`recovery/<docUuid>.rppj`) — so recovering one
     // would offer the other's work — and, once both were saved, two
     // different files on disk would claim to be the same document.
     if (asNewDocumentId != null) raw[kKeyId] = asNewDocumentId;

@@ -17,7 +17,7 @@
 //
 // The one `String` parameter, [fileName], is the DOCUMENT'S OWN file name
 // carried in from the session — the same string the FILE field has printed
-// since §5.2's worked example (`FILE smith.rackpal`). It is data about the
+// since §5.2's worked example (`FILE smith.rppj`). It is data about the
 // project, not annotation about the drawing.
 //
 // ─────────────────────────────────────────────────────────────────────────

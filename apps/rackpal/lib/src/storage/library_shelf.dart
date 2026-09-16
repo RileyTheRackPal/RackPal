@@ -1,4 +1,4 @@
-// Reading the shelf: every `.rmda` in the library directory, decoded
+// Reading the shelf: every `.rpda` in the library directory, decoded
 // (`#241`, DR-102 §11.101.3, DR-103 §11.102.7).
 //
 // ═══════════════════════════════════════════════════════════════════════
@@ -13,10 +13,10 @@
 // of which want paths and facts rather than templates.
 //
 // ═══════════════════════════════════════════════════════════════════════
-// EVERY `.rmda` ON THE SHELF IS LOADED, AND THAT IS A RULING
+// EVERY `.rpda` ON THE SHELF IS LOADED, AND THAT IS A RULING
 // ═══════════════════════════════════════════════════════════════════════
 // DR-103 §11.102.9: *"It does not decide which libraries are loaded:
-// every `.rmda` on the shelf is, because `#240`'s import is the only
+// every `.rpda` on the shelf is, because `#240`'s import is the only
 // thing that puts one there and a per-project enable list is a preference
 // nobody has asked for."* So there is no enable list, no manifest of
 // manifests, and no state to get out of step with the folder. The folder
@@ -25,7 +25,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // A LIBRARY THAT WILL NOT LOAD IS A ROW, NOT AN ABSENCE
 // ═══════════════════════════════════════════════════════════════════════
-// DR-103 §11.102.7 rules the case DR-102 §11.101.6 left open: a `.rmda`
+// DR-103 §11.102.7 rules the case DR-102 §11.101.6 left open: a `.rpda`
 // that fails to decode comes back as a [ShelfLibrary] with a null
 // [ShelfLibrary.library] and a non-null [ShelfLibrary.fault], and `#242`
 // draws it as a disabled chip naming the file.
@@ -34,7 +34,7 @@
 // mismatch is a warning and never a refusal: such a library loads, its
 // templates are real, and `previewLibraryImport` badges them. What lands
 // here instead is a file that yields NO templates at all: not JSON, a
-// `.rmdx` handed to the wrong reader, a newer `schemaVersion`, or one
+// `.rpdx` handed to the wrong reader, a newer `schemaVersion`, or one
 // over AC-058/D8's cap. There is nothing to badge, so the fault attaches
 // to the library rather than to a template.
 //

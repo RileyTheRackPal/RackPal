@@ -150,7 +150,7 @@ final class RackDocument {
   /// ═══════════════════════════════════════════════════════════════════
   /// THE MODEL NAMES A MEMBER; THE CONTAINER HOLDS THE BYTES
   /// ═══════════════════════════════════════════════════════════════════
-  /// A `PlanUnderlay` carries `imageMember`, a path into the `.rmpj` zip
+  /// A `PlanUnderlay` carries `imageMember`, a path into the `.rppj` zip
   /// container (`persistence/container.dart`, DR-019 §11.18.2), and never
   /// the image itself. That is what keeps `rackpal_core` free of an image
   /// decoder and what keeps a display list cheap to compare: the same

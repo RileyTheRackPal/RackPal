@@ -22,7 +22,7 @@ import 'package:rackpal_core/src/model/project_settings.dart';
 /// rendered text actually VARIES with the sequence number — and nothing
 /// guarantees it does. `ProjectSettings.portDesignatorFormat` is
 /// persisted as a raw string and `_decodeIdFormat` (json_codec.dart) is
-/// `IdFormat(raw)` with no token-presence check, so a `.rackpal` whose
+/// `IdFormat(raw)` with no token-presence check, so a `.rppj` whose
 /// pattern is the literal `"J"` loads clean and renders `"J"` for every
 /// value of `PORT_SEQ`. Connect a second pin on that device and the walk
 /// spins forever in a tight synchronous loop that no timeout can

@@ -388,7 +388,7 @@ final class CableSpecDef {
 }
 
 /// The container for all catalog/reference data a document embeds a
-/// referenced subset of, which is what makes a `.rackpal` file
+/// referenced subset of, which is what makes a `.rppj` file
 /// self-describing. Loaded and CSV-imported outside the document command
 /// stack (docs/03-architecture.md §5.6: library operations are not
 /// undoable), so its maps are plain mutable collections rather than

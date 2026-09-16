@@ -5,7 +5,7 @@
 // ==================================================================
 // docs/04-rack-editor.md §9: first launch shows a start card, "`Blank
 // project` plus the four starter projects, which are authored as **real
-// `.rmpj` files** doing triple duty as goldens, perf fixtures and
+// `.rppj` files** doing triple duty as goldens, perf fixtures and
 // screenshot source (AC-052)". They are bundled assets, authored by
 // `tool/generate_starters.dart`, and opened through the SAME
 // `DocumentStore.decodeBytes` every other file in the app goes through —

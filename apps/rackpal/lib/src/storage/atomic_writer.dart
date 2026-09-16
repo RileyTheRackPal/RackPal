@@ -7,13 +7,13 @@
 // For every instant during a save of a document whose previous good bytes
 // are OLD and whose new bytes are NEW:
 //
-//   I1. <target>.rackpal EXISTS and its content is exactly OLD or exactly
+//   I1. <target>.rppj EXISTS and its content is exactly OLD or exactly
 //       NEW. Never partial, never indeterminate, never absent.
 //       (Weakened for a FIRST save, where "OLD" is "the file is not
 //       there"; the crash test parameterises over both.)
-//   I2. <target>.rackpal.bak, if present, is exactly OLD or a complete
+//   I2. <target>.rppj.bak, if present, is exactly OLD or a complete
 //       older version. Never partial.
-//   I3. <target>.rackpal.tmp and <target>.rackpal.bak.tmp may be absent,
+//   I3. <target>.rppj.tmp and <target>.rppj.bak.tmp may be absent,
 //       empty, partial or complete. No claim is made about them.
 //   I4. No file exists in the user's directory other than those four
 //       names (CR-098).
@@ -26,7 +26,7 @@
 // still reaches the disk; a power cut does not. NTFS journals the
 // directory-entry update a `rename` makes, so a promote of a tmp whose
 // data extents were never committed lands a valid NAME over invalid
-// BYTES: `Smith.rackpal` opens as corrupt, and the `.bak` beside it
+// BYTES: `Smith.rppj` opens as corrupt, and the `.bak` beside it
 // holds the version from BEFORE the save that appeared to succeed.
 //
 // The fix is one word in the seam's contract — `FileSink.flush()` and
@@ -39,10 +39,10 @@
 // A DELIBERATE, DOCUMENTED DEVIATION FROM §9.3's STEP 4
 // ============================================================
 // §9.3 step 4 says: rename <target> to <target>.bak. Step 5 then renames
-// the tmp into place. BETWEEN THOSE TWO STEPS, <target>.rackpal DOES NOT
+// the tmp into place. BETWEEN THOSE TWO STEPS, <target>.rppj DOES NOT
 // EXIST. A hard kill in that window leaves the user's folder with no file
 // at the name they know: they open Explorer and their job is gone, sitting
-// next to something called `Smith.rackpal.bak` that Windows will not open
+// next to something called `Smith.rppj.bak` that Windows will not open
 // on a double-click. So §9.3's own stated guarantee — "a crash at any step
 // leaves either the previous good file, or the previous good file plus a
 // .tmp" — is literally false under a rename-based step 4.
@@ -299,7 +299,7 @@ final class AtomicWriter {
     // bug: `IOSink.flush()` waits for `write(2)` and never asks the device
     // to commit, so a power cut a second after this "completed" left NTFS
     // with a journalled rename pointing at data extents nobody had
-    // written — a torn `<target>.rackpal`, which is invariant I1's
+    // written — a torn `<target>.rppj`, which is invariant I1's
     // direct negation.
     //
     // `FileSink.flush()` is now specified as an fsync and `close()`

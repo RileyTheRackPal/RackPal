@@ -41,7 +41,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // `LocationTree` reports `detached` (parent not in the document) and
 // `cyclic` (parent chain loops) and makes both roots rather than dropping
-// them. This panel SHOWS them, flagged. A `.rmpj` is hand-editable text
+// them. This panel SHOWS them, flagged. A `.rppj` is hand-editable text
 // (DR-015) and the user cannot fix a room they cannot see; a panel that
 // quietly listed four of five rooms would be the worst possible response
 // to a file that needs repair.

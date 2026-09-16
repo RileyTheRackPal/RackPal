@@ -20,7 +20,7 @@
 // WHERE EACH RECIPE COMES FROM
 // ═════════════════════════════════════════════════════════════════════
 // Canon §1673 names the six and stops. The contents were censused rather
-// than invented, from the fixture's own drops (`whole_house.rmpj`, the
+// than invented, from the fixture's own drops (`whole_house.rppj`, the
 // only executable statement of what these templates produce), docs/07
 // §4.3 and docs/01 §519/§521:
 //

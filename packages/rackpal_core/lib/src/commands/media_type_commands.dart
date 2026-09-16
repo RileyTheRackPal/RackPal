@@ -44,7 +44,7 @@ import 'package:rackpal_core/src/units/ids.dart';
 /// that is the opposite of every entity id in this model. A registry key
 /// is not an entity id: it is written into `Link.media` on every drop,
 /// printed by `registry_wire_test`'s round trip, and read by a human
-/// diffing two `.rmpj` files. `media.cat6e` tells that reader what the
+/// diffing two `.rppj` files. `media.cat6e` tells that reader what the
 /// cable is; `media.9f3c-...` tells them to go and look it up.
 ///
 /// The suffix is the four transforms `normaliseCsvHeader` uses plus one:
@@ -170,7 +170,7 @@ final class AddMediaTypeCommand extends Command<RackDocument> {
 /// ═══════════════════════════════════════════════════════════════════════
 /// [mediaTypeIdFor] derives `media.cat6e` from the spelling, and its own
 /// comment argues why: a registry key is written into every `Link.media`
-/// and read by a human diffing two `.rmpj` files. Re-deriving it on a
+/// and read by a human diffing two `.rppj` files. Re-deriving it on a
 /// rename would turn a typo fix into a document-wide rewrite, and CR-117's
 /// byte round-trip would see the whole file churn for a cosmetic edit.
 ///

@@ -19,7 +19,7 @@
 // ── WHY THE ALIAS LIVES ON THE DEF ─────────────────────────────────────
 // It goes into `ConnectorTypeDef.aliases` in the DOCUMENT'S registry,
 // exactly where the seed catalog puts its own. `resolveConnectorToken`
-// therefore needs no second source and no precedence rule, and a `.rmpj`
+// therefore needs no second source and no precedence rule, and a `.rppj`
 // stays self-describing: the project that used "ethernet" carries the
 // word, so opening it on another machine resolves the same tokens.
 //

@@ -79,7 +79,7 @@ enum TemplateRole {
 /// THE BASE ROLE KEEPS THE BARE ID. `V06` stays `V06`, because it is what
 /// the catalog ships and what every existing document already references;
 /// only the derived half takes a suffix. Renaming the shipped half would
-/// break every `.rmpj` that holds one, to no purpose.
+/// break every `.rppj` that holds one, to no purpose.
 ///
 /// The separator is `:` and not `.` or `-`, because catalog ids are
 /// `[A-Z]\d\d` and template ids from a Device Builder fork are free text:

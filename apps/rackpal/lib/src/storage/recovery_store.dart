@@ -719,7 +719,7 @@ final class RecoveryStore {
 
     // SLOT → THE PATH THE SNAPSHOT ACTUALLY HAS. Not rebuilt from
     // `snapshotPathFor`, because after DR-015 a snapshot on disk may be
-    // spelled `.rackpal` while this build writes `.rmpj` — and a scan
+    // spelled `.rmpj` while this build writes `.rppj` — and a scan
     // that rebuilt the name would offer a survivor whose bytes it cannot
     // read, then fail to delete it on Discard.
     final snapshotPaths = <String, String>{};
@@ -727,7 +727,7 @@ final class RecoveryStore {
     final strays = <String>[];
     for (final entry in entries) {
       final name = context.basename(entry);
-      // `.tmp` FIRST: `<slot>.rmpj.tmp` is not a snapshot, and
+      // `.tmp` FIRST: `<slot>.rppj.tmp` is not a snapshot, and
       // classifying it as one would delete a live write in progress.
       final snapshotExt = name.endsWith(kTempSuffix)
           ? ''
@@ -931,7 +931,7 @@ final class RecoveryStore {
     return slot.substring(i + 1);
   }
 
-  /// The slot a recovery FILE belongs to: `<slot>.rmpj.tmp` and
+  /// The slot a recovery FILE belongs to: `<slot>.rppj.tmp` and
   /// `<slot>.json.tmp` both answer `<slot>`.
   String _slotOfArtifact(String path) {
     var name = context.basename(path);

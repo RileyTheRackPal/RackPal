@@ -425,7 +425,7 @@ const String kRunsIsDerived =
 /// A REGISTRY EDIT IS UNDOABLE, unlike a library import (docs/03 §5.6).
 /// The distinction is which aggregate is written: a library operation
 /// touches files outside the document, and this writes `doc.registries`,
-/// which is part of the document and is what makes a `.rmpj` file
+/// which is part of the document and is what makes a `.rppj` file
 /// self-describing.
 void Function(List<Command<RackDocument>>) buildMediaTypeAction({
   required DocumentController controller,

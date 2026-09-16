@@ -88,7 +88,7 @@ final class LibraryFile {
   /// The file's base name without its extension.
   ///
   /// **THE FILE NAME IS THE LIBRARY'S IDENTITY UNTIL `#239` READS ONE.**
-  /// A `.rmda` carries a manifest and the manifest will carry a name, so
+  /// A `.rpda` carries a manifest and the manifest will carry a name, so
   /// this is a placeholder for exactly as long as nothing can open the
   /// file. It is spelled as a derived getter rather than stored so that
   /// the day the manifest lands, the compiler shows every reader.

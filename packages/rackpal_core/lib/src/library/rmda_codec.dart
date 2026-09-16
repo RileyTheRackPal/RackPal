@@ -2,10 +2,10 @@
 // §11.15.3–§11.15.4).
 //
 // ═══════════════════════════════════════════════════════════════════════
-// IT IS THE `.rmdx` CODEC WITH A LIST IN IT, AND THAT IS THE RULING
+// IT IS THE `.rpdx` CODEC WITH A LIST IN IT, AND THAT IS THE RULING
 // ═══════════════════════════════════════════════════════════════════════
 // DR-015 §11.15.4: *"one JSON file holding a manifest and an array of
-// `TemplateBody`, in the `.rmdx` regime, with the `.rmdx` migration chain
+// `TemplateBody`, in the `.rpdx` regime, with the `.rpdx` migration chain
 // reused rather than a second one invented."* `rmdx_codec.dart`'s own
 // header states the same relationship from the other end, which is why
 // this file is short: the body encoding, the canonical byte convention,
@@ -24,7 +24,7 @@
 // ONE READING OF THE RULING IS RECORDED HERE RATHER THAN MADE QUIETLY
 // ═══════════════════════════════════════════════════════════════════════
 // §11.15.4 says *"an array of `TemplateBody`"*. This writes an array of
-// the same ENTRY a `.rmdx` carries: `{templateId, version, contentHash,
+// the same ENTRY a `.rpdx` carries: `{templateId, version, contentHash,
 // body}`. The difference is identity, and three things already ruled need
 // it:
 //
@@ -55,19 +55,19 @@ import 'package:rackpal_core/src/persistence/outlet_key_retirement.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/util/outcome.dart';
 
-/// The root `kind` tag every `.rmda` carries.
+/// The root `kind` tag every `.rpda` carries.
 ///
 /// **DISTINCT FROM [kRmdxKind], and that is what makes "you picked the
 /// wrong file" a typed refusal.** The two formats are structurally
-/// similar enough that a `.rmdx` handed to this reader would otherwise
+/// similar enough that a `.rpdx` handed to this reader would otherwise
 /// fail on a missing `templates` key, which reports a shape problem for
 /// what is really a wrong-file problem.
 const String kRmdaKind = 'device-library';
 
-/// The `.rmda` schema version this build writes and understands.
+/// The `.rpda` schema version this build writes and understands.
 ///
 /// **THE SAME CHAIN AS `.rmdx`, NOT A SECOND ONE** (DR-015 §11.15.4). The
-/// two formats move together by construction: a `.rmda` is `.rmdx`
+/// two formats move together by construction: a `.rpda` is `.rpdx`
 /// entries in a list, so a change to the entry shape is a change to both
 /// and one number keeps them from disagreeing about which.
 const int kRmdaSchemaVersion = kRmdxSchemaVersion;
@@ -114,7 +114,7 @@ final class NotADeviceLibraryError implements Exception {
 
 /// Refused: the file's `schemaVersion` is newer than this build reads.
 ///
-/// **REFUSED RATHER THAN PARTIALLY READ**, for `.rmdx`'s reason:
+/// **REFUSED RATHER THAN PARTIALLY READ**, for `.rpdx`'s reason:
 /// `TemplateBody` is app-defined and closed (AC-012) with no `unknown`
 /// passthrough, so a newer library would silently drop what it did not
 /// model on every template in it.
@@ -143,7 +143,7 @@ final class MalformedRmdaError implements Exception {
   String toString() => 'MalformedRmdaError: $message';
 }
 
-/// [file] as the plain JSON tree a `.rmda` holds.
+/// [file] as the plain JSON tree a `.rpda` holds.
 JsonMap rmdaToJsonTree(DeviceLibraryFile file) => <String, Object?>{
   _kSchemaVersion: kRmdaSchemaVersion,
   _kKind: kRmdaKind,
@@ -201,7 +201,7 @@ Outcome<DeviceLibraryFile> readRmdaBytes(
 
 /// A parsed JSON tree to a [DeviceLibraryFile]. Never throws (CR-093).
 Outcome<DeviceLibraryFile> readRmdaJsonTree(JsonMap raw) {
-  // KIND BEFORE VERSION, for `.rmdx`'s reason: a `.rmpj` and a `.rmdx`
+  // KIND BEFORE VERSION, for `.rpdx`'s reason: a `.rppj` and a `.rpdx`
   // both carry a schemaVersion, so checking it first would report the
   // wrong file as the right file from the wrong era.
   final kind = raw[_kKind];
@@ -221,9 +221,9 @@ Outcome<DeviceLibraryFile> readRmdaJsonTree(JsonMap raw) {
       ),
     );
   }
-  // v2 TO v3 IS THE CHAIN'S FIRST STEP: `.rmdx`'s entry step, run over
+  // v2 TO v3 IS THE CHAIN'S FIRST STEP: `.rpdx`'s entry step, run over
   // every entry (DR-171 §11.170.3). Anything older is still refused,
-  // because no `.rmda` was ever written below 2.
+  // because no `.rpda` was ever written below 2.
   var tree = raw;
   if (stored == 2) {
     tree = _migrateRmdaV2ToV3(raw);
@@ -263,7 +263,7 @@ Outcome<DeviceLibraryFile> readRmdaJsonTree(JsonMap raw) {
   }
 }
 
-/// v2 to v3 over every entry: `.rmdx`'s step, so the two formats cannot
+/// v2 to v3 over every entry: `.rpdx`'s step, so the two formats cannot
 /// disagree about which bodies were edited (DR-171 §11.170.3).
 JsonMap _migrateRmdaV2ToV3(JsonMap raw) {
   final migrated = JsonMap.of(raw);

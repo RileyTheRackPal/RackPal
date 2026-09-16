@@ -17,7 +17,7 @@
 //    `rack_shrink.dart` exists because that is a thing people do, and
 //    every device above the new top is now past `heightU` without any
 //    placement having been made.
-//  * A `.rmpj` is a file people hand-edit and email each other, and
+//  * A `.rppj` is a file people hand-edit and email each other, and
 //    CR-117's round-trip is byte fidelity, not validity.
 //  * `PLC-001` guards ONE path. A device placed before that rule shipped
 //    (M5-C) is still in somebody's project today.

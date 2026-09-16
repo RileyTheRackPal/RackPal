@@ -869,7 +869,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// ═══════════════════════════════════════════════════════════════════
   /// A VIEWPORT IS A WAY OF LOOKING, NOT A FACT ABOUT THE DOCUMENT
   /// ═══════════════════════════════════════════════════════════════════
-  /// So it lives here and nowhere else: not in the `.rmpj`, which is
+  /// So it lives here and nowhere else: not in the `.rppj`, which is
   /// under CR-117's byte round-trip and where a pan would dirty the file
   /// and prompt a save; and not in preferences, which would let a bad
   /// view outlive the restart that is currently how you escape one.
@@ -5458,7 +5458,7 @@ class _RackCanvasHandler implements CanvasIntentHandler {
 /// would change the moment the controller moved up a layer.
 ///
 /// THIS IS A SEAM WITH A SHORT LIFE. docs/04 §9 says first launch shows a
-/// start card — `Blank project` plus four real `.rackpal` starters — not
+/// start card — `Blank project` plus four real `.rppj` starters — not
 /// a demo rack. When those land, the shell opens one of them instead and
 /// this returns to being the screen's private fallback for tests.
 RackDocument buildDemoRackDocument({Map<String, TemplateBody>? catalog}) =>

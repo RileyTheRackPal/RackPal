@@ -192,7 +192,7 @@ enum PortColumnPack {
 /// STORED AS `.name` AND RESOLVED HERE, which is safe for exactly one
 /// reason: this crosses a PREFERENCES file and not the document format.
 /// `prefs.json` is a convenience the user may delete, so a pack renamed
-/// in a later build costs somebody one re-tick; a `.name` in a `.rmpj`
+/// in a later build costs somebody one re-tick; a `.name` in a `.rppj`
 /// would be a rename that silently changes what a saved project means,
 /// which is why the codec spells every enum out by hand instead.
 PortColumnPack? portColumnPackNamed(String name) {

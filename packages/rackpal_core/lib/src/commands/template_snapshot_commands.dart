@@ -7,7 +7,7 @@
 // (seeded, read-only), the user library directory (writable), and
 // **per-project embedded snapshots**. The library directory service is
 // M4-N and does not exist; the third one has existed since M0, is
-// persisted in every `.rmpj`, and is what `TemplateRef` resolves against
+// persisted in every `.rppj`, and is what `TemplateRef` resolves against
 // (CR-054). So the builder saves there, and a template authored in a
 // project lives in that project until M4-N gives it a shelf of its own.
 // The builder's save dialog says so rather than implying otherwise.
@@ -48,7 +48,7 @@ String templateSnapshotKey(TemplateId templateId, int version) =>
 /// `mediaTypeIdFor`'s call and made here for the same reason: this id is
 /// written into every `TemplateRef` that resolves the device, it is the
 /// left half of the `"$templateId@$version"` key, and it is read by a
-/// person diffing two `.rmpj` files. `tpl.hdmi_matrix_16x16` tells that
+/// person diffing two `.rppj` files. `tpl.hdmi_matrix_16x16` tells that
 /// reader what the device is; `tpl.9f3c-...` tells them to go and look it
 /// up.
 ///
