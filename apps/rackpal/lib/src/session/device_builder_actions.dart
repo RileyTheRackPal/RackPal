@@ -10,7 +10,7 @@
 // ═════════════════════════════════════════════════════════════════════
 // docs/06 §7.1 names three storage locations and the library directory
 // service is M4-N's, so the only writable one that exists is the
-// project's own embedded snapshots — which have been in every `.rmpj`
+// project's own embedded snapshots — which have been in every `.rppj`
 // since M0 and are what `TemplateRef` resolves against (CR-054). A
 // template authored here therefore travels with the file, and does NOT
 // appear in another project until M4-N. The builder says that above the
@@ -32,7 +32,7 @@
 // `rackpal_ui/test/canvas/palette_reads_the_document_test.dart`.
 //
 // AND SINCE M4-N (`#242`) THE SHELF IS NOT ONLY THIS DOCUMENT'S. What
-// this file writes can be packed into a `.rmda` and imported into
+// this file writes can be packed into a `.rpda` and imported into
 // another job, where it is a palette row tagged with the library that
 // carried it and placeable from there (DR-102 §11.101.3, DR-103
 // §11.102.2). That closes the OTHER half of requirement 2, "author the

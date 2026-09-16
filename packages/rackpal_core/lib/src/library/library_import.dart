@@ -1,4 +1,4 @@
-// What importing a `.rmda` MEANS, and what an export puts in one
+// What importing a `.rpda` MEANS, and what an export puts in one
 // (`#240`, DR-015 §11.15.3, AC-042).
 //
 // ═══════════════════════════════════════════════════════════════════════
@@ -18,7 +18,7 @@
 // what the surface needs is a count and the names, not a boolean.
 //
 // **The tri-state comes with it** (`#795`). `templateHashMatches` answers
-// `null` for anything that is not a real digest, which is every `.rmda`
+// `null` for anything that is not a real digest, which is every `.rpda`
 // written before `#795` existed and every hand-authored one. Those are
 // UNKNOWN, not mismatched, and counting them as mismatched would badge
 // every library anybody made this week.
@@ -28,7 +28,7 @@ import 'package:rackpal_core/src/library/rmdx_codec.dart';
 import 'package:rackpal_core/src/library/template_hash.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
 
-/// What a `.rmda` holds, and what is wrong with it, before anything is
+/// What a `.rpda` holds, and what is wrong with it, before anything is
 /// copied anywhere.
 final class LibraryImportPreview {
   const LibraryImportPreview({
@@ -52,7 +52,7 @@ final class LibraryImportPreview {
   /// How many templates carry no verifiable hash at all.
   ///
   /// **NOT MISMATCHED, AND THE SEPARATION IS THE POINT** (G4, `#795`).
-  /// Every `.rmda` written before the hash was real carries placeholders,
+  /// Every `.rpda` written before the hash was real carries placeholders,
   /// and reporting those as edited would badge every library made this
   /// week. It is surfaced as its own number so a caller that wants to say
   /// "this file predates hashing" can, without inferring it.

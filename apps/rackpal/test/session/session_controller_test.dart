@@ -23,9 +23,9 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
 
-const _target = r'C:\jobs\Smith.rmpj';
+const _target = r'C:\jobs\Smith.rppj';
 
-const _other = r'C:\jobs\Jones.rmpj';
+const _other = r'C:\jobs\Jones.rppj';
 
 /// `recents.json` inside the fake data root.
 const _recentsPath = r'C:\data\recents.json';
@@ -161,10 +161,10 @@ void main() {
       expect(t.services.session.filePath, _other);
     });
 
-    test('the suggested name is "<name>.rmpj"', () async {
+    test('the suggested name is "<name>.rppj"', () async {
       final t = await _session(savePaths: [_target]);
       await t.services.controller.save();
-      expect(t.picker.suggestedNames.single, 'Untitled.rmpj');
+      expect(t.picker.suggestedNames.single, 'Untitled.rppj');
     });
 
     test('a second save writes the same path with no dialog', () async {
@@ -245,14 +245,14 @@ void main() {
         initialDirectories: {kTestDataRoot, 'C:', r'C:\other'},
       );
       final t = await _session(
-        savePaths: [_target, r'C:\other\Smith.rmpj'],
+        savePaths: [_target, r'C:\other\Smith.rppj'],
         fs: fs,
         prompts: ScriptedPrompts(errorActions: [FileErrorActionId.saveAs]),
       );
 
       expect(await t.services.controller.save(), isTrue);
       expect(t.picker.saveCalls, 2);
-      expect(t.services.session.filePath, r'C:\other\Smith.rmpj');
+      expect(t.services.session.filePath, r'C:\other\Smith.rppj');
     });
   });
 
@@ -451,7 +451,7 @@ void main() {
       // eviction call was a no-op whatever the rule said — inverting
       // `shouldEvictOnOpenFailure(OpenUnreachable)` to `true` left it
       // green. The mutation sweep found that; reading it did not.
-      const onDeadShare = r'\\NAS\jobs\Smith.rmpj';
+      const onDeadShare = r'\\NAS\jobs\Smith.rppj';
       final fs = _diskWithRecent(onDeadShare);
       final t = await _session(fs: fs);
       expect(await t.services.controller.loadRecents(), hasLength(1));
@@ -474,7 +474,7 @@ void main() {
       final fs = FakeFileStore(
         initialDirectories: {kTestDataRoot, kTestJobsDir, 'C:'},
         initialFiles: {
-          r'C:\jobs\photos.rmpj': Uint8List.fromList(
+          r'C:\jobs\photos.rppj': Uint8List.fromList(
             utf8.encode('{"generator":"Blender"}'),
           ),
         },
@@ -482,7 +482,7 @@ void main() {
       final t = await _session(fs: fs);
 
       expect(
-        await t.services.controller.openPath(r'C:\jobs\photos.rmpj'),
+        await t.services.controller.openPath(r'C:\jobs\photos.rppj'),
         isFalse,
       );
       expect(
@@ -1147,7 +1147,7 @@ void main() {
   group('read-only documents', () {
     test('Ctrl+S on a newer-schema file routes to Save As with a "(copy)" '
         'name', () async {
-      final t = await _session(savePaths: [r'C:\jobs\Smith (copy).rmpj']);
+      final t = await _session(savePaths: [r'C:\jobs\Smith (copy).rppj']);
       t.services.session.adopt(
         controller: t.services.session.controller,
         filePath: _target,
@@ -1158,7 +1158,7 @@ void main() {
       expect(await t.services.controller.save(), isTrue);
 
       expect(t.picker.saveCalls, 1);
-      expect(t.picker.suggestedNames.single, 'Smith (copy).rmpj');
+      expect(t.picker.suggestedNames.single, 'Smith (copy).rppj');
       // No longer read-only, because these bytes are ours.
       expect(t.services.session.openReadOnly, isFalse);
     });
@@ -1314,7 +1314,7 @@ void main() {
       );
       final t = await _session(
         fs: fs,
-        savePaths: [r'C:\jobs\A.rmpj', r'C:\jobs\B.rmpj'],
+        savePaths: [r'C:\jobs\A.rppj', r'C:\jobs\B.rppj'],
       );
 
       expect(await t.services.controller.saveAs(), isTrue);
@@ -1348,7 +1348,7 @@ void main() {
       );
       final t = await _session(
         fs: fs,
-        savePaths: [r'C:\jobs\A.rmpj'],
+        savePaths: [r'C:\jobs\A.rppj'],
         openPaths: [null],
       );
 
@@ -1378,7 +1378,7 @@ void main() {
           ),
         },
       );
-      final t = await _session(fs: fs, savePaths: [r'C:\jobs\A.rmpj']);
+      final t = await _session(fs: fs, savePaths: [r'C:\jobs\A.rppj']);
 
       /// `prefs.json` READ AS BYTES, never through `PrefsStore.load`.
       ///
@@ -1413,7 +1413,7 @@ void main() {
     test('nothing on the startup path stats an entry', () async {
       // `exists` on a dead UNC path was measured at 1261 ms. Ten of those
       // is ten times the whole cold-start budget.
-      const dead = r'\\NAS\jobs\Ghost.rmpj';
+      const dead = r'\\NAS\jobs\Ghost.rppj';
       final fs = FakeFileStore(
         initialDirectories: {kTestDataRoot, kTestJobsDir, 'C:'},
         initialFiles: {
@@ -1444,7 +1444,7 @@ void main() {
 
     test('the menu-open probe reports `checking` for a hung entry rather '
         'than removing it', () async {
-      const dead = r'\\NAS\jobs\Ghost.rmpj';
+      const dead = r'\\NAS\jobs\Ghost.rppj';
       final fs = FakeFileStore(
         initialDirectories: {kTestDataRoot, kTestJobsDir, 'C:'},
         hangingPaths: {dead},

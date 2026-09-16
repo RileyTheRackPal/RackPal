@@ -340,7 +340,7 @@ FileErrorView _unreadable(p.Context ctx, String path, String detail) =>
 
 /// The refusal, said in terms of WHICH mistake was made.
 ///
-/// A `.rmdx` reported as a broken library sends the user back to re-pick
+/// A `.rpdx` reported as a broken library sends the user back to re-pick
 /// the same file, which is M4-M1's argument for the `kind` tag and the
 /// only reason having one is worth anything.
 FileErrorView _refused(p.Context ctx, String path, Object error) {

@@ -9,7 +9,7 @@ tags: [ruling, file-format, extensions, back-compat, dr-015, dr-096, dr-179]
 timestamp: 2026-09-15T00:00:00Z
 ruling_id: DR-179
 canon_section: "11.178"
-status: ruled
+status: built
 ---
 
 Ruled by the user on 2026-09-15 on board `#782`.
@@ -36,3 +36,11 @@ letters unruled.
   for a template, `.rmda` for a library, and Save keeps the name a file was opened with.
 - `.rackpal` comes off the list, and DR-015 §11.15.2's text is restored to `.rackmate`.
 - Refused: renaming at M8, and keeping `rm`.
+# Built
+
+`#782` landed it on 2026-09-15 (`04c8eb95`): the app writes `.rppj`, `.rpdx` and `.rpda`, and every
+spelling a build has written still opens, `.rmpj`, `.rmdx`, `.rmda` and the pre-DR-015 `.rackmate`.
+The four starters were renamed with `git mv` and are byte-identical. Two claims the ruling had
+already doubted turned out to have expired: a device template and a device archive both needed the
+legacy sibling their comments said they could not have, because template export and the library
+shelf shipped after DR-015 wrote them.

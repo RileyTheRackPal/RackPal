@@ -1,6 +1,6 @@
 // The concrete DocumentCodec (docs/02-data-model.md §6, CR-091/092/117):
 // RackDocument <-> the plain, pretty-printed, key-sorted UTF-8 JSON
-// `.rackpal` container. Hand-written both directions, no code
+// `.rppj` container. Hand-written both directions, no code
 // generation, no reflection.
 //
 // DRIFT / SCOPING NOTES (read once, applies throughout this file):
@@ -314,7 +314,7 @@ String _encodeIdFormat(IdFormat value) => value.pattern;
 /// `const IdFormat(this.pattern)` stores the string and checks none of it;
 /// `IdFormatSyntaxException` comes from `_parsePattern`, which only
 /// `render()` calls. So this used to accept ANY string from a file, and a
-/// hand-edited or corrupted `.rmpj` would open cleanly and then throw the
+/// hand-edited or corrupted `.rppj` would open cleanly and then throw the
 /// first time a designator was minted, a whole subsystem away from the
 /// field that caused it.
 ///
@@ -411,7 +411,7 @@ JsonMap _encodeRackDocument(RackDocument doc) {
     // The fourteen maps around this one write `{}` when they hold
     // nothing, which is what they have always done. This one does not,
     // and the difference is load-bearing rather than stylistic: writing
-    // `"underlays": {}` would add a key to EVERY `.rmpj` in existence on
+    // `"underlays": {}` would add a key to EVERY `.rppj` in existence on
     // its next save, so no existing file would re-encode byte for byte,
     // and DR-136 §11.135.3's reasoning about why the schema advances
     // would become false in the same commit that stated it.
@@ -419,7 +419,7 @@ JsonMap _encodeRackDocument(RackDocument doc) {
     // It is also what CR-114 says and what this codec has twice recently
     // chosen: DR-105 §11.104.3 stopped writing 727 origin positions per
     // starter, and DR-134 §11.133 counted 737 empty arrays in
-    // `apartment.rmpj` as a reason to delete a field. An absent map means
+    // `apartment.rppj` as a reason to delete a field. An absent map means
     // no underlays, which is exactly what an absent key has meant here
     // since M0.
     if (doc.underlays.isNotEmpty)
@@ -462,7 +462,7 @@ JsonMap _encodeRackDocument(RackDocument doc) {
     // "what shape is the payload below me".
     //
     // The case that makes it concrete. A future build (kSchemaVersion 3)
-    // writes Smith.rackpal with new fields. THIS build opens it: the
+    // writes Smith.rppj with new fields. THIS build opens it: the
     // minReaderVersion gate lets it through, `migrateToCurrent` returns
     // openReadOnly with the envelope untouched, and `_decodeRackDocument`
     // silently drops every v3 field it has no class member for. The user
@@ -709,7 +709,7 @@ JsonMap _encodeJacketColorDef(JacketColorDef d) => {
 /// (`this.meaning = ''`), and its default is a VALUE — "the user has not
 /// said" (G4). `asStr(null, …)` THROWS, so requiring the key on disk made
 /// a field the model says is optional mandatory in the file, and one
-/// missing `"meaning"` — in a hand-edited `.rackpal`, or in the output
+/// missing `"meaning"` — in a hand-edited `.rppj`, or in the output
 /// of an importer that only knows a name and a swatch — turned a whole
 /// document into a "damaged file" dialog over a field whose absence and
 /// whose empty value mean exactly the same thing.
@@ -756,7 +756,7 @@ JsonMap _encodeProjectSettings(ProjectSettings s) => {
   // `diversityFactorsByCategory` emit `{}` unconditionally because they
   // have done so since v1 — that empty object is already a byte of every
   // document ever written, so keeping it costs nothing. This key is NEW.
-  // Emitting it unconditionally moves the bytes of every `.rackpal` file
+  // Emitting it unconditionally moves the bytes of every `.rppj` file
   // that already exists on disk the moment it is loaded and saved, which
   // is exactly the CR-117 property (`write(read(bytes)) == bytes`) that
   // docs/03 §9.1 states and M0's exit criterion names. An empty map and an
@@ -869,7 +869,7 @@ ProjectSettings _decodeProjectSettings(JsonMap json) => ProjectSettings(
   },
   // THE `?? const {}` IS NOT DEFENSIVE PADDING. `asJsonMap(null, …)`
   // throws, and every file written before this field existed — including
-  // the checked-in input golden `v1_templates_and_power.rackpal.json`,
+  // the checked-in input golden `v1_templates_and_power.rppj.json`,
   // which is never regenerated — has no such key. The strict form would
   // turn every already-shipped document into "damaged file". Same shape
   // as `MediaTypeDef.jacketOptions` below. Mutation: drop the `??` and
@@ -2219,7 +2219,7 @@ JsonMap _encodeLink(Link l) {
   // degrades — the opposite of v2's breaking omission of previously
   // mandatory outlet keys. Sorted-key adjacency to `jacketColorId` is
   // deliberate: the pair reads as a pair when a human opens a
-  // `.rackpal`.
+  // `.rppj`.
   putIfNotNull(json, 'jacketColorPulledId', l.jacketColorPulledId?.v);
   putIfNotNull(json, 'routedLengthNm', l.routedLength?.nm);
   putIfNotNull(json, 'cutLengthNm', l.cutLength?.nm);
@@ -3560,7 +3560,7 @@ JsonMap _encodePortDef(PortDef p) {
     'connector': p.connector.v,
     'signalFamily': p.signalFamily.v,
     // `carriedProtocols` sat here until DR-134 §11.133.5 and was written
-    // UNCONDITIONALLY, so `apartment.rmpj` carried 737 copies of `[]` for
+    // UNCONDITIONALLY, so `apartment.rppj` carried 737 copies of `[]` for
     // a field nothing set. `acceptedFamilies` keeps that spelling on
     // purpose: DR-081 §11.80.5 rules that an empty list is the statement
     // "this port constrains nothing" rather than an unknown, so it is not
@@ -3801,7 +3801,7 @@ SubmissionCredit _decodeSubmissionCredit(JsonMap json) => SubmissionCredit(
   userId: asInt(json['userId'], 'SubmissionCredit.userId'),
 );
 
-// TWO keys and no `contentHash`, matching docs/06 §7.3's worked `.rmdx`
+// TWO keys and no `contentHash`, matching docs/06 §7.3's worked `.rpdx`
 // example exactly. The absent third field is AC-042's cut apparatus, not
 // an oversight — see `TemplateOrigin`'s doc comment.
 JsonMap _encodeTemplateOrigin(TemplateOrigin o) => {
@@ -3877,18 +3877,18 @@ JsonMap templateBodyToJson(TemplateBody b) => _encodeTemplateBody(b);
 
 /// The inverse of [templateBodyToJson].
 ///
-/// **Made public for the `.rmdx` codec (DR-100 §11.99), and it is the
+/// **Made public for the `.rpdx` codec (DR-100 §11.99), and it is the
 /// half that was missing rather than a new capability.** The encoder has
 /// been public since M4-C for `template_change_class.dart`; the decoder
-/// had no caller until a FILE carried a body, because `.rmpj` reaches
+/// had no caller until a FILE carried a body, because `.rppj` reaches
 /// this function through `_decodeTemplateSnapshot` and never needed a
 /// door of its own.
 ///
-/// **The pairing is the point.** DR-100 rules that a `.rmdx` carries the
-/// body flat, exactly as this pair writes and reads it, so the `.rmdx`
+/// **The pairing is the point.** DR-100 rules that a `.rpdx` carries the
+/// body flat, exactly as this pair writes and reads it, so the `.rpdx`
 /// codec acquires **no second description of a `TemplateBody`** and
 /// inherits CR-117's gate instead of drifting from it. A field this pair
-/// fails to carry is a field `.rmpj` fails to carry, and that gate fails
+/// fails to carry is a field `.rppj` fails to carry, and that gate fails
 /// first and loudly.
 TemplateBody templateBodyFromJson(JsonMap json) => _decodeTemplateBody(json);
 

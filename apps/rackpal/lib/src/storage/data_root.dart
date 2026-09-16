@@ -55,7 +55,7 @@
 // option prevents them while the common dialog is the dialog. A portable
 // build therefore leaves shell-owned HKCU entries on a client's machine
 // naming this executable and the folders it browsed, `E:\Jobs` and not
-// `E:\Jobs\Smith Residence.rackpal`, and they survive the stick being
+// `E:\Jobs\Smith Residence.rppj`, and they survive the stick being
 // pulled. See `session/file_picker.dart`'s header for the measurement and
 // `test/session/registry_claim_test.dart` for the gate that keeps this
 // paragraph matching the C++.

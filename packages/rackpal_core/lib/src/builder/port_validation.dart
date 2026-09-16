@@ -160,7 +160,7 @@ Map<String, List<PortIssue>> validatePorts(TemplateBody body) {
   // `Group as set…` cannot mint one (DR-086 §11.85.2 refuses under two
   // rows), and that is not the same as the state being unreachable:
   // `Delete` on a member leaves one, the `SET` column can move the other
-  // member out, and a hand-edited `.rmdx` can arrive holding one.
+  // member out, and a hand-edited `.rpdx` can arrive holding one.
   // `port_set_integrity_test.dart` gates the SEED on exactly this and
   // nothing gates an authored template.
   //

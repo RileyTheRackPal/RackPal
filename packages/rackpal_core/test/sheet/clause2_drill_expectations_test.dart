@@ -128,7 +128,7 @@ List<String> _sheetTexts(RackDocument doc) {
     info: fullProjectInfo(),
     settings: ProjectSettings(),
     revisions: const <RevisionEntry>[],
-    fileName: 'drill.rmpj',
+    fileName: 'drill.rppj',
     issuedAt: _now,
     measurer: FakeMeasurer(),
   ).scene.ops.whereType<OpText>().map((o) => o.text).toList();

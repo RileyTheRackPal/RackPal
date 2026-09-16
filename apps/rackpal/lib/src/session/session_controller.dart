@@ -160,12 +160,12 @@ final class SessionController {
   /// ==================================================================
   /// WHY THIS IS NOT `session.document.sequence` AT SAVE TIME
   /// ==================================================================
-  /// The pre-update snapshot's file name is `<sequence>.rackpal` (§9.3),
+  /// The pre-update snapshot's file name is `<sequence>.rppj` (§9.3),
   /// and a file name is a claim about its CONTENT. The bytes are the
   /// PRE-migration original; `doc.sequence` advances on every commit, so
   /// the two diverge the instant the user edits before saving. Filing the
   /// v1 original of a document whose live sequence has reached 3 under
-  /// `3.rackpal` names a state that never existed at that version — and
+  /// `3.rppj` names a state that never existed at that version — and
   /// `SnapshotStore.prune` sorts numerically on exactly that stem to pick
   /// which of the last ten to discard, so the retention window was
   /// ordered by a number that identified nothing.
@@ -431,9 +431,9 @@ final class SessionController {
   /// one, and the `.bak` beside it is the only readable copy of the
   /// project in existence: it is what the user was just rescued by.
   ///
-  /// So the sequence was: open Smith.rackpal, get "the file appears to be
+  /// So the sequence was: open Smith.rppj, get "the file appears to be
   /// damaged", press "Open the backup", edit, press Ctrl+S — and step 4
-  /// copied the truncated Smith.rackpal over the good Smith.rackpal.bak
+  /// copied the truncated Smith.rppj over the good Smith.rppj.bak
   /// BEFORE the promote. The good backup was destroyed by the save that
   /// was supposed to repair the damage. If the promote then failed —
   /// antivirus holding the file through all three retries, the drive
@@ -534,7 +534,7 @@ final class SessionController {
     //
     // NORMALISED THROUGH `SavePaths.forTarget`, which is what the save
     // will compare against. A file opened without the standard extension
-    // — the user double-clicked `Smith.rackpal.old`, or a share handed
+    // — the user double-clicked `Smith.rppj.old`, or a share handed
     // back an odd name — would otherwise produce a target string that
     // never matches, and the suppression would silently not happen on the
     // one path where it matters.

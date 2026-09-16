@@ -35,7 +35,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
 
-const _target = r'C:\jobs\Smith.rmpj';
+const _target = r'C:\jobs\Smith.rppj';
 
 void _edit(DocumentController controller) {
   final rack = controller.doc.racks.values.first;
@@ -495,7 +495,7 @@ void main() {
                   catalog: const {},
                 ),
               ),
-              filePath: r'C:\jobs\B.rmpj',
+              filePath: r'C:\jobs\B.rppj',
               openReadOnly: false,
               baseline: FileBaseline.absent,
             );

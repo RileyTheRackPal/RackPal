@@ -232,7 +232,7 @@ final class PlaceableTemplate {
   ///
   /// **A LIBRARY ROW ANSWERS FALSE**, and that is not an oversight: the
   /// shelf it names is not this project's, and `exportableLibraryTemplates`
-  /// filters on this getter to decide what a `.rmda` export packs. A
+  /// filters on this getter to decide what a `.rpda` export packs. A
   /// library's templates re-exported out of a project that has never
   /// placed one would be a pack of somebody else's work.
   bool get isProjectAuthored => provenance is ProjectProvenance;
@@ -315,7 +315,7 @@ List<PlaceableTemplate> buildPlaceableTemplates(
       libraryName: library.name,
     );
     // THE SAME REDUCTION, PER LIBRARY, and it is not decoration: a
-    // `.rmda` can legitimately hold two versions of one template, since
+    // `.rpda` can legitimately hold two versions of one template, since
     // `#240`'s export packs whatever the project held and CR-050 keeps
     // every earlier version resolvable. A library offering `@1` and `@3`
     // as two palette rows would ask the user a version question the

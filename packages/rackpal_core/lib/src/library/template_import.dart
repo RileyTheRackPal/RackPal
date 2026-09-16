@@ -1,4 +1,4 @@
-// What importing a `.rmdx` into a project MEANS (DR-101 §11.100, `#236`).
+// What importing a `.rpdx` into a project MEANS (DR-101 §11.100, `#236`).
 //
 // ==================================================================
 // THE DECISION IS HERE AND THE DIALOG IS NOT
@@ -21,7 +21,7 @@
 // Three candidate discriminators were checked against the tree and all
 // three fail (DR-101 §11.100.2): `derivedFrom` is written by door 3 only,
 // so a door-2 fork carries no lineage; `contentHash` is a placeholder
-// everywhere until `#795`; and a `.rmdx` carries ONE version rather than
+// everywhere until `#795`; and a `.rpdx` carries ONE version rather than
 // a chain, so a stranger who iterated their own same-named device to `@4`
 // is indistinguishable from yours returning at `@4`. There is no signal
 // in the file, which is why the person is asked.
@@ -71,7 +71,7 @@ final class TemplateImportCollision {
   final int incumbentLatestVersion;
 }
 
-/// A read `.rmdx`, and what standing it has in this document.
+/// A read `.rpdx`, and what standing it has in this document.
 final class TemplateImportPlan {
   const TemplateImportPlan({
     required this.file,
@@ -91,7 +91,7 @@ final class TemplateImportPlan {
   /// after export, which is a WARNING and a badge and never a load
   /// failure: refusing to open a file because somebody hand-edited it is
   /// a data-loss event dressed as a safety feature. `null` means there is
-  /// nothing to check against, which is every `.rmdx` written before
+  /// nothing to check against, which is every `.rpdx` written before
   /// `#795` and is not evidence of anything.
   final bool? hashVerdict;
 
@@ -142,7 +142,7 @@ TemplateImportPlan planTemplateImport(
 /// only way to get there is to have asked a question nobody was owed.
 ///
 /// **THE FILE'S OWN VERSION IS PRESERVED WHEN THE ID IS FREE**, rather
-/// than reset to 1. A `.rmdx` exported at `@3` lands at `@3`, so a later
+/// than reset to 1. A `.rpdx` exported at `@3` lands at `@3`, so a later
 /// `@4` of the same template slots in above it and the version chain
 /// keeps meaning what it means everywhere else. Sparse versions are
 /// already legal: `latestTemplateVersions` and `buildPlaceableTemplates`

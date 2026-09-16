@@ -9,7 +9,7 @@
 // `Endpoint` has modelled an unbound far end since M0 and NO GESTURE COULD
 // PRODUCE ONE, which made AC-018 unreachable by construction. #141's own
 // instruction was to check whether the schedule needed teaching first, and
-// it does not: `301136f` verified over `whole_house.rmpj` that a link with
+// it does not: `301136f` verified over `whole_house.rppj` that a link with
 // an unbound end already schedules, carries its `W` number and its CR-113
 // field label, reaches the Pull Sheet, and is excluded from the Termination
 // Schedule only with a reported count. So the work is producing the drops.
@@ -24,7 +24,7 @@
 // member list — membership is keyed back through
 // `Link.structureOrigin.outletId`, so there is exactly one source of truth.
 // This command therefore builds the same `Link` every other connect gesture
-// builds, plus that one struct. The shape is read off `whole_house.rmpj`
+// builds, plus that one struct. The shape is read off `whole_house.rppj`
 // rather than invented: the FIELD end is `Conductor.from` and the rack end
 // is `to`, which is the order the shipped starter uses and the order the
 // schedule's `_endOf` walk expects.

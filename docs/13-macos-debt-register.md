@@ -318,7 +318,7 @@ code, and both should be started early precisely because they are not.
 
 **What is genuinely unknown** is whether the PDF's **content streams** survive a platform change.
 That is the one item that could turn a bounded port into a design question, but §2's correction
-narrows it twice. It is **not** a CR-117 question (that gate is the `.rackpal` JSON), and it is
+narrows it twice. It is **not** a CR-117 question (that gate is the `.rppj` JSON), and it is
 **not cheap to answer**: the existing determinism test compares two exports in one process, so
 answering it means writing a golden-bytes comparison **and** having D4's macOS job to run it on.
 The text pipeline is already platform-independent by construction; the concrete risk that remains

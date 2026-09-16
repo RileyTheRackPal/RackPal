@@ -104,7 +104,7 @@ ElevationSheet _build({
     info: fullProjectInfo(),
     settings: ProjectSettings(),
     revisions: revisions,
-    fileName: 'smith.rmpj',
+    fileName: 'smith.rppj',
     issuedAt: DateTime.utc(2026, 7, 18),
     measurer: FakeMeasurer(),
   );

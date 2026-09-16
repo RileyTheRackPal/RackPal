@@ -101,7 +101,7 @@ RackPal/
 │  │     ├─ persistence/              codec.dart (DocumentCodec, sniffs PK\x03\x04) ·
 │  │     │                            json_codec.dart (hand-written) · schema.dart ·
 │  │     │                            migrations.dart (append-only, Outcome<T>) — CR-091..093
-│  │     ├─ library/                  catalog load + validate; .rmdx codec + its own chain
+│  │     ├─ library/                  catalog load + validate; .rpdx codec + its own chain
 │  │     └─ util/outcome.dart         sealed Outcome<T> — expected outcomes are values
 │  │  └─ test/                        migration_corpus_test · command_roundtrip_test ·
 │  │                                  epoch_mask_test (AC-014) · byte_roundtrip_test (CR-117) ·
@@ -307,7 +307,7 @@ Every `Command` declares `EpochMask get touches`. This one mechanism drives **th
 
 ### 4.4 Selection, viewport, tool mode, interaction
 
-**Selection** is observed, not owned by the document. It is never persisted to `.rmpj` and never bumps `sequence`, selecting a device must not mark the file dirty. But every `Transaction` captures `selectionBefore` / `selectionAfter`, so undo restores it; without that, undoing a delete leaves the caret on an entity that no longer exists.
+**Selection** is observed, not owned by the document. It is never persisted to `.rppj` and never bumps `sequence`, selecting a device must not mark the file dirty. But every `Transaction` captures `selectionBefore` / `selectionAfter`, so undo restores it; without that, undoing a delete leaves the caret on an entity that no longer exists.
 
 ```dart
 class SelectionController extends ChangeNotifier {
@@ -784,7 +784,7 @@ Full field-level detail is in [the file format](02-data-model.md#6-the-rackpal-f
 
 ### 9.1 Container and envelope
 
-`.rmpj` is **plain, pretty-printed, key-sorted UTF-8 JSON** (**CR-091**). The zip alternative existed only to carry per-face device images, and images are cut from v1 (**AC-057**), so the container question resolves to what the confirmed product decisions already specified. `DocumentCodec` ships from commit one and **sniffs `PK\x03\x04` on read**, so a v2 zip container is a non-event and the extension never changes.
+`.rppj` is **plain, pretty-printed, key-sorted UTF-8 JSON** (**CR-091**). The zip alternative existed only to carry per-face device images, and images are cut from v1 (**AC-057**), so the container question resolves to what the confirmed product decisions already specified. `DocumentCodec` ships from commit one and **sniffs `PK\x03\x04` on read**, so a v2 zip container is a non-event and the extension never changes.
 
 ```dart
 abstract class DocumentCodec {
@@ -839,22 +839,22 @@ Migration returns `Outcome<T>` and never throws (**CR-093**), expected outcomes 
 
 ```text
 1. Serialize in Isolate.run (AC-006: at the corrected ~600 KB, keep the UI thread clean).
-2. Write bytes to <target>.rmpj.tmp in the SAME directory (same volume ⇒ atomic rename).
+2. Write bytes to <target>.rppj.tmp in the SAME directory (same volume ⇒ atomic rename).
 3. flush() + close().
 4. If <target> exists → rename it to <target>.bak (overwriting the previous .bak).
-5. rename(<target>.rmpj.tmp → <target>.rmpj).
+5. rename(<target>.rppj.tmp → <target>.rppj).
 6. _savedStateId = doc.stateId;                        → isDirty goes false
 7. Delete this document's recovery snapshot.
 8. Push to recent files; update the window title.
 ```
 
-A crash at any step leaves either the previous good file, or the previous good file plus a `.tmp`. There is **one** `.bak` sibling and **no `.history/` folder** (**CR-098**), the confirmed product decision is a local single-file project, so the user's folder gains nothing but the file they asked for and one backup. Pre-update snapshots go to `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rmpj`, pruned to the last 10.
+A crash at any step leaves either the previous good file, or the previous good file plus a `.tmp`. There is **one** `.bak` sibling and **no `.history/` folder** (**CR-098**), the confirmed product decision is a local single-file project, so the user's folder gains nothing but the file they asked for and one backup. Pre-update snapshots go to `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rppj`, pruned to the last 10.
 
 ### 9.4 Dirty tracking, autosave, recovery
 
 `isDirty == doc.stateId != savedStateId`, per **CR-094**. Never document equality; that is `O(document)` per keystroke and gets subtly wrong the moment a float survives into the model (which, per the persistence contract, it must not).
 
-- Every **30 s** and on **window blur**, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rmpj` plus a sidecar `{realPath, sequence, savedAt, displayName}`.
+- Every **30 s** and on **window blur**, if dirty, write a recovery snapshot to `getApplicationSupportDirectory()/recovery/<docUuid>.rppj` plus a sidecar `{realPath, sequence, savedAt, displayName}`.
 - **Never autosave over the user's file.** CAD users expect explicit saves and will file a bug the first time an autosave clobbers something.
 - Autosave serialization runs in `Isolate.run`; nobody is waiting, so the transfer cost is free and the UI must not hitch (**CR-099**: `Isolate.run` is correct precisely where neither progress nor cancellation is wanted).
 - Delete the snapshot on clean save and on clean exit. On startup, scan the recovery directory; any survivor produces *"RackPal closed unexpectedly. Recover Smith Residence (12 unsaved changes)?"* with Recover / Discard / Keep for later.
@@ -880,7 +880,7 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 | `collection` | `in use` | `^1.19.0` | core | `UnmodifiableSetView`, `firstWhereOrNull`, deep-equality helpers. | none | trivial to inline |
 | `uuid` | `in use` | `^4.6.0` | core | **UUIDv7** entity IDs (time-ordered, sortable, index-local) and **v5** for deterministic port IDs (AC-006). | low | ~80 lines |
 | `crypto` | `in use` | `^3.0.7` | core | **`sha256` for `TemplateSnapshot.contentHash`** (`#795`, AC-042). Promoted from transitive to declared: it was already resolved in the workspace as somebody else's dependency, which is not a licence to import it (`depend_on_referenced_packages`). One call site, `templateContentHash` in `library/template_hash.dart`, over DR-100's canonical bytes. | none. Dart-team package, pure Dart, no native plugin, BSD-3 (compatible with DR-036's GPLv3). | ~200 lines. SHA-256 is a fully specified public algorithm with published test vectors, so a hand-rolled implementation is verifiable rather than trusted, which is not true of most dependencies here. Not worth writing while this one exists. |
-| `archive` | `in use` | `^4.0.9` | core | **The `.rmpj` zip container** (DR-019 §11.18.2, PLAN-B). `ZipDecoder`/`ZipEncoder` over bytes: `document.json` at the root plus `underlays/<uuid>.<ext>`. Promoted from transitive to declared on `crypto`'s precedent, which is the same rule stated once: already resolved in the workspace as `pdf`'s dependency is **not a licence to import it** (`depend_on_referenced_packages`). **It moves bytes and decodes no images**, which is what keeps it out of conflict with core's decoder-free rule: an `ImageRef` names a member and each BACKEND resolves it. | low. Pure Dart, no native plugin, MIT (compatible with DR-036's GPLv3), and the project already ships its code inside `pdf`'s dependency tree whether this row exists or not. The real risk is not the package: **zip is nondeterministic by default in four independent ways** (entry order, timestamps, compression level, extra fields) and CR-117 requires `write(read(bytes)) == bytes`, so the determinism is ours to impose and ours to gate. | the format is ours, so a hand-rolled STORE-only writer is ~300 lines of a fully specified public format and the reader is the harder half. Not worth writing while this exists, and the four determinism knobs would be the same work either way |
+| `archive` | `in use` | `^4.0.9` | core | **The `.rppj` zip container** (DR-019 §11.18.2, PLAN-B). `ZipDecoder`/`ZipEncoder` over bytes: `document.json` at the root plus `underlays/<uuid>.<ext>`. Promoted from transitive to declared on `crypto`'s precedent, which is the same rule stated once: already resolved in the workspace as `pdf`'s dependency is **not a licence to import it** (`depend_on_referenced_packages`). **It moves bytes and decodes no images**, which is what keeps it out of conflict with core's decoder-free rule: an `ImageRef` names a member and each BACKEND resolves it. | low. Pure Dart, no native plugin, MIT (compatible with DR-036's GPLv3), and the project already ships its code inside `pdf`'s dependency tree whether this row exists or not. The real risk is not the package: **zip is nondeterministic by default in four independent ways** (entry order, timestamps, compression level, extra fields) and CR-117 requires `write(read(bytes)) == bytes`, so the determinism is ours to impose and ours to gate. | the format is ours, so a hand-rolled STORE-only writer is ~300 lines of a fully specified public format and the reader is the harder half. Not worth writing while this exists, and the four determinism knobs would be the same work either way |
 | `pdf` | `in use` | `^3.13.0` | text, export | `PdfGraphics` vector output, `pw.Widget` layout for schedules, `PdfFont.stringMetrics` for the one `TextMeasurer`. Pure Dart ⇒ isolate-safe; Apache-2.0. | **Highest-consequence dependency in the project.** Single maintainer, headline feature. | `DiagramCanvas` **is** the hedge: swapping backends is one file. Failing that: emit PDF 1.7 content streams for pure vector plus Type0 embedding (~2 k lines of well-specified work), or route through `SvgDiagramCanvas` to an external converter. |
 | `flutter` | `in use` | sdk | ui, app | — | — | — |
 | `path_drawing` | `in use` | `^1.0.1` | ui | `dashPath()`: `dart:ui` has no native dashing (§8.3). | low activity, but tiny | ~60 lines over `PathMetrics` |
@@ -895,7 +895,7 @@ Recent files are a JSON list in application support (`{path, displayName, lastOp
 | `image` | `in use` | `^4.9.1` | app | **Decoding a floorplan on import and flattening its alpha before it is stored** (PLAN-D/2, DR-029). Promoted from transitive to declared on `archive`'s and `crypto`'s precedent, which is one rule stated three times now: already resolved as somebody else's dependency is **not a licence to import it** (`depend_on_referenced_packages`). **DECLARED IN THE APP AND NOT IN CORE**: `rackpal_core` is decoder-free by design and reads only a HEADER (`persistence/image_header.dart`), so the pixels never cross that boundary. | low. Pure Dart, no native plugin, MIT (compatible with DR-036's GPLv3), and already compiled into this project through `pdf` whether this row exists or not. **The real risk is not the package**: an image decoder is a memory-safety surface, which is why the caps in `image_header.dart` run BEFORE it is handed anything (AC-058/D8). | the header parser already gives dimensions without it, so a fallback that refused alpha instead of flattening it is conceivable and worse: it would push a real architectural export back onto a manual conversion step, which is the thing DR-029 spent 2 to 3 weeks buying out |
 | `pdfrx` | **`rejected`** | n/a | n/a | **REJECTED 2026-09-07 BY DR-138, AND THE ROW IS KEPT RATHER THAN DELETED** so the next person does not re-derive the same choice. `PLAN-D/1` picked it and recorded two unknowns; verifying them refuses it twice. **Every route DOWNLOADS pdfium at build time** (2.3.0+ via Dart native assets from `bblanchon/pdfium-binaries`, earlier via a CMake download), and **CR-100 rules that pdfium is vendored into the repo rather than downloaded**, on supply-chain and reproducibility grounds that DR-006's self-signed distribution sharpens rather than softens. Independently, `pdfrx` 2.x needs **Flutter 3.47 / Dart 3.13** and this repo is pinned at **3.44.4 / 3.12.2**. | n/a | the licence was the half that came back clean: `pdfrx`, `pdfrx_engine`, `pdfium_dart` and `pdfium_flutter` are all MIT and compatible with DR-036. **The licence was never the risk.** When a PDF needs a real rasteriser, CR-100's vendoring problem is waiting unchanged, and a direct FFI binding over a vendored pdfium is the route that satisfies it. **A PDF HAS NOW NEEDED IT** (DR-145 §11.144, 2026-09-08): the second real plan set is an AutoCAD plot with zero `/XObject`, and the lifter refuses all three of its pages. **The deferral stands and is re-examined at `PLAN-H`**, which is the first chapter whose own work needs an underlay rendered rather than stored; this row is what it will be re-examined against  **AND WHAT REPLACED IT LANDED AT `PLAN-K`, 2026-09-10** (DR-153 §11.152): a direct FFI binding over a **vendored** pdfium, in `rackpal_pdfium`, which is the route DR-138 named when it refused this package and which nothing had built. The rejection stands on both of its original grounds, re-checked rather than assumed.|
 | `printing` | `planned (M6)` | `^5.15.0` | app | **Behind an explicit "Verify output" button only.** `PdfPreview`; `layoutPdf` is v1.1. | `PdfPreview`/`raster` need **pdfium**, which the plugin's CMake downloads at build time, a fresh or network-restricted machine fails `flutter build windows` | **Binaries are vendored into the repo (CR-100)**; a network-fetched binary in a signed release is a supply-chain and reproducibility problem, not just a CI one. Degrade to export + "Open in system viewer", which needs no pdfium |
-| `desktop_drop` | `planned (unscheduled)` | `^0.6.0` | app | Drag a `.rmpj` onto the window. | 0.x, low activity | a nicety: degrade to File ▸ Open. Alternative `super_drag_and_drop` |
+| `desktop_drop` | `planned (unscheduled)` | `^0.6.0` | app | Drag a `.rppj` onto the window. | 0.x, low activity | a nicety: degrade to File ▸ Open. Alternative `super_drag_and_drop` |
 | `logging` | `planned (unscheduled)` | `^1.3.0` | app | Structured, level-based, zero-dependency. Sinks are ours. | none | — |
 | `intl` | `planned (M7)` | `^0.20.0` | app | Number/date/unit formatting; the runtime half of ARB localization. | none | — |
 | `flutter_localizations` | `planned (M7)` | sdk | app | Locale resolution, `MaterialLocalizations`, `Directionality`. | — | — |
@@ -949,7 +949,7 @@ Two things this pin does **not** yet cover, stated so neither is mistaken for do
 | Ports (mostly unmaterialised: AC-006) | 2 000 | 6 000 |
 | `Link` | 1 000 | 3 000 |
 | Undo history | 200 entries by default; 50 to 1000 per machine (DR-172) | — |
-| `.rmpj` file size | ~600 KB | 3 MB |
+| `.rppj` file size | ~600 KB | 3 MB |
 | Distinct text runs | ~10 000 | ~30 000 |
 
 The file-size figure is the **corrected** one. The original 500 KB budget was 3–6× optimistic because it materialised every port as a document entity with its own `EntityMeta` (~450–500 B each pretty-printed, so ~1 MB for ports alone at target). Lazy port materialisation plus `EntityMeta` off sub-objects (**AC-006**, **CR-095**) is what makes the plain-JSON decision survive its own arithmetic.
@@ -1108,7 +1108,7 @@ Reconciled from the two conflicting orders in the corpus (**CR-120**). The five 
 1. **Reconciliation**: this document set. Not compressible into the first coding milestone: CR-001, CR-008, CR-017, CR-051, CR-081 and CR-083 each cost a rewrite of everything downstream if guessed wrong.
 2. **The six API spikes**, including `PdfTtfFont` cold-start cost against the 1.2 s budget.
 3. **`units/` + `Pt`/`Box`**, with the two discriminating tests written **before any other code**: exact 1/32-in clearance, and zero accumulated error across a 45U stack (**AC-001**).
-4. **`.rmpj` envelope + hand-written codec + migration harness + the first golden fixture + the byte-round-trip test.** The format is the durable asset.
+4. **`.rppj` envelope + hand-written codec + migration harness + the first golden fixture + the byte-round-trip test.** The format is the durable asset.
 5. **`Command` / `Transaction` / `UndoStack` / `DocumentController`**, with `@internal` setters, the apply∘revert property test, and the epoch-mask coverage test. Retrofitting undo is the single most painful refactor available.
 6. **`DiagramCanvas` + `TextMeasurer` + `DiagramScene` + both backends + the baseline-Y parity test, together and early.** If parity does not hold, stop, every hour spent on layout before parity is an hour that may need redoing.
 7. **`CanvasIntent`, `ViewportController`, wheel/trackpad input, grid painter.** Pan and zoom must feel right before anything sits on them.

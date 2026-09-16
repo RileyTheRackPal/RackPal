@@ -6,26 +6,34 @@ import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:rackpal/src/storage/file_store.dart';
 
-/// The project extension, including the dot, lower-case (DR-015).
-const String kDocumentExtension = '.rmpj';
+/// The project extension, including the dot, lower-case (DR-179).
+const String kDocumentExtension = '.rppj';
 
-/// What this app wrote before DR-015.
+/// What this app wrote before DR-179, newest first.
 ///
 /// ═══════════════════════════════════════════════════════════════════
 /// STILL OPENED, AND STILL SAVED IN PLACE
 /// ═══════════════════════════════════════════════════════════════════
-/// The bytes did not change — DR-015 renamed the extension and nothing
-/// else — so a `.rackpal` written by any earlier build is a valid
-/// project and refusing it would be a data-loss event dressed as tidiness,
-/// which is the reasoning AC-042 already applied to `contentHash`.
+/// The bytes have never changed. DR-015 renamed `.rackmate` to `.rmpj`
+/// and DR-179 renamed `.rmpj` to `.rppj`; neither touched a byte inside a
+/// file. So a project written by any earlier build is valid, and refusing
+/// it would be a data-loss event dressed as tidiness, which is the
+/// reasoning AC-042 already applied to `contentHash`.
 ///
-/// It is listed in [kDocumentExtensions] rather than special-cased, which
-/// is what makes **Save keep the name it opened**: a team that is mid-job
-/// on `Smith.rackpal` presses `Ctrl+S` and gets `Smith.rackpal`, not
-/// `Smith.rackpal.rmpj`. Only Save As and a never-saved document reach
-/// for [kDocumentExtension]. Nothing renames a file the user did not ask
-/// to rename.
-const String kLegacyDocumentExtension = '.rackpal';
+/// They are listed in [kDocumentExtensions] rather than special-cased,
+/// which is what makes **Save keep the name it opened**: a team that is
+/// mid-job on `Smith.rmpj` presses `Ctrl+S` and gets `Smith.rmpj`, not
+/// `Smith.rmpj.rppj`. Only Save As and a never-saved document reach for
+/// [kDocumentExtension]. Nothing renames a file the user did not ask to
+/// rename.
+///
+/// **`.rackpal` IS NOT HERE, AND ITS ABSENCE IS DR-179 §11.178.1's
+/// CORRECTION.** This list held it from `0e2c5bb` until 2026-09-15: the
+/// product rename rewrote DR-015's `.rackmate`, which shipped builds
+/// really wrote, into a spelling no build ever produced. The back-compat
+/// path then pointed at nothing, and a project saved before 2026-08-02
+/// stopped appearing in the Open dialog.
+const List<String> kLegacyDocumentExtensions = <String>['.rmpj', '.rackmate'];
 
 /// Every extension a project may already carry, **the one to append
 /// first**.
@@ -34,42 +42,47 @@ const String kLegacyDocumentExtension = '.rackpal';
 /// none of these, and leaves the path alone when it ends in any of them.
 const List<String> kDocumentExtensions = <String>[
   kDocumentExtension,
-  kLegacyDocumentExtension,
+  ...kLegacyDocumentExtensions,
 ];
 
 /// The extension an exported PDF gets, including the dot, lower-case.
 const String kPdfExtension = '.pdf';
 
 /// The extension one exported device template gets, including the dot,
-/// lower-case (docs/06 §7.3).
-///
-/// **NO LEGACY SIBLING, and the absence is a fact rather than an
-/// oversight.** [kDocumentExtensions] exists because `.rackpal` files were
-/// written by shipped builds and refusing them would be a data-loss event.
-/// No build has ever written a device template, so there is nothing for a
-/// second spelling to rescue and [SavePaths.forTarget] takes this one
-/// alone.
-const String kDeviceTemplateExtension = '.rmdx';
+/// lower-case (docs/06 §7.3, renamed by DR-179).
+const String kDeviceTemplateExtension = '.rpdx';
 
 /// Every extension a device template may carry, **the one to append
-/// first**. One entry today; the list shape is what
-/// [SavePaths.forTarget] takes.
+/// first**.
+///
+/// **`.rmdx` IS A LEGACY SIBLING NOW, AND THIS COMMENT ONCE SAID THERE
+/// COULD BE NONE.** It read *"no build has ever written a device
+/// template"*, which was true on DR-015's day and stopped being true when
+/// the app gained template export (`device_template_io_actions.dart`).
+/// A spelling shipped builds wrote is exactly what DR-179 §11.178.3 keeps
+/// opening, so the rule that governs a project governs this too.
 const List<String> kDeviceTemplateExtensions = <String>[
   kDeviceTemplateExtension,
+  '.rmdx',
 ];
 
 /// The extension a device library gets, including the dot, lower-case
-/// (DR-015 §11.15.3).
-///
-/// **NO LEGACY SIBLING, and for a stronger reason than `.rmdx` has.**
-/// `.rmlib` was the pre-DR-015 name and was never shipped in any form: it
-/// was specified as a zip and cut by AC-042 before anything wrote one. So
-/// there is not merely nothing on a user's disk, there was never a writer.
-const String kDeviceLibraryExtension = '.rmda';
+/// (DR-015 §11.15.3, renamed by DR-179).
+const String kDeviceLibraryExtension = '.rpda';
 
 /// Every extension a device library may carry, the one to append first.
+///
+/// **`.rmda` IS HERE FOR THE REASON `.rmdx` IS**: the app has written them
+/// since DR-015's archive shipped, and `library_directory.dart` scans a
+/// shelf of them under the data root, so a scan that skipped the old
+/// spelling would empty a user's shelf (DR-179 §11.178.3).
+///
+/// `.rmlib` is still absent, and that absence is the older fact: it was
+/// the pre-DR-015 name, specified as a zip and cut by AC-042 before
+/// anything wrote one, so there was never a writer to rescue.
 const List<String> kDeviceLibraryExtensions = <String>[
   kDeviceLibraryExtension,
+  '.rmda',
 ];
 
 /// Appended to the target to name the in-progress write.
@@ -106,7 +119,7 @@ final class SavePaths {
   /// when the user types `Smith`, and a project saved as an extensionless
   /// file will not reopen by double-click and will not be found by the
   /// open dialog's filter. Appending is done rather than replacing, so a
-  /// deliberate `Smith.v2` becomes `Smith.v2.rmpj` and nothing the user
+  /// deliberate `Smith.v2` becomes `Smith.v2.rppj` and nothing the user
   /// typed is thrown away.
   ///
   /// [extensions] EXISTS SO THE PDF EXPORT SHARES THIS NORMALISATION
@@ -117,9 +130,9 @@ final class SavePaths {
   ///
   /// A LIST RATHER THAN ONE STRING, and the difference is DR-015's whole
   /// back-compat story. `.first` is what gets appended; **every** entry
-  /// counts as already-correct. So `Smith.rackpal` passes through
+  /// counts as already-correct. So `Smith.rmpj` passes through
   /// untouched and `Ctrl+S` saves it where it lives, while a new document
-  /// gets `.rmpj`. The PDF path passes a single-entry list and is
+  /// gets `.rppj`. The PDF path passes a single-entry list and is
   /// therefore unaffected by the project's legacy spelling — which it
   /// would not be if this took one extension plus a shared "also accept"
   /// set.
@@ -165,7 +178,7 @@ final class SavePaths {
     );
   }
 
-  /// `<dir>/<stem>.rmpj` — the file the user knows about.
+  /// `<dir>/<stem>.rppj` — the file the user knows about.
   final String target;
 
   /// `<target>.tmp` — where the new bytes land before they are promoted.

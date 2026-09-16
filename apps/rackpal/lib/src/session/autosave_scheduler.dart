@@ -6,7 +6,7 @@
 // NEVER AUTOSAVE OVER THE USER'S FILE. Not on the timer, not on blur, not
 // on close, not on accepting a recovery snapshot. "CAD users expect
 // explicit saves and will file a bug the first time an autosave clobbers
-// something." The ONLY writer of `<target>.rackpal` is an explicit user
+// something." The ONLY writer of `<target>.rppj` is an explicit user
 // Save or Save As — which is enforced structurally rather than by
 // intention: this class holds no `SavePaths` for the user's document and
 // cannot construct one. It calls `RecoveryStore.write`, which writes into

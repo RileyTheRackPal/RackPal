@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-09-15 (fifty-second entry)
+
+* **Closed**: `#782` with ``04c8eb95``, ruled as
+  [DR-179](/decisions/dr-179-the-rp-extensions.md) in ``a6457f9``. The app writes `.rppj`, `.rpdx`
+  and `.rpda`; `.rmpj`, `.rmdx`, `.rmda` and `.rackmate` still open, and Save keeps the name it
+  opened. **No version move**: it closes under `#786`.
+* **Update**: [DR-179](/decisions/dr-179-the-rp-extensions.md) is built.
+* **Note**: **A COMMENT THAT SAYS "THIS CANNOT HAPPEN" DATES FASTER THAN THE CODE.** Two constants
+  carried a reasoned argument for having no legacy spelling, and both were true when written and
+  false by the time they mattered: the app had since shipped the writers they said did not exist.
+
 ## 2026-09-15 (fifty-first entry)
 
 * **Closed**: `#780` with ``1e75efc`` and `#92` with ``1a48354``, under

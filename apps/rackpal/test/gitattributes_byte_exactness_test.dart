@@ -493,12 +493,12 @@ void main() {
   // are not in the repository — including the exact one this task was
   // raised against.
   group('the rule itself can fail', () {
-    const starter = 'apps/rackpal/assets/starters/apartment.rmpj';
+    const starter = 'apps/rackpal/assets/starters/apartment.rppj';
     const shipping = '''
 * text=auto
 *.dart   text eol=lf
 *.json   text eol=lf
-*.rmpj  text eol=lf
+*.rppj  text eol=lf
 *.png    binary
 ''';
 
@@ -506,7 +506,7 @@ void main() {
       expect(resolveCheckout(parseGitAttributes(shipping), starter), 'lf');
     });
 
-    test('THE DEFECT: no rule for .rmpj falls through to text=auto', () {
+    test('THE DEFECT: no rule for .rppj falls through to text=auto', () {
       // Verbatim the state this task was raised against: `*.json` pinned,
       // the starters matching nothing but `* text=auto`. `git check-attr`
       // reported exactly this — "text: auto, eol: unspecified".
@@ -526,7 +526,7 @@ void main() {
     test('...and so does `text` without an `eol`', () {
       // The near miss. `text` alone normalises going in and checks out
       // per core.autocrlf coming back — CRLF on a default Windows install.
-      const halfDone = '* text=auto\n*.rmpj  text\n';
+      const halfDone = '* text=auto\n*.rppj  text\n';
       expect(
         resolveCheckout(parseGitAttributes(halfDone), starter),
         'platform',
@@ -556,41 +556,41 @@ void main() {
           starter,
         ),
         'lf',
-        reason: '`assets/*` does not reach `assets/starters/x.rmpj`',
+        reason: '`assets/*` does not reach `assets/starters/x.rppj`',
       );
       // ...but this one is not, and last-match-wins is why it has to be
       // the whole file that is read and not the first hit.
-      const clobbered = '$shipping\n*.rmpj  text eol=crlf\n';
+      const clobbered = '$shipping\n*.rppj  text eol=crlf\n';
       expect(resolveCheckout(parseGitAttributes(clobbered), starter), 'crlf');
       expect(kByteSafeResolutions.contains('crlf'), isFalse);
     });
 
     test('`binary` is read as the macro it is', () {
-      const binary = '* text=auto\n*.rmpj  binary\n';
+      const binary = '* text=auto\n*.rppj  binary\n';
       expect(resolveCheckout(parseGitAttributes(binary), starter), 'binary');
     });
 
     test('a slashless pattern matches at any depth; an anchored one does '
         'not', () {
-      expect(patternMatches('*.rmpj', 'deep/nested/x.rmpj'), isTrue);
-      expect(patternMatches('*.rmpj', 'x.rmpj'), isTrue);
-      expect(patternMatches('assets/*.rmpj', 'assets/x.rmpj'), isTrue);
+      expect(patternMatches('*.rppj', 'deep/nested/x.rppj'), isTrue);
+      expect(patternMatches('*.rppj', 'x.rppj'), isTrue);
+      expect(patternMatches('assets/*.rppj', 'assets/x.rppj'), isTrue);
       expect(
-        patternMatches('assets/*.rmpj', 'apps/assets/x.rmpj'),
+        patternMatches('assets/*.rppj', 'apps/assets/x.rppj'),
         isFalse,
         reason: 'a pattern with a slash is anchored to the repository root',
       );
       expect(
-        patternMatches('assets/*.rmpj', 'assets/deep/x.rmpj'),
+        patternMatches('assets/*.rppj', 'assets/deep/x.rppj'),
         isFalse,
         reason: '`*` does not cross a separator in an anchored pattern',
       );
-      expect(patternMatches('*.json', 'x.rmpj'), isFalse);
+      expect(patternMatches('*.json', 'x.rppj'), isFalse);
     });
 
     test('comments and blank lines are not rules', () {
       const noisy = '''
-# *.rmpj  text eol=lf
+# *.rppj  text eol=lf
    # indented, still a comment
 
 * text=auto

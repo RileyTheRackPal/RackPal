@@ -18,7 +18,7 @@
 // actually in the file, name and count and occupancy, BEFORE the file
 // enters the document. That is the reassurance the sentence is for, aimed
 // at the moment somebody is looking at a file a stranger emailed them, and
-// the summary is a stronger answer than the sentence alone: a `.rmdx`
+// the summary is a stronger answer than the sentence alone: a `.rpdx`
 // claiming to be a 16x16 matrix and reporting `2 ports` is visible here and
 // nowhere else.
 //
@@ -91,7 +91,7 @@ String templateSummaryLine(TemplateBody body) =>
 /// event dressed as a safety feature. The buttons are unchanged when this
 /// shows; the sentence says what is known and lets the person decide.
 ///
-/// It says EDITED rather than CORRUPT or TAMPERED. A hand-edited `.rmdx`
+/// It says EDITED rather than CORRUPT or TAMPERED. A hand-edited `.rpdx`
 /// is a supported thing to have (`port_validation.dart` reasons about one
 /// arriving), and the common cause is somebody fixing a label in a text
 /// editor, not an attack.
@@ -260,7 +260,7 @@ class _ImportConfirmDialog extends StatelessWidget {
             // AC-042's warning, and the FIRST SURFACE `contentHash` has
             // ever had. Shown only for `hashMismatched`, which is true
             // for a file carrying a real hash that fails it and false for
-            // one carrying no hash at all: a `.rmdx` written before
+            // one carrying no hash at all: a `.rpdx` written before
             // `#795` is UNKNOWN, not modified, and warning about it would
             // fire on every file this product wrote before today.
             if (plan.hashMismatched) ...[

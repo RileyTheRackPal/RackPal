@@ -91,7 +91,7 @@ void main() {
       final doc = _doc();
       _hold(doc, 'tpl.mx', 1, _body('MX'));
       final s = _session(doc);
-      final picker = FakeFilePicker(savePaths: [r'C:\out\mx.rmdx']);
+      final picker = FakeFilePicker(savePaths: [r'C:\out\mx.rpdx']);
       final fs = FakeFileStore();
       final order = <String>[];
 
@@ -113,7 +113,7 @@ void main() {
       final doc = _doc();
       _hold(doc, 'tpl.mx', 1, _body('MX'));
       final s = _session(doc);
-      final picker = FakeFilePicker(savePaths: [r'C:\out\mx.rmdx']);
+      final picker = FakeFilePicker(savePaths: [r'C:\out\mx.rpdx']);
 
       final ok = await exportDeviceTemplate(
         session: s.session,
@@ -144,7 +144,7 @@ void main() {
         final doc = _doc();
         _hold(doc, 'tpl.mx', 1, _body('MX'));
         final s = _session(doc);
-        final picker = FakeFilePicker(savePaths: [r'C:\out\mx.rmdx']);
+        final picker = FakeFilePicker(savePaths: [r'C:\out\mx.rpdx']);
 
         await exportDeviceTemplate(
           session: s.session,
@@ -166,7 +166,7 @@ void main() {
       final doc = _doc();
       _hold(doc, 'tpl.mx', 3, _body('HDMI Matrix 16x16'));
       final s = _session(doc);
-      final picker = FakeFilePicker(savePaths: [r'C:\out\x.rmdx']);
+      final picker = FakeFilePicker(savePaths: [r'C:\out\x.rpdx']);
 
       await exportDeviceTemplate(
         session: s.session,
@@ -180,7 +180,7 @@ void main() {
             rows.firstWhere((r) => r.id == 'tpl.mx'),
         context: _windows,
       );
-      expect(picker.suggestedNames, ['hdmi-matrix-16x16-v3.rmdx']);
+      expect(picker.suggestedNames, ['hdmi-matrix-16x16-v3.rpdx']);
     });
 
     test('the bytes on disk are the codec’s, and they read back', () async {
@@ -202,7 +202,7 @@ void main() {
 
       final ok = await exportDeviceTemplate(
         session: s.session,
-        picker: FakeFilePicker(savePaths: [r'C:\out\mx.rmdx']),
+        picker: FakeFilePicker(savePaths: [r'C:\out\mx.rpdx']),
         writer: AtomicWriter(fs: fs, queue: SaveQueue(), context: _windows),
         chooseTemplate: (rows) async =>
             rows.firstWhere((r) => r.id == 'tpl.mx'),
@@ -210,7 +210,7 @@ void main() {
       );
       expect(ok, isTrue);
 
-      final written = _bytesAt(fs, r'C:\out\mx.rmdx');
+      final written = _bytesAt(fs, r'C:\out\mx.rpdx');
       expect(written, isNotNull, reason: 'the export wrote nothing');
       final read = readRmdxBytes(written!);
       expect(read, isA<Ok<DeviceTemplateFile>>());
@@ -262,7 +262,7 @@ void main() {
         final s = _session(_doc());
         final fs = FakeFileStore(
           initialFiles: {
-            r'C:\in\Smith.rmpj': Uint8List.fromList(
+            r'C:\in\Smith.rppj': Uint8List.fromList(
               utf8.encode('{"schemaVersion":2}'),
             ),
           },
@@ -272,7 +272,7 @@ void main() {
         final ok = await importDeviceTemplate(
           session: s.session,
           controller: s.session.controller,
-          picker: FakeFilePicker(openPaths: [r'C:\in\Smith.rmpj']),
+          picker: FakeFilePicker(openPaths: [r'C:\in\Smith.rppj']),
           fs: fs,
           prompts: prompts,
           clock: s.clock,
@@ -293,7 +293,7 @@ void main() {
       final s = _session(_doc());
       final fs = FakeFileStore(
         initialFiles: {
-          r'C:\in\mx.rmdx': _rmdxBytes('tpl.mx', 3, _body('MX')),
+          r'C:\in\mx.rpdx': _rmdxBytes('tpl.mx', 3, _body('MX')),
         },
       );
       var asked = 0;
@@ -301,7 +301,7 @@ void main() {
       final ok = await importDeviceTemplate(
         session: s.session,
         controller: s.session.controller,
-        picker: FakeFilePicker(openPaths: [r'C:\in\mx.rmdx']),
+        picker: FakeFilePicker(openPaths: [r'C:\in\mx.rpdx']),
         fs: fs,
         prompts: ScriptedPrompts(),
         clock: s.clock,
@@ -328,7 +328,7 @@ void main() {
       final s = _session(doc);
       final fs = FakeFileStore(
         initialFiles: {
-          r'C:\in\mx.rmdx': _rmdxBytes(
+          r'C:\in\mx.rpdx': _rmdxBytes(
             'tpl.mx',
             1,
             _body('MX', model: 'THEIRS'),
@@ -339,7 +339,7 @@ void main() {
       final ok = await importDeviceTemplate(
         session: s.session,
         controller: s.session.controller,
-        picker: FakeFilePicker(openPaths: [r'C:\in\mx.rmdx']),
+        picker: FakeFilePicker(openPaths: [r'C:\in\mx.rpdx']),
         fs: fs,
         prompts: ScriptedPrompts(),
         clock: s.clock,
@@ -362,14 +362,14 @@ void main() {
       final s = _session(_doc());
       final fs = FakeFileStore(
         initialFiles: {
-          r'C:\in\mx.rmdx': _rmdxBytes('tpl.mx', 1, _body('MX')),
+          r'C:\in\mx.rpdx': _rmdxBytes('tpl.mx', 1, _body('MX')),
         },
       );
 
       await importDeviceTemplate(
         session: s.session,
         controller: s.session.controller,
-        picker: FakeFilePicker(openPaths: [r'C:\in\mx.rmdx']),
+        picker: FakeFilePicker(openPaths: [r'C:\in\mx.rpdx']),
         fs: fs,
         prompts: ScriptedPrompts(),
         clock: s.clock,

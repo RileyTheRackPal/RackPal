@@ -93,7 +93,7 @@ void main() {
         _hold(doc, e.key, e.value);
       }
       final session = _session(doc);
-      final picker = FakeFilePicker(savePaths: [r'C:\out\kit.rmda']);
+      final picker = FakeFilePicker(savePaths: [r'C:\out\kit.rpda']);
 
       final ok = await exportDeviceLibrary(
         session: session,
@@ -113,7 +113,7 @@ void main() {
       // whole point, one extension further on.
       final doc = _doc()..templates.clear();
       _hold(doc, 'tpl.mine', _body('Mine'));
-      final picker = FakeFilePicker(savePaths: [r'C:\out\kit.rmda']);
+      final picker = FakeFilePicker(savePaths: [r'C:\out\kit.rpda']);
 
       await exportDeviceLibrary(
         session: _session(doc),
@@ -126,7 +126,7 @@ void main() {
         context: _windows,
       );
       expect(picker.dialogTypes, [FileDialogType.library]);
-      expect(picker.suggestedNames, ['shop-kit.rmda']);
+      expect(picker.suggestedNames, ['shop-kit.rpda']);
     });
 
     test(
@@ -143,7 +143,7 @@ void main() {
 
         final ok = await exportDeviceLibrary(
           session: _session(doc),
-          picker: FakeFilePicker(savePaths: [r'C:\out\kit.rmda']),
+          picker: FakeFilePicker(savePaths: [r'C:\out\kit.rpda']),
           writer: _writer(fs),
           askForLibrary: (c) async =>
               ExportLibraryRequest(name: 'Shop Kit', selected: c),
@@ -151,7 +151,7 @@ void main() {
         );
         expect(ok, isTrue);
 
-        final written = _bytesAt(fs, r'C:\out\kit.rmda');
+        final written = _bytesAt(fs, r'C:\out\kit.rpda');
         expect(written, isNotNull);
         final read = readRmdaBytes(written!);
         final lib = (read as Ok<DeviceLibraryFile>).value;
@@ -172,7 +172,7 @@ void main() {
 
       await exportDeviceLibrary(
         session: _session(doc),
-        picker: FakeFilePicker(savePaths: [r'C:\out\kit.rmda']),
+        picker: FakeFilePicker(savePaths: [r'C:\out\kit.rpda']),
         writer: _writer(fs),
         askForLibrary: (c) async => ExportLibraryRequest(
           name: 'Just One',
@@ -181,7 +181,7 @@ void main() {
         context: _windows,
       );
       final lib =
-          (readRmdaBytes(_bytesAt(fs, r'C:\out\kit.rmda')!)
+          (readRmdaBytes(_bytesAt(fs, r'C:\out\kit.rpda')!)
                   as Ok<DeviceLibraryFile>)
               .value;
       expect(lib.templates.map((t) => t.body.displayName), ['Switch']);
@@ -191,7 +191,7 @@ void main() {
       final doc = _doc()..templates.clear();
       _hold(doc, 'tpl.mine', _body('Mine'));
       final session = _session(doc);
-      final picker = FakeFilePicker(savePaths: [r'C:\out\kit.rmda']);
+      final picker = FakeFilePicker(savePaths: [r'C:\out\kit.rpda']);
 
       final ok = await exportDeviceLibrary(
         session: session,
@@ -212,7 +212,7 @@ void main() {
       // user has picked a file and read a warning is the wasted
       // interaction this app already refuses to inflict.
       final session = _session(_doc());
-      final picker = FakeFilePicker(openPaths: [r'C:\in\kit.rmda']);
+      final picker = FakeFilePicker(openPaths: [r'C:\in\kit.rpda']);
       final prompts = ScriptedPrompts();
 
       final ok = await importDeviceLibrary(
@@ -247,7 +247,7 @@ void main() {
     });
 
     test(
-      'a .rmdx is refused as the wrong kind, and names the right door',
+      'a .rpdx is refused as the wrong kind, and names the right door',
       () async {
         final rmdx = encodeRmdxBytes(
           DeviceTemplateFile(
@@ -258,14 +258,14 @@ void main() {
           ),
         );
         final fs = FakeFileStore(
-          initialFiles: {r'C:\in\one.rmdx': rmdx},
+          initialFiles: {r'C:\in\one.rpdx': rmdx},
           initialDirectories: <String>{'C:', r'C:\in', _root},
         );
         final prompts = ScriptedPrompts();
 
         final ok = await importDeviceLibrary(
           session: _session(_doc()),
-          picker: FakeFilePicker(openPaths: [r'C:\in\one.rmdx']),
+          picker: FakeFilePicker(openPaths: [r'C:\in\one.rpdx']),
           writer: _writer(fs),
           fs: fs,
           prompts: prompts,
@@ -289,14 +289,14 @@ void main() {
       // warning is about.
       final bytes = _rmda('Shop Kit', ['Amp', 'Switch']);
       final fs = FakeFileStore(
-        initialFiles: {r'C:\in\kit.rmda': bytes},
+        initialFiles: {r'C:\in\kit.rpda': bytes},
         initialDirectories: <String>{'C:', r'C:\in', _root},
       );
       final session = _session(_doc());
 
       final ok = await importDeviceLibrary(
         session: session,
-        picker: FakeFilePicker(openPaths: [r'C:\in\kit.rmda']),
+        picker: FakeFilePicker(openPaths: [r'C:\in\kit.rpda']),
         writer: _writer(fs),
         fs: fs,
         prompts: ScriptedPrompts(),
@@ -311,7 +311,7 @@ void main() {
       );
       expect(ok, isTrue);
       expect(
-        _bytesAt(fs, _windows.join(_shelf, 'kit.rmda')),
+        _bytesAt(fs, _windows.join(_shelf, 'kit.rpda')),
         bytes,
         reason: 'verbatim: re-encoding would normalise a hand-edited file',
       );
@@ -323,13 +323,13 @@ void main() {
       () async {
         final fs = FakeFileStore(
           initialFiles: {
-            r'C:\in\kit.rmda': _rmda('Shop Kit', ['Amp']),
+            r'C:\in\kit.rpda': _rmda('Shop Kit', ['Amp']),
           },
           initialDirectories: <String>{'C:', r'C:\in', _root},
         );
         await importDeviceLibrary(
           session: _session(_doc()),
-          picker: FakeFilePicker(openPaths: [r'C:\in\kit.rmda']),
+          picker: FakeFilePicker(openPaths: [r'C:\in\kit.rpda']),
           writer: _writer(fs),
           fs: fs,
           prompts: ScriptedPrompts(),
@@ -345,7 +345,7 @@ void main() {
     test('a cancelled confirmation copies NOTHING', () async {
       final fs = FakeFileStore(
         initialFiles: {
-          r'C:\in\kit.rmda': _rmda('Shop Kit', ['Amp']),
+          r'C:\in\kit.rpda': _rmda('Shop Kit', ['Amp']),
         },
         initialDirectories: <String>{'C:', r'C:\in', _root},
       );
@@ -353,7 +353,7 @@ void main() {
 
       final ok = await importDeviceLibrary(
         session: session,
-        picker: FakeFilePicker(openPaths: [r'C:\in\kit.rmda']),
+        picker: FakeFilePicker(openPaths: [r'C:\in\kit.rpda']),
         writer: _writer(fs),
         fs: fs,
         prompts: ScriptedPrompts(),
@@ -386,13 +386,13 @@ void main() {
           ),
         );
         final fs = FakeFileStore(
-          initialFiles: {r'C:\in\kit.rmda': bytes},
+          initialFiles: {r'C:\in\kit.rpda': bytes},
           initialDirectories: <String>{'C:', r'C:\in', _root},
         );
 
         final ok = await importDeviceLibrary(
           session: _session(_doc()),
-          picker: FakeFilePicker(openPaths: [r'C:\in\kit.rmda']),
+          picker: FakeFilePicker(openPaths: [r'C:\in\kit.rpda']),
           writer: _writer(fs),
           fs: fs,
           prompts: ScriptedPrompts(),

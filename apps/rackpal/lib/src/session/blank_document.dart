@@ -69,7 +69,7 @@ RackDocument buildBlankDocument({
       version: 1,
       // REAL AT `#795`. This read `sha256:seed-<id>`, which claimed an
       // algorithm it never ran; a seeded template now carries the hash
-      // of the body it actually holds, so a hand-edited `.rmpj` is
+      // of the body it actually holds, so a hand-edited `.rppj` is
       // detectable on the 48 templates every project starts with.
       contentHash: templateContentHash(entry.value),
       capturedAt: now,

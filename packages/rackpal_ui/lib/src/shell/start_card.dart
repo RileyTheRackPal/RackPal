@@ -2,7 +2,7 @@
 //
 // §9 is explicit and this widget is a direct reading of it: *"First
 // launch shows a start card, not an empty canvas: `Blank project` plus
-// the four starter projects, which are authored as real `.rackpal`
+// the four starter projects, which are authored as real `.rppj`
 // files… A user who picks 'Home theater' is editing a populated,
 // finding-clean 24U rack in two seconds, which is a far lower-effort mode
 // than creating one."*

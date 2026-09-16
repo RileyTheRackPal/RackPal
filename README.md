@@ -40,7 +40,7 @@ Read [00-overview](docs/00-overview.md) first, then [canonical-decisions](docs/c
 |---|---|
 | [docs/00-overview.md](docs/00-overview.md) | The product in one read: the core loop, the v1 line, who it is for |
 | [docs/01-domain.md](docs/01-domain.md) | Rack and A/V trade concepts, the glossary, the signal and cable registry |
-| [docs/02-data-model.md](docs/02-data-model.md) | Entities, primitives, units, the `.rackpal` envelope and migration chain |
+| [docs/02-data-model.md](docs/02-data-model.md) | Entities, primitives, units, the `.rppj` envelope and migration chain |
 | [docs/03-architecture.md](docs/03-architecture.md) | Five packages, the command stack, the drawing IR, the derived pipeline |
 | [docs/04-rack-editor.md](docs/04-rack-editor.md) | Elevation authoring: placement, quick-add, staging, compaction, locks |
 | [docs/05-schematic-editor.md](docs/05-schematic-editor.md) | The wiring canvas, drag-to-connect, layout and routing, the live schedule |

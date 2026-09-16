@@ -1,6 +1,6 @@
-// rackpal_core/src/persistence/container.dart — the `.rmpj` envelope.
+// rackpal_core/src/persistence/container.dart — the `.rppj` envelope.
 //
-// DR-019 §11.18.2(1): **`.rmpj` is plain pretty JSON when the document has
+// DR-019 §11.18.2(1): **`.rppj` is plain pretty JSON when the document has
 // no binary member, and a zip container when it has one.** The
 // `PK\x03\x04` sniff `codec.dart` has carried since M0 becomes the
 // discriminator it was always shaped to be, and CR-091's single-file
@@ -107,7 +107,7 @@
 //
 // AC-058/D8's rule is BOUND IT BEFORE YOU READ IT, and the existing caps
 // cannot do it: `checkJsonLimits` runs on `document.json`'s bytes, which
-// only exist AFTER the inflate. A one-megabyte `.rmpj` whose member
+// only exist AFTER the inflate. A one-megabyte `.rppj` whose member
 // declares ten gigabytes would exhaust memory before any of them ran.
 //
 // So [readContainerParts] checks the central directory first, where every
@@ -127,7 +127,7 @@ import 'package:rackpal_core/src/persistence/codec.dart';
 import 'package:rackpal_core/src/persistence/json_limits.dart';
 import 'package:rackpal_core/src/util/outcome.dart';
 
-/// The member every `.rmpj` container holds, at the root.
+/// The member every `.rppj` container holds, at the root.
 ///
 /// Its bytes are **byte-for-byte what the plain-JSON path would have
 /// written** (DR-019 §11.18.2(2)), which is what makes the two shapes one
@@ -163,7 +163,7 @@ final DateTime kContainerTimestamp = DateTime.utc(1980);
 /// unstated preference.
 const int kContainerDeflateLevel = DeflateLevel.bestCompression;
 
-/// The most entries a `.rmpj` container may hold.
+/// The most entries a `.rppj` container may hold.
 ///
 /// A project is one `document.json` plus one underlay per floor. Sixty
 /// four is an order of magnitude past the largest building anybody has
@@ -171,7 +171,7 @@ const int kContainerDeflateLevel = DeflateLevel.bestCompression;
 /// on the count alone, before its sizes are even added up.
 const int kMaxContainerMembers = 64;
 
-/// The most total uncompressed bytes a `.rmpj` container may declare.
+/// The most total uncompressed bytes a `.rppj` container may declare.
 ///
 /// Four times [kMaxDocumentBytes], which is the room a 64 MB document
 /// plus several architectural pages needs, and far below the ratios a
@@ -222,7 +222,7 @@ final class ContainerTooLargeError implements Exception {
       'and $byteLimit.';
 }
 
-/// A `.rmpj` file's bytes, split into the two halves the rest of the
+/// A `.rppj` file's bytes, split into the two halves the rest of the
 /// persistence layer deals in.
 final class ContainerParts {
   const ContainerParts({required this.documentBytes, required this.members});
@@ -278,7 +278,7 @@ final class ContainerUnreadableError implements Exception {
 
 /// A readable zip with no [kDocumentMember] at its root.
 ///
-/// Every zip is a candidate `.rmpj` now that the sniff is a branch, so
+/// Every zip is a candidate `.rppj` now that the sniff is a branch, so
 /// this is the state a `.docx`, a `.zip` of holiday photographs and a
 /// truncated project all land in.
 final class ContainerMissingDocumentError implements Exception {
@@ -295,7 +295,7 @@ final class ContainerMissingDocumentError implements Exception {
       'It holds ${members.length} member(s).';
 }
 
-/// Splits a `.rmpj` file's [bytes] into its document JSON and its binary
+/// Splits a `.rppj` file's [bytes] into its document JSON and its binary
 /// members.
 ///
 /// **Never throws** (CR-093): a foreign zip, a truncated archive and a
@@ -403,7 +403,7 @@ Outcome<ContainerParts> readContainerParts(
   );
 }
 
-/// Wraps [documentBytes] and [members] into the bytes of a `.rmpj` file.
+/// Wraps [documentBytes] and [members] into the bytes of a `.rppj` file.
 ///
 /// **Returns [documentBytes] UNCHANGED when [members] is empty**, which is
 /// DR-019 §11.18.2(1)'s *"a document with no underlay writes bytes

@@ -34,7 +34,7 @@
 // project that lives on the HOST.
 //
 // It is the wrong answer for the flagship portable workflow, where the
-// projects live on the STICK: E:\Jobs\Smith.rackpal. Plug that stick
+// projects live on the STICK: E:\Jobs\Smith.rppj. Plug that stick
 // into a machine where it mounts as F: and every absolute entry probes
 // as unreachable and renders dimmed FOREVER, with no route back. The
 // recents feature is then 100% dead in exactly the deliverable portable
@@ -222,7 +222,7 @@ final class RecentsStore {
 
   /// Records [entry] at the top, deduplicated, capped, and persisted.
   ///
-  /// Dedup is by [canonicalKey], so `C:\Jobs\Smith.rackpal` and
+  /// Dedup is by [canonicalKey], so `C:\Jobs\Smith.rppj` and
   /// `c:\jobs\..\jobs\smith.RACKPAL` are one entry on Windows.
   Future<List<RecentEntry>> push(RecentEntry entry) async {
     final current = await load();

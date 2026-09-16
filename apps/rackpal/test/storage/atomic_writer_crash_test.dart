@@ -83,7 +83,7 @@ void expectSaveInvariant(
       target,
       isNotNull,
       reason:
-          'I1 violated at $where: <target>.rmpj DOES NOT EXIST. '
+          'I1 violated at $where: <target>.rppj DOES NOT EXIST. '
           'A hard kill here leaves the user opening Explorer to find '
           'their job gone.',
     );
@@ -116,7 +116,7 @@ void expectSaveInvariant(
   }
 
   // --- I4: exactly four names, ever. (CR-098) --------------------------
-  const allowed = {'Smith.rmpj'};
+  const allowed = {'Smith.rppj'};
   for (final path in state.files.keys) {
     final name = _windows.basename(path);
     final stem = name
@@ -683,7 +683,7 @@ void main() {
       // keepBackup: false. Measuring `.bak.tmp` for them refuses eight
       // characters early — and per the mid-session finding, a recovery
       // snapshot that never writes tells nobody.
-      final stem = 'x' * (255 - r'C:\jobs\'.length - '.rmpj'.length);
+      final stem = 'x' * (255 - r'C:\jobs\'.length - '.rppj'.length);
       final tight = SavePaths.forTarget(
         r'C:\jobs\'
         '$stem',

@@ -12,7 +12,7 @@
 // **THIS COMMENT SAID "THREE IMPORT PATHS NEED IT" UNTIL 2026-09-07 AND
 // NAMED THEM**, by which time there were six and the list had missed
 // three: `grep -rn checkImportedFileSize` finds the CSV import, the
-// `.rmdx` import, the `.rmda` library import, the library shelf scan, the
+// `.rpdx` import, the `.rpda` library import, the library shelf scan, the
 // `.bak` sibling and the floorplan import. **The count is not restated
 // here for that reason.** A list of callers inside the callee is a second
 // copy of a fact the compiler already holds, and it goes stale in exactly

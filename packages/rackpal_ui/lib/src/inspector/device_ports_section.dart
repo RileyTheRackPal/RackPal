@@ -595,7 +595,7 @@ class _PortPicker<T> extends StatelessWidget {
     final scheme = theme.colorScheme;
     // THE RESOLVED VALUE MUST BE IN THE LIST OR THE DROPDOWN ASSERTS. A
     // template may name a connector this project's registries do not
-    // declare (an imported `.rmdx`, a hand-authored body), and dropping it
+    // declare (an imported `.rpdx`, a hand-authored body), and dropping it
     // from the list would make the control unable to show what the port
     // actually is.
     final options = <T>[

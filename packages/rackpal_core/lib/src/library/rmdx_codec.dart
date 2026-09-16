@@ -1,4 +1,4 @@
-// The `.rmdx` codec: one device template, as a file (DR-100 §11.99,
+// The `.rpdx` codec: one device template, as a file (DR-100 §11.99,
 // CR-063, AC-050/A8.2). docs/03-architecture.md §7 gives `library/` this
 // job, and this is its first occupant.
 //
@@ -7,8 +7,8 @@
 // ==================================================================
 // A DESCRIPTION OF A `TemplateBody`. Not one field name, not one key.
 // The body is written by `templateBodyToJson` and read by
-// `templateBodyFromJson`, the same pair `.rmpj` goes through, so a field
-// this format fails to carry is a field `.rmpj` fails to carry and
+// `templateBodyFromJson`, the same pair `.rppj` goes through, so a field
+// this format fails to carry is a field `.rppj` fails to carry and
 // CR-117's byte gate fails first and loudly.
 //
 // That is DR-100's whole content. The alternative on the table was
@@ -33,9 +33,9 @@
 //
 //     {templateId, version, contentHash, capturedAt, body: {...}}
 //
-// and a `.rmdx` is that shape with `capturedAt` dropped (a file has no
+// and a `.rpdx` is that shape with `capturedAt` dropped (a file has no
 // capture time; the moment it was exported is not a fact about the
-// template) plus `schemaVersion` and `kind`. `.rmda` is an array of
+// template) plus `schemaVersion` and `kind`. `.rpda` is an array of
 // these plus a manifest (DR-015 §11.15.3) and invents no third shape.
 import 'dart:convert';
 import 'dart:typed_data';
@@ -49,30 +49,30 @@ import 'package:rackpal_core/src/persistence/outlet_key_retirement.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/util/outcome.dart';
 
-/// The `.rmdx` schema version this build writes and understands.
+/// The `.rpdx` schema version this build writes and understands.
 ///
-/// **ITS OWN CHAIN, INDEPENDENT OF `.rmpj`'s `kSchemaVersion`**
-/// (AC-050/A8.2, docs/11 §5: *"`.rmdx` has its own parallel chain and its
-/// own corpus"*). `.rmpj` is at 2 and this is at 1, and the two numbers
+/// **ITS OWN CHAIN, INDEPENDENT OF `.rppj`'s `kSchemaVersion`**
+/// (AC-050/A8.2, docs/11 §5: *"`.rpdx` has its own parallel chain and its
+/// own corpus"*). `.rppj` is at 2 and this is at 1, and the two numbers
 /// never have to move together: a device template's shape is not a
 /// project's shape and coupling them would make every project migration
 /// a template migration for no reason.
 /// **2 SINCE DR-134 §11.133**, which deleted `PortDef.carriedProtocols`.
-/// The body of a `.rmdx` is written by `templateBodyToJson`, so a file
+/// The body of a `.rpdx` is written by `templateBodyToJson`, so a file
 /// exported before that change carries the key on every port AND a
 /// `contentHash` taken over bytes that include it. Left alone, every such
 /// file would import reporting a content mismatch, which is a false alarm
 /// that trains a person to ignore a real one.
 ///
 /// **3 SINCE DR-171 §11.170.3**, which deleted `PowerProfile`'s two outlet
-/// counts. The step is the one `.rmpj` and `.rmda` share: strip both keys,
+/// counts. The step is the one `.rppj` and `.rpda` share: strip both keys,
 /// and re-take the hash only where it attested the body as stored.
 const int kRmdxSchemaVersion = 3;
 
-/// The root `kind` tag every `.rmdx` carries (docs/06 §7.3).
+/// The root `kind` tag every `.rpdx` carries (docs/06 §7.3).
 ///
-/// **THIS IS `.rmdx`'s GENERATOR TAG**, doing the job `kGeneratorName`
-/// does for `.rmpj`: it is what makes "you picked a project file" a
+/// **THIS IS `.rpdx`'s GENERATOR TAG**, doing the job `kGeneratorName`
+/// does for `.rppj`: it is what makes "you picked a project file" a
 /// typed refusal rather than a `FormatException` from a decoder that was
 /// never going to succeed. It is the second half of M4-M1's file
 /// dialog. The filter stops most wrong picks; this stops the rest.
@@ -87,7 +87,7 @@ const String _kVersion = 'version';
 const String _kContentHash = 'contentHash';
 const String _kBody = 'body';
 
-/// One device template as it sits in a `.rmdx`.
+/// One device template as it sits in a `.rpdx`.
 ///
 /// The four facts beside the body are `TemplateSnapshot`'s, minus
 /// `capturedAt`. They are carried rather than derived because every one
@@ -132,8 +132,8 @@ final class DeviceTemplateFile {
   /// mismatches.
   ///
   /// **Filed as `#795`, not folded in here.** The hasher is shared with
-  /// every `.rmpj` `TemplateSnapshot`, so making it real inside the
-  /// `.rmdx` codec would fix one file format and leave the other with
+  /// every `.rppj` `TemplateSnapshot`, so making it real inside the
+  /// `.rpdx` codec would fix one file format and leave the other with
   /// the placeholder, which is two spellings of one fact (DR-098
   /// §11.97.4). It also needs `crypto` promoted from transitive to a
   /// declared dependency with a docs/03 §10.1 row, which the
@@ -162,7 +162,7 @@ final class NotADeviceTemplateError implements Exception {
 /// Refused: the file's `schemaVersion` is newer than [kRmdxSchemaVersion].
 ///
 /// **REFUSED RATHER THAN OPENED READ-ONLY, which is the opposite of what
-/// `.rmpj` does, and the asymmetry is deliberate.** A project carries
+/// `.rppj` does, and the asymmetry is deliberate.** A project carries
 /// `minReaderVersion` and an `unknown` passthrough on every persisted
 /// object, so a newer project can be opened without understanding all of
 /// it and re-saved losslessly (CR-093). **`TemplateBody` has neither.**
@@ -188,7 +188,7 @@ final class NewerRmdxSchemaError implements Exception {
 
 /// Refused: the envelope is structurally malformed.
 ///
-/// Distinct from [NotADeviceTemplateError] the way `.rmpj`'s
+/// Distinct from [NotADeviceTemplateError] the way `.rppj`'s
 /// `MalformedEnvelopeError` is distinct from `NotARackPalFileError`: the
 /// `kind` tag matched, so this really is meant to be a device template,
 /// just a broken one.
@@ -201,7 +201,7 @@ final class MalformedRmdxError implements Exception {
   String toString() => 'MalformedRmdxError: $message';
 }
 
-/// [file] as the plain JSON tree a `.rmdx` holds.
+/// [file] as the plain JSON tree a `.rpdx` holds.
 JsonMap rmdxToJsonTree(DeviceTemplateFile file) => <String, Object?>{
   _kSchemaVersion: kRmdxSchemaVersion,
   _kKind: kRmdxKind,
@@ -214,7 +214,7 @@ JsonMap rmdxToJsonTree(DeviceTemplateFile file) => <String, Object?>{
 /// [file] as the canonical bytes that go on disk: plain UTF-8 JSON, LF,
 /// two-space indent, keys sorted at every level (docs/06 §7.3).
 ///
-/// **The same `encodeCanonicalJsonBytes` `.rmpj` uses**, so "sorted how?"
+/// **The same `encodeCanonicalJsonBytes` `.rppj` uses**, so "sorted how?"
 /// has one answer in this product rather than two. `JsonEncoder` emits
 /// `\n` and never `\r\n`, which is where the LF requirement is actually
 /// satisfied; `.gitattributes` keeps it that way for the fixtures.
@@ -230,7 +230,7 @@ Uint8List encodeRmdxBytes(DeviceTemplateFile file) =>
 /// path once `#236` and M4-N have added theirs; this is one of the paths
 /// it will count, already paid.
 ///
-/// The zip sniff is here for `.rmpj`'s reason and one more of its own: a
+/// The zip sniff is here for `.rppj`'s reason and one more of its own: a
 /// `.rmda` is deliberately NOT a zip (DR-015 §11.15.4), so anything that
 /// sniffs as one reached this function by accident.
 Outcome<DeviceTemplateFile> readRmdxBytes(
@@ -264,7 +264,7 @@ Outcome<DeviceTemplateFile> readRmdxBytes(
 /// can still decode on the main isolate, and so a test can hand in a
 /// tree without building bytes for it.
 Outcome<DeviceTemplateFile> readRmdxJsonTree(JsonMap raw) {
-  // KIND BEFORE VERSION, deliberately. A `.rmpj` has a `schemaVersion`
+  // KIND BEFORE VERSION, deliberately. A `.rppj` has a `schemaVersion`
   // too, and checking the version first would report a project file as a
   // device template from the wrong era rather than as a project file.
   final kind = raw[_kKind];
@@ -311,13 +311,13 @@ Outcome<DeviceTemplateFile> readRmdxJsonTree(JsonMap raw) {
   }
 }
 
-/// The `.rmdx` migration chain: `storedSchemaVersion` to
+/// The `.rpdx` migration chain: `storedSchemaVersion` to
 /// [kRmdxSchemaVersion]. Never throws (CR-093).
 ///
 /// **IT WAS EMPTY UNTIL DR-134 AND THE SEAM PAID FOR ITSELF.** This
 /// function's own words were that it buys "the SEAM plus the refusal
 /// below, so that the first person to bump [kRmdxSchemaVersion] adds a
-/// row to a table that already exists instead of discovering that `.rmdx`
+/// row to a table that already exists instead of discovering that `.rpdx`
 /// never had a chain and inventing one under deadline". That person
 /// arrived, and adding v1 to v2 was a row. AC-050/A8.2 requires the
 /// chain; nothing said it had to have steps in it, and now it has one.
@@ -396,7 +396,7 @@ Outcome<JsonMap> _migrateRmdxV1ToV2(JsonMap raw) {
 }
 
 /// v2 to v3: `PowerProfile`'s two outlet counts are gone (DR-171
-/// §11.170.3), through the step `.rmpj` and `.rmda` share.
+/// §11.170.3), through the step `.rppj` and `.rpda` share.
 JsonMap _migrateRmdxV2ToV3(JsonMap raw) {
   final migrated = JsonMap.of(raw);
   final body = migrated[_kBody];

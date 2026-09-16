@@ -20,7 +20,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // `ReparentLocationCommand` refuses to CREATE a cycle (DR-021 §11.20.5),
 // which says nothing about a document that already holds one. Nothing
-// validates `parentId` on decode, `.rmpj` is a text format people hand-edit
+// validates `parentId` on decode, `.rppj` is a text format people hand-edit
 // (DR-015), and G5's forward-compatibility story means a file written by a
 // build that had no such refusal is openable by one that does.
 //

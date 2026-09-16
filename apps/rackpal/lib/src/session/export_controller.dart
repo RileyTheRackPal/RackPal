@@ -4,7 +4,7 @@
 // IT REUSES THE SAVE PATH RATHER THAN INVENTING ONE
 // ==================================================================
 // docs/08 §8.3: "Saving uses the app's own save dialog … The PDF path gets
-// the same dialog, the same `.rackpal`-style filter mechanics and the same
+// the same dialog, the same `.rppj`-style filter mechanics and the same
 // MRU behaviour as document Save As, for free."
 //
 // So this controller is deliberately thin: `picker.pickSave` →

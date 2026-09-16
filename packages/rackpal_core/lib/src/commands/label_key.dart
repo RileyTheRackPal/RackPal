@@ -260,7 +260,7 @@ enum LabelKey {
 
   // M4-P2 (`#247`, RJ-012). Editing a media type's LABEL, never its id:
   // the id is frozen at creation because it is written into every
-  // `Link.media` and read by a human diffing two `.rmpj` files, so a
+  // `Link.media` and read by a human diffing two `.rppj` files, so a
   // typo fix must not become a document-wide rewrite.
   editMediaType,
 

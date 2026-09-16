@@ -17,7 +17,7 @@
 //
 // THE PATH IS SHOWN IN FULL, ON PURPOSE. §12.4 forbids a file path in a
 // LOG; this is the user's own screen, and "could not save to
-// \\NAS\jobs\Smith.rackpal" is the sentence that tells them which of
+// \\NAS\jobs\Smith.rppj" is the sentence that tells them which of
 // their three network shares is down. The two surfaces have different
 // rules and the difference is deliberate.
 import 'package:flutter/material.dart';

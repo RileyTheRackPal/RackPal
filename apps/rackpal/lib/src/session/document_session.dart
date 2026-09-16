@@ -38,7 +38,7 @@ const String kUntitledDocumentName = 'Untitled';
 ///
 /// TREATED AS "NO NAME", not as a name. Core seeds every new document
 /// with it so the field is never null; a window titled "Untitled Project"
-/// for a file the user saved as `Smith.rackpal` would be strictly worse
+/// for a file the user saved as `Smith.rppj` would be strictly worse
 /// than one titled "Smith". `document_session_test.dart` asserts this
 /// constant still matches core's default, so a change there fails a test
 /// rather than silently retitling every window.
@@ -58,14 +58,14 @@ const int kNeverSavedStateId = -1;
 /// ==================================================================
 /// `RecoveryStore` (storage/recovery_store.dart) keys a pair on ONE
 /// opaque string, which becomes the
-/// file stem of `<key>.rackpal` and `<key>.json`. Handing it the document
+/// file stem of `<key>.rppj` and `<key>.json`. Handing it the document
 /// id alone was a single mistake that produced three separate ways to lose
 /// work, all of them silent:
 ///
 ///  1. A crash leaves a snapshot for `Smith` with twelve unsaved changes.
 ///     The user is offered it at launch and picks "Keep for later" — which
 ///     is documented as "it WILL be offered again next launch". They then
-///     open `Smith.rackpal` to look at it and quit. `cleanShutdown`
+///     open `Smith.rppj` to look at it and quit. `cleanShutdown`
 ///     deletes the snapshot for the id of the document that is open, which
 ///     is the SAME id, so the twelve changes are gone. No prompt, no dirty
 ///     flag, no report.

@@ -4,7 +4,7 @@
 // T2.02 WAS BLANK ON EVERY SHIPPED STARTER, AND SAID OTHERWISE
 // =====================================================================
 // Measured off the real emitted PDF for
-// `apps/rackpal/assets/starters/whole_house.rmpj`: T2.01 carried 27
+// `apps/rackpal/assets/starters/whole_house.rppj`: T2.01 carried 27
 // device designators as ink and T2.02 carried ZERO -- 68 recovered paths,
 // all frame and RU ruler. Both sheets printed the identical band, claiming
 // only "NOT DRAWN 4 OF 31 DEVICES". 19 of RK-1's 27 rail devices resolve
@@ -27,7 +27,7 @@
 //   4. nothing in the band reached the paper truncated -- the sentences
 //      above are only true if they are whole.
 //
-// Every number on the expectation side is derived from the .rmpj file.
+// Every number on the expectation side is derived from the .rppj file.
 // A test that compared the sheet against `computeRackLoadProfile` would be
 // comparing the gutter's arithmetic with itself.
 
@@ -62,7 +62,7 @@ void main() {
   });
 
   Uint8List starterBytes(String name) => File(
-    '../../apps/rackpal/assets/starters/$name.rmpj',
+    '../../apps/rackpal/assets/starters/$name.rppj',
   ).readAsBytesSync();
 
   RackDocument documentOf(String name) =>
@@ -74,7 +74,7 @@ void main() {
       ExportRequest(
         documentJson: starterBytes(name),
         fontBytes: <FontRef, Uint8List>{_font: fontBytes},
-        fileName: '$name.rmpj',
+        fileName: '$name.rppj',
         issuedAt: DateTime.utc(2026, 7, 18),
       ),
     );
@@ -139,7 +139,7 @@ void main() {
   }
 
   for (final name in _starters) {
-    group('$name.rmpj', () {
+    group('$name.rppj', () {
       test('every device the model puts on a face reaches THAT face as '
           'ink', () async {
         final doc = documentOf(name);

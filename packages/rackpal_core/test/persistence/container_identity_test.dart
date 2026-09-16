@@ -15,7 +15,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // A writer that emitted a one-entry zip for EVERY document would pass any
 // round-trip test ever written, and would break the byte identity of
-// every `.rmpj` in existence. So the tests below assert not only that the
+// every `.rppj` in existence. So the tests below assert not only that the
 // no-member path reproduces the bytes but that it does not produce a zip
 // at all, on real files rather than on a fixture: the four starters are
 // checked in, byte-verified by `gitattributes_byte_exactness_test.dart`,
@@ -37,7 +37,7 @@ const List<String> _starters = [
 /// Run from the package directory (CLAUDE.md), which is what makes this
 /// relative path the same one `rackpal_export`'s starter tests use.
 Uint8List _starterBytes(String name) =>
-    File('../../apps/rackpal/assets/starters/$name.rmpj').readAsBytesSync();
+    File('../../apps/rackpal/assets/starters/$name.rppj').readAsBytesSync();
 
 void main() {
   group('the corpus this is asserted over is real', () {

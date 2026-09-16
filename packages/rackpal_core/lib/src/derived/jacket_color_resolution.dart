@@ -111,7 +111,7 @@ final class ResolvedJacketColor {
   /// the ordinary case. The `!=` limb guards a file this program did not
   /// write: `SetLinkPulledJacketColorCommand` normalises an override
   /// equal to the convention away on the WRITE path, but a hand-edited
-  /// `.rackpal` or a CSV import can carry one, and reporting a
+  /// `.rppj` or a CSV import can carry one, and reporting a
   /// non-exception as an exception would inflate an exceptions-sheet
   /// count with rows that say `BLU — PULLED BLU`.
   ///

@@ -46,7 +46,7 @@ const int kOwnerWriteBit = 0x80;
 /// directory-entry update goes through the metadata journal, which
 /// survives a power cut; the tmp's data extents do not. Cut power a
 /// second after a 600 KB save "completes" and the reboot leaves
-/// `Smith.rackpal` pointing at extents that still hold zeros or stale
+/// `Smith.rppj` pointing at extents that still hold zeros or stale
 /// blocks — a TORN file at the name the user knows, with the `.bak`
 /// holding the version from before the save. Invariant I1 says the target
 /// is always exactly OLD or exactly NEW; that is the direct violation.

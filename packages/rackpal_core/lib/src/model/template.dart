@@ -503,7 +503,7 @@ final class TemplateBody {
   /// question about it answers UNKNOWN rather than no.
   ///
   /// **It lives on the body rather than beside `TemplateSnapshot.version`
-  /// for `submittedBy`'s reason, which is a file-layout fact.** A `.rmdx`
+  /// for `submittedBy`'s reason, which is a file-layout fact.** A `.rpdx`
   /// has no snapshot to hang it on: the whole file IS one template.
   ///
   /// **The reasoning here changed at DR-100 §11.99 and the conclusion did

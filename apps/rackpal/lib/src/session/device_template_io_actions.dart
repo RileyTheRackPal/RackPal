@@ -217,7 +217,7 @@ Future<bool> importDeviceTemplate({
   // THE SIZE CAP RUNS BEFORE THE READ (AC-058/D8, `#237`), and `#237`'s
   // own census gate is what found this: `readRmdxBytes` DOES run the
   // limits, but only after `readBytes` has already pulled the whole file
-  // into memory, so a 2 GB `.rmdx` was refused at the cost of 2 GB. The
+  // into memory, so a 2 GB `.rpdx` was refused at the cost of 2 GB. The
   // stat is one syscall and the refusal is the same sentence.
   //
   // A path `stat` cannot answer for is not refused here: "the file

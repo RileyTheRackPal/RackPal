@@ -127,14 +127,24 @@ if ($actualNative -contains 'dartjni.dll') {
 # --- the starters ---------------------------------------------------------
 # PACKAGED, not OPENED. See the header.
 $starterDir = Join-Path $ReleaseDir 'data/flutter_assets/assets/starters'
-# `.rmpj` SINCE DR-015 (`dc22ddc`), and this list was not updated with the
-# files. The gate then reported four missing starters that no longer exist
-# while the four that do exist shipped correctly, and it stayed that way
-# because `run_local.ps1 -SkipBuild` is the documented iteration path and
-# these two release gates only run when the build does. Board `#739`.
+# `.rppj` SINCE DR-179 (`#782`), and `.rmpj` since DR-015 (`dc22ddc`) before
+# that. THIS LIST HAS NOW GONE STALE AT BOTH RENAMES, and the second time is
+# the reason to say so twice: at DR-015 it reported four missing starters that
+# no longer existed while the four that do exist shipped correctly (board
+# `#739`), and at DR-179 it did the same on the PR build, which is the FIRST
+# run that could see it. `run_local.ps1 -SkipBuild` is the documented
+# iteration path and these two release gates only run when the build does, so
+# a rename is gated green locally five times over and fails on the agent.
+#
+# A LIST OF FILE NAMES IS A SECOND COPY OF SOMETHING GIT ALREADY KNOWS.
+# Deriving it from `apps/rackpal/assets/starters/` would end this, and is not
+# done here only because this gate reads the BUNDLE and must not take the
+# source tree's word for what shipped. The cheap half is done instead: the
+# extension is one constant, so the next rename touches one line.
+$starterExtension = '.rppj'
 $expectedStarters = @(
-    'apartment.rmpj', 'home_theatre.rmpj',
-    'small_office.rmpj', 'whole_house.rmpj'
+    "apartment$starterExtension", "home_theatre$starterExtension",
+    "small_office$starterExtension", "whole_house$starterExtension"
 )
 if (-not (Test-Path $starterDir)) {
     $problems += "the starter projects were not packaged: no $starterDir"

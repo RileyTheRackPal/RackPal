@@ -4,7 +4,7 @@
 // `doc.racks.values.first` while building its state — a precondition that
 // held for as long as the only document in the app was the demo seed. The
 // moment the app can OPEN A FILE, a rack-less document is reachable in
-// three ordinary ways: a project a user emptied, a `.rackpal` authored
+// three ordinary ways: a project a user emptied, a `.rppj` authored
 // elsewhere, and (from the next stage) a Blank project. Without this the
 // app would throw on the first frame after opening one, which is the worst
 // possible response to a perfectly valid file.

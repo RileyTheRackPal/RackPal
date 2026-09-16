@@ -360,8 +360,8 @@ bool _isZeroPanelPosition(Object? raw) {
 /// key. `json_codec.dart` states the trigger twice in the same words: a
 /// change is free when *"every file already on disk re-encodes byte for
 /// byte"*. This one is not. `_encodePortDef` wrote `carriedProtocols`
-/// unconditionally, so every `.rmpj` ever saved carries one empty array
-/// per port and loses it here. `apartment.rmpj` alone carries 737.
+/// unconditionally, so every `.rppj` ever saved carries one empty array
+/// per port and loses it here. `apartment.rppj` alone carries 737.
 /// Leaving the version at 3 while changing what the build emits gives a
 /// version-gated migration nothing to gate on, which is [migrateV1ToV2]'s
 /// stated reason and applies unchanged.

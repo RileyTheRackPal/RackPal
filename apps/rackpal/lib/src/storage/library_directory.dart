@@ -58,8 +58,16 @@ import 'package:rackpal/src/storage/file_store.dart';
 /// ever grows a sidecar, this is the comment that was wrong.
 const String kLibraryDirName = 'libraries';
 
-/// The extension a device library carries (DR-015).
-const String kLibraryExtension = '.rmda';
+/// The extension a device library carries (DR-015, renamed by DR-179).
+const String kLibraryExtension = '.rpda';
+
+/// Every extension the shelf recognises, the written one first.
+///
+/// **THE OLD SPELLING IS NOT OPTIONAL HERE.** Libraries written before
+/// 2026-09-15 are sitting in this very directory, so a scan that matched
+/// only [kLibraryExtension] would empty a user's shelf rather than rename
+/// anything (DR-179 §11.178.3).
+const List<String> kLibraryExtensions = <String>[kLibraryExtension, '.rmda'];
 
 /// One library file on the shelf, before anything has read it.
 ///
@@ -80,7 +88,7 @@ final class LibraryFile {
   /// The file's base name without its extension.
   ///
   /// **THE FILE NAME IS THE LIBRARY'S IDENTITY UNTIL `#239` READS ONE.**
-  /// A `.rmda` carries a manifest and the manifest will carry a name, so
+  /// A `.rpda` carries a manifest and the manifest will carry a name, so
   /// this is a placeholder for exactly as long as nothing can open the
   /// file. It is spelled as a derived getter rather than stored so that
   /// the day the manifest lands, the compiler shows every reader.
@@ -136,7 +144,9 @@ Future<List<LibraryFile>> listLibraries(
     // by a spreadsheet-minded person is the same file. The comparison is
     // on the extension only; the id keeps the name's own casing, which
     // is what the user typed and what they will look for.
-    if (ctx.extension(entry).toLowerCase() != kLibraryExtension) continue;
+    if (!kLibraryExtensions.contains(ctx.extension(entry).toLowerCase())) {
+      continue;
+    }
     final facts = await _statOrNull(fs, entry);
     if (facts == null) continue;
     found.add(

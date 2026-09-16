@@ -40,20 +40,28 @@
 *.bat    text eol=crlf
 
 # BYTE-EXACT GOLDENS — read the block above before changing these.
-# `.rmpj` is a project (CR-091, renamed by DR-015); `.rmdx` is a single
-# device template in the same JSON regime (CR-063), covered now so the
-# first one committed is already protected. `.rmda` is the device archive
-# DR-015 names and nothing writes yet — listed for the same reason.
+# `.rppj` is a project (CR-091, renamed by DR-015 and again by DR-179);
+# `.rpdx` is a single device template in the same JSON regime (CR-063);
+# `.rpda` is the device archive DR-015 named and DR-100 shaped.
 #
-# THE PRE-DR-015 SPELLINGS STAY LISTED. This app still opens a `.rackpal`
-# and still saves one in place, so one arriving through a checkout must
-# survive it byte-for-byte exactly as before; dropping the line the day
-# the extension changed would corrupt precisely the files the back-compat
-# path exists to protect.
+# EVERY SPELLING A BUILD HAS WRITTEN STAYS LISTED (DR-179 §11.178.3). The
+# app still opens `.rmpj`, `.rmdx`, `.rmda` and the pre-DR-015 `.rackmate`,
+# and still saves each in place, so one arriving through a checkout must
+# survive byte-for-byte exactly as before; dropping the line the day the
+# extension changed would corrupt precisely the files the back-compat path
+# exists to protect.
+#
+# `.rackpal` IS NOT LISTED AND NEVER SHOULD HAVE BEEN. The product rename
+# put it here in `0e2c5bb` in place of `.rackmate`, and no build has ever
+# written one (DR-179 §11.178.1). `.rmdev` is listed from DR-015's day,
+# when it was a specified name nothing wrote; it costs nothing and stays.
+*.rppj      text eol=lf
+*.rpdx      text eol=lf
+*.rpda      text eol=lf
 *.rmpj      text eol=lf
 *.rmdx      text eol=lf
 *.rmda      text eol=lf
-*.rackpal  text eol=lf
+*.rackmate  text eol=lf
 *.rmdev     text eol=lf
 
 *.png    binary

@@ -18,7 +18,7 @@ import 'fake_file_store.dart';
 
 final _windows = p.Context(style: p.Style.windows);
 const _dataRoot = r'C:\data';
-const _first = r'C:\data\snapshots\doc-1\1.rmpj';
+const _first = r'C:\data\snapshots\doc-1\1.rppj';
 
 ({SnapshotStore store, FakeFileStore fs}) _make({
   Map<String, Uint8List>? files,
@@ -52,7 +52,7 @@ Uint8List _bytes(int n, {int fill = 1}) =>
     Uint8List.fromList(List<int>.filled(n, fill));
 
 void main() {
-  test('a snapshot lands at snapshots/<docId>/<sequence>.rmpj', () async {
+  test('a snapshot lands at snapshots/<docId>/<sequence>.rppj', () async {
     final made = _make();
     final result = await made.store.write(
       docId: 'doc-1',
@@ -63,10 +63,10 @@ void main() {
     expect(result, isA<Ok<String>>());
     expect(
       (result as Ok<String>).value,
-      r'C:\data\snapshots\doc-1\412.rmpj',
+      r'C:\data\snapshots\doc-1\412.rppj',
     );
     expect(
-      made.fs.state.files.containsKey(r'C:\data\snapshots\doc-1\412.rmpj'),
+      made.fs.state.files.containsKey(r'C:\data\snapshots\doc-1\412.rppj'),
       isTrue,
     );
   });
@@ -83,11 +83,11 @@ void main() {
     expect(remaining, [3, 4, 5, 6, 7, 8, 9, 10, 11, 12]);
   });
 
-  test('snapshots written before DR-015 are still counted AND still '
-      'pruned (#170)', () async {
+  test('snapshots written before DR-179 are still counted AND still '
+      'pruned (#170, #782)', () async {
     // ── A CAP THAT ONLY APPLIES TO NEW FILES IS NOT A CAP ────────────
-    // `pathFor` now spells `.rmpj`. A prune that rebuilt the name from it
-    // would COUNT the ten `.rackpal` snapshots an earlier build left —
+    // `pathFor` now spells `.rppj`. A prune that rebuilt the name from it
+    // would COUNT the ten `.rmpj` snapshots an earlier build left —
     // so the cap reads as already-met — and then fail to delete them,
     // silently, because a snapshot that will not delete is deliberately
     // swallowed. The old files would sit in AppData forever and the new
@@ -99,7 +99,7 @@ void main() {
             _dataRoot,
             'snapshots',
             'doc-1',
-            '$i.rackpal',
+            '$i.rmpj',
           ): _bytes(
             4,
           ),
@@ -136,7 +136,7 @@ void main() {
           'it found on disk',
     );
     expect(
-      made.fs.state.files.keys.where((k) => k.endsWith('1.rackpal')),
+      made.fs.state.files.keys.where((k) => k.endsWith('1.rmpj')),
       isEmpty,
       reason: 'they are gone from disk, not merely from the listing',
     );
@@ -203,8 +203,8 @@ void main() {
       'alone', () async {
     final made = _make(
       files: {
-        r'C:\data\snapshots\doc-1\notes.rmpj': _bytes(4),
-        r'C:\data\snapshots\doc-1\1.rmpj': _bytes(4),
+        r'C:\data\snapshots\doc-1\notes.rppj': _bytes(4),
+        r'C:\data\snapshots\doc-1\1.rppj': _bytes(4),
       },
       dirs: {r'C:\data\snapshots', r'C:\data\snapshots\doc-1'},
     );
@@ -213,7 +213,7 @@ void main() {
     await made.store.prune('doc-1');
     expect(
       made.fs.state.files.containsKey(
-        r'C:\data\snapshots\doc-1\notes.rmpj',
+        r'C:\data\snapshots\doc-1\notes.rppj',
       ),
       isTrue,
     );

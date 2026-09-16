@@ -224,7 +224,7 @@ a board task instructing weeks of work that a ruling had abolished.
 - Perf/scene fixtures: `UPDATE_GOLDENS=1 flutter test <path>`. The op-count
   baselines in `schematic_perf_test.dart` are M2-C's record; regenerate content
   only when you mean to invalidate them.
-- File shape gotcha: in a `.rmpj`, `registries` is nested under `document`, and
+- File shape gotcha: in a `.rppj`, `registries` is nested under `document`, and
   `Registries.connectorTypes` serializes under the wire name **`connectors`**.
 
 ## Board (Azure DevOps)

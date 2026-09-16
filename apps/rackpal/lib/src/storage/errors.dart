@@ -388,7 +388,7 @@ final class OpenNotARackPalFile extends OpenError {
 /// stop, and its copy told the user *"RackPal projects are plain JSON. If
 /// the project is inside the archive, extract it first."* **Both halves
 /// are now false.** DR-019 §11.18.2(1) makes a zip a perfectly ordinary
-/// `.rmpj`: the sniff is a discriminator, not a refusal.
+/// `.rppj`: the sniff is a discriminator, not a refusal.
 ///
 /// So the state survives with a narrower and more useful job. It is what
 /// a `.docx`, a folder of holiday photographs and a project someone

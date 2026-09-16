@@ -503,7 +503,7 @@ void main() {
   });
 
   group('SavePaths shares ONE extension normalisation', () {
-    test('the .pdf and .rmpj rules are the same rule', () {
+    test('the .pdf and .rppj rules are the same rule', () {
       final ctx = p.Context(style: p.Style.windows);
       expect(
         SavePaths.forTarget(
@@ -535,7 +535,7 @@ void main() {
       // The default is unchanged for every existing caller.
       expect(
         SavePaths.forTarget(r'C:\jobs\smith', context: ctx).target,
-        r'C:\jobs\smith.rmpj',
+        r'C:\jobs\smith.rppj',
       );
     });
   });

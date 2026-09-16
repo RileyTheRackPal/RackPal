@@ -6,7 +6,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // `rmda_codec.dart` answers "what is in this file": a manifest name and
 // an array of entries. It deliberately carries **no identity**, because a
-// `.rmda` is a thing you email and the same pack can sit on two shelves
+// `.rpda` is a thing you email and the same pack can sit on two shelves
 // under two names. `DeviceLibraryFile`'s own header says the manifest is
 // one field on purpose.
 //
@@ -22,7 +22,7 @@
 // ═══════════════════════════════════════════════════════════════════════
 // IT HOLDS ENTRIES, NOT BODIES, AND THAT IS `#239`'s READING PAYING OFF
 // ═══════════════════════════════════════════════════════════════════════
-// `rmda_codec.dart` records why a `.rmda` carries `{templateId, version,
+// `rmda_codec.dart` records why a `.rpda` carries `{templateId, version,
 // contentHash, body}` rather than DR-015's literal "array of
 // `TemplateBody`", and one of its three reasons was this chapter:
 // *"`#241`'s provenance and AC-042's hash. Neither has anything to attach
@@ -48,7 +48,7 @@ final class LoadedLibrary {
   /// The app passes `LibraryFile.id`, the file's base name, which is
   /// unique because these are files in one directory. Two libraries may
   /// legitimately call themselves `Shop Kit` in their manifests; they
-  /// cannot both be `shop-kit.rmda`. A chip keyed on the display name
+  /// cannot both be `shop-kit.rpda`. A chip keyed on the display name
   /// would merge them, which is precisely the collapse DR-102 §11.101.4
   /// refuses one level down.
   final String id;

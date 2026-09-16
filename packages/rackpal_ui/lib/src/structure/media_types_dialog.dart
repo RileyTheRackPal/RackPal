@@ -159,7 +159,7 @@ class _MediaTypesDialogState extends State<_MediaTypesDialog> {
                     title: Text(def.displayName),
                     subtitle: Text(
                       // THE ID IS SHOWN, and that is deliberate. It is
-                      // what a person sees when they diff two `.rmpj`
+                      // what a person sees when they diff two `.rppj`
                       // files, and it is the only thing that distinguishes
                       // two types a typo made near-identical.
                       _subtitleFor(def, uses),
@@ -196,7 +196,7 @@ class _MediaTypesDialogState extends State<_MediaTypesDialog> {
 /// `media.cat6e  |  3 uses  |  C6`.
 ///
 /// THE ID LEADS, and that is deliberate: it is what a person sees when
-/// they diff two `.rmpj` files, and with two types a typo made
+/// they diff two `.rppj` files, and with two types a typo made
 /// near-identical it is the only thing that tells them apart.
 String _subtitleFor(MediaTypeDef def, int uses) {
   final used = uses == 0 ? 'not used' : '$uses use${uses == 1 ? '' : 's'}';

@@ -1124,7 +1124,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
 ///
 /// SEEDED AT CREATION, NEVER COMPUTED AT SAVE, and the reason is CR-117.
 /// `docs/02-data-model.md:834` says a document embeds "the subset a
-/// document references", which is what makes a `.rackpal`
+/// document references", which is what makes a `.rppj`
 /// self-describing — but if `write()` RECOMPUTED that subset, then
 /// reading a document carrying an entry nothing references and writing
 /// it back would DROP that entry, and `write(read(bytes)) == bytes` is

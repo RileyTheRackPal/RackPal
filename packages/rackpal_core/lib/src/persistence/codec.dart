@@ -8,7 +8,7 @@ import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/util/outcome.dart';
 
 /// The first four bytes of every ZIP local-file-header record — the
-/// standard `PK\x03\x04` magic number. `.rackpal` is plain JSON in v1
+/// standard `PK\x03\x04` magic number. `.rppj` is plain JSON in v1
 /// (CR-091), but [DocumentCodec.read] sniffs for this prefix up front so
 /// a zip file (a future v2 container, or simply the wrong file) comes
 /// back as a clear, typed [Err] instead of a `FormatException` thrown
@@ -25,7 +25,7 @@ bool looksLikeZip(List<int> bytes) {
 }
 
 /// [DocumentCodec.read] refuses a file that sniffs as a zip container —
-/// this build only understands the plain-JSON `.rackpal` shape.
+/// this build only understands the plain-JSON `.rppj` shape.
 final class UnsupportedZipContainerError implements Exception {
   const UnsupportedZipContainerError();
 

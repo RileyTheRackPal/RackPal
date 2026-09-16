@@ -62,7 +62,7 @@
 // AND SINCE `#242`, IT LISTS THE LOADED LIBRARIES TOO (DR-102, DR-103)
 // ═════════════════════════════════════════════════════════════════════
 // `buildPlaceableTemplates(doc, libraries: ...)` merges the document and
-// every `.rmda` on the shelf into one list, tagged by source. Three
+// every `.rpda` on the shelf into one list, tagged by source. Three
 // consequences land in this file:
 //
 //  * **A SOURCE CHIP ROW under the search box** (DR-103 §11.102.6):
@@ -176,7 +176,7 @@ final class PaletteSource {
 ///
 /// **A LABEL COLLISION IS DISAMBIGUATED BY ID.** Two libraries may both
 /// call themselves `Shop Kit` in their manifests and cannot both be
-/// `shop-kit.rmda` (`LoadedLibrary.id`). Two identical chips would be the
+/// `shop-kit.rpda` (`LoadedLibrary.id`). Two identical chips would be the
 /// collapse DR-102 §11.101.4 refuses, arrived at from the other end.
 List<PaletteSource> paletteSources(
   List<PlaceableTemplate> templates, {
