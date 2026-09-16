@@ -1,6 +1,6 @@
 # Data Model and File Format
 
-This is the authoritative specification of RackPal's domain model, its on-disk `.rmpj` format, and the rules that decide whether a document is coherent. It is derived from [the canonical decision record](canonical-decisions.md) §4 (canonical naming), §5 (canonical data model summary) and §6 (registry), and from the §1.2 and §1.3 rulings on the wiring entity model and validation philosophy. Where any raw working paper in [docs/research/](research/) disagrees with this document, this document wins; where this document disagrees with the canonical decision record, the record wins and this document is defective. Every non-obvious statement below cites the ruling that adjudicated it, so any reader can trace a field back to the argument that put it there.
+This is the authoritative specification of RackPal's domain model, its on-disk `.rppj` format, and the rules that decide whether a document is coherent. It is derived from [the canonical decision record](canonical-decisions.md) §4 (canonical naming), §5 (canonical data model summary) and §6 (registry), and from the §1.2 and §1.3 rulings on the wiring entity model and validation philosophy. Where any raw working paper in [docs/research/](research/) disagrees with this document, this document wins; where this document disagrees with the canonical decision record, the record wins and this document is defective. Every non-obvious statement below cites the ruling that adjudicated it, so any reader can trace a field back to the argument that put it there.
 
 **Companion documents:** [Overview](00-overview.md) · [Domain](01-domain.md) · [Architecture](03-architecture.md) · [Rack editor](04-rack-editor.md) · [Schematic editor](05-schematic-editor.md) · [Device builder](06-device-builder.md) · [Structure device](07-structure-device.md) · [PDF export](08-pdf-export.md) · [Roadmap](09-roadmap.md) · [Decisions](10-decisions.md) · [Testing and quality](11-testing-and-quality.md) · [Seed catalog](catalog/seed-devices.md)
 
@@ -431,7 +431,7 @@ final class TemplateBody {
   Len? containerUsableDepth, containerUsableWidth; bool containerVented;
 
   bool isPassthrough;
-  List<PassthroughPairDef> passthroughPairs;   // now in .rmdx. CR-057.
+  List<PassthroughPairDef> passthroughPairs;   // now in .rpdx. CR-057.
 
   PowerProfile power;
   List<PortDef>    ports;
@@ -865,7 +865,7 @@ The single most expensive mistake available in this domain is one `CableType` en
 
 `SignalDomainDef` is new in CR-078 and owns the **visual language** (`{id, displayName, tagPrefix, color, colorDark, dashPattern, lineWeightPermille, glyph, glyphAlt}`) which deleted the 43-entry per-family palette that the source design simultaneously carried and argued against. Colour encodes **domain** (8 entries, Okabe–Ito), not type, because no categorical palette is colour-vision-deficiency-safe past 8–9 categories. Dash pattern, line weight and glyph carry type-within-domain, and the tag pill (`W042 · HDMI · 25 ft`, drawn at both ends of every run) is the encoding that never fails. Requirement 4 of the brief, "colour-coded by cable type", is met by the **legend**, which prints one row per named cable type in colour and greyscale side by side (AC-054). Dash patterns are stored as `List<int>` of permille-points so the file stays integral: `6,3` is `[6000, 3000]` (CR-079).
 
-Registry IDs are `lower.dotted.snake` and reverse-hierarchical (`video.hdmi.2_1`, `conn.rj45`, `media.cat6a_futp`) with bare trade names carried as `aliases: List<String>` (CR-058). Full contents are specified in canonical §6 and shipped as `assets/catalog/registries.json`; the subset a document references is **embedded in the file**, which is what makes a `.rmpj` self-describing.
+Registry IDs are `lower.dotted.snake` and reverse-hierarchical (`video.hdmi.2_1`, `conn.rj45`, `media.cat6a_futp`) with bare trade names carried as `aliases: List<String>` (CR-058). Full contents are specified in canonical §6 and shipped as `assets/catalog/registries.json`; the subset a document references is **embedded in the file**, which is what makes a `.rppj` self-describing.
 
 Unresolvable registry IDs degrade to an `unknown(rawId)` placeholder that round-trips, renders in grey with the raw id as its tag, and never throws (I-46).
 
@@ -957,7 +957,7 @@ Rules are **Dart functions** in a registry keyed by `ruleId`; the **catalogue** 
 
 ---
 
-## 6. The `.rmpj` file format
+## 6. The `.rppj` file format
 
 This section **is** the file-format specification; `docs/file-format.md` is not created and every citation of it points here.
 
@@ -970,9 +970,9 @@ This section **is** the file-format specification; `docs/file-format.md` is not 
 | Envelope | Format metadata at the root; all entity maps under `"document"`. | CR-092 |
 | Round trip | **Byte** round trip: `write(read(bytes)) == bytes`, asserted over files RackPal wrote, an explicit `null` in a hand-edited file reads as absent and re-emits as absent. | CR-117 |
 | Unknown values | Written as an **absent key**, never an explicit `null`. `weightUg` and `bodyDepthNm` are the two that most often go missing. | CR-114, G4 |
-| Saves | Atomic: write `foo.rmpj.tmp` in the same directory → `flush()` → `rename()`. One sibling `.bak`. **No `.history/` folder** in the user's directory. | CR-098 |
-| Snapshots | `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rmpj`, last 10. | CR-098 |
-| Floats | **None**, in any persisted model, including `.rmdx`. | CR-001, CR-063, I-1 |
+| Saves | Atomic: write `foo.rppj.tmp` in the same directory → `flush()` → `rename()`. One sibling `.bak`. **No `.history/` folder** in the user's directory. | CR-098 |
+| Snapshots | `getApplicationSupportDirectory()/snapshots/<docUuid>/<sequence>.rppj`, last 10. | CR-098 |
+| Floats | **None**, in any persisted model, including `.rpdx`. | CR-001, CR-063, I-1 |
 | Enums | Strings, never ordinals. Unknown values fall back to an `unknown(raw)` variant that round-trips rather than throwing. | §4.3 |
 | Derived values | **Never serialized**: `portIds`, `Outlet.roughInStatus`, `templateUpdateAvailable`, `Link.dominantSignalFamily`, elevation X/Y, circuit membership, `continuousLimitAmps`. | CR-115, CR-006 |
 | IDs | UUIDv7 for entities; `uuidv5(deviceId, portKey)` for template-derived ports. Normative examples use real UUIDs. | CR-116, AC-006 |
@@ -1721,11 +1721,11 @@ A 12U wall rack, a 4×4 HDMI matrix, a 24-port PoE switch, a 24-port patch panel
 | `tombstones` non-empty | Ships in v1 (CR-095, G5). |
 | `registries` embedded, elided to the referenced subset | Requirement-4 colour lives on `signalDomains`, not on 43 families (CR-078). |
 
-### 6.4 `.rmdx`: the single-template file
+### 6.4 `.rpdx`: the single-template file
 
-A `.rmdx` is one `TemplateBody` plus its identity, in plain JSON, under the **same unit regime** as `.rmpj`, `depthNm`, `weightUg`, integers throughout (CR-063). ~~Its `identity.` / `physical.` / `power.` sections are a **file layout only**; the codec flattens them onto `TemplateBody` (CR-053).~~ **Superseded by DR-100 §11.99: there are no sections.** The file is five envelope keys (`schemaVersion`, `kind`, `templateId`, `version`, `contentHash`) over a `body` that is `templateBodyToJson`'s own map, verbatim, so the format acquires **no second description of a `TemplateBody`** and inherits CR-117's gate instead of drifting from it. The sectioned layout was drawn in docs/06 §7.3 and placed 18 of the encoder's 39 keys; `model` was one of the 21 it dropped. It has its own migration chain (AC-050/A8.2), starting at `schemaVersion` 1 independent of `.rmpj`'s 2, and a newer one is **refused rather than opened read-only**, because AC-012 makes `TemplateBody` closed with no `unknown` passthrough, so there is nothing to open read-only with. The `signature` field and the provenance chain are **cut from v1** (AC-042); single `.rmdx` export and import stay, because that is the unit people email each other.
+A `.rpdx` is one `TemplateBody` plus its identity, in plain JSON, under the **same unit regime** as `.rppj`, `depthNm`, `weightUg`, integers throughout (CR-063). ~~Its `identity.` / `physical.` / `power.` sections are a **file layout only**; the codec flattens them onto `TemplateBody` (CR-053).~~ **Superseded by DR-100 §11.99: there are no sections.** The file is five envelope keys (`schemaVersion`, `kind`, `templateId`, `version`, `contentHash`) over a `body` that is `templateBodyToJson`'s own map, verbatim, so the format acquires **no second description of a `TemplateBody`** and inherits CR-117's gate instead of drifting from it. The sectioned layout was drawn in docs/06 §7.3 and placed 18 of the encoder's 39 keys; `model` was one of the 21 it dropped. It has its own migration chain (AC-050/A8.2), starting at `schemaVersion` 1 independent of `.rppj`'s 2, and a newer one is **refused rather than opened read-only**, because AC-012 makes `TemplateBody` closed with no `unknown` passthrough, so there is nothing to open read-only with. The `signature` field and the provenance chain are **cut from v1** (AC-042); single `.rpdx` export and import stay, because that is the unit people email each other.
 
-**`.rmda`: the device archive.** Many `TemplateBody` in one file: a manifest plus an array, in the `.rmdx` unit regime, reusing the `.rmdx` migration chain rather than inventing a second one. **A single JSON file, not a zip**: DR-015 §11.15.4 has the argument, and it is CR-091's argument applied a second time: the zip in the original `.rmlib` spec existed to carry per-face device images, images are cut (AC-057), and a zip of pure JSON buys compression at the cost of the whole zip-slip / entry-count / decompression-bomb surface D8 lists as needed-and-absent. It carries **neither `signature` nor `provenance`**: AC-042 kept `contentHash` and cut the cryptographic apparatus, and an archive needs only the half that was kept. **This renames `.rmlib` and re-opens the part of AC-042 that cut it**: a scope edit under roadmap §8.3, ruled in DR-015 and not yet built.
+**`.rpda`: the device archive.** Many `TemplateBody` in one file: a manifest plus an array, in the `.rpdx` unit regime, reusing the `.rpdx` migration chain rather than inventing a second one. **A single JSON file, not a zip**: DR-015 §11.15.4 has the argument, and it is CR-091's argument applied a second time: the zip in the original `.rmlib` spec existed to carry per-face device images, images are cut (AC-057), and a zip of pure JSON buys compression at the cost of the whole zip-slip / entry-count / decompression-bomb surface D8 lists as needed-and-absent. It carries **neither `signature` nor `provenance`**: AC-042 kept `contentHash` and cut the cryptographic apparatus, and an archive needs only the half that was kept. **This renames `.rmlib` and re-opens the part of AC-042 that cut it**: a scope edit under roadmap §8.3, ruled in DR-015 and not yet built.
 
 ---
 

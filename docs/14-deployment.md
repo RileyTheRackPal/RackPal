@@ -2,7 +2,7 @@
 
 > **Status: the portable build exists; M8 has not started.** This document covers exactly what
 > board item #13 delivers — a signed portable folder for internal use. It is **not** M8. There is no
-> installer, no MSIX, no crash reporter, no cold-start budget and no `.rmpj` file association;
+> installer, no MSIX, no crash reporter, no cold-start budget and no `.rppj` file association;
 > those are M8's exit criterion and are untouched. See `docs/12-milestone-board.md` §5.7.
 
 > **This is a scope edit, and it is recorded as one.** DR-006 consequence 4 says plainly that a
@@ -196,7 +196,7 @@ the dialog.
 > the architecture document restates it as a closed list.
 
 So: a portable run leaves shell-owned `HKCU` entries naming this executable and the folders it
-browsed (`E:\Jobs`, never `E:\Jobs\Smith Residence.rmpj`) and they survive the stick being
+browsed (`E:\Jobs`, never `E:\Jobs\Smith Residence.rppj`) and they survive the stick being
 pulled.
 
 ---
@@ -246,8 +246,8 @@ literally, on a machine you are willing to change: import the probe certificate 
 Named so that M8 still has its work, and so nobody reads this page as more than it is:
 
 - **no installer and no MSIX**: canon §11.6.5 leaves that choice open, and flags that the
-  `.rmpj` file-association path differs between the two and drives it;
-- **no `.rmpj` file association**: a consequence of the above;
+  `.rppj` file-association path differs between the two and drives it;
+- **no `.rppj` file association**: a consequence of the above;
 - **no crash reporter**: M8's third exit clause; `storage_log.dart` and CR-096's redaction check
   are a policy with no reporter behind it;
 - **no cold-start budget**: none is defined and none has been measured;

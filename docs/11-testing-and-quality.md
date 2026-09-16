@@ -130,7 +130,7 @@ Assertions per fixture: it migrates to a valid current document; unknown fields 
 
 The **byte round-trip** is the contract, not the semantic one (CR-117): `write(read(bytes)) == bytes`. This is what constrains key ordering, including inside nested `unknown` maps, timestamp precision, and integer formatting, and those are exactly the things that otherwise produce spurious git diffs and a lying dirty flag. Rejected alternative: `read(write(read(x))) == read(x)`, which passes while the file churns.
 
-The four starter projects (AC-052) are real `.rmpj` files and do triple duty: golden corpus, performance fixtures, screenshot source. At least one exercises the Structure device and at least one exports a full sheet set.
+The four starter projects (AC-052) are real `.rppj` files and do triple duty: golden corpus, performance fixtures, screenshot source. At least one exercises the Structure device and at least one exports a full sheet set.
 
 ### 2.6 Registry and catalog assertions
 
@@ -303,7 +303,7 @@ Render pages with poppler's `pdftoppm` in the Linux job and image-diff against r
 
 **Widget tests** cover the surfaces where state and UI meet: inspector panels binding typed `DeviceOverrides` (CR-053); the device-builder port grid with fill-down and TSV paste; menu enablement (Undo disabled at sequence 0, enabled after one command, with the correct label); the spring-back reason chip and its `[ Connect anyway ]` affordance (CR-017); the Staging Bin return affordance (CR-032). **Leak tests** via `leak_tracker_flutter_testing` run on every canvas widget test, targeting undisposed `TextPainter` and `ui.Picture`, with a 12,000-entry label cache (AC-009) that is not optional.
 
-**Integration tests** (`integration_test`, desktop) cover the file lifecycle end to end: new → place devices → connect → save → close → reopen → assert a **byte-identical** document; the unsaved-changes close interception; the crash-recovery path (kill mid-edit, relaunch, assert the recovery prompt, accept, assert the document matches); open a `.rmpj` with a newer `minReaderVersion` and assert the refuse path, then one with a newer `schemaVersion` only and assert the read-only banner (CR-093). Two error-surface cases from AC-058/D3 are integration tests because nothing else catches them: **target PDF open in Acrobat**, the most common Windows export failure, and two app instances on one file.
+**Integration tests** (`integration_test`, desktop) cover the file lifecycle end to end: new → place devices → connect → save → close → reopen → assert a **byte-identical** document; the unsaved-changes close interception; the crash-recovery path (kill mid-edit, relaunch, assert the recovery prompt, accept, assert the document matches); open a `.rppj` with a newer `minReaderVersion` and assert the refuse path, then one with a newer `schemaVersion` only and assert the read-only banner (CR-093). Two error-surface cases from AC-058/D3 are integration tests because nothing else catches them: **target PDF open in Acrobat**, the most common Windows export failure, and two app instances on one file.
 
 The keyboard connection path (AC-058/D11) is asserted at both levels: a widget test drives select port → `W` → `Tab`/`Shift+Tab` across all ports → `Enter` and asserts one `Link` results; the NVDA/VoiceOver announcement matrix is manual and gated at M7.
 
@@ -433,7 +433,7 @@ Named here so it is not rediscovered, and scheduled in [Roadmap](09-roadmap.md) 
 | Reproducible signed builds | Post-v1 | A signed release is a supply-chain and reproducibility problem, not only a CI one |
 | In-app auto-update | **Not doing in v1** (RJ-014) | Signed installer plus a version-check ping. Auto-update is a security surface and a support burden before there are users |
 
-VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rmpj` file association, the file-association path differs between the two and drives the choice.
+VERIFY: MSIX packaging versus a plain signed installer for a desktop app that registers a `.rppj` file association, the file-association path differs between the two and drives the choice.
 
 ---
 

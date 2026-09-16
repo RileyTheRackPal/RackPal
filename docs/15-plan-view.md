@@ -41,7 +41,7 @@ designed (§4).
 
 **It survives the handoff.** The current practice this replaces is coloured dots in a notes
 application. That artifact is not in the project file, is not in the sheet set, does not print with
-a title block, and cannot be revised. Everything else in RackPal travels in one `.rmpj` and exports
+a title block, and cannot be revised. Everything else in RackPal travels in one `.rppj` and exports
 into one drawing set; a plan that does not is not worth building.
 
 **What it is explicitly not**, and these are limits, not omissions:
@@ -60,7 +60,7 @@ into one drawing set; a plan that does not is not worth building.
 
 Ruled by **DR-019**. Stated here because every other section depends on it.
 
-`.rmpj` is **plain pretty JSON when the document has no binary member, and a zip container when it
+`.rppj` is **plain pretty JSON when the document has no binary member, and a zip container when it
 does**. **BUILT AT PLAN-B, 2026-09-07** (`persistence/container.dart`), and this paragraph described
 it in the future tense until then. The sniff `persistence/codec.dart` has carried since M0 is now the
 branch it was always shaped to be.
@@ -92,7 +92,7 @@ The consequences worth stating:
 | Rejected | Why |
 |---|---|
 | **Base64 inside the JSON** | A 2 MB PNG becomes roughly 2.7 MB of inline text in a pretty-printed file that is rewritten whole on every save, and CR-117's round-trip starts moving megabytes on every run of the core suite. It is the fast answer and the one that is regretted |
-| **A sidecar file next to the `.rmpj`** | Breaks CR-091's single-file property outright, and "email the project, lose the floorplan" is the exact failure this product exists to prevent. It would also owe a new state in the file-layer error surface (AC-058/D3) |
+| **A sidecar file next to the `.rppj`** | Breaks CR-091's single-file property outright, and "email the project, lose the floorplan" is the exact failure this product exists to prevent. It would also owe a new state in the file-layer error surface (AC-058/D3) |
 
 **Raster formats accepted: PNG and JPEG. PDF IS READ, as of DR-029**, and this paragraph used to say it was not. The `pdf` package writes documents and
 does not import pages (docs/08 §1.1), so a PDF floorplan would require PDFium or a WinRT path, and
@@ -154,7 +154,7 @@ carrying an underlay or a pin declares a reader that understands plans, and an o
 read-only.
 
 **THE `underlays` MAP IS OMITTED WHEN EMPTY**, unlike the fourteen entity maps beside it, which is
-what keeps the paragraph above true. Writing `"underlays": {}` would add a key to every `.rmpj` in
+what keeps the paragraph above true. Writing `"underlays": {}` would add a key to every `.rppj` in
 existence on its next save.
 
 ### 3.1 `PlanUnderlay`

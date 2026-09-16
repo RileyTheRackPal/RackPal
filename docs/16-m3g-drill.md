@@ -120,7 +120,7 @@ teaches us to check rather than assume.
 From the repo root, against the file you saved:
 
 ```bash
-cd apps/rackpal && dart run tool/verify_drill.dart "C:\path\to\your\drill.rmpj"
+cd apps/rackpal && dart run tool/verify_drill.dart "C:\path\to\your\drill.rppj"
 ```
 
 It prints one line per AC-018 clause with `PASS` or `FAIL` and the number it measured, then an
