@@ -9,11 +9,13 @@
 // made RJ-012 unmeetable as written, because its third v1 surface is
 // literally *"a per-family colour override row in settings"*.
 //
-// ── EIGHTEEN ROWS AND ONE LIST ─────────────────────────────────────────
-// The 18 scalar settings are rows over `ProjectSettingFields`, so the
-// dialog cannot disagree with the field table about what exists or what a
+// ── EVERY SCALAR IS A ROW, AND ONE LIST ────────────────────────────────
+// The scalar settings are rows over `ProjectSettingFields`, so the dialog
+// cannot disagree with the field table about what exists or what a
 // setting is called: the LABEL lives on the field, beside the accessors,
-// and both the row and the undo entry read it from there.
+// and both the row and the undo entry read it from there. The COUNT is
+// not written here, on this repo's standing rule: the table is the one
+// place it lives and `project_settings_test.dart` asserts it.
 //
 // The colour overrides are a list rather than a row, because a colour per
 // signal family is not a field. The other three maps are filed rather than
@@ -43,6 +45,16 @@ const Key kProjectSettingsListKey = Key('project-settings-list');
 
 /// The label on the control that opens this.
 const String kProjectSettingsLabel = 'Project settings...';
+
+/// The wiring-standard dropdown, so a test can find THAT one.
+const Key kWiringStandardSettingKey = Key('setting-wiring-standard');
+
+/// What a setting nobody has stated says on screen (DR-180 §11.179.2, G4).
+///
+/// ONE SPELLING, SHARED, because this string is read by a person on the
+/// settings row AND on the Structure view's wiring cells. Two copies would
+/// drift, and an installer would be told the same absence in two voices.
+const String kNotStatedLabel = 'Not stated';
 
 /// Opens the settings editor over [doc].
 ///
@@ -186,6 +198,17 @@ class _SettingsDialogState extends State<_SettingsDialog> {
       );
     }
     return switch (f) {
+      // FIRST AMONG THE ENUM ARMS because it is the only NULLABLE one and
+      // the reader should meet it before the pattern it breaks.
+      // `ProjectSettingField<WiringStandard?>` is not a
+      // `ProjectSettingField<WiringStandard>`, so it cannot be taken by an
+      // arm written for the non-null case and would otherwise fall to the
+      // `default` refusal below.
+      ProjectSettingField<WiringStandard?>() => _WiringStandardRow(
+        field: f,
+        value: f.get(_s),
+        onChanged: (v) => _set(f, v),
+      ),
       ProjectSettingField<UnitSystem>() => _EnumRow<UnitSystem>(
         field: f,
         value: f.get(_s),
@@ -250,6 +273,61 @@ class _SettingsDialogState extends State<_SettingsDialog> {
 }
 
 // ── the row shapes ──────────────────────────────────────────────────────
+
+/// What this job wires its 8P8C jacks to (DR-180 §11.179.2).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THREE ITEMS, AND THE THIRD IS A CHOICE RATHER THAN A BLANK
+/// ═══════════════════════════════════════════════════════════════════════
+/// Settled by the user on 2026-09-16 from three offers. The two rejected
+/// ones are worth naming: a T568A/T568B pair with a `Clear` beside it
+/// reads truest but is a control shape nothing else in this dialog uses
+/// and a `Clear` is easy to miss, and a two-item dropdown that simply
+/// starts blank is a one-way door, since picking a standard would leave no
+/// way back to unset short of editing the file.
+///
+/// So unset is an ITEM. It can be chosen, chosen again, and read back off
+/// the closed dropdown, which is what G4 asks of an unknown that a person
+/// is allowed to assert: nobody has said is a fact about this job, not an
+/// empty box (CR-114).
+///
+/// [kNotStatedLabel] is the wording, in one place, because a test asserts
+/// what a person reads and not what a widget is called.
+class _WiringStandardRow extends StatelessWidget {
+  const _WiringStandardRow({
+    required this.field,
+    required this.value,
+    required this.onChanged,
+  });
+
+  final ProjectSettingField<Object?> field;
+  final WiringStandard? value;
+  final ValueChanged<WiringStandard?> onChanged;
+
+  @override
+  Widget build(BuildContext context) => ListTile(
+    title: Text(field.label),
+    subtitle: field.help == null ? null : Text(field.help!),
+    trailing: DropdownButton<WiringStandard?>(
+      key: kWiringStandardSettingKey,
+      value: value,
+      items: [
+        const DropdownMenuItem<WiringStandard?>(
+          child: Text(kNotStatedLabel),
+        ),
+        for (final v in WiringStandard.values)
+          DropdownMenuItem<WiringStandard?>(
+            value: v,
+            child: Text(wiringStandardLabel(v)),
+          ),
+      ],
+      // NO `if (v != null)` GUARD, unlike `_EnumRow` below. Null is the
+      // value of the first item here, so discarding it would make "Not
+      // stated" the one choice in this dialog that silently does nothing.
+      onChanged: onChanged,
+    ),
+  );
+}
 
 class _EnumRow<T> extends StatelessWidget {
   const _EnumRow({

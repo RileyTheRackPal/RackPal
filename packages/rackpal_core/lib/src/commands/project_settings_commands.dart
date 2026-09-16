@@ -67,7 +67,7 @@ final class ProjectSettingField<T> {
 /// The settings a person may edit (`#805`).
 ///
 /// ═══════════════════════════════════════════════════════════════════════
-/// EIGHTEEN OF TWENTY-TWO, AND THE FOUR ABSENCES ARE DELIBERATE
+/// EVERY SCALAR, AND THE FOUR ABSENCES ARE DELIBERATE
 /// ═══════════════════════════════════════════════════════════════════════
 /// The four MAPS are each an editor of their own shape and are not rows:
 ///
@@ -226,6 +226,20 @@ abstract final class ProjectSettingFields {
     set: _setVolts,
   );
 
+  /// DR-180 §11.179.2. Nullable, and the only entry here that is: every
+  /// other setting has a defensible default and this one does not, because
+  /// an unstated standard is a fact about the job rather than a gap to
+  /// fill in (G4).
+  static const wiringStandard = ProjectSettingField<WiringStandard?>(
+    key: 'wiringStandard',
+    label: 'Wiring standard',
+    help:
+        'T568A or T568B for this job. A cable may override it; unset '
+        'prints nothing rather than assuming T568B.',
+    get: _getWiringStandard,
+    set: _setWiringStandard,
+  );
+
   /// Every entry above. A test walks this to prove no two share a key
   /// and no accessor pair is aliased onto another field, which is the
   /// census the port field table needed three attempts to get right.
@@ -248,9 +262,13 @@ abstract final class ProjectSettingFields {
     defaultNetworkMedia,
     defaultRackHeightU,
     defaultLineVolts,
+    wiringStandard,
   ];
 }
 
+WiringStandard? _getWiringStandard(ProjectSettings s) => s.wiringStandard;
+void _setWiringStandard(ProjectSettings s, WiringStandard? v) =>
+    s.wiringStandard = v;
 UnitSystem _getDisplayUnits(ProjectSettings s) => s.displayUnits;
 void _setDisplayUnits(ProjectSettings s, UnitSystem v) => s.displayUnits = v;
 RuNumbering _getRuNumbering(ProjectSettings s) => s.defaultRuNumbering;

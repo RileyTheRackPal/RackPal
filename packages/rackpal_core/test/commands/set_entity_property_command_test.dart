@@ -928,6 +928,61 @@ void main() {
     });
   });
 
+  group("DR-180: a cable overrides the job's wiring standard", () {
+    // THE CELL MUST BE CLEARABLE, and that is the case worth writing. A
+    // per-cable override is an EXCEPTION, so the gesture that matters most
+    // after making one is taking it back: clearing hands the cable to the
+    // project's standard rather than declaring anything about it, and a
+    // field that could only ever be set would leave a mistyped exception
+    // in the document for good.
+
+    void setStandard(RackDocument doc, Uuid linkId, WiringStandard? to) {
+      buildSetEntityProperty(
+        doc: doc,
+        id: linkId,
+        field: LinkField.wiringStandard,
+        to: to,
+        now: _later,
+        actor: 'tester',
+      )!.apply(doc);
+    }
+
+    test('a new run states nothing, so it follows the job', () {
+      final p = _project();
+      expect(p.doc.links[p.linkId]!.wiringStandard, isNull);
+    });
+
+    test('setting one writes it, and clearing it hands the cable back', () {
+      final p = _project();
+      setStandard(p.doc, p.linkId, WiringStandard.t568a);
+      expect(p.doc.links[p.linkId]!.wiringStandard, WiringStandard.t568a);
+      setStandard(p.doc, p.linkId, null);
+      expect(p.doc.links[p.linkId]!.wiringStandard, isNull);
+    });
+
+    test('the edit round-trips byte-identically on revert (CR-117)', () {
+      final p = _project();
+      final before = _codec.write(p.doc);
+      final cmd = buildSetEntityProperty(
+        doc: p.doc,
+        id: p.linkId,
+        field: LinkField.wiringStandard,
+        to: WiringStandard.t568a,
+        now: _later,
+        actor: 'tester',
+      )!..apply(p.doc);
+      expect(_codec.write(p.doc), isNot(orderedEquals(before)));
+
+      cmd.revert(p.doc);
+      expect(_codec.write(p.doc), orderedEquals(before));
+    });
+
+    test('it declares wires and meta, like every other Link field', () {
+      expect(LinkField.wiringStandard.touches.has(EpochMask.wires), isTrue);
+      expect(LinkField.wiringStandard.touches.has(EpochMask.meta), isTrue);
+    });
+  });
+
   group('the retrofit and the tables agree (AC-013)', () {
     // The task's claim is that wiring a field to a Command IS the
     // `@internal` retrofit. These two cases are what make that a fact

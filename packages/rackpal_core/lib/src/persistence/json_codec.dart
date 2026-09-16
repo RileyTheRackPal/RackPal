@@ -780,6 +780,12 @@ JsonMap _encodeProjectSettings(ProjectSettings s) => {
   'defaultNetworkMedia': s.defaultNetworkMedia.v,
   'defaultRackHeightU': s.defaultRackHeightU,
   'defaultLineVolts': s.defaultLineVolts,
+  // OMITTED WHEN NULL, on `jacketColorConventions`' reasoning above and on
+  // G4/CR-114: unknown is an ABSENT KEY and never an explicit null. A job
+  // nobody has told is not a job wired to T568B, and an existing `.rppj`
+  // must not gain a byte the moment it is opened and saved (CR-117).
+  if (s.wiringStandard != null)
+    'wiringStandard': encodeEnumName(s.wiringStandard!),
 };
 
 ProjectSettings _decodeProjectSettings(JsonMap json) => ProjectSettings(
@@ -907,6 +913,13 @@ ProjectSettings _decodeProjectSettings(JsonMap json) => ProjectSettings(
     json['defaultLineVolts'],
     'ProjectSettings.defaultLineVolts',
   ),
+  wiringStandard: json['wiringStandard'] == null
+      ? null
+      : decodeEnumStrict(
+          WiringStandard.values,
+          asStr(json['wiringStandard'], 'ProjectSettings.wiringStandard'),
+          'ProjectSettings.wiringStandard',
+        ),
 );
 
 // --- Location ---------------------------------------------------------------
@@ -2227,6 +2240,11 @@ JsonMap _encodeLink(Link l) {
   putIfNotNull(json, 'slack', l.slack?.v);
   putIfNotNull(json, 'pathwayId', l.pathwayId?.v);
   if (l.crossover != null) json['crossover'] = encodeEnumName(l.crossover!);
+  // Absent means "the job's standard", which is the ordinary case, so an
+  // override costs a key and agreement costs nothing (DR-180 §11.179.2).
+  if (l.wiringStandard != null) {
+    json['wiringStandard'] = encodeEnumName(l.wiringStandard!);
+  }
   if (l.test != null) json['test'] = _encodeTestResult(l.test!);
   putIfNotNull(json, 'installedBy', l.installedBy);
   // ADDITIVE, and `0` MUST STILL WRITE. `putIfNotNull` tests the value
@@ -2334,6 +2352,13 @@ Link _decodeLink(Uuid id, JsonMap json) => Link(
           CrossoverKind.values,
           asStr(json['crossover'], 'Link.crossover'),
           'Link.crossover',
+        ),
+  wiringStandard: json['wiringStandard'] == null
+      ? null
+      : decodeEnumStrict(
+          WiringStandard.values,
+          asStr(json['wiringStandard'], 'Link.wiringStandard'),
+          'Link.wiringStandard',
         ),
   lifecycleStatus: decodeLifecycleStatus(
     asStr(json['lifecycleStatus'], 'Link.lifecycleStatus'),

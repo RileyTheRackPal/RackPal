@@ -124,3 +124,17 @@ enum RuNumbering { bottomUpFromOne, topDown }
 /// residential four-sheet set should not have to satisfy a commercial
 /// numbering grammar.
 enum SheetNumbering { ncs, simple }
+
+/// Which pair lands on which pin of an 8P8C jack (TIA-568).
+///
+/// DR-180 §11.179 puts it on the PROJECT, because a job spec names one
+/// standard for a whole site, with a per-cable override for the run that
+/// really differs. **There is no `unknown` value and no default**: both
+/// fields are nullable and absent means nobody has said (G4, CR-114), so
+/// this enum holds only the two things a person can choose.
+///
+/// The pair-to-pin difference is real work in the field and a real defect
+/// when it is mixed by accident: a run terminated A at the plate and B at
+/// the panel is a crossover nobody asked for. `wiring_standard.dart` is
+/// where the reading rules live.
+enum WiringStandard { t568a, t568b }

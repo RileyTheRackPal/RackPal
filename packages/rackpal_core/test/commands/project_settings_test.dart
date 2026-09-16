@@ -57,6 +57,22 @@ void _poke(ProjectSettingField<Object?> f, ProjectSettings s) {
     field.set(s, const MediaTypeId('media.probe'));
     return;
   }
+  // THE ONE NULLABLE ENTRY (DR-180 §11.179.2), and it needs its own arm
+  // for a reason the switch below cannot express: `_next` steps from the
+  // value that is there, and this one starts unset and is MEANT to. A
+  // `ProjectSettingField<WiringStandard?>` does not match
+  // `ProjectSettingField<WiringStandard>` either, so it would fall to the
+  // `default: fail` rather than being silently mis-poked.
+  if (f.key == ProjectSettingFields.wiringStandard.key) {
+    const field = ProjectSettingFields.wiringStandard;
+    field.set(
+      s,
+      field.get(s) == WiringStandard.t568a
+          ? WiringStandard.t568b
+          : WiringStandard.t568a,
+    );
+    return;
+  }
   switch (f) {
     case ProjectSettingField<UnitSystem>():
       f.set(s, _next(UnitSystem.values, f.get(s)));
@@ -120,8 +136,8 @@ void main() {
       }
     });
 
-    test('eighteen scalars, and the four maps are deliberately absent', () {
-      expect(ProjectSettingFields.all, hasLength(18));
+    test('nineteen scalars, and the four maps are deliberately absent', () {
+      expect(ProjectSettingFields.all, hasLength(19));
       for (final absent in [
         'ruleOverrides',
         'familyColorOverrides',

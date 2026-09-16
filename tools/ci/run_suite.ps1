@@ -856,7 +856,11 @@ $SuiteFloors = @{
     # 4759 at `#843`'s step (DR-178): -5, the tests that assert a stopwatch
     # reading. They left this suite for `rackpal_core_timed` below, which
     # runs them one at a time after every other suite.
-    'rackpal_core'   = 4759
+    # 4791 at `#80` (DR-180): +32. 28 in wiring_standard_test.dart, which
+    # is where the rule that a speaker run never gets a standard is
+    # actually held, and +4 for the Link field's own write, clear and
+    # byte-identical revert.
+    'rackpal_core'   = 4791
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1294,7 +1298,11 @@ $SuiteFloors = @{
     # the sheet at 0.1x), two in port_chip_test (rings and chip at the
     # opening zoom and four times it, and the rack at 0.1x, the only case
     # that sees the chassis canvas), and two in stroke_scaling_test.
-    'rackpal_ui'     = 1932
+    # 1935 at `#80` (DR-180): +3 for the wiring-standard settings row. The
+    # third is the one worth having: "Not stated" has to take a standard
+    # back OFF, which is why unset is an item in that dropdown rather than
+    # an empty box.
+    'rackpal_ui'     = 1935
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
