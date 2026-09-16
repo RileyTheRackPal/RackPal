@@ -11925,6 +11925,57 @@ the user ruled its remaining scope as unblocking the milestone gate:
 **Commits** (§8.8): `#92` `927d935` (the rename), `1a48354` (the marks); `#780` `1e75efc` (the
 gate).
 
+#### 5.9.59 `#782`: the extensions are `.rppj`, `.rpdx` and `.rpda`, and every spelling a build wrote still opens · `DR-179` · no version move
+
+**DEMONSTRATED** by the suites at their floors with the renamed extensions throughout, by
+`generate_starters.dart --check` reporting all four starters unchanged after `git mv`, and by
+`save_paths_test.dart`, which now asserts both that `.rmpj` and `.rackmate` still open and that
+`.rackpal` is not accepted at all.
+
+##### 5.9.59.1 A deferral whose deadline arrived early
+
+DR-096 §11.95.3 deferred matching the `rm` extensions to RackPal, with M8 as the trigger. Measuring
+for the ruling found the trigger nearer than M8: MSIX-7 (`#171`, under the Store alpha `#100`)
+registers the extensions in the package manifest, and a registered extension is the thing that makes
+a rename expensive. DR-179 §11.178.2 ruled the letters and the timing; this is that change.
+
+##### 5.9.59.2 What the rename found, all of it the product rename's work
+
+- **The legacy project extension was a spelling nothing ever wrote.** DR-015 kept `.rackmate`
+  opening; `0e2c5bb` rewrote that constant to `.rackpal`. A project saved before 2026-08-02 was
+  therefore missing from the Open dialog's filter, and `Ctrl+S` on one would have written a second
+  file beside it. The accepted list is now `.rppj`, `.rmpj`, `.rackmate`.
+- **Two "no legacy sibling" claims had expired.** `save_paths.dart` and the native dialog both said a
+  device template and a device archive needed no second spelling because no build had ever written
+  one. Template export and the library shelf have shipped since, so `.rmdx` and `.rpdx`, and `.rmda`
+  and `.rpda`, are accepted in pairs; `library_directory.dart` scans both, since the shelf it reads
+  is full of files this app wrote.
+- **Comments across the storage and session layer described `.rackpal` files**, in the recovery
+  store, the snapshot store, the file picker and `pubspec.yaml`. They meant a project file, which is
+  `.rppj` now, or a pre-DR-015 one, which is `.rackmate`.
+- **The legacy tests were testing the wrong legacy.** `save_paths_test`, `recovery_store_test` and
+  `snapshot_store_test` each proved an older spelling still opens by using `.rackpal`. They use
+  `.rmpj` now, which is a spelling that really exists on disk.
+
+##### 5.9.59.3 What did not change, and why
+
+- **No byte inside any file.** `kSchemaVersion` does not move and CR-117 is not in play: the codecs
+  write `kind: device-template` and `device-library`, never an extension, and the four starters are
+  byte-identical after the rename.
+- **The test fixtures keep their `.rmpj.json` names.** They are test data rather than files a user
+  sees, and renaming eleven of them would touch every test that reads one.
+- **Canon and docs/10 keep their historical prose.** They record what was true when written, and
+  rewriting a ruling's own words is the failure canon §11.95.8 exists over. Only sentences telling a
+  reader what the app writes today were changed.
+- **File-type registration is still MSIX-7's**, as DR-179 §11.178 says in terms.
+
+##### 5.9.59.4 Evidence
+
+- 19 gates green on each of the three commits, every suite exactly at its floor, and the four starter goldens byte-identical after the rename: `generate_starters.dart --check` reports all four unchanged.
+
+**Commits** (§8.8): `#782` `04c8eb95` (the app and the native dialog), `2aef2906` (the derived
+documents), `RECORDS_HASH` (these records).
+
 
 ---
 
