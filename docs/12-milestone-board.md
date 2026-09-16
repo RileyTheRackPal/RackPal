@@ -11956,6 +11956,13 @@ a rename expensive. DR-179 §11.178.2 ruled the letters and the timing; this is 
 - **The legacy tests were testing the wrong legacy.** `save_paths_test`, `recovery_store_test` and
   `snapshot_store_test` each proved an older spelling still opens by using `.rackpal`. They use
   `.rmpj` now, which is a spelling that really exists on disk.
+- **A BLUNT COMMENT SWEEP IS A RENAME WITH NO READER.** Replacing every old spelling in the
+  library comments also rewrote three deliberate references to the older one, and one of them
+  was code: `kLibraryExtensions` lost `.rmda`, so a shelf written before today would have
+  stopped being read. The other two were sentences about an older snapshot meeting a newer
+  build, which the pass turned into a file meeting itself. They were found by reading every
+  non-comment line the pass touched and every line where one spelling had come to appear
+  twice; both checks belong to the next sweep as much as to this one.
 
 ##### 5.9.59.3 What did not change, and why
 
@@ -11974,7 +11981,7 @@ a rename expensive. DR-179 §11.178.2 ruled the letters and the timing; this is 
 - 19 gates green on each of the three commits, every suite exactly at its floor, and the four starter goldens byte-identical after the rename: `generate_starters.dart --check` reports all four unchanged.
 
 **Commits** (§8.8): `#782` `04c8eb95` (the app and the native dialog), `2aef2906` (the derived
-documents), `RECORDS_HASH` (these records).
+documents), `05d60281` (these records), `9ce583ee` (the library comments).
 
 
 ---
