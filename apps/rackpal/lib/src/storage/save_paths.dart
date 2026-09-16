@@ -130,7 +130,7 @@ final class SavePaths {
   ///
   /// A LIST RATHER THAN ONE STRING, and the difference is DR-015's whole
   /// back-compat story. `.first` is what gets appended; **every** entry
-  /// counts as already-correct. So `Smith.rackpal` passes through
+  /// counts as already-correct. So `Smith.rmpj` passes through
   /// untouched and `Ctrl+S` saves it where it lives, while a new document
   /// gets `.rppj`. The PDF path passes a single-entry list and is
   /// therefore unaffected by the project's legacy spelling — which it

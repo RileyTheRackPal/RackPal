@@ -11956,6 +11956,14 @@ a rename expensive. DR-179 §11.178.2 ruled the letters and the timing; this is 
 - **The legacy tests were testing the wrong legacy.** `save_paths_test`, `recovery_store_test` and
   `snapshot_store_test` each proved an older spelling still opens by using `.rackpal`. They use
   `.rmpj` now, which is a spelling that really exists on disk.
+- **THE RELEASE-OUTPUT GATE'S STARTER LIST HAD GONE STALE AT BOTH RENAMES, AND ONLY THE PR
+  BUILD COULD SEE IT.** `tools/ci/verify_windows_build.ps1` names the four starter files, and
+  it runs only when `flutter build windows --release` does, which `run_local.ps1 -SkipBuild`,
+  the documented iteration path, skips. So five local runs passed and build 288 reported four
+  missing starters that no longer exist, which is exactly what DR-015's rename did to the same
+  list (board `#739`). The extension is one constant there now, the script records both
+  occurrences, and the fix was proved by running a real release build and the check rather
+  than by reading them.
 - **A BLUNT COMMENT SWEEP IS A RENAME WITH NO READER.** Replacing every old spelling in the
   library comments also rewrote three deliberate references to the older one, and one of them
   was code: `kLibraryExtensions` lost `.rmda`, so a shelf written before today would have
