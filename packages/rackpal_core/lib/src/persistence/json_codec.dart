@@ -3050,6 +3050,12 @@ JsonMap _encodeSignalFamilyDef(SignalFamilyDef d) {
     'lineWeightPermilleOverride',
     d.lineWeightPermilleOverride,
   );
+  // DR-181 §11.180.2, ADDITIVE ON THE THREE ABOVE'S PRECEDENT. Absent
+  // means "inherit the domain's native glyph", so a document written
+  // before this key re-encodes byte-for-byte and `kSchemaVersion` does not
+  // move. A document written AFTER it carries 26 of these, which is why
+  // the starters' bytes change: a document embeds its own registries.
+  putIfNotNull(json, 'glyphOverride', d.glyphOverride);
   return json;
 }
 
@@ -3094,6 +3100,10 @@ SignalFamilyDef _decodeSignalFamilyDef(SignalFamilyId id, JsonMap json) =>
       lineWeightPermilleOverride: asIntOrNull(
         json['lineWeightPermilleOverride'],
         'SignalFamilyDef.lineWeightPermilleOverride',
+      ),
+      glyphOverride: asStrOrNull(
+        json['glyphOverride'],
+        'SignalFamilyDef.glyphOverride',
       ),
     );
 

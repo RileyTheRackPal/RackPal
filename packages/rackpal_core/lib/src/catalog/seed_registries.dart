@@ -76,11 +76,15 @@
 //    ALREADY LANDED and an entry here would be a second way to say what
 //    one already says. `hdbaset`, `hbt`, `dante`, `ethernet` and `avoip`
 //    have no alias for exactly that reason. See `_family`'s docstring.
-//  * NO `glyphOverride`, and no per-family glyph. DR-010 §11.10.3 adds
-//    exactly `shortTag`, `dashOverride` and a weight override; §11.10.4
-//    keeps the rest of the ~20-field corpus shape out. §4.4's per-family
-//    Glyph column is therefore CARRIED BY THE DOMAIN ONLY — see the note
-//    on the three-glyph domains below.
+//  * `glyphOverride` LEFT THIS LIST AT DR-181 (`#82`), and the bullet is
+//    kept rather than deleted because what it said was true and what
+//    measuring it found was not. It read "§4.4's per-family Glyph column
+//    is CARRIED BY THE DOMAIN ONLY", which is an accurate description of
+//    the code and sounds like a small gap. It was 26 of the 57 families
+//    drawing a shape the catalogue does not give them, in all eight
+//    domains, and nobody had counted it. Same DR-010 §11.10.4 rule as
+//    `.mediaTypes` and `.aliases`: the field arrives when something needs
+//    it, and what needed it was the count.
 //  * `topologyFree` (AC-030's registry field, set on `ctl.cresnet`,
 //    `ctl.lutron_qs`, `ctl.dali`, `ctl.knx`) is not on the Dart class.
 //    Owed, and named here so the four families are findable when it
@@ -299,6 +303,7 @@ SignalFamilyDef _family(
   String shortTag, {
   List<int>? dash,
   int? weight,
+  String? glyph,
   List<String> aliases = const [],
 }) => SignalFamilyDef(
   id: SignalFamilyId(id),
@@ -310,6 +315,7 @@ SignalFamilyDef _family(
   shortTag: shortTag,
   dashOverride: dash,
   lineWeightPermilleOverride: weight,
+  glyphOverride: glyph,
   aliases: aliases,
 );
 
@@ -437,6 +443,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'HBT',
       dash: [14000, 4000],
       weight: 1250,
+      glyph: '△',
       aliases: const ['hdbt'],
     ),
     _family(
@@ -458,6 +465,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       star,
       'AVIP',
       dash: [14000, 4000, 2000, 4000],
+      glyph: '△',
     ),
 
     // ── Analog video & RF — #56B4E9, ▼ baseband / ▽ broadband ────────
@@ -519,6 +527,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       md,
       'RF',
       weight: 1500,
+      glyph: '▽',
     ),
     _family(
       'rf.satellite',
@@ -530,6 +539,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'SAT',
       dash: [12000, 4000, 3000, 4000],
       weight: 1500,
+      glyph: '▽',
     ),
     _family(
       'rf.ota',
@@ -540,6 +550,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       md,
       'OTA',
       dash: [16000, 4000],
+      glyph: '▽',
     ),
     _family(
       'rf.modulated',
@@ -549,6 +560,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       src,
       md,
       'RFM',
+      glyph: '▽',
     ),
 
     // ── Analog audio — #E69F00, ● line / ◐ speaker low-Z / ○ CV ──────
@@ -624,6 +636,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       //
       // `speaker` is first, so the derived bank name is "Speaker
       // Outputs" rather than "EURO2 Outputs" (§11.59.10(a)).
+      glyph: '◐',
       aliases: const ['speaker', 'euro2'],
     ),
     _family(
@@ -636,6 +649,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       '70V',
       dash: [10000, 3000, 2000, 3000],
       weight: 2000,
+      glyph: '○',
       aliases: const ['100v', 'cv'],
     ),
     _family(
@@ -698,6 +712,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'OPT',
       dash: [2000, 3000],
       weight: 1250,
+      glyph: '◇',
     ),
     _family(
       'audio.aes3',
@@ -728,6 +743,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       star,
       'DNT',
       weight: 1500,
+      glyph: '◇',
     ),
     _family(
       'audio.aes67',
@@ -739,6 +755,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'A67',
       dash: [6000, 3000, 1000, 3000, 1000, 3000],
       weight: 1500,
+      glyph: '◇',
     ),
     _family(
       'audio.avb',
@@ -750,6 +767,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'AVB',
       dash: [8000, 3000, 1000, 3000],
       weight: 1500,
+      glyph: '◇',
     ),
 
     // ── Network — #009E73, ■ copper / □ fibre or non-Ethernet ────────
@@ -789,6 +807,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'PoH',
       dash: [14000, 4000],
       weight: 2000,
+      glyph: '□',
     ),
     _family(
       'net.fiber_mm',
@@ -799,6 +818,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'FIB',
       dash: [16000, 4000],
+      glyph: '□',
     ),
     _family(
       'net.fiber_sm',
@@ -809,6 +829,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'FIBS',
       dash: [16000, 4000, 3000, 4000],
+      glyph: '□',
     ),
     _family(
       'net.dac',
@@ -819,6 +840,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'DAC',
       dash: [8000, 3000],
+      glyph: '□',
     ),
 
     // ── Control — #CC79A7, ✚ point-to-point / ✳ multi-drop bus ───────
@@ -910,6 +932,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       '485',
       dash: [6000, 3000],
       weight: 1000,
+      glyph: '✳',
     ),
     _family(
       'ctl.dmx512',
@@ -921,6 +944,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'DMX',
       dash: [8000, 3000, 1500, 3000],
       weight: 1000,
+      glyph: '✳',
     ),
     _family(
       'ctl.contact',
@@ -952,6 +976,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'CN',
       dash: [10000, 3000, 1500, 3000],
       weight: 1000,
+      glyph: '✳',
     ),
     _family(
       'ctl.lutron_qs',
@@ -963,6 +988,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'QS',
       dash: [10000, 3000],
       weight: 1000,
+      glyph: '✳',
     ),
     _family(
       'ctl.dali',
@@ -974,6 +1000,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'DALI',
       dash: [5000, 3000, 1500, 3000],
       weight: 1000,
+      glyph: '✳',
     ),
     _family(
       'ctl.knx',
@@ -985,6 +1012,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'KNX',
       dash: [7000, 3000, 1500, 3000],
       weight: 1000,
+      glyph: '✳',
     ),
     // VANTAGE IS THE SEVENTH TWO-WIRE BUS IN THIS DOMAIN, and that is
     // the argument for it rather than an objection. RS-485, DALI, KNX,
@@ -1012,6 +1040,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       // RS-232 6, KNX 7, DMX 8, Cresnet 10. PAL-1 passes at 57 families.
       dash: [9000, 3000, 1500, 3000],
       weight: 1000,
+      glyph: '✳',
     ),
 
     // ── Power — #000000 light / #E8E8E8 dark, ⬢ AC / ⬡ DC / ⏚ bonding
@@ -1067,6 +1096,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'DC',
       dash: [6000, 3000, 1500, 3000],
       weight: 1500,
+      glyph: '⬡',
     ),
     _family(
       'power.bonding',
@@ -1078,6 +1108,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       'GND',
       dash: [4000, 3000],
       weight: 1500,
+      glyph: '⏚',
     ),
 
     // ── Structure — #999999, ★ home run / ☆ pathway ──────────────────
@@ -1111,6 +1142,7 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
       p2p,
       'PATH',
       dash: [1500, 3000, 1500, 9000],
+      glyph: '☆',
     ),
   ];
   return {for (final f in all) f.id: f};

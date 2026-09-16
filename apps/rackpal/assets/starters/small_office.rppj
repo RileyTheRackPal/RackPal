@@ -2379,6 +2379,7 @@
           "defaultTopology": "star",
           "displayName": "AES67",
           "domain": "audio.digital",
+          "glyphOverride": "◇",
           "id": "audio.aes67",
           "lineWeightPermilleOverride": 1500,
           "shortTag": "A67"
@@ -2396,6 +2397,7 @@
           "defaultTopology": "star",
           "displayName": "AVB / Milan",
           "domain": "audio.digital",
+          "glyphOverride": "◇",
           "id": "audio.avb",
           "lineWeightPermilleOverride": 1500,
           "shortTag": "AVB"
@@ -2407,6 +2409,7 @@
           "defaultTopology": "star",
           "displayName": "Dante",
           "domain": "audio.digital",
+          "glyphOverride": "◇",
           "id": "audio.dante",
           "lineWeightPermilleOverride": 1500,
           "shortTag": "DNT"
@@ -2506,6 +2509,7 @@
           "defaultTopology": "p2p",
           "displayName": "TOSLINK (optical S/PDIF)",
           "domain": "audio.digital",
+          "glyphOverride": "◇",
           "id": "audio.spdif_optical",
           "lineWeightPermilleOverride": 1250,
           "shortTag": "OPT"
@@ -2526,6 +2530,7 @@
           "defaultTopology": "multidrop",
           "displayName": "Speaker, constant-voltage 70 / 100 / 25 V",
           "domain": "audio.analog",
+          "glyphOverride": "○",
           "id": "audio.speaker_cv",
           "lineWeightPermilleOverride": 2000,
           "shortTag": "70V"
@@ -2540,6 +2545,7 @@
           "defaultTopology": "p2p",
           "displayName": "Speaker level, low-Z",
           "domain": "audio.analog",
+          "glyphOverride": "◐",
           "id": "audio.speaker_lowz",
           "lineWeightPermilleOverride": 2000,
           "shortTag": "SPK"
@@ -2588,6 +2594,7 @@
           "defaultTopology": "multidrop",
           "displayName": "Cresnet",
           "domain": "ctl",
+          "glyphOverride": "✳",
           "id": "ctl.cresnet",
           "lineWeightPermilleOverride": 1000,
           "shortTag": "CN"
@@ -2605,6 +2612,7 @@
           "defaultTopology": "multidrop",
           "displayName": "DALI / DALI-2",
           "domain": "ctl",
+          "glyphOverride": "✳",
           "id": "ctl.dali",
           "lineWeightPermilleOverride": 1000,
           "shortTag": "DALI"
@@ -2622,6 +2630,7 @@
           "defaultTopology": "multidrop",
           "displayName": "DMX512-A",
           "domain": "ctl",
+          "glyphOverride": "✳",
           "id": "ctl.dmx512",
           "lineWeightPermilleOverride": 1000,
           "shortTag": "DMX"
@@ -2682,6 +2691,7 @@
           "defaultTopology": "multidrop",
           "displayName": "KNX TP1",
           "domain": "ctl",
+          "glyphOverride": "✳",
           "id": "ctl.knx",
           "lineWeightPermilleOverride": 1000,
           "shortTag": "KNX"
@@ -2697,6 +2707,7 @@
           "defaultTopology": "multidrop",
           "displayName": "Lutron QS / HomeWorks link",
           "domain": "ctl",
+          "glyphOverride": "✳",
           "id": "ctl.lutron_qs",
           "lineWeightPermilleOverride": 1000,
           "shortTag": "QS"
@@ -2731,6 +2742,7 @@
           "defaultTopology": "multidrop",
           "displayName": "RS-485",
           "domain": "ctl",
+          "glyphOverride": "✳",
           "id": "ctl.rs485",
           "lineWeightPermilleOverride": 1000,
           "shortTag": "485"
@@ -2762,6 +2774,7 @@
           "defaultTopology": "multidrop",
           "displayName": "Vantage station bus (Legrand)",
           "domain": "ctl",
+          "glyphOverride": "✳",
           "id": "ctl.vantage",
           "lineWeightPermilleOverride": 1000,
           "shortTag": "VTG"
@@ -2777,6 +2790,7 @@
           "defaultTopology": "p2p",
           "displayName": "Direct-attach copper (SFP+)",
           "domain": "net",
+          "glyphOverride": "□",
           "id": "net.dac",
           "shortTag": "DAC"
         },
@@ -2804,6 +2818,7 @@
           "defaultTopology": "p2p",
           "displayName": "Fibre, multimode (OM3 / OM4)",
           "domain": "net",
+          "glyphOverride": "□",
           "id": "net.fiber_mm",
           "shortTag": "FIB"
         },
@@ -2820,6 +2835,7 @@
           "defaultTopology": "p2p",
           "displayName": "Fibre, singlemode (OS2)",
           "domain": "net",
+          "glyphOverride": "□",
           "id": "net.fiber_sm",
           "shortTag": "FIBS"
         },
@@ -2845,6 +2861,7 @@
           "defaultTopology": "p2p",
           "displayName": "PoH (HDBaseT power)",
           "domain": "net",
+          "glyphOverride": "□",
           "id": "net.poh",
           "lineWeightPermilleOverride": 2000,
           "shortTag": "PoH"
@@ -2915,6 +2932,7 @@
           "defaultTopology": "star",
           "displayName": "Bonding / grounding conductor",
           "domain": "pwr",
+          "glyphOverride": "⏚",
           "id": "power.bonding",
           "lineWeightPermilleOverride": 1500,
           "shortTag": "GND"
@@ -2932,6 +2950,7 @@
           "defaultTopology": "p2p",
           "displayName": "Low-voltage DC (12 / 24 V supply)",
           "domain": "pwr",
+          "glyphOverride": "⬡",
           "id": "power.dc_low",
           "lineWeightPermilleOverride": 1500,
           "shortTag": "DC"
@@ -2943,6 +2962,7 @@
           "defaultTopology": "multidrop",
           "displayName": "RF / CATV distribution",
           "domain": "video.analog",
+          "glyphOverride": "▽",
           "id": "rf.catv",
           "lineWeightPermilleOverride": 1500,
           "shortTag": "RF"
@@ -2954,6 +2974,7 @@
           "defaultTopology": "multidrop",
           "displayName": "RF modulated channel",
           "domain": "video.analog",
+          "glyphOverride": "▽",
           "id": "rf.modulated",
           "shortTag": "RFM"
         },
@@ -2968,6 +2989,7 @@
           "defaultTopology": "multidrop",
           "displayName": "OTA antenna",
           "domain": "video.analog",
+          "glyphOverride": "▽",
           "id": "rf.ota",
           "shortTag": "OTA"
         },
@@ -2984,6 +3006,7 @@
           "defaultTopology": "multidrop",
           "displayName": "Satellite / SWM",
           "domain": "video.analog",
+          "glyphOverride": "▽",
           "id": "rf.satellite",
           "lineWeightPermilleOverride": 1500,
           "shortTag": "SAT"
@@ -3001,6 +3024,7 @@
           "defaultTopology": "p2p",
           "displayName": "Pathway only (conduit / pull string)",
           "domain": "str",
+          "glyphOverride": "☆",
           "id": "structure.pathway",
           "shortTag": "PATH"
         },
@@ -3027,6 +3051,7 @@
           "defaultTopology": "star",
           "displayName": "AV-over-IP (SDVoE / JPEG XS / NDI)",
           "domain": "video.digital",
+          "glyphOverride": "△",
           "id": "video.avoip",
           "shortTag": "AVIP"
         },
@@ -3087,6 +3112,7 @@
           "defaultTopology": "p2p",
           "displayName": "HDBaseT (5Play)",
           "domain": "video.digital",
+          "glyphOverride": "△",
           "id": "video.hdbaset",
           "lineWeightPermilleOverride": 1250,
           "shortTag": "HBT"

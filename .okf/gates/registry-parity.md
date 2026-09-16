@@ -65,9 +65,19 @@ heading each exit **1**; a name wrapped in bold still passes.
 
 # Its blind spot, stated
 
-The **glyph**, which the seed does not store per family (DR-010 §11.10.3), and
-every `SignalFamilyDef` field §4.4 does not tabulate, such as typical media and
+Every `SignalFamilyDef` field §4.4 does not tabulate, such as typical media and
 run lengths.
+
+**THE GLYPH LEFT THIS LIST AT DR-181** (`#82`), and what it was doing here is
+worth keeping. It read "the glyph, which the seed does not store per family
+(DR-010 §11.10.3)": an accurate statement about the code, in the right place,
+reading like a footnote. What it MEANT was that 26 of the 57 families drew a
+shape the specification does not give them, in all eight domains, and no gate
+could see it. A blind spot written down is not a blind spot measured. The seed
+stores a glyph per family now, and what is compared is the EFFECTIVE glyph, the
+family's own else its domain's native one, so the gate checks the inheritance
+rule as well as the values. Verified by mutation: changing `power.bonding`'s
+earth symbol to the hollow hexagon exits **1** and names the row.
 
 # Citations
 

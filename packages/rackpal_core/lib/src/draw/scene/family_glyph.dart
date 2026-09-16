@@ -54,15 +54,22 @@
 // this file, every one of the eight did.
 //
 // ═════════════════════════════════════════════════════════════════════
-// SIXTEEN CODEPOINTS, NOT EIGHT
+// EVERY CODEPOINT THE REGISTRIES CARRY, NOT ONLY THE ONES DRAWN TODAY
 // ═════════════════════════════════════════════════════════════════════
-// Eight domains carry a `glyph`/`glyphAlt` pair and `signal_style.dart`
-// draws only the native `glyph` — see its header on why no model field
-// selects the tier. The alternates are still registry data a document can
-// present, and mapping only the halves that are drawn TODAY would make
-// this file quietly wrong the moment that changes. So both are mapped, and
-// [FamilyGlyph.filled] carries the difference docs/05 §5 states: **fill
-// encodes tier**.
+// Eight domains carry a `glyph` and a `glyphAlt`, and two of them carry a
+// THIRD shape in docs/05 §6.2 (`● / ◐ / ○` and `⬢ / ⬡ / ⏚`). All of them
+// are mapped here, and [FamilyGlyph.fill] carries the difference docs/05
+// §5 states: **fill encodes tier**.
+//
+// THAT WAS ALREADY THIS FILE'S RULE AND IT PAID (DR-181). The header used
+// to say mapping only the halves drawn TODAY "would make this file quietly
+// wrong the moment that changes", and the moment arrived: `#82` gave every
+// family its own glyph, so the alternates are drawn now. What the rule did
+// NOT cover was the third shapes, and the gap was worse than an absence:
+// `◐` had been mapped to the hollow circle, which is `○`'s drawing, so the
+// day `audio.speaker_cv` took its own glyph a constant-voltage speaker run
+// and a low-impedance one would have been the same picture. A near-enough
+// mapping is how a channel goes quiet without anything reporting it.
 import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
@@ -89,8 +96,15 @@ const double kFamilyGlyphCapFactor = 0.72;
 /// there is no second place to forget it.
 const double kFamilyGlyphBearingFactor = 0.22;
 
-/// The eight shapes the seeded domains name, independent of which
-/// codepoint spells them.
+/// The shapes the seeded domains name, independent of which codepoint
+/// spells them.
+///
+/// [ground] ARRIVED WITH DR-181 and is the odd one: every other value is a
+/// closed outline that is filled or stroked, and this one is a STEM AND
+/// THREE BARS, an open figure that can only be stroked. It is `pwr`'s
+/// third glyph (`⏚`, U+23DA EARTH GROUND), which `power.bonding` takes,
+/// and there is no hexagon variant that says "this conductor is the
+/// bond": the trade draws an earth symbol and a reader looks for one.
 enum FamilyGlyphShape {
   triangleUp,
   triangleDown,
@@ -100,74 +114,107 @@ enum FamilyGlyphShape {
   cross,
   hexagon,
   star,
+  ground,
 }
 
-/// A resolved glyph: which shape, and whether it is the filled (native) or
-/// hollow (transported) variant.
+/// docs/05 §5: **fill encodes tier**.
+///
+/// THREE VALUES SINCE DR-181, AND THE THIRD IS NOT A NICETY. `audio.analog`
+/// and `pwr` each carry THREE glyphs (`● / ◐ / ○` and `⬢ / ⬡ / ⏚`), so a
+/// boolean fill collapses two of the three into one drawing: `◐` was
+/// mapped to the hollow circle, which is `○`'s shape, and the moment
+/// `audio.speaker_cv` started drawing its own `○` the two would have been
+/// the SAME PICTURE for a low-impedance speaker run and a constant-voltage
+/// one. Those are the two lines on a job that must never be confused for
+/// each other, which is the whole reason the glyph channel exists.
+enum FamilyGlyphFill {
+  /// The native tier: solid ink.
+  filled,
+
+  /// The middle tier: a half-disc, flat edge vertical. INK, like
+  /// [filled], and never outlined; see [familyGlyphOp].
+  half,
+
+  /// The transported tier: outline only.
+  hollow,
+}
+
+/// A resolved glyph: which shape, at which tier.
 @immutable
 final class FamilyGlyph {
-  const FamilyGlyph(this.shape, {required this.filled});
+  const FamilyGlyph(this.shape, {required this.fill});
 
   final FamilyGlyphShape shape;
 
-  /// docs/05 §5: **fill encodes tier**. Filled is native, hollow is
-  /// transported.
-  final bool filled;
+  /// docs/05 §5: **fill encodes tier**.
+  final FamilyGlyphFill fill;
+
+  /// Whether this glyph is solid ink, which is the question every call
+  /// site asked before [FamilyGlyphFill] had a third value.
+  bool get filled => fill == FamilyGlyphFill.filled;
 
   @override
   bool operator ==(Object other) =>
-      other is FamilyGlyph && other.shape == shape && other.filled == filled;
+      other is FamilyGlyph && other.shape == shape && other.fill == fill;
 
   @override
-  int get hashCode => Object.hash(shape, filled);
+  int get hashCode => Object.hash(shape, fill);
 
   @override
-  String toString() => 'FamilyGlyph($shape, filled: $filled)';
+  String toString() => 'FamilyGlyph($shape, fill: ${fill.name})';
 }
 
-/// Every codepoint the seeded domains emit, native and alternate.
+/// Every codepoint the seeded registries emit: a domain's native and
+/// alternate glyphs, and every family's own (DR-181).
 ///
 /// READ VERBATIM OUT OF `seed_registries.dart` on 2026-08-02 and pinned by
 /// `family_glyph_test.dart`, which walks `buildSeedSignalDomains()` rather
 /// than a transcription — so seeding a ninth domain, or changing a glyph,
-/// fails a test rather than silently landing in the fallback.
+/// fails a test rather than silently landing in the fallback. DR-181 gave
+/// the FAMILIES glyphs too, and that test walks `buildSeedSignalFamilies()`
+/// for the same reason.
 ///
 /// THE BOARD'S NOTE SAID "GEOMETRIC SHAPES"; FIVE OF EIGHT ARE. `▲ ▼ ● ◆ ■`
 /// are U+25xx Geometric Shapes, `✚` is Dingbats, `⬢` is Miscellaneous
 /// Symbols and Arrows, `★` is Miscellaneous Symbols. It does not change the
 /// diagnosis — Jost carries none of the four blocks — but a note that
-/// names the wrong block sends the next reader to the wrong place.
+/// names the wrong block sends the next reader to the wrong place. `⏚` is a
+/// sixth block, Miscellaneous Technical, and carries the same diagnosis.
 const Map<String, FamilyGlyph> _shapes = <String, FamilyGlyph>{
   // video.digital
-  '▲': FamilyGlyph(FamilyGlyphShape.triangleUp, filled: true),
-  '△': FamilyGlyph(FamilyGlyphShape.triangleUp, filled: false),
+  '▲': FamilyGlyph(FamilyGlyphShape.triangleUp, fill: FamilyGlyphFill.filled),
+  '△': FamilyGlyph(FamilyGlyphShape.triangleUp, fill: FamilyGlyphFill.hollow),
   // video.analog
-  '▼': FamilyGlyph(FamilyGlyphShape.triangleDown, filled: true),
-  '▽': FamilyGlyph(FamilyGlyphShape.triangleDown, filled: false),
-  // audio.analog — the alternate is U+25D0 CIRCLE WITH LEFT HALF BLACK,
-  // a HALF-filled disc that this renderer has no third state for. Mapped
-  // to the hollow circle, which is the closest honest reading of "not the
-  // native tier"; see `signal_style.dart`'s header on the three-shape
-  // domains that the model cannot express at all.
-  '●': FamilyGlyph(FamilyGlyphShape.circle, filled: true),
-  '◐': FamilyGlyph(FamilyGlyphShape.circle, filled: false),
+  '▼': FamilyGlyph(FamilyGlyphShape.triangleDown, fill: FamilyGlyphFill.filled),
+  '▽': FamilyGlyph(FamilyGlyphShape.triangleDown, fill: FamilyGlyphFill.hollow),
+  // audio.analog — THREE TIERS AND THEY ARE THREE PICTURES (DR-181).
+  // U+25D0 CIRCLE WITH LEFT HALF BLACK read as the hollow circle until
+  // `#82`, which was harmless only while nothing drew `○`: the moment
+  // `audio.speaker_cv` took its own glyph, a low-impedance speaker run and
+  // a constant-voltage one would have been the same drawing. See
+  // [FamilyGlyphFill].
+  '●': FamilyGlyph(FamilyGlyphShape.circle, fill: FamilyGlyphFill.filled),
+  '◐': FamilyGlyph(FamilyGlyphShape.circle, fill: FamilyGlyphFill.half),
+  '○': FamilyGlyph(FamilyGlyphShape.circle, fill: FamilyGlyphFill.hollow),
   // audio.digital
-  '◆': FamilyGlyph(FamilyGlyphShape.diamond, filled: true),
-  '◇': FamilyGlyph(FamilyGlyphShape.diamond, filled: false),
+  '◆': FamilyGlyph(FamilyGlyphShape.diamond, fill: FamilyGlyphFill.filled),
+  '◇': FamilyGlyph(FamilyGlyphShape.diamond, fill: FamilyGlyphFill.hollow),
   // net
-  '■': FamilyGlyph(FamilyGlyphShape.square, filled: true),
-  '□': FamilyGlyph(FamilyGlyphShape.square, filled: false),
+  '■': FamilyGlyph(FamilyGlyphShape.square, fill: FamilyGlyphFill.filled),
+  '□': FamilyGlyph(FamilyGlyphShape.square, fill: FamilyGlyphFill.hollow),
   // ctl — U+2733 EIGHT SPOKED ASTERISK is not a hollow cross, but it is
   // the cross FAMILY at the transported tier, which is the distinction the
   // channel carries.
-  '✚': FamilyGlyph(FamilyGlyphShape.cross, filled: true),
-  '✳': FamilyGlyph(FamilyGlyphShape.cross, filled: false),
-  // pwr
-  '⬢': FamilyGlyph(FamilyGlyphShape.hexagon, filled: true),
-  '⬡': FamilyGlyph(FamilyGlyphShape.hexagon, filled: false),
+  '✚': FamilyGlyph(FamilyGlyphShape.cross, fill: FamilyGlyphFill.filled),
+  '✳': FamilyGlyph(FamilyGlyphShape.cross, fill: FamilyGlyphFill.hollow),
+  // pwr — the third is an EARTH SYMBOL and not a hexagon variant, because
+  // that is what the trade draws for a bond and what a reader looks for.
+  '⬢': FamilyGlyph(FamilyGlyphShape.hexagon, fill: FamilyGlyphFill.filled),
+  '⬡': FamilyGlyph(FamilyGlyphShape.hexagon, fill: FamilyGlyphFill.hollow),
+  '⏚': FamilyGlyph(FamilyGlyphShape.ground, fill: FamilyGlyphFill.hollow),
   // str
-  '★': FamilyGlyph(FamilyGlyphShape.star, filled: true),
-  '☆': FamilyGlyph(FamilyGlyphShape.star, filled: false),
+  '★': FamilyGlyph(FamilyGlyphShape.star, fill: FamilyGlyphFill.filled),
+  '☆': FamilyGlyph(FamilyGlyphShape.star, fill: FamilyGlyphFill.hollow),
 };
 
 /// The shape [glyph] draws as, or `null` when nothing here matches — the
@@ -196,8 +243,25 @@ double familyGlyphAdvance(double sizePt) =>
 /// downstream op-kind assertion depend on which domain a link is in.
 ///
 /// STROKED AT A HAIRLINE WHEN HOLLOW, filled when native — docs/05 §5's
-/// "fill encodes tier", and the reason [FamilyGlyph.filled] is carried
-/// this far rather than resolved at the mapping.
+/// "fill encodes tier", and the reason [FamilyGlyph.fill] is carried this
+/// far rather than resolved at the mapping.
+///
+/// THE HALF TIER IS INK, SO IT IS FILLED AND NOT STROKED. Its path is the
+/// LEFT HALF-DISC alone, an arc closed by its own diameter, so what a
+/// reader sees is a D: solid ink on the left, a straight edge down the
+/// middle. **The right half's outline is not drawn**, and that is two
+/// constraints rather than a reading of U+25D0. A true `◐` is a full
+/// circle whose left half is inked, which needs one subpath filled and
+/// another stroked; this op model paints a whole path or nothing, and one
+/// op per flag is what `schematic_perf_test`'s per-flag identity is.
+///
+/// **AND A GLYPH MAY NEVER CARRY BOTH PAINTS.** `net_label_layer_test`'s
+/// `_isGlyphPath` tells a glyph from a pennant by exactly that: a pennant
+/// is the only path with a fill AND a stroke. A half-disc outlined for
+/// crispness would have made every `audio.speaker_lowz` flag read as a
+/// pennant to three scene tests, which would have counted the wrong paths
+/// and still passed. A half-disc is unmistakable against `●` and `○` at
+/// 8 pt without the outline, which is the distinction the channel carries.
 ///
 /// [hollowScalesWithGeometry] is false for a plan mark's glyph, whose line
 /// weight is constant on the surface (`#905`, DR-169 §11.168.11). A label
@@ -216,26 +280,28 @@ DiagramOp familyGlyphOp(
   final cx = leftMid.x + r;
   final cy = leftMid.y;
   final path = DiagramPath(
-    _commandsFor(glyph.shape, cx: cx, cy: cy, r: r),
+    _commandsFor(glyph.shape, glyph.fill, cx: cx, cy: cy, r: r),
   );
-  return OpPath(
-    path,
-    fill: glyph.filled ? Fill(argb) : null,
-    stroke: glyph.filled
-        ? null
-        : Stroke(
-            argb: argb,
-            widthPt: hollowWidthPt,
-            scaleWithGeometry: hollowScalesWithGeometry,
-          ),
+  final stroke = Stroke(
+    argb: argb,
+    widthPt: hollowWidthPt,
+    scaleWithGeometry: hollowScalesWithGeometry,
   );
+  return switch (glyph.fill) {
+    FamilyGlyphFill.filled || FamilyGlyphFill.half => OpPath(
+      path,
+      fill: Fill(argb),
+    ),
+    FamilyGlyphFill.hollow => OpPath(path, stroke: stroke),
+  };
 }
 
 /// The shape in device coordinates, centred on `(cx, cy)` inside a box of
 /// half-side [r]. **Y GROWS DOWNWARD** — the sheet's convention, so
 /// "triangle up" puts its apex at the SMALLER y.
 List<PathCommand> _commandsFor(
-  FamilyGlyphShape shape, {
+  FamilyGlyphShape shape,
+  FamilyGlyphFill fill, {
   required double cx,
   required double cy,
   required double r,
@@ -280,7 +346,16 @@ List<PathCommand> _commandsFor(
   ),
   // Five points, inner radius at the golden ratio the standard star uses.
   FamilyGlyphShape.star => _polygon(cx: cx, cy: cy, _starPoints(cx, cy, r)),
-  FamilyGlyphShape.circle => _circle(cx, cy, r),
+  // THE ONLY SHAPE WHOSE GEOMETRY DEPENDS ON ITS TIER. The other eight
+  // draw one outline and the paint decides what happens to it; a half tier
+  // is a DIFFERENT REGION, so the circle answers for its own fill.
+  FamilyGlyphShape.circle =>
+    fill == FamilyGlyphFill.half
+        ? _leftHalfDisc(cx, cy, r)
+        : _circle(cx, cy, r),
+  // An open figure: a stem and three bars. It is never filled, so it needs
+  // no re-centring on ink the way a polygon does; `_ground` centres itself.
+  FamilyGlyphShape.ground => _ground(cx, cy, r),
 };
 
 /// A closed polygon through [pts], RE-CENTRED ON ITS OWN BOUNDING BOX.
@@ -388,5 +463,56 @@ List<PathCommand> _circle(double cx, double cy, double r) {
     CubicTo(cx - k, cy + r, cx - r, cy + k, cx - r, cy),
     CubicTo(cx - r, cy - k, cx - k, cy - r, cx, cy - r),
     const ClosePath(),
+  ];
+}
+
+/// The LEFT half of that circle, closed by its own vertical diameter: two
+/// of [_circle]'s four cubics, run top to bottom down the left side, and a
+/// straight line back up the middle (DR-181).
+///
+/// CENTRED ON THE FULL CIRCLE, NOT ON THE HALF. `_polygon` re-centres a
+/// shape on its own ink because a star's ink sits high in its
+/// circumcircle, and applying that rule here would be wrong for the
+/// opposite reason: this glyph's job is to read as a circle with half of
+/// it inked, so it must sit exactly where `●` and `○` sit. Recentring it
+/// would slide the flat edge off the line the other two share and make
+/// `audio.analog`'s three tiers three different positions as well as three
+/// different pictures.
+List<PathCommand> _leftHalfDisc(double cx, double cy, double r) {
+  final k = r * kappa;
+  return <PathCommand>[
+    MoveTo(cx, cy - r),
+    CubicTo(cx - k, cy - r, cx - r, cy - k, cx - r, cy),
+    CubicTo(cx - r, cy + k, cx - k, cy + r, cx, cy + r),
+    LineTo(cx, cy - r),
+    const ClosePath(),
+  ];
+}
+
+/// The earth symbol: a stem down the middle to three bars of decreasing
+/// width (U+23DA), which is what `power.bonding` draws (DR-181).
+///
+/// PROPORTIONS ARE THE SYMBOL'S OWN, not this file's taste: the bars are
+/// the full width, two thirds and one third, evenly spaced across the
+/// lower half, and the stem runs from the top of the box to the first bar.
+/// It is drawn as FOUR SUBPATHS in one path, so it is still one op, and it
+/// is stroked rather than filled because an open figure has no inside.
+///
+/// THE BOX IS THE SAME `2r` SQUARE every other shape uses, so the tag's
+/// start does not move for `pwr`: [familyGlyphAdvance] is computed from
+/// the type size alone and knows nothing about which shape follows it.
+List<PathCommand> _ground(double cx, double cy, double r) {
+  final gap = r / 2;
+  return <PathCommand>[
+    // The stem, from the top of the box to the widest bar.
+    MoveTo(cx, cy - r),
+    LineTo(cx, cy),
+    // Three bars: full, two thirds, one third.
+    MoveTo(cx - r, cy),
+    LineTo(cx + r, cy),
+    MoveTo(cx - r * 2 / 3, cy + gap),
+    LineTo(cx + r * 2 / 3, cy + gap),
+    MoveTo(cx - r / 3, cy + 2 * gap),
+    LineTo(cx + r / 3, cy + 2 * gap),
   ];
 }

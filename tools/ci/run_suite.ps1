@@ -864,7 +864,14 @@ $SuiteFloors = @{
     # cell says (including the EUROBLOCK case, which is §11.179.3 read one
     # END down) and four for the `WIRING` column showing the override
     # rather than the resolved value.
-    'rackpal_core'   = 4799
+    # 4801 at `#82` (DR-181): +2, both in `family_glyph_test.dart`. Every
+    # seeded FAMILY glyph now has to resolve a shape, and a three-glyph
+    # domain's three tiers have to be three DISTINCT drawings: `◐` was
+    # mapped to the hollow circle, which is `○`'s, and nothing could see it
+    # while no family drew `○`. Two tests were rewritten in place rather
+    # than added, so they move no number: both recorded the gap this
+    # ruling closed and now record what closed it.
+    'rackpal_core'   = 4801
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
