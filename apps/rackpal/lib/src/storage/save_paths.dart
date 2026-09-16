@@ -119,7 +119,7 @@ final class SavePaths {
   /// when the user types `Smith`, and a project saved as an extensionless
   /// file will not reopen by double-click and will not be found by the
   /// open dialog's filter. Appending is done rather than replacing, so a
-  /// deliberate `Smith.v2` becomes `Smith.v2.rmpj` and nothing the user
+  /// deliberate `Smith.v2` becomes `Smith.v2.rppj` and nothing the user
   /// typed is thrown away.
   ///
   /// [extensions] EXISTS SO THE PDF EXPORT SHARES THIS NORMALISATION
@@ -132,7 +132,7 @@ final class SavePaths {
   /// back-compat story. `.first` is what gets appended; **every** entry
   /// counts as already-correct. So `Smith.rackpal` passes through
   /// untouched and `Ctrl+S` saves it where it lives, while a new document
-  /// gets `.rmpj`. The PDF path passes a single-entry list and is
+  /// gets `.rppj`. The PDF path passes a single-entry list and is
   /// therefore unaffected by the project's legacy spelling — which it
   /// would not be if this took one extension plus a shared "also accept"
   /// set.
@@ -178,7 +178,7 @@ final class SavePaths {
     );
   }
 
-  /// `<dir>/<stem>.rmpj` — the file the user knows about.
+  /// `<dir>/<stem>.rppj` — the file the user knows about.
   final String target;
 
   /// `<target>.tmp` — where the new bytes land before they are promoted.
