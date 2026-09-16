@@ -1,5 +1,23 @@
 # Update Log
 
+## 2026-09-16 (fifty-sixth entry)
+
+* **Closed**: `#91` with ``4547ad41``, citing
+  [DR-036](/decisions/dr-036-public-gplv3-cc0-catalog.md) and DR-011 §11.11.5. **No new ruling.**
+  docs/00 §7's competitive table is re-read against the vendors' own pricing pages, dated, and its
+  Price row says what DR-036 rules: nothing is priced. **No version move**: it closes under `#786`.
+* **Note**: **A WRONG NUMBER THAT FAVOURS THE ARGUMENT DESERVES MORE SUSPICION THAN ONE THAT DOES
+  NOT.** The corpus quoted a competitor's RENEWAL price as its first-year price, in two places, which
+  set the anchor at half the real entry cost and made the gap look smaller than it is. Nothing in the
+  document could have caught it; only the vendor's page could.
+* **Note**: **AN EXPIRED CITATION IS EVIDENCE, NOT AN EMBARRASSMENT.** A verbatim user complaint
+  about a competitor stopped being true: the product shipped the feature. It is marked dated and
+  kept, because a comparison that silently drops the findings that stop being true is a comparison
+  that only ever agrees with itself.
+* **Note**: **`Unknown` IS NOT `No`.** Two competitor columns are mostly `Unknown` on purpose: the
+  research verified prices and two features, and filling the rest from a product page would be the
+  fabrication a competitive table exists to be evidence against.
+
 ## 2026-09-16 (fifty-fifth entry)
 
 * **Closed**: `#796` with `#799` in ``1f0c5bb1``, ruled as

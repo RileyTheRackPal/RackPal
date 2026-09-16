@@ -12240,7 +12240,75 @@ rather than into an unruled change.
   50 seeded templates" against a catalogue of 51, and now names the test that holds the number.
 
 **Commits** (§8.8): `#796` `1f0c5bb1` (roadmap §6, §4's heading and scale, docs/00, the canon §12.7
-note).
+note), `1a00b064` (these records). `#797`, `#798` and `#799` close with it.
+
+#### 5.9.63 `#91`: the competitive table, re-read against the vendors' own pages · `DR-036`, `DR-011` · no version move
+
+2026-09-16, research gathered 2026-09-15. **No new ruling**: it cites DR-036 (nothing is priced) and
+DR-011 §11.11.5. It closes under `#786` and moves no number.
+
+**DEMONSTRATED** by every price in docs/00 §7 carrying the date it was read off the vendor's own
+pricing page, and by the two figures the corpus had wrong being corrected in the direction the
+evidence says rather than the direction that flatters.
+
+##### 5.9.63.1 A pricing strategy for a product with no price
+
+§7's Price row read *"anchored to Stardraw and free AVSnap, not to D-Tools"*. **DR-036 rules that
+nothing is priced**: the application is free and GPLv3. The row says so now and keeps the
+competitors' figures, because what a shop pays today is still how a reader parses the rest of the
+table.
+
+**AND THE ANCHOR WAS WRONG IN THE FLATTERING DIRECTION.** docs/00 said Stardraw is *"$275–$1,050 yr
+1"* in two places. **Those are the renewal prices.** Year one is $550 for Entry and $2,100 for
+Professional. The anchor sat at half the real entry cost, which is the error that makes a competitor
+look cheaper than it is and a gap look smaller than it is. A wrong number that favours the argument
+is worth more attention than a wrong number that does not.
+
+##### 5.9.63.2 What the research found, including what it refused to use
+
+- **D-Tools Cloud**: $99/mo Single to $1,199/mo Enterprise, $89–$1,079 paid annually, **plus setup
+  fees of $250 to $2,500** that no summary of this product mentions.
+- **XTEN-AV X-DRAW**: $139–$169 per user per month by tier, 25% off annually. **The X-PRO add-on is
+  $22.50/mo, double the $11.25** an earlier research note recorded.
+- **D-Tools SI's $1,800/user/yr with a five-user minimum is confirmed**, as is AVSnap being free.
+- **A SEARCH-ENGINE SUMMARY OF D-TOOLS CLOUD'S TIERS IS NOT USED.** It gave $99/$249/$499/$999
+  against a vendor page saying $99/$179/$349/$649/$1,199. The scratchpad note records both so the
+  disagreement is visible rather than silently resolved in favour of whichever was read last.
+- **A claimed Canny feature request for D-Tools Cloud rack elevations is not cited**: the page
+  returns "Company Not Found", so the claim is unverifiable and stays out.
+- **RackOnline is confirmed defunct rather than assumed so**: `rackonline.dk` returns NXDOMAIN and
+  refuses a connection. Its column stays with every cell `Unknown`, because deleting it would
+  quietly improve the field.
+
+##### 5.9.63.3 The complaint that expired, kept with its date
+
+docs/00 §1 cites a verbatim user review of XTEN-AV: *"there is no way to assign unique device names
+to devices"*. **X-DRAW's knowledge base now documents how to STOP it appending a number suffix to
+identical product names**, and carries articles on assigning, resetting and category-scoping cable
+IDs. The complaint was real when written and the product has moved.
+
+It is marked dated rather than deleted. An expired citation is evidence about how fast this market
+moves, and a table that silently drops the competitor findings that stop being true is a table that
+only ever agrees with itself.
+
+##### 5.9.63.4 Two cells promised an escape a ruling had removed
+
+Found while re-reading, fixed in the same pass. §7's typed-ports cell and §3's `R3` row both said an
+illegal connection springs back *"with a reason chip and `[ Connect anyway ]`"*. **DR-011 §11.11.5
+refuses a model-illegal drop OUTRIGHT** and says in its own heading that there is no
+`[ Connect anyway ]`; the escape belongs to the tier-2 advisories CR-017 describes, which are M5's.
+Two cells contradicted the ruling that narrowed them, in the document a reader meets first.
+
+##### 5.9.63.5 Evidence
+
+- 19 gates green. Every `Unknown` in the two new columns is a cell nobody checked, which is not the
+  same as "no": the research verified prices and two features, and filling the rest from a product
+  page would be the fabrication a competitive table is supposed to be evidence against.
+- `docs/research/research-prior-art.md` is **not edited**: `research/README.md` records it as an
+  unedited output, and a re-verification belongs beside the claim it corrects rather than inside the
+  artifact it corrects.
+
+**Commits** (§8.8): `#91` `4547ad41` (docs/00 §1, §3, §5 and §7).
 
 
 ---
