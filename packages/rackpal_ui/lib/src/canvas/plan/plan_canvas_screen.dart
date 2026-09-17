@@ -105,8 +105,11 @@ const double kPlanMarkerMinRadiusPt = 11;
 /// reported as *"massive"* in the first place. 1/300 was the other, and
 /// barely grows before somebody is inside a single room.
 ///
-/// On a 3300x2550 scan this is a **14.5-unit radius**, which a typical
-/// window reaches at about 2.7 times the fitted zoom.
+/// On a 3300x2550 scan this is a **14.5-unit radius**, so the crossover
+/// falls at a zoom of **0.76**. Against the FITTED zoom it is a range and
+/// not a figure, because the fit depends on the window: **2.3x fit in a
+/// 1920-point canvas and 3.4x in an 1100-point one**, over
+/// `fitToContent`'s own 0.9 margin.
 const double kPlanMarkerPlanFraction = 1 / 200;
 
 /// The marker radius in SCENE units for a plan of [pixelWidth] by

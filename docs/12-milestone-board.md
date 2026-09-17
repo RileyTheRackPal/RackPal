@@ -12366,9 +12366,14 @@ scanned in one strip is a real plan.
 
 So `sqrt(w * h)`, which has no cliff and agrees with the longer side on a square scan. This is the
 one clause in DR-183 the user did not choose, and it is recorded as an implementation clause: the
-option they answered said *"1/200 of the plan"*, and on a 4:3 scan the two anchors put the crossover
-at about 2.4x and 2.7x the fitted zoom respectively, both inside the *"about 2x fit"* the option
-carried.
+option they answered said *"1/200 of the plan"*, and the geometric mean reads 2901 on a 3300x2550
+scan against a longer side of 3300, so it moves the crossover **1.14x further in**.
+
+**AND THE CROSSOVER AGAINST THE FITTED ZOOM IS A RANGE, WHICH THE FIRST DRAFT OF THIS SECTION WROTE
+AS A NUMBER.** It said *"about 2.7x fit"*. The fit depends on the window, so the honest figure is
+**2.3x fit in a 1920-point canvas and 3.4x in an 1100-point one** on this scan, over
+`fitToContent`'s own 0.9 margin. The option the user answered carried "about 2x fit" as its own
+rough gloss, and that gloss is the same kind of estimate: it orients, and it is not a constant.
 
 ##### 5.9.64.4 The consumer that was not a scene
 

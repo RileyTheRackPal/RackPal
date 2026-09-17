@@ -21701,7 +21701,14 @@ side does with a fraction of exactly this shape, on paper: **6.87 points on a 20
 fraction reads the longer one. A corridor scanned in one strip is a real plan and would have taken a
 mark twice the size of the same room drawn square. `sqrt(w x h)` has no such cliff and agrees with the
 longer side on a square scan by construction. On a 3300x2550 sheet the anchored radius is **14.5 scene
-units**, which a typical window reaches at about **2.7 times the fitted zoom**.
+units** and the crossover falls at a zoom of **0.76**.
+
+**AGAINST THE FITTED ZOOM IT IS A RANGE AND NOT A FIGURE**, because the fit depends on the window:
+**2.3x fit in a 1920-point canvas and 3.4x in an 1100-point one**, over `fitToContent`'s own 0.9
+margin. This clause first said *"about 2.7 times the fitted zoom"*, which is one window's answer
+wearing the shape of a constant. **What a window cannot change is the effect of the anchor itself**:
+on this scan the geometric mean is 2901 against a longer side of 3300, so choosing it moves the
+crossover **1.14x further in**, wherever that crossover happens to sit.
 
 **11.182.3 IT SUPERSEDES §11.168.2 IN PART, WHICH IS WHY IT IS A RULING AND NOT A TWELFTH CLAUSE.**
 §11.168.10 and §11.168.11 each ADDED a clause to DR-169 and neither contradicted one. This changes what
