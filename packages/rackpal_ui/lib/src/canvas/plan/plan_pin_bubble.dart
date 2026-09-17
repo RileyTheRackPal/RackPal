@@ -49,6 +49,11 @@ class PlanPinBubble extends StatelessWidget {
   final ViewportController viewport;
 
   /// The mark's radius in screen points, so the bubble clears it.
+  ///
+  /// **SCREEN POINTS AND NOT SCENE UNITS**, which stopped being the same
+  /// number at `#910` (DR-183): above the crossover the mark grows with
+  /// the zoom, so a caller handing over the floor constant would park this
+  /// label inside the mark it names.
   final double radiusPt;
 
   @override
@@ -58,7 +63,7 @@ class PlanPinBubble extends StatelessWidget {
     // The bubble names a MARK, so it sits on the mark: a label that
     // trailed the cursor would drift off the thing it names while the
     // person moves to read it. Mapping through the viewport is also what
-    // keeps it right at every zoom, which is `kPlanMarkerRadiusPt`'s own
+    // keeps it right at every zoom, which is `planMarkerSceneRadius`'s own
     // rule one layer up.
     final screen = viewport.sceneToScreen(
       DPt(at.px.toDouble(), at.py.toDouble()),

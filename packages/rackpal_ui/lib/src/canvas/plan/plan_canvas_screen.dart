@@ -63,33 +63,92 @@ import 'package:rackpal_ui/src/canvas/viewport_hud.dart';
 import 'package:rackpal_ui/src/draw/flutter_canvas.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
 
-/// The radius a plan marker is drawn at, in logical points, at EVERY zoom
-/// (`#897`, DR-169 §11.168.2).
+/// The SMALLEST radius a plan marker is drawn at on screen, in logical
+/// points (`#910`, DR-183 §11.182.1). It holds at every zoom at or below
+/// the crossover [planMarkerSceneRadius] computes, and the mark grows with
+/// the plan above it.
 ///
 /// ═══════════════════════════════════════════════════════════════════════
-/// POINTS, BECAUSE A MARK IS AIMED AT WITH A POINTER AND NOT WITH A PLAN
+/// A FLOOR, BECAUSE A MARK IS AIMED AT WITH A POINTER
 /// ═══════════════════════════════════════════════════════════════════════
-/// `kPlanMarkerRadiusFraction` sized a marker as 1/110 of the underlay's
-/// longer side, in SCENE units, which are image pixels. That was a 30-unit
-/// radius on a 3300-unit architectural sheet, so a **60-point mark at
-/// 1:1** with a hit box to match, and four times that again at 400%. It
-/// was reported from the product as *"the pin size on the room view is
-/// massive"* and measured on 2026-09-13.
-///
-/// This is the rule [kOutlineCloseRadiusPt] already states for the close
-/// test, in that constant's own words: *"ten points of pointer travel at
-/// every zoom, which is what a person aims with."* Zooming in now shows
-/// more PLAN rather than a bigger dot.
+/// This half is `#897`'s rule and the reason it gave, which DR-183 keeps
+/// where it holds: [kOutlineCloseRadiusPt] says it in its own words for
+/// the close test, *"ten points of pointer travel at every zoom, which is
+/// what a person aims with."* A mark that shrank with the plan would stop
+/// being clickable on a fitted architectural sheet, where the whole
+/// drawing is a few hundred points across.
 ///
 /// **THE NUMBER IS APPEARANCE AND IS THE USER'S** (§11.168's closing
-/// clause), exactly as `kPlanMarkerRadiusFraction`'s note said of the
-/// fraction before it. Seven points is a starting value chosen to sit
-/// between the close radius and a mark that covers a doorway.
+/// clause). It was **7 until `#910`**, chosen at `#897` as a starting
+/// value; the user asked for *"a bit"* more and picked eleven from 9, 11
+/// and 14 drawn at actual size. Eleven is where the domain's glyph, whose
+/// box is [kPlanGlyphSideFactor] radii, becomes something a person reads
+/// rather than a smudge, which is the product reason to grow it at all.
 ///
 /// **THE PRINTED MARK IS A DIFFERENT NUMBER FOR A DIFFERENT READER.**
 /// `kPlanMarkPrintRadiusPt`, in core, is the callout pill's round end
 /// (`#904`, §11.168.10), and neither constant is derived from the other.
-const double kPlanMarkerRadiusPt = 7;
+/// DR-183 does not touch it: a sheet is read at arm's length and has no
+/// zoom to cross a threshold with.
+const double kPlanMarkerMinRadiusPt = 11;
+
+/// The radius a plan marker takes as a fraction of the plan's own size,
+/// once the zoom has passed the crossover (`#910`, DR-183 §11.182.1).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE USER'S NUMBER, AND THE ONE NEXT TO IT WAS DECLINED FOR A REASON
+/// ═══════════════════════════════════════════════════════════════════════
+/// Picked from three, against a chart of size against zoom. The option at
+/// **1/100 was declined**: that is within rounding of the retired
+/// `kPlanMarkerRadiusFraction`'s 1/110, so a mark would reach four times
+/// this floor at four times the fitted zoom, which is the size that was
+/// reported as *"massive"* in the first place. 1/300 was the other, and
+/// barely grows before somebody is inside a single room.
+///
+/// On a 3300x2550 scan this is a **14.5-unit radius**, which a typical
+/// window reaches at about 2.7 times the fitted zoom.
+const double kPlanMarkerPlanFraction = 1 / 200;
+
+/// The marker radius in SCENE units for a plan of [pixelWidth] by
+/// [pixelHeight] shown at [scale] (`#910`, DR-183 §11.182.1).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// TWO RULES AND A `max`, WHICH IS THE WHOLE RULING
+/// ═══════════════════════════════════════════════════════════════════════
+/// The first term is constant ON SCREEN and wins when the plan is small,
+/// so the mark stays [kPlanMarkerMinRadiusPt] and stays clickable. The
+/// second is constant ON THE PLAN and wins once the zoom has grown the
+/// first past it, so the mark belongs to the drawing and covers the same
+/// piece of floor however far in somebody goes. `max` is what makes the
+/// crossover a consequence rather than a third number to keep in step.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE ANCHOR IS THE GEOMETRIC MEAN AND **NOT THE LONGER SIDE**
+/// ═══════════════════════════════════════════════════════════════════════
+/// §11.168.10 measured what the longer side does, on the sheet, with the
+/// same kind of fraction: 6.87 points on a 2000x1500 plan, 5.15 on
+/// 1500x2000 and **10.20 on a 4000x1000 panorama**, because a fit binds on
+/// the tighter axis while the fraction reads the longer one. A corridor
+/// scanned in one strip is a real plan and would have taken a mark twice
+/// the size of the same room drawn square. `sqrt(w * h)` has no such
+/// cliff, and on a square plan the two anchors agree by construction.
+///
+/// **PURE, AND PUBLIC, SO IT CAN BE MEASURED WITHOUT A WIDGET.** The
+/// crossover is a claim about arithmetic that a widget test would prove
+/// slowly and indirectly, and §11.168.2's own "one place computes it"
+/// clause is about the three scene builders inside the screen, not about
+/// hiding the rule from a test.
+double planMarkerSceneRadius({
+  required double scale,
+  required int pixelWidth,
+  required int pixelHeight,
+}) {
+  final onScreen = kPlanMarkerMinRadiusPt / scale;
+  final onPlan =
+      kPlanMarkerPlanFraction *
+      math.sqrt(pixelWidth.toDouble() * pixelHeight.toDouble());
+  return math.max(onScreen, onPlan);
+}
 
 /// The width of a plan mark's outline on screen, in logical pixels, at
 /// EVERY zoom (`#905`, DR-169 §11.168.11). A device's ring is
@@ -106,11 +165,11 @@ const double kPlanMarkerRadiusPt = 7;
 /// where a 14-pixel device ring covered the fill and the glyph of a mark 7
 /// pixels in radius.
 ///
-/// **NOT DIVIDED BY THE ZOOM HERE**, unlike [kPlanMarkerRadiusPt]. A radius
-/// is geometry and has to arrive in scene units. A weight is emitted with
-/// `scaleWithGeometry: false`, and `RenderPlanCanvas` tells its canvas the
-/// zoom, which is also what keeps a one-pixel line clear of the 0.5 floor
-/// at 32x.
+/// **NOT DIVIDED BY THE ZOOM HERE**, unlike [planMarkerSceneRadius]. A
+/// radius is geometry and has to arrive in scene units. A weight is
+/// emitted with `scaleWithGeometry: false`, and `RenderPlanCanvas` tells
+/// its canvas the zoom, which is also what keeps a one-pixel line clear of
+/// the 0.5 floor at 32x.
 const double kPlanMarkerWeightPt = 1;
 
 /// The height the floating chrome occupies at the top of this canvas.
@@ -482,11 +541,19 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// a zoom REPAINTED THE SCENE IT ALREADY HELD under a new transform and
   /// never asked for a new one. The mark therefore kept the scene radius
   /// it was built with and grew with the zoom exactly as the proportional
-  /// rule it replaced did, snapping back to [kPlanMarkerRadiusPt] the next
-  /// time anything else called `setState`.
+  /// rule it replaced did, snapping back to the floor the next time
+  /// anything else called `setState`.
   ///
   /// **MEASURED, 2026-09-14**, through the render object's own scene: 7
   /// points at 1:1 and 28 at 400%. Reported from the product.
+  ///
+  /// **THE DEFECT AND DR-183 ARE NOT THE SAME THING**, and a reader
+  /// arriving after `#910` will be tempted to think so. A mark now grows
+  /// with the zoom ON PURPOSE above the crossover. What this listener
+  /// buys is that the drawn mark and the hit box agree at any zoom, which
+  /// is the property the ruling changed the SIZE of and never the
+  /// agreement. Take this listener out and the two diverge again, and the
+  /// divergence is larger now because the two rules differ by more.
   ///
   /// **AND THE HIT BOX DID NOT FOLLOW IT**, which is the same divergence
   /// [_markerRadius] warns about arriving by a route that comment did not
@@ -1148,8 +1215,9 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// printed callout is `PLAN-H`'s and is a different thing.
   ({String label, PxPt at})? _hoveredPin;
 
-  /// The marker radius in SCENE units that draws [kPlanMarkerRadiusPt] on
-  /// screen at the current zoom.
+  /// The marker radius in SCENE units at the current zoom, which is
+  /// [kPlanMarkerMinRadiusPt] on screen up to the crossover and a fixed
+  /// piece of the plan above it (`#910`, DR-183 §11.182.1).
   ///
   /// **ONE PLACE COMPUTES IT, WHICH IS A RULING AND NOT A TIDINESS**
   /// (§11.168.2). This screen builds the scene in three methods: the hit
@@ -1165,7 +1233,25 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// gave two answers whenever a zoom had happened since the last
   /// rebuild. [_onViewportChanged] is what makes "one place" also mean one
   /// moment.
-  double get _markerRadius => kPlanMarkerRadiusPt / widget.viewport.scale;
+  /// **AND IT NOW READS THE UNDERLAY**, which the constant-size rule did
+  /// not have to. Every reader of this getter is inside the screen and
+  /// already holds `widget.underlay`, so the plan's dimensions reach the
+  /// rule without a second field to keep in step.
+  double get _markerRadius => planMarkerSceneRadius(
+    scale: widget.viewport.scale,
+    pixelWidth: widget.underlay.pixelWidth,
+    pixelHeight: widget.underlay.pixelHeight,
+  );
+
+  /// The marker radius ON SCREEN, in points, at the current zoom.
+  ///
+  /// **A SECOND CONSUMER THAT IS NOT A SCENE** (`#910`). [PlanPinBubble]
+  /// clears the mark by this much, and it was handed the constant while
+  /// the constant WAS the screen radius. Above the crossover that would
+  /// have parked the designator inside the mark it names, growing worse
+  /// the further in somebody zoomed, and nothing in the tree would have
+  /// said so.
+  double get _markerScreenRadius => _markerRadius * widget.viewport.scale;
 
   /// Writes the dragged corner, and re-derives the figure it changed.
   ///
@@ -1562,7 +1648,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
                       label: hovered.label,
                       at: hovered.at,
                       viewport: widget.viewport,
-                      radiusPt: kPlanMarkerRadiusPt,
+                      radiusPt: _markerScreenRadius,
                     ),
                   // THE SAME HUD THE RACK HAS, in the same corner, saying
                   // the same three things (`#898`, DR-169 §11.168.3). A
