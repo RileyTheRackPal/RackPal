@@ -20983,6 +20983,13 @@ domain is authored or read from its member links, which is a different question 
 and is `#896`'s first chapter to answer with a measurement. And the callout treatment docs/15 §7
 schedules for `PLAN-H`, which this touches but does not close.
 
+> **THE FIRST OF THOSE ARRIVED ON 2026-09-17 AND BROUGHT §11.168.2 WITH IT.** The user asked for a
+> bigger mark that also grows with the plan once you zoom past a threshold, which is **DR-183
+> §11.182** and is listed at §12.36. It raises the point size from 7 to 11 and **partly reverses
+> §11.168.2's "retired, not re-tuned"**: the proportional rule returns above a crossover, floored
+> below it. Everything else in §11.168 stands, including §11.168.2's other half, that one place
+> computes the radius per surface and the drawn mark and the hit box are the same figure.
+
 ### 11.169 DR-170 · Editor chrome is drawn at its authored screen width at every zoom, and a canvas is told the zoom its layer applies
 
 **The question.** Found while building `#905` and measured at `#906`, 2026-09-14. The plan, rack and
@@ -21652,6 +21659,67 @@ which the docs change assigns from evidence.
 
 ---
 
+### 11.182 DR-183 · A plan mark sticks at a floor size and grows with the plan above a crossover
+
+**The question.** From the user, 2026-09-17, with a screenshot: *"we need to increase the site view pin
+size a bit; I feel like it should 'stick' at a certain size below a certain zoom level ... zooming out
+it stays physically this size, zooming in it should grow relatively in size to the room plan
+underlay."*
+
+**11.182.0 MEASURED FIRST, AND THE SCREENSHOT WAS NOT.** `plan_canvas_screen.dart` computed
+`kPlanMarkerRadiusPt / viewport.scale`, which is a **7-point radius on screen at every zoom from 5% to
+3200%**, by construction rather than by measurement. That is §11.168.2, whose own words were *"the
+proportional rule is retired, not re-tuned"*. **The screenshot yields no number and this says so**: it
+is a crop at an unknown zoom of a plan of unknown pixel dimensions, so nothing in it converts into
+points, and a figure read off it would have been a guess wearing a measurement's clothes. The two
+numbers below came from the user instead, against four discs drawn at actual size and a chart of size
+against zoom, which is §11.168.11's own method.
+
+**11.182.1 RULED: THE RADIUS IS THE LARGER OF A SCREEN FLOOR AND A FRACTION OF THE PLAN.** Settled by
+the user. A canvas mark is `max(11 points / scale, (1/200) x planSize)` in scene units, so:
+
+- **At or below the crossover** the first term wins and the mark is a **constant 11 points on screen**.
+  This is §11.168.2's rule and §11.168.2's reason, kept: a mark is aimed at with a pointer, which is
+  what `kOutlineCloseRadiusPt` says for the close test in its own words, and a mark that shrank with
+  the plan would be sub-point on a fitted architectural sheet.
+- **Above it** the second wins and the mark is a **fixed piece of the drawing**, covering the same
+  floor however far in somebody goes. This is the rule §11.168.2 retired, returning bounded.
+
+**The floor was 7 and is 11.** Chosen from 9, 11 and 14 drawn at actual size. Eleven is where the
+domain's glyph, whose box is `kPlanGlyphSideFactor` radii, becomes something a person reads rather than
+a smudge, which is the product reason to grow it at all.
+
+**THE FRACTION AT 1/100 WAS OFFERED AND DECLINED**, and the reason belongs in the record: that is within
+rounding of the retired `kPlanMarkerRadiusFraction`'s 1/110, so at four times the fitted zoom a mark
+would reach four times the floor, which is the size reported as *"massive"* in the first place. 1/300
+was the third and barely grows before somebody is inside a single room.
+
+**11.182.2 THE PLAN'S SIZE IS THE GEOMETRIC MEAN OF ITS TWO SIDES, NOT ITS LONGER ONE.** An
+implementation clause and not an appearance one, because §11.168.10 already MEASURED what the longer
+side does with a fraction of exactly this shape, on paper: **6.87 points on a 2000x1500 plan, 5.15 on
+1500x2000 and 10.20 on a 4000x1000 panorama**, because a fit binds on the tighter axis while the
+fraction reads the longer one. A corridor scanned in one strip is a real plan and would have taken a
+mark twice the size of the same room drawn square. `sqrt(w x h)` has no such cliff and agrees with the
+longer side on a square scan by construction. On a 3300x2550 sheet the anchored radius is **14.5 scene
+units**, which a typical window reaches at about **2.7 times the fitted zoom**.
+
+**11.182.3 IT SUPERSEDES §11.168.2 IN PART, WHICH IS WHY IT IS A RULING AND NOT A TWELFTH CLAUSE.**
+§11.168.10 and §11.168.11 each ADDED a clause to DR-169 and neither contradicted one. This changes what
+§11.168.2 decided, so it takes an ID and appears in §12. **What survives untouched is that clause's
+other half**: one place computes the radius per surface, and the drawn mark and the hit box are the
+same figure at every zoom. DR-183 changes the SIZE and never the agreement, and `#903` is the record of
+what happens when the agreement breaks.
+
+**11.182.4 Scope.** **No scope change**, on §11.168.9's reasoning: this is the appearance and the
+reachability of a mark that already exists.
+
+**What this does not rule.** The PRINTED mark, which is §11.168.10's round end of the callout pill: a
+sheet is read at arm's length and has no zoom to cross a threshold with, so that constant is unaffected
+and that is a decision rather than an oversight. The mark's line weight, which is §11.168.11's drafting
+weight and stays constant on the surface. Colour, the glyph inventory, and the rack asset.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -22291,6 +22359,18 @@ label onto two drops.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **DR-010 §11.10.3 and §11.10.4** | `SignalFamilyDef` gains exactly three render fields, `shortTag`, `dashOverride` and a weight override, and the rest of the corpus field list stays absent. | **A fourth render field, `glyphOverride`**, is added and seeded on the 26 families whose §4.4 glyph is not their domain's native one (§11.180.2). The rest of the list still stays absent. |
+
+### 12.36 Superseded in part by DR-183 (a plan mark sticks at a floor and grows above it)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-169 §11.168.2**, the size rule | A canvas mark is a **constant size in screen points at every zoom**, and *"the proportional rule is retired, not re-tuned"*, because shrinking the fraction would keep the property that caused the complaint. | **A mark is the LARGER of a screen floor and a fraction of the plan** (§11.182.1): 11 points, or 1/200 of the underlay's geometric mean, whichever is bigger. Constant on screen below the crossover and a fixed piece of the drawing above it. The retired rule returns BOUNDED, which is the part §11.168.2 did not consider: it weighed re-tuning the fraction and not flooring it. |
+| **DR-169 §11.168.2**, the floor's value | Seven points, *"a starting value chosen to sit between the close radius and a mark that covers a doorway"*. | **Eleven**, on §11.168's own closing clause that the point size is appearance and is the user's. Chosen from 9, 11 and 14 drawn at actual size. |
+
+**NOT superseded, and listed because it will otherwise be cut by association:** §11.168.2's OTHER
+half, that one place computes the radius per surface and the drawn mark and the hit box are the same
+figure at every zoom. DR-183 changes the size and never the agreement. §11.168.10's printed radius and
+§11.168.11's line weight are untouched: a sheet has no zoom to cross a threshold with.
 
 
 ## 13. Resolved §10 questions
