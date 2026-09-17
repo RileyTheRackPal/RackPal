@@ -12310,6 +12310,113 @@ Two cells contradicted the ruling that narrowed them, in the document a reader m
 
 **Commits** (§8.8): `#91` `4547ad41` (docs/00 §1, §3, §5 and §7).
 
+#### 5.9.64 `#910`: the plan mark sticks at a floor and grows with the plan · `DR-183` · no version move
+
+2026-09-17, reported by the user with a screenshot: *"we need to increase the site view pin size a
+bit; I feel like it should 'stick' at a certain size below a certain zoom level ... zooming out it
+stays physically this size, zooming in it should grow relatively in size to the room plan underlay."*
+**New ruling, DR-183 §11.182**, because it changes what §11.168.2 decided rather than adding a clause
+beside it, which is what `#904` and `#905` did. Listed at §12.36. It closes under `#786` and moves no
+number.
+
+**DEMONSTRATED** by six cases in `plan_canvas_screen_test.dart`, four of them properties of the rule
+and two driving the widget, and by three mutations run against them.
+
+##### 5.9.64.1 Measured first, and the screenshot was not
+
+`plan_canvas_screen.dart` computed `kPlanMarkerRadiusPt / viewport.scale`. That is a **7-point radius
+on screen at every zoom in the range, 5% to 3200%**, by construction rather than by measurement, and
+it is `#897`'s rule working exactly as ruled.
+
+**THE SCREENSHOT YIELDS NO NUMBER AND THAT IS RECORDED RATHER THAN WORKED AROUND.** It is a crop at an
+unknown zoom of a plan whose pixel dimensions are unknown, so nothing in it converts into points. A
+figure read off it would have been this repository's own *"a guess wearing a measurement's clothes"*,
+and the temptation was real: the request arrived WITH an example, which is usually the thing that
+makes a measurement possible. The two numbers came from the user instead, chosen against **four discs
+drawn at actual size** and a chart of size against zoom. That method is §11.168.11's, where the user
+picked a line weight from three drawn side by side at the same enlargement.
+
+##### 5.9.64.2 The rule is one `max`, and the crossover is a consequence
+
+`max(kPlanMarkerMinRadiusPt / scale, kPlanMarkerPlanFraction * sqrt(w * h))`, in scene units. The
+first term is constant on the SCREEN, the second constant on the PLAN, and the larger wins. A third
+number for the threshold would be a number to keep in step with the other two.
+
+| | Below the crossover | Above it |
+|---|---|---|
+| What is fixed | the points on screen | the piece of floor covered |
+| Why | a mark is aimed at with a pointer, which `kOutlineCloseRadiusPt` says for the close test in its own words | *"relative in size to the room plan underlay"*, which is the request |
+| Which rule | §11.168.2's, kept | the one §11.168.2 retired, returning bounded |
+
+**The floor rose from 7 to 11 points**, chosen by the user from 9, 11 and 14 drawn at actual size.
+**No reason is attributed to them**, because none was given and §11.168's closing clause does not ask
+for one. What IS recorded is the two measurable consequences: the domain glyph fills a box of
+`kPlanGlyphSideFactor` radii and grows from **8.05 points across to 12.65**, and a device's ring,
+being a constant 2 logical pixels, **falls from 28.6% of the radius to 18.2%**. The second was
+checked rather than assumed, because §11.168.11 sets a ceiling near 37% to keep a ring out of the
+corners of Network's square glyph and a bigger mark is exactly the shape of change that could have
+crowded it. It moves the other way: the ring does not grow with the mark.
+
+**1/100 WAS OFFERED AND DECLINED, AND THE OPTION SAID WHY BEFORE IT WAS DECLINED.** It is within
+rounding of the retired `kPlanMarkerRadiusFraction`'s 1/110, so a mark would reach four times the
+floor at four times the fitted zoom, which is the size the original complaint was about. Offering it
+without that sentence attached would have been an option the user could not price.
+
+##### 5.9.64.3 The anchor is the geometric mean, on a measurement already in the record
+
+The obvious anchor is the underlay's longer side, because that is what the retired constant used.
+**§11.168.10 had already measured it going wrong**, on paper, with a fraction of exactly this shape:
+6.87 points on a 2000x1500 plan, 5.15 on 1500x2000 and 10.20 on a 4000x1000 panorama, from one
+fraction, because a fit binds on the tighter axis while the fraction reads the longer one. A corridor
+scanned in one strip is a real plan.
+
+So `sqrt(w * h)`, which has no cliff and agrees with the longer side on a square scan. This is the
+one clause in DR-183 the user did not choose, and it is recorded as an implementation clause: the
+option they answered said *"1/200 of the plan"*, and the geometric mean reads 2901 on a 3300x2550
+scan against a longer side of 3300, so it moves the crossover **1.14x further in**.
+
+**AND THE CROSSOVER AGAINST THE FITTED ZOOM IS A RANGE, WHICH THE FIRST DRAFT OF THIS SECTION WROTE
+AS A NUMBER.** It said *"about 2.7x fit"*. The fit depends on the window, so the honest figure is
+**2.3x fit in a 1920-point canvas and 3.4x in an 1100-point one** on this scan, over
+`fitToContent`'s own 0.9 margin. The option the user answered carried "about 2x fit" as its own
+rough gloss, and that gloss is the same kind of estimate: it orients, and it is not a constant.
+
+##### 5.9.64.4 The consumer that was not a scene
+
+`PlanPinBubble` takes the mark's radius **in screen points** so the hover label clears it, and it was
+handed the constant. That was correct while the constant WAS the screen radius, and silently wrong
+the moment it stopped being: at 16x on the test fixture the label would have lifted by 37 points off
+a mark measuring 39, sitting inside the dot it names, worse the further in somebody zoomed. **No case
+in the file read its position**, which is how it would have shipped. The screen radius is now its own
+getter beside the scene one.
+
+##### 5.9.64.5 Evidence
+
+- **Six new cases**, and four of them assert a PROPERTY rather than the expression: the mark never
+  goes under the floor across a 200-step sweep of the whole zoom range, it grows in step with the
+  zoom once it has left the floor, it never steps (non-decreasing, and never outrunning the zoom, two
+  bounds that between them forbid a jump in either direction), and it does not care which way up the
+  scan is. Retyping `max(floor / scale, fraction * sqrt(w * h))` into a case would have proved that
+  Dart's `max` works.
+- **Two drive the widget**, both reading the render object's own scene for `#903`'s reason: the drawn
+  mark doubles between 8x and 16x while a click twenty points off centre goes from missing to
+  hitting, and the hover label clears the grown mark.
+- **THREE MUTATIONS, RUN.** Replacing the `max` with the floor term alone reddened two cases;
+  swapping `sqrt(w * h)` for the longer side reddened the aspect case and one of the older ones.
+  **The aspect case passed the first mutation vacuously**, because two marks both sitting on the
+  floor agree for a reason that has nothing to do with the anchor, so it gained a guard asserting the
+  anchored term is the one in play. That is the mutation run earning its keep rather than confirming
+  a green.
+- **The older group is renamed and two of its titles are corrected.** `AND IT NO LONGER DEPENDS ON
+  HOW BIG THE PLAN IS` outlived its rule by one ruling and now reads `AND BELOW THE CROSSOVER IT DOES
+  NOT DEPEND ...`; `THE MARK IS THE SAME SIZE ON SCREEN AFTER A ZOOM` gained `THAT STAYS UNDER THE
+  CROSSOVER`. Both still pass unchanged, because the 600x400 fixture's crossover sits near 4.5x and
+  every case in that group runs below it. **A title that overclaims is how a suite ends up asserting
+  a defect**, which this repository has found more than once.
+- **Test floor**: `rackpal_ui` 1938 to 1944, measured after the change.
+
+**Commits** (§8.8): to follow in this section when they land.
+
 
 ---
 

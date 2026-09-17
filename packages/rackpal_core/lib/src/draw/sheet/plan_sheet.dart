@@ -118,10 +118,16 @@ const double kPlanScaleBarBaselinePt = 13;
 /// the user gave is "the same size as the pill" and not a number, so a
 /// pill the print re-tunes carries the mark with it.
 ///
-/// **NOT THE SCREEN'S POINT SIZE.** `kPlanMarkerRadiusPt` lives in
+/// **NOT THE SCREEN'S POINT SIZE.** `kPlanMarkerMinRadiusPt` lives in
 /// `rackpal_ui` and is aimed at with a pointer. A printed mark is read at
 /// arm's length and aimed at with nothing, and a screen figure borrowed for
 /// paper would be a guess wearing a measurement's clothes.
+///
+/// **AND THE SCREEN'S RULE STOPPED BEING A SINGLE NUMBER AT `#910`**
+/// (DR-183): a canvas mark now sticks at a floor and grows with the plan
+/// above a crossover. A sheet has no zoom to cross one with, so this
+/// constant is unaffected, and the reasoning above is why rather than an
+/// oversight.
 ///
 /// WHAT IT REPLACED, MEASURED ON ANSI B LANDSCAPE: 1/110 of the underlay's
 /// longer side printed at 6.87 points on a 2000x1500 plan, 5.15 on a

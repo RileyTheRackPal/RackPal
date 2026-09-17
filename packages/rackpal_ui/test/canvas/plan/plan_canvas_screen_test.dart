@@ -5,6 +5,7 @@
 // test that pinned the live drag position would survive the command never
 // running at all.
 
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
@@ -758,7 +759,7 @@ void main() {
       // centred under the pointer at (333, 222).
       //
       // THE GRAB IS ONLY 3px OFF CENTRE BECAUSE THE MARKER IS SMALL. Its
-      // radius is `kPlanMarkerRadiusPt` at this harness's 1:1, and was a
+      // radius is `kPlanMarkerMinRadiusPt` at this harness's 1:1, and was a
       // fraction of the underlay's long side (600 / 110, about 5.5 units)
       // when an earlier draft of this case grabbed 12 units out, missed
       // the hit box entirely and asserted that nothing moved -- which it
@@ -1812,6 +1813,15 @@ void main() {
   // makes the point size appearance and the user's, so a case pinning `7`
   // would go red the first time they ask for a different mark. What must
   // hold is that the hit box is where the mark is, at every zoom.
+  //
+  // **AND THEY ASKED, WHICH IS WHY THIS GROUP IS NOW HALF OF A RULE**
+  // (`#910`, DR-183 §11.182.1). The constant-size rule holds BELOW a
+  // crossover and the mark grows with the plan above it, so every case
+  // here runs on the 600x400 fixture whose crossover sits at about 4.5x.
+  // The growth half is the group after this one. **The case that would
+  // have gone quietly wrong is `AND IT NO LONGER DEPENDS ON HOW BIG THE
+  // PLAN IS`**: its title outlived its rule by one ruling, and a title
+  // that overclaims is how a suite ends up asserting a defect.
   // ═════════════════════════════════════════════════════════════════════
   // AND THE FIRST VERSION OF THIS GROUP DID THE ARITHMETIC ITSELF
   // ═════════════════════════════════════════════════════════════════════
@@ -1822,7 +1832,7 @@ void main() {
   // 2026-09-14, because the screen builds its scene in `build` and a zoom
   // only ever REPAINTED the scene already in the tree. Every reading below
   // comes off the render object.
-  group('the mark is a constant size on screen (`#897`, §11.168.2)', () {
+  group('the mark sticks at a floor size on screen (`#897`, `#910`)', () {
     /// The marker's half-width ON SCREEN, in points, read from the scene
     /// the render object is actually holding and mapped through the live
     /// viewport exactly as the paint does.
@@ -1856,8 +1866,12 @@ void main() {
       );
     });
 
-    testWidgets('THE MARK IS THE SAME SIZE ON SCREEN AFTER A ZOOM, which is '
-        'the whole of what was asked for', (tester) async {
+    testWidgets('THE MARK IS THE SAME SIZE ON SCREEN AFTER A ZOOM THAT '
+        'STAYS UNDER THE CROSSOVER', (tester) async {
+      // 400% is still below this fixture's crossover, which is why this
+      // case reads the same after DR-183 as it did before it. On a plan
+      // four times the size it would be above it, and the group after
+      // this one is where that is asserted.
       final c = _controller(pinnedAt: const PxPt(300, 200));
       final h = await pump(tester, c);
       final atOne = markerScreenRadius(tester, h.viewport);
@@ -1917,23 +1931,30 @@ void main() {
       expect(
         h.selection.ids,
         isNotEmpty,
-        reason: 'four points off centre is inside a seven-point mark',
+        reason: 'four points off centre is inside an eleven-point mark',
       );
     });
 
-    testWidgets('AND IT NO LONGER DEPENDS ON HOW BIG THE PLAN IS, which is '
-        'what made an architectural sheet unusable', (tester) async {
+    testWidgets('AND BELOW THE CROSSOVER IT DOES NOT DEPEND ON HOW BIG THE '
+        'PLAN IS, which is what made an architectural sheet unusable', (
+      tester,
+    ) async {
       // The old rule read the underlay's longer side, so the same mark was
       // 5 units on this fixture and 30 on a 3300-unit scan.
+      //
+      // THE TITLE CARRIES "BELOW THE CROSSOVER" SINCE DR-183. Above it the
+      // size depends on the plan again, on purpose, and a title still
+      // reading "no longer depends" would have been this suite asserting
+      // that the ruling had not landed.
       final c = _controller(pinnedAt: const PxPt(300, 200));
       final h = await pump(tester, c);
 
       expect(
         markerScreenRadius(tester, h.viewport),
-        closeTo(kPlanMarkerRadiusPt, 1e-9),
+        closeTo(kPlanMarkerMinRadiusPt, 1e-9),
         reason:
-            'at 1:1 the scene radius IS the point radius, whatever the '
-            'underlay measures',
+            'at 1:1 on a plan this small the floor wins, so the scene '
+            'radius IS the point radius whatever the underlay measures',
       );
     });
 
@@ -1996,6 +2017,250 @@ void main() {
           );
         }
       }
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // AND IT GROWS WITH THE PLAN ABOVE THE CROSSOVER (`#910`, DR-183)
+  // ═════════════════════════════════════════════════════════════════════
+  // Reported from the product, 2026-09-17: *"we need to increase the site
+  // view pin size a bit; I feel like it should 'stick' at a certain size
+  // below a certain zoom level ... zooming out it stays physically this
+  // size, zooming in it should grow relatively in size to the room plan
+  // underlay."*
+  //
+  // ═════════════════════════════════════════════════════════════════════
+  // THESE ASSERT THE SHAPE, NOT THE EXPRESSION
+  // ═════════════════════════════════════════════════════════════════════
+  // `max(floor / scale, fraction * sqrt(w * h))` retyped into a case
+  // proves that Dart's `max` works. What the ruling actually promises is
+  // four things a person can feel, and each one below is one of them: the
+  // mark never shrinks past a floor, it grows in step with the zoom once
+  // it has left that floor, it never jumps as you pass through, and it
+  // does not care which way up the scan is. A future re-tune of either
+  // number moves every figure here and breaks none of these cases, which
+  // is the test this suite has been burned for not writing twice.
+  group('and it grows with the plan above the crossover (`#910`, DR-183)', () {
+    /// The marker's half-width ON SCREEN for a plan of [w] by [h] at
+    /// [scale], in points.
+    double screenRadius(double scale, {int w = 3300, int h = 2550}) =>
+        planMarkerSceneRadius(scale: scale, pixelWidth: w, pixelHeight: h) *
+        scale;
+
+    /// The scales a zoom control can actually reach, geometrically spaced
+    /// so the sweep is as dense at 10% as it is at 20x.
+    List<double> zoomSweep() {
+      const steps = 200;
+      final ratio = math.pow(kMaxScale / kMinScale, 1 / steps);
+      return [
+        for (var i = 0; i <= steps; i++) kMinScale * math.pow(ratio, i),
+      ];
+    }
+
+    test('THE FLOOR HOLDS ALL THE WAY DOWN, so a mark on a fitted '
+        'architectural sheet is still something a person can hit', () {
+      // The reachability half of §11.168.2, which DR-183 keeps: a mark
+      // that shrank with the plan would be sub-point on a 3300-unit scan
+      // fitted into a window, and `kOutlineCloseRadiusPt` gives the same
+      // reason for the close test in its own words.
+      for (final scale in zoomSweep()) {
+        expect(
+          screenRadius(scale),
+          greaterThanOrEqualTo(kPlanMarkerMinRadiusPt - 1e-9),
+          reason: 'at ${scale}x the mark went under the floor',
+        );
+      }
+      expect(
+        screenRadius(kMinScale),
+        closeTo(kPlanMarkerMinRadiusPt, 1e-9),
+        reason: 'and at the smallest zoom there is, it IS the floor',
+      );
+    });
+
+    test('AND ONCE IT HAS LEFT THE FLOOR IT GROWS IN STEP WITH THE ZOOM, '
+        'which is what "relative to the underlay" means', () {
+      // A mark that is a fixed piece of the drawing covers the same piece
+      // of floor at every zoom, so doubling the zoom doubles it on screen
+      // and its SCENE radius does not move at all.
+      const far = kMaxScale;
+      const half = far / 2;
+
+      expect(
+        screenRadius(far),
+        closeTo(screenRadius(half) * 2, 1e-9),
+        reason: 'twice the zoom, twice the mark, once it is off the floor',
+      );
+      expect(
+        screenRadius(far),
+        greaterThan(kPlanMarkerMinRadiusPt * 2),
+        reason:
+            'and it has to have LEFT the floor for that to mean anything, '
+            'or this case passes on a rule that never grows',
+      );
+      expect(
+        planMarkerSceneRadius(scale: far, pixelWidth: 3300, pixelHeight: 2550),
+        closeTo(
+          planMarkerSceneRadius(
+            scale: half,
+            pixelWidth: 3300,
+            pixelHeight: 2550,
+          ),
+          1e-9,
+        ),
+        reason: 'the same piece of the plan, which is the point',
+      );
+    });
+
+    test('THE TWO RULES MEET WITHOUT A STEP, so nothing snaps as the zoom '
+        'passes through the crossover', () {
+      // Two properties bracket the shape completely: the mark never gets
+      // smaller as you zoom in, and it never grows FASTER than the zoom.
+      // A jump in either direction breaks one of them, and neither one
+      // restates the expression.
+      final scales = zoomSweep();
+      for (var i = 1; i < scales.length; i++) {
+        final lo = scales[i - 1];
+        final hi = scales[i];
+        final rLo = screenRadius(lo);
+        final rHi = screenRadius(hi);
+        expect(
+          rHi,
+          greaterThanOrEqualTo(rLo - 1e-9),
+          reason: 'the mark shrank between ${lo}x and ${hi}x',
+        );
+        expect(
+          rHi / rLo,
+          lessThanOrEqualTo(hi / lo + 1e-9),
+          reason: 'the mark outran the zoom between ${lo}x and ${hi}x',
+        );
+      }
+    });
+
+    test('AND THE ANCHOR DOES NOT CARE WHICH WAY UP THE SCAN IS, which is '
+        'the defect §11.168.10 measured on paper', () {
+      // The longer side printed 6.87 points on a 2000x1500 plan, 5.15 on
+      // 1500x2000 and 10.20 on a 4000x1000 panorama, all from one
+      // fraction, because a fit binds on the tighter axis while the
+      // fraction reads the longer one. A corridor scanned in one strip is
+      // a real plan.
+      const far = kMaxScale;
+      // AND THE GUARD IS NOT DECORATION. Two marks both sitting on the
+      // floor agree for a reason that has nothing to do with the anchor,
+      // so without this line the case passes on a rule that never grows
+      // at all, which a mutation run confirmed.
+      expect(
+        screenRadius(far, w: 2000, h: 1500),
+        greaterThan(kPlanMarkerMinRadiusPt),
+        reason: 'the anchored term has to be the one in play here',
+      );
+      expect(
+        screenRadius(far, w: 2000, h: 1500),
+        closeTo(screenRadius(far, w: 1500, h: 2000), 1e-9),
+        reason: 'a plan turned on its side is the same plan',
+      );
+      expect(
+        screenRadius(far, w: 4000, h: 1000),
+        closeTo(screenRadius(far, w: 2000, h: 2000), 1e-9),
+        reason:
+            'a panorama and a square scan of the same area take the same '
+            'mark, where the longer side would have doubled it',
+      );
+    });
+
+    testWidgets('THROUGH THE PRODUCT: the drawn mark grows past the '
+        'crossover and the clicks follow it', (tester) async {
+      // This fixture is 600x400, so its crossover sits near 4.5x and the
+      // group above owns everything under it. Both readings here come off
+      // the render object's own scene, for `#903`'s reason: the screen
+      // builds the scene in `build` and a zoom that only repainted would
+      // leave the radius the last build computed.
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
+
+      double onScreen() {
+        final ro = tester.renderObject<RenderPlanCanvas>(
+          find.byType(PlanCanvasBody),
+        );
+        return ro.scene.hits.single.bounds.width / 2 * h.viewport.scale;
+      }
+
+      // Twenty points off centre is OUTSIDE the mark at 1:1.
+      await tester.tapAt(const Offset(320, 200));
+      await tester.pump();
+      expect(h.selection.ids, isEmpty, reason: 'twenty points off at 1:1');
+
+      h.viewport.zoomBy(8, screenPivot: const Offset(300, 200));
+      await tester.pump();
+      final atEight = onScreen();
+      expect(
+        atEight,
+        greaterThan(kPlanMarkerMinRadiusPt),
+        reason: "8x is past this fixture's crossover",
+      );
+
+      h.viewport.zoomBy(2, screenPivot: const Offset(300, 200));
+      await tester.pump();
+      expect(h.viewport.scale, closeTo(16, 1e-9));
+      expect(
+        onScreen(),
+        closeTo(atEight * 2, 1e-6),
+        reason: 'and the DRAWN mark doubled with the zoom, not just the rule',
+      );
+
+      // And the same twenty points is now INSIDE it.
+      final centre = h.viewport.sceneToScreen(const DPt(300, 200));
+      await tester.tapAt(Offset(centre.x + 20, centre.y));
+      await tester.pump();
+      expect(
+        h.selection.ids,
+        isNotEmpty,
+        reason:
+            'the hit box grew with the mark, which is the agreement '
+            'clause of §11.168.2 surviving a change to the size',
+      );
+    });
+
+    testWidgets('AND THE HOVER LABEL STILL CLEARS THE MARK IT NAMES', (
+      tester,
+    ) async {
+      // `PlanPinBubble` takes the radius in SCREEN points and was handed
+      // the constant, which was the screen radius until this ruling. Left
+      // alone it would have parked the designator INSIDE a grown mark,
+      // further in the further somebody zoomed, and no case in this file
+      // read its position.
+      final c = _controller(pinnedAt: const PxPt(300, 200));
+      final h = await pump(tester, c);
+      h.viewport.zoomBy(16, screenPivot: const Offset(300, 200));
+      await tester.pump();
+
+      final centre = h.viewport.sceneToScreen(const DPt(300, 200));
+      final radius =
+          tester
+              .renderObject<RenderPlanCanvas>(find.byType(PlanCanvasBody))
+              .scene
+              .hits
+              .single
+              .bounds
+              .width /
+          2 *
+          h.viewport.scale;
+
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      addTearDown(mouse.removePointer);
+      await mouse.addPointer(location: Offset.zero);
+      await mouse.moveTo(Offset(centre.x, centre.y));
+      await tester.pumpAndSettle();
+
+      final bubble = tester.getRect(find.byKey(PlanPinBubble.bubbleKey));
+      expect(
+        centre.y - bubble.top,
+        greaterThanOrEqualTo(radius),
+        reason:
+            'the label is lifted by the mark it names, which measures '
+            '${radius.toStringAsFixed(1)} points here. Handed the floor '
+            'constant instead it lifts by 37 against a radius of 39, so '
+            'the designator sits inside the dot',
+      );
     });
   });
 

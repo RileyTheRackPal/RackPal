@@ -626,11 +626,23 @@ and each answers a different question.
 | **Colour** | Which signal DOMAIN, from CR-078's own hue | Colour lives on the domain and nowhere else. The value is authored on the template, never derived: of 51 seeded templates only 13 have ports in one domain (§11.168.5) |
 | **Glyph** | The same domain again, in ink | Canon §14 records that the eight hues **collide in greyscale by design**, three inside one luminance band, and `plan_sheet.dart` splices this scene into a `T1.01` the Installer preset prints greyscale. PAL-3 separates a LINE by dash and weight; a filled dot has neither |
 
-**THE MARK IS A CONSTANT SIZE IN SCREEN POINTS**, at every zoom, and it was 1/110 of the underlay's
-longer side in SCENE units until `#897`. On a 3300-unit architectural sheet that was a **60-point
-mark at 1:1** with a hit box to match, reported from the product as *"the pin size on the room view
-is massive"*. Zooming in shows more PLAN, not a bigger dot, which is the rule
-`kOutlineCloseRadiusPt` already states for the close test.
+**THE MARK STICKS AT A FLOOR SIZE AND GROWS WITH THE PLAN ABOVE A CROSSOVER** (DR-183 §11.182.1,
+`#910`, 2026-09-17). Its radius is the larger of **11 screen points** and **1/200 of the plan**, so
+below the crossover it is a constant size a pointer can aim at and above it a fixed piece of the
+drawing that covers the same floor at any zoom. The plan's size for that fraction is the
+**geometric mean of the underlay's two pixel dimensions and not its longer side**, which is the
+anchor §11.168.10 measured going wrong on paper: one fraction printed 6.87 points on a 2000x1500
+plan, 5.15 on 1500x2000 and 10.20 on a 4000x1000 panorama, because a fit binds on the tighter axis
+while the fraction reads the longer one.
+
+**THIS PARAGRAPH READ "A CONSTANT SIZE IN SCREEN POINTS, AT EVERY ZOOM" UNTIL `#910`**, which was
+`#897`'s rule, and DR-183 keeps that half rather than reversing it: the floor is where the
+reachability argument lives, and it is the rule `kOutlineCloseRadiusPt` already states for the close
+test. What came back is the proportional rule §11.168.2 retired, bounded this time, because a mark
+that never grows stops belonging to the drawing once somebody is inside one room. **The retired
+fraction was 1/110 of the underlay's LONGER side in SCENE units with no floor at all**: on a
+3300-unit architectural sheet a **60-point mark at 1:1** with a hit box to match, reported from the
+product as *"the pin size on the room view is massive"*, and four times that again at 400%.
 
 **AND IT TOOK TWO GOES, BECAUSE THE SCREEN HAS TO REBUILD AND NOT ONLY REPAINT.** `#897` divided the
 point size by the zoom in `build`, and `RenderPlanCanvas` listens to the viewport with

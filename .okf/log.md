@@ -1,5 +1,28 @@
 # Update Log
 
+## 2026-09-17 (fifty-seventh entry)
+
+* **Closed**: `#910`, ruled as
+  [DR-183](/decisions/dr-183-a-mark-sticks-then-grows.md). A plan mark's radius is the larger of an
+  11-point screen floor and 1/200 of the plan, so it is a constant size below a crossover and a
+  fixed piece of the drawing above it. **No version move**: it closes under `#786`.
+* **Update**: [DR-169](/decisions/dr-169-a-plan-mark-says-what-it-is.md) §11.168.2 is **superseded in
+  part** (canon §12.36). Its agreement clause stands; its size rule does not.
+* **Note**: **AN EXAMPLE IS NOT A MEASUREMENT.** The request arrived with a screenshot of the wanted
+  minimum size, which is exactly the shape that makes a measurement feel available. It is a crop at
+  an unknown zoom of a plan of unknown pixel dimensions and yields no number at all. The numbers came
+  from the user instead, against four discs drawn at actual size, which is §11.168.11's own method.
+* **Note**: **AN OPTION HAS TO CARRY ITS OWN PRICE.** One of the three fractions offered was within
+  rounding of the retired rule that produced the original *"massive"* complaint. Offering it silently
+  would have let the user re-choose the defect by name; the option said so, and they declined it.
+* **Note**: **A MUTATION RUN THAT ONLY CONFIRMS A GREEN IS ONE NOBODY NEEDED.** Three were run. One
+  left a new case green for a reason unrelated to what it asserts: two marks both resting on the
+  floor agree whatever the anchor is. That case gained a guard.
+* **Note**: **A TEST TITLE CAN OUTLIVE ITS RULE WITHOUT GOING RED.** `AND IT NO LONGER DEPENDS ON HOW
+  BIG THE PLAN IS` still passes, on a fixture whose crossover it never reaches, while describing a
+  rule that no longer holds everywhere. Renamed in the same change. The family it belongs to is
+  [assert the artifact, not the mechanism](/practices/assert-the-artifact-not-the-mechanism.md).
+
 ## 2026-09-16 (fifty-sixth entry)
 
 * **Closed**: `#91` with ``4547ad41``, citing

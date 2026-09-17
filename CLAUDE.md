@@ -293,9 +293,33 @@ The board mirrors **structure**; the reasoning lives in `docs/12` and `docs/13`.
   `Parameter name: A description for a pull request must not be longer than 4000
   characters.`, three times running. The second line is easy to lose if the
   output is piped through anything that keeps only the first, which is the most
-  likely reason it was recorded as silent. **Measure in CHARACTERS, not bytes**:
-  `§`, `→` and `▸` are multi-byte, so a file `wc -c` calls 4,164 can be 4,142
-  characters, and trimming to the byte count overshoots.
+  likely reason it was recorded as silent. **AND THE UNIT IS NEITHER
+  CHARACTERS NOR BYTES**, which this bullet has now had wrong in both
+  directions: it said bytes, was corrected to *"measure in CHARACTERS, not
+  bytes"* on 2026-09-13, and a description of **exactly 4,000 characters was
+  refused** on PR 144. **It is 4,000 UTF-16 CODE UNITS**, which is what
+  `String.Length` counts in the service's own runtime, so **an astral
+  character costs two** and everything in the BMP costs one however many
+  UTF-8 bytes it takes.
+  **MEASURED ON PR 144, 2026-09-17**, one variable at a time. Every acceptance
+  is at or under 4,000 units and both refusals are at 4,001, and nothing else
+  separates them:
+
+  | Description | chars | UTF-8 bytes | UTF-16 units | Result |
+  |---|---|---|---|---|
+  | the real one, with its emoji | 4,000 | 4,013 | 4,001 | **refused** |
+  | `x` x 3999 + one emoji | 4,000 | 4,003 | 4,001 | **refused** |
+  | `x` x 4000 | 4,000 | 4,000 | 4,000 | accepted |
+  | `x` x 3999 + one `§` | 4,000 | 4,001 | 4,000 | accepted |
+  | `x` x 3998 + one emoji | 3,999 | 4,002 | 4,000 | accepted |
+  | `x` x 3990 + ten `→` | 4,000 | **4,020** | 4,000 | accepted |
+
+  The last row is the one that kills the byte reading, and the fourth kills
+  the character reading. **THE STING IS THE ATTRIBUTION LINE**: the emoji this
+  repository ends every PR description with is astral, so a description
+  trimmed to exactly 4,000 characters is always 4,001 units and always
+  refused. Count `len(text.encode('utf-16-le')) // 2`, and the cheapest way to
+  stay clear of all three readings is to leave a line of slack.
 - **`az repos pr create` SILENTLY STRIPS EVERY NON-ASCII CHARACTER** from a
   description passed by `@file`, even though the file is UTF-8 and the same file
   posts correctly over REST. Measured on PR 101, 2026-09-12: `§` vanished from

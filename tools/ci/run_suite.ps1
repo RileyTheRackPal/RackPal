@@ -1316,7 +1316,14 @@ $SuiteFloors = @{
     # 1938 at `#80`'s second half: +3 for the `WIRING` column. The one
     # worth having is the COAX row, which gets read-only text: an enabled
     # control whose every use the write path refuses is `#711` again.
-    'rackpal_ui'     = 1938
+    # 1944 at `#910` (DR-183): +6 for the plan mark's floor-and-growth
+    # rule. Four state a PROPERTY of the rule rather than its expression
+    # (it never goes under the floor, it grows in step with the zoom, it
+    # never steps, and it ignores which way up the scan is) and two drive
+    # the widget: the drawn mark with its hit box, and the hover label,
+    # which was the consumer taking the constant while the constant still
+    # WAS the screen radius. Measured after the change, not predicted.
+    'rackpal_ui'     = 1944
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
