@@ -81,9 +81,15 @@ import 'package:rackpal_ui/src/keymap/keymap.dart';
 /// **THE NUMBER IS APPEARANCE AND IS THE USER'S** (§11.168's closing
 /// clause). It was **7 until `#910`**, chosen at `#897` as a starting
 /// value; the user asked for *"a bit"* more and picked eleven from 9, 11
-/// and 14 drawn at actual size. Eleven is where the domain's glyph, whose
-/// box is [kPlanGlyphSideFactor] radii, becomes something a person reads
-/// rather than a smudge, which is the product reason to grow it at all.
+/// and 14 drawn at actual size. No reason is attributed to them beyond
+/// that, because none was given and none is owed.
+///
+/// **TWO CONSEQUENCES, THE SECOND CHECKED RATHER THAN ASSUMED.** The
+/// domain's glyph fills a box of [kPlanGlyphSideFactor] radii, so it grows
+/// from **8.05 points across to 12.65**. And a device's RING is a constant
+/// 2 logical pixels, so as a fraction of the radius it **falls from 28.6%
+/// to 18.2%**, further clear of the ~37% ceiling [kPlanGlyphSideFactor]
+/// records rather than nearer it: the ring does not grow with the mark.
 ///
 /// **THE PRINTED MARK IS A DIFFERENT NUMBER FOR A DIFFERENT READER.**
 /// `kPlanMarkPrintRadiusPt`, in core, is the callout pill's round end

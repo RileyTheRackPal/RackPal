@@ -21685,9 +21685,16 @@ the user. A canvas mark is `max(11 points / scale, (1/200) x planSize)` in scene
 - **Above it** the second wins and the mark is a **fixed piece of the drawing**, covering the same
   floor however far in somebody goes. This is the rule §11.168.2 retired, returning bounded.
 
-**The floor was 7 and is 11.** Chosen from 9, 11 and 14 drawn at actual size. Eleven is where the
-domain's glyph, whose box is `kPlanGlyphSideFactor` radii, becomes something a person reads rather than
-a smudge, which is the product reason to grow it at all.
+**The floor was 7 and is 11.** Chosen by the user from 9, 11 and 14 drawn at actual size, and that is
+where the clause ends: §11.168's closing clause makes the point size appearance and theirs, so **no
+reason is attributed to them here**.
+
+**THE MEASURABLE CONSEQUENCES ARE TWO, AND THE SECOND WAS CHECKED RATHER THAN ASSUMED.** The domain's
+glyph fills a box of `kPlanGlyphSideFactor` radii, so it grows from **8.05 points across to 12.65**.
+And a device's ring is a constant 2 logical pixels (§11.168.11), so as a fraction of the radius it
+**falls from 28.6% to 18.2%**, moving further clear of the roughly 37% ceiling §11.168.11 sets to keep
+a ring out of the corners of Network's square glyph. A bigger mark could have crowded that ceiling; it
+does the opposite, because the ring does not grow with it.
 
 **THE FRACTION AT 1/100 WAS OFFERED AND DECLINED**, and the reason belongs in the record: that is within
 rounding of the retired `kPlanMarkerRadiusFraction`'s 1/110, so at four times the fitted zoom a mark

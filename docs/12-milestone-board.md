@@ -12348,8 +12348,14 @@ number for the threshold would be a number to keep in step with the other two.
 | Why | a mark is aimed at with a pointer, which `kOutlineCloseRadiusPt` says for the close test in its own words | *"relative in size to the room plan underlay"*, which is the request |
 | Which rule | §11.168.2's, kept | the one §11.168.2 retired, returning bounded |
 
-**The floor rose from 7 to 11 points**, chosen from 9, 11 and 14. Eleven is where the domain glyph,
-whose box is `kPlanGlyphSideFactor` radii, becomes readable rather than a smudge.
+**The floor rose from 7 to 11 points**, chosen by the user from 9, 11 and 14 drawn at actual size.
+**No reason is attributed to them**, because none was given and §11.168's closing clause does not ask
+for one. What IS recorded is the two measurable consequences: the domain glyph fills a box of
+`kPlanGlyphSideFactor` radii and grows from **8.05 points across to 12.65**, and a device's ring,
+being a constant 2 logical pixels, **falls from 28.6% of the radius to 18.2%**. The second was
+checked rather than assumed, because §11.168.11 sets a ceiling near 37% to keep a ring out of the
+corners of Network's square glyph and a bigger mark is exactly the shape of change that could have
+crowded it. It moves the other way: the ring does not grow with the mark.
 
 **1/100 WAS OFFERED AND DECLINED, AND THE OPTION SAID WHY BEFORE IT WAS DECLINED.** It is within
 rounding of the retired `kPlanMarkerRadiusFraction`'s 1/110, so a mark would reach four times the

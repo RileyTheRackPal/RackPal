@@ -40,8 +40,10 @@ available and is not.
 
 - **The radius is `max(11 points / scale, (1/200) x planSize)`** in scene units. Constant on screen
   below the crossover, a fixed piece of the drawing above it.
-- **The floor rose from 7 to 11 points**, chosen from three sizes drawn at actual size. Eleven is
-  where the domain glyph inside the mark becomes readable.
+- **The floor rose from 7 to 11 points**, chosen from three sizes drawn at actual size. No reason is
+  attributed to the user beyond the choice. The measurable consequences are that the domain glyph
+  grows from 8.05 points across to 12.65, and that a device's constant-width ring falls from 28.6%
+  of the radius to 18.2%, further clear of the ceiling §11.168.11 sets rather than nearer it.
 - **The plan's size is the geometric mean of its two sides**, not the longer one. The one clause the
   user did not choose, taken on §11.168.10's measurement.
 - Refused: **1/100**, which is within rounding of the retired 1/110 and would reach four times the
