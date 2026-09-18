@@ -12418,6 +12418,66 @@ getter beside the scene one.
 **Commits** (§8.8): to follow in this section when they land.
 
 
+
+#### 5.9.65 `#911`: a floorplan turns in quarter turns, and a lifted page had been ignoring its `/Rotate` · `DR-184` · `v0.6.58`
+
+2026-09-18, from the user: *"the floorplan view, for example, doesn't allow the rotation of
+floorplans."* **New ruling, DR-184 §11.183.** A leaf Story under `#588`, so it moves the number.
+
+**DEMONSTRATED** by cases at four layers, each driven the way the surface is used rather than by
+reading the map back: the scene replayed through a `BoundsCanvas`, the sheet's callout against its
+own mark, the editor by button, key and drop, and the page picker's tile.
+
+##### 5.9.65.1 The report was the smaller half
+
+The request was a missing control. Measuring it found a defect nobody had reported: `_inherited`
+in `pdf_page_lift.dart` carried `/Rotate` down the page tree beside `/MediaBox` and `/Resources`,
+and nothing read it. `LiftedPdfPage` had no field that could hold a turn and the picker previewed the
+lifted bytes as they stand, while pdfium applies `/Rotate` before it renders. So a scanner's landscape
+sheet, which is a portrait page with `/Rotate 90`, came in **sideways by the preferred path and upright
+by the fallback**. The field the user asked for is also the lossless fix: the bytes stay the embedded
+bytes (DR-138 §11.137.3) and the turn rides beside them.
+
+##### 5.9.65.2 One map, where there had been a dozen spellings of the identity
+
+`plan_scene.dart`'s rule that one image pixel is one scene unit had been written out by hand at about
+a dozen sites, as `DPt(p.px.toDouble(), p.py.toDouble())` one way and `PxPt(s.x.round(), s.y.round())`
+the other: the scene, the sheet's callouts, and every overlay and gesture on the canvas. Harmless
+while there was nothing to agree on. `PlanTurn` is now the only crossing, the identity is its zero
+case, and the three overlays take it as a **required** argument on `#904`'s lesson that a defaulted
+identity is a retired rule nobody notices.
+
+**AN UNTURNED PLAN EMITS THE DISPLAY LIST IT ALWAYS DID.** The transform bracket appears only when
+there is a turn, so no existing op count, digest or exported byte moves, and the matrix is built from
+literal entries because `Matrix4.rotationZ(pi / 2)` carries `6.1e-17` where a zero belongs.
+
+##### 5.9.65.3 The host the first question offered did not exist
+
+The user chose buttons *"in the Plan editor's toolbar"* from a menu I wrote. There is no toolbar, and
+docs/15 §6 rules there is no fourth region. Found by reading `plan_editor_screen.dart` before writing
+the buttons, and the host went back to the user as its own question; the rail row won on DR-144
+§11.143.4's precedent. Recorded in canon because a wrong option gets chosen where a wrong claim gets
+corrected, which is the second time this repository has paid for that.
+
+##### 5.9.65.4 Evidence
+
+- **Five mutations, five kills.** Pins back on the identity (4 scene cases), the lifter ignoring
+  `/Rotate` (3 lift cases), the sheet's callouts on the raw pixel (1), the canvas storing the scene
+  point as the pixel (the drop case alone), and the turn not holding the centre (the centre case
+  alone). Each of the last two reddens exactly the case written for it.
+- **The centre case pans first**, so the canvas centre is not the picture's centre. Without that, a
+  view that re-fitted on every turn would also leave the middle of the picture in the middle and the
+  case would pass for the option the user declined.
+- The keymap grows by two rows in the plan scope, 4 to 6 and 74 to 76, and arbitration is clean.
+- **Floors**: `rackpal_core` 4801 to 4835, `rackpal_ui` 1944 to 1950, measured. **Gates**: the full
+  local run was 17 of 19, and both reds were this change's own: the new files unstaged, which is the
+  tracked-sources gate doing its job, and four analyzer infos, three missing `const`s and one import
+  made redundant by another. Both fixed and those two gates re-run alone; the analyzer is back on its
+  pin at 233.
+
+**Commits** (§8.8): the ruling `6cbebff1`, the implementation `a3375336`. These records and the
+version follow in their own commits.
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·

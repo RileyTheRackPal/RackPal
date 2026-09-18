@@ -129,6 +129,8 @@ const Map<LabelKey, String> kUndoLabels = <LabelKey, String>{
   LabelKey.reorderPlanUnderlay: 'Reorder floorplan pages',
   LabelKey.calibratePlan: 'Set plan scale',
   LabelKey.recalibratePlan: 'Change plan scale',
+  LabelKey.rotatePlanClockwise: 'Rotate plan right',
+  LabelKey.rotatePlanAnticlockwise: 'Rotate plan left',
   LabelKey.drawRoomOutline: 'Draw room outline',
   LabelKey.reshapeRoomOutline: 'Reshape room',
   LabelKey.clearRoomOutline: 'Erase room outline',

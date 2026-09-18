@@ -21732,6 +21732,81 @@ sheet is read at arm's length and has no zoom to cross a threshold with, so that
 and that is a decision rather than an oversight. The mark's line weight, which is §11.168.11's drafting
 weight and stays constant on the surface. Colour, the glyph inventory, and the rack asset.
 
+### 11.183 DR-184 · A floorplan turns in quarter turns, saved on the plan
+
+**The question.** From the user, 2026-09-18, on board `#911`: *"the floorplan view, for example,
+doesn't allow the rotation of floorplans."*
+
+**11.183.0 MEASURED FIRST, AND THE DEFECT WAS LARGER THAN THE REPORT.** `PlanUnderlay` carries no
+orientation of any kind (`model/plan.dart`), and `buildPlanScene` maps one image pixel to one scene
+unit with no transform between them, so a plan drawn sideways by its architect stays sideways on
+screen and on `T1.01`. **The second finding is a defect and not a missing feature.** The PDF lifter
+carries `/Rotate` down the page tree with `/MediaBox` and `/Resources` (`pdf_page_lift.dart`,
+`_inherited`) and then **never reads it**: `LiftedPdfPage` has no field that could hold it, and the
+page picker previews the lifted bytes as they stand. pdfium applies `/Rotate` before it renders
+(`pdfium_document.dart`). So a page stored portrait with `/Rotate 90`, which is how scanners and some
+plotters write a landscape sheet, **imports upright when it is rendered and sideways when it is
+lifted**, and lifting is the path the importer prefers.
+
+**11.183.1 RULED: QUARTER TURNS, SAVED ON THE PLAN.** Settled by the user. `PlanUnderlay` gains
+`rotationQuarterTurns`, an integer from 0 to 3, **clockwise** as the plan is seen. The screen and the
+printed sheet both follow it, because they replay one display list (CR-086) and a turn that only the
+screen knew about would be a screen and a sheet that disagree about which way is up.
+`SheetItem.rotationQuarterTurns` (docs/02 §2.11, *"0..3, no float angles"*) is the precedent for the
+name, the range and the integer. **Two options were declined**, and the prices belong in the record:
+
+- **A free angle.** It resamples the architect's line work on screen and on paper, which DR-137 rules
+  is what a floorplan IS; it leaves empty triangles in the corners of the sheet and shrinks the fit to
+  make room for them; and every pin would round-trip through trigonometry.
+- **A view-only turn.** Not saved, so the sheet prints unturned and the next session opens unturned:
+  the screen and the paper would disagree, which is the failure CR-086 exists to make unspellable.
+
+**11.183.2 A STORED COORDINATE NEVER TURNS.** An implementation clause. Pins, the calibration's two
+points and every room outline stay in the image's own pixel space (docs/15 §3.3), and the turn is a
+map applied where a pixel meets the scene. For a quarter turn that map is **exact on integers**, so a
+turn moves nothing, rounds nothing and can be undone by turning back. What follows from it is the
+cheapest possible failure: **a build that does not know the field drops it and shows the plan
+unturned, with every pin still on its drop.** The loss is an orientation and never a drawing, which is
+`PlanSourcePage`'s standard for an ordinary additive optional field, so `kPlanMinReaderVersion` does
+not move.
+
+**11.183.3 THE FILE OMITS AN UNTURNED PLAN.** Absent means 0, so no document in existence changes a
+byte on its next save, on the reasoning that keeps an empty `underlays` map out of the file. A
+present value must be 0 to 3 and anything else is refused at the boundary, on `pageIndex`'s precedent
+in `PlanSourcePage`: nothing is normalised modulo four, because a 5 in a file is somebody's mistake
+and not a turn.
+
+**11.183.4 RULED: THE BUTTONS LIVE ON THE OPEN PLAN'S ROW, AND THE KEYS ARE ACROBAT'S.** Settled by the
+user. Two icon buttons, turn left and turn right, sit beside `Calibrate…` and `Remove…` on the open
+plan's row in the rail, which is the host DR-144 §11.143.4 ruled for a property of a plan. The keys are
+`Ctrl+Shift+Plus` (clockwise) and `Ctrl+Shift+Minus` (anticlockwise) while the plan canvas has focus.
+
+**THE FIRST QUESTION OFFERED A HOST THAT DOES NOT EXIST**, and that is recorded because the user chose
+it. It named *"the Plan editor's toolbar"*; there is none, and docs/15 §6 rules three regions and
+*"no fourth region"*. The slip was caught before any widget was written, and the host was asked again
+as its own question. The keys were chosen in the same first question and stand.
+
+**11.183.5 RULED: THE VIEW TURNS ABOUT THE CANVAS CENTRE AND KEEPS ITS ZOOM.** Settled by the user. The
+spot under the middle of the canvas is still under the middle after the turn, so somebody zoomed into
+one room is still looking at that room. Re-fitting on every turn was declined: it would throw that
+person back out to the whole sheet. `Fit` remains one click away.
+
+**11.183.6 A LIFTED PAGE TAKES ITS TURN FROM `/Rotate`.** An implementation clause, not a user
+decision: it is §11.183.0's defect, and §11.183.1's field is what makes the fix lossless. The lifted
+bytes stay byte for byte what the PDF embeds (DR-138 §11.137.3); the page's `/Rotate` becomes the new
+plan's `rotationQuarterTurns`, and the picker's preview is turned to match, so the tile, the canvas
+and the sheet show the page the way a PDF viewer does. A `/Rotate` that is not a multiple of 90
+**refuses the lift with that reason**, on this lifter's own rule that a wrongful refusal costs one
+export while a wrongful acceptance costs a drawing, and the page is then offered to the renderer like
+any other. A rendered page arrives at 0, because pdfium has already turned it.
+
+**11.183.7 Scope.** **No scope change.** The Plan view is v1 (DR-029), and this is which way up an
+existing picture is drawn.
+
+**What this does not rule.** A north arrow, which docs/15 §8 already records as having no field to
+read and which a turn does not supply. Mirroring, which no architect's sheet needs. A free angle,
+declined above rather than deferred.
+
 ---
 
 ## 12. Superseded rulings

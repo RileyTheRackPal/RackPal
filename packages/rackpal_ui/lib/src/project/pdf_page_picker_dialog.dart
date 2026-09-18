@@ -181,6 +181,13 @@ class _PageTile extends StatelessWidget {
 
   Widget _liveTile(BuildContext context, ThemeData theme, PdfPageOption page) {
     final dpi = page.resultDpi;
+    // THE SIZE AS SEEN, which is what the tile shows above it. A lifted page
+    // with an odd `/Rotate` is stored one way and shown the other
+    // (DR-184 §11.183.6), and a portrait pair of numbers under a landscape
+    // picture reads as a mistake.
+    final turned = page.quarterTurns.isOdd;
+    final seenW = turned ? page.resultHeight : page.resultWidth;
+    final seenH = turned ? page.resultWidth : page.resultHeight;
     return Tooltip(
       message: 'Page $pageNumber',
       child: InkWell(
@@ -194,17 +201,31 @@ class _PageTile extends StatelessWidget {
                   border: Border.all(color: theme.dividerColor),
                   color: Colors.white,
                 ),
-                child: Image.memory(
-                  page.previewBytes,
-                  cacheWidth: kPageThumbnailDecodeWidth,
-                  fit: BoxFit.contain,
-                  // A page whose bytes will not decode is not a crash: the
-                  // header parsed, so the file lied or is damaged, and the
-                  // tile says so rather than taking the dialog down.
-                  errorBuilder: (_, _, _) => Center(
-                    child: Text(
-                      'Preview unavailable',
-                      style: theme.textTheme.bodySmall,
+                // TURNED THE WAY THE PLAN WILL ARRIVE (DR-184 §11.183.6).
+                // A lifted page previews its embedded image as stored, and
+                // before the ruling a `/Rotate 90` page showed sideways here
+                // and then imported sideways too. `RotatedBox` turns the
+                // LAYOUT, so the tile's `contain` fit reads the turned
+                // aspect rather than letterboxing a sideways one.
+                child: RotatedBox(
+                  quarterTurns: page.quarterTurns,
+                  child: Image.memory(
+                    page.previewBytes,
+                    cacheWidth: kPageThumbnailDecodeWidth,
+                    fit: BoxFit.contain,
+                    // A page whose bytes will not decode is not a crash:
+                    // the header parsed, so the file lied or is damaged,
+                    // and the tile says so rather than taking the dialog
+                    // down. TURNED BACK, because it sits inside the
+                    // `RotatedBox` and words are not a picture.
+                    errorBuilder: (_, _, _) => RotatedBox(
+                      quarterTurns: (4 - page.quarterTurns) % 4,
+                      child: Center(
+                        child: Text(
+                          'Preview unavailable',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -218,9 +239,8 @@ class _PageTile extends StatelessWidget {
               // person wondering why a 36-inch sheet looks soft is owed the
               // number rather than left to guess.
               dpi == null
-                  ? '${page.resultWidth} x ${page.resultHeight}'
-                  : '${page.resultWidth} x ${page.resultHeight}'
-                        ', ${dpi.round()} dpi',
+                  ? '$seenW x $seenH'
+                  : '$seenW x $seenH, ${dpi.round()} dpi',
               style: theme.textTheme.bodySmall,
             ),
           ],

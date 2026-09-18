@@ -683,3 +683,66 @@ final class SetPlanScaleCommand extends Command<RackDocument> {
     doc.underlays[underlayId]?.scale = _previous;
   }
 }
+
+/// Turns a plan a quarter, clockwise or anticlockwise (DR-184 §11.183,
+/// `#911`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// RELATIVE, BECAUSE THAT IS WHAT BOTH OF ITS CALLERS SAY
+/// ═══════════════════════════════════════════════════════════════════════
+/// A button and a key both mean "one more quarter this way", and neither
+/// knows or cares what the plan's turn is now. A command that took the
+/// TARGET would make each caller read the model to compute it, which is a
+/// second place to get `% 4` wrong. Revert restores the value [apply]
+/// found rather than turning back, so undo is exact even against a file
+/// whose stored turn was written by somebody else.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE MASK IS `sheet`, ON `ReorderPlanUnderlayCommand`'S REASONING
+/// ═══════════════════════════════════════════════════════════════════════
+/// A turn changes what `T1.01` draws and which way up the canvas shows the
+/// picture. It changes no length, because a length is measured between
+/// stored pixels and no stored pixel moves (§11.183.2), so `structure` and
+/// `wires`, which [SetPlanScaleCommand] declares because a scale DOES feed
+/// every run, are absent on purpose.
+final class RotatePlanCommand extends Command<RackDocument> {
+  RotatePlanCommand({required this.underlayId, required this.clockwise});
+
+  final Uuid underlayId;
+
+  /// True for a quarter turn clockwise as the plan is seen.
+  final bool clockwise;
+
+  int _previous = 0;
+  bool _applied = false;
+
+  @override
+  LabelKey get label => clockwise
+      ? LabelKey.rotatePlanClockwise
+      : LabelKey.rotatePlanAnticlockwise;
+
+  @override
+  EpochMask get touches => EpochMask.sheet;
+
+  @override
+  Iterable<Uuid> get affects => [underlayId];
+
+  @override
+  bool apply(RackDocument doc) {
+    final underlay = doc.underlays[underlayId];
+    if (underlay == null) return false;
+    _previous = underlay.rotationQuarterTurns;
+    // DART'S `%` IS NON-NEGATIVE for a positive divisor, so `0 - 1` wraps
+    // to 3 rather than to -1 and the stored value never leaves 0..3.
+    underlay.rotationQuarterTurns = (_previous + (clockwise ? 1 : -1)) % 4;
+    return _applied = true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    if (!_applied) {
+      throw StateError('RotatePlanCommand.revert called before apply().');
+    }
+    doc.underlays[underlayId]?.rotationQuarterTurns = _previous;
+  }
+}

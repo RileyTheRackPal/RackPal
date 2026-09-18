@@ -419,6 +419,73 @@ void main() {
       );
     });
 
+    test('DR-184: A TURNED PLAN PRINTS TURNED, and its callout follows the '
+        'pixel rather than the numbers', () {
+      // The image's top-left pixel. Unturned, that is the picture's
+      // top-LEFT corner; one quarter clockwise puts it top-RIGHT
+      // (`plan_turn.dart`). A callout that read the stored pixel instead
+      // of the turned one would print on the left in both, beside a mark
+      // that moved.
+      final underlay = _underlay()..rotationQuarterTurns = 1;
+      final built = buildPlanSheet(
+        sheet: SheetSet.forRacks(
+          <Rack>[testRack()],
+          planUnderlays: [underlay],
+        ).sheets.first,
+        underlay: underlay,
+        pins: const [
+          PlanPinSubject(
+            entityId: Uuid('rack-1'),
+            at: PxPt(0, 0),
+            carrier: PlanPinCarrier.rack,
+          ),
+        ],
+        labels: const {Uuid('rack-1'): 'RK-1'},
+        info: fullProjectInfo(),
+        settings: ProjectSettings(),
+        revisions: const <RevisionEntry>[],
+        fileName: 'smith.rppj',
+        issuedAt: DateTime.utc(2026, 9, 9),
+        measurer: FakeMeasurer(),
+      );
+      final area = sheetLayoutFor(
+        SheetSet.forRacks(
+          <Rack>[testRack()],
+          planUnderlays: [underlay],
+        ).sheets.first,
+        const <RevisionEntry>[],
+      ).drawingArea;
+      final pill = built.scene.ops.whereType<OpRoundRect>().last.r;
+      expect(
+        pill.left + pill.width / 2,
+        greaterThan(area.left + area.width / 2),
+        reason: 'the top-left pixel of a plan turned once is on the right',
+      );
+
+      // AND THE PICTURE IS FITTED AS SEEN: 2000 x 1500 turned is portrait,
+      // so on a landscape sheet it is bound by the height and far narrower
+      // than the area, where the unturned one is bound by the width.
+      //
+      // Read off the transform IN FORCE when the image is drawn, because
+      // the sheet's frame is drawn before the bracket and a plain ink box
+      // over those ops would measure the paper.
+      final canvas = BoundsCanvas(measurer: FakeMeasurer());
+      final image = built.scene.ops.whereType<OpImage>().single;
+      for (final op in built.scene.ops) {
+        if (identical(op, image)) break;
+        op.replay(canvas);
+      }
+      final m = canvas.currentTransform;
+      DPt onPage(double x, double y) => DPt(
+        m.entry(0, 0) * x + m.entry(0, 1) * y + m.entry(0, 3),
+        m.entry(1, 0) * x + m.entry(1, 1) * y + m.entry(1, 3),
+      );
+      final a = onPage(image.dst.left, image.dst.top);
+      final b = onPage(image.dst.right, image.dst.bottom);
+      expect((a.y - b.y).abs(), greaterThan((a.x - b.x).abs()));
+      expect((a.y - b.y).abs(), closeTo(area.height, 1));
+    });
+
     /// LOAD-BEARING. A pin with nothing to say gets no white box.
     test('a pin whose carrier has no designator keeps its marker and gets '
         'no pill', () {

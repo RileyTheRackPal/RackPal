@@ -169,10 +169,17 @@ final class PlanUnderlay {
   int pixelWidth, pixelHeight; // intrinsic size, so aspect is known without decoding
   String contentHash;          // AC-042's survivor; a warning, never a load failure
   PlanScale? scale;            // null = UNCALIBRATED, and that is a fact, not a default
+  int rotationQuarterTurns;    // 0..3 clockwise as seen; absent from the file at 0 (DR-184)
   FracIndex order;
   EntityMeta meta;
 }
 ```
+
+**`rotationQuarterTurns` ARRIVED WITH DR-184 (§11.183), 2026-09-18.** It turns the picture and never a
+stored coordinate: every `PxPt` on the plan stays in the image's own pixel space and
+`draw/scene/plan_turn.dart` is the one map between those pixels and the scene. A lifted PDF page takes
+its value from the page's own `/Rotate`, which the lifter had been carrying down the page tree and
+never reading.
 
 `pixelWidth`/`pixelHeight` are stored so the model can lay a plan out, hit-test a pin and size a
 sheet **without decoding the image**. That keeps `rackpal_core` free of an image decoder, which
@@ -572,7 +579,9 @@ an image resolver and a plan scene builder.
 | Marquee-select | CR-102's left-drag, with the CAD window/cross convention. **It WAS the product's first**, and this row was combined with the one above and read *"identical to the other two canvases"* until 2026-09-07, when `PLAN-E/1` found that **neither of the other two had a marquee**. DR-139 §11.138 ruled it built once and adopted on all three, and `#848` did that: the geometry is `rackpal_core/draw/marquee.dart`, the gesture and the band are `MarqueeController`, and the rack elevation, the schematic and this canvas each contribute four lines. The row is true now, and it says which files make it so |
 
 **Layout.** Left is the location tree, with the underlay list above it once the project has a
-floorplan. Centre is the plan. Right is the standard inspector, showing the selected room and, when
+floorplan. The open plan's row carries `Calibrate…`, a turn left and a turn right (DR-184 §11.183.4,
+also `Ctrl+Shift+Minus` and `Ctrl+Shift+Plus`), and `Remove…`; a turn holds the spot under the
+middle of the canvas and keeps the zoom (§11.183.5). Centre is the plan. Right is the standard inspector, showing the selected room and, when
 a plan is open, its outline on that plan. There is no fourth region and no plan-specific palette;
 the device palette is the device palette.
 

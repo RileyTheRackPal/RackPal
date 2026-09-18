@@ -226,6 +226,10 @@ enum KeyBindingId {
   planCancel,
   clearPlanPin,
   clearPlanPinBackspace,
+  // `#911`, DR-184 §11.183.4. A PAIR, AND IT LANDS AS ONE: a keymap that
+  // could turn a plan one way and not the other is RULE 14's partial group.
+  rotatePlanClockwise,
+  rotatePlanAnticlockwise,
 
   // --- builder (M4-G) -------------------------------------------------
   quickAddCommit,
@@ -484,6 +488,19 @@ final class SchematicCancelIntent extends Intent {
 /// a key that means four things in four places.
 final class PlanCancelIntent extends Intent {
   const PlanCancelIntent();
+}
+
+/// Turn the open plan a quarter (`#911`, DR-184 §11.183.4).
+///
+/// ONE INTENT CARRYING ITS DIRECTION, not two classes, because the plan
+/// canvas answers both with one method and a direction is a value rather
+/// than a different act. The two ROWS stay separate, because a row is a
+/// chord and these are two chords.
+final class RotatePlanIntent extends Intent {
+  const RotatePlanIntent({required this.clockwise});
+
+  /// True for clockwise as the plan is seen.
+  final bool clockwise;
 }
 
 /// Collapse or expand the bank the pin caret is in (`B`, CR-103, `#801`).
@@ -1443,6 +1460,31 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     label: 'Delete the selection',
     intent: DeleteSelectionIntent(),
     source: 'docs/04 §8 · docs/15 §6',
+  ),
+  // ACROBAT'S AND BLUEBEAM'S CHORDS (DR-184 §11.183.4), chosen because the
+  // people who read these drawings open them in one of those two every day.
+  // The trigger is the `=` key and not `+`: a logical key is the key's
+  // UNSHIFTED character, so `Shift` plus `=` is how `Ctrl+Shift+Plus`
+  // arrives on a US layout. Both chords are free in every scope.
+  KeyBinding(
+    id: KeyBindingId.rotatePlanClockwise,
+    scope: KeyScope.plan,
+    trigger: LogicalKeyboardKey.equal,
+    primary: true,
+    shift: true,
+    label: 'Rotate the plan right',
+    intent: RotatePlanIntent(clockwise: true),
+    source: 'DR-184 §11.183.4',
+  ),
+  KeyBinding(
+    id: KeyBindingId.rotatePlanAnticlockwise,
+    scope: KeyScope.plan,
+    trigger: LogicalKeyboardKey.minus,
+    primary: true,
+    shift: true,
+    label: 'Rotate the plan left',
+    intent: RotatePlanIntent(clockwise: false),
+    source: 'DR-184 §11.183.4',
   ),
   KeyBinding(
     id: KeyBindingId.quickAddCommit,

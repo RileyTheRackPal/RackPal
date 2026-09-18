@@ -597,6 +597,13 @@ enum LabelKey {
   calibratePlan,
   recalibratePlan,
 
+  // A PLAN'S TURN (commands/plan_commands.dart), `#911`, DR-184 §11.183.
+  // Two values and ONE COMMAND, on `setPlanPin`'s precedent: the command
+  // carries its direction, and "Undo Rotate Plan Right" in front of
+  // somebody who turned it left names the opposite act.
+  rotatePlanClockwise,
+  rotatePlanAnticlockwise,
+
   // THE ROOM OUTLINE'S THREE (commands/plan_commands.dart), `LEN-A/2`,
   // DR-050 §11.49. Three values and not one, on `setPlanPin`'s two
   // precedents applied together rather than re-argued.

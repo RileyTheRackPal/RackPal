@@ -33,6 +33,7 @@ class PlanPinBubble extends StatelessWidget {
     required this.label,
     required this.at,
     required this.viewport,
+    required this.turn,
     required this.radiusPt,
     super.key,
   });
@@ -47,6 +48,12 @@ class PlanPinBubble extends StatelessWidget {
   final PxPt at;
 
   final ViewportController viewport;
+
+  /// The plan's turn, which maps every stored pixel above into the scene
+  /// the viewport draws (DR-184 §11.183.2). REQUIRED, on `#904`'s lesson:
+  /// a defaulted identity would draw this a quarter turn away from the
+  /// picture on any turned plan, and nothing would say so.
+  final PlanTurn turn;
 
   /// The mark's radius in screen points, so the bubble clears it.
   ///
@@ -65,9 +72,7 @@ class PlanPinBubble extends StatelessWidget {
     // person moves to read it. Mapping through the viewport is also what
     // keeps it right at every zoom, which is `planMarkerSceneRadius`'s own
     // rule one layer up.
-    final screen = viewport.sceneToScreen(
-      DPt(at.px.toDouble(), at.py.toDouble()),
-    );
+    final screen = viewport.sceneToScreen(turn.toScene(at));
     return Positioned(
       key: bubbleKey,
       left: screen.x,

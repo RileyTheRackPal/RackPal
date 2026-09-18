@@ -267,9 +267,11 @@ void main() {
       // from here as well. Same trigger, same intent and the same LABEL
       // as the rack's, which is what principle (b) below is about: one
       // chord across scopes carries one meaning.
-      expect(keyBindingsIn(KeyScope.plan), hasLength(4));
+      // `#911` ADDS TWO (DR-184 §11.183.4): `Ctrl+Shift+Plus` and
+      // `Ctrl+Shift+Minus` turn the plan, as a pair.
+      expect(keyBindingsIn(KeyScope.plan), hasLength(6));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(74));
+      expect(kKeymap, hasLength(76));
     });
   });
 

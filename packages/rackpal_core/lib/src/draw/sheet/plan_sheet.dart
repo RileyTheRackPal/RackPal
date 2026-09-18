@@ -75,6 +75,7 @@ import 'package:rackpal_core/src/derived/plan_schedule.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/plan_scene.dart';
+import 'package:rackpal_core/src/draw/scene/plan_turn.dart';
 import 'package:rackpal_core/src/draw/scene/signal_style.dart'
     show kSignalBaseWeightPt;
 import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
@@ -93,6 +94,7 @@ import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
 import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/units/ids.dart';
+import 'package:rackpal_core/src/units/px_pt.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 /// The gap between the plan's own area and the schedule band.
@@ -265,6 +267,7 @@ PlanSheet buildPlanSheet({
   // `plan.scene.bounds` was a statement and not a defence; there is no
   // scene yet at this line, so neither is available to misread.
   final bounds = planUnderlayBounds(underlay);
+  final turn = PlanTurn.of(underlay);
   final factor = fitSceneFactor(
     bounds,
     availableWidth: planArea.width,
@@ -310,13 +313,21 @@ PlanSheet buildPlanSheet({
   // A PIN WITH NO LABEL GETS NO PILL AND KEEPS ITS MARKER. `labels` omits
   // an entity whose designator is empty rather than mapping it to `''`
   // (G4), and an empty pill is a white box that says nothing.
+  // THROUGH THE SAME TURN THE SCENE APPLIES (DR-184), then the same fit.
+  // A callout reading the stored pixel directly would print a quarter turn
+  // away from its own mark on any plan that is turned.
+  DPt onSheet(PxPt at) {
+    final p = turn.toScene(at);
+    return DPt(originX + p.x * s, originY + p.y * s);
+  }
+
   final callouts = buildPlanCallouts(
     subjects: <CalloutSubject>[
       for (final pin in pins)
         if (labels[pin.entityId] case final text?)
           CalloutSubject(
             entityId: pin.entityId,
-            at: DPt(originX + pin.at.px * s, originY + pin.at.py * s),
+            at: onSheet(pin.at),
             text: text,
           ),
     ],

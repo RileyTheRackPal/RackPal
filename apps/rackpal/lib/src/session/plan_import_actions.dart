@@ -217,6 +217,7 @@ Outcome<ImportedFloorplan> importFloorplanBytes({
   required EntityMeta meta,
   Uuid? locationId,
   PlanSourcePage? sourcePage,
+  int rotationQuarterTurns = 0,
 }) {
   // ---- 2. SNIFF, BY CONTENT (PLAN-D/4, M4-M4's rule). ---------------
   //
@@ -312,6 +313,10 @@ Outcome<ImportedFloorplan> importFloorplanBytes({
         // page's stored bytes already ARE the source, so a copy of the
         // PDF beside it would store one drawing twice.
         sourcePage: sourcePage,
+        // A LIFTED PAGE'S OWN `/Rotate` (DR-184 §11.183.6), and 0 for
+        // everything else: an image file has no turn to carry and pdfium
+        // has already turned a rendered page.
+        rotationQuarterTurns: rotationQuarterTurns,
         // NO SCALE. An imported plan is UNCALIBRATED and that is a fact
         // rather than a gap (G4): it locates every drop already, and it
         // yields no lengths until somebody picks two points and types a
@@ -493,6 +498,10 @@ Outcome<ImportedFloorplan> importLiftedPdfPage({
   order: order,
   meta: meta,
   locationId: locationId,
+  // THE PAGE ARRIVES THE WAY A PDF VIEWER SHOWS IT (DR-184 §11.183.6).
+  // Until the ruling this line did not exist and a `/Rotate 90` page came
+  // in sideways, while the same page rendered came in upright.
+  rotationQuarterTurns: page.quarterTurns,
 );
 
 /// The member a rendered page's source PDF is stored at.
