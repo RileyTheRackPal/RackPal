@@ -1,5 +1,25 @@
 # Update Log
 
+## 2026-09-18 (fifty-eighth entry)
+
+* **Closed**: `#911`, ruled as
+  [DR-184](/decisions/dr-184-a-floorplan-turns-in-quarter-turns.md). A floorplan turns in quarter
+  turns, saved on the plan, and the screen and `T1.01` both follow it. A lifted PDF page takes its turn
+  from its own `/Rotate`. **Version `v0.6.58`**: it is a leaf Story under `#588`, the current epic.
+* **Note**: **THE REPORT WAS THE SMALLER HALF.** A missing control, on inspection, sat beside a real
+  defect: the lifter carried `/Rotate` down the page tree and never read it, so one PDF imported
+  upright by one path and sideways by the other. The field that answered the request is also what made
+  the fix lossless.
+* **Note**: **A CONVENTION BORROWED IN ONE BREATH BRINGS ITS FURNITURE.** The keys were chosen as
+  Acrobat's, and in the same question the buttons were offered on *"the Plan editor's toolbar"*, which
+  is Acrobat's furniture and not this product's: docs/15 §6 rules there is no fourth region. The user
+  chose it. It was caught because the editor was read before any widget was written, and the host was
+  asked again on its own.
+* **Note**: **ONE MAP BEATS A DOZEN IDENTITIES.** The rule "one image pixel is one scene unit" was
+  written out by hand at about a dozen sites and was never wrong while it was the identity. A turn made
+  each of them a place to disagree. The crossing is one class now, and the overlays take it as a
+  required argument, because a defaulted identity is a retired rule nobody notices.
+
 ## 2026-09-17 (fifty-seventh entry)
 
 * **Closed**: `#910`, ruled as

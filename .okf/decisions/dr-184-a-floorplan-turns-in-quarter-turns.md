@@ -10,7 +10,7 @@ tags: [ruling, plan, canvas, pdf, import, rotation, dr-184, dr-144, dr-138, cr-0
 timestamp: 2026-09-18T00:00:00Z
 ruling_id: DR-184
 canon_section: "11.183"
-status: ruled
+status: built
 ---
 
 Ruled by the user on 2026-09-18 on board `#911`.
@@ -59,6 +59,18 @@ rather than normalising it.
 **A lifted page takes its turn from `/Rotate`**, and the lifted bytes stay exactly what the PDF
 embeds ([DR-138](/decisions/dr-138-lift-the-page-not-re-draw-it.md)). A `/Rotate` that is not a
 multiple of 90 refuses the lift, and the page goes to the renderer like any other refusal.
+
+# Built
+
+`#911` landed it on 2026-09-18 in `a3375336`: the field, `PlanTurn`, the scene and sheet, the lift,
+the picker, the rail buttons and the two keys, with 34 core cases and 6 ui cases. Five mutations were
+run and each was killed; the two on the canvas each reddened exactly the case written for them.
+
+**THE CENTRE CASE PANS FIRST.** Without the pan, the canvas centre is the picture's centre, and a view
+that re-fitted on every turn would also leave the middle of the picture in the middle. The case would
+then have passed for the option the user declined, which is the vacuous-green shape
+[a mutation that does not build measures nothing](/practices/a-mutation-that-does-not-build-measures-nothing.md)
+sits beside.
 
 # The menu error, recorded because it was chosen
 
