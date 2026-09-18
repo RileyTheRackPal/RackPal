@@ -878,7 +878,13 @@ $SuiteFloors = @{
     # 0 writes no key, 4, -1 and 5 are refused); 6 for the command; 5 for
     # the lifter reading the `/Rotate` it had been carrying and ignoring;
     # and 1 for a turned sheet's callout beside its own mark.
-    'rackpal_core'   = 4835
+    # 4841 at `#912` (DR-185): +6 for a plan's name and the place it shows.
+    # Five are the command's answers, a no-op among them because DR-156
+    # says a dialog confirmed with nothing changed leaves no undo entry;
+    # the sixth is the tenth location carrier, cleared and put back. The
+    # census case in `location_removal_test.dart` was EDITED, not added: its
+    # fixture gained a plan and its counts went from nine to ten.
+    'rackpal_core'   = 4841
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1334,7 +1340,10 @@ $SuiteFloors = @{
     # by key, by a drop on a turned plan and by the centre the view turns
     # about, which pans first so a re-fitting view could not pass it; one
     # is the page picker showing a `/Rotate 90` page the way it arrives.
-    'rackpal_ui'     = 1950
+    # 1954 at `#912` (DR-185): +4, all through the real editor's pencil:
+    # the button on the open row only, a name and a floor landing together
+    # with the room line finally printing, Cancel, and a blank name.
+    'rackpal_ui'     = 1954
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1468,7 +1477,10 @@ $SuiteFloors = @{
     # 1054 at `#80` (DR-180): +2 for the `WIRING` column's write path. The
     # second is the refusal: a cable with no 8P8C end is named rather than
     # quietly given an override nothing would read.
-    'rackpal_app'    = 1054
+    # 1060 at `#912` (DR-185): +6 for the import that proposes and asks,
+    # driven through `FloorplanIo.import` with a two-page PDF assembled by
+    # hand, so the page in the name is read off a real multi-page file.
+    'rackpal_app'    = 1060
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

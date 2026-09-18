@@ -1261,4 +1261,105 @@ void main() {
       expect(controller.epochs.wires.value, wires);
     });
   });
+
+  group("a plan's name and the place it shows (`#912`, DR-185)", () {
+    test('both change in ONE command, and one undo puts both back', () {
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(
+          SetPlanUnderlayDetailsCommand(
+            underlayId: _underlayId,
+            name: '  Ground floor  ',
+            locationId: _locationId,
+          ),
+        );
+      final underlay = doc.underlays[_underlayId]!;
+      expect(underlay.name, 'Ground floor', reason: 'stored trimmed');
+      expect(underlay.locationId, _locationId);
+      expect(controller.undo.undoLabelKey, LabelKey.editPlanUnderlay.name);
+
+      controller.undo.undo(doc);
+      expect(underlay.name, 'Level 1');
+      expect(underlay.locationId, isNull);
+    });
+
+    test('a site plan is an ordinary answer: the place can be cleared', () {
+      final doc = _doc();
+      doc.underlays[_underlayId]!.locationId = _locationId;
+      DocumentController(doc).run(
+        SetPlanUnderlayDetailsCommand(
+          underlayId: _underlayId,
+          name: 'Level 1',
+          locationId: null,
+        ),
+      );
+      expect(doc.underlays[_underlayId]!.locationId, isNull);
+    });
+
+    test('A DIALOG CONFIRMED WITH NOTHING CHANGED LEAVES NO UNDO ENTRY', () {
+      // DR-156: a command that changes nothing reports that it did not
+      // apply, so `Enter` on an untouched dialog cannot put "Undo Edit
+      // floorplan page" in the Edit menu with nothing behind it.
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(
+          SetPlanUnderlayDetailsCommand(
+            underlayId: _underlayId,
+            name: 'Level 1',
+            locationId: null,
+          ),
+        );
+      expect(controller.undo.undoLabelKey, isNull);
+    });
+
+    test('a blank name is refused rather than stored', () {
+      final doc = _doc();
+      final cmd = SetPlanUnderlayDetailsCommand(
+        underlayId: _underlayId,
+        name: '   ',
+        locationId: _locationId,
+      );
+      expect(cmd.apply(doc), isFalse);
+      expect(doc.underlays[_underlayId]!.name, 'Level 1');
+      expect(() => cmd.revert(doc), throwsStateError);
+    });
+
+    test('a place this document does not hold is refused, never dangled', () {
+      final doc = _doc();
+      final cmd = SetPlanUnderlayDetailsCommand(
+        underlayId: _underlayId,
+        name: 'Level 1',
+        locationId: const Uuid('not-a-room'),
+      );
+      expect(cmd.apply(doc), isFalse);
+      expect(doc.underlays[_underlayId]!.locationId, isNull);
+    });
+
+    test('DELETING THE ROOM A PLAN SHOWS CLEARS IT, and undo puts it back', () {
+      // THE TENTH CARRIER (`location_removal.dart`). Unreachable until this
+      // command gave `PlanUnderlay.locationId` a writer, and a dangling
+      // reference the day it became reachable.
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(
+          SetPlanUnderlayDetailsCommand(
+            underlayId: _underlayId,
+            name: 'Level 1',
+            locationId: _locationId,
+          ),
+        );
+      final plan = planLocationRemoval(doc, _locationId);
+      expect(
+        plan.references.map((r) => r.kind),
+        contains(LocationRefKind.underlay),
+      );
+
+      controller.run(RemoveLocationCommand(plan: plan));
+      expect(doc.locations.containsKey(_locationId), isFalse);
+      expect(doc.underlays[_underlayId]!.locationId, isNull);
+
+      controller.undo.undo(doc);
+      expect(doc.underlays[_underlayId]!.locationId, _locationId);
+    });
+  });
 }

@@ -604,6 +604,12 @@ enum LabelKey {
   rotatePlanClockwise,
   rotatePlanAnticlockwise,
 
+  // A PLAN'S NAME AND FLOOR (commands/plan_commands.dart), `#912`,
+  // DR-185 §11.184. One value for one dialog: the person edited the page's
+  // details, and naming only the field that happened to change would make
+  // the Edit menu describe half of what they did.
+  editPlanUnderlay,
+
   // THE ROOM OUTLINE'S THREE (commands/plan_commands.dart), `LEN-A/2`,
   // DR-050 §11.49. Three values and not one, on `setPlanPin`'s two
   // precedents applied together rather than re-argued.

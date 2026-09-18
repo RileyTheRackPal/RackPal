@@ -87,6 +87,15 @@ enum LocationRefKind {
   /// `Link`. IMMUTABLE, and the only carrier that needs a position within
   /// its entity to be found again.
   placeEndpoint,
+
+  /// `PlanUnderlay.locationId`, the floor a plan shows (DR-185, `#912`).
+  ///
+  /// THE TENTH, AND IT WAS NOT MISSED SO MUCH AS UNREACHABLE. The field
+  /// has been in the model since `PLAN-C` and nothing wrote it until
+  /// DR-185 gave it a dialog, so no document could carry a reference for
+  /// this census to find. The day it could, a deleted floor would have
+  /// left its plans pointing at nothing.
+  underlay,
 }
 
 /// One field, somewhere in the document, that points at a location being
@@ -330,6 +339,21 @@ LocationRemovalPlan planLocationRemoval(RackDocument doc, Uuid locationId) {
           ),
         );
       }
+    }
+  }
+
+  // LAST, so every reference the nine before it produced keeps its place
+  // in this list and a plan built before DR-185 is unchanged by it.
+  for (final entry in doc.underlays.entries) {
+    final id = entry.value.locationId;
+    if (id != null && going.contains(id)) {
+      refs.add(
+        LocationRef(
+          kind: LocationRefKind.underlay,
+          entityId: entry.key,
+          locationId: id,
+        ),
+      );
     }
   }
 

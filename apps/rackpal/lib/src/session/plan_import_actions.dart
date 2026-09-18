@@ -639,12 +639,24 @@ final class FloorplanIo {
   /// produced. Returning null from it is a cancel, not a failure: a person
   /// who opens an 80-page drawing set and closes the grid has not hit an
   /// error.
+  ///
+  /// [confirmDetails] is DR-185 §11.184.2: once the page is read, the
+  /// name and place this proposes are offered for a person to change.
+  /// **Null from it keeps the proposal and still imports**, because the
+  /// page is already picked and dismissing a naming dialog is not a
+  /// request to throw it away. [proposedLocation] is the Site tree's
+  /// selection, and one this document does not hold proposes none.
   Future<Outcome<PlanUnderlay>?> import({
     required Future<PdfPageOption?> Function(
       List<Outcome<PdfPageOption>> pages,
       String fileName,
     )
     pickPage,
+    Uuid? proposedLocation,
+    Future<({String name, Uuid? locationId})?> Function(
+      ({String name, Uuid? locationId}) proposed,
+    )?
+    confirmDetails,
   }) async {
     // THE CONTROLLER'S OWN CLOCK AND ACTOR, not `DateTime.now()`. Every
     // other command in this product stamps its `EntityMeta` from the
@@ -695,11 +707,18 @@ final class FloorplanIo {
         fileName,
       );
       if (chosen == null) return null;
+      // THE PAGE IS IN THE NAME WHEN THERE IS MORE THAN ONE (§11.184.2).
+      // Three pages of `A-101 REV3.pdf` were three rows reading the same
+      // words; a one-page PDF gains nothing from saying "p.1".
+      final pageCount = pages.value.length;
+      final pageName = pageCount > 1
+          ? '$underlayName, p.${chosen.pageIndex + 1}'
+          : underlayName;
       imported = switch (chosen) {
         LiftedPageOption(:final page) => importLiftedPdfPage(
           page: page,
           id: id,
-          name: underlayName,
+          name: pageName,
           order: order,
           meta: meta,
         ),
@@ -710,7 +729,7 @@ final class FloorplanIo {
           option: chosen,
           rasteriser: rasteriser,
           id: id,
-          name: underlayName,
+          name: pageName,
           order: order,
           meta: meta,
         ),
@@ -726,6 +745,21 @@ final class FloorplanIo {
     }
     if (imported case Err(:final error)) return Err(error);
     final floorplan = (imported as Ok<ImportedFloorplan>).value;
+
+    // ASKED AFTER THE PAGE IS READ AND BEFORE ANYTHING IS WRITTEN
+    // (DR-185 §11.184.2), so a file refused above never gets a dialog, and
+    // the details land inside the ONE command below: the import and its
+    // name are one undo entry.
+    bool known(Uuid? id) => id != null && doc.locations.containsKey(id);
+    final proposed = (
+      name: floorplan.underlay.name,
+      locationId: known(proposedLocation) ? proposedLocation : null,
+    );
+    final details = await confirmDetails?.call(proposed) ?? proposed;
+    final typed = details.name.trim();
+    floorplan.underlay
+      ..name = typed.isEmpty ? proposed.name : typed
+      ..locationId = known(details.locationId) ? details.locationId : null;
 
     // See the class header on why the member is written first.
     session.addMember(

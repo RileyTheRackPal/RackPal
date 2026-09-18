@@ -44,6 +44,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
+import 'package:rackpal_ui/src/canvas/plan/edit_plan_dialog.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_calibrate.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_canvas_screen.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_outline.dart';
@@ -292,6 +293,36 @@ class PlanEditorScreenState extends State<PlanEditorScreen> {
     }
     _controller.run(
       ReorderPlanUnderlayCommand(underlayId: moving.id, order: order),
+    );
+  }
+
+  /// The location selected in the Site tree, or null (DR-185 §11.184.2).
+  ///
+  /// PUBLIC for the import: a floorplan imported while `Level 2` is
+  /// selected proposes that it shows `Level 2`, and the shell that runs
+  /// the import is not this widget's parent chain to shout down.
+  Uuid? get selectedLocationId => _selectedLocation;
+
+  /// Opens `Edit plan…` on the OPEN plan (`#912`, DR-185 §11.184.1).
+  ///
+  /// ONE COMMAND FOR BOTH FIELDS, so the dialog is one undo entry, and a
+  /// dialog confirmed with nothing changed leaves none: the command
+  /// refuses a no-op (DR-156).
+  Future<void> _editOpenPlan() async {
+    final open = _open;
+    if (open == null) return;
+    final details = await showEditPlanDialog(
+      context,
+      doc: _controller.doc,
+      initial: PlanDetails(name: open.name, locationId: open.locationId),
+    );
+    if (details == null || !mounted) return;
+    _controller.run(
+      SetPlanUnderlayDetailsCommand(
+        underlayId: open.id,
+        name: details.name,
+        locationId: details.locationId,
+      ),
     );
   }
 
@@ -584,6 +615,7 @@ class PlanEditorScreenState extends State<PlanEditorScreen> {
               doc: _controller.doc,
               onOpen: _openPlan,
               onCalibrate: _beginCalibrate,
+              onEdit: () => unawaited(_editOpenPlan()),
               onRotate: _rotateOpenPlan,
               onRemove: () => unawaited(_removeOpenPlan()),
               onReorder: _reorderPlan,
@@ -730,6 +762,7 @@ class _UnderlayList extends StatelessWidget {
     required this.doc,
     required this.onOpen,
     required this.onCalibrate,
+    required this.onEdit,
     required this.onRotate,
     required this.onRemove,
     required this.onReorder,
@@ -750,6 +783,10 @@ class _UnderlayList extends StatelessWidget {
   /// button on a closed row that armed a pick over a different picture is
   /// the bug this signature makes unspellable.
   final VoidCallback onCalibrate;
+
+  /// Opens `Edit plan…` on the OPEN plan (DR-185 §11.184.1), for
+  /// [onCalibrate]'s reason.
+  final VoidCallback onEdit;
 
   /// Turns the OPEN plan a quarter (DR-184 §11.183.4), for [onCalibrate]'s
   /// reason exactly: the canvas is showing one plan, and a button on a
@@ -777,6 +814,9 @@ class _UnderlayList extends StatelessWidget {
 
   /// Ditto for the removal.
   static String removeKeyFor(Uuid id) => 'underlay-remove-${id.v}';
+
+  /// Ditto for `Edit plan…`.
+  static String editKeyFor(Uuid id) => 'underlay-edit-${id.v}';
 
   /// Ditto for the two turns.
   static String rotateLeftKeyFor(Uuid id) => 'underlay-rotate-left-${id.v}';
@@ -830,6 +870,7 @@ class _UnderlayList extends StatelessWidget {
         measurability: planMeasurabilityOf(doc, u),
         onOpen: () => onOpen(u.id),
         onCalibrate: onCalibrate,
+        onEdit: onEdit,
         onRotate: onRotate,
         onRemove: onRemove,
       );
@@ -875,6 +916,7 @@ class _UnderlayRow extends StatelessWidget {
     required this.measurability,
     required this.onOpen,
     required this.onCalibrate,
+    required this.onEdit,
     required this.onRotate,
     required this.onRemove,
     required this.dragIndex,
@@ -906,6 +948,7 @@ class _UnderlayRow extends StatelessWidget {
 
   final VoidCallback onOpen;
   final VoidCallback onCalibrate;
+  final VoidCallback onEdit;
   final void Function({required bool clockwise}) onRotate;
   final VoidCallback onRemove;
 
@@ -1010,6 +1053,26 @@ class _UnderlayRow extends StatelessWidget {
                   calibrationStateLabel(underlay, measurability),
                   style: theme.textTheme.labelSmall,
                 ),
+                // `Edit plan…` LEADS THE ACTIONS (DR-185 §11.184.1): the
+                // name and the place are what a person reads this row for,
+                // so the control that changes them sits nearest to them.
+                // An icon for `#911`'s reason: this row overflowed at 240
+                // wide holding one text button.
+                if (open)
+                  IconButton(
+                    key: ValueKey(_UnderlayList.editKeyFor(underlay.id)),
+                    onPressed: onEdit,
+                    tooltip: 'Edit plan… (name, and the floor it shows)',
+                    icon: const Icon(Icons.edit_outlined),
+                    iconSize: 16,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 28,
+                      height: 28,
+                    ),
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 if (open)
                   TextButton(
                     key: ValueKey(
