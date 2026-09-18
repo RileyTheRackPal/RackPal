@@ -1114,7 +1114,31 @@ JsonMap _encodePlanUnderlay(PlanUnderlay u) {
     'sourcePage',
     u.sourcePage == null ? null : _encodePlanSourcePage(u.sourcePage!),
   );
+  // ABSENT MEANS UNTURNED (DR-184 §11.183.3), which is a fact and not an
+  // unknown: every plan that existed before the ruling is unturned, and
+  // writing a 0 would add a key to each of them on its next save, which is
+  // the reasoning that keeps an empty `underlays` map out of the file.
+  if (u.rotationQuarterTurns != 0) {
+    json['rotationQuarterTurns'] = u.rotationQuarterTurns;
+  }
   return json;
+}
+
+/// A stored turn, 0 to 3, or 0 when the key is absent (DR-184 §11.183.3).
+///
+/// **REFUSED OUTSIDE 0 TO 3 AND NEVER NORMALISED**, on `pageIndex`'s own
+/// precedent below: a 5 in a file is somebody's mistake and not a turn,
+/// and reading it as 1 would be this decoder choosing which way up a
+/// drawing goes on a guess.
+int _decodeQuarterTurns(Object? raw, String context) {
+  if (raw == null) return 0;
+  final turns = asInt(raw, context);
+  if (turns < 0 || turns > 3) {
+    throw FormatException(
+      'Expected a quarter turn in 0..3 for $context, got: $turns',
+    );
+  }
+  return turns;
 }
 
 JsonMap _encodePlanSourcePage(PlanSourcePage p) => {
@@ -1164,6 +1188,10 @@ PlanUnderlay _decodePlanUnderlay(Uuid id, JsonMap json) => PlanUnderlay(
   sourcePage: json['sourcePage'] == null
       ? null
       : _decodePlanSourcePage(json['sourcePage'], 'PlanUnderlay.sourcePage'),
+  rotationQuarterTurns: _decodeQuarterTurns(
+    json['rotationQuarterTurns'],
+    'PlanUnderlay.rotationQuarterTurns',
+  ),
 );
 
 // --- Rack / ZeroUChannel -----------------------------------------------------

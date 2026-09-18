@@ -60,6 +60,16 @@ sealed class PdfPageOption {
   /// usable size. **The number DR-137 §11.136.4 made meaningful**: it is
   /// what a person wondering why a 36 inch sheet looks soft is owed.
   double? get resultDpi;
+
+  /// How far [previewBytes] must be turned, clockwise, to show the page
+  /// the way a PDF viewer shows it (DR-184 §11.183.6).
+  ///
+  /// Nonzero only for a LIFTED page, whose bytes are the embedded image as
+  /// stored and whose `/Rotate` travels beside them. A rendered page has
+  /// already been turned by pdfium, so its preview and its result are
+  /// upright and this is 0. The tile turns the preview by this much, so
+  /// the page somebody picks is the page that arrives.
+  int get quarterTurns;
 }
 
 /// A page that was one full-page image, taken whole (DR-138).
@@ -83,6 +93,9 @@ final class LiftedPageOption extends PdfPageOption {
 
   @override
   double? get resultDpi => page.effectiveDpi;
+
+  @override
+  int get quarterTurns => page.quarterTurns;
 }
 
 /// A page of vectors, which pdfium can draw (DR-153).
@@ -112,4 +125,9 @@ final class RenderedPageOption extends PdfPageOption {
 
   @override
   double? get resultDpi => plan.effectiveDpi;
+
+  /// Zero: pdfium applies `/Rotate` before it draws, so a rendered page
+  /// is already the right way up.
+  @override
+  int get quarterTurns => 0;
 }

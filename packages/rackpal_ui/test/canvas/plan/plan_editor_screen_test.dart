@@ -9,11 +9,11 @@
 // `PinCarrier.rack` just as long, `armCarrierDrag` shipped at PLAN-E/4,
 // and until this screen existed nothing could hand the one to the other.
 // Without a rack pin `PLN-003` fires and no length on the plan derives.
-import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -543,6 +543,143 @@ void main() {
 
       expect(c.doc.racks[_rackId]!.planPin, isNull);
       expect(c.doc.locations[_roomId]!.planOutline, isNull);
+    });
+  });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // `#911`, DR-184: A FLOORPLAN TURNS IN QUARTER TURNS
+  // ═════════════════════════════════════════════════════════════════════
+  // Every case is a GESTURE on the editor, because the defect this guards
+  // is a surface that turns the picture and not the marks, or the marks
+  // and not the pointer. A case that ran the command against a document
+  // could see neither.
+  group('#911, DR-184: turning a plan', () {
+    Finder right(Uuid id) =>
+        find.byKey(ValueKey('underlay-rotate-right-${id.v}'));
+    Finder left(Uuid id) =>
+        find.byKey(ValueKey('underlay-rotate-left-${id.v}'));
+
+    /// The middle of the canvas, which is what the view turns about.
+    Offset canvasCentre(WidgetTester tester) =>
+        tester.getCenter(find.byType(PlanCanvasScreen));
+
+    /// Drags the rack out of the strip and drops it at [at].
+    Future<void> dropRackAt(WidgetTester tester, Offset at) async {
+      final pointer = TestPointer(51, PointerDeviceKind.mouse);
+      await tester.sendEventToBinding(
+        pointer.down(
+          tester.getCenter(find.byKey(UnpinnedStrip.rowKey(_rackId))),
+        ),
+      );
+      await tester.sendEventToBinding(pointer.move(at));
+      await tester.sendEventToBinding(pointer.up());
+      await tester.pump();
+    }
+
+    Future<void> chord(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyEvent(key);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+    }
+
+    testWidgets('the two buttons are on the OPEN row and nowhere else', (
+      tester,
+    ) async {
+      // DR-144 §11.143.4's host, and the same rule `Calibrate…` and
+      // `Remove…` follow: a button on a closed row would turn a picture
+      // nobody can see.
+      final c = _controller(withSecond: true);
+      await pump(tester, c, members: const [_member1, _member2]);
+
+      expect(right(_ul1), findsOneWidget);
+      expect(left(_ul1), findsOneWidget);
+      expect(right(_ul2), findsNothing);
+      expect(left(_ul2), findsNothing);
+    });
+
+    testWidgets('LOAD-BEARING: Rotate right turns the plan, the Edit menu '
+        'says so, and one undo turns it back', (tester) async {
+      final c = _controller();
+      await pump(tester, c);
+
+      await tester.tap(right(_ul1));
+      await tester.pump();
+      expect(c.doc.underlays[_ul1]!.rotationQuarterTurns, 1);
+      expect(c.undo.undoLabelKey, LabelKey.rotatePlanClockwise.name);
+
+      await tester.tap(left(_ul1));
+      await tester.tap(left(_ul1));
+      await tester.pump();
+      expect(c.doc.underlays[_ul1]!.rotationQuarterTurns, 3);
+
+      c.undo.undo(c.doc);
+      expect(c.doc.underlays[_ul1]!.rotationQuarterTurns, 0);
+    });
+
+    testWidgets('THE KEYS ARE ACROBAT’S: Ctrl+Shift+Plus turns right and '
+        'Ctrl+Shift+Minus turns left', (tester) async {
+      final c = _controller();
+      await pump(tester, c);
+      // The canvas takes focus on mount; a click on empty plan is what a
+      // person does anyway before reaching for a key.
+      await tester.tapAt(canvasCentre(tester));
+      await tester.pump();
+
+      await chord(tester, LogicalKeyboardKey.equal);
+      expect(c.doc.underlays[_ul1]!.rotationQuarterTurns, 1);
+
+      await chord(tester, LogicalKeyboardKey.minus);
+      await chord(tester, LogicalKeyboardKey.minus);
+      expect(c.doc.underlays[_ul1]!.rotationQuarterTurns, 3);
+    });
+
+    testWidgets('A RACK DROPPED ON A TURNED PLAN IS UNDER THE POINTER, and a '
+        'click there finds it', (tester) async {
+      // The screen-to-pixel half of the map. A canvas that stored the
+      // scene point as the pixel would draw this rack a quarter turn
+      // away from where it was dropped, and the click would miss.
+      final c = _controller();
+      final selection = await pump(tester, c);
+      await tester.tap(right(_ul1));
+      await tester.pump();
+
+      final at = canvasCentre(tester) + const Offset(70, -40);
+      await dropRackAt(tester, at);
+      expect(c.doc.racks[_rackId]!.planPin, isNotNull);
+
+      selection.clear();
+      await tester.tapAt(at);
+      await tester.pump();
+      expect(selection.ids, {_rackId});
+    });
+
+    testWidgets('THE VIEW TURNS ABOUT THE CANVAS CENTRE (§11.183.5): a rack '
+        'at the centre is still at the centre', (tester) async {
+      // Panned first, so the canvas centre is NOT the picture's centre.
+      // Without that, a view that re-fitted on every turn would also leave
+      // the middle of the picture in the middle, and this would pass for
+      // the option the user declined.
+      final c = _controller();
+      final selection = await pump(tester, c);
+      tester
+          .widget<PlanCanvasScreen>(find.byType(PlanCanvasScreen))
+          .viewport
+          .panBy(const Offset(90, -35));
+      await tester.pump();
+
+      final centre = canvasCentre(tester);
+      await dropRackAt(tester, centre);
+
+      await tester.tap(right(_ul1));
+      await tester.pump();
+
+      selection.clear();
+      await tester.tapAt(centre);
+      await tester.pump();
+      expect(selection.ids, {_rackId});
     });
   });
 }

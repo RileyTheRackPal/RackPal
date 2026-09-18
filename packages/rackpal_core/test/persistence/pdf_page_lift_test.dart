@@ -68,6 +68,7 @@ Uint8List pdfWith({
   String mediaBox = '[0 0 2592 1728]',
   String? extraObjects,
   String pageExtra = '',
+  String pagesExtra = '',
 }) {
   final img = image ?? jpegOf(100, 50);
   final buf = BytesBuilder();
@@ -75,7 +76,7 @@ Uint8List pdfWith({
 
   put('%PDF-1.4\n');
   put('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n');
-  put('2 0 obj\n<</Type/Pages/Kids[3 0 R]/Count 1>>\nendobj\n');
+  put('2 0 obj\n<</Type/Pages/Kids[3 0 R]/Count 1$pagesExtra>>\nendobj\n');
   put(
     '3 0 obj\n<</Type/Page/Parent 2 0 R/MediaBox $mediaBox'
     '/Resources $resources/Contents 4 0 R$pageExtra>>\nendobj\n',
@@ -170,6 +171,66 @@ String refusalOf(Uint8List bytes) {
 }
 
 void main() {
+  group('DR-184: the /Rotate of a page travels with the lift', () {
+    // THE DEFECT (§11.183.6): `_inherited` carried `/Rotate` down the tree
+    // and nothing read it, so a landscape sheet stored portrait with
+    // `/Rotate 90` imported sideways here and upright through pdfium. The
+    // turn now rides beside the bytes, and the bytes stay the embedded
+    // bytes.
+    test('a page with /Rotate 90 lifts as one quarter turn clockwise', () {
+      final source = jpegOf(640, 480);
+      final page = soleLift(
+        pdfWith(
+          content: kFullPageContent,
+          image: source,
+          pageExtra: '/Rotate 90',
+        ),
+      );
+      expect(page.quarterTurns, 1);
+      // AND THE BYTES ARE STILL THE EMBEDDED BYTES (DR-138 §11.137.3):
+      // turning them would decode and re-encode a JPEG.
+      expect(page.bytes, source);
+    });
+
+    test('INHERITED from the page tree, which is the case `_inherited` '
+        'already carried and nothing read', () {
+      final page = soleLift(
+        pdfWith(content: kFullPageContent, pagesExtra: '/Rotate 270'),
+      );
+      expect(page.quarterTurns, 3);
+    });
+
+    test('a page with no /Rotate is unturned, which is the spec default', () {
+      expect(soleLift(pdfWith(content: kFullPageContent)).quarterTurns, 0);
+    });
+
+    test('negative and over-full turns reduce the way a viewer shows them', () {
+      expect(
+        soleLift(
+          pdfWith(content: kFullPageContent, pageExtra: '/Rotate -90'),
+        ).quarterTurns,
+        3,
+      );
+      expect(
+        soleLift(
+          pdfWith(content: kFullPageContent, pageExtra: '/Rotate 450'),
+        ).quarterTurns,
+        1,
+      );
+    });
+
+    test('a /Rotate that is not a quarter turn REFUSES the lift, by name', () {
+      // Refused and never rounded: a wrong refusal costs one render,
+      // while a wrong acceptance shows a drawing at a turn its author
+      // never set.
+      final reason = refusalOf(
+        pdfWith(content: kFullPageContent, pageExtra: '/Rotate 45'),
+      );
+      expect(reason, contains('/Rotate of 45'));
+      expect(reason, contains('not a quarter turn'));
+    });
+  });
+
   group('the shape the real corpus emits', () {
     /// PLAN-K/4. A refusal that knows how big the page is can be handed
     /// to something that draws vectors; one that does not, cannot.

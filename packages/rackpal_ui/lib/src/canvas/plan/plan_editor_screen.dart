@@ -40,6 +40,7 @@
 // room this underlay depicts, and that is one line of text on the row.
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
@@ -51,6 +52,7 @@ import 'package:rackpal_ui/src/canvas/plan/unpinned_strip.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
 import 'package:rackpal_ui/src/draw/flutter_canvas.dart';
+import 'package:rackpal_ui/src/keymap/keymap.dart';
 import 'package:rackpal_ui/src/project/locations_panel.dart';
 import 'package:rackpal_ui/src/project/remove_underlay_dialog.dart';
 
@@ -290,6 +292,25 @@ class PlanEditorScreenState extends State<PlanEditorScreen> {
     }
     _controller.run(
       ReorderPlanUnderlayCommand(underlayId: moving.id, order: order),
+    );
+  }
+
+  /// Turns the OPEN plan a quarter (`#911`, DR-184 §11.183.4).
+  ///
+  /// **THROUGH THE CANVAS WHEN THERE IS ONE**, so the rail's buttons and
+  /// the canvas's keys hold the view the same way (§11.183.5). With no
+  /// canvas mounted the command still runs: the turn is the act, and there
+  /// is no view to hold.
+  void _rotateOpenPlan({required bool clockwise}) {
+    final open = _open;
+    if (open == null) return;
+    final canvas = _canvasKeyFor(open.id).currentState;
+    if (canvas != null) {
+      canvas.rotate(clockwise: clockwise);
+      return;
+    }
+    _controller.run(
+      RotatePlanCommand(underlayId: open.id, clockwise: clockwise),
     );
   }
 
@@ -563,6 +584,7 @@ class PlanEditorScreenState extends State<PlanEditorScreen> {
               doc: _controller.doc,
               onOpen: _openPlan,
               onCalibrate: _beginCalibrate,
+              onRotate: _rotateOpenPlan,
               onRemove: () => unawaited(_removeOpenPlan()),
               onReorder: _reorderPlan,
             ),
@@ -708,6 +730,7 @@ class _UnderlayList extends StatelessWidget {
     required this.doc,
     required this.onOpen,
     required this.onCalibrate,
+    required this.onRotate,
     required this.onRemove,
     required this.onReorder,
   });
@@ -727,6 +750,12 @@ class _UnderlayList extends StatelessWidget {
   /// button on a closed row that armed a pick over a different picture is
   /// the bug this signature makes unspellable.
   final VoidCallback onCalibrate;
+
+  /// Turns the OPEN plan a quarter (DR-184 §11.183.4), for [onCalibrate]'s
+  /// reason exactly: the canvas is showing one plan, and a button on a
+  /// closed row that turned a picture nobody could see would be the bug
+  /// this signature makes unspellable.
+  final void Function({required bool clockwise}) onRotate;
 
   /// Removes the OPEN plan, for [onCalibrate]'s reason exactly: the
   /// confirmation counts what is on one page, and a button on a closed
@@ -748,6 +777,10 @@ class _UnderlayList extends StatelessWidget {
 
   /// Ditto for the removal.
   static String removeKeyFor(Uuid id) => 'underlay-remove-${id.v}';
+
+  /// Ditto for the two turns.
+  static String rotateLeftKeyFor(Uuid id) => 'underlay-rotate-left-${id.v}';
+  static String rotateRightKeyFor(Uuid id) => 'underlay-rotate-right-${id.v}';
 
   /// Ditto for the row itself.
   static String rowKeyFor(Uuid id) => 'underlay-row-${id.v}';
@@ -797,6 +830,7 @@ class _UnderlayList extends StatelessWidget {
         measurability: planMeasurabilityOf(doc, u),
         onOpen: () => onOpen(u.id),
         onCalibrate: onCalibrate,
+        onRotate: onRotate,
         onRemove: onRemove,
       );
     },
@@ -841,6 +875,7 @@ class _UnderlayRow extends StatelessWidget {
     required this.measurability,
     required this.onOpen,
     required this.onCalibrate,
+    required this.onRotate,
     required this.onRemove,
     required this.dragIndex,
     required this.reorderable,
@@ -871,7 +906,42 @@ class _UnderlayRow extends StatelessWidget {
 
   final VoidCallback onOpen;
   final VoidCallback onCalibrate;
+  final void Function({required bool clockwise}) onRotate;
   final VoidCallback onRemove;
+
+  /// One of the two turn buttons (DR-184 §11.183.4).
+  ///
+  /// **ICONS AND NOT WORDS**, unlike the two text buttons beside them. This
+  /// row overflowed by 126 pixels at 240 wide holding ONE text button,
+  /// which is why it is a `Wrap`; two more words would push `Remove…` onto
+  /// a third line in a narrow rail. The arrows are the convention every
+  /// image and PDF tool uses for exactly this act, and the tooltip carries
+  /// both the words and the chord, read off the keymap row so it cannot
+  /// name a key nothing listens for.
+  Widget _rotateButton(
+    ThemeData theme, {
+    required bool clockwise,
+    required String key,
+  }) {
+    final binding = keyBindingFor(
+      clockwise
+          ? KeyBindingId.rotatePlanClockwise
+          : KeyBindingId.rotatePlanAnticlockwise,
+    );
+    return IconButton(
+      key: ValueKey(key),
+      onPressed: () => onRotate(clockwise: clockwise),
+      tooltip:
+          '${clockwise ? 'Rotate right' : 'Rotate left'} '
+          '(${binding.renderChord(defaultTargetPlatform)})',
+      icon: Icon(clockwise ? Icons.rotate_right : Icons.rotate_left),
+      iconSize: 16,
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 28, height: 28),
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -961,6 +1031,22 @@ class _UnderlayRow extends StatelessWidget {
                       ),
                       style: theme.textTheme.labelSmall,
                     ),
+                  ),
+                // THE TURNS SIT BETWEEN CALIBRATE AND REMOVE, and only on
+                // the open row (DR-184 §11.183.4). A turn is a property of
+                // the plan and this is DR-144 §11.143.4's host for one;
+                // `Remove…` stays last because it is the destructive act.
+                if (open)
+                  _rotateButton(
+                    theme,
+                    clockwise: false,
+                    key: _UnderlayList.rotateLeftKeyFor(underlay.id),
+                  ),
+                if (open)
+                  _rotateButton(
+                    theme,
+                    clockwise: true,
+                    key: _UnderlayList.rotateRightKeyFor(underlay.id),
                   ),
                 // REMOVE SITS BESIDE CALIBRATE, and only on the open row.
                 // `RemovePlanUnderlayCommand` shipped at `PLAN-C/6` with a

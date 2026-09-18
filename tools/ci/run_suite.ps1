@@ -871,7 +871,14 @@ $SuiteFloors = @{
     # while no family drew `○`. Two tests were rewritten in place rather
     # than added, so they move no number: both recorded the gap this
     # ruling closed and now record what closed it.
-    'rackpal_core'   = 4801
+    # 4835 at `#911` (DR-184): +34 for a floorplan's quarter turn. 14 in
+    # `plan_turn_test.dart`, which replays the scene through a
+    # `BoundsCanvas` and clicks where the PICTURE shows a pixel rather than
+    # reading the four formulas back; 8 for the file (a turn round-trips,
+    # 0 writes no key, 4, -1 and 5 are refused); 6 for the command; 5 for
+    # the lifter reading the `/Rotate` it had been carrying and ignoring;
+    # and 1 for a turned sheet's callout beside its own mark.
+    'rackpal_core'   = 4835
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1323,7 +1330,11 @@ $SuiteFloors = @{
     # the widget: the drawn mark with its hit box, and the hover label,
     # which was the consumer taking the constant while the constant still
     # WAS the screen radius. Measured after the change, not predicted.
-    'rackpal_ui'     = 1944
+    # 1950 at `#911` (DR-184): +6. Five drive the plan editor by button,
+    # by key, by a drop on a turned plan and by the centre the view turns
+    # about, which pans first so a re-fitting view could not pass it; one
+    # is the page picker showing a `/Rotate 90` page the way it arrives.
+    'rackpal_ui'     = 1950
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

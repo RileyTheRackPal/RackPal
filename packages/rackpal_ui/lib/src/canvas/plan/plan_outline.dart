@@ -415,6 +415,7 @@ final class PlanOutlineLayer extends StatelessWidget {
     required this.drawing,
     required this.hover,
     required this.viewport,
+    required this.turn,
     required this.canClose,
     this.handles = const <PxPt>[],
     super.key,
@@ -442,6 +443,12 @@ final class PlanOutlineLayer extends StatelessWidget {
 
   final ViewportController viewport;
 
+  /// The plan's turn, which maps every stored pixel above into the scene
+  /// the viewport draws (DR-184 §11.183.2). REQUIRED, on `#904`'s lesson:
+  /// a defaulted identity would draw this a quarter turn away from the
+  /// picture on any turned plan, and nothing would say so.
+  final PlanTurn turn;
+
   /// Whether a click on the first corner would close the shape, which is
   /// what the first corner's ring advertises.
   final bool canClose;
@@ -463,6 +470,7 @@ final class PlanOutlineLayer extends StatelessWidget {
             drawing: drawing,
             hover: hover,
             viewport: viewport,
+            turn: turn,
             canClose: canClose,
             settled: scheme.tertiary,
             live: scheme.primary,
@@ -481,6 +489,7 @@ class _OutlinePainter extends CustomPainter {
     required this.drawing,
     required this.hover,
     required this.viewport,
+    required this.turn,
     required this.canClose,
     required this.settled,
     required this.live,
@@ -491,6 +500,7 @@ class _OutlinePainter extends CustomPainter {
   final List<PxPt> drawing;
   final PxPt? hover;
   final ViewportController viewport;
+  final PlanTurn turn;
   final bool canClose;
   final Color settled;
   final Color live;
@@ -500,7 +510,7 @@ class _OutlinePainter extends CustomPainter {
     // leaves each corner on the same wall rather than the same part of
     // the screen. `PlanCalibrateLine` does the same and for the same
     // reason.
-    final s = viewport.sceneToScreen(DPt(p.px.toDouble(), p.py.toDouble()));
+    final s = viewport.sceneToScreen(turn.toScene(p));
     return Offset(s.x, s.y);
   }
 
@@ -581,6 +591,7 @@ class _OutlinePainter extends CustomPainter {
   bool shouldRepaint(_OutlinePainter old) =>
       !identical(old.handles, handles) ||
       old.hover != hover ||
+      old.turn != turn ||
       old.canClose != canClose ||
       old.drawing.length != drawing.length ||
       !identical(old.finished, finished) ||

@@ -176,6 +176,7 @@ final class PlanCalibrateLine extends StatelessWidget {
     required this.from,
     required this.to,
     required this.viewport,
+    required this.turn,
     super.key,
   });
 
@@ -187,6 +188,12 @@ final class PlanCalibrateLine extends StatelessWidget {
   final PxPt? to;
 
   final ViewportController viewport;
+
+  /// The plan's turn, which maps every stored pixel above into the scene
+  /// the viewport draws (DR-184 §11.183.2). REQUIRED, on `#904`'s lesson:
+  /// a defaulted identity would draw this a quarter turn away from the
+  /// picture on any turned plan, and nothing would say so.
+  final PlanTurn turn;
 
   /// A stable handle for tests.
   static const Key lineKey = ValueKey('plan-calibrate-line');
@@ -208,7 +215,13 @@ final class PlanCalibrateLine extends StatelessWidget {
         animation: viewport,
         builder: (context, _) => CustomPaint(
           key: lineKey,
-          painter: _LinePainter(a: a, b: b, viewport: viewport, color: color),
+          painter: _LinePainter(
+            a: a,
+            b: b,
+            viewport: viewport,
+            turn: turn,
+            color: color,
+          ),
           size: Size.infinite,
         ),
       ),
@@ -221,12 +234,14 @@ class _LinePainter extends CustomPainter {
     required this.a,
     required this.b,
     required this.viewport,
+    required this.turn,
     required this.color,
   });
 
   final PxPt a;
   final PxPt b;
   final ViewportController viewport;
+  final PlanTurn turn;
   final Color color;
 
   @override
@@ -234,8 +249,8 @@ class _LinePainter extends CustomPainter {
     // MAPPED AT PAINT TIME from pixel space, so a pan or a zoom between
     // the two clicks leaves the picked end on the same wall rather than
     // on the same part of the screen.
-    final from = viewport.sceneToScreen(DPt(a.px.toDouble(), a.py.toDouble()));
-    final to = viewport.sceneToScreen(DPt(b.px.toDouble(), b.py.toDouble()));
+    final from = viewport.sceneToScreen(turn.toScene(a));
+    final to = viewport.sceneToScreen(turn.toScene(b));
     final p = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
@@ -251,7 +266,7 @@ class _LinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_LinePainter old) =>
-      old.a != a || old.b != b || old.color != color;
+      old.a != a || old.b != b || old.turn != turn || old.color != color;
 }
 
 /// The title the dialog and the row action both use.

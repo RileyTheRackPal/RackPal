@@ -198,6 +198,7 @@ final class LiftedPdfPage {
     required this.header,
     required this.sheetWidthPt,
     required this.sheetHeightPt,
+    this.quarterTurns = 0,
   });
 
   /// Zero-based, in the document's own page order.
@@ -205,6 +206,26 @@ final class LiftedPdfPage {
 
   /// The embedded image, byte for byte as the PDF carries it.
   final Uint8List bytes;
+
+  /// How far the page's own `/Rotate` turns it, in quarter turns
+  /// clockwise, 0 to 3 (DR-184 §11.183.6).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE BYTES ARE NOT TURNED, AND THIS IS WHY THAT IS NOT A DEFECT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A PDF viewer applies `/Rotate` when it shows the page, and pdfium
+  /// applies it before it renders one. Until DR-184 this lifter carried
+  /// the key down the page tree in `_inherited` and then never
+  /// read it, so a landscape sheet stored portrait with `/Rotate 90`
+  /// imported sideways when lifted and upright when rendered. Turning the
+  /// bytes would mean decoding and re-encoding a JPEG, which is the
+  /// generation DR-138 §11.137.3 exists not to lose; the turn travels
+  /// beside them instead and becomes the plan's `rotationQuarterTurns`.
+  ///
+  /// [sheetWidthPt] and [sheetHeightPt] stay the UNTURNED `/MediaBox`, so
+  /// they keep describing the same axes as [bytes] and [effectiveDpi]
+  /// stays a ratio of two things measured the same way.
+  final int quarterTurns;
 
   /// What [bytes] declares, read without decoding it.
   final ImageHeader header;
@@ -492,6 +513,24 @@ final class _PdfObjects {
     knownW = sheetW;
     knownH = sheetH;
 
+    // ---- the page's own turn (DR-184 §11.183.6) -----------------------
+    //
+    // READ HERE AND NOT AFTER THE FIVE RULES, so a page whose turn is
+    // nonsense is refused with that reason rather than with whichever
+    // rule it happened to fail next. A `/Rotate` that is not a quarter
+    // turn is refused, never rounded: this lifter's rule is that a wrong
+    // refusal costs one render while a wrong acceptance costs a drawing
+    // shown at a turn its author never set, and a refused page is still
+    // offered to the renderer.
+    final rotate = resolve(page['Rotate']);
+    final turns = _quarterTurnsOf(rotate);
+    if (turns == null) {
+      return no(
+        'declares a /Rotate of ${_describe(rotate)}, which is not a quarter '
+        'turn',
+      );
+    }
+
     // ---- rule 1: exactly one XObject ---------------------------------
     final resources = resolveDict(page['Resources']);
     if (resources == null) return no('has no resources');
@@ -556,6 +595,7 @@ final class _PdfObjects {
         header: (header as Ok<ImageHeader>).value,
         sheetWidthPt: sheetW,
         sheetHeightPt: sheetH,
+        quarterTurns: turns,
       ),
     );
   }
@@ -921,6 +961,36 @@ bool _isDelimiter(int c) =>
     c == 0x7D;
 
 bool _isDigit(int c) => c >= 0x30 && c <= 0x39;
+
+/// A page's `/Rotate` as quarter turns clockwise, 0 to 3, or null when the
+/// value is not a whole multiple of 90.
+///
+/// ABSENT IS 0, which is the PDF specification's own default. A negative
+/// or over-full turn is legal and is reduced: `-90` is 3 and `450` is 1,
+/// which is how a viewer shows them. Dart's `%` is non-negative for a
+/// positive divisor, so the reduction needs no second branch.
+int? _quarterTurnsOf(Object? v) {
+  final int degrees;
+  switch (v) {
+    case null:
+      return 0;
+    case final int i:
+      degrees = i;
+    case final double d when d == d.roundToDouble():
+      degrees = d.toInt();
+    default:
+      return null;
+  }
+  if (degrees % 90 != 0) return null;
+  return (degrees ~/ 90) % 4;
+}
+
+/// How a `/Rotate` value reads in a refusal.
+String _describe(Object? v) => switch (v) {
+  final int i => '$i',
+  final double d => '$d',
+  _ => 'a value that is not a number',
+};
 
 double? _asDouble(Object? v) => switch (v) {
   final int i => i.toDouble(),

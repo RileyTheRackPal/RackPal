@@ -349,6 +349,7 @@ final class PlanUnderlay {
     this.locationId,
     this.scale,
     this.sourcePage,
+    this.rotationQuarterTurns = 0,
   });
 
   final Uuid id;
@@ -398,11 +399,35 @@ final class PlanUnderlay {
   /// view's first job; it simply yields no lengths.
   PlanScale? scale;
 
+  /// How far the plan is turned, in quarter turns CLOCKWISE as it is seen,
+  /// 0 to 3 (DR-184 §11.183.1).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// IT TURNS THE PICTURE AND NEVER A STORED COORDINATE
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Every [PxPt] on this plan, a pin, the calibration's two points and
+  /// each room outline's corners, stays in the image's own pixel space
+  /// (docs/15 §3.3). The turn is applied where a pixel meets the scene,
+  /// by `PlanTurn` in `draw/scene/plan_turn.dart`, and for a quarter turn
+  /// that map is exact on integers. So turning moves nothing and rounds
+  /// nothing, and a build that does not know this field drops it and
+  /// shows the plan unturned with every pin still on its drop
+  /// (§11.183.2).
+  ///
+  /// An INTEGER and not an angle, on `SheetItem.rotationQuarterTurns`'s
+  /// precedent (docs/02 §2.11): CR-001 keeps floating point out of the
+  /// model, and a free angle was declined on its own merits.
+  int rotationQuarterTurns;
+
   FracIndex order;
   EntityMeta meta;
 
-  /// The aspect ratio, for fitting a page without stretching it. Known
-  /// without decoding, which is the whole reason the two sizes are here.
+  /// The aspect ratio OF THE STORED IMAGE, for fitting a page without
+  /// stretching it. Known without decoding, which is the whole reason the
+  /// two sizes are here.
+  ///
+  /// **NOT THE ASPECT OF THE PLAN AS SEEN** once [rotationQuarterTurns] is
+  /// odd; a caller framing the plan wants `PlanTurn`'s scene box.
   double get aspectRatio => pixelWidth / pixelHeight;
 
   /// True when this plan can yield a length at all.

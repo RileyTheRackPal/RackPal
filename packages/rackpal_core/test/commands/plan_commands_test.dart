@@ -1167,4 +1167,98 @@ void main() {
       expect(snapshot(controller).structure, isNot(before.structure));
     });
   });
+
+  group('a plan turns a quarter (`#911`, DR-184)', () {
+    test('clockwise, then undo, and NOTHING STORED ON THE PLAN MOVES', () {
+      // §11.183.2 IS THE CLAIM WORTH A TEST: the turn is applied where a
+      // pixel meets the scene, so a pin, the calibration and a room's
+      // corners hold the same stored values before and after. A command
+      // that "helpfully" rotated them too would turn every mark twice.
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(
+          SetPlanPinCommand(
+            carrier: PinCarrier.outlet,
+            entityId: _outletId,
+            pin: _pin,
+          ),
+        )
+        ..run(SetPlanScaleCommand(underlayId: _underlayId, scale: _scale))
+        ..run(
+          SetRoomOutlineCommand(locationId: _locationId, outline: _outline),
+        )
+        ..run(RotatePlanCommand(underlayId: _underlayId, clockwise: true));
+
+      expect(doc.underlays[_underlayId]!.rotationQuarterTurns, 1);
+      expect(doc.outlets[_outletId]!.planPin, _pin);
+      expect(doc.underlays[_underlayId]!.scale, _scale);
+      expect(doc.locations[_locationId]!.planOutline, _outline);
+
+      controller.undo.undo(doc);
+      expect(doc.underlays[_underlayId]!.rotationQuarterTurns, 0);
+    });
+
+    test('anticlockwise from unturned wraps to three, never to -1', () {
+      final doc = _doc();
+      DocumentController(
+        doc,
+      ).run(RotatePlanCommand(underlayId: _underlayId, clockwise: false));
+      expect(doc.underlays[_underlayId]!.rotationQuarterTurns, 3);
+    });
+
+    test('four quarters clockwise is the plan as it was imported', () {
+      final doc = _doc();
+      final controller = DocumentController(doc);
+      for (var i = 0; i < 4; i++) {
+        controller.run(
+          RotatePlanCommand(underlayId: _underlayId, clockwise: true),
+        );
+      }
+      expect(doc.underlays[_underlayId]!.rotationQuarterTurns, 0);
+    });
+
+    test('the Edit menu names the direction that happened', () {
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(RotatePlanCommand(underlayId: _underlayId, clockwise: true));
+      expect(
+        controller.undo.undoLabelKey,
+        LabelKey.rotatePlanClockwise.name,
+      );
+      controller.run(
+        RotatePlanCommand(underlayId: _underlayId, clockwise: false),
+      );
+      expect(
+        controller.undo.undoLabelKey,
+        LabelKey.rotatePlanAnticlockwise.name,
+      );
+    });
+
+    test(
+      'a plan that is not there is refused, and a revert after it THROWS',
+      () {
+        final doc = _doc(withUnderlay: false);
+        final cmd = RotatePlanCommand(underlayId: _underlayId, clockwise: true);
+        expect(cmd.apply(doc), isFalse);
+        expect(() => cmd.revert(doc), throwsStateError);
+      },
+    );
+
+    test('it wakes the sheet and nothing that measures a length', () {
+      // A turn moves no stored pixel, so no length changes and a consumer
+      // of cable data has nothing to recompute. It does change what
+      // `T1.01` draws.
+      final doc = _doc();
+      final controller = DocumentController(doc);
+      final structure = controller.epochs.structure.value;
+      final wires = controller.epochs.wires.value;
+      final sheet = controller.epochs.sheet.value;
+      controller.run(
+        RotatePlanCommand(underlayId: _underlayId, clockwise: true),
+      );
+      expect(controller.epochs.sheet.value, greaterThan(sheet));
+      expect(controller.epochs.structure.value, structure);
+      expect(controller.epochs.wires.value, wires);
+    });
+  });
 }

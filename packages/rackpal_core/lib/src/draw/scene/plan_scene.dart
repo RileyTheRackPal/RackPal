@@ -34,6 +34,15 @@
 // 4000-pixel scan of the same floor produce scenes of very different
 // numeric size and identical appearance once fitted.
 //
+// A TURNED PLAN KEEPS THE RULE AND ADDS ONE QUARTER TURN (DR-184). A pixel
+// is still one scene unit; the scene is the picture AS SEEN, so a plan
+// turned once has its width and height swapped, and a pin lands where
+// `PlanTurn.toScene` sends it rather than at the same two numbers. The
+// identity above is `PlanTurn`'s zero case and holds exactly for every
+// unturned plan, which is every plan that existed before the ruling. The
+// three properties survive: a quarter turn is exact on integers, so the
+// mapping is still testable as a closed form rather than a tolerance.
+//
 // ═══════════════════════════════════════════════════════════════════════
 // WHAT THIS BUILDER DOES NOT DRAW, LISTED SO IT IS NOT READ AS AN OMISSION
 // ═══════════════════════════════════════════════════════════════════════
@@ -49,6 +58,7 @@ import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/image_ref.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/family_glyph.dart';
+import 'package:rackpal_core/src/draw/scene/plan_turn.dart';
 import 'package:rackpal_core/src/draw/spec.dart';
 import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/registries.dart';
@@ -162,12 +172,12 @@ final class PlanScene {
 /// radius depend on the scene it is an argument to. So the sheet and
 /// [buildPlanScene] read this one answer, and the fit cannot drift from
 /// [PlanScene.underlayBounds].
-DBox planUnderlayBounds(PlanUnderlay underlay) => DBox.fromLtwh(
-  0,
-  0,
-  underlay.pixelWidth.toDouble(),
-  underlay.pixelHeight.toDouble(),
-);
+///
+/// **THE PLAN AS SEEN, NOT THE IMAGE AS STORED** (DR-184 §11.183.1). A plan
+/// turned a quarter swaps its width and height, and a sheet that fitted the
+/// stored box would size a landscape drawing as a portrait one.
+DBox planUnderlayBounds(PlanUnderlay underlay) =>
+    PlanTurn.of(underlay).sceneBounds;
 
 /// How much heavier a device's ring is than a drop's outline (`#901`,
 /// DR-169 §11.168.6 and §11.168.11).
@@ -238,7 +248,8 @@ PlanScene buildPlanScene({
   final fragments = <String, IntRange>{};
   final hits = <HitRegion>[];
 
-  final bounds = planUnderlayBounds(underlay);
+  final turn = PlanTurn.of(underlay);
+  final bounds = turn.sceneBounds;
 
   // ── the underlay, op zero ────────────────────────────────────────────
   //
@@ -247,20 +258,39 @@ PlanScene buildPlanScene({
   // `schematic_paint_plan.dart` makes the sheet ground "op zero of the
   // plan": a background drawn anywhere else is a background drawn over
   // something.
-  ops.add(
-    OpImage(
-      ImageRef(
-        member: underlay.imageMember,
-        format: switch (underlay.format) {
-          PlanImageFormat.png => ImageFormat.png,
-          PlanImageFormat.jpeg => ImageFormat.jpeg,
-        },
-        pixelWidth: underlay.pixelWidth,
-        pixelHeight: underlay.pixelHeight,
-      ),
-      bounds,
+  final image = OpImage(
+    ImageRef(
+      member: underlay.imageMember,
+      format: switch (underlay.format) {
+        PlanImageFormat.png => ImageFormat.png,
+        PlanImageFormat.jpeg => ImageFormat.jpeg,
+      },
+      pixelWidth: underlay.pixelWidth,
+      pixelHeight: underlay.pixelHeight,
+    ),
+    // THE STORED IMAGE'S OWN BOX, which the turn below then carries into
+    // the scene. For an unturned plan this is `bounds` exactly.
+    DBox.fromLtwh(
+      0,
+      0,
+      underlay.pixelWidth.toDouble(),
+      underlay.pixelHeight.toDouble(),
     ),
   );
+  // A TURNED PLAN IS THE SAME IMAGE UNDER ONE BRACKET (DR-184 §11.183.2),
+  // the `OpSave` / `OpTransform` / `OpRestore` shape `plan_sheet.dart`
+  // already wraps this whole scene in. AN UNTURNED ONE GETS NO BRACKET AT
+  // ALL, so every display list, op count and exported byte that existed
+  // before the turn did is unchanged by it.
+  if (turn.imageToScene case final m?) {
+    ops
+      ..add(const OpSave())
+      ..add(OpTransform(m))
+      ..add(image)
+      ..add(const OpRestore());
+  } else {
+    ops.add(image);
+  }
   fragments[underlay.id.v] = IntRange(0, ops.length);
 
   final r = markerRadius;
@@ -287,7 +317,9 @@ PlanScene buildPlanScene({
   // (CR-086) without this file changing shape.
   for (final pin in pins) {
     final start = ops.length;
-    final centre = DPt(pin.at.px.toDouble(), pin.at.py.toDouble());
+    // THROUGH THE TURN, which is the identity on an unturned plan and the
+    // one place a stored pixel becomes a scene point (DR-184 §11.183.2).
+    final centre = turn.toScene(pin.at);
     // ═════════════════════════════════════════════════════════════════
     // COLOUR IS THE DOMAIN'S AND THE GLYPH IS WHAT SURVIVES THE PRINT
     // ═════════════════════════════════════════════════════════════════

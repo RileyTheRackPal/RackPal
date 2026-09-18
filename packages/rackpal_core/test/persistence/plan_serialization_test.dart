@@ -253,6 +253,59 @@ void main() {
     });
   });
 
+  group('DR-184: the turn of a plan (§11.183.3)', () {
+    RackDocument turned(int turns) =>
+        _withUnderlay()..underlays[_underlayId]!.rotationQuarterTurns = turns;
+
+    /// The stored JSON of the one underlay, as a map to edit.
+    (Map<String, Object?>, Map<String, Object?>) tree(RackDocument doc) {
+      final root =
+          jsonDecode(utf8.decode(_codec.write(doc))) as Map<String, Object?>;
+      final underlays =
+          (root['document']! as Map<String, Object?>)['underlays']!
+              as Map<String, Object?>;
+      return (root, underlays[_underlayId.v]! as Map<String, Object?>);
+    }
+
+    for (final turns in [1, 2, 3]) {
+      test('a turn of $turns survives a write and a read, byte for byte', () {
+        final first = _codec.write(turned(turns));
+        final back = _reopen(turned(turns));
+        expect(back.underlays[_underlayId]!.rotationQuarterTurns, turns);
+        expect(_codec.write(back), orderedEquals(first));
+      });
+    }
+
+    /// LOAD-BEARING. Every plan that existed before the ruling is unturned,
+    /// and a 0 written out would add a key to each of them on its next save.
+    test('an unturned plan writes no key at all, and reads back unturned', () {
+      final (_, underlay) = tree(_withUnderlay());
+      expect(underlay.containsKey('rotationQuarterTurns'), isFalse);
+      expect(
+        _reopen(_withUnderlay()).underlays[_underlayId]!.rotationQuarterTurns,
+        0,
+      );
+    });
+
+    test('A TURN DOES NOT RAISE THE READER STAMP (§11.183.2)', () {
+      // An older build drops the key and shows the plan unturned with
+      // every pin still on its drop, which is an orientation lost rather
+      // than a drawing, so the stamp an underlay already raises is enough.
+      expect(_stampOf(turned(1)), _stampOf(_withUnderlay()));
+    });
+
+    for (final bad in [4, -1, 5]) {
+      test('a stored $bad is refused, never normalised to a turn', () {
+        final (root, underlay) = tree(turned(1));
+        underlay['rotationQuarterTurns'] = bad;
+        final result = _codec.read(
+          Uint8List.fromList(utf8.encode(jsonEncode(root))),
+        );
+        expect(result, isA<Err<RackDocument>>());
+      });
+    }
+  });
+
   group('the pin round-trips on all three carriers', () {
     test('Rack', () {
       final doc = _withUnderlay()..racks[_rackId] = _rack(pin: _pin);

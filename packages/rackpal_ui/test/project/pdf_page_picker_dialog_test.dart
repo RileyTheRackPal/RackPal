@@ -45,7 +45,14 @@ Uint8List stubJpeg(int w, int h) => Uint8List.fromList([
   0xD9,
 ]);
 
-Ok<PdfPageOption> liftable(int index, {int w = 2160, int h = 1440}) => Ok(
+Ok<PdfPageOption> liftable(
+  int index, {
+  int w = 2160,
+  int h = 1440,
+  double sheetW = 2592,
+  double sheetH = 1728,
+  int quarterTurns = 0,
+}) => Ok(
   LiftedPageOption(
     LiftedPdfPage(
       pageIndex: index,
@@ -55,8 +62,9 @@ Ok<PdfPageOption> liftable(int index, {int w = 2160, int h = 1440}) => Ok(
         pixelWidth: w,
         pixelHeight: h,
       ),
-      sheetWidthPt: 2592,
-      sheetHeightPt: 1728,
+      sheetWidthPt: sheetW,
+      sheetHeightPt: sheetH,
+      quarterTurns: quarterTurns,
     ),
   ),
 );
@@ -174,6 +182,33 @@ void main() {
 
       expect(find.text('5100 x 3300, 300 dpi'), findsOneWidget);
       expect(find.textContaining('320 x'), findsNothing);
+    });
+
+    /// `#911`, DR-184 §11.183.6. A scanner writes a landscape sheet as a
+    /// PORTRAIT page with `/Rotate 90`: 1440 x 2160 pixels on a 1728 x
+    /// 2592 point box. A PDF viewer shows it landscape, and so must the
+    /// tile, or the page somebody picks is not the page that arrives.
+    testWidgets('A LIFTED PAGE WITH /Rotate 90 IS SHOWN TURNED, and its size '
+        'reads the way it is seen', (tester) async {
+      await openPicker(tester, [
+        liftable(
+          0,
+          w: 1440,
+          h: 2160,
+          sheetW: 1728,
+          sheetH: 2592,
+          quarterTurns: 1,
+        ),
+      ]);
+
+      expect(find.text('2160 x 1440, 60 dpi'), findsOneWidget);
+      final turned = tester.widget<RotatedBox>(
+        find.ancestor(
+          of: find.byType(Image),
+          matching: find.byType(RotatedBox),
+        ),
+      );
+      expect(turned.quarterTurns, 1);
     });
 
     /// The grid is handed both kinds and must not be able to tell.

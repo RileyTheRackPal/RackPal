@@ -653,9 +653,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     var bestDistance = double.infinity;
     for (var i = 0; i < vertices.length; i++) {
       final v = vertices[i];
-      final a = widget.viewport.sceneToScreen(
-        DPt(v.px.toDouble(), v.py.toDouble()),
-      );
+      final a = widget.viewport.sceneToScreen(_turn.toScene(v));
       final dx = a.x - b.x;
       final dy = a.y - b.y;
       final d = dx * dx + dy * dy;
@@ -678,8 +676,9 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     final scene = widget.viewport.screenToScene(DPt(local.dx, local.dy));
     // ROUNDED, NOT TRUNCATED. `PxPt` is integer pixels and truncation
     // biases every pin up and left by up to a pixel, which at a zoomed-out
-    // view is several feet of building.
-    return PxPt(scene.x.round(), scene.y.round());
+    // view is several feet of building. `PlanTurn.toPixel` rounds once,
+    // after undoing the plan's turn (DR-184 §11.183.2).
+    return _turn.toPixel(scene);
   }
 
   bool _isOverCanvas(Offset global) {
@@ -705,6 +704,53 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// [armPaletteDrag] is: the host that owns the palette is not this
   /// widget's parent chain to shout down.
   void focusCanvas() => _canvasFocus.requestFocus();
+
+  /// Turns this plan a quarter and keeps the view on the same spot
+  /// (`#911`, DR-184 §11.183.4 and §11.183.5).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE SPOT UNDER THE MIDDLE OF THE CANVAS STAYS UNDER IT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Settled by the user: turn about the centre and keep the zoom, so
+  /// somebody zoomed into one room is still looking at that room. The
+  /// centre is read as a PIXEL of the picture before the turn, unrounded,
+  /// and the viewport is panned so that pixel's new scene position lands
+  /// back in the middle. Re-fitting was the declined option; it would
+  /// throw that person back out to the whole sheet.
+  ///
+  /// PUBLIC for [armPaletteDrag]'s reason: the rail's buttons live in the
+  /// host, and the host is not this widget's parent chain to shout down.
+  /// The key and the buttons land here so the two cannot turn the view
+  /// differently.
+  ///
+  /// **A CANVAS NOT YET LAID OUT STILL TURNS THE PLAN**, and simply has no
+  /// view to hold: the command is the act and the pan is a courtesy.
+  void rotate({required bool clockwise}) {
+    final underlay = widget.underlay;
+    final before = underlay.rotationQuarterTurns;
+    final box = _canvasKey.currentContext?.findRenderObject() as RenderBox?;
+    final laidOut = box != null && box.hasSize;
+    final centre = laidOut
+        ? DPt(box.size.width / 2, box.size.height / 2)
+        : null;
+    final held = centre == null
+        ? null
+        : _turn.pointToPixel(widget.viewport.screenToScene(centre));
+    _controller.run(
+      RotatePlanCommand(underlayId: underlay.id, clockwise: clockwise),
+    );
+    // `run` REPORTS NOTHING, so the model is asked. An underlay removed
+    // in another tab while this canvas was up turns nothing and pans
+    // nothing.
+    if (underlay.rotationQuarterTurns == before) return;
+    if (centre == null || held == null) return;
+    final landed = widget.viewport.sceneToScreen(
+      _turn.pointToScene(held.$1, held.$2),
+    );
+    widget.viewport.panBy(
+      Offset(centre.x - landed.x, centre.y - landed.y),
+    );
+  }
 
   void armPaletteDrag(PlaceableTemplate row, PointerDownEvent event) =>
       _arm(_ArmedCatalog(row), event);
@@ -948,9 +994,13 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
     }
     final subject = _pins.firstWhere((p) => p.entityId.v == hit.entityId);
     _grabbed = subject;
+    // THE OFFSET IS KEPT IN PIXEL SPACE, where the pin is stored. A quarter
+    // turn is rigid, so an offset measured there stays true however the
+    // plan is turned, and the drag below subtracts it in the same space.
+    final press = _turn.toPixel(sceneStart);
     _grabOffset = PxPt(
-      sceneStart.x.round() - subject.at.px,
-      sceneStart.y.round() - subject.at.py,
+      press.px - subject.at.px,
+      press.py - subject.at.py,
     );
     widget.selection.apply([subject.entityId], SelectMode.replace);
   }
@@ -975,12 +1025,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       // point. Somebody dragging one is putting it on a wall junction they
       // can see, and a handle that trailed the cursor by the few points
       // they happened to press off-centre would have to be aimed twice.
-      setState(
-        () => _liveVertex = PxPt(
-          sceneCurrent.x.round(),
-          sceneCurrent.y.round(),
-        ),
-      );
+      setState(() => _liveVertex = _turn.toPixel(sceneCurrent));
       return;
     }
     final offset = _grabOffset;
@@ -997,11 +1042,9 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       return;
     }
     _moved = true;
+    final under = _turn.toPixel(sceneCurrent);
     setState(() {
-      _livePin = PxPt(
-        sceneCurrent.x.round() - offset.px,
-        sceneCurrent.y.round() - offset.py,
-      );
+      _livePin = PxPt(under.px - offset.px, under.py - offset.py);
     });
   }
 
@@ -1201,12 +1244,18 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// the edge must not rescale the drawing, so the day a scene builder
   /// starts unioning markers into its bounds, framing the picture is
   /// already the right answer here.
-  Box get _underlayBox => Box.fromLtwh(
-    0,
-    0,
-    widget.underlay.pixelWidth,
-    widget.underlay.pixelHeight,
-  );
+  ///
+  /// **THE PLAN AS SEEN** (DR-184): a quarter turn swaps its width and
+  /// height, and framing the stored box would fit a landscape plan as a
+  /// portrait one.
+  Box get _underlayBox =>
+      Box.fromLtwh(0, 0, _turn.sceneWidth, _turn.sceneHeight);
+
+  /// The one map between this plan's stored pixels and its scene
+  /// (DR-184 §11.183.2). Every crossing on this screen goes through it;
+  /// `plan_turn.dart`'s header says what a site that kept the identity
+  /// would draw.
+  PlanTurn get _turn => PlanTurn.of(widget.underlay);
 
   /// The designator of the mark under the pointer, and where it sits, or
   /// null when the pointer is over none (`#902`, DR-169 §11.168.7).
@@ -1329,7 +1378,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
   /// dismissed cancels the mode, and a distance typed commits it, and
   /// neither of those is a fact this canvas has.
   void _calibrateClick(PlanCalibrateController calibrate, DPt at) {
-    final point = PxPt(at.x.round(), at.y.round());
+    final point = _turn.toPixel(at);
     final first = calibrate.first;
     if (first == null) {
       calibrate.pickFirst(point);
@@ -1400,14 +1449,12 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       setState(() => _outlineHover = null);
       return;
     }
-    outline.addVertex(PxPt(at.x.round(), at.y.round()));
+    outline.addVertex(_turn.toPixel(at));
   }
 
   /// Whether [at] is near enough to [corner] to mean "close it".
   bool _withinCloseRadius(PxPt corner, DPt at) {
-    final a = widget.viewport.sceneToScreen(
-      DPt(corner.px.toDouble(), corner.py.toDouble()),
-    );
+    final a = widget.viewport.sceneToScreen(_turn.toScene(corner));
     final b = widget.viewport.sceneToScreen(at);
     final dx = a.x - b.x;
     final dy = a.y - b.y;
@@ -1435,7 +1482,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
         entityId: pin.outletId,
         pin: PlanPin(
           underlayId: widget.underlay.id,
-          at: PxPt(at.x.round(), at.y.round()),
+          at: _turn.toPixel(at),
         ),
       ),
     );
@@ -1635,6 +1682,14 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
             () => _selectedPins.isNotEmpty,
             (_) => _clearSelectedPins(),
           ),
+          // ALWAYS ENABLED, because a plan on screen can always be turned
+          // (DR-184 §11.183.4). Still a gated action rather than a
+          // `CallbackAction`, on this map's own rule: the canvas's focus
+          // gates it, and a text field never sees `Ctrl+Shift+=`.
+          RotatePlanIntent: _PlanGatedAction<RotatePlanIntent>(
+            () => true,
+            (intent) => rotate(clockwise: intent.clockwise),
+          ),
         },
         child: Focus(
           focusNode: _canvasFocus,
@@ -1657,6 +1712,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
                       label: hovered.label,
                       at: hovered.at,
                       viewport: widget.viewport,
+                      turn: _turn,
                       radiusPt: _markerScreenRadius,
                     ),
                   // THE SAME HUD THE RACK HAS, in the same corner, saying
@@ -1721,10 +1777,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       markerWeight: kPlanMarkerWeightPt,
       domains: _doc.registries.signalDomains,
     );
-    final hit = hitTest(
-      built.scene,
-      DPt(at.px.toDouble(), at.py.toDouble()),
-    );
+    final hit = hitTest(built.scene, _turn.toScene(at));
     if (hit == null) {
       if (_hoveredPin != null) setState(() => _hoveredPin = null);
       return;
@@ -1816,6 +1869,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
                 drawing: outline?.vertices ?? const <PxPt>[],
                 hover: _outlineHover,
                 viewport: widget.viewport,
+                turn: _turn,
                 canClose: outline?.canClose ?? false,
               ),
             ),
@@ -1825,6 +1879,7 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
                 from: calibrate.first,
                 to: _calibrateHover,
                 viewport: widget.viewport,
+                turn: _turn,
               ),
             ),
           // ONE CHIP AT A TIME, IN THE SAME ORDER `Esc` UNWINDS THEM.
