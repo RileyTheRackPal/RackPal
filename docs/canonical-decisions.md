@@ -21852,6 +21852,55 @@ this is their writer.
 name and gains nothing by being written from there. Replacing a plan's picture with a revised drawing
 while keeping its pins, which is a different feature with its own geometry question.
 
+### 11.185 DR-186 · `Ctrl+L` locks a rack device's position, and pins a schematic symbol where it stands
+
+**The question.** From the user, 2026-09-18, on board `#913`: CR-034 ships three lock flags in v1 and
+docs/04 §8 binds `Ctrl+L` to *"lock / unlock (position here, route in the schematic)"*, and none of it
+could be reached.
+
+**11.185.0 MEASURED FIRST.** docs/12 §3.3 has said since M1 *"Locks: half-built ... no `Ctrl+L`, no way
+to set `Placement.locked`"*, and it is still true: the field has no writer but the decoder, and
+**compaction is its only reader**. Dragging, nudging and the width command all move a locked device,
+and so does a rack shrink trimmed from the bottom. On the schematic, CR-068 and docs/05 §10 rule that
+auto-layout never moves a pinned symbol and that `Ctrl+L` sets `SheetItem.pinned`. The layout **reads**
+pins (`schematic_scene.dart`, `_pinnedPositions`), and nothing writes one; **nor does any document hold
+the schematic `Sheet` a pin lives on**, though CR-073 says exactly one is created per project.
+
+**11.185.1 RULED: A LOCK REFUSES MOVING AND A SHRINK THAT WOULD MOVE IT, AND NOTHING ELSE.** Settled by
+the user. A locked device refuses a drag, a nudge, a width or face change and compaction (which already
+honoured it); **Trim from bottom** is refused while a locked device would have to shift, and says which.
+A top trim moves nobody and stays available, so every option in the shrink dialog is still lossless.
+**A lock does not refuse a delete**: the ruling is *"lock position"*, and a lock that has to be undone
+before a delete tends to be left off, which defeats it. Pushing by others was offered and not chosen.
+**That option described docs/04 §3.3's Alt-drop push as existing, and it does not**: no gesture in
+this build pushes one device with another, so the question it asked has no surface yet.
+
+**11.185.2 RULED: `Ctrl+L`, A CHECKBOX, AND A PADLOCK.** Settled by the user. `Ctrl+L` toggles the
+selection: if anything selected is unlocked it locks them all, and otherwise it unlocks them all. The
+device inspector carries a `Locked` checkbox, and a locked device carries a 🔒 badge. **The badge is
+editing chrome and does not print**, on the selection outline's reasoning: an elevation sheet is a
+deliverable, and a lock is a fact about somebody's editing session rather than about the rack.
+
+**11.185.3 RULED: THE SCHEMATIC'S `Ctrl+L` PINS A SYMBOL WHERE IT STANDS, NOW.** Settled by the user,
+against a first description of the option as doing *"nothing visible"* until symbols could be moved.
+**That description was wrong** and is recorded because the user chose past it: the layout already
+honours pins, so a symbol pinned at the position the layout gave it stays there when devices are added.
+The same toggle rule as §11.185.2, and the same label on both surfaces, because arbitration requires one
+chord to carry one meaning and docs/05 already calls both *"lock"*. A pinned symbol carries a 📌 badge,
+screen chrome as the padlock is.
+
+**11.185.4 THE ONE SCHEMATIC SHEET IS CREATED BY THE FIRST PIN.** An implementation clause. CR-073's
+single schematic `Sheet` had no producer, so the first pin creates it and every later pin finds it;
+nothing creates a second. It is created empty of every filter, and its number and title are read by
+nothing, since the export partitions the schematic by domain at export time.
+
+**11.185.5 Scope.** **No scope change.** CR-034's three flags and CR-068's pin are v1; this is their
+writer and the refusals they already implied.
+
+**What this does not rule.** Dragging or nudging a schematic symbol, which is the soft-glue task and has
+its own questions. `DeviceInstance.designatorLocked` and `Link.designatorLocked`, the other two CR-034
+flags, which belong to renumbering and are untouched.
+
 ---
 
 ## 12. Superseded rulings
