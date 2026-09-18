@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-09-18 (fifty-ninth entry)
+
+* **Closed**: `#912`, ruled as
+  [DR-185](/decisions/dr-185-a-plan-page-says-its-name-and-its-floor.md). A floorplan page can be
+  renamed and says which place it shows, from an `Edit plan…` dialog on the open row, and an import
+  proposes both and asks. **Version `v0.6.59`**, a leaf Story under `#588`.
+* **Update**: [DR-021](/decisions/dr-021-location-delete-cascades.md) is amended (canon §12.37): the
+  location census is ten carriers across eight entities, a plan being the tenth.
+* **Note**: **A WRITER CAN MAKE A CASCADE WRONG WITHOUT TOUCHING IT.** DR-021 counted nine carriers and
+  was right to, because the tenth field existed and nothing could set it. The census went stale the
+  moment a dialog could write the field, and nothing in DR-021's own code changed. The test that
+  asserts every reference kind is found is what caught it, on its first run, which is the argument
+  for a census test over a census comment.
+* **Note**: **A MODELLED FIELD'S CONSEQUENCES OUTRUN ITS DISPLAY.** The missing floor looked like a
+  missing label on the rail. It was also every plan's unpinned strip listing the whole building, and
+  every device dropped onto a plan arriving with no room.
+* **Note**: **I CALLED THE USER'S CHOICE A NO-OP AND IT WAS NOT.** On the lock questions I described
+  pinning a schematic symbol now as doing *"nothing visible"*, and the layout already honours pins, so
+  it freezes a symbol today. The user's pick was better than my description of it. An option that
+  undersells itself is as wrong as one that oversells, and it gets declined instead of chosen.
+
 ## 2026-09-18 (fifty-eighth entry)
 
 * **Closed**: `#911`, ruled as

@@ -9,7 +9,7 @@ tags: [ruling, plan, import, locations, dialog, dr-185, dr-142, dr-144, dr-184]
 timestamp: 2026-09-18T00:00:00Z
 ruling_id: DR-185
 canon_section: "11.184"
-status: ruled
+status: built
 ---
 
 Ruled by the user on 2026-09-18 on board `#912`, found while measuring
@@ -42,6 +42,13 @@ names, for the fourth or fifth time on this view alone.
 Giving `locationId` a writer made it reachable by [DR-021](/decisions/dr-021-location-delete-cascades.md)'s
 cascade, which had censused nine fields and could not have counted this one. Deleting a floor now
 clears the plans that showed it and undo puts them back (canon §11.184.3, §12.37).
+
+# Built
+
+`#912` landed it on 2026-09-18 in `64fc85b8`: the command, the dialog, the pencil, the import's
+proposal and the tenth carrier, with core +6, ui +4 and app +6. The import's two-page case reads the
+page into the name off a PDF assembled by hand, and the one mutation run (an import that asks and
+ignores the answer) was killed by exactly its case.
 
 # What this does not rule
 

@@ -181,6 +181,13 @@ stored coordinate: every `PxPt` on the plan stays in the image's own pixel space
 its value from the page's own `/Rotate`, which the lifter had been carrying down the page tree and
 never reading.
 
+**`name` AND `locationId` GAINED A WRITER WITH DR-185 (§11.184), 2026-09-18.** Until then a plan was
+named after its file for the life of the project and `locationId` was never set, so the rail's room
+line never printed and every plan's unpinned strip listed the whole project (§6). `Edit plan…` sets
+both in one undo entry, an import proposes both (the file's name, plus the page when the PDF has more
+than one, and the Site tree's selection) and asks, and deleting a location clears the plans that
+showed it, which makes a plan the tenth carrier in DR-021's census.
+
 `pixelWidth`/`pixelHeight` are stored so the model can lay a plan out, hit-test a pin and size a
 sheet **without decoding the image**. That keeps `rackpal_core` free of an image decoder, which
 matters because core is Flutter-free by gate and because AC-057 counted the decode surface as a real
@@ -579,10 +586,11 @@ an image resolver and a plan scene builder.
 | Marquee-select | CR-102's left-drag, with the CAD window/cross convention. **It WAS the product's first**, and this row was combined with the one above and read *"identical to the other two canvases"* until 2026-09-07, when `PLAN-E/1` found that **neither of the other two had a marquee**. DR-139 §11.138 ruled it built once and adopted on all three, and `#848` did that: the geometry is `rackpal_core/draw/marquee.dart`, the gesture and the band are `MarqueeController`, and the rack elevation, the schematic and this canvas each contribute four lines. The row is true now, and it says which files make it so |
 
 **Layout.** Left is the location tree, with the underlay list above it once the project has a
-floorplan. The open plan's row carries `Calibrate…`, a turn left and a turn right (DR-184 §11.183.4,
-also `Ctrl+Shift+Minus` and `Ctrl+Shift+Plus`), and `Remove…`; a turn holds the spot under the
-middle of the canvas and keeps the zoom (§11.183.5). Centre is the plan. Right is the standard inspector, showing the selected room and, when
-a plan is open, its outline on that plan. There is no fourth region and no plan-specific palette;
+floorplan. The open plan's row carries `Edit plan…` (its name and the place it shows, DR-185
+§11.184.1), `Calibrate…`, a turn left and a turn right (DR-184 §11.183.4, also `Ctrl+Shift+Minus`
+and `Ctrl+Shift+Plus`), and `Remove…`; a turn holds the spot under the middle of the canvas and keeps
+the zoom (§11.183.5). Centre is the plan. Right is the standard inspector, showing the selected room
+and, when a plan is open, its outline on that plan. There is no fourth region and no plan-specific palette;
 the device palette is the device palette.
 
 **THIS PARAGRAPH SAID THE TREE WAS READ-ONLY HERE, with an *"edit in `Project ▸ Locations…`"*
