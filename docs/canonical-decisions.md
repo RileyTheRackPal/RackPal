@@ -21838,7 +21838,14 @@ dialog keeps the proposal rather than abandoning a page somebody has just picked
 defaults applied silently, which would still leave most plans floorless, since hardly anybody selects
 a floor before importing; and today's behaviour.
 
-**11.184.3 Scope.** **No scope change.** Both fields are in the model since `PLAN-C` (docs/15 §3.1);
+**11.184.3 A PLAN IS THE TENTH LOCATION CARRIER.** An implementation clause, and the consequence of
+giving `locationId` a writer. DR-021 §11.20 censused **nine fields across seven entities** that point
+at a location, and `PlanUnderlay.locationId` was not among them because no document could hold one
+set. The day it can, deleting a floor would leave its plans pointing at nothing, so deleting a
+location now clears every plan that shows it, on exactly the terms of the other nine: cleared to null,
+counted in the dialog as an item that loses its room, and put back by the same undo. Listed at §12.37.
+
+**11.184.4 Scope.** **No scope change.** Both fields are in the model since `PLAN-C` (docs/15 §3.1);
 this is their writer.
 
 **What this does not rule.** Renaming a page from the printed sheet's title block, which reads the
@@ -22498,6 +22505,15 @@ label onto two drops.
 half, that one place computes the radius per surface and the drawn mark and the hit box are the same
 figure at every zoom. DR-183 changes the size and never the agreement. §11.168.10's printed radius and
 §11.168.11's line weight are untouched: a sheet has no zoom to cross a threshold with.
+
+### 12.37 Amended by DR-185 (a plan is the tenth location carrier)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-021 §11.20**, the census | **Nine fields across seven entities** point at a location from outside the tree, and deleting it clears every one. | **Ten across eight** (§11.184.3): `PlanUnderlay.locationId` joins them, cleared and restored on the same terms. It was not missed so much as unreachable: nothing wrote the field until DR-185. |
+
+**NOT amended:** everything else DR-021 rules, the subtree going, promotion and refusal rejected, and
+nothing but locations deleted. A plan that loses its floor is still a plan.
 
 
 ## 13. Resolved §10 questions

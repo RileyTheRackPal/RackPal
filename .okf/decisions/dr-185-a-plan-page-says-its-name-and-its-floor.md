@@ -37,6 +37,12 @@ names, for the fourth or fifth time on this view alone.
   and its details are one undo entry, and dismissing keeps the proposal rather than throwing away the
   page somebody just picked.
 
+# The tenth location carrier
+
+Giving `locationId` a writer made it reachable by [DR-021](/decisions/dr-021-location-delete-cascades.md)'s
+cascade, which had censused nine fields and could not have counted this one. Deleting a floor now
+clears the plans that showed it and undo puts them back (canon §11.184.3, §12.37).
+
 # What this does not rule
 
 Replacing a plan's picture with a revised drawing while keeping its pins, which is its own feature

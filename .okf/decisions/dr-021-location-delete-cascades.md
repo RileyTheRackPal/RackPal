@@ -136,3 +136,10 @@ invented.
 [3] `packages/rackmate_core/lib/src/derived/device_removal.dart`, the plan shape
     §11.20.3 reuses
 [4] `packages/rackmate_core/lib/src/derived/schedule.dart`, `kUngroupedTitle`
+
+# Amended by DR-185
+
+**The census is ten across eight now.** [DR-185](/decisions/dr-185-a-plan-page-says-its-name-and-its-floor.md)
+gave `PlanUnderlay.locationId` its first writer, and a plan showing a deleted floor is cleared and
+restored on exactly these terms (canon §12.37). The nine above were right when counted: the tenth
+field existed and could not be set.
