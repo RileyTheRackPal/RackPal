@@ -1,5 +1,23 @@
 # Update Log
 
+## 2026-09-18 (sixtieth entry)
+
+* **Closed**: `#913`, ruled as [DR-186](/decisions/dr-186-ctrl-l-locks-and-pins.md). `Ctrl+L` locks a
+  rack device's position and pins a schematic symbol where it stands. **No version move**: it closes
+  under `#786`.
+* **Note**: **A FIELD WITH ONE READER AND NO WRITER IS A RULE NOBODY IS FOLLOWING.** `Placement.locked`
+  was honoured by compaction alone for five milestones, so the product had a lock that every other
+  gesture ignored and nobody could set. The same shape one canvas over: the schematic layout read
+  `SheetItem.pinned` and nothing wrote one.
+* **Note**: **A DEFAULT CHOSEN WHEN IT MEANT NOTHING BECOMES A DECISION LATER.** The width command's
+  test fixture was written with `locked: true`, which was free while the field had no reader, and
+  every plan in that file refused the moment the rule arrived. The fixture was the first thing the
+  new rule found.
+* **Note**: **AN EPOCH IS A PROMISE ABOUT WHAT MOVED.** The schematic listened to the `sheet` epoch
+  with its structure handler, which re-lays the sheet out. Nothing on that epoch moves a symbol, and
+  the day a pin could be written it would have moved the pinned symbol's neighbours, which is the
+  complaint the key exists to answer.
+
 ## 2026-09-18 (fifty-ninth entry)
 
 * **Closed**: `#912`, ruled as

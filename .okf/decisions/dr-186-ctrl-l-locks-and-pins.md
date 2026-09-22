@@ -10,7 +10,7 @@ tags: [ruling, rack, schematic, lock, pin, keymap, dr-186, cr-034, cr-068, cr-07
 timestamp: 2026-09-18T00:00:00Z
 ruling_id: DR-186
 canon_section: "11.185"
-status: ruled
+status: built
 ---
 
 Ruled by the user on 2026-09-18 on board `#913`.
@@ -32,6 +32,22 @@ Ruled by the user on 2026-09-18 on board `#913`.
   does not print.
 - **The schematic's `Ctrl+L` pins a symbol where it stands, now**, under the same label, with a 📌
   badge. The first pin creates the one schematic `Sheet`.
+
+# Built
+
+`#913` landed it on 2026-09-18 in `2bbe532a`: the two commands, the refusals, `Ctrl+L` on both canvases, the
+inspector checkbox, the padlock and the pin badge, with eighteen core cases and twelve through the
+real screens. Three mutations, three kills.
+
+**THE `sheet` EPOCH NOW HOLDS THE SCHEMATIC LAYOUT.** It was wired to the structure handler, which
+re-lays the sheet out from scratch. Harmless while nothing wrote a `SheetItem`; the day one could, a
+pin would have re-run the layout with one node fixed and the neighbours could have shifted, so
+pinning one symbol would have moved the others.
+
+**THE WIDTH TEST FIXTURE CARRIED `locked: true`** and had since it was written, because the field was
+free while nothing read it. Every plan in that file refused on the first run of the new rule, which is
+[a defaulted enum has already answered](/practices/a-defaulted-enum-has-already-answered.md) wearing
+a boolean: a value chosen when it meant nothing becomes a decision the day it means something.
 
 # Two options I described wrongly
 

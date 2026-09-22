@@ -205,7 +205,7 @@ Consecutive nudges on the same axis within 500 ms **coalesce into one undo entry
 - **Marquee is left-drag on empty canvas, in every view** (CR-102). Rejected alternative: right-drag, which double-books the context menu. CAD convention is kept: left→right selects fully contained (solid band, corner label `WINDOW`), right→left selects intersecting (dashed band, `CROSS`). `Shift` adds, `Alt` subtracts.
 - `Ctrl+A` selects all in the focused rack; again for the whole project.
 - Multi-select draws a 2 px outline per member plus a combined bracket in the ruler spanning the union of their U ranges; the status bar rolls up `3 selected · 5U · 62 lb · 780 VA`, with any unknown contributor counted rather than guessed (G4).
-- Selection is the unit for move, nudge, delete, copy, duplicate, face change, lock (`Ctrl+L` → `Placement.locked`, CR-034) and inspector multi-edit, where differing values render `—` and an edit applies to all.
+- Selection is the unit for move, nudge, delete, copy, duplicate, face change, lock (`Ctrl+L` → `Placement.locked`, CR-034) and inspector multi-edit, where differing values render `—` and an edit applies to all. **The lock is BUILT at `#913` (DR-186 §11.185), 2026-09-18**, with the checkbox the inspector needed for a mouse and a padlock badge that is screen chrome and does not print. A locked device refuses a drag, a nudge, a width change and a bottom-trimmed shrink, and a refusal names it; **a delete is not refused**, which the ruling settles rather than leaves open. Copy, duplicate and cut/paste in that list are still unbuilt.
 
 | Command | Behaviour |
 |---|---|
