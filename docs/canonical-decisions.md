@@ -21933,10 +21933,24 @@ sheet, so the layout you arranged is gone the next morning."*
 **11.186.2 RULED: THE FIRST EDIT THAT WOULD RE-FLOW IS WHAT RECORDS THE POSITIONS.** Settled by the
 user. **Opening or viewing the Schematic writes nothing**, so looking at a project never marks it
 changed. When an edit arrives that would re-flow the sheet, the positions every symbol had BEFORE that
-edit are recorded, and only the new symbol is placed. It lands as **its own undo entry** beside the
-edit, which was stated in the question and chosen with it: writing at save time was declined because it
+edit are recorded, and only the new symbol is placed. Writing at save time was declined because it
 would mutate the document outside a command (docs/03 §5.6), and writing on first layout because it
 would prompt *"save changes?"* on a project nobody edited.
+
+**11.186.2.1 THIS CLAUSE SAID *"ITS OWN UNDO ENTRY"* AND THAT WAS WRONG, MEASURED.** The sentence was
+written here by the author of the option, not by the user, and the first build of it was refuted by two
+tests older than the ruling. `schematic_remedy_test.dart` and `schematic_remedy_dr128_test.dart` assert
+*"ONE undo takes back the device AND the cable"* and *"one undo takes back the converter and both
+cables"*, which is the Edit menu's standing promise; a freeze pushed as a second entry broke both.
+**The behaviour it produced is the one the ruling exists to abolish**: the first `Ctrl+Z` after any edit
+took back the ARRANGEMENT and left the edit, so the sheet visibly scrambled and the device stayed
+deleted, and undoing one delete took two presses. **RULED INSTEAD: the freeze is a CHILD of the edit's
+own undo entry.** One undo reverts both and lands on exactly the document that existed before either,
+which re-flows to the layout that was frozen, so the arrangement is right either way. The entry is
+still named by the edit, because `_commit` names a transaction after its FIRST child (DR-156
+§11.155.2). The mechanism is `DocumentController.addConsequence`, a hook that runs at the tail of a
+transaction that changed something, with the entry still open; an epoch listener cannot do this,
+because by the time an epoch bumps the entry is sealed.
 
 **11.186.3 RULED: A STORED POSITION IS HONOURED WHETHER OR NOT IT IS PINNED, AND PINNED MEANS `Tidy`
 LEAVES IT ALONE.** An implementation clause of §11.186.1, and it reverses a rule rather than adding
