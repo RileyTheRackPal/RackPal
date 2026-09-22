@@ -121,6 +121,7 @@
 //    direction reversal). See `app_shell.dart`'s header: a partial keymap
 //    reads as a whole one.
 
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart'
@@ -142,6 +143,7 @@ import 'package:rackpal_ui/src/canvas/schematic/schematic_filter.dart';
 import 'package:rackpal_ui/src/canvas/schematic/schematic_paint_plan.dart';
 import 'package:rackpal_ui/src/canvas/schematic/schematic_reveal.dart';
 import 'package:rackpal_ui/src/canvas/schematic/spring_back_chip_card.dart';
+import 'package:rackpal_ui/src/canvas/schematic/tidy_sheet_dialog.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/status_message_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
@@ -1873,6 +1875,42 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       pin
           ? 'Pinned $what. Auto-layout leaves it where it is.'
           : 'Unpinned $what.',
+    );
+  }
+
+  /// `Tidy sheet` from the filter bar (DR-187 §11.186.7, `#920`).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE FREEZE IS ONLY SAFE TO SHIP BECAUSE OF THIS
+  /// ═══════════════════════════════════════════════════════════════════
+  /// §11.186.1 keeps a sheet's layout forever, which is what was asked
+  /// for and which also means a sheet that has gone wrong stays wrong.
+  /// This is the way back: every unpinned stored position is removed and
+  /// the layout gets its say again. A pinned symbol is never touched
+  /// (CR-068), which is the one thing pinning still means.
+  ///
+  /// **THE COUNT IN THE DIALOG AND THE COUNT THAT MOVES ARE ONE ANSWER**,
+  /// both from `wouldReflow`, so the sentence cannot overstate the edit.
+  /// It is re-read after the await rather than trusted across it: a
+  /// dialog is a frame boundary and the document can change under it.
+  Future<void> _tidySheet() async {
+    final before = TidySheetCommand.wouldReflow(_doc);
+    if (before == 0) return;
+    if (!await confirmTidySheet(context, count: before)) return;
+    if (!mounted) return;
+    // RE-READ, not carried across the await. Nothing in the product can
+    // edit the sheet while a modal is up today, so this is a guard rather
+    // than a fix, and a guard that costs one map walk is worth its price.
+    final now = TidySheetCommand.wouldReflow(_doc);
+    if (now == 0) {
+      _status.show('Nothing left to tidy.');
+      return;
+    }
+    widget.controller.run(TidySheetCommand());
+    _status.show(
+      now == 1
+          ? 'Tidied 1 symbol. Ctrl+Z puts it back.'
+          : 'Tidied $now symbols. Ctrl+Z puts them back.',
     );
   }
 
@@ -4459,6 +4497,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
                   _dismissCoachMark();
                   setState(() => _filter = _filter.showNone());
                 },
+                // NOT behind `_dismissCoachMark`: the mark teaches the
+                // domain filter, and tidying the sheet is not evidence
+                // that anybody has read it.
+                tidyCount: TidySheetCommand.wouldReflow(_doc),
+                onTidySheet: () => unawaited(_tidySheet()),
               ),
               if (widget.showFilterCoachMark)
                 CoachMark(

@@ -197,4 +197,131 @@ void main() {
       expect(stored(doc)[entry.key], entry.value);
     }
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // `Tidy sheet` (DR-187 §11.186.3 and §11.186.7, `#920`)
+  // ═══════════════════════════════════════════════════════════════════
+  // The way back out of the freeze, and the reason the freeze is safe to
+  // ship at all. It lives on the domain filter bar for now, which is the
+  // schematic's only existing chrome; §11.186.7 moves it to the context
+  // menu when `#918`'s drag gives that menu its other reasons to exist.
+  //
+  // TWO CONTROLS SAY "Tidy sheet" once the dialog is up, the bar's and
+  // the confirm's, so every finder below names the BUTTON TYPE as well as
+  // the words. A bare `find.text` here would tap whichever the tree
+  // happened to reach first and pass either way.
+  Finder barButton() => find.widgetWithText(TextButton, 'Tidy sheet');
+  Finder confirmButton() => find.widgetWithText(FilledButton, 'Tidy sheet');
+
+  testWidgets('THE BUTTON IS DISABLED WITH NOTHING TO TIDY, so it can never '
+      'be the control that did nothing', (tester) async {
+    await pump(tester);
+
+    expect(barButton(), findsOneWidget);
+    expect(
+      tester.widget<TextButton>(barButton()).onPressed,
+      isNull,
+      reason: 'an untouched sheet stores no position',
+    );
+  });
+
+  testWidgets('a frozen sheet enables it, and the CONFIRM STATES THE COUNT '
+      'that will move', (tester) async {
+    await pump(tester);
+    controller.run(RemoveDeviceCommand(id: deviceNamed(doc, 'MTX-1').id));
+    await tester.pumpAndSettle();
+
+    final owed = stored(doc).length;
+    expect(owed, greaterThan(1));
+    expect(tester.widget<TextButton>(barButton()).onPressed, isNotNull);
+
+    await tester.tap(barButton());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Tidy $owed symbols?'), findsOneWidget);
+  });
+
+  testWidgets('Cancel changes NOTHING, which is the whole point of asking', (
+    tester,
+  ) async {
+    await pump(tester);
+    controller.run(RemoveDeviceCommand(id: deviceNamed(doc, 'MTX-1').id));
+    await tester.pumpAndSettle();
+    final frozen = stored(doc);
+
+    await tester.tap(barButton());
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(TextButton, 'Cancel'));
+    await tester.pumpAndSettle();
+
+    expect(stored(doc), frozen);
+    expect(controller.undo.undoLabelKey, LabelKey.removeDevice.name);
+  });
+
+  testWidgets('CONFIRMING HANDS THE SHEET BACK TO THE LAYOUT, and the symbols '
+      'land where an unfrozen document would have put them', (tester) async {
+    final c = unfrozen();
+    await pump(tester);
+    controller.run(RemoveDeviceCommand(id: deviceNamed(doc, 'MTX-1').id));
+    await tester.pumpAndSettle();
+
+    await tester.tap(barButton());
+    await tester.pumpAndSettle();
+    await tester.tap(confirmButton());
+    await tester.pumpAndSettle();
+
+    expect(stored(doc), isEmpty);
+    expect(controller.undo.undoLabelKey, LabelKey.tidySheet.name);
+    // THE CONTROL AGAIN: these are the positions the same deletion
+    // produces with nothing frozen, so a tidy has genuinely undone the
+    // freeze rather than merely deleted some rows.
+    expect(buildFixtureScene(doc).positions, c.after);
+  });
+
+  testWidgets('A PINNED SYMBOL SURVIVES A TIDY (CR-068), which is the one '
+      'thing pinning still means', (tester) async {
+    await pump(tester);
+    controller.run(RemoveDeviceCommand(id: deviceNamed(doc, 'MTX-1').id));
+    await tester.pumpAndSettle();
+
+    final kept = deviceNamed(doc, 'AMP-1').id;
+    final where = stored(doc)[kept];
+    expect(where, isNotNull);
+    controller.run(
+      SetSymbolPinnedCommand(
+        positions: {kept: where!},
+        pinned: true,
+        now: DateTime.utc(2026, 9, 22, 9),
+        actor: 'test',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(barButton());
+    await tester.pumpAndSettle();
+    await tester.tap(confirmButton());
+    await tester.pumpAndSettle();
+
+    expect(stored(doc).keys, [kept]);
+    expect(stored(doc)[kept], where);
+  });
+
+  testWidgets('and ONE undo puts the arrangement back, so a tidy pressed by '
+      'accident costs one keystroke', (tester) async {
+    await pump(tester);
+    controller.run(RemoveDeviceCommand(id: deviceNamed(doc, 'MTX-1').id));
+    await tester.pumpAndSettle();
+    final frozen = stored(doc);
+
+    await tester.tap(barButton());
+    await tester.pumpAndSettle();
+    await tester.tap(confirmButton());
+    await tester.pumpAndSettle();
+    expect(stored(doc), isEmpty);
+
+    controller.undoLast();
+    await tester.pumpAndSettle();
+
+    expect(stored(doc), frozen);
+  });
 }

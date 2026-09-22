@@ -1373,7 +1373,14 @@ $SuiteFloors = @{
     # them on an unfrozen document, so every claim is paired against that
     # control. Another asserts one undo takes the edit and the frozen
     # arrangement back together, which is the defect §11.186.2.1 records.
-    'rackpal_ui'     = 1972
+    # 1978 at `#920` (DR-187 §11.186.7): +6 for `Tidy sheet` on the domain
+    # filter bar, the way back out of the layout freeze. The load-bearing
+    # one asserts that confirming lands the symbols on THE CONTROL'S
+    # positions, the ones the same deletion produces with nothing frozen,
+    # so a tidy has genuinely undone the freeze rather than deleted some
+    # rows. Two more are the button DISABLED with nothing to tidy and a
+    # PINNED symbol surviving (CR-068).
+    'rackpal_ui'     = 1978
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

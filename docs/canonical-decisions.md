@@ -21977,9 +21977,19 @@ grows to hold it, which is the user's *"expanding the canvas slightly"*.
 manual move pins; a single Tidy sheet lays out all unpinned symbols"*, and none of it was built. This
 is that paragraph, plus the persistence DR-011.4 had refused.
 
-**What this does not rule.** **`Tidy sheet`'s host**, which is open and is settled when it is built:
-the schematic's only existing chrome is its domain filter bar, and docs/05 §5's context menu is
-specified and unbuilt. Multi-select drag. The v1.1 route constraints, untouched.
+**11.186.7 RULED: `Tidy sheet` SITS ON THE DOMAIN FILTER BAR NOW AND MOVES TO THE CONTEXT MENU WHEN
+THE DRAG LANDS.** Settled by the user on 2026-09-22, in those terms, over the two hosts §11.186.6
+left open. **The bar is the schematic's only existing chrome**, so the way out of the freeze ships in
+the same change as the freeze rather than waiting on a surface nobody has built; docs/05 §5 already
+lists `Tidy sheet` on the empty-space context menu, so that is where it belongs once `#918`'s drag
+gives that menu its other reasons to exist. **The button is the only DOCUMENT EDIT on a bar of view
+toggles**, which is a real objection and is answered in the widget rather than argued away: it is
+separated from `All`/`None`, it is DISABLED when nothing would re-flow, and it asks first, with the
+count, per docs/05 §10's *"behind a plain confirm"*. A move to the context menu is then a move and
+not a redesign, because the count and the confirm travel with it.
+
+**What this does not rule.** Multi-select drag. `Ctrl+Shift+U`, docs/05 §10's unpin, which has no
+command yet. The v1.1 route constraints, untouched.
 
 ---
 

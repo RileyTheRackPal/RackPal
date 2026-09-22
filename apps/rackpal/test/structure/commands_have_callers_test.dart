@@ -194,19 +194,6 @@ const Map<String, String> _exempt = {
   // comment, which the strip above now fixes. `AddLinkCommand` exists,
   // is used twenty-one times, and is deliberately not reachable, so it
   // moved to `_infrastructure` below rather than leaving the list.
-
-  // `#914` OPENED THIS ROW, AND THE GATE CAUGHT IT THE SAME HOUR THE
-  // COMMAND WAS WRITTEN, which is the whole argument for the gate. DR-187
-  // §11.186.3 makes `Tidy sheet` the way out of the layout freeze: the
-  // freeze is only safe to ship BECAUSE a person can hand the sheet back
-  // to the layout. The command, its refusals and `wouldReflow` (the count
-  // the confirmation says out loud) are built and tested; what is not
-  // settled is WHERE it is pressed from. §11.186.6's "what this does not
-  // rule" says so in terms, because the schematic's only existing chrome
-  // is its domain filter bar and docs/05 §5's context menu is specified
-  // and unbuilt, and that is a UI question for the user rather than a
-  // choice to make quietly in a commit. `#920` is that question.
-  'TidySheetCommand': '#920',
 };
 
 /// Commands that are NOT reachable from a person and are not supposed to
