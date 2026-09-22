@@ -84,6 +84,7 @@ class InspectorPanel extends StatelessWidget {
     required this.onSetPortFact,
     this.onSaveAsPreset,
     this.onSetMountNote,
+    this.onSetLocked,
     this.firstFieldFocus,
     super.key,
   });
@@ -140,6 +141,11 @@ class InspectorPanel extends StatelessWidget {
   /// on `onSetWidth`'s precedent one control up: a dead field invites the
   /// question of what would make it live.
   final ValueChanged<String>? onSetMountNote;
+
+  /// Locks or unlocks every selected device that has a rack position, as
+  /// one undo entry (DR-186 §11.185.2). Null hides the control, on
+  /// [onSetMountNote]'s precedent.
+  final ValueChanged<bool>? onSetLocked;
 
   final FocusNode? firstFieldFocus;
 
@@ -205,6 +211,7 @@ class InspectorPanel extends StatelessWidget {
           onSetOverride: onSetOverride,
           onSetPortFact: onSetPortFact,
           onSetMountNote: onSetMountNote,
+          onSetLocked: onSetLocked,
           onMoveZeroU: onMoveZeroU,
           onResizeZeroU: onResizeZeroU,
         ),
@@ -225,6 +232,7 @@ class _SelectionSummary extends StatelessWidget {
     required this.onSetOverride,
     required this.onSetPortFact,
     required this.onSetMountNote,
+    required this.onSetLocked,
     required this.onMoveZeroU,
     required this.onResizeZeroU,
   });
@@ -250,6 +258,16 @@ class _SelectionSummary extends StatelessWidget {
   onSetPortFact;
 
   final ValueChanged<String>? onSetMountNote;
+  final ValueChanged<bool>? onSetLocked;
+
+  /// The lock state of every selected device that HAS a rack position to
+  /// hold, one per device (DR-186 §11.185.1). Off-rack and staged devices
+  /// answer nothing, so a selection of only those shows no checkbox.
+  List<bool> get _locks => [
+    for (final id in selectedIds)
+      if (doc.devices[id] case final d?)
+        if (placementLocked(d.placement) case final bool locked) locked,
+  ];
 
   /// AC-044's three occupant fields, HERE SINCE `#887`.
   ///
@@ -437,6 +455,29 @@ class _SelectionSummary extends StatelessWidget {
               values: WidthPosition.values,
               labelOf: (p) => p.label,
               onChanged: onSetWidth,
+            ),
+          // DR-186 §11.185.2's `Locked`, beside the position it holds.
+          // TRISTATE, because a selection can be partly locked, and a
+          // box showing ticked or unticked for a mixed set would state a
+          // fact about half of it. A click locks all of them unless all
+          // are locked already, which is exactly `Ctrl+L`'s rule.
+          if (onSetLocked case final setLocked? when _locks.isNotEmpty)
+            CheckboxListTile(
+              key: const ValueKey('inspector-locked'),
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              controlAffinity: ListTileControlAffinity.leading,
+              tristate: true,
+              value: _locks.every((l) => l)
+                  ? true
+                  : (_locks.any((l) => l) ? null : false),
+              title: Text(
+                _locks.length == 1
+                    ? 'Locked'
+                    : 'Locked (${_locks.length} devices)',
+              ),
+              subtitle: const Text("Can't be moved while ticked"),
+              onChanged: (_) => setLocked(!_locks.every((l) => l)),
             ),
           // DR-130 (`#839`). The other side of the sealed placement type
           // from the width dropdown above: a rail-placed device says

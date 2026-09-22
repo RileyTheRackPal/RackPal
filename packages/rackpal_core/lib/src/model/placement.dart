@@ -97,6 +97,36 @@ final class RailPlacement extends Placement {
   final Len? depthOffsetFromFront;
   final ChassisRotation chassisRotation;
   final bool locked;
+
+  /// This placement with [locked] set (DR-186). The one site that knows
+  /// every other field, on `OffRackPlacement.withPlanPin`'s reasoning: a
+  /// field added later is a compile-visible edit here rather than a silent
+  /// drop at every caller that rebuilt the object by hand.
+  RailPlacement withLocked({required bool locked}) {
+    // READ OFF A LOCAL, which is `device_width_commands.dart`'s own
+    // `_rebuild(base, ...)` shape and is not a style choice here.
+    // `placement_rules_test.dart`'s PLC-002 gate reads `lib/` for a file
+    // that SETS a lateral position rather than copying one, and it tells a
+    // copy by the field being read back on the right-hand side. A bare
+    // `startTwelfth: startTwelfth` is a copy that does not look like one,
+    // and it cannot be spelled `this.startTwelfth` either, because the
+    // analyzer calls that qualifier unnecessary. The gate is right to be
+    // strict: the real writer in that file uses the bare spelling for a
+    // PARAMETER carrying a new value, so teaching the gate to forgive it
+    // would blind it to the one thing it watches.
+    final base = this;
+    return RailPlacement(
+      rackId: base.rackId,
+      ruIndex: base.ruIndex,
+      face: base.face,
+      startTwelfth: base.startTwelfth,
+      spanTwelfths: base.spanTwelfths,
+      depthOffsetFromFront: base.depthOffsetFromFront,
+      chassisRotation: base.chassisRotation,
+      locked: locked,
+      unknown: base.unknown,
+    );
+  }
 }
 
 /// Hosted on top of another device (e.g. a component sitting on a shelf).
@@ -117,6 +147,16 @@ final class ShelfPlacement extends Placement {
   final FracIndex order;
   final Len? lateralOffset;
   final bool locked;
+
+  /// This placement with [locked] set (DR-186). See
+  /// [RailPlacement.withLocked].
+  ShelfPlacement withLocked({required bool locked}) => ShelfPlacement(
+    hostDeviceId: hostDeviceId,
+    order: order,
+    lateralOffset: lateralOffset,
+    locked: locked,
+    unknown: unknown,
+  );
 }
 
 /// Mounted in a rack's 0U vertical channel (a cable-management rail),
@@ -166,6 +206,18 @@ final class ZeroUPlacement extends Placement {
   final Len? spanAlongChannel;
   final ZeroUOrientation orientation;
   final bool locked;
+
+  /// This placement with [locked] set (DR-186). See
+  /// [RailPlacement.withLocked].
+  ZeroUPlacement withLocked({required bool locked}) => ZeroUPlacement(
+    rackId: rackId,
+    channelId: channelId,
+    offsetFromChannelStart: offsetFromChannelStart,
+    orientation: orientation,
+    spanAlongChannel: spanAlongChannel,
+    locked: locked,
+    unknown: unknown,
+  );
 }
 
 /// Not in any rack — a wall-mounted speaker, an off-rack passive splitter,
@@ -256,3 +308,26 @@ final class StagedPlacement extends Placement {
   /// (CR-069); not touched again after that.
   final Pt? schematicHint;
 }
+
+/// Whether [placement] is locked, or null when it is a placement a lock
+/// means nothing for (DR-186 §11.185.1).
+///
+/// Off-rack and staged devices have no position in a rack to hold, so
+/// they answer null rather than false: a `Ctrl+L` over a selection holding
+/// one of them leaves it alone rather than reporting it unlocked.
+bool? placementLocked(Placement placement) => switch (placement) {
+  RailPlacement(:final locked) => locked,
+  ShelfPlacement(:final locked) => locked,
+  ZeroUPlacement(:final locked) => locked,
+  OffRackPlacement() || StagedPlacement() => null,
+};
+
+/// [placement] with its lock set, or null when a lock means nothing for
+/// it. See [placementLocked].
+Placement? placementWithLocked(Placement placement, {required bool locked}) =>
+    switch (placement) {
+      final RailPlacement p => p.withLocked(locked: locked),
+      final ShelfPlacement p => p.withLocked(locked: locked),
+      final ZeroUPlacement p => p.withLocked(locked: locked),
+      OffRackPlacement() || StagedPlacement() => null,
+    };

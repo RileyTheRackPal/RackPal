@@ -24,7 +24,11 @@ const _dev = Uuid('dev-1');
 EntityMeta _meta() =>
     EntityMeta(createdAt: _now, updatedAt: _now, updatedBy: 'test');
 
-RackDocument _doc({Placement? placement, int heightU = 12}) {
+RackDocument _doc({
+  Placement? placement,
+  int heightU = 12,
+  bool locked = false,
+}) {
   final doc = RackDocument(
     id: const Uuid('doc-width'),
     appVersion: '0.5.20',
@@ -66,11 +70,14 @@ RackDocument _doc({Placement? placement, int heightU = 12}) {
     name: 'Amplifier',
     placement:
         placement ??
-        const RailPlacement(
-          rackId: Uuid('rk-1'),
+        RailPlacement(
+          rackId: const Uuid('rk-1'),
           ruIndex: 3,
           face: Face.front,
-          locked: true,
+          // UNLOCKED BY DEFAULT SINCE DR-186. It was `true`, which was
+          // free while nothing read the field and is now the one value
+          // that refuses every plan in this file.
+          locked: locked,
           chassisRotation: ChassisRotation.reversed,
         ),
     meta: _meta(),
@@ -153,6 +160,36 @@ void main() {
   });
 
   group('refusals that are not rules carry no rule id (CR-021)', () {
+    test('A LOCKED DEVICE IS REFUSED BY NAME (DR-186 §11.185.1), because a '
+        'width position is a position', () {
+      final doc = _doc(locked: true);
+      final result = _plan(doc, 0, 6);
+
+      expect(result, isA<WidthChangeRefused>());
+      expect((result as WidthChangeRefused).reason, contains('AMP-1'));
+      expect(result.reason, lockedRefusal('AMP-1'));
+      expect(
+        (doc.devices[_dev]!.placement as RailPlacement).startTwelfth,
+        0,
+        reason: 'a refused plan writes nothing',
+      );
+    });
+
+    test('and the command refuses too, for a caller that skipped the '
+        'planner', () {
+      // The planner is the user-facing refusal; this is the line that
+      // holds when something builds the command directly.
+      final unlocked = _doc();
+      final command = (_plan(unlocked, 6, 6) as WidthChangeReady).command;
+      final locked = _doc(locked: true);
+
+      expect(command.apply(locked), isFalse);
+      expect(
+        (locked.devices[_dev]!.placement as RailPlacement).startTwelfth,
+        0,
+      );
+    });
+
     test('a device that is not rail-placed has no width position', () {
       final doc = _doc(placement: const OffRackPlacement());
       final result = _plan(doc, 0, 6);
@@ -179,7 +216,10 @@ void main() {
       final placement = doc.devices[_dev]!.placement as RailPlacement;
       expect(placement.ruIndex, 3);
       expect(placement.face, Face.front);
-      expect(placement.locked, isTrue);
+      // `locked` IS NOT ON THIS LIST ANY MORE, and its absence is the
+      // point: a locked device refuses the edit (DR-186 §11.185.1), so
+      // there is no width write over one for a field to survive. The case
+      // below is where the lock is asserted instead.
       expect(placement.chassisRotation, ChassisRotation.reversed);
       expect(placement.rackId, const Uuid('rk-1'));
     });

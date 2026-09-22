@@ -884,7 +884,17 @@ $SuiteFloors = @{
     # the sixth is the tenth location carrier, cleared and put back. The
     # census case in `location_removal_test.dart` was EDITED, not added: its
     # fixture gained a plan and its counts went from nine to ten.
-    'rackpal_core'   = 4841
+    # 4862 at `#913` (DR-186): +21 for `Ctrl+L`. 18 in `lock_commands_test
+    # .dart` (the two commands, the refusals, the one schematic Sheet the
+    # first pin creates), two in `device_width_command_test.dart` for the
+    # locked refusal at the planner and at the command, and one in
+    # `schematic_scene_test.dart`: a pinned symbol stays put when devices
+    # are added, with a control proving an unpinned one does not.
+    # 4863 at `#913` part two: +1, and it is a claim being withdrawn rather
+    # than a feature. Pinning a symbol where it already stands moves nothing
+    # else, which a probe measured after the commit message had asserted the
+    # opposite. docs/12 §5.9.67.3 carries the numbers.
+    'rackpal_core'   = 4863
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1343,7 +1353,12 @@ $SuiteFloors = @{
     # 1954 at `#912` (DR-185): +4, all through the real editor's pencil:
     # the button on the open row only, a name and a floor landing together
     # with the room line finally printing, Cancel, and a blank name.
-    'rackpal_ui'     = 1954
+    # 1966 at `#913` (DR-186): +12. Six drive the rack canvas (the key, the
+    # drag refused at the threshold, the nudge, the badge, the inspector
+    # checkbox, one undo), four the schematic canvas (the pin, the badge as
+    # chrome, the unpin, one undo) and two the shrink dialog's bottom trim,
+    # one of them the control for the other.
+    'rackpal_ui'     = 1966
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

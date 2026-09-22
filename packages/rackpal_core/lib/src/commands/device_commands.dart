@@ -343,6 +343,14 @@ final class MoveDeviceCommand extends Command<RackDocument> {
   bool apply(RackDocument doc) {
     final d = doc.devices[id]!;
     final base = _requireRail(d);
+    // A LOCKED DEVICE DOES NOT MOVE (DR-186 §11.185.1, CR-034). Every
+    // gesture that moves one refuses by name before it gets here; this is
+    // the line that holds for a caller that did not, and on DR-156's
+    // contract a refusal leaves no undo entry. A move to where the device
+    // already is changes nothing and is not a move.
+    if (base.locked && (toRuIndex != base.ruIndex || toFace != base.face)) {
+      return false;
+    }
     _prevUpdatedAt = d.meta.updatedAt;
     _prevUpdatedBy = d.meta.updatedBy;
     _prevLocalRevision = d.meta.localRevision;

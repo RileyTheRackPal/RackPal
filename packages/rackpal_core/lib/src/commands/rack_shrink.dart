@@ -737,3 +737,31 @@ List<MoveDeviceCommand> shrinkDisplacementCommands(
       actor: actor,
     ),
 ];
+
+/// The locked devices a trim from the BOTTOM would have to move
+/// (DR-186 §11.185.1), in designator order.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// EVERY RAIL DEVICE IN THE RACK, NOT ONLY THE ONES A PLAN NAMES
+/// ═══════════════════════════════════════════════════════════════════════
+/// Rule 5 shifts every surviving rail occupant down by the removed count,
+/// so a bottom trim moves every rail device in the rack whichever height
+/// was asked for, and a locked one anywhere refuses it. A TOP trim moves
+/// nobody and compaction already treats a lock as an anchor, so neither
+/// consults this: the shrink dialog keeps every option lossless and only
+/// the direction that would move a lock is unavailable. 0U occupants are
+/// not shifted by rule 5 (`_shiftable`), so a locked one does not count.
+List<DeviceInstance> lockedAgainstBottomTrim(RackDocument doc, Uuid rackId) {
+  final out = <DeviceInstance>[
+    for (final d in doc.devices.values)
+      if (d.placement case RailPlacement(
+        rackId: final r,
+        locked: true,
+      ) when r == rackId)
+        d,
+  ];
+  return out..sort((a, b) {
+    final byName = a.designator.compareTo(b.designator);
+    return byName != 0 ? byName : a.id.v.compareTo(b.id.v);
+  });
+}

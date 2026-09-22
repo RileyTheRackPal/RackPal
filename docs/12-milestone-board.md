@@ -320,7 +320,7 @@ Not exit clauses, but every one is scope that a later milestone now inherits.
 | **The Staging Bin** | Model-only | `packages/rackpal_ui/lib/src/canvas/staging_bin_overlay.dart:107` renders the honest text *"Staging Bin, not in this build"*; `rack_canvas_screen.dart:2981` states no command produces a `StagedPlacement` | M1 tail |
 | **Shelves with auto-pack** | **NOT BUILT** | No `ShelfPlacement` handling in any UI file; `rack_shrink.dart:276`, *"DEVICES ON A SHELF ARE DELIBERATELY ABSENT"* | M1 tail |
 | **0U occupants from the inspector** | **NOT BUILT** | No editing path | M1 tail |
-| **Locks** | Half-built | Honoured as immovable anchors by the compaction planner; **no `Ctrl+L`, no way to set `Placement.locked`** (docs/04:195) | M1 tail |
+| **Locks** | **BUILT** at `#913`, DR-186 §11.185, 2026-09-18 | Was *"half-built: honoured as immovable anchors by the compaction planner; no `Ctrl+L`, no way to set `Placement.locked`"*, which stood for the whole of M1 to M5. `Ctrl+L`, a `Locked` checkbox and a padlock badge now set it, and a locked device refuses a drag, a nudge, a width change and a bottom-trimmed shrink. The schematic's half of the same key, `SheetItem.pinned`, lands with it | closed |
 | **Copy-on-place with `DeviceOverrides`** | **NOT BUILT** | Nothing writes one; `inspector_panel.dart:21` defers device-property editing | **M4** will hit this on day one |
 | **`sources.md` provenance as a gate** | Prose, not a gate | `assets/catalog/sources.md` exists (166 lines) and the catalog is real (48 templates = 30 rack-side + 18 field, `packages/rackpal_core/test/catalog/seed_catalog_test.dart:19` and `:40`). But **no test anywhere names the file**: `grep -rn "sources\.md"` across all four test trees returns **nothing at all**. Its only references in the repository are three orienting `lib/` comments, `catalog_connectors.dart:15`, `rack_presets.dart:21`, `seed_catalog.dart:6`. Nothing parses the file; nothing cross-references a numeric field to a citation | §4.4 |
 | **The connector-footprint CI assertion** | Real test, no CI | `seed_catalog_test.dart:281`, with `:303` and `:316` proving the exempt set is both truly footprint-free and actually reachable. It is a **CI assertion with no CI** | §4.1 |
@@ -12523,6 +12523,88 @@ survives.
 
 **Commits** (§8.8): the ruling `0b43d4d4`, the implementation `64fc85b8`, the amendment to DR-021's
 census `201c9ed5`. These records and the version follow in their own commits.
+
+#### 5.9.67 `#913`: `Ctrl+L` locks a rack device and pins a schematic symbol, five milestones after the keymap promised it · `DR-186` · no version move
+
+2026-09-18. **New ruling, DR-186 §11.185.** It closes under `#786`, the cross-cutting debt epic, which
+is not the epic under development, so it moves no number (§5.9.29's precedent).
+
+**DEMONSTRATED** by six cases through the real rack canvas (the key, the drag, the nudge, the badge,
+the inspector checkbox, one undo), four through the real schematic canvas, two on the shrink dialog
+and eighteen in core.
+
+##### 5.9.67.1 Two fields, one reader between them
+
+`Placement.locked` (CR-034) has been in the format since M0 with **no writer but the decoder and one
+reader, compaction**. docs/12 §3.3 has said so since M1 and it stayed true through M5. So a drag, a
+nudge, the width command and a bottom-trimmed shrink all moved a device somebody had locked, except
+that nobody could lock one. `SheetItem.pinned` (CR-068) is the same shape one canvas over: the layout
+READS it (`schematic_scene.dart`'s `_pinnedPositions`) and nothing wrote one, and **no document held
+the schematic `Sheet` a pin lives on**, though CR-073 says exactly one exists per project. The first
+pin creates it.
+
+##### 5.9.67.2 What a lock refuses, and what it does not
+
+Moving: the drag (refused at the 4-pixel threshold, so a locked device never becomes a drag source),
+the nudge, the width position, and compaction, which already honoured it. **A bottom-trimmed shrink**,
+because rule 5 shifts every surviving rail occupant down, so one lock anywhere in the rack refuses
+that direction and the dialog names it; a top trim moves nobody and stays offered, which keeps every
+option in that dialog lossless. **Not a delete**, ruled rather than left open: a lock that has to be
+undone before a delete is a lock people leave off.
+
+##### 5.9.67.3 A pin freezes the sheet, which is what it is for
+
+The schematic's `Ctrl+L` stores the position the layout just produced, so pinning moves nothing and
+the symbol stays where it is when devices are added. `schematic_scene_test.dart` asserts exactly that,
+with the control that the same symbol unpinned DOES move under the same edit.
+
+**AND THE `sheet` EPOCH NOW HOLDS THE LAYOUT, FOR A REASON THAT HAD TO BE MEASURED BEFORE IT WAS
+TRUE.** It was wired to the structure handler, which re-lays the sheet out from scratch. The ruling's
+own commit message and the first draft of this section both said that a pin would therefore have
+shifted the pinned symbol's NEIGHBOURS. **Probed on `schematic_scene_test.dart`'s fixture, it does
+not**: pinning a symbol at the position it already has moves nothing at all, because a fixed node is
+handed the answer the layout was going to give it. That property is a test now.
+
+What the same probe found is why the hold stays: pinning that symbol **24 by 8 grid units away moves
+all five of the others**, since a fixed node stops relaxing and the rest re-flows around it. No
+gesture writes a pin anywhere but where the symbol stands yet. **The one that will is dragging a
+symbol**, which is the soft-glue task, and a relayout on this epoch is exactly what would make that
+drag shuffle the sheet. Holding also stops the schematic re-laying itself out for a floorplan
+rotation or rename, which bump the same epoch and have nothing to do with that canvas.
+
+##### 5.9.67.4 Evidence
+
+- **Three mutations, three kills**: the move guard, the width planner's refusal, and the drag
+  refusal, each reddening the case written for it.
+- **The width fixture carried `locked: true`** and had since it was written, because the field was
+  free while nothing read it. Every plan in that file refused on the first run. It is unlocked now,
+  the field-survival case says why `locked` is no longer on its list, and the lock has two cases of
+  its own.
+- **THE PLC-002 GATE CALLED A COPY A WRITE, AND IT WAS RIGHT TO.**
+  `placement_rules_test.dart` reads `lib/` for the one file that SETS a lateral position rather than
+  copying one, and it tells a copy by the field being read back on the right of the colon.
+  `RailPlacement.withLocked` wrote `startTwelfth: startTwelfth`, which is a copy that does not look
+  like one, and the gate went red. **The fix went in the code and not in the gate**: the real writer
+  in `device_width_commands.dart` uses that same bare spelling for a PARAMETER carrying a new value,
+  so widening the rule to forgive it would have blinded the gate to the one thing it watches. The
+  copy reads off a local now, which is that file's own `_rebuild(base, ...)` shape. `this.` was tried
+  first and costs two `unnecessary_this` infos.
+- **AND A TEST REACHED PAST `@internal`.** The shrink dialog case set `DeviceInstance.placement` from
+  `rackpal_ui`, which AC-013's access control exists to stop; the analyzer gate reported it as a
+  warning, and warnings are gated at zero rather than ratcheted. The fixture builds the device locked
+  instead, which is what the product does.
+- **A CLAIM WAS WITHDRAWN AFTER IT WAS COMMITTED.** `2bbe532a`'s message says a pin would have moved
+  its neighbours without the hold. The probe above says it would not, for the gesture that exists
+  today; the numbers are in §5.9.67.3 and the corrected reason is in the code. The commit stands as
+  written, because a message is a record of what was believed when it was written, and this is where
+  the correction lives.
+- **WHAT IS NOT ASSERTED, SAID OUT LOUD**: the padlock's and the pin's PIXELS. The cases assert the
+  flag that draws them and every locked case paints a frame, so a badge that threw would fail; a badge
+  drawn at the wrong size, or at a size that rides the zoom, would not. Both divide by the canvas
+  scale the way `#906` requires, and neither has a case that would notice if that stopped.
+- **Floors**: `rackpal_core` 4841 to 4863, `rackpal_ui` 1954 to 1966, measured.
+
+**Commits** (§8.8): the ruling `4e944d20`, the implementation `2bbe532a`. These records follow.
 
 ---
 

@@ -1,5 +1,29 @@
 # Update Log
 
+## 2026-09-18 (sixtieth entry)
+
+* **Closed**: `#913`, ruled as [DR-186](/decisions/dr-186-ctrl-l-locks-and-pins.md). `Ctrl+L` locks a
+  rack device's position and pins a schematic symbol where it stands. **No version move**: it closes
+  under `#786`.
+* **Note**: **A FIELD WITH ONE READER AND NO WRITER IS A RULE NOBODY IS FOLLOWING.** `Placement.locked`
+  was honoured by compaction alone for five milestones, so the product had a lock that every other
+  gesture ignored and nobody could set. The same shape one canvas over: the schematic layout read
+  `SheetItem.pinned` and nothing wrote one.
+* **Note**: **A DEFAULT CHOSEN WHEN IT MEANT NOTHING BECOMES A DECISION LATER.** The width command's
+  test fixture was written with `locked: true`, which was free while the field had no reader, and
+  every plan in that file refused the moment the rule arrived. The fixture was the first thing the
+  new rule found.
+* **Note**: **AN EPOCH IS A PROMISE ABOUT WHAT MOVED.** The schematic listened to the `sheet` epoch
+  with its structure handler, which re-lays the sheet out. Nothing on that epoch moves a symbol, so
+  it holds its layout now.
+* **Note**: **THE REASON I GAVE FOR THAT WAS WRONG, AND THE COMMIT MESSAGE CARRIES IT.** I wrote that
+  a pin would otherwise shift the pinned symbol's neighbours. **Probed: it does not.** Pinning a
+  symbol where it already stands moves nothing, because a fixed node is handed the answer the layout
+  was going to give it; that is a test now. Pinning it 24 by 8 grid units away moves all five of the
+  others, which is the state a DRAG creates and does not exist yet. The hold is a guard for the
+  gesture that is coming, not a fix for a defect anybody met, and the correction lives in docs/12
+  §5.9.67.3 because the commit is a record of what was believed when it was written.
+
 ## 2026-09-18 (fifty-ninth entry)
 
 * **Closed**: `#912`, ruled as

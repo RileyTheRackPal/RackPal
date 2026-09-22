@@ -610,6 +610,15 @@ enum LabelKey {
   // the Edit menu describe half of what they did.
   editPlanUnderlay,
 
+  // `Ctrl+L` (commands/lock_commands.dart), `#913`, DR-186 §11.185. FOUR
+  // values for two commands, each carrying its direction on
+  // `clearPlanPin`'s reasoning: "Undo Lock" in front of somebody who just
+  // unlocked names the opposite act.
+  lockPlacement,
+  unlockPlacement,
+  pinSymbol,
+  unpinSymbol,
+
   // THE ROOM OUTLINE'S THREE (commands/plan_commands.dart), `LEN-A/2`,
   // DR-050 §11.49. Three values and not one, on `setPlanPin`'s two
   // precedents applied together rather than re-argued.

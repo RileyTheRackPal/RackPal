@@ -329,7 +329,17 @@ class _ShrinkRackDialogState extends State<ShrinkRackDialog> {
             children: [
               _CasualtyList(plan: plan),
               const SizedBox(height: 16),
-              _TrimSelector(value: _trimFrom, onChanged: _setTrim),
+              _TrimSelector(
+                value: _trimFrom,
+                onChanged: _setTrim,
+                // DR-186 §11.185.1: a bottom trim moves every rail device
+                // down, so one locked anywhere in the rack refuses it. The
+                // top stays offered, and every option stays lossless.
+                bottomLockedBy: lockedAgainstBottomTrim(
+                  widget.doc,
+                  widget.rackId,
+                ).map((d) => d.designator).toList(),
+              ),
               const Divider(height: 24),
               // `RadioGroup` rather than per-tile `groupValue`/`onChanged`,
               // which Flutter deprecated — the same idiom the inspector's
@@ -596,15 +606,27 @@ class _CasualtyList extends StatelessWidget {
 
 /// §4.1's "Trim from: (o) Top ( ) Bottom" radio.
 class _TrimSelector extends StatelessWidget {
-  const _TrimSelector({required this.value, required this.onChanged});
+  const _TrimSelector({
+    required this.value,
+    required this.onChanged,
+    this.bottomLockedBy = const <String>[],
+  });
 
   final TrimFrom value;
   final ValueChanged<TrimFrom> onChanged;
 
+  /// The locked devices a bottom trim would move, by designator. Non-empty
+  /// disables `Bottom` and says why (DR-186 §11.185.1).
+  final List<String> bottomLockedBy;
+
+  /// A stable handle for tests.
+  static const Key lockedNoteKey = ValueKey('shrink-bottom-locked');
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Row(
+    final locked = bottomLockedBy;
+    final row = Row(
       children: [
         Text('Trim from:', style: theme.textTheme.bodyMedium),
         const SizedBox(width: 12),
@@ -623,6 +645,7 @@ class _TrimSelector extends StatelessWidget {
                       contentPadding: EdgeInsets.zero,
                       visualDensity: VisualDensity.compact,
                       value: trim,
+                      enabled: trim == TrimFrom.top || locked.isEmpty,
                       title: Text(
                         trim == TrimFrom.top ? 'Top' : 'Bottom',
                         style: theme.textTheme.bodyMedium,
@@ -631,6 +654,29 @@ class _TrimSelector extends StatelessWidget {
                   ),
               ],
             ),
+          ),
+        ),
+      ],
+    );
+    if (locked.isEmpty) return row;
+    // NAMED, because a disabled radio with no reason is the "the app is
+    // broken" silence docs/04 §3.4 refuses for a blocked nudge.
+    final who = locked.length == 1
+        ? '${locked.single} is locked'
+        : '${locked.take(3).join(', ')}'
+              '${locked.length > 3 ? ' and ${locked.length - 3} more' : ''}'
+              ' are locked';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        row,
+        Text(
+          'Bottom is unavailable: $who, and trimming from the bottom moves '
+          'every device down.',
+          key: lockedNoteKey,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
