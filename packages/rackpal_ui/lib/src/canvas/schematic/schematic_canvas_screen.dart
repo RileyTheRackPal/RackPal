@@ -850,10 +850,17 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     // notification had no listener at all. See `schematic_reveal.dart`.
     widget.reveal?.addListener(_onRevealRequested);
     if (widget.reveal?.pending != null) _onRevealRequested();
+    // DR-187 §11.186.2. NOT an epoch listener, for the reason
+    // `addConsequence` gives at length: by the time an epoch bumps, the
+    // undo entry is sealed and the freeze can only be a second one.
+    _stopFreezing = widget.controller.addConsequence(_freezeWithTheEdit);
   }
+
+  void Function()? _stopFreezing;
 
   @override
   void dispose() {
+    _stopFreezing?.call();
     _marquee.dispose();
     // THE CURVE BEFORE ITS PARENT: a `CurvedAnimation` unregisters from
     // the controller it was built on, so disposing the controller first
@@ -898,6 +905,46 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     if (!mounted) return;
     _structureDirty = true;
     _onDocumentChanged();
+  }
+
+  /// Records where the symbols are, INSIDE the edit that is about to move
+  /// them (DR-187 §11.186.2, `#916`).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// IT READS THE LAYOUT THAT IS STILL ON SCREEN
+  /// ═══════════════════════════════════════════════════════════════════
+  /// The hook runs at the tail of the transaction, so the document has
+  /// already changed, but [_heldPositions] has not: it is written in
+  /// `build`, one frame later. That gap is the whole mechanism. The map
+  /// this hands over is the arrangement the person is looking at, and the
+  /// command drops every symbol that already has a stored position, so it
+  /// records only what the next layout would otherwise invent.
+  ///
+  /// **ONLY AN EDIT THAT WOULD RE-FLOW**, which is what the ruling says.
+  /// `meta` reuses the layout (§11.75.3) and `wires` holds it (DR-011.4),
+  /// so neither is an occasion to write anything; `structure` and `style`
+  /// rebuild it from scratch, and those are the two this screen hands to
+  /// [_onStructureChanged] for exactly that reason.
+  ///
+  /// **IT RIDES ON THE CANVAS, AND THAT IS A LIMIT WORTH STATING.** Only a
+  /// laid-out canvas knows where the symbols are, so an edit made while
+  /// the Schematic has never been opened this session records nothing:
+  /// there is no arrangement yet to preserve, and the next edit after it
+  /// has been looked at freezes what was seen. Nothing is written on
+  /// opening one, which is the half the ruling is strict about.
+  void _freezeWithTheEdit(TxnScope<RackDocument> tx) {
+    if (_heldPositions.isEmpty) return;
+    if (!tx.touches.has(EpochMask.structure | EpochMask.style)) return;
+    // A sheet that already stores every symbol refuses this, and
+    // `TxnScope.add` then keeps it out of the entry entirely (DR-156), so
+    // the ordinary edit on a frozen sheet costs nothing at all.
+    tx.add(
+      StoreSymbolPositionsCommand(
+        positions: _heldPositions,
+        now: widget.controller.clock.nowUtc(),
+        actor: widget.controller.actor,
+      ),
+    );
   }
 
   /// A `meta` bump: the symbols are rebuilt, the layout is not

@@ -894,7 +894,15 @@ $SuiteFloors = @{
     # than a feature. Pinning a symbol where it already stands moves nothing
     # else, which a probe measured after the commit message had asserted the
     # opposite. docs/12 §5.9.67.3 carries the numbers.
-    'rackpal_core'   = 4863
+    # 4884 at `#914` (DR-187): +21. Thirteen in `sheet_layout_commands_
+    # test.dart` for the freeze and the tidy that is the way out of it,
+    # eight in `document_controller_test.dart` for `addConsequence`, the
+    # hook that puts a consequence in its cause's undo entry. The eight
+    # exist because the first build of the freeze used a second `run()`
+    # and two tests OLDER THAN THE RULING failed on it: deleting one
+    # device then took two presses of Ctrl+Z. Canon §11.186.2.1 carries
+    # the correction and the measurement.
+    'rackpal_core'   = 4884
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1358,7 +1366,14 @@ $SuiteFloors = @{
     # checkbox, one undo), four the schematic canvas (the pin, the badge as
     # chrome, the unpin, one undo) and two the shrink dialog's bottom trim,
     # one of them the control for the other.
-    'rackpal_ui'     = 1966
+    # 1972 at `#914` (DR-187): +6 in `schematic_freeze_layout_test.dart`.
+    # ONE OF THE SIX IS A CONTROL AND IT IS HALF THE FILE'S ARGUMENT: a
+    # test that deletes a device and asserts the survivors did not move
+    # proves nothing until the same deletion has been measured MOVING
+    # them on an unfrozen document, so every claim is paired against that
+    # control. Another asserts one undo takes the edit and the frozen
+    # arrangement back together, which is the defect §11.186.2.1 records.
+    'rackpal_ui'     = 1972
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
