@@ -50,7 +50,11 @@ typedef _Occ = ({String d, int ru, int h});
 
 _Occ _at(String d, int ru, int h) => (d: d, ru: ru, h: h);
 
-RackDocument _doc(int heightU, List<_Occ> occupants) {
+RackDocument _doc(
+  int heightU,
+  List<_Occ> occupants, {
+  Set<String> locked = const <String>{},
+}) {
   final doc = RackDocument(
     id: const Uuid('doc-shrink'),
     appVersion: '0.1.0',
@@ -83,6 +87,10 @@ RackDocument _doc(int heightU, List<_Occ> occupants) {
         rackId: _rackId,
         ruIndex: o.ru,
         face: Face.front,
+        // BUILT LOCKED, never set afterwards: `placement`'s setter is
+        // `@internal` (AC-013), so a test in this package reaching for it
+        // is reaching past the access control rather than through it.
+        locked: locked.contains(o.d),
       ),
       meta: _meta(),
     );
@@ -105,7 +113,8 @@ Map<String, int> _targets(List<CompactionMove> m) => {
 ///  * BOTTOM trim — the floor rises 8U, so A (U5) is doomed; the smallest
 ///                 lossless height is 20 - (5-1) = 16U, and reaching it
 ///                 shifts BOTH survivors down by 4U.
-RackDocument _example() => _doc(20, [_at('A', 5, 1), _at('B', 18, 2)]);
+RackDocument _example({Set<String> locked = const <String>{}}) =>
+    _doc(20, [_at('A', 5, 1), _at('B', 18, 2)], locked: locked);
 
 void main() {
   group('resolveShrink — the pure decision half', () {
@@ -327,6 +336,48 @@ void main() {
             'just about the tile text',
       );
       expect(popped.summary, contains('Kept RK-1 at 19U'));
+    });
+
+    testWidgets('`#913`, DR-186: A LOCK REFUSES THE BOTTOM TRIM AND NAMES '
+        'THE DEVICE, because that trim moves every rail device down', (
+      tester,
+    ) async {
+      await pump(tester, _example(locked: {'A'}));
+
+      expect(
+        find.textContaining('A is locked'),
+        findsOneWidget,
+        reason: 'a disabled radio with no reason reads as broken',
+      );
+      final bottom = tester.widget<RadioListTile<TrimFrom>>(
+        find.widgetWithText(RadioListTile<TrimFrom>, 'Bottom'),
+      );
+      expect(bottom.enabled, isFalse);
+
+      // AND THE TOP TRIM IS UNTOUCHED: it moves nobody, so a lock has
+      // nothing to say about it and every option stays lossless.
+      final top = tester.widget<RadioListTile<TrimFrom>>(
+        find.widgetWithText(RadioListTile<TrimFrom>, 'Top'),
+      );
+      expect(top.enabled, isTrue);
+      expect(
+        find.text('Keep rack at 19U (smallest that fits)'),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('and with nothing locked the radio is offered as before', (
+      tester,
+    ) async {
+      // The control for the case above: without it, a `Bottom` radio that
+      // was disabled for some unrelated reason would pass it.
+      await pump(tester, _example());
+
+      expect(find.textContaining('is locked'), findsNothing);
+      final bottom = tester.widget<RadioListTile<TrimFrom>>(
+        find.widgetWithText(RadioListTile<TrimFrom>, 'Bottom'),
+      );
+      expect(bottom.enabled, isTrue);
     });
 
     testWidgets('FLIPPING TO BOTTOM REWRITES THE TILE: it names the two '

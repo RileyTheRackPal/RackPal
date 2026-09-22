@@ -514,4 +514,88 @@ void main() {
       expect(controller.doc.links, hasLength(5));
     });
   });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // `#913`, DR-186 §11.185.3: Ctrl+L PINS A SYMBOL WHERE IT STANDS
+  // ═════════════════════════════════════════════════════════════════════
+  group('#913, DR-186: Ctrl+L pins a symbol', () {
+    Future<void> ctrlL(WidgetTester tester) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('LOAD-BEARING: it pins the selected symbol at the position '
+        'the layout gave it, so nothing moves', (tester) async {
+      await pump(tester);
+      final amp = deviceNamed(doc, 'AMP-1');
+      final before = reference.positions[amp.id];
+      expect(before, isNotNull);
+
+      await tester.tapAt(toScreen(tester, centreOf('AMP-1')));
+      await tester.pumpAndSettle();
+      await ctrlL(tester);
+
+      // CR-073's ONE sheet, created by this pin (§11.185.4).
+      expect(controller.doc.sheets, hasLength(1));
+      expect(pinnedSymbolIds(controller.doc), {amp.id});
+      final item = schematicSheetOf(controller.doc)!.items.values.single;
+      expect(
+        item.position,
+        before,
+        reason: 'pinned where it stands, so the symbol does not jump',
+      );
+      expect(find.textContaining('Pinned AMP-1'), findsOneWidget);
+    });
+
+    testWidgets('THE PIN IS DRAWN, as screen chrome over the sheet', (
+      tester,
+    ) async {
+      await pump(tester);
+      expect(find.byKey(PinBadgeLayer.layerKey), findsNothing);
+
+      await tester.tapAt(toScreen(tester, centreOf('AMP-1')));
+      await tester.pumpAndSettle();
+      await ctrlL(tester);
+
+      expect(find.byKey(PinBadgeLayer.layerKey), findsOneWidget);
+      // AND NOT IN THE SCENE: the plan the PDF backend would replay is
+      // what `painted` reads, and a badge there would print (CR-086).
+      expect(
+        painted(tester).whereType<OpImage>(),
+        isEmpty,
+        reason: 'the badge is chrome, never an op',
+      );
+    });
+
+    testWidgets('a second Ctrl+L unpins it, and the pin goes with it', (
+      tester,
+    ) async {
+      await pump(tester);
+      await tester.tapAt(toScreen(tester, centreOf('AMP-1')));
+      await tester.pumpAndSettle();
+      await ctrlL(tester);
+      await ctrlL(tester);
+
+      expect(pinnedSymbolIds(controller.doc), isEmpty);
+      expect(find.byKey(PinBadgeLayer.layerKey), findsNothing);
+    });
+
+    testWidgets('one undo takes the pin back, sheet and all', (tester) async {
+      await pump(tester);
+      await tester.tapAt(toScreen(tester, centreOf('AMP-1')));
+      await tester.pumpAndSettle();
+      await ctrlL(tester);
+      expect(controller.doc.sheets, hasLength(1));
+
+      // `undoLast`, which is what the app's own Undo runs: the raw stack
+      // does not bump an epoch, so a screen watching one would not hear it.
+      controller.undoLast();
+      await tester.pumpAndSettle();
+
+      expect(controller.doc.sheets, isEmpty);
+      expect(find.byKey(PinBadgeLayer.layerKey), findsNothing);
+    });
+  });
 }

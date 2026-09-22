@@ -35,6 +35,8 @@
 // render object's own actions map stays empty. Marquee/range-select and the
 // insertion caret are also later stages.
 
+import 'dart:math' as math;
+
 import 'package:flutter/rendering.dart';
 import 'package:flutter/widgets.dart';
 import 'package:rackpal_core/rackpal_core.dart';
@@ -58,6 +60,7 @@ class DeviceBox extends StatefulWidget {
     required this.semanticLabel,
     required this.palette,
     this.selected = false,
+    this.locked = false,
     this.portChip,
     this.portChipStyle,
     this.fadeOpacity,
@@ -84,6 +87,13 @@ class DeviceBox extends StatefulWidget {
   /// selected chrome state. Defaults false so non-editing hosts (and the
   /// render tests) need not supply it.
   final bool selected;
+
+  /// Whether this device's position is locked (DR-186 §11.185.2), which
+  /// draws a padlock in its top-left corner. SCREEN CHROME, like
+  /// [selected]: drawn after the fragment replays and never into the
+  /// scene, because the scene prints and a lock is a fact about an editing
+  /// session rather than about the rack.
+  final bool locked;
 
   /// CR-105's port-count chip, or null to draw none.
   ///
@@ -164,6 +174,7 @@ class _DeviceBoxState extends State<DeviceBox> {
         hovered: _hovered,
         focused: _focused,
         selected: widget.selected,
+        locked: widget.locked,
         portChip: widget.portChip,
         portChipStyle: widget.portChipStyle,
         fadeOpacity: widget.fadeOpacity,
@@ -183,6 +194,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     required this.hovered,
     required this.focused,
     required this.selected,
+    required this.locked,
     required this.portChip,
     required this.portChipStyle,
     required this.fadeOpacity,
@@ -197,6 +209,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
   final bool hovered;
   final bool focused;
   final bool selected;
+  final bool locked;
   final PortFill? portChip;
   final PortChipStyle? portChipStyle;
   final double? fadeOpacity;
@@ -212,6 +225,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
     hovered: hovered,
     focused: focused,
     selected: selected,
+    locked: locked,
     portChip: portChip,
     portChipStyle: portChipStyle,
     fadeOpacity: fadeOpacity,
@@ -229,6 +243,7 @@ class _DeviceBoxLeaf extends LeafRenderObjectWidget {
       ..hovered = hovered
       ..focused = focused
       ..selected = selected
+      ..locked = locked
       ..portChip = portChip
       ..portChipStyle = portChipStyle
       ..fadeOpacity = fadeOpacity
@@ -251,6 +266,7 @@ class RenderDeviceBox extends RenderBox {
     bool hovered = false,
     bool focused = false,
     bool selected = false,
+    bool locked = false,
     PortFill? portChip,
     PortChipStyle? portChipStyle,
     double? fadeOpacity,
@@ -263,6 +279,7 @@ class RenderDeviceBox extends RenderBox {
        _hovered = hovered,
        _focused = focused,
        _selected = selected,
+       _locked = locked,
        _portChip = portChip,
        _portChipStyle = portChipStyle,
        _fadeOpacity = fadeOpacity,
@@ -330,6 +347,17 @@ class RenderDeviceBox extends RenderBox {
     if (_selected == value) return;
     _selected = value;
     markNeedsPaint();
+  }
+
+  /// See [DeviceBox.locked]. It changes the semantics label as well as
+  /// the paint, so both are marked.
+  bool _locked;
+  bool get locked => _locked;
+  set locked(bool value) {
+    if (_locked == value) return;
+    _locked = value;
+    markNeedsPaint();
+    markNeedsSemanticsUpdate();
   }
 
   /// CR-105's chip. See [DeviceBox.portChip] for why null is the screen's
@@ -543,6 +571,54 @@ class RenderDeviceBox extends RenderBox {
         ..color = Color(_palette.selection);
       context.canvas.drawRect((paintOffset & size).deflate(1.5 / k), outline);
     }
+
+    if (_locked) paintLockBadge(context.canvas, paintOffset, k);
+  }
+
+  /// The padlock (DR-186 §11.185.2), a constant 12 logical pixels at every
+  /// zoom, in the top-left corner where CR-105's chip (top-right) cannot
+  /// cover it. DRAWN AS PATHS AND NOT AS AN ICON GLYPH, so it renders
+  /// identically wherever the icon font is or is not bundled, and a test
+  /// can find it by reading paint calls rather than a font.
+  ///
+  /// White behind dark ink, because it sits on every device body colour
+  /// there is and a hue of its own would be a ninth domain colour that
+  /// means nothing. It is chrome, so PAL-1 does not govern it.
+  @visibleForTesting
+  static void paintLockBadge(Canvas canvas, Offset topLeft, double k) {
+    final u = 1 / k;
+    final origin = topLeft + Offset(3 * u, 3 * u);
+    final plate = RRect.fromRectAndRadius(
+      origin & Size(12 * u, 12 * u),
+      Radius.circular(2 * u),
+    );
+    canvas
+      ..drawRRect(plate, Paint()..color = const Color(0xF2FFFFFF))
+      ..drawRRect(
+        plate,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = u
+          ..color = const Color(0xFF101010),
+      );
+    final ink = Paint()..color = const Color(0xFF101010);
+    canvas
+      // The body: the lower half of the plate, inset.
+      ..drawRect(
+        Rect.fromLTWH(origin.dx + 3 * u, origin.dy + 5.5 * u, 6 * u, 4.5 * u),
+        ink,
+      )
+      // The shackle: an arch over the body.
+      ..drawArc(
+        Rect.fromLTWH(origin.dx + 4 * u, origin.dy + 2 * u, 4 * u, 7 * u),
+        math.pi,
+        math.pi,
+        false,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.4 * u
+          ..color = const Color(0xFF101010),
+      );
   }
 
   void _paintChip(FlutterDiagramCanvas canvas) {
@@ -566,7 +642,7 @@ class RenderDeviceBox extends RenderBox {
     // the hybrid render architecture exists to make possible (docs/04 §9).
     config
       ..isSemanticBoundary = true
-      ..label = _semanticLabel
+      ..label = _locked ? '$_semanticLabel, locked' : _semanticLabel
       ..textDirection = TextDirection.ltr;
   }
 }

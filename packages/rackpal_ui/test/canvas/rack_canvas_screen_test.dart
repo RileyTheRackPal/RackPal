@@ -1258,4 +1258,135 @@ void main() {
       );
     });
   });
+
+  // ═════════════════════════════════════════════════════════════════════
+  // `#913`, DR-186: A LOCK HOLDS A POSITION
+  // ═════════════════════════════════════════════════════════════════════
+  // Driven through the real screen, because the defect being closed is a
+  // field with no writer: a case that ran the command against a document
+  // would prove nothing about whether a person can reach it.
+  group('#913, DR-186: Ctrl+L locks a position', () {
+    Future<void> ctrlL(WidgetTester tester) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+    }
+
+    testWidgets('LOAD-BEARING: the nudge that moved a device refuses once '
+        'it is locked, and says which device', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await tester.tapAt(_swCentre(tester)); // SW-1 at U7
+      await tester.pump();
+
+      // It moves. Without this the refusal below could be a device that
+      // never moved for some other reason.
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      final atU8 = tester.getTopLeft(_device('dev-sw')).dy;
+      expect(atU8, closeTo(topLeftOfRu(tester, _geo, 8).dy, 0.5));
+
+      await ctrlL(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+
+      expect(tester.getTopLeft(_device('dev-sw')).dy, closeTo(atU8, 0.5));
+      expect(find.textContaining('SW-1 is locked'), findsOneWidget);
+    });
+
+    testWidgets('A LOCKED DEVICE DOES NOT LIFT: the drag that moved it is '
+        'refused at the threshold', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await tester.tapAt(_ampCentre(tester)); // AMP-1 at U4, 2U
+      await tester.pump();
+      final before = tester.getTopLeft(_device('dev-amp')).dy;
+      await ctrlL(tester);
+
+      // The same 88px drag that moves it in the case above.
+      final gesture = await tester.startGesture(_ampCentre(tester));
+      await gesture.moveBy(sceneDelta(tester, 0, -88));
+      await tester.pump();
+      expect(
+        _isDragSource(tester, 'dev-amp'),
+        isFalse,
+        reason: 'a locked device never becomes a drag source',
+      );
+      await gesture.up();
+      await tester.pump();
+
+      expect(tester.getTopLeft(_device('dev-amp')).dy, closeTo(before, 0.5));
+      expect(find.textContaining('AMP-1 is locked'), findsOneWidget);
+    });
+
+    testWidgets('THE PADLOCK IS ON THE LOCKED DEVICE AND ON NO OTHER', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      expect(_render(tester, 'dev-sw').locked, isFalse);
+
+      await tester.tapAt(_swCentre(tester));
+      await tester.pump();
+      await ctrlL(tester);
+
+      expect(_render(tester, 'dev-sw').locked, isTrue);
+      expect(_render(tester, 'dev-amp').locked, isFalse);
+    });
+
+    testWidgets('and Ctrl+L again unlocks it, so the same nudge moves it', (
+      tester,
+    ) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await tester.tapAt(_swCentre(tester));
+      await tester.pump();
+      await ctrlL(tester);
+      await ctrlL(tester);
+
+      expect(_render(tester, 'dev-sw').locked, isFalse);
+      await tester.sendKeyEvent(LogicalKeyboardKey.arrowUp);
+      await tester.pump();
+      expect(
+        tester.getTopLeft(_device('dev-sw')).dy,
+        closeTo(topLeftOfRu(tester, _geo, 8).dy, 0.5),
+      );
+    });
+
+    testWidgets("THE INSPECTOR'S CHECKBOX IS THE OTHER ROUTE, and it is the "
+        'one a mouse has', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await tester.tapAt(_swCentre(tester));
+      await tester.pump();
+
+      final box = find.byKey(const ValueKey('inspector-locked'));
+      expect(box, findsOneWidget, reason: 'a selected device can be locked');
+      await tester.tap(box);
+      await tester.pump();
+
+      expect(_render(tester, 'dev-sw').locked, isTrue);
+
+      await tester.tap(box);
+      await tester.pump();
+      expect(_render(tester, 'dev-sw').locked, isFalse);
+    });
+
+    testWidgets('one undo unlocks what one Ctrl+L locked', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await tester.tapAt(_swCentre(tester));
+      await tester.pump();
+      await ctrlL(tester);
+      expect(_render(tester, 'dev-sw').locked, isTrue);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+
+      expect(_render(tester, 'dev-sw').locked, isFalse);
+    });
+  });
 }

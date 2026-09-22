@@ -106,6 +106,7 @@ export 'src/commands/link_commands.dart';
 export 'src/commands/link_count.dart';
 export 'src/commands/link_jacket_color_commands.dart';
 export 'src/commands/location_commands.dart';
+export 'src/commands/lock_commands.dart';
 export 'src/commands/media_type_commands.dart';
 export 'src/commands/mount_note_command.dart';
 export 'src/commands/move_endpoint_command.dart';

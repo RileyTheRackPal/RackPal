@@ -135,6 +135,7 @@ import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
 import 'package:rackpal_ui/src/canvas/schematic/connect_overlay.dart';
 import 'package:rackpal_ui/src/canvas/schematic/domain_filter_bar.dart';
 import 'package:rackpal_ui/src/canvas/schematic/link_hit_test.dart';
+import 'package:rackpal_ui/src/canvas/schematic/pin_badge_layer.dart';
 import 'package:rackpal_ui/src/canvas/schematic/pin_selection.dart';
 import 'package:rackpal_ui/src/canvas/schematic/render_schematic_canvas.dart';
 import 'package:rackpal_ui/src/canvas/schematic/schematic_filter.dart';
@@ -827,8 +828,10 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     // `sheet` and `style` COUNT AS STRUCTURE for this cache and not as
     // meta: `sheet` moves `SheetItem.pinned`/`position`, which is where a
     // symbol sits, and `style` resolves into the display list rather than
-    // over it (see [_sceneFor]'s key). Neither can reuse a layout.
-    widget.controller.epochs.sheet.addListener(_onStructureChanged);
+    // over it (see [_sceneFor]'s key). Neither can reuse a layout. **A
+    // `sheet` bump HOLDS the one it rebuilds**, since DR-186 made pins
+    // writable: see [_onSheetChanged].
+    widget.controller.epochs.sheet.addListener(_onSheetChanged);
     widget.controller.epochs.style.addListener(_onStructureChanged);
     _selection.addListener(_onSelectionChanged);
     // `Alt` is a MODIFIER, and Flutter delivers no hover event when only a
@@ -863,7 +866,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     widget.controller.epochs.structure.removeListener(_onStructureChanged);
     widget.controller.epochs.wires.removeListener(_onWiresChanged);
     widget.controller.epochs.meta.removeListener(_onMetaChanged);
-    widget.controller.epochs.sheet.removeListener(_onStructureChanged);
+    widget.controller.epochs.sheet.removeListener(_onSheetChanged);
     widget.controller.epochs.style.removeListener(_onStructureChanged);
     _selection
       ..removeListener(_onSelectionChanged)
@@ -904,6 +907,29 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   /// width formula, how wide it is — so the symbol tier is stale. It does
   /// not change what Sugiyama was ordering, and re-running it would move
   /// symbols under the cursor of somebody who just renamed one.
+  /// A `sheet` bump: a pin, an unpin, or a plan edit that is not about
+  /// this canvas at all (DR-186 §11.185.3).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// IT HOLDS THE LAYOUT, BECAUSE NOTHING ON THIS EPOCH MOVES A SYMBOL
+  /// ═══════════════════════════════════════════════════════════════════
+  /// It was `_onStructureChanged`, which re-lays the sheet out from
+  /// scratch, and that was harmless while nothing wrote a `SheetItem`. A
+  /// pin placed at the position the symbol already has would then have
+  /// re-run the layout with one node fixed, and the NEIGHBOURS could shift
+  /// because a fixed node no longer relaxes: pinning one symbol would have
+  /// moved the others, which is the complaint `Ctrl+L` exists to answer.
+  /// An unpin holds too, so the symbol stays put until something
+  /// structural happens. Rotating or renaming a floorplan bumps this epoch
+  /// as well, and a schematic that re-laid itself out for either was
+  /// answering an edit it had nothing to do with.
+  void _onSheetChanged() {
+    if (!mounted) return;
+    _holdLayoutOnNextBuild = true;
+    _structureDirty = true;
+    _onDocumentChanged();
+  }
+
   void _onMetaChanged() {
     if (!mounted) return;
     _metaDirty = true;
@@ -1761,6 +1787,52 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   /// `` ` ``, `F`. Not merely "no text field has focus": the key is only for
   /// this screen when this screen has focus.
   bool get _canvasKeysEnabled => !_textFieldHasFocus && _canvasFocus.hasFocus;
+
+  /// `Ctrl+L` over the selected symbols (DR-186 §11.185.3).
+  ///
+  /// PINNED WHERE THEY STAND: the positions are [_heldPositions], which is
+  /// what the last layout actually produced and what the symbols are drawn
+  /// at, so pinning moves nothing. The toggle rule is the rack's: anything
+  /// unpinned in the selection pins all of it, otherwise unpin all.
+  void _togglePinSelection() {
+    final ids = [
+      for (final id in _selection.ids)
+        if (_heldPositions.containsKey(id)) id,
+    ];
+    if (ids.isEmpty) {
+      _status.show('Only a symbol on the sheet can be pinned.');
+      return;
+    }
+    final pinned = pinnedSymbolIds(_doc);
+    final pin = ids.any((id) => !pinned.contains(id));
+    widget.controller.run(
+      SetSymbolPinnedCommand(
+        positions: {for (final id in ids) id: _heldPositions[id]!},
+        pinned: pin,
+        now: widget.controller.clock.nowUtc(),
+        actor: widget.controller.actor,
+      ),
+    );
+    final what = ids.length == 1
+        ? (_doc.devices[ids.single]?.designator ?? ids.single.v)
+        : '${ids.length} symbols';
+    _status.show(
+      pin
+          ? 'Pinned $what. Auto-layout leaves it where it is.'
+          : 'Unpinned $what.',
+    );
+  }
+
+  /// The body rect of every pinned symbol the last scene drew, for the
+  /// badge layer. Read off the SAME set the layout honours.
+  List<DBox> _pinnedBodies() {
+    final pinned = pinnedSymbolIds(_doc);
+    if (pinned.isEmpty) return const <DBox>[];
+    return [
+      for (final symbol in _scene?.symbols ?? const <RenderedSymbol>[])
+        if (pinned.contains(Uuid(symbol.id))) symbol.bodyRect,
+    ];
+  }
 
   void _soloByIndex(int oneBased) {
     final order = schematicDomainOrder(_doc.registries);
@@ -4202,6 +4274,12 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
             () => _canvasKeysEnabled,
             (_) => _showAllDomains(),
           ),
+          // `Ctrl+L` (DR-186 §11.185.3): a symbol is pinned where the layout
+          // put it. Disabled with nothing selected, so it falls through.
+          ToggleLockIntent: _GatedAction<ToggleLockIntent>(
+            () => _canvasKeysEnabled && _selection.isNotEmpty,
+            (_) => _togglePinSelection(),
+          ),
           FocusSelectionIntent: _GatedAction<FocusSelectionIntent>(
             () => _canvasKeysEnabled,
             (_) => _toggleFocus(),
@@ -4466,6 +4544,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
                     marquee: _marquee,
                     viewport: _viewport,
                     color: scheme.primary,
+                  ),
+                  // DR-186 §11.185.3's 📌, over the sheet and hit-testing
+                  // nothing, for the band's reason: a scene op would print.
+                  PinBadgeLayer(
+                    symbols: _pinnedBodies(),
+                    viewport: _viewport,
+                    color: scheme.onSurface,
                   ),
                   // The transient status line, where the rack canvas puts
                   // its own (`rack_canvas_screen.dart`'s bottom-left

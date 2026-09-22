@@ -2949,6 +2949,17 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     _moveBlockedReleaseTimer = null;
 
     final device = _doc.devices[Uuid(deviceId)];
+    // A LOCKED DEVICE DOES NOT LIFT (DR-186 §11.185.1). Refused at the
+    // threshold, where the drag would first become visible, with the same
+    // shake and status line a blocked nudge uses (docs/04 §3.4: never a
+    // silent no-op). `_dragRefused` is what keeps the rest of this pointer
+    // from arming, committing or reading as a click.
+    if (placement.locked) {
+      _dragRefused = true;
+      _shake.trigger(Uuid(deviceId));
+      _status.show(lockedRefusal(device?.designator ?? deviceId));
+      return;
+    }
     _moveDrag
       ..arm(
         subjectId: deviceId,
@@ -3424,6 +3435,52 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     _nudgeSelectedTo(_rack.heightU); // clamped down to a fitting position
   }
 
+  /// `Ctrl+L` over the selection (DR-186 §11.185.2).
+  ///
+  /// THE TOGGLE RULE IS HERE, where the selection is: anything unlocked in
+  /// it locks all of it, and a selection already all locked unlocks. A
+  /// per-device toggle would turn a mixed selection into its own inverse.
+  /// Devices with no rack position are left out rather than refused, and a
+  /// selection of nothing BUT those says so.
+  void _toggleLockSelection() {
+    final lockable = _lockableSelection;
+    if (lockable.isEmpty) {
+      _status.show('Only a device in a rack has a position to lock.');
+      return;
+    }
+    _setLockSelection(
+      lock: lockable.any(
+        (id) => placementLocked(_doc.devices[id]!.placement) == false,
+      ),
+    );
+  }
+
+  /// The selected devices a lock means something for: those with a rack
+  /// position (DR-186 §11.185.1). ONE list for the key and the checkbox,
+  /// so the two cannot disagree about which devices they would touch.
+  List<Uuid> get _lockableSelection => [
+    for (final id in _selection.ids)
+      if (_doc.devices[id] case final d?
+          when placementLocked(d.placement) != null)
+        id,
+  ];
+
+  /// Sets the lock on every selected device that has a rack position, as
+  /// one undo entry. `Ctrl+L` computes [lock] from the selection; the
+  /// inspector's checkbox computes it the same way and passes it here.
+  void _setLockSelection({required bool lock}) {
+    final lockable = _lockableSelection;
+    if (lockable.isEmpty) return;
+    _controller.selection = _selection.snapshot();
+    _controller.run(
+      SetPlacementLockedCommand(deviceIds: lockable, locked: lock),
+    );
+    final what = lockable.length == 1
+        ? _doc.devices[lockable.single]!.designator
+        : '${lockable.length} devices';
+    _status.show(lock ? 'Locked $what.' : 'Unlocked $what.');
+  }
+
   /// Nudges the focused selection to [targetRu] — one more
   /// `MoveDeviceCommand.run()` call, which is exactly what the existing,
   /// already-tested merge machinery coalesces within the 400ms window
@@ -3449,6 +3506,15 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     final deviceH = (layout.rect.height / RackGeometry.unitsPerRu).round();
     final clampedTarget = targetRu.clamp(1, _geo.maxRuIndexFor(deviceH));
     if (clampedTarget == placement.ruIndex) return; // genuine no-op
+
+    // A LOCKED DEVICE REFUSES THE NUDGE BY NAME (DR-186 §11.185.1), in the
+    // "attempted and refused" branch below and after the boundary no-op
+    // above: at the top of the rack there was nothing to refuse.
+    if (placement.locked) {
+      _shake.trigger(id);
+      _status.show(lockedRefusal(_doc.devices[id]?.designator ?? id.v));
+      return;
+    }
 
     final blocker = findBlockingOccupant(
       rack: _rack,
@@ -4497,6 +4563,15 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
             () => _canvasFocus.hasFocus,
             _deleteSelection,
           ),
+          // `Ctrl+L` (DR-186 §11.185.2). DOCUMENT-WIDE LIKE UNDO, not
+          // canvas-focused like Delete: it destroys nothing, and a person
+          // who has just ticked a field in the inspector means the
+          // selection that inspector is showing. Disabled with nothing
+          // selected, so the key falls through rather than being eaten.
+          ToggleLockIntent: _GatedAction<ToggleLockIntent>(
+            () => !_textFieldHasFocus && _selection.isNotEmpty,
+            _toggleLockSelection,
+          ),
           // Document-global: a rack rename typed in the inspector and an
           // undo pressed from the palette are both legitimate.
           //
@@ -4686,6 +4761,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
                       onSetOverride: _setDeviceOverride,
                       onSetPortFact: _setPortFact,
                       onSetMountNote: _setMountNote,
+                      onSetLocked: (lock) => _setLockSelection(lock: lock),
                       onZeroU: _runZeroU,
                       onMoveZeroU: _moveZeroUOccupant,
                       onAddZeroUDevice: _addZeroUOccupant,
@@ -4977,6 +5053,12 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
           : '${d.semanticLabel} — ${portChipSemantics(chip)}',
       palette: palette,
       selected: _selection.contains(d.deviceId),
+      // DR-186 §11.185.2's padlock, read off the placement on every build
+      // so the badge and the refusals below can never disagree.
+      locked: switch (_doc.devices[d.deviceId]?.placement) {
+        final Placement p => placementLocked(p) ?? false,
+        null => false,
+      },
       portChip: chip,
       portChipStyle: _portChipStyle(scheme),
       // Two in-place fades, one knob (see `RenderDeviceBox.fadeOpacity`):

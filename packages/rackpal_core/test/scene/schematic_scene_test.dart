@@ -446,6 +446,28 @@ void main() {
       expect(snk.bodyRect.top, at.gy * kSchematicUnitsPerGrid);
     });
 
+    test('A PINNED SYMBOL STAYS PUT WHEN DEVICES ARE ADDED, which is what a '
+        'pin is FOR (`#913`, DR-186 §11.185.3)', () {
+      // The complaint `Ctrl+L` answers: adding a device re-lays the sheet
+      // out and every symbol moves. `offRackChain` adds two devices and
+      // their wiring, which is that edit.
+      const at = Pt(96, 40);
+      final before = _build(_document(pinAt: at));
+      final after = _build(_document(pinAt: at, offRackChain: true));
+      DBox bodyOf(SchematicScene scene, String designator) =>
+          scene.symbols.firstWhere((s) => s.designator == designator).bodyRect;
+
+      expect(bodyOf(after, 'SNK-1'), bodyOf(before, 'SNK-1'));
+
+      // NOT VACUOUS: the same symbol, unpinned, moves under the same edit.
+      // Without this the case would pass on a layout that ignores the two
+      // new devices entirely.
+      expect(
+        bodyOf(_build(_document(offRackChain: true)), 'SNK-1'),
+        isNot(bodyOf(_build(_document()), 'SNK-1')),
+      );
+    });
+
     test('an UNPINNED SheetItem position is IGNORED — honouring it would '
         'freeze the first layout the document ever received and make every '
         'recompute a no-op', () {

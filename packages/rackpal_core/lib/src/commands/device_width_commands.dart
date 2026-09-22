@@ -30,6 +30,8 @@
 // twelfths through this same gate rather than needing a second one.
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
+import 'package:rackpal_core/src/commands/lock_commands.dart'
+    show lockedRefusal;
 import 'package:rackpal_core/src/derived/device_loads.dart' show bodyFor;
 import 'package:rackpal_core/src/derived/placement_rules.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
@@ -137,6 +139,11 @@ WidthChangeResult planSetDeviceWidth({
       'width position.',
     );
   }
+  // A WIDTH POSITION IS A POSITION (DR-186 §11.185.1). Refused by name
+  // rather than applied, so the person learns why rather than wondering.
+  if (placement.locked) {
+    return WidthChangeRefused(lockedRefusal(device.designator));
+  }
   final verdict = evaluatePlacement(
     doc: doc,
     placement: _rebuild(placement, startTwelfth, spanTwelfths),
@@ -215,6 +222,9 @@ final class SetDeviceWidthCommand extends Command<RackDocument> {
   bool apply(RackDocument doc) {
     final d = doc.devices[id]!;
     final base = _requireRail(d);
+    // THE LAST LINE, not the first: the planner refuses a locked device by
+    // name. This is what stops a caller that skipped the planner.
+    if (base.locked) return false;
     _prevUpdatedAt = d.meta.updatedAt;
     _prevUpdatedBy = d.meta.updatedBy;
     _prevLocalRevision = d.meta.localRevision;

@@ -189,6 +189,10 @@ enum KeyBindingId {
   rackSettings,
   newRack,
   applyCompaction,
+  // `#913`, DR-186 §11.185.2. docs/04 §8's `Ctrl+L`, and its schematic
+  // twin below: one chord, two scopes, one label, which is what `(b)` of
+  // the arbitration test requires and what docs/05 means by "lock".
+  lockSelection,
 
   // --- validation (M5, `#847`, DR-133) --------------------------------
   // ALL THREE docs/04 §8 NAMES, AND THE COMPLETENESS IS THE POINT.
@@ -218,6 +222,7 @@ enum KeyBindingId {
   showAllDomains,
   focusSelection,
   schematicCancel,
+  lockSelectionSchematic,
   beginWire,
   commitWire,
   toggleBankExpansion,
@@ -488,6 +493,16 @@ final class SchematicCancelIntent extends Intent {
 /// a key that means four things in four places.
 final class PlanCancelIntent extends Intent {
   const PlanCancelIntent();
+}
+
+/// Lock or unlock the selection (`#913`, DR-186 §11.185).
+///
+/// ONE INTENT FOR BOTH CANVASES, because docs/04 §8 and docs/05 §10 both
+/// call it "lock": a rack device's position on one, a symbol's pin on the
+/// other. Each canvas supplies its own action, and each decides lock or
+/// unlock from its own selection (§11.185.2's toggle rule).
+final class ToggleLockIntent extends Intent {
+  const ToggleLockIntent();
 }
 
 /// Turn the open plan a quarter (`#911`, DR-184 §11.183.4).
@@ -1410,6 +1425,32 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
         'W is UNBOUND IN THE RACK, which KeymapConflictKind.letterCollision '
         'keeps true — canon §1.10 principle (c).',
   ),
+  // ── Ctrl+L, on both canvases (`#913`, DR-186 §11.185) ────────────────
+  // THE SAME LABEL IN BOTH SCOPES, and `meaningDrift` fails if one is
+  // reworded: a chord that locked a device on one canvas and did something
+  // else on the other would be two keys wearing one name.
+  KeyBinding(
+    id: KeyBindingId.lockSelection,
+    scope: KeyScope.rack,
+    trigger: LogicalKeyboardKey.keyL,
+    primary: true,
+    label: 'Lock or unlock the selection',
+    intent: ToggleLockIntent(),
+    source: 'docs/04 §8 · DR-186',
+  ),
+  KeyBinding(
+    id: KeyBindingId.lockSelectionSchematic,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.keyL,
+    primary: true,
+    label: 'Lock or unlock the selection',
+    intent: ToggleLockIntent(),
+    source: 'docs/05 §10 · CR-068 · DR-186',
+    note:
+        'On the schematic a lock is SheetItem.pinned: the symbol is pinned '
+        'where the layout put it, and auto-layout leaves it there.',
+  ),
+
   // ── the plan (PLAN-E/5, DR-143 §11.142.6) ────────────────────────────
   KeyBinding(
     id: KeyBindingId.planCancel,

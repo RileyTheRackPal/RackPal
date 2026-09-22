@@ -196,13 +196,14 @@ void main() {
       // session_layering_test.dart is where the decision to add a global
       // binding is taken again.
       expect(keyBindingsIn(KeyScope.global), hasLength(13));
-      expect(keyBindingsIn(KeyScope.rack), hasLength(13));
+      // `#913` ADDS `Ctrl+L` HERE AND ON THE SCHEMATIC (DR-186).
+      expect(keyBindingsIn(KeyScope.rack), hasLength(14));
       // TWENTY-FIVE SINCE `#801`, which added `B` for CR-103's other
       // half. A click on a collapsed pin expands the bank, because
       // selecting a pin that stands for forty-eight ports means nothing;
       // going back needed a key, since `Shift`, `Ctrl` and `Alt` are all
       // spoken for on this canvas.
-      expect(keyBindingsIn(KeyScope.schematic), hasLength(25));
+      expect(keyBindingsIn(KeyScope.schematic), hasLength(26));
       expect(keyBindingsIn(KeyScope.structure), hasLength(2));
       //
       // FIVE IN THE BUILDER SINCE M4-F1, which added `Ctrl+D` and
@@ -271,7 +272,7 @@ void main() {
       // `Ctrl+Shift+Minus` turn the plan, as a pair.
       expect(keyBindingsIn(KeyScope.plan), hasLength(6));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(76));
+      expect(kKeymap, hasLength(78));
     });
   });
 
