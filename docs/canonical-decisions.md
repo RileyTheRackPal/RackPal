@@ -21901,6 +21901,72 @@ writer and the refusals they already implied.
 its own questions. `DeviceInstance.designatorLocked` and `Link.designatorLocked`, the other two CR-034
 flags, which belong to renumbering and are untouched.
 
+### 11.186 DR-187 · The schematic holds its layout, and a symbol drags, nudges and pins
+
+**The question.** From the user, 2026-09-18: *"the schematic view needs a 'soft glue' option for
+devices; it's getting annoying to see devices get auto placed and shift positions significantly. It
+should preserve the relative location of devices, just expanding the canvas slightly. This also comes
+with the ability to nudge them on the schematic view."*
+
+**11.186.0 MEASURED FIRST, AND ONE OF THE THREE CHANGED THE PLAN.** Probed on
+`schematic_scene_test.dart`'s fixture:
+
+- **Adding two devices re-flows the sheet and moves the symbols already on it.** That is the report,
+  reproduced.
+- **Pinning a symbol where it already stands moves nothing**, and pinning it 24 by 8 grid units away
+  **moves all five of its neighbours**, because a fixed node stops relaxing and the rest re-flows
+  around it. So a stored position is a strong instrument: it holds one symbol and disturbs the others.
+- **WITH EVERY EXISTING SYMBOL FIXED, A NEWLY ADDED DEVICE LANDS EXACTLY ON TOP OF ONE OF THEM.**
+  `MID-1` arrived at the identical position as `SNK-2`, a real overlap. **Freezing the sheet works and
+  placing the newcomer does not come free**, which is the half of this feature an unmeasured plan
+  would have discovered at the end.
+
+**11.186.1 RULED: THE SHEET KEEPS ITS LAYOUT, AND THE POSITIONS ARE IN THE FILE.** Settled by the
+user, from three shapes. Once a sheet has been laid out, every symbol keeps its place; a new device is
+placed in free space and the sheet grows; nothing else moves until `Tidy sheet` is pressed. **This
+overrules DR-011.4's third clause** (§12.38), which rejected *"pinning every symbol on first layout"*
+on the ground that it *"would write a `SheetItem` per device into every document and grow the CR-117
+byte surface to carry UI state"*. That cost is real and is now paid deliberately: the alternative
+offered was a session-only freeze, and it was declined because *"reopening the project re-flows the
+sheet, so the layout you arranged is gone the next morning."*
+
+**11.186.2 RULED: THE FIRST EDIT THAT WOULD RE-FLOW IS WHAT RECORDS THE POSITIONS.** Settled by the
+user. **Opening or viewing the Schematic writes nothing**, so looking at a project never marks it
+changed. When an edit arrives that would re-flow the sheet, the positions every symbol had BEFORE that
+edit are recorded, and only the new symbol is placed. It lands as **its own undo entry** beside the
+edit, which was stated in the question and chosen with it: writing at save time was declined because it
+would mutate the document outside a command (docs/03 §5.6), and writing on first layout because it
+would prompt *"save changes?"* on a project nobody edited.
+
+**11.186.3 RULED: A STORED POSITION IS HONOURED WHETHER OR NOT IT IS PINNED, AND PINNED MEANS `Tidy`
+LEAVES IT ALONE.** An implementation clause of §11.186.1, and it reverses a rule rather than adding
+one: `schematic_scene.dart` ignores an unpinned `SheetItem.position` today, because *"honouring it
+would freeze the first layout the document ever received and make every recompute a no-op"*. **That
+freeze is now the point.** The distinction the two states carry is what `Tidy sheet` does with them:
+it re-flows an unpinned symbol and clears its stored position, and never touches a pinned one
+(CR-068).
+
+**11.186.4 RULED: A DRAG OR A NUDGE MOVES A SYMBOL AND PINS IT, AND THE ARROWS NUDGE WHEN NO CONNECT
+IS IN FLIGHT.** Settled by the user. The pin half is CR-068 and docs/05 §10 as already written: *"any
+manual move sets `SheetItem.pinned = true`"*. The keys are the arrows, which the schematic scope binds
+to the connect-mode pin caret: one chord, two modes the canvas can tell apart, and **the keymap row is
+relabelled to say both** so the generated table does not promise one of them. `Alt`+arrows was declined
+because docs/04 gives that chord to the rack's swap, and one chord meaning two unrelated things across
+canvases is what the arbitration fails on.
+
+**11.186.5 A NEW SYMBOL TAKES A FREE SLOT.** An implementation clause, and §11.186.0's third
+measurement is why it is a clause at all: the layout places a new node among fixed ones without
+avoiding them. The new symbol takes the first free slot in the layer the graph gives it, and the sheet
+grows to hold it, which is the user's *"expanding the canvas slightly"*.
+
+**11.186.6 Scope.** **No scope change.** docs/05 §10 already rules *"first layout is automatic; any
+manual move pins; a single Tidy sheet lays out all unpinned symbols"*, and none of it was built. This
+is that paragraph, plus the persistence DR-011.4 had refused.
+
+**What this does not rule.** **`Tidy sheet`'s host**, which is open and is settled when it is built:
+the schematic's only existing chrome is its domain filter bar, and docs/05 §5's context menu is
+specified and unbuilt. Multi-select drag. The v1.1 route constraints, untouched.
+
 ---
 
 ## 12. Superseded rulings
@@ -22563,6 +22629,16 @@ figure at every zoom. DR-183 changes the size and never the agreement. §11.168.
 
 **NOT amended:** everything else DR-021 rules, the subtree going, promotion and refusal rejected, and
 nothing but locations deleted. A plan that loses its floor is still a plan.
+
+### 12.38 Superseded in part by DR-187 (the schematic holds its layout)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-011.4 §11.11.4**, the rejected shape | Pinning every symbol on first layout was rejected: it *"would write a `SheetItem` per device into every document and grow the CR-117 byte surface to carry UI state"*, and the session-only hold was taken instead because it *"adds nothing to the saved file"*. | **The positions are in the file** (§11.186.1). The user was shown that cost and the alternative that avoids it, and chose to pay it, because a session-only freeze loses the arrangement when the project is reopened. **Written on the first edit that would re-flow, never on view** (§11.186.2), so a document is still never dirtied by looking at it. |
+
+**NOT superseded:** §11.11.4's own subject, that creating a link does not re-lay-out the sheet. That
+rule stands and its `holdAt` mechanism stays; what changes is that the sheet now also holds across a
+close and a reopen.
 
 
 ## 13. Resolved §10 questions
