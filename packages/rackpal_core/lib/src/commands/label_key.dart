@@ -619,6 +619,14 @@ enum LabelKey {
   pinSymbol,
   unpinSymbol,
 
+  // THE SCHEMATIC'S LAYOUT (commands/sheet_layout_commands.dart), `#914`,
+  // DR-187 §11.186. `storeSymbolPositions` is the freeze and names what it
+  // did rather than what prompted it: "Undo Add Device" is the entry
+  // beside it, and two entries reading the same words would be one act to
+  // the eye and two to the stack.
+  storeSymbolPositions,
+  tidySheet,
+
   // THE ROOM OUTLINE'S THREE (commands/plan_commands.dart), `LEN-A/2`,
   // DR-050 §11.49. Three values and not one, on `setPlanPin`'s two
   // precedents applied together rather than re-argued.
