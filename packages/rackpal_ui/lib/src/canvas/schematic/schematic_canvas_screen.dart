@@ -911,18 +911,24 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   /// this canvas at all (DR-186 §11.185.3).
   ///
   /// ═══════════════════════════════════════════════════════════════════
-  /// IT HOLDS THE LAYOUT, BECAUSE NOTHING ON THIS EPOCH MOVES A SYMBOL
+  /// IT HOLDS THE LAYOUT, AND THE REASON IS MEASURED RATHER THAN FEARED
   /// ═══════════════════════════════════════════════════════════════════
   /// It was `_onStructureChanged`, which re-lays the sheet out from
-  /// scratch, and that was harmless while nothing wrote a `SheetItem`. A
-  /// pin placed at the position the symbol already has would then have
-  /// re-run the layout with one node fixed, and the NEIGHBOURS could shift
-  /// because a fixed node no longer relaxes: pinning one symbol would have
-  /// moved the others, which is the complaint `Ctrl+L` exists to answer.
-  /// An unpin holds too, so the symbol stays put until something
-  /// structural happens. Rotating or renaming a floorplan bumps this epoch
-  /// as well, and a schematic that re-laid itself out for either was
-  /// answering an edit it had nothing to do with.
+  /// scratch. **That is harmless for today's `Ctrl+L`, and the first draft
+  /// of this comment said otherwise.** Measured on
+  /// `schematic_scene_test.dart`'s fixture: pinning a symbol AT THE
+  /// POSITION IT ALREADY HAS moves nothing at all, because the layout
+  /// hands a fixed node the answer it was going to give anyway.
+  ///
+  /// What the same probe found is why the hold is here: pinning that
+  /// symbol **24 by 8 grid units away moves all five of the others**,
+  /// because a fixed node stops relaxing and everything else re-flows
+  /// around it. No gesture writes a pin anywhere but where the symbol
+  /// stands yet; the one that will is dragging a symbol, and a relayout
+  /// on this epoch is the thing that would make that drag shuffle the
+  /// sheet. Holding also stops a schematic re-laying itself out for a
+  /// floorplan rotation or rename, which bump this epoch and have nothing
+  /// to do with this canvas.
   void _onSheetChanged() {
     if (!mounted) return;
     _holdLayoutOnNextBuild = true;

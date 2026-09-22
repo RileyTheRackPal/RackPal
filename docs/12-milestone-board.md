@@ -12558,11 +12558,19 @@ The schematic's `Ctrl+L` stores the position the layout just produced, so pinnin
 the symbol stays where it is when devices are added. `schematic_scene_test.dart` asserts exactly that,
 with the control that the same symbol unpinned DOES move under the same edit.
 
-**AND THE `sheet` EPOCH NOW HOLDS THE LAYOUT.** It was wired to the structure handler, which re-lays
-the sheet out from scratch. That was harmless while nothing wrote a `SheetItem`; the day one could, a
-pin would have re-run the layout with one node fixed and the NEIGHBOURS could shift, so pinning one
-symbol would have moved the others. A plan rotation or rename bumps the same epoch and was making the
-schematic re-lay itself out for an edit it has nothing to do with.
+**AND THE `sheet` EPOCH NOW HOLDS THE LAYOUT, FOR A REASON THAT HAD TO BE MEASURED BEFORE IT WAS
+TRUE.** It was wired to the structure handler, which re-lays the sheet out from scratch. The ruling's
+own commit message and the first draft of this section both said that a pin would therefore have
+shifted the pinned symbol's NEIGHBOURS. **Probed on `schematic_scene_test.dart`'s fixture, it does
+not**: pinning a symbol at the position it already has moves nothing at all, because a fixed node is
+handed the answer the layout was going to give it. That property is a test now.
+
+What the same probe found is why the hold stays: pinning that symbol **24 by 8 grid units away moves
+all five of the others**, since a fixed node stops relaxing and the rest re-flows around it. No
+gesture writes a pin anywhere but where the symbol stands yet. **The one that will is dragging a
+symbol**, which is the soft-glue task, and a relayout on this epoch is exactly what would make that
+drag shuffle the sheet. Holding also stops the schematic re-laying itself out for a floorplan
+rotation or rename, which bump the same epoch and have nothing to do with that canvas.
 
 ##### 5.9.67.4 Evidence
 
@@ -12585,7 +12593,16 @@ schematic re-lay itself out for an edit it has nothing to do with.
   `rackpal_ui`, which AC-013's access control exists to stop; the analyzer gate reported it as a
   warning, and warnings are gated at zero rather than ratcheted. The fixture builds the device locked
   instead, which is what the product does.
-- **Floors**: `rackpal_core` 4841 to 4862, `rackpal_ui` 1954 to 1966, measured.
+- **A CLAIM WAS WITHDRAWN AFTER IT WAS COMMITTED.** `2bbe532a`'s message says a pin would have moved
+  its neighbours without the hold. The probe above says it would not, for the gesture that exists
+  today; the numbers are in §5.9.67.3 and the corrected reason is in the code. The commit stands as
+  written, because a message is a record of what was believed when it was written, and this is where
+  the correction lives.
+- **WHAT IS NOT ASSERTED, SAID OUT LOUD**: the padlock's and the pin's PIXELS. The cases assert the
+  flag that draws them and every locked case paints a frame, so a badge that threw would fail; a badge
+  drawn at the wrong size, or at a size that rides the zoom, would not. Both divide by the canvas
+  scale the way `#906` requires, and neither has a case that would notice if that stopped.
+- **Floors**: `rackpal_core` 4841 to 4863, `rackpal_ui` 1954 to 1966, measured.
 
 **Commits** (§8.8): the ruling `4e944d20`, the implementation `2bbe532a`. These records follow.
 

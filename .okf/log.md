@@ -14,9 +14,15 @@
   every plan in that file refused the moment the rule arrived. The fixture was the first thing the
   new rule found.
 * **Note**: **AN EPOCH IS A PROMISE ABOUT WHAT MOVED.** The schematic listened to the `sheet` epoch
-  with its structure handler, which re-lays the sheet out. Nothing on that epoch moves a symbol, and
-  the day a pin could be written it would have moved the pinned symbol's neighbours, which is the
-  complaint the key exists to answer.
+  with its structure handler, which re-lays the sheet out. Nothing on that epoch moves a symbol, so
+  it holds its layout now.
+* **Note**: **THE REASON I GAVE FOR THAT WAS WRONG, AND THE COMMIT MESSAGE CARRIES IT.** I wrote that
+  a pin would otherwise shift the pinned symbol's neighbours. **Probed: it does not.** Pinning a
+  symbol where it already stands moves nothing, because a fixed node is handed the answer the layout
+  was going to give it; that is a test now. Pinning it 24 by 8 grid units away moves all five of the
+  others, which is the state a DRAG creates and does not exist yet. The hold is a guard for the
+  gesture that is coming, not a fix for a defect anybody met, and the correction lives in docs/12
+  §5.9.67.3 because the commit is a record of what was believed when it was written.
 
 ## 2026-09-18 (fifty-ninth entry)
 

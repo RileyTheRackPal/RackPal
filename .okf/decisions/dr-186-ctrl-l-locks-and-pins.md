@@ -39,10 +39,14 @@ Ruled by the user on 2026-09-18 on board `#913`.
 inspector checkbox, the padlock and the pin badge, with eighteen core cases and twelve through the
 real screens. Three mutations, three kills.
 
-**THE `sheet` EPOCH NOW HOLDS THE SCHEMATIC LAYOUT.** It was wired to the structure handler, which
-re-lays the sheet out from scratch. Harmless while nothing wrote a `SheetItem`; the day one could, a
-pin would have re-run the layout with one node fixed and the neighbours could have shifted, so
-pinning one symbol would have moved the others.
+**THE `sheet` EPOCH NOW HOLDS THE SCHEMATIC LAYOUT, AND THE REASON WAS MEASURED AFTER IT WAS
+CLAIMED.** It was wired to the structure handler, which re-lays the sheet out from scratch. The
+claim was that a pin would therefore shift the pinned symbol's neighbours. **It does not**: probed on
+the scene fixture, pinning a symbol where it already stands moves nothing, because a fixed node is
+handed the answer the layout was going to give it, and that is a test now. Pinning it 24 by 8 grid
+units away moves all five of the others, which is the state a DRAG creates, and dragging is the
+soft-glue task. The hold is a guard for that and for the floorplan edits that bump the same epoch,
+not a fix for a defect anybody met.
 
 **THE WIDTH TEST FIXTURE CARRIED `locked: true`** and had since it was written, because the field was
 free while nothing read it. Every plan in that file refused on the first run of the new rule, which is

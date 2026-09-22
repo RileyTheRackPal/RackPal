@@ -890,7 +890,11 @@ $SuiteFloors = @{
     # locked refusal at the planner and at the command, and one in
     # `schematic_scene_test.dart`: a pinned symbol stays put when devices
     # are added, with a control proving an unpinned one does not.
-    'rackpal_core'   = 4862
+    # 4863 at `#913` part two: +1, and it is a claim being withdrawn rather
+    # than a feature. Pinning a symbol where it already stands moves nothing
+    # else, which a probe measured after the commit message had asserted the
+    # opposite. docs/12 §5.9.67.3 carries the numbers.
+    'rackpal_core'   = 4863
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
