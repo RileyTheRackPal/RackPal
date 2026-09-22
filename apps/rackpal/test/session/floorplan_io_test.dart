@@ -13,6 +13,7 @@
 // `imageMember` names bytes the container does not hold is a dangling
 // reference in a saved file, and it is exactly what a test asserting only
 // `doc.underlays.length` would miss.
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -83,6 +84,39 @@ RackDocument _doc() => RackDocument(
     ),
   );
 }
+
+/// A TWO-page PDF whose pages both draw the same full-sheet JPEG, so either
+/// can be lifted (DR-185 §11.184.2 names a page only when there is more
+/// than one). Assembled by hand on `onePagePdf`'s reasoning: a fixture a
+/// library wrote would prove nothing about a stranger's file.
+Uint8List _twoPagePdf(Uint8List jpeg, {required int w, required int h}) {
+  const content = 'q 2484 0 0 1656 54 36 cm /img0 Do Q\n';
+  // INTERPOLATED PIECES, NOT ADJACENT LITERALS, on the core fixture's
+  // precedent: PDF dictionary syntax has no whitespace between tokens, and
+  // the analyzer would have a space added that changes the file.
+  const rgbJpeg = '/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode';
+  const pageHead = '/Type/Page/Parent 2 0 R/MediaBox[0 0 2592 1728]';
+  const resources = '/Resources<</XObject<</img0 5 0 R>>>>';
+  final imageDict = '/Type/XObject/Subtype/Image/Width $w/Height $h$rgbJpeg';
+  final buf = BytesBuilder();
+  void put(String s) => buf.add(latin1.encode(s));
+  put('%PDF-1.4\n');
+  put('1 0 obj\n<</Type/Catalog/Pages 2 0 R>>\nendobj\n');
+  put('2 0 obj\n<</Type/Pages/Kids[3 0 R 6 0 R]/Count 2>>\nendobj\n');
+  for (final (page, stream) in const [(3, 4), (6, 7)]) {
+    put('$page 0 obj\n<<$pageHead$resources/Contents $stream 0 R>>\nendobj\n');
+    put('$stream 0 obj\n<</Length ${content.length}>>\nstream\n');
+    put(content);
+    put('\nendstream\nendobj\n');
+  }
+  put('5 0 obj\n<<$imageDict/Length ${jpeg.length}>>\nstream\n');
+  buf.add(jpeg);
+  put('\nendstream\nendobj\n');
+  put('trailer\n<</Root 1 0 R>>\n%%EOF\n');
+  return buf.toBytes();
+}
+
+typedef _Details = ({String name, Uuid? locationId});
 
 /// The page picker, as a callback that never runs for a raster file.
 Future<PdfPageOption?> _neverPicks(
@@ -337,6 +371,154 @@ void main() {
         isTrue,
         reason: 'a PDF must never reach the raster path by extension',
       );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════════
+  // DR-185 §11.184.2: THE IMPORT PROPOSES A NAME AND A PLACE, AND ASKS
+  // ═══════════════════════════════════════════════════════════════════════
+  group('DR-185: the import proposes, and asks', () {
+    const floor = Uuid('loc-l2');
+
+    /// A harness whose document holds `Level 2`, so a place can be
+    /// proposed and chosen.
+    ({DocumentSession session, FloorplanIo io, FakeFilePicker picker})
+    withFloor(Map<String, Uint8List> files, String picked) {
+      final h = _harness(files: files, picked: picked);
+      h.session.document.locations[floor] = Location(
+        id: floor,
+        kind: LocationKind.floor,
+        name: 'Level 2',
+        code: 'L2',
+        order: const FracIndex('a0'),
+        meta: EntityMeta(
+          createdAt: _fixed,
+          updatedAt: _fixed,
+          updatedBy: 'tester',
+        ),
+      );
+      return h;
+    }
+
+    test('a dismissed dialog KEEPS the proposal and still imports', () async {
+      // The page is already picked. Throwing it away because somebody
+      // pressed Esc on a naming dialog would be the surprise §11.184.2
+      // rules out.
+      final h = withFloor({
+        r'C:\plans\Level 2.png': _png(32, 32),
+      }, r'C:\plans\Level 2.png');
+      _Details? asked;
+
+      final result = await h.io.import(
+        pickPage: _neverPicks,
+        proposedLocation: floor,
+        confirmDetails: (proposed) async {
+          asked = proposed;
+          return null;
+        },
+      );
+
+      expect(asked, (name: 'Level 2', locationId: floor));
+      final underlay = (result! as Ok<PlanUnderlay>).value;
+      expect(underlay.name, 'Level 2');
+      expect(underlay.locationId, floor);
+    });
+
+    test('WHAT THE DIALOG ANSWERS IS STORED, and the import and its details '
+        'are ONE undo entry', () async {
+      final h = withFloor({
+        r'C:\plans\scan.png': _png(32, 32),
+      }, r'C:\plans\scan.png');
+
+      final result = await h.io.import(
+        pickPage: _neverPicks,
+        confirmDetails: (proposed) async =>
+            (name: '  Upstairs  ', locationId: floor),
+      );
+
+      final underlay = (result! as Ok<PlanUnderlay>).value;
+      expect(underlay.name, 'Upstairs', reason: 'stored trimmed');
+      expect(underlay.locationId, floor);
+
+      final controller = h.session.controller;
+      controller.undo.undo(controller.doc);
+      expect(
+        h.session.document.underlays,
+        isEmpty,
+        reason: 'one undo removes the page, name and all',
+      );
+    });
+
+    test('A PAGE OF A MULTI-PAGE PDF IS NAMED WITH ITS PAGE', () async {
+      // Three pages of one set were three rows reading the same words.
+      final h = withFloor({
+        r'C:\plans\A-101 REV3.pdf': _twoPagePdf(
+          realJpeg(100, 50),
+          w: 100,
+          h: 50,
+        ),
+      }, r'C:\plans\A-101 REV3.pdf');
+      _Details? asked;
+
+      await h.io.import(
+        pickPage: (pages, fileName) async =>
+            (pages[1] as Ok<PdfPageOption>).value,
+        confirmDetails: (proposed) async {
+          asked = proposed;
+          return null;
+        },
+      );
+
+      expect(asked?.name, 'A-101 REV3, p.2');
+    });
+
+    test('and a one-page PDF is not told it is page one', () async {
+      final h = withFloor({
+        r'C:\plans\set.pdf': onePagePdf(realJpeg(100, 50)),
+      }, r'C:\plans\set.pdf');
+
+      final result = await h.io.import(
+        pickPage: (pages, fileName) async =>
+            (pages.single as Ok<PdfPageOption>).value,
+        confirmDetails: (proposed) async => null,
+      );
+
+      expect((result! as Ok<PlanUnderlay>).value.name, 'set');
+    });
+
+    test(
+      'a proposed place this document does not hold proposes none',
+      () async {
+        final h = withFloor({
+          r'C:\plans\scan.png': _png(32, 32),
+        }, r'C:\plans\scan.png');
+        _Details? asked;
+
+        await h.io.import(
+          pickPage: _neverPicks,
+          proposedLocation: const Uuid('a-room-deleted-meanwhile'),
+          confirmDetails: (proposed) async {
+            asked = proposed;
+            return null;
+          },
+        );
+
+        expect(asked?.locationId, isNull);
+      },
+    );
+
+    test('a REFUSED file never asks', () async {
+      final h = withFloor({
+        r'C:\plans\notes.txt': Uint8List.fromList([1, 2, 3, 4]),
+      }, r'C:\plans\notes.txt');
+
+      final result = await h.io.import(
+        pickPage: _neverPicks,
+        confirmDetails: (proposed) async =>
+            fail('a file that was refused must not be named'),
+      );
+
+      expect(result, isA<Err<PlanUnderlay>>());
     });
   });
 }

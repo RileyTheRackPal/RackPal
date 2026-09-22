@@ -128,9 +128,9 @@ class DeleteLocationDialog extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     refs > 0
-                        ? 'Nothing else is deleted: cables, racks and outlets '
-                              'stay, with no room recorded. Undo puts the '
-                              'rooms back.'
+                        ? 'Nothing else is deleted: cables, racks, outlets '
+                              'and floorplans stay, with no room recorded. '
+                              'Undo puts the rooms back.'
                         : 'Undo puts them back.',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,

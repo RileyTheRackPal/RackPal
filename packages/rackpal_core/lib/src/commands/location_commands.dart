@@ -594,6 +594,15 @@ final class RemoveLocationCommand extends Command<RackDocument> {
           (d) => d.pathways[ref.entityId]?.toLocationId = ref.locationId,
         );
 
+      case LocationRefKind.underlay:
+        final underlay = doc.underlays[ref.entityId];
+        if (underlay == null) return null;
+        underlay.locationId = null;
+        return _ClearedRef(
+          ref,
+          (d) => d.underlays[ref.entityId]?.locationId = ref.locationId,
+        );
+
       case LocationRefKind.placeEndpoint:
         final link = doc.links[ref.entityId];
         final index = ref.conductorIndex!;

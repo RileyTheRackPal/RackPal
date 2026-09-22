@@ -553,6 +553,101 @@ void main() {
   // is a surface that turns the picture and not the marks, or the marks
   // and not the pointer. A case that ran the command against a document
   // could see neither.
+  // ═════════════════════════════════════════════════════════════════════
+  // `#912`, DR-185: A PAGE SAYS ITS NAME AND THE FLOOR IT SHOWS
+  // ═════════════════════════════════════════════════════════════════════
+  group('#912, DR-185: Edit plan', () {
+    Finder edit(Uuid id) => find.byKey(ValueKey('underlay-edit-${id.v}'));
+
+    /// Picks [label] out of the dialog's Shows dropdown.
+    Future<void> choosePlace(WidgetTester tester, String label) async {
+      await tester.tap(find.byKey(EditPlanDialog.showsKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label).last);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('the pencil is on the OPEN row and nowhere else', (
+      tester,
+    ) async {
+      final c = _controller(withSecond: true);
+      await pump(tester, c, members: const [_member1, _member2]);
+
+      expect(edit(_ul1), findsOneWidget);
+      expect(edit(_ul2), findsNothing);
+    });
+
+    testWidgets('LOAD-BEARING: a new name and a floor land together, the '
+        'row says so, and ONE undo takes both back', (tester) async {
+      // `_ul2` is the plan with no floor, which is what every imported plan
+      // was before this ruling. Opened first, then named and placed.
+      final c = _controller(withSecond: true);
+      await pump(tester, c, members: const [_member1, _member2]);
+      await tester.tap(find.text('Site'));
+      await tester.pump();
+
+      await tester.tap(edit(_ul2));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(EditPlanDialog.nameKey),
+        'Level 1 lighting',
+      );
+      await choosePlace(tester, 'Level 1');
+      await tester.tap(find.byKey(EditPlanDialog.confirmKey));
+      await tester.pumpAndSettle();
+
+      final plan = c.doc.underlays[_ul2]!;
+      expect(plan.name, 'Level 1 lighting');
+      expect(plan.locationId, _level1);
+      // THE ROOM LINE PRINTS AT LAST. `_UnderlayRow.room` could never be
+      // non-null before, because nothing wrote the field it reads.
+      final row = find.byKey(ValueKey('underlay-row-${_ul2.v}'));
+      expect(
+        find.descendant(of: row, matching: find.text('Level 1 lighting')),
+        findsOneWidget,
+      );
+      expect(
+        find.descendant(of: row, matching: find.text('Level 1')),
+        findsOneWidget,
+      );
+
+      c.undo.undo(c.doc);
+      expect(plan.name, 'Site');
+      expect(plan.locationId, isNull);
+    });
+
+    testWidgets('Cancel changes nothing and leaves no undo entry', (
+      tester,
+    ) async {
+      final c = _controller();
+      await pump(tester, c);
+
+      await tester.tap(edit(_ul1));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(EditPlanDialog.nameKey), 'Changed');
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(c.doc.underlays[_ul1]!.name, 'Level 1');
+      expect(c.undo.undoLabelKey, isNull);
+    });
+
+    testWidgets('a blank name cannot be saved', (tester) async {
+      final c = _controller();
+      await pump(tester, c);
+
+      await tester.tap(edit(_ul1));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byKey(EditPlanDialog.nameKey), '   ');
+      await tester.pump();
+
+      final save = tester.widget<FilledButton>(
+        find.byKey(EditPlanDialog.confirmKey),
+      );
+      expect(save.onPressed, isNull);
+    });
+  });
+
   group('#911, DR-184: turning a plan', () {
     Finder right(Uuid id) =>
         find.byKey(ValueKey('underlay-rotate-right-${id.v}'));

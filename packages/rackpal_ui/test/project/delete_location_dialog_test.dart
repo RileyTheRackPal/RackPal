@@ -150,7 +150,9 @@ void main() {
 
     expect(find.text('2 items lose their room.'), findsOneWidget);
     expect(
-      find.textContaining('cables, racks and outlets stay'),
+      // `floorplans` JOINED THE LIST AT DR-185, when a plan could first
+      // show a room and so lose one.
+      find.textContaining('cables, racks, outlets and floorplans stay'),
       findsOneWidget,
     );
   });

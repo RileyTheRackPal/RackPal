@@ -787,10 +787,35 @@ final class AppShellState extends State<AppShell>
   /// own `toString` is written for a person: the caps say their numbers
   /// and `PdfHasNoLiftablePageError` says the page count.
   Future<void> _importFloorplan() async {
+    final session = _services.session;
     final result = await _services.floorplanIo.import(
       pickPage: (pages, fileName) async {
         if (!mounted) return null;
         return pickPdfPage(context, pages: pages, fileName: fileName);
+      },
+      // THE SITE TREE'S SELECTION IS THE PROPOSED PLACE (DR-185
+      // §11.184.2). Read through the view's own key, which is null when
+      // the Site view has not been built this session, and then nothing
+      // is proposed rather than something guessed.
+      proposedLocation: GlobalObjectKey<PlanEditorScreenState>(
+        session.controller,
+      ).currentState?.selectedLocationId,
+      // AND THE PROPOSAL IS SHOWN BEFORE ANYTHING IS WRITTEN. A dismissal
+      // returns null, which the import reads as "keep the proposal".
+      confirmDetails: (proposed) async {
+        if (!mounted) return null;
+        final answer = await showEditPlanDialog(
+          context,
+          doc: session.document,
+          initial: PlanDetails(
+            name: proposed.name,
+            locationId: proposed.locationId,
+          ),
+          mode: EditPlanMode.import,
+        );
+        return answer == null
+            ? null
+            : (name: answer.name, locationId: answer.locationId);
       },
     );
     if (result case Err(:final error)) _showRefusal('$error');

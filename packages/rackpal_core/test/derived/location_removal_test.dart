@@ -48,8 +48,10 @@ Uuid _add(RackDocument doc, String name, {Uuid? parent}) => (AddLocationCommand(
 
 /// Puts one of every carrier in the document, all pointing at [where].
 ///
-/// Nine references across seven entities: the device carries two (its own
+/// Ten references across eight entities: the device carries two (its own
 /// `locationId` and its `OffRackPlacement`'s), and the pathway carries two.
+/// The tenth is a floorplan showing [where] (DR-185), unreachable until
+/// `SetPlanUnderlayDetailsCommand` gave `PlanUnderlay.locationId` a writer.
 void _seedEveryCarrier(RackDocument doc, Uuid where) {
   doc.racks[const Uuid('rk')] = Rack(
     id: const Uuid('rk'),
@@ -114,6 +116,18 @@ void _seedEveryCarrier(RackDocument doc, Uuid where) {
       ),
     ],
   );
+  doc.underlays[const Uuid('pln')] = PlanUnderlay(
+    id: const Uuid('pln'),
+    name: 'Level 1',
+    imageMember: 'underlays/pln.png',
+    format: PlanImageFormat.png,
+    pixelWidth: 600,
+    pixelHeight: 400,
+    contentHash: 'sha256:test',
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    locationId: where,
+  );
 }
 
 void main() {
@@ -161,7 +175,7 @@ void main() {
       expect(planLocationRemoval(doc, house).needsConfirmation, isTrue);
     });
 
-    test('finds all nine carriers across seven entities', () {
+    test('finds all ten carriers across eight entities', () {
       // The census DR-021 puts in the ruling, stated as a test. Two of
       // these are unreachable by a case-sensitive grep for `locationId`
       // (`Pathway.fromLocationId`, `.toLocationId`) and two live inside
@@ -177,8 +191,8 @@ void main() {
         LocationRefKind.values.toSet(),
         reason: 'a carrier in the enum is not being found by the plan',
       );
-      expect(plan.references, hasLength(9));
-      expect(plan.referenceCount, 7);
+      expect(plan.references, hasLength(10));
+      expect(plan.referenceCount, 8);
     });
 
     test('references into ANY node of the subtree are found, and each '
@@ -270,6 +284,7 @@ void main() {
             .locationId,
         isNull,
       );
+      expect(doc.underlays[const Uuid('pln')]!.locationId, isNull);
     });
 
     test('nothing is DELETED except locations (DR-021 §11.20.6)', () {
@@ -290,6 +305,7 @@ void main() {
       expect(doc.circuits, hasLength(1));
       expect(doc.pathways, hasLength(1));
       expect(doc.links, hasLength(1));
+      expect(doc.underlays, hasLength(1), reason: 'a plan loses its floor');
     });
 
     test('the fields BESIDE the cleared one survive on both immutable '

@@ -746,3 +746,97 @@ final class RotatePlanCommand extends Command<RackDocument> {
     doc.underlays[underlayId]?.rotationQuarterTurns = _previous;
   }
 }
+
+/// Sets a plan's name and the location it shows (DR-185 §11.184, `#912`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE WRITER TWO MODELLED FIELDS NEVER HAD
+/// ═══════════════════════════════════════════════════════════════════════
+/// `PlanUnderlay.name` was the file's for the life of the project and
+/// `PlanUnderlay.locationId` was accepted by every import signature and
+/// passed by no caller. So three pages of one PDF read the same, the rail's
+/// room line never printed, and DR-142's rule made a floorless plan's
+/// unpinned strip list every carrier in the project (§11.184.0).
+///
+/// ONE COMMAND FOR BOTH, because the dialog that raises it edits both and
+/// §11.184.1 rules them one undo entry.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THREE REFUSALS, AND A NO-OP IS ONE OF THEM
+/// ═══════════════════════════════════════════════════════════════════════
+/// A plan that is not there; a name that is empty once trimmed, which is a
+/// row nobody can read; and a location this document does not hold, which
+/// would be the dangling reference DR-021 exists to prevent. **And a change
+/// that changes nothing**, on DR-156's contract: a dialog confirmed with
+/// `Enter` and no edit must not leave an undo entry that undoes nothing.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE MASK
+/// ═══════════════════════════════════════════════════════════════════════
+/// `meta` for the name, which `T1.01`'s title block prints, so `sheet` as
+/// well. `structure` for the location, because it is the scope the
+/// unpinned strip and the PLN advisories read, and it is the location a
+/// device dropped from the palette onto this plan is placed in.
+final class SetPlanUnderlayDetailsCommand extends Command<RackDocument> {
+  SetPlanUnderlayDetailsCommand({
+    required this.underlayId,
+    required this.name,
+    required this.locationId,
+  });
+
+  final Uuid underlayId;
+
+  /// The new name, stored TRIMMED.
+  final String name;
+
+  /// The location the plan shows, or null for a plan that shows no one
+  /// place, which is a site plan and an ordinary answer (docs/15 §3.1).
+  final Uuid? locationId;
+
+  String _previousName = '';
+  Uuid? _previousLocation;
+  bool _applied = false;
+
+  @override
+  LabelKey get label => LabelKey.editPlanUnderlay;
+
+  @override
+  EpochMask get touches =>
+      EpochMask.meta | EpochMask.sheet | EpochMask.structure;
+
+  @override
+  Iterable<Uuid> get affects => [underlayId];
+
+  @override
+  bool apply(RackDocument doc) {
+    final underlay = doc.underlays[underlayId];
+    if (underlay == null) return false;
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return false;
+    final location = locationId;
+    if (location != null && !doc.locations.containsKey(location)) {
+      return false;
+    }
+    if (underlay.name == trimmed && underlay.locationId == location) {
+      return false;
+    }
+    _previousName = underlay.name;
+    _previousLocation = underlay.locationId;
+    underlay
+      ..name = trimmed
+      ..locationId = location;
+    return _applied = true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    if (!_applied) {
+      throw StateError(
+        'SetPlanUnderlayDetailsCommand.revert called before apply().',
+      );
+    }
+    doc.underlays[underlayId]
+      ?..name = _previousName
+      ..locationId = _previousLocation;
+  }
+}

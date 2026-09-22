@@ -12478,6 +12478,52 @@ corrected, which is the second time this repository has paid for that.
 **Commits** (§8.8): the ruling `6cbebff1`, the implementation `a3375336`. These records and the
 version follow in their own commits.
 
+#### 5.9.66 `#912`: a floorplan page says its name and the place it shows, and a plan is the tenth location carrier · `DR-185` · `v0.6.59`
+
+2026-09-18, found while measuring `#911`. **New ruling, DR-185 §11.184**, and **amends DR-021's census
+at §12.37**. A leaf Story under `#588`, so it moves the number.
+
+**DEMONSTRATED** by the editor driven by its own pencil button, the import driven through
+`FloorplanIo.import` with a two-page PDF assembled by hand, and the location cascade run against a
+fixture holding one of every carrier.
+
+##### 5.9.66.1 Two modelled fields, no writer
+
+`PlanUnderlay.name` was the file's for the life of the project, and `PlanUnderlay.locationId` was
+accepted by every import signature and passed by no caller. The consequences were three, and only the
+first was visible: three pages of one PDF were three rail rows reading the same words; the rail's
+room line (`_UnderlayRow.room`) could never print; and DR-142 §11.141 rules that a plan with no
+location lists **every** unpinned carrier, so each floor of a multi-storey job listed the whole
+building. The fourth consequence waited for the fix: a device dropped from the palette onto a plan
+takes the plan's location, and every plan had none.
+
+##### 5.9.66.2 The writer made a cascade matter
+
+`planLocationRemoval` censused nine fields across seven entities (DR-021 §11.20), and the plan's
+`locationId` was not one, because no document could hold one set. **Giving it a writer made the omission
+live**: deleting a floor would have left its plans pointing at nothing. It is the tenth carrier now,
+cleared and restored on the other nine's terms, and the census test that asserts every
+`LocationRefKind` is found went red on the first run, which is the test doing its job: its fixture
+needed a plan that shows the room. The delete dialog's reassurance sentence names floorplans among what
+survives.
+
+##### 5.9.66.3 Evidence
+
+- **Core +6**: the command's four answers (both fields in one entry, a site plan, a no-op leaves no
+  entry, a blank name and an unknown place refused) and the cascade.
+- **ui +4**: the pencil on the open row only, a new name and floor landing together with the room line
+  printing and one undo taking both back, `Cancel`, and a blank name that cannot be saved.
+- **app +6**: a dismissed dialog keeps the proposal and still imports; the answer is stored and the
+  import is one undo entry; a page of a two-page PDF is named with its page and a one-page PDF is not;
+  a proposed place the document does not hold proposes none; a refused file never asks.
+- **One mutation, one kill**: an import that asked and ignored the answer reddens exactly the case
+  written for it.
+- **Floors**: `rackpal_core` 4835 to 4841, `rackpal_ui` 1950 to 1954, `rackpal_app` 1054 to 1060,
+  measured.
+
+**Commits** (§8.8): the ruling `0b43d4d4`, the implementation `64fc85b8`, the amendment to DR-021's
+census `201c9ed5`. These records and the version follow in their own commits.
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·

@@ -21807,6 +21807,51 @@ existing picture is drawn.
 read and which a turn does not supply. Mirroring, which no architect's sheet needs. A free angle,
 declined above rather than deferred.
 
+### 11.184 DR-185 · A floorplan page can be renamed and says which floor it shows, and an import asks
+
+**The question.** Found on 2026-09-18 while measuring DR-184, and put to the user on board `#912`:
+a plan's name and the floor it shows had no way in.
+
+**11.184.0 MEASURED FIRST.** Two facts, both a modelled field with no writer:
+
+- **The name is the file's, forever.** `FloorplanIo.import` names every page
+  `basenameWithoutExtension(path)`, and no command renames a `PlanUnderlay`. Three pages lifted from
+  one PDF are three rows reading the same words.
+- **`PlanUnderlay.locationId` is never written.** The import signatures accept it and the one caller
+  in `lib/` passes nothing, so every plan in every project has no floor. The rail's room line
+  (`_UnderlayRow.room`) can never print, and DR-142 §11.141 rules that a plan with no location lists
+  **every** unpinned carrier in the project, so on a three-storey house each floor's strip shows the
+  whole building.
+
+**11.184.1 RULED: AN `Edit plan…` DIALOG ON THE OPEN PLAN'S ROW.** Settled by the user. A button
+beside `Calibrate…` opens a dialog with two fields, **Name** and **Shows**, where Shows lists the
+Site tree in its own order with a "no floor" choice for a site plan. Both fields commit as **one undo
+entry**. Declined: editing inline on the row, where double-click-to-rename is invisible and a
+dropdown in a 240-pixel rail truncates a floor's name; and the right-hand inspector, which docs/15 §6
+gives to the selected room and where a plan's property would vanish the moment a room was clicked.
+
+**11.184.2 RULED: AN IMPORT PROPOSES BOTH AND ASKS.** Settled by the user. The name defaults to the
+file's, with the page appended when the PDF has more than one; Shows defaults to the location
+selected in the Site tree, or none. The same dialog then opens pre-filled, so `Enter` accepts. What it
+asks is part of the import: **the import and its details are one undo entry**, and dismissing the
+dialog keeps the proposal rather than abandoning a page somebody has just picked. Declined: the same
+defaults applied silently, which would still leave most plans floorless, since hardly anybody selects
+a floor before importing; and today's behaviour.
+
+**11.184.3 A PLAN IS THE TENTH LOCATION CARRIER.** An implementation clause, and the consequence of
+giving `locationId` a writer. DR-021 §11.20 censused **nine fields across seven entities** that point
+at a location, and `PlanUnderlay.locationId` was not among them because no document could hold one
+set. The day it can, deleting a floor would leave its plans pointing at nothing, so deleting a
+location now clears every plan that shows it, on exactly the terms of the other nine: cleared to null,
+counted in the dialog as an item that loses its room, and put back by the same undo. Listed at §12.37.
+
+**11.184.4 Scope.** **No scope change.** Both fields are in the model since `PLAN-C` (docs/15 §3.1);
+this is their writer.
+
+**What this does not rule.** Renaming a page from the printed sheet's title block, which reads the
+name and gains nothing by being written from there. Replacing a plan's picture with a revised drawing
+while keeping its pins, which is a different feature with its own geometry question.
+
 ---
 
 ## 12. Superseded rulings
@@ -22460,6 +22505,15 @@ label onto two drops.
 half, that one place computes the radius per surface and the drawn mark and the hit box are the same
 figure at every zoom. DR-183 changes the size and never the agreement. §11.168.10's printed radius and
 §11.168.11's line weight are untouched: a sheet has no zoom to cross a threshold with.
+
+### 12.37 Amended by DR-185 (a plan is the tenth location carrier)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-021 §11.20**, the census | **Nine fields across seven entities** point at a location from outside the tree, and deleting it clears every one. | **Ten across eight** (§11.184.3): `PlanUnderlay.locationId` joins them, cleared and restored on the same terms. It was not missed so much as unreachable: nothing wrote the field until DR-185. |
+
+**NOT amended:** everything else DR-021 rules, the subtree going, promotion and refusal rejected, and
+nothing but locations deleted. A plan that loses its floor is still a plan.
 
 
 ## 13. Resolved §10 questions
