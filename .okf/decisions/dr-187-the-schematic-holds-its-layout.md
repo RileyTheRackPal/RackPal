@@ -32,12 +32,38 @@ Probed on `schematic_scene_test.dart`'s fixture:
   [DR-011.4](/decisions/dr-011-connect-gesture.md)'s rejection of a `SheetItem` per device (canon
   §12.38). A session-only freeze was offered and declined: it loses the arrangement when the project
   is reopened.
-- **Written on the first edit that would re-flow**, never on view, as its own undo entry. Writing at
-  save time was declined because it mutates the document outside a command; writing on first layout
-  because it would prompt "save changes?" for a project nobody edited.
+- **Written on the first edit that would re-flow**, never on view. Writing at save time was declined
+  because it mutates the document outside a command; writing on first layout because it would prompt
+  "save changes?" for a project nobody edited.
 - **A stored position is honoured whether or not it is pinned.** Pinned is what `Tidy sheet` spares.
 - **A drag or a nudge moves a symbol and pins it** (CR-068), and the arrows nudge whenever no connect
   is in flight, with the keymap row relabelled to carry both meanings.
+
+
+# The clause that said "its own undo entry", and the measurement that killed it
+
+Canon §11.186.2 said the freeze lands as its own undo entry beside the edit. **Built that way it
+did, and two tests older than the ruling went red on it**: `schematic_remedy_test.dart` asserts
+*"ONE undo takes back the device AND the cable"* and `schematic_remedy_dr128_test.dart` asserts
+*"one undo takes back the converter and both cables"*, which is the Edit menu's standing promise.
+
+**The behaviour it produced is the one this ruling exists to abolish.** The first `Ctrl+Z` after any
+edit took back the ARRANGEMENT and left the edit, so the sheet visibly scrambled, the device stayed
+deleted, and undoing one delete cost two presses.
+
+**Ruled instead (§11.186.2.1): the freeze is a CHILD of the edit's own undo entry.** One undo
+reverts both and lands on exactly the document that existed before either, which re-flows to the
+layout that was frozen, so the arrangement is right either way. The entry is still named by the
+edit, because `_commit` names a transaction after its first child ([DR-156](/decisions/dr-156-a-command-reports-whether-it-applied.md)
+§11.155.2).
+
+The mechanism is `DocumentController.addConsequence`: a hook that runs at the tail of a transaction
+that changed something, with the entry still open. **An epoch listener cannot do this**, because by
+the time an epoch bumps the entry is sealed and the only way in is a second one.
+
+**The sentence was the option author's and not the user's**, which is the failure
+[record-the-choice-not-a-reason-they-did-not-give](/practices/record-the-choice-not-a-manufactured-reason.md)
+already records once: a manufactured reason gets reasoned from.
 
 # What this does not rule
 

@@ -1,5 +1,35 @@
 # Update Log
 
+## 2026-09-22 (sixty-first entry)
+
+* **Progress**: `#914`, ruled as [DR-187](/decisions/dr-187-the-schematic-holds-its-layout.md).
+  SG-1, SG-2 and SG-3 are built and merged to the branch: a stored `SheetItem` position is honoured
+  whether or not it is pinned, the first edit that would re-flow records where everything was, and a
+  new symbol takes a free slot instead of landing on one. **No version move**: `#914` closes under
+  `#786`. SG-4 (drag pins), SG-5 (arrow nudge) and SG-6 (`Tidy sheet`'s host, a question for the
+  user) are open.
+* **Correction**: **THE RULING'S OWN CLAUSE WAS THE DEFECT.** §11.186.2 said the layout freeze
+  *"lands as its own undo entry"*. Built that way it produced the behaviour DR-187 exists to
+  abolish: the first `Ctrl+Z` after any edit took back the ARRANGEMENT and left the edit, so the
+  sheet scrambled, the device stayed deleted, and undoing one delete cost two presses. §11.186.2.1
+  replaces it: the freeze is a CHILD of the edit's own undo entry.
+* **Creation**: [An older test is a specification](/practices/an-older-test-is-a-specification.md).
+  Two tests written long before DR-187 caught that defect, in the Edit menu's own words: *"ONE undo
+  takes back the device AND the cable"*. **A ruling does not outrank a test whose name is a promise
+  to a person.**
+* **Creation**: [Record the choice, not a manufactured reason](/practices/record-the-choice-not-a-manufactured-reason.md),
+  written up on its second instance. The *"its own undo entry"* clause carried *"which was stated in
+  the question and chosen with it"*, and the consequence had been shown to nobody. **A manufactured
+  reason has the authority of a decision and none of the evidence**, so it gets reasoned from and
+  then built.
+* **Note**: **AN EPOCH LISTENER IS ALWAYS TOO LATE TO JOIN A TRANSACTION.** Epochs bump inside
+  `_commit`, after the undo entry is sealed, so anything a listener runs is necessarily a second
+  entry. `DocumentController.addConsequence` is the hook that runs while the entry is still open,
+  and `TxnScope.touches` lets a hook sit out the edits it does not care about.
+* **Note**: **A COMMAND THAT ALWAYS RETURNS `true` DEFEATS DR-156.** `RemoveDeviceCommand.apply`
+  reports success even when the id names no device, so a test needing a genuine refusal had to build
+  one. Filed for a census of the rest.
+
 ## 2026-09-18 (sixtieth entry)
 
 * **Closed**: `#913`, ruled as [DR-186](/decisions/dr-186-ctrl-l-locks-and-pins.md). `Ctrl+L` locks a

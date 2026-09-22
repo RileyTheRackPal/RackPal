@@ -12606,6 +12606,81 @@ rotation or rename, which bump the same epoch and have nothing to do with that c
 
 **Commits** (§8.8): the ruling `4e944d20`, the implementation `2bbe532a`. These records follow.
 
+#### 5.9.68 `#914` DR-187, the schematic holds its layout
+
+##### 5.9.68.1 Three measurements, and the third changed the plan
+
+Probed on `schematic_scene_test.dart`'s fixture before anything was built:
+
+| Probe | Result |
+|---|---|
+| Add two devices to a laid-out sheet | **The symbols already on it move.** The report, reproduced. |
+| Pin a symbol where it already stands | **Nothing moves.** A fixed node is handed the answer the layout was going to give it. |
+| Pin it 24 by 8 grid units away | **All five neighbours move**, because a fixed node stops relaxing. |
+| Fix every existing symbol, then add a device | **The newcomer lands exactly on top of one of them.** |
+
+The fourth line is why §11.186.5 is a clause at all: freezing the sheet works, and placing the
+newcomer does not come free.
+
+**THE FIRST HYPOTHESIS ABOUT IT WAS WRONG AND A PROBE SAID SO.** The guess was a cross-layer
+collision. Both nodes were in layer 2: `_separate` was forcing the newcomer into a gap between two
+fixed nodes too small to hold it. `_clearOfFixed` runs at the end of `_assignCoordinates` and moves
+each unfixed node clear of every fixed one in its row. It is a no-op when nothing is fixed, so no
+existing layout moves.
+
+##### 5.9.68.2 THE RULING'S OWN CLAUSE WAS THE DEFECT
+
+§11.186.2 said the freeze *"lands as its own undo entry beside the edit"*. Built exactly that way it
+worked, and the suite went red in two files that have nothing to do with the schematic's layout:
+
+| Test | What it asserts |
+|---|---|
+| `schematic_remedy_test.dart` | *"ONE undo takes back the device AND the cable"* |
+| `schematic_remedy_dr128_test.dart` | *"one undo takes back the converter and both cables"* |
+
+Both predate DR-187 and both are the Edit menu's standing promise. With a freeze pushed on top of
+every edit, the first `Ctrl+Z` took back the ARRANGEMENT and left the edit: the sheet visibly
+scrambled, the device stayed deleted, and undoing one delete cost two presses. **That is the
+behaviour DR-187 exists to abolish, reintroduced by the clause meant to deliver it.**
+
+§11.186.2.1 replaces it. The freeze is a CHILD of the edit's own undo entry, through
+`DocumentController.addConsequence`: a hook that runs at the tail of a transaction that changed
+something, with the entry still open. **An epoch listener structurally cannot do this**, because
+epochs bump inside `_commit` after the entry is sealed, so anything a listener runs is necessarily a
+second entry.
+
+One undo now reverts both and lands on exactly the document that existed before either, which
+re-flows to the layout that was frozen, so the arrangement is right either way. `_commit` names a
+transaction after its FIRST child (DR-156 §11.155.2), so the menu still says "Undo Delete device".
+
+##### 5.9.68.3 Evidence
+
+- **The control is half the UI file's argument.** A test that deletes a device and asserts the
+  survivors did not move proves nothing until the same deletion has been measured MOVING them on an
+  unfrozen document. `schematic_freeze_layout_test.dart` measures that first and pairs every claim
+  against it.
+- **Opening the Schematic writes nothing**, which is the half §11.186.2 is strict about, and it has
+  its own case.
+- **Byte behaviour is asserted twice**: undo takes the sheet away so a document that was never frozen
+  is byte-identical to one that froze and undid, and an undo over a sheet that ALREADY EXISTED keeps
+  the sheet and removes only what the command added.
+- **`TidySheetCommand` IS BUILT AND REACHABLE FROM NOBODY**, and the `#872` gate caught it within the
+  hour. It is exempted against `#920` rather than quietly wired, because WHERE `Tidy sheet` is
+  pressed from is a UI question the user has not answered and §11.186.6 leaves open in terms.
+- **`RemoveDeviceCommand.apply` RETURNS `true` WHETHER OR NOT IT REMOVED ANYTHING**, found while
+  looking for a command that genuinely refuses. It defeats DR-156's refusal path: deleting a device
+  that is not there makes an undo entry. Filed for a census of the rest; a purpose-built
+  `_RefusingCommand` stands in for the test that needed one.
+- **WHAT IS NOT ASSERTED, SAID OUT LOUD**: the freeze rides on a MOUNTED schematic canvas, because
+  only a laid-out canvas knows where the symbols are. An edit made in a session where the Schematic
+  was never opened records nothing, and no case covers that path because there is no arrangement yet
+  to preserve. The next edit after it has been looked at freezes what was seen.
+- **Floors**: `rackpal_core` 4863 to 4884, `rackpal_ui` 1966 to 1972, measured.
+
+**Commits** (§8.8): the ruling `1864a8c0`, SG-1 and SG-3 `a414bc73`, the `addConsequence` mechanism
+`a4719d4d`, the two commands `5e06d115`, the screen `a9e5f8c2`, the correction `f810d78c`. SG-4, SG-5
+and SG-6 are open.
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·
