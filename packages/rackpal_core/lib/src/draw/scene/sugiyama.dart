@@ -953,6 +953,67 @@ void _assignCoordinates(_Proper g, SugiyamaParams params) {
       _priorityPass(g, l, params, fromAbove: false);
     }
   }
+
+  _clearOfFixed(g, params);
+}
+
+/// Moves every UNFIXED node clear of every FIXED one in its layer, down and
+/// out of the way (DR-187 §11.186.5, `#917`).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// MEASURED, AND IT IS NOT THE COLLISION ANYBODY WOULD GUESS
+/// ═══════════════════════════════════════════════════════════════════════
+/// With every existing symbol fixed and a device added, the new symbol
+/// landed **exactly on top of** one of them. The mechanism is neither a
+/// missing separation pass nor a cross-layer collision: [_separate] pushes
+/// the newcomer down off the node above it and then back UP off the node
+/// below it, and when the gap between two fixed neighbours is smaller than
+/// the newcomer, that second pass forces it into a space it does not fit
+/// in. The priority passes then settle it onto one of them.
+///
+/// The rule is therefore about ROOM rather than order: a node with no fixed
+/// position is never left overlapping one that has. It moves DOWN, because
+/// down is where a sheet may grow without disturbing anything already on
+/// it, which is the *"expanding the canvas slightly"* half of the report.
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A NO-OP ON A LAYOUT WITH NOTHING FIXED, BY CONSTRUCTION
+/// ═══════════════════════════════════════════════════════════════════════
+/// It only ever measures an unfixed node against a FIXED one, so a document
+/// that stores no positions cannot reach the body of either loop. That is
+/// what keeps every existing scene, golden and op-count baseline exactly as
+/// it was: this pass changes a drawing only where the document has already
+/// asked for part of it to hold still.
+void _clearOfFixed(_Proper g, SugiyamaParams params) {
+  for (final row in g.layers) {
+    final fixed = [
+      for (final v in row)
+        if (g.pinnedY[v] != null) v,
+    ];
+    if (fixed.isEmpty) continue;
+    // CANONICAL ORDER, so two callers describing one graph get one answer:
+    // the row is already in phase 2's order, which is itself total.
+    for (final v in row) {
+      if (g.pinnedY[v] != null) continue;
+      // Repeated, because clearing one fixed neighbour can slide this node
+      // onto the next one down. It terminates: every step strictly
+      // increases `y` and there are finitely many fixed nodes.
+      var moved = true;
+      while (moved) {
+        moved = false;
+        for (final f in fixed) {
+          final top = g.y[v];
+          final bottom = top + g.height[v];
+          final fTop = g.y[f];
+          final fBottom = fTop + g.height[f];
+          if (top < fBottom && fTop < bottom) {
+            g.y[v] = fBottom + params.nodeGapGu;
+            moved = true;
+          }
+        }
+      }
+    }
+  }
 }
 
 /// Restores `y[i+1] >= y[i] + height[i] + gap` down the layer and then back

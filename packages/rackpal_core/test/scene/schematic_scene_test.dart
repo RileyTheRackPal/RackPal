@@ -258,6 +258,29 @@ RackDocument _document({
   return doc;
 }
 
+/// Stores every symbol position from [laidOut] on [doc]'s schematic sheet,
+/// which is what the first edit that would re-flow the sheet does
+/// (DR-187 §11.186.2). Unpinned, because storing is not pinning.
+void _storeEveryPosition(RackDocument doc, SchematicScene laidOut) {
+  const sheetId = Uuid('0190f105-0000-7000-8000-0000000000ff');
+  doc.sheets[sheetId] = Sheet(
+    id: sheetId,
+    number: 'T6',
+    title: 'SYSTEM SCHEMATIC',
+    order: const FracIndex('a0'),
+    meta: _meta(),
+    items: {
+      for (final s in laidOut.symbols)
+        Uuid('item-${s.id}'): SheetItem(
+          id: Uuid('item-${s.id}'),
+          targetId: Uuid(s.id),
+          position: laidOut.positions[Uuid(s.id)]!,
+          zOrder: const FracIndex('a0'),
+        ),
+    },
+  );
+}
+
 SchematicScene _build(RackDocument doc) =>
     buildSchematicScene(doc: doc, measurer: _Measurer());
 
@@ -490,24 +513,84 @@ void main() {
       }
     });
 
-    test('an UNPINNED SheetItem position is IGNORED — honouring it would '
-        'freeze the first layout the document ever received and make every '
-        'recompute a no-op', () {
-      // Three documents, identical but for the sheet: none, one carrying a
-      // PINNED item at `at`, and one carrying the SAME item unpinned.
+    test('A NEW SYMBOL TAKES A FREE SLOT RATHER THAN LANDING ON ONE '
+        '(`#917`, DR-187 §11.186.5)', () {
+      // MEASURED BEFORE IT WAS FIXED: with every symbol stored, the two
+      // devices `offRackChain` adds put `MID-1` at exactly `SNK-2`'s
+      // position. The gap between two stored neighbours was smaller than
+      // the newcomer, and the separation pass forced it in anyway.
+      final free = _build(_document());
+      final doc = _document(offRackChain: true);
+      _storeEveryPosition(doc, free);
+      final after = _build(doc);
+
+      // Every stored symbol is exactly where it was.
+      for (final s in free.symbols) {
+        expect(
+          after.positions[Uuid(s.id)],
+          free.positions[Uuid(s.id)],
+          reason: '${s.designator} moved when devices were added',
+        );
+      }
+      // AND NOTHING OVERLAPS ANYTHING, which is the assertion the probe
+      // failed before this rule existed.
+      for (var i = 0; i < after.symbols.length; i++) {
+        for (var j = i + 1; j < after.symbols.length; j++) {
+          final a = after.symbols[i].bodyRect;
+          final b = after.symbols[j].bodyRect;
+          final hit =
+              a.left < b.right &&
+              b.left < a.right &&
+              a.top < b.bottom &&
+              b.top < a.bottom;
+          expect(
+            hit,
+            isFalse,
+            reason:
+                '${after.symbols[i].designator} overlaps '
+                '${after.symbols[j].designator}',
+          );
+        }
+      }
+      // AND IT WENT BELOW THEM, which is where a sheet may grow without
+      // disturbing what is already on it. **The drawing does not always
+      // get taller**: on this fixture the newcomer fits under its layer's
+      // stored symbols and inside the extent another layer already sets,
+      // so "expanding the canvas" happens when it is needed and not as a
+      // rule. That was asserted the other way round first and measured
+      // here.
+      final stored = free.symbols.firstWhere((s) => s.designator == 'SNK-1');
+      final newcomer = after.symbols.firstWhere(
+        (s) => s.designator == 'MID-1',
+      );
+      expect(
+        newcomer.bodyRect.top,
+        greaterThanOrEqualTo(
+          after.symbols.firstWhere((s) => s.id == stored.id).bodyRect.bottom,
+        ),
+      );
+    });
+
+    test('AN UNPINNED STORED POSITION IS HONOURED TOO, which reverses the '
+        'rule this case used to assert (`#914`, DR-187 §11.186.3)', () {
+      // It read: "an UNPINNED SheetItem position is IGNORED, because
+      // honouring it would freeze the first layout the document ever
+      // received and make every recompute a no-op". **That freeze is the
+      // feature now.** What the two states still mean is what `Tidy sheet`
+      // does with them, which is not this file's business.
       const at = Pt(96, 40);
       final free = _build(_document());
       final pinned = _build(_document(pinAt: at));
       final unpinned = _build(_document(pinAt: at, pinItem: false));
 
-      // The unpinned item changes NOTHING — not one op.
-      expect(digestScene(unpinned.scene), digestScene(free.scene));
-      // And the comparison is not vacuous: the same item, pinned, moves the
-      // drawing.
-      expect(
-        digestScene(pinned.scene),
-        isNot(digestScene(free.scene)),
-      );
+      final snk = unpinned.symbols.firstWhere((s) => s.designator == 'SNK-1');
+      expect(unpinned.positions[Uuid(snk.id)], at);
+      // The two are now the same drawing: pinned and unpinned differ in
+      // what may move them later, never in where they are.
+      expect(digestScene(unpinned.scene), digestScene(pinned.scene));
+      // AND THE COMPARISON IS NOT VACUOUS: neither is the layout's own
+      // answer for this document.
+      expect(digestScene(unpinned.scene), isNot(digestScene(free.scene)));
     });
   });
 
