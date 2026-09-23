@@ -908,7 +908,13 @@ $SuiteFloors = @{
     # reads has to be carried across it. One of the five caught the
     # sheet id NOT being carried: a redo of a coalesced run created the
     # one schematic Sheet under an id nothing else resolved.
-    'rackpal_core'   = 4889
+    # 4897 at DR-191 (`#926`): +8 in room_estimate_follows_inputs_test.dart,
+    # which makes the edits in the order docs/20 used to warn against and
+    # reads the stored figure back. Two of them passed VACUOUSLY on the
+    # first mutation run (null is also what undo restores) until each
+    # asserted its precondition; with the controller's hook removed, four
+    # fail.
+    'rackpal_core'   = 4897
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

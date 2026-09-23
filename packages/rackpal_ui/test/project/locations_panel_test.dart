@@ -340,17 +340,24 @@ void _estimateFieldTests() {
           'Great Room',
           estimatedRunLength: const Len(60 * 12 * Len.nmPerInch),
         );
+        // WRITTEN TO THE ROOM DIRECTLY, not through the controller. Since
+        // DR-191 §11.190.2 the controller clears a plan figure the plan can
+        // no longer derive, and this room has no outline, so a `computed`
+        // command would be withdrawn in the same entry. The state is still
+        // real: it is a file written before DR-191, read back.
+        // Rebuilt through the public constructor, which is how a codec
+        // reads one back; the setter is package-internal.
         if (origin != null) {
-          h.controller.run(
-            origin == RunLengthOrigin.typed
-                ? SetRoomEstimateCommand.typed(
-                    locationId: id,
-                    length: const Len(60 * 12 * Len.nmPerInch),
-                  )
-                : SetRoomEstimateCommand.computed(
-                    locationId: id,
-                    length: const Len(60 * 12 * Len.nmPerInch),
-                  ),
+          final seeded = h.doc.locations[id]!;
+          h.doc.locations[id] = Location(
+            id: id,
+            kind: seeded.kind,
+            name: seeded.name,
+            code: seeded.code,
+            order: seeded.order,
+            meta: seeded.meta,
+            estimatedRunLengthFromRack: seeded.estimatedRunLengthFromRack,
+            estimatedRunLengthOrigin: origin,
           );
         }
 
@@ -368,7 +375,14 @@ void _estimateFieldTests() {
       final h = _Harness()..seed('Great Room');
       await open(tester, h, 'Great Room');
 
-      expect(find.textContaining('one number per room'), findsOneWidget);
+      // DR-191 §11.190.4: a blank figure names the input it is waiting
+      // for. With no outline that is either typing it or drawing one; it
+      // used to cite `AC-024`, a ruling ID shown to a user.
+      expect(
+        find.textContaining('outline this room on a calibrated plan'),
+        findsOneWidget,
+      );
+      expect(find.textContaining('AC-024'), findsNothing);
     });
 
     test('the cell text round-trips through the parser that reads it', () {

@@ -413,18 +413,16 @@ first.
 
 #### Outline the rooms
 
-An outline is what turns a room into a run length, and **when you draw it
-matters.** The figure is worked out at the moment you close or reshape the
-outline, and only if all of these are already true:
+An outline is what turns a room into a run length. The figure is worked out,
+and kept up to date, whenever all of these are true:
 
 - the plan is calibrated;
 - the room has at least one home run landed in a rack (§20.5.5);
 - that rack is pinned **on the same plan** as the outline.
 
-So outline the rooms last. A basement head end pinned on the basement plan
-cannot measure to a room outlined on the Level 1 plan: the two pages are
-unrelated pictures, and nothing records how they line up. Type those rooms'
-run lengths instead.
+The order you do them in does not matter: the moment the last one is in place,
+the figure appears, and moving the rack or reshaping the room moves it. Until
+then the room's helper line says which of the three is missing.
 
 1. Select the room in the tree. The right-hand panel shows it **On** the open
    plan, with **Draw…**.
@@ -436,10 +434,16 @@ run lengths instead.
 
 The room's **Run length from rack** then reads the straight line from the rack
 to the room's farthest corner, and its helper line says it was worked out from
-the plan. It adds no margin; the margin is yours to add when you quote. **A
-figure you typed yourself is never overwritten.** If a prerequisite arrives
-after the outline (you pin the rack later, say), `Redraw…` the outline to have
-the figure worked out.
+the plan. It adds no margin; the margin is yours to add when you quote.
+
+- **A figure you typed yourself is never overwritten.** Clear the field to hand
+  the room back to the plan.
+- **If a plan-derived figure's inputs go away** (the rack is unpinned, the
+  outline cleared), the figure is cleared too rather than left standing as a
+  guess.
+- **A basement head end cannot measure to a room on Level 1.** Two pages are
+  unrelated pictures, and nothing records how they line up. The helper line
+  says so; type those rooms' run lengths instead.
 
 ---
 
@@ -1170,9 +1174,6 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
   carries one, and ranks in the length ladder (§20.5.7).
 - **A run's pathway is set when the run is entered** (`@pathway=`, or a CSV
   column), not afterwards in the table.
-- **A room's run length is worked out only when its outline is drawn or
-  reshaped.** Pinning the rack or landing the runs afterwards does not update
-  it; redraw the outline (§20.5.2).
 - **The cable waste factor is stored and not yet applied.** The project
   setting exists and travels with the file; no figure on screen or in the PDF
   includes it.

@@ -548,7 +548,7 @@ class _Detail extends StatelessWidget {
             // on somebody else's drawing whose magnitude is unknown, so it
             // refuses a bare number; THIS is cable, ordered and cut in
             // whole feet, so a bare number is what it reads.
-            helper: estimateHelperFor(location),
+            helper: estimateHelperFor(doc, location),
             value: location.estimatedRunLengthFromRack == null
                 ? ''
                 : lengthCellText(
@@ -754,13 +754,36 @@ class _CommitFieldState extends State<_CommitField> {
 /// "typed": every document written before `LEN-A/1` carries a figure with
 /// no recorded provenance, and saying a person entered it would be
 /// inventing a fact about somebody else's project.
-String estimateHelperFor(Location location) {
+String estimateHelperFor(RackDocument doc, Location location) {
   if (location.estimatedRunLengthFromRack == null) {
-    return 'AC-024\u2019s one number per room. Blank is unknown.';
+    // BLANK SAYS WHY (DR-191 §11.190.4). This read *"AC-024's one number
+    // per room. Blank is unknown."*, which showed a person a ruling ID and
+    // told them nothing they could act on. The plan now fills the figure
+    // on its own whenever it can, so a blank one is waiting for exactly
+    // one input, and naming it is the useful sentence.
+    return switch (planEstimateGapOf(doc, location)) {
+      PlanEstimateGap.noOutline || null =>
+        'Blank is unknown. Type it, or outline this room on a calibrated '
+            'plan and it is worked out for you.',
+      PlanEstimateGap.notCalibrated =>
+        'Blank is unknown. Calibrate the plan this room is outlined on.',
+      PlanEstimateGap.noLandedRun =>
+        'Blank is unknown. No run to this room lands in a rack yet, so '
+            'there is nothing to measure from.',
+      PlanEstimateGap.rackNotPinned =>
+        'Blank is unknown. Pin the rack this room’s runs land in on '
+            'the plan it is outlined on.',
+      // THE ONE THE NEXT EDIT CANNOT FIX, so it says to type the figure
+      // rather than pointing at an act that would not help.
+      PlanEstimateGap.rackOnAnotherPlan =>
+        'Blank is unknown. The rack is pinned on a different plan from '
+            'this room’s outline, and two plans cannot be measured '
+            'across. Type the length.',
+    };
   }
   return switch (location.estimatedRunLengthOrigin) {
     RunLengthOrigin.computedFromPlan =>
-      'Worked out from this room\u2019s outline on the plan.',
+      'Worked out from this room’s outline on the plan.',
     RunLengthOrigin.typed => 'Entered by hand.',
     null => 'Where this figure came from was not recorded.',
   };
