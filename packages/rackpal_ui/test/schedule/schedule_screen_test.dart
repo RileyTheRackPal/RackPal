@@ -481,4 +481,49 @@ void main() {
       expect(find.textContaining(kUngroupedTitle), findsOneWidget);
     });
   });
+
+  group('the takeoff shows the waste factor per cable type (DR-192)', () {
+    testWidgets('78 ft of Cat6A reads 78 raw and 86 with the default 10%', (
+      tester,
+    ) async {
+      await _pump(tester, _populatedDoc());
+
+      // PRINTED, NOT ASSUMED: the words come off the screen. 78 x 1.10 is
+      // 85.8, and the column rounds to whole feet.
+      final texts = _textsUnder(tester, find.byType(ScheduleScreen));
+      expect(texts, contains('Field cable to order, with 10% waste:'));
+      // `_textsUnder` sees each string twice (the `Text` and the
+      // `RichText` it builds), so this asks for presence, not a count.
+      expect(
+        texts.where((t) => t.contains('78 ft, 86 ft with waste')),
+        isNotEmpty,
+      );
+      // The table's own row still says 78: no length is inflated.
+      expect(texts.where((t) => t == '78'), isNotEmpty);
+    });
+
+    testWidgets('the jumper is not in it, whatever the toggle says', (
+      tester,
+    ) async {
+      // The fixture's W002 is a jumper with no length. If the takeoff took
+      // it, the Cat6A line would carry "1 length unknown".
+      await _pump(tester, _populatedDoc());
+      await tester.tap(find.textContaining('Show jumpers and power cords'));
+      await tester.pumpAndSettle();
+
+      final line = _textsUnder(
+        tester,
+        find.byType(ScheduleScreen),
+      ).firstWhere((t) => t.contains('with waste'));
+      expect(line, isNot(contains('unknown')));
+    });
+
+    testWidgets('a document with no field cable shows no takeoff at all', (
+      tester,
+    ) async {
+      await _pump(tester, _emptyDoc());
+
+      expect(find.textContaining('to order'), findsNothing);
+    });
+  });
 }

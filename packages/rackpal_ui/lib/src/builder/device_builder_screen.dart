@@ -60,6 +60,8 @@
 // buttons rather than bindings for the same reason, and because the
 // builder's stack is NOT the document's (CR-106): binding `Ctrl+Z` here
 // would need a scope this screen does not yet have.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/builder/bank_dialogs.dart';
@@ -71,6 +73,7 @@ import 'package:rackpal_ui/src/builder/preview_dock.dart';
 import 'package:rackpal_ui/src/draw/device_glyph_mark.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
 import 'package:rackpal_ui/src/menu/undo_target.dart';
+import 'package:rackpal_ui/src/shell/unsaved_changes_dialog.dart';
 
 /// What the app does when the builder asks for something.
 ///
@@ -118,6 +121,16 @@ Set<PortColumnPack> _nothingRemembered(String category) =>
     const <PortColumnPack>{};
 
 void _rememberNothing(String category, Set<PortColumnPack> packs) {}
+
+/// What an unnamed template is called wherever a name is shown: the header,
+/// and the close prompt (DR-190).
+const String kUntitledDevice = 'Untitled device';
+
+/// Why `Save` is unavailable: AC-049's three facts, in the words the
+/// disabled button's tooltip and the close prompt's refusal both use.
+const String kBuilderSaveNeeds =
+    'Needs a name, a designator prefix, and an RU height above 0 (or a 0U '
+    'mount on the Physical section)';
 
 /// Opens the builder over [template].
 ///
@@ -545,6 +558,47 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
     if (close) widget.onDone?.call();
   }
 
+  /// `Close`, which ASKS FIRST when there is anything to lose (DR-190
+  /// §11.189).
+  ///
+  /// It called `onDone` directly until then, and `onDone` unmounts this
+  /// screen, so a dirty draft went with it: the session is an in-memory
+  /// copy nothing else holds. The prompt is the project's own close
+  /// prompt (docs/03 §9.5) with its rules unchanged, because leaving is
+  /// the act here, which is the difference from DR-099 §11.98.4's refusal
+  /// on door 2.
+  Future<void> _close() async {
+    final done = widget.onDone;
+    if (done == null) return;
+    if (!_session.isDirty) {
+      done();
+      return;
+    }
+    final name = _session.body.displayName.trim();
+    final choice = await showUnsavedChangesDialog(
+      context,
+      documentName: name.isEmpty ? kUntitledDevice : name,
+      editCount: _session.editsSinceSave,
+    );
+    if (!mounted) return;
+    switch (choice) {
+      case UnsavedChangesChoice.save:
+        // SAVE OBEYS THE SAVE BUTTON'S RULE (§11.189.2). A draft the
+        // button would refuse is refused here too, in the same band, and
+        // nothing closes: closing after a failed save is the silent
+        // discard this method exists to stop.
+        if (!_canSave) {
+          setState(() => _refusal = 'Not saved. $kBuilderSaveNeeds.');
+          return;
+        }
+        _save(close: true);
+      case UnsavedChangesChoice.dontSave:
+        done();
+      case UnsavedChangesChoice.cancel:
+        break;
+    }
+  }
+
   /// What the port grid last reported about its selection, or null when
   /// fewer than two rows are selected (M4-F2).
   PortBatchContext? _batch;
@@ -756,7 +810,7 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
             : null,
         onSave: _canSave ? () => _save(close: false) : null,
         onSaveAndClose: _canSave ? () => _save(close: true) : null,
-        onClose: widget.onDone,
+        onClose: widget.onDone == null ? null : () => unawaited(_close()),
       ),
       if (_refusal != null)
         Container(
@@ -1033,7 +1087,7 @@ class _Header extends StatelessWidget {
               // where a name goes; `displayName` is one of the three the
               // ruling requires, so this state is the FIRST thing a new
               // template is in and it must not read as a rendering bug.
-              name.isEmpty ? 'Untitled device' : name,
+              name.isEmpty ? kUntitledDevice : name,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontStyle: name.isEmpty ? FontStyle.italic : null,
@@ -1087,10 +1141,7 @@ class _Header extends StatelessWidget {
               // screen that ever explains AC-049's rule to the person
               // hitting it.
               Tooltip(
-                message: canSave
-                    ? 'Save'
-                    : 'Needs a name, a designator prefix, and an RU height '
-                          'above 0 (or a 0U mount on the Physical section)',
+                message: canSave ? 'Save' : kBuilderSaveNeeds,
                 child: FilledButton(
                   onPressed: onSave,
                   child: const Text('Save'),

@@ -11,6 +11,8 @@
 import 'package:rackpal_core/src/commands/clock.dart';
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
+import 'package:rackpal_core/src/commands/location_commands.dart'
+    show planEstimateRefreshes;
 import 'package:rackpal_core/src/commands/selection.dart';
 import 'package:rackpal_core/src/commands/simple_notifier.dart';
 import 'package:rackpal_core/src/commands/transaction.dart';
@@ -101,7 +103,21 @@ class DocumentController {
     int undoDepth = kDefaultUndoDepth,
   }) : _savedStateId = doc.stateId,
        _nextStateId = doc.stateId + 1,
-       undo = UndoStack<RackDocument>(maxEntries: undoDepth);
+       undo = UndoStack<RackDocument>(maxEntries: undoDepth) {
+    // ═════════════════════════════════════════════════════════════════
+    // THE PLAN ESTIMATES FOLLOW THEIR INPUTS (DR-191 §11.190)
+    // ═════════════════════════════════════════════════════════════════
+    // INSTALLED HERE AND NOT BY A VIEW, which is §11.190.3's whole point.
+    // DR-187's layout freeze is registered by the Schematic screen and so
+    // does nothing until that tab has been opened; a figure the schedule
+    // orders cable from must not depend on which tab somebody visited.
+    // Every route that builds a controller gets it, tests included.
+    _consequences.add((tx) {
+      for (final c in planEstimateRefreshes(doc)) {
+        tx.add(c);
+      }
+    });
+  }
 
   final RackDocument doc;
 

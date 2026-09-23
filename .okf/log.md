@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-09-23 (sixty-fourth entry)
+
+* **Creation**: [DR-190](/decisions/dr-190-builder-close-asks-before-it-discards.md),
+  [DR-191](/decisions/dr-191-room-estimate-follows-its-inputs.md),
+  [DR-192](/decisions/dr-192-schedule-shows-the-waste-factor.md) and
+  [DR-193](/decisions/dr-193-validation-keys-go-where-the-fix-is.md), the four gaps the user-guide
+  census found, each put to the user with three priced options. The user chose the recommended option
+  every time and gave no reasons, so each record says the reasoning is the author's.
+* **Progress**: all four built on `rulings-190-193`, one commit each, each gated in a sibling worktree
+  while the next was written: `7b1cccb7` (#925), `994a9f1a` (#926), `1189b0d9` (#927), `e64a42ee`
+  (#928).
+* **Note**: **TWO TESTS PASSED VACUOUSLY ON THE FIRST MUTATION RUN.** DR-191's undo and unpin cases
+  asserted a null that is also what undo restores, so they passed on a controller that computed
+  nothing. Each now asserts its precondition; with the hook removed, four fail.
+* **Note**: **A CONSEQUENCE IS INSTALLED BY THE CONTROLLER NOW, AS WELL AS BY A VIEW.** DR-191's
+  refresh is registered in `DocumentController`'s constructor; DR-187's freeze is still registered by
+  the Schematic screen and still waits for that tab to be opened. The two placements now sit side by
+  side, and the second is the one docs/20 §20.8 still has to warn about.
+* **Update**: [A figure computed at a gesture](/practices/a-derived-figure-computed-at-a-gesture-is-order-dependent.md)
+  records its own resolution.
+
 ## 2026-09-23 (sixty-third entry)
 
 * **Update**: docs/20 now walks every view as a workflow (`#924`, `a86af3a6`), written from a census

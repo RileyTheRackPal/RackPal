@@ -314,6 +314,9 @@ class RackPalApp extends StatelessWidget {
         // focused context upward, so the nearer one wins where it
         // matters.
         ...buildUndoActions(shellKey),
+        // DR-193 §11.192: `F7`/`F8`/`Shift+F8` from every view, with one
+        // cursor. No screen keeps a nearer handler.
+        ...buildValidationActions(shellKey),
       },
       // DR-090, both halves. Every value lives in `console_palette.dart`
       // in `rackpal_core`, where `contrast.dart` can check it; this call

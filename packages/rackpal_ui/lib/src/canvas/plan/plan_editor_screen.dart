@@ -50,6 +50,7 @@ import 'package:rackpal_ui/src/canvas/plan/plan_canvas_screen.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_outline.dart';
 import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/canvas/plan/unpinned_strip.dart';
+import 'package:rackpal_ui/src/canvas/schematic/schematic_reveal.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
 import 'package:rackpal_ui/src/draw/flutter_canvas.dart';
@@ -90,8 +91,13 @@ final class PlanEditorScreen extends StatefulWidget {
     this.arm,
     this.onRefuse,
     this.onNotice,
+    this.reveal,
     super.key,
   });
+
+  /// A floorplan to open, parked by the shell's `F8` (DR-193 §11.192).
+  /// See `RevealController` for why it is a pending request.
+  final RevealController? reveal;
 
   final DocumentController controller;
 
@@ -233,11 +239,30 @@ class PlanEditorScreenState extends State<PlanEditorScreen> {
   void initState() {
     super.initState();
     _controller.changes.addListener(_onDocumentChanged);
+    widget.reveal?.addListener(_onRevealRequested);
+    if (widget.reveal?.pending != null) _onRevealRequested();
+  }
+
+  /// Opens a parked floorplan, after the frame, on the Schematic's
+  /// reasoning including its `ensureVisualUpdate`. An id that is not a
+  /// floorplan in this document is dropped: nothing else on this view is
+  /// what a finding points at.
+  void _onRevealRequested() {
+    final id = widget.reveal?.take();
+    if (id == null) return;
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (mounted && _controller.doc.underlays.containsKey(id)) {
+          _openPlan(id);
+        }
+      })
+      ..ensureVisualUpdate();
   }
 
   @override
   void dispose() {
     _controller.changes.removeListener(_onDocumentChanged);
+    widget.reveal?.removeListener(_onRevealRequested);
     _calibrate.dispose();
     _outline.dispose();
     _reshape.dispose();

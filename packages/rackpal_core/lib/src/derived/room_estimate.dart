@@ -123,6 +123,58 @@ Len? roomEstimateFor(RackDocument doc, Location location) {
   return rise == null ? best : best + rise;
 }
 
+/// Why [location] has no plan-derived run length, or null when one derives
+/// (DR-191 §11.190.4).
+///
+/// **THE SAME REFUSALS AS [roomEstimateFor], IN THE SAME ORDER**, named
+/// rather than collapsed into null, so the room's helper line can tell a
+/// person which one input is missing instead of leaving a blank field and a
+/// guess about why.
+PlanEstimateGap? planEstimateGapOf(RackDocument doc, Location location) {
+  final outline = location.planOutline;
+  if (outline == null || !outline.isUsable) return PlanEstimateGap.noOutline;
+  if (doc.underlays[outline.underlayId]?.scale == null) {
+    return PlanEstimateGap.notCalibrated;
+  }
+  final racks = _datumRacksFor(doc, location.id);
+  if (racks.isEmpty) return PlanEstimateGap.noLandedRun;
+  final pins = [
+    for (final rackId in racks)
+      if (doc.racks[rackId]?.planPin case final pin?) pin,
+  ];
+  if (pins.isEmpty) return PlanEstimateGap.rackNotPinned;
+  if (pins.every((p) => p.underlayId != outline.underlayId)) {
+    return PlanEstimateGap.rackOnAnotherPlan;
+  }
+  // Every named input is present. A null from [roomEstimateFor] now means a
+  // calibration whose two points coincide, which reads to a person as a plan
+  // that is not calibrated.
+  return roomEstimateFor(doc, location) == null
+      ? PlanEstimateGap.notCalibrated
+      : null;
+}
+
+/// The one input a room's plan-derived run length is waiting for.
+enum PlanEstimateGap {
+  /// The room has no outline on any plan.
+  noOutline,
+
+  /// The plan the outline is on has no usable calibration.
+  notCalibrated,
+
+  /// No run to this room lands in a rack, so there is no rack to measure
+  /// from.
+  noLandedRun,
+
+  /// The rack this room's runs land in is pinned on no plan.
+  rackNotPinned,
+
+  /// The rack is pinned, on a DIFFERENT plan from the outline. Two plans are
+  /// unrelated pictures and nothing records how they line up, so this one
+  /// is fixed by typing the figure rather than by the next edit.
+  rackOnAnotherPlan,
+}
+
 /// The distance from [pin] to the most distant vertex of [outline].
 ///
 /// `lengthBetween` per vertex and the MAXIMUM of those, which is not the

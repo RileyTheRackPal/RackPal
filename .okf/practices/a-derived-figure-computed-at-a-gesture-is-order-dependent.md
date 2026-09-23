@@ -49,6 +49,16 @@ write the paragraph that tells a stranger what to do first.
   good reason to compute at a gesture rather than continuously. It is not a
   reason to compute only at that gesture.
 
+# Resolved, the same day
+
+[DR-191](/decisions/dr-191-room-estimate-follows-its-inputs.md) moved the
+derivation into a consequence the `DocumentController` installs at
+construction, so every edit re-derives it inside its own undo entry, and the
+helper line now names the missing input. **Installed by the controller, not
+by a view**: DR-187's layout freeze is registered by the Schematic screen and
+does nothing until that tab has been opened, which is this practice's shape
+again one level up.
+
 # Related
 
 * [A modelled field is not a reachable one](a-modelled-field-is-not-a-reachable-one.md):

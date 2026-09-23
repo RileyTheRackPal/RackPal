@@ -73,6 +73,8 @@ import 'package:rackpal/src/storage/recents_store.dart';
 import 'package:rackpal_core/rackpal_core.dart'
     show
         Err,
+        Finding,
+        FindingLocusKind,
         LabelKey,
         LoadedLibrary,
         LocationRemovalPlan,
@@ -81,6 +83,7 @@ import 'package:rackpal_core/rackpal_core.dart'
         RackDocument,
         RackPreset,
         RackWidthClass,
+        Severity,
         TemplateBody,
         TemplateId,
         TextMeasurer,
@@ -92,6 +95,8 @@ import 'package:rackpal_core/rackpal_core.dart'
         buildPlaceableTemplates,
         buildRackPresets,
         copyTemplateBody,
+        evaluateDocument,
+        findingLocusOf,
         kDefaultUndoDepth,
         kUserPresetIdPrefix,
         mergeRackPresets,
@@ -276,6 +281,67 @@ Map<Type, Action<Intent>> buildUndoActions(GlobalKey<AppShellState> shell) =>
       ),
     };
 
+/// The handlers for `F7`, `F8` and `Shift+F8`, which are GLOBAL bindings
+/// that had one handler, in the Rack view (DR-193 §11.192).
+///
+/// INSTALLED AT THE APP ROOT, for [buildUndoActions]' reason: an `Actions`
+/// map inside one screen answers only while focus is inside it, so the keys
+/// the keymap calls global did nothing on four views of six. Unlike undo,
+/// NO SCREEN KEEPS ITS OWN: a nearer handler would walk a second cursor.
+Map<Type, Action<Intent>> buildValidationActions(
+  GlobalKey<AppShellState> shell,
+) => <Type, Action<Intent>>{
+  RecheckIntent: CallbackAction<RecheckIntent>(
+    onInvoke: (_) {
+      shell.currentState?.recheckFromShell();
+      return null;
+    },
+  ),
+  NextIssueIntent: CallbackAction<NextIssueIntent>(
+    onInvoke: (_) {
+      shell.currentState?.stepIssueFromShell(1);
+      return null;
+    },
+  ),
+  PreviousIssueIntent: CallbackAction<PreviousIssueIntent>(
+    onInvoke: (_) {
+      shell.currentState?.stepIssueFromShell(-1);
+      return null;
+    },
+  ),
+};
+
+/// What `F8` says when there is nothing to step through.
+const String kNoIssuesNotice = 'No issues.';
+
+/// What `F7` says: the counts, by severity, or that there are none.
+String recheckSummary(List<Finding> findings) {
+  if (findings.isEmpty) return 'Re-checked. $kNoIssuesNotice';
+  int count(Severity s) => findings.where((f) => f.severity == s).length;
+  String part(int n, String one, String many) => '$n ${n == 1 ? one : many}';
+  final parts = [
+    if (count(Severity.error) > 0)
+      part(count(Severity.error), 'error', 'errors'),
+    if (count(Severity.warning) > 0)
+      part(count(Severity.warning), 'warning', 'warnings'),
+    if (count(Severity.advisory) > 0)
+      part(count(Severity.advisory), 'advisory', 'advisories'),
+  ];
+  return 'Re-checked. ${parts.join(', ')}.';
+}
+
+/// What `F8` says about the finding it just went to: the rule, the rule's
+/// own sentence, where it is in the list, and, when no single item could be
+/// selected, that too.
+String issueNotice(
+  Finding finding, {
+  required int position,
+  required int of,
+  required bool nothingToShow,
+}) =>
+    '${finding.ruleId} ($position of $of): ${finding.message}'
+    '${nothingToShow ? ' It points at no single item to select.' : ''}';
+
 /// The handlers for the registry's four file bindings, bound to one
 /// session.
 Map<Type, Action<Intent>> buildFileActions(SessionController controller) =>
@@ -415,7 +481,20 @@ final class AppShellState extends State<AppShell>
   /// elevation raises "show me this device"; only this class can change
   /// tabs; the schematic answers it. Neither tab may reach the other, and
   /// `rackpal_ui` deliberately contains no shell.
-  final SchematicRevealController _reveal = SchematicRevealController();
+  final RevealController _reveal = RevealController();
+
+  /// `F8`'s two other destinations (DR-193 §11.192): a device or rack on
+  /// the elevation, and a floorplan on the Site view. Owned here for
+  /// [_reveal]'s reason exactly.
+  final RevealController _rackReveal = RevealController();
+  final RevealController _siteReveal = RevealController();
+
+  /// Where `F8` is in the findings, in `evaluateDocument`'s own order.
+  ///
+  /// ONE CURSOR FOR THE WHOLE WINDOW (§11.192.2). The Rack view kept its
+  /// own until DR-193, over device findings only; a second one here would
+  /// walk a different list at the same keystroke.
+  int _issueCursor = -1;
 
   /// Whether AC-048's coach mark should be showing on the Schematic tab.
   ///
@@ -520,6 +599,8 @@ final class AppShellState extends State<AppShell>
       ..removeListener(_onTabChanged)
       ..dispose();
     _reveal.dispose();
+    _rackReveal.dispose();
+    _siteReveal.dispose();
     _paletteDragRow.dispose();
     _paletteSearchFocus.dispose();
     super.dispose();
@@ -641,6 +722,69 @@ final class AppShellState extends State<AppShell>
   /// thrown it away, leaving the key dead on the one tab whose primary
   /// verb is bulk data entry.
   void undoFromShell() => activeUndoTarget.undo();
+
+  /// `F7` from any view (DR-193 §11.192.2): run the checks and say what
+  /// they found. The drawer recomputes on every build already, so on the
+  /// Rack view this is the rebuild; everywhere else the sentence is the
+  /// only place the result can appear.
+  void recheckFromShell() {
+    final findings = evaluateDocument(_services.session.document);
+    setState(() {});
+    _showNotice(recheckSummary(findings));
+  }
+
+  /// `F8` and `Shift+F8` from any view (DR-193 §11.192.1): the next or
+  /// previous finding, shown on the view that can fix it.
+  ///
+  /// **WRAPS**, because a list you can fall off the end of makes the last
+  /// press feel like a bug, and **CLAMPS ON READ**, because a fix can
+  /// shrink the list under the cursor between two presses.
+  void stepIssueFromShell(int delta) {
+    final doc = _services.session.document;
+    final findings = evaluateDocument(doc);
+    if (findings.isEmpty) {
+      _issueCursor = -1;
+      _showNotice(kNoIssuesNotice);
+      return;
+    }
+    final next = _issueCursor < 0 || _issueCursor >= findings.length
+        ? (delta > 0 ? 0 : findings.length - 1)
+        : (_issueCursor + delta) % findings.length;
+    _issueCursor = next < 0 ? next + findings.length : next;
+    final finding = findings[_issueCursor];
+    final locus = findingLocusOf(doc, finding);
+    final subject = locus.subject;
+    final (RevealController? to, ShellView view) = switch (locus.kind) {
+      FindingLocusKind.rackDevice || FindingLocusKind.rack => (
+        _rackReveal,
+        ShellView.rack,
+      ),
+      FindingLocusKind.fieldDevice || FindingLocusKind.cable => (
+        _reveal,
+        ShellView.schematic,
+      ),
+      FindingLocusKind.plan => (_siteReveal, ShellView.site),
+      // NOTHING ONE VIEW CAN SELECT: the Rack view, where the drawer is,
+      // and a sentence saying so rather than a selection that looks like
+      // the key failed.
+      FindingLocusKind.none => (null, ShellView.rack),
+    };
+    // PARK FIRST, SWITCH SECOND, on `_revealInSchematic`'s reasoning: the
+    // destination may not be built yet and takes the request on its first
+    // frame.
+    if (to != null && subject != null) to.reveal(subject);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) switchToTab(view.index);
+    });
+    _showNotice(
+      issueNotice(
+        finding,
+        position: _issueCursor + 1,
+        of: findings.length,
+        nothingToShow: locus.kind == FindingLocusKind.none,
+      ),
+    );
+  }
 
   void redoFromShell() => activeUndoTarget.redo();
 
@@ -1472,14 +1616,13 @@ final class AppShellState extends State<AppShell>
       // before `#243` door 2 left the tab pinned to one template for the
       // rest of the session, because there was nowhere else for it to go.
       //
-      // **THERE IS NO DISCARD-AND-RETURN ROUTE YET, AND THAT IS A GAP
-      // RATHER THAN A DECISION.** Going back with a dirty draft is
-      // exactly the case DR-091 §11.90.6 protects with `wantKeepAlive`:
-      // the builder holds an edit SESSION, not a view, so swapping it
-      // for the browser destroys the copy that makes closing without
-      // saving a complete undo. It needs the refusal
-      // `_openTemplateForEditing` already spells, and it is filed rather
-      // than improvised here.
+      // **`Close` ALSO LANDS HERE, AND IT ASKS FIRST** (DR-190 §11.189).
+      // This paragraph used to say there was no discard-and-return route;
+      // `Close` was one, and it destroyed a dirty draft without a word,
+      // because the builder holds an edit SESSION, not a view, and this
+      // callback unmounts it. The builder now shows the project's own
+      // Save / Don't Save / Cancel prompt before calling this, so reaching
+      // this line means the person saved or chose to discard.
       onDone: () => setState(() {
         _editingTemplateId = null;
         _authoringNew = false;
@@ -1715,6 +1858,8 @@ final class AppShellState extends State<AppShell>
         // its own business, and every transient notice in this window is
         // a snack bar today.
         onNotice: _showNotice,
+        // DR-193: where `F8` sends a finding about a floorplan.
+        reveal: _siteReveal,
       ),
     );
   }
@@ -1846,6 +1991,8 @@ final class AppShellState extends State<AppShell>
         // DR-176: what every Preset surface lists, and Save as preset...,
         // which a degraded session does not offer because it cannot keep one.
         presets: _mergedRackPresets,
+        // DR-193: where `F8` sends a finding about a device or a rack.
+        reveal: _rackReveal,
         onSaveAsPreset: _services.rackPresetsStore == null
             ? null
             : (rack) => unawaited(_saveAsPreset(rack)),

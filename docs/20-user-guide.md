@@ -290,7 +290,7 @@ to what you create next.
 | Outlet label, field end / rack end | What gets printed on the wall plate, and what the rack end is called |
 | Default rack height, Default RU numbering, Mirror rear elevations by default | What a new rack starts with. Existing racks keep what they were made with |
 | Default line voltage, Wiring standard, Default network media | Job-wide defaults. One cable can take its own wiring standard in the WIRING column (§20.5.5) |
-| Cable waste factor | Stored with the project. Nothing on screen or in the PDF applies it yet (§20.8) |
+| Cable waste factor | The margin added to each cable type's footage in the Schedule's takeoff (§20.5.7). No length is ever inflated |
 | Sheet numbering, Designator collision policy, Designator block size | How sheets and designator blocks are numbered |
 
 Two more sections live in the same dialog:
@@ -413,18 +413,16 @@ first.
 
 #### Outline the rooms
 
-An outline is what turns a room into a run length, and **when you draw it
-matters.** The figure is worked out at the moment you close or reshape the
-outline, and only if all of these are already true:
+An outline is what turns a room into a run length. The figure is worked out,
+and kept up to date, whenever all of these are true:
 
 - the plan is calibrated;
 - the room has at least one home run landed in a rack (§20.5.5);
 - that rack is pinned **on the same plan** as the outline.
 
-So outline the rooms last. A basement head end pinned on the basement plan
-cannot measure to a room outlined on the Level 1 plan: the two pages are
-unrelated pictures, and nothing records how they line up. Type those rooms'
-run lengths instead.
+The order you do them in does not matter: the moment the last one is in place,
+the figure appears, and moving the rack or reshaping the room moves it. Until
+then the room's helper line says which of the three is missing.
 
 1. Select the room in the tree. The right-hand panel shows it **On** the open
    plan, with **Draw…**.
@@ -436,10 +434,16 @@ run lengths instead.
 
 The room's **Run length from rack** then reads the straight line from the rack
 to the room's farthest corner, and its helper line says it was worked out from
-the plan. It adds no margin; the margin is yours to add when you quote. **A
-figure you typed yourself is never overwritten.** If a prerequisite arrives
-after the outline (you pin the rack later, say), `Redraw…` the outline to have
-the figure worked out.
+the plan. It adds no margin; the margin is yours to add when you quote.
+
+- **A figure you typed yourself is never overwritten.** Clear the field to hand
+  the room back to the plan.
+- **If a plan-derived figure's inputs go away** (the rack is unpinned, the
+  outline cleared), the figure is cleared too rather than left standing as a
+  guess.
+- **A basement head end cannot measure to a room on Level 1.** Two pages are
+  unrelated pictures, and nothing records how they line up. The helper line
+  says so; type those rooms' run lengths instead.
 
 ---
 
@@ -494,8 +498,10 @@ The builder's sections:
 counted as unknown in every rollup; a made-up figure is worse than a blank one.
 
 The footer has **Save**, **Save & Close** (back to the browser) and **Close**.
-**Close leaves without saving, and does not ask.** The builder has its own
-undo and redo, in the footer and on `Ctrl+Z`, for as long as it is open.
+**Close asks first when there are unsaved changes**: Save, Don't Save or
+Cancel, the same question RackPal asks when you close a project. The builder
+has its own undo and redo, in the footer and on `Ctrl+Z`, for as long as it
+is open.
 
 #### Add ports
 
@@ -989,6 +995,14 @@ the view the schedule points you back to.
 - **A summary line**: rows, **total footage**, and how much of it is
   estimated, bound or unknown, with counts for anything else worth your
   attention (a disputed cable class, a jacket pulled in the wrong colour).
+- **The takeoff**: *Field cable to order, with 10% waste*, then one line per
+  cable type with its known footage and the same figure with your waste
+  factor added (`Cat6A 1240 ft, 1364 ft with waste`). It counts field cable
+  only, whichever preset is showing, because jumpers and cords are bought
+  differently. A line some runs could not contribute to says how many are
+  missing. There is deliberately **no grand total**: feet of Cat6 plus feet of
+  RG6 is not something anybody orders. Set the percentage in `File` ▸
+  `Project settings...`.
 
 If the document has no cables, the Schedule says so and says where cables are
 drawn. That is a statement about the file, not an error.
@@ -1039,12 +1053,24 @@ twenty minutes.
 - **Collapsed**, it reads `No issues`, or counts errors, warnings and
   advisories. It opens by itself the first time an error appears in a session,
   and you can drag it taller.
-- **Re-check** (`F7`) runs the checks again.
+- **Re-check** runs the checks again.
 - **Group by** Severity, Rule or Location. The severity chips filter the list;
   **Acknowledged** shows or hides what you have already dealt with.
-- **Click a finding** to select the device it is about. **`F8`** and
-  **`Shift+F8`** step through the findings that point at a device, selecting
-  each in turn.
+- **Click a finding** to select the device it is about.
+- **`F8`** and **`Shift+F8`** step through every finding, from any view, and
+  take you to the view where it can be fixed, with its subject selected:
+
+  | The finding is about | `F8` takes you to |
+  |---|---|
+  | A device in a rack, or a rack | **Rack**, switched to that rack |
+  | A device not in a rack, or a cable | **Schematic** |
+  | A floorplan | **Site**, with that plan open |
+  | Anything else (a net, a circuit) | **Rack**, where the drawer is |
+
+  A notice names the rule and where you are in the list (`LEN-001 (3 of
+  39)`). A cable whose rack end has not landed yet has no end on the sheet,
+  and the Schematic says so instead of selecting it.
+- **`F7`** re-checks from any view and says the counts.
 
 #### Deal with a finding
 
@@ -1079,7 +1105,7 @@ The handful that pay for themselves immediately:
 | `Ctrl+1` / `Ctrl+2` / `Ctrl+4` | Anywhere | Rack, Schematic, Schedule |
 | `Ctrl+Z` / `Ctrl+Y` | Anywhere | Undo, redo |
 | `Ctrl+S` / `Ctrl+Shift+S` | Anywhere | Save, Save As |
-| `F7` / `F8` / `Shift+F8` | Rack | Re-check, next issue, previous issue |
+| `F7` / `F8` / `Shift+F8` | Anywhere | Re-check, next issue, previous issue. `F8` goes to the view that can fix it |
 | `/` | Rack, Site | Jump to the palette search |
 | Arrow keys | Rack | Nudge the selection 1U, or move the caret |
 | `Ctrl+L` | Rack, Schematic | Lock a position, or pin a symbol |
@@ -1168,21 +1194,11 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
   carries one, and ranks in the length ladder (§20.5.7).
 - **A run's pathway is set when the run is entered** (`@pathway=`, or a CSV
   column), not afterwards in the table.
-- **A room's run length is worked out only when its outline is drawn or
-  reshaped.** Pinning the rack or landing the runs afterwards does not update
-  it; redraw the outline (§20.5.2).
-- **The cable waste factor is stored and not yet applied.** The project
-  setting exists and travels with the file; no figure on screen or in the PDF
-  includes it.
-- **The validation keys work on the Rack view only.** `F7`, `F8` and
-  `Shift+F8` do nothing on the other views, where the drawer is not shown.
 - **A device outside a rack has no room field.** Its place is its pin on the
   Site plan.
 
 ### Known rough edges
 
-- **Close in the Device Builder discards an unsaved draft without asking.** Use
-  **Save & Close** unless you mean to throw the draft away.
 - **A device that is not there can still be "deleted".** Removing a device that
   does not exist creates an undo entry for a document that did not change. It
   is harmless and it is being fixed.

@@ -1353,21 +1353,11 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
           ),
         ),
       );
-      // THE FIGURE FOLLOWS THE SHAPE, in the same transaction, exactly as
-      // it does when the shape is first drawn (§11.49.7). A reshape that
-      // left the old estimate behind would leave a room quoting a wall
-      // that has moved, and `planEstimateMayFill` is what keeps the
-      // auto-fill off a number a person typed.
-      final room = _doc.locations[reshaping.locationId];
-      if (room == null || !planEstimateMayFill(room)) return;
-      final derived = roomEstimateFor(_doc, room);
-      if (derived == null) return;
-      tx.add(
-        SetRoomEstimateCommand.computed(
-          locationId: reshaping.locationId,
-          length: derived,
-        ),
-      );
+      // THE FIGURE FOLLOWS THE SHAPE, in the same transaction (§11.49.7),
+      // and it is no longer written here. DR-191 §11.190 moved it to a
+      // consequence the controller installs, which re-derives every room
+      // after every edit, so a reshape, a pin moved later and a run
+      // landed later all reach it by one route.
     });
   }
 
@@ -1435,16 +1425,8 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
             outline: closed.outline,
           ),
         );
-        final room = _doc.locations[closed.locationId];
-        if (room == null || !planEstimateMayFill(room)) return;
-        final derived = roomEstimateFor(_doc, room);
-        if (derived == null) return;
-        tx.add(
-          SetRoomEstimateCommand.computed(
-            locationId: closed.locationId,
-            length: derived,
-          ),
-        );
+        // The run length follows through the controller's own consequence
+        // (DR-191 §11.190), which runs before this entry is sealed.
       });
       setState(() => _outlineHover = null);
       return;

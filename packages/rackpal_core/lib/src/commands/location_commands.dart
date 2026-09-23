@@ -47,6 +47,7 @@ import 'package:rackpal_core/src/commands/label_key.dart';
 import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackpal_core/src/derived/location_removal.dart';
 import 'package:rackpal_core/src/derived/location_tree.dart';
+import 'package:rackpal_core/src/derived/room_estimate.dart';
 import 'package:rackpal_core/src/model/conductor.dart';
 import 'package:rackpal_core/src/model/entity_meta.dart';
 import 'package:rackpal_core/src/model/location.dart';
@@ -762,4 +763,57 @@ final class SetRoomEstimateCommand extends Command<RackDocument> {
       ?..estimatedRunLengthFromRack = _previousLength
       ..estimatedRunLengthOrigin = _previousOrigin;
   }
+}
+
+/// The writes that bring every room's PLAN-DERIVED run length up to date
+/// with the document as it now stands (DR-191 §11.190).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// A CONSEQUENCE, INSTALLED BY THE CONTROLLER ITSELF
+/// ═══════════════════════════════════════════════════════════════════════
+/// `DocumentController` runs this at the end of every transaction that
+/// changed something, inside that transaction, so one `Ctrl+Z` takes back
+/// an edit and the figures it moved. It was called only when an outline
+/// was closed or reshaped, which made the figure depend on the ORDER a
+/// person worked in: outline before pinning the rack and nothing was ever
+/// computed, and pinning it afterwards changed nothing.
+///
+/// **ONLY WHAT THE PLAN MAY FILL** (`planEstimateMayFill`, DR-050
+/// §11.49.3): an empty figure, or the plan's own earlier one. A figure a
+/// person typed, or one whose origin was never recorded, is theirs and is
+/// never touched in either direction.
+///
+/// **A PLAN FIGURE THAT STOPS DERIVING IS CLEARED** (§11.190.2). Its
+/// inputs are gone (the rack unpinned, the outline cleared), and a computed
+/// number with nothing under it is a guess standing as a measurement.
+///
+/// **NOTHING UNCHANGED IS RETURNED**, because `SetRoomEstimateCommand`
+/// reports a change even when it writes the value already there, and an
+/// undo entry that changes nothing is one the user presses through twice.
+///
+/// Rooms are visited in id order, so two runs over one document return
+/// the same list (CR-117's determinism, applied to a list of edits).
+List<Command<RackDocument>> planEstimateRefreshes(RackDocument doc) {
+  final out = <Command<RackDocument>>[];
+  final ids = doc.locations.keys.toList()..sort((a, b) => a.v.compareTo(b.v));
+  for (final id in ids) {
+    final location = doc.locations[id]!;
+    if (!planEstimateMayFill(location)) continue;
+    final stored = location.estimatedRunLengthFromRack;
+    final derived = roomEstimateFor(doc, location);
+    if (derived != null) {
+      if (derived != stored ||
+          location.estimatedRunLengthOrigin !=
+              RunLengthOrigin.computedFromPlan) {
+        out.add(
+          SetRoomEstimateCommand.computed(locationId: id, length: derived),
+        );
+      }
+    } else if (stored != null) {
+      // `planEstimateMayFill` with a figure present means the figure is
+      // the plan's own, so this is the plan withdrawing it.
+      out.add(SetRoomEstimateCommand.cleared(locationId: id));
+    }
+  }
+  return out;
 }

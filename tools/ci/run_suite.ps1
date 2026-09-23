@@ -908,7 +908,16 @@ $SuiteFloors = @{
     # reads has to be carried across it. One of the five caught the
     # sheet id NOT being carried: a redo of a coalesced run created the
     # one schematic Sheet under an id nothing else resolved.
-    'rackpal_core'   = 4889
+    # 4897 at DR-191 (`#926`): +8 in room_estimate_follows_inputs_test.dart,
+    # which makes the edits in the order docs/20 used to warn against and
+    # reads the stored figure back. Two of them passed VACUOUSLY on the
+    # first mutation run (null is also what undo restores) until each
+    # asserted its precondition; with the controller's hook removed, four
+    # fail.
+    # 4902 at DR-193 (`#928`): +5 in validation/finding_locus_test.dart,
+    # one per row of the ruling's table plus the shelf, which is the row a
+    # table cannot show: a source on a shelf is in the rack its host is in.
+    'rackpal_core'   = 4902
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1407,7 +1416,16 @@ $SuiteFloors = @{
     # somebody OUTSIDE the project: when a binding moves, the person
     # holding the stale copy is a tester who concludes the software is
     # broken, and nobody here finds out.
-    'rackpal_ui'     = 1996
+    # 2001 at DR-190 (`#925`): +5 in builder_close_prompt_test.dart, one
+    # per answer to the close prompt plus the clean close that must not
+    # ask. The one that matters is Save on a draft AC-049 refuses: it must
+    # stay open, because closing after a failed save is the silent discard
+    # the ruling exists to stop.
+    # 2004 at DR-192 (`#927`): +3 in schedule_screen_test.dart for the
+    # takeoff strip. The one that matters reads the words off the screen:
+    # 78 ft of Cat6A must print 78 raw and 86 with waste, while the TABLE
+    # row still reads 78, because the factor is never written to a length.
+    'rackpal_ui'     = 2004
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1551,7 +1569,11 @@ $SuiteFloors = @{
     # LICENSE is what the project GRANTS, and they must be byte-identical.
     # The copy is mandatory because Flutter asset paths cannot escape the
     # package directory, which a probe found rather than a review.
-    'rackpal_app'    = 1067
+    # 1071 at DR-193 (`#928`): +4 in session/validation_keys_test.dart,
+    # which press F7/F8/Shift+F8 through the real app over the Whole house
+    # starter. With `buildValidationActions` left out of `main`, all four
+    # fail; with the Rack view's reveal unwired, the rack-device case does.
+    'rackpal_app'    = 1071
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

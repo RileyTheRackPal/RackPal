@@ -233,7 +233,7 @@ final class SchematicCanvasScreen extends StatefulWidget {
   /// CR-105's arrival: the elevation's chip parks a device here and this
   /// screen selects and frames it. Null in every host that has no rack tab
   /// to be sent from. See `schematic_reveal.dart`.
-  final SchematicRevealController? reveal;
+  final RevealController? reveal;
 
   /// Whether AC-048's coach mark is showing under the domain filter bar.
   ///
@@ -1557,6 +1557,24 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
   void _revealNow(Uuid id) {
     final scene = _scene;
+    // A CABLE, since DR-193 §11.192: `F8` on a finding about a cable
+    // lands here. Selected through the same method a click on its net
+    // label uses, so the two cannot disagree about what "selected" means.
+    if (_doc.links.containsKey(id)) {
+      _canvasFocus.requestFocus();
+      final drawn = scene?.netLabels.any((l) => l.linkId == id) ?? false;
+      if (!drawn) {
+        // Said rather than skipped: a home run not yet landed at the rack
+        // has no end on this sheet, and a silent key reads as a broken one.
+        _status.show(
+          '${_cableSaying(id)} has no drawn end on this sheet. Land it '
+          'from Structured Wiring.',
+        );
+        return;
+      }
+      _selectCable(id);
+      return;
+    }
     final device = _doc.devices[id];
     if (device == null) {
       _status.show('That device is no longer in this document.');
