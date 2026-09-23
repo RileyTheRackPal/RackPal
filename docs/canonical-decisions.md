@@ -22124,6 +22124,94 @@ DWG, permanently or otherwise. What layer names, units and block structure the D
 
 ---
 
+### 11.188 DR-189 · The licence is AGPLv3-or-later, and a vendor's door is the CC0 catalog
+
+**The question.** From the user, 2026-09-23: *"I want to switch the intended license to be AGPLv3; I
+remember there being a reason that this ended up being a potential problem, but APGLv3 allows for
+exceptions to be carved for specific use cases, which I feel we can use to work around those
+problems."*
+
+**11.188.1 RULED: THE APPLICATION CODE IS AGPLv3-OR-LATER.** Settled by the user. **This reverses
+DR-036 §11.35.1 clause 2** (§12.40). Every other clause of DR-036 stands unchanged: the project is
+public, the community catalog is CC0, contributions arrive under a DCO sign-off, and nothing is
+priced.
+
+**11.188.2 THE OBJECTION THE QUESTION REMEMBERS IS NOT RECORDED, AND WAS SEARCHED FOR RATHER THAN
+ASSUMED.** `AGPL` and `Affero` appear nowhere in the tracked tree, in `docs/`, in `.okf/`, or in any
+commit message on any branch. **Two recorded facts are adjacent and are the likely memory**: `pdf`
+being Apache-2.0 closes **GPLv2** permanently and not v3 (§11.35.2), and §11.35.4's **output
+exception**, which is a real problem solved by exactly the mechanism the question proposes. No
+AGPL-specific objection was ever raised in this project, so none is overruled here.
+
+**11.188.3 THE DEPENDENCY CENSUS STILL HOLDS AND NEEDS NO RE-RUN.** §11.35.2 measured the tree at
+`pdf` 3.13.0: one Apache-2.0, four MIT, the rest BSD-3-Clause, zero copyleft. **Apache-2.0 is
+one-way compatible into AGPLv3 on the same terms that admitted it to GPLv3**, so the tree is clean
+for this licence exactly as it was for the last one.
+
+**11.188.4 WHAT AGPL CHANGES TODAY IS NOTHING, AND THAT IS THE POINT.** AGPLv3 §13 obliges offering
+source to users who interact with the program **over a network**. RackPal is a Windows desktop
+application with no server, no accounts and no telemetry, so §13 is currently inert. **The value is
+prospective**: it forecloses a hosted RackPal built on this code without released modifications,
+in advance of anyone wanting one. A licence chosen after that becomes attractive is chosen too
+late.
+
+**11.188.5 THE OUTPUT EXCEPTION CARRIES OVER UNCHANGED IN MECHANISM, AND IS STILL UNWRITTEN.**
+AGPLv3 incorporates GPLv3 §7's additional permissions, so §11.35.4's exception grants identically:
+a document produced by RackPal is the user's own work and is not a derivative of RackPal, embedded
+template snapshots and exported sheets included. **MEASURED: this repository contains no `LICENSE`
+file, and README line 168 still calls the licence TBD and *"under consideration"*.** §11.35.4
+requires the exception to be *"stated in `LICENSE` and in the README, not inferred, because an
+exception nobody can find is not one"*, so that clause has been undischarged since 2026-08-10. **The
+outstanding work is not this switch. It is that the project has never been licensed at all.**
+
+**11.188.6 THE EXCEPTION TEXT IS NOT DRAFTED HERE AND NOT BY THIS AUTHOR.** §11.35.4's own
+precedent is the GCC Runtime Library Exception, drafted by the FSF's counsel. An additional
+permission that does not say what its author believes is worse than none, and this is the one
+deliverable in the project where approximately right is not a category that exists. **Ruled: the
+`LICENSE` file and its exception go to a qualified reviewer before any public push**, and M8's
+AC-058/D7 licence deliverable is where that lands.
+
+**11.188.7 THE COST, STATED RATHER THAN DISCOVERED.** AGPL is prohibited outright by some
+organisations' open-source policies. For an integrator's laptop this is very unlikely to bite; **it
+bites if a manufacturer or distributor ever wants to contribute code or embed the product**, which
+is a narrower door than GPLv3 leaves open. Recorded so the trade is visible rather than found
+later.
+
+**11.188.8 RULED: A VENDOR'S DOOR IS THE CC0 CATALOG, AND THE SEED BOUNDARY IS A LICENCE
+BOUNDARY.** The user asked whether the planned community template repository needs an exception
+carved from AGPL, and offered *"this may be as simple as just making the device template repository
+CC0"*, wanting manufacturer maintenance to be *"frictionless"*.
+
+**It needs no exception, and §11.35.1 clause 3 is why**: the catalog is already CC0 and was never
+under the code licence, for §11.35.3's reason, which is this question's own concern reaching one
+step further than it expected. **What this clause adds is the boundary.** The seeded catalog is
+Dart source in `rackpal_core/lib/src/catalog/` and is therefore AGPL as code; the community catalog
+is data and is CC0. **Vendor and manufacturer contributions arrive in the CC0 catalog and never as
+source**, because CC0 imposes no conditions and so flows into AGPL freely, while the reverse would
+put a vendor's product data under copyleft, which is the friction the question exists to remove.
+Promotion from community to seed is legitimate and one-way.
+
+**11.188.9 PROVENANCE NEEDS NO RULING, AND THE MODEL ALREADY HOLDS THE LINE.** The user raised
+vendor provenance and then declined it themselves, on the ground that verification *"introduces a
+lot of potential network operations that I'd like to avoid"*. **Measured: `TemplateProvenance` is
+already a sealed class answering *"where a placeable template came from, as far as THIS build can
+tell"*, and `ProjectProvenance` already states the discipline in terms: the name says which SHELF
+and not which author.** A manufacturer library is therefore another shelf, `LibraryProvenance`
+carries its id and name, and the badge-versus-filter split (DR-033's handle-and-id split applied
+one level down) already handles two libraries claiming one name. **No network operation is
+required, because the trust is established on acquisition rather than at runtime**, and that limit
+is stated rather than papered over: a badge means a library file said so. Signed archives are the
+next rung if one is ever wanted, and verification of a signature is also local; the cost there is
+key distribution, which is administrative rather than technical.
+
+**Scope.** **No scope change.** Licensing is not roadmap §2 feature scope. This reverses one clause
+of DR-036 and adds a boundary the catalog already implied.
+
+**What this does not rule.** The licence text itself. Whether a hosted RackPal is ever built. The
+catalog's CC0 status, which stands under §11.35.3 untouched. Signed archives.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -22801,6 +22889,13 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **docs/08 §9**, the non-PDF export table | `DXF` is listed at *"~400 lines, new geometry mapping"*, value **low**, ships **not planned**. | **DXF ships in v1.3** (§11.187.4). The cost estimate is undisturbed and is in fact the reason the change is cheap: `DiagramCanvas` already has two production backends and this is a third. What moved is the VALUE, and it moved on trade knowledge the table did not have: an interchange file is what another trade x-refs into its own set, and the device location plan is the one sheet whose geometry is already in real-world units. **`DWG` is not what ships**, and is declined on a licence collision rather than on cost. |
+
+
+### 12.40 Superseded by DR-189 (the licence is AGPLv3-or-later)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-036 §11.35.1 clause 2** | *"The application code is GPLv3-or-later. All five packages and the app shell."* | **AGPLv3-or-later** (§11.188.1), settled by the user on 2026-09-23. The dependency census that admitted GPLv3 admits AGPLv3 unchanged (§11.188.3), and §11.35.4's output exception carries over in mechanism because AGPLv3 incorporates GPLv3 §7 (§11.188.5). **The other four clauses of §11.35.1 are untouched**, the CC0 catalog among them, which is what makes a vendor's contribution path unaffected by the change (§11.188.8). |
 
 
 ## 13. Resolved §10 questions
