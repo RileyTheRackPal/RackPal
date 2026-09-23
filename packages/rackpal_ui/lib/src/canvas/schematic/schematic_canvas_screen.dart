@@ -2087,6 +2087,55 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     return body == null ? null : Uuid(body.entityId);
   }
 
+  /// The selected symbols an arrow could move.
+  ///
+  /// A SYMBOL THE SHEET DRAWS, which is narrower than "selected": the
+  /// selection is shared with the rack and the inspector and can name a
+  /// device this sheet has no symbol for (a device with no ports, or one
+  /// the domain filter has taken away).
+  List<Uuid> _nudgeableSelection() => [
+    for (final id in _selection.ids)
+      if (_heldPositions.containsKey(id)) id,
+  ];
+
+  /// One grid unit in [direction], pinning what it moves (CR-068).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// ONE UNIT, AND THE UNIT IS THE ONE THE POSITION IS STORED IN
+  /// ═══════════════════════════════════════════════════════════════════
+  /// `Pt` is integer grid units (CR-001), so a nudge of one is the
+  /// smallest move the format can hold. Anything finer would round to
+  /// either nothing or the same thing, and a key that sometimes does
+  /// nothing is worse than one that always moves a little.
+  ///
+  /// **A RUN OF PRESSES IS ONE UNDO ENTRY**, through
+  /// `SetSymbolPinnedCommand`'s `mergeKey`. Five presses costing five
+  /// `Ctrl+Z` would make this worse than not having it.
+  void _nudgeSelection(AxisDirection direction) {
+    final ids = _nudgeableSelection();
+    if (ids.isEmpty) return;
+    final (dx, dy) = switch (direction) {
+      AxisDirection.left => (-1, 0),
+      AxisDirection.right => (1, 0),
+      AxisDirection.up => (0, -1),
+      AxisDirection.down => (0, 1),
+    };
+    widget.controller.run(
+      SetSymbolPinnedCommand.move(
+        positions: {
+          for (final id in ids)
+            id: Pt(_heldPositions[id]!.gx + dx, _heldPositions[id]!.gy + dy),
+        },
+        now: widget.controller.clock.nowUtc(),
+        actor: widget.controller.actor,
+      ),
+    );
+    final what = ids.length == 1
+        ? (_doc.devices[ids.single]?.designator ?? ids.single.v)
+        : '${ids.length} symbols';
+    _status.show('Nudged $what. Ctrl+Shift+U releases it to the layout.');
+  }
+
   /// `Ctrl+Shift+U` (DR-187 §11.186.9): give the selection back to the
   /// layout.
   ///
@@ -2316,6 +2365,30 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   void _movePinCaret(AxisDirection direction) {
     final scene = _scene;
     if (scene == null) return;
+    // ═══════════════════════════════════════════════════════════════════
+    // THE CARET WINS WHILE ONE EXISTS, AND THAT IS THE WHOLE
+    // DISCRIMINATOR (DR-187 §11.186.10, `#919`)
+    // ═══════════════════════════════════════════════════════════════════
+    // §11.186.4 gave the arrows a second job and said the canvas can tell
+    // the two modes apart. It can, but NOT by asking whether a connect is
+    // in flight, which is what the clause first said: the arrows are also
+    // how a pin is reached BEFORE anything is armed (docs/05 §7's "arrow
+    // to a candidate port"), so "no wire in flight" is true for half of
+    // the connect route itself.
+    //
+    // **A CARET ON SCREEN IS THE MODE.** Pins are what the person is
+    // working with, so the arrows stay theirs; `Esc` clears the caret and
+    // hands them back. With no caret and a symbol selected, they nudge.
+    // With no caret and nothing selected they fall through to the seeding
+    // below, because there is nothing to nudge and a key that does
+    // nothing is the silent no-op docs/04 §3.4 forbids.
+    //
+    // **THE ROUTE TO A CARET IS STILL ONE KEY**: `W` seeds and arms in one
+    // press and always did (see [_beginWire]), so nothing was taken away.
+    if (_pinCaret == null && _nudgeableSelection().isNotEmpty) {
+      _nudgeSelection(direction);
+      return;
+    }
     final seeded = _seedCaret(scene);
     if (seeded == null) {
       _status.show('This sheet draws no pin to put a caret on.');

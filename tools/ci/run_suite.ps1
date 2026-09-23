@@ -902,7 +902,13 @@ $SuiteFloors = @{
     # and two tests OLDER THAN THE RULING failed on it: deleting one
     # device then took two presses of Ctrl+Z. Canon §11.186.2.1 carries
     # the correction and the measurement.
-    'rackpal_core'   = 4884
+    # 4889 at `#919` (DR-187 §11.186.10): +5 for the nudge's merge. A
+    # RUN OF ARROW PRESSES IS ONE UNDO ENTRY, and a merged command is
+    # never applied before a possible revert, so everything the revert
+    # reads has to be carried across it. One of the five caught the
+    # sheet id NOT being carried: a redo of a coalesced run created the
+    # one schematic Sheet under an id nothing else resolved.
+    'rackpal_core'   = 4889
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1390,7 +1396,12 @@ $SuiteFloors = @{
     # its own private SelectionController, and the painted op count is
     # identical either side of a tap), so those cases assert it through
     # `Ctrl+L`, which reads the selection and writes to the document.
-    'rackpal_ui'     = 1988
+    # 1994 at `#919`: +6 for the arrow nudge. THE LOAD-BEARING ONE IS
+    # THE CONTROL FOR THE DISCRIMINATOR: with a caret on screen the
+    # arrows must move it and NOT the symbol, which is the whole of
+    # §11.186.10, and the case asserts both halves so a rule that
+    # nudged unconditionally would fail rather than pass quietly.
+    'rackpal_ui'     = 1994
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

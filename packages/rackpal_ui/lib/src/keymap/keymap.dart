@@ -1974,11 +1974,16 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     trigger: LogicalKeyboardKey.arrowUp,
     label: 'Caret up · nudge the selection up',
     intent: MovePinCaretIntent(AxisDirection.up),
-    source: 'docs/05 §7 · canon §11.11.6',
+    source: 'docs/05 §7 · canon §11.11.6 · DR-187 §11.186.10',
     note:
-        'Shared label with the rack caret row. Nothing is nudged on the '
-        'sheet — M2-F builds no symbol-move gesture (§11.11.7) — so the '
-        "label is the union of the two scopes, exactly as Esc's is.",
+        'BOTH HALVES ARE REAL NOW (`#919`). This row carried the union '
+        'label from the rack while the sheet nudged nothing, on the note '
+        'that M2-F built no symbol-move gesture; DR-187 built one. A '
+        'caret on screen takes the arrows and Esc hands them back; with '
+        'no caret and a symbol selected they nudge it one grid unit and '
+        'pin it (CR-068). A run of presses is ONE undo entry. `W` seeds '
+        'a caret and arms in one press, so the connect route keeps its '
+        'entry.',
   ),
   KeyBinding(
     id: KeyBindingId.pinCaretDown,
@@ -1993,9 +1998,12 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     id: KeyBindingId.pinCaretLeft,
     scope: KeyScope.schematic,
     trigger: LogicalKeyboardKey.arrowLeft,
-    label: 'Caret to the pin on the left',
+    label: 'Caret left · nudge the selection left',
     intent: MovePinCaretIntent(AxisDirection.left),
-    source: 'docs/05 §7',
+    source: 'docs/05 §7 · DR-187 §11.186.10',
+    note:
+        'See pinCaretUp. Relabelled at `#919`, which gave it the '
+        'second meaning the row now promises.',
   ),
   KeyBinding(
     id: KeyBindingId.pinCaretRight,
@@ -2009,7 +2017,16 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     // this pair when the builder's row was `Tab`.
     label: 'Caret right',
     intent: MovePinCaretIntent(AxisDirection.right),
-    source: 'docs/05 §7',
+    source: 'docs/05 §7 · DR-187 §11.186.10',
+    note:
+        'ON THE SCHEMATIC IT ALSO NUDGES (`#919`), one grid unit right. '
+        'THE LABEL CANNOT SAY SO, and meaningDrift is what settled that: '
+        'the pair above shares this chord with the builder, where a '
+        'nudge is simply false, and the gate refused the row the moment '
+        'it gained a schematic-only clause. A SHARED LABEL MAY STATE '
+        'ONLY WHAT IS TRUE IN EVERY SCOPE THAT SHARES THE CHORD; the '
+        'union belongs to the arrow rows that pair with the RACK, where '
+        'the nudge is real. See pinCaretLeft.',
   ),
   // #93's SELECTION HALF. `Shift` is the last modifier this canvas has
   // spare — `Ctrl` is docs/05 §14's magnet suppressor and `Alt` is

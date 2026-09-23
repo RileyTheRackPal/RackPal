@@ -353,4 +353,149 @@ void main() {
       expect(controller.undo.canUndo, isFalse);
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // THE ARROWS NUDGE (DR-187 §11.186.4 and §11.186.10, `#919`)
+  // ═══════════════════════════════════════════════════════════════════
+  // THE DISCRIMINATOR IS THE CARET AND NOT "A CONNECT IN FLIGHT", which
+  // is what the clause first said and which cannot work: the arrows are
+  // also how a pin is reached BEFORE anything is armed, so "no wire in
+  // flight" is true for half of the connect route itself. A caret on
+  // screen takes the arrows; `Esc` hands them back; `W` seeds a caret and
+  // arms in one press, so the connect route keeps its entry.
+  //
+  // `schematic_keyboard_connect_test.dart` owns the other side of this
+  // boundary and its `caretOnto` helper is what proves the route survived.
+  group('the arrows nudge when no caret has them (§11.186.10)', () {
+    Future<void> arrow(WidgetTester tester, LogicalKeyboardKey key) async {
+      await tester.sendKeyEvent(key);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('one press moves ONE grid unit and pins it (CR-068)', (
+      tester,
+    ) async {
+      await pump(tester);
+      final device = deviceNamed(doc, 'MTX-1');
+      final before = reference.positions[device.id]!;
+
+      await tester.tapAt(toScreen(tester, bodyCentre('MTX-1')));
+      await tester.pumpAndSettle();
+      await arrow(tester, LogicalKeyboardKey.arrowRight);
+
+      expect(stored()[device.id], Pt(before.gx + 1, before.gy));
+      expect(pinnedSymbolIds(doc), {device.id});
+      expect(controller.undo.undoLabelKey, LabelKey.moveSymbol.name);
+    });
+
+    testWidgets('each direction moves its own way, which a transposed sign '
+        'would not survive', (tester) async {
+      await pump(tester);
+      final device = deviceNamed(doc, 'MTX-1');
+      final before = reference.positions[device.id]!;
+
+      await tester.tapAt(toScreen(tester, bodyCentre('MTX-1')));
+      await tester.pumpAndSettle();
+      await arrow(tester, LogicalKeyboardKey.arrowDown);
+      await arrow(tester, LogicalKeyboardKey.arrowDown);
+      await arrow(tester, LogicalKeyboardKey.arrowLeft);
+
+      // Two down, one left. A fixture whose deltas were equal could not
+      // see a transposition, so they deliberately are not.
+      expect(stored()[device.id], Pt(before.gx - 1, before.gy + 2));
+    });
+
+    testWidgets('A RUN OF PRESSES IS ONE UNDO ENTRY, so five nudges do not '
+        'cost five Ctrl+Z', (tester) async {
+      await pump(tester);
+      final device = deviceNamed(doc, 'MTX-1');
+      final before = reference.positions[device.id]!;
+
+      await tester.tapAt(toScreen(tester, bodyCentre('MTX-1')));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 5; i++) {
+        await arrow(tester, LogicalKeyboardKey.arrowRight);
+      }
+      expect(stored()[device.id], Pt(before.gx + 5, before.gy));
+
+      controller.undoLast();
+      await tester.pumpAndSettle();
+
+      expect(
+        doc.sheets,
+        isEmpty,
+        reason: 'one undo, and the document is the one that existed before',
+      );
+      expect(controller.undo.canUndo, isFalse);
+    });
+
+    testWidgets('and the REDO of a merged run lands on the same bytes, which '
+        'is what carrying the ids across a merge buys', (tester) async {
+      await pump(tester);
+      final device = deviceNamed(doc, 'MTX-1');
+
+      await tester.tapAt(toScreen(tester, bodyCentre('MTX-1')));
+      await tester.pumpAndSettle();
+      for (var i = 0; i < 3; i++) {
+        await arrow(tester, LogicalKeyboardKey.arrowRight);
+      }
+      final itemIds = schematicSheetOf(doc)!.items.keys.toSet();
+      final where = stored()[device.id];
+
+      controller.undoLast();
+      await tester.pumpAndSettle();
+      controller.redoLast();
+      await tester.pumpAndSettle();
+
+      expect(schematicSheetOf(doc)!.items.keys.toSet(), itemIds);
+      expect(stored()[device.id], where);
+    });
+
+    testWidgets('A CARET TAKES THE ARROWS BACK, which is the discriminator '
+        'the whole clause rests on', (tester) async {
+      await pump(tester);
+      final device = deviceNamed(doc, 'MTX-1');
+
+      await tester.tapAt(toScreen(tester, bodyCentre('MTX-1')));
+      await tester.pumpAndSettle();
+      // `W` seeds a caret on the selection and arms from it in one press.
+      await arrow(tester, LogicalKeyboardKey.keyW);
+      final frozen = stored();
+
+      await arrow(tester, LogicalKeyboardKey.arrowDown);
+      await arrow(tester, LogicalKeyboardKey.arrowDown);
+
+      expect(
+        stored(),
+        frozen,
+        reason: 'with a caret on screen the arrows move it, not the symbol',
+      );
+      expect(
+        stored()[device.id],
+        isNull,
+        reason: 'the control: nothing was nudged at all',
+      );
+    });
+
+    testWidgets('with NOTHING selected the arrows still seed a caret, so the '
+        'key is never a silent no-op (docs/04 §3.4)', (tester) async {
+      await pump(tester);
+
+      // WHICH PIN IT SEEDS IS THE PRODUCT'S ANSWER, NOT THIS TEST'S:
+      // `_seedCaret` falls back to the sheet's first located pin when
+      // nothing is selected, so the citation is read off the same
+      // function the screen uses rather than typed out here.
+      final seeded = locatePins(reference).first.ref;
+      final owner = doc.devices[Uuid(seeded.deviceId)]!.designator;
+
+      await arrow(tester, LogicalKeyboardKey.arrowDown);
+
+      expect(doc.sheets, isEmpty, reason: 'nothing to nudge, nothing moved');
+      expect(
+        find.textContaining(owner),
+        findsWidgets,
+        reason: 'the caret announced itself, which is the old behaviour',
+      );
+    });
+  });
 }

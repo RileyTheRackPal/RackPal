@@ -385,4 +385,103 @@ void main() {
       expect(doc.sheets, isEmpty);
     });
   });
+
+  // A NUDGE IS A MOVE, AND A RUN OF THEM IS ONE ACT (DR-187 §11.186.10,
+  // `#919`). The write is this command's; what the named constructor adds
+  // is a label and a merge key, and the merge is the half that can corrupt
+  // an undo stack if the carried state is wrong.
+  group('a move coalesces where a pin does not', () {
+    SetSymbolPinnedCommand move(Uuid id, Pt to) => SetSymbolPinnedCommand.move(
+      positions: {id: to},
+      now: _now,
+      actor: 'test',
+    );
+
+    test('it names the MOVE and not the pin it also performs', () {
+      final doc = _doc();
+      final controller = DocumentController(doc)
+        ..run(move(_rail, const Pt(4, 4)));
+      expect(controller.undo.undoLabelKey, LabelKey.moveSymbol.name);
+      expect(pinnedSymbolIds(doc), {_rail});
+    });
+
+    test('A RUN OVER THE SAME SYMBOL IS ONE ENTRY, and one undo lands on '
+        'the document that existed before the run', () {
+      final doc = _doc();
+      final controller = DocumentController(doc, clock: FixedClock(_now))
+        ..run(move(_rail, const Pt(1, 0)))
+        ..run(move(_rail, const Pt(2, 0)))
+        ..run(move(_rail, const Pt(3, 0)));
+      expect(
+        schematicSheetOf(doc)!.items.values.single.position,
+        const Pt(3, 0),
+      );
+
+      controller.undoLast();
+
+      // NOT A BYTE COMPARISON. Every commit and every undo advances the
+      // document's own `sequence` (CR-094), which the pin group above
+      // already states in its own words, so a round trip through the
+      // stack is never byte-identical to nothing. The claim here is the
+      // SHEET and the entry count.
+      expect(doc.sheets, isEmpty, reason: 'the whole run came back off');
+      expect(controller.undo.canUndo, isFalse, reason: 'ONE entry, not three');
+    });
+
+    test('REDO AFTER A MERGE REUSES THE IDS, which is what carrying them '
+        'across the merge buys', () {
+      final doc = _doc();
+      final controller = DocumentController(doc, clock: FixedClock(_now))
+        ..run(move(_rail, const Pt(1, 0)))
+        ..run(move(_rail, const Pt(2, 0)));
+      final sheetId = schematicSheetOf(doc)!.id;
+      final itemId = schematicSheetOf(doc)!.items.keys.single;
+
+      controller
+        ..undoLast()
+        ..redoLast();
+
+      expect(schematicSheetOf(doc)!.id, sheetId);
+      expect(schematicSheetOf(doc)!.items.keys.single, itemId);
+      expect(
+        schematicSheetOf(doc)!.items.values.single.position,
+        const Pt(2, 0),
+      );
+    });
+
+    test('A DIFFERENT SYMBOL DOES NOT MERGE, so nudging one and then '
+        'another is two acts', () {
+      final doc = _doc();
+      DocumentController(doc, clock: FixedClock(_now))
+        ..run(move(_rail, const Pt(1, 0)))
+        ..run(move(_shelf, const Pt(9, 9)))
+        ..undoLast();
+
+      expect(
+        pinnedSymbolIds(doc),
+        {_rail},
+        reason: 'only the second act came off',
+      );
+    });
+
+    test('A PIN NEVER MERGES INTO A MOVE, because a decision and an '
+        'adjustment are not one act', () {
+      final doc = _doc();
+      final controller = DocumentController(doc, clock: FixedClock(_now))
+        ..run(move(_rail, const Pt(1, 0)))
+        ..run(
+          SetSymbolPinnedCommand(
+            positions: {_shelf: const Pt(2, 2)},
+            pinned: true,
+            now: _now,
+            actor: 'test',
+          ),
+        );
+      expect(controller.undo.undoLabelKey, LabelKey.pinSymbol.name);
+
+      controller.undoLast();
+
+      expect(controller.undo.undoLabelKey, LabelKey.moveSymbol.name);
+    });
+  });
 }

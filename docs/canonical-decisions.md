@@ -22019,6 +22019,36 @@ and is tested; what was missing is the chord docs/05 names. `Ctrl+L` remains the
 §11.185.3) and is not replaced: a toggle answers *"pin this"* and an explicit unpin answers
 *"give this back to the layout"*, which is the question somebody has after a drag.
 
+**11.186.10 CORRECTED: THE DISCRIMINATOR IS THE CARET, NOT *"A CONNECT IN FLIGHT"*.** §11.186.4 gave
+the arrows a second job on the words *"the arrows nudge when no connect is in flight"*, and building
+it found that reading cannot work. **The arrows are also how a pin is REACHED before anything is
+armed** (docs/05 §7's *"arrow to a candidate port"*, and `schematic_keyboard_connect_test.dart`'s
+route in its own name: *"arrows reach a pin, W arms it, Enter commits"*), so *"no wire in flight"* is
+true for half of the connect route itself. Sixteen tests said so on the first build.
+
+**Settled by the user on 2026-09-22 from four shapes: A CARET ON SCREEN IS THE MODE.** With a caret
+the arrows move it, exactly as before; `Esc` hands them back. With no caret and a symbol selected
+they nudge it one grid unit and pin it (CR-068). With no caret and nothing selected they seed a
+caret, which is the old behaviour and keeps the key from being the silent no-op docs/04 §3.4 forbids.
+**The route to a caret is still one key**: `W` seeds a caret and arms from it in a single press, and
+always did, so nothing was taken away. `Alt`+arrows was declined a second time for §11.186.4's
+reason, and the other three modifiers are spoken for on this canvas.
+
+**A RUN OF PRESSES IS ONE UNDO ENTRY**, through a `mergeKey` on the move keyed by the set of symbols.
+Five presses costing five `Ctrl+Z` would make the feature worse than not having it. A pin and an
+unpin never merge, which is not an oversight: those are decisions rather than adjustments, and two in
+a row are two things somebody meant.
+
+**THE RELABELLING §11.186.4 REQUIRED IS HALF WHAT IT SOUNDS LIKE, AND A GATE IS WHY.** The ↑/↓ rows
+already carried *"Caret up · nudge the selection up"*, a union shared with the RACK's caret rows,
+against a note saying the sheet nudged nothing; that note was false the moment this shipped and is
+replaced. **The ←/→ rows keep caret-only labels and carry the nudge in their notes**, because
+`Arrow Right` is shared with the Device Builder's `quickAddComplete` and `meaningDrift` refused the
+pair the instant that row gained a schematic-only clause. The gate was right: a keyboard-only user
+cannot see a scope boundary, so **a shared label may state only what is true in EVERY scope that
+shares the chord**, and a label promising a nudge that the builder does not perform is worse than a
+note somebody has to open.
+
 **What this does not rule.** Multi-select drag. The v1.1 route constraints, untouched.
 
 ---
