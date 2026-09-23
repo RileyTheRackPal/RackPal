@@ -308,6 +308,7 @@ export 'src/util/id_gen.dart';
 export 'src/util/outcome.dart';
 export 'src/validation/drc.dart';
 export 'src/validation/finding.dart';
+export 'src/validation/finding_locus.dart';
 export 'src/validation/findings_view.dart';
 export 'src/validation/rule_catalogue.dart';
 export 'src/validation/rule_exception.dart';

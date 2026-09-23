@@ -27,6 +27,7 @@ import 'package:rackpal_ui/src/canvas/rack_metrics_row.dart';
 import 'package:rackpal_ui/src/canvas/render_device_box.dart';
 import 'package:rackpal_ui/src/canvas/render_rack_canvas.dart';
 import 'package:rackpal_ui/src/canvas/resize_preview_controller.dart';
+import 'package:rackpal_ui/src/canvas/schematic/schematic_reveal.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/shake_animation.dart';
 import 'package:rackpal_ui/src/canvas/staging_bin_overlay.dart';
@@ -98,8 +99,20 @@ class RackCanvasScreen extends StatefulWidget {
     this.onEditTemplate,
     this.presets,
     this.onSaveAsPreset,
+    this.reveal,
     super.key,
   });
+
+  /// A device or rack to show, parked by the shell's `F8` (DR-193
+  /// §11.192).
+  ///
+  /// A PENDING REQUEST RATHER THAN A CALLBACK, for `RevealController`'s
+  /// own reason: this screen is a page of a `TabBarView` and may not be
+  /// built at the moment the key is pressed. A device switches the rack
+  /// on screen to its own before it is selected; a rack is switched to and
+  /// its settings opened. Null is legal and is what every widget test
+  /// that builds this screen alone supplies.
+  final RevealController? reveal;
 
   /// The palette's search field, LENT by `PaletteHost` (`#885`, DR-165
   /// §11.164.3).
@@ -775,10 +788,49 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     // selection event, so it has a sensible (if inactive) position from
     // the very first frame.
     _recomputeCaret();
+    // DR-193: a request parked before this page was built is taken on its
+    // first frame; one parked afterwards arrives through the listener.
+    widget.reveal?.addListener(_onRevealRequested);
+    if (widget.reveal?.pending != null) _onRevealRequested();
+  }
+
+  /// Takes a parked reveal and answers it after the frame, on
+  /// `SchematicCanvasScreen._onRevealRequested`'s reasoning, including its
+  /// `ensureVisualUpdate`: a callback queued with no frame pending waits
+  /// for somebody else's `setState`.
+  void _onRevealRequested() {
+    final id = widget.reveal?.take();
+    if (id == null) return;
+    WidgetsBinding.instance
+      ..addPostFrameCallback((_) {
+        if (mounted) _revealEntity(id);
+      })
+      ..ensureVisualUpdate();
+  }
+
+  /// Shows [id]: a rack by switching to it and opening its settings, a
+  /// device by switching to the rack it is in and selecting it.
+  void _revealEntity(Uuid id) {
+    if (_doc.racks.containsKey(id)) {
+      _switchRack(id, announce: false);
+      _showRackInspector();
+      _canvasFocus.requestFocus();
+      return;
+    }
+    final device = _doc.devices[id];
+    if (device == null) return;
+    final rackId = rackIdOfDevice(_doc, device);
+    if (rackId != null && rackId != _activeRackId) {
+      _switchRack(rackId, announce: false);
+    }
+    _revealFinding(id);
+    _canvasFocus.requestFocus();
+    setState(() {});
   }
 
   @override
   void dispose() {
+    widget.reveal?.removeListener(_onRevealRequested);
     _marquee.dispose();
     _viewport
       ..removeListener(_onViewportChanged)
@@ -4678,23 +4730,13 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
             () => !_textFieldHasFocus,
             () => unawaited(_showNewRackDialog()),
           ),
-          // F7 / F8 / Shift+F8, docs/04 §8. Bare function keys, so no
-          // text-field gate: they type nothing.
-          //
-          // F7 RE-RUNS AN EVALUATION THAT IS ALREADY CURRENT, because
-          // `_findings` recomputes on build. It is bound anyway: the key
-          // promises a re-check and performs one, and it becomes
-          // load-bearing the moment validation is cached. RULE 14 also
-          // requires the group to land complete.
-          RecheckIntent: CallbackAction<RecheckIntent>(
-            onInvoke: (_) => setState(() {}),
-          ),
-          NextIssueIntent: CallbackAction<NextIssueIntent>(
-            onInvoke: (_) => _stepIssue(1),
-          ),
-          PreviousIssueIntent: CallbackAction<PreviousIssueIntent>(
-            onInvoke: (_) => _stepIssue(-1),
-          ),
+          // F7 / F8 / Shift+F8 ARE NOT HANDLED HERE ANY MORE (DR-193
+          // §11.192). They were, and only here, so on four views of six
+          // the keys the keymap calls global did nothing. The shell handles
+          // them at the app root now, with ONE cursor over the findings,
+          // and reaches this screen through `reveal` when a finding is
+          // fixed on the Rack view. A handler kept here would win whenever
+          // this canvas had focus and walk a second cursor.
           // NOT a `CallbackAction`. See the class's own doc comment: a
           // CallbackAction returning null still reports the key as HANDLED,
           // which would swallow every `Enter` in the palette search box and
@@ -4851,42 +4893,6 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   bool _drcIncludeAcknowledged = true;
   bool _drcExpanded = false;
   double _drcHeight = kDrawerAutoHeight;
-
-  /// Where `F8` is in the issue list. Survives a rebuild, resets when the
-  /// list it indexes into changes shape.
-  int _issueCursor = -1;
-
-  /// Moves the selection to the next finding's locus, or the previous.
-  ///
-  /// ═══════════════════════════════════════════════════════════════════
-  /// ONLY FINDINGS WITH A DEVICE LOCUS, and the list is what makes this
-  /// honest rather than the stepping.
-  /// ═══════════════════════════════════════════════════════════════════
-  /// A finding about a circuit's total draw has a null locus, and one
-  /// about a rack or a net points at something this screen cannot
-  /// select. Stepping onto one would look like the key had failed. So
-  /// the cursor walks the findings this screen can actually show, and
-  /// `F8` on a document whose every finding is unlocatable does nothing
-  /// visible, which is true rather than broken.
-  ///
-  /// WRAPS, because a list you can fall off the end of makes the last
-  /// press feel like a bug. `evaluateDocument` is deterministic, so the
-  /// order is stable between presses.
-  void _stepIssue(int delta) {
-    final locatable = [
-      for (final f in _findings)
-        if (f.primaryEntityId case final id?)
-          if (_doc.devices.containsKey(id)) id,
-    ];
-    if (locatable.isEmpty) return;
-    // The list can shrink under the cursor when a fix removes a finding,
-    // so it is clamped on read rather than trusted from the last press.
-    final next = _issueCursor < 0
-        ? (delta > 0 ? 0 : locatable.length - 1)
-        : (_issueCursor + delta) % locatable.length;
-    _issueCursor = next < 0 ? next + locatable.length : next;
-    _revealFinding(locatable[_issueCursor]);
-  }
 
   /// Selects the entity a finding points at, so "reveal" means the same
   /// thing here as it does everywhere else in this screen.

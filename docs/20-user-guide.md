@@ -1053,12 +1053,24 @@ twenty minutes.
 - **Collapsed**, it reads `No issues`, or counts errors, warnings and
   advisories. It opens by itself the first time an error appears in a session,
   and you can drag it taller.
-- **Re-check** (`F7`) runs the checks again.
+- **Re-check** runs the checks again.
 - **Group by** Severity, Rule or Location. The severity chips filter the list;
   **Acknowledged** shows or hides what you have already dealt with.
-- **Click a finding** to select the device it is about. **`F8`** and
-  **`Shift+F8`** step through the findings that point at a device, selecting
-  each in turn.
+- **Click a finding** to select the device it is about.
+- **`F8`** and **`Shift+F8`** step through every finding, from any view, and
+  take you to the view where it can be fixed, with its subject selected:
+
+  | The finding is about | `F8` takes you to |
+  |---|---|
+  | A device in a rack, or a rack | **Rack**, switched to that rack |
+  | A device not in a rack, or a cable | **Schematic** |
+  | A floorplan | **Site**, with that plan open |
+  | Anything else (a net, a circuit) | **Rack**, where the drawer is |
+
+  A notice names the rule and where you are in the list (`LEN-001 (3 of
+  39)`). A cable whose rack end has not landed yet has no end on the sheet,
+  and the Schematic says so instead of selecting it.
+- **`F7`** re-checks from any view and says the counts.
 
 #### Deal with a finding
 
@@ -1093,7 +1105,7 @@ The handful that pay for themselves immediately:
 | `Ctrl+1` / `Ctrl+2` / `Ctrl+4` | Anywhere | Rack, Schematic, Schedule |
 | `Ctrl+Z` / `Ctrl+Y` | Anywhere | Undo, redo |
 | `Ctrl+S` / `Ctrl+Shift+S` | Anywhere | Save, Save As |
-| `F7` / `F8` / `Shift+F8` | Rack | Re-check, next issue, previous issue |
+| `F7` / `F8` / `Shift+F8` | Anywhere | Re-check, next issue, previous issue. `F8` goes to the view that can fix it |
 | `/` | Rack, Site | Jump to the palette search |
 | Arrow keys | Rack | Nudge the selection 1U, or move the caret |
 | `Ctrl+L` | Rack, Schematic | Lock a position, or pin a symbol |
@@ -1182,8 +1194,6 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
   carries one, and ranks in the length ladder (§20.5.7).
 - **A run's pathway is set when the run is entered** (`@pathway=`, or a CSV
   column), not afterwards in the table.
-- **The validation keys work on the Rack view only.** `F7`, `F8` and
-  `Shift+F8` do nothing on the other views, where the drawer is not shown.
 - **A device outside a rack has no room field.** Its place is its pin on the
   Site plan.
 

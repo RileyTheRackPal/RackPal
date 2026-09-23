@@ -11,7 +11,7 @@
 // the affordance exists to serve, and the bug would look like "the chip
 // sometimes does not work".
 //
-// So `SchematicRevealController` parks a REQUEST rather than firing an
+// So `RevealController` parks a REQUEST rather than firing an
 // event, and this screen drains it on its first frame as well as on
 // notification. `arriving after the request was made` is that case, and it
 // is the one a naive implementation fails.
@@ -27,7 +27,7 @@ import 'schematic_test_document.dart';
 void main() {
   late RackDocument doc;
   late DocumentController controller;
-  late SchematicRevealController reveal;
+  late RevealController reveal;
   late SchematicScene reference;
 
   setUp(() {
@@ -41,7 +41,7 @@ void main() {
       doc,
       clock: FixedClock(DateTime.utc(2026, 8, 2, 9)),
     );
-    reveal = SchematicRevealController();
+    reveal = RevealController();
     reference = buildFixtureScene(doc);
   });
 
@@ -251,9 +251,9 @@ void main() {
     });
   });
 
-  group('4 — SchematicRevealController', () {
+  group('4 — RevealController', () {
     test('take empties it; a second take gets null', () {
-      final c = SchematicRevealController();
+      final c = RevealController();
       expect(c.pending, isNull);
       c.reveal(const Uuid('a'));
       expect(c.pending, const Uuid('a'));
@@ -265,7 +265,7 @@ void main() {
     test('an unclaimed request is REPLACED, not queued', () {
       // Two clicks before the sheet builds mean the user wants the second
       // device, not a tour of both.
-      final c = SchematicRevealController()
+      final c = RevealController()
         ..reveal(const Uuid('a'))
         ..reveal(const Uuid('b'));
       expect(c.take(), const Uuid('b'));

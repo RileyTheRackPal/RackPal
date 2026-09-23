@@ -30,9 +30,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 
-/// Carries "show me this device on the sheet" from the elevation's chip to
-/// the schematic.
-final class SchematicRevealController extends ChangeNotifier {
+/// Carries "show me this" to a view that may not be built yet.
+///
+/// **NAMED `SchematicRevealController` UNTIL DR-193 §11.192**, when it
+/// was the elevation chip's route to the schematic and nothing else. `F8`
+/// now sends findings to the Rack and Site views as well, by the same
+/// pending-request shape and for the same reason (a `TabBarView` builds
+/// its pages lazily), so the class says what it does rather than who first
+/// needed it. The ids it carries are whatever the receiving view can show:
+/// a device or a cable on the sheet, a device or a rack on the elevation, a
+/// floorplan on the Site view.
+final class RevealController extends ChangeNotifier {
   Uuid? _pending;
 
   /// The device waiting to be revealed, or null. Read-only; [take] is how

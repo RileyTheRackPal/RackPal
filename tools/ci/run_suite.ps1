@@ -914,7 +914,10 @@ $SuiteFloors = @{
     # first mutation run (null is also what undo restores) until each
     # asserted its precondition; with the controller's hook removed, four
     # fail.
-    'rackpal_core'   = 4897
+    # 4902 at DR-193 (`#928`): +5 in validation/finding_locus_test.dart,
+    # one per row of the ruling's table plus the shelf, which is the row a
+    # table cannot show: a source on a shelf is in the rack its host is in.
+    'rackpal_core'   = 4902
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1566,7 +1569,11 @@ $SuiteFloors = @{
     # LICENSE is what the project GRANTS, and they must be byte-identical.
     # The copy is mandatory because Flutter asset paths cannot escape the
     # package directory, which a probe found rather than a review.
-    'rackpal_app'    = 1067
+    # 1071 at DR-193 (`#928`): +4 in session/validation_keys_test.dart,
+    # which press F7/F8/Shift+F8 through the real app over the Whole house
+    # starter. With `buildValidationActions` left out of `main`, all four
+    # fail; with the Rack view's reveal unwired, the rack-device case does.
+    'rackpal_app'    = 1071
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
