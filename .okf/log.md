@@ -1,5 +1,37 @@
 # Update Log
 
+## 2026-09-23 (sixty-second entry)
+
+* **Creation**: [DR-188](/decisions/dr-188-cad-lite-and-dxf-opens-v1-3.md). **RackPal is CAD-lite**,
+  settled by the user, whose reason is trade knowledge and is recorded in their words: a precise
+  drawing gets altered or ignored on site and documenting every change is unbelievably tedious, so
+  the precision trade-off is negligible to the workflow. **v1.3 is created as a release band**, the
+  first added since the roadmap was written, and a **DXF** export opens it.
+* **Creation**: [DR-189](/decisions/dr-189-agplv3-and-the-cc0-vendor-door.md). **The licence is
+  AGPLv3-or-later**, reversing DR-036's clause 2 and nothing else.
+* **Note**: **THE AGPL OBJECTION THE QUESTION REMEMBERED IS RECORDED NOWHERE.** Searched across the
+  tracked tree, `docs/`, `.okf/` and every commit message on every branch: zero hits for `AGPL` or
+  `Affero`. The likely memory is `pdf`'s Apache-2.0 closing GPLv2 (not v3), or §11.35.4's output
+  exception, which is a real problem solved by exactly the mechanism the question proposed.
+* **Note**: **THE PROJECT HAS NEVER BEEN LICENSED AT ALL.** There is no `LICENSE` file, and the
+  README called the licence *"TBD"* and *"under consideration"* for six weeks after DR-036 answered
+  it. §11.35.4 requires the output exception to be stated there *"because an exception nobody can
+  find is not one"*, so that clause has been undischarged since the day it was ruled. **The switch
+  costs nothing precisely because nothing was ever published.**
+* **Note**: **THE CORPUS ALREADY HAD BOTH HALVES OF THE VENDOR QUESTION.** The exception the user
+  wanted carved for a manufacturer catalog was already clause 3 of the ruling being amended (the
+  catalog is CC0 and never was under the code licence), and the provenance model they worried about
+  building shipped at M4-N: `TemplateProvenance` already answers *"where a template came from, as
+  far as THIS build can tell"* and already states that the name says **which shelf and not which
+  author**. Two features became two citations.
+* **Note**: **A FIELD WITH NO WRITER, FOR THE FOURTH TIME.** `Rack` declares the whole physical
+  envelope (`overallWidth`, `overallDepth`, `overallHeight`, both doors, both clearances) and five
+  of the six appear only in the model and the codec. The cabinetmaker deliverable is blocked on
+  somewhere to type the numbers, not on the schema the user expected to need.
+* **Note**: **DWG WAS DECLINED ON A LICENCE COLLISION, NOT ON COST.** The open writer is GPL-3.0 and
+  would serve; the commercial route is GPL-incompatible and would put the feature in conflict with
+  the project's own licence. The ~400 line DXF estimate was never what changed.
+
 ## 2026-09-22 (sixty-first entry)
 
 * **Progress**: `#914`, ruled as [DR-187](/decisions/dr-187-the-schematic-holds-its-layout.md).

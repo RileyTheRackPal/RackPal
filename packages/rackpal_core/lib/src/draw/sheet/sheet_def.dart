@@ -12,12 +12,21 @@
 // with its `index`/`total` already baked in, and a sheet builder can only
 // read them.
 //
-// SCOPE. This build emits exactly three sheet ROLES — front elevation, rear
-// elevation, equipment list. The other nine sheets in §2.2's table (T0.00
+// SCOPE. This build emits FOUR sheet ROLES: front elevation, rear elevation,
+// equipment list, and the device location plan.
+//
+// **THIS COMMENT SAID "exactly three" UNTIL 2026-09-23**, and had been wrong
+// since `PLAN-H/1` added [SheetRole.devicePlan] on 2026-09-09. A count
+// written in prose beside the enum it counts is this corpus's most-repeated
+// failure, and nothing connects adding a role to editing this sentence. The
+// enum is the list; read it rather than this line.
+//
+// The other eight sheets in §2.2's table (T0.00
 // cover, T0.01 legend, T0.02 exceptions, T6.01+ interconnect, T6.10 pull
 // sheet, T6.11 termination schedule, T6.20 unused home runs, T5.01 pinout
-// details) are M6 and most of them need `Link`s, which do not exist until
-// M2. They are absent from [SheetRole] rather than stubbed.
+// details) are M6. They are absent from [SheetRole] rather than stubbed,
+// which is what lets a user-facing document state what prints by naming
+// these four rather than by counting anything (docs/20 §20.7).
 
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/plan.dart';

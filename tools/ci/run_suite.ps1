@@ -1401,7 +1401,13 @@ $SuiteFloors = @{
     # arrows must move it and NOT the symbol, which is the whole of
     # §11.186.10, and the case asserts both halves so a rule that
     # nudged unconditionally would fail rather than pass quietly.
-    'rackpal_ui'     = 1994
+    # 1996 at docs/20 (the user guide): +2 for the SHIPPED keyboard
+    # reference, generated from `kKeymap` and gated against it. A
+    # hand-written key list is this corpus's second-copy failure aimed at
+    # somebody OUTSIDE the project: when a binding moves, the person
+    # holding the stale copy is a tester who concludes the software is
+    # broken, and nobody here finds out.
+    'rackpal_ui'     = 1996
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

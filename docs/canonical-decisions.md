@@ -22042,14 +22042,173 @@ a row are two things somebody meant.
 **THE RELABELLING §11.186.4 REQUIRED IS HALF WHAT IT SOUNDS LIKE, AND A GATE IS WHY.** The ↑/↓ rows
 already carried *"Caret up · nudge the selection up"*, a union shared with the RACK's caret rows,
 against a note saying the sheet nudged nothing; that note was false the moment this shipped and is
-replaced. **The ←/→ rows keep caret-only labels and carry the nudge in their notes**, because
-`Arrow Right` is shared with the Device Builder's `quickAddComplete` and `meaningDrift` refused the
-pair the instant that row gained a schematic-only clause. The gate was right: a keyboard-only user
+replaced. **`Arrow Right` ALONE keeps a caret-only label and carries the nudge in its note**, because it is
+shared with the Device Builder's `quickAddComplete` and `meaningDrift` refused the pair the instant
+that row gained a schematic-only clause. **THIS CLAUSE SAID `←/→` UNTIL 2026-09-23 AND THE CODE
+NEVER MATCHED IT**: `Arrow Left` is shared with nothing, carries the union label, and always did.
+The sweeping version was written because an edit script aborted between its two replacements and the
+result was not re-read, which is the same shape as every other stale count this corpus keeps
+finding. Three rows carry the union and one cannot. The gate was right: a keyboard-only user
 cannot see a scope boundary, so **a shared label may state only what is true in EVERY scope that
 shares the chord**, and a label promising a nudge that the builder does not perform is worse than a
 note somebody has to open.
 
 **What this does not rule.** Multi-select drag. The v1.1 route constraints, untouched.
+
+---
+
+### 11.187 DR-188 · RackPal is CAD-lite, and DXF interchange opens v1.3
+
+**The question.** From the user, 2026-09-23, on reading docs/20's claim that the product *"is not a
+CAD package"*: *"I think we're selling ourselves a bit short by not calling it a CAD package;
+Granted it is representative of reality rather than strictly adhering to it, so I think CAD-Lite is
+a reasonable (even if made up) term to call the product."*
+
+**11.187.1 RULED: THE PRODUCT IS CAD-LITE.** Settled by the user, whose reason is recorded in their
+own words because it is trade knowledge rather than a product opinion: *"It's also nearly impossible
+in this industry to draw precise technical drawings that won't get altered and/or ignored by the
+installers for one reason or another. TV's get shifted because of furniture, wiring gets re-routed
+or a box gets moved because an electrician took the space first, etc. It'd be unbelievably tedious
+to document all of those changes, so the trade-off in precision is negligeable to the workflow."*
+
+The precision is therefore spent where it survives contact with a site and withheld where it does
+not: **calibrated floorplans, exact elevations (RU is discrete and a device fits or it does not),
+and cable footage**; representative everywhere else, which is symbol positions, routing paths and
+plan pin placement.
+
+**11.187.2 THE DESCRIPTION THIS REPLACES WAS THE AUTHOR'S AND WAS NEVER MEASURED.** docs/20 §20.1
+said *"it is not a CAD package"*, written to manage a tester's expectations downward and checked
+against nothing. It undersold a tool that calibrates plans to real-world scale, draws exact
+elevations and resolves cable footage through four ranked sources. Recorded because this ruling
+family has now produced four clauses that were the author's sentences rather than the user's
+choices, and three of them were refuted by their own build.
+
+**11.187.3 RULED: v1.3 IS CREATED AS A RELEASE BAND, AND DXF INTERCHANGE OPENS IT.** A §8.3
+amendment, and the first band added since the roadmap was written. roadmap §2 carried four bands
+(v1, v1.1, v1.2, v2) and the board's Sagas mirror them; **v1.3 did not exist and is created here**,
+between v1.2 and v2, because §2.4 rules v2 to be *"the next product decision, not the next
+release"* and an interchange export is neither a fast follow nor a new product.
+
+**11.187.4 RULED: DXF, NOT DWG.** Settled by the user from three shapes. DXF is Autodesk's
+documented interchange format and every CAD tool opens it; docs/08 §9 estimates it at ~400 lines of
+new geometry mapping, which is plausible because `DiagramCanvas` is an abstract interface with two
+production backends already (`bounds_canvas`, `pdf_canvas`) and this is a third, exactly as CR-086
+intends. **Native DWG was declined on a licence collision rather than on cost**: the open writer is
+GPL-3.0, which the licence ruling accommodates, but the commercial route (Open Design Alliance) is
+a paid membership and is GPL-incompatible, so native DWG would put the feature in conflict with
+this project's own licence. **This overrules docs/08 §9's `not planned`** (§12.39).
+
+**11.187.5 RULED: THE DEVICE LOCATION PLAN IS IN. RACK ELEVATIONS ARE NOT YET RULED, AND THE
+BLOCKER IS NOT WHAT IT LOOKED LIKE.** The plan is the drawing another trade actually wants and the
+only sheet whose geometry is already in real-world units. The user raised elevations as *"a
+maybe"*, for a reason recorded in their terms: *"We've encountered situations too many times where
+a cabinet was too small for a pull-out rack, or a closet was shaved down to make space for a mini
+bar and the rack no longer fit."*
+
+They expected this to need *"a future schema of the rack templates"* carrying physical dimensions.
+**MEASURED: that schema exists.** `Rack` declares `overallWidth`, `overallDepth`, `overallHeight`,
+`ownWeight`, `hasFrontDoor`, `hasRearDoor`, `frontDoorClearance` and `rearDoorClearance`, and they
+serialize. **Five of the six appear only in `rack.dart` and `json_codec.dart`: no writer, no
+reader.** Only `ownWeight` is read, by the rack inspector. So the cabinetmaker deliverable is
+blocked on somewhere to type the numbers, not on a model change, and that is a smaller and
+independently useful piece of work than the export it gates. **This is the fourth instance of the
+`Placement.locked` shape** (§11.185.0): a field with no writer is a rule nobody is following.
+
+**11.187.6 Scope.** **A scope change**, per §8.3, carried in its own commit. Creates roadmap §2.4
+for v1.3 and renumbers §2.4 to §2.7.
+
+**What this does not rule.** Whether rack elevations join the DXF export, which waits on
+§11.187.5's writer. Whether the product should CHECK a rack against a room's dimensions rather than
+only draw it, which is the thing that would have caught the shaved closet before anybody built it.
+DWG, permanently or otherwise. What layer names, units and block structure the DXF uses.
+
+---
+
+### 11.188 DR-189 · The licence is AGPLv3-or-later, and a vendor's door is the CC0 catalog
+
+**The question.** From the user, 2026-09-23: *"I want to switch the intended license to be AGPLv3; I
+remember there being a reason that this ended up being a potential problem, but APGLv3 allows for
+exceptions to be carved for specific use cases, which I feel we can use to work around those
+problems."*
+
+**11.188.1 RULED: THE APPLICATION CODE IS AGPLv3-OR-LATER.** Settled by the user. **This reverses
+DR-036 §11.35.1 clause 2** (§12.40). Every other clause of DR-036 stands unchanged: the project is
+public, the community catalog is CC0, contributions arrive under a DCO sign-off, and nothing is
+priced.
+
+**11.188.2 THE OBJECTION THE QUESTION REMEMBERS IS NOT RECORDED, AND WAS SEARCHED FOR RATHER THAN
+ASSUMED.** `AGPL` and `Affero` appear nowhere in the tracked tree, in `docs/`, in `.okf/`, or in any
+commit message on any branch. **Two recorded facts are adjacent and are the likely memory**: `pdf`
+being Apache-2.0 closes **GPLv2** permanently and not v3 (§11.35.2), and §11.35.4's **output
+exception**, which is a real problem solved by exactly the mechanism the question proposes. No
+AGPL-specific objection was ever raised in this project, so none is overruled here.
+
+**11.188.3 THE DEPENDENCY CENSUS STILL HOLDS AND NEEDS NO RE-RUN.** §11.35.2 measured the tree at
+`pdf` 3.13.0: one Apache-2.0, four MIT, the rest BSD-3-Clause, zero copyleft. **Apache-2.0 is
+one-way compatible into AGPLv3 on the same terms that admitted it to GPLv3**, so the tree is clean
+for this licence exactly as it was for the last one.
+
+**11.188.4 WHAT AGPL CHANGES TODAY IS NOTHING, AND THAT IS THE POINT.** AGPLv3 §13 obliges offering
+source to users who interact with the program **over a network**. RackPal is a Windows desktop
+application with no server, no accounts and no telemetry, so §13 is currently inert. **The value is
+prospective**: it forecloses a hosted RackPal built on this code without released modifications,
+in advance of anyone wanting one. A licence chosen after that becomes attractive is chosen too
+late.
+
+**11.188.5 THE OUTPUT EXCEPTION CARRIES OVER UNCHANGED IN MECHANISM, AND IS STILL UNWRITTEN.**
+AGPLv3 incorporates GPLv3 §7's additional permissions, so §11.35.4's exception grants identically:
+a document produced by RackPal is the user's own work and is not a derivative of RackPal, embedded
+template snapshots and exported sheets included. **MEASURED: this repository contains no `LICENSE`
+file, and README line 168 still calls the licence TBD and *"under consideration"*.** §11.35.4
+requires the exception to be *"stated in `LICENSE` and in the README, not inferred, because an
+exception nobody can find is not one"*, so that clause has been undischarged since 2026-08-10. **The
+outstanding work is not this switch. It is that the project has never been licensed at all.**
+
+**11.188.6 THE EXCEPTION TEXT IS NOT DRAFTED HERE AND NOT BY THIS AUTHOR.** §11.35.4's own
+precedent is the GCC Runtime Library Exception, drafted by the FSF's counsel. An additional
+permission that does not say what its author believes is worse than none, and this is the one
+deliverable in the project where approximately right is not a category that exists. **Ruled: the
+`LICENSE` file and its exception go to a qualified reviewer before any public push**, and M8's
+AC-058/D7 licence deliverable is where that lands.
+
+**11.188.7 THE COST, STATED RATHER THAN DISCOVERED.** AGPL is prohibited outright by some
+organisations' open-source policies. For an integrator's laptop this is very unlikely to bite; **it
+bites if a manufacturer or distributor ever wants to contribute code or embed the product**, which
+is a narrower door than GPLv3 leaves open. Recorded so the trade is visible rather than found
+later.
+
+**11.188.8 RULED: A VENDOR'S DOOR IS THE CC0 CATALOG, AND THE SEED BOUNDARY IS A LICENCE
+BOUNDARY.** The user asked whether the planned community template repository needs an exception
+carved from AGPL, and offered *"this may be as simple as just making the device template repository
+CC0"*, wanting manufacturer maintenance to be *"frictionless"*.
+
+**It needs no exception, and §11.35.1 clause 3 is why**: the catalog is already CC0 and was never
+under the code licence, for §11.35.3's reason, which is this question's own concern reaching one
+step further than it expected. **What this clause adds is the boundary.** The seeded catalog is
+Dart source in `rackpal_core/lib/src/catalog/` and is therefore AGPL as code; the community catalog
+is data and is CC0. **Vendor and manufacturer contributions arrive in the CC0 catalog and never as
+source**, because CC0 imposes no conditions and so flows into AGPL freely, while the reverse would
+put a vendor's product data under copyleft, which is the friction the question exists to remove.
+Promotion from community to seed is legitimate and one-way.
+
+**11.188.9 PROVENANCE NEEDS NO RULING, AND THE MODEL ALREADY HOLDS THE LINE.** The user raised
+vendor provenance and then declined it themselves, on the ground that verification *"introduces a
+lot of potential network operations that I'd like to avoid"*. **Measured: `TemplateProvenance` is
+already a sealed class answering *"where a placeable template came from, as far as THIS build can
+tell"*, and `ProjectProvenance` already states the discipline in terms: the name says which SHELF
+and not which author.** A manufacturer library is therefore another shelf, `LibraryProvenance`
+carries its id and name, and the badge-versus-filter split (DR-033's handle-and-id split applied
+one level down) already handles two libraries claiming one name. **No network operation is
+required, because the trust is established on acquisition rather than at runtime**, and that limit
+is stated rather than papered over: a badge means a library file said so. Signed archives are the
+next rung if one is ever wanted, and verification of a signature is also local; the cost there is
+key distribution, which is administrative rather than technical.
+
+**Scope.** **No scope change.** Licensing is not roadmap §2 feature scope. This reverses one clause
+of DR-036 and adds a boundary the catalog already implied.
+
+**What this does not rule.** The licence text itself. Whether a hosted RackPal is ever built. The
+catalog's CC0 status, which stands under §11.35.3 untouched. Signed archives.
 
 ---
 
@@ -22723,6 +22882,20 @@ nothing but locations deleted. A plan that loses its floor is still a plan.
 **NOT superseded:** §11.11.4's own subject, that creating a link does not re-lay-out the sheet. That
 rule stands and its `holdAt` mechanism stays; what changes is that the sheet now also holds across a
 close and a reopen.
+
+
+### 12.39 Superseded by DR-188 (DXF interchange opens v1.3)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **docs/08 §9**, the non-PDF export table | `DXF` is listed at *"~400 lines, new geometry mapping"*, value **low**, ships **not planned**. | **DXF ships in v1.3** (§11.187.4). The cost estimate is undisturbed and is in fact the reason the change is cheap: `DiagramCanvas` already has two production backends and this is a third. What moved is the VALUE, and it moved on trade knowledge the table did not have: an interchange file is what another trade x-refs into its own set, and the device location plan is the one sheet whose geometry is already in real-world units. **`DWG` is not what ships**, and is declined on a licence collision rather than on cost. |
+
+
+### 12.40 Superseded by DR-189 (the licence is AGPLv3-or-later)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-036 §11.35.1 clause 2** | *"The application code is GPLv3-or-later. All five packages and the app shell."* | **AGPLv3-or-later** (§11.188.1), settled by the user on 2026-09-23. The dependency census that admitted GPLv3 admits AGPLv3 unchanged (§11.188.3), and §11.35.4's output exception carries over in mechanism because AGPLv3 incorporates GPLv3 §7 (§11.188.5). **The other four clauses of §11.35.1 are untouched**, the CC0 catalog among them, which is what makes a vendor's contribution path unaffected by the change (§11.188.8). |
 
 
 ## 13. Resolved §10 questions

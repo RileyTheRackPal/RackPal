@@ -1176,7 +1176,15 @@ Document metadata is set (`title`, `author`, `creator`, `subject`, `keywords`) s
 | PNG: one sheet | ~40 lines with a size cap | medium | v1.1 |
 | JSON netlist | trivial; it is the model | medium | v1.1 |
 | XLSX | one dependency, ~200 lines | medium | on demand |
-| DXF | ~400 lines, new geometry mapping | low | not planned |
+| DXF | ~400 lines, new geometry mapping | **high** | **v1.3** (DR-188 §11.187.4) |
+| DWG | a licence collision, not a line count | n/a | **declined**: the open writer is GPL-3.0 and would serve, the commercial route is GPL-incompatible (DR-188 §11.187.4) |
+
+**The DXF row moved from `low` / `not planned` at DR-188 §11.187.4, and the COST estimate was not
+what changed.** ~400 lines still looks right, because `DiagramCanvas` is an abstract interface with
+two production backends already and this is a third. What moved is the **value**, on trade knowledge
+this table did not have when it was written: an interchange file is what another trade x-refs into
+its own set, and the Device Location Plan is the one sheet whose geometry is already in real-world
+units. §12.39 carries the supersession.
 
 ### 9.1 CSV
 
