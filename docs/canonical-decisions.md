@@ -21988,8 +21988,38 @@ separated from `All`/`None`, it is DISABLED when nothing would re-flow, and it a
 count, per docs/05 §10's *"behind a plain confirm"*. A move to the context menu is then a move and
 not a redesign, because the count and the confirm travel with it.
 
-**What this does not rule.** Multi-select drag. `Ctrl+Shift+U`, docs/05 §10's unpin, which has no
-command yet. The v1.1 route constraints, untouched.
+**11.186.8 RULED: A DRAG SHOWS A GHOST OUTLINE, AND THE SHEET LANDS ON RELEASE.** Settled by the
+user on 2026-09-22 over three preview shapes, **priced first**. One frame is 16.7 ms. Measured on
+`schematic_perf_test.dart`'s two fixtures, best of five:
+
+| Path | 300 links, 110 devices | 3,600 links, 1,320 devices |
+|---|---|---|
+| Wires re-routed, symbol tier reused | 0.72 ms | **8.8 ms** |
+| Layout reused, wires re-routed | — | **36.3 ms** |
+| Cold scene build | 7.7 ms | **76.9 ms** |
+
+**Live re-routing is affordable on a house and not on a campus**, and a twelve-pod job is exactly
+the sheet somebody needs to drag symbols around on, so the expensive case is the one that matters.
+A dashed rectangle follows the cursor, the symbol and its cables do not move, and the whole sheet
+lands at once on release. It costs one overlay op per frame at any size, which is the same budget
+CR-102's marquee band already runs on.
+
+**WHAT THIS COSTS IS STATED RATHER THAN GLOSSED**: the wires are not seen until the drop, so a
+symbol dropped into a tangle looks fine until it is released. One `Ctrl+Z` is the way out, and the
+alternative was a preview that stutters on the sheets most in need of tidying.
+
+**11.186.9 RULED: `Ctrl+Shift+U` UNPINS, AND IT SHIPS WITH THE DRAG.** Settled by the user, moving
+this out of §11.186.6's not-ruled list rather than amending roadmap §2: docs/05 §10 already rules
+*"any manual move pins; `Ctrl+Shift+U` unpins"*, so this is existing scope changing chapters and not
+new scope. **The reason it cannot wait is that the drag creates the need.** Every symbol a person
+ever nudges is pinned from then on, and `Tidy sheet` spares a pinned symbol by design (§11.186.3,
+CR-068), so without an unpin the act of tidying a sheet by hand is what permanently removes it from
+the reach of `Tidy sheet`. The command is the unpin half of `SetSymbolPinnedCommand`, which exists
+and is tested; what was missing is the chord docs/05 names. `Ctrl+L` remains the toggle (DR-186
+§11.185.3) and is not replaced: a toggle answers *"pin this"* and an explicit unpin answers
+*"give this back to the layout"*, which is the question somebody has after a drag.
+
+**What this does not rule.** Multi-select drag. The v1.1 route constraints, untouched.
 
 ---
 
