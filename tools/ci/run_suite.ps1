@@ -1407,7 +1407,12 @@ $SuiteFloors = @{
     # somebody OUTSIDE the project: when a binding moves, the person
     # holding the stale copy is a tester who concludes the software is
     # broken, and nobody here finds out.
-    'rackpal_ui'     = 1996
+    # 2001 at DR-190 (`#925`): +5 in builder_close_prompt_test.dart, one
+    # per answer to the close prompt plus the clean close that must not
+    # ask. The one that matters is Save on a draft AC-049 refuses: it must
+    # stay open, because closing after a failed save is the silent discard
+    # the ruling exists to stop.
+    'rackpal_ui'     = 2001
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

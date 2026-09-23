@@ -494,8 +494,10 @@ The builder's sections:
 counted as unknown in every rollup; a made-up figure is worse than a blank one.
 
 The footer has **Save**, **Save & Close** (back to the browser) and **Close**.
-**Close leaves without saving, and does not ask.** The builder has its own
-undo and redo, in the footer and on `Ctrl+Z`, for as long as it is open.
+**Close asks first when there are unsaved changes**: Save, Don't Save or
+Cancel, the same question RackPal asks when you close a project. The builder
+has its own undo and redo, in the footer and on `Ctrl+Z`, for as long as it
+is open.
 
 #### Add ports
 
@@ -1181,8 +1183,6 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 
 ### Known rough edges
 
-- **Close in the Device Builder discards an unsaved draft without asking.** Use
-  **Save & Close** unless you mean to throw the draft away.
 - **A device that is not there can still be "deleted".** Removing a device that
   does not exist creates an undo entry for a document that did not change. It
   is harmless and it is being fixed.

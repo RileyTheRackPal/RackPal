@@ -1472,14 +1472,13 @@ final class AppShellState extends State<AppShell>
       // before `#243` door 2 left the tab pinned to one template for the
       // rest of the session, because there was nowhere else for it to go.
       //
-      // **THERE IS NO DISCARD-AND-RETURN ROUTE YET, AND THAT IS A GAP
-      // RATHER THAN A DECISION.** Going back with a dirty draft is
-      // exactly the case DR-091 §11.90.6 protects with `wantKeepAlive`:
-      // the builder holds an edit SESSION, not a view, so swapping it
-      // for the browser destroys the copy that makes closing without
-      // saving a complete undo. It needs the refusal
-      // `_openTemplateForEditing` already spells, and it is filed rather
-      // than improvised here.
+      // **`Close` ALSO LANDS HERE, AND IT ASKS FIRST** (DR-190 §11.189).
+      // This paragraph used to say there was no discard-and-return route;
+      // `Close` was one, and it destroyed a dirty draft without a word,
+      // because the builder holds an edit SESSION, not a view, and this
+      // callback unmounts it. The builder now shows the project's own
+      // Save / Don't Save / Cancel prompt before calling this, so reaching
+      // this line means the person saved or chose to discard.
       onDone: () => setState(() {
         _editingTemplateId = null;
         _authoringNew = false;
