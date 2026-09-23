@@ -12714,9 +12714,70 @@ is up and a bare `find.text` would tap whichever the tree reached first and pass
 
 **Floor**: `rackpal_ui` 1972 to 1978, measured.
 
+##### 5.9.68.5 The drag, and four defects its own tests found
+
+**The preview was priced before it was offered**, which is the only reason the choice put to the user
+was a real one. One frame is 16.7 ms; `schematic_perf_test.dart`, best of five:
+
+| Path | 300 links, 110 devices | 3,600 links, 1,320 devices |
+|---|---|---|
+| Wires re-routed, symbol tier reused | 0.72 ms | **8.8 ms** |
+| Layout reused, wires re-routed | — | **36.3 ms** |
+| Cold scene build | 7.7 ms | **76.9 ms** |
+
+Live re-routing is affordable on a house and not on a campus, and a campus sheet is exactly the one
+somebody needs to drag symbols around on. A dashed ghost costs one rectangle per frame at any size.
+**What it costs is that the wires are not seen until the drop**, which §11.186.8 states rather than
+leaves to be discovered.
+
+**THE GESTURE IS THE FOURTH BRANCH OF ONE PRESS**, asked last: a pin sits ON a symbol and a pennant
+beside one, so either answering first keeps the gesture it already had. It shares the canvas claim
+rather than taking a third `_PointerGesture`, because a drag and a marquee are the two halves of one
+branch and the loser never starts.
+
+**Four defects, each found by a test rather than by review**, and each one a thing a person would
+have met:
+
+| What was wrong | How it would have shown |
+|---|---|
+| The grab point read `_lastScenePointer`, fed by `onHover` | A touch never hovers, so the drag worked on a mouse and refused **silently** on a touchscreen |
+| The ghost armed at the press | A dashed outline flashed over the symbol on **every selection click**, which the handler's own comment argues against |
+| The press selected | A press whose canvas is unmounted under it is CANCELLED, so the selection outlived a gesture the product says did not happen. Caught by case 2c, older than this chapter, on `F` drawing four wires for a device nothing had picked |
+| The cancel ran `setState` inside `finalizeTree` | *"Cannot be marked as needing to build because the framework is locked"*, on the same unmount path |
+
+The third is the one worth keeping: **a press is not yet a gesture.** The drop selects now.
+
+##### 5.9.68.6 `Ctrl+Shift+U`, and why it could not wait
+
+docs/05 §10 has ruled *"any manual move pins; `Ctrl+Shift+U` unpins"* since M2 and only the first
+half was ever built. §11.186.6 listed the chord under what DR-187 does not rule; §11.186.9 moves it
+into the chapter, which is existing scope changing chapters rather than a §8.3 amendment.
+
+**THE DRAG IS WHAT CREATES THE NEED.** Every symbol a person ever nudges is pinned from then on, and
+`Tidy sheet` spares a pinned symbol by design (§11.186.3, CR-068). Without an unpin, **the act of
+arranging a sheet by hand is what removes it from the reach of the one command that can lay it out
+again**, which is a trap a person falls into by doing exactly what the feature invites. `Ctrl+L`
+stays as the toggle and is not replaced: a toggle answers *"pin this"* and an explicit unpin answers
+*"give this back to the layout"*.
+
+**Evidence.** Ten cases. **Two of the ten guard the gesture this one steals from**, because selecting
+is by far the commonest thing anybody does to a symbol and a gesture that gained a move and lost a
+click would be a bad trade nobody asked for; a third holds the boundary with the band on empty paper.
+
+**WHAT IS NOT ASSERTED, SAID OUT LOUD**: the selection itself. `SchematicCanvasScreen` builds its own
+private `SelectionController` and the painted op count is identical either side of a tap on a symbol
+(831 both ways, measured in `schematic_marquee_test.dart`'s header). Those cases therefore assert the
+selection through `Ctrl+L`, which reads it and writes to the document. The cost is that such a case
+could fail for the chord instead of the selection, and `schematic_pin_selection_test.dart` is what
+separates those. **This file re-learnt that the hard way**, on two red tests asserting
+`controller.selection`, which on this screen is always empty.
+
+**Keymap**: schematic 26 to 27, total 78 to 79. **Floor**: `rackpal_ui` 1978 to 1988, measured.
+
 **Commits** (§8.8): the ruling `1864a8c0`, SG-1 and SG-3 `a414bc73`, the `addConsequence` mechanism
 `a4719d4d`, the two commands `5e06d115`, the screen `a9e5f8c2`, the correction `f810d78c`, SG-6
-`df86e875`. SG-4 and SG-5 are open.
+`df86e875`, the drag's ruling `7d5e9114`, its command `546e2eda`, the gesture `58c13b14`. SG-5 is
+open.
 
 ---
 

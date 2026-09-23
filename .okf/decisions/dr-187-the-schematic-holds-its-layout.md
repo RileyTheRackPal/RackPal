@@ -65,6 +65,27 @@ the time an epoch bumps the entry is sealed and the only way in is a second one.
 [record-the-choice-not-a-reason-they-did-not-give](/practices/record-the-choice-not-a-manufactured-reason.md)
 already records once: a manufactured reason gets reasoned from.
 
+
+# The drag, priced before it was offered
+
+One frame is 16.7 ms. Measured on `schematic_perf_test.dart`, best of five:
+
+| Path | 300 links | 3,600 links |
+|---|---|---|
+| Wires re-routed, symbol tier reused | 0.72 ms | **8.8 ms** |
+| Layout reused, wires re-routed | — | **36.3 ms** |
+| Cold scene build | 7.7 ms | **76.9 ms** |
+
+Live re-routing is affordable on a house and not on a campus, **and a campus sheet is exactly the
+one somebody needs to drag symbols around on**, so the expensive case decided it. A dashed ghost
+follows the cursor and the sheet lands on release, at one rectangle per frame at any size. The cost
+is that the wires are not seen until the drop, and one `Ctrl+Z` is the way out.
+
+**`Ctrl+Shift+U` ships with the drag** and not later. A drag pins (CR-068) and `Tidy sheet` spares a
+pinned symbol, so without an unpin the act of arranging a sheet by hand is what puts it beyond the
+reach of the command that lays it out again. That is a trap somebody falls into by doing exactly
+what the feature invites.
+
 # What this does not rule
 
 `Tidy sheet`'s host, which is settled when it is built: the schematic's only chrome is its domain

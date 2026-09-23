@@ -8,6 +8,17 @@
   new symbol takes a free slot instead of landing on one. **No version move**: `#914` closes under
   `#786`. SG-4 (drag pins), SG-5 (arrow nudge) and SG-6 (`Tidy sheet`'s host, a question for the
   user) are open.
+* **Closed**: `#918`, SG-4. **A symbol drags behind a dashed ghost and the drag pins it** (CR-068),
+  and **`Ctrl+Shift+U` ships with it** (§11.186.9) because the drag is what creates the need: a
+  pinned symbol is spared by `Tidy sheet`, so arranging a sheet by hand would otherwise put it
+  beyond the reach of the command that lays it out again.
+* **Note**: **THE PREVIEW WAS PRICED BEFORE IT WAS OFFERED.** One frame is 16.7 ms; live re-routing
+  is 0.72 ms on a 300-link house and 8.8 to 36.3 ms on a twelve-pod job. **The expensive case is the
+  sheet most in need of dragging**, so the ghost won. A choice offered without the numbers would
+  have been a choice between two words.
+* **Creation**: [A press is not a gesture](/practices/a-press-is-not-a-gesture.md). Selecting at the
+  press is the conventional shape and it leaked past a CANCEL, which a test older than the chapter
+  caught. Three of the drag's four defects were press/cancel boundary errors.
 * **Closed**: `#920`, SG-6. **`Tidy sheet` sits on the domain filter bar**, settled by the user over
   the two hosts the ruling left open, and moves to docs/05's context menu when `#918`'s drag gives
   that menu its other reasons to exist (§11.186.7). It is the only document edit on a strip of view
