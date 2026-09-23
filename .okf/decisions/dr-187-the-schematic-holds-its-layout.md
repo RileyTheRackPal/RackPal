@@ -86,6 +86,26 @@ pinned symbol, so without an unpin the act of arranging a sheet by hand is what 
 reach of the command that lays it out again. That is a trap somebody falls into by doing exactly
 what the feature invites.
 
+
+# The nudge, and the clause its own build refuted
+
+§11.186.4 said the arrows nudge *"when no connect is in flight"*. **The arrows are also how a pin is
+REACHED before anything is armed**, so that condition is true for half of the connect route itself,
+and sixteen tests said so on the first build.
+
+**§11.186.10: a caret on screen is the mode.** With one, the arrows move it and `Esc` hands them
+back; with no caret and a symbol selected they nudge it; with no caret and nothing selected they seed
+one, which is the old behaviour. `W` seeds a caret and arms in a single press, so the connect route
+kept its entry.
+
+**A run of presses is one undo entry**, through a `mergeKey` on the set of symbols. A pin and an
+unpin never merge, because those are decisions rather than adjustments.
+
+**And a gate corrected the relabelling.** ↑/↓ carry a union label shared with the rack, where the
+nudge is real; ←/→ cannot, because `Arrow Right` is shared with the builder and `meaningDrift`
+refused the pair. **A shared label may state only what is true in every scope that shares the
+chord**, so those two carry the nudge in a note instead.
+
 # What this does not rule
 
 `Tidy sheet`'s host, which is settled when it is built: the schematic's only chrome is its domain

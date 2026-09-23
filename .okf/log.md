@@ -8,6 +8,18 @@
   new symbol takes a free slot instead of landing on one. **No version move**: `#914` closes under
   `#786`. SG-4 (drag pins), SG-5 (arrow nudge) and SG-6 (`Tidy sheet`'s host, a question for the
   user) are open.
+* **Closed**: `#919`, SG-5, and with it **`#914` is complete**: all six chapters are closed. The
+  arrows nudge a symbol one grid unit and pin it, and a run of presses is ONE undo entry.
+* **Correction**: **THE RULING'S SECOND CLAUSE TO BE REFUTED BY ITS OWN BUILD.** §11.186.4 said the
+  arrows nudge *"when no connect is in flight"*. **The arrows are also how a pin is REACHED before
+  anything is armed**, so that is true for half the connect route, and sixteen tests said so.
+  §11.186.10: a caret on screen is the mode.
+* **Note**: **A MERGED COMMAND IS NEVER APPLIED BEFORE A POSSIBLE REVERT**, so every field the revert
+  reads must be carried across the merge. `_sheetId` was `late final` and a redo of a coalesced run
+  created the one schematic `Sheet` under a SECOND id nothing else resolved. A test caught it.
+* **Note**: **A SHARED LABEL MAY STATE ONLY WHAT IS TRUE IN EVERY SCOPE THAT SHARES THE CHORD.**
+  `meaningDrift` refused `Arrow Right` the moment its row gained a schematic-only clause, because it
+  is shared with the builder. The gate was right and the ruling was corrected to match it.
 * **Closed**: `#918`, SG-4. **A symbol drags behind a dashed ghost and the drag pins it** (CR-068),
   and **`Ctrl+Shift+U` ships with it** (§11.186.9) because the drag is what creates the need: a
   pinned symbol is spared by `Tidy sheet`, so arranging a sheet by hand would otherwise put it

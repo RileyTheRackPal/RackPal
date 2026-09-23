@@ -12774,10 +12774,69 @@ separates those. **This file re-learnt that the hard way**, on two red tests ass
 
 **Keymap**: schematic 26 to 27, total 78 to 79. **Floor**: `rackpal_ui` 1978 to 1988, measured.
 
+##### 5.9.68.7 The nudge, and the second clause of this ruling to be refuted by its own build
+
+§11.186.4 gave the arrows a second job on the words *"the arrows nudge when no connect is in
+flight"*. **That reading cannot work, and sixteen tests said so on the first build.** The arrows are
+also how a pin is reached BEFORE anything is armed: docs/05 §7's *"arrow to a candidate port"*, and
+`schematic_keyboard_connect_test.dart`'s route in its own name, *"arrows reach a pin, W arms it,
+Enter commits"*. So *"no wire in flight"* is true for half of the connect route itself.
+
+**§11.186.10, settled by the user from four shapes: a caret on screen is the mode.**
+
+| State | What an arrow does |
+|---|---|
+| A caret is on screen | Moves the caret, exactly as before. `Esc` hands the arrows back |
+| No caret, a symbol selected | Nudges it one grid unit and pins it (CR-068) |
+| No caret, nothing selected | Seeds a caret, which is the old behaviour |
+
+**The route to a caret was never taken away**: `W` seeds one and arms from it in a single press, and
+always did. The test helper places its caret with `W` then `Esc`, which is **21 call sites left
+untouched by one helper edit**, and it leans on that suite's own case that `Esc` cancels the wire
+while leaving the caret.
+
+**A RUN OF PRESSES IS ONE UNDO ENTRY.** Five presses costing five `Ctrl+Z` would make the feature
+worse than not having it, so the move carries a `mergeKey` on the set of symbols. A pin and an unpin
+never merge: those are decisions rather than adjustments, and two in a row are two things somebody
+meant.
+
+**A MERGED COMMAND IS NEVER APPLIED BEFORE A POSSIBLE REVERT**, so everything the revert reads has to
+be carried across it. A test caught the one field that was not: `_sheetId` was `late final`, so a
+redo of a coalesced run created the one schematic `Sheet` under a SECOND id that nothing else
+resolved. It is a carried field now and its declaration says why.
+
+##### 5.9.68.8 A GATE CORRECTED THE RELABELLING, AND IT WAS RIGHT TO
+
+§11.186.4 asked for the arrow rows to be *"relabelled to say both"* so the generated table would not
+promise one meaning. ↑/↓ already did, sharing a union label with the RACK's caret rows, where the
+nudge is real.
+
+←/→ could not. **`Arrow Right` is shared with the Device Builder's `quickAddComplete`, and
+`meaningDrift` refused the pair the instant that row gained a schematic-only clause.** The gate is
+right and the rule it forced is worth stating: **a shared label may state only what is true in EVERY
+scope that shares the chord**, because a keyboard-only user cannot see a scope boundary. A label
+promising a nudge the builder does not perform is worse than a note somebody has to open, so those
+two rows keep caret-only labels and carry the nudge in their notes.
+
+**The canon clause is corrected to say that**, rather than the sweeping version this chapter assumed.
+
+**Evidence.** Six UI cases and five core ones. **The load-bearing UI case is the control for the
+discriminator**: with a caret on screen the arrows must move it and NOT the symbol, and it asserts
+both halves, so a rule that nudged unconditionally fails rather than passing quietly. One core case
+asserts a run of three merges to one entry, one that a redo reuses the ids, one that a DIFFERENT
+symbol does not merge, and one that a pin never merges into a move.
+
+**WHAT IS NOT ASSERTED, SAID OUT LOUD**: the merge WINDOW. `FixedClock` puts every press at one
+instant, so these cases prove the key and the carried state and say nothing about what happens when
+somebody nudges, pauses for a minute, and nudges again. `clock.dart` owns that window and has its own
+coverage.
+
+**Floors**: `rackpal_core` 4884 to 4889, `rackpal_ui` 1988 to 1994, measured.
+
 **Commits** (§8.8): the ruling `1864a8c0`, SG-1 and SG-3 `a414bc73`, the `addConsequence` mechanism
 `a4719d4d`, the two commands `5e06d115`, the screen `a9e5f8c2`, the correction `f810d78c`, SG-6
-`df86e875`, the drag's ruling `7d5e9114`, its command `546e2eda`, the gesture `58c13b14`. SG-5 is
-open.
+`df86e875`, the drag's ruling `7d5e9114`, its command `546e2eda`, the gesture `58c13b14`, SG-5
+`445388de`. **All six chapters are closed.**
 
 ---
 
