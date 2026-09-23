@@ -1,5 +1,20 @@
 # Update Log
 
+## 2026-09-23 (sixty-third entry)
+
+* **Update**: docs/20 now walks every view as a workflow (`#924`, `a86af3a6`), written from a census
+  of the running UI. The census found the previous guide wrong in four places: it said there was no
+  project settings editor (`File ▸ Project settings...` exists), called the Schedule an equipment
+  schedule (it is the cable schedule), fixed undo at 200 (it is configurable), and listed `F7`/`F8` as
+  working anywhere (only the Rack view handles them).
+* **Creation**: [A figure computed at a gesture is an order the user has to
+  know](/practices/a-derived-figure-computed-at-a-gesture-is-order-dependent.md). The room run length
+  derives only when an outline is committed, so the natural order computes nothing.
+* **Note**: **THE CABLE WASTE FACTOR HAS NO CONSUMER.** It is a project setting with a help line
+  promising it on the pull sheet, and `cableFootageOf` is called by nothing outside its own file.
+* **Note**: **CLOSE IN THE DEVICE BUILDER DISCARDS A DIRTY DRAFT WITHOUT ASKING.** The shell's own
+  comment says there is no discard-and-return route; `Close` is one, and it does not prompt.
+
 ## 2026-09-23 (sixty-second entry)
 
 * **Creation**: [DR-188](/decisions/dr-188-cad-lite-and-dxf-opens-v1-3.md). **RackPal is CAD-lite**,
