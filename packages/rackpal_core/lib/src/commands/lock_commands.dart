@@ -169,7 +169,34 @@ final class SetSymbolPinnedCommand extends Command<RackDocument> {
     required this.pinned,
     required this.now,
     required this.actor,
-  }) : positions = Map<Uuid, Pt>.unmodifiable(positions);
+  }) : positions = Map<Uuid, Pt>.unmodifiable(positions),
+       _moved = false;
+
+  /// A DRAG OR A NUDGE (DR-187 §11.186.4, `#918`): the same write, named
+  /// after the act instead of after its side effect.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A NAMED CONSTRUCTOR AND NOT A SECOND COMMAND
+  /// ═══════════════════════════════════════════════════════════════════
+  /// *"Any manual move sets `SheetItem.pinned = true`"* (CR-068), so a
+  /// move and a pin are one write to the document and differ only in what
+  /// the person believes they did. A second command would be a second
+  /// place that knows how to create the one `Sheet`, mint an item and
+  /// restore a previous position, which is three chances for two writers
+  /// to drift. **What a second command would have bought is one enum
+  /// value**, and this buys it for a field.
+  SetSymbolPinnedCommand.move({
+    required Map<Uuid, Pt> positions,
+    required this.now,
+    required this.actor,
+  }) : positions = Map<Uuid, Pt>.unmodifiable(positions),
+       pinned = true,
+       _moved = true;
+
+  /// Whether this was a drag rather than a pin. Reaches [label] and
+  /// nothing else: the document cannot tell the two apart and must not,
+  /// because CR-068 says a manual move IS a pin.
+  final bool _moved;
 
   /// Each symbol's drawn position. Only the keys are read when unpinning.
   final Map<Uuid, Pt> positions;
@@ -189,7 +216,11 @@ final class SetSymbolPinnedCommand extends Command<RackDocument> {
   bool _applied = false;
 
   @override
-  LabelKey get label => pinned ? LabelKey.pinSymbol : LabelKey.unpinSymbol;
+  LabelKey get label => _moved
+      ? LabelKey.moveSymbol
+      : pinned
+      ? LabelKey.pinSymbol
+      : LabelKey.unpinSymbol;
 
   /// `sheet`, which is `SheetItem`'s own epoch: positions, pinning,
   /// collapse (`command.dart`).

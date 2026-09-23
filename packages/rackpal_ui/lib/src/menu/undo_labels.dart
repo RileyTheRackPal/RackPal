@@ -136,6 +136,7 @@ const Map<LabelKey, String> kUndoLabels = <LabelKey, String>{
   LabelKey.unlockPlacement: 'Unlock position',
   LabelKey.pinSymbol: 'Pin symbol',
   LabelKey.unpinSymbol: 'Unpin symbol',
+  LabelKey.moveSymbol: 'Move symbol',
   LabelKey.storeSymbolPositions: 'Arrange symbols',
   LabelKey.tidySheet: 'Tidy sheet',
   LabelKey.drawRoomOutline: 'Draw room outline',
