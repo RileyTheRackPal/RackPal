@@ -12664,9 +12664,11 @@ transaction after its FIRST child (DR-156 §11.155.2), so the menu still says "U
 - **Byte behaviour is asserted twice**: undo takes the sheet away so a document that was never frozen
   is byte-identical to one that froze and undid, and an undo over a sheet that ALREADY EXISTED keeps
   the sheet and removes only what the command added.
-- **`TidySheetCommand` IS BUILT AND REACHABLE FROM NOBODY**, and the `#872` gate caught it within the
-  hour. It is exempted against `#920` rather than quietly wired, because WHERE `Tidy sheet` is
-  pressed from is a UI question the user has not answered and §11.186.6 leaves open in terms.
+- **`TidySheetCommand` WAS BUILT AND REACHABLE FROM NOBODY**, and the `#872` gate caught it within
+  the hour. It was exempted against `#920` rather than quietly wired, because WHERE `Tidy sheet` is
+  pressed from is a UI question §11.186.6 left open in terms. **The user settled it on 2026-09-22**
+  (§11.186.7) and §5.9.68.4 is the row's retirement: the gate went green by the command acquiring a
+  route from a person, which is the only way a row on that list is supposed to leave it.
 - **`RemoveDeviceCommand.apply` RETURNS `true` WHETHER OR NOT IT REMOVED ANYTHING**, found while
   looking for a command that genuinely refuses. It defeats DR-156's refusal path: deleting a device
   that is not there makes an undo entry. Filed for a census of the rest; a purpose-built
@@ -12677,9 +12679,44 @@ transaction after its FIRST child (DR-156 §11.155.2), so the menu still says "U
   to preserve. The next edit after it has been looked at freezes what was seen.
 - **Floors**: `rackpal_core` 4863 to 4884, `rackpal_ui` 1966 to 1972, measured.
 
+##### 5.9.68.4 `Tidy sheet`, and the one document edit on a bar of view toggles
+
+Settled by the user on 2026-09-22 over the two hosts §11.186.6 left open: **the domain filter bar
+now, the empty-space context menu when `#918`'s drag lands.** The bar is the schematic's only
+existing chrome, so the way OUT of the freeze ships in the same change as the freeze rather than
+waiting on a surface nobody has built, and docs/05 §5 already lists `Tidy sheet` on that context
+menu, so the move later is a move and not a redesign.
+
+**THE OBJECTION IS REAL AND IS ANSWERED IN THE WIDGET.** Everything else on that strip changes what
+is DRAWN; this changes the document and lands on the undo stack. Three things keep them apart, and
+all three travel with the button when it moves:
+
+| Worry | What was built |
+|---|---|
+| It reads as another filter | A divider separates it from `All`/`None` |
+| It is the button that did nothing | **DISABLED when `wouldReflow` is 0**, with a tooltip saying the sheet is already laid out rather than one that reads as a failure |
+| It quietly destroys an afternoon's arranging | A confirm stating the count, and stating that pinned symbols stay |
+
+**THE CONFIRM IS NOT INCONSISTENT WITH THE PAGE PICKER**, which argues the opposite case one folder
+over and is right to: importing the wrong page is one `Ctrl+Z` away, and a prompt whose consequence
+is one undo is the nag that teaches people to click through prompts. What this destroys differs in
+kind. Twenty symbols moved by hand over an afternoon look exactly like twenty the layout happened to
+place, so somebody who presses it by accident **cannot tell from the screen whether they have lost
+anything**. That is `delete_device_dialog.dart`'s own test, and docs/05 §10 asks for the confirm in
+terms.
+
+**Evidence.** Six cases. The load-bearing one asserts that confirming lands the symbols on THE
+CONTROL'S positions, the ones the same deletion produces with nothing frozen, so the tidy has
+genuinely handed the sheet back to the layout rather than deleted some rows. A pinned symbol
+survives (CR-068), Cancel changes nothing, and one undo restores the arrangement. **Every finder
+names the button TYPE as well as the words**, because two controls say `Tidy sheet` once the dialog
+is up and a bare `find.text` would tap whichever the tree reached first and pass either way.
+
+**Floor**: `rackpal_ui` 1972 to 1978, measured.
+
 **Commits** (§8.8): the ruling `1864a8c0`, SG-1 and SG-3 `a414bc73`, the `addConsequence` mechanism
-`a4719d4d`, the two commands `5e06d115`, the screen `a9e5f8c2`, the correction `f810d78c`. SG-4, SG-5
-and SG-6 are open.
+`a4719d4d`, the two commands `5e06d115`, the screen `a9e5f8c2`, the correction `f810d78c`, SG-6
+`df86e875`. SG-4 and SG-5 are open.
 
 ---
 

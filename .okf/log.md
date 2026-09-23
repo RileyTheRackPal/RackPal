@@ -8,6 +8,11 @@
   new symbol takes a free slot instead of landing on one. **No version move**: `#914` closes under
   `#786`. SG-4 (drag pins), SG-5 (arrow nudge) and SG-6 (`Tidy sheet`'s host, a question for the
   user) are open.
+* **Closed**: `#920`, SG-6. **`Tidy sheet` sits on the domain filter bar**, settled by the user over
+  the two hosts the ruling left open, and moves to docs/05's context menu when `#918`'s drag gives
+  that menu its other reasons to exist (§11.186.7). It is the only document edit on a strip of view
+  toggles, which is answered in the widget: fenced off by a divider, **disabled when nothing would
+  re-flow**, and behind a confirm that states the count.
 * **Correction**: **THE RULING'S OWN CLAUSE WAS THE DEFECT.** §11.186.2 said the layout freeze
   *"lands as its own undo entry"*. Built that way it produced the behaviour DR-187 exists to
   abolish: the first `Ctrl+Z` after any edit took back the ARRANGEMENT and left the edit, so the
