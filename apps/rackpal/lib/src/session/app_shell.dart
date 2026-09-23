@@ -748,6 +748,15 @@ final class AppShellState extends State<AppShell>
   /// the registry's global scope is exactly four file bindings,
   /// `session_layering_test.dart` RULE 14 asserts it, and that rule exists
   /// so a fifth cannot arrive without the decision being taken again.
+  /// `Help ▸ About RackPal…` (DR-189, docs/20 §20.9).
+  ///
+  /// **THE VERSION IS READ FROM THE SAME CONSTANT THE DOCUMENT IS STAMPED
+  /// WITH**, so what a tester reads off this dialog and what a support
+  /// engineer reads out of their `.rppj` are one number by construction.
+  /// `version_parity_test.dart` is what keeps that constant honest against
+  /// the six pubspecs.
+  void _showAbout() => showRackPalAboutDialog(context, version: kAppVersion);
+
   Future<void> _exportPdf() async {
     await _services.export.exportPdf();
   }
@@ -1043,6 +1052,7 @@ final class AppShellState extends State<AppShell>
               onOpen: _openDocument,
               onSave: _save,
               onSaveAs: _saveAs,
+              onAbout: _showAbout,
               onExportPdf: _exportPdf,
               onExportTemplate: _exportTemplate,
               onImportTemplate: _importTemplate,
@@ -2046,8 +2056,13 @@ final class _AppMenuBar extends StatelessWidget {
     required this.onProjectSettings,
     required this.onPreferences,
     required this.onOpenRecent,
+    required this.onAbout,
     required this.undoTarget,
   });
+
+  /// `Help ▸ About RackPal…`. See the menu itself for why Help exists for
+  /// one item.
+  final VoidCallback onAbout;
 
   /// What `Edit` describes and acts on: the document's stack, or the
   /// Device Builder's while that screen is showing (DR-159 §11.158.5).
@@ -2248,6 +2263,22 @@ final class _AppMenuBar extends StatelessWidget {
             ),
           ],
           child: const Text('Edit'),
+        ),
+        // HELP IS RIGHTMOST, which is where every Windows application puts
+        // it and therefore the only place somebody looks for a version
+        // without being told. It carries one item and that is not a sign
+        // the menu is premature: `About` is where three obligations meet
+        // (the version a tester must quote, our own licence, and the
+        // third-party notices every MIT/BSD/Apache dependency requires us
+        // to reproduce), and none of them belongs under File or Edit.
+        SubmenuButton(
+          menuChildren: [
+            MenuItemButton(
+              onPressed: onAbout,
+              child: const Text('About RackPal…'),
+            ),
+          ],
+          child: const Text('Help'),
         ),
       ],
     );

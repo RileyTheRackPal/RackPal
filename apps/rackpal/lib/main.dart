@@ -82,6 +82,14 @@ Future<void> main() async {
 Future<void> _run() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // THE APPLICATION'S OWN LICENCE JOINS THE REGISTRY (DR-189 11.188.5).
+  // Flutter collects every DEPENDENCY's licence automatically and
+  // `showLicensePage` renders them; it knows nothing about ours, so
+  // without this the page lists everyone but the program the person is
+  // running. Lazily: `addLicense` takes a generator and the bundle read
+  // happens on first open rather than on every launch.
+  registerRackPalLicense(() => rootBundle.loadString('assets/LICENSE'));
+
   // Framework errors (build/layout/paint) and errors from futures the
   // engine is waiting on. Both default to printing in debug and to
   // silence in release; neither is a channel.

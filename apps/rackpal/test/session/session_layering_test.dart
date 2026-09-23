@@ -671,7 +671,21 @@ final class AppServices {
       // accelerator, for the reason every item since Locations has had
       // none, and DR-172 §11.171 leaves a shortcut unruled rather than
       // deciding one here.
-      [14, 6],
+      //
+      // 14 -> 15 AT DR-189, and the accelerator count did not move for the
+      // TWELFTH time. The fifteenth is `Help ▸ About RackPal...`, in a NEW
+      // top-level menu, which this comment's own rule above ("a top-level
+      // menu is a place people must learn") would normally argue against
+      // for a single item. It is taken anyway because Help is where every
+      // Windows application puts About, so it is the one new menu a person
+      // does not have to learn, and because three separate obligations
+      // land on that one item: the version a tester must quote (shown
+      // NOWHERE before this), our own licence, and the third-party notices
+      // that MIT, BSD-3 and Apache-2.0 all require us to reproduce.
+      // **The third was not being met at all**: nothing in the product
+      // called `showLicensePage` or touched `LicenseRegistry`, and the
+      // README claimed otherwise.
+      [15, 6],
       reason:
           'eleven File-menu items — New, Open…, Save, Save As…, Export '
           'PDF…, Export/Import device template…, Export/Import device '

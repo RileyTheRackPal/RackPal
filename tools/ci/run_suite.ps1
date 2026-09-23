@@ -1544,7 +1544,14 @@ $SuiteFloors = @{
     # 1060 at `#912` (DR-185): +6 for the import that proposes and asks,
     # driven through `FloorplanIo.import` with a two-page PDF assembled by
     # hand, so the page in the name is read off a real multi-page file.
-    'rackpal_app'    = 1060
+    # 1067 at DR-189: +7 for `Help > About RackPal...`. Four cover the
+    # dialog and three the LICENCE PARITY GATE, which guards the one
+    # stale copy in this corpus that would be a legal problem rather than
+    # a wrong number: assets/LICENSE is what the app SHOWS and the root
+    # LICENSE is what the project GRANTS, and they must be byte-identical.
+    # The copy is mandatory because Flutter asset paths cannot escape the
+    # package directory, which a probe found rather than a review.
+    'rackpal_app'    = 1067
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
