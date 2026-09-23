@@ -22042,9 +22042,13 @@ a row are two things somebody meant.
 **THE RELABELLING §11.186.4 REQUIRED IS HALF WHAT IT SOUNDS LIKE, AND A GATE IS WHY.** The ↑/↓ rows
 already carried *"Caret up · nudge the selection up"*, a union shared with the RACK's caret rows,
 against a note saying the sheet nudged nothing; that note was false the moment this shipped and is
-replaced. **The ←/→ rows keep caret-only labels and carry the nudge in their notes**, because
-`Arrow Right` is shared with the Device Builder's `quickAddComplete` and `meaningDrift` refused the
-pair the instant that row gained a schematic-only clause. The gate was right: a keyboard-only user
+replaced. **`Arrow Right` ALONE keeps a caret-only label and carries the nudge in its note**, because it is
+shared with the Device Builder's `quickAddComplete` and `meaningDrift` refused the pair the instant
+that row gained a schematic-only clause. **THIS CLAUSE SAID `←/→` UNTIL 2026-09-23 AND THE CODE
+NEVER MATCHED IT**: `Arrow Left` is shared with nothing, carries the union label, and always did.
+The sweeping version was written because an edit script aborted between its two replacements and the
+result was not re-read, which is the same shape as every other stale count this corpus keeps
+finding. Three rows carry the union and one cannot. The gate was right: a keyboard-only user
 cannot see a scope boundary, so **a shared label may state only what is true in EVERY scope that
 shares the chord**, and a label promising a nudge that the builder does not perform is worse than a
 note somebody has to open.
