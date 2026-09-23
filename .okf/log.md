@@ -1,5 +1,23 @@
 # Update Log
 
+## 2026-09-23 (sixty-fifth entry)
+
+* **Progress**: `#929`. `tools/user_guide_pdf.py` exports docs/20 as a PDF in the console style (DR-090),
+  the wordmark read out of brand.dart's outlines (DR-089) on the cover and in every page header. The
+  user chose dark pages throughout, for screen reading. **The PDF is not committed**: it is derived
+  from a document that moves every few days.
+* **Note**: **THE CORPUS ALREADY HAD THE PIPELINE.** `tools/docs_pdf.py` owned markdown to HTML to
+  headless Chrome, cold-start retry included, and was found before a second one was written. It gained
+  nested list blocks (a table inside a numbered step had been flattened into pipes), quoted
+  paragraphs, the double-backtick code span and heading ids, and was regression-checked against its
+  own previous output.
+* **Note**: **A CHROME QUIRK, BISECTED RATHER THAN GUESSED.** A heading in Jost at display size with
+  any explicit `line-height` has its text written into the PDF bookmark twice, deterministically on
+  Chrome 152. Found by removing the stylesheet's rules one at a time; the first three theories (the
+  cover's SVG, its absolute positioning, its named page) were each tested and each wrong.
+* **Note**: pages were inspected through the vendored pdfium over `ctypes`, since Chrome's headless
+  screenshot cannot render its own PDF viewer.
+
 ## 2026-09-23 (sixty-fourth entry)
 
 * **Creation**: [DR-190](/decisions/dr-190-builder-close-asks-before-it-discards.md),
