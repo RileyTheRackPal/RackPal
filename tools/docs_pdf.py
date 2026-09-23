@@ -133,10 +133,14 @@ def _inline(text: str) -> str:
     spans: list[str] = []
 
     def stash(m: "re.Match[str]") -> str:
-        spans.append(m.group(1))
+        spans.append(m.group(1) if m.group(1) is not None else m.group(2))
         return f"{_SENTINEL}{len(spans) - 1}{_SENTINEL}"
 
-    s = html.escape(re.sub(r"`([^`]+)`", stash, text))
+    # THE DOUBLE-BACKTICK FORM FIRST, because it is how a span holds a
+    # backtick: docs/20 and the keymap reference write the key that shows
+    # every domain as `` ` ``, which the single form read as two empty
+    # spans around a stray space.
+    s = html.escape(re.sub(r"``\s?(.+?)\s?``|`([^`]+)`", stash, text))
     s = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', s)
     s = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", s)
     s = re.sub(r"(?<!\*)\*([^*]+)\*(?!\*)", r"<em>\1</em>", s)
@@ -147,13 +151,41 @@ def _inline(text: str) -> str:
     return re.sub(_SENTINEL + r"(\d+)" + _SENTINEL, restore, s)
 
 
+_LIST = re.compile(r"^(\s*)([-*+]|\d+\.)\s+(.*)$")
+_BLOCK_START = re.compile(r"^(#{1,6})\s|^\||^>|^```|^(-{3,}|\*{3,})$")
+
+
+def _indent(line: str) -> int:
+    return len(line) - len(line.lstrip(" "))
+
+
+def _anchor(heading: str, ids: set[str]) -> str:
+    """A stable id for [heading]: `s20-5-2` for a numbered section, a slug
+    otherwise, suffixed while [ids] already holds it."""
+    numbered = re.match(r"^(\d+(?:\.\d+)+)\s", heading)
+    if numbered:
+        base = "s" + numbered.group(1).replace(".", "-")
+    else:
+        base = re.sub(r"[^a-z0-9]+", "-", heading.lower()).strip("-") or "h"
+    anchor, n = base, 2
+    while anchor in ids:
+        anchor, n = f"{base}-{n}", n + 1
+    ids.add(anchor)
+    return anchor
+
+
 def _row(line: str) -> list[str]:
     cells = line.strip().strip("|").split("|")
     return [c.strip() for c in cells]
 
 
-def convert(md: str, source: str) -> str:
-    """One markdown document to an HTML fragment."""
+def convert(md: str, source: str, ids: set[str] | None = None) -> str:
+    """One markdown document to an HTML fragment.
+
+    [ids] is the set of heading ids already issued, shared across the
+    recursion so a heading inside a list item cannot mint a duplicate.
+    """
+    ids = set() if ids is None else ids
     lines = md.split("\n")
     out: list[str] = []
     i = 0
@@ -202,12 +234,15 @@ def convert(md: str, source: str) -> str:
             i += 1
             continue
 
-        # ATX heading.
+        # ATX heading, with an id a link or an outline can land on.
         m = re.match(r"^(#{1,6})\s+(.*)$", stripped)
         if m:
             close(stack)
             level = len(m.group(1))
-            out.append(f"<h{level}>{_inline(m.group(2))}</h{level}>")
+            anchor = _anchor(m.group(2), ids)
+            out.append(
+                f'<h{level} id="{anchor}">{_inline(m.group(2))}</h{level}>'
+            )
             i += 1
             continue
 
@@ -236,38 +271,72 @@ def convert(md: str, source: str) -> str:
             out.append("</tbody></table>")
             continue
 
-        # Blockquote.
+        # Blockquote. CONVERTED RECURSIVELY, so a `>` line on its own is a
+        # paragraph break inside the quote, as it is on GitHub. The first
+        # version joined every line into one paragraph, which ran docs/20's
+        # three-paragraph preface together.
         if stripped.startswith(">"):
             close(stack)
             body = []
             while i < len(lines) and lines[i].strip().startswith(">"):
-                body.append(lines[i].strip().lstrip(">").strip())
+                body.append(re.sub(r"^>\s?", "", lines[i].strip()))
                 i += 1
-            out.append(f"<blockquote><p>{_inline(' '.join(body))}</p></blockquote>")
+            inner = convert(chr(10).join(body), source, ids)
+            out.append(f"<blockquote>{inner}</blockquote>")
             continue
 
-        # Lists. Continuation lines are joined so a wrapped bullet stays
-        # one item, which the corpus's hard wrap makes the normal case.
-        m = re.match(r"^(\s*)([-*+]|\d+\.)\s+(.*)$", line)
+        # Lists. An item OWNS every following line indented to its content
+        # column, blank lines included when the next non-blank one is still
+        # indented, and that body is converted RECURSIVELY. The first
+        # version joined continuation lines into one string, which kept a
+        # wrapped bullet whole and flattened everything else: docs/20 puts a
+        # table inside a numbered step, and it came out as pipes in a
+        # sentence. An unindented line that starts no block still continues
+        # the item (a lazy continuation), which is how the corpus's hard
+        # wrap sometimes lands.
+        m = _LIST.match(line)
         if m:
             want = "ol" if m.group(2)[0].isdigit() else "ul"
             if not stack or stack[-1] != want:
                 close(stack)
-                out.append(f"<{want}>")
+                # AN ORDERED LIST KEEPS ITS NUMBER across a blank line, which
+                # closes the list here and would otherwise restart it at 1.
+                start = (
+                    f' start="{m.group(2)[:-1]}"'
+                    if want == "ol" and m.group(2) != "1."
+                    else ""
+                )
+                out.append(f"<{want}{start}>")
                 stack.append(want)
+            column = m.start(3)
             body = [m.group(3)]
             i += 1
             while i < len(lines):
                 nxt = lines[i]
                 if not nxt.strip():
+                    j = i
+                    while j < len(lines) and not lines[j].strip():
+                        j += 1
+                    if j < len(lines) and _indent(lines[j]) >= column:
+                        body.extend([""] * (j - i))
+                        i = j
+                        continue
                     break
-                if re.match(r"^(\s*)([-*+]|\d+\.)\s+", nxt):
-                    break
-                if re.match(r"^(#{1,6})\s|^\||^>|^```", nxt.strip()):
+                if _indent(nxt) >= column:
+                    body.append(nxt[column:])
+                    i += 1
+                    continue
+                if _LIST.match(nxt) or _BLOCK_START.match(nxt.strip()):
                     break
                 body.append(nxt.strip())
                 i += 1
-            out.append(f"<li>{_inline(' '.join(body))}</li>")
+            inner = convert(chr(10).join(body), source, ids)
+            # ONE PARAGRAPH IS UNWRAPPED, so a plain bullet renders as it
+            # always did rather than gaining a paragraph's bottom margin.
+            single = re.fullmatch(r"<p>(.*)</p>", inner, re.S)
+            if single and "<p>" not in single.group(1):
+                inner = single.group(1)
+            out.append(f"<li>{inner}</li>")
             continue
 
         # Paragraph, joining the corpus's hard wrap back into one flow.
@@ -302,29 +371,12 @@ def find_chrome() -> str:
     )
 
 
-def main() -> int:
-    ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("sources", nargs="+", help="markdown files, in order")
-    ap.add_argument("-o", "--out", help="output PDF (default: first source)")
-    args = ap.parse_args()
+def print_pdf(page: str, out: str, extra_args: tuple[str, ...] = ()) -> None:
+    """Print one HTML document to [out] through headless Chrome.
 
-    docs = []
-    for src in args.sources:
-        with open(src, encoding="utf-8") as fh:
-            text = fh.read()
-        print(f"  reading {src}")
-        docs.append(
-            f'<div class="doc">'
-            f'<div class="meta">{html.escape(src)} · RackPal</div>'
-            f"{convert(text, src)}</div>"
-        )
-
-    out = args.out or os.path.splitext(args.sources[0])[0] + ".pdf"
-    page = (
-        "<!doctype html><html><head><meta charset='utf-8'>"
-        f"<style>{_CSS}</style></head><body>{''.join(docs)}</body></html>"
-    )
-
+    [extra_args] reach Chrome's command line, which is how a caller asks for
+    a document outline (`--generate-pdf-document-outline`).
+    """
     # RETRIED ONCE, because a cold start loses the race. Chrome exits 0
     # having written nothing when it is building the throwaway profile for
     # the first time in a while: it reports success on the LAUNCH, not on
@@ -349,6 +401,7 @@ def main() -> int:
                     "--disable-gpu",
                     f"--user-data-dir={os.path.join(tmp, 'profile')}",
                     "--no-pdf-header-footer",
+                    *extra_args,
                     f"--print-to-pdf={os.path.abspath(out)}",
                     "file:///" + html_path.replace("\\", "/"),
                 ],
@@ -366,6 +419,32 @@ def main() -> int:
             "That is no longer the known cold-start race: check that the "
             "output directory exists and is writable."
         )
+
+
+def main() -> int:
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument("sources", nargs="+", help="markdown files, in order")
+    ap.add_argument("-o", "--out", help="output PDF (default: first source)")
+    args = ap.parse_args()
+
+    docs = []
+    for src in args.sources:
+        with open(src, encoding="utf-8") as fh:
+            text = fh.read()
+        print(f"  reading {src}")
+        docs.append(
+            f'<div class="doc">'
+            f'<div class="meta">{html.escape(src)} · RackPal</div>'
+            f"{convert(text, src)}</div>"
+        )
+
+    out = args.out or os.path.splitext(args.sources[0])[0] + ".pdf"
+    page = (
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        f"<style>{_CSS}</style></head><body>{''.join(docs)}</body></html>"
+    )
+
+    print_pdf(page, out)
     print(f"  wrote {out}  ({os.path.getsize(out):,} bytes)")
     return 0
 
