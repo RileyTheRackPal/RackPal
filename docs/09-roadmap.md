@@ -117,7 +117,25 @@ Each needs a format addition, a fixture corpus, or evidence from real projects. 
 | Full commercial grounding and bonding detail sheet | AC-034 (m21), RJ-010 |
 | **Git sync of a `.rppj` between machines and people**, authenticated by authorization code with PKCE (DR-033's no-secrets constraint) | **DR-052** §11.51.2. Ships if real projects show a handoff that a file share does not already solve. **RackPal performs no merge in any release**: byte-exact key-sorted output makes a diff legible and does not make a three-way merge safe. The v1 half, divergence detection with a side-by-side, is §2.1 and does not wait for this |
 
-### 2.4 v2: the next product decision, not the next release
+### 2.4 v1.3: interchange
+
+**Created by DR-188 §11.187.3**, and the first band added since this section was written. It exists
+because v2 is ruled below to be *"the next product decision, not the next release"*, and an
+interchange export is neither a fast follow nor a new product.
+
+- **DXF export of the Device Location Plan.** Autodesk's documented interchange format, which every
+  CAD tool opens. A third `DiagramCanvas` backend beside `bounds_canvas` and `pdf_canvas`, which is
+  why docs/08 §9's ~400 line estimate is plausible; CR-086's one-display-list rule is what makes a
+  third backend the natural shape rather than a second drawing path.
+- **NOT DWG**, and the reason is a licence collision rather than cost (DR-188 §11.187.4): the open
+  writer is GPL-3.0 and would serve, but the commercial route is GPL-incompatible and would put the
+  feature in conflict with this project's own licence.
+- **Rack elevations are NOT in this band yet.** They are wanted, for a cabinetmaker or a GC, and
+  they are blocked on something smaller than an exporter: `Rack` already declares the whole physical
+  envelope and **five of those six fields have no writer** (DR-188 §11.187.5). Somewhere to type the
+  numbers comes first.
+
+### 2.5 v2: the next product decision, not the next release
 
 Each changes what the product *is* and should be decided with evidence from v1 users.
 
@@ -125,13 +143,13 @@ Each changes what the product *is* and should be decided with evidence from v1 u
 |---|---|
 | `SignalRoute`: Dante flows, AVoIP streams, matrix crosspoints, eARC, VLAN/multicast/latency | CR-008, AC-036. Returns **with** a Dante view or not at all; a third entity layer with no editor is dead weight |
 | **Layers**: Existing / Phase 1 / Phase 2 / Future / Demo | CR-064, AC-038. Real for commercial retrofit, absent from the residential first job; `DeviceStatus` covers 80% for one field |
-| ~~Cloud sync and multi-user~~ | **SPLIT BY DR-052 (§12.22) and this row is gone.** It was two features wearing one name. **Sync** moved *forward*: git sync is §2.3, gated on evidence, and divergence detection is §2.1. **Simultaneous multi-user editing** moved to §2.5, never. The row's reasoning survives and is why the split was possible: a cloud-ready model is what makes sync cheap and is irrelevant to concurrent editing, which fails on determinism, CR-117 and undo rather than on identity |
+| ~~Cloud sync and multi-user~~ | **SPLIT BY DR-052 (§12.22) and this row is gone.** It was two features wearing one name. **Sync** moved *forward*: git sync is §2.3, gated on evidence, and divergence detection is §2.1. **Simultaneous multi-user editing** moved to §2.6, never. The row's reasoning survives and is why the split was possible: a cloud-ready model is what makes sync cheap and is irrelevant to concurrent editing, which fails on determinism, CR-117 and undo rather than on identity |
 | Mobile **editing** | v1 is read-only by confirmed decision; the intent layer keeps the door open |
 | A read-only **web** viewer | AC-016 (#22). Distribution story, not a feature, one `kIsWeb` guard already exists |
 | A priced BOM with suppliers and purchase orders | AC-055. An adjacent product, not a missing feature |
 | Real-SKU catalog | A legal and maintenance question before it is a product one |
 
-### 2.5 Not doing: rulings, not omissions
+### 2.6 Not doing: rulings, not omissions
 
 | Item | Ruling |
 |---|---|
@@ -153,7 +171,7 @@ Each changes what the product *is* and should be decided with evidence from v1 u
 | **Label-printer drivers: Brother, Dymo, Epson dialects** | **DR-049 §11.48.7.** An export nobody has run on the hardware is `VACUOUS` under docs/12 §0, and this project already carries two unexecuted print matrices (`D11`, `D13`). **The label sheet and the CSV both ship** (§2.1); every label program on the market imports a CSV, and the mapping is the user's to make once |
 | **A D-Tools or XTEN-AV exporter** | **DR-049 §11.48.8.** It cannot be demonstrated without a licensed seat, neither vendor publishes a stable import schema, and docs/00 §4.2 positions this product against AVSnap and Stardraw and **explicitly not against D-Tools**, so shipping one is a positioning amendment wearing a feature's clothes. The generic CSV serves the same user through an import wizard those products already ship |
 
-### 2.6 The ten cuts that account for most of the saving
+### 2.7 The ten cuts that account for most of the saving
 
 Ranked by engineering weeks removed, using `critique-feasibility.md`'s own sizing.
 
