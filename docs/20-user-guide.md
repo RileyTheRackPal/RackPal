@@ -15,19 +15,42 @@
 
 ## 20.1 What it is
 
-RackPal is a design tool for AV and low-voltage jobs. You model the job once:
-the rooms, the racks, the devices, the cables. The rack elevations, the wiring
-schematic, the equipment schedule and the PDF sheet set are then all drawn from
-that one model.
+**RackPal is CAD-lite for AV and low-voltage work:** to scale where scale earns
+its keep, and deliberately representative everywhere else.
 
-**The point of that is the thing you cannot get from a drawing package.** A
-device that moves in the rack moves on the elevation, in the schedule and on
-every sheet that names it, because there is only one of it. The elevation and
-the schedule cannot disagree about what is in the rack, in the way that a
+You model the job once: the rooms, the racks, the devices, the cables. The rack
+elevations, the wiring schematic, the equipment schedule and the PDF sheet set
+are all derived from that one model. A device that moves in the rack moves on
+the elevation, in the schedule and on every sheet that names it, because there
+is only one of it. The elevation and the schedule cannot drift apart the way a
 Visio file and a spreadsheet always eventually do.
 
-What it is **not**: it is not a CAD package, it is not a proposal or quoting
-tool, and it does not talk to any distributor, PSA or ERP system.
+### Why "lite" is the feature rather than the apology
+
+In this trade a precise drawing is a fiction by the second week on site. A
+television shifts because of where the sofa ended up. A run gets re-routed. A
+back box moves because the electrician took the stud bay first. Documenting
+every one of those to millimetre truth costs far more than it returns, and the
+drawing that demanded it gets ignored rather than corrected.
+
+So the precision is spent where it pays and withheld where it does not:
+
+- **Floorplans carry a real-world scale**, calibrated by drawing a line of known
+  length across something you can measure, so distance on the plan means
+  something.
+- **Rack elevations are exact**, because rack units are discrete and a device
+  either fits in the space or it does not.
+- **Cable footage is a real number you can order from** (§20.5, Schedule), and
+  where the software cannot know a length it says so rather than inventing one.
+- **Everything else is representative.** Symbol positions, routing paths and
+  plan pin placement are there to communicate, not to survey.
+
+### What it is not
+
+It is not a drafting package. There is no DWG, no layer model, no
+dimension-driven geometry, and it does not replace the architectural or
+electrical set. It is not a proposal or quoting tool, and it talks to no
+distributor, PSA or ERP system.
 
 ---
 
@@ -193,6 +216,13 @@ Floorplans can be rotated in quarter turns, which matters more than it sounds:
 architectural sets are landscape and a PDF carrying a `/Rotate 90` used to
 import sideways.
 
+**Calibrate the plan and it carries a real-world scale.** Draw a line across
+something whose length you know, give the length, and distance on that plan
+becomes a measurement. That scale is what lets the schedule reason about cable
+footage and what lets the length rules catch a run that cannot possibly be
+inside its limit. A plan that has not been calibrated is still perfectly usable
+for marking where things go; it simply contributes no numbers.
+
 ### Device Manager
 
 The catalogue: what devices this project knows about, and the libraries they
@@ -248,6 +278,26 @@ quietly totalling the ones it knows and presenting that as the answer. When you
 are sizing a UPS this is the difference between a number and a guess, and it is
 a deliberate rule throughout the product rather than a limitation of the
 schedule.
+
+**Cable length resolves per run, through the best source available:**
+
+| Source | What it is |
+|---|---|
+| Measured cut length | Somebody went and measured it. Beats everything |
+| Outlet nominal | The nominal length recorded against that outlet |
+| Room estimate | The estimated run length from the rack for that room |
+| Plan floor | A straight line on a calibrated plan, printed italic and prefixed `>=` |
+| Unknown | Prints a dash, and is counted |
+
+**The plan floor ranks LAST, deliberately, and that is worth understanding
+before you judge it.** A straight line between two pins is always shorter than
+any real route, because structure decides the route and structure gets
+discovered rather than designed. So it is a floor and not an estimate: it can
+prove that a run has already blown its length limit, and it can never prove that
+one is fine. Ranking it above the room estimate would move every drop on a
+calibrated plan out of your purchase quantity and into the unknown column, which
+would make **the number you order cable from get worse the more of the job you
+planned.** So it sits below, and prints as the bound it is.
 
 ---
 

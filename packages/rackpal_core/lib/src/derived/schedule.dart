@@ -516,9 +516,13 @@ enum ScheduleLengthSource {
   /// [ScheduleEntry.lengthIsEstimated]: a floor and a guess are two
   /// claims, and one count cannot carry both (DR-147 §11.146.4).
   ///
-  /// **NOTHING PRODUCES THIS VALUE YET.** `PLAN-G/1` adds the tier and
-  /// answers `cable_footage.dart`'s booby-trapped switch; `_lengthOf`
-  /// starts returning it at `PLAN-G/3`, once both rollups can refuse it.
+  /// **THIS SAID "NOTHING PRODUCES THIS VALUE YET" UNTIL 2026-09-23**, and
+  /// had been wrong since `PLAN-G/3` did exactly what the sentence said it
+  /// would: `_lengthOf` returns this tier, below the room estimate, and
+  /// `rules_cable.dart` reads the floor directly. The note described a
+  /// plan rather than a state and nothing connected finishing the work to
+  /// editing it. Found while writing docs/20, which had to state what the
+  /// schedule can tell an integrator about cable footage.
   planLowerBound,
 
   /// No length is known. §3.2: prints `—`, and the `LEN-*` rules emit
