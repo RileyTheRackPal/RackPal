@@ -169,6 +169,12 @@ class _ScheduleScreenState extends State<ScheduleScreen> {
                 setState(() => _includeJumpers = value),
           ),
           _ScheduleSummary(view: view, units: units),
+          // DR-192 §11.191: what to ORDER, per cable type. From the same
+          // `Schedule` the table projects, so the two cannot disagree.
+          _TakeoffStrip(
+            footage: cableFootageOf(schedule, doc: widget.document),
+            units: units,
+          ),
           const Divider(height: 1),
           Expanded(
             child: _ScheduleTable(view: view, units: units),
@@ -354,6 +360,86 @@ class _ScheduleSummary extends StatelessWidget {
   }
 }
 
+/// The materials takeoff: one chip per cable type, its known footage and
+/// the same figure with the project's waste factor (DR-192 §11.191).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// THE SETTING HAD NO CONSUMER AND THE TAKEOFF HAD NO CALLER
+/// ═══════════════════════════════════════════════════════════════════════
+/// `cableWasteFactor` promised the pull sheet, and `cableFootageOf` built
+/// this exact table with the factor applied and was called by nothing
+/// outside its own file. This strip is the first reader of both.
+///
+/// **FIELD CABLE ONLY, WHICHEVER PRESET IS SHOWING.** The takeoff excludes
+/// jumpers, power cords and internal runs by class, as `CableFootage`
+/// documents, because those are bought differently. So it does not follow
+/// the preset or the jumper toggle, and says what it is rather than
+/// sitting inside the counts that do.
+///
+/// **NO GRAND TOTAL, AND NO ROW INFLATED** (§11.191.2). Feet of Cat6 plus
+/// feet of RG6 is not a quantity anybody buys, and the factor is applied
+/// to the rollup here and never to a length in the table.
+class _TakeoffStrip extends StatelessWidget {
+  const _TakeoffStrip({required this.footage, required this.units});
+
+  final CableFootage footage;
+  final UnitSystem units;
+
+  @override
+  Widget build(BuildContext context) {
+    if (footage.lines.isEmpty) return const SizedBox.shrink();
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
+      child: DefaultTextStyle.merge(
+        style: theme.textTheme.labelSmall ?? const TextStyle(),
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 6,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(takeoffHeading(footage.wasteFactor)),
+            for (final line in footage.lines)
+              _Chip(
+                label: takeoffLineLabel(line, units),
+                // A line some runs could not contribute to is SHORT by an
+                // unstated amount, and says so in the unknown tone.
+                tone: line.footage.unknownCount > 0
+                    ? _ChipTone.unknown
+                    : _ChipTone.neutral,
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// `Field cable to order, with 10% waste:`.
+String takeoffHeading(Permille waste) {
+  final pct = waste.v % 10 == 0 ? '${waste.v ~/ 10}' : '${waste.v / 10}';
+  return 'Field cable to order, with $pct% waste:';
+}
+
+/// `Cat6A F/UTP 78 ft, 86 ft with waste`, plus how many runs are missing
+/// from it when any are.
+String takeoffLineLabel(CableFootageLine line, UnitSystem units) {
+  final name = line.media?.displayName ?? line.mediaId.v;
+  final raw = _footageLabel(line.footage, units);
+  final suffix = units == UnitSystem.imperial ? 'ft' : 'm';
+  final withWaste = line.withWaste;
+  final wasted = withWaste == null
+      ? '$kUnknownCell $suffix'
+      : '${(withWaste.nm / _divisor(units)).round()} $suffix';
+  final unknown = line.footage.unknownCount;
+  return '$name $raw, $wasted with waste'
+      '${unknown == 0 ? '' : ' · $unknown length unknown'}';
+}
+
+int _divisor(UnitSystem units) => units == UnitSystem.imperial
+    ? Len.nmPerInch * 12
+    : Len.nmPerMillimetre * 1000;
+
 /// `1,860 ft`, `— ft` when nothing known contributed.
 ///
 /// The em dash is `totals.dart` rule 1 on screen: a rollup with no known
@@ -362,10 +448,7 @@ String _footageLabel(Rollup<Len> footage, UnitSystem units) {
   final value = footage.value;
   final suffix = units == UnitSystem.imperial ? 'ft' : 'm';
   if (value == null) return '$kUnknownCell $suffix';
-  final divisor = units == UnitSystem.imperial
-      ? Len.nmPerInch * 12
-      : Len.nmPerMillimetre * 1000;
-  return '${(value.nm / divisor).round()} $suffix';
+  return '${(value.nm / _divisor(units)).round()} $suffix';
 }
 
 enum _ChipTone { neutral, unknown, attention }

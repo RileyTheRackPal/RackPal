@@ -290,7 +290,7 @@ to what you create next.
 | Outlet label, field end / rack end | What gets printed on the wall plate, and what the rack end is called |
 | Default rack height, Default RU numbering, Mirror rear elevations by default | What a new rack starts with. Existing racks keep what they were made with |
 | Default line voltage, Wiring standard, Default network media | Job-wide defaults. One cable can take its own wiring standard in the WIRING column (§20.5.5) |
-| Cable waste factor | Stored with the project. Nothing on screen or in the PDF applies it yet (§20.8) |
+| Cable waste factor | The margin added to each cable type's footage in the Schedule's takeoff (§20.5.7). No length is ever inflated |
 | Sheet numbering, Designator collision policy, Designator block size | How sheets and designator blocks are numbered |
 
 Two more sections live in the same dialog:
@@ -995,6 +995,14 @@ the view the schedule points you back to.
 - **A summary line**: rows, **total footage**, and how much of it is
   estimated, bound or unknown, with counts for anything else worth your
   attention (a disputed cable class, a jacket pulled in the wrong colour).
+- **The takeoff**: *Field cable to order, with 10% waste*, then one line per
+  cable type with its known footage and the same figure with your waste
+  factor added (`Cat6A 1240 ft, 1364 ft with waste`). It counts field cable
+  only, whichever preset is showing, because jumpers and cords are bought
+  differently. A line some runs could not contribute to says how many are
+  missing. There is deliberately **no grand total**: feet of Cat6 plus feet of
+  RG6 is not something anybody orders. Set the percentage in `File` ▸
+  `Project settings...`.
 
 If the document has no cables, the Schedule says so and says where cables are
 drawn. That is a statement about the file, not an error.
@@ -1174,9 +1182,6 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
   carries one, and ranks in the length ladder (§20.5.7).
 - **A run's pathway is set when the run is entered** (`@pathway=`, or a CSV
   column), not afterwards in the table.
-- **The cable waste factor is stored and not yet applied.** The project
-  setting exists and travels with the file; no figure on screen or in the PDF
-  includes it.
 - **The validation keys work on the Rack view only.** `F7`, `F8` and
   `Shift+F8` do nothing on the other views, where the drawer is not shown.
 - **A device outside a rack has no room field.** Its place is its pin on the

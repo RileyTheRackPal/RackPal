@@ -1418,7 +1418,11 @@ $SuiteFloors = @{
     # ask. The one that matters is Save on a draft AC-049 refuses: it must
     # stay open, because closing after a failed save is the silent discard
     # the ruling exists to stop.
-    'rackpal_ui'     = 2001
+    # 2004 at DR-192 (`#927`): +3 in schedule_screen_test.dart for the
+    # takeoff strip. The one that matters reads the words off the screen:
+    # 78 ft of Cat6A must print 78 raw and 86 with waste, while the TABLE
+    # row still reads 78, because the factor is never written to a length.
+    'rackpal_ui'     = 2004
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

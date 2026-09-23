@@ -200,7 +200,11 @@ abstract final class ProjectSettingFields {
   static const cableWasteFactor = ProjectSettingField<Permille>(
     key: 'cableWasteFactor',
     label: 'Cable waste factor',
-    help: 'Added to every measured run on the pull sheet.',
+    // DR-192 §11.191.3: this promised the pull sheet, which does not print
+    // yet, and nothing applied it. The Schedule's takeoff does now.
+    help:
+        "Added to each cable type's footage in the Schedule's takeoff. "
+        'No length is ever inflated.',
     get: _getWaste,
     set: _setWaste,
   );
