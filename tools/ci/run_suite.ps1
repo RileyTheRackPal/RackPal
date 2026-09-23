@@ -1380,7 +1380,17 @@ $SuiteFloors = @{
     # so a tidy has genuinely undone the freeze rather than deleted some
     # rows. Two more are the button DISABLED with nothing to tidy and a
     # PINNED symbol surviving (CR-068).
-    'rackpal_ui'     = 1978
+    # 1988 at `#918` (DR-187 §11.186.4, §11.186.8, §11.186.9): +10 for the
+    # symbol drag, its ghost and `Ctrl+Shift+U`. TWO OF THE TEN GUARD THE
+    # GESTURE THIS ONE STEALS FROM: a press on a symbol body used to arm a
+    # marquee and select on release, and selecting is by far the commonest
+    # thing anybody does to a symbol, so a tap and a wobble each have a
+    # case. A third holds the boundary with the band on empty paper.
+    # The selection is NOT directly observable on this screen (it builds
+    # its own private SelectionController, and the painted op count is
+    # identical either side of a tap), so those cases assert it through
+    # `Ctrl+L`, which reads the selection and writes to the document.
+    'rackpal_ui'     = 1988
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

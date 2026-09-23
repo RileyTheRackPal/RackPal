@@ -88,6 +88,7 @@ export 'src/canvas/render_rack_canvas.dart';
 export 'src/canvas/resize_preview_controller.dart';
 export 'src/canvas/schematic/connect_overlay.dart';
 export 'src/canvas/schematic/domain_filter_bar.dart';
+export 'src/canvas/schematic/drag_ghost_layer.dart';
 export 'src/canvas/schematic/pin_badge_layer.dart';
 export 'src/canvas/schematic/pin_selection.dart';
 export 'src/canvas/schematic/render_schematic_canvas.dart';

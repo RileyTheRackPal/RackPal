@@ -127,6 +127,7 @@ import 'dart:math' as math;
 import 'package:flutter/gestures.dart'
     show PointerDeviceKind, PointerExitEvent, PointerHoverEvent;
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart' show SchedulerPhase;
 import 'package:flutter/services.dart'
     show HardwareKeyboard, KeyEvent, LogicalKeyboardKey;
 import 'package:rackpal_core/rackpal_core.dart';
@@ -135,6 +136,7 @@ import 'package:rackpal_ui/src/canvas/grid_painter.dart';
 import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
 import 'package:rackpal_ui/src/canvas/schematic/connect_overlay.dart';
 import 'package:rackpal_ui/src/canvas/schematic/domain_filter_bar.dart';
+import 'package:rackpal_ui/src/canvas/schematic/drag_ghost_layer.dart';
 import 'package:rackpal_ui/src/canvas/schematic/link_hit_test.dart';
 import 'package:rackpal_ui/src/canvas/schematic/pin_badge_layer.dart';
 import 'package:rackpal_ui/src/canvas/schematic/pin_selection.dart';
@@ -359,6 +361,12 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     onConnectUpdate: _dragWireTo,
     onConnectCommit: _releaseWireAt,
     onConnectCancel: _cancelWire,
+    // -- the symbol drag's five seams (`#918`) -----------------------
+    symbolAt: _symbolAt,
+    onSymbolDragBegin: _beginSymbolDrag,
+    onSymbolDragUpdate: _dragSymbolTo,
+    onSymbolDragCommit: _commitSymbolDrag,
+    onSymbolDragCancel: _cancelSymbolDrag,
   );
 
   SchematicViewFilter _filter = const SchematicViewFilter();
@@ -1916,6 +1924,208 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
   /// The body rect of every pinned symbol the last scene drew, for the
   /// badge layer. Read off the SAME set the layout honours.
+  // -- dragging a symbol (`#918`, DR-187 §11.186.4 and §11.186.8) ------
+
+  /// The symbol being dragged and where its body would land, or null.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE BODY RECT IS CAPTURED AT THE PRESS AND NEVER RE-READ
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A drag is the one gesture during which the sheet must not move, so
+  /// re-asking the scene for the symbol's box on every move would be
+  /// asking a question whose answer is deliberately frozen. Holding the
+  /// press-time rect also means the ghost is the symbol's real size even
+  /// if a rebuild lands mid-drag from another view.
+  ///
+  /// **`at` IS NULL UNTIL THE FIRST MOVE PAST THE SLOP**, which is what
+  /// keeps the ghost off an ordinary selection. Armed at the press with a
+  /// box, it drew a dashed outline exactly over the symbol on every click,
+  /// which is the flicker `_SchematicClickHandler.updateDrag`'s own
+  /// comment argues against; a test caught it saying so.
+  ({Uuid id, DBox from, DPt grabbedAt, DBox? at})? _symbolDrag;
+
+  /// Arms a drag on [id]. False hands the press back to the marquee.
+  ///
+  /// **A SYMBOL WITH NO DRAWN POSITION CANNOT BE DRAGGED**, and refusing
+  /// here rather than at the commit is what keeps the press useful: it
+  /// falls through to the band and then to the click, so the device is
+  /// still selected exactly as it was before this chapter.
+  bool _beginSymbolDrag(Uuid id, DPt sceneStart) {
+    final scene = _scene;
+    if (scene == null) return false;
+    if (!_heldPositions.containsKey(id)) return false;
+    final symbol = scene.symbols.where((s) => s.id == id.v).firstOrNull;
+    if (symbol == null) return false;
+    // THE PRESS, NOT `_lastScenePointer`. That field is fed by `onHover`
+    // and a touch never hovers, so a drag that grabbed from it would work
+    // on a mouse and refuse on a touchscreen.
+    final start = sceneStart;
+    setState(() {
+      _symbolDrag = (
+        id: id,
+        from: symbol.bodyRect,
+        grabbedAt: start,
+        // NO GHOST YET. The press may still turn out to be a click, and
+        // the outline is a claim that something is moving.
+        at: null,
+      );
+    });
+    return true;
+  }
+
+  /// Moves the ghost. THE POINTER CARRIES THE BOX BY ITS GRAB OFFSET, not
+  /// by its corner: a symbol grabbed in the middle that jumped its
+  /// top-left onto the cursor would leap on the first pixel of travel.
+  void _dragSymbolTo(DPt scenePoint) {
+    final drag = _symbolDrag;
+    if (drag == null) return;
+    final dx = scenePoint.x - drag.grabbedAt.x;
+    final dy = scenePoint.y - drag.grabbedAt.y;
+    setState(() {
+      _symbolDrag = (
+        id: drag.id,
+        from: drag.from,
+        grabbedAt: drag.grabbedAt,
+        at: DBox.fromCorners(
+          DPt(drag.from.left + dx, drag.from.top + dy),
+          DPt(drag.from.right + dx, drag.from.bottom + dy),
+        ),
+      );
+    });
+  }
+
+  /// Lands the symbol and pins it (CR-068).
+  ///
+  /// **THE STORED POSITION IS THE LAYOUT'S ANCHOR, NOT THE BODY'S CORNER.**
+  /// `_heldPositions` is what `layoutSugiyama` produced and what
+  /// `storedSymbolPositions` feeds back in, so the new position has to be
+  /// that same anchor moved by the drag. Deriving it from `bodyRect` would
+  /// put the symbol wherever the gap between the two happens to be, which
+  /// is a constant nobody stated and which a symbol with a taller header
+  /// would not share.
+  void _commitSymbolDrag(DPt scenePoint) {
+    final drag = _symbolDrag;
+    setState(() => _symbolDrag = null);
+    if (drag == null) return;
+    // ═══════════════════════════════════════════════════════════════════
+    // THE DROP SELECTS, AND THE PRESS DELIBERATELY DOES NOT
+    // ═══════════════════════════════════════════════════════════════════
+    // Something has to select the symbol, because `Ctrl+Shift+U` reads the
+    // SELECTION and the moment somebody wants it is right after a drag has
+    // pinned something. Doing it at the press is the conventional shape
+    // and is WRONG HERE: a press is not yet a gesture, and
+    // `schematic_gesture_infrastructure_test.dart` proves it in a case
+    // older than this chapter. A press whose canvas is unmounted under it
+    // is CANCELLED, never committed, so a press that had already selected
+    // would leave that selection behind after a gesture the product says
+    // did not happen. It failed exactly there, on `F` drawing four wires
+    // for a device nothing should have picked.
+    //
+    // AN ALREADY-SELECTED SYMBOL DOES NOT COLLAPSE THE SELECTION, on
+    // docs/04 §3.5's click model: a plain act replaces only when it lands
+    // on something that was not already in the set, so dragging one of
+    // five picked symbols keeps the other four.
+    if (!_selection.contains(drag.id)) {
+      _selection.apply(<Uuid>[drag.id], SelectMode.replace);
+    }
+    final anchor = _heldPositions[drag.id];
+    if (anchor == null) return;
+    final to = Pt(
+      anchor.gx + (scenePoint.x - drag.grabbedAt.x).round(),
+      anchor.gy + (scenePoint.y - drag.grabbedAt.y).round(),
+    );
+    if (to == anchor) return; // DR-156: a move to where it already is.
+    widget.controller.run(
+      SetSymbolPinnedCommand.move(
+        positions: {drag.id: to},
+        now: widget.controller.clock.nowUtc(),
+        actor: widget.controller.actor,
+      ),
+    );
+    final what = _doc.devices[drag.id]?.designator ?? drag.id.v;
+    _status.show('Moved $what. It is pinned now; Ctrl+Shift+U releases it.');
+  }
+
+  /// Drops the ghost with nothing written.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// THE FIELD IS CLEARED FIRST AND THE REBUILD IS ASKED FOR SECOND
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A cancel can arrive while the framework is LOCKED. The canvas subtree
+  /// is unmounted under a live pointer when an edit empties the sheet
+  /// (`schematic_gesture_infrastructure_test.dart`'s case 2c), the
+  /// detector's teardown ends the gesture, and all of that happens inside
+  /// `finalizeTree`, where `setState` throws *"cannot be marked as needing
+  /// to build because the framework is locked"*.
+  ///
+  /// **ASSIGNING THE FIELD IS ALWAYS SAFE** and is what the next build
+  /// reads. The `setState` is only needed for an ORDINARY cancel, where
+  /// nothing else has scheduled a rebuild; in the locked case a frame is
+  /// already being built and will read the null on its way past.
+  void _cancelSymbolDrag() {
+    if (_symbolDrag == null) return;
+    _symbolDrag = null;
+    if (!mounted) return;
+    if (WidgetsBinding.instance.schedulerPhase ==
+        SchedulerPhase.persistentCallbacks) {
+      return;
+    }
+    setState(() {});
+  }
+
+  /// The symbol body under [scenePoint], for the gesture's fourth branch.
+  ///
+  /// THE BODY ONLY, deliberately narrower than [_deviceAt]: that one falls
+  /// back to the layout's node box, which is padded and reaches into the
+  /// gaps between symbols. Selecting through that padding is generous and
+  /// right; MOVING through it would start a drag on a press that visibly
+  /// landed on empty paper, and empty paper is the marquee's.
+  Uuid? _symbolAt(DPt scenePoint) {
+    final scene = _scene;
+    if (scene == null) return null;
+    final body = hitTestRegions(_bodyRegionsFor(scene), scenePoint);
+    return body == null ? null : Uuid(body.entityId);
+  }
+
+  /// `Ctrl+Shift+U` (DR-187 §11.186.9): give the selection back to the
+  /// layout.
+  ///
+  /// THE COUNTERPART TO A DRAG AND NOT A SECOND `Ctrl+L`. A drag pins, and
+  /// `Tidy sheet` spares a pinned symbol by design (§11.186.3, CR-068), so
+  /// without this the act of arranging a sheet by hand is what removes it
+  /// from the reach of the one command that can lay it out again. `Ctrl+L`
+  /// remains the toggle; this is the explicit release, which is the
+  /// question somebody has after a drag rather than before one.
+  void _unpinSelection() {
+    final pinned = pinnedSymbolIds(_doc);
+    final ids = [
+      for (final id in _selection.ids)
+        if (pinned.contains(id)) id,
+    ];
+    if (ids.isEmpty) {
+      _status.show('Nothing pinned in the selection.');
+      return;
+    }
+    widget.controller.run(
+      SetSymbolPinnedCommand(
+        // UNPINNING READS ONLY THE KEYS (`lock_commands.dart`), so the
+        // positions handed over here are never stored. The symbol keeps
+        // where it is until a Tidy moves it, which is that command's own
+        // "does not jump when it is released".
+        positions: {
+          for (final id in ids) id: _heldPositions[id] ?? const Pt(0, 0),
+        },
+        pinned: false,
+        now: widget.controller.clock.nowUtc(),
+        actor: widget.controller.actor,
+      ),
+    );
+    final what = ids.length == 1
+        ? (_doc.devices[ids.single]?.designator ?? ids.single.v)
+        : '${ids.length} symbols';
+    _status.show('Unpinned $what. Tidy sheet can lay it out again.');
+  }
+
   List<DBox> _pinnedBodies() {
     final pinned = pinnedSymbolIds(_doc);
     if (pinned.isEmpty) return const <DBox>[];
@@ -4371,6 +4581,15 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
             () => _canvasKeysEnabled && _selection.isNotEmpty,
             (_) => _togglePinSelection(),
           ),
+          // `Ctrl+Shift+U` (DR-187 §11.186.9). Gated on the SELECTION and
+          // not on anything being pinned: a chord that fell through when
+          // the selection held nothing pinned would be a key that works
+          // sometimes, and the status line saying so is the feedback
+          // docs/04 §3.4 asks for instead of a silent no-op.
+          UnpinSelectionIntent: _GatedAction<UnpinSelectionIntent>(
+            () => _canvasKeysEnabled && _selection.isNotEmpty,
+            (_) => _unpinSelection(),
+          ),
           FocusSelectionIntent: _GatedAction<FocusSelectionIntent>(
             () => _canvasKeysEnabled,
             (_) => _toggleFocus(),
@@ -4641,6 +4860,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
                     viewport: _viewport,
                     color: scheme.primary,
                   ),
+                  // §11.186.8's ghost, UNDER the pin badges and over the
+                  // band, for the band's reason: a scene op would print.
+                  DragGhostLayer(
+                    box: _symbolDrag?.at,
+                    viewport: _viewport,
+                    color: scheme.primary,
+                  ),
                   // DR-186 §11.185.3's 📌, over the sheet and hit-testing
                   // nothing, for the band's reason: a scene op would print.
                   PinBadgeLayer(
@@ -4826,6 +5052,11 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     required this.onConnectCancel,
     required this.marquee,
     required this.onMarqueeCommit,
+    required this.symbolAt,
+    required this.onSymbolDragBegin,
+    required this.onSymbolDragUpdate,
+    required this.onSymbolDragCommit,
+    required this.onSymbolDragCancel,
   });
 
   final ViewportController viewport;
@@ -4878,6 +5109,29 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
 
   /// Applies whatever the band caught. The screen owns the selection.
   final VoidCallback onMarqueeCommit;
+
+  /// The symbol BODY under a press, or null (DR-187 §11.186.4, `#918`).
+  ///
+  /// ASKED LAST OF THE FOUR, and the order is the whole arbitration: a pin
+  /// sits ON a symbol and a pennant beside one, so either answering first
+  /// keeps the gesture it already had. What this steals is only from the
+  /// MARQUEE, which is the one gesture that was doing nothing useful on a
+  /// symbol body: a band begun on a symbol could only ever catch that
+  /// symbol and whatever it was dragged over.
+  final Uuid? Function(DPt scenePoint) symbolAt;
+
+  /// Arms a symbol drag; false hands the press back to the marquee, on
+  /// [onConnectBegin]'s contract exactly.
+  ///
+  /// **THE PRESS POINT IS PASSED AND NOT LOOKED UP.** The screen's
+  /// `_lastScenePointer` comes from `onHover`, and a touch or a stylus
+  /// never hovers: reading it here would make the gesture work on a mouse
+  /// and refuse silently on a touchscreen, which is AC-016 #23's rule
+  /// arrived at through the back door.
+  final bool Function(Uuid id, DPt sceneStart) onSymbolDragBegin;
+  final void Function(DPt scenePoint) onSymbolDragUpdate;
+  final void Function(DPt scenePoint) onSymbolDragCommit;
+  final VoidCallback onSymbolDragCancel;
 
   final bool Function() claim;
 
@@ -4935,6 +5189,22 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   /// gesture cannot change identity halfway through — see the class doc.
   bool _connecting = false;
 
+  /// The symbol this gesture is moving, or null (`#918`).
+  ///
+  /// ═════════════════════════════════════════════════════════════════
+  /// IT SHARES THE CANVAS CLAIM RATHER THAN TAKING A THIRD
+  /// ═════════════════════════════════════════════════════════════════
+  /// `_PointerGesture` exists to arbitrate between gestures that can be
+  /// LIVE AT THE SAME TIME on two pointers. A symbol drag and a marquee
+  /// are the two halves of one branch: [beginDrag] picks between them from
+  /// the press point and the loser never starts, so no press can ever hold
+  /// both and a third token would be a distinction with no case behind it.
+  /// A cable is different and does have its own, because a refused connect
+  /// releases a claim while a click is still live.
+  ///
+  /// Set once, beside [_connecting], for the same reason.
+  Uuid? _movingSymbol;
+
   @override
   void beginDrag(
     DPt sceneStart,
@@ -4966,9 +5236,20 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     _start = sceneStart;
     _travelPx = 0;
     _connecting = false;
+    _movingSymbol = null;
 
     if (!wantsConnect) {
-      // NEITHER A PIN NOR A PENNANT, so this press is a click or a band.
+      // NEITHER A PIN NOR A PENNANT. A press on a symbol BODY moves it
+      // (`#918`); anywhere else is a click or a band.
+      final symbol = symbolAt(sceneStart);
+      if (symbol != null && onSymbolDragBegin(symbol, sceneStart)) {
+        // NO BAND IS ARMED. A marquee begun here would have to be
+        // cancelled on the first move, and a controller that is armed and
+        // then abandoned is exactly the state `commitDrag`'s own comment
+        // records the rack canvas inheriting.
+        _movingSymbol = symbol;
+        return;
+      }
       // Arming here rather than at the first move keeps the band's origin
       // exactly where the pointer went down; `MarqueeController.begin`
       // gives it no extent until something moves, so a click still draws
@@ -5023,6 +5304,15 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
       onConnectUpdate(sceneCurrent);
       return;
     }
+    if (_movingSymbol != null) {
+      // THE SLOP APPLIES HERE AND NOT TO THE CABLE, and the asymmetry is
+      // the same one the band has: a press on a symbol is USUALLY a
+      // click, so a ghost that appeared on a 1 px wobble would flicker
+      // under every selection. A cable is committed to being a cable by
+      // where it started and has nothing to be mistaken for.
+      if (_travelPx > slopPx) onSymbolDragUpdate(sceneCurrent);
+      return;
+    }
     // THE BAND WIDENS WITH THE POINTER. It has no slop of its own for the
     // reason stated above: `MarqueeController` withholds the extent until
     // the first update, so a press that never moves never shows one.
@@ -5039,6 +5329,7 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     final start = _start;
     final travelled = _travelPx;
     final connecting = _connecting;
+    final moving = _movingSymbol;
     // BEFORE the outcome, so the claim's life is exactly the pointer's.
     // `CanvasIntentDetector` adopts any deferred pointer strictly after
     // this method returns — so a second finger inherits a canvas that is
@@ -5051,6 +5342,20 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
       // copies of it is how a tap becomes a cable on one path and a click
       // on the other.
       onConnectCommit(sceneEnd, moved: travelled > slopPx);
+      return;
+    }
+    if (moving != null) {
+      // UNDER THE SLOP IT WAS A CLICK, which is the behaviour a press on a
+      // symbol has always had and which `#918` must not take away: the
+      // commonest thing anybody does to a symbol is select it. The drag
+      // is cancelled rather than committed at zero distance, so no undo
+      // entry is made for a selection.
+      if (travelled > slopPx) {
+        onSymbolDragCommit(sceneEnd);
+      } else {
+        onSymbolDragCancel();
+        onClick(sceneEnd);
+      }
       return;
     }
     if (travelled > slopPx) {
@@ -5071,12 +5376,18 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
   void cancel({required CanvasGestureToken gesture}) {
     if (gesture != _owned) return; // see `commitDrag`.
     final connecting = _connecting;
+    final moving = _movingSymbol;
     _reset();
     marquee.cancel();
     // A POINTER-CANCEL, NOT A RELEASE: nothing was dropped anywhere, so
     // there is nothing to evaluate and nothing to write. docs/05 §7's
     // cancel, reached through the third of its doors.
     if (connecting) onConnectCancel();
+    // THE GHOST HAS TO GO EVEN THOUGH NOTHING IS WRITTEN. It is screen
+    // state rather than document state, so unlike the cable there is no
+    // command to decline: a cancel that only skipped the write would
+    // leave a dashed rectangle on the sheet with no pointer under it.
+    if (moving != null) onSymbolDragCancel();
   }
 
   void _reset() {
@@ -5086,9 +5397,12 @@ final class _SchematicClickHandler implements CanvasIntentHandler {
     if (_connecting) {
       releaseConnect();
     } else {
+      // THE SYMBOL DRAG COMES BACK THROUGH HERE, because it took the
+      // canvas claim and not the connect one. See [_movingSymbol].
       release();
     }
     _connecting = false;
+    _movingSymbol = null;
   }
 }
 

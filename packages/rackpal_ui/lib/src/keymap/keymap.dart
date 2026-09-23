@@ -223,6 +223,7 @@ enum KeyBindingId {
   focusSelection,
   schematicCancel,
   lockSelectionSchematic,
+  unpinSelection,
   beginWire,
   commitWire,
   toggleBankExpansion,
@@ -503,6 +504,23 @@ final class PlanCancelIntent extends Intent {
 /// unlock from its own selection (§11.185.2's toggle rule).
 final class ToggleLockIntent extends Intent {
   const ToggleLockIntent();
+}
+
+/// Give the selected symbols back to the layout (`#918`, DR-187
+/// §11.186.9).
+///
+/// NOT A SECOND `ToggleLockIntent`, and the difference is the question
+/// each one answers. A toggle answers *"pin this"* and flips whatever it
+/// finds, which is right when somebody is deciding. This answers *"give
+/// this back"*, which is what somebody wants AFTER a drag has pinned
+/// things they did not think of as pinned: a toggle over a mixed
+/// selection would pin the rest instead.
+///
+/// SCHEMATIC ONLY. docs/04 gives the rack no unpin, because a rack
+/// device's lock is set deliberately and never as a side effect of
+/// moving it.
+final class UnpinSelectionIntent extends Intent {
+  const UnpinSelectionIntent();
 }
 
 /// Turn the open plan a quarter (`#911`, DR-184 §11.183.4).
@@ -1449,6 +1467,21 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     note:
         'On the schematic a lock is SheetItem.pinned: the symbol is pinned '
         'where the layout put it, and auto-layout leaves it there.',
+  ),
+  KeyBinding(
+    id: KeyBindingId.unpinSelection,
+    scope: KeyScope.schematic,
+    trigger: LogicalKeyboardKey.keyU,
+    primary: true,
+    shift: true,
+    label: 'Unpin the selection',
+    intent: UnpinSelectionIntent(),
+    source: 'docs/05 §10 · CR-068 · DR-187 §11.186.9',
+    note:
+        'The counterpart to a drag. Any manual move pins (CR-068) and Tidy '
+        'sheet spares a pinned symbol, so without this the act of '
+        'arranging a sheet by hand is what removes it from the reach of '
+        'the one command that lays it out again.',
   ),
 
   // ── the plan (PLAN-E/5, DR-143 §11.142.6) ────────────────────────────
