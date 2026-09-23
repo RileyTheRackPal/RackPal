@@ -64,6 +64,7 @@ folder, not as a product.
 | Platform | **Windows only.** macOS is planned and not started |
 | Delivery | A **portable folder**. There is no installer, no auto-update, no crash reporter |
 | Your data | Projects are ordinary files you choose the location of. Nothing is uploaded anywhere. There are no accounts and no telemetry |
+| Licence | **AGPLv3 or later**, with the device catalog under CC0. The output exception, under which the drawings you produce are your own work, is drafted and **not yet in force** pending legal review. `Help` ▸ `About RackPal…` says so too |
 | Stability | The core editing paths have been exercised hard. The edges have not |
 
 **§20.8 lists what is not built.** Please read it before you decide something
@@ -95,6 +96,8 @@ and needs no unblocking.**
 ### Running it
 
 Extract anywhere you can write to, and run `rackpal.exe` from the folder.
+`Help` ▸ `About RackPal…` tells you which build you have, and is worth
+noting before you start so a report can carry it.
 
 It is a portable build, which means it keeps its settings beside itself rather
 than in your user profile. You can put it on a stick and carry it between
@@ -373,9 +376,9 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
   legend, the exceptions sheet, the pull sheet, the termination schedule, the
   unused home runs sheet and the pinout details. Eight of the twelve specified
   sheets are absent; §20.7 lists the four you do get.
-- **No version number is shown anywhere in the application.** It is stamped
-  into every project file you save, but you cannot read it off the screen,
-  which is awkward when reporting a problem. Quote the folder you were given.
+- **Nothing to report here any more.** This list carried *"no version number is
+  shown anywhere"* until 2026-09-23. `Help` ▸ `About RackPal…` now shows it,
+  alongside the licence and the third-party licence page.
 
 ### Built but narrower than it looks
 
@@ -411,8 +414,9 @@ What makes a report useful here, in rough order:
    occupant" tells us more than "the elevation is wrong".
 3. **Whether it is in §20.8.** If you are not sure, say so and report it
    anyway; a gap you hit and could not identify is itself worth knowing about.
-4. **Which folder you were given**, since the application does not display its
-   own version.
+4. **The version**, from `Help` ▸ `About RackPal…`. It is the same number
+   stamped into every project file you save, so it identifies the build
+   exactly.
 
 **Disagreements about the trade are the most valuable thing you can send.**
 The validation rules encode opinions about what is and is not a sane cable run,

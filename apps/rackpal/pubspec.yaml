@@ -199,6 +199,21 @@ flutter:
         - asset: assets/fonts/SpaceMono-Bold.ttf
           weight: 700
   assets:
+    # THE APPLICATION'S OWN LICENCE, so `showLicensePage` lists RackPal
+    # beside its dependencies rather than listing everyone but the program
+    # the person is running (DR-036 11.35.4: an exception nobody can find
+    # is not one).
+    #
+    # A COPY, AND IT IS GATED. `../../LICENSE` was tried first and does
+    # NOT work: Flutter asset paths cannot escape the package directory
+    # and `rootBundle.loadString` throws, which a probe found rather than
+    # a review. So the root file is copied here and
+    # `test/session/license_asset_parity_test.dart` asserts the two are
+    # byte-identical. **That gate is not bureaucracy**: if they drift, the
+    # application displays a different licence from the one the repository
+    # grants, which is the one kind of stale copy in this corpus that is a
+    # legal problem rather than a wrong number.
+    - assets/LICENSE
     - assets/fonts/Jost-Regular.ttf
     - assets/fonts/Jost-Medium.ttf
     - assets/fonts/SpaceMono-Regular.ttf
