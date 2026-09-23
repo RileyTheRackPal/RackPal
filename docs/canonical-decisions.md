@@ -22057,6 +22057,73 @@ note somebody has to open.
 
 ---
 
+### 11.187 DR-188 · RackPal is CAD-lite, and DXF interchange opens v1.3
+
+**The question.** From the user, 2026-09-23, on reading docs/20's claim that the product *"is not a
+CAD package"*: *"I think we're selling ourselves a bit short by not calling it a CAD package;
+Granted it is representative of reality rather than strictly adhering to it, so I think CAD-Lite is
+a reasonable (even if made up) term to call the product."*
+
+**11.187.1 RULED: THE PRODUCT IS CAD-LITE.** Settled by the user, whose reason is recorded in their
+own words because it is trade knowledge rather than a product opinion: *"It's also nearly impossible
+in this industry to draw precise technical drawings that won't get altered and/or ignored by the
+installers for one reason or another. TV's get shifted because of furniture, wiring gets re-routed
+or a box gets moved because an electrician took the space first, etc. It'd be unbelievably tedious
+to document all of those changes, so the trade-off in precision is negligeable to the workflow."*
+
+The precision is therefore spent where it survives contact with a site and withheld where it does
+not: **calibrated floorplans, exact elevations (RU is discrete and a device fits or it does not),
+and cable footage**; representative everywhere else, which is symbol positions, routing paths and
+plan pin placement.
+
+**11.187.2 THE DESCRIPTION THIS REPLACES WAS THE AUTHOR'S AND WAS NEVER MEASURED.** docs/20 §20.1
+said *"it is not a CAD package"*, written to manage a tester's expectations downward and checked
+against nothing. It undersold a tool that calibrates plans to real-world scale, draws exact
+elevations and resolves cable footage through four ranked sources. Recorded because this ruling
+family has now produced four clauses that were the author's sentences rather than the user's
+choices, and three of them were refuted by their own build.
+
+**11.187.3 RULED: v1.3 IS CREATED AS A RELEASE BAND, AND DXF INTERCHANGE OPENS IT.** A §8.3
+amendment, and the first band added since the roadmap was written. roadmap §2 carried four bands
+(v1, v1.1, v1.2, v2) and the board's Sagas mirror them; **v1.3 did not exist and is created here**,
+between v1.2 and v2, because §2.4 rules v2 to be *"the next product decision, not the next
+release"* and an interchange export is neither a fast follow nor a new product.
+
+**11.187.4 RULED: DXF, NOT DWG.** Settled by the user from three shapes. DXF is Autodesk's
+documented interchange format and every CAD tool opens it; docs/08 §9 estimates it at ~400 lines of
+new geometry mapping, which is plausible because `DiagramCanvas` is an abstract interface with two
+production backends already (`bounds_canvas`, `pdf_canvas`) and this is a third, exactly as CR-086
+intends. **Native DWG was declined on a licence collision rather than on cost**: the open writer is
+GPL-3.0, which the licence ruling accommodates, but the commercial route (Open Design Alliance) is
+a paid membership and is GPL-incompatible, so native DWG would put the feature in conflict with
+this project's own licence. **This overrules docs/08 §9's `not planned`** (§12.39).
+
+**11.187.5 RULED: THE DEVICE LOCATION PLAN IS IN. RACK ELEVATIONS ARE NOT YET RULED, AND THE
+BLOCKER IS NOT WHAT IT LOOKED LIKE.** The plan is the drawing another trade actually wants and the
+only sheet whose geometry is already in real-world units. The user raised elevations as *"a
+maybe"*, for a reason recorded in their terms: *"We've encountered situations too many times where
+a cabinet was too small for a pull-out rack, or a closet was shaved down to make space for a mini
+bar and the rack no longer fit."*
+
+They expected this to need *"a future schema of the rack templates"* carrying physical dimensions.
+**MEASURED: that schema exists.** `Rack` declares `overallWidth`, `overallDepth`, `overallHeight`,
+`ownWeight`, `hasFrontDoor`, `hasRearDoor`, `frontDoorClearance` and `rearDoorClearance`, and they
+serialize. **Five of the six appear only in `rack.dart` and `json_codec.dart`: no writer, no
+reader.** Only `ownWeight` is read, by the rack inspector. So the cabinetmaker deliverable is
+blocked on somewhere to type the numbers, not on a model change, and that is a smaller and
+independently useful piece of work than the export it gates. **This is the fourth instance of the
+`Placement.locked` shape** (§11.185.0): a field with no writer is a rule nobody is following.
+
+**11.187.6 Scope.** **A scope change**, per §8.3, carried in its own commit. Creates roadmap §2.4
+for v1.3 and renumbers §2.4 to §2.7.
+
+**What this does not rule.** Whether rack elevations join the DXF export, which waits on
+§11.187.5's writer. Whether the product should CHECK a rack against a room's dimensions rather than
+only draw it, which is the thing that would have caught the shaved closet before anybody built it.
+DWG, permanently or otherwise. What layer names, units and block structure the DXF uses.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -22727,6 +22794,13 @@ nothing but locations deleted. A plan that loses its floor is still a plan.
 **NOT superseded:** §11.11.4's own subject, that creating a link does not re-lay-out the sheet. That
 rule stands and its `holdAt` mechanism stays; what changes is that the sheet now also holds across a
 close and a reopen.
+
+
+### 12.39 Superseded by DR-188 (DXF interchange opens v1.3)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **docs/08 §9**, the non-PDF export table | `DXF` is listed at *"~400 lines, new geometry mapping"*, value **low**, ships **not planned**. | **DXF ships in v1.3** (§11.187.4). The cost estimate is undisturbed and is in fact the reason the change is cheap: `DiagramCanvas` already has two production backends and this is a third. What moved is the VALUE, and it moved on trade knowledge the table did not have: an interchange file is what another trade x-refs into its own set, and the device location plan is the one sheet whose geometry is already in real-world units. **`DWG` is not what ships**, and is declined on a licence collision rather than on cost. |
 
 
 ## 13. Resolved §10 questions
