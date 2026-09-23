@@ -61,6 +61,20 @@ final class TxnScope<A> {
     if (changed) _children.add(c);
     return changed;
   }
+
+  /// What everything added so far touches, so a consequence hook can ask
+  /// whether this edit is one it cares about (DR-187 §11.186.2).
+  ///
+  /// Folded from the children rather than recorded as it goes, because a
+  /// second accumulator is a second copy of the same fact and `_commit`
+  /// already folds this list its own way.
+  EpochMask get touches {
+    var m = EpochMask.none;
+    for (final c in _children) {
+      m |= c.touches ?? EpochMask.none;
+    }
+    return m;
+  }
 }
 
 /// Accumulates one in-progress transaction's children and before/after
@@ -212,6 +226,17 @@ class DocumentController {
     _open = b;
     try {
       final result = body(TxnScope<RackDocument>(b.children, doc));
+      // AFTER THE BODY AND INSIDE THE ENTRY (DR-187 §11.186.2). See
+      // [addConsequence]: last, so `children.first` still names the act,
+      // and only over an edit that changed something, so a refusal does
+      // not acquire a consequence and become history.
+      if (b.children.isNotEmpty) {
+        // A COPY, so a hook that removes itself does not mutate the list
+        // being walked.
+        for (final hook in List.of(_consequences)) {
+          hook(TxnScope<RackDocument>(b.children, doc));
+        }
+      }
       _commit(b);
       return result;
     } catch (e, st) {
@@ -220,6 +245,45 @@ class DocumentController {
     } finally {
       _open = null;
     }
+  }
+
+  final List<void Function(TxnScope<RackDocument> tx)> _consequences = [];
+
+  /// Registers [hook] to run at the end of every top-level transaction
+  /// that changed something, with that transaction STILL OPEN, and
+  /// returns the function that removes it again.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A CONSEQUENCE IS NOT A SECOND EDIT, AND THE UNDO STACK IS WHERE THE
+  /// DIFFERENCE SHOWS
+  /// ═══════════════════════════════════════════════════════════════════
+  /// DR-187 §11.186.2 needs the schematic's symbol positions written by
+  /// the edit that would otherwise re-flow them. Written as a second
+  /// `run()` afterwards, that lands as a second undo entry, and the first
+  /// `Ctrl+Z` then takes back the arrangement while the edit survives:
+  /// **two undos to delete one device**, against the Edit menu's own
+  /// promise that *"ONE undo takes back the device AND the cable"*. Two
+  /// tests written years before this hook say so in those words, and both
+  /// failed on the first build of the freeze that did it the other way.
+  ///
+  /// **THE HOOK RUNS LAST AND ITS COMMAND GOES IN AS A CHILD**, so:
+  ///
+  ///  * one undo reverts the edit and its consequence together, landing
+  ///    on exactly the document that existed before either;
+  ///  * `children.first` still names the entry, so the Edit menu says
+  ///    "Undo Delete device" and not "Undo Arrange symbols";
+  ///  * a refusal acquires nothing, because [TxnScope.add] drops a
+  ///    command that changed nothing and the guard skips an empty body.
+  ///
+  /// **IT IS NOT A LISTENER.** Epoch listeners fire after the commit, by
+  /// which time the entry is sealed and the only way in is a second one.
+  /// A hook here is the one place a caller can add to an entry that is
+  /// still being built.
+  void Function() addConsequence(
+    void Function(TxnScope<RackDocument> tx) hook,
+  ) {
+    _consequences.add(hook);
+    return () => _consequences.remove(hook);
   }
 
   void _commit(_TxnBuilder b) {

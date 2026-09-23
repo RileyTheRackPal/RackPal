@@ -1121,20 +1121,29 @@ LayerAnchor _anchorFor(
   return LayerAnchor.none;
 }
 
-/// The pinned symbol positions on the document's schematic sheet.
+/// The stored symbol positions on the document's schematic sheet.
 ///
-/// ONLY `pinned` ITEMS ARE READ. Every `SheetItem` carries a `position`,
-/// but CR-068 makes only a pinned one immovable — an unpinned item's stored
-/// position is where auto-layout last put it, and honouring it would freeze
-/// the first layout the document ever received and make every recompute a
-/// no-op.
+/// ═══════════════════════════════════════════════════════════════════════
+/// EVERY STORED POSITION IS READ NOW, PINNED OR NOT (DR-187 §11.186.3)
+/// ═══════════════════════════════════════════════════════════════════════
+/// This said *"ONLY `pinned` ITEMS ARE READ ... honouring an unpinned one
+/// would freeze the first layout the document ever received and make every
+/// recompute a no-op"*, and that was right until the user asked for
+/// exactly that freeze: a sheet whose symbols stop moving when a device is
+/// added. **The freeze is the feature.** What the two states still mean is
+/// what `Tidy sheet` does with them: it re-flows an unpinned symbol and
+/// clears its stored position, and it never touches a pinned one (CR-068).
+///
+/// Nothing WRITES an unpinned position until the first edit that would
+/// re-flow the sheet (§11.186.2), so a document nobody has edited still has
+/// no items and still lays out from scratch.
 ///
 /// The schematic sheet is resolved as the lowest-id `SheetKind.schematic`
 /// entry. There is exactly one in practice (CR-073, DR-004, AC-037) and
 /// `Sheet` deliberately does not enforce that structurally, so the tie-break
 /// is stated rather than left to map order.
-/// [_pinnedPositions] widened by [holdAt] — DR-011.4's freeze, expressed in
-/// the mechanism the layout already has.
+/// [storedSymbolPositions] widened by [holdAt] — DR-011.4's freeze,
+/// expressed in the mechanism the layout already has.
 ///
 /// ═══════════════════════════════════════════════════════════════════════
 /// A HOLD IS NOT A PIN, AND THE DIFFERENCE IS WHERE IT LIVES
@@ -1144,28 +1153,32 @@ LayerAnchor _anchorFor(
 /// caller's own memory of where this very function put those symbols last
 /// time — it is never written anywhere and never leaves the session.
 ///
-/// That distinction is the whole of DR-011.4's argument. Of the three
-/// shapes considered for "creating a link must not move every symbol",
-/// pinning each symbol on first layout was rejected precisely because it
-/// would write a `SheetItem` per device into every saved file and grow
-/// [CR-117]'s byte-exact surface to carry UI state. Feeding the previous
-/// positions back in as a LAYOUT INPUT gets the identical geometry and
-/// adds nothing to the document — `write(read(bytes)) == bytes` cannot
-/// notice this parameter exists.
+/// That distinction was the whole of DR-011.4's argument, and **DR-187
+/// §11.186.1 has since overruled its conclusion** (canon §12.38): the
+/// positions ARE written to the document now, because a session-only hold
+/// loses the arrangement when the project is reopened. The hold remains,
+/// and is still never written anywhere: it is what keeps the sheet still
+/// between the edit and the write, and what a document with no items at all
+/// lays out from.
 ///
-/// THE DOCUMENT WINS ON A CONFLICT. A pinned symbol is a decision the user
-/// made and saved; a held position is the last thing that happened to be on
-/// screen. Where both name a device, the pin governs — which also means a
-/// caller cannot accidentally strand a symbol away from the place its own
-/// document says it belongs.
+/// THE DOCUMENT WINS ON A CONFLICT. A stored position is a decision the
+/// document records; a held position is the last thing that happened to be
+/// on screen. Where both name a device, the document governs, which also
+/// means a caller cannot accidentally strand a symbol away from the place
+/// its own file says it belongs.
 Map<Uuid, Pt> _holdOrPin(RackDocument doc, Map<Uuid, Pt> holdAt) {
-  final pinned = _pinnedPositions(doc);
-  if (holdAt.isEmpty) return pinned;
-  if (pinned.isEmpty) return holdAt;
-  return <Uuid, Pt>{...holdAt, ...pinned};
+  final stored = storedSymbolPositions(doc);
+  if (holdAt.isEmpty) return stored;
+  if (stored.isEmpty) return holdAt;
+  return <Uuid, Pt>{...holdAt, ...stored};
 }
 
-Map<Uuid, Pt> _pinnedPositions(RackDocument doc) {
+/// Every position the schematic sheet stores, pinned or not
+/// (DR-187 §11.186.3).
+///
+/// PUBLIC, because the freeze that writes them has to know which symbols
+/// already have one: it records the rest and leaves these alone.
+Map<Uuid, Pt> storedSymbolPositions(RackDocument doc) {
   Sheet? chosen;
   for (final sheet in doc.sheets.values) {
     if (sheet.kind != SheetKind.schematic) continue;
@@ -1179,9 +1192,8 @@ Map<Uuid, Pt> _pinnedPositions(RackDocument doc) {
     ..sort((a, b) => a.id.v.compareTo(b.id.v));
   final out = <Uuid, Pt>{};
   for (final item in items) {
-    if (!item.pinned) continue;
-    // First pinned item wins if a document somehow carries two for one
-    // device: a stated rule beats whichever the map happened to yield.
+    // First item wins if a document somehow carries two for one device: a
+    // stated rule beats whichever the map happened to yield.
     out.putIfAbsent(item.targetId, () => item.position);
   }
   return out;

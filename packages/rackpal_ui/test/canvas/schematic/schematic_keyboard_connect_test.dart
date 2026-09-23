@@ -180,7 +180,34 @@ void main() {
     final count = steps ?? wiredRunOn(designator);
     await tester.tapAt(toScreen(tester, centreOf(designator)));
     await tester.pumpAndSettle();
-    for (var i = 0; i <= count; i++) {
+    // ═══════════════════════════════════════════════════════════════════
+    // `W` THEN `Esc` IS HOW A CARET IS PLACED SINCE `#919`
+    // ═══════════════════════════════════════════════════════════════════
+    // This used to be an arrow press, which SEEDED a caret when none
+    // existed. DR-187 §11.186.10 gave the arrows their second job: with no
+    // caret and a symbol selected they nudge the symbol, so the seeding
+    // press would now move the drawing instead.
+    //
+    // `W` seeds a caret on the selected device AND arms from it in one
+    // press (`_beginWire`), and `Esc` cancels the wire while LEAVING the
+    // caret, which the "Esc cancels the WIRE first" case below already
+    // relies on. So the caret is placed with nothing written, and the
+    // walk below is unchanged apart from losing the press that used to do
+    // the seeding.
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyW);
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    // AND THE TAP IS REPEATED, because `Esc` is a LADDER. `_beginWire`
+    // seeds the caret whether or not the arming then succeeds, and the
+    // fixture wires its first pins, so `W` on some devices refuses and the
+    // `Esc` above falls to the next rung and clears the SELECTION instead
+    // of a wire. The caret survives either way; this puts the selection
+    // back, and a selection change is ruled not to move an existing caret
+    // (case 5 below).
+    await tester.tapAt(toScreen(tester, centreOf(designator)));
+    await tester.pumpAndSettle();
+    for (var i = 0; i < count; i++) {
       await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
       await tester.pumpAndSettle();
     }

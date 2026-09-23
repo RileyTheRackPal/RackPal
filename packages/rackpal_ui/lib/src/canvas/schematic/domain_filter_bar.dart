@@ -24,6 +24,22 @@
 // document rather than as a filter count.
 //
 // ═════════════════════════════════════════════════════════════════════
+// ONE BUTTON HERE IS A DOCUMENT EDIT, AND IT IS FENCED OFF
+// ═════════════════════════════════════════════════════════════════════
+// DR-187 §11.186.7 puts `Tidy sheet` on this bar because the bar is the
+// schematic's only existing chrome, and docs/05 §5's context menu, where
+// the spec already lists it, is unbuilt. Everything else on this strip
+// changes what is DRAWN and nothing else; `Tidy sheet` changes the
+// document and lands on the undo stack.
+//
+// **THAT OBJECTION IS ANSWERED IN THE WIDGET RATHER THAN ARGUED AWAY.**
+// It sits after a divider, apart from `All` and `None`; it is DISABLED
+// when nothing would re-flow, so it can never be the button that did
+// nothing; and it asks first, with the count. When `#918`'s drag gives
+// the context menu its other reasons to exist, this moves there, and the
+// count and the confirm travel with it.
+//
+// ═════════════════════════════════════════════════════════════════════
 // THE GLYPH IS DRAWN BESIDE THE SWATCH, AND THAT IS NOT DECORATION
 // ═════════════════════════════════════════════════════════════════════
 // docs/05 §6.1: hue is NEVER used alone, because no categorical palette is
@@ -86,6 +102,8 @@ final class DomainFilterBar extends StatelessWidget {
     required this.onToggle,
     required this.onShowAll,
     required this.onShowNone,
+    required this.onTidySheet,
+    required this.tidyCount,
     this.headline,
     super.key,
   });
@@ -100,6 +118,15 @@ final class DomainFilterBar extends StatelessWidget {
 
   final VoidCallback onShowAll;
   final VoidCallback onShowNone;
+
+  /// DR-187 §11.186.7's button. See the file header for why a document
+  /// edit is on a bar of view toggles and what is done about it.
+  final VoidCallback onTidySheet;
+
+  /// How many symbols a tidy would move, from `TidySheetCommand
+  /// .wouldReflow`. **Zero disables the button**, which is the difference
+  /// between a control that is unavailable and one that did nothing.
+  final int tidyCount;
 
   /// §11.4's HUD chip — `Focus: AVR-1 · 1 hop · 14 devices, 31 cables` —
   /// generalised to all three of §11.1.1's triggers. Null when the sheet is
@@ -145,6 +172,28 @@ final class DomainFilterBar extends StatelessWidget {
               ),
             TextButton(onPressed: onShowAll, child: const Text('All')),
             TextButton(onPressed: onShowNone, child: const Text('None')),
+            // THE FENCE, and it is the whole of what separates a view
+            // toggle from an edit on this strip.
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4),
+              child: SizedBox(
+                height: 20,
+                child: VerticalDivider(width: 1, thickness: 1),
+              ),
+            ),
+            Tooltip(
+              message: tidyCount == 0
+                  // NOT "nothing to tidy", which reads as a failure. The
+                  // sheet being already laid out is the good state.
+                  ? 'Every symbol is where the layout put it, or pinned'
+                  : tidyCount == 1
+                  ? 'Lay out 1 unpinned symbol again'
+                  : 'Lay out $tidyCount unpinned symbols again',
+              child: TextButton(
+                onPressed: tidyCount == 0 ? null : onTidySheet,
+                child: const Text('Tidy sheet'),
+              ),
+            ),
           ],
         ),
       ),

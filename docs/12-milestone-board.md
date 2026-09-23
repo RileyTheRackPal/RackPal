@@ -12606,6 +12606,238 @@ rotation or rename, which bump the same epoch and have nothing to do with that c
 
 **Commits** (§8.8): the ruling `4e944d20`, the implementation `2bbe532a`. These records follow.
 
+#### 5.9.68 `#914` DR-187, the schematic holds its layout
+
+##### 5.9.68.1 Three measurements, and the third changed the plan
+
+Probed on `schematic_scene_test.dart`'s fixture before anything was built:
+
+| Probe | Result |
+|---|---|
+| Add two devices to a laid-out sheet | **The symbols already on it move.** The report, reproduced. |
+| Pin a symbol where it already stands | **Nothing moves.** A fixed node is handed the answer the layout was going to give it. |
+| Pin it 24 by 8 grid units away | **All five neighbours move**, because a fixed node stops relaxing. |
+| Fix every existing symbol, then add a device | **The newcomer lands exactly on top of one of them.** |
+
+The fourth line is why §11.186.5 is a clause at all: freezing the sheet works, and placing the
+newcomer does not come free.
+
+**THE FIRST HYPOTHESIS ABOUT IT WAS WRONG AND A PROBE SAID SO.** The guess was a cross-layer
+collision. Both nodes were in layer 2: `_separate` was forcing the newcomer into a gap between two
+fixed nodes too small to hold it. `_clearOfFixed` runs at the end of `_assignCoordinates` and moves
+each unfixed node clear of every fixed one in its row. It is a no-op when nothing is fixed, so no
+existing layout moves.
+
+##### 5.9.68.2 THE RULING'S OWN CLAUSE WAS THE DEFECT
+
+§11.186.2 said the freeze *"lands as its own undo entry beside the edit"*. Built exactly that way it
+worked, and the suite went red in two files that have nothing to do with the schematic's layout:
+
+| Test | What it asserts |
+|---|---|
+| `schematic_remedy_test.dart` | *"ONE undo takes back the device AND the cable"* |
+| `schematic_remedy_dr128_test.dart` | *"one undo takes back the converter and both cables"* |
+
+Both predate DR-187 and both are the Edit menu's standing promise. With a freeze pushed on top of
+every edit, the first `Ctrl+Z` took back the ARRANGEMENT and left the edit: the sheet visibly
+scrambled, the device stayed deleted, and undoing one delete cost two presses. **That is the
+behaviour DR-187 exists to abolish, reintroduced by the clause meant to deliver it.**
+
+§11.186.2.1 replaces it. The freeze is a CHILD of the edit's own undo entry, through
+`DocumentController.addConsequence`: a hook that runs at the tail of a transaction that changed
+something, with the entry still open. **An epoch listener structurally cannot do this**, because
+epochs bump inside `_commit` after the entry is sealed, so anything a listener runs is necessarily a
+second entry.
+
+One undo now reverts both and lands on exactly the document that existed before either, which
+re-flows to the layout that was frozen, so the arrangement is right either way. `_commit` names a
+transaction after its FIRST child (DR-156 §11.155.2), so the menu still says "Undo Delete device".
+
+##### 5.9.68.3 Evidence
+
+- **The control is half the UI file's argument.** A test that deletes a device and asserts the
+  survivors did not move proves nothing until the same deletion has been measured MOVING them on an
+  unfrozen document. `schematic_freeze_layout_test.dart` measures that first and pairs every claim
+  against it.
+- **Opening the Schematic writes nothing**, which is the half §11.186.2 is strict about, and it has
+  its own case.
+- **Byte behaviour is asserted twice**: undo takes the sheet away so a document that was never frozen
+  is byte-identical to one that froze and undid, and an undo over a sheet that ALREADY EXISTED keeps
+  the sheet and removes only what the command added.
+- **`TidySheetCommand` WAS BUILT AND REACHABLE FROM NOBODY**, and the `#872` gate caught it within
+  the hour. It was exempted against `#920` rather than quietly wired, because WHERE `Tidy sheet` is
+  pressed from is a UI question §11.186.6 left open in terms. **The user settled it on 2026-09-22**
+  (§11.186.7) and §5.9.68.4 is the row's retirement: the gate went green by the command acquiring a
+  route from a person, which is the only way a row on that list is supposed to leave it.
+- **`RemoveDeviceCommand.apply` RETURNS `true` WHETHER OR NOT IT REMOVED ANYTHING**, found while
+  looking for a command that genuinely refuses. It defeats DR-156's refusal path: deleting a device
+  that is not there makes an undo entry. Filed for a census of the rest; a purpose-built
+  `_RefusingCommand` stands in for the test that needed one.
+- **WHAT IS NOT ASSERTED, SAID OUT LOUD**: the freeze rides on a MOUNTED schematic canvas, because
+  only a laid-out canvas knows where the symbols are. An edit made in a session where the Schematic
+  was never opened records nothing, and no case covers that path because there is no arrangement yet
+  to preserve. The next edit after it has been looked at freezes what was seen.
+- **Floors**: `rackpal_core` 4863 to 4884, `rackpal_ui` 1966 to 1972, measured.
+
+##### 5.9.68.4 `Tidy sheet`, and the one document edit on a bar of view toggles
+
+Settled by the user on 2026-09-22 over the two hosts §11.186.6 left open: **the domain filter bar
+now, the empty-space context menu when `#918`'s drag lands.** The bar is the schematic's only
+existing chrome, so the way OUT of the freeze ships in the same change as the freeze rather than
+waiting on a surface nobody has built, and docs/05 §5 already lists `Tidy sheet` on that context
+menu, so the move later is a move and not a redesign.
+
+**THE OBJECTION IS REAL AND IS ANSWERED IN THE WIDGET.** Everything else on that strip changes what
+is DRAWN; this changes the document and lands on the undo stack. Three things keep them apart, and
+all three travel with the button when it moves:
+
+| Worry | What was built |
+|---|---|
+| It reads as another filter | A divider separates it from `All`/`None` |
+| It is the button that did nothing | **DISABLED when `wouldReflow` is 0**, with a tooltip saying the sheet is already laid out rather than one that reads as a failure |
+| It quietly destroys an afternoon's arranging | A confirm stating the count, and stating that pinned symbols stay |
+
+**THE CONFIRM IS NOT INCONSISTENT WITH THE PAGE PICKER**, which argues the opposite case one folder
+over and is right to: importing the wrong page is one `Ctrl+Z` away, and a prompt whose consequence
+is one undo is the nag that teaches people to click through prompts. What this destroys differs in
+kind. Twenty symbols moved by hand over an afternoon look exactly like twenty the layout happened to
+place, so somebody who presses it by accident **cannot tell from the screen whether they have lost
+anything**. That is `delete_device_dialog.dart`'s own test, and docs/05 §10 asks for the confirm in
+terms.
+
+**Evidence.** Six cases. The load-bearing one asserts that confirming lands the symbols on THE
+CONTROL'S positions, the ones the same deletion produces with nothing frozen, so the tidy has
+genuinely handed the sheet back to the layout rather than deleted some rows. A pinned symbol
+survives (CR-068), Cancel changes nothing, and one undo restores the arrangement. **Every finder
+names the button TYPE as well as the words**, because two controls say `Tidy sheet` once the dialog
+is up and a bare `find.text` would tap whichever the tree reached first and pass either way.
+
+**Floor**: `rackpal_ui` 1972 to 1978, measured.
+
+##### 5.9.68.5 The drag, and four defects its own tests found
+
+**The preview was priced before it was offered**, which is the only reason the choice put to the user
+was a real one. One frame is 16.7 ms; `schematic_perf_test.dart`, best of five:
+
+| Path | 300 links, 110 devices | 3,600 links, 1,320 devices |
+|---|---|---|
+| Wires re-routed, symbol tier reused | 0.72 ms | **8.8 ms** |
+| Layout reused, wires re-routed | — | **36.3 ms** |
+| Cold scene build | 7.7 ms | **76.9 ms** |
+
+Live re-routing is affordable on a house and not on a campus, and a campus sheet is exactly the one
+somebody needs to drag symbols around on. A dashed ghost costs one rectangle per frame at any size.
+**What it costs is that the wires are not seen until the drop**, which §11.186.8 states rather than
+leaves to be discovered.
+
+**THE GESTURE IS THE FOURTH BRANCH OF ONE PRESS**, asked last: a pin sits ON a symbol and a pennant
+beside one, so either answering first keeps the gesture it already had. It shares the canvas claim
+rather than taking a third `_PointerGesture`, because a drag and a marquee are the two halves of one
+branch and the loser never starts.
+
+**Four defects, each found by a test rather than by review**, and each one a thing a person would
+have met:
+
+| What was wrong | How it would have shown |
+|---|---|
+| The grab point read `_lastScenePointer`, fed by `onHover` | A touch never hovers, so the drag worked on a mouse and refused **silently** on a touchscreen |
+| The ghost armed at the press | A dashed outline flashed over the symbol on **every selection click**, which the handler's own comment argues against |
+| The press selected | A press whose canvas is unmounted under it is CANCELLED, so the selection outlived a gesture the product says did not happen. Caught by case 2c, older than this chapter, on `F` drawing four wires for a device nothing had picked |
+| The cancel ran `setState` inside `finalizeTree` | *"Cannot be marked as needing to build because the framework is locked"*, on the same unmount path |
+
+The third is the one worth keeping: **a press is not yet a gesture.** The drop selects now.
+
+##### 5.9.68.6 `Ctrl+Shift+U`, and why it could not wait
+
+docs/05 §10 has ruled *"any manual move pins; `Ctrl+Shift+U` unpins"* since M2 and only the first
+half was ever built. §11.186.6 listed the chord under what DR-187 does not rule; §11.186.9 moves it
+into the chapter, which is existing scope changing chapters rather than a §8.3 amendment.
+
+**THE DRAG IS WHAT CREATES THE NEED.** Every symbol a person ever nudges is pinned from then on, and
+`Tidy sheet` spares a pinned symbol by design (§11.186.3, CR-068). Without an unpin, **the act of
+arranging a sheet by hand is what removes it from the reach of the one command that can lay it out
+again**, which is a trap a person falls into by doing exactly what the feature invites. `Ctrl+L`
+stays as the toggle and is not replaced: a toggle answers *"pin this"* and an explicit unpin answers
+*"give this back to the layout"*.
+
+**Evidence.** Ten cases. **Two of the ten guard the gesture this one steals from**, because selecting
+is by far the commonest thing anybody does to a symbol and a gesture that gained a move and lost a
+click would be a bad trade nobody asked for; a third holds the boundary with the band on empty paper.
+
+**WHAT IS NOT ASSERTED, SAID OUT LOUD**: the selection itself. `SchematicCanvasScreen` builds its own
+private `SelectionController` and the painted op count is identical either side of a tap on a symbol
+(831 both ways, measured in `schematic_marquee_test.dart`'s header). Those cases therefore assert the
+selection through `Ctrl+L`, which reads it and writes to the document. The cost is that such a case
+could fail for the chord instead of the selection, and `schematic_pin_selection_test.dart` is what
+separates those. **This file re-learnt that the hard way**, on two red tests asserting
+`controller.selection`, which on this screen is always empty.
+
+**Keymap**: schematic 26 to 27, total 78 to 79. **Floor**: `rackpal_ui` 1978 to 1988, measured.
+
+##### 5.9.68.7 The nudge, and the second clause of this ruling to be refuted by its own build
+
+§11.186.4 gave the arrows a second job on the words *"the arrows nudge when no connect is in
+flight"*. **That reading cannot work, and sixteen tests said so on the first build.** The arrows are
+also how a pin is reached BEFORE anything is armed: docs/05 §7's *"arrow to a candidate port"*, and
+`schematic_keyboard_connect_test.dart`'s route in its own name, *"arrows reach a pin, W arms it,
+Enter commits"*. So *"no wire in flight"* is true for half of the connect route itself.
+
+**§11.186.10, settled by the user from four shapes: a caret on screen is the mode.**
+
+| State | What an arrow does |
+|---|---|
+| A caret is on screen | Moves the caret, exactly as before. `Esc` hands the arrows back |
+| No caret, a symbol selected | Nudges it one grid unit and pins it (CR-068) |
+| No caret, nothing selected | Seeds a caret, which is the old behaviour |
+
+**The route to a caret was never taken away**: `W` seeds one and arms from it in a single press, and
+always did. The test helper places its caret with `W` then `Esc`, which is **21 call sites left
+untouched by one helper edit**, and it leans on that suite's own case that `Esc` cancels the wire
+while leaving the caret.
+
+**A RUN OF PRESSES IS ONE UNDO ENTRY.** Five presses costing five `Ctrl+Z` would make the feature
+worse than not having it, so the move carries a `mergeKey` on the set of symbols. A pin and an unpin
+never merge: those are decisions rather than adjustments, and two in a row are two things somebody
+meant.
+
+**A MERGED COMMAND IS NEVER APPLIED BEFORE A POSSIBLE REVERT**, so everything the revert reads has to
+be carried across it. A test caught the one field that was not: `_sheetId` was `late final`, so a
+redo of a coalesced run created the one schematic `Sheet` under a SECOND id that nothing else
+resolved. It is a carried field now and its declaration says why.
+
+##### 5.9.68.8 A GATE CORRECTED THE RELABELLING, AND IT WAS RIGHT TO
+
+§11.186.4 asked for the arrow rows to be *"relabelled to say both"* so the generated table would not
+promise one meaning. ↑/↓ already did, sharing a union label with the RACK's caret rows, where the
+nudge is real.
+
+←/→ could not. **`Arrow Right` is shared with the Device Builder's `quickAddComplete`, and
+`meaningDrift` refused the pair the instant that row gained a schematic-only clause.** The gate is
+right and the rule it forced is worth stating: **a shared label may state only what is true in EVERY
+scope that shares the chord**, because a keyboard-only user cannot see a scope boundary. A label
+promising a nudge the builder does not perform is worse than a note somebody has to open, so those
+two rows keep caret-only labels and carry the nudge in their notes.
+
+**The canon clause is corrected to say that**, rather than the sweeping version this chapter assumed.
+
+**Evidence.** Six UI cases and five core ones. **The load-bearing UI case is the control for the
+discriminator**: with a caret on screen the arrows must move it and NOT the symbol, and it asserts
+both halves, so a rule that nudged unconditionally fails rather than passing quietly. One core case
+asserts a run of three merges to one entry, one that a redo reuses the ids, one that a DIFFERENT
+symbol does not merge, and one that a pin never merges into a move.
+
+**WHAT IS NOT ASSERTED, SAID OUT LOUD**: the merge WINDOW. `FixedClock` puts every press at one
+instant, so these cases prove the key and the carried state and say nothing about what happens when
+somebody nudges, pauses for a minute, and nudges again. `clock.dart` owns that window and has its own
+coverage.
+
+**Floors**: `rackpal_core` 4884 to 4889, `rackpal_ui` 1988 to 1994, measured.
+
+**Commits** (§8.8): the ruling `1864a8c0`, SG-1 and SG-3 `a414bc73`, the `addConsequence` mechanism
+`a4719d4d`, the two commands `5e06d115`, the screen `a9e5f8c2`, the correction `f810d78c`, SG-6
+`df86e875`, the drag's ruling `7d5e9114`, its command `546e2eda`, the gesture `58c13b14`, SG-5
+`445388de`. **All six chapters are closed.**
+
 ---
 
 **Related:** [Roadmap](09-roadmap.md) · [M1 implementation log](m1-implementation-log.md) ·

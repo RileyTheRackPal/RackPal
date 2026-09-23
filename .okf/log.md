@@ -1,5 +1,63 @@
 # Update Log
 
+## 2026-09-22 (sixty-first entry)
+
+* **Progress**: `#914`, ruled as [DR-187](/decisions/dr-187-the-schematic-holds-its-layout.md).
+  SG-1, SG-2 and SG-3 are built and merged to the branch: a stored `SheetItem` position is honoured
+  whether or not it is pinned, the first edit that would re-flow records where everything was, and a
+  new symbol takes a free slot instead of landing on one. **No version move**: `#914` closes under
+  `#786`. SG-4 (drag pins), SG-5 (arrow nudge) and SG-6 (`Tidy sheet`'s host, a question for the
+  user) are open.
+* **Closed**: `#919`, SG-5, and with it **`#914` is complete**: all six chapters are closed. The
+  arrows nudge a symbol one grid unit and pin it, and a run of presses is ONE undo entry.
+* **Correction**: **THE RULING'S SECOND CLAUSE TO BE REFUTED BY ITS OWN BUILD.** §11.186.4 said the
+  arrows nudge *"when no connect is in flight"*. **The arrows are also how a pin is REACHED before
+  anything is armed**, so that is true for half the connect route, and sixteen tests said so.
+  §11.186.10: a caret on screen is the mode.
+* **Note**: **A MERGED COMMAND IS NEVER APPLIED BEFORE A POSSIBLE REVERT**, so every field the revert
+  reads must be carried across the merge. `_sheetId` was `late final` and a redo of a coalesced run
+  created the one schematic `Sheet` under a SECOND id nothing else resolved. A test caught it.
+* **Note**: **A SHARED LABEL MAY STATE ONLY WHAT IS TRUE IN EVERY SCOPE THAT SHARES THE CHORD.**
+  `meaningDrift` refused `Arrow Right` the moment its row gained a schematic-only clause, because it
+  is shared with the builder. The gate was right and the ruling was corrected to match it.
+* **Closed**: `#918`, SG-4. **A symbol drags behind a dashed ghost and the drag pins it** (CR-068),
+  and **`Ctrl+Shift+U` ships with it** (§11.186.9) because the drag is what creates the need: a
+  pinned symbol is spared by `Tidy sheet`, so arranging a sheet by hand would otherwise put it
+  beyond the reach of the command that lays it out again.
+* **Note**: **THE PREVIEW WAS PRICED BEFORE IT WAS OFFERED.** One frame is 16.7 ms; live re-routing
+  is 0.72 ms on a 300-link house and 8.8 to 36.3 ms on a twelve-pod job. **The expensive case is the
+  sheet most in need of dragging**, so the ghost won. A choice offered without the numbers would
+  have been a choice between two words.
+* **Creation**: [A press is not a gesture](/practices/a-press-is-not-a-gesture.md). Selecting at the
+  press is the conventional shape and it leaked past a CANCEL, which a test older than the chapter
+  caught. Three of the drag's four defects were press/cancel boundary errors.
+* **Closed**: `#920`, SG-6. **`Tidy sheet` sits on the domain filter bar**, settled by the user over
+  the two hosts the ruling left open, and moves to docs/05's context menu when `#918`'s drag gives
+  that menu its other reasons to exist (§11.186.7). It is the only document edit on a strip of view
+  toggles, which is answered in the widget: fenced off by a divider, **disabled when nothing would
+  re-flow**, and behind a confirm that states the count.
+* **Correction**: **THE RULING'S OWN CLAUSE WAS THE DEFECT.** §11.186.2 said the layout freeze
+  *"lands as its own undo entry"*. Built that way it produced the behaviour DR-187 exists to
+  abolish: the first `Ctrl+Z` after any edit took back the ARRANGEMENT and left the edit, so the
+  sheet scrambled, the device stayed deleted, and undoing one delete cost two presses. §11.186.2.1
+  replaces it: the freeze is a CHILD of the edit's own undo entry.
+* **Creation**: [An older test is a specification](/practices/an-older-test-is-a-specification.md).
+  Two tests written long before DR-187 caught that defect, in the Edit menu's own words: *"ONE undo
+  takes back the device AND the cable"*. **A ruling does not outrank a test whose name is a promise
+  to a person.**
+* **Creation**: [Record the choice, not a manufactured reason](/practices/record-the-choice-not-a-manufactured-reason.md),
+  written up on its second instance. The *"its own undo entry"* clause carried *"which was stated in
+  the question and chosen with it"*, and the consequence had been shown to nobody. **A manufactured
+  reason has the authority of a decision and none of the evidence**, so it gets reasoned from and
+  then built.
+* **Note**: **AN EPOCH LISTENER IS ALWAYS TOO LATE TO JOIN A TRANSACTION.** Epochs bump inside
+  `_commit`, after the undo entry is sealed, so anything a listener runs is necessarily a second
+  entry. `DocumentController.addConsequence` is the hook that runs while the entry is still open,
+  and `TxnScope.touches` lets a hook sit out the edits it does not care about.
+* **Note**: **A COMMAND THAT ALWAYS RETURNS `true` DEFEATS DR-156.** `RemoveDeviceCommand.apply`
+  reports success even when the id names no device, so a test needing a genuine refusal had to build
+  one. Filed for a census of the rest.
+
 ## 2026-09-18 (sixtieth entry)
 
 * **Closed**: `#913`, ruled as [DR-186](/decisions/dr-186-ctrl-l-locks-and-pins.md). `Ctrl+L` locks a

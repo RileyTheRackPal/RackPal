@@ -520,4 +520,170 @@ void main() {
       expect(controller.doc.devices.containsKey(const Uuid('dev-4')), isTrue);
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-187 §11.186.2: A CONSEQUENCE RIDES IN THE ENTRY ITS CAUSE MADE
+  // ═══════════════════════════════════════════════════════════════════
+  // The schematic's layout freeze has to land in the same undo entry as
+  // the edit that would otherwise re-flow it. Written as a second `run()`
+  // it was a second entry, and deleting one device then took two presses
+  // of Ctrl+Z while the first one scrambled the sheet. These cases are
+  // the mechanism that fixed it, tested on the controller rather than
+  // through a canvas.
+  group('DocumentController.addConsequence', () {
+    test('the hook lands IN the entry, so one undo takes both back', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..addConsequence(
+          (tx) => tx.add(
+            _MarkCommand(_rackId, 'consequence'),
+          ),
+        )
+        ..run(_addDevice(fixed, id: const Uuid('dev-1')));
+
+      expect(doc.racks[_rackId]!.name, 'consequence');
+      expect(doc.devices, hasLength(1));
+
+      controller.undoLast();
+
+      expect(doc.racks[_rackId]!.name, 'DC Test Rack');
+      expect(doc.devices, isEmpty);
+      expect(controller.undo.canUndo, isFalse, reason: 'ONE entry, not two');
+    });
+
+    test('THE FIRST CHILD STILL NAMES THE ENTRY, so the Edit menu says what '
+        'the person did and not what it cost', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..addConsequence((tx) => tx.add(_MarkCommand(_rackId, 'consequence')))
+        ..run(_addDevice(fixed, id: const Uuid('dev-1')));
+
+      expect(controller.undo.undoLabelKey, LabelKey.addDevice.name);
+    });
+
+    test('A REFUSED EDIT ACQUIRES NO CONSEQUENCE, so a command that changed '
+        'nothing still makes no history (DR-156)', () {
+      final doc = _docWithRack(fixed);
+      var calls = 0;
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..addConsequence((tx) {
+          calls++;
+          tx.add(_MarkCommand(_rackId, 'consequence'));
+        })
+        ..run(_RefusingCommand());
+
+      expect(calls, 0, reason: 'the hook is not even asked');
+      expect(controller.undo.canUndo, isFalse);
+      expect(doc.racks[_rackId]!.name, 'DC Test Rack');
+    });
+
+    test('the hook is told WHAT THE EDIT TOUCHES, so it can sit out the ones '
+        'it does not care about', () {
+      final doc = _docWithRack(fixed);
+      EpochMask? seen;
+      DocumentController(doc, clock: FixedClock(fixed))
+        ..addConsequence((tx) => seen = tx.touches)
+        ..run(_addDevice(fixed, id: const Uuid('dev-1')));
+
+      expect(seen, isNotNull);
+      expect(seen!.has(EpochMask.structure), isTrue);
+      expect(seen!.has(EpochMask.sheet), isFalse);
+    });
+
+    test('A HOOK THAT ADDS NOTHING CHANGES NOTHING, which is the common case '
+        'once the sheet is already frozen', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed))
+        ..addConsequence((tx) {})
+        ..run(_addDevice(fixed, id: const Uuid('dev-1')));
+
+      expect(controller.undo.undoLabelKey, LabelKey.addDevice.name);
+      controller.undoLast();
+      expect(doc.devices, isEmpty);
+    });
+
+    test('the returned remover takes it off again, so a screen that is gone '
+        'stops writing to documents it no longer shows', () {
+      final doc = _docWithRack(fixed);
+      final controller = DocumentController(doc, clock: FixedClock(fixed));
+      final stop = controller.addConsequence(
+        (tx) => tx.add(_MarkCommand(_rackId, 'consequence')),
+      );
+      stop();
+      controller.run(_addDevice(fixed, id: const Uuid('dev-1')));
+
+      expect(doc.racks[_rackId]!.name, 'DC Test Rack');
+    });
+
+    test('a NESTED transaction fires the hook ONCE, at the outermost commit, '
+        'because that is the entry the person will undo', () {
+      final doc = _docWithRack(fixed);
+      var calls = 0;
+      DocumentController(doc, clock: FixedClock(fixed))
+        ..addConsequence((tx) => calls++)
+        ..transact(null, (tx) {
+          tx
+            ..add(_addDevice(fixed, id: const Uuid('dev-1')))
+            ..add(_addDevice(fixed, id: const Uuid('dev-2'), ruIndex: 2));
+        });
+
+      expect(calls, 1);
+    });
+  });
+}
+
+/// Renames the rack, so a consequence is visible in the document without
+/// a second fixture.
+final class _MarkCommand extends Command<RackDocument> {
+  _MarkCommand(this.rackId, this.name);
+
+  final Uuid rackId;
+  final String name;
+  String? _before;
+
+  @override
+  LabelKey get label => LabelKey.renameEntity;
+
+  @override
+  EpochMask get touches => EpochMask.meta;
+
+  @override
+  Iterable<Uuid> get affects => [rackId];
+
+  @override
+  bool apply(RackDocument doc) {
+    final rack = doc.racks[rackId];
+    if (rack == null || rack.name == name) return false;
+    _before = rack.name;
+    rack.name = name;
+    return true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    final before = _before;
+    if (before == null) throw StateError('_MarkCommand.revert before apply().');
+    doc.racks[rackId]!.name = before;
+  }
+}
+
+/// Changes nothing and says so, which `RemoveDeviceCommand` does not: it
+/// returns `true` even when the id names no device, so it cannot stand in
+/// for a refusal here.
+final class _RefusingCommand extends Command<RackDocument> {
+  @override
+  LabelKey get label => LabelKey.renameEntity;
+
+  @override
+  EpochMask get touches => EpochMask.structure;
+
+  @override
+  Iterable<Uuid> get affects => const [];
+
+  @override
+  bool apply(RackDocument doc) => false;
+
+  @override
+  void revert(RackDocument doc) =>
+      throw StateError('_RefusingCommand.revert before apply().');
 }

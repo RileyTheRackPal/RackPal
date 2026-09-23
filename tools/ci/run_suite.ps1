@@ -894,7 +894,21 @@ $SuiteFloors = @{
     # than a feature. Pinning a symbol where it already stands moves nothing
     # else, which a probe measured after the commit message had asserted the
     # opposite. docs/12 §5.9.67.3 carries the numbers.
-    'rackpal_core'   = 4863
+    # 4884 at `#914` (DR-187): +21. Thirteen in `sheet_layout_commands_
+    # test.dart` for the freeze and the tidy that is the way out of it,
+    # eight in `document_controller_test.dart` for `addConsequence`, the
+    # hook that puts a consequence in its cause's undo entry. The eight
+    # exist because the first build of the freeze used a second `run()`
+    # and two tests OLDER THAN THE RULING failed on it: deleting one
+    # device then took two presses of Ctrl+Z. Canon §11.186.2.1 carries
+    # the correction and the measurement.
+    # 4889 at `#919` (DR-187 §11.186.10): +5 for the nudge's merge. A
+    # RUN OF ARROW PRESSES IS ONE UNDO ENTRY, and a merged command is
+    # never applied before a possible revert, so everything the revert
+    # reads has to be carried across it. One of the five caught the
+    # sheet id NOT being carried: a redo of a coalesced run created the
+    # one schematic Sheet under an id nothing else resolved.
+    'rackpal_core'   = 4889
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1358,7 +1372,36 @@ $SuiteFloors = @{
     # checkbox, one undo), four the schematic canvas (the pin, the badge as
     # chrome, the unpin, one undo) and two the shrink dialog's bottom trim,
     # one of them the control for the other.
-    'rackpal_ui'     = 1966
+    # 1972 at `#914` (DR-187): +6 in `schematic_freeze_layout_test.dart`.
+    # ONE OF THE SIX IS A CONTROL AND IT IS HALF THE FILE'S ARGUMENT: a
+    # test that deletes a device and asserts the survivors did not move
+    # proves nothing until the same deletion has been measured MOVING
+    # them on an unfrozen document, so every claim is paired against that
+    # control. Another asserts one undo takes the edit and the frozen
+    # arrangement back together, which is the defect §11.186.2.1 records.
+    # 1978 at `#920` (DR-187 §11.186.7): +6 for `Tidy sheet` on the domain
+    # filter bar, the way back out of the layout freeze. The load-bearing
+    # one asserts that confirming lands the symbols on THE CONTROL'S
+    # positions, the ones the same deletion produces with nothing frozen,
+    # so a tidy has genuinely undone the freeze rather than deleted some
+    # rows. Two more are the button DISABLED with nothing to tidy and a
+    # PINNED symbol surviving (CR-068).
+    # 1988 at `#918` (DR-187 §11.186.4, §11.186.8, §11.186.9): +10 for the
+    # symbol drag, its ghost and `Ctrl+Shift+U`. TWO OF THE TEN GUARD THE
+    # GESTURE THIS ONE STEALS FROM: a press on a symbol body used to arm a
+    # marquee and select on release, and selecting is by far the commonest
+    # thing anybody does to a symbol, so a tap and a wobble each have a
+    # case. A third holds the boundary with the band on empty paper.
+    # The selection is NOT directly observable on this screen (it builds
+    # its own private SelectionController, and the painted op count is
+    # identical either side of a tap), so those cases assert it through
+    # `Ctrl+L`, which reads the selection and writes to the document.
+    # 1994 at `#919`: +6 for the arrow nudge. THE LOAD-BEARING ONE IS
+    # THE CONTROL FOR THE DISCRIMINATOR: with a caret on screen the
+    # arrows must move it and NOT the symbol, which is the whole of
+    # §11.186.10, and the case asserts both halves so a rule that
+    # nudged unconditionally would fail rather than pass quietly.
+    'rackpal_ui'     = 1994
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

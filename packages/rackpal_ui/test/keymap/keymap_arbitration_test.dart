@@ -203,7 +203,12 @@ void main() {
       // selecting a pin that stands for forty-eight ports means nothing;
       // going back needed a key, since `Shift`, `Ctrl` and `Alt` are all
       // spoken for on this canvas.
-      expect(keyBindingsIn(KeyScope.schematic), hasLength(26));
+      // TWENTY-SEVEN AT `#918` (DR-187 §11.186.9): `Ctrl+Shift+U` unpins.
+      // IT IS THE DRAG THAT MADE IT NECESSARY, not a wish for symmetry
+      // with `Ctrl+L`: a drag pins (CR-068) and `Tidy sheet` spares a
+      // pinned symbol, so arranging a sheet by hand is what removes it
+      // from the reach of the command that lays it out again.
+      expect(keyBindingsIn(KeyScope.schematic), hasLength(27));
       expect(keyBindingsIn(KeyScope.structure), hasLength(2));
       //
       // FIVE IN THE BUILDER SINCE M4-F1, which added `Ctrl+D` and
@@ -272,7 +277,10 @@ void main() {
       // `Ctrl+Shift+Minus` turn the plan, as a pair.
       expect(keyBindingsIn(KeyScope.plan), hasLength(6));
       expect(keyBindingsIn(KeyScope.dialog), hasLength(1));
-      expect(kKeymap, hasLength(78));
+      // SEVENTY-NINE AT `#918`, the schematic's `Ctrl+Shift+U`. The total
+      // is asserted as well as the per-scope counts so that a row added
+      // to the WRONG scope fails twice rather than netting out.
+      expect(kKeymap, hasLength(79));
     });
   });
 

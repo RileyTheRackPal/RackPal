@@ -169,7 +169,34 @@ final class SetSymbolPinnedCommand extends Command<RackDocument> {
     required this.pinned,
     required this.now,
     required this.actor,
-  }) : positions = Map<Uuid, Pt>.unmodifiable(positions);
+  }) : positions = Map<Uuid, Pt>.unmodifiable(positions),
+       _moved = false;
+
+  /// A DRAG OR A NUDGE (DR-187 §11.186.4, `#918`): the same write, named
+  /// after the act instead of after its side effect.
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A NAMED CONSTRUCTOR AND NOT A SECOND COMMAND
+  /// ═══════════════════════════════════════════════════════════════════
+  /// *"Any manual move sets `SheetItem.pinned = true`"* (CR-068), so a
+  /// move and a pin are one write to the document and differ only in what
+  /// the person believes they did. A second command would be a second
+  /// place that knows how to create the one `Sheet`, mint an item and
+  /// restore a previous position, which is three chances for two writers
+  /// to drift. **What a second command would have bought is one enum
+  /// value**, and this buys it for a field.
+  SetSymbolPinnedCommand.move({
+    required Map<Uuid, Pt> positions,
+    required this.now,
+    required this.actor,
+  }) : positions = Map<Uuid, Pt>.unmodifiable(positions),
+       pinned = true,
+       _moved = true;
+
+  /// Whether this was a drag rather than a pin. Reaches [label] and
+  /// nothing else: the document cannot tell the two apart and must not,
+  /// because CR-068 says a manual move IS a pin.
+  final bool _moved;
 
   /// Each symbol's drawn position. Only the keys are read when unpinning.
   final Map<Uuid, Pt> positions;
@@ -180,7 +207,12 @@ final class SetSymbolPinnedCommand extends Command<RackDocument> {
   final DateTime now;
   final String actor;
 
-  late final Uuid _sheetId = newEntityId();
+  /// NOT `late final`, because a MERGE has to carry it across (see
+  /// [mergeWith]). A merged command is a fresh object, so a `late final`
+  /// here would mint a SECOND sheet id and a redo of a coalesced run
+  /// would create the one schematic `Sheet` under an id nothing else
+  /// resolves. A test caught exactly that.
+  Uuid _sheetId = newEntityId();
   final Map<Uuid, Uuid> _itemIds = {};
 
   Uuid? _createdSheet;
@@ -189,7 +221,11 @@ final class SetSymbolPinnedCommand extends Command<RackDocument> {
   bool _applied = false;
 
   @override
-  LabelKey get label => pinned ? LabelKey.pinSymbol : LabelKey.unpinSymbol;
+  LabelKey get label => _moved
+      ? LabelKey.moveSymbol
+      : pinned
+      ? LabelKey.pinSymbol
+      : LabelKey.unpinSymbol;
 
   /// `sheet`, which is `SheetItem`'s own epoch: positions, pinning,
   /// collapse (`command.dart`).
@@ -198,6 +234,54 @@ final class SetSymbolPinnedCommand extends Command<RackDocument> {
 
   @override
   Iterable<Uuid> get affects => positions.keys;
+
+  /// **MOVES COALESCE AND PINS DO NOT** (DR-187 §11.186.10, `#919`).
+  ///
+  /// ═══════════════════════════════════════════════════════════════════
+  /// A RUN OF NUDGES IS ONE ACT
+  /// ═══════════════════════════════════════════════════════════════════
+  /// Holding an arrow key is how a symbol is moved by hand, and five
+  /// presses that cost five `Ctrl+Z` would make the feature worse than
+  /// not having it. The key is the SET OF SYMBOLS, so nudging one symbol
+  /// and then another does not fold two acts into one entry.
+  ///
+  /// **`null` FOR A PIN OR AN UNPIN**, which is not an oversight: those
+  /// are decisions rather than adjustments, and two of them in a row are
+  /// two things somebody meant.
+  @override
+  Object? get mergeKey => _moved
+      ? (
+          SetSymbolPinnedCommand,
+          'move',
+          [...positions.keys.map((k) => k.v)]..sort(),
+        ).toString()
+      : null;
+
+  @override
+  Command<RackDocument>? mergeWith(Command<RackDocument> next) {
+    if (!_moved || next is! SetSymbolPinnedCommand || !next._moved) {
+      return null;
+    }
+    if (next.mergeKey != mergeKey) return null;
+    // THE MERGED COMMAND IS NEVER `apply`ed BEFORE A POSSIBLE `revert`
+    // (`SetEntityPropertyCommand.mergeWith`'s rule), so everything the
+    // revert reads has to be carried across: the ORIGINAL before-values,
+    // whatever the FIRST apply created, and the applied latch itself.
+    // Carrying `_itemIds` as well is what keeps a redo minting the same
+    // ids, which is `AddRackCommand`'s rule and is why ids are constructor
+    // -time in the first place.
+    return SetSymbolPinnedCommand.move(
+        positions: next.positions,
+        now: next.now,
+        actor: next.actor,
+      )
+      .._sheetId = _sheetId
+      .._previous.addAll(_previous)
+      .._createdSheet = _createdSheet
+      .._createdItems.addAll(_createdItems)
+      .._itemIds.addAll(_itemIds)
+      .._applied = _applied;
+  }
 
   @override
   bool apply(RackDocument doc) {
