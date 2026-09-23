@@ -22212,6 +22212,135 @@ catalog's CC0 status, which stands under §11.35.3 untouched. Signed archives.
 
 ---
 
+### 11.189 DR-190 · Close in the Device Builder asks before it discards
+
+**The question.** Found writing docs/20 (`#924`): the Device Builder's `Close` returns to the
+browser by unmounting the builder, and the builder's `TemplateEditSession` is an in-memory copy, so
+**a dirty draft is destroyed without a word**. The shell's own comment above `onDone` called a
+discard-and-return route *"a gap rather than a decision"*; `Close` was that route, unguarded. Put
+to the user on 2026-09-23 with three options and prices.
+
+**11.189.1 RULED: CLOSE ON A DIRTY DRAFT SHOWS SAVE / DON'T SAVE / CANCEL.** Settled by the user,
+choosing the recommended option. The reasoning below is the author's as offered; the user accepted
+it and added none of their own. **It is the prompt the application already shows when a project is
+closed** (`UnsavedChangesDialog`, docs/03 §9.5), with its four rules unchanged: `Save` is the
+default and holds focus, `Esc` is Cancel, nothing on the keyboard reaches `Don't Save`, and a click
+outside is not an answer. A clean draft closes with no prompt.
+
+**11.189.2 `SAVE` OBEYS THE SAVE BUTTON'S OWN RULE.** A draft missing a name, a prefix or a height
+cannot be saved (AC-049), so `Save` from the prompt on such a draft saves nothing, closes nothing,
+and says why in the builder's refusal band. The person is left where they were, with the reason in
+front of them.
+
+**11.189.3 DR-099 §11.98.4 IS NOT CONTRADICTED.** That clause refuses, rather than prompts, when
+door 2 would REPLACE one dirty draft with another template, because the dialog offering to discard
+is dismissed by reflex on the way to something else. `Close` is not on the way to anything: leaving
+IS the act, so the standard three-button question is the honest one and a refusal would leave no
+way to abandon a draft at all.
+
+**Scope.** No scope change: this makes an existing control do what docs/03 §9.5 already requires of
+closing anything dirty.
+
+---
+
+### 11.190 DR-191 · A room's plan estimate follows its inputs, and says why when it cannot
+
+**The question.** Found writing docs/20 (`#924`): `roomEstimateFor` is called only when an outline
+is closed or reshaped, and returns null unless the plan is calibrated, a run to the room lands in a
+rack, and that rack is pinned on the outline's own underlay. **The natural order (import,
+calibrate, outline, then place and land) computes nothing, and supplying the missing input later
+never fills the field.** Put to the user on 2026-09-23 with three options and prices.
+
+**11.190.1 RULED: THE PLAN-DERIVED FIGURE IS REFRESHED BY EVERY EDIT THAT CHANGES IT.** Settled by
+the user, choosing the recommended option; the reasoning is the author's, accepted without
+addition. After every transaction, each room whose figure the plan may fill (DR-050 §11.49.3:
+empty, or the plan's own earlier figure) is re-derived, and a changed answer is written **inside
+the same undo entry** through `DocumentController.addConsequence` (DR-187 §11.186.2's mechanism).
+Pinning the rack, calibrating, landing a run or moving a corner therefore updates the figure, and
+one `Ctrl+Z` takes back the edit and its consequence together.
+
+**11.190.2 A FIGURE THE PLAN CAN NO LONGER DERIVE IS CLEARED, NOT KEPT.** When a room's plan figure
+stops deriving (the rack is unpinned, the outline cleared, the calibration removed) and the stored
+figure is the plan's own, it is cleared. A computed number whose inputs are gone is a guess, and
+G4 does not let a guess stand as a measurement. **A figure a person typed is never touched in either
+direction**, which §11.49.3 already rules and this keeps.
+
+**11.190.3 THE HOOK IS INSTALLED BY THE CONTROLLER, NOT BY A VIEW.** DR-187's freeze is registered
+by the Schematic view and therefore does nothing until that view has been opened, which docs/20
+§20.8 has to warn about. A fact about the document must not depend on which tab somebody visited,
+so this consequence is installed when the `DocumentController` is constructed, on every route that
+builds one.
+
+**11.190.4 A BLANK FIGURE NAMES WHAT IS MISSING.** The room's helper line, which says where a
+figure came from, now also says why there is none: no outline, plan not calibrated, no run to this
+room lands in a rack, or the rack is not pinned on this plan. **The multi-floor case gets its own
+sentence**, because it is the one a person cannot fix by doing the next thing: a head end on the
+basement page cannot measure to a room outlined on Level 1, and the answer there is to type it. The
+same line loses its `AC-024` citation, which was a ruling ID shown to a user.
+
+**Scope.** No scope change: DR-050 bought the figure and this makes it arrive.
+
+---
+
+### 11.191 DR-192 · The Schedule shows the waste factor, per cable type
+
+**The question.** Found writing docs/20 (`#924`): `ProjectSettings.cableWasteFactor` has a help
+line promising it on the pull sheet, and **nothing applies it**. `cableFootageOf` computes a
+per-media takeoff with `withWaste` already applied, and is called by nothing outside its own file.
+Put to the user on 2026-09-23 with three options and prices.
+
+**11.191.1 RULED: THE SCHEDULE SHOWS THE TAKEOFF, ONE LINE PER CABLE TYPE, RAW AND WITH WASTE.**
+Settled by the user, choosing the recommended option; the reasoning is the author's, accepted
+without addition. Under the summary line the Schedule lists each media type's known footage and
+the same figure with the project's waste factor, with the counts that qualify it (unknown lengths,
+estimates, bounds). **The takeoff that already exists is the one rendered**, so the screen and a
+future printed sheet cannot disagree.
+
+**11.191.2 NO ROW IS INFLATED, AND THERE IS NO GRAND TOTAL WITH WASTE.** The factor is applied to
+the rollup and never written back to a length: an installer's measured 62 ft must read 62 ft on the
+sheet they measured it against. And **feet of Cat6 plus feet of RG6 is not a quantity anybody
+buys**, which is `CableFootage`'s own reason for having no grand total; the with-waste figure
+appears per type only.
+
+**11.191.3 THE HELP LINE IS CORRECTED TO SAY WHERE IT APPLIES**, the Schedule's takeoff, rather
+than a pull sheet that does not print yet.
+
+**Scope.** No scope change: AC-024's takeoff reaching a surface.
+
+---
+
+### 11.192 DR-193 · The validation keys work from every view and go where the fix is
+
+**The question.** Found writing docs/20 (`#924`): `F7`, `F8` and `Shift+F8` sit in
+`KeyScope.global`, and only the Rack view's `Actions` handle them, so on four views of six they do
+nothing while the keymap and the generated reference say otherwise. Many findings are about cables
+and floorplans, which are not fixed on the Rack view. Put to the user on 2026-09-23 with three
+options and prices.
+
+**11.192.1 RULED: THE SHELL HANDLES THE THREE KEYS, AND `F8` SWITCHES TO THE VIEW THAT CAN FIX THE
+FINDING.** Settled by the user, choosing the recommended option; the reasoning is the author's,
+accepted without addition. The destination is decided by what the finding points at:
+
+| The finding points at | `F8` goes to | And |
+|---|---|---|
+| A device in a rack | Rack | switches to its rack, selects it |
+| A device not in a rack | Schematic | selects its symbol, or says it has none |
+| A rack | Rack | switches to it, opens its settings |
+| A cable | Schematic | selects the cable, or says it has no drawn end on the sheet |
+| A floorplan | Site | opens that plan |
+| Anything else (a net, a circuit) | Rack | and says the finding has no single item to show |
+
+**11.192.2 ONE CURSOR, IN THE ENGINE'S ORDER.** The walk is over `evaluateDocument`'s findings in
+its own deterministic order, wraps at both ends, and names what it selected on the status channel.
+`F7` re-checks from any view and says the counts.
+
+**11.192.3 THE DRAWER STAYS ON THE RACK VIEW.** Moving it into the shell under every view was the
+more complete option and was not chosen. docs/04 §1's layout stands.
+
+**Scope.** No scope change: docs/04 §8 declared these keys global and this makes them so.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
