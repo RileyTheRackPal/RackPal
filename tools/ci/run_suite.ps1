@@ -917,7 +917,10 @@ $SuiteFloors = @{
     # 4902 at DR-193 (`#928`): +5 in validation/finding_locus_test.dart,
     # one per row of the ruling's table plus the shelf, which is the row a
     # table cannot show: a source on a shelf is in the rack its host is in.
-    'rackpal_core'   = 4902
+    # 4906 at `#935`: +4 in commands/media_type_add_test.dart. Three were
+    # red before the guard; the one that matters undoes an add that added
+    # nothing, which used to delete the type already holding the id.
+    'rackpal_core'   = 4906
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
