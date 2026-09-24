@@ -26,7 +26,7 @@
 // sheet, T6.11 termination schedule, T6.20 unused home runs, T5.01 pinout
 // details) are M6. They are absent from [SheetRole] rather than stubbed,
 // which is what lets a user-facing document state what prints by naming
-// these four rather than by counting anything (docs/20 §20.7).
+// these four rather than by counting anything (docs/21 §21.7).
 
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/plan.dart';

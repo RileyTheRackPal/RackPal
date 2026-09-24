@@ -1,4 +1,4 @@
-# 20 · RackPal user guide
+# 21 · RackPal user guide
 
 > **This document describes what RackPal DOES. Every other document in `docs/`
 > describes what RackPal SHOULD BE.** That distinction is the whole point of
@@ -11,15 +11,15 @@
 > **Audience: AV and low-voltage integrators.** It assumes you know what a rack
 > unit, a patch panel, a home run and HDBaseT are, and explains none of them.
 >
-> **How to read it.** §20.4 is a fifteen-minute tour of a sample project. §20.5
+> **How to read it.** §21.4 is a fifteen-minute tour of a sample project. §21.5
 > is the manual: one chapter per view, in the order a job moves through them,
 > each written as the tasks you do there rather than as a list of controls.
-> Read §20.5.1 before you start a real project; read the rest as you reach each
+> Read §21.5.1 before you start a real project; read the rest as you reach each
 > view.
 
 ---
 
-## 20.1 What it is
+## 21.1 What it is
 
 **RackPal is CAD-lite for AV and low-voltage work:** to scale where scale earns
 its keep, and deliberately representative everywhere else.
@@ -46,7 +46,7 @@ So the precision is spent where it pays and withheld where it does not:
   something.
 - **Rack elevations are exact**, because rack units are discrete and a device
   either fits in the space or it does not.
-- **Cable footage is a real number you can order from** (§20.5.7), and where
+- **Cable footage is a real number you can order from** (§21.5.7), and where
   the software cannot know a length it says so rather than inventing one.
 - **Everything else is representative.** Symbol positions, routing paths and
   plan pin placement are there to communicate, not to survey.
@@ -60,7 +60,7 @@ distributor, PSA or ERP system.
 
 ---
 
-## 20.2 Read this before you install anything
+## 21.2 Read this before you install anything
 
 RackPal is **pre-release and pre-installer**. It is being handed to you as a
 folder, not as a product.
@@ -73,13 +73,13 @@ folder, not as a product.
 | Licence | **AGPLv3 or later**, with the device catalog under CC0. The output exception, under which the drawings you produce are your own work, is drafted and **not yet in force** pending legal review. `Help` ▸ `About RackPal…` says so too |
 | Stability | The core editing paths have been exercised hard. The edges have not |
 
-**§20.8 lists what is not built.** Please read it before you decide something
+**§21.8 lists what is not built.** Please read it before you decide something
 is broken. A good proportion of "that seems to be missing" is genuinely
 missing, and knowing which half you have hit saves everybody's time.
 
 ---
 
-## 20.3 Getting it running
+## 21.3 Getting it running
 
 You will be given a folder, most likely inside a ZIP.
 
@@ -124,7 +124,7 @@ the application.
 
 ---
 
-## 20.4 Your first fifteen minutes
+## 21.4 Your first fifteen minutes
 
 **Do not start with your own project.** Start with a starter, because you can
 tell at a glance whether the application is behaving and you have nothing to
@@ -208,12 +208,12 @@ tells you how many symbols that is before it does it.
 
 ### 7. Export
 
-`File` ▸ `Export PDF…`. See §20.7 for exactly which sheets you get, because it
+`File` ▸ `Export PDF…`. See §21.7 for exactly which sheets you get, because it
 is fewer than the design documents describe.
 
 ---
 
-## 20.5 Running a job, view by view
+## 21.5 Running a job, view by view
 
 The view strip is in the order a job usually moves through it, and this
 section follows the same order. You will go back and forth; nothing forces a
@@ -233,11 +233,11 @@ in all the others.
 | 7 | Validation drawer | Clear or acknowledge what the checks found | A job you can stand behind |
 | 8 | `File` ▸ `Export PDF…` | Export the sheet set | The PDF |
 
-### 20.5.1 Before you start: files, settings and safety nets
+### 21.5.1 Before you start: files, settings and safety nets
 
 #### Starting a project
 
-The start screen offers the four starters (§20.4), **Blank project** (one empty
+The start screen offers the four starters (§21.4), **Blank project** (one empty
 42U rack and the full device catalogue) and **Open a project…**. `File` ▸
 `New` (`Ctrl+N`) gets you back to a blank project later.
 
@@ -271,7 +271,7 @@ covers everything, including things people do not expect to be undoable, such
 as a floorplan import or a whole CSV import. The depth defaults to 200 steps;
 `Edit` ▸ `Preferences…` sets it anywhere from 50 to 1000.
 
-While the Device Builder is showing (§20.5.3), `Ctrl+Z` and the `Edit` menu
+While the Device Builder is showing (§21.5.3), `Ctrl+Z` and the `Edit` menu
 act on the template you are editing instead, and hand back to the project the
 moment you leave it.
 
@@ -289,8 +289,8 @@ to what you create next.
 | Port designator, Cable designator, Net name | The patterns for ports (`J{PORT_SEQ:2}`), cables (`W{SEQ:3}`) and net labels |
 | Outlet label, field end / rack end | What gets printed on the wall plate, and what the rack end is called |
 | Default rack height, Default RU numbering, Mirror rear elevations by default | What a new rack starts with. Existing racks keep what they were made with |
-| Default line voltage, Wiring standard, Default network media | Job-wide defaults. One cable can take its own wiring standard in the WIRING column (§20.5.5) |
-| Cable waste factor | The margin added to each cable type's footage in the Schedule's takeoff (§20.5.7). No length is ever inflated |
+| Default line voltage, Wiring standard, Default network media | Job-wide defaults. One cable can take its own wiring standard in the WIRING column (§21.5.5) |
+| Cable waste factor | The margin added to each cable type's footage in the Schedule's takeoff (§21.5.7). No length is ever inflated |
 | Sheet numbering, Designator collision policy, Designator block size | How sheets and designator blocks are numbered |
 
 Two more sections live in the same dialog:
@@ -301,7 +301,7 @@ Two more sections live in the same dialog:
   colour.
 - **Rule severities.** What a check counts as in this project, or off. **Every
   override needs a written reason**, because it is a decision somebody reading
-  the drawings is entitled to see. See §20.5.8.
+  the drawings is entitled to see. See §21.5.8.
 
 `Edit` ▸ `Preferences…` is the other settings dialog, and it holds what stays on
 **this computer** rather than in the file: the undo depth, and the rack presets
@@ -310,7 +310,7 @@ list shows).
 
 ---
 
-### 20.5.2 Site: rooms, floorplans and where things are
+### 21.5.2 Site: rooms, floorplans and where things are
 
 **What it is for.** The rooms are the project's vocabulary: every home run goes
 to a room, the pull sheet sorts by room, and outlet labels are built from room
@@ -417,7 +417,7 @@ An outline is what turns a room into a run length. The figure is worked out,
 and kept up to date, whenever all of these are true:
 
 - the plan is calibrated;
-- the room has at least one home run landed in a rack (§20.5.5);
+- the room has at least one home run landed in a rack (§21.5.5);
 - that rack is pinned **on the same plan** as the outline.
 
 The order you do them in does not matter: the moment the last one is in place,
@@ -447,7 +447,7 @@ the plan. It adds no margin; the margin is yours to add when you quote.
 
 ---
 
-### 20.5.3 Device Manager: the equipment this job can use
+### 21.5.3 Device Manager: the equipment this job can use
 
 **What it is for.** Every device you place is made from a **template**: its
 size, its ports, its power and its look. The Device Manager is where you find
@@ -575,7 +575,7 @@ device placed from it, after counting them and the cables they take with them.
 
 ---
 
-### 20.5.4 Rack: building the elevations
+### 21.5.4 Rack: building the elevations
 
 **What it is for.** The racks, what is in them, and where. The elevations here
 are exact: a device either fits or it does not, and the Rack view says which
@@ -593,7 +593,7 @@ and why.
   A help line along the bottom turns into a status line whenever something has
   just happened.
 - **Right: the inspector.** The selected device or devices, or the rack itself.
-- **Bottom: the validation drawer** (§20.5.8).
+- **Bottom: the validation drawer** (§21.5.8).
 
 If the project has no rack, the view says so and offers **New rack…**.
 
@@ -614,7 +614,7 @@ If the project has no rack, the view says so and offers **New rack…**.
    | RU numbering | Bottom-up or top-down |
    | Preset | Apply a preset's rails, depth, capacity and swing-frame settings |
    | 0U channels | Vertical channels for PDUs and cable managers (below) |
-   | Circuits | Listed, not yet created here (§20.8) |
+   | Circuits | Listed, not yet created here (§21.8) |
 
 3. **Save as preset…** in the inspector keeps a rack's form factor for reuse
    on this computer. Name and location are not saved with it.
@@ -726,7 +726,7 @@ number and a guess.
 
 ---
 
-### 20.5.5 Structured Wiring: the part in the walls
+### 21.5.5 Structured Wiring: the part in the walls
 
 **What it is for.** Home runs, outlets, wall plates and pathways: everything
 between the rack and the rooms. It is a table first, because the entry path
@@ -797,7 +797,7 @@ TEST, CERT ID, INSTALLED BY, TERMINATED, JACKET and PULLED colour, CLASS,
   the field termination to the rack end (`Rack term: same as field`).
 - A label you typed stays yours when the drop moves; clear the cell to let
   RackPal name it again.
-- A row's menu has **Pin on plan** (§20.5.2).
+- A row's menu has **Pin on plan** (§21.5.2).
 
 #### Land the runs at the rack
 
@@ -807,7 +807,7 @@ panel port, a switch port. Three ways:
 - **LANDS ON** (from **Columns**): pick a panel and the drop is punched down on
   its next free position. **PORT** overrides which position.
 - **`@panel=`** on the entry line lands a whole line as it is created.
-- **On the Schematic**, drag the run's loose end onto a free jack (§20.5.6).
+- **On the Schematic**, drag the run's loose end onto a free jack (§21.5.6).
 
 The Schematic's status strip counts the home runs not yet landed.
 
@@ -868,7 +868,7 @@ run out of it, after counting all three.
 
 ---
 
-### 20.5.6 Schematic: drawing the cables
+### 21.5.6 Schematic: drawing the cables
 
 **What it is for.** The interconnect: which port on which device connects to
 which. It is also where the product checks your work as you draw.
@@ -935,13 +935,13 @@ it matters, in trade terms.
 - **Pick a different port** puts you back to aiming, with the cable still in
   hand.
 - **Connect anyway** makes the cable as drawn. The rule then shows as a finding
-  in the validation drawer (§20.5.8), where you can acknowledge it with a
+  in the validation drawer (§21.5.8), where you can acknowledge it with a
   reason.
 - **Why?** opens what the rule checks and why it exists.
 
 **The rules encode opinions**, and they came from a small number of people. If
 one fires on something you do every week, that is exactly what we want to hear
-(§20.9).
+(§21.9).
 
 #### Draw many cables at once
 
@@ -975,7 +975,7 @@ speaker pair) draw as **one cable with several conductors** instead.
 
 ---
 
-### 20.5.7 Schedule: footage you can order from
+### 21.5.7 Schedule: footage you can order from
 
 **What it is for.** The cable schedule: one row per cable, derived live from the
 model. **It is read-only.** You change what it says by changing the model, in
@@ -1033,12 +1033,12 @@ is.
 **To tighten the total**, work up the ladder: give every room a run length
 (outline it, or type it), and record cut lengths as the job is pulled.
 
-**The Pull Sheet and Termination Schedule do not print yet** (§20.8). What is on
+**The Pull Sheet and Termination Schedule do not print yet** (§21.8). What is on
 screen is what you have.
 
 ---
 
-### 20.5.8 Checking the job: the validation drawer
+### 21.5.8 Checking the job: the validation drawer
 
 **What it is for.** RackPal runs its checks continuously: power, placement,
 cabling, labelling. What they find is listed in the **validation drawer**, the
@@ -1086,11 +1086,11 @@ Each row offers what applies to it:
   source it comes from.
 
 To change what a rule counts as for the whole project, use **Rule severities**
-in `File` ▸ `Project settings…` (§20.5.1). It needs a reason too.
+in `File` ▸ `Project settings…` (§21.5.1). It needs a reason too.
 
 ---
 
-## 20.6 Keys worth knowing
+## 21.6 Keys worth knowing
 
 The complete table is
 **[`docs/reference/keymap-windows.md`](reference/keymap-windows.md)**. It is
@@ -1118,13 +1118,13 @@ The handful that pay for themselves immediately:
 | `Ctrl+Shift+U` | Schematic | Release a pinned symbol back to the layout |
 | `Ctrl+D` / `Ctrl+V` | Structured Wiring, Device Builder | Fill down, paste cells |
 
-**Undo is document-wide and 200 steps deep by default** (§20.5.1). It covers
+**Undo is document-wide and 200 steps deep by default** (§21.5.1). It covers
 everything, including things people do not expect to be undoable such as a
 floorplan import.
 
 ---
 
-## 20.7 What the PDF export actually produces
+## 21.7 What the PDF export actually produces
 
 `File` ▸ `Export PDF…`. **Four kinds of sheet are emitted today:**
 
@@ -1151,7 +1151,7 @@ screen does not print yet**, and neither do the schedules. See below.
 
 ---
 
-## 20.8 What is not built
+## 21.8 What is not built
 
 This section is deliberately specific. Everything here is a known gap rather
 than a defect, and reporting one as a bug costs you time and tells us nothing.
@@ -1160,7 +1160,7 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 
 - **No installer.** Portable folder only, and no auto-update.
 - **No crash reporter.** If it dies, it dies silently, and we only learn about
-  it if you tell us. (Your work is still protected: §20.5.1.)
+  it if you tell us. (Your work is still protected: §21.5.1.)
 - **Windows only.** macOS is planned, not begun.
 - **No localisation.** English only, and no accessibility work has been done
   beyond keyboard reach.
@@ -1168,7 +1168,7 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
   full and it will not appear in the PDF. So the cover sheet, the symbol
   legend, the exceptions sheet, the pull sheet, the termination schedule, the
   unused home runs sheet and the pinout details. Eight of the twelve specified
-  sheets are absent; §20.7 lists the four you do get.
+  sheets are absent; §21.7 lists the four you do get.
 - **No DXF or DWG export.** DXF is planned for a later release.
 - **No Rear Panel view.** `Ctrl+3` does nothing; it is reserved for it. The
   rear panel prints on the rear elevation today; it is just not interactively
@@ -1191,7 +1191,7 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 - **A 0U device is not drawn on the elevation.** It is listed under its channel
   in the rack inspector.
 - **An outlet's nominal run length cannot be typed.** It is read when a file
-  carries one, and ranks in the length ladder (§20.5.7).
+  carries one, and ranks in the length ladder (§21.5.7).
 - **A run's pathway is set when the run is entered** (`@pathway=`, or a CSV
   column), not afterwards in the table.
 - **A device outside a rack has no room field.** Its place is its pin on the
@@ -1213,7 +1213,7 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 
 ---
 
-## 20.9 Reporting what you find
+## 21.9 Reporting what you find
 
 What makes a report useful here, in rough order:
 
@@ -1221,7 +1221,7 @@ What makes a report useful here, in rough order:
    carries everything, including the version that wrote it.
 2. **What you expected**, in trade terms. "The elevation should show the shelf
    occupant" tells us more than "the elevation is wrong".
-3. **Whether it is in §20.8.** If you are not sure, say so and report it
+3. **Whether it is in §21.8.** If you are not sure, say so and report it
    anyway; a gap you hit and could not identify is itself worth knowing about.
 4. **The version**, from `Help` ▸ `About RackPal…`. It is the same number
    stamped into every project file you save, so it identifies the build

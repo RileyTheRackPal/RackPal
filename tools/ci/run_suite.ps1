@@ -909,7 +909,7 @@ $SuiteFloors = @{
     # sheet id NOT being carried: a redo of a coalesced run created the
     # one schematic Sheet under an id nothing else resolved.
     # 4897 at DR-191 (`#926`): +8 in room_estimate_follows_inputs_test.dart,
-    # which makes the edits in the order docs/20 used to warn against and
+    # which makes the edits in the order docs/21 used to warn against and
     # reads the stored figure back. Two of them passed VACUOUSLY on the
     # first mutation run (null is also what undo restores) until each
     # asserted its precondition; with the controller's hook removed, four
@@ -1410,7 +1410,7 @@ $SuiteFloors = @{
     # arrows must move it and NOT the symbol, which is the whole of
     # §11.186.10, and the case asserts both halves so a rule that
     # nudged unconditionally would fail rather than pass quietly.
-    # 1996 at docs/20 (the user guide): +2 for the SHIPPED keyboard
+    # 1996 at docs/21 (the user guide): +2 for the SHIPPED keyboard
     # reference, generated from `kKeymap` and gated against it. A
     # hand-written key list is this corpus's second-copy failure aimed at
     # somebody OUTSIDE the project: when a binding moves, the person

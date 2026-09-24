@@ -137,7 +137,7 @@ def _inline(text: str) -> str:
         return f"{_SENTINEL}{len(spans) - 1}{_SENTINEL}"
 
     # THE DOUBLE-BACKTICK FORM FIRST, because it is how a span holds a
-    # backtick: docs/20 and the keymap reference write the key that shows
+    # backtick: docs/21 and the keymap reference write the key that shows
     # every domain as `` ` ``, which the single form read as two empty
     # spans around a stray space.
     s = html.escape(re.sub(r"``\s?(.+?)\s?``|`([^`]+)`", stash, text))
@@ -273,7 +273,7 @@ def convert(md: str, source: str, ids: set[str] | None = None) -> str:
 
         # Blockquote. CONVERTED RECURSIVELY, so a `>` line on its own is a
         # paragraph break inside the quote, as it is on GitHub. The first
-        # version joined every line into one paragraph, which ran docs/20's
+        # version joined every line into one paragraph, which ran docs/21's
         # three-paragraph preface together.
         if stripped.startswith(">"):
             close(stack)
@@ -289,7 +289,7 @@ def convert(md: str, source: str, ids: set[str] | None = None) -> str:
         # column, blank lines included when the next non-blank one is still
         # indented, and that body is converted RECURSIVELY. The first
         # version joined continuation lines into one string, which kept a
-        # wrapped bullet whole and flattened everything else: docs/20 puts a
+        # wrapped bullet whole and flattened everything else: docs/21 puts a
         # table inside a numbered step, and it came out as pipes in a
         # sentence. An unindented line that starts no block still continues
         # the item (a lazy continuation), which is how the corpus's hard

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Export the user guide (docs/20) as a PDF in RackPal's own console style.
+"""Export the user guide (docs/21) as a PDF in RackPal's own console style.
 
     python tools/user_guide_pdf.py
     python tools/user_guide_pdf.py -o somewhere/guide.pdf
 
 Writes build/user-guide/RackPal-User-Guide-<version>.pdf by default.
 
-WHY THE PDF IS NOT COMMITTED. It is derived from docs/20, which moves
+WHY THE PDF IS NOT COMMITTED. It is derived from docs/21, which moves
 every few days, and a committed copy of a moving document is this
 corpus's second-copy failure aimed at the people least able to notice it.
 This script is the durable half; run it when a copy is wanted.
@@ -50,7 +50,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import docs_pdf  # noqa: E402  (a sibling tool, not an installed package)
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-GUIDE = os.path.join(ROOT, "docs", "20-user-guide.md")
+GUIDE = os.path.join(ROOT, "docs", "21-user-guide.md")
+
+# The guide's document number, which its sections are numbered under
+# (`§21.5.2`). READ OFF THE FILE NAME, because it has already moved once: the
+# guide was written as docs/20 in a slot the rule review already held, and a
+# number typed into four patterns below would have had to be found four times.
+DOC = re.match(r"(\d+)-", os.path.basename(GUIDE)).group(1)
 KEYMAP = os.path.join(ROOT, "docs", "reference", "keymap-windows.md")
 BRAND = os.path.join(ROOT, "packages", "rackpal_core", "lib", "src", "draw", "brand.dart")
 PUBSPEC = os.path.join(ROOT, "apps", "rackpal", "pubspec.yaml")
@@ -115,7 +121,7 @@ def app_version() -> str:
 
 
 def guide_date() -> str:
-    """The date docs/20 last changed, so a PDF says which text it holds.
+    """The date docs/21 last changed, so a PDF says which text it holds.
 
     Falls back to today when git is unavailable, which is a copy made from
     an export rather than a checkout.
@@ -140,7 +146,7 @@ def split_guide(md: str) -> tuple[str, list[tuple[int, str, str]]]:
 
     The H1 is dropped (the cover replaces it) and the repository-only
     `**Related:**` footer goes with it, since every link in it is a path in
-    this repo. Each `##` is a section, and so is each `### 20.5.n`, because
+    this repo. Each `##` is a section, and so is each `### <DOC>.5.n`, because
     those are the per-view chapters and each deserves its own first page.
     """
     md = re.split(r"\n---\n\n\*\*Related:\*\*", md)[0]
@@ -151,7 +157,7 @@ def split_guide(md: str) -> tuple[str, list[tuple[int, str, str]]]:
         if line.startswith("# "):
             continue
         h2 = re.match(r"^## (.*)$", line)
-        h3 = re.match(r"^### (20\.5\.\d+ .*)$", line)
+        h3 = re.match(rf"^### ({DOC}\.5\.\d+ .*)$", line)
         if h2 or h3:
             sections.append((2 if h2 else 3, (h2 or h3).group(1), []))
             continue
@@ -208,7 +214,7 @@ def rewrite_links(md: str) -> str:
 
 
 def link_sections(fragment: str, ids: set[str]) -> str:
-    """`§20.5.2` becomes a link wherever the PDF holds that section."""
+    """`§21.5.2` becomes a link wherever the PDF holds that section."""
 
     def one(m: "re.Match[str]") -> str:
         anchor = "s" + m.group(1).replace(".", "-")
@@ -216,7 +222,7 @@ def link_sections(fragment: str, ids: set[str]) -> str:
             return m.group(0)
         return f'<a href="#{anchor}">{m.group(0)}</a>'
 
-    return re.sub(r"§(20(?:\.\d+)+)", one, fragment)
+    return re.sub(rf"§({DOC}(?:\.\d+)+)", one, fragment)
 
 
 def short_title(heading: str) -> str:
@@ -325,7 +331,7 @@ h2.chapter-head, h3.chapter-head {{
   letter-spacing: -0.005em;
 }}
 /* INLINE, NOT A BLOCK ABOVE THE TITLE: Chrome collapses the space after a
-   block-level span, and the bookmark then reads "20.1What it is". */
+   block-level span, and the bookmark then reads "21.1What it is". */
 .chapter-head .num {{
   font-family: "Space Mono"; font-weight: 400; font-size: 12pt;
   color: {NOTICE}; margin-right: 8pt; vertical-align: 3pt;
@@ -420,7 +426,7 @@ def build(out: str) -> None:
             f'<li class="{cls}"><a href="#{anchor}"><span class="n">{html.escape(num)}'
             f"</span><span>{docs_pdf._inline(title)}</span></a></li>"
         )
-        body_html = docs_pdf.convert(rewrite_links(body), "docs/20-user-guide.md", ids)
+        body_html = docs_pdf.convert(rewrite_links(body), "docs/21-user-guide.md", ids)
         chapters.append(
             f'<section class="chapter" style="page: {page}">'
             f'<h{level} class="chapter-head" id="{anchor}"><span class="num">'
@@ -462,7 +468,7 @@ def build(out: str) -> None:
         f'<div class="meta">Version {html.escape(version)} · {date}<br>'
         "Windows · pre-release</div>"
         '<div class="foot">For AV and low-voltage integrators. Describes what '
-        "RackPal does today; section 20.8 lists what is not built yet. Code "
+        f"RackPal does today; section {DOC}.8 lists what is not built yet. Code "
         "AGPLv3-or-later, device catalog CC0.</div>"
         "</div></div>"
     )

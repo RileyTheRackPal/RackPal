@@ -13,7 +13,7 @@ canon_section: "11.187"
 status: ruled
 ---
 
-Settled by the user on 2026-09-23, on reading docs/20's claim that the product *"is not a CAD
+Settled by the user on 2026-09-23, on reading docs/21's claim that the product *"is not a CAD
 package"*.
 
 # The positioning, and the reason is the user's

@@ -1,11 +1,11 @@
-// `Help ▸ About RackPal…` (DR-189, docs/20 §20.9).
+// `Help ▸ About RackPal…` (DR-189, docs/21 §21.9).
 //
 // ═══════════════════════════════════════════════════════════════════════
 // THE POINT OF THESE CASES IS THAT A LABEL NOBODY CHECKED SHIPS WRONG
 // ═══════════════════════════════════════════════════════════════════════
 // `kAppVersion` is stamped into every `RackDocument.appVersion` and every
 // recovery sidecar, and until this chapter it was displayed NOWHERE, so a
-// tester could not say which build they were running and docs/20 had to
+// tester could not say which build they were running and docs/21 had to
 // tell them to quote a folder name instead.
 //
 // A dialog that shows a version is worth nothing if it shows a DIFFERENT
