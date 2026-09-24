@@ -1,5 +1,28 @@
 # Update Log
 
+## 2026-09-24 (seventieth entry)
+
+* **Progress**: `PLAN-J/0` (`#943`). The Plan view's clause table is re-marked against the tree:
+  **4 of 7 `DEMONSTRATED`**, one parked on M6 by DR-155, and the two left are `PLAN-J`'s physical
+  acts, so the epic's weakest mark moves from `NOT BUILT` to `UNPERFORMED`. It had read `0 of 7`
+  through every chapter since `PLAN-F`.
+* **Note**: **TWO CLAUSES WERE PROVEN IN HALVES AND NEVER JOINED.** CR-117 on the zip path had a
+  codec test over JSON and a container test over a hand-written string, and no test saved a real
+  project with a floorplan through `DocumentStore` and compared the file. The callout clause had
+  "each carrier prints its own designator" and no test that the same string is on the Pull Sheet
+  rows, which is DR-150's whole argument. Both now run at the boundary the clause names. Half a
+  proof twice over is not a proof, which is [a gate's scope is part of its
+  claim](/practices/a-gates-scope-is-part-of-its-claim.md) at the size of one clause.
+* **Note**: **THE FIRST TEST TO IMPORT THROUGH THE REAL MENU FOUND A DEFECT AFTER ITS OWN ASSERTIONS
+  PASSED**: a plan's image decode left running when the shell closed threw "disposed while loading"
+  into the zone, which since DR-194 would have logged a fatal record on an ordinary quit.
+* **Note**: **PLAN-J/2's BRIEF WAS STALE TWICE OVER**: it asked to print the Pull Sheet, which
+  DR-155 says does not print, and to find every cable `W` number on the plan, which DR-150's callout
+  cannot show. [A brief expires](/practices/a-brief-expires.md), and this one had been overtaken by
+  two rulings made after it.
+* **Version**: `v0.6.60`. Epic `#588`: 57 Done Chapters plus the three Done leaf Stories (`#870`,
+  `#911`, `#912`), `#589`'s decomposition excluded; by family, 49 `PLAN-*` + 8 `LEN-A/*` + 3 = 60.
+
 ## 2026-09-24 (sixty-ninth entry)
 
 * **Progress**: the full-tree review (`#97`) closes. docs/12 §4.15 is its record: eleven findings,
