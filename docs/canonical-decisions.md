@@ -22393,6 +22393,19 @@ happens to equal today's constructor default is a fact that coincides with it; d
 fact to the constructor, and a later change to that default would then rewrite every device that
 had said it silently. The lint is right about code and wrong about data.
 
+**11.194.3 CORRECTED IN THE SAME CHAPTER: FIXTURES ARE DATA TOO, AND THE CORPUS HAD ALREADY SAID
+SO.** The options were priced on "~45 redundant arguments outside the catalogue", offered as
+sweepable. Applying the sweep (`#936`) and then reading the ratchet's own history found `#246`
+(DR-107), which **kept** sixty explicit `mountMethod: MountMethod.rackEars` sites, *"catalog and
+fixture"*, because that default had moved once and *"a template that had gone silent on the question
+would have changed meaning without a diff"*. That is §11.194.2's argument, made a month earlier and
+missed when this question was priced. Every one of the 45 builds a `TemplateBody` or a rack in a
+test fixture. **So the fixture files that carry them take the same documented file-wide ignore as
+the catalogue, and their values stay written.** One site in `lib/` (`shake_animation.dart`) passes a
+named constant that equals the default, and keeps it with a line `ignore` for the same reason.
+`cascade_invocations` is swept as ruled. The outcome the user chose is unchanged: the pin drops to
+the 23 infos worth reading, and only the route to it differs.
+
 **Scope.** No scope change.
 
 ### 11.195 DR-196 · The two canvas screens are not split before M7 (`#98`'s verdict)

@@ -1,5 +1,13 @@
 // Seed catalog — "Sources" (docs/catalog/seed-devices.md §3.5).
 
+// A VALUE EQUAL TO THE DEFAULT IS A FACT HERE, NOT REDUNDANCY (DR-195,
+// canon 11.194). A catalogue entry records what a device IS, and under
+// CR-114 an explicit `0` is a measurement. Dropping an argument that
+// happens to equal today's constructor default would hand the fact to the
+// constructor, and the next change to that default would rewrite every
+// device that had stated it with no diff here to show it.
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'package:rackpal_core/src/catalog/catalog_ports.dart';
 import 'package:rackpal_core/src/model/placement.dart' show Face;
 import 'package:rackpal_core/src/model/template.dart';
@@ -19,8 +27,7 @@ Map<String, TemplateBody> buildSourcesCatalog() {
   // forks from (a streaming player, disc player or console is a Device
   // Builder "Mirror bank" job from here — P3).
   final s01 = PortBuilder()
-    ..set('an', 'Analog stereo pair', SetKind.stereoPair);
-  s01
+    ..set('an', 'Analog stereo pair', SetKind.stereoPair)
     ..p(
       'rf.in',
       'RF IN',

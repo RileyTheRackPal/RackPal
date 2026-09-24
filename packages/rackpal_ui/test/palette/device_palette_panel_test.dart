@@ -9,6 +9,12 @@
 // was a surface reading the catalog and therefore agreeing with itself
 // forever (M4-S, DR-077 §11.76.1).
 
+// Fixture values that equal a constructor default are written anyway:
+// a `TemplateBody` here stands for a piece of equipment, and one that went
+// silent on a question changes meaning when the default moves, which
+// `mountMethod`'s did once (`#246`). DR-195, canon 11.194.
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'package:flutter/gestures.dart' show PointerDownEvent, kDoubleTapMinTime;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';

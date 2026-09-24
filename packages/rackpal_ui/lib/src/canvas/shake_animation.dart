@@ -48,6 +48,10 @@ class ShakeController extends ChangeNotifier {
   Offset offsetFor(Uuid id) {
     final controller = _controller;
     if (controller == null || _targetId != id) return Offset.zero;
+    // [amplitude] equals `shakeOffsetAt`'s default today, and passing it is
+    // the only thing that makes changing it do anything (DR-195's argument,
+    // in code rather than in the catalogue). `dart fix` removed it at `#936`.
+    // ignore: avoid_redundant_argument_values
     return shakeOffsetAt(controller.value, amplitude: amplitude);
   }
 
@@ -61,6 +65,13 @@ class ShakeController extends ChangeNotifier {
       vsync: _vsync,
       duration: duration,
     )..addListener(notifyListeners);
+    // NOT ONE CASCADE, whatever the lint says. `??=` binds looser than `..`,
+    // so folding these into the line above would stop and restart the shake
+    // only when the controller is first created, and a second press against
+    // the same blocker would play nothing. A mechanical fix merged them during
+    // `#936`; the analyzer saw nothing wrong, and `shake_animation_test.dart`'s
+    // re-trigger case fails on the merged form.
+    // ignore: cascade_invocations
     controller
       ..stop()
       ..forward(from: 0);

@@ -72,4 +72,26 @@
 # WHAT THIS IS NOT: mechanical noise from a formatting sweep. That case is
 # argued against above and the argument stands. Every one of the 62 is a
 # statement a person wrote about a piece of equipment.
-233
+#
+# 233 -> 23 on 2026-09-23 at `#936` (DR-195, canon section 11.194). The
+# first LINT-FIXING pass this file records, and it removes the two lints
+# that were 210 of the 233 without deleting a single stated value.
+#
+# `cascade_invocations` (49) is swept: pure style, no bulk fix exists, so a
+# script converted each site and every hunk was read. Reading mattered. The
+# script folded `controller..stop()..forward()` into a `??=` initialiser,
+# where `..` binds tighter, so a second shake would never have played; the
+# analyzer saw nothing and shake_animation_test's re-trigger case does fail
+# on it. That site keeps its two statements under a documented ignore.
+#
+# `avoid_redundant_argument_values` (161) is NOT swept. 116 sites are in the
+# nine seed catalogue files and the other 45 are test fixtures building
+# equipment, which is `#246`'s argument above made again: a value equal to
+# the default is a fact that coincides with it. Each of those files carries
+# a documented file-wide ignore. `dart fix` ran first and was reverted file
+# by file once `#246` was read, which is recorded rather than tidied away.
+#
+# What remains is 23 infos, every one of them a finding someone should
+# read, including the two DEPRECATED_MEMBER_USE on the announcement path.
+
+23

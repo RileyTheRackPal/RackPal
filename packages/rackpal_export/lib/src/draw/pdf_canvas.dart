@@ -67,12 +67,13 @@ final class PdfDiagramCanvas implements DiagramCanvas {
   }) : _g = graphics,
        _fonts = fonts,
        _measurer = measurer {
-    _g.saveContext();
-    _g.setTransform(
-      Matrix4.identity()
-        ..setEntry(1, 3, boxHeight) // translate y
-        ..setEntry(1, 1, -1.0), // scale y by -1 -> one global flip
-    );
+    _g
+      ..saveContext()
+      ..setTransform(
+        Matrix4.identity()
+          ..setEntry(1, 3, boxHeight) // translate y
+          ..setEntry(1, 1, -1.0), // scale y by -1 -> one global flip
+      );
     _stack.add(Matrix4.identity());
   }
 
@@ -235,8 +236,9 @@ final class PdfDiagramCanvas implements DiagramCanvas {
     // CALLER's job via this canvas's own save()/restore(), exactly as with
     // every other DiagramCanvas backend; bracketing it here would undo the
     // clip before the caller's next draw call ever saw it.
-    _g.drawRect(r.left, r.top, r.width, r.height);
-    _g.clipPath();
+    _g
+      ..drawRect(r.left, r.top, r.width, r.height)
+      ..clipPath();
   }
 
   @override
@@ -253,8 +255,8 @@ final class PdfDiagramCanvas implements DiagramCanvas {
     _applyStroke(s);
     _g
       ..drawLine(a.x, a.y, b.x, b.y)
-      ..strokePath();
-    _g.restoreContext();
+      ..strokePath()
+      ..restoreContext();
   }
 
   @override
@@ -269,8 +271,9 @@ final class PdfDiagramCanvas implements DiagramCanvas {
     // `strokePath(close: true)` is the PDF `s` operator -- close then
     // stroke in one step -- rather than an explicit separate closePath()
     // call, matching `PdfGraphics`'s own idiom for a closed stroked shape.
-    _g.strokePath(close: close);
-    _g.restoreContext();
+    _g
+      ..strokePath(close: close)
+      ..restoreContext();
   }
 
   @override
@@ -279,15 +282,17 @@ final class PdfDiagramCanvas implements DiagramCanvas {
       _g.saveContext();
       _applyFill(fill);
       _emitPath(p);
-      _g.fillPath();
-      _g.restoreContext();
+      _g
+        ..fillPath()
+        ..restoreContext();
     }
     if (stroke != null) {
       _g.saveContext();
       _applyStroke(stroke);
       _emitPath(p);
-      _g.strokePath();
-      _g.restoreContext();
+      _g
+        ..strokePath()
+        ..restoreContext();
     }
   }
 
@@ -337,16 +342,16 @@ final class PdfDiagramCanvas implements DiagramCanvas {
       _applyFill(fill);
       _g
         ..drawRect(r.left, r.top, r.width, r.height)
-        ..fillPath();
-      _g.restoreContext();
+        ..fillPath()
+        ..restoreContext();
     }
     if (stroke != null) {
       _g.saveContext();
       _applyStroke(stroke);
       _g
         ..drawRect(r.left, r.top, r.width, r.height)
-        ..strokePath();
-      _g.restoreContext();
+        ..strokePath()
+        ..restoreContext();
     }
   }
 
@@ -357,16 +362,16 @@ final class PdfDiagramCanvas implements DiagramCanvas {
       _applyFill(fill);
       _g
         ..drawRRect(r.left, r.top, r.width, r.height, radii.rv, radii.rh)
-        ..fillPath();
-      _g.restoreContext();
+        ..fillPath()
+        ..restoreContext();
     }
     if (stroke != null) {
       _g.saveContext();
       _applyStroke(stroke);
       _g
         ..drawRRect(r.left, r.top, r.width, r.height, radii.rv, radii.rh)
-        ..strokePath();
-      _g.restoreContext();
+        ..strokePath()
+        ..restoreContext();
     }
   }
 
@@ -377,16 +382,16 @@ final class PdfDiagramCanvas implements DiagramCanvas {
       _applyFill(fill);
       _g
         ..drawEllipse(c.x, c.y, radius, radius)
-        ..fillPath();
-      _g.restoreContext();
+        ..fillPath()
+        ..restoreContext();
     }
     if (stroke != null) {
       _g.saveContext();
       _applyStroke(stroke);
       _g
         ..drawEllipse(c.x, c.y, radius, radius)
-        ..strokePath();
-      _g.restoreContext();
+        ..strokePath()
+        ..restoreContext();
     }
   }
 
@@ -397,16 +402,16 @@ final class PdfDiagramCanvas implements DiagramCanvas {
       _applyFill(fill);
       _g
         ..drawEllipse(c.x, c.y, rx, ry)
-        ..fillPath();
-      _g.restoreContext();
+        ..fillPath()
+        ..restoreContext();
     }
     if (stroke != null) {
       _g.saveContext();
       _applyStroke(stroke);
       _g
         ..drawEllipse(c.x, c.y, rx, ry)
-        ..strokePath();
-      _g.restoreContext();
+        ..strokePath()
+        ..restoreContext();
     }
   }
 
@@ -424,14 +429,15 @@ final class PdfDiagramCanvas implements DiagramCanvas {
     _applyFill(Fill(s.argb));
     // Counter-flip locally so glyphs are upright, then apply the caller's
     // rotation. Sign is negated because the local frame is now Y-up.
-    _g.setTransform(
-      Matrix4.identity()
-        ..setEntry(0, 3, at.x)
-        ..setEntry(1, 3, at.y)
-        ..multiply(Matrix4.identity()..setEntry(1, 1, -1.0))
-        ..multiply(Matrix4.rotationZ(-s.rotationRad)),
-    );
-    _g.drawString(font, s.sizePt, text, o.x, -o.y, charSpace: s.letterSpacing);
-    _g.restoreContext();
+    _g
+      ..setTransform(
+        Matrix4.identity()
+          ..setEntry(0, 3, at.x)
+          ..setEntry(1, 3, at.y)
+          ..multiply(Matrix4.identity()..setEntry(1, 1, -1.0))
+          ..multiply(Matrix4.rotationZ(-s.rotationRad)),
+      )
+      ..drawString(font, s.sizePt, text, o.x, -o.y, charSpace: s.letterSpacing)
+      ..restoreContext();
   }
 }

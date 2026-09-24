@@ -28,3 +28,14 @@ coincides with it. Removing it hands the fact to the constructor, and the next c
 default rewrites every device that had stated it, with no diff in the catalogue to show it.
 [A non-nullable field with a default has already answered](/practices/a-defaulted-enum-has-already-answered.md)
 is the same point from the model's side. The lint is right about code and wrong about data.
+
+# Corrected in the same chapter
+
+The options were priced on about 45 redundant arguments outside the catalogue, offered as sweepable.
+The sweep ran, and then the ratchet's own history turned up `#246` (DR-107): sixty explicit
+`mountMethod` sites, *"catalog and fixture"*, kept on purpose because that default had already moved
+once. That is this ruling's argument, made a month earlier, and all 45 sites were test fixtures
+building equipment. They went back, under the same documented ignore, and only `cascade_invocations`
+was swept. The pin still reached 23. The miss is
+[the corpus already had it](/practices/census-before-building.md) again: the precedent sat in the one
+file the change was about to edit.

@@ -528,8 +528,9 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
     final run =
         runs?.runFor(text, s, () => _layOut(text, s)) ?? _layOut(text, s);
 
-    _c.save();
-    _c.translate(at.x, at.y);
+    _c
+      ..save()
+      ..translate(at.x, at.y);
     if (s.rotationRad != 0) _c.rotate(s.rotationRad);
     run.painter.paint(_c, ui.Offset(o.x, o.y - run.baselineOffset));
     _c.restore();
