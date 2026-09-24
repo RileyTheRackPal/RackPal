@@ -763,6 +763,15 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     // `SetEntityPropertyCommand(designator)`), which the header bar and the
     // inspector both display.
     _controller.epochs.meta.addListener(_onEditorChanged);
+    // `wires` since the full-tree review (`#932`). DR-171 counts a device's
+    // consumed outlets from the cords drawn to it (§11.170.4), and the
+    // findings drawer judges cables, and `build` derives both. So a
+    // wires-only commit, a cord removed or its undo, changed the chip and
+    // repainted nothing. The app hid it only because `AppShell` rebuilds the
+    // whole tree on every commit, which is a performance accident and not a
+    // dependency this screen may borrow. `rack_canvas_epochs_test.dart`
+    // mounts the screen without the shell to keep that honest.
+    _controller.epochs.wires.addListener(_onEditorChanged);
     // Bumped by EVERY commit, undo and redo (CR-094) — the one signal broad
     // enough to catch "the document moved under an open compaction
     // preview", whatever moved it. See `_onDocumentSequenceChanged`.
@@ -842,6 +851,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     _controller.epochs.structure.removeListener(_onEditorChanged);
     _controller.epochs.rack.removeListener(_onEditorChanged);
     _controller.epochs.meta.removeListener(_onEditorChanged);
+    _controller.epochs.wires.removeListener(_onEditorChanged);
     _controller.epochs.sequence.removeListener(_onDocumentSequenceChanged);
     _compaction.dispose();
     // A top-edge drag in flight at dispose time (as with the other two

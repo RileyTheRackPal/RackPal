@@ -1425,7 +1425,10 @@ $SuiteFloors = @{
     # takeoff strip. The one that matters reads the words off the screen:
     # 78 ft of Cat6A must print 78 raw and 86 with waste, while the TABLE
     # row still reads 78, because the factor is never written to a length.
-    'rackpal_ui'     = 2004
+    # 2006 at `#932`: +2 in rack_canvas_epochs_test.dart, which mounts the
+    # Rack view WITHOUT the shell. The shell rebuilds everything on every
+    # commit, and that is what hid a screen that never listened to `wires`.
+    'rackpal_ui'     = 2006
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
