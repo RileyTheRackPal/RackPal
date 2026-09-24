@@ -1592,7 +1592,10 @@ $SuiteFloors = @{
     # 1077 at `#939` (DR-194): +6 in storage/diagnostic_log_test.dart. The
     # one that matters writes an error whose MESSAGE names a client's house
     # and asserts the bytes on disk hold its type and frames and not the name.
-    'rackpal_app'    = 1077
+    # 1083 at `#940` (DR-194): +6 in session/startup_failure_test.dart. A
+    # startup throw reaches the failure path and the log the window names,
+    # and Close holds the focus (red without `autofocus`).
+    'rackpal_app'    = 1083
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

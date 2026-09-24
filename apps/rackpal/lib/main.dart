@@ -10,6 +10,7 @@ import 'package:pdf/pdf.dart';
 import 'package:rackpal/src/session/app_services.dart';
 import 'package:rackpal/src/session/app_shell.dart';
 import 'package:rackpal/src/session/blank_document.dart';
+import 'package:rackpal/src/session/startup_failure.dart';
 import 'package:rackpal/src/session/window_chrome.dart';
 import 'package:rackpal/src/storage/data_root.dart';
 import 'package:rackpal/src/storage/diagnostic_log.dart';
@@ -111,6 +112,15 @@ Future<void> _run() async {
   };
 
   final chrome = WindowManagerChrome(displayEnumerator: _enumerateDisplays);
+  // DR-194 (`#940`): a throw from here to `runApp` used to reach the zone
+  // and nothing else, behind a window nobody could see.
+  await guardStartup(
+    () => _start(chrome),
+    (error, stack) => _showStartupFailure(chrome, error, stack),
+  );
+}
+
+Future<void> _start(WindowManagerChrome chrome) async {
   // BEFORE runApp. `setPreventClose(true)` — inside `initialize` — is the
   // one load-bearing API in the whole `window_manager` dependency:
   // without it the OS destroys the window and Flutter finds out
@@ -144,6 +154,15 @@ Future<void> _run() async {
     await log.open();
     setStorageLogSink(log.storage);
     _diagnostics = log;
+  }
+
+  // A STARTUP FAILURE ON PURPOSE, for a person to see the window it
+  // produces: `flutter run --dart-define=RACKPAL_INDUCE_STARTUP_FAILURE=true`.
+  // A compile-time constant, so an ordinary build carries no trace of it.
+  // AFTER the log is installed, so the record lands where the window says,
+  // and it is the "deliberately induced crash" §9.9's M8 clause will need.
+  if (const bool.fromEnvironment('RACKPAL_INDUCE_STARTUP_FAILURE')) {
+    throw StateError('induced startup failure (DR-194)');
   }
 
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -199,6 +218,40 @@ Future<void> _run() async {
   );
 
   await chrome.show();
+}
+
+/// The window that replaces a black one when startup throws (DR-194).
+///
+/// EVERY STEP IS BEST-EFFORT, because the failure may have been the window
+/// itself: `chrome.initialize` is the first thing `_start` awaits. The
+/// record is written first and waited for, so the folder the window names
+/// holds the line it is pointing at. Prevent-close is switched off because
+/// nothing is listening for the close request any more, and the X button
+/// would otherwise do nothing.
+Future<void> _showStartupFailure(
+  WindowManagerChrome chrome,
+  Object error,
+  StackTrace stack,
+) async {
+  _reportFatal(error, stack);
+  await _diagnostics?.idle;
+  runApp(
+    StartupFailureApp(
+      logFolder: _diagnostics?.directory,
+      onClose: () => unawaited(_bestEffort(chrome.destroy)),
+    ),
+  );
+  await _bestEffort(() => chrome.setPreventClose(prevent: false));
+  await _bestEffort(chrome.show);
+}
+
+Future<void> _bestEffort(Future<void> Function() step) async {
+  try {
+    await step();
+  } on Object {
+    // The failure window is the last thing left to try; a step it cannot
+    // take is not a reason to throw from it.
+  }
 }
 
 /// §12.1's programmer-error channel, at the one place it can be installed.
