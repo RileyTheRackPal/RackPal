@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-09-23 (sixty-seventh entry)
+
+* **Update**: [Package layering](/invariants/package-layering.md). **`wire_trace.dart` MOVED TO
+  CORE**, closing the "violation in waiting" recorded here on the bundle's first day. The full-tree
+  review (`#97`) was the first thing to call `#98`'s one non-optional refactor due, because M6 is
+  next and its interconnect sheets render `drawn`. A pure move: `src/` imports in place of the
+  barrel, one export line per barrel, two test imports that became unused, no behaviour change.
+* **Note**: **THE PAGE SAID "ENFORCED BY TESTS" AND LISTED ONE.** The exporter's half is gated by
+  `rackpal_export/test/support/source_gate.dart`, which the Enforcement list never named. It is the
+  load-bearing one: a pub workspace resolves every member through one shared package config, so
+  leaving `rackpal_ui` out of the exporter's pubspec does not stop an import compiling.
+
 ## 2026-09-23 (sixty-sixth entry)
 
 * **Update**: **THE USER GUIDE IS docs/21, NOT docs/20.** It was written as `docs/20-user-guide.md` in a

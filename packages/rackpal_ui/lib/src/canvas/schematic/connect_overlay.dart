@@ -6,18 +6,19 @@
 // ═════════════════════════════════════════════════════════════════════
 // THIS LIVES IN `rackpal_ui` ON PURPOSE, UNLIKE ITS NEIGHBOUR
 // ═════════════════════════════════════════════════════════════════════
-// `wire_trace.dart` sits in this package and should not — the OKF bundle
-// records it as a layering violation in waiting, because `rackpal_export`
-// may never import `rackpal_ui` and therefore cannot draw a wire, which
-// makes M6's interconnect sheets unbuildable until it moves.
+// `wire_trace.dart` used to sit in this package and should not have: the
+// OKF bundle recorded it as a layering violation in waiting, because
+// `rackpal_export` may never import `rackpal_ui` and so could not draw a
+// wire for M6's interconnect sheets. The full-tree review (`#97`, `#98`)
+// moved it to `rackpal_core/src/draw/scene/`.
 //
 // This file is the opposite case and the distinction is worth stating so
-// the next reader does not "fix" it by relocating both. A caret ring and a
-// rubber band are LIVE GESTURE CHROME: they exist between a keypress and a
-// commit, they are never in a document, and there is no sheet on which they
-// could be printed. `Stroke.scaleWithGeometry: false` says the same thing
-// in the type system — this ink is measured in screen pixels, which is
-// meaningless to a PDF backend.
+// the next reader does not "fix" it by relocating it after its neighbour.
+// A caret ring and a rubber band are LIVE GESTURE CHROME: they exist
+// between a keypress and a commit, they are never in a document, and there
+// is no sheet on which they could be printed. `Stroke.scaleWithGeometry:
+// false` says the same thing in the type system — this ink is measured in
+// screen pixels, which is meaningless to a PDF backend.
 //
 // ═════════════════════════════════════════════════════════════════════
 // THE BAND IS THE REAL TRACE, NOT A LINE BETWEEN TWO POINTS
@@ -48,7 +49,6 @@ import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/rackpal_core.dart';
-import 'package:rackpal_ui/src/canvas/schematic/wire_trace.dart';
 
 /// One pin on the sheet, named the way a document names it.
 ///

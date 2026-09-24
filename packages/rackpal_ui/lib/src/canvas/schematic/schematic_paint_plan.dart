@@ -53,7 +53,6 @@
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/schematic/schematic_filter.dart';
-import 'package:rackpal_ui/src/canvas/schematic/wire_trace.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 /// Clear space, in grid units, between the outermost ink and the edge of

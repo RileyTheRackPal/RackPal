@@ -34,7 +34,6 @@
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
-import 'package:rackpal_ui/rackpal_ui.dart';
 
 import 'schematic_test_document.dart';
 

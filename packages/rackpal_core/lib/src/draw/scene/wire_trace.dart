@@ -1,4 +1,4 @@
-// rackpal_ui/src/canvas/schematic/wire_trace.dart
+// rackpal_core/src/draw/scene/wire_trace.dart
 //
 // THE WHOLE v1 ROUTER. A deterministic per-link orthogonal staircase, and
 // nothing else (canon §11.1.3: "The **deterministic per-link orthogonal
@@ -122,7 +122,19 @@
 import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
-import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_core/src/draw/geometry.dart';
+import 'package:rackpal_core/src/draw/ops.dart';
+import 'package:rackpal_core/src/draw/scene/net_label_layer.dart';
+import 'package:rackpal_core/src/draw/scene/rack_style.dart';
+import 'package:rackpal_core/src/draw/scene/schematic_scene.dart';
+import 'package:rackpal_core/src/draw/scene/signal_style.dart';
+import 'package:rackpal_core/src/draw/scene/symbol_layer.dart';
+import 'package:rackpal_core/src/draw/spec.dart';
+import 'package:rackpal_core/src/draw/text.dart';
+import 'package:rackpal_core/src/model/link.dart';
+import 'package:rackpal_core/src/model/rack_document.dart';
+import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 
 /// The largest number of corners any [orthogonalTrace] may contain — canon
 /// §11.1.3's "fixed bend budget", made checkable.

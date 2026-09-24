@@ -24,14 +24,14 @@
 /// canvas still lives in `rackpal_core/src/draw/scene/symbol_layer.dart`
 /// (CR-071, CR-086), where `rackpal_export` can also reach it.
 ///
-/// WHAT IS IN THIS PACKAGE RATHER THAN IN CORE, AND THE COST OF THAT.
-/// `wire_trace.dart` — canon §11.1.3's "whole v1 router" — is a Flutter
-/// package's file, so `rackpal_export` cannot drive it. §11.1.2 says every
-/// exported interconnect sheet `T6.01…` "is a domain filter by
-/// construction and therefore renders `drawn`", so the exporter WILL need
-/// it. It is pure geometry over `rackpal_core` types and moving it is a
-/// file move; it is here because M2-D owns `draw/scene/` and M2-E may not
-/// reach into it.
+/// WHAT USED TO BE IN THIS PACKAGE RATHER THAN IN CORE. `wire_trace.dart`,
+/// canon §11.1.3's "whole v1 router", was written here at M2-E because
+/// M2-D owned `draw/scene/`, which left `rackpal_export` unable to drive
+/// it while §11.1.2 says every exported interconnect sheet `T6.01…` "is a
+/// domain filter by construction and therefore renders `drawn`". It was
+/// always pure geometry over `rackpal_core` types, and the full-tree
+/// review (`#97`, `#98`) moved it to `rackpal_core/src/draw/scene/` as a
+/// file move with no behaviour change.
 ///
 /// `src/schedule/` IS BACK, and on different terms from the one that was
 /// deleted. The deleted one had no pipeline behind it and told the user
@@ -98,7 +98,6 @@ export 'src/canvas/schematic/schematic_paint_plan.dart';
 export 'src/canvas/schematic/schematic_reveal.dart';
 export 'src/canvas/schematic/spring_back_chip_card.dart';
 export 'src/canvas/schematic/tidy_sheet_dialog.dart';
-export 'src/canvas/schematic/wire_trace.dart';
 export 'src/canvas/selection_controller.dart';
 export 'src/canvas/shake_animation.dart';
 export 'src/canvas/staging_bin_overlay.dart';
