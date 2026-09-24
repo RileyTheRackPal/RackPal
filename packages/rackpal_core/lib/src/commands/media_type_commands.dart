@@ -58,11 +58,7 @@ import 'package:rackpal_core/src/units/ids.dart';
 /// with an existing key get a numeric suffix rather than overwriting,
 /// since two shops' `Cat6e` may be genuinely different cables.
 MediaTypeId mediaTypeIdFor(RackDocument doc, String spelling) {
-  final slug = spelling
-      .toLowerCase()
-      .replaceAll(RegExp('[^a-z0-9]+'), '_')
-      .replaceAll(RegExp(r'^_+|_+$'), '');
-  final base = slug.isEmpty ? 'type' : slug;
+  final base = mediaSlugFor(spelling);
   var candidate = MediaTypeId('media.$base');
   var n = 2;
   while (doc.registries.mediaTypes.containsKey(candidate)) {
@@ -70,6 +66,21 @@ MediaTypeId mediaTypeIdFor(RackDocument doc, String spelling) {
     n++;
   }
   return candidate;
+}
+
+/// The id tail [mediaTypeIdFor] starts from, before it is made unique.
+///
+/// **PUBLIC BECAUSE A SECOND CALLER MUST AGREE WITH IT EXACTLY** (DR-197,
+/// `#937`). The CSV import groups the new spellings of one sheet by this,
+/// so that two spellings the id cannot tell apart are offered as one type.
+/// A second copy of the rule would be a second answer to "is this the same
+/// id", and the two would drift the day either was edited.
+String mediaSlugFor(String spelling) {
+  final slug = spelling
+      .toLowerCase()
+      .replaceAll(RegExp('[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+  return slug.isEmpty ? 'type' : slug;
 }
 
 /// The trade tag for a type created from the spelling [spelling].

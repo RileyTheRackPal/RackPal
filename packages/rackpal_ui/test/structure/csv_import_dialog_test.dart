@@ -201,6 +201,56 @@ void main() {
       );
       expect(find.text('${kCablePrefix}Cat6e'), findsOneWidget);
     });
+
+    // DR-197 (`#937`). Two spellings that derive one id were two boxes over
+    // one created type: the list promised a cable type the import never
+    // made. One box now, naming the other spelling, and it declines both.
+    const twoSpellings =
+        'Room,Cable Type\n'
+        'Living Room,Plenum Speaker 14/4\n'
+        'Living Room,plenum-speaker 14-4\n';
+
+    testWidgets('two spellings of one cable are ONE box, and it says both', (
+      tester,
+    ) async {
+      await _pump(tester, _project(withRoom: true), twoSpellings);
+
+      expect(
+        find.text(
+          '${kCablePrefix}Plenum Speaker 14/4 '
+          '(also written "plenum-speaker 14-4")',
+        ),
+        findsOneWidget,
+      );
+      expect(
+        find.textContaining(kCablePrefix),
+        findsOneWidget,
+        reason: 'one type is created, so one type is offered',
+      );
+      expect(find.text('create 2 · update 0 · unchanged 0'), findsOneWidget);
+    });
+
+    testWidgets('and unticking that box skips the rows of BOTH spellings', (
+      tester,
+    ) async {
+      await _pump(tester, _project(withRoom: true), twoSpellings);
+
+      await tester.tap(
+        find.ancestor(
+          of: find.textContaining(kCablePrefix),
+          matching: find.byType(CheckboxListTile),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(
+        find.text('create 0 · update 0 · unchanged 0 · skipped 2'),
+        findsOneWidget,
+        reason:
+            'a box that declined one spelling would leave the other '
+            "spelling's drop being created on a type the operator refused",
+      );
+    });
   });
 
   group('a blocking mapping problem disables the commit', () {

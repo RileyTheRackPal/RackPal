@@ -143,6 +143,54 @@ void main() {
     });
   });
 
+  // DR-197 (`#937`). Two spellings of one cable that derive one id. Before
+  // `#935` the second add overwrote the first and the first spelling was
+  // lost; after it, the second refused and ITS spelling was lost. Now one
+  // add carries both.
+  group('two spellings of one cable in one sheet (DR-197)', () {
+    const sheet =
+        'Room,Outlet,Cable Type,Qty\n'
+        'Living Room,WP-1,Plenum Speaker 14/4,1\n'
+        'Attic,AP-1,plenum-speaker 14-4,1\n';
+
+    List<MediaTypeDef> created(RackDocument doc) => doc
+        .registries
+        .mediaTypes
+        .values
+        .where((m) => !_registries.mediaTypes.containsKey(m.id))
+        .toList();
+
+    test('the plan offers them as one type, in sheet order', () {
+      final types = _plan(_Doc(), sheet).newMediaTypes;
+      expect(types, hasLength(1));
+      expect(types.single.spellings, [
+        'Plenum Speaker 14/4',
+        'plenum-speaker 14-4',
+      ]);
+    });
+
+    test('the import makes one type that answers to both spellings', () {
+      final d = _Doc();
+      final built = _import(d, sheet);
+
+      expect(built.commands.whereType<AddMediaTypeCommand>(), hasLength(1));
+      final type = created(d.doc).single;
+      expect(type.displayName, 'Plenum Speaker 14/4');
+      expect(type.aliases, ['Plenum Speaker 14/4', 'plenum-speaker 14-4']);
+      expect(
+        d.doc.links.values.map((l) => l.media).toSet(),
+        {type.id},
+        reason: 'both drops are the one cable type',
+      );
+    });
+
+    test('and importing the sheet again creates nothing', () {
+      final d = _Doc();
+      _import(d, sheet);
+      expect(_plan(d, sheet).newMediaTypes, isEmpty);
+    });
+  });
+
   group('re-import is idempotent (§5.3), which is the whole point', () {
     test('the same sheet twice creates nothing the second time', () {
       final d = _Doc();

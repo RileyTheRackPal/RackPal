@@ -920,7 +920,11 @@ $SuiteFloors = @{
     # 4906 at `#935`: +4 in commands/media_type_add_test.dart. Three were
     # red before the guard; the one that matters undoes an add that added
     # nothing, which used to delete the type already holding the id.
-    'rackpal_core'   = 4906
+    # 4909 at `#937` (DR-197): +3 in structure/csv_import_apply_test.dart for
+    # one sheet spelling one cable two ways. The one that matters is the
+    # real import making ONE type carrying both spellings; it is red with
+    # the old per-spelling loop put back.
+    'rackpal_core'   = 4909
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1434,7 +1438,10 @@ $SuiteFloors = @{
     # 2008 at `#933`: +2 in schematic_freeze_layout_test.dart, one per rack
     # display toggle, each asserting the file gains no sheet. Both went red
     # with `style` put back on the two fields.
-    'rackpal_ui'     = 2008
+    # 2010 at `#937` (DR-197): +2 in csv_import_dialog_test.dart, one box for
+    # two spellings of one cable, and unticking it skips both spellings'
+    # rows. Both red on the old per-spelling list.
+    'rackpal_ui'     = 2010
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

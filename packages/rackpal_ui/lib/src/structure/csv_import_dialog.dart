@@ -327,12 +327,18 @@ class _CsvImportViewState extends State<CsvImportView> {
             on ? _declinedLocations.remove(name) : _declinedLocations.add(name);
           }),
         ),
-      for (final token in plan.newMediaTokens)
+      // ONE BOX PER TYPE, NOT PER SPELLING (DR-197). Two spellings that
+      // derive one id were two boxes over one created type, so the list
+      // promised more than the import did. The box declines every spelling
+      // in its group together, because they are one cable.
+      for (final type in plan.newMediaTypes)
         _createCheck(
-          label: '$kCablePrefix$token',
-          value: !_declinedMedia.contains(token),
+          label: newCableTypeLabel(type),
+          value: !type.spellings.any(_declinedMedia.contains),
           onChanged: (on) => setState(() {
-            on ? _declinedMedia.remove(token) : _declinedMedia.add(token);
+            on
+                ? _declinedMedia.removeAll(type.spellings)
+                : _declinedMedia.addAll(type.spellings);
           }),
         ),
     ],
@@ -607,6 +613,17 @@ const String kRoomPrefix = 'Room: ';
 
 /// See [kImportCsvLabel].
 const String kCablePrefix = 'Cable type: ';
+
+/// A new cable type's line in the "Will create" list (DR-197): its name,
+/// and every other way the sheet wrote it.
+///
+/// "also written" and not "aliases": the person reading this is looking at
+/// their own spreadsheet, and the word they would use for two spellings of
+/// one cable is not a registry term.
+String newCableTypeLabel(NewMediaType type) => type.alsoWritten.isEmpty
+    ? '$kCablePrefix${type.name}'
+    : '$kCablePrefix${type.name} (also written '
+          '${type.alsoWritten.map((s) => '"$s"').join(', ')})';
 
 /// See [kImportCsvLabel].
 const String kLongShapeLabel = 'One row per drop';
