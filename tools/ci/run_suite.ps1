@@ -1595,7 +1595,10 @@ $SuiteFloors = @{
     # 1083 at `#940` (DR-194): +6 in session/startup_failure_test.dart. A
     # startup throw reaches the failure path and the log the window names,
     # and Close holds the focus (red without `autofocus`).
-    'rackpal_app'    = 1083
+    # 1086 at `#941` (DR-194): +3 in session/diagnostics_menu_test.dart,
+    # through the real Help menu: the folder the log is in, a refusal said
+    # with the path, and the item disabled with no data root.
+    'rackpal_app'    = 1086
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

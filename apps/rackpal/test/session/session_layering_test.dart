@@ -685,7 +685,13 @@ final class AppServices {
       // **The third was not being met at all**: nothing in the product
       // called `showLicensePage` or touched `LicenseRegistry`, and the
       // README claimed otherwise.
-      [15, 6],
+      //
+      // 15 -> 16 AT DR-194 (`#941`), and the accelerator count did not move
+      // for the THIRTEENTH time. The sixteenth is `Help ▸ Open diagnostics
+      // folder…`, beside About because it serves the same reader: a tester
+      // who has a version to quote usually has a log to send. No key,
+      // because it is opened once, after something went wrong.
+      [16, 6],
       reason:
           'eleven File-menu items — New, Open…, Save, Save As…, Export '
           'PDF…, Export/Import device template…, Export/Import device '

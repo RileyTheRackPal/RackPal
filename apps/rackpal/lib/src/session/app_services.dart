@@ -62,6 +62,7 @@ import 'package:rackpal/src/session/timers.dart';
 import 'package:rackpal/src/session/window_chrome.dart';
 import 'package:rackpal/src/storage/atomic_writer.dart';
 import 'package:rackpal/src/storage/data_root.dart';
+import 'package:rackpal/src/storage/diagnostic_log.dart';
 import 'package:rackpal/src/storage/document_store.dart';
 import 'package:rackpal/src/storage/file_store.dart';
 import 'package:rackpal/src/storage/prefs_store.dart';
@@ -108,6 +109,8 @@ final class AppServices {
     required this.startupWarning,
     this.prefsStore,
     this.rackPresetsStore,
+    this.diagnosticsFolder,
+    this.folderRevealer = win32RevealFolder,
   }) : degradedWarning = ValueNotifier<String?>(startupWarning);
 
   final DocumentSession session;
@@ -199,6 +202,16 @@ final class AppServices {
   /// [prefs]'s own doc comment records.
   final PrefsStore? prefsStore;
 
+  /// Where DR-194's diagnostic log is written, or null in the degraded
+  /// session, which has no data root and so no log. `Help ▸ Open
+  /// diagnostics folder…` is disabled then rather than opening nothing.
+  final String? diagnosticsFolder;
+
+  /// Shows [diagnosticsFolder] in the OS file manager (`#941`). Injected
+  /// for the reason [FilePicker] is: the platform half is a channel call,
+  /// and a test wants to see the call rather than a window.
+  final FolderRevealer folderRevealer;
+
   /// Your rack presets and the seeded ones you hid, or null in the
   /// degraded session (DR-176 §11.175.3).
   ///
@@ -278,6 +291,7 @@ Future<AppServices> buildAppServices({
   /// say which platform it is on, and there is no second answer.
   required bool isWindows,
   FilePicker picker = const Win32FilePicker(),
+  FolderRevealer folderRevealer = win32RevealFolder,
   Clock clock = const SystemClock(),
   Serializer serializer = isolateSerializer,
   Deserializer deserializer = isolateDeserializer,
@@ -444,6 +458,12 @@ Future<AppServices> buildAppServices({
   services = AppServices(
     session: session,
     controller: controller,
+    // The same join `main.dart` makes when it opens the log, from the same
+    // root and the same constant, so the menu opens the folder the log is in.
+    diagnosticsFolder: ready == null
+        ? null
+        : ctx.join(ready.path, kDiagnosticsFolder),
+    folderRevealer: folderRevealer,
     export: ExportController(
       session: session,
       picker: picker,

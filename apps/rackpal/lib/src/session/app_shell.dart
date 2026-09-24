@@ -330,6 +330,14 @@ String recheckSummary(List<Finding> findings) {
   return 'Re-checked. ${parts.join(', ')}.';
 }
 
+/// `Help ▸ Open diagnostics folder…` (DR-194, `#941`).
+const String kOpenDiagnosticsLabel = 'Open diagnostics folder…';
+
+/// What the item says when the operating system would not show the folder.
+/// The path, because the next thing the person needs is where the log is.
+String diagnosticsNotShownNotice(String folder) =>
+    'Could not open the diagnostics folder. It is at $folder';
+
 /// What `F8` says about the finding it just went to: the rule, the rule's
 /// own sentence, where it is in the list, and, when no single item could be
 /// selected, that too.
@@ -901,6 +909,18 @@ final class AppShellState extends State<AppShell>
   /// the six pubspecs.
   void _showAbout() => showRackPalAboutDialog(context, version: kAppVersion);
 
+  /// `Help ▸ Open diagnostics folder…` (DR-194, `#941`).
+  ///
+  /// A folder the OS would not open is SAID, with the path, because the
+  /// person asking is usually about to send the log to somebody and the
+  /// path is the next thing they need.
+  Future<void> _openDiagnostics() async {
+    final folder = _services.diagnosticsFolder;
+    if (folder == null) return;
+    final shown = await _services.folderRevealer(folder);
+    if (!shown) _showNotice(diagnosticsNotShownNotice(folder));
+  }
+
   Future<void> _exportPdf() async {
     await _services.export.exportPdf();
   }
@@ -1197,6 +1217,9 @@ final class AppShellState extends State<AppShell>
               onSave: _save,
               onSaveAs: _saveAs,
               onAbout: _showAbout,
+              onOpenDiagnostics: _services.diagnosticsFolder == null
+                  ? null
+                  : _openDiagnostics,
               onExportPdf: _exportPdf,
               onExportTemplate: _exportTemplate,
               onImportTemplate: _importTemplate,
@@ -2204,12 +2227,19 @@ final class _AppMenuBar extends StatelessWidget {
     required this.onPreferences,
     required this.onOpenRecent,
     required this.onAbout,
+    required this.onOpenDiagnostics,
     required this.undoTarget,
   });
 
   /// `Help ▸ About RackPal…`. See the menu itself for why Help exists for
   /// one item.
   final VoidCallback onAbout;
+
+  /// `Help ▸ Open diagnostics folder…` (DR-194, `#941`), or null in the
+  /// degraded session, which has no log to show. Null DISABLES the item
+  /// rather than hiding it, so the menu does not change shape under a
+  /// person who is looking for it.
+  final VoidCallback? onOpenDiagnostics;
 
   /// What `Edit` describes and acts on: the document's stack, or the
   /// Device Builder's while that screen is showing (DR-159 §11.158.5).
@@ -2413,16 +2443,22 @@ final class _AppMenuBar extends StatelessWidget {
         ),
         // HELP IS RIGHTMOST, which is where every Windows application puts
         // it and therefore the only place somebody looks for a version
-        // without being told. It carries one item and that is not a sign
-        // the menu is premature: `About` is where three obligations meet
-        // (the version a tester must quote, our own licence, and the
-        // third-party notices every MIT/BSD/Apache dependency requires us
-        // to reproduce), and none of them belongs under File or Edit.
+        // without being told. `About` is where three obligations meet (the
+        // version a tester must quote, our own licence, and the third-party
+        // notices every MIT/BSD/Apache dependency requires us to
+        // reproduce), and none of them belongs under File or Edit. The
+        // diagnostics folder joined it at DR-194 (`#941`) for the same
+        // reader: a tester who has a version to quote usually has a log to
+        // send. (This said "it carries one item" until then.)
         SubmenuButton(
           menuChildren: [
             MenuItemButton(
               onPressed: onAbout,
               child: const Text('About RackPal…'),
+            ),
+            MenuItemButton(
+              onPressed: onOpenDiagnostics,
+              child: const Text(kOpenDiagnosticsLabel),
             ),
           ],
           child: const Text('Help'),
