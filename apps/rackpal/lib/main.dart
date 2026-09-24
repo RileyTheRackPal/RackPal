@@ -12,8 +12,10 @@ import 'package:rackpal/src/session/app_shell.dart';
 import 'package:rackpal/src/session/blank_document.dart';
 import 'package:rackpal/src/session/window_chrome.dart';
 import 'package:rackpal/src/storage/data_root.dart';
+import 'package:rackpal/src/storage/diagnostic_log.dart';
 import 'package:rackpal/src/storage/io_file_store.dart';
 import 'package:rackpal/src/storage/prefs_store.dart';
+import 'package:rackpal/src/storage/storage_log.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_text/rackpal_text.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -72,6 +74,12 @@ import 'package:screen_retriever/screen_retriever.dart';
 // in a discarded future and vanished. So did anything thrown by the four
 // awaits before `runApp`, which is worse: a failure there means the
 // process exits with a black window and no message at all.
+
+/// The local diagnostic log (DR-194), or null until the data root resolves
+/// or when it is unusable. Top-level because [_reportFatal] is: the zone and
+/// the two framework hooks hold a function, not an object.
+DiagnosticLog? _diagnostics;
+
 Future<void> main() async {
   // ONE ZONE AROUND THE WHOLE APP, so an error from a callback with no
   // caller — a timer tick, a window event, an `unawaited` save — has
@@ -121,6 +129,22 @@ Future<void> _run() async {
     executableDirectory: productionExecutableDirectory(),
     applicationSupportDirectory: productionApplicationSupportDirectory,
   );
+
+  // DR-194: the local diagnostic log, as early as there is anywhere to put
+  // it. OPENED BEFORE THE SINK IS INSTALLED, so the rename that keeps the
+  // last session's log cannot take one of this session's records with it.
+  // An unusable data root has nowhere to write, and this says nothing then
+  // rather than inventing a folder.
+  if (dataRoot case DataRootReady(:final path)) {
+    final log = DiagnosticLog(
+      fs: fs,
+      directory: p.join(path, kDiagnosticsFolder),
+      context: p.context,
+    );
+    await log.open();
+    setStorageLogSink(log.storage);
+    _diagnostics = log;
+  }
 
   final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -190,10 +214,15 @@ Future<void> _run() async {
 /// review (`#934`): canon §9.9 schedules "crash reporting local-first and
 /// opt-in remote" for release engineering, with an exit clause that a
 /// deliberately induced crash produces a local report containing no
-/// project content. Until then a RELEASE build reports nothing anywhere,
-/// including a throw in the awaits before `runApp`, so the header's black
-/// window is caught here and still shown to nobody.
+/// project content.
+///
+/// **DR-194 PULLED THE LOCAL HALF FORWARD** (`#939`), because builds were
+/// already with testers and a release build reported nothing anywhere.
+/// [_diagnostics] records the error's type and frames, never its message
+/// (see `diagnostic_log.dart`), from the moment the data root resolves.
+/// Anything thrown before that still reaches only `presentError`.
 void _reportFatal(Object error, StackTrace stack) {
+  _diagnostics?.fatal(error, stack);
   FlutterError.presentError(
     FlutterErrorDetails(
       exception: error,
