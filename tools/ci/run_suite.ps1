@@ -924,7 +924,10 @@ $SuiteFloors = @{
     # one sheet spelling one cable two ways. The one that matters is the
     # real import making ONE type carrying both spellings; it is red with
     # the old per-spelling loop put back.
-    'rackpal_core'   = 4909
+    # 4911 at `#943`: +2 in sheet/plan_callout_pull_sheet_test.dart, the join
+    # DR-150 argued and nobody ran: every Pull Sheet row for a pinned drop
+    # shows its callout's string. Red when the cell drops the outlet.
+    'rackpal_core'   = 4911
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1598,7 +1601,13 @@ $SuiteFloors = @{
     # 1086 at `#941` (DR-194): +3 in session/diagnostics_menu_test.dart,
     # through the real Help menu: the folder the log is in, a refusal said
     # with the path, and the item disabled with no data root.
-    'rackpal_app'    = 1086
+    # 1087 at `#943`: +1 in session/floorplan_menu_route_test.dart, the
+    # first test to import a floorplan through the real File menu, and the
+    # one that found a decode left running when the shell closed.
+    # 1090 at `#943`: +3 in storage/document_store_test.dart, CR-117 on the
+    # zip path THROUGH THE STORE: save, reopen, save twice more, and the file
+    # is byte-identical; the halves had only ever been proven apart.
+    'rackpal_app'    = 1090
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

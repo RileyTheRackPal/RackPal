@@ -1834,14 +1834,32 @@ final class AppShellState extends State<AppShell>
     for (final entry in session.members.entries) {
       if (!_planImagesLoaded.add(entry.key)) continue;
       unawaited(
-        _planImages.load(entry.key, entry.value).then((_) {
-          // A DECODE IS ASYNCHRONOUS AND THE CANVAS IS NOT. Without this
-          // the first frame after an import draws with the resolver
-          // returning null, which `FlutterDiagramCanvas` raises as
-          // `MissingImageError`; the rebuild is what makes the plan
-          // appear rather than the app report a missing member.
-          if (mounted) setState(() {});
-        }),
+        _planImages
+            .load(entry.key, entry.value)
+            .then(
+              (_) {
+                // A DECODE IS ASYNCHRONOUS AND THE CANVAS IS NOT. Without
+                // this the first frame after an import draws with the
+                // resolver returning null, which `FlutterDiagramCanvas`
+                // raises as `MissingImageError`; the rebuild is what makes
+                // the plan appear rather than the app report a missing
+                // member.
+                if (mounted) setState(() {});
+              },
+              // A SHELL THAT CLOSED MID-DECODE IS NOT A FAILURE (`#943`).
+              // `dispose` disposes the cache, and the cache throws on a
+              // load it can no longer hold. This future is unawaited, so
+              // that throw reached the zone and, since DR-194, the
+              // diagnostic log: quitting straight after an import wrote a
+              // "fatal" record for nothing. Swallowed only once unmounted;
+              // a decode that fails while the shell is alive still throws.
+              // Found by `floorplan_menu_route_test.dart`, the first test to
+              // import through the real shell and then tear it down.
+              onError: (Object error, StackTrace stack) {
+                if (!mounted) return;
+                Error.throwWithStackTrace(error, stack);
+              },
+            ),
       );
     }
   }

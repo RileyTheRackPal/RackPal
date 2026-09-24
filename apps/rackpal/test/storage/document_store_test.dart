@@ -15,6 +15,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:rackpal/src/storage/atomic_writer.dart';
 import 'package:rackpal/src/storage/document_store.dart';
@@ -123,9 +124,7 @@ Uint8List _bytes(String s) => Uint8List.fromList(utf8.encode(s));
 void main() {
   group('open — the error surface, every named case', () {
     test('a good file opens', () async {
-      final made = _make(
-        files: {_paths.target: _codec.write(_doc())},
-      );
+      final made = _make(files: {_paths.target: _codec.write(_doc())});
       final result = await made.store.open(_paths.target);
 
       expect(result, isA<Ok<OpenedDocument>>());
@@ -169,9 +168,7 @@ void main() {
       // unless the directory is checked too. Report OpenNotFound here and
       // a sleeping NAS silently costs the user their recents entry.
       final made = _make();
-      final result = await made.store.open(
-        r'\\NAS\jobs\Smith.rmpj',
-      );
+      final result = await made.store.open(r'\\NAS\jobs\Smith.rmpj');
 
       final error = (result as Err<OpenedDocument>).error;
       expect(
@@ -194,9 +191,7 @@ void main() {
       // Without this, the `.bak` is decoration: it exists and nothing
       // ever offers it. This is the UI half of the crash-safety story,
       // and it also covers a user who deleted the wrong file.
-      final made = _make(
-        files: {_paths.backup: _codec.write(_doc())},
-      );
+      final made = _make(files: {_paths.backup: _codec.write(_doc())});
       final result = await made.store.open(_paths.target);
 
       final error = (result as Err<OpenedDocument>).error as OpenNotFound;
@@ -224,9 +219,7 @@ void main() {
     });
 
     test('a corrupt file with NO .bak still reports honestly', () async {
-      final made = _make(
-        files: {_paths.target: _bytes('not json at all')},
-      );
+      final made = _make(files: {_paths.target: _bytes('not json at all')});
       final error =
           ((await made.store.open(_paths.target)) as Err<OpenedDocument>).error;
       expect(error, isA<OpenCorrupt>());
@@ -308,10 +301,7 @@ void main() {
       final error =
           ((await made.store.open(_paths.target)) as Err<OpenedDocument>).error;
       expect(error, isA<OpenNewerSchema>());
-      expect(
-        (error as OpenNewerSchema).minReaderVersion,
-        kSchemaVersion + 1,
-      );
+      expect((error as OpenNewerSchema).minReaderVersion, kSchemaVersion + 1);
       expect(error.supportedSchemaVersion, kSchemaVersion);
     });
 
@@ -319,9 +309,7 @@ void main() {
       final raw =
           jsonDecode(utf8.decode(_codec.write(_doc())))! as Map<String, Object?>
             ..['schemaVersion'] = kSchemaVersion + 1;
-      final made = _make(
-        files: {_paths.target: _bytes(jsonEncode(raw))},
-      );
+      final made = _make(files: {_paths.target: _bytes(jsonEncode(raw))});
 
       final opened =
           ((await made.store.open(_paths.target)) as Ok<OpenedDocument>).value;
@@ -358,9 +346,7 @@ void main() {
     test('TOO DEEPLY NESTED is refused BEFORE jsonDecode — a stack '
         'overflow would take the process down', () async {
       final made = _make(
-        files: {
-          _paths.target: _bytes('${'[' * 100000}1${']' * 100000}'),
-        },
+        files: {_paths.target: _bytes('${'[' * 100000}1${']' * 100000}')},
       );
       final error =
           ((await made.store.open(_paths.target)) as Err<OpenedDocument>).error;
@@ -699,10 +685,7 @@ void main() {
 
       expect((result as Err<SavedFile>).error, isA<SaveLocked>());
       expect(controller.isDirty, isTrue);
-      expect(
-        await made.fs.readBytes(_paths.target),
-        _bytes('old bytes here'),
-      );
+      expect(await made.fs.readBytes(_paths.target), _bytes('old bytes here'));
     });
 
     test('the external-change check refuses to overwrite a file that '
@@ -724,6 +707,155 @@ void main() {
     });
   });
 
+  // THE PLAN VIEW'S LAST MACHINE-CHECKABLE CLAUSE (`#943`), at the boundary
+  // it names. "`write(read(bytes)) == bytes` holds on the zip path across a
+  // write, a reopen and a second write, and a project with no underlay
+  // writes bytes identical to what the plain-JSON path writes today."
+  //
+  // THE HALVES WERE PROVEN APART AND NEVER TOGETHER. The codec's three-step
+  // trip runs over JSON alone (`plan_serialization_test.dart`), and the
+  // container's runs over a hand-written JSON string and a ramp of bytes
+  // standing in for a PNG (`container_determinism_test.dart`). Neither is a
+  // PROJECT: a real underlay, its real image and source PDF as members,
+  // saved and reopened through `DocumentStore`, which is the path a person
+  // takes with File ▸ Save and File ▸ Open. That composition is what this
+  // group runs, and every comparison is of the FILE ON DISK.
+  group('CR-117 on the zip path, through the store (the Plan view clause)', () {
+    const underlayId = Uuid('0190e3c1-1111-7000-8000-000000000001');
+    const imageMember = 'underlays/$underlayId.png';
+    const sourceMember = 'sources/$underlayId.pdf';
+
+    /// A real PNG, not bytes that merely sit where one would: the member is
+    /// what a floorplan import actually stores.
+    Uint8List png() {
+      final image = img.Image(width: 40, height: 30);
+      for (var y = 0; y < 30; y++) {
+        for (var x = 0; x < 40; x++) {
+          image.setPixelRgb(x, y, x * 6, y * 8, 120);
+        }
+      }
+      return Uint8List.fromList(img.encodePng(image));
+    }
+
+    /// The document half: an underlay that is calibrated, rendered from a
+    /// PDF page, and turned, so every optional field the plan carries is on
+    /// the wire.
+    RackDocument withPlan() {
+      final doc = _doc();
+      doc.underlays[underlayId] = PlanUnderlay(
+        id: underlayId,
+        name: 'Level 1',
+        imageMember: imageMember,
+        format: PlanImageFormat.png,
+        pixelWidth: 40,
+        pixelHeight: 30,
+        contentHash: 'sha256:level-1',
+        order: const FracIndex('a0'),
+        meta: _meta(),
+        scale: const PlanScale(
+          a: PxPt(2, 3),
+          b: PxPt(38, 3),
+          distance: Len(3_657_600_000),
+        ),
+        sourcePage: const PlanSourcePage(
+          member: sourceMember,
+          pageIndex: 0,
+          contentHash: 'sha256:source',
+        ),
+      );
+      return doc;
+    }
+
+    Map<String, Uint8List> members() => {
+      imageMember: png(),
+      sourceMember: Uint8List.fromList(utf8.encode('%PDF-1.7\n%stand-in\n')),
+    };
+
+    test(
+      'a write, a reopen and a second write leave the file identical',
+      () async {
+        final made = _make();
+
+        // Write.
+        final first = await made.store.save(
+          controller: DocumentController(withPlan(), clock: FixedClock(_fixed)),
+          paths: _paths,
+          members: members(),
+        );
+        expect(first, isA<Ok<SavedFile>>());
+        final firstBytes = await made.fs.readBytes(_paths.target);
+        expect(
+          looksLikeZip(firstBytes),
+          isTrue,
+          reason: 'a project carrying a floorplan is a container',
+        );
+
+        // Reopen, and write again from what the reopen produced, never from
+        // the originals: that is what catches a writer that is deterministic
+        // only on the object it has just been handed.
+        Future<Uint8List> reopenAndSave() async {
+          final opened =
+              ((await made.store.open(_paths.target)) as Ok<OpenedDocument>)
+                  .value;
+          expect(opened.document.underlays[underlayId]?.scale, isNotNull);
+          final saved = await made.store.save(
+            controller: DocumentController(
+              opened.document,
+              clock: FixedClock(_fixed),
+            ),
+            paths: _paths,
+            members: opened.members,
+          );
+          expect(saved, isA<Ok<SavedFile>>());
+          return made.fs.readBytes(_paths.target);
+        }
+
+        expect(await reopenAndSave(), firstBytes);
+        // And once more, because two is a coincidence.
+        expect(await reopenAndSave(), firstBytes);
+      },
+    );
+
+    test('the members come back byte for byte, and no extra one', () async {
+      final made = _make();
+      final sent = members();
+      await made.store.save(
+        controller: DocumentController(withPlan(), clock: FixedClock(_fixed)),
+        paths: _paths,
+        members: sent,
+      );
+
+      final opened =
+          ((await made.store.open(_paths.target)) as Ok<OpenedDocument>).value;
+      expect(opened.members.keys.toSet(), sent.keys.toSet());
+      for (final entry in sent.entries) {
+        expect(opened.members[entry.key], entry.value, reason: entry.key);
+      }
+    });
+
+    test(
+      'a project with no underlay writes exactly the plain-JSON bytes',
+      () async {
+        final made = _make();
+        final doc = _doc();
+        final plain = _codec.write(doc);
+
+        await made.store.save(
+          controller: DocumentController(doc, clock: FixedClock(_fixed)),
+          paths: _paths,
+        );
+
+        final written = await made.fs.readBytes(_paths.target);
+        expect(
+          looksLikeZip(written),
+          isFalse,
+          reason: 'no member, no container: the file every build has written',
+        );
+        expect(written, plain);
+      },
+    );
+  });
+
   group('serializeSnapshot', () {
     test('captures the state id alongside the bytes', () async {
       final made = _make();
@@ -743,10 +875,7 @@ void main() {
         path: null,
         bytes: _bytes('{"generator":"Nope"}'),
       );
-      expect(
-        (result as Err<OpenedDocument>).error,
-        isA<OpenNotARackPalFile>(),
-      );
+      expect((result as Err<OpenedDocument>).error, isA<OpenNotARackPalFile>());
     });
 
     test('a starter opened with a null path has an ABSENT baseline', () async {
