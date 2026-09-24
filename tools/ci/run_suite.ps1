@@ -1598,7 +1598,10 @@ $SuiteFloors = @{
     # 1086 at `#941` (DR-194): +3 in session/diagnostics_menu_test.dart,
     # through the real Help menu: the folder the log is in, a refusal said
     # with the path, and the item disabled with no data root.
-    'rackpal_app'    = 1086
+    # 1087 at `#943`: +1 in session/floorplan_menu_route_test.dart, the
+    # first test to import a floorplan through the real File menu, and the
+    # one that found a decode left running when the shell closed.
+    'rackpal_app'    = 1087
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
