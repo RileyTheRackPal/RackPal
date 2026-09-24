@@ -92,6 +92,60 @@ void main() {
     expect(controller.undo.undoLabelKey, isNull);
   });
 
+  // `#933`. The freeze is for an edit that would re-flow THIS sheet. A
+  // rack's RU numbering and rear mirroring are drawn on the Rack view and
+  // nowhere here, and until they stopped declaring `style` each toggle
+  // wrote every symbol's position into the file. Both fields are driven,
+  // because either one alone would leave the other free to regress.
+  for (final (label, edit) in <(String, Command<RackDocument> Function(Rack))>[
+    (
+      'RU numbering',
+      (r) => SetEntityPropertyCommand<Rack, RuNumbering>(
+        id: r.id,
+        field: RackField.ruNumbering,
+        from: r.ruNumbering,
+        to: r.ruNumbering == RuNumbering.topDown
+            ? RuNumbering.bottomUpFromOne
+            : RuNumbering.topDown,
+        now: DateTime.utc(2026, 9, 23),
+        actor: 'test',
+      ),
+    ),
+    (
+      'rear mirroring',
+      (r) => SetEntityPropertyCommand<Rack, bool>(
+        id: r.id,
+        field: RackField.mirrorRearElevation,
+        from: r.mirrorRearElevation,
+        to: !r.mirrorRearElevation,
+        now: DateTime.utc(2026, 9, 23),
+        actor: 'test',
+      ),
+    ),
+  ]) {
+    testWidgets('a rack $label toggle freezes nothing: it is not drawn on '
+        'this sheet', (tester) async {
+      await pump(tester);
+      expect(doc.racks, isNotEmpty, reason: 'the fixture must have a rack');
+
+      controller.run(edit(doc.racks.values.first));
+      await tester.pumpAndSettle();
+
+      expect(
+        doc.sheets,
+        isEmpty,
+        reason:
+            'a display preference of the Rack view is no occasion to '
+            'store where the schematic symbols are',
+      );
+      expect(
+        controller.undo.undoLabelKey,
+        isNotNull,
+        reason: 'the edit itself did land, so the silence is not vacuous',
+      );
+    });
+  }
+
   testWidgets('the control MOVES things, so the claims below are not '
       'vacuous', (tester) async {
     final c = unfrozen();

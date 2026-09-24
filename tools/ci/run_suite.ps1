@@ -1428,7 +1428,10 @@ $SuiteFloors = @{
     # 2006 at `#932`: +2 in rack_canvas_epochs_test.dart, which mounts the
     # Rack view WITHOUT the shell. The shell rebuilds everything on every
     # commit, and that is what hid a screen that never listened to `wires`.
-    'rackpal_ui'     = 2006
+    # 2008 at `#933`: +2 in schematic_freeze_layout_test.dart, one per rack
+    # display toggle, each asserting the file gains no sheet. Both went red
+    # with `style` put back on the two fields.
+    'rackpal_ui'     = 2008
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

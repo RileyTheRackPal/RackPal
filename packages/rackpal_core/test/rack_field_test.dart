@@ -110,13 +110,20 @@ void main() {
       }
     });
 
-    test('the two display-only fields declare style as well as rack', () {
+    // THIS CASE USED TO ASSERT THE DEFECT (`#933`). It required `style` on
+    // both fields, and `style` is the epoch the Schematic reads as a
+    // re-layout, so a ruler preference froze the schematic into the file.
+    // The artifact half, a toggle that writes no sheet, is asserted on the
+    // mounted Schematic in `schematic_freeze_layout_test.dart`.
+    test('the two display-only fields declare rack and nothing the '
+        'Schematic re-lays out for', () {
       for (final f in [
         RackField.ruNumbering,
         RackField.mirrorRearElevation,
       ]) {
         expect(f.touches.has(EpochMask.rack), isTrue, reason: f.key);
-        expect(f.touches.has(EpochMask.style), isTrue, reason: f.key);
+        expect(f.touches.has(EpochMask.style), isFalse, reason: f.key);
+        expect(f.touches.has(EpochMask.structure), isFalse, reason: f.key);
       }
     });
 
