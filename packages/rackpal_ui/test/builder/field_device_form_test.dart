@@ -13,6 +13,12 @@
 // A rack device cannot reach that state, so every existing builder test
 // passed. The first test below is the one that would have caught it, and
 // it is deliberately first.
+// `_field` states zero U and no rack side although both are defaults:
+// they are what makes it a FIELD device beside `_rack`, and a fixture
+// that relied on the default would prove nothing about the form's split
+// between the two (DR-195's argument, applied to fixtures at `#936`).
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';

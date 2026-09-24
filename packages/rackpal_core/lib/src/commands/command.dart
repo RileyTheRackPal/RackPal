@@ -25,7 +25,15 @@ extension type const EpochMask(int bits) {
   /// designators, names, notes, ProjectInfo.
   static const meta = EpochMask(1 << 3);
 
-  /// per-family colour overrides, ProjectSettings.
+  /// Reserved for a change to how the document LOOKS that is not about
+  /// any one entity. docs/03 §4.3 names per-family colour overrides and
+  /// ProjectSettings, and **no command declares it today** (`#933`):
+  /// `SetFamilyColorOverrideCommand` declares `meta`, which on the
+  /// Schematic rebuilds the symbols and keeps the layout, and that is the
+  /// cheaper right answer for a colour. The Schematic still listens to
+  /// this epoch and reads it as a re-layout, so a command that declares it
+  /// will move every symbol and, through DR-187's freeze, write their
+  /// positions into the file. Declare it only for an edit that should.
   static const style = EpochMask(1 << 4);
 
   /// SheetItem positions, pinning, collapse.

@@ -16,6 +16,12 @@
 // computed in the widget because three scope badges read one count, and
 // the badge is the only thing between a user and the wrong door.
 
+// Fixture values that equal a constructor default are written anyway:
+// a `TemplateBody` here stands for a piece of equipment, and one that went
+// silent on a question changes meaning when the default moves, which
+// `mountMethod`'s did once (`#246`). DR-195, canon 11.194.
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 

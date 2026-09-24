@@ -54,37 +54,36 @@ void main() {
 
       final recorder = ui.PictureRecorder();
       final uiCanvas = ui.Canvas(recorder);
-      final canvas = FlutterDiagramCanvas(uiCanvas, measurer: measurer);
-
-      canvas.save();
-      canvas.translate(5, 5);
-      canvas.drawRect(
-        const DBox.fromLtwh(10, 10, 50, 20),
-        fill: fill,
-        stroke: stroke,
-      );
-      canvas.drawRoundRect(
-        const DBox.fromLtwh(70, 10, 50, 20),
-        const Radii.circular(4),
-        fill: fill,
-        stroke: stroke,
-      );
-      canvas.drawCircle(const DPt(150, 20), 8, stroke: stroke);
-      canvas.drawEllipse(const DPt(150, 50), 12, 6, fill: fill);
-      canvas.drawPolyline(const [
-        DPt(10, 60),
-        DPt(40, 80),
-        DPt(70, 60),
-      ], dashedStroke);
-      canvas.drawLine(const DPt(10, 90), const DPt(100, 90), dashedStroke);
-      canvas.clipRect(const DBox.fromLtwh(0, 0, 200, 100));
-      canvas.drawPath(
-        DiagramPath.fromSvg('M5 5 L15 5 L15 15 Z'),
-        fill: fill,
-        stroke: stroke,
-      );
-      canvas.drawText('AV Wa To Ty', const DPt(10, 40), textStyle);
-      canvas.restore();
+      final canvas = FlutterDiagramCanvas(uiCanvas, measurer: measurer)
+        ..save()
+        ..translate(5, 5)
+        ..drawRect(
+          const DBox.fromLtwh(10, 10, 50, 20),
+          fill: fill,
+          stroke: stroke,
+        )
+        ..drawRoundRect(
+          const DBox.fromLtwh(70, 10, 50, 20),
+          const Radii.circular(4),
+          fill: fill,
+          stroke: stroke,
+        )
+        ..drawCircle(const DPt(150, 20), 8, stroke: stroke)
+        ..drawEllipse(const DPt(150, 50), 12, 6, fill: fill)
+        ..drawPolyline(const [
+          DPt(10, 60),
+          DPt(40, 80),
+          DPt(70, 60),
+        ], dashedStroke)
+        ..drawLine(const DPt(10, 90), const DPt(100, 90), dashedStroke)
+        ..clipRect(const DBox.fromLtwh(0, 0, 200, 100))
+        ..drawPath(
+          DiagramPath.fromSvg('M5 5 L15 5 L15 15 Z'),
+          fill: fill,
+          stroke: stroke,
+        )
+        ..drawText('AV Wa To Ty', const DPt(10, 40), textStyle)
+        ..restore();
 
       final picture = recorder.endRecording();
       expect(picture, isNotNull);

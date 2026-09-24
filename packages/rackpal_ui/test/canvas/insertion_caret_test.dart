@@ -67,15 +67,15 @@ void main() {
       final caret = CaretController();
       final rack = _rack();
       var notifications = 0;
-      caret.addListener(() => notifications++);
-
-      caret.recompute(
-        selectionEmpty: true,
-        canvasHasFocus: true,
-        dragInProgress: false,
-        rack: rack,
-        smartDefaultRuIndex: 1,
-      );
+      caret
+        ..addListener(() => notifications++)
+        ..recompute(
+          selectionEmpty: true,
+          canvasHasFocus: true,
+          dragInProgress: false,
+          rack: rack,
+          smartDefaultRuIndex: 1,
+        );
       expect(notifications, 1); // first seed + activation
 
       // Identical inputs again — no change, no notify.
@@ -169,14 +169,15 @@ void main() {
     test('moveTo survives a focus loss and returns unchanged on regain', () {
       final caret = CaretController();
       final rack = _rack();
-      caret.recompute(
-        selectionEmpty: true,
-        canvasHasFocus: true,
-        dragInProgress: false,
-        rack: rack,
-        smartDefaultRuIndex: 1,
-      );
-      caret.moveTo(5);
+      caret
+        ..recompute(
+          selectionEmpty: true,
+          canvasHasFocus: true,
+          dragInProgress: false,
+          rack: rack,
+          smartDefaultRuIndex: 1,
+        )
+        ..moveTo(5);
       expect(caret.caret!.ruIndex, 5);
 
       // Focus lost -> inactive, but the underlying position is retained.
@@ -221,16 +222,18 @@ void main() {
     test('moveBy(1) / moveBy(-1) step by one U (Up/Down)', () {
       caret.moveBy(1);
       expect(caret.caret!.ruIndex, 7);
-      caret.moveBy(-1);
-      caret.moveBy(-1);
+      caret
+        ..moveBy(-1)
+        ..moveBy(-1);
       expect(caret.caret!.ruIndex, 5);
     });
 
     test('moveBy(10) / moveBy(-10) step by ten U (PgUp/PgDn)', () {
       caret.moveBy(10);
       expect(caret.caret!.ruIndex, 12); // clamped to the rack top
-      caret.moveTo(6);
-      caret.moveBy(-10);
+      caret
+        ..moveTo(6)
+        ..moveBy(-10);
       expect(caret.caret!.ruIndex, 1); // clamped to U1
     });
 
@@ -250,8 +253,9 @@ void main() {
 
     test('a no-op move (already there) does not notify', () {
       var notifications = 0;
-      caret.addListener(() => notifications++);
-      caret.moveTo(6); // already at 6
+      caret
+        ..addListener(() => notifications++)
+        ..moveTo(6); // already at 6
       expect(notifications, 0);
     });
   });

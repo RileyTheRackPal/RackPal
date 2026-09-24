@@ -7,6 +7,12 @@
 // ever calls the lowest-free-U path) — this file fills that gap with a
 // small, hand-built catalog so each behaviour is tested in isolation.
 
+// The U heights and the rack height below equal their fixtures' defaults
+// today and are written anyway: they are what each placement case is
+// ABOUT, and a property carried by a default is not proven by the case
+// that relies on it (DR-195's argument, applied to fixtures at `#936`).
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 

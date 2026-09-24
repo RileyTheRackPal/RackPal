@@ -34,8 +34,7 @@ void main() {
   });
 
   test('lift only transitions from armed, and only forward', () {
-    final drag = DragPreviewController();
-    drag.lift(); // no-op: never armed.
+    final drag = DragPreviewController()..lift(); // no-op: never armed.
     expect(drag.phase, DragPreviewPhase.none);
 
     final armed = _armed()..lift();
@@ -47,12 +46,12 @@ void main() {
   });
 
   test('enterCanvas only transitions from lifted', () {
-    final drag = _armed();
-    drag.enterCanvas(); // still just armed -- no-op.
+    final drag = _armed()..enterCanvas(); // still just armed -- no-op.
     expect(drag.phase, DragPreviewPhase.armed);
 
-    drag.lift();
-    drag.enterCanvas();
+    drag
+      ..lift()
+      ..enterCanvas();
     expect(drag.phase, DragPreviewPhase.dragging);
     expect(drag.isDragging, isTrue);
   });
@@ -77,18 +76,20 @@ void main() {
   });
 
   test('updateEvaluation only applies while dragging', () {
-    final drag = _armed()..lift();
-    drag.updateEvaluation(
-      const DPt(0, 0),
-      const DragPreviewEvaluation(ruIndex: 1, blocked: false),
-    );
+    final drag = _armed()
+      ..lift()
+      ..updateEvaluation(
+        const DPt(0, 0),
+        const DragPreviewEvaluation(ruIndex: 1, blocked: false),
+      );
     expect(drag.evaluation, isNull); // not dragging yet -- ignored.
 
-    drag.enterCanvas();
-    drag.updateEvaluation(
-      const DPt(1, 2),
-      const DragPreviewEvaluation(ruIndex: 5, blocked: true, reason: 'x'),
-    );
+    drag
+      ..enterCanvas()
+      ..updateEvaluation(
+        const DPt(1, 2),
+        const DragPreviewEvaluation(ruIndex: 5, blocked: true, reason: 'x'),
+      );
     expect(drag.evaluation?.ruIndex, 5);
     expect(drag.evaluation?.blocked, isTrue);
     expect(drag.sceneCursor, const DPt(1, 2));
@@ -106,9 +107,8 @@ void main() {
           blocked: true,
           reason: 'Occupied by SW-1 (U3-U3).',
         ),
-      );
-
-    drag.beginBlockedRelease();
+      )
+      ..beginBlockedRelease();
     expect(drag.phase, DragPreviewPhase.none);
     expect(drag.releaseLingering, isTrue);
     expect(drag.isInProgress, isTrue); // still suppresses the caret.
@@ -126,9 +126,8 @@ void main() {
       ..updateEvaluation(
         const DPt(1, 1),
         const DragPreviewEvaluation(ruIndex: 2, blocked: false),
-      );
-
-    drag.reset();
+      )
+      ..reset();
     expect(drag.phase, DragPreviewPhase.none);
     expect(drag.subjectId, isNull);
     expect(drag.deviceH, 0);
@@ -158,15 +157,15 @@ void main() {
       '(no spurious rebuild)', () {
     final drag = DragPreviewController();
     var notifications = 0;
-    drag.addListener(() => notifications++);
-    drag.reset();
+    drag
+      ..addListener(() => notifications++)
+      ..reset();
     expect(notifications, 0);
   });
 
   test('updateCursorGlobal stores the raw global position regardless of '
       'phase (needed for the cursor card before canvas entry)', () {
-    final drag = _armed();
-    drag.updateCursorGlobal(const Offset(100, 200));
+    final drag = _armed()..updateCursorGlobal(const Offset(100, 200));
     expect(drag.cursorGlobal, const Offset(100, 200));
   });
 

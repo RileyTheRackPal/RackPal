@@ -36,6 +36,12 @@
 // asserts that it found the shapes it is about, and that they are not all
 // the same shape.
 
+// Fixture values that equal a constructor default are written anyway:
+// a `TemplateBody` here stands for a piece of equipment, and one that went
+// silent on a question changes meaning when the default moves, which
+// `mountMethod`'s did once (`#246`). DR-195, canon 11.194.
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'dart:io';
 import 'dart:typed_data';
 

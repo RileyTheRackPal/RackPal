@@ -178,31 +178,44 @@ CsvImportBuild buildCsvImport({
     );
   }
 
-  // --- RJ-012's cable types, once per spelling -------------------------
+  // --- RJ-012's cable types, once per id (DR-197) ----------------------
+  //
+  // ONE ADD PER TYPE, NOT PER SPELLING. Two spellings that derive one id
+  // used to build two adds with that id before either applied; the second
+  // overwrote the first until `#935` made it refuse. Grouping here makes
+  // one add carrying every spelling the sheet used for that cable.
   final newMedia = <String, MediaTypeId>{};
-  for (final token in plan.newMediaTokens) {
-    if (!plan.rows.any(
-      (r) => r.drops > 0 && r.row.items.any((i) => _isToken(i.media, token)),
-    )) {
-      continue;
-    }
-    final id = mediaTypeIdFor(doc, token);
+  for (final type in plan.newMediaTypes) {
+    // Only the spellings some row still draws on: a declined box leaves its
+    // spelling in the list but takes its drops away.
+    final used = [
+      for (final token in type.spellings)
+        if (plan.rows.any(
+          (r) =>
+              r.drops > 0 && r.row.items.any((i) => _isToken(i.media, token)),
+        ))
+          token,
+    ];
+    if (used.isEmpty) continue;
+    final id = mediaTypeIdFor(doc, used.first);
     creations.add(
       AddMediaTypeCommand(
         id: id,
-        displayName: token,
+        displayName: used.first,
         // WITHOUT A TAG THE DROP CANNOT BE LABELLED and `buildDropsFor`
         // refuses it, which would make RJ-012's "never a rejected row"
         // reject every row naming an unrecognised cable.
-        shortTag: mediaShortTagFor(token),
-        // THE SPELLING BECOMES AN ALIAS, which is what makes a re-import
+        shortTag: mediaShortTagFor(used.first),
+        // EVERY SPELLING BECOMES AN ALIAS, which is what makes a re-import
         // idempotent for exactly the rows RJ-012 serves: without it the
         // second pass finds no match for `Cat6e` again and mints
         // `media.cat6e_2`.
-        aliases: [token],
+        aliases: used,
       ),
     );
-    newMedia[token] = id;
+    for (final token in used) {
+      newMedia[token] = id;
+    }
   }
 
   // --- pathways, once each ---------------------------------------------

@@ -595,7 +595,7 @@ void main() {
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
     });
 
-    test('SetEntityPropertyCommand (rack|style display field)', () {
+    test('SetEntityPropertyCommand (rack display field)', () {
       final doc = _freshDoc();
       const rackId = Uuid('rack-1');
       doc.racks[rackId] = _rack(rackId);

@@ -299,3 +299,27 @@ const String kRackPalFilterLabel = 'RackPal project';
 
 /// The default suggested name for a document that has never been saved.
 String defaultSaveName(String displayName) => '$displayName$kDocumentExtension';
+
+/// Shows a folder in the operating system's file manager (DR-194, `#941`).
+///
+/// True when the operating system says it showed the folder; false when it
+/// refused or the call failed. Never throws: a menu item that cannot open a
+/// folder says so, it does not crash the window.
+///
+/// A FUNCTION TYPE rather than a method on [FilePicker], so the two fakes
+/// that implement the picker are not made to answer a question they are
+/// not about, and a test injects a closure.
+typedef FolderRevealer = Future<bool> Function(String folder);
+
+/// [FolderRevealer] over the channel [Win32FilePicker] uses, which
+/// `file_dialog_channel.cpp` serves as `revealFolder`.
+Future<bool> win32RevealFolder(String folder) async {
+  try {
+    return await kFileDialogChannel.invokeMethod<bool>('revealFolder', {
+          'path': folder,
+        }) ??
+        false;
+  } on Object {
+    return false;
+  }
+}

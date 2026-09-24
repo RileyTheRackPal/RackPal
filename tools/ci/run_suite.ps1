@@ -917,7 +917,14 @@ $SuiteFloors = @{
     # 4902 at DR-193 (`#928`): +5 in validation/finding_locus_test.dart,
     # one per row of the ruling's table plus the shelf, which is the row a
     # table cannot show: a source on a shelf is in the rack its host is in.
-    'rackpal_core'   = 4902
+    # 4906 at `#935`: +4 in commands/media_type_add_test.dart. Three were
+    # red before the guard; the one that matters undoes an add that added
+    # nothing, which used to delete the type already holding the id.
+    # 4909 at `#937` (DR-197): +3 in structure/csv_import_apply_test.dart for
+    # one sheet spelling one cable two ways. The one that matters is the
+    # real import making ONE type carrying both spellings; it is red with
+    # the old per-spelling loop put back.
+    'rackpal_core'   = 4909
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1425,7 +1432,16 @@ $SuiteFloors = @{
     # takeoff strip. The one that matters reads the words off the screen:
     # 78 ft of Cat6A must print 78 raw and 86 with waste, while the TABLE
     # row still reads 78, because the factor is never written to a length.
-    'rackpal_ui'     = 2004
+    # 2006 at `#932`: +2 in rack_canvas_epochs_test.dart, which mounts the
+    # Rack view WITHOUT the shell. The shell rebuilds everything on every
+    # commit, and that is what hid a screen that never listened to `wires`.
+    # 2008 at `#933`: +2 in schematic_freeze_layout_test.dart, one per rack
+    # display toggle, each asserting the file gains no sheet. Both went red
+    # with `style` put back on the two fields.
+    # 2010 at `#937` (DR-197): +2 in csv_import_dialog_test.dart, one box for
+    # two spellings of one cable, and unticking it skips both spellings'
+    # rows. Both red on the old per-spelling list.
+    'rackpal_ui'     = 2010
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1573,7 +1589,16 @@ $SuiteFloors = @{
     # which press F7/F8/Shift+F8 through the real app over the Whole house
     # starter. With `buildValidationActions` left out of `main`, all four
     # fail; with the Rack view's reveal unwired, the rack-device case does.
-    'rackpal_app'    = 1071
+    # 1077 at `#939` (DR-194): +6 in storage/diagnostic_log_test.dart. The
+    # one that matters writes an error whose MESSAGE names a client's house
+    # and asserts the bytes on disk hold its type and frames and not the name.
+    # 1083 at `#940` (DR-194): +6 in session/startup_failure_test.dart. A
+    # startup throw reaches the failure path and the log the window names,
+    # and Close holds the focus (red without `autofocus`).
+    # 1086 at `#941` (DR-194): +3 in session/diagnostics_menu_test.dart,
+    # through the real Help menu: the folder the log is in, a refusal said
+    # with the path, and the item disabled with no data root.
+    'rackpal_app'    = 1086
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

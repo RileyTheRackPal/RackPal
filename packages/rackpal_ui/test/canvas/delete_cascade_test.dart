@@ -53,6 +53,8 @@ TemplateBody _body(String model) => TemplateBody(
   // Rail-mounted and 1U, so the canvas draws a hit-testable box for it.
   frontU: 1,
   side: OccupancySide.front,
+  // The comment above names it, so it stays written (`#936`).
+  // ignore: avoid_redundant_argument_values
   mountMethod: MountMethod.rackEars,
   banks: [
     BankDef(key: 'io', label: 'IO', abbr: 'IO', order: const FracIndex('a0')),

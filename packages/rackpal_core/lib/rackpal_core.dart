@@ -30,10 +30,13 @@
 /// `net_label_layer.dart` draws every Link as the pair of net labels
 /// DR-001 makes the default. Both are in core, and not in `rackpal_ui`,
 /// for CR-071/CR-086's reason and so `rackpal_export` can drive a
-/// schematic sheet. Still no router and no drawn wires: canon §11.1.3
-/// keeps channel routing, the crossing sweep and hop arcs out of v1
-/// entirely, and the `drawn` mode that does ship arrives with the domain
-/// filter that triggers it.
+/// schematic sheet. Canon §11.1.3 keeps channel routing, the crossing
+/// sweep and hop arcs out of v1 entirely; the `drawn` mode that does ship
+/// is `draw/scene/wire_trace.dart`, the per-link orthogonal staircase.
+/// That file was written in `rackpal_ui` at M2-E and moved here by the
+/// full-tree review (`#97`, `#98`): every exported interconnect sheet
+/// `T6.01…` renders `drawn` (§11.1.2), and `rackpal_export` may not
+/// import `rackpal_ui`, so M6 could not draw a wire until it did.
 /// M2-F adds the CONNECT half of the schematic: `derived/connect_target
 /// .dart` joins a device and a port key into the one pin DR-011.2's
 /// pin-to-pin gesture acts on, `derived/connect_rules.dart` evaluates
@@ -204,6 +207,7 @@ export 'src/draw/scene/signal_style.dart';
 export 'src/draw/scene/sugiyama.dart';
 export 'src/draw/scene/symbol_hit_test.dart';
 export 'src/draw/scene/symbol_layer.dart';
+export 'src/draw/scene/wire_trace.dart';
 export 'src/draw/scene/zero_u_layer.dart';
 export 'src/draw/sheet/drawing_scale.dart';
 export 'src/draw/sheet/elevation_sheet.dart';

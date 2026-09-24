@@ -46,6 +46,8 @@
 // three days later, and the finding it recorded is what got #654 filed
 // rather than lost.
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/commands/media_type_commands.dart'
+    show mediaSlugFor;
 import 'package:rackpal_core/src/model/link.dart';
 import 'package:rackpal_core/src/model/location.dart';
 import 'package:rackpal_core/src/model/outlet.dart';
@@ -117,6 +119,22 @@ final class CsvPlannedRow {
   final List<Uuid> matchedLinkIds;
 }
 
+/// One cable type an import will create, and every spelling that names it
+/// (DR-197).
+@immutable
+final class NewMediaType {
+  const NewMediaType(this.spellings);
+
+  /// In sheet order, never empty. The first is the type's name.
+  final List<String> spellings;
+
+  String get name => spellings.first;
+
+  /// The other spellings, which become aliases so the next import of the
+  /// same sheet finds the type by any of them.
+  List<String> get alsoWritten => spellings.sublist(1);
+}
+
 /// Everything one import would do, counted.
 @immutable
 final class CsvImportPlan {
@@ -136,13 +154,36 @@ final class CsvImportPlan {
   /// surface's job; naming them is this one's.
   final List<String> newLocationNames;
 
-  /// RJ-012's new media types, deduplicated by the spelling the sheet
+  /// RJ-012's new media spellings, deduplicated by the spelling the sheet
   /// used, in first-seen order.
   ///
-  /// ONE TYPE PER DISTINCT SPELLING, NOT ONE PER ROW. A sheet with forty
+  /// ONE ENTRY PER DISTINCT SPELLING, NOT ONE PER ROW. A sheet with forty
   /// `Cat6e` rows creates one type and forty drops on it; minting per
-  /// row would put forty identical types in the registry.
+  /// row would put forty identical types in the registry. **The TYPES are
+  /// [newMediaTypes]**: this said "one type per distinct spelling" until
+  /// DR-197, and two spellings that derive one id were always one type.
   final List<String> newMediaTokens;
+
+  /// [newMediaTokens] grouped into the types the import will actually
+  /// create: one per derived id, in first-seen order (DR-197, `#937`).
+  ///
+  /// **TWO SPELLINGS THE ID CANNOT TELL APART ARE ONE TYPE.** `Plenum
+  /// Speaker 14/4` and `plenum-speaker 14-4` both derive
+  /// `media.plenum_speaker_14_4`, so the dialog listed two boxes for what
+  /// the import made as one. Grouped by [mediaSlugFor], the same function
+  /// that mints the id, so the list and the registry cannot disagree about
+  /// what "the same" means. [newMediaTokens] stays flat: it is still the
+  /// set a declined box is matched against, spelling by spelling.
+  List<NewMediaType> get newMediaTypes {
+    final bySlug = <String, List<String>>{};
+    for (final token in newMediaTokens) {
+      (bySlug[mediaSlugFor(token)] ??= <String>[]).add(token);
+    }
+    return [
+      for (final spellings in bySlug.values)
+        NewMediaType(List.unmodifiable(spellings)),
+    ];
+  }
 
   final List<String> newPathwayNames;
 

@@ -461,23 +461,31 @@ abstract final class RackField {
     touches: EpochMask.meta,
   );
 
-  /// Display-only (CR-026), but it redraws the RU ruler — hence `style` as
-  /// well as `rack`.
+  /// Display-only (CR-026), and it redraws the RU ruler, which the Rack
+  /// view does on `rack`.
+  ///
+  /// **NOT `style`, WHICH IT DECLARED UNTIL `#933`.** Nothing on the Rack
+  /// view listens to `style`; the Schematic does, and reads it as a reason
+  /// to re-lay the sheet out, so DR-187's freeze wrote every symbol's
+  /// position into the file on a ruler preference that no schematic draws.
+  /// A mask is a claim about who must redraw, and this one named the one
+  /// view that did not care.
   static final ruNumbering = EntityField<Rack, RuNumbering>(
     access: EntityAccess.rack,
     key: 'ruNumbering',
     get: (r) => r.ruNumbering,
     set: (r, v) => r.ruNumbering = v,
-    touches: EpochMask.rack | EpochMask.style,
+    touches: EpochMask.rack,
   );
 
-  /// Display-only (CR-035), but it drives the NOT MIRRORED chip.
+  /// Display-only (CR-035), and it drives the NOT MIRRORED chip on the
+  /// Rack view. `rack` only, for [ruNumbering]'s reason.
   static final mirrorRearElevation = EntityField<Rack, bool>(
     access: EntityAccess.rack,
     key: 'mirrorRearElevation',
     get: (r) => r.mirrorRearElevation,
     set: (r, v) => r.mirrorRearElevation = v,
-    touches: EpochMask.rack | EpochMask.style,
+    touches: EpochMask.rack,
   );
 
   static final widthClass = EntityField<Rack, RackWidthClass>(

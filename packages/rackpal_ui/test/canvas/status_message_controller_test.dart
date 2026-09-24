@@ -14,9 +14,9 @@ void main() {
     final status = StatusMessageController();
     addTearDown(status.dispose);
     var notifications = 0;
-    status.addListener(() => notifications++);
-
-    status.show('Blocked by SW-1');
+    status
+      ..addListener(() => notifications++)
+      ..show('Blocked by SW-1');
     expect(status.text, 'Blocked by SW-1');
     expect(notifications, 1);
 
@@ -29,9 +29,9 @@ void main() {
     final status = StatusMessageController();
     addTearDown(status.dispose);
     var notifications = 0;
-    status.addListener(() => notifications++);
-
-    status.clear();
+    status
+      ..addListener(() => notifications++)
+      ..clear();
     expect(notifications, 0);
   });
 

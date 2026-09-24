@@ -1226,6 +1226,13 @@ What makes a report useful here, in rough order:
 4. **The version**, from `Help` ▸ `About RackPal…`. It is the same number
    stamped into every project file you save, so it identifies the build
    exactly.
+5. **The diagnostic log**, if something crashed or would not save.
+   `Help` ▸ `Open diagnostics folder…` opens the folder holding it:
+   `rackpal.log` is this session and `rackpal.previous.log` the one before,
+   which is the one you want if RackPal closed on you. It records what kind
+   of error happened and where in the code, and never a project name, a file
+   name or a path (DR-194). If RackPal could not start at all, the window
+   that says so shows the same folder.
 
 **Disagreements about the trade are the most valuable thing you can send.**
 The validation rules encode opinions about what is and is not a sane cable run,

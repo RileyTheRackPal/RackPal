@@ -276,7 +276,7 @@ extension type const EpochMask(int bits) {
   static const wires     = EpochMask(1 << 1); // Link/Service/Conductor/Net add/remove/retype
   static const rack      = EpochMask(1 << 2); // heightU, rack add/remove, rails, depth
   static const meta      = EpochMask(1 << 3); // designators, names, notes, ProjectInfo
-  static const style     = EpochMask(1 << 4); // per-family colour overrides, ProjectSettings
+  static const style     = EpochMask(1 << 4); // reserved for look-only edits; no command declares it (`#933`)
   static const sheet     = EpochMask(1 << 5); // SheetItem positions, pinning, collapse
   EpochMask operator |(EpochMask o) => EpochMask(bits | o.bits);
   bool has(EpochMask o) => bits & o.bits != 0;

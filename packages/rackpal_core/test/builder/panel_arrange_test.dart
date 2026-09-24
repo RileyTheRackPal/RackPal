@@ -9,6 +9,12 @@
 // is the artifact: a person's undo stack is made of them, and a function
 // that computes the right coordinate and emits the wrong command has
 // failed at the thing it is for.
+// Fixture values that equal a constructor default are written anyway:
+// a `TemplateBody` here stands for a piece of equipment, and one that went
+// silent on a question changes meaning when the default moves, which
+// `mountMethod`'s did once (`#246`). DR-195, canon 11.194.
+// ignore_for_file: avoid_redundant_argument_values
+
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 

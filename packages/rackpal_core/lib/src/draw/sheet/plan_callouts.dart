@@ -34,13 +34,15 @@
 // ═══════════════════════════════════════════════════════════════════════
 // THE PILL'S GEOMETRY IS BORROWED REASONING, NOT BORROWED CODE
 // ═══════════════════════════════════════════════════════════════════════
-// `#642` says to reuse the schematic's tag pill. `_PillSizer` is **private
-// to `rackpal_ui/src/canvas/schematic/wire_trace.dart`**, and
-// `rackpal_export` may never import `rackpal_ui` (docs/03 §7.1) — the
-// layering debt recorded since 2026-07-28 that leaves M6's interconnect
-// sheets unbuildable until that file moves. Moving a thousand-line file to
-// borrow ninety of them belongs to M6 and not to a chapter about callouts
-// (DR-150 §11.149.6).
+// `#642` says to reuse the schematic's tag pill. When this was written
+// `_PillSizer` was **private to `rackpal_ui/src/canvas/schematic/
+// wire_trace.dart`**, and `rackpal_export` may never import `rackpal_ui`
+// (docs/03 §7.1). Moving a thousand-line file to borrow ninety of them
+// belonged to M6 and not to a chapter about callouts (DR-150 §11.149.6).
+// The full-tree review (`#97`, `#98`) has since moved that file to
+// `draw/scene/wire_trace.dart` in this package, as a pure move; the pill is
+// still private there, so sharing it is now a visibility change rather than
+// a layering one, and it has not been made.
 //
 // Three of its rules are taken deliberately and each is cited below: the
 // near edge anchors rather than the centre, the height comes from the type

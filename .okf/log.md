@@ -1,5 +1,58 @@
 # Update Log
 
+## 2026-09-24 (sixty-ninth entry)
+
+* **Progress**: the full-tree review (`#97`) closes. docs/12 §4.15 is its record: eleven findings,
+  each with a disposition, and the three claims of its own that were wrong. `#936` (`58866679`)
+  took the analyzer ratchet from 233 to 23; `#937` (`9c5805fc`) made the CSV import offer one type
+  per id; `#939` (`aa7362de`), `#940` (`9a4d4429`) and `#941` (`28de3367`) built
+  [DR-194](/decisions/dr-194-a-local-diagnostic-log-ships-now.md)'s local diagnostic log, its
+  startup-failure window and `Help ▸ Open diagnostics folder…`.
+* **Note**: **A MECHANICAL FIX IS NOT A BEHAVIOUR-PRESERVING ONE BECAUSE A TOOL MADE IT.** The
+  cascade sweep's script produced 18 void-result errors the analyzer caught and one semantic change
+  it did not: `controller..stop()..forward()` folded into a `??=` initialiser, where `..` binds
+  tighter, so a second shake would never have played. Reading every hunk found it.
+* **Note**: **THE LAYERING GATES EARNED THEIR KEEP ON NEW CODE.** `registry_claim_test` refused a
+  C++ comment saying ShellExecute did one thing "and nothing else", the exhaustive shape that claim
+  has been wrong in four times; `session_layering_test` RULE 14 made the new Help item a recorded
+  decision. Neither was a defect in the code; both were claims the code could not back.
+* **Note**: the Plan view, not M6, is the current milestone, and `PLAN-J/0` (`#943`) is the chapter
+  that makes its scoreboard honest before the human drill. PLAN-J/2 asked for a Pull Sheet print
+  that DR-155 had already recorded does not exist.
+
+## 2026-09-23 (sixty-eighth entry)
+
+* **Creation**: [DR-194](/decisions/dr-194-a-local-diagnostic-log-ships-now.md),
+  [DR-195](/decisions/dr-195-catalogue-values-stay-explicit.md),
+  [DR-196](/decisions/dr-196-canvas-screens-not-split-before-m7.md) and
+  [DR-197](/decisions/dr-197-csv-import-one-row-per-id.md), the four questions the full-tree review
+  (`#97`) put to the user. Each choice was the recommended option with no reasons given, so each
+  record says the reasoning is the author's.
+* **Creation**: [A blanket rebuild hides a missing subscription](/practices/a-blanket-rebuild-hides-a-missing-subscription.md),
+  from `#932` and `#933`: one mask too narrow and invisible, one too broad and writing to the file.
+* **Progress**: `#932` (`9bf8312b`), `#933` (`aefca8c3`), `#934` (`9564d331`) and `#935`
+  (`7bea52f5`) on `review-97`, each gated in a sibling worktree while the next was written.
+* **Note**: **TWO OF THE REVIEW'S OWN CLAIMS WERE WRONG, AND BOTH WERE CAUGHT BY RUNNING THEM.** "No
+  command declares `style`" came from a `grep -v command.dart` that also dropped
+  `set_entity_property_command.dart`; the corrected reading was the worse defect. "Re-importing the
+  sheet mints a duplicate" was a confident derivation from two equivalence rules disagreeing, and the
+  probe found a third rule reconciling them. Both are recorded in the rulings they touched.
+* **Note**: **THE CURRENT MILESTONE IS THE PLAN VIEW, NOT M6**, which the request that started the
+  review assumed. The completeness gate says so; docs/12 §1 and §5.9 still mark it `0 of 7` in prose
+  that ends at `PLAN-F`.
+
+## 2026-09-23 (sixty-seventh entry)
+
+* **Update**: [Package layering](/invariants/package-layering.md). **`wire_trace.dart` MOVED TO
+  CORE**, closing the "violation in waiting" recorded here on the bundle's first day. The full-tree
+  review (`#97`) was the first thing to call `#98`'s one non-optional refactor due, because M6 is
+  next and its interconnect sheets render `drawn`. A pure move: `src/` imports in place of the
+  barrel, one export line per barrel, two test imports that became unused, no behaviour change.
+* **Note**: **THE PAGE SAID "ENFORCED BY TESTS" AND LISTED ONE.** The exporter's half is gated by
+  `rackpal_export/test/support/source_gate.dart`, which the Enforcement list never named. It is the
+  load-bearing one: a pub workspace resolves every member through one shared package config, so
+  leaving `rackpal_ui` out of the exporter's pubspec does not stop an import compiling.
+
 ## 2026-09-23 (sixty-sixth entry)
 
 * **Update**: **THE USER GUIDE IS docs/21, NOT docs/20.** It was written as `docs/20-user-guide.md` in a

@@ -164,8 +164,8 @@ void main() {
     test('mutators notify listeners; no-op pan does not', () {
       final vp = ViewportController();
       var count = 0;
-      vp.addListener(() => count++);
       vp
+        ..addListener(() => count++)
         ..panBy(const Offset(1, 1))
         ..zoomBy(2, screenPivot: Offset.zero)
         ..reset();

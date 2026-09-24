@@ -2,8 +2,9 @@
 
 #include <flutter/method_channel.h>
 #include <flutter/standard_method_codec.h>
-#include <shobjidl.h>
 #include <windows.h>
+#include <shellapi.h>
+#include <shobjidl.h>
 #include <wrl/client.h>
 
 #include <memory>
@@ -321,6 +322,29 @@ void RegisterFileDialogChannel(flutter::FlutterEngine* engine, HWND owner) {
       [owner](const flutter::MethodCall<EncodableValue>& call,
               std::unique_ptr<flutter::MethodResult<EncodableValue>> result) {
         const auto* args = std::get_if<EncodableMap>(call.arguments());
+
+        // `Help > Open diagnostics folder...` (DR-194, #941). Asks Explorer
+        // to show a folder: ShellExecuteW's "open" verb on a directory, with
+        // no arguments and no working directory. OUR code here writes no
+        // registry key, which registry_claim_test checks against this
+        // source. What Explorer records about a folder it was asked to open
+        // is the shell's, not ours, and the folder is the diagnostics
+        // folder, never a project's. Success is ShellExecute's own
+        // contract, a return value above 32.
+        if (call.method_name() == "revealFolder") {
+          const std::optional<std::wstring> folder = StringArg(args, "path");
+          if (!folder) {
+            result->Error("bad_args", "revealFolder needs a path.");
+            return;
+          }
+          const HINSTANCE shown = ::ShellExecuteW(
+              owner, L"open", folder->c_str(), nullptr, nullptr,
+              SW_SHOWNORMAL);
+          result->Success(
+              EncodableValue(reinterpret_cast<INT_PTR>(shown) > 32));
+          return;
+        }
+
         const bool saving = call.method_name() == "save";
         if (!saving && call.method_name() != "open") {
           result->NotImplemented();

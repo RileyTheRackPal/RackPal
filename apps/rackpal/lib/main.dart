@@ -10,10 +10,13 @@ import 'package:pdf/pdf.dart';
 import 'package:rackpal/src/session/app_services.dart';
 import 'package:rackpal/src/session/app_shell.dart';
 import 'package:rackpal/src/session/blank_document.dart';
+import 'package:rackpal/src/session/startup_failure.dart';
 import 'package:rackpal/src/session/window_chrome.dart';
 import 'package:rackpal/src/storage/data_root.dart';
+import 'package:rackpal/src/storage/diagnostic_log.dart';
 import 'package:rackpal/src/storage/io_file_store.dart';
 import 'package:rackpal/src/storage/prefs_store.dart';
+import 'package:rackpal/src/storage/storage_log.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_text/rackpal_text.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -72,6 +75,12 @@ import 'package:screen_retriever/screen_retriever.dart';
 // in a discarded future and vanished. So did anything thrown by the four
 // awaits before `runApp`, which is worse: a failure there means the
 // process exits with a black window and no message at all.
+
+/// The local diagnostic log (DR-194), or null until the data root resolves
+/// or when it is unusable. Top-level because [_reportFatal] is: the zone and
+/// the two framework hooks hold a function, not an object.
+DiagnosticLog? _diagnostics;
+
 Future<void> main() async {
   // ONE ZONE AROUND THE WHOLE APP, so an error from a callback with no
   // caller — a timer tick, a window event, an `unawaited` save — has
@@ -103,6 +112,15 @@ Future<void> _run() async {
   };
 
   final chrome = WindowManagerChrome(displayEnumerator: _enumerateDisplays);
+  // DR-194 (`#940`): a throw from here to `runApp` used to reach the zone
+  // and nothing else, behind a window nobody could see.
+  await guardStartup(
+    () => _start(chrome),
+    (error, stack) => _showStartupFailure(chrome, error, stack),
+  );
+}
+
+Future<void> _start(WindowManagerChrome chrome) async {
   // BEFORE runApp. `setPreventClose(true)` — inside `initialize` — is the
   // one load-bearing API in the whole `window_manager` dependency:
   // without it the OS destroys the window and Flutter finds out
@@ -121,6 +139,31 @@ Future<void> _run() async {
     executableDirectory: productionExecutableDirectory(),
     applicationSupportDirectory: productionApplicationSupportDirectory,
   );
+
+  // DR-194: the local diagnostic log, as early as there is anywhere to put
+  // it. OPENED BEFORE THE SINK IS INSTALLED, so the rename that keeps the
+  // last session's log cannot take one of this session's records with it.
+  // An unusable data root has nowhere to write, and this says nothing then
+  // rather than inventing a folder.
+  if (dataRoot case DataRootReady(:final path)) {
+    final log = DiagnosticLog(
+      fs: fs,
+      directory: p.join(path, kDiagnosticsFolder),
+      context: p.context,
+    );
+    await log.open();
+    setStorageLogSink(log.storage);
+    _diagnostics = log;
+  }
+
+  // A STARTUP FAILURE ON PURPOSE, for a person to see the window it
+  // produces: `flutter run --dart-define=RACKPAL_INDUCE_STARTUP_FAILURE=true`.
+  // A compile-time constant, so an ordinary build carries no trace of it.
+  // AFTER the log is installed, so the record lands where the window says,
+  // and it is the "deliberately induced crash" §9.9's M8 clause will need.
+  if (const bool.fromEnvironment('RACKPAL_INDUCE_STARTUP_FAILURE')) {
+    throw StateError('induced startup failure (DR-194)');
+  }
 
   final navigatorKey = GlobalKey<NavigatorState>();
 
@@ -177,6 +220,40 @@ Future<void> _run() async {
   await chrome.show();
 }
 
+/// The window that replaces a black one when startup throws (DR-194).
+///
+/// EVERY STEP IS BEST-EFFORT, because the failure may have been the window
+/// itself: `chrome.initialize` is the first thing `_start` awaits. The
+/// record is written first and waited for, so the folder the window names
+/// holds the line it is pointing at. Prevent-close is switched off because
+/// nothing is listening for the close request any more, and the X button
+/// would otherwise do nothing.
+Future<void> _showStartupFailure(
+  WindowManagerChrome chrome,
+  Object error,
+  StackTrace stack,
+) async {
+  _reportFatal(error, stack);
+  await _diagnostics?.idle;
+  runApp(
+    StartupFailureApp(
+      logFolder: _diagnostics?.directory,
+      onClose: () => unawaited(_bestEffort(chrome.destroy)),
+    ),
+  );
+  await _bestEffort(() => chrome.setPreventClose(prevent: false));
+  await _bestEffort(chrome.show);
+}
+
+Future<void> _bestEffort(Future<void> Function() step) async {
+  try {
+    await step();
+  } on Object {
+    // The failure window is the last thing left to try; a step it cannot
+    // take is not a reason to throw from it.
+  }
+}
+
 /// §12.1's programmer-error channel, at the one place it can be installed.
 ///
 /// NO `print`, and not because of the lint: §12.4 forbids file paths,
@@ -184,8 +261,21 @@ Future<void> _run() async {
 /// `toString` is exactly where a path ends up. `FlutterError.presentError`
 /// is the framework's own sink — it is a no-op in release, and in debug it
 /// prints the structured report a developer needs. When a crash reporter
-/// lands (M2), this is the single function it hooks.
+/// lands, this is the single function it hooks.
+///
+/// **THAT IS M8, NOT M2**, which this comment said until the full-tree
+/// review (`#934`): canon §9.9 schedules "crash reporting local-first and
+/// opt-in remote" for release engineering, with an exit clause that a
+/// deliberately induced crash produces a local report containing no
+/// project content.
+///
+/// **DR-194 PULLED THE LOCAL HALF FORWARD** (`#939`), because builds were
+/// already with testers and a release build reported nothing anywhere.
+/// [_diagnostics] records the error's type and frames, never its message
+/// (see `diagnostic_log.dart`), from the moment the data root resolves.
+/// Anything thrown before that still reaches only `presentError`.
 void _reportFatal(Object error, StackTrace stack) {
+  _diagnostics?.fatal(error, stack);
   FlutterError.presentError(
     FlutterErrorDetails(
       exception: error,

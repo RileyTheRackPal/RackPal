@@ -3,7 +3,7 @@ type: Invariant
 title: Package layering — what may import what
 description: rackmate_core imports no Flutter; rackmate_export never imports rackmate_ui. Both are enforced by tests, and both shape where new code goes.
 tags: [invariant, architecture, layering]
-timestamp: 2026-07-28T12:00:00Z
+timestamp: 2026-09-23T12:00:00Z
 status: enforced
 ---
 
@@ -32,33 +32,39 @@ The layering is not bookkeeping; it has settled real design questions:
   must be computed exactly once, in core, which is why the schedule derivation
   lives in `core/derived/` and both the tab and the sheet builders consume it.
 
-# A violation in waiting
+# A violation that waited, and was paid (2026-09-23)
 
-`wire_trace.dart`, the deterministic per-link orthogonal staircase, sits in
-`rackmate_ui` because M2-D owned `core/draw/scene/` when M2-E needed it. It is
-pure geometry over core types.
+`wire_trace.dart`, the deterministic per-link orthogonal staircase, sat in
+`rackpal_ui` from M2-E because M2-D owned `core/draw/scene/` when M2-E needed
+it. It was always pure geometry over core types.
 
-**But §11.1.2 says every exported interconnect sheet renders `drawn` by
-construction, and `rackmate_export` may never import `rackmate_ui`.** So as
-things stand *the exporter cannot draw a wire*, and M6's sheets are unbuildable
-until it moves. Recorded before M6 starts rather than discovered during it.
+**§11.1.2 says every exported interconnect sheet renders `drawn` by
+construction, and `rackpal_export` may never import `rackpal_ui`.** So for eight
+weeks *the exporter could not draw a wire*, and M6's sheets were unbuildable
+until it moved. Recorded before M6 started rather than discovered during it,
+which is the part that worked.
 
-**AND IT HAS A SECOND CONSUMER NOW, WHICH IS HOW A DEBT GETS ITS PRICE.**
-`PLAN-H/3`'s brief told the plan sheet to *reuse the schematic's tag-pill
-geometry*, and `_PillSizer` is private to that same file. The sheet builders live
-in core, so the pill was unreachable from there too.
+**It picked up a second consumer while it waited.** `PLAN-H/3`'s brief told the
+plan sheet to *reuse the schematic's tag-pill geometry*, and `_PillSizer` is
+private to that same file. [DR-150](/decisions/dr-150-a-pin-has-no-domain.md)
+§11.149.6 declined to move a thousand lines inside a chapter about callouts and
+borrowed the **reasoning** instead, cited at each site.
 
-**The chapter did not move the file, and that is the decision rather than the
-omission** ([DR-150](/decisions/dr-150-a-pin-has-no-domain.md) §11.149.6): a
-thousand-line relocation is M6's migration and would have arrived inside a chapter
-about callouts. What it took was the **reasoning**, cited at each site it is used:
-near-edge anchoring rather than centring, height from the type size rather than
-from font metrics, a stadium radius. **A borrowed rule with its citation is not a
-copy of the code**, and the debt is unchanged and still M6's.
+**The full-tree review (`#97`, `#98`) moved it** to
+`rackpal_core/src/draw/scene/wire_trace.dart` as a pure move: explicit `src/`
+imports in place of the barrel, one export line in each barrel, and no test
+changed beyond two imports that became unused. `_PillSizer` is still private,
+so sharing it with `plan_callouts.dart` is now a visibility change rather than a
+layering one, and it has not been made.
 
 # Enforcement
 
 - `no_flutter_import_test.dart` fails the build on a Flutter import in core.
+- `rackpal_export/test/support/source_gate.dart` fails it on any route from the
+  exporter to `rackpal_ui`, including the three a naive `import` regex misses:
+  a barrel re-export, a conditional import, and `import"…"` with no space. A pub
+  workspace shares one package config, so the missing pubspec dependency alone
+  would not stop the import resolving.
 - `storage_layering_test.dart` RULE 1 permits `dart:io` in exactly **two** files.
   This is why the platform split is an injected `isWindows` flag rather than a
   `Platform.isWindows` call, see [DR-009](/decisions/dr-009-macos-in-v1.md).

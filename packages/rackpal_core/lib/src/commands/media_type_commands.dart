@@ -17,21 +17,26 @@
 // repeats itself one entity over: an entity the model carries, the codec
 // round-trips and four readers consume, which no gesture could create.
 //
-// This file is the minimum M3-F needs. It is NOT M4-P2's media-type
-// editor: there is no rename, no delete and no edit, because nothing
-// asks for them yet and a command with no caller is a promise about an
-// unbuilt feature.
+// It began as the minimum M3-F needed, an add and nothing else. RJ-012's
+// editor has since joined it: [EditMediaTypeCommand] renames a type in
+// place and [MergeMediaTypesCommand] folds a duplicate into another,
+// repointing every reference. (This header said "no rename, no delete and
+// no edit" until the full-tree review, `#935`.)
 //
 // ═════════════════════════════════════════════════════════════════════
-// WHY DELETE IS ABSENT AND IS NOT SIMPLY "NOT NEEDED YET"
+// WHY A PLAIN DELETE IS STILL ABSENT
 // ═════════════════════════════════════════════════════════════════════
 // Removing a media type would strand every `Link.media` naming it, and
 // `Link.media` is non-nullable. That is a cascade with a real design
 // question behind it (does the link go, or does the id dangle the way
 // `JacketColorId` deliberately does?), and DR-021 shows what settling
-// one properly costs. Undoing this command is safe because it is
-// bounded: revert removes the type only if this command is what put it
-// there.
+// one properly costs. A merge is the delete that answers it: the loser
+// goes, and everything that named it now names the winner.
+//
+// Undoing an add is safe because it is bounded: revert removes the type
+// only if this command is what put it there. **That sentence was a claim
+// about the caller until `#935`**, since `apply` overwrote an occupied id
+// and `revert` removed it regardless; see [AddMediaTypeCommand.apply].
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
@@ -53,11 +58,7 @@ import 'package:rackpal_core/src/units/ids.dart';
 /// with an existing key get a numeric suffix rather than overwriting,
 /// since two shops' `Cat6e` may be genuinely different cables.
 MediaTypeId mediaTypeIdFor(RackDocument doc, String spelling) {
-  final slug = spelling
-      .toLowerCase()
-      .replaceAll(RegExp('[^a-z0-9]+'), '_')
-      .replaceAll(RegExp(r'^_+|_+$'), '');
-  final base = slug.isEmpty ? 'type' : slug;
+  final base = mediaSlugFor(spelling);
   var candidate = MediaTypeId('media.$base');
   var n = 2;
   while (doc.registries.mediaTypes.containsKey(candidate)) {
@@ -65,6 +66,21 @@ MediaTypeId mediaTypeIdFor(RackDocument doc, String spelling) {
     n++;
   }
   return candidate;
+}
+
+/// The id tail [mediaTypeIdFor] starts from, before it is made unique.
+///
+/// **PUBLIC BECAUSE A SECOND CALLER MUST AGREE WITH IT EXACTLY** (DR-197,
+/// `#937`). The CSV import groups the new spellings of one sheet by this,
+/// so that two spellings the id cannot tell apart are offered as one type.
+/// A second copy of the rule would be a second answer to "is this the same
+/// id", and the two would drift the day either was edited.
+String mediaSlugFor(String spelling) {
+  final slug = spelling
+      .toLowerCase()
+      .replaceAll(RegExp('[^a-z0-9]+'), '_')
+      .replaceAll(RegExp(r'^_+|_+$'), '');
+  return slug.isEmpty ? 'type' : slug;
 }
 
 /// The trade tag for a type created from the spelling [spelling].
@@ -146,20 +162,41 @@ final class AddMediaTypeCommand extends Command<RackDocument> {
   @override
   Iterable<Uuid> get affects => const [];
 
+  /// Whether the last [apply] put the type there. [revert] is called on a
+  /// refused child too, because `Transaction.revert` walks every child, so
+  /// the refusal has to be remembered rather than re-derived.
+  bool _added = false;
+
+  /// Adds the type, or REFUSES when [id] is already registered.
+  ///
+  /// **AN ADD NEVER REPLACES** (`#935`). It used to overwrite, and then
+  /// [revert] removed the id, so an add handed an occupied id replaced
+  /// somebody's type and its undo deleted it. Every caller mints [id] with
+  /// [mediaTypeIdFor], which skips registered ids, so the guard lived only
+  /// in the callers, and one of them already defeats it: a CSV import that
+  /// names one cable in two spellings which slug alike builds two adds
+  /// before either applies, and both carry the same id. The second now
+  /// refuses and the first spelling's type stands.
   @override
   bool apply(RackDocument doc) {
+    if (doc.registries.mediaTypes.containsKey(id)) {
+      _added = false;
+      return false;
+    }
     doc.registries.mediaTypes[id] = MediaTypeDef(
       id: id,
       displayName: displayName,
       shortTag: shortTag,
       aliases: aliases,
     );
+    _added = true;
     return true;
   }
 
   @override
   void revert(RackDocument doc) {
-    doc.registries.mediaTypes.remove(id);
+    if (_added) doc.registries.mediaTypes.remove(id);
+    _added = false;
   }
 }
 
