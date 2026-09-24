@@ -1,5 +1,25 @@
 # Update Log
 
+## 2026-09-24 (sixty-ninth entry)
+
+* **Progress**: the full-tree review (`#97`) closes. docs/12 §4.15 is its record: eleven findings,
+  each with a disposition, and the three claims of its own that were wrong. `#936` (`58866679`)
+  took the analyzer ratchet from 233 to 23; `#937` (`9c5805fc`) made the CSV import offer one type
+  per id; `#939` (`aa7362de`), `#940` (`9a4d4429`) and `#941` (`28de3367`) built
+  [DR-194](/decisions/dr-194-a-local-diagnostic-log-ships-now.md)'s local diagnostic log, its
+  startup-failure window and `Help ▸ Open diagnostics folder…`.
+* **Note**: **A MECHANICAL FIX IS NOT A BEHAVIOUR-PRESERVING ONE BECAUSE A TOOL MADE IT.** The
+  cascade sweep's script produced 18 void-result errors the analyzer caught and one semantic change
+  it did not: `controller..stop()..forward()` folded into a `??=` initialiser, where `..` binds
+  tighter, so a second shake would never have played. Reading every hunk found it.
+* **Note**: **THE LAYERING GATES EARNED THEIR KEEP ON NEW CODE.** `registry_claim_test` refused a
+  C++ comment saying ShellExecute did one thing "and nothing else", the exhaustive shape that claim
+  has been wrong in four times; `session_layering_test` RULE 14 made the new Help item a recorded
+  decision. Neither was a defect in the code; both were claims the code could not back.
+* **Note**: the Plan view, not M6, is the current milestone, and `PLAN-J/0` (`#943`) is the chapter
+  that makes its scoreboard honest before the human drill. PLAN-J/2 asked for a Pull Sheet print
+  that DR-155 had already recorded does not exist.
+
 ## 2026-09-23 (sixty-eighth entry)
 
 * **Creation**: [DR-194](/decisions/dr-194-a-local-diagnostic-log-ships-now.md),

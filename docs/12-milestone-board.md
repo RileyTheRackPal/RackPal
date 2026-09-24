@@ -635,6 +635,19 @@ AC-014 wants mask-checked, and the test still does not see them.
 This is the same shape as every defect in the table at the top of this document: **an assertion that
 was honest when written and quietly stopped covering the thing it names.**
 
+**RE-MEASURED 2026-09-23 BY THE FULL-TREE REVIEW (`#97`), AND THE PARAGRAPH ABOVE IS HALF STALE.**
+The test has since learned two derived outputs, `derived:equipmentList` and
+`derived:rackRollups`, so "still does not see them" is no longer true of those. The larger drift
+is the other axis, the COMMANDS. A census of every `Command<RackDocument>` subclass in `lib/`
+against the file found **24 of 73 with a case and 49 without**. It is worse than a count: the
+test's `_knownMutableKeys` names nine top-level maps, and `ports`, `templates`, `underlays`,
+`sheets`, `ackedFindings`, `registries` and `settings` are not among them, so a command that writes
+any of those **cannot be given a case here at all** without first extending the mapping. Commands
+that write ports (`ConnectPortsCommand`, `BindEndpointCommand`, `MoveEndpointCommand`,
+`SetPortFactCommand`) are therefore untested for AC-014 by construction. No defect from this gap
+was found by the review; two mask defects were found by other means (`#932`, `#933`, §4.15), which is
+the argument for closing it rather than a reason to believe it is harmless.
+
 ### 4.6 Font: Jost supersedes CR-080's IBM Plex; the docs have not caught up
 
 The code is unambiguous. `apps/rackpal/pubspec.yaml` bundles **Jost Regular AND Jost Medium**,
@@ -869,6 +882,57 @@ the moment someone reaches for a code-signing certificate in M8-A.
 ruling to the board for an unrelated reason. Nothing has walked the other twelve `Mn-0` items
 against the rulings they were meant to decompose, and until something does, the count of items in
 this class is **at least one and unknown**.
+
+### 4.15 The full-tree review, `#97` · 2026-09-23 · `DR-194` to `DR-197` · no version move
+
+**Scope, stated so nobody reads more into it than was done.** `#97` was filed after M2 over 212
+library files and ~68,700 lines. It ran at M5-plus-Plan-view over **170,437 lines of non-test Dart**,
+and **it did not read every line**. It ran six strands, each a census or a probe rather than a
+read-through, in `#97`'s own priority order: claims that stopped covering what they name; the
+gaps between slices (epoch masks against their consumers, apply/revert symmetry, `doc.ports`
+readers); layering; tests that pass for the wrong reason; dead public API; and `#98`'s refactor
+candidates. Every behavioural claim below was **probed on a mounted screen or the real import
+path** before it was written down, and one was withdrawn when the probe was the author's own grep
+filter (see `#933`).
+
+**Baseline.** All nineteen local gates green on `main` at `f71ec40c` before any change.
+
+| Finding | Kind | Disposition |
+|---|---|---|
+| `wire_trace.dart` in `rackpal_ui`, so the exporter cannot draw a wire | layering | **MOVED**, `#931` at `0506ef5a`; `#98`'s one non-optional item |
+| The Rack view never listened to `wires`; the outlet chip and findings drawer went stale on a wires-only commit | gap between slices | **FIXED**, `#932` at `9bf8312b`. Masked in the app by a shell that rebuilds everything |
+| Two rack display toggles declared `style`, which only the Schematic hears; its DR-187 freeze wrote every symbol position into the file | gap between slices | **FIXED**, `#933`. A unit test asserted the defect |
+| Three comments describing code that had changed: no incremental path, a misplaced doc comment, a crash reporter "at M2" | stale claim | **FIXED**, `#934` |
+| `AddMediaTypeCommand` overwrote an occupied id and its undo deleted it; the header promised otherwise | stale claim, reachable | **FIXED**, `#935` |
+| One CSV import naming a cable in two spellings that slug alike offers two new types and makes one | UI | **FIXED** by DR-197, `#937`: one row per id, every spelling an alias |
+| Release builds report nothing anywhere, including a startup failure; the §12.4-safe storage log has no sink | release risk | **BUILT** by DR-194, which pulled §9.9's local half forward: the log (`#939`), the startup-failure window (`#940`), `Help ▸ Open diagnostics folder…` (`#941`). M8 keeps its exit clause |
+| AC-014's coverage | test drift | §4.5, re-measured: 24 of 73 document commands. Not fixed; recorded |
+| 210 of the analyzer's 233 infos were two lints, 116 of them catalogue facts | ratchet | **CLEARED** by DR-195, `#936`: 233 to 23, facts kept under a documented ignore, cascades swept. The first sweep also stripped 45 fixture values `#246` had argued are data, and was corrected in the same chapter (§11.194.3) |
+| `#98`'s refactor candidates | structure | **DECIDED** by DR-196: `wire_trace.dart` moved (`#931`), `json_codec.dart` left alone, the two canvas screens re-asked at M7 (`#942`) |
+| 42 public declarations nothing in `lib/` or `tool/` calls | dead code | Listed on `#97`; per-item, since some are deliberate test seams |
+| `SemanticsService.announce` deprecated after Flutter 3.35 | deprecation | Recorded; it is the channel M7's NVDA clause rests on |
+| The Plan view's clause table reads "0 of 7" and stops at `PLAN-F` | stale status | **FILED** as `PLAN-J/0` (`#943`), with PLAN-J/2's unperformable print step. See below |
+
+**THE MOST CONSEQUENTIAL FINDING IS NOT IN THE CODE.** The request that started this review said
+"before we dive into M6". The completeness gate names the current milestone as **the Plan view**
+(`#588`), and §1 and §5.9 mark it `0 of 7`, `NOT BUILT`, in prose that ends at `PLAN-F`. The tree
+has since gained the importer, the vendored rasteriser (`PLAN-K`), `PlanScale`'s writer, pins,
+and `SheetRole.devicePlan`. That table is a second copy of a moving status that stopped being
+moved, and §8.9 makes it load-bearing: M6 opens properly only once all seven clauses are
+discharged or parked. At least three are human acts that no agent can perform.
+
+**THE REVIEW'S OWN ERRORS, BECAUSE THEY ARE THE MOST TRANSFERABLE PART.** Three claims this review
+made were wrong and each was caught by running it rather than by re-reading it. "No command declares
+`style`" came from a `grep -v` that also dropped the one file that does, and the corrected reading
+was the worse defect (`#933`). "Re-importing that sheet mints a duplicate" was derived from two
+equivalence rules disagreeing, and a probe found a third that reconciles them. And the analyzer
+sweep's mechanical cascade conversion folded two statements into a `??=` initialiser, which the
+analyzer called clean and `shake_animation_test.dart` would have failed; it was caught reading the
+diff. A confident derivation is a hypothesis until something has run it.
+
+**WHAT THE REVIEW DID NOT DO.** It did not read the storage layer beyond the atomic writer, the
+persistence codec beyond its gates, or the 42 dead declarations one by one. It ran no mutation
+pass over the thousand-sequence round-trip test. Those are real gaps and not implied clean.
 
 ---
 
