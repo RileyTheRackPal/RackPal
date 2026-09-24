@@ -184,7 +184,15 @@ Future<void> _run() async {
 /// `toString` is exactly where a path ends up. `FlutterError.presentError`
 /// is the framework's own sink — it is a no-op in release, and in debug it
 /// prints the structured report a developer needs. When a crash reporter
-/// lands (M2), this is the single function it hooks.
+/// lands, this is the single function it hooks.
+///
+/// **THAT IS M8, NOT M2**, which this comment said until the full-tree
+/// review (`#934`): canon §9.9 schedules "crash reporting local-first and
+/// opt-in remote" for release engineering, with an exit clause that a
+/// deliberately induced crash produces a local report containing no
+/// project content. Until then a RELEASE build reports nothing anywhere,
+/// including a throw in the awaits before `runApp`, so the header's black
+/// window is caught here and still shown to nobody.
 void _reportFatal(Object error, StackTrace stack) {
   FlutterError.presentError(
     FlutterErrorDetails(

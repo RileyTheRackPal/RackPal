@@ -609,13 +609,19 @@ SchematicSymbolTier buildSchematicSymbolTier({
 
 /// Lays out [doc]'s schematic and builds its display list.
 ///
-/// FULL DETERMINISTIC RECOMPUTE (CR-013 as amended by DR-001): there is no
-/// cache, no invalidation and no incremental path, because "full recompute
-/// is perfectly stable and the invalidation bookkeeping costs more than it
-/// saves" (docs/03 §5.2). Calling this twice on the same document produces
-/// byte-identical ops; so does calling it on a document whose entities were
-/// inserted in a different order. Both are asserted in
-/// `schematic_scene_test.dart`.
+/// DETERMINISTIC (CR-013 as amended by DR-001). Calling this twice on the
+/// same document produces byte-identical ops; so does calling it on a
+/// document whose entities were inserted in a different order. Both are
+/// asserted in `schematic_scene_test.dart`.
+///
+/// **NO CACHE LIVES HERE, BUT THERE IS AN INCREMENTAL PATH**, and this doc
+/// said otherwise until the full-tree review (`#934`). It was written when
+/// "full recompute is perfectly stable and the invalidation bookkeeping
+/// costs more than it saves" (docs/03 §5.2) was the whole story. DR-076
+/// then measured 96 ms a frame at 3,600 links and added [reuseLayout] and
+/// [reuseSymbols]: this function still holds no state, and the CALLER, who
+/// owns the epochs, decides what may be carried over. A caller that passes
+/// neither gets the full recompute, byte for byte.
 ///
 /// [measurer] is injected per CR-081/AC-016 #13 and does real work — docs/05
 /// §3's width formula is a text measurement, and nothing here guesses a

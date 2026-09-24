@@ -957,13 +957,6 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     );
   }
 
-  /// A `meta` bump: the symbols are rebuilt, the layout is not
-  /// (DR-076 §11.75.3).
-  ///
-  /// A designator changes what a symbol PRINTS and, through docs/05 §3's
-  /// width formula, how wide it is — so the symbol tier is stale. It does
-  /// not change what Sugiyama was ordering, and re-running it would move
-  /// symbols under the cursor of somebody who just renamed one.
   /// A `sheet` bump: a pin, an unpin, or a plan edit that is not about
   /// this canvas at all (DR-186 §11.185.3).
   ///
@@ -993,6 +986,17 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     _onDocumentChanged();
   }
 
+  /// A `meta` bump: the symbols are rebuilt, the layout is not
+  /// (DR-076 §11.75.3).
+  ///
+  /// A designator changes what a symbol PRINTS and, through docs/05 §3's
+  /// width formula, how wide it is — so the symbol tier is stale. It does
+  /// not change what Sugiyama was ordering, and re-running it would move
+  /// symbols under the cursor of somebody who just renamed one.
+  ///
+  /// (This comment sat glued to the top of [_onSheetChanged]'s until the
+  /// full-tree review, `#934`, so the `sheet` handler opened by describing
+  /// the `meta` one.)
   void _onMetaChanged() {
     if (!mounted) return;
     _metaDirty = true;
