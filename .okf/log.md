@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-09-23 (sixty-eighth entry)
+
+* **Creation**: [DR-194](/decisions/dr-194-a-local-diagnostic-log-ships-now.md),
+  [DR-195](/decisions/dr-195-catalogue-values-stay-explicit.md),
+  [DR-196](/decisions/dr-196-canvas-screens-not-split-before-m7.md) and
+  [DR-197](/decisions/dr-197-csv-import-one-row-per-id.md), the four questions the full-tree review
+  (`#97`) put to the user. Each choice was the recommended option with no reasons given, so each
+  record says the reasoning is the author's.
+* **Creation**: [A blanket rebuild hides a missing subscription](/practices/a-blanket-rebuild-hides-a-missing-subscription.md),
+  from `#932` and `#933`: one mask too narrow and invisible, one too broad and writing to the file.
+* **Progress**: `#932` (`9bf8312b`), `#933` (`aefca8c3`), `#934` (`9564d331`) and `#935`
+  (`7bea52f5`) on `review-97`, each gated in a sibling worktree while the next was written.
+* **Note**: **TWO OF THE REVIEW'S OWN CLAIMS WERE WRONG, AND BOTH WERE CAUGHT BY RUNNING THEM.** "No
+  command declares `style`" came from a `grep -v command.dart` that also dropped
+  `set_entity_property_command.dart`; the corrected reading was the worse defect. "Re-importing the
+  sheet mints a duplicate" was a confident derivation from two equivalence rules disagreeing, and the
+  probe found a third rule reconciling them. Both are recorded in the rulings they touched.
+* **Note**: **THE CURRENT MILESTONE IS THE PLAN VIEW, NOT M6**, which the request that started the
+  review assumed. The completeness gate says so; docs/12 §1 and §5.9 still mark it `0 of 7` in prose
+  that ends at `PLAN-F`.
+
 ## 2026-09-23 (sixty-seventh entry)
 
 * **Update**: [Package layering](/invariants/package-layering.md). **`wire_trace.dart` MOVED TO

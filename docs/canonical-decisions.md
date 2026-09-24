@@ -22339,6 +22339,110 @@ more complete option and was not chosen. docs/04 §1's layout stands.
 
 **Scope.** No scope change: docs/04 §8 declared these keys global and this makes them so.
 
+### 11.193 DR-194 · A local diagnostic log ships now, because builds are already in the wild
+
+**The question.** Found by the full-tree review (`#97`). A release build reports nothing anywhere.
+`main.dart`'s fatal handler routes every uncaught error to `FlutterError.presentError`, which its own
+comment calls a no-op in release, so a throw in the awaits before `runApp` is still a black window
+and no message. `storage_log.dart` carries a complete §12.4-safe structured log, typed so that a
+fact may be an `int`, a `bool` or an `Enum` and never a `String`, and **nothing in `lib/` installs
+its sink**. §9.9 schedules *"crash reporting local-first and opt-in remote"* for M8. Pre-release
+builds are with testers now, so every crash they hit reaches the author as a description rather
+than as evidence. Put to the user on 2026-09-23 with three priced options.
+
+**11.193.1 RULED: THE LOCAL HALF OF §9.9'S CRASH REPORTING IS PULLED FORWARD.** Settled by the user,
+choosing the recommended option; the reasoning is the author's, accepted without addition. It lands
+under Epic `#786`, not under a milestone, and it moves no milestone's clause.
+
+**11.193.2 WHAT THE SLICE IS, AND NOTHING MORE.**
+
+1. **A local log file in the data root**, capped in size and rotated, never uploaded. It receives
+   the storage layer's structured events through the existing sink, and every fatal error.
+2. **A fatal error is recorded as its TYPE and its stack frames, never its message.** The message is
+   where a path, a client name or a site address ends up (§12.4, CR-096); the frames name the code,
+   not the user's files. The type-and-frames form is a floor, not a design for M8's reporter.
+3. **A dialog when startup fails**, so the case the header of `main.dart` calls a black window says
+   that the app could not start and where its log is.
+4. **`Help ▸ Open diagnostics folder…`** beside `About`, because a log nobody can find is a log
+   nobody sends.
+
+**11.193.3 WHAT STAYS AT M8.** The opt-in remote half, symbol archival, CR-096's redaction policy
+reconciled as a whole, and **§9.9's exit clause**: *"a deliberately induced crash produces a local
+report containing no project content"* is still M8's to demonstrate. This slice is the mechanism it
+will be demonstrated on, not the demonstration.
+
+**Scope.** An amendment of timing under §8.3, recorded in §12.41. No scope enters or leaves v1.
+
+### 11.194 DR-195 · The seed catalogue's explicit values stay explicit, and the ratchet is cleared around them
+
+**The question.** Of the analyzer's 233 infos, 161 were `avoid_redundant_argument_values` and 49
+`cascade_invocations`. `#98` recorded clearing them as a user decision in M2 and it was never taken.
+The full-tree review (`#97`) counted where the 161 live: **116 are in the nine seed catalogue files**,
+and they are values such as `requiresClearanceAboveU: 0` and `dir: PortDirection.bidirectional`.
+Put to the user on 2026-09-23 with three priced options.
+
+**11.194.1 RULED: THE CATALOGUE KEEPS ITS EXPLICIT VALUES; EVERYTHING ELSE IS SWEPT.** Settled by the
+user, choosing the recommended option; the reasoning is the author's, accepted without addition.
+Each seed catalogue file carries a file-wide `ignore` for that one lint, with its reason written
+beside it. Every other occurrence of both lints is fixed, and the pin is re-measured in the same
+change. docs/11 §7's lint configuration is unchanged.
+
+**11.194.2 WHY A VALUE EQUAL TO THE DEFAULT IS NOT REDUNDANT HERE.** Under CR-114 an explicit `0`
+means *measured zero*, and a catalogue entry is a record of what a device IS. An argument that
+happens to equal today's constructor default is a fact that coincides with it; deleting it hands the
+fact to the constructor, and a later change to that default would then rewrite every device that
+had said it silently. The lint is right about code and wrong about data.
+
+**Scope.** No scope change.
+
+### 11.195 DR-196 · The two canvas screens are not split before M7 (`#98`'s verdict)
+
+**The question.** `#98` was conditional on the full-tree review (`#97`) calling for it, and named four
+candidates. The review measured them: `rack_canvas_screen.dart` is 6,092 lines, 2,775 of code and
+2,988 of comment, one `State` class of 5,187 lines and 123 members whose largest method is 173 lines
+of code; `schematic_canvas_screen.dart` is 5,784, 2,715 of code, one `State` of 4,872 lines and 102
+members. The methods are not bloated; the classes are. Put to the user on 2026-09-23 with three
+priced options.
+
+**11.195.1 RULED: `#98` CLOSES WITH ONE MOVE MADE AND THREE DECLINED.** Settled by the user, choosing
+the recommended option; the reasoning is the author's, accepted without addition.
+
+| Candidate | Verdict |
+|---|---|
+| `wire_trace.dart` to `rackpal_core` | **Moved** (`#931`), the one item `#98` called not a judgement call |
+| `rack_canvas_screen.dart` | **Not split now.** Revisited at M7 |
+| `schematic_canvas_screen.dart` | **Not split now.** Revisited at M7 |
+| `json_codec.dart` | **Not touched.** Under CR-117's byte gate, and nothing asks |
+
+**11.195.2 WHY M7 AND NOT NOW.** M6 is export-side and touches neither screen, so a split before it
+buys tidiness M6 does not need at the price of every gesture in the product. M7's keyboard and
+screen-reader work goes through both, which is when a split starts paying for itself. A Story parked
+on M7 carries the question so it is re-asked rather than remembered.
+
+**Scope.** No scope change.
+
+### 11.196 DR-197 · A CSV import offers one new cable type per id, and lists every spelling
+
+**The question.** Found by the full-tree review (`#97`) and probed on the real import path. A sheet
+that spells one cable two ways that differ only in case or punctuation (`Plenum Speaker 14/4` and
+`plenum-speaker 14-4`) put **two** boxes in the import dialog's *"will create"* list and made **one**
+type: both spellings derive the same id, and since `#935` the second add refuses rather than
+overwriting the first. Re-importing the sheet was probed and is idempotent. Put to the user on
+2026-09-23 with three priced options.
+
+**11.196.1 RULED: ONE ROW PER ID, CARRYING EVERY SPELLING.** Settled by the user, choosing the
+recommended option; the reasoning is the author's, accepted without addition. New spellings whose
+derived ids collide are one entry in the list, named by the first spelling in sheet order and
+listing the others. The type it creates takes that first spelling as its name and **every** spelling
+as an alias. Unticking the row declines all of its spellings together.
+
+**11.196.2 WHY.** The dialog is a promise about what the import will do, and a list with more boxes
+than the import makes types is a small lie told at the one moment somebody is checking. Spellings
+that derive the same id differ only in case and punctuation, which is how one cable gets written
+twice, not how two cables get told apart.
+
+**Scope.** No scope change.
+
 ---
 
 ## 12. Superseded rulings
@@ -23025,6 +23129,13 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **DR-036 §11.35.1 clause 2** | *"The application code is GPLv3-or-later. All five packages and the app shell."* | **AGPLv3-or-later** (§11.188.1), settled by the user on 2026-09-23. The dependency census that admitted GPLv3 admits AGPLv3 unchanged (§11.188.3), and §11.35.4's output exception carries over in mechanism because AGPLv3 incorporates GPLv3 §7 (§11.188.5). **The other four clauses of §11.35.1 are untouched**, the CC0 catalog among them, which is what makes a vendor's contribution path unaffected by the change (§11.188.8). |
+
+
+### 12.41 Amended by DR-194 (a local diagnostic log ships now)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§9.9 (M8)**, contents | *"crash reporting local-first and opt-in remote with the redaction policy reconciled (CR-096)"* | **The local half ships now**, under Epic `#786` (§11.193.1): a capped local log, fatal errors recorded as type and frames only, a startup-failure dialog and `Help ▸ Open diagnostics folder…`. **M8 keeps** the opt-in remote half, CR-096's reconciliation and **the exit clause unchanged**, which it still has to demonstrate (§11.193.3). |
 
 
 ## 13. Resolved §10 questions
