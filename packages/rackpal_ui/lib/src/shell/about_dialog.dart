@@ -6,7 +6,7 @@
 //  1. **THE VERSION HAS TO BE READABLE.** It is stamped into every
 //     `RackDocument.appVersion` and every recovery sidecar and was shown
 //     nowhere at all, so a tester could not say which build they were
-//     running. docs/20 §20.9 had to tell them to quote the folder name
+//     running. docs/21 §21.9 had to tell them to quote the folder name
 //     instead, which is a workaround for a missing label.
 //  2. **THIRD-PARTY LICENCES HAVE TO BE REPRODUCED**, and that is a
 //     distribution obligation rather than a courtesy. Every dependency is
@@ -83,7 +83,7 @@ void showRackPalAboutDialog(BuildContext context, {required String version}) {
       Text(
         // SAID IN THE DIALOG, because this is the sentence a tester needs
         // when they are filing something and the folder name has been
-        // lost. docs/20 §20.9 asks for the version in a report.
+        // lost. docs/21 §21.9 asks for the version in a report.
         'Quote this version when reporting anything. It is also stored in '
         'every project file you save.',
       ),

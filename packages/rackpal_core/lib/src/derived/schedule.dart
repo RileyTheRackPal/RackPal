@@ -521,7 +521,7 @@ enum ScheduleLengthSource {
   /// would: `_lengthOf` returns this tier, below the room estimate, and
   /// `rules_cable.dart` reads the floor directly. The note described a
   /// plan rather than a state and nothing connected finishing the work to
-  /// editing it. Found while writing docs/20, which had to state what the
+  /// editing it. Found while writing docs/21, which had to state what the
   /// schedule can tell an integrator about cable footage.
   planLowerBound,
 

@@ -1,5 +1,18 @@
 # Update Log
 
+## 2026-09-23 (sixty-sixth entry)
+
+* **Update**: **THE USER GUIDE IS docs/21, NOT docs/20.** It was written as `docs/20-user-guide.md` in a
+  number `docs/20-rule-review.md` had held since 2026-09-04, and the user caught the collision. The
+  guide moved because it came second; its sections are renumbered `§21.x` and every pointer that
+  meant it was repointed (canon DR-188 to DR-193, docs/10, docs/12, code comments, the keymap golden
+  test's message, both PDF tools). **Earlier entries in this log that say docs/20 about the guide mean
+  docs/21**; they are history and are left as written.
+* **Note**: **A DOCUMENT NUMBER IS AN ID AND WAS NOT CHECKED LIKE ONE.** Ruling IDs are scanned across
+  every ref before use because they have collided; a docs/ number was taken on sight, and `ls docs`
+  would have shown the other file. `tools/user_guide_pdf.py` now reads the number off the file name,
+  so the next move touches one line.
+
 ## 2026-09-23 (sixty-fifth entry)
 
 * **Progress**: `#929`. `tools/user_guide_pdf.py` exports docs/20 as a PDF in the console style (DR-090),

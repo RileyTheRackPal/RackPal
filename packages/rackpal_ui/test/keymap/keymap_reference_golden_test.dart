@@ -1,4 +1,4 @@
-// The keyboard reference that ships to USERS (`docs/20-user-guide.md` §20.6),
+// The keyboard reference that ships to USERS (`docs/21-user-guide.md` §21.6),
 // generated from `kKeymap` and gated against it.
 //
 // ═══════════════════════════════════════════════════════════════════════
@@ -51,7 +51,7 @@ void main() {
       file.existsSync(),
       isTrue,
       reason:
-          '$_path is missing, and docs/20-user-guide.md §20.6 sends readers '
+          '$_path is missing, and docs/21-user-guide.md §21.6 sends readers '
           'to it. Regenerate with UPDATE_GOLDENS=1.',
     );
     expect(

@@ -22059,7 +22059,7 @@ note somebody has to open.
 
 ### 11.187 DR-188 · RackPal is CAD-lite, and DXF interchange opens v1.3
 
-**The question.** From the user, 2026-09-23, on reading docs/20's claim that the product *"is not a
+**The question.** From the user, 2026-09-23, on reading docs/21's claim that the product *"is not a
 CAD package"*: *"I think we're selling ourselves a bit short by not calling it a CAD package;
 Granted it is representative of reality rather than strictly adhering to it, so I think CAD-Lite is
 a reasonable (even if made up) term to call the product."*
@@ -22076,7 +22076,7 @@ not: **calibrated floorplans, exact elevations (RU is discrete and a device fits
 and cable footage**; representative everywhere else, which is symbol positions, routing paths and
 plan pin placement.
 
-**11.187.2 THE DESCRIPTION THIS REPLACES WAS THE AUTHOR'S AND WAS NEVER MEASURED.** docs/20 §20.1
+**11.187.2 THE DESCRIPTION THIS REPLACES WAS THE AUTHOR'S AND WAS NEVER MEASURED.** docs/21 §21.1
 said *"it is not a CAD package"*, written to manage a tester's expectations downward and checked
 against nothing. It undersold a tool that calibrates plans to real-world scale, draws exact
 elevations and resolves cable footage through four ranked sources. Recorded because this ruling
@@ -22214,7 +22214,7 @@ catalog's CC0 status, which stands under §11.35.3 untouched. Signed archives.
 
 ### 11.189 DR-190 · Close in the Device Builder asks before it discards
 
-**The question.** Found writing docs/20 (`#924`): the Device Builder's `Close` returns to the
+**The question.** Found writing docs/21 (`#924`): the Device Builder's `Close` returns to the
 browser by unmounting the builder, and the builder's `TemplateEditSession` is an in-memory copy, so
 **a dirty draft is destroyed without a word**. The shell's own comment above `onDone` called a
 discard-and-return route *"a gap rather than a decision"*; `Close` was that route, unguarded. Put
@@ -22245,7 +22245,7 @@ closing anything dirty.
 
 ### 11.190 DR-191 · A room's plan estimate follows its inputs, and says why when it cannot
 
-**The question.** Found writing docs/20 (`#924`): `roomEstimateFor` is called only when an outline
+**The question.** Found writing docs/21 (`#924`): `roomEstimateFor` is called only when an outline
 is closed or reshaped, and returns null unless the plan is calibrated, a run to the room lands in a
 rack, and that rack is pinned on the outline's own underlay. **The natural order (import,
 calibrate, outline, then place and land) computes nothing, and supplying the missing input later
@@ -22266,8 +22266,8 @@ G4 does not let a guess stand as a measurement. **A figure a person typed is nev
 direction**, which §11.49.3 already rules and this keeps.
 
 **11.190.3 THE HOOK IS INSTALLED BY THE CONTROLLER, NOT BY A VIEW.** DR-187's freeze is registered
-by the Schematic view and therefore does nothing until that view has been opened, which docs/20
-§20.8 has to warn about. A fact about the document must not depend on which tab somebody visited,
+by the Schematic view and therefore does nothing until that view has been opened, which docs/21
+§21.8 has to warn about. A fact about the document must not depend on which tab somebody visited,
 so this consequence is installed when the `DocumentController` is constructed, on every route that
 builds one.
 
@@ -22284,7 +22284,7 @@ same line loses its `AC-024` citation, which was a ruling ID shown to a user.
 
 ### 11.191 DR-192 · The Schedule shows the waste factor, per cable type
 
-**The question.** Found writing docs/20 (`#924`): `ProjectSettings.cableWasteFactor` has a help
+**The question.** Found writing docs/21 (`#924`): `ProjectSettings.cableWasteFactor` has a help
 line promising it on the pull sheet, and **nothing applies it**. `cableFootageOf` computes a
 per-media takeoff with `withWaste` already applied, and is called by nothing outside its own file.
 Put to the user on 2026-09-23 with three options and prices.
@@ -22311,7 +22311,7 @@ than a pull sheet that does not print yet.
 
 ### 11.192 DR-193 · The validation keys work from every view and go where the fix is
 
-**The question.** Found writing docs/20 (`#924`): `F7`, `F8` and `Shift+F8` sit in
+**The question.** Found writing docs/21 (`#924`): `F7`, `F8` and `Shift+F8` sit in
 `KeyScope.global`, and only the Rack view's `Actions` handle them, so on four views of six they do
 nothing while the keymap and the generated reference say otherwise. Many findings are about cables
 and floorplans, which are not fixed on the Rack view. Put to the user on 2026-09-23 with three

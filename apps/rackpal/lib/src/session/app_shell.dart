@@ -892,7 +892,7 @@ final class AppShellState extends State<AppShell>
   /// the registry's global scope is exactly four file bindings,
   /// `session_layering_test.dart` RULE 14 asserts it, and that rule exists
   /// so a fifth cannot arrive without the decision being taken again.
-  /// `Help ▸ About RackPal…` (DR-189, docs/20 §20.9).
+  /// `Help ▸ About RackPal…` (DR-189, docs/21 §21.9).
   ///
   /// **THE VERSION IS READ FROM THE SAME CONSTANT THE DOCUMENT IS STAMPED
   /// WITH**, so what a tester reads off this dialog and what a support

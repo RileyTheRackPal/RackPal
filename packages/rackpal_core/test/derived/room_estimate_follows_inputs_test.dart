@@ -18,7 +18,7 @@ const _square = <PxPt>[
 ];
 
 /// A room outlined on a calibrated plan, with one run landed in an
-/// UNPINNED rack: every input but the pin, which is the order docs/20 used
+/// UNPINNED rack: every input but the pin, which is the order docs/21 used
 /// to have to warn about.
 ({PlanDoc d, Uuid room, Uuid rack}) _outlinedFirst() {
   final d = PlanDoc()..underlay();
