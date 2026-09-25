@@ -1623,7 +1623,11 @@ $SuiteFloors = @{
     # 32, is OpenLocked and keeps its entry; red with it mapped back to
     # OpenUnexpected) and +1 in session/file_error_presenter_test.dart (what
     # the user reads: the lock, the usual holders, the remedy, OK only).
-    'rackpal_app'    = 1096
+    # 1101 at `#947`: +5 in session/device_io_menu_route_test.dart, the
+    # device library and template imports driven from the REAL File menu
+    # (the members the shell calls had never run), failures included, each
+    # read off the dialog on screen.
+    'rackpal_app'    = 1101
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
