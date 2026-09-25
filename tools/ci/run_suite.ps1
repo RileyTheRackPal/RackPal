@@ -1615,7 +1615,11 @@ $SuiteFloors = @{
     # 1090 at `#943`: +3 in storage/document_store_test.dart, CR-117 on the
     # zip path THROUGH THE STORE: save, reopen, save twice more, and the file
     # is byte-identical; the halves had only ever been proven apart.
-    'rackpal_app'    = 1090
+    # 1094 at `#947`: +4 in storage/document_store_test.dart, the first to
+    # make a READ fail after the file was found, so `_classifyOpen` ran at
+    # all: access denied, deleted between check and read (still offering
+    # the .bak), a share dropping mid-read (entry kept), and no errno.
+    'rackpal_app'    = 1094
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

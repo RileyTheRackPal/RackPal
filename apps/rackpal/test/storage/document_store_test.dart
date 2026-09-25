@@ -88,10 +88,12 @@ _Made _make({
   Set<String>? dirs,
   Serializer? serializer,
   Deserializer? deserializer,
+  Map<String, Object> failReadsOf = const {},
 }) {
   final fs = FakeFileStore(
     initialFiles: files,
     initialDirectories: {'C:', _dataRoot, _jobs, ...?dirs},
+    failReadsOf: failReadsOf,
   );
   final writer = AtomicWriter(
     fs: fs,
@@ -413,6 +415,78 @@ void main() {
           'envelope from a truncated one',
     );
     expect(error.backup, isNotNull);
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // A FILE THAT WAS THERE, AND THEN COULD NOT BE READ (#947)
+  // ═══════════════════════════════════════════════════════════════════
+  // Every case above fails before the read: the file is absent, or it
+  // reads and does not decode. `_classifyOpen` is the branch for a read
+  // that THROWS after `stat` said the file was there, and the first
+  // coverage measurement (2026-09-24) found it had never run. Each case
+  // is an OS error with a real Windows errno, thrown by the fake's
+  // per-path read fault, and asserted on what the user is told and on
+  // whether the recents entry survives, which is the part with teeth.
+  group('open: a read that FAILS after the file was found', () {
+    Future<OpenError> openFailingWith(
+      Object fault, {
+      Map<String, Uint8List> alsoFiles = const {},
+    }) async {
+      final made = _make(
+        files: {_paths.target: _codec.write(_doc()), ...alsoFiles},
+        failReadsOf: {_paths.target: fault},
+      );
+      final result = await made.store.open(_paths.target);
+      return (result as Err<OpenedDocument>).error as OpenError;
+    }
+
+    test(
+      'ACCESS DENIED (5) is a permission error, and the entry stays',
+      () async {
+        final error = await openFailingWith(const StorageOsException(5));
+        expect(error, isA<OpenPermissionDenied>());
+        expect(
+          shouldEvictOnOpenFailure(error),
+          isFalse,
+          reason: 'the file is there; the user may yet be given access',
+        );
+      },
+    );
+
+    test('a file DELETED between the check and the read (2) is not found, '
+        'and still offers the .bak', () async {
+      final error = await openFailingWith(
+        const StorageOsException(2),
+        alsoFiles: {_paths.backup: _codec.write(_doc())},
+      );
+      expect(error, isA<OpenNotFound>());
+      expect(
+        (error as OpenNotFound).backup?.path,
+        _paths.backup,
+        reason:
+            'the classifier builds its own OpenNotFound, and a .bak it '
+            'forgot to look up is a recovery the user is never offered',
+      );
+      expect(shouldEvictOnOpenFailure(error), isTrue);
+    });
+
+    test('a share that DROPS mid-read (64) is unreachable, NOT missing, so '
+        'the entry survives', () async {
+      // §9.5's unmounted-drive rule again, one line further down: a read
+      // that fails because the network name went away must not be
+      // reported as a deleted file, or a sleeping NAS costs the user
+      // their recents entry.
+      final error = await openFailingWith(const StorageOsException(64));
+      expect(error, isA<OpenUnreachable>());
+      expect(shouldEvictOnOpenFailure(error), isFalse);
+    });
+
+    test('a failure with NO errno is unexpected, and still an answer rather '
+        'than a throw', () async {
+      final error = await openFailingWith(StateError('not an OS error'));
+      expect(error, isA<OpenUnexpected>());
+      expect(shouldEvictOnOpenFailure(error), isFalse);
+    });
   });
 
   group('THE OPEN PATH NEVER COMPLETES WITH AN ERROR', () {

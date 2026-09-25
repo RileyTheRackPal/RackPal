@@ -480,6 +480,7 @@ final class FakeFileStore implements FileStore {
     this.undeletablePaths = const {},
     this.windowsSemantics = true,
     Map<String, int>? failRenamesTo,
+    this.failReadsOf = const {},
     DateTime? clock,
   }) : failRenamesTo = Map.of(failRenamesTo ?? const {}),
        _clock = clock ?? DateTime.utc(2026, 7, 26, 14, 32, 11) {
@@ -536,6 +537,17 @@ final class FakeFileStore implements FileStore {
   /// delete only cares THAT it failed — so the number here is colour, and
   /// the modelled fact is "this delete does not happen".
   final Set<String> undeletablePaths;
+
+  /// Path -> the exception `readBytes` throws for it, AFTER `stat` and
+  /// `exists` have answered normally.
+  ///
+  /// The state `DocumentStore.open`'s `_classifyOpen` exists for and no
+  /// test reached until #947: a file that was there a moment ago and then
+  /// could not be read. A share dropping mid-read, a file deleted between
+  /// the check and the read, a permission change, another program's lock.
+  /// Targeted by path for [failRenamesTo]'s reason: an op index would make
+  /// the test depend on how many calls `open` makes first.
+  final Map<String, Object> failReadsOf;
 
   final DateTime _clock;
 
@@ -652,6 +664,9 @@ final class FakeFileStore implements FileStore {
   @override
   Future<Uint8List> readBytes(String path) async {
     _maybeFail('readBytes');
+    if (failReadsOf[path] case final fault?) {
+      Error.throwWithStackTrace(fault, StackTrace.current);
+    }
     _requireFile(path);
     final content = _state.files[path]!;
     return switch (content) {
