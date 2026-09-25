@@ -22481,6 +22481,34 @@ going to clear.
 
 **Scope.** No scope change.
 
+### 11.198 DR-199 · An import refusal's title names the cause, not "that is not a device library"
+
+**The question.** Found by `#947`'s route tests of the device library and template imports. Every
+refusal carried the same title, *"That is not a device library"* (or *"…template"*), including
+the two cases where the file is one: over the size cap, and written by a newer RackPal, whose
+detail line says so directly under a title denying it. Put to the user on 2026-09-25 with three
+priced options: a title by cause; one neutral title for every refusal; leave it.
+
+**11.198.1 RULED: THE TITLE NAMES THE CAUSE.** Settled by the user, choosing the recommended option;
+the reasoning is the author's, accepted without addition. For a device library, and in the same
+words for a device template:
+
+| Cause | Title |
+|---|---|
+| Not that kind of file, or a zip archive | *That is not a device library* |
+| Written by a newer RackPal | *This library needs a newer RackPal* |
+| Over the size cap, or nested past the limit | *That library is too large to import* |
+| Anything else that does not decode | *That library could not be read* |
+
+The detail lines are unchanged. Too-deeply-nested shares the size title because the detail already
+treats the two as one limit, and a sentence of its own for a file only a broken or hostile writer
+produces is not worth the reader's time; that call is the author's.
+
+**11.198.2 WHY.** The title is read first and is often the only thing read. *Not a library* sends a
+person looking for a different file when theirs is fine and merely large, or merely new.
+
+**Scope.** No scope change.
+
 ---
 
 ## 12. Superseded rulings
