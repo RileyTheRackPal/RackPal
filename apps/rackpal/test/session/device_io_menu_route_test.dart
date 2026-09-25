@@ -143,6 +143,11 @@ void main() {
       );
 
       expect(
+        find.text('That library is too large to import'),
+        findsOneWidget,
+        reason: 'DR-199: it said "That is not a device library"',
+      );
+      expect(
         find.textContaining(
           'larger or more deeply nested than an import may '
           'be',

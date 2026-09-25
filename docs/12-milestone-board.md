@@ -980,6 +980,7 @@ each was read before it was called a gap:
 | `LibraryIo`/`DeviceTemplateIo`'s members the shell calls, and `runCsvImport`, had never run: every test called the function underneath | **Driven from the real menu and button** by `#947`, failures read off the dialog on screen |
 | `runCsvImport` caught `on Exception` beside a comment claiming the whole contract, while `import_guard.dart` catches `on Object` citing it as doing the same | **FIXED** by `#947`: an `Error` from the store escaped the import unreported. Red first |
 | The file error dialog's primary button, and Enter, never pressed | **Proven** by `#947` |
+| Found BY those route tests: every library or template refusal was titled *"That is not a device library"*, including a file that is one and is too large or from a newer RackPal | **DR-199**: a title per cause. The user's choice of three |
 
 **THE SHAPE, AGAIN.** Three of those are one defect class this repository keeps finding: a route
 proved by calling its handler has never been proved reachable (`#943` found the first). And the

@@ -7,6 +7,7 @@
 // of the steps, the places one ends early, and the two things only this
 // layer can be wrong about: WHICH file-dialog kind it asks for, and where
 // the imported bytes land.
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -407,5 +408,69 @@ void main() {
         expect(await listLibraries(fs, _root, context: _windows), hasLength(1));
       },
     );
+  });
+
+  // DR-199. Every refusal was titled "That is not a device library",
+  // including a file that is one and is merely too large or newer than
+  // this build. The title is read first, so each cause gets its own.
+  group('a refusal is TITLED by its cause (DR-199)', () {
+    Future<String> titleFor(Uint8List bytes) async {
+      const path = r'C:\in\kit.rpda';
+      final fs = FakeFileStore(
+        initialFiles: {path: bytes},
+        initialDirectories: <String>{'C:', r'C:\in', _root},
+      );
+      final prompts = ScriptedPrompts();
+      final ok = await importDeviceLibrary(
+        session: _session(_doc()),
+        picker: FakeFilePicker(openPaths: [path]),
+        writer: _writer(fs),
+        fs: fs,
+        prompts: prompts,
+        dataRoot: _root,
+        confirmImport: (_) async => fail('a refusal must not reach a prompt'),
+        context: _windows,
+      );
+      expect(ok, isFalse);
+      return prompts.errors.single.title;
+    }
+
+    test('a template is NOT a library, and says so', () async {
+      final rmdx = encodeRmdxBytes(
+        DeviceTemplateFile(
+          templateId: const TemplateId('tpl.a'),
+          version: 1,
+          contentHash: 'unhashed:a@1',
+          body: _body('Amp'),
+        ),
+      );
+      expect(await titleFor(rmdx), 'That is not a device library');
+    });
+
+    test('a library from a NEWER RackPal says it needs one', () async {
+      final tree =
+          jsonDecode(utf8.decode(_rmda('Shop Kit', ['Amp'])))
+              as Map<String, Object?>;
+      tree['schemaVersion'] = kRmdaSchemaVersion + 1;
+      final newer = Uint8List.fromList(utf8.encode(jsonEncode(tree)));
+      expect(await titleFor(newer), 'This library needs a newer RackPal');
+    });
+
+    test(
+      'a library over the size cap is too large, not "not a library"',
+      () async {
+        expect(
+          await titleFor(Uint8List(kMaxDocumentBytes + 1)),
+          'That library is too large to import',
+        );
+      },
+    );
+
+    test('bytes that do not decode could not be read', () async {
+      expect(
+        await titleFor(Uint8List.fromList(utf8.encode('{"not": '))),
+        'That library could not be read',
+      );
+    });
   });
 }

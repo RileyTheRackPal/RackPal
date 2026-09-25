@@ -1646,7 +1646,11 @@ $SuiteFloors = @{
     # 1109 at `#947`: +5 in session/outlet_plate_actions_test.dart, the four
     # plate actions the editor calls that had never run (add and remove a
     # gang, size a strap, fill a cell), each on its undo entry or its words.
-    'rackpal_app'    = 1109
+    # 1117 at DR-199: +4 in session/library_io_test.dart and +4 in
+    # session/device_template_io_test.dart, one refused file per cause, each
+    # asserting the TITLE the ruling gives it (it was "That is not a device
+    # library" for all of them, including files that are one).
+    'rackpal_app'    = 1117
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

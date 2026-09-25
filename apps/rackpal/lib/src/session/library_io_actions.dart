@@ -343,24 +343,39 @@ FileErrorView _unreadable(p.Context ctx, String path, String detail) =>
 /// A `.rpdx` reported as a broken library sends the user back to re-pick
 /// the same file, which is M4-M1's argument for the `kind` tag and the
 /// only reason having one is worth anything.
+///
+/// THE TITLE NAMES THE CAUSE TOO (DR-199). It said *"That is not a device
+/// library"* for every refusal, including a file that is one and is merely
+/// too large or newer than this build, under a detail line saying so.
 FileErrorView _refused(p.Context ctx, String path, Object error) {
   final name = ctx.basename(path);
-  final detail = switch (error) {
-    NotADeviceLibraryError() =>
+  final (title, detail) = switch (error) {
+    NotADeviceLibraryError() => (
+      'That is not a device library',
       '$name is not a device library. If it is a single device '
           'template, use File ▸ Import device template… instead.',
-    NewerRmdaSchemaError() =>
+    ),
+    NewerRmdaSchemaError() => (
+      'This library needs a newer RackPal',
       '$name was written by a newer build of RackPal and this one cannot '
           'read it without dropping what it does not understand.',
-    DocumentTooLargeError() || JsonTooDeeplyNestedError() =>
+    ),
+    DocumentTooLargeError() || JsonTooDeeplyNestedError() => (
+      'That library is too large to import',
       '$name is larger or more deeply nested than an import may be.',
-    UnsupportedZipContainerError() =>
+    ),
+    UnsupportedZipContainerError() => (
+      'That is not a device library',
       '$name is a zip archive. A RackPal library is a single JSON file '
           '(DR-015); a zipped pack is from a format that never shipped.',
-    _ => '$name could not be read as a device library.',
+    ),
+    _ => (
+      'That library could not be read',
+      '$name could not be read as a device library.',
+    ),
   };
   return FileErrorView(
-    title: 'That is not a device library',
+    title: title,
     detail: '$detail\n\nNothing has been added to your libraries.',
     actions: const <FileErrorAction>[
       FileErrorAction(id: FileErrorActionId.ok, label: 'OK', isPrimary: true),
