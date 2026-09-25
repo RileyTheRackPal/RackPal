@@ -932,7 +932,10 @@ $SuiteFloors = @{
     # and a census that fails when a new command lands without one. Three
     # mutations killed: the key union reverted, a port-fact mask set to
     # `sheet` alone, and a case renamed.
-    'rackpal_core'   = 4964
+    # 4968 at `#948`: +4 in commands/undo_merge_test.dart, the two
+    # `mergeWith` overrides no test had run and SetZeroUSpanCommand's undo,
+    # each asserted on the saved bytes and red on a mutation.
+    'rackpal_core'   = 4968
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
