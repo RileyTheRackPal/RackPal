@@ -22456,6 +22456,31 @@ twice, not how two cables get told apart.
 
 **Scope.** No scope change.
 
+### 11.197 DR-198 · A file another program has locked is named as locked when it will not open
+
+**The question.** Found by `#947`'s tests of `DocumentStore.open`, the first to make a read fail
+after the file was found. A read refused with a sharing violation (Windows errno 32: OneDrive or
+Dropbox syncing the file, antivirus, a second RackPal) classified as `OpenUnexpected`, and the user
+read *"Something went wrong that RackPal does not have a specific explanation for."* Save has had
+its own answer for the same condition all along (`SaveLocked`: three silent retries, then Retry,
+Save As or Cancel). Put to the user on 2026-09-25 with four priced options: name it with OK only;
+name it with a Try again button; retry silently three times first, then name it; leave it.
+
+**11.197.1 RULED: NAMED, WITH OK ONLY.** Settled by the user, choosing the recommended option; the
+reasoning is the author's, accepted without addition. A read refused as locked reports its own
+error, `OpenLocked`, not `OpenUnexpected`. The dialog says the file is in use by another program,
+names the usual holders (OneDrive, Dropbox, antivirus, a second copy of RackPal), says to wait or
+close it there and then open it again, and says nothing was changed on disk. Its one action is OK.
+The recents entry is kept: only `OpenNotFound` evicts.
+
+**11.197.2 WHY.** The generic sentence is true and useless: it names no cause, so it suggests no
+remedy, and the remedy here is simple and the user's to perform. Re-opening from File > Recent is
+already one action, so a Try again button would add the open sequence's first retry path for about
+one click saved. Silent retries were declined with it: they delay the report of a lock that is not
+going to clear.
+
+**Scope.** No scope change.
+
 ---
 
 ## 12. Superseded rulings
