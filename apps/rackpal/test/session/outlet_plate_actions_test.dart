@@ -121,6 +121,86 @@ void main() {
     });
   });
 
+  // #947: the first coverage measurement found four of these actions had
+  // never run. Each is what the plate editor calls, so each is asserted on
+  // the plate it leaves and the undo entry it lands, or on the sentence it
+  // refuses with, since that sentence is what the person reads.
+  group('the rest of the plate: gangs, straps and cells', () {
+    test('Add gang lands an undecided gang as one undo entry', () {
+      final c = _controller();
+      final actions = buildOutletsActions(controller: c, onRemove: (_) {});
+
+      expect(actions.onAddGang(_outletId), isNull);
+      expect(_gangsOf(c), hasLength(1));
+      expect(_gangsOf(c).single.fitting, isNull, reason: 'G4: no part chosen');
+      expect(c.undo.undoLabelKey, LabelKey.addGang.name);
+    });
+
+    test('an outlet that is not in the project is refused, not created', () {
+      final c = _controller();
+      final actions = buildOutletsActions(controller: c, onRemove: (_) {});
+      expect(
+        actions.onAddGang(const Uuid('99999999-9999-4999-8999-999999999999')),
+        'That outlet is not in this project.',
+      );
+      expect(c.undo.canUndo, isFalse);
+    });
+
+    test('Remove gang takes that gang and no other', () {
+      final c = _controller(
+        gangs: [
+          Gang(fitting: Strap(width: 1, height: 1)),
+          Gang(fitting: const PassThrough(PassThroughStyle.brush)),
+        ],
+      );
+      final actions = buildOutletsActions(controller: c, onRemove: (_) {});
+
+      expect(actions.onRemoveGang(_outletId, 0), isNull);
+      expect(_gangsOf(c).single.fitting, isA<PassThrough>());
+      expect(c.undo.undoLabelKey, LabelKey.removeGang.name);
+      expect(
+        actions.onRemoveGang(_outletId, 3),
+        'That outlet has no gang 4.',
+      );
+    });
+
+    test('a strap size is set, and one nobody makes is refused in words', () {
+      final c = _controller(gangs: [Gang()]);
+      final actions = buildOutletsActions(controller: c, onRemove: (_) {});
+
+      expect(actions.onSetStrap(_outletId, 0, 2, 3), isNull);
+      expect((_gangsOf(c).single.fitting! as Strap).cellCount, 6);
+      expect(c.undo.undoLabelKey, LabelKey.setStrapSize.name);
+
+      expect(
+        actions.onSetStrap(_outletId, 0, 3, 1),
+        'A 3 x 1 strap is not a part anybody makes.',
+      );
+      expect(
+        (_gangsOf(c).single.fitting! as Strap).cellCount,
+        6,
+        reason: 'the refusal wrote nothing',
+      );
+    });
+
+    test('a cell on a strap takes its occupant, and one past the end is '
+        'refused by count', () {
+      final c = _controller(gangs: [Gang(fitting: Strap(width: 1, height: 2))]);
+      final actions = buildOutletsActions(controller: c, onRemove: (_) {});
+
+      expect(actions.onSetCell(_outletId, 0, 1, const BlankInsert()), isNull);
+      expect(
+        (_gangsOf(c).single.fitting! as Strap).cells[1],
+        const BlankInsert(),
+      );
+      expect(c.undo.undoLabelKey, LabelKey.setCellOccupant.name);
+      expect(
+        actions.onSetCell(_outletId, 0, 5, const BlankInsert()),
+        'A 2-port strap has no cell 6.',
+      );
+    });
+  });
+
   group('ARRANGE PUTS THE BRUSHES BACK (§11.46.6)', () {
     test('a brushed opening survives an arrange that rebuilds the plate', () {
       final c = _controller(

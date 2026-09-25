@@ -1643,7 +1643,10 @@ $SuiteFloors = @{
     # 1104 at `#947`: +3 in session/csv_import_route_test.dart, Import CSV…
     # from the Structure editor's own button; `runCsvImport` had never run.
     # The third was RED: an Error from the store escaped the import.
-    'rackpal_app'    = 1104
+    # 1109 at `#947`: +5 in session/outlet_plate_actions_test.dart, the four
+    # plate actions the editor calls that had never run (add and remove a
+    # gang, size a strap, fill a cell), each on its undo entry or its words.
+    'rackpal_app'    = 1109
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

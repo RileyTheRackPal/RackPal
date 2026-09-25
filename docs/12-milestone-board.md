@@ -987,9 +987,10 @@ CSV catch is the class §4.15 opened with, twice over: a comment describing more
 does, and a second file citing the first as its precedent. Neither could be seen by reading one
 file; both fell out of asking what had never run.
 
-**STILL OWED on `#947`:** the storage layer read beyond the atomic writer, the codec read for G4, the
-round-trip fuzz's mutation pass (and that it generates about half the commands), and
-`outlet_plate_actions.dart`'s five uninvoked wirings.
+**STILL OWED on `#947`:** the storage layer read beyond the atomic writer, the codec read for G4, and
+the round-trip fuzz's mutation pass (and that it generates about half the commands).
+`outlet_plate_actions.dart`'s uninvoked actions were the last coverage item, closed in the same
+branch.
 
 ---
 
