@@ -144,7 +144,7 @@ mechanisms on principle.
 
 # Citations
 
-[1] `packages/rackmate_ui/test/canvas/schematic/wire_trace_layering_test.dart`
+[1] `packages/rackpal_core/test/scene/wire_trace_layering_test.dart` (in `rackmate_ui/test/canvas/schematic/` when this was written; it followed `wire_trace.dart` into core at `#948`)
     (group 1, and its own header recording both wrong versions)
 [2] `docs/12-milestone-board.md` §5.1, the six field reports this came out of
 [3] Commits `b48e96c` (the mirrored comb), `5d53512` (the measurement that
