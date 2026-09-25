@@ -1627,7 +1627,10 @@ $SuiteFloors = @{
     # device library and template imports driven from the REAL File menu
     # (the members the shell calls had never run), failures included, each
     # read off the dialog on screen.
-    'rackpal_app'    = 1101
+    # 1104 at `#947`: +3 in session/csv_import_route_test.dart, Import CSV…
+    # from the Structure editor's own button; `runCsvImport` had never run.
+    # The third was RED: an Error from the store escaped the import.
+    'rackpal_app'    = 1104
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

@@ -115,12 +115,18 @@ Future<String?> runCsvImport({
     return 'That file is ${e.bytes} bytes, and an import is capped at '
         '${e.limit}. Nothing has been read. If it really is a pull list, '
         'split it and import the parts.';
-  } on Exception catch (e) {
+  } on Object catch (e) {
     // `FileStore.readBytes` declares no typed failure, so this catches
     // the interface's whole contract rather than one implementation's
     // exception class: naming `FileSystemException` would be reaching
     // through the seam for a type the seam does not promise, and would
     // miss whatever a fake or a future store throws.
+    //
+    // `on Object` AND NOT `on Exception` (#947). This said `Exception`
+    // while describing the whole contract, and `import_guard.dart`
+    // catches `on Object` citing this file as doing the same. An `Error`
+    // from the store left the import entirely and reached the shell's
+    // handler with nothing shown; `csv_import_route_test.dart` has it.
     //
     // The realistic causes are all one sentence to the user: the file
     // moved between the picker and the read, or Excel still has it open,
