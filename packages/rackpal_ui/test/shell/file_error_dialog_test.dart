@@ -84,6 +84,26 @@ void main() {
       expect(result.pressed, 'retry');
     });
 
+    // #947: the two cases above press a SECONDARY button, and the first
+    // coverage measurement found the PRIMARY one's handler had never run.
+    // It is the button pressed most ("Save As…", "Open backup"), and it is
+    // autofocused, so Enter is its keyboard route.
+    testWidgets('the PRIMARY button returns its own id', (tester) async {
+      final result = await _open(tester);
+      await tester.tap(find.text('Save As…'));
+      await tester.pumpAndSettle();
+      expect(result.pressed, 'saveAs');
+    });
+
+    testWidgets('Enter presses the primary, because it has the focus', (
+      tester,
+    ) async {
+      final result = await _open(tester);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(result.pressed, 'saveAs');
+    });
+
     testWidgets('Esc resolves to the dismiss action rather than null', (
       tester,
     ) async {

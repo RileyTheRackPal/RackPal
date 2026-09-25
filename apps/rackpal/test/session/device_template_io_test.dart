@@ -381,4 +381,70 @@ void main() {
       expect(s.session.document.templates, isEmpty);
     });
   });
+
+  // DR-199, in the template's words: see library_io_test.dart's twin.
+  group('a refusal is TITLED by its cause (DR-199)', () {
+    Future<String> titleFor(Uint8List bytes) async {
+      const path = r'C:\in\one.rpdx';
+      final s = _session(_doc());
+      final prompts = ScriptedPrompts();
+      final ok = await importDeviceTemplate(
+        session: s.session,
+        controller: s.session.controller,
+        picker: FakeFilePicker(openPaths: [path]),
+        fs: FakeFileStore(
+          initialFiles: {path: bytes},
+          initialDirectories: <String>{'C:', r'C:\in'},
+        ),
+        prompts: prompts,
+        clock: s.clock,
+        confirmImport: (_) async => fail('a refusal must not reach a prompt'),
+      );
+      expect(ok, isFalse);
+      return prompts.errors.single.title;
+    }
+
+    test('a library is NOT a template, and says so', () async {
+      final rmda = encodeRmdaBytes(
+        DeviceLibraryFile(
+          name: 'Kit',
+          templates: [
+            DeviceTemplateFile(
+              templateId: const TemplateId('tpl.a'),
+              version: 1,
+              contentHash: 'unhashed:a@1',
+              body: _body('Amp'),
+            ),
+          ],
+        ),
+      );
+      expect(await titleFor(rmda), 'That is not a device template');
+    });
+
+    test('a template from a NEWER RackPal says it needs one', () async {
+      final tree =
+          jsonDecode(utf8.decode(_rmdxBytes('tpl.a', 1, _body('Amp'))))
+              as Map<String, Object?>;
+      tree['schemaVersion'] = kRmdxSchemaVersion + 1;
+      final newer = Uint8List.fromList(utf8.encode(jsonEncode(tree)));
+      expect(await titleFor(newer), 'This template needs a newer RackPal');
+    });
+
+    test(
+      'a template over the size cap is too large, not "not a template"',
+      () async {
+        expect(
+          await titleFor(Uint8List(kMaxDocumentBytes + 1)),
+          'That template is too large to import',
+        );
+      },
+    );
+
+    test('bytes that do not decode could not be read', () async {
+      expect(
+        await titleFor(Uint8List.fromList(utf8.encode('{"not": '))),
+        'That template could not be read',
+      );
+    });
+  });
 }

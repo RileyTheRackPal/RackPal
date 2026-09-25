@@ -286,23 +286,38 @@ FileErrorView _unreadable(String path, String detail) => FileErrorView(
 /// the second half of M4-M1's file dialog: the filter stops most wrong
 /// picks and the `kind` tag stops the rest, and it is only worth having if
 /// the message spends it.
+///
+/// THE TITLE NAMES THE CAUSE TOO (DR-199), in the library's words: it said
+/// *"That is not a device template"* for a file that is one and is merely
+/// too large or newer than this build.
 FileErrorView _refused(String path, Object error) {
   final name = p.basename(path);
-  final detail = switch (error) {
-    NotADeviceTemplateError() =>
+  final (title, detail) = switch (error) {
+    NotADeviceTemplateError() => (
+      'That is not a device template',
       '$name is not a device template. If it is a RackPal project, open '
           'it with File ▸ Open instead.',
-    NewerRmdxSchemaError() =>
+    ),
+    NewerRmdxSchemaError() => (
+      'This template needs a newer RackPal',
       '$name was written by a newer build of RackPal and this one cannot '
           'read it without dropping what it does not understand.',
-    DocumentTooLargeError() || JsonTooDeeplyNestedError() =>
+    ),
+    DocumentTooLargeError() || JsonTooDeeplyNestedError() => (
+      'That template is too large to import',
       '$name is larger or more deeply nested than an import may be.',
-    UnsupportedZipContainerError() =>
+    ),
+    UnsupportedZipContainerError() => (
+      'That is not a device template',
       '$name is an archive rather than a single device template.',
-    _ => '$name could not be read as a device template.',
+    ),
+    _ => (
+      'That template could not be read',
+      '$name could not be read as a device template.',
+    ),
   };
   return FileErrorView(
-    title: 'That is not a device template',
+    title: title,
     detail: '$detail\n\nNothing has been added to this project.',
     actions: const <FileErrorAction>[
       FileErrorAction(id: FileErrorActionId.ok, label: 'OK', isPrimary: true),

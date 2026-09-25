@@ -299,6 +299,18 @@ FileErrorView describeOpenError(
       actions: const [_ok],
     ),
 
+    // DR-198. A lock is a known cause with a remedy the user performs, so
+    // it is named rather than reported as unexplained. OK only: opening it
+    // again from File > Recent is already one action.
+    OpenLocked(:final path) => FileErrorView(
+      title: '${_name(path, context)} is in use by another program.',
+      detail:
+          'OneDrive, Dropbox, antivirus or a second copy of RackPal has it '
+          'open. Wait a moment or close it there, then open it again. '
+          'Nothing was changed on disk.',
+      actions: const [_ok],
+    ),
+
     OpenPermissionDenied(:final path) => FileErrorView(
       title: 'Windows refused to read ${_name(path, context)}.',
       detail:

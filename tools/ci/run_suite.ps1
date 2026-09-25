@@ -1462,7 +1462,10 @@ $SuiteFloors = @{
     # 1978 at `#948`: -34, and NOT A DELETION. wire_trace_test.dart (28) and
     # wire_trace_layering_test.dart (6) moved to rackpal_core/test/scene with
     # the code they test; core's floor rose by the same 34 in this commit.
-    'rackpal_ui'     = 1978
+    # 1980 at `#947`: +2 in shell/file_error_dialog_test.dart. The existing
+    # cases pressed a SECONDARY button; the PRIMARY one ("Save As…", "Open
+    # backup") had never run, and neither had Enter, its keyboard route.
+    'rackpal_ui'     = 1980
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1625,7 +1628,29 @@ $SuiteFloors = @{
     # 1090 at `#943`: +3 in storage/document_store_test.dart, CR-117 on the
     # zip path THROUGH THE STORE: save, reopen, save twice more, and the file
     # is byte-identical; the halves had only ever been proven apart.
-    'rackpal_app'    = 1090
+    # 1094 at `#947`: +4 in storage/document_store_test.dart, the first to
+    # make a READ fail after the file was found, so `_classifyOpen` ran at
+    # all: access denied, deleted between check and read (still offering
+    # the .bak), a share dropping mid-read (entry kept), and no errno.
+    # 1096 at DR-198: +1 in storage/document_store_test.dart (a lock, errno
+    # 32, is OpenLocked and keeps its entry; red with it mapped back to
+    # OpenUnexpected) and +1 in session/file_error_presenter_test.dart (what
+    # the user reads: the lock, the usual holders, the remedy, OK only).
+    # 1101 at `#947`: +5 in session/device_io_menu_route_test.dart, the
+    # device library and template imports driven from the REAL File menu
+    # (the members the shell calls had never run), failures included, each
+    # read off the dialog on screen.
+    # 1104 at `#947`: +3 in session/csv_import_route_test.dart, Import CSV…
+    # from the Structure editor's own button; `runCsvImport` had never run.
+    # The third was RED: an Error from the store escaped the import.
+    # 1109 at `#947`: +5 in session/outlet_plate_actions_test.dart, the four
+    # plate actions the editor calls that had never run (add and remove a
+    # gang, size a strap, fill a cell), each on its undo entry or its words.
+    # 1117 at DR-199: +4 in session/library_io_test.dart and +4 in
+    # session/device_template_io_test.dart, one refused file per cause, each
+    # asserting the TITLE the ruling gives it (it was "That is not a device
+    # library" for all of them, including files that are one).
+    'rackpal_app'    = 1117
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
