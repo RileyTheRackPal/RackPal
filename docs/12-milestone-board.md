@@ -648,6 +648,24 @@ that write ports (`ConnectPortsCommand`, `BindEndpointCommand`, `MoveEndpointCom
 was found by the review; two mask defects were found by other means (`#932`, `#933`, §4.15), which is
 the argument for closing it rather than a reason to believe it is harmless.
 
+**CLOSED 2026-09-24 BY `#944` AT `56b37d1d`, AND THE COUNT ABOVE WAS LOW.** A census that follows
+`extends` through abstract bases finds **71** concrete document commands, and **52** had no case:
+two more than the review's 49, because a name grep counts a command covered when a comment mentions
+it (`SetMountNoteCommand`, `SetRoomEstimateCommand`). All 71 now have one, over `whole_house.rppj`,
+and a census test fails when a new command lands without one. **No mask was found wrong.**
+
+The work was not the cases. `_knownMutableKeys` gained the seven maps named above plus `info`, and
+`_changedTopLevelKeys` now diffs the UNION of the keys before and after: `underlays` is omitted when
+empty, so the first underlay a project gets was invisible to the old loop (`changed: {}`, measured
+by putting it back). The new maps are mapped by READER: only the Rack view and the Schematic
+subscribe to single epochs, so a command writing a map must declare an epoch each screen reading it
+hears. The check is per map, not per field, and the test says where that bites.
+
+**A CORRECTION TO THE PARAGRAPH ABOVE.** It says two mask defects were found by other means, `#932`
+and `#933`. **Only `#933` was a mask defect**: a command declaring `style`. `#932` was a screen that
+did not SUBSCRIBE to `wires`, which is the consumer side, and no test of declared masks can see it.
+`#932`'s own regression test is the guard for that class.
+
 ### 4.6 Font: Jost supersedes CR-080's IBM Plex; the docs have not caught up
 
 The code is unambiguous. `apps/rackpal/pubspec.yaml` bundles **Jost Regular AND Jost Medium**,
@@ -906,11 +924,11 @@ filter (see `#933`).
 | `AddMediaTypeCommand` overwrote an occupied id and its undo deleted it; the header promised otherwise | stale claim, reachable | **FIXED**, `#935` |
 | One CSV import naming a cable in two spellings that slug alike offers two new types and makes one | UI | **FIXED** by DR-197, `#937`: one row per id, every spelling an alias |
 | Release builds report nothing anywhere, including a startup failure; the §12.4-safe storage log has no sink | release risk | **BUILT** by DR-194, which pulled §9.9's local half forward: the log (`#939`), the startup-failure window (`#940`), `Help ▸ Open diagnostics folder…` (`#941`). M8 keeps its exit clause |
-| AC-014's coverage | test drift | §4.5, re-measured: 24 of 73 document commands. Not fixed; **filed** as `#944` |
+| AC-014's coverage | test drift | **CLOSED** by `#944` at `56b37d1d`: all 71 document commands have a case, and a census fails on the next one without. None was wrong. §4.5 |
 | 210 of the analyzer's 233 infos were two lints, 116 of them catalogue facts | ratchet | **CLEARED** by DR-195, `#936`: 233 to 23, facts kept under a documented ignore, cascades swept. The first sweep also stripped 45 fixture values `#246` had argued are data, and was corrected in the same chapter (§11.194.3) |
 | `#98`'s refactor candidates | structure | **DECIDED** by DR-196: `wire_trace.dart` moved (`#931`), `json_codec.dart` left alone, the two canvas screens re-asked at M7 (`#942`) |
 | 42 public declarations nothing in `lib/` or `tool/` calls | dead code | Per-item, since some are deliberate test seams. **Filed** as `#945`, with the list re-run at `66de1a84` (41). This cell said *"Listed on `#97`"* and the list was never posted there |
-| `SemanticsService.announce` deprecated after Flutter 3.35 | deprecation | It is the channel M7's NVDA clause rests on. **Filed** under M7 as `#946` |
+| `SemanticsService.announce` deprecated after Flutter 3.35 | deprecation | It is the channel M7's NVDA clause rests on. **FIXED** by `#946` at `49a2699b`: `sendAnnouncement` to the owner's view; analyzer pin 23 to 21 |
 | The Plan view's clause table reads "0 of 7" and stops at `PLAN-F` | stale status | **FILED** as `PLAN-J/0` (`#943`), with PLAN-J/2's unperformable print step. See below |
 
 **THE MOST CONSEQUENTIAL FINDING IS NOT IN THE CODE.** The request that started this review said

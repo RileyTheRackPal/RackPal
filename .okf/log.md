@@ -1,5 +1,24 @@
 # Update Log
 
+## 2026-09-24 (seventy-second entry)
+
+* **Progress**: `#944` (AC-014). All 71 concrete document commands have an epoch-mask case, over
+  `whole_house.rppj`, and a census test fails when a new one lands without. **No mask was wrong.**
+  `#946` (AC-058) moved the one announcement channel off the deprecated `SemanticsService.announce`
+  onto `sendAnnouncement` to the owner's view; the analyzer pin went 23 to 21.
+* **Creation**: [A diff over the old keys cannot see a new
+  one](/practices/a-diff-over-the-old-keys-cannot-see-a-new-one.md). The test compared the
+  document on the keys it had BEFORE a command, and `underlays` is absent when empty, so a
+  project's first underlay was invisible to it: `changed: {}`.
+* **Note**: **THE REVIEW'S COUNT WAS LOW BY TWO**, and for a reason worth keeping. Its census
+  counted a command covered when the test file MENTIONED it, and two were mentioned only in
+  comments. The new gate matches a `test(` named for the command.
+* **Note**: **A CORRECTION TO THE SEVENTY-FIRST ENTRY.** It says `#932` and `#933` were both mask
+  defects this test did not see. Only `#933` was. `#932` was a screen that did not subscribe to
+  an epoch, the consumer side, which no test of declared masks can reach.
+* **Note**: the round-trip fuzz behind CR-117 generates roughly half of the 71 commands (a name
+  grep, so approximate). Recorded on `#947`, which owes its mutation pass.
+
 ## 2026-09-24 (seventy-first entry)
 
 * **Progress**: the full-tree review's four open ends are on the board. docs/12 §4.15 had recorded

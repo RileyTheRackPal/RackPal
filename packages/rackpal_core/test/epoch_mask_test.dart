@@ -12,6 +12,7 @@
 // never exact equality.
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:collection/collection.dart';
 import 'package:rackpal_core/rackpal_core.dart';
@@ -70,7 +71,11 @@ Set<String> _changedTopLevelKeys(RackDocument doc, void Function() mutate) {
   final after = _documentMap(doc);
   final derivedAfter = _derivedProjection(doc);
   return {
-    for (final key in before.keys)
+    // THE UNION, NOT `before.keys` (#944). `underlays` is omitted from the
+    // file when empty (json_codec.dart), so the first underlay a document
+    // ever gets adds a key `before` does not have, and a loop over
+    // `before.keys` alone could not see the change at all.
+    for (final key in {...before.keys, ...after.keys})
       if (!_deepEq.equals(before[key], after[key])) key,
     // Folded in under a `derived:` prefix so every per-command test below
     // gains derived coverage without changing a line of any of them.
@@ -242,7 +247,20 @@ void _projectionCoversEveryField() {
 /// to be a superset of what changed, never the exact minimal set.
 bool _epochPlausiblyCovers(EpochMask touches, String key) => switch (key) {
   'devices' => touches.has(EpochMask.structure) || touches.has(EpochMask.meta),
-  'racks' => touches.has(EpochMask.rack) || touches.has(EpochMask.meta),
+  // `structure` JOINED THIS ARM AT #944, by the reader rule set out below:
+  // the Rack view reads racks and hears `structure`. What forced it was
+  // `RemovePlanUnderlayCommand` (structure | wires), which clears a rack's
+  // plan pin, a field only the Plan view reads, and that view rebuilds on
+  // every commit. It was a gap in this map, not in the command.
+  //
+  // A LIMIT THIS FUNCTION CANNOT GET PAST: it works per map, not per field.
+  // The Schematic reads one rack field, `order`, to sort its layers, so a
+  // command that reorders racks under `rack` alone would pass here and
+  // leave the Schematic stale. No such command exists today.
+  'racks' =>
+    touches.has(EpochMask.rack) ||
+        touches.has(EpochMask.meta) ||
+        touches.has(EpochMask.structure),
   'links' || 'nets' => touches.has(EpochMask.wires),
   // M3-A's Structure family. Both maps sit under the SAME two epochs as
   // `devices`, and for the same reason: a Structure body is a device with
@@ -281,6 +299,48 @@ bool _epochPlausiblyCovers(EpochMask touches, String key) => switch (key) {
         touches.has(EpochMask.meta) ||
         touches.has(EpochMask.rack) ||
         touches.has(EpochMask.wires),
+  // ═══════════════════════════════════════════════════════════════════
+  // THE MAPS THIS TEST COULD NOT SEE UNTIL #944, AND THE RULE THEY USE
+  // ═══════════════════════════════════════════════════════════════════
+  // Only two screens subscribe to single epochs, and every other surface
+  // rebuilds on any commit, so a mask can only be wrong where one of these
+  // two reads the map. Each marks its scene dirty on every epoch it hears:
+  //
+  //   Rack view   structure, rack, meta, wires  (rack_canvas_screen.dart)
+  //   Schematic   structure, wires, meta, sheet, style
+  //
+  // So THE RULE IS BY READER: a command that writes a map must declare an
+  // epoch EVERY screen reading that map hears. A map both read needs one of
+  // the three they share; a map one reads needs one of that screen's.
+  //
+  // Both read `ports` (the Schematic's pins; the Rack view's rollups and
+  // findings), `templates` (the Rack view's bodies, the Schematic's net
+  // labels), `settings` (colour overrides on the Schematic, rule overrides
+  // in the Rack view's findings drawer) and `registries` (connector and
+  // media names in labels and in findings).
+  'ports' || 'templates' || 'settings' || 'registries' =>
+    touches.has(EpochMask.structure) ||
+        touches.has(EpochMask.wires) ||
+        touches.has(EpochMask.meta),
+  // The Schematic alone reads `sheets` (schematic_scene.dart).
+  'sheets' =>
+    touches.has(EpochMask.structure) ||
+        touches.has(EpochMask.wires) ||
+        touches.has(EpochMask.meta) ||
+        touches.has(EpochMask.sheet) ||
+        touches.has(EpochMask.style),
+  // The Rack view alone reads these: `info` in its title block, and
+  // `ackedFindings` through the findings drawer, which #932 found going
+  // stale on an epoch the screen did not hear.
+  'info' || 'ackedFindings' =>
+    touches.has(EpochMask.structure) ||
+        touches.has(EpochMask.rack) ||
+        touches.has(EpochMask.meta) ||
+        touches.has(EpochMask.wires),
+  // NO EPOCH-LISTENING SCREEN READS `underlays`: the Plan view rebuilds on
+  // every commit. So no mask is wrong for it today. If a Plan screen ever
+  // subscribes to single epochs, this arm must name them.
+  'underlays' => true,
   _ => false,
 };
 
@@ -298,6 +358,16 @@ const _knownMutableKeys = {
   'locations',
   'circuits',
   'pathways',
+  // #944: eight top-level keys a command could write and this set did not
+  // name, so no command that wrote one could be given a case here at all.
+  'ports',
+  'templates',
+  'settings',
+  'registries',
+  'sheets',
+  'info',
+  'ackedFindings',
+  'underlays',
   'derived:equipmentList',
   'derived:rackRollups',
 };
@@ -1145,4 +1215,981 @@ void main() {
       _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
     });
   });
+
+  group('AC-014 over a real starter, for the fifty that had no case '
+      '(#944)', () {
+    test('every document command in lib/ has a case in this file', () {
+      final missing = _commandsWithoutACase();
+      expect(
+        missing,
+        isEmpty,
+        reason:
+            'Each concrete Command<RackDocument> needs a test here NAMED '
+            'for it, so its declared EpochMask is checked against what it '
+            'changes. The full-tree review (#97) found 49 without one and '
+            'nothing had said so: add a case, or an entry in '
+            '_exemptFromACase with the reason it cannot have one.',
+      );
+    });
+
+    test('AcknowledgeFindingCommand', () {
+      final doc = _house();
+      _covers(doc, _ack(), expectAtLeast: {'ackedFindings'});
+    });
+
+    test('UnacknowledgeFindingCommand', () {
+      final doc = _house();
+      final ack = _ack()..apply(doc);
+      _covers(
+        doc,
+        UnacknowledgeFindingCommand(id: ack.id),
+        expectAtLeast: {'ackedFindings'},
+      );
+    });
+
+    test('AddGangCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        AddGangCommand(outletId: _anOutlet(doc), width: 2, height: 3),
+        expectAtLeast: {'outlets'},
+      );
+    });
+
+    test('RemoveGangCommand', () {
+      final doc = _house();
+      final outlet = _outletWithAGang(doc);
+      _covers(
+        doc,
+        RemoveGangCommand(outletId: outlet, index: 0),
+        expectAtLeast: {'outlets'},
+      );
+    });
+
+    test('SetStrapSizeCommand', () {
+      final doc = _house();
+      final outlet = _outletWithAGang(doc);
+      _covers(
+        doc,
+        SetStrapSizeCommand(outletId: outlet, index: 0, width: 1, height: 2),
+        expectAtLeast: {'outlets'},
+      );
+    });
+
+    test('SetGangPassThroughCommand', () {
+      final doc = _house();
+      final outlet = _outletWithAGang(doc);
+      _covers(
+        doc,
+        SetGangPassThroughCommand(
+          outletId: outlet,
+          index: 0,
+          style: PassThroughStyle.brush,
+        ),
+        expectAtLeast: {'outlets'},
+      );
+    });
+
+    test('SetCellOccupantCommand', () {
+      final doc = _house();
+      final outlet = _outletWithAGang(doc);
+      _covers(
+        doc,
+        SetCellOccupantCommand(
+          outletId: outlet,
+          gangIndex: 0,
+          cellIndex: 0,
+          occupant: LinkEndOccupant(doc.links.keys.first),
+        ),
+        expectAtLeast: {'outlets'},
+      );
+    });
+
+    test('AddMediaTypeCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        AddMediaTypeCommand(id: _mediaA, displayName: 'Test A'),
+        expectAtLeast: {'registries'},
+      );
+    });
+
+    test('EditMediaTypeCommand', () {
+      final doc = _house();
+      AddMediaTypeCommand(id: _mediaA, displayName: 'Test A').apply(doc);
+      final was = doc.registries.mediaTypes[_mediaA]!;
+      _covers(
+        doc,
+        EditMediaTypeCommand(
+          from: was,
+          to: MediaTypeDef(
+            id: _mediaA,
+            displayName: 'Test A, renamed',
+            shortTag: was.shortTag,
+            aliases: was.aliases,
+          ),
+        ),
+        expectAtLeast: {'registries'},
+      );
+    });
+
+    test('MergeMediaTypesCommand', () {
+      final doc = _house();
+      AddMediaTypeCommand(id: _mediaA, displayName: 'Test A').apply(doc);
+      AddMediaTypeCommand(id: _mediaB, displayName: 'Test B').apply(doc);
+      _covers(
+        doc,
+        MergeMediaTypesCommand(winner: _mediaA, loser: _mediaB),
+        expectAtLeast: {'registries'},
+      );
+    });
+
+    test('SetConnectorAliasesCommand', () {
+      final doc = _house();
+      final id = doc.registries.connectorTypes.keys.first;
+      final was = doc.registries.connectorTypes[id]!.aliases;
+      _covers(
+        doc,
+        SetConnectorAliasesCommand(
+          id: id,
+          from: was,
+          to: [...was, 'epoch-mask-test'],
+        ),
+        expectAtLeast: {'registries'},
+      );
+    });
+
+    test('AddPathwayCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        AddPathwayCommand(
+          name: 'P-TEST',
+          order: const FracIndex('z0'),
+          now: _now,
+          actor: 'test',
+        ),
+        expectAtLeast: {'pathways'},
+      );
+    });
+
+    test('RemovePathwayCommand', () {
+      final doc = _house();
+      // The pathway a cable runs through, so the command's cascade onto
+      // `links` is exercised and not only its own map.
+      final used = doc.links.values
+          .map((l) => l.pathwayId)
+          .firstWhere((p) => p != null, orElse: () => fail('no routed link'))!;
+      _covers(
+        doc,
+        RemovePathwayCommand(id: used, now: _now),
+        expectAtLeast: {'pathways', 'links'},
+      );
+    });
+
+    test('AddPlanUnderlayCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        AddPlanUnderlayCommand(underlay: _underlay()),
+        expectAtLeast: {'underlays'},
+      );
+    });
+
+    test('RemovePlanUnderlayCommand', () {
+      final doc = _planned();
+      // A rack pinned to it, so the removal's cascade clears a pin too.
+      SetPlanPinCommand(
+        carrier: PinCarrier.rack,
+        entityId: doc.racks.keys.first,
+        pin: const PlanPin(underlayId: _planId, at: PxPt(40, 50)),
+      ).apply(doc);
+      _covers(
+        doc,
+        RemovePlanUnderlayCommand(underlayId: _planId),
+        expectAtLeast: {'underlays', 'racks'},
+      );
+    });
+
+    test('ReorderPlanUnderlayCommand', () {
+      final doc = _planned();
+      _covers(
+        doc,
+        ReorderPlanUnderlayCommand(
+          underlayId: _planId,
+          order: const FracIndex('a5'),
+        ),
+        expectAtLeast: {'underlays'},
+      );
+    });
+
+    test('RotatePlanCommand', () {
+      final doc = _planned();
+      _covers(
+        doc,
+        RotatePlanCommand(underlayId: _planId, clockwise: true),
+        expectAtLeast: {'underlays'},
+      );
+    });
+
+    test('SetPlanScaleCommand', () {
+      final doc = _planned();
+      _covers(
+        doc,
+        SetPlanScaleCommand(
+          underlayId: _planId,
+          scale: const PlanScale(
+            a: PxPt(100, 100),
+            b: PxPt(200, 100),
+            distance: Len(36 * Len.nmPerInch),
+          ),
+        ),
+        expectAtLeast: {'underlays'},
+      );
+    });
+
+    test('SetPlanUnderlayDetailsCommand', () {
+      final doc = _planned();
+      _covers(
+        doc,
+        SetPlanUnderlayDetailsCommand(
+          underlayId: _planId,
+          name: 'Level 2',
+          locationId: doc.locations.keys.first,
+        ),
+        expectAtLeast: {'underlays'},
+      );
+    });
+
+    test('SetPlanPinCommand', () {
+      final doc = _planned();
+      _covers(
+        doc,
+        SetPlanPinCommand(
+          carrier: PinCarrier.outlet,
+          entityId: _anOutlet(doc),
+          pin: const PlanPin(underlayId: _planId, at: PxPt(40, 50)),
+        ),
+        expectAtLeast: {'outlets'},
+      );
+    });
+
+    test('ClearPlanPinCommand', () {
+      final doc = _planned();
+      final outlet = _anOutlet(doc);
+      SetPlanPinCommand(
+        carrier: PinCarrier.outlet,
+        entityId: outlet,
+        pin: const PlanPin(underlayId: _planId, at: PxPt(40, 50)),
+      ).apply(doc);
+      _covers(
+        doc,
+        ClearPlanPinCommand(carrier: PinCarrier.outlet, entityId: outlet),
+        expectAtLeast: {'outlets'},
+      );
+    });
+
+    test('SetRoomOutlineCommand', () {
+      final doc = _planned();
+      _covers(
+        doc,
+        SetRoomOutlineCommand(
+          locationId: doc.locations.keys.first,
+          outline: _outline(),
+        ),
+        expectAtLeast: {'locations'},
+      );
+    });
+
+    test('ClearRoomOutlineCommand', () {
+      final doc = _planned();
+      final room = doc.locations.keys.first;
+      SetRoomOutlineCommand(locationId: room, outline: _outline()).apply(doc);
+      _covers(
+        doc,
+        ClearRoomOutlineCommand(locationId: room),
+        expectAtLeast: {'locations'},
+      );
+    });
+
+    test('AddZeroUChannelCommand', () {
+      final doc = _house();
+      final built = planAddZeroUChannel(
+        doc: doc,
+        rackId: doc.racks.keys.first,
+        id: 'ch.epoch-test',
+        side: ZeroUChannelSide.rearRight,
+        startU: 1,
+        endU: 4,
+      );
+      _covers(doc, _zeroU(built), expectAtLeast: {'racks'});
+    });
+
+    test('RemoveZeroUChannelCommand', () {
+      final doc = _house();
+      final rackId = doc.racks.keys.first;
+      _zeroU(
+        planAddZeroUChannel(
+          doc: doc,
+          rackId: rackId,
+          id: 'ch.epoch-test',
+          side: ZeroUChannelSide.rearRight,
+          startU: 1,
+          endU: 4,
+        ),
+      ).apply(doc);
+      final built = planRemoveZeroUChannel(
+        doc: doc,
+        rackId: rackId,
+        id: 'ch.epoch-test',
+      );
+      _covers(doc, _zeroU(built), expectAtLeast: {'racks'});
+    });
+
+    test('SetZeroUPositionCommand', () {
+      final doc = _house();
+      final (id, _) = _aZeroUDevice(doc);
+      // The starter's PDU runs the channel's whole length, so it has no
+      // room to slide until it is shortened, by the product's command.
+      _zeroU(
+        planSetZeroUSpan(
+          doc: doc,
+          id: id,
+          span: const Len(6 * Len.nmPerInch),
+          now: _now,
+          actor: 'seed',
+        ),
+      ).apply(doc);
+      final placement = doc.devices[id]!.placement as ZeroUPlacement;
+      final built = planSetZeroUPosition(
+        doc: doc,
+        id: id,
+        channelId: placement.channelId,
+        offsetFromChannelStart:
+            placement.offsetFromChannelStart + const Len(Len.nmPerInch),
+        now: _now,
+        actor: 'test',
+      );
+      _covers(doc, _zeroU(built), expectAtLeast: {'devices'});
+    });
+
+    test('SetZeroUSpanCommand', () {
+      final doc = _house();
+      final (id, _) = _aZeroUDevice(doc);
+      final built = planSetZeroUSpan(
+        doc: doc,
+        id: id,
+        span: const Len(6 * Len.nmPerInch),
+        now: _now,
+        actor: 'test',
+      );
+      _covers(doc, _zeroU(built), expectAtLeast: {'devices'});
+    });
+
+    test('SetDeviceWidthCommand', () {
+      final doc = _house();
+      final id = _aRailDevice(doc);
+      final built = planSetDeviceWidth(
+        doc: doc,
+        id: id,
+        startTwelfth: 0,
+        spanTwelfths: 6,
+        now: _now,
+        actor: 'test',
+      );
+      final cmd = switch (built) {
+        WidthChangeReady(:final command) => command,
+        WidthChangeRefused() => fail('half width refused: $built'),
+      };
+      _covers(doc, cmd, expectAtLeast: {'devices'});
+    });
+
+    test('SetPlacementLockedCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        SetPlacementLockedCommand(deviceIds: [_aRailDevice(doc)], locked: true),
+        expectAtLeast: {'devices'},
+      );
+    });
+
+    test('SaveTemplateToProjectCommand', () {
+      final doc = _house();
+      _covers(doc, _saveTemplate(doc), expectAtLeast: {'templates'});
+    });
+
+    test('RemoveTemplateCommand', () {
+      final doc = _house();
+      _saveTemplate(doc).apply(doc);
+      _covers(
+        doc,
+        RemoveTemplateCommand(templateId: _savedTemplate),
+        expectAtLeast: {'templates'},
+      );
+    });
+
+    test('ForkTemplateFromDeviceCommand', () {
+      final doc = _house();
+      final built = buildForkTemplateFromDevice(
+        doc: doc,
+        deviceId: _aRailDevice(doc),
+        newTemplateId: const TemplateId('tpl.epoch-fork'),
+        now: _now,
+        actor: 'test',
+      );
+      final cmd = switch (built) {
+        ForkTemplateReady(:final command) => command,
+        _ => fail('fork refused: $built'),
+      };
+      _covers(doc, cmd, expectAtLeast: {'templates', 'devices'});
+    });
+
+    test('SetProjectSettingCommand', () {
+      final doc = _house();
+      final was = doc.settings.defaultRackHeightU;
+      _covers(
+        doc,
+        SetProjectSettingCommand<int>(
+          field: ProjectSettingFields.defaultRackHeightU,
+          from: was,
+          to: was + 1,
+        ),
+        expectAtLeast: {'settings'},
+      );
+    });
+
+    test('SetFamilyColorOverrideCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        const SetFamilyColorOverrideCommand(
+          family: SignalFamilyId('video.hdmi.2_1'),
+          from: null,
+          to: Rgb(255, 0, 0),
+        ),
+        expectAtLeast: {'settings'},
+      );
+    });
+
+    test('SetRuleOverrideCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        SetRuleOverrideCommand(
+          ruleId: 'PWR-001',
+          from: doc.settings.ruleOverrides['PWR-001'],
+          to: RuleOverride(
+            severity: Severity.error,
+            reason: 'Epoch-mask case.',
+            by: 'test',
+            at: _now,
+          ),
+        ),
+        expectAtLeast: {'settings'},
+      );
+    });
+
+    test('SetLinkClassCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        SetLinkClassCommand(
+          linkId: doc.links.keys.first,
+          linkClass: LinkClass.jumper,
+        ),
+        expectAtLeast: {'links'},
+      );
+    });
+
+    test('ClearLinkClassOverrideCommand', () {
+      final doc = _house();
+      final link = doc.links.keys.first;
+      SetLinkClassCommand(linkId: link, linkClass: LinkClass.jumper).apply(doc);
+      _covers(
+        doc,
+        ClearLinkClassOverrideCommand(linkId: link),
+        expectAtLeast: {'links'},
+      );
+    });
+
+    test('SetRackLabelCommand', () {
+      final doc = _house();
+      final built = buildSetRackLabel(
+        doc: doc,
+        linkId: _aHomeRun(doc, landed: true).id,
+        to: 'EPOCH-1',
+        now: _now,
+        actor: 'test',
+      );
+      final cmd = switch (built) {
+        SetRackLabelReady(:final command) => command,
+        _ => fail('rack label refused: $built'),
+      };
+      _covers(doc, cmd, expectAtLeast: {'links'});
+    });
+
+    test('SetSignalFamilyCommand', () {
+      final doc = _house();
+      final link = doc.links.values.first;
+      _covers(
+        doc,
+        SetSignalFamilyCommand(
+          linkId: link.id,
+          family: const SignalFamilyId('audio.line_unbal'),
+          now: _now,
+          actor: 'test',
+        ),
+        expectAtLeast: {'links'},
+      );
+    });
+
+    test('SplitConductorCommand', () {
+      final doc = _house();
+      final cable = doc.links.values.firstWhere(
+        (l) => l.conductors.length > 1,
+        orElse: () => fail('whole_house has no multi-conductor cable'),
+      );
+      _covers(
+        doc,
+        SplitConductorCommand(linkId: cable.id, index: 1),
+        expectAtLeast: {'links'},
+      );
+    });
+
+    test('DeclareInlineAdapterCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        DeclareInlineAdapterCommand(
+          linkId: doc.links.keys.first,
+          fromConnector: const ConnectorTypeId('conn.xlr3'),
+          toConnector: const ConnectorTypeId('conn.rca'),
+          satisfiesRuleIds: const ['CON-001'],
+        ),
+        expectAtLeast: {'links'},
+      );
+    });
+
+    test('BindEndpointCommand', () {
+      final doc = _house();
+      final link = _aHomeRun(doc, landed: false);
+      final cmd = _firstReady(
+        doc,
+        _aPanel(doc),
+        (target) => switch (buildBindEndpointCommand(
+          doc: doc,
+          linkId: link.id,
+          port: _pin(doc, target),
+          rackLabel: 'EPOCH-1',
+          usedRackLabels: const {},
+          now: _now,
+          actor: 'test',
+        )) {
+          BindEndpointReady(:final command) => command,
+          _ => null,
+        },
+      );
+      _covers(doc, cmd, expectAtLeast: {'links'});
+    });
+
+    test('MoveEndpointCommand', () {
+      final doc = _house();
+      final link = _aHomeRun(doc, landed: true);
+      final cmd = _firstReady(
+        doc,
+        _aPanel(doc),
+        (target) => switch (buildMoveEndpointCommand(
+          doc: doc,
+          linkId: link.id,
+          port: _pin(doc, target),
+          rackLabel: 'EPOCH-1',
+          usedRackLabels: const {},
+          now: _now,
+          actor: 'test',
+        )) {
+          MoveEndpointReady(:final command) => command,
+          _ => null,
+        },
+      );
+      _covers(doc, cmd, expectAtLeast: {'links'});
+    });
+
+    test('UnlandEndpointCommand', () {
+      final doc = _house();
+      final built = buildUnlandEndpointCommand(
+        doc: doc,
+        linkId: _aHomeRun(doc, landed: true).id,
+        now: _now,
+        actor: 'test',
+      );
+      final cmd = switch (built) {
+        UnlandEndpointReady(:final command) => command,
+        _ => fail('unland refused: $built'),
+      };
+      _covers(doc, cmd, expectAtLeast: {'links'});
+    });
+
+    test('ConnectPortsCommand', () {
+      final doc = _house();
+      _covers(doc, _anyConnect(doc), expectAtLeast: {'links'});
+    });
+
+    test('AtomicConnectCommand', () {
+      final doc = _house();
+      _covers(doc, _anyAtomicConnect(doc), expectAtLeast: {'links'});
+    });
+
+    test('SetPortFactCommand', () {
+      final doc = _house();
+      final device = _aRailDevice(doc);
+      final key = _bodyOf(doc, device).ports.first.key;
+      _covers(
+        doc,
+        SetPortFactCommand(
+          deviceId: device,
+          portKey: key,
+          field: PortFactField.userLabel,
+          value: 'Epoch label',
+          designatorIfMaterialised: 'J99',
+          now: _now,
+          actor: 'test',
+        ),
+        expectAtLeast: {'ports'},
+      );
+    });
+
+    test('StoreSymbolPositionsCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        StoreSymbolPositionsCommand(
+          positions: {doc.devices.keys.first: const Pt(10, 20)},
+          now: _now,
+          actor: 'test',
+        ),
+        expectAtLeast: {'sheets'},
+      );
+    });
+
+    test('SetSymbolPinnedCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        SetSymbolPinnedCommand(
+          positions: {doc.devices.keys.first: const Pt(96, 40)},
+          pinned: true,
+          now: _now,
+          actor: 'test',
+        ),
+        expectAtLeast: {'sheets'},
+      );
+    });
+
+    test('SetMountNoteCommand', () {
+      final doc = _house();
+      // DR-130: the note belongs to an OFF-RACK placement.
+      final device = doc.devices.values.firstWhere(
+        (d) => d.placement is OffRackPlacement,
+        orElse: () => fail('whole_house has no off-rack device'),
+      );
+      _covers(
+        doc,
+        SetMountNoteCommand(
+          id: device.id,
+          from: (device.placement as OffRackPlacement).mountNote,
+          to: 'Rear rails only.',
+          now: _now,
+          actor: 'test',
+        ),
+        expectAtLeast: {'devices', 'derived:equipmentList'},
+      );
+    });
+
+    test('SetRoomEstimateCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        SetRoomEstimateCommand.typed(
+          locationId: doc.locations.keys.first,
+          length: const Len(40 * 12 * Len.nmPerInch),
+        ),
+        expectAtLeast: {'locations'},
+      );
+    });
+
+    test('TidySheetCommand', () {
+      final doc = _house();
+      StoreSymbolPositionsCommand(
+        positions: {doc.devices.keys.first: const Pt(10, 20)},
+        now: _now,
+        actor: 'test',
+      ).apply(doc);
+      _covers(doc, TidySheetCommand(), expectAtLeast: {'sheets'});
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// #944's FIXTURE AND CENSUS
+// ═══════════════════════════════════════════════════════════════════
+// The fifty run over `whole_house.rppj`, the richest starter: home runs
+// both landed and open, four-conductor cables, zero-U channels, pathways,
+// a Structure body with outlets. A command checked against a real project
+// is checked against the state the product puts it in, which a two-device
+// fixture per case would only approximate. What the starter lacks (gangs,
+// an underlay, a sheet, media types) each case seeds with the product's
+// own command first.
+
+final Uint8List _houseBytes = File(
+  '../../apps/rackpal/assets/starters/whole_house.rppj',
+).readAsBytesSync();
+
+/// A fresh decode per case, since every case mutates what it is given.
+RackDocument _house() => switch (_codec.read(_houseBytes)) {
+  Ok(:final value) => value,
+  final other => fail('whole_house.rppj did not decode: $other'),
+};
+
+final _now = DateTime.utc(2026, 9, 24);
+
+void _covers(
+  RackDocument doc,
+  Command<RackDocument> cmd, {
+  required Set<String> expectAtLeast,
+}) {
+  final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
+  _expectTouchesCoversChanges(cmd, changed, expectAtLeast: expectAtLeast);
+}
+
+AcknowledgeFindingCommand _ack() => AcknowledgeFindingCommand(
+  ruleId: 'LEN-001',
+  targetFingerprint: 'LEN-001:0123456789abcdef',
+  reason: 'Existing condition.',
+  demotedTo: Severity.off,
+  now: _now,
+  actor: 'test',
+);
+
+Uuid _anOutlet(RackDocument doc) => doc.outlets.keys.first;
+
+/// An outlet given one 2x3 strap by the product's own command.
+Uuid _outletWithAGang(RackDocument doc) {
+  final outlet = _anOutlet(doc);
+  AddGangCommand(outletId: outlet, width: 2, height: 3).apply(doc);
+  return outlet;
+}
+
+const _mediaA = MediaTypeId('media.epoch_a');
+const _mediaB = MediaTypeId('media.epoch_b');
+
+const _planId = Uuid('0190e3c1-1111-7000-8000-00000000e944');
+
+PlanUnderlay _underlay() => PlanUnderlay(
+  id: _planId,
+  name: 'Level 1',
+  imageMember: 'underlays/$_planId.png',
+  format: PlanImageFormat.png,
+  pixelWidth: 4000,
+  pixelHeight: 3000,
+  contentHash: 'sha256:abcdef',
+  order: const FracIndex('a0'),
+  meta: _meta(),
+);
+
+RoomOutline _outline() => RoomOutline(
+  underlayId: _planId,
+  vertices: const [
+    PxPt(100, 100),
+    PxPt(400, 100),
+    PxPt(400, 300),
+    PxPt(100, 300),
+  ],
+);
+
+/// The starter with one underlay, added by the product's command.
+RackDocument _planned() {
+  final doc = _house();
+  AddPlanUnderlayCommand(underlay: _underlay()).apply(doc);
+  return doc;
+}
+
+Command<RackDocument> _zeroU(ZeroUResult built) => switch (built) {
+  ZeroUReady(:final command) => command,
+  ZeroURefused(:final reason) => fail('zero-U planner refused: $reason'),
+};
+
+(Uuid, ZeroUPlacement) _aZeroUDevice(RackDocument doc) {
+  for (final d in doc.devices.values) {
+    final p = d.placement;
+    if (p is ZeroUPlacement) return (d.id, p);
+  }
+  fail('whole_house has no zero-U device');
+}
+
+Uuid _aRailDevice(RackDocument doc) => doc.devices.values
+    .firstWhere(
+      (d) => d.placement is RailPlacement,
+      orElse: () => fail('whole_house has no rail device'),
+    )
+    .id;
+
+TemplateBody _bodyOf(RackDocument doc, Uuid deviceId) =>
+    doc.templates[templateKeyFor(doc.devices[deviceId]!.templateRef)]!.body;
+
+const _savedTemplate = TemplateId('tpl.epoch-save');
+
+SaveTemplateToProjectCommand _saveTemplate(RackDocument doc) {
+  final version = nextTemplateVersion(doc, _savedTemplate);
+  return SaveTemplateToProjectCommand(
+    templateId: _savedTemplate,
+    version: version,
+    contentHash: 'unhashed:${_savedTemplate.v}@$version',
+    body: TemplateBody(
+      manufacturer: 'Generic',
+      model: '',
+      displayName: 'Epoch',
+    )..frontU = 1,
+    capturedAt: _now,
+  );
+}
+
+/// A home run whose rack end is a port ([landed]) or open.
+Link _aHomeRun(RackDocument doc, {required bool landed}) =>
+    doc.links.values.firstWhere(
+      (l) =>
+          l.structureOrigin != null &&
+          l.conductors.length == 1 &&
+          (landed
+              ? l.conductors.single.to is PortEndpoint
+              : l.conductors.single.to is OpenEndpoint),
+      orElse: () => fail('whole_house has no ${landed ? '' : 'un'}landed run'),
+    );
+
+/// The patch panel the starter's home runs land on.
+Uuid _aPanel(RackDocument doc) => doc.ports.values.first.deviceId;
+
+PortMaterialisation _pin(RackDocument doc, ConnectTarget target) =>
+    PortMaterialisation.of(
+      target,
+      designator: allocatePortDesignatorFor(doc, target),
+    );
+
+/// The first of [deviceId]'s ports for which [build] returns a command.
+C _firstReady<C>(
+  RackDocument doc,
+  Uuid deviceId,
+  C? Function(ConnectTarget target) build,
+) {
+  for (final def in _bodyOf(doc, deviceId).ports) {
+    final target = resolveConnectTarget(
+      doc,
+      deviceId: deviceId,
+      portKey: def.key.v,
+    );
+    if (target == null) continue;
+    final built = build(target);
+    if (built != null) return built;
+  }
+  fail('no port on ${doc.devices[deviceId]!.designator} gave a command');
+}
+
+/// The first pair of free ports anywhere in the starter the connect
+/// gesture accepts, found the way a person would: by trying.
+ConnectPortsCommand _anyConnect(RackDocument doc) {
+  final targets = [
+    for (final d in doc.devices.values)
+      if (doc.templates[templateKeyFor(d.templateRef)] case final snap?)
+        for (final def in snap.body.ports)
+          ?resolveConnectTarget(doc, deviceId: d.id, portKey: def.key.v),
+  ];
+  for (final from in targets) {
+    for (final to in targets) {
+      if (identical(from, to)) continue;
+      final built = buildConnectPortsCommand(
+        doc: doc,
+        from: from,
+        to: to,
+        media: const MediaTypeId('media.cat6'),
+        now: _now,
+        actor: 'test',
+      );
+      if (built is ConnectPortsReady) return built.command;
+    }
+  }
+  fail('no two ports in whole_house connect');
+}
+
+/// The first pair of atomic port sets the gesture accepts.
+AtomicConnectCommand _anyAtomicConnect(RackDocument doc) {
+  final sets = [
+    for (final d in doc.devices.values)
+      if (doc.templates[templateKeyFor(d.templateRef)] case final snap?)
+        for (final set in snap.body.portSets)
+          if (set.atomicConnect) (d.id, set.key),
+  ];
+  for (final (fromId, fromKey) in sets) {
+    for (final (toId, toKey) in sets) {
+      if (fromId == toId) continue;
+      final plan = planAtomicConnect(
+        doc,
+        fromDeviceId: fromId,
+        fromSetKey: fromKey,
+        toDeviceId: toId,
+        toSetKey: toKey,
+      );
+      if (plan is AtomicConnectReady) {
+        return buildAtomicConnectCommand(
+          doc: doc,
+          plan: plan.plan,
+          signalFamily: const SignalFamilyId('audio.line_unbal'),
+          media: const MediaTypeId('media.cat6'),
+          now: _now,
+          actor: 'test',
+        );
+      }
+    }
+  }
+  fail('no two atomic port sets in whole_house connect');
+}
+
+/// Commands that cannot have a case here, each with the reason. Empty,
+/// and a new entry is a claim the next reader should be able to check.
+const _exemptFromACase = <String, String>{};
+
+/// Every concrete `Command<RackDocument>` in `lib/` with no `test(` in
+/// this file named for it. Walks `extends`/`implements` through
+/// intermediate classes, so a command reached through an abstract base
+/// is still found.
+List<String> _commandsWithoutACase() {
+  final classDecl = RegExp(
+    r'^((?:abstract |final |base |sealed |interface )*)class (\w+)'
+    r'(?:<[^{]*?>)?\s+(?:extends|implements|with)\s+([^{]+)\{',
+    multiLine: true,
+  );
+  final decls = <String, (String, String)>{};
+  for (final f in Directory('lib').listSync(recursive: true)) {
+    if (f is! File || !f.path.endsWith('.dart')) continue;
+    for (final m in classDecl.allMatches(f.readAsStringSync())) {
+      decls[m.group(2)!] = (m.group(1)!, m.group(3)!);
+    }
+  }
+  bool isDocCommand(String name, Set<String> seen) {
+    final decl = decls[name];
+    if (decl == null || !seen.add(name)) return false;
+    if (decl.$2.contains('Command<RackDocument>')) return true;
+    return RegExp(
+      r'\b([A-Z]\w*)',
+    ).allMatches(decl.$2).any((m) => isDocCommand(m.group(1)!, seen));
+  }
+
+  final self = File('test/epoch_mask_test.dart').readAsStringSync();
+  return [
+    for (final MapEntry(key: name, value: (mods, _)) in decls.entries)
+      if (!mods.contains('abstract') &&
+          !mods.contains('sealed') &&
+          isDocCommand(name, {}) &&
+          !_exemptFromACase.containsKey(name) &&
+          !RegExp("test\\(\\s*'$name\\b").hasMatch(self))
+        name,
+  ]..sort();
 }
