@@ -426,8 +426,9 @@ final class DocumentStore {
       StorageFailure.unreachable => OpenUnreachable(path),
       StorageFailure.permissionDenied ||
       StorageFailure.readOnlyTarget => OpenPermissionDenied(path),
+      // DR-198: named, because the cause and the remedy are both known.
+      StorageFailure.locked => OpenLocked(path),
       StorageFailure.pathTooLong ||
-      StorageFailure.locked ||
       StorageFailure.diskFull ||
       StorageFailure.unknown => OpenUnexpected(
         path,

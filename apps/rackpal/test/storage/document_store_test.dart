@@ -481,6 +481,13 @@ void main() {
       expect(shouldEvictOnOpenFailure(error), isFalse);
     });
 
+    test('a LOCK (32) is named as one, not as unexplained, and the entry '
+        'stays (DR-198)', () async {
+      final error = await openFailingWith(const StorageOsException(32));
+      expect(error, isA<OpenLocked>());
+      expect(shouldEvictOnOpenFailure(error), isFalse);
+    });
+
     test('a failure with NO errno is unexpected, and still an answer rather '
         'than a throw', () async {
       final error = await openFailingWith(StateError('not an OS error'));

@@ -1619,7 +1619,11 @@ $SuiteFloors = @{
     # make a READ fail after the file was found, so `_classifyOpen` ran at
     # all: access denied, deleted between check and read (still offering
     # the .bak), a share dropping mid-read (entry kept), and no errno.
-    'rackpal_app'    = 1094
+    # 1096 at DR-198: +1 in storage/document_store_test.dart (a lock, errno
+    # 32, is OpenLocked and keeps its entry; red with it mapped back to
+    # OpenUnexpected) and +1 in session/file_error_presenter_test.dart (what
+    # the user reads: the lock, the usual holders, the remedy, OK only).
+    'rackpal_app'    = 1096
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

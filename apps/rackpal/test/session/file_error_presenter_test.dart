@@ -89,6 +89,7 @@ final List<OpenError> _allOpenErrors = [
   OpenNotFound(r'C:\jobs\Smith.rmpj', backup: _backup),
   const OpenUnreachable(r'\\NAS\jobs\Smith.rmpj'),
   const OpenPermissionDenied(r'C:\jobs\Smith.rmpj'),
+  const OpenLocked(r'C:\jobs\Smith.rmpj'),
   const OpenTooLarge(
     r'C:\jobs\huge.rmpj',
     bytes: 199229440,
@@ -175,6 +176,22 @@ void main() {
     test('and on OPEN it says the recents entry was kept', () {
       final view = _open(const OpenUnreachable(r'\\NAS\jobs\Smith.rmpj'));
       expect(view.detail, contains('LEFT in your recent list'));
+    });
+  });
+
+  group('a file another program has locked, on open (DR-198)', () {
+    test('names the lock, the usual holders and the remedy, with OK only', () {
+      final view = _open(const OpenLocked(r'C:\jobs\Smith.rmpj'));
+      expect(view.title, 'Smith.rmpj is in use by another program.');
+      expect(view.detail, contains('OneDrive, Dropbox, antivirus'));
+      expect(view.detail, contains('then open it again'));
+      expect(view.detail, contains('Nothing was changed on disk'));
+      expect(
+        view.detail,
+        isNot(contains('does not have a specific explanation')),
+        reason: 'the sentence DR-198 replaced',
+      );
+      expect(_ids(view), [FileErrorActionId.ok]);
     });
   });
 

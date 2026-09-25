@@ -338,6 +338,18 @@ final class OpenPermissionDenied extends OpenError {
   final String path;
 }
 
+/// Another program holds the file open and would not share it (DR-198).
+///
+/// A sharing violation: OneDrive or Dropbox syncing it, antivirus, a
+/// second RackPal. Its own error rather than [OpenUnexpected], because the
+/// cause is known and so is the remedy, and the remedy is the user's.
+final class OpenLocked extends OpenError {
+  const OpenLocked(this.path);
+
+  @override
+  final String path;
+}
+
 /// Import hardening: over the byte cap.
 final class OpenTooLarge extends OpenError {
   const OpenTooLarge(this.path, {required this.bytes, required this.limit});
