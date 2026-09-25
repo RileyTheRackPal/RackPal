@@ -32,8 +32,8 @@
 // the same reason `net_label_layer_test`'s two-pin fixture could not see
 // the label comb climb, recorded in `net_label_comb_test.dart`'s header.
 
-import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:test/test.dart';
 
 import 'schematic_test_document.dart';
 

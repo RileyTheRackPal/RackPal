@@ -6,8 +6,8 @@
 // the point list would pass forever and would tell nobody whether the
 // router still obeys the ruling.
 
-import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:test/test.dart';
 
 import 'schematic_test_document.dart';
 

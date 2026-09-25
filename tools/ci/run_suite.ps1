@@ -932,7 +932,14 @@ $SuiteFloors = @{
     # and a census that fails when a new command lands without one. Three
     # mutations killed: the key union reverted, a port-fact mask set to
     # `sheet` alone, and a case renamed.
-    'rackpal_core'   = 4964
+    # 4968 at `#948`: +4 in commands/undo_merge_test.dart, the two
+    # `mergeWith` overrides no test had run and SetZeroUSpanCommand's undo,
+    # each asserted on the saved bytes and red on a mutation.
+    # 5002 at `#948`: +34 MOVED IN from rackpal_ui. `wire_trace.dart` came
+    # to core at #931 and left its tests behind, so core covered it at 1%;
+    # with wire_trace_test.dart (28) and wire_trace_layering_test.dart (6)
+    # beside it, 97%. rackpal_ui fell by the same 34 in the same commit.
+    'rackpal_core'   = 5002
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1452,7 +1459,10 @@ $SuiteFloors = @{
     # 2012 at `#946`: +2 in canvas/status_message_controller_test.dart, an
     # announcement addressed to the owner's view (red on the deprecated
     # implicit-view call) and a gone owner announcing nothing.
-    'rackpal_ui'     = 2012
+    # 1978 at `#948`: -34, and NOT A DELETION. wire_trace_test.dart (28) and
+    # wire_trace_layering_test.dart (6) moved to rackpal_core/test/scene with
+    # the code they test; core's floor rose by the same 34 in this commit.
+    'rackpal_ui'     = 1978
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
