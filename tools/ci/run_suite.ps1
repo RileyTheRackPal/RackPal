@@ -927,7 +927,12 @@ $SuiteFloors = @{
     # 4911 at `#943`: +2 in sheet/plan_callout_pull_sheet_test.dart, the join
     # DR-150 argued and nobody ran: every Pull Sheet row for a pinned drop
     # shows its callout's string. Red when the cell drops the outlet.
-    'rackpal_core'   = 4911
+    # 4964 at `#944` (AC-014): +53 in epoch_mask_test.dart, a case for each
+    # of the 52 document commands it had none for, over whole_house.rppj,
+    # and a census that fails when a new command lands without one. Three
+    # mutations killed: the key union reverted, a port-fact mask set to
+    # `sheet` alone, and a case renamed.
+    'rackpal_core'   = 4964
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
