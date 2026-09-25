@@ -92,11 +92,11 @@ void main() {
   /// The status line the screen is currently showing, or null.
   ///
   /// THIS IS THE ANNOUNCEMENT CHANNEL, not a decoration.
-  /// `StatusMessageController.show` calls `SemanticsService.announce` in
-  /// the same breath — it is the only `announce` call site in the
-  /// repository — so asserting the text is asserting what a screen reader
-  /// says. M2-F's clause is "works end to end WITH SCREEN-READER
-  /// ANNOUNCEMENTS", and this is where that is measured.
+  /// `StatusMessageController.show` calls `SemanticsService.sendAnnouncement`
+  /// in the same breath — it is the only announcement call site in the
+  /// repository — so asserting the text is asserting what a screen reader says.
+  /// M2-F's clause is "works end to end WITH SCREEN-READER ANNOUNCEMENTS", and
+  /// this is where that is measured.
   String? statusOf(WidgetTester tester) {
     final texts = tester.widgetList<Text>(find.byType(Text));
     for (final text in texts) {
@@ -949,7 +949,7 @@ void main() {
   });
 
   group('7 — what a SCREEN READER actually hears', () {
-    /// Every `SemanticsService.announce` this screen makes, in order.
+    /// Every `SemanticsService.sendAnnouncement` this screen makes, in order.
     ///
     /// M2-F's clause is "works end to end WITH SCREEN-READER
     /// ANNOUNCEMENTS", and `find.text` cannot measure that: the status

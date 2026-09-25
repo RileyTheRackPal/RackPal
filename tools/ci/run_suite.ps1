@@ -1444,7 +1444,10 @@ $SuiteFloors = @{
     # 2010 at `#937` (DR-197): +2 in csv_import_dialog_test.dart, one box for
     # two spellings of one cable, and unticking it skips both spellings'
     # rows. Both red on the old per-spelling list.
-    'rackpal_ui'     = 2010
+    # 2012 at `#946`: +2 in canvas/status_message_controller_test.dart, an
+    # announcement addressed to the owner's view (red on the deprecated
+    # implicit-view call) and a gone owner announcing nothing.
+    'rackpal_ui'     = 2012
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
