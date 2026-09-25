@@ -1462,7 +1462,10 @@ $SuiteFloors = @{
     # 1978 at `#948`: -34, and NOT A DELETION. wire_trace_test.dart (28) and
     # wire_trace_layering_test.dart (6) moved to rackpal_core/test/scene with
     # the code they test; core's floor rose by the same 34 in this commit.
-    'rackpal_ui'     = 1978
+    # 1980 at `#947`: +2 in shell/file_error_dialog_test.dart. The existing
+    # cases pressed a SECONDARY button; the PRIMARY one ("Save As…", "Open
+    # backup") had never run, and neither had Enter, its keyboard route.
+    'rackpal_ui'     = 1980
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
