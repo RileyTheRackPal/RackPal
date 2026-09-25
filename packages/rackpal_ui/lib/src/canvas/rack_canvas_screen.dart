@@ -281,10 +281,12 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// `TickerProvider`, hence `TickerProviderStateMixin` above.
   late final ShakeController _shake = ShakeController(vsync: this);
 
-  /// Transient status-line text + `SemanticsService.announce` for
+  /// Transient status-line text + `SemanticsService.sendAnnouncement` for
   /// nudge-blocked / placement-confirmed feedback (docs/04 §3.4's "never
   /// silently stops").
-  final StatusMessageController _status = StatusMessageController();
+  late final StatusMessageController _status = StatusMessageController(
+    view: () => mounted ? View.of(context) : null,
+  );
 
   /// The drag-from-palette-to-rails state machine (docs/04 §3.1). See
   /// drag_preview_controller.dart's header and the "palette drag" section
@@ -3430,7 +3432,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   ///
   /// AND IT REPORTS (§3.4's "never silently do nothing"): clearing says so
   /// on the status line — which `StatusMessageController` also pushes
-  /// through `SemanticsService.announce`, so a screen-reader user hears
+  /// through `SemanticsService.sendAnnouncement`, so a screen-reader user hears
   /// the mode change rather than inferring it. Esc with nothing selected
   /// and nothing in flight is the one silent case, and deliberately: a
   /// cancel key that scolds you for having nothing to cancel is noise, and
@@ -3777,7 +3779,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// (double-click / row-Enter / search-box Enter, §3.2) AND the
   /// drag-from-palette commit (§3.1, added this stage): run the command,
   /// take canvas focus, make the new device the sole selection, and
-  /// announce it on the status line (+ `SemanticsService.announce`, via
+  /// announce it on the status line (+ `SemanticsService.sendAnnouncement`, via
   /// `StatusMessageController`) — docs/04 §3.1 step 6's "becomes sole
   /// selection, status bar announces" applies identically to both entry
   /// points, so this is the ONE place that does it.

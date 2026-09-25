@@ -1,17 +1,80 @@
 // Unit tests for StatusMessageController: show()/clear()/auto-hold timing.
-// SemanticsService.announce is a platform channel call under the hood in a
-// full Flutter binding, so these run under flutter_test's binding (which
+// SemanticsService.sendAnnouncement is a platform channel call under the hood
+// in a full Flutter binding, so these run under flutter_test's binding (which
 // stubs platform channels) rather than plain `package:test`.
 
+import 'dart:ui' show FlutterView;
+
 import 'package:fake_async/fake_async.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
 
+/// A view whose id is NOT the implicit view's, so an announcement that
+/// reaches the channel carrying 7 was addressed to the view the owner
+/// supplied and not sent by the deprecated implicit-view path (#946).
+class _OtherView implements FlutterView {
+  @override
+  int get viewId => 7;
+
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
+  final binding = TestWidgetsFlutterBinding.ensureInitialized();
+  FlutterView? implicit() => binding.platformDispatcher.implicitView;
+
+  /// Every announcement map sent on the accessibility channel.
+  List<Map<Object?, Object?>> heard() {
+    final out = <Map<Object?, Object?>>[];
+    binding.defaultBinaryMessenger.setMockDecodedMessageHandler<Object?>(
+      SystemChannels.accessibility,
+      (message) async {
+        if (message is Map && message['type'] == 'announce') {
+          out.add(message['data']! as Map<Object?, Object?>);
+        }
+        return null;
+      },
+    );
+    addTearDown(
+      () =>
+          binding.defaultBinaryMessenger.setMockDecodedMessageHandler<Object?>(
+            SystemChannels.accessibility,
+            null,
+          ),
+    );
+    return out;
+  }
+
+  test('an announcement is addressed to the view the owner supplies', () async {
+    final said = heard();
+    final status = StatusMessageController(view: _OtherView.new);
+    addTearDown(status.dispose);
+
+    status.show('Blocked by SW-1');
+    await pumpEventQueue();
+
+    expect(said, hasLength(1));
+    expect(said.single['message'], 'Blocked by SW-1');
+    expect(said.single['viewId'], 7);
+  });
+
+  test('an owner that is gone still updates the line and announces '
+      'nothing', () async {
+    final said = heard();
+    final status = StatusMessageController(view: () => null);
+    addTearDown(status.dispose);
+
+    status.show('Placed AMP-2');
+    await pumpEventQueue();
+
+    expect(status.text, 'Placed AMP-2');
+    expect(said, isEmpty);
+  });
 
   test('show() sets text and notifies; clear() clears and notifies', () {
-    final status = StatusMessageController();
+    final status = StatusMessageController(view: implicit);
     addTearDown(status.dispose);
     var notifications = 0;
     status
@@ -26,7 +89,7 @@ void main() {
   });
 
   test('clear() on an already-empty controller does not notify', () {
-    final status = StatusMessageController();
+    final status = StatusMessageController(view: implicit);
     addTearDown(status.dispose);
     var notifications = 0;
     status
@@ -38,6 +101,7 @@ void main() {
   test('a message auto-clears after its hold duration', () {
     fakeAsync((async) {
       final status = StatusMessageController(
+        view: implicit,
         defaultHold: const Duration(milliseconds: 500),
       );
       addTearDown(status.dispose);
@@ -57,6 +121,7 @@ void main() {
       '(no premature clear)', () {
     fakeAsync((async) {
       final status = StatusMessageController(
+        view: implicit,
         defaultHold: const Duration(milliseconds: 500),
       );
       addTearDown(status.dispose);
@@ -74,7 +139,7 @@ void main() {
 
   test('a per-call hold overrides defaultHold', () {
     fakeAsync((async) {
-      final status = StatusMessageController(); // default 3s hold
+      final status = StatusMessageController(view: implicit); // default 3s hold
       addTearDown(status.dispose);
 
       status.show('quick', hold: const Duration(milliseconds: 50));

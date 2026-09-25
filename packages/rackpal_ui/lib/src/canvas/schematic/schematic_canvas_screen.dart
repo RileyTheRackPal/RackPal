@@ -296,14 +296,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
   final FocusNode _canvasFocus = FocusNode(debugLabel: 'schematicCanvas');
 
-  /// Transient status text + `SemanticsService.announce` — the channel
-  /// docs/04 §3.4's "never silently stops" needs and this screen had none
-  /// of. `SemanticsService.announce` is called from exactly one place in
-  /// the repository (`status_message_controller.dart`), so without this
-  /// field the schematic has NO announcement channel at all — which is
-  /// what M2-F's "works end to end with screen-reader announcements"
-  /// clause is measured against.
-  final StatusMessageController _status = StatusMessageController();
+  /// Transient status text + `SemanticsService.sendAnnouncement` — the channel
+  /// docs/04 §3.4's "never silently stops" needs and this screen had none of.
+  /// `SemanticsService.sendAnnouncement` is called from exactly one place in
+  /// the repository (`status_message_controller.dart`), so without this field
+  /// the schematic has NO announcement channel at all — which is what M2-F's
+  /// "works end to end with screen-reader announcements" clause is measured
+  /// against.
+  late final StatusMessageController _status = StatusMessageController(
+    view: () => mounted ? View.of(context) : null,
+  );
 
   /// Which POINTER-DRIVEN gesture currently owns the canvas, or null when
   /// none does. THE one piece of state behind this screen's exclusivity
@@ -2771,11 +2773,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       _multiPlans = Map<(String, String), MultiDrawPlan>.unmodifiable(plans);
     });
     if (announce) {
-      // ONE SENTENCE, COMPOSED — never two `show` calls. Every `show`
-      // is a `SemanticsService.announce`, so a second one here would put
-      // two messages on the accessibility channel for one keystroke,
-      // which is the defect `_committingWire` exists to prevent arriving
-      // through another door (see `_armWireFrom`'s note on the chain).
+      // ONE SENTENCE, COMPOSED — never two `show` calls. Every `show` is a
+      // `SemanticsService.sendAnnouncement`, so a second one here would put two
+      // messages on the accessibility channel for one keystroke, which is the
+      // defect `_committingWire` exists to prevent arriving through another
+      // door (see `_armWireFrom`'s note on the chain).
       //
       // The set clause is the disclosure the branch order owes: see
       // `_armWireFrom`, where multi-draw is ruled to beat DR-011.2's

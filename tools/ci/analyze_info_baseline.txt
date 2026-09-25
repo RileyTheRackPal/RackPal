@@ -93,5 +93,11 @@
 #
 # What remains is 23 infos, every one of them a finding someone should
 # read, including the two DEPRECATED_MEMBER_USE on the announcement path.
+#
+# 23 -> 21 on 2026-09-24 at `#946` (AC-058). Those two were the
+# announcement path itself: `SemanticsService.announce` sends to the
+# implicit view and Flutter deprecated it after 3.35. The controller now
+# takes the view from its owner and calls `sendAnnouncement`, which is the
+# fix, not an ignore. The channel is what M7's NVDA matrix will listen to.
 
-23
+21
