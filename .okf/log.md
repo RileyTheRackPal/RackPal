@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-09-25 (seventy-third entry)
+
+* **Progress**: the repository's first line-coverage measurement (docs/12 §4.16): core 91.8%, ui
+  93.1%, export 88.5%, app 83.0%. **No percentage became a gate**; the list of places nothing had
+  run did. `#948` proved the two undo merges no test ran and `SetZeroUSpanCommand`'s undo, and
+  moved `wire_trace.dart`'s tests into core after it (1% to 97.1%). `#947` drove
+  `DocumentStore._classifyOpen`, the device library and template imports from the real File menu,
+  and Import CSV… from its real button.
+* **Creation**: [DR-198](/decisions/dr-198-a-locked-file-is-named-on-open.md). A file another
+  program holds open said *"something went wrong"* on open; it is named now, OK only. The user
+  chose the recommended option of four and gave no reasons.
+* **Note**: **A COMMENT THAT CLAIMS MORE THAN ITS CODE, CITED BY A SECOND FILE AS PRECEDENT.**
+  `runCsvImport` caught `on Exception` beside a comment claiming "the interface's whole
+  contract", and `import_guard.dart` catches `on Object` saying the CSV code already does the
+  same. An `Error` from the store escaped the import with nothing shown. Neither file shows it
+  alone; a test that asked what happens found it red.
+* **Note**: **THE FORMATTER RAN BEFORE `pub get` TWICE IN ONE DAY**, the second an hour after the
+  first was written into memory, and both times reformatted a dozen unrelated files with the
+  default style. The correct style cannot restore what the wrong one stripped, so recovery is
+  `git checkout` and re-applying the edit, not re-formatting.
+
 ## 2026-09-24 (seventy-second entry)
 
 * **Progress**: `#944` (AC-014). All 71 concrete document commands have an epoch-mask case, over

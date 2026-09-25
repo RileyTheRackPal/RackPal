@@ -953,6 +953,44 @@ persistence codec beyond its gates, or the 42 dead declarations one by one. It r
 pass over the thousand-sequence round-trip test. Those are real gaps and not implied clean, and
 `#947` owes the first, second and fourth of them; `#945` owes the third.
 
+### 4.16 The first line-coverage measurement · 2026-09-24 at `a6d29b02` · `#948`, `#947`, `DR-198`
+
+**Nobody had measured it.** No gate, no pipeline step and no line of this file mentions coverage.
+`flutter test --coverage` over the four suites, each package counting its own tests only:
+
+| Package | Lines | Covered |
+|---|---|---|
+| `rackpal_core` | 22,048 | **91.8%** |
+| `rackpal_ui` | 18,019 | **93.1%** |
+| `rackpal_export` | 338 | **88.5%** |
+| `apps/rackpal` | 3,650 | **83.0%** |
+
+**THE PERCENTAGES ARE NOT THE FINDING, AND NO PERCENTAGE IS A GATE.** The lowest files were mostly
+`==`/`hashCode`, `const` constructors and native startup; one uncovered line was an artifact of
+coverage losing an `await`'s continuation in a widget test. A percent gate would be defended by
+testing getters. What the measurement bought was a list of specific places nothing had run, and
+each was read before it was called a gap:
+
+| Found | Disposition |
+|---|---|
+| Two of eight `mergeWith` overrides never executed (`RenameEntityCommand`, `SetRackHeightCommand`); `SetZeroUSpanCommand` neither fuzzed nor undone by any test | **Proven** by `#948`, on the saved bytes after one undo. No defect |
+| `wire_trace.dart`'s tests left in `rackpal_ui` when `#931` moved the code, so core covered it at **1%** | **Moved** by `#948`: 97.1%. The fixture splits, ui re-exporting core's half |
+| `DocumentStore._classifyOpen` never ran: no test made a READ fail after the file was found | **Proven** by `#947`, through the real `open`. Four branches right; the fifth is DR-198 |
+| A sharing violation on open said *"Something went wrong that RackPal does not have a specific explanation for"*, while save has had `SaveLocked` all along | **DR-198**: `OpenLocked`, named, OK only, recents kept. The user's choice of four |
+| `LibraryIo`/`DeviceTemplateIo`'s members the shell calls, and `runCsvImport`, had never run: every test called the function underneath | **Driven from the real menu and button** by `#947`, failures read off the dialog on screen |
+| `runCsvImport` caught `on Exception` beside a comment claiming the whole contract, while `import_guard.dart` catches `on Object` citing it as doing the same | **FIXED** by `#947`: an `Error` from the store escaped the import unreported. Red first |
+| The file error dialog's primary button, and Enter, never pressed | **Proven** by `#947` |
+
+**THE SHAPE, AGAIN.** Three of those are one defect class this repository keeps finding: a route
+proved by calling its handler has never been proved reachable (`#943` found the first). And the
+CSV catch is the class §4.15 opened with, twice over: a comment describing more than its code
+does, and a second file citing the first as its precedent. Neither could be seen by reading one
+file; both fell out of asking what had never run.
+
+**STILL OWED on `#947`:** the storage layer read beyond the atomic writer, the codec read for G4, the
+round-trip fuzz's mutation pass (and that it generates about half the commands), and
+`outlet_plate_actions.dart`'s five uninvoked wirings.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
