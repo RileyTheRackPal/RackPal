@@ -1,5 +1,20 @@
 # Update Log
 
+## 2026-09-24 (seventy-first entry)
+
+* **Progress**: the full-tree review's four open ends are on the board. docs/12 §4.15 had recorded
+  them and filed none: AC-014's command coverage (`#944`), the dead public declarations (`#945`),
+  the deprecated `SemanticsService.announce` under M7 (`#946`), and the three areas the review said
+  it did not read (`#947`). A finding recorded only in a document has no owner and gets forgotten.
+* **Note**: **§4.15 SAID THE DEAD-DECLARATION LIST WAS "ON `#97`", AND IT NEVER WAS.** Neither the
+  description nor either comment carries it. The review's own census script was re-run at
+  `66de1a84` and finds 41, not 42, and that list is on `#945`. The claim was written as though
+  the evidence had been posted, which is the stale-claim failure the review existed to find, made
+  in the review's own record.
+* **Note**: **AC-014 IS THE EPOCH-MASK TEST, NOT THE APPLY/REVERT ROUND TRIP**, and it was
+  misdescribed in conversation before this entry was written. The distinction raises the stakes:
+  both of the review's worst defects (`#932`, `#933`) were mask defects this test did not see.
+
 ## 2026-09-24 (seventieth entry)
 
 * **Progress**: `PLAN-J/0` (`#943`). The Plan view's clause table is re-marked against the tree:

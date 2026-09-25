@@ -906,11 +906,11 @@ filter (see `#933`).
 | `AddMediaTypeCommand` overwrote an occupied id and its undo deleted it; the header promised otherwise | stale claim, reachable | **FIXED**, `#935` |
 | One CSV import naming a cable in two spellings that slug alike offers two new types and makes one | UI | **FIXED** by DR-197, `#937`: one row per id, every spelling an alias |
 | Release builds report nothing anywhere, including a startup failure; the §12.4-safe storage log has no sink | release risk | **BUILT** by DR-194, which pulled §9.9's local half forward: the log (`#939`), the startup-failure window (`#940`), `Help ▸ Open diagnostics folder…` (`#941`). M8 keeps its exit clause |
-| AC-014's coverage | test drift | §4.5, re-measured: 24 of 73 document commands. Not fixed; recorded |
+| AC-014's coverage | test drift | §4.5, re-measured: 24 of 73 document commands. Not fixed; **filed** as `#944` |
 | 210 of the analyzer's 233 infos were two lints, 116 of them catalogue facts | ratchet | **CLEARED** by DR-195, `#936`: 233 to 23, facts kept under a documented ignore, cascades swept. The first sweep also stripped 45 fixture values `#246` had argued are data, and was corrected in the same chapter (§11.194.3) |
 | `#98`'s refactor candidates | structure | **DECIDED** by DR-196: `wire_trace.dart` moved (`#931`), `json_codec.dart` left alone, the two canvas screens re-asked at M7 (`#942`) |
-| 42 public declarations nothing in `lib/` or `tool/` calls | dead code | Listed on `#97`; per-item, since some are deliberate test seams |
-| `SemanticsService.announce` deprecated after Flutter 3.35 | deprecation | Recorded; it is the channel M7's NVDA clause rests on |
+| 42 public declarations nothing in `lib/` or `tool/` calls | dead code | Per-item, since some are deliberate test seams. **Filed** as `#945`, with the list re-run at `66de1a84` (41). This cell said *"Listed on `#97`"* and the list was never posted there |
+| `SemanticsService.announce` deprecated after Flutter 3.35 | deprecation | It is the channel M7's NVDA clause rests on. **Filed** under M7 as `#946` |
 | The Plan view's clause table reads "0 of 7" and stops at `PLAN-F` | stale status | **FILED** as `PLAN-J/0` (`#943`), with PLAN-J/2's unperformable print step. See below |
 
 **THE MOST CONSEQUENTIAL FINDING IS NOT IN THE CODE.** The request that started this review said
@@ -932,7 +932,8 @@ diff. A confident derivation is a hypothesis until something has run it.
 
 **WHAT THE REVIEW DID NOT DO.** It did not read the storage layer beyond the atomic writer, the
 persistence codec beyond its gates, or the 42 dead declarations one by one. It ran no mutation
-pass over the thousand-sequence round-trip test. Those are real gaps and not implied clean.
+pass over the thousand-sequence round-trip test. Those are real gaps and not implied clean, and
+`#947` owes the first, second and fourth of them; `#945` owes the third.
 
 ---
 
