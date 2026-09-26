@@ -1481,9 +1481,9 @@ void main() {
           if (cmd == null) continue;
 
           final before = _codec.write(doc);
-          cmd
-            ..apply(doc)
-            ..revert(doc);
+          cmd.apply(doc);
+          final afterApply = _codec.write(doc);
+          cmd.revert(doc);
           final afterRevert = _codec.write(doc);
 
           final reason =
@@ -1502,6 +1502,23 @@ void main() {
           // apply`), so later steps in this sequence can reference
           // whatever this command just did.
           cmd.apply(doc);
+
+          // AND THE TRAILING APPLY IS ASSERTED (#947). The header states
+          // the whole law, "lands in the identical state as a single
+          // apply", and until this line only its first half was checked:
+          // the re-apply ran and nothing compared it. A command that minted
+          // a fresh id or stamped fresh meta on its second apply, which is
+          // exactly what redo is, passed. Measured before it was added: no
+          // generated command differed. It is here so none can.
+          expect(
+            _codec.write(doc),
+            equals(afterApply),
+            reason:
+                'seed=$seed step=$step kind=$kind '
+                'command=${cmd.runtimeType} — apply;revert;apply did not '
+                'land where the first apply did, so redo is not the edit '
+                'the user made. Reproduce with Random($seed).',
+          );
           _reconcileTrackingAfterCommit(kind, cmd, state);
         }
       }
