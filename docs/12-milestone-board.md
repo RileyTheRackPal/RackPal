@@ -991,7 +991,52 @@ file; both fell out of asking what had never run.
 **STILL OWED on `#947`:** the storage layer read beyond the atomic writer, the codec read for G4, and
 the round-trip fuzz's mutation pass (and that it generates about half the commands).
 `outlet_plate_actions.dart`'s uninvoked actions were the last coverage item, closed in the same
-branch.
+branch. The mutation pass is §4.17.
+
+### 4.17 The round-trip fuzz's mutation pass · 2026-09-25 · `#947` · two defects fixed
+
+**What was measured first, with the loop instrumented over all 1,000 sequences.** The fuzz generated
+**27 of the 71** document command classes. `ConnectPortsCommand`, whose data-dependent revert the
+file's header calls *"the step this harness exists for"*, was drawn **8 times**, and **never onto a
+port an earlier connect had made**, which is the only case that tests it. And the loop asserted
+half the law it states: `revert` restores the bytes, but the trailing `apply` was run and never
+compared with the first (no generated command differed when it was).
+
+**The pass.** Ten realistic `revert` mutations, one per fuzzed command, each run against the fuzz
+**alone**:
+
+| Mutation | Fuzz alone |
+|---|---|
+| `MoveDeviceCommand` reverts to the new index | killed |
+| `MoveDeviceCommand` leaves `localRevision` one up | killed |
+| `RemoveLinkCommand` forgets the net | killed |
+| `ConnectPortsCommand` removes ports it did not mint | **SURVIVED** (the deterministic test caught it); **killed** after the fix below |
+| `SetRuleOverrideCommand` clears instead of restoring | killed |
+| `AcknowledgeFindingCommand` revert is a no-op | killed |
+| `RemoveStructureCommand` forgets the device | killed |
+| `SetLinkClassCommand` forgets the lock | killed |
+| `AddZeroUChannelCommand` removes nothing | killed |
+| `RemoveOutletCommand` forgets the outlet | killed |
+
+**What changed.** The fuzz asserts the trailing `apply`. Half the sequences start with two devices
+from the generator's own `addDevice` arm: 154 connects, 3 onto an existing port, and the fuzz now
+counts those and fails at zero, since three is thin. The 44 commands it never generates get
+`apply; revert; apply` on the saved bytes at one real state each, in `epoch_mask_test.dart`'s
+per-command cases over `whole_house.rppj`, so **every one of the 71 has its undo checked on the
+file**, in the fuzz or there.
+
+**THAT CHECK FOUND TWO DEFECTS ON ITS FIRST RUN, BOTH IN COMMANDS THE FUZZ NEVER DREW, AND BOTH
+BEHIND UNIT TESTS THAT ASSERTED A FIELD WHILE THE FILE CHANGED:**
+
+- **`SetConnectorAliasesCommand` emptied `matesWith`**, on the edit and not only the undo: `_write`
+  rebuilt the def field by field and left it out. The mating rule returns nothing for a connector
+  with an empty list, so adding one alias to an XLR stopped a real connector mismatch on it being
+  flagged. The new tests compare the whole saved def minus `aliases`, so the next forgotten field
+  fails too.
+- **`RemovePathwayCommand`'s undo left every cable through the pathway stamped** as edited by
+  `removePathway`, one revision up. Its test checked each `pathwayId` came back, and passed.
+
+**STILL OWED on `#947`:** the storage layer read beyond the atomic writer, and the codec read for G4.
 
 ---
 

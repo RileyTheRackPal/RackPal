@@ -1,5 +1,24 @@
 # Update Log
 
+## 2026-09-25 (seventy-fourth entry)
+
+* **Progress**: the round-trip fuzz's mutation pass (`#947`, docs/12 §4.17). Measured first: it
+  generated 27 of the 71 document commands, and drew the connect arm its header says it exists for
+  8 times, never onto a port an earlier connect had made. Ten revert mutations; the fuzz alone
+  killed nine, and the tenth was exactly that arm. Half the sequences now start with two devices,
+  the fuzz counts the asymmetric connect and fails at zero, and it asserts the trailing `apply` of
+  the law it states. Every command the fuzz never draws gets `apply; revert; apply` on the saved
+  bytes at one real state.
+* **Note**: **TWO DEFECTS, BOTH BEHIND TESTS THAT ASSERTED A FIELD WHILE THE FILE CHANGED.** An alias
+  edit emptied a connector's `matesWith` (so a real mismatch stopped being flagged), and undoing a
+  pathway removal left every cable in it stamped. Each command's own unit test checked the field it
+  meant to move and passed. [Assert the artifact, not the
+  mechanism](/practices/assert-the-artifact-not-the-mechanism.md) is this bundle's oldest practice;
+  these are two more instances, found the moment something compared the whole file.
+* **Note**: **A HARNESS CAN BE BUILT FOR A CASE AND NEVER REACH IT.** The fuzz's author gave the
+  fixture a bus-tap pin precisely so a random walk could reach the asymmetric revert, and wrote
+  that it did. Nobody had counted. The count is now an assertion.
+
 ## 2026-09-25 (seventy-third entry)
 
 * **Progress**: the repository's first line-coverage measurement (docs/12 §4.16): core 91.8%, ui

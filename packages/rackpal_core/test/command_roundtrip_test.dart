@@ -1463,12 +1463,34 @@ void main() {
     '$_sequenceCount random command sequences: apply; revert restores '
     'byte-identical JSON (CR-117)',
     () {
+      // How often the one data-dependent revert is actually exercised.
+      // See the assertion after the loop.
+      var connects = 0;
+      var connectsOntoAnExistingPort = 0;
       for (var i = 0; i < _sequenceCount; i++) {
         final seed = _baseSeed + i;
         final rnd = Random(seed);
         final startAt = DateTime.utc(2026);
         final doc = _freshDocumentWithOneRack(startAt);
         final state = _SequenceState(doc);
+
+        // HALF THE SEQUENCES START WITH TWO DEVICES (#947). `connectPorts`
+        // needs two alive at once, and a 5..15-step walk over thirty-odd
+        // kinds that adds a device about once a sequence reached that
+        // state 8 times in the whole run, measured, and the asymmetric
+        // revert this file's header calls the step the harness exists for
+        // ZERO times. A mutation removing ports the command did not mint
+        // SURVIVED the fuzz; only the deterministic test at the bottom
+        // caught it. The seeding goes through the generator's own
+        // `addDevice` arm, so the devices are the ones a walk makes, and
+        // the even/odd split keeps the empty-document states covered too.
+        if (i.isEven) {
+          for (var d = 0; d < 2; d++) {
+            final add = _buildCommand(_StepKind.addDevice, state, rnd, -1 - d)!
+              ..apply(doc);
+            _reconcileTrackingAfterCommit(_StepKind.addDevice, add, state);
+          }
+        }
 
         final stepCount = 5 + rnd.nextInt(11); // 5..15 commands
         for (var step = 0; step < stepCount; step++) {
@@ -1481,9 +1503,16 @@ void main() {
           if (cmd == null) continue;
 
           final before = _codec.write(doc);
-          cmd
-            ..apply(doc)
-            ..revert(doc);
+          if (cmd is ConnectPortsCommand) {
+            connects++;
+            if (doc.ports.containsKey(cmd.from.portId) ||
+                doc.ports.containsKey(cmd.to.portId)) {
+              connectsOntoAnExistingPort++;
+            }
+          }
+          cmd.apply(doc);
+          final afterApply = _codec.write(doc);
+          cmd.revert(doc);
           final afterRevert = _codec.write(doc);
 
           final reason =
@@ -1502,9 +1531,43 @@ void main() {
           // apply`), so later steps in this sequence can reference
           // whatever this command just did.
           cmd.apply(doc);
+
+          // AND THE TRAILING APPLY IS ASSERTED (#947). The header states
+          // the whole law, "lands in the identical state as a single
+          // apply", and until this line only its first half was checked:
+          // the re-apply ran and nothing compared it. A command that minted
+          // a fresh id or stamped fresh meta on its second apply, which is
+          // exactly what redo is, passed. Measured before it was added: no
+          // generated command differed. It is here so none can.
+          expect(
+            _codec.write(doc),
+            equals(afterApply),
+            reason:
+                'seed=$seed step=$step kind=$kind '
+                'command=${cmd.runtimeType} — apply;revert;apply did not '
+                'land where the first apply did, so redo is not the edit '
+                'the user made. Reproduce with Random($seed).',
+          );
           _reconcileTrackingAfterCommit(kind, cmd, state);
         }
       }
+
+      // THE ARM THIS HARNESS EXISTS FOR MUST ACTUALLY FIRE (#947). Before
+      // the two-device seeding above it fired ZERO times in the whole run
+      // (8 connects, none onto a port an earlier connect had made), and
+      // the fuzz passed a revert that removed ports it had not minted.
+      // Measured after: 154 connects, 3 onto an existing port, and that
+      // mutation is killed by the fuzz alone. Three is thin, so this says
+      // so the moment a change to the generator takes it back to nothing,
+      // which is #587's VACUOUS arm again.
+      expect(
+        connectsOntoAnExistingPort,
+        greaterThan(0),
+        reason:
+            'no generated connect landed on a port an earlier connect '
+            'had materialised ($connects connects in all), so '
+            "ConnectPortsCommand's data-dependent revert went unexercised",
+      );
     },
   );
 
