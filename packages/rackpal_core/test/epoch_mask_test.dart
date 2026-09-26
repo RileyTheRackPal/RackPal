@@ -474,9 +474,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'devices'});
+      _covers(doc, cmd, expectAtLeast: {'devices'});
     });
 
     test('AddRackCommand', () {
@@ -492,9 +490,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+      _covers(doc, cmd, expectAtLeast: {'racks'});
     });
 
     test('RemoveDeviceCommand', () {
@@ -517,9 +513,7 @@ void main() {
       );
       final cmd = RemoveDeviceCommand(id: deviceId);
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'devices'});
+      _covers(doc, cmd, expectAtLeast: {'devices'});
     });
 
     test('MoveDeviceCommand', () {
@@ -550,9 +544,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'devices'});
+      _covers(doc, cmd, expectAtLeast: {'devices'});
     });
 
     test('RenameEntityCommand (device)', () {
@@ -582,9 +574,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'devices'});
+      _covers(doc, cmd, expectAtLeast: {'devices'});
     });
 
     test('RenameEntityCommand (rack)', () {
@@ -600,9 +590,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+      _covers(doc, cmd, expectAtLeast: {'racks'});
     });
 
     test('SetRackHeightCommand', () {
@@ -617,9 +605,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+      _covers(doc, cmd, expectAtLeast: {'racks'});
     });
 
     // One case per EpochMask branch the RackField table declares, rather
@@ -642,9 +628,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+      _covers(doc, cmd, expectAtLeast: {'racks'});
     });
 
     test('SetEntityPropertyCommand (meta-epoch field)', () {
@@ -660,9 +644,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+      _covers(doc, cmd, expectAtLeast: {'racks'});
     });
 
     test('SetEntityPropertyCommand (rack display field)', () {
@@ -678,9 +660,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'racks'});
+      _covers(doc, cmd, expectAtLeast: {'racks'});
     });
 
     test('SetEntityPropertyCommand (nullable field, set and cleared)', () {
@@ -737,13 +717,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(
-        cmd,
-        changed,
-        expectAtLeast: {'devices', 'structures'},
-      );
+      _covers(doc, cmd, expectAtLeast: {'devices', 'structures'});
     });
 
     test('RemoveStructureCommand takes both, and does NOT cascade to '
@@ -767,11 +741,9 @@ void main() {
       ).apply(doc);
       final cmd = RemoveStructureCommand(bodyId: add.bodyId);
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(
+      final changed = _covers(
+        doc,
         cmd,
-        changed,
         expectAtLeast: {'devices', 'structures'},
       );
       expect(
@@ -799,9 +771,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'outlets'});
+      _covers(doc, cmd, expectAtLeast: {'outlets'});
     });
 
     test('RemoveOutletCommand', () {
@@ -809,9 +779,7 @@ void main() {
       final outletId = _seedOutlet(doc);
       final cmd = RemoveOutletCommand(id: outletId);
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'outlets'});
+      _covers(doc, cmd, expectAtLeast: {'outlets'});
     });
 
     test('AddLocationCommand', () {
@@ -824,9 +792,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'locations'});
+      _covers(doc, cmd, expectAtLeast: {'locations'});
     });
 
     test('ReparentLocationCommand', () {
@@ -844,9 +810,7 @@ void main() {
                   as ReparentLocationReady)
               .command;
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'locations'});
+      _covers(doc, cmd, expectAtLeast: {'locations'});
     });
 
     test('RemoveLocationCommand reaches SEVEN maps, not one', () {
@@ -861,11 +825,9 @@ void main() {
       doc.racks[rackId] = _rack(rackId)..locationId = room;
       final cmd = buildRemoveLocation(doc: doc, locationId: room)!;
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(
+      _covers(
+        doc,
         cmd,
-        changed,
         expectAtLeast: {
           'locations',
           'racks',
@@ -885,9 +847,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'locations'});
+      _covers(doc, cmd, expectAtLeast: {'locations'});
     });
 
     test('SetEntityPropertyCommand (location, nullable field set and '
@@ -943,9 +903,7 @@ void main() {
                   as AddHomeRunReady)
               .command;
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+      final changed = _covers(doc, cmd, expectAtLeast: {'links'});
       expect(changed, contains('nets'));
     });
 
@@ -983,9 +941,7 @@ void main() {
                   as SetStructureOriginReady<String>)
               .command;
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+      _covers(doc, cmd, expectAtLeast: {'links'});
     });
 
     // One case per EpochMask branch `OutletField`/`StructureBodyField`
@@ -1005,9 +961,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'outlets'});
+      _covers(doc, cmd, expectAtLeast: {'outlets'});
     });
 
     test('SetEntityPropertyCommand (outlet, meta-epoch field)', () {
@@ -1022,9 +976,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'outlets'});
+      _covers(doc, cmd, expectAtLeast: {'outlets'});
     });
 
     test('SetEntityPropertyCommand (outlet, nullable field set and '
@@ -1082,9 +1034,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'structures'});
+      _covers(doc, cmd, expectAtLeast: {'structures'});
     });
 
     test('SetEntityPropertyCommand (device lifecycle)', () {
@@ -1104,9 +1054,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'devices'});
+      _covers(doc, cmd, expectAtLeast: {'devices'});
     });
 
     test('SetEntityPropertyCommand (link lifecycle)', () {
@@ -1128,9 +1076,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+      _covers(doc, cmd, expectAtLeast: {'links'});
     });
 
     test('AddLinkCommand', () {
@@ -1144,9 +1090,7 @@ void main() {
         actor: 'tester',
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+      final changed = _covers(doc, cmd, expectAtLeast: {'links'});
       // The implicit Net (CR-011) is part of the same wires epoch.
       expect(changed, contains('nets'));
     });
@@ -1163,9 +1107,7 @@ void main() {
       )..apply(doc);
       final cmd = RemoveLinkCommand(id: add.id, netId: add.netId);
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+      _covers(doc, cmd, expectAtLeast: {'links'});
     });
 
     test('SetLinkJacketColorCommand', () {
@@ -1183,9 +1125,7 @@ void main() {
         conventionId: const JacketColorId('jc.blue'),
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+      _covers(doc, cmd, expectAtLeast: {'links'});
     });
 
     test('SetLinkPulledJacketColorCommand', () {
@@ -1210,9 +1150,7 @@ void main() {
         pulledId: const JacketColorId('jc.yellow'),
       );
 
-      final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
-
-      _expectTouchesCoversChanges(cmd, changed, expectAtLeast: {'links'});
+      _covers(doc, cmd, expectAtLeast: {'links'});
     });
   });
 
@@ -1952,13 +1890,44 @@ RackDocument _house() => switch (_codec.read(_houseBytes)) {
 
 final _now = DateTime.utc(2026, 9, 24);
 
-void _covers(
+/// AC-014's mask check, AND CR-117's `apply; revert; apply` at the same
+/// realistic state (#947).
+///
+/// THE SECOND HALF IS HERE BECAUSE THE FUZZ DOES NOT REACH THESE. Measured
+/// on 2026-09-25, `command_roundtrip_test.dart`'s thousand sequences
+/// generate 27 of the 71 document command classes; every Plan view
+/// command, the gangs, the locations, the media types and the endpoint
+/// moves never appear in one. One state per command is far less than a
+/// random walk, and far more than nothing, which is what they had: each
+/// command's revert was proven only by whatever its own unit test chose.
+/// Returns the changed keys, for a case that asserts more about them.
+Set<String> _covers(
   RackDocument doc,
   Command<RackDocument> cmd, {
   required Set<String> expectAtLeast,
 }) {
+  final before = _codec.write(doc);
   final changed = _changedTopLevelKeys(doc, () => cmd.apply(doc));
   _expectTouchesCoversChanges(cmd, changed, expectAtLeast: expectAtLeast);
+
+  final applied = _codec.write(doc);
+  cmd.revert(doc);
+  expect(
+    utf8.decode(_codec.write(doc)),
+    utf8.decode(before),
+    reason:
+        '${cmd.runtimeType}: apply;revert did not restore the saved '
+        'bytes (CR-117)',
+  );
+  cmd.apply(doc);
+  expect(
+    utf8.decode(_codec.write(doc)),
+    utf8.decode(applied),
+    reason:
+        '${cmd.runtimeType}: apply;revert;apply did not land where the '
+        'first apply did, so redo is not the edit the user made',
+  );
+  return changed;
 }
 
 AcknowledgeFindingCommand _ack() => AcknowledgeFindingCommand(
