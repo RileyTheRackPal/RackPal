@@ -1,5 +1,20 @@
 # Update Log
 
+## 2026-09-26 (seventy-fifth entry)
+
+* **Progress**: `#947` closes (docs/12 §4.18). The codec's G4 read became a whole-codec test: every
+  inspector field on real entities, cleared (31, no JSON `null`, byte-exact re-save) and zeroed
+  (12, the `0` survives). The codec was already right; the test guards the next field. The
+  storage-layer read found a prefs round trip called *"full set"* that held four of eight fields,
+  and a second open error with no explanation.
+* **Creation**: [DR-200](/decisions/dr-200-a-long-path-is-named-on-open.md). A path too long for
+  Windows is named on open, with its length and the limit save already states. The question as
+  put said the limit was 260; it is 259, and the ruling records the slip as the author's.
+* **Note**: **A TEST NAME IS A CLAIM, AND "FULL" WAS THE CLAIM.** *"round-trips a full set of
+  preferences"* was true when written and covered half the fields by the time anyone looked, each
+  one added later without reaching it. It now compares the whole saved form, which is the only
+  way a "full" test stays full.
+
 ## 2026-09-25 (seventy-fourth entry)
 
 * **Progress**: the round-trip fuzz's mutation pass (`#947`, docs/12 §4.17). Measured first: it

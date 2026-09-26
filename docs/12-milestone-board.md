@@ -1037,6 +1037,35 @@ BEHIND UNIT TESTS THAT ASSERTED A FIELD WHILE THE FILE CHANGED:**
   `removePathway`, one revision up. Its test checked each `pathwayId` came back, and passed.
 
 **STILL OWED on `#947`:** the storage layer read beyond the atomic writer, and the codec read for G4.
+Both are §4.18, and `#947` closes with them.
+
+### 4.18 The storage layer read and the codec's G4 read · 2026-09-26 · `#947` closes · `DR-200`
+
+**The codec, for G4.** Unknown is an absent key, never an explicit `null`, and `0` is a measurement
+(G4, CR-114). It was asserted field by field in whichever test shipped each field.
+`g4_wire_test.dart` now walks every field in `SetEntityPropertyCommand`'s seven tables on real
+entities from `whole_house.rppj`: cleared, **31 fields** write no JSON `null` and re-save byte for
+byte; zeroed, **12 measured fields** keep their `0`. A hand-edited explicit `null` reads as unknown
+and re-saves as an absent key. **The codec was already right**: two encoder mutations (unknown
+written as `null`, a zero dropped as unknown) are killed, and none of the 15 committed starters and
+fixtures holds a JSON `null`. It is a guard against the next field, not a fix.
+
+**The storage layer, read beside a fresh coverage run.** Most of what never ran is `==`,
+`toString`, `const` constructors, the two production-only platform wrappers (injected precisely
+because they cannot run under test), and the pre-update snapshot's failure, which the session
+tests drive end to end and the storage-only run cannot see. Two findings:
+
+| Found | Disposition |
+|---|---|
+| `prefs_store_test`'s *"round-trips a full set of preferences"* held **four of eight** fields; coach marks, port-column packs, favourites and undo depth were each added after it | **Full now**, compared as the whole saved form so the next field is covered too; `_packsFromJson`'s "unknown names are kept" promise pinned |
+| On open, a path too long for Windows read *"Something went wrong…"* while save has named it all along. DR-198's shape, one arm further down the same switch | **DR-200**: `OpenPathTooLong`, the length and `kWindowsMaxPath`, OK only, recents kept. The user's choice of three |
+
+**`#947` CLOSES.** Its four items, across three merges: the storage layer beyond the atomic writer
+(this section), the codec for G4 (this section), the round-trip fuzz's mutation pass (§4.17), and
+the coverage gaps it absorbed from §4.16. Five defects fixed across them, all found by asking what
+had never run: the CSV import that let an `Error` escape, the connector alias edit that emptied
+`matesWith`, the pathway removal whose undo stamped every cable, and the two open errors with no
+explanation (DR-198, DR-200). Plus DR-199's refusal titles.
 
 ---
 
