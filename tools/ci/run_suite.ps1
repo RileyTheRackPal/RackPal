@@ -945,7 +945,12 @@ $SuiteFloors = @{
     # 5005 at `#947`: +1 in commands/pathway_commands_test.dart, a pathway
     # removal's undo is byte-identical, cable meta included. Red with the
     # meta restore removed, which is what the command did.
-    'rackpal_core'   = 5005
+    # 5119 at `#947`: +114 in persistence/g4_wire_test.dart. Every
+    # inspector field in SetEntityPropertyCommand's seven tables, on real
+    # entities from whole_house.rppj: cleared, it writes no JSON null and
+    # re-saves byte for byte (31 fields); zeroed, the 0 survives (12). Plus
+    # a counting floor and a hand-edited explicit null read as unknown.
+    'rackpal_core'   = 5119
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
