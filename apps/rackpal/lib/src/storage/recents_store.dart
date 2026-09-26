@@ -390,6 +390,9 @@ bool shouldEvictOnOpenFailure(OpenError error) => switch (error) {
   OpenPermissionDenied() => false,
   // Another program has it open for now (DR-198); it is still there.
   OpenLocked() => false,
+  // Too deep for Windows (DR-200); moving it is the user's fix, and the
+  // entry is how they find it again afterwards.
+  OpenPathTooLong() => false,
   // The file is right there and opened. It is a bad file, not a missing
   // one, and forgetting it would take away the user's only route back to
   // it (including the "open the backup" path).

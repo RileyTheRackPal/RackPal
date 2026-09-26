@@ -488,6 +488,14 @@ void main() {
       expect(shouldEvictOnOpenFailure(error), isFalse);
     });
 
+    test('a path TOO LONG for Windows (3, folder reachable) is named with '
+        'its length, and the entry stays (DR-200)', () async {
+      final error = await openFailingWith(const StorageOsException(3));
+      expect(error, isA<OpenPathTooLong>());
+      expect((error as OpenPathTooLong).length, _paths.target.length);
+      expect(shouldEvictOnOpenFailure(error), isFalse);
+    });
+
     test('a failure with NO errno is unexpected, and still an answer rather '
         'than a throw', () async {
       final error = await openFailingWith(StateError('not an OS error'));

@@ -311,6 +311,17 @@ FileErrorView describeOpenError(
       actions: const [_ok],
     ),
 
+    // DR-200. Both numbers, as `SavePathTooLong` gives them: "too long"
+    // alone cannot tell the user how much shorter it has to be.
+    OpenPathTooLong(:final path, :final length) => FileErrorView(
+      title: "${_name(path, context)}'s path is too long for Windows.",
+      detail:
+          'Its path is $length characters and the limit is '
+          '$kWindowsMaxPath. Move it to a shorter folder, or shorten the '
+          'folder names, then open it again. Nothing was changed on disk.',
+      actions: const [_ok],
+    ),
+
     OpenPermissionDenied(:final path) => FileErrorView(
       title: 'Windows refused to read ${_name(path, context)}.',
       detail:

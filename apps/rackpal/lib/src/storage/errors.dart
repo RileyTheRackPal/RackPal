@@ -338,6 +338,22 @@ final class OpenPermissionDenied extends OpenError {
   final String path;
 }
 
+/// The path is longer than Windows will open (DR-200).
+///
+/// Its own error rather than [OpenUnexpected] for DR-198's reason: the
+/// cause is known and so is the remedy, a shorter folder, and save has
+/// named the same condition all along (`SavePathTooLong`).
+final class OpenPathTooLong extends OpenError {
+  const OpenPathTooLong(this.path, {required this.length});
+
+  @override
+  final String path;
+
+  /// The path's length in characters, which the message states beside the
+  /// limit so the user can tell how much shorter it has to be.
+  final int length;
+}
+
 /// Another program holds the file open and would not share it (DR-198).
 ///
 /// A sharing violation: OneDrive or Dropbox syncing it, antivirus, a

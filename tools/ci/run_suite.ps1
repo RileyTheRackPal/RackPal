@@ -1654,7 +1654,12 @@ $SuiteFloors = @{
     # pack name from a newer build is kept; and the "full set" round trip
     # there now holds all eight fields (it held four) and compares the whole
     # saved form.
-    'rackpal_app'    = 1118
+    # 1120 at DR-200: +1 in storage/document_store_test.dart (a path too
+    # long, errno 3 with the folder reachable, is OpenPathTooLong with its
+    # length and keeps its entry; red with the arm mapped back to
+    # OpenUnexpected) and +1 in session/file_error_presenter_test.dart (the
+    # length, the limit save states, the remedy, OK only).
+    'rackpal_app'    = 1120
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
