@@ -89,6 +89,16 @@ final class SetConnectorAliasesCommand extends Command<RackDocument> {
   /// a `const` constructor: the seed catalog's entries are compile-time
   /// constants, and mutating one in place would throw on a shipped
   /// connector and succeed on an imported one.
+  /// Rebuilds the one def with new aliases and EVERY OTHER FIELD AS IT WAS.
+  ///
+  /// `matesWith` WAS MISSING from this list until #947, so editing a
+  /// connector's aliases emptied what it mates with, on the edit and not
+  /// only the undo, and the mating rule (`spring_back_rules.dart`) returns
+  /// nothing for a connector whose list is empty: a real mismatch stopped
+  /// being flagged. A field-by-field copy drops the next field added to
+  /// `ConnectorTypeDef` the same way, which is why
+  /// `connector_alias_test.dart` compares the whole def either side of an
+  /// edit rather than naming the fields it expects to survive.
   void _write(RackDocument doc, List<String> aliases) {
     final was = doc.registries.connectorTypes[id];
     if (was == null) return;
@@ -100,6 +110,7 @@ final class SetConnectorAliasesCommand extends Command<RackDocument> {
       footprintHeight: was.footprintHeight,
       pitch: was.pitch,
       genderApplies: was.genderApplies,
+      matesWith: was.matesWith,
     );
   }
 }
