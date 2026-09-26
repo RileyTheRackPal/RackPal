@@ -74,20 +74,50 @@ void main() {
     });
 
     test('round-trips a full set of preferences', () async {
+      // #947: THIS SAID "FULL" AND HELD FOUR OF EIGHT FIELDS. The coach
+      // marks, the port-column packs, the favourites and the undo depth
+      // were each added after it and none reached it; a line-coverage run
+      // found `_packsFromJson`'s body had never executed. It now sets every
+      // field and compares the WHOLE saved form, so the next field added to
+      // `AppPrefs.toJson` is covered without anybody remembering this test.
       final made = _make();
       const original = AppPrefs(
         window: WindowBounds(left: 120, top: 64, width: 1440, height: 900),
         maximized: true,
         displayId: r'\\.\DISPLAY2',
         lastSaveDirectory: r'C:\jobs',
+        coachMarksSeen: {'pin-to-plan', 'first-rack'},
+        portColumnPacks: {
+          'video.matrix': {'hdmi', 'hdbaset'},
+          'audio.dsp': {'dante'},
+        },
+        favouriteTemplateIds: {'tpl.amp', 'tpl.switch'},
+        undoDepth: 250,
       );
       await made.store.save(original);
 
       final loaded = await made.store.load();
+      expect(jsonEncode(loaded.toJson()), jsonEncode(original.toJson()));
       expect(loaded.window, original.window);
       expect(loaded.maximized, isTrue);
       expect(loaded.displayId, r'\\.\DISPLAY2');
       expect(loaded.lastSaveDirectory, r'C:\jobs');
+      expect(loaded.packsFor('video.matrix'), {'hdmi', 'hdbaset'});
+    });
+
+    test('a port-column pack name this build does not know is KEPT, so an '
+        "older build does not forget a newer one's choice", () async {
+      // `_packsFromJson`'s own promise, which nothing had exercised.
+      final made = _make();
+      await made.store.save(
+        const AppPrefs(
+          portColumnPacks: {
+            'video.matrix': {'hdmi', 'from-a-newer-build'},
+          },
+        ),
+      );
+      final loaded = await made.store.load();
+      expect(loaded.packsFor('video.matrix'), contains('from-a-newer-build'));
     });
 
     group('is written atomically', () {

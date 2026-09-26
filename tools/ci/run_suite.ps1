@@ -1650,7 +1650,11 @@ $SuiteFloors = @{
     # session/device_template_io_test.dart, one refused file per cause, each
     # asserting the TITLE the ruling gives it (it was "That is not a device
     # library" for all of them, including files that are one).
-    'rackpal_app'    = 1117
+    # 1118 at `#947`: +1 in storage/prefs_store_test.dart, a port-column
+    # pack name from a newer build is kept; and the "full set" round trip
+    # there now holds all eight fields (it held four) and compares the whole
+    # saved form.
+    'rackpal_app'    = 1118
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
