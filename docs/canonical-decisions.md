@@ -22509,6 +22509,32 @@ person looking for a different file when theirs is fine and merely large, or mer
 
 **Scope.** No scope change.
 
+### 11.199 DR-200 · A path too long for Windows is named when a file will not open
+
+**The question.** Found by `#947`'s read of the storage layer, and the same shape as DR-198. On
+open, `StorageFailure.pathTooLong` fell through to `OpenUnexpected`, so a project in a deep OneDrive
+or SharePoint folder read *"Something went wrong that RackPal does not have a specific explanation
+for."* Save has named the condition all along (`SavePathTooLong`, stating both numbers). Dart adds
+no long-path prefix on Windows, so the case is reachable, not theoretical. Put to the user on
+2026-09-26 with three priced options: name it with both numbers, OK only; name it without numbers;
+leave it.
+
+**11.199.1 RULED: NAMED, WITH BOTH NUMBERS, OK ONLY.** Settled by the user, choosing the recommended
+option; the reasoning is the author's, accepted without addition. A read refused because the path
+is too long reports `OpenPathTooLong`, whose dialog says the path is too long for Windows, gives its
+length and the limit, says to move it to a shorter folder or shorten the folder names and open it
+again, and says nothing was changed on disk. OK is its only action; the recents entry is kept.
+
+**11.199.2 A CORRECTION TO THE QUESTION AS PUT.** The option's example said Windows allows *260*.
+The limit used is `kWindowsMaxPath`, **259**, the same constant `SavePathTooLong` states, so open and
+save give the same number for the same folder. The example was the author's slip, not the user's
+choice.
+
+**11.199.3 WHY.** The remedy is the user's to perform, and *"too long"* without a number cannot
+tell them how much shorter it has to be, which is the argument save's own message was written on.
+
+**Scope.** No scope change.
+
 ---
 
 ## 12. Superseded rulings
