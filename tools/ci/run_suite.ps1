@@ -939,7 +939,13 @@ $SuiteFloors = @{
     # to core at #931 and left its tests behind, so core covered it at 1%;
     # with wire_trace_test.dart (28) and wire_trace_layering_test.dart (6)
     # beside it, 97%. rackpal_ui fell by the same 34 in the same commit.
-    'rackpal_core'   = 5002
+    # 5004 at `#947`: +2 in commands/connector_alias_test.dart, an alias
+    # edit changes the aliases and NOTHING ELSE, compared as the saved def.
+    # Both red with `matesWith` dropped, which is what the command did.
+    # 5005 at `#947`: +1 in commands/pathway_commands_test.dart, a pathway
+    # removal's undo is byte-identical, cable meta included. Red with the
+    # meta restore removed, which is what the command did.
+    'rackpal_core'   = 5005
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

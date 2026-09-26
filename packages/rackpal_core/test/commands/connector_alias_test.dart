@@ -179,4 +179,52 @@ void main() {
       );
     });
   });
+
+  // #947. `_write` rebuilt the def field by field and left `matesWith` out,
+  // so an alias edit emptied what the connector mates with and the mating
+  // rule went quiet for it. Compared as the SAVED FORM minus `aliases`, so
+  // the next field added to `ConnectorTypeDef` and forgotten in `_write`
+  // fails here too, rather than a list of the fields this test knew about.
+  group('an alias edit changes the aliases and NOTHING ELSE', () {
+    Map<String, Object?> savedDef(RackDocument doc, ConnectorTypeId id) {
+      final tree = const JsonDocumentCodec().encodeToJsonTree(doc);
+      final document = tree['document']! as Map<String, Object?>;
+      final registries = document['registries']! as Map<String, Object?>;
+      final connectors = registries['connectors']! as Map<String, Object?>;
+      return Map.of(connectors[id.v]! as Map<String, Object?>)
+        ..remove('aliases');
+    }
+
+    test('what an XLR mates with survives adding a word for it', () {
+      final doc = _doc();
+      expect(
+        doc.registries.connectorTypes[_xlr]!.matesWith,
+        isNotEmpty,
+        reason: 'the premise: a seeded connector that mates with something',
+      );
+      final before = savedDef(doc, _xlr);
+
+      SetConnectorAliasesCommand(
+        id: _xlr,
+        from: _aliasesOf(doc, _xlr),
+        to: [..._aliasesOf(doc, _xlr), 'mic cable end'],
+      ).apply(doc);
+
+      expect(_aliasesOf(doc, _xlr), contains('mic cable end'));
+      expect(savedDef(doc, _xlr), before);
+    });
+
+    test('and so does its undo', () {
+      final doc = _doc();
+      final before = savedDef(doc, _xlr);
+      SetConnectorAliasesCommand(
+          id: _xlr,
+          from: _aliasesOf(doc, _xlr),
+          to: [..._aliasesOf(doc, _xlr), 'mic cable end'],
+        )
+        ..apply(doc)
+        ..revert(doc);
+      expect(savedDef(doc, _xlr), before);
+    });
+  });
 }
