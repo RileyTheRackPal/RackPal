@@ -13,6 +13,8 @@
 // is that runs through it go back to having no recorded route, and the
 // reference is CLEARED rather than left dangling, because a dangling
 // `pathwayId` prints a `PATH` cell identical to "nobody said" (G4).
+import 'dart:convert';
+
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 
@@ -216,6 +218,30 @@ void main() {
       expect(doc.pathways[pathway.id]!.name, 'PW-LR-1');
       expect(doc.links[a]!.pathwayId, pathway.id);
       expect(doc.links[b]!.pathwayId, pathway.id);
+    });
+
+    test('and the undo is byte-identical, cable meta included (CR-117)', () {
+      // #947. The case above checks every `pathwayId` came back, and passed
+      // while undo left each of those cables stamped as edited by
+      // `removePathway`, one revision up: apply touched their meta and
+      // revert never restored it. Asserting the saved bytes is what sees
+      // the fields a test did not think to name.
+      final doc = _doc();
+      final pathway = _add(doc, 'PW-LR-1')..apply(doc);
+      _link(doc, 'W001', pathwayId: pathway.id);
+      _link(doc, 'W002', pathwayId: pathway.id);
+      _link(doc, 'W003');
+      const codec = JsonDocumentCodec();
+      final before = utf8.decode(codec.write(doc));
+
+      final remove = RemovePathwayCommand(id: pathway.id, now: _later)
+        ..apply(doc);
+      final applied = utf8.decode(codec.write(doc));
+      remove.revert(doc);
+      expect(utf8.decode(codec.write(doc)), before);
+
+      remove.apply(doc);
+      expect(utf8.decode(codec.write(doc)), applied, reason: 'redo');
     });
 
     test('it declares wires, where creating one does not', () {

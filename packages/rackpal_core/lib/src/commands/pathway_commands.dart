@@ -184,7 +184,17 @@ final class RemovePathwayCommand extends Command<RackDocument> {
   /// back. A set would lose nothing today, but a list keeps the restore
   /// deterministic if the same link is ever cleared twice by a merged
   /// command.
-  final List<Uuid> _clearedLinks = [];
+  /// Each cleared link's meta triple as it was BEFORE `apply` touched it,
+  /// in the order `apply` met them.
+  ///
+  /// `revert` puts it back with `restoreTo`, because a second `touch`
+  /// cannot produce the prior triple (see `EntityMeta.restoreTo`). Until
+  /// #947 revert restored the `pathwayId` and not the meta, so undoing a
+  /// pathway removal left every cable through it stamped as edited by
+  /// `removePathway`, one revision higher. The round-trip fuzz never
+  /// generates this command; `epoch_mask_test.dart`'s per-command
+  /// `apply; revert; apply` over `whole_house.rppj` found it.
+  final Map<Uuid, ({DateTime at, String by, int revision})> _cleared = {};
 
   @override
   LabelKey get label => LabelKey.removePathway;
@@ -197,15 +207,20 @@ final class RemovePathwayCommand extends Command<RackDocument> {
       EpochMask.structure | EpochMask.wires | EpochMask.meta;
 
   @override
-  Iterable<Uuid> get affects => [id, ..._clearedLinks];
+  Iterable<Uuid> get affects => [id, ..._cleared.keys];
 
   @override
   bool apply(RackDocument doc) {
     _removed = doc.pathways.remove(id);
-    _clearedLinks.clear();
+    _cleared.clear();
     for (final link in doc.links.values) {
       if (link.pathwayId == id) {
-        _clearedLinks.add(link.id);
+        final meta = link.meta;
+        _cleared[link.id] = (
+          at: meta.updatedAt,
+          by: meta.updatedBy,
+          revision: meta.localRevision,
+        );
         link
           ..pathwayId = null
           ..meta.touch(now, 'removePathway');
@@ -218,8 +233,15 @@ final class RemovePathwayCommand extends Command<RackDocument> {
   void revert(RackDocument doc) {
     final pathway = _removed;
     if (pathway != null) doc.pathways[id] = pathway;
-    for (final linkId in _clearedLinks) {
-      doc.links[linkId]?.pathwayId = id;
+    for (final MapEntry(key: linkId, value: was) in _cleared.entries) {
+      final link = doc.links[linkId];
+      if (link == null) continue;
+      link.pathwayId = id;
+      link.meta.restoreTo(
+        updatedAt: was.at,
+        updatedBy: was.by,
+        localRevision: was.revision,
+      );
     }
   }
 }
