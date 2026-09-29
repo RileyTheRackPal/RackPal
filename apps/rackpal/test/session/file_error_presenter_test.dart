@@ -90,6 +90,7 @@ final List<OpenError> _allOpenErrors = [
   const OpenUnreachable(r'\\NAS\jobs\Smith.rmpj'),
   const OpenPermissionDenied(r'C:\jobs\Smith.rmpj'),
   const OpenLocked(r'C:\jobs\Smith.rmpj'),
+  const OpenPathTooLong(r'C:\jobs\Smith.rmpj', length: 274),
   const OpenTooLarge(
     r'C:\jobs\huge.rmpj',
     bytes: 199229440,
@@ -191,6 +192,20 @@ void main() {
         isNot(contains('does not have a specific explanation')),
         reason: 'the sentence DR-198 replaced',
       );
+      expect(_ids(view), [FileErrorActionId.ok]);
+    });
+  });
+
+  group('a path too long for Windows, on open (DR-200)', () {
+    test('states the length AND the limit, the one save states, OK only', () {
+      final view = _open(
+        const OpenPathTooLong(r'C:\jobs\Smith.rmpj', length: 274),
+      );
+      expect(view.title, "Smith.rmpj's path is too long for Windows.");
+      expect(view.detail, contains('274 characters'));
+      expect(view.detail, contains('the limit is $kWindowsMaxPath'));
+      expect(view.detail, contains('then open it again'));
+      expect(view.detail, isNot(contains('does not have a specific')));
       expect(_ids(view), [FileErrorActionId.ok]);
     });
   });

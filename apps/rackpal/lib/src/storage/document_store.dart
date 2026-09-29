@@ -428,9 +428,10 @@ final class DocumentStore {
       StorageFailure.readOnlyTarget => OpenPermissionDenied(path),
       // DR-198: named, because the cause and the remedy are both known.
       StorageFailure.locked => OpenLocked(path),
-      StorageFailure.pathTooLong ||
-      StorageFailure.diskFull ||
-      StorageFailure.unknown => OpenUnexpected(
+      // DR-200: the same, a second time. Dart adds no long-path prefix on
+      // Windows, so a deep OneDrive folder reaches this.
+      StorageFailure.pathTooLong => OpenPathTooLong(path, length: path.length),
+      StorageFailure.diskFull || StorageFailure.unknown => OpenUnexpected(
         path,
         cause: error,
         stackTrace: stackTrace,

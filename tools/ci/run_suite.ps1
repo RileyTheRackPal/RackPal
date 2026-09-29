@@ -945,7 +945,12 @@ $SuiteFloors = @{
     # 5005 at `#947`: +1 in commands/pathway_commands_test.dart, a pathway
     # removal's undo is byte-identical, cable meta included. Red with the
     # meta restore removed, which is what the command did.
-    'rackpal_core'   = 5005
+    # 5119 at `#947`: +114 in persistence/g4_wire_test.dart. Every
+    # inspector field in SetEntityPropertyCommand's seven tables, on real
+    # entities from whole_house.rppj: cleared, it writes no JSON null and
+    # re-saves byte for byte (31 fields); zeroed, the 0 survives (12). Plus
+    # a counting floor and a hand-edited explicit null read as unknown.
+    'rackpal_core'   = 5119
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1656,7 +1661,16 @@ $SuiteFloors = @{
     # session/device_template_io_test.dart, one refused file per cause, each
     # asserting the TITLE the ruling gives it (it was "That is not a device
     # library" for all of them, including files that are one).
-    'rackpal_app'    = 1117
+    # 1118 at `#947`: +1 in storage/prefs_store_test.dart, a port-column
+    # pack name from a newer build is kept; and the "full set" round trip
+    # there now holds all eight fields (it held four) and compares the whole
+    # saved form.
+    # 1120 at DR-200: +1 in storage/document_store_test.dart (a path too
+    # long, errno 3 with the folder reachable, is OpenPathTooLong with its
+    # length and keeps its entry; red with the arm mapped back to
+    # OpenUnexpected) and +1 in session/file_error_presenter_test.dart (the
+    # length, the limit save states, the remedy, OK only).
+    'rackpal_app'    = 1120
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

@@ -277,6 +277,7 @@ fuller treatment; nothing here replaces them.
 | DR-197 | **A CSV import offers one new cable type per id, and lists every spelling.** Two spellings deriving one id showed two boxes and made one type. The user chose the recommended option: **one row per id**, named by the first spelling in sheet order, every spelling kept as an alias, declined together | canon §11.196 |
 | DR-198 | **A file another program has locked is named as locked when it will not open.** A sharing violation on open read as *"something went wrong"*. The user chose the recommended option: its own error, `OpenLocked`, naming the usual holders and the remedy, **OK only**, recents kept | canon §11.197 |
 | DR-199 | **An import refusal's title names the cause.** Every device library and template refusal was titled *"That is not a device library"*, including a file that is one but too large or from a newer RackPal. The user chose the recommended option: **a title per cause** (not that kind of file; needs a newer RackPal; too large to import; could not be read), details unchanged | canon §11.198 |
+| DR-200 | **A path too long for Windows is named when a file will not open.** It read *"something went wrong"* on open while save has named it all along. The user chose the recommended option: `OpenPathTooLong`, **both numbers** (length and `kWindowsMaxPath`, 259, as save states it), OK only, recents kept | canon §11.199 |
 
 See also [Canonical decisions](canonical-decisions.md), normative, plus
 [Overview](00-overview.md), [Data model](02-data-model.md),

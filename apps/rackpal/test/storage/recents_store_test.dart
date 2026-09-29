@@ -537,6 +537,7 @@ void main() {
       final keep = <OpenError>[
         const OpenPermissionDenied('x'),
         const OpenLocked('x'),
+        const OpenPathTooLong('x', length: 300),
         const OpenCorrupt('x', detail: 'truncated'),
         const OpenTooLarge('x', bytes: 1, limit: 0),
         const OpenTooDeeplyNested('x', depth: 99, limit: 64),
