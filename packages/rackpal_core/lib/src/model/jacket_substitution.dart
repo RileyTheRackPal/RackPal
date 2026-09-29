@@ -296,19 +296,6 @@ const Map<(String, String), bool> _crossFamily = {
   ('CL2', 'CL3'): true,
 };
 
-/// The plenum listing an article requires, for a rule that has a pathway
-/// and needs to ask a question about it.
-///
-/// Null for an article this file has no plenum listing for, which cannot
-/// happen today and is left as a real answer rather than an assertion.
-JacketListing? plenumListingFor(JacketArticle article) => switch (article) {
-  JacketArticle.communications => JacketListing.cmp,
-  JacketArticle.classTwoThree => JacketListing.cl2p,
-  JacketArticle.fireAlarm => JacketListing.fplp,
-  JacketArticle.opticalFibre => JacketListing.ofnp,
-  JacketArticle.coax => JacketListing.catvp,
-};
-
 /// Whether [listing] is rated for a plenum, judged inside its own article.
 ///
 /// THE QUESTION `CODE-002` ACTUALLY ASKS. It never needs to compare two
@@ -317,12 +304,3 @@ JacketListing? plenumListingFor(JacketArticle article) => switch (article) {
 /// this one has no unknown: every listing knows its own use.
 bool isPlenumRated(JacketListing listing) =>
     classifyJacketListing(listing).use == JacketUse.plenum;
-
-/// Whether [listing] is rated for a riser, judged inside its own article.
-///
-/// Plenum reaches riser, which is the substitution rule stated for the one
-/// pair a pathway rule is likely to ask about.
-bool isRiserRated(JacketListing listing) {
-  final use = classifyJacketListing(listing).use;
-  return use == JacketUse.riser || use == JacketUse.plenum;
-}

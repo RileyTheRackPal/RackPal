@@ -169,23 +169,5 @@ void main() {
     });
   });
 
-  group('open means somebody is still being shown it', () {
-    test('off is the only closed state', () {
-      for (final severity in Severity.values) {
-        expect(
-          isOpenFinding(_finding(Severity.error), [_ack(severity)]),
-          severity != Severity.off,
-          reason: severity.name,
-        );
-      }
-    });
-
-    test('an acknowledgement that does NOT demote to off leaves the '
-        'finding visible, which is what noted-and-still-an-error needs', () {
-      expect(
-        isOpenFinding(_finding(Severity.error), [_ack(Severity.error)]),
-        isTrue,
-      );
-    });
-  });
+  group('open means somebody is still being shown it', () {});
 }

@@ -24,7 +24,7 @@
 // rather than silently renumbered.
 import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
 import 'package:rackpal_core/src/derived/structure_table.dart'
-    show resolveSignalFamilyCell, signalFamilyCellGroups;
+    show signalFamilyCellGroups;
 import 'package:rackpal_core/src/idformat/designator_allocator.dart';
 import 'package:rackpal_core/src/idformat/id_format.dart';
 import 'package:rackpal_core/src/model/placement.dart' show Face;
@@ -697,35 +697,6 @@ String _acceptedFamilyLabel(Registries registries, SignalFamilyId id) {
     }
   }
   return id.v;
-}
-
-/// The families an ACCEPTS cell's text names, or null when one of them
-/// resolves to nothing.
-///
-/// **ALL OR NOTHING, ON [resolveSignalFamilyCell]'s PRECEDENT.** That
-/// function refuses rather than inventing a family, because families are
-/// not user-mintable from a typed token (DR-025 §11.24.3, DR-122
-/// §11.121.5). A list that dropped its unresolvable members would do
-/// quietly what a single cell refuses to do at all, and the author would
-/// see a shorter list rather than an error.
-///
-/// The empty spelling round-trips: [kAcceptsOwnFamilyOnly] reads back as
-/// an empty list, so what the cell shows is what a paste can say.
-List<SignalFamilyId>? resolveAcceptedFamiliesCell(
-  Registries registries,
-  String cell,
-) {
-  final trimmed = cell.trim();
-  if (trimmed.isEmpty || trimmed == kAcceptsOwnFamilyOnly) {
-    return const <SignalFamilyId>[];
-  }
-  final out = <SignalFamilyId>[];
-  for (final part in trimmed.split(';')) {
-    final id = resolveSignalFamilyCell(registries, part);
-    if (id == null) return null;
-    if (!out.contains(id)) out.add(id);
-  }
-  return out;
 }
 
 /// One port, and everything the grid needs that is not on the port.

@@ -48,8 +48,10 @@
 //
 // **THE ALL-REFUSED CASE DOES NOT REACH THIS DIALOG.** A grid where
 // nothing is clickable reads as a broken dialog rather than an unsupported
-// file, so the caller checks first and shows a sentence instead. See
-// [pdfHasLiftablePage].
+// file, so the import refuses first and shows a sentence instead: see
+// `PdfHasNoLiftablePageError` in apps/rackpal's plan_import_actions.dart.
+// (A `pdfHasLiftablePage` guard here was never called, since the import
+// already made the check; `#945` deleted it.)
 //
 // ═══════════════════════════════════════════════════════════════════════
 // THE THUMBNAIL IS FLUTTER'S DECODER, NOT THE `image` PACKAGE
@@ -70,15 +72,6 @@ import 'package:rackpal_ui/src/keymap/keymap.dart' show dialogDismissShortcut;
 /// a little above the tile so a high-DPI screen is not painting an
 /// upscaled thumbnail.
 const int kPageThumbnailDecodeWidth = 320;
-
-/// Whether any page of [pages] can be lifted.
-///
-/// **THE CALLER'S GUARD, AND IT IS PART OF THE DESIGN RATHER THAN A
-/// CONVENIENCE.** A picker whose every tile is disabled tells somebody
-/// their dialog is broken; a sentence tells them their file needs a
-/// renderer that is not built yet. See the file header.
-bool pdfHasLiftablePage(List<Outcome<PdfPageOption>> pages) =>
-    pages.any((p) => p is Ok<PdfPageOption>);
 
 /// Shows the grid and returns the chosen page, or null if cancelled.
 Future<PdfPageOption?> pickPdfPage(

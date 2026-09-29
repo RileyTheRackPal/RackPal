@@ -16,24 +16,6 @@ void main() {
         expect(c.family, isNotEmpty, reason: '${listing.name} has no family');
       }
     });
-
-    test('each article carries at least one plenum listing', () {
-      for (final article in JacketArticle.values) {
-        expect(
-          plenumListingFor(article),
-          isNotNull,
-          reason: '${article.name} has no plenum listing',
-        );
-      }
-    });
-
-    test('the plenum listing an article names IS plenum-rated', () {
-      // The two halves of the file agreeing, which is the sort of thing
-      // that silently stops being true.
-      for (final article in JacketArticle.values) {
-        expect(isPlenumRated(plenumListingFor(article)!), isTrue);
-      }
-    });
   });
 
   group('a higher listing stands in for a lower one, within its family', () {
@@ -202,13 +184,6 @@ void main() {
         JacketListing.values.map((l) => l.name),
         isNot(contains('lszh')),
       );
-    });
-
-    test('isRiserRated accepts plenum too, since plenum reaches riser', () {
-      expect(isRiserRated(JacketListing.cmr), isTrue);
-      expect(isRiserRated(JacketListing.cmp), isTrue);
-      expect(isRiserRated(JacketListing.cm), isFalse);
-      expect(isRiserRated(JacketListing.cmx), isFalse);
     });
   });
 }

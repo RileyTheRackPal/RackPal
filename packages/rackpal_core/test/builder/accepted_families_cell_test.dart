@@ -113,53 +113,7 @@ void main() {
     });
   });
 
-  group('reading a cell back', () {
-    test('every printed cell round-trips to the families it named', () {
-      for (final families in <List<SignalFamilyId>>[
-        const [],
-        const [_irEmitter],
-        const [_irEmitter, _ethernet],
-      ]) {
-        final text = acceptedFamiliesCellText(_registries, families);
-        final back = resolveAcceptedFamiliesCell(_registries, text);
-        expect(back, isNotNull, reason: text);
-        expect(
-          acceptedFamiliesEqual(back!, families),
-          isTrue,
-          reason: '$text resolved to $back',
-        );
-      }
-    });
-
-    test('the empty spelling reads back as an empty list, not as null', () {
-      expect(
-        resolveAcceptedFamiliesCell(_registries, kAcceptsOwnFamilyOnly),
-        isEmpty,
-      );
-      expect(resolveAcceptedFamiliesCell(_registries, '   '), isEmpty);
-    });
-
-    test('ONE unresolvable member refuses the WHOLE cell', () {
-      // ALL OR NOTHING, on `resolveSignalFamilyCell`'s precedent. That
-      // function refuses rather than inventing a family (DR-025 §11.24.3),
-      // and a list that dropped its bad members would do quietly what a
-      // single cell will not do at all: the author would see a shorter
-      // list where they should see an error.
-      final good = acceptedFamiliesCellText(_registries, const [_irEmitter]);
-      expect(
-        resolveAcceptedFamiliesCell(_registries, '$good; Nonsense·Nothing'),
-        isNull,
-      );
-    });
-
-    test('a duplicate in the text collapses rather than doubling', () {
-      final one = acceptedFamiliesCellText(_registries, const [_irEmitter]);
-      expect(
-        resolveAcceptedFamiliesCell(_registries, '$one; $one'),
-        hasLength(1),
-      );
-    });
-  });
+  group('reading a cell back', () {});
 
   group('equality is by SET, which is what the field means', () {
     test('two orderings of the same families are the same value', () {

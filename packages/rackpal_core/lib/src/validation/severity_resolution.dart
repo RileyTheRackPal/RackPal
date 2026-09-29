@@ -67,13 +67,3 @@ Severity effectiveSeverity(
 ) =>
     acknowledgementFor(finding, acknowledgements)?.demotedTo ??
     finding.severity;
-
-/// Whether [finding] is still OPEN: something a person is being shown
-/// rather than something already dealt with.
-///
-/// `Severity.off` is the only closed state, and an acknowledgement that
-/// demotes to anything else deliberately leaves the finding visible. That
-/// is the case an inspector needs: *noted, justified, and still an
-/// error*. `T0.02` prints the reason either way (CR-022).
-bool isOpenFinding(Finding finding, Iterable<AckedFinding> acknowledgements) =>
-    effectiveSeverity(finding, acknowledgements) != Severity.off;

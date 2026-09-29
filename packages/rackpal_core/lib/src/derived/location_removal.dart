@@ -30,10 +30,10 @@
 // ═══════════════════════════════════════════════════════════════════════
 // A four-conductor home run to a wall plate holds four `PlaceEndpoint`s in
 // one room. That is ONE cable to the person reading the dialog: one thing
-// they pull, one row on the schedule. `linksOnPorts` makes the identical
-// call about a link touching one jack twice, and for the identical reason
-// — a count in the wrong unit is a dialog that says four where an
-// installer sees one.
+// they pull, one row on the schedule. Any count of cables makes the same
+// call about a link touching one jack twice, for the same reason: a count
+// in the wrong unit is a dialog that says four where an installer sees
+// one.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // WHAT THIS DOES NOT COUNT, BECAUSE IT DOES NOT GO

@@ -50,12 +50,3 @@ const Len kFoot = Len(12 * Len.nmPerInch);
 /// `pointsForLen(kRackUnit) == 126.0` and `pointsForLen(Len(482_600_000))
 /// == 1368.0` (the EIA-19 panel width), both exactly.
 double pointsForLen(Len l) => l.nm * kPdfPointsPerInch / Len.nmPerInch;
-
-/// The inverse of [pointsForLen], rounded to the nearest nanometre.
-///
-/// Only for turning a measured paper distance back into a physical one (a
-/// diagnostic direction — the drawing pipeline never needs it). Rounding is
-/// lossy by construction: not every point value lands on an integer
-/// nanometre.
-Len lenForPoints(double points) =>
-    Len((points * Len.nmPerInch / kPdfPointsPerInch).round());

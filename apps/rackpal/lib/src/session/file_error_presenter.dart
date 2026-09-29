@@ -553,14 +553,6 @@ const String kAutosaveStoppedWarning =
     'data folder, so unsaved work is no longer being protected. Save your '
     'project somewhere you can write to.';
 
-/// Whether an open failure is one the app should describe by opening a
-/// sibling backup rather than by stopping.
-bool offersBackup(OpenError error) => switch (error) {
-  OpenNotFound(:final backup) => backup != null,
-  OpenCorrupt(:final backup) => backup != null,
-  _ => false,
-};
-
 /// The `.bak` an [OpenError] pointed at, or null.
 BackupFacts? backupOf(OpenError error) => switch (error) {
   OpenNotFound(:final backup) => backup,

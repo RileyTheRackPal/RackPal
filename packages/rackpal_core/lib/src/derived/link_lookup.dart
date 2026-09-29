@@ -44,21 +44,6 @@ List<Uuid> linksOnPort(RackDocument doc, Uuid portId) => <Uuid>[
     if (_touches(entry.value.conductors, portId)) entry.key,
 ];
 
-/// Every `Link` with a conductor end on any of [portIds], in document
-/// order, each appearing once.
-///
-/// Not [linksOnPort] in a loop: a cable between two pins of ONE port set —
-/// a loopback, or the second conductor of a stereo pair landing back on the
-/// same device — would come back twice, and a caller counting cables to put
-/// a number in a sentence would say two where an installer pulls one.
-List<Uuid> linksOnPorts(RackDocument doc, Set<Uuid> portIds) {
-  if (portIds.isEmpty) return const <Uuid>[];
-  return <Uuid>[
-    for (final entry in doc.links.entries)
-      if (_touchesAny(entry.value.conductors, portIds)) entry.key,
-  ];
-}
-
 /// The `Net` a `RemoveLinkCommand` for [linkId] may take with it, or null
 /// when it must take none.
 ///
@@ -109,15 +94,6 @@ bool _touches(List<Conductor> conductors, Uuid portId) {
   for (final c in conductors) {
     for (final end in [c.from, c.to]) {
       if (end is PortEndpoint && end.portId == portId) return true;
-    }
-  }
-  return false;
-}
-
-bool _touchesAny(List<Conductor> conductors, Set<Uuid> portIds) {
-  for (final c in conductors) {
-    for (final end in [c.from, c.to]) {
-      if (end is PortEndpoint && portIds.contains(end.portId)) return true;
     }
   }
   return false;
