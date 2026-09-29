@@ -176,39 +176,8 @@ Future<Outcome<Uint8List>> readImportedBytes({
   }
 }
 
-/// Reads the floorplan at [path] and turns it into an underlay.
-///
-/// Separate from the picking so a caller with bytes already in hand (a
-/// test, a drag and drop, a future PDF page picker handing over a
-/// rasterised page) reaches the identical checks. One implementation
-/// means the hardening cannot differ between the route the user usually
-/// takes and the routes they take on a bad day, which is
-/// `DocumentStore.decodeBytes`'s reason one layer down.
-Future<Outcome<ImportedFloorplan>> importFloorplanFrom({
-  required FileStore fs,
-  required String path,
-  required Uuid id,
-  required String name,
-  required FracIndex order,
-  required EntityMeta meta,
-  Uuid? locationId,
-  int maxBytes = kMaxImageBytes,
-}) async {
-  final read = await readImportedBytes(fs: fs, path: path, maxBytes: maxBytes);
-  if (read case Err(:final error)) return Err(error);
-  final bytes = (read as Ok<Uint8List>).value;
-
-  return importFloorplanBytes(
-    bytes: bytes,
-    id: id,
-    name: name,
-    order: order,
-    meta: meta,
-    locationId: locationId,
-  );
-}
-
-/// The half that has bytes and no file system. See [importFloorplanFrom].
+/// The half that has bytes and no file system; [readImportedBytes] is the
+/// other, and `FloorplanIo` composes the two.
 Outcome<ImportedFloorplan> importFloorplanBytes({
   required Uint8List bytes,
   required Uuid id,
@@ -561,9 +530,12 @@ Outcome<ImportedFloorplan> importRenderedPdfPage({
 /// `importFloorplanFrom`, `importFloorplanBytes`, `readPdfPages`,
 /// `importLiftedPdfPage` and `PdfPagePickerDialog` had **zero call sites**
 /// in `lib/`. So `AddPlanUnderlayCommand` had no producer and no project
-/// could hold a floorplan. (All but one gained a caller through this
-/// class. `pickAndImportFloorplan` never did, since this class calls
-/// `importFloorplanFrom` itself, and `#945` deleted it.)
+/// could hold a floorplan. (All but two gained a caller through this
+/// class. `pickAndImportFloorplan` and `importFloorplanFrom` never did:
+/// this class reads with `readImportedBytes` and decodes with
+/// `importFloorplanBytes` itself, so `#945` deleted both. It first deleted
+/// only the one, and said here that this class called the other; that was
+/// wrong, and a second census run found `importFloorplanFrom` orphaned.)
 ///
 /// This class is the shape the three existing import/export families
 /// already use: it holds the picker and the file store, takes the dialog
