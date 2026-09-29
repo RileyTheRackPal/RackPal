@@ -43,6 +43,7 @@
 // the snapshot it already stores IS the resolved half. Nothing in the
 // codec moves, and `write(read(bytes)) == bytes` is unaffected.
 
+import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/catalog/catalog_field.dart';
 import 'package:rackpal_core/src/catalog/catalog_video.dart';
 import 'package:rackpal_core/src/model/template.dart';
@@ -219,6 +220,10 @@ List<ControlBus> busesFor(String catalogId) => switch (catalogId) {
 /// Null is REACHABLE AND NORMAL, on [resolveTemplateRole]'s reasoning: a
 /// caller asking a patch panel for its Vantage half is asking a
 /// reasonable question and getting a true answer.
+///
+/// Only tests call this (#945): it is a handle on live logic, not logic of its
+/// own, so it stays and the analyzer keeps it out of lib/.
+@visibleForTesting
 TemplateBody? resolveTemplateBus(
   Map<String, TemplateBody> catalog,
   String catalogId,

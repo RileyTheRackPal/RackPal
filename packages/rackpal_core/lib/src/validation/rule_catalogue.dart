@@ -34,6 +34,7 @@
 // rewrite them. It carries their rows and a test binds the two, which is
 // the arrangement that keeps working code working and still fails when
 // the two drift.
+import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/enums.dart' show Severity;
 
 /// docs/02 §5's three tiers, in the frame CR-017 sets: *"the gesture may
@@ -708,6 +709,10 @@ final Map<String, RuleMeta> kRulesById = <String, RuleMeta>{
 };
 
 /// The rules of one tier, in catalogue order.
+///
+/// Only tests call this (#945): it is a handle on live logic, not logic of its
+/// own, so it stays and the analyzer keeps it out of lib/.
+@visibleForTesting
 List<RuleMeta> rulesInTier(RuleTier tier) => <RuleMeta>[
   for (final rule in kRuleCatalogue)
     if (rule.tier == tier) rule,

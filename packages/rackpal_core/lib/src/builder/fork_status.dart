@@ -194,6 +194,10 @@ final class ForkAudit {
 }
 
 /// Resolves every entry of [templates] (see [resolveForkStatus]).
+///
+/// Only tests call this (#945): it is a handle on live logic, not logic of its
+/// own, so it stays and the analyzer keeps it out of lib/.
+@visibleForTesting
 ForkAudit auditForks(
   Map<String, TemplateBody> templates, {
   required Map<TemplateId, int> sourceVersions,

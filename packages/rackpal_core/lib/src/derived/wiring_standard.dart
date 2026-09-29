@@ -151,6 +151,9 @@ bool wiringStandardIsException(RackDocument doc, Link link) {
 /// `T5.01`'s sheet condition is "this list is not empty", which is a
 /// question M6 will ask of the document and not of one cable, so it is
 /// answered here beside the predicate rather than restated there.
+///
+/// NO CALLER YET (#945), and one is scheduled: M6-E's T5.01 sheet (#331) is the
+/// question it was written to answer.
 List<Link> wiringStandardExceptions(RackDocument doc) => <Link>[
   for (final link in doc.links.values)
     if (wiringStandardIsException(doc, link)) link,

@@ -34,6 +34,7 @@
 import 'dart:isolate';
 import 'dart:typed_data';
 
+import 'package:meta/meta.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 
 /// Plain JSON tree in, canonical bytes out.
@@ -60,9 +61,17 @@ Future<Outcome<JsonMap>> isolateDeserializer(Uint8List bytes) =>
 /// exercises [isolateSerializer] and asserts it produces byte-identical
 /// output to this — that is the "the isolate really works" proof, and it
 /// costs one spawn instead of forty.
+///
+/// Only tests call this (#945): it is a handle on live logic, not logic of its
+/// own, so it stays and the analyzer keeps it out of lib/.
+@visibleForTesting
 Future<Uint8List> inlineSerializer(JsonMap tree) async =>
     encodeJsonTreeBytes(tree);
 
 /// Synchronous deserializer for tests. See [inlineSerializer].
+///
+/// Only tests call this (#945): it is a handle on live logic, not logic of its
+/// own, so it stays and the analyzer keeps it out of lib/.
+@visibleForTesting
 Future<Outcome<JsonMap>> inlineDeserializer(Uint8List bytes) async =>
     parseDocumentJsonTree(bytes);
