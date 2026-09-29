@@ -326,21 +326,4 @@ void main() {
       expect(find.text('Page 3'), findsOneWidget);
     });
   });
-
-  group('pdfHasLiftablePage, the caller guard', () {
-    test('is false when every page is refused', () {
-      expect(
-        pdfHasLiftablePage([refused(0, 'a'), refused(1, 'b')]),
-        isFalse,
-      );
-    });
-
-    test('is true when any page can be lifted', () {
-      expect(pdfHasLiftablePage([refused(0, 'a'), liftable(1)]), isTrue);
-    });
-
-    test('is false for no pages at all', () {
-      expect(pdfHasLiftablePage(const []), isFalse);
-    });
-  });
 }

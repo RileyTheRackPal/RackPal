@@ -417,27 +417,23 @@ void main() {
     });
   });
 
-  group('offersBackup / backupOf', () {
-    test('only the two cases a backup can help with', () {
+  group('backupOf', () {
+    // #945 deleted `offersBackup`, which nothing in the product called; the
+    // session decides with `backupOf` (session_controller.dart). That test
+    // also held `backupOf`'s only assertion, so this restores it, and
+    // widens it to the cases the deleted one covered through the other.
+    test('returns the .bak for the two cases a backup can help with, and '
+        'nothing otherwise', () {
       expect(
-        offersBackup(OpenNotFound(r'C:\a.rmpj', backup: _backup)),
-        isTrue,
-      );
-      expect(
-        offersBackup(
-          OpenCorrupt(r'C:\a.rmpj', detail: 'x', backup: _backup),
-        ),
-        isTrue,
-      );
-      expect(offersBackup(const OpenNotFound(r'C:\a.rmpj')), isFalse);
-      expect(
-        offersBackup(const OpenUnreachable(r'C:\a.rmpj')),
-        isFalse,
+        backupOf(OpenNotFound(r'C:\a.rmpj', backup: _backup)),
+        same(_backup),
       );
       expect(
         backupOf(OpenCorrupt(r'C:\a.rmpj', detail: 'x', backup: _backup)),
         same(_backup),
       );
+      expect(backupOf(const OpenNotFound(r'C:\a.rmpj')), isNull);
+      expect(backupOf(const OpenUnreachable(r'C:\a.rmpj')), isNull);
     });
   });
 }

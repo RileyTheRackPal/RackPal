@@ -1436,7 +1436,9 @@ final class AppShellState extends State<AppShell>
   // What changes is the host, and the one difference a host makes is
   // whether there is anything to close: `onClose`/`onDone` is null here,
   // and each screen hides its dismissal control rather than offering a
-  // button that would pop the application's own route.
+  // button that would pop the application's own route. (The Structure
+  // editor's `onDone` is gone altogether since `#945`: this was its only
+  // host, and here it was only ever null.)
   //
   // KEYED ON THE CONTROLLER, as the rack and schedule tabs are. Replacing
   // the document must reset a selection, a draft or an expanded tree,

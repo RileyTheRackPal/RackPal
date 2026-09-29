@@ -950,7 +950,18 @@ $SuiteFloors = @{
     # entities from whole_house.rppj: cleared, it writes no JSON null and
     # re-saves byte for byte (31 fields); zeroed, the 0 survives (12). Plus
     # a counting floor and a hand-edited explicit null read as unknown.
-    'rackpal_core'   = 5119
+    # 5116 at DR-201: -4 and +1, and the four are NOT lost coverage. They
+    # tested `resolveDesignatorCollision`, which nothing in the product
+    # called; DR-201 deleted it with the Project Settings row that was its
+    # only reason to exist. +1 in commands/project_settings_test.dart: a
+    # stored non-default policy still round-trips byte for byte.
+    # 5104 at `#945`: -12, and NOT lost coverage of anything the product
+    # runs. They tested six functions nothing in lib/ called (lenForPoints,
+    # resolveAcceptedFamiliesCell, linksOnPorts, isRiserRated,
+    # plenumListingFor, isOpenFinding), deleted with them. The one live rule
+    # among them, a non-off acknowledgement leaving a finding listed, is
+    # asserted where the product computes it (findings_view_test.dart).
+    'rackpal_core'   = 5104
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1476,7 +1487,12 @@ $SuiteFloors = @{
     # 1980 at `#947`: +2 in shell/file_error_dialog_test.dart. The existing
     # cases pressed a SECONDARY button; the PRIMARY one ("Save As…", "Open
     # backup") had never run, and neither had Enter, its keyboard route.
-    'rackpal_ui'     = 1980
+    # 1981 at DR-201: +1 in settings/project_settings_dialog_test.dart, the
+    # collision policy is not offered anywhere in the list.
+    # 1978 at `#945`: -3, the tests of `pdfHasLiftablePage`, a guard nothing
+    # called; the import refuses a PDF with no liftable page before the
+    # picker opens (PdfHasNoLiftablePageError), which is tested there.
+    'rackpal_ui'     = 1978
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1670,7 +1686,11 @@ $SuiteFloors = @{
     # length and keeps its entry; red with the arm mapped back to
     # OpenUnexpected) and +1 in session/file_error_presenter_test.dart (the
     # length, the limit save states, the remedy, OK only).
-    'rackpal_app'    = 1120
+    # 1124 at `#945` (CR-045): +3 in session/drop_entry_actions_test.dart and
+    # +1 in session/outlet_template_actions_test.dart. A new Structure body
+    # is named in the project's own format and skips a designator in use;
+    # both offers wrote a literal 'STR-1'. Red with the literal back.
+    'rackpal_app'    = 1124
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

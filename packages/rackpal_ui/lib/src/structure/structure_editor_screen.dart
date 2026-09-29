@@ -259,43 +259,12 @@ final class StructureCellEdit {
   final String value;
 }
 
-/// Opens the editor full-screen.
-///
-/// FULL-SCREEN AND NOT A TAB. The four top-level tabs are views of a
-/// DOCUMENT (`Ctrl+1/2/4`, CR-071); this is an editor for one entity,
-/// with a `Done`, in the same shape docs/06's device builder has. Its
-/// header carries the body it is editing so two Structure bodies (§7)
-/// can never be confused for one.
-///
-/// [currentDoc] is read on every build, for [DropEntryLoop]'s reason: a
-/// surface holding one document reference plans the next line against
-/// the state before the last one landed.
-Future<void> showStructureEditor(
-  BuildContext context, {
-  required StructureEditorActions actions,
-  required RackDocument Function() currentDoc,
-  Uuid? structureBodyId,
-}) => showDialog<void>(
-  context: context,
-  // The editor is a working surface, not a question: it fills the
-  // window rather than floating a 640 px card over the rack.
-  builder: (context) => Dialog.fullscreen(
-    child: StructureEditorScreen(
-      actions: actions,
-      currentDoc: currentDoc,
-      structureBodyId: structureBodyId,
-      onDone: () => Navigator.of(context).pop(),
-    ),
-  ),
-);
-
 /// docs/07 §4's editor, in table mode.
 class StructureEditorScreen extends StatefulWidget {
   const StructureEditorScreen({
     required this.actions,
     required this.currentDoc,
     this.structureBodyId,
-    this.onDone,
     super.key,
   });
 
@@ -312,10 +281,6 @@ class StructureEditorScreen extends StatefulWidget {
   /// devices"*. CR-113 ships multiple instances; merging them is not what
   /// it ships.
   final Uuid? structureBodyId;
-
-  /// Null when the editor is not in a route it can pop — the state a
-  /// widget test drives it in.
-  final VoidCallback? onDone;
 
   @override
   State<StructureEditorScreen> createState() => _StructureEditorScreenState();
@@ -456,7 +421,6 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
           doc: doc,
           structureBodyId: _bodyIdFor(doc),
           table: table,
-          onDone: widget.onDone,
           onBody: (id) => setState(() => _pickedBodyId = id),
           onImportCsv: () =>
               unawaited(widget.actions.onImportCsv(_bodyIdFor(doc))),
@@ -1043,7 +1007,6 @@ class _EditorHeader extends StatelessWidget {
     required this.doc,
     required this.structureBodyId,
     required this.table,
-    required this.onDone,
     required this.onBody,
     required this.onImportCsv,
     required this.onManageMediaTypes,
@@ -1054,7 +1017,6 @@ class _EditorHeader extends StatelessWidget {
   final RackDocument doc;
   final Uuid? structureBodyId;
   final StructureTable table;
-  final VoidCallback? onDone;
 
   /// M3-F/2 (#160). In the HEADER rather than beside `Add outlet`,
   /// because it acts on the whole body and not on the table's selection,
@@ -1175,8 +1137,6 @@ class _EditorHeader extends StatelessWidget {
                 ),
               ],
             ),
-          if (onDone != null)
-            TextButton(onPressed: onDone, child: const Text('Done')),
         ],
       ),
     );

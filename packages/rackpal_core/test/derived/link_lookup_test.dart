@@ -185,16 +185,6 @@ void main() {
       expect(portConductorCount(f.doc, port), 2);
       expect(linksOnPort(f.doc, port), <Uuid>[loop]);
     });
-
-    test('linksOnPorts de-duplicates a cable spanning two of them', () {
-      // Both ends of the stereo cable are in the set. One cable.
-      final f = _fixture();
-      expect(
-        linksOnPorts(f.doc, {_pin(_src, 'l'), _pin(_src, 'r')}),
-        <Uuid>[f.linkId],
-      );
-      expect(linksOnPorts(f.doc, const <Uuid>{}), isEmpty);
-    });
   });
 
   group('netToRemoveWith asks the survivors', () {

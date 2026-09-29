@@ -72,6 +72,7 @@
 // their own. Only [OutletField] and [StructureBodyField] own every
 // converted setter on their class, which is why only those two carry the
 // exact-agreement test.
+import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
@@ -262,6 +263,11 @@ final class EntityField<E, T> {
 /// because it is a CABLE length the schedule prints in a link row
 /// (`ScheduleLengthSource`), and a consumer watching cable data subscribes
 /// to `wires`.
+///
+/// No product surface builds a command from this table (#945); the round-trip
+/// fuzz, the AC-014 cases and the G4 wire test enumerate every Outlet field
+/// through it, which is why it stays.
+@visibleForTesting
 abstract final class OutletField {
   /// "GR-TV-1" — the outlet's own field designation.
   static final designation = EntityField<Outlet, String>(
@@ -367,6 +373,11 @@ abstract final class OutletField {
 }
 
 /// Every editable [StructureBody] property.
+///
+/// No product surface builds a command from this table (#945); the round-trip
+/// fuzz, the AC-014 cases and the G4 wire test enumerate every StructureBody
+/// field through it, which is why it stays.
+@visibleForTesting
 abstract final class StructureBodyField {
   /// "Rough-In - First Floor".
   static final title = EntityField<StructureBody, String>(

@@ -160,6 +160,10 @@ TemplateSearchEntry buildTemplateSearchEntryFor(
 /// A convenience over the entries, for a caller with no index of its own
 /// and few enough rows not to want one. A surface that filters on every
 /// keystroke should build the entries ONCE and hold them.
+///
+/// Only tests call this (#945): it is a handle on live logic, not logic of its
+/// own, so it stays and the analyzer keeps it out of lib/.
+@visibleForTesting
 List<PlaceableTemplate> searchPlaceableTemplates(
   List<PlaceableTemplate> rows,
   String query, {

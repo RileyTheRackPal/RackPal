@@ -136,8 +136,16 @@ void main() {
       }
     });
 
-    test('nineteen scalars, and the four maps are deliberately absent', () {
-      expect(ProjectSettingFields.all, hasLength(19));
+    test('eighteen scalars, and the four maps are deliberately absent', () {
+      // Nineteen until DR-201 took `collisionPolicy` out: it governed
+      // nothing, so it is stored and no longer offered. It is absent for
+      // that reason, not for the maps' one, and says so below.
+      expect(ProjectSettingFields.all, hasLength(18));
+      expect(
+        ProjectSettingFields.all.any((f) => f.key == 'collisionPolicy'),
+        isFalse,
+        reason: 'DR-201: stored on the wire, not offered as a row',
+      );
       for (final absent in [
         'ruleOverrides',
         'familyColorOverrides',
@@ -251,5 +259,27 @@ void main() {
       expect(doc.settings.familyColorOverrides[other], const Rgb(0, 0, 255));
       expect(doc.settings.familyColorOverrides, hasLength(2));
     });
+  });
+
+  // DR-201 took the collision policy out of Project Settings and kept the
+  // stored value. This is the "kept" half: a project that set a policy
+  // other than the default still writes it and reads it back, byte for
+  // byte, so removing the row migrated nothing and lost nothing.
+  test('a stored collision policy still round-trips, though no row edits '
+      'it (DR-201)', () {
+    const codec = JsonDocumentCodec();
+    final doc = _doc()..settings.collisionPolicy = CollisionPolicy.error;
+    final bytes = codec.write(doc);
+    final back = switch (codec.read(bytes)) {
+      Ok(:final value) => value,
+      final other => fail('did not decode: $other'),
+    };
+    expect(back.settings.collisionPolicy, CollisionPolicy.error);
+    expect(codec.write(back), bytes);
+    expect(
+      ProjectSettingFields.all.map((f) => f.key),
+      isNot(contains('collisionPolicy')),
+      reason: 'and nothing in the settings table offers it',
+    );
   });
 }

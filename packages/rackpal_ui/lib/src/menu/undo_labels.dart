@@ -48,6 +48,7 @@
 // word. "Undo Move device" is §13.3's own example and fixes the shape:
 // the verb is capitalised because it starts the phrase, the object is not
 // because it is not a proper noun, and nothing ends in a full stop.
+import 'package:meta/meta.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 
 /// What the Edit menu prints after `Undo` or `Redo`, per command kind.
@@ -202,6 +203,10 @@ const Map<LabelKey, String> kUndoLabels = <LabelKey, String>{
 /// found a `LabelKey` nobody named, and the honest render is the bare
 /// word `Undo` rather than a de-camel-cased guess that reads like a bug
 /// report. `undo_labels_test.dart` is what stops it happening.
+///
+/// Only tests call this (#945): it is a handle on live logic, not logic of its
+/// own, so it stays and the analyzer keeps it out of lib/.
+@visibleForTesting
 String? undoLabelFor(LabelKey key) => kUndoLabels[key];
 
 /// The full menu string: `Undo Move device`, or `Undo` when the stack is

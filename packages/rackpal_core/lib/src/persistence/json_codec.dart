@@ -28,12 +28,14 @@
 //    relationship as the Len/Mass "Nm"/"Ug" suffix convention: the wire
 //    name and the Dart field name are allowed to differ for a documented
 //    reason.
-//  * Enum unknown(raw) fallback (§6.1) is implemented and unit-tested
-//    end-to-end for `LifecycleStatus`/`Severity` (see enum_wire.dart's
-//    header comment for the full scoping rationale); every other enum in
-//    the model decodes via the strict, throwing `decodeEnumStrict`, which
-//    surfaces as a whole-document `Err` at the `read()` boundary rather
-//    than a silent guess.
+//  * Enum unknown(raw) fallback (§6.1) is NOT implemented, for any enum.
+//    This line said it was "implemented and unit-tested end-to-end" for
+//    `LifecycleStatus`/`Severity`; that code had no caller and no test, and
+//    `#945` deleted it (enum_wire.dart's header has the scoping reason).
+//    Every enum decodes strictly, so an unrecognised value surfaces as a
+//    whole-document `Err` at the `read()` boundary rather than a silent
+//    guess, and a newer build that adds a value is expected to raise
+//    `minReaderVersion` so an older one refuses the file by name.
 import 'dart:convert';
 import 'dart:typed_data';
 

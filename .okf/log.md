@@ -1,5 +1,20 @@
 # Update Log
 
+## 2026-09-29 (seventy-sixth entry)
+
+* **Progress**: `#945` (docs/12 §4.19). Of 41 public declarations nothing in `lib/` called, 20 were
+  deleted (with the tests of their own logic), 20 kept with a stated reason (13 now
+  `@visibleForTesting`, 3 with a scheduled caller, 4 for a Tab feature `#949` asks about), and one
+  was the fix: `allocateStructureDesignator`, now called where both offers wrote `'STR-1'`.
+* **Creation**: [DR-201](/decisions/dr-201-collision-policy-leaves-settings.md). The collision
+  policy row governed nothing and leaves Project Settings; the stored value stays on the wire.
+* **Creation**: [An uncalled helper can be
+  evidence](/practices/an-uncalled-helper-can-be-evidence.md). Two of the 41 were the only trace of
+  a rule nobody followed, and deleting one caller orphaned a callee the first census could not see.
+* **Note**: **THE FIRST DELETION BATCH CLAIMED SOMETHING NOBODY CHECKED**: that `FloorplanIo` called
+  `importFloorplanFrom`. It did not, and a second census run found the orphan. The commit that
+  deleted it says so, and so does the comment.
+
 ## 2026-09-26 (seventy-fifth entry)
 
 * **Progress**: `#947` closes (docs/12 §4.18). The codec's G4 read became a whole-codec test: every

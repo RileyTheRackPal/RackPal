@@ -19,6 +19,7 @@
 // for that class of enclosure, never a real manufacturer SKU — the same
 // rule the 48-template device catalog follows (AC-052 / DR-002). See
 // `assets/catalog/sources.md` §5.
+import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/mass.dart';
@@ -234,4 +235,8 @@ Map<String, RackPreset> buildRackPresets() {
 /// The dropdown's display order — the insertion order of
 /// [buildRackPresets], named explicitly so a caller never has to rely on
 /// `Map` iteration order being meaningful.
+///
+/// Only tests call this (#945): it is a handle on live logic, not logic of its
+/// own, so it stays and the analyzer keeps it out of lib/.
+@visibleForTesting
 List<String> rackPresetOrder() => buildRackPresets().keys.toList();

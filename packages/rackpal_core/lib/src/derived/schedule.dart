@@ -2001,6 +2001,10 @@ ScheduleView buildScheduleView(
 /// Convenience: derive and project in one call, for a caller that wants
 /// one sheet. Two sheets should [buildSchedule] ONCE and project twice —
 /// that is the point of the split, and it is what makes the two agree.
+///
+/// Only tests call this (#945): it is a handle on live logic, not logic of its
+/// own, so it stays and the analyzer keeps it out of lib/.
+@visibleForTesting
 ScheduleView scheduleViewOf(
   RackDocument doc, {
   required SchedulePreset preset,

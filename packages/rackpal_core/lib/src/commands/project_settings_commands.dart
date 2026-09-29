@@ -23,7 +23,6 @@
 // carries the before and after.
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
-import 'package:rackpal_core/src/idformat/collision_policy.dart';
 import 'package:rackpal_core/src/idformat/id_format.dart';
 import 'package:rackpal_core/src/model/enums.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
@@ -182,13 +181,6 @@ abstract final class ProjectSettingFields {
     set: _setPad,
   );
 
-  static const collisionPolicy = ProjectSettingField<CollisionPolicy>(
-    key: 'collisionPolicy',
-    label: 'Designator collision policy',
-    get: _getCollision,
-    set: _setCollision,
-  );
-
   static const designatorBlockSize = ProjectSettingField<int>(
     key: 'designatorBlockSize',
     label: 'Designator block size',
@@ -260,7 +252,10 @@ abstract final class ProjectSettingFields {
     outletRackLabelFormat,
     designatorSeparator,
     designatorPad,
-    collisionPolicy,
+    // NO `collisionPolicy` (DR-201). It was a row here that changed
+    // nothing: allocation cannot collide, and typed entry never read it.
+    // `ProjectSettings.collisionPolicy` stays in the model and on the wire
+    // untouched, so existing projects save back byte for byte.
     designatorBlockSize,
     cableWasteFactor,
     defaultNetworkMedia,
@@ -302,9 +297,6 @@ String _getSep(ProjectSettings s) => s.designatorSeparator;
 void _setSep(ProjectSettings s, String v) => s.designatorSeparator = v;
 int _getPad(ProjectSettings s) => s.designatorPad;
 void _setPad(ProjectSettings s, int v) => s.designatorPad = v;
-CollisionPolicy _getCollision(ProjectSettings s) => s.collisionPolicy;
-void _setCollision(ProjectSettings s, CollisionPolicy v) =>
-    s.collisionPolicy = v;
 int _getBlock(ProjectSettings s) => s.designatorBlockSize;
 void _setBlock(ProjectSettings s, int v) => s.designatorBlockSize = v;
 Permille _getWaste(ProjectSettings s) => s.cableWasteFactor;

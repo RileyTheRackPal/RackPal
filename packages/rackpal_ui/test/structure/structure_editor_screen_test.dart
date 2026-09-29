@@ -590,18 +590,20 @@ int _visibleDropCount(WidgetTester tester) {
 
 Future<void> _pump(WidgetTester tester, _Harness h) async {
   // A WINDOW, NOT A PHONE. The default 800×600 test surface is smaller
-  // than any window this editor opens in: `showStructureEditor` uses
-  // `Dialog.fullscreen`.
+  // than any window this editor opens in: it is the Structured Wiring tab
+  // of the main window (AC-048).
   //
   // FOUND BY M3-F/2, and the finding is about the tests rather than the
   // screen. These cases asserted that three drops are all visible at
-  // 600 px, and that held only because the harness passes no `onDone`,
-  // so the header rendered with NO BUTTON IN IT and collapsed to 24 px.
-  // Production always has `Done`, so production's header has always been
-  // 48 px and has always shown one fewer row than these tests claimed.
-  // Adding `Import CSV…` made the test header match production and the
-  // gap became visible. Sizing the surface to a real window fixes the
-  // representation rather than the assertion.
+  // 600 px, and that held only because the harness's header rendered
+  // with NO BUTTON IN IT and collapsed to 24 px, while production's
+  // carried one and was 48 px. Adding `Import CSV…` made the test header
+  // match production and the gap became visible. Sizing the surface to a
+  // real window fixes the representation rather than the assertion.
+  //
+  // (That button was `Done`, from the full-screen dialog this editor used
+  // to open in. `#945` removed it: the tab never passed `onDone`, so it
+  // could not appear, and the dialog opener was deleted as uncalled.)
   await tester.binding.setSurfaceSize(const Size(1200, 900));
   addTearDown(() => tester.binding.setSurfaceSize(null));
   await tester.pumpWidget(

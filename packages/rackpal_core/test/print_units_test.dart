@@ -57,17 +57,4 @@ void main() {
       expect(pointsForLen(const Len(-25400000)), -72.0);
     });
   });
-
-  group('lenForPoints', () {
-    test('inverts pointsForLen on the values that matter', () {
-      expect(lenForPoints(126).nm, kRackUnit.nm);
-      expect(lenForPoints(72).nm, Len.nmPerInch);
-      expect(lenForPoints(1368).nm, 482600000);
-    });
-
-    test('rounds to the nearest nanometre rather than truncating', () {
-      // 1 pt = 25_400_000 / 72 = 352_777.77… nm.
-      expect(lenForPoints(1).nm, 352778);
-    });
-  });
 }

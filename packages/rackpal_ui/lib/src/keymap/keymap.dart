@@ -79,7 +79,7 @@
 // `rack_canvas_screen.dart` for why every one of those is a real `Action`
 // and not a `CallbackAction`.
 import 'package:flutter/foundation.dart'
-    show TargetPlatform, defaultTargetPlatform;
+    show TargetPlatform, defaultTargetPlatform, visibleForTesting;
 import 'package:flutter/services.dart' show LogicalKeyboardKey;
 import 'package:flutter/widgets.dart'
     show
@@ -2208,6 +2208,11 @@ Map<ShortcutActivator, VoidCallback> dialogDismissShortcut(
 /// remaining half of the sentence and is not wired yet; what matters for
 /// M7's clause is that the table is DERIVED, and that
 /// `keymap_arbitration_test.dart` reads the same list it does.
+///
+/// Only tests call this (#945): the reference golden test compares its output
+/// with docs/04, which is how the table stays derived until a build step writes
+/// it.
+@visibleForTesting
 String renderKeymapMarkdown(TargetPlatform platform) {
   final out = StringBuffer()
     ..writeln('# RackPal keymap — ${platform.name}')
@@ -2406,6 +2411,10 @@ List<KeymapConflict> arbitrate(
 }
 
 /// [kKeymap], arbitrated.
+///
+/// Only tests call this (#945): it is the instrument the keymap conflict test
+/// reads, so it stays, kept out of lib/ by the analyzer.
+@visibleForTesting
 List<KeymapConflict> arbitrateKeymap(TargetPlatform platform) =>
     arbitrate(kKeymap, platform);
 

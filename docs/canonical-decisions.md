@@ -22535,6 +22535,35 @@ tell them how much shorter it has to be, which is the argument save's own messag
 
 **Scope.** No scope change.
 
+### 11.200 DR-201 · The collision policy leaves Project Settings, because it governs nothing
+
+**The question.** Found by `#945`'s triage of the declarations nothing calls:
+`resolveDesignatorCollision`, the only reader of `ProjectSettings.collisionPolicy`, had no caller.
+The setting was an editable row in Project Settings (append a letter, append a number, or refuse)
+and changed nothing. New designators come from `_lowestUnused`, so an allocated one cannot collide
+by construction, and a typed device designator that is already taken is not checked against the
+setting (it is allowed, and validation flags the duplicate). Put to the user on 2026-09-29 with
+three priced options: remove the row; wire the policy to every surface a designator is typed into,
+under a ruling of its own; leave it and file it.
+
+**11.200.1 RULED: THE ROW IS REMOVED; THE STORED VALUE IS KEPT.** Settled by the user, choosing the
+recommended option; the reasoning is the author's, accepted without addition. Project Settings no
+longer offers the collision policy. `ProjectSettings.collisionPolicy` stays in the model and on the
+wire, read and written exactly as before, so every existing project saves back byte for byte
+(CR-117) and nothing migrates. `resolveDesignatorCollision`, which nothing called, is deleted with
+its tests; the enum stays because the stored field is typed by it.
+
+**11.200.2 WHY.** A control that changes nothing teaches the person using it that the settings
+cannot be trusted, which costs every other row in the dialog. And the question it asks is moot for
+allocation, the only place a designator is computed.
+
+**11.200.3 WHAT THIS DOES NOT DECIDE.** What a typed duplicate designator should do is unchanged:
+allowed at entry, flagged by validation. Wiring a policy to typed entry was the second option, and
+it was not chosen; if it is wanted later it is a ruling of its own, and the stored field is still
+there for it.
+
+**Scope.** No scope change.
+
 ---
 
 ## 12. Superseded rulings

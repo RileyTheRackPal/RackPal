@@ -927,7 +927,7 @@ filter (see `#933`).
 | AC-014's coverage | test drift | **CLOSED** by `#944` at `56b37d1d`: all 71 document commands have a case, and a census fails on the next one without. None was wrong. §4.5 |
 | 210 of the analyzer's 233 infos were two lints, 116 of them catalogue facts | ratchet | **CLEARED** by DR-195, `#936`: 233 to 23, facts kept under a documented ignore, cascades swept. The first sweep also stripped 45 fixture values `#246` had argued are data, and was corrected in the same chapter (§11.194.3) |
 | `#98`'s refactor candidates | structure | **DECIDED** by DR-196: `wire_trace.dart` moved (`#931`), `json_codec.dart` left alone, the two canvas screens re-asked at M7 (`#942`) |
-| 42 public declarations nothing in `lib/` or `tool/` calls | dead code | Per-item, since some are deliberate test seams. **Filed** as `#945`, with the list re-run at `66de1a84` (41). This cell said *"Listed on `#97`"* and the list was never posted there |
+| 42 public declarations nothing in `lib/` or `tool/` calls | dead code | **CLOSED** by `#945` (§4.19): 20 deleted, 20 kept with a reason, and two turned out to be evidence of live defects (a Structure named `'STR-1'` against CR-045; a settings row that governed nothing, DR-201). This cell once said *"Listed on `#97`"* and the list was never posted there |
 | `SemanticsService.announce` deprecated after Flutter 3.35 | deprecation | It is the channel M7's NVDA clause rests on. **FIXED** by `#946` at `49a2699b`: `sendAnnouncement` to the owner's view; analyzer pin 23 to 21 |
 | The Plan view's clause table reads "0 of 7" and stops at `PLAN-F` | stale status | **FILED** as `PLAN-J/0` (`#943`), with PLAN-J/2's unperformable print step. See below |
 
@@ -1066,6 +1066,42 @@ the coverage gaps it absorbed from §4.16. Five defects fixed across them, all f
 had never run: the CSV import that let an `Error` escape, the connector alias edit that emptied
 `matesWith`, the pathway removal whose undo stamped every cable, and the two open errors with no
 explanation (DR-198, DR-200). Plus DR-199's refusal titles.
+
+### 4.19 The declarations nothing calls · 2026-09-29 · `#945` · `DR-201`
+
+The census (a public top-level function or class named at most once in its own file and nowhere
+else in `lib/` or `tool/`) found **41** at `a13a2dcf`: 11 called by nothing at all, 30 called only
+by tests. **"Only tests call it" is not one finding but three**, so each was read before it was
+touched:
+
+| Disposition | Count | How it was decided |
+|---|---|---|
+| **Deleted, no caller anywhere** | 11 + 1 | the census's 11, plus the orphan below; a live replacement already did the job (`FloorplanIo`, `marqueeSelectionIn`, the Structured Wiring tab), or nothing needed it. Includes the `unknown(raw)` enum machinery both headers called *"implemented and unit-tested end-to-end"*: no caller, no test ever, per `git log -S` |
+| **Deleted with the tests of their own logic** | 8 | the product never runs that logic (`isOpenFinding`: `drc.dart` drops `off` itself; `pdfHasLiftablePage`: the import refuses first) |
+| **Kept, `@visibleForTesting`** | 13 | a handle on live logic that tests reach it through; the analyzer now enforces what a comment used to ask |
+| **Kept, caller scheduled** | 3 | `wiringStandardExceptions` for T5.01 (`#331`); the brand paths for M8-H (`#768`) |
+| **Kept, feature never wired** | 4 | the port grid's Tab moves; `#949` asks whether the grid needs them |
+| **Fixed, the helper was the evidence** | 1 | `allocateStructureDesignator` sat unused while both "create one" offers wrote `'STR-1'`, ignoring the project's format (CR-045) and any device already holding it |
+| **Ruled, the setting did nothing** (its resolver deleted) | 1 | `resolveDesignatorCollision` was the only reader of the collision policy row. **DR-201** removed the row and kept the stored value |
+
+**AN UNCALLED HELPER IS SOMETIMES THE ONLY TRACE OF A RULE NOBODY FOLLOWS.** Two of the 41 were not
+clutter but evidence: a helper written to obey a ruling, left unused beside a literal that broke it,
+and a resolver whose absence meant a user-visible setting governed nothing. Deleting either on sight
+would have erased the evidence and kept the defect.
+
+**AND DELETING A CALLER CAN ORPHAN ITS CALLEE.** The first deletion batch removed
+`pickAndImportFloorplan` and claimed `FloorplanIo` called `importFloorplanFrom` itself. It did not;
+the removed function was the only caller. A second census run found the orphan, and its two tests,
+which guarded the live size cap, were rewritten onto the functions the product uses. And the same
+thing happened one level down: deleting the uncalled `showStructureEditor` orphaned
+`StructureEditorScreen.onDone`, which only that opener passed, so the editor's **Done** button could
+never appear. The census does not look at parameters; `#875`'s callbacks-have-suppliers test did,
+and failed the app suite until `onDone` went too. **The census is run to a fixpoint**, the structural
+tests are run with it, and at the end the census lists exactly the 20 kept on purpose.
+
+**TWO MORE THINGS THE PRUNE NEARLY TOOK.** `backupOf` is live, and its only assertion sat inside the
+`offersBackup` test; it was restored as its own test. And the test-only floor drops (core 12, ui 3,
+plus DR-201's 4 core) say beside each number that no product-run logic lost its coverage.
 
 ---
 

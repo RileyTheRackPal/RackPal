@@ -202,6 +202,10 @@ final class PortSelection {
 /// without stopping, because [order] is the grid's flat row list and a
 /// band is a run inside it rather than a break in it: `PortTable.rows`
 /// states the same thing for the same reason.
+///
+/// NOTHING CALLS THIS YET (#945): the port grid has no Tab handling of its own,
+/// so Tab does what default focus traversal does. #949 decides whether the grid
+/// needs these moves or they go.
 String? rowBelow(String key, List<String> order) {
   final at = order.indexOf(key);
   if (at < 0 || at + 1 >= order.length) return null;
@@ -209,6 +213,10 @@ String? rowBelow(String key, List<String> order) {
 }
 
 /// The row before [key] in [order], or null at the top.
+///
+/// NOTHING CALLS THIS YET (#945): the port grid has no Tab handling of its own,
+/// so Tab does what default focus traversal does. #949 decides whether the grid
+/// needs these moves or they go.
 String? rowAbove(String key, List<String> order) {
   final at = order.indexOf(key);
   if (at <= 0) return null;
@@ -220,6 +228,10 @@ String? rowAbove(String key, List<String> order) {
 /// TAB'S MOVE, and it takes the VISIBLE columns rather than
 /// `PortColumnId.values`: a pack the user has closed is not a cell, and
 /// tabbing into one would move focus somewhere nothing is drawn.
+///
+/// NOTHING CALLS THIS YET (#945): the port grid has no Tab handling of its own,
+/// so Tab does what default focus traversal does. #949 decides whether the grid
+/// needs these moves or they go.
 PortColumnId? columnAfter(PortColumnId id, List<PortColumnId> columns) {
   final at = columns.indexOf(id);
   if (at < 0 || at + 1 >= columns.length) return null;
@@ -227,6 +239,10 @@ PortColumnId? columnAfter(PortColumnId id, List<PortColumnId> columns) {
 }
 
 /// The column before [id] in [columns], or null at the left edge.
+///
+/// NOTHING CALLS THIS YET (#945): the port grid has no Tab handling of its own,
+/// so Tab does what default focus traversal does. #949 decides whether the grid
+/// needs these moves or they go.
 PortColumnId? columnBefore(PortColumnId id, List<PortColumnId> columns) {
   final at = columns.indexOf(id);
   if (at <= 0) return null;

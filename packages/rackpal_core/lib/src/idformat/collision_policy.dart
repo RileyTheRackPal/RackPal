@@ -1,11 +1,22 @@
-// Project-wide designator collision policy (CR-045). One policy governs
-// every call site that allocates a designator: device, port, link, drop
-// field label, drop rack label. Per canonical-decisions.md, a duplicate is
-// never a hard error that blocks a whole export (that reading of
-// design-pdf-export.md §3.4 does not survive CR-022/G3) — CollisionPolicy
-// only controls what happens at the moment a *new* designator is minted.
+// Project-wide designator collision policy (CR-045), STORED AND NOT
+// APPLIED since DR-201.
+//
+// This header used to say one policy governed every call site that
+// allocates a designator. None ever read it: every allocator picks the
+// lowest unused designator, so a minted one cannot collide, and a typed
+// duplicate is allowed and flagged by validation (a duplicate is never a
+// hard error that blocks an export; CR-022/G3). `#945` found the resolver
+// uncalled, and DR-201 took the setting out of Project Settings. The enum
+// stays for the stored field.
 
 /// How a freshly-computed designator that already exists gets resolved.
+///
+/// STORED, NOT APPLIED (DR-201). Allocation picks the lowest unused
+/// designator, so a computed one never collides, and nothing typed is
+/// checked against this; the resolver that read it had no caller and was
+/// deleted with the Project Settings row. The enum stays because
+/// `ProjectSettings.collisionPolicy` is typed by it and is kept on the
+/// wire, so existing files re-save byte for byte (CR-117).
 enum CollisionPolicy {
   /// Append A, B, C, ... Z, AA, AB, ... to the candidate until free.
   suffixLetter,
@@ -13,73 +24,6 @@ enum CollisionPolicy {
   /// Append 2, 3, 4, ... to the candidate until free.
   suffixNumber,
 
-  /// Reject the collision outright — see [DesignatorCollisionException].
+  /// Reject the collision outright.
   error,
-}
-
-/// Thrown by [resolveDesignatorCollision] under [CollisionPolicy.error].
-///
-// TODO(rackpal): this package has no `Outcome`/result type yet (M0 scope
-// note); once one exists, consider returning a failed Outcome from
-// resolveDesignatorCollision instead of throwing.
-final class DesignatorCollisionException implements Exception {
-  const DesignatorCollisionException(this.candidate);
-
-  /// The designator that was already in use.
-  final String candidate;
-
-  @override
-  String toString() =>
-      'DesignatorCollisionException: designator "$candidate" is already '
-      'in use and CollisionPolicy.error forbids resolving it '
-      'automatically.';
-}
-
-/// Resolves [candidate] against the already-used set [used], per [policy].
-///
-/// Returns [candidate] unchanged when it is not already in [used]. Never
-/// mutates [used] — the caller is responsible for recording whatever
-/// designator is ultimately chosen.
-String resolveDesignatorCollision(
-  String candidate,
-  Set<String> used,
-  CollisionPolicy policy,
-) {
-  if (!used.contains(candidate)) {
-    return candidate;
-  }
-  switch (policy) {
-    case CollisionPolicy.error:
-      throw DesignatorCollisionException(candidate);
-    case CollisionPolicy.suffixLetter:
-      var i = 0;
-      while (true) {
-        final attempt = '$candidate${_letterSuffix(i)}';
-        if (!used.contains(attempt)) {
-          return attempt;
-        }
-        i++;
-      }
-    case CollisionPolicy.suffixNumber:
-      var n = 2;
-      while (true) {
-        final attempt = '$candidate$n';
-        if (!used.contains(attempt)) {
-          return attempt;
-        }
-        n++;
-      }
-  }
-}
-
-/// Bijective base-26 letter suffix: 0 -> "A", 1 -> "B", ..., 25 -> "Z",
-/// 26 -> "AA", 27 -> "AB", ...
-String _letterSuffix(int i) {
-  var n = i;
-  final letters = <String>[];
-  do {
-    letters.add(String.fromCharCode(65 + n % 26));
-    n = n ~/ 26 - 1;
-  } while (n >= 0);
-  return letters.reversed.join();
 }

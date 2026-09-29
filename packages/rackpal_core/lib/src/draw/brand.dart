@@ -276,6 +276,9 @@ DiagramPath? _rileyPath;
 /// Traced from the supplied artwork rather than drawn here, at 98.6%
 /// pixel agreement against the source raster, with turns sharper than
 /// 42 degrees kept as corners so the ears and the jaw teeth survive.
+///
+/// NO CALLER YET (#945), and one is scheduled: the app, window and document
+/// icons of M8-H (#768).
 DiagramPath rackPalRileyPath() => _rileyPath ??= DiagramPath.fromSvg(_rileyD);
 
 DiagramPath? _ruledPath;
@@ -285,6 +288,9 @@ DiagramPath? _plainPath;
 ///
 /// `ruled` adds the horizontal rule between the rows; see
 /// [kRackPalLockupMinRuledCapPx] for when not to.
+///
+/// NO CALLER YET (#945), and one is scheduled: the app, window and document
+/// icons of M8-H (#768).
 DiagramPath rackPalLockupPath({required bool ruled}) {
   if (ruled) {
     return _ruledPath ??= DiagramPath.fromSvg(_ruledD);

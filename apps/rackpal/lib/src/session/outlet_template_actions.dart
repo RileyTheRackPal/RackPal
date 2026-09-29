@@ -60,7 +60,11 @@ OutletTemplateActions buildOutletTemplateActions({
     controller.run(
       AddStructureCommand(
         title: 'Rough-In',
-        designator: 'STR-1',
+        // THROUGH THE FORMAT ENGINE (CR-045), and it was a literal 'STR-1'
+        // until #945: that ignored a project's separator and padding, and
+        // named the new body 'STR-1' even when a device already held it.
+        // The helper was written for exactly this and nothing called it.
+        designator: allocateStructureDesignator(doc: controller.doc),
         now: controller.clock.nowUtc(),
         actor: controller.actor,
       ),

@@ -288,17 +288,17 @@ void main() {
         initialDirectories: {'C:', r'C:\plans'},
       );
 
-      final result = await importFloorplanFrom(
+      // THROUGH `readImportedBytes`, the read `FloorplanIo` makes (#945
+      // deleted the `importFloorplanFrom` wrapper this used to call, which
+      // nothing in the product did).
+      final read = await readImportedBytes(
         fs: fs,
         path: r'C:\plans\level1.png',
-        id: _id,
-        name: 'Level 1',
-        order: const FracIndex('a0'),
-        meta: _meta(),
         maxBytes: 10,
       );
 
-      expect(errorOf(result), isA<DocumentTooLargeError>());
+      expect(read, isA<Err<Uint8List>>());
+      expect((read as Err<Uint8List>).error, isA<DocumentTooLargeError>());
     });
 
     test('a real file on the fake store imports', () async {
@@ -308,9 +308,14 @@ void main() {
         initialDirectories: {'C:', r'C:\plans'},
       );
 
-      final result = await importFloorplanFrom(
+      // The two halves `FloorplanIo` composes: the capped read, then the
+      // decode.
+      final read = await readImportedBytes(
         fs: fs,
         path: r'C:\plans\level1.png',
+      );
+      final result = importFloorplanBytes(
+        bytes: (read as Ok<Uint8List>).value,
         id: _id,
         name: 'Level 1',
         order: const FracIndex('a0'),
