@@ -183,6 +183,22 @@ void main() {
       );
       expect(c.doc.links, hasLength(1));
     });
+
+    test("the body it makes is named in the project's own format (CR-045)", () {
+      // #945: this offer named every new body with a literal 'STR-1', which
+      // ignored the project's separator and padding. Same fix, and the same
+      // test, as the drop panel's in drop_entry_actions_test.dart.
+      final w = _controller(withStructure: false);
+      final c = w.controller;
+      c.doc.settings
+        ..designatorSeparator = '.'
+        ..designatorPad = 2;
+
+      buildOutletTemplateActions(controller: c).onCreateStructure();
+
+      final body = c.doc.structures.values.single;
+      expect(c.doc.devices[body.deviceId]!.designator, 'STR.01');
+    });
   });
 
   group('the grade presets, end to end through the app', () {

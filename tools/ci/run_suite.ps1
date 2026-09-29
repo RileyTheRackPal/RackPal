@@ -1670,7 +1670,11 @@ $SuiteFloors = @{
     # length and keeps its entry; red with the arm mapped back to
     # OpenUnexpected) and +1 in session/file_error_presenter_test.dart (the
     # length, the limit save states, the remedy, OK only).
-    'rackpal_app'    = 1120
+    # 1124 at `#945` (CR-045): +3 in session/drop_entry_actions_test.dart and
+    # +1 in session/outlet_template_actions_test.dart. A new Structure body
+    # is named in the project's own format and skips a designator in use;
+    # both offers wrote a literal 'STR-1'. Red with the literal back.
+    'rackpal_app'    = 1124
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

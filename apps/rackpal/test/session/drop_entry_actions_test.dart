@@ -226,6 +226,64 @@ void main() {
     });
   });
 
+  // #945, CR-045. Both "create one" offers named the new body with a
+  // literal 'STR-1', which ignored the project's designator format and
+  // named it 'STR-1' even when a device already held that designator.
+  // `allocateStructureDesignator` was written for exactly this and nothing
+  // called it; the census of uncalled declarations is what found it.
+  group("a new Structure is named by the project's own format (CR-045)", () {
+    /// A project with NO Structure body yet, which is the only state the
+    /// offer is made in (`_controller` above already has one).
+    DocumentController bare() => DocumentController(
+      RackDocument(
+        id: const Uuid('doc-945'),
+        appVersion: '0.1.0',
+        createdAt: _when,
+        modifiedAt: _when,
+        meta: EntityMeta(createdAt: _when, updatedAt: _when, updatedBy: 'seed'),
+      )..registries = buildSeedRegistries(),
+      clock: FixedClock(_when),
+      actor: 'the-integrator',
+    );
+
+    String createAndName(DocumentController c) {
+      buildDropEntryActions(controller: c).onCreateStructure();
+      final body = c.doc.structures.values.single;
+      return c.doc.devices[body.deviceId]!.designator;
+    }
+
+    test('a default project still gets STR-1', () {
+      expect(createAndName(bare()), 'STR-1');
+    });
+
+    test('a project that writes STR.01 gets STR.01, not STR-1', () {
+      final c = bare();
+      c.doc.settings
+        ..designatorSeparator = '.'
+        ..designatorPad = 2;
+      expect(createAndName(c), 'STR.01');
+    });
+
+    test('a designator already in use is skipped, not duplicated', () {
+      final c = bare();
+      final taken = DeviceInstance(
+        id: const Uuid('dev-already-str-1'),
+        kind: DeviceKind.rackDevice,
+        templateRef: const TemplateRef(
+          templateId: TemplateId('tpl.other'),
+          version: 1,
+          contentHash: 'sha256:other',
+        ),
+        designator: 'STR-1',
+        name: 'Somebody else',
+        placement: const OffRackPlacement(),
+        meta: EntityMeta(createdAt: _when, updatedAt: _when, updatedBy: 'seed'),
+      );
+      c.doc.devices[taken.id] = taken;
+      expect(createAndName(c), 'STR-2');
+    });
+  });
+
   group('initialsFor', () {
     test('multi-word rooms take one letter each', () {
       expect(initialsFor('Living Room'), 'LR');
