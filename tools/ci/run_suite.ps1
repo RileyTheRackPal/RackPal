@@ -950,7 +950,12 @@ $SuiteFloors = @{
     # entities from whole_house.rppj: cleared, it writes no JSON null and
     # re-saves byte for byte (31 fields); zeroed, the 0 survives (12). Plus
     # a counting floor and a hand-edited explicit null read as unknown.
-    'rackpal_core'   = 5119
+    # 5116 at DR-201: -4 and +1, and the four are NOT lost coverage. They
+    # tested `resolveDesignatorCollision`, which nothing in the product
+    # called; DR-201 deleted it with the Project Settings row that was its
+    # only reason to exist. +1 in commands/project_settings_test.dart: a
+    # stored non-default policy still round-trips byte for byte.
+    'rackpal_core'   = 5116
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1476,7 +1481,9 @@ $SuiteFloors = @{
     # 1980 at `#947`: +2 in shell/file_error_dialog_test.dart. The existing
     # cases pressed a SECONDARY button; the PRIMARY one ("Save As…", "Open
     # backup") had never run, and neither had Enter, its keyboard route.
-    'rackpal_ui'     = 1980
+    # 1981 at DR-201: +1 in settings/project_settings_dialog_test.dart, the
+    # collision policy is not offered anywhere in the list.
+    'rackpal_ui'     = 1981
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

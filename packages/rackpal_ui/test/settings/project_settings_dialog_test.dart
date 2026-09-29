@@ -142,6 +142,25 @@ void main() {
       await _open(tester, _doc());
       expect(find.textContaining('No row for this setting type'), findsNothing);
     });
+
+    testWidgets('the collision policy is NOT offered: it governed nothing '
+        '(DR-201)', (tester) async {
+      // The list is lazy, so the whole of it is walked rather than the
+      // first screen searched: absent at every row's scroll position.
+      await _open(tester, _doc());
+      for (final f in ProjectSettingFields.all) {
+        await tester.scrollUntilVisible(
+          find.text(f.label),
+          120,
+          scrollable: _list,
+        );
+        expect(
+          find.textContaining('collision policy'),
+          findsNothing,
+          reason: 'at ${f.key}',
+        );
+      }
+    });
   });
 
   group('CR-097: display units', () {

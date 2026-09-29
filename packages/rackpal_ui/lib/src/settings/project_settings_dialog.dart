@@ -232,13 +232,6 @@ class _SettingsDialogState extends State<_SettingsDialog> {
         nameOf: (v) => v.name,
         onChanged: (v) => _set(f, v),
       ),
-      ProjectSettingField<CollisionPolicy>() => _EnumRow<CollisionPolicy>(
-        field: f,
-        value: f.get(_s),
-        values: CollisionPolicy.values,
-        nameOf: (v) => v.name,
-        onChanged: (v) => _set(f, v),
-      ),
       ProjectSettingField<bool>() => SwitchListTile(
         title: Text(f.label),
         subtitle: f.help == null ? null : Text(f.help!),
