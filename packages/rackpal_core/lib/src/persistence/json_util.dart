@@ -74,9 +74,6 @@ JsonMap asJsonMap(Object? value, String context) {
   throw FormatException('Expected a JSON object for $context, got: $value');
 }
 
-JsonMap? asJsonMapOrNull(Object? value, String context) =>
-    value == null ? null : asJsonMap(value, context);
-
 List<Object?> asJsonList(Object? value, String context) {
   if (value is List) return value;
   throw FormatException('Expected a JSON array for $context, got: $value');

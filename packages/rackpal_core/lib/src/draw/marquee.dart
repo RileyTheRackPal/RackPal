@@ -84,22 +84,17 @@ bool bandContainsBox(DBox band, DBox box) =>
     box.top >= band.top &&
     box.bottom <= band.bottom;
 
-/// Every entity a band from [from] to [to] catches, in a total order.
+/// Every entity a band from [from] to [to] catches, over bare [regions],
+/// in a total order.
 ///
-/// ═══════════════════════════════════════════════════════════════════════
-/// IDS, DEDUPED, SORTED, AND THE SORT IS NOT TIDINESS
-/// ═══════════════════════════════════════════════════════════════════════
-/// One entity may contribute several regions (see the header) and a
-/// `Set`'s iteration order is its insertion order, which follows the
+/// IDS, DEDUPED, SORTED, AND THE SORT IS NOT TIDINESS. One entity may
+/// contribute several regions and a `Set`'s iteration order follows the
 /// scene's, which follows a `Map` whose order differs between a freshly
 /// built document and the same one reopened from disk. Anything that
 /// compares two selections, or writes one into a golden, needs this list
-/// to be the same list both times.
-List<String> marqueeSelection(DiagramScene scene, DPt from, DPt to) =>
-    marqueeSelectionIn(scene.hits, from, to);
-
-/// The list-level core of [marqueeSelection], on `hitTestRegions`'
-/// precedent: a caller holding bare regions reuses the identical rule.
+/// to be the same list both times. (This took over from a scene-level
+/// `marqueeSelection` wrapper that nothing called; `#945` deleted it and
+/// moved its reasoning here, where the rule lives.)
 List<String> marqueeSelectionIn(
   List<HitRegion> regions,
   DPt from,

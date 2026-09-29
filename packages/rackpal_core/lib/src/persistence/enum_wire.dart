@@ -18,14 +18,13 @@
 // across ~45 enums is a model-layer change disproportionate to this
 // persistence-focused milestone.
 //
-// So: the full wrapper/sentinel mechanism is implemented and
-// unit-tested end-to-end for the two enums docs/02-data-model.md's own
-// contract cites as its representative pair — [LifecycleStatus] and
-// [Severity] — via [decodeLifecycleStatusOrUnknown]/
-// [encodeLifecycleStatusValue] and [decodeSeverityOrUnknown]/
-// [encodeSeverityValue] below. The live model fields that hold these two
-// enums (`DeviceInstance.lifecycleStatus`, `Link.lifecycleStatus`,
-// `Sheet.lifecycleFilter`, `AckedFinding.demotedTo`,
+// So the `unknown(raw)` fallback is NOT IMPLEMENTED for any enum. A
+// wrapper/sentinel version for [LifecycleStatus] and [Severity] used to sit
+// here, described as "implemented and unit-tested end-to-end"; nothing
+// called it, no test ever did (`#945`, checked against the history), and
+// no model field could hold its result, so it was deleted. The live model
+// fields that hold these two enums (`DeviceInstance.lifecycleStatus`,
+// `Link.lifecycleStatus`, `Sheet.lifecycleFilter`, `AckedFinding.demotedTo`,
 // `RuleOverride.severity`) still decode via the strict, throwing
 // [decodeLifecycleStatus]/[decodeSeverity] below, because their field
 // type has nowhere else to put an unrecognised value yet. Every OTHER
@@ -76,38 +75,6 @@ LifecycleStatus decodeLifecycleStatus(String raw) {
   throw FormatException('Unrecognised LifecycleStatus value "$raw".');
 }
 
-/// The full wrapper/sentinel result: either a recognised [LifecycleStatus]
-/// or the original unrecognised raw string, preserved verbatim.
-sealed class LifecycleStatusValue {
-  const LifecycleStatusValue();
-}
-
-final class KnownLifecycleStatus extends LifecycleStatusValue {
-  const KnownLifecycleStatus(this.value);
-  final LifecycleStatus value;
-}
-
-final class UnknownLifecycleStatus extends LifecycleStatusValue {
-  const UnknownLifecycleStatus(this.raw);
-  final String raw;
-}
-
-/// Demonstrates the format's enum contract end-to-end: an unrecognised
-/// string comes back as [UnknownLifecycleStatus] rather than throwing,
-/// and [encodeLifecycleStatusValue] re-emits its exact original text.
-LifecycleStatusValue decodeLifecycleStatusOrUnknown(String raw) {
-  for (final entry in _lifecycleStatusWire.entries) {
-    if (entry.value == raw) return KnownLifecycleStatus(entry.key);
-  }
-  return UnknownLifecycleStatus(raw);
-}
-
-String encodeLifecycleStatusValue(LifecycleStatusValue statusValue) =>
-    switch (statusValue) {
-      KnownLifecycleStatus(value: final v) => encodeLifecycleStatus(v),
-      UnknownLifecycleStatus(raw: final r) => r,
-    };
-
 // --- Severity ---------------------------------------------------------
 
 const Map<Severity, String> _severityWire = {
@@ -127,31 +94,3 @@ Severity decodeSeverity(String raw) {
   }
   throw FormatException('Unrecognised Severity value "$raw".');
 }
-
-/// The full wrapper/sentinel result — see [LifecycleStatusValue].
-sealed class SeverityValue {
-  const SeverityValue();
-}
-
-final class KnownSeverity extends SeverityValue {
-  const KnownSeverity(this.value);
-  final Severity value;
-}
-
-final class UnknownSeverity extends SeverityValue {
-  const UnknownSeverity(this.raw);
-  final String raw;
-}
-
-SeverityValue decodeSeverityOrUnknown(String raw) {
-  for (final entry in _severityWire.entries) {
-    if (entry.value == raw) return KnownSeverity(entry.key);
-  }
-  return UnknownSeverity(raw);
-}
-
-String encodeSeverityValue(SeverityValue severityValue) =>
-    switch (severityValue) {
-      KnownSeverity(value: final v) => encodeSeverity(v),
-      UnknownSeverity(raw: final r) => r,
-    };

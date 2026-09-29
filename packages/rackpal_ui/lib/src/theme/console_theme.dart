@@ -73,27 +73,6 @@ enum ConsoleStatus {
       prefersLightInk(_argb) ? _c(kConsoleControlText) : _c(kConsoleCanvas);
 }
 
-/// The surfaces and text tiers, for widgets that need a token the Material
-/// `ColorScheme` has no slot for.
-abstract final class ConsoleColors {
-  static Color get canvas => _c(kConsoleCanvas);
-  static Color get base => _c(kConsoleBase);
-  static Color get card => _c(kConsoleCard);
-  static Color get buttonBase => _c(kConsoleButtonBase);
-
-  static Color get primaryText => _c(kConsolePrimaryText);
-  static Color get controlText => _c(kConsoleControlText);
-  static Color get active => _c(kConsoleActive);
-  static Color get secondaryText => _c(kConsoleSecondaryText);
-  static Color get nonCriticalText => _c(kConsoleNonCriticalText);
-
-  /// Tracks, borders, dividers. NOT text: see [inactiveInk].
-  static Color get inactiveSurface => _c(kConsoleInactiveSurface);
-
-  /// Disabled labels and icons.
-  static Color get inactiveInk => _c(kConsoleInactiveInk);
-}
-
 /// The application theme.
 ///
 /// `fontFamily` is Jost (§11.89.8): before it was set the app drew its

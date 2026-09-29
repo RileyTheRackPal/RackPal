@@ -132,33 +132,6 @@ const String kBuilderSaveNeeds =
     'Needs a name, a designator prefix, and an RU height above 0 (or a 0U '
     'mount on the Physical section)';
 
-/// Opens the builder over [template].
-///
-/// A FULL-WINDOW SURFACE, NOT A FLOATING CARD. docs/06 §2: *"a modal
-/// cannot host a 68-row virtualised grid"*. `Dialog.fullscreen` is how
-/// `showStructureEditor` says the same thing, and the grid it is being
-/// sized for is M4-E's.
-Future<void> showDeviceBuilder(
-  BuildContext context, {
-  required TemplateBody template,
-  required DeviceBuilderActions actions,
-  required TextMeasurer measurer,
-  Registries? registries,
-  IdFormat portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
-}) => showDialog<void>(
-  context: context,
-  builder: (context) => Dialog.fullscreen(
-    child: DeviceBuilderScreen(
-      template: template,
-      actions: actions,
-      measurer: measurer,
-      registries: registries,
-      portDesignatorFormat: portDesignatorFormat,
-      onDone: () => Navigator.of(context).pop(),
-    ),
-  ),
-);
-
 /// The four sections that exist. See the file header for the three that
 /// do not.
 enum BuilderSection {

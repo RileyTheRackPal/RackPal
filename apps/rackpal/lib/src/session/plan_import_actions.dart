@@ -550,33 +550,6 @@ Outcome<ImportedFloorplan> importRenderedPdfPage({
   );
 }
 
-/// Asks the user for a floorplan and imports it. Null means cancelled.
-Future<Outcome<ImportedFloorplan>?> pickAndImportFloorplan({
-  required FilePicker picker,
-  required FileStore fs,
-  required Uuid id,
-  required String name,
-  required FracIndex order,
-  required EntityMeta meta,
-  String? initialDirectory,
-  Uuid? locationId,
-}) async {
-  final path = await picker.pickOpen(
-    initialDirectory: initialDirectory,
-    type: FileDialogType.floorplan,
-  );
-  if (path == null) return null;
-  return importFloorplanFrom(
-    fs: fs,
-    path: path,
-    id: id,
-    name: name,
-    order: order,
-    meta: meta,
-    locationId: locationId,
-  );
-}
-
 /// `File ▸ Import floorplan…`, the caller this whole file did not have
 /// (DR-143 §11.142).
 ///
@@ -588,7 +561,9 @@ Future<Outcome<ImportedFloorplan>?> pickAndImportFloorplan({
 /// `importFloorplanFrom`, `importFloorplanBytes`, `readPdfPages`,
 /// `importLiftedPdfPage` and `PdfPagePickerDialog` had **zero call sites**
 /// in `lib/`. So `AddPlanUnderlayCommand` had no producer and no project
-/// could hold a floorplan.
+/// could hold a floorplan. (All but one gained a caller through this
+/// class. `pickAndImportFloorplan` never did, since this class calls
+/// `importFloorplanFrom` itself, and `#945` deleted it.)
 ///
 /// This class is the shape the three existing import/export families
 /// already use: it holds the picker and the file store, takes the dialog

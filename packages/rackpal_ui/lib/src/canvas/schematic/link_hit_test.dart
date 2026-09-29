@@ -121,17 +121,3 @@ RenderedNetLabel? netLabelAtPoint(
   }
   return null;
 }
-
-/// Every rendered pennant belonging to [linkId], in the scene's op order.
-///
-/// USUALLY TWO, and the exceptions are both normal rather than faults: ONE
-/// for a home run to the field (AC-018 — the far end is an `OpenEndpoint`
-/// and lands on no pin), and ZERO when the link's domain is filtered out or
-/// neither of its devices has a symbol on this sheet. A caller drawing a
-/// selection mark iterates whatever it gets; a caller that assumed two
-/// would draw a mark at a stale position on a filtered sheet.
-List<RenderedNetLabel> pennantsOfLink(SchematicScene scene, Uuid linkId) =>
-    <RenderedNetLabel>[
-      for (final label in scene.netLabels)
-        if (label.linkId == linkId) label,
-    ];
