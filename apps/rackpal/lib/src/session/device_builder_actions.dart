@@ -48,13 +48,15 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 ///
 /// [editing] is the id of the template being re-saved, or null when the
 /// builder is authoring a new one. **The distinction decides whether a
-/// save FORKS A VERSION or MINTS AN ID**, which is CR-050's rule: editing
-/// a published template does not mutate it, it forks `version + 1` and
-/// every earlier version stays resolvable, so the devices already placed
-/// from v1 keep resolving to v1.
+/// save WRITES A VERSION or MINTS AN ID.** Which version it writes is
+/// `planTemplateSave`'s (DR-202 §11.201.1): CR-050 forks `version + 1` so
+/// devices already placed from v1 keep resolving to v1, and with nothing
+/// placed from the newest version there is nobody to protect, so it is
+/// replaced in place.
 ///
 /// ══════════════════════════════════════════════════════════════════════
-/// THE SECOND `Save` IN ONE SESSION FORKS. IT DOES NOT MINT A SECOND ID.
+/// THE SECOND `Save` IN ONE SESSION WRITES THE SAME ID. IT DOES NOT MINT
+/// A SECOND ONE.
 /// ══════════════════════════════════════════════════════════════════════
 /// The builder offers a plain `[Save]` beside `[Save & Close]` precisely
 /// so a person can save and keep working, so pressing it twice is the
@@ -69,6 +71,16 @@ import 'package:rackpal_ui/rackpal_ui.dart';
 /// rather than the document's: it is a fact about this authoring session,
 /// and a second builder window opened later is a second session authoring
 /// a second device.
+///
+/// **WHICH MEANS THE CALLER MUST BUILD THIS ONCE PER SESSION, and from
+/// `#778` to `#950` the shell did not.** A dialog built it once per
+/// opening, which is where DR-077 fixed it; `#778` (2026-08-26) made the
+/// builder a view and called this inside `build`. A save is a document
+/// change, a document change is a rebuild,
+/// and the fresh closure's `authored` was null again: the second Save on
+/// a new template minted `tpl.foo_2` exactly as before DR-077. The shell
+/// now keeps the result for the life of one builder session; see
+/// `AppShellState._builderActionsFor`.
 ///
 /// **RENAMING BETWEEN SAVES DOES NOT RE-ID.** The id is derived from the
 /// display name only when it is minted. A rename that re-derived it would
@@ -110,10 +122,32 @@ DeviceBuilderActions buildDeviceBuilderActions({
         ),
       );
     },
+    // THE VERSION DEVICES STAND ON, for the change class (DR-202
+    // §11.201.2). Read through `authored`, so a new template has no
+    // baseline until its first Save gives it an id, and none after that
+    // until something is placed from it.
+    placedBaseline: () {
+      final id = authored;
+      if (id == null) return null;
+      final doc = controller.doc;
+      final placed = newestPlacedTemplateVersion(doc, id);
+      if (placed == null) return null;
+      final snapshot = doc.templates[templateSnapshotKey(id, placed.version)];
+      // A device whose snapshot is missing is a hand-edited file, and a
+      // verdict against a body we do not have would be invented.
+      if (snapshot == null) return null;
+      return (
+        body: snapshot.body,
+        version: placed.version,
+        count: placed.count,
+      );
+    },
     onSave: (body) {
       final doc = controller.doc;
       final templateId = authored ??= templateIdFor(doc, body.displayName);
-      final version = nextTemplateVersion(doc, templateId);
+      // REPLACES the newest version while nothing is placed from it, and
+      // forks `version + 1` once something is (DR-202 §11.201.1).
+      final (:version, replaces: _) = planTemplateSave(doc, templateId);
 
       controller.run(
         SaveTemplateToProjectCommand(

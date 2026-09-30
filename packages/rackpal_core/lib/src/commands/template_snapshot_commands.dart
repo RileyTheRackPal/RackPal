@@ -30,6 +30,8 @@
 // `TemplateRef`s already pointing at it. `nextTemplateVersion` is the
 // allocator, and it is a free function for exactly the reason
 // `mediaTypeIdFor` is.
+import 'package:rackpal_core/src/catalog/seed_catalog.dart'
+    show kSeedCatalogIds;
 import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/label_key.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
@@ -89,14 +91,56 @@ TemplateId templateIdFor(RackDocument doc, String displayName) {
 /// `TemplateRef` cannot hold one. Editing a published template does not
 /// mutate it; it forks `version + 1` and every earlier version stays
 /// resolvable, which is what makes an embedded snapshot trustworthy.
-int nextTemplateVersion(RackDocument doc, TemplateId templateId) {
+int nextTemplateVersion(RackDocument doc, TemplateId templateId) =>
+    _latestVersion(doc, templateId) + 1;
+
+int _latestVersion(RackDocument doc, TemplateId templateId) {
   var highest = 0;
   for (final s in doc.templates.values) {
     if (s.templateId == templateId && s.version > highest) {
       highest = s.version;
     }
   }
-  return highest + 1;
+  return highest;
+}
+
+/// The version a Device Builder `Save` of [templateId] writes (DR-202
+/// §11.201.1).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// A FORK PROTECTS PLACED DEVICES, SO WITH NONE PLACED IT PROTECTS NOBODY
+/// ═════════════════════════════════════════════════════════════════════
+/// CR-050 forks `version + 1` so that a device placed from v1 keeps
+/// resolving to v1 whatever the author does next. That guarantee is about
+/// a `TemplateRef`, and the only holder of one is a `DeviceInstance`. When
+/// no device references the newest version, a fork keeps a body nobody can
+/// reach, and a template saved thirty times while it is being built would
+/// carry thirty full snapshots in the `.rppj` for ever. So the newest
+/// version is REPLACED IN PLACE until something is placed from it, and
+/// forked from the first Save after that.
+///
+/// **THE SHIPPED CATALOG BODY IS NEVER REPLACED.** A seeded id's `@1` is
+/// the one DR-158 §11.157.3 calls identical in every project, so editing
+/// it forks `@2` even with nothing placed, and later saves replace `@2`.
+///
+/// Returns whether the key is already taken, so the caller can say which
+/// happened; [SaveTemplateToProjectCommand] restores what it replaced on
+/// undo either way.
+({int version, bool replaces}) planTemplateSave(
+  RackDocument doc,
+  TemplateId templateId,
+) {
+  final latest = _latestVersion(doc, templateId);
+  if (latest == 0) return (version: 1, replaces: false);
+  final shipped = latest == 1 && kSeedCatalogIds.contains(templateId.v);
+  final placed = doc.devices.values.any(
+    (d) =>
+        d.templateRef.templateId == templateId &&
+        d.templateRef.version == latest,
+  );
+  return shipped || placed
+      ? (version: latest + 1, replaces: false)
+      : (version: latest, replaces: true);
 }
 
 /// Writes one [TemplateSnapshot] into `RackDocument.templates`.
@@ -145,8 +189,13 @@ final class SaveTemplateToProjectCommand extends Command<RackDocument> {
   @override
   Iterable<Uuid> get affects => const [];
 
+  /// The snapshot [apply] overwrote, or null when the key was free. Set on
+  /// every apply, so a redo describes THAT run.
+  TemplateSnapshot? _replaced;
+
   @override
   bool apply(RackDocument doc) {
+    _replaced = doc.templates[key];
     doc.templates[key] = TemplateSnapshot(
       templateId: templateId,
       version: version,
@@ -157,16 +206,22 @@ final class SaveTemplateToProjectCommand extends Command<RackDocument> {
     return true;
   }
 
-  /// Removes only what this command added.
+  /// Puts back exactly what was there: nothing, or the snapshot this save
+  /// replaced (DR-202 §11.201.1), as the SAME object.
   ///
-  /// **Bounded, in `AddMediaTypeCommand`'s sense**: the key is
-  /// `"$templateId@$version"` and [nextTemplateVersion] guarantees it was
-  /// free, so a revert cannot delete a snapshot somebody else's devices
-  /// resolve against. That is what makes undoing a save safe even though
-  /// undoing a library DELETE would not be (CR-106).
+  /// **Bounded, in `AddMediaTypeCommand`'s sense**: the key is either one
+  /// [nextTemplateVersion] guaranteed free, or one [planTemplateSave]
+  /// found no device referencing, so a revert cannot pull a body out from
+  /// under a placed device. That is what makes undoing a save safe even
+  /// though undoing a library DELETE would not be (CR-106).
   @override
   void revert(RackDocument doc) {
-    doc.templates.remove(key);
+    final replaced = _replaced;
+    if (replaced == null) {
+      doc.templates.remove(key);
+    } else {
+      doc.templates[key] = replaced;
+    }
   }
 }
 

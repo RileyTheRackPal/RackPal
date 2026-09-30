@@ -1103,6 +1103,38 @@ tests are run with it, and at the end the census lists exactly the 20 kept on pu
 `offersBackup` test; it was restored as its own test. And the test-only floor drops (core 12, ui 3,
 plus DR-201's 4 core) say beside each number that no product-run logic lost its coverage.
 
+### 4.20 The builder's second Save, and a verdict about nobody · 2026-09-29 · `#950` · `DR-202` · no version move
+
+Reported by the user: on a new template, Save *"will save a new version rather than saving the
+edits to the original template"* until the template is closed and reopened, and the `Breaking` chip
+*"is a bit confusing, especially if it is a brand new template"*.
+
+**THE FIRST WAS DR-077 §11.76.3 UNDONE, AND ITS TESTS WERE GREEN THE WHOLE TIME.** The fix was right
+when made, because the builder was a dialog that built its wiring once per opening. `#778`
+(`e1ba9958`, 2026-08-26) made it a view, and from then the shell built `buildDeviceBuilderActions`
+inside `build`. The closure is the only record of a new template's minted
+id; a save is a document change, a document change is a shell rebuild, and the fresh closure had
+forgotten. Measured through the shell before the fix: two Saves wrote `tpl.zone_amp_8@1` and
+`tpl.zone_amp_8_2@1`, two templates with one name. The five §11.76.3 cases each built one closure
+and called it twice, which is the product's behaviour only if nothing rebuilds between presses.
+`builder_save_route_test.dart` now presses the real button in the real shell, and it was red first.
+
+**THE SECOND WAS A BASELINE, NOT A LABEL.** The chip diffed against the body the window opened with,
+which for a new template is a blank, so a height read `Breaking`. DR-202 moved the baseline to the
+newest version a device is placed from and draws nothing when there is none; with the id fixed, it
+also stopped every Save forking a snapshot nobody could reach.
+
+| Changed | Where |
+|---|---|
+| Wiring built once per authoring session, cleared on New and on close | `AppShellState._builderActionsFor` |
+| `planTemplateSave`: replace while unplaced, fork once placed, never a seeded `@1` | `template_snapshot_commands.dart` |
+| Save's undo restores the snapshot a replace overwrote, as the same object | `SaveTemplateToProjectCommand.revert` |
+| `newestPlacedTemplateVersion`, the version-sensitive count its file said door 2 would need | `template_usage.dart` |
+| Chip: `placedBaseline`, `Breaking · N placed`, version in the tooltip | `device_builder_screen.dart` |
+
+**Scope.** No scope change. `#951`, the layout half of the same report, is separate and waits on a
+mockup the user asked to see first.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

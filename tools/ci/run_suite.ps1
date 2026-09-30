@@ -961,7 +961,12 @@ $SuiteFloors = @{
     # plenumListingFor, isOpenFinding), deleted with them. The one live rule
     # among them, a non-off acknowledgement leaving a finding listed, is
     # asserted where the product computes it (findings_view_test.dart).
-    'rackpal_core'   = 5104
+    # 5109 at `#950` (DR-202 §11.201.1): +5 in
+    # commands/template_snapshot_commands_test.dart for planTemplateSave:
+    # a new id starts at 1, an unplaced newest version is replaced, a placed
+    # one forks, a seeded @1 is never replaced, and undoing a replace puts
+    # back the same snapshot object.
+    'rackpal_core'   = 5109
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1492,7 +1497,11 @@ $SuiteFloors = @{
     # 1978 at `#945`: -3, the tests of `pdfHasLiftablePage`, a guard nothing
     # called; the import refuses a PDF with no liftable page before the
     # picker opens (PdfHasNoLiftablePageError), which is tested there.
-    'rackpal_ui'     = 1978
+    # 1980 at `#950` (DR-202 §11.201.2): +2 in
+    # builder/device_builder_screen_test.dart. The change chip says nothing
+    # when nothing is placed, and it measures against the placed body rather
+    # than the one the window opened with.
+    'rackpal_ui'     = 1980
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1690,7 +1699,12 @@ $SuiteFloors = @{
     # +1 in session/outlet_template_actions_test.dart. A new Structure body
     # is named in the project's own format and skips a designator in use;
     # both offers wrote a literal 'STR-1'. Red with the literal back.
-    'rackpal_app'    = 1124
+    # 1130 at `#950` (DR-202): +2 in session/builder_save_route_test.dart,
+    # which presses Save twice in the REAL shell (red before the fix: it
+    # wrote tpl.zone_amp_8_2) and sees no change chip on a new template;
+    # +4 in session/device_builder_actions_test.dart for the fork once a
+    # device is placed, the placed baseline twice, and undo of a fork.
+    'rackpal_app'    = 1130
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

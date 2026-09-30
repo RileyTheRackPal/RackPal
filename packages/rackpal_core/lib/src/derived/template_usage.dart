@@ -36,6 +36,36 @@ import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/units/ids.dart';
 
+/// The newest version of [templateId] that any device in [doc] is placed
+/// from, and how many devices stand on exactly that version, or null when
+/// none are (DR-202 §11.201.2).
+///
+/// **THE VERSION-SENSITIVE COUNT THE HEADER SAID DOOR 2 WOULD NEED**, and
+/// it is the builder's change class that needed it first. That verdict is
+/// about devices already placed, so it compares the draft against the body
+/// those devices resolve to, and a template nothing stands on has no
+/// verdict to give. The NEWEST placed version is the baseline because it
+/// is the one a later migration would start from; instances on older
+/// versions are already a fork behind whatever this save does.
+({int version, int count})? newestPlacedTemplateVersion(
+  RackDocument doc,
+  TemplateId templateId,
+) {
+  var version = 0;
+  var count = 0;
+  for (final d in doc.devices.values) {
+    final ref = d.templateRef;
+    if (ref.templateId != templateId) continue;
+    if (ref.version > version) {
+      version = ref.version;
+      count = 1;
+    } else if (ref.version == version) {
+      count++;
+    }
+  }
+  return count == 0 ? null : (version: version, count: count);
+}
+
 /// Every device in [doc] standing on template [templateId], including any
 /// device you may be about to edit.
 ///

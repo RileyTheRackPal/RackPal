@@ -22566,6 +22566,56 @@ there for it.
 
 ---
 
+### 11.201 DR-202 · Save replaces a version nothing is placed from, and the change class speaks only for placed devices
+
+**The question.** Reported by the user on 2026-09-29 (`#950`) as two defects in the Device Builder.
+First: *"when hitting Save, it will save a new version rather than saving the edits to the original
+template, if it's the first time a template is opened. Once the template is closed and re-opened,
+save functions as normal."* Second: *"'Breaking' is a bit confusing, especially if it is a brand new
+template."*
+
+**The first was a regression of §11.76.3, and not a new question.** §11.76.3 was fixed while the
+builder was a dialog, which built its wiring once per opening; `#778` (2026-08-26) made it a view,
+and from then the shell called `buildDeviceBuilderActions` inside `build`. The closure it returns is the only record of the id a new
+template's first Save mints; a save changes the document, the document change rebuilds the shell,
+and the rebuilt closure's id was null again. So the second Save on a new template minted `tpl.foo_2`
+beside `tpl.foo`, exactly the defect §11.76.3 was written to remove. Reopening worked because door 2
+supplies the id from the shell. **The §11.76.3 tests passed throughout**, because each held one
+closure still and called it twice; the app never held it still. The shell now builds the wiring once
+per authoring session, and `builder_save_route_test.dart` presses the real button.
+
+**Fixing that exposed the ruling question.** With the id kept, every Save forks `version + 1`, so a
+template saved thirty times while it is built carries thirty full snapshots in the `.rppj`. And the
+change class measured the draft against the body the window opened with, which for a new template is
+a blank: typing a height read `Breaking`. Put to the user with priced options for both.
+
+**11.201.1 RULED: SAVE REPLACES THE NEWEST VERSION WHILE NO DEVICE IS PLACED FROM IT.** Settled by
+the user, choosing the recommended option; the reasoning is the author's, accepted without addition.
+CR-050's fork exists so a device placed from v1 keeps resolving to v1, and the only holder of a
+`TemplateRef` is a `DeviceInstance`. When none references the newest version a fork protects nobody,
+so `planTemplateSave` replaces that version in place, and forks from the first Save after something
+is placed from it. **A seeded id's `@1` is never replaced**, placed or not: it is the shipped body
+§11.157.3 calls identical in every project, so editing it forks `@2`, and later saves replace `@2`.
+Undo restores the replaced snapshot as the same object, so the save stays one bounded document edit.
+
+**11.201.2 RULED: THE CHANGE CLASS IS SHOWN ONLY WHEN DEVICES ARE PLACED, WITH THE COUNT.** Settled
+by the user, choosing the recommended option; the reasoning is the author's, accepted without
+addition. The class answers what an edit means for devices already placed, so it is measured
+against the **newest version any device stands on** and reads `Breaking · 4 placed`, with the
+version named in the tooltip. A template nothing is placed from shows no chip, however large the
+edit. **The baseline was offered to the user as "your last Save"** and is refined here to the placed
+version: under §11.201.1 the last Save of a template with placements is either that placed version
+or an unplaced version above it, and only the placed one is what the devices resolve to.
+
+**11.201.3 WHAT THIS DOES NOT DECIDE.** No placed device is ever migrated by a Save; that was true
+before and is unchanged, and the change class stays an advisory label (CR-050). A device placed from
+the palette while the builder is open turns the next Save into a fork, which is the rule working
+rather than an edge case.
+
+**Scope.** No scope change. §11.76.3's fork clause is narrowed (§12.42); its id clause stands.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -23257,6 +23307,14 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **§9.9 (M8)**, contents | *"crash reporting local-first and opt-in remote with the redaction policy reconciled (CR-096)"* | **The local half ships now**, under Epic `#786` (§11.193.1): a capped local log, fatal errors recorded as type and frames only, a startup-failure dialog and `Help ▸ Open diagnostics folder…`. **M8 keeps** the opt-in remote half, CR-096's reconciliation and **the exit clause unchanged**, which it still has to demonstrate (§11.193.3). |
+
+
+### 12.42 Narrowed by DR-202 (Save replaces a version nothing is placed from)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-077 §11.76.3**, the fork clause | *"The actions closure remembers the id it minted; later saves in the same authoring session pass it as `editing` and fork `version + 1`."* | **A later save REPLACES the newest version while no device is placed from it, and forks `version + 1` once one is** (§11.201.1). A seeded `@1` is never replaced. **The id clause stands exactly**: a second Save never mints a second template, and a rename does not re-id. |
+| **docs/06 §7.2**, the change class | *"computed from the diff and shown prominently before save"*, diffed against the body the window opened with. | **Shown only when devices are placed from the template, against the newest version they stand on, with the count** (§11.201.2). |
 
 
 ## 13. Resolved §10 questions

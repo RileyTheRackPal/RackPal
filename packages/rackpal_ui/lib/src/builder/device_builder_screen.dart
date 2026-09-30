@@ -50,6 +50,11 @@
 // §2's right dock, because that dock does not exist yet and because a
 // verdict about saving belongs next to the button that saves.
 //
+// **AND IT IS ONLY THERE WHEN IT IS ABOUT SOMEBODY** (DR-202 §11.201.2,
+// `#950`). The class answers what an edit means for devices already
+// placed, so it is measured against the version they stand on and drawn
+// only when some do. A new template has none and shows none.
+//
 // ═════════════════════════════════════════════════════════════════════
 // NO KEYMAP ROWS
 // ═════════════════════════════════════════════════════════════════════
@@ -86,7 +91,24 @@ final class DeviceBuilderActions {
     required this.onSave,
     this.rememberedPacks = _nothingRemembered,
     this.onPacksRemembered = _rememberNothing,
+    this.placedBaseline = _nothingPlaced,
   });
+
+  /// The body devices already placed from this template resolve to, which
+  /// version that is, and how many stand on it; null when none do (DR-202
+  /// §11.201.2).
+  ///
+  /// **THE CHANGE CLASS IS A VERDICT ABOUT THESE DEVICES AND NOTHING
+  /// ELSE.** It compared against the body the window opened with until
+  /// `#950`, so a brand-new template read `Breaking` the moment it had a
+  /// height: breaking relative to a blank, for devices that could not
+  /// exist. With no placed baseline there is nobody to warn, and the chip
+  /// is not drawn.
+  ///
+  /// A CALL AND NOT A VALUE, read on every build, because the answer moves
+  /// under an open window: a first Save gives a new template an id, and a
+  /// device placed from the palette meanwhile gives it a baseline.
+  final PlacedTemplateBaseline? Function() placedBaseline;
 
   /// Which column packs this device CATEGORY was last left showing
   /// (docs/06 §4.5).
@@ -121,6 +143,12 @@ Set<PortColumnPack> _nothingRemembered(String category) =>
     const <PortColumnPack>{};
 
 void _rememberNothing(String category, Set<PortColumnPack> packs) {}
+
+/// A caller with no document: nothing is placed, so no verdict is shown.
+PlacedTemplateBaseline? _nothingPlaced() => null;
+
+/// What [DeviceBuilderActions.placedBaseline] answers.
+typedef PlacedTemplateBaseline = ({TemplateBody body, int version, int count});
 
 /// What an unnamed template is called wherever a name is shown: the header,
 /// and the close prompt (DR-190).
@@ -281,9 +309,13 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
     undoDepth: widget.undoDepth,
   );
 
-  /// The body as it was when the window opened, for the change class.
-  /// A COPY, because `_session.body` is the live one and diffing a thing
-  /// against itself always answers "unchanged".
+  /// The body as it was when the window opened, for the port keys it had
+  /// already published. A COPY, because `_session.body` is the live one.
+  ///
+  /// **IT IS NO LONGER THE CHANGE CLASS'S BASELINE** (DR-202 §11.201.2).
+  /// It was, and for a new template that made the baseline a blank, so the
+  /// chip read `Breaking` for devices that could not exist. The baseline
+  /// is now [DeviceBuilderActions.placedBaseline].
   late final TemplateBody _opened = copyTemplateBody(widget.template);
 
   @override
@@ -352,8 +384,8 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) => _reportUp());
   }
 
-  /// Named `_reportUp` and not `_report`, because this class already
-  /// has a `_report` field holding the live `TemplateChangeReport`.
+  /// Named `_reportUp` because it reports UP, to the shell; the change
+  /// class this screen shows is [_verdict].
   void _reportUp() {
     _reportDirty();
     _reportUndo();
@@ -440,8 +472,17 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
             b.mountMethod == MountMethod.notInRack);
   }
 
-  TemplateChangeReport get _report =>
-      classifyTemplateChange(_opened, _session.body);
+  /// The change class against the body placed devices resolve to, or null
+  /// when nothing is placed and there is nobody for a verdict to be about.
+  _Verdict? get _verdict {
+    final base = widget.actions.placedBaseline();
+    if (base == null) return null;
+    return (
+      report: classifyTemplateChange(base.body, _session.body),
+      version: base.version,
+      count: base.count,
+    );
+  }
 
   /// Runs one field write and repaints, unless it would write the value
   /// already
@@ -773,7 +814,7 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
     children: [
       _Header(
         session: _session,
-        report: _report,
+        verdict: _verdict,
         canSave: _canSave,
         onUndo: _session.undo.canUndo
             ? () => setState(_session.undoLast)
@@ -1017,7 +1058,7 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
 class _Header extends StatelessWidget {
   const _Header({
     required this.session,
-    required this.report,
+    required this.verdict,
     required this.canSave,
     required this.onUndo,
     required this.onRedo,
@@ -1027,7 +1068,9 @@ class _Header extends StatelessWidget {
   });
 
   final TemplateEditSession session;
-  final TemplateChangeReport report;
+
+  /// Null when nothing is placed from this template (DR-202 §11.201.2).
+  final _Verdict? verdict;
   final bool canSave;
   final VoidCallback? onUndo;
   final VoidCallback? onRedo;
@@ -1095,7 +1138,7 @@ class _Header extends StatelessWidget {
                     child: Chip(label: Text('Draft')),
                   ),
                 ),
-              _ChangeClassChip(report: report),
+              if (verdict case final v?) _ChangeClassChip(verdict: v),
               const SizedBox(width: 12),
               IconButton(
                 onPressed: onUndo,
@@ -1142,14 +1185,24 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// docs/06 §7.2's verdict, beside the button it is about.
-class _ChangeClassChip extends StatelessWidget {
-  const _ChangeClassChip({required this.report});
+/// The change class, the version it was measured against, and how many
+/// devices stand on that version.
+typedef _Verdict = ({TemplateChangeReport report, int version, int count});
 
-  final TemplateChangeReport report;
+/// docs/06 §7.2's verdict, beside the button it is about.
+///
+/// **IT SAYS WHO IT IS ABOUT** (DR-202 §11.201.2). `Breaking` alone read
+/// as a property of the edit, and on a new template it was a property of
+/// nothing. `Breaking · 4 placed` is a statement about four devices, and
+/// the tooltip names the version they resolve to.
+class _ChangeClassChip extends StatelessWidget {
+  const _ChangeClassChip({required this.verdict});
+
+  final _Verdict verdict;
 
   @override
   Widget build(BuildContext context) {
+    final report = verdict.report;
     if (report.isUnchanged) return const SizedBox.shrink();
     final scheme = Theme.of(context).colorScheme;
     final (label, background) = switch (report.changeClass) {
@@ -1164,15 +1217,18 @@ class _ChangeClassChip extends StatelessWidget {
         .take(6)
         .map((c) => '${c.kind.name}: ${c.path}')
         .join('\n');
+    final devices = verdict.count == 1
+        ? '1 placed device uses'
+        : '${verdict.count} placed devices use';
     return Tooltip(
-      message: reasons,
+      message: 'Compared with v${verdict.version}, which $devices.\n$reasons',
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
           color: background,
           borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(label),
+        child: Text('$label · ${verdict.count} placed'),
       ),
     );
   }

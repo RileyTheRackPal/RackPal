@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-09-29 (seventy-seventh entry)
+
+* **Progress**: `#950` (docs/12 §4.20). A new template's second Save minted a second template
+  (`tpl.zone_amp_8_2`): the shell rebuilt the save closure that remembered the id, undoing DR-077
+  §11.76.3 behind its own green tests. The wiring now lives for one authoring session, and a test
+  presses the real button in the real shell.
+* **Creation**: [DR-202](/decisions/dr-202-save-replaces-an-unplaced-version.md). Save replaces the
+  newest version until a device is placed from it (never a seeded `@1`), and the change chip shows
+  only for placed devices, as `Breaking · 4 placed`.
+* **Creation**: [A closure built in build forgets](/practices/a-closure-built-in-build-forgets.md).
+* **Note**: `#951`, the layout half of the same report, waits on a mockup the user asked to see.
+
 ## 2026-09-29 (seventy-sixth entry)
 
 * **Progress**: `#945` (docs/12 §4.19). Of 41 public declarations nothing in `lib/` called, 20 were
