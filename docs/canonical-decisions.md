@@ -22688,6 +22688,72 @@ nothing migrates (CR-117). Which sections exist (§11.106.2's `Panel` rule is un
 
 ---
 
+### 11.203 DR-204 · A device can be set on a shelf, and it is drawn there
+
+**The question.** Reported by the user on 2026-09-30 (`#953`): *"In the rack editor, it doesn't seem
+to be possible to place devices on a shelf."* AC-043 kept shelves in v1 with **auto-pack left to
+right**, and docs/04 §6.1 draws the interaction. Censused before anything was offered:
+
+| Found | Where |
+|---|---|
+| **No gesture creates a `ShelfPlacement`.** `buildPlaceOnShelfCommand` exists (DR-128) and its only caller is the `Add outlets` remedy | `shelf_placement.dart` |
+| **A device that IS on a shelf is never drawn.** `_visibleDevices` skips every non-rail placement; the Home Theatre starter's two shelf components have been invisible since M1, counted only by the load gutter's `undrawnCount` | `scene_builder.dart` |
+| **Deleting a shelf strands its hosts**, pointing at a device that no longer exists. Unreachable only while nothing can be put on a shelf | the delete path reads no `ShelfPlacement` |
+| **No shelf width is known.** `chassisWidth` is non-nullable, defaults to 432 mm, is always written, and no shelf or hosted seed sets it | `template.dart` |
+
+The last row corrects a question already put: the author first offered "an unrecorded width gets a
+hollow slot" on the premise that widths came from `chassisWidth`, and the user chose it. The premise
+was false, and the question was put again with that said.
+
+**11.203.1 RULED: DRAG ONTO A SHELF, AND AN INSPECTOR PICKER, BOTH.** Settled by the user, choosing
+over the recommended drag alone. A palette drag onto a shelf's tray sets the device on it at the
+nearest gap; selecting a shelf offers `Put a device on this shelf…`, AC-044's shape for 0U
+occupants and the keyboard's route.
+
+**11.203.2 RULED ON TRADE KNOWLEDGE: ANY DEVICE MAY SIT ON A SHELF.** The author recommended a rule
+keyed on mount method; the user explained why it is wrong: *"it depends heavily on the
+amplifier/AVR. Some AVR's have rack mount kits available, but those are both A: a separate product
+and B: sized to fit a specific or a small range of AVR's. Sometimes those kits aren't even
+available."* So the template gets no vote. **A rack-ear device set on a shelf is allowed and the
+status line says so**, which catches a mis-drop without blocking a real one (the user's choice of
+the two offered).
+
+**11.203.3 RULED: A SHELF WIDTH IS ITS OWN OPTIONAL FIELD.** Settled by the user, choosing the
+recommended option. `TemplateBody.shelfWidth` (`shelfWidthNm`), a `Len?`, blank meaning unknown and
+serialised as an absent key (G4, CR-114). Additive; nothing migrates. The builder shows it in `Size
+and mounting` for shelf and hosted mounts and on Physical for everything else. **A known width draws
+at true scale; an unknown one draws as a hollow fixed slot reading `width unknown`**, the 0U bar's
+treatment of an unknown length (§11.165.2). `chassisWidth` is not reused: it is the rack panel's
+connector-flow width, and its 432 mm default would draw every unmeasured host a full shelf wide as
+though measured.
+
+**11.203.4 HOSTS ARE DRAWN AND SELECTABLE.** Inside the shelf's block, packed left to right by
+`ShelfPlacement.order`, below a header naming the shelf and above its tray. They join the scene's
+hits and layouts as a 0U bar does (§11.165.1), which is what makes them selectable and inspectable.
+
+**11.203.5 RULED: DRAGGING A HOST.** Along its own shelf, it reorders. Onto another shelf, it moves
+there, keeping its id, ports and links (the recommended option). **Anywhere else, it is deleted**,
+the user's own instruction, with the status line saying `Removed STB-1. Ctrl+Z to undo`.
+
+**11.203.6 RULED: DELETING A SHELF ASKS.** docs/04 §6.1 item 7: `SHF-1 hosts 3 devices. [Delete all
+4] [Move hosts to Staging Bin] [Cancel]`, defaulting to the bin. Recommended by the author as data
+safety and chosen by the user.
+
+**11.203.7 RULED: THE SHELF SAYS WHAT IT CARRIES.** docs/04 §6.1 item 4: the header shows the load
+against `containerWeightCapacity`, over capacity marked and **never blocked**, because an integrator
+may be documenting an existing over-spec install. Unknown masses are counted (G4): `≥ 12.4/22 lb (1
+unknown)`.
+
+**11.203.8 WHAT STAYS DEFERRED.** AC-043's cuts are untouched: free lateral positioning
+(`lateralOffset` stays null), `Alt`-drag, the third focus level, and depth-overhang warnings. `#844`
+stays parked: sub-1U heights, stacking, orientation and purpose-made shelves. **Lateral overflow**
+(docs/04 §6.1 item 5) is refused on a drop only when every width involved is known, and otherwise
+said rather than refused, because an unknown cannot be added up.
+
+**Scope.** No scope change: AC-043's v1 half, built.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
