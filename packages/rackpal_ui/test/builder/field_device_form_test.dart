@@ -214,28 +214,26 @@ void main() {
     // comparison rather than two independent guesses.
     const tall = Size(1740, 2400);
 
-    testWidgets('Physical drops its rack rows and keeps the two that are not '
+    testWidgets('Physical drops its rack rows and keeps the one that is not '
         'rack geometry', (tester) async {
       await _pump(tester, _field(), size: tall);
       await _open(tester, 'Physical');
 
-      // KEPT. Mount method is the way back out, and a speaker has a weight.
-      expect(find.text('Mount method'), findsOneWidget);
+      // KEPT. A speaker has a weight. The way back out, `How it mounts`,
+      // is on Identity since DR-203, and the note says so.
       expect(find.text('Weight'), findsOneWidget);
+      expect(find.textContaining('How it mounts on Identity'), findsOneWidget);
 
-      // GONE. AC-031: no RU, no rack depth, no thermal class.
+      // GONE. AC-031: no RU, no rack depth, no thermal class. The
+      // occupancy rows are not listed: they left this section for every
+      // device, which the next group asserts.
       for (final gone in [
-        'RU height (rear)',
-        'Occupies',
-        'Width class',
-        'Width in twelfths of a rack',
         'Body depth',
         'Chassis width',
         'Max unsupported mass',
         'Clearance above (U)',
         'Clearance below (U)',
         'Thermal class',
-        'Passthrough',
         'Container',
       ]) {
         expect(find.text(gone), findsNothing, reason: gone);
@@ -247,13 +245,50 @@ void main() {
       await _pump(tester, _rack(), size: tall);
       await _open(tester, 'Physical');
       for (final kept in [
-        'RU height (rear)',
-        'Occupies',
-        'Mount method',
+        'Body depth',
         'Thermal class',
         'Weight',
+        'Container',
       ]) {
         expect(find.text(kept), findsOneWidget, reason: kept);
+      }
+    });
+  });
+
+  // DR-203 (`#951`): the report was data entered more than once. So the
+  // assertion is about BOTH sections: the occupancy is asked on Identity,
+  // and Physical does not ask it again.
+  group('occupancy is asked in one place', () {
+    const tall = Size(1740, 2400);
+    const occupancy = [
+      'How it mounts',
+      'RU height (front) *',
+      'RU height (rear)',
+    ];
+
+    testWidgets('Identity asks it, and shows Occupies rather than asking', (
+      tester,
+    ) async {
+      await _pump(tester, _rack(), size: tall);
+      for (final label in occupancy) {
+        expect(find.text(label), findsOneWidget, reason: label);
+      }
+      expect(find.textContaining('Occupies: '), findsOneWidget);
+      expect(find.byType(DropdownButtonFormField<OccupancySide>), findsNothing);
+    });
+
+    testWidgets('and Physical does not ask it again', (tester) async {
+      await _pump(tester, _rack(), size: tall);
+      await _open(tester, 'Physical');
+      for (final label in [
+        ...occupancy,
+        'Mount method',
+        'Occupies',
+        'Width class',
+        'Width in twelfths of a rack',
+        'Passthrough',
+      ]) {
+        expect(find.text(label), findsNothing, reason: label);
       }
     });
   });
@@ -266,11 +301,14 @@ void main() {
       await _open(tester, 'Panel');
       expect(find.textContaining('Customize panel layout'), findsOneWidget);
 
-      await _open(tester, 'Physical');
+      // `How it mounts` is on Identity since DR-203.
+      await _open(tester, 'Identity');
       // The label is `_mountLabel(notInRack)`, which is 'Not in a rack'.
       // The first draft guessed 'Not in rack' and the finder threw rather
       // than passing on the wrong widget, which is the behaviour worth
       // having.
+      await tester.ensureVisible(find.text('Rack ears').last);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Rack ears').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Not in a rack').last);

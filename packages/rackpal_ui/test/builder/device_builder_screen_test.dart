@@ -103,6 +103,20 @@ Finder _saveButton() => find.widgetWithText(FilledButton, 'Save');
 bool _saveEnabled(WidgetTester tester) =>
     tester.widget<FilledButton>(_saveButton()).onPressed != null;
 
+/// Picks a mount in Size and mounting (DR-203), by its on-screen words.
+Future<void> _chooseMount(WidgetTester tester, String label) async {
+  final picker = find.widgetWithText(
+    DropdownButtonFormField<MountMethod>,
+    'How it mounts',
+  );
+  await tester.ensureVisible(picker);
+  await tester.pumpAndSettle();
+  await tester.tap(picker);
+  await tester.pumpAndSettle();
+  await tester.tap(find.text(label).last);
+  await tester.pumpAndSettle();
+}
+
 Future<void> _type(WidgetTester tester, String label, String text) async {
   await tester.enterText(find.widgetWithText(TextField, label), text);
   await tester.pump();
@@ -564,10 +578,13 @@ void main() {
   // fourth interaction is the stall AC-049 exists to prevent.
   //
   // These read the body handed to `onSave`, which is what placement
-  // reads. The visible `Occupies` row binds to the same `body.side`, so
-  // it cannot disagree with what is asserted here; driving the navigation
-  // to that section is not what these cases are about.
-  group('DR-157: a rack height fills in the side it implies', () {
+  // reads.
+  //
+  // DR-203 (`#951`) WIDENED THIS: the side is re-derived from every
+  // occupancy edit, not only filled when blank, and the rear height
+  // follows the front until somebody types it. Two cases below asserted
+  // the old narrowness and now assert the ruling that replaced it.
+  group('DR-157 / DR-203: the side is read off the heights', () {
     testWidgets('AC-049 STILL LIGHTS SAVE ON THREE FIELDS, which is the '
         'thing the first attempt at this broke', (tester) async {
       await _pump(tester);
@@ -579,16 +596,109 @@ void main() {
       expect(_saveEnabled(tester), isTrue);
     });
 
-    testWidgets('a FRONT height alone implies front', (tester) async {
+    testWidgets('A FRONT HEIGHT ON A NEW TEMPLATE IS THE REAR HEIGHT TOO, '
+        'which is 21 of the 25 seeded rack-ear devices', (tester) async {
+      // `#951`: a 2U amplifier had its height typed on Identity, typed
+      // again on Physical, and `Occupies` corrected by hand.
       final saved = await _pump(tester);
 
-      await _type(tester, 'Display name *', 'Patch Panel');
-      await _type(tester, 'Designator prefix *', 'PP');
+      await _type(tester, 'Display name *', 'Zone Amp');
+      await _type(tester, 'Designator prefix *', 'AMP');
       await _type(tester, 'RU height (front) *', '2');
       await tester.tap(_saveButton());
       await tester.pump();
 
-      expect(saved.single.side, OccupancySide.front);
+      expect(
+        (saved.single.frontU, saved.single.rearU, saved.single.side),
+        (2, 2, OccupancySide.both),
+      );
+    });
+
+    testWidgets('and a rear typed as 0 makes it front only, and stops '
+        'following', (tester) async {
+      final saved = await _pump(tester);
+
+      await _type(tester, 'Display name *', 'Blank Plate');
+      await _type(tester, 'Designator prefix *', 'BP');
+      await _type(tester, 'RU height (front) *', '1');
+      await _type(tester, 'RU height (rear)', '0');
+      await _type(tester, 'RU height (front) *', '2');
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(
+        (saved.single.frontU, saved.single.rearU, saved.single.side),
+        (2, 0, OccupancySide.front),
+      );
+    });
+
+    testWidgets('A 0U MOUNT LIGHTS SAVE ON ITS OWN, with no second step', (
+      tester,
+    ) async {
+      // `#951`: `0U mount` did nothing for Save until `Occupies` said 0U.
+      final saved = await _pump(
+        tester,
+        template: _blank()
+          ..displayName = 'PDU'
+          ..typePrefix = 'PDU',
+      );
+      expect(_saveEnabled(tester), isFalse);
+
+      await _chooseMount(tester, '0U mount');
+      expect(_saveEnabled(tester), isTrue);
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.side, OccupancySide.zeroUVertical);
+      expect(saved.single.frontU, 0);
+    });
+
+    testWidgets('A HOSTED CARD CAN BE SAVED, which no template could be '
+        'before DR-203', (tester) async {
+      final saved = await _pump(
+        tester,
+        template: _blank()
+          ..displayName = 'Input Card'
+          ..typePrefix = 'CRD',
+      );
+
+      await _chooseMount(tester, 'Hosted in another device');
+      expect(
+        find.widgetWithText(TextField, 'RU height (front) *'),
+        findsNothing,
+      );
+      expect(_saveEnabled(tester), isTrue);
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(
+        (saved.single.frontU, saved.single.side),
+        (0, OccupancySide.none),
+      );
+    });
+
+    testWidgets('HALF RACK CARRIES ITS SPAN, so the file cannot say half and '
+        'full at once', (tester) async {
+      final saved = await _pump(tester, template: _named());
+
+      final width = find.widgetWithText(
+        DropdownButtonFormField<WidthClass>,
+        'Width',
+      );
+      await tester.ensureVisible(width);
+      await tester.pumpAndSettle();
+      await tester.tap(width);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Half rack').last);
+      await tester.pumpAndSettle();
+      expect(
+        find.widgetWithText(TextField, 'Width in twelfths of a rack'),
+        findsNothing,
+      );
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.nominalSpanTwelfths, 6);
     });
 
     testWidgets('AND A BODY SAVED THIS WAY IS ONE A RACK WILL TAKE, which '
@@ -607,7 +717,8 @@ void main() {
       expect(saved.single.frontU, 2);
     });
 
-    testWidgets('AN EXPLICIT SIDE IS NEVER OVERWRITTEN', (tester) async {
+    testWidgets('A SIDE THE HEIGHTS NO LONGER FIT IS RE-DERIVED (DR-203 '
+        'replaced "never overwritten")', (tester) async {
       final saved = await _pump(
         tester,
         template: _blank()
@@ -621,14 +732,19 @@ void main() {
       await tester.tap(_saveButton());
       await tester.pump();
 
+      // It opened 1U front with no rear height and a side of `rear`, a
+      // body the heights contradict. Front and rear disagreed as opened,
+      // so the rear does not follow, and the side becomes what the
+      // heights say.
       expect(
-        saved.single.side,
-        OccupancySide.rear,
-        reason: 'it fills a blank and never argues with a choice',
+        (saved.single.frontU, saved.single.rearU, saved.single.side),
+        (3, 0, OccupancySide.front),
       );
     });
 
-    testWidgets('and `notInRack` is not contradicted', (tester) async {
+    testWidgets('and `notInRack` offers no height to contradict it', (
+      tester,
+    ) async {
       final saved = await _pump(
         tester,
         template: _blank()
@@ -637,7 +753,10 @@ void main() {
           ..mountMethod = MountMethod.notInRack,
       );
 
-      await _type(tester, 'RU height (front) *', '2');
+      expect(
+        find.widgetWithText(TextField, 'RU height (front) *'),
+        findsNothing,
+      );
       await tester.tap(_saveButton());
       await tester.pump();
 
@@ -660,14 +779,17 @@ void main() {
     ) async {
       final saved = await _pump(tester, registries: withDomains());
 
-      await _type(tester, 'Display name *', 'Managed Switch');
-      await _type(tester, 'Designator prefix *', 'SW');
-      await _type(tester, 'RU height (front) *', '1');
-
+      // THE PICKER FIRST: since DR-203 the Size and mounting block makes
+      // Identity taller than a 720 px window, so typing the height scrolls
+      // the list and the lazily built picker at the top leaves the tree.
       await tester.tap(find.byKey(kPrimaryDomainFieldKey));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Network').last);
       await tester.pumpAndSettle();
+
+      await _type(tester, 'Display name *', 'Managed Switch');
+      await _type(tester, 'Designator prefix *', 'SW');
+      await _type(tester, 'RU height (front) *', '1');
 
       await tester.tap(_saveButton());
       await tester.pump();
@@ -696,14 +818,17 @@ void main() {
         template: _blank()..primaryDomain = const SignalDomainId('net'),
       );
 
-      await _type(tester, 'Display name *', 'Managed Switch');
-      await _type(tester, 'Designator prefix *', 'SW');
-      await _type(tester, 'RU height (front) *', '1');
-
+      // THE PICKER FIRST: since DR-203 the Size and mounting block makes
+      // Identity taller than a 720 px window, so typing the height scrolls
+      // the list and the lazily built picker at the top leaves the tree.
       await tester.tap(find.byKey(kPrimaryDomainFieldKey));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Not set').last);
       await tester.pumpAndSettle();
+
+      await _type(tester, 'Display name *', 'Managed Switch');
+      await _type(tester, 'Designator prefix *', 'SW');
+      await _type(tester, 'RU height (front) *', '1');
 
       await tester.tap(_saveButton());
       await tester.pump();

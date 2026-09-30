@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-09-30 (seventy-eighth entry)
+
+* **Progress**: `#950` closes at `f2024657` (PR 166). `#951` (docs/12 §4.21): the Device Builder
+  asks size and mounting once, on Identity, and derives `Occupies` and the span.
+* **Creation**: [DR-203](/decisions/dr-203-size-and-mounting-asked-once.md). Side-mounted and
+  in-furniture gear take no rack units, on the user's trade answer; a hosted card and a rear
+  lacing bar can be saved; Passthrough moves to the Ports toolbar.
+* **Note**: **THE USER ASKED FOR THE REST TO BE CHECKED, AND THE CHECK FOUND HALF THE LIST.** Three
+  cases were reported and three more were found by looking: the switch a section from what it
+  gates, and two device shapes the Save rule refused outright. A report names what somebody hit,
+  not what is there.
+
 ## 2026-09-29 (seventy-seventh entry)
 
 * **Progress**: `#950` (docs/12 §4.20). A new template's second Save minted a second template

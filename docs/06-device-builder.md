@@ -68,7 +68,7 @@ Sections in rail order. Only section 1's three starred fields block `Save`.
 
 | # | Section | Required |
 |---|---|---|
-| 1 | Identity & Classification | `displayName`★, `heightU`★ (= `frontU`), `typePrefix`★ |
+| 1 | Identity & Classification | `displayName`★, `heightU`★ (a rack height front or rear, or a mount that takes none: DR-203 §11.202.5), `typePrefix`★ |
 | 2 | Physical & Mounting | no |
 | 3 | Power & Thermal | no |
 | 4 | **Ports (I/O)** | no: blank panels legitimately have zero |
@@ -94,6 +94,8 @@ Sections in rail order. Only section 1's three starred fields block `Save`.
 ### 3.2 Physical & mounting
 
 Occupancy is a struct, never a scalar (CR-036): `frontU`, `rearU`, `side`, `mountMethod`, `widthClass`, `nominalSpanTwelfths`. A 2U patch panel is `{front: 2, rear: 2}`; a rear lacing bar is `{front: 0, rear: 1}`; a 0U PDU is `{0, 0, side: zeroUVertical}`. Half-rack width is `widthClass: half` plus `nominalSpanTwelfths` (CR-030), never "0.5 rack width", because 9.5 / 10 / 10.4 / 10.5 in all ship.
+
+**A person states three of the six, once, in `Size and mounting` on Identity** (DR-203 §11.202): how it mounts, front and rear RU, and width. `side` and the span are derived on every occupancy edit (§11.202.2), and the rear height follows the front until it is typed (§11.202.3). Rack ears, a shelf and a rear rail take rack units; a 0U mount, a hosted card, side-mounted gear, gear in furniture and gear not in a rack take none (§11.202.4). The rest of this section's fields stay on Physical, and `isPassthrough` is a toggle on the Ports toolbar (§11.202.6).
 
 All lengths are `Len` (int64 nanometres, CR-001) and all masses `Mass` (int64 micrograms, CR-003). Serialized names carry the unit: `depthNm`, `weightUg`, `chassisWidth`. `chassisWidth` defaults to **432 mm** for `widthClass: full`, not 482.6 mm, 482.6 is the *panel* width including ears, and flowing connectors across it draws jacks out past the rails on the very view that gets taped inside the rack door (AC-032). `maxUnsupportedMass` defaults to ~7 kg for `rackEars` and feeds `RCK-013` (AC-028).
 

@@ -261,9 +261,9 @@ void main() {
     testWidgets('occupancy and mounting read as words a person uses', (
       tester,
     ) async {
+      // ON IDENTITY since DR-203 (`#951`): Size and mounting asks the
+      // mount and SHOWS the side, so both read here.
       await _pump(tester);
-      await tester.tap(find.widgetWithText(ListTile, 'Physical'));
-      await tester.pumpAndSettle();
 
       // A COLLAPSED DROPDOWN SHOWS ONLY ITS CURRENT VALUE, so these are
       // the defaults a new template carries. **The mount default moved
@@ -275,9 +275,14 @@ void main() {
       expect(find.text('rackEars'), findsNothing);
       expect(find.text('none'), findsNothing);
       expect(find.text('Rack ears'), findsWidgets);
-      expect(find.text('Does not sit in the rack'), findsWidgets);
+      expect(
+        find.textContaining('Occupies: Does not sit in the rack'),
+        findsOneWidget,
+      );
 
       // And the whole set, once the menu is open.
+      await tester.ensureVisible(find.text('Rack ears').first);
+      await tester.pumpAndSettle();
       await tester.tap(find.text('Rack ears').first);
       await tester.pumpAndSettle();
 

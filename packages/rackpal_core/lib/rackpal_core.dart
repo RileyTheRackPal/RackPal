@@ -57,6 +57,7 @@ export 'src/builder/archetypes.dart';
 export 'src/builder/bank_commands.dart';
 export 'src/builder/fork_status.dart';
 export 'src/builder/label_pattern.dart';
+export 'src/builder/occupancy_rules.dart';
 export 'src/builder/panel_arrange.dart';
 export 'src/builder/passthrough_commands.dart';
 export 'src/builder/port_batch.dart';

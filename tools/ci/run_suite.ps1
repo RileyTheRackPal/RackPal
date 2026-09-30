@@ -966,7 +966,11 @@ $SuiteFloors = @{
     # a new id starts at 1, an unplaced newest version is replaced, a placed
     # one forks, a seeded @1 is never replaced, and undoing a replace puts
     # back the same snapshot object.
-    'rackpal_core'   = 5109
+    # 5123 at `#951` (DR-203): +14 in builder/occupancy_rules_test.dart,
+    # among them the sweep that runs derivedOccupancy over every seeded
+    # template and finds no disagreement, which is what makes an always-on
+    # derivation safe to write over a real device.
+    'rackpal_core'   = 5123
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1501,7 +1505,13 @@ $SuiteFloors = @{
     # builder/device_builder_screen_test.dart. The change chip says nothing
     # when nothing is placed, and it measures against the placed body rather
     # than the one the window opened with.
-    'rackpal_ui'     = 1980
+    # 1986 at `#951` (DR-203): +4 in builder/device_builder_screen_test.dart
+    # (rear follows front, a typed 0 stops it, 0U lights Save alone, a
+    # hosted card saves, half rack carries 6; one "front alone implies
+    # front" case became the first of these) and +2 in
+    # builder/field_device_form_test.dart asserting occupancy is asked on
+    # Identity and NOT again on Physical, which is the report itself.
+    'rackpal_ui'     = 1986
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

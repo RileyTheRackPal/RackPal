@@ -2,9 +2,10 @@
 // being read-only. `#225` (M4-J3), DR-087 §11.86.
 //
 // DRIVEN THROUGH THE SCREEN. The column only exists when `isPassthrough`
-// is on, and that switch is on the Physical section, so a case that
-// handed `PortGrid` a passthrough body directly would skip the route a
-// person actually takes and could not see the gating at all.
+// is on, and a case that handed `PortGrid` a passthrough body directly
+// would skip the route a person actually takes and could not see the
+// gating at all. The switch was on the Physical section until DR-203
+// (`#951`) moved it to the Ports toolbar, beside the button it enables.
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
@@ -177,23 +178,17 @@ void main() {
       );
     });
 
-    testWidgets('and the switch on the Physical section turns both on, '
-        'which is the route a person actually takes', (tester) async {
-      // TALL, because the Physical form's switch sits below the fold at
-      // the ordinary height and a `ListView` does not build what it is not
-      // showing. Scrolling to it would work too and would test the
-      // scrolling; this case is about the gate the switch opens.
-      await _pump(
-        tester,
-        template: _panel(passthrough: false),
-        size: const Size(1940, 2000),
-      );
+    testWidgets('AND THE TOGGLE ON THE PORTS TOOLBAR TURNS BOTH ON, without '
+        'leaving the section (DR-203 §11.202.6)', (tester) async {
+      // `#951`: a patch panel cost a trip to Physical and back before
+      // `Pair front to rear` would even appear.
+      await _pump(tester, template: _panel(passthrough: false));
 
-      await tester.tap(find.widgetWithText(ListTile, 'Physical'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.widgetWithText(SwitchListTile, 'Passthrough'));
-      await tester.pumpAndSettle();
       await tester.tap(find.widgetWithText(ListTile, 'Ports'));
+      await tester.pumpAndSettle();
+      expect(find.text('Pair front to rear'), findsNothing);
+
+      await tester.tap(find.widgetWithText(FilterChip, 'Passthrough'));
       await tester.pumpAndSettle();
 
       expect(find.text('Pair front to rear'), findsOneWidget);

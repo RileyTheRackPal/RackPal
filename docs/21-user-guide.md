@@ -475,7 +475,12 @@ Rack and Site views searches the same list.
 1. Click **New device template…**.
 2. Fill in **Identity**: Display name, Manufacturer (`Generic` is filled in, and
    is the trade's own word for unspecified), Model, **Designator prefix** (two
-   to four letters: `MTX` gives `MTX-1`, `MTX-2`) and **RU height (front)**.
+   to four letters: `MTX` gives `MTX-1`, `MTX-2`), then **Size and mounting**:
+   how it mounts, **RU height (front)** and width. The rear height copies the
+   front until you type in it (put `0` for a front-only device), and
+   **Occupies** is worked out for you. Gear that takes no rack units (0U,
+   hosted in another device, side mounted, in furniture, not in a rack) asks
+   for no height at all.
    Category is optional and suggests a prefix and an elevation mark; Signal
    domain is optional and colours the device on a floorplan.
 3. **Save** now if you like. **A name, a prefix and a height is a finished
@@ -487,10 +492,10 @@ The builder's sections:
 
 | Section | What it holds |
 |---|---|
-| Identity | Name, manufacturer, model, prefix, front height, category, domain, tags |
-| Ports | Every connector, in a grid, with previews of the elevation, the schematic symbol and the rear panel |
+| Identity | Name, manufacturer, model, prefix, category, domain, tags, and **Size and mounting**: how it mounts, front and rear height, width |
+| Ports | Every connector, in a grid, with previews of the elevation, the schematic symbol and the rear panel. **Passthrough** on its toolbar makes a patch panel, and **Pair front to rear** then pairs it |
 | Panel | Where the cutouts sit on the panel. Derived from connector footprints; **Customize panel layout** lets you move them, align and distribute them, and **Reset to auto** puts them back |
-| Physical | Mount method, rear height, width class, depth, weight, clearances, passthrough and container flags |
+| Physical | Depth, chassis width, weight, clearances, thermal class and the container flag |
 | Power | Nameplate, typical and standby watts, volts, VA, power factor, PoE budget, inlet. **Nothing is guessed**: typical draw is never worked out from the nameplate |
 | Appearance | Accent colour and the mark drawn on the elevation, so devices stay tellable apart on a greyscale print |
 

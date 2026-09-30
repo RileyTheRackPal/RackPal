@@ -157,8 +157,8 @@ const String kUntitledDevice = 'Untitled device';
 /// Why `Save` is unavailable: AC-049's three facts, in the words the
 /// disabled button's tooltip and the close prompt's refusal both use.
 const String kBuilderSaveNeeds =
-    'Needs a name, a designator prefix, and an RU height above 0 (or a 0U '
-    'mount on the Physical section)';
+    'Needs a name, a designator prefix, and a rack height above 0 (unless '
+    'it mounts without taking rack units)';
 
 /// The four sections that exist. See the file header for the three that
 /// do not.
@@ -463,13 +463,20 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
   /// third fact, occupancy, with the second of its two honest spellings
   /// admitted: choosing `notInRack` means a zero as deliberately as
   /// choosing `zeroUVertical` does. Nothing else may join the list.
+  ///
+  /// **AND THE SAME HOLE WAS STILL OPEN FOR THREE MORE MOUNTS** (`#951`,
+  /// DR-203 §11.202.5). A hosted card (the seeded AVR is one), a
+  /// side-mounted and an in-furniture device all take no rack units, and
+  /// none could be saved; neither could docs/06 §3.2's own rear lacing
+  /// bar, `{front: 0, rear: 1}`, because the check read the front height
+  /// alone. `hasMeantOccupancy` states the third fact once: a rack mount
+  /// means it with a height, front or rear, and every other mount means a
+  /// zero by being chosen.
   bool get _canSave {
     final b = _session.body;
     return b.displayName.trim().isNotEmpty &&
         (b.typePrefix ?? '').trim().isNotEmpty &&
-        (b.frontU > 0 ||
-            b.side == OccupancySide.zeroUVertical ||
-            b.mountMethod == MountMethod.notInRack);
+        hasMeantOccupancy(b);
   }
 
   /// The change class against the body placed devices resolve to, or null
@@ -502,50 +509,66 @@ class _DeviceBuilderScreenState extends State<DeviceBuilderScreen>
             to: value,
           ),
         );
-        final derived = _impliedSide();
-        if (derived != null) {
-          tx.add(
-            SetTemplateFieldCommand<OccupancySide>(
-              field: TemplateBodyField.side,
-              from: _session.body.side,
-              to: derived,
-            ),
-          );
+        if (field.key == TemplateBodyField.rearU.key) _rearFollows = false;
+        if (field.key == TemplateBodyField.frontU.key &&
+            _rearFollows &&
+            mountTakesRackUnits(_session.body.mountMethod)) {
+          _write(tx, TemplateBodyField.rearU, _session.body.frontU);
         }
+        if (_occupancyKeys.contains(field.key)) _writeDerived(tx);
       });
       _refusal = null;
     });
   }
 
-  /// The side a rack height implies, or null when nothing should be
-  /// written (DR-157 §11.156.5, the user's call on 2026-09-12).
+  /// The four fields a person states about occupancy; editing any of them
+  /// re-derives the other three (DR-203 §11.202.2).
+  static final Set<String> _occupancyKeys = {
+    TemplateBodyField.frontU.key,
+    TemplateBodyField.rearU.key,
+    TemplateBodyField.mountMethod.key,
+    TemplateBodyField.widthClass.key,
+  };
+
+  /// Whether the rear height is still following the front one (DR-203
+  /// §11.202.3). **21 of the 25 seeded rack-ear devices take the same RU
+  /// front and rear**, so the common case typed its height twice. True
+  /// while the two agree as opened, which a new template's `0 / 0` does,
+  /// and false from the first keystroke in the rear box: somebody who
+  /// typed a rear height meant it.
+  late bool _rearFollows = widget.template.rearU == widget.template.frontU;
+
+  void _write<T>(TxnScope<TemplateBody> tx, TemplateField<T> field, T to) {
+    final from = field.get(_session.body);
+    if (from == to) return;
+    tx.add(SetTemplateFieldCommand<T>(field: field, from: from, to: to));
+  }
+
+  /// Writes what the mount, heights and width imply, inside the edit's own
+  /// transaction, so one `Ctrl+Z` takes back the edit and its consequence.
   ///
   /// ═══════════════════════════════════════════════════════════════════
-  /// DERIVED RATHER THAN DEMANDED, BECAUSE AC-049 FORBIDS A FOURTH FIELD
+  /// IT WAS `_impliedSide`, AND IT ONLY EVER FILLED A BLANK
   /// ═══════════════════════════════════════════════════════════════════
-  /// `side` defaults to `none` and this form never asked for it, so a
-  /// person could type `4` into RU height, watch `Save` light, and author
-  /// a body `buildPlaceFromCatalogCommand` routes OFF-RACK: created, not
-  /// in the rack, nothing drawn. Reported from the `PLAN-J` demo
-  /// (`#869`).
+  /// DR-157 §11.156.5 (`#869`) derived the side from a typed front height,
+  /// because a form that never asked for `side` authored a body placement
+  /// routed off-rack. A save gate was tried first and rightly broke
+  /// AC-049's three-fields case: typing a height IS saying where it
+  /// mounts. It filled `none` and nothing else, so a person who typed a
+  /// rear height afterwards kept `Front only`, and corrected it on a
+  /// second section. That is the double entry `#951` reported.
   ///
-  /// **The first fix attempted was a save gate, and it was wrong.** It
-  /// broke the case asserting AC-049's *"three required fields then ports,
-  /// then done"*, and that case was right: a fourth interaction is the
-  /// stall AC-049 exists to prevent. Typing a front height IS saying the
-  /// device mounts on the front, so the answer is to read it rather than
-  /// ask for it again.
-  ///
-  /// **IT ONLY EVER FILLS A BLANK.** A person who has chosen a side keeps
-  /// it, whatever they type afterwards, and one who has said `notInRack`
-  /// is not contradicted.
-  OccupancySide? _impliedSide() {
-    final b = _session.body;
-    if (b.side != OccupancySide.none) return null;
-    if (b.mountMethod == MountMethod.notInRack) return null;
-    if (b.frontU <= 0 && b.rearU <= 0) return null;
-    if (b.frontU > 0 && b.rearU > 0) return OccupancySide.both;
-    return b.rearU > 0 ? OccupancySide.rear : OccupancySide.front;
+  /// **Occupies is now never asked at all** (DR-203 §11.202.2): it is
+  /// shown, and re-derived from every occupancy edit by
+  /// `derivedOccupancy`, which the whole seeded catalog already satisfies.
+  /// Editing a name does not re-derive, so a hand-written file whose side
+  /// disagrees is left as written until somebody touches its occupancy.
+  void _writeDerived(TxnScope<TemplateBody> tx) {
+    final d = derivedOccupancy(_session.body);
+    _write(tx, TemplateBodyField.frontU, d.frontU);
+    _write(tx, TemplateBodyField.rearU, d.rearU);
+    _write(tx, TemplateBodyField.side, d.side);
+    _write(tx, TemplateBodyField.nominalSpanTwelfths, d.nominalSpanTwelfths);
   }
 
   /// Runs one command that is not a field write, and repaints.
@@ -1302,15 +1325,17 @@ class _PhysicalSection extends StatelessWidget {
   /// ═══════════════════════════════════════════════════════════════════
   /// AC-031's STRIPPED FORM IS FEWER ROWS, NOT GREYED-OUT ONES
   /// ═══════════════════════════════════════════════════════════════════
-  /// *"no RU, no rack depth, no thermal class"*. Twelve of this section's
-  /// fourteen rows are statements about living in a rack, and they go
-  /// together: occupancy, fit, depth, load, clearance, thermal, and the
-  /// two switches, which describe a patch panel and a shelf.
+  /// *"no RU, no rack depth, no thermal class"*. Every row here but one is
+  /// a statement about living in a rack, and they go together: fit,
+  /// depth, load, clearance, thermal, and the `Container` switch, which
+  /// describes a shelf.
   ///
-  /// **TWO STAY.** `Mount method` is the control that put the body in
-  /// this state, and hiding it would strand a person here with no way
-  /// back. `Weight` stays because a speaker has one and nothing about
-  /// weight is rack geometry.
+  /// **ONE STAYS.** `Weight`, because a speaker has one and nothing about
+  /// weight is rack geometry. `Mount method` stayed too while it lived
+  /// here, so a person was never stranded; since DR-203 it is on Identity
+  /// with the rest of the occupancy, and so are the heights, `Occupies`
+  /// and the width. `Passthrough` went to the port grid's toolbar, beside
+  /// the pairing it enables (§11.202.6).
   ///
   /// A GETTER RATHER THAN A LOCAL, so `build` keeps its expression body:
   /// converting it to a block meant managing a closing brace by hand in a
@@ -1324,59 +1349,13 @@ class _PhysicalSection extends StatelessWidget {
     children: [
       _SectionNote(
         _inRack
-            ? 'Where a device sits takes more than one number. A 2U patch '
-                  'panel fills 2U front and back; a rear lacing bar takes '
-                  'nothing at the front and 1U behind; a 0U PDU takes no '
-                  'rack units at all and mounts vertically.'
+            ? 'How big it is and how it mounts are on Identity. These are '
+                  'the fit, load and heat figures a drawing checks against; '
+                  'leave any you do not know blank.'
             : 'A field device is not in the rack, so it has no rack '
-                  'geometry to state. Change Mount method to bring the '
-                  'rack fields back.',
+                  'geometry to state. Change How it mounts on Identity to '
+                  'bring the rack fields back.',
       ),
-      if (_inRack)
-        _IntRow(
-          label: 'RU height (rear)',
-          value: body.rearU,
-          hint:
-              'How much it takes up behind the rails. A front-only '
-              'device is 0.',
-          onChanged: (v) => onEdit(TemplateBodyField.rearU, v),
-        ),
-      if (_inRack)
-        _EnumRow<OccupancySide>(
-          label: 'Occupies',
-          value: body.side,
-          values: OccupancySide.values,
-          nameOf: _occupancyLabel,
-          onChanged: (v) => onEdit(TemplateBodyField.side, v),
-        ),
-      _EnumRow<MountMethod>(
-        label: 'Mount method',
-        value: body.mountMethod,
-        values: MountMethod.values,
-        nameOf: _mountLabel,
-        onChanged: (v) => onEdit(TemplateBodyField.mountMethod, v),
-      ),
-      if (_inRack)
-        _EnumRow<WidthClass>(
-          label: 'Width class',
-          value: body.widthClass,
-          values: WidthClass.values,
-          nameOf: _widthLabel,
-          onChanged: (v) => onEdit(TemplateBodyField.widthClass, v),
-        ),
-      if (_inRack)
-        _IntRow(
-          label: 'Width in twelfths of a rack',
-          value: body.nominalSpanTwelfths,
-          // HALF-RACK IS A CLASS PLUS A SPAN, never "0.5 rack width"
-          // (CR-030), because 9.5 / 10 / 10.4 / 10.5 in all ship and a
-          // fraction cannot tell them apart.
-          hint:
-              '12 is full width, 6 is half. Half-rack gear is not all one '
-              'width, which is why this sits alongside the width class '
-              'rather than instead of it.',
-          onChanged: (v) => onEdit(TemplateBodyField.nominalSpanTwelfths, v),
-        ),
       if (_inRack)
         _LenRow(
           label: 'Body depth',
@@ -1441,16 +1420,6 @@ class _PhysicalSection extends StatelessWidget {
           values: ThermalClass.values,
           nameOf: _thermalLabel,
           onChanged: (v) => onEdit(TemplateBodyField.thermalClass, v),
-        ),
-      if (_inRack)
-        SwitchListTile(
-          title: const Text('Passthrough'),
-          subtitle: const Text(
-            'A patch panel or plate: front and rear ports pair up. The '
-            'pairing itself is set in the port grid.',
-          ),
-          value: body.isPassthrough,
-          onChanged: (v) => onEdit(TemplateBodyField.isPassthrough, v),
         ),
       if (_inRack)
         SwitchListTile(
@@ -1772,19 +1741,7 @@ class _IdentitySection extends StatelessWidget {
         example: 'MTX',
         onChanged: (v) => onEdit(TemplateBodyField.typePrefix, v),
       ),
-      _IntRow(
-        label: 'RU height (front)',
-        required: true,
-        value: body.frontU,
-        // 0 IS A MEASURED ZERO, not an unknown: a 0U vertical PDU
-        // occupies no rack units and says so. G4 cuts the other way here
-        // than it does for weight, which is why this field is an `int`.
-        hint:
-            'How many rack units the front of the device takes up. '
-            'Use 0 only for gear that mounts vertically in the rear '
-            'channel rather than on the rails.',
-        onChanged: (v) => onEdit(TemplateBodyField.frontU, v),
-      ),
+      _SizeAndMounting(body: body, onEdit: onEdit),
       _TagsRow(
         value: body.tags,
         onChanged: (v) => onEdit(TemplateBodyField.tags, v),
@@ -1811,6 +1768,133 @@ class _IdentitySection extends StatelessWidget {
       ),
     ],
   );
+}
+
+/// How big the device is and how it mounts, in one place (DR-203
+/// §11.202.1, `#951`).
+///
+/// ═════════════════════════════════════════════════════════════════════
+/// THREE QUESTIONS ASKED, THREE ANSWERS SHOWN
+/// ═════════════════════════════════════════════════════════════════════
+/// A person says how it mounts, how tall it is front and rear, and how
+/// wide. `Occupies` and the span in twelfths are READ here, not asked:
+/// `derivedOccupancy` writes them on every occupancy edit. Front height
+/// sat on Identity and rear height, `Occupies`, mount and width sat on
+/// Physical until `#951`, so one fact about a 2U amplifier was typed on
+/// two sections and corrected on a third row. The user chose this block
+/// from a mockup on 2026-09-29.
+///
+/// **ON IDENTITY, because the height is one of AC-049's three.** A
+/// required fact on the second section is a required fact a person does
+/// not see until Save refuses.
+///
+/// A mount that takes no rack units shows no height and no width at all,
+/// rather than greyed rows: `derivedOccupancy` zeroes the heights, so a
+/// box there could only ever show a number that is about to be replaced.
+class _SizeAndMounting extends StatelessWidget {
+  const _SizeAndMounting({required this.body, required this.onEdit});
+
+  final TemplateBody body;
+  final void Function<T>(TemplateField<T> field, T value) onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final rack = mountTakesRackUnits(body.mountMethod);
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text('Size and mounting', style: theme.textTheme.titleSmall),
+          ),
+          _EnumRow<MountMethod>(
+            // KEYED ON THE VALUE so an undo that changes it redraws the
+            // picker: `DropdownButtonFormField` reads `initialValue` once.
+            key: ValueKey(body.mountMethod),
+            label: 'How it mounts',
+            value: body.mountMethod,
+            values: MountMethod.values,
+            nameOf: _mountLabel,
+            onChanged: (v) => onEdit(TemplateBodyField.mountMethod, v),
+          ),
+          if (rack)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: _IntRow(
+                    label: 'RU height (front)',
+                    required: true,
+                    value: body.frontU,
+                    // 0 IS A MEASURED ZERO, not an unknown (G4 cuts the
+                    // other way here than for weight): a rear lacing bar
+                    // takes nothing at the front.
+                    hint: 'Rack units on the front rails.',
+                    onChanged: (v) => onEdit(TemplateBodyField.frontU, v),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _IntRow(
+                    label: 'RU height (rear)',
+                    value: body.rearU,
+                    hint:
+                        'Follows the front until you type here. Use 0 for '
+                        'a front-only device.',
+                    onChanged: (v) => onEdit(TemplateBodyField.rearU, v),
+                  ),
+                ),
+              ],
+            ),
+          if (rack)
+            _EnumRow<WidthClass>(
+              key: ValueKey(body.widthClass),
+              label: 'Width',
+              value: body.widthClass,
+              values: WidthClass.values,
+              nameOf: _widthLabel,
+              onChanged: (v) => onEdit(TemplateBodyField.widthClass, v),
+            ),
+          if (rack && body.widthClass == WidthClass.customWidth)
+            _IntRow(
+              label: 'Width in twelfths of a rack',
+              value: body.nominalSpanTwelfths,
+              // HALF-RACK IS A CLASS PLUS A SPAN (CR-030), because 9.5 /
+              // 10 / 10.4 / 10.5 in all ship. The named classes carry
+              // their span; only a custom width has one to type.
+              hint: '12 is full width, 6 is half.',
+              onChanged: (v) =>
+                  onEdit(TemplateBodyField.nominalSpanTwelfths, v),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  TextSpan(
+                    text: 'Occupies: ',
+                    style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                  ),
+                  // THE STORED SIDE, not a fresh derivation: this is a
+                  // reading of the file, and a hand-written body that
+                  // disagrees should be seen disagreeing.
+                  TextSpan(text: _occupancyLabel(body.side)),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 /// The first two or three letters of the category's own words, which is
@@ -2295,6 +2379,7 @@ class _EnumRow<T> extends StatelessWidget {
     required this.nameOf,
     required this.onChanged,
     this.leadingOf,
+    super.key,
   });
 
   final String label;
