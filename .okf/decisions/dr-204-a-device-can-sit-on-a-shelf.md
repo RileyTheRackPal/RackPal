@@ -31,6 +31,8 @@ past a recommendation, the ruling says whose choice each clause is.
   with its wiring, and anywhere else on the rack removes it, announced on the ghost first.
 - **Deleting a shelf asks**, defaulting to moving its hosts to the Staging Bin.
 - **The shelf header shows its load** against capacity, never blocking.
+- **A loaded shelf is labelled in its header only** (§11.203.10), and its hosts' port chips show on
+  hover or selection, after the user's screenshot showed both colliding with the hosts' labels.
 
 AC-043's cuts (free lateral position, `Alt`-drag, the third focus level, overhang warnings) and
 `#844`'s richer model (stacking, sub-1U heights, orientation) stay deferred.
