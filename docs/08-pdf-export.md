@@ -152,6 +152,10 @@ Rows per page    ⌊(659 − 18) / 15⌋ = 42   (≈28 with heavy notes)
 | 9 | `PATHWAY` | 36 | left | `RackMono` 7 / `RackBody` 7 | `Pathway.designator`; **falls back to `Pathway.name`** when the trunk carries none, and the FONT says which (M3-E/2, DR-026 §11.25.1). Mono for a designator, because it is an identifier somebody wrote on a trunk; body for a name, because it is prose. `ScheduleEntry.pathwayLabelIsDesignator` is the flag. `—` when the run is in no pathway at all |
 | 10 | `SIGN-OFF` | 56 | centre | — | `☐ P` 12 · `☐ T` 12 · `☐ T` 12 · `INIT` 20 |
 
+**Grouped by lifecycle (DR-206 §11.205.2).** Rows fall into sections, each with its own header and
+count, in this order: **TO PULL** (`new`, `designIntent`), **EXISTING**, **TO REMOVE**, **FUTURE**.
+An empty section is not drawn.
+
 ### 3.3 Termination Schedule: exact columns
 
 ANSI A landscape, 792 × 612 pt, usable 690 pt, body 479 pt, **30 rows per page** (≈24 with heavy notes).
@@ -179,6 +183,11 @@ it was already on this table: every other fact prints **both** ends (`RACK LABEL
 `RACK / RU / FACE` / `FAR END`, `PORT` / `FAR PORT`), and termination was the only per-end fact
 collapsed into one column. Width came from §3.4's own donor order, `CONDUCTOR / NOTES` first and then
 `MEDIA`; Σ is still exactly 690.
+
+**Lifecycle rides on `CABLE ID` (DR-206 §11.205.3).** `W042 EX` · `W043 RM` · `W044 FUT` · `W045 DI`,
+and **no suffix for `new`**. A one-line key prints in the sheet header whenever a suffix appears on
+the sheet. It costs no width, which is why it is not §3.4's `LIFECYCLE` column: these thirteen already
+fill the 690 pt, and that column would promote every retrofit job's schedule to ANSI B.
 
 **Neither column ever falls back to the other.** An end nobody has decided prints `—` (G4, CR-114).
 Copying the field value across would reproduce on paper the defect DR-046 removed from the model.
@@ -211,7 +220,7 @@ Toggled per export. Width is taken from `CONDUCTOR / NOTES` first, then `MEDIA`.
 | `ROOM / ZONE` | 56 | left | any endpoint carries a `Location` |
 | `PATHWAY` | 40 | left | any `Pathway` assigned |
 | `ROUGH-IN` | 48 | centre | Installer / As-built preset |
-| `LIFECYCLE` | 44 | centre | any `lifecycleStatus != new` |
+| `LIFECYCLE` | 44 | centre | any `lifecycleStatus != new`, on a sheet with the room; **not T6.11**, which carries a `CABLE ID` suffix instead (DR-206 §11.205.3), and **not the Pull Sheet**, which groups by lifecycle (§11.205.2) |
 | `ISSUES` | 40 | centre | any open `Finding` on a row |
 | `ROUTED` / `TERMINATED` | 28 ea | right | the other two of the three length fields (AC-024) |
 | `REF` | 40 | centre | zone grid enabled: `6.01/B3` |

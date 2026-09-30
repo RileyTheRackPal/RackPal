@@ -22853,6 +22853,47 @@ device. It is undoable and the status line says so; `Esc` is the way to cancel a
 
 ---
 
+### 11.205 DR-206 · The schedules say what a run's lifecycle is: grouped on the Pull Sheet, a suffix on T6.11
+
+**Settled by the user on 2026-09-30, resolving `#576`.** `ScheduleEntry.lifecycleStatus` was
+populated in `schedule.dart` and read by nothing, so four of the five states printed identically to
+`new` on both schedule presets: an installer handed the Pull Sheet could pull a cable that is already
+in the wall, or one marked for demolition.
+
+**11.205.1 THE PREMISE WAS HALF WRONG, AND THE CORRECTION IS PART OF THE RULING.** `#576` said a
+status column would be an unruled scope change to a specified sheet. docs/08 §3.4 had already
+specified one: an optional `LIFECYCLE` column, 44 pt, switched on by *"any `lifecycleStatus !=
+new`"*, with its width taken from `CONDUCTOR / NOTES` and then `MEDIA` and an ANSI B promotion when
+the columns overflow. Nothing of §3.4 is built. What the spec had not priced is T6.11: its thirteen
+columns already sum to exactly its 690 pt (DR-055), so that column promotes every retrofit job's
+Termination Schedule to 11×17. The options were put with that cost on them.
+
+**11.205.2 RULED: THE PULL SHEET GROUPS BY LIFECYCLE.** The user's choice, over docs/08 §3.4's one
+list with a column and over a pull-only list with a count of the rest. Rows are split into
+sections, each with its own header and row count, in this order: **TO PULL** (`new` and
+`designIntent`, the two a crew pulls), **EXISTING** (verify only), **TO REMOVE** (`removed`) and
+**FUTURE** (`future`). An empty section is not drawn. Nothing is hidden, and a crew working down
+the page reaches everything it has to pull before anything it must not. The Pull Sheet is on
+screen only (DR-155), so this costs no printed width.
+
+**11.205.3 RULED: T6.11 CARRIES IT AS A SUFFIX ON `CABLE ID`.** The recommended option, over §3.4's
+column (which promotes the sheet to ANSI B) and over a column off by default (which leaves the
+state invisible on paper, the defect this ruling answers). `W042 EX` · `W043 RM` · `W044 FUT` ·
+`W045 DI`; **`new` carries no suffix**, being what the sheet is for. A one-line key prints in the
+sheet header whenever any suffix appears on the sheet, and not otherwise. It costs no width: the
+56 pt mono `CABLE ID` column holds a designator and three letters. **This is a recorded deviation
+from docs/08 §3.4** for T6.11, and docs/08 is edited to match; §3.4's `LIFECYCLE` column stays
+available to sheets with the room for it.
+
+**11.205.4 WHAT IS NOT DECIDED HERE.** Devices' lifecycle is unaffected: the elevation and the
+equipment list already express it (`#576`'s own finding). Rough-in state and DRC issues keep their
+own vocabularies and headers (CR-065). T6.11 is not yet built (`#693`); the suffix is specified
+here and lands with that sheet.
+
+**Scope.** No scope change: CR-064's lifecycle states, expressed where docs/08 left them silent.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
