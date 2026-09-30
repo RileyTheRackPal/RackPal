@@ -22754,6 +22754,56 @@ said rather than refused, because an unknown cannot be added up.
 
 ---
 
+### 11.204 DR-205 · The Staging Bin ships: a strip under the canvas, four ways in and two ways out
+
+**The question.** Building DR-204's shelf deletion (§11.203.6) needed its default, *"Move hosts to
+Staging Bin"*, and **the bin does not exist**. `StagedPlacement` has round-tripped since M0 with no
+command that produces one, nothing that lists one and no way back; Shrink Rack shows its bin option
+disabled for exactly that reason. The author had offered the default without checking, the same
+error §11.203 records about shelf widths, found within the hour. Put to the user with three options
+and prices; **the user chose to build the bin**.
+
+**IT IS NOT A SCOPE AMENDMENT, AND IT WAS FIRST DESCRIBED AS ONE.** CR-032 already rules that the
+Staging Bin *is* `StagedPlacement`, and that *"It ships in v1 with the return affordance"*. Like shelves, it
+was ruled, specified in docs/04 §1, §3.1 and §4.1, and never built. This ruling settles its shape.
+
+**11.204.1 RULED: A STRIP UNDER THE RACK CANVAS, SHOWN ONLY WHILE SOMETHING IS IN IT.** docs/04
+§1's own sketch, the recommended option. Each staged device is a chip; a click selects it exactly as
+a click on the rack would, and the inspector shows it. The bin is a query (CR-032): nothing stores a
+list.
+
+**11.204.2 RULED: FOUR WAYS IN, EVERY ONE KEEPING THE DEVICE.** Chosen by the user, all four
+offered: deleting a shelf (its default, §11.203.6), **a release off the rack** (a palette drag
+creates the device there, docs/04 §3.1; an existing device dragged off keeps its id, ports and
+links, the user's own addition: *"should also keep wiring"*), the **`U`** key on the selection
+(docs/04 §8), and Shrink Rack's option 2 (docs/04 §4.1), no longer disabled. A device keeps its
+wiring in the bin because a stage replaces its placement and touches nothing else
+(`ReplacePlacementCommand`).
+
+**11.204.3 RULED: TWO WAYS OUT.** The recommended option. A **return chip** puts a device back where
+it was, *"once space exists"* (CR-032): `Return to RK-1 U21` for a rack position, or `Return to
+SHF-1` for a shelf, which needed one additive field, `StagedPlacement.lastHostDeviceId`. Where a
+return is not possible the chip says why. And **dragging** a chip onto a rack or a shelf places it
+anywhere. CR-032 draws the chip with a `↩`, and the glyph-coverage gate refused it: the product
+font has no bold `↩`, so the chip carries CR-032's words without the arrow.
+
+**11.204.3a `U` IS THE RACK'S FIRST BARE LETTER, AND CANON ALLOWS IT.** §1.10 principle (c) says a
+bare letter *"must not collide between views that share the canvas"*. The arbitration test had
+asserted something stricter, that the rack binds no bare letter at all, which described the registry
+rather than the ruling. The schematic binds no bare `U` (its unpin is `Ctrl+Shift+U`), so the test now
+asserts the ruling, and a real collision is still caught by `arbitrate()`.
+
+**11.204.4 A CONSEQUENCE STATED RATHER THAN DISCOVERED.** docs/04 §3.1 sends ANY release off the
+rack to the bin, so a palette drag that wanders down the palette and is let go there now creates a
+device. It is undoable and the status line says so; `Esc` is the way to cancel a drag.
+
+**11.204.5 WHAT STAYS DEFERRED.** `RCK-014`, the advisory naming a non-empty bin, stays v1.2
+(CR-021). Paste and duplicate overflow to the bin (docs/04 §8) are not built here.
+
+**Scope.** No scope change: CR-032's v1 bin, built.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
