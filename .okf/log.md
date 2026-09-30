@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-09-30 (ninety-second entry)
+
+* **Progress**: M6-B3/B4/B5 merged at `637c93b0` (PR 180). M6-B6 (`#969`) begun, the last open
+  Chapter under `#316`.
+* **Creation**: [DR-209](/decisions/dr-209-sheet-set-dialog-and-legend-notes.md).
+* **Note**: **THE TITLE BLOCK HAS NO WRITER.** No `lib/` assigns a `ProjectInfo` field; every sheet
+  prints a project name, client and drawn-by that nobody can type. That fact is what priced
+  DR-209's surface, and it is M6-A1's to close.
+
 ## 2026-09-30 (ninety-first entry)
 
 * **Progress**: M6-B1/B2 merged at `fda24158` (PR 179). B3, B4 and B5 built: T0.01's other five
