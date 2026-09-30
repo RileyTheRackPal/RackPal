@@ -1289,6 +1289,21 @@ class _PortGridState extends State<PortGrid> {
           // could do nothing on 46 of the 48 seeded templates is the
           // `UnbuiltView` defect wearing a toolbar.
           onPairByOrder: widget.body.isPassthrough ? _pairByOrder : null,
+          // THE SWITCH THAT ENABLES THE BUTTON ABOVE, BESIDE IT (DR-203
+          // §11.202.6). It lived on the Physical section, so a patch panel
+          // cost a trip there and back before `Pair front to rear` would
+          // even appear. Not offered for a field device, which has no
+          // front and rear rails to pass through, as before.
+          isPassthrough: widget.body.isPassthrough,
+          onTogglePassthrough: widget.body.mountMethod == MountMethod.notInRack
+              ? null
+              : (on) => widget.actions.run(
+                  SetTemplateFieldCommand<bool>(
+                    field: TemplateBodyField.isPassthrough,
+                    from: widget.body.isPassthrough,
+                    to: on,
+                  ),
+                ),
           openPacks: _openPacks(),
           onTogglePack: _togglePack,
           refusal: _fillRefusal,
@@ -1525,6 +1540,8 @@ class _Toolbar extends StatelessWidget {
     required this.onAdd,
     required this.onDelete,
     required this.onPairByOrder,
+    required this.isPassthrough,
+    required this.onTogglePassthrough,
     required this.openPacks,
     required this.onTogglePack,
     required this.refusal,
@@ -1539,6 +1556,11 @@ class _Toolbar extends StatelessWidget {
   /// docs/06 §4.7's `Pair front↔rear by order`, or null when this
   /// template is not a passthrough and the action has nothing to act on.
   final VoidCallback? onPairByOrder;
+
+  /// `TemplateBody.isPassthrough`, and the toggle that writes it, or null
+  /// where the template cannot be one (a field device).
+  final bool isPassthrough;
+  final ValueChanged<bool>? onTogglePassthrough;
   final Set<PortColumnPack> openPacks;
   final void Function(PortColumnPack pack, {required bool on}) onTogglePack;
 
@@ -1604,6 +1626,21 @@ class _Toolbar extends StatelessWidget {
                     : 'Delete $selectedCount selected',
               ),
             ),
+            if (onTogglePassthrough case final ValueChanged<bool> toggle)
+              Tooltip(
+                message:
+                    'A patch panel or plate: front and rear ports pair up.',
+                // COMPACT, because this row sets the grid's height at the
+                // 1000x720 minimum window, and a full-height chip wrapped
+                // the toolbar and overflowed the grid under it.
+                child: FilterChip(
+                  visualDensity: VisualDensity.compact,
+                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  label: const Text('Passthrough'),
+                  selected: isPassthrough,
+                  onSelected: toggle,
+                ),
+              ),
             if (onPairByOrder case final VoidCallback pair)
               TextButton.icon(
                 onPressed: pair,

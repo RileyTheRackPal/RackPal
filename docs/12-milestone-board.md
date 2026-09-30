@@ -1135,6 +1135,38 @@ also stopped every Save forking a snapshot nobody could reach.
 **Scope.** No scope change. `#951`, the layout half of the same report, is separate and waits on a
 mockup the user asked to see first.
 
+### 4.21 Size and mounting, asked once · 2026-09-30 · `#951` · `DR-203` · no version move
+
+The same report's other half: *"data has to be entered multiple times in some situations."* The
+user confirmed the three the author found (heights and `Occupies`, 0U and `Occupies`, width and
+span) and asked for the rest to be checked. **The check found three the user had not hit**: the
+Passthrough switch a section away from the pairing it gates, a hosted card that could not be saved,
+and a rear-only lacing bar that could not either.
+
+**THE CENSUS THAT SET THE DEFAULT.** Of the seed catalog's 25 rack-ear devices, 21 take the same RU
+front and rear and 4 are front-only; the rear height defaulted to 0, so the common case was the one
+that typed its height twice. The rear now follows the front until it is typed.
+
+**THE SWEEP THAT MAKES THE DERIVATION SAFE.** `derivedOccupancy` rewrites `side`, the heights and
+the span whenever occupancy is edited. A derivation the shipped catalog disagreed with would rewrite
+a real device the moment somebody touched its height, so a test runs it over every seeded template
+and asserts no disagreement; there is none.
+
+| Changed | Where |
+|---|---|
+| `mountTakesRackUnits`, `twelfthsForWidth`, `derivedOccupancy`, `hasMeantOccupancy` | `builder/occupancy_rules.dart` |
+| `Size and mounting` on Identity; Physical loses six rows | `device_builder_screen.dart` |
+| Occupancy edits write their consequences in one undo entry; `_impliedSide` retired | `_writeDerived` |
+| Passthrough toggle beside `Pair front to rear` | `port_grid.dart` |
+| The builder's two rows in the user guide | `docs/21` |
+
+**A LAYOUT COST, MEASURED.** Identity is now taller than a 720 px window, so typing the height
+scrolls the form. Two picker tests had to choose the domain before typing, because the lazily built
+list dropped the picker once it scrolled away. And the Passthrough chip, at full height, wrapped the
+Ports toolbar at the 1000 px minimum and overflowed the grid by 2 px; it is compact.
+
+**Scope.** No scope change.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
