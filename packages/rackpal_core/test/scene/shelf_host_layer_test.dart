@@ -310,4 +310,93 @@ void main() {
       expect(f.overflow, isNull);
     });
   });
+
+  group('what a shelf carries (DR-204 §11.203.7, `#960`)', () {
+    final loaded = {
+      ...templates,
+      'HEAVY@1': _snap(
+        'HEAVY',
+        _host(width: _mm100)..weight = Mass.fromPounds(4),
+      ),
+      'SHELF22@1': _snap(
+        'SHELF22',
+        _shelfBody()..containerWeightCapacity = Mass.fromPounds(10),
+      ),
+    };
+    DeviceInstance heavy(String id, String order) =>
+        _on(id, order, template: 'HEAVY');
+
+    Rollup<Mass> load(List<DeviceInstance> on) => shelfLoad(
+      devices: [_shelf(), ...on],
+      templates: loaded,
+      shelfId: const Uuid('shf'),
+    );
+
+    test('KNOWN MASSES ARE SUMMED AND AN UNKNOWN ONE IS COUNTED, never '
+        'added as zero (G4)', () {
+      final l = load([heavy('a', 'a0'), _on('u', 'a1')]);
+      expect(l.value, Mass.fromPounds(4));
+      expect((l.knownCount, l.unknownCount), (1, 1));
+    });
+
+    test('the load line: under, incomplete, over, and without a '
+        'capacity', () {
+      final cap = Mass.fromPounds(10);
+      expect(
+        formatShelfLoad(load([heavy('a', 'a0')]), cap, UnitSystem.imperial),
+        '4.0/10.0 lb',
+      );
+      expect(
+        formatShelfLoad(
+          load([heavy('a', 'a0'), _on('u', 'a1')]),
+          cap,
+          UnitSystem.imperial,
+        ),
+        '≥ 4.0/10.0 lb (1 unknown)',
+      );
+      expect(
+        formatShelfLoad(
+          load([heavy('a', 'a0'), heavy('b', 'a1'), heavy('c', 'a2')]),
+          cap,
+          UnitSystem.imperial,
+        ),
+        '12.0/10.0 lb OVER',
+        reason: 'marked, and never blocked',
+      );
+      expect(
+        formatShelfLoad(load([heavy('a', 'a0')]), null, UnitSystem.imperial),
+        '4.0 lb',
+      );
+      expect(
+        formatShelfLoad(load([_on('u', 'a0')]), cap, UnitSystem.imperial),
+        '—/10.0 lb (1 unknown)',
+      );
+    });
+
+    test('THE ELEVATION PRINTS IT in the header of a shelf that carries '
+        'something, and nothing on an empty one', () {
+      String? loadLine(List<DeviceInstance> on) {
+        final shelf = _device(
+          'shf',
+          'SHELF22',
+          const RailPlacement(rackId: _rackId, ruIndex: 5, face: Face.front),
+        );
+        final scene = buildRackScene(
+          rack: _rack(),
+          devices: [shelf, ...on],
+          templates: loaded,
+          face: Face.front,
+          lod: LodLevel.full,
+          measurer: FakeMeasurer(),
+        );
+        for (final op in scene.scene.ops) {
+          if (op is OpText && op.text.contains(' lb')) return op.text;
+        }
+        return null;
+      }
+
+      expect(loadLine([heavy('a', 'a0')]), '4.0/10.0 lb');
+      expect(loadLine(const []), isNull);
+    });
+  });
 }

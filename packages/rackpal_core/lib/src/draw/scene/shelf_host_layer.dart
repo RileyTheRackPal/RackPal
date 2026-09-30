@@ -35,14 +35,21 @@
 // elevation that threw on it would take a rack down over one shelf.
 import 'package:rackpal_core/src/commands/shelf_placement.dart'
     show devicesOnShelfIn;
-import 'package:rackpal_core/src/derived/device_loads.dart' show templateKeyFor;
+import 'package:rackpal_core/src/derived/device_loads.dart'
+    show resolveDeviceLoads, templateKeyFor;
+import 'package:rackpal_core/src/derived/totals.dart' show Rollup;
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/scene/rack_geometry.dart';
+import 'package:rackpal_core/src/draw/scene/rack_load_gutter.dart'
+    show formatMassRollup, kGutterUnknown;
 import 'package:rackpal_core/src/model/device_instance.dart';
+import 'package:rackpal_core/src/model/enums.dart' show UnitSystem;
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/constants.dart' show kRackUnit;
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
+import 'package:rackpal_core/src/units/mass.dart';
+import 'package:rackpal_core/src/units/unit_formatter.dart' show MassFormatting;
 
 /// One device on a shelf, with the rect it is drawn in.
 typedef ShelfHostBox = ({
@@ -137,6 +144,75 @@ Len shelfUsableWidth(TemplateBody? shelfBody, DBox shelfRect) {
     overflow: known > usable.nm ? Len(known - usable.nm) : null,
     unknown: unknown,
   );
+}
+
+/// What [shelfId] carries (DR-204 §11.203.7, `#960`): the mass of every
+/// device on it, down the whole chain, as a G4 rollup, so an unknown mass
+/// is counted rather than summed as zero.
+///
+/// Each mass is `resolveDeviceLoads`', the override first and then the
+/// template, which is the answer the rack's own load gutter reads, so the
+/// shelf and the rack cannot disagree about one device.
+Rollup<Mass> shelfLoad({
+  required Iterable<DeviceInstance> devices,
+  required Map<String, TemplateSnapshot> templates,
+  required Uuid shelfId,
+}) {
+  var sum = Mass.zero;
+  var known = 0;
+  var unknown = 0;
+  final seen = <Uuid>{shelfId};
+  final queue = [shelfId];
+  while (queue.isNotEmpty) {
+    for (final h in devicesOnShelfIn(devices, queue.removeLast())) {
+      if (!seen.add(h.id)) continue; // a looped chain is TOP-005's to say
+      queue.add(h.id);
+      final mass = resolveDeviceLoads(
+        h,
+        templates[templateKeyFor(h.templateRef)]?.body,
+      ).mass;
+      if (mass == null) {
+        unknown++;
+      } else {
+        sum += mass;
+        known++;
+      }
+    }
+  }
+  return Rollup.fromScan(sum: sum, knownCount: known, unknownCount: unknown);
+}
+
+/// The shelf header's load line: `12.4/22.0 lb`, `≥ 12.4/22.0 lb (1
+/// unknown)`, `24.1/22.0 lb OVER`, or without a capacity just the load.
+///
+/// **OVER IS MARKED AND NEVER BLOCKS** (§11.203.7), because an integrator
+/// may be documenting an existing over-spec install. It is marked only
+/// when the KNOWN masses already exceed the capacity, which is certain
+/// whatever the unknowns weigh; an incomplete total under capacity says
+/// `≥` and the count, and never claims to fit. Words rather than a colour,
+/// because colour on this drawing belongs to the signal domain (CR-078)
+/// and a greyscale print must still say it.
+String formatShelfLoad(
+  Rollup<Mass> load,
+  Mass? capacity,
+  UnitSystem units,
+) {
+  if (capacity == null) return formatMassRollup(load, units);
+  final metric = units == UnitSystem.metric;
+  String value(Mass m) => metric
+      ? m.toKilogramsValue(fractionDigits: 1)
+      : m.toPoundsValue(fractionDigits: 1);
+  final unit = metric ? 'kg' : 'lb';
+  final carried = load.value;
+  final unknown = load.unknownCount == 0
+      ? ''
+      : ' (${load.unknownCount} unknown)';
+  if (carried == null) {
+    return '$kGutterUnknown/${value(capacity)} $unit$unknown';
+  }
+  final over = carried.ug > capacity.ug ? ' OVER' : '';
+  final floor = load.unknownCount == 0 ? '' : '≥ ';
+  return '$floor${value(carried)}/${value(capacity)} $unit$over$unknown';
 }
 
 /// Lays out every device on [shelf], whose block is drawn at [shelfRect].

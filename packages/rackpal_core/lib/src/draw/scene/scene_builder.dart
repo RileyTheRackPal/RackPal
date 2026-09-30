@@ -446,6 +446,38 @@ RackScene buildRackScene({
       );
     }
   }
+  // ── what each shelf carries (DR-204 §11.203.7, `#960`) ───────────────
+  //
+  // In the header band, right-aligned, and only where there IS a header
+  // (a shelf too short for one gives the band to its hosts) and only when
+  // the measured line fits in the right half, so it never runs into the
+  // designator. A shelf carrying nothing prints nothing: `0.0/22.0 lb` on
+  // every empty shelf in a rack is noise, and the load is the news.
+  for (final (:device, :rect) in drawnRail) {
+    if (shelves[device.id]?.hosts.isEmpty ?? true) continue;
+    if (shelfHostArea(rect).top <= rect.top) continue;
+    final text = formatShelfLoad(
+      shelfLoad(devices: devices, templates: templates, shelfId: device.id),
+      templates[templateKeyFor(device.templateRef)]
+          ?.body
+          .containerWeightCapacity,
+      options.units,
+    );
+    final sizePt = options.typeScale.size(RackTextSizes.type);
+    final style = rackText(sizePt, palette.deviceType, TextAnchor.midRight);
+    if (measurer.measureText(text, style).advanceWidth > rect.width / 2 - 6) {
+      continue;
+    }
+    ops.add(
+      OpText(
+        text,
+        DPt(rect.right - 4, rect.top + kShelfHeaderUnits / 2),
+        style,
+      ),
+    );
+    minText = _min(minText, sizePt);
+  }
+
   // THE SHELF KEEPS ONLY WHAT NO HOST COVERS. Nearest-hit breaks a tie
   // between two containing regions on distance to centre, so a click on a
   // wide host near its edge could pick the shelf under it. Cutting each

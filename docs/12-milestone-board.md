@@ -1248,6 +1248,25 @@ the status line says the shelf is over-full by at least the stated widths, since
 counted and never added up as zero (G4). The shelf's own width is always known: what its template
 states, capped at the rails' opening it is drawn in.
 
+**CHAPTER `#959`: DELETING A SHELF ASKS (§11.203.6).** A shelf carrying devices opens docs/04 §6.1
+item 7's prompt, `SHF-1 hosts 3 devices.` with `Move hosts to Staging Bin` focused as the default,
+`Delete all 4` and `Cancel`. **This was a data defect as well as a missing dialog**: an ordinary
+Delete removed the shelf and left every host naming a device that no longer existed, which is
+TOP-005's fault. The prompt runs before the cable confirmation, because `Delete all` widens the
+list that confirmation counts cables from. `Move` stages the hosts first in the same undo entry as
+the removal, so one Ctrl+Z restores the shelf and everything on it. The hosts are collected down
+the whole chain, so a shelf on a shelf is not orphaned either.
+
+**CHAPTER `#960`: THE SHELF SAYS WHAT IT CARRIES (§11.203.7).** A loaded shelf's header prints its
+load against `containerWeightCapacity`, right-aligned in the header band and only where the
+measured line fits: `4.0/10.0 lb`, `≥ 4.0/10.0 lb (1 unknown)`, `12.0/10.0 lb OVER`. The masses are
+`resolveDeviceLoads`', the same reading the rack's load gutter takes, so the shelf and the rack
+cannot disagree about one device. **OVER is marked and never blocks**, and it is marked only when
+the KNOWN masses already exceed the capacity, which is certain whatever the unknowns weigh; an
+incomplete total under capacity says `≥` and never claims to fit. Words rather than a colour,
+because colour on this drawing belongs to the signal domain (CR-078). An empty shelf prints
+nothing, because a load of zero on every empty shelf in a rack is noise.
+
 ### 4.24 The Staging Bin, which CR-032 ruled in and nothing built · 2026-09-30 · `#961` · `DR-205` · no version move
 
 Found building `#959`: DR-204's shelf deletion defaults to *"Move hosts to Staging Bin"*, and there
