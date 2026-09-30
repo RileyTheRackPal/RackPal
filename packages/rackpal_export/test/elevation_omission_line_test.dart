@@ -117,13 +117,38 @@ void main() {
   /// [rack] -- read straight off the document (docs/04 section 2.2: a
   /// device renders on a face when it occupies >= 1 U there, whichever
   /// rails carry its ears).
-  Set<String> shouldBeDrawn(RackDocument doc, Rack rack, Face face) => <String>{
+  bool onRailsHere(
+    DeviceInstance device,
+    RackDocument doc,
+    Rack rack,
+    Face face,
+  ) =>
+      device.placement is RailPlacement &&
+      (device.placement as RailPlacement).rackId == rack.id &&
+      switch (bodyOf(doc, device)) {
+        final body? => (face == Face.front ? body.frontU : body.rearU) > 0,
+        null => false,
+      };
+
+  /// The RAIL devices [face]'s elevation should draw. The fixture-shape
+  /// cases below are about rail occupancy and read this one.
+  Set<String> railDrawn(RackDocument doc, Rack rack, Face face) => <String>{
     for (final device in doc.devices.values)
-      if (device.placement case RailPlacement(
-        rackId: final id,
-      ) when id == rack.id)
-        if (bodyOf(doc, device) case final body?)
-          if ((face == Face.front ? body.frontU : body.rearU) > 0)
+      if (onRailsHere(device, doc, rack, face)) device.designator,
+  };
+
+  /// Everything [face]'s elevation should draw: the rail devices, and since
+  /// DR-204 (`#953`) every device ON a shelf that is drawn there, when its
+  /// template resolves. Spelled out here rather than borrowed from
+  /// `isDrawnOnFace`, which is the point of this file: an independent
+  /// statement of what the sheet should show.
+  Set<String> shouldBeDrawn(RackDocument doc, Rack rack, Face face) => <String>{
+    ...railDrawn(doc, rack, face),
+    for (final device in doc.devices.values)
+      if (device.placement case ShelfPlacement(:final hostDeviceId))
+        if (doc.devices[hostDeviceId] case final shelf?)
+          if (onRailsHere(shelf, doc, rack, face) &&
+              bodyOf(doc, device) != null)
             device.designator,
   };
 
@@ -299,8 +324,8 @@ void main() {
       // empty -- i.e. vacuously.
       final doc = documentOf('whole_house');
       final rack = orderedRacks(doc).single;
-      final front = shouldBeDrawn(doc, rack, Face.front);
-      final rear = shouldBeDrawn(doc, rack, Face.rear);
+      final front = railDrawn(doc, rack, Face.front);
+      final rear = railDrawn(doc, rack, Face.rear);
 
       expect(front, hasLength(27));
       expect(rear, hasLength(19));
@@ -324,16 +349,16 @@ void main() {
         (await exportOf('whole_house')).bytes,
       )['T2.02']!;
 
-      for (final designator in shouldBeDrawn(doc, rack, Face.rear)) {
+      for (final designator in railDrawn(doc, rack, Face.rear)) {
         expect(runs, contains(designator));
       }
       // The eight front-only ones are NOT on it — the sheet is a rear
       // elevation, not a copy of T2.01.
-      final frontOnly = shouldBeDrawn(
+      final frontOnly = railDrawn(
         doc,
         rack,
         Face.front,
-      ).difference(shouldBeDrawn(doc, rack, Face.rear));
+      ).difference(railDrawn(doc, rack, Face.rear));
       expect(frontOnly, hasLength(8));
       for (final designator in frontOnly) {
         expect(runs, isNot(contains(designator)));

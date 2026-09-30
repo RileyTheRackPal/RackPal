@@ -704,6 +704,32 @@ void main() {
       );
     });
 
+    testWidgets('A SHELF-SITTING DEVICE STATES ITS SHELF WIDTH where its '
+        'height would be, and it saves (DR-204 §11.203.3)', (tester) async {
+      final saved = await _pump(
+        tester,
+        template: _blank()
+          ..displayName = 'Streamer'
+          ..typePrefix = 'STR',
+      );
+
+      await _chooseMount(tester, 'On a shelf');
+      final field = find.widgetWithText(TextField, 'Width on a shelf');
+      expect(field, findsOneWidget, reason: 'asked once, in Size and mounting');
+      await tester.ensureVisible(field);
+      await tester.enterText(field, '98');
+      await tester.pump();
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(saved.single.shelfWidth, const Len(98_000_000));
+      expect(
+        saved.single.chassisWidth,
+        const Len(432_000_000),
+        reason: 'a different field; the rack panel default is untouched',
+      );
+    });
+
     testWidgets('HALF RACK CARRIES ITS SPAN, so the file cannot say half and '
         'full at once', (tester) async {
       final saved = await _pump(tester, template: _named());

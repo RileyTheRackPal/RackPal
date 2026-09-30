@@ -246,7 +246,10 @@ void main() {
       meta: testMeta(),
     );
 
-    DeviceInstance onShelf(String id, String host) => DeviceInstance(
+    DeviceInstance onShelf(
+      String id,
+      String host,
+    ) => DeviceInstance(
       id: Uuid(id),
       kind: DeviceKind.rackDevice,
       templateRef: const TemplateRef(
@@ -282,14 +285,18 @@ void main() {
       );
       final drawn = drawnIds(rack, devices, templates);
 
-      expect(drawn, <String>{'shelf'});
+      // DR-204 (`#953`): the device ON the shelf is drawn now, on the
+      // shelf, which is why this set gained `ontop` and the count below
+      // fell from 3 to 2. The equality with `devices.length - drawn.length`
+      // is the assertion that matters, and it held across the change.
+      expect(drawn, <String>{'shelf', 'ontop'});
       expect(profile.contributingCount, 4);
       expect(
         profile.undrawnCount,
         devices.length - drawn.length,
         reason: 'the stated omission count must BE the omission',
       );
-      expect(profile.undrawnCount, 3);
+      expect(profile.undrawnCount, 2);
     });
 
     test('the summary states the count and where those rows are', () {
@@ -338,13 +345,24 @@ void main() {
     group('the sentence carries the RIGHT count, not a neighbouring one', () {
       final rack = _rack();
       final devices = <DeviceInstance>[
-        // Front-only, drawn on T2.01 and not on T2.02.
-        _rail(id: 'ok', ru: 2),
-        // A shelf host, also front-only.
+        // A shelf host, front-only.
         _rail(id: 'shf', ru: 5),
-        // On the shelf: a position, no elevation geometry → undrawn, NOT
+        // On that shelf: drawn on T2.01 (DR-204) and not on T2.02, which
+        // is the front-only row this fixture needs. It was a plain rail
+        // device `ok` at U2 until hosts could be drawn.
+        onShelf('tray', 'shf'),
+        // On a shelf that is itself ON a shelf: a position (the chain ends
+        // at `shf`'s rail), and no elevation draws it, because a scene
+        // lays hosts only on shelves it drew on the rails → undrawn, NOT
         // off-axis. This is the row that separates the two counts.
-        onShelf('stb', 'shf'),
+        //
+        // IT WAS A PLAIN HOST OF `shf` UNTIL DR-204 (`#953`), when every
+        // host was undrawn by definition. Hosts are drawn now, so a plain
+        // one would be drawn and the two counts would merge, which is the
+        // state this fixture exists to prevent. An unresolved host does
+        // not replace it: with no body it has no height to be counted at,
+        // so it is off-axis too.
+        onShelf('stb', 'tray'),
         // No vertical position at all → undrawn AND off-axis.
         zeroU('pdu'),
         // A stated RU with an unknowable height → undrawn AND off-axis.

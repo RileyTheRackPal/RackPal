@@ -35,6 +35,7 @@ import 'package:rackpal_core/src/draw/scene/rack_geometry.dart';
 import 'package:rackpal_core/src/draw/scene/rack_layer.dart';
 import 'package:rackpal_core/src/draw/scene/rack_load_gutter.dart';
 import 'package:rackpal_core/src/draw/scene/rack_style.dart';
+import 'package:rackpal_core/src/draw/scene/shelf_host_layer.dart';
 import 'package:rackpal_core/src/draw/scene/zero_u_layer.dart';
 import 'package:rackpal_core/src/draw/text.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
@@ -43,6 +44,7 @@ import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/ids.dart';
+import 'package:rackpal_core/src/units/len.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 /// One device's on-screen placement, derived from the model for the current
@@ -77,6 +79,7 @@ final class RackScene {
     required this.devices,
     required this.chassisBounds,
     this.unlabelledDeviceIds = const <Uuid>[],
+    this.shelfOverflow = const <Uuid, Len>{},
   });
 
   /// The one composed display list. `fragmentFor(rackId.v)` → chassis;
@@ -100,6 +103,13 @@ final class RackScene {
   /// unlabelled elevation in silence: `elevation_sheet.dart` turns it into
   /// a note ON the sheet and `build_document.dart` into an export notice.
   final List<Uuid> unlabelledDeviceIds;
+
+  /// Every drawn shelf whose hosts are wider than it is, and by how much
+  /// (DR-204 §11.203.8). Its hosts are drawn scaled down together to fit,
+  /// which can cost a narrow one its mark under `device_layer.dart`'s own
+  /// ladder, so the state is REPORTED rather than left for the picture to
+  /// hint at. Empty is the normal case.
+  final Map<Uuid, Len> shelfOverflow;
 }
 
 /// The sheet-only extras docs/08 §2.2 asks of a rack elevation, grouped so
@@ -305,6 +315,9 @@ RackScene buildRackScene({
 
   // ── device fragments (local, wrapped in an absolute translate) ───────
   final visible = _visibleDevices(rack, devices, templates, face);
+  // What was drawn and where, for the shelf pass below: a host is laid on
+  // the rect its shelf was actually drawn at, on this face, or not at all.
+  final drawnRail = <({DeviceInstance device, DBox rect})>[];
   for (final entry in visible) {
     final device = entry.device;
     final body = entry.body;
@@ -359,6 +372,7 @@ RackScene buildRackScene({
     fragments[device.id.v] = IntRange(localStart, localEnd);
     if (built.labelDropped) unlabelled.add(device.id);
     hits.add(HitRegion(device.id.v, rect));
+    drawnRail.add((device: device, rect: rect));
     layouts.add(
       DeviceLayout(
         deviceId: device.id,
@@ -373,6 +387,83 @@ RackScene buildRackScene({
       bounds.union(rect),
       built.inkBounds?.shift(rect.left, rect.top),
     );
+  }
+
+  // ── shelf hosts (DR-204 §11.203.4, `#953`) ────────────────────────────
+  //
+  // In the same three lists a rail device and a 0U bar use, because being
+  // in `hits` and `layouts` is what "selectable" MEANS on this canvas.
+  // Drawn after every rail device, so a host paints over its shelf.
+  final shelves = layoutAllShelves(
+    devices: devices,
+    templates: templates,
+    placed: drawnRail,
+    mirrored: mirrored,
+  );
+  for (final layout in shelves.values) {
+    for (final host in layout.hosts) {
+      final body = host.body;
+      // An unresolved template draws nothing, as it does on the rails.
+      if (body == null) continue;
+      final rect = host.rect;
+      final built = buildDeviceLayer(
+        host.device,
+        body,
+        deviceH: 1,
+        width: rect.width,
+        height: rect.height,
+        lod: lod,
+        palette: palette,
+        measurer: measurer,
+        lifecycleBorder: options.lifecycleBorders,
+        typeScale: options.typeScale,
+        showBadge: false,
+        widthUnknown: !host.widthKnown,
+      );
+      ops
+        ..add(const OpSave())
+        ..add(OpTransform(Matrix4.translationValues(rect.left, rect.top, 0)));
+      final localStart = ops.length;
+      ops.addAll(built.ops);
+      final localEnd = ops.length;
+      ops.add(const OpRestore());
+      fragments[host.device.id.v] = IntRange(localStart, localEnd);
+      if (built.labelDropped) unlabelled.add(host.device.id);
+      hits.add(HitRegion(host.device.id.v, rect));
+      layouts.add(
+        DeviceLayout(
+          deviceId: host.device.id,
+          rect: rect,
+          semanticLabel: host.widthKnown
+              ? _semanticLabel(host.device, body)
+              : '${_semanticLabel(host.device, body)}, width unknown',
+        ),
+      );
+      minText = _min(minText, built.minTextPt);
+      bounds = _grow(
+        bounds.union(rect),
+        built.inkBounds?.shift(rect.left, rect.top),
+      );
+    }
+  }
+  // THE SHELF KEEPS ONLY WHAT NO HOST COVERS. Nearest-hit breaks a tie
+  // between two containing regions on distance to centre, so a click on a
+  // wide host near its edge could pick the shelf under it. Cutting each
+  // shelf's region to its header, its tray and its free width makes the
+  // host the ONLY region there: the answer by construction rather than by
+  // geometry. One pass, so no index is carried across an edit of the list.
+  if (shelves.isNotEmpty) {
+    final rebuilt = <HitRegion>[
+      for (final hit in hits)
+        if (shelves[Uuid(hit.entityId)] case final layout?)
+          for (final part in shelfFreeRegions(hit.bounds, layout))
+            HitRegion(hit.entityId, part)
+        else
+          hit,
+    ];
+    hits
+      ..clear()
+      ..addAll(rebuilt);
   }
 
   // ── 0U bars (absolute, on the rails) ─────────────────────────────────
@@ -464,6 +555,10 @@ RackScene buildRackScene({
     devices: layouts,
     chassisBounds: DBox.fromLtwh(0, 0, geo.rackWidth, geo.rackHeight),
     unlabelledDeviceIds: List.unmodifiable(unlabelled),
+    shelfOverflow: Map.unmodifiable({
+      for (final MapEntry(key: id, value: layout) in shelves.entries)
+        if (layout.overflow case final over?) id: over,
+    }),
   );
 }
 

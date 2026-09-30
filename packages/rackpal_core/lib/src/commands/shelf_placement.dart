@@ -77,9 +77,18 @@ final class ShelfPlacementFailed extends ShelfPlacementResult {
 /// CONTAINMENT IS CHILD TO PARENT ONLY (CR-029): the shelf carries no
 /// list, so the only way to know what is on it is to ask every device
 /// what it is on. `X03`'s own description says so.
-List<DeviceInstance> devicesOnShelf(RackDocument doc, Uuid hostId) {
+List<DeviceInstance> devicesOnShelf(RackDocument doc, Uuid hostId) =>
+    devicesOnShelfIn(doc.devices.values, hostId);
+
+/// [devicesOnShelf] over a bare device list, for a caller holding no
+/// document: the elevation's scene builder is handed devices and
+/// templates, never a `RackDocument`, and one sort is better than two.
+List<DeviceInstance> devicesOnShelfIn(
+  Iterable<DeviceInstance> devices,
+  Uuid hostId,
+) {
   final out = <DeviceInstance>[];
-  for (final device in doc.devices.values) {
+  for (final device in devices) {
     final placement = device.placement;
     if (placement is ShelfPlacement && placement.hostDeviceId == hostId) {
       out.add(device);

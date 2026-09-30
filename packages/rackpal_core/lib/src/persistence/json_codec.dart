@@ -4006,6 +4006,7 @@ JsonMap _encodeTemplateBody(TemplateBody b) {
   );
   putIfNotNull(json, 'containerUsableDepthNm', b.containerUsableDepth?.nm);
   putIfNotNull(json, 'containerUsableWidthNm', b.containerUsableWidth?.nm);
+  putIfNotNull(json, 'shelfWidthNm', b.shelfWidth?.nm);
   if (b.accentColor != null) json['accentColor'] = _encodeRgb(b.accentColor!);
   // Absent means INHERIT THE CATEGORY'S DEFAULT, not unknown (DR-059).
   // Writing the resolved value instead would put a key on all 48 seeded
@@ -4120,6 +4121,10 @@ TemplateBody _decodeTemplateBody(JsonMap json) => TemplateBody(
   containerUsableWidth: _decodeLenOrNull(
     json['containerUsableWidthNm'],
     'TemplateBody.containerUsableWidthNm',
+  ),
+  shelfWidth: _decodeLenOrNull(
+    json['shelfWidthNm'],
+    'TemplateBody.shelfWidthNm',
   ),
   containerVented: asBool(
     json['containerVented'] ?? false,

@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-09-30 (eightieth entry)
+
+* **Progress**: `#953` first half (docs/12 §4.23): devices on a shelf are drawn inside it and
+  selectable, with a new optional `shelfWidth`.
+* **Creation**: [DR-204](/decisions/dr-204-a-device-can-sit-on-a-shelf.md).
+* **Note**: **A QUESTION WAS ANSWERED ON A FALSE PREMISE AND PUT AGAIN.** The first offer assumed
+  shelf widths came from `chassisWidth`, which is a default on every template. The data an option
+  reads needs the same census as the surface it names.
+* **Note**: the Home Theatre starter's five devices on one 2U shelf are `#844`'s first evidence:
+  they need 125% of the shelf side by side, and would stack in a real rack.
+
 ## 2026-09-30 (seventy-ninth entry)
 
 * **Update**: [DR-203](/decisions/dr-203-size-and-mounting-asked-once.md) corrected at `#952`:

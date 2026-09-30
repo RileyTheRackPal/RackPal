@@ -1178,6 +1178,36 @@ it at 0. The seed sweep could not see it, because P04's `0 / 0 / none` derives t
 only the Save rule and the visible form differ. Corrected in code, canon §11.202.4 (as the author's
 error), docs/06, docs/21 and the OKF record.
 
+### 4.23 A device can sit on a shelf · 2026-09-30 · `#953` · `DR-204` · no version move
+
+*"In the rack editor, it doesn't seem to be possible to place devices on a shelf."* Censused before
+anything was offered: **no gesture creates a `ShelfPlacement`**, **no elevation draws one**, deleting
+a shelf strands its hosts, and **no shelf width is known**, because `chassisWidth` is always a 432 mm
+default. That last row corrected a question already put and answered.
+
+**THE FIRST HALF (Chapters `#954`, `#955`): hosts are drawn and selectable.** `shelf_host_layer.dart`
+packs them by `order` inside the shelf's block, at true width from the new `shelfWidth`, hollow when
+it is unknown. They join the scene's hits and layouts, as a 0U bar does; a shelf with hosts keeps only
+the hit regions no host covers, so a click on a host can only find the host. The load gutter asks
+`isDrawnOnFace`, which knows about shelves, and its self-consistency test compares it against what
+`buildRackScene` actually leaves out.
+
+**TWO FIXTURES HAD THEIR ONE JOB TAKEN AWAY, AND WERE REBUILT RATHER THAN RELAXED.** The gutter's
+"every count is distinct" fixture used a shelf host as its undrawn-but-positioned row; that row now
+sits on a shelf that is itself on a shelf, which no elevation draws. The op census's "one mark per
+device" now exempts exactly the hosts on a shelf the scene REPORTS as overfull (`shelfOverflow`),
+computed and never listed.
+
+**THE FIXTURE IS `#844`'S FIRST EVIDENCE.** The committed Home Theatre starter puts an AVR and four
+set-top boxes on one 2U shelf. Side by side at a quarter-shelf each that is 125% of it, so they are
+drawn squeezed and too narrow to seat a mark. In a real rack those boxes stack, which is the model
+`#844` parks.
+
+**AN UNKNOWN WIDTH ON A 2U SHELF IS AN OUTLINE, NOT WORDS.** A host there is 26 units tall and the
+label ladder seats the designator alone; the hollow body is the statement, as a 0U bar's unknown
+length is, the words draw on a taller shelf, and the semantic label always carries them. The user had
+chosen an option describing the words; the difference is reported rather than hidden.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

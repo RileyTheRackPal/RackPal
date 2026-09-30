@@ -1384,6 +1384,11 @@ class _PhysicalSection extends StatelessWidget {
             v ?? const Len(432_000_000),
           ),
         ),
+      // Any device may sit on a shelf (DR-204 §11.203.2), so rack gear
+      // states its shelf width here; shelf and hosted mounts state it in
+      // Size and mounting instead, and are not asked twice.
+      if (_inRack && !_sitsOnAShelf(body.mountMethod))
+        _ShelfWidthRow(body: body, onEdit: onEdit),
       _MassRow(
         label: 'Weight',
         value: body.weight,
@@ -1874,6 +1879,11 @@ class _SizeAndMounting extends StatelessWidget {
               onChanged: (v) =>
                   onEdit(TemplateBodyField.nominalSpanTwelfths, v),
             ),
+          // WHERE A SHELF-SITTING DEVICE STATES ITS SIZE (DR-204 §11.203.3).
+          // It has no rack height, so the one dimension the rack editor
+          // needs from it goes where the height would have been.
+          if (_sitsOnAShelf(body.mountMethod))
+            _ShelfWidthRow(body: body, onEdit: onEdit),
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text.rich(
@@ -1895,6 +1905,32 @@ class _SizeAndMounting extends StatelessWidget {
       ),
     );
   }
+}
+
+/// The mounts whose device is normally set on a shelf.
+bool _sitsOnAShelf(MountMethod m) =>
+    m == MountMethod.shelf || m == MountMethod.hosted;
+
+/// `TemplateBody.shelfWidth` (DR-204 §11.203.3): blank is UNKNOWN (G4).
+class _ShelfWidthRow extends StatelessWidget {
+  const _ShelfWidthRow({required this.body, required this.onEdit});
+
+  final TemplateBody body;
+  final void Function<T>(TemplateField<T> field, T value) onEdit;
+
+  @override
+  Widget build(BuildContext context) => _LenRow(
+    label: 'Width on a shelf',
+    value: body.shelfWidth,
+    // NOT THE CHASSIS WIDTH, which is a 432 mm default on every template
+    // and describes a rack panel. This one is only ever what somebody
+    // typed, so the rack editor can draw it at true width or say it does
+    // not know.
+    hint:
+        'Millimetres, for when it sits on a shelf. Leave blank if you do '
+        'not know: the rack editor will show it as unknown.',
+    onChanged: (v) => onEdit(TemplateBodyField.shelfWidth, v),
+  );
 }
 
 /// The first two or three letters of the category's own words, which is
