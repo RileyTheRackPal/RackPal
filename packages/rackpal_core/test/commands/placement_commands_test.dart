@@ -227,6 +227,60 @@ void main() {
     });
   });
 
+  group('a host dragged off its shelf onto the rails (#958)', () {
+    test('lands on a free U with its links, labelled as a move', () {
+      final stb = _byDesignator(doc, 'STB-1');
+      final links = _linksOf(doc, stb);
+      // A free U: stage a rail device, then aim at the U it left.
+      final rail = doc.devices.values.firstWhere(
+        (d) =>
+            d.placement is RailPlacement &&
+            occupancyU(bodyFor(d, doc.templates), Face.front) != null,
+      );
+      final was = rail.placement as RailPlacement;
+      _ready(
+        planStageDevice(doc: doc, id: rail.id, now: _now, actor: _actor),
+      ).apply(doc);
+      // STB-1 may have no rack height of its own; this case is about the
+      // path, so it borrows the rail device's template for the drop.
+      stb.templateRef = rail.templateRef;
+
+      final command = _ready(
+        planMoveHostOntoRails(
+          doc: doc,
+          id: stb.id,
+          rack: doc.racks[was.rackId]!,
+          ruIndex: was.ruIndex,
+          face: Face.front,
+          now: _now,
+          actor: _actor,
+        ),
+      );
+      expect(command.label, LabelKey.moveDevice);
+      command.apply(doc);
+      final placed = doc.devices[stb.id]!.placement as RailPlacement;
+      expect(placed.ruIndex, was.ruIndex);
+      expect(_linksOf(doc, doc.devices[stb.id]!), links);
+    });
+
+    test('and a device with no rack height is refused in words', () {
+      final stb = _byDesignator(doc, 'STB-1');
+      final plan = planMoveHostOntoRails(
+        doc: doc,
+        id: stb.id,
+        rack: doc.racks.values.first,
+        ruIndex: 1,
+        face: Face.rear,
+        now: _now,
+        actor: _actor,
+      );
+      // THE PRECONDITION: the fixture's set-top box has no rear rack
+      // height, which is the case this refusal is for.
+      expect(occupancyU(bodyFor(stb, doc.templates), Face.rear), isNull);
+      expect(_refusal(plan), contains('no rack height'));
+    });
+  });
+
   group('a NEW device dropped at a gap on a shelf (#956)', () {
     late Uuid shelfId;
     late String catalogId;

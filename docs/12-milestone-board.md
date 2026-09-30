@@ -1231,6 +1231,23 @@ places it through `buildPlaceOnShelfCommand`, which asks TOP-005, and the status
 sentence the drag prints, rack-ear note included. Library rows are not offered, on
 `add_zero_u_occupant_dialog.dart`'s reasoning: copy-on-place stays in one place.
 
+**CHAPTER `#958`: A HOST DRAGS (§11.203.9).** The user reconciled §11.203.5's *"anywhere else, it is
+deleted"* with DR-205's bin and added the case neither named: onto free rails, a device with a rack
+height is mounted there. Off the rack it goes to the bin; along its shelf it reorders, onto another
+it moves, and anywhere else on the rack it is removed. **The removal is announced before it
+happens**: a blocked ghost usually means "release does nothing", so for a host it carries `Release
+to remove STB-1. Ctrl+Z to undo.` and the status line afterwards names the cables that went with
+it. A host released back in its own gap is a no-op with no undo entry; a mutation that removed that
+guard turned its test red, so the test is not vacuous.
+
+**AND #956 HAD SHIPPED WITHOUT §11.203.8's WIDTH RULE**, found by reading the ruling for a free
+sub-number: *"refused on a drop only when every width involved is known, and otherwise said rather
+than refused"*. The drop, the picker and the host drag now share `shelfFit` in core. With every
+width stated and over, the drop is refused, naming the shelf; with an unknown in play it lands, and
+the status line says the shelf is over-full by at least the stated widths, since an unknown width is
+counted and never added up as zero (G4). The shelf's own width is always known: what its template
+states, capped at the rails' opening it is drawn in.
+
 ### 4.24 The Staging Bin, which CR-032 ruled in and nothing built · 2026-09-30 · `#961` · `DR-205` · no version move
 
 Found building `#959`: DR-204's shelf deletion defaults to *"Move hosts to Staging Bin"*, and there

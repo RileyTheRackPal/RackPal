@@ -22750,6 +22750,23 @@ stays parked: sub-1U heights, stacking, orientation and purpose-made shelves. **
 (docs/04 §6.1 item 5) is refused on a drop only when every width involved is known, and otherwise
 said rather than refused, because an unknown cannot be added up.
 
+**11.203.9 RULED: WHERE A DRAGGED HOST CAN LAND, WITH THE BIN BUILT.** Settled by the user on
+2026-09-30, building `#958`, on the recommended option. §11.203.5 said *"anywhere else, it is
+deleted"*, and DR-205 then ruled that a release off the rack keeps the device's wiring in the bin;
+the two are reconciled, and the rails case neither named is added:
+
+| Release | Result |
+|---|---|
+| its own shelf | reorder |
+| another shelf | move there |
+| free rails, and the device has a rack height | move onto the rails |
+| off the rack | Staging Bin, wiring kept (DR-205) |
+| anywhere else on the rack | removed, `Removed STB-1. Ctrl+Z to undo` |
+
+The rails case is the AVR one from §11.203.2: a rack-mountable device first set on a shelf and
+mounted after all. The removal is announced on the drag ghost before the release, and the status
+line names the cables that go with it.
+
 **Scope.** No scope change: AC-043's v1 half, built.
 
 ---

@@ -97,6 +97,48 @@ Len shelfUsableWidth(TemplateBody? shelfBody, DBox shelfRect) {
   return stated == null || stated.nm > drawn.nm ? drawn : stated;
 }
 
+/// Whether [adding] fits beside what already sits on [shelfId], in
+/// [usable] (DR-204 §11.203.8: *"refused on a drop only when every width
+/// involved is known, and otherwise said rather than refused"*).
+///
+/// `overflow` is the known widths' overrun, null when they fit. `unknown`
+/// counts the widths nobody stated, the arriving device's included, and
+/// when it is not zero `overflow` is a floor rather than the answer, so a
+/// caller refuses only on `unknown == 0` (G4: an unknown is never added
+/// up as zero, and never guessed).
+///
+/// [except] leaves out a host being dragged along its own shelf, which
+/// would otherwise be counted twice.
+({Len? overflow, int unknown}) shelfFit({
+  required Iterable<DeviceInstance> devices,
+  required Map<String, TemplateSnapshot> templates,
+  required Uuid shelfId,
+  required Len usable,
+  required TemplateBody? adding,
+  Uuid? except,
+}) {
+  var known = 0;
+  var unknown = 0;
+  void count(TemplateBody? body) {
+    final w = body?.shelfWidth;
+    if (w == null) {
+      unknown++;
+    } else {
+      known += w.nm;
+    }
+  }
+
+  for (final h in devicesOnShelfIn(devices, shelfId)) {
+    if (h.id == except) continue;
+    count(templates[templateKeyFor(h.templateRef)]?.body);
+  }
+  count(adding);
+  return (
+    overflow: known > usable.nm ? Len(known - usable.nm) : null,
+    unknown: unknown,
+  );
+}
+
 /// Lays out every device on [shelf], whose block is drawn at [shelfRect].
 ShelfLayout layoutShelfHosts({
   required Iterable<DeviceInstance> devices,

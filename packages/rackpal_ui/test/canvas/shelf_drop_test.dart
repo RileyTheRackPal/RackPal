@@ -399,4 +399,210 @@ void main() {
       expect(find.byKey(button), findsOneWidget);
     });
   });
+
+  group('DRAGGING A HOST (#958, canon §11.203.9)', () {
+    /// Selects [id] and drags it from its centre to [to], answering the
+    /// gesture still DOWN so a caller can read the live frame.
+    Future<TestGesture> grab(WidgetTester tester, Uuid id, Offset to) async {
+      final box = find.byKey(ValueKey(id.v));
+      await tester.tap(box);
+      await tester.pumpAndSettle();
+      return _carry(tester, tester.getCenter(box), to);
+    }
+
+    testWidgets('ALONG ITS OWN SHELF it reorders, keeping the device', (
+      tester,
+    ) async {
+      final doc = _document();
+      await _pump(tester, doc);
+      final a = tester.getRect(find.byKey(ValueKey(_box1.v)));
+
+      final g = await grab(tester, _box2, Offset(a.left + 2, a.center.dy));
+      await g.up();
+      await tester.pump();
+
+      expect(_packOrder(doc), [_box2, _box1]);
+      expect(_onScreen(tester, 'Moved STB-2 along SHF-1.'), isTrue);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('DROPPED BACK IN ITS OWN GAP it is a no-op with no undo '
+        'entry', (tester) async {
+      final doc = _document();
+      final controller = await _pump(tester, doc);
+      final b = tester.getRect(find.byKey(ValueKey(_box2.v)));
+
+      final g = await grab(tester, _box2, Offset(b.right - 2, b.center.dy));
+      await g.up();
+      await tester.pump();
+
+      expect(_packOrder(doc), [_box1, _box2]);
+      expect(controller.undo.canUndo, isFalse);
+    });
+
+    testWidgets('ONTO ANOTHER SHELF it moves there', (tester) async {
+      final doc = _document();
+      _device(
+        doc,
+        const Uuid('dev-shelf-2'),
+        'tpl.shelf',
+        'SHF-2',
+        const RailPlacement(rackId: _rack, ruIndex: 9, face: Face.front),
+      );
+      await _pump(tester, doc);
+      final to = tester.getCenter(find.byKey(const ValueKey('dev-shelf-2')));
+
+      final g = await grab(tester, _box1, to);
+      await g.up();
+      await tester.pump();
+
+      expect(
+        (doc.devices[_box1]!.placement as ShelfPlacement).hostDeviceId,
+        const Uuid('dev-shelf-2'),
+      );
+      expect(_onScreen(tester, 'Moved STB-1 to SHF-2.'), isTrue);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('A RACK-EAR HOST onto free rails is MOUNTED there, the AVR '
+        'case', (tester) async {
+      final doc = _document();
+      const avr = Uuid('dev-avr');
+      _device(
+        doc,
+        avr,
+        'tpl.avr',
+        'AVR-1',
+        const ShelfPlacement(hostDeviceId: _shelf, order: FracIndex('a2')),
+      );
+      await _pump(tester, doc);
+      final shelf = tester.getRect(find.byKey(ValueKey(_shelf.v)));
+
+      final g = await grab(
+        tester,
+        avr,
+        Offset(shelf.center.dx, shelf.top - shelf.height * 2),
+      );
+      await g.up();
+      await tester.pump();
+
+      expect(doc.devices[avr]!.placement, isA<RailPlacement>());
+      expect(_onScreen(tester, 'Placed AVR-1 at RK-1'), isTrue);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('OFF THE RACK it goes to the Staging Bin', (tester) async {
+      final doc = _document();
+      await _pump(tester, doc);
+      final shelf = tester.getRect(find.byKey(ValueKey(_shelf.v)));
+
+      final g = await grab(
+        tester,
+        _box1,
+        Offset(shelf.right + shelf.width, shelf.center.dy),
+      );
+      await g.up();
+      await tester.pump();
+
+      final staged = doc.devices[_box1]!.placement as StagedPlacement;
+      expect(staged.lastHostDeviceId, _shelf);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('ANYWHERE ELSE ON THE RACK it is removed, the ghost says so '
+        'first, and ONE Ctrl+Z brings it back', (tester) async {
+      final doc = _document();
+      await _pump(tester, doc);
+      final shelf = tester.getRect(find.byKey(ValueKey(_shelf.v)));
+
+      // Bare rails, and STB-1 has no rack height.
+      final g = await grab(
+        tester,
+        _box1,
+        Offset(shelf.center.dx, shelf.top - shelf.height * 2),
+      );
+      expect(_onScreen(tester, 'Release to remove STB-1'), isTrue);
+      await g.up();
+      await tester.pump();
+
+      expect(doc.devices.containsKey(_box1), isFalse);
+      expect(_onScreen(tester, 'Removed STB-1. Ctrl+Z to undo.'), isTrue);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+      expect(_packOrder(doc), [_box1, _box2]);
+      await tester.pump(const Duration(seconds: 4));
+    });
+  });
+
+  group('WIDTH ON A SHELF (DR-204 §11.203.8)', () {
+    /// Widens the fixture's boxes to 200 mm: two fit on a 19-inch shelf and
+    /// a third does not.
+    RackDocument wide() {
+      final doc = _document();
+      final box = doc.templates['tpl.box@1']!.body
+        ..shelfWidth = const Len(200_000_000);
+      expect(box.shelfWidth, const Len(200_000_000));
+      return doc;
+    }
+
+    testWidgets('EVERY WIDTH KNOWN AND OVER: the drop is refused, naming the '
+        'shelf, and nothing is added', (tester) async {
+      final doc = wide();
+      await _pump(tester, doc);
+      final before = doc.devices.length;
+
+      final g = await _carry(
+        tester,
+        _row(tester, 'Cable box'),
+        _between(tester),
+      );
+      expect(_onScreen(tester, 'SHF-1 is full'), isTrue);
+      await g.up();
+      await tester.pump(const Duration(seconds: 2));
+
+      expect(doc.devices.length, before);
+    });
+
+    testWidgets('AN UNKNOWN WIDTH IN PLAY: the drop lands, and the status '
+        'line says the shelf is over-full at least by the stated widths', (
+      tester,
+    ) async {
+      final doc = wide();
+      _template(
+        doc,
+        'tpl.modem',
+        TemplateBody(
+          manufacturer: 'Demo',
+          model: 'MODEM',
+          displayName: 'Modem',
+          typePrefix: 'MDM',
+          mountMethod: MountMethod.shelf,
+        ),
+      );
+      _device(
+        doc,
+        const Uuid('dev-modem'),
+        'tpl.modem',
+        'MDM-1',
+        const ShelfPlacement(hostDeviceId: _shelf, order: FracIndex('a2')),
+      );
+      await _pump(tester, doc);
+
+      final g = await _carry(
+        tester,
+        _row(tester, 'Cable box'),
+        _between(tester),
+      );
+      await g.up();
+      await tester.pump();
+
+      expect(_packOrder(doc), hasLength(4));
+      expect(_onScreen(tester, 'over-full by at least'), isTrue);
+      expect(_onScreen(tester, '1 width not stated'), isTrue);
+      await tester.pump(const Duration(seconds: 4));
+    });
+  });
 }

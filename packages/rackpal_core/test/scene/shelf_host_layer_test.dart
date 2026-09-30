@@ -261,4 +261,53 @@ void main() {
     );
     expect(scene.devices.map((l) => l.deviceId.v), isNot(contains('stb')));
   });
+
+  group('shelfFit (DR-204 §11.203.8, `#956`)', () {
+    ({Len? overflow, int unknown}) fit(
+      List<DeviceInstance> on,
+      TemplateBody? adding, {
+      Uuid? except,
+    }) => shelfFit(
+      devices: [_shelf(), ...on],
+      templates: templates,
+      shelfId: const Uuid('shf'),
+      usable: const Len(250_000_000),
+      adding: adding,
+      except: except,
+    );
+
+    test('every width known and over: the overrun, and nothing unknown, '
+        'which is the one case a drop refuses', () {
+      final f = fit([_on('a', 'a0'), _on('b', 'a1')], _host(width: _mm100));
+      expect(f.unknown, 0);
+      expect(f.overflow, const Len(50_000_000));
+    });
+
+    test('every width known and under: no overflow', () {
+      final f = fit([_on('a', 'a0')], _host(width: _mm100));
+      expect((f.overflow, f.unknown), (null, 0));
+    });
+
+    test('AN UNKNOWN IS COUNTED, NEVER ADDED UP AS ZERO (G4): the known '
+        'overrun is still reported, as a floor', () {
+      final f = fit([_on('a', 'a0'), _on('b', 'a1')], _host(width: _mm100));
+      final withUnknown = fit([
+        _on('a', 'a0'),
+        _on('b', 'a1'),
+        _on('u', 'a2', template: 'UNKNOWN'),
+      ], _host(width: _mm100));
+      expect(withUnknown.unknown, 1);
+      expect(withUnknown.overflow, f.overflow);
+      expect(fit([], _host()).unknown, 1, reason: 'the arriving device too');
+    });
+
+    test('a host dragged along its own shelf is not counted twice', () {
+      final f = fit(
+        [_on('a', 'a0'), _on('b', 'a1')],
+        _host(width: _mm100),
+        except: const Uuid('b'),
+      );
+      expect(f.overflow, isNull);
+    });
+  });
 }

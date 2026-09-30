@@ -696,6 +696,11 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// whether this gesture is a move at all.
   RailPlacement? _dragPlacement;
 
+  /// The selected SHELF HOST this gesture grabbed, when it grabbed one
+  /// (`#958`). Mutually exclusive with [_dragPlacement], which is rail
+  /// devices only; cleared by `_resetDrag`.
+  Uuid? _dragHostId;
+
   /// Whether the move drag is currently off the rack, so the status line
   /// says so once rather than on every pointer move (DR-205).
   bool _moveWillStage = false;
@@ -2129,13 +2134,13 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
           return;
       }
     }
-    _showPlacedOnShelf(placedId, shelf);
+    _showPlacedOnShelf(placedId, shelf, note: _unknownFitNote(target));
   }
 
   /// `Placed STB-3 on SHF-1.`, and for a rack-ear device the sentence that
   /// catches a drop meant for the rails (§11.203.2). One spelling for the
   /// drag and the picker.
-  void _showPlacedOnShelf(Uuid placedId, String shelf) {
+  void _showPlacedOnShelf(Uuid placedId, String shelf, {String note = ''}) {
     final placed = _doc.devices[placedId];
     final body = placed == null ? null : bodyFor(placed, _doc.templates);
     final name = placed?.designator ?? 'The device';
@@ -2143,7 +2148,8 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     _status.show(
       'Placed $name on $shelf.'
       '${ears ? ' $name is rack-mountable; drag it to the rails if that '
-                'was meant.' : ''}',
+                'was meant.' : ''}'
+      '$note',
     );
   }
 
@@ -2154,6 +2160,21 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     final shelfId = _soleSelectedDeviceId;
     if (shelfId == null) return;
     final shelf = _doc.devices[shelfId]?.designator ?? 'the shelf';
+    // The same width judgement a drop makes (§11.203.8), against the gap
+    // at the right-hand end where this lands.
+    final rect = _layoutFor(shelfId.v)?.rect;
+    final target = rect == null ? null : _gapOn(shelfId, rect, double.infinity);
+    if (target != null) {
+      final judged = _onShelf(
+        target,
+        0,
+        resolveLatestTemplate(_doc, catalogId)?.body,
+      );
+      if (judged.blocked) {
+        _status.show(judged.reason ?? '$shelf is full.');
+        return;
+      }
+    }
     _controller.selection = _selection.snapshot();
     switch (buildPlaceOnShelfCommand(
       doc: _doc,
@@ -2164,7 +2185,11 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     )) {
       case ShelfPlacementReady(:final command):
         _finalizeCatalogPlacement(command, catalogId, fromQuickAdd: false);
-        _showPlacedOnShelf(command.id, shelf);
+        _showPlacedOnShelf(
+          command.id,
+          shelf,
+          note: target == null ? '' : _unknownFitNote(target),
+        );
       case ShelfPlacementFailed(:final reason):
         _status.show(reason);
     }
@@ -2750,6 +2775,17 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
         _dragPlacement = placement;
       }
     }
+    // A HOST ON A SHELF lifts too (DR-204 §11.203.5, `#958`), through its
+    // own preview and commit: it has no U to carry a grab offset from, and
+    // where it can go is a different list (canon §11.203.9).
+    _dragHostId = null;
+    if (deviceId != null) {
+      final id = Uuid(deviceId);
+      if (_doc.devices[id]?.placement is ShelfPlacement &&
+          _selection.contains(id)) {
+        _dragHostId = id;
+      }
+    }
   }
 
   void _onUpdateDrag(DPt sceneCurrent, DPt sceneDelta) {
@@ -2872,6 +2908,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     _dragCancelled = false;
     _dragRefused = false;
     _dragPlacement = null;
+    _dragHostId = null;
     _resizeDrag = false;
     // THE BAND DIES WITH THE GESTURE THAT MADE IT. Every path out of a
     // drag reaches here, including the early returns above `_commitDragBody`
@@ -3284,6 +3321,10 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// drops to 30% opacity IN PLACE (via `_lastMoveDragSourceId` →
   /// `DeviceBox.dragSource`) and the ghost goes live.
   void _armMovePreview() {
+    if (_dragHostId case final host?) {
+      _armHostPreview(host);
+      return;
+    }
     final deviceId = _dragDeviceId;
     final placement = _dragPlacement;
     if (deviceId == null || placement == null) return;
@@ -3345,6 +3386,10 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// protect.
   void _updateMovePreview(DPt sceneCurrent) {
     if (!_moveDrag.isDragging) return;
+    if (_dragHostId case final host?) {
+      _updateHostPreview(host, sceneCurrent);
+      return;
+    }
     final deviceId = _dragDeviceId;
     final placement = _dragPlacement;
     if (deviceId == null || placement == null) return;
@@ -3396,6 +3441,10 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// the last live-evaluated state" stays literally true: there is no second
   /// code path deciding whether the move is legal.
   void _commitOrNoopMoveDrag(DPt sceneEnd) {
+    if (_dragHostId case final host?) {
+      _commitHostDrag(host, sceneEnd);
+      return;
+    }
     final deviceId = _dragDeviceId;
     final placement = _dragPlacement;
     if (deviceId == null || placement == null) {
@@ -3476,6 +3525,206 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
 
   /// Tears down a move preview with no command and no lingering chip — the
   /// `Esc` revert (docs/04 §3.3 step 4) and the pointer-cancel path.
+  // ═══════════════════════════════════════════════════════════════════
+  // DRAGGING A HOST (DR-204 §11.203.5, canon §11.203.9, `#958`)
+  // ═══════════════════════════════════════════════════════════════════
+  // Where a device on a shelf can be released, in the user's order:
+  //
+  //   same shelf            reorder
+  //   another shelf         move there
+  //   free rails, rack U    move onto the rails (the AVR case)
+  //   off the rack          Staging Bin, wiring kept (DR-205)
+  //   anywhere else         delete, "Removed STB-1. Ctrl+Z to undo"
+  //
+  // THE DELETE IS SHOWN BEFORE IT HAPPENS. A blocked ghost on the rails
+  // normally means "release does nothing"; for a host it means "release
+  // removes it", so the ghost carries that sentence and not a U conflict.
+
+  /// The rack height a host would take on the rails, and the face, or a
+  /// 1U stand-in on the face in view when it has none.
+  ({int h, Face face, bool railless}) _hostRailShape(Uuid host) {
+    final d = _doc.devices[host];
+    final body = d == null ? null : bodyFor(d, _doc.templates);
+    if (body == null || (body.frontU <= 0 && body.rearU <= 0)) {
+      return (h: 1, face: _face, railless: true);
+    }
+    final face = body.frontU > 0 ? Face.front : Face.rear;
+    return (
+      h: face == Face.front ? body.frontU : body.rearU,
+      face: face,
+      railless: false,
+    );
+  }
+
+  void _armHostPreview(Uuid host) {
+    _moveBlockedReleaseTimer?.cancel();
+    _moveBlockedReleaseTimer = null;
+    final d = _doc.devices[host];
+    final shape = _hostRailShape(host);
+    _dragDeviceHeightU = shape.h;
+    _moveDrag
+      ..arm(
+        subjectId: host.v,
+        deviceH: shape.h,
+        face: shape.face,
+        displayName: d?.name ?? '',
+        badge: shape.railless ? '' : '${shape.h}U',
+        sourceKinds: _dragSourceKinds,
+      )
+      ..liftIntoCanvas();
+    _insertMoveDragOverlay();
+  }
+
+  void _updateHostPreview(Uuid host, DPt scene) {
+    final who = _doc.devices[host]?.designator ?? 'it';
+    _moveDrag.updateCursorGlobal(_sceneToGlobal(scene));
+    if (_isOffRack(scene)) {
+      if (!_moveWillStage) {
+        _moveWillStage = true;
+        _status.show('Release to send $who to the Staging Bin, wiring kept.');
+      }
+      _moveDrag.clearEvaluation(scene);
+      return;
+    }
+    _moveWillStage = false;
+    final shape = _hostRailShape(host);
+    final ruIndex = _geo.ruIndexForCursorY(scene.y, shape.h);
+    if (_shelfTargetAt(scene, except: host) case final shelf?) {
+      _moveDrag.updateEvaluation(
+        scene,
+        _onShelf(shelf, ruIndex, _bodyOf(host), except: host),
+      );
+      return;
+    }
+    if (!shape.railless) {
+      final onRails = _evaluateDrop(
+        ruIndex,
+        shape.h,
+        shape.face,
+        exceptId: host,
+      );
+      if (!onRails.blocked) {
+        _moveDrag.updateEvaluation(scene, onRails);
+        return;
+      }
+    }
+    _moveDrag.updateEvaluation(
+      scene,
+      DragPreviewEvaluation(
+        ruIndex: ruIndex,
+        blocked: true,
+        reason: 'Release to remove $who. Ctrl+Z to undo.',
+      ),
+    );
+  }
+
+  void _commitHostDrag(Uuid host, DPt sceneEnd) {
+    _updateHostPreview(host, sceneEnd);
+    final evaluation = _moveDrag.evaluation;
+    final offRack = _isOffRack(sceneEnd);
+    _moveWillStage = false;
+    _cancelMoveDrag();
+    final who = _doc.devices[host]?.designator ?? 'The device';
+    final now = _controller.clock.nowUtc();
+    _controller.selection = _selection.snapshot();
+
+    void run(PlacementPlan plan, String said) {
+      switch (plan) {
+        case PlacementPlanReady(:final command):
+          _controller.run(command);
+          _status.show(said);
+        case PlacementPlanRefused(:final reason):
+          _status.show(reason);
+      }
+    }
+
+    if (offRack) {
+      run(
+        planStageDevice(
+          doc: _doc,
+          id: host,
+          now: now,
+          actor: _controller.actor,
+        ),
+        '$who sent to the Staging Bin, wiring kept. Ctrl+Z to undo.',
+      );
+      return;
+    }
+    if (evaluation?.shelf case final shelf?) {
+      // A FULL SHELF REFUSES; it never falls through to the delete below,
+      // which is for a release that aimed at no shelf at all.
+      if (evaluation!.blocked) {
+        _shake.trigger(kDragGhostShakeId);
+        _status.show(evaluation.reason ?? 'That shelf is full.');
+        return;
+      }
+      final from = _doc.devices[host]?.placement;
+      final sameShelf =
+          from is ShelfPlacement && from.hostDeviceId == shelf.shelfId;
+      // DROPPED BACK IN ITS OWN GAP: a genuine no-op, and no undo entry.
+      if (sameShelf) {
+        final others = [
+          for (final h in devicesOnShelf(_doc, shelf.shelfId))
+            if (h.id != host) h.id,
+        ];
+        final mine = devicesOnShelf(
+          _doc,
+          shelf.shelfId,
+        ).indexWhere((h) => h.id == host);
+        final before = mine <= 0 ? null : others[mine - 1];
+        if (before == shelf.after) return;
+      }
+      final to = _doc.devices[shelf.shelfId]?.designator ?? 'the shelf';
+      run(
+        planMoveOntoShelf(
+          doc: _doc,
+          id: host,
+          hostId: shelf.shelfId,
+          after: shelf.after,
+          now: now,
+          actor: _controller.actor,
+        ),
+        sameShelf ? 'Moved $who along $to.' : 'Moved $who to $to.',
+      );
+      return;
+    }
+    if (evaluation != null && !evaluation.blocked) {
+      final shape = _hostRailShape(host);
+      run(
+        planMoveHostOntoRails(
+          doc: _doc,
+          id: host,
+          rack: _rack,
+          ruIndex: evaluation.ruIndex,
+          face: shape.face,
+          now: now,
+          actor: _controller.actor,
+        ),
+        'Placed $who at ${_rack.designator} U${evaluation.ruIndex}, '
+        '${shape.face.name}, wiring kept.',
+      );
+      return;
+    }
+    // ANYWHERE ELSE: the user's own rule, "Drag off the shelf should
+    // delete". No dialog, because the gesture already said so on the
+    // ghost; the cable count is in the sentence, so a wired device is not
+    // removed silently, and one Ctrl+Z brings back the device and them.
+    final cables = planDeviceRemoval(_doc, host).linkIds.length;
+    final wired = switch (cables) {
+      0 => '',
+      1 => ' and its cable',
+      _ => ' and its $cables cables',
+    };
+    _controller.transact(LabelKey.removeDevice, (tx) {
+      tx.add(RemoveDeviceCommand(id: host));
+      _selection.clear();
+      _controller.selection = _selection.snapshot();
+    });
+    _status.show(
+      'Removed $who$wired. Ctrl+Z to undo.',
+    );
+  }
+
   void _cancelMoveDrag() {
     _moveBlockedReleaseTimer?.cancel();
     _moveBlockedReleaseTimer = null;
@@ -4518,11 +4767,10 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     Face face,
   ) {
     if (_shelfTargetAt(scene) case final shelf? when !_armedContainer) {
-      return DragPreviewEvaluation(
-        ruIndex: ruIndex,
-        blocked: false,
-        shelf: shelf,
-      );
+      final staged = _armedStagedId;
+      final adding =
+          _armedPaletteRow?.body ?? (staged == null ? null : _bodyOf(staged));
+      return _onShelf(shelf, ruIndex, adding);
     }
     if (_armedRailless) {
       return DragPreviewEvaluation(
@@ -4536,12 +4784,78 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     return _evaluateDrop(ruIndex, deviceH, face);
   }
 
+  TemplateBody? _bodyOf(Uuid id) => switch (_doc.devices[id]) {
+    final d? => bodyFor(d, _doc.templates),
+    null => null,
+  };
+
+  /// A drop on [shelf] of a device whose body is [adding], judged for
+  /// width (DR-204 §11.203.8): *"refused on a drop only when every width
+  /// involved is known, and otherwise said rather than refused"*.
+  ///
+  /// [except] is a host dragged along its own shelf, counted once.
+  DragPreviewEvaluation _onShelf(
+    ShelfDropTarget shelf,
+    int ruIndex,
+    TemplateBody? adding, {
+    Uuid? except,
+  }) {
+    final fit = _fitOn(shelf, adding, except: except);
+    if (fit.overflow case final over? when fit.unknown == 0) {
+      return DragPreviewEvaluation(
+        ruIndex: ruIndex,
+        blocked: true,
+        reason:
+            '${_doc.devices[shelf.shelfId]?.designator ?? 'The shelf'} is '
+            'full: this would be ${_mm(over)} over its width.',
+        shelf: shelf,
+      );
+    }
+    return DragPreviewEvaluation(
+      ruIndex: ruIndex,
+      blocked: false,
+      shelf: shelf,
+    );
+  }
+
+  ({Len? overflow, int unknown}) _fitOn(
+    ShelfDropTarget shelf,
+    TemplateBody? adding, {
+    Uuid? except,
+  }) => shelfFit(
+    devices: _doc.devices.values,
+    templates: _doc.templates,
+    shelfId: shelf.shelfId,
+    usable: shelfUsableWidth(_bodyOf(shelf.shelfId), shelf.shelfRect),
+    adding: adding,
+    except: except,
+  );
+
+  static String _mm(Len len) =>
+      '${UnitFormatter.lenToMillimeters(len, fractionDigits: 0)} mm';
+
+  /// The "said rather than refused" half of §11.203.8, for the status line
+  /// after a device lands: said only when the STATED widths already run
+  /// over and an unknown one is why the drop was not refused. Empty when
+  /// there is nothing to say.
+  String _unknownFitNote(ShelfDropTarget shelf, {Uuid? except}) {
+    final fit = _fitOn(shelf, null, except: except);
+    // The device has landed, so it is counted among the hosts now, and
+    // `adding: null` would count it a second time as an unknown.
+    final unknown = fit.unknown - 1;
+    final over = fit.overflow;
+    if (over == null || unknown <= 0) return '';
+    final name = _doc.devices[shelf.shelfId]?.designator ?? 'The shelf';
+    return ' $name is over-full by at least ${_mm(over)} '
+        '(${unknown == 1 ? '1 width' : '$unknown widths'} not stated).';
+  }
+
   /// The shelf under [scene] and the gap the cursor names on it, or null.
   ///
   /// A cursor over a HOST names that host's shelf. Only a shelf on the
   /// rails is a target: one sitting on another shelf is not drawn (one
   /// level of hosts, DR-204), so nothing could show where it landed.
-  ShelfDropTarget? _shelfTargetAt(DPt scene) {
+  ShelfDropTarget? _shelfTargetAt(DPt scene, {Uuid? except}) {
     for (final layout in _rackScene?.devices ?? const <DeviceLayout>[]) {
       if (!layout.rect.contains(scene)) continue;
       final hit = _doc.devices[layout.deviceId];
@@ -4553,7 +4867,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       if (bodyFor(shelf, _doc.templates)?.isContainer != true) continue;
       final rect = _layoutFor(shelf.id.v)?.rect;
       if (rect == null) continue;
-      return _gapOn(shelf.id, rect, scene.x);
+      return _gapOn(shelf.id, rect, scene.x, except: except);
     }
     return null;
   }
@@ -4565,7 +4879,16 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// why: it packs right to left, so "passed" flips and the caret sits on
   /// the other edge of each host. Pack order is still `order`, so `after`
   /// means the same thing on both faces.
-  ShelfDropTarget _gapOn(Uuid shelfId, DBox shelfRect, double x) {
+  ///
+  /// [except] is a host being DRAGGED along its own shelf. It is left out
+  /// of the neighbours, so a cursor past its own centre never names it as
+  /// the host to land after, which `shelfOrderAfter` would read as first.
+  ShelfDropTarget _gapOn(
+    Uuid shelfId,
+    DBox shelfRect,
+    double x, {
+    Uuid? except,
+  }) {
     final mirrored = _face == Face.rear && _rack.mirrorRearElevation;
     final area = shelfHostArea(shelfRect);
     double lead(DBox r) => mirrored ? r.right : r.left;
@@ -4573,7 +4896,8 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
 
     final hosts = [
       for (final h in devicesOnShelf(_doc, shelfId))
-        if (_layoutFor(h.id.v)?.rect case final r?) (id: h.id, rect: r),
+        if (h.id != except)
+          if (_layoutFor(h.id.v)?.rect case final r?) (id: h.id, rect: r),
     ];
     Uuid? after;
     var caretX = hosts.isEmpty ? lead(area) : lead(hosts.first.rect);

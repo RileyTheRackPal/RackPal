@@ -26,8 +26,9 @@ past a recommendation, the ruling says whose choice each clause is.
 - **`shelfWidth`, a new optional length**, blank meaning unknown. A known width draws at true scale;
   an unknown one draws hollow. `chassisWidth` is not reused: it is a 432 mm default on every template.
 - **Hosts are drawn and selectable**, packed by `order`.
-- **Dragging a host**: along its shelf reorders, onto another shelf moves, anywhere else deletes
-  (the user's own instruction) with an undo note.
+- **Dragging a host** (§11.203.9, reconciled with DR-205): along its shelf reorders, onto another
+  shelf moves, onto free rails mounts it (the AVR case), off the rack sends it to the Staging Bin
+  with its wiring, and anywhere else on the rack removes it, announced on the ghost first.
 - **Deleting a shelf asks**, defaulting to moving its hosts to the Staging Bin.
 - **The shelf header shows its load** against capacity, never blocking.
 

@@ -349,6 +349,43 @@ PlacementPlan planPlaceStagedOnRail({
   if (d.placement is! StagedPlacement) {
     return PlacementPlanRefused('${d.designator} is not in the Staging Bin.');
   }
+  return _ontoRails(doc, d, rack, ruIndex, face, now, actor);
+}
+
+/// A device on a SHELF dragged onto free rails (`#958`, canon §11.203.9:
+/// *"free rails, has rack U: move onto the rails"*). The AVR case: a
+/// rack-mountable device first set on a shelf, then mounted after all.
+/// Keeps its id, ports and links, and runs the same U check as a staged
+/// chip's drop.
+PlacementPlan planMoveHostOntoRails({
+  required RackDocument doc,
+  required Uuid id,
+  required Rack rack,
+  required int ruIndex,
+  required Face face,
+  required DateTime now,
+  required String actor,
+}) {
+  final d = doc.devices[id];
+  if (d == null) return const PlacementPlanRefused('That device is gone.');
+  if (d.placement is! ShelfPlacement) {
+    return PlacementPlanRefused('${d.designator} is not on a shelf.');
+  }
+  return _ontoRails(doc, d, rack, ruIndex, face, now, actor);
+}
+
+/// The rail half both planners above share: a rack height on [face], then
+/// [_railFault]. Labelled by where the device came from, so undo says
+/// `Return from Staging Bin` or `Move device` as the act was.
+PlacementPlan _ontoRails(
+  RackDocument doc,
+  DeviceInstance d,
+  Rack rack,
+  int ruIndex,
+  Face face,
+  DateTime now,
+  String actor,
+) {
   if (occupancyU(bodyFor(d, doc.templates), face) == null) {
     return PlacementPlanRefused(
       '${d.designator} has no rack height on the ${face.name} face, so it '
@@ -361,9 +398,11 @@ PlacementPlan planPlaceStagedOnRail({
   }
   return PlacementPlanReady(
     ReplacePlacementCommand(
-      id: id,
+      id: d.id,
       to: RailPlacement(rackId: rack.id, ruIndex: ruIndex, face: face),
-      label: LabelKey.returnFromStaging,
+      label: d.placement is StagedPlacement
+          ? LabelKey.returnFromStaging
+          : LabelKey.moveDevice,
       now: now,
       actor: actor,
     ),

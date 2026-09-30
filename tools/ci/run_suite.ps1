@@ -990,7 +990,11 @@ $SuiteFloors = @{
     # shift to the height asked for, and on full success equals moves.
     # 5158 at `#956` (DR-204 §11.203.1): +3, a new device dropped on a
     # shelf lands right after the host named, first, or at the end.
-    'rackpal_core'   = 5158
+    # 5164 at `#958` (§11.203.9, §11.203.8): +6. A host onto free rails lands
+    # with its links as a move, and one with no rack height is refused;
+    # shelfFit reports a known overrun, a fit, an unknown counted as a
+    # floor, and a dragged host counted once.
+    'rackpal_core'   = 5164
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1554,7 +1558,12 @@ $SuiteFloors = @{
     # `Put a device on this shelf…` lists shelf-sitting devices first and
     # no shelf, and Enter from its filter places; typing narrows it and a
     # rack-ear pick says so; it is offered for a shelf and nothing else.
-    'rackpal_ui'     = 2011
+    # 2019 at `#958` (§11.203.9, §11.203.8): +8 in canvas/shelf_drop_test.dart.
+    # A host reorders, is a no-op in its own gap, moves to another shelf,
+    # mounts on free rails, stages off the rack, and is removed elsewhere
+    # with one Ctrl+Z back; a full shelf refuses a drop, and one with an
+    # unknown width takes it and says so.
+    'rackpal_ui'     = 2019
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
