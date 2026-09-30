@@ -39,7 +39,13 @@ import 'rack_with_palette.dart';
 
 final DateTime _when = DateTime.utc(2026, 8, 30, 11);
 
-const String _released = 'Released outside the rack';
+// WHAT A RELEASED DRAG SAYS, and it changed at DR-205 (`#961`): a release
+// off the rack used to announce "Released outside the rack ... was not
+// placed"; the Staging Bin now takes the device, and the line reads
+// "... is in the Staging Bin". The click cases below assert this does NOT
+// appear, so it must be the string the product actually prints, or they
+// pass on a string nothing can say.
+const String _released = 'is in the Staging Bin';
 
 final class _FakeMeasurer implements TextMeasurer {
   @override
@@ -174,14 +180,12 @@ void main() {
     await tester.pumpAndSettle();
   });
 
-  testWidgets('a LIFTED drag released outside the rack still says so', (
-    tester,
-  ) async {
+  testWidgets('a LIFTED drag released outside the rack STAGES the device, '
+      'and says so', (tester) async {
     // The half that is not a defect, held so the fix cannot be widened
     // into deleting the message. The pointer crosses the 4px slop and is
-    // released while still over the palette, which is the escape hatch
-    // docs/04 §3.1 describes and which the Staging Bin does not exist to
-    // catch (docs/m1-implementation-log.md §4.2).
+    // released while still over the palette: off the rack, which docs/04
+    // §3.1 sends to the Staging Bin now that there is one (DR-205).
     final controller = await pump(tester);
     final row = find.widgetWithText(ListTile, 'HDMI Matrix 4x4');
     final start = tester.getCenter(row);
@@ -198,9 +202,13 @@ void main() {
     expect(
       onScreen(tester).where((t) => t.contains(_released)),
       isNotEmpty,
-      reason: 'a real drag released outside the rack IS a refused action',
+      reason: 'a real drag released outside the rack IS an action',
     );
-    expect(controller.doc.devices, isEmpty);
+    expect(controller.doc.devices, hasLength(1));
+    expect(
+      controller.doc.devices.values.single.placement,
+      isA<StagedPlacement>(),
+    );
 
     await tester.pumpAndSettle();
   });

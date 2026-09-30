@@ -296,6 +296,17 @@ class DragPreviewController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The pointer is OFF THE RACK, where a release stages the device
+  /// (DR-205): there is no U to show, so there is no ghost. The phase is
+  /// untouched, so the gesture is still a drag and its release still
+  /// commits.
+  void clearEvaluation(DPt sceneCursor) {
+    if (_phase != DragPreviewPhase.dragging) return;
+    _sceneCursor = sceneCursor;
+    _evaluation = null;
+    notifyListeners();
+  }
+
   /// docs/04 §3.1 step 5, a blocked pointer-up: freezes the current
   /// ghost/chip state ([releaseLingering] true) for the caller's own 1.2s
   /// `Timer` to clear via [reset]. Does not itself play the shake (that is

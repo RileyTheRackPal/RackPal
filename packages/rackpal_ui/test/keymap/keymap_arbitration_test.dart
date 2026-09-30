@@ -197,7 +197,8 @@ void main() {
       // binding is taken again.
       expect(keyBindingsIn(KeyScope.global), hasLength(13));
       // `#913` ADDS `Ctrl+L` HERE AND ON THE SCHEMATIC (DR-186).
-      expect(keyBindingsIn(KeyScope.rack), hasLength(14));
+      // `#961` ADDS `U`, send the selection to the Staging Bin (DR-205).
+      expect(keyBindingsIn(KeyScope.rack), hasLength(15));
       // TWENTY-FIVE SINCE `#801`, which added `B` for CR-103's other
       // half. A click on a collapsed pin expands the bank, because
       // selecting a pin that stands for forty-eight ports means nothing;
@@ -280,7 +281,8 @@ void main() {
       // SEVENTY-NINE AT `#918`, the schematic's `Ctrl+Shift+U`. The total
       // is asserted as well as the per-scope counts so that a row added
       // to the WRONG scope fails twice rather than netting out.
-      expect(kKeymap, hasLength(79));
+      // EIGHTY AT `#961`, the rack's `U` (DR-205).
+      expect(kKeymap, hasLength(80));
     });
   });
 
@@ -550,17 +552,25 @@ void main() {
       // across. `F` is Focus on the sheet and is UNBOUND in the rack for
       // exactly this reason (docs/04 §8's "deleted bindings"), and that
       // was held by two file headers agreeing with each other until now.
-      final rackLetters = keyBindingsIn(KeyScope.rack)
+      Set<String> bareLetters(KeyScope scope) => keyBindingsIn(scope)
           .where((b) => !b.primary && !b.alt && !b.shift)
           .map((b) => b.trigger.keyLabel)
           .where((l) => l.length == 1 && l.toUpperCase() == l && l != '/')
           .toSet();
+      // THE RULE, NOT A SNAPSHOT OF IT. This asserted "the rack binds no
+      // bare letter at all", which was the state of the registry and
+      // stricter than canon §1.10 (c), whose words are that a bare letter
+      // "must not collide between views that share the canvas". DR-205
+      // gave the rack its first one, `U` (docs/04 §8), which the schematic
+      // does not bind bare, so the assertion is now the ruling itself.
+      final rackLetters = bareLetters(KeyScope.rack);
+      expect(rackLetters, {'U'}, reason: 'DR-205, and nothing else yet');
       expect(
-        rackLetters,
+        rackLetters.intersection(bareLetters(KeyScope.schematic)),
         isEmpty,
         reason:
-            'the rack binds no bare letter at all, which is what makes '
-            'the schematic free to use 1-8, ` and F',
+            'a bare letter the rack binds is not bound bare on the '
+            'schematic, which keeps it free for 1-8, ` and F',
       );
 
       final mutant = <KeyBinding>[

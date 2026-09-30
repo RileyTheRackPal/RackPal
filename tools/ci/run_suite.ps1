@@ -976,7 +976,13 @@ $SuiteFloors = @{
     # packed by order, mirrored behind, hollow when its width is unknown;
     # a point on it hits the host and never the shelf; an overfull shelf
     # is squeezed AND reported.
-    'rackpal_core'   = 5135
+    # 5145 at `#961` (DR-205): +10 in commands/placement_commands_test.dart.
+    # Staging and returning keep id, ports and links; undo is byte-exact;
+    # a device remembers its rack, U, face or shelf; a taken U is refused in
+    # words; a host reorders and moves between shelves.
+    # 5148 at `#961`: +3. TOP-005 refuses a shelf-chain loop, which only a
+    # move can make (two cases), and ReplacePlacementCommand's AC-014 case.
+    'rackpal_core'   = 5148
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1520,7 +1526,11 @@ $SuiteFloors = @{
     # 1987 at `#952`: +1, a shelf-sitting device asks no height and saves.
     # 1988 at `#953`: +1, a shelf-sitting device states its shelf width in
     # Size and mounting and it saves, leaving chassisWidth alone.
-    'rackpal_ui'     = 1988
+    # 1994 at `#961` (DR-205): +6 in canvas/staging_bin_test.dart. A host
+    # is drawn and a click selects it; the bin hides while empty; U stages
+    # and the return chip puts back, to a U or a shelf; a drag off the rack
+    # stages with its last U; one Ctrl+Z undoes a U.
+    'rackpal_ui'     = 1994
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

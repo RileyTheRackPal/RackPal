@@ -483,20 +483,40 @@ void main() {
         }
       }
 
+      // TWO WRITERS SINCE DR-204/DR-205, and this is where the second one
+      // was caught: `placement_commands.dart` MOVES an existing device
+      // onto a shelf (a drag, a return from the Staging Bin), and it went
+      // red here before it asked. A move needs the cycle half as well,
+      // because the device being moved can already be a shelf with hosts.
+      const writers = {
+        'lib/src/commands/shelf_placement.dart',
+        'lib/src/commands/placement_commands.dart',
+      };
       expect(
         shelfWriters,
-        {'lib/src/commands/shelf_placement.dart'},
+        writers,
         reason:
-            'a second shelf writer would need its own TOP-005 check, and '
-            'a first one that moved would leave this pointing at nothing',
+            'a new shelf writer would need its own TOP-005 check, and '
+            'one that moved would leave this pointing at nothing',
       );
+      for (final writer in writers) {
+        expect(
+          File(writer).readAsStringSync(),
+          contains("ruleId: 'TOP-005'"),
+          reason:
+              '$writer stopped asking whether its host is a container, so '
+              'a device can be set on a rack ear and TOP-005 will not say '
+              'so until somebody wires it',
+        );
+      }
       expect(
-        File('lib/src/commands/shelf_placement.dart').readAsStringSync(),
-        contains("ruleId: 'TOP-005'"),
+        File(
+          'lib/src/commands/placement_commands.dart',
+        ).readAsStringSync(),
+        contains('shelfMoveWouldLoop('),
         reason:
-            'the shelf writer stopped asking whether its host is a '
-            'container, so a device can be set on a rack ear and TOP-005 '
-            'will not say so until somebody wires it',
+            'the MOVE writer stopped walking the chain, so a shelf can be '
+            'set on a shelf that sits on it',
       );
     });
 

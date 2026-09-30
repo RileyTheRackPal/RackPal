@@ -193,6 +193,7 @@ enum KeyBindingId {
   // twin below: one chord, two scopes, one label, which is what `(b)` of
   // the arbitration test requires and what docs/05 means by "lock".
   lockSelection,
+  stageSelection,
 
   // --- validation (M5, `#847`, DR-133) --------------------------------
   // ALL THREE docs/04 §8 NAMES, AND THE COMPLETENESS IS THE POINT.
@@ -504,6 +505,12 @@ final class PlanCancelIntent extends Intent {
 /// unlock from its own selection (§11.185.2's toggle rule).
 final class ToggleLockIntent extends Intent {
   const ToggleLockIntent();
+}
+
+/// Send the selection to the Staging Bin, keeping each device's wiring
+/// (DR-205, CR-032, docs/04 §8).
+final class StageSelectionIntent extends Intent {
+  const StageSelectionIntent();
 }
 
 /// Give the selected symbols back to the layout (`#918`, DR-187
@@ -1455,6 +1462,18 @@ const List<KeyBinding> kKeymap = <KeyBinding>[
     label: 'Lock or unlock the selection',
     intent: ToggleLockIntent(),
     source: 'docs/04 §8 · DR-186',
+  ),
+  // ── U, the rack only (DR-205) ─────────────────────────────────────────
+  // docs/04 §8 names it. A PLAIN letter, gated off while a text field has
+  // focus, as every plain letter on this canvas is. `Ctrl+Shift+U` is the
+  // schematic's unpin; the two do not share a scope or a chord.
+  KeyBinding(
+    id: KeyBindingId.stageSelection,
+    scope: KeyScope.rack,
+    trigger: LogicalKeyboardKey.keyU,
+    label: 'Send the selection to the Staging Bin',
+    intent: StageSelectionIntent(),
+    source: 'docs/04 §8 · CR-032 · DR-205',
   ),
   KeyBinding(
     id: KeyBindingId.lockSelectionSchematic,

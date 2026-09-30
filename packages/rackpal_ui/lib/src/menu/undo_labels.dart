@@ -60,6 +60,8 @@ const Map<LabelKey, String> kUndoLabels = <LabelKey, String>{
   LabelKey.addDevice: 'Add device',
   LabelKey.removeDevice: 'Delete device',
   LabelKey.moveDevice: 'Move device',
+  LabelKey.stageDevice: 'Send to Staging Bin',
+  LabelKey.returnFromStaging: 'Return from Staging Bin',
   LabelKey.setDeviceWidth: 'Set device width',
   LabelKey.setMountNote: 'Set mounting note',
   LabelKey.insertRemedyDevice: 'Insert device',

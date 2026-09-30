@@ -87,11 +87,12 @@ enum ConnectRule {
   /// the resulting cable would be the only evidence of a state the model
   /// says means nothing.
   ///
-  /// THERE IS A CREATION SITE NOW, AND IT ASKS. `shelf_placement.dart`
-  /// (DR-128, `#837`) is the first and only command that builds a
-  /// `ShelfPlacement`, and it refuses a host that is not a container,
-  /// citing this rule id. So the shelf chain finally has a gate at the
-  /// moment it is created rather than only when somebody wires it.
+  /// THERE ARE TWO CREATION SITES NOW, AND BOTH ASK. `shelf_placement.dart`
+  /// (DR-128, `#837`) mints a device onto a shelf and refuses a host that
+  /// is not a container; `placement_commands.dart` (DR-204, DR-205) MOVES
+  /// an existing one and also refuses a loop, which only a move can make.
+  /// Both cite this rule id, so the shelf chain has a gate at the moment
+  /// it is created rather than only when somebody wires it.
   ///
   /// THIS NOTE HAS BEEN WRONG ONCE AND STALE ONCE, which is why it now
   /// says what to check rather than what is true. It first read that the

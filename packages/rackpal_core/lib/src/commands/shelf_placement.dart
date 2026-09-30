@@ -39,6 +39,8 @@
 //
 // **Building any of that here would amend a confirmed acceptance
 // criterion inside a DRC remedy commit**, which §8.3 forbids in terms.
+import 'package:rackpal_core/src/commands/catalog_placement.dart'
+    show deviceKindFor;
 import 'package:rackpal_core/src/commands/device_commands.dart';
 import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackpal_core/src/derived/device_loads.dart';
@@ -105,6 +107,26 @@ List<DeviceInstance> devicesOnShelfIn(
     return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
   });
   return out;
+}
+
+/// TOP-005's cycle half, asked of a MOVE: whether setting [id] on
+/// [hostId] would put [id] in its own shelf chain.
+///
+/// Walks [hostId]'s chain child to parent (CR-029) looking for [id], and
+/// stops on a chain that already loops, which is `connect_rules.dart`'s
+/// fault to report rather than this question's. A minted device can never
+/// loop, which is why [buildPlaceOnShelfCommand] does not ask.
+bool shelfMoveWouldLoop(RackDocument doc, Uuid id, Uuid hostId) {
+  final visited = <Uuid>{};
+  Uuid? current = hostId;
+  while (current != null && visited.add(current)) {
+    if (current == id) return true;
+    current = switch (doc.devices[current]?.placement) {
+      ShelfPlacement(:final hostDeviceId) => hostDeviceId,
+      _ => null,
+    };
+  }
+  return false;
 }
 
 /// The first container in [rackId] that could host something, or null.
@@ -179,10 +201,13 @@ ShelfPlacementResult buildPlaceOnShelfCommand({
   // could make fail, which is worse than none: it would read as though
   // the case were live.
   //
-  // A MOVE would be a different matter and does not exist yet.
+  // A MOVE IS A DIFFERENT MATTER, and it exists now (DR-204 §11.203.5):
+  // `placement_commands.dart` sets an EXISTING device on a shelf, which
+  // can already host others, so it walks the chain with
+  // [shelfMoveWouldLoop] before it writes.
   return ShelfPlacementReady(
     AddDeviceCommand(
-      kind: DeviceKind.rackDevice,
+      kind: deviceKindFor(catalogId, snapshot.body),
       templateRef: TemplateRef(
         templateId: snapshot.templateId,
         version: snapshot.version,
