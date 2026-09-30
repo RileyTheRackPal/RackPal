@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-09-30 (eighty-fifth entry)
+
+* **Progress**: `#967` merged at `d1783fc0` (PR 172). `#956` is PR 173; `#957` and `#958` built.
+* **Update**: [DR-204](/decisions/dr-204-a-device-can-sit-on-a-shelf.md) gains §11.203.9, where a
+  dragged host lands, reconciled with the bin.
+* **Note**: **READ THE RULING, NOT YOUR SUMMARY OF IT.** `#956` shipped a shelf drop with no width
+  check, against §11.203.8, which was in the same ruling the chapter cited. It was found by reading
+  that ruling for a free sub-number. And a `sed` over `packages/` for that sub-number rewrote two
+  correct citations and several binary caches: scope a mechanical edit to the files you wrote.
+
 ## 2026-09-30 (eighty-fourth entry)
 
 * **Progress**: `#964` merged at `66b5eacf` (PR 171); `#967` is PR 172. Chapter `#956`, a drag onto
