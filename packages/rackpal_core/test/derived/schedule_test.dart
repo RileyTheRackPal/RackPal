@@ -213,6 +213,7 @@ Uuid _link(
   // every existing case in this file is unchanged.
   TerminationType? terminationField = TerminationType.keystone,
   int order = 0,
+  LifecycleStatus lifecycleStatus = LifecycleStatus.new_,
 }) {
   final id = d._mint('link');
   d.doc.links[id] = Link(
@@ -230,6 +231,7 @@ Uuid _link(
     jacketColorPulledId: jacketColorPulledId,
     crossover: crossover,
     roughInStatus: roughInStatus,
+    lifecycleStatus: lifecycleStatus,
     services: signalFamily == null
         ? null
         : [
@@ -576,7 +578,6 @@ void main() {
       expect(
         shared,
         containsAll(<ScheduleColumnId>{
-          ScheduleColumnId.cableId,
           ScheduleColumnId.type,
           ScheduleColumnId.fieldLabel,
           ScheduleColumnId.rackLabel,
@@ -590,6 +591,20 @@ void main() {
           reason: '$id must be one string, computed once',
         );
       }
+      // CABLE ID LEFT THIS SET AT DR-206 §11.205.3, ON PURPOSE: T6.11's
+      // carries the lifecycle suffix. It is still the SAME designator,
+      // computed once, with the suffix after it, and that is asserted.
+      final pullId = pull.rows.single.cell(
+        ScheduleColumnId.cableId,
+        units: UnitSystem.imperial,
+      );
+      expect(
+        term.rows.single.cell(
+          ScheduleColumnId.cableIdWithLifecycle,
+          units: UnitSystem.imperial,
+        ),
+        startsWith(pullId),
+      );
     });
 
     test('every column either preset names resolves to a cell', () {
@@ -2226,6 +2241,112 @@ void main() {
         final view = _pull(d.doc, grouping: grouping);
         expect(view.groups.last.title, kUndeterminedClassGroupTitle);
       }
+    });
+  });
+
+  group('DR-206 — a run says its lifecycle (#576)', () {
+    /// One run per status, each on its own port, all in one room.
+    _Doc everyStatus() {
+      final d = _Doc();
+      final great = d.room('Great Room');
+      final rack = d.rack('RK-1');
+      final panel = d.device('PP-1', rackId: rack, ruIndex: 14);
+      var n = 0;
+      for (final status in [
+        LifecycleStatus.existing,
+        LifecycleStatus.new_,
+        LifecycleStatus.future,
+        LifecycleStatus.removed,
+        LifecycleStatus.designIntent,
+      ]) {
+        n++;
+        _link(
+          d,
+          designator: 'W00$n',
+          from: PlaceEndpoint(description: 'wall $n', locationId: great),
+          to: PortEndpoint(d.port(panel, 'A0$n')),
+          fieldLabel: 'GR-$n',
+          rackLabel: '1A-A0$n',
+          cutLength: const Len(10000000000),
+          order: n,
+          lifecycleStatus: status,
+        );
+      }
+      return d;
+    }
+
+    test('THE PULL SHEET GROUPS INTO SECTIONS, in the order a crew works: '
+        'everything it pulls before anything it must not', () {
+      final view = _pull(everyStatus().doc);
+      expect(
+        [for (final s in view.sections) (s.section, s.rowCount)],
+        [
+          (LifecycleSection.toPull, 2),
+          (LifecycleSection.existing, 1),
+          (LifecycleSection.toRemove, 1),
+          (LifecycleSection.future, 1),
+        ],
+      );
+      // The bands follow the sections, so the page reads in that order.
+      expect(
+        [for (final g in view.groups) g.section],
+        [
+          LifecycleSection.toPull,
+          LifecycleSection.existing,
+          LifecycleSection.toRemove,
+          LifecycleSection.future,
+        ],
+      );
+      expect(
+        {for (final r in view.groups.first.rows) r.designator},
+        {'W002', 'W005'},
+        reason: 'new and design intent are the two a crew pulls',
+      );
+    });
+
+    test('EACH SECTION CARRIES ITS OWN FOOTAGE, so existing runs are not '
+        'cable anybody orders', () {
+      final view = _pull(everyStatus().doc);
+      final toPull = view.sections.first;
+      expect(toPull.footage.value, const Len(20000000000));
+      expect(toPull.footage.unknownCount, 0);
+    });
+
+    test('an EMPTY section is not drawn', () {
+      final view = _pull(everyStatus().doc);
+      final d = everyStatus();
+      final only = _pull(
+        d.doc
+          ..links.removeWhere(
+            (_, l) => l.lifecycleStatus != LifecycleStatus.new_,
+          ),
+      );
+      expect(view.sections, hasLength(4));
+      expect(
+        [for (final s in only.sections) s.section],
+        [LifecycleSection.toPull],
+      );
+    });
+
+    test('T6.11 CARRIES A SUFFIX ON CABLE ID, none for new, and its key '
+        'appears only when a suffix does', () {
+      final term = _term(everyStatus().doc);
+      final ids = {
+        for (final r in term.rows)
+          r.cell(
+            ScheduleColumnId.cableIdWithLifecycle,
+            units: UnitSystem.imperial,
+          ),
+      };
+      expect(ids, {'W001 EX', 'W002', 'W003 FUT', 'W004 RM', 'W005 DI'});
+      expect(term.lifecycleKey, kLifecycleSuffixKey);
+      expect(term.sections, isEmpty, reason: 'T6.11 is not sectioned');
+
+      final d = everyStatus();
+      d.doc.links.removeWhere(
+        (_, l) => l.lifecycleStatus != LifecycleStatus.new_,
+      );
+      expect(_term(d.doc).lifecycleKey, isNull);
     });
   });
 }

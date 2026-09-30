@@ -353,6 +353,10 @@ class _ScheduleSummary extends StatelessWidget {
               _Chip(label: '${exclusions.internal} internal hidden'),
             if (exclusions.notLandingInRack > 0)
               _Chip(label: '${exclusions.notLandingInRack} land in no rack'),
+            // DR-206 §11.205.3's key, present exactly when a CABLE ID on
+            // this view carries a suffix for it to explain.
+            if (view.lifecycleKey case final key?)
+              _Chip(key: const ValueKey('lifecycle-key'), label: key),
           ],
         ),
       ),
@@ -454,7 +458,7 @@ String _footageLabel(Rollup<Len> footage, UnitSystem units) {
 enum _ChipTone { neutral, unknown, attention }
 
 class _Chip extends StatelessWidget {
-  const _Chip({required this.label, this.tone = _ChipTone.neutral});
+  const _Chip({required this.label, this.tone = _ChipTone.neutral, super.key});
 
   final String label;
   final _ChipTone tone;
@@ -646,7 +650,19 @@ class _Body extends StatelessWidget {
     // `m.flattened` shape — the paginator consumes exactly this sequence,
     // so the screen scrolls the same order the sheet paginates.
     final items = <Widget>[];
+    // DR-206 §11.205.2: a section header wherever the Pull Sheet's
+    // lifecycle section changes. Bands arrive in section order, so a change
+    // between neighbours IS the section boundary; no second grouping.
+    final sections = {for (final s in view.sections) s.section: s};
+    LifecycleSection? current;
     for (final group in view.groups) {
+      final section = group.section;
+      if (section != null && section != current) {
+        current = section;
+        if (sections[section] case final summary?) {
+          items.add(_SectionRow(summary: summary, units: units));
+        }
+      }
       items.add(_BandRow(group: group, units: units));
       for (final row in group.rows) {
         items.add(
@@ -662,6 +678,41 @@ class _Body extends StatelessWidget {
     return ListView.builder(
       itemCount: items.length,
       itemBuilder: (context, index) => items[index],
+    );
+  }
+}
+
+/// A Pull Sheet lifecycle section's header (DR-206 §11.205.2):
+/// `TO PULL · 14 runs · 820 ft`. Above the room bands it contains, and
+/// louder than them, because it answers the first question a crew asks of
+/// a row: do I pull this at all.
+class _SectionRow extends StatelessWidget {
+  const _SectionRow({required this.summary, required this.units});
+
+  final ScheduleSectionSummary summary;
+  final UnitSystem units;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final unknown = summary.footage.unknownCount;
+    return ColoredBox(
+      key: ValueKey('schedule-section-${summary.section.name}'),
+      color: scheme.secondaryContainer,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 7),
+        child: Text(
+          '${summary.section.title} · ${summary.rowCount} '
+          '${summary.rowCount == 1 ? 'run' : 'runs'} · '
+          '${_footageLabel(summary.footage, units)}'
+          '${unknown > 0 ? ' · $unknown unknown' : ''}',
+          style: theme.textTheme.titleSmall?.copyWith(
+            color: scheme.onSecondaryContainer,
+            fontWeight: kConsoleEmphasis,
+          ),
+        ),
+      ),
     );
   }
 }
@@ -803,7 +854,9 @@ class _DataRow extends StatelessWidget {
         color: isUnknown
             ? theme.colorScheme.onSurfaceVariant
             : theme.colorScheme.onSurface,
-        fontWeight: column.id == ScheduleColumnId.cableId
+        fontWeight:
+            column.id == ScheduleColumnId.cableId ||
+                column.id == ScheduleColumnId.cableIdWithLifecycle
             ? kConsoleEmphasis
             : FontWeight.w400,
       ),

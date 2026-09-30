@@ -1333,6 +1333,24 @@ every-choice matrix in `shrink_rack_dialog_test.dart` re-typed the screen's appl
 went red on the first run: it never staged. It now stages first as the screen does, and it also
 asserts that nobody left the document and that exactly the decision's devices are in the bin.
 
+
+### 4.25 The schedules say a run's lifecycle · 2026-09-30 · `#576` · `DR-206` · no version move
+
+`ScheduleEntry.lifecycleStatus` was populated and read by nothing, so an existing, removed or future
+run printed exactly as a new one: a crew could pull a cable already in the wall. **The "ruling
+needed" was half answered already**: docs/08 §3.4 specified an optional `LIFECYCLE` column. What it
+had not priced was T6.11, whose thirteen columns fill its 690 pt exactly, so that column would have
+promoted every retrofit job's schedule to 11×17. The user ruled with that cost in front of them.
+
+**THE PULL SHEET IS SECTIONED** (§11.205.2): TO PULL (`new`, `designIntent`), EXISTING, TO REMOVE,
+FUTURE, each with its own count and G4 footage, above the room bands it contains, empty sections not
+drawn. Per-section footage is the point: the view's total still spans every section, and a crew
+ordering cable reads TO PULL's. **T6.11's `CABLE ID` is its own column id**,
+`cableIdWithLifecycle`, so the one cell function prints `W042 EX` for the screen preset today and for
+the printed sheet when `#693` builds it; the key appears exactly when a suffix does. The test that
+pinned "every shared column prints one string" was rewritten to the new rule rather than dropped:
+T6.11's `CABLE ID` is the same designator, computed once, with the suffix after it.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

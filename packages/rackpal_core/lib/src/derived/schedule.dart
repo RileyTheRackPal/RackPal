@@ -982,6 +982,12 @@ final class ScheduleEntry {
   String cell(ScheduleColumnId id, {required UnitSystem units}) => switch (id) {
     ScheduleColumnId.number || ScheduleColumnId.signOff => '',
     ScheduleColumnId.cableId => designator,
+    ScheduleColumnId.cableIdWithLifecycle => switch (lifecycleSuffix(
+      lifecycleStatus,
+    )) {
+      '' => designator,
+      final suffix => '$designator $suffix',
+    },
     ScheduleColumnId.type => typeCell,
     ScheduleColumnId.fieldLabel => fieldLabel ?? kUnknownCell,
     ScheduleColumnId.rackLabel => rackLabel ?? kUnknownCell,
@@ -1462,7 +1468,60 @@ enum ScheduleColumnId {
   term,
   conductorNotes,
   signOff,
+
+  /// T6.11's `CABLE ID`: the designator and, unless the run is `new`, its
+  /// lifecycle suffix (DR-206 §11.205.3). A column of its own rather than
+  /// a preset flag on [cableId], so the one cell function answers both
+  /// and a printed T6.11 cannot spell the suffix a second way.
+  cableIdWithLifecycle,
 }
+
+/// T6.11's lifecycle suffix for [status] (DR-206 §11.205.3), or empty for
+/// `new`, which is what the sheet is for.
+String lifecycleSuffix(LifecycleStatus status) => switch (status) {
+  LifecycleStatus.new_ => '',
+  LifecycleStatus.existing => 'EX',
+  LifecycleStatus.removed => 'RM',
+  LifecycleStatus.future => 'FUT',
+  LifecycleStatus.designIntent => 'DI',
+};
+
+/// The one-line key T6.11 prints whenever a suffix appears on it.
+const String kLifecycleSuffixKey =
+    'EX existing · RM to remove · FUT future · DI design intent';
+
+/// The Pull Sheet's sections, in the order a crew works down the page
+/// (DR-206 §11.205.2): everything it pulls before anything it must not.
+enum LifecycleSection {
+  toPull('TO PULL'),
+  existing('EXISTING'),
+  toRemove('TO REMOVE'),
+  future('FUTURE');
+
+  const LifecycleSection(this.title);
+
+  /// The section header's words.
+  final String title;
+}
+
+/// Which Pull Sheet section a run of [status] belongs in. `designIntent`
+/// is pulled: its field end is known and only the device is undecided.
+LifecycleSection lifecycleSectionOf(LifecycleStatus status) => switch (status) {
+  LifecycleStatus.new_ ||
+  LifecycleStatus.designIntent => LifecycleSection.toPull,
+  LifecycleStatus.existing => LifecycleSection.existing,
+  LifecycleStatus.removed => LifecycleSection.toRemove,
+  LifecycleStatus.future => LifecycleSection.future,
+};
+
+/// One Pull Sheet section's header: how many runs, and their footage with
+/// its unknowns counted (G4). Per section, because EXISTING runs are not
+/// cable anybody orders, and a total over every section would say so.
+typedef ScheduleSectionSummary = ({
+  LifecycleSection section,
+  int rowCount,
+  Rollup<Len> footage,
+});
 
 /// Where a cell sits in its column (§3.2/§3.3's `Just.`).
 enum ScheduleAlign { left, right, centre }
@@ -1556,7 +1615,12 @@ const List<ScheduleColumn> kPullSheetColumns = <ScheduleColumn>[
 /// `PlaceEndpoint` chain belongs to the field end alone, and copying one
 /// end onto the other is the defect DR-046 removed from the model.
 const List<ScheduleColumn> kTerminationScheduleColumns = <ScheduleColumn>[
-  ScheduleColumn(id: ScheduleColumnId.cableId, header: 'CABLE ID', widthPt: 56),
+  // DR-206 §11.205.3: the lifecycle rides here, at no width.
+  ScheduleColumn(
+    id: ScheduleColumnId.cableIdWithLifecycle,
+    header: 'CABLE ID',
+    widthPt: 56,
+  ),
   ScheduleColumn(id: ScheduleColumnId.type, header: 'TYPE', widthPt: 44),
   ScheduleColumn(
     id: ScheduleColumnId.rackLabel,
@@ -1701,7 +1765,12 @@ final class ScheduleGroup {
     required this.computedEstimateCount,
     required this.boundCount,
     required this.isUndeterminedClass,
+    this.section,
   });
+
+  /// The Pull Sheet section this band sits in (DR-206 §11.205.2), or null
+  /// on a preset that is not sectioned.
+  final LifecycleSection? section;
 
   /// The grouping value, or null for a catch-all band.
   final Uuid? key;
@@ -1841,11 +1910,22 @@ final class ScheduleView {
     required this.unresolvedSignalFamilyCount,
     required this.missingFieldLabelCount,
     required this.missingRackLabelCount,
+    this.sections = const [],
+    this.lifecycleKey,
   });
 
   final SchedulePreset preset;
   final ScheduleSort sort;
   final ScheduleGrouping grouping;
+
+  /// The Pull Sheet's non-empty lifecycle sections, in order, each with
+  /// its count and footage (DR-206 §11.205.2). Empty on other presets.
+  final List<ScheduleSectionSummary> sections;
+
+  /// [kLifecycleSuffixKey] when a `CABLE ID` on this view carries a
+  /// lifecycle suffix (DR-206 §11.205.3), else null, so the key appears
+  /// exactly when there is something for it to explain.
+  final String? lifecycleKey;
 
   /// §3.2/§3.3's column table for this preset.
   final List<ScheduleColumn> columns;
@@ -1970,7 +2050,33 @@ ScheduleView buildScheduleView(
     sort: effectiveSort,
     grouping: effectiveGrouping,
     columns: preset.columns,
-    groups: _group(kept, effectiveGrouping),
+    groups: _group(
+      kept,
+      effectiveGrouping,
+      sectioned: preset == SchedulePreset.pullSheet,
+    ),
+    sections: preset == SchedulePreset.pullSheet
+        ? [
+            for (final section in LifecycleSection.values)
+              if ([
+                    for (final r in kept)
+                      if (lifecycleSectionOf(r.lifecycleStatus) == section) r,
+                  ]
+                  case final rows when rows.isNotEmpty)
+                (
+                  section: section,
+                  rowCount: rows.length,
+                  footage: _footageOf(rows),
+                ),
+          ]
+        : const [],
+    lifecycleKey:
+        preset.columns.any(
+              (c) => c.id == ScheduleColumnId.cableIdWithLifecycle,
+            ) &&
+            kept.any((r) => lifecycleSuffix(r.lifecycleStatus).isNotEmpty)
+        ? kLifecycleSuffixKey
+        : null,
     sourceRowCount: schedule.rowCount,
     exclusions: ScheduleExclusions(
       jumpers: jumpers,
@@ -2021,10 +2127,36 @@ ScheduleView scheduleViewOf(
 
 // ─── grouping ────────────────────────────────────────────────────────
 
+/// [rows] banded by [grouping], and on a SECTIONED preset (the Pull
+/// Sheet, DR-206 §11.205.2) banded once per lifecycle section, in
+/// [LifecycleSection]'s order, so a room with pulls and existing runs
+/// appears under TO PULL and again under EXISTING. An empty section has
+/// no bands, so it is not drawn. [rows] is already sorted and a
+/// partition keeps order, so each section's bands still follow the sort.
 List<ScheduleGroup> _group(
   List<ScheduleEntry> rows,
-  ScheduleGrouping grouping,
-) {
+  ScheduleGrouping grouping, {
+  required bool sectioned,
+}) {
+  if (!sectioned) return _groupWithin(rows, grouping);
+  return List.unmodifiable([
+    for (final section in LifecycleSection.values)
+      ..._groupWithin(
+        [
+          for (final r in rows)
+            if (lifecycleSectionOf(r.lifecycleStatus) == section) r,
+        ],
+        grouping,
+        section: section,
+      ),
+  ]);
+}
+
+List<ScheduleGroup> _groupWithin(
+  List<ScheduleEntry> rows,
+  ScheduleGrouping grouping, {
+  LifecycleSection? section,
+}) {
   // THE UNDETERMINED BAND IS PARTITIONED OFF FIRST, whatever the
   // grouping. See [kUndeterminedClassGroupTitle].
   final undetermined = <ScheduleEntry>[];
@@ -2036,7 +2168,15 @@ List<ScheduleGroup> _group(
   final bands = <ScheduleGroup>[];
   if (grouping == ScheduleGrouping.none) {
     if (placed.isNotEmpty) {
-      bands.add(_band(null, kAllRunsTitle, placed, isUndetermined: false));
+      bands.add(
+        _band(
+          null,
+          kAllRunsTitle,
+          placed,
+          isUndetermined: false,
+          section: section,
+        ),
+      );
     }
   } else {
     // Dart's default `Map` is INSERTION-ORDERED BY SPECIFICATION, and
@@ -2063,6 +2203,7 @@ List<ScheduleGroup> _group(
           titles[entry.key]!,
           entry.value,
           isUndetermined: false,
+          section: section,
         ),
       );
     }
@@ -2075,6 +2216,7 @@ List<ScheduleGroup> _group(
         kUndeterminedClassGroupTitle,
         undetermined,
         isUndetermined: true,
+        section: section,
       ),
     );
   }
@@ -2126,9 +2268,11 @@ ScheduleGroup _band(
   String title,
   List<ScheduleEntry> rows, {
   required bool isUndetermined,
+  LifecycleSection? section,
 }) => ScheduleGroup(
   key: key,
   title: title,
+  section: section,
   rows: List.unmodifiable(rows),
   footage: _footageOf(rows),
   estimatedCount: rows.where((r) => r.lengthIsEstimated).length,
