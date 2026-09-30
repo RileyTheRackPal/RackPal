@@ -1550,7 +1550,11 @@ $SuiteFloors = @{
     # says so; a shelf row over a shelf is aimed at the rails, not nested;
     # a shelf-only row over bare rails is refused; a staged one drags from
     # the bin to the front of the shelf.
-    'rackpal_ui'     = 2008
+    # 2011 at `#957` (DR-204 §11.203.1): +3 in canvas/shelf_drop_test.dart.
+    # `Put a device on this shelf…` lists shelf-sitting devices first and
+    # no shelf, and Enter from its filter places; typing narrows it and a
+    # rack-ear pick says so; it is offered for a shelf and nothing else.
+    'rackpal_ui'     = 2011
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

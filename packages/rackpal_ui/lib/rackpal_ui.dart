@@ -117,6 +117,7 @@ export 'src/inspector/device_ports_section.dart';
 export 'src/inspector/inspector_panel.dart';
 export 'src/inspector/mount_note_field.dart';
 export 'src/inspector/new_rack_dialog.dart';
+export 'src/inspector/put_on_shelf_dialog.dart';
 export 'src/inspector/rack_inspector_panel.dart';
 export 'src/inspector/save_rack_preset_dialog.dart';
 export 'src/inspector/shrink_rack_dialog.dart';

@@ -43,6 +43,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/inspector/device_overrides_section.dart';
 import 'package:rackpal_ui/src/inspector/device_ports_section.dart';
 import 'package:rackpal_ui/src/inspector/mount_note_field.dart';
+import 'package:rackpal_ui/src/inspector/put_on_shelf_dialog.dart';
 import 'package:rackpal_ui/src/inspector/rack_inspector_panel.dart'
     show InspectorDropdown, RackInspectorPanel;
 import 'package:rackpal_ui/src/inspector/zero_u_occupant_row.dart';
@@ -85,9 +86,14 @@ class InspectorPanel extends StatelessWidget {
     this.onSaveAsPreset,
     this.onSetMountNote,
     this.onSetLocked,
+    this.onPutOnShelf,
     this.firstFieldFocus,
     super.key,
   });
+
+  /// A catalog id to set on the sole selected SHELF, from `Put a device on
+  /// this shelf…` (DR-204 §11.203.1, `#957`). Null hides the button.
+  final ValueChanged<String>? onPutOnShelf;
 
   final InspectorTarget target;
   final Rack rack;
@@ -214,6 +220,7 @@ class InspectorPanel extends StatelessWidget {
           onSetLocked: onSetLocked,
           onMoveZeroU: onMoveZeroU,
           onResizeZeroU: onResizeZeroU,
+          onPutOnShelf: onPutOnShelf,
         ),
       },
     );
@@ -235,7 +242,20 @@ class _SelectionSummary extends StatelessWidget {
     required this.onSetLocked,
     required this.onMoveZeroU,
     required this.onResizeZeroU,
+    this.onPutOnShelf,
   });
+
+  final ValueChanged<String>? onPutOnShelf;
+
+  /// The sole selected device when it is a SHELF on the rails, the one
+  /// kind of device `Put a device on this shelf…` is offered for. A shelf
+  /// sitting on another shelf is not drawn (one level of hosts), so it is
+  /// not offered one either.
+  DeviceInstance? get _soleRailShelf {
+    final d = _soleDevice;
+    if (d == null || d.placement is! RailPlacement) return null;
+    return (bodyFor(d, doc.templates)?.isContainer ?? false) ? d : null;
+  }
 
   final RackDocument doc;
   final Set<Uuid> selectedIds;
@@ -504,6 +524,25 @@ class _SelectionSummary extends StatelessWidget {
               // header. The row prints it when it lives in a LIST, where
               // nothing else says which device a pair of fields is for.
               showDesignator: false,
+            ),
+          // DR-204 §11.203.1's picker (`#957`), the keyboard's route onto a
+          // shelf: the drag needs a pointer, and this is Tab and Enter.
+          if (_soleRailShelf case final shelf? when onPutOnShelf != null)
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                key: const ValueKey('inspector-put-on-shelf'),
+                icon: const Icon(Icons.add, size: 18),
+                label: const Text(kPutOnShelfLabel),
+                onPressed: () async {
+                  final catalogId = await showPutOnShelf(
+                    context,
+                    shelf: shelf,
+                    doc: doc,
+                  );
+                  if (catalogId != null) onPutOnShelf!(catalogId);
+                },
+              ),
             ),
           // DOOR 1, ON ONE DEVICE ONLY (CR-054, DR-098 §11.97.5). `#183`
           // describes right-clicking A device, and the amber badge counts
