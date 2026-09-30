@@ -138,7 +138,7 @@ void main() {
     final out = await export(_fixture(heightU: 60, nameLength: 400));
 
     expect(out.bytes, isNotEmpty, reason: 'a notice is not a gate (G3)');
-    expect(out.sheetCount, 3);
+    expect(out.sheetCount, 4, reason: 'the legend, two elevations, a list');
     expect(
       out.notices,
       contains(

@@ -25,7 +25,9 @@ SheetFurniture furnitureFor({
   DateTime? issuedAt,
 }) {
   final set = oneRackSheetSet();
-  final resolved = sheet ?? set.sheets.first;
+  final resolved =
+      sheet ??
+      set.sheets.firstWhere((s) => s.role == SheetRole.rackElevationFront);
   return buildSheetFurniture(
     sheet: resolved,
     info: info ?? fullProjectInfo(),
@@ -107,7 +109,10 @@ void main() {
       // The whole point: a caller can size its content before it knows what
       // ratio it will be drawn at.
       final set = oneRackSheetSet();
-      final layout = sheetLayoutFor(set.sheets.first, const <RevisionEntry>[]);
+      final layout = sheetLayoutFor(
+        set.sheets.firstWhere((s) => s.role == SheetRole.rackElevationFront),
+        const <RevisionEntry>[],
+      );
       expect(layout.drawingArea, const DBox.fromLtwh(60, 42, 690, 999));
     });
 
@@ -117,7 +122,7 @@ void main() {
       // area and furniture drawn against another.
       final set = oneRackSheetSet();
       final standalone = sheetLayoutFor(
-        set.sheets.first,
+        set.sheets.firstWhere((s) => s.role == SheetRole.rackElevationFront),
         const <RevisionEntry>[],
       );
       final composed = furnitureFor().layout;

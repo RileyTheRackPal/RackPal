@@ -174,7 +174,8 @@ void main() {
       );
 
       expect(session.services.session.status, startsWith('Exported '));
-      expect(session.services.session.status, contains('3 sheets'));
+      // The legend, two elevations and the list since M6-B.
+      expect(session.services.session.status, contains('4 sheets'));
     });
 
     test('leaves NO .bak beside the deliverable, even on the OVERWRITE '
@@ -257,7 +258,7 @@ void main() {
 
       // Not vacuous: there really are three drawn sheets to compare, and
       // each of them has ink on it.
-      expect(first, hasLength(3));
+      expect(first, hasLength(4));
       for (final page in first) {
         expect(page.length, greaterThan(500));
       }
@@ -576,8 +577,8 @@ void main() {
       expect(await session.services.export.exportPdf(), isTrue);
       final after = _pageStreams(_bytesAt(session.fs, r'C:\jobs\smith.pdf')!);
 
-      expect(before, hasLength(3), reason: 'three drawn sheets to compare');
-      expect(after, hasLength(3));
+      expect(before, hasLength(4), reason: 'four drawn sheets to compare');
+      expect(after, hasLength(4));
       expect(
         after,
         isNot(before),

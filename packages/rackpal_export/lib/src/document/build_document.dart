@@ -121,6 +121,35 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     final LegibilityReport legibility;
 
     switch (sheet.role) {
+      case SheetRole.symbolLegend:
+        final built = buildLegendSheet(
+          sheet: sheet,
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+          // THE PROJECT'S OWN REGISTRIES, not the seed's, for the plan's
+          // reason below (`#901`): a document carries the subset written
+          // at its creation.
+          registries: doc.registries,
+          familiesInUse: {
+            for (final link in doc.links.values)
+              for (final service in link.services) service.signalFamily,
+          },
+        );
+        scene = built.scene;
+        legibility = built.legibility;
+        // A ROW THAT DID NOT FIT IS NAMED, NEVER DROPPED SILENTLY: a key
+        // missing a line is a legend that lies by omission.
+        if (built.omittedRows > 0) {
+          notices.add(
+            '${sheet.ncsId}: ${built.omittedRows} cable-type '
+            'line${built.omittedRows == 1 ? '' : 's'} did not fit the '
+            'legend.',
+          );
+        }
       case SheetRole.rackElevationFront:
       case SheetRole.rackElevationRear:
         final built = buildElevationSheet(

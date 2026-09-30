@@ -321,6 +321,11 @@ void main() {
           // work leaking into M3. The list is asserted whole, rather than
           // the absence checked alone, precisely so an addition has to be
           // looked at: this one was, and it is legitimate.
+          //
+          // `symbolLegend` ARRIVED AT M6-B (`#316`) AND IS NOT A PULL
+          // SHEET EITHER. It is `T0.01`, M6's own sheet landing in M6, so
+          // it answers neither side of the seam; it was looked at too.
+          'symbolLegend',
           'devicePlan',
           'rackElevationFront',
           'rackElevationRear',

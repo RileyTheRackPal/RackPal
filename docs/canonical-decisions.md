@@ -22894,6 +22894,29 @@ here and lands with that sheet.
 
 ---
 
+### 11.206 DR-207 · The legend's cable-type key: the ten named types always, then what the set uses
+
+**Settled by the user on 2026-09-30, building M6-B (`#316`), on the recommended option.** docs/08
+§5.4 asks for *"one row per named cable type"* with *"all ten types the brief names ... individually
+identifiable"*, and its connector table says *"every glyph used in the set"*; it never said whether a
+project's legend prints the ten regardless or only what that project uses.
+
+**11.206.1 THE PRICE THAT DECIDED IT.** Three of the four starters carry no cables at all, and the
+fourth uses four families. A legend of only what is used prints an empty cable key on three of them,
+and hands AC-054's physical test (all ten identifiable on a greyscale photocopy) a sheet that does
+not contain the ten. A legend of every shipped family does not fit one ANSI B sheet beside the five
+other blocks.
+
+**11.206.2 RULED: THE TEN, THEN WHAT THE SET USES.** Requirement 4's ten named types are always
+printed, one row each, as canon §6.6 draws them: a type with several families (HDMI's three
+weights, RG6's three carried families) shows them together on its row. After them, one row for each
+other family some cable in the set carries. So the key a crew learns is the same on every project,
+it is the exact sheet AC-054 verifies, and a project's own extras still appear.
+
+**Scope.** No scope change: docs/08 §5.4's block 1, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

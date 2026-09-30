@@ -32,7 +32,9 @@ TitleBlockFields fieldsFor({
   return TitleBlockFields.resolve(
     info: info ?? fullProjectInfo(),
     settings: settings ?? ProjectSettings(),
-    sheet: sheet ?? set.sheets.first,
+    sheet:
+        sheet ??
+        set.sheets.firstWhere((s) => s.role == SheetRole.rackElevationFront),
     rack: noRack ? null : (rack ?? testRack()),
     revisions: revisions,
     scale: scale ?? DrawingScale.standard(8),
@@ -213,8 +215,9 @@ void main() {
   group('sheet numbering (CR-066)', () {
     test('simple prints SHEET i OF n plus the sheet title', () {
       final fields = fieldsFor(settings: ProjectSettings());
-      expect(fields.sheetNumberLine, 'SHEET 1 OF 3 · RACK ELEVATION — FRONT');
-      expect(valueOf(fields, 'SHEET'), '1/3');
+      // SHEET 2 OF 4: T0.01 opens every set since M6-B.
+      expect(fields.sheetNumberLine, 'SHEET 2 OF 4 · RACK ELEVATION — FRONT');
+      expect(valueOf(fields, 'SHEET'), '2/4');
     });
 
     test('ncs prints the NCS id', () {

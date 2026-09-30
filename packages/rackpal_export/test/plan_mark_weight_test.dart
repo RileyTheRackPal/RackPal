@@ -78,7 +78,7 @@ void main() {
       sheet: SheetSet.forRacks(
         <Rack>[rack],
         planUnderlays: [underlay],
-      ).sheets.first,
+      ).sheets.firstWhere((s) => s.role == SheetRole.devicePlan),
       underlay: underlay,
       pins: [
         // The drop on the left and the device on the right, so the two are

@@ -133,11 +133,12 @@ void main() {
   }
 
   group('the harness sees the whole set', () {
-    test('three sheets, each with its own operator stream', () async {
+    test('four sheets, the legend first, each with its own operator '
+        'stream', () async {
       final bytes = await export(DateTime.utc(2026, 7, 18));
       // Without this the comparisons below could be comparing two empty
       // lists and passing.
-      expect(pages(bytes), hasLength(3));
+      expect(pages(bytes), hasLength(4));
       for (final page in pages(bytes)) {
         expect(page.length, greaterThan(500));
       }
@@ -169,7 +170,7 @@ void main() {
       final cmap = parseToUnicodeCMap(bytes);
       final sheets = pages(bytes);
 
-      expect(sheets, hasLength(3));
+      expect(sheets, hasLength(4));
       for (var i = 0; i < sheets.length; i++) {
         final text = interpretContentStream(
           sheets[i],

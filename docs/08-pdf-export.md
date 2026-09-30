@@ -516,7 +516,7 @@ Rows come from `RevisionEntry`, which is a document entity and a conflict unit, 
 
 Six blocks on one ANSI B landscape sheet:
 
-1. **Cable-type key**: one row per **named cable type** (not per domain), each showing its exact drawn rendering in colour and in greyscale side by side, with hue, dash, weight, glyph and tag. All ten types the brief names are individually identifiable here and on the drawing (AC-054). The hue-is-domain argument is printed on the sheet so the reader sees *why*.
+1. **Cable-type key**: requirement 4's ten named types **always**, then one row per other family the set uses (DR-207 §11.206.2); one row per **named cable type** (not per domain), each showing its exact drawn rendering in colour and in greyscale side by side, with hue, dash, weight, glyph and tag. All ten types the brief names are individually identifiable here and on the drawing (AC-054). The hue-is-domain argument is printed on the sheet so the reader sees *why*.
 2. **Connector symbol table**: every glyph used in the set, at drawing scale. Glyphs are the same `DiagramPath` constants the drawing uses, so the legend cannot drift from it.
 3. **Device block anatomy**: one annotated example: designator position, name, model, port stub, port label, RU span, `lifecycleStatus` border.
 4. **Convention key**: lifecycle borders; junction dot vs plain crossover (there are no hop arcs in v1, DR-001); the **net-label stub**: a labelled stub at a pin standing in for a drawn wire, which is the default rendering everywhere except a domain-filtered sheet, so the legend must explain it; home-run vs local tag-pill shape; `— OPEN —` end notation; the revision cloud and revision triangle.

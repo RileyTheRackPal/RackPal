@@ -1004,7 +1004,11 @@ $SuiteFloors = @{
     # 5175 at `#576` (DR-206): +4 in derived/schedule_test.dart. The Pull
     # Sheet sections in order with per-section footage, an empty section
     # is not drawn, and T6.11's CABLE ID suffix and its key.
-    'rackpal_core'   = 5175
+    # 5185 at `#316` (M6-B1/B2, DR-207): +10 in sheet/legend_sheet_test.dart.
+    # The ten named types, held to pal1_check.py; which rows; every family
+    # in colour and in grey at its own dash and weight; the grey of a hue;
+    # T0.01 opens every set.
+    'rackpal_core'   = 5185
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1043,7 +1047,9 @@ $SuiteFloors = @{
     # weight read off the PDF content stream the real backend writes, where
     # the 0.5-point floor lives: the same weights on a 600x450 and a
     # 6600x5100 scan, and a device still 1.4x a drop on the large one.
-    'rackpal_export' = 229
+    # 231 at `#316` (M6-B): +2 in legend_export_test.dart, T0.01 reaches
+    # the PDF with all ten named types in ink, and a starter's own family.
+    'rackpal_export' = 231
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

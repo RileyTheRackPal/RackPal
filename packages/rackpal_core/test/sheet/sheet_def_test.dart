@@ -27,58 +27,65 @@ void main() {
   });
 
   group('SheetSet.forRacks', () {
-    test('one rack resolves to exactly the three sheets the doc names', () {
+    test('one rack resolves to exactly the four sheets the doc names, the '
+        'legend first (M6-B)', () {
       final set = SheetSet.forRacks(<Rack>[testRack()]);
 
       expect(set.sheets.map((s) => s.ncsId), <String>[
+        'T0.01',
         'T2.01',
         'T2.02',
         'T6.30',
       ]);
       expect(set.sheets.map((s) => s.role), <SheetRole>[
+        SheetRole.symbolLegend,
         SheetRole.rackElevationFront,
         SheetRole.rackElevationRear,
         SheetRole.equipmentList,
       ]);
-      expect(set.total, 3);
+      expect(set.total, 4);
       expect(set.notices, isEmpty);
     });
 
     test('every sheet carries the SAME total, known before rendering', () {
       final set = SheetSet.forRacks(<Rack>[testRack()]);
-      expect(set.sheets.map((s) => s.total), everyElement(3));
-      expect(set.sheets.map((s) => s.index), <int>[1, 2, 3]);
+      expect(set.sheets.map((s) => s.total), everyElement(4));
+      expect(set.sheets.map((s) => s.index), <int>[1, 2, 3, 4]);
     });
 
-    test('TWO racks give 2N+1 = 5 sheets with no id collision', () {
+    test('TWO racks give 2N+2 = 6 sheets with no id collision', () {
       // The whole reason the dry run exists. A counter that was right for
-      // one rack would print "SHEET 3 OF 3" on sheet 5 here.
+      // one rack would print "SHEET 4 OF 4" on sheet 6 here. 2N+2 since
+      // M6-B: the legend and the equipment list, and two per rack.
       final set = SheetSet.forRacks(<Rack>[
         testRack(id: 'r1'),
         testRack(id: 'r2', designator: 'RK-2', order: 'b0'),
       ]);
 
-      expect(set.total, 5);
+      expect(set.total, 6);
       expect(set.sheets.map((s) => s.ncsId), <String>[
+        'T0.01',
         'T2.01',
         'T2.02',
         'T2.03',
         'T2.04',
         'T6.30',
       ]);
-      expect(set.sheets.map((s) => s.ncsId).toSet(), hasLength(5));
-      expect(set.sheets.map((s) => s.total), everyElement(5));
-      expect(set.sheets.map((s) => s.index), <int>[1, 2, 3, 4, 5]);
+      expect(set.sheets.map((s) => s.ncsId).toSet(), hasLength(6));
+      expect(set.sheets.map((s) => s.total), everyElement(6));
+      expect(set.sheets.map((s) => s.index), <int>[1, 2, 3, 4, 5, 6]);
       expect(set.notices, isEmpty);
     });
 
     test('elevation sheets carry their rack; the equipment list does not', () {
       final set = SheetSet.forRacks(<Rack>[testRack(id: 'r1')]);
 
-      expect(set.sheets[0].rackId, const Uuid('r1'));
-      expect(set.sheets[0].rackDesignator, 'RK-1');
+      // [0] is T0.01, which opens every set and names no rack (M6-B).
+      expect(set.sheets[0].rackId, isNull);
       expect(set.sheets[1].rackId, const Uuid('r1'));
-      expect(set.sheets[2].rackId, isNull);
+      expect(set.sheets[1].rackDesignator, 'RK-1');
+      expect(set.sheets[2].rackId, const Uuid('r1'));
+      expect(set.sheets[3].rackId, isNull);
     });
 
     test('racks are ordered by Rack.order, not by iteration order', () {
@@ -87,8 +94,8 @@ void main() {
         testRack(id: 'a', designator: 'RK-A'),
       ]);
 
-      expect(set.sheets[0].rackDesignator, 'RK-A');
-      expect(set.sheets[2].rackDesignator, 'RK-Z');
+      expect(set.sheets[1].rackDesignator, 'RK-A');
+      expect(set.sheets[3].rackDesignator, 'RK-Z');
     });
 
     test('racks sharing an order fall back to id, deterministically', () {
@@ -96,15 +103,16 @@ void main() {
         testRack(id: 'b', designator: 'RK-B'),
         testRack(id: 'a', designator: 'RK-A'),
       ]);
-      expect(set.sheets[0].rackDesignator, 'RK-A');
+      expect(set.sheets[1].rackDesignator, 'RK-A');
     });
 
-    test('a rackless project still resolves the equipment list alone', () {
+    test('a rackless project still resolves the legend and the equipment '
+        'list', () {
       // The export UX refuses a rackless document out loud rather than
       // emitting this — but the answer the resolver gives must be honest.
       final set = SheetSet.forRacks(const <Rack>[]);
-      expect(set.sheets.map((s) => s.ncsId), <String>['T6.30']);
-      expect(set.total, 1);
+      expect(set.sheets.map((s) => s.ncsId), <String>['T0.01', 'T6.30']);
+      expect(set.total, 2);
     });
 
     test('a set large enough to overflow the NCS sequence reports a notice '
@@ -120,11 +128,11 @@ void main() {
           ),
       ]);
 
-      expect(set.total, 101);
+      expect(set.total, 102);
       expect(set.notices, isNotEmpty);
       expect(set.notices.first, contains('does not match the NCS pattern'));
       // Still emitted — the notice does not remove the sheet.
-      expect(set.sheets, hasLength(101));
+      expect(set.sheets, hasLength(102));
     });
   });
 
@@ -222,8 +230,9 @@ void main() {
     // moves with it. What it still refuses is a role appearing without
     // anybody deciding: eight of §2.2's twelve slots are M6's and are
     // absent from this enum rather than stubbed.
-    test('names the four sheets in this set, and no others', () {
-      expect(SheetRole.values, hasLength(4));
+    test('names the five sheets in this set, and no others', () {
+      expect(SheetRole.values, hasLength(5));
+      expect(SheetRole.symbolLegend.title, 'SYMBOL LEGEND');
       expect(SheetRole.devicePlan.title, 'DEVICE LOCATION PLAN');
       expect(SheetRole.rackElevationFront.title, 'RACK ELEVATION — FRONT');
       expect(SheetRole.rackElevationRear.title, 'RACK ELEVATION — REAR');
@@ -239,6 +248,9 @@ void main() {
       // (DR-037 §11.36.1), so the sheet the drill judges and the sheet
       // this emits are the same paper.
       expect(SheetRole.devicePlan.size, SheetSize.ansiBLandscape);
+      // The legend is ANSI B landscape too, as §6.1 gives the cover,
+      // legend and exceptions.
+      expect(SheetRole.symbolLegend.size, SheetSize.ansiBLandscape);
       expect(SheetSize.ansiBLandscape.sizeCode, 'B');
     });
 
@@ -247,6 +259,7 @@ void main() {
       // would emit one sheet per rack per underlay.
       expect(SheetRole.devicePlan.perRack, isFalse);
       expect(SheetRole.equipmentList.perRack, isFalse);
+      expect(SheetRole.symbolLegend.perRack, isFalse);
       expect(SheetRole.rackElevationFront.perRack, isTrue);
       expect(SheetRole.rackElevationRear.perRack, isTrue);
     });
