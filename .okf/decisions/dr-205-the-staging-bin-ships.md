@@ -31,3 +31,12 @@ The author offered "Move hosts to Staging Bin" as the recommended default for de
 and the bin did not exist: `StagedPlacement` had no producer, no list and no way back, and Shrink
 Rack showed its bin option disabled for that reason. The option was corrected in the next question,
 and the user chose to build the bin rather than work around it.
+
+# What the gates refused while it was built
+
+- **A shelf move with no loop check.** Moving a device onto a shelf can close a loop (a shelf set
+  on a shelf that sits on it), which a newly minted device never can. The first draft asked only
+  whether the host was a container. `placement_rules_test.dart`'s writer scan named the new file,
+  and both move planners now refuse a loop under TOP-005 through `shelfMoveWouldLoop`.
+- **CR-032's `↩`.** The product font has no bold `↩`, so the glyph-coverage gate refused it. The
+  chip reads `Return to RK-1 U21`, CR-032's words without the arrow.

@@ -36,6 +36,7 @@ import 'package:rackpal_core/src/derived/placeable_templates.dart'
 import 'package:rackpal_core/src/idformat/designator_allocator.dart';
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/placement.dart';
+import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/model/template.dart'
     show TemplateRef, TemplateSnapshot;
@@ -283,16 +284,32 @@ PlacementPlan planReturnFromStaging({
       'Drag it onto a rack or a shelf.',
     );
   }
-  final to = RailPlacement(rackId: rack.id, ruIndex: ru, face: face);
-  // THE SAME CHECKS A DROP MAKES, on both faces the device occupies.
+  if (_railFault(doc, d, rack, ru, outside: 'no longer inside the rack')
+      case final fault?) {
+    return PlacementPlanRefused(fault);
+  }
+  return ready(RailPlacement(rackId: rack.id, ruIndex: ru, face: face));
+}
+
+/// THE SAME CHECKS A DROP MAKES, on both faces [d] occupies, in the same
+/// order (extent first, then occupancy): the sentence saying why [d]
+/// cannot sit at [rack] U[ru], or null when it can.
+///
+/// One function for the return chip and a dragged chip, so the two can
+/// never disagree about the same U.
+String? _railFault(
+  RackDocument doc,
+  DeviceInstance d,
+  Rack rack,
+  int ru, {
+  required String outside,
+}) {
   final body = bodyFor(d, doc.templates);
   for (final f in Face.values) {
     final h = occupancyU(body, f);
     if (h == null) continue;
     if (ru < 1 || ru + h - 1 > rack.heightU) {
-      return PlacementPlanRefused(
-        '${rack.designator} U$ru is no longer inside the rack.',
-      );
+      return '${rack.designator} U$ru is $outside.';
     }
     final blocker = findBlockingOccupant(
       rack: rack,
@@ -304,12 +321,54 @@ PlacementPlan planReturnFromStaging({
       exceptId: d.id,
     );
     if (blocker != null) {
-      return PlacementPlanRefused(
-        '${rack.designator} U$ru is taken by ${blocker.designator}.',
-      );
+      return '${rack.designator} U$ru is taken by ${blocker.designator}.';
     }
   }
-  return ready(to);
+  return null;
+}
+
+/// A staged device dragged onto [rack] at [ruIndex] on [face] (DR-205
+/// §11.204.3: *"dragging a chip onto a rack or a shelf places it
+/// anywhere"*). The device keeps its id, ports and links, as every
+/// planner here does.
+///
+/// The canvas has already evaluated this U live; the checks run again
+/// here because a planner that trusted its caller would let a same-frame
+/// edit through, and the return chip's own [_railFault] is the one that
+/// runs.
+PlacementPlan planPlaceStagedOnRail({
+  required RackDocument doc,
+  required Uuid id,
+  required Rack rack,
+  required int ruIndex,
+  required Face face,
+  required DateTime now,
+  required String actor,
+}) {
+  final d = doc.devices[id];
+  if (d == null) return const PlacementPlanRefused('That device is gone.');
+  if (d.placement is! StagedPlacement) {
+    return PlacementPlanRefused('${d.designator} is not in the Staging Bin.');
+  }
+  if (occupancyU(bodyFor(d, doc.templates), face) == null) {
+    return PlacementPlanRefused(
+      '${d.designator} has no rack height on the ${face.name} face, so it '
+      'cannot go on the rails.',
+    );
+  }
+  if (_railFault(doc, d, rack, ruIndex, outside: 'outside the rack')
+      case final fault?) {
+    return PlacementPlanRefused(fault);
+  }
+  return PlacementPlanReady(
+    ReplacePlacementCommand(
+      id: id,
+      to: RailPlacement(rackId: rack.id, ruIndex: ruIndex, face: face),
+      label: LabelKey.returnFromStaging,
+      now: now,
+      actor: actor,
+    ),
+  );
 }
 
 /// Sets [id] on the shelf [hostId], at the gap after [after] (or first

@@ -54,6 +54,7 @@ class StagingBinStrip extends StatelessWidget {
     required this.selectedIds,
     required this.onSelect,
     required this.onReturn,
+    this.onArmDrag,
     super.key,
   });
 
@@ -61,6 +62,12 @@ class StagingBinStrip extends StatelessWidget {
   final Set<Uuid> selectedIds;
   final ValueChanged<Uuid> onSelect;
   final ValueChanged<Uuid> onReturn;
+
+  /// Every pointer-down on a chip, for the screen's drag (`#964`). A
+  /// `Listener` rather than a recognizer, as the palette's rows are: it
+  /// joins no gesture arena, so the chip's own click still selects, and
+  /// the screen decides past its 4px slop whether this became a drag.
+  final void Function(Uuid id, PointerDownEvent event)? onArmDrag;
 
   @override
   Widget build(BuildContext context) {
@@ -97,12 +104,15 @@ class StagingBinStrip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        InputChip(
-          key: ValueKey('staged-${chip.id.v}'),
-          label: Text(label),
-          selected: selectedIds.contains(chip.id),
-          onSelected: (_) => onSelect(chip.id),
-          showCheckmark: false,
+        Listener(
+          onPointerDown: (e) => onArmDrag?.call(chip.id, e),
+          child: InputChip(
+            key: ValueKey('staged-${chip.id.v}'),
+            label: Text(label),
+            selected: selectedIds.contains(chip.id),
+            onSelected: (_) => onSelect(chip.id),
+            showCheckmark: false,
+          ),
         ),
         if (returnLabel != null)
           TextButton(

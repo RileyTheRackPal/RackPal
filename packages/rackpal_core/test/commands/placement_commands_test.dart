@@ -166,6 +166,67 @@ void main() {
     });
   });
 
+  group('dragged out onto the rails (#964)', () {
+    late DeviceInstance rail;
+    late RailPlacement was;
+    setUp(() {
+      rail = doc.devices.values.firstWhere(
+        (d) => d.placement is RailPlacement,
+      );
+      was = rail.placement as RailPlacement;
+      _ready(
+        planStageDevice(doc: doc, id: rail.id, now: _now, actor: _actor),
+      ).apply(doc);
+    });
+
+    PlacementPlan dropAt(int ru, {Uuid? id}) => planPlaceStagedOnRail(
+      doc: doc,
+      id: id ?? rail.id,
+      rack: doc.racks[was.rackId]!,
+      ruIndex: ru,
+      face: was.face,
+      now: _now,
+      actor: _actor,
+    );
+
+    test('lands at the U it was dropped on, with its links', () {
+      final links = _linksOf(doc, rail);
+      _ready(dropAt(was.ruIndex)).apply(doc);
+      final placed = doc.devices[rail.id]!.placement as RailPlacement;
+      expect((placed.rackId, placed.ruIndex), (was.rackId, was.ruIndex));
+      expect(_linksOf(doc, doc.devices[rail.id]!), links);
+      expect(stagedDevices(doc).map((d) => d.id), isNot(contains(rail.id)));
+    });
+
+    test('and refuses, naming the occupant, on a taken U', () {
+      final other = doc.devices.values.firstWhere(
+        (d) =>
+            d.placement is RailPlacement &&
+            (d.placement as RailPlacement).rackId == was.rackId &&
+            (d.placement as RailPlacement).face == was.face,
+      );
+      expect(
+        _refusal(dropAt((other.placement as RailPlacement).ruIndex)),
+        contains('taken by ${other.designator}'),
+      );
+    });
+
+    test('and past the top of the rack', () {
+      final rack = doc.racks[was.rackId]!;
+      expect(_refusal(dropAt(rack.heightU + 1)), contains('outside the rack'));
+    });
+
+    test('only a staged device takes this path', () {
+      final placed = doc.devices.values.firstWhere(
+        (d) => d.placement is RailPlacement,
+      );
+      expect(
+        _refusal(dropAt(was.ruIndex, id: placed.id)),
+        contains('is not in the Staging Bin'),
+      );
+    });
+  });
+
   group('along and between shelves', () {
     test('a host dragged to the front of its own shelf becomes first', () {
       final shelfId = (_byDesignator(doc, 'STB-1').placement as ShelfPlacement)

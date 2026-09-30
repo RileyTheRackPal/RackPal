@@ -1226,6 +1226,22 @@ guarded against a "Released outside the rack" message that no longer exists. Its
 string the product prints. **AND ONE TEST WAS STRICTER THAN ITS RULING**: canon §1.10 (c) forbids a
 colliding bare letter, and the test forbade any bare letter in the rack. It now asserts the ruling.
 
+**THE GATE CAUGHT A MISSING TOP-005 CHECK.** The writer scan in `placement_rules_test.dart` went red
+on the first run of this slice, naming `placement_commands.dart` as a second `ShelfPlacement`
+writer. `shelf_placement.dart` had said in writing that a move onto a shelf *"does not exist yet"*;
+this built one without the loop half of TOP-005, and a move is the only way to make a loop, by
+setting a shelf onto a shelf that sits on it. Both move planners now refuse a loop and a
+non-container under TOP-005, and the scan checks every writer it finds. The same run refused
+CR-032's `↩`, which has no bold weight in the product font; the chip says "Return to" in its place.
+
+**CHAPTER `#964`: A CHIP DRAGS OUT.** A bin chip starts the palette's own drag, so the ghost, the
+live evaluation, the blocked shake and Esc are the same code rather than a copy. Only the release
+differs: `planPlaceStagedOnRail` moves the existing device, and it runs the same extent and
+occupancy function the return chip does (`_railFault`), so the two cannot disagree about one U.
+Released off the rack, the chip stays in the bin and says so. The overlay that promises "add to the
+Staging Bin" is suppressed for it, because the device is already there. A staged device with no
+rack height does not arm: it has no rails, and it waits for the shelf target of `#956`.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

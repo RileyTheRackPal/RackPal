@@ -982,7 +982,10 @@ $SuiteFloors = @{
     # words; a host reorders and moves between shelves.
     # 5148 at `#961`: +3. TOP-005 refuses a shelf-chain loop, which only a
     # move can make (two cases), and ReplacePlacementCommand's AC-014 case.
-    'rackpal_core'   = 5148
+    # 5152 at `#964`: +4, a staged device dragged onto the rails lands at
+    # its U with its links, and is refused on a taken U, past the top, and
+    # when it is not staged at all.
+    'rackpal_core'   = 5152
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1530,7 +1533,10 @@ $SuiteFloors = @{
     # is drawn and a click selects it; the bin hides while empty; U stages
     # and the return chip puts back, to a U or a shelf; a drag off the rack
     # stages with its last U; one Ctrl+Z undoes a U.
-    'rackpal_ui'     = 1994
+    # 1997 at `#964`: +3, a bin chip dragged onto a free U lands there; onto
+    # an occupied one it is refused with the occupant named; released off
+    # the rack it stays in the bin and no chip promises otherwise.
+    'rackpal_ui'     = 1997
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
