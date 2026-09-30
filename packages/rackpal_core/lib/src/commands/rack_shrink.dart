@@ -140,6 +140,7 @@ final class DoomedOccupant {
 final class CompactionRescue {
   const CompactionRescue({
     required this.moves,
+    required this.binMoves,
     required this.rescued,
     required this.stillDoomed,
     required this.freedU,
@@ -152,6 +153,17 @@ final class CompactionRescue {
   /// device. Deliberately not two hops — a device should appear once in
   /// the preview and once in the undo entry, at its final home.
   final List<CompactionMove> moves;
+
+  /// The net moves when [stillDoomed] go to the Staging Bin instead and
+  /// the rack reaches the REQUESTED height (DR-205, `#967`: *"2 of 3 fit,
+  /// 1 goes to Staging Bin"*). Equal to [moves] on full success.
+  ///
+  /// NOT [moves] with the leftovers filtered out, and a bottom trim is
+  /// why: [moves] carries the shift to [achievableHeightU], and reaching
+  /// the requested height takes a larger one. The leftovers are absent
+  /// entirely, so each is staged from the U it stands on now and its
+  /// return chip names that U, not a compacted one it never reached.
+  final List<CompactionMove> binMoves;
 
   /// Casualties compaction saves. Never empty (see the class doc).
   final List<DoomedOccupant> rescued;
@@ -196,9 +208,10 @@ final class CompactionRescue {
 
   /// The smallest height the compacted layout actually permits WITHOUT
   /// losing anyone. Equals the requested height on full success; on
-  /// partial success it is larger, and it is what makes option 1 remain
-  /// lossless and therefore honestly selectable (rule 1) even though the
-  /// Staging Bin the spec's partial label assumes does not exist.
+  /// partial success it is larger. It is option 1's height when the
+  /// leftovers cannot go to the Staging Bin (a locked one does not move,
+  /// DR-186 §11.185.1); when they can, [binMoves] reaches the requested
+  /// height instead.
   final int achievableHeightU;
 
   /// Rule 2's preselection test.
@@ -670,9 +683,45 @@ CompactionRescue? _planRescue({
   final achievable = stillDoomed.isEmpty ? toHeightU : postFloor;
   if (achievable >= rack.heightU) return null;
 
-  // The net move list: compaction target, then the bottom-trim shift —
-  // sized to the height actually applied, not the height requested.
-  final shift = trimFrom == TrimFrom.bottom ? rack.heightU - achievable : 0;
+  // The net move lists: compaction target, then the bottom-trim shift,
+  // sized to the height each one actually applies. [moves] stops at
+  // `achievable`; [binMoves] reaches `toHeightU` with the leftovers staged
+  // rather than moved, so they are left out of it.
+  final leftovers = {for (final d in stillDoomed) d.deviceId};
+  final moves = _netMoves(
+    occupants,
+    postRu,
+    shift: trimFrom == TrimFrom.bottom ? rack.heightU - achievable : 0,
+  );
+  final binMoves = stillDoomed.isEmpty
+      ? moves
+      : _netMoves(
+          [
+            for (final o in occupants)
+              if (!leftovers.contains(o.device.id)) o,
+          ],
+          postRu,
+          shift: trimFrom == TrimFrom.bottom ? rack.heightU - toHeightU : 0,
+        );
+
+  final freed = preFloor - postFloor;
+  return CompactionRescue(
+    moves: List.unmodifiable(moves),
+    binMoves: List.unmodifiable(binMoves),
+    rescued: List.unmodifiable(rescued),
+    stillDoomed: List.unmodifiable(stillDoomed),
+    freedU: freed < 0 ? 0 : freed,
+    achievableHeightU: achievable,
+  );
+}
+
+/// One move per occupant from where it stands to its compacted position
+/// less [shift], skipping any it leaves in place.
+List<CompactionMove> _netMoves(
+  List<_Occupant> occupants,
+  Map<Uuid, int> postRu, {
+  required int shift,
+}) {
   final moves = <CompactionMove>[];
   for (final o in occupants) {
     if (!_shiftable(o)) {
@@ -702,15 +751,7 @@ CompactionRescue? _planRescue({
       ),
     );
   }
-
-  final freed = preFloor - postFloor;
-  return CompactionRescue(
-    moves: List.unmodifiable(moves),
-    rescued: List.unmodifiable(rescued),
-    stillDoomed: List.unmodifiable(stillDoomed),
-    freedU: freed < 0 ? 0 : freed,
-    achievableHeightU: achievable,
-  );
+  return moves;
 }
 
 /// The `MoveDeviceCommand`s realising a chosen set of displacements —

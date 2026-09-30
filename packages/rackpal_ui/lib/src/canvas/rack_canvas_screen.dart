@@ -2026,6 +2026,25 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     );
   }
 
+  /// The staging commands for a Shrink Rack decision (DR-205 §11.204.6).
+  ///
+  /// A refusal here is unreachable, because the dialog offers the bin only
+  /// when `binRefusals` is empty, and it is DROPPED rather than thrown: the
+  /// device then stays on the rail above the new top, which the load
+  /// gutter counts as undrawn. That is a visible state, where a throw
+  /// halfway through the transaction would be a crash.
+  List<ReplacePlacementCommand> _stageCommands(List<Uuid> ids) => [
+    for (final id in ids)
+      if (planStageDevice(
+            doc: _doc,
+            id: id,
+            now: _controller.clock.nowUtc(),
+            actor: _controller.actor,
+          )
+          case PlacementPlanReady(:final command))
+        command,
+  ];
+
   void _returnFromStaging(Uuid id) {
     switch (planReturnFromStaging(
       doc: _doc,
@@ -2339,6 +2358,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
           preset,
           toHeightU: toHeightU,
           moves: decision.moves,
+          staged: decision.staged,
         );
       } else {
         // RULE 6, verbatim: "Apply is ONE undo entry covering the resize and
@@ -2348,6 +2368,10 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
         // REVERSE, so undo restores the height before the positions, which
         // is the correct unwinding of exactly that ordering.
         _controller.transact(LabelKey.resizeRack, (tx) {
+          // STAGED FIRST (DR-205 §11.204.6): it frees the U the casualties
+          // held before anything moves into them, and a staged device is
+          // no longer rail-placed, so no displacement below can name one.
+          _stageCommands(decision.staged).forEach(tx.add);
           for (final c in shrinkDisplacementCommands(
             decision.moves,
             now: _controller.clock.nowUtc(),
@@ -2447,6 +2471,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     RackPreset preset, {
     required int? toHeightU,
     required List<CompactionMove> moves,
+    List<Uuid> staged = const [],
   }) {
     _controller.transact(LabelKey.applyRackPreset, (tx) {
       void set<T>(EntityField<Rack, T> field, T value) {
@@ -2474,6 +2499,8 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       set(RackField.isSwingFrame, preset.isSwingFrame);
       set(RackField.hingeSide, preset.hingeSide);
 
+      // Staged before anything moves, as `_openShrinkDialog` orders it.
+      _stageCommands(staged).forEach(tx.add);
       for (final c in shrinkDisplacementCommands(
         moves,
         now: _controller.clock.nowUtc(),

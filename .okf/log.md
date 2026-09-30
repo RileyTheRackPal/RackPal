@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-09-30 (eighty-third entry)
+
+* **Progress**: Chapter `#967`, Shrink Rack's bin option, docs/12 §4.24.
+* **Update**: [DR-205](/decisions/dr-205-the-staging-bin-ships.md) gains §11.204.6, the user's two
+  Shrink Rack choices.
+* **Note**: **A WORKAROUND LEAVES ITS SHAPE IN THE DATA.** The shrink planner's compaction moves
+  were sized to the fallback height because the bin that would have reached the asked height did
+  not exist. Building the bin needed a second move list, not a filter on the first. When a missing
+  feature is built, read what was planned around its absence.
+
 ## 2026-09-30 (eighty-second entry)
 
 * **Progress**: `#961`'s first slice is PR 170. Chapter `#964`: a bin chip drags onto the rails

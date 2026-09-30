@@ -22800,6 +22800,23 @@ device. It is undoable and the status line says so; `Esc` is the way to cancel a
 **11.204.5 WHAT STAYS DEFERRED.** `RCK-014`, the advisory naming a non-empty bin, stays v1.2
 (CR-021). Paste and duplicate overflow to the bin (docs/04 §8) are not built here.
 
+**11.204.6 RULED: SHRINK RACK TAKES THE BIN AS docs/04 §4.1 WROTE IT.** Settled by the user on
+2026-09-30, building `#967`, both times on the recommended option.
+
+- **Rule 2 as written.** Option 1 is preselected when compaction fits everyone; otherwise option 2,
+  *"Move the N above to the Staging Bin"*, is. So Enter gives the height that was typed, and the
+  devices that do not fit wait in the bin with their wiring, one Ctrl+Z away. The dialog had
+  preselected option 3 (*"Keep rack at N U"*) only because the bin did not exist. Option 3 is
+  preselected now only when a casualty is **locked**, since a locked device does not move (DR-186
+  §11.185.1) and staging is a move; option 2 is then shown disabled, naming the locked devices.
+- **Option 1's partial form takes the spec's label**, *"2 of 3 fit, 1 goes to Staging Bin"*: it
+  compacts, stages the leftovers and reaches the requested height. It stops taller, as before, only
+  when a leftover is locked. On a bottom trim the compaction's downward shift is re-sized to the
+  requested height (`CompactionRescue.binMoves`), because the shift already planned was sized to the
+  taller fallback.
+- Staging runs **first** in the one transaction, before any displacement and the height change: it
+  frees the U the casualties held, and a staged device can no longer be moved.
+
 **Scope.** No scope change: CR-032's v1 bin, built.
 
 ---

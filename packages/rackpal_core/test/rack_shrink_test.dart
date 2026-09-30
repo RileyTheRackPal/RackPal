@@ -480,6 +480,103 @@ void main() {
       }
     });
 
+    group('LEFTOVERS TO THE STAGING BIN (DR-205, #967)', () {
+      /// Where every occupant NOT staged ends up under [moves], checked to
+      /// sit wholly inside [heightU].
+      void expectFits(
+        Map<String, int> start,
+        Map<String, int> heights,
+        List<CompactionMove> moves,
+        Set<String> staged,
+        int heightU,
+      ) {
+        final end = {
+          for (final e in start.entries)
+            if (!staged.contains(e.key)) e.key: e.value,
+          ..._targets(moves),
+        };
+        for (final e in end.entries) {
+          final top = e.value + heights[e.key]! - 1;
+          expect(
+            e.value >= 1 && top <= heightU,
+            isTrue,
+            reason: '${e.key} would stand at U${e.value}-U$top in ${heightU}U',
+          );
+        }
+      }
+
+      test('on a TOP trim the rack reaches the height asked for, and the '
+          'leftover is not moved at all', () {
+        final doc = _doc(24, [
+          _at('A', 4, 1),
+          _at('B', 14, 1),
+          _at('TALL', 18, 6),
+        ]);
+        final rescue = planRackShrink(
+          doc: doc,
+          rackId: _rackId,
+          toHeightU: 5,
+        ).rescue!;
+
+        expect(_names(rescue.stillDoomed), {'TALL'});
+        expect(
+          _targets(rescue.binMoves),
+          {'A': 1, 'B': 2},
+          reason: 'TALL is staged from U18, where it stands, not moved first',
+        );
+        expectFits(
+          {'A': 4, 'B': 14, 'TALL': 18},
+          {'A': 1, 'B': 1, 'TALL': 6},
+          rescue.binMoves,
+          {'TALL'},
+          5,
+        );
+      });
+
+      test('on a BOTTOM trim the shift is sized to the height asked for, '
+          'which is exactly where reusing `moves` would have gone wrong', () {
+        // Compacting up: A->24, B->23, TALL->17-22. Trimming 19U off the
+        // bottom saves B and A, and TALL still dies.
+        final doc = _doc(24, [
+          _at('A', 20, 1),
+          _at('B', 10, 1),
+          _at('TALL', 2, 6),
+        ]);
+        final rescue = planRackShrink(
+          doc: doc,
+          rackId: _rackId,
+          toHeightU: 5,
+          trimFrom: TrimFrom.bottom,
+        ).rescue!;
+
+        expect(_names(rescue.stillDoomed), {'TALL'});
+        expect(rescue.achievableHeightU, greaterThan(5));
+        expect(_targets(rescue.binMoves), {'A': 5, 'B': 4});
+        expectFits(
+          {'A': 20, 'B': 10, 'TALL': 2},
+          {'A': 1, 'B': 1, 'TALL': 6},
+          rescue.binMoves,
+          {'TALL'},
+          5,
+        );
+      });
+
+      test('on full success there is nothing to stage and the two lists '
+          'agree', () {
+        final doc = _doc(24, [
+          _at('A', 4, 1),
+          _at('B', 14, 1),
+          _at('C', 20, 1),
+        ]);
+        final rescue = planRackShrink(
+          doc: doc,
+          rackId: _rackId,
+          toHeightU: 12,
+        ).rescue!;
+        expect(_targets(rescue.binMoves), _targets(rescue.moves));
+      });
+    });
+
     test('respects locked anchors — a rescue never moves a locked '
         'occupant', () {
       final doc = _doc(24, [

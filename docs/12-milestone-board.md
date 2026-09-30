@@ -1242,6 +1242,18 @@ Released off the rack, the chip stays in the bin and says so. The overlay that p
 Staging Bin" is suppressed for it, because the device is already there. A staged device with no
 rack height does not arm: it has no rails, and it waits for the shelf target of `#956`.
 
+**CHAPTER `#967`: SHRINK RACK'S OPTION 2 IS LIVE (§11.204.6).** The tile that read *"Not available
+yet"* is now a radio, and it is the preselection whenever compaction cannot fit everyone, which is
+docs/04 §4.1 rule 2 as written; the user chose the letter over the old inversion. Option 1's
+partial form stages its leftovers and reaches the requested height. **The bottom trim was the
+trap.** `CompactionRescue.moves` already carries a downward shift sized to the taller fallback
+height, so reusing it with the leftovers filtered out would have left every survivor too high. A
+second list, `binMoves`, is planned in core at the requested height, and a core test pins its
+bottom-trim targets. A locked casualty refuses the bin and puts option 3 back as the default. The
+every-choice matrix in `shrink_rack_dialog_test.dart` re-typed the screen's apply sequence, so it
+went red on the first run: it never staged. It now stages first as the screen does, and it also
+asserts that nobody left the document and that exactly the decision's devices are in the bin.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

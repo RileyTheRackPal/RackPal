@@ -30,47 +30,38 @@
 // (see [ShrinkChoice.asRequested]) rather than being hidden behind a
 // "smallest that fits" that would understate what is possible.
 //
-// ── OPTION 2 IS OUT OF SCOPE, AND SHOWN ANYWAY ────────────────────────────
+// ── OPTION 2 IS BUILT (DR-205 §11.204.6, `#967`) ──────────────────────────
 //
-// §4.1's second option — "Move the N above to the Staging Bin" — cannot be
-// built in this stage. `StagedPlacement` exists in the model and round-trips
-// through the codec, but there is no Staging Bin UI, no command that produces
-// one, and no return-to-rack path; shipping half of it would strand devices
-// somewhere the user cannot see or retrieve them, which is the data loss rule
-// 3 exists to prevent.
+// §4.1's second option, "Move the N above to the Staging Bin", was rendered
+// DISABLED WITH ITS REASON for as long as there was no bin: no command made
+// a `StagedPlacement`, nothing listed one and nothing brought one back, so
+// offering it would have stranded devices where nobody could see them. The
+// disabled tile was deliberate, on CR-114's principle that a refusal the user
+// can see beats an option that silently is not there, and it is why the
+// Staging Bin was found missing at all.
 //
-// It is rendered DISABLED WITH ITS REASON rather than omitted. The choice is
-// deliberate and follows CR-114's binding principle that missing data the
-// user can see beats fabricated data they cannot: a user staring at a modal
-// that will not shrink their rack to 12U deserves to know that the option
-// which WOULD do it exists in the design and is simply not built yet.
-// Omitting it makes the tool look arbitrarily restrictive; showing it
-// disabled makes it look honestly incomplete, which is what it is.
+// DR-205 built the bin, so the option is live. A staged device keeps its id,
+// its ports and every link, so moving one there is not the deletion rule 3
+// forbids. It is still refused, and still shown with its reason, when a
+// casualty is LOCKED: a locked device does not move (DR-186 §11.185.1), and
+// staging is a move.
 //
-// This is a different judgement from the Circuits section's omitted "+ Add
-// circuit" button (rack_inspector_panel.dart), and the distinction is worth
-// stating because the two look contradictory. That button's absence costs a
-// user nothing — they cannot miss an affordance they had no reason to expect.
-// This one's absence would leave a REFUSAL unexplained: the dialog is
-// actively declining to do the thing asked of it, and the missing option is
-// the explanation.
-//
-// ── RULE 2'S PRESELECTION, AND HOW THE MISSING OPTION 2 BENDS IT ──────────
+// ── RULE 2'S PRESELECTION, NOW AS WRITTEN ─────────────────────────────────
 //
 // Rule 2: "Option 1 is preselected when it fully succeeds; otherwise option 2
-// is. Never preselect the lossy-feeling option when a clean one exists."
-// Option 2 does not exist here, so [defaultShrinkChoice] substitutes option 3
-// as the fallback. That INVERTS the rule's letter and HONOURS its stated
-// intent: with the bin gone, option 3 ("keep at the smallest height that
-// fits") is the only always-available option that loses nothing whatsoever —
-// it is the cleanest item on the list, not the lossiest. Option 1's PARTIAL
-// form is deliberately not preselected either: it is a compromise (a height
-// between what was asked for and what is free) that the user should reach for
-// deliberately rather than find already chosen.
+// is." While option 2 did not exist, [defaultShrinkChoice] substituted option
+// 3 ("keep at the smallest height that fits"), inverting the letter to keep
+// the intent. With the bin built the user chose the letter (§11.204.6): Enter
+// gives the height that was typed, and the devices that do not fit wait in
+// the bin with their wiring, one Ctrl+Z away.
 //
-// Nothing is silently dropped under any selection. Every option is lossless;
-// they differ only in the height finally reached and in how much gets moved
-// to reach it.
+// AND OPTION 1'S PARTIAL FORM TAKES THE SPEC'S OWN LABEL, *"2 of 3 fit, 1
+// goes to Staging Bin"* (§11.204.6): it compacts, sends the leftovers to the
+// bin and reaches the requested height. It falls back to stopping taller
+// only when a leftover is locked.
+//
+// Nothing is dropped under any selection. Every option keeps every device;
+// they differ in the height reached and in where the devices end up.
 
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
@@ -85,10 +76,16 @@ enum ShrinkChoice {
   asRequested,
 
   /// §4.1 option 1 — "Compact first, then shrink". Offered only when
-  /// compaction actually helps (rule 1). On partial success it composes with
-  /// option 3 and stops at the smallest height the compacted layout permits,
-  /// so it stays lossless.
+  /// compaction actually helps (rule 1). On partial success it sends the
+  /// leftovers to the Staging Bin and reaches the requested height; when a
+  /// leftover is locked it stops at the smallest height the compacted
+  /// layout permits instead.
   compactFirst,
+
+  /// §4.1 option 2 — "Move the N above to the Staging Bin" (DR-205). Every
+  /// casualty is staged with its wiring and the rack reaches the requested
+  /// height. Refused when a casualty is locked.
+  moveToBin,
 
   /// §4.1 option 3 — "Keep rack at 18U (smallest that fits)". Always
   /// available, always lossless.
@@ -103,43 +100,68 @@ final class ShrinkDecision {
     required this.toHeightU,
     required this.moves,
     required this.summary,
+    this.staged = const [],
   });
 
   /// The height actually applied — NOT necessarily the height requested. On
-  /// [ShrinkChoice.keepSmallest], and on a partial [ShrinkChoice.compactFirst],
-  /// it is deliberately larger, which is exactly how "never destroy" is
-  /// honoured without a Staging Bin to destroy things into.
+  /// [ShrinkChoice.keepSmallest], and on a partial [ShrinkChoice.compactFirst]
+  /// whose leftovers cannot be staged, it is deliberately larger.
   final int toHeightU;
 
   /// Every `MoveDeviceCommand` the screen must run BEFORE the height change,
   /// so no intermediate state has an occupant standing above the rack top.
   final List<CompactionMove> moves;
 
+  /// The devices to send to the Staging Bin, FIRST, before [moves]: staging
+  /// frees the U they held, and a staged device can no longer be moved.
+  final List<Uuid> staged;
+
   /// One line for the status bar, stating what actually happened — including
   /// when that differs from what was asked for.
   final String summary;
 }
 
-/// Rule 2's preselection, with option 3 substituted for the unbuildable
-/// option 2. See the file header for why that inversion honours the rule.
-ShrinkChoice defaultShrinkChoice(RackShrinkPlan plan) {
+/// Rule 2's preselection, as written (DR-205 §11.204.6): option 1 when it
+/// fully succeeds, otherwise option 2, and option 3 only when the bin
+/// refuses a casualty.
+///
+/// [binRefusedBy] is [binRefusals] for the plan's casualties.
+ShrinkChoice defaultShrinkChoice(
+  RackShrinkPlan plan, {
+  List<String> binRefusedBy = const [],
+}) {
   if (!plan.hasCasualties) return ShrinkChoice.asRequested;
   if (plan.rescue?.isFull ?? false) return ShrinkChoice.compactFirst;
+  if (binRefusedBy.isEmpty) return ShrinkChoice.moveToBin;
   return ShrinkChoice.keepSmallest;
 }
 
-/// Whether [choice] is offerable against [plan] — the single predicate both
-/// the radio list and [resolveShrink] consult, so a disabled option can never
-/// be resolvable and vice versa.
-bool shrinkChoiceAvailable(RackShrinkPlan plan, ShrinkChoice choice) =>
-    switch (choice) {
-      ShrinkChoice.asRequested => !plan.hasCasualties,
-      // Rule 1: "Option 1 appears ONLY when compaction actually helps."
-      // `planRackShrink` returns a null rescue in exactly that case, so the
-      // rule is enforced by the planner rather than remembered here.
-      ShrinkChoice.compactFirst => plan.rescue != null,
-      ShrinkChoice.keepSmallest => true,
-    };
+/// Whether [choice] is offerable against [plan] — the single predicate the
+/// radio list and the preselection consult, so a disabled option can never
+/// be preselected.
+bool shrinkChoiceAvailable(
+  RackShrinkPlan plan,
+  ShrinkChoice choice, {
+  List<String> binRefusedBy = const [],
+}) => switch (choice) {
+  ShrinkChoice.asRequested => !plan.hasCasualties,
+  // Rule 1: "Option 1 appears ONLY when compaction actually helps."
+  // `planRackShrink` returns a null rescue in exactly that case, so the
+  // rule is enforced by the planner rather than remembered here.
+  ShrinkChoice.compactFirst => plan.rescue != null,
+  ShrinkChoice.moveToBin => plan.hasCasualties && binRefusedBy.isEmpty,
+  ShrinkChoice.keepSmallest => true,
+};
+
+/// The designators among [who] the Staging Bin would refuse: a LOCKED rail
+/// device does not move (DR-186 §11.185.1), and staging is a move. The
+/// same test `planStageDevice` applies, asked here without building
+/// commands for a choice nobody has made yet.
+List<String> binRefusals(RackDocument doc, Iterable<DoomedOccupant> who) => [
+  for (final d in who)
+    if (doc.devices[d.deviceId]?.placement case RailPlacement(locked: true))
+      d.designator,
+];
 
 /// Turns a choice into the height + displacements Apply will run.
 ///
@@ -168,8 +190,36 @@ ShrinkDecision resolveShrink({
             '${_shiftSuffix(plan.shiftMoves, plan.removedU)}.',
       );
 
+    case ShrinkChoice.moveToBin:
+      final staged = plan.doomed;
+      return ShrinkDecision(
+        toHeightU: plan.toHeightU,
+        moves: plan.shiftMoves,
+        staged: [for (final d in staged) d.deviceId],
+        summary:
+            'Resized $designator to ${plan.toHeightU}U; ${_names(staged)} '
+            '${staged.length == 1 ? 'is' : 'are'} in the Staging Bin, wiring '
+            'kept${_shiftSuffix(plan.shiftMoves, plan.removedU)}.',
+      );
+
     case ShrinkChoice.compactFirst:
       final rescue = plan.rescue!;
+      // THE SPEC'S PARTIAL LABEL, honoured (DR-205 §11.204.6): the
+      // leftovers go to the bin and the rack reaches the height asked for,
+      // with `binMoves`, whose bottom-trim shift is sized to that height.
+      if (rescue.stillDoomed.isNotEmpty &&
+          binRefusals(doc, rescue.stillDoomed).isEmpty) {
+        final leftovers = rescue.stillDoomed;
+        return ShrinkDecision(
+          toHeightU: plan.toHeightU,
+          moves: rescue.binMoves,
+          staged: [for (final d in leftovers) d.deviceId],
+          summary:
+              'Compacted $designator and resized to ${plan.toHeightU}U; '
+              '${_names(leftovers)} ${leftovers.length == 1 ? 'is' : 'are'} '
+              'in the Staging Bin, wiring kept.',
+        );
+      }
       // Clamped for the same reason [ShrinkChoice.keepSmallest] is (see
       // [_withinBounds]). `rescue.moves` stay consistent with a clamped
       // height under both trim directions: a TOP trim renumbers nobody
@@ -282,7 +332,13 @@ class ShrinkRackDialog extends StatefulWidget {
 
 class _ShrinkRackDialogState extends State<ShrinkRackDialog> {
   TrimFrom _trimFrom = TrimFrom.top;
-  late ShrinkChoice _choice = defaultShrinkChoice(_plan);
+  late ShrinkChoice _choice = defaultShrinkChoice(
+    _plan,
+    binRefusedBy: _binRefusedBy(_plan),
+  );
+
+  List<String> _binRefusedBy(RackShrinkPlan plan) =>
+      binRefusals(widget.doc, plan.doomed);
 
   /// Recomputed from the model on every build — cheap (a pure pass over the
   /// occupants), and it means the radio and the option list can never be
@@ -304,8 +360,10 @@ class _ShrinkRackDialogState extends State<ShrinkRackDialog> {
       // appears when the new direction loses nobody). Keep the user's choice
       // when it is still offerable, otherwise fall back to the preselection
       // rule rather than leaving a selected-but-unavailable radio.
-      if (!shrinkChoiceAvailable(_plan, _choice)) {
-        _choice = defaultShrinkChoice(_plan);
+      final plan = _plan;
+      final refused = _binRefusedBy(plan);
+      if (!shrinkChoiceAvailable(plan, _choice, binRefusedBy: refused)) {
+        _choice = defaultShrinkChoice(plan, binRefusedBy: refused);
       }
     });
   }
@@ -397,6 +455,13 @@ class _ShrinkRackDialogState extends State<ShrinkRackDialog> {
       choice: ShrinkChoice.keepSmallest,
       designator: _designator,
     );
+    final binRefusedBy = _binRefusedBy(plan);
+    // The same test `resolveShrink` makes for option 1's partial form, so
+    // the tile and Apply cannot disagree about where the leftovers go.
+    final leftoversStage =
+        rescue != null &&
+        rescue.stillDoomed.isNotEmpty &&
+        binRefusals(widget.doc, rescue.stillDoomed).isEmpty;
     return [
       if (shrinkChoiceAvailable(plan, ShrinkChoice.asRequested))
         _OptionTile(
@@ -413,7 +478,7 @@ class _ShrinkRackDialogState extends State<ShrinkRackDialog> {
           // Rule 1: "its label states the outcome". Both spellings below are
           // the real outcome of pressing Apply with this selected — never a
           // hopeful one.
-          title: rescue.isFull
+          title: rescue.isFull || leftoversStage
               ? 'Compact first, then shrink'
               : 'Compact first, then shrink to '
                     '${rescue.achievableHeightU}U',
@@ -427,10 +492,18 @@ class _ShrinkRackDialogState extends State<ShrinkRackDialog> {
                     '${rescue.rescued.length == 1 ? 'It fits' : 'All '
                               '${rescue.rescued.length} fit'} within '
                     '${plan.toHeightU}U.'
-              // The spec's own partial label is "2 of 3 fit — 1 goes to
-              // Staging Bin", which this build cannot honour (see the file
-              // header). Relabelled to what it CAN honestly do: shrink as
-              // far as the compacted layout allows and displace nobody.
+              // The spec's own partial label, "2 of 3 fit, 1 goes to
+              // Staging Bin" (DR-205 §11.204.6).
+              : leftoversStage
+              ? 'Removes ${rescue.freedU}U of gaps. '
+                    '${rescue.rescued.length} of '
+                    '${rescue.rescued.length + rescue.stillDoomed.length} fit '
+                    'within ${plan.toHeightU}U; '
+                    '${_names(rescue.stillDoomed)} '
+                    '${rescue.stillDoomed.length == 1 ? 'goes' : 'go'} to the '
+                    'Staging Bin, wiring kept.'
+              // A LOCKED leftover cannot be staged, so this stops taller and
+              // displaces nobody.
               : 'Removes ${rescue.freedU}U of gaps. '
                     '${rescue.rescued.length} of '
                     '${rescue.rescued.length + rescue.stillDoomed.length} fit '
@@ -438,7 +511,23 @@ class _ShrinkRackDialogState extends State<ShrinkRackDialog> {
                     'is the smallest that also fits '
                     '${_names(rescue.stillDoomed)}.',
         ),
-      _StagingBinOption(count: plan.doomed.length),
+      if (plan.hasCasualties)
+        if (binRefusedBy.isEmpty)
+          _OptionTile(
+            value: ShrinkChoice.moveToBin,
+            title: plan.doomed.length == 1
+                ? 'Move the 1 above to the Staging Bin'
+                : 'Move the ${plan.doomed.length} above to the Staging Bin',
+            subtitle:
+                'Shrinks to ${plan.toHeightU}U. ${_names(plan.doomed)} '
+                '${plan.doomed.length == 1 ? 'keeps its' : 'keep their'} '
+                'wiring and can be put back from the bin.',
+          )
+        else
+          _StagingBinRefused(
+            count: plan.doomed.length,
+            lockedBy: binRefusedBy,
+          ),
       _OptionTile(
         value: ShrinkChoice.keepSmallest,
         // §4.1 option 3, verbatim in shape — but the height comes from the
@@ -714,19 +803,20 @@ class _OptionTile extends StatelessWidget {
   }
 }
 
-/// §4.1's option 2, rendered disabled with its reason. See the file header
-/// for why it is shown at all rather than omitted.
+/// §4.1's option 2 when a casualty is LOCKED, rendered disabled with its
+/// reason: a locked device does not move (DR-186 §11.185.1), and staging is
+/// a move. Shown rather than omitted, on CR-114's principle, because the
+/// dialog is declining the height asked for and this is part of why.
 ///
-/// DELIBERATELY NOT A `RadioListTile`. Every `ShrinkChoice` this build can
-/// resolve is selectable, so an inert tile would have to borrow some other
-/// option's value — and would then light up whenever that option was chosen,
-/// which is worse than not showing it. A plain disabled `ListTile` with a
-/// radio-shaped leading icon reads as "an option, unavailable" without
-/// participating in the group at all.
-class _StagingBinOption extends StatelessWidget {
-  const _StagingBinOption({required this.count});
+/// DELIBERATELY NOT A `RadioListTile`. An inert radio tile would have to
+/// carry [ShrinkChoice.moveToBin] and would then read as selectable. A plain
+/// disabled `ListTile` with a radio-shaped leading icon reads as "an
+/// option, unavailable" without joining the group at all.
+class _StagingBinRefused extends StatelessWidget {
+  const _StagingBinRefused({required this.count, required this.lockedBy});
 
   final int count;
+  final List<String> lockedBy;
 
   @override
   Widget build(BuildContext context) {
@@ -744,7 +834,9 @@ class _StagingBinOption extends StatelessWidget {
         style: theme.textTheme.bodyMedium?.copyWith(color: disabled),
       ),
       subtitle: Text(
-        'Not available yet — the Staging Bin has no UI in this build.',
+        '${lockedBy.join(', ')} ${lockedBy.length == 1 ? 'is' : 'are'} '
+        'locked, and a locked device does not move. Unlock '
+        '${lockedBy.length == 1 ? 'it' : 'them'} to use the bin.',
         style: theme.textTheme.bodySmall?.copyWith(color: disabled),
       ),
     );

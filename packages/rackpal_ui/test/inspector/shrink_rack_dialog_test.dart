@@ -233,19 +233,42 @@ void main() {
       expect(shrinkChoiceAvailable(plan, ShrinkChoice.asRequested), isTrue);
     });
 
-    test('with casualties and no rescue, option 3 is preselected and '
-        'asRequested is not offerable', () {
+    test('with casualties and no rescue, OPTION 2 IS PRESELECTED (rule 2 as '
+        'written, DR-205 §11.204.6) and asRequested is not offerable', () {
       // One device, already packed at the bottom: compaction cannot help it,
-      // so `plan.rescue` is null (rule 1).
+      // so `plan.rescue` is null (rule 1). This case preselected option 3
+      // for as long as the Staging Bin did not exist.
       final plan = _plan(_doc(20, [_at('A', 1, 12)]), 6, TrimFrom.top);
 
       expect(plan.hasCasualties, isTrue);
       expect(plan.rescue, isNull);
-      expect(defaultShrinkChoice(plan), ShrinkChoice.keepSmallest);
+      expect(defaultShrinkChoice(plan), ShrinkChoice.moveToBin);
       expect(shrinkChoiceAvailable(plan, ShrinkChoice.asRequested), isFalse);
       expect(shrinkChoiceAvailable(plan, ShrinkChoice.compactFirst), isFalse);
+      expect(shrinkChoiceAvailable(plan, ShrinkChoice.moveToBin), isTrue);
       // Rule: option 3 is ALWAYS offerable.
       expect(shrinkChoiceAvailable(plan, ShrinkChoice.keepSmallest), isTrue);
+    });
+
+    test('a LOCKED casualty refuses the bin, and option 3 is preselected '
+        'in its place', () {
+      final doc = _doc(20, [_at('A', 1, 12)], locked: {'A'});
+      final plan = _plan(doc, 6, TrimFrom.top);
+      final refused = binRefusals(doc, plan.doomed);
+
+      expect(refused, ['A']);
+      expect(
+        shrinkChoiceAvailable(
+          plan,
+          ShrinkChoice.moveToBin,
+          binRefusedBy: refused,
+        ),
+        isFalse,
+      );
+      expect(
+        defaultShrinkChoice(plan, binRefusedBy: refused),
+        ShrinkChoice.keepSmallest,
+      );
     });
 
     test('a full rescue preselects compactFirst (rule 2)', () {
@@ -300,6 +323,26 @@ void main() {
       await tester.pumpAndSettle();
       return () => popped;
     }
+
+    testWidgets('WITH NO RESCUE, pressing Apply straight away sends the '
+        'casualty to the bin at the height typed (DR-205 §11.204.6)', (
+      tester,
+    ) async {
+      // A 14U device already at U1: nothing compacts, so option 2 is the
+      // preselection, and pressing Apply without touching a radio is the
+      // gesture that proves it.
+      final doc = _doc(20, [_at('A', 1, 14)]);
+      final read = await pump(tester, doc);
+
+      expect(find.text('Move the 1 above to the Staging Bin'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Apply'));
+      await tester.pumpAndSettle();
+
+      final popped = read();
+      expect(popped, isNotNull);
+      expect(popped!.toHeightU, 12);
+      expect(popped.staged, [const Uuid('dev-A')]);
+    });
 
     testWidgets('TOP trim: the tile promises stillness, and Apply really '
         'does pop a 19U decision with NO moves', (tester) async {
@@ -451,6 +494,20 @@ void main() {
         clock: FixedClock(DateTime.utc(2026, 7, 18)),
       );
       controller.transact(LabelKey.resizeRack, (tx) {
+        // Staged FIRST, as the screen does (DR-205 §11.204.6).
+        for (final id in decision.staged) {
+          switch (planStageDevice(
+            doc: doc,
+            id: id,
+            now: controller.clock.nowUtc(),
+            actor: controller.actor,
+          )) {
+            case PlacementPlanReady(:final command):
+              tx.add(command);
+            case PlacementPlanRefused(:final reason):
+              fail('the dialog offered a stage the bin refuses: $reason');
+          }
+        }
         for (final c in shrinkDisplacementCommands(
           decision.moves,
           now: controller.clock.nowUtc(),
@@ -525,6 +582,7 @@ void main() {
             choice: choice,
             designator: 'RK-1',
           );
+          final before = doc.devices.length;
           apply(doc, decision);
 
           expect(
@@ -535,6 +593,17 @@ void main() {
                 '($choice / $trim)',
           );
           expectAllInside(doc);
+          // AND NOBODY LEFT THE DOCUMENT: a device off the rails is in the
+          // bin, where a person can see it and put it back (rule 3).
+          expect(doc.devices.length, before, reason: '$choice / $trim');
+          expect(
+            {
+              for (final d in doc.devices.values)
+                if (d.placement is StagedPlacement) d.id,
+            },
+            decision.staged.toSet(),
+            reason: '$choice / $trim',
+          );
         }
       }
     });
@@ -563,6 +632,99 @@ void main() {
       expect(doc.racks[_rackId]!.heightU, 20);
       expect(positions(doc), {'A': 5, 'B': 18});
       expect(controller.undo.canUndo, isFalse);
+    });
+
+    group('OPTION 2 (DR-205 §11.204.6)', () {
+      test('under a TOP trim: the rack reaches 12U, B waits in the bin, and '
+          'ONE Ctrl+Z puts both back', () {
+        final doc = _example();
+        final plan = _plan(doc, 12, TrimFrom.top);
+        final decision = resolveShrink(
+          doc: doc,
+          plan: plan,
+          choice: ShrinkChoice.moveToBin,
+          designator: 'RK-1',
+        );
+        final controller = apply(doc, decision);
+
+        expect(doc.racks[_rackId]!.heightU, 12);
+        expect(positions(doc), {'A': 5});
+        final b = doc.devices.values.singleWhere((d) => d.designator == 'B');
+        expect(
+          (b.placement as StagedPlacement).lastRuIndex,
+          18,
+          reason: 'staged from where it stood, so its return chip is right',
+        );
+        expect(decision.summary, contains('B is in the Staging Bin'));
+
+        controller.undo.undo(doc);
+        expect(doc.racks[_rackId]!.heightU, 20);
+        expect(positions(doc), {'A': 5, 'B': 18});
+        expect(controller.undo.canUndo, isFalse);
+      });
+
+      test('under a BOTTOM trim: A waits in the bin and B shifts down the '
+          'whole 8U', () {
+        final doc = _example();
+        final plan = _plan(doc, 12, TrimFrom.bottom);
+        apply(
+          doc,
+          resolveShrink(
+            doc: doc,
+            plan: plan,
+            choice: ShrinkChoice.moveToBin,
+            designator: 'RK-1',
+          ),
+        );
+        expect(doc.racks[_rackId]!.heightU, 12);
+        expect(positions(doc), {'B': 10});
+        expectAllInside(doc);
+      });
+    });
+
+    test('OPTION 1 PARTIAL sends the leftover to the bin and reaches the '
+        'height asked for (DR-205 §11.204.6)', () {
+      // Compacted: A@1, B@2, TALL@3-8. B fits under 5U and TALL does not.
+      final doc = _doc(24, [
+        _at('A', 4, 1),
+        _at('B', 14, 1),
+        _at('TALL', 18, 6),
+      ]);
+      final plan = _plan(doc, 5, TrimFrom.top);
+      expect(plan.rescue?.isFull, isFalse);
+      final decision = resolveShrink(
+        doc: doc,
+        plan: plan,
+        choice: ShrinkChoice.compactFirst,
+        designator: 'RK-1',
+      );
+      apply(doc, decision);
+
+      expect(doc.racks[_rackId]!.heightU, 5);
+      expect(positions(doc), {'A': 1, 'B': 2});
+      expect(decision.summary, contains('TALL is in the Staging Bin'));
+      expectAllInside(doc);
+    });
+
+    test('and with a LOCKED leftover it stops taller, as it always did', () {
+      final doc = _doc(
+        24,
+        [_at('A', 4, 1), _at('B', 14, 1), _at('TALL', 18, 6)],
+        locked: {'TALL'},
+      );
+      final plan = _plan(doc, 5, TrimFrom.top);
+      // THE PRECONDITION, so this cannot pass vacuously: compaction still
+      // saves B, and the locked TALL at U18-U23 sets the floor at 23U.
+      final rescue = plan.rescue!;
+      expect(rescue.stillDoomed.map((d) => d.designator), ['TALL']);
+      final decision = resolveShrink(
+        doc: doc,
+        plan: plan,
+        choice: ShrinkChoice.compactFirst,
+        designator: 'RK-1',
+      );
+      expect(decision.staged, isEmpty);
+      expect(decision.toHeightU, rescue.achievableHeightU);
     });
 
     test('keepSmallest under a BOTTOM trim: the rack becomes 16U AND both '
