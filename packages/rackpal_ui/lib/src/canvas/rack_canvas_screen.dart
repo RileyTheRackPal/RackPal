@@ -2129,6 +2129,13 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
           return;
       }
     }
+    _showPlacedOnShelf(placedId, shelf);
+  }
+
+  /// `Placed STB-3 on SHF-1.`, and for a rack-ear device the sentence that
+  /// catches a drop meant for the rails (§11.203.2). One spelling for the
+  /// drag and the picker.
+  void _showPlacedOnShelf(Uuid placedId, String shelf) {
     final placed = _doc.devices[placedId];
     final body = placed == null ? null : bodyFor(placed, _doc.templates);
     final name = placed?.designator ?? 'The device';
@@ -2138,6 +2145,29 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       '${ears ? ' $name is rack-mountable; drag it to the rails if that '
                 'was meant.' : ''}',
     );
+  }
+
+  /// `Put a device on this shelf…` (DR-204 §11.203.1, `#957`): [catalogId]
+  /// onto the sole selected shelf, auto-packed at the right-hand end
+  /// (AC-043), since a keyboard has no caret to aim.
+  void _putOnSoleShelf(String catalogId) {
+    final shelfId = _soleSelectedDeviceId;
+    if (shelfId == null) return;
+    final shelf = _doc.devices[shelfId]?.designator ?? 'the shelf';
+    _controller.selection = _selection.snapshot();
+    switch (buildPlaceOnShelfCommand(
+      doc: _doc,
+      catalogId: catalogId,
+      hostId: shelfId,
+      now: _controller.clock.nowUtc(),
+      actor: _controller.actor,
+    )) {
+      case ShelfPlacementReady(:final command):
+        _finalizeCatalogPlacement(command, catalogId, fromQuickAdd: false);
+        _showPlacedOnShelf(command.id, shelf);
+      case ShelfPlacementFailed(:final reason):
+        _status.show(reason);
+    }
   }
 
   /// A chip dragged onto the rails and released on a free U (`#964`). The
@@ -5337,6 +5367,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
                       onSetPortFact: _setPortFact,
                       onSetMountNote: _setMountNote,
                       onSetLocked: (lock) => _setLockSelection(lock: lock),
+                      onPutOnShelf: _putOnSoleShelf,
                       onZeroU: _runZeroU,
                       onMoveZeroU: _moveZeroUOccupant,
                       onAddZeroUDevice: _addZeroUOccupant,

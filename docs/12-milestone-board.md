@@ -1222,6 +1222,15 @@ is a drawing fact, not a rule about what may sit where, and it lifts when `#844`
 draws deeper. The first gate run also went red on `#964`'s own refused-drop test, which aimed at
 SHF-1 to provoke *"Occupied by SHF-1"*; a shelf now takes the drop, so the test aims at a switch.
 
+**CHAPTER `#957`: `Put a device on this shelf…`**, the keyboard's route (§11.203.1). A selected
+shelf on the rails shows the button in the inspector; the dialog opens with its filter focused, so
+typing narrows the list and Enter places the first match, auto-packed at the right-hand end because
+a keyboard has no caret to aim. Shelf-sitting devices are listed first and every other template
+follows by name; a shelf is not offered, for the drag's reason. It returns an id and the screen
+places it through `buildPlaceOnShelfCommand`, which asks TOP-005, and the status line is the same
+sentence the drag prints, rack-ear note included. Library rows are not offered, on
+`add_zero_u_occupant_dialog.dart`'s reasoning: copy-on-place stays in one place.
+
 ### 4.24 The Staging Bin, which CR-032 ruled in and nothing built · 2026-09-30 · `#961` · `DR-205` · no version move
 
 Found building `#959`: DR-204's shelf deletion defaults to *"Move hosts to Staging Bin"*, and there

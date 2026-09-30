@@ -321,4 +321,82 @@ void main() {
     expect(_onScreen(tester, 'Placed STB-2 on SHF-1.'), isTrue);
     await tester.pump(const Duration(seconds: 4)); // the status timer
   });
+
+  group('PUT A DEVICE ON THIS SHELF… (#957, DR-204 §11.203.1)', () {
+    const button = ValueKey('inspector-put-on-shelf');
+
+    /// Selects SHF-1 by its header strip, the part of a hosting shelf a
+    /// click can reach that no host covers.
+    Future<void> selectShelf(WidgetTester tester) async {
+      final r = tester.getRect(find.byKey(ValueKey(_shelf.v)));
+      await tester.tapAt(Offset(r.left + 3, r.top + 3));
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('offers shelf-sitting devices first and never a shelf, and '
+        'Enter from the filter puts the first match on the end', (
+      tester,
+    ) async {
+      final doc = _document();
+      await _pump(tester, doc);
+      await selectShelf(tester);
+
+      await tester.tap(find.byKey(button));
+      await tester.pumpAndSettle();
+      final dialog = find.byType(PutOnShelfDialog);
+      expect(dialog, findsOneWidget);
+      final names = tester
+          .widgetList<RadioListTile<String>>(
+            find.descendant(
+              of: dialog,
+              matching: find.byType(RadioListTile<String>),
+            ),
+          )
+          .map((t) => t.value)
+          .toList();
+      expect(names, ['tpl.box', 'tpl.avr']);
+
+      // THE KEYBOARD'S ROUTE: the filter has focus, so Enter alone places.
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pump();
+
+      final order = _packOrder(doc);
+      expect(order, hasLength(3));
+      expect(order.take(2), [_box1, _box2], reason: 'packed at the end');
+      expect(_onScreen(tester, 'on SHF-1.'), isTrue);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('typing narrows the list, and a rack-ear pick says so', (
+      tester,
+    ) async {
+      final doc = _document();
+      await _pump(tester, doc);
+      await selectShelf(tester);
+      await tester.tap(find.byKey(button));
+      await tester.pumpAndSettle();
+
+      await tester.enterText(find.byKey(PutOnShelfDialog.filterKey), 'recei');
+      await tester.pump();
+      await tester.tap(find.byKey(PutOnShelfDialog.confirmKey));
+      await tester.pump();
+
+      final order = _packOrder(doc);
+      expect(doc.devices[order.last]!.designator, startsWith('AVR'));
+      expect(_onScreen(tester, 'is rack-mountable'), isTrue);
+      await tester.pump(const Duration(seconds: 4));
+    });
+
+    testWidgets('is offered for a shelf and for nothing else', (tester) async {
+      final doc = _document();
+      await _pump(tester, doc);
+
+      await tester.tap(find.byKey(ValueKey(_box1.v)));
+      await tester.pumpAndSettle();
+      expect(find.byKey(button), findsNothing, reason: 'STB-1 is no shelf');
+
+      await selectShelf(tester);
+      expect(find.byKey(button), findsOneWidget);
+    });
+  });
 }
