@@ -1167,6 +1167,17 @@ Ports toolbar at the 1000 px minimum and overflowed the grid by 2 px; it is comp
 
 **Scope.** No scope change.
 
+### 4.22 DR-203 put "on a shelf" on the wrong side · 2026-09-30 · `#952` · no version move
+
+Found the next day, investigating why nothing can be put on a shelf (`#953`). `mountTakesRackUnits`
+listed `MountMethod.shelf` as taking rack units. **The user was never asked about it**: their answer
+covered side-mounted and in-furniture gear, and the author added `shelf` beside rack ears on a
+reading of the word. It means the device sits on a shelf, and the seeded P04 strip says so in its
+own comment. The builder therefore demanded a height of a strip lying on a shelf and refused to save
+it at 0. The seed sweep could not see it, because P04's `0 / 0 / none` derives the same either way;
+only the Save rule and the visible form differ. Corrected in code, canon §11.202.4 (as the author's
+error), docs/06, docs/21 and the OKF record.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

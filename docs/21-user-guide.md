@@ -478,9 +478,9 @@ Rack and Site views searches the same list.
    to four letters: `MTX` gives `MTX-1`, `MTX-2`), then **Size and mounting**:
    how it mounts, **RU height (front)** and width. The rear height copies the
    front until you type in it (put `0` for a front-only device), and
-   **Occupies** is worked out for you. Gear that takes no rack units (0U,
-   hosted in another device, side mounted, in furniture, not in a rack) asks
-   for no height at all.
+   **Occupies** is worked out for you. Gear that takes no rack units (on a
+   shelf, 0U, hosted in another device, side mounted, in furniture, not in a
+   rack) asks for no height at all.
    Category is optional and suggests a prefix and an elevation mark; Signal
    domain is optional and colours the device on a floorplan.
 3. **Save** now if you like. **A name, a prefix and a height is a finished

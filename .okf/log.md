@@ -1,5 +1,11 @@
 # Update Log
 
+## 2026-09-30 (seventy-ninth entry)
+
+* **Update**: [DR-203](/decisions/dr-203-size-and-mounting-asked-once.md) corrected at `#952`:
+  `On a shelf` takes no rack units. The author had added it to the rack-units list unasked; the
+  seed sweep could not see it, because a shelf-sitting body derives the same either way.
+
 ## 2026-09-30 (seventy-eighth entry)
 
 * **Progress**: `#950` closes at `f2024657` (PR 166). `#951` (docs/12 §4.21): the Device Builder

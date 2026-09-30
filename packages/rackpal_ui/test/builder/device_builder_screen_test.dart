@@ -677,6 +677,33 @@ void main() {
       );
     });
 
+    testWidgets('A DEVICE THAT SITS ON A SHELF ASKS NO HEIGHT, which is the '
+        'shape of the seeded P04 power strip (`#952`)', (tester) async {
+      // DR-203 first classed `shelf` as taking rack units, so this form
+      // demanded a height of a strip lying on a shelf and would not save
+      // it at 0. The U it sits in is the shelf's.
+      final saved = await _pump(
+        tester,
+        template: _blank()
+          ..displayName = 'Power Strip'
+          ..typePrefix = 'PS',
+      );
+
+      await _chooseMount(tester, 'On a shelf');
+      expect(
+        find.widgetWithText(TextField, 'RU height (front) *'),
+        findsNothing,
+      );
+      expect(_saveEnabled(tester), isTrue);
+      await tester.tap(_saveButton());
+      await tester.pump();
+
+      expect(
+        (saved.single.frontU, saved.single.rearU, saved.single.side),
+        (0, 0, OccupancySide.none),
+      );
+    });
+
     testWidgets('HALF RACK CARRIES ITS SPAN, so the file cannot say half and '
         'full at once', (tester) async {
       final saved = await _pump(tester, template: _named());
