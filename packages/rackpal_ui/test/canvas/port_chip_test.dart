@@ -23,6 +23,7 @@
 //      both written against, so `onRevealInSchematic == null` must draw
 //      nothing at all.
 
+import 'package:flutter/gestures.dart' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:rackpal_core/rackpal_core.dart';
@@ -620,6 +621,100 @@ void main() {
           reason: "the chip is its own style's width in physical pixels",
         );
       }
+    });
+  });
+
+  group('5 — ON A SHELF, THE CHIP WAITS FOR HOVER OR SELECTION (DR-204 '
+      '§11.203.10, #968)', () {
+    /// AMP-1 set on a 2U shelf, where the 11-unit chip covered its label.
+    void onAShelf() {
+      const shelf = Uuid('dev-shelf');
+      doc.templates['tpl.shelf@1'] = TemplateSnapshot(
+        templateId: const TemplateId('tpl.shelf'),
+        version: 1,
+        contentHash: 'sha256:tpl.shelf',
+        capturedAt: _when,
+        body: TemplateBody(
+          manufacturer: 'Demo',
+          model: 'tpl.shelf',
+          displayName: 'Shelf',
+          frontU: 2,
+          isContainer: true,
+        ),
+      );
+      doc.devices[shelf] = DeviceInstance(
+        id: shelf,
+        kind: DeviceKind.rackDevice,
+        templateRef: const TemplateRef(
+          templateId: TemplateId('tpl.shelf'),
+          version: 1,
+          contentHash: 'sha256:tpl.shelf',
+        ),
+        designator: 'SHF-1',
+        name: 'Shelf',
+        placement: const RailPlacement(
+          rackId: _rackId,
+          ruIndex: 1,
+          face: Face.front,
+        ),
+        meta: _meta(),
+      );
+      final amp = doc.devices[_amp]!;
+      doc.devices[_amp] = DeviceInstance(
+        id: amp.id,
+        kind: amp.kind,
+        templateRef: amp.templateRef,
+        designator: amp.designator,
+        name: amp.name,
+        placement: const ShelfPlacement(
+          hostDeviceId: shelf,
+          order: FracIndex('a0'),
+        ),
+        meta: _meta(),
+      );
+    }
+
+    testWidgets('AT REST a host carries no chip, while a rail device does', (
+      tester,
+    ) async {
+      onAShelf();
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+      expect(_render(tester, _amp).portChip, isNull);
+    });
+
+    testWidgets('HOVERED, it shows', (tester) async {
+      onAShelf();
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+
+      // A REAL MOUSE puts Flutter in the traditional highlight mode, which
+      // is when `onShowHoverHighlight` fires; a synthetic hover does not,
+      // so the test states the mode a mouse user is in.
+      FocusManager.instance.highlightStrategy =
+          FocusHighlightStrategy.alwaysTraditional;
+      addTearDown(
+        () => FocusManager.instance.highlightStrategy =
+            FocusHighlightStrategy.automatic,
+      );
+      final mouse = await tester.createGesture(kind: PointerDeviceKind.mouse);
+      await mouse.addPointer(location: Offset.zero);
+      addTearDown(mouse.removePointer);
+      await mouse.moveTo(tester.getCenter(find.byKey(ValueKey(_amp.v))));
+      await tester.pumpAndSettle();
+
+      expect(_render(tester, _amp).portChip?.label, '0/4');
+    });
+
+    testWidgets('SELECTED, it shows', (tester) async {
+      onAShelf();
+      await tester.pumpWidget(app());
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(ValueKey(_amp.v)));
+      await tester.pumpAndSettle();
+
+      expect(_render(tester, _amp).portChip?.label, '0/4');
     });
   });
 }

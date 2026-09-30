@@ -22767,6 +22767,21 @@ The rails case is the AVR one from §11.203.2: a rack-mountable device first set
 mounted after all. The removal is announced on the drag ghost before the release, and the status
 line names the cables that go with it.
 
+**11.203.10 RULED: A LOADED SHELF IS LABELLED IN ITS HEADER, AND ITS HOSTS' CHIPS WAIT.** Settled by
+the user on 2026-09-30 from a screenshot of a loaded 2U shelf (`#968`), both on the recommended
+option. The shelf's own name and type lines were drawn under its hosts and showed straight through a
+hollow, width-unknown one, and each host's CR-105 port chip, 11 units tall on a host about 26 tall,
+sat on its label.
+
+- **A shelf carrying devices draws its top line only**: designator, U badge, and between them its
+  load (§11.203.7), in the header band reserved for it. The name and type lines are dropped while
+  it hosts anything and stay in the inspector; an empty shelf draws as any device does. It prints
+  the same on the PDF, which rules out the tooltip-only option: paper has no hover. An off-rack
+  margin label was the third option, and was not chosen.
+- **A shelf host's port chip shows on hover or selection**, not at rest. Rail devices keep the
+  always-on chip. The chip is pressable exactly when it can be seen: a mouse always hovers before it
+  presses, and a touch or pen press on an unselected host does not fire a chip nobody could see.
+
 **Scope.** No scope change: AC-043's v1 half, built.
 
 ---

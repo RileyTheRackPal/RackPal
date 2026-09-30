@@ -1267,6 +1267,26 @@ incomplete total under capacity says `≥` and never claims to fit. Words rather
 because colour on this drawing belongs to the signal domain (CR-078). An empty shelf prints
 nothing, because a load of zero on every empty shelf in a rack is noise.
 
+**CHAPTER `#968`: IT WORKED AND IT WAS ROUGH (§11.203.10).** The user's screenshot of a loaded 2U
+shelf showed three layers colliding, and this record had called the Story's exit criterion met. The
+shelf's own name and type lines were drawn under its hosts and through a hollow one; each host's
+port chip covered its label; and the load line from `#960` shared the header's right edge with the
+U badge. **A loaded shelf now draws its top line only**, with the load placed by the device layer
+between the designator and the badge, measured, so it is the note that drops and never the
+identifier. **A host's chip waits for hover or selection**, decided in `DeviceBox`, where hover
+lives, so the render object still draws exactly what it is handed; the hit test matches what is
+visible, and a touch press on an unselected host does not fire an invisible chip. Story `#953` was
+reopened for this rather than the defect being filed somewhere quieter.
+
+**AND THEN IT WAS LOOKED AT.** The Home Theatre starter's elevation was rendered to a PNG through
+the export and pdfium, which no gate does, and showed two more defects no test could see: `SHF-1`
+sat on its hosts' top edge, because the header was a constant 15 units and the print floor inflates
+every label; and the shelf's 45° hatch ran through its hollow hosts' labels. Both were the
+author's calls rather than the user's, recorded here and not in the ruling: the header is now sized
+from the designator at the sheet's type scale (`shelfHeaderUnitsFor`), and a loaded shelf is not
+hatched, its header and mark saying what it is. The screen never hatches (`hatchPassive` is a
+sheet option), so the second defect was paper-only. The re-render reads clean.
+
 ### 4.24 The Staging Bin, which CR-032 ruled in and nothing built · 2026-09-30 · `#961` · `DR-205` · no version move
 
 Found building `#959`: DR-204's shelf deletion defaults to *"Move hosts to Staging Bin"*, and there

@@ -998,7 +998,10 @@ $SuiteFloors = @{
     # A shelf's load counts an unknown mass rather than summing it as zero;
     # the load line under, incomplete, OVER and uncapped; the elevation
     # prints it on a loaded shelf and not on an empty one.
-    'rackpal_core'   = 5167
+    # 5171 at `#968` (§11.203.10): +4, a loaded shelf draws no name or type
+    # line under its hosts, and an empty one still does; its header is sized
+    # from the type scale; a loaded shelf is not hatched and an empty one is.
+    'rackpal_core'   = 5171
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1570,7 +1573,9 @@ $SuiteFloors = @{
     # 2022 at `#959` (DR-204 §11.203.6): +3 in canvas/shelf_drop_test.dart.
     # Deleting a shelf asks; Enter stages its hosts and one Ctrl+Z puts all
     # back; Delete all removes every host; Cancel changes nothing.
-    'rackpal_ui'     = 2022
+    # 2025 at `#968` (§11.203.10): +3 in canvas/port_chip_test.dart. A shelf
+    # host's chip is absent at rest, and shows on hover and on selection.
+    'rackpal_ui'     = 2025
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

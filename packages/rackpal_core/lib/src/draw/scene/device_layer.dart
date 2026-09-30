@@ -135,6 +135,13 @@ DeviceLayerBuild buildDeviceLayer(
   // of an unknown length (§11.165.2) applied to the other axis.
   bool showBadge = true,
   bool widthUnknown = false,
+  // A SHELF CARRYING DEVICES (DR-204 §11.203.10, `#968`): non-null means
+  // it hosts something, and it is then the shelf's load line. The shelf
+  // keeps ONLY its top line, designator and badge with this note between
+  // them, because its hosts are drawn over the rest of its body and its
+  // name and type lines showed through them (and straight through a
+  // hollow, width-unknown one). The name and type are in the inspector.
+  String? hostingNote,
 }) {
   final ops = <DiagramOp>[];
   final sizes = <double>[];
@@ -307,22 +314,48 @@ DeviceLayerBuild buildDeviceLayer(
 
       // docs/08 §2.2's `4U · 12–15` when the caller supplied it, the plain
       // U-height badge otherwise. Same line, so it costs no extra height.
+      var noteRight = width - _pad;
       if (showBadge) {
-        ops.add(
-          OpText(
-            ruSpanLabel ?? '${deviceH}U',
-            DPt(width - _pad, pad),
-            rackText(badgePt, inkBadge, TextAnchor.topRight),
-          ),
-        );
+        final badge = ruSpanLabel ?? '${deviceH}U';
+        final badgeStyle = rackText(badgePt, inkBadge, TextAnchor.topRight);
+        ops.add(OpText(badge, DPt(width - _pad, pad), badgeStyle));
         sizes.add(badgePt);
+        noteRight -= measurer.measureText(badge, badgeStyle).advanceWidth + 6;
+      }
+
+      // THE LOAD LINE, between the designator and the badge and only if it
+      // fits there, measured: a note that cannot fit is dropped, never the
+      // designator or the badge. It is not reported through
+      // `labelDropped`, which is about the device's identifier.
+      if (hostingNote case final note?) {
+        final style = rackText(typePt, inkType, TextAnchor.topRight);
+        final designatorEnd =
+            textLeft +
+            measurer
+                .measureText(
+                  designator,
+                  rackText(designatorPt, inkDesignator, TextAnchor.topLeft),
+                )
+                .advanceWidth;
+        final noteWidth = measurer.measureText(note, style).advanceWidth;
+        if (noteRight - noteWidth >= designatorEnd + 8) {
+          ops.add(
+            OpText(
+              note,
+              DPt(noteRight, pad + (designatorPt - typePt) / 2),
+              style,
+            ),
+          );
+          sizes.add(typePt);
+        }
       }
 
       // full / detail: stack name then type below the designator, each
       // only if it fits vertically (a 1U body has room for the designator
       // only). These are rungs 2 and 1 of the ladder — dropped before the
       // line above them ever is.
-      if (lod == LodLevel.full || lod == LodLevel.detail) {
+      if (hostingNote == null &&
+          (lod == LodLevel.full || lod == LodLevel.detail)) {
         var y = pad + designatorPt + 2;
         if (y + namePt <= height - pad) {
           ops.add(

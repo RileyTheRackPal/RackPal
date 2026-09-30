@@ -33,6 +33,8 @@
 // drop that would cause it is refused where the widths are known
 // (§11.203.8); a hand-edited file can still arrive in that state, and an
 // elevation that threw on it would take a rack down over one shelf.
+import 'dart:math' as math;
+
 import 'package:rackpal_core/src/commands/shelf_placement.dart'
     show devicesOnShelfIn;
 import 'package:rackpal_core/src/derived/device_loads.dart'
@@ -42,6 +44,8 @@ import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/scene/rack_geometry.dart';
 import 'package:rackpal_core/src/draw/scene/rack_load_gutter.dart'
     show formatMassRollup, kGutterUnknown;
+import 'package:rackpal_core/src/draw/scene/rack_style.dart'
+    show RackTextSizes, RackTypeScale;
 import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/enums.dart' show UnitSystem;
 import 'package:rackpal_core/src/model/template.dart';
@@ -82,12 +86,25 @@ const double _minHostUnits = RackGeometry.unitsPerRu * 0.6;
 /// Nanometres per diagram unit: the inverse of `RackGeometry.unitsForLen`.
 final double _nmPerUnit = kRackUnit.nm / RackGeometry.unitsPerRu;
 
+/// The header band a shelf needs for its designator at [typeScale]: the
+/// device layer's 4-unit pad, the designator itself, and 3 units clear of
+/// the hosts' top edge (DR-204 §11.203.10, `#968`).
+///
+/// SIZED FROM THE TYPE, NOT A CONSTANT. [kShelfHeaderUnits] was the whole
+/// answer until a rendered PDF showed `SHF-1` touching its hosts: the print
+/// floor inflates every label (`RackTypeScale`), and a band sized for the
+/// screen's 11 units no longer held the designator on paper.
+double shelfHeaderUnitsFor(RackTypeScale typeScale) => math.max(
+  kShelfHeaderUnits,
+  4 + typeScale.size(RackTextSizes.designator) + 3,
+);
+
 /// The rect inside [shelfRect] that hosts are packed into: below the
 /// header when there is room for one, above the tray always.
-DBox shelfHostArea(DBox shelfRect) {
+DBox shelfHostArea(DBox shelfRect, {double headerUnits = kShelfHeaderUnits}) {
   final withHeader =
-      shelfRect.height - kShelfHeaderUnits - kShelfTrayUnits >= _minHostUnits;
-  final top = shelfRect.top + (withHeader ? kShelfHeaderUnits : 0);
+      shelfRect.height - headerUnits - kShelfTrayUnits >= _minHostUnits;
+  final top = shelfRect.top + (withHeader ? headerUnits : 0);
   return DBox.fromLtwh(
     shelfRect.left + 2,
     top,
@@ -222,8 +239,9 @@ ShelfLayout layoutShelfHosts({
   required DeviceInstance shelf,
   required DBox shelfRect,
   required bool mirrored,
+  double headerUnits = kShelfHeaderUnits,
 }) {
-  final area = shelfHostArea(shelfRect);
+  final area = shelfHostArea(shelfRect, headerUnits: headerUnits);
   final shelfBody = templates[templateKeyFor(shelf.templateRef)]?.body;
   final usable = shelfUsableWidth(shelfBody, shelfRect);
   final unknownSlot = Len(usable.nm ~/ 4);
@@ -270,6 +288,7 @@ Map<Uuid, ShelfLayout> layoutAllShelves({
   required Map<String, TemplateSnapshot> templates,
   required Iterable<({DeviceInstance device, DBox rect})> placed,
   required bool mirrored,
+  double headerUnits = kShelfHeaderUnits,
 }) {
   final out = <Uuid, ShelfLayout>{};
   for (final p in placed) {
@@ -279,6 +298,7 @@ Map<Uuid, ShelfLayout> layoutAllShelves({
       shelf: p.device,
       shelfRect: p.rect,
       mirrored: mirrored,
+      headerUnits: headerUnits,
     );
     if (layout.hosts.isNotEmpty) out[p.device.id] = layout;
   }
