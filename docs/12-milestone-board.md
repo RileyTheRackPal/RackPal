@@ -1351,6 +1351,31 @@ the printed sheet when `#693` builds it; the key appears exactly when a suffix d
 pinned "every shared column prints one string" was rewritten to the new rule rather than dropped:
 T6.11's `CABLE ID` is the same designator, computed once, with the suffix after it.
 
+
+### 4.26 T0.01's cable-type key, in colour and greyscale side by side · 2026-09-30 · `#316` · `DR-207` · no version move
+
+M6-B's first half (Chapters `#317`, `#318`). `T0.01` is a new `SheetRole`, first in every set and
+ANSI B landscape, and its first block is the cable-type key: **requirement 4's ten named types
+always, then every other family the set uses** (DR-207, the user's choice after the starters were
+counted: three carry no cables, so an in-use key would have been empty and would not contain the ten
+AC-054's photocopy test reads). The ten are data, `kRequirement4Types`, held to
+`tools/pal1_check.py`'s `REQUIREMENT_4` by a test that reads the script rather than a second copy of
+its table. Every rendering comes from `resolveSignalStyle` with the project's own overrides, so the
+legend cannot document a line the sheets do not draw; the marks are drawn by `familyGlyphOp`, since
+the glyph gate keeps those shapes out of the font. **The greyscale column is the hue's own relative
+luminance** as grey, which is what a mono laser does to the colour sheet and the L PAL-1 is stated
+over, rather than the greyscale export's black, which would erase L and preview a different print.
+IR shows `ctl.ir_direct` beside canon §6.6's two IR families, as docs/05 §6.4 and `pal1_check.py`
+already do; canon's table is the one short of a shipped family.
+
+**IT WAS LOOKED AT BEFORE IT WAS TESTED.** The first render set every row's first letter on the
+frame line, which is fixed, and showed tags reading `AUD·AUD`, `NET·NET` and `RF·RF`: the tag
+composer doubles when a family's short tag equals its domain prefix, on every sheet and not only
+here, and canon §6.6 says `AUD`. That is filed as its own task rather than patched inside the legend.
+Adding the role renumbered every set, and the tests that pinned the old shape (`2N + 1`, "the three
+sheets", "SHEET 1 OF 3", pages found by position) were updated to the new truth, several by finding
+their sheet by role instead of by index, which is what they meant.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
@@ -7044,7 +7069,7 @@ requires: the board query for Done Chapters under epic 23 returns 61, and 60 plu
 
 | Clause | Mark | Why |
 |---|---|---|
-| All four starters export a **complete sheet set** | **NOT BUILT** | They export **3 of 12 slots**. Missing: `T0.00` cover/index, `T0.01` legend, `T0.02` exceptions, `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.20` unused home runs, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details. `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
+| All four starters export a **complete sheet set** | **NOT BUILT** | They export **4 of 12 slots**; `T0.01` legend arrived at M6-B (`#316`, §4.26) with its cable-type key, and its other five blocks are owed. Missing: `T0.00` cover/index, `T0.02` exceptions, `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.20` unused home runs, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details. `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
 | Legend under deuteranopia / protanopia simulation | **UNPERFORMED** | No legend sheet exists to verify |
 | Real greyscale laser print (AC-054) | **UNPERFORMED** | Nothing has been printed |
 | ANSI B laser / ANSI D plotter / photocopy, physically inspected and signed off (AC-058 D13) | **UNPERFORMED** | Nothing has been printed |

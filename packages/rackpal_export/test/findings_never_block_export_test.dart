@@ -489,8 +489,8 @@ void main() {
       );
       expect(result.value.sheetCount, expected.sheets.length);
 
-      // THE SHEET ITSELF, READ OFF THE PAGE. A `sheetCount` of four is
-      // satisfied by four blank pages, and `T1.01` is the sheet these
+      // THE SHEET ITSELF, READ OFF THE PAGE. A `sheetCount` of five is
+      // satisfied by five blank pages, and `T1.01` is the sheet these
       // four rules are about: a plan whose advisories held it back would
       // still have exported the elevations and the schedule.
       final cmap = parseToUnicodeCMap(result.value.bytes);
@@ -572,7 +572,8 @@ void main() {
       expect(result, isA<Ok<ExportedDocument>>());
       expect(
         (result as Ok<ExportedDocument>).value.sheetCount,
-        4,
+        // The legend, the plan, two elevations and the list (M6-B).
+        5,
         reason: 'the same set as the unacknowledged run',
       );
     });

@@ -1131,16 +1131,17 @@ floorplan import.
 
 ## 21.7 What the PDF export actually produces
 
-`File` ▸ `Export PDF…`. **Four kinds of sheet are emitted today:**
+`File` ▸ `Export PDF…`. **These sheets are emitted today:**
 
 | Sheet | When |
 |---|---|
+| **Symbol Legend** (`T0.01`) | Always, first. Every cable type in colour and in greyscale side by side: the ten named types every time, then any other type your cables use |
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |
 | **Rack Elevation, Rear** | One per rack |
 | **Equipment List and Materials** | Always, paginated as needed |
 
-So a two-rack job with one floorplan gives you six sheets. The status line says
+So a two-rack job with one floorplan gives you seven sheets. The status line says
 how many sheets were written and how large the file is.
 
 **A project with no rack cannot be exported**: there is no elevation to draw
@@ -1170,10 +1171,9 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 - **No localisation.** English only, and no accessibility work has been done
   beyond keyboard reach.
 - **The interconnect sheets do not print.** You can author the schematic in
-  full and it will not appear in the PDF. So the cover sheet, the symbol
-  legend, the exceptions sheet, the pull sheet, the termination schedule, the
-  unused home runs sheet and the pinout details. Eight of the twelve specified
-  sheets are absent; §21.7 lists the four you do get.
+  full and it will not appear in the PDF. Nor do the cover sheet, the
+  exceptions sheet, the pull sheet, the termination schedule, the unused home
+  runs sheet or the pinout details; §21.7 lists the sheets you do get.
 - **No DXF or DWG export.** DXF is planned for a later release.
 - **No Rear Panel view.** `Ctrl+3` does nothing; it is reserved for it. The
   rear panel prints on the rear elevation today; it is just not interactively

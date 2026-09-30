@@ -311,7 +311,8 @@ void main() {
       );
 
       expect(pages.length, greaterThan(1));
-      expect(set.sheets, hasLength(2 * 2 + pages.length));
+      // The legend, two elevations per rack, and every schedule page.
+      expect(set.sheets, hasLength(1 + 2 * 2 + pages.length));
       for (final sheet in set.sheets) {
         expect(sheet.total, set.sheets.length);
       }
@@ -336,11 +337,12 @@ void main() {
       expect(set.notices, isEmpty);
     });
 
-    test('one rack and one schedule page is still the three-sheet set', () {
+    test('one rack and one schedule page is still the four-sheet set, the '
+        'legend first (M6-B)', () {
       final set = SheetSet.forRacks(<Rack>[testRack()]);
       expect(
         set.sheets.map((s) => s.ncsId).toList(),
-        <String>['T2.01', 'T2.02', 'T6.30'],
+        <String>['T0.01', 'T2.01', 'T2.02', 'T6.30'],
       );
     });
   });

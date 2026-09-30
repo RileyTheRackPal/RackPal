@@ -21,12 +21,13 @@
 // failure, and nothing connects adding a role to editing this sentence. The
 // enum is the list; read it rather than this line.
 //
-// The other eight sheets in §2.2's table (T0.00
-// cover, T0.01 legend, T0.02 exceptions, T6.01+ interconnect, T6.10 pull
-// sheet, T6.11 termination schedule, T6.20 unused home runs, T5.01 pinout
-// details) are M6. They are absent from [SheetRole] rather than stubbed,
-// which is what lets a user-facing document state what prints by naming
-// these four rather than by counting anything (docs/21 §21.7).
+// The rest of §2.2's table (T0.00 cover, T0.02 exceptions, T6.01+
+// interconnect, T6.10 pull sheet, T6.11 termination schedule, T6.20 unused
+// home runs, T5.01 pinout details) is M6 and not yet built; T0.01, the
+// legend, arrived at M6-B. The unbuilt ones are absent from [SheetRole]
+// rather than stubbed, which is what lets a user-facing document state what
+// prints by naming the roles rather than by counting anything
+// (docs/21 §21.7).
 
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/plan.dart';
@@ -86,6 +87,15 @@ enum SheetSize {
 /// building before they open a rack. `T0.00`–`T0.02` are M6's and are not
 /// emitted yet, so today the plans come first.
 enum SheetRole {
+  /// docs/08 §5.4's `T0.01`, the symbol legend (M6-B, `#316`). FIRST in
+  /// every set and `ON` (docs/08 §2.2's table), ANSI B landscape as the
+  /// cover, legend and exceptions all are (§6.1).
+  symbolLegend(
+    'SYMBOL LEGEND',
+    SheetSize.ansiBLandscape,
+    perRack: false,
+  ),
+
   /// docs/15 §8's `T1.01`, one per `PlanUnderlay` that carries at least one
   /// pin.
   ///
@@ -337,9 +347,17 @@ final class SheetSet {
         return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
       });
 
-    final total = plans.length + ordered.length * 2 + equipmentListSheets;
-    final sheets = <SheetDef>[];
-    var index = 1;
+    // +1 FOR T0.01, which every set carries (docs/08 §2.2, `ON`).
+    final total = 1 + plans.length + ordered.length * 2 + equipmentListSheets;
+    final sheets = <SheetDef>[
+      SheetDef(
+        ncsId: 'T0.01',
+        role: SheetRole.symbolLegend,
+        index: 1,
+        total: total,
+      ),
+    ];
+    var index = 2;
 
     // FIRST IN THE SET, AND THAT IS DR-149 §11.148.3 RATHER THAN A
     // NUMERIC ACCIDENT. Plans go after `T0.02` and before the elevations

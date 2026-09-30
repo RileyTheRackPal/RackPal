@@ -65,7 +65,7 @@ PlanUnderlay _underlay({PlanScale? scale}) => PlanUnderlay(
 SheetDef _sheet() => SheetSet.forRacks(
   <Rack>[testRack()],
   planUnderlays: [_underlay()],
-).sheets.first;
+).sheets.firstWhere((s) => s.role == SheetRole.devicePlan);
 
 PlanSheet _build({
   PlanScale? scale,

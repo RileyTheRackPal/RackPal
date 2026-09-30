@@ -139,10 +139,11 @@ void main() {
         _underlay(),
       ]);
 
-      expect(set.sheets.first.role, SheetRole.devicePlan);
+      // FIRST AFTER T0.01, which opens every set (M6-B).
+      expect(set.sheets[1].role, SheetRole.devicePlan);
       expect(
         set.sheets.map((s) => s.ncsId),
-        orderedEquals(['T1.01', 'T1.02', 'T2.01', 'T2.02', 'T6.30']),
+        orderedEquals(['T0.01', 'T1.01', 'T1.02', 'T2.01', 'T2.02', 'T6.30']),
       );
     });
 
@@ -166,15 +167,21 @@ void main() {
     test('SHEET i OF n counts the plans', () {
       final set = setWith([_underlay()]);
 
-      expect(set.total, 4, reason: 'one plan, two elevations, one list');
+      expect(
+        set.total,
+        5,
+        reason: 'the legend, one plan, two elevations, one list',
+      );
       for (final sheet in set.sheets) {
-        expect(sheet.total, 4);
+        expect(sheet.total, 5);
       }
-      expect(set.sheets.map((s) => s.index), orderedEquals([1, 2, 3, 4]));
+      expect(set.sheets.map((s) => s.index), orderedEquals([1, 2, 3, 4, 5]));
     });
 
     test('a plan sheet carries its underlay identity and no rack', () {
-      final sheet = setWith([_underlay()]).sheets.first;
+      final sheet = setWith([
+        _underlay(),
+      ]).sheets.firstWhere((s) => s.role == SheetRole.devicePlan);
 
       expect(sheet.underlayId, _ul);
       expect(sheet.underlayName, 'Level 1');
@@ -204,7 +211,7 @@ void main() {
         planUnderlays: [_underlay()],
       );
       return buildPlanSheet(
-        sheet: set.sheets.first,
+        sheet: set.sheets.firstWhere((s) => s.role == SheetRole.devicePlan),
         underlay: _underlay(),
         pins: pins,
         labels: labels,
@@ -369,7 +376,7 @@ void main() {
         SheetSet.forRacks(
           <Rack>[testRack()],
           planUnderlays: [_underlay()],
-        ).sheets.first,
+        ).sheets.firstWhere((s) => s.role == SheetRole.devicePlan),
         const <RevisionEntry>[],
       );
       final area = layout.drawingArea;
@@ -409,7 +416,7 @@ void main() {
         SheetSet.forRacks(
           <Rack>[testRack()],
           planUnderlays: [_underlay()],
-        ).sheets.first,
+        ).sheets.firstWhere((s) => s.role == SheetRole.devicePlan),
         const <RevisionEntry>[],
       );
       expect(
@@ -431,7 +438,7 @@ void main() {
         sheet: SheetSet.forRacks(
           <Rack>[testRack()],
           planUnderlays: [underlay],
-        ).sheets.first,
+        ).sheets.firstWhere((s) => s.role == SheetRole.devicePlan),
         underlay: underlay,
         pins: const [
           PlanPinSubject(
@@ -452,7 +459,7 @@ void main() {
         SheetSet.forRacks(
           <Rack>[testRack()],
           planUnderlays: [underlay],
-        ).sheets.first,
+        ).sheets.firstWhere((s) => s.role == SheetRole.devicePlan),
         const <RevisionEntry>[],
       ).drawingArea;
       final pill = built.scene.ops.whereType<OpRoundRect>().last.r;
@@ -533,7 +540,7 @@ void main() {
         sheet: SheetSet.forRacks(
           <Rack>[testRack()],
           planUnderlays: [underlay],
-        ).sheets.first,
+        ).sheets.firstWhere((s) => s.role == SheetRole.devicePlan),
         underlay: underlay,
         pins: [
           PlanPinSubject(
@@ -601,7 +608,7 @@ void main() {
         sheet: SheetSet.forRacks(
           <Rack>[testRack()],
           planUnderlays: [underlay],
-        ).sheets.first,
+        ).sheets.firstWhere((s) => s.role == SheetRole.devicePlan),
         underlay: underlay,
         pins: const [
           PlanPinSubject(
