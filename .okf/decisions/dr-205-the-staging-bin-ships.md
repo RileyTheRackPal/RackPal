@@ -24,6 +24,9 @@ with its return affordance. It had been specified in docs/04 and never built.
   second possible), or a drag onto a rack or shelf.
 - `U` is the rack's first bare letter, allowed by canon §1.10 (c) because the schematic does not
   bind it bare.
+- **Shrink Rack (§11.204.6)**: option 2 is preselected when compaction cannot fit everyone (docs/04
+  §4.1 rule 2 as written), and option 1's partial form stages its leftovers. A locked casualty
+  refuses the bin and restores option 3 as the default.
 
 # How it was found
 

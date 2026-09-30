@@ -985,7 +985,10 @@ $SuiteFloors = @{
     # 5152 at `#964`: +4, a staged device dragged onto the rails lands at
     # its U with its links, and is refused on a taken U, past the top, and
     # when it is not staged at all.
-    'rackpal_core'   = 5152
+    # 5155 at `#967` (§11.204.6): +3 in rack_shrink_test.dart. binMoves on
+    # a top trim leaves the leftover unmoved, on a bottom trim sizes the
+    # shift to the height asked for, and on full success equals moves.
+    'rackpal_core'   = 5155
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1536,7 +1539,11 @@ $SuiteFloors = @{
     # 1997 at `#964`: +3, a bin chip dragged onto a free U lands there; onto
     # an occupied one it is refused with the occupant named; released off
     # the rack it stays in the bin and no chip promises otherwise.
-    'rackpal_ui'     = 1997
+    # 2003 at `#967` (§11.204.6): +6 in shrink_rack_dialog_test.dart. A
+    # locked casualty refuses the bin; option 2 under both trims, with one
+    # undo; option 1 partial stages its leftover, or with it locked stops
+    # taller; Apply with no rescue pops a staging decision.
+    'rackpal_ui'     = 2003
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
