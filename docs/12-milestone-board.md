@@ -1208,6 +1208,24 @@ label ladder seats the designator alone; the hollow body is the statement, as a 
 length is, the words draw on a taller shelf, and the semantic label always carries them. The user had
 chosen an option describing the words; the difference is reported rather than hidden.
 
+### 4.24 The Staging Bin, which CR-032 ruled in and nothing built · 2026-09-30 · `#961` · `DR-205` · no version move
+
+Found building `#959`: DR-204's shelf deletion defaults to *"Move hosts to Staging Bin"*, and there
+is no bin. **The author had offered that default without checking**, the same slip DR-204 records
+about shelf widths, within the hour. The user chose to build it.
+
+**FIRST SLICE (Chapters `#962`, `#963`, `#965`, `#966`).** `ReplacePlacementCommand` changes a
+placement and nothing else, so a device keeps its id, ports and links into and out of the bin, and
+undo is byte-exact. `StagedPlacement` gained `lastHostDeviceId`, so a device taken off a shelf has
+a way back. The strip lists staged devices with a return chip or the reason there is none. A release
+off the rack stages: a palette drag creates the device there, and a device dragged off keeps its
+wiring. `U` sends the selection.
+
+**THREE TESTS ASSERTED THE BIN'S ABSENCE**, and one would have gone vacuous: the palette-click test
+guarded against a "Released outside the rack" message that no longer exists. Its constant is now the
+string the product prints. **AND ONE TEST WAS STRICTER THAN ITS RULING**: canon §1.10 (c) forbids a
+colliding bare letter, and the test forbade any bare letter in the rack. It now asserts the ruling.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

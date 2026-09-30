@@ -38,6 +38,7 @@ Generated from `kKeymap`. Do not edit by hand.
 | `Ctrl+Alt+N` | New rack | docs/04 §8 · §9 | The AltGr caveat on rackSettings applies to AltGr+N identically. |
 | `Enter` | Commit what is in flight | docs/04 §3.6 · canon §11.11.6 | The label is DR-011.6's retrofit: it used to read 'Apply the compaction preview', which the schematic's Enter (commit the wire) could not share, and meaningDrift compares labels across scopes. Here the thing in flight is the compaction preview; on the sheet it is the wire. |
 | `Ctrl+L` | Lock or unlock the selection | docs/04 §8 · DR-186 |  |
+| `U` | Send the selection to the Staging Bin | docs/04 §8 · CR-032 · DR-205 |  |
 
 ## schematic
 

@@ -1550,6 +1550,7 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
     :final lastRackId,
     :final lastRuIndex,
     :final lastFace,
+    :final lastHostDeviceId,
     :final schematicHint,
   ) =>
     {
@@ -1557,6 +1558,7 @@ JsonMap _encodePlacement(Placement placement) => switch (placement) {
       if (lastRackId != null) 'lastRackId': lastRackId.v,
       if (lastRuIndex != null) 'lastRuIndex': lastRuIndex,
       if (lastFace != null) 'lastFace': encodeEnumName(lastFace),
+      if (lastHostDeviceId != null) 'lastHostDeviceId': lastHostDeviceId.v,
       if (schematicHint != null) 'schematicHint': _encodePt(schematicHint),
       ...?_placementUnknown(placement),
     },
@@ -1659,6 +1661,10 @@ Placement _decodePlacement(JsonMap json) {
         lastRuIndex: asIntOrNull(
           json['lastRuIndex'],
           'StagedPlacement.lastRuIndex',
+        ),
+        lastHostDeviceId: _decodeUuidOrNull(
+          json['lastHostDeviceId'],
+          'StagedPlacement.lastHostDeviceId',
         ),
         lastFace: json['lastFace'] == null
             ? null

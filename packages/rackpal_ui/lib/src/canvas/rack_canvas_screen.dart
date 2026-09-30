@@ -31,6 +31,7 @@ import 'package:rackpal_ui/src/canvas/schematic/schematic_reveal.dart';
 import 'package:rackpal_ui/src/canvas/selection_controller.dart';
 import 'package:rackpal_ui/src/canvas/shake_animation.dart';
 import 'package:rackpal_ui/src/canvas/staging_bin_overlay.dart';
+import 'package:rackpal_ui/src/canvas/staging_bin_strip.dart';
 import 'package:rackpal_ui/src/canvas/status_message_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_controller.dart';
 import 'package:rackpal_ui/src/canvas/viewport_hud.dart';
@@ -680,6 +681,18 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// `beginDrag` so the preview and the commit can never disagree about
   /// whether this gesture is a move at all.
   RailPlacement? _dragPlacement;
+
+  /// Whether the move drag is currently off the rack, so the status line
+  /// says so once rather than on every pointer move (DR-205).
+  bool _moveWillStage = false;
+
+  /// Off the rack: outside the chassis the scene drew, left, right, above
+  /// or below. The canvas pans, so the canvas's own bounds are not the
+  /// rack's.
+  bool _isOffRack(DPt scene) {
+    final chassis = _rackScene?.chassisBounds;
+    return chassis != null && !chassis.contains(scene);
+  }
 
   /// The pointer kinds `CanvasIntentDetector` reported at `beginDrag`,
   /// carried into the drag preview purely as INFORMATION (matching the
@@ -1924,6 +1937,116 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     }
   }
 
+  // ═══════════════════════════════════════════════════════════════════
+  // THE STAGING BIN (DR-205, CR-032, `#961`)
+  // ═══════════════════════════════════════════════════════════════════
+  // The bin is a query over the document (`stagedDevices`), so there is
+  // nothing here to keep in step: the strip is rebuilt from the document
+  // like every other surface on this screen.
+
+  /// The strip's chips, each with the return it offers or why it cannot.
+  List<StagedChip> _stagedChips() => [
+    for (final d in stagedDevices(_doc)) _stagedChipFor(d),
+  ];
+
+  StagedChip _stagedChipFor(DeviceInstance d) {
+    final body = bodyFor(d, _doc.templates);
+    final h = body == null ? 0 : math.max(body.frontU, body.rearU);
+    final plan = planReturnFromStaging(
+      doc: _doc,
+      id: d.id,
+      now: _controller.clock.nowUtc(),
+      actor: _controller.actor,
+    );
+    return StagedChip(
+      id: d.id,
+      designator: d.designator,
+      heightLabel: h > 0 ? '${h}U' : '',
+      returnLabel: switch (plan) {
+        // CR-032's own words. It was `↩ RK-1 U21` for one gate run, and
+        // the glyph gate refused it: `↩` is not in the bold weight.
+        PlacementPlanReady(:final command) =>
+          'Return to ${_whereLabel(command.to)}',
+        PlacementPlanRefused() => null,
+      },
+      returnRefusal: switch (plan) {
+        PlacementPlanRefused(:final reason) => reason,
+        PlacementPlanReady() => null,
+      },
+    );
+  }
+
+  /// `RK-1 U21`, or the shelf's designator, for a return chip and for the
+  /// status line after one is pressed.
+  String _whereLabel(Placement to) => switch (to) {
+    RailPlacement(:final rackId, :final ruIndex) =>
+      '${_doc.racks[rackId]?.designator ?? 'rack'} U$ruIndex',
+    ShelfPlacement(:final hostDeviceId) =>
+      _doc.devices[hostDeviceId]?.designator ?? 'its shelf',
+    _ => 'its place',
+  };
+
+  /// `U`: every selected device to the bin, in ONE undo entry.
+  void _stageSelection() {
+    final now = _controller.clock.nowUtc();
+    final ready = <ReplacePlacementCommand>[];
+    String? refusal;
+    for (final id in _selection.ids) {
+      switch (planStageDevice(
+        doc: _doc,
+        id: id,
+        now: now,
+        actor: _controller.actor,
+      )) {
+        case PlacementPlanReady(:final command):
+          ready.add(command);
+        case PlacementPlanRefused(:final reason):
+          refusal ??= reason;
+      }
+    }
+    if (ready.isEmpty) {
+      if (refusal != null) _status.show(refusal);
+      return;
+    }
+    _controller.transact(LabelKey.stageDevice, (tx) {
+      for (final command in ready) {
+        tx.add(command);
+      }
+    });
+    final what = ready.length == 1
+        ? (_doc.devices[ready.single.id]?.designator ?? 'The device')
+        : '${ready.length} devices';
+    _status.show(
+      '$what sent to the Staging Bin, wiring kept. Ctrl+Z to undo.',
+    );
+  }
+
+  void _returnFromStaging(Uuid id) {
+    switch (planReturnFromStaging(
+      doc: _doc,
+      id: id,
+      now: _controller.clock.nowUtc(),
+      actor: _controller.actor,
+    )) {
+      case PlacementPlanReady(:final command):
+        _controller.run(command);
+        _status.show(
+          'Returned ${_doc.devices[id]?.designator ?? 'the device'} to '
+          '${_whereLabel(command.to)}.',
+        );
+      case PlacementPlanRefused(:final reason):
+        _status.show(reason);
+    }
+  }
+
+  /// A chip click selects the device, as a click on the rack would.
+  void _selectStaged(Uuid id) {
+    _selection.apply([id], SelectMode.replace);
+    if (_inspectorTarget != InspectorTarget.selection) {
+      setState(() => _inspectorTarget = InspectorTarget.selection);
+    }
+  }
+
   void _setMountNote(String note) {
     final id = _soleSelectedDeviceId;
     if (id == null) return;
@@ -3061,6 +3184,24 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     final placement = _dragPlacement;
     if (deviceId == null || placement == null) return;
 
+    // OFF THE RACK, THE RELEASE STAGES (DR-205). No ghost, because there
+    // is no U it would land at, and the status line says what the release
+    // will do, once, on the way out.
+    if (_isOffRack(sceneCurrent)) {
+      if (!_moveWillStage) {
+        _moveWillStage = true;
+        final who = _doc.devices[Uuid(deviceId)]?.designator ?? 'it';
+        _status.show(
+          'Release to send $who to the Staging Bin, wiring kept.',
+        );
+      }
+      _moveDrag
+        ..updateCursorGlobal(_sceneToGlobal(sceneCurrent))
+        ..clearEvaluation(sceneCurrent);
+      return;
+    }
+    _moveWillStage = false;
+
     final newTopY = _dragDeviceStartTopY + (sceneCurrent.y - _dragStartScene.y);
     final ruIndex = _geo.ruIndexForTopY(newTopY, _dragDeviceHeightU);
     _moveDrag
@@ -3098,6 +3239,28 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     }
 
     _updateMovePreview(sceneEnd);
+    // A release off the rack sends the device to the bin with its id,
+    // ports and links (DR-205; the user: "should also keep wiring").
+    if (_isOffRack(sceneEnd)) {
+      _moveWillStage = false;
+      _cancelMoveDrag();
+      switch (planStageDevice(
+        doc: _doc,
+        id: Uuid(deviceId),
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+      )) {
+        case PlacementPlanReady(:final command):
+          _controller.run(command);
+          _status.show(
+            '${_doc.devices[command.id]?.designator ?? 'The device'} sent to '
+            'the Staging Bin, wiring kept. Ctrl+Z to undo.',
+          );
+        case PlacementPlanRefused(:final reason):
+          _status.show(reason);
+      }
+      return;
+    }
     final evaluation = _moveDrag.evaluation;
 
     if (evaluation == null || evaluation.blocked) {
@@ -4245,18 +4408,42 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       // that never became a drag was not an action, and narrating it is
       // the same noise the rule exists to prevent, pointed the other way.
       final lifted = _paletteDrag.phase == DragPreviewPhase.lifted;
-      final name = _paletteDrag.displayName;
+      final row = _armedPaletteRow;
       _removePaletteDragOverlay();
       _removeStagingBinOverlay();
       _paletteDrag.reset();
-      if (!lifted) return;
-      _status.show(
-        name.isEmpty
-            ? 'Released outside the rack — nothing placed. '
-                  'The Staging Bin is not in this build.'
-            : 'Released outside the rack — $name was not placed. '
-                  'The Staging Bin is not in this build.',
+      if (!lifted || row == null) return;
+      // ── THE STAGING BIN IS BUILT (DR-205), so a release off the rack
+      // stages the device rather than narrating a no-op. docs/04 §3.1:
+      // *"dropping there creates a `StagedPlacement`"*. The same library
+      // plan and the same finalising path a placement uses, so a library
+      // row copies once and the new device becomes the selection.
+      final plan = row.provenance is LibraryProvenance
+          ? planLibraryPlacement(
+              _doc,
+              row,
+              capturedAt: _controller.clock.nowUtc(),
+            )
+          : null;
+      final command = buildAddStagedCommand(
+        doc: _doc,
+        catalogId: plan?.templateId ?? row.id,
+        now: _controller.clock.nowUtc(),
+        actor: _controller.actor,
+        using: plan?.snapshot,
       );
+      if (command == null) {
+        _status.show('That template is no longer in this project.');
+        return;
+      }
+      _finalizeCatalogPlacement(
+        command,
+        plan?.templateId ?? row.id,
+        fromQuickAdd: false,
+        plan: plan,
+        row: row,
+      );
+      _status.show('${command.designator} is in the Staging Bin.');
       return;
     }
 
@@ -4636,6 +4823,13 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
             () => !_textFieldHasFocus && _selection.isNotEmpty,
             _toggleLockSelection,
           ),
+          // `U` (DR-205): a PLAIN letter, so gated off in a text field like
+          // every other one here, and off with nothing selected so the key
+          // falls through.
+          StageSelectionIntent: _GatedAction<StageSelectionIntent>(
+            () => !_textFieldHasFocus && _selection.isNotEmpty,
+            _stageSelection,
+          ),
           // Document-global: a rack rename typed in the inspector and an
           // undo pressed from the palette are both legitimate.
           //
@@ -4775,16 +4969,35 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
                   // was the only one in the tree, so the Plan tab had a
                   // built gesture and nothing on screen to start it.
                   Expanded(
-                    child: Focus(
-                      focusNode: _canvasFocus,
-                      autofocus: true,
-                      child: _buildCanvas(
-                        context,
-                        scheme,
-                        gridStyle,
-                        palette,
-                        rackScene,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: Focus(
+                            focusNode: _canvasFocus,
+                            autofocus: true,
+                            child: _buildCanvas(
+                              context,
+                              scheme,
+                              gridStyle,
+                              palette,
+                              rackScene,
+                            ),
+                          ),
+                        ),
+                        // docs/04 §1's STAGING BIN, under the canvas and
+                        // only while it holds something (DR-205).
+                        if (_stagedChips() case final chips
+                            when chips.isNotEmpty) ...[
+                          const Divider(height: 1),
+                          StagingBinStrip(
+                            chips: chips,
+                            selectedIds: _selection.ids.toSet(),
+                            onSelect: _selectStaged,
+                            onReturn: _returnFromStaging,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   const VerticalDivider(width: 1),

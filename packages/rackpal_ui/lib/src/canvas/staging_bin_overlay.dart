@@ -4,18 +4,18 @@
 // shows the ghost at 40 % with a `Release to add to Staging Bin` chip;
 // dropping there creates a `StagedPlacement` (CR-031, CR-032)."
 //
-// THIS CHIP DOES NOT SAY THAT SENTENCE, AND THAT IS THE POINT.
+// THIS CHIP SAYS THAT SENTENCE NOW (DR-205, `#961`), AND FOR MONTHS IT
+// DELIBERATELY DID NOT.
 //
-// The Staging Bin is `StagedPlacement` (CR-032) — a query, not an entity —
-// and while the model and codec have carried it since M0, this build has:
-// no command that produces one, no panel or outline branch that lists the
-// devices in it, and no `↩ Return to RK-1 U21` chip. Releasing outside the
-// canvas is therefore a no-op (`RackCanvasScreen._commitOrNoopPaletteDrag`).
-// A chip reading "Release to add to Staging Bin" over a build where release
-// adds nothing is the exact failure docs/09-roadmap.md M1 names — "an empty
-// Schedule tab that explains it is coming is a lie" — so this one states
-// what will actually happen instead. When the bin ships, this widget's copy
-// changes and its position, lifecycle and tests do not.
+// The Staging Bin is `StagedPlacement` (CR-032), a query rather than an
+// entity. Until DR-205 the build had no command that produced one, nothing
+// that listed the devices in it and no return chip, so releasing here was
+// a no-op and this chip read "Staging Bin — not in this build": a chip
+// promising "Release to add to Staging Bin" over a release that added
+// nothing is the failure docs/09-roadmap.md M1 names, "an empty Schedule
+// tab that explains it is coming is a lie". The bin ships with DR-205 (a
+// strip under the canvas, `staging_bin_strip.dart`), so the copy changed
+// and, as this comment always said it would, nothing else about the chip.
 //
 // SHAPE NOTES, both of them defects this file shipped with:
 //  * It is a `Positioned` chip anchored to the drag cursor, sitting just
@@ -105,7 +105,7 @@ class StagingBinOverlay extends StatelessWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                'Staging Bin — not in this build',
+                                'Release to add to the Staging Bin',
                                 style: theme.textTheme.labelMedium?.copyWith(
                                   color: scheme.onSurfaceVariant,
                                   fontWeight: kConsoleEmphasis,
@@ -113,7 +113,7 @@ class StagingBinOverlay extends StatelessWidget {
                               ),
                               if (name.isNotEmpty)
                                 Text(
-                                  'Releasing here will not place $name.',
+                                  '$name will wait there, off the rack.',
                                   overflow: TextOverflow.ellipsis,
                                   style: theme.textTheme.labelSmall?.copyWith(
                                     color: scheme.onSurface,

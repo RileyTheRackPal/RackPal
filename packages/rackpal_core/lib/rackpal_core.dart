@@ -116,6 +116,7 @@ export 'src/commands/mount_note_command.dart';
 export 'src/commands/move_endpoint_command.dart';
 export 'src/commands/multi_draw.dart';
 export 'src/commands/pathway_commands.dart';
+export 'src/commands/placement_commands.dart';
 export 'src/commands/plan_commands.dart';
 export 'src/commands/port_override_commands.dart';
 export 'src/commands/project_settings_commands.dart';

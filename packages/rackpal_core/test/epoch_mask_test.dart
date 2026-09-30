@@ -547,6 +547,41 @@ void main() {
       _covers(doc, cmd, expectAtLeast: {'devices'});
     });
 
+    test('ReplacePlacementCommand', () {
+      // The Staging Bin's one command (DR-205): rail to bin, and the
+      // placement is the only thing it may change.
+      final doc = _freshDoc();
+      const rackId = Uuid('rack-1');
+      const deviceId = Uuid('dev-1');
+      doc.racks[rackId] = _rack(rackId);
+      doc.devices[deviceId] = DeviceInstance(
+        id: deviceId,
+        kind: DeviceKind.rackDevice,
+        templateRef: _templateRef,
+        designator: 'DEV-1',
+        name: 'Test Device',
+        placement: const RailPlacement(
+          rackId: rackId,
+          ruIndex: 1,
+          face: Face.front,
+        ),
+        meta: _meta(),
+      );
+      final cmd = ReplacePlacementCommand(
+        id: deviceId,
+        to: const StagedPlacement(
+          lastRackId: rackId,
+          lastRuIndex: 1,
+          lastFace: Face.front,
+        ),
+        label: LabelKey.stageDevice,
+        now: DateTime.utc(2026, 1, 2),
+        actor: 'tester',
+      );
+
+      _covers(doc, cmd, expectAtLeast: {'devices'});
+    });
+
     test('RenameEntityCommand (device)', () {
       final doc = _freshDoc();
       const rackId = Uuid('rack-1');

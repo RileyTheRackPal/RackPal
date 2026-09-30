@@ -133,7 +133,7 @@ void main() {
     });
 
     testWidgets('it names the device being dragged, and says releasing here '
-        'will NOT place it', (tester) async {
+        'puts it in the Staging Bin', (tester) async {
       await tester.pumpWidget(_app());
       await tester.pump();
 
@@ -142,10 +142,8 @@ void main() {
       await gesture.moveBy(const Offset(0, 30));
       await tester.pump();
 
-      // docs/09-roadmap.md M1: "an empty Schedule tab that explains it is
-      // coming is a lie". A chip reading "Release to add to Staging Bin"
-      // over a build where release adds nothing is the same lie, so the
-      // copy states the refusal AND names its subject.
+      // docs/04 §3.1's own sentence, which this chip refused to say until
+      // DR-205 built the bin it promises (see the overlay's header).
       expect(
         find.descendant(
           of: _chip,
@@ -154,16 +152,11 @@ void main() {
         findsOneWidget,
       );
       expect(
-        find.descendant(of: _chip, matching: find.textContaining('not')),
-        findsWidgets,
-      );
-      expect(
         find.descendant(
           of: _chip,
-          matching: find.text('Release to add to Staging Bin'),
+          matching: find.text('Release to add to the Staging Bin'),
         ),
-        findsNothing,
-        reason: 'the build cannot honour that promise; it must not make it',
+        findsOneWidget,
       );
 
       await gesture.up();
@@ -294,9 +287,9 @@ void main() {
     });
   });
 
-  group('releasing outside the canvas refuses, and SAYS SO', () {
-    testWidgets('no device is added, and the status line reports it rather '
-        'than silently doing nothing', (tester) async {
+  group('releasing outside the canvas STAGES, and says so (DR-205)', () {
+    testWidgets('the device goes to the bin, not the rack, and the status '
+        'line and the strip both show it', (tester) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       final before = tester.widgetList(find.byType(DeviceBox)).length;
@@ -312,14 +305,9 @@ void main() {
       expect(_chip, findsNothing);
       expect(find.byType(StagingBinOverlay), findsNothing);
 
-      // "Never silently do nothing" — a refused action reports. The chip
-      // said releasing here would not place the device; this is the same
-      // claim at the moment of release, where the chip is already gone.
-      expect(
-        find.textContaining('Blank Panel, 1U was not placed'),
-        findsOneWidget,
-      );
-      expect(find.textContaining('Staging Bin'), findsOneWidget);
+      // Not on the rack (the box count above is unchanged), and IN the bin.
+      expect(find.textContaining('is in the Staging Bin'), findsOneWidget);
+      expect(find.byType(StagingBinStrip), findsOneWidget);
 
       await _settleDoubleTapRecognizer(tester);
     });

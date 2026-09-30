@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-09-30 (eighty-first entry)
+
+* **Progress**: `#953`'s first half merged at `ec9f759c` (PR 169). `#961`'s first slice (docs/12
+  §4.24): the Staging Bin, with `U`, off-rack releases and return chips.
+* **Creation**: [DR-205](/decisions/dr-205-the-staging-bin-ships.md).
+* **Note**: **THE SAME SLIP TWICE IN ONE HOUR.** A recommended option named a Staging Bin that did
+  not exist, an hour after the shelf-width question failed the same way. The practice was already
+  written; this is the evidence it has to be run on EVERY option, the recommended one first.
+
 ## 2026-09-30 (eightieth entry)
 
 * **Progress**: `#953` first half (docs/12 §4.23): devices on a shelf are drawn inside it and

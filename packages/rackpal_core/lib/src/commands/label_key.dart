@@ -7,6 +7,13 @@ enum LabelKey {
   addDevice,
   removeDevice,
   moveDevice,
+
+  /// Into the Staging Bin and back out, keeping the device and its links
+  /// (DR-205, CR-032). Their own values, on this enum's rule that each
+  /// names the act the Edit menu reports: "Undo Move device" after `U`
+  /// would name a move to somewhere the person cannot see.
+  stageDevice,
+  returnFromStaging,
   addLink,
   removeLink,
   renameEntity,

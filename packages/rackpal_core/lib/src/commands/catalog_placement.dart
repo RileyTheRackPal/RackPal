@@ -712,7 +712,7 @@ CatalogPlacementResult _readyOffPlan({
   );
 
   final command = AddDeviceCommand(
-    kind: _kindFor(catalogId, body),
+    kind: deviceKindFor(catalogId, body),
     templateRef: TemplateRef(
       templateId: snapshot.templateId,
       version: snapshot.version,
@@ -727,7 +727,12 @@ CatalogPlacementResult _readyOffPlan({
   return CatalogPlacementReady(command);
 }
 
-DeviceKind _kindFor(String catalogId, TemplateBody body) {
+/// The `DeviceKind` a device minted from [catalogId] with [body] gets.
+///
+/// PUBLIC SINCE DR-204 (`#953`), so every path that mints a device asks
+/// the same question: the shelf builder hard-coded `rackDevice`, which set
+/// a shelf on a shelf as something that is not a shelf.
+DeviceKind deviceKindFor(String catalogId, TemplateBody body) {
   switch (catalogId) {
     case 'X01':
       return DeviceKind.blankPanel;

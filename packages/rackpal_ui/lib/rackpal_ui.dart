@@ -101,6 +101,7 @@ export 'src/canvas/schematic/tidy_sheet_dialog.dart';
 export 'src/canvas/selection_controller.dart';
 export 'src/canvas/shake_animation.dart';
 export 'src/canvas/staging_bin_overlay.dart';
+export 'src/canvas/staging_bin_strip.dart';
 export 'src/canvas/status_message_controller.dart';
 export 'src/canvas/viewport_controller.dart';
 export 'src/canvas/viewport_hud.dart';

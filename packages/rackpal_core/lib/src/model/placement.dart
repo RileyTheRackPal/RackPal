@@ -296,6 +296,7 @@ final class StagedPlacement extends Placement {
     this.lastRackId,
     this.lastRuIndex,
     this.lastFace,
+    this.lastHostDeviceId,
     this.schematicHint,
     super.unknown,
   });
@@ -303,6 +304,13 @@ final class StagedPlacement extends Placement {
   final Uuid? lastRackId;
   final int? lastRuIndex;
   final Face? lastFace;
+
+  /// The shelf the device sat on before it was staged, or null when it was
+  /// not on one (DR-205). CR-032's return affordance is *"Return to RK-1
+  /// U21"*, a rail position; a device taken off a shelf has none of its
+  /// own, so without this its return chip would have nowhere honest to
+  /// send it. Additive and absent when null, so no file migrates.
+  final Uuid? lastHostDeviceId;
 
   /// Consumed ONCE, when the first `SheetItem` is created for this device
   /// (CR-069); not touched again after that.
