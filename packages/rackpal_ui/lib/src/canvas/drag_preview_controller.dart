@@ -96,6 +96,31 @@ enum DragPreviewPhase {
 /// user-facing reason and (for an occupancy block only) the conflicting
 /// occupant's own scene rect, so the painter can hatch it without
 /// re-deriving device layouts itself.
+/// A drag over a shelf's tray (DR-204 §11.203.1, `#956`): which shelf, the
+/// gap it would land in, and where to draw that gap.
+@immutable
+final class ShelfDropTarget {
+  const ShelfDropTarget({
+    required this.shelfId,
+    required this.after,
+    required this.shelfRect,
+    required this.caret,
+  });
+
+  final Uuid shelfId;
+
+  /// The host the drop lands right after in pack order, or null for first:
+  /// exactly `shelfOrderAfter`'s argument, so the caret and the commit
+  /// name the same gap.
+  final Uuid? after;
+
+  /// The shelf's own scene rect, outlined while it is the target.
+  final DBox shelfRect;
+
+  /// A thin scene rect at the gap, drawn as the insertion caret.
+  final DBox caret;
+}
+
 @immutable
 class DragPreviewEvaluation {
   const DragPreviewEvaluation({
@@ -103,7 +128,13 @@ class DragPreviewEvaluation {
     required this.blocked,
     this.reason,
     this.blockingRect,
+    this.shelf,
   });
+
+  /// Set when the drop would land ON A SHELF rather than on the rails;
+  /// [ruIndex] is then the rail U under the cursor, kept only so a drag
+  /// that leaves the shelf does not jump.
+  final ShelfDropTarget? shelf;
 
   /// The hard-quantised RU the ghost is snapped to — always exactly a
   /// `RackGeometry` inverse result (docs/04 §3.1 step 4: "Snap is

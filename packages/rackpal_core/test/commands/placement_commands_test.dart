@@ -227,6 +227,50 @@ void main() {
     });
   });
 
+  group('a NEW device dropped at a gap on a shelf (#956)', () {
+    late Uuid shelfId;
+    late String catalogId;
+    setUp(() {
+      final stb = _byDesignator(doc, 'STB-1');
+      shelfId = (stb.placement as ShelfPlacement).hostDeviceId;
+      catalogId = stb.templateRef.templateId.v;
+    });
+
+    /// Places a new device with [gap] and answers where it landed, as its
+    /// index in the shelf's pack order.
+    int dropAt(({Uuid? after})? gap) {
+      final result = buildPlaceOnShelfCommand(
+        doc: doc,
+        catalogId: catalogId,
+        hostId: shelfId,
+        now: _now,
+        actor: _actor,
+        gap: gap,
+      );
+      final command = (result as ShelfPlacementReady).command..apply(doc);
+      return devicesOnShelf(
+        doc,
+        shelfId,
+      ).indexWhere((d) => d.designator == command.designator);
+    }
+
+    test('right after the host it was dropped after', () {
+      final hosts = devicesOnShelf(doc, shelfId);
+      expect(hosts.length, greaterThan(1), reason: 'a gap needs neighbours');
+      expect(dropAt((after: hosts.first.id)), 1);
+    });
+
+    test('first, when dropped before every host', () {
+      expect(dropAt((after: null)), 0);
+    });
+
+    test('and at the right-hand end with no gap named, as AC-043 always '
+        'packed', () {
+      final count = devicesOnShelf(doc, shelfId).length;
+      expect(dropAt(null), count);
+    });
+  });
+
   group('along and between shelves', () {
     test('a host dragged to the front of its own shelf becomes first', () {
       final shelfId = (_byDesignator(doc, 'STB-1').placement as ShelfPlacement)

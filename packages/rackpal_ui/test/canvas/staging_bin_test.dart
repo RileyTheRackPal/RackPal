@@ -33,6 +33,7 @@ const _rack = Uuid('rack-1');
 const _amp = Uuid('dev-amp');
 const _shelf = Uuid('dev-shelf');
 const _box = Uuid('dev-box');
+const _switch = Uuid('dev-switch');
 
 void _template(RackDocument doc, String id, TemplateBody body) =>
     doc.templates['$id@1'] = TemplateSnapshot(
@@ -135,6 +136,16 @@ RackDocument _document() {
     'tpl.box',
     'STB-1',
     const ShelfPlacement(hostDeviceId: _shelf, order: FracIndex('a0')),
+  );
+  // A RAIL OCCUPANT THAT IS NOT A SHELF, for the refused drop below: since
+  // `#956` a shelf is a drop target, so aiming at SHF-1 lands the device
+  // on it rather than being refused.
+  _device(
+    doc,
+    _switch,
+    'tpl.amp',
+    'SW-1',
+    const RailPlacement(rackId: _rack, ruIndex: 1, face: Face.front),
   );
   return doc;
 }
@@ -312,13 +323,13 @@ void main() {
 
         await dragChipTo(
           tester,
-          tester.getCenter(find.byKey(ValueKey(_shelf.v))),
+          tester.getCenter(find.byKey(ValueKey(_switch.v))),
         );
 
         // THE PRECONDITION, so this cannot pass on a drag that never armed:
         // the live evaluation named the occupant and the chip lingers
         // with it (docs/04 §3.1 step 5).
-        expect(find.textContaining('Occupied by SHF-1'), findsWidgets);
+        expect(find.textContaining('Occupied by SW-1'), findsWidgets);
         expect(doc.devices[_amp]!.placement, isA<StagedPlacement>());
         expect(find.byKey(ValueKey('staged-${_amp.v}')), findsOneWidget);
         await tester.pump(const Duration(seconds: 2)); // the blocked linger

@@ -42,7 +42,8 @@
 import 'package:rackpal_core/src/commands/catalog_placement.dart'
     show deviceKindFor;
 import 'package:rackpal_core/src/commands/device_commands.dart';
-import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
+import 'package:rackpal_core/src/commands/rack_commands.dart'
+    show nextOrder, orderBetween;
 import 'package:rackpal_core/src/derived/device_loads.dart';
 import 'package:rackpal_core/src/derived/placeable_templates.dart';
 import 'package:rackpal_core/src/idformat/designator_allocator.dart';
@@ -109,6 +110,36 @@ List<DeviceInstance> devicesOnShelfIn(
   return out;
 }
 
+/// The `order` for a device set on [hostId] in the gap right after
+/// [after] (first, when [after] is null), or null when a hand-edited file
+/// leaves no room between two neighbours (see `orderBetween`).
+///
+/// [except] is left out of the neighbours, so a host reordered along its
+/// own shelf does not measure itself. One function for a palette drop, a
+/// moved host and the inspector's picker, so no two of them can disagree
+/// about where a gap is (DR-204 §11.203.1, *"at the nearest gap"*).
+///
+/// An [after] that is not on the shelf lands first, which is what a stale
+/// neighbour from a frame ago should mean rather than a throw.
+FracIndex? shelfOrderAfter(
+  RackDocument doc,
+  Uuid hostId, {
+  Uuid? after,
+  Uuid? except,
+}) {
+  final others = [
+    for (final h in devicesOnShelf(doc, hostId))
+      if (h.id != except) h,
+  ];
+  final orders = [
+    for (final h in others) (h.placement as ShelfPlacement).order,
+  ];
+  final index = after == null ? 0 : others.indexWhere((h) => h.id == after) + 1;
+  final before = index == 0 ? null : orders[index - 1];
+  final next = index >= orders.length ? null : orders[index];
+  return orderBetween(before, next);
+}
+
 /// TOP-005's cycle half, asked of a MOVE: whether setting [id] on
 /// [hostId] would put [id] in its own shelf chain.
 ///
@@ -163,6 +194,10 @@ DeviceInstance? findShelfInRack(RackDocument doc, Uuid rackId) {
 /// that the placement path has resolved out of `doc.templates` since M0
 /// and a caller minting a device from a body the document does not hold
 /// produces a device whose `TemplateRef` draws as unknown.
+///
+/// [gap] null auto-packs at the right-hand end (AC-043); a record names
+/// the gap a drop chose, right after `after` or first when that is null
+/// (DR-204 §11.203.1, `#956`), through [shelfOrderAfter].
 ShelfPlacementResult buildPlaceOnShelfCommand({
   required RackDocument doc,
   required String catalogId,
@@ -170,6 +205,7 @@ ShelfPlacementResult buildPlaceOnShelfCommand({
   required DateTime now,
   required String actor,
   TemplateSnapshot? using,
+  ({Uuid? after})? gap,
 }) {
   final snapshot = using ?? resolveLatestTemplate(doc, catalogId);
   if (snapshot == null) {
@@ -205,6 +241,19 @@ ShelfPlacementResult buildPlaceOnShelfCommand({
   // `placement_commands.dart` sets an EXISTING device on a shelf, which
   // can already host others, so it walks the chain with
   // [shelfMoveWouldLoop] before it writes.
+  final order = gap == null
+      ? nextOrder(
+          devicesOnShelf(
+            doc,
+            hostId,
+          ).map((d) => (d.placement as ShelfPlacement).order),
+        )
+      : shelfOrderAfter(doc, hostId, after: gap.after);
+  if (order == null) {
+    return ShelfPlacementFailed(
+      'There is no room between those two on ${host.designator}.',
+    );
+  }
   return ShelfPlacementReady(
     AddDeviceCommand(
       kind: deviceKindFor(catalogId, snapshot.body),
@@ -221,16 +270,11 @@ ShelfPlacementResult buildPlaceOnShelfCommand({
       name: snapshot.body.displayName,
       placement: ShelfPlacement(
         hostDeviceId: hostId,
-        // AUTO-PACK: the next slot to the right of whatever is already
-        // there. `lateralOffset` is deliberately left null, which is
-        // AC-043's "free lateral positioning defers" with the field kept
-        // in the format for when it does not.
-        order: nextOrder(
-          devicesOnShelf(
-            doc,
-            hostId,
-          ).map((d) => (d.placement as ShelfPlacement).order),
-        ),
+        // AUTO-PACK, or the gap a drop chose. `lateralOffset` is
+        // deliberately left null either way, which is AC-043's "free
+        // lateral positioning defers" with the field kept in the format
+        // for when it does not.
+        order: order,
       ),
       now: now,
       actor: actor,

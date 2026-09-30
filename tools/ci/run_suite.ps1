@@ -988,7 +988,9 @@ $SuiteFloors = @{
     # 5155 at `#967` (§11.204.6): +3 in rack_shrink_test.dart. binMoves on
     # a top trim leaves the leftover unmoved, on a bottom trim sizes the
     # shift to the height asked for, and on full success equals moves.
-    'rackpal_core'   = 5155
+    # 5158 at `#956` (DR-204 §11.203.1): +3, a new device dropped on a
+    # shelf lands right after the host named, first, or at the end.
+    'rackpal_core'   = 5158
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1543,7 +1545,12 @@ $SuiteFloors = @{
     # locked casualty refuses the bin; option 2 under both trims, with one
     # undo; option 1 partial stages its leftover, or with it locked stops
     # taller; Apply with no rescue pops a staging decision.
-    'rackpal_ui'     = 2003
+    # 2008 at `#956` (DR-204 §11.203.1): +5 in canvas/shelf_drop_test.dart.
+    # A shelf-only row lands between two hosts; a rack-ear row lands and
+    # says so; a shelf row over a shelf is aimed at the rails, not nested;
+    # a shelf-only row over bare rails is refused; a staged one drags from
+    # the bin to the front of the shelf.
+    'rackpal_ui'     = 2008
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

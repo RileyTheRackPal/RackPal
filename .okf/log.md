@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-09-30 (eighty-fourth entry)
+
+* **Progress**: `#964` merged at `66b5eacf` (PR 171); `#967` is PR 172. Chapter `#956`, a drag onto
+  a shelf, docs/12 §4.23.
+* **Note**: **A GATE THAT SAID "NOWHERE TO GO" OUTLIVES THE PLACE BEING BUILT.** The palette refused
+  to drag a device with no rack height, correctly, until a shelf existed to take it. The refusal
+  sat in the arm step with a comment calling it a deliberate scope narrowing, and it would have
+  kept a shelf-only device undraggable after shelves shipped. Re-read every "cannot, because X
+  does not exist" when X is built.
+
 ## 2026-09-30 (eighty-third entry)
 
 * **Progress**: Chapter `#967`, Shrink Rack's bin option, docs/12 §4.24.
