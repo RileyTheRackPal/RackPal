@@ -22616,6 +22616,69 @@ rather than an edge case.
 
 ---
 
+### 11.202 DR-203 · Size and mounting is asked once, on Identity, and what follows from it is derived
+
+**The question.** Reported by the user on 2026-09-29 (`#951`): *"The layout of the template builder
+is a bit confusing, and data has to be entered multiple times in some situations."* Three
+situations were put to the user and all three confirmed; the user asked for the rest of the form to
+be checked and for a mockup before any code.
+
+| Situation | Why it happened |
+|---|---|
+| **A 2U device's height was typed twice and `Occupies` corrected by hand** | front RU was on Identity, rear RU and `Occupies` on Physical, and §11.156.5 only ever filled a blank side |
+| **`0U mount` did not light Save** until `Occupies` also said 0U | the Save rule read the side, and nothing derived it from the mount |
+| **`Half rack` left the span at 12** | width class and `nominalSpanTwelfths` were two independent inputs |
+
+The check found three more. **The Passthrough switch was on Physical** while the pairing it enables
+is on Ports, and `Pair front to rear` was hidden until it was flipped. **A hosted template could not
+be saved at all** (the seeded AVR is one), and **neither could docs/06 §3.2's own rear lacing bar**
+`{front: 0, rear: 1}`, because the Save rule read the front height alone. And a census of the seeded
+catalog found **21 of its 25 rack-ear devices take the same RU front and rear**, while the rear
+height defaulted to 0.
+
+**11.202.1 RULED: ONE `Size and mounting` BLOCK ON IDENTITY.** Settled by the user from a mockup,
+choosing the recommended option; the reasoning is the author's, accepted without addition. How it
+mounts, front and rear RU, and width sit together on Identity, because the height is one of AC-049's
+three required facts and a required fact on the fourth section is one a person meets only when
+Save refuses. Physical keeps depth, chassis width, weight, load, clearances, thermal class and
+`Container`.
+
+**11.202.2 `Occupies` AND THE SPAN ARE DERIVED, NOT ASKED.** `derivedOccupancy` writes them on every
+edit to the mount, a height or the width, inside that edit's own undo entry: the side from the
+heights (both, front, rear, or none), and the span from the class (12, 6, 4, 3), typed only for
+`Custom width`. `Occupies` is shown as a reading. **§11.156.5's "only ever fills a blank" is
+replaced** (§12.43): that clause is exactly why a second height left the side wrong. Editing
+anything else does not re-derive, so a hand-written body that disagrees stays as written until
+somebody touches its occupancy. **Every seeded template already satisfies the derivation**, and a
+test sweeps the shipped catalog to keep it so.
+
+**11.202.3 THE REAR HEIGHT FOLLOWS THE FRONT UNTIL IT IS TYPED.** True while the two agree as
+opened, which a new template's `0 / 0` does; false from the first keystroke in the rear box. A
+front-only device costs one `0`, against a second height on the common case.
+
+**11.202.4 RULED ON TRADE KNOWLEDGE: SIDE-MOUNTED AND IN-FURNITURE GEAR TAKE NO RACK UNITS.** Asked
+rather than guessed, and answered by the user. Rack ears, a shelf and a rear rail take rack units;
+a 0U mount, a hosted card, side-mounted gear, gear in furniture and gear not in a rack take none, and
+show no height or width at all. Choosing one zeroes the heights, because `{frontU: 2, side: none}`
+is the body DR-157 refuses to place.
+
+**11.202.5 SAVE'S THIRD FACT, STATED ONCE.** `hasMeantOccupancy`: a rack mount means its occupancy
+with a height, front **or** rear; every other mount means a zero by being chosen, the reading DR-107
+§11.106.2 already made of `notInRack`. **This is not a fourth required fact**: it is AC-049's third,
+with the spellings §11.106.2 left out admitted. The user chose to fix the hosted case here rather
+than file it.
+
+**11.202.6 RULED: PASSTHROUGH IS A TOGGLE ON THE PORTS TOOLBAR.** Settled by the user, choosing the
+recommended option. It sits beside `Pair front to rear`, where a person is standing when they need
+it, and is not offered for a field device, as before.
+
+**11.202.7 WHAT THIS DOES NOT CHANGE.** The model and the file: every field is where it was, and
+nothing migrates (CR-117). Which sections exist (§11.106.2's `Panel` rule is unchanged).
+
+**Scope.** No scope change: the same fields, asked in fewer places.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -23315,6 +23378,14 @@ close and a reopen.
 |---|---|---|
 | **DR-077 §11.76.3**, the fork clause | *"The actions closure remembers the id it minted; later saves in the same authoring session pass it as `editing` and fork `version + 1`."* | **A later save REPLACES the newest version while no device is placed from it, and forks `version + 1` once one is** (§11.201.1). A seeded `@1` is never replaced. **The id clause stands exactly**: a second Save never mints a second template, and a rename does not re-id. |
 | **docs/06 §7.2**, the change class | *"computed from the diff and shown prominently before save"*, diffed against the body the window opened with. | **Shown only when devices are placed from the template, against the newest version they stand on, with the count** (§11.201.2). |
+
+
+### 12.43 Narrowed by DR-203 (size and mounting is asked once)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-157 §11.156.5**, the blank clause | *"IT ONLY EVER FILLS A BLANK. A person who has chosen a side keeps it whatever they type afterwards"* | **The side is derived from every occupancy edit** (§11.202.2) and is no longer a control, so there is no chosen side to keep. The rest of §11.156.5 stands: typing a height is saying where it mounts, the write rides the edit's own transaction, and a save gate is still the wrong answer. |
+| **DR-107 §11.106.2**, where `Mount method` lives | the Physical section keyed on `mountMethod`, with the mount picker on it | **The mount picker is on Identity**, in `Size and mounting` (§11.202.1). Physical still strips its rack rows for `notInRack`, as §11.106.2 rules. |
 
 
 ## 13. Resolved §10 questions
