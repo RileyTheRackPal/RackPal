@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-09-30 (eighty-second entry)
+
+* **Progress**: `#961`'s first slice is PR 170. Chapter `#964`: a bin chip drags onto the rails
+  through the palette's own drag, and the return chip and the drop share one U check.
+* **Update**: [DR-205](/decisions/dr-205-the-staging-bin-ships.md) records what the gates refused:
+  a shelf MOVE with no TOP-005 loop check, and CR-032's `↩`, which the font cannot draw in bold.
+* **Note**: **A COMMENT THAT SAYS "DOES NOT EXIST YET" IS A TRIPWIRE.** `shelf_placement.dart`
+  argued its missing cycle check was safe because nothing moved a device onto a shelf. The move
+  was then built in another file, and only the source scan noticed. Grep for the sentence when you
+  build the thing it says is absent.
+
 ## 2026-09-30 (eighty-first entry)
 
 * **Progress**: `#953`'s first half merged at `ec9f759c` (PR 169). `#961`'s first slice (docs/12

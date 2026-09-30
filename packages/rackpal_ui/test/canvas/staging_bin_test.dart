@@ -256,6 +256,99 @@ void main() {
       expect(find.byKey(ValueKey('staged-${_amp.v}')), findsOneWidget);
     });
 
+    group('A CHIP DRAGGED OUT (#964)', () {
+      /// Stages AMP-1 with `U` and answers where its body was, which is
+      /// now the free 2U the drags below aim at.
+      Future<Offset> stageAmp(WidgetTester tester, RackDocument doc) async {
+        final amp = find.byKey(ValueKey(_amp.v));
+        final where = tester.getCenter(amp);
+        await tester.tap(amp);
+        await tester.pumpAndSettle();
+        await tester.sendKeyEvent(LogicalKeyboardKey.keyU);
+        await tester.pumpAndSettle();
+        expect(doc.devices[_amp]!.placement, isA<StagedPlacement>());
+        return where;
+      }
+
+      Future<void> dragChipTo(WidgetTester tester, Offset to) async {
+        final chip = find.byKey(ValueKey('staged-${_amp.v}'));
+        final from = tester.getCenter(chip);
+        final gesture = await tester.startGesture(from);
+        const steps = 12;
+        for (var i = 1; i <= steps; i++) {
+          await gesture.moveTo(Offset.lerp(from, to, i / steps)!);
+          await tester.pump();
+        }
+        await gesture.up();
+        await tester.pumpAndSettle();
+      }
+
+      testWidgets('onto a free U, it lands there and leaves the bin', (
+        tester,
+      ) async {
+        final doc = _document();
+        await _pump(tester, doc);
+        final free = await stageAmp(tester, doc);
+
+        await dragChipTo(tester, free);
+
+        final placed = doc.devices[_amp]!.placement;
+        expect(placed, isA<RailPlacement>());
+        expect(
+          ((placed as RailPlacement).rackId, placed.ruIndex),
+          (_rack, 9),
+          reason: 'aimed at the body AMP-1 left, U9-U10',
+        );
+        expect(find.byType(StagingBinStrip), findsNothing);
+        expect(find.textContaining('wiring kept'), findsOneWidget);
+      });
+
+      testWidgets('onto an occupied U, it is refused and stays in the bin', (
+        tester,
+      ) async {
+        final doc = _document();
+        await _pump(tester, doc);
+        await stageAmp(tester, doc);
+
+        await dragChipTo(
+          tester,
+          tester.getCenter(find.byKey(ValueKey(_shelf.v))),
+        );
+
+        // THE PRECONDITION, so this cannot pass on a drag that never armed:
+        // the live evaluation named the occupant and the chip lingers
+        // with it (docs/04 §3.1 step 5).
+        expect(find.textContaining('Occupied by SHF-1'), findsWidgets);
+        expect(doc.devices[_amp]!.placement, isA<StagedPlacement>());
+        expect(find.byKey(ValueKey('staged-${_amp.v}')), findsOneWidget);
+        await tester.pump(const Duration(seconds: 2)); // the blocked linger
+      });
+
+      testWidgets('released off the rack, it stays where it is and says '
+          'so, and no "add to the Staging Bin" chip promises otherwise', (
+        tester,
+      ) async {
+        final doc = _document();
+        await _pump(tester, doc);
+        await stageAmp(tester, doc);
+        final chip = tester.getCenter(
+          find.byKey(ValueKey('staged-${_amp.v}')),
+        );
+
+        final gesture = await tester.startGesture(chip);
+        for (var i = 0; i < 6; i++) {
+          await gesture.moveBy(const Offset(40, 0));
+          await tester.pump();
+        }
+        expect(find.byKey(StagingBinOverlay.chipKey), findsNothing);
+        await gesture.up();
+        await tester.pumpAndSettle();
+
+        expect(doc.devices[_amp]!.placement, isA<StagedPlacement>());
+        expect(find.text('AMP-1 stays in the Staging Bin.'), findsOneWidget);
+      });
+    });
+
     testWidgets('ONE Ctrl+Z takes a U back', (tester) async {
       final doc = _document();
       await _pump(tester, doc);

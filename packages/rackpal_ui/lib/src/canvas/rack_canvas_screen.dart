@@ -442,6 +442,11 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// against a list this screen no longer owns.
   PlaceableTemplate? _armedPaletteRow;
 
+  /// The staged device a Staging Bin chip drag was armed with, when the
+  /// drag came from the bin rather than the palette (`#964`). Exactly one
+  /// of this and [_armedPaletteRow] is set by an arm.
+  Uuid? _armedStagedId;
+
   /// The same coarse filter for `_moveDrag`: the id of the device that
   /// should currently paint at 30% opacity in place (docs/04 §3.3 step 1),
   /// or null. A `setState` fires only when this VALUE changes — i.e. once
@@ -2033,6 +2038,32 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
         _status.show(
           'Returned ${_doc.devices[id]?.designator ?? 'the device'} to '
           '${_whereLabel(command.to)}.',
+        );
+      case PlacementPlanRefused(:final reason):
+        _status.show(reason);
+    }
+  }
+
+  /// A chip dragged onto the rails and released on a free U (`#964`). The
+  /// planner re-runs the checks the live drag just showed, as a palette
+  /// release does, so a same-frame edit is refused in words rather than
+  /// overlapped.
+  void _placeStagedOnRail(Uuid id, int ruIndex, Face face) {
+    switch (planPlaceStagedOnRail(
+      doc: _doc,
+      id: id,
+      rack: _rack,
+      ruIndex: ruIndex,
+      face: face,
+      now: _controller.clock.nowUtc(),
+      actor: _controller.actor,
+    )) {
+      case PlacementPlanReady(:final command):
+        _controller.run(command);
+        _selection.apply([id], SelectMode.replace);
+        _status.show(
+          'Placed ${_doc.devices[id]?.designator ?? 'the device'} at '
+          '${_whereLabel(command.to)}, ${face.name}, wiring kept.',
         );
       case PlacementPlanRefused(:final reason):
         _status.show(reason);
@@ -4160,11 +4191,55 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     // the list and resolves the key, so the string that could name the
     // wrong template never reaches this screen at all.
     _armedPaletteRow = row;
+    _armedStagedId = null;
     final body = row.body;
     // Field devices: click/double-click-only, see above.
     final mountable = body.frontU > 0 || body.rearU > 0;
     if (!mountable) return;
+    _armDrag(
+      subjectId: row.rowKey,
+      body: body,
+      displayName: body.displayName,
+      event: event,
+    );
+  }
 
+  /// A Staging Bin chip, dragged out onto the rails (DR-205 §11.204.3,
+  /// `#964`).
+  ///
+  /// THE PALETTE'S OWN DRAG, not a second one: the same ghost, the same
+  /// live evaluation (`_evaluateDrop`), the same blocked shake and the same
+  /// Esc, because a chip dragged to U5 and a palette row dragged to U5 are
+  /// asking the rack the same question. Only the release differs, in
+  /// `_commitOrNoopPaletteDrag`: this one moves an existing device, keeping
+  /// its id and its wiring, where a palette release mints one.
+  ///
+  /// A device with no rack height does not arm, exactly as a field row
+  /// does not: it has no rails to snap to, and it waits for a shelf target
+  /// (`#956`).
+  void armStagedDrag(Uuid id, PointerDownEvent event) {
+    final device = _doc.devices[id];
+    final body = device == null ? null : bodyFor(device, _doc.templates);
+    if (device == null || body == null) return;
+    if (body.frontU <= 0 && body.rearU <= 0) return;
+    _armedPaletteRow = null;
+    _armedStagedId = id;
+    _armDrag(
+      subjectId: 'staged:${id.v}',
+      body: body,
+      displayName: device.designator,
+      event: event,
+    );
+  }
+
+  /// The half of arming both sources share: the claim, the controller and
+  /// the global pointer route.
+  void _armDrag({
+    required String subjectId,
+    required TemplateBody body,
+    required String displayName,
+    required PointerDownEvent event,
+  }) {
     // THE EXCLUSIVITY RULE, asked rather than restated (see that section).
     // This subsumes the hand-written concurrent-arm guard that used to live
     // here — `_liveGesture` is set for the whole life of a palette drag and
@@ -4197,14 +4272,14 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     _armPointer = event.pointer;
     _armGlobalStart = event.position; // PointerEvent.position is always global.
     _paletteDrag.arm(
-      // THE `rowKey`, not the template id: `_commitOrNoopPaletteDrag`
-      // reads this back to find the row, and a template id can name two
+      // THE `rowKey`, not the template id: a template id can name two
       // rows (DR-102 §11.101.4). `subjectId` is opaque to
-      // `DragPreviewController`, which is why this needed no change there.
-      subjectId: row.rowKey,
+      // `DragPreviewController`, which is why a staged chip's
+      // `staged:<id>` needed no change there either.
+      subjectId: subjectId,
       deviceH: deviceH,
       face: face,
-      displayName: body.displayName,
+      displayName: displayName,
       badge: '${deviceH}U',
       sourceKinds: {event.kind},
     );
@@ -4259,8 +4334,14 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     }
 
     // Staging Bin: show when outside canvas, hide when inside
+    // NOT FOR A CHIP DRAGGED OUT OF THE BIN: releasing that one off the
+    // rack leaves it where it already is, and a chip saying "Release to
+    // add to the Staging Bin" over it would promise a move to where the
+    // device already sits.
     final isOutsideCanvas =
-        !insideCanvas && _paletteDrag.phase == DragPreviewPhase.lifted;
+        _armedStagedId == null &&
+        !insideCanvas &&
+        _paletteDrag.phase == DragPreviewPhase.lifted;
     if (isOutsideCanvas) {
       _insertStagingBinOverlay();
     } else if (!isOutsideCanvas && _stagingBinOverlayEntry != null) {
@@ -4409,9 +4490,21 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       // the same noise the rule exists to prevent, pointed the other way.
       final lifted = _paletteDrag.phase == DragPreviewPhase.lifted;
       final row = _armedPaletteRow;
+      final staged = _armedStagedId;
       _removePaletteDragOverlay();
       _removeStagingBinOverlay();
       _paletteDrag.reset();
+      // A BIN CHIP RELEASED OFF THE RACK stays in the bin, and says so
+      // only when it was really dragged: a click on a chip arms too.
+      if (staged != null) {
+        if (lifted) {
+          _status.show(
+            '${_doc.devices[staged]?.designator ?? 'The device'} stays in '
+            'the Staging Bin.',
+          );
+        }
+        return;
+      }
       if (!lifted || row == null) return;
       // ── THE STAGING BIN IS BUILT (DR-205), so a release off the rack
       // stages the device rather than narrating a no-op. docs/04 §3.1:
@@ -4473,6 +4566,13 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     // blocked flag) is still exactly what was last shown, per docs/04's
     // "commit reads the last live-evaluated state".
     _controller.selection = _selection.snapshot();
+    if (_armedStagedId case final staged?) {
+      final face = _paletteDrag.face;
+      _removePaletteDragOverlay();
+      _paletteDrag.reset();
+      _placeStagedOnRail(staged, evaluation.ruIndex, face);
+      return;
+    }
     // THE SAME PLAN THE QUICK-ADD PATH USES (DR-103 §11.102.2), because
     // dragging a library row onto the rails is the same act as
     // double-clicking it. One placement mechanism, two entry points, and
@@ -4995,6 +5095,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
                             selectedIds: _selection.ids.toSet(),
                             onSelect: _selectStaged,
                             onReturn: _returnFromStaging,
+                            onArmDrag: armStagedDrag,
                           ),
                         ],
                       ],
