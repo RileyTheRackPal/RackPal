@@ -605,4 +605,67 @@ void main() {
       await tester.pump(const Duration(seconds: 4));
     });
   });
+
+  group('DELETING A SHELF ASKS (#959, DR-204 §11.203.6)', () {
+    Future<void> deleteShelf(WidgetTester tester) async {
+      final r = tester.getRect(find.byKey(ValueKey(_shelf.v)));
+      await tester.tapAt(Offset(r.left + 3, r.top + 3));
+      await tester.pumpAndSettle();
+      await tester.sendKeyEvent(LogicalKeyboardKey.delete);
+      await tester.pumpAndSettle();
+    }
+
+    testWidgets('ENTER TAKES THE DEFAULT: the hosts go to the bin with their '
+        'shelf remembered, and ONE Ctrl+Z puts all three back', (
+      tester,
+    ) async {
+      final doc = _document();
+      await _pump(tester, doc);
+      await deleteShelf(tester);
+
+      expect(find.text('SHF-1 hosts 2 devices.'), findsOneWidget);
+      expect(find.text('Delete all 3'), findsOneWidget);
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+
+      expect(doc.devices.containsKey(_shelf), isFalse);
+      for (final id in [_box1, _box2]) {
+        final p = doc.devices[id]!.placement as StagedPlacement;
+        expect(p.lastHostDeviceId, _shelf);
+      }
+      expect(find.text('Staging Bin (2)'), findsOneWidget);
+
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyZ);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(_packOrder(doc), [_box1, _box2]);
+    });
+
+    testWidgets('DELETE ALL removes the shelf and every host, and nothing is '
+        'left pointing at a shelf that is gone', (tester) async {
+      final doc = _document();
+      await _pump(tester, doc);
+      await deleteShelf(tester);
+
+      await tester.tap(find.byKey(DeleteShelfDialog.deleteAllKey));
+      await tester.pumpAndSettle();
+
+      for (final id in [_shelf, _box1, _box2]) {
+        expect(doc.devices.containsKey(id), isFalse);
+      }
+    });
+
+    testWidgets('CANCEL changes nothing', (tester) async {
+      final doc = _document();
+      await _pump(tester, doc);
+      await deleteShelf(tester);
+
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+
+      expect(doc.devices.containsKey(_shelf), isTrue);
+      expect(_packOrder(doc), [_box1, _box2]);
+    });
+  });
 }

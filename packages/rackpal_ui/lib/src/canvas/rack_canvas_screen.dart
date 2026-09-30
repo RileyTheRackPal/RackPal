@@ -38,6 +38,7 @@ import 'package:rackpal_ui/src/canvas/viewport_hud.dart';
 import 'package:rackpal_ui/src/inspector/add_zero_u_channel_dialog.dart'
     show zeroUChannelLabel;
 import 'package:rackpal_ui/src/inspector/delete_device_dialog.dart';
+import 'package:rackpal_ui/src/inspector/delete_shelf_dialog.dart';
 import 'package:rackpal_ui/src/inspector/inspector_panel.dart';
 import 'package:rackpal_ui/src/inspector/new_rack_dialog.dart';
 import 'package:rackpal_ui/src/inspector/shrink_rack_dialog.dart';
@@ -3785,6 +3786,36 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     final ids = _selection.ids.where(_doc.devices.containsKey).toList();
     if (ids.isEmpty) return;
 
+    // A SHELF CARRYING DEVICES ASKS FIRST (DR-204 §11.203.6, `#959`). It
+    // used to be removed and leave its hosts pointing at nothing, which is
+    // TOP-005's fault arriving from an ordinary Delete. Asked BEFORE the
+    // cable confirmation below, because "Delete all" widens the list that
+    // the cable count is taken from: the number that dialog prints has to
+    // be the gesture's.
+    final hosts = _hostsLeftBehind(ids);
+    var staged = const <Uuid>[];
+    if (hosts.isNotEmpty) {
+      final all = [for (final h in hosts.values) ...h];
+      final choice = await askAboutShelfHosts(
+        context,
+        shelves: [
+          for (final MapEntry(key: shelf, value: on) in hosts.entries)
+            (
+              designator: _doc.devices[shelf]?.designator ?? shelf.v,
+              hosts: on.length,
+            ),
+        ],
+        totalDevices: ids.length + all.length,
+      );
+      if (choice == null || !mounted) return;
+      switch (choice) {
+        case ShelfHostsChoice.deleteAll:
+          ids.addAll(all);
+        case ShelfHostsChoice.moveToBin:
+          staged = all;
+      }
+    }
+
     // ═════════════════════════════════════════════════════════════════
     // DR-013 §11.13.2 — ASK BEFORE DESTROYING WORK THE USER CANNOT SEE
     // ═════════════════════════════════════════════════════════════════
@@ -3824,7 +3855,13 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     // EACH COMMAND NOW CARRIES ITS OWN LINKS: DR-013 §11.13.1 makes the
     // cascade part of `RemoveDeviceCommand` itself, which is what the
     // "deferred" note that used to sit here was waiting for.
+    //
+    // THE HOSTS ARE STAGED FIRST, in the same entry (§11.203.6): a staged
+    // device no longer names the shelf, so nothing points at it when it
+    // goes, and one Ctrl+Z puts the shelf and its hosts back together.
+    final stageCommands = _stageCommands(staged);
     _controller.transact(LabelKey.removeDevice, (tx) {
+      stageCommands.forEach(tx.add);
       for (final id in live) {
         tx.add(RemoveDeviceCommand(id: id));
       }
@@ -3833,6 +3870,38 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       _selection.clear();
       _controller.selection = _selection.snapshot(); // after = {}
     });
+    if (stageCommands.isNotEmpty) {
+      final n = stageCommands.length;
+      _status.show(
+        '${n == 1 ? '1 device' : '$n devices'} moved to the Staging Bin, '
+        'wiring kept. Ctrl+Z to undo.',
+      );
+    }
+  }
+
+  /// The devices on shelves in [ids] that are NOT themselves in [ids],
+  /// by shelf, in pack order: what a delete would otherwise leave pointing
+  /// at nothing.
+  ///
+  /// Walks the whole chain, so a host that is itself a shelf brings its
+  /// own hosts along: drawn or not, they would be orphaned just the same.
+  /// Keyed in [ids]' order, so the dialog lists shelves as selected.
+  Map<Uuid, List<Uuid>> _hostsLeftBehind(List<Uuid> ids) {
+    final chosen = ids.toSet();
+    final out = <Uuid, List<Uuid>>{};
+    for (final shelf in ids) {
+      final found = <Uuid>[];
+      final queue = [shelf];
+      while (queue.isNotEmpty) {
+        for (final h in devicesOnShelf(_doc, queue.removeLast())) {
+          if (chosen.contains(h.id) || found.contains(h.id)) continue;
+          found.add(h.id);
+          queue.add(h.id);
+        }
+      }
+      if (found.isNotEmpty) out[shelf] = found;
+    }
+    return out;
   }
 
   void _undo() {

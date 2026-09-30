@@ -1,5 +1,12 @@
 # Update Log
 
+## 2026-09-30 (eighty-sixth entry)
+
+* **Progress**: `#956` merged at `dc43f5fc` (PR 173), closing Story `#961`. `#957` is PR 174;
+  `#958` and `#959` built. docs/12 §4.23.
+* **Note**: **A DIALOG CAN BE A DATA FIX.** Deleting a shelf left its hosts naming a device that
+  was gone. The ticket read as UX; the ruling behind it was also closing a TOP-005 hole.
+
 ## 2026-09-30 (eighty-fifth entry)
 
 * **Progress**: `#967` merged at `d1783fc0` (PR 172). `#956` is PR 173; `#957` and `#958` built.

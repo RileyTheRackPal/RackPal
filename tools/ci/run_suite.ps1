@@ -1563,7 +1563,10 @@ $SuiteFloors = @{
     # mounts on free rails, stages off the rack, and is removed elsewhere
     # with one Ctrl+Z back; a full shelf refuses a drop, and one with an
     # unknown width takes it and says so.
-    'rackpal_ui'     = 2019
+    # 2022 at `#959` (DR-204 §11.203.6): +3 in canvas/shelf_drop_test.dart.
+    # Deleting a shelf asks; Enter stages its hosts and one Ctrl+Z puts all
+    # back; Delete all removes every host; Cancel changes nothing.
+    'rackpal_ui'     = 2022
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
