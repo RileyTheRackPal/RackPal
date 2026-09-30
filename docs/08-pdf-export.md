@@ -521,7 +521,9 @@ Six blocks on one ANSI B landscape sheet:
 3. **Device block anatomy**: one annotated example: designator position, name, model, port stub, port label, RU span, `lifecycleStatus` border.
 4. **Convention key**: lifecycle borders; junction dot vs plain crossover (there are no hop arcs in v1, DR-001); the **net-label stub**: a labelled stub at a pin standing in for a drawn wire, which is the default rendering everywhere except a domain-filtered sheet, so the legend must explain it; home-run vs local tag-pill shape; `— OPEN —` end notation; the revision cloud and revision triangle.
 5. **Identifier formats**: the active templates, expanded, with a worked decomposition field by field.
-6. **Abbreviations and general notes**: editable, seeded.
+6. **Abbreviations and general notes**: editable, seeded; seeded first, with editing its own Chapter (DR-208 §11.207.2).
+
+**Blocks 2 to 6 explain what the set prints (DR-208 §11.207.1).** A convention joins the key in the change that first prints it, so the key never explains a mark the reader cannot find in the set.
 
 J-STD-710 symbol geometry becomes constants: distinctive shapes inside a 3/8 in circle, circles 0.35 in, squares 0.25 in, symbol line weight 0.014 in (1 pt), attribute text ≥ 3/32 in.
 
