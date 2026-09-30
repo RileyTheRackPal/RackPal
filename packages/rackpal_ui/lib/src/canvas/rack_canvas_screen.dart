@@ -3119,6 +3119,16 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     for (final layout in _rackScene?.devices ?? const <DeviceLayout>[]) {
       final fill = _portFill[layout.deviceId];
       if (fill == null || !fill.hasUnconnected) continue;
+      // A HOST'S CHIP IS DRAWN ONLY ON HOVER OR SELECTION (§11.203.10), so
+      // it is pressable only then: a mouse always hovers before it
+      // presses, and a touch or pen press on an unselected host must not
+      // fire a chip nobody could see. "A chip you can see but not click,
+      // or click but not see" is what the file header warns against.
+      if (_doc.devices[layout.deviceId]?.placement is ShelfPlacement &&
+          !_selection.contains(layout.deviceId) &&
+          !_dragSourceKinds.contains(PointerDeviceKind.mouse)) {
+        continue;
+      }
       final local = portChipRect(
         deviceWidth: layout.rect.width,
         deviceHeight: layout.rect.height,
@@ -6024,6 +6034,9 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       },
       portChip: chip,
       portChipStyle: _portChipStyle(scheme),
+      // A HOST'S CHIP WAITS FOR HOVER OR SELECTION (§11.203.10): on a
+      // 2U shelf it would sit on the host's only label.
+      portChipAtRest: _doc.devices[d.deviceId]?.placement is! ShelfPlacement,
       // Two in-place fades, one knob (see `RenderDeviceBox.fadeOpacity`):
       //  * §3.3 step 1 — the device being move-dragged drops to 30 %,
       //    "showing the vacated U", while its full-opacity ghost follows

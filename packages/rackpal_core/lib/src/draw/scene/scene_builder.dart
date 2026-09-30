@@ -26,6 +26,8 @@
 
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/catalog/catalog_passive.dart' show kCatPassive;
+import 'package:rackpal_core/src/commands/shelf_placement.dart'
+    show devicesOnShelfIn;
 import 'package:rackpal_core/src/derived/device_loads.dart'
     show elevationOccupancyU, templateKeyFor;
 import 'package:rackpal_core/src/draw/geometry.dart';
@@ -332,6 +334,9 @@ RackScene buildRackScene({
       mirrored: mirrored,
     );
 
+    // A shelf with something on it (DR-204 §11.203.10).
+    final hosting =
+        body.isContainer && devicesOnShelfIn(devices, device.id).isNotEmpty;
     final built = buildDeviceLayer(
       device,
       body,
@@ -354,8 +359,26 @@ RackScene buildRackScene({
       // panel filed under some other category simply does not hatch,
       // which is graceful degradation rather than a guess about what the
       // author meant. Recorded in the M1 log as a known partial.
-      hatched: options.hatchPassive && body.category == kCatPassive,
+      // NOT ON A LOADED SHELF (§11.203.10): its hosts sit over the band,
+      // and one drawn hollow (width unknown) had the 45° lines running
+      // through its label. The header's designator and mark already say
+      // what it is; an empty shelf keeps its hatch.
+      hatched: options.hatchPassive && body.category == kCatPassive && !hosting,
       typeScale: options.typeScale,
+      // A SHELF CARRYING DEVICES keeps its top line only, with its load
+      // on it (DR-204 §11.203.7, §11.203.10): its hosts cover the rest.
+      // A shelf carrying nothing draws as any device does.
+      hostingNote: hosting
+          ? formatShelfLoad(
+              shelfLoad(
+                devices: devices,
+                templates: templates,
+                shelfId: device.id,
+              ),
+              body.containerWeightCapacity,
+              options.units,
+            )
+          : null,
     );
 
     ops
@@ -399,6 +422,7 @@ RackScene buildRackScene({
     templates: templates,
     placed: drawnRail,
     mirrored: mirrored,
+    headerUnits: shelfHeaderUnitsFor(options.typeScale),
   );
   for (final layout in shelves.values) {
     for (final host in layout.hosts) {
@@ -446,38 +470,6 @@ RackScene buildRackScene({
       );
     }
   }
-  // ── what each shelf carries (DR-204 §11.203.7, `#960`) ───────────────
-  //
-  // In the header band, right-aligned, and only where there IS a header
-  // (a shelf too short for one gives the band to its hosts) and only when
-  // the measured line fits in the right half, so it never runs into the
-  // designator. A shelf carrying nothing prints nothing: `0.0/22.0 lb` on
-  // every empty shelf in a rack is noise, and the load is the news.
-  for (final (:device, :rect) in drawnRail) {
-    if (shelves[device.id]?.hosts.isEmpty ?? true) continue;
-    if (shelfHostArea(rect).top <= rect.top) continue;
-    final text = formatShelfLoad(
-      shelfLoad(devices: devices, templates: templates, shelfId: device.id),
-      templates[templateKeyFor(device.templateRef)]
-          ?.body
-          .containerWeightCapacity,
-      options.units,
-    );
-    final sizePt = options.typeScale.size(RackTextSizes.type);
-    final style = rackText(sizePt, palette.deviceType, TextAnchor.midRight);
-    if (measurer.measureText(text, style).advanceWidth > rect.width / 2 - 6) {
-      continue;
-    }
-    ops.add(
-      OpText(
-        text,
-        DPt(rect.right - 4, rect.top + kShelfHeaderUnits / 2),
-        style,
-      ),
-    );
-    minText = _min(minText, sizePt);
-  }
-
   // THE SHELF KEEPS ONLY WHAT NO HOST COVERS. Nearest-hit breaks a tie
   // between two containing regions on distance to centre, so a click on a
   // wide host near its edge could pick the shelf under it. Cutting each

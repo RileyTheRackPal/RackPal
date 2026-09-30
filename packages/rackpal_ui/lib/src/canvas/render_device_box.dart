@@ -63,6 +63,7 @@ class DeviceBox extends StatefulWidget {
     this.locked = false,
     this.portChip,
     this.portChipStyle,
+    this.portChipAtRest = true,
     this.fadeOpacity,
     this.shake,
     super.key,
@@ -108,6 +109,14 @@ class DeviceBox extends StatefulWidget {
   /// non-null; nullable so the many hosts that pass neither need not
   /// invent one.
   final PortChipStyle? portChipStyle;
+
+  /// Whether [portChip] shows while the device is neither hovered nor
+  /// selected. False for a device on a SHELF (DR-204 §11.203.10, `#968`):
+  /// a host there is about 26 units tall and the 11-unit chip sat on its
+  /// label, so it appears on hover or selection instead. Decided here,
+  /// where hover lives, so the render object still draws exactly what it
+  /// is handed.
+  final bool portChipAtRest;
 
   /// The alpha this device composites at IN PLACE, or null (the default)
   /// for full opacity. Two callers today, both from `RackCanvasScreen`:
@@ -175,7 +184,9 @@ class _DeviceBoxState extends State<DeviceBox> {
         focused: _focused,
         selected: widget.selected,
         locked: widget.locked,
-        portChip: widget.portChip,
+        portChip: widget.portChipAtRest || _hovered || widget.selected
+            ? widget.portChip
+            : null,
         portChipStyle: widget.portChipStyle,
         fadeOpacity: widget.fadeOpacity,
         shake: widget.shake,

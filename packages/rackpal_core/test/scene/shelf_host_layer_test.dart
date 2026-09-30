@@ -399,4 +399,76 @@ void main() {
       expect(loadLine(const []), isNull);
     });
   });
+
+  group('the own labels of a loaded shelf (DR-204 §11.203.10, `#968`)', () {
+    List<String> shelfTexts(List<DeviceInstance> on) {
+      final scene = _scene([_shelf(), ...on], templates);
+      final range = scene.scene.fragments['shf']!;
+      return [
+        for (final op in scene.scene.ops.sublist(range.start, range.end))
+          if (op is OpText) op.text,
+      ];
+    }
+
+    test('A SHELF CARRYING DEVICES DRAWS ITS TOP LINE ONLY: no name or type '
+        'line for its hosts to be drawn over, or to show through a hollow '
+        'one', () {
+      final texts = shelfTexts([_on('stb', 'a0', template: 'UNKNOWN')]);
+      expect(texts, contains('SHF'));
+      expect(texts, isNot(contains('2U shelf')), reason: 'the type line');
+    });
+
+    test('and an EMPTY shelf still draws as any device does', () {
+      expect(shelfTexts(const []), contains('2U shelf'));
+    });
+
+    test('THE HEADER IS SIZED FROM THE TYPE: at an inflated print scale '
+        'the hosts start below the designator, not on it', () {
+      const scale = RackTypeScale(1.6);
+      expect(
+        shelfHeaderUnitsFor(scale),
+        greaterThan(4 + 11 * 1.6),
+        reason: 'the pad and the designator, with room to spare',
+      );
+      final layout = layoutShelfHosts(
+        devices: [_shelf(), _on('stb', 'a0')],
+        templates: templates,
+        shelf: _shelf(),
+        shelfRect: const DBox.fromLtwh(0, 0, 400, 88),
+        mirrored: false,
+        headerUnits: shelfHeaderUnitsFor(scale),
+      );
+      expect(
+        layout.hosts.single.rect.top,
+        greaterThanOrEqualTo(4 + 11 * 1.6),
+      );
+    });
+
+    test('A LOADED SHELF IS NOT HATCHED, so a hollow host has no lines '
+        'through its label; an empty one still is', () {
+      final passive = {
+        ...templates,
+        'SHELF@1': _snap('SHELF', _shelfBody()..category = kCatPassive),
+      };
+      bool hatched(List<DeviceInstance> on) {
+        // THE SHEET'S SETTING: the screen never hatches, paper does.
+        final scene = buildRackScene(
+          rack: _rack(),
+          devices: [_shelf(), ...on],
+          templates: passive,
+          face: Face.front,
+          lod: LodLevel.full,
+          measurer: FakeMeasurer(),
+          options: const RackSceneOptions(hatchPassive: true),
+        );
+        final range = scene.scene.fragments['shf']!;
+        return scene.scene.ops
+            .sublist(range.start, range.end)
+            .any((op) => op is OpClipRect);
+      }
+
+      expect(hatched(const []), isTrue, reason: 'the control');
+      expect(hatched([_on('stb', 'a0', template: 'UNKNOWN')]), isFalse);
+    });
+  });
 }

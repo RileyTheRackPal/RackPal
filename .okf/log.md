@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-09-30 (eighty-eighth entry)
+
+* **Progress**: `#958`, `#959` and `#960` merged (PRs 175, 176); Story `#953` closed and then
+  reopened for `#968`, the user's screenshot. docs/12 §4.23.
+* **Update**: [DR-204](/decisions/dr-204-a-device-can-sit-on-a-shelf.md) gains §11.203.10.
+* **Note**: **GREEN IS NOT LOOKED AT.** Nineteen gates and every widget test passed over a shelf
+  whose labels overlapped three ways. The tests asserted what was drawn, never that two things did
+  not draw in one place. Render a real screenshot of a new drawing before calling it done.
+
 ## 2026-09-30 (eighty-seventh entry)
 
 * **Progress**: `#957` merged at `6c61d0b5` (PR 174); `#958` is PR 175. Chapter `#960`, the
