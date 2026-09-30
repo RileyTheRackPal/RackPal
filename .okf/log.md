@@ -1,5 +1,13 @@
 # Update Log
 
+## 2026-09-30 (eighty-seventh entry)
+
+* **Progress**: `#957` merged at `6c61d0b5` (PR 174); `#958` is PR 175. Chapter `#960`, the
+  shelf's load in its header, completes DR-204's list. docs/12 §4.23.
+* **Note**: **OVER IS CERTAIN BEFORE IT IS COMPLETE.** A mass is never negative, so known masses
+  already past a capacity are over whatever the unknowns weigh. The load line says `OVER` then and
+  `≥` otherwise, and never claims an incomplete total fits.
+
 ## 2026-09-30 (eighty-sixth entry)
 
 * **Progress**: `#956` merged at `dc43f5fc` (PR 173), closing Story `#961`. `#957` is PR 174;

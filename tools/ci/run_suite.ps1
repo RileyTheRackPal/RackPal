@@ -994,7 +994,11 @@ $SuiteFloors = @{
     # with its links as a move, and one with no rack height is refused;
     # shelfFit reports a known overrun, a fit, an unknown counted as a
     # floor, and a dragged host counted once.
-    'rackpal_core'   = 5164
+    # 5167 at `#960` (DR-204 §11.203.7): +3 in scene/shelf_host_layer_test.
+    # A shelf's load counts an unknown mass rather than summing it as zero;
+    # the load line under, incomplete, OVER and uncapped; the elevation
+    # prints it on a loaded shelf and not on an empty one.
+    'rackpal_core'   = 5167
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
