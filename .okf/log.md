@@ -1,5 +1,11 @@
 # Update Log
 
+## 2026-09-30 (ninetieth entry)
+
+* **Progress**: `#576` merged at `444174ef` (PR 178). M6-B (`#316`) begun; the user will run the Plan
+  view's drill and M6's physical criteria together.
+* **Creation**: [DR-207](/decisions/dr-207-legend-prints-the-ten-then-what-is-used.md).
+
 ## 2026-09-30 (eighty-ninth entry)
 
 * **Progress**: `#968` merged at `84a6a245` (PR 177), closing Story `#953` again.
