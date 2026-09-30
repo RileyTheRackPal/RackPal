@@ -238,6 +238,9 @@ const Map<String, _Rule> _bodyRules = {
   'containerUsableDepthNm': _safe,
   'containerUsableWidthNm': _safe,
   'containerVented': _safe,
+  // A DRAWING input, like `chassisWidthNm`: it moves where a host sits on
+  // its shelf and nothing that is wired, scheduled or measured (DR-204).
+  'shelfWidthNm': _safe,
 
   // docs/06 §7.2, verbatim: "`isPassthrough` toggled" and "passthrough
   // pairing altered" are both breaking.

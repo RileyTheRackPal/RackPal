@@ -35,8 +35,9 @@ final class _M implements TextMeasurer {
   );
 }
 
-/// One face of one rack, and the devices the scene actually drew.
-({List<DiagramOp> ops, int devices}) _face(
+/// One face of one rack, the devices the scene actually drew, and how many
+/// of them sit on a shelf the scene itself reports as overfull.
+({List<DiagramOp> ops, int devices, int squeezed}) _face(
   RackDocument doc,
   Rack rack,
   Face face,
@@ -49,7 +50,17 @@ final class _M implements TextMeasurer {
     lod: LodLevel.full,
     measurer: _M(),
   );
-  return (ops: built.scene.ops, devices: built.devices.length);
+  final overfull = built.shelfOverflow.keys.toSet();
+  final squeezed = built.devices.where((l) {
+    final placement = doc.devices[l.deviceId]?.placement;
+    return placement is ShelfPlacement &&
+        overfull.contains(placement.hostDeviceId);
+  }).length;
+  return (
+    ops: built.scene.ops,
+    devices: built.devices.length,
+    squeezed: squeezed,
+  );
 }
 
 void main() {
@@ -58,12 +69,14 @@ void main() {
     final doc = readSchematicFixture();
     var totalDevices = 0;
     var totalPaths = 0;
+    var totalSqueezed = 0;
     final byKind = <String, int>{};
 
     for (final rack in doc.racks.values) {
       for (final face in Face.values) {
         final f = _face(doc, rack, face);
         totalDevices += f.devices;
+        totalSqueezed += f.squeezed;
         totalPaths += f.ops.whereType<OpPath>().length;
         for (final op in f.ops) {
           byKind.update(
@@ -84,6 +97,7 @@ void main() {
       'ELEVATION OP CENSUS [${doc.racks.length} racks x 2 faces]:\n'
       '  devices drawn   $totalDevices\n'
       '  marks drawn     $totalPaths\n'
+      '  on overfull     $totalSqueezed\n'
       '  ops by kind     $byKind',
     );
 
@@ -94,9 +108,21 @@ void main() {
           'a fixture that draws no devices proves nothing at all, '
           'which is the shape of vacuous pass this file exists to end',
     );
+    // ONE EXCEPTION, AND THE SCENE NAMES IT RATHER THAN THIS TEST. Since
+    // DR-204 (`#953`) a device on a shelf is drawn, and a shelf whose hosts
+    // are wider than it squeezes them together to fit, which can take one
+    // below `device_layer.dart`'s width for a mark. The fixture's SHF-1
+    // carries five on 2U, which is `#844`'s case (stacking is parked).
+    // The squeezed hosts are counted from `RackScene.shelfOverflow`, so an
+    // unreported squeeze still fails here.
     expect(
       totalPaths,
-      totalDevices,
+      greaterThanOrEqualTo(totalDevices - totalSqueezed),
+      reason: 'every device not on an overfull shelf carries its mark',
+    );
+    expect(
+      totalPaths,
+      lessThanOrEqualTo(totalDevices),
       reason:
           'ONE mark per device. Fewer means a mark that does not draw, '
           'which is what shipped for four months as `accentColor` and was '

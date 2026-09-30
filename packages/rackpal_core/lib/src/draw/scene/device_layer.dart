@@ -129,6 +129,12 @@ DeviceLayerBuild buildDeviceLayer(
   bool lifecycleBorder = false,
   bool hatched = false,
   RackTypeScale typeScale = const RackTypeScale.identity(),
+  // A DEVICE ON A SHELF (DR-204 §11.203.4). It has no U of its own, so
+  // no U badge; and an unknown shelf width is drawn HOLLOW, reading
+  // `width unknown` where the type goes, which is the 0U bar's treatment
+  // of an unknown length (§11.165.2) applied to the other axis.
+  bool showBadge = true,
+  bool widthUnknown = false,
 }) {
   final ops = <DiagramOp>[];
   final sizes = <double>[];
@@ -158,7 +164,9 @@ DeviceLayerBuild buildDeviceLayer(
   // The ink then follows the FILL rather than the palette, because one of
   // the eight shipped swatches is pure black while all four label colours
   // are dark inks chosen against a near-white default.
-  final onDark = prefersLightInk(fillArgb);
+  // A hollow host has no fill for its ink to stand on, so it takes the
+  // palette's dark inks over whatever the shelf is drawn in.
+  final onDark = !widthUnknown && prefersLightInk(fillArgb);
   final inkDesignator = onDark
       ? palette.deviceDesignatorOnDark
       : palette.deviceDesignator;
@@ -167,7 +175,7 @@ DeviceLayerBuild buildDeviceLayer(
   final inkBadge = onDark ? palette.deviceBadgeOnDark : palette.deviceBadge;
 
   final rect = DBox.fromLtwh(0, 0, width, height);
-  final fill = Fill(fillArgb);
+  final fill = widthUnknown ? null : Fill(fillArgb);
   final stroke = lifecycleBorder
       ? lifecycleStroke(device.lifecycleStatus, palette.deviceStroke)
       : Stroke(argb: palette.deviceStroke, widthPt: 1);
@@ -184,8 +192,15 @@ DeviceLayerBuild buildDeviceLayer(
   if (hatched) ops.addAll(hatchBand(rect, palette.deviceType));
 
   final designator = device.designator;
-  final name = device.name;
-  final typeName = body.displayName;
+  // AN UNKNOWN SHELF WIDTH TAKES THE SECOND LINE, not the third, so it is
+  // the first thing to draw once there is room for anything under the
+  // designator. **On a 2U shelf there is not**: a host there is 26 units
+  // tall and the label ladder seats the designator alone. The HOLLOW body
+  // is then the whole statement, which is exactly the 0U bar's treatment
+  // of an unknown length (§11.165.2), and the semantic label says it in
+  // words for somebody who cannot see the outline.
+  final name = widthUnknown ? 'width unknown' : device.name;
+  final typeName = widthUnknown ? device.name : body.displayName;
 
   if (lod == LodLevel.block) {
     // Solid block: designator centred, ONLY if it fits (measured) and the
@@ -292,14 +307,16 @@ DeviceLayerBuild buildDeviceLayer(
 
       // docs/08 §2.2's `4U · 12–15` when the caller supplied it, the plain
       // U-height badge otherwise. Same line, so it costs no extra height.
-      ops.add(
-        OpText(
-          ruSpanLabel ?? '${deviceH}U',
-          DPt(width - _pad, pad),
-          rackText(badgePt, inkBadge, TextAnchor.topRight),
-        ),
-      );
-      sizes.add(badgePt);
+      if (showBadge) {
+        ops.add(
+          OpText(
+            ruSpanLabel ?? '${deviceH}U',
+            DPt(width - _pad, pad),
+            rackText(badgePt, inkBadge, TextAnchor.topRight),
+          ),
+        );
+        sizes.add(badgePt);
+      }
 
       // full / detail: stack name then type below the designator, each
       // only if it fits vertically (a 1U body has room for the designator

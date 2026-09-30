@@ -213,6 +213,13 @@ abstract final class TemplateBodyField {
     set: _setBodyDepth,
   );
 
+  /// Unknown, not zero, for [bodyDepth]'s reason (DR-204 §11.203.3).
+  static const shelfWidth = TemplateField<Len?>(
+    key: 'shelfWidth',
+    get: _getShelfWidth,
+    set: _setShelfWidth,
+  );
+
   /// Unknown, not zero, for [bodyDepth]'s reason.
   static const weight = TemplateField<Mass?>(
     key: 'weight',
@@ -386,6 +393,7 @@ abstract final class TemplateBodyField {
     widthClass,
     nominalSpanTwelfths,
     bodyDepth,
+    shelfWidth,
     weight,
     chassisWidth,
     maxUnsupportedMass,
@@ -455,6 +463,9 @@ void _setNominalSpanTwelfths(TemplateBody b, int v) =>
 
 Len? _getBodyDepth(TemplateBody b) => b.bodyDepth;
 void _setBodyDepth(TemplateBody b, Len? v) => b.bodyDepth = v;
+
+Len? _getShelfWidth(TemplateBody b) => b.shelfWidth;
+void _setShelfWidth(TemplateBody b, Len? v) => b.shelfWidth = v;
 
 Mass? _getWeight(TemplateBody b) => b.weight;
 void _setWeight(TemplateBody b, Mass? v) => b.weight = v;

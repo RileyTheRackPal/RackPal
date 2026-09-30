@@ -971,7 +971,12 @@ $SuiteFloors = @{
     # template and finds no disagreement, which is what makes an always-on
     # derivation safe to write over a real device.
     # 5124 at `#952`: +1, `shelf` among the mounts that take no rack units.
-    'rackpal_core'   = 5124
+    # 5135 at `#953` (DR-204): +11 in scene/shelf_host_layer_test.dart. A
+    # device on a shelf is drawn inside it, at true width when known,
+    # packed by order, mirrored behind, hollow when its width is unknown;
+    # a point on it hits the host and never the shelf; an overfull shelf
+    # is squeezed AND reported.
+    'rackpal_core'   = 5135
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1513,7 +1518,9 @@ $SuiteFloors = @{
     # builder/field_device_form_test.dart asserting occupancy is asked on
     # Identity and NOT again on Physical, which is the report itself.
     # 1987 at `#952`: +1, a shelf-sitting device asks no height and saves.
-    'rackpal_ui'     = 1987
+    # 1988 at `#953`: +1, a shelf-sitting device states its shelf width in
+    # Size and mounting and it saves, leaving chassisWidth alone.
+    'rackpal_ui'     = 1988
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

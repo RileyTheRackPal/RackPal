@@ -232,9 +232,26 @@ RackLoadProfile computeRackLoadProfile({
     // project keeps paying for, and here the two copies disagreeing would
     // mean the sheet states a count of omissions that is not the count of
     // what was omitted.
-    if (!isDrawnOnSomeElevation(device, body)) undrawn++;
-    if (elevationOccupancyU(device, body, Face.front) == null) undrawnFront++;
-    if (elevationOccupancyU(device, body, Face.rear) == null) undrawnRear++;
+    // Since DR-204 a device on a drawn shelf IS drawn, so this asks
+    // `isDrawnOnFace`, which knows about shelves, rather than the rail-only
+    // occupancy question it asked before.
+    final onFront = isDrawnOnFace(
+      device,
+      body,
+      Face.front,
+      byId: byId,
+      templates: templates,
+    );
+    final onRear = isDrawnOnFace(
+      device,
+      body,
+      Face.rear,
+      byId: byId,
+      templates: templates,
+    );
+    if (!onFront && !onRear) undrawn++;
+    if (!onFront) undrawnFront++;
+    if (!onRear) undrawnRear++;
 
     // Where in the stack this mass sits. A rail placement supplies it
     // directly; a shelf-hosted component inherits its host's. Anything

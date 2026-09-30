@@ -204,6 +204,7 @@ export 'src/draw/scene/rack_load_gutter.dart';
 export 'src/draw/scene/rack_style.dart';
 export 'src/draw/scene/scene_builder.dart';
 export 'src/draw/scene/schematic_scene.dart';
+export 'src/draw/scene/shelf_host_layer.dart';
 export 'src/draw/scene/signal_style.dart';
 export 'src/draw/scene/sugiyama.dart';
 export 'src/draw/scene/symbol_hit_test.dart';

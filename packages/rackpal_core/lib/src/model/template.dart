@@ -316,6 +316,7 @@ final class TemplateBody {
     this.containerUsableDepth,
     this.containerUsableWidth,
     this.containerVented = false,
+    this.shelfWidth,
     this.isPassthrough = false,
     List<PassthroughPairDef>? passthroughPairs,
     PowerProfile? power,
@@ -447,6 +448,18 @@ final class TemplateBody {
   Len? containerUsableDepth;
   Len? containerUsableWidth;
   bool containerVented;
+
+  /// How wide this device is when it sits on a shelf, or null when that is
+  /// UNKNOWN (DR-204 §11.203.3, G4). Absent on the wire when null.
+  ///
+  /// **NOT [chassisWidth], and the difference is the whole reason this
+  /// exists.** `chassisWidth` is non-nullable, defaults to 432 mm, is
+  /// always written, and is the width a rack PANEL's connectors flow
+  /// across. Read as a shelf width, every unmeasured cable box would be
+  /// drawn a full shelf wide as though somebody had measured it. Any
+  /// device may sit on a shelf (§11.203.2), so any template may carry
+  /// this.
+  Len? shelfWidth;
 
   bool isPassthrough;
   List<PassthroughPairDef> passthroughPairs;

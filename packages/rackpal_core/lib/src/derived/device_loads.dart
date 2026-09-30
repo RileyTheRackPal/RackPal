@@ -331,6 +331,33 @@ Face? boltedRailFace(DeviceInstance device) {
 /// test, so the count of what no elevation shows can never describe a
 /// different set from the one actually left out. `rack_load_gutter.dart`'s
 /// `undrawnCount` is exactly the complement of this.
+/// Whether the [face] elevation draws [device] at all: a rail device that
+/// occupies U on that face, or a device sitting on a shelf that is itself
+/// drawn there (DR-204 §11.203.4).
+///
+/// **THE SHELF HALF IS THE SAME TEST `scene_builder.dart` DRAWS BY**: it
+/// lays hosts only on shelves it drew on this face, and only hosts whose
+/// template resolves. `rack_load_gutter_test.dart` compares this against
+/// what `buildRackScene` actually leaves out, so the two cannot drift
+/// without a red test. [elevationOccupancyU] stays the rail-only question,
+/// because its callers are asking about U, which a host has none of.
+bool isDrawnOnFace(
+  DeviceInstance device,
+  TemplateBody? body,
+  Face face, {
+  required Map<Uuid, DeviceInstance> byId,
+  required Map<String, TemplateSnapshot> templates,
+}) {
+  final placement = device.placement;
+  if (placement is ShelfPlacement) {
+    if (body == null) return false;
+    final shelf = byId[placement.hostDeviceId];
+    if (shelf == null) return false;
+    return elevationOccupancyU(shelf, bodyFor(shelf, templates), face) != null;
+  }
+  return elevationOccupancyU(device, body, face) != null;
+}
+
 bool isDrawnOnSomeElevation(DeviceInstance device, TemplateBody? body) {
   for (final face in Face.values) {
     if (elevationOccupancyU(device, body, face) != null) return true;

@@ -1,0 +1,264 @@
+// Devices on a shelf are drawn on it, and selectable (DR-204 §11.203.4,
+// `#953`).
+//
+// Every case reads `buildRackScene`'s own output (its layouts, its hit
+// regions, its ops), because the defect was a device the scene left out
+// while everything upstream of the scene was right.
+import 'package:rackpal_core/rackpal_core.dart';
+import 'package:test/test.dart';
+
+import '../sheet/sheet_test_support.dart';
+
+const _rackId = Uuid('rack');
+
+Rack _rack() => Rack(
+  id: _rackId,
+  name: 'R',
+  designator: 'RK-1',
+  heightU: 12,
+  order: const FracIndex('a0'),
+  meta: testMeta(),
+);
+
+TemplateSnapshot _snap(String id, TemplateBody body) => TemplateSnapshot(
+  templateId: TemplateId(id),
+  version: 1,
+  contentHash: 'h',
+  body: body,
+  capturedAt: DateTime.utc(2026, 9, 30),
+);
+
+TemplateBody _shelfBody() => TemplateBody(
+  manufacturer: 'Generic',
+  model: '',
+  displayName: '2U shelf',
+  frontU: 2,
+  side: OccupancySide.front,
+  isContainer: true,
+);
+
+TemplateBody _host({Len? width}) => TemplateBody(
+  manufacturer: 'Generic',
+  model: '',
+  displayName: 'Cable box',
+  typePrefix: 'STB',
+  mountMethod: MountMethod.shelf,
+  shelfWidth: width,
+);
+
+DeviceInstance _device(String id, String template, Placement placement) =>
+    DeviceInstance(
+      id: Uuid(id),
+      kind: DeviceKind.rackDevice,
+      templateRef: TemplateRef(
+        templateId: TemplateId(template),
+        version: 1,
+        contentHash: 'h',
+      ),
+      designator: id.toUpperCase(),
+      name: '',
+      placement: placement,
+      meta: testMeta(),
+    );
+
+DeviceInstance _shelf() => _device(
+  'shf',
+  'SHELF',
+  const RailPlacement(rackId: _rackId, ruIndex: 5, face: Face.front),
+);
+
+DeviceInstance _on(String id, String order, {String template = 'BOX'}) =>
+    _device(
+      id,
+      template,
+      ShelfPlacement(hostDeviceId: const Uuid('shf'), order: FracIndex(order)),
+    );
+
+const Len _mm100 = Len(100_000_000);
+
+RackScene _scene(
+  List<DeviceInstance> devices,
+  Map<String, TemplateSnapshot> templates, {
+  Face face = Face.front,
+}) => buildRackScene(
+  rack: _rack(),
+  devices: devices,
+  templates: templates,
+  face: face,
+  lod: LodLevel.full,
+  measurer: FakeMeasurer(),
+);
+
+DBox _rectOf(RackScene scene, String id) =>
+    scene.devices.singleWhere((l) => l.deviceId.v == id).rect;
+
+void main() {
+  final templates = {
+    'SHELF@1': _snap('SHELF', _shelfBody()),
+    'BOX@1': _snap('BOX', _host(width: _mm100)),
+    'UNKNOWN@1': _snap('UNKNOWN', _host()),
+  };
+
+  test('A DEVICE ON A SHELF IS DRAWN, inside the shelf, which it never was '
+      'before DR-204', () {
+    final scene = _scene([_shelf(), _on('stb', 'a0')], templates);
+    final shelf = _rectOf(scene, 'shf');
+    final host = _rectOf(scene, 'stb');
+
+    expect(host.left, greaterThanOrEqualTo(shelf.left));
+    expect(host.right, lessThanOrEqualTo(shelf.right));
+    expect(host.top, greaterThan(shelf.top), reason: 'below the header');
+    expect(host.bottom, lessThan(shelf.bottom), reason: 'above the tray');
+    expect(scene.scene.fragments.containsKey('stb'), isTrue);
+  });
+
+  test('a KNOWN width is drawn at true scale', () {
+    final scene = _scene([_shelf(), _on('stb', 'a0')], templates);
+    expect(
+      _rectOf(scene, 'stb').width,
+      closeTo(RackGeometry.unitsForLen(_mm100), 1e-9),
+    );
+  });
+
+  test('hosts pack LEFT TO RIGHT in `order`, whatever order the file lists '
+      'them in', () {
+    final scene = _scene(
+      [_shelf(), _on('second', 'a1'), _on('first', 'a0')],
+      templates,
+    );
+    final first = _rectOf(scene, 'first');
+    final second = _rectOf(scene, 'second');
+    expect(first.right, closeTo(second.left, 1e-9));
+  });
+
+  test('the rear elevation packs from the RIGHT, because it is the same '
+      'shelf seen from behind', () {
+    final shelfBoth = TemplateBody(
+      manufacturer: 'Generic',
+      model: '',
+      displayName: '2U shelf',
+      frontU: 2,
+      rearU: 2,
+      side: OccupancySide.both,
+      isContainer: true,
+    );
+    final rack = Rack(
+      id: _rackId,
+      name: 'R',
+      designator: 'RK-1',
+      heightU: 12,
+      order: const FracIndex('a0'),
+      // `mirrorRearElevation` defaults to true, which is the reading this
+      // case is about; it is not restated.
+      meta: testMeta(),
+    );
+    final scene = buildRackScene(
+      rack: rack,
+      devices: [_shelf(), _on('stb', 'a0')],
+      templates: {...templates, 'SHELF@1': _snap('SHELF', shelfBoth)},
+      face: Face.rear,
+      lod: LodLevel.full,
+      measurer: FakeMeasurer(),
+    );
+    final shelf = _rectOf(scene, 'shf');
+    final host = _rectOf(scene, 'stb');
+    expect(shelf.right - host.right, lessThan(host.left - shelf.left));
+  });
+
+  group('an UNKNOWN width (G4)', () {
+    test('is drawn HOLLOW, and says so to a screen reader', () {
+      final scene = _scene([
+        _shelf(),
+        _on('stb', 'a0', template: 'UNKNOWN'),
+      ], templates);
+      final range = scene.scene.fragments['stb']!;
+      final ops = scene.scene.ops.sublist(range.start, range.end);
+
+      final body = ops.whereType<OpRoundRect>().first;
+      expect(body.fill, isNull, reason: 'hollow: no width was measured');
+      expect(
+        scene.devices.singleWhere((l) => l.deviceId.v == 'stb').semanticLabel,
+        endsWith('width unknown'),
+      );
+    });
+
+    test('and READS `width unknown` wherever the shelf is tall enough to '
+        'seat a second line', () {
+      // A 2U shelf seats the designator alone (see `device_layer.dart`),
+      // so the words are asserted on a 3U one; the hollow body above is
+      // what carries the statement on 2U.
+      final tall = _shelfBody()..frontU = 3;
+      final scene = _scene(
+        [_shelf(), _on('stb', 'a0', template: 'UNKNOWN')],
+        {...templates, 'SHELF@1': _snap('SHELF', tall)},
+      );
+      final range = scene.scene.fragments['stb']!;
+      final texts = scene.scene.ops
+          .sublist(range.start, range.end)
+          .whereType<OpText>()
+          .map((t) => t.text);
+      expect(texts, contains('width unknown'));
+    });
+
+    test('and is NOT the 432 mm chassis-width default a full shelf wide', () {
+      final scene = _scene([
+        _shelf(),
+        _on('stb', 'a0', template: 'UNKNOWN'),
+      ], templates);
+      expect(
+        _rectOf(scene, 'stb').width,
+        lessThan(_rectOf(scene, 'shf').width / 2),
+      );
+    });
+  });
+
+  group('selection', () {
+    test('a point on the host finds the HOST, never the shelf under it', () {
+      final scene = _scene([_shelf(), _on('stb', 'a0')], templates);
+      final host = _rectOf(scene, 'stb');
+      // Near the host's own edge, where centre distance alone would have
+      // favoured the wider shelf.
+      final nearEdge = DPt(host.left + 1, host.top + 1);
+      expect(hitTest(scene.scene, nearEdge)?.entityId, 'stb');
+    });
+
+    test('and a point on the free width of the shelf finds the SHELF', () {
+      final scene = _scene([_shelf(), _on('stb', 'a0')], templates);
+      final shelf = _rectOf(scene, 'shf');
+      final host = _rectOf(scene, 'stb');
+      final free = DPt(
+        (host.right + shelf.right) / 2,
+        (host.top + host.bottom) / 2,
+      );
+      expect(hitTest(scene.scene, free)?.entityId, 'shf');
+    });
+  });
+
+  test('HOSTS WIDER THAN THE SHELF are squeezed to fit, and the scene SAYS '
+      'by how much', () {
+    final wide = _snap('WIDE', _host(width: const Len(300_000_000)));
+    final scene = _scene(
+      [
+        _shelf(),
+        _on('a', 'a0', template: 'WIDE'),
+        _on('b', 'a1', template: 'WIDE'),
+      ],
+      {...templates, 'WIDE@1': wide},
+    );
+    final shelf = _rectOf(scene, 'shf');
+    expect(_rectOf(scene, 'b').right, lessThanOrEqualTo(shelf.right));
+    final over = scene.shelfOverflow[const Uuid('shf')];
+    expect(over, isNotNull);
+    expect(over!.nm, greaterThan(0));
+  });
+
+  test('a shelf not drawn on this face draws no hosts on it', () {
+    // Front-only shelf, rear elevation.
+    final scene = _scene(
+      [_shelf(), _on('stb', 'a0')],
+      templates,
+      face: Face.rear,
+    );
+    expect(scene.devices.map((l) => l.deviceId.v), isNot(contains('stb')));
+  });
+}
