@@ -22917,6 +22917,30 @@ it is the exact sheet AC-054 verifies, and a project's own extras still appear.
 
 ---
 
+### 11.207 DR-208 · The legend explains what the set prints; its notes ship seeded
+
+**Settled by the user on 2026-09-30, building M6-B3 and M6-B4 (`#319`, `#320`), both on the
+recommended option.**
+
+**11.207.1 RULED: THE SYMBOL TABLE AND CONVENTION KEY EXPLAIN WHAT THE SET PRINTS.** docs/08 §5.4
+lists net-label stubs, home-run and local tag pills, junction dots, `— OPEN —` ends and the revision
+cloud and triangle, and no sheet in the set prints any of them yet: they arrive with the
+interconnect sheets (M6-D) and the sheet furniture (M6-G). T0.01 explains what a reader can find in
+the PDF they hold: the device marks the set's devices carry, the plan's rack, drop and device
+markers when the set has a plan, lifecycle borders, hatched passives, the RU span label and the load
+gutter. Each later convention joins the key in the same change that first prints it. It is DR-207's
+reasoning and B1's rule applied to the other blocks: the legend never documents a rendering the
+sheets do not have.
+
+**11.207.2 RULED: ABBREVIATIONS AND GENERAL NOTES SHIP SEEDED, AND EDITING IS ITS OWN CHAPTER.**
+§5.4 calls block 6 *"editable, seeded"*. This pass prints the seeded block from one constant; a
+project field for it, its codec entry and an editor are a separate Chapter, since the edit surface is
+a UI decision in its own right.
+
+**Scope.** No scope change: docs/08 §5.4's blocks 2 to 6, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

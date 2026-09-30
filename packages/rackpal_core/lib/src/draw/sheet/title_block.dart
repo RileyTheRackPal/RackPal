@@ -36,13 +36,12 @@
 //   holds, else `NTS`. See `drawing_scale.dart`.
 // * SHEET follows `ProjectSettings.sheetNumbering` (CR-066): `simple`
 //   prints `SHEET 3 OF 3 · …`, `ncs` prints the NCS id.
-// * THE LEGEND REFERENCE IS OMITTED. §5.2's `SYMBOL LEGEND: SEE SHEET …`
-//   is auto-filled from the legend sheet's number — and T0.01 is not in
-//   this sheet set. Printing a cross-reference to a sheet that is not in
-//   the file is the exact failure T0.00's drawing-index rule exists to
-//   prevent, so the line is dropped rather than pointed at nothing. CR-023
-//   already forbids it being a gate; this is stronger, and it is recorded
-//   in the M1 log.
+// * THE LEGEND REFERENCE IS AUTO-FILLED (M6-B5). §5.2's `SYMBOL LEGEND:
+//   SEE SHEET …` takes the legend sheet's id from the set, on every sheet
+//   but the legend itself. It WAS OMITTED until T0.01 existed, because
+//   printing a cross-reference to a sheet not in the file is the failure
+//   T0.00's drawing-index rule exists to prevent; that rule still holds,
+//   as a set with no legend gets no line. CR-023 forbids it being a gate.
 //
 // THERE IS NO LOGO (RJ-017). The integrator ships as a TEXT block — firm,
 // contact, licence — which carries the same information and needs no raster
@@ -108,6 +107,7 @@ final class TitleBlockFields {
     required this.integratorLine,
     required this.sheetNumberLine,
     required this.sheetIdLine,
+    required this.legendLine,
   });
 
   /// Resolves every field from the model. See the file header: no
@@ -181,6 +181,11 @@ final class TitleBlockFields {
       ]),
       sheetNumberLine: sheetNumberLine,
       sheetIdLine: 'SHEET NO.  ${sheet.ncsId}',
+      // AUTO-FILLED FROM THE SET (CR-023, M6-B5): the legend's own id, on
+      // every sheet of a set that has one, and nothing where it has none.
+      legendLine: sheet.legendNcsId == null
+          ? null
+          : 'SYMBOL LEGEND: SEE SHEET ${sheet.legendNcsId}',
     );
   }
 
@@ -215,6 +220,10 @@ final class TitleBlockFields {
   /// whatever the numbering scheme (§2.1).
   final String sheetIdLine;
 
+  /// `SYMBOL LEGEND: SEE SHEET T0.01`, or `null` on the legend itself and
+  /// in a set with no legend (docs/08 §5.2, CR-023).
+  final String? legendLine;
+
   /// Every optional line, in the order they appear, for tests and for the
   /// collapse rule's own documentation.
   List<String?> get optionalLines => <String?>[
@@ -222,6 +231,7 @@ final class TitleBlockFields {
     clientLine,
     rackLine,
     integratorLine,
+    legendLine,
   ];
 }
 
@@ -292,10 +302,13 @@ LayerBuild _buildFull(
   ];
 
   // ── band heights ───────────────────────────────────────────────────
-  final footerLines = <String>[
-    if (fields.integratorLine != null) fields.integratorLine!,
-  ];
-  final footerHeight = (footerLines.length + 1) * _kFooterLineHeight;
+  // ONE ROW FOR THE INTEGRATOR AND THE LEGEND REFERENCE TOGETHER, the
+  // reference right-aligned opposite the firm (M6-B5). The block's height
+  // is fixed, so a second row would shrink every identity line above it;
+  // a row is added only when there is something to put on it.
+  final hasFooterRow =
+      fields.integratorLine != null || fields.legendLine != null;
+  final footerHeight = ((hasFooterRow ? 1 : 0) + 1) * _kFooterLineHeight;
   const gridHeight = 2 * kTitleGridRowHeight;
   final gridTop = box.bottom - footerHeight - gridHeight;
 
@@ -364,7 +377,24 @@ LayerBuild _buildFull(
       sheetRule(palette.rule, kTableRuleWidthPt),
     ),
   );
-  for (final line in footerLines) {
+  if (fields.legendLine case final legend?) {
+    _emitPair(
+      ops,
+      box: box,
+      top: footerTop,
+      height: _kFooterLineHeight,
+      left: fields.integratorLine,
+      right: legend,
+      sizePt: SheetTextSizes.integrator,
+      palette: palette,
+      measurer: measurer,
+    );
+    footerTop += _kFooterLineHeight;
+  }
+  for (final line in <String>[
+    if (fields.legendLine == null && fields.integratorLine != null)
+      fields.integratorLine!,
+  ]) {
     _emitFitted(
       ops,
       text: line,
@@ -427,6 +457,7 @@ LayerBuild _buildCompact(
           fields.addressLine,
           fields.clientLine,
           fields.integratorLine,
+          fields.legendLine,
         ]) !=
         null)
       (
@@ -434,6 +465,7 @@ LayerBuild _buildCompact(
           fields.addressLine,
           fields.clientLine,
           fields.integratorLine,
+          fields.legendLine,
         ]),
         right: fields.sheetNumberLine,
         size: SheetTextSizes.identity,

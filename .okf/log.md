@@ -1,5 +1,13 @@
 # Update Log
 
+## 2026-09-30 (ninety-first entry)
+
+* **Progress**: M6-B1/B2 merged at `fda24158` (PR 179). B3, B4 and B5 built: T0.01's other five
+  blocks and the title-block cross-reference. docs/12 §4.26.
+* **Creation**: [DR-208](/decisions/dr-208-legend-explains-what-the-set-prints.md).
+* **Note**: **RENDER IT, THEN TEST IT, EVERY TIME.** Two renders today caught what no assertion
+  could: rows sitting on the frame line, and leader lines striking through the text they label.
+
 ## 2026-09-30 (ninetieth entry)
 
 * **Progress**: `#576` merged at `444174ef` (PR 178). M6-B (`#316`) begun; the user will run the Plan

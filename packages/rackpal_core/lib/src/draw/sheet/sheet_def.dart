@@ -139,6 +139,10 @@ enum SheetRole {
 
 /// docs/08 §2.1's NCS identifier grammar,
 /// `[Discipline][SheetType].[Sequence]`.
+/// T0.01's id, in one place: the legend's own, and the one every other
+/// sheet's title block points at.
+const String _kLegendNcsId = 'T0.01';
+
 final RegExp kNcsIdPattern = RegExp(r'^[A-Z]{1,2}\d\.\d{2}$');
 
 /// Whether [id] is a well-formed NCS sheet identifier.
@@ -230,7 +234,15 @@ final class SheetDef {
     this.rackDesignator,
     this.underlayId,
     this.underlayName,
+    this.legendNcsId,
   });
+
+  /// The id of the set's legend sheet, on every OTHER sheet of a set that
+  /// has one, for the title block's `SYMBOL LEGEND: SEE SHEET …` (docs/08
+  /// §5.2, CR-023, M6-B5). Null on the legend itself and in a set with no
+  /// legend, where pointing at a sheet that is not in the file would be
+  /// worse than saying nothing.
+  final String? legendNcsId;
 
   /// The stable NCS identity — `T2.01`, `T2.02`, `T6.30`.
   final String ncsId;
@@ -271,7 +283,8 @@ final class SheetDef {
       other.rackId == rackId &&
       other.rackDesignator == rackDesignator &&
       other.underlayId == underlayId &&
-      other.underlayName == underlayName;
+      other.underlayName == underlayName &&
+      other.legendNcsId == legendNcsId;
 
   @override
   int get hashCode => Object.hash(
@@ -283,6 +296,7 @@ final class SheetDef {
     rackDesignator,
     underlayId,
     underlayName,
+    legendNcsId,
   );
 
   @override
@@ -351,7 +365,7 @@ final class SheetSet {
     final total = 1 + plans.length + ordered.length * 2 + equipmentListSheets;
     final sheets = <SheetDef>[
       SheetDef(
-        ncsId: 'T0.01',
+        ncsId: _kLegendNcsId,
         role: SheetRole.symbolLegend,
         index: 1,
         total: total,
@@ -382,6 +396,7 @@ final class SheetSet {
           total: total,
           underlayId: plan.id,
           underlayName: plan.name,
+          legendNcsId: _kLegendNcsId,
         ),
       );
     }
@@ -403,6 +418,7 @@ final class SheetSet {
             total: total,
             rackId: rack.id,
             rackDesignator: rack.designator,
+            legendNcsId: _kLegendNcsId,
           ),
         );
       }
@@ -415,6 +431,7 @@ final class SheetSet {
           role: SheetRole.equipmentList,
           index: index++,
           total: total,
+          legendNcsId: _kLegendNcsId,
         ),
       );
     }

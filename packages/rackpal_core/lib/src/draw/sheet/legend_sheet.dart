@@ -33,22 +33,34 @@
 import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/catalog/catalog_passive.dart' show kCatPassive;
+import 'package:rackpal_core/src/derived/device_loads.dart' show templateKeyFor;
 import 'package:rackpal_core/src/draw/contrast.dart' show relativeLuminance;
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/family_glyph.dart';
+import 'package:rackpal_core/src/draw/scene/plan_scene.dart'
+    show PlanPinCarrier;
 import 'package:rackpal_core/src/draw/scene/signal_style.dart';
 import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
+import 'package:rackpal_core/src/draw/sheet/legend_blocks.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_def.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_frame.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_furniture.dart';
 import 'package:rackpal_core/src/draw/spec.dart';
 import 'package:rackpal_core/src/draw/text.dart';
+import 'package:rackpal_core/src/model/device_glyph.dart';
+import 'package:rackpal_core/src/model/device_instance.dart';
+import 'package:rackpal_core/src/model/enums.dart' show LifecycleStatus;
+import 'package:rackpal_core/src/model/placement.dart';
 import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
 import 'package:rackpal_core/src/model/registries.dart';
+import 'package:rackpal_core/src/model/template.dart'
+    show TemplateBody, TemplateSnapshot;
 import 'package:rackpal_core/src/units/ids.dart';
+import 'package:vector_math/vector_math_64.dart' show Matrix4;
 
 /// One of requirement 4's named cable types and the families that render
 /// it, in canon §6.6's order.
@@ -168,6 +180,7 @@ final class LegendSheet {
     required this.scene,
     required this.legibility,
     required this.omittedRows,
+    this.omittedBlocks = const <String>[],
   });
 
   final DiagramScene scene;
@@ -175,6 +188,9 @@ final class LegendSheet {
 
   /// Family lines that did not fit the sheet, or zero.
   final int omittedRows;
+
+  /// The headings of blocks 2 to 6 that did not fit the sheet, or none.
+  final List<String> omittedBlocks;
 }
 
 /// Builds `T0.01`.
@@ -188,6 +204,9 @@ LegendSheet buildLegendSheet({
   required TextMeasurer measurer,
   required Registries registries,
   required Iterable<SignalFamilyId> familiesInUse,
+  Iterable<DeviceInstance> devices = const <DeviceInstance>[],
+  Map<String, TemplateSnapshot> templates = const <String, TemplateSnapshot>{},
+  Iterable<PlanPinCarrier> planCarriers = const <PlanPinCarrier>[],
   SheetPalette palette = const SheetPalette(),
 }) {
   assert(
@@ -313,6 +332,81 @@ LegendSheet buildLegendSheet({
     );
   }
 
+  // ── blocks 2 to 6, right of the key (DR-208) ─────────────────────────
+  //
+  // WHAT THE ELEVATIONS DRAW: a device on the rails, on a shelf or in a
+  // 0U channel. A staged or off-rack device prints on no elevation, so
+  // its mark and its border are not the set's to explain.
+  final drawn = <TemplateBody>[];
+  final statuses = <LifecycleStatus>{};
+  for (final d in devices) {
+    final shown = switch (d.placement) {
+      RailPlacement() || ShelfPlacement() || ZeroUPlacement() => true,
+      _ => false,
+    };
+    if (!shown) continue;
+    statuses.add(d.lifecycleStatus);
+    if (templates[templateKeyFor(d.templateRef)]?.body case final body?) {
+      drawn.add(body);
+    }
+  }
+  final marks =
+      {
+          for (final b in drawn) effectiveGlyph(b.glyph, b.category),
+        }.where((g) => g != DeviceGlyph.none).toList()
+        ..sort((a, b) => a.index.compareTo(b.index));
+  final carriers = planCarriers.toSet().toList()
+    ..sort((a, b) => a.index.compareTo(b.index));
+
+  const gutter = 24.0;
+  final keyRight = area.left + _typeW + _familyW + 2 * _pairW;
+  final regionLeft = keyRight + 32;
+  final colW = (area.right - regionLeft - gutter) / 2;
+  final blocks = <LegendBlock>[
+    symbolsBlock(
+      marks: marks,
+      carriers: carriers,
+      width: colW,
+      palette: palette,
+    ),
+    deviceAnatomyBlock(measurer: measurer, width: colW, palette: palette),
+    conventionsBlock(
+      statuses: LifecycleStatus.values.where(statuses.contains).toList(),
+      hatchedPassive: drawn.any((b) => b.category == kCatPassive),
+      palette: palette,
+    ),
+    identifiersBlock(settings: settings, palette: palette),
+    notesBlock(registries: registries, palette: palette),
+  ];
+  // A COLUMN THAT MEETS THE TITLE OR REVISION BLOCK STOPS ABOVE IT.
+  final furnitureTop = math.min(
+    layout.titleBlockBox.top,
+    layout.revisionBlockBox?.top ?? double.infinity,
+  );
+  double bottomOf(double left) =>
+      left + colW > layout.titleBlockBox.left ? furnitureTop - 10 : area.bottom;
+  final omittedBlocks = <String>[];
+  var column = 0;
+  var blockY = area.top;
+  for (final block in blocks) {
+    var left = regionLeft + column * (colW + gutter);
+    if (blockY + block.height > bottomOf(left) && column == 0) {
+      column = 1;
+      blockY = area.top;
+      left = regionLeft + colW + gutter;
+    }
+    if (blockY + block.height > bottomOf(left)) {
+      omittedBlocks.add(block.title);
+      continue;
+    }
+    ops
+      ..add(const OpSave())
+      ..add(OpTransform(Matrix4.translationValues(left, blockY, 0)))
+      ..addAll(block.ops)
+      ..add(const OpRestore());
+    blockY += block.height + 16;
+  }
+
   final minText = math.min(furniture.minTextSizePt, kLegendPt);
   return LegendSheet(
     scene: DiagramScene(
@@ -327,6 +421,7 @@ LegendSheet buildLegendSheet({
       scale: const SceneFactor(1),
     ),
     omittedRows: omitted,
+    omittedBlocks: omittedBlocks,
   );
 }
 

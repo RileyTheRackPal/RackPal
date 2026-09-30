@@ -1376,6 +1376,21 @@ Adding the role renumbered every set, and the tests that pinned the old shape (`
 sheets", "SHEET 1 OF 3", pages found by position) were updated to the new truth, several by finding
 their sheet by role instead of by index, which is what they meant.
 
+**CHAPTERS `#319`, `#320` AND `#321`: THE OTHER FIVE BLOCKS AND THE CROSS-REFERENCE (DR-208).**
+Symbols, the device block, conventions, identifiers, and abbreviations and notes flow into two
+columns right of the key, the column that meets the title block stopping above it, and a block that
+does not fit is named in a notice. **They explain what the set prints** (§11.207.1): the device marks
+the set's drawn devices carry, the plan's markers only when the set has a plan, the lifecycle borders
+in use, the hatch only when a passive is present. Every sample is drawn by the code the sheets use:
+`deviceGlyphOp`, `lifecycleStroke`, `hatchBand`, `buildDeviceLayer` for the device block, and the plan
+markers through `planMarkerOps`, lifted out of `buildPlanScene`'s pin loop unchanged so the legend
+cannot show a marker the plan does not. The identifiers block expands the project's own templates
+with a worked example and a line per token, from a map a test holds to `kIdFormatTokens` exactly.
+**The rendered device block's leaders first struck through its own text**, starting at each part's
+left edge; they now start at the block's right edge, level with the part. Every non-legend sheet's
+title block now reads `SYMBOL LEGEND: SEE SHEET T0.01`, opposite the integrator line so the fixed
+115 pt block does not lose a row, and the legend itself and a set without one carry no line.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

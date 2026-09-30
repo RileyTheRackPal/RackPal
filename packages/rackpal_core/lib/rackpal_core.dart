@@ -215,6 +215,7 @@ export 'src/draw/scene/zero_u_layer.dart';
 export 'src/draw/sheet/drawing_scale.dart';
 export 'src/draw/sheet/elevation_sheet.dart';
 export 'src/draw/sheet/equipment_sheet.dart';
+export 'src/draw/sheet/legend_blocks.dart';
 export 'src/draw/sheet/legend_sheet.dart';
 export 'src/draw/sheet/plan_callouts.dart';
 export 'src/draw/sheet/plan_scale_bar.dart';

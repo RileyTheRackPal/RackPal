@@ -1008,7 +1008,12 @@ $SuiteFloors = @{
     # The ten named types, held to pal1_check.py; which rows; every family
     # in colour and in grey at its own dash and weight; the grey of a hue;
     # T0.01 opens every set.
-    'rackpal_core'   = 5185
+    # 5196 at `#319`-`#321` (M6-B3/B4/B5, DR-208): +11. Nine in
+    # sheet/legend_blocks_test.dart (marks, plan markers, borders and hatch
+    # each in and out, the device block, every token explained, templates
+    # expanded, prefixes and notes); title_block_test's cross-reference
+    # group went from one case to three.
+    'rackpal_core'   = 5196
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
