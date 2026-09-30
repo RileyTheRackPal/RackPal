@@ -526,4 +526,83 @@ void main() {
       expect(find.textContaining('to order'), findsNothing);
     });
   });
+
+  group('a run says its lifecycle (DR-206, #576)', () {
+    /// [_populatedDoc] plus an EXISTING home run on a free panel port.
+    RackDocument withExisting() {
+      final doc = _populatedDoc();
+      const port = Uuid('port-a12');
+      doc.ports[port] = Port(
+        id: port,
+        deviceId: const Uuid('dev-pp'),
+        designator: 'A12',
+      );
+      final existing = Link(
+        id: const Uuid('lnk-ex'),
+        designator: 'W016',
+        media: const MediaTypeId('media.cat6a_futp'),
+        order: const FracIndex('aW016'),
+        meta: _meta(),
+        lifecycleStatus: LifecycleStatus.existing,
+        conductors: [
+          const Conductor(
+            from: PlaceEndpoint(
+              description: 'Office',
+              locationId: Uuid('loc-great'),
+            ),
+            to: PortEndpoint(port),
+          ),
+        ],
+      );
+      doc.links[existing.id] = existing;
+      return doc;
+    }
+
+    testWidgets('THE PULL SHEET IS SECTIONED, TO PULL above EXISTING, and '
+        'the existing run sits under its own header', (tester) async {
+      // TALL, because the list is lazy: a row below the default 600 px is
+      // never built, and a finder for it finds nothing rather than a row
+      // in the wrong place.
+      tester.view.physicalSize = const Size(1600, 2400);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.reset);
+      await _pump(tester, withExisting());
+
+      final toPull = find.byKey(const ValueKey('schedule-section-toPull'));
+      final existing = find.byKey(
+        const ValueKey('schedule-section-existing'),
+      );
+      expect(toPull, findsOneWidget);
+      expect(existing, findsOneWidget);
+      expect(
+        tester.getTopLeft(toPull).dy,
+        lessThan(tester.getTopLeft(existing).dy),
+      );
+      expect(
+        find.descendant(of: existing, matching: find.textContaining('1 run')),
+        findsOneWidget,
+      );
+      expect(
+        tester.getTopLeft(find.text('W016')).dy,
+        greaterThan(tester.getTopLeft(existing).dy),
+        reason: 'W016 is listed under EXISTING, not among the pulls',
+      );
+      expect(find.byKey(const ValueKey('lifecycle-key')), findsNothing);
+    });
+
+    testWidgets('THE TERMINATION SCHEDULE CARRIES THE SUFFIX and its key, '
+        'and is not sectioned', (tester) async {
+      await _pump(tester, withExisting());
+      await tester.tap(find.textContaining('TERMINATION SCHEDULE'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('W016 EX'), findsOneWidget);
+      expect(find.text('W015'), findsOneWidget, reason: 'new has no suffix');
+      expect(find.byKey(const ValueKey('lifecycle-key')), findsOneWidget);
+      expect(
+        find.byKey(const ValueKey('schedule-section-toPull')),
+        findsNothing,
+      );
+    });
+  });
 }

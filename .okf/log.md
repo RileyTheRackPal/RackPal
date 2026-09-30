@@ -1,5 +1,13 @@
 # Update Log
 
+## 2026-09-30 (eighty-ninth entry)
+
+* **Progress**: `#968` merged at `84a6a245` (PR 177), closing Story `#953` again.
+* **Creation**: [DR-206](/decisions/dr-206-schedules-say-a-runs-lifecycle.md), resolving `#576`.
+* **Note**: **A "RULING NEEDED" CAN BE HALF ANSWERED ALREADY.** `#576` called a status column an
+  unruled scope change; docs/08 §3.4 specified one. What the spec lacked was its price on the one
+  printed sheet with no room. Grep the spec before framing the question, then put the cost on it.
+
 ## 2026-09-30 (eighty-eighth entry)
 
 * **Progress**: `#958`, `#959` and `#960` merged (PRs 175, 176); Story `#953` closed and then

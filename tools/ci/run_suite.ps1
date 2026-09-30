@@ -1001,7 +1001,10 @@ $SuiteFloors = @{
     # 5171 at `#968` (§11.203.10): +4, a loaded shelf draws no name or type
     # line under its hosts, and an empty one still does; its header is sized
     # from the type scale; a loaded shelf is not hatched and an empty one is.
-    'rackpal_core'   = 5171
+    # 5175 at `#576` (DR-206): +4 in derived/schedule_test.dart. The Pull
+    # Sheet sections in order with per-section footage, an empty section
+    # is not drawn, and T6.11's CABLE ID suffix and its key.
+    'rackpal_core'   = 5175
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1575,7 +1578,10 @@ $SuiteFloors = @{
     # back; Delete all removes every host; Cancel changes nothing.
     # 2025 at `#968` (§11.203.10): +3 in canvas/port_chip_test.dart. A shelf
     # host's chip is absent at rest, and shows on hover and on selection.
-    'rackpal_ui'     = 2025
+    # 2027 at `#576` (DR-206): +2 in schedule/schedule_screen_test.dart. The
+    # Pull Sheet shows TO PULL above EXISTING with the run under its header;
+    # the Termination Schedule shows the suffix and its key.
+    'rackpal_ui'     = 2027
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
