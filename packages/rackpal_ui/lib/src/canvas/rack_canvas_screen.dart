@@ -447,6 +447,15 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   /// of this and [_armedPaletteRow] is set by an arm.
   Uuid? _armedStagedId;
 
+  /// Whether the armed device has no rack height, so only a shelf takes it
+  /// (`#956`). Set by every arm.
+  bool _armedRailless = false;
+
+  /// Whether the armed device is itself a shelf. A shelf never targets a
+  /// shelf: the elevation draws one level of hosts (DR-204), so one set on
+  /// another would land where nobody can see it. Set by every arm.
+  bool _armedContainer = false;
+
   /// The same coarse filter for `_moveDrag`: the id of the device that
   /// should currently paint at 30% opacity in place (docs/04 §3.3 step 1),
   /// or null. A `setState` fires only when this VALUE changes — i.e. once
@@ -2061,6 +2070,74 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       case PlacementPlanRefused(:final reason):
         _status.show(reason);
     }
+  }
+
+  /// A palette row or a bin chip released over a shelf (DR-204 §11.203.1,
+  /// `#956`): set on it at the gap the caret showed.
+  ///
+  /// A RACK-EAR DEVICE LANDS, AND THE STATUS LINE SAYS SO (§11.203.2). The
+  /// template gets no vote, on the user's trade knowledge: whether an AVR
+  /// has a rack kit depends on the AVR, and the kit is a separate product.
+  /// The sentence is what catches a drop meant for the rails.
+  void _dropOnShelf(ShelfDropTarget target) {
+    final now = _controller.clock.nowUtc();
+    final shelf = _doc.devices[target.shelfId]?.designator ?? 'the shelf';
+    final Uuid placedId;
+    if (_armedStagedId case final staged?) {
+      switch (planMoveOntoShelf(
+        doc: _doc,
+        id: staged,
+        hostId: target.shelfId,
+        after: target.after,
+        now: now,
+        actor: _controller.actor,
+      )) {
+        case PlacementPlanReady(:final command):
+          _controller.run(command);
+          _selection.apply([staged], SelectMode.replace);
+        case PlacementPlanRefused(:final reason):
+          _status.show(reason);
+          return;
+      }
+      placedId = staged;
+    } else {
+      final row = _armedPaletteRow;
+      if (row == null) return;
+      final plan = row.provenance is LibraryProvenance
+          ? planLibraryPlacement(_doc, row, capturedAt: now)
+          : null;
+      switch (buildPlaceOnShelfCommand(
+        doc: _doc,
+        catalogId: plan?.templateId ?? row.id,
+        hostId: target.shelfId,
+        now: now,
+        actor: _controller.actor,
+        using: plan?.snapshot,
+        gap: (after: target.after),
+      )) {
+        case ShelfPlacementReady(:final command):
+          _finalizeCatalogPlacement(
+            command,
+            plan?.templateId ?? row.id,
+            fromQuickAdd: false,
+            plan: plan,
+            row: row,
+          );
+          placedId = command.id;
+        case ShelfPlacementFailed(:final reason):
+          _status.show(reason);
+          return;
+      }
+    }
+    final placed = _doc.devices[placedId];
+    final body = placed == null ? null : bodyFor(placed, _doc.templates);
+    final name = placed?.designator ?? 'The device';
+    final ears = body != null && (body.frontU > 0 || body.rearU > 0);
+    _status.show(
+      'Placed $name on $shelf.'
+      '${ears ? ' $name is rack-mountable; drag it to the rails if that '
+                'was meant.' : ''}',
+    );
   }
 
   /// A chip dragged onto the rails and released on a free U (`#964`). The
@@ -4190,12 +4267,13 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
   // "Not started") — dropping outside the canvas widget's bounds is
   // simply a no-op here (see `_commitOrNoopPaletteDrag`).
   //
-  // ONLY RACK-MOUNTABLE TEMPLATES ARM A DRAG (`frontU > 0 || rearU > 0`,
-  // checked in `_onPaletteArmDrag`) — a deliberate scope narrowing, not an
-  // oversight: docs/04 §3.1 is specifically "drag from palette to RAILS",
-  // and a field/off-rack device (`mountMethod: notInRack`) has no rails to
-  // snap to or evaluate against. Those templates stay click/double-click
-  // -only (Part 1's unchanged behaviour); nothing regresses for them.
+  // EVERY TEMPLATE ARMS A DRAG since DR-204 §11.203.2 (*"any device may
+  // sit on a shelf"*, `#956`). This used to be rack-mountable rows only,
+  // because docs/04 §3.1 is "drag from palette to RAILS" and a device with
+  // no rack height had nowhere to go. A shelf is somewhere to go, so a
+  // railless row now drags as a 1U ghost that only a shelf accepts, and
+  // over bare rails it is refused in words (`_evaluateAt`). A click on
+  // such a row is still a click: nothing lifts below the 4px slop.
 
   /// docs/04 §3.1 step 1: "Arm — pointer down on a palette row."
   void armPaletteDrag(PlaceableTemplate row, PointerDownEvent event) {
@@ -4220,9 +4298,9 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     _armedPaletteRow = row;
     _armedStagedId = null;
     final body = row.body;
-    // Field devices: click/double-click-only, see above.
-    final mountable = body.frontU > 0 || body.rearU > 0;
-    if (!mountable) return;
+    // EVERY ROW ARMS since DR-204 §11.203.2 (*"any device may sit on a
+    // shelf"*): a row with no rack height is dragged to a shelf, and is
+    // refused in words over bare rails. See the section header.
     _armDrag(
       subjectId: row.rowKey,
       body: body,
@@ -4248,7 +4326,6 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     final device = _doc.devices[id];
     final body = device == null ? null : bodyFor(device, _doc.templates);
     if (device == null || body == null) return;
-    if (body.frontU <= 0 && body.rearU <= 0) return;
     _armedPaletteRow = null;
     _armedStagedId = id;
     _armDrag(
@@ -4282,8 +4359,18 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     // claim even though `releaseLingering` is still true.
     if (!_claimPointerGesture(_PointerGesture.paletteDrag)) return;
 
-    final face = body.frontU > 0 ? Face.front : Face.rear;
-    final deviceH = face == Face.front ? body.frontU : body.rearU;
+    // RAILLESS: a device with no rack height on either face can only land
+    // on a shelf (DR-204 §11.203.2). It drags as a 1U ghost on the face in
+    // view so the gesture has something to draw, and `_evaluateAt` refuses
+    // it everywhere but a shelf.
+    _armedRailless = body.frontU <= 0 && body.rearU <= 0;
+    _armedContainer = body.isContainer;
+    final face = _armedRailless
+        ? _face
+        : (body.frontU > 0 ? Face.front : Face.rear);
+    final deviceH = _armedRailless
+        ? 1
+        : (face == Face.front ? body.frontU : body.rearU);
 
     // FIX (stale blocked-release timer): a new drag starting — even a
     // legitimate sequential one arming during the PREVIOUS drag's blocked-
@@ -4383,9 +4470,96 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       final ruIndex = _geo.ruIndexForCursorY(scene.y, deviceH);
       _paletteDrag.updateEvaluation(
         scene,
-        _evaluateDrop(ruIndex, deviceH, _paletteDrag.face),
+        _evaluateAt(scene, ruIndex, deviceH, _paletteDrag.face),
       );
     }
+  }
+
+  /// A palette row or a bin chip over [scene]: a SHELF when the cursor is on
+  /// one (DR-204 §11.203.1, `#956`), otherwise the rails.
+  ///
+  /// The shelf is asked first because it sits ON the rails: a cursor over a
+  /// shelf's tray is also over the U the shelf occupies, and a drop there
+  /// means the shelf, not "that U is occupied by SHF-1".
+  DragPreviewEvaluation _evaluateAt(
+    DPt scene,
+    int ruIndex,
+    int deviceH,
+    Face face,
+  ) {
+    if (_shelfTargetAt(scene) case final shelf? when !_armedContainer) {
+      return DragPreviewEvaluation(
+        ruIndex: ruIndex,
+        blocked: false,
+        shelf: shelf,
+      );
+    }
+    if (_armedRailless) {
+      return DragPreviewEvaluation(
+        ruIndex: ruIndex,
+        blocked: true,
+        reason:
+            '${_paletteDrag.displayName} has no rack height. Drop it on a '
+            'shelf.',
+      );
+    }
+    return _evaluateDrop(ruIndex, deviceH, face);
+  }
+
+  /// The shelf under [scene] and the gap the cursor names on it, or null.
+  ///
+  /// A cursor over a HOST names that host's shelf. Only a shelf on the
+  /// rails is a target: one sitting on another shelf is not drawn (one
+  /// level of hosts, DR-204), so nothing could show where it landed.
+  ShelfDropTarget? _shelfTargetAt(DPt scene) {
+    for (final layout in _rackScene?.devices ?? const <DeviceLayout>[]) {
+      if (!layout.rect.contains(scene)) continue;
+      final hit = _doc.devices[layout.deviceId];
+      final shelf = switch (hit?.placement) {
+        ShelfPlacement(:final hostDeviceId) => _doc.devices[hostDeviceId],
+        _ => hit,
+      };
+      if (shelf == null || shelf.placement is! RailPlacement) continue;
+      if (bodyFor(shelf, _doc.templates)?.isContainer != true) continue;
+      final rect = _layoutFor(shelf.id.v)?.rect;
+      if (rect == null) continue;
+      return _gapOn(shelf.id, rect, scene.x);
+    }
+    return null;
+  }
+
+  /// The gap on [shelfId] nearest [x]: after the last host, in pack order,
+  /// whose drawn centre the cursor has passed.
+  ///
+  /// READ FROM WHERE THE HOSTS ARE DRAWN, and a mirrored rear elevation is
+  /// why: it packs right to left, so "passed" flips and the caret sits on
+  /// the other edge of each host. Pack order is still `order`, so `after`
+  /// means the same thing on both faces.
+  ShelfDropTarget _gapOn(Uuid shelfId, DBox shelfRect, double x) {
+    final mirrored = _face == Face.rear && _rack.mirrorRearElevation;
+    final area = shelfHostArea(shelfRect);
+    double lead(DBox r) => mirrored ? r.right : r.left;
+    double trail(DBox r) => mirrored ? r.left : r.right;
+
+    final hosts = [
+      for (final h in devicesOnShelf(_doc, shelfId))
+        if (_layoutFor(h.id.v)?.rect case final r?) (id: h.id, rect: r),
+    ];
+    Uuid? after;
+    var caretX = hosts.isEmpty ? lead(area) : lead(hosts.first.rect);
+    for (final h in hosts) {
+      final centre = (h.rect.left + h.rect.right) / 2;
+      if (mirrored ? x >= centre : x <= centre) break;
+      after = h.id;
+      caretX = trail(h.rect);
+    }
+    const caretW = 1.5;
+    return ShelfDropTarget(
+      shelfId: shelfId,
+      after: after,
+      shelfRect: shelfRect,
+      caret: DBox.fromLtwh(caretX - caretW / 2, area.top, caretW, area.height),
+    );
   }
 
   /// CR-017's two BLOCKING checks (docs/04 §3.1 step 5), first-failure-
@@ -4593,6 +4767,12 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     // blocked flag) is still exactly what was last shown, per docs/04's
     // "commit reads the last live-evaluated state".
     _controller.selection = _selection.snapshot();
+    if (evaluation.shelf case final shelf?) {
+      _removePaletteDragOverlay();
+      _paletteDrag.reset();
+      _dropOnShelf(shelf);
+      return;
+    }
     if (_armedStagedId case final staged?) {
       final face = _paletteDrag.face;
       _removePaletteDragOverlay();

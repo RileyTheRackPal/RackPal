@@ -370,9 +370,31 @@ class EditingOverlayPainter extends CustomPainter {
     double scale,
   ) {
     final color = evaluation.blocked ? style.errorColor : style.caretColor;
-    final rect = geo.deviceRect(evaluation.ruIndex, drag.deviceH);
     final shakeOffset = shake?.offsetFor(kDragGhostShakeId);
     final dx = shakeOffset?.dx ?? 0;
+
+    // ONTO A SHELF (DR-204 §11.203.1, `#956`): the shelf is outlined and
+    // the gap gets a caret, instead of a rail ghost at a U the device will
+    // not occupy. The same box routine and colours, so a shelf drop reads
+    // as the same gesture aimed at a different place.
+    if (evaluation.shelf case final shelf?) {
+      final r = shelf.shelfRect;
+      _paintGhostBox(
+        canvas,
+        ui.Rect.fromLTRB(r.left + dx, r.top, r.right + dx, r.bottom),
+        color,
+        scale,
+        dashedBorder: evaluation.blocked,
+      );
+      final c = shelf.caret;
+      canvas.drawRect(
+        ui.Rect.fromLTRB(c.left + dx, c.top, c.right + dx, c.bottom),
+        ui.Paint()..color = color,
+      );
+      return;
+    }
+
+    final rect = geo.deviceRect(evaluation.ruIndex, drag.deviceH);
     final drawRect = ui.Rect.fromLTRB(
       rect.left + dx,
       rect.top,

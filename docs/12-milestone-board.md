@@ -1208,6 +1208,20 @@ label ladder seats the designator alone; the hollow body is the statement, as a 
 length is, the words draw on a taller shelf, and the semantic label always carries them. The user had
 chosen an option describing the words; the difference is reported rather than hidden.
 
+**CHAPTER `#956`: A DRAG ONTO A SHELF.** A palette row or a Staging Bin chip over a shelf targets
+the shelf rather than the U it stands on: the shelf is outlined and a caret marks the gap. The gap is
+read from where the hosts are DRAWN, after the last host whose centre the cursor has passed, so a
+mirrored rear elevation lands where it looks like it will. One function, `shelfOrderAfter`, turns
+that gap into an `order` for a new device, a moved host and the coming picker, so no two of them can
+disagree. **EVERY PALETTE ROW NOW ARMS A DRAG**, because any device may sit on a shelf
+(§11.203.2); a row with no rack height is refused over bare rails in words, and before this it could
+not be dragged at all. A rack-ear device lands and the status line says it could have gone on the
+rails, which is §11.203.2's catch for a mis-drop. **A SHELF IS NEVER AIMED AT A SHELF**: the
+elevation draws one level of hosts, so a shelf set on another would land where nobody can see it. It
+is a drawing fact, not a rule about what may sit where, and it lifts when `#844`'s stacking model
+draws deeper. The first gate run also went red on `#964`'s own refused-drop test, which aimed at
+SHF-1 to provoke *"Occupied by SHF-1"*; a shelf now takes the drop, so the test aims at a switch.
+
 ### 4.24 The Staging Bin, which CR-032 ruled in and nothing built · 2026-09-30 · `#961` · `DR-205` · no version move
 
 Found building `#959`: DR-204's shelf deletion defaults to *"Move hosts to Staging Bin"*, and there

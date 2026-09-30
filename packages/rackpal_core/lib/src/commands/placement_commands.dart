@@ -25,10 +25,9 @@ import 'package:rackpal_core/src/commands/command.dart';
 import 'package:rackpal_core/src/commands/device_commands.dart'
     show AddDeviceCommand;
 import 'package:rackpal_core/src/commands/label_key.dart';
-import 'package:rackpal_core/src/commands/rack_commands.dart'
-    show nextOrder, orderBetween;
+import 'package:rackpal_core/src/commands/rack_commands.dart' show nextOrder;
 import 'package:rackpal_core/src/commands/shelf_placement.dart'
-    show devicesOnShelf, shelfMoveWouldLoop;
+    show devicesOnShelf, shelfMoveWouldLoop, shelfOrderAfter;
 import 'package:rackpal_core/src/derived/device_loads.dart'
     show bodyFor, occupancyU;
 import 'package:rackpal_core/src/derived/placeable_templates.dart'
@@ -397,18 +396,9 @@ PlacementPlan planMoveOntoShelf({
     );
   }
   // THE ORDER, from the shelf's hosts WITHOUT this one, so a reorder does
-  // not measure itself as its own neighbour.
-  final others = [
-    for (final h in devicesOnShelf(doc, hostId))
-      if (h.id != id) h,
-  ];
-  final orders = [
-    for (final h in others) (h.placement as ShelfPlacement).order,
-  ];
-  final index = after == null ? 0 : others.indexWhere((h) => h.id == after) + 1;
-  final before = index == 0 ? null : orders[index - 1];
-  final next = index >= orders.length ? null : orders[index];
-  final order = orderBetween(before, next);
+  // not measure itself as its own neighbour. The same function a palette
+  // drop uses, so the two cannot disagree about a gap.
+  final order = shelfOrderAfter(doc, hostId, after: after, except: id);
   if (order == null) {
     // A hand-edited file only (see `orderBetween`); refused in words
     // rather than renumbering the shelf behind the user's back.
