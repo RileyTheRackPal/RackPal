@@ -75,6 +75,9 @@ void main() {
 
   group('a mount that takes no rack units has no height', () {
     for (final mount in [
+      // `#952`: DR-203 first listed `shelf` as taking rack units. The
+      // seeded P04 strip, `mountMethod: shelf`, says the U is the shelf's.
+      MountMethod.shelf,
       MountMethod.hosted,
       MountMethod.sideMount,
       MountMethod.furniture,

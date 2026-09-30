@@ -22662,6 +22662,15 @@ a 0U mount, a hosted card, side-mounted gear, gear in furniture and gear not in 
 show no height or width at all. Choosing one zeroes the heights, because `{frontU: 2, side: none}`
 is the body DR-157 refuses to place.
 
+**CORRECTED 2026-09-30 (`#952`): "a shelf" was the author's error, and it was never asked.** The
+user's answer covered side-mounted and in-furniture gear only; `shelf` was put in the rack-units
+list by the author. `MountMethod.shelf` means the device **sits on** a shelf, and the U it sits in
+is the shelf's: the seeded P04 power strip carries it with the comment *"NO RAIL HOLES AND NO U OF
+ITS OWN, WHICH IS THE SHELF'S JOB"*, and docs/04 §6.1 says a shelf's hosts *"consume zero additional
+RU"*. So only rack ears and a rear rail take rack units, and `On a shelf` joins the mounts that ask
+no height. The builder had been demanding a height of a strip lying on a shelf and refusing to save
+it without one. The shelf itself is a rack-ears device and is unaffected.
+
 **11.202.5 SAVE'S THIRD FACT, STATED ONCE.** `hasMeantOccupancy`: a rack mount means its occupancy
 with a height, front **or** rear; every other mount means a zero by being chosen, the reading DR-107
 §11.106.2 already made of `notInRack`. **This is not a fourth required fact**: it is AC-049's third,

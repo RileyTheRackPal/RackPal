@@ -22,19 +22,29 @@
 // field templates already satisfies it.
 //
 // ═════════════════════════════════════════════════════════════════════
-// WHICH MOUNTS TAKE RACK UNITS IS TRADE KNOWLEDGE, AND IT WAS ASKED
+// WHICH MOUNTS TAKE RACK UNITS IS TRADE KNOWLEDGE, AND HALF OF IT WAS ASKED
 // ═════════════════════════════════════════════════════════════════════
-// Rack ears, a shelf and a rear rail put a device in the rails' height.
-// A 0U mount, a card hosted in another device, and gear that is not in a
-// rack take none. **Side-mounted and in-furniture gear take none either**,
+// Rack ears and a rear rail put a device in the rails' height. A 0U
+// mount, a card hosted in another device, and gear that is not in a rack
+// take none. **Side-mounted and in-furniture gear take none either**,
 // which is the user's answer on 2026-09-29 to a question put rather than
 // guessed (DR-203 §11.202.4).
+//
+// **`shelf` WAS ASSERTED, NOT ASKED, AND IT WAS WRONG** (`#952`). DR-203
+// listed it as taking rack units. It means the device SITS ON a shelf,
+// and the U it sits in is the shelf's: the seeded P04 power strip says so
+// beside its own `mountMethod: shelf`, and docs/04 §6.1 says a shelf's
+// hosts "consume zero additional RU". Classed the other way, the builder
+// asked a height of a power strip and refused to save it without one.
+// The two words sat side by side in the enum and a guess read one as the
+// other.
 import 'package:rackpal_core/src/model/template.dart';
 
 /// Whether a device mounted this way occupies rack units (DR-203
-/// §11.202.4).
+/// §11.202.4, corrected for `shelf` at `#952`).
 bool mountTakesRackUnits(MountMethod mount) => switch (mount) {
-  MountMethod.rackEars || MountMethod.shelf || MountMethod.rearRail => true,
+  MountMethod.rackEars || MountMethod.rearRail => true,
+  MountMethod.shelf ||
   MountMethod.zeroU ||
   MountMethod.sideMount ||
   MountMethod.furniture ||

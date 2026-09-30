@@ -25,8 +25,10 @@ workflow reasoning standing in for the trade's.
   edit, inside that edit's undo entry. DR-157 §11.156.5's "only ever fills a blank" is replaced.
 - **The rear height follows the front** until it is typed. 21 of the 25 seeded rack-ear devices
   are the same front and rear.
-- **Only rack ears, a shelf and a rear rail take rack units**; every other mount shows no height
-  and zeroes it.
+- **Only rack ears and a rear rail take rack units**; every other mount shows no height and
+  zeroes it. The first version of this ruling also listed a shelf, which was the author's error
+  and not the user's answer: `shelf` means the device sits on one, and the U is the shelf's
+  (corrected at `#952`).
 - **Save's third fact** (`hasMeantOccupancy`): a rack height front or rear, or a mount that takes
   none. A hosted card and a rear lacing bar can now be saved.
 - **Passthrough is a toggle on the Ports toolbar**, beside the pairing it enables.
