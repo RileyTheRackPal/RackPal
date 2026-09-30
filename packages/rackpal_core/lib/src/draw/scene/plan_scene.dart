@@ -331,62 +331,18 @@ PlanScene buildPlanScene({
     // that for a line with dash and weight; a filled dot has neither, so
     // the domain's own glyph is what separates them on paper
     // (DR-169 §11.168.6).
-    final def = pin.domain == null ? null : domains[pin.domain];
-    final fill = def == null ? palette.markerFill : Fill(def.color.argb);
-    final glyph = def == null ? null : familyGlyphFor(def.glyph);
-    switch (pin.carrier) {
-      case PlanPinCarrier.rack:
-        // THE DATUM READS AS A DATUM. Every length on this plan is
-        // measured from here (`PLN-003`), so it is a square with a cross
-        // through it rather than one more dot in a field of dots.
-        final box = DBox.fromLtwh(centre.x - r, centre.y - r, r * 2, r * 2);
-        ops
-          ..add(OpRect(box, fill: palette.markerFill, stroke: outline))
-          ..add(
-            OpLine(
-              DPt(box.left, centre.y),
-              DPt(box.right, centre.y),
-              outline,
-            ),
-          )
-          ..add(
-            OpLine(
-              DPt(centre.x, box.top),
-              DPt(centre.x, box.bottom),
-              outline,
-            ),
-          );
-      case PlanPinCarrier.outlet:
-        // A drop is the thing a designer is actually dotting (docs/15
-        // §3.4), and there are sixty of them on the design case, so it is
-        // the plainest mark of the three: one circle, and the domain's
-        // colour costs no extra ink.
-        ops.add(OpCircle(centre, r, fill: fill, stroke: outline));
-      case PlanPinCarrier.device:
-        // THE HEAVIER RING IS WHAT KEEPS A DEVICE FROM READING AS A DROP
-        // once both carry a glyph. It was an inner dot at `r / 3`, which
-        // is the space the glyph now occupies; a weight is the cheapest
-        // channel left that survives greyscale, and docs/15 §3.4's three
-        // marks stay three.
-        ops.add(OpCircle(centre, r, fill: fill, stroke: ring));
-    }
-    // THE GLYPH GOES IN BOTH, AND IN THE RACK'S NEITHER. A rack has no
-    // domain to draw (§11.168.8) and its square already carries a cross.
-    if (glyph != null && pin.carrier != PlanPinCarrier.rack) {
-      final side = r * kPlanGlyphSideFactor;
-      ops.add(
-        familyGlyphOp(
-          glyph,
-          DPt(centre.x - side / 2, centre.y),
-          side / kFamilyGlyphCapFactor,
-          palette.markerCore.argb,
-          // A HOLLOW GLYPH IS OUTLINED AT THE MARK'S OWN WEIGHT, and on
-          // the surface rather than in scene units, for the ring's reason.
-          hollowWidthPt: markerWeight,
-          hollowScalesWithGeometry: false,
-        ),
-      );
-    }
+    ops.addAll(
+      planMarkerOps(
+        carrier: pin.carrier,
+        domain: pin.domain == null ? null : domains[pin.domain],
+        centre: centre,
+        r: r,
+        outline: outline,
+        ring: ring,
+        markerWeight: markerWeight,
+        palette: palette,
+      ),
+    );
     fragments[pin.entityId.v] = IntRange(start, ops.length);
     // THE HIT BOX IS THE MARKER'S SQUARE, for all three kinds. A circular
     // hit test on a mark this size buys nothing a person can feel and
@@ -450,4 +406,81 @@ final class PlanPalette {
 
   /// The device mark's centre dot.
   final Fill markerCore;
+}
+
+/// ONE PLAN MARKER, as `buildPlanScene` draws it for a pin: the rack's
+/// crossed square, an outlet's circle or a device's heavier ring, filled
+/// with [domain]'s hue, and the domain's glyph inside a filled one.
+///
+/// A FUNCTION OF ITS OWN SO THE LEGEND DRAWS THE SAME MARK (docs/08 §5.4,
+/// M6-B3): lifted out of the pin loop unchanged, so T0.01 cannot come to
+/// show a marker the plan does not.
+List<DiagramOp> planMarkerOps({
+  required PlanPinCarrier carrier,
+  required SignalDomainDef? domain,
+  required DPt centre,
+  required double r,
+  required Stroke outline,
+  required Stroke ring,
+  required double markerWeight,
+  PlanPalette palette = const PlanPalette(),
+}) {
+  final ops = <DiagramOp>[];
+  final def = domain;
+  final fill = def == null ? palette.markerFill : Fill(def.color.argb);
+  final glyph = def == null ? null : familyGlyphFor(def.glyph);
+  switch (carrier) {
+    case PlanPinCarrier.rack:
+      // THE DATUM READS AS A DATUM. Every length on this plan is
+      // measured from here (`PLN-003`), so it is a square with a cross
+      // through it rather than one more dot in a field of dots.
+      final box = DBox.fromLtwh(centre.x - r, centre.y - r, r * 2, r * 2);
+      ops
+        ..add(OpRect(box, fill: palette.markerFill, stroke: outline))
+        ..add(
+          OpLine(
+            DPt(box.left, centre.y),
+            DPt(box.right, centre.y),
+            outline,
+          ),
+        )
+        ..add(
+          OpLine(
+            DPt(centre.x, box.top),
+            DPt(centre.x, box.bottom),
+            outline,
+          ),
+        );
+    case PlanPinCarrier.outlet:
+      // A drop is the thing a designer is actually dotting (docs/15
+      // §3.4), and there are sixty of them on the design case, so it is
+      // the plainest mark of the three: one circle, and the domain's
+      // colour costs no extra ink.
+      ops.add(OpCircle(centre, r, fill: fill, stroke: outline));
+    case PlanPinCarrier.device:
+      // THE HEAVIER RING IS WHAT KEEPS A DEVICE FROM READING AS A DROP
+      // once both carry a glyph. It was an inner dot at `r / 3`, which
+      // is the space the glyph now occupies; a weight is the cheapest
+      // channel left that survives greyscale, and docs/15 §3.4's three
+      // marks stay three.
+      ops.add(OpCircle(centre, r, fill: fill, stroke: ring));
+  }
+  // THE GLYPH GOES IN BOTH, AND IN THE RACK'S NEITHER. A rack has no
+  // domain to draw (§11.168.8) and its square already carries a cross.
+  if (glyph != null && carrier != PlanPinCarrier.rack) {
+    final side = r * kPlanGlyphSideFactor;
+    ops.add(
+      familyGlyphOp(
+        glyph,
+        DPt(centre.x - side / 2, centre.y),
+        side / kFamilyGlyphCapFactor,
+        palette.markerCore.argb,
+        // A HOLLOW GLYPH IS OUTLINED AT THE MARK'S OWN WEIGHT, and on
+        // the surface rather than in scene units, for the ring's reason.
+        hollowWidthPt: markerWeight,
+        hollowScalesWithGeometry: false,
+      ),
+    );
+  }
+  return ops;
 }

@@ -1135,7 +1135,7 @@ floorplan import.
 
 | Sheet | When |
 |---|---|
-| **Symbol Legend** (`T0.01`) | Always, first. Every cable type in colour and in greyscale side by side: the ten named types every time, then any other type your cables use |
+| **Symbol Legend** (`T0.01`) | Always, first. Every cable type in colour and in greyscale side by side (the ten named types every time, then any other type your cables use); the device marks and plan markers in your set; an annotated device block; the border and hatch conventions; your ID formats worked through; abbreviations. Every other sheet says `SYMBOL LEGEND: SEE SHEET T0.01` |
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |
 | **Rack Elevation, Rear** | One per rack |

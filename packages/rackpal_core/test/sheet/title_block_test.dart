@@ -240,12 +240,35 @@ void main() {
     });
   });
 
-  group('the legend cross-reference is omitted, not pointed at nothing', () {
-    test('no field mentions a symbol legend or T0.01', () {
-      // T0.01 is not in this sheet set. Section 5.2 would auto-fill
-      // "SYMBOL LEGEND: SEE SHEET …"; pointing at an absent sheet is worse
-      // than saying nothing, and CR-023 already forbids it being a gate.
+  group('the legend cross-reference (M6-B5, CR-023)', () {
+    test('EVERY OTHER SHEET of a set with a legend says where it is, and it '
+        'reaches the page', () {
       final texts = textsOf(layerFor(fieldsFor())).join(' ');
+      expect(texts, contains('SYMBOL LEGEND: SEE SHEET T0.01'));
+    });
+
+    test('the legend itself does not point at itself', () {
+      final legend = oneRackSheetSet().sheets.firstWhere(
+        (s) => s.role == SheetRole.symbolLegend,
+      );
+      expect(fieldsFor(sheet: legend).legendLine, isNull);
+    });
+
+    test('A SET WITH NO LEGEND gets no line, never one pointed at nothing', () {
+      // Section 5.2 auto-fills from the legend's number; pointing at a
+      // sheet that is not in the file is worse than saying nothing.
+      final bare = oneRackSheetSet().sheets.firstWhere(
+        (s) => s.role == SheetRole.rackElevationFront,
+      );
+      final orphan = SheetDef(
+        ncsId: bare.ncsId,
+        role: bare.role,
+        index: bare.index,
+        total: bare.total,
+        rackId: bare.rackId,
+        rackDesignator: bare.rackDesignator,
+      );
+      final texts = textsOf(layerFor(fieldsFor(sheet: orphan))).join(' ');
       expect(texts, isNot(contains('LEGEND')));
       expect(texts, isNot(contains('T0.01')));
     });
@@ -331,7 +354,9 @@ void main() {
       expect(fields.addressLine, isNull);
       expect(fields.clientLine, isNull);
       expect(fields.integratorLine, isNull);
-      expect(fields.optionalLines.whereType<String>(), hasLength(1));
+      // The rack line, and the legend reference a set with T0.01 carries
+      // on every other sheet (M6-B5).
+      expect(fields.optionalLines.whereType<String>(), hasLength(2));
     });
 
     test('a partly-filled address collapses its missing parts', () {

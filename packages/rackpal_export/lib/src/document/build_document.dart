@@ -138,9 +138,24 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
             for (final link in doc.links.values)
               for (final service in link.services) service.signalFamily,
           },
+          // THE MARKS AND BORDERS THIS SET DRAWS (DR-208 §11.207.1): the
+          // devices and templates the elevations are drawn from, and the
+          // marker kinds the plans in THIS set carry.
+          devices: doc.devices.values,
+          templates: doc.templates,
+          planCarriers: {
+            for (final plan in plans)
+              for (final pin in planPinsFor(doc, plan.id)) pin.carrier,
+          },
         );
         scene = built.scene;
         legibility = built.legibility;
+        if (built.omittedBlocks.isNotEmpty) {
+          notices.add(
+            '${sheet.ncsId}: did not fit the legend: '
+            '${built.omittedBlocks.join(', ')}.',
+          );
+        }
         // A ROW THAT DID NOT FIT IS NAMED, NEVER DROPPED SILENTLY: a key
         // missing a line is a legend that lies by omission.
         if (built.omittedRows > 0) {
