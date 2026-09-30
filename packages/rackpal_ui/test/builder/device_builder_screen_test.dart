@@ -60,6 +60,10 @@ Future<List<TemplateBody>> _pump(
   // comment defends: passing empty registries would claim the project has
   // none.
   Registries? registries,
+  // What devices already placed from this template stand on (DR-202
+  // §11.201.2). Null is the default and the common case: nothing placed,
+  // so the change class has nobody to be about.
+  PlacedTemplateBaseline? placed,
 }) async {
   // THE APP'S OWN MINIMUM, not the 800x600 default. `kMinWindowWidth` is
   // 1000 and `kMinWindowHeight` is 720 (`prefs_store.dart`), enforced
@@ -85,6 +89,7 @@ Future<List<TemplateBody>> _pump(
               saved.add(b);
               return null;
             },
+            placedBaseline: () => placed,
           ),
         ),
       ),
@@ -183,11 +188,16 @@ void main() {
     testWidgets('shows Safe for a rename, which is docs/06 §7.2 verbatim', (
       tester,
     ) async {
-      await _pump(tester, template: _blank()..displayName = 'Old');
+      final old = _blank()..displayName = 'Old';
+      await _pump(
+        tester,
+        template: old,
+        placed: (body: copyTemplateBody(old), version: 1, count: 3),
+      );
 
       await _type(tester, 'Display name *', 'New');
 
-      expect(find.text('Safe'), findsOneWidget);
+      expect(find.text('Safe · 3 placed'), findsOneWidget);
     });
 
     testWidgets('shows Breaking when the occupancy moves', (tester) async {
@@ -195,11 +205,51 @@ void main() {
         ..displayName = 'Matrix'
         ..typePrefix = 'MTX'
         ..frontU = 4;
-      await _pump(tester, template: body);
+      await _pump(
+        tester,
+        template: body,
+        placed: (body: copyTemplateBody(body), version: 2, count: 1),
+      );
 
       await _type(tester, 'RU height (front) *', '2');
 
-      expect(find.text('Breaking'), findsOneWidget);
+      expect(find.text('Breaking · 1 placed'), findsOneWidget);
+    });
+
+    testWidgets('SAYS NOTHING WHEN NOTHING IS PLACED, however breaking the '
+        'edit (DR-202 §11.201.2)', (tester) async {
+      // `#950`: a new template read `Breaking` the moment it had a height,
+      // measured against the blank the window opened with. The verdict is
+      // about devices already placed, and there are none.
+      await _pump(tester);
+
+      await _type(tester, 'Display name *', 'Matrix');
+      await _type(tester, 'RU height (front) *', '4');
+
+      expect(find.textContaining('Breaking'), findsNothing);
+      expect(find.textContaining('placed'), findsNothing);
+    });
+
+    testWidgets('MEASURES AGAINST THE PLACED BODY, not the one it opened '
+        'with', (tester) async {
+      // Devices stand on a 4U v1; the window opened on a 2U v2 that nothing
+      // uses. Renaming is safe against v2 and still breaking against v1,
+      // and v1 is what those devices resolve to.
+      final placed = _blank()
+        ..displayName = 'Matrix'
+        ..frontU = 4;
+      final opened = _blank()
+        ..displayName = 'Matrix'
+        ..frontU = 2;
+      await _pump(
+        tester,
+        template: opened,
+        placed: (body: placed, version: 1, count: 5),
+      );
+
+      await _type(tester, 'Display name *', 'Matrix rev B');
+
+      expect(find.text('Breaking · 5 placed'), findsOneWidget);
     });
   });
 

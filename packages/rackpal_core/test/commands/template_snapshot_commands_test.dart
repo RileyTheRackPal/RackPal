@@ -7,6 +7,10 @@
 // what makes an embedded snapshot trustworthy — a device placed from v1
 // still resolves to the v1 it was drawn against, a week after somebody
 // corrected the wattage.
+//
+// DR-202 §11.201.1 narrows WHEN the builder asks for that fork: only once
+// a device stands on the newest version. `planTemplateSave` is that rule;
+// this command's revert restores whatever a replace overwrote.
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 
@@ -131,6 +135,93 @@ void main() {
       doc.templates.remove('tpl.mtx@1');
 
       expect(nextTemplateVersion(doc, _id), 3);
+    });
+  });
+
+  // DR-202 §11.201.1. The builder's Save asks this, not
+  // `nextTemplateVersion`: a fork protects placed devices, so with none
+  // placed on the newest version it is replaced in place.
+  group('planTemplateSave', () {
+    void place(RackDocument doc, TemplateId id, int version) {
+      final n = doc.devices.length + 1;
+      doc.devices[Uuid('dev-$n')] = DeviceInstance(
+        id: Uuid('dev-$n'),
+        kind: DeviceKind.rackDevice,
+        templateRef: TemplateRef(
+          templateId: id,
+          version: version,
+          contentHash: 'x',
+        ),
+        designator: 'MTX-$n',
+        name: 'Matrix $n',
+        placement: const OffRackPlacement(),
+        meta: doc.meta,
+      );
+    }
+
+    SaveTemplateToProjectCommand saveAt(TemplateId id, int version, int u) =>
+        SaveTemplateToProjectCommand(
+          templateId: id,
+          version: version,
+          contentHash: 'h$u',
+          body: _body('Matrix')..frontU = u,
+          capturedAt: DateTime.utc(2026, 9, 29),
+        );
+
+    test('a template the document has never held starts at 1', () {
+      expect(planTemplateSave(_doc(), _id), (version: 1, replaces: false));
+    });
+
+    test('an UNPLACED newest version is replaced in place', () {
+      final doc = _doc();
+      saveAt(_id, 1, 2).apply(doc);
+      expect(planTemplateSave(doc, _id), (version: 1, replaces: true));
+    });
+
+    test('a PLACED newest version forks, and an unplaced one above it is '
+        'replaced', () {
+      final doc = _doc();
+      saveAt(_id, 1, 2).apply(doc);
+      place(doc, _id, 1);
+      expect(planTemplateSave(doc, _id), (version: 2, replaces: false));
+
+      saveAt(_id, 2, 3).apply(doc);
+      expect(
+        planTemplateSave(doc, _id),
+        (version: 2, replaces: true),
+        reason: 'devices stand on @1, not on @2',
+      );
+    });
+
+    test('THE SHIPPED CATALOG BODY IS NEVER REPLACED, placed or not', () {
+      // DR-158 §11.157.3: a seeded `@1` is identical in every project.
+      final seeded = TemplateId(kSeedCatalogIds.first);
+      final doc = _doc();
+      saveAt(seeded, 1, 2).apply(doc);
+      expect(planTemplateSave(doc, seeded), (version: 2, replaces: false));
+
+      saveAt(seeded, 2, 3).apply(doc);
+      expect(planTemplateSave(doc, seeded), (version: 2, replaces: true));
+    });
+
+    test('undoing a replace restores the SAME snapshot it replaced', () {
+      final doc = _doc();
+      saveAt(_id, 1, 2).apply(doc);
+      final before = doc.templates['tpl.mtx@1'];
+      final replace = saveAt(_id, 1, 4)..apply(doc);
+      expect(doc.templates['tpl.mtx@1']!.body.frontU, 4);
+
+      replace.revert(doc);
+      expect(identical(doc.templates['tpl.mtx@1'], before), isTrue);
+
+      replace.apply(doc);
+      expect(doc.templates['tpl.mtx@1']!.body.frontU, 4);
+      replace.revert(doc);
+      expect(
+        identical(doc.templates['tpl.mtx@1'], before),
+        isTrue,
+        reason: 'a redo captures afresh, so a second undo is still exact',
+      );
     });
   });
 

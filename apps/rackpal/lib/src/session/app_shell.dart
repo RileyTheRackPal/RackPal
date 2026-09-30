@@ -425,6 +425,41 @@ final class AppShellState extends State<AppShell>
   /// showing the browser (`#243`). See [_deviceManagerTab]'s three states.
   bool _authoringNew = false;
 
+  /// The builder's Save wiring, built ONCE per authoring session (`#950`).
+  ///
+  /// **IT WAS BUILT IN `build`, AND THAT UNDID DR-077 §11.76.3.** The
+  /// closure is the only thing that remembers the id a new template's
+  /// first Save minted; a save changes the document, the document change
+  /// rebuilds this shell, and the rebuilt closure had forgotten. So the
+  /// second Save on a new template authored `tpl.foo_2` beside `tpl.foo`,
+  /// and the tests passed because they held one closure still.
+  ///
+  /// Keyed like the builder itself, on the controller and the template, so
+  /// door 2 and a new document each get fresh wiring; and cleared where an
+  /// authoring session ends or a new one starts, because two new-template
+  /// sessions share the key `(controller, null)` and must not share an id.
+  DeviceBuilderActions? _builderActions;
+  Object? _builderActionsKey;
+
+  DeviceBuilderActions _builderActionsFor(
+    DocumentSession session,
+    TemplateId? editing,
+  ) {
+    final key = (session.controller, editing);
+    final cached = _builderActions;
+    if (cached != null && _builderActionsKey == key) return cached;
+    _builderActionsKey = key;
+    return _builderActions = buildDeviceBuilderActions(
+      controller: session.controller,
+      prefs: _services.prefsStore,
+      // NON-NULL IS WHAT MAKES SAVE WRITE A VERSION RATHER THAN A NEW
+      // TEMPLATE. With `editing` set, `onSave` reuses the id and
+      // `planTemplateSave` picks the version; with it null the first save
+      // mints an id and the closure keeps it.
+      editing: editing,
+    );
+  }
+
   /// The starred template ids (`#245`, DR-104 §11.103.4), held here so
   /// both the browser and the palette read one value.
   ///
@@ -1598,7 +1633,11 @@ final class AppShellState extends State<AppShell>
         // authoring a template: this tab was the only one, so the
         // browser either carries it or the capability is gone
         // (DR-104 §11.103.2's corrected clause).
-        onNew: () => setState(() => _authoringNew = true),
+        onNew: () => setState(() {
+          _authoringNew = true;
+          // A NEW session: it must not inherit the last one's minted id.
+          _builderActions = null;
+        }),
         onEdit: _openTemplateForEditing,
         onRemove: (id) => unawaited(_removeTemplate(session, id)),
       );
@@ -1651,15 +1690,9 @@ final class AppShellState extends State<AppShell>
       onDone: () => setState(() {
         _editingTemplateId = null;
         _authoringNew = false;
+        _builderActions = null;
       }),
-      actions: buildDeviceBuilderActions(
-        controller: session.controller,
-        prefs: _services.prefsStore,
-        // NON-NULL IS WHAT MAKES SAVE A FORK RATHER THAN A NEW TEMPLATE.
-        // With `editing` set, `onSave` reuses the id and `nextTemplateVersion`
-        // gives it `version + 1`; with it null the save mints a fresh id.
-        editing: snapshot == null ? null : editing,
-      ),
+      actions: _builderActionsFor(session, snapshot == null ? null : editing),
       // THE PROJECT'S OWN REGISTRIES AND FORMAT, so the port grid prints
       // `HDMI Type A` where the model holds `conn.hdmi_a` and previews the
       // designators THIS project would allocate (CR-042).
