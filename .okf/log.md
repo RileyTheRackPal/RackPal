@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-01 (ninety-third entry)
+
+* **Progress**: `#969` merged at `7e7d745f` (PR 181); Story `#316` (M6-B) closed. M6-A (`#311`)
+  begun at M6-A1 (`#312`), whose description now names the ProjectInfo editor explicitly.
+* **Creation**: [DR-210](/decisions/dr-210-cover-index-right-title-block-editable.md).
+* **Note**: **A TICKET THAT PRINTS A FIELD IS NOT A TICKET THAT EDITS IT.** `#312` listed what the
+  cover prints and `#343` draws the title block; neither named the editor, so both could be built
+  to the letter with the title block still unwritable. Read the description, not the title, and ask
+  of every printed field what writes it.
+
 ## 2026-09-30 (ninety-second entry)
 
 * **Progress**: M6-B3/B4/B5 merged at `637c93b0` (PR 180). M6-B6 (`#969`) built, the last open

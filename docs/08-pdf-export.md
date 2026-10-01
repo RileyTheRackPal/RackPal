@@ -529,6 +529,16 @@ J-STD-710 symbol geometry becomes constants: distinctive shapes inside a 3/8 in 
 
 **Named acceptance criterion (AC-054, AC-058/D13):** before v1 ships, `T0.01` is rendered under protanopia and deuteranopia simulation with every domain pair still distinguishable, **and** printed on a real greyscale office laser at ANSI B and photocopied once, with all ten named cable types still identifiable. The entire dash-and-weight argument is predicated on that test, so it is run on hardware, not asserted.
 
+### 5.5 Cover sheet `T0.00`
+
+ANSI B landscape, first in every set (DR-210 §11.209.1). **Left**: the project block (project
+name, client, site address, drawing number, current revision and issue date), the scope paragraph
+when one is written, the integrator block, and the sign-off line `DRAWN · CHECKED · APPROVED`
+(§11.209.3). **Right**: the drawing index, a full-height column, generated after the sheet list
+resolves (§2.2). **Foot**: the rack summary strip. The title and revision blocks sit bottom-right as
+on every sheet. Every field is edited in `File ▸ Sheet set…` (DR-209, DR-210 §11.209.2), and an
+empty optional line collapses (§5.2).
+
 ---
 
 ## 6. Page setup and fit
