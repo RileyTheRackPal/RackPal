@@ -57,5 +57,9 @@ void main() {
       expect(first, contains(heading), reason: heading);
     }
     expect(first, contains('RK-1'));
+    // M6-A3: the drawing index reaches ink, naming sheets by both numbers.
+    expect(first, contains('DRAWING INDEX'));
+    expect(first, contains('T2.02'));
+    expect(first, contains('SYMBOL LEGEND'));
   });
 }

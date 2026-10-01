@@ -1033,7 +1033,13 @@ $SuiteFloors = @{
     # resolved elevations; no closing row when all fit; the strip at the
     # cover's foot; and no passive in Whole House is an unknown power
     # contributor.
-    'rackpal_core'   = 5232
+    # 5240 at `#314` (M6-A3, DR-212): +8 in sheet/cover_index_test.dart. Every
+    # resolved sheet with both numbers and a schedule run as one row; an AUTO
+    # sheet not emitted is not indexed; a single page is no range; one
+    # column for a small set; two and three sub-columns inside the column;
+    # a narrow title keeps the face and the rack; a set three cannot hold
+    # names what it omits; and the cover carries the index under its title.
+    'rackpal_core'   = 5240
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

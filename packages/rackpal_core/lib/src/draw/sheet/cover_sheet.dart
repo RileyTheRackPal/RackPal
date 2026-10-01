@@ -6,11 +6,11 @@
 // DR-210 §11.209.1: the project block, the scope paragraph, the integrator
 // and the sign-off take the left; the drawing index (M6-A3) is a
 // full-height column on the right, as wide as the title block it stands
-// above, because the index is the one block that grows; the rack summary
-// strip (M6-A2, `cover_rack_strip.dart`) runs along the foot. This file
-// builds the left and places the strip. The right
-// column is RESERVED here and filled by M6-A3, so nothing on the left can
-// grow into the space the index needs.
+// above, because the index is the one block that grows (M6-A3,
+// `cover_index.dart`); the rack summary strip (M6-A2,
+// `cover_rack_strip.dart`) runs along the foot. This file builds the left
+// and places the other two, and nothing on the left may grow into the
+// index's column.
 //
 // EVERY LINE COMES FROM `ProjectInfo`, formatted by the helpers the title
 // block uses (`formatAddress`, `formatSheetDate`, `newestRevisionLabel`),
@@ -24,6 +24,7 @@ import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/derived/device_outlets.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
+import 'package:rackpal_core/src/draw/sheet/cover_index.dart';
 import 'package:rackpal_core/src/draw/sheet/cover_rack_strip.dart';
 import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
 import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart'
@@ -69,14 +70,16 @@ final class CoverSheet {
     required this.scopeTruncated,
     required this.racksShown,
     required this.racksHidden,
+    required this.indexColumns,
+    required this.indexOmitted,
   });
 
   final DiagramScene scene;
   final LegibilityReport legibility;
 
-  /// The full-height right-hand column reserved for the drawing index
+  /// The full-height right-hand column the drawing index fills
   /// (§11.209.1), as wide as the title block and ending above the revision
-  /// and title blocks. Empty until M6-A3 fills it.
+  /// and title blocks.
   final DBox indexColumn;
 
   /// The scope paragraph did not fit [kCoverScopeMaxLines] and was cut.
@@ -86,6 +89,13 @@ final class CoverSheet {
   /// row (§11.210.4). A non-zero [racksHidden] is an export notice.
   final int racksShown;
   final int racksHidden;
+
+  /// The sub-columns the drawing index used (§11.211.4).
+  final int indexColumns;
+
+  /// Sheets the index could not list; a non-empty list is an export
+  /// notice, never a silent omission.
+  final List<SheetDef> indexOmitted;
 }
 
 /// The sign-off line, `DRAWN J.S. · CHECKED — · APPROVED —` (§11.209.3).
@@ -286,6 +296,15 @@ CoverSheet buildCoverSheet({
   );
   ops.addAll(strip.ops);
 
+  // ── the drawing index, in the column reserved for it (M6-A3) ─────────
+  final index = drawCoverIndex(
+    rows: coverIndexRows(sheets),
+    box: indexColumn,
+    measurer: measurer,
+    palette: palette,
+  );
+  ops.addAll(index.ops);
+
   final minText = math.min(
     furniture.minTextSizePt,
     math.min(kCoverHeadingPt, kCoverStripPt),
@@ -306,6 +325,8 @@ CoverSheet buildCoverSheet({
     scopeTruncated: scopeTruncated,
     racksShown: strip.shown,
     racksHidden: strip.hidden,
+    indexColumns: index.columns,
+    indexOmitted: index.omitted,
   );
 }
 

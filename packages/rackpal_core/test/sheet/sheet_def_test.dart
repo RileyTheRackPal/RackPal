@@ -242,7 +242,7 @@ void main() {
     // absent from this enum rather than stubbed.
     test('names the six sheets in this set, and no others', () {
       expect(SheetRole.values, hasLength(6));
-      expect(SheetRole.cover.title, 'COVER');
+      expect(SheetRole.cover.title, 'COVER AND DRAWING INDEX');
       expect(SheetRole.symbolLegend.title, 'SYMBOL LEGEND');
       expect(SheetRole.devicePlan.title, 'DEVICE LOCATION PLAN');
       expect(SheetRole.rackElevationFront.title, 'RACK ELEVATION — FRONT');

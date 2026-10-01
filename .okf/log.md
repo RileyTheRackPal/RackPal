@@ -2,7 +2,11 @@
 
 ## 2026-10-01 (ninety-fifth entry)
 
-* **Progress**: `#313` merged at `86f4372d` (PR 183). M6-A3 (`#314`) begun.
+* **Progress**: `#313` merged at `86f4372d` (PR 183). M6-A3 (`#314`) built: the drawing index.
+  docs/12 §4.27.
+* **Note**: **RENDER THE STRESS CASE, NOT ONLY THE STARTER.** Whole House's six-sheet index was
+  right on the first render. A 131-sheet set took three more passes, and every defect it showed was
+  in the narrow layout no starter reaches.
 * **Creation**: [DR-212](/decisions/dr-212-drawing-index.md).
 
 ## 2026-10-01 (ninety-fourth entry)

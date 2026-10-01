@@ -87,14 +87,15 @@ enum SheetSize {
 /// building before they open a rack. `T0.00`–`T0.02` are M6's and are not
 /// emitted yet, so today the plans come first.
 enum SheetRole {
-  /// docs/08 §5.5's `T0.00`, the cover (M6-A, `#311`). FIRST in every set
-  /// and `ON` (docs/08 §2.2), ANSI B landscape (§6.1). Titled `COVER` until
-  /// M6-A3 gives it the drawing index, so the title never names a block the
-  /// sheet does not carry.
+  /// docs/08 §5.5's `T0.00`, the cover and drawing index (M6-A, `#311`).
+  /// FIRST in every set and `ON` (docs/08 §2.2), ANSI B landscape (§6.1).
+  /// Titled `COVER` until M6-A3 gave it the index, so the title never named
+  /// a block the sheet did not carry.
   cover(
-    'COVER',
+    'COVER AND DRAWING INDEX',
     SheetSize.ansiBLandscape,
     perRack: false,
+    shortTitle: 'COVER',
   ),
 
   /// docs/08 §5.4's `T0.01`, the symbol legend (M6-B, `#316`). FIRST in
@@ -104,6 +105,7 @@ enum SheetRole {
     'SYMBOL LEGEND',
     SheetSize.ansiBLandscape,
     perRack: false,
+    shortTitle: 'LEGEND',
   ),
 
   /// docs/15 §8's `T1.01`, one per `PlanUnderlay` that carries at least one
@@ -119,28 +121,44 @@ enum SheetRole {
     'DEVICE LOCATION PLAN',
     SheetSize.ansiBLandscape,
     perRack: false,
+    shortTitle: 'PLAN',
   ),
 
   rackElevationFront(
     'RACK ELEVATION — FRONT',
     SheetSize.ansiBPortrait,
     perRack: true,
+    shortTitle: 'FRONT ELEV.',
   ),
   rackElevationRear(
     'RACK ELEVATION — REAR',
     SheetSize.ansiBPortrait,
     perRack: true,
+    shortTitle: 'REAR ELEV.',
   ),
   equipmentList(
     'EQUIPMENT LIST AND MATERIALS',
     SheetSize.ansiALandscape,
     perRack: false,
+    shortTitle: 'EQUIPMENT LIST',
   );
 
-  const SheetRole(this.title, this.size, {required this.perRack});
+  const SheetRole(
+    this.title,
+    this.size, {
+    required this.perRack,
+    required this.shortTitle,
+  });
 
   /// What the title block's sheet-title line prints.
   final String title;
+
+  /// What a NARROW drawing-index row prints instead of [title] (DR-212
+  /// §11.211.4): in three sub-columns a title has about 70 pt, and
+  /// `RACK ELEVATION — FRONT · RK-10` cut to fit lost either the face or
+  /// the rack, the two facts that tell one elevation row from the next.
+  /// The full [title] is printed wherever it fits.
+  final String shortTitle;
   final SheetSize size;
 
   /// Whether the set contains one of these per `Rack`.

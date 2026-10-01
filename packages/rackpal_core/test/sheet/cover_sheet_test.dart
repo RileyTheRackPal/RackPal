@@ -153,19 +153,25 @@ void main() {
     expect(built.scopeTruncated, isTrue);
   });
 
-  test('THE INDEX COLUMN IS RESERVED: nothing on the cover draws in it', () {
-    // M6-A3 fills it. Until then a left block that grew into it would be
-    // taking the space the index needs (DR-210 §11.209.1).
+  test('THE INDEX COLUMN HOLDS THE INDEX AND NOTHING ELSE', () {
+    // Reserved at M6-A1 and filled at M6-A3: a left block that grew into
+    // it would take the space the index needs (DR-210 §11.209.1).
     final built = _build(fullProjectInfo());
     final column = built.indexColumn;
-    final intruders = [
+    final rows = coverIndexRows(SheetSet.forRacks([testRack()]).sheets);
+    final allowed = <String>{
+      'DRAWING INDEX',
+      for (final r in rows) ...[r.positions, r.ids, r.title],
+    };
+    final inColumn = [
       for (final op in textOps(built.scene.ops))
         if (op.at.x >= column.left &&
             op.at.y >= column.top &&
             op.at.y <= column.bottom)
           op.text,
     ];
-    expect(intruders, isEmpty);
+    expect(inColumn, isNotEmpty, reason: 'the index is there');
+    expect(inColumn.where((t) => !allowed.contains(t)), isEmpty);
     expect(column.height, greaterThan(300), reason: 'a full-height column');
   });
 }

@@ -138,6 +138,17 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
         );
         scene = built.scene;
         legibility = built.legibility;
+        // A SHEET THE INDEX COULD NOT LIST IS NAMED (§11.211.4): an index
+        // that drops a sheet quietly is the one defect an index exists to
+        // prevent.
+        if (built.indexOmitted.isNotEmpty) {
+          notices.add(
+            '${sheet.ncsId}: the drawing index lists '
+            '${set.sheets.length - built.indexOmitted.length} of '
+            '${set.sheets.length} sheets in ${built.indexColumns} columns; '
+            '${coverIndexOmittedText(built.indexOmitted)}.',
+          );
+        }
         // A RACK LEFT OFF THE STRIP IS NAMED, NEVER SILENT (§11.210.4).
         if (built.racksHidden > 0) {
           notices.add(
