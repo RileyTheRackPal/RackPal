@@ -1163,6 +1163,8 @@ and `Restore defaults` puts it back. The signal tag prefixes (`AUD`, `NET` and s
 on) always follow your abbreviations and are not edited here. A long note wraps
 on the sheet.
 
+**Zones on the drawings.** Floor plans and rack elevations carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions and equipment list have a plain border.
+
 So a two-rack job with one floorplan gives you at least nine sheets, more if the exceptions or the equipment list run to a second page. The status line says
 how many sheets were written and how large the file is.
 

@@ -133,6 +133,7 @@ enum SheetRole {
     SheetSize.ansiBLandscape,
     perRack: false,
     shortTitle: 'PLAN',
+    zoned: true,
   ),
 
   rackElevationFront(
@@ -140,12 +141,14 @@ enum SheetRole {
     SheetSize.ansiBPortrait,
     perRack: true,
     shortTitle: 'FRONT ELEV.',
+    zoned: true,
   ),
   rackElevationRear(
     'RACK ELEVATION — REAR',
     SheetSize.ansiBPortrait,
     perRack: true,
     shortTitle: 'REAR ELEV.',
+    zoned: true,
   ),
   equipmentList(
     'EQUIPMENT LIST AND MATERIALS',
@@ -159,7 +162,12 @@ enum SheetRole {
     this.size, {
     required this.perRack,
     required this.shortTitle,
+    this.zoned = false,
   });
+
+  /// Whether this sheet carries §5.1's zone band and grid (DR-215
+  /// §11.214.1): the drawings do, the tables and front matter do not.
+  final bool zoned;
 
   /// What the title block's sheet-title line prints.
   final String title;

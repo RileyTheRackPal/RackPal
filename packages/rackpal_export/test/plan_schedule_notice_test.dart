@@ -169,7 +169,10 @@ void main() {
       out.notices,
       contains(
         predicate<String>(
-          (n) => n.startsWith('T1.01: ') && n.contains('shows 80 of 81 rows'),
+          // 76 SINCE M6-G1, 80 BEFORE: the zone band (DR-215) took one row
+          // from each of the four blocks. Still above the sixty drops the
+          // exit criterion needs (DR-037 §11.36.1).
+          (n) => n.startsWith('T1.01: ') && n.contains('shows 76 of 81 rows'),
         ),
       ),
       reason: 'Notices: ${out.notices}',

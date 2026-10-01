@@ -113,7 +113,15 @@ void main() {
         set.sheets.firstWhere((s) => s.role == SheetRole.rackElevationFront),
         const <RevisionEntry>[],
       );
-      expect(layout.drawingArea, const DBox.fromLtwh(60, 42, 690, 999));
+      // THE ZONED FRAME (DR-215): the margins (54, 36), then the 0.22 in
+      // band in place of the 6 pt inset on every side, which also lifts
+      // the furniture's top by the same amount.
+      const grow = kZoneBandWidthPt - kPlainInsetPt;
+      final a = layout.drawingArea;
+      expect(a.left, closeTo(54 + kZoneBandWidthPt, 1e-9));
+      expect(a.top, closeTo(36 + kZoneBandWidthPt, 1e-9));
+      expect(a.width, closeTo(690 - 2 * grow, 1e-9));
+      expect(a.height, closeTo(999 - 2 * grow, 1e-9));
     });
 
     test('the layout buildSheetFurniture uses is the SAME one '

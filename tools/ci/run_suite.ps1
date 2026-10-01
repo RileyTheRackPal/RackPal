@@ -1054,7 +1054,13 @@ $SuiteFloors = @{
     # empty report says so with its basis; every finding one row, message
     # whole; errors first; the locus a designator; a break repeats heading
     # and band; the signed sections).
-    'rackpal_core'   = 5274
+    # 5282 at `#342` (M6-G1, DR-215): +8 in sheet/zone_grid_test.dart. Which
+    # roles are zoned; a zoned sheet gives up the band while a table keeps
+    # §3.2's widths; one zone per 4.25 in (B landscape 4 x 2, D 8 x 5, B
+    # portrait 2 x 4); zones from the lower right; letters skip I and O;
+    # every zone labelled with a tick at every boundary; an unzoned frame
+    # has no labels; the elevation lays out on the zoned frame.
+    'rackpal_core'   = 5282
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

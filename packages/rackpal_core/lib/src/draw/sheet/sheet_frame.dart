@@ -20,14 +20,20 @@
 // (612 − 54 − 36 − 12 = 510 portrait; 792 − 54 − 36 − 12 = 690 landscape),
 // which is a useful confirmation that the arithmetic here is the doc's.
 //
-// THE 6 PT INSET vs §5.1's ZONE BAND, recorded rather than papered over.
-// §5.1's stack is `margin → outer rule → 0.22 in zone band → inner rule →
-// drawing area`, which would put 15.84 pt between the two rules. §3.2's
-// arithmetic says 6 pt each side. They disagree. 6 pt is used because it is
-// the figure that reproduces the doc's own usable widths, and because THE
-// ZONE GRID IS NOT BUILT in this stage: its only v1 consumer is the
-// schedule's `REF` column, which needs `Link`s, which do not exist until M2.
-// It is omitted whole, not stubbed as an empty band.
+// THE 6 PT INSET AND §5.1's ZONE BAND ARE BOTH RIGHT, ON DIFFERENT SHEETS
+// (DR-215 §11.214.1). §5.1's stack is `margin → outer rule → 0.22 in zone
+// band → inner rule → drawing area`, 15.84 pt between the rules; §3.2's
+// usable widths need 6 pt. Until M6-G1 the band was not built and 6 pt
+// was used everywhere. Now a DRAWING sheet (`SheetRole.zoned`: the plans,
+// the elevations, and the interconnect sheets when they land) carries the
+// full band and grid, and a TABLE sheet keeps the 6 pt inset §3.2's
+// widths are computed from: a zone names a place on a drawing, and a table
+// has none to name.
+//
+// ZONES RUN FROM THE LOWER RIGHT (DR-215 §11.214.2, the user's ruling):
+// zone 1 and row A at the lower-right corner, numbers increasing right to
+// left along the top and bottom, letters bottom to top along both sides,
+// so an ANSI C/D sheet folded into a binder shows the markings.
 
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
@@ -214,15 +220,19 @@ final class SheetGeometry {
   const SheetGeometry(
     this.size, {
     this.margins = SheetMargins.standard,
-    this.borderInset = 6,
+    this.zoned = false,
   });
 
   final SheetSize size;
   final SheetMargins margins;
 
-  /// §3.2's "border inset 6 pt inside margin" — the gap between the outer
-  /// and inner rules. See the file header on §5.1's zone band.
-  final double borderInset;
+  /// Whether this sheet carries §5.1's zone band and grid (DR-215
+  /// §11.214.1): a drawing sheet does, a table sheet does not.
+  final bool zoned;
+
+  /// The gap between the outer and inner rules: §5.1's 0.22 in zone band
+  /// on a zoned sheet, §3.2's 6 pt otherwise. See the file header.
+  double get borderInset => zoned ? kZoneBandWidthPt : kPlainInsetPt;
 
   double get pageWidth => size.widthPt;
   double get pageHeight => size.heightPt;
@@ -247,13 +257,68 @@ final class SheetGeometry {
       other is SheetGeometry &&
       other.size == size &&
       other.margins == margins &&
-      other.borderInset == borderInset;
+      other.zoned == zoned;
 
   @override
-  int get hashCode => Object.hash(size, margins, borderInset);
+  int get hashCode => Object.hash(size, margins, zoned);
 
   @override
   String toString() => 'SheetGeometry(${size.name})';
+}
+
+/// §5.1's zone band, 0.22 in, between the outer and inner rules.
+const double kZoneBandWidthPt = 0.22 * 72;
+
+/// §3.2's border inset on a sheet without zones.
+const double kPlainInsetPt = 6;
+
+/// §5.1's zone module, 4.25 in.
+const double kZoneModulePt = 4.25 * 72;
+
+/// The zone labels' size: §5.1's RackMono 7, in the one face bundled.
+const double kZoneLabelPt = 7;
+
+/// How many zones run along a side [lengthPt] long: one per module,
+/// rounded, and never fewer than two (§5.1's "minimum 2 × 2"). ANSI B
+/// landscape gives 4 × 2 and ANSI D 8 × 5, as §5.1 says.
+int zoneCount(double lengthPt) {
+  final n = (lengthPt / kZoneModulePt).round();
+  return n < 2 ? 2 : n;
+}
+
+/// Zone columns (numbered) and rows (lettered) on [geometry].
+(int columns, int rows) zoneGrid(SheetGeometry geometry) => (
+  zoneCount(geometry.frameBox.width),
+  zoneCount(geometry.frameBox.height),
+);
+
+/// The letter for row [index], counted from 0 at the BOTTOM: `A`, `B`...
+/// `I` and `O` are skipped, as drawing sheets skip them, so a zone never
+/// reads as a one or a zero.
+String zoneLetter(int index) {
+  const letters = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+  return letters[index % letters.length];
+}
+
+/// The zone [point] falls in on a zoned [geometry], `B3`, counted from the
+/// lower right (DR-215 §11.214.2); null outside the drawing frame or on an
+/// unzoned sheet. This is what a schedule's `REF` column will print
+/// (docs/08 §5.1), from the final placed geometry.
+String? zoneAt(SheetGeometry geometry, DPt point) {
+  if (!geometry.zoned) return null;
+  final frame = geometry.frameBox;
+  if (point.x < frame.left ||
+      point.x > frame.right ||
+      point.y < frame.top ||
+      point.y > frame.bottom) {
+    return null;
+  }
+  final (columns, rows) = zoneGrid(geometry);
+  final fromRight = (frame.right - point.x) / (frame.width / columns);
+  final fromBottom = (frame.bottom - point.y) / (frame.height / rows);
+  final column = fromRight.floor().clamp(0, columns - 1);
+  final row = fromBottom.floor().clamp(0, rows - 1);
+  return '${zoneLetter(row)}${column + 1}';
 }
 
 /// §5.2's full title block: 396 × 115 pt, bottom-right.
@@ -372,9 +437,10 @@ final class SheetLayout {
 }
 
 /// docs/08 §5.1's border: an outer rule at the margin and an inner rule at
-/// the drawing frame, both at the 0.25 pt furniture floor (CR-082).
-///
-/// The zone band between them is NOT drawn — see the file header.
+/// the drawing frame, both at the 0.25 pt furniture floor (CR-082), and on
+/// a zoned sheet the zone band between them: a tick at every zone
+/// boundary across the band, the zone numbers along the top and bottom
+/// and the letters along both sides, counted from the lower right.
 LayerBuild buildSheetFrameLayer(
   SheetGeometry geometry, {
   SheetPalette palette = const SheetPalette(),
@@ -389,11 +455,71 @@ LayerBuild buildSheetFrameLayer(
       stroke: sheetRule(palette.rule, kInnerRuleWidthPt),
     ),
   ];
+  if (geometry.zoned) ops.addAll(_zoneBand(geometry, palette));
   return (
     ops: ops,
-    minTextPt: double.infinity,
-    // The frame draws no text and its ink is exactly the margin box, grown
-    // by half the outer rule's width on each side.
+    minTextPt: geometry.zoned ? kZoneLabelPt : double.infinity,
+    // The frame's ink is exactly the margin box, grown by half the outer
+    // rule's width on each side: the zone labels sit INSIDE the band,
+    // between the two rules, so they add none.
     inkBounds: geometry.marginBox.inflate(kOuterRuleWidthPt / 2),
   );
+}
+
+/// The ticks and labels in a zoned sheet's band.
+List<DiagramOp> _zoneBand(SheetGeometry geometry, SheetPalette palette) {
+  final outer = geometry.marginBox;
+  final inner = geometry.frameBox;
+  final (columns, rows) = zoneGrid(geometry);
+  // AT THE OUTER RULE'S WEIGHT, so a tick's end overhangs the outer rule by
+  // no more than the rule itself does and the layer's ink claim below
+  // stays true; a tick is the lighter mark anyway.
+  final stroke = sheetRule(palette.rule, kOuterRuleWidthPt);
+  final label = TextStyleSpec(
+    font: kSheetFont,
+    sizePt: kZoneLabelPt,
+    argb: palette.text,
+    anchor: TextAnchor.midCenter,
+  );
+  final colW = inner.width / columns;
+  final rowH = inner.height / rows;
+  final topBand = (outer.top + inner.top) / 2;
+  final bottomBand = (outer.bottom + inner.bottom) / 2;
+  final leftBand = (outer.left + inner.left) / 2;
+  final rightBand = (outer.right + inner.right) / 2;
+  final ops = <DiagramOp>[];
+
+  // Column boundaries and numbers, counted from the RIGHT.
+  for (var i = 0; i < columns; i++) {
+    final right = inner.right - i * colW;
+    final centre = right - colW / 2;
+    if (i > 0) {
+      ops
+        ..add(OpLine(DPt(right, outer.top), DPt(right, inner.top), stroke))
+        ..add(
+          OpLine(DPt(right, inner.bottom), DPt(right, outer.bottom), stroke),
+        );
+    }
+    final n = '${i + 1}';
+    ops
+      ..add(OpText(n, DPt(centre, topBand), label))
+      ..add(OpText(n, DPt(centre, bottomBand), label));
+  }
+  // Row boundaries and letters, counted from the BOTTOM.
+  for (var j = 0; j < rows; j++) {
+    final bottom = inner.bottom - j * rowH;
+    final centre = bottom - rowH / 2;
+    if (j > 0) {
+      ops
+        ..add(OpLine(DPt(outer.left, bottom), DPt(inner.left, bottom), stroke))
+        ..add(
+          OpLine(DPt(inner.right, bottom), DPt(outer.right, bottom), stroke),
+        );
+    }
+    final letter = zoneLetter(j);
+    ops
+      ..add(OpText(letter, DPt(leftBand, centre), label))
+      ..add(OpText(letter, DPt(rightBand, centre), label));
+  }
+  return ops;
 }
