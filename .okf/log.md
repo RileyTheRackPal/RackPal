@@ -1,5 +1,11 @@
 # Update Log
 
+## 2026-10-01 (ninety-ninth entry)
+
+* **Progress**: `#342` merged at `ae480f04` (PR 188); G2 (`#343`) closed on existing evidence after
+  an audit against docs/08 §5.2. G5 (`#346`) begun.
+* **Creation**: [DR-216](/decisions/dr-216-ifc-stamp-and-logo.md).
+
 ## 2026-10-01 (ninety-eighth entry)
 
 * **Progress**: `#322` merged at `fa8d3606` (PR 187); M6-C closed. M6-G (`#341`) begun at G1;

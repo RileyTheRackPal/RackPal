@@ -16,7 +16,7 @@ The PDF is the artifact that leaves the office. Everything upstream of it (the r
 
 And one governing constraint that outranks all of them:
 
-> **Nothing blocks the bytes.** `blockExportOnErrors` is deleted, not deferred (CR-022). Open findings gate exactly one thing — the `ISSUED FOR CONSTRUCTION` stamp and the revision block's issued flag (`ExportSpec.issuedForConstruction`). A heuristic may never hold a user's deliverable hostage (G3). Every export emits sheet `T0.02`, so the errors travel *with* the document instead of preventing it.
+> **Nothing blocks the bytes.** `blockExportOnErrors` is deleted, not deferred (CR-022). Open findings gate exactly one thing — the `ISSUED FOR CONSTRUCTION` stamp and the revision block's issued flag (`ExportSpec.issuedForConstruction`). A heuristic may never hold a user's deliverable hostage (G3). Every export emits sheet `T0.02`, so the errors travel *with* the document instead of preventing it. The stamp is requested by `File ▸ Export for construction…` and prints on every sheet directly above the revision block, or as a full-width band above the strip on ANSI A (DR-216 §11.215.1-2); the issued flag waits on project history with the revision writer (§11.215.4).
 
 ---
 
@@ -495,7 +495,7 @@ Bottom-right, 396 × 115 pt on ANSI B and larger; on ANSI A a full-width 690 × 
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
-**The logo ships in v1 as of DR-030**, in M6 beside the title block it sits in, and this line used to read *"There is no logo"*. It rides the zip container DR-019 settled and the raster path DR-029 builds for the plan sheet, so it is a fourth consumer of things already paid for rather than a new subsystem. The integrator's **text** block (firm, contact, licence number) is unchanged and still ships: the logo is added beside it, never instead of it, because the text is what a photocopy at third generation still carries.
+**The logo ships in v1 as of DR-030**, in M6 beside the title block it sits in, and this line used to read *"There is no logo"*. It rides the zip container DR-019 settled and the raster path DR-029 builds for the plan sheet, so it is a fourth consumer of things already paid for rather than a new subsystem. The integrator's **text** block (firm, contact, licence number) is unchanged and still ships: the logo is added beside it, never instead of it, because the text is what a photocopy at third generation still carries. **Placement (DR-216 §11.215.3):** a box about 100 by 45 pt at the top right of the identity band, fitted inside with its aspect kept; set in `File ▸ Sheet set…`.
 
 Every field resolves from `ProjectInfo`, `Rack`, the sheet definition, or app preferences. Nothing is typed at export time. Empty optional lines collapse rather than printing a blank. Two fields are computed rather than stored:
 
