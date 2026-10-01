@@ -20,11 +20,11 @@
 // the enum it counts is this corpus's most-repeated failure, and nothing
 // connects adding a role to editing this sentence, so it no longer counts.
 //
-// The rest of §2.2's table (T0.02 exceptions, T6.01+ interconnect, T6.10
-// pull sheet, T6.11 termination schedule, T6.20 unused home runs, T5.01
-// pinout details) is M6 and not yet built; T0.01, the legend, arrived at
-// M6-B and T0.00, the cover, at M6-A. The unbuilt ones are absent from
-// [SheetRole]
+// The rest of §2.2's table (T6.01+ interconnect, T6.10 pull sheet, T6.11
+// termination schedule, T6.20 unused home runs, T5.01 pinout details) is
+// M6 and not yet built; T0.00, the cover, arrived at M6-A, T0.01, the
+// legend, at M6-B, and T0.02, the exceptions, at M6-C. The unbuilt ones
+// are absent from [SheetRole]
 // rather than stubbed, which is what lets a user-facing document state what
 // prints by naming the roles rather than by counting anything
 // (docs/21 §21.7).
@@ -106,6 +106,17 @@ enum SheetRole {
     SheetSize.ansiBLandscape,
     perRack: false,
     shortTitle: 'LEGEND',
+  ),
+
+  /// docs/08 §2.2's `T0.02`, exceptions and acknowledgements (M6-C,
+  /// `#322`, DR-214). `ON`: in every set, after the legend, because CR-022
+  /// put the findings on the deliverable instead of letting them withhold
+  /// it. Continues on `T0.03` and on when one page does not hold them.
+  exceptions(
+    'EXCEPTIONS AND ACKNOWLEDGEMENTS',
+    SheetSize.ansiBLandscape,
+    perRack: false,
+    shortTitle: 'EXCEPTIONS',
   ),
 
   /// docs/15 §8's `T1.01`, one per `PlanUnderlay` that carries at least one
@@ -366,8 +377,14 @@ final class SheetSet {
   factory SheetSet.forRacks(
     Iterable<Rack> racks, {
     int equipmentListSheets = 1,
+    int exceptionSheets = 1,
     Iterable<PlanUnderlay> planUnderlays = const <PlanUnderlay>[],
   }) {
+    assert(
+      exceptionSheets >= 1,
+      'SheetSet.forRacks: T0.02 is always at least one sheet; an empty '
+      'report is a page that says so (#325)',
+    );
     assert(
       equipmentListSheets >= 1,
       'SheetSet.forRacks: the equipment list is always at least one sheet '
@@ -393,8 +410,14 @@ final class SheetSet {
     // +2 FOR T0.00 AND T0.01, which every set carries (docs/08 §2.2, both
     // `ON`). The cover is FIRST, because a client deliverable opens on it
     // (DR-005 §11.5.3); the legend follows, as the cover's own title block
-    // points at it.
-    final total = 2 + plans.length + ordered.length * 2 + equipmentListSheets;
+    // points at it. Then T0.02's pages, which every set carries too, as
+    // many as the caller paginated (DR-214 §11.213.5).
+    final total =
+        2 +
+        exceptionSheets +
+        plans.length +
+        ordered.length * 2 +
+        equipmentListSheets;
     final sheets = <SheetDef>[
       SheetDef(
         ncsId: _kCoverNcsId,
@@ -411,6 +434,17 @@ final class SheetSet {
       ),
     ];
     var index = 3;
+    for (var page = 0; page < exceptionSheets; page++) {
+      sheets.add(
+        SheetDef(
+          ncsId: 'T0.${(2 + page).toString().padLeft(2, '0')}',
+          role: SheetRole.exceptions,
+          index: index++,
+          total: total,
+          legendNcsId: _kLegendNcsId,
+        ),
+      );
+    }
 
     // FIRST IN THE SET, AND THAT IS DR-149 §11.148.3 RATHER THAN A
     // NUMERIC ACCIDENT. Plans go after `T0.02` and before the elevations

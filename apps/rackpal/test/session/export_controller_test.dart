@@ -174,8 +174,9 @@ void main() {
       );
 
       expect(session.services.session.status, startsWith('Exported '));
-      // The cover, the legend, two elevations and the list since M6-A.
-      expect(session.services.session.status, contains('5 sheets'));
+      // The cover, the legend, the exceptions, two elevations and the
+      // list since M6-C.
+      expect(session.services.session.status, contains('6 sheets'));
     });
 
     test('leaves NO .bak beside the deliverable, even on the OVERWRITE '
@@ -256,9 +257,9 @@ void main() {
       expect(await session.services.export.exportPdf(), isTrue);
       final second = _pageStreams(_bytesAt(session.fs, r'C:\jobs\smith.pdf')!);
 
-      // Not vacuous: there really are five drawn sheets to compare, and
+      // Not vacuous: there really are six drawn sheets to compare, and
       // each of them has ink on it.
-      expect(first, hasLength(5));
+      expect(first, hasLength(6));
       for (final page in first) {
         expect(page.length, greaterThan(500));
       }
@@ -577,8 +578,8 @@ void main() {
       expect(await session.services.export.exportPdf(), isTrue);
       final after = _pageStreams(_bytesAt(session.fs, r'C:\jobs\smith.pdf')!);
 
-      expect(before, hasLength(5), reason: 'five drawn sheets to compare');
-      expect(after, hasLength(5));
+      expect(before, hasLength(6), reason: 'six drawn sheets to compare');
+      expect(after, hasLength(6));
       expect(
         after,
         isNot(before),

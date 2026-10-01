@@ -411,10 +411,23 @@ void main() {
       }
     });
 
-    test('the exporter never consults the rules at all', () {
-      // A second cue, and the reason the switch above is honest: the
-      // package cannot gate on a finding it never asks for. This is a
-      // source scan for the same reason `status_marker_source_test.dart`
+    test('the exporter asks for the findings in ONE place, to print them on '
+        'T0.02, and reads nothing else of the rules', () {
+      // A second cue, and the reason the switch above is honest.
+      //
+      // THIS TEST SAID "never consults the rules at all" UNTIL M6-C, and
+      // that was the right claim while nothing printed them. CR-022 has
+      // two halves: the findings never withhold the bytes, AND every
+      // export emits T0.02 "so the errors travel with the document"
+      // (docs/08 §1). Printing them means asking for them. So the claim is
+      // now the narrow one: `evaluateDocument` is named once, in
+      // `build_document.dart`, inside the T0.02 dry run, and its result
+      // goes to `buildExceptionsReport` and nowhere else; every other
+      // needle stays forbidden. Moving the call behind a core helper so
+      // this scan stopped seeing it would have kept the old words and lost
+      // their point.
+      //
+      // A source scan for the same reason `status_marker_source_test.dart`
       // is one, and it is not vacuous: it walks a package that really
       // does contain Dart.
       final files = Directory('lib')
@@ -427,8 +440,23 @@ void main() {
       final offenders = <String>[];
       for (final f in files) {
         final src = f.readAsStringSync();
+        // THE ONE PERMITTED READ: the findings, straight into T0.02's
+        // report. Counted, so a second call anywhere is an offender.
+        const permitted = 'buildExceptionsReport(doc, evaluateDocument(doc))';
+        if (src.contains('evaluateDocument')) {
+          final calls = 'evaluateDocument'.allMatches(src).length;
+          final asPermitted = permitted.allMatches(src).length;
+          if (!f.path
+                  .replaceAll(r'\', '/')
+                  .endsWith(
+                    'src/document/build_document.dart',
+                  ) ||
+              calls != 1 ||
+              asPermitted != 1) {
+            offenders.add('${f.path}: evaluateDocument outside T0.02');
+          }
+        }
         for (final needle in const [
-          'evaluateDocument',
           'kDrcRules',
           // BOTH BANDS AND THE JOINT REGISTRY (DR-154). A scan naming one
           // catalogue would let the exporter learn about the other.
@@ -446,7 +474,9 @@ void main() {
       expect(
         offenders,
         isEmpty,
-        reason: 'CR-022: the exporter must not read the rules',
+        reason:
+            'CR-022: the exporter reads the findings only to print them on '
+            'T0.02, and reads nothing else of the rules',
       );
     });
   });
@@ -572,28 +602,28 @@ void main() {
       expect(result, isA<Ok<ExportedDocument>>());
       expect(
         (result as Ok<ExportedDocument>).value.sheetCount,
-        // The cover, the legend, the plan, two elevations and the list
-        // (M6-A, M6-B).
-        6,
+        // The cover, the legend, T0.02, the plan, two elevations and the
+        // list (M6-A, M6-B, M6-C).
+        7,
         reason: 'the same set as the unacknowledged run',
       );
-    });
 
-    test('T0.02 IS NOT ASSERTED HERE, AND M6 IS WHY', () {
-      // THE PRACTICE `#646` ASKS FOR: a test asserting an absence names
-      // the item that retires it. `sheet_def.dart` says `T0.00`-`T0.02`
-      // are M6's and are not emitted, so "the acknowledgement prints on
-      // T0.02" cannot be proved today and asserting it would be vacuous
-      // in the exact shape `#310` refused for the ISSUED FOR CONSTRUCTION
-      // stamp.
-      //
-      // RETIRED BY: M6's exceptions sheet. When `SheetRole` gains an
-      // `exceptions` value, the group above gains the assertion that the
-      // reason above prints on it, and this test is deleted.
+      // AND THE REASON PRINTS ON T0.02, which is the assertion a test
+      // here waited for until M6-C ("T0.02 IS NOT ASSERTED HERE, AND M6 IS
+      // WHY", retired by this). The exporter evaluates without the
+      // session's `changedUnderlays`, so `PLN-004` does not fire at export
+      // and this acknowledgement prints under NO LONGER OCCURS: the
+      // signed reason reaches the sheet either way (DR-214 §11.213.4).
+      final bytes = result.value.bytes;
+      final cmap = parseToUnicodeCMap(bytes);
+      final t002 = [
+        for (final body in operatorStreams(bytes))
+          interpretContentStream(body, toUnicode: cmap).allText,
+      ].singleWhere((t) => RegExp(r'SHEET NO\.\s+T0\.02').hasMatch(t));
       expect(
-        SheetRole.values.map((r) => r.name),
-        isNot(contains('exceptions')),
-        reason: 'M6 has landed T0.02; retire this test and assert the sheet',
+        t002,
+        contains('Re-imported from the same survey; the pins were'),
+        reason: 'the acknowledgement reason does not reach T0.02',
       );
     });
   });

@@ -100,8 +100,22 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   // dry run has to know the total before any sheet is drawn, or
   // "SHEET i OF n" is wrong.
   final plans = planUnderlaysWithPins(doc);
+  // T0.02's PAGES ARE A DRY RUN TOO (DR-214 §11.213.5): the findings are
+  // evaluated ONCE, here, and the same list is laid out and drawn, so the
+  // sheet and `SHEET i OF n` cannot come from two evaluations.
+  final exceptionPages = paginateExceptions(
+    report: buildExceptionsReport(doc, evaluateDocument(doc)),
+    doc: doc,
+    drawingArea: SheetLayout.resolve(
+      geometry: const SheetGeometry(SheetSize.ansiBLandscape),
+      revisionRowCount: revisionBodyRowCount(doc.revisionBlock),
+    ).drawingArea,
+    measurer: measurer,
+    issuedAt: request.issuedAt,
+  );
   final set = SheetSet.forRacks(
     doc.racks.values,
+    exceptionSheets: exceptionPages.length,
     equipmentListSheets: schedulePages.length,
     planUnderlays: plans,
   );
@@ -116,6 +130,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   // ---- step 4: render -------------------------------------------------
   final notices = <String>[...set.notices];
   var schedulePage = 0;
+  var exceptionPage = 0;
   for (final sheet in set.sheets) {
     final DiagramScene scene;
     final LegibilityReport legibility;
@@ -166,6 +181,19 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
             'File ▸ Sheet set….',
           );
         }
+      case SheetRole.exceptions:
+        final built = buildExceptionsSheet(
+          sheet: sheet,
+          page: exceptionPages[exceptionPage++],
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+        );
+        scene = built.scene;
+        legibility = built.legibility;
       case SheetRole.symbolLegend:
         final built = buildLegendSheet(
           sheet: sheet,

@@ -45,12 +45,13 @@ void main() {
       expect(_rows(set.sheets), <(String, String, String)>[
         ('1', 'T0.00', 'COVER AND DRAWING INDEX'),
         ('2', 'T0.01', 'SYMBOL LEGEND'),
-        ('3', 'T1.01', 'DEVICE LOCATION PLAN · Main Floor'),
-        ('4', 'T2.01', 'RACK ELEVATION — FRONT · RK-1'),
-        ('5', 'T2.02', 'RACK ELEVATION — REAR · RK-1'),
-        ('6', 'T2.03', 'RACK ELEVATION — FRONT · RK-2'),
-        ('7', 'T2.04', 'RACK ELEVATION — REAR · RK-2'),
-        ('8–10', 'T6.30–T6.32', 'EQUIPMENT LIST AND MATERIALS (3 pages)'),
+        ('3', 'T0.02', 'EXCEPTIONS AND ACKNOWLEDGEMENTS'),
+        ('4', 'T1.01', 'DEVICE LOCATION PLAN · Main Floor'),
+        ('5', 'T2.01', 'RACK ELEVATION — FRONT · RK-1'),
+        ('6', 'T2.02', 'RACK ELEVATION — REAR · RK-1'),
+        ('7', 'T2.03', 'RACK ELEVATION — FRONT · RK-2'),
+        ('8', 'T2.04', 'RACK ELEVATION — REAR · RK-2'),
+        ('9–11', 'T6.30–T6.32', 'EQUIPMENT LIST AND MATERIALS (3 pages)'),
       ]);
     });
 
@@ -61,12 +62,19 @@ void main() {
       final ids = _rows(
         SheetSet.forRacks(_racks(1)).sheets,
       ).map((r) => r.$2).toList();
-      expect(ids, <String>['T0.00', 'T0.01', 'T2.01', 'T2.02', 'T6.30']);
+      expect(ids, <String>[
+        'T0.00',
+        'T0.01',
+        'T0.02',
+        'T2.01',
+        'T2.02',
+        'T6.30',
+      ]);
     });
 
     test('a single schedule page is a plain row, not a range of one', () {
       final last = _rows(SheetSet.forRacks(_racks(1)).sheets).last;
-      expect(last, ('5', 'T6.30', 'EQUIPMENT LIST AND MATERIALS'));
+      expect(last, ('6', 'T6.30', 'EQUIPMENT LIST AND MATERIALS'));
     });
   });
 

@@ -215,9 +215,9 @@ void main() {
   group('sheet numbering (CR-066)', () {
     test('simple prints SHEET i OF n plus the sheet title', () {
       final fields = fieldsFor(settings: ProjectSettings());
-      // SHEET 3 OF 5: T0.00 and T0.01 open every set since M6-A.
-      expect(fields.sheetNumberLine, 'SHEET 3 OF 5 · RACK ELEVATION — FRONT');
-      expect(valueOf(fields, 'SHEET'), '3/5');
+      // SHEET 4 OF 6: T0.00 to T0.02 open every set since M6-C.
+      expect(fields.sheetNumberLine, 'SHEET 4 OF 6 · RACK ELEVATION — FRONT');
+      expect(valueOf(fields, 'SHEET'), '4/6');
     });
 
     test('ncs prints the NCS id', () {

@@ -2,7 +2,11 @@
 
 ## 2026-10-01 (ninety-seventh entry)
 
-* **Progress**: `#970` merged at `68adde0d` (PR 186). M6-C (`#322`) begun.
+* **Progress**: `#970` merged at `68adde0d` (PR 186). M6-C (`#322`) built: T0.02, with its three
+  Chapters. docs/12 §4.29.
+* **Note**: **A TRIPWIRE THAT NAMES ITS OWN RETIREMENT IS A GIFT.** `findings_never_block_export_test`
+  carried a test asserting T0.02's absence that said which change retires it and what to assert
+  instead; the work found it by failing, not by memory.
 * **Creation**: [DR-214](/decisions/dr-214-t0-02-exceptions.md).
 
 ## 2026-10-01 (ninety-sixth entry)
