@@ -1147,7 +1147,7 @@ floorplan import.
 
 | Sheet | When |
 |---|---|
-| **Cover** (`T0.00`) | Always, first. The project name, client and site, drawing number, revision and issue date, your scope paragraph, your company, and who drew, checked and approved the set, all from `File` ▸ `Sheet set…`. The drawing index arrives in a later build |
+| **Cover** (`T0.00`) | Always, first. The project name, client and site, drawing number, revision and issue date, your scope paragraph, your company, and who drew, checked and approved the set, all from `File` ▸ `Sheet set…`. Along the foot, one line per rack: its size, how many active devices (blanks, vents, shelves and other passives are not counted), the rack units used on the front and the rear, weight, VA and BTU/hr, with how many devices are missing a value. The drawing index arrives in a later build |
 | **Symbol Legend** (`T0.01`) | Always, second. Every cable type in colour and in greyscale side by side (the ten named types every time, then any other type your cables use); the device marks and plan markers in your set; an annotated device block; the border and hatch conventions; your ID formats worked through; abbreviations and general notes, which you can change in `File` ▸ `Sheet set…`. Every other sheet says `SYMBOL LEGEND: SEE SHEET T0.01` |
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |

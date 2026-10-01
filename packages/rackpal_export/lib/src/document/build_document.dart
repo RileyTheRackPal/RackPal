@@ -130,9 +130,22 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
           fileName: request.fileName,
           issuedAt: request.issuedAt,
           measurer: measurer,
+          racks: doc.racks.values,
+          devices: doc.devices.values,
+          templates: doc.templates,
+          landings: PortLandings.of(doc),
+          sheets: set.sheets,
         );
         scene = built.scene;
         legibility = built.legibility;
+        // A RACK LEFT OFF THE STRIP IS NAMED, NEVER SILENT (§11.210.4).
+        if (built.racksHidden > 0) {
+          notices.add(
+            '${sheet.ncsId}: ${built.racksHidden} of '
+            '${built.racksShown + built.racksHidden} racks did not fit the '
+            "cover's rack summary; the closing row names their elevations.",
+          );
+        }
         // A SCOPE CUT SHORT IS NAMED, NEVER SILENT: the paragraph is the
         // job's description, and half of it reads as the whole.
         if (built.scopeTruncated) {

@@ -1,10 +1,18 @@
 // Seed catalog — "Passive & Mechanical" (docs/catalog/seed-devices.md
-// §3.8). All three are zero-port, `mountMethod: rackEars`, and carry an
-// EMPTY `PowerProfile` — every field left unset, so watts, VA and outlet
-// counts alike come back null and the rollups count them as unknown
-// contributors rather than measured zeros (P5, G4). `TemplateBody.power`
-// is non-nullable, so "no PowerProfile at all" is not expressible; an
-// all-null one is the same statement and this comment now says which.
+// §3.8). All three are zero-port and `mountMethod: rackEars`.
+//
+// ═══════════════════════════════════════════════════════════════════════
+// THEIR POWER IS A MEASURED ZERO, STATED (DR-211 §11.210.5)
+// ═══════════════════════════════════════════════════════════════════════
+// These carried an EMPTY `PowerProfile` until 2026-10-01, on the reading
+// that an absent value keeps the rollup's unknown count honest. It did the
+// opposite: measured on the four starters, five of Whole House's ten
+// unknown power contributors were these panels, so a cover reading
+// `≥ 2490 VA (10 unknown)` told a client half the rack was unspecified
+// when half of the "unknown" was steel. A blank panel drawing nothing is
+// not an estimate; it is the fact G4 spells as `0`. Watts (nameplate,
+// typical, standby) and VA are stated as zero; voltage and power factor
+// stay absent, since a part with no supply has neither.
 //
 // That was only half true until `PowerProfile.outletsProvided` /
 // `outletsConsumed` stopped being non-nullable ints defaulting to 0:
@@ -51,7 +59,12 @@ Map<String, TemplateBody> buildPassiveCatalog() => {
     mountMethod: MountMethod.rackEars,
     bodyDepth: _mm(25),
     weight: _kg(0.45),
-    power: PowerProfile(),
+    power: PowerProfile(
+      nameplateWatts: 0,
+      typicalWatts: 0,
+      standbyWatts: 0,
+      apparentVA: 0,
+    ),
   ),
 
   // X02 · Vent Panel, 1U, 64% open.
@@ -68,7 +81,12 @@ Map<String, TemplateBody> buildPassiveCatalog() => {
     mountMethod: MountMethod.rackEars,
     bodyDepth: _mm(25),
     weight: _kg(0.45),
-    power: PowerProfile(),
+    power: PowerProfile(
+      nameplateWatts: 0,
+      typicalWatts: 0,
+      standbyWatts: 0,
+      apparentVA: 0,
+    ),
   ),
 
   // X03 · Rack Shelf, 2U, vented — a container; hosts A02 and S01.
@@ -95,6 +113,11 @@ Map<String, TemplateBody> buildPassiveCatalog() => {
     containerUsableDepth: _mm(375),
     containerUsableWidth: _mm(432),
     containerVented: true,
-    power: PowerProfile(),
+    power: PowerProfile(
+      nameplateWatts: 0,
+      typicalWatts: 0,
+      standbyWatts: 0,
+      apparentVA: 0,
+    ),
   ),
 };

@@ -9,27 +9,37 @@ import 'package:test/test.dart';
 
 import 'sheet_test_support.dart';
 
-SheetDef _coverDef() => SheetSet.forRacks(
-  <Rack>[testRack()],
-).sheets.firstWhere((s) => s.role == SheetRole.cover);
-
-CoverSheet _build(ProjectInfo info, {FakeMeasurer? measurer}) =>
-    buildCoverSheet(
-      sheet: _coverDef(),
-      info: info,
-      settings: ProjectSettings(),
-      revisions: <RevisionEntry>[
-        RevisionEntry(
-          revision: 'B',
-          date: DateTime.utc(2026, 9),
-          description: 'Issued for rough-in',
-          by: 'JS',
-        ),
-      ],
-      fileName: 'cover.rppj',
-      issuedAt: DateTime.utc(2026, 10),
-      measurer: measurer ?? FakeMeasurer(),
-    );
+CoverSheet _build(
+  ProjectInfo info, {
+  FakeMeasurer? measurer,
+  List<Rack>? racks,
+  List<DeviceInstance> devices = const <DeviceInstance>[],
+  Map<String, TemplateSnapshot> templates = const <String, TemplateSnapshot>{},
+}) {
+  final rackList = racks ?? <Rack>[testRack()];
+  final set = SheetSet.forRacks(rackList);
+  return buildCoverSheet(
+    sheet: set.sheets.firstWhere((s) => s.role == SheetRole.cover),
+    info: info,
+    settings: ProjectSettings(),
+    revisions: <RevisionEntry>[
+      RevisionEntry(
+        revision: 'B',
+        date: DateTime.utc(2026, 9),
+        description: 'Issued for rough-in',
+        by: 'JS',
+      ),
+    ],
+    fileName: 'cover.rppj',
+    issuedAt: DateTime.utc(2026, 10),
+    measurer: measurer ?? FakeMeasurer(),
+    racks: rackList,
+    devices: devices,
+    templates: templates,
+    landings: PortLandings.none,
+    sheets: set.sheets,
+  );
+}
 
 /// The texts drawn left of the index column: the cover's own, without the
 /// title block's copies of the same fields.

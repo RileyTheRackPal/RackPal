@@ -7,7 +7,8 @@
 // and the sign-off take the left; the drawing index (M6-A3) is a
 // full-height column on the right, as wide as the title block it stands
 // above, because the index is the one block that grows; the rack summary
-// strip (M6-A2) runs along the foot. This file builds the left. The right
+// strip (M6-A2, `cover_rack_strip.dart`) runs along the foot. This file
+// builds the left and places the strip. The right
 // column is RESERVED here and filled by M6-A3, so nothing on the left can
 // grow into the space the index needs.
 //
@@ -20,8 +21,10 @@
 import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/derived/device_outlets.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
+import 'package:rackpal_core/src/draw/sheet/cover_rack_strip.dart';
 import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
 import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart'
     show wrapMeasured;
@@ -34,9 +37,12 @@ import 'package:rackpal_core/src/draw/sheet/text_fit.dart';
 import 'package:rackpal_core/src/draw/sheet/title_block.dart'
     show formatAddress;
 import 'package:rackpal_core/src/draw/text.dart';
+import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
+import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
+import 'package:rackpal_core/src/model/template.dart';
 
 /// The cover's type sizes, in points.
 const double kCoverTitlePt = 24;
@@ -61,6 +67,8 @@ final class CoverSheet {
     required this.legibility,
     required this.indexColumn,
     required this.scopeTruncated,
+    required this.racksShown,
+    required this.racksHidden,
   });
 
   final DiagramScene scene;
@@ -73,6 +81,11 @@ final class CoverSheet {
 
   /// The scope paragraph did not fit [kCoverScopeMaxLines] and was cut.
   final bool scopeTruncated;
+
+  /// Racks with a row in the strip, and racks named only in its closing
+  /// row (§11.210.4). A non-zero [racksHidden] is an export notice.
+  final int racksShown;
+  final int racksHidden;
 }
 
 /// The sign-off line, `DRAWN J.S. · CHECKED — · APPROVED —` (§11.209.3).
@@ -96,6 +109,12 @@ String coverIssueLine(
 ], separator: '   ·   ')!;
 
 /// Builds `T0.00`.
+///
+/// [racks], [devices], [templates] and [landings] feed the rack strip,
+/// and [sheets] is the RESOLVED set, so the strip's overflow row (and,
+/// from M6-A3, the index) can only name sheets the file contains.
+/// [landings] is required for `computeRackRollups`' reason: a default of
+/// "nothing is wired" would be a silent wrong answer.
 CoverSheet buildCoverSheet({
   required SheetDef sheet,
   required ProjectInfo info,
@@ -104,6 +123,11 @@ CoverSheet buildCoverSheet({
   required String fileName,
   required DateTime issuedAt,
   required TextMeasurer measurer,
+  required Iterable<Rack> racks,
+  required Iterable<DeviceInstance> devices,
+  required Map<String, TemplateSnapshot> templates,
+  required PortLandings landings,
+  required List<SheetDef> sheets,
   SheetPalette palette = const SheetPalette(),
 }) {
   assert(
@@ -231,7 +255,41 @@ CoverSheet buildCoverSheet({
   line('SIGN-OFF', heading, kCoverHeadingPt * 2);
   line(coverSignOffLine(info), body, kCoverBodyPt * 1.45);
 
-  final minText = math.min(furniture.minTextSizePt, kCoverHeadingPt);
+  // ── the rack summary strip, along the foot (M6-A2, DR-211) ───────────
+  //
+  // BOTTOM-UP FROM THE DRAWING AREA'S FOOT, and never above the left
+  // block's last line: the strip yields to the project block rather than
+  // the other way round, and a rack it cannot fit is named, not dropped.
+  final strip = drawCoverRackStrip(
+    rows: coverRackRows(
+      racks: racks,
+      devices: devices,
+      templates: templates,
+      landings: landings,
+    ),
+    sheets: sheets,
+    units: settings.displayUnits,
+    left: area.left,
+    width: leftWidth,
+    ceiling: y + 24,
+    // DOWN TO THE FRAME, NOT TO `drawingArea`'s FOOT. The drawing area is
+    // deliberately a rectangle stopping at the furniture's top, giving up
+    // the strip left of the title block so a centred elevation can never
+    // run under it (`sheet_frame.dart`). The cover is an L by ruling
+    // (§11.209.1): the strip ends a gutter left of the index column, which
+    // is the title block's own left edge, so it cannot reach the block.
+    // The first render stopped it at the furniture's top and left a third
+    // of the left side empty beneath it.
+    bottom: layout.frameBox.bottom - _inset,
+    measurer: measurer,
+    palette: palette,
+  );
+  ops.addAll(strip.ops);
+
+  final minText = math.min(
+    furniture.minTextSizePt,
+    math.min(kCoverHeadingPt, kCoverStripPt),
+  );
   return CoverSheet(
     scene: DiagramScene(
       ops: ops,
@@ -246,6 +304,8 @@ CoverSheet buildCoverSheet({
     ),
     indexColumn: indexColumn,
     scopeTruncated: scopeTruncated,
+    racksShown: strip.shown,
+    racksHidden: strip.hidden,
   );
 }
 

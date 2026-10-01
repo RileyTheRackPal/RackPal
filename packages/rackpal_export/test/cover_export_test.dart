@@ -52,5 +52,10 @@ void main() {
     expect(first, contains('ISSUED 2026-10-01'));
     expect(first, contains('APPROVED'));
     expect(first, contains('SYMBOL LEGEND: SEE SHEET T0.01'));
+    // M6-A2: the rack strip reaches ink, headings and the rack's row.
+    for (final heading in kCoverStripHeaders) {
+      expect(first, contains(heading), reason: heading);
+    }
+    expect(first, contains('RK-1'));
   });
 }

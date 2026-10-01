@@ -1152,9 +1152,10 @@ The 3000 VA variant shown.
 | X02 | Vent Panel, N U, 64% open *(param 1, 2)* | `VNT` | `{N, 0, front}` | shallow | 0.45 kg/U | 0 | — |
 | X03 | Rack Shelf, N U, vented *(param 1, 2)* | `SHF` | `{N, 0, front}` | standard | 1.4 / 2.3 kg | 0 | **container** |
 
-All three are `mountMethod: rackEars`, `power: {}` (no `PowerProfile` at all, not zero watts,
-*absent*, which is what makes the rollup's unknown count honest), and all three are parametric on
-U height per P4.
+All three are `mountMethod: rackEars`, state their power as **zero** (`nameplateWatts`,
+`typicalWatts`, `standbyWatts` and `apparentVA` all `0`; voltage and power factor absent), and are
+parametric on U height per P4. They read `power: {}` until DR-211 §11.210.5: an absent profile
+counted each panel as an unknown power contributor, and half of Whole House's unknowns were steel.
 
 **X03 · Rack Shelf** additionally carries the container fields:
 

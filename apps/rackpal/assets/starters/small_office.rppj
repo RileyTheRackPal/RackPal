@@ -264,7 +264,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:8540af33d1ba39a1d4de359d6b62ebc1705f0116cef8f13e440c26fb90664ee2",
+          "contentHash": "sha256:ca5fe27c2f8a192ce0fdf999a4d2c15e7780f1c94ad480bb6641b69e429f131f",
           "templateId": "X03",
           "version": 1
         }
@@ -363,7 +363,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:f9939fe7c45086767e3b0b941e96a2a774046c21d426f0887a4055821adbac9c",
+          "contentHash": "sha256:d4e0126377ee243d15c8f707e690a55614110c452b58fbf335c4a53a709e3c4a",
           "templateId": "X01",
           "version": 1
         }
@@ -396,7 +396,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:b845e38638a29cff2079e728df54e442a2603fdc97729f199f7ee7ab5902b786",
+          "contentHash": "sha256:4cf819b9c4d69ef786e92c9176049627ff97f78bd7b202ec99434d25675e3280",
           "templateId": "X02",
           "version": 1
         }
@@ -684,7 +684,7 @@
           "type": "rail"
         },
         "templateRef": {
-          "contentHash": "sha256:b845e38638a29cff2079e728df54e442a2603fdc97729f199f7ee7ab5902b786",
+          "contentHash": "sha256:4cf819b9c4d69ef786e92c9176049627ff97f78bd7b202ec99434d25675e3280",
           "templateId": "X02",
           "version": 1
         }
@@ -20306,7 +20306,11 @@
           "portSets": [],
           "ports": [],
           "power": {
-            "isContinuousLoad": false
+            "apparentVA": 0,
+            "isContinuousLoad": false,
+            "nameplateWatts": 0,
+            "standbyWatts": 0,
+            "typicalWatts": 0
           },
           "rearU": 0,
           "requiresClearanceAboveU": 0,
@@ -20322,7 +20326,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:f9939fe7c45086767e3b0b941e96a2a774046c21d426f0887a4055821adbac9c",
+        "contentHash": "sha256:d4e0126377ee243d15c8f707e690a55614110c452b58fbf335c4a53a709e3c4a",
         "templateId": "X01",
         "version": 1
       },
@@ -20348,7 +20352,11 @@
           "portSets": [],
           "ports": [],
           "power": {
-            "isContinuousLoad": false
+            "apparentVA": 0,
+            "isContinuousLoad": false,
+            "nameplateWatts": 0,
+            "standbyWatts": 0,
+            "typicalWatts": 0
           },
           "rearU": 0,
           "requiresClearanceAboveU": 0,
@@ -20364,7 +20372,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:b845e38638a29cff2079e728df54e442a2603fdc97729f199f7ee7ab5902b786",
+        "contentHash": "sha256:4cf819b9c4d69ef786e92c9176049627ff97f78bd7b202ec99434d25675e3280",
         "templateId": "X02",
         "version": 1
       },
@@ -20394,7 +20402,11 @@
           "portSets": [],
           "ports": [],
           "power": {
-            "isContinuousLoad": false
+            "apparentVA": 0,
+            "isContinuousLoad": false,
+            "nameplateWatts": 0,
+            "standbyWatts": 0,
+            "typicalWatts": 0
           },
           "rearU": 0,
           "requiresClearanceAboveU": 0,
@@ -20410,7 +20422,7 @@
           "widthClass": "full"
         },
         "capturedAt": "2026-02-17T13:30:00.000Z",
-        "contentHash": "sha256:8540af33d1ba39a1d4de359d6b62ebc1705f0116cef8f13e440c26fb90664ee2",
+        "contentHash": "sha256:ca5fe27c2f8a192ce0fdf999a4d2c15e7780f1c94ad480bb6641b69e429f131f",
         "templateId": "X03",
         "version": 1
       }
