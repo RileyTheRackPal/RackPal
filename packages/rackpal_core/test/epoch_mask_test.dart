@@ -1631,6 +1631,19 @@ void main() {
       );
     });
 
+    test('SetLegendNotesCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        SetLegendNotesCommand.to(
+          doc.info,
+          abbreviations: const [LegendAbbreviation('AFF', 'above floor')],
+          notes: const ['Verify in field.'],
+        ),
+        expectAtLeast: {'info'},
+      );
+    });
+
     test('SetFamilyColorOverrideCommand', () {
       final doc = _house();
       _covers(

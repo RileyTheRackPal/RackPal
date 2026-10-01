@@ -2,8 +2,9 @@
 
 ## 2026-09-30 (ninety-second entry)
 
-* **Progress**: M6-B3/B4/B5 merged at `637c93b0` (PR 180). M6-B6 (`#969`) begun, the last open
-  Chapter under `#316`.
+* **Progress**: M6-B3/B4/B5 merged at `637c93b0` (PR 180). M6-B6 (`#969`) built, the last open
+  Chapter under `#316`: `ProjectInfo.legendAbbreviations` / `legendNotes` (absent while seeded),
+  `SetLegendNotesCommand`, and `File ▸ Sheet set…`. docs/12 §4.26.
 * **Creation**: [DR-209](/decisions/dr-209-sheet-set-dialog-and-legend-notes.md).
 * **Note**: **THE TITLE BLOCK HAS NO WRITER.** No `lib/` assigns a `ProjectInfo` field; every sheet
   prints a project name, client and drawn-by that nobody can type. That fact is what priced

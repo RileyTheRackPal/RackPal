@@ -1013,7 +1013,13 @@ $SuiteFloors = @{
     # each in and out, the device block, every token explained, templates
     # expanded, prefixes and notes); title_block_test's cross-reference
     # group went from one case to three.
-    'rackpal_core'   = 5196
+    # 5209 at `#969` (M6-B6, DR-209): +13. Eight in
+    # commands/sheet_set_commands_test.dart (absent while seeded, rows on the
+    # wire, an empty list written, CR-117, the command's write, blank rows,
+    # restore, unmodifiable), four in sheet/legend_blocks_test.dart (edited
+    # replaces seed, empty prints nothing, a long note wraps, the sheet reads
+    # ProjectInfo), and SetLegendNotesCommand's case in epoch_mask_test.dart.
+    'rackpal_core'   = 5209
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1592,7 +1598,10 @@ $SuiteFloors = @{
     # 2027 at `#576` (DR-206): +2 in schedule/schedule_screen_test.dart. The
     # Pull Sheet shows TO PULL above EXISTING with the run under its header;
     # the Termination Schedule shows the suffix and its key.
-    'rackpal_ui'     = 2027
+    # 2032 at `#969` (DR-209): +5 in settings/sheet_set_dialog_test.dart. The
+    # seed shows as rows and looking saves nothing; an edit, an add, a remove
+    # and Restore defaults each reach the document as one command.
+    'rackpal_ui'     = 2032
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1795,7 +1804,9 @@ $SuiteFloors = @{
     # wrote tpl.zone_amp_8_2) and sees no change chip on a new template;
     # +4 in session/device_builder_actions_test.dart for the fork once a
     # device is placed, the placed baseline twice, and undo of a fork.
-    'rackpal_app'    = 1130
+    # 1131 at `#969` (DR-209): +1 in session/sheet_set_route_test.dart,
+    # File ▸ Sheet set… edits the session document and Edit undoes it.
+    'rackpal_app'    = 1131
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

@@ -537,6 +537,14 @@ enum LabelKey {
   // rather than the whole settings object.
   setRuleOverride,
 
+  // T0.01'S ABBREVIATIONS AND NOTES (commands/sheet_set_commands.dart),
+  // `#969`, DR-209. Its own value and not `setProjectSetting`: this is
+  // front matter the set prints, not a setting, and it lives on
+  // `ProjectInfo`. One value for adding, removing, editing and restoring
+  // the seed, because each is the same act to the person: the legend's
+  // notes changed.
+  setLegendNotes,
+
   // LATERAL POSITION (commands/device_width_commands.dart), M5-C/`#269`.
   // Its own value and not `moveDevice`, on the split every value here is
   // made on: what the Edit menu has to say. A move changes which U a

@@ -1112,6 +1112,25 @@ final class AppShellState extends State<AppShell>
     );
   }
 
+  /// Opens `File ▸ Sheet set…`, the drawing set's front matter (`#969`,
+  /// DR-209). The DOCUMENT stack, as project settings are: what it edits
+  /// is `ProjectInfo`, a field of the document.
+  Future<void> _openSheetSet() async {
+    final session = _services.session;
+    await showSheetSetDialog(
+      context,
+      doc: session.document,
+      onEdit: (commands) {
+        if (commands.isEmpty) return;
+        session.controller.transact(null, (tx) {
+          for (final command in commands) {
+            tx.add(command);
+          }
+        });
+      },
+    );
+  }
+
   /// Opens Edit > Preferences, this computer's settings (DR-172).
   ///
   /// ON NO UNDO STACK, unlike project settings: a preference is a fact about
@@ -1262,6 +1281,7 @@ final class AppShellState extends State<AppShell>
               onImportLibrary: _importLibrary,
               onImportFloorplan: _importFloorplan,
               onProjectSettings: _openProjectSettings,
+              onSheetSet: _openSheetSet,
               onPreferences: _openPreferences,
               onOpenRecent: _openRecent,
               undoTarget: activeUndoTarget,
@@ -2277,6 +2297,7 @@ final class _AppMenuBar extends StatelessWidget {
     required this.onImportLibrary,
     required this.onImportFloorplan,
     required this.onProjectSettings,
+    required this.onSheetSet,
     required this.onPreferences,
     required this.onOpenRecent,
     required this.onAbout,
@@ -2317,6 +2338,9 @@ final class _AppMenuBar extends StatelessWidget {
 
   /// Opens the project settings editor (`#805`, RJ-012).
   final Future<void> Function() onProjectSettings;
+
+  /// `File ▸ Sheet set…` (`#969`, DR-209 §11.208.2).
+  final Future<void> Function() onSheetSet;
 
   /// Edit > Preferences (DR-172).
   final Future<void> Function() onPreferences;
@@ -2389,6 +2413,13 @@ final class _AppMenuBar extends StatelessWidget {
             MenuItemButton(
               onPressed: () => unawaited(onExportPdf()),
               child: const Text('Export PDF…'),
+            ),
+            // BESIDE EXPORT PDF, NOT UNDER PROJECT SETTINGS (DR-209
+            // §11.208.2, the user's call): it edits what the PDF prints on
+            // its front pages. No accelerator, for the reason above.
+            MenuItemButton(
+              onPressed: () => unawaited(onSheetSet()),
+              child: const Text(kSheetSetLabel),
             ),
             // DR-101 §11.100.4 puts the device-template pair HERE, beside
             // the other file operations, and not on a palette card:

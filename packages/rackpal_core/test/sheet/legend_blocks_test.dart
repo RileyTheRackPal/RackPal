@@ -206,4 +206,90 @@ void main() {
       },
     );
   });
+
+  group("the project's own abbreviations and notes (M6-B6, DR-209)", () {
+    List<String> notesTexts({
+      List<LegendAbbreviation>? abbreviations,
+      List<String>? notes,
+    }) => textsOf(
+      notesBlock(
+        registries: _seed,
+        measurer: FakeMeasurer(),
+        width: 240,
+        abbreviations: abbreviations,
+        notes: notes,
+      ).ops,
+    );
+
+    test('AN EDITED LIST REPLACES THE SEED, and the tag prefixes stay', () {
+      final texts = notesTexts(
+        abbreviations: const [LegendAbbreviation('AFF', 'above floor')],
+        notes: const ['Verify in field.'],
+      );
+      expect(texts, containsAll(['AFF', 'above floor', 'Verify in field.']));
+      expect(texts, isNot(contains('NTS')));
+      expect(texts, isNot(contains(kLegendGeneralNotes.first)));
+      expect(texts, contains('NET'), reason: 'derived, never the author’s');
+    });
+
+    test('an EMPTY list prints no seed rows, which null would', () {
+      final texts = notesTexts(abbreviations: const [], notes: const []);
+      expect(texts, isNot(contains('RU')));
+      expect(texts.where(kLegendGeneralNotes.contains), isEmpty);
+      expect(notesTexts(), containsAll(['RU', ...kLegendGeneralNotes]));
+    });
+
+    test('A LONG NOTE WRAPS inside the block, losing no words', () {
+      const note =
+          'Coordinate every floor box location with the electrical '
+          'contractor before rough-in, and confirm the finished floor '
+          'height with the general contractor on site.';
+      const width = 160.0;
+      final measurer = FakeMeasurer();
+      final block = notesBlock(
+        registries: _seed,
+        measurer: measurer,
+        width: width,
+        abbreviations: const [],
+        notes: const [note],
+      );
+      // The heading is the block's first text; the note follows the tag
+      // prefixes, so it is the last lines at x == 0 in draw order.
+      final atLeft = [
+        for (final op in block.ops)
+          if (op case OpText(:final at) when at.x == 0) op,
+      ];
+      final noteLines = atLeft.skipWhile((o) => !note.startsWith(o.text));
+      expect(noteLines.length, greaterThan(1), reason: 'it wrapped');
+      expect(noteLines.map((o) => o.text).join(' '), note);
+      for (final op in noteLines) {
+        expect(
+          measurer.measureText(op.text, op.style).advanceWidth,
+          lessThanOrEqualTo(width),
+          reason: op.text,
+        );
+      }
+    });
+
+    test('the T0.01 sheet prints what ProjectInfo holds', () {
+      final built = buildLegendSheet(
+        sheet: SheetSet.forRacks(<Rack>[testRack()]).sheets.first,
+        info: fullProjectInfo()
+          ..legendAbbreviations = const [
+            LegendAbbreviation('AFF', 'above floor'),
+          ]
+          ..legendNotes = const ['Verify in field.'],
+        settings: ProjectSettings(),
+        revisions: const <RevisionEntry>[],
+        fileName: 'legend.rppj',
+        issuedAt: DateTime.utc(2026, 9, 30),
+        measurer: FakeMeasurer(),
+        registries: _seed,
+        familiesInUse: const [],
+      );
+      final texts = textsOf(built.scene.ops);
+      expect(texts, containsAll(['AFF', 'Verify in field.']));
+      expect(texts, isNot(contains(kLegendGeneralNotes.first)));
+    });
+  });
 }

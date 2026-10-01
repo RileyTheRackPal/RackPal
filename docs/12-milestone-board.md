@@ -1391,6 +1391,18 @@ left edge; they now start at the block's right edge, level with the part. Every 
 title block now reads `SYMBOL LEGEND: SEE SHEET T0.01`, opposite the integrator line so the fixed
 115 pt block does not lose a row, and the legend itself and a set without one carry no line.
 
+**CHAPTER `#969`: THE ABBREVIATIONS AND NOTES BECOME THE PROJECT'S OWN (DR-209).** Two
+`ProjectInfo` fields, `legendAbbreviations` and `legendNotes`, **absent while seeded**, so an
+unedited file writes no key and follows the seed; a list, empty included, prints exactly.
+`SetLegendNotesCommand` replaces both at once and drops wholly blank rows, and `File ▸ Sheet set…`
+edits them as rows, sending a command only when the rows differ from what the document already
+prints, so looking at the seed does not freeze it. **The block now measures and wraps** what an
+author types, and a long abbreviation moves the meaning column right, up to a third of the block.
+**Looked at before it was committed**: the first render of Whole House with three edited notes read
+them as two, since a wrapped note ran straight into the next; notes now carry a 3 pt gap. **The
+dialog opens with this one section because nothing writes `ProjectInfo`**: the title block every
+sheet prints has no editor, and M6-A1's fields join this dialog.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

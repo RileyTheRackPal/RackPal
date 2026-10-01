@@ -376,7 +376,14 @@ LegendSheet buildLegendSheet({
       palette: palette,
     ),
     identifiersBlock(settings: settings, palette: palette),
-    notesBlock(registries: registries, palette: palette),
+    notesBlock(
+      registries: registries,
+      measurer: measurer,
+      width: colW,
+      abbreviations: info.legendAbbreviations,
+      notes: info.legendNotes,
+      palette: palette,
+    ),
   ];
   // A COLUMN THAT MEETS THE TITLE OR REVISION BLOCK STOPS ABOVE IT.
   final furnitureTop = math.min(

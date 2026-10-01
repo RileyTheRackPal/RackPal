@@ -127,6 +127,7 @@ export 'src/commands/selection.dart';
 export 'src/commands/set_entity_property_command.dart';
 export 'src/commands/set_rack_height_command.dart';
 export 'src/commands/sheet_layout_commands.dart';
+export 'src/commands/sheet_set_commands.dart';
 export 'src/commands/shelf_placement.dart';
 export 'src/commands/signal_family_command.dart';
 export 'src/commands/simple_notifier.dart';
