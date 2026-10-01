@@ -1060,7 +1060,12 @@ $SuiteFloors = @{
     # portrait 2 x 4); zones from the lower right; letters skip I and O;
     # every zone labelled with a tick at every boundary; an unzoned frame
     # has no labels; the elevation lays out on the zoned frame.
-    'rackpal_core'   = 5282
+    # 5292 at `#346` (M6-G5, DR-216): +7 in sheet/issued_stamp_test.dart
+    # (every sheet of a stamped set, none of another; the box above the
+    # revision block, a band on the strip; the drawing area shorter by the
+    # stamp; the words and the date in ink) and +3 in
+    # validation/exceptions_report_test.dart for openErrorCount.
+    'rackpal_core'   = 5292
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1111,7 +1116,10 @@ $SuiteFloors = @{
     # retired "T0.02 IS NOT ASSERTED HERE", as it asked, into the assertion
     # that the reason prints on T0.02; exceptions_export_test.dart adds every
     # finding's rule and locus in ink, and the empty sections in words.
-    'rackpal_export' = 239
+    # 242 at `#346` (M6-G5, DR-216): +3 in issued_stamp_export_test.dart,
+    # the stamp on every page with no open error, withheld with the reason
+    # over Whole House's errors, and absent when not asked for.
+    'rackpal_export' = 242
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1861,7 +1869,11 @@ $SuiteFloors = @{
     # device is placed, the placed baseline twice, and undo of a fork.
     # 1131 at `#969` (DR-209): +1 in session/sheet_set_route_test.dart,
     # File ▸ Sheet set… edits the session document and Edit undoes it.
-    'rackpal_app'    = 1131
+    # 1135 at `#346` (DR-216): +2 in export_controller_test.dart (the stamp
+    # on the status line, and a plain export silent about it), +1 for the
+    # status line's stamp wording, +1 in app_shell_test.dart for the menu
+    # item's wiring and its missing accelerator.
+    'rackpal_app'    = 1135
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

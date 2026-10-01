@@ -94,6 +94,15 @@ final class ExceptionsReport {
   final List<AckedFinding> stale;
 
   int get openCount => open.fold(0, (n, g) => n + g.rows.length);
+
+  /// Open findings at [Severity.error]: the count that withholds the
+  /// ISSUED FOR CONSTRUCTION stamp (CR-022, DR-216 §11.215.1). An
+  /// acknowledged error is not open, so it does not count.
+  int get openErrorCount => open.fold(
+    0,
+    (n, g) =>
+        n + g.rows.where((r) => r.finding.severity == Severity.error).length,
+  );
 }
 
 /// What a severity prints as.

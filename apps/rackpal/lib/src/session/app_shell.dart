@@ -58,6 +58,7 @@ import 'package:rackpal/src/session/csv_import_actions.dart';
 import 'package:rackpal/src/session/device_builder_actions.dart';
 import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/drop_entry_actions.dart';
+import 'package:rackpal/src/session/export_controller.dart';
 import 'package:rackpal/src/session/locations_actions.dart';
 import 'package:rackpal/src/session/outlet_plate_actions.dart';
 import 'package:rackpal/src/session/outlet_template_actions.dart';
@@ -960,6 +961,11 @@ final class AppShellState extends State<AppShell>
     await _services.export.exportPdf();
   }
 
+  /// `File ▸ Export for construction…` (DR-216 §11.215.1).
+  Future<void> _exportForConstruction() async {
+    await _services.export.exportPdf(issuedForConstruction: true);
+  }
+
   /// `File ▸ Export device template…` (DR-101 §11.100.4).
   ///
   /// The chooser is passed in rather than reached for inside the action,
@@ -1275,6 +1281,7 @@ final class AppShellState extends State<AppShell>
                   ? null
                   : _openDiagnostics,
               onExportPdf: _exportPdf,
+              onExportForConstruction: _exportForConstruction,
               onExportTemplate: _exportTemplate,
               onImportTemplate: _importTemplate,
               onExportLibrary: _exportLibrary,
@@ -2291,6 +2298,7 @@ final class _AppMenuBar extends StatelessWidget {
     required this.onSave,
     required this.onSaveAs,
     required this.onExportPdf,
+    required this.onExportForConstruction,
     required this.onExportTemplate,
     required this.onImportTemplate,
     required this.onExportLibrary,
@@ -2328,6 +2336,9 @@ final class _AppMenuBar extends StatelessWidget {
   final Future<void> Function() onSave;
   final Future<void> Function() onSaveAs;
   final Future<void> Function() onExportPdf;
+
+  /// `File ▸ Export for construction…` (DR-216 §11.215.1).
+  final Future<void> Function() onExportForConstruction;
   final Future<void> Function() onExportTemplate;
   final Future<void> Function() onImportTemplate;
   final Future<void> Function() onExportLibrary;
@@ -2413,6 +2424,14 @@ final class _AppMenuBar extends StatelessWidget {
             MenuItemButton(
               onPressed: () => unawaited(onExportPdf()),
               child: const Text('Export PDF…'),
+            ),
+            // BESIDE EXPORT PDF (DR-216 §11.215.1, the user's call): the same
+            // export with the ISSUED FOR CONSTRUCTION stamp requested, for this
+            // one export only. M6-I's export dialog takes it over as an option.
+            // No accelerator, for the reason above.
+            MenuItemButton(
+              onPressed: () => unawaited(onExportForConstruction()),
+              child: const Text(kExportForConstructionLabel),
             ),
             // BESIDE EXPORT PDF, NOT UNDER PROJECT SETTINGS (DR-209
             // §11.208.2, the user's call): it edits what the PDF prints on

@@ -3,7 +3,11 @@
 ## 2026-10-01 (ninety-ninth entry)
 
 * **Progress**: `#342` merged at `ae480f04` (PR 188); G2 (`#343`) closed on existing evidence after
-  an audit against docs/08 §5.2. G5 (`#346`) begun.
+  an audit against docs/08 §5.2. G5 (`#346`) built: `File ▸ Export for construction…`, the stamp on
+  every sheet, withheld over an open error with the reason on the status line. docs/12 §4.31.
+* **Note**: **A REASON FILED AS A NOTICE IS NEVER READ.** The status line counts notices and prints
+  none, so "not stamped: 15 open errors" would have reached the user as "1 notice". When the output
+  answers the command the user chose, it gets its own field.
 * **Creation**: [DR-216](/decisions/dr-216-ifc-stamp-and-logo.md).
 
 ## 2026-10-01 (ninety-eighth entry)

@@ -49,6 +49,7 @@ import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
 import 'package:rackpal_core/src/draw/sheet/revision_block.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_def.dart';
 import 'package:rackpal_core/src/draw/sheet/sheet_frame.dart';
+import 'package:rackpal_core/src/draw/sheet/text_fit.dart';
 import 'package:rackpal_core/src/draw/sheet/title_block.dart';
 import 'package:rackpal_core/src/draw/text.dart';
 import 'package:rackpal_core/src/model/project_info.dart';
@@ -119,6 +120,7 @@ final class SheetFurniture {
 /// inputs, so the two can never disagree.
 SheetLayout sheetLayoutFor(SheetDef sheet, List<RevisionEntry> revisions) =>
     SheetLayout.resolve(
+      stamped: sheet.stamped,
       // ZONED BY ROLE (DR-215 §11.214.1): a drawing sheet carries the
       // band and grid, a table sheet the plain inset.
       geometry: SheetGeometry(sheet.size, zoned: sheet.role.zoned),
@@ -180,6 +182,7 @@ SheetFurniture buildSheetFurniture({
     ...frame.ops,
     ...title.ops,
     if (revision != null) ...revision.ops,
+    if (layout.stampBox case final box?) ..._stamp(box, issuedAt, palette),
   ];
 
   final minText = math.min(
@@ -193,4 +196,30 @@ SheetFurniture buildSheetFurniture({
     fields: fields,
     minTextSizePt: minText,
   );
+}
+
+/// The ISSUED FOR CONSTRUCTION stamp (DR-216 §11.215.2): a ruled box, the
+/// words, and the issue date, which is the export's one injected clock
+/// value (§8.4). Drawn only on a sheet the set marked stamped, and the set
+/// marks one only when no error is open (CR-022).
+List<DiagramOp> _stamp(DBox box, DateTime issuedAt, SheetPalette palette) {
+  TextStyleSpec style(double size) => TextStyleSpec(
+    font: kSheetFont,
+    sizePt: size,
+    argb: palette.text,
+    anchor: TextAnchor.midLeft,
+  );
+  return <DiagramOp>[
+    OpRect(box, stroke: sheetRule(palette.rule, kInnerRuleWidthPt)),
+    OpText(
+      kIssuedForConstruction,
+      DPt(box.left + 6, box.top + kStampHeight * 0.36),
+      style(9),
+    ),
+    OpText(
+      formatSheetDate(issuedAt),
+      DPt(box.left + 6, box.top + kStampHeight * 0.78),
+      style(7),
+    ),
+  ];
 }

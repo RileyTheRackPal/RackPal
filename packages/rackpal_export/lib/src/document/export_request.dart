@@ -42,7 +42,14 @@ final class ExportRequest {
     required this.fileName,
     required this.issuedAt,
     this.members = const <String, Uint8List>{},
+    this.issuedForConstruction = false,
   });
+
+  /// Whether the caller ASKED for the ISSUED FOR CONSTRUCTION stamp
+  /// (CR-022's `ExportSpec.issuedForConstruction`, DR-216 §11.215.1). A
+  /// request, not a promise: an open error withholds the stamp and never the
+  /// bytes, and [ExportedDocument.stamped] says which happened.
+  final bool issuedForConstruction;
 
   /// The document, encoded (`encodeJsonTreeBytes(encodeToJsonTree(doc))`).
   ///
@@ -98,9 +105,22 @@ final class ExportedDocument {
     required this.bytes,
     required this.sheetCount,
     required this.notices,
+    this.stamped = false,
+    this.stampWithheld,
   });
 
   final Uint8List bytes;
+
+  /// Whether every sheet carries the ISSUED FOR CONSTRUCTION stamp. False
+  /// whenever it was not asked for, AND when it was asked for over an open
+  /// error (CR-022), in which case [stampWithheld] says why.
+  final bool stamped;
+
+  /// Why a requested stamp was withheld, as the status line prints it
+  /// (`not stamped: 3 open errors, see T0.02`), or `null` when the stamp was
+  /// not requested or was applied. Not one of [notices]: those are counted,
+  /// and this is the answer to what the user asked for (DR-216 §11.215.1).
+  final String? stampWithheld;
 
   /// How many sheets were emitted -- `2N + equipment pages`, and what the
   /// status line reports.

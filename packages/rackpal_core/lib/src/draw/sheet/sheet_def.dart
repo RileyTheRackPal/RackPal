@@ -283,7 +283,14 @@ final class SheetDef {
     this.underlayId,
     this.underlayName,
     this.legendNcsId,
+    this.stamped = false,
   });
+
+  /// Whether this sheet prints the ISSUED FOR CONSTRUCTION stamp (DR-216).
+  /// Set by the resolver on EVERY sheet of a stamped set, the way
+  /// [legendNcsId] is, so each sheet's layout and furniture see it without
+  /// a second parameter threaded through every builder.
+  final bool stamped;
 
   /// The id of the set's legend sheet, on every OTHER sheet of a set that
   /// has one, for the title block's `SYMBOL LEGEND: SEE SHEET …` (docs/08
@@ -332,7 +339,8 @@ final class SheetDef {
       other.rackDesignator == rackDesignator &&
       other.underlayId == underlayId &&
       other.underlayName == underlayName &&
-      other.legendNcsId == legendNcsId;
+      other.legendNcsId == legendNcsId &&
+      other.stamped == stamped;
 
   @override
   int get hashCode => Object.hash(
@@ -345,6 +353,7 @@ final class SheetDef {
     underlayId,
     underlayName,
     legendNcsId,
+    stamped,
   );
 
   @override
@@ -386,6 +395,7 @@ final class SheetSet {
     Iterable<Rack> racks, {
     int equipmentListSheets = 1,
     int exceptionSheets = 1,
+    bool stamped = false,
     Iterable<PlanUnderlay> planUnderlays = const <PlanUnderlay>[],
   }) {
     assert(
@@ -433,12 +443,14 @@ final class SheetSet {
         index: 1,
         total: total,
         legendNcsId: _kLegendNcsId,
+        stamped: stamped,
       ),
       SheetDef(
         ncsId: _kLegendNcsId,
         role: SheetRole.symbolLegend,
         index: 2,
         total: total,
+        stamped: stamped,
       ),
     ];
     var index = 3;
@@ -450,6 +462,7 @@ final class SheetSet {
           index: index++,
           total: total,
           legendNcsId: _kLegendNcsId,
+          stamped: stamped,
         ),
       );
     }
@@ -478,6 +491,7 @@ final class SheetSet {
           underlayId: plan.id,
           underlayName: plan.name,
           legendNcsId: _kLegendNcsId,
+          stamped: stamped,
         ),
       );
     }
@@ -500,6 +514,7 @@ final class SheetSet {
             rackId: rack.id,
             rackDesignator: rack.designator,
             legendNcsId: _kLegendNcsId,
+            stamped: stamped,
           ),
         );
       }
@@ -513,6 +528,7 @@ final class SheetSet {
           index: index++,
           total: total,
           legendNcsId: _kLegendNcsId,
+          stamped: stamped,
         ),
       );
     }

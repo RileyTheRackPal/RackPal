@@ -165,4 +165,51 @@ void main() {
       expect(report.stale.map((a) => a.id), [const Uuid('ack-stale')]);
     });
   });
+
+  group('openErrorCount, which withholds the stamp (CR-022, DR-216)', () {
+    test('counts the open ERRORS and nothing else', () {
+      final doc = _wholeHouse();
+      final findings = evaluateDocument(doc);
+      final report = buildExceptionsReport(doc, findings);
+      final errors = findings.where((f) => f.severity == Severity.error);
+      // Whole House opens with errors among warnings and advisories, so a
+      // count of every open row would be a different, larger number.
+      expect(errors, isNotEmpty);
+      expect(report.openErrorCount, errors.length);
+      expect(report.openErrorCount, lessThan(report.openCount));
+    });
+
+    test('an ACKNOWLEDGED error is not open, so it does not count', () {
+      final doc = _wholeHouse();
+      final before = buildExceptionsReport(doc, evaluateDocument(doc));
+      final error = evaluateDocument(
+        doc,
+      ).firstWhere((f) => f.severity == Severity.error);
+      doc.ackedFindings[const Uuid('ack-error')] = _ack(
+        'ack-error',
+        error.ruleId,
+        error.targetFingerprint,
+        demotedTo: Severity.warning,
+      );
+      final after = buildExceptionsReport(doc, evaluateDocument(doc));
+      expect(after.openErrorCount, before.openErrorCount - 1);
+    });
+
+    test(
+      'a starter with no errors opens at zero, its warnings notwithstanding',
+      () {
+        final doc =
+            (const JsonDocumentCodec().read(
+                      File(
+                        '../../apps/rackpal/assets/starters/small_office.rppj',
+                      ).readAsBytesSync(),
+                    )
+                    as Ok<RackDocument>)
+                .value;
+        final report = buildExceptionsReport(doc, evaluateDocument(doc));
+        expect(report.openCount, greaterThan(0));
+        expect(report.openErrorCount, 0);
+      },
+    );
+  });
 }
