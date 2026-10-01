@@ -265,8 +265,8 @@ void main() {
       });
 
       test(
-        '(5) the sheet set is the cover + the legend + 2N + schedule '
-        'pages, numbered i OF n',
+        '(5) the sheet set is the cover + the legend + T0.02 pages + 2N + '
+        'schedule pages, numbered i OF n',
         () async {
           final doc = documentOf(name);
           final exported = await exportOf(name);
@@ -282,10 +282,19 @@ void main() {
             contains('OF ${exported.sheetCount}'),
             reason: 'the printed total disagrees with the pages emitted',
           );
+          // T0.02 RUNS TO AS MANY PAGES AS ITS FINDINGS NEED (Whole House:
+          // two), so it is counted in the ink like the schedule's pages.
+          final cmap = parseToUnicodeCMap(exported.bytes);
+          final exceptionPages = [
+            for (final body in operatorStreams(exported.bytes))
+              interpretContentStream(body, toUnicode: cmap).allText,
+          ].where((t) => RegExp(r'SHEET NO\.\s+T0\.0[2-9]').hasMatch(t)).length;
+          expect(exceptionPages, greaterThanOrEqualTo(1), reason: 'T0.02');
           expect(
             exported.sheetCount,
             // + 2 for T0.00 and T0.01, which open every set since M6-A.
             2 +
+                exceptionPages +
                 doc.racks.length * 2 +
                 RegExp(r'SHEET NO\.\s+T6\.3').allMatches(text).length,
           );

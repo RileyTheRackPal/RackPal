@@ -1492,6 +1492,28 @@ designators and every materials item in ink; `DEVICES + PASSIVES` against the do
 form now sits in core too, proved by a mutation that drops vent panels from the materials.
 **Looked at**: Small Office's T6.30, where the render also showed the scope note's first letter on
 the frame line, which `main` already does and which is filed separately.
+
+### 4.29 T0.02, where the reason prints · 2026-10-01 · `#322`-`#325` · `DR-214` · no version move
+
+M6-C. **The derivation half was already built, and DR-111 had said so**: `evaluateDocument` produces
+the findings, `groupFindings` bands them and joins acknowledgements through `acknowledgementFor`, and
+§11.110.3 binds the sheet to that one join. `buildExceptionsReport` adds only what the sheet needs
+beyond the panel: the project-wide section (rule overrides and `"*"` mutes, each with its catalogue
+severity and what it is here) and the stale acknowledgements, matched by `acknowledges` and never by
+hand. `paginateExceptions` lays it out in DR-214's order and continues on `T0.03` and on; the export
+evaluates the findings once, in the dry run, so the sheet and `SHEET i OF n` cannot come from two
+evaluations. An empty section says so in words, and the open-findings note gives the claim's basis.
+
+**TWO TRIPWIRES LEFT FOR THIS MOMENT, BOTH HONOURED.** A source scan asserted the exporter *"never
+consults the rules at all"*, which was right while nothing printed them; CR-022's other half requires
+T0.02, and printing means asking. It is restated rather than dodged: `evaluateDocument` is named once,
+in `build_document.dart`, straight into `buildExceptionsReport`, and every other rule symbol stays
+forbidden, proved by a mutation that adds a second mention elsewhere. And a test named *"T0.02 IS NOT
+ASSERTED HERE, AND M6 IS WHY"* asked to be deleted when this role landed and replaced by the
+assertion that the acknowledgement's reason prints on it; it was, and the reason prints (under NO
+LONGER OCCURS, since the exporter runs without the session's changed-underlay set). **Looked at**:
+Whole House's two T0.02 pages, 39 findings, errors first, the continuation repeating its heading and
+band.
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

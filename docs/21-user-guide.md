@@ -1148,6 +1148,7 @@ floorplan import.
 | Sheet | When |
 |---|---|
 | **Cover** (`T0.00`) | Always, first. The project name, client and site, drawing number, revision and issue date, your scope paragraph, your company, and who drew, checked and approved the set, all from `File` ▸ `Sheet set…`. Along the foot, one line per rack: its size, how many active devices (blanks, vents, shelves and other passives are not counted), the rack units used on the front and the rear, weight, VA and BTU/hr, with how many devices are missing a value. Down the right, the drawing index: every sheet in the file, with both its number in the set and its sheet number, and a schedule that runs to several pages as one line. A very large set flows into two or three narrower columns |
+| **Exceptions and Acknowledgements** (`T0.02`) | Always, third, on as many pages as it needs. First, any rule you have switched off or muted for the whole project, with its reason. Then every open finding from the validation drawer, errors first, each with its rule, where it is, and what it says. Then every finding you acknowledged, with your reason, who and when, including any acknowledgement whose problem has since gone away, marked so. A section with nothing in it says so in words |
 | **Symbol Legend** (`T0.01`) | Always, second. Every cable type in colour and in greyscale side by side (the ten named types every time, then any other type your cables use); the device marks and plan markers in your set; an annotated device block; the border and hatch conventions; your ID formats worked through; abbreviations and general notes, which you can change in `File` ▸ `Sheet set…`. Every other sheet says `SYMBOL LEGEND: SEE SHEET T0.01` |
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |
@@ -1162,7 +1163,7 @@ and `Restore defaults` puts it back. The signal tag prefixes (`AUD`, `NET` and s
 on) always follow your abbreviations and are not edited here. A long note wraps
 on the sheet.
 
-So a two-rack job with one floorplan gives you eight sheets. The status line says
+So a two-rack job with one floorplan gives you at least nine sheets, more if the exceptions or the equipment list run to a second page. The status line says
 how many sheets were written and how large the file is.
 
 **A project with no rack cannot be exported**: there is no elevation to draw

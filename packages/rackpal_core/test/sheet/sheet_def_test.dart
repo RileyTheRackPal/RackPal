@@ -27,13 +27,14 @@ void main() {
   });
 
   group('SheetSet.forRacks', () {
-    test('one rack resolves to exactly the five sheets the doc names, the '
-        'cover first (M6-A) and the legend second (M6-B)', () {
+    test('one rack resolves to exactly the six sheets the doc names, the '
+        'cover, the legend and the exceptions first (M6-A, M6-B, M6-C)', () {
       final set = SheetSet.forRacks(<Rack>[testRack()]);
 
       expect(set.sheets.map((s) => s.ncsId), <String>[
         'T0.00',
         'T0.01',
+        'T0.02',
         'T2.01',
         'T2.02',
         'T6.30',
@@ -41,57 +42,60 @@ void main() {
       expect(set.sheets.map((s) => s.role), <SheetRole>[
         SheetRole.cover,
         SheetRole.symbolLegend,
+        SheetRole.exceptions,
         SheetRole.rackElevationFront,
         SheetRole.rackElevationRear,
         SheetRole.equipmentList,
       ]);
-      expect(set.total, 5);
+      expect(set.total, 6);
       expect(set.notices, isEmpty);
     });
 
     test('every sheet carries the SAME total, known before rendering', () {
       final set = SheetSet.forRacks(<Rack>[testRack()]);
-      expect(set.sheets.map((s) => s.total), everyElement(5));
-      expect(set.sheets.map((s) => s.index), <int>[1, 2, 3, 4, 5]);
+      expect(set.sheets.map((s) => s.total), everyElement(6));
+      expect(set.sheets.map((s) => s.index), <int>[1, 2, 3, 4, 5, 6]);
     });
 
-    test('TWO racks give 2N+3 = 7 sheets with no id collision', () {
+    test('TWO racks give 2N+4 = 8 sheets with no id collision', () {
       // The whole reason the dry run exists. A counter that was right for
-      // one rack would print "SHEET 5 OF 5" on sheet 7 here. 2N+3 since
-      // M6-A: the cover, the legend and the equipment list, and two per
-      // rack.
+      // one rack would print "SHEET 6 OF 6" on sheet 8 here. 2N+4 since
+      // M6-C: the cover, the legend, the exceptions and the equipment
+      // list, and two per rack.
       final set = SheetSet.forRacks(<Rack>[
         testRack(id: 'r1'),
         testRack(id: 'r2', designator: 'RK-2', order: 'b0'),
       ]);
 
-      expect(set.total, 7);
+      expect(set.total, 8);
       expect(set.sheets.map((s) => s.ncsId), <String>[
         'T0.00',
         'T0.01',
+        'T0.02',
         'T2.01',
         'T2.02',
         'T2.03',
         'T2.04',
         'T6.30',
       ]);
-      expect(set.sheets.map((s) => s.ncsId).toSet(), hasLength(7));
-      expect(set.sheets.map((s) => s.total), everyElement(7));
-      expect(set.sheets.map((s) => s.index), <int>[1, 2, 3, 4, 5, 6, 7]);
+      expect(set.sheets.map((s) => s.ncsId).toSet(), hasLength(8));
+      expect(set.sheets.map((s) => s.total), everyElement(8));
+      expect(set.sheets.map((s) => s.index), <int>[1, 2, 3, 4, 5, 6, 7, 8]);
       expect(set.notices, isEmpty);
     });
 
     test('elevation sheets carry their rack; the equipment list does not', () {
       final set = SheetSet.forRacks(<Rack>[testRack(id: 'r1')]);
 
-      // [0] and [1] are T0.00 and T0.01, which open every set and name
-      // no rack (M6-A, M6-B).
+      // [0] to [2] are T0.00, T0.01 and T0.02, which open every set and
+      // name no rack (M6-A, M6-B, M6-C).
       expect(set.sheets[0].rackId, isNull);
       expect(set.sheets[1].rackId, isNull);
-      expect(set.sheets[2].rackId, const Uuid('r1'));
-      expect(set.sheets[2].rackDesignator, 'RK-1');
+      expect(set.sheets[2].rackId, isNull);
       expect(set.sheets[3].rackId, const Uuid('r1'));
-      expect(set.sheets[4].rackId, isNull);
+      expect(set.sheets[3].rackDesignator, 'RK-1');
+      expect(set.sheets[4].rackId, const Uuid('r1'));
+      expect(set.sheets[5].rackId, isNull);
     });
 
     test('racks are ordered by Rack.order, not by iteration order', () {
@@ -100,8 +104,8 @@ void main() {
         testRack(id: 'a', designator: 'RK-A'),
       ]);
 
-      expect(set.sheets[2].rackDesignator, 'RK-A');
-      expect(set.sheets[4].rackDesignator, 'RK-Z');
+      expect(set.sheets[3].rackDesignator, 'RK-A');
+      expect(set.sheets[5].rackDesignator, 'RK-Z');
     });
 
     test('racks sharing an order fall back to id, deterministically', () {
@@ -109,20 +113,21 @@ void main() {
         testRack(id: 'b', designator: 'RK-B'),
         testRack(id: 'a', designator: 'RK-A'),
       ]);
-      expect(set.sheets[2].rackDesignator, 'RK-A');
+      expect(set.sheets[3].rackDesignator, 'RK-A');
     });
 
-    test('a rackless project still resolves the cover, the legend and the '
-        'equipment list', () {
+    test('a rackless project still resolves the cover, the legend, the '
+        'exceptions and the equipment list', () {
       // The export UX refuses a rackless document out loud rather than
       // emitting this — but the answer the resolver gives must be honest.
       final set = SheetSet.forRacks(const <Rack>[]);
       expect(set.sheets.map((s) => s.ncsId), <String>[
         'T0.00',
         'T0.01',
+        'T0.02',
         'T6.30',
       ]);
-      expect(set.total, 3);
+      expect(set.total, 4);
     });
 
     test('a set large enough to overflow the NCS sequence reports a notice '
@@ -138,11 +143,11 @@ void main() {
           ),
       ]);
 
-      expect(set.total, 103);
+      expect(set.total, 104);
       expect(set.notices, isNotEmpty);
       expect(set.notices.first, contains('does not match the NCS pattern'));
       // Still emitted — the notice does not remove the sheet.
-      expect(set.sheets, hasLength(103));
+      expect(set.sheets, hasLength(104));
     });
   });
 
@@ -240,8 +245,9 @@ void main() {
     // moves with it. What it still refuses is a role appearing without
     // anybody deciding: eight of §2.2's twelve slots are M6's and are
     // absent from this enum rather than stubbed.
-    test('names the six sheets in this set, and no others', () {
-      expect(SheetRole.values, hasLength(6));
+    test('names the seven sheets in this set, and no others', () {
+      expect(SheetRole.values, hasLength(7));
+      expect(SheetRole.exceptions.title, 'EXCEPTIONS AND ACKNOWLEDGEMENTS');
       expect(SheetRole.cover.title, 'COVER AND DRAWING INDEX');
       expect(SheetRole.symbolLegend.title, 'SYMBOL LEGEND');
       expect(SheetRole.devicePlan.title, 'DEVICE LOCATION PLAN');

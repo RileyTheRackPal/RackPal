@@ -140,8 +140,8 @@ void main() {
     expect(out.bytes, isNotEmpty, reason: 'a notice is not a gate (G3)');
     expect(
       out.sheetCount,
-      5,
-      reason: 'the cover, the legend, two elevations, a list',
+      6,
+      reason: 'the cover, the legend, the exceptions, two elevations, a list',
     );
     expect(
       out.notices,

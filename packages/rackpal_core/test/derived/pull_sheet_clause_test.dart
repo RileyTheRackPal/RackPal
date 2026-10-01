@@ -330,6 +330,9 @@ void main() {
           // M6's own sheet in M6. Looked at, and not a Pull Sheet.
           'cover',
           'symbolLegend',
+          // `exceptions` ARRIVED AT M6-C (`#322`): `T0.02`, M6's own sheet
+          // in M6, and not a Pull Sheet. Looked at.
+          'exceptions',
           'devicePlan',
           'rackElevationFront',
           'rackElevationRear',

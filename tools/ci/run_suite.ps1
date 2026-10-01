@@ -1046,7 +1046,15 @@ $SuiteFloors = @{
     # T6.30's rows; a passive still joins through rowFor. Then one row per
     # item and status with the WHERE split, the subtotal's wording on the
     # sheet, and the MATERIALS band after the last rack.
-    'rackpal_core'   = 5263
+    # 5274 at `#322` (M6-C, DR-214): +11. Five in
+    # validation/exceptions_report_test.dart (nothing signed is all open,
+    # banded; the override then the mute; every finding one open or one
+    # acknowledged row; the acknowledged rows are acknowledgementFor's; only
+    # the stale one is stale) and six in sheet/exceptions_sheet_test.dart (an
+    # empty report says so with its basis; every finding one row, message
+    # whole; errors first; the locus a designator; a break repeats heading
+    # and band; the signed sections).
+    'rackpal_core'   = 5274
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1093,7 +1101,11 @@ $SuiteFloors = @{
     # starter the cover's index and the file's pages are the same set of
     # sheet ids, both directions (four); a floorplan with nothing pinned
     # emits no T1 page or row, and one pin brings both back.
-    'rackpal_export' = 238
+    # 239 at `#322` (M6-C): -1 and +2. findings_never_block_export_test.dart
+    # retired "T0.02 IS NOT ASSERTED HERE", as it asked, into the assertion
+    # that the reason prints on T0.02; exceptions_export_test.dart adds every
+    # finding's rule and locus in ink, and the empty sections in words.
+    'rackpal_export' = 239
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
