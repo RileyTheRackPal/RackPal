@@ -1449,6 +1449,18 @@ equipment table for its materials section, filed as M6-F6 (`#970`). **Two defect
 showed**: the strip stopped at the drawing area's foot, which on a landscape sheet is the furniture's
 top, leaving a third of the left side empty; and POWER clipped its unknown suffix at a 13% column.
 
+**CHAPTER `#314` (M6-A3): THE DRAWING INDEX (DR-212).** Built from the resolved `List<SheetDef>` and
+nothing else, so an AUTO sheet the set did not emit cannot be listed. Each row carries the set
+position and the NCS id, consecutive pages of one schedule collapse to one row, and a set the column
+cannot hold flows into two then three sub-columns before a full-width closing line and a notice name
+what is omitted. The sheet's title became `COVER AND DRAWING INDEX`, held back until the index was
+on it. **Three render passes on a 131-sheet stress set** shaped the narrow case: fixed number columns
+left every title `RAC…`; sizing them to the widest entry let one range row starve its column and
+lost the face from every elevation; and the closing line, cut to a sub-column, lost the range it
+exists to carry. The fixes are per-sub-column widths that a range row may not dictate, a short form
+per role (`FRONT ELEV.`) used only where the full title does not fit, truncation that gives way from
+the role and never from the rack, and a full-width closing line. Each is held by a test.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

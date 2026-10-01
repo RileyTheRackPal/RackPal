@@ -801,13 +801,16 @@ int _ratioOn(RecoveredStream sheet) {
 /// `extractOperatorStream` picks the smallest matching body, which is what
 /// keeps the few-KB operator stream winning over the embedded font blob.
 /// The marker is a SHEET ID, so each page is addressed by the identity it
-/// prints rather than by its index in the file.
+/// prints rather than by its index in the file. It is matched as the
+/// title block's `SHEET NO.` line, not as a bare substring: since M6-A3
+/// the cover's drawing index prints every sheet's id too, and a bare
+/// `T2.01` found the cover first.
 String _streamContaining(Uint8List bytes, String marker) {
   final cmap = parseToUnicodeCMap(bytes);
   for (final body in operatorStreams(bytes)) {
     if (!body.contains(' re ')) continue;
     if (interpretContentStream(body, toUnicode: cmap).allText.contains(
-      marker,
+      'SHEET NO.  $marker',
     )) {
       return body;
     }
