@@ -1,5 +1,10 @@
 # Update Log
 
+## 2026-10-01 (ninety-eighth entry)
+
+* **Progress**: `#322` merged at `fa8d3606` (PR 187); M6-C closed. M6-G (`#341`) begun at G1.
+* **Creation**: [DR-215](/decisions/dr-215-zones-and-history-park.md).
+
 ## 2026-10-01 (ninety-seventh entry)
 
 * **Progress**: `#970` merged at `68adde0d` (PR 186). M6-C (`#322`) built: T0.02, with its three

@@ -23147,6 +23147,39 @@ states the basis for it. Every join goes through `acknowledgementFor` and the fi
 
 ---
 
+### 11.214 DR-215 · Zones on drawing sheets only, from the lower right; revision entries and clouds park on project history
+
+**Settled by the user on 2026-10-01, opening M6-G (`#341`).** docs/08 §5.1 specifies a 0.22 in zone
+band between two rules and flags its own origin convention *"VERIFY"*; the frame has used a 6 pt
+inset since M1, recorded in `sheet_frame.dart` as a deviation pending the zone grid. Priced first: a
+full band takes about 20 pt of width from a drawing area, and on `T6.30` that width comes out of
+thirteen columns pinned to the old usable width.
+
+**11.214.1 RULED: THE ZONE BAND AND GRID ARE ON DRAWING SHEETS ONLY**, the elevations, the plans and
+the interconnect sheets when they land; the cover, the legend, `T0.02` and `T6.30` keep the thin
+inset. A zone names a place on a drawing, and a table has none to name. The option not taken was a
+uniform zoned border on every sheet.
+
+**11.214.2 RULED, WITH THE USER'S REASON: ZONES RUN FROM THE LOWER RIGHT.** Zone 1 and row A at the
+lower-right corner, numbers increasing right to left, letters bottom to top, which is §5.1's default.
+In the user's words, the intention is for the ANSI C/D sheets *"to be folded in such a way that they
+fold out from a binder but display the ASME markings when folded"*. The option not taken was
+upper-left reading order. §5.1's `VERIFY` is answered by the user's ruling rather than by a citation
+of ASME Y14.1, and is recorded as such.
+
+**11.214.3 RULED: M6-G3'S ENTRY WRITER AND M6-G4'S CLOUDS PARK ON PROJECT HISTORY (§8.9).** docs/08
+§5.3 makes revision entries *"generated from project history, not hand-entered"*, and a cloud is drawn
+around what changed since the last issued revision; both need history, epic `#655`, which is not
+built. `#344` moves under HIST/3 (`#658`), the journal of milestones and saves an entry is generated
+from, and `#345` under HIST/5 (`#660`), the document diff that says what changed. The revision block
+itself has drawn from `RevisionEntry` since M1 and is unchanged. The option not taken was a manual
+*Issue revision* action now, which §5.3 rules out and history would later have to reconcile with.
+
+**Scope.** No v1 scope change: docs/08 §5.1 made definite, and two Chapters parked by ruling ID on a
+named later body of work, as §8.9 requires.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
