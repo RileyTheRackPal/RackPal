@@ -1026,7 +1026,14 @@ $SuiteFloors = @{
     # revert, blank as absent, a blank name refused, the address made and
     # removed, revert by identity keeps {} bytes, the scope's wire), and
     # SetProjectInfoCommand's case in epoch_mask_test.dart.
-    'rackpal_core'   = 5224
+    # 5232 at `#313` (M6-A2, DR-211): +8 in sheet/cover_rack_strip_test.dart.
+    # A passive is left out of the count and an unresolved device is not; a
+    # staged or other rack's device is not this rack's; rows follow rack
+    # order; the cells in units; the cap with its closing row naming the
+    # resolved elevations; no closing row when all fit; the strip at the
+    # cover's foot; and no passive in Whole House is an unknown power
+    # contributor.
+    'rackpal_core'   = 5232
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

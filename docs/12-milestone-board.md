@@ -1436,6 +1436,19 @@ truth, most by finding the legend by role. `sheet_def.dart`'s header stopped cou
 **Looked at before it was committed**: Whole House's cover rendered through pdfium, with a scope, an
 approver and a drawing number set through the command.
 
+**CHAPTER `#313` (M6-A2): THE RACK STRIP, AND WHAT MEASURING THE STARTERS FIRST CHANGED (DR-211).**
+One line per rack along the cover's foot: size, active devices, RU per face (`F 37 · R 28`), weight,
+VA and BTU/hr, every figure the elevation gutter's or the chip strip's own and formatted by the
+gutter's formatters, so an unknown reads the same on T0.00 as on T2.01. Racks past what fits get a
+closing row naming their elevations from the resolved set, and a notice. **A probe of the four
+starters before the options were offered** showed Whole House's power at `≥ 2490 VA (10 unknown)`
+with five of the ten being steel panels whose catalog `PowerProfile` was empty; the user ruled the
+seed states a passive's power as zero, and the starters and the 300-link fixture regenerated (the
+fixture alone, its perf baselines untouched). The user also ruled that passives leave T6.30's
+equipment table for its materials section, filed as M6-F6 (`#970`). **Two defects only the render
+showed**: the strip stopped at the drawing area's foot, which on a landscape sheet is the furniture's
+top, leaving a third of the left side empty; and POWER clipped its unknown suffix at a 13% column.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

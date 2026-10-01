@@ -2,7 +2,8 @@
 
 ## 2026-10-01 (ninety-fourth entry)
 
-* **Progress**: `#312` merged at `d96b822c` (PR 182). M6-A2 (`#313`) begun; M6-F6 (`#970`) filed.
+* **Progress**: `#312` merged at `d96b822c` (PR 182). M6-A2 (`#313`) built: the seed's passives
+  state 0 W / 0 VA, and the cover's rack strip. M6-F6 (`#970`) filed. docs/12 §4.27.
 * **Creation**: [DR-211](/decisions/dr-211-cover-rack-strip-and-passives.md).
 * **Note**: **MEASURE THE STARTERS BEFORE OFFERING A STRIP.** A probe of the four starters' rollups
   showed half of Whole House's unknown power contributors were steel panels. Without it the
