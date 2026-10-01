@@ -45,7 +45,9 @@ List<String> _legendTexts({
   Iterable<PlanPinCarrier> carriers = const [],
 }) {
   final built = buildLegendSheet(
-    sheet: SheetSet.forRacks(<Rack>[testRack()]).sheets.first,
+    sheet: SheetSet.forRacks(<Rack>[testRack()]).sheets.firstWhere(
+      (s) => s.role == SheetRole.symbolLegend,
+    ),
     info: fullProjectInfo(),
     settings: ProjectSettings(),
     revisions: const <RevisionEntry>[],
@@ -273,7 +275,9 @@ void main() {
 
     test('the T0.01 sheet prints what ProjectInfo holds', () {
       final built = buildLegendSheet(
-        sheet: SheetSet.forRacks(<Rack>[testRack()]).sheets.first,
+        sheet: SheetSet.forRacks(<Rack>[testRack()]).sheets.firstWhere(
+          (s) => s.role == SheetRole.symbolLegend,
+        ),
         info: fullProjectInfo()
           ..legendAbbreviations = const [
             LegendAbbreviation('AFF', 'above floor'),

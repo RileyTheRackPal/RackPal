@@ -213,6 +213,7 @@ export 'src/draw/scene/symbol_hit_test.dart';
 export 'src/draw/scene/symbol_layer.dart';
 export 'src/draw/scene/wire_trace.dart';
 export 'src/draw/scene/zero_u_layer.dart';
+export 'src/draw/sheet/cover_sheet.dart';
 export 'src/draw/sheet/drawing_scale.dart';
 export 'src/draw/sheet/elevation_sheet.dart';
 export 'src/draw/sheet/equipment_sheet.dart';

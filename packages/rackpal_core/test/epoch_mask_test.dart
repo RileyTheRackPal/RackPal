@@ -1631,6 +1631,19 @@ void main() {
       );
     });
 
+    test('SetProjectInfoCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        SetProjectInfoCommand.to(
+          doc.info,
+          ProjectInfoFields.clientName,
+          'Sample Client, revised',
+        ),
+        expectAtLeast: {'info'},
+      );
+    });
+
     test('SetLegendNotesCommand', () {
       final doc = _house();
       _covers(

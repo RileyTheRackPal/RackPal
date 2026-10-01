@@ -158,7 +158,7 @@ void _baseline() {
     modifiedAt: DateTime.utc(2026, 8, 15),
     appVersion: 'scale-probe',
   );
-  final doc = author.newDocument(info: ProjectInfo()..projectName = 'Empty');
+  final doc = author.newDocument(info: ProjectInfo(projectName: 'Empty'));
   const codec = JsonDocumentCodec();
   final r = _round(doc);
   stdout
@@ -335,7 +335,7 @@ RackDocument _build(double multiplier) {
     appVersion: 'scale-probe',
   );
   final doc = author.newDocument(
-    info: ProjectInfo()..projectName = 'Scale probe ${multiplier}x',
+    info: ProjectInfo(projectName: 'Scale probe ${multiplier}x'),
   );
 
   final locations = [

@@ -12,19 +12,19 @@
 // with its `index`/`total` already baked in, and a sheet builder can only
 // read them.
 //
-// SCOPE. This build emits FOUR sheet ROLES: front elevation, rear elevation,
-// equipment list, and the device location plan.
+// SCOPE. The roles this build emits are [SheetRole]'s values; read the enum.
 //
-// **THIS COMMENT SAID "exactly three" UNTIL 2026-09-23**, and had been wrong
-// since `PLAN-H/1` added [SheetRole.devicePlan] on 2026-09-09. A count
-// written in prose beside the enum it counts is this corpus's most-repeated
-// failure, and nothing connects adding a role to editing this sentence. The
-// enum is the list; read it rather than this line.
+// **THIS COMMENT SAID "exactly three" UNTIL 2026-09-23, AND THEN "FOUR"**,
+// which was wrong from the day T0.01 landed (M6-B) and would have been
+// wrong twice over when T0.00 did (M6-A). A count written in prose beside
+// the enum it counts is this corpus's most-repeated failure, and nothing
+// connects adding a role to editing this sentence, so it no longer counts.
 //
-// The rest of §2.2's table (T0.00 cover, T0.02 exceptions, T6.01+
-// interconnect, T6.10 pull sheet, T6.11 termination schedule, T6.20 unused
-// home runs, T5.01 pinout details) is M6 and not yet built; T0.01, the
-// legend, arrived at M6-B. The unbuilt ones are absent from [SheetRole]
+// The rest of §2.2's table (T0.02 exceptions, T6.01+ interconnect, T6.10
+// pull sheet, T6.11 termination schedule, T6.20 unused home runs, T5.01
+// pinout details) is M6 and not yet built; T0.01, the legend, arrived at
+// M6-B and T0.00, the cover, at M6-A. The unbuilt ones are absent from
+// [SheetRole]
 // rather than stubbed, which is what lets a user-facing document state what
 // prints by naming the roles rather than by counting anything
 // (docs/21 §21.7).
@@ -87,6 +87,16 @@ enum SheetSize {
 /// building before they open a rack. `T0.00`–`T0.02` are M6's and are not
 /// emitted yet, so today the plans come first.
 enum SheetRole {
+  /// docs/08 §5.5's `T0.00`, the cover (M6-A, `#311`). FIRST in every set
+  /// and `ON` (docs/08 §2.2), ANSI B landscape (§6.1). Titled `COVER` until
+  /// M6-A3 gives it the drawing index, so the title never names a block the
+  /// sheet does not carry.
+  cover(
+    'COVER',
+    SheetSize.ansiBLandscape,
+    perRack: false,
+  ),
+
   /// docs/08 §5.4's `T0.01`, the symbol legend (M6-B, `#316`). FIRST in
   /// every set and `ON` (docs/08 §2.2's table), ANSI B landscape as the
   /// cover, legend and exceptions all are (§6.1).
@@ -142,6 +152,7 @@ enum SheetRole {
 /// T0.01's id, in one place: the legend's own, and the one every other
 /// sheet's title block points at.
 const String _kLegendNcsId = 'T0.01';
+const String _kCoverNcsId = 'T0.00';
 
 final RegExp kNcsIdPattern = RegExp(r'^[A-Z]{1,2}\d\.\d{2}$');
 
@@ -361,23 +372,33 @@ final class SheetSet {
         return byOrder != 0 ? byOrder : a.id.v.compareTo(b.id.v);
       });
 
-    // +1 FOR T0.01, which every set carries (docs/08 §2.2, `ON`).
-    final total = 1 + plans.length + ordered.length * 2 + equipmentListSheets;
+    // +2 FOR T0.00 AND T0.01, which every set carries (docs/08 §2.2, both
+    // `ON`). The cover is FIRST, because a client deliverable opens on it
+    // (DR-005 §11.5.3); the legend follows, as the cover's own title block
+    // points at it.
+    final total = 2 + plans.length + ordered.length * 2 + equipmentListSheets;
     final sheets = <SheetDef>[
+      SheetDef(
+        ncsId: _kCoverNcsId,
+        role: SheetRole.cover,
+        index: 1,
+        total: total,
+        legendNcsId: _kLegendNcsId,
+      ),
       SheetDef(
         ncsId: _kLegendNcsId,
         role: SheetRole.symbolLegend,
-        index: 1,
+        index: 2,
         total: total,
       ),
     ];
-    var index = 2;
+    var index = 3;
 
     // FIRST IN THE SET, AND THAT IS DR-149 §11.148.3 RATHER THAN A
     // NUMERIC ACCIDENT. Plans go after `T0.02` and before the elevations
     // because a reader orients in the building before they open a rack;
-    // `T0.00`–`T0.02` are M6's and are not emitted yet, so today "after
-    // the cover block" and "first" are the same position. docs/08 §2.2's
+    // `T0.00` and `T0.01` now precede them and `T0.02` will, so "after the
+    // cover block" is the position. docs/08 §2.2's
     // own table is not numeric either — `T5.01` sits last.
     //
     // WHICH UNDERLAYS REACH HERE IS THE CALLER'S QUESTION, not this

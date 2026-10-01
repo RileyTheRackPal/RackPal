@@ -56,8 +56,7 @@ Uint8List _snapshotBytes({String projectName = 'Smith Residence'}) {
     id: const Uuid(_crashedId),
     rackId: const Uuid('crashed-rack'),
     catalog: const {},
-  );
-  doc.info.projectName = projectName;
+  )..info = ProjectInfo(projectName: projectName);
   return const JsonDocumentCodec().write(doc);
 }
 

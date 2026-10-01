@@ -22,8 +22,7 @@ RackDocument _doc({String projectName = ''}) {
     id: const Uuid('doc-1'),
     rackId: _rackId,
     catalog: const {},
-  );
-  doc.info.projectName = projectName;
+  )..info = ProjectInfo(projectName: projectName);
   return doc;
 }
 

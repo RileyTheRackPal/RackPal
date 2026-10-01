@@ -1403,6 +1403,39 @@ them as two, since a wrapped note ran straight into the next; notes now carry a 
 dialog opens with this one section because nothing writes `ProjectInfo`**: the title block every
 sheet prints has no editor, and M6-A1's fields join this dialog.
 
+### 4.27 T0.00's cover, and the title block becomes editable · 2026-10-01 · `#312` · `DR-210` · no version move
+
+M6-A1. **THE FINDING THAT SHAPED IT: NOTHING WROTE `ProjectInfo`.** The title block every sheet
+prints read a project name, client and drawn-by that no surface could set; the codec's decoder was
+the only writer, the shape `ProjectSettings` was found in at `#805`. `#312`'s description listed what
+the cover prints and `#343` draws the title block, so both could have been built to the letter with
+the title block still unwritable; the ticket now names the editor (DR-209 had already placed it).
+
+**The write path.** Every `ProjectInfo` field became an `@internal` setter, so seven test and tool
+sites that assigned `projectName` moved to the constructor. `ProjectInfoFields` is one table of
+seventeen lines (the eleven fields, the six address lines, the new `scopeNarrative`) and
+`SetProjectInfoCommand` writes one, **trimmed, blank stored as absent**, and **refuses a blank
+project name** (`apply` returns false). The address is **replaced whole, never edited in place**, so
+revert hands back the very object it replaced and an address decoded from `{}` keeps its bytes.
+
+**The editor** (DR-210 §11.209.2): `File ▸ Sheet set…` gains Title block (Project, Client and site,
+Integrator, Sign-off) and Cover sections above the legend. A field commits when left, on Enter, or
+when the dialog closes; one with unchanged text sends nothing; a cleared name is refused with
+*"A project needs a name: it heads every sheet."*
+
+**The sheet.** `SheetRole.cover`, `T0.00`, first in every set, ANSI B landscape, titled `COVER`
+until M6-A3 gives it the index so the title never names a block the sheet lacks. The left carries
+the project, client, address, issue line, scope, integrator and the sign-off with **approved by**
+(§11.209.3); empty optional lines collapse, the sign-off prints `—` for who has not signed. **The
+right column is reserved** at the title block's width for the index, and a test holds it empty. A
+scope too long for fourteen lines is cut **and the export says so**. Adding the role renumbered every
+set again: tests pinning `2N+2`, `SHEET 2 OF 4` or the legend at `sheets.first` were moved to the new
+truth, most by finding the legend by role. `sheet_def.dart`'s header stopped counting roles: it said
+*"FOUR"*, wrong since the legend.
+
+**Looked at before it was committed**: Whole House's cover rendered through pdfium, with a scope, an
+approver and a drawing number set through the command.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
@@ -7096,7 +7129,7 @@ requires: the board query for Done Chapters under epic 23 returns 61, and 60 plu
 
 | Clause | Mark | Why |
 |---|---|---|
-| All four starters export a **complete sheet set** | **NOT BUILT** | They export **4 of 12 slots**; `T0.01` legend arrived at M6-B (`#316`, §4.26) with its cable-type key, and its other five blocks are owed. Missing: `T0.00` cover/index, `T0.02` exceptions, `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.20` unused home runs, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details. `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
+| All four starters export a **complete sheet set** | **NOT BUILT** | The built slots are `SheetRole`'s values, not a number written here: `T0.01` legend arrived complete at M6-B (`#316`, §4.26), and `T0.00` arrived at M6-A1 (`#312`, §4.27) with its project block and no index yet. Missing: `T0.00`'s drawing index and rack strip (M6-A2, M6-A3), `T0.02` exceptions, `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.20` unused home runs, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details. `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
 | Legend under deuteranopia / protanopia simulation | **UNPERFORMED** | No legend sheet exists to verify |
 | Real greyscale laser print (AC-054) | **UNPERFORMED** | Nothing has been printed |
 | ANSI B laser / ANSI D plotter / photocopy, physically inspected and signed off (AC-058 D13) | **UNPERFORMED** | Nothing has been printed |

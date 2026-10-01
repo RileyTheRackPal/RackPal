@@ -641,6 +641,7 @@ JsonMap _encodeProjectInfo(ProjectInfo info) {
   putIfNotNull(json, 'drawnBy', info.drawnBy);
   putIfNotNull(json, 'checkedBy', info.checkedBy);
   putIfNotNull(json, 'approvedBy', info.approvedBy);
+  putIfNotNull(json, 'scopeNarrative', info.scopeNarrative);
   // ABSENT WHILE SEEDED (DR-209 §11.208.4): null means the legend prints
   // the seed, so an unedited project writes no key. An empty list is
   // written, because it is a person having deleted every row.
@@ -688,6 +689,10 @@ ProjectInfo _decodeProjectInfo(JsonMap json) => ProjectInfo(
   drawnBy: asStrOrNull(json['drawnBy'], 'ProjectInfo.drawnBy'),
   checkedBy: asStrOrNull(json['checkedBy'], 'ProjectInfo.checkedBy'),
   approvedBy: asStrOrNull(json['approvedBy'], 'ProjectInfo.approvedBy'),
+  scopeNarrative: asStrOrNull(
+    json['scopeNarrative'],
+    'ProjectInfo.scopeNarrative',
+  ),
   legendAbbreviations: json['legendAbbreviations'] == null
       ? null
       : decodeObjectList(

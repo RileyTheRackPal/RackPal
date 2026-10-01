@@ -22976,6 +22976,45 @@ editable here. Every edit is one undo step on the document stack.
 
 ---
 
+### 11.209 DR-210 · The cover puts its index on the right, and the title block becomes editable
+
+**Settled by the user on 2026-10-01, building M6-A1 (`#312`), on the recommended option four
+times.** docs/08 §2.2 lists what `T0.00` carries and never placed it; the title block's eleven
+`ProjectInfo` fields had no writer anywhere; `approvedBy` was in the format and printed on no sheet.
+
+**11.209.1 RULED: THE DRAWING INDEX IS A FULL-HEIGHT RIGHT-HAND COLUMN.** The project block and
+the scope paragraph take the left of the cover, the rack summary strip runs along its foot, and the
+title and revision blocks sit bottom-right as on every sheet. **What priced it is the index**, the
+one block that grows: a set at AC-050's 40-sheet warning needs about forty rows, which a
+full-height column holds and a band across the lower half (the centred title page, not taken) does
+not without a continuation page.
+
+**11.209.2 RULED: THE EDITOR GROUPS THE FIELDS AS THE SET PRINTS THEM.** `File ▸ Sheet set…`
+(DR-209) gains a Title block section in four groups (Project, Client and site, Integrator,
+Sign-off) and a Cover section holding the scope paragraph, above the Legend section. A field
+commits when it is left, as the legend rows do, and each commit is one undo step. The option not
+taken was one flat list of seventeen boxes.
+
+**11.209.3 RULED: `approvedBy` PRINTS ON THE COVER.** The cover's sign-off line reads drawn,
+checked and approved. Approval is a statement about the whole set, and the per-sheet title block
+is a fixed 115 pt that would lose a row. The option not taken was to leave the field out of the
+editor until a sheet printed it.
+
+**11.209.4 RULED: A CLEARED PROJECT NAME IS REFUSED, WITH A REASON.** The field keeps its last
+value and says that a project needs a name because it heads every sheet. It is the one required
+`ProjectInfo` field, and the Recent Files label. The option not taken was a silent fallback to
+`Untitled Project`, which lets a client PDF go out under that title with nobody choosing it.
+
+**11.209.5 THE DATA, WHICH FOLLOWS FROM G4 RATHER THAN BEING CHOSEN.** One new field,
+`ProjectInfo.scopeNarrative`, absent when nobody has written one; an absent scope prints no SCOPE
+heading, under docs/08 §5.2's *"empty optional lines collapse"*. Every optional field cleared to
+blank is stored absent rather than as an empty string, so a cleared field and a never-set one are
+the same fact on the wire.
+
+**Scope.** No scope change: docs/08 §2.2's row 1, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

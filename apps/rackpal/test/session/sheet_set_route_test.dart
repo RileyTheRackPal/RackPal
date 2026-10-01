@@ -1,4 +1,4 @@
-// `File ▸ Sheet set…`, in the shell (`#969`, DR-209 §11.208).
+// `File ▸ Sheet set…`, in the shell (`#969` DR-209, `#312` DR-210).
 //
 // `sheet_set_dialog_test.dart` proves the dialog emits the right command to
 // whatever `onEdit` it was handed. This proves the route a person takes:
@@ -41,14 +41,13 @@ void main() {
       ..resetDevicePixelRatio();
   });
 
-  testWidgets('File ▸ Sheet set… edits the legend, and Edit undoes it', (
-    tester,
-  ) async {
+  testWidgets('File ▸ Sheet set… edits the title block, and Edit undoes '
+      'it', (tester) async {
     final built = await buildTestApp(measurer);
     await tester.pumpWidget(built.app);
     await tester.pumpAndSettle();
     final doc = built.session.services.session.document;
-    expect(doc.info.legendAbbreviations, isNull, reason: 'precondition');
+    final before = doc.info.clientName;
 
     await tester.tap(find.widgetWithText(SubmenuButton, 'File'));
     await tester.pumpAndSettle();
@@ -56,22 +55,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(kSheetSetListKey), findsOneWidget);
 
-    await tester.enterText(find.byKey(meaningFieldKey(0)), 'rack unit');
+    // THE FIELD THAT HAD NO WRITER ANYWHERE until `#312`.
+    final client = find.byKey(
+      projectInfoFieldKey(ProjectInfoFields.clientName),
+    );
+    await tester.ensureVisible(client);
+    await tester.pumpAndSettle();
+    await tester.enterText(client, 'Jones Family Trust');
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
     await tester.tap(find.text('Close'));
     await tester.pumpAndSettle();
 
     expect(
-      doc.info.legendAbbreviations?.first,
-      const LegendAbbreviation('RU', 'rack unit'),
+      doc.info.clientName,
+      'Jones Family Trust',
       reason: 'the dialog edits the session document, not a copy',
     );
 
     await tester.tap(find.widgetWithText(SubmenuButton, 'Edit'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Undo Edit legend notes'));
+    await tester.tap(find.text('Undo Edit project details'));
     await tester.pumpAndSettle();
-    expect(doc.info.legendAbbreviations, isNull, reason: 'back to the seed');
+    expect(doc.info.clientName, before);
   });
 }

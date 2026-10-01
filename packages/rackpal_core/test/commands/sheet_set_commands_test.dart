@@ -151,4 +151,118 @@ void main() {
       expect(() => doc.info.legendNotes!.add('Two.'), throwsUnsupportedError);
     });
   });
+
+  group('SetProjectInfoCommand (#312, DR-210)', () {
+    test('THE TABLE NAMES EVERY TITLE-BLOCK FIELD, once, plus the scope', () {
+      // By hand, not derived: a field dropped from the table is a field
+      // with no editor, which is the state all of these were found in.
+      expect(ProjectInfoFields.all.map((f) => f.key).toList(), [
+        'projectName',
+        'projectNumber',
+        'drawingNumber',
+        'clientName',
+        'siteAddress.line1',
+        'siteAddress.line2',
+        'siteAddress.city',
+        'siteAddress.region',
+        'siteAddress.postalCode',
+        'siteAddress.country',
+        'integratorName',
+        'integratorContact',
+        'integratorLicense',
+        'drawnBy',
+        'checkedBy',
+        'approvedBy',
+        'scopeNarrative',
+      ]);
+    });
+
+    test('every field writes, reads back, and reverts', () {
+      for (final field in ProjectInfoFields.all) {
+        final doc = _doc();
+        final before = field.get(doc.info);
+        final cmd = SetProjectInfoCommand.to(doc.info, field, 'Value');
+        expect(cmd.apply(doc), isTrue, reason: field.key);
+        expect(field.get(doc.info), 'Value', reason: field.key);
+        cmd.revert(doc);
+        expect(field.get(doc.info), before, reason: field.key);
+      }
+    });
+
+    test('TRIMMED, AND BLANK IS STORED AS NULL, never an empty string', () {
+      final doc = _doc();
+      SetProjectInfoCommand.to(
+        doc.info,
+        ProjectInfoFields.clientName,
+        '  Sample Client ',
+      ).apply(doc);
+      expect(doc.info.clientName, 'Sample Client');
+      SetProjectInfoCommand.to(
+        doc.info,
+        ProjectInfoFields.clientName,
+        '   ',
+      ).apply(doc);
+      expect(doc.info.clientName, isNull);
+      expect(_infoOnWire(doc).containsKey('clientName'), isFalse);
+    });
+
+    test('A BLANK PROJECT NAME IS REFUSED, and nothing changes', () {
+      final doc = _doc();
+      final cmd = SetProjectInfoCommand.to(
+        doc.info,
+        ProjectInfoFields.projectName,
+        ' ',
+      );
+      expect(cmd.apply(doc), isFalse);
+      expect(doc.info.projectName, 'Legend');
+    });
+
+    test('the first address line makes an address; clearing the last '
+        'removes it', () {
+      final doc = _doc();
+      SetProjectInfoCommand.to(
+        doc.info,
+        ProjectInfoFields.city,
+        'Portland',
+      ).apply(doc);
+      expect(doc.info.siteAddress?.city, 'Portland');
+      expect(_infoOnWire(doc)['siteAddress'], {'city': 'Portland'});
+      SetProjectInfoCommand.to(
+        doc.info,
+        ProjectInfoFields.city,
+        '',
+      ).apply(doc);
+      expect(doc.info.siteAddress, isNull);
+      expect(_infoOnWire(doc).containsKey('siteAddress'), isFalse);
+    });
+
+    test('AN ADDRESS EDIT REVERTS TO THE VERY OBJECT IT REPLACED, so an '
+        '{} address keeps its bytes (CR-117)', () {
+      final doc = _doc();
+      final original = Address();
+      doc.info = ProjectInfo(projectName: 'Legend', siteAddress: original);
+      final bytes = _codec.write(doc);
+      final cmd = SetProjectInfoCommand.to(
+        doc.info,
+        ProjectInfoFields.addressLine1,
+        '1 Main St',
+      )..apply(doc);
+      expect(identical(doc.info.siteAddress, original), isFalse);
+      expect(original.line1, isNull, reason: 'never edited in place');
+      cmd.revert(doc);
+      expect(identical(doc.info.siteAddress, original), isTrue);
+      expect(_codec.write(doc), bytes);
+    });
+
+    test('the scope narrative is absent until written, and round-trips', () {
+      final doc = _doc();
+      expect(_infoOnWire(doc).containsKey('scopeNarrative'), isFalse);
+      SetProjectInfoCommand.to(
+        doc.info,
+        ProjectInfoFields.scopeNarrative,
+        'Supply and install a 42U rack.',
+      ).apply(doc);
+      expect(_readBack(doc).scopeNarrative, 'Supply and install a 42U rack.');
+    });
+  });
 }

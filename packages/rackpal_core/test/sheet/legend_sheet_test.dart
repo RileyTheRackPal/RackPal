@@ -13,7 +13,9 @@ import 'sheet_test_support.dart';
 
 final Registries _seed = buildSeedRegistries();
 
-SheetDef _legendDef() => SheetSet.forRacks(<Rack>[testRack()]).sheets.first;
+SheetDef _legendDef() => SheetSet.forRacks(
+  <Rack>[testRack()],
+).sheets.firstWhere((s) => s.role == SheetRole.symbolLegend);
 
 LegendSheet _build({Iterable<SignalFamilyId> inUse = const []}) =>
     buildLegendSheet(
@@ -141,19 +143,21 @@ void main() {
   });
 
   test(
-    'T0.01 IS THE FIRST SHEET OF EVERY SET, and is counted in its total',
+    // SECOND SINCE M6-A: the cover opens a client deliverable, and the
+    // legend is the sheet its title block points at.
+    'T0.01 FOLLOWS THE COVER IN EVERY SET, and is counted in its total',
     () {
       final set = SheetSet.forRacks(<Rack>[testRack()]);
-      final first = set.sheets.first;
+      final legend = set.sheets[1];
       expect(
-        (first.ncsId, first.role, first.index),
+        (legend.ncsId, legend.role, legend.index),
         (
           'T0.01',
           SheetRole.symbolLegend,
-          1,
+          2,
         ),
       );
-      expect(first.total, set.sheets.length);
+      expect(legend.total, set.sheets.length);
     },
   );
 }

@@ -1,3 +1,7 @@
+// ignore_for_file: prefer_initializing_formals, the public constructor
+// parameter name intentionally differs from the private backing field
+// name it feeds (AC-013's public-getter/@internal-setter pattern), so
+// the shorthand `this._field` form does not apply.
 import 'package:meta/meta.dart';
 
 /// A postal address, structured rather than a flat string.
@@ -58,43 +62,115 @@ final class LegendAbbreviation {
 }
 
 /// The AVIXA D401.01 title-block fields, and the rest of the set's front
-/// matter. There is NO logo field in v1 (RJ-017).
+/// matter: the cover's scope paragraph and T0.01's notes. The logo
+/// (DR-030) is not a field yet; it arrives at M6-G6.
+///
+/// ACCESS CONTROL: every field is an `@internal` setter (AC-013), wired to
+/// `SetProjectInfoCommand` (title block, cover) or `SetLegendNotesCommand`
+/// (legend) and written nowhere else; `internal_setter_grep_test.dart`
+/// holds that. **AN OPTIONAL FIELD IS NEVER AN EMPTY STRING** once a
+/// command has written it (DR-210 §11.209.5): blank is stored as null, so a
+/// cleared field and a never-set one are the same fact on the wire.
 final class ProjectInfo {
   ProjectInfo({
-    this.projectName = 'Untitled Project',
-    this.projectNumber,
-    this.drawingNumber,
-    this.clientName,
-    this.siteAddress,
-    this.integratorName,
-    this.integratorContact,
-    this.integratorLicense,
-    this.drawnBy,
-    this.checkedBy,
-    this.approvedBy,
+    String projectName = 'Untitled Project',
+    String? projectNumber,
+    String? drawingNumber,
+    String? clientName,
+    String? integratorName,
+    String? integratorContact,
+    String? integratorLicense,
+    String? drawnBy,
+    String? checkedBy,
+    String? approvedBy,
+    String? scopeNarrative,
+    Address? siteAddress,
     List<LegendAbbreviation>? legendAbbreviations,
     List<String>? legendNotes,
-  }) : _legendAbbreviations = legendAbbreviations == null
+  }) : _projectName = projectName,
+       _projectNumber = projectNumber,
+       _drawingNumber = drawingNumber,
+       _clientName = clientName,
+       _integratorName = integratorName,
+       _integratorContact = integratorContact,
+       _integratorLicense = integratorLicense,
+       _drawnBy = drawnBy,
+       _checkedBy = checkedBy,
+       _approvedBy = approvedBy,
+       _scopeNarrative = scopeNarrative,
+       _siteAddress = siteAddress,
+       _legendAbbreviations = legendAbbreviations == null
            ? null
            : List.unmodifiable(legendAbbreviations),
        _legendNotes = legendNotes == null
            ? null
            : List.unmodifiable(legendNotes);
 
-  // ACCESS CONTROL: fields below are plain mutable pending @internal
-  // retrofit (AC-013). Converted as each is wired to a Command. See
-  // internal_setter_grep_test.dart.
-  String projectName;
-  String? projectNumber;
-  String? drawingNumber;
-  String? clientName;
-  Address? siteAddress;
-  String? integratorName;
-  String? integratorContact;
-  String? integratorLicense;
-  String? drawnBy;
-  String? checkedBy;
-  String? approvedBy;
+  /// The one REQUIRED field: it heads every sheet and labels Recent Files,
+  /// so a blank one is refused (DR-210 §11.209.4).
+  String _projectName;
+  String get projectName => _projectName;
+  @internal
+  set projectName(String v) => _projectName = v;
+
+  String? _projectNumber;
+  String? get projectNumber => _projectNumber;
+  @internal
+  set projectNumber(String? v) => _projectNumber = v;
+
+  String? _drawingNumber;
+  String? get drawingNumber => _drawingNumber;
+  @internal
+  set drawingNumber(String? v) => _drawingNumber = v;
+
+  String? _clientName;
+  String? get clientName => _clientName;
+  @internal
+  set clientName(String? v) => _clientName = v;
+
+  String? _integratorName;
+  String? get integratorName => _integratorName;
+  @internal
+  set integratorName(String? v) => _integratorName = v;
+
+  String? _integratorContact;
+  String? get integratorContact => _integratorContact;
+  @internal
+  set integratorContact(String? v) => _integratorContact = v;
+
+  String? _integratorLicense;
+  String? get integratorLicense => _integratorLicense;
+  @internal
+  set integratorLicense(String? v) => _integratorLicense = v;
+
+  String? _drawnBy;
+  String? get drawnBy => _drawnBy;
+  @internal
+  set drawnBy(String? v) => _drawnBy = v;
+
+  String? _checkedBy;
+  String? get checkedBy => _checkedBy;
+  @internal
+  set checkedBy(String? v) => _checkedBy = v;
+
+  String? _approvedBy;
+  String? get approvedBy => _approvedBy;
+  @internal
+  set approvedBy(String? v) => _approvedBy = v;
+
+  /// The cover's one paragraph (docs/08 §2.2, DR-210). Absent prints no
+  /// SCOPE heading at all: an empty optional line collapses (§5.2).
+  String? _scopeNarrative;
+  String? get scopeNarrative => _scopeNarrative;
+  @internal
+  set scopeNarrative(String? v) => _scopeNarrative = v;
+
+  /// Replaced whole by `SetProjectInfoCommand`, never edited in place, so
+  /// an undo can hand back the very object it replaced.
+  Address? _siteAddress;
+  Address? get siteAddress => _siteAddress;
+  @internal
+  set siteAddress(Address? v) => _siteAddress = v;
 
   // ── T0.01 block 6, the legend's abbreviations and notes (DR-209) ─────
   //
@@ -119,6 +195,4 @@ final class ProjectInfo {
   @internal
   set legendNotes(List<String>? v) =>
       _legendNotes = v == null ? null : List.unmodifiable(v);
-
-  // No logo field in v1 (RJ-017).
 }

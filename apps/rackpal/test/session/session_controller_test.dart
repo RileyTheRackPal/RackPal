@@ -38,8 +38,7 @@ Uint8List _documentBytes({String projectName = 'Jones Loft'}) {
     id: const Uuid('on-disk-doc'),
     rackId: const Uuid('on-disk-rack'),
     catalog: const {},
-  );
-  doc.info.projectName = projectName;
+  )..info = ProjectInfo(projectName: projectName);
   return const JsonDocumentCodec().write(doc);
 }
 
