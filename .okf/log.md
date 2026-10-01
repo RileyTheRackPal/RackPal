@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-01 (ninety-sixth entry)
+
+* **Progress**: `#315` merged at `48febf3a` (PR 185); Story `#311` (M6-A) closed. M6-F6 (`#970`)
+  begun.
+* **Creation**: [DR-213](/decisions/dr-213-t6-30-subtotals-and-materials.md).
+* **Note**: **"NEEDS NO RULINGS" WAS WRONG, AND READING THE CODE SAID SO.** `#970` was described to
+  the user as ready to build; T6.30's subtotals are summed from its rows and held equal to the chip
+  strip by a test, so moving rows out forced a choice between agreeing with the other sheets and
+  adding up. Read the code that consumes a change before promising it is mechanical.
+
 ## 2026-10-01 (ninety-fifth entry)
 
 * **Progress**: `#313` merged at `86f4372d` (PR 183). M6-A3 (`#314`) built: the drawing index.
