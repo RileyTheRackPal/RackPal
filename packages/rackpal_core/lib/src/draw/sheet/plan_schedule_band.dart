@@ -34,6 +34,11 @@
 //   3 blocks of 365 pt   cap 60   60 rows leave the plan 313 pt
 //   4 blocks of 270 pt   cap 80   60 rows leave the plan 373 pt
 //
+// MEASURED AT DR-152, BEFORE THE ZONE BAND. Since M6-G1 the plan sheet is
+// zoned (DR-215) and the cap is 76: the band took one row from each block.
+// Still above the exit criterion's sixty; the figure lives in
+// `plan_schedule_notice_test.dart`, not here.
+//
 // So the plan, which is the sheet's subject, gets MORE room at every row
 // count and not less. What narrows is the fields: DESCRIPTION goes from 37
 // characters to 27 and AREA from 25 to 18, which is what `PLAN-J`'s print
@@ -89,9 +94,10 @@ const double kPlanBandColumnGapPt = 14;
 /// How wide one block wants to be before another is opened.
 ///
 /// 260 AND NOT 300, WHICH IS THE DIFFERENCE BETWEEN FOUR BLOCKS AND
-/// THREE on a 1122 pt drawing area, and so between a cap of 80 rows and a
-/// cap of 60. Sixty is the exit criterion's own figure (DR-037 §11.36.1),
-/// and a cap standing exactly on it omits a row from an ordinary house.
+/// THREE on a 1122 pt drawing area (1102 since the zone band), and three
+/// blocks capped the band at sixty. Sixty is the exit criterion's own
+/// figure (DR-037 §11.36.1), and a cap standing exactly on it omits a row
+/// from an ordinary house.
 const double kPlanBandColumnMinPt = 260;
 
 /// What the band drew, and what it could not.

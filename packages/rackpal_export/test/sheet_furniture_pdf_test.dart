@@ -37,7 +37,9 @@ const double _marginL = 54;
 const double _marginT = 36;
 const double _marginR = 36;
 const double _marginB = 36;
-const double _inset = 6;
+// THE ZONE BAND, 0.22 in, since M6-G1: the elevation this file renders
+// is a zoned sheet (DR-215 §11.214.1). It was §3.2's 6 pt before.
+const double _inset = 0.22 * 72;
 
 const FontRef _font = FontRef('Jost');
 
@@ -161,18 +163,18 @@ void main() {
       expect(outer.height, closeTo(1152, 1e-3));
     });
 
-    test('the inner rule is 6 pt inside it: 690 x 1140 at (60, 42)', () async {
+    test('the inner rule is the zone band inside it (DR-215)', () async {
       final recovered = recover(await renderFurniture());
       final inner = recovered.rects.firstWhere(
-        (r) => (r.width - 690).abs() < 0.01,
-        orElse: () => throw StateError('no 690 pt wide rectangle emitted'),
+        (r) => (r.width - (702 - 2 * _inset)).abs() < 0.01,
+        orElse: () => throw StateError('no inner rule emitted'),
       );
 
       expect(inner.left, closeTo(_marginL + _inset, 1e-3));
       expect(inner.right, closeTo(_pageW - _marginR - _inset, 1e-3));
       expect(inner.bottom, closeTo(_marginB + _inset, 1e-3));
       expect(inner.top, closeTo(_pageH - _marginT - _inset, 1e-3));
-      expect(inner.height, closeTo(1140, 1e-3));
+      expect(inner.height, closeTo(1152 - 2 * _inset, 1e-3));
     });
 
     test(
@@ -183,7 +185,7 @@ void main() {
           (r) => (r.width - 702).abs() < 0.01,
         );
         final inner = recovered.rects.firstWhere(
-          (r) => (r.width - 690).abs() < 0.01,
+          (r) => (r.width - (702 - 2 * _inset)).abs() < 0.01,
         );
 
         expect(outer.lineWidthPt, closeTo(0.7, 1e-6));
@@ -209,7 +211,8 @@ void main() {
         );
 
         // Bottom-right of the drawing frame: right edge at
-        // 792 - 36 - 6 = 750, bottom edge at 36 + 6 = 42 in user space.
+        // 792 - 36 - band = 740.16, bottom edge at 36 + band = 51.84 in
+        // user space, the band being the zone band since M6-G1.
         expect(title.right, closeTo(_pageW - _marginR - _inset, 1e-3));
         expect(title.bottom, closeTo(_marginB + _inset, 1e-3));
         expect(title.left, closeTo(_pageW - _marginR - _inset - 396, 1e-3));
@@ -228,7 +231,7 @@ void main() {
       );
 
       expect(title.top, lessThan(_pageH / 2));
-      expect(title.bottom, closeTo(42, 1e-3));
+      expect(title.bottom, closeTo(_marginB + _inset, 1e-3));
     });
 
     test(
@@ -358,8 +361,8 @@ void main() {
           (r) => (r.width - 396).abs() < 0.01 && (r.height - 65).abs() < 0.01,
           orElse: () => throw StateError('no 396 x 65 revision block emitted'),
         );
-        expect(revision.bottom, closeTo(42 + 115, 1e-3));
-        expect(revision.top, closeTo(42 + 115 + 65, 1e-3));
+        expect(revision.bottom, closeTo(_marginB + _inset + 115, 1e-3));
+        expect(revision.top, closeTo(_marginB + _inset + 115 + 65, 1e-3));
       },
     );
   });

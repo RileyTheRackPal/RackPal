@@ -1514,6 +1514,24 @@ assertion that the acknowledgement's reason prints on it; it was, and the reason
 LONGER OCCURS, since the exporter runs without the session's changed-underlay set). **Looked at**:
 Whole House's two T0.02 pages, 39 findings, errors first, the continuation repeating its heading and
 band.
+
+### 4.30 The zone band and grid, on the drawings · 2026-10-01 · `#342` · `DR-215` · no version move
+
+M6-G1. The frame's 6 pt inset, recorded since M1 as a deviation from §5.1 pending the grid, is now
+right on the sheets it serves: `SheetRole.zoned` marks the plans and the elevations (and the
+interconnect sheets when they land), whose geometry takes §5.1's 0.22 in band with a tick at every
+zone boundary and the labels counted from the lower right, letters skipping `I` and `O`; the cover,
+legend, `T0.02` and `T6.30` keep the inset §3.2's usable widths are computed from. `zoneAt` answers a
+point's zone, for the schedule's `REF` column when the interconnect sheets give it something to point
+at.
+
+**What the band cost, measured rather than estimated.** The elevation's drawing area lost 19.68 pt
+each way. Over 1 to 60 U against `main`, **exactly one rack height changed scale: 57 U, from 1:8 to
+1:10**; 42, 45 and 48 U are unaffected. The plan sheet's device schedule cap fell **from 80 rows to
+76**, one per block, still above the exit criterion's sixty. Three elevation tests had measured
+against a hand-built *unzoned* geometry and were corrected to the sheet's own, and the frame's ticks
+draw at the outer rule's weight so the layer's ink claim (the margin box plus half the outer rule)
+stays true. **Looked at**: Whole House's front elevation, 2 x 4 zones, A1 under the title block.
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

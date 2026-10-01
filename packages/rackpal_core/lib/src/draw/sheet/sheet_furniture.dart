@@ -119,7 +119,9 @@ final class SheetFurniture {
 /// inputs, so the two can never disagree.
 SheetLayout sheetLayoutFor(SheetDef sheet, List<RevisionEntry> revisions) =>
     SheetLayout.resolve(
-      geometry: SheetGeometry(sheet.size),
+      // ZONED BY ROLE (DR-215 §11.214.1): a drawing sheet carries the
+      // band and grid, a table sheet the plain inset.
+      geometry: SheetGeometry(sheet.size, zoned: sheet.role.zoned),
       revisionRowCount: revisionBodyRowCount(revisions),
     );
 

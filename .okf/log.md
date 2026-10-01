@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-01 (ninety-eighth entry)
+
+* **Progress**: `#322` merged at `fa8d3606` (PR 187); M6-C closed. M6-G (`#341`) begun at G1;
+  G1 (`#342`) built: the zone band on the drawings. G3 and G4 parked on `#658` and `#660`. docs/12
+  §4.30.
+* **Note**: **PRICE A LAYOUT CHANGE BY SWEEPING THE INPUT RANGE.** The band's cost was found by
+  rendering every rack height 1 to 60 U on both branches: one height changed scale, and a plan cap
+  fell four rows. A single-starter render would have shown neither.
+* **Creation**: [DR-215](/decisions/dr-215-zones-and-history-park.md).
+
 ## 2026-10-01 (ninety-seventh entry)
 
 * **Progress**: `#970` merged at `68adde0d` (PR 186). M6-C (`#322`) built: T0.02, with its three

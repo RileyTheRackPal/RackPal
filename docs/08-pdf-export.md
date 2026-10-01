@@ -470,7 +470,7 @@ Sheet edge
   └── drawing area
 ```
 
-Zone module 4.25 in, minimum 2 × 2, ANSI B landscape gives 4 × 2, ANSI D gives 8 × 5. Origin, numbering direction and letter direction are a project setting; default origin lower-right, numbers increasing right-to-left, letters bottom-to-top. VERIFY: which origin convention ASME Y14.1 Table 1 actually mandates, both lower-right and upper-right are in live use, and this is a two-line config constant.
+Zone module 4.25 in, minimum 2 × 2, ANSI B landscape gives 4 × 2, ANSI D gives 8 × 5. Origin lower-right, numbers increasing right-to-left, letters bottom-to-top, ruled by the user (DR-215 §11.214.2) so ANSI C/D sheets folded into a binder show the markings; this answers the earlier `VERIFY` by ruling, not by citation. **Drawing sheets only** (elevations, plans, interconnect); the cover, legend, `T0.02` and `T6.30` keep a thin inset with no zone band (§11.214.1).
 
 Zone references are computed from the **final placed geometry**, after layout, and are what the schedule's optional `REF` column points at. The zone grid survives CR-073's cuts specifically because that column is useful; off-sheet connectors and cross-reference resolution do not.
 

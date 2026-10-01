@@ -134,10 +134,15 @@ void main() {
         expect(scale.isToScale, isTrue, reason: '${heightU}U reported NTS');
       }
       // The tallest legal rack needs 1:10 — 60 U is 105 in, and at 1:8
-      // that is 945 pt against a 909 pt drawing area. Stated because it is
-      // the boundary the tiler would otherwise have been needed for.
+      // that is 945 pt against the drawing area. Stated because it is the
+      // boundary the tiler would otherwise have been needed for.
+      //
+      // 56 U SINCE M6-G1, 57 U BEFORE. The zone band (DR-215) takes 19.68
+      // pt of height, and 57 U is the one rack height it moves: 1:8 to
+      // 1:10. Measured over 1..60 U against main; no other height changed.
       expect(_build(heightU: 60).scale.label, '1:10');
-      expect(_build(heightU: 57).scale.label, '1:8');
+      expect(_build(heightU: 57).scale.label, '1:10');
+      expect(_build(heightU: 56).scale.label, '1:8');
     });
 
     test('a SMALL rack is drawn LARGER — the fit is real, not a constant', () {
@@ -267,7 +272,8 @@ void main() {
       final bounds = sheet.rackScene.scene.bounds;
       final area = elevationAreaOf(
         SheetLayout.resolve(
-          geometry: const SheetGeometry(SheetSize.ansiBPortrait),
+          // THE SHEET'S OWN GEOMETRY: an elevation is zoned (DR-215).
+          geometry: const SheetGeometry(SheetSize.ansiBPortrait, zoned: true),
           revisionRowCount: 1,
         ).drawingArea,
       );
@@ -278,16 +284,20 @@ void main() {
       ].reduce((a, b) => a > b ? a : b);
 
       expect(sheet.fit.overrunPt, closeTo(measured, 1e-9));
-      // ...and it is the WIDTH that overruns, by a couple of points.
+      // ...and it is the WIDTH that overruns: 2.37 pt of label, plus the
+      // 19.68 pt the zone band took from the drawing area (DR-215).
       expect(bounds.width * s, greaterThan(area.width));
-      expect(sheet.fit.overrunPt, closeTo(2.366, 0.01));
+      expect(
+        sheet.fit.overrunPt,
+        closeTo(2.366 + 2 * (kZoneBandWidthPt - kPlainInsetPt), 0.01),
+      );
     });
 
     test('the overrun is REPORTED, not silently shipped', () {
       final sheet = overrunning();
       expect(sheet.fit.notice, isNotNull);
       expect(sheet.fit.notice, contains('past the drawing area'));
-      expect(sheet.fit.notice, contains('2.4 pt'));
+      expect(sheet.fit.notice, contains('22.0 pt'));
       // ...and the sheet IS still scalable, which is what the notice says.
       expect(sheet.scale.isToScale, isTrue);
       expect(sheet.scale.notice, isNull);
@@ -938,7 +948,8 @@ void main() {
       // centred in it with its `1 ft` label. Both are asserted against the
       // INK that lands in them further down.
       final drawing = SheetLayout.resolve(
-        geometry: const SheetGeometry(SheetSize.ansiBPortrait),
+        // THE SHEET'S OWN GEOMETRY: an elevation is zoned (DR-215).
+        geometry: const SheetGeometry(SheetSize.ansiBPortrait, zoned: true),
         revisionRowCount: 1,
       ).drawingArea;
       final area = elevationAreaOf(drawing);
@@ -961,7 +972,8 @@ void main() {
       // rather than a surprise on paper.
       final sheet = _build(heightU: 12, role: SheetRole.rackElevationRear);
       final drawing = SheetLayout.resolve(
-        geometry: const SheetGeometry(SheetSize.ansiBPortrait),
+        // THE SHEET'S OWN GEOMETRY: an elevation is zoned (DR-215).
+        geometry: const SheetGeometry(SheetSize.ansiBPortrait, zoned: true),
         revisionRowCount: 1,
       ).drawingArea;
       final area = elevationAreaOf(drawing);

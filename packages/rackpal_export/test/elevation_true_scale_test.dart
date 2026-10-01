@@ -111,7 +111,9 @@ const double _tol = 0.01;
 const double _pageW = 792;
 const double _pageH = 1224;
 const double _marginB = 36;
-const double _inset = 6;
+// THE ZONE BAND, 0.22 in, since M6-G1: an elevation is a zoned sheet
+// (DR-215 §11.214.1). It was §3.2's 6 pt before.
+const double _inset = 0.22 * 72;
 
 /// The title block, from docs/08 section 5.2.
 const double _titleBlockH = 115;
