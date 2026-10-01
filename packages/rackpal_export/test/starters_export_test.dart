@@ -111,31 +111,54 @@ void main() {
         );
       });
 
-      test('(1) THE MODEL BIJECTION: one row per device, no more and no '
-          'less', () async {
+      test('(1) THE MODEL BIJECTION: every device is one row or one '
+          'materials unit, no more and no less (DR-213 §11.212.3)', () async {
+        // ONE ROW PER DEVICE until M6-F6. Passives are now listed by item
+        // under MATERIALS (DR-211, DR-213), so the bijection is over rows
+        // AND materials units together, and it is still a bijection: a
+        // device on neither list, or on both, fails here.
         final doc = documentOf(name);
         final list = buildEquipmentList(doc);
+        final byId = {for (final d in doc.devices.values) d.id: d};
 
         final modelled = doc.devices.values.map((d) => d.designator).toList()
           ..sort();
-        final rows = list.rows.map((r) => r.designator).toList()..sort();
+        final listed = [
+          ...list.rows.map((r) => r.designator),
+          for (final m in list.materials)
+            for (final id in m.deviceIds) byId[id]!.designator,
+        ]..sort();
 
-        expect(rows, modelled);
-        expect(list.rowCount, doc.devices.length);
+        expect(listed, modelled);
         // ...and every row belongs to exactly one group, which is the
-        // property that makes the two lists comparable at all.
+        // property that makes the lists comparable at all.
         expect(
-          list.groups.fold<int>(0, (n, g) => n + g.rows.length),
+          list.groups.fold<int>(0, (n, g) => n + g.rows.length) +
+              list.materials.fold<int>(0, (n, m) => n + m.qty),
           doc.devices.length,
         );
       });
 
-      test('(2) EVERY designator reaches INK on a T6.30 page', () async {
+      test('(2) EVERY active designator and EVERY materials item reaches '
+          'INK on a T6.30 page', () async {
         // The assertion a model-level check cannot make. A row that is
         // modelled, paginated off the end and never drawn passes (1) and
         // fails here — which is exactly why both exist.
+        //
+        // A PASSIVE IS LISTED BY ITEM, NOT BY DESIGNATOR (DR-211, DR-213),
+        // so its ink is its item and its WHERE, checked below.
         final doc = documentOf(name);
         final text = scheduleText((await exportOf(name)).bytes);
+        final list = buildEquipmentList(doc);
+        for (final m in list.materials) {
+          expect(
+            text,
+            contains(m.item),
+            reason: '${m.item} is not on the sheet',
+          );
+          expect(text, contains(m.whereText), reason: m.whereText);
+        }
+        final passive = {for (final m in list.materials) ...m.deviceIds};
 
         expect(
           text,
@@ -145,6 +168,7 @@ void main() {
               'below would be vacuous',
         );
         for (final device in doc.devices.values) {
+          if (passive.contains(device.id)) continue;
           expect(
             text,
             contains(device.designator),
@@ -307,12 +331,18 @@ void main() {
         final text = scheduleText((await exportOf(name)).bytes);
 
         for (final rack in doc.racks.values) {
-          final expected = doc.devices.values
+          final inRack = doc.devices.values
               .where((d) => hostRackOf(d, byId) == rack.id)
+              .toList();
+          final expected = inRack.length;
+          final expectedPassives = inRack
+              .where((d) => isPassiveDevice(d, doc.templates))
               .length;
+          // SINCE DR-213 the line reads `26 DEVICES + 5 PASSIVES (SEE
+          // MATERIALS)`, and the two together are the rack contents.
           final match = RegExp(
             '${RegExp.escape(rack.designator)}'
-            r' SUBTOTAL\s+(\d+)\s+DEVICE',
+            r' SUBTOTAL\s+(\d+)\s+DEVICES?(?:\s+\+\s+(\d+)\s+PASSIVE)?',
           ).firstMatch(text);
 
           expect(
@@ -320,8 +350,10 @@ void main() {
             isNotNull,
             reason: '${rack.designator} has no subtotal band in the ink',
           );
+          final passives = int.parse(match!.group(2) ?? '0');
+          expect(passives, expectedPassives, reason: rack.designator);
           expect(
-            int.parse(match!.group(1)!),
+            int.parse(match.group(1)!) + passives,
             expected,
             reason:
                 '${rack.designator}: T6.30 and the elevations must agree '

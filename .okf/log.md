@@ -3,12 +3,16 @@
 ## 2026-10-01 (ninety-sixth entry)
 
 * **Progress**: `#315` merged at `48febf3a` (PR 185); Story `#311` (M6-A) closed. M6-F6 (`#970`)
-  begun.
+  built: T6.30's passives become MATERIALS. docs/12 §4.28.
 * **Creation**: [DR-213](/decisions/dr-213-t6-30-subtotals-and-materials.md).
 * **Note**: **"NEEDS NO RULINGS" WAS WRONG, AND READING THE CODE SAID SO.** `#970` was described to
   the user as ready to build; T6.30's subtotals are summed from its rows and held equal to the chip
   strip by a test, so moving rows out forced a choice between agreeing with the other sheets and
   adding up. Read the code that consumes a change before promising it is mechanical.
+* **Note**: **A CHAINED COMMAND COMMITTED A HALF-RULING.** A generator's uniqueness assert fired and
+  the `;`-joined commands after it still staged and committed, so `bef8c94b` claimed DR-213 and
+  carried only two OKF lines; `e36484da` supplied the rest. Join steps that depend on each other with
+  `&&`, and look at `git show --stat` before pushing a docs commit.
 
 ## 2026-10-01 (ninety-fifth entry)
 

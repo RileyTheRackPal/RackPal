@@ -1039,7 +1039,14 @@ $SuiteFloors = @{
     # column for a small set; two and three sub-columns inside the column;
     # a narrow title keeps the face and the rack; a set three cannot hold
     # names what it omits; and the cover carries the index under its title.
-    'rackpal_core'   = 5240
+    # 5263 at `#970` (M6-F6, DR-213): +23 in derived/equipment_materials_test.dart.
+    # Per starter (five each, twenty): every device one row or one materials
+    # unit; the materials are exactly the passives; a rack subtotal equals
+    # computeRackRollups and counts its passives; the cover's count is
+    # T6.30's rows; a passive still joins through rowFor. Then one row per
+    # item and status with the WHERE split, the subtotal's wording on the
+    # sheet, and the MATERIALS band after the last rack.
+    'rackpal_core'   = 5263
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

@@ -22,9 +22,10 @@
 // in rack order, then one row naming how many more and the elevation
 // sheets that hold them, and the caller turns the shortfall into a notice.
 import 'package:meta/meta.dart';
-import 'package:rackpal_core/src/catalog/catalog_passive.dart' show kCatPassive;
 import 'package:rackpal_core/src/derived/device_loads.dart';
 import 'package:rackpal_core/src/derived/device_outlets.dart';
+import 'package:rackpal_core/src/derived/equipment_list.dart'
+    show isPassiveDevice;
 import 'package:rackpal_core/src/derived/totals.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
@@ -146,7 +147,9 @@ List<CoverRackRow> coverRackRows({
         var active = 0;
         for (final d in all) {
           if (!belongsToRack(d, rack.id, byId)) continue;
-          if (bodyFor(d, templates)?.category == kCatPassive) continue;
+          // THE SHARED PREDICATE: T6.30 lists by the same one, so the
+          // cover's count and T6.30's rows cannot disagree (DR-213).
+          if (isPassiveDevice(d, templates)) continue;
           active++;
         }
         return CoverRackRow(

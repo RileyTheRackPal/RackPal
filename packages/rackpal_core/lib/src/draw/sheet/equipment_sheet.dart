@@ -66,8 +66,16 @@ import 'package:rackpal_core/src/units/unit_formatter.dart';
 
 /// What the sheet says about the schedules it does NOT carry. See the file
 /// header.
+///
+/// "EQUIPMENT ONLY" until M6-F6: the sheet now also lists the rack
+/// materials (DR-213), so the note says what it carries and what it does
+/// not.
 const String kEquipmentScopeNote =
-    'EQUIPMENT ONLY. CABLE AND POWER SCHEDULES NOT ISSUED IN THIS SET.';
+    'EQUIPMENT AND RACK MATERIALS. CABLE AND POWER SCHEDULES NOT ISSUED IN '
+    'THIS SET.';
+
+/// The MATERIALS section's band (DR-213 §11.212.2).
+const String kMaterialsBandTitle = 'MATERIALS';
 
 /// What a group band gains when it is re-emitted after a page break.
 const String kContinuationSuffix = ' (cont.)';
@@ -221,11 +229,22 @@ final class ScheduleBand extends ScheduleItem {
 /// One device.
 @immutable
 final class ScheduleRow extends ScheduleItem {
-  const ScheduleRow({required this.cells, required this.noteLines});
+  const ScheduleRow({
+    required this.cells,
+    required this.noteLines,
+    this.span,
+  });
 
   /// The thirteen cell strings, in [EquipmentColumn] order, already
   /// measured-and-truncated.
   final List<String> cells;
+
+  /// A materials row's `WHERE`, already fitted, drawn ACROSS the RU, RACK,
+  /// LOCATION and FACE columns, whose own cells it replaces. `RK-1 × 3,
+  /// RK-2 × 1` fits no single one of them, and those four are the columns
+  /// that say where an equipment row is, so the header above still reads
+  /// true. Null on an equipment row.
+  final String? span;
 
   /// The NOTES column's wrapped lines, 0..[kMaxNoteLines].
   final List<String> noteLines;
@@ -290,6 +309,16 @@ List<SchedulePage> paginateEquipmentList({
         for (final row in group.rows) _row(row, measurer, units),
       ])
       ..add(ScheduleSubtotal(_subtotalText(group, units)));
+  }
+  // THE MATERIALS, AFTER THE LAST GROUP (DR-213 §11.212.2). A band like a
+  // rack's, so a page break inside it re-emits `MATERIALS (cont.)` through
+  // the same logic.
+  if (list.materials.isNotEmpty) {
+    flat
+      ..add(const ScheduleBand(title: kMaterialsBandTitle, continued: false))
+      ..addAll(<ScheduleItem>[
+        for (final row in list.materials) _materialsRow(row, measurer, units),
+      ]);
   }
 
   final pages = <SchedulePage>[];
@@ -548,7 +577,22 @@ List<DiagramOp> _dataRow(
   var x = area.left;
   for (var i = 0; i < EquipmentColumn.values.length; i++) {
     final column = EquipmentColumn.values[i];
-    final text = column == EquipmentColumn.notes ? '' : row.cells[i];
+    final spanned = row.span != null && _spanColumns.contains(column);
+    if (spanned && column == _spanColumns.first) {
+      ops.add(
+        OpText(
+          row.span!,
+          DPt(x + _kCellPad, y + kScheduleRowHeight / 2),
+          TextStyleSpec(
+            font: kSheetFont,
+            sizePt: kSchedulePt,
+            argb: palette.text,
+            anchor: TextAnchor.midLeft,
+          ),
+        ),
+      );
+    }
+    final text = column == EquipmentColumn.notes || spanned ? '' : row.cells[i];
     if (text.isNotEmpty) {
       ops.add(
         OpText(
@@ -626,6 +670,73 @@ List<DiagramOp> _subtotal(
   ];
 }
 
+/// The columns a materials row's `WHERE` spans, left to right.
+const List<EquipmentColumn> _spanColumns = <EquipmentColumn>[
+  EquipmentColumn.ru,
+  EquipmentColumn.rack,
+  EquipmentColumn.location,
+  EquipmentColumn.face,
+];
+
+/// One MATERIALS line (DR-213 §11.212.2), on the equipment grid so the
+/// page's header reads true above it: QTY, MANUFACTURER, MODEL,
+/// DESCRIPTION (the item), MASS and DRAW (totals for the quantity),
+/// LIFECYCLE, and `WHERE` across RU to FACE. No designator: an item, not
+/// a device.
+ScheduleRow _materialsRow(
+  MaterialsRow row,
+  TextMeasurer measurer,
+  UnitSystem units,
+) {
+  TextStyleSpec style(EquipmentColumn c) => TextStyleSpec(
+    font: kSheetFont,
+    sizePt: kSchedulePt,
+    argb: 0xFF000000,
+    anchor: c._anchor,
+  );
+  String fit(EquipmentColumn c, String text) => fitTextToWidth(
+    text,
+    c.width - 2 * _kCellPad,
+    style: style(c),
+    measurer: measurer,
+  );
+  final cells = <String>[
+    for (final c in EquipmentColumn.values)
+      fit(c, switch (c) {
+        EquipmentColumn.qty => '${row.qty}',
+        EquipmentColumn.designator => '',
+        EquipmentColumn.manufacturer => row.manufacturer ?? kUnknownCell,
+        EquipmentColumn.model => row.model ?? kUnknownCell,
+        EquipmentColumn.description => row.item,
+        EquipmentColumn.mass => _rollupCell(
+          row.mass.value == null || row.mass.unknownCount > 0
+              ? null
+              : _mass(row.mass.value, units),
+        ),
+        EquipmentColumn.draw => _rollupCell(
+          row.apparentVA.unknownCount > 0 ? null : '${row.apparentVA.value}',
+        ),
+        EquipmentColumn.lifecycle => lifecycleLabel(row.lifecycleStatus),
+        _ => '',
+      }),
+  ];
+  final spanWidth = _spanColumns.fold<double>(0, (w, c) => w + c.width);
+  return ScheduleRow(
+    cells: List.unmodifiable(cells),
+    noteLines: const <String>[],
+    span: fitTextToWidth(
+      row.whereText,
+      spanWidth - 2 * _kCellPad,
+      style: style(EquipmentColumn.ru),
+      measurer: measurer,
+    ),
+  );
+}
+
+/// A materials total with ANY unknown in it prints the unknown mark: a
+/// partial sum in a per-row cell would read as the whole (G4).
+String _rollupCell(String? value) => value ?? kUnknownCell;
+
 /// The cells for one device, measured and truncated to their columns.
 ScheduleRow _row(
   EquipmentRow row,
@@ -700,7 +811,16 @@ String _subtotalText(EquipmentGroup group, UnitSystem units) {
       ? kUnplacedGroupTitle
       : group.title.split(' · ').first;
   final devices = group.rows.length;
-  return '$label SUBTOTAL   $devices DEVICE${devices == 1 ? '' : 'S'}   '
+  // THE WHOLE RACK, AND IT SAYS SO (DR-213 §11.212.1): the weight and VA
+  // count the passives listed under MATERIALS, so the figure equals the
+  // cover's strip and the elevation gutter, and this line is why the rows
+  // above it sum to less.
+  final passives = group.passiveCount == 0
+      ? ''
+      : ' + ${group.passiveCount} PASSIVE${group.passiveCount == 1 ? '' : 'S'}'
+            ' (SEE MATERIALS)';
+  return '$label SUBTOTAL   $devices DEVICE${devices == 1 ? '' : 'S'}'
+      '$passives   '
       '${formatMassRollup(group.mass, units)}   '
       '${formatIntRollup(group.apparentVA, 'VA')}';
 }
