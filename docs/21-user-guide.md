@@ -1203,9 +1203,9 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 - **No localisation.** English only, and no accessibility work has been done
   beyond keyboard reach.
 - **The interconnect sheets do not print.** You can author the schematic in
-  full and it will not appear in the PDF. Nor do the cover sheet, the
-  exceptions sheet, the pull sheet, the termination schedule, the unused home
-  runs sheet or the pinout details; §21.7 lists the sheets you do get.
+  full and it will not appear in the PDF. Nor do the pull sheet, the
+  termination schedule, the unused home runs sheet or the pinout details;
+  §21.7 lists the sheets you do get.
 - **No DXF or DWG export.** DXF is planned for a later release.
 - **No Rear Panel view.** `Ctrl+3` does nothing; it is reserved for it. The
   rear panel prints on the rear elevation today; it is just not interactively
