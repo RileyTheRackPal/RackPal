@@ -531,13 +531,15 @@ J-STD-710 symbol geometry becomes constants: distinctive shapes inside a 3/8 in 
 
 ### 5.5 Cover sheet `T0.00`
 
-ANSI B landscape, first in every set (DR-210 §11.209.1). **Left**: the project block (project
-name, client, site address, drawing number, current revision and issue date), the scope paragraph
-when one is written, the integrator block, and the sign-off line `DRAWN · CHECKED · APPROVED`
+ANSI B landscape, first in every set (DR-210 §11.209.1). **Left**: the project block (project name,
+client, site address, drawing number, current revision and issue date), the scope paragraph when
+one is written, the integrator block, and the sign-off line `DRAWN · CHECKED · APPROVED`
 (§11.209.3). **Right**: the drawing index, a full-height column, generated after the sheet list
-resolves (§2.2). **Foot**: the rack summary strip. The title and revision blocks sit bottom-right as
-on every sheet. Every field is edited in `File ▸ Sheet set…` (DR-209, DR-210 §11.209.2), and an
-empty optional line collapses (§5.2).
+resolves (§2.2). **Foot**: the rack summary strip (DR-211): per rack, designator, size, active
+device count (passives excluded, §11.210.3), RU used per face (`F 31 · R 19`), weight, VA and
+BTU/hr, each with its unknown count; racks past what fits are named in one closing row and a
+notice. The title and revision blocks sit bottom-right as on every sheet. Every field is edited in
+`File ▸ Sheet set…` (DR-209, DR-210 §11.209.2), and an empty optional line collapses (§5.2).
 
 ---
 

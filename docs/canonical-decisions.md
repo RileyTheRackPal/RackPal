@@ -23015,6 +23015,45 @@ the same fact on the wire.
 
 ---
 
+### 11.210 DR-211 · The cover's rack strip, and passives leave the equipment list
+
+**Settled by the user on 2026-10-01, building M6-A2 (`#313`).** docs/08 §2.2 gives the strip's
+columns as designator, `heightU`, device count, populated RU, total mass and total draw, each with
+an unknown count, and leaves open which draw, which face, which devices and what happens when racks
+outnumber the space. Two answers reached further than the strip and are ruled here as well.
+
+**11.210.1 RULED: POWER IS VA AND BTU/HR.** Apparent power for circuit sizing (CR-056) and heat
+from typical watts (AC-039), the two figures each elevation's load gutter already prints, so the
+cover agrees with T2.xx to the digit. The option not taken was VA alone.
+
+**11.210.2 RULED: POPULATED RU IS SHOWN PER FACE**, `F 31 · R 19`, as `computeRackRollups` counts
+it (docs/04 §5). The option not taken was the front face alone.
+
+**11.210.3 RULED, IN THE USER'S WORDS: "Leave out passives from an equipment list, but note them on
+the BOM."** The cover's device count is active equipment. Passive is **the catalog's whole `Passive
+& Mechanical` category** (blanks, vent panels, shelves, lacing bars, cable management), chosen over
+excluding shelves and over adding patch panels. **The ruling reaches T6.30**, the user's choice over
+applying it to the cover alone: the equipment table drops passive rows and the materials section,
+which AC-055 makes the set's BOM, lists them by type. That is M6-F6 (`#970`), so the cover's count
+and T6.30's rows agree again.
+
+**11.210.4 RULED: A STRIP TOO LONG IS CAPPED AND SAYS SO.** The racks that fit print in rack order,
+then one row naming how many more and which elevations hold them, and the export carries a notice.
+The option not taken was shrinking the text, which falls under the 6 pt floor past about 25 racks.
+
+**11.210.5 RULED: THE SEED CATALOG STATES A PASSIVE'S POWER AS ZERO.** Measured on the four
+starters before the strip was built: Whole House's power read `≥ 2490 VA (10 unknown)`, and five of
+the ten were vent panels, a blank and a shelf whose `PowerProfile` the catalog left empty. A blank
+panel drawing nothing is a measured zero, which G4 permits. The seed's passive entries state 0 W
+and 0 VA and the starters regenerate; a project already saved keeps its own template snapshots until
+they are refreshed. The options not taken were a rollup rule skipping passives, which infers a zero
+from a category, and leaving the counts as they were.
+
+**Scope.** No v1 scope change: docs/08 §2.2's rows 1 and 7, made definite. M6-F6 is a new Chapter
+inside M6-F's existing T6.30 scope.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

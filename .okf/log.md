@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-10-01 (ninety-fourth entry)
+
+* **Progress**: `#312` merged at `d96b822c` (PR 182). M6-A2 (`#313`) begun; M6-F6 (`#970`) filed.
+* **Creation**: [DR-211](/decisions/dr-211-cover-rack-strip-and-passives.md).
+* **Note**: **MEASURE THE STARTERS BEFORE OFFERING A STRIP.** A probe of the four starters' rollups
+  showed half of Whole House's unknown power contributors were steel panels. Without it the
+  question about passives would have been asked as a counting nicety, and the strip would have
+  shipped telling a client half the rack was unspecified.
+
 ## 2026-10-01 (ninety-third entry)
 
 * **Progress**: `#969` merged at `7e7d745f` (PR 181); Story `#316` (M6-B) closed. M6-A (`#311`)
