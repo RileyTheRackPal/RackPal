@@ -1082,7 +1082,11 @@ $SuiteFloors = @{
     # the PDF with all ten named types in ink, and a starter's own family.
     # 232 at `#312` (M6-A1): +1 in cover_export_test.dart, T0.00 is sheet 1
     # of a real starter and prints the project and the sign-off in ink.
-    'rackpal_export' = 232
+    # 238 at `#315` (M6-A4): +6 in auto_sheet_absent_test.dart. On every
+    # starter the cover's index and the file's pages are the same set of
+    # sheet ids, both directions (four); a floorplan with nothing pinned
+    # emits no T1 page or row, and one pin brings both back.
+    'rackpal_export' = 238
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

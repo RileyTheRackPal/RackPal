@@ -4,6 +4,10 @@
 
 * **Progress**: `#313` merged at `86f4372d` (PR 183). M6-A3 (`#314`) built: the drawing index.
   docs/12 §4.27.
+* **Progress**: M6-A4 (`#315`) built; Story `#311` (M6-A) closed.
+* **Note**: **WHEN A TICKET NAMES A SHEET THAT DOES NOT EXIST, TEST THE CLASS.** `#315` asked that
+  T6.20 be absent; T6.20 is not built, so that assertion was vacuous. The index-equals-pages check
+  on every starter covers it, and every later AUTO sheet, with no new test.
 * **Note**: **RENDER THE STRESS CASE, NOT ONLY THE STARTER.** Whole House's six-sheet index was
   right on the first render. A 131-sheet set took three more passes, and every defect it showed was
   in the narrow layout no starter reaches.

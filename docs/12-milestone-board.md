@@ -1461,6 +1461,15 @@ exists to carry. The fixes are per-sub-column widths that a range row may not di
 per role (`FRONT ELEV.`) used only where the full title does not fit, truncation that gives way from
 the role and never from the rack, and a full-width closing line. Each is held by a test.
 
+**CHAPTER `#315` (M6-A4): AN ABSENT AUTO SHEET IS ABSENT FROM THE FILE AND THE INDEX.** The ticket
+names T6.20, which is M6-E and not a `SheetRole` yet, so its literal assertion would have passed over
+a sheet that cannot be emitted. It tests the class instead, on real PDFs: on every starter the
+cover's index and the file's pages are the same set of `SHEET NO.` ids, in both directions, so
+T6.20, T5.01 and T6.50 are covered the day each lands as AUTO; and the AUTO sheet that exists today,
+`T1.01`, is absent from both when a floorplan carries no pin and present in both after one. **Proved
+by mutation**: an index that lists a T6.20 the file lacks fails all four starters. M6-A's four
+Chapters are done, and `#311` closes.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
