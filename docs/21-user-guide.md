@@ -1152,7 +1152,7 @@ floorplan import.
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |
 | **Rack Elevation, Rear** | One per rack |
-| **Equipment List and Materials** | Always, paginated as needed |
+| **Equipment List and Materials** | Always, paginated as needed. One row per device, grouped by rack. Blanks, vents, shelves and other passives are not equipment rows: they are listed once each by item under **MATERIALS** at the end, with how many and which racks they are in. Each rack's subtotal still includes them, and says so |
 
 **Your own abbreviations and notes.** `File` ▸ `Sheet set…` lists the legend's
 abbreviations and general notes as rows. Change a row, add one with `Add

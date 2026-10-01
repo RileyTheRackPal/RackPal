@@ -107,12 +107,6 @@ List<PlanScheduleRow> planScheduleFor(
   final pins = planPinsFor(doc, underlayId);
   final labels = planPinLabelsFor(doc, pins);
 
-  // ONE LOOKUP BUILT ONCE. `EquipmentList.rows` is a list and a row per
-  // pinned device would otherwise be a linear scan inside a loop.
-  final byDevice = <String, EquipmentRow>{
-    for (final row in equipment.rows) row.deviceId.v: row,
-  };
-
   final out = <PlanScheduleRow>[];
   for (final pin in pins) {
     // A CARRIER WITH NO DESIGNATOR HAS NO ROW, because it has no callout
@@ -138,7 +132,9 @@ List<PlanScheduleRow> planScheduleFor(
         doc,
         doc.devices[pin.entityId]!,
         reference,
-        byDevice[pin.entityId.v],
+        // `rowFor`, not the listed rows: since DR-213 a passive is not
+        // a listed row, and a pinned one still has the list's values.
+        equipment.rowFor(pin.entityId),
       ),
     });
   }

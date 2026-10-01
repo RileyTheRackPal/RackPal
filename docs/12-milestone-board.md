@@ -1470,6 +1470,28 @@ T6.20, T5.01 and T6.50 are covered the day each lands as AUTO; and the AUTO shee
 by mutation**: an index that lists a T6.20 the file lacks fails all four starters. M6-A's four
 Chapters are done, and `#311` closes.
 
+
+### 4.28 T6.30's passives become MATERIALS · 2026-10-01 · `#970` · `DR-211`, `DR-213` · no version move
+
+M6-F6. In the user's words from DR-211, *"leave out passives from an equipment list, but note them
+on the BOM"*. **Described to the user as needing no rulings, and it needed two**: T6.30's subtotals
+were summed from its rows and held equal to the chip strip by a test, so moving rows out forced a
+choice between agreeing with the other sheets and adding up (DR-213: the whole rack, and the line
+says so); and where the materials go (one list at the end, with a `WHERE` split).
+
+`isPassiveDevice` is now the one predicate, read by T6.30 and the cover's strip alike. A passive's
+row values are still built, so the subtotal and the plan schedule's join (`rowFor`) see it; only its
+listing moves. `MaterialsRow` is one per item and status, ordered by DR-206's lifecycle sections, on
+the equipment grid so every page's header reads true, with `WHERE` drawn across RU to FACE.
+
+**THE BIJECTION TEST'S ADDRESS WAS WRONG.** `equipment_list.dart` said its starter bijection lived in
+`equipment_list_test.dart`; that one is synthetic with no passive, so the change left
+`rackpal_core`'s whole suite green and only `rackpal_export`'s `starters_export_test.dart` failed. Its
+three cases were restated to DR-213 rather than loosened (rows plus materials units; active
+designators and every materials item in ink; `DEVICES + PASSIVES` against the document), and a model
+form now sits in core too, proved by a mutation that drops vent panels from the materials.
+**Looked at**: Small Office's T6.30, where the render also showed the scope note's first letter on
+the frame line, which `main` already does and which is filed separately.
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

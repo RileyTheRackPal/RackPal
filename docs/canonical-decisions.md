@@ -23082,6 +23082,32 @@ index sheet, which would make the set's sheet count depend on the index's own si
 
 ---
 
+### 11.212 DR-213 · T6.30's subtotals stay whole-rack, and the materials are one list
+
+**Settled by the user on 2026-10-01, building M6-F6 (`#970`), on the recommended option both
+times.** DR-211 §11.210.3 moved passives off T6.30's equipment rows and into its materials section.
+Two consequences were left open, and building the move found both.
+
+**11.212.1 RULED: A RACK'S SUBTOTAL IS THE WHOLE RACK, AND SAYS SO.** Weight and VA still count the
+passives, so the subtotal equals the cover's rack strip and the elevation's load gutter, which a
+test has held equal to `computeRackRollups` since M1. The line names what it includes:
+`26 DEVICES + 5 PASSIVES (SEE MATERIALS)`. The rows above it then sum to less than it, and the line
+is why. The option not taken summed the rows alone, giving one rack two weights in one set.
+
+**11.212.2 RULED: THE MATERIALS ARE ONE LIST AT THE END.** A `MATERIALS` section after the last
+rack band: one row per item and lifecycle status, the total quantity, the manufacturer and model,
+and a `WHERE` column with the split by rack (`RK-1 × 3, RK-2 × 1`). M6-F's cable and hardware
+rollups join this section. The option not taken put a passives block under each rack.
+
+**11.212.3 THE EXIT CRITERION'S BIJECTION, RESTATED RATHER THAN DROPPED.** T6.30 has carried "every
+device in exactly one row" since M1. It becomes: every device is exactly one equipment row or exactly
+one unit of one materials row, so nothing in the document is missing from the sheet or counted
+twice, and the starter test asserts that form.
+
+**Scope.** No scope change: DR-211 §11.210.3, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
