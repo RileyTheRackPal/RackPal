@@ -23108,6 +23108,45 @@ twice, and the starter test asserts that form.
 
 ---
 
+### 11.213 DR-214 · T0.02 leads with the project-wide exceptions, then errors first, and keeps every signed reason
+
+**Settled by the user on 2026-10-01, building M6-C (`#322`), on the recommended option four times.**
+docs/08 §2.2 rules what `T0.02` carries (every open finding with rule, severity and locus; every
+acknowledgement with reason, author and date; emitted even when empty) and not its order. Measured
+first on the starters: Whole House opens with 39 findings, 15 of them errors, and messages run to
+about 140 characters; the other three carry two to five warnings; no starter holds an
+acknowledgement or a rule override.
+
+**11.213.1 RULED: PROJECT-WIDE EXCEPTIONS COME FIRST**, in their own section: every
+`ProjectSettings.ruleOverrides` entry (the rule, its catalogue severity and what it is in this
+project) and every project-wide `"*"` mute, each with its mandatory reason, author and date. A
+reviewer meets a silenced rule before reading a list it no longer contributes to. The option not
+taken put them last.
+
+**11.213.2 RULED: OPEN FINDINGS ARE BANDED BY SEVERITY, ERRORS FIRST**, each row carrying severity,
+rule, locus and message; the locus is its own column so a reader in a rack room can find the thing
+(`#323`). Within a band the order is `evaluateDocument`'s, which `groupFindings` already refuses to
+re-sort. The option not taken banded by location.
+
+**11.213.3 RULED: ACKNOWLEDGED FINDINGS ARE THEIR OWN SECTION**, after the open ones, adding reason,
+author and date. The option not taken marked them inline.
+
+**11.213.4 RULED: AN ACKNOWLEDGEMENT THAT OUTLIVED ITS FINDING STILL PRINTS**, at the end of the
+acknowledged section, marked `NO LONGER OCCURS`: docs/08 says *every* `AckedFinding`, and a signed
+reason that silently left the deliverable cannot be told from one deleted to hide it. The option not
+taken printed live acknowledgements only.
+
+**11.213.5 DECIDED WITHOUT A QUESTION, AND SAID SO.** A set too long for one sheet continues on
+`T0.03`, `T0.04` and on, as `T6.30` continues to `T6.31`; the set resolves the page count before
+anything renders, as the equipment list's does. An empty section says so in words, and an empty
+sheet says that the checks ran and when (`#325`): *"No open exceptions"* is a claim, and the sheet
+states the basis for it. Every join goes through `acknowledgementFor` and the findings
+`evaluateDocument` returns, as DR-111 §11.110.3 binds.
+
+**Scope.** No scope change: docs/08 §2.2's row 3, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

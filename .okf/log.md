@@ -1,5 +1,10 @@
 # Update Log
 
+## 2026-10-01 (ninety-seventh entry)
+
+* **Progress**: `#970` merged at `68adde0d` (PR 186). M6-C (`#322`) begun.
+* **Creation**: [DR-214](/decisions/dr-214-t0-02-exceptions.md).
+
 ## 2026-10-01 (ninety-sixth entry)
 
 * **Progress**: `#315` merged at `48febf3a` (PR 185); Story `#311` (M6-A) closed. M6-F6 (`#970`)
