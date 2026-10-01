@@ -139,11 +139,19 @@ void main() {
         _underlay(),
       ]);
 
-      // FIRST AFTER T0.01, which opens every set (M6-B).
-      expect(set.sheets[1].role, SheetRole.devicePlan);
+      // FIRST AFTER T0.00 AND T0.01, which open every set (M6-A, M6-B).
+      expect(set.sheets[2].role, SheetRole.devicePlan);
       expect(
         set.sheets.map((s) => s.ncsId),
-        orderedEquals(['T0.01', 'T1.01', 'T1.02', 'T2.01', 'T2.02', 'T6.30']),
+        orderedEquals([
+          'T0.00',
+          'T0.01',
+          'T1.01',
+          'T1.02',
+          'T2.01',
+          'T2.02',
+          'T6.30',
+        ]),
       );
     });
 
@@ -169,13 +177,16 @@ void main() {
 
       expect(
         set.total,
-        5,
-        reason: 'the legend, one plan, two elevations, one list',
+        6,
+        reason: 'the cover, the legend, one plan, two elevations, one list',
       );
       for (final sheet in set.sheets) {
-        expect(sheet.total, 5);
+        expect(sheet.total, 6);
       }
-      expect(set.sheets.map((s) => s.index), orderedEquals([1, 2, 3, 4, 5]));
+      expect(
+        set.sheets.map((s) => s.index),
+        orderedEquals([1, 2, 3, 4, 5, 6]),
+      );
     });
 
     test('a plan sheet carries its underlay identity and no rack', () {

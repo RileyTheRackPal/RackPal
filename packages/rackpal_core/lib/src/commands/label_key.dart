@@ -545,6 +545,12 @@ enum LabelKey {
   // notes changed.
   setLegendNotes,
 
+  // THE TITLE BLOCK AND THE COVER (commands/sheet_set_commands.dart),
+  // `#312`, DR-210. One value for every field, on `setProjectSetting`'s
+  // reasoning: one typed write to one field is one act, and seventeen keys
+  // would make the Edit menu name a storage slot rather than an act.
+  setProjectInfo,
+
   // LATERAL POSITION (commands/device_width_commands.dart), M5-C/`#269`.
   // Its own value and not `moveDevice`, on the split every value here is
   // made on: what the Edit menu has to say. A move changes which U a

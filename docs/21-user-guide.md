@@ -275,6 +275,18 @@ While the Device Builder is showing (§21.5.3), `Ctrl+Z` and the `Edit` menu
 act on the template you are editing instead, and hand back to the project the
 moment you leave it.
 
+#### Sheet set: the title block your PDF prints
+
+`File` ▸ `Sheet set…` holds what the drawing set prints about the job rather than
+how it is modelled. **Title block**: project name and number, drawing number, the
+client and site address, your company, contact and licence number, and who drew,
+checked and approved the set. These print in the title block on every sheet
+(approved by prints on the cover). **Cover**: one paragraph saying what the job is.
+**Legend**: the abbreviations and general notes (§21.7). A field saves when you
+leave it or press Enter, and each change can be undone from `Edit`. Leave a field
+empty and its line is left off the sheet; the project name is the exception, and
+clearing it is refused, because it heads every sheet.
+
 #### Project settings: set these before you place anything
 
 `File` ▸ `Project settings…` holds the conventions that travel with the file.
@@ -1135,7 +1147,8 @@ floorplan import.
 
 | Sheet | When |
 |---|---|
-| **Symbol Legend** (`T0.01`) | Always, first. Every cable type in colour and in greyscale side by side (the ten named types every time, then any other type your cables use); the device marks and plan markers in your set; an annotated device block; the border and hatch conventions; your ID formats worked through; abbreviations and general notes, which you can change in `File` ▸ `Sheet set…`. Every other sheet says `SYMBOL LEGEND: SEE SHEET T0.01` |
+| **Cover** (`T0.00`) | Always, first. The project name, client and site, drawing number, revision and issue date, your scope paragraph, your company, and who drew, checked and approved the set, all from `File` ▸ `Sheet set…`. The drawing index arrives in a later build |
+| **Symbol Legend** (`T0.01`) | Always, second. Every cable type in colour and in greyscale side by side (the ten named types every time, then any other type your cables use); the device marks and plan markers in your set; an annotated device block; the border and hatch conventions; your ID formats worked through; abbreviations and general notes, which you can change in `File` ▸ `Sheet set…`. Every other sheet says `SYMBOL LEGEND: SEE SHEET T0.01` |
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |
 | **Rack Elevation, Rear** | One per rack |
@@ -1149,7 +1162,7 @@ and `Restore defaults` puts it back. The signal tag prefixes (`AUD`, `NET` and s
 on) always follow your abbreviations and are not edited here. A long note wraps
 on the sheet.
 
-So a two-rack job with one floorplan gives you seven sheets. The status line says
+So a two-rack job with one floorplan gives you eight sheets. The status line says
 how many sheets were written and how large the file is.
 
 **A project with no rack cannot be exported**: there is no elevation to draw

@@ -241,8 +241,8 @@ void main() {
       });
 
       test(
-        '(5) the sheet set is the legend + 2N + schedule pages, numbered i '
-        'OF n',
+        '(5) the sheet set is the cover + the legend + 2N + schedule '
+        'pages, numbered i OF n',
         () async {
           final doc = documentOf(name);
           final exported = await exportOf(name);
@@ -260,8 +260,8 @@ void main() {
           );
           expect(
             exported.sheetCount,
-            // + 1 for T0.01, which opens every set since M6-B.
-            1 +
+            // + 2 for T0.00 and T0.01, which open every set since M6-A.
+            2 +
                 doc.racks.length * 2 +
                 RegExp(r'SHEET NO\.\s+T6\.3').allMatches(text).length,
           );

@@ -1,14 +1,19 @@
-// File ▸ Sheet set… (`#969`, DR-209 §11.208).
+// File ▸ Sheet set… (`#969` DR-209 §11.208, `#312` DR-210 §11.209).
 //
 // ═══════════════════════════════════════════════════════════════════════
 // WHAT THE DRAWING SET'S FRONT PAGES PRINT, AND NOTHING ELSE
 // ═══════════════════════════════════════════════════════════════════════
 // Project settings is modelling defaults: units, RU numbering, designator
-// formats. This is deliverable prose, the words a client reads on T0.01
-// and, when M6-A1 lands, on the title block and the cover. The user chose
-// a dialog of its own over a section at the foot of Project settings, and
-// the fact that priced it is that NOTHING writes `ProjectInfo` yet: the
-// title block needs an editor whichever way this went.
+// formats. This is deliverable prose, the words a client reads in the
+// title block, on the cover and on T0.01. The user chose a dialog of its
+// own over a section at the foot of Project settings, and the fact that
+// priced it was that NOTHING wrote `ProjectInfo`: the title block every
+// sheet prints had no editor until `#312` put it here.
+//
+// ── THE TITLE BLOCK, GROUPED AS PRINTED (§11.209.2) ─────────────────────
+// Project, Client and site, Integrator, Sign-off, from
+// `ProjectInfoFields.groups`, then the cover's scope paragraph, then the
+// legend. A field commits when it is left, like a legend row.
 //
 // ── ROWS, NOT A TEXT BOX (§11.208.3) ────────────────────────────────────
 // One row per abbreviation and one per note, each removable, with an add
@@ -63,6 +68,14 @@ Key noteFieldKey(int row) => Key('sheet-set-note-$row');
 
 /// The remove control on note [row].
 Key removeNoteKey(int row) => Key('sheet-set-note-remove-$row');
+
+/// The text field for one title-block or cover field (`#312`).
+Key projectInfoFieldKey(ProjectInfoField field) =>
+    Key('sheet-set-info-${field.key}');
+
+/// What a cleared project name says (DR-210 §11.209.4).
+const String kProjectNameRequired =
+    'A project needs a name: it heads every sheet.';
 
 /// Opens the sheet set editor over [doc].
 Future<void> showSheetSetDialog(
@@ -127,6 +140,7 @@ class _SheetSetDialogState extends State<_SheetSetDialog> {
   @override
   void dispose() {
     _clearDrafts();
+    _disposeInfo();
     super.dispose();
   }
 
@@ -228,6 +242,93 @@ class _SheetSetDialogState extends State<_SheetSetDialog> {
   bool get _isSeeded =>
       _info.legendAbbreviations == null && _info.legendNotes == null;
 
+  // ── the title block and the cover (#312, DR-210) ─────────────────────
+
+  late final Map<ProjectInfoField, TextEditingController> _infoText = {
+    for (final f in ProjectInfoFields.all)
+      f: TextEditingController(text: f.get(_info) ?? ''),
+  };
+
+  late final Map<ProjectInfoField, FocusNode> _infoFocus = {
+    for (final f in ProjectInfoFields.all)
+      f: FocusNode()
+        ..addListener(() {
+          if (!(_infoFocus[f]?.hasFocus ?? true)) _commitInfo();
+        }),
+  };
+
+  /// The refusal on screen, for the one field that may not be blank.
+  String? _nameError;
+
+  void _disposeInfo() {
+    for (final c in _infoText.values) {
+      c.dispose();
+    }
+    for (final f in _infoFocus.values) {
+      f.dispose();
+    }
+  }
+
+  /// One command per field whose text differs from what the document
+  /// holds, compared as the command will store it (trimmed, blank as
+  /// null), so clicking in and out of a field sends nothing.
+  ///
+  /// **A BLANK PROJECT NAME IS REFUSED HERE, WITH A REASON** (§11.209.4):
+  /// the field gets its stored name back and says why.
+  void _commitInfo() {
+    if (!mounted) return;
+    final commands = <Command<RackDocument>>[];
+    for (final MapEntry(key: field, value: text) in _infoText.entries) {
+      final cmd = SetProjectInfoCommand.to(_info, field, text.text);
+      if (cmd.stored == field.get(_info)) continue;
+      if (field.required && cmd.stored == null) {
+        text.text = field.get(_info) ?? '';
+        setState(() => _nameError = kProjectNameRequired);
+        continue;
+      }
+      commands.add(cmd);
+    }
+    if (commands.isEmpty) return;
+    widget.onEdit(commands);
+    setState(() => _nameError = null);
+  }
+
+  Widget _infoRow(ProjectInfoField f) => Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 140,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: Text(f.label),
+          ),
+        ),
+        Expanded(
+          child: TextField(
+            key: projectInfoFieldKey(f),
+            controller: _infoText[f],
+            focusNode: _infoFocus[f],
+            // THE SCOPE WRAPS ON SCREEN AND ENTER STILL SAVES, as a legend
+            // note does: it is one paragraph on the cover.
+            maxLines: f.multiline ? null : 1,
+            minLines: f.multiline ? 3 : 1,
+            keyboardType: TextInputType.text,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _commitInfo(),
+            onTapOutside: (_) => _commitInfo(),
+            decoration: InputDecoration(
+              isDense: true,
+              errorText: f.required ? _nameError : null,
+              errorMaxLines: 2,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -242,12 +343,15 @@ class _SheetSetDialogState extends State<_SheetSetDialog> {
       // A FIELD STILL BEING TYPED IN IS SAVED ON CLOSE, by `Esc` or by the
       // button: neither moves focus first, so without this the last edit
       // would vanish with the dialog.
-      onPopInvokedWithResult: (didPop, _) => _commit(),
+      onPopInvokedWithResult: (didPop, _) {
+        _commitInfo();
+        _commit();
+      },
       child: AlertDialog(
         title: const Text('Sheet set'),
         content: SizedBox(
           width: 640,
-          height: 520,
+          height: 600,
           child: ListView(
             key: kSheetSetListKey,
             children: [
@@ -257,6 +361,30 @@ class _SheetSetDialogState extends State<_SheetSetDialog> {
                 style: caption,
               ),
               const SizedBox(height: 16),
+              // ── the title block, grouped as printed (§11.209.2) ──────
+              Text('Title block', style: theme.textTheme.titleSmall),
+              Text(
+                'Printed on every sheet. Approved by prints on the cover.',
+                style: caption,
+              ),
+              for (final (group, fields) in ProjectInfoFields.groups) ...[
+                Padding(
+                  padding: const EdgeInsets.only(top: 12, bottom: 4),
+                  child: Text(group, style: theme.textTheme.labelLarge),
+                ),
+                for (final f in fields) _infoRow(f),
+              ],
+              const Divider(height: 32),
+              // ── the cover (T0.00) ──────────────────────────────────────
+              Text('Cover (T0.00)', style: theme.textTheme.titleSmall),
+              Text(
+                'One paragraph saying what the job is. Leave it empty and '
+                'the cover prints no scope at all.',
+                style: caption,
+              ),
+              const SizedBox(height: 8),
+              _infoRow(ProjectInfoFields.scopeNarrative),
+              const Divider(height: 32),
               Text(
                 'Legend (T0.01): abbreviations',
                 style: theme.textTheme.titleSmall,

@@ -3,7 +3,9 @@
 ## 2026-10-01 (ninety-third entry)
 
 * **Progress**: `#969` merged at `7e7d745f` (PR 181); Story `#316` (M6-B) closed. M6-A (`#311`)
-  begun at M6-A1 (`#312`), whose description now names the ProjectInfo editor explicitly.
+  begun at M6-A1 (`#312`), whose description now names the ProjectInfo editor explicitly. A1
+  built: `SetProjectInfoCommand` over `ProjectInfoFields`, the Title block and Cover sections of
+  `File ▸ Sheet set…`, and `T0.00` first in every set. docs/12 §4.27.
 * **Creation**: [DR-210](/decisions/dr-210-cover-index-right-title-block-editable.md).
 * **Note**: **A TICKET THAT PRINTS A FIELD IS NOT A TICKET THAT EDITS IT.** `#312` listed what the
   cover prints and `#343` draws the title block; neither named the editor, so both could be built

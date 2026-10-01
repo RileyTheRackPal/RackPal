@@ -121,6 +121,27 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     final LegibilityReport legibility;
 
     switch (sheet.role) {
+      case SheetRole.cover:
+        final built = buildCoverSheet(
+          sheet: sheet,
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+        );
+        scene = built.scene;
+        legibility = built.legibility;
+        // A SCOPE CUT SHORT IS NAMED, NEVER SILENT: the paragraph is the
+        // job's description, and half of it reads as the whole.
+        if (built.scopeTruncated) {
+          notices.add(
+            '${sheet.ncsId}: the scope paragraph is longer than '
+            '$kCoverScopeMaxLines lines and was cut; shorten it in '
+            'File ▸ Sheet set….',
+          );
+        }
       case SheetRole.symbolLegend:
         final built = buildLegendSheet(
           sheet: sheet,

@@ -325,6 +325,10 @@ void main() {
           // `symbolLegend` ARRIVED AT M6-B (`#316`) AND IS NOT A PULL
           // SHEET EITHER. It is `T0.01`, M6's own sheet landing in M6, so
           // it answers neither side of the seam; it was looked at too.
+          //
+          // `cover` ARRIVED AT M6-A (`#312`) FOR THE SAME REASON: `T0.00`,
+          // M6's own sheet in M6. Looked at, and not a Pull Sheet.
+          'cover',
           'symbolLegend',
           'devicePlan',
           'rackElevationFront',

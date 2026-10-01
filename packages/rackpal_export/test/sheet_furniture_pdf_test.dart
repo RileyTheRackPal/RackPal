@@ -257,8 +257,8 @@ void main() {
           'FILE',
           'smith.rmpj',
           'NBS INTEGRATION LLC',
-          // SHEET 2 OF 4: T0.01 opens every set since M6-B.
-          'SHEET 2 OF 4',
+          // SHEET 3 OF 5: T0.00 and T0.01 open every set since M6-A.
+          'SHEET 3 OF 5',
           'SHEET NO.  T2.01',
         ]) {
           expect(text, contains(expected), reason: expected);

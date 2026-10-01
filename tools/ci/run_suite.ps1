@@ -1019,7 +1019,14 @@ $SuiteFloors = @{
     # restore, unmodifiable), four in sheet/legend_blocks_test.dart (edited
     # replaces seed, empty prints nothing, a long note wraps, the sheet reads
     # ProjectInfo), and SetLegendNotesCommand's case in epoch_mask_test.dart.
-    'rackpal_core'   = 5209
+    # 5224 at `#312` (M6-A1, DR-210): +15. Seven in sheet/cover_sheet_test.dart
+    # (T0.00 opens the set, every field prints, approved by, collapse, the
+    # scope wraps, a long scope says so, the index column stays empty), seven
+    # in commands/sheet_set_commands_test.dart (the field table, write and
+    # revert, blank as absent, a blank name refused, the address made and
+    # removed, revert by identity keeps {} bytes, the scope's wire), and
+    # SetProjectInfoCommand's case in epoch_mask_test.dart.
+    'rackpal_core'   = 5224
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1060,7 +1067,9 @@ $SuiteFloors = @{
     # 6600x5100 scan, and a device still 1.4x a drop on the large one.
     # 231 at `#316` (M6-B): +2 in legend_export_test.dart, T0.01 reaches
     # the PDF with all ten named types in ink, and a starter's own family.
-    'rackpal_export' = 231
+    # 232 at `#312` (M6-A1): +1 in cover_export_test.dart, T0.00 is sheet 1
+    # of a real starter and prints the project and the sign-off in ink.
+    'rackpal_export' = 232
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1601,7 +1610,11 @@ $SuiteFloors = @{
     # 2032 at `#969` (DR-209): +5 in settings/sheet_set_dialog_test.dart. The
     # seed shows as rows and looking saves nothing; an edit, an add, a remove
     # and Restore defaults each reach the document as one command.
-    'rackpal_ui'     = 2032
+    # 2037 at `#312` (DR-210): +5 in settings/sheet_set_dialog_test.dart. The
+    # file shows grouped as printed; an edit is one command and looking sends
+    # none; a cleared name is refused with its reason; a cleared field is
+    # absent; a field typed in and closed is saved.
+    'rackpal_ui'     = 2037
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

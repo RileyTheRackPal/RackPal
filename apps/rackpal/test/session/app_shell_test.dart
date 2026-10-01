@@ -209,8 +209,7 @@ void main() {
         id: const Uuid('opened'),
         rackId: const Uuid('opened-rack'),
         catalog: const {},
-      );
-      onDisk.info.projectName = 'Jones Loft';
+      )..info = ProjectInfo(projectName: 'Jones Loft');
       final fs = FakeFileStore(
         initialDirectories: {kTestDataRoot, kTestJobsDir, 'C:'},
         initialFiles: {_target: const JsonDocumentCodec().write(onDisk)},
@@ -444,8 +443,7 @@ void main() {
         id: const Uuid('crashed'),
         rackId: const Uuid('crashed-rack'),
         catalog: const {},
-      );
-      crashed.info.projectName = 'Smith Residence';
+      )..info = ProjectInfo(projectName: 'Smith Residence');
       final fs = FakeFileStore(
         initialDirectories: {
           kTestDataRoot,

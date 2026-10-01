@@ -572,8 +572,9 @@ void main() {
       expect(result, isA<Ok<ExportedDocument>>());
       expect(
         (result as Ok<ExportedDocument>).value.sheetCount,
-        // The legend, the plan, two elevations and the list (M6-B).
-        5,
+        // The cover, the legend, the plan, two elevations and the list
+        // (M6-A, M6-B).
+        6,
         reason: 'the same set as the unacknowledged run',
       );
     });
