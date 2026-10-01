@@ -23054,6 +23054,34 @@ inside M6-F's existing T6.30 scope.
 
 ---
 
+### 11.211 DR-212 · The drawing index: both numbers, flat, ranges collapsed, sub-columns on overflow
+
+**Settled by the user on 2026-10-01, building M6-A3 (`#314`), on the recommended option four
+times.** docs/08 §2.2 rules only that the index is generated after the sheet list resolves. The
+column DR-210 reserved holds about forty rows; Whole House's set is six sheets today and about
+nineteen when M6 is complete, and a ten-rack job reaches about thirty-seven, so overflow was priced
+as a real case.
+
+**11.211.1 RULED: EACH ROW CARRIES BOTH NUMBERS**, the set position and the NCS id, `4  T2.01`,
+because every title block prints both (`SHEET 4 OF 6` and `SHEET NO. T2.01`) and a reader may hold
+either. The option not taken followed the Sheet numbering setting.
+
+**11.211.2 RULED: FLAT, IN SET ORDER.** The NCS ids group the rows by series already, and a band
+header is a row the column cannot spend on a sheet. The option not taken banded by series.
+
+**11.211.3 RULED: A MULTI-PAGE SCHEDULE IS ONE ROW**, `6–8  T6.30–T6.32  EQUIPMENT LIST AND
+MATERIALS (3 pages)`: consecutive pages of one schedule collapse, and nothing else does. The option
+not taken listed every page.
+
+**11.211.4 RULED: OVERFLOW FLOWS INTO SUB-COLUMNS**, two then three, with titles fitted to the
+narrower width. A set that three cannot hold still exports, with a notice naming the sheets the
+index omits. The options not taken were shrinking the type below the 6 pt floor and a continuation
+index sheet, which would make the set's sheet count depend on the index's own size.
+
+**Scope.** No scope change: docs/08 §2.2's row 1, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

@@ -1,5 +1,10 @@
 # Update Log
 
+## 2026-10-01 (ninety-fifth entry)
+
+* **Progress**: `#313` merged at `86f4372d` (PR 183). M6-A3 (`#314`) begun.
+* **Creation**: [DR-212](/decisions/dr-212-drawing-index.md).
+
 ## 2026-10-01 (ninety-fourth entry)
 
 * **Progress**: `#312` merged at `d96b822c` (PR 182). M6-A2 (`#313`) built: the seed's passives
