@@ -17,6 +17,8 @@
 //
 // EACH BLOCK IS BUILT AT ITS OWN ORIGIN and reports its height, so the
 // sheet can flow the blocks into columns and name any that do not fit.
+import 'dart:math' as math;
+
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/derived/equipment_list.dart'
     show lifecycleLabel;
@@ -27,7 +29,10 @@ import 'package:rackpal_core/src/draw/scene/device_layer.dart';
 import 'package:rackpal_core/src/draw/scene/plan_scene.dart';
 import 'package:rackpal_core/src/draw/scene/rack_geometry.dart' show LodLevel;
 import 'package:rackpal_core/src/draw/scene/rack_style.dart';
+import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart'
+    show wrapMeasured;
 import 'package:rackpal_core/src/draw/sheet/sheet_frame.dart';
+import 'package:rackpal_core/src/draw/sheet/text_fit.dart';
 import 'package:rackpal_core/src/draw/spec.dart';
 import 'package:rackpal_core/src/draw/text.dart';
 import 'package:rackpal_core/src/idformat/id_format.dart';
@@ -37,6 +42,7 @@ import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/entity_meta.dart';
 import 'package:rackpal_core/src/model/enums.dart';
 import 'package:rackpal_core/src/model/placement.dart';
+import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/model/template.dart';
@@ -452,14 +458,15 @@ LegendBlock identifiersBlock({
 // ─── block 6: abbreviations and general notes ───────────────────────────
 
 /// The seeded abbreviations: what the sheets themselves print (DR-208
-/// §11.207.2 ships these seeded; editing is its own Chapter).
-const List<(String, String)> kLegendAbbreviations = <(String, String)>[
-  ('RU', 'rack unit, 1.75 in'),
-  ('NTS', 'not to scale'),
-  ('REV', 'revision'),
-  ("CHK'D", 'checked by'),
-  ('DISC', 'discipline'),
-  ('PROJ', 'project number'),
+/// §11.207.2). A project that has not edited its list prints these, and
+/// follows them as they change (DR-209 §11.208.4).
+const List<LegendAbbreviation> kLegendAbbreviations = <LegendAbbreviation>[
+  LegendAbbreviation('RU', 'rack unit, 1.75 in'),
+  LegendAbbreviation('NTS', 'not to scale'),
+  LegendAbbreviation('REV', 'revision'),
+  LegendAbbreviation("CHK'D", 'checked by'),
+  LegendAbbreviation('DISC', 'discipline'),
+  LegendAbbreviation('PROJ', 'project number'),
 ];
 
 /// The seeded general notes.
@@ -468,10 +475,30 @@ const List<String> kLegendGeneralNotes = <String>[
   'A value shown as — is not known, and was not guessed.',
 ];
 
+/// The most lines one abbreviation's meaning or one note may take before
+/// it is ellipsised. Generous, since the block reports its height and a
+/// block too tall for its column is named in an export notice rather than
+/// clipped.
+const int kLegendNoteMaxLines = 8;
+
 /// Block 6: the abbreviations, the signal-domain prefixes the tags carry
 /// (from the project's own registries), and the general notes.
+///
+/// [abbreviations] and [notes] are the project's own (`ProjectInfo`), and
+/// null prints the seed (DR-209 §11.208.4). The tag prefixes follow the
+/// author's rows and are never the author's to edit: they are what the
+/// registries say the tags mean.
+///
+/// **EVERYTHING AN AUTHOR TYPES IS MEASURED AND WRAPPED** to [width]. The
+/// seed fits on one line each, and a person's note will not;
+/// `PdfGraphics.drawString` neither wraps nor clips, so an unmeasured
+/// string runs across the next column and off the sheet.
 LegendBlock notesBlock({
   required Registries registries,
+  required TextMeasurer measurer,
+  required double width,
+  List<LegendAbbreviation>? abbreviations,
+  List<String>? notes,
   SheetPalette palette = const SheetPalette(),
 }) {
   final ops = <DiagramOp>[];
@@ -481,21 +508,62 @@ LegendBlock notesBlock({
       final byTag = a.tagPrefix.compareTo(b.tagPrefix);
       return byTag != 0 ? byTag : a.id.v.compareTo(b.id.v);
     });
-  for (final (abbr, meaning) in <(String, String)>[
-    ...kLegendAbbreviations,
-    for (final d in domains) (d.tagPrefix, '${d.displayName} (a tag prefix)'),
-  ]) {
-    ops
-      ..add(OpText(abbr, DPt(0, y), _text(kLegendBlockPt, palette.text)))
-      ..add(
-        OpText(meaning, DPt(48, y), _text(kLegendBlockPt, palette.text)),
-      );
-    y += kLegendBlockLine - 2;
+  final rows = <LegendAbbreviation>[
+    ...(abbreviations ?? kLegendAbbreviations),
+    for (final d in domains)
+      LegendAbbreviation(d.tagPrefix, '${d.displayName} (a tag prefix)'),
+  ];
+  final body = _text(kLegendBlockPt, palette.text);
+  const step = kLegendBlockLine - 2;
+  // THE MEANING COLUMN MOVES RIGHT FOR A LONG ABBREVIATION, and stops at a
+  // third of the block: 48 pt is what the seed always used, so a project
+  // with only short abbreviations draws exactly as before.
+  const double seedX = 48;
+  var widest = 0.0;
+  for (final r in rows) {
+    final w = measurer.measureText(r.abbreviation, body).advanceWidth;
+    if (w > widest) widest = w;
+  }
+  final meaningX = math.min(
+    math.max(seedX, widest + 8),
+    math.max(seedX, width / 3),
+  );
+  for (final r in rows) {
+    final abbr = fitTextToWidth(
+      r.abbreviation.trim(),
+      meaningX - 6,
+      style: body,
+      measurer: measurer,
+    );
+    final lines = wrapMeasured(
+      r.meaning,
+      width - meaningX,
+      style: body,
+      measurer: measurer,
+      maxLines: kLegendNoteMaxLines,
+    );
+    ops.add(OpText(abbr, DPt(0, y), body));
+    for (final (i, line) in lines.indexed) {
+      ops.add(OpText(line, DPt(meaningX, y + i * step), body));
+    }
+    y += step * math.max(1, lines.length);
   }
   y += 6;
-  for (final note in kLegendGeneralNotes) {
-    ops.add(OpText(note, DPt(0, y), _text(kLegendBlockPt, palette.mutedText)));
-    y += kLegendBlockLine - 2;
+  final muted = _text(kLegendBlockPt, palette.mutedText);
+  for (final note in notes ?? kLegendGeneralNotes) {
+    for (final line in wrapMeasured(
+      note,
+      width,
+      style: muted,
+      measurer: measurer,
+      maxLines: kLegendNoteMaxLines,
+    )) {
+      ops.add(OpText(line, DPt(0, y), muted));
+      y += step;
+    }
+    // A GAP BETWEEN NOTES, because a wrapped note otherwise runs straight
+    // into the next one: the first render read three notes as two.
+    y += 3;
   }
   return LegendBlock('ABBREVIATIONS AND NOTES', ops, y);
 }

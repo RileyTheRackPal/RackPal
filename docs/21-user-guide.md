@@ -1135,11 +1135,19 @@ floorplan import.
 
 | Sheet | When |
 |---|---|
-| **Symbol Legend** (`T0.01`) | Always, first. Every cable type in colour and in greyscale side by side (the ten named types every time, then any other type your cables use); the device marks and plan markers in your set; an annotated device block; the border and hatch conventions; your ID formats worked through; abbreviations. Every other sheet says `SYMBOL LEGEND: SEE SHEET T0.01` |
+| **Symbol Legend** (`T0.01`) | Always, first. Every cable type in colour and in greyscale side by side (the ten named types every time, then any other type your cables use); the device marks and plan markers in your set; an annotated device block; the border and hatch conventions; your ID formats worked through; abbreviations and general notes, which you can change in `File` ▸ `Sheet set…`. Every other sheet says `SYMBOL LEGEND: SEE SHEET T0.01` |
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |
 | **Rack Elevation, Rear** | One per rack |
 | **Equipment List and Materials** | Always, paginated as needed |
+
+**Your own abbreviations and notes.** `File` ▸ `Sheet set…` lists the legend's
+abbreviations and general notes as rows. Change a row, add one with `Add
+abbreviation` or `Add note`, or remove one with its `×`; each change can be undone
+from `Edit`. Until you change anything the legend prints RackPal's standard list,
+and `Restore defaults` puts it back. The signal tag prefixes (`AUD`, `NET` and so
+on) always follow your abbreviations and are not edited here. A long note wraps
+on the sheet.
 
 So a two-rack job with one floorplan gives you seven sheets. The status line says
 how many sheets were written and how large the file is.

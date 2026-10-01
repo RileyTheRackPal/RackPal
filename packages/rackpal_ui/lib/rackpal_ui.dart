@@ -149,6 +149,7 @@ export 'src/schedule/schedule_screen.dart';
 // while the app layer owns all four.
 export 'src/settings/preferences_dialog.dart';
 export 'src/settings/project_settings_dialog.dart';
+export 'src/settings/sheet_set_dialog.dart';
 export 'src/shell/about_dialog.dart';
 export 'src/shell/coach_mark.dart';
 export 'src/shell/file_error_dialog.dart';

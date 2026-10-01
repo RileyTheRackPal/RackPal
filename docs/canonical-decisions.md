@@ -22941,6 +22941,41 @@ a UI decision in its own right.
 
 ---
 
+### 11.208 DR-209 · The front matter gets a Sheet set dialog, and the legend's notes are its first section
+
+**Settled by the user on 2026-09-30, building M6-B6 (`#969`), on the recommended option both
+times.** DR-208 §11.207.2 left the edit surface for T0.01's abbreviations and general notes as a UI
+decision of its own.
+
+**11.208.1 THE FACT THAT PRICED IT.** Nothing in any `lib/` writes `ProjectInfo`: the title block
+every sheet prints carries a project name, client, drawn-by and checked-by that the format encodes
+and no surface lets anybody type. That is M6-A1's to fix, and it means the front matter will need an
+editor whichever way this Chapter went. The existing Project settings dialog is a single scroll of
+modelling defaults.
+
+**11.208.2 RULED: A `Sheet set…` DIALOG ON THE FILE MENU, BESIDE `Export PDF…`.** It holds what
+the set's front matter prints. This Chapter builds it with one section, the legend's abbreviations
+and general notes; M6-A1's title block and cover fields join it rather than Project settings. The
+option not taken was a section at the foot of Project settings, cheaper by about one dialog.
+
+**11.208.3 RULED: ROWS WITH ADD AND REMOVE, NOT A TEXT BOX.** One row per abbreviation, with an
+abbreviation field and a meaning field, and one row per note, each with a delete control, plus an
+add control per list. Nothing is parsed, so there is no malformed line to explain. The option not
+taken was one free-text box per list with `NTS = not to scale` lines.
+
+**11.208.4 THE DATA, WHICH FOLLOWS FROM G4 AND CR-117 RATHER THAN BEING CHOSEN.** Two fields on
+`ProjectInfo`, since docs/01 names abbreviations and general notes as front matter beside the cover
+and the symbol key: `legendAbbreviations` and `legendNotes`. **Absent means seeded**: an unedited
+project writes no key and prints the seed, so a file does not freeze today's seed into itself. A
+list, including an empty one, is what the author wrote and prints exactly. `Restore defaults`
+returns both to absent. A row left entirely blank is not saved. The signal-domain tag prefixes stay
+derived from the project's registries, printed after the author's abbreviations, and are not
+editable here. Every edit is one undo step on the document stack.
+
+**Scope.** No scope change: DR-208 §11.207.2's Chapter, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

@@ -691,11 +691,17 @@ final class AppServices {
       // folder…`, beside About because it serves the same reader: a tester
       // who has a version to quote usually has a log to send. No key,
       // because it is opened once, after something went wrong.
-      [16, 6],
+      //
+      // 16 -> 17 AT DR-209 (`#969`), and the accelerator count did not move
+      // for the FOURTEENTH time. The seventeenth is `File ▸ Sheet set…`,
+      // beside Export PDF because it edits what the PDF prints on its front
+      // pages; the user chose it over a section inside Project settings.
+      // No key, for the reason every item since Locations has had none.
+      [17, 6],
       reason:
-          'eleven File-menu items — New, Open…, Save, Save As…, Export '
-          'PDF…, Export/Import device template…, Export/Import device '
-          'library…, Project settings…, Import floorplan… — and four '
+          'twelve File-menu items — New, Open…, Save, Save As…, Export '
+          'PDF…, Sheet set…, Export/Import device template…, Export/Import '
+          'device library…, Project settings…, Import floorplan… — and four '
           'accelerators. '
           'Edit holds Undo and Redo, which carry the other two, and '
           'Preferences..., which carries none. '
