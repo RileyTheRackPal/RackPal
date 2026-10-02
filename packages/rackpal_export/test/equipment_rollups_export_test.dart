@@ -104,4 +104,22 @@ void main() {
       );
     }
   });
+
+  test('WHOLE HOUSE: the outlet map names every provider and its free '
+      'count, with no cord drawn (F5, AC-026, DR-219)', () async {
+    final doc = starter('whole_house');
+    final ink = await equipmentInk(doc);
+    expect(ink, contains(kOutletMapSectionTitle));
+    expect(ink, contains(kNoOutletCordsText));
+    for (final p in buildOutletMap(doc).providers) {
+      expect(
+        ink,
+        contains(
+          '${p.device.designator}: 0 of ${p.outletCount} outlets assigned, '
+          '${p.outletCount} free.',
+        ),
+        reason: p.device.designator,
+      );
+    }
+  });
 }

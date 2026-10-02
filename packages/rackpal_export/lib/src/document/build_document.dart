@@ -116,6 +116,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
       // From `report`, the one evaluation T0.02 draws (DR-214 §11.213.5).
       hardwareSection(doc, report),
       jumperSection(jumperRollupOf(schedule), doc.settings.displayUnits),
+      outletMapSection(doc, buildOutletMap(doc)),
     ],
   );
   // WHICH PLANS EARN A SHEET IS A DERIVATION, NOT A DRAWING DECISION

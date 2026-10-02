@@ -9,9 +9,12 @@
 // reads too, so the sheet and the screen cannot disagree about a length.
 // This file only formats: it chooses words, units and columns.
 import 'package:rackpal_core/src/derived/cable_footage.dart';
+import 'package:rackpal_core/src/derived/device_loads.dart' show hostRackOf;
 import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
 import 'package:rackpal_core/src/derived/jumper_rollup.dart';
+import 'package:rackpal_core/src/derived/outlet_map.dart';
 import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart';
+import 'package:rackpal_core/src/model/device_instance.dart';
 import 'package:rackpal_core/src/model/enums.dart' show UnitSystem;
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/units/len.dart';
@@ -247,6 +250,69 @@ RollupSection jumperSection(JumperRollup rollup, UnitSystem units) {
     notes: <String>[
       if (unstated == 1) '1 lead has no length stated.',
       if (unstated > 1) '$unstated leads have no length stated.',
+    ],
+  );
+}
+
+/// The outlet map's band.
+const String kOutletMapSectionTitle = 'OUTLET MAP';
+
+/// What the outlet map says when no device provides outlets.
+const String kNoOutletProvidersText =
+    'NO DEVICE IN THIS PROJECT PROVIDES '
+    'OUTLETS.';
+
+/// What it says when providers exist and no cord is drawn to one.
+const String kNoOutletCordsText = 'NO CORD IS DRAWN TO AN OUTLET.';
+
+/// AC-026's outlet map (M6-F5), in DR-219 §11.218.2's shape: a row per
+/// outlet with a cord drawn to it, then each provider's free count, then
+/// how many devices are counted as plugged in with no cord drawn. Kept OFF
+/// the cable schedule, as AC-026 rules: do not move it back.
+RollupSection outletMapSection(RackDocument doc, OutletMap map) {
+  // A PDU IS USUALLY 0U, and a UPS may sit on a shelf: `hostRackOf` is the
+  // walk the rack totals use, so the provider's rack is the totals' rack.
+  String rackOf(DeviceInstance device) {
+    final rackId = hostRackOf(device, doc.devices);
+    return (rackId == null ? null : doc.racks[rackId]?.designator) ??
+        kUnknownCell;
+  }
+
+  final rows = <List<String>>[
+    for (final provider in map.providers)
+      for (final a in provider.assignments)
+        <String>[
+          provider.device.designator,
+          a.outletLabel,
+          a.device?.designator ?? kUnknownCell,
+          a.inletLabel ?? kUnknownCell,
+          a.cord,
+          rackOf(provider.device),
+        ],
+  ];
+  final undrawn = map.undrawnDevices;
+  String freeLine(OutletProvider p) =>
+      '${p.device.designator}: ${p.assignedCount} of ${p.outletCount} '
+      'outlets assigned, ${p.freeCount} free.';
+  final undrawnLine = undrawn == 1
+      ? '1 device has no cord drawn and is counted as one outlet per inlet.'
+      : '$undrawn devices have no cord drawn and are counted as one outlet '
+            'per inlet.';
+  return RollupSection(
+    title: kOutletMapSectionTitle,
+    columns: const <SectionColumn>[
+      SectionColumn('PROVIDER', 90),
+      SectionColumn('OUTLET', 110),
+      SectionColumn('DEVICE', 100),
+      SectionColumn('INLET', 130),
+      SectionColumn('CORD', 70),
+      SectionColumn('RACK', 190),
+    ],
+    rows: rows,
+    empty: map.providers.isEmpty ? kNoOutletProvidersText : kNoOutletCordsText,
+    notes: <String>[
+      for (final p in map.providers) freeLine(p),
+      if (undrawn > 0) undrawnLine,
     ],
   );
 }

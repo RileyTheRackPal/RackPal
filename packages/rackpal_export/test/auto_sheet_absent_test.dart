@@ -100,8 +100,16 @@ void main() {
         ids.add(token);
         continue;
       }
-      // A collapsed run, `T6.30–T6.31`: both ends are pages.
-      ids.addAll(token.split('–'));
+      // A COLLAPSED RUN, `T6.30–T6.32`: every sheet in it is a page, not
+      // only its two ends. This read both ends alone until Whole House's
+      // list ran to three pages at `#340`, when T6.31 went unaccounted for.
+      final ends = token.split('–');
+      final prefix = ends.first.substring(0, ends.first.indexOf('.') + 1);
+      final from = int.parse(ends.first.split('.').last);
+      final to = int.parse(ends.last.split('.').last);
+      for (var n = from; n <= to; n++) {
+        ids.add('$prefix${n.toString().padLeft(2, '0')}');
+      }
     }
     return ids;
   }
