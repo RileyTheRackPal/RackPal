@@ -1100,7 +1100,13 @@ $SuiteFloors = @{
     # the string seam both ways and blank as none, the field through it,
     # equal orders equal at the seam, absent when unknown, a JSON array that
     # reads back, the bytes round-trip, and a changed order is breaking.
-    'rackpal_core'   = 5362
+    # 5372 at `#975` (M6-E2b, DR-221): +10 in derived/pinout_details_test.dart,
+    # Home Theatre's six receiver ports and Whole House's five with the ruled
+    # pin map, the other two starters empty, mono TS never listed, a terminal
+    # order listed against its standard, the standard and none not listed, a
+    # wrong count listed, no standard never listed, a wiring exception, and a
+    # null-modem cable.
+    'rackpal_core'   = 5372
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

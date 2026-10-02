@@ -156,6 +156,7 @@ export 'src/derived/location_removal.dart';
 export 'src/derived/location_tree.dart';
 export 'src/derived/outlet_map.dart';
 export 'src/derived/pathway_table.dart';
+export 'src/derived/pinout_details.dart';
 export 'src/derived/placeable_templates.dart';
 export 'src/derived/placement_rules.dart';
 export 'src/derived/plan_length.dart';

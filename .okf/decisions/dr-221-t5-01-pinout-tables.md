@@ -17,7 +17,8 @@ Settled by the user on 2026-10-02, building M6-E2 (`#333`, `#974` to `#976`).
 
 - **Pinout tables only**, one section per kind. Plate drawings to scale were not taken.
 - **Mono tip-sleeve is the IR standard**: an IR port on a placed device with any other variant
-  (`xantech-stereo`) turns the sheet on. Only Home Theatre's six receiver jacks fire today.
+  (`xantech-stereo`) turns the sheet on: Home Theatre's six receiver jacks and Whole House's five.
+  First recorded as Home Theatre alone, from a census that crashed silently on Whole House.
 - **A receiver jack is tip IR, ring +12 V, sleeve GND.** The registry, canon, docs/01,
   seed-devices.md and three code comments had ring and sleeve reversed; all corrected. The damage
   mechanism (a TS plug bridging ring to sleeve) is unchanged.
