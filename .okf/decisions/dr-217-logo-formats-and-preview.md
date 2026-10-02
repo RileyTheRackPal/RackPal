@@ -23,6 +23,8 @@ Settled by the user on 2026-10-01, building M6-G6 (`#590`).
 - **A cell spanning the title block's upper band**, 65 pt, the logo fitted into 100 x 45 pt in it,
   refining DR-216: the identity band alone is 26 to 49 pt tall. Upper lines get 280 pt, not 388.
 - **The ANSI A strip prints no logo**: it is already full, and the firm's text line stays.
+- **The PDF embeds the logo no larger than 834 x 375 px**, the member staying verbatim: a
+  photographic 3000 px JPEG logo had added 14.8 MB to every export (decided without a question).
 
 # Why
 

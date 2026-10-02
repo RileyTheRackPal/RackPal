@@ -27,10 +27,19 @@
 // since an empty row is not something the author wrote and the command
 // would drop it anyway.
 //
+// ── THE LOGO, UNDER THE INTEGRATOR (DR-216 §11.215.3, DR-217 §11.216.3) ──
+// A thumbnail on white at the logo box's 100 : 45, as it will print, with
+// its pixel size and Replace and Remove; with none, Choose. Choosing reads
+// a file, so the shell supplies it as a callback and its refusal is shown
+// HERE, in the dialog the person is looking at, rather than behind it.
+// Remove is a command like any other edit.
+//
 // **AN UNEDITED PROJECT STAYS UNEDITED.** The seed shows as ordinary rows,
 // and a commit whose rows still equal what the document already prints
 // sends nothing, so clicking into a field and out again does not freeze
 // today's seed into the file.
+import 'dart:typed_data';
+
 import 'package:flutter/foundation.dart' show listEquals;
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
@@ -73,6 +82,19 @@ Key removeNoteKey(int row) => Key('sheet-set-note-remove-$row');
 Key projectInfoFieldKey(ProjectInfoField field) =>
     Key('sheet-set-info-${field.key}');
 
+/// `Choose logo…` or `Replace logo…`.
+const Key kChooseLogoKey = Key('sheet-set-choose-logo');
+
+/// `Remove logo`.
+const Key kRemoveLogoKey = Key('sheet-set-remove-logo');
+
+/// The logo's preview.
+const Key kLogoThumbnailKey = Key('sheet-set-logo-thumbnail');
+
+/// Asks for a logo file and puts it in the document: the logo on success,
+/// `null` when the person cancelled, an `Err` carrying the refusal.
+typedef ChooseLogo = Future<Outcome<ProjectLogo>?> Function();
+
 /// What a cleared project name says (DR-210 §11.209.4).
 const String kProjectNameRequired =
     'A project needs a name: it heads every sheet.';
@@ -82,9 +104,16 @@ Future<void> showSheetSetDialog(
   BuildContext context, {
   required RackDocument doc,
   required SheetSetEdit onEdit,
+  ChooseLogo? onChooseLogo,
+  Uint8List? Function(String member)? logoBytes,
 }) => showDialog<void>(
   context: context,
-  builder: (context) => _SheetSetDialog(doc: doc, onEdit: onEdit),
+  builder: (context) => _SheetSetDialog(
+    doc: doc,
+    onEdit: onEdit,
+    onChooseLogo: onChooseLogo,
+    logoBytes: logoBytes,
+  ),
 );
 
 /// One editable row: its own controllers and focus nodes, and an id that
@@ -115,10 +144,21 @@ final class _Draft {
 }
 
 class _SheetSetDialog extends StatefulWidget {
-  const _SheetSetDialog({required this.doc, required this.onEdit});
+  const _SheetSetDialog({
+    required this.doc,
+    required this.onEdit,
+    this.onChooseLogo,
+    this.logoBytes,
+  });
 
   final RackDocument doc;
   final SheetSetEdit onEdit;
+
+  /// Null hides the logo row: a control with no host is not offered.
+  final ChooseLogo? onChooseLogo;
+
+  /// The container member's bytes, for the preview.
+  final Uint8List? Function(String member)? logoBytes;
 
   @override
   State<_SheetSetDialog> createState() => _SheetSetDialogState();
@@ -293,6 +333,107 @@ class _SheetSetDialogState extends State<_SheetSetDialog> {
     setState(() => _nameError = null);
   }
 
+  // ── the logo (#590, DR-217) ─────────────────────────────────────────
+
+  /// Why the last Choose was refused, or null.
+  String? _logoError;
+
+  Future<void> _chooseLogo() async {
+    final result = await widget.onChooseLogo!();
+    if (!mounted) return;
+    setState(() {
+      _logoError = switch (result) {
+        Err(:final error) => '$error',
+        _ => null,
+      };
+    });
+  }
+
+  void _removeLogo() {
+    widget.onEdit([SetProjectLogoCommand.to(_info, null)]);
+    setState(() => _logoError = null);
+  }
+
+  Widget _logoRow(ThemeData theme) {
+    final logo = _info.logo;
+    final bytes = logo == null
+        ? null
+        : widget.logoBytes?.call(logo.imageMember);
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom: 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(
+            width: 140,
+            child: Padding(
+              padding: EdgeInsets.only(top: 10),
+              child: Text('Logo'),
+            ),
+          ),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (logo != null)
+                  // ON WHITE AT THE BOX'S OWN 100 : 45, because that is the
+                  // paper and the box it prints in.
+                  Container(
+                    key: kLogoThumbnailKey,
+                    width: 200,
+                    height: 90,
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      border: Border.all(color: theme.dividerColor),
+                    ),
+                    child: bytes == null
+                        ? const Center(child: Text('Not in this file'))
+                        : Image.memory(
+                            bytes,
+                            fit: BoxFit.contain,
+                          ),
+                  ),
+                Text(
+                  logo == null
+                      ? 'None. Printed at the top right of the title block, '
+                            'not on the A-size equipment list.'
+                      : '${logo.pixelWidth} × ${logo.pixelHeight} px',
+                  style: theme.textTheme.bodySmall,
+                ),
+                Wrap(
+                  spacing: 8,
+                  children: [
+                    TextButton(
+                      key: kChooseLogoKey,
+                      onPressed: _chooseLogo,
+                      child: Text(
+                        logo == null ? 'Choose logo…' : 'Replace logo…',
+                      ),
+                    ),
+                    if (logo != null)
+                      TextButton(
+                        key: kRemoveLogoKey,
+                        onPressed: _removeLogo,
+                        child: const Text('Remove logo'),
+                      ),
+                  ],
+                ),
+                if (_logoError case final error?)
+                  Text(
+                    error,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.error,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _infoRow(ProjectInfoField f) => Padding(
     padding: const EdgeInsets.only(bottom: 4),
     child: Row(
@@ -373,6 +514,9 @@ class _SheetSetDialogState extends State<_SheetSetDialog> {
                   child: Text(group, style: theme.textTheme.labelLarge),
                 ),
                 for (final f in fields) _infoRow(f),
+                // THE FIRM'S MARK BESIDE THE FIRM'S NAME (§11.215.3).
+                if (group == 'Integrator' && widget.onChooseLogo != null)
+                  _logoRow(theme),
               ],
               const Divider(height: 32),
               // ── the cover (T0.00) ──────────────────────────────────────

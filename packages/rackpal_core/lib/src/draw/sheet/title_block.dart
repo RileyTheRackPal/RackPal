@@ -50,6 +50,7 @@
 
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
+import 'package:rackpal_core/src/draw/image_ref.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/rack_layer.dart' show LayerBuild;
 import 'package:rackpal_core/src/draw/sheet/drawing_scale.dart';
@@ -60,6 +61,7 @@ import 'package:rackpal_core/src/draw/sheet/sheet_frame.dart';
 import 'package:rackpal_core/src/draw/sheet/text_fit.dart';
 import 'package:rackpal_core/src/draw/text.dart';
 import 'package:rackpal_core/src/model/enums.dart' show SheetNumbering;
+import 'package:rackpal_core/src/model/plan.dart' show PlanImageFormat;
 import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/rack.dart';
@@ -108,6 +110,7 @@ final class TitleBlockFields {
     required this.sheetNumberLine,
     required this.sheetIdLine,
     required this.legendLine,
+    required this.logo,
   });
 
   /// Resolves every field from the model. See the file header: no
@@ -186,6 +189,19 @@ final class TitleBlockFields {
       legendLine: sheet.legendNcsId == null
           ? null
           : 'SYMBOL LEGEND: SEE SHEET ${sheet.legendNcsId}',
+      logo: switch (info.logo) {
+        null => null,
+        final l => ImageRef(
+          member: l.imageMember,
+          format: switch (l.format) {
+            PlanImageFormat.png => ImageFormat.png,
+            PlanImageFormat.jpeg => ImageFormat.jpeg,
+          },
+          pixelWidth: l.pixelWidth,
+          pixelHeight: l.pixelHeight,
+          screened: false,
+        ),
+      },
     );
   }
 
@@ -223,6 +239,11 @@ final class TitleBlockFields {
   /// `SYMBOL LEGEND: SEE SHEET T0.01`, or `null` on the legend itself and
   /// in a set with no legend (docs/08 §5.2, CR-023).
   final String? legendLine;
+
+  /// The integrator's logo, at full value, or `null` for none (DR-030).
+  /// Drawn by the full block only: the compact strip prints none (DR-217
+  /// §11.216.5).
+  final ImageRef? logo;
 
   /// Every optional line, in the order they appear, for tests and for the
   /// collapse rule's own documentation.
@@ -277,6 +298,15 @@ const double _kFooterLineHeight = 12;
 /// Padding inside a title-block cell.
 const double _kPad = 4;
 
+/// The box the logo is fitted into, aspect kept (DR-216 §11.215.3, DR-217
+/// §11.216.4). DR-217 §11.216.2's import render targets this at 600 dpi.
+const double kLogoBoxWidth = 100;
+const double kLogoBoxHeight = 45;
+
+/// The logo's cell: the box plus a pad each side, at the right of the
+/// upper band, its full height.
+const double kLogoCellWidth = kLogoBoxWidth + 2 * _kPad;
+
 /// Builds the title block into [box] (from `SheetLayout.titleBlockBox`).
 ///
 /// [compact] selects §5.2's ANSI A full-width strip over the 396 × 115
@@ -329,6 +359,38 @@ LayerBuild _buildFull(
   final upperHeight = gridTop - box.top;
   final rowHeight = upperHeight / upperLines.length;
 
+  // ── the logo's cell (DR-217 §11.216.4) ─────────────────────────────
+  // THE WHOLE UPPER BAND'S HEIGHT, AT THE RIGHT, so the logo is the same
+  // size on every sheet of a set whichever lines a sheet prints. The text
+  // keeps its left alignment in what remains. No logo, no cell, and the
+  // block is exactly what it was.
+  final logo = fields.logo;
+  final textRight = logo == null ? box.right : box.right - kLogoCellWidth;
+  if (logo != null) {
+    ops
+      ..add(
+        OpLine(
+          DPt(textRight, box.top),
+          DPt(textRight, gridTop),
+          sheetRule(palette.rule, kTableRuleWidthPt),
+        ),
+      )
+      ..add(
+        OpImage(
+          logo,
+          fitInside(
+            DBox.fromLtwh(
+              textRight + _kPad,
+              box.top + (upperHeight - kLogoBoxHeight) / 2,
+              kLogoBoxWidth,
+              kLogoBoxHeight,
+            ),
+            logo.aspectRatio,
+          ),
+        ),
+      );
+  }
+
   for (var i = 0; i < upperLines.length; i++) {
     final line = upperLines[i];
     final style = TextStyleSpec(
@@ -341,17 +403,18 @@ LayerBuild _buildFull(
       ops,
       text: line.text,
       at: DPt(box.left + _kPad, box.top + (i + 0.5) * rowHeight),
-      maxWidth: box.width - 2 * _kPad,
+      maxWidth: textRight - box.left - 2 * _kPad,
       style: style,
       measurer: measurer,
     );
-    // The rule between the identity band and the sheet band.
+    // The rule between the identity band and the sheet band, which stops
+    // at the logo's cell when there is one.
     if (i == identity.length - 1 && sheetLines.isNotEmpty) {
       final y = box.top + (i + 1) * rowHeight;
       ops.add(
         OpLine(
           DPt(box.left, y),
-          DPt(box.right, y),
+          DPt(textRight, y),
           sheetRule(palette.rule, kTableRuleWidthPt),
         ),
       );
@@ -636,4 +699,19 @@ void _emitFitted(
   );
   if (fitted.isEmpty) return;
   ops.add(OpText(fitted, at, style));
+}
+
+/// The largest box of [aspect] (width over height) inside [box], centred:
+/// DR-030 §11.29.5's fit rule, aspect kept and never stretched.
+DBox fitInside(DBox box, double aspect) {
+  final width = box.width / box.height > aspect
+      ? box.height * aspect
+      : box.width;
+  final height = width / aspect;
+  return DBox.fromLtwh(
+    box.left + (box.width - width) / 2,
+    box.top + (box.height - height) / 2,
+    width,
+    height,
+  );
 }

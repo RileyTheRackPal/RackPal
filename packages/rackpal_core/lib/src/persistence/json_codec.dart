@@ -654,7 +654,42 @@ JsonMap _encodeProjectInfo(ProjectInfo info) {
   if (info.legendNotes case final notes?) {
     json['legendNotes'] = [...notes];
   }
+  // ABSENT FOR NO LOGO (DR-030 §11.29.6), the ordinary case, so a project
+  // without one writes exactly the bytes it wrote before the field existed.
+  if (info.logo case final logo?) {
+    json['logo'] = {
+      'imageMember': logo.imageMember,
+      'format': encodeEnumName(logo.format),
+      'pixelWidth': logo.pixelWidth,
+      'pixelHeight': logo.pixelHeight,
+      'contentHash': logo.contentHash,
+    };
+  }
   return json;
+}
+
+ProjectLogo _decodeProjectLogo(JsonMap json) {
+  const context = 'ProjectInfo.logo';
+  final width = asInt(json['pixelWidth'], '$context.pixelWidth');
+  final height = asInt(json['pixelHeight'], '$context.pixelHeight');
+  // A ZERO-SIZED LOGO IS REFUSED AT THE BOUNDARY: the fit rule divides by
+  // both, and an import can never produce one.
+  if (width <= 0 || height <= 0) {
+    throw FormatException(
+      'Expected a positive pixel size for $context, got: ${width}x$height',
+    );
+  }
+  return ProjectLogo(
+    imageMember: asStr(json['imageMember'], '$context.imageMember'),
+    format: decodeEnumStrict(
+      PlanImageFormat.values,
+      asStr(json['format'], '$context.format'),
+      '$context.format',
+    ),
+    pixelWidth: width,
+    pixelHeight: height,
+    contentHash: asStr(json['contentHash'], '$context.contentHash'),
+  );
 }
 
 ProjectInfo _decodeProjectInfo(JsonMap json) => ProjectInfo(
@@ -712,6 +747,12 @@ ProjectInfo _decodeProjectInfo(JsonMap json) => ProjectInfo(
           ).indexed)
             asStr(note, 'ProjectInfo.legendNotes[$i]'),
         ],
+  logo: decodeNullableObject(
+    json,
+    'logo',
+    'ProjectInfo.logo',
+    _decodeProjectLogo,
+  ),
 );
 
 // --- ProjectSettings / RuleOverride -----------------------------------------

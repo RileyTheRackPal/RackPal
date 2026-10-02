@@ -186,6 +186,7 @@ const Map<LabelKey, String> kUndoLabels = <LabelKey, String>{
   LabelKey.setProjectSetting: 'Change project setting',
   LabelKey.setFamilyColorOverride: 'Override family colour',
   LabelKey.setLegendNotes: 'Edit legend notes',
+  LabelKey.setProjectLogo: 'Change logo',
   LabelKey.setProjectInfo: 'Edit project details',
 
   // ── registries and import ───────────────────────────────────────────

@@ -1558,6 +1558,39 @@ every sheet size. **Looked at**: Small Office's T2.01 at B and T6.31 at A, stamp
 `RevisionEntry` has no such flag and its writer is parked on HIST/3 (`#658`); DR-216 §11.215.4 parks
 the flag there with it.
 
+### 4.32 The integrator's logo · 2026-10-01 · `#590` · `DR-030`, `DR-216`, `DR-217` · no version move
+
+M6-G6. `ProjectInfo.logo` is a `ProjectLogo` with `PlanUnderlay`'s image shape, absent for none, set
+from `File ▸ Sheet set…`'s Title block section under the Integrator group: a thumbnail on white at the
+box's 100 : 45, its pixel size, Replace and Remove. It prints in a ruled cell at the right of every
+full title block's upper band, fitted into 100 by 45 pt, at full value; the ANSI A strip prints none.
+
+**Four formats in, one kind of member out.** PNG and JPEG go through the floorplan's own sequence
+(sniff, header under the caps, decode, re-check, flatten), now extracted as `storeImportedRaster` so
+the logo shares it rather than copying it. A PDF's first page is rendered by pdfium to fit 834 by 375
+px; an SVG is drawn as a one-page PDF by the `pdf` package and then rendered the same way. **SVG was
+priced at two to three days on a wrong premise** (that a decoder and rasteriser had to be added); it
+cost one conversion, and `xml` promoted from transitive to declared.
+
+**Three things the measurements found.**
+- **The identity band is 26 to 49 pt tall**, so DR-216's 100 by 45 pt box did not fit in it on every
+  sheet; DR-217 §11.216.4 moved the cell to span the upper band. Upper lines have 280 pt rather than
+  388; the widest line on any starter is 222 pt.
+- **`pdf`'s SVG support treats every embedded image as four channels**, so an RGB PNG or any JPEG
+  inside an SVG threw a `RangeError`. The import now decodes each embedded image under the floorplan's
+  caps and re-encodes it as RGBA before `pdf` sees it, which is also what stops an uncapped decode
+  there.
+- **A photographic 3000 px JPEG logo added 14.8 MB to an export**, because the backend embeds raw
+  RGB. The export now embeds a full-value image no larger than the box at 600 dpi (§11.216.6): 742 KB
+  for pure noise, 5 KB for a flat logo.
+
+**Evidence.** `logo_export_test.dart` reads the PDF back: one image per full-block sheet, upright,
+100 by 45 pt; none on `T6.3x`; none without a logo. `plan_image_test.dart` holds full value against
+the screen and the 834 by 375 cap. `logo_import_test.dart` runs all four formats through the real
+pdfium and the SVG refusals (size, entities, an embedded image over the caps). The route test chooses
+a logo through the real shell, saves, and reads the container back. **Looked at**: Small Office's
+cover and T2.01 with a transparent logo, flattened to paper.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

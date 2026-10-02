@@ -112,6 +112,77 @@ void main() {
     });
   });
 
+  group('THE LOGO IS NOT SCREENED (DR-030 §11.29.3)', () {
+    const logo = ImageRef(
+      member: _member,
+      format: ImageFormat.png,
+      pixelWidth: 4,
+      pixelHeight: 1,
+      screened: false,
+    );
+
+    test('full value, and still flattened against white', () {
+      expect(_samples(resolve(logo)!), [
+        ...[0, 0, 0],
+        ...[255, 255, 255],
+        ...[128, 128, 128],
+        // The transparent pixel is paper here too: no alpha, ever.
+        ...[255, 255, 255],
+      ]);
+    });
+
+    test('one member asked for both ways is two images, not whichever '
+        'came first', () {
+      final screened = resolve(_ref)!;
+      final full = resolve(logo)!;
+      expect(identical(screened, full), isFalse);
+      expect(_samples(screened).first, _screened(0));
+      expect(_samples(full).first, 0);
+    });
+  });
+
+  group('A FULL-VALUE IMAGE IS EMBEDDED AT THE LOGO BOX, NO LARGER '
+      '(DR-217 §11.216.6)', () {
+    PdfImage resolveSized(int w, int h, {required bool screened}) {
+      const member = 'logos/big.png';
+      final bytes = Uint8List.fromList(
+        im.encodePng(im.Image(width: w, height: h)),
+      );
+      return planImageResolver(document, {member: bytes})(
+        ImageRef(
+          member: member,
+          format: ImageFormat.png,
+          pixelWidth: w,
+          pixelHeight: h,
+          screened: screened,
+        ),
+      )!;
+    }
+
+    // 833, NOT 834: 3000 : 1350 is the box's own 100 : 45, and the box at
+    // 600 dpi is 833.3 px wide, so it is height-bound.
+    test('a 3000 x 1350 logo is embedded at 833 x 375', () {
+      final image = resolveSized(3000, 1350, screened: false);
+      expect((image.width, image.height), (833, 375));
+      expect(_samples(image).length, 833 * 375 * 3);
+    });
+
+    test('a tall one is height-bound, aspect kept', () {
+      final image = resolveSized(600, 1200, screened: false);
+      expect((image.width, image.height), (187, 375));
+    });
+
+    test('one already inside the box is not touched, never enlarged', () {
+      final image = resolveSized(300, 100, screened: false);
+      expect((image.width, image.height), (300, 100));
+    });
+
+    test('A FLOORPLAN IS NEVER RESIZED: it is drawn at sheet size', () {
+      final image = resolveSized(3000, 1350, screened: true);
+      expect((image.width, image.height), (3000, 1350));
+    });
+  });
+
   group('what the resolver refuses', () {
     test('a member the container does not hold resolves to null', () {
       // The CANVAS decides what that means: `PdfDiagramCanvas.drawImage`

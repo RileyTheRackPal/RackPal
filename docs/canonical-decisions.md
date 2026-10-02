@@ -23263,6 +23263,15 @@ line stays, and it is the carrier DR-030 §11.29.1 kept because it survives a ph
 not taken were growing the strip, about one schedule row per page, and squeezing a cell into it,
 which truncates that text line further.
 
+**11.216.6 THE PDF EMBEDS A LOGO NO LARGER THAN ITS BOX AT 600 DPI.** **Decided without a question
+and recorded as such**, on a measurement made while building it. The PDF backend has no path that
+embeds a PNG or JPEG as it is (docs/08's raster note): it decodes to raw RGB and deflates. Measured on
+Small Office, a flat 3000 px logo added 23 KB to the export and a photographic 3000 px JPEG added
+**14.8 MB**. The member stays verbatim (§11.216.2); the export's copy of a full-value image is fitted
+inside 834 by 375 px, averaged, never enlarged, as the floorplan's screening already lives in the
+backend rather than the member. Remeasured after the change: 5 KB and 742 KB, the second pure noise,
+which no compressor shrinks. A floorplan is never resized: it prints at sheet size.
+
 **Scope.** No scope change: DR-030 §11.29.5's allowlist, made definite.
 
 ---

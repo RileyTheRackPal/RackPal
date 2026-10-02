@@ -102,9 +102,12 @@ PdfImageResolver planImageResolver(
   PdfDocument document,
   Map<String, Uint8List> members,
 ) {
-  final cache = <String, PdfImage>{};
+  // KEYED ON THE TREATMENT TOO: one member drawn screened and at full
+  // value would otherwise get whichever was asked for first.
+  final cache = <(String, bool), PdfImage>{};
   return (ImageRef ref) {
-    final hit = cache[ref.member];
+    final key = (ref.member, ref.screened);
+    final hit = cache[key];
     if (hit != null) return hit;
 
     final bytes = members[ref.member];
@@ -131,15 +134,22 @@ PdfImageResolver planImageResolver(
     }
     if (decoded == null) return null;
 
+    // A FULL-VALUE IMAGE IS EMBEDDED NO LARGER THAN THE LOGO BOX AT 600 DPI
+    // (DR-217 §11.216.6). The member stays verbatim; only the PDF's copy is
+    // sized to what the box can print. Measured: a photographic 3000 px
+    // JPEG logo added 14.8 MB to every export at full size.
+    final source = ref.screened ? decoded : _toLogoBox(decoded);
     final built = PdfImage(
       document,
-      image: _screen(decoded),
-      width: decoded.width,
-      height: decoded.height,
+      // THE LOGO IS FLATTENED AND NOT SCREENED (DR-030 §11.29.3): full
+      // value, still no alpha.
+      image: ref.screened ? _screen(source) : _flattenOnly(source),
+      width: source.width,
+      height: source.height,
       // THE WHOLE POINT. `true` is the default and writes an `/SMask`.
       alpha: false,
     );
-    cache[ref.member] = built;
+    cache[key] = built;
     return built;
   };
 }
@@ -178,3 +188,52 @@ Uint8List _screen(im.Image source) {
 /// One channel composited over white at alpha [a].
 int _flatten(int channel, int a) =>
     a >= 255 ? channel : (channel * a + _towardWhite * (255 - a)) ~/ 255;
+
+/// Flattens [source] against white, returning packed RGB, with no
+/// screening: the logo's path (DR-030 §11.29.3). An import has already
+/// flattened an alpha logo, so this is the same guarantee one layer later,
+/// for a member that arrived some other way.
+Uint8List _flattenOnly(im.Image source) {
+  final out = Uint8List(source.width * source.height * 3);
+  var i = 0;
+  for (final pixel in source) {
+    final a = pixel.a.toInt();
+    out[i++] = _flatten(pixel.r.toInt(), a);
+    out[i++] = _flatten(pixel.g.toInt(), a);
+    out[i++] = _flatten(pixel.b.toInt(), a);
+  }
+  return out;
+}
+
+/// The most pixels a full-value image is embedded at: the logo box
+/// (`kLogoBoxWidth` by `kLogoBoxHeight` pt) at 600 dpi, 834 by 375.
+const int kLogoEmbedMaxWidthPx = 834;
+const int kLogoEmbedMaxHeightPx = 375;
+
+/// [source] fitted inside [kLogoEmbedMaxWidthPx] by [kLogoEmbedMaxHeightPx],
+/// aspect kept, or [source] itself when it already fits. Never enlarged.
+im.Image _toLogoBox(im.Image source) {
+  if (source.width <= kLogoEmbedMaxWidthPx &&
+      source.height <= kLogoEmbedMaxHeightPx) {
+    return source;
+  }
+  // INTEGER ARITHMETIC for the target size, on `_screen`'s CR-001 reason:
+  // the document is compared byte for byte.
+  final byWidth =
+      source.width * kLogoEmbedMaxHeightPx >=
+      source.height * kLogoEmbedMaxWidthPx;
+  final width = byWidth
+      ? kLogoEmbedMaxWidthPx
+      : (source.width * kLogoEmbedMaxHeightPx) ~/ source.height;
+  final height = byWidth
+      ? (source.height * kLogoEmbedMaxWidthPx) ~/ source.width
+      : kLogoEmbedMaxHeightPx;
+  return im.copyResize(
+    source,
+    width: width < 1 ? 1 : width,
+    height: height < 1 ? 1 : height,
+    // AVERAGE, because this only ever shrinks, and averaging is what keeps
+    // a thin rule in a logo from vanishing between sampled pixels.
+    interpolation: im.Interpolation.average,
+  );
+}

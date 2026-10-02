@@ -551,6 +551,11 @@ enum LabelKey {
   // would make the Edit menu name a storage slot rather than an act.
   setProjectInfo,
 
+  // THE INTEGRATOR'S LOGO (commands/sheet_set_commands.dart), `#590`,
+  // DR-217. Its own value and not `setProjectInfo`, because the Edit menu
+  // should say what changed: a picture, not a line of the title block.
+  setProjectLogo,
+
   // LATERAL POSITION (commands/device_width_commands.dart), M5-C/`#269`.
   // Its own value and not `moveDevice`, on the split every value here is
   // made on: what the Edit menu has to say. A move changes which U a

@@ -147,6 +147,11 @@ const String kUnderlayMemberDir = 'underlays/';
 /// apart without opening either.
 const String kPlanSourceMemberDir = 'sources/';
 
+/// The directory prefix the integrator's logo lives under, `logos/<id>.png`
+/// (DR-030, DR-217). Its own prefix for `sources/`'s reason: a reader
+/// listing the container can tell a logo from a floorplan unopened.
+const String kLogoMemberDir = 'logos/';
+
 /// The constant every entry's modification time is written with.
 ///
 /// The MS-DOS epoch, which is the conventional reproducible-build choice

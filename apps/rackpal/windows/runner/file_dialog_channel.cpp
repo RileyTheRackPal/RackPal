@@ -208,12 +208,25 @@ HRESULT ConfigureDialog(IFileDialog* dialog, const EncodableMap* args,
       {L"All files", L"*.*"},
   };
 
+  // THE LOGO (`#590`, DR-217): the floorplan's three plus SVG, in a row of
+  // its own because the floorplan import refuses SVG. Open only, and the
+  // content sniff decides, for the floorplan's reasons above.
+  static const COMDLG_FILTERSPEC kLogoFilters[] = {
+      {L"Logo (PNG, JPEG, PDF, SVG)", L"*.png;*.jpg;*.jpeg;*.pdf;*.svg"},
+      {L"PNG image", L"*.png"},
+      {L"JPEG image", L"*.jpg;*.jpeg"},
+      {L"PDF document", L"*.pdf"},
+      {L"SVG image", L"*.svg"},
+      {L"All files", L"*.*"},
+  };
+
   static const FileKind kFileKinds[] = {
       {L"project", kProjectFilters, ARRAYSIZE(kProjectFilters), L"rppj"},
       {L"csv", kCsvFilters, ARRAYSIZE(kCsvFilters), L"csv"},
       {L"device", kDeviceFilters, ARRAYSIZE(kDeviceFilters), L"rpdx"},
       {L"library", kLibraryFilters, ARRAYSIZE(kLibraryFilters), L"rpda"},
       {L"floorplan", kFloorplanFilters, ARRAYSIZE(kFloorplanFilters), L"png"},
+      {L"logo", kLogoFilters, ARRAYSIZE(kLogoFilters), L"png"},
   };
 
   const std::optional<std::wstring> file_type = StringArg(args, "fileType");
