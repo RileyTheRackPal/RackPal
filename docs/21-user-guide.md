@@ -1165,6 +1165,7 @@ floorplan import.
 | **Rack Elevation, Rear** | One per rack |
 | **Unused Home Runs** (`T6.20`) | Automatically, when at least one home run is still a coil at one end: never landed at the rack, or landed at the rack and never terminated at the room. One band per room with how many runs it holds, cable IDs in order. The `OPEN` column says which end is loose: `RACK`, `ROOM` or `BOTH`. Each row also gives the rack label, the wall-plate label, the outlet, your description of the room end, the cable, its length, the pathway and how far rough-in has got. A project with every run landed at both ends gets no page for it |
 | **Equipment List and Materials** | Always, paginated as needed. One row per device, grouped by rack. Blanks, vents, shelves and other passives are not equipment rows: they are listed once each by item under **MATERIALS** at the end, with how many and which racks they are in. Each rack's subtotal still includes them, and says so. After MATERIALS, four short tables, each with its own headings: **cable footage by media** with your waste factor added; **hardware the rules imply**, a rear rail support for every device too heavy for its ears and an ear kit for a half-rack device on its own, including ones you have acknowledged, with your reason; **jumpers and power cords** by media, length and colour; and the **outlet map**, every cord you have drawn to a PDU, UPS or sequencer outlet and how many outlets each has free. A table with nothing in it says so. No prices, ever |
+| **Plate, Panel and Pinout Details** (`T5.01`) | Automatically, last, when something in the job is not wired the usual way: an IR receiver port that carries power (the kind that ruins an emitter plugged into it), printed with its pin map; a cable whose T568A or T568B differs from the project's, with both pin colour orders; a cable marked null-modem; or a Cresnet or RS-232 terminal block whose terminal order you recorded differently from the standard (`24 Y Z G`, `TX RX G`). Record a terminal order in the Device Builder's **Terminals** column, under Columns ▸ Advanced, typed with spaces: `TX RX G`. A job with none of these gets no page for it |
 
 **Your own abbreviations and notes.** `File` ▸ `Sheet set…` lists the legend's
 abbreviations and general notes as rows. Change a row, add one with `Add
@@ -1174,9 +1175,9 @@ and `Restore defaults` puts it back. The signal tag prefixes (`AUD`, `NET` and s
 on) always follow your abbreviations and are not edited here. A long note wraps
 on the sheet.
 
-**Zones on the drawings.** Floor plans and rack elevations carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions, unused home runs and equipment list have a plain border.
+**Zones on the drawings.** Floor plans and rack elevations carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions, unused home runs, equipment list and pinout details have a plain border.
 
-So a two-rack job with one floorplan gives you at least nine sheets, more if the exceptions or the equipment list run to a second page, or if any home run is still unused. The status line says
+So a two-rack job with one floorplan gives you at least nine sheets, more if the exceptions or the equipment list run to a second page, or if any home run is still unused or any pinout is non-standard. The status line says
 how many sheets were written and how large the file is.
 
 **A project with no rack cannot be exported**: there is no elevation to draw
