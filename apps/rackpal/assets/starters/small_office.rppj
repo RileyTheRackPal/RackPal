@@ -3291,7 +3291,7 @@
       "outletRackLabelFormat": "{FLOOR}{SPACE}-{PANEL}{PORT:2}",
       "portDesignatorFormat": "J{PORT_SEQ:2}",
       "ruleOverrides": {},
-      "sheetNumbering": "simple"
+      "sheetNumbering": "ncs"
     },
     "sheets": {
       "019c6bcb-1fc0-7000-8000-00000000002c": {

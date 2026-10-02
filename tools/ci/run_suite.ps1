@@ -1070,7 +1070,10 @@ $SuiteFloors = @{
     # +7 in sheet/logo_title_block_test.dart (full value, the cell, the fit,
     # the text stopping at it, nothing without a logo, nothing on the strip)
     # and +1 in epoch_mask_test.dart for SetProjectLogoCommand.
-    'rackpal_core'   = 5308
+    # 5310 at `#971` (DR-218): +2 in sheet/title_block_test.dart. The strip
+    # prints the legend reference whole, in row 1 beside the title; and row
+    # 2 keeps the sheet number with no address, client or firm.
+    'rackpal_core'   = 5310
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1127,7 +1130,10 @@ $SuiteFloors = @{
     # 250 at `#590` (DR-217): +6 in plan_image_test.dart (the logo at full
     # value, one member two ways, the 834 x 375 embed cap and a floorplan
     # never resized) and +2 in logo_export_test.dart, read back from the PDF.
-    'rackpal_export' = 250
+    # 258 at `#347` (M6-H, CR-066): +8 in numbering_identity_test.dart, four
+    # cases on each of Whole House and Small Office under both schemes: the
+    # ids in order, only the number moving, the legend reference, the index.
+    'rackpal_export' = 258
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1676,7 +1682,10 @@ $SuiteFloors = @{
     # with none; the row under the Integrator; the preview, its size, Replace
     # and Remove; Remove as one command; Choose showing the new logo; a
     # refusal in the dialog; and no row when nothing can choose.
-    'rackpal_ui'     = 2044
+    # 2045 at `#347` (CR-066): +1 in settings/project_settings_dialog_test.
+    # dart. The numbering choices say what they print, not the enum, and
+    # picking NCS is one command.
+    'rackpal_ui'     = 2045
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

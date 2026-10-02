@@ -115,6 +115,11 @@ abstract final class ProjectSettingFields {
   static const sheetNumbering = ProjectSettingField<SheetNumbering>(
     key: 'sheetNumbering',
     label: 'Sheet numbering',
+    // ON-SCREEN COPY, so no ruling id in it: CR-066 is the reason, and the
+    // person reading this needs the consequence.
+    help:
+        'What each title block prints as the sheet number. Every sheet '
+        'keeps its own id, like T2.01, either way.',
     get: _getSheetNumbering,
     set: _setSheetNumbering,
   );

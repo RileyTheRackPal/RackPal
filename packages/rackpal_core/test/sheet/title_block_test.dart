@@ -414,6 +414,58 @@ void main() {
       );
       expect(textsOf(ops).where((t) => t.trim().isEmpty), isEmpty);
     });
+
+    test('THE LEGEND REFERENCE PRINTS WHOLE, IN ROW 1, beside the sheet '
+        'title (DR-218)', () {
+      // The longest site address a person might type, which used to push
+      // the reference off the end of row 2.
+      final info = ProjectInfo(
+        projectName: 'Whole House',
+        clientName: 'Sample Client With A Long Registered Trading Name',
+        siteAddress: Address(
+          line1: '48 Example Ridge Road, Building C, Suite 1400',
+          city: 'Sampleton',
+          region: 'CA',
+          postalCode: '90000',
+          country: 'US',
+        ),
+        integratorName: 'Example Integration Co.',
+        integratorContact: 'projects@example.invalid',
+      );
+      final set = oneRackSheetSet();
+      final fields = fieldsFor(
+        info: info,
+        sheet: set.sheets.last,
+        noRack: true,
+      );
+      final ops = layerFor(fields, compact: true);
+      final texts = textOps(ops);
+      final legend = texts.where(
+        (t) => t.text == 'SYMBOL LEGEND: SEE SHEET T0.01',
+      );
+      expect(legend, hasLength(1), reason: 'whole, never cut to SEE S…');
+      final title = texts.singleWhere((t) => t.text == fields.sheetTitle);
+      expect(
+        legend.single.at.y,
+        title.at.y,
+        reason: 'the same row as the title',
+      );
+      expect(legend.single.at.x, lessThan(title.at.x));
+      expectInside(ops, boxFor(compact: true));
+    });
+
+    test('ROW 2 KEEPS THE SHEET NUMBER with no address, client or firm', () {
+      final set = oneRackSheetSet();
+      final fields = fieldsFor(
+        info: minimalProjectInfo(),
+        sheet: set.sheets.last,
+        noRack: true,
+      );
+      expect(
+        textsOf(layerFor(fields, compact: true)),
+        contains(fields.sheetNumberLine),
+      );
+    });
   });
 
   group('the injected clock (section 8.4)', () {
