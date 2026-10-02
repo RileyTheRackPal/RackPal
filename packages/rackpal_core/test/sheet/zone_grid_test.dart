@@ -16,6 +16,8 @@ void main() {
           SheetRole.devicePlan: true,
           SheetRole.rackElevationFront: true,
           SheetRole.rackElevationRear: true,
+          // T6.20 IS A TABLE (DR-220): the inset, not the band.
+          SheetRole.unusedHomeRuns: false,
           SheetRole.equipmentList: false,
         },
       );

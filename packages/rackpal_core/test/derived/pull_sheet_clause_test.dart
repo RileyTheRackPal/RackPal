@@ -336,6 +336,11 @@ void main() {
           'devicePlan',
           'rackElevationFront',
           'rackElevationRear',
+          // `unusedHomeRuns` ARRIVED AT M6-E1 (`#332`, DR-220): `T6.20`,
+          // M6's own sheet in M6. It filters the same schedule rows a Pull
+          // Sheet would, and it is still not one: no sign-off, no pull
+          // order, only the runs with an open end. Looked at.
+          'unusedHomeRuns',
           'equipmentList',
         ]),
         reason:

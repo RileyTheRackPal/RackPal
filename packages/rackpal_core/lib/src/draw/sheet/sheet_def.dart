@@ -21,11 +21,11 @@
 // connects adding a role to editing this sentence, so it no longer counts.
 //
 // The rest of §2.2's table (T6.01+ interconnect, T6.10 pull sheet, T6.11
-// termination schedule, T6.20 unused home runs, T5.01 pinout details) is
-// M6 and not yet built; T0.00, the cover, arrived at M6-A, T0.01, the
-// legend, at M6-B, and T0.02, the exceptions, at M6-C. The unbuilt ones
-// are absent from [SheetRole]
-// rather than stubbed, which is what lets a user-facing document state what
+// termination schedule, T5.01 pinout details) is M6 and not yet built;
+// T0.00, the cover, arrived at M6-A, T0.01, the legend, at M6-B, T0.02,
+// the exceptions, at M6-C, and T6.20, unused home runs, at M6-E1. The
+// unbuilt ones are absent from [SheetRole] rather than stubbed, which is
+// what lets a user-facing document state what
 // prints by naming the roles rather than by counting anything
 // (docs/21 §21.7).
 
@@ -151,6 +151,18 @@ enum SheetRole {
     shortTitle: 'REAR ELEV.',
     zoned: true,
   ),
+
+  /// docs/08 §2.2's `T6.20`, Unused Home Runs (M6-E1, `#332`, DR-220).
+  /// `AUTO`: emitted iff a home run has an open end, so
+  /// [SheetSet.forRacks]' `unusedHomeRunSheets` defaults to zero and a
+  /// project with none resolves the set it resolved before this role
+  /// existed. ANSI A landscape, the schedules' paper (§6.1).
+  unusedHomeRuns(
+    'UNUSED HOME RUNS',
+    SheetSize.ansiALandscape,
+    perRack: false,
+    shortTitle: 'UNUSED RUNS',
+  ),
   equipmentList(
     'EQUIPMENT LIST AND MATERIALS',
     SheetSize.ansiALandscape,
@@ -226,13 +238,49 @@ String _reservedNotice(String id) =>
     '(docs/08 §2.2) — printed as-is (CR-023).';
 
 /// Says WHY the schedule's sheet numbers jump. See [equipmentListNcsId].
-String _overflowNotice(int pages) {
+String _overflowNotice(int pages, int from) {
   const last = kEquipmentListBlockStart + kEquipmentListBlockSize - 1;
   return 'The equipment list needs $pages pages and docs/08 §2.2 gives it '
       'T6.$kEquipmentListBlockStart–T6.$last, so page '
       '${kEquipmentListBlockSize + 1} onward is numbered from '
-      'T6.$kEquipmentListOverflowStart — T6.4x and T6.5x are reserved.';
+      'T6.$from — T6.4x and T6.5x are reserved.';
 }
+
+/// The same, for T6.20 (DR-220 §11.219.5). See [unusedHomeRunsNcsId].
+String _unusedOverflowNotice(int pages) {
+  const last = kUnusedHomeRunsBlockStart + kUnusedHomeRunsBlockSize - 1;
+  return 'Unused home runs need $pages pages and docs/08 §2.2 gives them '
+      'T6.$kUnusedHomeRunsBlockStart–T6.$last, so page '
+      '${kUnusedHomeRunsBlockSize + 1} onward is numbered from '
+      'T6.$kEquipmentListOverflowStart — T6.30 to T6.5x are taken or reserved.';
+}
+
+/// The first sequence number T6.20 uses (docs/08 §2.2, DR-220).
+const int kUnusedHomeRunsBlockStart = 20;
+
+/// How many sheet numbers T6.20 has to itself: `T6.20` to `T6.29`. The
+/// next is the equipment list's `T6.30`.
+const int kUnusedHomeRunsBlockSize = 10;
+
+/// The NCS id for T6.20 page [page], 0-based: `T6.20` to `T6.29`, then
+/// from [kEquipmentListOverflowStart] (DR-220 §11.219.5).
+///
+/// THE OVERFLOW IS SHARED, AND T6.20 TAKES IT FIRST because it sits first
+/// in the set. The equipment list's own overflow then starts after it:
+/// see [equipmentListNcsId]'s `overflowFrom`. Two schedules each counting
+/// from `T6.60` would print one sheet number on two drawings, which is the
+/// one thing a sheet number exists to prevent.
+String unusedHomeRunsNcsId(int page) {
+  final sequence = page < kUnusedHomeRunsBlockSize
+      ? kUnusedHomeRunsBlockStart + page
+      : kEquipmentListOverflowStart + page - kUnusedHomeRunsBlockSize;
+  return 'T6.${sequence.toString().padLeft(2, '0')}';
+}
+
+/// How many overflow ids T6.20 takes from [kEquipmentListOverflowStart]
+/// for [pages] pages.
+int _unusedOverflowCount(int pages) =>
+    pages > kUnusedHomeRunsBlockSize ? pages - kUnusedHomeRunsBlockSize : 0;
 
 /// The first sequence number the equipment list uses — §2.2's `T6.30`.
 const int kEquipmentListBlockStart = 30;
@@ -250,7 +298,10 @@ const int kEquipmentListOverflowStart = 60;
 
 /// The NCS id for schedule page [page], 0-based.
 ///
-/// `T6.30`, `T6.31`, … `T6.39`, then `T6.60`, `T6.61`, … .
+/// `T6.30`, `T6.31`, … `T6.39`, then `T6.60`, `T6.61`, … . [overflowFrom]
+/// moves that second run past any overflow T6.20 has already taken (DR-220
+/// §11.219.5); it is [kEquipmentListOverflowStart] in a set where T6.20
+/// fits its own ten.
 ///
 /// THE JUMP IS THE POINT. This was `'T6.${30 + page}'`, which runs off the
 /// end of its own block at the eleventh page and emits `T6.40` — the id
@@ -263,10 +314,13 @@ const int kEquipmentListOverflowStart = 60;
 /// The jump is not silent either: [SheetSet.forRacks] raises a notice
 /// whenever it is used, because a reader looking for page 11 between
 /// `T6.39` and `T6.60` is owed the reason for the gap.
-String equipmentListNcsId(int page) {
+String equipmentListNcsId(
+  int page, {
+  int overflowFrom = kEquipmentListOverflowStart,
+}) {
   final sequence = page < kEquipmentListBlockSize
       ? kEquipmentListBlockStart + page
-      : kEquipmentListOverflowStart + page - kEquipmentListBlockSize;
+      : overflowFrom + page - kEquipmentListBlockSize;
   return 'T6.${sequence.toString().padLeft(2, '0')}';
 }
 
@@ -396,6 +450,7 @@ final class SheetSet {
     Iterable<Rack> racks, {
     int equipmentListSheets = 1,
     int exceptionSheets = 1,
+    int unusedHomeRunSheets = 0,
     bool stamped = false,
     Iterable<PlanUnderlay> planUnderlays = const <PlanUnderlay>[],
     SheetNumbering numbering = SheetNumbering.simple,
@@ -437,6 +492,7 @@ final class SheetSet {
         exceptionSheets +
         plans.length +
         ordered.length * 2 +
+        unusedHomeRunSheets +
         equipmentListSheets;
     final sheets = <SheetDef>[
       SheetDef(
@@ -522,10 +578,32 @@ final class SheetSet {
       }
     }
 
+    // T6.20 IS `n+3`, BEFORE T6.30 (docs/08 §2.2, DR-220 §11.219.5), and
+    // the interconnect, pull and termination sheets will land ahead of it.
+    // Zero pages is the AUTO sheet absent: the caller paginated nothing
+    // because nothing is unused.
+    for (var page = 0; page < unusedHomeRunSheets; page++) {
+      sheets.add(
+        SheetDef(
+          ncsId: unusedHomeRunsNcsId(page),
+          role: SheetRole.unusedHomeRuns,
+          index: index++,
+          total: total,
+          legendNcsId: _kLegendNcsId,
+          stamped: stamped,
+        ),
+      );
+    }
+
+    final equipmentOverflowFrom =
+        kEquipmentListOverflowStart + _unusedOverflowCount(unusedHomeRunSheets);
     for (var page = 0; page < equipmentListSheets; page++) {
       sheets.add(
         SheetDef(
-          ncsId: equipmentListNcsId(page),
+          ncsId: equipmentListNcsId(
+            page,
+            overflowFrom: equipmentOverflowFrom,
+          ),
           role: SheetRole.equipmentList,
           index: index++,
           total: total,
@@ -547,8 +625,10 @@ final class SheetSet {
           _ncsNotice(sheet.ncsId)
         else if (isReservedNcsId(sheet.ncsId))
           _reservedNotice(sheet.ncsId),
+      if (unusedHomeRunSheets > kUnusedHomeRunsBlockSize)
+        _unusedOverflowNotice(unusedHomeRunSheets),
       if (equipmentListSheets > kEquipmentListBlockSize)
-        _overflowNotice(equipmentListSheets),
+        _overflowNotice(equipmentListSheets, equipmentOverflowFrom),
     ];
 
     return SheetSet._(List.unmodifiable(sheets), List.unmodifiable(notices));
