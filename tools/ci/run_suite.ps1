@@ -1070,7 +1070,10 @@ $SuiteFloors = @{
     # +7 in sheet/logo_title_block_test.dart (full value, the cell, the fit,
     # the text stopping at it, nothing without a logo, nothing on the strip)
     # and +1 in epoch_mask_test.dart for SetProjectLogoCommand.
-    'rackpal_core'   = 5308
+    # 5310 at `#971` (DR-218): +2 in sheet/title_block_test.dart. The strip
+    # prints the legend reference whole, in row 1 beside the title; and row
+    # 2 keeps the sheet number with no address, client or firm.
+    'rackpal_core'   = 5310
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

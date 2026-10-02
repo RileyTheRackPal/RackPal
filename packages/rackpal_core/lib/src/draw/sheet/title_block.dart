@@ -510,31 +510,36 @@ LayerBuild _buildCompact(
     ...fields.gridRowB,
   ].map((f) => '${f.label} ${f.value}').join(' · ');
 
-  final rows = <({String? left, String right, double size})>[
+  // THE LEGEND REFERENCE PRINTS IN ROW 1 (DR-218 §11.217.1), beside the
+  // sheet title. It was last on row 2, which overflows on a real project
+  // (Whole House: 708 pt on a 690 pt strip), so the one item a reader acts
+  // on printed as `SEE S…`. Row 1 carries a name and a title and has about
+  // 480 pt free.
+  //
+  // ROW 2 IS UNCONDITIONAL, because its right half is the sheet's number.
+  // It used to exist only when its left half had text, which the legend
+  // reference always guaranteed; moving the reference out would have let a
+  // project with no address, client or firm lose `SHEET i OF n`.
+  final rows = <({String? left, String? middle, String right, double size})>[
     (
       left: fields.projectLine,
+      middle: fields.legendLine,
       right: fields.sheetTitle,
       size: SheetTextSizes.sheetTitle,
     ),
-    if (joinNonEmpty(<String?>[
-          fields.addressLine,
-          fields.clientLine,
-          fields.integratorLine,
-          fields.legendLine,
-        ]) !=
-        null)
-      (
-        left: joinNonEmpty(<String?>[
-          fields.addressLine,
-          fields.clientLine,
-          fields.integratorLine,
-          fields.legendLine,
-        ]),
-        right: fields.sheetNumberLine,
-        size: SheetTextSizes.identity,
-      ),
+    (
+      left: joinNonEmpty(<String?>[
+        fields.addressLine,
+        fields.clientLine,
+        fields.integratorLine,
+      ]),
+      middle: null,
+      right: fields.sheetNumberLine,
+      size: SheetTextSizes.identity,
+    ),
     (
       left: fieldRun,
+      middle: null,
       right: fields.sheetIdLine,
       size: SheetTextSizes.fieldValue,
     ),
@@ -549,6 +554,7 @@ LayerBuild _buildCompact(
       top: box.top + i * rowHeight,
       height: rowHeight,
       left: row.left,
+      middle: row.middle,
       right: row.right,
       sizePt: row.size,
       palette: palette,
@@ -653,6 +659,7 @@ void _emitPair(
   required double sizePt,
   required SheetPalette palette,
   required TextMeasurer measurer,
+  String? middle,
 }) {
   final midY = top + height / 2;
   final rightStyle = TextStyleSpec(
@@ -664,12 +671,31 @@ void _emitPair(
   final rightWidth = measurer.measureText(right, rightStyle).advanceWidth;
   ops.add(OpText(right, DPt(box.right - _kPad, midY), rightStyle));
 
+  // THE MIDDLE ITEM SITS RIGHT-ALIGNED BEFORE THE RIGHT ONE, at the
+  // identity size whatever the row's: on the compact strip it is the legend
+  // reference in the title's row (DR-218). It is placed before the left
+  // text is fitted, so a long project name gives way to it and not the
+  // other way round.
+  var used = rightWidth;
+  if (middle != null && middle.isNotEmpty) {
+    final middleStyle = TextStyleSpec(
+      font: kSheetFont,
+      sizePt: SheetTextSizes.identity,
+      argb: palette.text,
+      anchor: TextAnchor.midRight,
+    );
+    final middleRight = box.right - rightWidth - 4 * _kPad;
+    final middleWidth = measurer.measureText(middle, middleStyle).advanceWidth;
+    ops.add(OpText(middle, DPt(middleRight, midY), middleStyle));
+    used += middleWidth + 3 * _kPad;
+  }
+
   if (left == null || left.isEmpty) return;
   _emitFitted(
     ops,
     text: left,
     at: DPt(box.left + _kPad, midY),
-    maxWidth: box.width - rightWidth - 3 * _kPad,
+    maxWidth: box.width - used - 3 * _kPad,
     style: TextStyleSpec(
       font: kSheetFont,
       sizePt: sizePt,
