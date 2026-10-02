@@ -23302,6 +23302,40 @@ resolves under both. The code always followed the ruling.
 
 ---
 
+### 11.218 DR-219 · T6.30's rollups are sections with their own headers; the outlet map lists assignments; an acknowledged support still prints
+
+**Settled by the user on 2026-10-02, on the recommended option three times, building M6-F (`#335`).**
+docs/08 §2.2 and AC-024, AC-026 and AC-028 put four rollups on `T6.30` beside the equipment table:
+cable footage by media with a waste factor, the hardware implied by rules, jumpers and power cords by
+media, length and colour, and the PDU outlet map. None says how they sit on a sheet whose table has
+one thirteen-column header.
+
+**11.218.1 RULED: EACH ROLLUP IS ITS OWN SECTION WITH ITS OWN HEADER ROW**, after MATERIALS, re-printed
+with `(cont.)` when a page breaks inside it, so every header reads true over its column. The option
+not taken was reusing the equipment grid as MATERIALS does, which prints `MANUFACTURER` over a media
+name.
+
+**11.218.2 RULED: THE OUTLET MAP LISTS ASSIGNMENTS**, one row per outlet with a cord drawn to it
+(outlet, device, inlet), then one line per outlet provider giving how many of its outlets are free and
+how many devices are counted as plugged in without a drawn cord (DR-171 §11.170.4). Measured on the
+starters, which draw no cords: 16 to 74 outlets across UPSes, sequencers and PDUs, about 38 rows to
+an A page. The option not taken was every outlet, which on Whole House is about two pages of dashes.
+
+**11.218.3 RULED: AN ACKNOWLEDGED `RCK-013` STILL PRINTS ITS REAR SUPPORT**, with the
+acknowledgement's reason in NOTES. The weight is physical, and an acknowledgement usually records
+that support is specified. The option not taken, open findings only, would drop a kit somebody needed
+because they quietened the drawer.
+
+**11.218.4 CR-030's EAR-KIT ADVISORY IS BUILT, AS `RCK-014`. Decided without a question and recorded
+as such.** CR-030 rules that a half-rack device placed alone *"files an advisory naming the ear kit"*;
+no rule did. The ear kit is one of the two pieces of hardware docs/08 names as implied by rules, so
+the materials line and the drawer's advisory come from the same predicate: a rail-mounted device
+narrower than the rack with nothing else in any of its U on its face.
+
+**Scope.** No scope change: docs/08 §2.2's `T6.30`, AC-026 and CR-030, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
