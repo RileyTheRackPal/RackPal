@@ -23326,13 +23326,24 @@ acknowledgement's reason in NOTES. The weight is physical, and an acknowledgemen
 that support is specified. The option not taken, open findings only, would drop a kit somebody needed
 because they quietened the drawer.
 
-**11.218.4 CR-030's EAR-KIT ADVISORY IS BUILT, AS `RCK-014`. Decided without a question and recorded
-as such.** CR-030 rules that a half-rack device placed alone *"files an advisory naming the ear kit"*;
-no rule did. The ear kit is one of the two pieces of hardware docs/08 names as implied by rules, so
-the materials line and the drawer's advisory come from the same predicate: a rail-mounted device
-narrower than the rack with nothing else in any of its U on its face.
+**11.218.4 RULED, AS A §8.3 AMENDMENT: CR-030's EAR-KIT ADVISORY IS BUILT, AS `RCK-014`.** CR-030 rules
+that a half-rack device placed alone *"files an advisory naming the ear kit"*; no rule did. The ear kit
+is one of the two pieces of hardware docs/08 names as implied by rules, so the materials line and the
+drawer's advisory come from the same predicate: a rail-mounted device narrower than the rack with
+nothing else in any of its U on its face. **The v1 catalogue moves to 8 tier-1 + 6 tier-2 + 16
+tier-3**, `RCK-014` an advisory in tier 3, with its AC-051 pair.
 
-**Scope.** No scope change: docs/08 §2.2's `T6.30`, AC-026 and CR-030, made definite.
+**THIS PARAGRAPH FIRST READ "DECIDED WITHOUT A QUESTION", AND THAT WAS WRONG.** It was written before
+the catalogue gate was read. `rule_catalogue_test.dart` pins the count as v1's rule scope and says a
+rule arriving without a §8.3 amendment fails there, which is roadmap M5's *"just one more obvious
+rule"*. CR-030 already ruled the behaviour into v1, so this builds a promise rather than widening the
+product, but the gate it moves is the user's, and the question was put. The options not taken were
+deriving ear kits from placement with no rule, which leaves the drawer and the sheet two answers to
+one question, and listing rear supports only.
+
+**Scope.** **§8.3 amendment for §11.218.4 only**: the v1 rule catalogue gains `RCK-014`, by CR-030's
+own wording. §11.218.1 to §11.218.3 change no scope: docs/08 §2.2's `T6.30` and AC-026, made
+definite.
 
 ---
 

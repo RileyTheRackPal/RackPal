@@ -344,7 +344,7 @@ Two further sequencing constraints are binding, from AC-059:
 **Goal.** Rules that are right, acknowledgeable, and incapable of holding a deliverable hostage.
 
 - [ ] The rule registry as Dart functions; catalogue metadata as data; the compat matrix as a lookup table
-- [ ] Every rule, 8 tier-1, 6 tier-2, 15 tier-3, enumerated once in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers); findings, severities, `AckedFinding` at both scopes, project-wide mutes with reasons
+- [ ] Every rule, 8 tier-1, 6 tier-2, 16 tier-3 (`RCK-014` by DR-219's §8.3 amendment), enumerated once in [the rule catalogue](02-data-model.md#5-the-v1-validation-rule-catalogue--three-tiers); findings, severities, `AckedFinding` at both scopes, project-wide mutes with reasons
 - [ ] Spring-back with reason chips and remedy chips, each with `[ Connect anyway ]`; the `[Why?]` rationale viewer
 - [ ] **The DRC fixture corpus**
 

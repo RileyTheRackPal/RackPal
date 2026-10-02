@@ -18,8 +18,10 @@ Settled by the user on 2026-10-02, building M6-F (`#335`), on the recommended op
 - **Each rollup is its own section with its own header**, re-printed with `(cont.)` on a break.
 - **The outlet map lists assignments**: a row per drawn cord, then a free count per outlet provider.
 - **An acknowledged `RCK-013` still prints its rear support**, with the reason in NOTES.
-- **`RCK-014` is built** (decided without a question): CR-030's ear-kit advisory for a half-rack
-  device placed alone, the source of the ear-kit materials line.
+- **`RCK-014` is built, as a §8.3 amendment the user approved**: CR-030's ear-kit advisory for a
+  half-rack device placed alone, the source of the ear-kit materials line. The catalogue goes to
+  8 + 6 + 16. First recorded as decided without a question, which was wrong: the count is v1's rule
+  scope.
 
 # Why
 
