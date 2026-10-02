@@ -23215,6 +23215,42 @@ parked on HIST/3 (`#658`) by DR-215 §11.214.3. The flag joins it there. The sta
 
 ---
 
+### 11.216 DR-217 · The logo imports from PNG, JPEG, PDF or SVG, is stored as a raster, and is previewed where it is set
+
+**Settled by the user on 2026-10-01, building M6-G6 (`#590`).** DR-030 §11.29.5 owes *"a format
+allowlist"* and names none; DR-216 §11.215.3 places the logo and its control. Two questions were put.
+
+**11.216.1 RULED: PNG, JPEG, PDF AND SVG**, the user's choice over the recommended PNG, JPEG and PDF,
+with *"might as well if we're doing it."* The SVG price offered was two to three days, on the premise
+that a decoder and a rasteriser had to be added. **That premise was wrong and is corrected here**:
+the `pdf` package, already a dependency, draws SVG as PDF vectors, and the vendored pdfium (DR-153)
+already rasterises PDF. An SVG therefore becomes a one-page PDF and takes the PDF route, with no new
+dependency.
+
+**11.216.2 STORED AS A RASTER, PNG OR JPEG, so `ProjectLogo` mirrors `PlanUnderlay`** exactly as
+§11.29.5 asks and `rackpal_core` still needs no decoder. **Decided without a question and recorded as
+such:**
+- **A PNG or JPEG is stored verbatim** (§11.29.5, *"Stored bytes go in verbatim"*), flattened over
+  white only when it carries alpha, which is the underlay's rule for docs/08 row 9's reason.
+- **A PDF or SVG is rendered once, at import**, to a PNG that fits inside the logo box at 600 dpi:
+  834 by 375 px, aspect kept. The box is fixed, so the raster can be no sharper on paper than that.
+  A PDF gives its first page; a logo has no page picker. The source file is not kept: a different
+  box is a re-import, not a re-render.
+- **Caps**: the image cap every import carries (M4-M4), and 4 MB for SVG text, which is parsed
+  before anything bounds it. The SVG parser follows only embedded `data:` images and expands no DTD
+  entity; nothing in it touches a file or the network.
+
+**11.216.3 RULED: A THUMBNAIL WITH REPLACE AND REMOVE.** The Title block section shows the logo at
+the box's aspect, as it will print, with its pixel size, `Replace logo…` and `Remove logo`; with none
+set, `Choose logo…`. The option not taken was the file name alone, which leaves the first sight of a
+badly flattened logo to a printed sheet. **The preview matters more for SVG than anywhere**: the
+`pdf` package's SVG support is partial (no filters, no CSS stylesheets), and the thumbnail is where
+a logo it cannot draw is seen before it is issued.
+
+**Scope.** No scope change: DR-030 §11.29.5's allowlist, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
