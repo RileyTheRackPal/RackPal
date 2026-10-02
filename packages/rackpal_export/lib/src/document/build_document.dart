@@ -103,6 +103,11 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     ).drawingArea,
     measurer: measurer,
     units: doc.settings.displayUnits,
+    // THE ROLLUPS RIDE IN THE DRY RUN (docs/08 §2.2, DR-219), because
+    // they add pages and `SHEET i OF n` must count them.
+    sections: <RollupSection>[
+      footageSection(buildCableFootage(doc), doc.settings.displayUnits),
+    ],
   );
   // WHICH PLANS EARN A SHEET IS A DERIVATION, NOT A DRAWING DECISION
   // (docs/15 section 8: one per underlay THAT CARRIES AT LEAST ONE PIN).

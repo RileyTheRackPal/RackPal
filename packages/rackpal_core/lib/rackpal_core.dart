@@ -222,6 +222,7 @@ export 'src/draw/sheet/equipment_sheet.dart';
 export 'src/draw/sheet/exceptions_sheet.dart';
 export 'src/draw/sheet/legend_blocks.dart';
 export 'src/draw/sheet/legend_sheet.dart';
+export 'src/draw/sheet/materials_rollups.dart';
 export 'src/draw/sheet/plan_callouts.dart';
 export 'src/draw/sheet/plan_scale_bar.dart';
 export 'src/draw/sheet/plan_schedule_band.dart';
