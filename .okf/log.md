@@ -1,5 +1,13 @@
 # Update Log
 
+## 2026-10-02 (hundred-and-second entry)
+
+* **Progress**: `#347` and `#971` merged at `3addd571` (PR 191); M6-H closed. M6-F (`#335`) built:
+  T6.30's four rollups as sections with their own headers, and `RCK-014`. docs/12 §4.34.
+* **Note**: **A GATE THAT SAYS "AMENDMENT" MEANS THE USER.** I recorded adding a rule as decided
+  without a question; the catalogue test's own comment says the count is v1's rule scope. Read the
+  gate a change moves before deciding the change is mine to make.
+
 ## 2026-10-02 (hundred-and-first entry)
 
 * **Progress**: `#590` merged at `60389e4e` (PR 190); M6-G (`#341`) closed. M6-H (`#347`) built over
