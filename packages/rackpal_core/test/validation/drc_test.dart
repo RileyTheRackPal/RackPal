@@ -142,11 +142,12 @@ void main() {
       );
       expect(
         built,
-        hasLength(15),
+        hasLength(16),
         reason:
-            'docs/02 §5 gives 29 rules as 8 + 6 + 15, and this is '
-            'the fifteen. It was fourteen until DR-132 §11.131 restored '
-            '`ELE-005`, which AC-040 had cut',
+            'docs/02 §5 gives 30 rules as 8 + 6 + 16, and this is '
+            'the sixteen. It was fourteen until DR-132 §11.131 restored '
+            '`ELE-005`, which AC-040 had cut, and fifteen until DR-219 '
+            '§11.218.4 added `RCK-014`',
       );
     });
 

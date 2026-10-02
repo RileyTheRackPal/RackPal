@@ -69,7 +69,7 @@ void main() {
       for (final rule in kPlanRules) {
         expect(drc, isNot(contains(rule.ruleId)), reason: rule.ruleId);
       }
-      expect(kRuleCatalogue, hasLength(29));
+      expect(kRuleCatalogue, hasLength(30));
     });
 
     test('every rule cites a ruling and explains itself (§8.2)', () {

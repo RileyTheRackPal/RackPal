@@ -102,6 +102,32 @@ RackDocument _tooDeep({required Len front, required Len rear}) {
 }
 
 /// A device heavier than the limit its own body states, on front ears.
+/// One half-rack device in U 1, and with [pair] a second beside it
+/// (`RCK-014`, CR-030).
+RackDocument _halfRack({required bool pair}) {
+  final doc = fixtureDoc();
+  fixturePlaceBody(
+    doc,
+    fixtureBody(),
+    1,
+    seq: 1,
+    designator: 'SW-1',
+    spanTwelfths: 6,
+  );
+  if (pair) {
+    fixturePlaceBody(
+      doc,
+      fixtureBody(),
+      1,
+      seq: 2,
+      designator: 'SW-2',
+      startTwelfth: 6,
+      spanTwelfths: 6,
+    );
+  }
+  return doc;
+}
+
 RackDocument _unsupported({required Mass weight}) {
   final doc = fixtureDoc();
   fixturePlaceBody(
@@ -705,6 +731,18 @@ List<DrcFixture> tier3Fixtures() => [
     kind: FixtureKind.nearMiss,
     what: 'exactly 20 kg, which is at the limit and not over it',
     run: () => fromDocument(_unsupported(weight: Mass.fromKilograms(20))),
+  ),
+  DrcFixture(
+    ruleId: 'RCK-014',
+    kind: FixtureKind.knownBad,
+    what: 'a half-rack switch alone in its U',
+    run: () => fromDocument(_halfRack(pair: false)),
+  ),
+  DrcFixture(
+    ruleId: 'RCK-014',
+    kind: FixtureKind.nearMiss,
+    what: 'the same switch with a second half-rack unit beside it',
+    run: () => fromDocument(_halfRack(pair: true)),
   ),
   DrcFixture(
     ruleId: 'LEN-001',

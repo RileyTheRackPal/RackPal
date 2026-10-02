@@ -551,6 +551,17 @@ const List<RuleMeta> kTier3Rules = <RuleMeta>[
     defaultSeverity: Severity.warning,
   ),
   RuleMeta(
+    ruleId: 'RCK-014',
+    tier: RuleTier.postHoc,
+    summary: 'Half-rack device alone in its U; needs an ear kit or a shelf.',
+    rationale:
+        'A half-width device has ears for half a rack. On its own it needs '
+        'an extension ear kit, or a shelf, to reach both rails. Two of them '
+        'side by side are joined with the kit they ship with instead.',
+    governing: ['CR-030', 'DR-219'],
+    defaultSeverity: Severity.advisory,
+  ),
+  RuleMeta(
     ruleId: 'CODE-001',
     tier: RuleTier.postHoc,
     summary:
