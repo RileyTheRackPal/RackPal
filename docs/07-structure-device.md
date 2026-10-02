@@ -509,7 +509,7 @@ Both are editable, and a project may write its own pattern from the token vocabu
 |---|---|---|
 | **Pull Sheet** (`T6.10`, portrait) | Every `fieldCable`, sorted **room then pathway**: the order the tech walks the house. Per-room footage subtotals, jacket colour, both labels on both ends, and `Pulled ☐ Terminated ☐ Tested ☐ Init ___`. Pathway-only entries (conduit, pull string) appear here and nowhere else. | AC-025, AC-026, CR-109 |
 | **Termination Schedule** (`T6.11`, landscape) | Every cable landing in the rack, sorted **rack, panel, port**: the port-to-drop map of §1. Adds T568A/B, punch position, polarity, and `Conductor.colorCode` per role. | AC-025 |
-| **Unused Home Runs** (`T6.20`) | Home runs whose rack end is an `OpenEndpoint`, grouped by room. Emitted automatically whenever at least one exists. A deliverable integrators cannot get from anything else; the name is canonical and stays. | canon §4.3 |
+| **Unused Home Runs** (`T6.20`) | Home runs with an `OpenEndpoint` at either end, the rack or the room, grouped by room, with a column saying which end (DR-220 §11.219.1, which widened *"whose rack end"*). Emitted automatically whenever at least one exists. A deliverable integrators cannot get from anything else; the name is canonical and stays. | canon §4.3, DR-220 |
 | **Equipment List and Materials** (`T6.30`) | Cable footage rollup by media with a configurable waste factor, *"Cat6: 2,140 ft estimated + 10% = 2,354 ft → 3 boxes (1000 ft)"*. No pricing in v1. | AC-024, AC-055 |
 | **Interconnect sheets** (`T6.01…`) | The flag banks of §6. N interconnect sheets, one per domain partition of the single schematic `Sheet`. Each partition is a domain filter, so these sheets render `drawn` rather than as net labels (DR-001). | CR-073 |
 

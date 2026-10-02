@@ -5,11 +5,11 @@
 // THE TICKET NAMES A SHEET THAT DOES NOT EXIST YET, SO THIS TESTS THE CLASS
 // ═══════════════════════════════════════════════════════════════════════
 // `#315` reads: "export a project with no unused home runs and assert T6.20
-// appears in neither the file nor the index". T6.20 is M6-E and is not a
-// `SheetRole` yet, so that literal assertion would pass today over a sheet
-// that cannot be emitted at all, which proves nothing. Two things are
-// asserted instead, and together they catch the whole class the ticket
-// names:
+// appears in neither the file nor the index". T6.20 was M6-E and not a
+// `SheetRole` when this was written, so that literal assertion would have
+// passed over a sheet that could not be emitted at all, which proves
+// nothing. Two things were asserted instead, and together they catch the
+// whole class the ticket names:
 //
 //  1. ON REAL PDFs, THE INDEX AND THE PAGES ARE THE SAME SET. Every page's
 //     `SHEET NO.` is in the cover's index, and the index names no id that
@@ -20,6 +20,9 @@
 //     floorplan with nothing pinned to it emits no plan page and no index
 //     row, and one pin brings both back. The control is the point: a
 //     fixture that never produced a `T1` page would pass part 1 vacuously.
+//  3. T6.20, NOW THAT IT EXISTS (M6-E3 `#334`, DR-220), the ticket's own
+//     assertion and its control: Whole House prints it and indexes it, and
+//     the same project with its open ends landed does neither.
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -200,6 +203,38 @@ void main() {
       expect(pages.keys, contains('T1.01'));
       expect(indexedIds(pages['T0.00']!), contains('T1.01'));
       expect(pages['T0.00'], contains('DEVICE LOCATION PLAN'));
+    });
+  });
+
+  group('3. T6.20, absent and present (M6-E3)', () {
+    test(
+      'WHOLE HOUSE, twelve runs open at the rack: the page AND the row',
+      () async {
+        final pages = pagesById(await export(starter('whole_house')));
+        expect(pages.keys, contains('T6.20'));
+        expect(indexedIds(pages['T0.00']!), contains('T6.20'));
+        expect(pages['T0.00'], contains('UNUSED HOME RUNS'));
+      },
+    );
+
+    test('THE SAME PROJECT WITH NOTHING UNUSED: no page and no row', () async {
+      final doc = starter('whole_house');
+      // Remove the twelve open runs rather than land them: a run with no
+      // open end is what the sheet leaves out, and this is the cheapest
+      // edit that leaves the project otherwise as shipped.
+      doc.links.removeWhere(
+        (_, l) => l.conductors.any(
+          (c) => c.from is OpenEndpoint || c.to is OpenEndpoint,
+        ),
+      );
+      expect(doc.links, isNotEmpty, reason: 'the landed runs remain');
+      final pages = pagesById(await export(doc));
+      expect(pages.keys.where((id) => id.startsWith('T6.2')), isEmpty);
+      expect(
+        indexedIds(pages['T0.00']!).where((id) => id.startsWith('T6.2')),
+        isEmpty,
+      );
+      expect(pages['T0.00'], isNot(contains('UNUSED HOME RUNS')));
     });
   });
 }

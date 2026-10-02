@@ -1661,6 +1661,41 @@ read a collapsed index run `T6.30–T6.32` as its two ends.
 the starters draws a jumper or a cord to an outlet, so F4 and F5 are proved on hand-built documents
 and the sheets say so in words. **Looked at**: Whole House's three `T6.30` pages.
 
+### 4.35 T6.20, unused home runs · 2026-10-02 · `#332`, `#334` · `DR-220` · no version move
+
+M6-E1 and M6-E3. **The corpus defined the sheet three ways and laid it out nowhere**: canon §4.3 said
+*"an unbound rack end"*, docs/07 and docs/08 *"whose rack end is an `OpenEndpoint`"*, and docs/01
+*"terminated at the DD with no device on it"*, a different sheet. **Measured before asking**: three
+starters carry no `Link`; Whole House carries 27 home runs, 12 open at the rack and 15 landed, and no
+patch cord, so docs/01's reading would print all 27 as unused. The user widened the recommended
+rack-end-only reading to **either end open**, and chose ANSI A landscape in room bands and cable-ID
+order. **Those two answers together left a row stating its defining fact by absence**, since nothing
+in the chosen nine columns said which end was loose; a follow-up added the `OPEN` column (DR-220
+§11.219.3).
+
+`unusedHomeRunsOf` filters the export's one `buildSchedule` rather than building a second row model,
+and reads the schedule's oriented ends (`to` is the rack end) rather than re-deciding them. The sheet
+prints every cell the Schedule view also prints through `ScheduleEntry.cell`. Pages are `T6.20` to
+`T6.29`, then from `T6.60`, **and the equipment list's overflow now starts after whatever T6.20
+took**: both had counted from `T6.60`, which would print one number on two drawings.
+
+**Found by rendering, not by tests.** `PATHWAY` at 56 pt wrapped on every row, because a pathway with
+no designator prints its name (`Equipment room to attic riser`); the widths were rebalanced from the
+render. And one export assertion, `contains('ROOM')`, was true of every band title (`GREAT ROOM`) and
+was removed rather than kept as a test that could not fail.
+
+**Evidence.** `unused_home_runs_test.dart` on Whole House as shipped and edited (the ROOM and BOTH
+cases, a run that is not a home run, natural order, no room last). `unused_runs_sheet_test.dart` sweeps
+seven page shapes for a band at a page foot and a page opening on rows it does not name, and pins the
+shared overflow. `unused_runs_export_test.dart` reads the twelve runs and none of the fifteen in ink;
+`auto_sheet_absent_test.dart`'s new group is M6-E3, the page and the index row present on Whole House
+and both absent once nothing is unused. **Mutation-tested**: removing the keep-with, the `(cont.)`
+band, or the room half of `openEndOf` fails each. **Looked at**: Whole House's `T6.20`, twelve runs in
+six room bands.
+
+**Left for M6-E2**: `T5.01`. The user has ruled the IR half of its trigger (non-default variants
+only), which needs one more fact ruled, the default itself.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
@@ -7354,7 +7389,7 @@ requires: the board query for Done Chapters under epic 23 returns 61, and 60 plu
 
 | Clause | Mark | Why |
 |---|---|---|
-| All four starters export a **complete sheet set** | **NOT BUILT** | The built slots are `SheetRole`'s values, not a number written here: `T0.01` legend arrived complete at M6-B (`#316`, §4.26), and `T0.00` arrived at M6-A1 (`#312`, §4.27) with its project block and no index yet. Missing: `T0.00`'s drawing index and rack strip (M6-A2, M6-A3), `T0.02` exceptions, `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.20` unused home runs, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details. `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
+| All four starters export a **complete sheet set** | **NOT BUILT** | The built slots are `SheetRole`'s values, not a number written here. **This cell's list of what was missing had gone stale**: it still named `T0.00`'s drawing index and rack strip and `T0.02` after M6-A2, M6-A3 and M6-C shipped them. It was re-read against the enum at M6-E1 (`#332`, §4.35), when `T6.20` arrived. Missing then: `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details. **Read the enum before trusting that list.** `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
 | Legend under deuteranopia / protanopia simulation | **UNPERFORMED** | No legend sheet exists to verify |
 | Real greyscale laser print (AC-054) | **UNPERFORMED** | Nothing has been printed |
 | ANSI B laser / ANSI D plotter / photocopy, physically inspected and signed off (AC-058 D13) | **UNPERFORMED** | Nothing has been printed |

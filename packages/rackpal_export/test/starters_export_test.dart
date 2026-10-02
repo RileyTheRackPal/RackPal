@@ -266,7 +266,7 @@ void main() {
 
       test(
         '(5) the sheet set is the cover + the legend + T0.02 pages + 2N + '
-        'schedule pages, numbered i OF n',
+        'T6.20 pages + schedule pages, numbered i OF n',
         () async {
           final doc = documentOf(name);
           final exported = await exportOf(name);
@@ -298,12 +298,26 @@ void main() {
               interpretContentStream(body, toUnicode: cmap).allText,
           ].where((t) => RegExp(r'SHEET NO\.\s+T0\.0[2-9]').hasMatch(t)).length;
           expect(exceptionPages, greaterThanOrEqualTo(1), reason: 'T0.02');
+          final unusedPages = [
+            for (final body in operatorStreams(exported.bytes))
+              interpretContentStream(body, toUnicode: cmap).allText,
+          ].where((t) => RegExp(r'SHEET NO\.\s+T6\.2\d').hasMatch(t)).length;
+          expect(
+            unusedPages,
+            name == 'whole_house' ? 1 : 0,
+            reason:
+                'T6.20: twelve open runs on Whole House, no cables elsewhere',
+          );
           expect(
             exported.sheetCount,
             // + 2 for T0.00 and T0.01, which open every set since M6-A.
             2 +
                 exceptionPages +
                 doc.racks.length * 2 +
+                // T6.20 IS AUTO (DR-220): Whole House prints one page of
+                // unused home runs, the other three none. Counted in the
+                // ink, as the schedule's pages are.
+                unusedPages +
                 RegExp(r'SHEET NO\.\s+T6\.3').allMatches(text).length,
           );
         },

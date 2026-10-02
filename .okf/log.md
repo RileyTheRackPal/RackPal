@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-10-02 (hundred-and-third entry)
+
+* **Progress**: M6-E (`#331`) opened on branch `m6e-auto-sheets`. M6-E1 (`#332`) ruled before any
+  code, then built: T6.20, with M6-E3's T6.20 half (`#334`). docs/12 §4.35. M6-E2 (`#333`) ruled
+  and decomposed into `#974` to `#976`; `#973` filed for the null-modem writer.
+* **Note**: **TWO ANSWERS CAN BE RIGHT SEPARATELY AND WRONG TOGETHER.** Widening the sheet to either
+  end and choosing a layout with no column naming the end were each fine; together they made a row
+  state its defining fact by absence. Read a batch of answers against each other before building.
+* **Creation**: [DR-220](/decisions/dr-220-t6-20-unused-home-runs.md), [DR-221](/decisions/dr-221-t5-01-pinout-tables.md).
+* **Note**: **A SAFETY FACT IN A COMMENT IS NOT A SOURCE.** The IR receiver's ring and sleeve were
+  reversed in every copy the corpus held, in canon, the docs and the code alike. It surfaced only
+  because a sheet was about to print it for a person to wire by; ask before printing a pin map,
+  whatever the code says.
+
 ## 2026-10-02 (hundred-and-second entry)
 
 * **Progress**: `#347` and `#971` merged at `3addd571` (PR 191); M6-H closed. M6-F (`#335`) built:

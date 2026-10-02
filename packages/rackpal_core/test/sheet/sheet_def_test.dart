@@ -254,9 +254,12 @@ void main() {
     // `SheetRole` had three values; docs/15 §8 adds `T1.01` and the count
     // moves with it. What it still refuses is a role appearing without
     // anybody deciding: eight of §2.2's twelve slots are M6's and are
-    // absent from this enum rather than stubbed.
-    test('names the seven sheets in this set, and no others', () {
-      expect(SheetRole.values, hasLength(7));
+    // absent from this enum rather than stubbed. EIGHT SINCE M6-E1 (`#332`,
+    // DR-220): T6.20 arrived as a role, decided by a ruling.
+    test('names the eight sheets in this set, and no others', () {
+      expect(SheetRole.values, hasLength(8));
+      expect(SheetRole.unusedHomeRuns.title, 'UNUSED HOME RUNS');
+      expect(SheetRole.unusedHomeRuns.size, SheetSize.ansiALandscape);
       expect(SheetRole.exceptions.title, 'EXCEPTIONS AND ACKNOWLEDGEMENTS');
       expect(SheetRole.cover.title, 'COVER AND DRAWING INDEX');
       expect(SheetRole.symbolLegend.title, 'SYMBOL LEGEND');

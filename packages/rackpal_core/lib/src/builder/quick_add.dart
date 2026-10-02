@@ -359,11 +359,11 @@ QuickAddResult parseQuickAdd(Registries registries, String source) {
   // A DESTRUCTIVE PINOUT (DR-060 §11.59.11)
   // ═══════════════════════════════════════════════════════════════════
   // `seed_registries.dart` states the hazard where the IR families are
-  // declared: "receivers are tip = signal, ring = GND, sleeve =
-  // +12 V; emitters are tip = IR in, sleeve = GND. Plugging an emitter
-  // into a receiver jack destroys the emitter and can damage the
-  // supply." AC-052 makes `pinoutVariant` mandatory on every 3.5 mm IR
-  // port for that reason.
+  // declared: receivers are tip = signal, ring = +12 V, sleeve = GND
+  // (DR-221 §11.220.3 corrected a reversed ring and sleeve); emitters
+  // are tip = IR in, sleeve = GND. Plugging an emitter into a receiver
+  // jack destroys the emitter and can damage the supply. AC-052 makes
+  // `pinoutVariant` mandatory on every 3.5 mm IR port for that reason.
   //
   // docs/06 §9.1 types `ir35 out` at step 9 for emitters and
   // `1 ir35 in "IR IN"` at step 12 for the matrix's IR INPUT. THIS

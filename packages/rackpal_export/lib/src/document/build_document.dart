@@ -139,9 +139,23 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     measurer: measurer,
     issuedAt: request.issuedAt,
   );
+  // T6.20 IS AUTO, AND THE PAGE COUNT SAYS SO (DR-220): no unused home run
+  // paginates to no page, and zero pages is the sheet absent from the file
+  // and the index alike (M6-E3). From `schedule`, the one built above.
+  final unusedPages = paginateUnusedRuns(
+    rooms: unusedHomeRunsOf(schedule, doc),
+    drawingArea: SheetLayout.resolve(
+      geometry: const SheetGeometry(SheetSize.ansiALandscape),
+      revisionRowCount: revisionBodyRowCount(doc.revisionBlock),
+      stamped: stamped,
+    ).drawingArea,
+    measurer: measurer,
+    units: doc.settings.displayUnits,
+  );
   final set = SheetSet.forRacks(
     doc.racks.values,
     exceptionSheets: exceptionPages.length,
+    unusedHomeRunSheets: unusedPages.length,
     equipmentListSheets: schedulePages.length,
     planUnderlays: plans,
     stamped: stamped,
@@ -173,6 +187,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   final notices = <String>[...set.notices];
   var schedulePage = 0;
   var exceptionPage = 0;
+  var unusedPage = 0;
   for (final sheet in set.sheets) {
     final DiagramScene scene;
     final LegibilityReport legibility;
@@ -372,6 +387,19 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
             'placed clear of another and overlap.',
           );
         }
+      case SheetRole.unusedHomeRuns:
+        final built = buildUnusedRunsSheet(
+          sheet: sheet,
+          page: unusedPages[unusedPage++],
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+        );
+        scene = built.scene;
+        legibility = built.legibility;
       case SheetRole.equipmentList:
         final built = buildEquipmentSheet(
           sheet: sheet,

@@ -3345,7 +3345,7 @@ Only the fields that were spelled more than one way, or whose spelling is load-b
 | **Equipment List and Materials** | Sheet `T6.30`. **No pricing.** Includes the cable footage rollup by media with waste factor. AC-055, AC-024. | Never called a BOM. `Money`, `cost`, `supplier`, `purchaseOrder` are deleted from v1. |
 | **Exceptions & Acknowledgements** | Sheet `T0.02`. Every open finding and every acknowledgement with reason, author, date. CR-022. | This is where "the reason prints". |
 | **Symbol Legend** | Sheet `T0.01`. **One row per named cable type**, in colour and greyscale side by side. AC-054. | Other sheets' title blocks are auto-filled with `SYMBOL LEGEND: SEE SHEET T0.01`. CR-023. |
-| **Unused Home Runs** | The page listing home-run `Link`s with an unbound rack end. | A differentiator; keep the name. |
+| **Unused Home Runs** | Sheet `T6.20`. The page listing home-run `Link`s with an open end, at the rack or at the room. DR-220 §11.219.1 widened this from *"an unbound rack end"*. | A differentiator; keep the name. |
 | **`ISSUED FOR CONSTRUCTION`** | The stamp. Gated on zero open errors. **Never gates bytes.** CR-022, G3. | — |
 
 Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `simple`** (CR-066).
@@ -4472,7 +4472,7 @@ length (~915 m) *and* 24 V power drop (18 AWG at 20 W ⇒ **333 ft**), which is 
 emits two findings, not one. Lutron QS is 2000 ft on 12 AWG and topology-free.
 
 `ctl.ir_emitter` and `ctl.ir_receiver` are separate families because the pinout hazard is real
-and destructive: Xantech/Niles **receivers** are tip = signal, ring = GND, sleeve = +12 V;
+and destructive: Xantech/Niles **receivers** are tip = signal, ring = +12 V, sleeve = GND (DR-221 §11.220.3, which corrected a reversed ring and sleeve here);
 **emitters** are tip = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys the
 emitter and can damage the supply. `PortDef.pinoutVariant` is mandatory on every 3.5 mm IR port
 and is a **safety-adjacent field**, so a template with an uncited value does not ship (AC-052).
@@ -10986,7 +10986,8 @@ WHY.** Settled by the user on 2026-08-15, after the summary line was read agains
 
 `seed_registries.dart` states the hazard where the two IR families are declared: *"receivers are
 tip = signal, ring = GND, sleeve = +12 V; emitters are tip = IR in, sleeve = GND. Plugging an
-emitter into a receiver jack destroys the emitter and can damage the supply."* AC-052 makes
+emitter into a receiver jack destroys the emitter and can damage the supply."* (Ring and sleeve are
+reversed there; DR-221 §11.220.3 corrects them to ring +12 V, sleeve GND.) AC-052 makes
 `pinoutVariant` mandatory on every 3.5 mm IR port for exactly that reason. docs/06 §9.1 then types
 `ir35 out` at step 9 for emitters and `1 ir35 in "IR IN"` at step 12 for the matrix's IR **input**,
 which is a receiver input. **One token, two families, and the direction is what separates them.**
@@ -16799,6 +16800,9 @@ least of all, and the fix DR-125 imagined was unavailable.
 > receivers are tip = signal, ring = GND, sleeve = +12 V; emitters are tip
 > = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys
 > the emitter and can damage the supply.
+
+*The ring and sleeve in that quotation are reversed: a receiver jack is ring +12 V, sleeve GND
+(DR-221 §11.220.3, §12.45). The quotation keeps the words the registry had.*
 
 **A two-conductor TS plug entering a three-conductor jack bridges ring to
 sleeve.** That is the damage, and it happens because the jack SUPPLIES
@@ -23345,6 +23349,121 @@ one question, and listing rear supports only.
 own wording. §11.218.1 to §11.218.3 change no scope: docs/08 §2.2's `T6.30` and AC-026, made
 definite.
 
+### 11.219 DR-220 · T6.20 lists a home run open at either end, in room bands, and says which end
+
+**Settled by the user on 2026-10-02, building M6-E1 (`#332`).** `T6.20` Unused Home Runs has been a
+v1 sheet since canon §4.3, `AUTO` iff at least one exists, and the corpus defined it three ways:
+§4.3's glossary says *"home-run `Link`s with an unbound rack end"*, docs/07 and docs/08 say *"whose
+rack end is an `OpenEndpoint`"*, and docs/01 says *"every home run terminated at the DD with no device
+on it"*, which is a different sheet. Nothing said how it is laid out.
+
+**MEASURED FIRST**, on the four starters at `4879aaa5`: Apartment, Home Theatre and Small Office carry
+no `Link` at all. Whole House carries 27, every one a home run, 12 with an `OpenEndpoint` rack end and
+15 landed on a panel port, and **no patch cord anywhere**.
+
+**11.219.1 RULED: A HOME RUN IS LISTED WHEN EITHER END IS OPEN.** A home run is a `Link` carrying a
+`StructureOrigin`. It is listed when its rack end or its field end is an `OpenEndpoint`. The rack end
+is the end in a rack when exactly one end is, and otherwise the conductor's `to`, which is where
+`AddHomeRunCommand` writes it and where `plan_length.dart` reads it. The options not taken were the
+rack end only (recommended; §4.3's wording) and docs/01's *"terminated with no device on it"*, which
+on Whole House lists all 27 runs: a job that draws no patch cords, which is most of them, would print
+every run it has as unused. The user gave no reason; what the choice adds over the recommended one is
+a run dressed and landed at the rack and left as a coil at the room.
+
+**11.219.2 RULED: ANSI A LANDSCAPE, ROOM BANDS, TEN COLUMNS.** The paper is T6.30's and the
+Termination Schedule's (docs/08 §6.1, *"Equipment List, details"*). Rows sit in one band per room,
+titled with the room and its count, rooms in name order and `NO ROOM RECORDED` last. The columns are
+`CABLE ID` (with DR-206's lifecycle suffix), `OPEN`, `RACK LBL`, `FIELD LBL`, `OUTLET`, `FIELD END`,
+`MEDIA`, `LEN`, `PATHWAY` and `ROUGH-IN`. Every cell the Schedule view also prints is printed by
+`ScheduleEntry.cell`, so the sheet and the screen cannot disagree. Not taken: ANSI A portrait in seven
+columns, the Pull Sheet's paper, which drops `FIELD END` and `PATHWAY`; and a column printing the open
+end's own note, which on every run today is one of two stock sentences.
+
+**11.219.3 RULED: WHICH END IS OPEN IS ITS OWN COLUMN**, `OPEN`, reading `RACK`, `ROOM` or `BOTH`.
+§11.219.1 makes a row open at either end, and the ten columns otherwise state it nowhere; a reader
+should not have to infer a fact the sheet holds. Not taken: one section per open end, which repeats a
+room up to three times; and `— OPEN —` in `FIELD END`, docs/08 §3.3's convention, which states *rack
+open* only by absence.
+
+**11.219.4 RULED: WITHIN A ROOM, ROWS PRINT IN CABLE ID ORDER**, natural (`W4` before `W10`). The `W`
+number is on the label at both ends, so it is found from whichever end the reader is standing at. Not
+taken: field-label order, the order of the plates.
+
+**11.219.5 DECIDED WITHOUT A QUESTION: POSITION AND NUMBERING**, because each follows from a mechanism
+already ruled. `T6.20` sits at docs/08 §2.2's `n+3`: after the elevations (and the interconnect, pull
+and termination sheets when they land) and before `T6.30`. Its pages are `T6.20` to `T6.29`, and an
+eleventh page onward continues from `T6.60`, ahead of the equipment list's own overflow, which then
+follows it: `equipmentListNcsId`'s reasoning, that `T6.4x` and `T6.5x` are reserved, applies to any
+schedule. A page that opens inside a room re-prints the column heads and the band `(cont.)`, and a
+band keeps with its first row (DR-219 §11.218.1, `#337`).
+
+**What this does not rule.** A rack end recorded as a place (`PlaceEndpoint`) is not open and is not
+listed; no command writes one today, since `drop_build.dart` leaves the rack end null and null becomes
+an `OpenEndpoint`. A run that is not a home run (no `StructureOrigin`) with an open end is a schedule
+row and not this sheet's.
+
+**Scope.** No scope moves between releases. `T6.20` was v1 already; this rules its contents and
+layout, and amends §4.3's glossary row (§12.44).
+
+### 11.220 DR-221 · T5.01 prints pinout tables; a receiver jack is ring +12 V; a port records its terminal order
+
+**Settled by the user on 2026-10-02, building M6-E2 (`#333`, `#974` to `#976`).** docs/08 §2.2 puts
+`T5.01` Plate, Panel & Pinout Details last in the set, `AUTO` *"iff any non-standard pinout exists:
+null-modem RS-232, IR pinout variant, Euroblock role map, or a cable whose wiring standard differs
+from the project's"*. None of the four had been defined against the model.
+
+**MEASURED FIRST**, at `4879aaa5`. **IR**: 21 seeded ports carry a `pinoutVariant`, 18
+`mono-tip-sleeve` and 3 `xantech-stereo`; every starter places at least one, and only Home Theatre
+places a `xantech-stereo` (six jacks). **Wiring standard**: `wiringStandardExceptions` exists, written
+for this sheet. **Null-modem**: `Link.crossover` is modelled and read, and **nothing in the UI writes
+it**. **Euroblock role map**: four words in docs/08's row and **nothing in the model at all**; no field
+says which conductor lands on which terminal.
+
+**11.220.1 RULED: PINOUT TABLES ONLY.** One section per kind, each with its own header row (DR-219
+§11.218.1's mechanism): receiver jacks, wiring-standard exceptions with a `T568A`/`T568B` colour key,
+null-modem cables, and terminal orders against their standard. Not taken: also drawing each outlet's
+strap layout to scale, which DR-007, DR-038 and DR-041 made possible; it is a drawing rather than a
+table, priced at three to five days, and §11.7.7 itself says it would make the sheet `ON` far more
+often.
+
+**11.220.2 RULED: MONO TIP-SLEEVE IS THE IR STANDARD.** An IR-family port (`kIrFamilies`) on a placed
+device whose `pinoutVariant` is set and is not `mono-tip-sleeve` turns the sheet on. Not taken: any
+variant on a port a cable lands on (no starter fires), and any placed IR port (every starter fires,
+and `AUTO` stops meaning much). **Decided without a question**: a `pinoutVariant` on a port outside
+the IR families does not trigger, because the question put was about IR and no other variant has a
+declared standard.
+
+**11.220.3 RULED, CORRECTING THE CORPUS: A RECEIVER JACK IS TIP IR, RING +12 V, SLEEVE GND.** The
+registry, canon, docs/01, `docs/catalog/seed-devices.md` (four times) and three code comments said
+ring GND, sleeve +12 V. The user settled it when the two readings were put side by side. **The mechanism §11.125.1 rests on survives
+unchanged**: a two-conductor plug bridges ring to sleeve, which shorts the supply whichever of the
+two carries it. What changes is the pin map `T5.01` prints, which is the one place the order is read
+by a person holding a screwdriver. Corrected in place by §12.45.
+
+**11.220.4 RULED: NULL-MODEM STAYS IN THE TRIGGER, AND ITS WRITER IS FILED.** A cable with
+`crossover == nullModem` turns the sheet on whenever a file carries one; the missing control is
+`#973`. Not taken: dropping the clause from v1 until something can set it.
+
+**11.220.5 RULED: THE EUROBLOCK ROLE MAP IS MODELLED NOW**, over the recommended parking to v1.1.
+`PortDef` gains an ordered list of terminal roles, pin 1 to n, **absent when nobody has said** (G4,
+CR-114). The Device Builder enters it as a typed `TERMINALS` column, roles separated by spaces, with
+fill-down and paste; a count that differs from the connector's pins is an error on the cell. Not
+taken: a per-pin picker, which cannot be mistyped and cannot be pasted either. **Standards are
+declared for two families only: `ctl.cresnet` on 4 pins, `24 Y Z G`, and `ctl.rs232` on 3 pins, `TX
+RX G`.** A port whose recorded order differs turns the sheet on; a family with no declared standard
+never does. Not taken: standards for balanced line audio (`+ - G`) and speakers (`+ -`) as well,
+which the user judged too variable by manufacturer to call a deviation non-standard. Also not taken:
+parking the clause to v1.1, or to a later v1 milestone. **The starters never fire it**, since no
+seeded port records an order, and that is correct rather than a gap.
+
+**11.220.6 DECIDED WITHOUT A QUESTION: POSITION AND NUMBERING.** `T5.01` is last in the set, docs/08
+§2.2's `n+5`, on ANSI A landscape (§6.1's *"details"*). Pages run `T5.01`, `T5.02` and on; type 5 has
+no other sheet and no reserved id.
+
+**Scope.** No scope moves between releases: each clause was v1 already, in docs/08 §2.2's row, and
+§11.220.5 builds one rather than deferring it. The format gains one optional key on `PortDef`, absent
+by default, so no existing file's bytes move (CR-117).
+
 ---
 
 ## 12. Superseded rulings
@@ -24054,6 +24173,20 @@ close and a reopen.
 |---|---|---|
 | **DR-157 §11.156.5**, the blank clause | *"IT ONLY EVER FILLS A BLANK. A person who has chosen a side keeps it whatever they type afterwards"* | **The side is derived from every occupancy edit** (§11.202.2) and is no longer a control, so there is no chosen side to keep. The rest of §11.156.5 stands: typing a height is saying where it mounts, the write rides the edit's own transaction, and a save gate is still the wrong answer. |
 | **DR-107 §11.106.2**, where `Mount method` lives | the Physical section keyed on `mountMethod`, with the mount picker on it | **The mount picker is on Identity**, in `Size and mounting` (§11.202.1). Physical still strips its rack rows for `notInRack`, as §11.106.2 rules. |
+
+
+### 12.44 Amended by DR-220 (T6.20 lists a home run open at either end)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§4.3**, the `Unused Home Runs` row | *"The page listing home-run `Link`s with an unbound rack end."* | **A home run with an open end at the rack OR at the room** (§11.219.1), with an `OPEN` column saying which (§11.219.3). The row is amended in place and points here. docs/01 §9.9's *"terminated at the DD with no device on it"*, a different sheet, is corrected with it rather than ruled in. |
+
+
+### 12.45 Corrected by DR-221 (a receiver jack is ring +12 V, sleeve GND)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§6 (the IR families paragraph)**, and the registry text §11.125.1 quotes | *"receivers are tip = signal, ring = GND, sleeve = +12 V"* | **Tip IR, ring +12 V, sleeve GND** (§11.220.3). The paragraph is corrected in place; §11.125.1's blockquote and DR-060's inline quotation (§11.59) keep the words they quoted, each followed by a pointer here. The damage mechanism, a TS plug bridging ring to sleeve, is unchanged. |
 
 
 ## 13. Resolved §10 questions

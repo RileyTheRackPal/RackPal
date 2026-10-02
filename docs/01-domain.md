@@ -481,7 +481,7 @@ A multi-drop bus, not point-to-point. Each speaker carries a **transformer tap**
 
 ### 7.4 IR pinout variance is a hardware-destroying hazard
 
-Xantech/Niles-style **receivers** are tip = signal, ring = GND, sleeve = +12 V. **Emitters** are tip = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys the emitter and can damage the supply. This is why `ctl.ir_emitter` and `ctl.ir_receiver` are separate families, and why **`PortDef.pinoutVariant` is mandatory on every 3.5 mm IR port**. It is a safety-adjacent field, so a template with an uncited value does not ship (AC-052).
+Xantech/Niles-style **receivers** are tip = signal, ring = +12 V, sleeve = GND (DR-221 §11.220.3; this line had ring and sleeve reversed until then). **Emitters** are tip = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys the emitter and can damage the supply. This is why `ctl.ir_emitter` and `ctl.ir_receiver` are separate families, and why **`PortDef.pinoutVariant` is mandatory on every 3.5 mm IR port**. It is a safety-adjacent field, so a template with an uncited value does not ship (AC-052).
 
 ### 7.5 PoE budgets
 
@@ -708,7 +708,7 @@ The v1 sheet set, full detail in [PDF export](08-pdf-export.md) §2.2, which is 
 | `T6.01…` **Interconnect** | One sheet per domain partition of the single schematic `Sheet` (CR-073). Signal flow, left to right, colour by domain. Devices repeat across sheets, identified by `designator`. Zero cross-sheet connections by construction | ON |
 | `T6.10` **Pull Sheet** | §9.7 | ON |
 | `T6.11` **Termination Schedule** | §9.7 | ON |
-| `T6.20` **Unused Home Runs** | Every home run terminated at the DD with no device on it | AUTO (iff ≥ 1 exists) |
+| `T6.20` **Unused Home Runs** | Every home run with an open end, at the rack or at the room, in room bands, saying which end (DR-220). This row read *"terminated at the DD with no device on it"*, a different sheet, until that ruling | AUTO (iff ≥ 1 exists) |
 | `T6.30` **Equipment List and Materials** | Includes the cable footage rollup by media with waste factor. No pricing | ON |
 | `T5.01` **Plate, Panel & Pinout Details** | Per-plate and per-panel detail where a connector's pinout is non-standard | AUTO (iff a non-standard pinout exists) |
 

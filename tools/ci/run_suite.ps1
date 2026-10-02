@@ -1090,7 +1090,13 @@ $SuiteFloors = @{
     # 5331 at `#340` (M6-F5, AC-026, DR-219): +3 in derived/outlet_map_test.
     # dart. Whole House's four providers; a drawn cord is a row in outlet order
     # and the free and undrawn counts move with it; the section's lines.
-    'rackpal_core'   = 5331
+    # 5354 at `#332` (M6-E1, DR-220): +8 in derived/unused_home_runs_test.dart,
+    # Whole House's twelve open runs and none landed, rooms in name order, the
+    # ROOM and BOTH cases, a non-home-run left out, natural cable-ID order, no
+    # room last; +15 in sheet/unused_runs_sheet_test.dart, no page for nothing,
+    # the key lines, a seven-size sweep that no page ends on a band and every
+    # page names its room, and the shared T6.60 overflow with no id twice.
+    'rackpal_core'   = 5354
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1156,7 +1162,12 @@ $SuiteFloors = @{
     # rear-support line per RCK-013 finding on Whole House, in ink.
     # 262 at `#340` (DR-219): +1 in equipment_rollups_export_test.dart, every
     # provider's free count on Whole House, in ink.
-    'rackpal_export' = 262
+    # 267 at `#332`, `#334` (M6-E1, M6-E3, DR-220): +3 in
+    # unused_runs_export_test.dart, Whole House's T6.20 in ink with its twelve
+    # open runs and none of the fifteen landed, a ROOM run, no cables no sheet;
+    # +2 in auto_sheet_absent_test.dart, T6.20 in the file and the index, and
+    # in neither once nothing is unused.
+    'rackpal_export' = 267
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

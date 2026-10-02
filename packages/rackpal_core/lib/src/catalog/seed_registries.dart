@@ -846,8 +846,10 @@ Map<SignalFamilyId, SignalFamilyDef> buildSeedSignalFamilies() {
     // ── Control — #CC79A7, ✚ point-to-point / ✳ multi-drop bus ───────
     //
     // THE THREE IR FAMILIES ARE SEPARATE BECAUSE THE PINOUT HAZARD IS
-    // REAL AND DESTRUCTIVE: receivers are tip = signal, ring = GND,
-    // sleeve = +12 V; emitters are tip = IR in, sleeve = GND. Plugging an
+    // REAL AND DESTRUCTIVE: receivers are tip = signal, ring = +12 V,
+    // sleeve = GND; emitters are tip = IR in, sleeve = GND. (Ring and
+    // sleeve read the other way round until DR-221 §11.220.3 corrected
+    // them; canon §11.125.1 quotes the old words.) Plugging an
     // emitter into a receiver jack destroys the emitter and can damage the
     // supply. That is why `PortDef.pinoutVariant` is a safety-adjacent
     // mandatory field on every 3.5 mm IR port (AC-052).
