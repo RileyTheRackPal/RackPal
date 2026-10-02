@@ -23447,8 +23447,15 @@ by a person holding a screwdriver. Corrected in place by §12.45.
 **11.220.5 RULED: THE EUROBLOCK ROLE MAP IS MODELLED NOW**, over the recommended parking to v1.1.
 `PortDef` gains an ordered list of terminal roles, pin 1 to n, **absent when nobody has said** (G4,
 CR-114). The Device Builder enters it as a typed `TERMINALS` column, roles separated by spaces, with
-fill-down and paste; a count that differs from the connector's pins is an error on the cell. Not
-taken: a per-pin picker, which cannot be mistyped and cannot be pasted either. **Standards are
+fill-down and paste. Not taken: a per-pin picker, which cannot be mistyped and cannot be pasted
+either. **THIS SENTENCE FIRST PROMISED A COUNT CHECK ON THE CELL, against "the connector's pins", and
+no such number exists**: `ConnectorTypeDef` carries no pin count, and none of the 492 terminal-block
+ports in the starters' templates sets `conductorCount`. The premise was in the option text Claude
+wrote, not in the user's answer. Put to the user with prices, they ruled **no count check**: on the
+two families with a standard, a wrong count already differs from it and prints on `T5.01`. Not
+taken: a pin count on the four terminal-block connectors (half a day, every starter's bytes
+regenerated, older documents never checked), and checking `conductorCount` (which checks nothing
+until somebody fills it in). **Standards are
 declared for two families only: `ctl.cresnet` on 4 pins, `24 Y Z G`, and `ctl.rs232` on 3 pins, `TX
 RX G`.** A port whose recorded order differs turns the sheet on; a family with no declared standard
 never does. Not taken: standards for balanced line audio (`+ - G`) and speakers (`+ -`) as well,
