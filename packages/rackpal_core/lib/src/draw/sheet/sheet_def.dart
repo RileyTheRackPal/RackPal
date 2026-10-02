@@ -21,9 +21,9 @@
 // connects adding a role to editing this sentence, so it no longer counts.
 //
 // The rest of §2.2's table (T6.01+ interconnect, T6.10 pull sheet, T6.11
-// termination schedule, T5.01 pinout details) is M6 and not yet built;
-// T0.00, the cover, arrived at M6-A, T0.01, the legend, at M6-B, T0.02,
-// the exceptions, at M6-C, and T6.20, unused home runs, at M6-E1. The
+// termination schedule) is M6 and not yet built; T0.00, the cover,
+// arrived at M6-A, T0.01, the legend, at M6-B, T0.02, the exceptions, at
+// M6-C, T6.20, unused home runs, at M6-E1, and T5.01 at M6-E2. The
 // unbuilt ones are absent from [SheetRole] rather than stubbed, which is
 // what lets a user-facing document state what
 // prints by naming the roles rather than by counting anything
@@ -168,6 +168,17 @@ enum SheetRole {
     SheetSize.ansiALandscape,
     perRack: false,
     shortTitle: 'EQUIPMENT LIST',
+  ),
+
+  /// docs/08 §2.2's `T5.01`, Plate, Panel & Pinout Details (M6-E2c,
+  /// `#976`, DR-221). `AUTO`: emitted iff a pinout is non-standard, LAST
+  /// in the set (`n+5`), ANSI A landscape. The title is the canonical name
+  /// though this pass prints pinout tables only (§11.220.1).
+  pinoutDetails(
+    'PLATE, PANEL AND PINOUT DETAILS',
+    SheetSize.ansiALandscape,
+    perRack: false,
+    shortTitle: 'PINOUT DETAILS',
   );
 
   const SheetRole(
@@ -451,6 +462,7 @@ final class SheetSet {
     int equipmentListSheets = 1,
     int exceptionSheets = 1,
     int unusedHomeRunSheets = 0,
+    int pinoutSheets = 0,
     bool stamped = false,
     Iterable<PlanUnderlay> planUnderlays = const <PlanUnderlay>[],
     SheetNumbering numbering = SheetNumbering.simple,
@@ -493,7 +505,8 @@ final class SheetSet {
         plans.length +
         ordered.length * 2 +
         unusedHomeRunSheets +
-        equipmentListSheets;
+        equipmentListSheets +
+        pinoutSheets;
     final sheets = <SheetDef>[
       SheetDef(
         ncsId: _kCoverNcsId,
@@ -605,6 +618,23 @@ final class SheetSet {
             overflowFrom: equipmentOverflowFrom,
           ),
           role: SheetRole.equipmentList,
+          index: index++,
+          total: total,
+          legendNcsId: _kLegendNcsId,
+          stamped: stamped,
+        ),
+      );
+    }
+
+    // T5.01 IS LAST (docs/08 §2.2's `n+5`, DR-221 §11.220.6): a set that is
+    // not numeric, as the table itself says. Type 5 has no other sheet and
+    // no reserved id, so the pages simply count up. Zero pages is the AUTO
+    // sheet absent.
+    for (var page = 0; page < pinoutSheets; page++) {
+      sheets.add(
+        SheetDef(
+          ncsId: 'T5.${(page + 1).toString().padLeft(2, '0')}',
+          role: SheetRole.pinoutDetails,
           index: index++,
           total: total,
           legendNcsId: _kLegendNcsId,

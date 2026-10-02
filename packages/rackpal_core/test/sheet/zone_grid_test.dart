@@ -19,6 +19,8 @@ void main() {
           // T6.20 IS A TABLE (DR-220): the inset, not the band.
           SheetRole.unusedHomeRuns: false,
           SheetRole.equipmentList: false,
+          // T5.01 IS TABLES (DR-221 §11.220.1).
+          SheetRole.pinoutDetails: false,
         },
       );
     });

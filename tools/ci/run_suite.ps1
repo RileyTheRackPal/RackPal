@@ -1106,7 +1106,12 @@ $SuiteFloors = @{
     # order listed against its standard, the standard and none not listed, a
     # wrong count listed, no standard never listed, a wiring exception, and a
     # null-modem cable.
-    'rackpal_core'   = 5372
+    # 5385 at `#976` (M6-E2c, DR-221): +13 in sheet/pinout_sheet_test.dart,
+    # no page for nothing, Home Theatre's one section, an empty section not
+    # drawn, six page shapes, every IR count 1 to 90 ahead of a second
+    # section (a sampled sweep let a missing keep-with survive), the
+    # control, and T5.01 absent then last in the set.
+    'rackpal_core'   = 5385
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1177,7 +1182,13 @@ $SuiteFloors = @{
     # open runs and none of the fifteen landed, a ROOM run, no cables no sheet;
     # +2 in auto_sheet_absent_test.dart, T6.20 in the file and the index, and
     # in neither once nothing is unused.
-    'rackpal_export' = 267
+    # 272 at `#976`, `#334` (M6-E2c, M6-E3, DR-221): +2 in
+    # pinout_export_test.dart, Home Theatre's six ports with the ruled pin map
+    # in ink, and a terminal order and a wiring exception in their own
+    # sections; +3 in auto_sheet_absent_test.dart, T5.01 in the file and the
+    # index on Home Theatre, in neither on Apartment or with the variants
+    # cleared.
+    'rackpal_export' = 272
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

@@ -152,8 +152,20 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     measurer: measurer,
     units: doc.settings.displayUnits,
   );
+  // T5.01 IS AUTO TOO (DR-221): nothing non-standard paginates to no page.
+  final pinoutPages = paginatePinoutDetails(
+    details: pinoutDetailsOf(doc, schedule),
+    settings: doc.settings,
+    drawingArea: SheetLayout.resolve(
+      geometry: const SheetGeometry(SheetSize.ansiALandscape),
+      revisionRowCount: revisionBodyRowCount(doc.revisionBlock),
+      stamped: stamped,
+    ).drawingArea,
+    measurer: measurer,
+  );
   final set = SheetSet.forRacks(
     doc.racks.values,
+    pinoutSheets: pinoutPages.length,
     exceptionSheets: exceptionPages.length,
     unusedHomeRunSheets: unusedPages.length,
     equipmentListSheets: schedulePages.length,
@@ -188,6 +200,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   var schedulePage = 0;
   var exceptionPage = 0;
   var unusedPage = 0;
+  var pinoutPage = 0;
   for (final sheet in set.sheets) {
     final DiagramScene scene;
     final LegibilityReport legibility;
@@ -391,6 +404,19 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
         final built = buildUnusedRunsSheet(
           sheet: sheet,
           page: unusedPages[unusedPage++],
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+        );
+        scene = built.scene;
+        legibility = built.legibility;
+      case SheetRole.pinoutDetails:
+        final built = buildPinoutSheet(
+          sheet: sheet,
+          page: pinoutPages[pinoutPage++],
           info: doc.info,
           settings: doc.settings,
           revisions: doc.revisionBlock,

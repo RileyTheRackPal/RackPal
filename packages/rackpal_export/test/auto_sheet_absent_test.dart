@@ -23,6 +23,10 @@
 //  3. T6.20, NOW THAT IT EXISTS (M6-E3 `#334`, DR-220), the ticket's own
 //     assertion and its control: Whole House prints it and indexes it, and
 //     the same project with its open ends landed does neither.
+//  4. T5.01 (M6-E3 `#334`, DR-221): Home Theatre prints and indexes it for
+//     its receiver ports; Apartment, with nothing non-standard, does
+//     neither; and Home Theatre with every receiver variant cleared does
+//     neither, the control.
 import 'dart:io';
 import 'dart:typed_data';
 
@@ -235,6 +239,42 @@ void main() {
         isEmpty,
       );
       expect(pages['T0.00'], isNot(contains('UNUSED HOME RUNS')));
+    });
+  });
+
+  group('4. T5.01, absent and present (M6-E3)', () {
+    test(
+      'HOME THEATRE, six powered receiver ports: the page AND the row',
+      () async {
+        final pages = pagesById(await export(starter('home_theatre')));
+        expect(pages.keys, contains('T5.01'));
+        expect(indexedIds(pages['T0.00']!), contains('T5.01'));
+      },
+    );
+
+    test('APARTMENT, nothing non-standard: no page and no row', () async {
+      final pages = pagesById(await export(starter('apartment')));
+      expect(pages.keys.where((id) => id.startsWith('T5.')), isEmpty);
+      expect(
+        indexedIds(pages['T0.00']!).where((id) => id.startsWith('T5.')),
+        isEmpty,
+      );
+    });
+
+    test('THE CONTROL: Home Theatre with its receiver variants cleared has '
+        'neither', () async {
+      final doc = starter('home_theatre');
+      for (final t in doc.templates.values) {
+        for (final p in t.body.ports) {
+          if (p.pinoutVariant == 'xantech-stereo') p.pinoutVariant = null;
+        }
+      }
+      final pages = pagesById(await export(doc));
+      expect(pages.keys.where((id) => id.startsWith('T5.')), isEmpty);
+      expect(
+        indexedIds(pages['T0.00']!).where((id) => id.startsWith('T5.')),
+        isEmpty,
+      );
     });
   });
 }
