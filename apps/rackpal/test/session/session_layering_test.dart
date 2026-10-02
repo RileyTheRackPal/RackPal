@@ -697,10 +697,17 @@ final class AppServices {
       // beside Export PDF because it edits what the PDF prints on its front
       // pages; the user chose it over a section inside Project settings.
       // No key, for the reason every item since Locations has had none.
-      [17, 6],
+      //
+      // 17 -> 18 AT DR-216 (`#346`), and the accelerator count did not move
+      // for the FIFTEENTH time. The eighteenth is `File ▸ Export for
+      // construction…`, beside Export PDF: the same export with the stamp
+      // requested, the user's call over a saved setting. No key, because
+      // docs/08 gives export Ctrl+P and that is still not bound either.
+      [18, 6],
       reason:
-          'twelve File-menu items — New, Open…, Save, Save As…, Export '
-          'PDF…, Sheet set…, Export/Import device template…, Export/Import '
+          'thirteen File-menu items — New, Open…, Save, Save As…, Export '
+          'PDF…, Export for construction…, Sheet set…, Export/Import device '
+          'template…, Export/Import '
           'device library…, Project settings…, Import floorplan… — and four '
           'accelerators. '
           'Edit holds Undo and Redo, which carry the other two, and '

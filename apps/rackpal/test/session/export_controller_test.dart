@@ -179,6 +179,37 @@ void main() {
       expect(session.services.session.status, contains('6 sheets'));
     });
 
+    test('EXPORT FOR CONSTRUCTION stamps a document with no open error, '
+        'and the status line says so (DR-216)', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+      );
+
+      expect(
+        await session.services.export.exportPdf(issuedForConstruction: true),
+        isTrue,
+      );
+      expect(
+        session.services.session.status,
+        allOf(
+          startsWith('Exported 6 sheets'),
+          contains('issued for construction'),
+        ),
+      );
+    });
+
+    test('a PLAIN export says nothing about a stamp', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+      );
+
+      expect(await session.services.export.exportPdf(), isTrue);
+      expect(session.services.session.status, isNot(contains('stamp')));
+      expect(session.services.session.status, isNot(contains('construction')));
+    });
+
     test('leaves NO .bak beside the deliverable, even on the OVERWRITE '
         '(CR-098)', () async {
       // ==============================================================
@@ -493,6 +524,29 @@ void main() {
           notices: const <String>['T2.01: small text'],
         ),
         'Exported 3 sheets · 1 KB · 1 notice',
+      );
+    });
+
+    test('A STAMP IS NAMED, and a WITHHELD one is printed whole, before the '
+        'notices (DR-216 §11.215.1)', () {
+      expect(
+        describeExportSuccess(
+          sheetCount: 6,
+          bytesWritten: 2048,
+          notices: const <String>[],
+          stamped: true,
+        ),
+        'Exported 6 sheets · 2 KB · issued for construction',
+      );
+      expect(
+        describeExportSuccess(
+          sheetCount: 8,
+          bytesWritten: 2048,
+          notices: const <String>['T2.01: small text'],
+          stampWithheld: 'not stamped: 15 open errors, see T0.02',
+        ),
+        'Exported 8 sheets · 2 KB · not stamped: 15 open errors, see T0.02 '
+        '· 1 notice',
       );
     });
 

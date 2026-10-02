@@ -1176,6 +1176,14 @@ file.
 They affect whether the drawing can be stamped for construction, and nothing
 else.
 
+**Issuing for construction.** `File` ▸ `Export for construction…` is the same
+export with every sheet stamped `ISSUED FOR CONSTRUCTION` and the date, in a box
+above the revision history. It stamps only when the validation drawer has no
+open error. If it has any, you still get the file, unstamped, and the status
+line says how many errors are open and which sheet lists them. Acknowledging an
+error counts as dealing with it. Nothing is remembered: the next `Export PDF…`
+is unstamped.
+
 **The interconnect sheets are the notable absence: the schematic you draw on
 screen does not print yet**, and neither do the schedules. See below.
 
@@ -1195,9 +1203,9 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 - **No localisation.** English only, and no accessibility work has been done
   beyond keyboard reach.
 - **The interconnect sheets do not print.** You can author the schematic in
-  full and it will not appear in the PDF. Nor do the cover sheet, the
-  exceptions sheet, the pull sheet, the termination schedule, the unused home
-  runs sheet or the pinout details; §21.7 lists the sheets you do get.
+  full and it will not appear in the PDF. Nor do the pull sheet, the
+  termination schedule, the unused home runs sheet or the pinout details;
+  §21.7 lists the sheets you do get.
 - **No DXF or DWG export.** DXF is planned for a later release.
 - **No Rear Panel view.** `Ctrl+3` does nothing; it is reserved for it. The
   rear panel prints on the rear elevation today; it is just not interactively

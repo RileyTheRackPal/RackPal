@@ -23180,6 +23180,41 @@ named later body of work, as §8.9 requires.
 
 ---
 
+### 11.215 DR-216 · Export for construction is its own command, the stamp is on every sheet, and the logo sits top-right
+
+**Settled by the user on 2026-10-01, building M6-G5 (`#346`) and M6-G6 (`#590`), on the recommended
+option three times.** CR-022 settles the stamp's logic, `ExportSpec.issuedForConstruction`, with
+open errors suppressing the stamp and never the bytes; DR-030 settles the logo's nature (optional,
+full opacity, fit-inside, a member like an underlay's, import limits). Neither placed anything.
+
+**11.215.1 RULED: `File ▸ Export for construction…` BESIDE `Export PDF…`.** It requests the stamp
+for one export and remembers nothing. With zero open errors every sheet is stamped; otherwise the
+set still exports, unstamped, and the status line says why and points at `T0.02`. M6-I's export
+dialog takes this over as an option when it exists. The options not taken were a saved project
+setting, which would stamp later exports by default, and waiting for M6-I, which would leave G5
+undemonstrable.
+
+**11.215.2 RULED: THE STAMP IS ON EVERY SHEET, DIRECTLY ABOVE THE REVISION BLOCK**, the same width,
+reading `ISSUED FOR CONSTRUCTION` and the issue date, because sheets travel separately on a site and a
+loose sheet must say what it is. The option not taken was the cover only. **Decided without a
+question and recorded as such:** an ANSI A sheet has no revision block (§5.2's compact strip), so
+there the stamp is a full-width band directly above the strip. A stamped export lays out every sheet
+with the stamp's height reserved, in the dry run, so pagination and `SHEET i OF n` see it.
+
+**11.215.3 RULED: THE LOGO SITS AT THE TOP RIGHT OF THE TITLE BLOCK'S IDENTITY BAND**, in a box
+about 100 by 45 pt, fitted inside with its aspect kept, the project, client and address lines
+keeping their left alignment in what remains. The firm's text line stays (DR-030 §11.29.1). It is
+set in `File ▸ Sheet set…`'s Title block section, beside the fields it sits with. The option not taken
+was a box outside the title block, which takes drawing space on every sheet.
+
+**11.215.4 THE REVISION BLOCK'S `issued` FLAG PARKS WITH G3.** CR-022 has open errors withhold the
+stamp and the revision block's issued flag; `RevisionEntry` carries no such flag and its writer is
+parked on HIST/3 (`#658`) by DR-215 §11.214.3. The flag joins it there. The stamp alone is G5.
+
+**Scope.** No scope change: CR-022 and DR-030, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

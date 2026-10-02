@@ -94,6 +94,10 @@ Future<Map<FontRef, Uint8List>> loadExportFontsFromBundle() async {
 /// What the status line says when the user backs out of the dialog.
 const String kExportCancelledStatus = 'Export cancelled.';
 
+/// The menu item that requests the ISSUED FOR CONSTRUCTION stamp (DR-216
+/// §11.215.1). A constant because a test finds the item by it.
+const String kExportForConstructionLabel = 'Export for construction…';
+
 /// What a document with no racks is told, out loud.
 const String kExportNoRacksTitle = 'Nothing to export.';
 
@@ -124,7 +128,12 @@ final class ExportController {
 
   /// Exports the current document. Returns true only when bytes reached
   /// disk.
-  Future<bool> exportPdf() async {
+  ///
+  /// [issuedForConstruction] is `File ▸ Export for construction…` (DR-216
+  /// §11.215.1): it REQUESTS the stamp for this one export and remembers
+  /// nothing. An open error withholds the stamp and never the file, and the
+  /// status line says which happened.
+  Future<bool> exportPdf({bool issuedForConstruction = false}) async {
     // ── refuse a rackless document BEFORE the dialog ────────────────────
     //
     // Before, not after: asking the user where to put a file and only then
@@ -190,6 +199,7 @@ final class ExportController {
         // ONE clock value for the whole export (§8.4). Injected, never
         // `DateTime.now()` inside a sheet builder.
         issuedAt: clock.nowUtc(),
+        issuedForConstruction: issuedForConstruction,
       ),
     );
     if (built case Err(:final error)) {
@@ -228,6 +238,8 @@ final class ExportController {
           sheetCount: exported.sheetCount,
           bytesWritten: value.bytesWritten,
           notices: exported.notices,
+          stamped: exported.stamped,
+          stampWithheld: exported.stampWithheld,
         ),
       );
       return true;
@@ -325,12 +337,22 @@ String describeExportSuccess({
   required int sheetCount,
   required int bytesWritten,
   required List<String> notices,
+  bool stamped = false,
+  String? stampWithheld,
 }) {
   final sheets = '$sheetCount sheet${sheetCount == 1 ? '' : 's'}';
   final size = formatByteSize(bytesWritten);
-  if (notices.isEmpty) return 'Exported $sheets · $size';
   final n = notices.length;
-  return 'Exported $sheets · $size · $n notice${n == 1 ? '' : 's'}';
+  return <String>[
+    'Exported $sheets',
+    size,
+    // THE STAMP BEFORE THE NOTICES (DR-216 §11.215.1): it is the outcome of
+    // the command the user chose, and a withheld stamp is printed whole
+    // rather than counted, with the sheet that lists the errors.
+    if (stamped) 'issued for construction',
+    ?stampWithheld,
+    if (n > 0) '$n notice${n == 1 ? '' : 's'}',
+  ].join(' · ');
 }
 
 /// `214 KB`, `1.4 MB`. Kilobytes are 1024 bytes, which is what a Windows

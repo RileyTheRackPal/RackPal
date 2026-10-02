@@ -84,12 +84,22 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   final measurer = PdfFontMeasurer(fonts);
 
   // ---- steps 2 and 3: paginate, THEN resolve the sheet list ------------
+  // THE STAMP IS DECIDED FIRST (DR-216 §11.215.2), because it changes every
+  // sheet's drawing area and so the dry runs below must see it. The
+  // findings are evaluated ONCE, here, and this same report is what T0.02
+  // lays out and draws (DR-214 §11.213.5).
+  final report = buildExceptionsReport(doc, evaluateDocument(doc));
+  final openErrors = report.openErrorCount;
+  // CR-022: an open error withholds the stamp, NEVER the bytes.
+  final stamped = request.issuedForConstruction && openErrors == 0;
+
   final list = buildEquipmentList(doc);
   final schedulePages = paginateEquipmentList(
     list: list,
     drawingArea: SheetLayout.resolve(
       geometry: const SheetGeometry(SheetSize.ansiALandscape),
       revisionRowCount: revisionBodyRowCount(doc.revisionBlock),
+      stamped: stamped,
     ).drawingArea,
     measurer: measurer,
     units: doc.settings.displayUnits,
@@ -100,15 +110,16 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   // dry run has to know the total before any sheet is drawn, or
   // "SHEET i OF n" is wrong.
   final plans = planUnderlaysWithPins(doc);
-  // T0.02's PAGES ARE A DRY RUN TOO (DR-214 §11.213.5): the findings are
-  // evaluated ONCE, here, and the same list is laid out and drawn, so the
-  // sheet and `SHEET i OF n` cannot come from two evaluations.
+  // T0.02's PAGES ARE A DRY RUN TOO (DR-214 §11.213.5): `report` above is
+  // the one evaluation, laid out here and drawn below, so the sheet and
+  // `SHEET i OF n` cannot come from two evaluations.
   final exceptionPages = paginateExceptions(
-    report: buildExceptionsReport(doc, evaluateDocument(doc)),
+    report: report,
     doc: doc,
     drawingArea: SheetLayout.resolve(
       geometry: const SheetGeometry(SheetSize.ansiBLandscape),
       revisionRowCount: revisionBodyRowCount(doc.revisionBlock),
+      stamped: stamped,
     ).drawingArea,
     measurer: measurer,
     issuedAt: request.issuedAt,
@@ -118,6 +129,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     exceptionSheets: exceptionPages.length,
     equipmentListSheets: schedulePages.length,
     planUnderlays: plans,
+    stamped: stamped,
   );
 
   // ONE RESOLVER FOR THE WHOLE DOCUMENT, so a member decoded for sheet 1
@@ -128,6 +140,20 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   final images = planImageResolver(pdf.document, request.members);
 
   // ---- step 4: render -------------------------------------------------
+  // NOT A NOTICE. It answers the question the user asked (DR-216
+  // §11.215.1): they chose Export for construction and did not get the
+  // stamp. A notice is counted on the status line and never read out, so
+  // this rides in its own field and the status line prints it whole.
+  final String? stampWithheld;
+  if (request.issuedForConstruction && !stamped) {
+    final exceptionsId = set.sheets
+        .firstWhere((s) => s.role == SheetRole.exceptions)
+        .ncsId;
+    final noun = openErrors == 1 ? 'error' : 'errors';
+    stampWithheld = 'not stamped: $openErrors open $noun, see $exceptionsId';
+  } else {
+    stampWithheld = null;
+  }
   final notices = <String>[...set.notices];
   var schedulePage = 0;
   var exceptionPage = 0;
@@ -367,6 +393,8 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
       bytes: await pdf.save(),
       sheetCount: set.sheets.length,
       notices: List.unmodifiable(notices),
+      stamped: stamped,
+      stampWithheld: stampWithheld,
     ),
   );
 }

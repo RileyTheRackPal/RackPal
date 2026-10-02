@@ -1532,6 +1532,32 @@ each way. Over 1 to 60 U against `main`, **exactly one rack height changed scale
 against a hand-built *unzoned* geometry and were corrected to the sheet's own, and the frame's ticks
 draw at the outer rule's weight so the layer's ink claim (the margin box plus half the outer rule)
 stays true. **Looked at**: Whole House's front elevation, 2 x 4 zones, A1 under the title block.
+
+### 4.31 The ISSUED FOR CONSTRUCTION stamp · 2026-10-01 · `#346` · `DR-216` · no version move
+
+M6-G5. CR-022 has carried `ExportSpec.issuedForConstruction` since the first canon, with open errors
+withholding the stamp and never the bytes; nothing requested it and nothing drew it. `File ▸ Export
+for construction…` now requests it for one export. With zero open errors every sheet carries a 24 pt
+box directly above the revision block, its width, reading `ISSUED FOR CONSTRUCTION` and the issue
+date; on the compact ANSI A strip it is a full-width band above the strip. With any open error the set
+exports unstamped and the status line prints why, whole: `not stamped: 15 open errors, see T0.02`.
+
+**The stamp is decided before any page is laid out**, because it takes 24 pt from every drawing area
+and the equipment-list and `T0.02` dry runs must see it. That moved the one `evaluateDocument` call
+ahead of the first dry run rather than adding a second. **The withheld reason is not a notice**: the
+status line counts notices and never reads them, so a reason filed there would have answered the
+user's question with *"1 notice"*. It rides on `ExportedDocument.stampWithheld` instead.
+
+**Evidence.** `issued_stamp_export_test.dart` reads the ink back on real starters: Small Office
+(warnings, no error) prints the words and the date on every page; Whole House (15 open errors) prints
+them on none, at the same sheet count as a plain export. `issued_stamp_test.dart` holds the layout:
+the box's edges against the revision block's, and the drawing area shorter by exactly the stamp on
+every sheet size. **Looked at**: Small Office's T2.01 at B and T6.31 at A, stamped.
+
+**What G5 does not do.** CR-022 also has an open error withhold the revision block's `issued` flag.
+`RevisionEntry` has no such flag and its writer is parked on HIST/3 (`#658`); DR-216 §11.215.4 parks
+the flag there with it.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

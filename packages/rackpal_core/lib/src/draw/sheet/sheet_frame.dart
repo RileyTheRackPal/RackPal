@@ -329,6 +329,13 @@ const double kTitleBlockHeight = 115;
 /// schedule table is not notched.
 const double kCompactTitleBlockHeight = 43;
 
+/// The ISSUED FOR CONSTRUCTION stamp's height (DR-216 §11.215.2): two
+/// lines, the words and the date.
+const double kStampHeight = 24;
+
+/// What the stamp says.
+const String kIssuedForConstruction = 'ISSUED FOR CONSTRUCTION';
+
 /// §5.3: the revision block is the same width as the title block, and its
 /// rows are 13 pt.
 const double kRevisionRowHeight = 13;
@@ -351,6 +358,7 @@ final class SheetLayout {
     required this.revisionBlockBox,
     required this.drawingArea,
     required this.revisionRowCount,
+    this.stampBox,
   });
 
   /// Resolves the furniture boxes for [geometry] given a revision block of
@@ -360,6 +368,7 @@ final class SheetLayout {
   factory SheetLayout.resolve({
     required SheetGeometry geometry,
     required int revisionRowCount,
+    bool stamped = false,
   }) {
     final frame = geometry.frameBox;
     final compact = geometry.size.usesCompactTitleBlock;
@@ -400,7 +409,27 @@ final class SheetLayout {
     // up deliberately, because a rectangular drawing area is what a
     // centred elevation and a paginated table both want, and reasoning
     // about an L-shaped one is how content ends up under a title block.
-    final furnitureTop = revisionBox?.top ?? titleBox.top;
+    // THE STAMP SITS ON TOP OF THE STACK (DR-216 §11.215.2): directly above
+    // the revision block, its width; on the compact strip, which has no
+    // revision block, a full-width band directly above the strip. RESERVED
+    // HERE, so a stamped export lays out (and paginates) around it.
+    final stackTop = revisionBox?.top ?? titleBox.top;
+    final stampBox = !stamped
+        ? null
+        : compact
+        ? DBox.fromLtwh(
+            frame.left,
+            stackTop - kStampHeight,
+            frame.width,
+            kStampHeight,
+          )
+        : DBox.fromLtwh(
+            titleBox.left,
+            stackTop - kStampHeight,
+            kTitleBlockWidth,
+            kStampHeight,
+          );
+    final furnitureTop = stampBox?.top ?? stackTop;
     final drawing = DBox.fromLtwh(
       frame.left,
       frame.top,
@@ -413,6 +442,7 @@ final class SheetLayout {
       frameBox: frame,
       titleBlockBox: titleBox,
       revisionBlockBox: revisionBox,
+      stampBox: stampBox,
       drawingArea: drawing,
       revisionRowCount: revisionRowCount,
     );
@@ -424,6 +454,10 @@ final class SheetLayout {
 
   /// `null` on the compact (ANSI A) strip — see the constructor's note.
   final DBox? revisionBlockBox;
+
+  /// The ISSUED FOR CONSTRUCTION stamp's box, or `null` on an unstamped
+  /// export (DR-216 §11.215.2).
+  final DBox? stampBox;
 
   /// What is left for the sheet's own content.
   final DBox drawingArea;

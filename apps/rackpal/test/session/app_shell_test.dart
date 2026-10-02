@@ -16,6 +16,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:pdf/pdf.dart';
 import 'package:rackpal/src/session/autosave_scheduler.dart';
 import 'package:rackpal/src/session/blank_document.dart';
+import 'package:rackpal/src/session/export_controller.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_text/rackpal_text.dart';
 import 'package:rackpal_ui/rackpal_ui.dart';
@@ -252,6 +253,32 @@ void main() {
 
       expect(t.fs.state.files.containsKey(r'C:\jobs\smith.pdf'), isTrue);
       expect(find.textContaining('Exported '), findsOneWidget);
+    });
+
+    testWidgets('Export for construction… runs the export WITH THE STAMP '
+        'REQUESTED, and carries no accelerator (DR-216)', (tester) async {
+      // WIRING, as above: the stamp's two outcomes are proved in
+      // `export_controller_test.dart` and `rackpal_export`. Either one on
+      // the status line proves the request carried the flag, since a plain
+      // export prints neither.
+      final t = await pump(tester, savePaths: [r'C:\jobs\smith.pdf']);
+      await tester.tap(find.text('File'));
+      await tester.pumpAndSettle();
+      final item = tester.widget<MenuItemButton>(
+        find.ancestor(
+          of: find.text(kExportForConstructionLabel),
+          matching: find.byType(MenuItemButton),
+        ),
+      );
+      expect(item.shortcut, isNull);
+      await tester.tap(find.text(kExportForConstructionLabel));
+      await tester.pumpAndSettle();
+
+      expect(t.fs.state.files.containsKey(r'C:\jobs\smith.pdf'), isTrue);
+      expect(
+        find.textContaining(RegExp('issued for construction|not stamped')),
+        findsOneWidget,
+      );
     });
 
     testWidgets('Export PDF… carries NO accelerator — the binding is a '
