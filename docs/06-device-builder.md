@@ -269,7 +269,7 @@ A virtualised data grid, rows grouped by bank under sticky collapsible headers. 
 | Bus | Segment · Address · Universe · Unit loads · Terminator · Tap W |
 | Power | Role · Receptacle · Volts · Max A · Outlet mode · Seq step · Seq delay · Circuit |
 | Passthrough | Paired port |
-| Advanced | Max connections · Topology · **Gender** · Pinout variant · Return channel · `renamedFrom` · **`Accepts`** |
+| Advanced | Max connections · Topology · **Gender** · Pinout variant · **Terminals** (a terminal block's order, typed `TX RX G`; DR-221) · Return channel · `renamedFrom` · **`Accepts`** |
 
 `Gender` has **three** values, `male | female | genderless`, and the column is only enabled when `ConnectorTypeDef.genderApplies` is true (CR-059). *Rejected alternative:* the five-value enum with `jack` and `plug`, which contained two synonym pairs and silently broke `CON-002`: the rule "both ends male or both ends female" never fired for `jack` + `jack`.
 

@@ -121,7 +121,12 @@ Future<_Harness> _pump(WidgetTester tester, TemplateBody template) async {
   // grid in every case, which tests the scroll view. Layout at a real
   // width is `builder_narrow_window_test.dart`'s subject and not this
   // file's.
-  tester.view.physicalSize = const Size(3200, 900);
+  //
+  // 3400 SINCE DR-221 (`#974`): TERMINALS joined the Advanced pack ahead of
+  // ACCEPTS and moved it 108 pt right, to x=2909, where at 3200 the tap
+  // landed on the overlay at the window's edge and all five cases failed
+  // on the tap rather than on what they test.
+  tester.view.physicalSize = const Size(3400, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
 

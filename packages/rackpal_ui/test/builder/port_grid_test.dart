@@ -2849,6 +2849,43 @@ void main() {
     });
   });
 
+  group('TERMINALS (M6-E2a, DR-221 §11.220.5)', () {
+    testWidgets("a typed order is saved as the port's ordered list, "
+        'spaces normalised', (tester) async {
+      final harness = await _pump(
+        tester,
+        template: _saveable()..ports.add(_port('rs232', order: 'a0')),
+      );
+      await tester.tap(find.widgetWithText(TextButton, 'Columns'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Advanced'));
+      await tester.pumpAndSettle();
+
+      // ANCHORED ON THE HEADER, so the cell typed into is this column's
+      // and not whichever text field happens to come first.
+      final column = tester.getTopLeft(find.text('TERMINALS')).dx;
+      final fields = find.byType(TextField);
+      var typed = false;
+      for (var i = 0; i < tester.widgetList(fields).length; i++) {
+        if ((tester.getTopLeft(fields.at(i)).dx - column).abs() < 8) {
+          await tester.enterText(fields.at(i), 'TX  RX G');
+          await tester.pump();
+          await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+          await tester.pumpAndSettle();
+          typed = true;
+          break;
+        }
+      }
+      expect(typed, isTrue, reason: 'precondition: the cell was found');
+
+      expect((await harness.read(tester)).ports.single.terminalRoles, [
+        'TX',
+        'RX',
+        'G',
+      ]);
+    });
+  });
+
   group('the footer readout (M4-E5)', () {
     testWidgets('is there before any port is, so the shape is learnable', (
       tester,

@@ -2866,6 +2866,13 @@ class _PortRow extends StatelessWidget {
       hint: 'emitter',
       onCommit: (v) => _set(id, PortDefField.pinoutVariant, _orNull(v)),
     ),
+    // THE STRING SEAM, NOT THE LIST (DR-221 §11.220.5): the field joins
+    // and splits, so this cell is a text cell like PINOUT.
+    PortColumnId.terminalRoles => PortTextCell(
+      value: terminalRolesText(_port.terminalRoles),
+      hint: 'TX RX G',
+      onCommit: (v) => _set(id, PortDefField.terminalRoles, _orNull(v)),
+    ),
     PortColumnId.conductorCount => PortNumberCell(
       value: _port.conductorCount,
       onCommit: (v) => _set(id, PortDefField.conductorCount, v),

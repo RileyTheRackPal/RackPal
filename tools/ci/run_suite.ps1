@@ -1096,7 +1096,22 @@ $SuiteFloors = @{
     # room last; +15 in sheet/unused_runs_sheet_test.dart, no page for nothing,
     # the key lines, a seven-size sweep that no page ends on a band and every
     # page names its room, and the shared T6.60 overflow with no id twice.
-    'rackpal_core'   = 5354
+    # 5362 at `#974` (M6-E2a, DR-221): +8 in builder/terminal_roles_test.dart,
+    # the string seam both ways and blank as none, the field through it,
+    # equal orders equal at the seam, absent when unknown, a JSON array that
+    # reads back, the bytes round-trip, and a changed order is breaking.
+    # 5372 at `#975` (M6-E2b, DR-221): +10 in derived/pinout_details_test.dart,
+    # Home Theatre's six receiver ports and Whole House's five with the ruled
+    # pin map, the other two starters empty, mono TS never listed, a terminal
+    # order listed against its standard, the standard and none not listed, a
+    # wrong count listed, no standard never listed, a wiring exception, and a
+    # null-modem cable.
+    # 5385 at `#976` (M6-E2c, DR-221): +13 in sheet/pinout_sheet_test.dart,
+    # no page for nothing, Home Theatre's one section, an empty section not
+    # drawn, six page shapes, every IR count 1 to 90 ahead of a second
+    # section (a sampled sweep let a missing keep-with survive), the
+    # control, and T5.01 absent then last in the set.
+    'rackpal_core'   = 5385
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1167,7 +1182,13 @@ $SuiteFloors = @{
     # open runs and none of the fifteen landed, a ROOM run, no cables no sheet;
     # +2 in auto_sheet_absent_test.dart, T6.20 in the file and the index, and
     # in neither once nothing is unused.
-    'rackpal_export' = 267
+    # 272 at `#976`, `#334` (M6-E2c, M6-E3, DR-221): +2 in
+    # pinout_export_test.dart, Home Theatre's six ports with the ruled pin map
+    # in ink, and a terminal order and a wiring exception in their own
+    # sections; +3 in auto_sheet_absent_test.dart, T5.01 in the file and the
+    # index on Home Theatre, in neither on Apartment or with the variants
+    # cleared.
+    'rackpal_export' = 272
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1719,7 +1740,10 @@ $SuiteFloors = @{
     # 2045 at `#347` (CR-066): +1 in settings/project_settings_dialog_test.
     # dart. The numbering choices say what they print, not the enum, and
     # picking NCS is one command.
-    'rackpal_ui'     = 2045
+    # 2046 at `#974` (M6-E2a, DR-221): +1 in builder/port_grid_test.dart. An
+    # order typed into TERMINALS, found by its header, is saved as the
+    # port's list with the spaces normalised.
+    'rackpal_ui'     = 2046
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

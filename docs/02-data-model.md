@@ -476,6 +476,7 @@ final class PortDef {
   Gender gender;                          // male|female|genderless ONLY. CR-059.
   Face face; PanelPosition position;
   String? pinoutVariant;                  // the IR emitter/receiver hazard. Must be cited. AC-052.
+  List<String>? terminalRoles;            // terminal-block order, pin 1 first ('TX RX G'). Absent = unknown. DR-221.
   int? conductorCount;
 
   int? impedanceOhms; AudioLevel? level; bool? balanced, phantomPowerCapable;

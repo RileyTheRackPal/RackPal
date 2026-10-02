@@ -266,7 +266,7 @@ void main() {
 
       test(
         '(5) the sheet set is the cover + the legend + T0.02 pages + 2N + '
-        'T6.20 pages + schedule pages, numbered i OF n',
+        'T6.20 pages + schedule pages + T5.01 pages, numbered i OF n',
         () async {
           final doc = documentOf(name);
           final exported = await exportOf(name);
@@ -302,6 +302,15 @@ void main() {
             for (final body in operatorStreams(exported.bytes))
               interpretContentStream(body, toUnicode: cmap).allText,
           ].where((t) => RegExp(r'SHEET NO\.\s+T6\.2\d').hasMatch(t)).length;
+          final pinoutPages = [
+            for (final body in operatorStreams(exported.bytes))
+              interpretContentStream(body, toUnicode: cmap).allText,
+          ].where((t) => RegExp(r'SHEET NO\.\s+T5\.\d\d').hasMatch(t)).length;
+          expect(
+            pinoutPages,
+            name == 'home_theatre' || name == 'whole_house' ? 1 : 0,
+            reason: 'T5.01: receiver ports on Home Theatre and Whole House',
+          );
           expect(
             unusedPages,
             name == 'whole_house' ? 1 : 0,
@@ -318,6 +327,7 @@ void main() {
                 // unused home runs, the other three none. Counted in the
                 // ink, as the schedule's pages are.
                 unusedPages +
+                pinoutPages +
                 RegExp(r'SHEET NO\.\s+T6\.3').allMatches(text).length,
           );
         },

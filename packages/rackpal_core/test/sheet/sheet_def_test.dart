@@ -255,9 +255,12 @@ void main() {
     // moves with it. What it still refuses is a role appearing without
     // anybody deciding: eight of §2.2's twelve slots are M6's and are
     // absent from this enum rather than stubbed. EIGHT SINCE M6-E1 (`#332`,
-    // DR-220): T6.20 arrived as a role, decided by a ruling.
-    test('names the eight sheets in this set, and no others', () {
-      expect(SheetRole.values, hasLength(8));
+    // DR-220): T6.20 arrived as a role, decided by a ruling. NINE SINCE
+    // M6-E2 (`#976`, DR-221): T5.01.
+    test('names the nine sheets in this set, and no others', () {
+      expect(SheetRole.values, hasLength(9));
+      expect(SheetRole.pinoutDetails.title, 'PLATE, PANEL AND PINOUT DETAILS');
+      expect(SheetRole.pinoutDetails.size, SheetSize.ansiALandscape);
       expect(SheetRole.unusedHomeRuns.title, 'UNUSED HOME RUNS');
       expect(SheetRole.unusedHomeRuns.size, SheetSize.ansiALandscape);
       expect(SheetRole.exceptions.title, 'EXCEPTIONS AND ACKNOWLEDGEMENTS');

@@ -411,6 +411,20 @@ abstract final class PortDefField {
     set: _setPinoutVariant,
   );
 
+  /// The terminal order of a terminal block (DR-221 §11.220.5), as the
+  /// grid shows and takes it: roles separated by spaces, `TX RX G`.
+  ///
+  /// A STRING AT THIS SEAM ON PURPOSE. The model holds an ordered list,
+  /// and every scalar comparison in the grid, fill and batch machinery
+  /// (`==` on a cell's value) would compare two lists by IDENTITY, the
+  /// defect `acceptedFamilies` paid for in four places. Joined here, the
+  /// list never reaches them. Blank stores null: no order was recorded.
+  static const terminalRoles = PortField<String?>(
+    key: 'terminalRoles',
+    get: _getTerminalRoles,
+    set: _setTerminalRoles,
+  );
+
   static const conductorCount = PortField<int?>(
     key: 'conductorCount',
     get: _getConductorCount,
@@ -533,6 +547,7 @@ abstract final class PortDefField {
     topology,
     gender,
     pinoutVariant,
+    terminalRoles,
     conductorCount,
     returnChannel,
     order,
@@ -812,6 +827,26 @@ void _setGender(PortDef p, Gender v) => p.gender = v;
 
 String? _getPinoutVariant(PortDef p) => p.pinoutVariant;
 void _setPinoutVariant(PortDef p, String? v) => p.pinoutVariant = v;
+
+String? _getTerminalRoles(PortDef p) => terminalRolesText(p.terminalRoles);
+void _setTerminalRoles(PortDef p, String? v) =>
+    p.terminalRoles = parseTerminalRoles(v);
+
+/// How the grid prints a terminal order: roles separated by one space, or
+/// null when none is recorded.
+String? terminalRolesText(List<String>? roles) =>
+    roles == null || roles.isEmpty ? null : roles.join(' ');
+
+/// A typed terminal order: split on whitespace, blank meaning none
+/// recorded. `TX  RX G` and `TX RX G` are one order.
+List<String>? parseTerminalRoles(String? text) {
+  final roles = (text ?? '')
+      .trim()
+      .split(RegExp(r'\s+'))
+      .where((r) => r.isNotEmpty)
+      .toList();
+  return roles.isEmpty ? null : roles;
+}
 
 int? _getConductorCount(PortDef p) => p.conductorCount;
 void _setConductorCount(PortDef p, int? v) => p.conductorCount = v;
@@ -1176,6 +1211,9 @@ PortDef portWithIdentity(
   maxConnections: port.maxConnections,
   gender: port.gender,
   pinoutVariant: port.pinoutVariant,
+  terminalRoles: port.terminalRoles == null
+      ? null
+      : List<String>.of(port.terminalRoles!),
   conductorCount: port.conductorCount,
   impedanceOhms: port.impedanceOhms,
   level: port.level,

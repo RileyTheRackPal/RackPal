@@ -139,6 +139,14 @@ void main() {
           'position',
           'renamedFrom',
           'serial',
+          // `terminalRoles` JOINED AT DR-221 (`#974`), AND THE #841 ANSWER
+          // IS YES, SOMETHING OUTSIDE THE BUILDER READS IT: T5.01's
+          // `pinoutDetailsOf`. It is safe for the reason DR-124 and DR-126
+          // were not: the seed's value is null, which is "nobody said"
+          // (G4), and the reader treats null as NOT non-standard, never as
+          // a default order. No seeded device is decided on a value nobody
+          // authored; it is left out, which is the truth about it.
+          'terminalRoles',
           'topology',
           'wavelengthNm',
         ],

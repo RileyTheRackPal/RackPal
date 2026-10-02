@@ -3,8 +3,10 @@
 ## 2026-10-02 (hundred-and-third entry)
 
 * **Progress**: M6-E (`#331`) opened on branch `m6e-auto-sheets`. M6-E1 (`#332`) ruled before any
-  code, then built: T6.20, with M6-E3's T6.20 half (`#334`). docs/12 §4.35. M6-E2 (`#333`) ruled
-  and decomposed into `#974` to `#976`; `#973` filed for the null-modem writer.
+  code, then built: T6.20, with M6-E3's T6.20 half (`#334`), merged at `1960d469` (PR 193). docs/12
+  §4.35. M6-E2 (`#333`) ruled, decomposed into `#974` to `#976` and built: the TERMINALS column, the
+  trigger derivation and T5.01 itself, with M6-E3's second half. docs/12 §4.36. `#973` filed for the
+  null-modem writer.
 * **Note**: **TWO ANSWERS CAN BE RIGHT SEPARATELY AND WRONG TOGETHER.** Widening the sheet to either
   end and choosing a layout with no column naming the end were each fine; together they made a row
   state its defining fact by absence. Read a batch of answers against each other before building.

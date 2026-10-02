@@ -3740,6 +3740,11 @@ JsonMap _encodePortDef(PortDef p) {
     json['returnChannel'] = encodeEnumName(p.returnChannel!);
   }
   putIfNotNull(json, 'pinoutVariant', p.pinoutVariant);
+  // ABSENT WHEN UNKNOWN (DR-221 §11.220.5). The setters never store an
+  // empty list, and one read from a file is written back as it came, so
+  // the bytes round-trip whatever the file held (CR-117).
+  final roles = p.terminalRoles;
+  if (roles != null) json['terminalRoles'] = [...roles];
   putIfNotNull(json, 'conductorCount', p.conductorCount);
   putIfNotNull(json, 'impedanceOhms', p.impedanceOhms);
   if (p.level != null) json['level'] = encodeEnumName(p.level!);
@@ -3829,6 +3834,15 @@ PortDef _decodePortDef(JsonMap json) => PortDef(
     'PortDef.gender',
   ),
   pinoutVariant: asStrOrNull(json['pinoutVariant'], 'PortDef.pinoutVariant'),
+  terminalRoles: json['terminalRoles'] == null
+      ? null
+      : [
+          for (final v in asJsonList(
+            json['terminalRoles'],
+            'PortDef.terminalRoles',
+          ))
+            asStr(v, 'PortDef.terminalRoles[]'),
+        ],
   conductorCount: asIntOrNull(json['conductorCount'], 'PortDef.conductorCount'),
   impedanceOhms: asIntOrNull(json['impedanceOhms'], 'PortDef.impedanceOhms'),
   level: json['level'] == null

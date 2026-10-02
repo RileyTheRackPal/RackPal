@@ -146,6 +146,9 @@ enum PortColumnId {
   topology,
   gender,
   pinoutVariant,
+
+  /// A terminal block's order, pin 1 first (DR-221 §11.220.5).
+  terminalRoles,
   conductorCount,
   returnChannel,
   renamedFrom,
@@ -257,6 +260,7 @@ PortColumnPack? portColumnPack(PortColumnId id) => switch (id) {
   PortColumnId.topology ||
   PortColumnId.gender ||
   PortColumnId.pinoutVariant ||
+  PortColumnId.terminalRoles ||
   PortColumnId.conductorCount ||
   PortColumnId.returnChannel ||
   PortColumnId.renamedFrom ||
@@ -405,6 +409,7 @@ String portColumnHeader(PortColumnId id) => switch (id) {
   PortColumnId.topology => 'TOPOLOGY',
   PortColumnId.gender => 'GENDER',
   PortColumnId.pinoutVariant => 'PINOUT',
+  PortColumnId.terminalRoles => 'TERMINALS',
   PortColumnId.conductorCount => 'CONDUCTORS',
   PortColumnId.returnChannel => 'RETURN',
   PortColumnId.renamedFrom => 'WAS CALLED',
@@ -471,6 +476,7 @@ double portColumnWidth(PortColumnId id) => switch (id) {
   PortColumnId.topology => 100,
   PortColumnId.gender => 100,
   PortColumnId.pinoutVariant => 108,
+  PortColumnId.terminalRoles => 108,
   PortColumnId.conductorCount => 92,
   PortColumnId.returnChannel => 88,
   PortColumnId.renamedFrom => 108,

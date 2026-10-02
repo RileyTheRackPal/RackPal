@@ -181,6 +181,7 @@ const Map<String, PortImportTarget> kPortImportSynonyms = {
   'impedance': PortImportColumn(PortColumnId.impedanceOhms),
   'ohms': PortImportColumn(PortColumnId.impedanceOhms),
   'pinout': PortImportColumn(PortColumnId.pinoutVariant),
+  'terminals': PortImportColumn(PortColumnId.terminalRoles),
   'set': PortImportColumn(PortColumnId.portSet),
   'portset': PortImportColumn(PortColumnId.portSet),
   'role': PortImportColumn(PortColumnId.setRole),

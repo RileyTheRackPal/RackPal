@@ -23413,8 +23413,11 @@ null-modem RS-232, IR pinout variant, Euroblock role map, or a cable whose wirin
 from the project's"*. None of the four had been defined against the model.
 
 **MEASURED FIRST**, at `4879aaa5`. **IR**: 21 seeded ports carry a `pinoutVariant`, 18
-`mono-tip-sleeve` and 3 `xantech-stereo`; every starter places at least one, and only Home Theatre
-places a `xantech-stereo` (six jacks). **Wiring standard**: `wiringStandardExceptions` exists, written
+`mono-tip-sleeve` and 3 `xantech-stereo`; every starter places at least one, and **two place a
+`xantech-stereo`: Home Theatre six jacks and Whole House five** (IRB-1, the connecting block). **This
+line first said only Home Theatre**, and the user was told so when the option was put: the census
+script crashed on Whole House before printing, and its silence was read as none. The derivation's
+first test run found it (M6-E2b, `#975`). **Wiring standard**: `wiringStandardExceptions` exists, written
 for this sheet. **Null-modem**: `Link.crossover` is modelled and read, and **nothing in the UI writes
 it**. **Euroblock role map**: four words in docs/08's row and **nothing in the model at all**; no field
 says which conductor lands on which terminal.
@@ -23427,7 +23430,8 @@ table, priced at three to five days, and §11.7.7 itself says it would make the 
 often.
 
 **11.220.2 RULED: MONO TIP-SLEEVE IS THE IR STANDARD.** An IR-family port (`kIrFamilies`) on a placed
-device whose `pinoutVariant` is set and is not `mono-tip-sleeve` turns the sheet on. Not taken: any
+device whose `pinoutVariant` is set and is not `mono-tip-sleeve` turns the sheet on: on Home Theatre
+and Whole House as shipped. Not taken: any
 variant on a port a cable lands on (no starter fires), and any placed IR port (every starter fires,
 and `AUTO` stops meaning much). **Decided without a question**: a `pinoutVariant` on a port outside
 the IR families does not trigger, because the question put was about IR and no other variant has a
@@ -23447,8 +23451,15 @@ by a person holding a screwdriver. Corrected in place by §12.45.
 **11.220.5 RULED: THE EUROBLOCK ROLE MAP IS MODELLED NOW**, over the recommended parking to v1.1.
 `PortDef` gains an ordered list of terminal roles, pin 1 to n, **absent when nobody has said** (G4,
 CR-114). The Device Builder enters it as a typed `TERMINALS` column, roles separated by spaces, with
-fill-down and paste; a count that differs from the connector's pins is an error on the cell. Not
-taken: a per-pin picker, which cannot be mistyped and cannot be pasted either. **Standards are
+fill-down and paste. Not taken: a per-pin picker, which cannot be mistyped and cannot be pasted
+either. **THIS SENTENCE FIRST PROMISED A COUNT CHECK ON THE CELL, against "the connector's pins", and
+no such number exists**: `ConnectorTypeDef` carries no pin count, and none of the 492 terminal-block
+ports in the starters' templates sets `conductorCount`. The premise was in the option text Claude
+wrote, not in the user's answer. Put to the user with prices, they ruled **no count check**: on the
+two families with a standard, a wrong count already differs from it and prints on `T5.01`. Not
+taken: a pin count on the four terminal-block connectors (half a day, every starter's bytes
+regenerated, older documents never checked), and checking `conductorCount` (which checks nothing
+until somebody fills it in). **Standards are
 declared for two families only: `ctl.cresnet` on 4 pins, `24 Y Z G`, and `ctl.rs232` on 3 pins, `TX
 RX G`.** A port whose recorded order differs turns the sheet on; a family with no declared standard
 never does. Not taken: standards for balanced line audio (`+ - G`) and speakers (`+ -`) as well,

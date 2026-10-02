@@ -1693,8 +1693,40 @@ and both absent once nothing is unused. **Mutation-tested**: removing the keep-w
 band, or the room half of `openEndOf` fails each. **Looked at**: Whole House's `T6.20`, twelve runs in
 six room bands.
 
-**Left for M6-E2**: `T5.01`. The user has ruled the IR half of its trigger (non-default variants
-only), which needs one more fact ruled, the default itself.
+**Left for M6-E2**: `T5.01`, §4.36.
+
+### 4.36 T5.01, pinout details, and a receiver pinout the corpus had backwards · 2026-10-02 · `#333`, `#974` to `#976`, `#334` · `DR-221` · no version move
+
+M6-E2 and M6-E3's second half. **Every one of the four triggers docs/08 names was undefined against the
+model, and two had nothing behind them**: `Link.crossover` has no writer in the UI (`#973`), and the
+*"Euroblock role map"* had no field at all. The user chose pinout tables only, mono tip-sleeve as the
+IR standard, null-modem kept with its writer filed, and the role map **modelled now** over the
+recommended park: `PortDef.terminalRoles`, typed in a `TERMINALS` column, with standards declared for
+Cresnet (`24 Y Z G`) and RS-232 (`TX RX G`) only.
+
+**THE RECEIVER PINOUT WAS REVERSED IN EVERY COPY.** The registry comment, canon's §6 paragraph, docs/01,
+seed-devices.md, the DR-126 OKF note and three code comments said ring GND, sleeve +12 V. Put to the user
+before printing it, they ruled tip IR, ring +12 V, sleeve GND (§11.220.3). The damage mechanism does not
+depend on the order; the printed pin map, the one a person wires by, does.
+
+**Three things the build found that the questions did not.**
+- **The census the options were priced on was wrong.** Whole House places five `xantech-stereo` jacks
+  (IRB-1) as well as Home Theatre's six; the script crashed on Whole House and its silence was read as
+  none. The derivation's first test run found it; the user had been told one starter fires, and two do.
+- **The count check the TERMINALS option promised had nothing to check against.** No connector records
+  a pin count and no terminal-block port sets `conductorCount`. Put back with prices, the user ruled no
+  check: on the two standardised families a wrong count differs from the standard and prints anyway.
+- **A sampled pagination sweep did not prove the keep-with.** A mutation deleting it survived six page
+  shapes; every IR count from 1 to 90 ahead of a second section is swept now, and kills it. The census
+  gate (`seed_producer_census_test`) also asked #841's question of the new field, answered in place: the
+  seed's null is "nobody said", and the reader never treats it as an order.
+
+**Evidence.** `terminal_roles_test.dart` (the string seam, absent when unknown, bytes, breaking class),
+the grid test typing `TX  RX G` through the real cell, `pinout_details_test.dart` on four starters,
+`pinout_sheet_test.dart`, `pinout_export_test.dart` reading the pin map from the ink, and
+`auto_sheet_absent_test.dart`'s group 4: Home Theatre prints and indexes `T5.01`, Apartment does
+neither, and neither does Home Theatre with its receiver variants cleared. **Looked at**: Home
+Theatre's `T5.01`, six ports.
 
 ---
 
@@ -7389,7 +7421,7 @@ requires: the board query for Done Chapters under epic 23 returns 61, and 60 plu
 
 | Clause | Mark | Why |
 |---|---|---|
-| All four starters export a **complete sheet set** | **NOT BUILT** | The built slots are `SheetRole`'s values, not a number written here. **This cell's list of what was missing had gone stale**: it still named `T0.00`'s drawing index and rack strip and `T0.02` after M6-A2, M6-A3 and M6-C shipped them. It was re-read against the enum at M6-E1 (`#332`, §4.35), when `T6.20` arrived. Missing then: `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details. **Read the enum before trusting that list.** `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
+| All four starters export a **complete sheet set** | **NOT BUILT** | The built slots are `SheetRole`'s values, not a number written here. **This cell's list of what was missing had gone stale**: it still named `T0.00`'s drawing index and rack strip and `T0.02` after M6-A2, M6-A3 and M6-C shipped them. It was re-read against the enum at M6-E1 (`#332`, §4.35), when `T6.20` arrived. Missing then: `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details; `T5.01` arrived at M6-E2 (§4.36). **Read the enum before trusting that list.** `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
 | Legend under deuteranopia / protanopia simulation | **UNPERFORMED** | No legend sheet exists to verify |
 | Real greyscale laser print (AC-054) | **UNPERFORMED** | Nothing has been printed |
 | ANSI B laser / ANSI D plotter / photocopy, physically inspected and signed off (AC-058 D13) | **UNPERFORMED** | Nothing has been printed |

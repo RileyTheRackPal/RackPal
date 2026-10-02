@@ -676,6 +676,7 @@ final class PortDef {
     this.maxConnections = 1,
     this.gender = Gender.genderless,
     this.pinoutVariant,
+    this.terminalRoles,
     this.conductorCount,
     this.impedanceOhms,
     this.level,
@@ -761,6 +762,16 @@ final class PortDef {
 
   /// The IR emitter/receiver hazard. Must be cited (AC-052).
   String? pinoutVariant;
+
+  /// The order a terminal block is wired in, pin 1 first: `TX RX G` on an
+  /// RS-232 euroblock, `24 Y Z G` on Cresnet (DR-221 §11.220.5).
+  ///
+  /// NULL IS "NOBODY HAS SAID" (G4, CR-114), and it is the state of every
+  /// seeded port: no order is assumed, so nothing is non-standard until a
+  /// person records one. Never an empty list; the setters store null.
+  /// `T5.01` prints a port whose order differs from its family's declared
+  /// standard (`kTerminalStandards`).
+  List<String>? terminalRoles;
   int? conductorCount;
 
   int? impedanceOhms;
