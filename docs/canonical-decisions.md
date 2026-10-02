@@ -23247,6 +23247,22 @@ badly flattened logo to a printed sheet. **The preview matters more for SVG than
 `pdf` package's SVG support is partial (no filters, no CSS stylesheets), and the thumbnail is where
 a logo it cannot draw is seen before it is issued.
 
+**11.216.4 RULED: A CELL SPANNING THE TITLE BLOCK'S UPPER BAND, refining DR-216 §11.215.3 on a
+measurement.** §11.215.3 placed the logo at the top right of the identity band, about 100 by 45 pt.
+**That band is 26 to 49 pt tall**, by how many lines a sheet prints, so the box does not fit in it on
+every sheet. Two placements were put. The one taken is a ruled cell at the right of the whole upper
+band (the identity and sheet-title lines, 65 pt), with the logo fitted into 100 by 45 pt and centred
+in it, **the same size on every sheet**. Every upper line then has 280 pt rather than 388; the widest
+line on any starter is 222 pt (Whole House's project line). With no logo the block is unchanged. The
+option not taken was the identity lines alone, which prints the logo at a different size on
+different sheets of one set.
+
+**11.216.5 RULED: THE COMPACT STRIP PRINTS NO LOGO.** ANSI A sheets (today `T6.30`) use §5.2's 43 pt
+strip, which is already full: Whole House truncates its second row without a logo. The firm's text
+line stays, and it is the carrier DR-030 §11.29.1 kept because it survives a photocopy. The options
+not taken were growing the strip, about one schedule row per page, and squeezing a cell into it,
+which truncates that text line further.
+
 **Scope.** No scope change: DR-030 §11.29.5's allowlist, made definite.
 
 ---

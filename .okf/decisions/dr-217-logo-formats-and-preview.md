@@ -20,6 +20,9 @@ Settled by the user on 2026-10-01, building M6-G6 (`#590`).
   only over alpha; PDF (first page) and SVG rendered once at import, 834 x 375 px at most, which is
   the 100 x 45 pt box at 600 dpi.
 - **A thumbnail with Replace and Remove** in Sheet set's Title block section.
+- **A cell spanning the title block's upper band**, 65 pt, the logo fitted into 100 x 45 pt in it,
+  refining DR-216: the identity band alone is 26 to 49 pt tall. Upper lines get 280 pt, not 388.
+- **The ANSI A strip prints no logo**: it is already full, and the firm's text line stays.
 
 # Why
 
