@@ -23276,6 +23276,32 @@ which no compressor shrinks. A floorplan is never resized: it prints at sheet si
 
 ---
 
+### 11.217 DR-218 · On the ANSI A strip, the legend reference moves to row 1
+
+**Settled by the user on 2026-10-02, on the recommended option, building M6-H (`#347`); the defect
+is `#971`.** CR-023 auto-fills `SYMBOL LEGEND: SEE SHEET T0.01` into every other sheet's title
+block. §5.2's compact strip, the ANSI A title block (today `T6.30`), put it last on its second row,
+after the address, client and firm. **Measured with Jost on the 690 pt strip**, that row is 435 to
+542 pt plus 162 to 166 pt for the sheet line on the four starters, and on Whole House it overflows:
+the reference printed as `SYMBOL LEGEND: SEE S…`, the one item on the row a reader needs to act on.
+M6-H's identity test found it; nothing earlier read the strip's ink.
+
+**11.217.1 RULED: THE REFERENCE PRINTS IN ROW 1**, right-aligned just before the sheet title, at the
+second row's size. Row 1 carries only the project name and the sheet title, 194 to 209 pt on the
+starters, so about 480 pt is free; the reference is 119 pt. Row 2 then fits Whole House whole, 581
+of 690. The options not taken were leading row 2 with it, which moves the truncation onto the firm's
+contact line that DR-030 §11.29.1 keeps for a photocopy, and row 3 beside `SHEET NO.`, which fits
+Whole House with about 15 pt spare and would cut the field run's end on a longer file name.
+
+**11.217.2 docs/08 §2.1's "under the active scheme" was wrong, and is corrected.** It said the
+reference carries the legend's number *"under the active scheme"*; CR-023 rules the id, `T0.01`,
+and the id is the one every title block prints as `SHEET NO.` under both schemes, so the reference
+resolves under both. The code always followed the ruling.
+
+**Scope.** No scope change: CR-023's auto-fill, made legible.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

@@ -29,7 +29,7 @@ Every sheet carries a stable NCS identifier (`[Discipline][SheetType].[Sequence]
 - **`simple`** (default), `SHEET 5 OF 14 · INTERCONNECT — VIDEO`. A residential set is four to eight pages; failing validation on a naming convention built for 200-sheet construction documents is the nannying that pushes users to export a PNG into Word.
 - **`ncs`**: the NCS number is printed and validated against `^[A-Z]{1,2}\d\.\d{2}$`. Default for projects created from a commercial starter.
 
-Rejected: making NCS mandatory (design-data-model.md I-40). The exporter auto-fills each non-legend sheet's `SYMBOL LEGEND: SEE SHEET …` field with whatever number the legend sheet actually bears under the active scheme, never an invariant, never a gate (CR-023).
+Rejected: making NCS mandatory (design-data-model.md I-40). The exporter auto-fills each non-legend sheet's `SYMBOL LEGEND: SEE SHEET T0.01` field with the legend's **id**, which every title block prints as `SHEET NO.` under both schemes, never an invariant, never a gate (CR-023). This sentence said *"whatever number the legend sheet actually bears under the active scheme"* until DR-218 §11.217.2; the code always printed the id.
 
 ### 2.2 The v1 sheets, in order
 
