@@ -4472,7 +4472,7 @@ length (~915 m) *and* 24 V power drop (18 AWG at 20 W ⇒ **333 ft**), which is 
 emits two findings, not one. Lutron QS is 2000 ft on 12 AWG and topology-free.
 
 `ctl.ir_emitter` and `ctl.ir_receiver` are separate families because the pinout hazard is real
-and destructive: Xantech/Niles **receivers** are tip = signal, ring = GND, sleeve = +12 V;
+and destructive: Xantech/Niles **receivers** are tip = signal, ring = +12 V, sleeve = GND (DR-221 §11.220.3, which corrected a reversed ring and sleeve here);
 **emitters** are tip = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys the
 emitter and can damage the supply. `PortDef.pinoutVariant` is mandatory on every 3.5 mm IR port
 and is a **safety-adjacent field**, so a template with an uncited value does not ship (AC-052).
@@ -10986,7 +10986,8 @@ WHY.** Settled by the user on 2026-08-15, after the summary line was read agains
 
 `seed_registries.dart` states the hazard where the two IR families are declared: *"receivers are
 tip = signal, ring = GND, sleeve = +12 V; emitters are tip = IR in, sleeve = GND. Plugging an
-emitter into a receiver jack destroys the emitter and can damage the supply."* AC-052 makes
+emitter into a receiver jack destroys the emitter and can damage the supply."* (Ring and sleeve are
+reversed there; DR-221 §11.220.3 corrects them to ring +12 V, sleeve GND.) AC-052 makes
 `pinoutVariant` mandatory on every 3.5 mm IR port for exactly that reason. docs/06 §9.1 then types
 `ir35 out` at step 9 for emitters and `1 ir35 in "IR IN"` at step 12 for the matrix's IR **input**,
 which is a receiver input. **One token, two families, and the direction is what separates them.**
@@ -16799,6 +16800,9 @@ least of all, and the fix DR-125 imagined was unavailable.
 > receivers are tip = signal, ring = GND, sleeve = +12 V; emitters are tip
 > = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys
 > the emitter and can damage the supply.
+
+*The ring and sleeve in that quotation are reversed: a receiver jack is ring +12 V, sleeve GND
+(DR-221 §11.220.3, §12.45). The quotation keeps the words the registry had.*
 
 **A two-conductor TS plug entering a three-conductor jack bridges ring to
 sleeve.** That is the damage, and it happens because the jack SUPPLIES
@@ -23401,6 +23405,65 @@ row and not this sheet's.
 **Scope.** No scope moves between releases. `T6.20` was v1 already; this rules its contents and
 layout, and amends §4.3's glossary row (§12.44).
 
+### 11.220 DR-221 · T5.01 prints pinout tables; a receiver jack is ring +12 V; a port records its terminal order
+
+**Settled by the user on 2026-10-02, building M6-E2 (`#333`, `#974` to `#976`).** docs/08 §2.2 puts
+`T5.01` Plate, Panel & Pinout Details last in the set, `AUTO` *"iff any non-standard pinout exists:
+null-modem RS-232, IR pinout variant, Euroblock role map, or a cable whose wiring standard differs
+from the project's"*. None of the four had been defined against the model.
+
+**MEASURED FIRST**, at `4879aaa5`. **IR**: 21 seeded ports carry a `pinoutVariant`, 18
+`mono-tip-sleeve` and 3 `xantech-stereo`; every starter places at least one, and only Home Theatre
+places a `xantech-stereo` (six jacks). **Wiring standard**: `wiringStandardExceptions` exists, written
+for this sheet. **Null-modem**: `Link.crossover` is modelled and read, and **nothing in the UI writes
+it**. **Euroblock role map**: four words in docs/08's row and **nothing in the model at all**; no field
+says which conductor lands on which terminal.
+
+**11.220.1 RULED: PINOUT TABLES ONLY.** One section per kind, each with its own header row (DR-219
+§11.218.1's mechanism): receiver jacks, wiring-standard exceptions with a `T568A`/`T568B` colour key,
+null-modem cables, and terminal orders against their standard. Not taken: also drawing each outlet's
+strap layout to scale, which DR-007, DR-038 and DR-041 made possible; it is a drawing rather than a
+table, priced at three to five days, and §11.7.7 itself says it would make the sheet `ON` far more
+often.
+
+**11.220.2 RULED: MONO TIP-SLEEVE IS THE IR STANDARD.** An IR-family port (`kIrFamilies`) on a placed
+device whose `pinoutVariant` is set and is not `mono-tip-sleeve` turns the sheet on. Not taken: any
+variant on a port a cable lands on (no starter fires), and any placed IR port (every starter fires,
+and `AUTO` stops meaning much). **Decided without a question**: a `pinoutVariant` on a port outside
+the IR families does not trigger, because the question put was about IR and no other variant has a
+declared standard.
+
+**11.220.3 RULED, CORRECTING THE CORPUS: A RECEIVER JACK IS TIP IR, RING +12 V, SLEEVE GND.** The
+registry, canon, docs/01, `docs/catalog/seed-devices.md` (four times) and three code comments said
+ring GND, sleeve +12 V. The user settled it when the two readings were put side by side. **The mechanism §11.125.1 rests on survives
+unchanged**: a two-conductor plug bridges ring to sleeve, which shorts the supply whichever of the
+two carries it. What changes is the pin map `T5.01` prints, which is the one place the order is read
+by a person holding a screwdriver. Corrected in place by §12.45.
+
+**11.220.4 RULED: NULL-MODEM STAYS IN THE TRIGGER, AND ITS WRITER IS FILED.** A cable with
+`crossover == nullModem` turns the sheet on whenever a file carries one; the missing control is
+`#973`. Not taken: dropping the clause from v1 until something can set it.
+
+**11.220.5 RULED: THE EUROBLOCK ROLE MAP IS MODELLED NOW**, over the recommended parking to v1.1.
+`PortDef` gains an ordered list of terminal roles, pin 1 to n, **absent when nobody has said** (G4,
+CR-114). The Device Builder enters it as a typed `TERMINALS` column, roles separated by spaces, with
+fill-down and paste; a count that differs from the connector's pins is an error on the cell. Not
+taken: a per-pin picker, which cannot be mistyped and cannot be pasted either. **Standards are
+declared for two families only: `ctl.cresnet` on 4 pins, `24 Y Z G`, and `ctl.rs232` on 3 pins, `TX
+RX G`.** A port whose recorded order differs turns the sheet on; a family with no declared standard
+never does. Not taken: standards for balanced line audio (`+ - G`) and speakers (`+ -`) as well,
+which the user judged too variable by manufacturer to call a deviation non-standard. Also not taken:
+parking the clause to v1.1, or to a later v1 milestone. **The starters never fire it**, since no
+seeded port records an order, and that is correct rather than a gap.
+
+**11.220.6 DECIDED WITHOUT A QUESTION: POSITION AND NUMBERING.** `T5.01` is last in the set, docs/08
+§2.2's `n+5`, on ANSI A landscape (§6.1's *"details"*). Pages run `T5.01`, `T5.02` and on; type 5 has
+no other sheet and no reserved id.
+
+**Scope.** No scope moves between releases: each clause was v1 already, in docs/08 §2.2's row, and
+§11.220.5 builds one rather than deferring it. The format gains one optional key on `PortDef`, absent
+by default, so no existing file's bytes move (CR-117).
+
 ---
 
 ## 12. Superseded rulings
@@ -24117,6 +24180,13 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **§4.3**, the `Unused Home Runs` row | *"The page listing home-run `Link`s with an unbound rack end."* | **A home run with an open end at the rack OR at the room** (§11.219.1), with an `OPEN` column saying which (§11.219.3). The row is amended in place and points here. docs/01 §9.9's *"terminated at the DD with no device on it"*, a different sheet, is corrected with it rather than ruled in. |
+
+
+### 12.45 Corrected by DR-221 (a receiver jack is ring +12 V, sleeve GND)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§6 (the IR families paragraph)**, and the registry text §11.125.1 quotes | *"receivers are tip = signal, ring = GND, sleeve = +12 V"* | **Tip IR, ring +12 V, sleeve GND** (§11.220.3). The paragraph is corrected in place; §11.125.1's blockquote and DR-060's inline quotation (§11.59) keep the words they quoted, each followed by a pointer here. The damage mechanism, a TS plug bridging ring to sleeve, is unchanged. |
 
 
 ## 13. Resolved §10 questions

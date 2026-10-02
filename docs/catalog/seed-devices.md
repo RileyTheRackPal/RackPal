@@ -373,7 +373,7 @@ free-text modifier; a value that has no field is a spec bug, not a note.
 |---|---|---|
 | `[z75]` `[z110]` `[z120]` | `impedanceOhms` | **Safety-adjacent**: must be cited. RCA carrying `audio.spdif_coax` without `z75` is a live builder warning |
 | `[Ω8]` `[Ω4]` | `impedanceOhms` on a speaker terminal | Feeds `ELE-004` |
-| `[pin:NAME]` | `pinoutVariant` | **Mandatory on every 3.5 mm IR port.** Values: `xantech-stereo` (tip signal / ring GND / sleeve +12 V), `mono-tip-sleeve` (tip IR / sleeve GND) |
+| `[pin:NAME]` | `pinoutVariant` | **Mandatory on every 3.5 mm IR port.** Values: `xantech-stereo` (tip signal / ring +12 V / sleeve GND; DR-221 §11.220.3 corrected a reversed ring and sleeve), `mono-tip-sleeve` (tip IR / sleeve GND) |
 | `[poe:STD/ROLE]` | `PoeSpec{standard, role}` | `af` `at` `bt-t3` `bt-t4`; `pse` or `pd`. Adds `/cN` for class |
 | `[poh:pse]` `[poh:pd]` | `PoeSpec` on `net.poh` | HDBaseT power, **not** interoperable with a standard PoE PSE |
 | `[budget:N]` | `PowerProfile.poeBudgetWatts` (device-level) | `NET-001` depends on it; safety-adjacent |
@@ -893,7 +893,7 @@ requirement 4's "IR" and "RS-232" reachable without a second control device.
 ```
 
 > ⚠ **The pinout hazard is real and destructive, and this template is where it is modelled.**
-> Xantech/Niles **receivers** are tip = signal, ring = GND, sleeve = +12 V; **emitters** are
+> Xantech/Niles **receivers** are tip = signal, ring = +12 V, sleeve = GND (DR-221); **emitters** are
 > tip = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys the emitter and can
 > damage the supply. `ctl.ir_emitter` and `ctl.ir_receiver` are therefore separate families with
 > separate glyph tags, `PortDef.pinoutVariant` is **mandatory on every 3.5 mm IR port in the
@@ -1393,7 +1393,7 @@ because `impedanceOhms` lives on the speaker terminal and `tapWatts` on the inst
 1x IRRX-OUT           "PIGTAIL TO BLOCK"     @Pigtail                  [pin:xantech-stereo]
 ```
 
-> The other half of C02's destructive-pinout hazard. Tip = signal, ring = GND, **sleeve = +12 V**.
+> The other half of C02's destructive-pinout hazard. Tip = signal, **ring = +12 V**, sleeve = GND (DR-221).
 > Because the eye and an emitter share the identical 3.5 mm connector, `pinoutVariant` is the only
 > thing standing between the drawing and a dead emitter, and it is cited on both ends or neither
 > ships.
@@ -1837,7 +1837,7 @@ devices per line segment, 1000 m per line. Cresnet has **two independent limits*
 findings, not one. Lutron QS is 2000 ft on 12 AWG and topology-free.
 
 `ctl.ir_emitter` and `ctl.ir_receiver` are separate families because the pinout hazard is real and
-destructive: Xantech/Niles **receivers** are tip = signal, ring = GND, sleeve = +12 V;
+destructive: Xantech/Niles **receivers** are tip = signal, ring = +12 V, sleeve = GND (DR-221);
 **emitters** are tip = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys the
 emitter and can damage the supply. `PortDef.pinoutVariant` is mandatory on every 3.5 mm IR port
 and is a **safety-adjacent field**, so a template with an uncited value does not ship (AC-052).

@@ -33,7 +33,8 @@ const kSpdifCoaxFamily = SignalFamilyId('audio.spdif_coax');
 
 /// The three IR families, which are separate BECAUSE the pinout differs
 /// and getting it wrong is destructive: a receiver is tip signal, ring
-/// ground, sleeve +12 V; an emitter is tip IR, sleeve ground. Plugging an
+/// +12 V, sleeve ground; an emitter is tip IR, sleeve ground (ring and
+/// sleeve corrected by DR-221 §11.220.3). Plugging an
 /// emitter into a receiver jack destroys the emitter and can damage the
 /// supply.
 ///

@@ -481,7 +481,7 @@ A multi-drop bus, not point-to-point. Each speaker carries a **transformer tap**
 
 ### 7.4 IR pinout variance is a hardware-destroying hazard
 
-Xantech/Niles-style **receivers** are tip = signal, ring = GND, sleeve = +12 V. **Emitters** are tip = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys the emitter and can damage the supply. This is why `ctl.ir_emitter` and `ctl.ir_receiver` are separate families, and why **`PortDef.pinoutVariant` is mandatory on every 3.5 mm IR port**. It is a safety-adjacent field, so a template with an uncited value does not ship (AC-052).
+Xantech/Niles-style **receivers** are tip = signal, ring = +12 V, sleeve = GND (DR-221 §11.220.3; this line had ring and sleeve reversed until then). **Emitters** are tip = IR in, sleeve = GND. Plugging an emitter into a receiver jack destroys the emitter and can damage the supply. This is why `ctl.ir_emitter` and `ctl.ir_receiver` are separate families, and why **`PortDef.pinoutVariant` is mandatory on every 3.5 mm IR port**. It is a safety-adjacent field, so a template with an uncited value does not ship (AC-052).
 
 ### 7.5 PoE budgets
 

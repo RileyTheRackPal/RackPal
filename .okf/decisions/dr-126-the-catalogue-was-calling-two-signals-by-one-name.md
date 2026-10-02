@@ -42,8 +42,10 @@ an emitter head goes. The fix DR-125 imagined was unavailable.
 ## The mechanism was in the registry the whole time
 
 `seed_registries.dart` states it beside the family definitions: receivers are
-tip = signal, ring = GND, sleeve = +12 V; emitters are tip = IR in, sleeve =
-GND. **A two-conductor TS plug entering a three-conductor jack bridges ring to
+tip = signal, ring = +12 V, sleeve = GND; emitters are tip = IR in, sleeve =
+GND. (The registry had ring and sleeve reversed until
+[DR-221](dr-221-t5-01-pinout-tables.md) corrected it; the mechanism below holds
+either way.) **A two-conductor TS plug entering a three-conductor jack bridges ring to
 sleeve.** The damage happens because the jack SUPPLIES power, not because the
 far device is called a receiver.
 
