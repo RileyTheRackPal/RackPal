@@ -275,13 +275,21 @@ void main() {
           // "SHEET i OF n" is resolved by a dry run BEFORE anything renders,
           // so `n` must be the number of pages actually in the file. A
           // running counter would be right for a one-rack, one-page project
-          // and wrong here — `small_office` has two racks and `whole_house`
-          // needs two schedule pages.
-          expect(
-            text,
-            contains('OF ${exported.sheetCount}'),
-            reason: 'the printed total disagrees with the pages emitted',
-          );
+          // and wrong here — `whole_house` needs two schedule pages.
+          //
+          // UNDER `ncs` NO TOTAL PRINTS: the number IS the id (CR-066), and
+          // `small_office`, the commercial starter, is on `ncs` since `#347`.
+          // Its pages are still counted below, from the ids in the ink.
+          if (doc.settings.sheetNumbering == SheetNumbering.simple) {
+            expect(
+              text,
+              contains('OF ${exported.sheetCount}'),
+              reason: 'the printed total disagrees with the pages emitted',
+            );
+          } else {
+            expect(text, contains('SHEET T6.30 ·'));
+            expect(text, isNot(contains('OF ${exported.sheetCount}')));
+          }
           // T0.02 RUNS TO AS MANY PAGES AS ITS FINDINGS NEED (Whole House:
           // two), so it is counted in the ink like the schedule's pages.
           final cmap = parseToUnicodeCMap(exported.bytes);

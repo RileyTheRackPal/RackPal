@@ -180,6 +180,32 @@ void main() {
     });
   });
 
+  group('CR-066: sheet numbering (#347)', () {
+    testWidgets('THE CHOICES SAY WHAT THEY PRINT, not the enum, and picking '
+        'NCS is one command', (tester) async {
+      final doc = _doc();
+      final ran = await _open(tester, doc);
+      final simple = find.text('Simple (SHEET 5 OF 14)');
+      await tester.ensureVisible(simple);
+      await tester.pumpAndSettle();
+      expect(find.text('ncs'), findsNothing);
+      expect(
+        find.text(
+          'What each title block prints as the sheet number. Every sheet '
+          'keeps its own id, like T2.01, either way.',
+        ),
+        findsOneWidget,
+      );
+      await tester.tap(simple);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('National CAD Standard (T2.01)').last);
+      await tester.pumpAndSettle();
+
+      expect(ran, hasLength(1));
+      expect(doc.settings.sheetNumbering, SheetNumbering.ncs);
+    });
+  });
+
   group("DR-180: the job's wiring standard", () {
     // THE CASE THIS GROUP EXISTS FOR is the LAST one: getting back to
     // unset. A three-item dropdown was chosen over a two-item one for
@@ -188,6 +214,10 @@ void main() {
     // down.
 
     Future<void> pick(WidgetTester tester, String item) async {
+      // SCROLLED TO FIRST: rows above it may grow (the sheet numbering row
+      // gained a help line at `#347`), and a tap off screen hits nothing.
+      await tester.ensureVisible(find.byKey(kWiringStandardSettingKey));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(kWiringStandardSettingKey));
       await tester.pumpAndSettle();
       await tester.tap(find.text(item).last);
@@ -256,6 +286,11 @@ void main() {
         of: find.widgetWithText(ListTile, 'Port designator'),
         matching: find.byType(TextField),
       );
+      // BUILT, THEN ON SCREEN: the list is virtualised, and the rows above
+      // this one grew at `#347`.
+      await tester.scrollUntilVisible(field, 100, scrollable: _list);
+      await tester.ensureVisible(field);
+      await tester.pumpAndSettle();
       await tester.enterText(field, 'J{UNCLOSED');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
@@ -296,6 +331,11 @@ void main() {
         of: find.widgetWithText(ListTile, 'Net name'),
         matching: find.byType(TextField),
       );
+      // BUILT, THEN ON SCREEN: the list is virtualised, and the rows above
+      // this one grew at `#347`.
+      await tester.scrollUntilVisible(field, 100, scrollable: _list);
+      await tester.ensureVisible(field);
+      await tester.pumpAndSettle();
       await tester.enterText(field, 'N{NOPE}');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();
@@ -313,6 +353,11 @@ void main() {
         of: find.widgetWithText(ListTile, 'Port designator'),
         matching: find.byType(TextField),
       );
+      // BUILT, THEN ON SCREEN: the list is virtualised, and the rows above
+      // this one grew at `#347`.
+      await tester.scrollUntilVisible(field, 100, scrollable: _list);
+      await tester.ensureVisible(field);
+      await tester.pumpAndSettle();
       await tester.enterText(field, 'P{PORT_SEQ:3}');
       await tester.testTextInput.receiveAction(TextInputAction.done);
       await tester.pumpAndSettle();

@@ -1591,6 +1591,33 @@ pdfium and the SVG refusals (size, entities, an embedded image over the caps). T
 a logo through the real shell, saves, and reads the container back. **Looked at**: Small Office's
 cover and T2.01 with a transparent logo, flattened to paper.
 
+### 4.33 Sheet numbering, and the strip's legend reference · 2026-10-02 · `#347`, `#971` · `CR-066`, `DR-218` · no version move
+
+M6-H. **Most of it was already built**, and the audit is the evidence: `ProjectSettings.sheetNumbering`
+is serialized, defaults to `simple`, has a row in Project settings, and the title block prints
+`SHEET i OF n` or the id by it. Three clauses of CR-066 and docs/08 §2.1 were not met, and are now:
+- **The NCS pattern is checked under `ncs` only.** It ran under both, so a 50-rack residential set
+  got a notice about a convention nobody chose. A RESERVED id is still told under both, because
+  `SHEET NO.` prints the id on every sheet.
+- **The commercial starter starts on `ncs`.** CR-066 makes it the default for a project created from
+  a commercial starter, and Small Office is the one (DR-002); it shipped `simple`. Regenerating it
+  changed one line.
+- **The control said `simple` and `ncs`**, the enum's own names. It now reads *Simple (SHEET 5 OF
+  14)* and *National CAD Standard (T2.01)*, with a help line saying the id never changes.
+
+**H3 is proved on the ink.** `numbering_identity_test.dart` exports Whole House and Small Office under
+both schemes and asserts every sheet's `SHEET NO.` in order, the drawing index and every legend
+reference identical, and only the printed number moved. **It found a defect on its first run**
+(`#971`): on Whole House's `T6.30` the compact strip printed the legend reference as `SYMBOL LEGEND:
+SEE S…`, last on a 708 pt row of a 690 pt strip. DR-218 moved it to row 1, which has about 480 pt
+free on every starter; row 2 is now unconditional, because its right half is the sheet number and
+it had existed only when its left half had text. docs/08 §2.1's *"under the active scheme"*, which
+contradicted CR-023, is corrected. **G2 (`#343`) was closed on existing evidence a day earlier and
+did not catch this**: that audit read the title block's code and tests, and neither had ever read the
+strip's ink on a real project.
+
+**Looked at**: Whole House's `T6.30` strip, and Small Office's `T2.01` under `ncs`.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

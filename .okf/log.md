@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-02 (hundred-and-first entry)
+
+* **Progress**: `#590` merged at `60389e4e` (PR 190); M6-G (`#341`) closed. M6-H (`#347`) built over
+  an audit: the NCS pattern under `ncs` only, Small Office on `ncs`, the control in words. `#971`
+  found and fixed on the way. docs/12 §4.33.
+* **Note**: **AN AUDIT THAT READS CODE CANNOT SEE INK.** G2 closed on existing evidence and missed a
+  legend reference cut to `SEE S…` on a real sheet; the next test that read every sheet's text found
+  it in one run. When closing on evidence, render the real starters.
+* **Creation**: [DR-218](/decisions/dr-218-strip-legend-reference.md).
+
 ## 2026-10-01 (hundredth entry)
 
 * **Progress**: `#346` merged at `6fd35cde` (PR 189). G6 (`#590`) built: the integrator's logo from

@@ -312,7 +312,8 @@ to what you create next.
 | Default rack height, Default RU numbering, Mirror rear elevations by default | What a new rack starts with. Existing racks keep what they were made with |
 | Default line voltage, Wiring standard, Default network media | Job-wide defaults. One cable can take its own wiring standard in the WIRING column (§21.5.5) |
 | Cable waste factor | The margin added to each cable type's footage in the Schedule's takeoff (§21.5.7). No length is ever inflated |
-| Sheet numbering, Designator collision policy, Designator block size | How sheets and designator blocks are numbered |
+| Sheet numbering | What each title block prints as the sheet's number: **Simple** prints `SHEET 5 OF 14`, **National CAD Standard** prints the sheet's id, `T2.01`. Every sheet keeps its id either way, and the drawing index and every `SEE SHEET` reference use the id. A project made from the Small Office starter starts on the National CAD Standard; the rest start on Simple |
+| Designator block size | Reserves blocks of numbers for commercial port numbering |
 
 Two more sections live in the same dialog:
 

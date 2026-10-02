@@ -47,6 +47,11 @@ RackDocument buildSmallOfficeStarter() {
       integratorName: 'Example Integration Co.',
       drawnBy: 'RackPal',
     ),
+    // NCS NUMBERING, AS THE ONE COMMERCIAL STARTER (CR-066, docs/08 §2.1):
+    // `ncs` is the default for a project created from a commercial starter,
+    // because a GC's drawing set is where the convention is asked for. The
+    // three residential starters keep `simple`.
+    settings: ProjectSettings(sheetNumbering: SheetNumbering.ncs),
     sequence: 604,
   );
 

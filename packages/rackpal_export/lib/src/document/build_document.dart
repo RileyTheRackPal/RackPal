@@ -130,6 +130,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     equipmentListSheets: schedulePages.length,
     planUnderlays: plans,
     stamped: stamped,
+    numbering: doc.settings.sheetNumbering,
   );
 
   // ONE RESOLVER FOR THE WHOLE DOCUMENT, so a member decoded for sheet 1

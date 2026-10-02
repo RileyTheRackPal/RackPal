@@ -229,7 +229,13 @@ class _SettingsDialogState extends State<_SettingsDialog> {
         field: f,
         value: f.get(_s),
         values: SheetNumbering.values,
-        nameOf: (v) => v.name,
+        // WHAT EACH PRINTS, NOT THE ENUM (`#347`): `ncs` means nothing to
+        // somebody who has not read docs/08, and the example is the whole
+        // difference between the two.
+        nameOf: (v) => switch (v) {
+          SheetNumbering.simple => 'Simple (SHEET 5 OF 14)',
+          SheetNumbering.ncs => 'National CAD Standard (T2.01)',
+        },
         onChanged: (v) => _set(f, v),
       ),
       ProjectSettingField<bool>() => SwitchListTile(

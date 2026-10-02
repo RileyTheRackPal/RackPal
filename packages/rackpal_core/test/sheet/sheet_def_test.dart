@@ -134,20 +134,30 @@ void main() {
         'rather than failing', () {
       // 50 racks pushes the front-elevation sequence past two digits. CR-023
       // and G3: a naming convention never withholds the bytes of a user.
-      final set = SheetSet.forRacks(<Rack>[
+      final racks = <Rack>[
         for (var i = 0; i < 50; i++)
           testRack(
             id: 'r$i',
             designator: 'RK-$i',
             order: 'a${i.toString().padLeft(3, '0')}',
           ),
-      ]);
+      ];
+      final set = SheetSet.forRacks(racks, numbering: SheetNumbering.ncs);
 
       expect(set.total, 104);
       expect(set.notices, isNotEmpty);
       expect(set.notices.first, contains('does not match the NCS pattern'));
       // Still emitted — the notice does not remove the sheet.
       expect(set.sheets, hasLength(104));
+
+      // UNDER `simple` THE PATTERN IS NOT CHECKED (CR-066): the same set,
+      // the same ids, and no notice about a convention nobody chose.
+      final simple = SheetSet.forRacks(racks);
+      expect(simple.notices.where((n) => n.contains('NCS pattern')), isEmpty);
+      expect(
+        simple.sheets.map((s) => s.ncsId),
+        set.sheets.map((s) => s.ncsId),
+      );
     });
   });
 

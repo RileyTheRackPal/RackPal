@@ -30,6 +30,7 @@
 // (docs/21 §21.7).
 
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/model/enums.dart' show SheetNumbering;
 import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/units/ids.dart';
@@ -397,6 +398,7 @@ final class SheetSet {
     int exceptionSheets = 1,
     bool stamped = false,
     Iterable<PlanUnderlay> planUnderlays = const <PlanUnderlay>[],
+    SheetNumbering numbering = SheetNumbering.simple,
   }) {
     assert(
       exceptionSheets >= 1,
@@ -533,9 +535,15 @@ final class SheetSet {
       );
     }
 
+    // THE PATTERN IS CHECKED UNDER `ncs` ONLY (CR-066, docs/08 §2.1): it is
+    // the scheme that prints the id as the sheet's number, and failing a
+    // four-page residential set on a 200-sheet convention is the nannying
+    // `simple` exists to spare. A RESERVED id is told under both, because
+    // `SHEET NO.` prints the id on every sheet whichever scheme numbers it.
+    final checkPattern = numbering == SheetNumbering.ncs;
     final notices = <String>[
       for (final sheet in sheets)
-        if (!isValidNcsId(sheet.ncsId))
+        if (checkPattern && !isValidNcsId(sheet.ncsId))
           _ncsNotice(sheet.ncsId)
         else if (isReservedNcsId(sheet.ncsId))
           _reservedNotice(sheet.ncsId),
