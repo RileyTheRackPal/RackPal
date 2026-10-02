@@ -215,6 +215,14 @@ enum FileDialogType {
   /// its default extension because the struct requires one, and that row
   /// is wrong the day a save path appears.
   floorplan,
+
+  /// The integrator's logo: PNG, JPEG, PDF or SVG (`#590`, DR-217).
+  ///
+  /// **floorplan's row with SVG added, and its own row rather than that
+  /// one widened**, because the floorplan import refuses SVG and a filter
+  /// offering it there would offer a file the import then refuses. Open
+  /// only, and the content sniff decides, for the same reasons.
+  logo,
 }
 
 /// Native open and save dialogs, behind two methods.

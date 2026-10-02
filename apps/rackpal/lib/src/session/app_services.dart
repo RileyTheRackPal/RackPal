@@ -54,6 +54,7 @@ import 'package:rackpal/src/session/export_controller.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/session/library_io_actions.dart';
+import 'package:rackpal/src/session/logo_import_actions.dart';
 import 'package:rackpal/src/session/plan_import_actions.dart';
 import 'package:rackpal/src/session/session_controller.dart';
 import 'package:rackpal/src/session/session_prompts.dart';
@@ -102,6 +103,7 @@ final class AppServices {
     required this.templateIo,
     required this.libraryIo,
     required this.floorplanIo,
+    required this.logoIo,
     required this.chrome,
     required this.autosave,
     required this.titleWriter,
@@ -154,6 +156,11 @@ final class AppServices {
   /// PROJECT's container rather than onto a shelf in the data folder, so
   /// the degraded session imports one perfectly well.
   final FloorplanIo floorplanIo;
+
+  /// File ▸ Sheet set…'s `Choose logo…` (`#590`, DR-217). Like
+  /// [floorplanIo], it writes into the open project's container, so the
+  /// degraded session sets a logo perfectly well.
+  final LogoIo logoIo;
 
   final WindowChrome chrome;
   final AutosaveScheduler autosave;
@@ -497,6 +504,12 @@ Future<AppServices> buildAppServices({
       fs: fs,
       // The same MRU the other pickers use: a person who has just saved a
       // project is usually importing from beside it.
+      initialDirectory: controller.exportInitialDirectory,
+    ),
+    logoIo: LogoIo(
+      session: session,
+      picker: picker,
+      fs: fs,
       initialDirectory: controller.exportInitialDirectory,
     ),
     templateIo: DeviceTemplateIo(

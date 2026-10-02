@@ -72,6 +72,7 @@ final class ImageRef {
     required this.format,
     required this.pixelWidth,
     required this.pixelHeight,
+    this.screened = true,
   }) : assert(pixelWidth > 0, 'ImageRef.pixelWidth must be positive'),
        assert(pixelHeight > 0, 'ImageRef.pixelHeight must be positive');
 
@@ -93,20 +94,31 @@ final class ImageRef {
   /// aspect preserved, never stretched).
   double get aspectRatio => pixelWidth / pixelHeight;
 
+  /// Whether a backend lightens the picture toward the paper before drawing
+  /// it. TRUE FOR A FLOORPLAN, which is background reference that callouts
+  /// must read over (DR-149 §11.148.4); FALSE FOR THE LOGO, which DR-030
+  /// §11.29.3 prints at full value. Defaulted to the underlay's answer
+  /// because the underlay was this type's only consumer for a milestone,
+  /// and the logo is the one caller that says otherwise.
+  final bool screened;
+
   @override
   bool operator ==(Object other) =>
       other is ImageRef &&
       other.member == member &&
       other.format == format &&
       other.pixelWidth == pixelWidth &&
-      other.pixelHeight == pixelHeight;
+      other.pixelHeight == pixelHeight &&
+      other.screened == screened;
 
   @override
-  int get hashCode => Object.hash(member, format, pixelWidth, pixelHeight);
+  int get hashCode =>
+      Object.hash(member, format, pixelWidth, pixelHeight, screened);
 
   @override
   String toString() =>
-      'ImageRef($member, ${format.name}, ${pixelWidth}x$pixelHeight)';
+      'ImageRef($member, ${format.name}, ${pixelWidth}x$pixelHeight'
+      '${screened ? '' : ', full value'})';
 }
 
 /// Thrown by a backend asked to draw an [ImageRef] its resolver does not

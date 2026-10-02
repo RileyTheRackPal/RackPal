@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-01 (hundredth entry)
+
+* **Progress**: `#346` merged at `6fd35cde` (PR 189). G6 (`#590`) built: the integrator's logo from
+  PNG, JPEG, PDF or SVG, in a cell spanning the title block's upper band, previewed in Sheet set.
+  docs/12 §4.32.
+* **Note**: **A PRICE GIVEN ON A PREMISE NOBODY CHECKED IS A GUESS WITH A NUMBER ON IT.** SVG was
+  offered at two to three days because a decoder "had to be added"; the `pdf` package already drew
+  SVG and pdfium already rasterised PDF. Grep the dependency tree before pricing a format.
+* **Creation**: [DR-217](/decisions/dr-217-logo-formats-and-preview.md).
+
 ## 2026-10-01 (ninety-ninth entry)
 
 * **Progress**: `#342` merged at `ae480f04` (PR 188); G2 (`#343`) closed on existing evidence after

@@ -128,6 +128,10 @@ dependencies:
   # interface with a fake, so the close/blur/geometry flows are
   # widget-testable with no real window.
   window_manager: ^0.5.2
+  # THE SVG LOGO'S SIZE AND ITS EMBEDDED IMAGES, read before `pdf` draws it
+  # (`#590`, DR-217). Already resolved through `pdf`; declared on `image`'s
+  # precedent (docs/03 §10.1).
+  xml: ^7.0.1
 
 dev_dependencies:
   flutter_test:

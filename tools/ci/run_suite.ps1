@@ -1065,7 +1065,12 @@ $SuiteFloors = @{
     # revision block, a band on the strip; the drawing area shorter by the
     # stamp; the words and the date in ink) and +3 in
     # validation/exceptions_report_test.dart for openErrorCount.
-    'rackpal_core'   = 5292
+    # 5308 at `#590` (M6-G6, DR-217): +8 in commands/project_logo_test.dart
+    # (the wire, the byte round-trip, a zero size refused, the command),
+    # +7 in sheet/logo_title_block_test.dart (full value, the cell, the fit,
+    # the text stopping at it, nothing without a logo, nothing on the strip)
+    # and +1 in epoch_mask_test.dart for SetProjectLogoCommand.
+    'rackpal_core'   = 5308
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1119,7 +1124,10 @@ $SuiteFloors = @{
     # 242 at `#346` (M6-G5, DR-216): +3 in issued_stamp_export_test.dart,
     # the stamp on every page with no open error, withheld with the reason
     # over Whole House's errors, and absent when not asked for.
-    'rackpal_export' = 242
+    # 250 at `#590` (DR-217): +6 in plan_image_test.dart (the logo at full
+    # value, one member two ways, the 834 x 375 embed cap and a floorplan
+    # never resized) and +2 in logo_export_test.dart, read back from the PDF.
+    'rackpal_export' = 250
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1664,7 +1672,11 @@ $SuiteFloors = @{
     # file shows grouped as printed; an edit is one command and looking sends
     # none; a cleared name is refused with its reason; a cleared field is
     # absent; a field typed in and closed is saved.
-    'rackpal_ui'     = 2037
+    # 2044 at `#590` (DR-217): +7 in settings/sheet_set_logo_test.dart. Choose
+    # with none; the row under the Integrator; the preview, its size, Replace
+    # and Remove; Remove as one command; Choose showing the new logo; a
+    # refusal in the dialog; and no row when nothing can choose.
+    'rackpal_ui'     = 2044
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1873,7 +1885,11 @@ $SuiteFloors = @{
     # on the status line, and a plain export silent about it), +1 for the
     # status line's stamp wording, +1 in app_shell_test.dart for the menu
     # item's wiring and its missing accelerator.
-    'rackpal_app'    = 1135
+    # 1154 at `#590` (DR-217): +18 in session/logo_import_test.dart (four
+    # formats through the real pdfium, the SVG refusals, LogoIo's two
+    # writes) and +1 in session/sheet_set_route_test.dart, choose, save and
+    # read the container back.
+    'rackpal_app'    = 1154
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

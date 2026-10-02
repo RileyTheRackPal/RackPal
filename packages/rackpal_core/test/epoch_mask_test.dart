@@ -1657,6 +1657,24 @@ void main() {
       );
     });
 
+    test('SetProjectLogoCommand', () {
+      final doc = _house();
+      _covers(
+        doc,
+        SetProjectLogoCommand.to(
+          doc.info,
+          const ProjectLogo(
+            imageMember: '${kLogoMemberDir}firm.png',
+            format: PlanImageFormat.png,
+            pixelWidth: 834,
+            pixelHeight: 375,
+            contentHash: 'sha256:firm',
+          ),
+        ),
+        expectAtLeast: {'info'},
+      );
+    });
+
     test('SetFamilyColorOverrideCommand', () {
       final doc = _house();
       _covers(

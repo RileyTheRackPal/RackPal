@@ -1126,6 +1126,10 @@ final class AppShellState extends State<AppShell>
     await showSheetSetDialog(
       context,
       doc: session.document,
+      // THE LOGO (`#590`, DR-217): chosen through the shell's picker, and
+      // previewed from the container the export will read.
+      onChooseLogo: _services.logoIo.choose,
+      logoBytes: (member) => session.members[member],
       onEdit: (commands) {
         if (commands.isEmpty) return;
         session.controller.transact(null, (tx) {

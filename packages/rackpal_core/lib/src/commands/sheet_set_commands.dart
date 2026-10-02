@@ -417,3 +417,43 @@ final class SetLegendNotesCommand extends Command<RackDocument> {
       ..legendNotes = fromNotes;
   }
 }
+
+/// Sets, replaces or removes the integrator's logo (`#590`, DR-030,
+/// DR-217). A null [to] removes it.
+///
+/// THE MEMBER IS NOT THIS COMMAND'S. The caller writes the bytes to the
+/// container first, and undo leaves them there, which is
+/// `RemovePlanUnderlayCommand`'s rule: deleting bytes on an undo would make
+/// the redo unable to find them. An orphaned member is the state the
+/// container already tolerates by name.
+final class SetProjectLogoCommand extends Command<RackDocument> {
+  const SetProjectLogoCommand({required this.from, required this.to});
+
+  /// The command that makes [info] carry [logo], capturing what it carried.
+  factory SetProjectLogoCommand.to(ProjectInfo info, ProjectLogo? logo) =>
+      SetProjectLogoCommand(from: info.logo, to: logo);
+
+  final ProjectLogo? from;
+  final ProjectLogo? to;
+
+  @override
+  LabelKey get label => LabelKey.setProjectLogo;
+
+  /// `meta`, for [SetLegendNotesCommand]'s reason.
+  @override
+  EpochMask get touches => EpochMask.meta;
+
+  @override
+  Iterable<Uuid> get affects => const [];
+
+  /// A no-op when nothing changes, so Remove on no logo is no undo step.
+  @override
+  bool apply(RackDocument doc) {
+    if (doc.info.logo == to) return false;
+    doc.info.logo = to;
+    return true;
+  }
+
+  @override
+  void revert(RackDocument doc) => doc.info.logo = from;
+}

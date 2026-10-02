@@ -208,7 +208,7 @@ final class RackDocument {
 | `ports` | `Map<Uuid, Port>` | Only ports carrying project state are serialized; the rest are key-joined at load (AC-006, §5.4). |
 | `tombstones` | `Map<Uuid, Tombstone>` | Ships in v1 even though the history UI does not (G5, CR-095). |
 
-`ProjectInfo` carries the AVIXA D401.01 title-block fields, `projectName`, `projectNumber`, `drawingNumber`, `clientName`, `siteAddress`, `integratorName`, `integratorContact`, `integratorLicense`, `drawnBy`, `checkedBy`, `approvedBy`, plus the front matter the set prints: `scopeNarrative` for the cover (DR-210 §11.209.5) and `legendAbbreviations` / `legendNotes` for `T0.01` (DR-209 §11.208.4), each absent until somebody writes it. All of them are edited in `File ▸ Sheet set…`. There is no logo field yet; DR-030 adds one at M6-G6.
+`ProjectInfo` carries the AVIXA D401.01 title-block fields, `projectName`, `projectNumber`, `drawingNumber`, `clientName`, `siteAddress`, `integratorName`, `integratorContact`, `integratorLicense`, `drawnBy`, `checkedBy`, `approvedBy`, plus the front matter the set prints: `scopeNarrative` for the cover (DR-210 §11.209.5) and `legendAbbreviations` / `legendNotes` for `T0.01` (DR-209 §11.208.4), each absent until somebody writes it. All of them are edited in `File ▸ Sheet set…`, as is `logo` (DR-030, DR-217): a `ProjectLogo` with `PlanUnderlay`'s image shape (`imageMember` under `logos/`, `format`, `pixelWidth`, `pixelHeight`, `contentHash`), always a raster, absent for none.
 
 ```dart
 final class ProjectSettings {

@@ -3,6 +3,7 @@
 // name it feeds (AC-013's public-getter/@internal-setter pattern), so
 // the shorthand `this._field` form does not apply.
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/model/plan.dart' show PlanImageFormat;
 
 /// A postal address, structured rather than a flat string.
 ///
@@ -32,6 +33,52 @@ final class Address {
   String? region;
   String? postalCode;
   String? country;
+}
+
+/// The integrator's logo, printed at the top right of every title block's
+/// identity band (DR-030, DR-216 §11.215.3).
+///
+/// THE SHAPE IS `PlanUnderlay`'s, as DR-030 §11.29.5 asks: a container
+/// member, its format, its pixel size so layout needs no decode, and a
+/// `contentHash` that warns and never refuses (AC-042). Always a raster:
+/// a PDF or SVG is rendered once at import (DR-217 §11.216.2), so
+/// `rackpal_core` needs no decoder.
+@immutable
+final class ProjectLogo {
+  const ProjectLogo({
+    required this.imageMember,
+    required this.format,
+    required this.pixelWidth,
+    required this.pixelHeight,
+    required this.contentHash,
+  });
+
+  /// `logos/<id>.png` (or `.jpg`) in the container.
+  final String imageMember;
+
+  final PlanImageFormat format;
+
+  final int pixelWidth;
+  final int pixelHeight;
+
+  /// `sha256:<hex>` over the stored bytes.
+  final String contentHash;
+
+  @override
+  bool operator ==(Object other) =>
+      other is ProjectLogo &&
+      other.imageMember == imageMember &&
+      other.format == format &&
+      other.pixelWidth == pixelWidth &&
+      other.pixelHeight == pixelHeight &&
+      other.contentHash == contentHash;
+
+  @override
+  int get hashCode =>
+      Object.hash(imageMember, format, pixelWidth, pixelHeight, contentHash);
+
+  @override
+  String toString() => 'ProjectLogo($imageMember, ${pixelWidth}x$pixelHeight)';
 }
 
 /// One row of T0.01's abbreviations block (docs/08 §5.4 block 6).
@@ -87,6 +134,7 @@ final class ProjectInfo {
     Address? siteAddress,
     List<LegendAbbreviation>? legendAbbreviations,
     List<String>? legendNotes,
+    ProjectLogo? logo,
   }) : _projectName = projectName,
        _projectNumber = projectNumber,
        _drawingNumber = drawingNumber,
@@ -104,7 +152,8 @@ final class ProjectInfo {
            : List.unmodifiable(legendAbbreviations),
        _legendNotes = legendNotes == null
            ? null
-           : List.unmodifiable(legendNotes);
+           : List.unmodifiable(legendNotes),
+       _logo = logo;
 
   /// The one REQUIRED field: it heads every sheet and labels Recent Files,
   /// so a blank one is refused (DR-210 §11.209.4).
@@ -195,4 +244,11 @@ final class ProjectInfo {
   @internal
   set legendNotes(List<String>? v) =>
       _legendNotes = v == null ? null : List.unmodifiable(v);
+
+  /// The integrator's logo, or `null` for none, which is the ordinary case
+  /// (DR-030 §11.29.6): absent from the file, never a placeholder.
+  ProjectLogo? _logo;
+  ProjectLogo? get logo => _logo;
+  @internal
+  set logo(ProjectLogo? v) => _logo = v;
 }

@@ -176,18 +176,32 @@ Future<Outcome<Uint8List>> readImportedBytes({
   }
 }
 
-/// The half that has bytes and no file system; [readImportedBytes] is the
-/// other, and `FloorplanIo` composes the two.
-Outcome<ImportedFloorplan> importFloorplanBytes({
-  required Uint8List bytes,
-  required Uuid id,
-  required String name,
-  required FracIndex order,
-  required EntityMeta meta,
-  Uuid? locationId,
-  PlanSourcePage? sourcePage,
-  int rotationQuarterTurns = 0,
-}) {
+/// An image that passed every import control and is ready to store: the
+/// bytes to write, their format and their size.
+///
+/// **EXTRACTED SO THE LOGO SHARES THE CONTROLS RATHER THAN SKIPPING THEM**
+/// (DR-217 §11.216.2), on [readImportedBytes]' own reason: a second import
+/// path that wrote these steps again would be one that left one out.
+final class StoredRaster {
+  const StoredRaster({
+    required this.bytes,
+    required this.format,
+    required this.pixelWidth,
+    required this.pixelHeight,
+  });
+
+  final Uint8List bytes;
+  final PlanImageFormat format;
+  final int pixelWidth;
+  final int pixelHeight;
+
+  /// `sha256:<hex>` over [bytes], the form every member hash takes.
+  String get contentHash => '$kSha256Prefix${sha256.convert(bytes)}';
+}
+
+/// Steps 2 to 5 of the sequence, for any raster import: sniff, read the
+/// header under the caps, decode, re-check, flatten.
+Outcome<StoredRaster> storeImportedRaster(Uint8List bytes) {
   // ---- 2. SNIFF, BY CONTENT (PLAN-D/4, M4-M4's rule). ---------------
   //
   // A PDF DOES NOT ARRIVE HERE ANY MORE (DR-138). It goes through
@@ -266,14 +280,45 @@ Outcome<ImportedFloorplan> importFloorplanBytes({
   }
 
   return Ok(
+    StoredRaster(
+      bytes: stored,
+      format: storedFormat,
+      pixelWidth: decoded.width,
+      pixelHeight: decoded.height,
+    ),
+  );
+}
+
+/// The half that has bytes and no file system; [readImportedBytes] is the
+/// other, and `FloorplanIo` composes the two.
+Outcome<ImportedFloorplan> importFloorplanBytes({
+  required Uint8List bytes,
+  required Uuid id,
+  required String name,
+  required FracIndex order,
+  required EntityMeta meta,
+  Uuid? locationId,
+  PlanSourcePage? sourcePage,
+  int rotationQuarterTurns = 0,
+}) {
+  final raster = storeImportedRaster(bytes);
+  if (raster case Err(:final error)) return Err(error);
+  final StoredRaster(
+    bytes: stored,
+    format: storedFormat,
+    pixelWidth: width,
+    pixelHeight: height,
+  ) = (raster as Ok<StoredRaster>).value;
+
+  return Ok(
     ImportedFloorplan(
       underlay: PlanUnderlay(
         id: id,
         name: name,
         imageMember: '$kUnderlayMemberDir${id.v}.${storedFormat.extension}',
         format: storedFormat,
-        pixelWidth: decoded.width,
-        pixelHeight: decoded.height,
+        pixelWidth: width,
+        pixelHeight: height,
         contentHash: '$kSha256Prefix${sha256.convert(stored)}',
         order: order,
         meta: meta,

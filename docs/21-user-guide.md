@@ -287,6 +287,15 @@ leave it or press Enter, and each change can be undone from `Edit`. Leave a fiel
 empty and its line is left off the sheet; the project name is the exception, and
 clearing it is refused, because it heads every sheet.
 
+**Your logo.** Under the company lines, `Choose logo…` takes a PNG, JPEG, PDF or
+SVG. A PDF gives its first page, and a transparent background becomes white. The
+preview shows it as it will print, at the top right of the title block on every
+sheet except the A-size equipment list, which has no room. `Replace logo…` and
+`Remove logo` do what they say, and both can be undone. Your company's name and
+contact still print as text, so a photocopy that loses the logo keeps the firm.
+An SVG that uses effects the PDF cannot draw may preview wrong: check it before
+you issue.
+
 #### Project settings: set these before you place anything
 
 `File` ▸ `Project settings…` holds the conventions that travel with the file.
