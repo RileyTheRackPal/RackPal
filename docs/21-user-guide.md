@@ -1163,6 +1163,7 @@ floorplan import.
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |
 | **Rack Elevation, Rear** | One per rack |
+| **Unused Home Runs** (`T6.20`) | Automatically, when at least one home run is still a coil at one end: never landed at the rack, or landed at the rack and never terminated at the room. One band per room with how many runs it holds, cable IDs in order. The `OPEN` column says which end is loose: `RACK`, `ROOM` or `BOTH`. Each row also gives the rack label, the wall-plate label, the outlet, your description of the room end, the cable, its length, the pathway and how far rough-in has got. A project with every run landed at both ends gets no page for it |
 | **Equipment List and Materials** | Always, paginated as needed. One row per device, grouped by rack. Blanks, vents, shelves and other passives are not equipment rows: they are listed once each by item under **MATERIALS** at the end, with how many and which racks they are in. Each rack's subtotal still includes them, and says so. After MATERIALS, four short tables, each with its own headings: **cable footage by media** with your waste factor added; **hardware the rules imply**, a rear rail support for every device too heavy for its ears and an ear kit for a half-rack device on its own, including ones you have acknowledged, with your reason; **jumpers and power cords** by media, length and colour; and the **outlet map**, every cord you have drawn to a PDU, UPS or sequencer outlet and how many outlets each has free. A table with nothing in it says so. No prices, ever |
 
 **Your own abbreviations and notes.** `File` ▸ `Sheet set…` lists the legend's
@@ -1173,9 +1174,9 @@ and `Restore defaults` puts it back. The signal tag prefixes (`AUD`, `NET` and s
 on) always follow your abbreviations and are not edited here. A long note wraps
 on the sheet.
 
-**Zones on the drawings.** Floor plans and rack elevations carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions and equipment list have a plain border.
+**Zones on the drawings.** Floor plans and rack elevations carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions, unused home runs and equipment list have a plain border.
 
-So a two-rack job with one floorplan gives you at least nine sheets, more if the exceptions or the equipment list run to a second page. The status line says
+So a two-rack job with one floorplan gives you at least nine sheets, more if the exceptions or the equipment list run to a second page, or if any home run is still unused. The status line says
 how many sheets were written and how large the file is.
 
 **A project with no rack cannot be exported**: there is no elevation to draw
