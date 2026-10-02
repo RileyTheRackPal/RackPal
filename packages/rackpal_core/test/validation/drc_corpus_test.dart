@@ -31,7 +31,7 @@ void main() {
   test('the corpus is not vacuous', () {
     // A corpus that walked nothing would report no gaps and pass.
     expect(drcCorpus().length, greaterThan(20));
-    expect(kRuleCatalogue, hasLength(29));
+    expect(kRuleCatalogue, hasLength(30));
   });
 
   /// DR-154 §11.153.4. The gate reports per band, so a failure names the

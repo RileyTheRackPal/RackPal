@@ -169,6 +169,8 @@ DeviceInstance fixturePlaceBody(
   required int seq,
   required String designator,
   Face face = Face.front,
+  int startTwelfth = 0,
+  int spanTwelfths = 12,
 }) {
   final id = 'fx-$seq';
   doc.templates[templateKey(id, 1)] = TemplateSnapshot(
@@ -188,7 +190,13 @@ DeviceInstance fixturePlaceBody(
     ),
     designator: designator,
     name: body.displayName,
-    placement: RailPlacement(rackId: kFixtureRackId, ruIndex: ru, face: face),
+    placement: RailPlacement(
+      rackId: kFixtureRackId,
+      ruIndex: ru,
+      face: face,
+      startTwelfth: startTwelfth,
+      spanTwelfths: spanTwelfths,
+    ),
     meta: fixtureMeta(),
   );
   doc.devices[device.id] = device;

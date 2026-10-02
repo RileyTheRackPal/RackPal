@@ -476,6 +476,62 @@ List<Finding> ruleRck013(RackDocument doc) {
   return out;
 }
 
+// ─────────────────────────────────────────────────────────────────────
+// RCK-014 — a half-rack device alone in its U (CR-030, DR-219)
+// ─────────────────────────────────────────────────────────────────────
+
+/// `RCK-014` — a rail-mounted device narrower than the rack with nothing
+/// else in any of its U on its face.
+///
+/// CR-030 RULED THIS IN 2026-08 AND NOTHING FILED IT: *"A half-rack device
+/// dropped alone is allowed and files an advisory naming the ear kit."*
+/// DR-219 §11.218.4 builds it because `T6.30`'s hardware rollup lists the
+/// ear kit, and the drawer's advisory and the materials line must come
+/// from one predicate rather than two that can disagree.
+///
+/// ALONE MEANS NOTHING ELSE IN ANY OF ITS U ON ITS FACE. Two half-rack
+/// units side by side are joined with the kit they ship with; a full-width
+/// device overlapping it is `RCK-001`'s error, not this advisory's.
+List<Finding> ruleRck014(RackDocument doc) {
+  final out = <Finding>[];
+  final racks = doc.racks.values.toList()
+    ..sort((a, b) => a.id.v.compareTo(b.id.v));
+  for (final rack in racks) {
+    for (final face in Face.values) {
+      final spans = _spansOn(doc, rack, face)
+        ..sort((a, b) => a.device.id.v.compareTo(b.device.id.v));
+      for (final span in spans) {
+        final placement = span.device.placement;
+        if (placement is! RailPlacement) continue;
+        // ITS OWN FACE ONLY, so a half-rack device is judged once, where
+        // its ears are, and not again from behind.
+        if (placement.face != face) continue;
+        if (placement.spanTwelfths >= 12) continue;
+        final alone = spans.every(
+          (other) =>
+              identical(other, span) ||
+              other.ruIndex >= span.ruIndex + span.height ||
+              span.ruIndex >= other.ruIndex + other.height,
+        );
+        if (!alone) continue;
+        out.add(
+          Finding(
+            ruleId: 'RCK-014',
+            severity: Severity.advisory,
+            message:
+                '${span.device.designator} is a half-rack device with '
+                'nothing beside it in ${rack.designator}. It needs an ear '
+                'kit or a shelf.',
+            targets: [span.device.id, rack.id],
+            primaryEntityId: span.device.id,
+          ),
+        );
+      }
+    }
+  }
+  return out;
+}
+
 /// [ug] in kilograms, to one decimal place.
 String _kg(int ug) => (ug / 1000000000).toStringAsFixed(1);
 

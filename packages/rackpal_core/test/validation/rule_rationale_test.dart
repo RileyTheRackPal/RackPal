@@ -20,7 +20,7 @@ void main() {
         if (r.rationale.trim().isEmpty) r.ruleId,
     ];
     expect(empty, isEmpty);
-    expect(kRuleCatalogue, hasLength(29));
+    expect(kRuleCatalogue, hasLength(30));
   });
 
   test('a rationale is not the summary again', () {

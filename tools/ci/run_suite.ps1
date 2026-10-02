@@ -1073,7 +1073,24 @@ $SuiteFloors = @{
     # 5310 at `#971` (DR-218): +2 in sheet/title_block_test.dart. The strip
     # prints the legend reference whole, in row 1 beside the title; and row
     # 2 keeps the sheet number with no address, client or firm.
-    'rackpal_core'   = 5310
+    # 5318 at `#337` (M6-F2, DR-219): +8 in sheet/materials_sections_test.dart.
+    # A section is its band, header, rows and notes; a page opening inside one
+    # heads its columns with the section's and re-prints the band (cont.); an
+    # empty section and an empty list say so; footage rows are the derivation's.
+    # 5322 at `#338` (M6-F3, DR-219): +4 in sheet/materials_sections_test.dart.
+    # A rear-support line per RCK-013 finding; an acknowledged one keeps it
+    # with the reason; a lone half-rack device implies an ear kit through
+    # RCK-014; nothing implied says so.
+    # 5327 at `#339` (M6-F4, AC-026): +5 in derived/jumper_rollup_test.dart.
+    # Grouped by media, length and colour with quantities; a field cable is
+    # not a lead and the footage excludes exactly what this counts; no length
+    # is its own group; lengths as bought; the section's rows and notes.
+    # 5328 at `#337` (DR-219): +1 in sheet/materials_sections_test.dart. No
+    # page ends on a band or a header row, swept over 1 to 90 rows.
+    # 5331 at `#340` (M6-F5, AC-026, DR-219): +3 in derived/outlet_map_test.
+    # dart. Whole House's four providers; a drawn cord is a row in outlet order
+    # and the free and undrawn counts move with it; the section's lines.
+    'rackpal_core'   = 5331
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1133,7 +1150,13 @@ $SuiteFloors = @{
     # 258 at `#347` (M6-H, CR-066): +8 in numbering_identity_test.dart, four
     # cases on each of Whole House and Small Office under both schemes: the
     # ids in order, only the number moving, the legend reference, the index.
-    'rackpal_export' = 258
+    # 260 at `#337` (DR-219): +2 in equipment_rollups_export_test.dart, the
+    # footage section's header and every media line in ink, and the empty case.
+    # 261 at `#338` (DR-219): +1 in equipment_rollups_export_test.dart, a
+    # rear-support line per RCK-013 finding on Whole House, in ink.
+    # 262 at `#340` (DR-219): +1 in equipment_rollups_export_test.dart, every
+    # provider's free count on Whole House, in ink.
+    'rackpal_export' = 262
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

@@ -104,7 +104,7 @@ void main() {
   });
 
   group('the count is the scope gate', () {
-    test('29 rules: 8 tier-1, 6 tier-2, 15 tier-3', () {
+    test('30 rules: 8 tier-1, 6 tier-2, 16 tier-3', () {
       // The arithmetic written out, because AC-040's own "22" is an error
       // against its enumeration of 24 and canon §12.6(b)'s "27" predates
       // DR-020 adding `LEN-002`. A number this corpus has got wrong twice
@@ -116,10 +116,14 @@ void main() {
       // in the same commit as the ruling that authorises it. A rule
       // arriving without one fails here, which is what roadmap M5's risk
       // list means by *"just one more obvious rule"*.
+      //
+      // 30 AT DR-219 §11.218.4, a §8.3 amendment the user approved:
+      // `RCK-014`, CR-030's ear-kit advisory, ruled into v1 in 2026-08 and
+      // never built, and the source of T6.30's ear-kit line.
       expect(rulesInTier(RuleTier.modelIllegal), hasLength(8));
       expect(rulesInTier(RuleTier.springBack), hasLength(6));
-      expect(rulesInTier(RuleTier.postHoc), hasLength(15));
-      expect(kRuleCatalogue, hasLength(29));
+      expect(rulesInTier(RuleTier.postHoc), hasLength(16));
+      expect(kRuleCatalogue, hasLength(30));
     });
 
     test('no two rules share an id, which is the join Finding, '
@@ -131,7 +135,7 @@ void main() {
       // resolution and acknowledgement are; the LISTS stay separate,
       // which is what keeps docs/02 §5's number from moving when docs/15
       // §9 grows.
-      expect(kRulesById, hasLength(29 + kPlanRules.length));
+      expect(kRulesById, hasLength(30 + kPlanRules.length));
     });
 
     test('every rule cites at least one ruling (§8.2)', () {

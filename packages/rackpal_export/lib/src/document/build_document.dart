@@ -94,6 +94,9 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   final stamped = request.issuedForConstruction && openErrors == 0;
 
   final list = buildEquipmentList(doc);
+  // ONE SCHEDULE FOR THE ROLLUPS THAT READ IT: the footage excludes the
+  // jumpers the jumper rollup counts, and the two are one set of rows.
+  final schedule = buildSchedule(doc);
   final schedulePages = paginateEquipmentList(
     list: list,
     drawingArea: SheetLayout.resolve(
@@ -103,6 +106,18 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     ).drawingArea,
     measurer: measurer,
     units: doc.settings.displayUnits,
+    // THE ROLLUPS RIDE IN THE DRY RUN (docs/08 §2.2, DR-219), because
+    // they add pages and `SHEET i OF n` must count them.
+    sections: <RollupSection>[
+      footageSection(
+        cableFootageOf(schedule, doc: doc),
+        doc.settings.displayUnits,
+      ),
+      // From `report`, the one evaluation T0.02 draws (DR-214 §11.213.5).
+      hardwareSection(doc, report),
+      jumperSection(jumperRollupOf(schedule), doc.settings.displayUnits),
+      outletMapSection(doc, buildOutletMap(doc)),
+    ],
   );
   // WHICH PLANS EARN A SHEET IS A DERIVATION, NOT A DRAWING DECISION
   // (docs/15 section 8: one per underlay THAT CARRIES AT LEAST ONE PIN).

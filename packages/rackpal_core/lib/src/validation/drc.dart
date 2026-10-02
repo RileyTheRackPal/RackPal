@@ -92,6 +92,7 @@ const Map<String, DrcRule> kDrcRules = <String, DrcRule>{
   'RCK-003': ruleRck003,
   'RCK-012': ruleRck012,
   'RCK-013': ruleRck013,
+  'RCK-014': ruleRck014,
 };
 
 /// The plan band's rules, by id (DR-154 §11.153.2).

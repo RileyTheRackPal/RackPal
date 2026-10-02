@@ -74,6 +74,9 @@ const String kEquipmentScopeNote =
     'EQUIPMENT AND RACK MATERIALS. CABLE AND POWER SCHEDULES NOT ISSUED IN '
     'THIS SET.';
 
+/// What an equipment list with nothing on it says.
+const String kNoEquipmentText = 'NO EQUIPMENT IN THIS PROJECT.';
+
 /// The MATERIALS section's band (DR-213 §11.212.2).
 const String kMaterialsBandTitle = 'MATERIALS';
 
@@ -265,12 +268,102 @@ final class ScheduleSubtotal extends ScheduleItem {
   double get height => kScheduleSubtotalHeight;
 }
 
+/// A column of a rollup section (DR-219 §11.218.1).
+@immutable
+final class SectionColumn {
+  const SectionColumn(this.heading, this.width, {this.alignRight = false});
+
+  final String heading;
+
+  /// In points. A section's columns sum to the usable width, 690 pt, as
+  /// the equipment grid's do.
+  final double width;
+
+  /// Numbers align right, as MASS and DRAW do on the equipment grid.
+  final bool alignRight;
+}
+
+/// One of `T6.30`'s rollups (docs/08 §2.2, DR-219): a titled section with
+/// its own columns, after MATERIALS.
+///
+/// ITS OWN HEADER ROW, because its columns are not the equipment grid's
+/// (§11.218.1): footage is media, runs and feet, and the outlet map is a
+/// provider, an outlet and a device. A shared header would print
+/// `MANUFACTURER` over a media name.
+@immutable
+final class RollupSection {
+  const RollupSection({
+    required this.title,
+    required this.columns,
+    required this.rows,
+    required this.empty,
+    this.notes = const <String>[],
+  });
+
+  /// The band, e.g. `CABLE FOOTAGE BY MEDIA`.
+  final String title;
+
+  final List<SectionColumn> columns;
+
+  /// One list of cell strings per row, in [columns] order, unfitted.
+  final List<List<String>> rows;
+
+  /// What prints instead of rows when there are none. A section with
+  /// nothing in it says so in words (DR-214's precedent on T0.02), rather
+  /// than vanishing and leaving a reader to wonder whether it was checked.
+  final String empty;
+
+  /// Closing lines after the rows: what was not counted, and why.
+  final List<String> notes;
+}
+
+/// A rollup section's header row, where the section opens (§11.218.1).
+@immutable
+final class ScheduleColumns extends ScheduleItem {
+  const ScheduleColumns(this.columns);
+
+  final List<SectionColumn> columns;
+
+  @override
+  double get height => kScheduleHeaderHeight;
+}
+
+/// One rollup row, its cells already fitted to [columns].
+@immutable
+final class ScheduleSectionRow extends ScheduleItem {
+  const ScheduleSectionRow({required this.cells, required this.columns});
+
+  final List<String> cells;
+  final List<SectionColumn> columns;
+
+  @override
+  double get height => kScheduleRowHeight;
+}
+
+/// A line of prose across the table: a section's `None.`, or what it did
+/// not count.
+@immutable
+final class ScheduleNote extends ScheduleItem {
+  const ScheduleNote(this.text);
+
+  final String text;
+
+  @override
+  double get height => kScheduleRowHeight;
+}
+
 /// One page's worth of items.
 @immutable
 final class SchedulePage {
-  const SchedulePage(this.items);
+  const SchedulePage(this.items, {this.header});
 
   final List<ScheduleItem> items;
+
+  /// The columns the page's header row prints: null for the equipment
+  /// grid, or the rollup section the page OPENS inside. A page that begins
+  /// halfway down the outlet map heads its columns with the outlet map's
+  /// names, not the equipment grid's (DR-219 §11.218.1).
+  final List<SectionColumn>? header;
 
   Iterable<ScheduleRow> get rows => items.whereType<ScheduleRow>();
 }
@@ -299,9 +392,15 @@ List<SchedulePage> paginateEquipmentList({
   required DBox drawingArea,
   required TextMeasurer measurer,
   UnitSystem units = UnitSystem.imperial,
+  List<RollupSection> sections = const <RollupSection>[],
 }) {
   final body = scheduleBodyArea(drawingArea);
   final flat = <ScheduleItem>[];
+  // WITH SECTIONS AFTER IT, AN EMPTY EQUIPMENT TABLE SAYS SO IN A LINE: the
+  // page is no longer empty, so the whole-page message below never fires.
+  if (sections.isNotEmpty && list.groups.isEmpty && list.materials.isEmpty) {
+    flat.add(const ScheduleNote(kNoEquipmentText));
+  }
   for (final group in list.groups) {
     flat
       ..add(ScheduleBand(title: group.title, continued: false))
@@ -320,23 +419,76 @@ List<SchedulePage> paginateEquipmentList({
         for (final row in list.materials) _materialsRow(row, measurer, units),
       ]);
   }
+  // THE ROLLUPS, AFTER MATERIALS (docs/08 §2.2, DR-219 §11.218.1): a band,
+  // the section's own header row, its rows or the line saying it has none,
+  // then what it did not count.
+  for (final section in sections) {
+    flat
+      ..add(ScheduleBand(title: section.title, continued: false))
+      ..add(ScheduleColumns(section.columns));
+    if (section.rows.isEmpty) flat.add(ScheduleNote(section.empty));
+    for (final row in section.rows) {
+      flat.add(
+        ScheduleSectionRow(
+          cells: _fitCells(row, section.columns, measurer),
+          columns: section.columns,
+        ),
+      );
+    }
+    for (final note in section.notes) {
+      flat.add(ScheduleNote(note));
+    }
+  }
 
   final pages = <SchedulePage>[];
   var page = <ScheduleItem>[];
   var y = 0.0;
   ScheduleBand? openBand;
+  // The columns of the table being laid out: null for the equipment grid.
+  List<SectionColumn>? openColumns;
+  List<SectionColumn>? pageHeader;
 
   void flush() {
     if (page.isEmpty) return;
-    pages.add(SchedulePage(List.unmodifiable(page)));
+    pages.add(SchedulePage(List.unmodifiable(page), header: pageHeader));
     page = <ScheduleItem>[];
     y = 0;
   }
 
-  for (final item in flat) {
+  for (var i = 0; i < flat.length; i++) {
+    final item = flat[i];
     final h = item.height;
+    // A BAND KEEPS WITH WHAT FOLLOWS IT: its section's header row, if it
+    // has one, and the first line under that. A band alone at a page's foot
+    // names a table that starts overleaf, and the next page then prints it
+    // `(cont.)` over rows it never continued. Found on Whole House's T6.30,
+    // where `OUTLET MAP` was stranded under the jumper section.
+    if (item is ScheduleBand && page.isNotEmpty) {
+      final next = i + 1 < flat.length ? flat[i + 1] : null;
+      final columns = next is ScheduleColumns ? next : null;
+      final first = columns == null
+          ? next
+          : (i + 2 < flat.length ? flat[i + 2] : null);
+      final need = h + (columns?.height ?? 0) + (first?.height ?? 0);
+      if (y + need > body.height) {
+        flush();
+        // The page opens on this band, so its header row is this table's:
+        // the section's own columns, or the equipment grid's.
+        pageHeader = columns?.columns;
+        openColumns = columns?.columns;
+        openBand = item;
+        page.add(item);
+        y += h;
+        // The section's header row is already in the page's header slot.
+        if (columns != null) i++;
+        continue;
+      }
+    }
     if (y + h > body.height && page.isNotEmpty) {
       flush();
+      // THE NEW PAGE'S HEADER ROW IS THE TABLE IT OPENS IN: the section's
+      // own columns when a break falls inside one (§11.218.1).
+      pageHeader = item is ScheduleColumns ? item.columns : openColumns;
       final band = openBand;
       // The re-emitted band is what makes a group readable across a break:
       // without it, page 2 opens with rows belonging to a rack it never
@@ -346,8 +498,15 @@ List<SchedulePage> paginateEquipmentList({
         page.add(cont);
         y += cont.height;
       }
+      // A section header that would open the page is already printed in
+      // the header row above it.
+      if (item is ScheduleColumns) {
+        openColumns = item.columns;
+        continue;
+      }
     }
     if (item is ScheduleBand) openBand = item;
+    if (item is ScheduleColumns) openColumns = item.columns;
     page.add(item);
     y += h;
   }
@@ -429,7 +588,16 @@ EquipmentSheet buildEquipmentSheet({
         anchor: TextAnchor.midLeft,
       ),
     ),
-    ..._header(area, palette, measurer, settings.displayUnits),
+    if (page.header case final columns?)
+      ..._columnsRow(
+        area,
+        area.top + kScheduleNoteHeight,
+        columns,
+        palette,
+        measurer,
+      )
+    else
+      ..._header(area, palette, measurer, settings.displayUnits),
   ];
 
   var y = scheduleBodyArea(area).top;
@@ -441,6 +609,12 @@ EquipmentSheet buildEquipmentSheet({
         ops.addAll(_dataRow(area, y, item, palette));
       case ScheduleSubtotal():
         ops.addAll(_subtotal(area, y, item, palette, measurer));
+      case ScheduleColumns():
+        ops.addAll(_columnsRow(area, y, item.columns, palette, measurer));
+      case ScheduleSectionRow():
+        ops.addAll(_sectionRow(area, y, item, palette));
+      case ScheduleNote():
+        ops.addAll(_note(area, y, item, palette, measurer));
     }
     y += item.height;
   }
@@ -450,7 +624,7 @@ EquipmentSheet buildEquipmentSheet({
     // blank grid. A blank grid reads as a form somebody forgot to fill in.
     ops.add(
       OpText(
-        'NO EQUIPMENT IN THIS PROJECT.',
+        kNoEquipmentText,
         DPt(area.left, scheduleBodyArea(area).top + kScheduleRowHeight / 2),
         TextStyleSpec(
           font: kSheetFont,
@@ -897,4 +1071,142 @@ List<String> _withEllipsis(
     ),
   );
   return List.unmodifiable(lines);
+}
+
+/// [cells] fitted to [columns], one each.
+List<String> _fitCells(
+  List<String> cells,
+  List<SectionColumn> columns,
+  TextMeasurer measurer,
+) => <String>[
+  for (var i = 0; i < columns.length; i++)
+    fitTextToWidth(
+      i < cells.length ? cells[i] : '',
+      columns[i].width - 2 * _kCellPad,
+      style: TextStyleSpec(
+        font: kSheetFont,
+        sizePt: kSchedulePt,
+        argb: 0xFF000000,
+        anchor: columns[i].alignRight
+            ? TextAnchor.midRight
+            : TextAnchor.midLeft,
+      ),
+      measurer: measurer,
+    ),
+];
+
+/// A rollup section's header row at [top], drawn as the equipment grid's
+/// is: the rules above and below, the headings muted.
+List<DiagramOp> _columnsRow(
+  DBox area,
+  double top,
+  List<SectionColumn> columns,
+  SheetPalette palette,
+  TextMeasurer measurer,
+) {
+  final ops = <DiagramOp>[
+    OpLine(
+      DPt(area.left, top),
+      DPt(area.right, top),
+      sheetRule(palette.rule, kTableRuleWidthPt),
+    ),
+    OpLine(
+      DPt(area.left, top + kScheduleHeaderHeight),
+      DPt(area.right, top + kScheduleHeaderHeight),
+      sheetRule(palette.rule, kBlockOutlineWidthPt),
+    ),
+  ];
+  var x = area.left;
+  for (final column in columns) {
+    final style = TextStyleSpec(
+      font: kSheetFont,
+      sizePt: kScheduleHeaderPt,
+      argb: palette.mutedText,
+      anchor: column.alignRight ? TextAnchor.midRight : TextAnchor.midLeft,
+    );
+    final text = fitTextToWidth(
+      column.heading,
+      column.width - 2 * _kCellPad,
+      style: style,
+      measurer: measurer,
+    );
+    if (text.isNotEmpty) {
+      ops.add(
+        OpText(
+          text,
+          DPt(
+            column.alignRight ? x + column.width - _kCellPad : x + _kCellPad,
+            top + kScheduleHeaderHeight / 2,
+          ),
+          style,
+        ),
+      );
+    }
+    x += column.width;
+  }
+  return ops;
+}
+
+List<DiagramOp> _sectionRow(
+  DBox area,
+  double y,
+  ScheduleSectionRow row,
+  SheetPalette palette,
+) {
+  final ops = <DiagramOp>[];
+  var x = area.left;
+  for (var i = 0; i < row.columns.length; i++) {
+    final column = row.columns[i];
+    final text = row.cells[i];
+    if (text.isNotEmpty) {
+      ops.add(
+        OpText(
+          text,
+          DPt(
+            column.alignRight ? x + column.width - _kCellPad : x + _kCellPad,
+            y + kScheduleRowHeight / 2,
+          ),
+          TextStyleSpec(
+            font: kSheetFont,
+            sizePt: kSchedulePt,
+            argb: palette.text,
+            anchor: column.alignRight
+                ? TextAnchor.midRight
+                : TextAnchor.midLeft,
+          ),
+        ),
+      );
+    }
+    x += column.width;
+  }
+  return ops;
+}
+
+List<DiagramOp> _note(
+  DBox area,
+  double y,
+  ScheduleNote note,
+  SheetPalette palette,
+  TextMeasurer measurer,
+) {
+  final style = TextStyleSpec(
+    font: kSheetFont,
+    sizePt: kSchedulePt,
+    argb: palette.text,
+    anchor: TextAnchor.midLeft,
+  );
+  final text = fitTextToWidth(
+    note.text,
+    area.width - 2 * _kCellPad,
+    style: style,
+    measurer: measurer,
+  );
+  return <DiagramOp>[
+    if (text.isNotEmpty)
+      OpText(
+        text,
+        DPt(area.left + _kCellPad, y + kScheduleRowHeight / 2),
+        style,
+      ),
+  ];
 }

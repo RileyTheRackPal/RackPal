@@ -1618,6 +1618,49 @@ strip's ink on a real project.
 
 **Looked at**: Whole House's `T6.30` strip, and Small Office's `T2.01` under `ncs`.
 
+### 4.34 T6.30's rollups, and the rule they needed · 2026-10-02 · `#335` to `#340` · `DR-219` · no version move
+
+M6-F. docs/08 §2.2 puts four rollups beside the equipment table on `T6.30`, and AC-024, AC-026 and
+AC-028 each say what one of them is. **F1, the table itself, was already built** and closes on that
+evidence: grouped by rack then RU descending, every subtotal `≥ … (N unknown)` rather than a total
+that pretends (G4), and F6's MATERIALS since `#970`.
+
+**The mechanism (§11.218.1, the user's call).** Each rollup is a titled section after MATERIALS with
+its OWN header row, because none of them has the equipment grid's columns. A page that opens inside a
+section heads its columns with the section's and re-prints the band `(cont.)`. A band keeps with its
+header row and first line: the first render stranded `OUTLET MAP` at a page foot, and a property test
+now sweeps section sizes 1 to 90 rows for any page ending on a band or a header.
+
+**The four, each formatting a derivation and never recomputing one.**
+- **F2, footage by media** (AC-024): `cableFootageOf`, the derivation the Schedule view's takeoff
+  reads, so the sheet and the screen cannot disagree. No grand total, by that derivation's own
+  reasoning, and a closing line for what it did not count.
+- **F3, hardware implied by the rules** (AC-028, CR-030): a rear rail support per `RCK-013` finding
+  and an ear kit per `RCK-014`, from the export's one evaluation, open and acknowledged alike, the
+  acknowledgement's reason in NOTES (§11.218.3).
+- **F4, jumpers and power cords** (AC-026): `jumperRollupOf` counts the same schedule rows the footage
+  excludes as bought by the piece, by media, length and as-built colour; a test pins the two counts
+  equal.
+- **F5, the outlet map** (AC-026, §11.218.2): a row per drawn cord in outlet order, a free count per
+  provider, and how many devices are charged an outlet per inlet because none is drawn: the facts
+  `PWR-003` reads.
+
+**`RCK-014` IS A §8.3 AMENDMENT, AND WAS FIRST RECORDED AS NOT ONE.** CR-030 ruled in 2026-08 that a
+half-rack device placed alone files an advisory naming the ear kit; no rule did, and F3 needed one.
+DR-219 first recorded adding it as decided without a question, which was wrong: the catalogue count
+is v1's rule scope and its test says so. The question was put, the user approved it, and the
+catalogue is 8 + 6 + 16 with the AC-051 pair. **The rule-review pack generator could not be re-run**,
+because ELE-005 and the plan band were never given reviewer groups; that is `#972`.
+
+**Found by rendering, not by tests.** The provider's rack read `RailPlacement` only and printed the
+dash for a 0U PDU (`hostRackOf` now). And Whole House's list reaching three pages showed a test that
+read a collapsed index run `T6.30–T6.32` as its two ends.
+
+**Evidence.** `materials_sections_test.dart`, `jumper_rollup_test.dart`, `outlet_map_test.dart`, and
+`equipment_rollups_export_test.dart` reading every section back from the PDF on real starters. None of
+the starters draws a jumper or a cord to an outlet, so F4 and F5 are proved on hand-built documents
+and the sheets say so in words. **Looked at**: Whole House's three `T6.30` pages.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

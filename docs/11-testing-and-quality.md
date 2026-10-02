@@ -85,7 +85,7 @@ The **epoch-mask coverage test** (AC-014) is forty lines and is the highest valu
 
 ### 2.3 Validation rules, addressed by rule ID
 
-The v1 catalogue is **8 tier-1 + 6 tier-2 + 15 tier-3**, with `PLC-001..003` ratified (canon §12.6(b)), `LEN-002` added (DR-020, canon §11.19) and `ELE-005` restored (DR-132, canon §11.131), and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). **The plan advisories are a second band** and are not counted here (DR-154 §11.153.2). The gate is AC-051, it is absolute, and it follows the RULE rather than the list: **no rule in either band ships without its fixture pair.**
+The v1 catalogue is **8 tier-1 + 6 tier-2 + 16 tier-3**, with `PLC-001..003` ratified (canon §12.6(b)), `LEN-002` added (DR-020, canon §11.19), `ELE-005` restored (DR-132, canon §11.131) and `RCK-014` added (DR-219, canon §11.218.4), and every one is a Dart function in a registry keyed by `ruleId` (CR-024, AC-011). **The plan advisories are a second band** and are not counted here (DR-154 §11.153.2). The gate is AC-051, it is absolute, and it follows the RULE rather than the list: **no rule in either band ships without its fixture pair.**
 
 ```text
 packages/rackpal_core/test/fixtures/drc/

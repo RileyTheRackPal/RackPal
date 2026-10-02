@@ -1163,7 +1163,7 @@ floorplan import.
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |
 | **Rack Elevation, Rear** | One per rack |
-| **Equipment List and Materials** | Always, paginated as needed. One row per device, grouped by rack. Blanks, vents, shelves and other passives are not equipment rows: they are listed once each by item under **MATERIALS** at the end, with how many and which racks they are in. Each rack's subtotal still includes them, and says so |
+| **Equipment List and Materials** | Always, paginated as needed. One row per device, grouped by rack. Blanks, vents, shelves and other passives are not equipment rows: they are listed once each by item under **MATERIALS** at the end, with how many and which racks they are in. Each rack's subtotal still includes them, and says so. After MATERIALS, four short tables, each with its own headings: **cable footage by media** with your waste factor added; **hardware the rules imply**, a rear rail support for every device too heavy for its ears and an ear kit for a half-rack device on its own, including ones you have acknowledged, with your reason; **jumpers and power cords** by media, length and colour; and the **outlet map**, every cord you have drawn to a PDU, UPS or sequencer outlet and how many outlets each has free. A table with nothing in it says so. No prices, ever |
 
 **Your own abbreviations and notes.** `File` ▸ `Sheet set…` lists the legend's
 abbreviations and general notes as rows. Change a row, add one with `Add
