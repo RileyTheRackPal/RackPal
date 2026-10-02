@@ -84,4 +84,19 @@ void main() {
     expect(ink, contains(kFootageSectionTitle));
     expect(ink, contains(kNoFootageText));
   });
+
+  test('WHOLE HOUSE: a rear-support line per RCK-013 finding, in ink '
+      '(F3, AC-028)', () async {
+    final doc = starter('whole_house');
+    final ink = await equipmentInk(doc);
+    expect(ink, contains(kHardwareSectionTitle));
+    for (final f in evaluateDocument(doc).where((f) => f.ruleId == 'RCK-013')) {
+      final device = doc.devices[f.primaryEntityId]!.designator;
+      expect(
+        ink,
+        contains('1 Rear rail support $device RK-1 RCK-013'),
+        reason: device,
+      );
+    }
+  });
 }

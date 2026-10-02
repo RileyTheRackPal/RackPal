@@ -12,8 +12,11 @@ import 'package:rackpal_core/src/derived/cable_footage.dart';
 import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
 import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart';
 import 'package:rackpal_core/src/model/enums.dart' show UnitSystem;
+import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/units/len.dart';
 import 'package:rackpal_core/src/units/permille.dart';
+import 'package:rackpal_core/src/validation/exceptions_report.dart';
+import 'package:rackpal_core/src/validation/findings_view.dart';
 
 /// The footage section's band.
 const String kFootageSectionTitle = 'CABLE FOOTAGE BY MEDIA';
@@ -107,4 +110,84 @@ String _excluded(CableFootage f) {
     if (f.excludedUndeterminedClass > 0)
       '${f.excludedUndeterminedClass} of undetermined class',
   ].join('; ');
+}
+
+/// The hardware section's band.
+const String kHardwareSectionTitle = 'HARDWARE IMPLIED BY THE RULES';
+
+/// What the hardware section says when no rule implies anything.
+const String kNoHardwareText = 'NO HARDWARE IMPLIED BY THE RULES.';
+
+/// What each rule implies, by rule id (docs/08 §2.2: "ear kits, rear
+/// supports").
+const Map<String, String> kHardwareByRule = <String, String>{
+  'RCK-013': 'Rear rail support',
+  'RCK-014': 'Ear kit (half-rack)',
+};
+
+/// The hardware the rules imply (docs/08 §2.2, AC-028, CR-030, M6-F3).
+///
+/// ONE LINE PER FINDING, OPEN OR ACKNOWLEDGED (DR-219 §11.218.3). The
+/// weight is physical; an acknowledgement usually records that the support
+/// is specified, so the line stays and prints the acknowledgement's reason
+/// in NOTES, where a shelf-mounted exception can be struck by hand. A rule
+/// turned OFF for the project files nothing, so it implies nothing: that
+/// is the project's own decision, made with a reason on T0.02.
+///
+/// From [report], the export's one evaluation (DR-214 §11.213.5), so the
+/// list and T0.02 cannot disagree about which findings exist.
+RollupSection hardwareSection(RackDocument doc, ExceptionsReport report) {
+  final rows = <FindingRow>[
+    for (final group in report.open) ...group.rows,
+    ...report.acknowledged,
+  ].where((r) => kHardwareByRule.containsKey(r.finding.ruleId)).toList();
+
+  String designatorOf(FindingRow row) {
+    final id = row.finding.primaryEntityId;
+    return (id == null ? null : doc.devices[id]?.designator) ?? kUnknownCell;
+  }
+
+  String rackOf(FindingRow row) {
+    for (final id in row.finding.targets) {
+      final rack = doc.racks[id];
+      if (rack != null) return rack.designator;
+    }
+    return kUnknownCell;
+  }
+
+  // TOTAL ORDER: rack, then device, then rule, then the fingerprint, which
+  // is unique per finding.
+  rows.sort((a, b) {
+    final byRack = rackOf(a).compareTo(rackOf(b));
+    if (byRack != 0) return byRack;
+    final byDevice = designatorOf(a).compareTo(designatorOf(b));
+    if (byDevice != 0) return byDevice;
+    final byRule = a.finding.ruleId.compareTo(b.finding.ruleId);
+    if (byRule != 0) return byRule;
+    return a.finding.targetFingerprint.compareTo(b.finding.targetFingerprint);
+  });
+
+  return RollupSection(
+    title: kHardwareSectionTitle,
+    columns: const <SectionColumn>[
+      SectionColumn('QTY', 30, alignRight: true),
+      SectionColumn('ITEM', 170),
+      SectionColumn('FOR', 90),
+      SectionColumn('RACK', 80),
+      SectionColumn('RULE', 60),
+      SectionColumn('NOTES', 260),
+    ],
+    rows: <List<String>>[
+      for (final row in rows)
+        <String>[
+          '1',
+          kHardwareByRule[row.finding.ruleId]!,
+          designatorOf(row),
+          rackOf(row),
+          row.finding.ruleId,
+          if (row.reason case final reason?) 'Acknowledged: $reason' else '',
+        ],
+    ],
+    empty: kNoHardwareText,
+  );
 }

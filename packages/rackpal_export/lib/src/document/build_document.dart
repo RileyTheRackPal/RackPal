@@ -107,6 +107,8 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     // they add pages and `SHEET i OF n` must count them.
     sections: <RollupSection>[
       footageSection(buildCableFootage(doc), doc.settings.displayUnits),
+      // From `report`, the one evaluation T0.02 draws (DR-214 §11.213.5).
+      hardwareSection(doc, report),
     ],
   );
   // WHICH PLANS EARN A SHEET IS A DERIVATION, NOT A DRAWING DECISION

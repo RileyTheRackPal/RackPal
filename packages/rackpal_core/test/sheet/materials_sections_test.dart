@@ -166,4 +166,113 @@ void main() {
       expect(section.empty, kNoFootageText);
     });
   });
+
+  group('hardware implied by the rules (F3, AC-028, CR-030)', () {
+    test('WHOLE HOUSE: one rear-support line per RCK-013 finding, naming '
+        'the device and its rack', () {
+      final doc = _starter('whole_house');
+      final findings = evaluateDocument(doc);
+      final heavy = findings.where((f) => f.ruleId == 'RCK-013').toList();
+      expect(heavy, isNotEmpty, reason: 'the premise');
+      final section = hardwareSection(
+        doc,
+        buildExceptionsReport(doc, findings),
+      );
+      expect(section.rows, hasLength(heavy.length));
+      for (final f in heavy) {
+        final device = doc.devices[f.primaryEntityId]!.designator;
+        expect(
+          section.rows.where(
+            (r) => r[1] == 'Rear rail support' && r[2] == device,
+          ),
+          hasLength(1),
+          reason: device,
+        );
+      }
+    });
+
+    test(
+      'AN ACKNOWLEDGED SUPPORT STILL PRINTS, with the reason (§11.218.3)',
+      () {
+        final doc = _starter('whole_house');
+        final f = evaluateDocument(
+          doc,
+        ).firstWhere((f) => f.ruleId == 'RCK-013');
+        final at = DateTime.utc(2026, 10);
+        doc.ackedFindings[const Uuid('ack-heavy')] = AckedFinding(
+          id: const Uuid('ack-heavy'),
+          ruleId: 'RCK-013',
+          targetFingerprint: f.targetFingerprint,
+          reason: 'Rear rails ordered with the rack.',
+          by: 'riley',
+          at: at,
+          demotedTo: Severity.advisory,
+          meta: EntityMeta(createdAt: at, updatedAt: at, updatedBy: 'test'),
+        );
+        final section = hardwareSection(
+          doc,
+          buildExceptionsReport(doc, evaluateDocument(doc)),
+        );
+        final device = doc.devices[f.primaryEntityId]!.designator;
+        final row = section.rows.singleWhere((r) => r[2] == device);
+        expect(row[5], 'Acknowledged: Rear rails ordered with the rack.');
+      },
+    );
+
+    test('A HALF-RACK DEVICE ALONE implies an ear kit, through RCK-014', () {
+      final doc = _starter('apartment');
+      final rack = doc.racks.values.first;
+      final at = DateTime.utc(2026, 10);
+      final template = doc.templates.values.first;
+      doc.devices[const Uuid('half-1')] = DeviceInstance(
+        id: const Uuid('half-1'),
+        kind: DeviceKind.rackDevice,
+        templateRef: TemplateRef(
+          templateId: template.templateId,
+          version: template.version,
+          contentHash: template.contentHash,
+        ),
+        designator: 'HALF-1',
+        name: 'Half-rack unit',
+        placement: RailPlacement(
+          rackId: rack.id,
+          ruIndex: rack.heightU,
+          face: Face.front,
+          spanTwelfths: 6,
+        ),
+        meta: EntityMeta(createdAt: at, updatedAt: at, updatedBy: 'test'),
+      );
+      final findings = evaluateDocument(doc);
+      expect(
+        findings.where((f) => f.ruleId == 'RCK-014'),
+        hasLength(1),
+        reason: 'the premise: the top U is free on the apartment rack',
+      );
+      final section = hardwareSection(
+        doc,
+        buildExceptionsReport(doc, findings),
+      );
+      expect(
+        section.rows.where(
+          (r) => r[1] == 'Ear kit (half-rack)' && r[2] == 'HALF-1',
+        ),
+        hasLength(1),
+      );
+    });
+
+    test('nothing implied says so', () {
+      final doc = _starter('whole_house');
+      final section = hardwareSection(
+        doc,
+        const ExceptionsReport(
+          projectWide: [],
+          open: [],
+          acknowledged: [],
+          stale: [],
+        ),
+      );
+      expect(section.rows, isEmpty);
+      expect(section.empty, kNoHardwareText);
+    });
+  });
 }
