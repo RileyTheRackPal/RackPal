@@ -10,6 +10,7 @@
 // This file only formats: it chooses words, units and columns.
 import 'package:rackpal_core/src/derived/cable_footage.dart';
 import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
+import 'package:rackpal_core/src/derived/jumper_rollup.dart';
 import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart';
 import 'package:rackpal_core/src/model/enums.dart' show UnitSystem;
 import 'package:rackpal_core/src/model/rack_document.dart';
@@ -189,5 +190,63 @@ RollupSection hardwareSection(RackDocument doc, ExceptionsReport report) {
         ],
     ],
     empty: kNoHardwareText,
+  );
+}
+
+/// The jumper section's band.
+const String kJumperSectionTitle = 'JUMPERS AND POWER CORDS';
+
+/// What the jumper section says when there are none.
+const String kNoJumpersText = 'NO JUMPERS OR POWER CORDS IN THIS PROJECT.';
+
+/// A lead's length as it is bought: `3 ft`, `1.5 ft`, `0.5 m`; the dash
+/// when none is stated (G4).
+String leadLengthText(Len? length, UnitSystem units) {
+  if (length == null) return kUnknownCell;
+  if (units == UnitSystem.imperial) {
+    final tenths = (length.nm * 10 / (Len.nmPerInch * 12)).round();
+    return tenths % 10 == 0
+        ? '${tenths ~/ 10} ft'
+        : '${(tenths / 10).toStringAsFixed(1)} ft';
+  }
+  final cm = (length.nm / (Len.nmPerMillimetre * 10)).round();
+  final metres = (cm / 100)
+      .toStringAsFixed(2)
+      .replaceFirst(
+        RegExp(r'\.?0+$'),
+        '',
+      );
+  return '$metres m';
+}
+
+/// AC-026's jumper and power-cord rollup, by media, length and colour
+/// (M6-F4). The quantities are `jumperRollupOf`'s, from the schedule's
+/// rows, so they are the same leads the footage note excludes.
+RollupSection jumperSection(JumperRollup rollup, UnitSystem units) {
+  final unstated = rollup.noLengthCount;
+  return RollupSection(
+    title: kJumperSectionTitle,
+    columns: const <SectionColumn>[
+      SectionColumn('QTY', 30, alignRight: true),
+      SectionColumn('MEDIA', 300),
+      SectionColumn('LENGTH', 90, alignRight: true),
+      SectionColumn('COLOUR', 150),
+      SectionColumn('NOTES', 120),
+    ],
+    rows: <List<String>>[
+      for (final line in rollup.lines)
+        <String>[
+          '${line.quantity}',
+          line.media?.displayName ?? line.mediaId.v,
+          leadLengthText(line.length, units),
+          line.colour?.displayName ?? kUnknownCell,
+          '',
+        ],
+    ],
+    empty: kNoJumpersText,
+    notes: <String>[
+      if (unstated == 1) '1 lead has no length stated.',
+      if (unstated > 1) '$unstated leads have no length stated.',
+    ],
   );
 }

@@ -79,11 +79,16 @@ void main() {
     }
   });
 
-  test('a project with no field cable says so on the sheet', () async {
-    final ink = await equipmentInk(starter('apartment'));
-    expect(ink, contains(kFootageSectionTitle));
-    expect(ink, contains(kNoFootageText));
-  });
+  test(
+    'a project with no field cable and no leads says so on the sheet',
+    () async {
+      final ink = await equipmentInk(starter('apartment'));
+      expect(ink, contains(kFootageSectionTitle));
+      expect(ink, contains(kNoFootageText));
+      expect(ink, contains(kJumperSectionTitle));
+      expect(ink, contains(kNoJumpersText));
+    },
+  );
 
   test('WHOLE HOUSE: a rear-support line per RCK-013 finding, in ink '
       '(F3, AC-028)', () async {

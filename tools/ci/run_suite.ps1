@@ -1081,7 +1081,11 @@ $SuiteFloors = @{
     # A rear-support line per RCK-013 finding; an acknowledged one keeps it
     # with the reason; a lone half-rack device implies an ear kit through
     # RCK-014; nothing implied says so.
-    'rackpal_core'   = 5322
+    # 5327 at `#339` (M6-F4, AC-026): +5 in derived/jumper_rollup_test.dart.
+    # Grouped by media, length and colour with quantities; a field cable is
+    # not a lead and the footage excludes exactly what this counts; no length
+    # is its own group; lengths as bought; the section's rows and notes.
+    'rackpal_core'   = 5327
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
