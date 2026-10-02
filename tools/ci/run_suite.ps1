@@ -1096,7 +1096,11 @@ $SuiteFloors = @{
     # room last; +15 in sheet/unused_runs_sheet_test.dart, no page for nothing,
     # the key lines, a seven-size sweep that no page ends on a band and every
     # page names its room, and the shared T6.60 overflow with no id twice.
-    'rackpal_core'   = 5354
+    # 5362 at `#974` (M6-E2a, DR-221): +8 in builder/terminal_roles_test.dart,
+    # the string seam both ways and blank as none, the field through it,
+    # equal orders equal at the seam, absent when unknown, a JSON array that
+    # reads back, the bytes round-trip, and a changed order is breaking.
+    'rackpal_core'   = 5362
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1719,7 +1723,10 @@ $SuiteFloors = @{
     # 2045 at `#347` (CR-066): +1 in settings/project_settings_dialog_test.
     # dart. The numbering choices say what they print, not the enum, and
     # picking NCS is one command.
-    'rackpal_ui'     = 2045
+    # 2046 at `#974` (M6-E2a, DR-221): +1 in builder/port_grid_test.dart. An
+    # order typed into TERMINALS, found by its header, is saved as the
+    # port's list with the spaces normalised.
+    'rackpal_ui'     = 2046
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

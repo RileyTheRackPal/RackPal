@@ -313,6 +313,9 @@ const Map<String, _Rule> _portRules = {
   // `polarity` on the terminal so a typo would be inexpressible.
   'pinoutVariant': _breaking,
   'polarity': _breaking,
+  // A terminal block rewired in another order is the same failure: the
+  // cable landed on the old order is now on the wrong pins (DR-221).
+  'terminalRoles': _breaking,
 
   'conductorCount': _safe,
   'impedanceOhms': _safe,

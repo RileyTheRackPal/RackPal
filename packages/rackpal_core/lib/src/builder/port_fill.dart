@@ -282,6 +282,7 @@ PortColumnFill? portColumnFill(PortColumnId id) => switch (id) {
   PortColumnId.topology => _plain(PortDefField.topology),
   PortColumnId.gender => _plain(PortDefField.gender),
   PortColumnId.pinoutVariant => _plain(PortDefField.pinoutVariant),
+  PortColumnId.terminalRoles => _plain(PortDefField.terminalRoles),
   PortColumnId.conductorCount => _plain(PortDefField.conductorCount),
   PortColumnId.returnChannel => _plain(PortDefField.returnChannel),
 };
