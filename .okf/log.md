@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-10-02 (hundred-and-third entry)
+
+* **Progress**: M6-E (`#331`) opened on branch `m6e-auto-sheets`. M6-E1 (`#332`) ruled before any
+  code: T6.20's membership, layout, order and the column saying which end is open.
+* **Note**: **TWO ANSWERS CAN BE RIGHT SEPARATELY AND WRONG TOGETHER.** Widening the sheet to either
+  end and choosing a layout with no column naming the end were each fine; together they made a row
+  state its defining fact by absence. Read a batch of answers against each other before building.
+* **Creation**: [DR-220](/decisions/dr-220-t6-20-unused-home-runs.md).
+
 ## 2026-10-02 (hundred-and-second entry)
 
 * **Progress**: `#347` and `#971` merged at `3addd571` (PR 191); M6-H closed. M6-F (`#335`) built:

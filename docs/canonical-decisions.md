@@ -3345,7 +3345,7 @@ Only the fields that were spelled more than one way, or whose spelling is load-b
 | **Equipment List and Materials** | Sheet `T6.30`. **No pricing.** Includes the cable footage rollup by media with waste factor. AC-055, AC-024. | Never called a BOM. `Money`, `cost`, `supplier`, `purchaseOrder` are deleted from v1. |
 | **Exceptions & Acknowledgements** | Sheet `T0.02`. Every open finding and every acknowledgement with reason, author, date. CR-022. | This is where "the reason prints". |
 | **Symbol Legend** | Sheet `T0.01`. **One row per named cable type**, in colour and greyscale side by side. AC-054. | Other sheets' title blocks are auto-filled with `SYMBOL LEGEND: SEE SHEET T0.01`. CR-023. |
-| **Unused Home Runs** | The page listing home-run `Link`s with an unbound rack end. | A differentiator; keep the name. |
+| **Unused Home Runs** | Sheet `T6.20`. The page listing home-run `Link`s with an open end, at the rack or at the room. DR-220 §11.219.1 widened this from *"an unbound rack end"*. | A differentiator; keep the name. |
 | **`ISSUED FOR CONSTRUCTION`** | The stamp. Gated on zero open errors. **Never gates bytes.** CR-022, G3. | — |
 
 Sheet numbering is `ProjectSettings.sheetNumbering: ncs | simple`, **default `simple`** (CR-066).
@@ -23345,6 +23345,62 @@ one question, and listing rear supports only.
 own wording. §11.218.1 to §11.218.3 change no scope: docs/08 §2.2's `T6.30` and AC-026, made
 definite.
 
+### 11.219 DR-220 · T6.20 lists a home run open at either end, in room bands, and says which end
+
+**Settled by the user on 2026-10-02, building M6-E1 (`#332`).** `T6.20` Unused Home Runs has been a
+v1 sheet since canon §4.3, `AUTO` iff at least one exists, and the corpus defined it three ways:
+§4.3's glossary says *"home-run `Link`s with an unbound rack end"*, docs/07 and docs/08 say *"whose
+rack end is an `OpenEndpoint`"*, and docs/01 says *"every home run terminated at the DD with no device
+on it"*, which is a different sheet. Nothing said how it is laid out.
+
+**MEASURED FIRST**, on the four starters at `4879aaa5`: Apartment, Home Theatre and Small Office carry
+no `Link` at all. Whole House carries 27, every one a home run, 12 with an `OpenEndpoint` rack end and
+15 landed on a panel port, and **no patch cord anywhere**.
+
+**11.219.1 RULED: A HOME RUN IS LISTED WHEN EITHER END IS OPEN.** A home run is a `Link` carrying a
+`StructureOrigin`. It is listed when its rack end or its field end is an `OpenEndpoint`. The rack end
+is the end in a rack when exactly one end is, and otherwise the conductor's `to`, which is where
+`AddHomeRunCommand` writes it and where `plan_length.dart` reads it. The options not taken were the
+rack end only (recommended; §4.3's wording) and docs/01's *"terminated with no device on it"*, which
+on Whole House lists all 27 runs: a job that draws no patch cords, which is most of them, would print
+every run it has as unused. The user gave no reason; what the choice adds over the recommended one is
+a run dressed and landed at the rack and left as a coil at the room.
+
+**11.219.2 RULED: ANSI A LANDSCAPE, ROOM BANDS, TEN COLUMNS.** The paper is T6.30's and the
+Termination Schedule's (docs/08 §6.1, *"Equipment List, details"*). Rows sit in one band per room,
+titled with the room and its count, rooms in name order and `NO ROOM RECORDED` last. The columns are
+`CABLE ID` (with DR-206's lifecycle suffix), `OPEN`, `RACK LBL`, `FIELD LBL`, `OUTLET`, `FIELD END`,
+`MEDIA`, `LEN`, `PATHWAY` and `ROUGH-IN`. Every cell the Schedule view also prints is printed by
+`ScheduleEntry.cell`, so the sheet and the screen cannot disagree. Not taken: ANSI A portrait in seven
+columns, the Pull Sheet's paper, which drops `FIELD END` and `PATHWAY`; and a column printing the open
+end's own note, which on every run today is one of two stock sentences.
+
+**11.219.3 RULED: WHICH END IS OPEN IS ITS OWN COLUMN**, `OPEN`, reading `RACK`, `ROOM` or `BOTH`.
+§11.219.1 makes a row open at either end, and the ten columns otherwise state it nowhere; a reader
+should not have to infer a fact the sheet holds. Not taken: one section per open end, which repeats a
+room up to three times; and `— OPEN —` in `FIELD END`, docs/08 §3.3's convention, which states *rack
+open* only by absence.
+
+**11.219.4 RULED: WITHIN A ROOM, ROWS PRINT IN CABLE ID ORDER**, natural (`W4` before `W10`). The `W`
+number is on the label at both ends, so it is found from whichever end the reader is standing at. Not
+taken: field-label order, the order of the plates.
+
+**11.219.5 DECIDED WITHOUT A QUESTION: POSITION AND NUMBERING**, because each follows from a mechanism
+already ruled. `T6.20` sits at docs/08 §2.2's `n+3`: after the elevations (and the interconnect, pull
+and termination sheets when they land) and before `T6.30`. Its pages are `T6.20` to `T6.29`, and an
+eleventh page onward continues from `T6.60`, ahead of the equipment list's own overflow, which then
+follows it: `equipmentListNcsId`'s reasoning, that `T6.4x` and `T6.5x` are reserved, applies to any
+schedule. A page that opens inside a room re-prints the column heads and the band `(cont.)`, and a
+band keeps with its first row (DR-219 §11.218.1, `#337`).
+
+**What this does not rule.** A rack end recorded as a place (`PlaceEndpoint`) is not open and is not
+listed; no command writes one today, since `drop_build.dart` leaves the rack end null and null becomes
+an `OpenEndpoint`. A run that is not a home run (no `StructureOrigin`) with an open end is a schedule
+row and not this sheet's.
+
+**Scope.** No scope moves between releases. `T6.20` was v1 already; this rules its contents and
+layout, and amends §4.3's glossary row (§12.44).
+
 ---
 
 ## 12. Superseded rulings
@@ -24054,6 +24110,13 @@ close and a reopen.
 |---|---|---|
 | **DR-157 §11.156.5**, the blank clause | *"IT ONLY EVER FILLS A BLANK. A person who has chosen a side keeps it whatever they type afterwards"* | **The side is derived from every occupancy edit** (§11.202.2) and is no longer a control, so there is no chosen side to keep. The rest of §11.156.5 stands: typing a height is saying where it mounts, the write rides the edit's own transaction, and a save gate is still the wrong answer. |
 | **DR-107 §11.106.2**, where `Mount method` lives | the Physical section keyed on `mountMethod`, with the mount picker on it | **The mount picker is on Identity**, in `Size and mounting` (§11.202.1). Physical still strips its rack rows for `notInRack`, as §11.106.2 rules. |
+
+
+### 12.44 Amended by DR-220 (T6.20 lists a home run open at either end)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **§4.3**, the `Unused Home Runs` row | *"The page listing home-run `Link`s with an unbound rack end."* | **A home run with an open end at the rack OR at the room** (§11.219.1), with an `OPEN` column saying which (§11.219.3). The row is amended in place and points here. docs/01 §9.9's *"terminated at the DD with no device on it"*, a different sheet, is corrected with it rather than ruled in. |
 
 
 ## 13. Resolved §10 questions
