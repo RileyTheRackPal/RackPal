@@ -1085,7 +1085,9 @@ $SuiteFloors = @{
     # Grouped by media, length and colour with quantities; a field cable is
     # not a lead and the footage excludes exactly what this counts; no length
     # is its own group; lengths as bought; the section's rows and notes.
-    'rackpal_core'   = 5327
+    # 5328 at `#337` (DR-219): +1 in sheet/materials_sections_test.dart. No
+    # page ends on a band or a header row, swept over 1 to 90 rows.
+    'rackpal_core'   = 5328
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

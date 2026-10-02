@@ -455,8 +455,35 @@ List<SchedulePage> paginateEquipmentList({
     y = 0;
   }
 
-  for (final item in flat) {
+  for (var i = 0; i < flat.length; i++) {
+    final item = flat[i];
     final h = item.height;
+    // A BAND KEEPS WITH WHAT FOLLOWS IT: its section's header row, if it
+    // has one, and the first line under that. A band alone at a page's foot
+    // names a table that starts overleaf, and the next page then prints it
+    // `(cont.)` over rows it never continued. Found on Whole House's T6.30,
+    // where `OUTLET MAP` was stranded under the jumper section.
+    if (item is ScheduleBand && page.isNotEmpty) {
+      final next = i + 1 < flat.length ? flat[i + 1] : null;
+      final columns = next is ScheduleColumns ? next : null;
+      final first = columns == null
+          ? next
+          : (i + 2 < flat.length ? flat[i + 2] : null);
+      final need = h + (columns?.height ?? 0) + (first?.height ?? 0);
+      if (y + need > body.height) {
+        flush();
+        // The page opens on this band, so its header row is this table's:
+        // the section's own columns, or the equipment grid's.
+        pageHeader = columns?.columns;
+        openColumns = columns?.columns;
+        openBand = item;
+        page.add(item);
+        y += h;
+        // The section's header row is already in the page's header slot.
+        if (columns != null) i++;
+        continue;
+      }
+    }
     if (y + h > body.height && page.isNotEmpty) {
       flush();
       // THE NEW PAGE'S HEADER ROW IS THE TABLE IT OPENS IN: the section's

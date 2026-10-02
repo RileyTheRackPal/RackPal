@@ -96,6 +96,36 @@ void main() {
       expect(pages.first.header, isNull);
     });
 
+    test('A BAND IS NEVER STRANDED: no page ends on a band or a header row, '
+        'and (cont.) only follows rows of its own table', () {
+      // A SWEEP, because the defect lived at one exact fill: Whole House's
+      // `OUTLET MAP` band landed alone at a page foot. Every section size up
+      // to past two pages walks the break through every position.
+      for (var rows = 1; rows <= 90; rows++) {
+        final pages = _paginate(_starter('whole_house'), [
+          _section(rows, notes: ['note']),
+          _section(3),
+        ]);
+        for (final (n, page) in pages.indexed) {
+          final last = page.items.last;
+          expect(
+            last is ScheduleBand || last is ScheduleColumns,
+            isFalse,
+            reason: '$rows rows: page ${n + 1} ends on $last',
+          );
+          final first = page.items.first;
+          if (first is ScheduleBand && first.continued) {
+            final previous = pages[n - 1].items.last;
+            expect(
+              previous is ScheduleBand || previous is ScheduleColumns,
+              isFalse,
+              reason: '$rows rows: page ${n + 1} continues nothing',
+            );
+          }
+        }
+      }
+    });
+
     test('a section with no rows says so in words', () {
       final items = _paginate(_starter('apartment'), [
         _section(0),
