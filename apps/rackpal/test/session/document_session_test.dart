@@ -392,6 +392,20 @@ void main() {
       expect(session.status, 'Undo history now keeps 50 steps.');
     });
   });
+
+  group('A STATUS AND ITS NOTICES (DR-224)', () {
+    test('travel together: a later status replaces both, so a list never '
+        'outlives the line that counted it', () {
+      final session = _session()
+        ..setStatus(
+          'Exported 8 sheets · 22 KB · 1 notice',
+          notices: const ['T0.00: Smallest text is 6 pt.'],
+        );
+      expect(session.statusNotices, ['T0.00: Smallest text is 6 pt.']);
+      session.setStatus('Saved.');
+      expect(session.statusNotices, isEmpty);
+    });
+  });
 }
 
 /// A minimal `SavedFile`, built here rather than by running a real save,

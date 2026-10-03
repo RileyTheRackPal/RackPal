@@ -152,6 +152,7 @@ export 'src/settings/project_settings_dialog.dart';
 export 'src/settings/sheet_set_dialog.dart';
 export 'src/shell/about_dialog.dart';
 export 'src/shell/coach_mark.dart';
+export 'src/shell/export_notices_dialog.dart';
 export 'src/shell/file_error_dialog.dart';
 export 'src/shell/no_racks_view.dart';
 export 'src/shell/recent_files_menu.dart';

@@ -1761,7 +1761,10 @@ $SuiteFloors = @{
     # 2046 at `#974` (M6-E2a, DR-221): +1 in builder/port_grid_test.dart. An
     # order typed into TERMINALS, found by its header, is saved as the
     # port's list with the spaces normalised.
-    'rackpal_ui'     = 2046
+    # 2050 at `#983` (M6-M, DR-224): +4 in shell/export_notices_dialog_test.
+    # dart, notices grouped by sheet, no link with none, no link when the line
+    # does not end with the count, and the link opens the list and Copy works.
+    'rackpal_ui'     = 2050
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -1974,7 +1977,11 @@ $SuiteFloors = @{
     # formats through the real pdfium, the SVG refusals, LogoIo's two
     # writes) and +1 in session/sheet_set_route_test.dart, choose, save and
     # read the container back.
-    'rackpal_app'    = 1154
+    # 1156 at `#983` (M6-M, DR-224): +1 in session/app_shell_test.dart, the
+    # real menu, status line and dialog showing a notice's sentence; +1 in
+    # session/document_session_test.dart, a status and its notices replaced
+    # together.
+    'rackpal_app'    = 1156
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

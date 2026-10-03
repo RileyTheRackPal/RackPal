@@ -241,6 +241,9 @@ final class ExportController {
           stamped: exported.stamped,
           stampWithheld: exported.stampWithheld,
         ),
+        // THE SENTENCES, NOT ONLY THE COUNT (DR-224): until this line the
+        // count was all that reached the user.
+        notices: exported.notices,
       );
       return true;
     }
@@ -351,9 +354,14 @@ String describeExportSuccess({
     // rather than counted, with the sheet that lists the errors.
     if (stamped) 'issued for construction',
     ?stampWithheld,
-    if (n > 0) '$n notice${n == 1 ? '' : 's'}',
+    if (n > 0) noticeCountLabel(n),
   ].join(' · ');
 }
+
+/// `1 notice`, `6 notices`: the status line's last segment, and the text
+/// its link wears (DR-224). One function, so the link finds the words the
+/// line prints.
+String noticeCountLabel(int n) => '$n notice${n == 1 ? '' : 's'}';
 
 /// `214 KB`, `1.4 MB`. Kilobytes are 1024 bytes, which is what a Windows
 /// file listing shows.

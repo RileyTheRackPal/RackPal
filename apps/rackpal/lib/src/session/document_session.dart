@@ -191,6 +191,11 @@ final class DocumentSession extends ChangeNotifier {
   bool _recoveryEnabled;
   String? _status;
 
+  /// The notices [_status] counted (DR-224 §11.223.1). Replaced with it,
+  /// always: a list that outlived its message would open under a status
+  /// line saying something else.
+  List<String> _statusNotices = const <String>[];
+
   /// Whether this document has already said its undo history is full.
   /// Once per document (DR-172), so [adopt] resets it.
   bool _historyFullSaid = false;
@@ -264,6 +269,10 @@ final class DocumentSession extends ChangeNotifier {
   /// not be updated.", "Recovered from 14:32…".
   String? get status => _status;
 
+  /// The notices the current [status] counts, readable from its link
+  /// (DR-224). Empty for every status that counts none.
+  List<String> get statusNotices => _statusNotices;
+
   /// CR-094. Forwarded, never cached — a second copy of this bit is a
   /// second thing that can be wrong.
   bool get isDirty => _controller.isDirty;
@@ -310,6 +319,7 @@ final class DocumentSession extends ChangeNotifier {
     _openReadOnly = openReadOnly;
     _baseline = baseline;
     _status = status;
+    _statusNotices = const <String>[];
     _historyFullSaid = false;
     // A property of the FILE, so adopting a different document replaces
     // it. The default is empty, which is what makes every existing caller
@@ -330,6 +340,7 @@ final class DocumentSession extends ChangeNotifier {
     _baseline = saved.baseline;
     _openReadOnly = false;
     _status = status;
+    _statusNotices = const <String>[];
     notifyListeners();
   }
 
@@ -369,10 +380,21 @@ final class DocumentSession extends ChangeNotifier {
     setStatus(undoDepthChangedStatus(depth, dropped));
   }
 
-  void setStatus(String? status) {
-    if (_status == status) return;
+  /// Sets the status line, and the [notices] it counts (DR-224): an
+  /// export's, or none. The two are set together so they cannot disagree.
+  void setStatus(String? status, {List<String> notices = const <String>[]}) {
+    if (_status == status && _sameNotices(notices)) return;
     _status = status;
+    _statusNotices = List<String>.unmodifiable(notices);
     notifyListeners();
+  }
+
+  bool _sameNotices(List<String> other) {
+    if (other.length != _statusNotices.length) return false;
+    for (var i = 0; i < other.length; i++) {
+      if (other[i] != _statusNotices[i]) return false;
+    }
+    return true;
   }
 
   /// Turns out-of-document persistence off for the session. See
@@ -395,6 +417,7 @@ final class DocumentSession extends ChangeNotifier {
     if (!_historyFullSaid && undo.droppedCount > 0) {
       _historyFullSaid = true;
       _status = undoHistoryFullStatus(undo.maxEntries);
+      _statusNotices = const <String>[];
     }
     notifyListeners();
   }
