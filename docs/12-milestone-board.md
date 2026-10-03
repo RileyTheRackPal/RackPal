@@ -1787,6 +1787,24 @@ starter's trunks print `T1` to `T4` with no notice, and without them the notice 
 routes. **Looked at**: Whole House's `T6.10`, the full e-mail and file name on its strip. **Left**:
 PATHWAY's own head prints `PATHW…`, one word wider than 36 pt.
 
+### 4.39 Every export notice was a number, and nobody had read one · 2026-10-03 · `#983` · `DR-224` · no version move
+
+M6-M. **Found writing M6-L's test route**, which had to say where a person would read DR-223's new
+notice: nowhere. `describeExportSuccess` printed `6 notices` and dropped the sentences, and the
+diagnostic log recorded the count alone. So every notice the exporter had ever written (a sheet below
+the preferred text size, an index that omitted sheets, an elevation not to scale, overflow numbering)
+reached the user as a number. CR-023 and G3 made them notices so they would never gate the bytes;
+nothing made them readable. The user ruled the count a link to a list (DR-224).
+
+The notices travel with the status message that counted them, so a later message replaces both; the
+count is a link only where the line ends with it; the dialog groups by sheet id, with Copy and a
+focused Close.
+
+**Evidence.** The shell test drives the real File menu, status line and dialog and reads a notice's
+sentence; removing the notices from `setStatus` fails it. `export_notices_dialog_test.dart` holds the
+grouping, no link with nothing to read, no link on the wrong words, and Copy. **Looked at**: not yet
+on a running build; the test route is in the PR.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
