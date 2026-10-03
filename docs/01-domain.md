@@ -707,7 +707,7 @@ The v1 sheet set, full detail in [PDF export](08-pdf-export.md) §2.2, which is 
 | `T2.02` **Rack Elevation: Rear** | §9.8. The rear panel *prints* in v1; the interactive Rear Panel view is v1.1 (CR-071) | ON, one per `Rack` |
 | `T6.01…` **Interconnect** | One sheet per domain partition of the single schematic `Sheet` (CR-073). Signal flow, left to right, colour by domain. Devices repeat across sheets, identified by `designator`. Zero cross-sheet connections by construction | ON |
 | `T6.10` **Pull Sheet** | §9.7 | ON |
-| `T6.11` **Termination Schedule** | §9.7 | ON |
+| `T6.15` **Termination Schedule** | §9.7 | ON |
 | `T6.20` **Unused Home Runs** | Every home run with an open end, at the rack or at the room, in room bands, saying which end (DR-220). This row read *"terminated at the DD with no device on it"*, a different sheet, until that ruling | AUTO (iff ≥ 1 exists) |
 | `T6.30` **Equipment List and Materials** | Includes the cable footage rollup by media with waste factor. No pricing | ON |
 | `T5.01` **Plate, Panel & Pinout Details** | Per-plate and per-panel detail where a connector's pinout is non-standard | AUTO (iff a non-standard pinout exists) |

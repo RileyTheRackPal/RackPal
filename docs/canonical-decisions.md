@@ -23475,6 +23475,38 @@ no other sheet and no reserved id.
 §11.220.5 builds one rather than deferring it. The format gains one optional key on `PortDef`, absent
 by default, so no existing file's bytes move (CR-117).
 
+### 11.221 DR-222 · The schedules number in blocks of five, and print their fixed columns
+
+**Settled by the user on 2026-10-02, opening M6-K (`#977`).** The Pull Sheet and the Termination
+Schedule are v1 sheets (docs/08 §2.2 rows `n+1` and `n+2`, both `ON`) that M6's decomposition never
+filed: `#693` owed the Termination Schedule's columns and `#574` pointed at the Pull Sheet, and nothing
+built either page. The rows exist; M3 built `buildScheduleView` and both presets' column tables.
+
+**11.221.1 RULED: BLOCKS OF FIVE.** The Pull Sheet is `T6.10` to `T6.14`; **the Termination Schedule
+moves from `T6.11` to `T6.15`**, and runs `T6.15` to `T6.19`. A page past either block takes the next
+id from the shared overflow pool at `T6.60`, which every schedule draws from in set order (Pull Sheet,
+Termination Schedule, `T6.20`, `T6.30`), so no id lands on two sheets (DR-220 §11.219.5, generalised).
+**THE COLLISION THIS FIXES WAS IN THE CORPUS FROM THE START**: at 42 rows a page, any job over 42 drops
+needs a second Pull Sheet page, and `T6.11` was already the Termination Schedule's. Not taken: keeping
+`T6.11` and sending every second page to the pool, which prints a 60-drop job's Pull Sheet as `T6.10`,
+`T6.60`; and giving the Pull Sheet the whole decade with the Termination Schedule at `T6.70`.
+
+**11.221.2 RULED: FIXED COLUMNS ONLY.** The Pull Sheet prints docs/08 §3.2's ten columns and the
+Termination Schedule §3.3's thirteen, with DR-055's `FIELD TERM` and `RACK TERM` (`#693`). §3.4's
+optional columns arrive with M6-I's export dialog, where a person chooses them. Not taken: turning each
+on when its *"Enabled by"* condition holds, which would let the overflow rule promote sheets to ANSI B
+on its own and leave M6-I reconciling automatic choices with manual ones.
+
+**11.221.3 DECIDED WITHOUT A QUESTION**, each following a ruling already made: both sheets are `ON`, so
+a project with no cable prints a page that says so (T6.30's precedent); jumpers and power cords are
+excluded and counted in words (AC-026), since they roll up on `T6.30`; the Pull Sheet groups by
+lifecycle and then room (DR-206 §11.205.2), the Termination Schedule by rack with the lifecycle suffix
+on `CABLE ID` (§11.205.3); a band repeats `(cont.)` and keeps with its first row (docs/08 §3.6, DR-219
+§11.218.1).
+
+**Scope.** No scope moves between releases. §11.221.1 renumbers a v1 sheet, an amendment recorded in
+§12.46.
+
 ---
 
 ## 12. Superseded rulings
@@ -24198,6 +24230,13 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **§6 (the IR families paragraph)**, and the registry text §11.125.1 quotes | *"receivers are tip = signal, ring = GND, sleeve = +12 V"* | **Tip IR, ring +12 V, sleeve GND** (§11.220.3). The paragraph is corrected in place; §11.125.1's blockquote and DR-060's inline quotation (§11.59) keep the words they quoted, each followed by a pointer here. The damage mechanism, a TS plug bridging ring to sleeve, is unchanged. |
+
+
+### 12.46 Amended by DR-222 (the Termination Schedule is T6.15)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **docs/08 §2.2's `n+2`**, and every ruling before DR-222 naming `T6.11` (DR-206 §11.205 throughout, and DR-090 §11.89's note on the cells that emit `U+2194`) | the Termination Schedule is `T6.11` | **It is `T6.15`, running `T6.15` to `T6.19`; the Pull Sheet keeps `T6.10` and runs to `T6.14`** (§11.221.1). The rulings keep their words: in any of them `T6.11` means the Termination Schedule. The derived documents are edited to match. |
 
 
 ## 13. Resolved §10 questions
