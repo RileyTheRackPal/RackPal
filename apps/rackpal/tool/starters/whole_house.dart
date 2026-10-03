@@ -182,10 +182,18 @@ RackDocument buildWholeHouseStarter() {
   );
 
   // --- Pathways ----------------------------------------------------------
+  //
+  // DESIGNATED, AS AN AS-BUILT TRUNK IS (DR-223 §11.222.2). The Pull Sheet's
+  // PATHWAY column is 36 pt for a designator and falls back to the name,
+  // which these names cannot fit. The values are AUTHORED here, the record
+  // somebody walking these trunks would write, and not allocated: DR-026
+  // §11.25.1 rules a designator hand-entered with no series, and nothing
+  // in the product mints one.
 
   final riser = author.addPathway(
     doc,
     name: 'Equipment room to attic riser',
+    designator: 'T1',
     kind: PathwayKind.conduit,
     order: 0,
     fromLocationId: equip,
@@ -196,6 +204,7 @@ RackDocument buildWholeHouseStarter() {
   final groundRun = author.addPathway(
     doc,
     name: 'Ground floor J-hook run',
+    designator: 'T2',
     kind: PathwayKind.jhook,
     order: 1,
     fromLocationId: equip,
@@ -205,6 +214,7 @@ RackDocument buildWholeHouseStarter() {
   final atticTray = author.addPathway(
     doc,
     name: 'First floor attic tray',
+    designator: 'T3',
     kind: PathwayKind.tray,
     order: 2,
     fromLocationId: l2,
@@ -214,6 +224,7 @@ RackDocument buildWholeHouseStarter() {
   final buried = author.addPathway(
     doc,
     name: 'Patio direct bury',
+    designator: 'T4',
     kind: PathwayKind.directBury,
     order: 3,
     fromLocationId: equip,

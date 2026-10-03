@@ -1120,7 +1120,10 @@ $SuiteFloors = @{
     # 5398 at `#982` (M6-L, DR-223): +2 in sheet/title_block_test.dart, the
     # compact strip repeats nothing, and a row too wide steps down to 7 pt
     # and the layer reports it.
-    'rackpal_core'   = 5398
+    # 5400 at `#982` (M6-L, DR-223): +2 in sheet/schedule_sheet_test.dart,
+    # Whole House's trunks print T1 to T4 with no notice, and without them
+    # the notice counts, names three, and gives the route.
+    'rackpal_core'   = 5400
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

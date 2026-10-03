@@ -43,6 +43,7 @@ import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
 import 'package:rackpal_core/src/model/registries.dart';
+import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
 
 /// Text size and one wrapped line, in points. §3.2's body row is 15 pt
@@ -74,6 +75,41 @@ const double _kCellPad = 2.5;
 const String kNoCablesText = 'This project has no cables yet.';
 const String kAllExcludedText =
     'No cable belongs on this sheet; the exclusions are named above.';
+
+/// Where a pathway's designator is typed, as the notice names it: the
+/// Structured Wiring tab's Pathways view, its DESIGNATOR column.
+///
+/// IN WORDS AND NOT WITH `▸`, which this corpus reserves for a MENU path:
+/// `menu_route_copy_test.dart` reads the real menu bar and refuses a
+/// route through a menu that does not exist, and Structured Wiring is a
+/// tab. The first draft wrote it with the glyph and that test caught it.
+const String kPathwayDesignatorRoute =
+    "the DESIGNATOR column of the Structured Wiring tab's Pathways view";
+
+/// The export notice for pathways a Pull Sheet prints without a designator
+/// (DR-223 §11.222.2), or null when every one it prints has one.
+///
+/// PATHWAY is 36 pt for a designator and falls back to the name (DR-026
+/// §11.25.1), which it is too narrow to hold. The designator is
+/// hand-entered and nothing mints one, so the notice says where a person
+/// types it rather than inventing a short form. Distinct pathways, in the
+/// order the sheet first prints them, up to three named.
+String? undesignatedPathwayNotice(ScheduleView view, String sheetId) {
+  final names = <Uuid, String>{};
+  for (final row in view.rows) {
+    final id = row.pathwayId;
+    if (id == null || row.pathwayDesignator != null) continue;
+    names.putIfAbsent(id, () => row.pathwayName ?? id.v);
+  }
+  if (names.isEmpty) return null;
+  final n = names.length;
+  final shown = names.values.take(3).join(', ');
+  final more = n > 3 ? ' and ${n - 3} more' : '';
+  final them = n == 1 ? 'it' : 'each one';
+  return '$sheetId: $n ${n == 1 ? 'pathway has' : 'pathways have'} no '
+      'designator, so PATHWAY prints the name, cut to fit: $shown$more. '
+      'Give $them a designator in $kPathwayDesignatorRoute.';
+}
 
 // ── the paginated model ──────────────────────────────────────────────────
 

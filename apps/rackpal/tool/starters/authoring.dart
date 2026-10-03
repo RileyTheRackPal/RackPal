@@ -494,6 +494,7 @@ final class StarterAuthor {
     required String name,
     required PathwayKind kind,
     required int order,
+    String? designator,
     Uuid? fromLocationId,
     Uuid? toLocationId,
     Len? nominalLength,
@@ -504,6 +505,7 @@ final class StarterAuthor {
     doc.pathways[id] = Pathway(
       id: id,
       name: name,
+      designator: designator,
       order: fracIndex(order),
       meta: meta(),
       kind: kind,

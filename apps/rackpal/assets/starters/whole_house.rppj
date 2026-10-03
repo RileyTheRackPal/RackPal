@@ -4264,6 +4264,7 @@
     "pathways": {
       "019bb13c-a3e0-7000-8000-00000000000f": {
         "containsLineVoltage": false,
+        "designator": "T1",
         "fromLocationId": "019bb13c-a3e0-7000-8000-000000000006",
         "id": "019bb13c-a3e0-7000-8000-00000000000f",
         "kind": "conduit",
@@ -4282,6 +4283,7 @@
       },
       "019bb13c-a3e0-7000-8000-000000000010": {
         "containsLineVoltage": false,
+        "designator": "T2",
         "fromLocationId": "019bb13c-a3e0-7000-8000-000000000006",
         "id": "019bb13c-a3e0-7000-8000-000000000010",
         "kind": "jhook",
@@ -4299,6 +4301,7 @@
       },
       "019bb13c-a3e0-7000-8000-000000000011": {
         "containsLineVoltage": false,
+        "designator": "T3",
         "fromLocationId": "019bb13c-a3e0-7000-8000-000000000005",
         "id": "019bb13c-a3e0-7000-8000-000000000011",
         "kind": "tray",
@@ -4316,6 +4319,7 @@
       },
       "019bb13c-a3e0-7000-8000-000000000012": {
         "containsLineVoltage": false,
+        "designator": "T4",
         "fromLocationId": "019bb13c-a3e0-7000-8000-000000000006",
         "id": "019bb13c-a3e0-7000-8000-000000000012",
         "kind": "directBury",
