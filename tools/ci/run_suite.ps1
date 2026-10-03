@@ -1123,7 +1123,13 @@ $SuiteFloors = @{
     # 5400 at `#982` (M6-L, DR-223): +2 in sheet/schedule_sheet_test.dart,
     # Whole House's trunks print T1 to T4 with no notice, and without them
     # the notice counts, names three, and gives the route.
-    'rackpal_core'   = 5400
+    # 5407 at `#327` (M6-D1, DR-225): +7 in sheet/interconnect_partition_
+    # test.dart, the figure order, each labelled link on exactly one sheet,
+    # each sheet's devices its own, Whole House's two sheets with every
+    # port-landed run on one, the collapsed-canvas control that loses
+    # eleven of PP-1's twelve, banksWiredBy, and the view differing from
+    # its source in devices and links alone.
+    'rackpal_core'   = 5407
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
