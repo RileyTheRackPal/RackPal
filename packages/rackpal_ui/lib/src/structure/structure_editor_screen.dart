@@ -64,6 +64,7 @@ import 'package:rackpal_ui/src/canvas/plan/plan_pin_arm.dart';
 import 'package:rackpal_ui/src/keymap/keymap.dart';
 import 'package:rackpal_ui/src/structure/connector_aliases_dialog.dart';
 import 'package:rackpal_ui/src/structure/csv_import_dialog.dart';
+import 'package:rackpal_ui/src/structure/devices_view.dart';
 import 'package:rackpal_ui/src/structure/drop_entry_panel.dart';
 import 'package:rackpal_ui/src/structure/media_types_dialog.dart';
 import 'package:rackpal_ui/src/structure/outlets_view.dart';
@@ -89,6 +90,7 @@ final class StructureEditorActions {
     required this.onEditPathways,
     required this.onAddPathway,
     required this.onRemovePathway,
+    required this.onEditDevices,
     required this.onImportCsv,
     required this.onRunMediaTypeCommands,
     required this.onRemoveStructure,
@@ -173,6 +175,13 @@ final class StructureEditorActions {
   /// cascade: see `RemovePathwayCommand`.
   final String? Function(Uuid id) onRemovePathway;
 
+  /// The Devices view's cells, as ONE undo step (NET-A/2a, DR-226).
+  ///
+  /// A FOURTH CALLBACK for [onEditPathways]' reason: the id in a
+  /// `NetworkCellEdit` is a `DeviceInstance`'s, and folding it into another
+  /// callback would put a third entity type behind one `Uuid`.
+  final String? Function(List<NetworkCellEdit> edits) onEditDevices;
+
   /// docs/07 §5's import, on the body the editor is showing (M3-F/2,
   /// #160).
   ///
@@ -225,6 +234,11 @@ enum StructureEditorTab {
   /// expectation is that a pathway is SET in the Plan view, once somebody
   /// has walked the run.
   pathways,
+
+  /// NET-A/2a (`#988`), DR-226 §11.225.2: the devices and their network
+  /// values, DR-048's table given a host. FIFTH and last, so nothing a
+  /// person learned the place of moves.
+  devices,
 }
 
 /// What the tab strip calls each tab.
@@ -238,6 +252,9 @@ const String kOutletsTabLabel = 'Outlets';
 
 /// See [kTableTabLabel].
 const String kPathwaysTabLabel = 'Pathways';
+
+/// See [kTableTabLabel].
+const String kDevicesTabLabel = 'Devices';
 
 /// One cell, as an edit request: which drop, which column, what was
 /// typed.
@@ -519,6 +536,10 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
                             onRemove: _removePathway,
                           ),
                         ),
+                        StructureEditorTab.devices => DevicesView(
+                          doc: doc,
+                          actions: DevicesActions(onEdit: _editDevices),
+                        ),
                       },
                     ),
                   ],
@@ -662,6 +683,12 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   /// for the same class of news.
   String? _editPathways(List<PathwayCellEdit> edits) {
     final refusal = widget.actions.onEditPathways(edits);
+    setState(() => _refusal = refusal);
+    return refusal;
+  }
+
+  String? _editDevices(List<NetworkCellEdit> edits) {
+    final refusal = widget.actions.onEditDevices(edits);
     setState(() => _refusal = refusal);
     return refusal;
   }
@@ -1278,6 +1305,10 @@ class _TabStrip extends StatelessWidget {
           ButtonSegment<StructureEditorTab>(
             value: StructureEditorTab.pathways,
             label: Text(kPathwaysTabLabel),
+          ),
+          ButtonSegment<StructureEditorTab>(
+            value: StructureEditorTab.devices,
+            label: Text(kDevicesTabLabel),
           ),
         ],
         selected: {tab},

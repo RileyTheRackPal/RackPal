@@ -84,6 +84,15 @@ final class _Harness {
   /// The Structure body the last `Add outlet` was opened on (#158).
   Uuid? outletPickerBody;
 
+  /// Every batch of Devices-view edits (NET-A/2a), recorded and never
+  /// refused: the parsing and the commands are the app's, and tested there.
+  final List<List<NetworkCellEdit>> deviceEdits = [];
+
+  String? editDevices(List<NetworkCellEdit> edits) {
+    deviceEdits.add(edits);
+    return null;
+  }
+
   StructureEditorActions get actions => StructureEditorActions(
     onPinOnPlan: offerPinOnPlan ? armedOnPlan.add : null,
     dropEntry: DropEntryActions(
@@ -122,6 +131,7 @@ final class _Harness {
     onEditPathways: editPathways,
     onAddPathway: addPathway,
     onRemovePathway: removePathway,
+    onEditDevices: editDevices,
     onImportCsv: (bodyId) async {
       importCsvOpened++;
       importCsvBody = bodyId;
@@ -1729,6 +1739,20 @@ void main() {
       expect(find.text(kAddPathwayLabel), findsOneWidget);
     });
 
+    testWidgets('the Devices tab opens a real surface (NET-A/2a)', (
+      tester,
+    ) async {
+      // A project with no network-capable device still gets a surface: the
+      // view says so in words and points at Show all.
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await tester.tap(find.text(kDevicesTabLabel));
+      await tester.pumpAndSettle();
+
+      expect(find.byType(DevicesView), findsOneWidget);
+      expect(find.text(kShowAllDevicesLabel), findsOneWidget);
+    });
+
     testWidgets('the strip is in §4 order, and Pathways did not move', (
       tester,
     ) async {
@@ -1748,11 +1772,14 @@ void main() {
           )
           .map((t) => t.data)
           .toList();
+      // `Devices` (NET-A/2a, DR-226) arrived FIFTH, so the four before it
+      // are still where a person learned them.
       expect(labels, [
         kTableTabLabel,
         kMatrixTabLabel,
         kOutletsTabLabel,
         kPathwaysTabLabel,
+        kDevicesTabLabel,
       ]);
     });
 

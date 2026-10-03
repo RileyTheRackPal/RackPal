@@ -163,6 +163,7 @@ export 'src/shell/unbuilt_view.dart';
 export 'src/shell/unsaved_changes_dialog.dart';
 export 'src/structure/connector_aliases_dialog.dart';
 export 'src/structure/csv_import_dialog.dart';
+export 'src/structure/devices_view.dart';
 export 'src/structure/drop_entry_panel.dart';
 export 'src/structure/media_types_dialog.dart';
 export 'src/structure/outlet_template_picker.dart';

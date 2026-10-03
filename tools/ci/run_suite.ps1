@@ -1172,7 +1172,12 @@ $SuiteFloors = @{
     # stated yes and no both written and read back, and unstated absent
     # again. The isolation census now also covers primaryDomain, which was
     # missing from TemplateBodyField.all.
-    'rackpal_core'   = 5467
+    # 5477 at `#988` (NET-A/2a, DR-226, DR-227): +10 in derived/network_
+    # table_test.dart, Whole House's 26 rows without the passthroughs, Show
+    # all, Wi-Fi without a port, a value keeping a device listed, both
+    # orders and their agreement, a row reading its device (the MAC from
+    # macAddressPrimary), unverified said, and the VLAN parser.
+    'rackpal_core'   = 5477
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1825,7 +1830,12 @@ $SuiteFloors = @{
     # _test.dart, the Wi-Fi row: yes reaches the saved body, unset starts
     # and saves unset, no is kept apart from unset, and yes goes back to
     # unset.
-    'rackpal_ui'     = 2054
+    # 2060 at `#988` (NET-A/2a, DR-226): +5 in structure/devices_view_test
+    # .dart, the 26 rows and default columns, Show all, unverified in the
+    # box, one edit per Enter (the double send it found is fixed), and the
+    # identity columns read-only; +1 in structure_editor_screen_test.dart,
+    # the Devices tab opening a real surface.
+    'rackpal_ui'     = 2060
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -2042,12 +2052,17 @@ $SuiteFloors = @{
     # real menu, status line and dialog showing a notice's sentence; +1 in
     # session/document_session_test.dart, a status and its notices replaced
     # together.
+    # 1169 at `#988` (NET-A/2a, DR-226): +8 in session/network_actions_test
+    # .dart, through a real controller: an address trimmed, the MAC on the
+    # device, an emptied cell unknown, VLANs and dates refused when
+    # mistyped, no stamp on edit, several cells one undo, and a stranger
+    # refused.
     # 1161 at `#330` (M6-D4, DR-004, DR-225): +5 in one_schematic_sheet_test
     # .dart, a source scan: not vacuous, a Sheet constructed only by the
     # codec and the two commands that create the ONE sheet, each behind a
     # null check, the interconnect files writing none, and no surface
     # offering to author a sheet. Both scans mutation-checked.
-    'rackpal_app'    = 1161
+    'rackpal_app'    = 1169
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
