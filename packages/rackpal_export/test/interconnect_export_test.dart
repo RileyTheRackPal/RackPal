@@ -81,6 +81,23 @@ void main() {
     expect(pageOf['T6.01'], isNot(contains('PP-1')));
   });
 
+  test('Network prints under the floor and SAYS so, and stays drawn: net '
+      'labels miss the floor too, so no note and no fallback notice '
+      '(DR-225 §11.224.4)', () {
+    expect(
+      exported.notices,
+      contains(
+        allOf(startsWith('T6.02:'), contains('below the 6 pt legibility')),
+      ),
+    );
+    expect(
+      exported.notices.where((n) => n.contains('shown as net labels')),
+      isEmpty,
+    );
+    expect(pageOf['T6.02'], isNot(contains(kInterconnectNoteLines.first)));
+    expect(pageOf['T6.02'], contains('W002 ·'), reason: 'still drawn');
+  });
+
   test('the drawing index lists each interconnect sheet on its own row', () {
     final cover = pageOf['T0.00']!;
     expect(cover, contains('INTERCONNECT · Analog Video & RF'));

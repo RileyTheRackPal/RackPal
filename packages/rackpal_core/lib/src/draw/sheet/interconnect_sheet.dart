@@ -31,6 +31,25 @@
 //
 // THE SCALE FIELD SAYS `NTS`. A schematic states topology, not distance,
 // and a ratio printed on it invites someone to scale a cable length off it.
+//
+// ═══════════════════════════════════════════════════════════════════════
+// THE FALLBACK TO NET LABELS, AND HOW RARELY IT CAN HELP (DR-225 §11.224.4)
+// ═══════════════════════════════════════════════════════════════════════
+// A sheet is `drawn` (DR-001 §11.1.2) unless its fit puts text under
+// `kMinPrintPt`, and then it prints as net labels ONLY IF THAT SHEET MEETS
+// THE FLOOR, with a ruled note saying so ([kInterconnectNoteLines]). There
+// is no link count anywhere in this decision, which keeps `wire_trace
+// .dart`'s "no link-count branch" true: the measure is the paper.
+//
+// MEASURED WHEN IT WAS BUILT, AND WORTH KNOWING BEFORE ANYONE TUNES IT. The
+// two renderings share one symbol layout and one 8 pt type size, so they
+// differ only in how far the ink reaches. On Whole House's Network sheet
+// drawn prints at 5.18 pt and labels at 5.39; on the schematic test
+// fixture's three sheets the two are never more than 0.25 pt apart, and
+// labels are the WORSE of the two on two of them. A sheet too big is too
+// big because of its symbols and the layout's gaps, not its wires, so the
+// fallback almost never fires and the implementer's clause is what stops
+// it trading the wires away for nothing.
 
 import 'dart:math' as math;
 
@@ -55,6 +74,62 @@ import 'package:vector_math/vector_math_64.dart' show Matrix4;
 /// See the file header.
 const double kInterconnectMaxFactor = 1;
 
+/// How an interconnect sheet renders its cables (DR-001 §11.1.2, DR-225
+/// §11.224.4). Decided once per sheet by [layoutInterconnect], never
+/// persisted.
+enum InterconnectRender {
+  /// Orthogonal wires with a tag pill at each end: the default.
+  drawn,
+
+  /// A labelled stub at each end, and the note box saying why.
+  netLabels,
+}
+
+/// DR-225 §11.224.4's decision, given what each rendering would print its
+/// smallest text at on paper.
+///
+/// Drawn when drawn meets the floor; net labels when drawn does not and
+/// labels do; drawn otherwise, because a swap that reaches no floor buys
+/// no legibility and costs the wires (the implementer's clause, recorded as
+/// such in canon).
+InterconnectRender chooseInterconnectRender({
+  required double drawnPaperPt,
+  required double labelsPaperPt,
+}) {
+  if (drawnPaperPt >= kMinPrintPt) return InterconnectRender.drawn;
+  if (labelsPaperPt >= kMinPrintPt) return InterconnectRender.netLabels;
+  return InterconnectRender.drawn;
+}
+
+/// The fallback's note (DR-225 §11.224.5), one entry per printed line.
+///
+/// IT NAMES WHAT THE READER HOLDS, not the ruling: a client's copy of the
+/// set has no use for a ruling id, and every word here is about the sheet
+/// in their hand. Uppercase, as every note on a drawing is.
+const List<String> kInterconnectNoteLines = <String>[
+  'NOTE: THE CABLES ON THIS SHEET ARE SHOWN AS NET LABELS, ONE AT EACH END.',
+  'DRAWN AS WIRES, THIS SHEET WOULD PRINT ITS TEXT BELOW 6 PT.',
+];
+
+/// The note's type size: §6.2's preferred floor, so the note that explains
+/// a legibility trade is itself comfortably legible.
+const double kInterconnectNotePt = kSoftPrintPt;
+
+/// The note box's inner padding and its line pitch.
+const double kInterconnectNotePadPt = 4;
+const double kInterconnectNoteLinePt = 9;
+
+/// The clear space between the note box and the drawing below it.
+const double kInterconnectNoteGapPt = 6;
+
+/// The band the note takes off the top of the drawing area: the box, and
+/// the gap under it. The drawing is fitted into what is left, so the note
+/// can never sit on top of a symbol.
+const double kInterconnectNoteBandPt =
+    kInterconnectNotePadPt * 2 +
+    kInterconnectNoteLinePt * 2 +
+    kInterconnectNoteGapPt;
+
 /// One interconnect sheet's drawing, decided BEFORE the set is resolved.
 ///
 /// A dry run for the reason every paginated sheet has one: the set has to
@@ -68,8 +143,11 @@ final class InterconnectDrawing {
     required this.scene,
     required this.wires,
     required this.area,
+    required this.render,
     required this.content,
+    required this.contentArea,
     required this.factor,
+    required this.drawnPaperPt,
   });
 
   final InterconnectPartition partition;
@@ -78,29 +156,65 @@ final class InterconnectDrawing {
   final SchematicScene scene;
 
   /// The subset's drawn wires and tag pills, over every link in
-  /// [partition].
+  /// [partition]. Built whichever way the sheet renders: the decision
+  /// needs its extent.
   final DrawnWireLayer wires;
 
-  /// The drawing area this drawing was fitted to. The sheet asserts it
-  /// resolves the same area, so a dry run against one frame and a draw
-  /// against another cannot pass silently.
+  /// The drawing area this drawing was laid out in. The sheet asserts it
+  /// lies inside the area the sheet resolves, so a dry run against one
+  /// frame and a draw against another cannot pass silently.
   final DBox area;
 
-  /// What is fitted: the symbols and the wires, in diagram units.
+  final InterconnectRender render;
+
+  /// What is fitted, in diagram units: the symbols and the wires when
+  /// [render] is `drawn`, the symbols and the labels when it is not.
   final DBox content;
+
+  /// Where [content] is fitted: [area] when drawn, and [area] less
+  /// [kInterconnectNoteBandPt] off its top when the note prints.
+  final DBox contentArea;
 
   /// Paper points per diagram unit. Never above [kInterconnectMaxFactor].
   final SceneFactor factor;
 
-  /// The smallest text this drawing prints, in diagram units: the symbols'
-  /// and the tag pills'.
-  double get minTextPt => math.min(
-    scene.symbolTier.minTextPt,
-    wires.wires.isEmpty
-        ? double.infinity
-        : const SchematicWireStyle().tagSizePt,
-  );
+  /// What the DRAWN rendering would print its smallest text at, whichever
+  /// rendering was chosen: the number the fallback's notice states.
+  final double drawnPaperPt;
+
+  /// Whether this sheet fell back to net labels, and so carries the note.
+  bool get fellBack => render == InterconnectRender.netLabels;
+
+  /// The smallest text this drawing prints, in diagram units.
+  double get minTextPt => switch (render) {
+    InterconnectRender.drawn => _drawnMinTextPt(scene, wires),
+    InterconnectRender.netLabels => scene.scene.minTextSizePt,
+  };
 }
+
+/// The smallest text a DRAWN sheet prints: the symbols' and the pills'.
+double _drawnMinTextPt(SchematicScene scene, DrawnWireLayer wires) => math.min(
+  scene.symbolTier.minTextPt,
+  wires.wires.isEmpty ? double.infinity : const SchematicWireStyle().tagSizePt,
+);
+
+/// [content] plus one grid unit of clearance. `inkBounds` is geometry, not
+/// stroked ink (`DrawnWireLayer.inkBounds` says why), so the outermost
+/// stroke and outline reach up to half their width past it; a grid unit is
+/// an order of magnitude more than the widest of them.
+DBox _cleared(DBox content) => content.inflate(kSchematicUnitsPerGrid);
+
+/// The fit of [content] into [area], never above the design size.
+SceneFactor _fit(DBox content, DBox area) => SceneFactor(
+  math.min(
+    fitSceneFactor(
+      content,
+      availableWidth: area.width,
+      availableHeight: area.height,
+    ).unitsToPoints,
+    kInterconnectMaxFactor,
+  ),
+);
 
 /// The drawing area an interconnect sheet has, before its [SheetDef]
 /// exists: the zoned ANSI B landscape frame (docs/08 §6.1, DR-215).
@@ -145,27 +259,39 @@ InterconnectDrawing layoutInterconnect({
     measurer: measurer,
     palette: palette,
   );
-  var content = scene.symbolTier.bounds ?? const DBox.fromLtwh(0, 0, 0, 0);
-  if (wires.inkBounds case final ink?) content = content.union(ink);
-  // ONE GRID UNIT OF CLEARANCE. `inkBounds` is geometry, not stroked ink
-  // (`DrawnWireLayer.inkBounds` says why), so the outermost stroke and pill
-  // outline reach up to half their width past it; a grid unit is an order
-  // of magnitude more than the widest of them.
-  content = content.inflate(kSchematicUnitsPerGrid);
-  final fit = fitSceneFactor(
-    content,
-    availableWidth: area.width,
-    availableHeight: area.height,
+  var drawnInk = scene.symbolTier.bounds ?? const DBox.fromLtwh(0, 0, 0, 0);
+  if (wires.inkBounds case final ink?) drawnInk = drawnInk.union(ink);
+  final drawnContent = _cleared(drawnInk);
+  final drawnFactor = _fit(drawnContent, area);
+  final drawnPaperPt = drawnFactor.points(_drawnMinTextPt(scene, wires));
+
+  // THE LABEL SHEET IS MEASURED IN THE AREA IT WOULD ACTUALLY HAVE: the
+  // note takes its band off the top first, so a fallback that only met the
+  // floor by ignoring its own note could not be chosen.
+  final noteArea = DBox.fromLtwh(
+    area.left,
+    area.top + kInterconnectNoteBandPt,
+    area.width,
+    area.height - kInterconnectNoteBandPt,
   );
+  final labelContent = _cleared(scene.scene.bounds);
+  final labelFactor = _fit(labelContent, noteArea);
+  final render = chooseInterconnectRender(
+    drawnPaperPt: drawnPaperPt,
+    labelsPaperPt: labelFactor.points(scene.scene.minTextSizePt),
+  );
+  final drawn = render == InterconnectRender.drawn;
+
   return InterconnectDrawing(
     partition: partition,
     scene: scene,
     wires: wires,
     area: area,
-    content: content,
-    factor: SceneFactor(
-      math.min(fit.unitsToPoints, kInterconnectMaxFactor),
-    ),
+    render: render,
+    content: drawn ? drawnContent : labelContent,
+    contentArea: drawn ? area : noteArea,
+    factor: drawn ? drawnFactor : labelFactor,
+    drawnPaperPt: drawnPaperPt,
   );
 }
 
@@ -195,12 +321,19 @@ InterconnectSheet buildInterconnectSheet({
     'buildInterconnectSheet: ${sheet.role} is not the interconnect role',
   );
   final layout = sheetLayoutFor(sheet, revisions);
+  // INSIDE, NOT EQUAL. The export always lays out in exactly this area; a
+  // test that lays out in a smaller box inside it, to reach a rendering no
+  // starter reaches, is drawing a real sheet and is allowed to.
+  final frame = layout.drawingArea;
   assert(
-    layout.drawingArea == drawing.area,
-    'buildInterconnectSheet: the drawing was fitted to ${drawing.area} and '
-    'the sheet resolves ${layout.drawingArea}',
+    drawing.area.left >= frame.left &&
+        drawing.area.top >= frame.top &&
+        drawing.area.right <= frame.right &&
+        drawing.area.bottom <= frame.bottom,
+    'buildInterconnectSheet: the drawing was laid out in ${drawing.area}, '
+    "outside the sheet's drawing area $frame",
   );
-  final area = layout.drawingArea;
+  final area = drawing.contentArea;
 
   final furniture = buildSheetFurniture(
     sheet: sheet,
@@ -233,17 +366,29 @@ InterconnectSheet buildInterconnectSheet({
       Matrix4.translationValues(originX, originY, 0)
         ..multiply(Matrix4.diagonal3Values(s, s, 1)),
     ),
-    // THE SYMBOLS, THEN THE WIRES, the canvas's own order for a soloed
-    // domain: a wire's pills are emitted after every trace, and every
-    // trace after every body, so nothing a reader needs sits under a box.
-    ...drawing.scene.symbolTier.ops,
-    ...drawing.wires.ops,
+    ...switch (drawing.render) {
+      // THE SYMBOLS, THEN THE WIRES, the canvas's own order for a soloed
+      // domain: a wire's pills are emitted after every trace, and every
+      // trace after every body, so nothing a reader needs sits under a box.
+      InterconnectRender.drawn => <DiagramOp>[
+        ...drawing.scene.symbolTier.ops,
+        ...drawing.wires.ops,
+      ],
+      // THE WHOLE SUBSET SCENE: its symbols, then its labels, which is the
+      // order `buildSchematicScene` already emits them in, and it holds
+      // this domain's labels and no other's.
+      InterconnectRender.netLabels => drawing.scene.scene.ops,
+    },
     const OpRestore(),
+    if (drawing.fellBack) ..._noteOps(drawing.area, measurer, palette),
   ];
 
   final minText = math.min(
-    furniture.minTextSizePt,
-    drawing.factor.points(drawing.minTextPt),
+    math.min(
+      furniture.minTextSizePt,
+      drawing.factor.points(drawing.minTextPt),
+    ),
+    drawing.fellBack ? kInterconnectNotePt : double.infinity,
   );
 
   return InterconnectSheet(
@@ -259,4 +404,47 @@ InterconnectSheet buildInterconnectSheet({
       scale: const SceneFactor(1),
     ),
   );
+}
+
+/// The fallback's ruled note, in the drawing area's upper left (DR-225
+/// §11.224.5), in the band [layoutInterconnect] reserved for it.
+///
+/// FURNITURE, NOT DRAWING: it is emitted outside the drawing's scale
+/// bracket, at 1:1, so it prints at [kInterconnectNotePt] whatever the fit.
+List<DiagramOp> _noteOps(
+  DBox area,
+  TextMeasurer measurer,
+  SheetPalette palette,
+) {
+  final style = TextStyleSpec(
+    font: kSheetFont,
+    sizePt: kInterconnectNotePt,
+    argb: palette.text,
+    anchor: TextAnchor.midLeft,
+  );
+  var widest = 0.0;
+  for (final line in kInterconnectNoteLines) {
+    widest = math.max(widest, measurer.measureText(line, style).advanceWidth);
+  }
+  final box = DBox.fromLtwh(
+    area.left,
+    area.top,
+    widest + kInterconnectNotePadPt * 2,
+    kInterconnectNoteBandPt - kInterconnectNoteGapPt,
+  );
+  return <DiagramOp>[
+    OpRect(box, stroke: sheetRule(palette.rule, kTableRuleWidthPt)),
+    for (var i = 0; i < kInterconnectNoteLines.length; i++)
+      OpText(
+        kInterconnectNoteLines[i],
+        DPt(
+          box.left + kInterconnectNotePadPt,
+          box.top +
+              kInterconnectNotePadPt +
+              kInterconnectNoteLinePt * i +
+              kInterconnectNoteLinePt / 2,
+        ),
+        style,
+      ),
+  ];
 }

@@ -486,9 +486,20 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
           );
         }
       case SheetRole.interconnect:
+        final drawing = interconnects[interconnectSheet++];
+        // THE FALLBACK IS SAID TWICE (DR-225 §11.224.5): on the sheet, for
+        // whoever holds it, and here, for whoever exported it.
+        if (drawing.fellBack) {
+          notices.add(
+            '${sheet.ncsId}: cables shown as net labels; drawn, the '
+            'smallest text would print at '
+            '${drawing.drawnPaperPt.toStringAsFixed(2)} pt, under the '
+            '${kMinPrintPt.toStringAsFixed(0)} pt floor.',
+          );
+        }
         final built = buildInterconnectSheet(
           sheet: sheet,
-          drawing: interconnects[interconnectSheet++],
+          drawing: drawing,
           info: doc.info,
           settings: doc.settings,
           revisions: doc.revisionBlock,
