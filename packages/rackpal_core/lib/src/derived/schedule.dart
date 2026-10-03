@@ -2,7 +2,7 @@
 //
 // docs/08-pdf-export.md §3 — THE WIRING SCHEDULE. "The schedule is the
 // deliverable; the drawing is the receipt" (G1), which is why this is the
-// one derivation the Schedule tab AND the T6.10/T6.11 sheet builders both
+// one derivation the Schedule tab AND the T6.10/T6.15 sheet builders both
 // read. Computes; never draws.
 //
 // ═════════════════════════════════════════════════════════════════════
@@ -15,7 +15,7 @@
 // a sort, a grouping and a column list — and no code of its own. The
 // failure this shape exists to prevent is the obvious one: two table
 // builders that agree on the day they are written, and disagree about
-// what a rack label is by the end of the milestone. `T6.10` and `T6.11`
+// what a rack label is by the end of the milestone. `T6.10` and `T6.15`
 // describe the SAME cable to two different readers, and a discrepancy
 // between them is a callback.
 //
@@ -383,7 +383,7 @@ const String kNoBoxCell = '— NO BOX —';
 /// document states where it is.
 ///
 /// ALIASED FROM `equipment_list.dart` rather than respelled. A reader who
-/// meets `NOT IN A RACK` on T6.30 and again on T6.11 is entitled to
+/// meets `NOT IN A RACK` on T6.30 and again on T6.15 is entitled to
 /// assume it means one thing, and two independent string literals is how
 /// that stops being true.
 const String kNotInARackCell = kUnplacedGroupTitle;
@@ -1501,14 +1501,14 @@ enum ScheduleColumnId {
   conductorNotes,
   signOff,
 
-  /// T6.11's `CABLE ID`: the designator and, unless the run is `new`, its
+  /// T6.15's `CABLE ID`: the designator and, unless the run is `new`, its
   /// lifecycle suffix (DR-206 §11.205.3). A column of its own rather than
   /// a preset flag on [cableId], so the one cell function answers both
-  /// and a printed T6.11 cannot spell the suffix a second way.
+  /// and a printed T6.15 cannot spell the suffix a second way.
   cableIdWithLifecycle,
 }
 
-/// T6.11's lifecycle suffix for [status] (DR-206 §11.205.3), or empty for
+/// T6.15's lifecycle suffix for [status] (DR-206 §11.205.3), or empty for
 /// `new`, which is what the sheet is for.
 String lifecycleSuffix(LifecycleStatus status) => switch (status) {
   LifecycleStatus.new_ => '',
@@ -1518,7 +1518,7 @@ String lifecycleSuffix(LifecycleStatus status) => switch (status) {
   LifecycleStatus.designIntent => 'DI',
 };
 
-/// The one-line key T6.11 prints whenever a suffix appears on it.
+/// The one-line key T6.15 prints whenever a suffix appears on it.
 const String kLifecycleSuffixKey =
     'EX existing · RM to remove · FUT future · DI design intent';
 
@@ -1711,14 +1711,18 @@ enum SchedulePreset {
   /// per-room footage subtotals and a sign-off block.
   pullSheet,
 
-  /// `T6.11` — ANSI A landscape, rack then panel then port, every cable
+  /// `T6.15` — ANSI A landscape, rack then panel then port, every cable
   /// landing in a rack.
   terminationSchedule;
 
-  /// The sheet id docs/08 §2.2 gives this preset.
+  /// The id of this preset's FIRST printed page: the Schedule screen's
+  /// picker shows it, so it names the same sheet the paper does. `T6.15`
+  /// since DR-222 §11.221.1 (it was `T6.15`, which left a second Pull
+  /// Sheet page no id); `sheet_def.dart`'s block constants are the ones
+  /// the set is numbered from, and a test holds the two equal.
   String get sheetId => switch (this) {
     SchedulePreset.pullSheet => 'T6.10',
-    SchedulePreset.terminationSchedule => 'T6.11',
+    SchedulePreset.terminationSchedule => 'T6.15',
   };
 
   String get title => switch (this) {

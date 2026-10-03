@@ -54,7 +54,7 @@ WEIGHTS = ['Jost-Regular.ttf', 'Jost-Medium.ttf']
 # Emitted by live code onto printed sheets. Listed explicitly so that if the
 # literal scan below ever stops matching anything, this gate still fails rather
 # than passing vacuously on an empty set.
-REQUIRED = {0x2192: 'passthrough arrow, schedules T6.10/T6.11',
+REQUIRED = {0x2192: 'passthrough arrow, schedules T6.10/T6.15',
             0x2194: 'bidirectional',
             0x2032: 'feet', 0x2033: 'inches',
             0x2014: 'G4 unknown, the em dash', 0x00B7: 'separator',

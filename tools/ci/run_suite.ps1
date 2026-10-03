@@ -1111,7 +1111,13 @@ $SuiteFloors = @{
     # drawn, six page shapes, every IR count 1 to 90 ahead of a second
     # section (a sampled sweep let a missing keep-with survive), the
     # control, and T5.01 absent then last in the set.
-    'rackpal_core'   = 5385
+    # 5396 at `#977` (M6-K, DR-222): +11 in sheet/schedule_sheet_test.dart,
+    # an empty schedule says so, Whole House's Pull Sheet whole and in order
+    # with page 2 re-heading, the Termination Schedule's exclusions named,
+    # two sweeps of page heights 150 to 600 for a band at a page foot, the
+    # TYPE tag's placement and the chip, and the numbers: the picker's ids,
+    # blocks of five, and four schedules sharing one overflow pool.
+    'rackpal_core'   = 5396
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1188,7 +1194,10 @@ $SuiteFloors = @{
     # sections; +3 in auto_sheet_absent_test.dart, T5.01 in the file and the
     # index on Home Theatre, in neither on Apartment or with the variants
     # cleared.
-    'rackpal_export' = 272
+    # 275 at `#977`, `#574` (M6-K, DR-222): +3 in schedules_export_test.dart,
+    # AC-018's PRINTS clause on Whole House's Pull Sheet, T6.10 to T6.11 and
+    # T6.15 with every landed run, and Apartment's two schedules saying so.
+    'rackpal_export' = 275
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

@@ -306,12 +306,15 @@ void main() {
     });
   });
 
-  group('what this clause does NOT reach, so M6 is not read as done', () {
-    test('there is no Pull Sheet role to render one with', () {
-      // DR-027 §11.26.2 in executable form. If a `SheetRole.pullSheet`
-      // ever appears, this case fails and whoever added it has to decide
-      // whether M3's clause or M6's now owns the sheet — which is the
-      // conversation the seam exists to force.
+  group('the seam DR-027 drew, and the day it was crossed', () {
+    test('THE PULL SHEET ROLE EXISTS, AND IT IS M6\u2019s', () {
+      // DR-027 §11.26.2 in executable form. This case read "there is no
+      // Pull Sheet role to render one with" and was built to FAIL the day a
+      // `SheetRole.pullSheet` appeared, so whoever added it had to decide
+      // whether M3's clause or M6's owned the sheet. Decided at M6-K
+      // (`#977`, DR-222): M6's, as §11.26.2 always said. M3 owed the rows
+      // and delivered them; this sheet lays out M3's `ScheduleView` and
+      // derives nothing of its own, which is what keeps M3's clause closed.
       expect(
         SheetRole.values.map((r) => r.name),
         orderedEquals([
@@ -336,6 +339,12 @@ void main() {
           'devicePlan',
           'rackElevationFront',
           'rackElevationRear',
+          // `pullSheet` AND `terminationSchedule` ARRIVED AT M6-K (`#977`,
+          // DR-222): `T6.10` and `T6.15`, THE sheets this seam was about,
+          // landing in M6 as §11.26.2 ruled. Looked at, and this time they
+          // are the quarry.
+          'pullSheet',
+          'terminationSchedule',
           // `unusedHomeRuns` ARRIVED AT M6-E1 (`#332`, DR-220): `T6.20`,
           // M6's own sheet in M6. It filters the same schedule rows a Pull
           // Sheet would, and it is still not one: no sign-off, no pull
@@ -350,11 +359,16 @@ void main() {
             'M6 owes the sheet: the SheetRole, the layout, the initial '
             'boxes and the page',
       );
-      // THE ACTUAL CLAIM, stated so it survives the next legitimate
-      // addition without anybody having to re-read the list above.
+      // THE ACTUAL CLAIM, inverted when it came true: the Pull Sheet is a
+      // role, on the paper §6.1 gives it, and the projection it lays out is
+      // M3's own preset rather than a second derivation.
+      expect(SheetRole.pullSheet.size, SheetSize.ansiAPortrait);
       expect(
-        SheetRole.values.map((r) => r.name),
-        isNot(contains('pullSheet')),
+        buildScheduleView(
+          const Schedule(rows: <ScheduleEntry>[]),
+          preset: SchedulePreset.pullSheet,
+        ).columns,
+        kPullSheetColumns,
         reason: 'DR-027 §11.26.2: M3 owes the rows, M6 owns the sheet',
       );
     });

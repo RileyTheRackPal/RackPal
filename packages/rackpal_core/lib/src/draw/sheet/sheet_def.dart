@@ -20,10 +20,10 @@
 // the enum it counts is this corpus's most-repeated failure, and nothing
 // connects adding a role to editing this sentence, so it no longer counts.
 //
-// The rest of §2.2's table (T6.01+ interconnect, T6.10 pull sheet, T6.11
-// termination schedule) is M6 and not yet built; T0.00, the cover,
-// arrived at M6-A, T0.01, the legend, at M6-B, T0.02, the exceptions, at
-// M6-C, T6.20, unused home runs, at M6-E1, and T5.01 at M6-E2. The
+// The rest of §2.2's table (T6.01+ interconnect) is M6 and not yet built;
+// T0.00, the cover, arrived at M6-A, T0.01, the legend, at M6-B, T0.02,
+// the exceptions, at M6-C, T6.20, unused home runs, at M6-E1, T5.01 at
+// M6-E2, and the Pull Sheet and Termination Schedule at M6-K. The
 // unbuilt ones are absent from [SheetRole] rather than stubbed, which is
 // what lets a user-facing document state what
 // prints by naming the roles rather than by counting anything
@@ -55,6 +55,10 @@ enum SheetSize {
 
   /// 792 × 612 pt. Equipment list and details (§6.1).
   ansiALandscape(11 * kPdfPointsPerInch, 8.5 * kPdfPointsPerInch, 'A'),
+
+  /// 612 × 792 pt. The Pull Sheet (§6.1): carried, marked up, initialled,
+  /// so it is the one schedule a person holds rather than reads at a desk.
+  ansiAPortrait(8.5 * kPdfPointsPerInch, 11 * kPdfPointsPerInch, 'A'),
 
   /// 1224 × 792 pt. The device location plan (§6.1, `PLAN-H/1`).
   ///
@@ -150,6 +154,25 @@ enum SheetRole {
     perRack: true,
     shortTitle: 'REAR ELEV.',
     zoned: true,
+  ),
+
+  /// docs/08 §2.2's `T6.10`, the Pull Sheet (M6-K1, `#978`, DR-222). `ON`,
+  /// ANSI A portrait, `T6.10` to `T6.14` then the overflow pool.
+  pullSheet(
+    'PULL SHEET',
+    SheetSize.ansiAPortrait,
+    perRack: false,
+    shortTitle: 'PULL SHEET',
+  ),
+
+  /// docs/08 §2.2's Termination Schedule, `T6.15` since DR-222 (it was
+  /// `T6.11`, which left a second Pull Sheet page no id). `ON`, ANSI A
+  /// landscape, `T6.15` to `T6.19` then the pool (M6-K2, `#979`).
+  terminationSchedule(
+    'TERMINATION SCHEDULE',
+    SheetSize.ansiALandscape,
+    perRack: false,
+    shortTitle: 'TERMINATION',
   ),
 
   /// docs/08 §2.2's `T6.20`, Unused Home Runs (M6-E1, `#332`, DR-220).
@@ -258,12 +281,12 @@ String _overflowNotice(int pages, int from) {
 }
 
 /// The same, for T6.20 (DR-220 §11.219.5). See [unusedHomeRunsNcsId].
-String _unusedOverflowNotice(int pages) {
+String _unusedOverflowNotice(int pages, int from) {
   const last = kUnusedHomeRunsBlockStart + kUnusedHomeRunsBlockSize - 1;
   return 'Unused home runs need $pages pages and docs/08 §2.2 gives them '
       'T6.$kUnusedHomeRunsBlockStart–T6.$last, so page '
       '${kUnusedHomeRunsBlockSize + 1} onward is numbered from '
-      'T6.$kEquipmentListOverflowStart — T6.30 to T6.5x are taken or reserved.';
+      'T6.$from — T6.30 to T6.5x are taken or reserved.';
 }
 
 /// The first sequence number T6.20 uses (docs/08 §2.2, DR-220).
@@ -281,10 +304,13 @@ const int kUnusedHomeRunsBlockSize = 10;
 /// see [equipmentListNcsId]'s `overflowFrom`. Two schedules each counting
 /// from `T6.60` would print one sheet number on two drawings, which is the
 /// one thing a sheet number exists to prevent.
-String unusedHomeRunsNcsId(int page) {
+String unusedHomeRunsNcsId(
+  int page, {
+  int overflowFrom = kEquipmentListOverflowStart,
+}) {
   final sequence = page < kUnusedHomeRunsBlockSize
       ? kUnusedHomeRunsBlockStart + page
-      : kEquipmentListOverflowStart + page - kUnusedHomeRunsBlockSize;
+      : overflowFrom + page - kUnusedHomeRunsBlockSize;
   return 'T6.${sequence.toString().padLeft(2, '0')}';
 }
 
@@ -292,6 +318,37 @@ String unusedHomeRunsNcsId(int page) {
 /// for [pages] pages.
 int _unusedOverflowCount(int pages) =>
     pages > kUnusedHomeRunsBlockSize ? pages - kUnusedHomeRunsBlockSize : 0;
+
+/// The Pull Sheet's block, `T6.10` to `T6.14` (DR-222 §11.221.1).
+const int kPullSheetBlockStart = 10;
+
+/// The Termination Schedule's block, `T6.15` to `T6.19`. It was `T6.11`,
+/// which left a second Pull Sheet page no id.
+const int kTerminationBlockStart = 15;
+
+/// How many ids each schedule's block holds.
+const int kScheduleBlockSize = 5;
+
+/// The id of page [page] (0-based) of a schedule whose block starts at
+/// [blockStart], its overflow taken from [overflowFrom] on.
+String scheduleNcsId(
+  int page, {
+  required int blockStart,
+  int overflowFrom = kEquipmentListOverflowStart,
+}) {
+  final sequence = page < kScheduleBlockSize
+      ? blockStart + page
+      : overflowFrom + page - kScheduleBlockSize;
+  return 'T6.${sequence.toString().padLeft(2, '0')}';
+}
+
+int _scheduleOverflowCount(int pages) =>
+    pages > kScheduleBlockSize ? pages - kScheduleBlockSize : 0;
+
+String _scheduleOverflowNotice(String name, int pages, int block, int from) =>
+    '$name needs $pages pages and DR-222 gives it '
+    'T6.$block–T6.${block + kScheduleBlockSize - 1}, so page '
+    '${kScheduleBlockSize + 1} onward is numbered from T6.$from.';
 
 /// The first sequence number the equipment list uses — §2.2's `T6.30`.
 const int kEquipmentListBlockStart = 30;
@@ -463,6 +520,8 @@ final class SheetSet {
     int exceptionSheets = 1,
     int unusedHomeRunSheets = 0,
     int pinoutSheets = 0,
+    int pullSheets = 0,
+    int terminationSheets = 0,
     bool stamped = false,
     Iterable<PlanUnderlay> planUnderlays = const <PlanUnderlay>[],
     SheetNumbering numbering = SheetNumbering.simple,
@@ -504,6 +563,8 @@ final class SheetSet {
         exceptionSheets +
         plans.length +
         ordered.length * 2 +
+        pullSheets +
+        terminationSheets +
         unusedHomeRunSheets +
         equipmentListSheets +
         pinoutSheets;
@@ -591,14 +652,63 @@ final class SheetSet {
       }
     }
 
+    // THE OVERFLOW POOL IS ONE COUNTER, drawn in set order (DR-222
+    // §11.221.1): the Pull Sheet's overflow, then the Termination
+    // Schedule's, then T6.20's, then the equipment list's. Each starts where
+    // the one before it stopped, so no id is printed on two sheets however
+    // many of them overflow.
+    var pool = kEquipmentListOverflowStart;
+
+    // T6.10 AND T6.15 ARE `n+1` AND `n+2` (docs/08 §2.2), both `ON`: the
+    // export always passes at least one page of each. Zero is the default
+    // here so a set built only to test the racks stays the set it was.
+    final pullFrom = pool;
+    pool += _scheduleOverflowCount(pullSheets);
+    for (var page = 0; page < pullSheets; page++) {
+      sheets.add(
+        SheetDef(
+          ncsId: scheduleNcsId(
+            page,
+            blockStart: kPullSheetBlockStart,
+            overflowFrom: pullFrom,
+          ),
+          role: SheetRole.pullSheet,
+          index: index++,
+          total: total,
+          legendNcsId: _kLegendNcsId,
+          stamped: stamped,
+        ),
+      );
+    }
+    final terminationFrom = pool;
+    pool += _scheduleOverflowCount(terminationSheets);
+    for (var page = 0; page < terminationSheets; page++) {
+      sheets.add(
+        SheetDef(
+          ncsId: scheduleNcsId(
+            page,
+            blockStart: kTerminationBlockStart,
+            overflowFrom: terminationFrom,
+          ),
+          role: SheetRole.terminationSchedule,
+          index: index++,
+          total: total,
+          legendNcsId: _kLegendNcsId,
+          stamped: stamped,
+        ),
+      );
+    }
+
     // T6.20 IS `n+3`, BEFORE T6.30 (docs/08 §2.2, DR-220 §11.219.5), and
-    // the interconnect, pull and termination sheets will land ahead of it.
-    // Zero pages is the AUTO sheet absent: the caller paginated nothing
-    // because nothing is unused.
+    // the interconnect sheets will land ahead of the schedules. Zero pages
+    // is the AUTO sheet absent: the caller paginated nothing because
+    // nothing is unused.
+    final unusedFrom = pool;
+    pool += _unusedOverflowCount(unusedHomeRunSheets);
     for (var page = 0; page < unusedHomeRunSheets; page++) {
       sheets.add(
         SheetDef(
-          ncsId: unusedHomeRunsNcsId(page),
+          ncsId: unusedHomeRunsNcsId(page, overflowFrom: unusedFrom),
           role: SheetRole.unusedHomeRuns,
           index: index++,
           total: total,
@@ -608,8 +718,7 @@ final class SheetSet {
       );
     }
 
-    final equipmentOverflowFrom =
-        kEquipmentListOverflowStart + _unusedOverflowCount(unusedHomeRunSheets);
+    final equipmentOverflowFrom = pool;
     for (var page = 0; page < equipmentListSheets; page++) {
       sheets.add(
         SheetDef(
@@ -655,8 +764,22 @@ final class SheetSet {
           _ncsNotice(sheet.ncsId)
         else if (isReservedNcsId(sheet.ncsId))
           _reservedNotice(sheet.ncsId),
+      if (pullSheets > kScheduleBlockSize)
+        _scheduleOverflowNotice(
+          'The Pull Sheet',
+          pullSheets,
+          kPullSheetBlockStart,
+          pullFrom,
+        ),
+      if (terminationSheets > kScheduleBlockSize)
+        _scheduleOverflowNotice(
+          'The Termination Schedule',
+          terminationSheets,
+          kTerminationBlockStart,
+          terminationFrom,
+        ),
       if (unusedHomeRunSheets > kUnusedHomeRunsBlockSize)
-        _unusedOverflowNotice(unusedHomeRunSheets),
+        _unusedOverflowNotice(unusedHomeRunSheets, unusedFrom),
       if (equipmentListSheets > kEquipmentListBlockSize)
         _overflowNotice(equipmentListSheets, equipmentOverflowFrom),
     ];

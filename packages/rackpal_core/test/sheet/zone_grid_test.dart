@@ -16,6 +16,10 @@ void main() {
           SheetRole.devicePlan: true,
           SheetRole.rackElevationFront: true,
           SheetRole.rackElevationRear: true,
+          // THE SCHEDULES ARE TABLES (DR-222). `REF` would point INTO the
+          // drawings' zones; the schedules carry none of their own.
+          SheetRole.pullSheet: false,
+          SheetRole.terminationSchedule: false,
           // T6.20 IS A TABLE (DR-220): the inset, not the band.
           SheetRole.unusedHomeRuns: false,
           SheetRole.equipmentList: false,

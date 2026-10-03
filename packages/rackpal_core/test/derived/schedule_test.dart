@@ -569,7 +569,7 @@ void main() {
         isTrue,
         reason:
             'if these are ever two different objects, the two sheets can '
-            'describe one cable two ways — and T6.10 and T6.11 '
+            'describe one cable two ways — and T6.10 and T6.15 '
             'disagreeing about a cable is a callback',
       );
     });
@@ -598,7 +598,7 @@ void main() {
           reason: '$id must be one string, computed once',
         );
       }
-      // CABLE ID LEFT THIS SET AT DR-206 §11.205.3, ON PURPOSE: T6.11's
+      // CABLE ID LEFT THIS SET AT DR-206 §11.205.3, ON PURPOSE: T6.15's
       // carries the lifecycle suffix. It is still the SAME designator,
       // computed once, with the suffix after it, and that is asserted.
       final pullId = pull.rows.single.cell(
@@ -1217,7 +1217,7 @@ void main() {
     test('a device on a rack SHELF resolves to the rack beneath it', () {
       // A one-hop `placement.rackId` read drops every shelf-mounted
       // device out of "lands in a rack" and takes its whole row off
-      // T6.11.
+      // T6.15.
       final d = _Doc();
       final rack = d.rack('RK-1');
       final shelf = d.device('SHF-1', rackId: rack, ruIndex: 8);
@@ -2343,7 +2343,7 @@ void main() {
       );
     });
 
-    test('T6.11 CARRIES A SUFFIX ON CABLE ID, none for new, and its key '
+    test('T6.15 CARRIES A SUFFIX ON CABLE ID, none for new, and its key '
         'appears only when a suffix does', () {
       final term = _term(everyStatus().doc);
       final ids = {
@@ -2355,7 +2355,7 @@ void main() {
       };
       expect(ids, {'W001 EX', 'W002', 'W003 FUT', 'W004 RM', 'W005 DI'});
       expect(term.lifecycleKey, kLifecycleSuffixKey);
-      expect(term.sections, isEmpty, reason: 'T6.11 is not sectioned');
+      expect(term.sections, isEmpty, reason: 'T6.15 is not sectioned');
 
       final d = everyStatus();
       d.doc.links.removeWhere(
