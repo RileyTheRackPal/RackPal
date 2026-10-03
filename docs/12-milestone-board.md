@@ -1759,6 +1759,34 @@ House run's W number on the printed Pull Sheet. **Looked at**: Whole House's `T6
 `T6.15`. **Seen and not fixed here**: the compact title strip truncates the e-mail and file name at the
 portrait page's 510 pt, and `PATHWAY`'s head and long names truncate in §3.2's 36 pt.
 
+### 4.38 The strip and PATHWAY, measured before they were offered · 2026-10-03 · `#982` · `DR-223`, `DR-026` · no version move
+
+M6-L, the two truncations §4.37 left. **Both were measured with the real font before any option went
+to the user**, and the measurement changed the picture: the strip looked like a Whole House problem in
+the render, and row 3 overflowed the 510 pt portrait strip on **every** starter (536 to 561 pt). Both
+overflowing rows were carrying a repeat, the sheet title on row 2 and `SHEET i/n` on row 3, so the
+cheapest fix was removing what the strip already printed. The user ruled that, with a step down to
+7 pt for a row still too wide (Whole House's row 3, 9 pt over without it). PATHWAY keeps §3.2's 36 pt:
+a pathway printed with no designator is named in a notice that gives the route to type one, and
+Whole House's four trunks are authored `T1` to `T4`. DR-026 §11.25.1's *"no allocator"* holds.
+
+**Three of my own defects, caught by the gates rather than by me.** The route in the notice was checked
+against the UI before it was written, and was wrong in the mock-up (*"Structure > Pathways"*; the tab
+is Structured Wiring). Then it was written `Structured Wiring ▸ Pathways`, and `menu_route_copy_test`
+refused it: `▸` is this corpus's mark for a MENU path, Structured Wiring is a tab, and an on-screen
+route through a menu that does not exist is exactly what that test was built after (`#888`). It now
+reads in words. And a test I rewrote to match the number without its old suffix used `(?!\d)`
+in an ordinary Dart string, where `\d` is `d`: it passed while asserting *"not followed by the letter
+d"*. The analyzer's ratchet caught the two escapes; the export package's tests had not been analysed
+before the commit, which is the habit the memory warns about.
+
+**Evidence.** `strip_fit_export_test.dart` builds every starter's strip with the real font, portrait
+and landscape, and finds no row cut; restoring `SHEET` to the run cuts most starters and disabling the
+step-down cuts Whole House alone, which is what the measurement said. `schedule_sheet_test.dart`: the
+starter's trunks print `T1` to `T4` with no notice, and without them the notice counts, names and
+routes. **Looked at**: Whole House's `T6.10`, the full e-mail and file name on its strip. **Left**:
+PATHWAY's own head prints `PATHW…`, one word wider than 36 pt.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

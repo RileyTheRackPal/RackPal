@@ -288,7 +288,8 @@ void main() {
               reason: 'the printed total disagrees with the pages emitted',
             );
           } else {
-            expect(text, contains('SHEET T6.30 ·'));
+            // The number alone on the ANSI A strip since DR-223.
+            expect(text, contains('SHEET T6.30'));
             expect(text, isNot(contains('OF ${exported.sheetCount}')));
           }
           // T0.02 RUNS TO AS MANY PAGES AS ITS FINDINGS NEED (Whole House:

@@ -200,6 +200,41 @@ void main() {
     });
   });
 
+  group('PATHWAY AND ITS DESIGNATOR (DR-223 §11.222.2)', () {
+    test('Whole House’s trunks carry designators, so PATHWAY prints them '
+        'and no notice is raised', () {
+      final doc = _starter('whole_house');
+      final view = _view(doc, SchedulePreset.pullSheet);
+      final at = kPullSheetColumns.indexWhere(
+        (c) => c.id == ScheduleColumnId.pathway,
+      );
+      final cells = {
+        for (final row in _paginate(
+          doc,
+          SchedulePreset.pullSheet,
+        ).expand((p) => p.items).whereType<ScheduleSheetRow>())
+          row.cells[at].join(' '),
+      };
+      expect(cells, {'T1', 'T2', 'T3', 'T4'});
+      expect(undesignatedPathwayNotice(view, 'T6.10'), isNull);
+    });
+
+    test('WITHOUT THEM, the notice counts them, names three, and says where '
+        'a person types one', () {
+      final doc = _starter('whole_house');
+      for (final p in doc.pathways.values) {
+        p.designator = null;
+      }
+      final notice = undesignatedPathwayNotice(
+        _view(doc, SchedulePreset.pullSheet),
+        'T6.10',
+      )!;
+      expect(notice, startsWith('T6.10: 4 pathways have no designator'));
+      expect(notice, contains('and 1 more'));
+      expect(notice, contains(kPathwayDesignatorRoute));
+    });
+  });
+
   group('THE NUMBERS (DR-222 §11.221.1)', () {
     test('the Schedule screen’s picker names the first page the set '
         'prints, for both presets', () {

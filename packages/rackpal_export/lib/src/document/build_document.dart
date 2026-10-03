@@ -231,6 +231,14 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     stampWithheld = null;
   }
   final notices = <String>[...set.notices];
+  // A PATHWAY PRINTED WITHOUT A DESIGNATOR IS NAMED (DR-223 §11.222.2):
+  // the column is sized for one, and the notice says where to type it.
+  final pullId = set.sheets
+      .firstWhere((s) => s.role == SheetRole.pullSheet)
+      .ncsId;
+  if (undesignatedPathwayNotice(pullView, pullId) case final notice?) {
+    notices.add(notice);
+  }
   var schedulePage = 0;
   var exceptionPage = 0;
   var unusedPage = 0;

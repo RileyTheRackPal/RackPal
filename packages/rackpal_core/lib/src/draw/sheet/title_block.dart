@@ -108,6 +108,7 @@ final class TitleBlockFields {
     required this.gridRowB,
     required this.integratorLine,
     required this.sheetNumberLine,
+    required this.sheetNumberOnly,
     required this.sheetIdLine,
     required this.legendLine,
     required this.logo,
@@ -183,6 +184,10 @@ final class TitleBlockFields {
         info.integratorLicense,
       ]),
       sheetNumberLine: sheetNumberLine,
+      sheetNumberOnly: switch (settings.sheetNumbering) {
+        SheetNumbering.simple => 'SHEET ${sheet.index} OF ${sheet.total}',
+        SheetNumbering.ncs => 'SHEET ${sheet.ncsId}',
+      },
       sheetIdLine: 'SHEET NO.  ${sheet.ncsId}',
       // AUTO-FILLED FROM THE SET (CR-023, M6-B5): the legend's own id, on
       // every sheet of a set that has one, and nothing where it has none.
@@ -231,6 +236,10 @@ final class TitleBlockFields {
 
   /// `SHEET 3 OF 3 · EQUIPMENT LIST AND MATERIALS`.
   final String sheetNumberLine;
+
+  /// [sheetNumberLine] without the title, for the compact strip, whose
+  /// first row already prints the title (DR-223 §11.222.1).
+  final String sheetNumberOnly;
 
   /// `SHEET NO.  T6.30` — the sheet's stable identity, always printed
   /// whatever the numbering scheme (§2.1).
@@ -505,10 +514,18 @@ LayerBuild _buildCompact(
 
   // The whole field grid becomes one run of `LABEL value` pairs, because a
   // 43 pt strip has no room for a two-row five-column table.
-  final fieldRun = <TitleBlockField>[
-    ...fields.gridRowA,
-    ...fields.gridRowB,
-  ].map((f) => '${f.label} ${f.value}').join(' · ');
+  //
+  // WITHOUT `SHEET` (DR-223 §11.222.1): row 2 prints the sheet's number,
+  // and the run repeating it was what pushed row 3 past the portrait strip
+  // on every starter (536 to 561 pt in 510).
+  final fieldRun =
+      <TitleBlockField>[
+            ...fields.gridRowA,
+            ...fields.gridRowB,
+          ]
+          .where((f) => f.label != 'SHEET')
+          .map((f) => '${f.label} ${f.value}')
+          .join(' · ');
 
   // THE LEGEND REFERENCE PRINTS IN ROW 1 (DR-218 §11.217.1), beside the
   // sheet title. It was last on row 2, which overflows on a real project
@@ -534,7 +551,9 @@ LayerBuild _buildCompact(
         fields.integratorLine,
       ]),
       middle: null,
-      right: fields.sheetNumberLine,
+      // THE NUMBER ALONE: row 1 prints the title, and the repeat is what
+      // pushed Whole House's row 2 past the portrait strip (DR-223).
+      right: fields.sheetNumberOnly,
       size: SheetTextSizes.identity,
     ),
     (
@@ -546,8 +565,18 @@ LayerBuild _buildCompact(
   ];
 
   final rowHeight = box.height / rows.length;
+  var minText = SheetTextSizes.identity;
   for (var i = 0; i < rows.length; i++) {
     final row = rows[i];
+    // A ROW STILL TOO WIDE STEPS DOWN TO 7 PT (DR-223 §11.222.1), the
+    // 7.5 pt rows only: the title row keeps its size and gives way by
+    // truncating its left text, as it always has.
+    var size = row.size;
+    if (size == SheetTextSizes.identity &&
+        _pairWidth(row.left, row.right, size, measurer) > box.width) {
+      size = kCompactStepDownPt;
+      if (size < minText) minText = size;
+    }
     _emitPair(
       ops,
       box: box,
@@ -556,7 +585,7 @@ LayerBuild _buildCompact(
       left: row.left,
       middle: row.middle,
       right: row.right,
-      sizePt: row.size,
+      sizePt: size,
       palette: palette,
       measurer: measurer,
     );
@@ -574,9 +603,31 @@ LayerBuild _buildCompact(
 
   return (
     ops: ops,
-    minTextPt: SheetTextSizes.identity,
+    minTextPt: minText,
     inkBounds: box.inflate(kBlockOutlineWidthPt / 2),
   );
+}
+
+/// The size a compact-strip row steps down to when it does not fit at
+/// 7.5 pt (DR-223 §11.222.1).
+const double kCompactStepDownPt = 7;
+
+/// What [left] and [right] need side by side at [sizePt], with
+/// `_emitPair`'s three pads between and around them.
+double _pairWidth(
+  String? left,
+  String right,
+  double sizePt,
+  TextMeasurer measurer,
+) {
+  final style = TextStyleSpec(
+    font: kSheetFont,
+    sizePt: sizePt,
+    argb: 0xFF000000,
+    anchor: TextAnchor.midLeft,
+  );
+  final l = left == null ? 0.0 : measurer.measureText(left, style).advanceWidth;
+  return l + measurer.measureText(right, style).advanceWidth + 3 * _kPad;
 }
 
 /// Emits the two-row, five-column field grid at [top].

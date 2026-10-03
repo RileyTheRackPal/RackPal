@@ -1117,7 +1117,13 @@ $SuiteFloors = @{
     # two sweeps of page heights 150 to 600 for a band at a page foot, the
     # TYPE tag's placement and the chip, and the numbers: the picker's ids,
     # blocks of five, and four schedules sharing one overflow pool.
-    'rackpal_core'   = 5396
+    # 5398 at `#982` (M6-L, DR-223): +2 in sheet/title_block_test.dart, the
+    # compact strip repeats nothing, and a row too wide steps down to 7 pt
+    # and the layer reports it.
+    # 5400 at `#982` (M6-L, DR-223): +2 in sheet/schedule_sheet_test.dart,
+    # Whole House's trunks print T1 to T4 with no notice, and without them
+    # the notice counts, names three, and gives the route.
+    'rackpal_core'   = 5400
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1197,7 +1203,10 @@ $SuiteFloors = @{
     # 275 at `#977`, `#574` (M6-K, DR-222): +3 in schedules_export_test.dart,
     # AC-018's PRINTS clause on Whole House's Pull Sheet, T6.10 to T6.11 and
     # T6.15 with every landed run, and Apartment's two schedules saying so.
-    'rackpal_export' = 275
+    # 279 at `#982` (M6-L, DR-223): +4 in strip_fit_export_test.dart, one per
+    # starter: no compact-strip row cut, portrait or landscape, measured with
+    # the real font.
+    'rackpal_export' = 279
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

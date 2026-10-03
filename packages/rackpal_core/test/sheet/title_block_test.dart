@@ -461,10 +461,53 @@ void main() {
         sheet: set.sheets.last,
         noRack: true,
       );
+      // THE NUMBER ALONE since DR-223 §11.222.1: row 1 prints the title.
       expect(
         textsOf(layerFor(fields, compact: true)),
-        contains(fields.sheetNumberLine),
+        contains(fields.sheetNumberOnly),
       );
+    });
+
+    test('REPEATS NOTHING (DR-223): the title once, the number once, and no '
+        'SHEET in the field run', () {
+      final set = oneRackSheetSet();
+      final fields = fieldsFor(sheet: set.sheets.last, noRack: true);
+      final texts = textsOf(layerFor(fields, compact: true));
+      expect(
+        texts.where((t) => t.contains(fields.sheetTitle)),
+        hasLength(1),
+        reason: 'the title prints on row 1 only',
+      );
+      expect(
+        texts.join(' '),
+        isNot(contains('SHEET ${set.sheets.last.index}/')),
+      );
+      expect(texts, contains(fields.sheetNumberOnly));
+    });
+
+    test('A ROW TOO WIDE STEPS DOWN TO 7 PT, and the layer says so; one that '
+        'fits keeps 7.5', () {
+      final set = oneRackSheetSet();
+      OpText rowTwo(List<DiagramOp> ops, TitleBlockFields f) => ops
+          .whereType<OpText>()
+          .firstWhere((o) => o.text == f.sheetNumberOnly);
+      final short = fieldsFor(sheet: set.sheets.last, noRack: true);
+      expect(rowTwo(layerFor(short, compact: true), short).style.sizePt, 7.5);
+
+      final info = fullProjectInfo()..integratorName = 'X' * 400;
+      final long = fieldsFor(
+        info: info,
+        sheet: set.sheets.last,
+        noRack: true,
+      );
+      final layer = buildTitleBlockLayer(
+        box: boxFor(compact: true),
+        fields: long,
+        measurer: FakeMeasurer(),
+        compact: true,
+      );
+      expect(rowTwo(layer.ops, long).style.sizePt, kCompactStepDownPt);
+      expect(layer.minTextPt, kCompactStepDownPt);
     });
   });
 
