@@ -23674,6 +23674,54 @@ date column alone, which turns stamping a rack into a select-and-type every visi
 
 ---
 
+### 11.226 DR-227 · A template can say it has Wi-Fi, the Devices view lists what can join a network, and one setting orders the view and T6.50
+
+**Settled by the user on 2026-10-03, building NET-A/2 (`#683`).** A §8.3 amendment: it gives
+`TemplateBody` a field DR-048 §11.47.10 said it would not have. Recorded with a correction first.
+
+**11.226.1 A PRICE WAS WRONG, AND THE USER RE-DECIDED ON THE RIGHT ONE.** DR-226 §11.225.2 was chosen
+over a Device Manager host partly because Structured Wiring would reuse its table's batch bar and cell
+editors *"with no extraction"*. Read rather than assumed, those widgets are typed to cable rows (a link
+id, `StructureColumnId`, the signal-family registry), so either host needs a new device table; what is
+reused is the pattern and the shared `fillDown` binding. Offered again on the corrected price, the user
+kept Structured Wiring, on §11.225.2's other reason. That clause stands; its price did not.
+
+**11.226.2 RULED: THE VIEW LISTS NETWORK-CAPABLE DEVICES, WITH SHOW ALL.** By default, a device whose
+template has a port in the Network domain **and is not a passthrough**, or whose template says it has
+Wi-Fi (§11.226.3), or that already carries a network value or a MAC. A *Show all devices* toggle adds
+the rest. Not taken: every device with ports, which on Whole House lists every amplifier, splitter and
+panel; and Network ports alone, which leaves a Wi-Fi-only device no row to be given an address on.
+
+**The passthrough exclusion was ruled the same day, on a measurement.** The port rule as first written
+listed patch panels and fibre enclosures, which carry Network ports and never an address. The template's
+existing `isPassthrough` separates them exactly on all four starters (Whole House 30 rows to 26, `PP-1`
+to `PP-3` and `LIU-1` leaving; Small Office 21 to 18; Home Theatre 14 to 13): a passthrough is copper
+or glass between two things that have addresses, and has none of its own. No new field.
+
+**11.226.3 RULED BY THE USER: `TemplateBody` GAINS `wifi`, AND IT IS NOT WHAT DR-048 REFUSED.** A
+`bool?` (unset, yes, no), shown in the Device Builder as a *Wi-Fi* toggle; a template that says yes is
+network-capable without a jack and without an address yet. In the user's words: *"even though it's a
+network 'field', it's still a device property (What the device is capable of)."* DR-048 kept network
+**values** off the template because they are facts about an install; whether a model can join a
+network at all is a fact about the model. The census behind it is also the user's: Wi-Fi-only devices
+are rare in this trade, *"aside from the Move 2, Roam, and Ace Headphones (which are portable anyway)
+I've seen zero Sonos devices that are WiFi only."* Editing it never forks a template's identity, and
+no seeded template sets it, because CR-061 wants a source for every catalog fact and there is none.
+
+**11.226.4 RULED: ONE SETTING ORDERS THE DEVICES VIEW AND `T6.50`.** `ProjectSettings` gains the network
+order, *by designator* or *rack by rack, top unit down, then room by room*, set in `File ▸ Sheet set…`,
+defaulting to by designator. The user's reason for the default: it *"mirrors how the firm I work for
+handles IP address assignment on a network"*, and for the setting: *"other firms may use a different
+method for IP assignment."* The view follows the same setting so the table and the printed schedule
+never disagree about order: one derivation, two projections (CR-107). Not taken for the view: a fixed
+designator order beside a configurable sheet.
+
+**Scope.** **v1 grows by one field**, `TemplateBody.wifi`, superseding DR-048 §11.47.10's *"does not
+give `TemplateBody` a network field"* for this capability alone (§12.47). `ProjectSettings` gains the
+order. No milestone moves.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -24402,6 +24450,12 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **docs/08 §2.2's `n+2`**, and every ruling before DR-222 naming `T6.11` (DR-206 §11.205 throughout, and DR-090 §11.89's note on the cells that emit `U+2194`) | the Termination Schedule is `T6.11` | **It is `T6.15`, running `T6.15` to `T6.19`; the Pull Sheet keeps `T6.10` and runs to `T6.14`** (§11.221.1). The rulings keep their words: in any of them `T6.11` means the Termination Schedule. The derived documents are edited to match. |
+
+### 12.47 Amended by DR-227 (a template can say it has Wi-Fi)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-048 §11.47.10**, its last sentence | It *"does not give `TemplateBody` a network field"*, and *"M4 is untouched: this is instance data, not template data, and no device template gains a field"*. | **Superseded for `TemplateBody.wifi` alone** (§11.226.3): whether a model can join a network is a fact about the model. Every network **value** (hostname, address, subnet, gateway, VLANs, MAC, the verified date) stays instance data exactly as DR-048 ruled, and no template carries one. |
 
 
 ## 13. Resolved §10 questions

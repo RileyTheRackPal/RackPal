@@ -6,6 +6,11 @@
   `#985` to `#995`, and ruled before any code. `#46` now links `#684`, so M6's sheet-set clause shows the
   T6.50 Story it waits on.
 * **Creation**: [DR-226](/decisions/dr-226-network-values-devices-view.md).
+* **Creation**: [DR-227](/decisions/dr-227-wifi-capability-and-network-order.md), a §8.3 amendment.
+* **Note**: **A PRICE OFFERED BEFORE READING THE CODE WAS WRONG, AND IT HAD DECIDED SOMETHING.** DR-226's
+  host was recommended as reusing a table's widgets "with no extraction"; the widgets are typed to cable
+  rows. Told so, the user re-decided and kept the host on its other reason. Read the code a price rests
+  on before the question is asked, not after it is answered.
 * **Note**: **A RULING CAN NAME A SURFACE THAT DOES NOT EXIST.** DR-048 put network values in "the table, via
   Columns", and seven weeks later no surface listed device instances at all. Census the noun a ruling
   points at, not only the field it adds: the field had one writer (the decoder) and the table had none.
