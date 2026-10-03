@@ -473,7 +473,7 @@ Zone references are computed from the **final placed geometry**, after layout, a
 
 ### 5.2 Title block
 
-Bottom-right, 396 × 115 pt on ANSI B and larger; on ANSI A a full-width 690 × 43 pt (or 510 × 43 pt portrait) strip along the bottom, so the schedule table is not notched.
+Bottom-right, 396 × 115 pt on ANSI B and larger; on ANSI A a full-width 690 × 43 pt (or 510 × 43 pt portrait) strip along the bottom, so the schedule table is not notched. The strip is three rows (project, legend reference and title; address, client and firm with the sheet's number; the field run with `SHEET NO.`) and repeats nothing: the title and the number each print once (DR-223 §11.222.1), and a row too wide for the strip prints at 7 pt rather than 7.5.
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────┐

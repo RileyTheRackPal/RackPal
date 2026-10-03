@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-10-03 (hundred-and-fifth entry)
+
+* **Progress**: M6-K merged at `5cb0ff3c` (PR 195). M6-L (`#982`) filed and ruled: the two
+  truncations M6-K's render showed.
+* **Note**: **MEASURE WHAT YOU OFFER.** The strip looked like a Whole House problem in the render;
+  measured, row 3 overflowed on every starter, and the cheapest fix was removing repeats rather
+  than adding space.
+* **Creation**: [DR-223](/decisions/dr-223-strip-repeats-and-pathway-designators.md).
+
 ## 2026-10-02 (hundred-and-fourth entry)
 
 * **Progress**: M6-E (`#331`) closed: PR 194 merged at `ea5f4ec8`. M6-K (`#977`) filed, ruled and

@@ -23507,6 +23507,36 @@ on `CABLE ID` (§11.205.3); a band repeats `(cont.)` and keeps with its first ro
 **Scope.** No scope moves between releases. §11.221.1 renumbers a v1 sheet, an amendment recorded in
 §12.46.
 
+### 11.222 DR-223 · The compact strip drops its repeats, and PATHWAY asks for designators
+
+**Settled by the user on 2026-10-03, building M6-L (`#982`).** M6-K's render of Whole House showed two
+truncations, and both were measured with the real font before they were offered.
+
+**MEASURED FIRST.** The compact strip on the portrait Pull Sheet is 510 pt. Row 3, the field run, needs
+536 to 561 pt on the four starters, so it overflows on **every** one, and row 2 needs 520 on Whole House.
+Both rows carried a repeat: row 2 ended `· PULL SHEET`, the title row 1 prints, and row 3 ended
+`SHEET 7/14`, the number row 2 prints. Without them row 2 needs 368 to 474 and row 3 493 to 519, so only
+Whole House's row 3 is still over, by 9 pt. **PATHWAY**: docs/08 §3.2 gives it 36 pt for a
+`Pathway.designator`, falling back to the name (DR-026 §11.25.1). No starter pathway has a designator,
+and their names need 49 to 86 pt, about 62 across two lines.
+
+**11.222.1 RULED: THE COMPACT STRIP DROPS ITS TWO REPEATS, AND A ROW STILL TOO WIDE STEPS DOWN TO 7 PT.**
+Row 2's right side is the sheet's number alone and row 3's field run no longer ends with `SHEET`, on the
+compact strip only; the full block keeps its grid. A row whose text still does not fit prints at 7 pt
+rather than 7.5. Every starter then fits, portrait and landscape, and nothing is lost that the strip
+does not print elsewhere. Not taken: a fourth row on portrait (about one Pull Sheet row a page, with
+the repeats kept); dropping the repeats without shrinking (Whole House's file name still cut); leaving
+it.
+
+**11.222.2 RULED: PATHWAY KEEPS ITS WIDTH, AND A MISSING DESIGNATOR IS NAMED.** When a schedule prints a
+pathway with no designator, the export says so in a notice that names the route to fix it (Structured
+Wiring ▸ Pathways, the `DESIGNATOR` column), and the four starters get designators so they show the
+column as designed. Not taken: widening PATHWAY to 60 pt from FROM and TO, which already truncate; the
+notice alone, with the starters still showing the fallback; leaving it.
+
+**Scope.** No scope moves. §11.222.1 refines docs/08 §5.2's strip; §11.222.2 adds a notice and changes
+starter data.
+
 ---
 
 ## 12. Superseded rulings
