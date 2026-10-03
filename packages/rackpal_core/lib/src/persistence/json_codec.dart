@@ -1877,13 +1877,23 @@ PortOverrides _decodePortOverrides(JsonMap json) => PortOverrides(
 );
 
 JsonMap _encodeNetworkConfig(NetworkConfig n) {
-  final json = <String, Object?>{'vlans': n.vlans};
+  // `vlans` ONLY WHEN SOMEBODY STATED ONE (DR-048 §11.47.9). This opened
+  // `{'vlans': n.vlans}`, so an untouched list encoded as `"vlans": []`,
+  // which under CR-114 claims MEASURED ZERO where the fact is NOBODY SAID.
+  // It never mattered while nothing constructed a NetworkConfig; on a
+  // device-level record it is the common case. The decoder already reads
+  // an absent key as empty, so no file on disk changes meaning.
+  final json = <String, Object?>{};
+  if (n.vlans.isNotEmpty) json['vlans'] = n.vlans;
   putIfNotNull(json, 'hostname', n.hostname);
   putIfNotNull(json, 'ip', n.ip);
   putIfNotNull(json, 'subnet', n.subnet);
   putIfNotNull(json, 'gw', n.gw);
   putIfNotNull(json, 'mac', n.mac);
   putIfNotNull(json, 'portRole', n.portRole);
+  if (n.verifiedOn != null) {
+    json['verifiedOn'] = encodeDateTime(n.verifiedOn!);
+  }
   return json;
 }
 
@@ -1901,6 +1911,9 @@ NetworkConfig _decodeNetworkConfig(JsonMap json) => NetworkConfig(
       asInt(v, 'NetworkConfig.vlans[]'),
   ],
   portRole: asStrOrNull(json['portRole'], 'NetworkConfig.portRole'),
+  verifiedOn: json['verifiedOn'] == null
+      ? null
+      : decodeDateTime(asStr(json['verifiedOn'], 'NetworkConfig.verifiedOn')),
 );
 
 JsonMap _encodePoeAssignment(PoeAssignment p) {

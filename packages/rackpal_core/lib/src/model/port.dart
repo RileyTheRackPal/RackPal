@@ -72,7 +72,24 @@ final class NetworkConfig {
     this.mac,
     List<int>? vlans,
     this.portRole,
+    this.verifiedOn,
   }) : vlans = vlans ?? [];
+
+  /// The day somebody last confirmed these values against the device, or
+  /// null when nobody has (DR-048 §11.47.3).
+  ///
+  /// G4 HANDLES UNKNOWN AND HAS NO MECHANISM FOR STALE. An address recorded
+  /// in March and re-assigned in June is not null and not counted, and it
+  /// would print in the same typeface as a fact. This date is the whole of
+  /// the mechanism, so a surface that shows a value without it, or shows a
+  /// value with none as anything but unverified, has thrown the ruling away.
+  ///
+  /// A CALENDAR DAY, held as UTC midnight: what was checked is "on the 3rd",
+  /// not "at 14:02", and a day stored at local midnight would print as the
+  /// day before for anybody west of the writer. It dates the WHOLE row a
+  /// surface shows, the device's `macAddressPrimary` included (DR-226
+  /// §11.225.4).
+  DateTime? verifiedOn;
 
   String? hostname;
   String? ip;

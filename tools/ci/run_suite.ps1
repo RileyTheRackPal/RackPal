@@ -1145,7 +1145,13 @@ $SuiteFloors = @{
     # .dart, neither convention row without a sample, the tag pill row and
     # the net label row each drawn and explained, and each sample the
     # layer's own mark, the same pill and the same pennant to 1e-9.
-    'rackpal_core'   = 5427
+    # 5434 at `#985` (NET-A/1a, DR-048): +7 in persistence/network_config_
+    # wire_test.dart, the control (by key, not word: every starter has a bank
+    # keyed "network"), vlans absent when unstated and round-tripping when
+    # stated, an on-disk [] read as unstated, verifiedOn absent and then to
+    # the day, and CR-117 over both. The unconditional-vlans mutation is
+    # killed by the absence test alone, as the Story said it would be.
+    'rackpal_core'   = 5434
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
