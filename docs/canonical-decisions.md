@@ -23631,6 +23631,49 @@ clause rules the sheet.
 
 ---
 
+### 11.225 DR-226 · Network values are typed in a Devices view in Structured Wiring, and a device's MAC has one home
+
+**Settled by the user on 2026-10-03, opening NET-A (`#681`), on the recommended option three times and
+the user's own once.** DR-048 §11.47.6 put the surface in *"the table, via `⚙ Columns`"*, and a census
+before decomposing found the table does not exist.
+
+**11.225.1 THE FACTS THAT PRICED IT.** **No surface in the product lists device instances.** The
+Device Manager tab browses the template library, the Schedule lists cables, Structured Wiring's views
+are runs, the matrix, outlets and pathways, and the only `Columns` control is the Device Builder's port
+grid, which edits templates, where DR-048 §11.47.10 says no field is added. The batch bar, `Ctrl+D`
+fill-down and the cell editors exist, privately, inside Structured Wiring's table. **And a device's MAC
+has two fields**: `DeviceInstance.macAddressPrimary`, beside serial number and firmware, and the
+`mac` of the `NetworkConfig` DR-048 hung on the device. Neither has ever been written.
+
+**11.225.2 RULED: A `Devices` VIEW IN STRUCTURED WIRING**, a fifth beside Table, Matrix, Outlets and
+Pathways: one row per device, its network values in columns, with the batch bar and fill-down that
+table already has. It is §11.47.6's table, given a host. DR-020 §11.19.2(5), the precedent §11.47.6
+cites, put the as-built tally on a table the product already built rather than a new screen, and this
+keeps a job's close-out in one tab. Not taken: an *In this project* view in the Device Manager, which
+its name invites and which first needs the table machinery extracted into a shared widget; and an
+editable inspector, which reverses §11.47.6's one-place-a-value-is-written argument.
+
+**11.225.3 RULED BY THE USER: THE DEFAULT COLUMNS ARE HOSTNAME, IP, MAC, VLANS AND VERIFIED ON**;
+subnet and gateway sit behind the `Columns` toggle. The recommendation was hostname, IP and verified on;
+the user added the other two, in their words: *"MAC addresses are heavily used for WOL/SSDP/SDDP
+identification, and VLAN's are important for many video distribution systems."*
+
+**11.225.4 RULED: A DEVICE'S MAC IS `macAddressPrimary`**, the device-level identity field. The MAC
+column writes it and `T6.50` prints it. `NetworkConfig.mac` stays for per-port use, a device whose
+ports carry their own. One fact, one home, so no later surface can write the other copy. Not taken:
+`network.mac`, which leaves `macAddressPrimary` as a second home nobody writes. **`verifiedOn` dates
+the row**, the MAC included, though the field lives on the device and the date on its `NetworkConfig`:
+a tech confirming a device confirms what the row shows.
+
+**11.225.5 RULED: `verifiedOn` IS AN EDITABLE DATE COLUMN, AND THE BATCH BAR STAMPS TODAY.** Editing an
+address never changes the date by itself. Not taken: stamping on edit, which marks a value retyped from
+an old spreadsheet as freshly checked, the stale-as-fact failure §11.47.3 exists to prevent; and the
+date column alone, which turns stamping a rack into a select-and-type every visit.
+
+**Scope.** No scope moves: DR-048 §11.47.6's surface given a host, and its MAC made single.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

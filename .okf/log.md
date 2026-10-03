@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-03 (hundred-and-seventh entry)
+
+* **Progress**: M6-D merged at `4ce4ee44` (PR 198). NET-A (`#681`) opened on branch `net-a`, decomposed into
+  `#985` to `#995`, and ruled before any code. `#46` now links `#684`, so M6's sheet-set clause shows the
+  T6.50 Story it waits on.
+* **Creation**: [DR-226](/decisions/dr-226-network-values-devices-view.md).
+* **Note**: **A RULING CAN NAME A SURFACE THAT DOES NOT EXIST.** DR-048 put network values in "the table, via
+  Columns", and seven weeks later no surface listed device instances at all. Census the noun a ruling
+  points at, not only the field it adds: the field had one writer (the decoder) and the table had none.
+
 ## 2026-10-03 (hundred-and-sixth entry)
 
 * **Progress**: M6-M merged at `fa2e8d2d` (PR 197). M6-D (`#326`) opened on branch
