@@ -2011,7 +2011,12 @@ $SuiteFloors = @{
     # real menu, status line and dialog showing a notice's sentence; +1 in
     # session/document_session_test.dart, a status and its notices replaced
     # together.
-    'rackpal_app'    = 1156
+    # 1161 at `#330` (M6-D4, DR-004, DR-225): +5 in one_schematic_sheet_test
+    # .dart, a source scan: not vacuous, a Sheet constructed only by the
+    # codec and the two commands that create the ONE sheet, each behind a
+    # null check, the interconnect files writing none, and no surface
+    # offering to author a sheet. Both scans mutation-checked.
+    'rackpal_app'    = 1161
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
