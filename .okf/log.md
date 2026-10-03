@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-03 (hundred-and-sixth entry)
+
+* **Progress**: M6-M merged at `fa2e8d2d` (PR 197). M6-D (`#326`) opened on branch
+  `m6d-interconnect` and ruled before any code; `#984` filed for the legend rows DR-208 makes part of it.
+* **Creation**: [DR-225](/decisions/dr-225-interconnect-sheets.md).
+* **Note**: **A STORY'S PREMISE CAN EXPIRE BEFORE ITS STORY DOES.** M6-D2 said the router was in
+  `rackpal_ui` and the sheets unbuildable until it moved; it had moved long before. And the Story named
+  six sheets against eight seeded domains, which DR-001's own "exactly one" would have turned back into
+  net labels. Read a Story's nouns against the registry, not against the docs that wrote it.
+
 ## 2026-10-03 (hundred-and-fifth entry)
 
 * **Progress**: M6-K merged at `5cb0ff3c` (PR 195). M6-L (`#982`) filed, ruled and built: the

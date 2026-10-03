@@ -23559,6 +23559,65 @@ both; and filing the gap unbuilt.
 
 ---
 
+### 11.224 DR-225 · The interconnect sheets: one per domain, its own devices, and a fallback measured at 6 pt
+
+**Settled by the user on 2026-10-03, opening M6-D (`#326`), on the recommended option four times.**
+CR-073 and DR-001 §11.1.2 fix what the interconnect sheets are: one per domain partition of the one
+schematic `Sheet`, rendered `drawn`. Four things they left open were found reading the Story against
+the tree, and each would have been decided by whoever typed the code.
+
+**11.224.1 THE FACTS THAT PRICED IT.** The Story and docs/08 §2.2 name six sheets, *"Video, Audio,
+Network, Control, Power, Structure"*, and the registry seeds **eight** domains. `schematic_filter.dart`
+reads §11.1.1's trigger as **exactly one** `SignalDomainId`, so a sheet holding two domains is by
+DR-001's own table a `netLabels` sheet. The on-screen solo draws every symbol, which on paper is the
+all-devices sheet CR-074 deleted. And *"a per-sheet Link count above which it would be illegible"*
+carries no number anywhere in the corpus, while `wire_trace.dart` records that it has no link-count
+branch on purpose.
+
+**11.224.2 RULED: ONE SHEET PER `SignalDomainId`, AT MOST EIGHT, `T6.01` ON.** In the filter bar's
+figure order, docs/05 §11.2: Digital Video, Analog Video and RF, Analog Audio, Digital Audio, Network,
+Control, Power, Structure. A domain none of whose links lands on a drawn pin produces no sheet; a link
+with no device at either end is `T6.20`'s and has nothing on a schematic to attach to. Eight fit under
+`T6.10` with `T6.09` spare. The order is an exporter constant over the eight seeded ids, any other id
+following in ascending order; it is not a field on `SignalDomainDef`, and the filter bar's own order is
+not changed by it. The option not taken was six grouped sheets, which needed a further ruling that
+export overrides §11.1.1's "exactly one".
+
+**11.224.3 RULED: A SHEET DRAWS ITS OWN DEVICES, AND A LOCKED DEVICE KEEPS ITS PLACE.** Only devices
+carrying a link of that domain are drawn. A device the user locked (`SheetItem.pinned`, CR-068) stays
+at its `SheetItem.position`; the rest are laid out around it by phases 0 to 3, on the subset. So the
+paper keeps the arrangement the user made where they made one. Not taken: the same subset laid out
+fresh, which can move a deliberately placed device; and every device at its screen position, which is
+CR-074's sheet.
+
+**11.224.4 RULED: THE FALLBACK IS THE LEGIBILITY FLOOR, MEASURED ON THE SHEET.** §11.1.2's *"per-sheet
+Link count above which it would be illegible"* is read as docs/08 §6.2's trigger: the drawn sheet is
+fitted to its paper, and if that fit puts any text below `kMinPrintPt` (6 pt), the sheet prints as net
+labels instead. No count is invented. **An implementation clause, stated by the implementer and not
+asked:** the fallback is taken only when the net-label sheet itself meets the floor. Both renderings
+share one symbol layout and one 8 pt type size, so they differ only in how far the ink reaches, and a
+sheet whose symbols alone are too big is too big either way; trading its wires for labels there buys
+no legibility and costs the wires. Such a sheet stays `drawn`, at its fit, with §6.2's notice: G3, a
+heuristic may never hold a deliverable hostage. Not taken: a fixed
+link count, which no source supplies and which is wrong in both directions (sixty short runs fit; thirty
+on one 48-port panel do not). This is the export's fallback and only the export's: §12.1's AC-040 row
+deletes the on-screen degradation, and it stays deleted.
+
+**11.224.5 RULED: THE FALLBACK SAYS SO IN A NOTE BOX ON THE SHEET**, ruled, in the drawing area's upper
+left, naming what the reader is holding: the cables are shown as net labels, and drawn they would print
+below 6 pt. The export also raises a notice, which DR-224 made readable. Not taken: a suffix on the
+title-block title, which is the part of the sheet that is skimmed; and the export notice alone, which a
+forwarded PDF does not carry and which would break §11.1.2's *"prints a note"*.
+
+**11.224.6 TWO CONSEQUENCES, STATED SO THEY ARE NOT DECIDED SILENTLY.** `ExportSpec.wireRender` is not
+built here: no surface could set it before M6-I's export dialog, so `auto` is the behaviour that ships
+and the field arrives with the dialog. And by DR-208 §11.207.1 the legend's convention key gains the tag
+pill and the net-label stub in the same change that first prints them (`#984`).
+
+**Scope.** No scope moves. CR-073's partition and DR-001 §11.1.2's rendering, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
