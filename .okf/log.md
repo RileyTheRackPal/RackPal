@@ -8,7 +8,10 @@
 * **Note**: **MEASURE WHAT YOU OFFER.** The strip looked like a Whole House problem in the render;
   measured, row 3 overflowed on every starter, and the cheapest fix was removing repeats rather
   than adding space.
-* **Creation**: [DR-223](/decisions/dr-223-strip-repeats-and-pathway-designators.md).
+* **Creation**: [DR-223](/decisions/dr-223-strip-repeats-and-pathway-designators.md), [DR-224](/decisions/dr-224-export-notices-readable.md).
+* **Note**: **A CHANNEL THAT ONLY COUNTS IS NOT A CHANNEL.** Every export notice in the product
+  was invisible beyond its count, and it surfaced only because a test route had to say where the
+  user would read one. Write the route before trusting the channel.
 
 ## 2026-10-02 (hundred-and-fourth entry)
 

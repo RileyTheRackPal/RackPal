@@ -23538,6 +23538,25 @@ notice alone, with the starters still showing the fallback; leaving it.
 **Scope.** No scope moves. §11.222.1 refines docs/08 §5.2's strip; §11.222.2 adds a notice and changes
 starter data.
 
+### 11.223 DR-224 · An export's notices are read by clicking their count
+
+**Settled by the user on 2026-10-03, opening M6-M (`#983`).** Found while writing M6-L's test route:
+**no export notice's text reaches the user anywhere.** `describeExportSuccess` prints `Exported 14
+sheets · 214 KB · 6 notices` and drops the sentences, and the diagnostic log records the count alone.
+So every notice the exporter writes (a sheet below the preferred text size, an index that omitted
+sheets, an elevation not to scale, overflow numbering, DR-223's pathways with no designator) has only
+ever reached a person as a number. CR-023 and G3 made them notices so they would never gate the bytes;
+nothing made them readable.
+
+**11.223.1 RULED: THE COUNT IS A LINK, AND IT OPENS A LIST.** When the status line ends with an
+export's notice count, the count is clickable and keyboard-reachable, and opens an `Export notices`
+dialog listing every notice from that export, grouped by the sheet id it names, with Copy and Close.
+The notices belong to the status message they were counted in: a later message replaces both. Not
+taken: printing them on `T0.02`, where a client deliverable would carry the export's housekeeping;
+both; and filing the gap unbuilt.
+
+**Scope.** No scope moves. It makes CR-023's notices readable.
+
 ---
 
 ## 12. Superseded rulings
