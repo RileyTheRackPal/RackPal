@@ -23529,8 +23529,9 @@ the repeats kept); dropping the repeats without shrinking (Whole House's file na
 it.
 
 **11.222.2 RULED: PATHWAY KEEPS ITS WIDTH, AND A MISSING DESIGNATOR IS NAMED.** When a schedule prints a
-pathway with no designator, the export says so in a notice that names the route to fix it (Structured
-Wiring ▸ Pathways, the `DESIGNATOR` column), and the four starters get designators so they show the
+pathway with no designator, the export says so in a notice that names the route to fix it (the `DESIGNATOR`
+column of the Structured Wiring tab's Pathways view; first written with `▸`, which the corpus keeps
+for a menu path, and refused as such by the copy test), and the four starters get designators so they show the
 column as designed. Not taken: widening PATHWAY to 60 pt from FROM and TO, which already truncate; the
 notice alone, with the starters still showing the fallback; leaving it.
 

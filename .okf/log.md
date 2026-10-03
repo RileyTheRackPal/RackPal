@@ -2,8 +2,9 @@
 
 ## 2026-10-03 (hundred-and-fifth entry)
 
-* **Progress**: M6-K merged at `5cb0ff3c` (PR 195). M6-L (`#982`) filed and ruled: the two
-  truncations M6-K's render showed.
+* **Progress**: M6-K merged at `5cb0ff3c` (PR 195). M6-L (`#982`) filed, ruled and built: the
+  strip drops its repeats and steps a too-wide row to 7 pt; a pathway with no designator is named,
+  and Whole House's trunks are T1 to T4. docs/12 §4.38.
 * **Note**: **MEASURE WHAT YOU OFFER.** The strip looked like a Whole House problem in the render;
   measured, row 3 overflowed on every starter, and the cheapest fix was removing repeats rather
   than adding space.
