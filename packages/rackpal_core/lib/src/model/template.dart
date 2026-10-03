@@ -293,6 +293,7 @@ final class TemplateBody {
     this.description = '',
     this.category = '',
     this.primaryDomain,
+    this.wifi,
     this.typePrefix,
     List<String>? tags,
     this.frontU = 0,
@@ -374,6 +375,19 @@ final class TemplateBody {
   /// nine values include `Sources`, which covers both audio and video
   /// sources, so the mapping would lie for some of them.
   SignalDomainId? primaryDomain;
+
+  /// Whether this model can join a network over Wi-Fi: yes, no, or null
+  /// when nobody has said (G4).
+  ///
+  /// A CAPABILITY, NOT A NETWORK VALUE, and that is the line DR-048 drew.
+  /// Its §11.47.10 kept network values (an address, a VLAN, a verified
+  /// date) off the template because they are facts about one install;
+  /// whether the model can join a network at all is a fact about the
+  /// model, in the user's words *"what the device is capable of"* (DR-227
+  /// §11.226.3, §12.47). Yes makes a device network-capable without a
+  /// jack, so it lists in the Devices view before anybody types an
+  /// address. No seed sets it: CR-061 wants a source for a catalog fact.
+  bool? wifi;
 
   /// "MTX" — seeds the designator format.
   String? typePrefix;

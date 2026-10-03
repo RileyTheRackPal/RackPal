@@ -824,6 +824,70 @@ void main() {
   // and left with nothing that reaches them. A nullable model field whose
   // only writer is a codec is the same shape: it would read back exactly
   // what it was given, for ever, because nothing could give it anything.
+  // ═══════════════════════════════════════════════════════════════════
+  // WI-FI, THE TEMPLATE'S ONE NETWORK CAPABILITY (DR-227 §11.226.3)
+  // ═══════════════════════════════════════════════════════════════════
+  // Three states because "nobody said" and "no" are different facts (G4).
+  // Driven by the row's key, for the primary domain's reason: Identity is
+  // taller than the window, so the row is reached before any typing scrolls
+  // the list.
+  group('the Wi-Fi row (NET-A/2e, DR-227)', () {
+    Future<void> choose(WidgetTester tester, String label) async {
+      await tester.ensureVisible(find.byKey(kBuilderWifiFieldKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(kBuilderWifiFieldKey));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(label).last);
+      await tester.pumpAndSettle();
+    }
+
+    // FROM `_named()`, which already meets AC-049's three, so nothing is
+    // typed: typing reaches fields at the top of Identity, which the
+    // scroll to this row has already taken out of the lazily built list.
+    Future<TemplateBody> saveNamed(
+      WidgetTester tester,
+      List<TemplateBody> saved,
+    ) async {
+      await tester.ensureVisible(_saveButton());
+      await tester.tap(_saveButton());
+      await tester.pump();
+      return saved.single;
+    }
+
+    testWidgets('Yes reaches the saved body', (tester) async {
+      final saved = await _pump(tester, template: _named());
+      await choose(tester, kWifiChoiceLabels[true]!);
+      expect((await saveNamed(tester, saved)).wifi, isTrue);
+    });
+
+    testWidgets('STARTS UNSET AND SAVES UNSET: nobody has said, and G4 '
+        'does not guess', (tester) async {
+      final saved = await _pump(tester, template: _named());
+      await tester.ensureVisible(find.byKey(kBuilderWifiFieldKey));
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(
+          of: find.byKey(kBuilderWifiFieldKey),
+          matching: find.text(kWifiChoiceLabels[null]!),
+        ),
+        findsOneWidget,
+      );
+      expect((await saveNamed(tester, saved)).wifi, isNull);
+    });
+
+    testWidgets('No is a stated no, kept apart from unset', (tester) async {
+      final saved = await _pump(tester, template: _named());
+      await choose(tester, kWifiChoiceLabels[false]!);
+      expect((await saveNamed(tester, saved)).wifi, isFalse);
+    });
+
+    testWidgets('a stated Yes can be put back to unset', (tester) async {
+      final saved = await _pump(tester, template: _named()..wifi = true);
+      await choose(tester, kWifiChoiceLabels[null]!);
+      expect((await saveNamed(tester, saved)).wifi, isNull);
+    });
+  });
+
   group('the signal-domain picker (`#899`)', () {
     Registries withDomains() => buildSeedRegistries();
 

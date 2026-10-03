@@ -512,6 +512,12 @@ void _writeProbe(TemplateField<Object?> subject, TemplateBody body) {
       subject.set(body, (subject.get(body) ?? 0) + 7);
     case TemplateField<bool>():
       subject.set(body, !subject.get(body));
+    // AFTER `bool`, because a `TemplateField<bool>` is also a
+    // `TemplateField<bool?>` under Dart's covariant generics and would be
+    // caught here instead. Unstated becomes yes; a stated value flips.
+    // `wifi` (DR-227) is the first tri-state boolean on a template.
+    case TemplateField<bool?>():
+      subject.set(body, !(subject.get(body) ?? false));
     case TemplateField<Rgb?>():
       subject.set(body, const Rgb(0x11, 0x22, 0x33));
     case TemplateField<OccupancySide>():

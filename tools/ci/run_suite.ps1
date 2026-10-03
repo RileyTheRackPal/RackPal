@@ -1166,7 +1166,13 @@ $SuiteFloors = @{
     # and a measured-zero case for every DeviceField row, so the seven new
     # rows got G4 wire coverage on arrival. First floored at 5447 from the
     # test file alone; the gate counted 5461, and the difference is these.
-    'rackpal_core'   = 5461
+    # 5467 at `#996` (NET-A/2e, DR-227): +6 in persistence/template_wifi_
+    # wire_test.dart, no starter body carrying the key with each file still
+    # byte-exact (by key, not word: the access point is TAGGED "wifi"), a
+    # stated yes and no both written and read back, and unstated absent
+    # again. The isolation census now also covers primaryDomain, which was
+    # missing from TemplateBodyField.all.
+    'rackpal_core'   = 5467
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1815,7 +1821,11 @@ $SuiteFloors = @{
     # 2050 at `#983` (M6-M, DR-224): +4 in shell/export_notices_dialog_test.
     # dart, notices grouped by sheet, no link with none, no link when the line
     # does not end with the count, and the link opens the list and Copy works.
-    'rackpal_ui'     = 2050
+    # 2054 at `#996` (NET-A/2e, DR-227): +4 in builder/device_builder_screen
+    # _test.dart, the Wi-Fi row: yes reaches the saved body, unset starts
+    # and saves unset, no is kept apart from unset, and yes goes back to
+    # unset.
+    'rackpal_ui'     = 2054
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

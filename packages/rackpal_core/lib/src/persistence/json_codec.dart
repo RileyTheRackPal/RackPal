@@ -4116,6 +4116,8 @@ JsonMap _encodeTemplateBody(TemplateBody b) {
   // ABSENT WHEN UNKNOWN, which is G4's spelling and what keeps every
   // document written before `#899` byte-identical (CR-117).
   putIfNotNull(json, 'primaryDomain', b.primaryDomain?.v);
+  // ABSENT WHEN UNSTATED (G4): `false` is a stated no, and is written.
+  putIfNotNull(json, 'wifi', b.wifi);
   putIfNotNull(json, 'typePrefix', b.typePrefix);
   putIfNotNull(json, 'customPanelWidthNm', b.customPanelWidth?.nm);
   putIfNotNull(json, 'bodyDepthNm', b.bodyDepth?.nm);
@@ -4162,6 +4164,7 @@ TemplateBody _decodeTemplateBody(JsonMap json) => TemplateBody(
     final String v => SignalDomainId(v),
     null => null,
   },
+  wifi: json['wifi'] == null ? null : asBool(json['wifi'], 'TemplateBody.wifi'),
   typePrefix: asStrOrNull(json['typePrefix'], 'TemplateBody.typePrefix'),
   tags: [
     for (final v in asJsonList(
