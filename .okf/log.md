@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-02 (hundred-and-fourth entry)
+
+* **Progress**: M6-E (`#331`) closed: PR 194 merged at `ea5f4ec8`. M6-K (`#977`) filed, ruled and
+  built: DR-055's FIELD TERM / RACK TERM split (`#693`), then T6.10 and T6.15 on M3's own projection,
+  with AC-018's PRINTS clause read off the PDF (`#574`). docs/12 §4.37.
+* **Note**: **A DECOMPOSITION CAN OMIT A SHEET THE EXIT CRITERION NEEDS.** Two pointer items (`#693`,
+  `#574`) referred to the printed schedules and nothing built them, so the gap read as covered.
+  Census the criterion's nouns against the board, not the board against itself.
+* **Creation**: [DR-222](/decisions/dr-222-schedules-blocks-of-five.md).
+
 ## 2026-10-02 (hundred-and-third entry)
 
 * **Progress**: M6-E (`#331`) opened on branch `m6e-auto-sheets`. M6-E1 (`#332`) ruled before any

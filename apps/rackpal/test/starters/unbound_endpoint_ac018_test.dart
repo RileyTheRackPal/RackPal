@@ -18,13 +18,15 @@
 // itself is weaker evidence than the document a user actually opens. This
 // asserts the AC-018 clause over that file.
 //
-// THE FOURTH CLAUSE, "PRINTS", IS NOT ASSERTED HERE AND CANNOT BE YET.
-// `SheetRole` has exactly three values — front elevation, rear elevation,
-// equipment list — so there is no Pull Sheet or Termination Schedule in the
-// exporter at all. Those are M6 sheets, which is what M3-D's board task
-// calls "the M6 straddle". Asserting "it prints" against a sheet that does
-// not exist would be the empty check this repository's testing discipline
-// warns about, so the clause is NAMED as owed rather than faked.
+// THE FOURTH CLAUSE, "PRINTS", IS ASSERTED NEXT DOOR SINCE M6-K (`#574`).
+// This header said it could not be: `SheetRole` had no Pull Sheet, so an
+// assertion would have been the empty check this repository warns about,
+// and the clause was named as owed rather than faked. M6-K built T6.10
+// (DR-222), and `packages/rackpal_export/test/schedules_export_test.dart`
+// reads every unbound Whole House run's W number off the printed Pull
+// Sheet. It lives there because the PDF text reader is that package's
+// test support; importing it across into an app test would be a path
+// that breaks the first time either folder moves.
 
 import 'dart:io';
 

@@ -133,12 +133,13 @@ void main() {
   }
 
   group('the harness sees the whole set', () {
-    test('six sheets, the cover, legend and exceptions first, each with its '
-        'own operator stream', () async {
+    test('eight sheets, the cover, legend and exceptions first, each with '
+        'its own operator stream', () async {
       final bytes = await export(DateTime.utc(2026, 7, 18));
       // Without this the comparisons below could be comparing two empty
-      // lists and passing.
-      expect(pages(bytes), hasLength(6));
+      // lists and passing. EIGHT SINCE M6-K (DR-222): the Pull Sheet and the
+      // Termination Schedule are ON, so every set carries both.
+      expect(pages(bytes), hasLength(8));
       for (final page in pages(bytes)) {
         expect(page.length, greaterThan(500));
       }
@@ -170,7 +171,7 @@ void main() {
       final cmap = parseToUnicodeCMap(bytes);
       final sheets = pages(bytes);
 
-      expect(sheets, hasLength(6));
+      expect(sheets, hasLength(8));
       for (var i = 0; i < sheets.length; i++) {
         final text = interpretContentStream(
           sheets[i],

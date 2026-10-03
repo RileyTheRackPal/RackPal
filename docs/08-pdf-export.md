@@ -44,8 +44,8 @@ This is the v1 sheet set. Canon §7.2.7's eight-item list is a summary, not a ce
 | 4 | **Rack Elevation: Front** | `T2.01` | ON | One per `Rack`. RU ruler both edges per `Rack.ruNumbering`; device blocks with `designator`, name, model, RU span (`4U · 12–15`), `lifecycleStatus` border; cumulative mass from the bottom up, draw, and BTU/hr in the gutter; blanks, vents and shelves as hatched bands. |
 | 5 | **Rack Elevation: Rear** | `T2.02` | ON | Same frame, rear faces, mirrored per `Rack.mirrorRearElevation`, connector fields drawn from the template footprints, every port labelled with its `designator` and the `Link.designator` landing on it. The rear panel **prints** in v1; the interactive Rear Panel view is v1.1 (CR-071). |
 | 6..n | **Interconnect** | `T6.01`… | ON | One sheet per **domain partition** of the single schematic `Sheet` (CR-073). Order: Video, Audio, Network, Control, Power, Structure. A domain with zero `Link`s produces no sheet. This is partition at export, not multi-sheet authoring, which is never built (DR-004, canon §11.4.3). |
-| n+1 | **Pull Sheet** | `T6.10` | ON | §3. Portrait, sorted room then pathway, `fieldCable` only. |
-| n+2 | **Termination Schedule** | `T6.11` | ON | §3. Landscape, sorted rack then panel then port. |
+| n+1 | **Pull Sheet** | `T6.10` (to `T6.14`, DR-222) | ON | §3. Portrait, sorted room then pathway, `fieldCable` only. |
+| n+2 | **Termination Schedule** | `T6.15` | ON | §3. Landscape, sorted rack then panel then port. **`T6.15` to `T6.19`, then the overflow pool from `T6.60`; it was `T6.11`, which left a second Pull Sheet page no id** (DR-222 §11.221.1). |
 | n+3 | **Unused Home Runs** | `T6.20` | AUTO | Home-run `Link`s with an `OpenEndpoint` at either end, a real deliverable and a differentiator; keep the name (canon §4.3). On iff ≥1 exists. ANSI A landscape, one band per room, rows in cable-ID order, ten columns: `CABLE ID`, `OPEN` (`RACK`, `ROOM` or `BOTH`), `RACK LBL`, `FIELD LBL`, `OUTLET`, `FIELD END`, `MEDIA`, `LEN`, `PATHWAY`, `ROUGH-IN`. Pages `T6.20` to `T6.29`, then from `T6.60` (DR-220). This row read *"whose rack end is an `OpenEndpoint`"* until that ruling widened it to the room end. |
 | n+4 | **Equipment List and Materials** | `T6.30` | ON | Qty · designators · manufacturer · model · description · RU · rack · location · face · mass · draw · `lifecycleStatus` · notes, grouped by rack then RU descending, with passives (the `Passive & Mechanical` category) listed instead in a **MATERIALS** section at the end by item, quantity and rack (DR-211, DR-213); a rack's subtotal still counts them and says so. Plus the **cable footage rollup by media with waste factor** (AC-024), the hardware implied by rules (ear kits, rear supports), the jumper/power-cord rollup by media + length + colour, and the PDU **outlet map** that AC-026 keeps off the cable schedule. **No pricing**: `Money`, `cost`, `supplier` and `purchaseOrder` do not exist in v1 (AC-055). Never called a BOM. |
 | n+5 | **Plate, Panel & Pinout Details** | `T5.01` | AUTO | On iff any non-standard pinout exists: null-modem RS-232, IR pinout variant, Euroblock role map, or a cable whose wiring standard DIFFERS FROM THE PROJECT'S (DR-180 §11.179.4; `wiringStandardExceptions` is that list). **DR-221 made each definite**: an IR port whose variant is not `mono-tip-sleeve`; a cable with `crossover == nullModem`; a terminal block (`PortDef.terminalRoles`) wired in an order other than its family's declared standard, which exists for `ctl.cresnet` (`24 Y Z G`) and `ctl.rs232` (`TX RX G`) only. **Built as pinout tables only**, one section per kind, last in the set, `T5.01` and on; no plate is drawn. This row read "non-default T568A" until that ruling, which is the same test stated against an assumed default: a job that states T568A everywhere is not a job full of exceptions, and a job that has stated nothing has no default for a cable to be non-. |
@@ -92,7 +92,7 @@ The schedule is the deliverable; the drawing is the receipt (G1). Effort and ris
 
 `design-pdf-export.md §2` designed a single schedule organised for the person drawing it. AC-025 rules that wrong: a row reading `W044: MTX-1:J09 → HBT-GRT:J01` with a zone reference requires two sheet flips to become actionable at 7 pm behind a rack, and carries no room, no rack, no RU, no conductor colours, and nothing to initial. The single schedule splits into **two presets of one derivation**: same query, same row model, different projection.
 
-| | **Pull Sheet** (`T6.10`) | **Termination Schedule** (`T6.11`) |
+| | **Pull Sheet** (`T6.10`) | **Termination Schedule** (`T6.15`) |
 |---|---|---|
 | Page | ANSI A **portrait**, usable 510 pt | ANSI A **landscape**, usable 690 pt |
 | Default sort | **room, then pathway**: the order the tech walks the house | **rack, then panel, then port** |
@@ -201,10 +201,7 @@ prints `EUROBLOCK` and no standard rather than a sentence about hardware with no
 is not four-pair at all never reaches this question: §11.179.3 answers it one level up. A job nobody
 has told prints the termination alone, never an assumed `T568B`.
 
-**WHAT IS BUILT TODAY IS STILL ONE `TERM` COLUMN**, 52 pt, carrying the field end. DR-055's split
-above is ruled and unbuilt, and that was already true before DR-180; the wiring standard prints in
-the column that exists. Nothing here is waiting on the standard, and the split is not waiting on
-anything but the work.
+**BUILT AT M6-K (`#693`).** This paragraph said one `TERM` column was still built, carrying the field end; it also carried the rack end's port designator, so a wall keystone landed on panel hole `A03` printed `KEYSTONE A03`, true of no single piece of hardware. `FIELD TERM` now reads the field end alone and `RACK TERM` the rack end's own termination, punch position and standard, `—` when undecided.
 
 **Rule weights**: grouping without colspan, which `pw.Table` cannot do. 0.8 pt vertical rules at the block boundaries (identity ┃ ends ┃ spec ┃ notes); 0.35 pt between all other columns and between rows; 0.8 pt above and below the header; **no outer border**: the drawing border supplies it.
 
@@ -220,7 +217,7 @@ Toggled per export. Width is taken from `CONDUCTOR / NOTES` first, then `MEDIA`.
 | `ROOM / ZONE` | 56 | left | any endpoint carries a `Location` |
 | `PATHWAY` | 40 | left | any `Pathway` assigned |
 | `ROUGH-IN` | 48 | centre | Installer / As-built preset |
-| `LIFECYCLE` | 44 | centre | any `lifecycleStatus != new`, on a sheet with the room; **not T6.11**, which carries a `CABLE ID` suffix instead (DR-206 §11.205.3), and **not the Pull Sheet**, which groups by lifecycle (§11.205.2) |
+| `LIFECYCLE` | 44 | centre | any `lifecycleStatus != new`, on a sheet with the room; **not T6.15**, which carries a `CABLE ID` suffix instead (DR-206 §11.205.3), and **not the Pull Sheet**, which groups by lifecycle (§11.205.2) |
 | `ISSUES` | 40 | centre | any open `Finding` on a row |
 | `ROUTED` / `TERMINATED` | 28 ea | right | the other two of the three length fields (AC-024) |
 | `REF` | 40 | centre | zone grid enabled: `6.01/B3` |
@@ -1108,7 +1105,7 @@ Every primitive above brackets itself in `saveContext`/`restoreContext`, which e
 ║ ☑ T6.05 Power         │ ☐ Include jumpers & cords     │                           ║
 ║ ☑ T6.06 Structure     │                               │                           ║
 ║ ☑ T6.10 Pull sheet    │ PALETTE                       │                           ║
-║ ☑ T6.11 Termination   │ ◉ Colour ○ Greyscale ○ CMYK   │                           ║
+║ ☑ T6.15 Termination   │ ◉ Colour ○ Greyscale ○ CMYK   │                           ║
 ║ ☑ T6.20 Unused runs   │ ☐ ISSUED FOR CONSTRUCTION  ⚠  │                           ║
 ║ ☑ T6.30 Equipment     │ ☐ Embed .rppj source      │                           ║
 ║ ☐ T5.01 Pinout detail │                               │                           ║

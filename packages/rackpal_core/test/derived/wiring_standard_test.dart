@@ -372,7 +372,7 @@ void main() {
         'which is the sentence §11.179.4 rules', () {
       final doc = _doc()..settings.wiringStandard = WiringStandard.t568b;
       _link(doc, origin: _origin(field: TerminationType.keystone));
-      expect(rowFor(doc, 'lnk').terminationCell, 'KEYSTONE T568B');
+      expect(rowFor(doc, 'lnk').fieldTermCell, 'KEYSTONE T568B');
     });
 
     test('and a PUNCHDOWN keeps its punch position welded to its type, '
@@ -380,12 +380,17 @@ void main() {
       // `PUNCHDOWN A03` is one thing an installer reads at the panel.
       // This case is here so a later tidy that "puts the standard beside
       // the type" literally has to change a test rather than a habit.
+      //
+      // RACK TERM SINCE DR-055 WAS BUILT (`#693`): a punch position is a
+      // hole in a panel, so it is the rack end's, and this case was always
+      // about the rack end. It read the field end's type beside the rack
+      // end's hole while one TERM cell carried both.
       final doc = _doc()..settings.wiringStandard = WiringStandard.t568a;
-      final link = _link(doc, origin: _origin(field: TerminationType.punchdown))
+      final link = _link(doc, origin: _origin(rack: TerminationType.punchdown))
         ..conductors.add(_toPort('lan'));
       expect(link.conductors, hasLength(1));
-      expect(rowFor(doc, 'lnk').terminationCell, startsWith('PUNCHDOWN'));
-      expect(rowFor(doc, 'lnk').terminationCell, endsWith('T568A'));
+      expect(rowFor(doc, 'lnk').rackTermCell, startsWith('PUNCHDOWN'));
+      expect(rowFor(doc, 'lnk').rackTermCell, endsWith('T568A'));
     });
 
     test('a EUROBLOCK on a four-pair run prints NO standard, which is '
@@ -395,13 +400,13 @@ void main() {
       // be the fabrication the ruling exists to stop.
       final doc = _doc()..settings.wiringStandard = WiringStandard.t568b;
       _link(doc, origin: _origin(field: TerminationType.euroblock));
-      expect(rowFor(doc, 'lnk').terminationCell, 'EUROBLOCK');
+      expect(rowFor(doc, 'lnk').fieldTermCell, 'EUROBLOCK');
     });
 
     test('a project that has stated nothing prints the termination alone', () {
       final doc = _doc();
       _link(doc, origin: _origin(field: TerminationType.keystone));
-      expect(rowFor(doc, 'lnk').terminationCell, 'KEYSTONE');
+      expect(rowFor(doc, 'lnk').fieldTermCell, 'KEYSTONE');
     });
   });
 

@@ -56,9 +56,17 @@ const PdfPageFormat ansiBLandscape = PdfPageFormat(
   11 * PdfPageFormat.inch,
 );
 
+/// ANSI A portrait, 612 x 792 pt (8.5 x 11 in) -- the Pull Sheet, which is
+/// carried and marked up (§6.1, DR-222).
+const PdfPageFormat ansiAPortrait = PdfPageFormat(
+  8.5 * PdfPageFormat.inch,
+  11 * PdfPageFormat.inch,
+);
+
 /// The `PdfPageFormat` for a core [SheetSize].
 PdfPageFormat pdfPageFormatFor(SheetSize size) => switch (size) {
   SheetSize.ansiBPortrait => ansiBPortrait,
   SheetSize.ansiALandscape => ansiALandscape,
   SheetSize.ansiBLandscape => ansiBLandscape,
+  SheetSize.ansiAPortrait => ansiAPortrait,
 };

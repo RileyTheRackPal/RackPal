@@ -1728,6 +1728,37 @@ the grid test typing `TX  RX G` through the real cell, `pinout_details_test.dart
 neither, and neither does Home Theatre with its receiver variants cleared. **Looked at**: Home
 Theatre's `T5.01`, six ports.
 
+### 4.37 The printed schedules, which M6's decomposition never filed · 2026-10-02 · `#977` to `#981`, `#693`, `#574` · `DR-222`, `DR-055` · no version move
+
+M6-K. **M6's exit criterion needs a complete sheet set, and the Pull Sheet and the Termination Schedule
+had no Story**: `#693` owed the Termination Schedule's columns and `#574` pointed at the Pull Sheet, and
+the two pointers read as coverage. Filed as `#977` before any code. **The numbering collided from the
+start**: at 42 rows a page any job over 42 drops needs a second Pull Sheet page, and `T6.11` was already
+the Termination Schedule's. The user ruled blocks of five, the Termination Schedule moving to `T6.15`,
+and fixed columns only (DR-222).
+
+**DR-055's split, built first** (`#693`). One `TERM` cell had carried both ends: the field end's type
+beside the rack end's port, so a wall keystone landed on panel hole `A03` printed `KEYSTONE A03`, and an
+existing test asserted exactly that string. `FIELD TERM` and `RACK TERM` each read one end, the rack end
+with no fallback (DR-046). The column table's comment said nothing rendered it while the Schedule screen
+did.
+
+**The sheets lay out M3's `ScheduleView` and derive nothing**, so the page and the screen are one
+projection. The overflow pool became one counter drawn in set order by all four schedules.
+
+**Found by rendering Whole House, three times**: the TYPE cell printed the screen's long label (`NET…
+(co…`) where §3.2 says the short tag; column heads were cut; and the Termination Schedule told runs
+landing in no rack that jumpers are bought by the piece. And one value in code, `SchedulePreset.sheetId`,
+still said `T6.11`, which the Schedule screen's picker printed.
+
+**Evidence.** `schedule_sheet_test.dart` (an empty schedule says so; Whole House whole and in order;
+page heights swept 150 to 600 pt for a band at a page foot; the tag's placement, which a surviving
+mutation showed was untested until it was pinned; four schedules sharing one pool with no id twice).
+`schedules_export_test.dart` reads the PDF: **AC-018's PRINTS clause (`#574`)**, every unbound Whole
+House run's W number on the printed Pull Sheet. **Looked at**: Whole House's `T6.10`, `T6.11` and
+`T6.15`. **Seen and not fixed here**: the compact title strip truncates the e-mail and file name at the
+portrait page's 510 pt, and `PATHWAY`'s head and long names truncate in §3.2's 36 pt.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

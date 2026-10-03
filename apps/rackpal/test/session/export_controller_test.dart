@@ -174,9 +174,9 @@ void main() {
       );
 
       expect(session.services.session.status, startsWith('Exported '));
-      // The cover, the legend, the exceptions, two elevations and the
-      // list since M6-C.
-      expect(session.services.session.status, contains('6 sheets'));
+      // The cover, the legend, the exceptions, two elevations, the Pull
+      // Sheet, the Termination Schedule and the list since M6-K (DR-222).
+      expect(session.services.session.status, contains('8 sheets'));
     });
 
     test('EXPORT FOR CONSTRUCTION stamps a document with no open error, '
@@ -193,7 +193,7 @@ void main() {
       expect(
         session.services.session.status,
         allOf(
-          startsWith('Exported 6 sheets'),
+          startsWith('Exported 8 sheets'),
           contains('issued for construction'),
         ),
       );
@@ -290,7 +290,7 @@ void main() {
 
       // Not vacuous: there really are six drawn sheets to compare, and
       // each of them has ink on it.
-      expect(first, hasLength(6));
+      expect(first, hasLength(8));
       for (final page in first) {
         expect(page.length, greaterThan(500));
       }
@@ -632,8 +632,8 @@ void main() {
       expect(await session.services.export.exportPdf(), isTrue);
       final after = _pageStreams(_bytesAt(session.fs, r'C:\jobs\smith.pdf')!);
 
-      expect(before, hasLength(6), reason: 'six drawn sheets to compare');
-      expect(after, hasLength(6));
+      expect(before, hasLength(8), reason: 'eight drawn sheets to compare');
+      expect(after, hasLength(8));
       expect(
         after,
         isNot(before),

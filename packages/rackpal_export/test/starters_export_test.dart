@@ -266,7 +266,8 @@ void main() {
 
       test(
         '(5) the sheet set is the cover + the legend + T0.02 pages + 2N + '
-        'T6.20 pages + schedule pages + T5.01 pages, numbered i OF n',
+        'T6.1x pages + T6.20 pages + schedule pages + T5.01 pages, numbered '
+        'i OF n',
         () async {
           final doc = documentOf(name);
           final exported = await exportOf(name);
@@ -302,6 +303,13 @@ void main() {
             for (final body in operatorStreams(exported.bytes))
               interpretContentStream(body, toUnicode: cmap).allText,
           ].where((t) => RegExp(r'SHEET NO\.\s+T6\.2\d').hasMatch(t)).length;
+          // T6.10 AND T6.15 ARE ON (DR-222): at least one page each, read
+          // from the ink like every other count here.
+          final wiringPages = [
+            for (final body in operatorStreams(exported.bytes))
+              interpretContentStream(body, toUnicode: cmap).allText,
+          ].where((t) => RegExp(r'SHEET NO\.\s+T6\.1\d').hasMatch(t)).length;
+          expect(wiringPages, greaterThanOrEqualTo(2), reason: 'T6.10, T6.15');
           final pinoutPages = [
             for (final body in operatorStreams(exported.bytes))
               interpretContentStream(body, toUnicode: cmap).allText,
@@ -326,6 +334,7 @@ void main() {
                 // T6.20 IS AUTO (DR-220): Whole House prints one page of
                 // unused home runs, the other three none. Counted in the
                 // ink, as the schedule's pages are.
+                wiringPages +
                 unusedPages +
                 pinoutPages +
                 RegExp(r'SHEET NO\.\s+T6\.3').allMatches(text).length,

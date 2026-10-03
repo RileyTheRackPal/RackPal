@@ -445,7 +445,8 @@ void main() {
       // The sheet ids come from `SchedulePreset` in core, so the tab and
       // the printed sheet cannot be given different names.
       expect(find.textContaining('T6.10'), findsOneWidget);
-      expect(find.textContaining('T6.11'), findsOneWidget);
+      // T6.15 SINCE DR-222: the picker names the sheet the paper prints.
+      expect(find.textContaining('T6.15'), findsOneWidget);
     });
 
     testWidgets('Ctrl+4 opens it, and Ctrl+3 does nothing (CR-071)', (

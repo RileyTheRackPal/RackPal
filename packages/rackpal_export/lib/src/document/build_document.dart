@@ -163,8 +163,42 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     ).drawingArea,
     measurer: measurer,
   );
+  // T6.10 AND T6.15 ARE `ON` (docs/08 §2.2, DR-222): paginated from the
+  // export's one schedule, through M3's own projection, so the page and
+  // the Schedule screen are one view. Each is at least one page.
+  final pullView = buildScheduleView(
+    schedule,
+    preset: SchedulePreset.pullSheet,
+  );
+  final terminationView = buildScheduleView(
+    schedule,
+    preset: SchedulePreset.terminationSchedule,
+  );
+  DBox drawingAreaOf(SheetSize size) => SheetLayout.resolve(
+    geometry: SheetGeometry(size),
+    revisionRowCount: revisionBodyRowCount(doc.revisionBlock),
+    stamped: stamped,
+  ).drawingArea;
+  final pullPages = paginateSchedule(
+    view: pullView,
+    title: SheetRole.pullSheet.title,
+    registries: doc.registries,
+    drawingArea: drawingAreaOf(SheetRole.pullSheet.size),
+    measurer: measurer,
+    units: doc.settings.displayUnits,
+  );
+  final terminationPages = paginateSchedule(
+    view: terminationView,
+    title: SheetRole.terminationSchedule.title,
+    registries: doc.registries,
+    drawingArea: drawingAreaOf(SheetRole.terminationSchedule.size),
+    measurer: measurer,
+    units: doc.settings.displayUnits,
+  );
   final set = SheetSet.forRacks(
     doc.racks.values,
+    pullSheets: pullPages.length,
+    terminationSheets: terminationPages.length,
     pinoutSheets: pinoutPages.length,
     exceptionSheets: exceptionPages.length,
     unusedHomeRunSheets: unusedPages.length,
@@ -200,6 +234,8 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   var schedulePage = 0;
   var exceptionPage = 0;
   var unusedPage = 0;
+  var pullPage = 0;
+  var terminationPage = 0;
   var pinoutPage = 0;
   for (final sheet in set.sheets) {
     final DiagramScene scene;
@@ -400,6 +436,25 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
             'placed clear of another and overlap.',
           );
         }
+      case SheetRole.pullSheet:
+      case SheetRole.terminationSchedule:
+        final pull = sheet.role == SheetRole.pullSheet;
+        final built = buildScheduleSheet(
+          sheet: sheet,
+          page: pull
+              ? pullPages[pullPage++]
+              : terminationPages[terminationPage++],
+          columns: (pull ? pullView : terminationView).columns,
+          registries: doc.registries,
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+        );
+        scene = built.scene;
+        legibility = built.legibility;
       case SheetRole.unusedHomeRuns:
         final built = buildUnusedRunsSheet(
           sheet: sheet,

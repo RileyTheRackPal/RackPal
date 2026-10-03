@@ -2,7 +2,7 @@
 //
 // docs/08-pdf-export.md §3 — THE WIRING SCHEDULE. "The schedule is the
 // deliverable; the drawing is the receipt" (G1), which is why this is the
-// one derivation the Schedule tab AND the T6.10/T6.11 sheet builders both
+// one derivation the Schedule tab AND the T6.10/T6.15 sheet builders both
 // read. Computes; never draws.
 //
 // ═════════════════════════════════════════════════════════════════════
@@ -15,7 +15,7 @@
 // a sort, a grouping and a column list — and no code of its own. The
 // failure this shape exists to prevent is the obvious one: two table
 // builders that agree on the day they are written, and disagree about
-// what a rack label is by the end of the milestone. `T6.10` and `T6.11`
+// what a rack label is by the end of the milestone. `T6.10` and `T6.15`
 // describe the SAME cable to two different readers, and a discrepancy
 // between them is a callback.
 //
@@ -383,7 +383,7 @@ const String kNoBoxCell = '— NO BOX —';
 /// document states where it is.
 ///
 /// ALIASED FROM `equipment_list.dart` rather than respelled. A reader who
-/// meets `NOT IN A RACK` on T6.30 and again on T6.11 is entitled to
+/// meets `NOT IN A RACK` on T6.30 and again on T6.15 is entitled to
 /// assume it means one thing, and two independent string literals is how
 /// that stops being true.
 const String kNotInARackCell = kUnplacedGroupTitle;
@@ -590,6 +590,7 @@ final class ScheduleEntry {
     this.boxless = false,
     this.estimateOrigin,
     this.wiringStandard,
+    this.rackTerminationType,
   });
 
   final Uuid linkId;
@@ -709,6 +710,13 @@ final class ScheduleEntry {
   /// both RG6 terminations and the model states which one this is or it
   /// does not.
   final TerminationType? terminationType;
+
+  /// How this run's RACK end terminates: `StructureOrigin.terminationRack`
+  /// and nothing else (DR-046, DR-055 §11.54). Null is undecided and prints
+  /// as such; [terminationType]'s `PlaceEndpoint` chain belongs to the
+  /// field end alone, and copying one end onto the other is the defect
+  /// DR-046 removed from the model.
+  final TerminationType? rackTerminationType;
 
   /// What this cable is wired to, ALREADY RESOLVED (DR-180 §11.179.2).
   ///
@@ -880,12 +888,17 @@ final class ScheduleEntry {
     return '${convention ?? kUnknownCell}→$pulled';
   }
 
-  /// §3.3 column 11 — `PUNCHDOWN A03 T568B`, `KEYSTONE T568A`, `F BARREL`.
+  /// §3.3 column 11, FIELD TERM: `KEYSTONE T568A`, `F BARREL`. Its twin,
+  /// [rackTermCell], is column 12: `PUNCHDOWN A03 T568B`.
   ///
-  /// Assembled from what the model states: the termination type on the
-  /// home run's origin (or the field end's intent), the near end's port
-  /// designator, which on a punchdown IS the punch position, and the
-  /// wiring standard (DR-180 §11.179.4).
+  /// **ONE CELL CARRIED BOTH ENDS UNTIL M6-K (`#693`)**: the field end's
+  /// termination type beside the RACK end's port designator, so a wall
+  /// keystone landed on panel hole A03 printed `KEYSTONE A03`, a phrase
+  /// true of no single piece of hardware. DR-055 split it. Each cell now
+  /// reads one end: the field end's type (the home run's origin, or a
+  /// `PlaceEndpoint`'s intent) here, and the rack end's own type, then its
+  /// punch position (the near end's port designator), there. Both close
+  /// with the wiring standard (DR-180 §11.179.4).
   ///
   /// THE STANDARD GOES LAST, BEHIND THE PUNCH POSITION, and that is a
   /// choice rather than an accident. `PUNCHDOWN A03` is one thing an
@@ -901,13 +914,23 @@ final class ScheduleEntry {
   /// at THIS end is a euroblock or a binding post. `EUROBLOCK T568B` is a
   /// sentence about hardware that has no pins, which is the fabrication
   /// §11.179.3 exists to prevent, one end down.
-  String get terminationCell {
+  String get fieldTermCell => _termCell(terminationType, port: null);
+
+  /// §3.3 column 12: the rack end's termination, then the punch position
+  /// where there is one, then the standard. `—` when the rack end's
+  /// termination is undecided, whatever the field end says (DR-046).
+  String get rackTermCell {
+    if (rackTerminationType == null) return kUnknownCell;
+    return _termCell(rackTerminationType, port: nearEnd.portDesignator);
+  }
+
+  String _termCell(TerminationType? type, {required String? port}) {
     final parts = <String>[
-      if (terminationType != null) terminationLabel(terminationType!),
-      if (nearEnd.portDesignator != null) nearEnd.portDesignator!,
+      if (type != null) terminationLabel(type),
+      if (port != null) port,
       if (wiringStandard != null &&
-          terminationType != null &&
-          kPairOrderTerminations.contains(terminationType))
+          type != null &&
+          kPairOrderTerminations.contains(type))
         wiringStandardLabel(wiringStandard!),
     ];
     return parts.isEmpty ? kUnknownCell : parts.join(' ');
@@ -1002,7 +1025,8 @@ final class ScheduleEntry {
     ScheduleColumnId.jacketColor => jacketColorCell,
     ScheduleColumnId.length => lengthCell(units),
     ScheduleColumnId.pathway => pathwayLabel ?? kUnknownCell,
-    ScheduleColumnId.term => terminationCell,
+    ScheduleColumnId.fieldTerm => fieldTermCell,
+    ScheduleColumnId.rackTerm => rackTermCell,
     ScheduleColumnId.conductorNotes => _conductorNotesCell,
   };
 
@@ -1259,6 +1283,7 @@ ScheduleEntry _row(RackDocument doc, Link link) {
     terminationType: _terminationOf(link, first),
     notes: _trimToNull(link.notes),
     wiringStandard: effectiveWiringStandard(doc, link),
+    rackTerminationType: link.structureOrigin?.terminationRack,
   );
 }
 
@@ -1465,18 +1490,25 @@ enum ScheduleColumnId {
   jacketColor,
   length,
   pathway,
-  term,
+
+  /// §3.3 column 11, the FIELD end's termination (DR-055 §11.54). Was one
+  /// `term` column until DR-055's split was built at M6-K (`#693`).
+  fieldTerm,
+
+  /// §3.3 column 12, the RACK end's termination, its punch position and
+  /// standard. No fallback to the field end (DR-046).
+  rackTerm,
   conductorNotes,
   signOff,
 
-  /// T6.11's `CABLE ID`: the designator and, unless the run is `new`, its
+  /// T6.15's `CABLE ID`: the designator and, unless the run is `new`, its
   /// lifecycle suffix (DR-206 §11.205.3). A column of its own rather than
   /// a preset flag on [cableId], so the one cell function answers both
-  /// and a printed T6.11 cannot spell the suffix a second way.
+  /// and a printed T6.15 cannot spell the suffix a second way.
   cableIdWithLifecycle,
 }
 
-/// T6.11's lifecycle suffix for [status] (DR-206 §11.205.3), or empty for
+/// T6.15's lifecycle suffix for [status] (DR-206 §11.205.3), or empty for
 /// `new`, which is what the sheet is for.
 String lifecycleSuffix(LifecycleStatus status) => switch (status) {
   LifecycleStatus.new_ => '',
@@ -1486,7 +1518,7 @@ String lifecycleSuffix(LifecycleStatus status) => switch (status) {
   LifecycleStatus.designIntent => 'DI',
 };
 
-/// The one-line key T6.11 prints whenever a suffix appears on it.
+/// The one-line key T6.15 prints whenever a suffix appears on it.
 const String kLifecycleSuffixKey =
     'EX existing · RM to remove · FUT future · DI design intent';
 
@@ -1596,24 +1628,18 @@ const List<ScheduleColumn> kPullSheetColumns = <ScheduleColumn>[
 
 /// §3.3 — the Termination Schedule's twelve columns, landscape, Σ 690 pt.
 ///
-/// **THIRTEEN COLUMNS BY RULING, TWELVE IN CODE, AND THE GAP IS OWNED.**
-/// DR-055 (§11.54) retires `TERM` for `FIELD TERM` 44 and `RACK TERM` 44,
-/// taking width from `CONDUCTOR / NOTES` 66 to 44 and `MEDIA` 56 to 42, so
-/// Σ stays 690. It is not built here because §11.26.4 splits the work:
-/// sorted rows and G4's counts are the derivation and are M3's, while a
-/// `header` and a `widthPt` are presentation and are **M6's under
-/// DR-027**. Board #693.
+/// **THIRTEEN COLUMNS, DR-055's, BUILT AT M6-K (`#693`).** `TERM` is retired
+/// for `FIELD TERM` 44 and `RACK TERM` 44, taking width from
+/// `CONDUCTOR / NOTES` 66 to 44 and `MEDIA` 56 to 42, so Σ stays 690.
 ///
-/// **THE DERIVATION IS ALREADY DONE**, which is why the ruling ships no
-/// code: `StructureOrigin` carries both `terminationField` and
-/// `terminationRack`, both round-trip, and the editor populates both.
-/// What is missing is a printed page, and `rackpal_export` has no
-/// schedule renderer at all, so nothing renders this constant today and
-/// there is no drift to fear while it waits.
+/// `RACK TERM` gets **no fallback**. `_terminationOf`'s `PlaceEndpoint`
+/// chain belongs to the field end alone, and copying one end onto the
+/// other is the defect DR-046 removed from the model.
 ///
-/// When it is built: `RACK TERM` gets **no fallback**. `_terminationOf`'s
-/// `PlaceEndpoint` chain belongs to the field end alone, and copying one
-/// end onto the other is the defect DR-046 removed from the model.
+/// **THIS COMMENT SAID "NOTHING RENDERS THIS CONSTANT TODAY" WHILE THE
+/// SCHEDULE SCREEN DID**, through `ScheduleView.columns`. Both the screen
+/// and the printed `T6.15` read it, which is the point: one column set,
+/// so the page and the screen cannot disagree about a termination.
 const List<ScheduleColumn> kTerminationScheduleColumns = <ScheduleColumn>[
   // DR-206 §11.205.3: the lifecycle rides here, at no width.
   ScheduleColumn(
@@ -1645,12 +1671,21 @@ const List<ScheduleColumn> kTerminationScheduleColumns = <ScheduleColumn>[
     header: 'FAR PORT',
     widthPt: 46,
   ),
-  ScheduleColumn(id: ScheduleColumnId.media, header: 'MEDIA', widthPt: 56),
-  ScheduleColumn(id: ScheduleColumnId.term, header: 'TERM', widthPt: 52),
+  ScheduleColumn(id: ScheduleColumnId.media, header: 'MEDIA', widthPt: 42),
+  ScheduleColumn(
+    id: ScheduleColumnId.fieldTerm,
+    header: 'FIELD TERM',
+    widthPt: 44,
+  ),
+  ScheduleColumn(
+    id: ScheduleColumnId.rackTerm,
+    header: 'RACK TERM',
+    widthPt: 44,
+  ),
   ScheduleColumn(
     id: ScheduleColumnId.conductorNotes,
     header: 'CONDUCTOR / NOTES',
-    widthPt: 66,
+    widthPt: 44,
   ),
 ];
 
@@ -1676,14 +1711,18 @@ enum SchedulePreset {
   /// per-room footage subtotals and a sign-off block.
   pullSheet,
 
-  /// `T6.11` — ANSI A landscape, rack then panel then port, every cable
+  /// `T6.15` — ANSI A landscape, rack then panel then port, every cable
   /// landing in a rack.
   terminationSchedule;
 
-  /// The sheet id docs/08 §2.2 gives this preset.
+  /// The id of this preset's FIRST printed page: the Schedule screen's
+  /// picker shows it, so it names the same sheet the paper does. `T6.15`
+  /// since DR-222 §11.221.1 (it was `T6.15`, which left a second Pull
+  /// Sheet page no id); `sheet_def.dart`'s block constants are the ones
+  /// the set is numbered from, and a test holds the two equal.
   String get sheetId => switch (this) {
     SchedulePreset.pullSheet => 'T6.10',
-    SchedulePreset.terminationSchedule => 'T6.11',
+    SchedulePreset.terminationSchedule => 'T6.15',
   };
 
   String get title => switch (this) {

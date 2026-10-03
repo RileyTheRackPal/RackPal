@@ -513,9 +513,13 @@ void main() {
       // than written as `4`, because `SheetSet.forRacks` is where that
       // arithmetic lives and a literal here would be a second copy of it.
       final doc = troubledPlan();
+      // THE TWO SCHEDULES ARE ON (DR-222), one page each here; the factory
+      // defaults them to none so a set built only for the racks stays one.
       final expected = SheetSet.forRacks(
         doc.racks.values,
         planUnderlays: planUnderlaysWithPins(doc),
+        pullSheets: 1,
+        terminationSheets: 1,
       );
       expect(result.value.sheetCount, expected.sheets.length);
 
@@ -602,9 +606,10 @@ void main() {
       expect(result, isA<Ok<ExportedDocument>>());
       expect(
         (result as Ok<ExportedDocument>).value.sheetCount,
-        // The cover, the legend, T0.02, the plan, two elevations and the
-        // list (M6-A, M6-B, M6-C).
-        7,
+        // The cover, the legend, T0.02, the plan, two elevations, the Pull
+        // Sheet, the Termination Schedule and the list (M6-A, M6-B, M6-C,
+        // M6-K).
+        9,
         reason: 'the same set as the unacknowledged run',
       );
 
