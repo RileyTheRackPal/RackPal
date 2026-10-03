@@ -22,6 +22,8 @@ Settled by the user on 2026-10-03, opening M6-D (`#326`), on the recommended opt
 - **`drawn` falls back to net labels at docs/08 §6.2's 6 pt floor**, measured on the fitted sheet,
   and only when the label sheet meets it (an implementer's clause: otherwise the swap buys nothing).
   No link count is invented.
+- **A bank the sheet wires prints expanded** (§11.224.7, ruled the same day). A collapsed bank's
+  vector pin carries only its first port, so the other members' cables were drawn nowhere.
 - **The fallback prints a ruled note box** in the drawing area's upper left, and raises a notice.
 - `ExportSpec.wireRender` waits for M6-I's dialog; the legend keys the tag pill and net-label stub
   in the same change (`#984`, by [DR-208](dr-208-legend-explains-what-the-set-prints.md)).

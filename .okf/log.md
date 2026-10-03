@@ -9,6 +9,10 @@
   `rackpal_ui` and the sheets unbuildable until it moved; it had moved long before. And the Story named
   six sheets against eight seeded domains, which DR-001's own "exactly one" would have turned back into
   net labels. Read a Story's nouns against the registry, not against the docs that wrote it.
+* **Note**: **A COUNTED OMISSION NOBODY READS IS A SILENT ONE.** `unlabelledLinkIds` has counted every
+  cable on a collapsed bank's non-first member since bank collapse reached the canvas, and nothing
+  displays it; Whole House hides eleven of twelve patch-panel runs. Found because the partition test
+  asked every port-landed run to reach a sheet. DR-225 §11.224.7 rules the sheet.
 
 ## 2026-10-03 (hundred-and-fifth entry)
 

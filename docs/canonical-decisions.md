@@ -23614,6 +23614,19 @@ built here: no surface could set it before M6-I's export dialog, so `auto` is th
 and the field arrives with the dialog. And by DR-208 §11.207.1 the legend's convention key gains the tag
 pill and the net-label stub in the same change that first prints them (`#984`).
 
+**11.224.7 RULED THE SAME DAY: A BANK THE SHEET WIRES PRINTS EXPANDED.** Found building the partition.
+A collapsed bank (CR-103) draws one vector pin carrying its FIRST port's key, so a cable on any other
+member finds no pin and is drawn nowhere: counted in `unlabelledLinkIds`, shown to nobody. On Whole
+House that is eleven of `PP-1`'s twelve runs, and the Network sheet would have printed one cable of
+twelve. DR-174 §11.173 names a set inside a collapsed bank as not ruled, and docs/05 §3 says only that
+members *"remain individually routed in the schedule"*. **Ruled by the user:** on an interconnect sheet,
+every bank with at least one cable of that sheet's domain prints expanded, so each cable has its own pin,
+wire and pill; a bank with none stays collapsed. The partition reads a schematic with every bank
+expanded, so no cable is lost before the sheet is chosen. Not taken: routing the members onto the vector
+pin, where the v1 router has no lane to separate them and eleven wires print as one; and expanding every
+bank, which prints a 48-port switch whole for two cables. The on-screen half is filed separately; this
+clause rules the sheet.
+
 **Scope.** No scope moves. CR-073's partition and DR-001 §11.1.2's rendering, made definite.
 
 ---
