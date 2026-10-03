@@ -28,6 +28,7 @@
 // feature whose entire job is protecting work the user has not saved yet.
 // Dismissible, because the user has read it and cannot act on it.
 import 'package:flutter/material.dart';
+import 'package:rackpal_ui/src/shell/export_notices_dialog.dart';
 
 /// The newer-schema read-only banner. Non-dismissible; see the header.
 final class ReadOnlyBanner extends StatelessWidget {
@@ -156,28 +157,70 @@ final class ShellWarningBanner extends StatelessWidget {
 /// raise a dialog, and a save whose backup did not must not be silent —
 /// this line is where the difference lives.
 final class ShellStatusLine extends StatelessWidget {
-  const ShellStatusLine({required this.message, super.key});
+  const ShellStatusLine({
+    required this.message,
+    this.notices = const <String>[],
+    this.noticeLabel,
+    super.key,
+  });
 
   final String message;
+
+  /// The notices [message] counts (DR-224). When it is not empty and
+  /// [message] ends with [noticeLabel], that count is a link to them.
+  final List<String> notices;
+
+  /// The count's own words, `6 notices`, which [message] ends with.
+  final String? noticeLabel;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final style = theme.textTheme.bodySmall;
+    final label = noticeLabel;
+    // THE COUNT BECOMES THE LINK ONLY WHERE THE LINE PRINTS IT, so the
+    // words a person clicks are the words they read. A message that does
+    // not end with the count keeps no link rather than a misplaced one.
+    final linked =
+        notices.isNotEmpty && label != null && message.endsWith(label);
+    final text = linked
+        ? Row(
+            children: [
+              Flexible(
+                child: Text(
+                  message.substring(0, message.length - label.length),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: style,
+                ),
+              ),
+              TextButton(
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  minimumSize: const Size(0, 20),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  textStyle: style?.copyWith(
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
+                onPressed: () => showExportNoticesDialog(context, notices),
+                child: Text(label),
+              ),
+            ],
+          )
+        : Text(
+            message,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: style,
+          );
     return Material(
       color: theme.colorScheme.surfaceContainerHighest,
       child: SizedBox(
         height: 24,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              message,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
+          child: Align(alignment: Alignment.centerLeft, child: text),
         ),
       ),
     );

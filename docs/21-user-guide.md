@@ -1180,7 +1180,7 @@ on the sheet.
 **Zones on the drawings.** Floor plans and rack elevations carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions, pull sheet, termination schedule, unused home runs, equipment list and pinout details have a plain border.
 
 So a two-rack job with one floorplan gives you at least eleven sheets, more if the exceptions or the equipment list run to a second page, or if any home run is still unused or any pinout is non-standard. The status line says
-how many sheets were written and how large the file is.
+how many sheets were written and how large the file is, and how many notices the export raised. **Click that count to read them**: a list opens, grouped by sheet, with a Copy button.
 
 **A project with no rack cannot be exported**: there is no elevation to draw
 and no equipment to list, and RackPal says so rather than writing an empty

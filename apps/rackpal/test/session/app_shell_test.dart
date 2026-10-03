@@ -255,6 +255,40 @@ void main() {
       expect(find.textContaining('Exported '), findsOneWidget);
     });
 
+    testWidgets('THE NOTICE COUNT IS A LINK, and clicking it shows the '
+        'sentences the export wrote (DR-224)', (tester) async {
+      // Until DR-224 the status line said `6 notices` and nothing anywhere
+      // showed what they said. This drives the real menu, the real status
+      // line and the real dialog.
+      await pump(tester, savePaths: [r'C:\jobs\smith.pdf']);
+      await tester.tap(find.text('File'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Export PDF…'));
+      await tester.pumpAndSettle();
+
+      final link = find.descendant(
+        of: find.byType(ShellStatusLine),
+        matching: find.byType(TextButton),
+      );
+      expect(link, findsOneWidget, reason: 'precondition: notices were raised');
+      final label = tester.widget<Text>(
+        find.descendant(of: link, matching: find.byType(Text)),
+      );
+      expect(label.data, endsWith('notices'));
+
+      await tester.tap(link);
+      await tester.pumpAndSettle();
+      expect(find.text(kExportNoticesTitle), findsOneWidget);
+      // A SENTENCE, not a count: every starter export raises a legibility
+      // notice, and its words are what this ruling exists to show.
+      expect(find.textContaining('Smallest text'), findsWidgets);
+
+      // Close is focused, so the keyboard alone dismisses it.
+      await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+      await tester.pumpAndSettle();
+      expect(find.text(kExportNoticesTitle), findsNothing);
+    });
+
     testWidgets('Export for construction… runs the export WITH THE STAMP '
         'REQUESTED, and carries no accelerator (DR-216)', (tester) async {
       // WIRING, as above: the stamp's two outcomes are proved in

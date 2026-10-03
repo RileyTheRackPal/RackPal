@@ -1490,7 +1490,13 @@ final class AppShellState extends State<AppShell>
             ),
           ),
         ),
-        if (status != null) ShellStatusLine(message: status),
+        if (status != null)
+          ShellStatusLine(
+            message: status,
+            // DR-224: the export's notices, readable from their count.
+            notices: session.statusNotices,
+            noticeLabel: noticeCountLabel(session.statusNotices.length),
+          ),
       ],
     );
   }
