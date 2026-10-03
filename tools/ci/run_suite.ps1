@@ -1123,7 +1123,29 @@ $SuiteFloors = @{
     # 5400 at `#982` (M6-L, DR-223): +2 in sheet/schedule_sheet_test.dart,
     # Whole House's trunks print T1 to T4 with no notice, and without them
     # the notice counts, names three, and gives the route.
-    'rackpal_core'   = 5400
+    # 5407 at `#327` (M6-D1, DR-225): +7 in sheet/interconnect_partition_
+    # test.dart, the figure order, each labelled link on exactly one sheet,
+    # each sheet's devices its own, Whole House's two sheets with every
+    # port-landed run on one, the collapsed-canvas control that loses
+    # eleven of PP-1's twelve, banksWiredBy, and the view differing from
+    # its source in devices and links alone.
+    # 5415 at `#328` (M6-D2, DR-225): +5 in sheet/interconnect_sheet_test
+    # .dart, every partition link wired and none from another domain, the
+    # sheet replaying the builders' own ops with no label among them, never
+    # enlarged, inside its area, and a lock kept while an unpinned stored
+    # position is laid out again (mutation-checked); +3 in sheet_def_test
+    # .dart, T6.01 on between the elevations and T6.10, all eight fitting
+    # under T6.09, and a tenth taking the pool first with its notice.
+    # 5422 at `#329` (M6-D3, DR-225): +7 in sheet/interconnect_fallback_
+    # test.dart, the decision's three quadrants (the implementer's clause
+    # mutation-checked), the RF sheet drawn in its real area and falling
+    # back in a 220 x 300 box below the note band, the built sheet's ruled
+    # note with labels and no wire, and Whole House's Network staying drawn.
+    # 5427 at `#984` (M6-D5, DR-225): +5 in sheet/legend_interconnect_test
+    # .dart, neither convention row without a sample, the tag pill row and
+    # the net label row each drawn and explained, and each sample the
+    # layer's own mark, the same pill and the same pennant to 1e-9.
+    'rackpal_core'   = 5427
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1206,7 +1228,15 @@ $SuiteFloors = @{
     # 279 at `#982` (M6-L, DR-223): +4 in strip_fit_export_test.dart, one per
     # starter: no compact-strip row cut, portrait or landscape, measured with
     # the real font.
-    'rackpal_export' = 279
+    # 283 at `#328` (M6-D2, DR-225): +4 in interconnect_export_test.dart,
+    # read off the PDF: T6.01 RF and T6.02 Network naming their domains,
+    # every landed run's tag pill on its own sheet including the eleven a
+    # collapsed bank hid, each sheet's own devices only, and the index rows.
+    # 284 at `#329` (M6-D3, DR-225): +1, Network under the floor says so in a
+    # notice and stays drawn, with no note and no fallback notice.
+    # 285 at `#984` (M6-D5, DR-225): +1, Whole House's printed legend keys
+    # the tag pill on W003, RF's first cable, and not the net label.
+    'rackpal_export' = 285
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1981,7 +2011,12 @@ $SuiteFloors = @{
     # real menu, status line and dialog showing a notice's sentence; +1 in
     # session/document_session_test.dart, a status and its notices replaced
     # together.
-    'rackpal_app'    = 1156
+    # 1161 at `#330` (M6-D4, DR-004, DR-225): +5 in one_schematic_sheet_test
+    # .dart, a source scan: not vacuous, a Sheet constructed only by the
+    # codec and the two commands that create the ONE sheet, each behind a
+    # null check, the interconnect files writing none, and no surface
+    # offering to author a sheet. Both scans mutation-checked.
+    'rackpal_app'    = 1161
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

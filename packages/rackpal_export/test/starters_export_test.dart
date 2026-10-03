@@ -326,12 +326,24 @@ void main() {
             reason:
                 'T6.20: twelve open runs on Whole House, no cables elsewhere',
           );
+          // T6.01… ARE ONE PER DOMAIN WITH A CABLE ON A DRAWN PIN (DR-225):
+          // Whole House's RF and Network, and no cables anywhere else.
+          final interconnectPages = [
+            for (final body in operatorStreams(exported.bytes))
+              interpretContentStream(body, toUnicode: cmap).allText,
+          ].where((t) => RegExp(r'SHEET NO\.\s+T6\.0\d').hasMatch(t)).length;
+          expect(
+            interconnectPages,
+            name == 'whole_house' ? 2 : 0,
+            reason: 'T6.01…: RF and Network on Whole House',
+          );
           expect(
             exported.sheetCount,
             // + 2 for T0.00 and T0.01, which open every set since M6-A.
             2 +
                 exceptionPages +
                 doc.racks.length * 2 +
+                interconnectPages +
                 // T6.20 IS AUTO (DR-220): Whole House prints one page of
                 // unused home runs, the other three none. Counted in the
                 // ink, as the schedule's pages are.

@@ -1163,6 +1163,7 @@ floorplan import.
 | **Device Location Plan** | Automatically, one per floorplan that has at least one item pinned to it |
 | **Rack Elevation, Front** | One per rack |
 | **Rack Elevation, Rear** | One per rack |
+| **Interconnect** (`T6.01` on) | Automatically, one per signal domain with at least one cable landing on a device, in this order: Digital Video, Analog Video & RF, Analog Audio, Digital Audio, Network, Control, Power, Structure. The title block names the domain. Each sheet draws only the devices that domain's cables land on, laid out afresh, except a symbol you locked on the Schematic, which keeps its place. Every cable is a wire with a tag pill at each end giving the cable ID and its type; a home run to a room is a short wire and one pill. A bank of ports folded up on screen prints unfolded whenever one of the sheet's cables lands in it, so every cable has its own pin. If the sheet's text would print below 6 pt and showing the cables as named stubs instead would fix that, it does so and a boxed note at its top left says why; if neither would, it stays as wires and the export's notices give the size it printed at. A cable whose type belongs to no signal domain is on no interconnect sheet, and the notices name it |
 | **Pull Sheet** (`T6.10`) | Always, on letter paper standing up, because it is the sheet a crew carries. Every field cable in the order you would walk the house: grouped first by whether it is to pull, existing, to remove or future, then by room, each room with its run count and footage. Each row gives the cable ID, a small swatch drawn in the cable type's own colour and line style with its short tag, both labels, where it starts and where it lands, the cable, its length, its pathway (the short designator you gave it, such as `T1`; if a pathway has none the sheet prints its name, cut to fit, and the export's notices tell you which ones and that you can add a designator in the **DESIGNATOR** column of the **Structured Wiring** tab's **Pathways** view), and three tick boxes and an initials line for pulled, terminated and tested. Patch cords and power cords are left off and the sheet says how many; they are counted on the equipment list. A long list continues on `T6.11` up to `T6.14` |
 | **Termination Schedule** (`T6.15`) | Always, landscape. Every cable that lands in a rack, rack by rack, panel by panel, port by port: the rack and its position, the device and port, the far end, the cable, and how each end is finished, the wall end in **FIELD TERM** and the rack end in **RACK TERM** (a dash when you have not recorded it), with the wiring standard where it applies. Cables that land in no rack are named as a count at the top; they are on the Pull Sheet. Was numbered `T6.11` before; a long Pull Sheet now uses that number |
 | **Unused Home Runs** (`T6.20`) | Automatically, when at least one home run is still a coil at one end: never landed at the rack, or landed at the rack and never terminated at the room. One band per room with how many runs it holds, cable IDs in order. The `OPEN` column says which end is loose: `RACK`, `ROOM` or `BOTH`. Each row also gives the rack label, the wall-plate label, the outlet, your description of the room end, the cable, its length, the pathway and how far rough-in has got. A project with every run landed at both ends gets no page for it |
@@ -1177,9 +1178,9 @@ and `Restore defaults` puts it back. The signal tag prefixes (`AUD`, `NET` and s
 on) always follow your abbreviations and are not edited here. A long note wraps
 on the sheet.
 
-**Zones on the drawings.** Floor plans and rack elevations carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions, pull sheet, termination schedule, unused home runs, equipment list and pinout details have a plain border.
+**Zones on the drawings.** Floor plans, rack elevations and interconnect sheets carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions, pull sheet, termination schedule, unused home runs, equipment list and pinout details have a plain border.
 
-So a two-rack job with one floorplan gives you at least eleven sheets, more if the exceptions or the equipment list run to a second page, or if any home run is still unused or any pinout is non-standard. The status line says
+So a two-rack job with one floorplan gives you at least eleven sheets, plus one interconnect sheet for each signal domain your cables use, more if the exceptions or the equipment list run to a second page, or if any home run is still unused or any pinout is non-standard. The status line says
 how many sheets were written and how large the file is, and how many notices the export raised. **Click that count to read them**: a list opens, grouped by sheet, with a Copy button.
 
 **A project with no rack cannot be exported**: there is no elevation to draw
@@ -1198,8 +1199,9 @@ line says how many errors are open and which sheet lists them. Acknowledging an
 error counts as dealing with it. Nothing is remembered: the next `Export PDF…`
 is unstamped.
 
-**The interconnect sheets are the notable absence: the schematic you draw on
-screen does not print yet**, and neither do the schedules. See below.
+**One schematic, several drawings.** The interconnect sheets are how the one
+schematic you draw becomes a sheet per signal domain. You never make, name or
+arrange a second sheet; the export splits the one you have.
 
 ---
 
@@ -1216,10 +1218,6 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 - **Windows only.** macOS is planned, not begun.
 - **No localisation.** English only, and no accessibility work has been done
   beyond keyboard reach.
-- **The interconnect sheets do not print.** You can author the schematic in
-  full and it will not appear in the PDF. Nor do the pull sheet, the
-  termination schedule, the unused home runs sheet or the pinout details;
-  §21.7 lists the sheets you do get.
 - **No DXF or DWG export.** DXF is planned for a later release.
 - **No Rear Panel view.** `Ctrl+3` does nothing; it is reserved for it. The
   rear panel prints on the rear elevation today; it is just not interactively
@@ -1238,7 +1236,7 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
 - **No multi-select drag on the schematic.** You can drag one symbol at a time;
   the arrow keys nudge a selection of several.
 - **One schematic sheet per project**, by design rather than by omission. The
-  export will partition it by signal domain; you do not author multiple sheets.
+  export partitions it by signal domain; you do not author multiple sheets.
 - **A 0U device is not drawn on the elevation.** It is listed under its channel
   in the rack inspector.
 - **An outlet's nominal run length cannot be typed.** It is read when a file
@@ -1249,6 +1247,15 @@ than a defect, and reporting one as a bug costs you time and tells us nothing.
   Site plan.
 
 ### Known rough edges
+
+- **A cable on a folded bank of ports shows no label on the Schematic** unless
+  it lands on the bank's first port. Click the bank to unfold it and see the
+  rest. The printed interconnect sheet unfolds them for you.
+- **An interconnect sheet can print small.** The layout leaves the same gap
+  between every pair of devices on a sheet, sized for the busiest edge, so one
+  large patch panel can push a sheet's text below 6 pt. The Whole House
+  starter's Network sheet prints at about 5.3 pt, and the export's notices say
+  so.
 
 - **A device that is not there can still be "deleted".** Removing a device that
   does not exist creates an undo entry for a document that did not change. It

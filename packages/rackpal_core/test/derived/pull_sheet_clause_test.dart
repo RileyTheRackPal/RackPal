@@ -339,6 +339,10 @@ void main() {
           'devicePlan',
           'rackElevationFront',
           'rackElevationRear',
+          // `interconnect` ARRIVED AT M6-D (`#328`, DR-225): `T6.01…`, M6's
+          // own drawings in M6. They draw cables and list none, so they
+          // answer neither side of the seam. Looked at.
+          'interconnect',
           // `pullSheet` AND `terminationSchedule` ARRIVED AT M6-K (`#977`,
           // DR-222): `T6.10` and `T6.15`, THE sheets this seam was about,
           // landing in M6 as §11.26.2 ruled. Looked at, and this time they

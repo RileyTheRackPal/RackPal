@@ -7,11 +7,14 @@
 // device marks the set's devices carry, the plan's markers when there is a
 // plan, the lifecycle borders the elevations draw, a hatch when a passive
 // is in the set, and the RU span label and load gutter every elevation
-// has. Net-label stubs, tag pills, junction dots, `— OPEN —` ends and the
-// revision cloud join the key in the change that first prints them.
+// has. Tag pills and net-label stubs joined at M6-D (DR-225 §11.224.6),
+// each shown only when an interconnect sheet in the set prints it; junction
+// dots, `— OPEN —` ends and the revision cloud join the key in the change
+// that first prints them.
 //
 // EVERY SAMPLE IS DRAWN BY THE CODE THE SHEETS USE: `deviceGlyphOp`,
-// `planMarkerOps`, `lifecycleStroke`, `hatchBand` and `buildDeviceLayer`
+// `planMarkerOps`, `lifecycleStroke`, `hatchBand`, `tagPillSampleOps`,
+// `netLabelSampleOps` and `buildDeviceLayer`
 // itself for the anatomy example. A legend drawing its own copy of a mark
 // is a legend that can come to disagree with the drawing.
 //
@@ -26,9 +29,16 @@ import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/device_glyph_art.dart';
 import 'package:rackpal_core/src/draw/scene/device_layer.dart';
+import 'package:rackpal_core/src/draw/scene/net_label_layer.dart'
+    show netLabelSampleOps;
 import 'package:rackpal_core/src/draw/scene/plan_scene.dart';
 import 'package:rackpal_core/src/draw/scene/rack_geometry.dart' show LodLevel;
 import 'package:rackpal_core/src/draw/scene/rack_style.dart';
+import 'package:rackpal_core/src/draw/scene/schematic_scene.dart'
+    show kSchematicUnitsPerGrid;
+import 'package:rackpal_core/src/draw/scene/signal_style.dart' show SignalStyle;
+import 'package:rackpal_core/src/draw/scene/wire_trace.dart'
+    show tagPillSampleOps;
 import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart'
     show wrapMeasured;
 import 'package:rackpal_core/src/draw/sheet/sheet_frame.dart';
@@ -294,13 +304,42 @@ LegendBlock deviceAnatomyBlock({
 
 // ─── block 4: conventions ───────────────────────────────────────────────
 
+/// A cable the set really draws, as a convention's sample names it: the
+/// text it prints and the four channels it prints them in.
+typedef LegendCableSample = ({String text, SignalStyle signal});
+
+/// The meaning lines of the two interconnect conventions (DR-225
+/// §11.224.6), in reader's words.
+const String kLegendTagPillMeaning =
+    "Tag pill: the cable's number and type, at each end of a drawn cable";
+const String kLegendNetLabelMeaning =
+    'Net label: a cable shown as a named stub at each end, where its '
+    'sheet notes it';
+
+/// How tall a cable sample's row is: a pill is its 8 pt type plus its pad,
+/// which a 14 pt text line does not hold.
+const double _kCableSampleRow = 20;
+
 /// Block 4: the lifecycle borders in [statuses], a hatch when
-/// [hatchedPassive], and the two annotations every elevation carries.
+/// [hatchedPassive], the two annotations every elevation carries, and the
+/// interconnect sheets' tag pill and net label when the set prints them.
+///
+/// [tagPill] and [netLabel] are null when no sheet in the set draws that
+/// mark (DR-208 §11.207.1: the key explains what the set prints). Either
+/// needs [measurer], since both samples are drawn by the schematic's own
+/// layers, which measure their text.
 LegendBlock conventionsBlock({
   required List<LifecycleStatus> statuses,
   required bool hatchedPassive,
+  LegendCableSample? tagPill,
+  LegendCableSample? netLabel,
+  TextMeasurer? measurer,
   SheetPalette palette = const SheetPalette(),
 }) {
+  assert(
+    (tagPill == null && netLabel == null) || measurer != null,
+    'conventionsBlock: a cable sample is drawn by a layer that measures',
+  );
   final ops = <DiagramOp>[];
   var y = _heading(ops, 'CONVENTIONS', palette);
   const sampleW = 34.0;
@@ -356,6 +395,53 @@ LegendBlock conventionsBlock({
         ),
       );
     y += kLegendBlockLine;
+  }
+  // THE INTERCONNECT SHEETS' TWO MARKS, each drawn by the layer the sheets
+  // draw it with, on a cable the set really carries, then explained on the
+  // line below: a pill or a pennant is wider than this block's sample
+  // column, so the meaning cannot sit beside it.
+  for (final (sample, meaning, ops0)
+      in <
+        (
+          LegendCableSample?,
+          String,
+          List<DiagramOp> Function(LegendCableSample, double),
+        )
+      >[
+        (
+          tagPill,
+          kLegendTagPillMeaning,
+          (s, at) => tagPillSampleOps(
+            text: s.text,
+            pin: DPt(0, at),
+            length: kSchematicUnitsPerGrid * 3,
+            signal: s.signal,
+            measurer: measurer!,
+          ),
+        ),
+        (
+          netLabel,
+          kLegendNetLabelMeaning,
+          (s, at) => netLabelSampleOps(
+            pin: DPt(0, at),
+            signal: s.signal,
+            netName: s.text,
+            measurer: measurer!,
+          ),
+        ),
+      ]) {
+    if (sample == null) continue;
+    final at = y - kLegendBlockLine / 2 + _kCableSampleRow / 2;
+    ops
+      ..addAll(ops0(sample, at))
+      ..add(
+        OpText(
+          meaning,
+          DPt(0, at + _kCableSampleRow / 2 + kLegendBlockLine / 2),
+          _text(kLegendBlockPt, palette.text),
+        ),
+      );
+    y += _kCableSampleRow + kLegendBlockLine;
   }
   return LegendBlock('CONVENTIONS', ops, y);
 }

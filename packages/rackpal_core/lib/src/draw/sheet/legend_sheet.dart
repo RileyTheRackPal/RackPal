@@ -207,6 +207,12 @@ LegendSheet buildLegendSheet({
   Iterable<DeviceInstance> devices = const <DeviceInstance>[],
   Map<String, TemplateSnapshot> templates = const <String, TemplateSnapshot>{},
   Iterable<PlanPinCarrier> planCarriers = const <PlanPinCarrier>[],
+
+  /// A cable a DRAWN interconnect sheet in this set prints, or null when
+  /// none does; and a cable a FALLEN-BACK one prints, or null (DR-225
+  /// §11.224.6). The key shows each mark only when the set carries it.
+  LegendCableSample? tagPillSample,
+  LegendCableSample? netLabelSample,
   SheetPalette palette = const SheetPalette(),
 }) {
   assert(
@@ -373,6 +379,9 @@ LegendSheet buildLegendSheet({
     conventionsBlock(
       statuses: LifecycleStatus.values.where(statuses.contains).toList(),
       hatchedPassive: drawn.any((b) => b.category == kCatPassive),
+      tagPill: tagPillSample,
+      netLabel: netLabelSample,
+      measurer: measurer,
       palette: palette,
     ),
     identifiersBlock(settings: settings, palette: palette),

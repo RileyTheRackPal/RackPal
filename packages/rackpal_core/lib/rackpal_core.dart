@@ -224,6 +224,8 @@ export 'src/draw/sheet/drawing_scale.dart';
 export 'src/draw/sheet/elevation_sheet.dart';
 export 'src/draw/sheet/equipment_sheet.dart';
 export 'src/draw/sheet/exceptions_sheet.dart';
+export 'src/draw/sheet/interconnect_partition.dart';
+export 'src/draw/sheet/interconnect_sheet.dart';
 export 'src/draw/sheet/legend_blocks.dart';
 export 'src/draw/sheet/legend_sheet.dart';
 export 'src/draw/sheet/materials_rollups.dart';

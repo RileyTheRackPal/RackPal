@@ -1,5 +1,26 @@
 # Update Log
 
+## 2026-10-03 (hundred-and-sixth entry)
+
+* **Progress**: M6-M merged at `fa2e8d2d` (PR 197). M6-D (`#326`) opened on branch
+  `m6d-interconnect` and ruled before any code; `#984` filed for the legend rows DR-208 makes part of it.
+* **Creation**: [DR-225](/decisions/dr-225-interconnect-sheets.md).
+* **Progress**: M6-D built on the branch: D1 `499ea59d`, D2 `561133b5`, D3 `4a428856`, D5 (`#984`)
+  `f619470f`, D4 `3ab732f7`. docs/12 §4.40. Whole House prints two interconnect sheets.
+* **Note**: **MEASURE A FALLBACK BEFORE TRUSTING IT TO RESCUE ANYTHING.** The ruled degradation to net
+  labels shares its layout with what it degrades from, so on every real sheet measured it bought at most
+  a fifth of a point. Writing "fall back only if that helps" into the ruling as an implementer's clause,
+  and saying so, kept it from trading wires for nothing; the measurement is what found where the
+  problem really lives.
+* **Note**: **A STORY'S PREMISE CAN EXPIRE BEFORE ITS STORY DOES.** M6-D2 said the router was in
+  `rackpal_ui` and the sheets unbuildable until it moved; it had moved long before. And the Story named
+  six sheets against eight seeded domains, which DR-001's own "exactly one" would have turned back into
+  net labels. Read a Story's nouns against the registry, not against the docs that wrote it.
+* **Note**: **A COUNTED OMISSION NOBODY READS IS A SILENT ONE.** `unlabelledLinkIds` has counted every
+  cable on a collapsed bank's non-first member since bank collapse reached the canvas, and nothing
+  displays it; Whole House hides eleven of twelve patch-panel runs. Found because the partition test
+  asked every port-landed run to reach a sheet. DR-225 §11.224.7 rules the sheet.
+
 ## 2026-10-03 (hundred-and-fifth entry)
 
 * **Progress**: M6-K merged at `5cb0ff3c` (PR 195). M6-L (`#982`) filed, ruled and built: the

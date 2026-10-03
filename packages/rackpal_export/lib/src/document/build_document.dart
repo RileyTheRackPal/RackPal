@@ -195,8 +195,37 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     measurer: measurer,
     units: doc.settings.displayUnits,
   );
+  // T6.01… ARE A DRY RUN TOO (DR-225): which domains get a sheet is read
+  // off the WHOLE schematic, every bank expanded so no cable on a collapsed
+  // bank is lost before its sheet is chosen (§11.224.7), and each sheet is
+  // laid out and fitted here, once, so the set, the legend and the sheet
+  // are all told the same thing about it.
+  final partitioning = interconnectPartitionsOf(
+    buildSchematicScene(
+      doc: doc,
+      measurer: measurer,
+      expandedBanks: allBanksExpanded(doc),
+    ),
+  );
+  final interconnectArea = interconnectDrawingArea(
+    revisionRowCount: revisionBodyRowCount(doc.revisionBlock),
+    stamped: stamped,
+  );
+  final interconnects = <InterconnectDrawing>[
+    for (final partition in partitioning.partitions)
+      layoutInterconnect(
+        doc: doc,
+        partition: partition,
+        measurer: measurer,
+        area: interconnectArea,
+      ),
+  ];
   final set = SheetSet.forRacks(
     doc.racks.values,
+    interconnectDomains: <SignalDomainDef>[
+      for (final partition in partitioning.partitions)
+        doc.registries.signalDomains[partition.domain]!,
+    ],
     pullSheets: pullPages.length,
     terminationSheets: terminationPages.length,
     pinoutSheets: pinoutPages.length,
@@ -239,6 +268,18 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   if (undesignatedPathwayNotice(pullView, pullId) case final notice?) {
     notices.add(notice);
   }
+  // A CABLE WHOSE TYPE RESOLVES TO NO DOMAIN IS ON NO INTERCONNECT SHEET,
+  // and saying so is the whole of what G4 asks: a drawing set that quietly
+  // omits a run is indistinguishable from one that lost it.
+  if (partitioning.unresolvedLinkIds case final ids when ids.isNotEmpty) {
+    final names = [for (final id in ids) doc.links[id]!.designator]..sort();
+    notices.add(
+      '${ids.length} cable${ids.length == 1 ? '' : 's'} with a type that '
+      'resolves to no signal domain ${ids.length == 1 ? 'is' : 'are'} on no '
+      'interconnect sheet: ${names.join(', ')}.',
+    );
+  }
+  var interconnectSheet = 0;
   var schedulePage = 0;
   var exceptionPage = 0;
   var unusedPage = 0;
@@ -334,6 +375,11 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
             for (final plan in plans)
               for (final pin in planPinsFor(doc, plan.id)) pin.carrier,
           },
+          // THE INTERCONNECT SHEETS' MARKS, each on a real cable from the
+          // first sheet that prints it (DR-225 §11.224.6). Known here
+          // because the sheets were laid out in the dry run above.
+          tagPillSample: _tagPillSample(doc, interconnects),
+          netLabelSample: _netLabelSample(interconnects),
         );
         scene = built.scene;
         legibility = built.legibility;
@@ -444,6 +490,30 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
             'placed clear of another and overlap.',
           );
         }
+      case SheetRole.interconnect:
+        final drawing = interconnects[interconnectSheet++];
+        // THE FALLBACK IS SAID TWICE (DR-225 §11.224.5): on the sheet, for
+        // whoever holds it, and here, for whoever exported it.
+        if (drawing.fellBack) {
+          notices.add(
+            '${sheet.ncsId}: cables shown as net labels; drawn, the '
+            'smallest text would print at '
+            '${drawing.drawnPaperPt.toStringAsFixed(2)} pt, under the '
+            '${kMinPrintPt.toStringAsFixed(0)} pt floor.',
+          );
+        }
+        final built = buildInterconnectSheet(
+          sheet: sheet,
+          drawing: drawing,
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+        );
+        scene = built.scene;
+        legibility = built.legibility;
       case SheetRole.pullSheet:
       case SheetRole.terminationSchedule:
         final pull = sheet.role == SheetRole.pullSheet;
@@ -540,3 +610,31 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
 /// and no message. Checked here so it is a reported refusal instead.
 FontRef? _missingFont(Map<FontRef, Uint8List> fontBytes) =>
     fontBytes.containsKey(kSheetFont) ? null : kSheetFont;
+
+/// The legend's tag pill: the first wire of the first sheet that prints
+/// wires, in that sheet's own words, or null when no sheet draws one.
+LegendCableSample? _tagPillSample(
+  RackDocument doc,
+  List<InterconnectDrawing> drawings,
+) {
+  for (final drawing in drawings) {
+    if (drawing.fellBack || drawing.wires.wires.isEmpty) continue;
+    final wire = drawing.wires.wires.first;
+    return (
+      text: tagPillText(doc.links[wire.linkId]!, wire.style),
+      signal: wire.style,
+    );
+  }
+  return null;
+}
+
+/// The legend's net label: the first label of the first sheet that fell
+/// back to them, or null when none did.
+LegendCableSample? _netLabelSample(List<InterconnectDrawing> drawings) {
+  for (final drawing in drawings) {
+    if (!drawing.fellBack || drawing.scene.netLabels.isEmpty) continue;
+    final label = drawing.scene.netLabels.first;
+    return (text: label.netName, signal: label.style);
+  }
+  return null;
+}

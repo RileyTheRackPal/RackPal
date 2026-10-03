@@ -387,9 +387,14 @@ SchematicSymbolTier buildSchematicSymbolTier({
   Map<Uuid, Pt> holdAt = const <Uuid, Pt>{},
   SugiyamaLayout? reuseLayout,
   Map<Uuid, Set<String>> expandedBanks = const <Uuid, Set<String>>{},
+  bool pinnedPositionsOnly = false,
 }) {
   final upg = kSchematicUnitsPerGrid;
-  final pinned = _holdOrPin(doc, holdAt);
+  final pinned = _holdOrPin(
+    doc,
+    holdAt,
+    pinnedPositionsOnly: pinnedPositionsOnly,
+  );
 
   // ── which devices get a symbol (see the file header) ─────────────────
   final candidates = doc.devices.values.toList()
@@ -655,6 +660,18 @@ SchematicScene buildSchematicScene({
   /// changes. `schematic_canvas_screen.dart` bumps its scene epoch for
   /// exactly this reason.
   Map<Uuid, Set<String>> expandedBanks = const <Uuid, Set<String>>{},
+
+  /// Honour only the stored positions of PINNED symbols, and lay out the
+  /// rest (DR-225 §11.224.3).
+  ///
+  /// THE CANVAS NEVER PASSES THIS. Since DR-187 every symbol a user has
+  /// touched carries a stored position, pinned or not, and the canvas lays
+  /// out by all of them so the sheet does not move between sessions. An
+  /// interconnect sheet draws a SUBSET of the devices, and laying a subset
+  /// out by the whole sheet's stored positions prints the screen's
+  /// arrangement with every other domain's devices cut out, gaps included;
+  /// a pin is the one position the user asked to keep.
+  bool pinnedPositionsOnly = false,
 }) {
   final upg = kSchematicUnitsPerGrid;
   final tier =
@@ -668,6 +685,7 @@ SchematicScene buildSchematicScene({
         holdAt: holdAt,
         reuseLayout: reuseLayout,
         expandedBanks: expandedBanks,
+        pinnedPositionsOnly: pinnedPositionsOnly,
       );
   final layout = tier.layout;
   final symbols = tier.symbols;
@@ -1172,19 +1190,27 @@ LayerAnchor _anchorFor(
 /// on screen. Where both name a device, the document governs, which also
 /// means a caller cannot accidentally strand a symbol away from the place
 /// its own file says it belongs.
-Map<Uuid, Pt> _holdOrPin(RackDocument doc, Map<Uuid, Pt> holdAt) {
-  final stored = storedSymbolPositions(doc);
+Map<Uuid, Pt> _holdOrPin(
+  RackDocument doc,
+  Map<Uuid, Pt> holdAt, {
+  required bool pinnedPositionsOnly,
+}) {
+  final stored = storedSymbolPositions(doc, pinnedOnly: pinnedPositionsOnly);
   if (holdAt.isEmpty) return stored;
   if (stored.isEmpty) return holdAt;
   return <Uuid, Pt>{...holdAt, ...stored};
 }
 
 /// Every position the schematic sheet stores, pinned or not
-/// (DR-187 §11.186.3).
+/// (DR-187 §11.186.3), or only the pinned ones when [pinnedOnly]
+/// (DR-225 §11.224.3: an interconnect sheet keeps a lock and nothing else).
 ///
 /// PUBLIC, because the freeze that writes them has to know which symbols
 /// already have one: it records the rest and leaves these alone.
-Map<Uuid, Pt> storedSymbolPositions(RackDocument doc) {
+Map<Uuid, Pt> storedSymbolPositions(
+  RackDocument doc, {
+  bool pinnedOnly = false,
+}) {
   Sheet? chosen;
   for (final sheet in doc.sheets.values) {
     if (sheet.kind != SheetKind.schematic) continue;
@@ -1198,6 +1224,7 @@ Map<Uuid, Pt> storedSymbolPositions(RackDocument doc) {
     ..sort((a, b) => a.id.v.compareTo(b.id.v));
   final out = <Uuid, Pt>{};
   for (final item in items) {
+    if (pinnedOnly && !item.pinned) continue;
     // First item wins if a document somehow carries two for one device: a
     // stated rule beats whichever the map happened to yield.
     out.putIfAbsent(item.targetId, () => item.position);

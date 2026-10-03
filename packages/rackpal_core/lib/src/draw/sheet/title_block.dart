@@ -131,11 +131,14 @@ final class TitleBlockFields {
     // off `SheetDef.underlayName` rather than through a second parameter,
     // because the sheet already knows its own subject and a set with
     // three plans in it is unreadable without one (DR-149 §11.148).
+    // AN INTERCONNECT SHEET NAMES ITS DOMAIN the same way (DR-225), off
+    // `SheetDef.domainName`.
+    final named = sheet.underlayName?.trim() ?? sheet.domainName?.trim();
     final subject = rack != null
         ? _rackTitle(rack)
-        : (sheet.underlayName?.trim().isEmpty ?? true)
+        : (named == null || named.isEmpty)
         ? null
-        : sheet.underlayName!.trim();
+        : named;
     final projectLine = subject == null
         ? info.projectName
         : '${info.projectName} — $subject';
