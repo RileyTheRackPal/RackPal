@@ -8,7 +8,7 @@ tags: [ruling, export, interconnect, schematic, drawn, m6-d, dr-225]
 timestamp: 2026-10-03T00:00:00Z
 ruling_id: DR-225
 canon_section: "11.224"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-03, opening M6-D (`#326`), on the recommended option four times.
@@ -35,6 +35,18 @@ The Story named six sheets for eight domains, and a two-domain sheet is not
 The on-screen solo draws every symbol, which on paper is the all-devices sheet CR-074 deleted. And
 the threshold the ruling asked for had no number anywhere: the router's own header says it has no
 link-count branch on purpose. Each gap would otherwise have been decided by whoever typed the code.
+
+# Built
+
+M6-D landed it on 2026-10-03 on branch `m6d-interconnect`: the partition in `499ea59d`, the drawn
+sheet in `561133b5`, the fallback and its note in `4a428856`, the legend rows in `f619470f` and the
+DR-004 guard in `3ab732f7`. Whole House prints `T6.01` RF and `T6.02` Network.
+
+**THE FALLBACK ALMOST NEVER FIRES, AND THAT WAS MEASURED.** Drawn and net labels share one layout and
+one type size and differ only in ink reach: Whole House Network 5.18 pt drawn, 5.39 labels; the test
+fixture within 0.25 pt, labels worse on two of three. The implementer's clause is what stops a swap
+that buys nothing. What actually makes a sheet small is the layout's global node gap, sized for the
+busiest comb on the sheet, which is not this ruling's to fix.
 
 # Related
 

@@ -1805,6 +1805,43 @@ sentence; removing the notices from `setStatus` fails it. `export_notices_dialog
 grouping, no link with nothing to read, no link on the wrong words, and Copy. **Looked at**: not yet
 on a running build; the test route is in the PR.
 
+### 4.40 The interconnect sheets, and a fallback measured into near-silence · 2026-10-03 · `#326`, `#327` to `#330`, `#984` · `DR-225`, `CR-073`, `DR-001`, `DR-004` · no version move
+
+M6-D. `T6.01…` print, one per signal domain whose cables land on a drawn pin, in docs/05 §11.2's
+figure order, on zoned ANSI B landscape between the elevations and `T6.10`. Ruled before any code
+(DR-225), because reading the Story against the tree found four things whoever typed the code would
+otherwise have decided: six sheets named against eight domains, a two-domain sheet that DR-001's own
+"exactly one" would turn back into net labels, the on-screen solo that is CR-074's all-devices sheet on
+paper, and a "Link count above which it would be illegible" with no number anywhere. M6-D2's premise,
+that the router lived in `rackpal_ui`, had expired long before.
+
+**A collapsed bank hid eleven of twelve runs (§11.224.7).** Found by the partition test, which asked
+every port-landed run on Whole House to reach a sheet: a collapsed bank's vector pin carries its first
+port's key, so `PP-1`'s ports 2 to 12 got no label and no wire, counted in `unlabelledLinkIds` and
+shown to nobody. The user ruled the sheet: a bank carrying one of its cables prints expanded. The
+canvas half is filed separately.
+
+**The fallback almost never fires, and that was measured, not assumed.** Both renderings share one
+layout and one 8 pt type size, so they differ only in ink reach: Whole House Network drawn 5.18 pt,
+labels 5.39; the schematic fixture's three sheets within 0.25 pt, labels worse on two. The clause the
+implementer added to §11.224.4, fall back only when labels meet the floor, is what stops a swap that
+buys nothing. **Whole House's Network sheet prints at about 5.3 pt and says so**: the layout's node gap
+is global, sized for `PP-1`'s twelve-lane comb, so the sheet fits by height. That is the layout's
+problem, not the router's, and it is not fixed here.
+
+**Evidence.** `interconnect_partition_test.dart` (figure order, each labelled link on one sheet, a
+sheet's own devices, Whole House's two sheets with every port-landed run on one, the collapsed-canvas
+control, the view differing from its source in devices and links alone); `interconnect_sheet_test.dart`
+(every link wired, the builders' own ops, never enlarged, a lock kept while an unpinned stored position
+is re-laid, mutation-checked); `interconnect_fallback_test.dart` (the decision's quadrants with the
+clause mutation-checked, the RF sheet falling back in a 220 x 300 box with its ruled note);
+`legend_interconnect_test.dart` (each sample the layer's own mark); `interconnect_export_test.dart`
+(read off the PDF: the two sheets, every pill, own devices only, the index rows, the legend's pill on
+`W003`, Network's notice); `one_schematic_sheet_test.dart` (DR-004: a `Sheet` constructed only by the
+codec and the two commands that make the one sheet, behind a null check, and no authoring copy; both
+scans mutation-checked). **Looked at**: the Network, RF and legend sheets rendered through pdfium and
+read; not yet printed or seen in a running build. The test route is in the PR.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
@@ -7498,7 +7535,7 @@ requires: the board query for Done Chapters under epic 23 returns 61, and 60 plu
 
 | Clause | Mark | Why |
 |---|---|---|
-| All four starters export a **complete sheet set** | **NOT BUILT** | The built slots are `SheetRole`'s values, not a number written here. **This cell's list of what was missing had gone stale**: it still named `T0.00`'s drawing index and rack strip and `T0.02` after M6-A2, M6-A3 and M6-C shipped them. It was re-read against the enum at M6-E1 (`#332`, §4.35), when `T6.20` arrived. Missing then: `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details; `T5.01` arrived at M6-E2 (§4.36). **Read the enum before trusting that list.** `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
+| All four starters export a **complete sheet set** | **NOT BUILT** | The built slots are `SheetRole`'s values, not a number written here. **This cell's list of what was missing had gone stale**: it still named `T0.00`'s drawing index and rack strip and `T0.02` after M6-A2, M6-A3 and M6-C shipped them. It was re-read against the enum at M6-E1 (`#332`, §4.35), when `T6.20` arrived. Missing then: `T6.01+` interconnect, `T6.10` pull sheet, `T6.11` termination schedule, `T6.50` network/IP schedule (added to v1 by DR-048, `AUTO`), `T5.01` pinout details; `T5.01` arrived at M6-E2 (§4.36), and `T6.01…` at M6-D (§4.40). **Read the enum before trusting that list.** `sheet_def.dart:15-20` states this plainly and states **why**: *"most of them need `Link`s, which do not exist until M2. They are absent from `SheetRole` rather than stubbed"*, and `T6.50` joins them for the neighbouring reason: `NetworkConfig` has existed since M0 with no writer, so the sheet would have had nothing to print |
 | Legend under deuteranopia / protanopia simulation | **UNPERFORMED** | No legend sheet exists to verify |
 | Real greyscale laser print (AC-054) | **UNPERFORMED** | Nothing has been printed |
 | ANSI B laser / ANSI D plotter / photocopy, physically inspected and signed off (AC-058 D13) | **UNPERFORMED** | Nothing has been printed |
