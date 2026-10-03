@@ -496,9 +496,16 @@ void main() {
       );
     });
 
-    test("the Termination Schedule's twelve columns sum to exactly "
-        '690 pt', () {
-      expect(kTerminationScheduleColumns.length, 12);
+    // THIRTEEN SINCE DR-055 WAS BUILT (`#693`): TERM retired for FIELD TERM
+    // and RACK TERM, the width taken from CONDUCTOR / NOTES and MEDIA, so
+    // the sum below did not move.
+    test("the Termination Schedule's thirteen columns sum to exactly "
+        '690 pt, FIELD TERM then RACK TERM after MEDIA', () {
+      expect(kTerminationScheduleColumns.length, 13);
+      expect(
+        kTerminationScheduleColumns.map((c) => c.header).skip(9).take(3),
+        ['MEDIA', 'FIELD TERM', 'RACK TERM'],
+      );
       expect(
         kTerminationScheduleColumns.fold<double>(0, (n, c) => n + c.widthPt),
         690,
@@ -2102,8 +2109,8 @@ void main() {
       expect(view.unresolvedMediaCount, 1);
     });
 
-    test('the TERM cell is the termination the model STATES plus the '
-        'punch position — never a guessed T568A/B', () {
+    test('FIELD TERM is the field end the model STATES and RACK TERM the '
+        'rack end, never one copied to the other (DR-055, DR-046)', () {
       final d = _Doc();
       final rack = d.rack('RK-1');
       final pp = d.device('PP-1', rackId: rack, ruIndex: 14);
@@ -2116,9 +2123,17 @@ void main() {
       );
       final row = _term(d.doc).rows.single;
       expect(row.terminationType, TerminationType.keystone);
+      // THIS READ 'KEYSTONE A03' WHILE ONE TERM CELL CARRIED BOTH ENDS: the
+      // wall's keystone beside the panel's hole, true of no single piece of
+      // hardware. The field end is a keystone; the rack end's termination
+      // was never recorded, so it prints the dash, not the field's word.
       expect(
-        row.cell(ScheduleColumnId.term, units: UnitSystem.imperial),
-        'KEYSTONE A03',
+        row.cell(ScheduleColumnId.fieldTerm, units: UnitSystem.imperial),
+        'KEYSTONE',
+      );
+      expect(
+        row.cell(ScheduleColumnId.rackTerm, units: UnitSystem.imperial),
+        kUnknownCell,
       );
     });
 
@@ -2135,7 +2150,7 @@ void main() {
         to: const OpenEndpoint('coil'),
       );
       expect(
-        _pull(d.doc).rows.single.terminationCell,
+        _pull(d.doc).rows.single.fieldTermCell,
         'F BARREL',
       );
     });

@@ -201,10 +201,7 @@ prints `EUROBLOCK` and no standard rather than a sentence about hardware with no
 is not four-pair at all never reaches this question: §11.179.3 answers it one level up. A job nobody
 has told prints the termination alone, never an assumed `T568B`.
 
-**WHAT IS BUILT TODAY IS STILL ONE `TERM` COLUMN**, 52 pt, carrying the field end. DR-055's split
-above is ruled and unbuilt, and that was already true before DR-180; the wiring standard prints in
-the column that exists. Nothing here is waiting on the standard, and the split is not waiting on
-anything but the work.
+**BUILT AT M6-K (`#693`).** This paragraph said one `TERM` column was still built, carrying the field end; it also carried the rack end's port designator, so a wall keystone landed on panel hole `A03` printed `KEYSTONE A03`, true of no single piece of hardware. `FIELD TERM` now reads the field end alone and `RACK TERM` the rack end's own termination, punch position and standard, `—` when undecided.
 
 **Rule weights**: grouping without colspan, which `pw.Table` cannot do. 0.8 pt vertical rules at the block boundaries (identity ┃ ends ┃ spec ┃ notes); 0.35 pt between all other columns and between rows; 0.8 pt above and below the header; **no outer border**: the drawing border supplies it.
 
