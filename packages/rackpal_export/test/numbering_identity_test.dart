@@ -83,13 +83,30 @@ void main() {
       test('ONLY THE PRINTED NUMBER MOVES: SHEET i OF n under simple, the '
           'id under ncs', () {
         final total = simple.length;
+        // THE NUMBER, NOT THE NUMBER AND TITLE: the ANSI A strip prints the
+        // number alone since DR-223 (row 1 has the title), so ` ·` is gone
+        // there. The boundary keeps `SHEET 1 OF 14` from matching `… 140`.
         for (final (i, id) in ids(simple).indexed) {
           expect(
             simple[i],
-            contains('SHEET ${i + 1} OF $total ·'),
+            matches(
+              RegExp(
+                'SHEET ${i + 1} OF $total'
+                r'(?!\d)',
+              ),
+            ),
             reason: id,
           );
-          expect(ncs[i], contains('SHEET $id ·'), reason: id);
+          expect(
+            ncs[i],
+            matches(
+              RegExp(
+                'SHEET ${RegExp.escape(id)}'
+                r'(?!\d)',
+              ),
+            ),
+            reason: id,
+          );
           expect(ncs[i], isNot(contains('SHEET ${i + 1} OF $total')));
         }
       });
