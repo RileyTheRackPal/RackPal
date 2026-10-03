@@ -65,15 +65,72 @@ final class PortOverrides {
 /// example exists for this type.
 final class NetworkConfig {
   NetworkConfig({
-    this.hostname,
-    this.ip,
-    this.subnet,
-    this.gw,
+    String? hostname,
+    String? ip,
+    String? subnet,
+    String? gw,
     this.mac,
     List<int>? vlans,
     this.portRole,
-    this.verifiedOn,
-  }) : vlans = vlans ?? [];
+    DateTime? verifiedOn,
+  }) : _hostname = hostname,
+       _ip = ip,
+       _subnet = subnet,
+       _gw = gw,
+       _vlans = List<int>.unmodifiable(vlans ?? const <int>[]),
+       _verifiedOn = verifiedOn;
+
+  // ─────────────────────────────────────────────────────────────────────
+  // AC-013'S PUBLIC-GETTER / @internal-SETTER PAIRS, AS EACH IS WIRED
+  // ─────────────────────────────────────────────────────────────────────
+  // The six fields the Devices view writes (DR-048, DR-226) went from plain
+  // public fields to these pairs in the change that gave them a command,
+  // which is AC-013's rule: a public setter is a second writer that skips
+  // undo, `EntityMeta` and the epochs. [mac] and [portRole] stay plain
+  // because nothing writes them yet; the first command that does converts
+  // them too.
+
+  String? _hostname;
+  String? get hostname => _hostname;
+  @internal
+  set hostname(String? v) => _hostname = v;
+
+  String? _ip;
+  String? get ip => _ip;
+  @internal
+  set ip(String? v) => _ip = v;
+
+  String? _subnet;
+  String? get subnet => _subnet;
+  @internal
+  set subnet(String? v) => _subnet = v;
+
+  String? _gw;
+  String? get gw => _gw;
+  @internal
+  set gw(String? v) => _gw = v;
+
+  /// UNMODIFIABLE, and replaced rather than edited: a list that could be
+  /// changed in place would let an undo's captured "before" value change
+  /// under it.
+  List<int> _vlans;
+  List<int> get vlans => _vlans;
+  @internal
+  set vlans(List<int> v) => _vlans = List<int>.unmodifiable(v);
+
+  DateTime? _verifiedOn;
+
+  /// Whether nobody has said anything here at all: the state in which a
+  /// device carries no `network` and the key is absent (DR-048 §11.47.2).
+  bool get isEmpty =>
+      _hostname == null &&
+      _ip == null &&
+      _subnet == null &&
+      _gw == null &&
+      mac == null &&
+      _vlans.isEmpty &&
+      portRole == null &&
+      _verifiedOn == null;
 
   /// The day somebody last confirmed these values against the device, or
   /// null when nobody has (DR-048 §11.47.3).
@@ -89,14 +146,11 @@ final class NetworkConfig {
   /// day before for anybody west of the writer. It dates the WHOLE row a
   /// surface shows, the device's `macAddressPrimary` included (DR-226
   /// §11.225.4).
-  DateTime? verifiedOn;
+  DateTime? get verifiedOn => _verifiedOn;
+  @internal
+  set verifiedOn(DateTime? v) => _verifiedOn = v;
 
-  String? hostname;
-  String? ip;
-  String? subnet;
-  String? gw;
   String? mac;
-  List<int> vlans;
 
   /// e.g. "access" | "trunk" — value set not yet specified.
   String? portRole;

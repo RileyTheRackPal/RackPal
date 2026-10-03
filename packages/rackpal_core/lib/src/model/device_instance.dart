@@ -384,10 +384,10 @@ final class DeviceInstance {
     Uuid? locationId,
     this.serialNumber,
     this.assetTag,
-    this.macAddressPrimary,
+    String? macAddressPrimary,
     this.firmwareVersion,
     this.installedAt,
-    this.network,
+    NetworkConfig? network,
     DeviceOverrides? overrides,
     this.designatorWatermark = 0,
     this.structureBodyId,
@@ -398,6 +398,8 @@ final class DeviceInstance {
        _placement = placement,
        _lifecycleStatus = lifecycleStatus,
        _locationId = locationId,
+       _macAddressPrimary = macAddressPrimary,
+       _network = network,
        overrides = overrides ?? DeviceOverrides(),
        _notes = notes;
 
@@ -460,7 +462,14 @@ final class DeviceInstance {
   bool designatorLocked;
   String? serialNumber;
   String? assetTag;
-  String? macAddressPrimary;
+
+  /// THE device's MAC (DR-226 §11.225.4): the one home for it, which the
+  /// Devices view's MAC column writes and `T6.50` prints. `network.mac` is
+  /// never written on a device. AC-013's pair, since it has a command.
+  String? _macAddressPrimary;
+  String? get macAddressPrimary => _macAddressPrimary;
+  @internal
+  set macAddressPrimary(String? v) => _macAddressPrimary = v;
   String? firmwareVersion;
   DateTime? installedAt;
 
@@ -477,7 +486,10 @@ final class DeviceInstance {
   /// ITS `mac` IS NOT THE DEVICE'S MAC. That is [macAddressPrimary], the
   /// one home DR-226 §11.225.4 gave it; nothing writes `network.mac` on a
   /// device, so the fact cannot live in two places.
-  NetworkConfig? network;
+  NetworkConfig? _network;
+  NetworkConfig? get network => _network;
+  @internal
+  set network(NetworkConfig? v) => _network = v;
   DeviceOverrides overrides;
 
   /// Reserve allocation (AC-006).

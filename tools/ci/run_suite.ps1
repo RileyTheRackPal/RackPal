@@ -1155,7 +1155,18 @@ $SuiteFloors = @{
     # wire_test.dart, no device record in any of the four starters carrying
     # the key with each file still byte-exact, and a management address on
     # its own record only, read back and byte-exact (mutation-checked).
-    'rackpal_core'   = 5439
+    # 5447 at `#987` (NET-A/1c, DR-048, DR-226): +8 in commands/device_
+    # network_command_test.dart, the first value creating the network and
+    # undo restoring the record, the last clear dropping it, the MAC on the
+    # device and never the network, no stamp on edit, VLANs compared by
+    # content, a stored list unchangeable under undo, Verified today as one
+    # entry, and the row keys. Drop-on-last mutation-checked (three kills).
+    # The fuzz harness gains setDeviceNetwork; its case count is unchanged.
+    # PLUS 14 THAT NOBODY WROTE: g4_wire_test.dart generates a cleared case
+    # and a measured-zero case for every DeviceField row, so the seven new
+    # rows got G4 wire coverage on arrival. First floored at 5447 from the
+    # test file alone; the gate counted 5461, and the difference is these.
+    'rackpal_core'   = 5461
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
