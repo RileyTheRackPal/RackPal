@@ -1151,7 +1151,11 @@ $SuiteFloors = @{
     # stated, an on-disk [] read as unstated, verifiedOn absent and then to
     # the day, and CR-117 over both. The unconditional-vlans mutation is
     # killed by the absence test alone, as the Story said it would be.
-    'rackpal_core'   = 5434
+    # 5439 at `#986` (NET-A/1b, DR-048): +5 in persistence/device_network_
+    # wire_test.dart, no device record in any of the four starters carrying
+    # the key with each file still byte-exact, and a management address on
+    # its own record only, read back and byte-exact (mutation-checked).
+    'rackpal_core'   = 5439
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

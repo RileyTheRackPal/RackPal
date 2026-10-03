@@ -1785,6 +1785,14 @@ JsonMap _encodeDeviceInstance(DeviceInstance d) {
   if (d.installedAt != null) {
     json['installedAt'] = encodeDateTime(d.installedAt!);
   }
+  // ABSENT WHEN NULL, on `macAddressPrimary`'s pattern four lines up and
+  // NOT `designatorLocked`'s, which is written unconditionally at the top of
+  // this function and is exactly what gets copied by proximity (DR-048
+  // §11.47.2). Absence is what lets `kSchemaVersion` stay put: CR-117's
+  // additive-optional case.
+  if (d.network != null) {
+    json['network'] = _encodeNetworkConfig(d.network!);
+  }
   putIfNotNull(json, 'structureBodyId', d.structureBodyId?.v);
   putIfNotNull(json, 'notes', d.notes);
   if (d.colorOverride != null) {
@@ -1837,6 +1845,11 @@ DeviceInstance _decodeDeviceInstance(Uuid id, JsonMap json) => DeviceInstance(
       ? null
       : decodeDateTime(
           asStr(json['installedAt'], 'DeviceInstance.installedAt'),
+        ),
+  network: json['network'] == null
+      ? null
+      : _decodeNetworkConfig(
+          asJsonMap(json['network'], 'DeviceInstance.network'),
         ),
   overrides: _decodeDeviceOverrides(
     asJsonMap(json['overrides'], 'DeviceInstance.overrides'),

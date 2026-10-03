@@ -544,7 +544,10 @@ final class DeviceInstance {
   Placement placement;
   Uuid? locationId;
   String? serialNumber, assetTag, macAddressPrimary, firmwareVersion;
+                                          // macAddressPrimary is THE device MAC (DR-226)
   DateTime? installedAt;
+  NetworkConfig? network;                 // the MANAGEMENT address, absent when null.
+                                          // Its mac is unused here. DR-048, DR-226.
   DeviceOverrides overrides;              // TYPED, nullable fields. CR-053, AC-012.
   int designatorWatermark;                // reserve allocation. AC-006.
   Uuid? structureBodyId;

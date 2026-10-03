@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/entity_meta.dart';
 import 'package:rackpal_core/src/model/enums.dart' show LifecycleStatus;
 import 'package:rackpal_core/src/model/placement.dart';
+import 'package:rackpal_core/src/model/port.dart' show NetworkConfig;
 import 'package:rackpal_core/src/model/template.dart' show TemplateRef;
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
@@ -386,6 +387,7 @@ final class DeviceInstance {
     this.macAddressPrimary,
     this.firmwareVersion,
     this.installedAt,
+    this.network,
     DeviceOverrides? overrides,
     this.designatorWatermark = 0,
     this.structureBodyId,
@@ -461,6 +463,21 @@ final class DeviceInstance {
   String? macAddressPrimary;
   String? firmwareVersion;
   DateTime? installedAt;
+
+  /// The device's MANAGEMENT address: hostname, IP, subnet, gateway, VLANs
+  /// and when somebody last checked them (DR-048 §11.47.2). Null when
+  /// nobody has said, which is every device until somebody does.
+  ///
+  /// ON THE DEVICE, NOT A PORT. A managed switch has one management address
+  /// and forty-eight ports, so an address hung off a port is a fact filed
+  /// under an arbitrary one of them. `Port.network` keeps what is genuinely
+  /// per-port: VLAN membership, `portRole`, and the address of a device
+  /// that really has more than one.
+  ///
+  /// ITS `mac` IS NOT THE DEVICE'S MAC. That is [macAddressPrimary], the
+  /// one home DR-226 §11.225.4 gave it; nothing writes `network.mac` on a
+  /// device, so the fact cannot live in two places.
+  NetworkConfig? network;
   DeviceOverrides overrides;
 
   /// Reserve allocation (AC-006).
