@@ -1129,7 +1129,14 @@ $SuiteFloors = @{
     # port-landed run on one, the collapsed-canvas control that loses
     # eleven of PP-1's twelve, banksWiredBy, and the view differing from
     # its source in devices and links alone.
-    'rackpal_core'   = 5407
+    # 5415 at `#328` (M6-D2, DR-225): +5 in sheet/interconnect_sheet_test
+    # .dart, every partition link wired and none from another domain, the
+    # sheet replaying the builders' own ops with no label among them, never
+    # enlarged, inside its area, and a lock kept while an unpinned stored
+    # position is laid out again (mutation-checked); +3 in sheet_def_test
+    # .dart, T6.01 on between the elevations and T6.10, all eight fitting
+    # under T6.09, and a tenth taking the pool first with its notice.
+    'rackpal_core'   = 5415
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1212,7 +1219,11 @@ $SuiteFloors = @{
     # 279 at `#982` (M6-L, DR-223): +4 in strip_fit_export_test.dart, one per
     # starter: no compact-strip row cut, portrait or landscape, measured with
     # the real font.
-    'rackpal_export' = 279
+    # 283 at `#328` (M6-D2, DR-225): +4 in interconnect_export_test.dart,
+    # read off the PDF: T6.01 RF and T6.02 Network naming their domains,
+    # every landed run's tag pill on its own sheet including the eleven a
+    # collapsed bank hid, each sheet's own devices only, and the index rows.
+    'rackpal_export' = 283
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

@@ -257,9 +257,14 @@ void main() {
     // absent from this enum rather than stubbed. EIGHT SINCE M6-E1 (`#332`,
     // DR-220): T6.20 arrived as a role, decided by a ruling. NINE SINCE
     // M6-E2 (`#976`, DR-221): T5.01. ELEVEN SINCE M6-K (`#977`, DR-222):
-    // the Pull Sheet and the Termination Schedule.
-    test('names the eleven sheets in this set, and no others', () {
-      expect(SheetRole.values, hasLength(11));
+    // the Pull Sheet and the Termination Schedule. TWELVE SINCE M6-D
+    // (`#328`, DR-225): T6.01…, the interconnect sheets, one role for all
+    // of them, since the domain is a field on the sheet and not a role.
+    test('names the twelve sheets in this set, and no others', () {
+      expect(SheetRole.values, hasLength(12));
+      expect(SheetRole.interconnect.title, 'INTERCONNECT');
+      expect(SheetRole.interconnect.size, SheetSize.ansiBLandscape);
+      expect(SheetRole.interconnect.zoned, isTrue);
       expect(SheetRole.pullSheet.title, 'PULL SHEET');
       expect(SheetRole.terminationSchedule.title, 'TERMINATION SCHEDULE');
       expect(SheetRole.pinoutDetails.title, 'PLATE, PANEL AND PINOUT DETAILS');
@@ -306,6 +311,94 @@ void main() {
       for (final role in SheetRole.values) {
         expect(role.title.toUpperCase(), isNot(contains('BOM')));
       }
+    });
+  });
+
+  group('the interconnect sheets, T6.01… (DR-225)', () {
+    final seeds = buildSeedSignalDomains();
+    List<SignalDomainDef> domains(int n) => [
+      for (final id in kInterconnectDomainOrder) seeds[id]!,
+    ].take(n).toList();
+
+    test('sit after the elevations and before the Pull Sheet, numbered '
+        'T6.01 on in the order the caller gives, each naming its domain', () {
+      final set = SheetSet.forRacks(
+        <Rack>[testRack()],
+        interconnectDomains: domains(2),
+        pullSheets: 1,
+      );
+      expect(set.sheets.map((s) => s.ncsId), <String>[
+        'T0.00',
+        'T0.01',
+        'T0.02',
+        'T2.01',
+        'T2.02',
+        'T6.01',
+        'T6.02',
+        'T6.10',
+        'T6.30',
+      ]);
+      final sheets = set.sheets.where((s) => s.role == SheetRole.interconnect);
+      expect(sheets.map((s) => s.domainName), <String>[
+        'Digital Video',
+        'Analog Video & RF',
+      ]);
+      expect(sheets.map((s) => s.legendNcsId), everyElement('T0.01'));
+      expect(set.notices, isEmpty);
+    });
+
+    test('all eight seeded domains fit T6.01 to T6.08, so no id is borrowed '
+        'from the Pull Sheet', () {
+      final set = SheetSet.forRacks(
+        <Rack>[testRack()],
+        interconnectDomains: domains(8),
+        pullSheets: 1,
+      );
+      expect(
+        set.sheets
+            .where((s) => s.role == SheetRole.interconnect)
+            .map((s) => s.ncsId),
+        <String>[
+          'T6.01',
+          'T6.02',
+          'T6.03',
+          'T6.04',
+          'T6.05',
+          'T6.06',
+          'T6.07',
+          'T6.08',
+        ],
+      );
+      expect(set.notices, isEmpty);
+    });
+
+    test('a tenth domain takes the shared pool FIRST, being first in set '
+        'order, and says why its number jumps', () {
+      final extra = [
+        for (var i = 0; i < 2; i++)
+          SignalDomainDef(
+            id: SignalDomainId('zz.extra$i'),
+            displayName: 'Extra $i',
+            tagPrefix: 'X$i',
+            color: seeds[kInterconnectDomainOrder.first]!.color,
+            colorDark: seeds[kInterconnectDomainOrder.first]!.colorDark,
+            dashPattern: const <int>[],
+            lineWeightPermille: 1000,
+            glyph: '*',
+            glyphAlt: '*',
+          ),
+      ];
+      final set = SheetSet.forRacks(
+        <Rack>[testRack()],
+        interconnectDomains: [...domains(8), ...extra],
+        pullSheets: 6,
+      );
+      final ids = set.sheets.map((s) => s.ncsId).toList();
+      expect(ids, containsAllInOrder(<String>['T6.08', 'T6.09', 'T6.60']));
+      // The Pull Sheet's own overflow moves past it rather than reusing it.
+      expect(ids, contains('T6.61'));
+      expect(ids.toSet(), hasLength(ids.length), reason: 'an id printed twice');
+      expect(set.notices.join(), contains('T6.01–T6.09'));
     });
   });
 }

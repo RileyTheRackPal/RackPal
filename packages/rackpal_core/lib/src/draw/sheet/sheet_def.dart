@@ -20,11 +20,11 @@
 // the enum it counts is this corpus's most-repeated failure, and nothing
 // connects adding a role to editing this sentence, so it no longer counts.
 //
-// The rest of §2.2's table (T6.01+ interconnect) is M6 and not yet built;
-// T0.00, the cover, arrived at M6-A, T0.01, the legend, at M6-B, T0.02,
-// the exceptions, at M6-C, T6.20, unused home runs, at M6-E1, T5.01 at
-// M6-E2, and the Pull Sheet and Termination Schedule at M6-K. The
-// unbuilt ones are absent from [SheetRole] rather than stubbed, which is
+// §2.2's table arrived in pieces: T0.00, the cover, at M6-A, T0.01, the
+// legend, at M6-B, T0.02, the exceptions, at M6-C, T6.20, unused home
+// runs, at M6-E1, T5.01 at M6-E2, the Pull Sheet and Termination Schedule
+// at M6-K, and T6.01…, the interconnect sheets, at M6-D. Anything still
+// unbuilt is absent from [SheetRole] rather than stubbed, which is
 // what lets a user-facing document state what
 // prints by naming the roles rather than by counting anything
 // (docs/21 §21.7).
@@ -33,6 +33,7 @@ import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/enums.dart' show SheetNumbering;
 import 'package:rackpal_core/src/model/plan.dart';
 import 'package:rackpal_core/src/model/rack.dart';
+import 'package:rackpal_core/src/model/registries.dart' show SignalDomainDef;
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/print_units.dart';
 
@@ -153,6 +154,20 @@ enum SheetRole {
     SheetSize.ansiBPortrait,
     perRack: true,
     shortTitle: 'REAR ELEV.',
+    zoned: true,
+  ),
+
+  /// docs/08 §2.2's `T6.01…`, one per domain partition of the one
+  /// schematic `Sheet` (CR-073, M6-D `#326`, DR-225). `ON`, after the
+  /// elevations and before the Pull Sheet, ANSI B landscape (§6.1), zoned
+  /// as a drawing (DR-215). Which domains is a derivation the caller makes
+  /// (`interconnectPartitionsOf`); each sheet names its own in
+  /// [SheetDef.domainName], which the title block prints as its subject.
+  interconnect(
+    'INTERCONNECT',
+    SheetSize.ansiBLandscape,
+    perRack: false,
+    shortTitle: 'INTERCONNECT',
     zoned: true,
   ),
 
@@ -319,6 +334,28 @@ String unusedHomeRunsNcsId(
 int _unusedOverflowCount(int pages) =>
     pages > kUnusedHomeRunsBlockSize ? pages - kUnusedHomeRunsBlockSize : 0;
 
+/// How many ids the interconnect sheets have to themselves: `T6.01` to
+/// `T6.09`, the decade below the Pull Sheet's `T6.10` (DR-225).
+const int kInterconnectBlockSize = 9;
+
+/// The NCS id of interconnect sheet [i], 0-based: `T6.01` to `T6.09`, then
+/// from [overflowFrom].
+String interconnectNcsId(
+  int i, {
+  int overflowFrom = kEquipmentListOverflowStart,
+}) {
+  final sequence = i < kInterconnectBlockSize
+      ? i + 1
+      : overflowFrom + i - kInterconnectBlockSize;
+  return 'T6.${sequence.toString().padLeft(2, '0')}';
+}
+
+/// Says why an interconnect sheet's number jumps. See [interconnectNcsId].
+String _interconnectOverflowNotice(int sheets, int from) =>
+    'The interconnect sheets need $sheets ids and DR-225 gives them '
+    'T6.01–T6.09, so sheet ${kInterconnectBlockSize + 1} onward is '
+    'numbered from T6.$from.';
+
 /// The Pull Sheet's block, `T6.10` to `T6.14` (DR-222 §11.221.1).
 const int kPullSheetBlockStart = 10;
 
@@ -405,9 +442,19 @@ final class SheetDef {
     this.rackDesignator,
     this.underlayId,
     this.underlayName,
+    this.domainId,
+    this.domainName,
     this.legendNcsId,
     this.stamped = false,
   });
+
+  /// The signal domain this sheet draws, for [SheetRole.interconnect].
+  final SignalDomainId? domainId;
+
+  /// That domain's display name, `Network`, carried on [underlayName]'s
+  /// precedent: it is the sheet's subject, and a set with two interconnect
+  /// sheets is unreadable without one.
+  final String? domainName;
 
   /// Whether this sheet prints the ISSUED FOR CONSTRUCTION stamp (DR-216).
   /// Set by the resolver on EVERY sheet of a stamped set, the way
@@ -462,6 +509,8 @@ final class SheetDef {
       other.rackDesignator == rackDesignator &&
       other.underlayId == underlayId &&
       other.underlayName == underlayName &&
+      other.domainId == domainId &&
+      other.domainName == domainName &&
       other.legendNcsId == legendNcsId &&
       other.stamped == stamped;
 
@@ -475,6 +524,8 @@ final class SheetDef {
     rackDesignator,
     underlayId,
     underlayName,
+    domainId,
+    domainName,
     legendNcsId,
     stamped,
   );
@@ -524,6 +575,7 @@ final class SheetSet {
     int terminationSheets = 0,
     bool stamped = false,
     Iterable<PlanUnderlay> planUnderlays = const <PlanUnderlay>[],
+    List<SignalDomainDef> interconnectDomains = const <SignalDomainDef>[],
     SheetNumbering numbering = SheetNumbering.simple,
   }) {
     assert(
@@ -563,6 +615,7 @@ final class SheetSet {
         exceptionSheets +
         plans.length +
         ordered.length * 2 +
+        interconnectDomains.length +
         pullSheets +
         terminationSheets +
         unusedHomeRunSheets +
@@ -658,6 +711,32 @@ final class SheetSet {
     // the one before it stopped, so no id is printed on two sheets however
     // many of them overflow.
     var pool = kEquipmentListOverflowStart;
+
+    // T6.01… ARE `6..n`, AFTER THE ELEVATIONS AND BEFORE THE SCHEDULES
+    // (docs/08 §2.2), one per domain in THE CALLER'S ORDER: which domains,
+    // and in what order, is DR-225 §11.224.2's derivation
+    // (`interconnectPartitionsOf`), not this factory's. Nine ids before
+    // `T6.10`, so the eight seeded domains always fit; a ninth-plus would
+    // take the shared pool first, being first in set order.
+    final interconnectFrom = pool;
+    pool += interconnectDomains.length > kInterconnectBlockSize
+        ? interconnectDomains.length - kInterconnectBlockSize
+        : 0;
+    for (var i = 0; i < interconnectDomains.length; i++) {
+      final domain = interconnectDomains[i];
+      sheets.add(
+        SheetDef(
+          ncsId: interconnectNcsId(i, overflowFrom: interconnectFrom),
+          role: SheetRole.interconnect,
+          index: index++,
+          total: total,
+          domainId: domain.id,
+          domainName: domain.displayName,
+          legendNcsId: _kLegendNcsId,
+          stamped: stamped,
+        ),
+      );
+    }
 
     // T6.10 AND T6.15 ARE `n+1` AND `n+2` (docs/08 §2.2), both `ON`: the
     // export always passes at least one page of each. Zero is the default
@@ -764,6 +843,11 @@ final class SheetSet {
           _ncsNotice(sheet.ncsId)
         else if (isReservedNcsId(sheet.ncsId))
           _reservedNotice(sheet.ncsId),
+      if (interconnectDomains.length > kInterconnectBlockSize)
+        _interconnectOverflowNotice(
+          interconnectDomains.length,
+          interconnectFrom,
+        ),
       if (pullSheets > kScheduleBlockSize)
         _scheduleOverflowNotice(
           'The Pull Sheet',

@@ -195,8 +195,37 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     measurer: measurer,
     units: doc.settings.displayUnits,
   );
+  // T6.01… ARE A DRY RUN TOO (DR-225): which domains get a sheet is read
+  // off the WHOLE schematic, every bank expanded so no cable on a collapsed
+  // bank is lost before its sheet is chosen (§11.224.7), and each sheet is
+  // laid out and fitted here, once, so the set, the legend and the sheet
+  // are all told the same thing about it.
+  final partitioning = interconnectPartitionsOf(
+    buildSchematicScene(
+      doc: doc,
+      measurer: measurer,
+      expandedBanks: allBanksExpanded(doc),
+    ),
+  );
+  final interconnectArea = interconnectDrawingArea(
+    revisionRowCount: revisionBodyRowCount(doc.revisionBlock),
+    stamped: stamped,
+  );
+  final interconnects = <InterconnectDrawing>[
+    for (final partition in partitioning.partitions)
+      layoutInterconnect(
+        doc: doc,
+        partition: partition,
+        measurer: measurer,
+        area: interconnectArea,
+      ),
+  ];
   final set = SheetSet.forRacks(
     doc.racks.values,
+    interconnectDomains: <SignalDomainDef>[
+      for (final partition in partitioning.partitions)
+        doc.registries.signalDomains[partition.domain]!,
+    ],
     pullSheets: pullPages.length,
     terminationSheets: terminationPages.length,
     pinoutSheets: pinoutPages.length,
@@ -239,6 +268,18 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   if (undesignatedPathwayNotice(pullView, pullId) case final notice?) {
     notices.add(notice);
   }
+  // A CABLE WHOSE TYPE RESOLVES TO NO DOMAIN IS ON NO INTERCONNECT SHEET,
+  // and saying so is the whole of what G4 asks: a drawing set that quietly
+  // omits a run is indistinguishable from one that lost it.
+  if (partitioning.unresolvedLinkIds case final ids when ids.isNotEmpty) {
+    final names = [for (final id in ids) doc.links[id]!.designator]..sort();
+    notices.add(
+      '${ids.length} cable${ids.length == 1 ? '' : 's'} with a type that '
+      'resolves to no signal domain ${ids.length == 1 ? 'is' : 'are'} on no '
+      'interconnect sheet: ${names.join(', ')}.',
+    );
+  }
+  var interconnectSheet = 0;
   var schedulePage = 0;
   var exceptionPage = 0;
   var unusedPage = 0;
@@ -444,6 +485,19 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
             'placed clear of another and overlap.',
           );
         }
+      case SheetRole.interconnect:
+        final built = buildInterconnectSheet(
+          sheet: sheet,
+          drawing: interconnects[interconnectSheet++],
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+        );
+        scene = built.scene;
+        legibility = built.legibility;
       case SheetRole.pullSheet:
       case SheetRole.terminationSchedule:
         final pull = sheet.role == SheetRole.pullSheet;

@@ -76,14 +76,22 @@ String? _subject(SheetDef s) {
   if (rack != null && rack.isNotEmpty) return rack;
   final plan = s.underlayName?.trim();
   if (plan != null && plan.isNotEmpty) return plan;
+  final domain = s.domainName?.trim();
+  if (domain != null && domain.isNotEmpty) return domain;
   return null;
 }
 
 /// Two sheets are pages of one thing when they share a role and a subject
-/// (§11.211.3). Front and rear elevations differ in role and two plans in
-/// underlay, so only a paginated schedule ever runs.
+/// (§11.211.3). Front and rear elevations differ in role, two plans in
+/// underlay and two interconnect sheets in domain, so only a paginated
+/// schedule ever runs. Without the domain term the set's interconnect
+/// sheets, adjacent and sharing a role, would index as one sheet of
+/// several pages.
 bool _samePagesOf(SheetDef a, SheetDef b) =>
-    a.role == b.role && a.rackId == b.rackId && a.underlayId == b.underlayId;
+    a.role == b.role &&
+    a.rackId == b.rackId &&
+    a.underlayId == b.underlayId &&
+    a.domainId == b.domainId;
 
 /// The index's rows for [sheets], the RESOLVED set, in its order.
 List<CoverIndexRow> coverIndexRows(List<SheetDef> sheets) {

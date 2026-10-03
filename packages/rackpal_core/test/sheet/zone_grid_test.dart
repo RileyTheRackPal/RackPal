@@ -16,6 +16,9 @@ void main() {
           SheetRole.devicePlan: true,
           SheetRole.rackElevationFront: true,
           SheetRole.rackElevationRear: true,
+          // A DRAWING, named in §11.214.1's own list, and the reason the
+          // schedule's `REF` column exists (CR-073).
+          SheetRole.interconnect: true,
           // THE SCHEDULES ARE TABLES (DR-222). `REF` would point INTO the
           // drawings' zones; the schedules carry none of their own.
           SheetRole.pullSheet: false,
