@@ -98,6 +98,22 @@ void main() {
     expect(pageOf['T6.02'], contains('W002 ·'), reason: 'still drawn');
   });
 
+  test('the legend keys the tag pill on a real cable the set prints, and not '
+      'the net label, which no sheet fell back to (DR-208, #984)', () {
+    final legend = pageOf['T0.01']!;
+    expect(legend, contains(kLegendTagPillMeaning));
+    // RF is T6.01, so its first wire is the sample, in the sheet's words.
+    expect(legend, contains('W003 ·'));
+    expect(pageOf['T6.01'], contains('W003 ·'));
+    expect(legend, isNot(contains(kLegendNetLabelMeaning)));
+    // A block that does not fit is dropped WITH a notice; there is none,
+    // so the row above is the block's and not a lucky substring.
+    expect(
+      exported.notices.where((n) => n.startsWith('T0.01: did not fit')),
+      isEmpty,
+    );
+  });
+
   test('the drawing index lists each interconnect sheet on its own row', () {
     final cover = pageOf['T0.00']!;
     expect(cover, contains('INTERCONNECT · Analog Video & RF'));

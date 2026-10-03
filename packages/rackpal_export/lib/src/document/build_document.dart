@@ -375,6 +375,11 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
             for (final plan in plans)
               for (final pin in planPinsFor(doc, plan.id)) pin.carrier,
           },
+          // THE INTERCONNECT SHEETS' MARKS, each on a real cable from the
+          // first sheet that prints it (DR-225 §11.224.6). Known here
+          // because the sheets were laid out in the dry run above.
+          tagPillSample: _tagPillSample(doc, interconnects),
+          netLabelSample: _netLabelSample(interconnects),
         );
         scene = built.scene;
         legibility = built.legibility;
@@ -605,3 +610,31 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
 /// and no message. Checked here so it is a reported refusal instead.
 FontRef? _missingFont(Map<FontRef, Uint8List> fontBytes) =>
     fontBytes.containsKey(kSheetFont) ? null : kSheetFont;
+
+/// The legend's tag pill: the first wire of the first sheet that prints
+/// wires, in that sheet's own words, or null when no sheet draws one.
+LegendCableSample? _tagPillSample(
+  RackDocument doc,
+  List<InterconnectDrawing> drawings,
+) {
+  for (final drawing in drawings) {
+    if (drawing.fellBack || drawing.wires.wires.isEmpty) continue;
+    final wire = drawing.wires.wires.first;
+    return (
+      text: tagPillText(doc.links[wire.linkId]!, wire.style),
+      signal: wire.style,
+    );
+  }
+  return null;
+}
+
+/// The legend's net label: the first label of the first sheet that fell
+/// back to them, or null when none did.
+LegendCableSample? _netLabelSample(List<InterconnectDrawing> drawings) {
+  for (final drawing in drawings) {
+    if (!drawing.fellBack || drawing.scene.netLabels.isEmpty) continue;
+    final label = drawing.scene.netLabels.first;
+    return (text: label.netName, signal: label.style);
+  }
+  return null;
+}

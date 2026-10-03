@@ -196,8 +196,10 @@ import 'package:rackpal_core/src/model/link.dart';
 import 'package:rackpal_core/src/model/port.dart' show Port, derivePortId;
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/model/template.dart'
-    show PortSetDef, SymbolSide;
+    show PortDirection, PortSetDef, SymbolSide;
+import 'package:rackpal_core/src/units/constants.dart' show kGridUnit;
 import 'package:rackpal_core/src/units/ids.dart';
+import 'package:rackpal_core/src/units/print_units.dart' show pointsForLen;
 
 /// The stub and pennant figures, in the units each one is naturally
 /// stated in: LAYOUT distances in grid units (so they track `kGridUnit`
@@ -570,7 +572,7 @@ NetLabelLayerBuild buildNetLabelLayer({
     for (final end in ends) {
       bucket.add(
         _Stub(
-          link: link,
+          linkId: link.id,
           symbol: end.symbol,
           port: end.port,
           style: signal,
@@ -687,6 +689,64 @@ NetLabelLayerBuild buildNetLabelLayer({
   );
 }
 
+/// One net label, a leader off [pin] running right and the pennant at its
+/// end, drawn BY THIS LAYER'S OWN EMITTER: for `T0.01`'s convention key
+/// (DR-208 §11.207.1, DR-225 §11.224.6), which may only show a mark the
+/// sheets draw with the code the sheets draw it with.
+///
+/// THE SYMBOL IS A STAND-IN AND IS NOT RETURNED. The emitter places a stub
+/// from a pin on a symbol, so a zero-width body puts its one right-edge pin
+/// exactly at [pin]; only the emitter's ops come back, in the order a
+/// domain's run paints them.
+List<DiagramOp> netLabelSampleOps({
+  required DPt pin,
+  required SignalStyle signal,
+  required String netName,
+  required TextMeasurer measurer,
+  SchematicPalette palette = const SchematicPalette(),
+  NetLabelStyle style = const NetLabelStyle(),
+}) {
+  final upg = pointsForLen(kGridUnit);
+  final port = SymbolPort(
+    key: 'sample',
+    label: '',
+    side: SymbolSide.right,
+    offset: 0,
+    size: upg,
+    direction: PortDirection.source,
+    family: signal.familyId,
+  );
+  final symbol = RenderedSymbol(
+    id: 'legend-sample',
+    designator: '',
+    name: '',
+    bodyRect: DBox.fromLtwh(pin.x, pin.y, 0, 0),
+    headerHeight: 0,
+    ports: <SymbolSide, List<SymbolPort>>{
+      SymbolSide.right: <SymbolPort>[port],
+    },
+  );
+  final emitter =
+      _Emitter(
+          sizer: _Sizer(measurer: measurer, style: style, unitsPerGrid: upg),
+          palette: palette,
+          style: style,
+          combIndex: const <String, int>{},
+        )
+        ..emit(
+          _Stub(
+            linkId: const Uuid('legend-sample'),
+            symbol: symbol,
+            port: port,
+            style: signal,
+            netName: netName,
+            bracket: const <SymbolPort>[],
+          ),
+        )
+        ..flushDomain();
+  return List<DiagramOp>.unmodifiable(emitter.ops);
+}
+
 /// The bucket key for stubs whose domain did not resolve. A `SignalDomainId`
 /// can never be the empty string in a seeded registry, and the value never
 /// reaches a fragment key — see [NetLabelLayerBuild.unresolvedRange].
@@ -696,7 +756,7 @@ const String _kUnresolvedBucket = '';
 @immutable
 final class _Stub {
   const _Stub({
-    required this.link,
+    required this.linkId,
     required this.symbol,
     required this.port,
     required this.style,
@@ -704,7 +764,10 @@ final class _Stub {
     required this.bracket,
   });
 
-  final Link link;
+  /// The link's id, and nothing else of it: the emitter reads no other
+  /// field, which is what lets `netLabelSampleOps` draw a legend's sample
+  /// through it without a `Link` to hand.
+  final Uuid linkId;
   final RenderedSymbol symbol;
   final SymbolPort port;
   final SignalStyle style;
@@ -1606,7 +1669,7 @@ final class _Emitter {
 
     labels.add(
       RenderedNetLabel(
-        linkId: stub.link.id,
+        linkId: stub.linkId,
         deviceId: stub.symbol.id,
         portKey: stub.port.key,
         side: side,

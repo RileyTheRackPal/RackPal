@@ -859,6 +859,42 @@ DrawnWireLayer buildDrawnWireLayer({
   );
 }
 
+/// One drawn wire's end, a short run of trace and its tag pill, exactly as
+/// [buildDrawnWireLayer] draws it: for `T0.01`'s convention key (DR-208
+/// §11.207.1, DR-225 §11.224.6), which may only show a mark the sheets
+/// draw with the code the sheets draw it with.
+///
+/// The trace runs [length] rightward from [pin] and the pill hangs off its
+/// far end, as a right-edge pin's would. [text] is the pill's text, which
+/// the caller takes from a real cable in the set.
+List<DiagramOp> tagPillSampleOps({
+  required String text,
+  required DPt pin,
+  required double length,
+  required SignalStyle signal,
+  required TextMeasurer measurer,
+  SchematicPalette palette = const SchematicPalette(),
+  SchematicWireStyle style = const SchematicWireStyle(),
+}) {
+  final end = DPt(pin.x + length, pin.y);
+  return <DiagramOp>[
+    OpLine(
+      pin,
+      end,
+      Stroke(argb: signal.argb, widthPt: signal.widthPt, dash: signal.dash),
+    ),
+    ..._PillSizer(
+      measurer: measurer,
+      style: style,
+      unitsPerGrid: kSchematicUnitsPerGrid,
+    ).pillOps(text, end, SymbolSide.right, signal, palette),
+  ];
+}
+
+/// The pill text [buildDrawnWireLayer] prints for [link], public so the
+/// legend's sample names a real cable in exactly the sheet's words.
+String tagPillText(Link link, SignalStyle style) => _tagTextFor(link, style);
+
 /// The tag pill's text.
 ///
 /// canon §4.4 states the pill as `W042 · HDMI · 25 ft` — designator, type,

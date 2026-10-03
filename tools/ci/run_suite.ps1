@@ -1141,7 +1141,11 @@ $SuiteFloors = @{
     # mutation-checked), the RF sheet drawn in its real area and falling
     # back in a 220 x 300 box below the note band, the built sheet's ruled
     # note with labels and no wire, and Whole House's Network staying drawn.
-    'rackpal_core'   = 5422
+    # 5427 at `#984` (M6-D5, DR-225): +5 in sheet/legend_interconnect_test
+    # .dart, neither convention row without a sample, the tag pill row and
+    # the net label row each drawn and explained, and each sample the
+    # layer's own mark, the same pill and the same pennant to 1e-9.
+    'rackpal_core'   = 5427
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1230,7 +1234,9 @@ $SuiteFloors = @{
     # collapsed bank hid, each sheet's own devices only, and the index rows.
     # 284 at `#329` (M6-D3, DR-225): +1, Network under the floor says so in a
     # notice and stays drawn, with no note and no fallback notice.
-    'rackpal_export' = 284
+    # 285 at `#984` (M6-D5, DR-225): +1, Whole House's printed legend keys
+    # the tag pill on W003, RF's first cable, and not the net label.
+    'rackpal_export' = 285
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
