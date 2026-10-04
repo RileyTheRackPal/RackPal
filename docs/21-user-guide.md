@@ -1015,8 +1015,16 @@ one fires on something you do every week, that is exactly what we want to hear
    the status line says how many connected and how many found no partner.
 3. Release, or press `Enter`. It is one undo step.
 
+If any cable in the run would spring back, the whole run springs back with
+one card. It names the first such cable and says how many of the run object;
+**Connect anyway** makes all of them. A run's card offers no fix of its own.
+
 Ports declared as a **set** in their template (a balanced audio pair, a
-speaker pair) draw as **one cable with several conductors** instead.
+speaker pair) draw as **one cable with several conductors** instead. A set
+is checked pair by pair the same way: the card names the first pair that
+objects and how many do, and **Connect anyway** makes the one cable. When the
+only objection is connectors that do not mate, **Declare an adapter** makes
+the cable with one adapter on it.
 
 #### Select, move and delete cables
 
@@ -1062,6 +1070,9 @@ the view the schedule points you back to.
   from-device, longest first, or rough-in status.
 - **Show jumpers and power cords**, off by default, and the button says how
   many it is hiding.
+  A power cord is an IEC or NEMA cord, wherever it runs: to a PDU, another
+  rack or a wall receptacle. Low-voltage DC and hardwired power are cables
+  somebody pulls, so they stay on the Pull Sheet.
 - **A summary line**: rows, **total footage**, and how much of it is
   estimated, bound or unknown, with counts for anything else worth your
   attention (a disputed cable class, a jacket pulled in the wrong colour).

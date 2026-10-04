@@ -9,7 +9,7 @@ tags: [ruling, amendment, link-class, power-cord, pull-sheet, dr-233, dr-008]
 timestamp: 2026-10-04T00:00:00Z
 ruling_id: DR-233
 canon_section: "11.232"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-04, building `#908`.

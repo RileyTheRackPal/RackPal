@@ -9,7 +9,7 @@ tags: [ruling, tier-2, spring-back, atomic-connect, multi-draw, schematic, dr-23
 timestamp: 2026-10-04T00:00:00Z
 ruling_id: DR-234
 canon_section: "11.233"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-04, building `#909` and `#999`.
