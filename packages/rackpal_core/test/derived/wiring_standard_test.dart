@@ -457,7 +457,12 @@ void main() {
         structureColumnIsEditable(StructureColumnId.wiringStandard),
         isTrue,
       );
-      expect(StructureColumnId.values.last, StructureColumnId.wiringStandard);
+      // APPENDED IN ORDER, `values` being the gear menu's history: WIRING
+      // was last until DR-231's CROSSOVER joined after it.
+      expect(
+        StructureColumnId.values.sublist(StructureColumnId.values.length - 2),
+        [StructureColumnId.wiringStandard, StructureColumnId.crossover],
+      );
     });
   });
 

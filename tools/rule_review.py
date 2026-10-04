@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """Generate docs/20-rule-review.md, the M5-H1 domain-review pack.
 
-    python3 tools/rule_review.py
+    python3 tools/rule_review.py           # writes the pack
+    python3 tools/rule_review.py --check   # the gate: parses, writes nothing
+
+WHY A GATE (`#972`). This refused to run from DR-132's ELE-005 onward:
+ELE-005, the plan band (DR-154) and RCK-014 (DR-219) all reached the
+catalogue with no group here, the pack said "28" while the catalogue held
+34, and nothing failed, because nothing ran it. `--check` does the
+parse and the grouping and writes nothing, so a rule arriving without a
+place in the pack fails the build the day it arrives.
 
 WHY GENERATED AND NOT WRITTEN. `#304`: *"a reviewer who has to learn the
 words 'net', 'service' and 'conductor' first is a reviewer who signs off
@@ -51,6 +59,9 @@ SEVERITY = {
     None: 'n/a (nothing is filed, the edit is simply refused)',
 }
 
+PLAN_GROUP = ('The floor plan (a separate set, outside the v1 count: '
+              'these only file once a floorplan is imported)')
+
 # Grouped by what a person would say the rule is ABOUT, not by tier. A
 # reviewer thinks in subjects; the tier is a consequence and is stated per
 # rule as "what happens".
@@ -59,13 +70,20 @@ GROUPS = [
      ['SIG-001', 'SIG-002', 'DIR-001', 'DIR-003', 'CON-001', 'ELE-006',
       'ELE-003']),
     ('Cable lengths', ['LEN-001', 'LEN-002']),
-    ('Power', ['PWR-001', 'PWR-003', 'NET-001']),
+    # ELE-005 HERE AND NOT UNDER SIGNALS (DR-132): it is a load on an
+    # amplifier channel, PWR-001's 80% headroom applied to a 70 V line.
+    ('Power', ['PWR-001', 'PWR-003', 'NET-001', 'ELE-005']),
     ('Racks and mounting',
      ['RCK-001', 'RCK-002', 'RCK-003', 'RCK-012', 'RCK-013', 'PLC-001',
-      'PLC-002', 'PLC-003']),
+      'PLC-002', 'PLC-003', 'RCK-014']),
     ('Code-adjacent checks', ['CODE-001', 'CODE-002']),
     ('Drawing integrity',
      ['TOP-001', 'TOP-002', 'TOP-003', 'TOP-004', 'TOP-005', 'LNK-020']),
+    # THE PLAN BAND, IN THE PACK BUT NOT IN THE COUNT (DR-154 §11.153.2).
+    # A reviewer sees every check the drawer can file, and these four are
+    # filed there; what they never do is move the v1 number, so their
+    # group says so and the totals below count them apart.
+    (PLAN_GROUP, ['PLN-001', 'PLN-002', 'PLN-003', 'PLN-004']),
 ]
 
 _PIECES = re.compile(r"'([^']*)'|\"([^\"]*)\"")
@@ -82,8 +100,13 @@ def _joined(block: str, field: str) -> str | None:
 
 def rules() -> list[dict]:
     src = io.open(CATALOGUE, encoding='utf-8').read()
+    # WHICH LIST A RULE IS DECLARED IN is what makes it plan band or v1,
+    # read from the source rather than guessed from an id prefix.
+    plan_from = src.index('const List<RuleMeta> kPlanRules')
+    plan_to = src.index('const List<RuleMeta> kRuleCatalogue')
     out = []
-    for block in re.findall(r'RuleMeta\((.*?)\n  \),', src, re.S):
+    for m in re.finditer(r'RuleMeta\((.*?)\n  \),', src, re.S):
+        block = m.group(1)
         rid = re.search(r"ruleId:\s*'([^']+)'", block)
         if not rid:
             continue
@@ -94,6 +117,7 @@ def rules() -> list[dict]:
             'severity': sev.group(1) if sev else None,
             'summary': _joined(block, 'summary'),
             'rationale': _joined(block, 'rationale'),
+            'plan': plan_from < m.start() < plan_to,
         })
     return out
 
@@ -108,7 +132,8 @@ def families() -> dict[str, list[tuple[str, str]]]:
     return dom
 
 
-def main() -> int:
+def main(argv: list[str]) -> int:
+    check_only = '--check' in argv
     catalogue = rules()
     by_id = {r['id']: r for r in catalogue}
     placed = {i for _, ids in GROUPS for i in ids}
@@ -124,10 +149,25 @@ def main() -> int:
         print(f'grouped but not in the catalogue: {sorted(stale)}',
               file=sys.stderr)
         return 1
+    misbanded = [
+        rid for title, ids in GROUPS for rid in ids
+        if by_id[rid]['plan'] != (title == PLAN_GROUP)
+    ]
+    if misbanded:
+        print(f'grouped in the wrong band: {sorted(misbanded)}',
+              file=sys.stderr)
+        return 1
+    v1 = sum(1 for r in catalogue if not r['plan'])
+    plan = len(catalogue) - v1
+    if check_only:
+        print(f'rule review pack: {v1} v1 rules and {plan} plan-band rules, '
+              'every one grouped')
+        return 0
 
     L: list[str] = []
     w = L.append
-    w('# The 28 checks, and the signal families: a review pack')
+    w(f'# The {len(catalogue)} checks, and the signal families: a review '
+      'pack')
     w('')
     w('**For a working integrator to mark up. Nothing here needs any '
       'knowledge of how RackPal is built.**')
@@ -155,10 +195,12 @@ def main() -> int:
     w('')
     w('## What I am NOT asking')
     w('')
-    w('Whether there should be MORE checks. The set is capped at 28 on '
-      'purpose and adding to it is a separate decision. If something '
-      'important is missing, say so and it becomes its own question rather '
-      'than a change to this list.')
+    w(f'Whether there should be MORE checks. The {v1} main checks are a '
+      'fixed set on purpose, each one added by a decision of its own, and '
+      f'the {plan} floor-plan checks are a separate set that only applies '
+      'once a floorplan is in the project. If something important is '
+      'missing, say so and it becomes its own question rather than a '
+      'change to this list.')
     w('')
     w('Nothing here is a code ruling. Two of the checks mention NEC '
       'articles and both ask you to verify rather than telling you the '
@@ -167,7 +209,8 @@ def main() -> int:
     w('')
     w('---')
     w('')
-    w(f'# Part 1: the {len(catalogue)} checks')
+    w(f'# Part 1: the {len(catalogue)} checks ({v1} main, {plan} floor '
+      'plan)')
     w('')
     for title, ids in GROUPS:
         w(f'## {title}')
@@ -237,9 +280,10 @@ def main() -> int:
     w('')
 
     io.open(OUT, 'w', encoding='utf-8', newline='').write('\n'.join(L))
-    print(f'wrote {OUT}: {len(catalogue)} rules, {total} families')
+    print(f'wrote {OUT}: {v1} v1 rules, {plan} plan-band rules, '
+          f'{total} families')
     return 0
 
 
 if __name__ == '__main__':
-    raise SystemExit(main())
+    raise SystemExit(main(sys.argv[1:]))

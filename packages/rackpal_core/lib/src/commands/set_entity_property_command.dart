@@ -933,6 +933,24 @@ abstract final class LinkField {
     touches: EpochMask.wires | EpochMask.meta,
   );
 
+  /// How the cable's conductors are crossed (DR-231, `#973`): the
+  /// schematic's cable bar and the Structured Wiring table's CROSSOVER
+  /// column both write through here.
+  ///
+  /// NULL IS NOBODY HAS SAID (G4), and is different from `straight`, which
+  /// is somebody saying so. Every value is offered on every cable (DR-231
+  /// §11.230.2), so this row does not consult the cable's family.
+  ///
+  /// `wires | meta` like [wiringStandard]: it changes the schedule's notes
+  /// and whether T5.01 prints.
+  static final crossover = EntityField<Link, CrossoverKind?>(
+    access: EntityAccess.link,
+    key: 'crossover',
+    get: (l) => l.crossover,
+    set: (l, v) => l.crossover = v,
+    touches: EpochMask.wires | EpochMask.meta,
+  );
+
   // ── the other two lengths (AC-024, M3-D/2) ─────────────────────────
   // THREE FIELDS, THREE COLUMNS, THREE READERS: takeoff, pull sheet,
   // as-built. They are three rows here for the same reason they are
@@ -1016,6 +1034,7 @@ abstract final class LinkField {
     notes,
     terminatedLength,
     wiringStandard,
+    crossover,
     routedLength,
     cutLength,
     test,

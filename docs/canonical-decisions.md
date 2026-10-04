@@ -23821,6 +23821,36 @@ superseded (§12.48).
 
 ---
 
+### 11.230 DR-231 · A cable's crossover is set on the schematic and in the table, and polarity reversed joins it
+
+**Settled by the user on 2026-10-04, closing `#973`.** DR-221 §11.220.4 kept null-modem in T5.01's
+trigger and filed its writer; `Link.crossover` had been modelled since M0 with no command and no
+control. A §8.3 amendment, because the model gains a value.
+
+**11.230.1 RULED: TWO HOSTS, THE SCHEMATIC AND THE STRUCTURED WIRING TABLE.** Selecting a cable on the
+schematic shows a bar naming the cable with a **Crossover** dropdown beside it, the first per-cable
+control the schematic has; the Structured Wiring table gains a **CROSSOVER** column for home runs, on
+the machinery `#712`'s CLASS column used. Not taken: the table alone, which lists only home runs and so
+could never mark the usual null-modem case, a serial cable inside the rack; and the schematic alone.
+
+**11.230.2 RULED: EVERY CHOICE ON EVERY CABLE**, against the recommendation to offer only what fits the
+cable's family, **on the user's trade reason**: cables are deliberately wired crossed on more families
+than the recommendation assumed, a subwoofer run wired out of phase being the user's example. The
+choices are `Not set`, `Straight`, `Null-modem`, `Polarity A→B` and `Polarity reversed`, unset meaning
+nobody has said (G4).
+
+**11.230.3 RULED: `CrossoverKind` GAINS `polarityReversed`, AND T5.01 PRINTS IT.** The user's example
+was a speaker pair wired `+` to `−`, which neither existing value describes: null-modem is an RS-232
+transmit-receive swap and A→B is fibre. Marked so, the schedule's notes read `POLARITY REVERSED` and
+T5.01 lists the cable in its own section, under a note that the swap is deliberate, so whoever
+terminates it does not correct it. Not taken: keeping three values and recording the case in the
+cable's notes, where T5.01 never shows it. Additive: an older file has no such value and decodes
+unchanged, and the codec writes it by name like the others.
+
+**Scope.** v1 grows by one enum value, `CrossoverKind.polarityReversed`. No milestone moves.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

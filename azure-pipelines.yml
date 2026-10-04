@@ -622,6 +622,16 @@ jobs:
         displayName: 'Gate: milestone completeness (section 8.9)'
         condition: succeededOrFailed()
 
+      # #972: the rule-review pack's generator stopped running at DR-132
+      # and nothing failed for three rulings. Parses the catalogue and the
+      # pack's grouping, writes nothing; a rule with no place in the pack,
+      # or in the wrong band, fails here.
+      - pwsh: |
+          python tools/rule_review.py --check
+          exit $LASTEXITCODE
+        displayName: 'Gate: rule review pack grouping (#972)'
+        condition: succeededOrFailed()
+
       # ==================================================================
       # GATE 3 — THE REPORTING PATH ITSELF
       # ==================================================================

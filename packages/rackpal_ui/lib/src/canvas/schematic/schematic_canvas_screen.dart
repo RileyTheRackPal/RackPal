@@ -134,6 +134,7 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/canvas/canvas_intent.dart';
 import 'package:rackpal_ui/src/canvas/grid_painter.dart';
 import 'package:rackpal_ui/src/canvas/marquee_controller.dart';
+import 'package:rackpal_ui/src/canvas/schematic/cable_bar.dart';
 import 'package:rackpal_ui/src/canvas/schematic/connect_overlay.dart';
 import 'package:rackpal_ui/src/canvas/schematic/domain_filter_bar.dart';
 import 'package:rackpal_ui/src/canvas/schematic/drag_ghost_layer.dart';
@@ -1848,6 +1849,26 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       RemoveLinkCommand(id: id, netId: netToRemoveWith(_doc, id)),
     );
     _status.show('$saying removed. Ctrl+Z puts it back.');
+  }
+
+  /// Sets [id]'s crossover from the cable bar (DR-231), one undo step, and
+  /// says what was set.
+  void _setCrossover(Uuid id, CrossoverKind? to) {
+    final command = buildSetEntityProperty(
+      doc: _doc,
+      id: id,
+      field: LinkField.crossover,
+      to: to,
+      now: widget.controller.clock.nowUtc(),
+      actor: widget.controller.actor,
+    );
+    if (command == null) return;
+    widget.controller.run(command);
+    _status.show(
+      '${_doc.links[id]?.designator ?? 'That cable'} crossover: '
+      '${to == null ? kCrossoverNotSet : crossoverLabel(to)}. '
+      'Ctrl+Z puts it back.',
+    );
   }
 
   // ── keyboard (docs/05 §14) ────────────────────────────────────────────
@@ -4834,6 +4855,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
                       )
                     : _canvas(scheme, plan),
               ),
+              // DR-231 §11.230.1: the selected cable's own controls.
+              if (_selectedLink case final id? when _doc.links[id] != null) ...[
+                const Divider(height: 1),
+                SchematicCableBar(
+                  key: ValueKey('cable-bar-${id.v}'),
+                  saying: _cableSaying(id),
+                  crossover: _doc.links[id]!.crossover,
+                  onCrossover: (to) => _setCrossover(id, to),
+                ),
+              ],
               const Divider(height: 1),
               _SchematicStatusStrip(
                 scene: scene,

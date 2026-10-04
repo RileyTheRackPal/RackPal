@@ -628,7 +628,7 @@ final class Link {                        // ONE PHYSICAL CABLE. One W###. One s
   Len? routedLength, cutLength, terminatedLength;   // three fields, three columns. AC-024.
   Permille? slack;
   Uuid? pathwayId;                        // → Pathway
-  CrossoverKind? crossover;               // straight|nullModem|fiberPolarityAB
+  CrossoverKind? crossover;               // straight|nullModem|fiberPolarityAB|polarityReversed (DR-231)
   WiringStandard? wiringStandard;         // t568a|t568b — THIS CABLE'S, when it
                                           // differs from the job's. Null means
                                           // "whatever the project says", the
