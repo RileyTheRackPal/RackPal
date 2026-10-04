@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-04 (hundred-and-eleventh entry)
+
+* **Progress**: `#973` and `#972` merged at `e071de1a` (PR 201). `#998` filed for the Network interconnect
+  sheet's legibility, on branch `net-legibility`.
+* **Creation**: [DR-232](/decisions/dr-232-interconnect-placed-by-own-ink.md), amending DR-225 §11.224.4.
+* **Note**: **LOOK AT THE PAGE BEFORE PRICING THE FIX.** M6-D's note blamed "the global node gap, sized for
+  PP-1's comb". Measuring found the cause (a label reservation on a sheet that draws no labels); rendering
+  the hacked fix found what the reservation had been hiding (a pill now touching the device above) and
+  what neither number showed (a landscape page two-thirds empty).
+
 ## 2026-10-04 (hundred-and-tenth entry)
 
 * **Progress**: M6-I merged at `97f6a83b` (PR 200); Story `#351` closed. `#973` and `#972` opened on

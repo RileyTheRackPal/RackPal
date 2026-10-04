@@ -23851,6 +23851,35 @@ unchanged, and the codec writes it by name like the others.
 
 ---
 
+### 11.231 DR-232 · A drawn interconnect sheet reserves its own ink, and islands sit side by side
+
+**Settled by the user on 2026-10-04, building `#998`.** Whole House's `T6.02` Network sheet printed at about
+5.3 pt, under docs/08 §6.2's floor, with the notice to say so (docs/12 §4.40 flagged it). **Measured first**:
+the sheet is two devices, `PP-1` and `LIU-1`, in one column; their bodies total 344 units and they spanned
+604, because the drawn rendering was laid out with the net-label comb reservation it never draws. Height
+bound the fit at 0.679. Removing the reservation alone reached about 7.5 pt, and the render showed
+`LIU-1`'s pill touching `PP-1` with most of the landscape page still empty.
+
+**11.231.1 RULED: THE DRAWN SHEET IS PLACED BY ITS OWN INK.** Each device's ink is its body and the stubs
+and pills its own ends draw, recorded by the wire layer as it draws them; within a column, devices stack
+with the schematic's ordinary node gap between their inks. The label rendering keeps the label
+reservation it needs. So the two renderings no longer share one layout, and DR-225 §11.224.4's
+implementer clause is amended to say so (§12.49): the fallback still compares the two on the sheet.
+
+**11.231.2 RULED: ISLANDS WRAP TO FIT THE PAPER**, the recommended option over the gap fix alone. When
+every device a sheet draws is an island, with no wire between two of them (a sheet of home runs), they
+are arranged in rows and columns, in the layout's order, choosing the arrangement that prints largest.
+Whole House's `PP-1` and `LIU-1` sit side by side. Not taken: the gap fix alone, which clears the floor
+and leaves one narrow column with empty paper either side.
+
+**11.231.3 A LOCK STILL HOLDS** (DR-225 §11.224.3). A column holding a locked device keeps its layout,
+and islands wrap only when none of them is locked: re-placing around a position the user fixed would
+move the devices beside it for a reason the user cannot see.
+
+**Scope.** No scope moves: how a v1 sheet is laid out, made legible.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -24591,6 +24620,12 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **CR-100**, its preview clause, and docs/08 §8.1 note 3 and §8.3's two preview levels | *"Screen-renderer preview is primary and has no native dependency"*; pdfium sits behind an explicit **Verify output** button | **The export preview is the generated PDF rendered by the vendored pdfium** (§11.229.1), and Verify output is that preview rather than a second button. CR-100's vendoring condition, the OS print dialog's deferral to v1.1 and Open in system viewer stand as ruled. |
+
+### 12.49 Amended by DR-232 (a drawn interconnect sheet is placed by its own ink)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-225 §11.224.4**, its implementation clause | *"Both renderings share one symbol layout and one 8 pt type size, so they differ only in how far the ink reaches"* | **The drawn rendering is placed by its own ink** (§11.231.1) and, when every device is an island, wrapped to fit (§11.231.2); the label rendering keeps the label reservation. The fallback still compares the two as fitted on the sheet, and the clause's reasoning (a fallback that buys no legibility is not taken) stands. |
 
 
 ## 13. Resolved §10 questions
