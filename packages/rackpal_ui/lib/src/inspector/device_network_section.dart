@@ -18,6 +18,7 @@
 // date would have thrown the ruling away.
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/network/open_web_page.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 
 /// The section's heading.
@@ -99,6 +100,9 @@ class DeviceNetworkSection extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(kEditNetworkInDevices, style: muted),
+          // DR-229 §11.228.1: beside the address it opens. Nothing when the
+          // row has no IP or hostname, or the app supplied no launcher.
+          OpenWebPageButton(row: row),
         ],
       ],
     );

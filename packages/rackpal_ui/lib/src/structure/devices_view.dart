@@ -25,6 +25,7 @@
 // somebody has.
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/network/open_web_page.dart';
 import 'package:rackpal_ui/src/structure/structure_editor_screen.dart'
     show kBatchSetLabel, kClearSelectionLabel;
 import 'package:rackpal_ui/src/theme/console_theme.dart';
@@ -69,6 +70,11 @@ const String kVerifiedTodayLabel = 'Verified today';
 
 /// The tick gutter's width, the cable table's `kSelectGutterWidth`.
 const double kDeviceSelectGutterWidth = 34;
+
+/// The last column's width: one "Open web page" button per row (DR-229
+/// §11.228.1). A column of the VIEW, not a `NetworkColumnId`: it is not
+/// in the Columns menu and T6.50 does not print it.
+const double kDeviceWebPageColumnWidth = 34;
 
 /// The Columns menu's button (NET-A/2b), the port grid's word for it.
 const String kDeviceColumnsLabel = 'Columns';
@@ -297,7 +303,8 @@ class _DeviceTable extends StatelessWidget {
   Widget build(BuildContext context) {
     final totalPt =
         columns.fold<double>(0, (n, c) => n + networkColumnWidth(c)) +
-        kDeviceSelectGutterWidth;
+        kDeviceSelectGutterWidth +
+        kDeviceWebPageColumnWidth;
     final ids = [for (final r in rows) r.deviceId];
     final ticked = ids.where(selected.contains).length;
     return LayoutBuilder(
@@ -404,6 +411,7 @@ class _HeaderRow extends StatelessWidget {
                 ),
               ),
             ),
+          SizedBox(width: kDeviceWebPageColumnWidth * scale),
         ],
       ),
     );
@@ -469,6 +477,12 @@ class _DeviceRow extends StatelessWidget {
                     ),
             ),
           ),
+        // LAST, after the values it opens (DR-229 §11.228.1), and empty on
+        // a row with no address rather than a button that cannot work.
+        SizedBox(
+          width: kDeviceWebPageColumnWidth * scale,
+          child: OpenWebPageButton(row: row, compact: true),
+        ),
       ],
     );
   }

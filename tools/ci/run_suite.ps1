@@ -1871,7 +1871,12 @@ $SuiteFloors = @{
     # test.dart, ten URLs judged openable or not (http and https with a
     # host; file, ftp, javascript, mailto, hostless and bare refused) and
     # the scope handing its launcher down.
-    'rackpal_ui'     = 2087
+    # 2099 at `#995` (NET-A/4b, DR-229): +12 in network/open_web_page_
+    # test.dart, the address and URL helpers, the confirmation before any
+    # launch, an edited URL opening, Cancel, a non-http URL refused in the
+    # dialog, the system's refusal said, no button without an address or
+    # a launcher and its control, and both hosts.
+    'rackpal_ui'     = 2099
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
