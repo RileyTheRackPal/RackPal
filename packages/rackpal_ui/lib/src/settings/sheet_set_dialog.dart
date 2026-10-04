@@ -95,6 +95,16 @@ const Key kLogoThumbnailKey = Key('sheet-set-logo-thumbnail');
 /// `null` when the person cancelled, an `Err` carrying the refusal.
 typedef ChooseLogo = Future<Outcome<ProjectLogo>?> Function();
 
+/// The network order picker (DR-227 §11.226.4).
+const Key kNetworkOrderKey = Key('sheet-set-network-order');
+
+/// What each network order is called. The words a person would use for
+/// how their firm assigns addresses, not the enum's names.
+const Map<NetworkOrder, String> kNetworkOrderLabels = {
+  NetworkOrder.designator: 'By designator',
+  NetworkOrder.rackThenRoom: 'Rack by rack, then room by room',
+};
+
 /// What a cleared project name says (DR-210 §11.209.4).
 const String kProjectNameRequired =
     'A project needs a name: it heads every sheet.';
@@ -470,6 +480,36 @@ class _SheetSetDialogState extends State<_SheetSetDialog> {
     ),
   );
 
+  /// The order picker. Writes through `SetProjectSettingCommand`, so the
+  /// change is one undo step and the Devices table follows it.
+  Widget _networkOrderRow() {
+    const field = ProjectSettingFields.networkOrder;
+    final value = field.get(widget.doc.settings);
+    return DropdownButtonFormField<NetworkOrder>(
+      key: kNetworkOrderKey,
+      initialValue: value,
+      decoration: InputDecoration(
+        labelText: field.label,
+        border: const OutlineInputBorder(),
+      ),
+      items: [
+        for (final o in NetworkOrder.values)
+          DropdownMenuItem(value: o, child: Text(kNetworkOrderLabels[o]!)),
+      ],
+      onChanged: (to) {
+        if (to == null || to == value) return;
+        widget.onEdit([
+          SetProjectSettingCommand<NetworkOrder>(
+            field: field,
+            from: value,
+            to: to,
+          ),
+        ]);
+        setState(() {});
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -528,6 +568,18 @@ class _SheetSetDialogState extends State<_SheetSetDialog> {
               ),
               const SizedBox(height: 8),
               _infoRow(ProjectInfoFields.scopeNarrative),
+              const Divider(height: 32),
+              // ── the network schedule (T6.50), DR-227 §11.226.4 ─────────
+              Text(
+                'Network schedule (T6.50)',
+                style: theme.textTheme.titleSmall,
+              ),
+              Text(
+                ProjectSettingFields.networkOrder.help!,
+                style: caption,
+              ),
+              const SizedBox(height: 8),
+              _networkOrderRow(),
               const Divider(height: 32),
               Text(
                 'Legend (T0.01): abbreviations',

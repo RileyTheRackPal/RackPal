@@ -1177,7 +1177,11 @@ $SuiteFloors = @{
     # all, Wi-Fi without a port, a value keeping a device listed, both
     # orders and their agreement, a row reading its device (the MAC from
     # macAddressPrimary), unverified said, and the VLAN parser.
-    'rackpal_core'   = 5477
+    # 5483 at `#997` (NET-A/2f, DR-227): +6 in persistence/network_order_
+    # wire_test.dart, each starter reading as by designator with no key and
+    # its bytes kept, rack then room written and read back, and the key
+    # absent again at the default.
+    'rackpal_core'   = 5483
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1835,7 +1839,11 @@ $SuiteFloors = @{
     # box, one edit per Enter (the double send it found is fixed), and the
     # identity columns read-only; +1 in structure_editor_screen_test.dart,
     # the Devices tab opening a real surface.
-    'rackpal_ui'     = 2060
+    # 2064 at `#997` (NET-A/2f, DR-227): +3 in settings/sheet_set_dialog_test
+    # .dart, every setting left to Sheet set drawn there (so none is drawn
+    # nowhere), the default, and rack then room as one setting command; +1
+    # in structure/devices_view_test.dart, the table following its order.
+    'rackpal_ui'     = 2064
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

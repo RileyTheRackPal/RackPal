@@ -22,8 +22,9 @@ RackDocument _wholeHouse() =>
 
 Future<List<List<NetworkCellEdit>>> _pump(
   WidgetTester tester,
-  RackDocument doc,
-) async {
+  RackDocument doc, {
+  NetworkOrder order = NetworkOrder.designator,
+}) async {
   tester.view.physicalSize = const Size(1400, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
@@ -33,6 +34,7 @@ Future<List<List<NetworkCellEdit>>> _pump(
       home: Scaffold(
         body: DevicesView(
           doc: doc,
+          order: order,
           actions: DevicesActions(
             onEdit: (e) {
               edits.add(e);
@@ -105,6 +107,23 @@ void main() {
     expect(edits.single.single.deviceId, first.deviceId);
     expect(edits.single.single.column, NetworkColumnId.ip);
     expect(edits.single.single.value, '10.0.10.2');
+  });
+
+  testWidgets('the table follows the order it is given, the one T6.50 '
+      'prints by (DR-227 §11.226.4)', (tester) async {
+    final doc = _wholeHouse();
+    final byRack = buildNetworkTable(doc, order: NetworkOrder.rackThenRoom);
+    final byName = buildNetworkTable(doc);
+    // THE CONTROL: the two orders must start differently on this project,
+    // or this test could not tell them apart.
+    expect(byRack.first.deviceId, isNot(byName.first.deviceId));
+
+    await _pump(tester, doc, order: NetworkOrder.rackThenRoom);
+    final firstOnScreen = tester
+        .widgetList<Text>(find.byType(Text))
+        .map((t) => t.data)
+        .firstWhere((t) => byRack.any((r) => r.designator == t));
+    expect(firstOnScreen, byRack.first.designator);
   });
 
   testWidgets('the identity columns are read, not typed into', (

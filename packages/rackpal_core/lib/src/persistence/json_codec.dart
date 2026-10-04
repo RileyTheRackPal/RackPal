@@ -812,6 +812,10 @@ JsonMap _encodeProjectSettings(ProjectSettings s) => {
   'defaultRuNumbering': encodeEnumName(s.defaultRuNumbering),
   'defaultMirrorRearElevation': s.defaultMirrorRearElevation,
   'sheetNumbering': encodeEnumName(s.sheetNumbering),
+  // ABSENT AT THE DEFAULT, so every file written before DR-227 keeps its
+  // bytes (CR-117's additive-optional case) and `kSchemaVersion` stays.
+  if (s.networkOrder != NetworkOrder.designator)
+    'networkOrder': encodeEnumName(s.networkOrder),
   'deviceDesignatorFormat': _encodeIdFormat(s.deviceDesignatorFormat),
   'portDesignatorFormat': _encodeIdFormat(s.portDesignatorFormat),
   'linkDesignatorFormat': _encodeIdFormat(s.linkDesignatorFormat),
@@ -887,6 +891,13 @@ ProjectSettings _decodeProjectSettings(JsonMap json) => ProjectSettings(
     asStr(json['sheetNumbering'], 'ProjectSettings.sheetNumbering'),
     'ProjectSettings.sheetNumbering',
   ),
+  networkOrder: json['networkOrder'] == null
+      ? NetworkOrder.designator
+      : decodeEnumStrict(
+          NetworkOrder.values,
+          asStr(json['networkOrder'], 'ProjectSettings.networkOrder'),
+          'ProjectSettings.networkOrder',
+        ),
   deviceDesignatorFormat: _decodeIdFormat(
     asStr(
       json['deviceDesignatorFormat'],

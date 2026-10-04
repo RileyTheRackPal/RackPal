@@ -1,7 +1,7 @@
 import 'package:rackpal_core/src/idformat/collision_policy.dart';
 import 'package:rackpal_core/src/idformat/id_format.dart';
 import 'package:rackpal_core/src/model/enums.dart'
-    show RuNumbering, SheetNumbering, UnitSystem, WiringStandard;
+    show NetworkOrder, RuNumbering, SheetNumbering, UnitSystem, WiringStandard;
 import 'package:rackpal_core/src/model/jacket_color.dart';
 import 'package:rackpal_core/src/model/rule_override.dart';
 import 'package:rackpal_core/src/units/ids.dart';
@@ -21,6 +21,7 @@ final class ProjectSettings {
     this.defaultRuNumbering = RuNumbering.bottomUpFromOne,
     this.defaultMirrorRearElevation = true,
     this.sheetNumbering = SheetNumbering.simple,
+    this.networkOrder = NetworkOrder.designator,
     this.deviceDesignatorFormat = const IdFormat('{TYPE_PREFIX}{SEP}{SEQ}'),
     this.portDesignatorFormat = const IdFormat('J{PORT_SEQ:2}'),
     this.linkDesignatorFormat = const IdFormat('W{SEQ:3}'),
@@ -62,6 +63,11 @@ final class ProjectSettings {
   /// Seeds `Rack.mirrorRearElevation` on new racks (CR-035).
   bool defaultMirrorRearElevation;
   SheetNumbering sheetNumbering;
+
+  /// How the Devices view and `T6.50` order their devices (DR-227
+  /// §11.226.4). One setting for both, so the table and the printed
+  /// schedule never disagree about order. Set in `File ▸ Sheet set…`.
+  NetworkOrder networkOrder;
 
   // Format engine. One grammar, one parser, five call sites (CR-045,
   // CR-048).

@@ -538,6 +538,9 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
                         ),
                         StructureEditorTab.devices => DevicesView(
                           doc: doc,
+                          // ONE SETTING FOR THE TABLE AND T6.50 (DR-227
+                          // §11.226.4), so they never disagree about order.
+                          order: doc.settings.networkOrder,
                           actions: DevicesActions(onEdit: _editDevices),
                         ),
                       },
