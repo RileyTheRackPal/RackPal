@@ -1,4 +1,4 @@
-# The 28 checks, and the signal families: a review pack
+# The 34 checks, and the signal families: a review pack
 
 **For a working integrator to mark up. Nothing here needs any knowledge of how RackPal is built.**
 
@@ -16,13 +16,13 @@ For Part 2, one question: **what would you specify on a job that is not on the l
 
 ## What I am NOT asking
 
-Whether there should be MORE checks. The set is capped at 28 on purpose and adding to it is a separate decision. If something important is missing, say so and it becomes its own question rather than a change to this list.
+Whether there should be MORE checks. The 30 main checks are a fixed set on purpose, each one added by a decision of its own, and the 4 floor-plan checks are a separate set that only applies once a floorplan is in the project. If something important is missing, say so and it becomes its own question rather than a change to this list.
 
 Nothing here is a code ruling. Two of the checks mention NEC articles and both ask you to verify rather than telling you the answer; if they read as though they are deciding, that is a defect and worth flagging.
 
 ---
 
-# Part 1: the 28 checks
+# Part 1: the 34 checks (30 main, 4 floor plan)
 
 ## Signal and connector compatibility
 
@@ -174,6 +174,18 @@ Nothing here is a code ruling. Two of the checks mention NEC articles and both a
 |---|---|---|---|
 |  |  |  |  |
 
+### ELE-005
+
+**Why it matters.** Overload a 70 V line and the amplifier clips, and clipped square waves are what destroy tweeters, so the cost of getting this wrong is a van full of replacement drivers rather than a protection circuit doing its job. The 80% is headroom on the same convention PWR-001 derates a breaker by, and it is a planning figure rather than a measurement: a tap nobody recorded still draws, so the total this reports is a FLOOR.
+
+**What happens.** Listed on the issues panel after the fact. Nothing is blocked, and you can acknowledge it with a reason that prints on the sheet set.
+
+**How serious.** Warning
+
+| Right? | Severity right? | False alarms? | Notes |
+|---|---|---|---|
+|  |  |  |  |
+
 ## Racks and mounting
 
 ### RCK-001
@@ -262,11 +274,23 @@ Nothing here is a code ruling. Two of the checks mention NEC articles and both a
 
 ### PLC-003
 
-**Why it matters.** Zero-U gear mounts in a channel down the side of the rack. A device in a channel this rack does not have, or past the end of one, has nothing to screw into.
+**Why it matters.** Zero-U gear mounts in a channel down the side of the rack. A device in a channel this rack does not have, or past the end of one, has nothing to screw into. That covers the tail as well as the start: an occupant whose span runs off the end is hanging in the air, and a span the file does not record is unknown rather than illegal.
 
 **What happens.** The app will not let you draw this. There is no override, because the drawing would not mean anything.
 
 **How serious.** n/a (nothing is filed, the edit is simply refused)
+
+| Right? | Severity right? | False alarms? | Notes |
+|---|---|---|---|
+|  |  |  |  |
+
+### RCK-014
+
+**Why it matters.** A half-width device has ears for half a rack. On its own it needs an extension ear kit, or a shelf, to reach both rails. Two of them side by side are joined with the kit they ship with instead.
+
+**What happens.** Listed on the issues panel after the fact. Nothing is blocked, and you can acknowledge it with a reason that prints on the sheet set.
+
+**How serious.** Advisory (a note, not a problem)
 
 | Right? | Severity right? | False alarms? | Notes |
 |---|---|---|---|
@@ -372,11 +396,61 @@ Nothing here is a code ruling. Two of the checks mention NEC articles and both a
 |---|---|---|---|
 |  |  |  |  |
 
+## The floor plan (a separate set, outside the v1 count: these only file once a floorplan is imported)
+
+### PLN-001
+
+**Why it matters.** A plan locates every drop whether or not it is calibrated, which is most of what a plan is for. What it cannot do uncalibrated is yield a length: nothing on it can be measured, so no run on that floor gets a figure from the drawing.
+
+**What happens.** Listed on the issues panel after the fact. Nothing is blocked, and you can acknowledge it with a reason that prints on the sheet set.
+
+**How serious.** Advisory (a note, not a problem)
+
+| Right? | Severity right? | False alarms? | Notes |
+|---|---|---|---|
+|  |  |  |  |
+
+### PLN-002
+
+**Why it matters.** A drop that is not on the plan is a drop the installer has to be told about some other way. The strip along the bottom of the plan lists exactly these, so the number here and the rows there are one population.
+
+**What happens.** Listed on the issues panel after the fact. Nothing is blocked, and you can acknowledge it with a reason that prints on the sheet set.
+
+**How serious.** Advisory (a note, not a problem)
+
+| Right? | Severity right? | False alarms? | Notes |
+|---|---|---|---|
+|  |  |  |  |
+
+### PLN-003
+
+**Why it matters.** Every home run is measured FROM the head end. A plan with drops and no rack has a set of positions and nothing to measure them to, so the whole floor yields no length however well it is calibrated.
+
+**What happens.** Listed on the issues panel after the fact. Nothing is blocked, and you can acknowledge it with a reason that prints on the sheet set.
+
+**How serious.** Advisory (a note, not a problem)
+
+| Right? | Severity right? | False alarms? | Notes |
+|---|---|---|---|
+|  |  |  |  |
+
+### PLN-004
+
+**Why it matters.** The image under the pins has changed since it was imported. The pins, the calibration and every length derived from them were placed against a different picture, so they may all be in the wrong place. The file still opens: this says why it might not be what you think.
+
+**What happens.** Listed on the issues panel after the fact. Nothing is blocked, and you can acknowledge it with a reason that prints on the sheet set.
+
+**How serious.** Warning
+
+| Right? | Severity right? | False alarms? | Notes |
+|---|---|---|---|
+|  |  |  |  |
+
 ---
 
 # Part 2: the signal types RackPal knows
 
-**56 of them, in 8 groups.** These are catalogue data and cannot be added by the person drawing, so a missing one cannot be worked around on a job. That is why the list is here.
+**57 of them, in 8 groups.** These are catalogue data and cannot be added by the person drawing, so a missing one cannot be worked around on a job. That is why the list is here.
 
 The question is not whether the names are right. It is whether anything you would put on a drawing has nowhere to go.
 
@@ -405,7 +479,7 @@ The question is not whether the names are right. It is whether anything you woul
 | S/PDIF, coaxial (75 Ω) | `audio.spdif_coax` |
 | TOSLINK (optical S/PDIF) | `audio.spdif_optical` |
 
-## ctl (12)
+## ctl (13)
 
 | Name | Id |
 |---|---|
@@ -414,8 +488,9 @@ The question is not whether the names are right. It is whether anything you woul
 | Cresnet | `ctl.cresnet` |
 | DALI / DALI-2 | `ctl.dali` |
 | DMX512-A | `ctl.dmx512` |
+| IR direct (device input) | `ctl.ir_direct` |
 | IR emitter (flasher) | `ctl.ir_emitter` |
-| IR receiver | `ctl.ir_receiver` |
+| IR receiver (powered eye) | `ctl.ir_receiver` |
 | KNX TP1 | `ctl.knx` |
 | Lutron QS / HomeWorks link | `ctl.lutron_qs` |
 | RS-232 | `ctl.rs232` |

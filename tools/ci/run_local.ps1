@@ -103,6 +103,11 @@ try {
     # neither discharged nor parked on a named later milestone by a ruling.
     # It runs its own planted cases first, so a green run means it can fail.
     Invoke-Gate 'milestone completeness' { python tools/milestone_gate.py }
+    # #972: the rule-review pack's generator stopped running at DR-132 and
+    # nothing noticed for three rulings. This parses the catalogue and the
+    # pack's grouping and writes nothing: a rule with no place in the pack,
+    # or in the wrong band, fails here the day it arrives.
+    Invoke-Gate 'rule review pack'    { python tools/rule_review.py --check }
     # DR-090 section 11.89.8. The only gate here that reads a font BINARY,
     # because it is the only one that can: the two backends emit IDENTICAL
     # ops for a missing glyph and differ solely in what a rasteriser does
