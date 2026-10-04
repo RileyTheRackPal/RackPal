@@ -1842,6 +1842,51 @@ codec and the two commands that make the one sheet, behind a null check, and no 
 scans mutation-checked). **Looked at**: the Network, RF and legend sheets rendered through pdfium and
 read; not yet printed or seen in a running build. The test route is in the PR.
 
+### 4.41 Network values, a Devices view, T6.50 and Open web page · 2026-10-04 · `#681`, `#682` to `#685`, `#985` to `#997` · `DR-048`, `DR-226`, `DR-227`, `DR-228`, `DR-229` · no version move
+
+NET-A, M6 work ruled into v1 by DR-048 seven weeks earlier and found with no surface to type into: the
+ruling said "the table, via Columns", and no table listed device instances. Four rulings made with the
+user before their code. DR-226 hosted a Devices view in Structured Wiring, with hostname, IP, MAC and
+VLANs shown by default (the user added MAC for WOL/SSDP/SDDP and VLANs for video distribution), the MAC
+on `macAddressPrimary`, and an editable verified date with a batch Verified today. DR-227 amended DR-048
+in part: a template can say Wi-Fi, so a Sonos-style device lists without a jack; rows are network-capable
+devices less passthroughs; and one setting, in Sheet set, orders both the view and `T6.50`. DR-228 made
+`T6.50` print all ten columns, but only for devices carrying a value. DR-229 gave Open web page two hosts
+and an editable `http://` URL.
+
+**A price offered before reading the code was wrong, and it had decided something.** DR-226's host was
+recommended as reusing the cable table's widgets "with no extraction"; they are typed to cable rows. Told
+so, the user re-decided and kept the host on its other reason (DR-227 §11.226.1).
+
+**Defects found on the way, none of them the ticket's.** `TemplateBodyField.all` had never listed
+`primaryDomain`, so the isolation census probed every template field but that one. A cell sent twice
+when Enter and focus loss both fired. The sheet set's overflow pool never advanced past the equipment
+list's overflow, harmless while that list was the last T6 sheet and a duplicate `T6.61` the moment
+`T6.50` followed it; the set test asserts the pool across three overflowing schedules. The gate, not a
+reading, caught `pull_sheet_clause_test`'s role census, which the plan had named and the 3a commit
+skipped; it was folded into that commit so no commit on the branch is red. The board's close helper
+had the previous branch written into it, and eleven items said `m6d-interconnect` until one was read.
+
+**Open web page ships no binary.** `url_launcher` would have added a plugin DLL to a portable ZIP that
+already hand-writes its file dialog to avoid one, and `Process` would have widened RULE 1's two-file
+`dart:io` gate. It is `openUrl` beside `revealFolder` on the runner's own channel, ShellExecuteW's
+"open" verb, with the scheme checked in Dart and again in C++, because "open" on a `file:` URL runs a
+program and the URL field is editable.
+
+**Evidence.** Core: `network_config_wire_test`, `device_network_wire_test`, `template_wifi_wire_test`,
+`network_order_wire_test` (absent keys, byte round-trip, starters unchanged);
+`device_network_command_test` and the `g4_wire_test` rows; `network_table_test` (Whole House's 26 rows, passthroughs out, Wi-Fi,
+both orders); `network_sheet_test` (rows, cells, seven page sizes swept with a control, numbering, the
+reservation lifted, the notice, the undated ink mutation-checked). Export:
+`network_schedule_export_test` (absent from file, index and notices as shipped; present, indexed and keyed with three devices
+addressed). UI: `devices_view_test`, the editor's tab, Ctrl+D and batch tests,
+`device_network_section_test`, `open_web_page_test` (no launch before the confirmation, an edited URL, Cancel, `file:`
+refused, a refusal said, both hosts). App: `network_actions_test` (the local day at UTC midnight on a
+clock that tells them apart), `web_page_launcher_test` (only http and https reach the channel).
+**Looked at**: `T6.50`'s text read off a real export. Not yet printed, not seen in a running build, and
+Open web page has never opened a real browser: the C++ compiled in the build gate and nothing more. The
+test route is in the PR.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

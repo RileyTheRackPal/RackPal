@@ -8,7 +8,7 @@ tags: [ruling, network, as-built, structured-wiring, net-a, dr-226, dr-048]
 timestamp: 2026-10-03T00:00:00Z
 ruling_id: DR-226
 canon_section: "11.225"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-03, opening NET-A (`#681`), on the recommended option three times and

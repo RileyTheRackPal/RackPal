@@ -8,7 +8,7 @@ tags: [ruling, network, ui, net-a, dr-229, dr-048]
 timestamp: 2026-10-04T00:00:00Z
 ruling_id: DR-229
 canon_section: "11.228"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-04, building NET-A/4 (`#685`). DR-048 §11.47.7 ruled the launch and

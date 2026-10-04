@@ -504,7 +504,10 @@ Rack and Site views searches the same list.
    shelf, 0U, hosted in another device, side mounted, in furniture, not in a
    rack) asks for no height at all.
    Category is optional and suggests a prefix and an elevation mark; Signal
-   domain is optional and colours the device on a floorplan.
+   domain is optional and colours the device on a floorplan. **Wi-Fi** says
+   whether the device can join a network without a cable (`Not set`, `Yes`
+   or `No`); `Yes` lists it in the Devices view (§21.5.5) though it has no
+   network jack.
 3. **Save** now if you like. **A name, a prefix and a height is a finished
    template**: it will place and print like any other. `Save` stays disabled,
    with a tooltip saying why, until those three exist.
@@ -514,7 +517,7 @@ The builder's sections:
 
 | Section | What it holds |
 |---|---|
-| Identity | Name, manufacturer, model, prefix, category, domain, tags, and **Size and mounting**: how it mounts, front and rear height, width |
+| Identity | Name, manufacturer, model, prefix, category, domain, Wi-Fi, tags, and **Size and mounting**: how it mounts, front and rear height, width |
 | Ports | Every connector, in a grid, with previews of the elevation, the schematic symbol and the rear panel. **Passthrough** on its toolbar makes a patch panel, and **Pair front to rear** then pairs it |
 | Panel | Where the cutouts sit on the panel. Derived from connector footprints; **Customize panel layout** lets you move them, align and distribute them, and **Reset to auto** puts them back |
 | Physical | Depth, chassis width, weight, clearances, thermal class and the container flag |
@@ -732,6 +735,10 @@ under its channel and is not drawn in the elevation yet.**
     template.
   - **Mount note**, free text for the installer (`AV closet, top shelf,
     sideways`).
+  - **Network**: the device's hostname, address, MAC and VLANs with the day
+    they were verified, or `unverified`. Read-only; it says where to edit
+    them (the Devices tab of Structured Wiring) and, when there is an IP or a
+    hostname, offers **Open web page**.
 
 **Right-click a device** for the three ways to change it: **Edit this device
 only** (the inspector, above), **Edit the template…** (every device placed from
@@ -768,7 +775,7 @@ hand: the first drop you enter creates one.
 - **Header:** a Structure picker (only when the project has more than one),
   **Import CSV…**, **Manage media types…**, **Connector words…**, and a `⋮`
   menu holding **Remove this Structure…**.
-- **Tabs:** **Table**, **Matrix**, **Outlets**, **Pathways**.
+- **Tabs:** **Table**, **Matrix**, **Outlets**, **Pathways**, **Devices**.
 - **Left:** the rooms, read-only here (rooms are named on the Site view), with
   a drop count each.
 - **The entry line**, then a filter bar (room, media, **Unconnected only**, and
@@ -871,6 +878,36 @@ The header counts pathways, lengths still unknown and runs through no pathway.
 **Add pathway** adds one; the delete button on a row says how many runs lose
 their recorded route. Runs are assigned to a pathway with `@pathway=` when they
 are entered, or through a CSV import.
+
+#### The Devices tab
+
+Every device that can be on a network, one row each: anything with a network
+jack, anything whose template says **Wi-Fi**, and anything you have already
+given an address. Patch panels and fibre enclosures are left out, since they
+carry network ports but never an address; **Show all devices** adds them and
+everything else. The toolbar counts the rows and how many are verified.
+
+- **Type into a cell** and press `Enter` or move away. **HOSTNAME**, **IP
+  ADDRESS**, **MAC** and **VLANS** show by default; **Columns** adds **SUBNET**
+  and **GATEWAY**. An emptied cell means "not known", never blank text.
+  VLANs are numbers from 1 to 4094 separated by commas (`10, 20`).
+- **VERIFIED** is the day somebody last checked the row against the device on
+  site, typed as `2026-10-04`. Changing an address never dates it for you: an
+  address typed from a quote and one confirmed yesterday must not look alike.
+- **Tick rows** for the batch bar: **Set** one column to one value on every
+  ticked row (a subnet, say), or **Verified today**, which dates them all.
+  Each is one undo step.
+- `Ctrl+D` fills the cell from the row above, as in the Table view.
+- **Open web page** (the arrow icon at the end of a row with an IP or a
+  hostname) asks before it opens anything: it shows `http://` and the
+  address, which you can change to `https://` or add a port to, then opens
+  it in your browser. Only `http` and `https` addresses open, and nothing you
+  change there is saved.
+
+The order is set once for this view and the printed schedule, under **Network
+schedule (T6.50)** in `File` ▸ `Sheet set…`: by designator, or rack by rack
+then room by room. This tab is the one place a network value is typed; the
+inspector shows it but does not edit it.
 
 #### Import a spreadsheet
 

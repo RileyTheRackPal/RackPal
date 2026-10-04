@@ -8,7 +8,7 @@ tags: [ruling, amendment, network, template, wifi, net-a, dr-227, dr-048]
 timestamp: 2026-10-03T00:00:00Z
 ruling_id: DR-227
 canon_section: "11.226"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-03, building NET-A/2 (`#683`). A §8.3 amendment.

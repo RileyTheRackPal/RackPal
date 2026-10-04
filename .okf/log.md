@@ -8,6 +8,13 @@
 * **Progress**: NET-A/3 built: T6.50 prints, is numbered and is indexed (`#992`), and dates every row or
   says it is unverified (`#993`).
 * **Creation**: [DR-229](/decisions/dr-229-open-web-page.md), where Open web page lives and what it opens.
+* **Progress**: NET-A/4 built: the launcher seam (`#994`) and Open web page behind its confirmation
+  (`#995`). DR-226 to DR-229 marked built; docs/12 §4.41 carries the evidence, and docs/21 gains the
+  Devices tab, the inspector's Network lines and the Wi-Fi row.
+* **Note**: **A CENSUS NAMED IN THE PLAN WAS STILL SKIPPED, AND THE GATE CAUGHT IT.** The 3a plan listed
+  `pull_sheet_clause_test`'s role list among the tests a new role must update; the commit updated the
+  other two and ran only the sheet tests. Run the package's whole suite before committing a new enum
+  value, not the directory the change lives in.
 * **Note**: **A HELPER'S DEFAULT IS A CLAIM ON EVERY ITEM IT TOUCHES.** The board's close helper had the
   previous branch's name written into it, and eleven NET-A items said they landed on `m6d-interconnect`
   until a read of one description showed it. A value that changes per piece of work belongs in the call.
