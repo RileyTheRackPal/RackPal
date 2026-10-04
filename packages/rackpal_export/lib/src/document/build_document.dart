@@ -125,6 +125,8 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
       // From `report`, the one evaluation T0.02 draws (DR-214 §11.213.5).
       hardwareSection(doc, report),
       jumperSection(jumperRollupOf(schedule), doc.settings.displayUnits),
+      // DR-235 §11.234.3, after jumpers and power cords.
+      adapterSection(adapterRollupOf(schedule, doc)),
       outletMapSection(doc, buildOutletMap(doc)),
     ],
   );

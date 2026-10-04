@@ -8,6 +8,7 @@
 // The footage is `cableFootageOf`'s, which the Schedule view's takeoff
 // reads too, so the sheet and the screen cannot disagree about a length.
 // This file only formats: it chooses words, units and columns.
+import 'package:rackpal_core/src/derived/adapter_rollup.dart';
 import 'package:rackpal_core/src/derived/cable_footage.dart';
 import 'package:rackpal_core/src/derived/device_loads.dart' show hostRackOf;
 import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
@@ -250,6 +251,41 @@ RollupSection jumperSection(JumperRollup rollup, UnitSystem units) {
     notes: <String>[
       if (unstated == 1) '1 lead has no length stated.',
       if (unstated > 1) '$unstated leads have no length stated.',
+    ],
+  );
+}
+
+/// The in-line adapters section's band (DR-235 §11.234.3).
+const String kAdapterSectionTitle = 'IN-LINE ADAPTERS';
+
+/// What it says when no cable carries an adapter.
+const String kNoAdaptersText = 'NO IN-LINE ADAPTER IS DECLARED.';
+
+/// DR-128 §11.127.2's promise, kept by DR-235 §11.234.3: every declared
+/// adapter, by connector pair and model. The quantities are
+/// `adapterRollupOf`'s, over the schedule's cables. An unstated model
+/// prints as unknown on its own line and is counted underneath (G4).
+RollupSection adapterSection(AdapterRollup rollup) {
+  final unstated = rollup.unstatedModelCount;
+  return RollupSection(
+    title: kAdapterSectionTitle,
+    columns: const <SectionColumn>[
+      SectionColumn('QTY', 30, alignRight: true),
+      SectionColumn('ADAPTER', 330),
+      SectionColumn('MODEL', 330),
+    ],
+    rows: <List<String>>[
+      for (final line in rollup.lines)
+        <String>[
+          '${line.quantity}',
+          line.connectors,
+          line.model ?? kUnknownCell,
+        ],
+    ],
+    empty: kNoAdaptersText,
+    notes: <String>[
+      if (unstated == 1) '1 adapter has no model stated.',
+      if (unstated > 1) '$unstated adapters have no model stated.',
     ],
   );
 }

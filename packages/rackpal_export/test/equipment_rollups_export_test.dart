@@ -90,6 +90,38 @@ void main() {
     },
   );
 
+  test('DR-235: a declared adapter reaches T6.30 IN INK, its unstated model '
+      'counted, and a project with none says so', () async {
+    final none = await equipmentInk(starter('apartment'));
+    expect(none, contains(kAdapterSectionTitle));
+    expect(none, contains(kNoAdaptersText));
+
+    final doc = starter('whole_house');
+    final links = doc.links.values.toList()
+      ..sort((a, b) => a.designator.compareTo(b.designator));
+    links.first.inlineAdapters.add(
+      InlineAdapter(
+        fromConnector: const ConnectorTypeId('conn.xlr3'),
+        toConnector: const ConnectorTypeId('conn.rca'),
+        satisfiesRuleIds: ['CON-001'],
+      ),
+    );
+    links[1].inlineAdapters.add(
+      InlineAdapter(
+        fromConnector: const ConnectorTypeId('conn.xlr3'),
+        toConnector: const ConnectorTypeId('conn.rca'),
+        model: 'Hosa XLR3F-RCA',
+        satisfiesRuleIds: ['CON-001'],
+      ),
+    );
+    final ink = await equipmentInk(doc);
+    expect(ink, contains(kAdapterSectionTitle));
+    expect(ink, contains('XLR3 to RCA'));
+    expect(ink, contains('Hosa XLR3F-RCA'));
+    expect(ink, contains('1 adapter has no model stated.'));
+    expect(ink, isNot(contains(kNoAdaptersText)));
+  });
+
   test('WHOLE HOUSE: a rear-support line per RCK-013 finding, in ink '
       '(F3, AC-028)', () async {
     final doc = starter('whole_house');

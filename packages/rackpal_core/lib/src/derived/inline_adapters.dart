@@ -18,8 +18,14 @@ String connectorName(Registries registries, ConnectorTypeId id) {
   return name.isEmpty ? id.v : name;
 }
 
-/// "Euroblock 3-pole to XLR3": [adapter]'s two connectors, source side
+/// "Euroblock 3-pole to XLR3": an adapter's two connectors, source side
 /// first, as `DeclareInlineAdapterCommand` records them.
+String connectorPairLabel(
+  Registries registries,
+  ConnectorTypeId from,
+  ConnectorTypeId to,
+) => '${connectorName(registries, from)} to ${connectorName(registries, to)}';
+
+/// [connectorPairLabel] for [adapter].
 String adapterConnectorsLabel(Registries registries, InlineAdapter adapter) =>
-    '${connectorName(registries, adapter.fromConnector)} to '
-    '${connectorName(registries, adapter.toConnector)}';
+    connectorPairLabel(registries, adapter.fromConnector, adapter.toConnector);

@@ -84,8 +84,13 @@ void main() {
       'still written: nothing is asked', () async {
     final done =
         (await export(_wholeHouse(extraRacks: 13))) as Ok<ExportedDocument>;
-    expect(done.value.sheetCount, 42);
-    expect(done.value.notices.first, largeSetNotice(42));
+    // PAST FORTY, AND THE NOTICE SAYS THE REAL COUNT. This pinned 42 until
+    // DR-235 (`#1001`) gave T6.30 an in-line adapters table, and thirteen
+    // racks' equipment list plus one more table crossed a page boundary:
+    // 43. The page break was never the claim; the notice is.
+    final count = done.value.sheetCount;
+    expect(count, greaterThan(kLargeSetSheets));
+    expect(done.value.notices.first, largeSetNotice(count));
     expect(done.value.bytes, isNotEmpty);
   });
 

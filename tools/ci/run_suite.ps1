@@ -1220,7 +1220,11 @@ $SuiteFloors = @{
     # command; an index or cable gone; two equal adapters named and removed
     # by position with the same instance back on undo; both connectors named,
     # an unknown one by its id) and +2 epoch-mask cases for the two commands.
-    'rackpal_core'   = 5560
+    # 5565 at `#1001` (DR-235 §11.234.3): +5 in derived/adapter_rollup_test.
+    # dart (an empty table that says so; one pair and model as one line of
+    # two; an unstated model as its own line, last and counted; ordered as
+    # printed; two adapters on one cable).
+    'rackpal_core'   = 5565
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1331,7 +1335,9 @@ $SuiteFloors = @{
     # named as the index names it at its own paper.
     # 300 at `#356` (docs/08 §8.4): +1, morning and evening of one day are
     # one file, now that the creation date is the issue day.
-    'rackpal_export' = 300
+    # 301 at `#1001` (DR-235 §11.234.3): +1 in equipment_rollups_export_
+    # test.dart, a declared adapter and its unstated model in T6.30's ink.
+    'rackpal_export' = 301
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
