@@ -16,7 +16,8 @@ import 'package:rackpal/src/session/export_runner.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal_core/rackpal_core.dart';
-import 'package:rackpal_export/rackpal_export.dart' show ExportedDocument;
+import 'package:rackpal_export/rackpal_export.dart'
+    show ExportRequest, ExportedDocument;
 
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
@@ -218,6 +219,44 @@ void main() {
       expect(_pathsEndingIn(session.fs, '.pdf'), isEmpty);
       expect(session.services.session.status, kExportCancelledStatus);
     });
+  });
+
+  group('THE FILE FIELD NAMES THE PROJECT (docs/08 §5.2, M6-I4)', () {
+    // What the controller hands the export, which the title block prints:
+    // `title_block_test.dart` holds that half.
+    Future<String> fileNameSent({required bool saveFirst}) async {
+      final sent = <ExportRequest>[];
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[
+          if (saveFirst) r'C:\jobs\smith.rppj',
+          r'C:\jobs\smith-set.pdf',
+        ],
+        exportRunner: (request) {
+          sent.add(request);
+          return runExportInline(request);
+        },
+      );
+      if (saveFirst) {
+        expect(await session.services.controller.save(), isTrue);
+      }
+      expect(await session.services.export.exportPdf(), isTrue);
+      return sent.single.fileName;
+    }
+
+    test(
+      'a saved project prints its own file name, never the PDF name',
+      () async {
+        expect(await fileNameSent(saveFirst: true), 'smith.rppj');
+      },
+    );
+
+    test(
+      'an unsaved project has no file, and the field prints its dash',
+      () async {
+        expect(await fileNameSent(saveFirst: false), isEmpty);
+      },
+    );
   });
 
   group('a successful export', () {

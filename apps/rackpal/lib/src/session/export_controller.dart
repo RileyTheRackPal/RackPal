@@ -206,7 +206,16 @@ final class ExportController {
         // same reason: `members` is replaced wholesale rather than
         // mutated, so an import racing an export cannot half-appear.
         members: session.members,
-        fileName: context.basename(chosen),
+        // THE PROJECT'S OWN FILE NAME, as docs/08 §5.2's worked example
+        // prints it (`FILE smith.rppj`) and `title_block.dart` documents
+        // it. This passed the PDF's name from the save dialog, which is
+        // not data about the project; and since DR-230 previews the bytes
+        // BEFORE the save dialog, it could not be known anyway. An unsaved
+        // project has no file, and the field prints its dash.
+        fileName: switch (session.filePath) {
+          final path? => context.basename(path),
+          null => '',
+        },
         // ONE clock value for the whole export (§8.4). Injected, never
         // `DateTime.now()` inside a sheet builder.
         issuedAt: clock.nowUtc(),

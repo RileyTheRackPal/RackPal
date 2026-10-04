@@ -661,6 +661,15 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
         issuedAt: request.issuedAt,
       ),
       sheetCount: set.sheets.length,
+      sheets: List.unmodifiable([
+        for (final sheet in set.sheets)
+          ExportedSheet(
+            ncsId: sheet.ncsId,
+            title: sheetTitle(sheet),
+            widthPt: sheet.size.widthPt,
+            heightPt: sheet.size.heightPt,
+          ),
+      ]),
       notices: List.unmodifiable(notices),
       stamped: stamped,
       stampWithheld: stampWithheld,

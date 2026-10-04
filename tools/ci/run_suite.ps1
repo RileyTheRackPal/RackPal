@@ -1189,7 +1189,10 @@ $SuiteFloors = @{
     # lifted, and the unrecorded-devices notice.
     # 5508 at `#993` (NET-A/3b, DR-048): +1, a dated row printed in the
     # values' ink and an undated one as unverified in the muted ink.
-    'rackpal_core'   = 5508
+    # 5510 at `#355` (M6-I4, DR-230): +2 in sheet/cover_index_test.dart,
+    # sheetTitle with and without a subject, and every single-page index
+    # row reading what it says.
+    'rackpal_core'   = 5510
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1295,7 +1298,10 @@ $SuiteFloors = @{
     # still parses, and an unrecognised file is returned untouched.
     # 297 at `#353` (M6-I2, CR-099): +1 in export_progress_test.dart, the
     # hook heard at zero and once per sheet drawn, in order.
-    'rackpal_export' = 297
+    # 299 at `#355` (M6-I4, DR-230): +2 in exported_sheets_test.dart, one
+    # entry per page in the order the pages print their numbers, and each
+    # named as the index names it at its own paper.
+    'rackpal_export' = 299
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -2130,7 +2136,10 @@ $SuiteFloors = @{
     # refusal crosses as a refusal, inline cancel discards) and +3 in
     # export_controller_test.dart (a fast export shows nothing, a slow one
     # shows progress and is written, Cancel writes nothing and says so).
-    'rackpal_app'    = 1183
+    # 1185 at `#355` (M6-I4, docs/08 §5.2): +2 in export_controller_test.
+    # dart, FILE sent as the saved project's own name and empty for an
+    # unsaved one.
+    'rackpal_app'    = 1185
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

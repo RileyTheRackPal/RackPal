@@ -99,15 +99,42 @@ final class ExportRequest {
   final Map<String, Uint8List> members;
 }
 
+/// One page of a finished export, as the preview lists it (DR-230).
+final class ExportedSheet {
+  const ExportedSheet({
+    required this.ncsId,
+    required this.title,
+    required this.widthPt,
+    required this.heightPt,
+  });
+
+  /// `T2.01`.
+  final String ncsId;
+
+  /// `RACK ELEVATION — FRONT · RK-1`, from `sheetTitle`, the drawing
+  /// index's own naming.
+  final String title;
+
+  /// The page's size, so a preview renders it at its own proportions:
+  /// a set mixes ANSI B portrait elevations with ANSI A landscape
+  /// schedules.
+  final double widthPt;
+  final double heightPt;
+}
+
 /// A finished export.
 final class ExportedDocument {
   const ExportedDocument({
     required this.bytes,
     required this.sheetCount,
     required this.notices,
+    this.sheets = const <ExportedSheet>[],
     this.stamped = false,
     this.stampWithheld,
   });
+
+  /// Every page, in file order: page `i` of [bytes] is `sheets[i]`.
+  final List<ExportedSheet> sheets;
 
   final Uint8List bytes;
 
