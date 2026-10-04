@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-10-04 (hundred-and-twelfth entry)
+
+* **Progress**: `#998` merged at `f6af1f9b` (PR 202). `#908` and `#909` opened on branch `debt-908-909`;
+  pricing `#909` filed `#999` (multi-draw has the same gap) and the user's 16/4 question filed `#1000`.
+* **Creation**: [DR-233](/decisions/dr-233-iec-or-nema-cord-is-a-power-cord.md), amending DR-008 §11.8.1.
+* **Creation**: [DR-234](/decisions/dr-234-sets-and-multi-draw-ask-tier-2.md).
+* **Note**: **A TICKET'S "LIKELY SHAPE" CAN BE A TRADE CLAIM.** `#908` sketched "any power port with a
+  role" as the cord test; the seed has five power families, and two of them are routinely pulled wire. The
+  family table answered what the ticket's sentence could not, and the user ruled from it.
+* **Note**: **A "FIXED IN COMMIT" LINK IS A MENTION.** Both items carried three each and neither was
+  built: ADO links any commit that names the number.
+
 ## 2026-10-04 (hundred-and-eleventh entry)
 
 * **Progress**: `#973` and `#972` merged at `e071de1a` (PR 201). `#998` filed for the Network interconnect

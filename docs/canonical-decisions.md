@@ -23880,6 +23880,92 @@ move the devices beside it for a reason the user cannot see.
 
 ---
 
+### 11.232 DR-233 · An IEC or NEMA cord is a power cord, wherever its far end lands
+
+**Settled by the user on 2026-10-04, building `#908`.** `LinkClass.powerCord` was documented as
+auto-classified and the classifier never returned it: `linkClassOf` answered `jumper` for both ends in
+one rack and `fieldCable` otherwise. So a cord from an amplifier's IEC inlet to a PDU outlet in the same
+rack was a jumper, one to a wall receptacle or another rack landed on the Pull Sheet as a cable somebody
+pulls, and the schedule's *"N power cords hidden"* chip could only count links a person had locked by
+hand. DR-008 §11.8.1 left the class open in so many words: *"`powerCord` and `internal` are untouched by
+this ruling."*
+
+**11.232.1 RULED: A CORD IS ITS PORTS.** A link is a `powerCord` when every port its ends land on is a
+`power.ac_iec` or `power.ac_branch` port with a `PortPowerSpec.role`, and at least one end is such a port.
+The two families mix freely, since a NEMA-to-C13 lead from a PDU to a device is the commonest cord there
+is. The other end may be a place or open, so a cord to *"the wall receptacle behind the TV"* is a cord.
+The test runs **before** the rack test, so DR-008 §11.8.1's *"Nothing else"* now reads *"nothing else,
+once a cord is ruled out"* (§12.50). The family is the port's effective one, override included (DR-131's
+reason: a correction a person made on an instance must reach every reader of the family).
+
+**11.232.2 THE OTHER POWER FAMILIES KEEP THE RACK TEST**, the user's choice, and the recommended one.
+`power.ac_hardwired` is a branch circuit an electrician pulls, `power.dc_low` is as often 18/2 pulled to
+a keypad or a camera as it is a wall-wart lead, and `power.bonding` is a conductor cut to length. Each
+stays a jumper inside one rack and a field cable otherwise, so a pulled run stays on the sheet the
+installer pulls from. Not taken: every `power.*` port with a role, the shape `#908` sketched, which hides
+a pulled 24 V run in the hidden-cords count; and IEC, NEMA and low-voltage DC together, right for an
+in-rack brick and wrong for every DC run that goes through a wall.
+
+**11.232.3 UNDETERMINED STAYS UNDETERMINED.** An end on a port the document cannot resolve still returns
+`null` before either test runs (G4): a cord to a staged device is not a guessed cord.
+
+**11.232.4 A LOCK STILL WINS, AND NOW IT CAN DISAGREE.** DR-008 §11.8.2 is untouched: a class a person
+set stands, and a link locked to `jumper` that is now a cord reports the disagreement. Measured at the
+ruling: none of the four starters draws a link onto a power port, and none locks a class.
+
+**Scope.** No scope moves: a v1 class that was modelled and never produced now is.
+
+---
+
+### 11.233 DR-234 · A set and a multi-draw ask tier 2 per pair, and a set's chip names the first
+
+**Settled by the user on 2026-10-04, building `#909` and `#999`.** DR-116 §11.115.3 ruled that *"a rule is
+a statement about the RESULTING STATE, not about the gesture that produced it"*, for the bind gesture.
+Measured: two more gestures never asked tier 2. `_commitSet` runs `planAtomicConnect` (tier 1 per paired
+position) and commits, so a stereo pair on two 3-pin blocks dropped on an XLR pair is a cable with no
+`CON-001` chip, where the pin gesture springs each half back. `_commitMultiDraw` builds its N connects and
+runs them, under an arm-time comment saying *"The commit path checks it per pair"*, which it did not. This
+ruling applies DR-116 to both and settles the three things `#909` left open.
+
+**11.233.1 RULED: TIER 2 PER PAIRED POSITION, FIRST CHIP WINS.** Each position with a port at both ends is
+asked, in the set's declared order (a multi-draw's plan order), and the first chip springs the gesture
+back, as tier 1 already does across positions. An open position has no pair and is not asked. At arm
+time a target set, or a multi-draw target bank, whose pairs would raise a chip has its pins offered with
+the amber ring (DR-116 §11.115.5).
+
+**11.233.2 RULED: THE CHIP NAMES THE FIRST FAILING PAIR, PLUS A COUNT**, the user's choice. The headline
+is the pin gesture's own, naming that pair's jacks, and the explanation adds how many more of the cable's
+paired conductors (or the run's cables) would spring back. Not taken: naming the two sets by label,
+which reads well for a pair and stops naming a jack a person can find once one position of a larger set
+is the problem.
+
+**11.233.3 `[ Connect anyway ]` COMMITS THE WHOLE GESTURE**, the set as one cable or the run as N, exactly
+what the gesture would have written (CR-017).
+
+**11.233.4 RULED: ON A SET, ONLY `CON-001`'s ADAPTER**, the user's choice. `Declare an adapter` makes the set
+cable and declares one adapter on it, which clears every conductor, since `CON-001` reads adapters per
+cable. It is offered only when `CON-001` is the only rule any paired position trips: otherwise the remedy
+would clear one rule and commit past another. The remedies that insert a device (`SIG-001`'s receiver,
+`SIG-002`'s converter) are withheld on a set chip, because each wires pin-to-pin cables and would split a
+one-cable set apart. Not taken: no remedies at all, which costs this: the chip is the only host in the
+product that can declare an adapter, so a stereo Euroblock-to-XLR cable could never clear `CON-001`.
+Also not taken: remedies acting on one conductor, which makes a single-conductor cable out of a pair.
+
+**11.233.5 A MULTI-DRAW CHIP OFFERS NO RULE-SPECIFIC REMEDY.** This clause is the implementer's default,
+stated to the user and not separately ruled: the run is N cables, and a remedy that repairs one of them
+while the rest commit has no single meaning.
+
+**11.233.6 WHAT THIS DOES NOT RULE: A 16/4 TAPPED AND CONTINUED.** The user raised the trade convention of
+running 16/4 to a room, tapping one pair at the first speaker and continuing to the second. That is one
+cable reaching two devices, a `Breakout` (CR-014), and it never reaches this chip: an unequal count is
+§11.8.3's connect-what-fits-and-warn, and no rule reads an unpaired position. An adapter is the wrong
+noun for that junction. `Breakout` has no writer and the hand-authored conductor map defers to v1.1
+(AC-053, RJ-016); `#1000` records the gap, and its Saga is the user's §8.3 call.
+
+**Scope.** No scope moves: DR-116, reaching two more gestures.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -24626,6 +24712,12 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **DR-225 §11.224.4**, its implementation clause | *"Both renderings share one symbol layout and one 8 pt type size, so they differ only in how far the ink reaches"* | **The drawn rendering is placed by its own ink** (§11.231.1) and, when every device is an island, wrapped to fit (§11.231.2); the label rendering keeps the label reservation. The fallback still compares the two as fitted on the sheet, and the clause's reasoning (a fallback that buys no legibility is not taken) stands. |
+
+### 12.50 Amended by DR-233 (an IEC or NEMA cord is a power cord)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-008 §11.8.1**, its heading and its closing line | *"A jumper is a Link with both ends in the same rack. Nothing else."*, and *"`powerCord` and `internal` are untouched by this ruling."* | **A cord is tested first** (§11.232.1): a link whose port ends are all `power.ac_iec` or `power.ac_branch` ports with a role is a `powerCord`, in one rack or not. The rack test then decides jumper or field cable exactly as before, and its three reasons stand. `internal` is still untouched. |
 
 
 ## 13. Resolved §10 questions
