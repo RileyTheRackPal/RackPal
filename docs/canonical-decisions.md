@@ -23999,6 +23999,16 @@ the model does not record which end the adapter sits at, and whoever reads eithe
 taken: the drawn wire alone, which DR-001's default rendering would almost never show; and the pennants
 alone, which would lose the mark when a domain switches to drawn.
 
+**11.234.6 DECIDED BUILDING IT: A BOWTIE, NOT A LOZENGE.** The shape in §11.234.5 is superseded; its placement
+stands. Building the lozenge found four families whose glyph is a hollow diamond (Dante, AES67, AVB and
+TOSLINK), drawn inside the pennant a few millimetres from where the lozenge would sit on the leader: two
+identical marks meaning two different things on one label, and the same diamond prints in T0.01's cable-types
+block. Asked, the user chose a **bowtie**, two triangles tip to tip across the cable (two different ends
+meeting), which no family glyph uses, oriented along the cable so the line runs through both tips. Not taken:
+keeping the lozenge and relying on its position, which an 8 pt page does not reliably show; and a barrel,
+which sits close to the hollow square four other families use. T0.01 keys it as *"Bowtie: an in-line adapter
+declared on the cable"*.
+
 **Scope.** No scope moves: a v1 value object that was modelled, written and never shown, shown.
 
 ---
