@@ -31,6 +31,11 @@ import 'package:rackpal/src/storage/recovery_store.dart'
 import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 
+/// A button the status line carries after the status: the same shape as
+/// `rackpal_ui`'s `StatusAction`, named here so this model imports no
+/// widget package (records are structural, so the two are one type).
+typedef SessionStatusAction = ({String label, VoidCallback onPressed});
+
 /// The app's own name, used when a document has none.
 const String kUntitledDocumentName = 'Untitled';
 
@@ -273,6 +278,11 @@ final class DocumentSession extends ChangeNotifier {
   /// (DR-224). Empty for every status that counts none.
   List<String> get statusNotices => _statusNotices;
 
+  /// The buttons the status line carries after [status]: an export's
+  /// `Open` and `Show in folder` (M6-I4). Cleared with the status.
+  List<SessionStatusAction> get statusActions => _statusActions;
+  List<SessionStatusAction> _statusActions = const <SessionStatusAction>[];
+
   /// CR-094. Forwarded, never cached — a second copy of this bit is a
   /// second thing that can be wrong.
   bool get isDirty => _controller.isDirty;
@@ -320,6 +330,7 @@ final class DocumentSession extends ChangeNotifier {
     _baseline = baseline;
     _status = status;
     _statusNotices = const <String>[];
+    _statusActions = const <SessionStatusAction>[];
     _historyFullSaid = false;
     // A property of the FILE, so adopting a different document replaces
     // it. The default is empty, which is what makes every existing caller
@@ -341,6 +352,7 @@ final class DocumentSession extends ChangeNotifier {
     _openReadOnly = false;
     _status = status;
     _statusNotices = const <String>[];
+    _statusActions = const <SessionStatusAction>[];
     notifyListeners();
   }
 
@@ -382,10 +394,23 @@ final class DocumentSession extends ChangeNotifier {
 
   /// Sets the status line, and the [notices] it counts (DR-224): an
   /// export's, or none. The two are set together so they cannot disagree.
-  void setStatus(String? status, {List<String> notices = const <String>[]}) {
-    if (_status == status && _sameNotices(notices)) return;
+  void setStatus(
+    String? status, {
+    List<String> notices = const <String>[],
+    List<SessionStatusAction> actions = const <SessionStatusAction>[],
+  }) {
+    // ACTIONS ALWAYS REPLACE: two exports to two folders print the same
+    // words, and an early return on equal words would leave the second
+    // export's Open opening the first one's file.
+    if (_status == status &&
+        _sameNotices(notices) &&
+        actions.isEmpty &&
+        _statusActions.isEmpty) {
+      return;
+    }
     _status = status;
     _statusNotices = List<String>.unmodifiable(notices);
+    _statusActions = List<SessionStatusAction>.unmodifiable(actions);
     notifyListeners();
   }
 
@@ -418,6 +443,7 @@ final class DocumentSession extends ChangeNotifier {
       _historyFullSaid = true;
       _status = undoHistoryFullStatus(undo.maxEntries);
       _statusNotices = const <String>[];
+      _statusActions = const <SessionStatusAction>[];
     }
     notifyListeners();
   }

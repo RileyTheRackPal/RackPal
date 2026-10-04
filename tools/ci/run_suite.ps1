@@ -1189,7 +1189,10 @@ $SuiteFloors = @{
     # lifted, and the unrecorded-devices notice.
     # 5508 at `#993` (NET-A/3b, DR-048): +1, a dated row printed in the
     # values' ink and an undated one as unverified in the muted ink.
-    'rackpal_core'   = 5508
+    # 5510 at `#355` (M6-I4, DR-230): +2 in sheet/cover_index_test.dart,
+    # sheetTitle with and without a subject, and every single-page index
+    # row reading what it says.
+    'rackpal_core'   = 5510
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1284,7 +1287,23 @@ $SuiteFloors = @{
     # test.dart, T6.50 absent from file, index and notices as shipped, then
     # present and indexed with three devices addressed, and the notice
     # naming the blank ones.
-    'rackpal_export' = 288
+    # 292 at `#352` (M6-I1, DR-230): +4 in export_sheet_cap_test.dart,
+    # Whole House's sixteen and two per rack, forty sheets saying nothing,
+    # forty-two said first among the notices with the file still written,
+    # and a set past 2000 refused quickly with its count.
+    # 296 at `#356` (M6-I5, docs/08 §8.4): +4 net in export_determinism_
+    # test.dart, whose one "files are NOT identical" case became five: one
+    # document at one date is one file, the creation date is the injected
+    # one, the ID follows the contents in both slots, the rewritten file
+    # still parses, and an unrecognised file is returned untouched.
+    # 297 at `#353` (M6-I2, CR-099): +1 in export_progress_test.dart, the
+    # hook heard at zero and once per sheet drawn, in order.
+    # 299 at `#355` (M6-I4, DR-230): +2 in exported_sheets_test.dart, one
+    # entry per page in the order the pages print their numbers, and each
+    # named as the index names it at its own paper.
+    # 300 at `#356` (docs/08 §8.4): +1, morning and evening of one day are
+    # one file, now that the creation date is the issue day.
+    'rackpal_export' = 300
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1876,7 +1895,18 @@ $SuiteFloors = @{
     # launch, an edited URL opening, Cancel, a non-http URL refused in the
     # dialog, the system's refusal said, no button without an address or
     # a launcher and its control, and both hosts.
-    'rackpal_ui'     = 2099
+    # 2104 at `#353` (M6-I2, docs/08 §8.2): +5 in export/export_progress_
+    # dialog_test.dart, preparing, drawing with a counting bar, writing with
+    # none, Cancel asking and waiting, and closing itself when done.
+    # 2111 at `#355` (M6-I4, DR-230): +7 in export/export_preview_dialog_
+    # test.dart, the header and the first page at its proportions, paging
+    # by button, arrow and list with a portrait page portrait, one render
+    # per size, the notices beside, the 40-sheet warning, a missing
+    # renderer said with Save still yes, and Save yes and Close no.
+    # 2113 at `#355` (M6-I4, CR-100): +2 in shell/status_line_actions_
+    # test.dart, the actions as buttons after the message and the notices
+    # link, and none for any other status.
+    'rackpal_ui'     = 2113
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -2110,7 +2140,27 @@ $SuiteFloors = @{
     # test.dart, openUrl sent whole, nothing but http/https reaching the
     # channel, a refusal or a throw read as false, and the app's root
     # handing the services' launcher to the shell.
-    'rackpal_app'    = 1175
+    # 1183 at `#353` (M6-I2, M6-I3, CR-099): +5 in session/export_runner_
+    # test.dart (the isolate and inline runners give one file, progress
+    # crosses and ends at the set, cancel stops it and nothing follows, a
+    # refusal crosses as a refusal, inline cancel discards) and +3 in
+    # export_controller_test.dart (a fast export shows nothing, a slow one
+    # shows progress and is written, Cancel writes nothing and says so).
+    # 1185 at `#355` (M6-I4, docs/08 §5.2): +2 in export_controller_test.
+    # dart, FILE sent as the saved project's own name and empty for an
+    # unsaved one.
+    # 1190 at `#355` (M6-I4, DR-230): +4 in export_controller_test.dart
+    # (a closed preview opens no save dialog and writes nothing, it offers
+    # the generated set, a missing pdfium is said in the page and the file
+    # still written, a bad page said and a good one the PNG) and +1 in
+    # export_preview_pdfium_test.dart (every Whole House page renders
+    # through the real binary at its own proportions).
+    # 1196 at `#355` (M6-I4, CR-100): +6 in session/export_open_test.dart,
+    # openFile sent for a PDF and nothing else reaching the channel, Open
+    # and Show in folder opening the written file and its folder and
+    # nothing unasked, a refusing viewer said, a second same-status export
+    # opening its own file, and the next status clearing them.
+    'rackpal_app'    = 1196
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

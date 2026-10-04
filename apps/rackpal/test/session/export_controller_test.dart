@@ -5,15 +5,22 @@
 // surface rather than inventing one, that every outcome REPORTS, and that
 // a refusal leaves nothing behind.
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:rackpal/src/session/export_controller.dart';
+import 'package:rackpal/src/session/export_runner.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_export/rackpal_export.dart'
+    show ExportRequest, ExportedDocument;
+import 'package:rackpal_pdfium/rackpal_pdfium.dart' show PdfiumUnavailable;
+import 'package:rackpal_ui/rackpal_ui.dart'
+    show PreviewImage, PreviewUnavailable;
 
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
@@ -153,7 +160,182 @@ RackDocument _document({
 /// a file.
 RackDocument _racklessDocument() => _document(rackCount: 0);
 
+/// A job that runs [inner] and delivers its outcome only after [delay],
+/// standing in for an export slow enough to show its progress.
+ExportJob _slow(ExportJob inner, Duration delay) {
+  final done = Completer<Outcome<ExportedDocument>?>();
+  Future<void>.delayed(delay, () async {
+    final outcome = await inner.result;
+    if (!done.isCompleted) done.complete(outcome);
+  });
+  return ExportJob(
+    result: done.future,
+    progress: inner.progress,
+    cancel: () {
+      inner.cancel();
+      if (!done.isCompleted) done.complete(null);
+    },
+  );
+}
+
 void main() {
+  group('progress and cancel (M6-I2, docs/08 §8.2)', () {
+    test(
+      'A FAST EXPORT SHOWS NO PROGRESS: under 400 ms a bar is noise',
+      () async {
+        final session = await buildTestSession(
+          document: _document(),
+          savePaths: <String?>[r'C:\jobs\smith'],
+        );
+        expect(await session.services.export.exportPdf(), isTrue);
+        expect(session.prompts.exportProgressShown, 0);
+      },
+    );
+
+    test('a slow export shows its progress, and is still written', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+        exportRunner: (request) => _slow(
+          runExportInline(request),
+          kExportProgressDelay * 2,
+        ),
+      );
+      expect(await session.services.export.exportPdf(), isTrue);
+      expect(session.prompts.exportProgressShown, 1);
+      expect(_pathsEndingIn(session.fs, '.pdf'), hasLength(1));
+    });
+
+    test('CANCEL STOPS IT: nothing is written, and the status line says '
+        'so', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+        exportRunner: (request) => _slow(
+          runExportInline(request),
+          kExportProgressDelay * 2,
+        ),
+      );
+      session.prompts.cancelExport = true;
+      expect(await session.services.export.exportPdf(), isFalse);
+      expect(session.prompts.exportProgressShown, 1);
+      expect(_pathsEndingIn(session.fs, '.pdf'), isEmpty);
+      expect(session.services.session.status, kExportCancelledStatus);
+    });
+  });
+
+  group('THE FILE FIELD NAMES THE PROJECT (docs/08 §5.2, M6-I4)', () {
+    // What the controller hands the export, which the title block prints:
+    // `title_block_test.dart` holds that half.
+    Future<String> fileNameSent({required bool saveFirst}) async {
+      final sent = <ExportRequest>[];
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[
+          if (saveFirst) r'C:\jobs\smith.rppj',
+          r'C:\jobs\smith-set.pdf',
+        ],
+        exportRunner: (request) {
+          sent.add(request);
+          return runExportInline(request);
+        },
+      );
+      if (saveFirst) {
+        expect(await session.services.controller.save(), isTrue);
+      }
+      expect(await session.services.export.exportPdf(), isTrue);
+      return sent.single.fileName;
+    }
+
+    test(
+      'a saved project prints its own file name, never the PDF name',
+      () async {
+        expect(await fileNameSent(saveFirst: true), 'smith.rppj');
+      },
+    );
+
+    test(
+      'an unsaved project has no file, and the field prints its dash',
+      () async {
+        expect(await fileNameSent(saveFirst: false), isEmpty);
+      },
+    );
+  });
+
+  group('THE PREVIEW COMES BEFORE THE SAVE DIALOG (DR-230)', () {
+    test(
+      'closing the preview opens no save dialog and writes nothing',
+      () async {
+        final session = await buildTestSession(
+          document: _document(),
+          savePaths: <String?>[r'C:\jobs\smith'],
+        );
+        session.prompts.savePreview = false;
+        expect(await session.services.export.exportPdf(), isFalse);
+        expect(session.prompts.previews, hasLength(1));
+        expect(session.picker.saveCalls, 0);
+        expect(_pathsEndingIn(session.fs, '.pdf'), isEmpty);
+        expect(session.services.session.status, kExportCancelledStatus);
+      },
+    );
+
+    test('it offers the generated set: every sheet, the notices, the size, '
+        'and no warning for a small set', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+      );
+      await session.services.export.exportPdf();
+      final preview = session.prompts.previews.single;
+      expect(preview.sheets, hasLength(8));
+      expect(preview.sheets.first.ncsId, 'T0.00');
+      expect(preview.sizeLabel, endsWith('KB'));
+      expect(preview.countWarning, isNull);
+      expect(preview.projectName, session.services.session.displayName);
+    });
+
+    test('A MISSING PDFIUM IS SAID IN THE PAGE, and the file is still '
+        'written', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+        exportRasteriser: (pdf, page, {required width, required height}) =>
+            throw const PdfiumUnavailable('no binary'),
+      );
+      expect(await session.services.export.exportPdf(), isTrue);
+      final page = session.prompts.previews.single.renderPage(
+        0,
+        width: 100,
+        height: 100,
+      );
+      expect((page as PreviewUnavailable).reason, kPreviewRendererMissing);
+      expect(_pathsEndingIn(session.fs, '.pdf'), hasLength(1));
+    });
+
+    test('a page that will not render says so, and a good one is the '
+        "rasteriser's PNG", () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+        exportRasteriser: (pdf, page, {required width, required height}) =>
+            page == 0
+            ? fakePageRasteriser(pdf, page, width: width, height: height)
+            : const Err<Uint8List>('bad page'),
+      );
+      await session.services.export.exportPdf();
+      final preview = session.prompts.previews.single;
+      expect(
+        preview.renderPage(0, width: 10, height: 10),
+        isA<PreviewImage>(),
+      );
+      expect(
+        (preview.renderPage(1, width: 10, height: 10) as PreviewUnavailable)
+            .reason,
+        kPreviewPageFailed,
+      );
+    });
+  });
+
   group('a successful export', () {
     test('writes the PDF and reports what it wrote', () async {
       final session = await buildTestSession(

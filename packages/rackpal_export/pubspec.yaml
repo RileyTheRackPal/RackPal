@@ -11,6 +11,12 @@ environment:
 resolution: workspace
 
 dependencies:
+  # M6-I5 (`#356`): the PDF's `/ID` is a sha256 of the file's own contents,
+  # so two exports of one project are one file (docs/08 §8.4). Dart-team,
+  # pure Dart, BSD-3, and already `rackpal_core`'s declared dependency, so
+  # this declares what this package imports rather than adding one
+  # (`depend_on_referenced_packages`, the app's `crypto` note).
+  crypto: ^3.0.7
   # Transitive via `pdf` and now imported directly, pinned on the same
   # rule as `vector_math` below. `plan_image.dart` decodes an underlay to
   # screen it, which `pdf` cannot do for us: PdfImage.file returns an

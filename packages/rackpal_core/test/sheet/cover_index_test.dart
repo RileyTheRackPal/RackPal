@@ -217,4 +217,25 @@ void main() {
     expect(cover.indexColumns, 1);
     expect(cover.indexOmitted, isEmpty);
   });
+
+  group('sheetTitle: one naming for the index and the preview (DR-230)', () {
+    test('a sheet with a subject carries it, one without does not', () {
+      final sheets = SheetSet.forRacks([testRack()]).sheets;
+      String titleOf(SheetRole role) =>
+          sheetTitle(sheets.firstWhere((s) => s.role == role));
+      expect(
+        titleOf(SheetRole.rackElevationFront),
+        'RACK ELEVATION — FRONT · RK-1',
+      );
+      expect(titleOf(SheetRole.equipmentList), 'EQUIPMENT LIST AND MATERIALS');
+    });
+
+    test('every single-page index row reads exactly what sheetTitle '
+        'says of its sheet', () {
+      final rows = coverIndexRows(SheetSet.forRacks([testRack()]).sheets);
+      for (final row in rows.where((r) => r.sheets.length == 1)) {
+        expect(row.title, sheetTitle(row.sheets.single), reason: row.ids);
+      }
+    });
+  });
 }

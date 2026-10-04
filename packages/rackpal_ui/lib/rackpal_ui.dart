@@ -109,6 +109,8 @@ export 'src/draw/device_glyph_mark.dart';
 export 'src/draw/flutter_canvas.dart';
 export 'src/draw/plan_image_cache.dart';
 export 'src/draw/text_run_cache.dart';
+export 'src/export/export_preview_dialog.dart';
+export 'src/export/export_progress_dialog.dart';
 export 'src/inspector/add_zero_u_channel_dialog.dart';
 export 'src/inspector/add_zero_u_occupant_dialog.dart';
 export 'src/inspector/delete_device_dialog.dart';

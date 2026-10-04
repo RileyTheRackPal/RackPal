@@ -81,6 +81,17 @@ String? _subject(SheetDef s) {
   return null;
 }
 
+/// [sheet]'s title with its subject: `RACK ELEVATION — FRONT · RK-1`,
+/// `INTERCONNECT · Network`, `EQUIPMENT LIST AND MATERIALS`.
+///
+/// ONE NAMING FOR EVERY LIST OF SHEETS: the drawing index's rows and the
+/// export preview's sheet list (DR-230) both read [_subject], so the two
+/// cannot call one sheet by two names.
+String sheetTitle(SheetDef sheet) {
+  final subject = _subject(sheet);
+  return subject == null ? sheet.title : '${sheet.title} · $subject';
+}
+
 /// Two sheets are pages of one thing when they share a role and a subject
 /// (§11.211.3). Front and rear elevations differ in role, two plans in
 /// underlay and two interconnect sheets in domain, so only a paginated

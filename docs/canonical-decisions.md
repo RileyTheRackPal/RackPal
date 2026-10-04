@@ -23784,6 +23784,43 @@ into a launcher for a `file:` path or a program.
 
 ---
 
+### 11.229 DR-230 · Export previews the real PDF, and past 40 sheets it says so without asking
+
+**Settled by the user on 2026-10-04, opening M6-I (`#351`), on the recommended option twice.** The
+roadmap's M6 item reads *"export progress, cancel and preview"*, and CR-100 ruled the preview a screen
+rendering because a pdfium preview needed a native dependency.
+
+**11.229.1 RULED: THE PREVIEW IS THE REAL FILE, RENDERED BY THE VENDORED PDFIUM.** Export generates the
+PDF once, off the main isolate (CR-099), and opens a preview of **those bytes**: each page rasterised on
+demand, paged through, with the export's notices beside it. **Save…** writes the bytes that were
+previewed; closing the preview writes nothing. CR-100's reason for a screen preview, *"no native
+dependency"*, is gone: DR-153 vendored pdfium for floorplan import, committed rather than downloaded,
+which is the very condition CR-100 set. A preview of the bytes is faithful by definition where a screen
+rendering is faithful only as far as a parity test reaches, and one generation serves both preview and
+save. CR-100's **Verify output** button is therefore the preview itself and does not ship separately.
+**Measured** on Whole House: the export takes about 100 ms for sixteen sheets and pdfium renders a page
+at 1100 px in about 56 ms with its PNG encode. Not taken: CR-100's screen preview (about twice the
+price, and its plan sheets need an image path the screen canvas lacks), and no in-app preview at all.
+**A MISSING BINARY NEVER HOLDS THE FILE**: without pdfium the preview says so and Save… still works
+(CR-023, G3). The OS print dialog stays v1.1, and **Open in system viewer** still ships, as CR-100 ruled.
+
+**11.229.2 RULED: PAST 40 SHEETS THE COUNT IS SAID, NOT ASKED.** At about 6 ms a sheet, forty sheets is a
+quarter of a second, so AC-050 A7.4's warning guards against a broken project rather than a long wait.
+The preview's header shows the count, marked past 40 as more than a set usually needs, and the export
+raises a notice; no prompt, because a commercial job may legitimately run to sixty and would click
+through it on every export. **2000 is refused**, before any page is drawn, saying the count and the
+cap. Not taken: a confirmation before generating.
+
+**11.229.3 THE MECHANICAL PARTS, STATED SO THEY ARE NOT DECIDED SILENTLY.** The count is the sheet set's
+own dry run, which resolves before a page is emitted. Progress is shown only past 400 ms (docs/08
+§8.2), which on the measured rate is a set of about 65 sheets, so most exports never show it. Cancel
+kills the isolate and nothing is written.
+
+**Scope.** No scope moves: the roadmap's preview, given its mechanism. CR-100's preview clause is
+superseded (§12.48).
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -24518,6 +24555,12 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **DR-048 §11.47.10**, its last sentence | It *"does not give `TemplateBody` a network field"*, and *"M4 is untouched: this is instance data, not template data, and no device template gains a field"*. | **Superseded for `TemplateBody.wifi` alone** (§11.226.3): whether a model can join a network is a fact about the model. Every network **value** (hostname, address, subnet, gateway, VLANs, MAC, the verified date) stays instance data exactly as DR-048 ruled, and no template carries one. |
+
+### 12.48 Amended by DR-230 (export previews the real PDF)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **CR-100**, its preview clause, and docs/08 §8.1 note 3 and §8.3's two preview levels | *"Screen-renderer preview is primary and has no native dependency"*; pdfium sits behind an explicit **Verify output** button | **The export preview is the generated PDF rendered by the vendored pdfium** (§11.229.1), and Verify output is that preview rather than a second button. CR-100's vendoring condition, the OS print dialog's deferral to v1.1 and Open in system viewer stand as ruled. |
 
 
 ## 13. Resolved §10 questions

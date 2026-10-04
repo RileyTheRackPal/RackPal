@@ -51,10 +51,12 @@ import 'package:rackpal/src/session/autosave_scheduler.dart';
 import 'package:rackpal/src/session/device_template_io_actions.dart';
 import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/export_controller.dart';
+import 'package:rackpal/src/session/export_runner.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/session/library_io_actions.dart';
 import 'package:rackpal/src/session/logo_import_actions.dart';
+import 'package:rackpal/src/session/pdf_rasteriser.dart';
 import 'package:rackpal/src/session/plan_import_actions.dart';
 import 'package:rackpal/src/session/session_controller.dart';
 import 'package:rackpal/src/session/session_prompts.dart';
@@ -307,6 +309,9 @@ Future<AppServices> buildAppServices({
   FilePicker picker = const Win32FilePicker(),
   FolderRevealer folderRevealer = win32RevealFolder,
   WebPageLauncher webPageLauncher = win32OpenWebPage,
+  ExportRunner exportRunner = runExport,
+  PdfRasteriser exportRasteriser = pdfiumRenderPng,
+  FileOpener fileOpener = win32OpenFile,
   Clock clock = const SystemClock(),
   Serializer serializer = isolateSerializer,
   Deserializer deserializer = isolateDeserializer,
@@ -490,6 +495,10 @@ Future<AppServices> buildAppServices({
       writer: writer,
       fontLoader: exportFontLoader,
       clock: clock,
+      runner: exportRunner,
+      rasteriser: exportRasteriser,
+      opener: fileOpener,
+      revealer: folderRevealer,
       // The PDF dialog opens where the last document save did (§8.3's
       // "the same MRU behaviour as document Save As, for free").
       initialDirectory: controller.exportInitialDirectory,

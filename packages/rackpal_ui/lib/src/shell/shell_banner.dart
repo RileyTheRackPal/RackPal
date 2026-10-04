@@ -149,6 +149,15 @@ final class ShellWarningBanner extends StatelessWidget {
   }
 }
 
+/// A button the status line carries after its message: `Open`, `Show in
+/// folder` after an export (CR-100, docs/08 §8.3's completion strip as
+/// one line, M6-I4).
+///
+/// A RECORD, NOT A CLASS, so the session that sets it needs no import of
+/// this package: the app's `DocumentSession` is a model and names the same
+/// shape structurally.
+typedef StatusAction = ({String label, VoidCallback onPressed});
+
 /// The shell's one-line status readout.
 ///
 /// Carries the outcomes that are REPORTED but are not failures: "Saved."
@@ -161,8 +170,13 @@ final class ShellStatusLine extends StatelessWidget {
     required this.message,
     this.notices = const <String>[],
     this.noticeLabel,
+    this.actions = const <StatusAction>[],
     super.key,
   });
+
+  /// Buttons after the message, in order. Empty for every status that is
+  /// not an export's.
+  final List<StatusAction> actions;
 
   final String message;
 
@@ -183,7 +197,13 @@ final class ShellStatusLine extends StatelessWidget {
     // not end with the count keeps no link rather than a misplaced one.
     final linked =
         notices.isNotEmpty && label != null && message.endsWith(label);
-    final text = linked
+    final buttonStyle = TextButton.styleFrom(
+      padding: const EdgeInsets.symmetric(horizontal: 4),
+      minimumSize: const Size(0, 20),
+      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      textStyle: style?.copyWith(decoration: TextDecoration.underline),
+    );
+    final line = linked
         ? Row(
             children: [
               Flexible(
@@ -220,7 +240,24 @@ final class ShellStatusLine extends StatelessWidget {
         height: 24,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Align(alignment: Alignment.centerLeft, child: text),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: actions.isEmpty
+                ? line
+                : Row(
+                    children: [
+                      Flexible(child: line),
+                      for (final a in actions) ...[
+                        const SizedBox(width: 8),
+                        TextButton(
+                          style: buttonStyle,
+                          onPressed: a.onPressed,
+                          child: Text(a.label),
+                        ),
+                      ],
+                    ],
+                  ),
+          ),
         ),
       ),
     );

@@ -1,5 +1,6 @@
-// The three questions the session layer has to ask a human, behind an
-// interface.
+// The questions the session layer has to ask a human, behind an
+// interface, and the one thing it has to show while it works (an
+// export's progress, whose Cancel is the question).
 //
 // WHY AN INTERFACE RATHER THAN A `BuildContext`. `SessionController` runs
 // the close sequence, the open sequence and the save sequence, and each
@@ -13,6 +14,7 @@
 // with a fixed sequence, and the DIALOGS are tested separately with real
 // `tester.tap` and real `sendKeyEvent`. The shell wires the real one, so
 // the production path uses the same dialogs the widget tests drive.
+import 'package:flutter/foundation.dart' show ValueListenable, VoidCallback;
 import 'package:rackpal_ui/rackpal_ui.dart';
 
 /// Asks the user the three questions this layer has.
@@ -34,4 +36,17 @@ abstract interface class SessionPrompts {
     required DateTime savedAt,
     int? unsavedEditCount,
   });
+
+  /// An export's progress, with a Cancel that calls [onCancel] (M6-I2,
+  /// docs/08 §8.2). Closes itself when [finished] completes; the caller
+  /// opens it only for a job still running past the 400 ms threshold.
+  Future<void> showExportProgress({
+    required ValueListenable<ExportProgress?> progress,
+    required Future<void> finished,
+    required VoidCallback onCancel,
+  });
+
+  /// The export's preview of its own bytes (DR-230). True for Save…,
+  /// false when it was closed, which writes nothing.
+  Future<bool> showExportPreview(ExportPreview preview);
 }

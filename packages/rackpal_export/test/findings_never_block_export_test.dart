@@ -399,12 +399,17 @@ void main() {
         ExportDocumentUnreadable(Exception('x')),
         const ExportNoRacks(),
         const ExportFontMissing(_font),
+        // A FOURTH ARM, AND IT CAME HERE TO ARGUE (M6-I1, DR-230
+        // §11.229.2): it refuses on a SHEET COUNT from the dry run, which
+        // no finding, rule or severity can move, so CR-022 is untouched.
+        const ExportTooManySheets(2001),
       ];
       for (final arm in arms) {
         final about = switch (arm) {
           ExportDocumentUnreadable() => 'the file could not be read back',
           ExportNoRacks() => 'the project has no racks to draw',
           ExportFontMissing() => 'a font was not supplied',
+          ExportTooManySheets() => 'the set runs past the 2000-sheet cap',
         };
         expect(about, isNotEmpty);
         expect(arm.message, isNotEmpty);

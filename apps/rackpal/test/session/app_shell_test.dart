@@ -250,6 +250,9 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Export PDF…'));
       await tester.pumpAndSettle();
+      // THE PREVIEW COMES FIRST SINCE DR-230: the file is shown, then saved.
+      await tester.tap(find.text(kExportPreviewSave));
+      await tester.pumpAndSettle();
 
       expect(t.fs.state.files.containsKey(r'C:\jobs\smith.pdf'), isTrue);
       expect(find.textContaining('Exported '), findsOneWidget);
@@ -265,9 +268,17 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.text('Export PDF…'));
       await tester.pumpAndSettle();
+      // THE PREVIEW COMES FIRST SINCE DR-230: the file is shown, then saved.
+      await tester.tap(find.text(kExportPreviewSave));
+      await tester.pumpAndSettle();
 
-      final link = find.descendant(
-        of: find.byType(ShellStatusLine),
+      // THE BUTTON THAT CARRIES THE COUNT, not "the" button: since M6-I4 the
+      // line also carries Open and Show in folder.
+      final link = find.ancestor(
+        of: find.descendant(
+          of: find.byType(ShellStatusLine),
+          matching: find.textContaining(RegExp(r'^\d+ notices?$')),
+        ),
         matching: find.byType(TextButton),
       );
       expect(link, findsOneWidget, reason: 'precondition: notices were raised');
@@ -306,6 +317,8 @@ void main() {
       );
       expect(item.shortcut, isNull);
       await tester.tap(find.text(kExportForConstructionLabel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kExportPreviewSave));
       await tester.pumpAndSettle();
 
       expect(t.fs.state.files.containsKey(r'C:\jobs\smith.pdf'), isTrue);

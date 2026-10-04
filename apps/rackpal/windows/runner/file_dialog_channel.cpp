@@ -389,6 +389,32 @@ void RegisterFileDialogChannel(flutter::FlutterEngine* engine, HWND owner) {
           return;
         }
 
+        // "Open" on the PDF an export just wrote (M6-I4, #355, CR-100's
+        // "Open in system viewer"). Only a path ending in .pdf, checked
+        // here as well as in Dart, because ShellExecute's "open" runs a
+        // program when handed one.
+        if (call.method_name() == "openFile") {
+          const std::optional<std::wstring> path = StringArg(args, "path");
+          if (!path) {
+            result->Error("bad_args", "openFile needs a path.");
+            return;
+          }
+          std::wstring lower = *path;
+          for (auto& c : lower) {
+            c = static_cast<wchar_t>(::towlower(c));
+          }
+          if (lower.size() < 4 ||
+              lower.compare(lower.size() - 4, 4, L".pdf") != 0) {
+            result->Success(EncodableValue(false));
+            return;
+          }
+          const HINSTANCE opened = ::ShellExecuteW(
+              owner, L"open", path->c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+          result->Success(
+              EncodableValue(reinterpret_cast<INT_PTR>(opened) > 32));
+          return;
+        }
+
         const bool saving = call.method_name() == "save";
         if (!saving && call.method_name() != "open") {
           result->NotImplemented();

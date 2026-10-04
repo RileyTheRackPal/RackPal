@@ -52,6 +52,7 @@
 // the ordinal lives in [kViewKeyToTabIndex]. RULE 14e checks both.
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show ValueListenable;
 import 'package:flutter/material.dart';
 import 'package:rackpal/src/session/app_services.dart';
 import 'package:rackpal/src/session/csv_import_actions.dart';
@@ -1497,6 +1498,8 @@ final class AppShellState extends State<AppShell>
             // DR-224: the export's notices, readable from their count.
             notices: session.statusNotices,
             noticeLabel: noticeCountLabel(session.statusNotices.length),
+            // M6-I4: an export's Open and Show in folder.
+            actions: session.statusActions,
           ),
       ],
     );
@@ -2639,6 +2642,33 @@ final class NavigatorSessionPrompts implements SessionPrompts {
       savedAt: savedAt,
       unsavedEditCount: unsavedEditCount,
     );
+  }
+
+  @override
+  Future<void> showExportProgress({
+    required ValueListenable<ExportProgress?> progress,
+    required Future<void> finished,
+    required VoidCallback onCancel,
+  }) async {
+    final context = _context;
+    // NO NAVIGATOR, NO DIALOG: the export still runs to its end, it just
+    // cannot be watched or cancelled, which loses nothing.
+    if (context == null) return;
+    return showExportProgressDialog(
+      context,
+      progress: progress,
+      finished: finished,
+      onCancel: onCancel,
+    );
+  }
+
+  @override
+  Future<bool> showExportPreview(ExportPreview preview) async {
+    final context = _context;
+    // NO NAVIGATOR, NO PREVIEW, AND NO SAVE: the answer that writes
+    // nothing nobody saw.
+    if (context == null) return false;
+    return showExportPreviewDialog(context, preview);
   }
 }
 

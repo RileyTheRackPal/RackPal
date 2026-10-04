@@ -15,6 +15,7 @@
 library;
 
 export 'src/document/build_document.dart';
+export 'src/document/deterministic_pdf.dart';
 export 'src/document/export_request.dart';
 export 'src/draw/page_wiring.dart';
 export 'src/draw/pdf_canvas.dart';

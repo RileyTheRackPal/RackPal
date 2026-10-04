@@ -15,14 +15,18 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show ValueListenable, VoidCallback;
 import 'package:flutter/widgets.dart' show GlobalKey, NavigatorState;
+import 'package:image/image.dart' as img;
 import 'package:path/path.dart' as p;
 import 'package:rackpal/main.dart';
 import 'package:rackpal/src/session/app_services.dart';
 import 'package:rackpal/src/session/app_shell.dart';
 import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/export_controller.dart';
+import 'package:rackpal/src/session/export_runner.dart';
 import 'package:rackpal/src/session/file_picker.dart';
+import 'package:rackpal/src/session/pdf_rasteriser.dart';
 import 'package:rackpal/src/session/session_controller.dart';
 import 'package:rackpal/src/session/session_prompts.dart';
 import 'package:rackpal/src/session/starter_projects.dart';
@@ -317,7 +321,54 @@ final class ScriptedPrompts implements SessionPrompts {
         ? RecoveryChoice.keepForLater
         : _recoveryChoices.removeAt(0);
   }
+
+  /// How many times export progress was shown.
+  int exportProgressShown = 0;
+
+  /// When true, the progress prompt presses Cancel as soon as it opens.
+  bool cancelExport = false;
+
+  @override
+  Future<void> showExportProgress({
+    required ValueListenable<ExportProgress?> progress,
+    required Future<void> finished,
+    required VoidCallback onCancel,
+  }) async {
+    exportProgressShown++;
+    if (cancelExport) onCancel();
+    await finished;
+  }
+
+  /// Every preview shown, so a test can read what it offered and call its
+  /// renderer.
+  final List<ExportPreview> previews = [];
+
+  /// When false, the preview is closed rather than saved.
+  bool savePreview = true;
+
+  @override
+  Future<bool> showExportPreview(ExportPreview preview) async {
+    previews.add(preview);
+    return savePreview;
+  }
 }
+
+// --- Export preview -------------------------------------------------------
+
+/// A white one-pixel PNG for every page, so a test that reaches the export
+/// preview needs no pdfium binary.
+Outcome<Uint8List> fakePageRasteriser(
+  Uint8List pdf,
+  int pageIndex, {
+  required int width,
+  required int height,
+}) => Ok(
+  Uint8List.fromList(
+    img.encodePng(
+      img.Image(width: 1, height: 1)..setPixelRgb(0, 0, 255, 255, 255),
+    ),
+  ),
+);
 
 // --- Window ------------------------------------------------------------
 
@@ -472,6 +523,9 @@ Future<TestSession> buildTestSession({
   bool useRealDialogs = false,
   FolderRevealer? folderRevealer,
   WebPageLauncher? webPageLauncher,
+  ExportRunner? exportRunner,
+  PdfRasteriser? exportRasteriser,
+  FileOpener? fileOpener,
 }) async {
   final context = p.Context(style: p.Style.windows);
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -534,6 +588,14 @@ Future<TestSession> buildTestSession({
     // Never the real channel either, for the same reason, and never a
     // browser opened by a test.
     webPageLauncher: webPageLauncher ?? (_) async => true,
+    // INLINE, NEVER AN ISOLATE: a widget test's fake-async zone never
+    // delivers another isolate's work, and the test would hang silently.
+    exportRunner: exportRunner ?? runExportInline,
+    // A ONE-PIXEL PAGE, NEVER THE BINARY: the preview's own tests use a
+    // closure, and `export_preview_pdfium_test.dart` runs the real one.
+    exportRasteriser: exportRasteriser ?? fakePageRasteriser,
+    // Never the real channel: a test opens no viewer.
+    fileOpener: fileOpener ?? (_) async => true,
   );
 
   // The SHELL is what installs the window handler in production. These

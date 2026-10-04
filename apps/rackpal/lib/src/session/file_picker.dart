@@ -334,6 +334,27 @@ Future<bool> win32RevealFolder(String folder) async {
   }
 }
 
+/// Opens a file the app just wrote in the system's viewer for it; true
+/// when the platform accepted it (CR-100's "Open in system viewer").
+typedef FileOpener = Future<bool> Function(String path);
+
+/// [FileOpener] over the channel, served as `openFile` (M6-I4, `#355`).
+///
+/// ONLY A `.pdf`, ON BOTH SIDES OF THE CHANNEL, for [win32OpenWebPage]'s
+/// reason: ShellExecute's "open" runs a program when handed one, and the
+/// only file this opens is the export the user just saved.
+Future<bool> win32OpenFile(String path) async {
+  if (!path.toLowerCase().endsWith('.pdf')) return false;
+  try {
+    return await kFileDialogChannel.invokeMethod<bool>('openFile', {
+          'path': path,
+        }) ??
+        false;
+  } on Object {
+    return false;
+  }
+}
+
 /// [WebPageLauncher] over the same channel, which `file_dialog_channel.cpp`
 /// serves as `openUrl` (NET-A/4a, `#994`, DR-048 §11.47.7, DR-229).
 ///

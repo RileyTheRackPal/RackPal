@@ -37,6 +37,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_export/src/document/deterministic_pdf.dart';
 import 'package:rackpal_export/src/document/export_request.dart';
 import 'package:rackpal_export/src/draw/plan_image.dart';
 import 'package:rackpal_export/src/sheets/sheet_page.dart';
@@ -51,12 +52,20 @@ const String kPdfProducer = 'RackPal';
 /// is a fact the caller reports to the user, not a programmer error
 /// (CR-093).
 ///
-/// Called SYNCHRONOUSLY on the main isolate in M1. Its argument carries
-/// only bytes, so moving it behind `Isolate.spawn` later is a one-line
-/// change with no refactor -- see `export_request.dart`.
+/// Its argument carries only bytes, so it runs unchanged behind
+/// `Isolate.spawn` (CR-099, M6-I2): see `export_request.dart`.
+///
+/// [onProgress] hears `(sheetsDone, sheets)`: once with zero when the set
+/// is resolved, then once per sheet drawn. **WHAT IT CANNOT HEAR IS THE
+/// SAVE**, which is where most of the time goes: the pinned `pdf` paints
+/// every page inside one `save()` call (`Page.postProcess`), measured at
+/// about four fifths of a Whole House export. So `sheetsDone == sheets`
+/// means "writing the file", and a caller shows that phase as such rather
+/// than as a bar sitting at full.
 Future<Outcome<ExportedDocument>> buildExportDocument(
-  ExportRequest request,
-) async {
+  ExportRequest request, {
+  void Function(int sheetsDone, int sheets)? onProgress,
+}) async {
   final decoded = const JsonDocumentCodec().read(request.documentJson);
   if (decoded case Err(:final error)) {
     return Err(ExportDocumentUnreadable(error));
@@ -273,7 +282,18 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   } else {
     stampWithheld = null;
   }
-  final notices = <String>[...set.notices];
+  // THE CAP IS THE DRY RUN'S, AND IT BITES BEFORE A PAGE IS EMITTED
+  // (AC-050/A7.4, DR-230 §11.229.2): `set` is resolved, and nothing has
+  // been added to `pdf` yet.
+  if (set.total > kMaxExportSheets) {
+    return Err(ExportTooManySheets(set.total));
+  }
+  onProgress?.call(0, set.total);
+  final notices = <String>[
+    // SAID, NOT ASKED, and first: it is about the whole set.
+    if (set.total > kLargeSetSheets) largeSetNotice(set.total),
+    ...set.notices,
+  ];
   // A PATHWAY PRINTED WITHOUT A DESIGNATOR IS NAMED (DR-223 §11.222.2):
   // the column is sized for one, and the notice says where to type it.
   final pullId = set.sheets
@@ -311,6 +331,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   var terminationPage = 0;
   var pinoutPage = 0;
   var networkPage = 0;
+  var drawn = 0;
   for (final sheet in set.sheets) {
     final DiagramScene scene;
     final LegibilityReport legibility;
@@ -627,12 +648,28 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
         images: images,
       ),
     );
+    onProgress?.call(++drawn, set.total);
   }
 
   return Ok(
     ExportedDocument(
-      bytes: await pdf.save(),
+      // THE FILE, NOT ONLY THE DRAWING, IS DETERMINISTIC (§8.4, M6-I5):
+      // the pinned `pdf`'s random ID and wall-clock date are rewritten in
+      // place from `issuedAt` and the file's own contents.
+      bytes: deterministicPdfBytes(
+        await pdf.save(),
+        issuedAt: request.issuedAt,
+      ),
       sheetCount: set.sheets.length,
+      sheets: List.unmodifiable([
+        for (final sheet in set.sheets)
+          ExportedSheet(
+            ncsId: sheet.ncsId,
+            title: sheetTitle(sheet),
+            widthPt: sheet.size.widthPt,
+            heightPt: sheet.size.heightPt,
+          ),
+      ]),
       notices: List.unmodifiable(notices),
       stamped: stamped,
       stampWithheld: stampWithheld,
