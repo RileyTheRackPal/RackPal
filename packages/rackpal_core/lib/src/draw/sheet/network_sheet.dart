@@ -15,6 +15,14 @@
 // ALL TEN COLUMNS (§11.227.1): the tech setting a static address at the
 // rack needs the subnet and the gateway, and paper has no Columns menu.
 //
+// EVERY ROW IS DATED OR SAYS IT IS NOT (DR-048 §11.47.3, NET-A/3b
+// `#993`). A sheet that prints a bare address is the failure the ruling
+// exists to prevent: an address typed from a quote, never checked, reads
+// on paper exactly like one a tech confirmed yesterday. So VERIFIED is a
+// column like any other, an undated row prints `unverified` in the muted
+// ink an unknown gets everywhere else, and a key on every page says what
+// the column means.
+//
 // PAGINATED LIKE T6.20: the page count is known before anything renders,
 // so the set can say `SHEET i OF n`, and the column heads repeat on every
 // page. There are no bands: LOCATION carries the rack or room, and the
@@ -55,6 +63,9 @@ const double _kNote = 12;
 const double _kInset = 8;
 const double _kCellPad = 3;
 
+/// VERIFIED's position among the cells.
+final int _kVerifiedColumn = NetworkColumnId.verified.index;
+
 /// The sheet's heading, before its count.
 const String kNetworkSheetHeading = 'NETWORK/IP SCHEDULE';
 
@@ -66,6 +77,13 @@ String networkOrderNote(NetworkOrder order) => switch (order) {
   NetworkOrder.rackThenRoom =>
     'Listed rack by rack, top of rack down, then room by room.',
 };
+
+/// The key under the heading that says what VERIFIED means. Printed on
+/// every page, as the order note is: a reader handed page 2 alone is owed
+/// it as much as page 1.
+const String kVerifiedKey =
+    'VERIFIED: the day this row was last checked against the device on '
+    'site. unverified: not checked yet, so treat the values as planned.';
 
 /// T6.50's widths in points (Σ 674, the 690 pt ANSI A usable width less
 /// the 8 pt inset each side), in [NetworkColumnId] order.
@@ -227,7 +245,7 @@ List<NetworkSheetPage> paginateNetworkSchedule({
   final widths = _widths(body.width);
   final heading = NetworkSheetHeading(
     title: '$kNetworkSheetHeading (${rows.length})',
-    notes: <String>[networkOrderNote(order)],
+    notes: <String>[networkOrderNote(order), kVerifiedKey],
   );
 
   final pages = <NetworkSheetPage>[];
@@ -359,10 +377,22 @@ NetworkSheet buildNetworkSheet({
         );
       case NetworkSheetRow():
         for (final (i, lines) in item.cells.indexed) {
+          // AN UNDATED ROW IN THE MUTED INK, so a column of dates and
+          // `unverified`s reads at a glance as which rows to trust.
+          final undated =
+              i == _kVerifiedColumn &&
+              lines.length == 1 &&
+              lines.single == kUnverified;
           for (final (j, line) in lines.indexed) {
             if (line.isEmpty) continue;
             final lineY = y + _kRowPad / 2 + kNetworkSheetLine * (j + 0.5);
-            ops.add(OpText(line, DPt(xs[i] + _kCellPad, lineY), text));
+            ops.add(
+              OpText(
+                line,
+                DPt(xs[i] + _kCellPad, lineY),
+                undated ? muted : text,
+              ),
+            );
           }
         }
         ops.add(

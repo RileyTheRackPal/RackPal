@@ -1187,7 +1187,9 @@ $SuiteFloors = @{
     # page sizes swept and their control, T6.50's place and numbering in
     # the set with the pool after the equipment list's, the reservation
     # lifted, and the unrecorded-devices notice.
-    'rackpal_core'   = 5507
+    # 5508 at `#993` (NET-A/3b, DR-048): +1, a dated row printed in the
+    # values' ink and an undated one as unverified in the muted ink.
+    'rackpal_core'   = 5508
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

@@ -105,6 +105,10 @@ void main() {
 
     expect(page, contains('$kNetworkSheetHeading (3)'));
     expect(page, contains(networkOrderNote(NetworkOrder.designator)));
+    expect(page, contains(kVerifiedKey));
+    // THE SET'S FURNITURE (#993): the legend is pointed at, as on every
+    // other sheet.
+    expect(page, contains('SYMBOL LEGEND: SEE SHEET T0.01'));
     for (final c in NetworkColumnId.values) {
       expect(page, contains(networkColumnHeader(c)), reason: c.name);
     }

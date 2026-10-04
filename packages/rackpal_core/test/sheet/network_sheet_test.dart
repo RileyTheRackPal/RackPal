@@ -137,7 +137,10 @@ void main() {
       expect(pages, hasLength(1));
       final heading = pages.single.items.first as NetworkSheetHeading;
       expect(heading.text, '$kNetworkSheetHeading (3)');
-      expect(heading.notes, [networkOrderNote(NetworkOrder.designator)]);
+      expect(heading.notes, [
+        networkOrderNote(NetworkOrder.designator),
+        kVerifiedKey,
+      ]);
       expect(pages.single.designators, ['AP-1', 'FW-1', 'SW-1']);
     });
 
@@ -147,8 +150,8 @@ void main() {
         order: NetworkOrder.rackThenRoom,
       );
       expect(
-        (pages.single.items.first as NetworkSheetHeading).notes,
-        [networkOrderNote(NetworkOrder.rackThenRoom)],
+        (pages.single.items.first as NetworkSheetHeading).notes.first,
+        networkOrderNote(NetworkOrder.rackThenRoom),
       );
       expect(
         networkOrderNote(NetworkOrder.rackThenRoom),
@@ -170,6 +173,8 @@ void main() {
         for (final (i, page) in pages.indexed) {
           final heading = page.items.first as NetworkSheetHeading;
           expect(heading.continued, i > 0);
+          // THE KEY ON EVERY PAGE (#993): page 2 alone is still read.
+          expect(heading.notes, contains(kVerifiedKey));
           expect(page.designators, isNotEmpty);
           final used = page.items.fold<double>(0, (s, it) => s + it.height);
           expect(used, lessThanOrEqualTo(body.height));
@@ -294,6 +299,43 @@ void main() {
       }
       expect(texts, containsAll(<String>['10.0.10.2', '00:11:22:33:44:55']));
       expect(built.legibility.notice, isNull);
+    });
+
+    test('VERIFIED (#993): a dated row prints its day in the ink of the '
+        'values, an undated one says unverified in the muted ink', () {
+      final doc = _addressed();
+      _set(
+        doc,
+        'SW-1',
+        DeviceField.networkVerifiedOn,
+        DateTime.utc(2026, 10, 3),
+      );
+      final sheet = SheetSet.forRacks(
+        doc.racks.values,
+        networkScheduleSheets: 1,
+      ).sheets.firstWhere((s) => s.role == SheetRole.networkSchedule);
+      const palette = SheetPalette();
+      final ops = buildNetworkSheet(
+        sheet: sheet,
+        page: _paginate(networkSheetRowsOf(doc)).single,
+        info: doc.info,
+        settings: doc.settings,
+        revisions: doc.revisionBlock,
+        fileName: 'whole_house.rppj',
+        issuedAt: DateTime.utc(2026, 10, 4),
+        measurer: FakeMeasurer(),
+      ).scene.ops.whereType<OpText>().toList();
+
+      final dated = ops.where((o) => o.text == '2026-10-03').toList();
+      final undated = ops.where((o) => o.text == kUnverified).toList();
+      expect(dated, hasLength(1));
+      expect(undated, hasLength(2), reason: 'AP-1 and FW-1');
+      expect(dated.single.style.argb, palette.text);
+      for (final o in undated) {
+        expect(o.style.argb, palette.mutedText);
+      }
+      expect(palette.text, isNot(palette.mutedText), reason: 'control');
+      expect(ops.map((o) => o.text), contains(kVerifiedKey));
     });
   });
 }
