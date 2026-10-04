@@ -23737,7 +23737,10 @@ menu. Not taken: the view's default columns, which leave out exactly what that t
 project's network order (DR-227 §11.226.4). The sheet states facts: a blank row in a client deliverable
 reads as an omission, which is why `T6.20` and `T5.01` are `AUTO` too (DR-005). Every row prints its
 verified day or `unverified` (DR-048 §11.47.3). The export raises a notice naming how many
-network-capable devices have nothing recorded, so the gap is said rather than silent. Not taken: every
+network-capable devices have nothing recorded, so the gap is said rather than silent; **only when
+`T6.50` prints**, an implementer's clause stated so it is not decided silently, since a project that
+records no address has no schedule to have a gap in and a notice on its every export would nag about a
+feature nobody is using. Not taken: every
 network-capable device, blank rows included, which is a commissioning form and prints empty boxes on
 the client's copy.
 

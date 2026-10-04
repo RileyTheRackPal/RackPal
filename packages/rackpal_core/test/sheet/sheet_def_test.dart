@@ -242,7 +242,8 @@ void main() {
       // numbering, so a future sheet role that lands on T6.40 is reported
       // the day it does rather than the day someone notices in print.
       expect(isReservedNcsId('T6.40'), isTrue);
-      expect(isReservedNcsId('T6.50'), isTrue);
+      // T6.50 LEFT THE LIST WHEN DR-228 BUILT THE SHEET IT WAS KEPT FOR.
+      expect(isReservedNcsId('T6.50'), isFalse);
       expect(isReservedNcsId('T6.30'), isFalse);
       expect(kReservedNcsIds['T6.40'], contains('Power Schedule'));
     });
@@ -260,8 +261,10 @@ void main() {
     // the Pull Sheet and the Termination Schedule. TWELVE SINCE M6-D
     // (`#328`, DR-225): T6.01…, the interconnect sheets, one role for all
     // of them, since the domain is a field on the sheet and not a role.
-    test('names the twelve sheets in this set, and no others', () {
-      expect(SheetRole.values, hasLength(12));
+    // THIRTEEN SINCE NET-A/3a (`#992`, DR-228): T6.50.
+    test('names the thirteen sheets in this set, and no others', () {
+      expect(SheetRole.values, hasLength(13));
+      expect(SheetRole.networkSchedule.title, 'NETWORK/IP SCHEDULE');
       expect(SheetRole.interconnect.title, 'INTERCONNECT');
       expect(SheetRole.interconnect.size, SheetSize.ansiBLandscape);
       expect(SheetRole.interconnect.zoned, isTrue);

@@ -355,6 +355,10 @@ void main() {
           // order, only the runs with an open end. Looked at.
           'unusedHomeRuns',
           'equipmentList',
+          // `networkSchedule` ARRIVED AT NET-A/3a (`#992`, DR-228): `T6.50`,
+          // one row per device with a network value. Not a Pull Sheet.
+          // Looked at.
+          'networkSchedule',
           // `pinoutDetails` ARRIVED AT M6-E2 (`#976`, DR-221): `T5.01`,
           // pinout tables, M6's own sheet in M6. Not a Pull Sheet. Looked at.
           'pinoutDetails',

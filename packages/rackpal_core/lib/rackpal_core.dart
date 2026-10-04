@@ -230,6 +230,7 @@ export 'src/draw/sheet/interconnect_sheet.dart';
 export 'src/draw/sheet/legend_blocks.dart';
 export 'src/draw/sheet/legend_sheet.dart';
 export 'src/draw/sheet/materials_rollups.dart';
+export 'src/draw/sheet/network_sheet.dart';
 export 'src/draw/sheet/pinout_sheet.dart';
 export 'src/draw/sheet/plan_callouts.dart';
 export 'src/draw/sheet/plan_scale_bar.dart';

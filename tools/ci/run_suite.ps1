@@ -1181,7 +1181,13 @@ $SuiteFloors = @{
     # wire_test.dart, each starter reading as by designator with no key and
     # its bytes kept, rack then room written and read back, and the key
     # absent again at the default.
-    'rackpal_core'   = 5483
+    # 5507 at `#992` (NET-A/3a, DR-228): +24 in sheet/network_sheet_test.
+    # dart, which rows print (none recorded, a MAC alone, a date alone not
+    # a value, the project's order), the ten cells and the widths, seven
+    # page sizes swept and their control, T6.50's place and numbering in
+    # the set with the pool after the equipment list's, the reservation
+    # lifted, and the unrecorded-devices notice.
+    'rackpal_core'   = 5507
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1272,7 +1278,11 @@ $SuiteFloors = @{
     # notice and stays drawn, with no note and no fallback notice.
     # 285 at `#984` (M6-D5, DR-225): +1, Whole House's printed legend keys
     # the tag pill on W003, RF's first cable, and not the net label.
-    'rackpal_export' = 285
+    # 288 at `#992` (NET-A/3a, DR-228): +3 in network_schedule_export_
+    # test.dart, T6.50 absent from file, index and notices as shipped, then
+    # present and indexed with three devices addressed, and the notice
+    # naming the blank ones.
+    'rackpal_export' = 288
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
