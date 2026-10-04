@@ -1215,7 +1215,12 @@ $SuiteFloors = @{
     # pair onto XLR, named and counted; the second pair named; another rule
     # withdrawing the adapter; a converter withheld on a set; multi-draw's
     # noun and no remedy).
-    'rackpal_core'   = 5549
+    # 5560 at `#1001` (DR-235): +9 in commands/inline_adapter_edit_test.dart
+    # (a model named, trimmed and undone; blank as absent; the same value no
+    # command; an index or cable gone; two equal adapters named and removed
+    # by position with the same instance back on undo; both connectors named,
+    # an unknown one by its id) and +2 epoch-mask cases for the two commands.
+    'rackpal_core'   = 5560
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1940,7 +1945,11 @@ $SuiteFloors = @{
     # 2124 at `#999` (DR-234): +2 in group 8 of canvas/schematic/schematic_
     # multi_draw_test.dart (the demo run springing back on SIG-002 with the
     # cable count, no remedy and nothing written; arming ambers the bank).
-    'rackpal_ui'     = 2124
+    # 2130 at `#1001` (DR-235): +6 in canvas/schematic/schematic_cable_bar_
+    # adapter_test.dart (no row without an adapter; named by connectors; a
+    # model as one undo step the field follows; blank as absent; a W and a
+    # Backspace in the field driving nothing; Remove and the same one back).
+    'rackpal_ui'     = 2130
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

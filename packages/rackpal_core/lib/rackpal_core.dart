@@ -148,6 +148,7 @@ export 'src/derived/device_outlets.dart';
 export 'src/derived/device_removal.dart';
 export 'src/derived/endpoint_resolution.dart';
 export 'src/derived/equipment_list.dart';
+export 'src/derived/inline_adapters.dart';
 export 'src/derived/jacket_color_resolution.dart';
 export 'src/derived/jumper_rollup.dart';
 export 'src/derived/link_class.dart';

@@ -1787,6 +1787,42 @@ void main() {
       );
     });
 
+    // DR-235 (`#1001`): the cable bar's two adapter edits. Each needs an
+    // adapter on the cable to act on, so the fixture declares one first.
+    test('SetInlineAdapterModelCommand', () {
+      final doc = _house();
+      doc.links.values.first.inlineAdapters.add(
+        InlineAdapter(
+          fromConnector: const ConnectorTypeId('conn.xlr3'),
+          toConnector: const ConnectorTypeId('conn.rca'),
+        ),
+      );
+      _covers(
+        doc,
+        SetInlineAdapterModelCommand(
+          linkId: doc.links.keys.first,
+          index: 0,
+          model: 'Hosa XLR3F-RCA',
+        ),
+        expectAtLeast: {'links'},
+      );
+    });
+
+    test('RemoveInlineAdapterCommand', () {
+      final doc = _house();
+      doc.links.values.first.inlineAdapters.add(
+        InlineAdapter(
+          fromConnector: const ConnectorTypeId('conn.xlr3'),
+          toConnector: const ConnectorTypeId('conn.rca'),
+        ),
+      );
+      _covers(
+        doc,
+        RemoveInlineAdapterCommand(linkId: doc.links.keys.first, index: 0),
+        expectAtLeast: {'links'},
+      );
+    });
+
     test('BindEndpointCommand', () {
       final doc = _house();
       final link = _aHomeRun(doc, landed: false);

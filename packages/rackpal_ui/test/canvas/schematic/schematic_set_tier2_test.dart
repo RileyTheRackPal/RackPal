@@ -242,6 +242,12 @@ void main() {
       reason: 'the pair, not a one-conductor pin cable',
     );
     expect(link.inlineAdapters, hasLength(1));
+    expect(
+      find.textContaining(
+        'Euroblock 3-pole to XLR3 adapter declared on it. Select the cable',
+      ),
+      findsWidgets,
+    );
     final adapter = link.inlineAdapters.single;
     expect(adapter.fromConnector.v, 'conn.euroblock_3');
     expect(adapter.toConnector.v, 'conn.xlr3');
