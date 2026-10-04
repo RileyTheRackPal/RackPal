@@ -8,7 +8,7 @@ tags: [ruling, amendment, export, preview, pdfium, m6, m6-i, dr-230, cr-100]
 timestamp: 2026-10-04T00:00:00Z
 ruling_id: DR-230
 canon_section: "11.229"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-04, opening M6-I (`#351`). Supersedes CR-100's preview clause (§12.48).

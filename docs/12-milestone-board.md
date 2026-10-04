@@ -1887,6 +1887,54 @@ clock that tells them apart), `web_page_launcher_test` (only http and https reac
 Open web page has never opened a real browser: the C++ compiled in the build gate and nothing more. The
 test route is in the PR.
 
+### 4.42 Export mechanics: a preview of the real file, progress, cancel, and one file per day · 2026-10-04 · `#351`, `#352` to `#356` · `DR-230`, `CR-099`, `CR-100`, `AC-050` · no version move
+
+M6-I, the last build Story under M6's "all four starters" clause. **Measured before it was priced**: Whole
+House's sixteen sheets export in about 100 ms, about 6 ms a sheet, and pdfium renders one of them at
+1100 px in about 56 ms. Both numbers changed what was built. DR-230 ruled, with the user, that the
+preview is the generated PDF rendered by the vendored pdfium, superseding CR-100's screen preview,
+whose only reason ("no native dependency") DR-153 had already retired; and that past 40 sheets the
+count is said and never asked, since forty sheets is a quarter of a second and AC-050's warning was
+written against twenty minutes of generation. The user also chose the preview's layout and links over
+auto-opening after a save.
+
+**What ships.** The sheet set's dry run refuses past 2000 before a page is emitted and raises a notice
+past 40 (`#352`). The export runs in its own isolate with progress over a `SendPort`, its result by
+`Isolate.exit`, and a cancel by `Isolate.kill`, behind a dialog that opens only past 400 ms (`#353`,
+`#354`, with the `kIsWeb` inline runner the tests also use). The preview shows the real pages with the
+sheet list and notices beside them; Save… writes those bytes, and Close writes nothing (`#355`).
+After a save the status line offers Open and Show in folder. Two exports of one project on one day
+are one file (`#356`).
+
+**The progress bar says what it cannot see.** Drawing the sheets is about a fifth of an export; the
+pinned `pdf` paints and writes every page inside one `save()` that reports nothing. So the bar counts
+sheets drawn and then says "Writing the file…" over an indeterminate bar, rather than sitting at full.
+
+**Determinism was fixed, not narrowed.** Two exports differed in exactly 125 bytes, all inside the
+random `/ID` and wall-clock `/CreationDate`, both fixed-width. They are rewritten in place: the ID as a
+hash of the file's own contents, the date as the issue day. The day was first stamped to the second,
+and the user guide's sentence about same-day exports was false until it was checked against the code.
+
+**Found on the way.** The title block's FILE printed the PDF's name from the save dialog where §5.2
+and `title_block.dart` say the project's file; nothing pinned it, and DR-230's order (preview before
+the save dialog) made it impossible anyway. With byte-identical exports, two saves print identical
+status lines, and `setStatus`'s early return would have left the second export's Open pointing at the
+first file. **The gate caught three things I had not**: two shell tests failing on a 400 ms
+`Future.delayed` left pending after a fast export (now a cancelled `Timer`); a timed perf red that was
+my own concurrent suite run, green alone; and a `SingleActivator` the keymap ban refuses, replaced by a
+`Focus` reading bare arrows.
+
+**Evidence.** Export: `export_sheet_cap_test` (40 silent, 42 said, past 2000 refused quickly),
+`export_progress_test`, `export_determinism_test` (one file, the injected day, morning and evening one
+file, the ID from the contents, still parseable, unknown tokens untouched), `exported_sheets_test`
+(order matches the printed sheet numbers). App: `export_runner_test` (a real isolate and the inline
+runner give one file; cancel delivers nothing), `export_controller_test` (progress past 400 ms, Cancel
+writes nothing, the preview before the save dialog, a missing pdfium said and the file still written,
+FILE as the project's name), `export_preview_pdfium_test` (every Whole House page through the real
+binary), `export_open_test`. UI: the progress dialog's phases, the preview's paging, caching and
+renderer-missing case, the status line's actions. **Not yet seen** in a running build: the test route
+is in the PR.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
