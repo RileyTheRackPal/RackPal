@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-04 (hundred-and-tenth entry)
+
+* **Progress**: M6-I merged at `97f6a83b` (PR 200); Story `#351` closed. `#973` and `#972` opened on
+  branch `m6-debt`.
+* **Creation**: [DR-231](/decisions/dr-231-crossover-hosts-and-polarity-reversed.md), a §8.3 amendment.
+* **Note**: **A TRADE REASON CAN NAME A VALUE THE MODEL LACKS.** The user chose "every choice on every
+  cable" because subs are wired out of phase, and none of the three crossover values described that.
+  Asking which value a sub run would carry, before building the dropdown, found the missing one;
+  building first would have printed an RS-232 swap table for a speaker cable.
+
 ## 2026-10-04 (hundred-and-ninth entry)
 
 * **Progress**: NET-A merged at `41731395` (PR 199); Epic `#681` closed. M6-I (`#351`) opened on branch
