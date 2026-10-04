@@ -18,6 +18,9 @@ import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_export/rackpal_export.dart'
     show ExportRequest, ExportedDocument;
+import 'package:rackpal_pdfium/rackpal_pdfium.dart' show PdfiumUnavailable;
+import 'package:rackpal_ui/rackpal_ui.dart'
+    show PreviewImage, PreviewUnavailable;
 
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
@@ -257,6 +260,80 @@ void main() {
         expect(await fileNameSent(saveFirst: false), isEmpty);
       },
     );
+  });
+
+  group('THE PREVIEW COMES BEFORE THE SAVE DIALOG (DR-230)', () {
+    test(
+      'closing the preview opens no save dialog and writes nothing',
+      () async {
+        final session = await buildTestSession(
+          document: _document(),
+          savePaths: <String?>[r'C:\jobs\smith'],
+        );
+        session.prompts.savePreview = false;
+        expect(await session.services.export.exportPdf(), isFalse);
+        expect(session.prompts.previews, hasLength(1));
+        expect(session.picker.saveCalls, 0);
+        expect(_pathsEndingIn(session.fs, '.pdf'), isEmpty);
+        expect(session.services.session.status, kExportCancelledStatus);
+      },
+    );
+
+    test('it offers the generated set: every sheet, the notices, the size, '
+        'and no warning for a small set', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+      );
+      await session.services.export.exportPdf();
+      final preview = session.prompts.previews.single;
+      expect(preview.sheets, hasLength(8));
+      expect(preview.sheets.first.ncsId, 'T0.00');
+      expect(preview.sizeLabel, endsWith('KB'));
+      expect(preview.countWarning, isNull);
+      expect(preview.projectName, session.services.session.displayName);
+    });
+
+    test('A MISSING PDFIUM IS SAID IN THE PAGE, and the file is still '
+        'written', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+        exportRasteriser: (pdf, page, {required width, required height}) =>
+            throw const PdfiumUnavailable('no binary'),
+      );
+      expect(await session.services.export.exportPdf(), isTrue);
+      final page = session.prompts.previews.single.renderPage(
+        0,
+        width: 100,
+        height: 100,
+      );
+      expect((page as PreviewUnavailable).reason, kPreviewRendererMissing);
+      expect(_pathsEndingIn(session.fs, '.pdf'), hasLength(1));
+    });
+
+    test('a page that will not render says so, and a good one is the '
+        "rasteriser's PNG", () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+        exportRasteriser: (pdf, page, {required width, required height}) =>
+            page == 0
+            ? fakePageRasteriser(pdf, page, width: width, height: height)
+            : const Err<Uint8List>('bad page'),
+      );
+      await session.services.export.exportPdf();
+      final preview = session.prompts.previews.single;
+      expect(
+        preview.renderPage(0, width: 10, height: 10),
+        isA<PreviewImage>(),
+      );
+      expect(
+        (preview.renderPage(1, width: 10, height: 10) as PreviewUnavailable)
+            .reason,
+        kPreviewPageFailed,
+      );
+    });
   });
 
   group('a successful export', () {

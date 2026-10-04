@@ -1896,7 +1896,12 @@ $SuiteFloors = @{
     # 2104 at `#353` (M6-I2, docs/08 §8.2): +5 in export/export_progress_
     # dialog_test.dart, preparing, drawing with a counting bar, writing with
     # none, Cancel asking and waiting, and closing itself when done.
-    'rackpal_ui'     = 2104
+    # 2111 at `#355` (M6-I4, DR-230): +7 in export/export_preview_dialog_
+    # test.dart, the header and the first page at its proportions, paging
+    # by button, arrow and list with a portrait page portrait, one render
+    # per size, the notices beside, the 40-sheet warning, a missing
+    # renderer said with Save still yes, and Save yes and Close no.
+    'rackpal_ui'     = 2111
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -2139,7 +2144,13 @@ $SuiteFloors = @{
     # 1185 at `#355` (M6-I4, docs/08 §5.2): +2 in export_controller_test.
     # dart, FILE sent as the saved project's own name and empty for an
     # unsaved one.
-    'rackpal_app'    = 1185
+    # 1190 at `#355` (M6-I4, DR-230): +4 in export_controller_test.dart
+    # (a closed preview opens no save dialog and writes nothing, it offers
+    # the generated set, a missing pdfium is said in the page and the file
+    # still written, a bad page said and a good one the PNG) and +1 in
+    # export_preview_pdfium_test.dart (every Whole House page renders
+    # through the real binary at its own proportions).
+    'rackpal_app'    = 1190
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

@@ -45,4 +45,8 @@ abstract interface class SessionPrompts {
     required Future<void> finished,
     required VoidCallback onCancel,
   });
+
+  /// The export's preview of its own bytes (DR-230). True for Save…,
+  /// false when it was closed, which writes nothing.
+  Future<bool> showExportPreview(ExportPreview preview);
 }

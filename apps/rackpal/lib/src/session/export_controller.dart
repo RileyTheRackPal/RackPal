@@ -7,7 +7,12 @@
 // the same dialog, the same `.rppj`-style filter mechanics and the same
 // MRU behaviour as document Save As, for free."
 //
-// So this controller is deliberately thin: `picker.pickSave` →
+// THE ORDER SINCE DR-230: generate (off the main isolate, M6-I2) →
+// preview those bytes → THEN the save dialog. The file written is the file
+// that was shown, and nothing reaches the save dialog that the user has
+// not looked at.
+//
+// The save itself is deliberately thin: `picker.pickSave` →
 // `SavePaths.forTarget(…, extension: '.pdf')` → `AtomicWriter.write` →
 // `describeSaveError` + `SessionPrompts.showFileError`. That inherits the
 // whole enumerated failure surface the persistence stage built —
@@ -23,8 +28,9 @@
 // ==================================================================
 // NEVER SILENTLY DO NOTHING
 // ==================================================================
-// Three outcomes report, and none of them is silence:
-//   * a cancelled picker  → "Export cancelled."
+// Every outcome reports, and none of them is silence:
+//   * a cancelled export, a closed preview or a cancelled picker
+//                         → "Export cancelled."
 //   * a rackless document → refused BEFORE the dialog, with the reason
 //   * a success           → "Exported 3 sheets · 214 KB"
 // A document with no racks would otherwise produce a one-sheet PDF of
@@ -48,6 +54,7 @@ import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/export_runner.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/session/file_picker.dart';
+import 'package:rackpal/src/session/pdf_rasteriser.dart';
 import 'package:rackpal/src/session/session_prompts.dart';
 import 'package:rackpal/src/storage/atomic_writer.dart';
 import 'package:rackpal/src/storage/errors.dart';
@@ -55,7 +62,16 @@ import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal/src/storage/storage_log.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_export/rackpal_export.dart';
-import 'package:rackpal_ui/rackpal_ui.dart' show FileErrorAction, FileErrorView;
+import 'package:rackpal_pdfium/rackpal_pdfium.dart' show PdfiumUnavailable;
+import 'package:rackpal_ui/rackpal_ui.dart'
+    show
+        ExportPreview,
+        FileErrorAction,
+        FileErrorView,
+        PreviewImage,
+        PreviewSheet,
+        PreviewUnavailable,
+        kExportPreviewLargeSet;
 
 /// Reads the bundled TTFs. Injected because `rackpal_export` is pure Dart
 /// and cannot reach an asset bundle, and because the session layer may not
@@ -97,6 +113,15 @@ Future<Map<FontRef, Uint8List>> loadExportFontsFromBundle() async {
 /// under this, a bar flashed on screen looks worse than a pause.
 const Duration kExportProgressDelay = Duration(milliseconds: 400);
 
+/// What the preview says in place of a page when the renderer is missing.
+const String kPreviewRendererMissing =
+    'Preview unavailable: the PDF renderer is missing from this '
+    'installation. Save… still writes the file.';
+
+/// What it says when one page would not render.
+const String kPreviewPageFailed =
+    'This page could not be shown. Save… still writes the file.';
+
 /// What the status line says when the user backs out of the dialog.
 const String kExportCancelledStatus = 'Export cancelled.';
 
@@ -118,8 +143,13 @@ final class ExportController {
     required this.clock,
     this.initialDirectory,
     this.runner = runExport,
+    this.rasteriser = pdfiumRenderPng,
     p.Context? context,
   }) : context = context ?? p.context;
+
+  /// Renders a page of the generated PDF for the preview: the vendored
+  /// pdfium (DR-230), injected so a test needs no binary.
+  final PdfRasteriser rasteriser;
 
   /// Starts the export off the main isolate (CR-099, M6-I2). Injected so a
   /// widget test runs it inline, where fake async can see it finish.
@@ -169,25 +199,13 @@ final class ExportController {
       return false;
     }
 
-    final chosen = await picker.pickSave(
-      suggestedName: exportFileNameFor(
-        displayName: session.displayName,
-        document: session.document,
-        issuedAt: clock.nowUtc(),
-      ),
-      initialDirectory: await initialDirectory?.call(),
-    );
-    // A CANCEL IS REPORTED. `SessionController.openDocument` treats a
-    // cancelled OPEN as the one silent "nothing happened" it allows,
-    // because nothing was going to change either way. An export is a
-    // deliberate action with an expected artefact, so its absence is worth
-    // one line.
-    if (chosen == null) {
-      session.setStatus(kExportCancelledStatus);
-      return false;
-    }
-
     // ── build ───────────────────────────────────────────────────────────
+    //
+    // BEFORE THE SAVE DIALOG SINCE DR-230: the file is generated, then
+    // previewed, then saved, so the bytes written are the bytes shown.
+    // ONE clock value for the whole export (§8.4), shared by the sheets and
+    // the suggested file name so the two cannot straddle midnight.
+    final issuedAt = clock.nowUtc();
     //
     // ENCODED FIRST, SYNCHRONOUSLY, then handed over as bytes. Same reason
     // `storage/serialization.dart` splits its two phases: what crosses into
@@ -216,9 +234,8 @@ final class ExportController {
           final path? => context.basename(path),
           null => '',
         },
-        // ONE clock value for the whole export (§8.4). Injected, never
-        // `DateTime.now()` inside a sheet builder.
-        issuedAt: clock.nowUtc(),
+        // Injected, never `DateTime.now()` inside a sheet builder.
+        issuedAt: issuedAt,
         issuedForConstruction: issuedForConstruction,
       ),
     );
@@ -234,6 +251,30 @@ final class ExportController {
     }
     final exported = (built as Ok<ExportedDocument>).value;
 
+    // ── preview: the real pages, before anything is written (DR-230) ────
+    if (!await prompts.showExportPreview(_previewOf(exported))) {
+      session.setStatus(kExportCancelledStatus);
+      return false;
+    }
+
+    final chosen = await picker.pickSave(
+      suggestedName: exportFileNameFor(
+        displayName: session.displayName,
+        document: session.document,
+        issuedAt: issuedAt,
+      ),
+      initialDirectory: await initialDirectory?.call(),
+    );
+    // A CANCEL IS REPORTED. `SessionController.openDocument` treats a
+    // cancelled OPEN as the one silent "nothing happened" it allows,
+    // because nothing was going to change either way. An export is a
+    // deliberate action with an expected artefact, so its absence is worth
+    // one line.
+    if (chosen == null) {
+      session.setStatus(kExportCancelledStatus);
+      return false;
+    }
+
     return _write(
       SavePaths.forTarget(
         chosen,
@@ -243,6 +284,47 @@ final class ExportController {
       exported,
     );
   }
+
+  /// What the preview shows of [exported]: its pages, rendered on demand by
+  /// [rasteriser] from the very bytes Save… will write.
+  ExportPreview _previewOf(ExportedDocument exported) => ExportPreview(
+    projectName: session.displayName,
+    sheets: [
+      for (final s in exported.sheets)
+        PreviewSheet(
+          ncsId: s.ncsId,
+          title: s.title,
+          widthPt: s.widthPt,
+          heightPt: s.heightPt,
+        ),
+    ],
+    sizeLabel: formatByteSize(exported.bytes.length),
+    notices: exported.notices,
+    countWarning: exported.sheetCount > kLargeSetSheets
+        ? kExportPreviewLargeSet
+        : null,
+    stampLine: exported.stamped
+        ? 'issued for construction'
+        : exported.stampWithheld,
+    renderPage: (page, {required width, required height}) {
+      // A MISSING BINARY NEVER HOLDS THE FILE (DR-230 §11.229.1): it is a
+      // fact about the installation, said in the page area, and Save…
+      // still writes.
+      try {
+        return switch (rasteriser(
+          exported.bytes,
+          page,
+          width: width,
+          height: height,
+        )) {
+          Ok(:final value) => PreviewImage(value),
+          Err() => const PreviewUnavailable(kPreviewPageFailed),
+        };
+      } on PdfiumUnavailable {
+        return const PreviewUnavailable(kPreviewRendererMissing);
+      }
+    },
+  );
 
   /// [job]'s outcome, showing its progress only if it is still running
   /// after [kExportProgressDelay] (docs/08 §8.2). Null when it was

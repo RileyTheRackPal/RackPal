@@ -2659,6 +2659,15 @@ final class NavigatorSessionPrompts implements SessionPrompts {
       onCancel: onCancel,
     );
   }
+
+  @override
+  Future<bool> showExportPreview(ExportPreview preview) async {
+    final context = _context;
+    // NO NAVIGATOR, NO PREVIEW, AND NO SAVE: the answer that writes
+    // nothing nobody saw.
+    if (context == null) return false;
+    return showExportPreviewDialog(context, preview);
+  }
 }
 
 /// `user:` and a slug of [name], with `-2`, `-3`... while [taken] holds it
