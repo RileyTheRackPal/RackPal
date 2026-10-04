@@ -1,4 +1,5 @@
-// DR-235 §11.234.3 (`#1001`): T6.30's in-line adapters.
+// DR-235 §11.234.3 and §11.234.4 (`#1001`): T6.30's in-line adapters, and
+// the schedule's notes naming them on the cable's own row.
 //
 // THE CASE THIS FILE EXISTS FOR is `an unstated model is its own line`.
 // Folding an adapter nobody named into a stated one with the same
@@ -116,5 +117,52 @@ void main() {
       ]),
     );
     expect(rollup.lines.single.quantity, 2);
+  });
+
+  group('the schedule notes the adapter on its cable (§11.234.4)', () {
+    String notesCell(RackDocument doc) => buildSchedule(doc).rows.single.cell(
+      ScheduleColumnId.conductorNotes,
+      units: UnitSystem.imperial,
+    );
+
+    test('a cable with no adapter carries no adapter note', () {
+      expect(notesCell(_doc([[]])), isNot(contains('ADAPTER')));
+    });
+
+    test('an unstated model names the connectors and nothing else', () {
+      final cell = notesCell(
+        _doc([
+          [_adapter('conn.xlr3', 'conn.rca')],
+        ]),
+      );
+      expect(cell, contains('ADAPTER XLR3 TO RCA'));
+      expect(cell, isNot(contains('(')), reason: 'no invented model (G4)');
+    });
+
+    test("a stated model follows in brackets, in the person's own case", () {
+      expect(
+        notesCell(
+          _doc([
+            [_adapter('conn.xlr3', 'conn.rca', model: 'Hosa XLR3F-RCA')],
+          ]),
+        ),
+        contains('ADAPTER XLR3 TO RCA (Hosa XLR3F-RCA)'),
+      );
+    });
+
+    test('two adapters on one cable are two notes, in the order declared', () {
+      final cell = notesCell(
+        _doc([
+          [
+            _adapter('conn.f_type', 'conn.bnc'),
+            _adapter('conn.xlr3', 'conn.rca'),
+          ],
+        ]),
+      );
+      final first = cell.indexOf('ADAPTER F');
+      final second = cell.indexOf('ADAPTER XLR3 TO RCA');
+      expect(first, isNonNegative);
+      expect(second, greaterThan(first));
+    });
   });
 }

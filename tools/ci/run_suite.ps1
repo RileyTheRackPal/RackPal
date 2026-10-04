@@ -1224,7 +1224,11 @@ $SuiteFloors = @{
     # dart (an empty table that says so; one pair and model as one line of
     # two; an unstated model as its own line, last and counted; ordered as
     # printed; two adapters on one cable).
-    'rackpal_core'   = 5565
+    # 5569 at `#1001` (DR-235 §11.234.4): +4 in derived/adapter_rollup_test.
+    # dart's notes group (no adapter, no note; an unstated model names only
+    # the connectors; a stated one in brackets in its own case; two in the
+    # order declared).
+    'rackpal_core'   = 5569
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

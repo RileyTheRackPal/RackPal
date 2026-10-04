@@ -98,9 +98,10 @@
 //    invented.
 //  * **§3.8's generated notes** — `NOT ETHERNET`, `VERIFY POLARITY`, the
 //    null-modem pin map. Those come from a rules pass over the connector
-//    and family model that does not exist. Three notes that ARE stated by
-//    the model are derived ([ScheduleEntry.derivedNotes]); the rest are
-//    absent rather than approximated.
+//    and family model that does not exist. The notes the model DOES state
+//    are derived ([ScheduleEntry.derivedNotes], not counted here because
+//    this said "three" until it held six); the rest are absent rather
+//    than approximated.
 //  * **Pagination, page geometry, the chip's dash and hue.** §3.5/§3.7
 //    are rendering. [ScheduleColumn.widthPt] carries §3.2/§3.3's exact
 //    point widths because they are the shared column contract, but no
@@ -115,6 +116,7 @@ import 'package:rackpal_core/src/derived/device_loads.dart'
     show bodyFor, hostRackOf;
 import 'package:rackpal_core/src/derived/equipment_list.dart'
     show kUnknownCell, kUnplacedGroupTitle;
+import 'package:rackpal_core/src/derived/inline_adapters.dart';
 import 'package:rackpal_core/src/derived/jacket_color_resolution.dart';
 import 'package:rackpal_core/src/derived/link_class.dart';
 import 'package:rackpal_core/src/derived/plan_length.dart';
@@ -591,6 +593,7 @@ final class ScheduleEntry {
     this.estimateOrigin,
     this.wiringStandard,
     this.rackTerminationType,
+    this.adapterNotes = const <String>[],
   });
 
   final Uuid linkId;
@@ -702,6 +705,14 @@ final class ScheduleEntry {
   final RoughInStatus roughInStatus;
   final LifecycleStatus lifecycleStatus;
   final CrossoverKind? crossover;
+
+  /// One note per declared in-line adapter, in `Link.inlineAdapters`
+  /// order: `ADAPTER XLR3 TO RCA (Hosa XLR3F-RCA)` (DR-235 §11.234.4).
+  /// Composed at build from `adapterConnectorsLabel`, so the schedule names
+  /// an adapter exactly as the cable bar and T6.30 do. The connectors are
+  /// in the notes' capitals; the model is a person's words and keeps its
+  /// own case.
+  final List<String> adapterNotes;
 
   /// How this run's field end terminates —
   /// `StructureOrigin.terminationField` for a home run, else a
@@ -981,6 +992,9 @@ final class ScheduleEntry {
     if (crossover == CrossoverKind.nullModem) 'NULL-MODEM',
     if (crossover == CrossoverKind.fiberPolarityAB) 'POLARITY A→B',
     if (crossover == CrossoverKind.polarityReversed) 'POLARITY REVERSED',
+    // DR-235 §11.234.4: whoever terminates the cable needs to know there is
+    // a part in the middle of it.
+    ...adapterNotes,
     if (jacketColor.isException) 'PULLED OFF-CONVENTION',
     if (isClassUndetermined) kUndeterminedClassGroupTitle,
     // DR-008 §11.8.2's disagreement, ON THE ROW rather than only in a
@@ -1285,7 +1299,17 @@ ScheduleEntry _row(RackDocument doc, Link link) {
     notes: _trimToNull(link.notes),
     wiringStandard: effectiveWiringStandard(doc, link),
     rackTerminationType: link.structureOrigin?.terminationRack,
+    adapterNotes: List.unmodifiable(<String>[
+      for (final a in link.inlineAdapters) _adapterNote(doc, a),
+    ]),
   );
+}
+
+/// `ADAPTER XLR3 TO RCA`, and the model in brackets when one is stated.
+String _adapterNote(RackDocument doc, InlineAdapter adapter) {
+  final pair = adapterConnectorsLabel(doc.registries, adapter).toUpperCase();
+  final model = adapter.model;
+  return model == null ? 'ADAPTER $pair' : 'ADAPTER $pair ($model)';
 }
 
 /// The home run's own termination first, then a `PlaceEndpoint`'s stated
