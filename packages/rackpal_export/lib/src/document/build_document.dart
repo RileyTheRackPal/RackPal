@@ -273,7 +273,17 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   } else {
     stampWithheld = null;
   }
-  final notices = <String>[...set.notices];
+  // THE CAP IS THE DRY RUN'S, AND IT BITES BEFORE A PAGE IS EMITTED
+  // (AC-050/A7.4, DR-230 §11.229.2): `set` is resolved, and nothing has
+  // been added to `pdf` yet.
+  if (set.total > kMaxExportSheets) {
+    return Err(ExportTooManySheets(set.total));
+  }
+  final notices = <String>[
+    // SAID, NOT ASKED, and first: it is about the whole set.
+    if (set.total > kLargeSetSheets) largeSetNotice(set.total),
+    ...set.notices,
+  ];
   // A PATHWAY PRINTED WITHOUT A DESIGNATOR IS NAMED (DR-223 §11.222.2):
   // the column is sized for one, and the notice says where to type it.
   final pullId = set.sheets

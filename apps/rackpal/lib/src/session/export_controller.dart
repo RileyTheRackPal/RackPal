@@ -275,6 +275,7 @@ final class ExportController {
       ExportNoRacks() => kExportNoRacksTitle,
       ExportDocumentUnreadable() => 'That project could not be exported.',
       ExportFontMissing() => 'A font this build needs is missing.',
+      ExportTooManySheets() => 'Too many sheets to export.',
     },
     detail: '${error.message} Nothing has been written.',
     actions: const <FileErrorAction>[

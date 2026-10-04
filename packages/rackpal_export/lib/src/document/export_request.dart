@@ -169,6 +169,43 @@ final class ExportNoRacks extends ExportError {
   String get message => 'Nothing to export — this project has no racks.';
 }
 
+/// The most sheets one export will produce (AC-050/A7.4, DR-230
+/// §11.229.2). Past it the export is refused before a page is emitted.
+const int kMaxExportSheets = 2000;
+
+/// Past this many sheets the set is said to be large, in a notice and in
+/// the preview's header, and nothing is asked (DR-230 §11.229.2).
+const int kLargeSetSheets = 40;
+
+/// The notice a set past [kLargeSetSheets] raises.
+///
+/// SAID, NOT ASKED. At about 6 ms a sheet, forty sheets is a quarter of a
+/// second, so this guards against a broken project and not against a long
+/// wait; a commercial job may legitimately run to sixty and would click
+/// through a prompt on every export.
+String largeSetNotice(int sheets) =>
+    'This set is $sheets sheets, more than the $kLargeSetSheets a set '
+    'usually needs. If that is not expected, check the sheet list for '
+    'duplicate racks, plans or pages.';
+
+/// The set would run past [kMaxExportSheets].
+///
+/// REFUSED BEFORE ANY PAGE IS EMITTED, from the sheet set's own dry run:
+/// two thousand sheets is a project where something upstream is wrong, and
+/// the place to find that out is before the file, not inside it.
+final class ExportTooManySheets extends ExportError {
+  const ExportTooManySheets(this.sheets);
+
+  /// How many sheets the dry run resolved.
+  final int sheets;
+
+  @override
+  String get message =>
+      'This project would print $sheets sheets, and an export stops at '
+      '$kMaxExportSheets. A set that large usually means something upstream '
+      'is wrong: check for duplicated racks, plans or schedules.';
+}
+
 /// A font the sheets need was not supplied.
 final class ExportFontMissing extends ExportError {
   const ExportFontMissing(this.font);

@@ -1284,7 +1284,11 @@ $SuiteFloors = @{
     # test.dart, T6.50 absent from file, index and notices as shipped, then
     # present and indexed with three devices addressed, and the notice
     # naming the blank ones.
-    'rackpal_export' = 288
+    # 292 at `#352` (M6-I1, DR-230): +4 in export_sheet_cap_test.dart,
+    # Whole House's sixteen and two per rack, forty sheets saying nothing,
+    # forty-two said first among the notices with the file still written,
+    # and a set past 2000 refused quickly with its count.
+    'rackpal_export' = 292
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
