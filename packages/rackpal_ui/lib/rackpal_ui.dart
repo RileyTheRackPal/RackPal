@@ -113,6 +113,7 @@ export 'src/inspector/add_zero_u_channel_dialog.dart';
 export 'src/inspector/add_zero_u_occupant_dialog.dart';
 export 'src/inspector/delete_device_dialog.dart';
 export 'src/inspector/delete_shelf_dialog.dart';
+export 'src/inspector/device_network_section.dart';
 export 'src/inspector/device_overrides_section.dart';
 export 'src/inspector/device_ports_section.dart';
 export 'src/inspector/inspector_panel.dart';

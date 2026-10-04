@@ -1851,7 +1851,11 @@ $SuiteFloors = @{
     # ticked rows, Verified today asking for exactly them, and Clear; +2 in
     # structure_editor_screen_test.dart, Ctrl+D filling from the row above
     # and Ctrl+V saying where it works.
-    'rackpal_ui'     = 2072
+    # 2076 at `#991` (NET-A/2d, DR-048): +4 in inspector/device_network_
+    # section_test.dart, nothing recorded naming where to record it, an
+    # address shown beside unverified, a dated row's day, and no text field
+    # anywhere in the section.
+    'rackpal_ui'     = 2076
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
