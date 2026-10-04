@@ -23966,6 +23966,43 @@ noun for that junction. `Breakout` has no writer and the hand-authored conductor
 
 ---
 
+### 11.234 DR-235 · A declared adapter is named on the cable bar, listed on T6.30, noted on the schedule and marked on the drawing
+
+**Settled by the user on 2026-10-04, building `#1001`.** After `[ Declare an adapter ]` the product says *"Name
+the part in the inspector so it reaches the bill of materials."* Measured: nothing in `rackpal_ui` or the app
+reads or edits `Link.inlineAdapters`, and nothing in core or export reads an adapter into a bill of
+materials; the only readers are the two tier-2 rules and the codec. So the sentence named a control that does
+not exist, and DR-128 §11.127.2's own promise, that *"an adapter with no model reaches the BOM as an
+unspecified line"*, had no implementation. docs/05 §12 adds that an adapter is *"rendered as a small lozenge on
+the wire"*, which no ruling made and nothing draws.
+
+**11.234.1 RULED: DR-128's PROMISE IS KEPT WHOLE**, the recommended option over the equipment list alone and
+over deleting the sentence. Deleting it would have hidden an unkept ruling rather than kept it.
+
+**11.234.2 RULED: THE CABLE BAR NAMES IT.** The schematic's cable bar (DR-231 §11.230.1, the one per-cable
+host) lists the selected cable's adapters by their two connectors, each with a **Model** field and
+**Remove**, each change one undo step. The remedy's sentence names the cable bar. An empty model is unknown
+and stays absent (G4).
+
+**11.234.3 RULED: T6.30 LISTS THEM.** The materials table gains **in-line adapters**, after jumpers and power
+cords: one row per connector pair and model, with a quantity. An adapter with no model is a row of its own,
+printed as unknown and counted in a note, never merged into a stated one.
+
+**11.234.4 RULED: THE SCHEDULE NOTES SAY SO**, the user's choice, on DR-231 §11.230.3's machinery: each
+adapter on a cable is noted on its rows by its two connectors, and its model when stated, because the person
+terminating the cable is the one who needs to know there is a part in the middle.
+
+**11.234.5 RULED: A LOZENGE ON BOTH RENDERINGS**, the user's choice, against marking only the drawn wire as
+docs/05 describes. A cable carrying an adapter draws a small lozenge on each pennant of its net-label pair
+and at the midpoint of a drawn wire, on screen and on the drawn interconnect sheets. Each pennant, because
+the model does not record which end the adapter sits at, and whoever reads either end should see it. Not
+taken: the drawn wire alone, which DR-001's default rendering would almost never show; and the pennants
+alone, which would lose the mark when a domain switches to drawn.
+
+**Scope.** No scope moves: a v1 value object that was modelled, written and never shown, shown.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal

@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-04 (hundred-and-thirteenth entry)
+
+* **Progress**: `debt-908-909` merged at `02f38325` (PR 203); `#908`, `#909`, `#999` closed. `#1002` filed (a
+  captive cord counted as a cord to buy), with a census: all 13 captive inlets are `power.ac_branch` on a NEMA
+  plug and every detachable one is IEC. `#1001` opened on branch `adapters-1001`.
+* **Creation**: [DR-235](/decisions/dr-235-a-declared-adapter-is-shown.md).
+* **Note**: **A DEAD SENTENCE CAN COVER A DEAD RULING.** `#1001` read as one line of copy pointing at a missing
+  inspector field. Behind it, DR-128's own clause that an adapter reaches the BOM had no reader at all.
+  Deleting the sentence was the cheap option, and it would have hidden the unkept ruling.
+
 ## 2026-10-04 (hundred-and-twelfth entry)
 
 * **Progress**: `#998` merged at `f6af1f9b` (PR 202). `#908` and `#909` opened on branch `debt-908-909`;
