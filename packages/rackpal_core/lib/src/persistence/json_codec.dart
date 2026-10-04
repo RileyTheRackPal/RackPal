@@ -812,6 +812,10 @@ JsonMap _encodeProjectSettings(ProjectSettings s) => {
   'defaultRuNumbering': encodeEnumName(s.defaultRuNumbering),
   'defaultMirrorRearElevation': s.defaultMirrorRearElevation,
   'sheetNumbering': encodeEnumName(s.sheetNumbering),
+  // ABSENT AT THE DEFAULT, so every file written before DR-227 keeps its
+  // bytes (CR-117's additive-optional case) and `kSchemaVersion` stays.
+  if (s.networkOrder != NetworkOrder.designator)
+    'networkOrder': encodeEnumName(s.networkOrder),
   'deviceDesignatorFormat': _encodeIdFormat(s.deviceDesignatorFormat),
   'portDesignatorFormat': _encodeIdFormat(s.portDesignatorFormat),
   'linkDesignatorFormat': _encodeIdFormat(s.linkDesignatorFormat),
@@ -887,6 +891,13 @@ ProjectSettings _decodeProjectSettings(JsonMap json) => ProjectSettings(
     asStr(json['sheetNumbering'], 'ProjectSettings.sheetNumbering'),
     'ProjectSettings.sheetNumbering',
   ),
+  networkOrder: json['networkOrder'] == null
+      ? NetworkOrder.designator
+      : decodeEnumStrict(
+          NetworkOrder.values,
+          asStr(json['networkOrder'], 'ProjectSettings.networkOrder'),
+          'ProjectSettings.networkOrder',
+        ),
   deviceDesignatorFormat: _decodeIdFormat(
     asStr(
       json['deviceDesignatorFormat'],
@@ -1785,6 +1796,14 @@ JsonMap _encodeDeviceInstance(DeviceInstance d) {
   if (d.installedAt != null) {
     json['installedAt'] = encodeDateTime(d.installedAt!);
   }
+  // ABSENT WHEN NULL, on `macAddressPrimary`'s pattern four lines up and
+  // NOT `designatorLocked`'s, which is written unconditionally at the top of
+  // this function and is exactly what gets copied by proximity (DR-048
+  // §11.47.2). Absence is what lets `kSchemaVersion` stay put: CR-117's
+  // additive-optional case.
+  if (d.network != null) {
+    json['network'] = _encodeNetworkConfig(d.network!);
+  }
   putIfNotNull(json, 'structureBodyId', d.structureBodyId?.v);
   putIfNotNull(json, 'notes', d.notes);
   if (d.colorOverride != null) {
@@ -1838,6 +1857,11 @@ DeviceInstance _decodeDeviceInstance(Uuid id, JsonMap json) => DeviceInstance(
       : decodeDateTime(
           asStr(json['installedAt'], 'DeviceInstance.installedAt'),
         ),
+  network: json['network'] == null
+      ? null
+      : _decodeNetworkConfig(
+          asJsonMap(json['network'], 'DeviceInstance.network'),
+        ),
   overrides: _decodeDeviceOverrides(
     asJsonMap(json['overrides'], 'DeviceInstance.overrides'),
   ),
@@ -1877,13 +1901,23 @@ PortOverrides _decodePortOverrides(JsonMap json) => PortOverrides(
 );
 
 JsonMap _encodeNetworkConfig(NetworkConfig n) {
-  final json = <String, Object?>{'vlans': n.vlans};
+  // `vlans` ONLY WHEN SOMEBODY STATED ONE (DR-048 §11.47.9). This opened
+  // `{'vlans': n.vlans}`, so an untouched list encoded as `"vlans": []`,
+  // which under CR-114 claims MEASURED ZERO where the fact is NOBODY SAID.
+  // It never mattered while nothing constructed a NetworkConfig; on a
+  // device-level record it is the common case. The decoder already reads
+  // an absent key as empty, so no file on disk changes meaning.
+  final json = <String, Object?>{};
+  if (n.vlans.isNotEmpty) json['vlans'] = n.vlans;
   putIfNotNull(json, 'hostname', n.hostname);
   putIfNotNull(json, 'ip', n.ip);
   putIfNotNull(json, 'subnet', n.subnet);
   putIfNotNull(json, 'gw', n.gw);
   putIfNotNull(json, 'mac', n.mac);
   putIfNotNull(json, 'portRole', n.portRole);
+  if (n.verifiedOn != null) {
+    json['verifiedOn'] = encodeDateTime(n.verifiedOn!);
+  }
   return json;
 }
 
@@ -1901,6 +1935,9 @@ NetworkConfig _decodeNetworkConfig(JsonMap json) => NetworkConfig(
       asInt(v, 'NetworkConfig.vlans[]'),
   ],
   portRole: asStrOrNull(json['portRole'], 'NetworkConfig.portRole'),
+  verifiedOn: json['verifiedOn'] == null
+      ? null
+      : decodeDateTime(asStr(json['verifiedOn'], 'NetworkConfig.verifiedOn')),
 );
 
 JsonMap _encodePoeAssignment(PoeAssignment p) {
@@ -4090,6 +4127,8 @@ JsonMap _encodeTemplateBody(TemplateBody b) {
   // ABSENT WHEN UNKNOWN, which is G4's spelling and what keeps every
   // document written before `#899` byte-identical (CR-117).
   putIfNotNull(json, 'primaryDomain', b.primaryDomain?.v);
+  // ABSENT WHEN UNSTATED (G4): `false` is a stated no, and is written.
+  putIfNotNull(json, 'wifi', b.wifi);
   putIfNotNull(json, 'typePrefix', b.typePrefix);
   putIfNotNull(json, 'customPanelWidthNm', b.customPanelWidth?.nm);
   putIfNotNull(json, 'bodyDepthNm', b.bodyDepth?.nm);
@@ -4136,6 +4175,7 @@ TemplateBody _decodeTemplateBody(JsonMap json) => TemplateBody(
     final String v => SignalDomainId(v),
     null => null,
   },
+  wifi: json['wifi'] == null ? null : asBool(json['wifi'], 'TemplateBody.wifi'),
   typePrefix: asStrOrNull(json['typePrefix'], 'TemplateBody.typePrefix'),
   tags: [
     for (final v in asJsonList(

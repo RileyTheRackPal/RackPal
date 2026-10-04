@@ -413,12 +413,18 @@ class RackPalApp extends StatelessWidget {
       // site names no colour and no font, so there is nothing here to
       // drift from the ruling.
       theme: buildConsoleTheme(),
-      home: AppShell(
-        key: shellKey,
-        services: services,
-        measurer: measurer,
-        runStartupRecovery: runStartupRecovery,
-        showStartCard: showStartCard,
+      // THE ONE PLACE THE BROWSER SEAM IS INSTALLED (DR-229 §11.228.3):
+      // above the shell, so the inspector and the Devices view, a dozen
+      // constructors apart, read the same launcher the services hold.
+      home: WebPageScope(
+        launcher: services.webPageLauncher,
+        child: AppShell(
+          key: shellKey,
+          services: services,
+          measurer: measurer,
+          runStartupRecovery: runStartupRecovery,
+          showStartCard: showStartCard,
+        ),
       ),
     );
   }

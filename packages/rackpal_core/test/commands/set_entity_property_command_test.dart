@@ -1127,8 +1127,16 @@ void main() {
       // public mutable fields until door 1 gave them a producer, and a
       // public setter is a second writer that skips the undo stack, the
       // meta touch and the epoch invalidation all at once.
+      //
+      // AND `port.dart` WITH IT, since NET-A/1c (DR-048, DR-226). The
+      // `network.*` rows write `NetworkConfig`'s setters, which live beside
+      // `Port` because the type is shared with `Port.network`; the rule is
+      // the overrides' rule, one file over.
       expect(
-        _internalSetters('device_instance.dart'),
+        {
+          ..._internalSetters('device_instance.dart'),
+          ..._internalSetters('port.dart'),
+        },
         containsAll([for (final f in DeviceField.all) f.key.split('.').last]),
       );
       expect(

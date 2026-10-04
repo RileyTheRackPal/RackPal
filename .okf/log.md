@@ -1,5 +1,39 @@
 # Update Log
 
+## 2026-10-04 (hundred-and-eighth entry)
+
+* **Progress**: NET-A/2 built on `net-a`: the Devices view (`#988` to `#990`, `#997`) and the
+  inspector's read-only summary (`#991`). Story `#683` closed.
+* **Creation**: [DR-228](/decisions/dr-228-t650-network-schedule.md), what T6.50 prints.
+* **Progress**: NET-A/3 built: T6.50 prints, is numbered and is indexed (`#992`), and dates every row or
+  says it is unverified (`#993`).
+* **Creation**: [DR-229](/decisions/dr-229-open-web-page.md), where Open web page lives and what it opens.
+* **Progress**: NET-A/4 built: the launcher seam (`#994`) and Open web page behind its confirmation
+  (`#995`). DR-226 to DR-229 marked built; docs/12 §4.41 carries the evidence, and docs/21 gains the
+  Devices tab, the inspector's Network lines and the Wi-Fi row.
+* **Note**: **A CENSUS NAMED IN THE PLAN WAS STILL SKIPPED, AND THE GATE CAUGHT IT.** The 3a plan listed
+  `pull_sheet_clause_test`'s role list among the tests a new role must update; the commit updated the
+  other two and ran only the sheet tests. Run the package's whole suite before committing a new enum
+  value, not the directory the change lives in.
+* **Note**: **A HELPER'S DEFAULT IS A CLAIM ON EVERY ITEM IT TOUCHES.** The board's close helper had the
+  previous branch's name written into it, and eleven NET-A items said they landed on `m6d-interconnect`
+  until a read of one description showed it. A value that changes per piece of work belongs in the call.
+
+## 2026-10-03 (hundred-and-seventh entry)
+
+* **Progress**: M6-D merged at `4ce4ee44` (PR 198). NET-A (`#681`) opened on branch `net-a`, decomposed into
+  `#985` to `#995`, and ruled before any code. `#46` now links `#684`, so M6's sheet-set clause shows the
+  T6.50 Story it waits on.
+* **Creation**: [DR-226](/decisions/dr-226-network-values-devices-view.md).
+* **Creation**: [DR-227](/decisions/dr-227-wifi-capability-and-network-order.md), a §8.3 amendment.
+* **Note**: **A PRICE OFFERED BEFORE READING THE CODE WAS WRONG, AND IT HAD DECIDED SOMETHING.** DR-226's
+  host was recommended as reusing a table's widgets "with no extraction"; the widgets are typed to cable
+  rows. Told so, the user re-decided and kept the host on its other reason. Read the code a price rests
+  on before the question is asked, not after it is answered.
+* **Note**: **A RULING CAN NAME A SURFACE THAT DOES NOT EXIST.** DR-048 put network values in "the table, via
+  Columns", and seven weeks later no surface listed device instances at all. Census the noun a ruling
+  points at, not only the field it adds: the field had one writer (the decoder) and the table had none.
+
 ## 2026-10-03 (hundred-and-sixth entry)
 
 * **Progress**: M6-M merged at `fa2e8d2d` (PR 197). M6-D (`#326`) opened on branch

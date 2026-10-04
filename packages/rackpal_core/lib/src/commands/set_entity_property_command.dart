@@ -83,6 +83,7 @@ import 'package:rackpal_core/src/model/link.dart';
 import 'package:rackpal_core/src/model/location.dart';
 import 'package:rackpal_core/src/model/outlet.dart';
 import 'package:rackpal_core/src/model/pathway.dart';
+import 'package:rackpal_core/src/model/port.dart' show NetworkConfig;
 import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/model/structure_body.dart';
@@ -232,7 +233,18 @@ final class EntityField<E, T> {
     required this.get,
     required this.set,
     required this.touches,
+    this.equals,
   });
+
+  /// How [buildSetEntityProperty] tells "nothing to do" from an edit, when
+  /// `==` cannot. Null means `==`, which is right for every scalar row.
+  ///
+  /// A COLLECTION ROW NEEDS ONE. Dart compares lists by identity, so a
+  /// list-valued row would read every retyped-but-identical value as a
+  /// change and push an empty undo entry; that is the defect a collection
+  /// field brings to every equality check written for scalars, met here
+  /// first by `DeviceField.networkVlans`.
+  final bool Function(T a, T b)? equals;
 
   /// Which map to find the entity in, and where its meta lives.
   final EntityAccess<E> access;
@@ -671,6 +683,87 @@ abstract final class DeviceField {
         touches: EpochMask.structure,
       );
 
+  // ─────────────────────────────────────────────────────────────────────
+  // THE DEVICES VIEW'S COLUMNS (DR-048 §11.47.6, DR-226 §11.225)
+  // ─────────────────────────────────────────────────────────────────────
+  // ONE ROW PER COLUMN, not one row for the whole `NetworkConfig`: a cell is
+  // one field, so undo coalesces per cell as it does for every other table
+  // in the product, and no row ever has to compare two configs (a mutable
+  // class carrying a list has no honest `==`).
+  //
+  // ALL `meta`. A management address moves no geometry; it prints on
+  // `T6.50` and reads in the inspector, both of which watch `meta`.
+  //
+  // THE NETWORK ROWS SHARE ONE WRITER, [_writeNetwork], which creates the
+  // device's config on the first value and drops it on the last. So a
+  // device whose every value is cleared carries no `network` at all and its
+  // key is absent again (§11.47.2), and undoing the first value written to a
+  // device restores exactly the bytes it had.
+
+  /// The device's MAC, its one home (DR-226 §11.225.4). On the device, not
+  /// in its `network`.
+  static final macAddressPrimary = EntityField<DeviceInstance, String?>(
+    access: EntityAccess.device,
+    key: 'macAddressPrimary',
+    get: (d) => d.macAddressPrimary,
+    set: (d, v) => d.macAddressPrimary = v,
+    touches: EpochMask.meta,
+  );
+
+  static final networkHostname = EntityField<DeviceInstance, String?>(
+    access: EntityAccess.device,
+    key: 'network.hostname',
+    get: (d) => d.network?.hostname,
+    set: (d, v) => _writeNetwork(d, (n) => n.hostname = v),
+    touches: EpochMask.meta,
+  );
+
+  static final networkIp = EntityField<DeviceInstance, String?>(
+    access: EntityAccess.device,
+    key: 'network.ip',
+    get: (d) => d.network?.ip,
+    set: (d, v) => _writeNetwork(d, (n) => n.ip = v),
+    touches: EpochMask.meta,
+  );
+
+  static final networkSubnet = EntityField<DeviceInstance, String?>(
+    access: EntityAccess.device,
+    key: 'network.subnet',
+    get: (d) => d.network?.subnet,
+    set: (d, v) => _writeNetwork(d, (n) => n.subnet = v),
+    touches: EpochMask.meta,
+  );
+
+  static final networkGateway = EntityField<DeviceInstance, String?>(
+    access: EntityAccess.device,
+    key: 'network.gw',
+    get: (d) => d.network?.gw,
+    set: (d, v) => _writeNetwork(d, (n) => n.gw = v),
+    touches: EpochMask.meta,
+  );
+
+  /// EMPTY IS "NOBODY SAID", never "measured none" (DR-048 §11.47.9), and
+  /// the list is compared by CONTENT ([EntityField.equals]).
+  static final networkVlans = EntityField<DeviceInstance, List<int>>(
+    access: EntityAccess.device,
+    key: 'network.vlans',
+    get: (d) => d.network?.vlans ?? const <int>[],
+    set: (d, v) => _writeNetwork(d, (n) => n.vlans = v),
+    touches: EpochMask.meta,
+    equals: _sameInts,
+  );
+
+  /// A calendar day at UTC midnight (`NetworkConfig.verifiedOn`). Written
+  /// by the date cell and by the batch bar's Verified today, and never as a
+  /// side effect of editing a value (DR-226 §11.225.5).
+  static final networkVerifiedOn = EntityField<DeviceInstance, DateTime?>(
+    access: EntityAccess.device,
+    key: 'network.verifiedOn',
+    get: (d) => d.network?.verifiedOn,
+    set: (d, v) => _writeNetwork(d, (n) => n.verifiedOn = v),
+    touches: EpochMask.meta,
+  );
+
   /// See [OutletField.all].
   static final List<EntityField<DeviceInstance, Object?>> all = [
     lifecycleStatus,
@@ -678,7 +771,33 @@ abstract final class DeviceField {
     overrideTypicalWatts,
     overrideBodyDepth,
     overrideAccentColor,
+    macAddressPrimary,
+    networkHostname,
+    networkIp,
+    networkSubnet,
+    networkGateway,
+    networkVlans,
+    networkVerifiedOn,
   ];
+
+  /// Writes one value into [d]'s network, creating it on the first and
+  /// dropping it when nothing is left in it. See the block above.
+  static void _writeNetwork(
+    DeviceInstance d,
+    void Function(NetworkConfig n) write,
+  ) {
+    final network = d.network ?? NetworkConfig();
+    write(network);
+    d.network = network.isEmpty ? null : network;
+  }
+
+  static bool _sameInts(List<int> a, List<int> b) {
+    if (a.length != b.length) return false;
+    for (var i = 0; i < a.length; i++) {
+      if (a[i] != b[i]) return false;
+    }
+    return true;
+  }
 }
 
 /// Editable [Link] properties.
@@ -1280,7 +1399,7 @@ SetEntityPropertyCommand<E, T>? buildSetEntityProperty<E, T>({
     );
   }
   final from = field.get(entity);
-  if (from == to) return null;
+  if (field.equals?.call(from, to) ?? from == to) return null;
   return SetEntityPropertyCommand<E, T>(
     id: id,
     field: field,

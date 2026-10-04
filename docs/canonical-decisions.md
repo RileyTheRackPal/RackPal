@@ -23631,6 +23631,159 @@ clause rules the sheet.
 
 ---
 
+### 11.225 DR-226 · Network values are typed in a Devices view in Structured Wiring, and a device's MAC has one home
+
+**Settled by the user on 2026-10-03, opening NET-A (`#681`), on the recommended option three times and
+the user's own once.** DR-048 §11.47.6 put the surface in *"the table, via `⚙ Columns`"*, and a census
+before decomposing found the table does not exist.
+
+**11.225.1 THE FACTS THAT PRICED IT.** **No surface in the product lists device instances.** The
+Device Manager tab browses the template library, the Schedule lists cables, Structured Wiring's views
+are runs, the matrix, outlets and pathways, and the only `Columns` control is the Device Builder's port
+grid, which edits templates, where DR-048 §11.47.10 says no field is added. The batch bar, `Ctrl+D`
+fill-down and the cell editors exist, privately, inside Structured Wiring's table. **And a device's MAC
+has two fields**: `DeviceInstance.macAddressPrimary`, beside serial number and firmware, and the
+`mac` of the `NetworkConfig` DR-048 hung on the device. Neither has ever been written.
+
+**11.225.2 RULED: A `Devices` VIEW IN STRUCTURED WIRING**, a fifth beside Table, Matrix, Outlets and
+Pathways: one row per device, its network values in columns, with the batch bar and fill-down that
+table already has. It is §11.47.6's table, given a host. DR-020 §11.19.2(5), the precedent §11.47.6
+cites, put the as-built tally on a table the product already built rather than a new screen, and this
+keeps a job's close-out in one tab. Not taken: an *In this project* view in the Device Manager, which
+its name invites and which first needs the table machinery extracted into a shared widget; and an
+editable inspector, which reverses §11.47.6's one-place-a-value-is-written argument.
+
+**11.225.3 RULED BY THE USER: THE DEFAULT COLUMNS ARE HOSTNAME, IP, MAC, VLANS AND VERIFIED ON**;
+subnet and gateway sit behind the `Columns` toggle. The recommendation was hostname, IP and verified on;
+the user added the other two, in their words: *"MAC addresses are heavily used for WOL/SSDP/SDDP
+identification, and VLAN's are important for many video distribution systems."*
+
+**11.225.4 RULED: A DEVICE'S MAC IS `macAddressPrimary`**, the device-level identity field. The MAC
+column writes it and `T6.50` prints it. `NetworkConfig.mac` stays for per-port use, a device whose
+ports carry their own. One fact, one home, so no later surface can write the other copy. Not taken:
+`network.mac`, which leaves `macAddressPrimary` as a second home nobody writes. **`verifiedOn` dates
+the row**, the MAC included, though the field lives on the device and the date on its `NetworkConfig`:
+a tech confirming a device confirms what the row shows.
+
+**11.225.5 RULED: `verifiedOn` IS AN EDITABLE DATE COLUMN, AND THE BATCH BAR STAMPS TODAY.** Editing an
+address never changes the date by itself. Not taken: stamping on edit, which marks a value retyped from
+an old spreadsheet as freshly checked, the stale-as-fact failure §11.47.3 exists to prevent; and the
+date column alone, which turns stamping a rack into a select-and-type every visit.
+
+**Scope.** No scope moves: DR-048 §11.47.6's surface given a host, and its MAC made single.
+
+---
+
+### 11.226 DR-227 · A template can say it has Wi-Fi, the Devices view lists what can join a network, and one setting orders the view and T6.50
+
+**Settled by the user on 2026-10-03, building NET-A/2 (`#683`).** A §8.3 amendment: it gives
+`TemplateBody` a field DR-048 §11.47.10 said it would not have. Recorded with a correction first.
+
+**11.226.1 A PRICE WAS WRONG, AND THE USER RE-DECIDED ON THE RIGHT ONE.** DR-226 §11.225.2 was chosen
+over a Device Manager host partly because Structured Wiring would reuse its table's batch bar and cell
+editors *"with no extraction"*. Read rather than assumed, those widgets are typed to cable rows (a link
+id, `StructureColumnId`, the signal-family registry), so either host needs a new device table; what is
+reused is the pattern and the shared `fillDown` binding. Offered again on the corrected price, the user
+kept Structured Wiring, on §11.225.2's other reason. That clause stands; its price did not.
+
+**11.226.2 RULED: THE VIEW LISTS NETWORK-CAPABLE DEVICES, WITH SHOW ALL.** By default, a device whose
+template has a port in the Network domain **and is not a passthrough**, or whose template says it has
+Wi-Fi (§11.226.3), or that already carries a network value or a MAC. A *Show all devices* toggle adds
+the rest. Not taken: every device with ports, which on Whole House lists every amplifier, splitter and
+panel; and Network ports alone, which leaves a Wi-Fi-only device no row to be given an address on.
+
+**The passthrough exclusion was ruled the same day, on a measurement.** The port rule as first written
+listed patch panels and fibre enclosures, which carry Network ports and never an address. The template's
+existing `isPassthrough` separates them exactly on all four starters (Whole House 30 rows to 26, `PP-1`
+to `PP-3` and `LIU-1` leaving; Small Office 21 to 18; Home Theatre 14 to 13): a passthrough is copper
+or glass between two things that have addresses, and has none of its own. No new field.
+
+**11.226.3 RULED BY THE USER: `TemplateBody` GAINS `wifi`, AND IT IS NOT WHAT DR-048 REFUSED.** A
+`bool?` (unset, yes, no), shown in the Device Builder as a *Wi-Fi* toggle; a template that says yes is
+network-capable without a jack and without an address yet. In the user's words: *"even though it's a
+network 'field', it's still a device property (What the device is capable of)."* DR-048 kept network
+**values** off the template because they are facts about an install; whether a model can join a
+network at all is a fact about the model. The census behind it is also the user's: Wi-Fi-only devices
+are rare in this trade, *"aside from the Move 2, Roam, and Ace Headphones (which are portable anyway)
+I've seen zero Sonos devices that are WiFi only."* Editing it never forks a template's identity, and
+no seeded template sets it, because CR-061 wants a source for every catalog fact and there is none.
+
+**11.226.4 RULED: ONE SETTING ORDERS THE DEVICES VIEW AND `T6.50`.** `ProjectSettings` gains the network
+order, *by designator* or *rack by rack, top unit down, then room by room*, set in `File ▸ Sheet set…`,
+defaulting to by designator. The user's reason for the default: it *"mirrors how the firm I work for
+handles IP address assignment on a network"*, and for the setting: *"other firms may use a different
+method for IP assignment."* The view follows the same setting so the table and the printed schedule
+never disagree about order: one derivation, two projections (CR-107). Not taken for the view: a fixed
+designator order beside a configurable sheet.
+
+**Scope.** **v1 grows by one field**, `TemplateBody.wifi`, superseding DR-048 §11.47.10's *"does not
+give `TemplateBody` a network field"* for this capability alone (§12.47). `ProjectSettings` gains the
+order. No milestone moves.
+
+---
+
+### 11.227 DR-228 · T6.50 prints every network column, one row per device with a value
+
+**Settled by the user on 2026-10-04, building NET-A/3 (`#684`), on the recommended option twice.**
+DR-048 §11.47.4 put `T6.50` in v1 as an `AUTO` sheet and said nothing about what it prints.
+
+**11.227.1 RULED: ALL TEN COLUMNS, SUBNET AND GATEWAY INCLUDED.** `DEVICE`, `NAME`, `LOCATION`,
+`HOSTNAME`, `IP ADDRESS`, `SUBNET`, `GATEWAY`, `MAC`, `VLANS`, `VERIFIED`, from the one derivation the
+Devices view renders (DR-226), so the screen and the sheet are the same strings (CR-107). The tech at a
+rack who sets a static address on a laptop needs the subnet and the gateway, and paper has no Columns
+menu. Not taken: the view's default columns, which leave out exactly what that tech needs.
+
+**11.227.2 RULED: ONE ROW PER DEVICE THAT CARRIES A VALUE**, an address, a MAC or a VLAN, in the
+project's network order (DR-227 §11.226.4). The sheet states facts: a blank row in a client deliverable
+reads as an omission, which is why `T6.20` and `T5.01` are `AUTO` too (DR-005). Every row prints its
+verified day or `unverified` (DR-048 §11.47.3). The export raises a notice naming how many
+network-capable devices have nothing recorded, so the gap is said rather than silent; **only when
+`T6.50` prints**, an implementer's clause stated so it is not decided silently, since a project that
+records no address has no schedule to have a gap in and a notice on its every export would nag about a
+feature nobody is using. Not taken: every
+network-capable device, blank rows included, which is a commissioning form and prints empty boxes on
+the client's copy.
+
+**11.227.3 THE MECHANICAL PARTS, STATED SO THEY ARE NOT DECIDED SILENTLY.** ANSI A landscape, the
+schedules' paper (docs/08 §6.1); `T6.50` to `T6.59`, then the shared overflow pool, taking it after the
+equipment list, which precedes it; in the set after `T6.30` and before `T5.01`, which DR-221 keeps last.
+`kReservedNcsIds` stops reserving `T6.50` for the v1.1 schedule it no longer is; `T6.40` stays reserved.
+
+**Scope.** No scope moves: DR-048 §11.47.4's sheet, made definite.
+
+---
+
+### 11.228 DR-229 · Open web page from the inspector and the Devices view, at an editable URL
+
+**Settled by the user on 2026-10-04, building NET-A/4 (`#685`).** DR-048 §11.47.7 ruled that the address
+launches a browser behind a confirmation that shows the URL, and said neither where the gesture lives
+nor what URL it builds.
+
+**11.228.1 RULED: TWO HOSTS, THE INSPECTOR AND THE DEVICES VIEW**, against the recommendation of the
+inspector alone. The inspector's `NETWORK` section carries the button beside the address it opens; the
+Devices view carries it per row, because that is the table the addresses are typed into and a tech
+working down a rack checks them from there. **The row's form is an implementer's choice, stated so it is
+not decided silently**: a narrow trailing column holding one button, on the tick gutter's precedent,
+since no table in the product has a right-click menu and building one for a single item would be a menu
+nobody else uses. It is a column of the view and not of `NetworkColumnId`: it prints nowhere and is not
+in the Columns menu.
+
+**11.228.2 RULED: THE CONFIRMATION'S URL IS EDITABLE, PREFILLED `http://<address>/`**, the address being
+the row's IP and its hostname when it has none. HTTPS or a port is typed before it opens; nothing is
+written back to the device. The trade's gear splits across both schemes (UniFi, Araknis and Crestron
+serve HTTPS, older AV kit HTTP), and a stored per-device URL was offered and **not taken**: it is a
+model field DR-048 did not rule in. A device with neither address offers no button rather than a
+disabled one that cannot say why.
+
+**11.228.3 THE LAUNCH IS A SEAM OUTSIDE `rackpal_core`** (DR-048 §11.47.7, NET-A/4a): an injected
+function the app supplies, so the widget tests never open a browser and the core stays free of platform
+code. The confirmation opens only `http` and `https` URLs, so an edited field cannot turn the button
+into a launcher for a `file:` path or a program.
+
+**Scope.** No scope moves: DR-048 §11.47.7's gesture, given its hosts and its URL.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -24359,6 +24512,12 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **docs/08 §2.2's `n+2`**, and every ruling before DR-222 naming `T6.11` (DR-206 §11.205 throughout, and DR-090 §11.89's note on the cells that emit `U+2194`) | the Termination Schedule is `T6.11` | **It is `T6.15`, running `T6.15` to `T6.19`; the Pull Sheet keeps `T6.10` and runs to `T6.14`** (§11.221.1). The rulings keep their words: in any of them `T6.11` means the Termination Schedule. The derived documents are edited to match. |
+
+### 12.47 Amended by DR-227 (a template can say it has Wi-Fi)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-048 §11.47.10**, its last sentence | It *"does not give `TemplateBody` a network field"*, and *"M4 is untouched: this is instance data, not template data, and no device template gains a field"*. | **Superseded for `TemplateBody.wifi` alone** (§11.226.3): whether a model can join a network is a fact about the model. Every network **value** (hostname, address, subnet, gateway, VLANs, MAC, the verified date) stays instance data exactly as DR-048 ruled, and no template carries one. |
 
 
 ## 13. Resolved §10 questions

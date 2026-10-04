@@ -7,6 +7,7 @@
 #include <shobjidl.h>
 #include <wrl/client.h>
 
+#include <cwctype>
 #include <memory>
 #include <optional>
 #include <string>
@@ -355,6 +356,36 @@ void RegisterFileDialogChannel(flutter::FlutterEngine* engine, HWND owner) {
               SW_SHOWNORMAL);
           result->Success(
               EncodableValue(reinterpret_cast<INT_PTR>(shown) > 32));
+          return;
+        }
+
+        // "Open web page" (NET-A/4a, #994, DR-048 §11.47.7, DR-229). The
+        // same act as revealFolder: ShellExecuteW's "open" verb, here on a
+        // URL the user has just seen and confirmed. THE SCHEME IS CHECKED
+        // HERE TOO, not only in Dart: "open" on `file:///...cmd.exe` runs a
+        // program, and this end must not trust that every future caller of
+        // the channel checked first. Only http:// and https:// pass, case
+        // folded as URL schemes are. OUR code writes no registry key; what
+        // the browser records about a page it was asked to open is the
+        // browser's.
+        if (call.method_name() == "openUrl") {
+          const std::optional<std::wstring> url = StringArg(args, "url");
+          if (!url) {
+            result->Error("bad_args", "openUrl needs a url.");
+            return;
+          }
+          std::wstring scheme = url->substr(0, url->find(L':'));
+          for (auto& c : scheme) {
+            c = static_cast<wchar_t>(::towlower(c));
+          }
+          if (scheme != L"http" && scheme != L"https") {
+            result->Success(EncodableValue(false));
+            return;
+          }
+          const HINSTANCE opened = ::ShellExecuteW(
+              owner, L"open", url->c_str(), nullptr, nullptr, SW_SHOWNORMAL);
+          result->Success(
+              EncodableValue(reinterpret_cast<INT_PTR>(opened) > 32));
           return;
         }
 

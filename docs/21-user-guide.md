@@ -504,7 +504,10 @@ Rack and Site views searches the same list.
    shelf, 0U, hosted in another device, side mounted, in furniture, not in a
    rack) asks for no height at all.
    Category is optional and suggests a prefix and an elevation mark; Signal
-   domain is optional and colours the device on a floorplan.
+   domain is optional and colours the device on a floorplan. **Wi-Fi** says
+   whether the device can join a network without a cable (`Not set`, `Yes`
+   or `No`); `Yes` lists it in the Devices view (§21.5.5) though it has no
+   network jack.
 3. **Save** now if you like. **A name, a prefix and a height is a finished
    template**: it will place and print like any other. `Save` stays disabled,
    with a tooltip saying why, until those three exist.
@@ -514,7 +517,7 @@ The builder's sections:
 
 | Section | What it holds |
 |---|---|
-| Identity | Name, manufacturer, model, prefix, category, domain, tags, and **Size and mounting**: how it mounts, front and rear height, width |
+| Identity | Name, manufacturer, model, prefix, category, domain, Wi-Fi, tags, and **Size and mounting**: how it mounts, front and rear height, width |
 | Ports | Every connector, in a grid, with previews of the elevation, the schematic symbol and the rear panel. **Passthrough** on its toolbar makes a patch panel, and **Pair front to rear** then pairs it |
 | Panel | Where the cutouts sit on the panel. Derived from connector footprints; **Customize panel layout** lets you move them, align and distribute them, and **Reset to auto** puts them back |
 | Physical | Depth, chassis width, weight, clearances, thermal class and the container flag |
@@ -732,6 +735,10 @@ under its channel and is not drawn in the elevation yet.**
     template.
   - **Mount note**, free text for the installer (`AV closet, top shelf,
     sideways`).
+  - **Network**: the device's hostname, address, MAC and VLANs with the day
+    they were verified, or `unverified`. Read-only; it says where to edit
+    them (the Devices tab of Structured Wiring) and, when there is an IP or a
+    hostname, offers **Open web page**.
 
 **Right-click a device** for the three ways to change it: **Edit this device
 only** (the inspector, above), **Edit the template…** (every device placed from
@@ -768,7 +775,7 @@ hand: the first drop you enter creates one.
 - **Header:** a Structure picker (only when the project has more than one),
   **Import CSV…**, **Manage media types…**, **Connector words…**, and a `⋮`
   menu holding **Remove this Structure…**.
-- **Tabs:** **Table**, **Matrix**, **Outlets**, **Pathways**.
+- **Tabs:** **Table**, **Matrix**, **Outlets**, **Pathways**, **Devices**.
 - **Left:** the rooms, read-only here (rooms are named on the Site view), with
   a drop count each.
 - **The entry line**, then a filter bar (room, media, **Unconnected only**, and
@@ -871,6 +878,36 @@ The header counts pathways, lengths still unknown and runs through no pathway.
 **Add pathway** adds one; the delete button on a row says how many runs lose
 their recorded route. Runs are assigned to a pathway with `@pathway=` when they
 are entered, or through a CSV import.
+
+#### The Devices tab
+
+Every device that can be on a network, one row each: anything with a network
+jack, anything whose template says **Wi-Fi**, and anything you have already
+given an address. Patch panels and fibre enclosures are left out, since they
+carry network ports but never an address; **Show all devices** adds them and
+everything else. The toolbar counts the rows and how many are verified.
+
+- **Type into a cell** and press `Enter` or move away. **HOSTNAME**, **IP
+  ADDRESS**, **MAC** and **VLANS** show by default; **Columns** adds **SUBNET**
+  and **GATEWAY**. An emptied cell means "not known", never blank text.
+  VLANs are numbers from 1 to 4094 separated by commas (`10, 20`).
+- **VERIFIED** is the day somebody last checked the row against the device on
+  site, typed as `2026-10-04`. Changing an address never dates it for you: an
+  address typed from a quote and one confirmed yesterday must not look alike.
+- **Tick rows** for the batch bar: **Set** one column to one value on every
+  ticked row (a subnet, say), or **Verified today**, which dates them all.
+  Each is one undo step.
+- `Ctrl+D` fills the cell from the row above, as in the Table view.
+- **Open web page** (the arrow icon at the end of a row with an IP or a
+  hostname) asks before it opens anything: it shows `http://` and the
+  address, which you can change to `https://` or add a port to, then opens
+  it in your browser. Only `http` and `https` addresses open, and nothing you
+  change there is saved.
+
+The order is set once for this view and the printed schedule, under **Network
+schedule (T6.50)** in `File` ▸ `Sheet set…`: by designator, or rack by rack
+then room by room. This tab is the one place a network value is typed; the
+inspector shows it but does not edit it.
 
 #### Import a spreadsheet
 
@@ -1168,6 +1205,7 @@ floorplan import.
 | **Termination Schedule** (`T6.15`) | Always, landscape. Every cable that lands in a rack, rack by rack, panel by panel, port by port: the rack and its position, the device and port, the far end, the cable, and how each end is finished, the wall end in **FIELD TERM** and the rack end in **RACK TERM** (a dash when you have not recorded it), with the wiring standard where it applies. Cables that land in no rack are named as a count at the top; they are on the Pull Sheet. Was numbered `T6.11` before; a long Pull Sheet now uses that number |
 | **Unused Home Runs** (`T6.20`) | Automatically, when at least one home run is still a coil at one end: never landed at the rack, or landed at the rack and never terminated at the room. One band per room with how many runs it holds, cable IDs in order. The `OPEN` column says which end is loose: `RACK`, `ROOM` or `BOTH`. Each row also gives the rack label, the wall-plate label, the outlet, your description of the room end, the cable, its length, the pathway and how far rough-in has got. A project with every run landed at both ends gets no page for it |
 | **Equipment List and Materials** | Always, paginated as needed. One row per device, grouped by rack. Blanks, vents, shelves and other passives are not equipment rows: they are listed once each by item under **MATERIALS** at the end, with how many and which racks they are in. Each rack's subtotal still includes them, and says so. After MATERIALS, four short tables, each with its own headings: **cable footage by media** with your waste factor added; **hardware the rules imply**, a rear rail support for every device too heavy for its ears and an ear kit for a half-rack device on its own, including ones you have acknowledged, with your reason; **jumpers and power cords** by media, length and colour; and the **outlet map**, every cord you have drawn to a PDU, UPS or sequencer outlet and how many outlets each has free. A table with nothing in it says so. No prices, ever |
+| **Network/IP Schedule** (`T6.50`) | Automatically, after the equipment list, when at least one device has an address, a MAC or a VLAN recorded in the **Devices** view of the **Structured Wiring** tab. One row per such device and no others, in the order you chose under **Network schedule (T6.50)** in `File` ▸ `Sheet set…` (by designator, or rack by rack then room by room), which is also the order the Devices view lists them in. Every column prints, subnet and gateway included, whatever you have hidden on screen; a value nobody entered prints as a dash. **VERIFIED** gives the day the row was last checked on site, or `unverified` in grey, and a key at the top of every page says what that means. When some devices that could be on the network have nothing recorded, the export's notices name them, so a schedule that looks complete is not quietly short. A job with no address anywhere gets no page and no notice. A long schedule continues on `T6.51` up to `T6.59` |
 | **Plate, Panel and Pinout Details** (`T5.01`) | Automatically, last, when something in the job is not wired the usual way: an IR receiver port that carries power (the kind that ruins an emitter plugged into it), printed with its pin map; a cable whose T568A or T568B differs from the project's, with both pin colour orders; a cable marked null-modem; or a Cresnet or RS-232 terminal block whose terminal order you recorded differently from the standard (`24 Y Z G`, `TX RX G`). Record a terminal order in the Device Builder's **Terminals** column, under Columns ▸ Advanced, typed with spaces: `TX RX G`. A job with none of these gets no page for it |
 
 **Your own abbreviations and notes.** `File` ▸ `Sheet set…` lists the legend's
@@ -1178,9 +1216,9 @@ and `Restore defaults` puts it back. The signal tag prefixes (`AUD`, `NET` and s
 on) always follow your abbreviations and are not edited here. A long note wraps
 on the sheet.
 
-**Zones on the drawings.** Floor plans, rack elevations and interconnect sheets carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions, pull sheet, termination schedule, unused home runs, equipment list and pinout details have a plain border.
+**Zones on the drawings.** Floor plans, rack elevations and interconnect sheets carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions, pull sheet, termination schedule, unused home runs, equipment list, network schedule and pinout details have a plain border.
 
-So a two-rack job with one floorplan gives you at least eleven sheets, plus one interconnect sheet for each signal domain your cables use, more if the exceptions or the equipment list run to a second page, or if any home run is still unused or any pinout is non-standard. The status line says
+So a two-rack job with one floorplan gives you at least eleven sheets, plus one interconnect sheet for each signal domain your cables use, more if the exceptions or the equipment list run to a second page, or if any home run is still unused, any device has an address recorded, or any pinout is non-standard. The status line says
 how many sheets were written and how large the file is, and how many notices the export raised. **Click that count to read them**: a list opens, grouped by sheet, with a Copy button.
 
 **A project with no rack cannot be exported**: there is no elevation to draw

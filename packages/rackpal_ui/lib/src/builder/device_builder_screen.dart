@@ -1730,6 +1730,18 @@ class _IdentitySection extends StatelessWidget {
         registries: registries,
         onChanged: (v) => onEdit(TemplateBodyField.primaryDomain, v),
       ),
+      // WHAT THE MODEL CAN DO, NOT AN ADDRESS (DR-227 §11.226.3). Three
+      // states, because "nobody said" and "no" are different facts (G4); a
+      // switch could only say two of them. Yes lists a device in the
+      // Devices view without a network jack.
+      _EnumRow<bool?>(
+        key: kBuilderWifiFieldKey,
+        label: kBuilderWifiLabel,
+        value: body.wifi,
+        values: const <bool?>[null, true, false],
+        nameOf: (v) => kWifiChoiceLabels[v]!,
+        onChanged: (v) => onEdit(TemplateBodyField.wifi, v),
+      ),
       _TextRow(
         label: 'Designator prefix',
         required: true,
@@ -2395,6 +2407,22 @@ String _thermalLabel(ThermalClass v) => switch (v) {
   ThermalClass.lowHeat => 'Runs cool',
   ThermalClass.highHeat => 'Runs hot',
   ThermalClass.activeCooled => 'Fan cooled',
+};
+
+/// The Device Builder's Wi-Fi row (DR-227 §11.226.3). Public so a test
+/// can find the row by what it says.
+const String kBuilderWifiLabel = 'Wi-Fi';
+
+/// The Wi-Fi row's key, for [kPrimaryDomainFieldKey]'s reason.
+const Key kBuilderWifiFieldKey = ValueKey<String>('builder-wifi');
+
+/// What each of the Wi-Fi row's three states says.
+const Map<bool?, String> kWifiChoiceLabels = <bool?, String>{
+  // "Not set", THE PRIMARY DOMAIN'S WORD one row up, so two neighbouring
+  // pickers do not use two words for one state.
+  null: 'Not set',
+  true: 'Yes',
+  false: 'No',
 };
 
 String _plugLabel(PlugType? v) => switch (v) {

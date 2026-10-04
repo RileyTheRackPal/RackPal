@@ -123,6 +123,8 @@ void main() {
         'is the state NetworkConfig was found in', (tester) async {
       await _open(tester, _doc());
       for (final f in ProjectSettingFields.all) {
+        // Drawn by Sheet set instead, and required there by its own test.
+        if (kSettingsDrawnInSheetSet.contains(f.key)) continue;
         // SCROLLED TO, not merely searched for: the dialog is a ListView
         // and a row below the fold is never built, so `findsOneWidget`
         // alone would fail for a row that exists and pass for one that
@@ -149,6 +151,7 @@ void main() {
       // first screen searched: absent at every row's scroll position.
       await _open(tester, _doc());
       for (final f in ProjectSettingFields.all) {
+        if (kSettingsDrawnInSheetSet.contains(f.key)) continue;
         await tester.scrollUntilVisible(
           find.text(f.label),
           120,

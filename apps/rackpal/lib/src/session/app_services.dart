@@ -73,6 +73,7 @@ import 'package:rackpal/src/storage/recovery_store.dart';
 import 'package:rackpal/src/storage/serialization.dart';
 import 'package:rackpal/src/storage/snapshot_store.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/rackpal_ui.dart' show WebPageLauncher;
 
 /// This build's version, recorded in recovery sidecars and in new
 /// documents.
@@ -113,6 +114,7 @@ final class AppServices {
     this.rackPresetsStore,
     this.diagnosticsFolder,
     this.folderRevealer = win32RevealFolder,
+    this.webPageLauncher = win32OpenWebPage,
   }) : degradedWarning = ValueNotifier<String?>(startupWarning);
 
   final DocumentSession session;
@@ -219,6 +221,11 @@ final class AppServices {
   /// and a test wants to see the call rather than a window.
   final FolderRevealer folderRevealer;
 
+  /// Opens a device's web page in the browser (NET-A/4a, `#994`, DR-229
+  /// §11.228.3). Injected for [folderRevealer]'s reason, and handed to the
+  /// views through a `WebPageScope` at the app's root.
+  final WebPageLauncher webPageLauncher;
+
   /// Your rack presets and the seeded ones you hid, or null in the
   /// degraded session (DR-176 §11.175.3).
   ///
@@ -299,6 +306,7 @@ Future<AppServices> buildAppServices({
   required bool isWindows,
   FilePicker picker = const Win32FilePicker(),
   FolderRevealer folderRevealer = win32RevealFolder,
+  WebPageLauncher webPageLauncher = win32OpenWebPage,
   Clock clock = const SystemClock(),
   Serializer serializer = isolateSerializer,
   Deserializer deserializer = isolateDeserializer,
@@ -471,6 +479,7 @@ Future<AppServices> buildAppServices({
         ? null
         : ctx.join(ready.path, kDiagnosticsFolder),
     folderRevealer: folderRevealer,
+    webPageLauncher: webPageLauncher,
     export: ExportController(
       session: session,
       picker: picker,

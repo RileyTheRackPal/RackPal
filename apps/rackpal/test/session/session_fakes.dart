@@ -471,6 +471,7 @@ Future<TestSession> buildTestSession({
   String recoverySessionId = kTestSessionId,
   bool useRealDialogs = false,
   FolderRevealer? folderRevealer,
+  WebPageLauncher? webPageLauncher,
 }) async {
   final context = p.Context(style: p.Style.windows);
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -530,6 +531,9 @@ Future<TestSession> buildTestSession({
     // Never the real channel in a test: an unanswered `revealFolder` would
     // read as the OS refusing, and hide a wiring bug behind the notice.
     folderRevealer: folderRevealer ?? (_) async => true,
+    // Never the real channel either, for the same reason, and never a
+    // browser opened by a test.
+    webPageLauncher: webPageLauncher ?? (_) async => true,
   );
 
   // The SHELL is what installs the window handler in production. These
@@ -601,6 +605,7 @@ Future<({RackPalApp app, TestSession session})> buildTestApp(
   /// DR-012.4's "no store" branch lives.
   DataRoot? dataRoot,
   FolderRevealer? folderRevealer,
+  WebPageLauncher? webPageLauncher,
 }) async {
   final session = await buildTestSession(
     document: document ?? buildDemoRackDocument(),
@@ -612,6 +617,7 @@ Future<({RackPalApp app, TestSession session})> buildTestApp(
     dataRoot: dataRoot,
     useRealDialogs: true,
     folderRevealer: folderRevealer,
+    webPageLauncher: webPageLauncher,
   );
   return (
     app: RackPalApp(

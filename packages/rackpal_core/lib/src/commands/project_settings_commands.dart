@@ -124,6 +124,19 @@ abstract final class ProjectSettingFields {
     set: _setSheetNumbering,
   );
 
+  /// DR-227 §11.226.4. Edited in Sheet set, beside the rest of what the
+  /// drawing set prints, not in Project settings.
+  static const networkOrder = ProjectSettingField<NetworkOrder>(
+    key: 'networkOrder',
+    label: 'Order devices on the network schedule',
+    help:
+        'The order T6.50 and the Devices table list devices in. By '
+        'designator follows how most firms assign addresses; rack then '
+        'room follows where the gear stands.',
+    get: _getNetworkOrder,
+    set: _setNetworkOrder,
+  );
+
   static const deviceDesignatorFormat = ProjectSettingField<IdFormat>(
     key: 'deviceDesignatorFormat',
     label: 'Device designator',
@@ -249,6 +262,7 @@ abstract final class ProjectSettingFields {
     defaultRuNumbering,
     defaultMirrorRearElevation,
     sheetNumbering,
+    networkOrder,
     deviceDesignatorFormat,
     portDesignatorFormat,
     linkDesignatorFormat,
@@ -283,6 +297,8 @@ void _setMirror(ProjectSettings s, bool v) => s.defaultMirrorRearElevation = v;
 SheetNumbering _getSheetNumbering(ProjectSettings s) => s.sheetNumbering;
 void _setSheetNumbering(ProjectSettings s, SheetNumbering v) =>
     s.sheetNumbering = v;
+NetworkOrder _getNetworkOrder(ProjectSettings s) => s.networkOrder;
+void _setNetworkOrder(ProjectSettings s, NetworkOrder v) => s.networkOrder = v;
 IdFormat _getDeviceFmt(ProjectSettings s) => s.deviceDesignatorFormat;
 void _setDeviceFmt(ProjectSettings s, IdFormat v) =>
     s.deviceDesignatorFormat = v;

@@ -36,6 +36,16 @@ import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 import 'package:rackpal_ui/src/validation/rule_severity_dialog.dart';
 
+/// The settings this dialog leaves to `File ▸ Sheet set…`, by key.
+///
+/// ONE CONTROL HAS ONE HOME. The network order (DR-227 §11.226.4) is
+/// about what a schedule prints, so it sits beside the rest of what the
+/// drawing set prints. Public so the two dialogs' tests can hold every
+/// field drawn somewhere: skipped here, required there.
+final Set<String> kSettingsDrawnInSheetSet = {
+  ProjectSettingFields.networkOrder.key,
+};
+
 /// What the dialog hands back: commands for the session's undo stack.
 typedef ProjectSettingEdit =
     void Function(List<Command<RackDocument>> commands);
@@ -128,7 +138,8 @@ class _SettingsDialogState extends State<_SettingsDialog> {
               style: theme.textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
-            for (final f in ProjectSettingFields.all) _row(f),
+            for (final f in ProjectSettingFields.all)
+              if (!kSettingsDrawnInSheetSet.contains(f.key)) _row(f),
             const Divider(height: 32),
             _FamilyColours(
               doc: widget.doc,

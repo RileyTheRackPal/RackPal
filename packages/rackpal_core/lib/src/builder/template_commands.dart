@@ -125,6 +125,14 @@ abstract final class TemplateBodyField {
     set: _setPrimaryDomain,
   );
 
+  /// Whether the model has Wi-Fi: yes, no, or unstated (DR-227 §11.226.3).
+  /// A capability, so it is template data where a network value is not.
+  static const wifi = TemplateField<bool?>(
+    key: 'wifi',
+    get: _getWifi,
+    set: _setWifi,
+  );
+
   /// Rack units on the front face. The second of M4-D's three required
   /// fields, and the one a user gets wrong most cheaply: `0` is a
   /// MEASURED zero here (a zero-U device), never an unknown, so this
@@ -384,6 +392,11 @@ abstract final class TemplateBodyField {
     model,
     displayName,
     category,
+    // `primaryDomain` WAS MISSING FROM THIS LIST, which says it holds every
+    // field above, so the isolation test never ran over it. Found adding
+    // `wifi` beside it (NET-A/2e).
+    primaryDomain,
+    wifi,
     typePrefix,
     frontU,
     tags,
@@ -432,6 +445,9 @@ void _setTypePrefix(TemplateBody b, String? v) => b.typePrefix = v;
 SignalDomainId? _getPrimaryDomain(TemplateBody b) => b.primaryDomain;
 void _setPrimaryDomain(TemplateBody b, SignalDomainId? v) =>
     b.primaryDomain = v;
+
+bool? _getWifi(TemplateBody b) => b.wifi;
+void _setWifi(TemplateBody b, bool? v) => b.wifi = v;
 
 int _getFrontU(TemplateBody b) => b.frontU;
 void _setFrontU(TemplateBody b, int v) => b.frontU = v;

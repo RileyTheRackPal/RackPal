@@ -60,6 +60,7 @@ import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/drop_entry_actions.dart';
 import 'package:rackpal/src/session/export_controller.dart';
 import 'package:rackpal/src/session/locations_actions.dart';
+import 'package:rackpal/src/session/network_actions.dart';
 import 'package:rackpal/src/session/outlet_plate_actions.dart';
 import 'package:rackpal/src/session/outlet_template_actions.dart';
 import 'package:rackpal/src/session/pathway_actions.dart';
@@ -1531,6 +1532,12 @@ final class AppShellState extends State<AppShell>
       onEdit: buildStructureEditAction(controller: session.controller),
       onSetCount: buildStructureMatrixAction(controller: session.controller),
       onEditPathways: buildPathwayEditAction(controller: session.controller),
+      onEditDevices: buildDeviceNetworkEditAction(
+        controller: session.controller,
+      ),
+      onDevicesVerifiedToday: buildDevicesVerifiedTodayAction(
+        controller: session.controller,
+      ),
       onAddPathway: buildPathwayAddAction(controller: session.controller),
       onRemovePathway: buildPathwayRemoveAction(
         controller: session.controller,

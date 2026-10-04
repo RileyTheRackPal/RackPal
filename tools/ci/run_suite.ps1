@@ -1145,7 +1145,51 @@ $SuiteFloors = @{
     # .dart, neither convention row without a sample, the tag pill row and
     # the net label row each drawn and explained, and each sample the
     # layer's own mark, the same pill and the same pennant to 1e-9.
-    'rackpal_core'   = 5427
+    # 5434 at `#985` (NET-A/1a, DR-048): +7 in persistence/network_config_
+    # wire_test.dart, the control (by key, not word: every starter has a bank
+    # keyed "network"), vlans absent when unstated and round-tripping when
+    # stated, an on-disk [] read as unstated, verifiedOn absent and then to
+    # the day, and CR-117 over both. The unconditional-vlans mutation is
+    # killed by the absence test alone, as the Story said it would be.
+    # 5439 at `#986` (NET-A/1b, DR-048): +5 in persistence/device_network_
+    # wire_test.dart, no device record in any of the four starters carrying
+    # the key with each file still byte-exact, and a management address on
+    # its own record only, read back and byte-exact (mutation-checked).
+    # 5447 at `#987` (NET-A/1c, DR-048, DR-226): +8 in commands/device_
+    # network_command_test.dart, the first value creating the network and
+    # undo restoring the record, the last clear dropping it, the MAC on the
+    # device and never the network, no stamp on edit, VLANs compared by
+    # content, a stored list unchangeable under undo, Verified today as one
+    # entry, and the row keys. Drop-on-last mutation-checked (three kills).
+    # The fuzz harness gains setDeviceNetwork; its case count is unchanged.
+    # PLUS 14 THAT NOBODY WROTE: g4_wire_test.dart generates a cleared case
+    # and a measured-zero case for every DeviceField row, so the seven new
+    # rows got G4 wire coverage on arrival. First floored at 5447 from the
+    # test file alone; the gate counted 5461, and the difference is these.
+    # 5467 at `#996` (NET-A/2e, DR-227): +6 in persistence/template_wifi_
+    # wire_test.dart, no starter body carrying the key with each file still
+    # byte-exact (by key, not word: the access point is TAGGED "wifi"), a
+    # stated yes and no both written and read back, and unstated absent
+    # again. The isolation census now also covers primaryDomain, which was
+    # missing from TemplateBodyField.all.
+    # 5477 at `#988` (NET-A/2a, DR-226, DR-227): +10 in derived/network_
+    # table_test.dart, Whole House's 26 rows without the passthroughs, Show
+    # all, Wi-Fi without a port, a value keeping a device listed, both
+    # orders and their agreement, a row reading its device (the MAC from
+    # macAddressPrimary), unverified said, and the VLAN parser.
+    # 5483 at `#997` (NET-A/2f, DR-227): +6 in persistence/network_order_
+    # wire_test.dart, each starter reading as by designator with no key and
+    # its bytes kept, rack then room written and read back, and the key
+    # absent again at the default.
+    # 5507 at `#992` (NET-A/3a, DR-228): +24 in sheet/network_sheet_test.
+    # dart, which rows print (none recorded, a MAC alone, a date alone not
+    # a value, the project's order), the ten cells and the widths, seven
+    # page sizes swept and their control, T6.50's place and numbering in
+    # the set with the pool after the equipment list's, the reservation
+    # lifted, and the unrecorded-devices notice.
+    # 5508 at `#993` (NET-A/3b, DR-048): +1, a dated row printed in the
+    # values' ink and an undated one as unverified in the muted ink.
+    'rackpal_core'   = 5508
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1236,7 +1280,11 @@ $SuiteFloors = @{
     # notice and stays drawn, with no note and no fallback notice.
     # 285 at `#984` (M6-D5, DR-225): +1, Whole House's printed legend keys
     # the tag pill on W003, RF's first cable, and not the net label.
-    'rackpal_export' = 285
+    # 288 at `#992` (NET-A/3a, DR-228): +3 in network_schedule_export_
+    # test.dart, T6.50 absent from file, index and notices as shipped, then
+    # present and indexed with three devices addressed, and the notice
+    # naming the blank ones.
+    'rackpal_export' = 288
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1794,7 +1842,41 @@ $SuiteFloors = @{
     # 2050 at `#983` (M6-M, DR-224): +4 in shell/export_notices_dialog_test.
     # dart, notices grouped by sheet, no link with none, no link when the line
     # does not end with the count, and the link opens the list and Copy works.
-    'rackpal_ui'     = 2050
+    # 2054 at `#996` (NET-A/2e, DR-227): +4 in builder/device_builder_screen
+    # _test.dart, the Wi-Fi row: yes reaches the saved body, unset starts
+    # and saves unset, no is kept apart from unset, and yes goes back to
+    # unset.
+    # 2060 at `#988` (NET-A/2a, DR-226): +5 in structure/devices_view_test
+    # .dart, the 26 rows and default columns, Show all, unverified in the
+    # box, one edit per Enter (the double send it found is fixed), and the
+    # identity columns read-only; +1 in structure_editor_screen_test.dart,
+    # the Devices tab opening a real surface.
+    # 2064 at `#997` (NET-A/2f, DR-227): +3 in settings/sheet_set_dialog_test
+    # .dart, every setting left to Sheet set drawn there (so none is drawn
+    # nowhere), the default, and rack then room as one setting command; +1
+    # in structure/devices_view_test.dart, the table following its order.
+    # 2066 at `#989` (NET-A/2b, DR-226): +1 in structure/devices_view_test
+    # .dart, Columns turning subnet on and MAC off; +1 in structure_editor_
+    # screen_test.dart, Show all surviving a trip to another view.
+    # 2072 at `#990` (NET-A/2c, DR-226): +4 in structure/devices_view_test
+    # .dart, the batch bar absent until a tick, Set as one call over the
+    # ticked rows, Verified today asking for exactly them, and Clear; +2 in
+    # structure_editor_screen_test.dart, Ctrl+D filling from the row above
+    # and Ctrl+V saying where it works.
+    # 2076 at `#991` (NET-A/2d, DR-048): +4 in inspector/device_network_
+    # section_test.dart, nothing recorded naming where to record it, an
+    # address shown beside unverified, a dated row's day, and no text field
+    # anywhere in the section.
+    # 2087 at `#994` (NET-A/4a, DR-229): +11 in network/web_page_scope_
+    # test.dart, ten URLs judged openable or not (http and https with a
+    # host; file, ftp, javascript, mailto, hostless and bare refused) and
+    # the scope handing its launcher down.
+    # 2099 at `#995` (NET-A/4b, DR-229): +12 in network/open_web_page_
+    # test.dart, the address and URL helpers, the confirmation before any
+    # launch, an edited URL opening, Cancel, a non-http URL refused in the
+    # dialog, the system's refusal said, no button without an address or
+    # a launcher and its control, and both hosts.
+    'rackpal_ui'     = 2099
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -2011,12 +2093,24 @@ $SuiteFloors = @{
     # real menu, status line and dialog showing a notice's sentence; +1 in
     # session/document_session_test.dart, a status and its notices replaced
     # together.
+    # 1169 at `#988` (NET-A/2a, DR-226): +8 in session/network_actions_test
+    # .dart, through a real controller: an address trimmed, the MAC on the
+    # device, an emptied cell unknown, VLANs and dates refused when
+    # mistyped, no stamp on edit, several cells one undo, and a stranger
+    # refused.
     # 1161 at `#330` (M6-D4, DR-004, DR-225): +5 in one_schematic_sheet_test
     # .dart, a source scan: not vacuous, a Sheet constructed only by the
     # codec and the two commands that create the ONE sheet, each behind a
     # null check, the interconnect files writing none, and no surface
     # offering to author a sheet. Both scans mutation-checked.
-    'rackpal_app'    = 1161
+    # 1171 at `#990` (NET-A/2c, DR-226): +2 in session/network_actions_test
+    # .dart, Verified today as one undo step, and today as the LOCAL day at
+    # UTC midnight (mutation-checked against the UTC day, west of UTC).
+    # 1175 at `#994` (NET-A/4a, DR-229): +4 in session/web_page_launcher_
+    # test.dart, openUrl sent whole, nothing but http/https reaching the
+    # channel, a refusal or a throw read as false, and the app's root
+    # handing the services' launcher to the shell.
+    'rackpal_app'    = 1175
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

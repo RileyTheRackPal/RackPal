@@ -125,6 +125,14 @@ enum RuNumbering { bottomUpFromOne, topDown }
 /// numbering grammar.
 enum SheetNumbering { ncs, simple }
 
+/// How the Devices view and `T6.50` order their devices (DR-227 §11.226.4).
+///
+/// [designator] is the default, the user's own firm's method: addresses
+/// are assigned in designator order, so the schedule reads in the order
+/// the network was built. [rackThenRoom] is rack by rack, top unit down,
+/// then room by room, for a firm that assigns where the gear stands.
+enum NetworkOrder { designator, rackThenRoom }
+
 /// Which pair lands on which pin of an 8P8C jack (TIA-568).
 ///
 /// DR-180 §11.179 puts it on the PROJECT, because a job spec names one

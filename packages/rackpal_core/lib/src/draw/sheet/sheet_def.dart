@@ -23,7 +23,8 @@
 // §2.2's table arrived in pieces: T0.00, the cover, at M6-A, T0.01, the
 // legend, at M6-B, T0.02, the exceptions, at M6-C, T6.20, unused home
 // runs, at M6-E1, T5.01 at M6-E2, the Pull Sheet and Termination Schedule
-// at M6-K, and T6.01…, the interconnect sheets, at M6-D. Anything still
+// at M6-K, T6.01…, the interconnect sheets, at M6-D, and T6.50, the
+// network schedule, at NET-A/3a (DR-228). Anything still
 // unbuilt is absent from [SheetRole] rather than stubbed, which is
 // what lets a user-facing document state what
 // prints by naming the roles rather than by counting anything
@@ -208,6 +209,18 @@ enum SheetRole {
     shortTitle: 'EQUIPMENT LIST',
   ),
 
+  /// docs/08 §2.2's `T6.50`, the Network/IP Schedule (NET-A/3a, `#992`,
+  /// DR-048 §11.47.4, DR-228). `AUTO`: emitted iff a device carries a
+  /// network value, so [SheetSet.forRacks]' `networkScheduleSheets`
+  /// defaults to zero. After `T6.30` and before `T5.01` (`n+5`), ANSI A
+  /// landscape, the schedules' paper (§6.1).
+  networkSchedule(
+    'NETWORK/IP SCHEDULE',
+    SheetSize.ansiALandscape,
+    perRack: false,
+    shortTitle: 'NETWORK',
+  ),
+
   /// docs/08 §2.2's `T5.01`, Plate, Panel & Pinout Details (M6-E2c,
   /// `#976`, DR-221). `AUTO`: emitted iff a pinout is non-standard, LAST
   /// in the set (`n+5`), ANSI A landscape. The title is the canonical name
@@ -265,14 +278,17 @@ bool isValidNcsId(String id) => kNcsIdPattern.hasMatch(id);
 /// to what they are reserved FOR.
 ///
 /// §2.2's "Not in v1, and this is a ruling, not an omission" names `T6.40`
-/// Power Schedule and `T6.50` Network/IP Schedule as v1.1 sheets. A sheet
-/// of some other type printed under one of those ids is not a cosmetic
-/// problem: two revisions of one project would carry the same sheet number
-/// on different drawings, which is the one thing a sheet number exists to
-/// prevent.
+/// Power Schedule as a v1.1 sheet. A sheet of some other type printed
+/// under that id is not a cosmetic problem: two revisions of one project
+/// would carry the same sheet number on different drawings, which is the
+/// one thing a sheet number exists to prevent.
+///
+/// `T6.50` WAS RESERVED HERE TOO, for a v1.1 Network/IP Schedule, until
+/// DR-048 moved that sheet into v1 and DR-228 built it: it is
+/// [SheetRole.networkSchedule]'s own id now, and reserving it would raise
+/// a notice against the very sheet it was kept for.
 const Map<String, String> kReservedNcsIds = <String, String>{
   'T6.40': 'the v1.1 Power Schedule',
-  'T6.50': 'the v1.1 Network/IP Schedule',
 };
 
 /// Whether [id] is spoken for by a sheet type this build does not emit.
@@ -292,7 +308,7 @@ String _overflowNotice(int pages, int from) {
   return 'The equipment list needs $pages pages and docs/08 §2.2 gives it '
       'T6.$kEquipmentListBlockStart–T6.$last, so page '
       '${kEquipmentListBlockSize + 1} onward is numbered from '
-      'T6.$from — T6.4x and T6.5x are reserved.';
+      'T6.$from — T6.4x is reserved and T6.5x is the network schedule.';
 }
 
 /// The same, for T6.20 (DR-220 §11.219.5). See [unusedHomeRunsNcsId].
@@ -395,10 +411,10 @@ const int kEquipmentListBlockStart = 30;
 const int kEquipmentListBlockSize = 10;
 
 /// Where an equipment list too long for its block continues, past BOTH
-/// reserved decades — `T6.40` Power Schedule and `T6.50` Network/IP
-/// Schedule. Their continuation pages would want `T6.41…` and `T6.51…`,
-/// so the whole of each decade is left alone rather than only its first
-/// number.
+/// decades above it: `T6.40`, reserved for the v1.1 Power Schedule, and
+/// `T6.50`, the Network/IP Schedule's own (DR-228). Their continuation
+/// pages want `T6.41…` and `T6.51…`, so the whole of each decade is left
+/// alone rather than only its first number.
 const int kEquipmentListOverflowStart = 60;
 
 /// The NCS id for schedule page [page], 0-based.
@@ -427,6 +443,34 @@ String equipmentListNcsId(
       ? kEquipmentListBlockStart + page
       : overflowFrom + page - kEquipmentListBlockSize;
   return 'T6.${sequence.toString().padLeft(2, '0')}';
+}
+
+/// The first sequence number T6.50 uses (docs/08 §2.2, DR-228).
+const int kNetworkScheduleBlockStart = 50;
+
+/// How many sheet numbers T6.50 has to itself: `T6.50` to `T6.59`, the
+/// whole decade the reservation kept clear (§11.227.3).
+const int kNetworkScheduleBlockSize = 10;
+
+/// The NCS id for T6.50 page [page], 0-based: `T6.50` to `T6.59`, then
+/// from [overflowFrom], which is wherever the equipment list's own
+/// overflow stopped, since it precedes T6.50 in the set.
+String networkScheduleNcsId(
+  int page, {
+  int overflowFrom = kEquipmentListOverflowStart,
+}) {
+  final sequence = page < kNetworkScheduleBlockSize
+      ? kNetworkScheduleBlockStart + page
+      : overflowFrom + page - kNetworkScheduleBlockSize;
+  return 'T6.${sequence.toString().padLeft(2, '0')}';
+}
+
+/// Says why T6.50's numbers jump. See [networkScheduleNcsId].
+String _networkOverflowNotice(int pages, int from) {
+  const last = kNetworkScheduleBlockStart + kNetworkScheduleBlockSize - 1;
+  return 'The network schedule needs $pages pages and DR-228 gives it '
+      'T6.$kNetworkScheduleBlockStart–T6.$last, so page '
+      '${kNetworkScheduleBlockSize + 1} onward is numbered from T6.$from.';
 }
 
 /// One resolved sheet: its identity, its role, and where it sits in the
@@ -570,6 +614,7 @@ final class SheetSet {
     int equipmentListSheets = 1,
     int exceptionSheets = 1,
     int unusedHomeRunSheets = 0,
+    int networkScheduleSheets = 0,
     int pinoutSheets = 0,
     int pullSheets = 0,
     int terminationSheets = 0,
@@ -620,6 +665,7 @@ final class SheetSet {
         terminationSheets +
         unusedHomeRunSheets +
         equipmentListSheets +
+        networkScheduleSheets +
         pinoutSheets;
     final sheets = <SheetDef>[
       SheetDef(
@@ -707,9 +753,9 @@ final class SheetSet {
 
     // THE OVERFLOW POOL IS ONE COUNTER, drawn in set order (DR-222
     // §11.221.1): the Pull Sheet's overflow, then the Termination
-    // Schedule's, then T6.20's, then the equipment list's. Each starts where
-    // the one before it stopped, so no id is printed on two sheets however
-    // many of them overflow.
+    // Schedule's, then T6.20's, then the equipment list's, then T6.50's.
+    // Each starts where the one before it stopped, so no id is printed on
+    // two sheets however many of them overflow.
     var pool = kEquipmentListOverflowStart;
 
     // T6.01… ARE `6..n`, AFTER THE ELEVATIONS AND BEFORE THE SCHEDULES
@@ -798,6 +844,9 @@ final class SheetSet {
     }
 
     final equipmentOverflowFrom = pool;
+    pool += equipmentListSheets > kEquipmentListBlockSize
+        ? equipmentListSheets - kEquipmentListBlockSize
+        : 0;
     for (var page = 0; page < equipmentListSheets; page++) {
       sheets.add(
         SheetDef(
@@ -814,7 +863,24 @@ final class SheetSet {
       );
     }
 
-    // T5.01 IS LAST (docs/08 §2.2's `n+5`, DR-221 §11.220.6): a set that is
+    // T6.50 IS `n+5`, AFTER T6.30 AND BEFORE T5.01 (DR-228 §11.227.3), and
+    // last to draw on the pool because last of the T6 sheets in the set.
+    // Zero pages is the AUTO sheet absent: nobody recorded a value.
+    final networkFrom = pool;
+    for (var page = 0; page < networkScheduleSheets; page++) {
+      sheets.add(
+        SheetDef(
+          ncsId: networkScheduleNcsId(page, overflowFrom: networkFrom),
+          role: SheetRole.networkSchedule,
+          index: index++,
+          total: total,
+          legendNcsId: _kLegendNcsId,
+          stamped: stamped,
+        ),
+      );
+    }
+
+    // T5.01 IS LAST (docs/08 §2.2's `n+6`, DR-221 §11.220.6): a set that is
     // not numeric, as the table itself says. Type 5 has no other sheet and
     // no reserved id, so the pages simply count up. Zero pages is the AUTO
     // sheet absent.
@@ -866,6 +932,8 @@ final class SheetSet {
         _unusedOverflowNotice(unusedHomeRunSheets, unusedFrom),
       if (equipmentListSheets > kEquipmentListBlockSize)
         _overflowNotice(equipmentListSheets, equipmentOverflowFrom),
+      if (networkScheduleSheets > kNetworkScheduleBlockSize)
+        _networkOverflowNotice(networkScheduleSheets, networkFrom),
     ];
 
     return SheetSet._(List.unmodifiable(sheets), List.unmodifiable(notices));

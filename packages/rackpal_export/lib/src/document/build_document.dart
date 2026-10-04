@@ -163,6 +163,19 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     ).drawingArea,
     measurer: measurer,
   );
+  // T6.50 IS AUTO (DR-048 §11.47.4, DR-228): no device with a value
+  // paginates to no page. The rows are the Devices view's, in the project's
+  // one network order (DR-227).
+  final networkPages = paginateNetworkSchedule(
+    rows: networkSheetRowsOf(doc),
+    order: doc.settings.networkOrder,
+    drawingArea: SheetLayout.resolve(
+      geometry: const SheetGeometry(SheetSize.ansiALandscape),
+      revisionRowCount: revisionBodyRowCount(doc.revisionBlock),
+      stamped: stamped,
+    ).drawingArea,
+    measurer: measurer,
+  );
   // T6.10 AND T6.15 ARE `ON` (docs/08 §2.2, DR-222): paginated from the
   // export's one schedule, through M3's own projection, so the page and
   // the Schedule screen are one view. Each is at least one page.
@@ -232,6 +245,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
     exceptionSheets: exceptionPages.length,
     unusedHomeRunSheets: unusedPages.length,
     equipmentListSheets: schedulePages.length,
+    networkScheduleSheets: networkPages.length,
     planUnderlays: plans,
     stamped: stamped,
     numbering: doc.settings.sheetNumbering,
@@ -279,6 +293,16 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
       'interconnect sheet: ${names.join(', ')}.',
     );
   }
+  // A SCHEDULE THAT LOOKS COMPLETE IS NAMED WHERE IT IS NOT (DR-228
+  // §11.227.2): the devices that could carry an address and carry none.
+  if (networkPages.isNotEmpty) {
+    final networkId = set.sheets
+        .firstWhere((s) => s.role == SheetRole.networkSchedule)
+        .ncsId;
+    if (networkUnrecordedNotice(doc, networkId) case final notice?) {
+      notices.add(notice);
+    }
+  }
   var interconnectSheet = 0;
   var schedulePage = 0;
   var exceptionPage = 0;
@@ -286,6 +310,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   var pullPage = 0;
   var terminationPage = 0;
   var pinoutPage = 0;
+  var networkPage = 0;
   for (final sheet in set.sheets) {
     final DiagramScene scene;
     final LegibilityReport legibility;
@@ -537,6 +562,19 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
         final built = buildUnusedRunsSheet(
           sheet: sheet,
           page: unusedPages[unusedPage++],
+          info: doc.info,
+          settings: doc.settings,
+          revisions: doc.revisionBlock,
+          fileName: request.fileName,
+          issuedAt: request.issuedAt,
+          measurer: measurer,
+        );
+        scene = built.scene;
+        legibility = built.legibility;
+      case SheetRole.networkSchedule:
+        final built = buildNetworkSheet(
+          sheet: sheet,
+          page: networkPages[networkPage++],
           info: doc.info,
           settings: doc.settings,
           revisions: doc.revisionBlock,

@@ -262,6 +262,13 @@ enum _StepKind {
   setSignalFamily,
   setLifecycleStatus,
 
+  // NET-A/1c (`#987`, DR-048, DR-226), REGISTERED THE DAY IT SHIPPED. The
+  // network rows create a device's config on its first value and DROP it on
+  // its last, so a revert has to remove an object the apply invented and
+  // put back one it removed. A half-restore re-encodes consistently, so
+  // only this byte identity would see it.
+  setDeviceNetwork,
+
   // M0's clause 4a, wired in 2026-08-27. See this file's header: the
   // clause asks for byte identity "including `templates.keys`", and until
   // M4-S there was no command that touched the map to ask it of.
@@ -575,6 +582,47 @@ Command<RackDocument>? _buildSetOriginProperty(
   };
 }
 
+/// One Devices-view edit (NET-A/1c): a random network row or the MAC, set
+/// to a value or CLEARED, so both the create-on-first and drop-on-last arms
+/// of `DeviceField._writeNetwork` are driven.
+///
+/// SPELLED OUT PER FIELD, for `_buildSetOutletProperty`'s reason.
+Command<RackDocument> _buildSetDeviceNetwork(_SequenceState s, Random rnd) {
+  final id = s.aliveDeviceIds[rnd.nextInt(s.aliveDeviceIds.length)];
+  final device = s.doc.devices[id]!;
+  final now = s.nextNow();
+  final clear = rnd.nextInt(3) == 0;
+
+  SetEntityPropertyCommand<DeviceInstance, T> make<T>(
+    EntityField<DeviceInstance, T> field,
+    T to,
+  ) => SetEntityPropertyCommand<DeviceInstance, T>(
+    id: id,
+    field: field,
+    from: field.get(device),
+    to: to,
+    now: now,
+    actor: 'gen',
+  );
+
+  final n = rnd.nextInt(250) + 1;
+  return switch (rnd.nextInt(7)) {
+    0 => make(
+      DeviceField.macAddressPrimary,
+      clear ? null : '00:11:22:33:44:$n',
+    ),
+    1 => make(DeviceField.networkHostname, clear ? null : 'host-$n'),
+    2 => make(DeviceField.networkIp, clear ? null : '10.0.10.$n'),
+    3 => make(DeviceField.networkSubnet, clear ? null : '255.255.255.0'),
+    4 => make(DeviceField.networkGateway, clear ? null : '10.0.10.1'),
+    5 => make(DeviceField.networkVlans, clear ? const <int>[] : [n, n + 1]),
+    _ => make(
+      DeviceField.networkVerifiedOn,
+      clear ? null : DateTime.utc(2026, 10, 1 + n % 28),
+    ),
+  };
+}
+
 /// One lifecycle edit, on a device or a cable — M3-A/7's two table rows.
 Command<RackDocument> _buildSetLifecycle(_SequenceState s, Random rnd) {
   final now = s.nextNow();
@@ -717,6 +765,7 @@ final class _SequenceState {
     if (aliveHomeRunLinkIds.isNotEmpty) _StepKind.setSignalFamily,
     if (aliveDeviceIds.isNotEmpty || aliveLinkIds.isNotEmpty)
       _StepKind.setLifecycleStatus,
+    if (aliveDeviceIds.isNotEmpty) _StepKind.setDeviceNetwork,
 
     // UNCONDITIONAL: an acknowledgement names a rule and a fingerprint,
     // not an entity, so there is nothing for it to wait on. The
@@ -1029,6 +1078,8 @@ Command<RackDocument>? _buildCommand(
 
     case _StepKind.setLifecycleStatus:
       return _buildSetLifecycle(s, rnd);
+    case _StepKind.setDeviceNetwork:
+      return _buildSetDeviceNetwork(s, rnd);
     case _StepKind.setSignalFamily:
       return _buildSetSignalFamily(s, rnd);
 
@@ -1272,6 +1323,7 @@ void _reconcileTrackingAfterCommit(
     case _StepKind.setOriginProperty:
     case _StepKind.setSignalFamily:
     case _StepKind.setLifecycleStatus:
+    case _StepKind.setDeviceNetwork:
     // Mutate entities already tracked; no alive-id bookkeeping needed.
   }
 

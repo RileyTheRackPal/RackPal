@@ -6,6 +6,7 @@ import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/model/entity_meta.dart';
 import 'package:rackpal_core/src/model/enums.dart' show LifecycleStatus;
 import 'package:rackpal_core/src/model/placement.dart';
+import 'package:rackpal_core/src/model/port.dart' show NetworkConfig;
 import 'package:rackpal_core/src/model/template.dart' show TemplateRef;
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/len.dart';
@@ -383,9 +384,10 @@ final class DeviceInstance {
     Uuid? locationId,
     this.serialNumber,
     this.assetTag,
-    this.macAddressPrimary,
+    String? macAddressPrimary,
     this.firmwareVersion,
     this.installedAt,
+    NetworkConfig? network,
     DeviceOverrides? overrides,
     this.designatorWatermark = 0,
     this.structureBodyId,
@@ -396,6 +398,8 @@ final class DeviceInstance {
        _placement = placement,
        _lifecycleStatus = lifecycleStatus,
        _locationId = locationId,
+       _macAddressPrimary = macAddressPrimary,
+       _network = network,
        overrides = overrides ?? DeviceOverrides(),
        _notes = notes;
 
@@ -458,9 +462,34 @@ final class DeviceInstance {
   bool designatorLocked;
   String? serialNumber;
   String? assetTag;
-  String? macAddressPrimary;
+
+  /// THE device's MAC (DR-226 §11.225.4): the one home for it, which the
+  /// Devices view's MAC column writes and `T6.50` prints. `network.mac` is
+  /// never written on a device. AC-013's pair, since it has a command.
+  String? _macAddressPrimary;
+  String? get macAddressPrimary => _macAddressPrimary;
+  @internal
+  set macAddressPrimary(String? v) => _macAddressPrimary = v;
   String? firmwareVersion;
   DateTime? installedAt;
+
+  /// The device's MANAGEMENT address: hostname, IP, subnet, gateway, VLANs
+  /// and when somebody last checked them (DR-048 §11.47.2). Null when
+  /// nobody has said, which is every device until somebody does.
+  ///
+  /// ON THE DEVICE, NOT A PORT. A managed switch has one management address
+  /// and forty-eight ports, so an address hung off a port is a fact filed
+  /// under an arbitrary one of them. `Port.network` keeps what is genuinely
+  /// per-port: VLAN membership, `portRole`, and the address of a device
+  /// that really has more than one.
+  ///
+  /// ITS `mac` IS NOT THE DEVICE'S MAC. That is [macAddressPrimary], the
+  /// one home DR-226 §11.225.4 gave it; nothing writes `network.mac` on a
+  /// device, so the fact cannot live in two places.
+  NetworkConfig? _network;
+  NetworkConfig? get network => _network;
+  @internal
+  set network(NetworkConfig? v) => _network = v;
   DeviceOverrides overrides;
 
   /// Reserve allocation (AC-006).

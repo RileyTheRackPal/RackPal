@@ -80,6 +80,8 @@ void _poke(ProjectSettingField<Object?> f, ProjectSettings s) {
       f.set(s, _next(RuNumbering.values, f.get(s)));
     case ProjectSettingField<SheetNumbering>():
       f.set(s, _next(SheetNumbering.values, f.get(s)));
+    case ProjectSettingField<NetworkOrder>():
+      f.set(s, _next(NetworkOrder.values, f.get(s)));
     case ProjectSettingField<CollisionPolicy>():
       f.set(s, _next(CollisionPolicy.values, f.get(s)));
     case ProjectSettingField<bool>():
@@ -136,11 +138,12 @@ void main() {
       }
     });
 
-    test('eighteen scalars, and the four maps are deliberately absent', () {
+    test('nineteen scalars, and the four maps are deliberately absent', () {
       // Nineteen until DR-201 took `collisionPolicy` out: it governed
       // nothing, so it is stored and no longer offered. It is absent for
-      // that reason, not for the maps' one, and says so below.
-      expect(ProjectSettingFields.all, hasLength(18));
+      // that reason, not for the maps' one, and says so below. Nineteen
+      // again since DR-227 added `networkOrder` (NET-A/2f).
+      expect(ProjectSettingFields.all, hasLength(19));
       expect(
         ProjectSettingFields.all.any((f) => f.key == 'collisionPolicy'),
         isFalse,

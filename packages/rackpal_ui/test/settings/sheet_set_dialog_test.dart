@@ -350,4 +350,48 @@ void main() {
       expect(doc.info.scopeNarrative, 'Supply and install a rack.');
     });
   });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // THE NETWORK ORDER (NET-A/2f, DR-227 §11.226.4)
+  // ═══════════════════════════════════════════════════════════════════
+  group('the network schedule order', () {
+    testWidgets('every setting Project settings leaves to Sheet set is drawn '
+        'here, so no setting is drawn nowhere', (tester) async {
+      await _open(tester, _doc());
+      for (final key in kSettingsDrawnInSheetSet) {
+        final field = ProjectSettingFields.all.singleWhere((f) => f.key == key);
+        await _revealText(tester, field.label);
+      }
+    });
+
+    testWidgets('it starts by designator, the default', (tester) async {
+      await _open(tester, _doc());
+      await _reveal(tester, kNetworkOrderKey);
+      expect(
+        find.descendant(
+          of: find.byKey(kNetworkOrderKey),
+          matching: find.text(kNetworkOrderLabels[NetworkOrder.designator]!),
+        ),
+        findsOneWidget,
+      );
+    });
+
+    testWidgets('choosing rack then room is ONE undoable setting command', (
+      tester,
+    ) async {
+      final doc = _doc();
+      final ran = await _open(tester, doc);
+      await _reveal(tester, kNetworkOrderKey);
+      await tester.tap(find.byKey(kNetworkOrderKey));
+      await tester.pumpAndSettle();
+      await tester.tap(
+        find.text(kNetworkOrderLabels[NetworkOrder.rackThenRoom]!).last,
+      );
+      await tester.pumpAndSettle();
+
+      expect(ran, hasLength(1));
+      expect(ran.single, isA<SetProjectSettingCommand<NetworkOrder>>());
+      expect(doc.settings.networkOrder, NetworkOrder.rackThenRoom);
+    });
+  });
 }

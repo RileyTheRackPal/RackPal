@@ -40,6 +40,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/inspector/device_network_section.dart';
 import 'package:rackpal_ui/src/inspector/device_overrides_section.dart';
 import 'package:rackpal_ui/src/inspector/device_ports_section.dart';
 import 'package:rackpal_ui/src/inspector/mount_note_field.dart';
@@ -562,6 +563,10 @@ class _SelectionSummary extends StatelessWidget {
                       device: one,
                       onSetOverride: onSetOverride,
                     ),
+                    // NET-A/2d (`#991`): read-only, between the device's
+                    // own facts and its jacks, since an address is a fact
+                    // about the device and not about jack 37.
+                    DeviceNetworkSection(doc: doc, device: one),
                     // M4-L4 (`#233`). Below door 1's device fields, because
                     // a port is a fact ABOUT the device and a person looks
                     // for the mass before they look for jack 37.
