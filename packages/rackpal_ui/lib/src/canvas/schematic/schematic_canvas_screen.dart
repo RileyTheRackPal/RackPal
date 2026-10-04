@@ -2745,6 +2745,8 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
     final plans = <(String, String), MultiDrawPlan>{};
     final candidates = <PinRef>[];
+    final springBack = <PinRef>{};
+    final chipsByBank = <(String, String), bool>{};
     for (final pin in locatePins(scene)) {
       final bank = _bankKeyOf(pin.ref);
       if (bank == null) continue;
@@ -2766,7 +2768,22 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
           toBankKey: bank,
         ),
       );
-      if (!plan.isEmpty) candidates.add(pin.ref);
+      if (plan.isEmpty) continue;
+      candidates.add(pin.ref);
+      // DR-116 §11.115.5's amber ring, per target BANK (DR-234
+      // §11.233.1): the plan is already made, pairs and all, so whether
+      // any of its N cables would spring back is known here.
+      final chips = chipsByBank.putIfAbsent(
+        key,
+        () =>
+            evaluatePairedSpringBack(
+              _doc,
+              [for (final p in plan.pairs) (p.from, p.to)],
+              gesture: PairedGesture.multiDraw,
+            ) !=
+            null,
+      );
+      if (chips) springBack.add(pin.ref);
     }
 
     if (candidates.isEmpty) {
@@ -2782,15 +2799,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     setState(() {
       _wireFrom = caret;
       _wireFromBankKey = sel.bankKey;
-      // NO TIER-2 VERDICT ON A MULTI-DRAW, AND IT IS A GAP RATHER THAN A
-      // RULING. A bank run aims at a BANK, and `planMultiDraw` decides
-      // which source lands on which member only once a target bank is
-      // chosen — so at arm time there is no pin PAIR to ask
-      // `evaluateSpringBack` about, and an amber ring would have to mean
-      // "one of the N cables this bank would make might object", which is
-      // not a thing a ring on one pin can say. The commit path checks it
-      // per pair, where the pairing exists.
-      _setTargets(candidates: candidates);
+      // THE RING IS PER TARGET BANK (`#999`, DR-234). This comment used to
+      // say there was no pair to ask at arm time and that "the commit path
+      // checks it per pair"; both were wrong. The walk above plans every
+      // bank, pairs included, and the commit path checked nothing until
+      // DR-234. A ring on any of a bank's pins means one of the N cables
+      // that bank would take springs back.
+      _setTargets(candidates: candidates, springBack: springBack);
       _multiPlans = Map<(String, String), MultiDrawPlan>.unmodifiable(plans);
     });
     if (announce) {
@@ -2854,12 +2869,30 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
   /// Commits the armed multi-draw onto [to]'s bank — N `Link`s, ONE undo
   /// entry (docs/05:484).
-  void _commitMultiDraw(PinRef to) {
+  ///
+  /// [overriding] is `[ Connect anyway ]`, which commits all N (DR-234
+  /// §11.233.3).
+  void _commitMultiDraw(PinRef to, {bool overriding = false}) {
     final plan = _planFor(to);
     if (plan == null || plan.isEmpty) {
       _clearWire();
       _status.show('That bank can take none of these cables.');
       return;
+    }
+    // TIER 2 PER CABLE (`#999`, DR-234 §11.233.1). The first cable whose
+    // pair springs back names its two jacks and counts the rest; the chip
+    // carries no rule-specific remedy (§11.233.5), because a remedy that
+    // repaired one of N while the rest committed has no single meaning.
+    if (!overriding) {
+      final verdict = evaluatePairedSpringBack(
+        _doc,
+        [for (final p in plan.pairs) (p.from, p.to)],
+        gesture: PairedGesture.multiDraw,
+      );
+      if (verdict != null) {
+        _springBackOff(to, verdict.chip);
+        return;
+      }
     }
     final commands = buildMultiDrawCommands(
       doc: _doc,
@@ -4468,7 +4501,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     // The same three-way branch [_armWireFrom] took, read back off the
     // field each limb set. Multi-draw first, for the reason stated there.
     if (_wireFromBankKey != null) {
-      _commitMultiDraw(to);
+      _commitMultiDraw(to, overriding: overriding);
       return;
     }
     final setKey = _wireFromSetKey;

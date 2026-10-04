@@ -146,6 +146,23 @@ void main() {
     return null;
   }
 
+  /// `[ Connect anyway ]` on the chip the run raises, ASSERTED UP.
+  ///
+  /// EVERY RUN IN THIS FILE SPRINGS BACK SINCE DR-234 (`#999`), and should.
+  /// MTX-1's `audOut` became balanced 3-pin pairs at DR-173, so the demo
+  /// run onto AMP-1's RCA `srcIn` is balanced line level into unbalanced
+  /// inputs (`SIG-002`), and the run onto DIS-1's `video` is audio into a
+  /// display. Multi-draw committed both in silence for as long as it never
+  /// asked tier 2. These tests are about the gesture's mechanics, so they
+  /// go through the override, which CR-017 makes the same N cables the run
+  /// would have written. Not optional: a run that raised no chip here would
+  /// mean the check had stopped running.
+  Future<void> connectAnyway(WidgetTester tester) async {
+    expect(find.byType(SpringBackChipCard), findsOneWidget);
+    await tester.tap(find.text(kSpringBackConnectAnyway));
+    await tester.pumpAndSettle();
+  }
+
   /// Selects [count] jacks from the top of [designator]'s [bankKey] bank
   /// and returns them in rank order.
   Future<List<({PinRef ref, DPt centre})>> selectRun(
@@ -181,6 +198,7 @@ void main() {
       await tester.pump();
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
 
       expect(doc.links, hasLength(before + 4), reason: 'four CABLES');
       final made = doc.links.values.skip(before).toList();
@@ -214,6 +232,7 @@ void main() {
       await tester.pump();
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
 
       final designators = doc.links.values
           .skip(before)
@@ -241,6 +260,7 @@ void main() {
       await tester.pump();
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
 
       final made = doc.links.values.skip(before).toList();
       for (var i = 0; i < 4; i++) {
@@ -283,6 +303,7 @@ void main() {
       await tester.pump();
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
 
       final first = doc.links.values.skip(before).first.conductors.single;
       expect(
@@ -311,6 +332,7 @@ void main() {
       await tester.pump();
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
       expect(doc.links, hasLength(before + 4));
 
       controller.undo.undo(doc);
@@ -343,6 +365,7 @@ void main() {
       await tester.pump();
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
 
       expect(controller.undo.undoLabelKey, LabelKey.multiDraw.name);
     });
@@ -428,6 +451,7 @@ void main() {
       await tester.pumpAndSettle();
       await tester.sendKeyEvent(LogicalKeyboardKey.enter);
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
 
       expect(doc.links, hasLength(before + 3));
       expect(statusOf(tester), contains('connected 3 cables'));
@@ -458,6 +482,7 @@ void main() {
       await tester.pump();
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
 
       final made = doc.links.length - before;
       expect(made, lessThan(8), reason: 'the bank could not take them all');
@@ -497,6 +522,61 @@ void main() {
             'different bills of materials, so choosing between them in '
             'silence is the harm the ruling names',
       );
+    });
+  });
+
+  group('8 — tier 2 per cable (DR-234, `#999`)', () {
+    testWidgets('the demo run SPRINGS BACK on SIG-002, counts the cables, '
+        'offers no remedy, and writes nothing', (tester) async {
+      await pump(tester);
+      final before = doc.links.length;
+      final sources = await selectRun(tester, 'MTX-1', 'audOut', count: 4);
+      final target = bank('AMP-1', 'srcIn');
+
+      final drag = await tester.startGesture(
+        toScreen(tester, sources.first.centre),
+      );
+      await tester.pump();
+      await drag.moveTo(toScreen(tester, target.first.centre));
+      await tester.pump();
+      await drag.up();
+      await tester.pumpAndSettle();
+
+      expect(find.byType(SpringBackChipCard), findsOneWidget);
+      final said = tester
+          .widgetList<Text>(find.byType(Text))
+          .map((t) => t.data ?? '')
+          .firstWhere((d) => d.startsWith('SIG-002 '), orElse: () => '');
+      expect(said, contains(' 4 of the 4 cables spring back.'));
+      for (final remedy in SpringBackRemedy.values) {
+        expect(
+          find.text(remedy.label),
+          findsNothing,
+          reason: 'a remedy for one cable of N has no single meaning',
+        );
+      }
+      expect(doc.links, hasLength(before), reason: 'this used to commit');
+    });
+
+    testWidgets('arming the run AMBERS the target bank', (tester) async {
+      await pump(tester);
+      final sources = await selectRun(tester, 'MTX-1', 'audOut', count: 4);
+      final drag = await tester.startGesture(
+        toScreen(tester, sources.first.centre),
+      );
+      await tester.pump();
+      final amber = tester
+          .renderObject<RenderSchematicCanvas>(find.byType(SchematicCanvasBody))
+          .plan
+          .ops
+          .whereType<OpCircle>()
+          .where((op) => op.stroke?.argb == kSpringBackRingArgb)
+          .length;
+      // Released before asserting, so a failure cannot leak a held
+      // pointer into the next test.
+      await drag.cancel();
+      await tester.pumpAndSettle();
+      expect(amber, greaterThan(0));
     });
   });
 }

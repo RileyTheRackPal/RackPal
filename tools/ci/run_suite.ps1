@@ -1937,7 +1937,10 @@ $SuiteFloors = @{
     # test.dart on the real V01 and A04 (the premise through core, the
     # spring-back writing nothing, the amber ring, Connect anyway as one
     # cable, Declare an adapter as one cable, one adapter, one undo).
-    'rackpal_ui'     = 2122
+    # 2124 at `#999` (DR-234): +2 in group 8 of canvas/schematic/schematic_
+    # multi_draw_test.dart (the demo run springing back on SIG-002 with the
+    # cable count, no remedy and nothing written; arming ambers the bank).
+    'rackpal_ui'     = 2124
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
