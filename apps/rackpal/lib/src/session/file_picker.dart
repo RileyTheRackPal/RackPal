@@ -141,6 +141,8 @@
 //     offsets.
 import 'package:flutter/services.dart';
 import 'package:rackpal/src/storage/save_paths.dart';
+import 'package:rackpal_ui/rackpal_ui.dart'
+    show WebPageLauncher, isOpenableWebUrl;
 
 /// The platform channel `windows/runner/file_dialog_channel.cpp` serves.
 ///
@@ -325,6 +327,30 @@ Future<bool> win32RevealFolder(String folder) async {
   try {
     return await kFileDialogChannel.invokeMethod<bool>('revealFolder', {
           'path': folder,
+        }) ??
+        false;
+  } on Object {
+    return false;
+  }
+}
+
+/// [WebPageLauncher] over the same channel, which `file_dialog_channel.cpp`
+/// serves as `openUrl` (NET-A/4a, `#994`, DR-048 §11.47.7, DR-229).
+///
+/// ON THIS CHANNEL, BESIDE [win32RevealFolder], because it is the same act:
+/// ShellExecuteW's "open" verb on a string, with a success code above 32.
+/// No package and no plugin DLL, for the reason `pubspec.yaml` gives for the
+/// file dialog: every native binary in the portable ZIP is one more for an
+/// enterprise allowlist to block.
+///
+/// THE SCHEME IS CHECKED ON BOTH SIDES OF THE CHANNEL. Here, so nothing but
+/// `http` and `https` is ever sent; and in the C++, so a future caller of
+/// the channel cannot hand ShellExecute a path to a program. Never throws.
+Future<bool> win32OpenWebPage(Uri url) async {
+  if (!isOpenableWebUrl(url)) return false;
+  try {
+    return await kFileDialogChannel.invokeMethod<bool>('openUrl', {
+          'url': url.toString(),
         }) ??
         false;
   } on Object {

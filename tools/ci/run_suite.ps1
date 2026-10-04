@@ -1867,7 +1867,11 @@ $SuiteFloors = @{
     # section_test.dart, nothing recorded naming where to record it, an
     # address shown beside unverified, a dated row's day, and no text field
     # anywhere in the section.
-    'rackpal_ui'     = 2076
+    # 2087 at `#994` (NET-A/4a, DR-229): +11 in network/web_page_scope_
+    # test.dart, ten URLs judged openable or not (http and https with a
+    # host; file, ftp, javascript, mailto, hostless and bare refused) and
+    # the scope handing its launcher down.
+    'rackpal_ui'     = 2087
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -2097,7 +2101,11 @@ $SuiteFloors = @{
     # 1171 at `#990` (NET-A/2c, DR-226): +2 in session/network_actions_test
     # .dart, Verified today as one undo step, and today as the LOCAL day at
     # UTC midnight (mutation-checked against the UTC day, west of UTC).
-    'rackpal_app'    = 1171
+    # 1175 at `#994` (NET-A/4a, DR-229): +4 in session/web_page_launcher_
+    # test.dart, openUrl sent whole, nothing but http/https reaching the
+    # channel, a refusal or a throw read as false, and the app's root
+    # handing the services' launcher to the shell.
+    'rackpal_app'    = 1175
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
