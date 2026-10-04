@@ -306,6 +306,13 @@ class StructureEditorScreen extends StatefulWidget {
 class _StructureEditorScreenState extends State<StructureEditorScreen> {
   final Set<StructureColumnId> _optional = <StructureColumnId>{};
 
+  /// The Devices view's state, held HERE for [_optional]'s reason: the
+  /// view is rebuilt from nothing every time its tab is chosen, and a
+  /// person's column choices should not reset because they looked at the
+  /// matrix (NET-A/2b).
+  bool _devicesShowAll = false;
+  final Set<NetworkColumnId> _devicesShown = {...defaultNetworkColumns};
+
   /// AC-048: THE EDITOR OPENS IN TABLE MODE. The one requirement the
   /// ruling makes of this surface, and the one line that keeps it.
   StructureEditorTab _tab = StructureEditorTab.table;
@@ -541,6 +548,12 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
                           // ONE SETTING FOR THE TABLE AND T6.50 (DR-227
                           // §11.226.4), so they never disagree about order.
                           order: doc.settings.networkOrder,
+                          showAll: _devicesShowAll,
+                          onShowAll: (v) => setState(() => _devicesShowAll = v),
+                          shown: _devicesShown,
+                          onColumn: (c) => setState(() {
+                            if (!_devicesShown.remove(c)) _devicesShown.add(c);
+                          }),
                           actions: DevicesActions(onEdit: _editDevices),
                         ),
                       },

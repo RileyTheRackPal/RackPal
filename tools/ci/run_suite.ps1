@@ -1843,7 +1843,10 @@ $SuiteFloors = @{
     # .dart, every setting left to Sheet set drawn there (so none is drawn
     # nowhere), the default, and rack then room as one setting command; +1
     # in structure/devices_view_test.dart, the table following its order.
-    'rackpal_ui'     = 2064
+    # 2066 at `#989` (NET-A/2b, DR-226): +1 in structure/devices_view_test
+    # .dart, Columns turning subnet on and MAC off; +1 in structure_editor_
+    # screen_test.dart, Show all surviving a trip to another view.
+    'rackpal_ui'     = 2066
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

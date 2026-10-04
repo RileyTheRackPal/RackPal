@@ -29,17 +29,29 @@ Future<List<List<NetworkCellEdit>>> _pump(
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
   final edits = <List<NetworkCellEdit>>[];
+  // THE EDITOR'S STATE, played by a StatefulBuilder: the view is
+  // controlled, so a test that does not hold its state cannot flip it.
+  var showAll = false;
+  final shown = {...defaultNetworkColumns};
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
-        body: DevicesView(
-          doc: doc,
-          order: order,
-          actions: DevicesActions(
-            onEdit: (e) {
-              edits.add(e);
-              return null;
-            },
+        body: StatefulBuilder(
+          builder: (context, setState) => DevicesView(
+            doc: doc,
+            order: order,
+            showAll: showAll,
+            onShowAll: (v) => setState(() => showAll = v),
+            shown: shown,
+            onColumn: (c) => setState(() {
+              if (!shown.remove(c)) shown.add(c);
+            }),
+            actions: DevicesActions(
+              onEdit: (e) {
+                edits.add(e);
+                return null;
+              },
+            ),
           ),
         ),
       ),
@@ -124,6 +136,27 @@ void main() {
         .map((t) => t.data)
         .firstWhere((t) => byRack.any((r) => r.designator == t));
     expect(firstOnScreen, byRack.first.designator);
+  });
+
+  testWidgets('Columns puts subnet and gateway on, and a default column off '
+      '(NET-A/2b)', (tester) async {
+    await _pump(tester, _wholeHouse());
+    expect(find.text('SUBNET'), findsNothing, reason: 'control');
+
+    await tester.tap(find.text(kDeviceColumnsLabel));
+    await tester.pumpAndSettle();
+    // THE MENU ITEM, NOT THE WORD: once a column shows, its name is both a
+    // heading and an item, and `.last` picked the heading, which taps to
+    // nothing. Anchored on the item's own type.
+    await tester.tap(find.widgetWithText(MenuItemButton, 'SUBNET'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(MenuItemButton, 'MAC'));
+    await tester.pumpAndSettle();
+    await tester.tapAt(Offset.zero);
+    await tester.pumpAndSettle();
+
+    expect(find.text('SUBNET'), findsOneWidget, reason: 'now a heading');
+    expect(find.text('MAC'), findsNothing, reason: 'turned off');
   });
 
   testWidgets('the identity columns are read, not typed into', (

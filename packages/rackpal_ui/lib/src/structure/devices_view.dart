@@ -12,7 +12,9 @@
 // Which devices, in what order, and every cell's text come from
 // `rackpal_core`'s `derived/network_table.dart`, which `T6.50` prints from
 // too, so the table and the schedule are the same strings (CR-107). This
-// file owns VIEW state only: whether Show all is on.
+// file owns no state at all: whether Show all is on and which columns show
+// are the EDITOR'S, as the cable table's optional columns are, so both
+// survive switching to another view and back.
 //
 // ═════════════════════════════════════════════════════════════════════
 // UNVERIFIED IS SAID, NEVER LEFT BLANK
@@ -55,15 +57,35 @@ final class NetworkCellEdit {
 /// The Show all toggle's words (DR-227 §11.226.2).
 const String kShowAllDevicesLabel = 'Show all devices';
 
+/// The Columns menu's button (NET-A/2b), the port grid's word for it.
+const String kDeviceColumnsLabel = 'Columns';
+
+/// The columns a person may turn on and off: every network value. The
+/// three that say which device a row is are always shown.
+List<NetworkColumnId> get toggleableNetworkColumns => [
+  for (final c in NetworkColumnId.values)
+    if (networkColumnIsEditable(c)) c,
+];
+
+/// The columns showing before anybody touches the menu (DR-226 §11.225.3).
+Set<NetworkColumnId> get defaultNetworkColumns => {
+  for (final c in toggleableNetworkColumns)
+    if (networkColumnShownByDefault(c)) c,
+};
+
 /// What the view says when nothing is network-capable yet.
 const String kNoNetworkDevicesYet =
     'No device here has a network jack, Wi-Fi or an address yet. Turn on '
     '$kShowAllDevicesLabel to give any device one.';
 
-class DevicesView extends StatefulWidget {
+class DevicesView extends StatelessWidget {
   const DevicesView({
     required this.doc,
     required this.actions,
+    required this.showAll,
+    required this.onShowAll,
+    required this.shown,
+    required this.onColumn,
     this.order = NetworkOrder.designator,
     super.key,
   });
@@ -71,52 +93,50 @@ class DevicesView extends StatefulWidget {
   final RackDocument doc;
   final DevicesActions actions;
 
+  /// Whether every device is listed, not only the network-capable ones
+  /// (DR-227 §11.226.2).
+  final bool showAll;
+  final ValueChanged<bool> onShowAll;
+
+  /// The toggleable columns showing. The identity columns always are.
+  final Set<NetworkColumnId> shown;
+
+  /// Turns [NetworkColumnId] on when it is off, and off when it is on.
+  final ValueChanged<NetworkColumnId> onColumn;
+
   /// The project's network order (DR-227 §11.226.4), which `T6.50` reads
   /// too.
   final NetworkOrder order;
 
   @override
-  State<DevicesView> createState() => _DevicesViewState();
-}
-
-class _DevicesViewState extends State<DevicesView> {
-  bool _showAll = false;
-
-  @override
   Widget build(BuildContext context) {
-    final rows = buildNetworkTable(
-      widget.doc,
-      showAll: _showAll,
-      order: widget.order,
-    );
+    final rows = buildNetworkTable(doc, showAll: showAll, order: order);
     final columns = [
       for (final c in NetworkColumnId.values)
-        if (networkColumnShownByDefault(c)) c,
+        if (!networkColumnIsEditable(c) || shown.contains(c)) c,
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _Toolbar(
           rows: rows,
-          showAll: _showAll,
-          onShowAll: (v) => setState(() => _showAll = v),
+          showAll: showAll,
+          onShowAll: onShowAll,
+          shown: shown,
+          onColumn: onColumn,
         ),
         const Divider(height: 1),
         Expanded(
           child: rows.isEmpty
               ? const _EmptyState()
-              : _DeviceTable(
-                  rows: rows,
-                  columns: columns,
-                  actions: widget.actions,
-                ),
+              : _DeviceTable(rows: rows, columns: columns, actions: actions),
         ),
       ],
     );
   }
 }
 
-/// The counts and the toggle.
+/// The counts, the Columns menu and the Show all toggle.
 ///
 /// BOTH COUNTS SHOW, ZERO INCLUDED, for `PathwaysView`'s reason: "0
 /// verified" is news, and a line that vanishes when the news is bad makes
@@ -126,11 +146,15 @@ class _Toolbar extends StatelessWidget {
     required this.rows,
     required this.showAll,
     required this.onShowAll,
+    required this.shown,
+    required this.onColumn,
   });
 
   final List<NetworkRow> rows;
   final bool showAll;
   final ValueChanged<bool> onShowAll;
+  final Set<NetworkColumnId> shown;
+  final ValueChanged<NetworkColumnId> onColumn;
 
   @override
   Widget build(BuildContext context) {
@@ -146,6 +170,32 @@ class _Toolbar extends StatelessWidget {
             style: theme.textTheme.bodySmall,
           ),
           const Spacer(),
+          // THE PORT GRID'S CONTROL, word for word: a labelled button
+          // opening a list of checkboxes, so a person who has used one
+          // knows the other.
+          MenuAnchor(
+            menuChildren: [
+              for (final c in toggleableNetworkColumns)
+                MenuItemButton(
+                  closeOnActivate: false,
+                  leadingIcon: Icon(
+                    shown.contains(c)
+                        ? Icons.check_box
+                        : Icons.check_box_outline_blank,
+                    size: 18,
+                  ),
+                  onPressed: () => onColumn(c),
+                  child: Text(networkColumnHeader(c)),
+                ),
+            ],
+            builder: (context, controller, child) => TextButton.icon(
+              onPressed: () =>
+                  controller.isOpen ? controller.close() : controller.open(),
+              icon: const Icon(Icons.settings_outlined, size: 18),
+              label: const Text(kDeviceColumnsLabel),
+            ),
+          ),
+          const SizedBox(width: 12),
           Text(kShowAllDevicesLabel, style: theme.textTheme.bodySmall),
           Switch(value: showAll, onChanged: onShowAll),
         ],

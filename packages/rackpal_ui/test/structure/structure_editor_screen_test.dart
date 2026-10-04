@@ -1753,6 +1753,23 @@ void main() {
       expect(find.text(kShowAllDevicesLabel), findsOneWidget);
     });
 
+    testWidgets('Show all survives a trip to another view and back '
+        '(NET-A/2b): the editor holds it, not the view', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await tester.tap(find.text(kDevicesTabLabel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(Switch));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.text(kPathwaysTabLabel));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kDevicesTabLabel));
+      await tester.pumpAndSettle();
+
+      expect(tester.widget<Switch>(find.byType(Switch)).value, isTrue);
+    });
+
     testWidgets('the strip is in §4 order, and Pathways did not move', (
       tester,
     ) async {
