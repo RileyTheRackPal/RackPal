@@ -1913,7 +1913,11 @@ $SuiteFloors = @{
     # 2113 at `#355` (M6-I4, CR-100): +2 in shell/status_line_actions_
     # test.dart, the actions as buttons after the message and the notices
     # link, and none for any other status.
-    'rackpal_ui'     = 2113
+    # 2117 at `#973` (DR-231): +4 in canvas/schematic/schematic_cable_bar_
+    # test.dart, no bar without a selection, the bar naming the cable
+    # unset, Null-modem as one undo step and Not set taking it back, and
+    # every value on every cable.
+    'rackpal_ui'     = 2117
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
