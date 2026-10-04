@@ -52,7 +52,8 @@ import 'package:rackpal_core/src/derived/wiring_standard.dart';
 import 'package:rackpal_core/src/model/conductor.dart' show PortEndpoint;
 import 'package:rackpal_core/src/model/enums.dart'
     show TerminationType, UnitSystem;
-import 'package:rackpal_core/src/model/link.dart' show LinkClass, RoughInStatus;
+import 'package:rackpal_core/src/model/link.dart'
+    show CrossoverKind, LinkClass, RoughInStatus;
 import 'package:rackpal_core/src/model/pathway.dart' show PathwayKind;
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/model/registries.dart';
@@ -367,6 +368,32 @@ enum StructureColumnId {
   // LAST, like the three above it: `values` order is the order `⚙
   // Columns` presents, and appending is how a reader sees the history.
   wiringStandard,
+
+  // DR-231 §11.230.1, `#973`. How this cable's conductors are crossed:
+  // the table's half of the two hosts, the schematic's cable bar being
+  // the other. OFF BY DEFAULT, like `wiringStandard`: almost every run is
+  // never marked, and the column exists for the one that is.
+  crossover,
+}
+
+/// What a crossover value reads as, in a cell, a menu and the schematic's
+/// cable bar (DR-231). ONE SPELLING, so the menu that offers a value, the
+/// cell that shows it and the writer that parses it cannot disagree.
+String crossoverLabel(CrossoverKind kind) => switch (kind) {
+  CrossoverKind.straight => 'Straight',
+  CrossoverKind.nullModem => 'Null-modem',
+  CrossoverKind.fiberPolarityAB => 'Polarity A→B',
+  CrossoverKind.polarityReversed => 'Polarity reversed',
+};
+
+/// The value [label] names, matched without regard to case or surrounding
+/// space, or null when it names none.
+CrossoverKind? crossoverFromLabel(String label) {
+  final wanted = label.trim().toLowerCase();
+  for (final kind in CrossoverKind.values) {
+    if (crossoverLabel(kind).toLowerCase() == wanted) return kind;
+  }
+  return null;
 }
 
 /// §4.1's eight, in the wireframe's own left-to-right order.
@@ -431,6 +458,8 @@ const List<StructureColumnId> kStructureOptionalColumns = <StructureColumnId>[
   // this column. It exists for the run that really differs, which is also
   // the run `T5.01` will be about.
   StructureColumnId.wiringStandard,
+  // DR-231 §11.230.1: off by default, on wiringStandard's reason.
+  StructureColumnId.crossover,
 ];
 
 /// The as-built set, as one thing to switch on (DR-020 §11.19.2(5)).
@@ -492,6 +521,7 @@ String structureColumnHeader(StructureColumnId id) => switch (id) {
   // cell answers "how is this one wired", and a header reading `T568`
   // over a column of dashes would look like a field nobody filled in.
   StructureColumnId.wiringStandard => 'WIRING',
+  StructureColumnId.crossover => 'CROSSOVER',
 };
 
 /// Points, at the same scale `kPullSheetColumns` uses, so the editor and
@@ -529,6 +559,8 @@ double structureColumnWidth(StructureColumnId id) => switch (id) {
   // Sized for `— NO RJ45 —`, which is the widest thing this cell says.
   // `T568A` and the dash both fit in half of it.
   StructureColumnId.wiringStandard => 76,
+  // Sized for `Polarity reversed`, the longest label.
+  StructureColumnId.crossover => 104,
 };
 
 /// Whether a person can type into this column.
@@ -632,6 +664,10 @@ bool structureColumnIsEditable(StructureColumnId id) => switch (id) {
   // an 8P8C end is a fact about that run. `structureCellChoices` is where
   // that per-row answer lives, exactly as it does for `LANDS ON`.
   StructureColumnId.wiringStandard => true,
+
+  // DR-231: every value on every cable (§11.230.2), so unlike `WIRING` it
+  // is editable on every row.
+  StructureColumnId.crossover => true,
 
   _ => false,
 };
@@ -1118,6 +1154,12 @@ String structureCell(
         final w? => wiringStandardLabel(w),
         null => kUnknownCell,
       },
+      null => kUnknownCell,
+    },
+    // UNSET SHOWS THE DASH, never `Straight` (G4): nobody having said is a
+    // different fact from somebody saying straight.
+    StructureColumnId.crossover => switch (link?.crossover) {
+      final k? => crossoverLabel(k),
       null => kUnknownCell,
     },
   };

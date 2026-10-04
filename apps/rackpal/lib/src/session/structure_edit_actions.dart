@@ -155,6 +155,11 @@ StructureEditFn buildStructureEditAction({
         edit: edit,
         into: commands,
       ),
+      StructureColumnId.crossover => _crossover(
+        controller: controller,
+        edit: edit,
+        into: commands,
+      ),
       StructureColumnId.testResult => _testResult(
         controller: controller,
         edit: edit,
@@ -476,6 +481,35 @@ String? _wiringStandard({
     controller: controller,
     edit: edit,
     field: LinkField.wiringStandard,
+    to: value,
+    into: into,
+  );
+}
+
+/// `CROSSOVER`, how a cable's conductors are crossed (DR-231, `#973`).
+///
+/// Every value on every cable (§11.230.2); the dash, or an empty cell,
+/// clears it back to "nobody has said". Anything else is refused with the
+/// list, spelled by `crossoverLabel` as the menu spells it.
+String? _crossover({
+  required DocumentController controller,
+  required StructureCellEdit edit,
+  required List<Command<RackDocument>> into,
+}) {
+  final wanted = edit.value.trim();
+  CrossoverKind? value;
+  if (wanted.isNotEmpty && wanted != kUnknownCell) {
+    value = crossoverFromLabel(wanted);
+    if (value == null) {
+      return '"${edit.value}" is not a crossover. Use one of: '
+          '$kUnknownCell, '
+          '${CrossoverKind.values.map(crossoverLabel).join(', ')}.';
+    }
+  }
+  return _plain<CrossoverKind?>(
+    controller: controller,
+    edit: edit,
+    field: LinkField.crossover,
     to: value,
     into: into,
   );

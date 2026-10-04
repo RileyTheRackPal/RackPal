@@ -2283,6 +2283,12 @@ List<String>? structureCellChoices(
             kUnknownCell,
             ...WiringStandard.values.map(wiringStandardLabel),
           ],
+  // EVERY VALUE ON EVERY ROW (DR-231 §11.230.2), the dash first to clear,
+  // on the wiring column's precedent.
+  StructureColumnId.crossover => <String>[
+    kUnknownCell,
+    ...CrossoverKind.values.map(crossoverLabel),
+  ],
   _ => null,
 };
 

@@ -2167,7 +2167,11 @@ $SuiteFloors = @{
     # and Show in folder opening the written file and its folder and
     # nothing unasked, a refusing viewer said, a second same-status export
     # opening its own file, and the next status clearing them.
-    'rackpal_app'    = 1196
+    # 1201 at `#973` (DR-231): +5 in session/crossover_edit_test.dart, the
+    # label writes and the dash clears, any case, a refusal with the list,
+    # the cell's dash and label, and a null-modem marked in the table
+    # bringing T5.01 into the export.
+    'rackpal_app'    = 1201
 }
 
 # Test names in this repository contain em dashes. Without this the stream is
