@@ -68,6 +68,8 @@ import 'package:rackpal_core/src/draw/text.dart';
 import 'package:rackpal_core/src/model/project_info.dart';
 import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
+import 'package:rackpal_core/src/units/ids.dart';
+import 'package:rackpal_core/src/units/pt.dart';
 import 'package:vector_math/vector_math_64.dart' show Matrix4;
 
 /// The largest factor an interconnect sheet is drawn at: its design size.
@@ -252,18 +254,35 @@ InterconnectDrawing layoutInterconnect({
     // port, and the rest of its cables would be drawn nowhere.
     expandedBanks: banksWiredBy(doc, partition.linkIds),
   );
-  final wires = buildDrawnWireLayer(
+  final laidOut = buildDrawnWireLayer(
     scene: scene,
     doc: doc,
     linkIds: partition.linkIds.toSet(),
     measurer: measurer,
     palette: palette,
   );
-  var drawnInk = scene.symbolTier.bounds ?? const DBox.fromLtwh(0, 0, 0, 0);
+  // THE DRAWN RENDERING IS PLACED BY ITS OWN INK (DR-232). The scene above
+  // was laid out with the net-label reservation, which the label rendering
+  // needs and the drawn one never draws; `_placeByInk` re-places it.
+  final drawnPlaced = _placeByInk(
+    doc: doc,
+    partition: partition,
+    measurer: measurer,
+    palette: palette,
+    area: area,
+    scene: scene,
+    wires: laidOut,
+  );
+  final drawnScene = drawnPlaced.scene;
+  final wires = drawnPlaced.wires;
+  var drawnInk =
+      drawnScene.symbolTier.bounds ?? const DBox.fromLtwh(0, 0, 0, 0);
   if (wires.inkBounds case final ink?) drawnInk = drawnInk.union(ink);
   final drawnContent = _cleared(drawnInk);
   final drawnFactor = _fit(drawnContent, area);
-  final drawnPaperPt = drawnFactor.points(_drawnMinTextPt(scene, wires));
+  final drawnPaperPt = drawnFactor.points(
+    _drawnMinTextPt(drawnScene, wires),
+  );
 
   // THE LABEL SHEET IS MEASURED IN THE AREA IT WOULD ACTUALLY HAVE: the
   // note takes its band off the top first, so a fallback that only met the
@@ -284,7 +303,9 @@ InterconnectDrawing layoutInterconnect({
 
   return InterconnectDrawing(
     partition: partition,
-    scene: scene,
+    // THE SCENE OF THE RENDERING CHOSEN: the two are placed differently
+    // since DR-232, so the sheet draws the one it was fitted from.
+    scene: drawn ? drawnScene : scene,
     wires: wires,
     area: area,
     render: render,
@@ -292,6 +313,176 @@ InterconnectDrawing layoutInterconnect({
     contentArea: drawn ? area : noteArea,
     factor: drawn ? drawnFactor : labelFactor,
     drawnPaperPt: drawnPaperPt,
+  );
+}
+
+/// The schematic's ordinary clear space between two stacked symbols, the
+/// gap a drawn sheet keeps between INKS (DR-232 §11.231.1).
+double get _inkGap =>
+    const SchematicMetrics().layout.nodeGapGu * kSchematicUnitsPerGrid;
+
+/// [scene] and [wires] re-placed for the DRAWN rendering (DR-232).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// WHY A SECOND PLACEMENT AND NOT A SECOND SET OF LAYOUT PARAMETERS
+/// ═══════════════════════════════════════════════════════════════════════
+/// What a drawn device needs around it is the ink its own ends draw: a
+/// stub per wired pin, rising a comb step further per pin, and a pill at
+/// its tip. That is known exactly once the wires are drawn and only
+/// estimated before, so the first layout runs, the wire layer records each
+/// symbol's end ink (`DrawnWireLayer.endInk`), and the symbols are moved
+/// by that measured ink and drawn again. Measured on Whole House's Network
+/// sheet: 344 units of body had been spread over 604 by the net-label
+/// reservation, and with it removed LIU-1's pill touched PP-1. Ink
+/// placement keeps both from happening.
+///
+/// TWO MOVES, BOTH IN GRID UNITS so a symbol stays on the grid:
+///  * ISLANDS WRAP (§11.231.2): when no wire runs between two drawn
+///    symbols, they are set in rows and columns, in the layout's order,
+///    choosing the column count that prints largest in [area];
+///  * otherwise each COLUMN RESTACKS: its symbols keep their order and
+///    their tops move so [_inkGap] separates one ink from the next.
+///
+/// A LOCK HOLDS (§11.231.3): a column with a locked symbol keeps its
+/// layout, and islands wrap only when none is locked. And the scene is
+/// rebuilt only if something moved, so a sheet already placed by its ink
+/// is the sheet it was.
+({SchematicScene scene, DrawnWireLayer wires}) _placeByInk({
+  required RackDocument doc,
+  required InterconnectPartition partition,
+  required TextMeasurer measurer,
+  required SchematicPalette palette,
+  required DBox area,
+  required SchematicScene scene,
+  required DrawnWireLayer wires,
+}) {
+  final upg = kSchematicUnitsPerGrid;
+  final subset = partitionDocument(doc, partition);
+  final locked = <String>{
+    for (final id in storedSymbolPositions(subset, pinnedOnly: true).keys) id.v,
+  };
+  final symbolById = <String, RenderedSymbol>{
+    for (final s in scene.symbols) s.id: s,
+  };
+  // HALF A GRID UNIT OF PIN: an unwired pin's circle sits on the body's
+  // edge and reaches past it by its radius, which `endInk` cannot see.
+  DBox inkOf(String id) {
+    final body = symbolById[id]!.bodyRect.inflate(upg / 2);
+    final ends = wires.endInk[id];
+    return ends == null ? body : body.union(ends);
+  }
+
+  // The layout's own order, column by column and top to bottom.
+  final columns = <List<String>>[
+    for (final layer in scene.layout.layers)
+      [
+        for (final id in layer)
+          if (symbolById.containsKey(id)) id,
+      ],
+  ]..removeWhere((c) => c.isEmpty);
+  final order = [for (final c in columns) ...c];
+  if (order.isEmpty) return (scene: scene, wires: wires);
+
+  // A symbol is CONNECTED when a link on this sheet has a drawn end on it
+  // and on another symbol; an island has none.
+  final endsByLink = <Uuid, Set<String>>{};
+  for (final label in scene.netLabels) {
+    if (!partition.linkIds.contains(label.linkId)) continue;
+    endsByLink.putIfAbsent(label.linkId, () => <String>{}).add(label.deviceId);
+  }
+  final connected = <String>{
+    for (final ends in endsByLink.values)
+      if (ends.length > 1) ...ends,
+  };
+
+  final moves = <String, Pt>{};
+  void move(String id, double dx, double dy) {
+    final gx = (dx / upg).ceil();
+    final gy = (dy / upg).ceil();
+    if (gx != 0 || gy != 0) moves[id] = Pt(gx, gy);
+  }
+
+  final allIslands = order.every((id) => !connected.contains(id));
+  if (allIslands && order.length > 1 && !order.any(locked.contains)) {
+    // THE ARRANGEMENT THAT PRINTS LARGEST. A grid cell is as wide as its
+    // column's widest ink and as tall as its row's tallest; one more grid
+    // unit than the gap absorbs the rounding of a move to the grid.
+    final step = _inkGap + upg;
+    final inks = [for (final id in order) inkOf(id)];
+    var bestColumns = 1;
+    var bestFit = -1.0;
+    for (var n = 1; n <= order.length; n++) {
+      final rows = (order.length / n).ceil();
+      final widths = List<double>.filled(n, 0);
+      final heights = List<double>.filled(rows, 0);
+      for (final (i, ink) in inks.indexed) {
+        widths[i % n] = math.max(widths[i % n], ink.width);
+        heights[i ~/ n] = math.max(heights[i ~/ n], ink.height);
+      }
+      final w = widths.fold<double>(0, (a, b) => a + b) + step * (n - 1);
+      final h = heights.fold<double>(0, (a, b) => a + b) + step * (rows - 1);
+      final fit = _fit(_cleared(DBox.fromLtwh(0, 0, w, h)), area);
+      // STRICTLY LARGER: a tie keeps the fewer columns, the layout's own.
+      if (fit.unitsToPoints > bestFit) {
+        bestFit = fit.unitsToPoints;
+        bestColumns = n;
+      }
+    }
+    final n = bestColumns;
+    final rows = (order.length / n).ceil();
+    final widths = List<double>.filled(n, 0);
+    final heights = List<double>.filled(rows, 0);
+    for (final (i, ink) in inks.indexed) {
+      widths[i % n] = math.max(widths[i % n], ink.width);
+      heights[i ~/ n] = math.max(heights[i ~/ n], ink.height);
+    }
+    final left = inks.map((b) => b.left).reduce(math.min);
+    final top = inks.map((b) => b.top).reduce(math.min);
+    for (final (i, ink) in inks.indexed) {
+      var x = left;
+      for (var c = 0; c < i % n; c++) {
+        x += widths[c] + step;
+      }
+      var y = top;
+      for (var r = 0; r < i ~/ n; r++) {
+        y += heights[r] + step;
+      }
+      move(order[i], x - ink.left, y - ink.top);
+    }
+  } else {
+    for (final column in columns) {
+      if (column.any(locked.contains)) continue;
+      var cursor = inkOf(column.first).bottom + _inkGap;
+      for (final id in column.skip(1)) {
+        final ink = inkOf(id);
+        final dy = cursor - ink.top;
+        move(id, 0, dy);
+        cursor = ink.bottom + (dy / upg).ceil() * upg + _inkGap;
+      }
+    }
+  }
+  if (moves.isEmpty) return (scene: scene, wires: wires);
+
+  final placed = buildSchematicScene(
+    doc: subset,
+    measurer: measurer,
+    palette: palette,
+    pinnedPositionsOnly: true,
+    expandedBanks: banksWiredBy(doc, partition.linkIds),
+    holdAt: <Uuid, Pt>{
+      for (final id in order)
+        Uuid(id): scene.layout.positions[id]! + (moves[id] ?? const Pt(0, 0)),
+    },
+  );
+  return (
+    scene: placed,
+    wires: buildDrawnWireLayer(
+      scene: placed,
+      doc: doc,
+      linkIds: partition.linkIds.toSet(),
+      measurer: measurer,
+      palette: palette,
+    ),
   );
 }
 

@@ -147,8 +147,14 @@ void main() {
     });
   });
 
-  test('Whole House’s Network sheet stays drawn under the floor, because '
-      'labels miss it too', () {
+  // THIS ASSERTED THE DEFECT UNTIL `#998`. It read "Whole House's Network
+  // sheet stays drawn under the floor" and pinned `drawnPaperPt` below 6 pt,
+  // which was true only because the drawn sheet was laid out with net-label
+  // room it never draws (DR-232). The clause it witnessed, a sheet neither
+  // rendering can make legible stays drawn, is the quadrant test above and
+  // the narrow-box case below; the real sheet now prints at its design size.
+  test('Whole House’s Network sheet prints drawn at its design size '
+      '(DR-232)', () {
     final doc = _wholeHouse();
     final net = layoutInterconnect(
       doc: doc,
@@ -159,7 +165,21 @@ void main() {
         stamped: false,
       ),
     );
-    expect(net.drawnPaperPt, lessThan(kMinPrintPt));
+    expect(net.render, InterconnectRender.drawn);
+    expect(net.factor.unitsToPoints, kInterconnectMaxFactor);
+    expect(net.drawnPaperPt, greaterThanOrEqualTo(kMinPrintPt));
+  });
+
+  test('THE SAME SHEET IN A BOX NEITHER RENDERING CAN READ stays drawn, '
+      'the clause the old test witnessed', () {
+    final doc = _wholeHouse();
+    final net = layoutInterconnect(
+      doc: doc,
+      partition: _partition(doc, 'net'),
+      measurer: const FakeMeasurer(),
+      area: const DBox.fromLtwh(0, 0, 120, 90),
+    );
+    expect(net.drawnPaperPt, lessThan(kMinPrintPt), reason: 'precondition');
     expect(net.render, InterconnectRender.drawn);
   });
 }

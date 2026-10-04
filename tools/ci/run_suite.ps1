@@ -1199,7 +1199,13 @@ $SuiteFloors = @{
     # persistence/g4_wire_test.dart for the new LinkField row. MEASURED BY
     # NAME against main, after a plain `dart test` counted 17: it includes
     # the five `perf` tests the gate excludes.
-    'rackpal_core'   = 5522
+    # 5530 at `#998` (DR-232): +7 in sheet/interconnect_ink_placement_test.
+    # dart (Whole House's islands side by side at design size, nothing a
+    # device draws landing on another across three documents, the stacked
+    # case keeping the ruling's gap between inks, a lock holding, a column
+    # keeping its order) and +1 from interconnect_fallback_test.dart, whose
+    # defect-pinning case became the real sheet and the narrow-box clause.
+    'rackpal_core'   = 5530
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
