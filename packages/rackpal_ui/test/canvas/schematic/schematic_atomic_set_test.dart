@@ -119,6 +119,24 @@ void main() {
     return symbolPortCentre(symbol, sym);
   }
 
+  /// `[ Connect anyway ]` on the chip a loopback raises, ASSERTED UP.
+  ///
+  /// THE LOOPBACK SPRINGS BACK SINCE DR-234 (`#909`), and should: it lands
+  /// a line input pair on a speaker output pair, which the set gesture
+  /// committed on tier 1 alone for as long as it never asked tier 2. This
+  /// fixture has no set pair that clears both tiers (MTX-1's zone pairs are
+  /// balanced 3-pin, AMP-1's inputs RCA), so the mechanics below go through
+  /// the override, which CR-017 makes the same cable the gesture would have
+  /// written. `schematic_set_split_test.dart` reached the same answer for
+  /// the same fixture. Not optional: a drop that raised no chip here would
+  /// mean the check had stopped running.
+  Future<void> connectAnyway(WidgetTester tester) async {
+    expect(find.byType(SpringBackChipCard), findsOneWidget);
+    expect(doc.links, hasLength(5), reason: 'the spring-back wrote nothing');
+    await tester.tap(find.text(kSpringBackConnectAnyway));
+    await tester.pumpAndSettle();
+  }
+
   /// A pin on AMP-1 that is in NO set — the pin-to-pin control case.
   DPt unsetPinOf(String designator) {
     final device = deviceNamed(doc, designator);
@@ -190,6 +208,7 @@ void main() {
       await tester.pump();
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
 
       expect(
         doc.links,
@@ -224,6 +243,7 @@ void main() {
       await drag.moveTo(toScreen(tester, pinOfSet('AMP-1', 'zone6')));
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
 
       expect(doc.links, hasLength(6));
       expect(
@@ -254,6 +274,7 @@ void main() {
       await drag.moveTo(toScreen(tester, pinOfSet('AMP-1', 'zone7')));
       await drag.up();
       await tester.pumpAndSettle();
+      await connectAnyway(tester);
       expect(doc.links, hasLength(6));
 
       controller.undoLast();

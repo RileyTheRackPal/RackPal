@@ -1210,7 +1210,12 @@ $SuiteFloors = @{
     # keeping the rack test; no role, one non-power end and a mixed cable
     # not being cords; the override; a staged end; a lock disagreeing; and
     # the Pull Sheet hiding and counting the cord).
-    'rackpal_core'   = 5541
+    # 5549 at `#909` (DR-234): +8 in derived/paired_spring_back_test.dart (the
+    # plan's pairs and its open positions; a clear pair; the ticket's 3-pin
+    # pair onto XLR, named and counted; the second pair named; another rule
+    # withdrawing the adapter; a converter withheld on a set; multi-draw's
+    # noun and no remedy).
+    'rackpal_core'   = 5549
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1928,7 +1933,11 @@ $SuiteFloors = @{
     # test.dart, no bar without a selection, the bar naming the cable
     # unset, Null-modem as one undo step and Not set taking it back, and
     # every value on every cable.
-    'rackpal_ui'     = 2117
+    # 2122 at `#909` (DR-234): +5 in canvas/schematic/schematic_set_tier2_
+    # test.dart on the real V01 and A04 (the premise through core, the
+    # spring-back writing nothing, the amber ring, Connect anyway as one
+    # cable, Declare an adapter as one cable, one adapter, one undo).
+    'rackpal_ui'     = 2122
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
