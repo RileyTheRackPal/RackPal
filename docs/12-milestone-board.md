@@ -1967,6 +1967,31 @@ schedule note, T5.01's section, a null-modem turning T5.01 on) and two generated
 writer, and a null-modem marked in the table bringing T5.01 into a real export, with the starter's IR
 causes cleared so the control can see it absent). **Not yet seen** in a running build.
 
+### 4.44 The Network interconnect sheet, printed at its design size · 2026-10-04 · `#998` · `DR-232`, `DR-225` · no version move
+
+Whole House's `T6.02` Network sheet printed at about 5.3 pt, under the 6 pt floor, flagged in §4.40 with
+the wrong cause: "the global node gap, sized for PP-1's comb". **Measured**: the sheet is two devices in
+one column, 344 units of body spread over 604 by the net-label comb reservation, which the drawn
+rendering never draws. **Rendered** with the reservation removed, LIU-1's pill touched PP-1 and the
+landscape page stayed two-thirds empty, so the user ruled the larger fix (DR-232): the drawn sheet is
+placed by its own ink, recorded by the wire layer as it draws each stub and pill, and islands (no wire
+between two drawn devices) wrap into the arrangement that prints largest. Locks hold.
+
+**Measured after**: the sheet fits at 1.000, 8 pt, PP-1 and LIU-1 side by side, content 660 × 393 where
+it was 413 × 825. On the wired schematic fixture, Network rose from 3.17 to 3.39 pt and digital video fell
+from 4.10 to 4.07 pt, seven units taller for a full gap between inks rather than bodies.
+
+**Two tests had pinned the defect as behaviour**, one in core and one reading the PDF; both now assert
+the fixed sheet, and the clause the first witnessed stays on the same sheet in a box too small to read.
+**The new guard was first green for the wrong reason**: "nothing touches" survived placing by bodies
+alone, because a grid unit of rounding slack hid a crowding pill. It now asserts the ruling's promise,
+the node gap between inks, in a tall narrow area where the two devices stack, and fails under that
+mutation.
+
+**Evidence.** `interconnect_ink_placement_test` (seven cases), the rewritten fallback and export tests,
+and the page rendered through pdfium before, under the removal-only hack, and after, all three looked
+at. Not yet printed.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

@@ -243,7 +243,17 @@ final class DrawnWireLayer {
     required this.wires,
     required this.unroutableLinkIds,
     this.inkBounds,
+    this.endInk = const <String, DBox>{},
   });
+
+  /// Per symbol id, the ink its OWN ends draw outside it: each stub from
+  /// pin to escape point, and the pill hung off that point. Not the run
+  /// between two symbols, which belongs to the gap they share.
+  ///
+  /// RECORDED AS THE PILLS ARE DRAWN, from the very boxes the ops carry,
+  /// so a caller placing symbols by their ink (`interconnect_sheet.dart`,
+  /// `#998`) reserves what is drawn rather than a prediction of it.
+  final Map<String, DBox> endInk;
 
   /// ABSOLUTE-coordinate ops. Unlike a symbol fragment these carry sheet
   /// coordinates and replay with no bracketing translate, exactly as a
@@ -723,6 +733,9 @@ DrawnWireLayer buildDrawnWireLayer({
   // layer cannot break a fragment the way it would there.
   final pills = <DiagramOp>[];
   final wires = <DrawnWire>[];
+  final endInk = <String, DBox>{};
+  void growEnd(String symbolId, DBox box) =>
+      endInk[symbolId] = endInk[symbolId]?.union(box) ?? box;
   final unroutable = <Uuid>[];
   final sizer = _PillSizer(measurer: measurer, style: style, unitsPerGrid: upg);
 
@@ -830,11 +843,18 @@ DrawnWireLayer buildDrawnWireLayer({
         palette,
       );
       pills.addAll(pillRun);
+      // THE END'S OWN INK: its stub from pin to escape point, and below its
+      // pill. `ends` and `pillAt` are in the same order.
+      final owner = ends[i].deviceId;
+      growEnd(owner, DBox.fromCorners(ends[i].pinCentre, pillAt[i]));
       // The pill's own box, read back off the op rather than re-derived:
       // its text is anchored `midCenter` INSIDE that box, so the box is the
       // whole of what a pill contributes.
       for (final op in pillRun) {
-        if (op is OpRoundRect) grow(op.r);
+        if (op is OpRoundRect) {
+          grow(op.r);
+          growEnd(owner, op.r);
+        }
       }
     }
 
@@ -856,6 +876,7 @@ DrawnWireLayer buildDrawnWireLayer({
     wires: List<DrawnWire>.unmodifiable(wires),
     unroutableLinkIds: List<Uuid>.unmodifiable(unroutable),
     inkBounds: ink,
+    endInk: Map<String, DBox>.unmodifiable(endInk),
   );
 }
 

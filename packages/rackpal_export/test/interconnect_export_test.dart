@@ -81,15 +81,21 @@ void main() {
     expect(pageOf['T6.01'], isNot(contains('PP-1')));
   });
 
-  test('Network prints under the floor and SAYS so, and stays drawn: net '
-      'labels miss the floor too, so no note and no fallback notice '
-      '(DR-225 §11.224.4)', () {
+  // THIS PINNED THE DEFECT UNTIL `#998`: it asserted T6.02 printed under the
+  // 6 pt floor, which it did only because the drawn sheet was laid out with
+  // net-label room it never draws (DR-232). Placed by its own ink, the
+  // sheet clears the floor; the clause's other halves still hold.
+  test('Network prints OVER the floor, drawn, with no note and no fallback '
+      'notice (DR-232, DR-225 §11.224.4)', () {
     expect(
-      exported.notices,
-      contains(
-        allOf(startsWith('T6.02:'), contains('below the 6 pt legibility')),
+      exported.notices.where(
+        (n) => n.startsWith('T6.02:') && n.contains('below the 6 pt'),
       ),
+      isEmpty,
     );
+    for (final device in ['PP-1', 'LIU-1', 'W027 ·']) {
+      expect(pageOf['T6.02'], contains(device), reason: device);
+    }
     expect(
       exported.notices.where((n) => n.contains('shown as net labels')),
       isEmpty,
