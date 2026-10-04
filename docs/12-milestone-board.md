@@ -2028,6 +2028,37 @@ real V01 and A04, and group 8 of `schematic_multi_draw_test` (+2). Six mutations
 
 ---
 
+### 4.46 A declared adapter is shown where it is named, bought, terminated and drawn · 2026-10-04 · `#1001` · `DR-235`, `DR-128` · no version move
+
+The ticket was one sentence: `CON-001`'s remedy said *"Name the part in the inspector so it reaches the bill of
+materials"*, and the schematic has no inspector. **Measured**: nothing in `rackpal_ui` or the app read
+`Link.inlineAdapters`, and nothing in core or export read an adapter into any list a person buys from. So
+DR-128 §11.127.2's own clause, that an adapter *"reaches the BOM as an unspecified line"*, was unkept, and
+deleting the sentence would have hidden that. The user ruled the promise kept whole (DR-235).
+
+**Built, in four slices**: two commands and the cable bar's adapter rows (Model, Remove), with both remedy
+sentences now naming the bar; T6.30's in-line adapters table, an unstated model on its own line and counted;
+schedule notes on the cable's own row; and the mark on each pennant and mid-wire, keyed on T0.01.
+
+**The mark changed shape while being built.** The lozenge first ruled is the hollow-diamond glyph Dante, AES67,
+AVB and TOSLINK print inside their pennants, a few millimetres from the leader; the user chose a bowtie
+(§11.234.6). **Rendered through pdfium and looked at**: T6.01's `W003` and T6.02's `W002` (upright, on a
+vertical stub) wear it, T0.01 keys it, and the same render shows TOSLINK's diamond in the cable-types block.
+
+**Three things the building found.** The Model box is the first text field inside the schematic's keymap,
+where `W` arms a wire and `Delete` removes a cable; the screen's guard predated it, and a test now types into
+the box and asserts nothing on the sheet moved. `export_sheet_cap_test` had pinned 42 sheets, an incidental
+page break the new table moved to 43; it now asserts the claim (past forty, and the notice names the count).
+And the first test finder for the mark matched a domain's filled-diamond glyph eight times in a fixture with
+no adapter at all.
+
+**Evidence.** `inline_adapter_edit_test` (+9) and two epoch-mask cases, `adapter_rollup_test` (+9),
+`adapter_mark_test` (+7), `schematic_cable_bar_adapter_test` (+6), and two export tests in ink. Mutations
+caught: the screen's text-focus guard forced off, grouping without the model, and each layer's mark switched
+off. Not yet driven by hand.
+
+---
+
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`

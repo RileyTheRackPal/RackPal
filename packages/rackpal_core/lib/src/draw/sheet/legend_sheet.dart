@@ -213,6 +213,10 @@ LegendSheet buildLegendSheet({
   /// §11.224.6). The key shows each mark only when the set carries it.
   LegendCableSample? tagPillSample,
   LegendCableSample? netLabelSample,
+
+  /// A cable an interconnect sheet in this set prints with an adapter's
+  /// mark on it, or null when none does (DR-235 §11.234.5).
+  SignalStyle? adapterSample,
   SheetPalette palette = const SheetPalette(),
 }) {
   assert(
@@ -381,6 +385,7 @@ LegendSheet buildLegendSheet({
       hatchedPassive: drawn.any((b) => b.category == kCatPassive),
       tagPill: tagPillSample,
       netLabel: netLabelSample,
+      adapter: adapterSample,
       measurer: measurer,
       palette: palette,
     ),

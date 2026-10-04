@@ -206,6 +206,13 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(doc.links, hasLength(1), reason: 'the cable the adapter sits in');
+      // DR-235 (`#1001`): the sentence names the cable bar, which exists,
+      // and no longer an inspector field, which never did.
+      expect(
+        find.textContaining('Select the cable to name the part on its bar'),
+        findsWidgets,
+      );
+      expect(find.textContaining('inspector'), findsNothing);
       final link = doc.links.values.single;
       expect(link.inlineAdapters, hasLength(1));
       final adapter = link.inlineAdapters.single;

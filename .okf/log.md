@@ -1,5 +1,20 @@
 # Update Log
 
+## 2026-10-04 (hundred-and-thirteenth entry)
+
+* **Progress**: `debt-908-909` merged at `02f38325` (PR 203); `#908`, `#909`, `#999` closed. `#1002` filed (a
+  captive cord counted as a cord to buy), with a census: all 13 captive inlets are `power.ac_branch` on a NEMA
+  plug and every detachable one is IEC. `#1001` opened on branch `adapters-1001`.
+* **Creation**: [DR-235](/decisions/dr-235-a-declared-adapter-is-shown.md).
+* **Note**: **A DEAD SENTENCE CAN COVER A DEAD RULING.** `#1001` read as one line of copy pointing at a missing
+  inspector field. Behind it, DR-128's own clause that an adapter reaches the BOM had no reader at all.
+  Deleting the sentence was the cheap option, and it would have hidden the unkept ruling.
+* **Progress**: `#1001` built on `adapters-1001` in four slices (cable bar `ea58889b`, T6.30 `e8a28aa7`,
+  schedule notes `1017d60e`, the mark `485ba9ee`). DR-235 marked built; docs/12 §4.46.
+* **Note**: **A RULED SHAPE CAN ALREADY MEAN SOMETHING.** The lozenge was ruled from a preview with no
+  family in it; four families already print a hollow diamond inside the pennant beside it. Census the glyph
+  table before ruling a mark, the way a field is censused before it is added.
+
 ## 2026-10-04 (hundred-and-twelfth entry)
 
 * **Progress**: `#998` merged at `f6af1f9b` (PR 202). `#908` and `#909` opened on branch `debt-908-909`;

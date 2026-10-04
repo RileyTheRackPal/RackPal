@@ -27,6 +27,7 @@ import 'package:rackpal_core/src/derived/equipment_list.dart'
     show lifecycleLabel;
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
+import 'package:rackpal_core/src/draw/scene/adapter_mark.dart';
 import 'package:rackpal_core/src/draw/scene/device_glyph_art.dart';
 import 'package:rackpal_core/src/draw/scene/device_layer.dart';
 import 'package:rackpal_core/src/draw/scene/net_label_layer.dart'
@@ -37,6 +38,8 @@ import 'package:rackpal_core/src/draw/scene/rack_style.dart';
 import 'package:rackpal_core/src/draw/scene/schematic_scene.dart'
     show kSchematicUnitsPerGrid;
 import 'package:rackpal_core/src/draw/scene/signal_style.dart' show SignalStyle;
+import 'package:rackpal_core/src/draw/scene/symbol_layer.dart'
+    show SchematicPalette;
 import 'package:rackpal_core/src/draw/scene/wire_trace.dart'
     show tagPillSampleOps;
 import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart'
@@ -316,6 +319,10 @@ const String kLegendNetLabelMeaning =
     'Net label: a cable shown as a named stub at each end, where its '
     'sheet notes it';
 
+/// The adapter mark's meaning line (DR-235 §11.234.5).
+const String kLegendAdapterMeaning =
+    'Bowtie: an in-line adapter declared on the cable';
+
 /// How tall a cable sample's row is: a pill is its 8 pt type plus its pad,
 /// which a 14 pt text line does not hold.
 const double _kCableSampleRow = 20;
@@ -325,7 +332,9 @@ const double _kCableSampleRow = 20;
 /// interconnect sheets' tag pill and net label when the set prints them.
 ///
 /// [tagPill] and [netLabel] are null when no sheet in the set draws that
-/// mark (DR-208 §11.207.1: the key explains what the set prints). Either
+/// mark (DR-208 §11.207.1: the key explains what the set prints), and so
+/// is [adapter], the style of a cable the set prints with its mark on it
+/// (DR-235 §11.234.5). Either
 /// needs [measurer], since both samples are drawn by the schematic's own
 /// layers, which measure their text.
 LegendBlock conventionsBlock({
@@ -333,6 +342,7 @@ LegendBlock conventionsBlock({
   required bool hatchedPassive,
   LegendCableSample? tagPill,
   LegendCableSample? netLabel,
+  SignalStyle? adapter,
   TextMeasurer? measurer,
   SheetPalette palette = const SheetPalette(),
 }) {
@@ -442,6 +452,40 @@ LegendBlock conventionsBlock({
         ),
       );
     y += _kCableSampleRow + kLegendBlockLine;
+  }
+  // DR-235 §11.234.5, JOINING IN THE CHANGE THAT FIRST PRINTS IT (DR-208
+  // §11.207.1): the mark on a short run of the cable it was found on,
+  // drawn by the one function every rendering draws it with.
+  if (adapter != null) {
+    ops
+      ..add(
+        OpLine(
+          DPt(0, y),
+          DPt(sampleW, y),
+          Stroke(
+            argb: adapter.argb,
+            widthPt: adapter.widthPt,
+            dash: adapter.dash,
+          ),
+        ),
+      )
+      ..add(
+        adapterMarkOp(
+          DPt(sampleW / 2, y),
+          half: sampleH / 2,
+          horizontal: true,
+          signal: adapter,
+          fillArgb: const SchematicPalette().bodyFill,
+        ),
+      )
+      ..add(
+        OpText(
+          kLegendAdapterMeaning,
+          DPt(sampleW + 8, y),
+          _text(kLegendBlockPt, palette.text),
+        ),
+      );
+    y += kLegendBlockLine;
   }
   return LegendBlock('CONVENTIONS', ops, y);
 }

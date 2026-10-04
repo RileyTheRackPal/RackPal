@@ -183,6 +183,7 @@ import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/path.dart';
+import 'package:rackpal_core/src/draw/scene/adapter_mark.dart';
 // #124 — channel 4a as geometry, and the ONE width both this file's sizer
 // and its emitter read for it.
 import 'package:rackpal_core/src/draw/scene/family_glyph.dart';
@@ -578,6 +579,8 @@ NetLabelLayerBuild buildNetLabelLayer({
           style: signal,
           netName: name ?? kUnknownCell,
           bracket: end.bracket,
+          // DR-235 §11.234.5: a mark on each pennant of the pair.
+          adapter: link.inlineAdapters.isNotEmpty,
         ),
       );
     }
@@ -762,6 +765,7 @@ final class _Stub {
     required this.style,
     required this.netName,
     required this.bracket,
+    this.adapter = false,
   });
 
   /// The link's id, and nothing else of it: the emitter reads no other
@@ -775,6 +779,9 @@ final class _Stub {
 
   /// The pins a DR-174 bracket spans at this end, in edge order, or empty.
   final List<SymbolPort> bracket;
+
+  /// Whether the link carries a declared in-line adapter (DR-235).
+  final bool adapter;
 }
 
 /// One end of a link that landed on a drawn pin. `bracket` is the pins a
@@ -1696,9 +1703,30 @@ final class _Emitter {
         .union(
           DBox.fromCorners(start, anchor).inflate(stub.style.widthPt / 2),
         );
+    // DR-235 §11.234.5: THE ADAPTER'S MARK, on the leader halfway from pin
+    // to flag, in the PENNANT run so it paints over the leader it
+    // interrupts, facing along the leader. Inside room the leader already
+    // had, so it moves nothing.
+    DBox? mark;
+    if (stub.adapter) {
+      final mid = DPt((start.x + anchor.x) / 2, (start.y + anchor.y) / 2);
+      // One grid unit is the leader over its length in grid units.
+      final half = kAdapterMarkHalfGu * (sizer.leader / style.leaderGu);
+      _pennants.add(
+        adapterMarkOp(
+          mid,
+          half: half,
+          horizontal: horizontal,
+          signal: stub.style,
+          fillArgb: palette.bodyFill,
+        ),
+      );
+      mark = adapterMarkBox(mid, half, stub.style.widthPt);
+    }
+    final withMark = mark == null ? ink : ink.union(mark);
     final inked = bracketInk == null
-        ? ink
-        : ink.union(bracketInk.inflate(stub.style.widthPt / 2));
+        ? withMark
+        : withMark.union(bracketInk.inflate(stub.style.widthPt / 2));
     bounds = bounds == null ? inked : bounds!.union(inked);
   }
 

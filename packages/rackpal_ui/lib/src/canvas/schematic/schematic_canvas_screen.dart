@@ -1871,6 +1871,50 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     );
   }
 
+  /// The cable bar's adapters for [id], named once in core
+  /// (`adapterConnectorsLabel`) so the bar, T6.30 and the notes agree.
+  List<CableBarAdapter> _adaptersOf(Uuid id) => [
+    for (final a in _doc.links[id]?.inlineAdapters ?? const <InlineAdapter>[])
+      (
+        connectors: adapterConnectorsLabel(_doc.registries, a),
+        model: a.model,
+      ),
+  ];
+
+  /// DR-235 §11.234.2: the cable bar names an adapter's part.
+  ///
+  /// ASKED BEFORE RUNNING, because `run` cannot say whether a command
+  /// applied: an index the document no longer holds, or the model the
+  /// adapter already has, would otherwise announce an edit nobody made.
+  void _setAdapterModel(Uuid id, int index, String? model) {
+    final adapters = _doc.links[id]?.inlineAdapters;
+    if (adapters == null || index >= adapters.length) return;
+    final command = SetInlineAdapterModelCommand(
+      linkId: id,
+      index: index,
+      model: model,
+    );
+    if (adapters[index].model == command.model) return;
+    widget.controller.run(command);
+    _status.show(
+      '${_doc.links[id]?.designator ?? 'That cable'} adapter '
+      '${command.model == null ? 'model cleared' : 'is ${command.model}'}. '
+      'Ctrl+Z puts it back.',
+    );
+  }
+
+  /// DR-235 §11.234.2: the cable bar takes an adapter off.
+  void _removeAdapter(Uuid id, int index) {
+    final adapters = _doc.links[id]?.inlineAdapters;
+    if (adapters == null || index >= adapters.length) return;
+    final named = adapterConnectorsLabel(_doc.registries, adapters[index]);
+    widget.controller.run(RemoveInlineAdapterCommand(linkId: id, index: index));
+    _status.show(
+      '${_doc.links[id]?.designator ?? 'That cable'}: removed the $named '
+      'adapter. Ctrl+Z puts it back.',
+    );
+  }
+
   // ── keyboard (docs/05 §14) ────────────────────────────────────────────
 
   /// Whether a `TextField` currently holds focus — `rack_canvas_screen.dart`'s
@@ -1878,7 +1922,10 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   /// widget identity precisely so it stays correct for fields that do not
   /// exist yet.
   ///
-  /// THAT IS WHY IT IS HERE ON A SCREEN WITH NO TEXT FIELD. docs/04 §8's
+  /// THAT IS WHY IT WAS HERE ON A SCREEN WITH NO TEXT FIELD, and the field
+  /// it was waiting for arrived with DR-235: the cable bar's adapter Model
+  /// (`#1001`), whose test types into it to hold this getter to its word.
+  /// docs/04 §8's
   /// rule is "'global' never means 'including inside a text field'", and
   /// the defect it was written for was introduced by ADDING a text field to
   /// a subtree whose keymap predated it. A filter-bar search box, a net-name
@@ -4320,11 +4367,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
                     outcome = message;
                   case DeclareAdapterReady(:final command):
                     tx.add(command);
+                    // THE CABLE BAR, NOT "THE INSPECTOR" (DR-235, `#1001`):
+                    // this sentence used to send people to an inspector
+                    // field the schematic never had.
+                    final reg = _doc.registries;
+                    final from = connectorName(reg, fromTarget.def.connector);
+                    final to = connectorName(reg, toTarget.def.connector);
                     outcome =
-                        'Declared a ${fromTarget.def.connector.v} to '
-                        '${toTarget.def.connector.v} adapter on the cable. '
-                        'Name the part in the inspector so it reaches the '
-                        'bill of materials.';
+                        'Declared a $from to $to adapter on '
+                        '${connect.designator}. Select the cable to name the '
+                        'part on its bar.';
                 }
             }
           });
@@ -4460,13 +4512,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
             outcome = message;
           case DeclareAdapterReady(command: final declare):
             tx.add(declare);
-            // NO "NAME THE PART IN THE INSPECTOR" HERE, unlike the pin
-            // path's sentence: no inspector reads or edits an adapter, so
-            // that instruction names a route the product does not have.
+            // The cable bar names the part (DR-235 §11.234.2), as the pin
+            // path's sentence now says too.
             outcome =
                 '${command.designator} connected ${toSet.def.label} as one '
-                'cable, with a ${verdict.from.def.connector.v} to '
-                '${verdict.to.def.connector.v} adapter declared on it.';
+                'cable, with a '
+                '${connectorName(_doc.registries, verdict.from.def.connector)}'
+                ' to '
+                '${connectorName(_doc.registries, verdict.to.def.connector)}'
+                ' adapter declared on it. Select the cable to name the part '
+                'on its bar.';
         }
       });
     } finally {
@@ -5041,6 +5096,10 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
                   saying: _cableSaying(id),
                   crossover: _doc.links[id]!.crossover,
                   onCrossover: (to) => _setCrossover(id, to),
+                  // DR-235 §11.234.2: the cable's adapters, named here.
+                  adapters: _adaptersOf(id),
+                  onAdapterModel: (i, model) => _setAdapterModel(id, i, model),
+                  onRemoveAdapter: (i) => _removeAdapter(id, i),
                 ),
               ],
               const Divider(height: 1),

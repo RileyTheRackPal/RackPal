@@ -580,6 +580,12 @@ enum LabelKey {
   // just named a barrel adapter would offer to take back the wrong act.
   declareInlineAdapter,
 
+  // NAMING AND REMOVING ONE (commands/declare_adapter.dart), `#1001`,
+  // DR-235. The cable bar's two adapter edits; not `setProperty`, which
+  // would put "Undo Set Property" in front of somebody who typed a part.
+  setInlineAdapterModel,
+  removeInlineAdapter,
+
   // A MOUNT NOTE ON AN OFF-RACK DEVICE (commands/mount_note_command.dart),
   // M5-L/`#839`, DR-130. Its own value and not `setProperty`: the field
   // lives on the `Placement` rather than on the device, and "Undo Set

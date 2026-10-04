@@ -127,6 +127,133 @@ final class DeclareInlineAdapterCommand extends Command<RackDocument> {
   }
 }
 
+// ═════════════════════════════════════════════════════════════════════
+// AND ITS FIRST EDITORS (DR-235 §11.234.2, `#1001`)
+// ═════════════════════════════════════════════════════════════════════
+// An adapter could be declared and then never named or taken off: the
+// remedy writes `model: null`, and the sentence that followed sent the
+// person to an inspector field that did not exist. The cable bar is the
+// host now, and these two are what it runs.
+//
+// BY INDEX, because an `InlineAdapter` has no id and two on one cable can
+// be field-for-field equal. The bar reads the list and names a position;
+// each command holds the instance it touched, so undo acts on the same
+// object rather than on whatever now sits at that index.
+//
+// `InlineAdapter.model` STAYS A PLAIN FIELD, against the AC-013 note on the
+// model that fields are converted as each is wired to a command.
+// `internal_setter_grep_test.dart` matches setters BY NAME, and
+// `TemplateBody.model` is assigned in `builder/template_commands.dart`, so
+// an `@internal set model` here would fail that test on a different class.
+
+/// Names, or clears, the part an adapter is.
+///
+/// A blank model is no model (G4: unknown stays absent rather than
+/// becoming an empty string that prints as a part). Setting the value it
+/// already has is no command, and applies nothing.
+final class SetInlineAdapterModelCommand extends Command<RackDocument> {
+  SetInlineAdapterModelCommand({
+    required this.linkId,
+    required this.index,
+    required String? model,
+  }) : model = (model ?? '').trim().isEmpty ? null : model!.trim();
+
+  final Uuid linkId;
+
+  /// Position in `Link.inlineAdapters`.
+  final int index;
+
+  /// The part, or null for "nobody has said".
+  final String? model;
+
+  InlineAdapter? _target;
+  String? _before;
+
+  @override
+  LabelKey get label => LabelKey.setInlineAdapterModel;
+
+  @override
+  EpochMask get touches => EpochMask.wires;
+
+  @override
+  Iterable<Uuid> get affects => [linkId];
+
+  @override
+  bool apply(RackDocument doc) {
+    final adapters = doc.links[linkId]?.inlineAdapters;
+    if (adapters == null || index < 0 || index >= adapters.length) {
+      return false;
+    }
+    final adapter = adapters[index];
+    if (adapter.model == model) return false;
+    _target = adapter;
+    _before = adapter.model;
+    adapter.model = model;
+    return true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    final adapter = _target;
+    if (adapter == null) {
+      throw StateError(
+        'SetInlineAdapterModelCommand.revert called before apply().',
+      );
+    }
+    adapter.model = _before;
+    _target = null;
+  }
+}
+
+/// Takes one adapter off its cable, and puts that same one back on undo.
+///
+/// Removing the adapter that cleared `CON-001` makes the rule fire again
+/// on the next pass, which is right: the finding is computed (CR-021),
+/// and a person who removed the barrel has a cable whose plug does not fit.
+final class RemoveInlineAdapterCommand extends Command<RackDocument> {
+  RemoveInlineAdapterCommand({required this.linkId, required this.index});
+
+  final Uuid linkId;
+
+  /// Position in `Link.inlineAdapters`.
+  final int index;
+
+  InlineAdapter? _removed;
+
+  @override
+  LabelKey get label => LabelKey.removeInlineAdapter;
+
+  @override
+  EpochMask get touches => EpochMask.wires;
+
+  @override
+  Iterable<Uuid> get affects => [linkId];
+
+  @override
+  bool apply(RackDocument doc) {
+    final adapters = doc.links[linkId]?.inlineAdapters;
+    if (adapters == null || index < 0 || index >= adapters.length) {
+      return false;
+    }
+    _removed = adapters.removeAt(index);
+    return true;
+  }
+
+  @override
+  void revert(RackDocument doc) {
+    final adapter = _removed;
+    if (adapter == null) {
+      throw StateError(
+        'RemoveInlineAdapterCommand.revert called before apply().',
+      );
+    }
+    final adapters = doc.links[linkId]?.inlineAdapters;
+    if (adapters == null) return;
+    adapters.insert(index.clamp(0, adapters.length), adapter);
+    _removed = null;
+  }
+}
+
 /// What [buildDeclareAdapterCommand] decided.
 sealed class DeclareAdapterResult {
   const DeclareAdapterResult();

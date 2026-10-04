@@ -90,6 +90,8 @@ const Map<LabelKey, String> kUndoLabels = <LabelKey, String>{
   LabelKey.moveEndpoint: 'Move cable end',
   LabelKey.unlandEndpoint: 'Unland cable',
   LabelKey.declareInlineAdapter: 'Declare adapter',
+  LabelKey.setInlineAdapterModel: 'Name adapter',
+  LabelKey.removeInlineAdapter: 'Remove adapter',
   LabelKey.setLinkJacketColor: 'Set jacket colour',
   LabelKey.setLinkPulledJacketColor: 'Set pulled jacket colour',
   LabelKey.setLinkClass: 'Set cable class',
