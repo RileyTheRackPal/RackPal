@@ -24013,6 +24013,59 @@ declared on the cable"*.
 
 ---
 
+### 11.235 DR-236 · One cable may carry several sets to several devices, added from the cable's own bar
+
+**Settled by the user on 2026-10-04, a §8.3 amendment, for `#1000`.** The trade convention: run 16/4 from the
+amplifier to a room, tap one pair at the first speaker and continue to the second. One cable, one pull, two
+devices. **Measured before ruling:**
+
+- **The model already allows it, and has since the corpus was reconciled.** CR-014 relaxed I-25 to the
+  conductor: *"Each `Conductor` spans exactly two endpoints; a `Link` may reference up to N devices"*, and
+  AC-029 accepted that for v1 with the dual-head IR emitter as its example.
+- **What AC-053 deferred was the authoring**: *"Hand-authoring an arbitrary conductor map defers to v1.1."*
+  The v1 gesture connects one set to one set, so the closest a person could get was a set connect and a
+  DR-014 split: two cables on the Pull Sheet where the crew pulls one. Roadmap §2.2's row justified waiting
+  with *"`atomicConnect` covers component video, stereo pairs, 16/4"*, which is true of a 16/4 between two
+  devices and false of this one.
+- **The readers misread the ruling they cite.** `net_label_layer.dart` reads the cable's ends off its first
+  conductor on the ground that *"CR-014 fixes each conductor at exactly two ends and every conductor of one
+  cable shares the same physical pair"*. CR-014 rules the first half and the opposite of the second. Six
+  generic readers take that shortcut: the classifier, the schedule's ends, net labels, the schematic's
+  layout, link lookup and the canvas; the other sites that read the first conductor are home-run code, where
+  one conductor is the shape.
+
+**11.235.1 RULED: SETS ONTO ONE CABLE COME INTO V1**, the user's choice, and the recommended one. A cable may
+carry several atomic sets, each landing on its own device. AC-053's deferral narrows to what it still
+covers, hand-mapping individual conductors, which stays v1.1 (§12.51). Not taken: the full conductor map,
+which needs a per-conductor editor nobody has designed and which the 16/4 case does not need.
+
+**11.235.2 RULED: ADDED FROM THE CABLE'S OWN BAR**, the user's choice. A selected cable's bar (DR-231 §11.230.1)
+offers **Add a set to this cable**, which arms the set gesture from a free set on a device the cable already
+reaches; the drop appends that set's conductors to this cable instead of minting a new one, in one undo
+step. Tier 1 refuses as it does for any set; tier 2 springs back per pair with DR-234's chip. It is DR-014's
+split read the other way. Not taken: dropping onto a cable's pennant, which nothing on screen marks as a
+target and which a near miss turns into a new cable; and a modifier drag, undiscoverable and one more bare
+key in a keymap that has just grown a text field.
+
+**11.235.3 RULED: ONE ROW, EVERY FAR END NAMED**, the user's choice. The Pull Sheet prints such a cable once,
+with one length, its far ends named together (`SPK-1 + SPK-2`): it is one pull, which is RJ-016's whole
+argument. The Termination Schedule gives each end its own line under the one cable number, since each end
+is terminated by somebody. Not taken: a row per far end, the shape RJ-016 rejected.
+
+**11.235.4 RULED: EVERY READER READS EVERY CONDUCTOR.** The readers above take a cable's ends from all its
+conductors, as CR-014 always required, and their comments stop citing CR-014 for the opposite. A cable with
+every conductor on one pair of devices, which is every cable drawn before this ruling, reads exactly as
+before.
+
+**11.235.5 LEFT FOR ITS CHAPTER.** How a drawn wire that reaches three devices is drawn is decided when that
+chapter is built, with the user. Where along the run a tap sits (`Breakout.atLengthFraction`) stays unknown
+unless a person states it (G4); nothing here invents one.
+
+**Scope.** **v1 grows**: the authoring of a cable that carries several sets to several devices, and the
+readers that make such a cable print right. A new Epic under the v1 Saga holds it; `#1000` moves there.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
@@ -24766,6 +24819,11 @@ close and a reopen.
 |---|---|---|
 | **DR-008 §11.8.1**, its heading and its closing line | *"A jumper is a Link with both ends in the same rack. Nothing else."*, and *"`powerCord` and `internal` are untouched by this ruling."* | **A cord is tested first** (§11.232.1): a link whose port ends are all `power.ac_iec` or `power.ac_branch` ports with a role is a `powerCord`, in one rack or not. The rack test then decides jumper or field cable exactly as before, and its three reasons stand. `internal` is still untouched. |
 
+### 12.51 Amended by DR-236 (one cable, several sets, several devices)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **AC-053**, its deferral, and roadmap §2.2's row | *"Hand-authoring an arbitrary conductor map defers to v1.1"*; the row adds *"`atomicConnect` covers component video, stereo pairs, 16/4"* | **Adding a further set to an existing cable, each set to its own device, is v1** (§11.235.1, §11.235.2). Hand-mapping individual conductors stays v1.1. The row's claim is narrowed: `atomicConnect` covers a 16/4 between two devices, not one tapped and continued. |
 
 ## 13. Resolved §10 questions
 

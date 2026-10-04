@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-04 (hundred-and-fourteenth entry)
+
+* **Progress**: `adapters-1001` merged at `50dc9576` (PR 204); `#1001` closed. BRK-A opened on branch `brk-a`:
+  Epic `#1003` under the v1 Saga, `#1000` moved under it, decomposed into `#1004` to `#1009` before any code.
+* **Creation**: [DR-236](/decisions/dr-236-one-cable-several-sets-several-devices.md), a §8.3 amendment.
+* **Note**: **A COMMENT CAN CITE A RULING FOR ITS OPPOSITE.** Six readers take a cable's ends from its first
+  conductor "because CR-014 fixes every conductor of one cable to the same pair"; CR-014 rules that a cable may
+  reach N devices. The scope question ("is this v1.1?") was answered by reading the ruling the code cited,
+  which showed the model was v1 all along and only the authoring was deferred.
+
 ## 2026-10-04 (hundred-and-thirteenth entry)
 
 * **Progress**: `debt-908-909` merged at `02f38325` (PR 203); `#908`, `#909`, `#999` closed. `#1002` filed (a
