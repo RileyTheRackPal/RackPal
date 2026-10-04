@@ -91,6 +91,7 @@ final class StructureEditorActions {
     required this.onAddPathway,
     required this.onRemovePathway,
     required this.onEditDevices,
+    required this.onDevicesVerifiedToday,
     required this.onImportCsv,
     required this.onRunMediaTypeCommands,
     required this.onRemoveStructure,
@@ -181,6 +182,10 @@ final class StructureEditorActions {
   /// `NetworkCellEdit` is a `DeviceInstance`'s, and folding it into another
   /// callback would put a third entity type behind one `Uuid`.
   final String? Function(List<NetworkCellEdit> edits) onEditDevices;
+
+  /// The Devices batch bar's Verified today, as ONE undo step (NET-A/2c,
+  /// DR-226 §11.225.5). The app supplies the day, from its clock.
+  final String? Function(List<Uuid> ids) onDevicesVerifiedToday;
 
   /// docs/07 §5's import, on the body the editor is showing (M3-F/2,
   /// #160).
@@ -312,6 +317,11 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   /// matrix (NET-A/2b).
   bool _devicesShowAll = false;
   final Set<NetworkColumnId> _devicesShown = {...defaultNetworkColumns};
+
+  /// The ticked devices and the focused Devices cell (NET-A/2c), held here
+  /// for the cable table's [_selected] and [_caret]'s reasons.
+  final Set<Uuid> _devicesSelected = <Uuid>{};
+  (Uuid, NetworkColumnId)? _devicesCaret;
 
   /// AC-048: THE EDITOR OPENS IN TABLE MODE. The one requirement the
   /// ruling makes of this surface, and the one line that keeps it.
@@ -554,7 +564,26 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
                           onColumn: (c) => setState(() {
                             if (!_devicesShown.remove(c)) _devicesShown.add(c);
                           }),
-                          actions: DevicesActions(onEdit: _editDevices),
+                          selected: _devicesSelected,
+                          onSelect: (id, {required ticked}) => setState(() {
+                            if (ticked) {
+                              _devicesSelected.add(id);
+                            } else {
+                              _devicesSelected.remove(id);
+                            }
+                          }),
+                          onSelectAll: (ids, {required ticked}) => setState(() {
+                            if (ticked) {
+                              _devicesSelected.addAll(ids);
+                            } else {
+                              _devicesSelected.removeAll(ids);
+                            }
+                          }),
+                          onCaret: (cell) => _devicesCaret = cell,
+                          actions: DevicesActions(
+                            onEdit: _editDevices,
+                            onVerifiedToday: _devicesVerifiedToday,
+                          ),
                         ),
                       },
                     ),
@@ -709,6 +738,45 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
     return refusal;
   }
 
+  String? _devicesVerifiedToday(List<Uuid> ids) {
+    final refusal = widget.actions.onDevicesVerifiedToday(ids);
+    setState(() => _refusal = refusal);
+    return refusal;
+  }
+
+  /// `Ctrl+D` on the Devices tab: the cell directly above, the table's own
+  /// meaning (`FillDownIntent`), over the rows the view is showing.
+  void _fillDownDevices() {
+    final caret = _devicesCaret;
+    if (caret == null) {
+      setState(() => _refusal = kNoCaretForFill);
+      return;
+    }
+    final rows = buildNetworkTable(
+      widget.currentDoc(),
+      showAll: _devicesShowAll,
+      order: widget.currentDoc().settings.networkOrder,
+    );
+    final index = rows.indexWhere((r) => r.deviceId == caret.$1);
+    if (index <= 0) {
+      setState(() => _refusal = kNothingAboveToFill);
+      return;
+    }
+    final above = rows[index - 1];
+    _editDevices([
+      NetworkCellEdit(
+        deviceId: caret.$1,
+        column: caret.$2,
+        // An undated row above fills an EMPTY date, not the word: copying
+        // `unverified` would be refused as a date, and its meaning is
+        // "no date", which an empty cell already says.
+        value: caret.$2 == NetworkColumnId.verified && above.verifiedOn == null
+            ? ''
+            : networkCellText(above, caret.$2),
+      ),
+    ]);
+  }
+
   String? _addPathway() {
     final refusal = widget.actions.onAddPathway();
     setState(() => _refusal = refusal);
@@ -829,6 +897,10 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   /// caret in a cell first" at somebody whose caret IS in a cell would
   /// be worse than an unbound key.
   void _fillDown() {
+    if (_tab == StructureEditorTab.devices) {
+      _fillDownDevices();
+      return;
+    }
     if (_tab != StructureEditorTab.table) {
       setState(() => _refusal = kGridKeysAreTableOnly);
       return;
@@ -862,6 +934,10 @@ class _StructureEditorScreenState extends State<StructureEditorScreen> {
   /// on its fourth row writes none of its rows rather than three. See
   /// `StructureEditorActions.onEdit`.
   Future<void> _paste() async {
+    if (_tab == StructureEditorTab.devices) {
+      setState(() => _refusal = kPasteIsCableTableOnly);
+      return;
+    }
     if (_tab != StructureEditorTab.table) {
       setState(() => _refusal = kGridKeysAreTableOnly);
       return;
@@ -2920,7 +2996,14 @@ const String kPasteOverrunsColumns =
 /// 32 cables and an outlet each from one keystroke, and that is a ruling
 /// rather than an afternoon.
 const String kGridKeysAreTableOnly =
-    'Ctrl+D and Ctrl+V work on the table, not the matrix.';
+    'Ctrl+D works in the Table and Devices views, and Ctrl+V in the Table '
+    'view.';
+
+/// Why `Ctrl+V` did nothing on the Devices tab (NET-A/2c): it pastes
+/// spreadsheet rows of cables, and a device row is not one.
+const String kPasteIsCableTableOnly =
+    'Ctrl+V pastes cable rows into the Table view. Here, type into a cell, '
+    'fill down with Ctrl+D, or tick rows and use Set.';
 
 /// What the first line of the no-drops state says.
 const String kNoDropsHeadline = 'This Structure body has no drops yet.';

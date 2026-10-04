@@ -11,6 +11,8 @@
 // deleted panel got wrong in the direction that costs most. It names the
 // field that is on screen directly above it, and the test below drives
 // that exact instruction.
+import 'dart:io';
+
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -65,6 +67,17 @@ RackDocument _project({
   return doc;
 }
 
+/// The Whole House starter, for the Devices tab, which needs real
+/// network-capable devices (NET-A/2c).
+RackDocument _wholeHouse() =>
+    (const JsonDocumentCodec().read(
+              File(
+                '../../apps/rackpal/assets/starters/whole_house.rppj',
+              ).readAsBytesSync(),
+            )
+            as Ok<RackDocument>)
+        .value;
+
 /// What the app layer does, in the shape the app layer does it: re-plan
 /// against its own clock and actor, apply, report.
 final class _Harness {
@@ -87,6 +100,9 @@ final class _Harness {
   /// Every batch of Devices-view edits (NET-A/2a), recorded and never
   /// refused: the parsing and the commands are the app's, and tested there.
   final List<List<NetworkCellEdit>> deviceEdits = [];
+
+  /// Every Verified today the Devices batch bar asked for (NET-A/2c).
+  final List<List<Uuid>> verifiedToday = [];
 
   String? editDevices(List<NetworkCellEdit> edits) {
     deviceEdits.add(edits);
@@ -132,6 +148,10 @@ final class _Harness {
     onAddPathway: addPathway,
     onRemovePathway: removePathway,
     onEditDevices: editDevices,
+    onDevicesVerifiedToday: (ids) {
+      verifiedToday.add(ids);
+      return null;
+    },
     onImportCsv: (bodyId) async {
       importCsvOpened++;
       importCsvBody = bodyId;
@@ -1751,6 +1771,59 @@ void main() {
 
       expect(find.byType(DevicesView), findsOneWidget);
       expect(find.text(kShowAllDevicesLabel), findsOneWidget);
+    });
+
+    testWidgets('Ctrl+D on the Devices tab fills a cell from the row '
+        'above (NET-A/2c), the table key with the table meaning', (
+      tester,
+    ) async {
+      final doc = _wholeHouse();
+      final rows = buildNetworkTable(doc);
+      // THROUGH THE COMMAND: the field's setter is `@internal`, so a test in
+      // another package writes it the way the product does.
+      DocumentController(doc).run(
+        buildSetEntityProperty(
+          doc: doc,
+          id: rows[0].deviceId,
+          field: DeviceField.networkIp,
+          to: '10.0.0.1',
+          now: DateTime.utc(2026, 10, 3),
+          actor: 'test',
+        )!,
+      );
+      final h = _Harness(doc);
+      await _pump(tester, h);
+      await tester.tap(find.text(kDevicesTabLabel));
+      await tester.pumpAndSettle();
+
+      final second = find.descendant(
+        of: find.byKey(ValueKey('${rows[1].deviceId.v}:ip')),
+        matching: find.byType(TextField),
+      );
+      await tester.tap(second);
+      await tester.pump();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyD);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pump();
+
+      final sent = h.deviceEdits.last.single;
+      expect(sent.deviceId, rows[1].deviceId);
+      expect(sent.column, NetworkColumnId.ip);
+      expect(sent.value, '10.0.0.1');
+    });
+
+    testWidgets('Ctrl+V on the Devices tab says where it works rather than '
+        'doing nothing (docs/04 §3.4)', (tester) async {
+      final h = _Harness(_project());
+      await _pump(tester, h);
+      await tester.tap(find.text(kDevicesTabLabel));
+      await tester.pumpAndSettle();
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+      await tester.sendKeyEvent(LogicalKeyboardKey.keyV);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+      await tester.pumpAndSettle();
+      expect(find.text(kPasteIsCableTableOnly), findsOneWidget);
     });
 
     testWidgets('Show all survives a trip to another view and back '

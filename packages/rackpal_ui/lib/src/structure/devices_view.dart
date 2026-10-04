@@ -25,17 +25,24 @@
 // somebody has.
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/structure/structure_editor_screen.dart'
+    show kBatchSetLabel, kClearSelectionLabel;
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 
 /// What the app does when the Devices view asks for something.
 @immutable
 final class DevicesActions {
-  const DevicesActions({required this.onEdit});
+  const DevicesActions({required this.onEdit, required this.onVerifiedToday});
 
   /// Applies cell edits as ONE undo step, and returns a refusal sentence
   /// or null. A list, on `PathwaysActions.onEdit`'s reasoning: fill-down
   /// and the batch bar send several.
   final String? Function(List<NetworkCellEdit> edits) onEdit;
+
+  /// Stamps today's date on the given devices' rows, as ONE undo step (DR-226
+  /// §11.225.5). "Today" is the person's calendar day, which only the app
+  /// has a clock for, so the view asks rather than supplying a date.
+  final String? Function(List<Uuid> ids) onVerifiedToday;
 }
 
 /// One cell, as an edit request: which device, which column, what was
@@ -56,6 +63,12 @@ final class NetworkCellEdit {
 
 /// The Show all toggle's words (DR-227 §11.226.2).
 const String kShowAllDevicesLabel = 'Show all devices';
+
+/// The batch bar's stamp (DR-226 §11.225.5).
+const String kVerifiedTodayLabel = 'Verified today';
+
+/// The tick gutter's width, the cable table's `kSelectGutterWidth`.
+const double kDeviceSelectGutterWidth = 34;
 
 /// The Columns menu's button (NET-A/2b), the port grid's word for it.
 const String kDeviceColumnsLabel = 'Columns';
@@ -86,9 +99,23 @@ class DevicesView extends StatelessWidget {
     required this.onShowAll,
     required this.shown,
     required this.onColumn,
+    required this.selected,
+    required this.onSelect,
+    required this.onSelectAll,
+    required this.onCaret,
     this.order = NetworkOrder.designator,
     super.key,
   });
+
+  /// The ticked devices. Held by the editor, as the cable table's are.
+  final Set<Uuid> selected;
+  final void Function(Uuid id, {required bool ticked}) onSelect;
+
+  /// Ticks or unticks every row ON SCREEN: what Show all lists.
+  final void Function(List<Uuid> ids, {required bool ticked}) onSelectAll;
+
+  /// The focused cell, for `Ctrl+D`.
+  final ValueChanged<(Uuid, NetworkColumnId)?> onCaret;
 
   final RackDocument doc;
   final DevicesActions actions;
@@ -126,10 +153,37 @@ class DevicesView extends StatelessWidget {
           onColumn: onColumn,
         ),
         const Divider(height: 1),
+        // ONLY WHEN SOMETHING ON SCREEN IS TICKED, the cable bar's rule: a
+        // strip of controls that do nothing on an empty selection is the
+        // defect `shell_tabs_test.dart` gates.
+        if (rows.any((r) => selected.contains(r.deviceId)))
+          _DeviceBatchBar(
+            ticked: [
+              for (final r in rows)
+                if (selected.contains(r.deviceId)) r.deviceId,
+            ],
+            columns: [
+              for (final c in columns)
+                if (networkColumnIsEditable(c)) c,
+            ],
+            actions: actions,
+            onClear: () => onSelectAll(
+              [for (final r in rows) r.deviceId],
+              ticked: false,
+            ),
+          ),
         Expanded(
           child: rows.isEmpty
               ? const _EmptyState()
-              : _DeviceTable(rows: rows, columns: columns, actions: actions),
+              : _DeviceTable(
+                  rows: rows,
+                  columns: columns,
+                  actions: actions,
+                  selected: selected,
+                  onSelect: onSelect,
+                  onSelectAll: onSelectAll,
+                  onCaret: onCaret,
+                ),
         ),
       ],
     );
@@ -225,18 +279,27 @@ class _DeviceTable extends StatelessWidget {
     required this.rows,
     required this.columns,
     required this.actions,
+    required this.selected,
+    required this.onSelect,
+    required this.onSelectAll,
+    required this.onCaret,
   });
 
   final List<NetworkRow> rows;
   final List<NetworkColumnId> columns;
   final DevicesActions actions;
+  final Set<Uuid> selected;
+  final void Function(Uuid id, {required bool ticked}) onSelect;
+  final void Function(List<Uuid> ids, {required bool ticked}) onSelectAll;
+  final ValueChanged<(Uuid, NetworkColumnId)?> onCaret;
 
   @override
   Widget build(BuildContext context) {
-    final totalPt = columns.fold<double>(
-      0,
-      (n, c) => n + networkColumnWidth(c),
-    );
+    final totalPt =
+        columns.fold<double>(0, (n, c) => n + networkColumnWidth(c)) +
+        kDeviceSelectGutterWidth;
+    final ids = [for (final r in rows) r.deviceId];
+    final ticked = ids.where(selected.contains).length;
     return LayoutBuilder(
       builder: (context, constraints) {
         // NEVER SQUEEZED BELOW THE AUTHORED WIDTHS: a narrow window scrolls
@@ -253,7 +316,18 @@ class _DeviceTable extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _HeaderRow(columns: columns, scale: effective),
+                  _HeaderRow(
+                    columns: columns,
+                    scale: effective,
+                    // TRI-STATE, as the cable table's header is: some but
+                    // not all ticked reads as a dash.
+                    allTicked: ticked == ids.length
+                        ? true
+                        : ticked == 0
+                        ? false
+                        : null,
+                    onSelectAll: (all) => onSelectAll(ids, ticked: all),
+                  ),
                   const Divider(height: 1),
                   Expanded(
                     child: ListView.builder(
@@ -264,6 +338,10 @@ class _DeviceTable extends StatelessWidget {
                         columns: columns,
                         scale: effective,
                         actions: actions,
+                        ticked: selected.contains(rows[index].deviceId),
+                        onTick: (v) =>
+                            onSelect(rows[index].deviceId, ticked: v),
+                        onCaret: onCaret,
                       ),
                     ),
                   ),
@@ -278,10 +356,19 @@ class _DeviceTable extends StatelessWidget {
 }
 
 class _HeaderRow extends StatelessWidget {
-  const _HeaderRow({required this.columns, required this.scale});
+  const _HeaderRow({
+    required this.columns,
+    required this.scale,
+    required this.allTicked,
+    required this.onSelectAll,
+  });
 
   final List<NetworkColumnId> columns;
   final double scale;
+  final bool? allTicked;
+
+  /// True ticks every row on screen; false unticks them.
+  final ValueChanged<bool> onSelectAll;
 
   @override
   Widget build(BuildContext context) {
@@ -290,6 +377,17 @@ class _HeaderRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
+          SizedBox(
+            width: kDeviceSelectGutterWidth * scale,
+            child: Checkbox(
+              key: const ValueKey('devices-tick-all'),
+              tristate: true,
+              value: allTicked,
+              // A DASH TAPPED TICKS THE REST, the reading a spreadsheet
+              // gives it; only a full tick taps to clear.
+              onChanged: (_) => onSelectAll(allTicked != true),
+            ),
+          ),
           for (final id in columns)
             SizedBox(
               width: networkColumnWidth(id) * scale,
@@ -318,6 +416,9 @@ class _DeviceRow extends StatelessWidget {
     required this.columns,
     required this.scale,
     required this.actions,
+    required this.ticked,
+    required this.onTick,
+    required this.onCaret,
     super.key,
   });
 
@@ -325,12 +426,23 @@ class _DeviceRow extends StatelessWidget {
   final List<NetworkColumnId> columns;
   final double scale;
   final DevicesActions actions;
+  final bool ticked;
+  final ValueChanged<bool> onTick;
+  final ValueChanged<(Uuid, NetworkColumnId)?> onCaret;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Row(
       children: [
+        SizedBox(
+          width: kDeviceSelectGutterWidth * scale,
+          child: Checkbox(
+            key: ValueKey('devices-tick-${row.deviceId.v}'),
+            value: ticked,
+            onChanged: (v) => onTick(v ?? false),
+          ),
+        ),
         for (final id in columns)
           SizedBox(
             width: networkColumnWidth(id) * scale,
@@ -343,6 +455,7 @@ class _DeviceRow extends StatelessWidget {
                       column: id,
                       value: _editValue(row, id),
                       onEdit: actions.onEdit,
+                      onFocused: () => onCaret((row.deviceId, id)),
                     )
                   : Text(
                       networkCellText(row, id),
@@ -375,6 +488,7 @@ class _TextCell extends StatefulWidget {
     required this.column,
     required this.value,
     required this.onEdit,
+    required this.onFocused,
     super.key,
   });
 
@@ -382,6 +496,9 @@ class _TextCell extends StatefulWidget {
   final NetworkColumnId column;
   final String value;
   final String? Function(List<NetworkCellEdit> edits) onEdit;
+
+  /// Tells the editor this is the cell `Ctrl+D` should fill.
+  final VoidCallback onFocused;
 
   @override
   State<_TextCell> createState() => _TextCellState();
@@ -430,7 +547,11 @@ class _TextCellState extends State<_TextCell> {
   }
 
   void _onFocusChange() {
-    if (!_focus.hasFocus) _commit();
+    if (_focus.hasFocus) {
+      widget.onFocused();
+    } else {
+      _commit();
+    }
   }
 
   void _commit() {
@@ -472,6 +593,119 @@ class _TextCellState extends State<_TextCell> {
         ),
       ),
       onSubmitted: (_) => _commit(),
+    );
+  }
+}
+
+/// The Devices batch bar: a column and a value for every ticked row, and
+/// the day they were checked.
+///
+/// THE CABLE BAR'S WORDS (`Set`, `value, then Enter`, `Clear selection`),
+/// so a person who has used one has used the other. Holds only the column
+/// it is about to set and the text in its box: what is ticked is the
+/// editor's.
+class _DeviceBatchBar extends StatefulWidget {
+  const _DeviceBatchBar({
+    required this.ticked,
+    required this.columns,
+    required this.actions,
+    required this.onClear,
+  });
+
+  /// The ticked rows on screen, in screen order.
+  final List<Uuid> ticked;
+
+  /// The editable columns on screen.
+  final List<NetworkColumnId> columns;
+  final DevicesActions actions;
+  final VoidCallback onClear;
+
+  @override
+  State<_DeviceBatchBar> createState() => _DeviceBatchBarState();
+}
+
+class _DeviceBatchBarState extends State<_DeviceBatchBar> {
+  final TextEditingController _text = TextEditingController();
+  NetworkColumnId? _column;
+
+  @override
+  void dispose() {
+    _text.dispose();
+    super.dispose();
+  }
+
+  void _set(String value) {
+    final column = _column;
+    if (column == null) return;
+    final refusal = widget.actions.onEdit([
+      for (final id in widget.ticked)
+        NetworkCellEdit(deviceId: id, column: column, value: value),
+    ]);
+    if (refusal == null) _text.clear();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final column = widget.columns.contains(_column) ? _column : null;
+    return ColoredBox(
+      color: theme.colorScheme.surfaceContainerHighest,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+        // A WRAP, for the cable bar's reason: a Row of these overflowed.
+        child: Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            Text(
+              '${widget.ticked.length} selected',
+              style: theme.textTheme.labelLarge,
+            ),
+            Text(kBatchSetLabel, style: theme.textTheme.labelMedium),
+            DropdownButton<NetworkColumnId>(
+              key: const ValueKey('devices-batch-column'),
+              value: column,
+              hint: const Text('column'),
+              items: [
+                for (final id in widget.columns)
+                  DropdownMenuItem(
+                    value: id,
+                    child: Text(networkColumnHeader(id)),
+                  ),
+              ],
+              onChanged: (id) => setState(() => _column = id),
+            ),
+            if (column != null)
+              SizedBox(
+                width: 180,
+                child: TextField(
+                  key: const ValueKey('devices-batch-value'),
+                  controller: _text,
+                  decoration: const InputDecoration(
+                    isDense: true,
+                    hintText: 'value, then Enter',
+                  ),
+                  onSubmitted: _set,
+                ),
+              ),
+            // A GESTURE, NOT A DEFAULT (DR-226 §11.225.5): the date says a
+            // person checked these rows, so only a person pressing this
+            // writes it, and nothing else ever does.
+            TextButton.icon(
+              key: const ValueKey('devices-verified-today'),
+              onPressed: () => widget.actions.onVerifiedToday(widget.ticked),
+              icon: const Icon(Icons.event_available_outlined, size: 18),
+              label: const Text(kVerifiedTodayLabel),
+            ),
+            TextButton(
+              key: const ValueKey('devices-batch-clear'),
+              onPressed: widget.onClear,
+              child: const Text(kClearSelectionLabel),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

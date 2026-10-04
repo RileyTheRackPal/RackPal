@@ -86,6 +86,48 @@ void main() {
     expect(sw.network, isNull);
   });
 
+  test('Verified today stamps every given device with today, as ONE undo '
+      'step (DR-226 §11.225.5)', () {
+    final verify = buildDevicesVerifiedTodayAction(controller: controller);
+    final ids = [
+      for (final d in doc.devices.values.take(3)) d.id,
+    ];
+    final local = _clock.nowUtc().toLocal();
+    final today = DateTime.utc(local.year, local.month, local.day);
+
+    expect(verify(ids), isNull);
+    for (final id in ids) {
+      expect(doc.devices[id]!.network!.verifiedOn, today);
+    }
+    controller.undoLast();
+    for (final id in ids) {
+      expect(doc.devices[id]!.network, isNull);
+    }
+  });
+
+  test(
+    'today is the LOCAL calendar day at UTC midnight, whatever the hour',
+    () {
+      final verify = buildDevicesVerifiedTodayAction(
+        controller: DocumentController(
+          doc,
+          clock: FixedClock(DateTime.utc(2026, 10, 4, 2)),
+        ),
+      );
+      verify([sw.id]);
+      final day = sw.network!.verifiedOn!;
+      expect(day.isUtc, isTrue);
+      expect((day.hour, day.minute), (0, 0));
+      // 02:00 UTC ON THE 4TH IS STILL THE 3RD WEST OF UTC, so on such a machine
+      // this tells the local day from the UTC one; 23:59 could not.
+      final local = DateTime.utc(2026, 10, 4, 2).toLocal();
+      expect(
+        (day.year, day.month, day.day),
+        (local.year, local.month, local.day),
+      );
+    },
+  );
+
   test('a device not in the project is refused', () {
     expect(
       edit([

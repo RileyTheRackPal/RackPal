@@ -20,6 +20,14 @@ RackDocument _wholeHouse() =>
             as Ok<RackDocument>)
         .value;
 
+/// What the harness's actions were asked to do.
+final class _Calls {
+  final List<List<NetworkCellEdit>> edits = [];
+  final List<List<Uuid>> verifiedToday = [];
+}
+
+late _Calls _calls;
+
 Future<List<List<NetworkCellEdit>>> _pump(
   WidgetTester tester,
   RackDocument doc, {
@@ -28,11 +36,13 @@ Future<List<List<NetworkCellEdit>>> _pump(
   tester.view.physicalSize = const Size(1400, 900);
   tester.view.devicePixelRatio = 1;
   addTearDown(tester.view.reset);
-  final edits = <List<NetworkCellEdit>>[];
+  _calls = _Calls();
+  final edits = _calls.edits;
   // THE EDITOR'S STATE, played by a StatefulBuilder: the view is
   // controlled, so a test that does not hold its state cannot flip it.
   var showAll = false;
   final shown = {...defaultNetworkColumns};
+  final selected = <Uuid>{};
   await tester.pumpWidget(
     MaterialApp(
       home: Scaffold(
@@ -46,9 +56,21 @@ Future<List<List<NetworkCellEdit>>> _pump(
             onColumn: (c) => setState(() {
               if (!shown.remove(c)) shown.add(c);
             }),
+            selected: selected,
+            onSelect: (id, {required ticked}) => setState(() {
+              ticked ? selected.add(id) : selected.remove(id);
+            }),
+            onSelectAll: (ids, {required ticked}) => setState(() {
+              ticked ? selected.addAll(ids) : selected.removeAll(ids);
+            }),
+            onCaret: (_) {},
             actions: DevicesActions(
               onEdit: (e) {
                 edits.add(e);
+                return null;
+              },
+              onVerifiedToday: (ids) {
+                _calls.verifiedToday.add(ids);
                 return null;
               },
             ),
@@ -157,6 +179,84 @@ void main() {
 
     expect(find.text('SUBNET'), findsOneWidget, reason: 'now a heading');
     expect(find.text('MAC'), findsNothing, reason: 'turned off');
+  });
+
+  group('the batch bar (NET-A/2c)', () {
+    testWidgets('absent until a row is ticked, then counts it', (
+      tester,
+    ) async {
+      final doc = _wholeHouse();
+      await _pump(tester, doc);
+      expect(find.text(kVerifiedTodayLabel), findsNothing, reason: 'control');
+
+      final first = buildNetworkTable(doc).first;
+      await tester.tap(
+        find.byKey(ValueKey('devices-tick-${first.deviceId.v}')),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('1 selected'), findsOneWidget);
+      expect(find.text(kVerifiedTodayLabel), findsOneWidget);
+    });
+
+    testWidgets('Set writes one value into every ticked row, as ONE call', (
+      tester,
+    ) async {
+      final doc = _wholeHouse();
+      await _pump(tester, doc);
+      final rows = buildNetworkTable(doc);
+      for (final r in rows.take(2)) {
+        await tester.tap(find.byKey(ValueKey('devices-tick-${r.deviceId.v}')));
+        await tester.pumpAndSettle();
+      }
+      await tester.tap(find.byKey(const ValueKey('devices-batch-column')));
+      await tester.pumpAndSettle();
+      // AN ON-SCREEN COLUMN: the bar offers only what shows, the cable
+      // bar's rule. Anchored on the menu item, since HOSTNAME is also a
+      // heading.
+      await tester.tap(
+        find.widgetWithText(DropdownMenuItem<NetworkColumnId>, 'HOSTNAME').last,
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const ValueKey('devices-batch-value')),
+        'core-sw',
+      );
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+
+      final batch = _calls.edits.single;
+      expect(batch.map((e) => e.deviceId), [
+        rows[0].deviceId,
+        rows[1].deviceId,
+      ]);
+      expect(batch.map((e) => e.column).toSet(), {NetworkColumnId.hostname});
+      expect(batch.map((e) => e.value).toSet(), {'core-sw'});
+    });
+
+    testWidgets('Verified today asks for exactly the ticked rows', (
+      tester,
+    ) async {
+      final doc = _wholeHouse();
+      await _pump(tester, doc);
+      await tester.tap(find.byKey(const ValueKey('devices-tick-all')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kVerifiedTodayLabel));
+      await tester.pumpAndSettle();
+      expect(
+        _calls.verifiedToday.single,
+        [for (final r in buildNetworkTable(doc)) r.deviceId],
+      );
+    });
+
+    testWidgets('Clear selection unticks and the bar goes', (tester) async {
+      final doc = _wholeHouse();
+      await _pump(tester, doc);
+      await tester.tap(find.byKey(const ValueKey('devices-tick-all')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(kClearSelectionLabel));
+      await tester.pumpAndSettle();
+      expect(find.text(kVerifiedTodayLabel), findsNothing);
+    });
   });
 
   testWidgets('the identity columns are read, not typed into', (

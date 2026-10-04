@@ -1846,7 +1846,12 @@ $SuiteFloors = @{
     # 2066 at `#989` (NET-A/2b, DR-226): +1 in structure/devices_view_test
     # .dart, Columns turning subnet on and MAC off; +1 in structure_editor_
     # screen_test.dart, Show all surviving a trip to another view.
-    'rackpal_ui'     = 2066
+    # 2072 at `#990` (NET-A/2c, DR-226): +4 in structure/devices_view_test
+    # .dart, the batch bar absent until a tick, Set as one call over the
+    # ticked rows, Verified today asking for exactly them, and Clear; +2 in
+    # structure_editor_screen_test.dart, Ctrl+D filling from the row above
+    # and Ctrl+V saying where it works.
+    'rackpal_ui'     = 2072
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -2073,7 +2078,10 @@ $SuiteFloors = @{
     # codec and the two commands that create the ONE sheet, each behind a
     # null check, the interconnect files writing none, and no surface
     # offering to author a sheet. Both scans mutation-checked.
-    'rackpal_app'    = 1169
+    # 1171 at `#990` (NET-A/2c, DR-226): +2 in session/network_actions_test
+    # .dart, Verified today as one undo step, and today as the LOCAL day at
+    # UTC midnight (mutation-checked against the UTC day, west of UTC).
+    'rackpal_app'    = 1171
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

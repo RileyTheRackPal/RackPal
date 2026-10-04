@@ -1535,6 +1535,9 @@ final class AppShellState extends State<AppShell>
       onEditDevices: buildDeviceNetworkEditAction(
         controller: session.controller,
       ),
+      onDevicesVerifiedToday: buildDevicesVerifiedTodayAction(
+        controller: session.controller,
+      ),
       onAddPathway: buildPathwayAddAction(controller: session.controller),
       onRemovePathway: buildPathwayRemoveAction(
         controller: session.controller,

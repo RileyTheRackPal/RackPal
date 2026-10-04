@@ -105,3 +105,40 @@ DeviceNetworkEditFn buildDeviceNetworkEditAction({
   );
   return null;
 };
+
+typedef DevicesVerifiedTodayFn = String? Function(List<Uuid> ids);
+
+/// Wires the batch bar's Verified today to [controller] (NET-A/2c, DR-226
+/// §11.225.5): every given device's date becomes today, as ONE undo step.
+///
+/// TODAY IS THE PERSON'S CALENDAR DAY, read in local time and stored at
+/// UTC midnight (`NetworkConfig.verifiedOn`'s convention). A tech checking
+/// a rack at 8 pm in California has checked it on the 3rd, which is
+/// already the 4th in UTC.
+DevicesVerifiedTodayFn buildDevicesVerifiedTodayAction({
+  required DocumentController controller,
+}) => (ids) {
+  if (ids.isEmpty) return null;
+  final local = controller.clock.nowUtc().toLocal();
+  final today = DateTime.utc(local.year, local.month, local.day);
+  final commands = <Command<RackDocument>>[];
+  for (final id in ids) {
+    if (!controller.doc.devices.containsKey(id)) return kDeviceNotInProject;
+    final command = buildSetEntityProperty<DeviceInstance, DateTime?>(
+      doc: controller.doc,
+      id: id,
+      field: DeviceField.networkVerifiedOn,
+      to: today,
+      now: controller.clock.nowUtc(),
+      actor: controller.actor,
+    );
+    if (command != null) commands.add(command);
+  }
+  if (commands.isEmpty) return null;
+  controller.transact(LabelKey.fillCells, (tx) {
+    for (final c in commands) {
+      tx.add(c);
+    }
+  });
+  return null;
+};
