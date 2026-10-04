@@ -1903,7 +1903,10 @@ $SuiteFloors = @{
     # by button, arrow and list with a portrait page portrait, one render
     # per size, the notices beside, the 40-sheet warning, a missing
     # renderer said with Save still yes, and Save yes and Close no.
-    'rackpal_ui'     = 2111
+    # 2113 at `#355` (M6-I4, CR-100): +2 in shell/status_line_actions_
+    # test.dart, the actions as buttons after the message and the notices
+    # link, and none for any other status.
+    'rackpal_ui'     = 2113
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -2152,7 +2155,12 @@ $SuiteFloors = @{
     # still written, a bad page said and a good one the PNG) and +1 in
     # export_preview_pdfium_test.dart (every Whole House page renders
     # through the real binary at its own proportions).
-    'rackpal_app'    = 1190
+    # 1196 at `#355` (M6-I4, CR-100): +6 in session/export_open_test.dart,
+    # openFile sent for a PDF and nothing else reaching the channel, Open
+    # and Show in folder opening the written file and its folder and
+    # nothing unasked, a refusing viewer said, a second same-status export
+    # opening its own file, and the next status clearing them.
+    'rackpal_app'    = 1196
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

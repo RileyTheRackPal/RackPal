@@ -1218,8 +1218,31 @@ on the sheet.
 
 **Zones on the drawings.** Floor plans, rack elevations and interconnect sheets carry a lettered and numbered border, so someone on the phone can say "the patch panel at B2". Zone A1 is the lower-right corner, numbers run right to left and letters bottom to top, so a large sheet folded into a binder still shows them. The cover, legend, exceptions, pull sheet, termination schedule, unused home runs, equipment list, network schedule and pinout details have a plain border.
 
-So a two-rack job with one floorplan gives you at least eleven sheets, plus one interconnect sheet for each signal domain your cables use, more if the exceptions or the equipment list run to a second page, or if any home run is still unused, any device has an address recorded, or any pinout is non-standard. The status line says
-how many sheets were written and how large the file is, and how many notices the export raised. **Click that count to read them**: a list opens, grouped by sheet, with a Copy button.
+So a two-rack job with one floorplan gives you at least eleven sheets, plus one interconnect sheet for each signal domain your cables use, more if the exceptions or the equipment list run to a second page, or if any home run is still unused, any device has an address recorded, or any pinout is non-standard.
+
+**You see the file before you save it.** `Export PDF…` builds the PDF first
+(a large set shows its progress, with a Cancel that stops it), then opens a
+preview of the actual pages: the page on the left, the list of sheets and the
+export's notices on the right. Page through with the arrows, the arrow keys
+or by clicking a sheet in the list. **Save…** then asks where to put it and
+writes exactly what you saw; **Close** writes nothing. A set of more than 40
+sheets says so beside its count, in case something has been duplicated, and
+a set of more than 2,000 is refused before anything is built. If the page
+renderer is missing from the installation the preview says so, and Save…
+still writes the file.
+
+The title block's `FILE` field names the **project** file (`smith.rppj`), not
+the PDF; an unsaved project prints a dash there.
+
+After saving, the status line says how many sheets were written and how large
+the file is, and how many notices the export raised. **Click that count to
+read them**: a list opens, grouped by sheet, with a Copy button. Beside it,
+**Open** opens the PDF in your PDF viewer and **Show in folder** opens the
+folder it is in. Nothing opens unless you click.
+
+**The same project exported twice on the same day is the same file**, byte for
+byte, so a file comparison shows whether anything actually changed between
+two issues.
 
 **A project with no rack cannot be exported**: there is no elevation to draw
 and no equipment to list, and RackPal says so rather than writing an empty

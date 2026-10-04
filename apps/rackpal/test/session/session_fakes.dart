@@ -525,6 +525,7 @@ Future<TestSession> buildTestSession({
   WebPageLauncher? webPageLauncher,
   ExportRunner? exportRunner,
   PdfRasteriser? exportRasteriser,
+  FileOpener? fileOpener,
 }) async {
   final context = p.Context(style: p.Style.windows);
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -593,6 +594,8 @@ Future<TestSession> buildTestSession({
     // A ONE-PIXEL PAGE, NEVER THE BINARY: the preview's own tests use a
     // closure, and `export_preview_pdfium_test.dart` runs the real one.
     exportRasteriser: exportRasteriser ?? fakePageRasteriser,
+    // Never the real channel: a test opens no viewer.
+    fileOpener: fileOpener ?? (_) async => true,
   );
 
   // The SHELL is what installs the window handler in production. These

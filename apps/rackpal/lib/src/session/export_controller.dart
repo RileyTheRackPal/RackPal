@@ -122,6 +122,16 @@ const String kPreviewRendererMissing =
 const String kPreviewPageFailed =
     'This page could not be shown. Save… still writes the file.';
 
+/// The status line's button that opens the exported PDF (CR-100).
+const String kExportOpenLabel = 'Open';
+
+/// The one that shows its folder (docs/08 §8.3).
+const String kExportShowInFolderLabel = 'Show in folder';
+
+/// What is said when no viewer would open the file.
+String exportOpenFailedStatus(String file) =>
+    '$file could not be opened. Is a PDF viewer installed?';
+
 /// What the status line says when the user backs out of the dialog.
 const String kExportCancelledStatus = 'Export cancelled.';
 
@@ -144,8 +154,17 @@ final class ExportController {
     this.initialDirectory,
     this.runner = runExport,
     this.rasteriser = pdfiumRenderPng,
+    this.opener = win32OpenFile,
+    this.revealer = win32RevealFolder,
     p.Context? context,
   }) : context = context ?? p.context;
+
+  /// Opens the written PDF in the system viewer (CR-100), from the status
+  /// line's `Open`.
+  final FileOpener opener;
+
+  /// Shows the folder it was written to, from `Show in folder`.
+  final FolderRevealer revealer;
 
   /// Renders a page of the generated PDF for the preview: the vendored
   /// pdfium (DR-230), injected so a test needs no binary.
@@ -377,6 +396,19 @@ final class ExportController {
         // THE SENTENCES, NOT ONLY THE COUNT (DR-224): until this line the
         // count was all that reached the user.
         notices: exported.notices,
+        // CR-100's "Open in system viewer", and §8.3's Show in folder: asked
+        // for, never done unasked (the user's choice, 2026-10-04), since
+        // the pages were just seen in the preview.
+        actions: <SessionStatusAction>[
+          (
+            label: kExportOpenLabel,
+            onPressed: () => unawaited(_open(paths.target)),
+          ),
+          (
+            label: kExportShowInFolderLabel,
+            onPressed: () => unawaited(revealer(context.dirname(paths.target))),
+          ),
+        ],
       );
       return true;
     }
@@ -401,6 +433,12 @@ final class ExportController {
         // Refused, and reported. Nothing is silent.
         return false;
     }
+  }
+
+  /// Opens [path], saying so when the system would not.
+  Future<void> _open(String path) async {
+    if (await opener(path)) return;
+    session.setStatus(exportOpenFailedStatus(context.basename(path)));
   }
 
   FileErrorView _describeExportError(ExportError error) => FileErrorView(

@@ -1498,6 +1498,8 @@ final class AppShellState extends State<AppShell>
             // DR-224: the export's notices, readable from their count.
             notices: session.statusNotices,
             noticeLabel: noticeCountLabel(session.statusNotices.length),
+            // M6-I4: an export's Open and Show in folder.
+            actions: session.statusActions,
           ),
       ],
     );

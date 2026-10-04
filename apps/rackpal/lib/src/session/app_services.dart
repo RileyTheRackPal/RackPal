@@ -311,6 +311,7 @@ Future<AppServices> buildAppServices({
   WebPageLauncher webPageLauncher = win32OpenWebPage,
   ExportRunner exportRunner = runExport,
   PdfRasteriser exportRasteriser = pdfiumRenderPng,
+  FileOpener fileOpener = win32OpenFile,
   Clock clock = const SystemClock(),
   Serializer serializer = isolateSerializer,
   Deserializer deserializer = isolateDeserializer,
@@ -496,6 +497,8 @@ Future<AppServices> buildAppServices({
       clock: clock,
       runner: exportRunner,
       rasteriser: exportRasteriser,
+      opener: fileOpener,
+      revealer: folderRevealer,
       // The PDF dialog opens where the last document save did (§8.3's
       // "the same MRU behaviour as document Save As, for free").
       initialDirectory: controller.exportInitialDirectory,

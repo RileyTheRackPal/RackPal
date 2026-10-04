@@ -272,8 +272,13 @@ void main() {
       await tester.tap(find.text(kExportPreviewSave));
       await tester.pumpAndSettle();
 
-      final link = find.descendant(
-        of: find.byType(ShellStatusLine),
+      // THE BUTTON THAT CARRIES THE COUNT, not "the" button: since M6-I4 the
+      // line also carries Open and Show in folder.
+      final link = find.ancestor(
+        of: find.descendant(
+          of: find.byType(ShellStatusLine),
+          matching: find.textContaining(RegExp(r'^\d+ notices?$')),
+        ),
         matching: find.byType(TextButton),
       );
       expect(link, findsOneWidget, reason: 'precondition: notices were raised');
