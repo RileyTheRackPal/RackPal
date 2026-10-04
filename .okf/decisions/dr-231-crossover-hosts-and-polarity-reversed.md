@@ -8,7 +8,7 @@ tags: [ruling, amendment, cable, crossover, null-modem, t5-01, dr-231, dr-221]
 timestamp: 2026-10-04T00:00:00Z
 ruling_id: DR-231
 canon_section: "11.230"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-04, closing `#973`. A §8.3 amendment: the model gains a value.

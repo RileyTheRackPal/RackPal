@@ -9,6 +9,11 @@
   cable" because subs are wired out of phase, and none of the three crossover values described that.
   Asking which value a sub run would carry, before building the dropdown, found the missing one;
   building first would have printed an RS-232 swap table for a speaker cable.
+* **Progress**: `#973` built (the command, polarityReversed on T5.01, the table column, the schematic's
+  cable bar) and `#972` fixed and gated. DR-231 marked built; docs/12 §4.43.
+* **Note**: **A PLAIN `dart test` IS NOT THE GATE'S COUNT.** It runs the `perf` tests the gate
+  excludes, and counted 17 new tests where the gate would count 12. Measure a floor by name against
+  main, or from the gate's own run.
 
 ## 2026-10-04 (hundred-and-ninth entry)
 

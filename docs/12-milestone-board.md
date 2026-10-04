@@ -1935,6 +1935,38 @@ binary), `export_open_test`. UI: the progress dialog's phases, the preview's pag
 renderer-missing case, the status line's actions. **Not yet seen** in a running build: the test route
 is in the PR.
 
+### 4.43 A crossover with a writer, and a review pack that runs · 2026-10-04 · `#973`, `#972` · `DR-231`, `DR-221`, `DR-154`, `AC-040` · no version move
+
+Two items M6 had filed against itself.
+
+**`#973`: `Link.crossover` had no writer from M0 on.** DR-221 kept null-modem in T5.01's trigger
+and filed the control. Before offering a host, a census: the schematic had no per-cable control at
+all, and the Structured Wiring table, where every other cable field is edited, lists only home runs,
+so it could never reach the usual null-modem cable, a serial link inside the rack. The user ruled
+both hosts (DR-231): a cable bar on the schematic, its first per-cable control, and a CROSSOVER column
+in the table. Offered a family-filtered menu, the user chose every value on every cable, giving a
+subwoofer wired out of phase as the reason. **That reason named a value the model lacked**: a speaker
+pair wired `+` to `−` is neither an RS-232 swap nor fibre A→B, so asking which value a sub run would
+carry, before building the menu, found `CrossoverKind.polarityReversed`. Built, it would otherwise
+have printed an RS-232 table for a speaker cable. It is noted on the schedule and listed on T5.01
+under a note that the swap is deliberate.
+
+**`#972`: the review pack's generator had refused to run since DR-132.** ELE-005, the plan band and
+RCK-014 reached the catalogue with no reviewer group, the pack said 28 against a catalogue of 34, and
+nothing failed because nothing ran it. They are grouped, the plan band labelled outside the v1 count
+(read from the list a rule is declared in, not its prefix), the counts computed (30 v1, 4 plan), and
+`--check` is now a gate locally and in the pipeline, mutation-checked both ways.
+
+**Measured, not assumed.** A plain `dart test` counted 17 new core tests; a name-by-name diff against
+main found 12. The other five were the `perf` tests the gate excludes, and a floor set from the plain
+count would have turned the gate red on its own number.
+
+**Evidence.** `link_crossover_test` (the command and undo, every value on the wire, unset absent, the
+schedule note, T5.01's section, a null-modem turning T5.01 on) and two generated `g4_wire_test` rows;
+`schematic_cable_bar_test` (through the real screen and controller); `crossover_edit_test` (the column's
+writer, and a null-modem marked in the table bringing T5.01 into a real export, with the starter's IR
+causes cleared so the control can see it absent). **Not yet seen** in a running build.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
