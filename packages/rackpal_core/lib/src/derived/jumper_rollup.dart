@@ -14,13 +14,14 @@
 // twice and cannot disagree.
 //
 // ═══════════════════════════════════════════════════════════════════════
-// A POWER CORD IS MOSTLY A JUMPER ON POWER MEDIA
+// A POWER CORD IS BOUGHT LIKE A JUMPER, AND THE MEDIA TELLS THEM APART
 // ═══════════════════════════════════════════════════════════════════════
-// The classifier never returns `LinkClass.powerCord` (`#908`): a cord from
-// an amplifier to a PDU in the same rack is a `jumper`. Both classes are
-// counted here, grouped by MEDIA, and the media name is what tells an IEC
-// cord from a Cat6 patch lead. A `powerCord` a person set by hand is the
-// same row.
+// Both classes are counted here, grouped by MEDIA, and the media name is
+// what tells an IEC cord from a Cat6 patch lead. The classifier has
+// produced `powerCord` since DR-233 (`#908`), for IEC and NEMA ports in or
+// out of a rack; before that a cord was a `jumper` in one rack and missed
+// this table entirely when it ran to a wall. A low-voltage DC lead inside
+// one rack is still a `jumper` (§11.232.2) and lands here by that road.
 //
 // ═══════════════════════════════════════════════════════════════════════
 // COLOUR IS AS BUILT, AND UNSTATED IS ITS OWN GROUP

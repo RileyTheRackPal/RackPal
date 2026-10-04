@@ -42,12 +42,40 @@
 // and never undetermined-for-lack-of-data: it is a `fieldCable`, which is
 // exactly right. See [linkClassOf] for how that case is separated from a
 // genuine failure to resolve.
+//
+// ═══════════════════════════════════════════════════════════════════════
+// A CORD IS TESTED FIRST, AND IT IS A FACT ABOUT THE PORTS (DR-233)
+// ═══════════════════════════════════════════════════════════════════════
+// `powerCord` was documented as auto-classified for months while this file
+// returned only the two classes above (`#908`), so a cord from an amplifier
+// to a PDU was a jumper and one to a wall receptacle was a pull. DR-233
+// §11.232.1: a link is a cord when every port it lands on is an IEC or NEMA
+// power port playing a role, inlet or outlet. The far end may be a place,
+// since a cord to "the receptacle behind the TV" is still bought by the
+// piece.
+//
+// TWO FAMILIES, NOT FIVE, and that was the user's call on trade grounds
+// (§11.232.2). `power.ac_hardwired` is a branch circuit an electrician
+// pulls, `power.dc_low` is as often 18/2 run to a keypad as it is a
+// wall-wart lead, and `power.bonding` is cut to length. Each of those falls
+// through to the rack test, so a pulled run stays on the Pull Sheet. Do not
+// widen [_cordFamilies] to "anything `power.*`" without a ruling: that hides
+// real pulls inside the schedule's hidden-cords count.
 
+import 'package:rackpal_core/src/derived/device_loads.dart' show bodyFor;
 import 'package:rackpal_core/src/derived/endpoint_resolution.dart';
+import 'package:rackpal_core/src/derived/port_facts.dart';
 import 'package:rackpal_core/src/model/conductor.dart';
 import 'package:rackpal_core/src/model/link.dart';
 import 'package:rackpal_core/src/model/rack_document.dart';
+import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/ids.dart';
+
+/// The power families whose ports take a cord (DR-233 §11.232.1).
+const Set<SignalFamilyId> _cordFamilies = {
+  SignalFamilyId('power.ac_iec'),
+  SignalFamilyId('power.ac_branch'),
+};
 
 /// What the classifier believes [link] is, or `null` when it cannot tell.
 ///
@@ -72,6 +100,11 @@ LinkClass? linkClassOf(RackDocument doc, Link link) {
   final a = _resolve(doc, first.from);
   final b = _resolve(doc, first.to);
   if (a == null || b == null) return null; // unresolved — see [_End]
+
+  // AFTER RESOLUTION, so a cord to a staged device stays undetermined
+  // (§11.232.3), and BEFORE THE RACK TEST, so a cord inside one rack is a
+  // cord rather than a jumper (§12.50).
+  if (_isCord(doc, link)) return LinkClass.powerCord;
 
   // BOTH ENDS IN ONE RACK, AND THERE IS A RACK. The second half is not
   // redundant: two field ends both carry a null rack, and letting those
@@ -159,4 +192,44 @@ _End? _resolve(RackDocument doc, Endpoint e) {
   }
   // PlaceEndpoint / OpenEndpoint: genuinely no rack, and that is an answer.
   return const _End(null);
+}
+
+/// Whether [link] is a power cord by DR-233 §11.232.1: at least one end on
+/// a port, and every port end a cord port.
+///
+/// EVERY CONDUCTOR, not the first. The first conductor speaks for where a
+/// cable's ends are, which is what the rack test needs; it does not speak
+/// for what each conductor lands on, and a cable with one IEC conductor and
+/// one Ethernet conductor is not a cord whichever one was drawn first.
+bool _isCord(RackDocument doc, Link link) {
+  var ports = 0;
+  for (final conductor in link.conductors) {
+    for (final end in [conductor.from, conductor.to]) {
+      if (end is! PortEndpoint) continue;
+      ports++;
+      if (!_isCordPort(doc, end.portId)) return false;
+    }
+  }
+  return ports > 0;
+}
+
+/// Whether [portId] is an IEC or NEMA power port playing a role.
+///
+/// THE EFFECTIVE FAMILY, override included, on DR-131's reason: a family a
+/// person corrected on this instance must reach every reader of the family,
+/// and this is one. An instance-added port has no template def and so no
+/// power role, and is not a cord port.
+bool _isCordPort(RackDocument doc, Uuid portId) {
+  final port = doc.ports[portId];
+  final key = port?.templatePortKey;
+  if (port == null || key == null) return false;
+  final device = doc.devices[port.deviceId];
+  if (device == null) return false;
+  for (final def
+      in bodyFor(device, doc.templates)?.ports ?? const <PortDef>[]) {
+    if (def.key != key) continue;
+    return def.power?.role != null &&
+        _cordFamilies.contains(resolvePortSignalFamily(port, def));
+  }
+  return false;
 }

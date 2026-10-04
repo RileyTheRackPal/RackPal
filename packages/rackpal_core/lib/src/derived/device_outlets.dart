@@ -26,10 +26,12 @@
 // ─────────────────────────────────────────────────────────────────────────
 // A POWER CONNECTION IS A CONDUCTOR ON AN INLET, NOT A LINK OF A CLASS
 // ─────────────────────────────────────────────────────────────────────────
-// `LinkClass.powerCord` reads like the test and is not one: the classifier
-// never returns it (`#908`), so a cord from an amplifier to a PDU in the
-// same rack is a `jumper`. The port says what the connection is by being
-// an inlet, whatever the link around it is called.
+// `LinkClass.powerCord` reads like the test and is not one, even now the
+// classifier produces it (DR-233, `#908`). It covers IEC and NEMA cords
+// only, so a 24 V feed or a hardwired circuit landing on an inlet is a
+// jumper or a field cable and still consumes; and a person can lock any
+// link to any class. The port says what the connection is by being an
+// inlet, whatever the link around it is called.
 //
 // ─────────────────────────────────────────────────────────────────────────
 // PER DEVICE, NEVER PER RACK

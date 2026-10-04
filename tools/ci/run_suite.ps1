@@ -1205,7 +1205,12 @@ $SuiteFloors = @{
     # case keeping the ruling's gap between inks, a lock holding, a column
     # keeping its order) and +1 from interconnect_fallback_test.dart, whose
     # defect-pinning case became the real sheet and the narrow-box clause.
-    'rackpal_core'   = 5530
+    # 5541 at `#908` (DR-233): +11 in derived/link_class_test.dart (a cord in
+    # one rack, to a wall and between racks; DC, hardwired and bonding
+    # keeping the rack test; no role, one non-power end and a mixed cable
+    # not being cords; the override; a staged end; a lock disagreeing; and
+    # the Pull Sheet hiding and counting the cord).
+    'rackpal_core'   = 5541
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
