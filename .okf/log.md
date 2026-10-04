@@ -5,6 +5,12 @@
 * **Progress**: NET-A/2 built on `net-a`: the Devices view (`#988` to `#990`, `#997`) and the
   inspector's read-only summary (`#991`). Story `#683` closed.
 * **Creation**: [DR-228](/decisions/dr-228-t650-network-schedule.md), what T6.50 prints.
+* **Progress**: NET-A/3 built: T6.50 prints, is numbered and is indexed (`#992`), and dates every row or
+  says it is unverified (`#993`).
+* **Creation**: [DR-229](/decisions/dr-229-open-web-page.md), where Open web page lives and what it opens.
+* **Note**: **A HELPER'S DEFAULT IS A CLAIM ON EVERY ITEM IT TOUCHES.** The board's close helper had the
+  previous branch's name written into it, and eleven NET-A items said they landed on `m6d-interconnect`
+  until a read of one description showed it. A value that changes per piece of work belongs in the call.
 
 ## 2026-10-03 (hundred-and-seventh entry)
 

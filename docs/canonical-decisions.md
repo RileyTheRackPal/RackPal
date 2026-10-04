@@ -23753,6 +23753,37 @@ equipment list, which precedes it; in the set after `T6.30` and before `T5.01`, 
 
 ---
 
+### 11.228 DR-229 · Open web page from the inspector and the Devices view, at an editable URL
+
+**Settled by the user on 2026-10-04, building NET-A/4 (`#685`).** DR-048 §11.47.7 ruled that the address
+launches a browser behind a confirmation that shows the URL, and said neither where the gesture lives
+nor what URL it builds.
+
+**11.228.1 RULED: TWO HOSTS, THE INSPECTOR AND THE DEVICES VIEW**, against the recommendation of the
+inspector alone. The inspector's `NETWORK` section carries the button beside the address it opens; the
+Devices view carries it per row, because that is the table the addresses are typed into and a tech
+working down a rack checks them from there. **The row's form is an implementer's choice, stated so it is
+not decided silently**: a narrow trailing column holding one button, on the tick gutter's precedent,
+since no table in the product has a right-click menu and building one for a single item would be a menu
+nobody else uses. It is a column of the view and not of `NetworkColumnId`: it prints nowhere and is not
+in the Columns menu.
+
+**11.228.2 RULED: THE CONFIRMATION'S URL IS EDITABLE, PREFILLED `http://<address>/`**, the address being
+the row's IP and its hostname when it has none. HTTPS or a port is typed before it opens; nothing is
+written back to the device. The trade's gear splits across both schemes (UniFi, Araknis and Crestron
+serve HTTPS, older AV kit HTTP), and a stored per-device URL was offered and **not taken**: it is a
+model field DR-048 did not rule in. A device with neither address offers no button rather than a
+disabled one that cannot say why.
+
+**11.228.3 THE LAUNCH IS A SEAM OUTSIDE `rackpal_core`** (DR-048 §11.47.7, NET-A/4a): an injected
+function the app supplies, so the widget tests never open a browser and the core stays free of platform
+code. The confirmation opens only `http` and `https` URLs, so an edited field cannot turn the button
+into a launcher for a `file:` path or a program.
+
+**Scope.** No scope moves: DR-048 §11.47.7's gesture, given its hosts and its URL.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
