@@ -37,6 +37,7 @@ import 'dart:typed_data';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_export/src/document/deterministic_pdf.dart';
 import 'package:rackpal_export/src/document/export_request.dart';
 import 'package:rackpal_export/src/draw/plan_image.dart';
 import 'package:rackpal_export/src/sheets/sheet_page.dart';
@@ -641,7 +642,13 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
 
   return Ok(
     ExportedDocument(
-      bytes: await pdf.save(),
+      // THE FILE, NOT ONLY THE DRAWING, IS DETERMINISTIC (§8.4, M6-I5):
+      // the pinned `pdf`'s random ID and wall-clock date are rewritten in
+      // place from `issuedAt` and the file's own contents.
+      bytes: deterministicPdfBytes(
+        await pdf.save(),
+        issuedAt: request.issuedAt,
+      ),
       sheetCount: set.sheets.length,
       notices: List.unmodifiable(notices),
       stamped: stamped,

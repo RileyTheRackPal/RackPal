@@ -1,17 +1,20 @@
-// §8.4's determinism, SCOPED HONESTLY, through the real export entry.
+// §8.4's determinism, through the real export entry.
 //
 // =====================================================================
-// WHAT IS CLAIMED, AND WHAT IS NOT
+// WHAT IS CLAIMED: THE FILE, SINCE M6-I5
 // =====================================================================
 // §8.4 says "two exports of an unmodified project differ only in the date
-// field". FILE-LEVEL byte equality is IMPOSSIBLE on the pinned pdf 3.13.0:
-// `PdfDocument.documentID` is `sha256(DateTime.now() + Random.secure())`
-// and lands in the trailer `/ID`, and `PdfInfo` hardcodes
-// `/CreationDate: DateTime.now()`. Neither is injectable.
+// field". The pinned pdf 3.13.0 writes `sha256(DateTime.now() +
+// Random.secure())` into the trailer `/ID` and the wall clock into
+// `/CreationDate`, and exposes neither, so until M6-I5 (`#356`) the claim
+// was narrowed to the DRAWN CONTENT and the last test here asserted that
+// the FILES differed, keeping the limit visible.
 //
-// So the claim made here — and asserted — is that the DRAWN CONTENT is
-// deterministic, and the last test asserts the FILES are NOT identical so
-// the limitation stays visible rather than remembered.
+// `deterministic_pdf.dart` now rewrites both tokens in place, at the same
+// length, from `issuedAt` and from the file's own contents. So the claim
+// is the whole file, and the last group asserts it: one document at one
+// date is one file. If a `pdf` upgrade moves either token, that group goes
+// red rather than a rewrite quietly doing nothing.
 //
 // =====================================================================
 // WHY THIS FILE EXISTS SEPARATELY FROM sheet_furniture_pdf_test.dart
@@ -280,6 +283,7 @@ void main() {
         const ExportNoRacks(),
         const ExportFontMissing(_font),
         const ExportDocumentUnreadable('cause'),
+        const ExportTooManySheets(2001),
       ]) {
         expect(error.message, isNotEmpty);
         expect(error.message, isNot(contains('Instance of')));
@@ -288,13 +292,46 @@ void main() {
     });
   });
 
-  group('the limit of the claim, asserted so it stays visible', () {
-    test('two exports are NOT byte-identical as FILES', () async {
-      // If this ever starts failing, pdf gained an injectable document id
-      // and the determinism gate can be widened. Asserting the current
-      // reality keeps the limitation checked rather than remembered.
+  group('THE FILE IS DETERMINISTIC (§8.4, M6-I5)', () {
+    test('two exports at one date are ONE FILE, byte for byte', () async {
       final at = DateTime.utc(2026, 7, 18);
-      expect(await export(at), isNot(await export(at)));
+      expect(await export(at), await export(at));
+    });
+
+    test(
+      'the creation date is the injected one, never the wall clock',
+      () async {
+        final bytes = await export(DateTime.utc(2027, 3, 9, 14, 5, 6));
+        final text = String.fromCharCodes(bytes);
+        expect(text, contains('/CreationDate(D:20270309140506Z)'));
+      },
+    );
+
+    test('the ID is the contents: a different date or a different project '
+        'is a different ID, and both slots agree', () async {
+      final id = RegExp(r'/ID\[<([0-9a-f]{64})><([0-9a-f]{64})>\]');
+      Match idOf(Uint8List b) => id.firstMatch(String.fromCharCodes(b))!;
+      final a = idOf(await export(DateTime.utc(2026, 7, 18)));
+      final b = idOf(await export(DateTime.utc(2026, 7, 19)));
+      expect(a.group(1), a.group(2));
+      expect(a.group(1), isNot(b.group(1)));
+      expect(a.group(1), isNot('0' * 64), reason: 'the hash was written');
+    });
+
+    test(
+      'the rewrite keeps the file readable: every sheet still parses',
+      () async {
+        expect(pages(await export(DateTime.utc(2026, 7, 18))), hasLength(8));
+      },
+    );
+
+    test('a file whose tokens it does not recognise is returned '
+        'untouched', () {
+      final odd = Uint8List.fromList('%PDF-1.4 no tokens here'.codeUnits);
+      expect(
+        deterministicPdfBytes(odd, issuedAt: DateTime.utc(2026)),
+        same(odd),
+      );
     });
   });
 }

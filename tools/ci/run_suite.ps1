@@ -1288,7 +1288,12 @@ $SuiteFloors = @{
     # Whole House's sixteen and two per rack, forty sheets saying nothing,
     # forty-two said first among the notices with the file still written,
     # and a set past 2000 refused quickly with its count.
-    'rackpal_export' = 292
+    # 296 at `#356` (M6-I5, docs/08 §8.4): +4 net in export_determinism_
+    # test.dart, whose one "files are NOT identical" case became five: one
+    # document at one date is one file, the creation date is the injected
+    # one, the ID follows the contents in both slots, the rewritten file
+    # still parses, and an unrecognised file is returned untouched.
+    'rackpal_export' = 296
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
