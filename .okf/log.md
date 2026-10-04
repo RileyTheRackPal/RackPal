@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-10-04 (hundred-and-ninth entry)
+
+* **Progress**: NET-A merged at `41731395` (PR 199); Epic `#681` closed. M6-I (`#351`) opened on branch
+  `m6i`.
+* **Creation**: [DR-230](/decisions/dr-230-export-previews-the-real-pdf.md), a supersession of CR-100's
+  preview clause.
+* **Note**: **A RULING'S REASON CAN EXPIRE WHILE ITS TEXT STANDS.** CR-100 chose a screen preview because
+  pdfium was a native dependency; DR-153 vendored pdfium for a different feature, and nothing connected
+  the two until the preview was priced. Measured first: the export runs at about 6 ms a sheet, which
+  also retired the "twenty minutes of generation" premise behind the 40-sheet warning.
+
 ## 2026-10-04 (hundred-and-eighth entry)
 
 * **Progress**: NET-A/2 built on `net-a`: the Devices view (`#988` to `#990`, `#997`) and the
