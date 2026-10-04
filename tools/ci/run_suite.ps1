@@ -1228,7 +1228,12 @@ $SuiteFloors = @{
     # dart's notes group (no adapter, no note; an unstated model names only
     # the connectors; a stated one in brackets in its own case; two in the
     # order declared).
-    'rackpal_core'   = 5569
+    # 5576 at `#1001` (DR-235 §11.234.5): +7 in scene/adapter_mark_test.dart
+    # (the trace midpoint by length and its facing; a zero-length trace; no
+    # adapter, no mark; a mark on EACH pennant's own leader and nothing else
+    # added; a drawn wire's mark at its midpoint and inside its ink; the
+    # legend row absent and present).
+    'rackpal_core'   = 5576
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1341,7 +1346,9 @@ $SuiteFloors = @{
     # one file, now that the creation date is the issue day.
     # 301 at `#1001` (DR-235 §11.234.3): +1 in equipment_rollups_export_
     # test.dart, a declared adapter and its unstated model in T6.30's ink.
-    'rackpal_export' = 301
+    # 302 at `#1001` (DR-235 §11.234.5): +1 in interconnect_export_test.dart,
+    # T0.01 keying the adapter mark only once a printed cable carries one.
+    'rackpal_export' = 302
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

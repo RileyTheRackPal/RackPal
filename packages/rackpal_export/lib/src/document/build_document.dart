@@ -428,6 +428,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
           // because the sheets were laid out in the dry run above.
           tagPillSample: _tagPillSample(doc, interconnects),
           netLabelSample: _netLabelSample(interconnects),
+          adapterSample: _adapterSample(doc, interconnects),
         );
         scene = built.scene;
         legibility = built.legibility;
@@ -701,6 +702,30 @@ LegendCableSample? _tagPillSample(
       text: tagPillText(doc.links[wire.linkId]!, wire.style),
       signal: wire.style,
     );
+  }
+  return null;
+}
+
+/// The legend's adapter mark (DR-235 §11.234.5): the style of the first
+/// cable an interconnect sheet prints that carries an adapter, drawn or
+/// fallen back to labels, since both renderings wear the mark. Null when
+/// no printed cable carries one, so the key never explains a mark the set
+/// does not have (DR-208 §11.207.1).
+SignalStyle? _adapterSample(
+  RackDocument doc,
+  List<InterconnectDrawing> drawings,
+) {
+  bool carries(Uuid id) => doc.links[id]?.inlineAdapters.isNotEmpty ?? false;
+  for (final drawing in drawings) {
+    if (drawing.fellBack) {
+      for (final label in drawing.scene.netLabels) {
+        if (carries(label.linkId)) return label.style;
+      }
+    } else {
+      for (final wire in drawing.wires.wires) {
+        if (carries(wire.linkId)) return wire.style;
+      }
+    }
   }
   return null;
 }

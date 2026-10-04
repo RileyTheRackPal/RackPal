@@ -125,4 +125,47 @@ void main() {
     expect(cover, contains('INTERCONNECT · Analog Video & RF'));
     expect(cover, contains('INTERCONNECT · Network'));
   });
+
+  test('DR-235 §11.234.5: the legend keys the adapter mark only when a '
+      'cable the set prints carries one (DR-208)', () async {
+    expect(
+      pageOf['T0.01'],
+      isNot(contains(kLegendAdapterMeaning)),
+      reason: 'Whole House as shipped declares no adapter',
+    );
+
+    final withAdapter =
+        (const JsonDocumentCodec().read(const JsonDocumentCodec().write(doc))
+                as Ok<RackDocument>)
+            .value;
+    withAdapter.links.values
+        .firstWhere((l) => l.designator == 'W003')
+        .inlineAdapters
+        .add(
+          InlineAdapter(
+            fromConnector: const ConnectorTypeId('conn.f_type'),
+            toConnector: const ConnectorTypeId('conn.bnc'),
+            satisfiesRuleIds: ['CON-001'],
+          ),
+        );
+    final result = await buildExportDocument(
+      ExportRequest(
+        documentJson: const JsonDocumentCodec().write(withAdapter),
+        fontBytes: <FontRef, Uint8List>{
+          const FontRef('Jost'): File(
+            '../../apps/rackpal/assets/fonts/Jost-Regular.ttf',
+          ).readAsBytesSync(),
+        },
+        fileName: 'whole_house.rppj',
+        issuedAt: DateTime.utc(2026, 10, 3),
+      ),
+    );
+    final bytes = (result as Ok<ExportedDocument>).value.bytes;
+    final cmap = parseToUnicodeCMap(bytes);
+    final legend = [
+      for (final body in operatorStreams(bytes))
+        interpretContentStream(body, toUnicode: cmap).allText,
+    ].firstWhere((t) => RegExp(r'SHEET NO\.\s+T0\.01').hasMatch(t));
+    expect(legend, contains(kLegendAdapterMeaning));
+  });
 }

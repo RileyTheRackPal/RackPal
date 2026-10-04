@@ -124,6 +124,7 @@ import 'dart:math' as math;
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
+import 'package:rackpal_core/src/draw/scene/adapter_mark.dart';
 import 'package:rackpal_core/src/draw/scene/net_label_layer.dart';
 import 'package:rackpal_core/src/draw/scene/rack_style.dart';
 import 'package:rackpal_core/src/draw/scene/schematic_scene.dart';
@@ -831,6 +832,26 @@ DrawnWireLayer buildDrawnWireLayer({
 
     for (final point in points) {
       grow(DBox.fromCorners(point, point));
+    }
+
+    // DR-235 §11.234.5: A CABLE WITH AN ADAPTER WEARS ITS MARK HALFWAY
+    // ALONG ITS TRACE, facing along the segment it lands on, painted with
+    // the pills so it sits over the line it interrupts. It grows the
+    // layer's ink but neither end's: like the trace, it belongs to the
+    // route, and DR-232 places a device by what its own ends draw.
+    if (link.inlineAdapters.isNotEmpty) {
+      final mid = polylineMidpoint(points);
+      final half = kAdapterMarkHalfGu * upg;
+      pills.add(
+        adapterMarkOp(
+          mid.at,
+          half: half,
+          horizontal: mid.horizontal,
+          signal: signal,
+          fillArgb: palette.bodyFill,
+        ),
+      );
+      grow(adapterMarkBox(mid.at, half, signal.widthPt));
     }
 
     // §11.1.1: "an orthogonal polyline with a tag pill at each end".
