@@ -1994,6 +1994,40 @@ at. Not yet printed.
 
 ---
 
+### 4.45 A cord is a cord, and a set and a run ask tier 2 per pair · 2026-10-04 · `#908`, `#909`, `#999` · `DR-233`, `DR-234`, `DR-116` · no version move
+
+**`#908`.** `LinkClass.powerCord` was documented as auto-classified and the classifier never returned it,
+so an IEC cord to a PDU in one rack was a jumper and a cord to a wall receptacle was a pull. The ticket
+sketched "any `power.*` port with a role" as the test; the seed has five power families and two of them,
+hardwired AC and low-voltage DC, are routinely pulled wire. The user ruled the narrower test (DR-233): IEC
+and NEMA ports with a role, every conductor, before the rack test. **Measured before landing**: none of the
+four starters draws a link onto a power port or locks a class, so no shipped file moves.
+
+**`#909` and `#999`.** DR-116 ruled tier 2 governs the resulting state; the atomic set and multi-draw
+gestures still never asked it. Pricing `#909` found the second: multi-draw's arm-time comment said the
+commit path checked each pair, and it checked nothing. DR-234 asks each pair in order, the first chip wins
+and names that pair plus a count, `[ Connect anyway ]` commits the whole gesture, and a set's chip offers
+only `CON-001`'s adapter, declared once on the cable.
+
+**Eleven existing tests were blessing a tier-2 case**, which is the finding worth keeping. The schematic
+fixture's only set pairs are AMP-1's RCA inputs onto its own speaker outputs, and DR-173 had made the
+multi-draw demo run (MTX-1's zone outputs onto AMP-1's inputs) balanced line level into RCA, `SIG-002`. Both
+gestures committed those in silence. The mechanics tests now pass through `[ Connect anyway ]`, asserted
+up, as `schematic_set_split_test` already did for the same fixture.
+
+**The first widget draft raised no chip for a reason that looked exactly like the defect**: V01's `audOut`
+bank starts collapsed and the first press expands it. Printing the screen found it; the precondition is now
+asserted.
+
+**Found on the way, filed, not fixed**: the pin path's `CON-001` remedy tells the user to "name the part in
+the inspector", and no inspector shows an adapter (`#1001`); and the user's 16/4 tap-and-continue run, a
+`Breakout` with no writer (`#1000`, Saga the user's call).
+
+**Evidence.** `link_class_test` (+11), `paired_spring_back_test` (+8), `schematic_set_tier2_test` (+5) on the
+real V01 and A04, and group 8 of `schematic_multi_draw_test` (+2). Six mutations run, all caught. Not yet driven by hand.
+
+---
+
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`

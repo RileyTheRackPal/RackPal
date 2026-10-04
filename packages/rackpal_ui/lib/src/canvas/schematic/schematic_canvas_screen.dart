@@ -2745,6 +2745,8 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
     final plans = <(String, String), MultiDrawPlan>{};
     final candidates = <PinRef>[];
+    final springBack = <PinRef>{};
+    final chipsByBank = <(String, String), bool>{};
     for (final pin in locatePins(scene)) {
       final bank = _bankKeyOf(pin.ref);
       if (bank == null) continue;
@@ -2766,7 +2768,22 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
           toBankKey: bank,
         ),
       );
-      if (!plan.isEmpty) candidates.add(pin.ref);
+      if (plan.isEmpty) continue;
+      candidates.add(pin.ref);
+      // DR-116 §11.115.5's amber ring, per target BANK (DR-234
+      // §11.233.1): the plan is already made, pairs and all, so whether
+      // any of its N cables would spring back is known here.
+      final chips = chipsByBank.putIfAbsent(
+        key,
+        () =>
+            evaluatePairedSpringBack(
+              _doc,
+              [for (final p in plan.pairs) (p.from, p.to)],
+              gesture: PairedGesture.multiDraw,
+            ) !=
+            null,
+      );
+      if (chips) springBack.add(pin.ref);
     }
 
     if (candidates.isEmpty) {
@@ -2782,15 +2799,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     setState(() {
       _wireFrom = caret;
       _wireFromBankKey = sel.bankKey;
-      // NO TIER-2 VERDICT ON A MULTI-DRAW, AND IT IS A GAP RATHER THAN A
-      // RULING. A bank run aims at a BANK, and `planMultiDraw` decides
-      // which source lands on which member only once a target bank is
-      // chosen — so at arm time there is no pin PAIR to ask
-      // `evaluateSpringBack` about, and an amber ring would have to mean
-      // "one of the N cables this bank would make might object", which is
-      // not a thing a ring on one pin can say. The commit path checks it
-      // per pair, where the pairing exists.
-      _setTargets(candidates: candidates);
+      // THE RING IS PER TARGET BANK (`#999`, DR-234). This comment used to
+      // say there was no pair to ask at arm time and that "the commit path
+      // checks it per pair"; both were wrong. The walk above plans every
+      // bank, pairs included, and the commit path checked nothing until
+      // DR-234. A ring on any of a bank's pins means one of the N cables
+      // that bank would take springs back.
+      _setTargets(candidates: candidates, springBack: springBack);
       _multiPlans = Map<(String, String), MultiDrawPlan>.unmodifiable(plans);
     });
     if (announce) {
@@ -2854,12 +2869,30 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
   /// Commits the armed multi-draw onto [to]'s bank — N `Link`s, ONE undo
   /// entry (docs/05:484).
-  void _commitMultiDraw(PinRef to) {
+  ///
+  /// [overriding] is `[ Connect anyway ]`, which commits all N (DR-234
+  /// §11.233.3).
+  void _commitMultiDraw(PinRef to, {bool overriding = false}) {
     final plan = _planFor(to);
     if (plan == null || plan.isEmpty) {
       _clearWire();
       _status.show('That bank can take none of these cables.');
       return;
+    }
+    // TIER 2 PER CABLE (`#999`, DR-234 §11.233.1). The first cable whose
+    // pair springs back names its two jacks and counts the rest; the chip
+    // carries no rule-specific remedy (§11.233.5), because a remedy that
+    // repaired one of N while the rest committed has no single meaning.
+    if (!overriding) {
+      final verdict = evaluatePairedSpringBack(
+        _doc,
+        [for (final p in plan.pairs) (p.from, p.to)],
+        gesture: PairedGesture.multiDraw,
+      );
+      if (verdict != null) {
+        _springBackOff(to, verdict.chip);
+        return;
+      }
     }
     final commands = buildMultiDrawCommands(
       doc: _doc,
@@ -2958,6 +2991,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     if (scene == null) return false;
 
     final candidates = <PinRef>[];
+    final springBack = <PinRef>{};
+    // ONE VERDICT PER TARGET SET, read by every member pin. The walk visits
+    // a pin per member, and a set's plan and its tier-2 answer are the
+    // same whichever member was visited.
+    final chipsBySet = <(String, String), bool>{};
     for (final pin in locatePins(scene)) {
       final to = _atomicSetFor(pin.ref);
       if (to == null) continue;
@@ -2969,7 +3007,23 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
         toDeviceId: to.deviceId,
         toSetKey: to.def.key,
       );
-      if (planned is AtomicConnectReady) candidates.add(pin.ref);
+      if (planned is! AtomicConnectReady) continue;
+      candidates.add(pin.ref);
+      // TIER 2 PER PAIR, AND THE RING IS DR-116 §11.115.5 reaching the set
+      // (DR-234 §11.233.1): a set whose pairs would spring back stays
+      // OFFERED and wears amber on every member, since dropping on any
+      // member commits the same set.
+      final chips = chipsBySet.putIfAbsent(
+        (to.deviceId.v, to.def.key),
+        () =>
+            evaluatePairedSpringBack(
+              _doc,
+              [for (final p in planned.plan.pairs) (p.from, p.to)],
+              gesture: PairedGesture.set,
+            ) !=
+            null,
+      );
+      if (chips) springBack.add(pin.ref);
     }
 
     if (candidates.isEmpty) {
@@ -2991,12 +3045,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       // group to prefer. Left empty rather than filled with everything,
       // which would read as a preference that happens to be universal.
       //
-      // NO TIER-2 VERDICT EITHER, for the multi-draw's reason in a
-      // smaller frame: a set connects N members at once and
-      // `evaluateSpringBack` answers about ONE pair, so a ring on the
-      // set's anchor pin would be a verdict about whichever member the
-      // ring happened to be drawn on. Checked per member at commit.
-      _setTargets(candidates: candidates);
+      // THE TIER-2 RING IS PER TARGET SET, computed in the walk above.
+      // This said there was none, on the ground that `evaluateSpringBack`
+      // answers about one pair; DR-234 asks it of every pair the set
+      // would make, and the ring states the set's answer (`#909`).
+      _setTargets(candidates: candidates, springBack: springBack);
     });
     if (announce) {
       _status.show(
@@ -3012,7 +3065,15 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
   /// Commits the armed SET gesture — AC-053's "one gesture producing one
   /// `Link` with N `Conductor`s".
-  void _commitSet(PinRef from, PinRef to, String fromSetKey) {
+  ///
+  /// [overriding] is `[ Connect anyway ]`, which commits the whole set
+  /// (DR-234 §11.233.3) by skipping tier 2 exactly as [_commitWire] does.
+  void _commitSet(
+    PinRef from,
+    PinRef to,
+    String fromSetKey, {
+    bool overriding = false,
+  }) {
     final fromTarget = _targetFor(from);
     final toSet = _atomicSetFor(to);
     if (fromTarget == null || toSet == null) {
@@ -3046,6 +3107,25 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
           'a pin and press W.',
         );
       case AtomicConnectReady(:final plan):
+        // ═══════════════════════════════════════════════════════════════
+        // TIER 2 PER PAIRED POSITION (`#909`, DR-234 §11.233.1)
+        // ═══════════════════════════════════════════════════════════════
+        // This committed on tier 1 alone, so a stereo pair landed on
+        // mismatched connectors with no chip where the pin gesture springs
+        // each half back. DR-116: a rule is about the resulting state. The
+        // first failing pair's chip springs the set back, naming that
+        // pair's jacks and counting the rest (§11.233.2).
+        if (!overriding) {
+          final verdict = evaluatePairedSpringBack(
+            _doc,
+            [for (final p in plan.pairs) (p.from, p.to)],
+            gesture: PairedGesture.set,
+          );
+          if (verdict != null) {
+            _springBackOff(to, verdict.chip);
+            return;
+          }
+        }
         final command = buildAtomicConnectCommand(
           doc: _doc,
           plan: plan,
@@ -4177,6 +4257,13 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       // `evaluateSpringBack` was called with `ontoLink: null` and why
       // the rule fired in the first place.
       case SpringBackRemedy.declareAdapter:
+        // A SET'S CHIP DECLARES ONE ADAPTER ON THE SET'S CABLE (DR-234
+        // §11.233.4), and must not fall into the pin path below, which
+        // would make a one-conductor cable out of a pair.
+        if (_wireFromSetKey case final setKey?) {
+          _declareSetAdapter(from!, setKey);
+          return;
+        }
         final at = _chipAt;
         final toTarget = at == null ? null : _targetFor(at);
         if (toTarget == null) {
@@ -4298,6 +4385,97 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     }
   }
 
+  /// `Declare an adapter` on a SET's chip (DR-234 §11.233.4): the set's one
+  /// cable, and one adapter on it, in one undo entry.
+  ///
+  /// RE-PLANNED, NOT REMEMBERED, on `insert_receiver.dart`'s argument: the
+  /// chip is a frame old and the document can move under it. ONE ADAPTER
+  /// IS ENOUGH because `CON-001` reads adapters per cable, so the first
+  /// failing pair's connectors name it and every conductor is cleared.
+  void _declareSetAdapter(PinRef from, String setKey) {
+    final at = _chipAt;
+    final fromTarget = _targetFor(from);
+    final toSet = at == null ? null : _atomicSetFor(at);
+    if (fromTarget == null || toSet == null) {
+      _dismissChip();
+      _status.show("That cable's sets are no longer in this document.");
+      return;
+    }
+    final planned = planAtomicConnect(
+      _doc,
+      fromDeviceId: fromTarget.deviceId,
+      fromSetKey: setKey,
+      toDeviceId: toSet.deviceId,
+      toSetKey: toSet.def.key,
+    );
+    if (planned is! AtomicConnectReady) {
+      _dismissChip();
+      _status.show('That set can no longer be connected as one cable.');
+      return;
+    }
+    final plan = planned.plan;
+    final verdict = evaluatePairedSpringBack(
+      _doc,
+      [for (final p in plan.pairs) (p.from, p.to)],
+      gesture: PairedGesture.set,
+    );
+    // THE CHIP STAYS UP in both of these, for the pin path's reason: the
+    // person asked for a fix and did not get one.
+    if (verdict == null) {
+      _status.show(
+        'The ${toSet.def.label} takes this set as it is now, so no adapter '
+        'is needed.',
+      );
+      return;
+    }
+    if (!verdict.chip.remedies.contains(SpringBackRemedy.declareAdapter)) {
+      _status.show(
+        '${verdict.chip.ruleId} — an adapter cannot answer for this set any '
+        'more. ${verdict.chip.headline}',
+      );
+      return;
+    }
+    late String outcome;
+    _committingWire = true;
+    try {
+      widget.controller.transact(LabelKey.declareInlineAdapter, (tx) {
+        final command = buildAtomicConnectCommand(
+          doc: _doc,
+          plan: plan,
+          signalFamily: fromTarget.signalFamily,
+          media: kUnstatedMedia,
+          now: widget.controller.clock.nowUtc(),
+          actor: widget.controller.actor,
+        );
+        tx.add(command);
+        final adapter = buildDeclareAdapterCommand(
+          doc: _doc,
+          linkId: command.id,
+          from: verdict.from,
+          to: verdict.to,
+          ruleId: SpringBackRule.connectorsDoNotMate.id,
+        );
+        switch (adapter) {
+          case DeclareAdapterRefused(:final message):
+            outcome = message;
+          case DeclareAdapterReady(command: final declare):
+            tx.add(declare);
+            // NO "NAME THE PART IN THE INSPECTOR" HERE, unlike the pin
+            // path's sentence: no inspector reads or edits an adapter, so
+            // that instruction names a route the product does not have.
+            outcome =
+                '${command.designator} connected ${toSet.def.label} as one '
+                'cable, with a ${verdict.from.def.connector.v} to '
+                '${verdict.to.def.connector.v} adapter declared on it.';
+        }
+      });
+    } finally {
+      _committingWire = false;
+    }
+    _clearWire();
+    _status.show(outcome);
+  }
+
   /// `Enter` — commit the wire in flight (docs/05 §7, DR-011.6).
   ///
   /// [overriding] is `[ Connect anyway ]`: the same commit with tier 2
@@ -4323,12 +4501,12 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     // The same three-way branch [_armWireFrom] took, read back off the
     // field each limb set. Multi-draw first, for the reason stated there.
     if (_wireFromBankKey != null) {
-      _commitMultiDraw(to);
+      _commitMultiDraw(to, overriding: overriding);
       return;
     }
     final setKey = _wireFromSetKey;
     if (setKey != null) {
-      _commitSet(from, to, setKey);
+      _commitSet(from, to, setKey, overriding: overriding);
       return;
     }
     final fromTarget = _targetFor(from);

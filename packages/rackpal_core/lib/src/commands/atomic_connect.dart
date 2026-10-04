@@ -106,6 +106,26 @@ final class RoleMismatch {
   final String toRole;
 }
 
+/// One position where BOTH ends land on a jack, as the two pins tier 2
+/// reads (DR-234 §11.233.1).
+///
+/// The plan carries these so the chip and the commit come from one walk:
+/// a surface that re-paired the sets itself could ask tier 2 about a
+/// different pairing from the one [AtomicConnectCommand] writes.
+@immutable
+final class AtomicConnectPair {
+  const AtomicConnectPair({
+    required this.position,
+    required this.from,
+    required this.to,
+  });
+
+  /// Index in declared order.
+  final int position;
+  final ConnectTarget from;
+  final ConnectTarget to;
+}
+
 /// A pin an [AtomicConnectPlan] will land on that the document does not
 /// hold yet — the plan's half of DR-011.1.
 ///
@@ -144,6 +164,7 @@ final class AtomicConnectPlan {
     required this.openCount,
     required this.roleMismatches,
     this.neededPorts = const <PlannedPort>[],
+    this.pairs = const <AtomicConnectPair>[],
   });
 
   /// In declared order. One per position that lands at least one end.
@@ -180,6 +201,10 @@ final class AtomicConnectPlan {
   ///
   /// EMPTY IS NORMAL, and means every member was already materialised.
   final List<PlannedPort> neededPorts;
+
+  /// Every paired position, in declared order, as two pins (DR-234). One
+  /// per [pairedCount]; an open position has no pair and is not here.
+  final List<AtomicConnectPair> pairs;
 
   /// Whether every position landed both ends.
   bool get isComplete => openCount == 0;
@@ -295,6 +320,7 @@ AtomicConnectResult? planAtomicConnect(
 
   final conductors = <Conductor>[];
   final mismatches = <RoleMismatch>[];
+  final pairs = <AtomicConnectPair>[];
   var paired = 0;
   var open = 0;
 
@@ -336,6 +362,22 @@ AtomicConnectResult? planAtomicConnect(
       if (refusal != null) return AtomicConnectRefused(refusal);
 
       paired++;
+      // Both members come from the template's own ports, so both resolve;
+      // the null check is for a hand-edited file, where a pin tier 2
+      // cannot read is one it has no opinion about.
+      final fromPin = resolveConnectTarget(
+        doc,
+        deviceId: from.deviceId,
+        portKey: a.portKey.v,
+      );
+      final toPin = resolveConnectTarget(
+        doc,
+        deviceId: to.deviceId,
+        portKey: b.portKey.v,
+      );
+      if (fromPin != null && toPin != null) {
+        pairs.add(AtomicConnectPair(position: i, from: fromPin, to: toPin));
+      }
       final aRole = a.role;
       final bRole = b.role;
       if (aRole != null &&
@@ -413,6 +455,7 @@ AtomicConnectResult? planAtomicConnect(
       pairedCount: paired,
       openCount: open,
       roleMismatches: mismatches,
+      pairs: List<AtomicConnectPair>.unmodifiable(pairs),
     ),
   );
 }

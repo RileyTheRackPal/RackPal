@@ -410,7 +410,7 @@ The requirement's "Analog RCA" and "speaker level" share one orange and are sepa
 | `power.dc_low` | Low-voltage DC (12/24 V) | `conn.barrel_dc` | → | `DC` | — |
 | `power.bonding` | Bonding / grounding conductor | `conn.ground_lug` | ↔ | `GND` | Exists so a bonding conductor is *drawable*. Busbar entity and conductor sizing are v1.2 (RJ-010) |
 
-**Inlet and outlet are not directions**: they are `sink`/`source` on a `power.*` family plus `PortPowerSpec.role: inlet | outlet` (CR-058, CR-060). Links on `power.*` originating at a PDU outlet auto-classify as `LinkClass.powerCord` and are excluded from the pull sheet by default, appearing instead as an **outlet map** on the power schedule (AC-026).
+**Inlet and outlet are not directions**: they are `sink`/`source` on a `power.*` family plus `PortPowerSpec.role: inlet | outlet` (CR-058, CR-060). Links whose port ends are all `power.ac_iec` or `power.ac_branch` ports with a role auto-classify as `LinkClass.powerCord` wherever the far end lands (a PDU outlet, another rack, a wall receptacle) and are excluded from the pull sheet by default; hardwired AC, low-voltage DC and bonding are pulled wire and keep the rack test (DR-233). Cords drawn to a PDU, UPS or sequencer outlet appear on the **outlet map** (AC-026).
 
 PDU outlet attributes that matter: switched / unswitched / sequenced (with step and delay) / UPS-backed / surge-only / metered. `SEQ-001 warning: amplifier on sequencer step 1 of 4 — amplifiers should be last on and first off` (AC-033); a reversed sequence thumps and blows drivers.
 

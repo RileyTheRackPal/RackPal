@@ -16,6 +16,8 @@ import 'package:rackpal_core/src/units/permille.dart';
 
 /// fieldCable|jumper|powerCord|internal — auto-classified,
 /// user-overridable (AC-026). The schedule excludes jumpers by default.
+/// `linkClassOf` produces the first three (DR-008, DR-233); `internal` is
+/// only ever set by hand.
 enum LinkClass { fieldCable, jumper, powerCord, internal }
 
 /// The NEC/UL LISTING printed on a cable's jacket. DR-079 §11.78.1.

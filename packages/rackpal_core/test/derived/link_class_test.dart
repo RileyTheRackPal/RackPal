@@ -77,6 +77,60 @@ Link _link(Endpoint from, Endpoint to) => Link(
 Endpoint _port(String device) => PortEndpoint(Uuid('$device.p'));
 Endpoint _field(String what) => PlaceEndpoint(description: what);
 
+/// A port def on [family], playing [role] (null for none).
+PortDef _def(String family, {PortPowerRole? role}) => PortDef(
+  key: const PortKey('p'),
+  label: 'p',
+  connector: const ConnectorTypeId('conn.iec_c14'),
+  signalFamily: SignalFamilyId(family),
+  face: Face.rear,
+  order: const FracIndex('a0'),
+  power: role == null ? null : PortPowerSpec(role: role),
+);
+
+/// `_doc`, with each device's single port `p` declared by `devices` in a
+/// template snapshot of its own, so the classifier can read the family
+/// and role the way it reads them on a real document.
+RackDocument _powerDoc(Map<String, (Uuid?, PortDef)> devices) {
+  final doc = _doc({for (final e in devices.entries) e.key: e.value.$1})
+    ..registries = buildSeedRegistries();
+  devices.forEach((name, spec) {
+    final tpl = TemplateId('tpl.$name');
+    doc.templates['tpl.$name@1'] = TemplateSnapshot(
+      templateId: tpl,
+      version: 1,
+      contentHash: 'sha256:tpl.$name',
+      body: TemplateBody(
+        manufacturer: 'Test',
+        model: name,
+        displayName: name,
+        frontU: 1,
+        side: OccupancySide.front,
+        ports: [spec.$2],
+      ),
+      capturedAt: _when,
+    );
+    final old = doc.devices[Uuid(name)]!;
+    doc.devices[old.id] = DeviceInstance(
+      id: old.id,
+      kind: old.kind,
+      templateRef: TemplateRef(
+        templateId: tpl,
+        version: 1,
+        contentHash: 'sha256:tpl.$name',
+      ),
+      designator: old.designator,
+      name: old.name,
+      placement: old.placement,
+      meta: _meta(),
+    );
+  });
+  return doc;
+}
+
+final PortDef _iecInlet = _def('power.ac_iec', role: PortPowerRole.inlet);
+final PortDef _nemaOutlet = _def('power.ac_branch', role: PortPowerRole.outlet);
+
 void main() {
   group('DR-008 §11.8.1 — a jumper is both ends in the same rack', () {
     test('both ends in ONE rack is a jumper', () {
@@ -131,6 +185,174 @@ void main() {
             'a 9 m service loop that begins and ends in one rack is still '
             'not something anybody pulls through a wall',
       );
+    });
+  });
+
+  // ═══════════════════════════════════════════════════════════════════
+  // DR-233 — AN IEC OR NEMA CORD IS A POWER CORD (`#908`)
+  // ═══════════════════════════════════════════════════════════════════
+  group('DR-233 §11.232 — a cord is its ports', () {
+    test('an amplifier inlet to a PDU outlet in ONE rack is a cord, not a '
+        'jumper', () {
+      final doc = _powerDoc({
+        'amp': (_rackA, _iecInlet),
+        'pdu': (_rackA, _nemaOutlet),
+      });
+      expect(
+        linkClassOf(doc, _link(_port('amp'), _port('pdu'))),
+        LinkClass.powerCord,
+        reason:
+            'the cord test runs BEFORE the rack test (§12.50); this was a '
+            'jumper for as long as the classifier never produced powerCord',
+      );
+    });
+
+    test('a cord to a wall receptacle is a cord, not a pull', () {
+      final doc = _powerDoc({'amp': (_rackA, _iecInlet)});
+      expect(
+        linkClassOf(
+          doc,
+          _link(_port('amp'), _field('receptacle behind the TV')),
+        ),
+        LinkClass.powerCord,
+        reason:
+            'this was a fieldCable, a cable on the Pull Sheet that nobody '
+            'pulls through a wall',
+      );
+    });
+
+    test('a cord between two racks is a cord', () {
+      final doc = _powerDoc({
+        'amp': (_rackA, _iecInlet),
+        'ups': (_rackB, _nemaOutlet),
+      });
+      expect(
+        linkClassOf(doc, _link(_port('amp'), _port('ups'))),
+        LinkClass.powerCord,
+      );
+    });
+
+    test('LOW-VOLTAGE DC, HARDWIRED AC AND BONDING KEEP THE RACK TEST', () {
+      // §11.232.2, the user's trade call: each of these is as often pulled
+      // wire as a lead, so a cord test that took them would hide a real
+      // pull in the hidden-cords count.
+      for (final family in [
+        'power.dc_low',
+        'power.ac_hardwired',
+        'power.bonding',
+      ]) {
+        final inlet = _def(family, role: PortPowerRole.inlet);
+        final outlet = _def(family, role: PortPowerRole.outlet);
+        final pulled = _powerDoc({
+          'kp': (_rackA, inlet),
+          'psu': (_rackB, outlet),
+        });
+        expect(
+          linkClassOf(pulled, _link(_port('kp'), _port('psu'))),
+          LinkClass.fieldCable,
+          reason: '$family between racks is a pull',
+        );
+        final local = _powerDoc({
+          'kp': (_rackA, inlet),
+          'psu': (_rackA, outlet),
+        });
+        expect(
+          linkClassOf(local, _link(_port('kp'), _port('psu'))),
+          LinkClass.jumper,
+          reason: '$family inside one rack is a jumper, as before',
+        );
+      }
+    });
+
+    test('a power port with NO ROLE is not a cord port', () {
+      // P01's ground and P03's battery expansion ship exactly so.
+      final doc = _powerDoc({
+        'amp': (_rackA, _def('power.ac_iec')),
+        'pdu': (_rackA, _nemaOutlet),
+      });
+      expect(
+        linkClassOf(doc, _link(_port('amp'), _port('pdu'))),
+        LinkClass.jumper,
+      );
+    });
+
+    test('ONE NON-POWER END makes it not a cord', () {
+      final doc = _powerDoc({
+        'amp': (_rackA, _iecInlet),
+        'sw': (_rackB, _def('net.ethernet')),
+      });
+      expect(
+        linkClassOf(doc, _link(_port('amp'), _port('sw'))),
+        LinkClass.fieldCable,
+      );
+    });
+
+    test('EVERY CONDUCTOR is asked, not only the first', () {
+      final doc = _powerDoc({
+        'amp': (_rackA, _iecInlet),
+        'pdu': (_rackA, _nemaOutlet),
+        'sw': (_rackA, _def('net.ethernet')),
+        'nvr': (_rackA, _def('net.ethernet')),
+      });
+      final mixed = _link(_port('amp'), _port('pdu'))
+        ..conductors.add(Conductor(from: _port('sw'), to: _port('nvr')));
+      expect(linkClassOf(doc, mixed), LinkClass.jumper);
+    });
+
+    test("THE FAMILY IS THE PORT'S EFFECTIVE ONE, override included", () {
+      // DR-131's reason: a correction made on this instance must reach
+      // every reader of the family.
+      final corrected = _powerDoc({
+        'amp': (_rackA, _iecInlet),
+        'pdu': (_rackA, _nemaOutlet),
+      });
+      corrected.ports[const Uuid('amp.p')]!.overrides.signalFamily =
+          const SignalFamilyId('power.dc_low');
+      expect(
+        linkClassOf(corrected, _link(_port('amp'), _port('pdu'))),
+        LinkClass.jumper,
+      );
+    });
+
+    test('a cord to a STAGED device stays undetermined (§11.232.3)', () {
+      final doc = _powerDoc({
+        'amp': (null, _iecInlet),
+        'pdu': (_rackA, _nemaOutlet),
+      });
+      expect(linkClassOf(doc, _link(_port('amp'), _port('pdu'))), isNull);
+    });
+
+    test('a jumper LOCKED by hand now reports the cord (§11.232.4)', () {
+      final doc = _powerDoc({
+        'amp': (_rackA, _iecInlet),
+        'pdu': (_rackA, _nemaOutlet),
+      });
+      final link = _link(_port('amp'), _port('pdu'))
+        ..linkClass = LinkClass.jumper
+        ..linkClassLocked = true;
+      expect(effectiveLinkClassOf(doc, link), LinkClass.jumper);
+      expect(linkClassDisagreementOf(doc, link), LinkClass.powerCord);
+    });
+
+    test('THE ARTIFACT: a cord to the wall is off the Pull Sheet and '
+        'counted as a hidden cord', () {
+      final doc = _powerDoc({'amp': (_rackA, _iecInlet)});
+      doc.links[const Uuid('lnk')] = _link(
+        _port('amp'),
+        _field('receptacle behind the TV'),
+      );
+      final view = buildScheduleView(
+        buildSchedule(doc),
+        preset: SchedulePreset.pullSheet,
+      );
+      expect(view.rowCount, 0, reason: 'nobody pulls a power cord');
+      expect(view.exclusions.powerCords, 1);
+      final shown = buildScheduleView(
+        buildSchedule(doc),
+        preset: SchedulePreset.pullSheet,
+        includeJumpersAndPowerCords: true,
+      );
+      expect(shown.rowCount, 1);
     });
   });
 

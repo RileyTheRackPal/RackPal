@@ -36,11 +36,13 @@
 //
 // THE CON-001 PAIR MOVED AT DR-173 (#112), AND THE RE-RUN CENSUS CHOSE IT.
 // It was V01.aud.out.1 -> A04.bal.l until V01's zone audio became an
-// atomic L/R pair. A drag from a set member takes the SET gesture, and
-// that gesture does not consult tier 2 at all (#909), so no chip could be
-// raised through it. Swept again over ports in no atomic set, same family
-// and different connector, the audio domain has exactly one shape left:
-// V05's 5-pin stereo output into a 3-pin input, on A03 or A05.
+// atomic L/R pair. A drag from a set member takes the SET gesture, which
+// did not consult tier 2 until DR-234 (#909), so no chip could be raised
+// through it then; `schematic_set_tier2_test.dart` now drives that pair
+// through the set's own chip. This file keeps the pin gesture's case.
+// Swept again over ports in no atomic set, same family and different
+// connector, the audio domain has exactly one shape left: V05's 5-pin
+// stereo output into a 3-pin input, on A03 or A05.
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
