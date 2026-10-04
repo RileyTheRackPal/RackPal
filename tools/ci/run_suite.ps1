@@ -1301,7 +1301,9 @@ $SuiteFloors = @{
     # 299 at `#355` (M6-I4, DR-230): +2 in exported_sheets_test.dart, one
     # entry per page in the order the pages print their numbers, and each
     # named as the index names it at its own paper.
-    'rackpal_export' = 299
+    # 300 at `#356` (docs/08 §8.4): +1, morning and evening of one day are
+    # one file, now that the creation date is the issue day.
+    'rackpal_export' = 300
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

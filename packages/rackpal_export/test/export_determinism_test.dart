@@ -298,12 +298,20 @@ void main() {
       expect(await export(at), await export(at));
     });
 
+    test('MORNING AND EVENING OF ONE DAY ARE ONE FILE: §8.4 lets the date '
+        'differ and nothing finer', () async {
+      expect(
+        await export(DateTime.utc(2026, 7, 18, 8, 30)),
+        await export(DateTime.utc(2026, 7, 18, 19, 45, 12)),
+      );
+    });
+
     test(
-      'the creation date is the injected one, never the wall clock',
+      'the creation date is the injected DAY, never the wall clock',
       () async {
         final bytes = await export(DateTime.utc(2027, 3, 9, 14, 5, 6));
         final text = String.fromCharCodes(bytes);
-        expect(text, contains('/CreationDate(D:20270309140506Z)'));
+        expect(text, contains('/CreationDate(D:20270309000000Z)'));
       },
     );
 

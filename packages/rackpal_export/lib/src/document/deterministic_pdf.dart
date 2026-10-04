@@ -19,8 +19,13 @@
 // Both tokens have a fixed width (`D:` + fourteen digits + `Z`, and two
 // 64-hex strings), so they are overwritten byte for byte: no offset in the
 // cross-reference table moves, and the file stays valid without being
-// re-serialised. `/CreationDate` becomes the export's own `issuedAt`, the
-// one clock §8.4 allows. `/ID` becomes a hash of the file with the ID
+// re-serialised. `/CreationDate` becomes the export's issue DATE, at
+// midnight UTC: §8.4 lets "the date field" differ and nothing finer, so
+// two exports of one project on one day are one file, which is what makes
+// "did anything change between rev B and rev C?" a file comparison. It
+// was `issuedAt` to the second until the user guide's sentence about
+// same-day exports was checked against it and found false. `/ID` becomes
+// a hash of the file with the ID
 // zeroed, which is what an ID is for (ISO 32000 §14.4: computed from the
 // file's contents): the same document gives the same ID, a different one
 // a different ID.
@@ -38,9 +43,9 @@ import 'package:crypto/crypto.dart';
 final RegExp _creationDate = RegExp(r'/CreationDate\(D:(\d{14})Z\)');
 final RegExp _id = RegExp(r'/ID\[<([0-9a-fA-F]{64})><([0-9a-fA-F]{64})>\]');
 
-/// [pdf] with its creation date set to [issuedAt] and its ID derived from
-/// its contents, at the same length; [pdf] itself when either token is not
-/// found exactly once.
+/// [pdf] with its creation date set to [issuedAt]'s day and its ID derived
+/// from its contents, at the same length; [pdf] itself when either token is
+/// not found exactly once.
 Uint8List deterministicPdfBytes(Uint8List pdf, {required DateTime issuedAt}) {
   // LATIN-1 IS A BYTE-FOR-BYTE VIEW: one char per byte, both ways, so the
   // binary streams between the tokens survive the round trip untouched.
@@ -68,9 +73,10 @@ Uint8List deterministicPdfBytes(Uint8List pdf, {required DateTime issuedAt}) {
   return out;
 }
 
-/// `yyyyMMddHHmmss` in UTC, the fourteen digits the token holds.
+/// `yyyyMMdd000000`, [at]'s UTC day: the fourteen digits the token holds.
 String _stamp(DateTime at) {
-  final u = at.toUtc();
+  final t = at.toUtc();
+  final u = DateTime.utc(t.year, t.month, t.day);
   String two(int n) => n.toString().padLeft(2, '0');
   return '${u.year.toString().padLeft(4, '0')}${two(u.month)}${two(u.day)}'
       '${two(u.hour)}${two(u.minute)}${two(u.second)}';
