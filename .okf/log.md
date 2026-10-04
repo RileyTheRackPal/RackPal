@@ -1,5 +1,11 @@
 # Update Log
 
+## 2026-10-04 (hundred-and-eighth entry)
+
+* **Progress**: NET-A/2 built on `net-a`: the Devices view (`#988` to `#990`, `#997`) and the
+  inspector's read-only summary (`#991`). Story `#683` closed.
+* **Creation**: [DR-228](/decisions/dr-228-t650-network-schedule.md), what T6.50 prints.
+
 ## 2026-10-03 (hundred-and-seventh entry)
 
 * **Progress**: M6-D merged at `4ce4ee44` (PR 198). NET-A (`#681`) opened on branch `net-a`, decomposed into

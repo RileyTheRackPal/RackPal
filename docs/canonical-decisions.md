@@ -23722,6 +23722,34 @@ order. No milestone moves.
 
 ---
 
+### 11.227 DR-228 · T6.50 prints every network column, one row per device with a value
+
+**Settled by the user on 2026-10-04, building NET-A/3 (`#684`), on the recommended option twice.**
+DR-048 §11.47.4 put `T6.50` in v1 as an `AUTO` sheet and said nothing about what it prints.
+
+**11.227.1 RULED: ALL TEN COLUMNS, SUBNET AND GATEWAY INCLUDED.** `DEVICE`, `NAME`, `LOCATION`,
+`HOSTNAME`, `IP ADDRESS`, `SUBNET`, `GATEWAY`, `MAC`, `VLANS`, `VERIFIED`, from the one derivation the
+Devices view renders (DR-226), so the screen and the sheet are the same strings (CR-107). The tech at a
+rack who sets a static address on a laptop needs the subnet and the gateway, and paper has no Columns
+menu. Not taken: the view's default columns, which leave out exactly what that tech needs.
+
+**11.227.2 RULED: ONE ROW PER DEVICE THAT CARRIES A VALUE**, an address, a MAC or a VLAN, in the
+project's network order (DR-227 §11.226.4). The sheet states facts: a blank row in a client deliverable
+reads as an omission, which is why `T6.20` and `T5.01` are `AUTO` too (DR-005). Every row prints its
+verified day or `unverified` (DR-048 §11.47.3). The export raises a notice naming how many
+network-capable devices have nothing recorded, so the gap is said rather than silent. Not taken: every
+network-capable device, blank rows included, which is a commissioning form and prints empty boxes on
+the client's copy.
+
+**11.227.3 THE MECHANICAL PARTS, STATED SO THEY ARE NOT DECIDED SILENTLY.** ANSI A landscape, the
+schedules' paper (docs/08 §6.1); `T6.50` to `T6.59`, then the shared overflow pool, taking it after the
+equipment list, which precedes it; in the set after `T6.30` and before `T5.01`, which DR-221 keeps last.
+`kReservedNcsIds` stops reserving `T6.50` for the v1.1 schedule it no longer is; `T6.40` stays reserved.
+
+**Scope.** No scope moves: DR-048 §11.47.4's sheet, made definite.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
