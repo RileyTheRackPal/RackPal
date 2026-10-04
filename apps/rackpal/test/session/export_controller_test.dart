@@ -5,15 +5,18 @@
 // surface rather than inventing one, that every outcome REPORTS, and that
 // a refusal leaves nothing behind.
 
+import 'dart:async';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path/path.dart' as p;
 import 'package:rackpal/src/session/export_controller.dart';
+import 'package:rackpal/src/session/export_runner.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_export/rackpal_export.dart' show ExportedDocument;
 
 import '../storage/fake_file_store.dart';
 import 'session_fakes.dart';
@@ -153,7 +156,70 @@ RackDocument _document({
 /// a file.
 RackDocument _racklessDocument() => _document(rackCount: 0);
 
+/// A job that runs [inner] and delivers its outcome only after [delay],
+/// standing in for an export slow enough to show its progress.
+ExportJob _slow(ExportJob inner, Duration delay) {
+  final done = Completer<Outcome<ExportedDocument>?>();
+  Future<void>.delayed(delay, () async {
+    final outcome = await inner.result;
+    if (!done.isCompleted) done.complete(outcome);
+  });
+  return ExportJob(
+    result: done.future,
+    progress: inner.progress,
+    cancel: () {
+      inner.cancel();
+      if (!done.isCompleted) done.complete(null);
+    },
+  );
+}
+
 void main() {
+  group('progress and cancel (M6-I2, docs/08 §8.2)', () {
+    test(
+      'A FAST EXPORT SHOWS NO PROGRESS: under 400 ms a bar is noise',
+      () async {
+        final session = await buildTestSession(
+          document: _document(),
+          savePaths: <String?>[r'C:\jobs\smith'],
+        );
+        expect(await session.services.export.exportPdf(), isTrue);
+        expect(session.prompts.exportProgressShown, 0);
+      },
+    );
+
+    test('a slow export shows its progress, and is still written', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+        exportRunner: (request) => _slow(
+          runExportInline(request),
+          kExportProgressDelay * 2,
+        ),
+      );
+      expect(await session.services.export.exportPdf(), isTrue);
+      expect(session.prompts.exportProgressShown, 1);
+      expect(_pathsEndingIn(session.fs, '.pdf'), hasLength(1));
+    });
+
+    test('CANCEL STOPS IT: nothing is written, and the status line says '
+        'so', () async {
+      final session = await buildTestSession(
+        document: _document(),
+        savePaths: <String?>[r'C:\jobs\smith'],
+        exportRunner: (request) => _slow(
+          runExportInline(request),
+          kExportProgressDelay * 2,
+        ),
+      );
+      session.prompts.cancelExport = true;
+      expect(await session.services.export.exportPdf(), isFalse);
+      expect(session.prompts.exportProgressShown, 1);
+      expect(_pathsEndingIn(session.fs, '.pdf'), isEmpty);
+      expect(session.services.session.status, kExportCancelledStatus);
+    });
+  });
+
   group('a successful export', () {
     test('writes the PDF and reports what it wrote', () async {
       final session = await buildTestSession(

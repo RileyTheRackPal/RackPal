@@ -39,11 +39,13 @@
 // so the file group cannot quietly grow a fifth member. Adding `Ctrl+P`
 // here would edit it by stealth. One File menu entry ships; the binding is
 // recorded as deferred so the decision is taken explicitly.
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:path/path.dart' as p;
 import 'package:rackpal/src/session/document_session.dart';
+import 'package:rackpal/src/session/export_runner.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/session/session_prompts.dart';
@@ -91,6 +93,10 @@ Future<Map<FontRef, Uint8List>> loadExportFontsFromBundle() async {
   };
 }
 
+/// How long an export runs before its progress is shown (docs/08 §8.2):
+/// under this, a bar flashed on screen looks worse than a pause.
+const Duration kExportProgressDelay = Duration(milliseconds: 400);
+
 /// What the status line says when the user backs out of the dialog.
 const String kExportCancelledStatus = 'Export cancelled.';
 
@@ -111,8 +117,13 @@ final class ExportController {
     required this.fontLoader,
     required this.clock,
     this.initialDirectory,
+    this.runner = runExport,
     p.Context? context,
   }) : context = context ?? p.context;
+
+  /// Starts the export off the main isolate (CR-099, M6-I2). Injected so a
+  /// widget test runs it inline, where fake async can see it finish.
+  final ExportRunner runner;
 
   final DocumentSession session;
   final FilePicker picker;
@@ -183,7 +194,7 @@ final class ExportController {
     // the builder must be a SNAPSHOT of one document state, not the live
     // mutable graph, or an edit racing the export can be half-included.
     final json = const JsonDocumentCodec().write(session.document);
-    final built = await buildExportDocument(
+    final job = runner(
       ExportRequest(
         documentJson: json,
         fontBytes: await fontLoader(),
@@ -202,6 +213,12 @@ final class ExportController {
         issuedForConstruction: issuedForConstruction,
       ),
     );
+    final built = await _awaitWithProgress(job);
+    // CANCELLED, AND SAID: the work was stopped and nothing was written.
+    if (built == null) {
+      session.setStatus(kExportCancelledStatus);
+      return false;
+    }
     if (built case Err(:final error)) {
       await prompts.showFileError(_describeExportError(error as ExportError));
       return false;
@@ -216,6 +233,31 @@ final class ExportController {
       ),
       exported,
     );
+  }
+
+  /// [job]'s outcome, showing its progress only if it is still running
+  /// after [kExportProgressDelay] (docs/08 §8.2). Null when it was
+  /// cancelled.
+  Future<Outcome<ExportedDocument>?> _awaitWithProgress(ExportJob job) async {
+    final finished = job.result.then<void>((_) {}, onError: (Object _) {});
+    // A TIMER THAT IS CANCELLED, NOT A `Future.delayed` RACED AGAINST THE
+    // JOB. The race left its 400 ms delay pending after every fast export,
+    // which a widget test reports as a timer outliving the tree, and which
+    // in the app is a stray wake-up for nothing.
+    final timer = Timer(kExportProgressDelay, () {
+      unawaited(
+        prompts.showExportProgress(
+          progress: job.progress,
+          finished: finished,
+          onCancel: job.cancel,
+        ),
+      );
+    });
+    try {
+      return await job.result;
+    } finally {
+      timer.cancel();
+    }
   }
 
   Future<bool> _write(SavePaths paths, ExportedDocument exported) async {

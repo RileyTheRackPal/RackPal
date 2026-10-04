@@ -52,12 +52,20 @@ const String kPdfProducer = 'RackPal';
 /// is a fact the caller reports to the user, not a programmer error
 /// (CR-093).
 ///
-/// Called SYNCHRONOUSLY on the main isolate in M1. Its argument carries
-/// only bytes, so moving it behind `Isolate.spawn` later is a one-line
-/// change with no refactor -- see `export_request.dart`.
+/// Its argument carries only bytes, so it runs unchanged behind
+/// `Isolate.spawn` (CR-099, M6-I2): see `export_request.dart`.
+///
+/// [onProgress] hears `(sheetsDone, sheets)`: once with zero when the set
+/// is resolved, then once per sheet drawn. **WHAT IT CANNOT HEAR IS THE
+/// SAVE**, which is where most of the time goes: the pinned `pdf` paints
+/// every page inside one `save()` call (`Page.postProcess`), measured at
+/// about four fifths of a Whole House export. So `sheetsDone == sheets`
+/// means "writing the file", and a caller shows that phase as such rather
+/// than as a bar sitting at full.
 Future<Outcome<ExportedDocument>> buildExportDocument(
-  ExportRequest request,
-) async {
+  ExportRequest request, {
+  void Function(int sheetsDone, int sheets)? onProgress,
+}) async {
   final decoded = const JsonDocumentCodec().read(request.documentJson);
   if (decoded case Err(:final error)) {
     return Err(ExportDocumentUnreadable(error));
@@ -280,6 +288,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   if (set.total > kMaxExportSheets) {
     return Err(ExportTooManySheets(set.total));
   }
+  onProgress?.call(0, set.total);
   final notices = <String>[
     // SAID, NOT ASKED, and first: it is about the whole set.
     if (set.total > kLargeSetSheets) largeSetNotice(set.total),
@@ -322,6 +331,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
   var terminationPage = 0;
   var pinoutPage = 0;
   var networkPage = 0;
+  var drawn = 0;
   for (final sheet in set.sheets) {
     final DiagramScene scene;
     final LegibilityReport legibility;
@@ -638,6 +648,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
         images: images,
       ),
     );
+    onProgress?.call(++drawn, set.total);
   }
 
   return Ok(

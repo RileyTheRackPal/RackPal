@@ -1293,7 +1293,9 @@ $SuiteFloors = @{
     # document at one date is one file, the creation date is the injected
     # one, the ID follows the contents in both slots, the rewritten file
     # still parses, and an unrecognised file is returned untouched.
-    'rackpal_export' = 296
+    # 297 at `#353` (M6-I2, CR-099): +1 in export_progress_test.dart, the
+    # hook heard at zero and once per sheet drawn, in order.
+    'rackpal_export' = 297
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -1885,7 +1887,10 @@ $SuiteFloors = @{
     # launch, an edited URL opening, Cancel, a non-http URL refused in the
     # dialog, the system's refusal said, no button without an address or
     # a launcher and its control, and both hosts.
-    'rackpal_ui'     = 2099
+    # 2104 at `#353` (M6-I2, docs/08 §8.2): +5 in export/export_progress_
+    # dialog_test.dart, preparing, drawing with a counting bar, writing with
+    # none, Cancel asking and waiting, and closing itself when done.
+    'rackpal_ui'     = 2104
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -2119,7 +2124,13 @@ $SuiteFloors = @{
     # test.dart, openUrl sent whole, nothing but http/https reaching the
     # channel, a refusal or a throw read as false, and the app's root
     # handing the services' launcher to the shell.
-    'rackpal_app'    = 1175
+    # 1183 at `#353` (M6-I2, M6-I3, CR-099): +5 in session/export_runner_
+    # test.dart (the isolate and inline runners give one file, progress
+    # crosses and ends at the set, cancel stops it and nothing follows, a
+    # refusal crosses as a refusal, inline cancel discards) and +3 in
+    # export_controller_test.dart (a fast export shows nothing, a slow one
+    # shows progress and is written, Cancel writes nothing and says so).
+    'rackpal_app'    = 1183
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

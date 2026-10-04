@@ -15,6 +15,7 @@
 import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart' show ValueListenable, VoidCallback;
 import 'package:flutter/widgets.dart' show GlobalKey, NavigatorState;
 import 'package:path/path.dart' as p;
 import 'package:rackpal/main.dart';
@@ -22,6 +23,7 @@ import 'package:rackpal/src/session/app_services.dart';
 import 'package:rackpal/src/session/app_shell.dart';
 import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/export_controller.dart';
+import 'package:rackpal/src/session/export_runner.dart';
 import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/session/session_controller.dart';
 import 'package:rackpal/src/session/session_prompts.dart';
@@ -317,6 +319,23 @@ final class ScriptedPrompts implements SessionPrompts {
         ? RecoveryChoice.keepForLater
         : _recoveryChoices.removeAt(0);
   }
+
+  /// How many times export progress was shown.
+  int exportProgressShown = 0;
+
+  /// When true, the progress prompt presses Cancel as soon as it opens.
+  bool cancelExport = false;
+
+  @override
+  Future<void> showExportProgress({
+    required ValueListenable<ExportProgress?> progress,
+    required Future<void> finished,
+    required VoidCallback onCancel,
+  }) async {
+    exportProgressShown++;
+    if (cancelExport) onCancel();
+    await finished;
+  }
 }
 
 // --- Window ------------------------------------------------------------
@@ -472,6 +491,7 @@ Future<TestSession> buildTestSession({
   bool useRealDialogs = false,
   FolderRevealer? folderRevealer,
   WebPageLauncher? webPageLauncher,
+  ExportRunner? exportRunner,
 }) async {
   final context = p.Context(style: p.Style.windows);
   final navigatorKey = GlobalKey<NavigatorState>();
@@ -534,6 +554,9 @@ Future<TestSession> buildTestSession({
     // Never the real channel either, for the same reason, and never a
     // browser opened by a test.
     webPageLauncher: webPageLauncher ?? (_) async => true,
+    // INLINE, NEVER AN ISOLATE: a widget test's fake-async zone never
+    // delivers another isolate's work, and the test would hang silently.
+    exportRunner: exportRunner ?? runExportInline,
   );
 
   // The SHELL is what installs the window handler in production. These

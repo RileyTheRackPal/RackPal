@@ -51,6 +51,7 @@ import 'package:rackpal/src/session/autosave_scheduler.dart';
 import 'package:rackpal/src/session/device_template_io_actions.dart';
 import 'package:rackpal/src/session/document_session.dart';
 import 'package:rackpal/src/session/export_controller.dart';
+import 'package:rackpal/src/session/export_runner.dart';
 import 'package:rackpal/src/session/file_error_presenter.dart';
 import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/session/library_io_actions.dart';
@@ -307,6 +308,7 @@ Future<AppServices> buildAppServices({
   FilePicker picker = const Win32FilePicker(),
   FolderRevealer folderRevealer = win32RevealFolder,
   WebPageLauncher webPageLauncher = win32OpenWebPage,
+  ExportRunner exportRunner = runExport,
   Clock clock = const SystemClock(),
   Serializer serializer = isolateSerializer,
   Deserializer deserializer = isolateDeserializer,
@@ -490,6 +492,7 @@ Future<AppServices> buildAppServices({
       writer: writer,
       fontLoader: exportFontLoader,
       clock: clock,
+      runner: exportRunner,
       // The PDF dialog opens where the last document save did (§8.3's
       // "the same MRU behaviour as document Save As, for free").
       initialDirectory: controller.exportInitialDirectory,
