@@ -48,12 +48,14 @@ const double _kRowPad = 4;
 const double _kInset = 8;
 const double _kCellPad = 3;
 
-/// The four section titles, in the order they print.
+/// The section titles, in the order they print. Not counted here: a count
+/// beside the list it counts goes stale when the list grows (DR-231 did).
 /// PORTS AND NOT JACKS: the render showed IRR-1's `PIGTAIL TO BLOCK`, the
 /// receiver eye's plug, carries the same powered pinout.
 const String kIrSectionTitle = 'POWERED IR RECEIVER PORTS';
 const String kWiringSectionTitle = 'WIRING STANDARD EXCEPTIONS';
 const String kNullModemSectionTitle = 'NULL-MODEM CABLES';
+const String kPolarityReversedSectionTitle = 'POLARITY-REVERSED CABLES';
 const String kTerminalSectionTitle = 'TERMINAL ORDER';
 
 /// What the IR section says under its title (DR-221 §11.220.3).
@@ -73,6 +75,13 @@ const String kT568bKey =
 const String kNullModemNote =
     'Transmit and receive are crossed in the cable. Confirm the handshake '
     'lines against both devices.';
+
+/// What the polarity-reversed section says under its title (DR-231
+/// §11.230.3): the swap is the design, and the person holding the strippers
+/// is the one who needs telling.
+const String kPolarityReversedNote =
+    'Wired + to - and - to + on purpose. Terminate as marked; do not '
+    'correct the polarity.';
 
 /// What the terminal section says under its title.
 const String kTerminalNote =
@@ -298,6 +307,20 @@ List<PinoutPage> paginatePinoutDetails({
     const [kNullModemNote],
     [
       for (final e in details.nullModems)
+        [
+          e.designator,
+          e.cell(ScheduleColumnId.fromRoomOutlet, units: units),
+          e.cell(ScheduleColumnId.toRackRuFace, units: units),
+          e.cell(ScheduleColumnId.media, units: units),
+        ],
+    ],
+  );
+  section(
+    kPolarityReversedSectionTitle,
+    _nullModemColumns,
+    const [kPolarityReversedNote],
+    [
+      for (final e in details.polarityReversed)
         [
           e.designator,
           e.cell(ScheduleColumnId.fromRoomOutlet, units: units),

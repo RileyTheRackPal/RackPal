@@ -94,8 +94,13 @@ enum JacketListing {
   catvx,
 }
 
-/// straight|nullModem|fiberPolarityAB.
-enum CrossoverKind { straight, nullModem, fiberPolarityAB }
+/// How a cable's conductors are crossed between its ends, when somebody
+/// has said (DR-231). Unset is unknown (G4), not straight.
+///
+/// [polarityReversed] arrived with DR-231 §11.230.3: a speaker pair wired
+/// `+` to `-` on purpose (a subwoofer run out of phase), which neither an
+/// RS-232 transmit-receive swap nor fibre A-to-B describes.
+enum CrossoverKind { straight, nullModem, fiberPolarityAB, polarityReversed }
 
 /// planned|pulled|dressed|terminated|tested.
 enum RoughInStatus { planned, pulled, dressed, terminated, tested }
@@ -148,7 +153,7 @@ final class Link {
     Len? terminatedLength,
     this.slack,
     this.pathwayId,
-    this.crossover,
+    CrossoverKind? crossover,
     WiringStandard? wiringStandard,
     LifecycleStatus lifecycleStatus = LifecycleStatus.new_,
     int? spliceCount,
@@ -174,6 +179,7 @@ final class Link {
        _cutLength = cutLength,
        _terminatedLength = terminatedLength,
        _wiringStandard = wiringStandard,
+       _crossover = crossover,
        _test = test,
        _installedBy = installedBy,
        _terminatedAt = terminatedAt,
@@ -389,6 +395,19 @@ final class Link {
   @internal
   set wiringStandard(WiringStandard? v) => _wiringStandard = v;
 
+  /// How the conductors are crossed between the ends, or null when nobody
+  /// has said (DR-231). Read by the schedule's notes and by T5.01's
+  /// trigger (DR-221 §11.220.4).
+  ///
+  /// IN THE CONVERTED REGION SINCE `#973`, for [wiringStandard]'s reason:
+  /// `LinkField.crossover` writes it, so AC-013 makes it a public getter
+  /// and an `@internal` setter, and the undo stack is the only way in. It
+  /// was a plain field with no writer at all from M0 until then.
+  CrossoverKind? _crossover;
+  CrossoverKind? get crossover => _crossover;
+  @internal
+  set crossover(CrossoverKind? v) => _crossover = v;
+
   // ─────────────────────────────────────────────────────────────────
   // AND THE OTHER TWO OF AC-024'S THREE (M3-D/2).
   // ─────────────────────────────────────────────────────────────────
@@ -503,7 +522,6 @@ final class Link {
   // closed the asymmetry M3-J/3 left and recorded.
   Permille? slack;
   Uuid? pathwayId;
-  CrossoverKind? crossover;
 
   /// Home runs only (AC-019).
   StructureOrigin? structureOrigin;

@@ -980,6 +980,7 @@ final class ScheduleEntry {
   List<String> get derivedNotes => <String>[
     if (crossover == CrossoverKind.nullModem) 'NULL-MODEM',
     if (crossover == CrossoverKind.fiberPolarityAB) 'POLARITY A→B',
+    if (crossover == CrossoverKind.polarityReversed) 'POLARITY REVERSED',
     if (jacketColor.isException) 'PULLED OFF-CONVENTION',
     if (isClassUndetermined) kUndeterminedClassGroupTitle,
     // DR-008 §11.8.2's disagreement, ON THE ROW rather than only in a

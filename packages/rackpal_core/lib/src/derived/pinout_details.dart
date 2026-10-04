@@ -14,8 +14,10 @@
 //     only: no other variant has a declared standard.
 //  2. A CABLE WHOSE WIRING STANDARD DIFFERS FROM THE PROJECT'S (DR-180
 //     §11.179.4): `wiringStandardExceptions`, which was written for this.
-//  3. A NULL-MODEM CABLE (§11.220.4). Nothing in the UI sets one yet
-//     (`#973`); a file that carries one prints it.
+//  3. A NULL-MODEM CABLE (§11.220.4), set from the schematic's cable bar
+//     or the table's CROSSOVER column since `#973` (DR-231). And, beside
+//     it, A CABLE MARKED POLARITY REVERSED (DR-231 §11.230.3): a speaker
+//     pair wired + to - on purpose, listed so nobody corrects it.
 //  4. A TERMINAL BLOCK WIRED IN AN ORDER OTHER THAN ITS FAMILY'S STANDARD
 //     (§11.220.5). Two standards exist, Cresnet and RS-232; a family with
 //     none never counts, and an order nobody recorded never counts (G4).
@@ -109,6 +111,7 @@ final class PinoutDetails {
     required this.wiringExceptions,
     required this.nullModems,
     required this.terminalOrders,
+    this.polarityReversed = const <ScheduleEntry>[],
   });
 
   final List<IrVariantRow> irPorts;
@@ -116,6 +119,9 @@ final class PinoutDetails {
   /// Schedule rows whose standard differs from the project's.
   final List<ScheduleEntry> wiringExceptions;
   final List<ScheduleEntry> nullModems;
+
+  /// Cables marked [CrossoverKind.polarityReversed] (DR-231 §11.230.3).
+  final List<ScheduleEntry> polarityReversed;
   final List<TerminalOrderRow> terminalOrders;
 
   /// Whether nothing is non-standard, which is T5.01 absent.
@@ -123,6 +129,7 @@ final class PinoutDetails {
       irPorts.isEmpty &&
       wiringExceptions.isEmpty &&
       nullModems.isEmpty &&
+      polarityReversed.isEmpty &&
       terminalOrders.isEmpty;
 }
 
@@ -211,6 +218,12 @@ PinoutDetails pinoutDetailsOf(RackDocument doc, Schedule schedule) {
     nullModems: List.unmodifiable(
       schedule.rows
           .where((r) => r.crossover == CrossoverKind.nullModem)
+          .toList()
+        ..sort(byCable),
+    ),
+    polarityReversed: List.unmodifiable(
+      schedule.rows
+          .where((r) => r.crossover == CrossoverKind.polarityReversed)
           .toList()
         ..sort(byCable),
     ),
