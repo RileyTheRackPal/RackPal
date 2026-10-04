@@ -9,6 +9,11 @@
   PP-1's comb". Measuring found the cause (a label reservation on a sheet that draws no labels); rendering
   the hacked fix found what the reservation had been hiding (a pill now touching the device above) and
   what neither number showed (a landscape page two-thirds empty).
+* **Progress**: `#998` built: the drawn interconnect sheet placed by its own ink, islands side by side.
+  Whole House's Network sheet prints at 8 pt. DR-232 marked built; docs/12 §4.44.
+* **Note**: **A GUARD THAT PASSES THE MUTATION IS NOT A GUARD.** "Nothing touches" stayed green when
+  placement ignored the pills, because rounding slack kept them a hair apart. Assert the ruling's own
+  promise (the gap), not the weakest thing that would have caught the original sighting.
 
 ## 2026-10-04 (hundred-and-tenth entry)
 

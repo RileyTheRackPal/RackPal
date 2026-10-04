@@ -8,7 +8,7 @@ tags: [ruling, amendment, interconnect, layout, legibility, m6, dr-232, dr-225]
 timestamp: 2026-10-04T00:00:00Z
 ruling_id: DR-232
 canon_section: "11.231"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-04, building `#998`.
