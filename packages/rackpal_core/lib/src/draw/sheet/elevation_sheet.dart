@@ -183,6 +183,20 @@ String? envelopeNote(Rack rack, Face face, UnitSystem units) {
       '${v(swing)} SWING';
 }
 
+/// The note a rack with `groundBarPresent` carries on both elevations
+/// (AC-034/m21, DR-240 §11.239.3).
+///
+/// The fact and the act m21's liability argument is about, and no gauge,
+/// code section or jurisdiction: conductor sizing is RJ-010's v1.2 work.
+/// 288.5 pt of the 327 pt note column through the real Jost metrics, held
+/// by `elevation_ground_bar_test.dart` in rackpal_export.
+///
+/// AN UNTICKED BOX PRINTS NOTHING, and never "NO GROUND BAR": `false` is
+/// also the default every rack carries whether or not anybody looked, so
+/// such a line would print a default as though it were a finding.
+const String kGroundBarNote =
+    'RACK GROUND BAR PRESENT. BOND TO BUILDING GROUND PER LOCAL CODE.';
+
 /// CR-035's chip, for a rack whose `mirrorRearElevation` is off.
 ///
 /// A missing chip would be a silent ambiguity: the reader cannot tell a
@@ -451,8 +465,12 @@ ElevationSheet buildElevationSheet({
     kScaleAppliesNote,
     // DR-239 §11.238.4. Only when something is known.
     if (envelopeNote(rack, face, settings.displayUnits) case final note?) note,
-    // FIFTH AT MOST since DR-239: rear note, chip, scale, envelope, this.
-    // Only ever present when it has something to say.
+    // DR-240 §11.239.1: both faces, beside the envelope, so the two rack
+    // facts read together and the sheet's notice about itself stays last.
+    if (rack.groundBarPresent) kGroundBarNote,
+    // SIXTH AT MOST since DR-240, and the band holds six: rear note, chip,
+    // scale, envelope, ground bar, this. Only ever present when it has
+    // something to say.
     if (labels.sheetNote case final note?) note,
   ];
   final summary = rackLoadSummaryLines(profile, settings.displayUnits, face);

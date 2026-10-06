@@ -119,22 +119,24 @@ Len _mm(int mm) => Len(mm * 1000000);
 
 /// A 42 U closet rack with DR-239's envelope entered: a front door with
 /// both clearances, a rear door with only its swing space.
-Rack _closet({Len? width, bool frontDoor = true}) => Rack(
-  id: _rackId,
-  name: 'MASTER RACK',
-  designator: 'RK-1',
-  heightU: 42,
-  order: const FracIndex('a0'),
-  meta: testMeta(),
-  overallWidth: width ?? _mm(600),
-  overallDepth: _mm(1000),
-  overallHeight: _mm(2000),
-  hasFrontDoor: frontDoor,
-  frontRailClearance: _mm(75),
-  frontDoorClearance: _mm(600),
-  hasRearDoor: true,
-  rearDoorClearance: _mm(550),
-);
+Rack _closet({Len? width, bool frontDoor = true, bool groundBar = false}) =>
+    Rack(
+      id: _rackId,
+      name: 'MASTER RACK',
+      designator: 'RK-1',
+      heightU: 42,
+      order: const FracIndex('a0'),
+      meta: testMeta(),
+      overallWidth: width ?? _mm(600),
+      overallDepth: _mm(1000),
+      overallHeight: _mm(2000),
+      hasFrontDoor: frontDoor,
+      frontRailClearance: _mm(75),
+      frontDoorClearance: _mm(600),
+      hasRearDoor: true,
+      rearDoorClearance: _mm(550),
+      groundBarPresent: groundBar,
+    );
 
 final _metric = ProjectSettings(displayUnits: UnitSystem.metric);
 
@@ -415,6 +417,159 @@ void main() {
           'ENCLOSURE 23.6 W x 39.4 D x 78.7 H IN; FRONT DOOR 3.0 RAIL, '
           '23.6 SWING';
       expect(_envelopeLines(_build(rack: _closet())), [line]);
+    });
+  });
+
+  // DR-240 (`#1018`): m21's checkbox had a writer and no reader. Asserted
+  // VERBATIM for the same reason as the envelope: `_band` cuts with an
+  // ellipsis, and a contains() check passes on the cut line.
+  group('the elevation prints the ground bar note (DR-240)', () {
+    Rack grounded({bool bar = true}) => Rack(
+      id: _rackId,
+      name: 'MASTER RACK',
+      designator: 'RK-1',
+      heightU: 42,
+      order: const FracIndex('a0'),
+      meta: testMeta(),
+      groundBarPresent: bar,
+    );
+
+    Iterable<String> groundLines(ElevationSheet sheet) =>
+        _texts(sheet).where((t) => t.contains('GROUND BAR'));
+
+    test('A TICKED BOX PRINTS THE NOTE ON BOTH FACES, once each', () {
+      for (final role in [
+        SheetRole.rackElevationFront,
+        SheetRole.rackElevationRear,
+      ]) {
+        expect(
+          groundLines(_build(rack: grounded(), role: role)),
+          ['RACK GROUND BAR PRESENT. BOND TO BUILDING GROUND PER LOCAL CODE.'],
+          reason: '$role',
+        );
+      }
+    });
+
+    test('AN UNTICKED BOX PRINTS NOTHING, never "no ground bar"', () {
+      // `false` is also the default, so a negative line would print a
+      // default as though somebody had checked.
+      for (final role in [
+        SheetRole.rackElevationFront,
+        SheetRole.rackElevationRear,
+      ]) {
+        final texts = _texts(_build(rack: grounded(bar: false), role: role));
+        expect(texts.where((t) => t.contains('GROUND')), isEmpty);
+      }
+    });
+
+    test('it sits after the envelope and before the sheet notes itself', () {
+      final texts = _texts(
+        _build(rack: _closet(groundBar: true), settings: _metric),
+      );
+      final envelope = texts.indexWhere((t) => t.startsWith('ENCLOSURE'));
+      final bar = texts.indexOf(kGroundBarNote);
+      expect(envelope, isNonNegative);
+      expect(bar, envelope + 1);
+    });
+
+    test('THE FULLEST REAR SHEET IS SIX NOTES, and all six sit inside the '
+        'band', () {
+      // Every conditional note at once: a rear sheet (rear note, chip),
+      // the scale note, an envelope, the ground bar, and the unlabelled-
+      // blocks note. That last one needs a legal 60 U rack whose 40 U
+      // block's long name drives the fit down until a 1 U block cannot
+      // hold its designator (`scale_notice_test.dart` in rackpal_export).
+      final rack = Rack(
+        id: _rackId,
+        name: 'MASTER RACK',
+        designator: 'RK-1',
+        heightU: 60,
+        order: const FracIndex('a0'),
+        meta: testMeta(),
+        overallWidth: _mm(600),
+        overallDepth: _mm(1000),
+        overallHeight: _mm(2000),
+        groundBarPresent: true,
+      );
+      DeviceInstance device(String id, String template, int ru, String name) =>
+          DeviceInstance(
+            id: Uuid(id),
+            kind: DeviceKind.rackDevice,
+            templateRef: TemplateRef(
+              templateId: TemplateId(template),
+              version: 1,
+              contentHash: 'h',
+            ),
+            designator: id.toUpperCase(),
+            name: name,
+            placement: RailPlacement(
+              rackId: _rackId,
+              ruIndex: ru,
+              face: Face.rear,
+            ),
+            meta: testMeta(),
+          );
+      TemplateSnapshot snap(String id, int u) => TemplateSnapshot(
+        templateId: TemplateId(id),
+        version: 1,
+        contentHash: 'h',
+        body: TemplateBody(
+          manufacturer: 'ACME',
+          model: 'MDL',
+          displayName: 'Widget',
+          category: 'Video & Display',
+          frontU: u,
+          rearU: u,
+          side: OccupancySide.both,
+        ),
+        capturedAt: DateTime.utc(2026),
+      );
+      final sheet = _build(
+        rack: rack,
+        role: SheetRole.rackElevationRear,
+        settings: _metric,
+        devices: [
+          device('tall', 'BIG', 1, 'W' * 400),
+          device('sw-1', 'ONEU', 55, 'x'),
+        ],
+        templates: {'BIG@1': snap('BIG', 40), 'ONEU@1': snap('ONEU', 1)},
+      );
+      expect(
+        sheet.labels.allLabelled,
+        isFalse,
+        reason: 'the fixture no longer reaches the unlabelled-blocks note',
+      );
+
+      final drawing = SheetLayout.resolve(
+        geometry: const SheetGeometry(SheetSize.ansiBPortrait, zoned: true),
+        revisionRowCount: 1,
+      ).drawingArea;
+      final area = elevationAreaOf(drawing);
+      final notes =
+          sheet.scene.ops
+              .whereType<OpText>()
+              .where(
+                (o) =>
+                    o.style.anchor == TextAnchor.topLeft &&
+                    o.at.x == drawing.left &&
+                    o.at.y >= drawing.top &&
+                    o.at.y < area.top,
+              )
+              .toList()
+            ..sort((a, b) => a.at.y.compareTo(b.at.y));
+      expect(notes.map((o) => o.text), [
+        kRearDetailNote,
+        kMirroredChip,
+        kScaleAppliesNote,
+        'ENCLOSURE 600 W x 1000 D x 2000 H MM',
+        kGroundBarNote,
+        sheet.labels.sheetNote,
+      ]);
+      expect(
+        notes.last.at.y + kElevationNotePt,
+        lessThanOrEqualTo(area.top),
+        reason: 'the sixth note prints over the top of the elevation',
+      );
     });
   });
 

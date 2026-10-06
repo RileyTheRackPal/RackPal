@@ -1279,7 +1279,11 @@ $SuiteFloors = @{
     # sheet_test.dart (each face prints its own door, an unknown as a dash;
     # nothing entered prints no line and no door the size alone; imperial
     # prints inches).
-    'rackpal_core'   = 5641
+    # 5645 at `#1018` (GB-2, DR-240 §11.239): +4 in sheet/elevation_sheet_
+    # test.dart (ticked prints on both faces; unticked prints nothing; the
+    # note follows the envelope; the fullest rear sheet is six notes, all
+    # inside the band).
+    'rackpal_core'   = 5645
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1397,7 +1401,10 @@ $SuiteFloors = @{
     # 306 at `#1014` (ENV-4, DR-239 §11.238.4): +4 in elevation_envelope_
     # fit_test.dart, the worst-case envelope line printed whole through the
     # real Jost metrics on both faces in both unit systems.
-    'rackpal_export' = 306
+    # 308 at `#1018` (GB-2, DR-240 §11.239): +2 in elevation_ground_bar_
+    # test.dart, small_office's ticked RK-1 and unticked RK-2 read off the
+    # emitted PDF, and the six-note rear sheet whole through the real font.
+    'rackpal_export' = 308
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
