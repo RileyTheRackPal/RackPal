@@ -2118,6 +2118,43 @@ RCA control passes; with the screw terminal's list emptied, the known-now test f
 
 ---
 
+### 4.49 A rack's envelope is typed in the inspector and printed on its elevation · 2026-10-06 · `#923`, `#1011` to `#1015` · `DR-239`, `DR-188` · no version move
+
+DR-188 §11.187.5 measured that `Rack` had declared its whole physical envelope for months and that nothing
+could set it: the fourth instance of the `Placement.locked` shape. The user settled four questions, and the
+one about clearance came back with two answers: **rail clearance** is the depth inside the door and **door
+clearance** the swing space in front of it, so the model gained the field it was missing.
+
+**Built.** ENV-1 at `1b144999`: `frontRailClearance` and `rearRailClearance` beside the door (swing)
+clearances, absent read as unknown. ENV-2 at `7d967689`: ten `RackField` rows through the one property
+command, each field converted to an `@internal` setter. ENV-3 at `adaceec4`: the Enclosure section below
+Form factor, with a clearance disabled and its value kept while its door is unticked; own weight became a
+field, and the length and mass refusals stopped naming "Usable depth" for every field. ENV-4 at `7c84d8c9`:
+one elevation line, `ENCLOSURE 600 W x 1000 D x 2000 H MM; FRONT DOOR 75 RAIL, 600 SWING`, each face with
+its own door.
+
+**Refused by a measurement, and corrected.** The ruling put own weight on that line. Through the real Jost
+metrics the note column is 327 pt on ANSI B, and a 1200 x 1400 x 2400 mm cabinet at 300 kg measured 331.5:
+the sheet's own fitter would have cut it with an ellipsis. The core sheet test uses a fake measurer that
+passes any length, so it could never have said so; `elevation_envelope_fit_test.dart` now builds the real
+sheet through the real font. §11.238.4 was corrected before it was built, and so was its "nothing known"
+sentence: every starter ticks a door and enters no size, so a ticked door alone prints nothing.
+
+**Two misses the gate caught, both mine.** ENV-2's core floor summed the cases it wrote and missed 20 that
+`g4_wire_test` generates, two per `RackField` row; the floor is the gate's count, re-measured at ENV-3. And
+ENV-3 was checked by running its new cases by name: the whole package found the inspector test's `_reveal`
+scrolling one way only, which the taller panel made overshoot. It now looks both ways.
+
+**Found on the way.** docs/04 §4 promises that **Ground bar present** prints a note on the elevation, and
+nothing reads it (`#1016`, filed). It is the inverse of the shape this task closed: a writer with no reader.
+
+**Evidence.** `rack_envelope_codec_test` (+3), `rack_envelope_writer_test` (+2, the DONE clause's save and
+reload), the inspector's Enclosure cases (+3 net), `elevation_sheet_test` (+3) and
+`elevation_envelope_fit_test` (+4), each mutation-tested, and 20 generated `g4_wire_test` cases. Floors:
+core 5613 to 5641, ui 2134 to 2137, export 302 to 306.
+
+---
+
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`

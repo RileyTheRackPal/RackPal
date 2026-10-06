@@ -9,7 +9,7 @@ tags: [ruling, rack, envelope, inspector, elevation, clearance, dr-239, dr-188]
 timestamp: 2026-10-06T00:00:00Z
 ruling_id: DR-239
 canon_section: "11.238"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-06 for `#923`, the writer
@@ -29,3 +29,5 @@ See [trade knowledge beats workflow reasoning](/practices/trade-knowledge-beats-
 the question offered "depth inside" or "swing space", and the answer was both, with their trade names.
 
 Canon §11.238 holds the full text.
+
+Built at `1b144999`, `7d967689`, `adaceec4` and `7c84d8c9`; docs/12 §4.49 holds the evidence.

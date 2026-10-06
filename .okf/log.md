@@ -1,5 +1,12 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-nineteenth entry)
+
+* **Progress**: `#923` built in four chapters (`#1011` to `#1014`); DR-239 marked built. docs/12 §4.49.
+* **Note**: **A FAKE MEASURER PASSES ANY LENGTH.** The ruling's envelope line, own weight included, was
+  4.5 pt too wide for its column on paper, and every core test would have stayed green. A note that a
+  person will read off a printed sheet needs one test through the real font.
+
 ## 2026-10-06 (hundred-and-eighteenth entry)
 
 * **Progress**: PR 206 merged at `586fbd48`; `#1010` and `#1002` closed. `#923` taken, decomposed into
