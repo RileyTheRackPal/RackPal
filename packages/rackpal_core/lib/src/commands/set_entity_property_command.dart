@@ -449,7 +449,8 @@ abstract final class StructureBodyField {
   ];
 }
 
-/// Every editable [Rack] property: the twelve docs/04 §4 makes editable.
+/// Every editable [Rack] property: docs/04 §4's, and since `#1012` the
+/// envelope DR-239 §11.238.1 gives a writer.
 ///
 /// THE ORIGINAL ACCESSOR TABLE. It shipped in M1 with its own command
 /// class, `SetEntityPropertyCommand`, whose file argued this whole shape:
@@ -577,6 +578,92 @@ abstract final class RackField {
     touches: EpochMask.rack,
   );
 
+  // ── THE ENVELOPE (DR-239 §11.238.1, `#1012`) ──────────────────────────
+  //
+  // A field with no writer is a rule nobody is following (§11.185.0): these
+  // serialized for months with nothing able to set them. `rack` like the
+  // rest of the physical fields, since the Rack view's inspector shows them
+  // and the elevation prints them.
+  static final overallDepth = EntityField<Rack, Len?>(
+    access: EntityAccess.rack,
+    key: 'overallDepth',
+    get: (r) => r.overallDepth,
+    set: (r, v) => r.overallDepth = v,
+    touches: EpochMask.rack,
+  );
+
+  static final overallWidth = EntityField<Rack, Len?>(
+    access: EntityAccess.rack,
+    key: 'overallWidth',
+    get: (r) => r.overallWidth,
+    set: (r, v) => r.overallWidth = v,
+    touches: EpochMask.rack,
+  );
+
+  static final overallHeight = EntityField<Rack, Len?>(
+    access: EntityAccess.rack,
+    key: 'overallHeight',
+    get: (r) => r.overallHeight,
+    set: (r, v) => r.overallHeight = v,
+    touches: EpochMask.rack,
+  );
+
+  static final ownWeight = EntityField<Rack, Mass?>(
+    access: EntityAccess.rack,
+    key: 'ownWeight',
+    get: (r) => r.ownWeight,
+    set: (r, v) => r.ownWeight = v,
+    touches: EpochMask.rack,
+  );
+
+  static final hasFrontDoor = EntityField<Rack, bool>(
+    access: EntityAccess.rack,
+    key: 'hasFrontDoor',
+    get: (r) => r.hasFrontDoor,
+    set: (r, v) => r.hasFrontDoor = v,
+    touches: EpochMask.rack,
+  );
+
+  static final hasRearDoor = EntityField<Rack, bool>(
+    access: EntityAccess.rack,
+    key: 'hasRearDoor',
+    get: (r) => r.hasRearDoor,
+    set: (r, v) => r.hasRearDoor = v,
+    touches: EpochMask.rack,
+  );
+
+  static final frontDoorClearance = EntityField<Rack, Len?>(
+    access: EntityAccess.rack,
+    key: 'frontDoorClearance',
+    get: (r) => r.frontDoorClearance,
+    set: (r, v) => r.frontDoorClearance = v,
+    touches: EpochMask.rack,
+  );
+
+  static final rearDoorClearance = EntityField<Rack, Len?>(
+    access: EntityAccess.rack,
+    key: 'rearDoorClearance',
+    get: (r) => r.rearDoorClearance,
+    set: (r, v) => r.rearDoorClearance = v,
+    touches: EpochMask.rack,
+  );
+
+  static final frontRailClearance = EntityField<Rack, Len?>(
+    access: EntityAccess.rack,
+    key: 'frontRailClearance',
+    get: (r) => r.frontRailClearance,
+    set: (r, v) => r.frontRailClearance = v,
+    touches: EpochMask.rack,
+  );
+
+  static final rearRailClearance = EntityField<Rack, Len?>(
+    access: EntityAccess.rack,
+    key: 'rearRailClearance',
+    get: (r) => r.rearRailClearance,
+    set: (r, v) => r.rearRailClearance = v,
+    touches: EpochMask.rack,
+  );
+
   /// See [OutletField.all].
   static final List<EntityField<Rack, Object?>> all = [
     designator,
@@ -591,6 +678,16 @@ abstract final class RackField {
     isSwingFrame,
     hingeSide,
     groundBarPresent,
+    overallDepth,
+    overallWidth,
+    overallHeight,
+    ownWeight,
+    hasFrontDoor,
+    hasRearDoor,
+    frontDoorClearance,
+    rearDoorClearance,
+    frontRailClearance,
+    rearRailClearance,
   ];
 }
 

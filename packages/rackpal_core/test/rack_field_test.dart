@@ -70,7 +70,8 @@ void main() {
       expect(keys.toSet(), hasLength(keys.length));
     });
 
-    test('covers the twelve fields §4 makes editable', () {
+    // DR-239's envelope joined docs/04 §4's twelve at `#1012`.
+    test("covers §4's fields and DR-239's envelope", () {
       expect(RackField.all.map((f) => f.key).toSet(), {
         'designator',
         'locationId',
@@ -84,6 +85,16 @@ void main() {
         'isSwingFrame',
         'hingeSide',
         'groundBarPresent',
+        'overallDepth',
+        'overallWidth',
+        'overallHeight',
+        'ownWeight',
+        'hasFrontDoor',
+        'hasRearDoor',
+        'frontDoorClearance',
+        'rearDoorClearance',
+        'frontRailClearance',
+        'rearRailClearance',
       });
     });
 
@@ -105,6 +116,16 @@ void main() {
         RackField.isSwingFrame,
         RackField.hingeSide,
         RackField.groundBarPresent,
+        RackField.overallDepth,
+        RackField.overallWidth,
+        RackField.overallHeight,
+        RackField.ownWeight,
+        RackField.hasFrontDoor,
+        RackField.hasRearDoor,
+        RackField.frontDoorClearance,
+        RackField.rearDoorClearance,
+        RackField.frontRailClearance,
+        RackField.rearRailClearance,
       ]) {
         expect(f.touches.has(EpochMask.rack), isTrue, reason: f.key);
       }
@@ -164,6 +185,16 @@ void main() {
       check(RackField.isSwingFrame, true, false);
       check(RackField.hingeSide, HingeSide.right, null);
       check(RackField.groundBarPresent, true, false);
+      check(RackField.overallDepth, const Len(1000000000), null);
+      check(RackField.overallWidth, const Len(600000000), null);
+      check(RackField.overallHeight, const Len(2000000000), null);
+      check(RackField.ownWeight, const Mass(68000000000), null);
+      check(RackField.hasFrontDoor, true, false);
+      check(RackField.hasRearDoor, true, false);
+      check(RackField.frontDoorClearance, const Len(600000000), null);
+      check(RackField.rearDoorClearance, const Len(550000000), null);
+      check(RackField.frontRailClearance, const Len(75000000), null);
+      check(RackField.rearRailClearance, const Len(120000000), null);
     });
   });
 

@@ -1267,7 +1267,11 @@ $SuiteFloors = @{
     # envelope_codec_test.dart (the envelope round-trips byte for byte;
     # rail and door clearance are two keys with their own numbers; a file
     # from before DR-239 opens with its rail clearances unknown).
-    'rackpal_core'   = 5616
+    # 5618 at `#1012` (ENV-2, DR-239 §11.238.1): +2 in commands/rack_
+    # envelope_writer_test.dart (every envelope field entered through the
+    # command survives a save and a reload; undo of a clearance lands the
+    # saved bytes exactly).
+    'rackpal_core'   = 5618
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
