@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-fifteenth entry)
+
+* **Progress**: BRK-A built on `brk-a`: `#1004` (`2d7bc795`), `#1005` (`c3befee4`), `#1006` (`d0435993`), `#1007`
+  (`dee64537`), `#1008` (`ea591673`). DR-236 marked built; docs/12 §4.47. `#1010` filed (CON-001 on every
+  amplifier-to-in-wall-speaker run).
+* **Note**: **A PAIRED-INDEX LOOP IS A TWO-ENDS ASSUMPTION IN DISGUISE.** The pill loop read `ends[i]` beside
+  `pillAt[i]`, correct for every two-ended cable ever drawn and wrong for the first that branched. Census the
+  loops that zip two lists, not only the reads of `.first`.
+* **Note**: **A VALUE THAT IS NULL ON BOTH SIDES MAKES EQUALITY VACUOUS.** "The footage is the same" passed
+  with no footage at all; asserting the value itself caught it. Assert what the number is, then that it is
+  the same.
+
 ## 2026-10-04 (hundred-and-fourteenth entry)
 
 * **Progress**: `adapters-1001` merged at `50dc9576` (PR 204); `#1001` closed. BRK-A opened on branch `brk-a`:

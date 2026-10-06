@@ -24061,6 +24061,25 @@ before.
 chapter is built, with the user. Where along the run a tap sits (`Breakout.atLengthFraction`) stays unknown
 unless a person states it (G4); nothing here invents one.
 
+**11.235.6 DECIDED BUILDING IT: TRUNK AND BRANCH**, the user's choice for §11.235.5, against a wire per pair
+(which reads as two cables, the shape RJ-016 argued against) and against keeping such a cable as labels in
+drawn mode. The first conductor's route is the trunk, so every two-device cable draws as it did; a further
+pair on a device the trunk joins is drawn into the trunk's own escape point there; a further device is a
+branch from a filled junction dot at the trunk's midpoint, with its own tag pill. An adapter's bowtie
+moves to the trunk's quarter point when a junction is drawn. T0.01 keys the dot when a printed wire
+branches (DR-208).
+
+**11.235.7 MEASURED BUILDING IT: THE READERS WERE NOT THE SIX NAMED ABOVE.** The census §11.235.4 promised
+found `link_lookup.dart` already walking every conductor; the ruling named it from the shape of the
+problem. Of 29 first-conductor sites, four had to read every conductor (the classifier, net labels, the
+schematic layout and the cable bar's sentence), three were sound on the first conductor for a reason
+their comments did not give (the first conductor is the cable's first far end, so `roomOfLink`,
+`plan_length` and `room_estimate`'s datum walk stand), one is the schedule row's (BRK-A/4), and the rest
+are home-run code, one conductor by shape.
+
+**11.235.8 AN IMPLEMENTER'S DEFAULT, STATED TO THE USER:** an appended set must carry the cable's own
+family. Both of this ruling's cases are one family, and a cable with two services is AC-021's machinery.
+
 **Scope.** **v1 grows**: the authoring of a cable that carries several sets to several devices, and the
 readers that make such a cable print right. A new Epic under the v1 Saga holds it; `#1000` moves there.
 

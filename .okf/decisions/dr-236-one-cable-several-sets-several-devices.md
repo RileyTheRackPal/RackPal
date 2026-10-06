@@ -9,7 +9,7 @@ tags: [ruling, amendment, breakout, conductor, link, cr-014, ac-053, dr-236, brk
 timestamp: 2026-10-04T00:00:00Z
 ruling_id: DR-236
 canon_section: "11.235"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-04 for `#1000`. Epic `#1003` (BRK-A) under the v1 Saga holds it.
@@ -22,8 +22,10 @@ Settled by the user on 2026-10-04 for `#1000`. Epic `#1003` (BRK-A) under the v1
   reaches and appends, one undo step, tier 1 and DR-234's tier 2 as for any set.
 - **One row, every far end named** on the Pull Sheet; a Termination Schedule line per end.
 - **Every reader reads every conductor**, as CR-014 always required.
-- **Left for its chapter**: how a drawn wire to three devices is drawn; where along the run a tap sits stays
-  unknown unless stated ([G4](/invariants/g4-unknowns-are-counted.md)).
+- **Trunk and branch, decided building it** (§11.235.6): the first conductor's route, a branch from a
+  junction dot to each further device, the further pairs at a trunk device drawn into it. Where along the
+  run a tap sits stays unknown unless stated ([G4](/invariants/g4-unknowns-are-counted.md)).
+- **The census corrected the ruling** (§11.235.7): `link_lookup` was never one of the readers.
 
 # What decided the scope
 
