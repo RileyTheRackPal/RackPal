@@ -1,5 +1,15 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-sixteenth entry)
+
+* **Progress**: `brk-a` merged at `8496b4fd` (PR 205); `#1000` and `#1004` to `#1009` closed, Epic `#1003` left
+  open for a person-driven run. `#1010` and `#1002` ruled; branch `cords-and-posts`.
+* **Creation**: [DR-237](/decisions/dr-237-speaker-wire-is-bare-wire.md) and
+  [DR-238](/decisions/dr-238-captive-cord-is-part-of-its-device.md).
+* **Note**: **A "MATES WITH" LIST WRITTEN FOR PLUGS IS WRONG FOR BARE WIRE.** The binding post was modelled as a
+  socket for banana plugs; in the trade it is a clamp for bare wire first. The user's one sentence settled
+  what the census could only measure.
+
 ## 2026-10-06 (hundred-and-fifteenth entry)
 
 * **Progress**: BRK-A built on `brk-a`: `#1004` (`2d7bc795`), `#1005` (`c3befee4`), `#1006` (`d0435993`), `#1007`

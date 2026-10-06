@@ -24085,6 +24085,60 @@ readers that make such a cable print right. A new Epic under the v1 Saga holds i
 
 ---
 
+### 11.236 DR-237 · Speaker wire is bare wire: a binding post or a 2-pole Euroblock mates with the bare-wire terminations
+
+**Settled by the user on 2026-10-06, for `#1010`.** `CON-001` sprang back on every amplifier-to-in-wall-speaker
+run: the seeded `conn.binding_post` mated with `conn.banana` alone, and `CON-001` reads the source side's
+`matesWith`. **The user's trade fact:** *bare wire is typical for most speakers*, on spring-loaded terminals;
+combination binding-post and banana sockets appear mostly on floorstanding, bookshelf and satellite
+speakers, not in-wall or in-ceiling ones.
+
+**Measured:** four connectors carry speaker-level ports in the seed. `conn.binding_post` (A02, A04) mated
+with banana only, so it fired even against a bookshelf's own binding post; `conn.euroblock_2` (the
+commercial A01, A05) mated with itself only, so it fired the same way; `conn.screw_terminal` (F04, F05,
+F14) and `conn.unterminated` (F07, F08, F20) mate with nothing, which `CON-001` reads as unknown and skips
+(G4).
+
+**11.236.1 RULED: THE TWO SOURCE-SIDE TERMINATIONS MATE WITH EVERY BARE-WIRE ONE.** `conn.binding_post` mates
+with `conn.banana`, `conn.binding_post`, `conn.euroblock_2`, `conn.screw_terminal` and `conn.unterminated`;
+`conn.euroblock_2` with itself and the same three. A genuine mismatch, an RCA into a binding post, still
+fires.
+
+**11.236.2 THE SINK-SIDE ONES KEEP THEIR EMPTY LISTS**, an implementer's default stated to the user. Giving
+`conn.screw_terminal` and `conn.unterminated` a list would switch `CON-001` ON for them wherever they are a
+source, a class of chip nobody asked for; reading the source side is enough to clear every speaker run.
+
+**11.236.3 WIDER THAN THE SENTENCE, AND SAID SO.** The user spoke of binding posts; the 2-pole Euroblock is
+included because the census found the identical false positive on the commercial amplifiers. It is the
+implementer's reading of the trade fact, recorded as such, and narrows to binding posts alone on the
+user's word.
+
+**Scope.** No scope moves: a catalogue correction.
+
+---
+
+### 11.237 DR-238 · A captive cord is part of its device, and T6.30 does not list it
+
+**Settled by the user on 2026-10-06, for `#1002`:** *"remove captive cords on T6.30"*. T6.30's jumpers-and-power-
+cords table and its footage note counted every power cord as a piece to buy, and a captive cord (an
+amplifier's own attached lead) is bought by nobody.
+
+**11.237.1 RULED: CAPTIVE CORDS LEAVE T6.30's TABLE AND ITS "BOUGHT BY THE PIECE" COUNT TOGETHER**, which are
+one count read twice. They stay power cords: off the Pull Sheet (DR-233), on the outlet map, and in the
+Schedule's hidden-cords count.
+
+**11.237.2 HOW ONE IS KNOWN, DERIVED AND NOT AUTHORED**, the implementer's choice from `#1002`'s census and
+stated to the user: a cord landing on an INLET-role `power.ac_branch` port is the device's own cord. All 13
+captive inlets in the seed are exactly that, on a NEMA plug, and every detachable AC inlet is
+`power.ac_iec`; a plug on an inlet is the end of the device's own cord. No template field is added.
+
+**11.237.3 COUNTED, NOT HIDDEN (G4).** The footage note says how many captive cords it set aside, so the two
+counts on one sheet still reconcile with the Schedule's.
+
+**Scope.** No scope moves: a v1 table made right.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
