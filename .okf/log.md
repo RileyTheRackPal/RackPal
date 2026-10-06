@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-twentieth entry)
+
+* **Progress**: PR 207 merged at `dd7a8f17`. `#1016` taken, decomposed into `#1017` to `#1019`; branch
+  `ground-bar-1016`.
+* **Creation**: [DR-240](/decisions/dr-240-ground-bar-note-prints.md).
+* **Note**: **A FULL BAND MAKES A ONE-LINE FEATURE A LAYOUT RULING.** The note was trivial; where it goes
+  was not, because the band's height is what the drawing scale is chosen against. Priced before it was
+  offered: one rack height of sixty changes ratio.
+
 ## 2026-10-06 (hundred-and-nineteenth entry)
 
 * **Progress**: `#923` built in four chapters (`#1011` to `#1014`); DR-239 marked built. docs/12 §4.49.
