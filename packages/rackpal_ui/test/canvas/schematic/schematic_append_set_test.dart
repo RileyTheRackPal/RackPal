@@ -6,11 +6,12 @@
 // catalogue's A04 and two F05s, W001 already run from the A04's left pair to
 // the first speaker, and the gesture continuing it to the second.
 //
-// THE DROP SPRINGS BACK, and that is the catalogue, not this feature: the
-// A04's binding posts declare they mate with banana plugs only and the F05
-// takes screw terminals, so `CON-001` fires on every amplifier-to-in-wall
-// run. The test asserts the chip and goes through `[ Connect anyway ]`,
-// which DR-234 §11.233.3 makes the same append.
+// THE DROP LANDS WITH NO CHIP SINCE DR-237 (`#1010`). It used to spring
+// back on `CON-001`, because the A04's binding posts were listed as mating
+// with banana plugs alone and the F05 takes screw terminals; this test went
+// through `[ Connect anyway ]` to reach the append. Speaker wire is bare
+// wire, so the drop now appends directly, which is the gesture as a person
+// meets it.
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -213,11 +214,8 @@ void main() {
       pinAt(tester, amp, 'spk.R.pos'),
       pinAt(tester, spk2, 'spk.pos'),
     );
-    // The catalogue's CON-001 (see the file header), and nothing written.
-    expect(find.byType(SpringBackChipCard), findsOneWidget);
-    expect(doc.links[w001]!.conductors, hasLength(2));
-    await tester.tap(find.text(kSpringBackConnectAnyway));
-    await tester.pumpAndSettle();
+    // No chip since DR-237 (see the file header): speaker wire is bare wire.
+    expect(find.byType(SpringBackChipCard), findsNothing);
 
     expect(doc.links, hasLength(1), reason: 'no second cable');
     final w = doc.links[w001]!;

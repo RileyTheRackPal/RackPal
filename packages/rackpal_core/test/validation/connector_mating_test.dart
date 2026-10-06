@@ -29,13 +29,11 @@ import 'package:test/test.dart';
 /// termination or mounting systems rather than mating pairs. One is a
 /// receptacle this catalogue does not seed, and one is a bus terminal.
 const Map<String, String> _unseeded = <String, String>{
-  'conn.unterminated': 'a cut end has no connector to mate',
   'conn.hardwired': 'a hardwired lead has no connector to mate',
   'conn.ground_lug': 'a lug takes a ring terminal or bare wire, not a mate',
   'conn.punchdown_110': 'an IDC termination, not a mating pair',
   'conn.keystone': 'a mounting standard; the INSERT mates, not the frame',
   'conn.sfp_cage': 'takes a transceiver module, which this model has not got',
-  'conn.screw_terminal': 'wire under a screw',
   'conn.knx_terminal': 'a bus terminal',
   'conn.nema_l5_30p': 'its receptacle, NEMA L5-30R, is not seeded',
 };
@@ -159,8 +157,11 @@ void main() {
   });
 
   group('what is deliberately unknown', () {
-    test('exactly nine connectors have no mating set, and each is named '
-        'with its reason', () {
+    // `conn.screw_terminal` and `conn.unterminated` left this table at
+    // `#1010` (DR-237 §11.236.2): bare wire mates with every bare-wire
+    // termination, and symmetry made them list it back.
+    test('the connectors with no mating set are exactly the ones named '
+        'with a reason', () {
       final empty = <String>[
         for (final def in connectors.values)
           if (def.matesWith.isEmpty) def.id.v,

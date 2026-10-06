@@ -595,6 +595,7 @@ final class ScheduleEntry {
     this.rackTerminationType,
     this.adapterNotes = const <String>[],
     this.furtherPairs = const <ScheduleEndPair>[],
+    this.isCaptiveCord = false,
   });
 
   final Uuid linkId;
@@ -725,6 +726,11 @@ final class ScheduleEntry {
   /// ONE ROW STILL, so the view's footage and counts read the cable once,
   /// and the Termination Schedule prints a line per pair under it.
   final List<ScheduleEndPair> furtherPairs;
+
+  /// Whether this cable is a device's own attached lead (DR-238): still a
+  /// power cord everywhere, and left out of what T6.30 says is bought by
+  /// the piece.
+  final bool isCaptiveCord;
 
   /// " + SPK-2": each further pair's NEW end, on the side of the row the
   /// pair does NOT share (§11.235.3, one row naming every far end).
@@ -1405,6 +1411,7 @@ ScheduleEntry _row(RackDocument doc, Link link) {
     wiringStandard: effectiveWiringStandard(doc, link),
     rackTerminationType: link.structureOrigin?.terminationRack,
     furtherPairs: _furtherPairsOf(doc, link),
+    isCaptiveCord: linkIsCaptiveCord(doc, link),
     adapterNotes: List.unmodifiable(<String>[
       for (final a in link.inlineAdapters) _adapterNote(doc, a),
     ]),

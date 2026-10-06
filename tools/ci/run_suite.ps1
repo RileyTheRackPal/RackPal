@@ -1254,7 +1254,16 @@ $SuiteFloors = @{
     # joiner and branch with one dot and three pills; the branch's pill in
     # SPK-2's ink; a bowtie never on the junction; the legend's dot row
     # absent and present).
-    'rackpal_core'   = 5603
+    # 5609 at `#1010` (DR-237 §11.236): +6 in derived/speaker_bare_wire_
+    # test.dart (an A04's binding posts and an A01's 2-pole Euroblock into
+    # an F05 with no CON-001; a binding post into a bookshelf's post; the
+    # same run dragged from the speaker's end; a screw terminal onto an
+    # RCA jack firing now it is known; an RCA sink still firing).
+    # 5613 at `#1002` (DR-238 §11.237): +4 in derived/captive_cord_test.dart
+    # (an A02's own lead out of T6.30 beside an A03's detachable cord; both
+    # still power cords; the footage note agreeing with the table and
+    # naming the captive cord; a captive lead to a wall receptacle).
+    'rackpal_core'   = 5613
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
