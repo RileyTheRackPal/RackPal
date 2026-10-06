@@ -1244,7 +1244,12 @@ $SuiteFloors = @{
     # byte-identical with the ports it made; a device the cable does not
     # reach; another family; tier 1 on a full speaker; a home run; a
     # refused plan writing nothing) and +1 epoch-mask case.
-    'rackpal_core'   = 5591
+    # 5597 at `#1007` (BRK-A/4, DR-236 §11.235.3): +6 in sheet/schedule_
+    # further_ends_test.dart (an ordinary cable unchanged; the 16/4 one row
+    # naming SPK-2 on the side it does not share; its footage once; the
+    # Termination Schedule's second line under W012 with no length; the
+    # Pull Sheet's one line; speakers in the room joining FROM).
+    'rackpal_core'   = 5597
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
