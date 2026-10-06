@@ -108,8 +108,13 @@ String _excluded(CableFootage f) {
     if (f.excludedPowerCords > 0)
       n(f.excludedPowerCords, 'power cord', 'power cords'),
   ];
+  final captive = f.excludedCaptiveCords;
+  final whose = captive == 1 ? 'its device' : 'their devices';
   return <String>[
     if (pieces.isNotEmpty) '${pieces.join(' and ')}, bought by the piece',
+    // DR-238: set aside and said, so the counts on one sheet reconcile.
+    if (captive > 0)
+      '${n(captive, 'captive cord', 'captive cords')}, part of $whose',
     if (f.excludedInternal > 0)
       n(f.excludedInternal, 'internal link', 'internal links'),
     if (f.excludedUndeterminedClass > 0)

@@ -178,6 +178,7 @@ final class CableFootage {
     required this.excludedPowerCords,
     required this.excludedInternal,
     required this.excludedUndeterminedClass,
+    this.excludedCaptiveCords = 0,
   });
 
   /// Ordered by media display name, then by id — a TOTAL order with no
@@ -195,6 +196,11 @@ final class CableFootage {
   final int excludedPowerCords;
   final int excludedInternal;
 
+  /// Captive cords (DR-238): a device's own lead, which nobody buys, so
+  /// not among [excludedPowerCords]'s "bought by the piece". Counted here
+  /// rather than dropped, so the sheet still reconciles (G4).
+  final int excludedCaptiveCords;
+
   /// Rows whose class nobody has established. See the file header: this
   /// is the exclusion that most looks like an omission and is most
   /// deliberate.
@@ -203,6 +209,7 @@ final class CableFootage {
   int get excludedTotal =>
       excludedJumpers +
       excludedPowerCords +
+      excludedCaptiveCords +
       excludedInternal +
       excludedUndeterminedClass;
 
@@ -248,6 +255,7 @@ CableFootage cableFootageOf(Schedule schedule, {required RackDocument doc}) {
 
   var jumpers = 0;
   var powerCords = 0;
+  var captive = 0;
   var internal = 0;
   var undetermined = 0;
 
@@ -265,7 +273,16 @@ CableFootage cableFootageOf(Schedule schedule, {required RackDocument doc}) {
       undetermined++;
       continue;
     }
-    switch (row.linkClass!) {
+    final cls = row.linkClass!;
+    // DR-238: a device's own lead is a cord nobody buys, so it is counted
+    // apart from the jumpers and cords bought by the piece. The jumper
+    // table reads the same flag, so the two still agree.
+    if (row.isCaptiveCord &&
+        (cls == LinkClass.jumper || cls == LinkClass.powerCord)) {
+      captive++;
+      continue;
+    }
+    switch (cls) {
       case LinkClass.jumper:
         jumpers++;
         continue;
@@ -323,6 +340,7 @@ CableFootage cableFootageOf(Schedule schedule, {required RackDocument doc}) {
     wasteFactor: waste,
     excludedJumpers: jumpers,
     excludedPowerCords: powerCords,
+    excludedCaptiveCords: captive,
     excludedInternal: internal,
     excludedUndeterminedClass: undetermined,
   );

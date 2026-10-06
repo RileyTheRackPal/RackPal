@@ -1259,7 +1259,11 @@ $SuiteFloors = @{
     # an F05 with no CON-001; a binding post into a bookshelf's post; the
     # same run dragged from the speaker's end; a screw terminal onto an
     # RCA jack firing now it is known; an RCA sink still firing).
-    'rackpal_core'   = 5609
+    # 5613 at `#1002` (DR-238 §11.237): +4 in derived/captive_cord_test.dart
+    # (an A02's own lead out of T6.30 beside an A03's detachable cord; both
+    # still power cords; the footage note agreeing with the table and
+    # naming the captive cord; a captive lead to a wall receptacle).
+    'rackpal_core'   = 5613
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

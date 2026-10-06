@@ -102,6 +102,9 @@ JumperRollup jumperRollupOf(Schedule schedule) {
         row.linkClass != LinkClass.powerCord) {
       continue;
     }
+    // DR-238: a captive cord is part of its device, and T6.30 does not
+    // list it. `cableFootageOf` counts it apart on the same flag.
+    if (row.isCaptiveCord) continue;
     final colourId = row.jacketColor.asBuiltColorId;
     final colour = row.jacketColor.asBuilt;
     if (colourId != null && colour != null) colours[colourId.v] = colour;

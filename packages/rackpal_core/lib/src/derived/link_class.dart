@@ -242,6 +242,39 @@ bool _isCord(RackDocument doc, Link link) {
   return ports > 0;
 }
 
+/// Whether [link] is a CAPTIVE cord: one with an end on an inlet-role
+/// `power.ac_branch` port, which is the device's own attached lead (DR-238
+/// §11.237.2).
+///
+/// DERIVED, NOT AUTHORED. A plug on an INLET is the end of the device's
+/// own cord: all 13 captive inlets in the seed are `power.ac_branch` on a
+/// NEMA plug, and every detachable AC inlet is `power.ac_iec`. A captive
+/// cord is still a power cord (DR-233); only T6.30, which lists what is
+/// bought by the piece, leaves it out.
+bool linkIsCaptiveCord(RackDocument doc, Link link) {
+  for (final conductor in link.conductors) {
+    for (final end in [conductor.from, conductor.to]) {
+      if (end is! PortEndpoint) continue;
+      final port = doc.ports[end.portId];
+      final key = port?.templatePortKey;
+      if (port == null || key == null) continue;
+      final device = doc.devices[port.deviceId];
+      if (device == null) continue;
+      for (final def
+          in bodyFor(device, doc.templates)?.ports ?? const <PortDef>[]) {
+        if (def.key != key) continue;
+        if (def.power?.role == PortPowerRole.inlet &&
+            resolvePortSignalFamily(port, def) == _captiveFamily) {
+          return true;
+        }
+      }
+    }
+  }
+  return false;
+}
+
+const SignalFamilyId _captiveFamily = SignalFamilyId('power.ac_branch');
+
 /// Whether [portId] is an IEC or NEMA power port playing a role.
 ///
 /// THE EFFECTIVE FAMILY, override included, on DR-131's reason: a family a
