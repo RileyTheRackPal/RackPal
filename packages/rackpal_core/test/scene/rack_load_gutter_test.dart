@@ -505,11 +505,12 @@ void main() {
       }
     });
 
-    test('the summary never exceeds the five lines the note band holds', () {
-      // `elevation_sheet.dart` sizes its band at kElevationHeaderBand =
-      // 56 pt — five 8 pt lines on a 10 pt lead. A sixth prints over the
-      // top of the elevation. EVERY face, because the omission line is
-      // now per-face and the rear one is the longer of the two.
+    test('the summary never exceeds its five-line budget', () {
+      // `elevation_sheet.dart` sizes its band at kElevationHeaderBand, and
+      // a line past kElevationNoteLines prints over the top of the
+      // elevation. The band holds six since DR-240, and the sixth row was
+      // ruled for the note column, so this one keeps five. EVERY face,
+      // because the omission line is per-face and the rear one is longer.
       final devices = <DeviceInstance>[
         _rail(id: 'a', ru: 1),
         zeroU('pdu'),

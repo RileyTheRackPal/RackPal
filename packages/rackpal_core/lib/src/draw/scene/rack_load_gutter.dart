@@ -513,9 +513,11 @@ String _omissionLine(RackLoadProfile profile, Face face) {
 ///
 /// AT MOST FIVE LINES, and that is a hard budget rather than a habit:
 /// `elevation_sheet.dart` sizes its note band at a constant
-/// `kElevationHeaderBand` = 56 pt — five 8 pt lines on a 10 pt lead — and
-/// a sixth would print over the top of the elevation it belongs to. So the
-/// omission statement is ONE line carrying every count, not three.
+/// `kElevationHeaderBand`, and a line past `kElevationNoteLines` would
+/// print over the top of the elevation it belongs to. So the omission
+/// statement is ONE line carrying every count, not three. The band holds
+/// six since DR-240, and the sixth row was ruled for the NOTE column (the
+/// ground bar); this column keeps its five, so nothing here can take it.
 List<String> rackLoadSummaryLines(
   RackLoadProfile profile,
   UnitSystem units,

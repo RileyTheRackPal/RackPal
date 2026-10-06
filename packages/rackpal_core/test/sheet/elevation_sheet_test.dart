@@ -168,9 +168,13 @@ void main() {
       // 56 U SINCE M6-G1, 57 U BEFORE. The zone band (DR-215) takes 19.68
       // pt of height, and 57 U is the one rack height it moves: 1:8 to
       // 1:10. Measured over 1..60 U against main; no other height changed.
+      //
+      // 55 U SINCE DR-240. The sixth note line takes 10 pt more, and 56 U
+      // is the one rack height it moves, by the same measurement.
       expect(_build(heightU: 60).scale.label, '1:10');
       expect(_build(heightU: 57).scale.label, '1:10');
-      expect(_build(heightU: 56).scale.label, '1:8');
+      expect(_build(heightU: 56).scale.label, '1:10');
+      expect(_build(heightU: 55).scale.label, '1:8');
     });
 
     test('a SMALL rack is drawn LARGER — the fit is real, not a constant', () {
@@ -1008,7 +1012,7 @@ void main() {
   });
 
   group('the drawing area is computed before the scale, and agrees', () {
-    test('elevationAreaOf reserves both bands — 56 pt above, 34 pt '
+    test('elevationAreaOf reserves both bands — 66 pt above, 34 pt '
         'below', () {
       // ==================================================================
       // THE LITERALS, BECAUSE THE CONSTANTS PROVE NOTHING ABOUT THEMSELVES.
@@ -1021,9 +1025,10 @@ void main() {
       // own comments say it keeps shipping.
       //
       // The numbers are checkable from the sheet instead of restated from
-      // the source: the header band is five 8 pt note lines on a 10 pt
-      // lead (`rackLoadSummaryLines` is capped at five and the fixture
-      // below emits them), and the scale band holds a 6 pt tall bar
+      // the source: the header band is six 8 pt note lines on a 10 pt
+      // lead (DR-240; the sixth row is the note column's, and a sheet
+      // that fills it is asserted with the ground bar note), and the
+      // scale band holds a 6 pt tall bar
       // centred in it with its `1 ft` label. Both are asserted against the
       // INK that lands in them further down.
       final drawing = SheetLayout.resolve(
@@ -1033,18 +1038,19 @@ void main() {
       ).drawingArea;
       final area = elevationAreaOf(drawing);
 
-      expect(kElevationHeaderBand, 56);
+      expect(kElevationHeaderBand, 66);
+      expect(kElevationNoteLines, 6);
       expect(kElevationScaleBand, 34);
-      expect(area.top - drawing.top, 56);
+      expect(area.top - drawing.top, 66);
       expect(drawing.bottom - area.bottom, 34);
-      expect(drawing.height - area.height, 90);
+      expect(drawing.height - area.height, 100);
       expect(area.left, drawing.left);
       expect(area.width, drawing.width);
     });
 
     test('the reserved bands are the bands the sheet actually draws '
         'INTO', () {
-      // The counterpart the literals above cannot supply: that 56 and 34
+      // The counterpart the literals above cannot supply: that 66 and 34
       // are not merely two numbers but the space the notes and the scale
       // bar occupy. Asserted on the emitted ops, in page coordinates, so
       // shrinking a band until its own content spills is a failure here

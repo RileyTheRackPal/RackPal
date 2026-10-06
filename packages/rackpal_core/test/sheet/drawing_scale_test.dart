@@ -263,8 +263,8 @@ void main() {
     // `elevation_sheet.dart`'s `_fitElevation` does the denominator walk
     // itself against the real scene's INK extent (RU ruler + panel + load
     // gutter + inflated print type) inside `elevationAreaOf(drawingArea)`,
-    // which is 90 pt shorter. Two implementations of the exit criterion's
-    // own arithmetic, and the tested one was the dead one.
+    // which is shorter by both bands. Two implementations of the exit
+    // criterion's own arithmetic, and the tested one was the dead one.
     //
     // They disagreed, and both suites passed anyway. The old test here
     // said `chooseFor(60).denominator == 8` under the comment "the claim
