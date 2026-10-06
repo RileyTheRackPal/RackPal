@@ -24101,12 +24101,21 @@ F14) and `conn.unterminated` (F07, F08, F20) mate with nothing, which `CON-001` 
 
 **11.236.1 RULED: THE TWO SOURCE-SIDE TERMINATIONS MATE WITH EVERY BARE-WIRE ONE.** `conn.binding_post` mates
 with `conn.banana`, `conn.binding_post`, `conn.euroblock_2`, `conn.screw_terminal` and `conn.unterminated`;
-`conn.euroblock_2` with itself and the same three. A genuine mismatch, an RCA into a binding post, still
-fires.
+`conn.euroblock_2` with itself and the same three, and the bare-wire ones list them back (§11.236.2). A
+genuine mismatch, an RCA into a binding post, still fires.
 
-**11.236.2 THE SINK-SIDE ONES KEEP THEIR EMPTY LISTS**, an implementer's default stated to the user. Giving
-`conn.screw_terminal` and `conn.unterminated` a list would switch `CON-001` ON for them wherever they are a
-source, a class of chip nobody asked for; reading the source side is enough to clear every speaker run.
+**11.236.2 AND EVERY BARE-WIRE TERMINATION LISTS THEM BACK**, because mating is symmetric.
+`conn.screw_terminal` and `conn.unterminated` each mate with `conn.binding_post`, `conn.euroblock_2`,
+`conn.screw_terminal` and `conn.unterminated`, so the drag may start at either end of a speaker run, and a
+screw terminal or a pigtail dropped on an RCA jack now springs back.
+
+**CORRECTED BEFORE IT WAS BUILT.** This clause first read *"the sink-side ones keep their empty lists"*, an
+implementer's default: a list there would switch `CON-001` on wherever one is a source. The gate refused it.
+`connector_mating_test` pins that if A lists B then B lists A, or the same joint validates one way from each
+end, which means a connector with an empty, unknown list can never be listed by another. The default was
+mine and not the user's, so it is corrected here rather than superseded. `conn.unterminated` is also a
+fiber splice pigtail (N04); it is spliced and never plugged, so a pigtail on an LC port springing back is
+right.
 
 **11.236.3 WIDER THAN THE SENTENCE, AND SAID SO.** The user spoke of binding posts; the 2-pole Euroblock is
 included because the census found the identical false positive on the commercial amplifiers. It is the

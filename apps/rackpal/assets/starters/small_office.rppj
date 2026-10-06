@@ -1265,7 +1265,11 @@
           "genderApplies": true,
           "id": "conn.binding_post",
           "matesWith": [
-            "conn.banana"
+            "conn.banana",
+            "conn.binding_post",
+            "conn.euroblock_2",
+            "conn.screw_terminal",
+            "conn.unterminated"
           ],
           "pitchNm": 20000000
         },
@@ -1329,7 +1333,10 @@
           "genderApplies": true,
           "id": "conn.euroblock_2",
           "matesWith": [
-            "conn.euroblock_2"
+            "conn.euroblock_2",
+            "conn.binding_post",
+            "conn.screw_terminal",
+            "conn.unterminated"
           ]
         },
         "conn.euroblock_3": {
@@ -1686,7 +1693,13 @@
           "displayName": "Screw terminal",
           "footprintHeightNm": 10000000,
           "footprintWidthNm": 9000000,
-          "id": "conn.screw_terminal"
+          "id": "conn.screw_terminal",
+          "matesWith": [
+            "conn.binding_post",
+            "conn.euroblock_2",
+            "conn.screw_terminal",
+            "conn.unterminated"
+          ]
         },
         "conn.sfp_cage": {
           "aliases": [
@@ -1722,7 +1735,13 @@
         "conn.unterminated": {
           "aliases": [],
           "displayName": "Unterminated",
-          "id": "conn.unterminated"
+          "id": "conn.unterminated",
+          "matesWith": [
+            "conn.binding_post",
+            "conn.euroblock_2",
+            "conn.screw_terminal",
+            "conn.unterminated"
+          ]
         },
         "conn.usb_c": {
           "aliases": [],

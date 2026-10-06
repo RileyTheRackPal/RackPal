@@ -119,10 +119,12 @@ ConnectorTypeDef _cNoFootprint(
   String id,
   String name, {
   List<String> aliases = const [],
+  List<String> mates = const [],
 }) => ConnectorTypeDef(
   id: ConnectorTypeId(id),
   displayName: name,
   aliases: aliases,
+  matesWith: [for (final m in mates) ConnectorTypeId(m)],
 );
 
 /// Builds the seeded `ConnectorTypeDef` registry — every connector id the
@@ -378,7 +380,16 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       10.0,
       aliases: const ['euro2'],
       gender: true,
-      mates: const ['conn.euroblock_2'],
+      // BARE WIRE (DR-237 §11.236.1): a commercial amplifier's 2-pole
+      // speaker output takes bare wire, and so does every speaker input in
+      // the seed, so it mates with the bare-wire terminations as well as
+      // with itself.
+      mates: const [
+        'conn.euroblock_2',
+        'conn.binding_post',
+        'conn.screw_terminal',
+        'conn.unterminated',
+      ],
     ),
     _c(
       'conn.euroblock_3',
@@ -406,7 +417,19 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       gender: true,
       mates: const ['conn.phoenix_4'],
     ),
-    _c('conn.screw_terminal', 'Screw terminal', 9.0, 10.0),
+    _c(
+      'conn.screw_terminal',
+      'Screw terminal',
+      9.0,
+      10.0,
+      // Bare wire, to any bare-wire termination (DR-237 §11.236.2).
+      mates: const [
+        'conn.binding_post',
+        'conn.euroblock_2',
+        'conn.screw_terminal',
+        'conn.unterminated',
+      ],
+    ),
     _c('conn.knx_terminal', 'KNX bus terminal', 9.0, 10.0),
     // -- Passive / mechanical audio -----------------------------------------
     _c(
@@ -417,7 +440,24 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
       aliases: const ['bp'],
       pitchMm: 20,
       gender: true,
-      mates: const ['conn.banana'],
+      // BARE WIRE FIRST, BANANA SECOND (DR-237, the user's trade fact):
+      // speaker wire is normally bare at both ends, into the post's hole or
+      // under its collar, and to a speaker's spring or screw terminal.
+      // Banana-and-post combination sockets are mostly on floorstanding and
+      // bookshelf speakers. This mated with banana alone, so `CON-001`
+      // sprang back on every amplifier-to-speaker run, even post to post.
+      //
+      // AND EVERY BARE-WIRE TERMINATION LISTS IT BACK (§11.236.2): mating
+      // is symmetric (connector_mating_test), or the same joint would
+      // validate one way from each end. So the screw terminal and the
+      // pigtail are known now too, and `CON-001` reads them as a source.
+      mates: const [
+        'conn.banana',
+        'conn.binding_post',
+        'conn.euroblock_2',
+        'conn.screw_terminal',
+        'conn.unterminated',
+      ],
     ),
     _c(
       'conn.banana',
@@ -566,7 +606,19 @@ Map<ConnectorTypeId, ConnectorTypeDef> buildSeedConnectorFootprints() {
     // nulls; resolution is satisfied by the entries existing.
     _cNoFootprint('conn.hardwired', 'Hardwired lead', aliases: const ['hw']),
     _cNoFootprint('conn.ground_lug', 'Ground lug', aliases: const ['gnd']),
-    _cNoFootprint('conn.unterminated', 'Unterminated'),
+    // Bare wire, to any bare-wire termination (DR-237 §11.236.2). A fiber
+    // splice pigtail carries this id too; it is spliced, never plugged, so
+    // a pigtail dropped on an LC port springs back, which is right.
+    _cNoFootprint(
+      'conn.unterminated',
+      'Unterminated',
+      mates: const [
+        'conn.binding_post',
+        'conn.euroblock_2',
+        'conn.screw_terminal',
+        'conn.unterminated',
+      ],
+    ),
   ];
   return {for (final c in all) c.id: c};
 }
