@@ -24181,8 +24181,17 @@ so the panel never mixes units. Entering inches is a separate question for every
 dimension a cabinetmaker or general contractor can be handed before any DXF exists. It carries the
 envelope and **that face's own door**: the front elevation the front door, the rear the rear. Printed in the
 project's display units, as the sheet's load summary already is (an implementer's choice, stated). An
-unknown dimension prints as a dash, never a guess (G4); a rack with nothing known prints no line, since a
-row of dashes tells a reader nothing the absence does not.
+unknown dimension prints as a dash, never a guess (G4); a rack with no number known prints no line, a
+ticked door alone included, since a row of dashes tells a reader nothing the absence does not. Every
+starter ticks a door and enters no size; that is the case this sentence was refined for.
+
+**CORRECTED BEFORE IT WAS BUILT: OWN WEIGHT IS NOT ON THE LINE, BY MEASUREMENT.** The note column is half
+the band, **327 pt** on ANSI B through the real Jost metrics. A 1200 x 1400 x 2400 mm cabinet at 300 kg with
+both clearances measured **331.5 pt**, so the sheet would have cut it with an ellipsis; without the weight
+the same case is 299.6 pt metric and 285.4 imperial. Prefixing "RACK" to save the room would sit beside the
+load summary's "RACK TOTAL", a different weight. So the line carries the size and that face's door, and own
+weight stays in the inspector. `elevation_envelope_fit_test.dart` holds the fit against the real font,
+because the core test's fake measurer passes any length.
 
 **What this does not rule.** A fit check of the rack against a room, which DR-188 left open and this makes
 possible. Whether rack presets carry the envelope. Whether rack elevations join the DXF export (v1.3).

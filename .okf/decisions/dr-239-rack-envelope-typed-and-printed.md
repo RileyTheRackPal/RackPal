@@ -21,8 +21,9 @@ Settled by the user on 2026-10-06 for `#923`, the writer
 - **Two clearances per door**, in the user's words: *rail clearance* is the depth inside the door, *door
   clearance* the swing space in front of it. `frontRailClearance` and `rearRailClearance` are added; the
   rear one is the implementer's extension, for symmetry.
-- **The elevation prints one line**: the envelope and that face's door, unknowns as a dash
-  ([G4](/invariants/g4-unknowns-are-counted.md)).
+- **The elevation prints one line**: the size and that face's door, unknowns as a dash
+  ([G4](/invariants/g4-unknowns-are-counted.md)). Own weight left the line by measurement: with it, the
+  worst case was 331.5 pt against a 327 pt column.
 
 See [trade knowledge beats workflow reasoning](/practices/trade-knowledge-beats-workflow-reasoning.md):
 the question offered "depth inside" or "swing space", and the answer was both, with their trade names.
