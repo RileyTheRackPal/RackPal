@@ -24148,6 +24148,49 @@ counts on one sheet still reconcile with the Schedule's.
 
 ---
 
+### 11.238 DR-239 · A rack's envelope is typed in the rack inspector and printed on its elevation
+
+**Settled by the user on 2026-10-06, for `#923`.** DR-188 §11.187.5 measured that `Rack` already declares
+its physical envelope (`overallWidth`, `overallDepth`, `overallHeight`, `ownWeight`, `hasFrontDoor`,
+`hasRearDoor`, `frontDoorClearance`, `rearDoorClearance`) and that nothing in the product can set them: the
+fourth instance of the `Placement.locked` shape (§11.185.0). The user's reason is in DR-188's own record:
+*"a cabinet was too small for a pull-out rack, or a closet was shaved down to make space for a mini bar
+and the rack no longer fit."*
+
+**11.238.1 RULED: AN ENCLOSURE SECTION, BELOW FORM FACTOR.** The rack inspector gains a section of its own
+holding overall width, depth and height, own weight (editable, where it was a read-only row), and per side a
+door checkbox and that door's two clearances. Form factor stays about rails and RU. A clearance is dashed
+and disabled while its door is unticked, as Hinge side already is without a swing frame; unticking a door
+keeps the values, so ticking it back loses nothing. Every field is one `RackField` row through the one
+property command, undoable like the rest.
+
+**11.238.2 RULED: TWO CLEARANCES PER DOOR, IN THE TRADE'S OWN WORDS.** The user: *"There needs to be one
+for each; "Front Rail Clearance" is typically used for depth inside the door, while "Door Clearance" is
+what's typically used for swing space."* So **rail clearance** is the depth between a rail and its closed
+door, which handles, cable and door-mounted fans eat, and **door clearance** is the swing space the door
+needs in front of it, which is what a closet or millwork must leave free. The existing
+`frontDoorClearance` and `rearDoorClearance` keep their names and mean swing space; `frontRailClearance`
+and `rearRailClearance` are added beside them, nullable `Len`, an absent key read as unknown (G4) so every
+file on disk still opens. **The rear rail clearance is the implementer's extension**, for symmetry with the
+existing door pair, and stated as such.
+
+**11.238.3 RULED: MILLIMETRES AND KILOGRAMS**, matching the inspector's usable depth and weight capacity,
+so the panel never mixes units. Entering inches is a separate question for every length field at once.
+
+**11.238.4 RULED: THE ELEVATION PRINTS IT.** One line in the elevation sheet's notes band, the printed
+dimension a cabinetmaker or general contractor can be handed before any DXF exists. It carries the
+envelope and **that face's own door**: the front elevation the front door, the rear the rear. Printed in the
+project's display units, as the sheet's load summary already is (an implementer's choice, stated). An
+unknown dimension prints as a dash, never a guess (G4); a rack with nothing known prints no line, since a
+row of dashes tells a reader nothing the absence does not.
+
+**What this does not rule.** A fit check of the rack against a room, which DR-188 left open and this makes
+possible. Whether rack presets carry the envelope. Whether rack elevations join the DXF export (v1.3).
+
+**Scope.** No scope moves: fields the v1 model already declares, given a writer and a reader.
+
+---
+
 ## 12. Superseded rulings
 
 Every ruling in Parts 1–3 that DR-001…DR-036 change or void, plus the small set of internal
