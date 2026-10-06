@@ -1337,6 +1337,8 @@ JsonMap _encodeRack(Rack r) {
   if (r.hingeSide != null) json['hingeSide'] = encodeEnumName(r.hingeSide!);
   putIfNotNull(json, 'frontDoorClearanceNm', r.frontDoorClearance?.nm);
   putIfNotNull(json, 'rearDoorClearanceNm', r.rearDoorClearance?.nm);
+  putIfNotNull(json, 'frontRailClearanceNm', r.frontRailClearance?.nm);
+  putIfNotNull(json, 'rearRailClearanceNm', r.rearRailClearance?.nm);
   putIfNotNull(
     json,
     'planPin',
@@ -1412,6 +1414,16 @@ Rack _decodeRack(Uuid id, JsonMap json) => Rack(
   rearDoorClearance: _decodeLenOrNull(
     json['rearDoorClearanceNm'],
     'Rack.rearDoorClearanceNm',
+  ),
+  // DR-239: absent in every file written before it, and absent is
+  // unknown (G4), so those files open unchanged.
+  frontRailClearance: _decodeLenOrNull(
+    json['frontRailClearanceNm'],
+    'Rack.frontRailClearanceNm',
+  ),
+  rearRailClearance: _decodeLenOrNull(
+    json['rearRailClearanceNm'],
+    'Rack.rearRailClearanceNm',
   ),
   groundBarPresent: asBool(json['groundBarPresent'], 'Rack.groundBarPresent'),
   zeroUChannels: decodeObjectList(

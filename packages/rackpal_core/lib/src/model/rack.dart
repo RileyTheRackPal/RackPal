@@ -64,6 +64,8 @@ final class Rack {
     this.hasRearDoor = false,
     this.frontDoorClearance,
     this.rearDoorClearance,
+    this.frontRailClearance,
+    this.rearRailClearance,
     bool groundBarPresent = false,
     List<ZeroUChannel>? zeroUChannels,
   }) : _name = name,
@@ -208,8 +210,20 @@ final class Rack {
   Mass? ownWeight;
   bool hasFrontDoor;
   bool hasRearDoor;
+
+  /// DOOR CLEARANCE IS THE SWING SPACE in front of the door, which a
+  /// closet or millwork must leave free (DR-239 §11.238.2, the trade's own
+  /// term). Null is unknown (CR-114).
   Len? frontDoorClearance;
   Len? rearDoorClearance;
+
+  /// RAIL CLEARANCE IS THE DEPTH INSIDE the door, between the rail and the
+  /// closed door, which handles, cable and door-mounted fans eat (DR-239
+  /// §11.238.2). A different measurement from [frontDoorClearance] with a
+  /// different trade name; the model had one field where the trade has
+  /// two. Null is unknown (CR-114).
+  Len? frontRailClearance;
+  Len? rearRailClearance;
 
   /// Sub-objects, string-keyed, no `EntityMeta`.
   List<ZeroUChannel> zeroUChannels;

@@ -1263,7 +1263,11 @@ $SuiteFloors = @{
     # (an A02's own lead out of T6.30 beside an A03's detachable cord; both
     # still power cords; the footage note agreeing with the table and
     # naming the captive cord; a captive lead to a wall receptacle).
-    'rackpal_core'   = 5613
+    # 5616 at `#1011` (ENV-1, DR-239 §11.238.2): +3 in persistence/rack_
+    # envelope_codec_test.dart (the envelope round-trips byte for byte;
+    # rail and door clearance are two keys with their own numbers; a file
+    # from before DR-239 opens with its rail clearances unknown).
+    'rackpal_core'   = 5616
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
