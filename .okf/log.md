@@ -1,5 +1,13 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-seventeenth entry)
+
+* **Progress**: `#1010` built at `1a6cf076` and `#1002` at `78d7deda`; DR-237 and DR-238 marked built. docs/12
+  §4.48.
+* **Note**: **A CATALOGUE FIX DOES NOT REACH A SAVED PROJECT.** Registries are embedded per document, so the
+  binding-post correction lands in new projects and the starters only; said to the user rather than
+  discovered by them.
+
 ## 2026-10-06 (hundred-and-sixteenth entry)
 
 * **Progress**: `brk-a` merged at `8496b4fd` (PR 205); `#1000` and `#1004` to `#1009` closed, Epic `#1003` left

@@ -8,7 +8,7 @@ tags: [ruling, power-cord, captive, t6-30, bom, dr-238, dr-233]
 timestamp: 2026-10-06T00:00:00Z
 ruling_id: DR-238
 canon_section: "11.237"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-06 for `#1002`: remove captive cords on T6.30.
@@ -22,3 +22,5 @@ Settled by the user on 2026-10-06 for `#1002`: remove captive cords on T6.30.
 - **Counted, not hidden** ([G4](/invariants/g4-unknowns-are-counted.md)).
 
 Canon §11.237 holds the full text.
+
+Built at `78d7deda`; docs/12 §4.48 holds the evidence.

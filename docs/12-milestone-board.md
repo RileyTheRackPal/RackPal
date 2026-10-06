@@ -2088,6 +2088,36 @@ driven by a person**, so the Epic stays open for that.
 
 ---
 
+### 4.48 Speaker wire is bare wire, and a captive cord is part of its device · 2026-10-06 · `#1010`, `#1002` · `DR-237`, `DR-238` · no version move
+
+Two small corrections the user settled in one message, each on a trade fact the census could only measure.
+
+**Built.** `#1010` at `1a6cf076`: the seeded binding post mated with banana plugs alone, and `CON-001` reads the
+source side, so every amplifier-to-speaker run sprang back; the commercial amps' 2-pole Euroblock did the
+same. Both now mate with every bare-wire termination (§11.236.1), the screw terminal and the pigtail list
+them back (§11.236.2), and an RCA into a binding post still fires. `#1002` at `78d7deda`: a cord with an end on an
+inlet-role `power.ac_branch` port is a captive cord (§11.237.2); T6.30's table and the footage note's
+"bought by the piece" both read one Schedule flag, and the note counts what it set aside (§11.237.3).
+
+**Not migrated, by precedent.** A document embeds its registries (DR-010), so a project saved before
+`1a6cf076` keeps the old binding-post list and still springs back on a speaker run. New projects and the
+regenerated starters carry the fix. Every earlier catalogue correction has left saved projects the same way.
+
+**Refused by the gate, and corrected.** §11.236.2 first said the sink-side terminations keep their empty
+lists, the implementer's default, so that `CON-001` would stay off where they are a source. `connector_mating_test` pins
+mating as symmetric, which means an unknown connector can never be listed, and the suite went red on it.
+The clause was corrected in canon before it was built. The cost is chips nobody had: a screw terminal or a
+fiber splice pigtail dropped on a plug-in port now springs back, which is right.
+
+**Found on the way.** PR 205's hand route told the tester to press **Connect anyway** on that chip at steps 2
+and 4; the drop now lands with no chip, and `schematic_append_set_test` was the screen test asserting it.
+
+**Evidence.** `speaker_bare_wire_test` (+6; with the old lists restored, the three no-chip tests fail and the
+RCA control passes; with the screw terminal's list emptied, the known-now test fails) and `captive_cord_test` (+4; with the flag forced false, all four fail). Floor: core
+5603 to 5611. The A02's own lead and an A03's detachable IEC cord, side by side, are the test's premise.
+
+---
+
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`
