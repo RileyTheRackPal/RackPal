@@ -104,10 +104,13 @@ import 'package:rackpal_core/src/units/len.dart';
 /// place is a measured zero (G4, CR-114), which is what a device pinned on
 /// top of the rack really is.
 Len? planLowerBoundOf(RackDocument doc, Link link) {
-  // A LINK'S ENDS ARE ITS CONDUCTORS' ENDS, and CR-014 gives every
-  // conductor of one cable the same physical pair, so the first speaks for
-  // the link. The identical assumption `_row` and `linkClassOf` make,
-  // spelled the same way so the three cannot drift.
+  // THE FIRST CONDUCTOR, AND IT IS SOUND HERE FOR A REASON OF ITS OWN.
+  // CR-014 lets a cable reach N devices (DR-236), so the first conductor
+  // is not the whole cable; it is the cable's FIRST far end, because a set
+  // added to an existing cable appends after the conductors already there.
+  // The distance to that end is still a true lower bound on the cable's
+  // length: the cable reaches it. It is not the tightest bound when the
+  // cable continues further, and it never claims to be.
   final conductors = link.conductors;
   if (conductors.isEmpty) return null;
   final first = conductors.first;

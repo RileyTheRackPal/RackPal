@@ -197,7 +197,7 @@ import 'package:rackpal_core/src/model/link.dart';
 import 'package:rackpal_core/src/model/port.dart' show Port, derivePortId;
 import 'package:rackpal_core/src/model/rack_document.dart';
 import 'package:rackpal_core/src/model/template.dart'
-    show PortDirection, PortSetDef, SymbolSide;
+    show PortDef, PortDirection, PortSetDef, SymbolSide;
 import 'package:rackpal_core/src/units/constants.dart' show kGridUnit;
 import 'package:rackpal_core/src/units/ids.dart';
 import 'package:rackpal_core/src/units/print_units.dart' show pointsForLen;
@@ -794,14 +794,28 @@ typedef _End = ({
 });
 
 /// [link]'s ends that landed on a drawn pin, in conductor order (from,
-/// then to).
+/// then to): ONE PER DEVICE AND SET it lands on.
 ///
-/// `Link.conductors.first` speaks for the whole link: CR-014 fixes each
-/// conductor at exactly two ends and every conductor of one cable shares
-/// the same physical pair, which is the reading `derived/link_class.dart`
-/// and `schematic_scene.dart` both take.
+/// ═══════════════════════════════════════════════════════════════════════
+/// EVERY CONDUCTOR, GROUPED (DR-236 §11.235.4)
+/// ═══════════════════════════════════════════════════════════════════════
+/// This read `Link.conductors.first` alone, on the ground that "CR-014
+/// fixes each conductor at exactly two ends and every conductor of one
+/// cable shares the same physical pair". CR-014 rules the opposite: a Link
+/// may reach N devices. A 16/4 tapped at one speaker and continued to the
+/// next is one cable to two devices, and labelled by its first conductor
+/// it showed no pennant at the second speaker, nor at the amplifier's
+/// second zone pair, which then looked unwired.
 ///
-/// An end drops out — WITHOUT dropping the other — when it is not a
+/// So an end is a (device, set) group: every conductor end on one device's
+/// one atomic set is one end, labelled once at its first pin with DR-174's
+/// bracket over the set; every end on one device's pins outside any set is
+/// one end too. An ordinary cable (every conductor on one pair of devices
+/// and one set at each) therefore yields exactly the two ends it did, in
+/// the same order. A set cable whose FIRST position was left open used to
+/// lose its far end's pennant; it now takes it from the next conductor.
+///
+/// An end drops out (WITHOUT dropping the others) when it is not a
 /// `PortEndpoint` (a home run to the field, AC-018), when the port is not
 /// in this document, or when its device has no symbol. A one-ended link
 /// still labels the end it has: that flag is the only place the reader
@@ -813,24 +827,43 @@ List<_End> _endsOf(
   Map<String, Map<String, SymbolPort>> pinsOf,
 ) {
   if (link.conductors.isEmpty) return const <_End>[];
-  final conductor = link.conductors.first;
   final out = <_End>[];
-  for (final endpoint in <Endpoint>[conductor.from, conductor.to]) {
-    if (endpoint is! PortEndpoint) continue;
-    final port = doc.ports[endpoint.portId];
-    if (port == null) continue;
-    final key = port.templatePortKey;
-    if (key == null) continue;
-    final symbol = symbolById[port.deviceId.v];
-    final pin = pinsOf[port.deviceId.v]?[key.v];
-    if (symbol == null || pin == null) continue;
-    out.add((
-      symbol: symbol,
-      port: pin,
-      bracket: _bracketOf(link, doc, port, pin, pinsOf[port.deviceId.v]!),
-    ));
+  final seen = <(String, String)>{};
+  for (final conductor in link.conductors) {
+    for (final endpoint in <Endpoint>[conductor.from, conductor.to]) {
+      if (endpoint is! PortEndpoint) continue;
+      final port = doc.ports[endpoint.portId];
+      if (port == null) continue;
+      final key = port.templatePortKey;
+      if (key == null) continue;
+      final group = (port.deviceId.v, _setKeyOf(doc, port) ?? '');
+      if (!seen.add(group)) continue;
+      final symbol = symbolById[port.deviceId.v];
+      final pin = pinsOf[port.deviceId.v]?[key.v];
+      if (symbol == null || pin == null) continue;
+      out.add((
+        symbol: symbol,
+        port: pin,
+        bracket: _bracketOf(link, doc, port, pin, pinsOf[port.deviceId.v]!),
+      ));
+    }
   }
   return out;
+}
+
+/// The set [port]'s template declares it in, or null for none.
+String? _setKeyOf(RackDocument doc, Port port) {
+  final key = port.templatePortKey;
+  final device = doc.devices[port.deviceId];
+  if (key == null || device == null) return null;
+  final body = doc.templates[templateKeyFor(device.templateRef)]?.body;
+  for (final def in body?.ports ?? const <PortDef>[]) {
+    if (def.key.v == key.v) {
+      final set = def.setKey;
+      return set == null || set.isEmpty ? null : set;
+    }
+  }
+  return null;
 }
 
 /// The pins a bracket spans at [port]'s end of [link], in edge order, or

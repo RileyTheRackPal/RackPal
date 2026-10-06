@@ -1190,10 +1190,12 @@ Schedule buildSchedule(RackDocument doc) {
 
 ScheduleEntry _row(RackDocument doc, Link link) {
   final conductors = link.conductors;
-  // A Link's ends ARE its conductors' ends, and CR-014 gives every
-  // conductor of one cable the same physical pair, so the first speaks
-  // for the link — the identical assumption `linkClassOf` makes, spelled
-  // the same way so the two cannot drift.
+  // THE FIRST CONDUCTOR'S ENDS, AND THAT IS NOW KNOWN TO BE INCOMPLETE.
+  // This said CR-014 gives every conductor of one cable the same pair; it
+  // does not, and a cable may reach N devices (DR-236). For every cable
+  // with one pair of devices this is the whole answer. A cable that
+  // reaches further prints its far ends together on one row, which is
+  // BRK-A/4's (`#1007`) and DR-236 §11.235.3's, not this reader's.
   final first = conductors.isEmpty ? null : conductors.first;
   final endA = first == null ? ScheduleEnd.none : _endOf(doc, first.from);
   final endB = first == null ? ScheduleEnd.none : _endOf(doc, first.to);
@@ -1387,6 +1389,11 @@ Uuid? _roomIdOf(ScheduleEnd from, ScheduleEnd to, Outlet? outlet) =>
 Uuid? roomOfLink(RackDocument doc, Link link) {
   final conductors = link.conductors;
   if (conductors.isEmpty) return null;
+  // THE FIRST CONDUCTOR IS THE CABLE'S FIRST FAR END. A cable may reach N
+  // devices (CR-014, DR-236), and a set added to it appends after the
+  // conductors already there, so a 16/4 tapped and continued is placed in
+  // its first speaker's room. That is the row's room on DR-236 §11.235.3's
+  // one Pull Sheet row; where the run continues is the row's far ends.
   final first = conductors.first;
   final endA = _endOf(doc, first.from);
   final endB = _endOf(doc, first.to);

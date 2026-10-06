@@ -145,4 +145,35 @@ void main() {
       );
     }
   });
+
+  testWidgets('A CABLE THAT REACHES A THIRD DEVICE NAMES IT (DR-236 '
+      '§11.235.4)', (tester) async {
+    // The bar's sentence read the first conductor alone, so a 16/4 tapped
+    // and continued named only its first speaker.
+    final id = linkNamed('W001');
+    final link = doc.links[id]!;
+    final first = link.conductors.first;
+    final reached = <Uuid>{
+      for (final e in [first.from, first.to])
+        if (e is PortEndpoint) doc.ports[e.portId]!.deviceId,
+    };
+    final third = doc.ports.values.firstWhere(
+      (p) => !reached.contains(p.deviceId),
+    );
+    link.conductors.add(
+      Conductor(from: first.from, to: PortEndpoint(third.id)),
+    );
+    // The new end gives the layout a new edge, so the pennant moved.
+    reference = buildFixtureScene(doc);
+    await pump(tester);
+    await tester.tapAt(toScreen(tester, pennantOf(id)));
+    await tester.pumpAndSettle();
+
+    final saying = tester
+        .widget<SchematicCableBar>(find.byType(SchematicCableBar))
+        .saying;
+    final thirdDevice = doc.devices[third.deviceId]!.designator;
+    expect(saying, contains(' + $thirdDevice ${third.designator})'));
+    expect(saying, endsWith('${link.conductors.length} conductors'));
+  });
 }

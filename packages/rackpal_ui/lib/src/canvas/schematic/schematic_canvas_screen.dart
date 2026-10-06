@@ -1746,30 +1746,41 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   /// citation shape, so "W004" is anchored to something the user can see on
   /// the sheet rather than being a bare identifier.
   ///
-  /// THE CONDUCTOR COUNT IS SAID WHENEVER IT IS NOT ONE, and that is the
-  /// clause this method exists for. An atomic set — a stereo pair, a
-  /// speaker pair, a component run — is ONE `Link` carrying N conductors
-  /// across N pins, and `net_label_layer.dart` draws a pennant for
-  /// `conductors.first` alone. So a user deleting what looks like the cable
-  /// on `L` is also deleting the one on `R`, and the sheet has not told
-  /// them. Until the bracket lands, this sentence is the only place that
-  /// fact is stated.
+  /// THE CONDUCTOR COUNT IS SAID WHENEVER IT IS NOT ONE. An atomic set (a
+  /// stereo pair, a speaker pair, a component run) is ONE `Link` carrying N
+  /// conductors across N pins, so a user deleting what looks like the cable
+  /// on `L` is also deleting the one on `R`. DR-174's bracket now draws
+  /// that on the sheet; this sentence still says it in words, which is what
+  /// a screen reader hears.
+  ///
+  /// EVERY DEVICE THE CABLE REACHES (DR-236 §11.235.4), each by its first
+  /// pin, in conductor order: the first is where the cable starts and the
+  /// rest follow "to", joined with `+`. This read the first conductor
+  /// alone, which named only the first speaker of a 16/4 tapped and
+  /// continued. An ordinary cable reaches two devices and reads exactly as
+  /// it did.
   String _cableSaying(Uuid linkId) {
     final link = _doc.links[linkId];
     if (link == null) return 'That cable';
+    // The first conductor's two ends are named as they always were, so a
+    // loop-through (both ends on one device) still reads "A J01 to A J02";
+    // a further device the cable reaches is then added once.
     final ends = <String>[];
-    if (link.conductors.isNotEmpty) {
-      final first = link.conductors.first;
-      for (final end in <Endpoint>[first.from, first.to]) {
+    final seen = <Uuid>{};
+    for (final (i, conductor) in link.conductors.indexed) {
+      for (final end in <Endpoint>[conductor.from, conductor.to]) {
         if (end is! PortEndpoint) continue;
         final port = _doc.ports[end.portId];
         if (port == null) continue;
         final device = _doc.devices[port.deviceId];
         if (device == null) continue;
+        if (!seen.add(device.id) && i > 0) continue;
         ends.add('${device.designator} ${port.designator}');
       }
     }
-    final where = ends.length == 2 ? ' (${ends[0]} to ${ends[1]})' : '';
+    final where = ends.length < 2
+        ? ''
+        : ' (${ends.first} to ${ends.skip(1).join(' + ')})';
     final n = link.conductors.length;
     final wide = n > 1 ? ', $n conductors' : '';
     return '${link.designator}$where$wide';

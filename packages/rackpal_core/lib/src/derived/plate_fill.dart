@@ -144,8 +144,10 @@ int? cellsRequiredFor(
 ///
 /// `Conductor.from` is the field end and `.to` is the rack end, which is
 /// the reading `link_class.dart` and `schematic_scene.dart` both take:
-/// CR-014 fixes each conductor at two ends and every conductor of one
-/// cable shares the same pair, so the first speaks for the link.
+/// The first conductor, because a home run is ONE conductor from a plate to
+/// a rack: the shape this function is for. It is not CR-014's doing; CR-014
+/// lets a cable reach N devices (DR-236), and a cable that did is not a
+/// home run.
 ///
 /// A LINK WITH NO CONDUCTORS IS NOT LANDED, rather than an error. It is
 /// reachable from a file, and answering "landed" for it would zero a

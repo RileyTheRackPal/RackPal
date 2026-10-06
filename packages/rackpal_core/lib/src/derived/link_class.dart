@@ -93,25 +93,54 @@ LinkClass? linkClassOf(RackDocument doc, Link link) {
   final conductors = link.conductors;
   if (conductors.isEmpty) return null;
 
-  // A Link's ends ARE its conductors' ends. CR-014 fixes each conductor at
-  // exactly two, and every conductor of one cable shares the same pair of
-  // physical ends, so the first conductor speaks for the link.
-  final first = conductors.first;
-  final a = _resolve(doc, first.from);
-  final b = _resolve(doc, first.to);
-  if (a == null || b == null) return null; // unresolved — see [_End]
+  // ═════════════════════════════════════════════════════════════════════
+  // EVERY END OF EVERY CONDUCTOR (DR-236 §11.235.4)
+  // ═════════════════════════════════════════════════════════════════════
+  // This read the first conductor alone, on the ground that "CR-014 ...
+  // every conductor of one cable shares the same pair of physical ends".
+  // CR-014 rules the opposite: each conductor spans two endpoints and a
+  // Link may reach N devices. A 16/4 tapped at one speaker and continued
+  // to the next is one cable to two devices, and its first conductor
+  // knows only the first.
+  //
+  // AN OPEN END IS NOT AN END, so it takes no part in the rack test. A set
+  // connected "what fits" (§11.8.3) leaves a position open; that coil runs
+  // inside the same cable between the same two devices, and letting it
+  // vote made the class depend on which position happened to be open.
+  // ONLY WHEN TWO LANDED ENDS REMAIN TO DECIDE IT. A single conductor from
+  // a rack device to nowhere is still a field cable, as it always was:
+  // one landed end cannot say the cable stays in the rack.
+  final landed = <_End>[];
+  var opens = 0;
+  for (final c in conductors) {
+    for (final e in [c.from, c.to]) {
+      if (e is OpenEndpoint) {
+        opens++;
+        continue;
+      }
+      final resolved = _resolve(doc, e);
+      if (resolved == null) return null; // unresolved: see [_End]
+      landed.add(resolved);
+    }
+  }
+  final ends = landed.length >= 2 || opens == 0
+      ? landed
+      : [...landed, for (var i = 0; i < opens; i++) const _End(null)];
 
   // AFTER RESOLUTION, so a cord to a staged device stays undetermined
   // (§11.232.3), and BEFORE THE RACK TEST, so a cord inside one rack is a
   // cord rather than a jumper (§12.50).
   if (_isCord(doc, link)) return LinkClass.powerCord;
 
-  // BOTH ENDS IN ONE RACK, AND THERE IS A RACK. The second half is not
+  // EVERY END IN ONE RACK, AND THERE IS A RACK. The second half is not
   // redundant: two field ends both carry a null rack, and letting those
   // compare equal would classify a wall-to-wall home run as a jumper and
   // drop it off the Pull Sheet. That is the bug this shape exists to make
   // unwritable.
-  if (a.rackId != null && a.rackId == b.rackId) return LinkClass.jumper;
+  final rack = ends.isEmpty ? null : ends.first.rackId;
+  if (rack != null && ends.every((e) => e.rackId == rack)) {
+    return LinkClass.jumper;
+  }
 
   return LinkClass.fieldCable;
 }
