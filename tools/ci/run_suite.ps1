@@ -1271,7 +1271,11 @@ $SuiteFloors = @{
     # envelope_writer_test.dart (every envelope field entered through the
     # command survives a save and a reload; undo of a clearance lands the
     # saved bytes exactly).
-    'rackpal_core'   = 5618
+    # 5638, re-measured at `#1013` from the gate's own count: ENV-2's 5618
+    # missed 20 cases that persistence/g4_wire_test.dart GENERATES, two per
+    # `RackField` row, and ENV-2 added ten rows. A floor is the gate's
+    # count, not a sum of the cases a commit wrote by hand.
+    'rackpal_core'   = 5638
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -2010,7 +2014,12 @@ $SuiteFloors = @{
     # schematic_append_set_test.dart on the real A04 and two F05s (the exit
     # criterion's gesture through CON-001's chip and Connect anyway, one
     # undo; a device the cable does not reach answered in words; Esc).
-    'rackpal_ui'     = 2134
+    # 2137 at `#1013` (ENV-3, DR-239 §11.238.1): +3 net in inspector/rack_
+    # inspector_panel_test.dart (the read-only Own weight case replaced by
+    # the field's; an overall dimension and its refusal naming it; a
+    # clearance disabled behind an unticked door, rail apart from door;
+    # unticking a door keeping its clearances).
+    'rackpal_ui'     = 2137
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
