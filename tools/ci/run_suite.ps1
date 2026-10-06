@@ -1979,7 +1979,11 @@ $SuiteFloors = @{
     # Backspace in the field driving nothing; Remove and the same one back).
     # 2131 at `#1004` (BRK-A/1): +1 in canvas/schematic/schematic_cable_bar_
     # test.dart, the bar's sentence naming a third device the cable reaches.
-    'rackpal_ui'     = 2131
+    # 2134 at `#1006` (BRK-A/3, DR-236 §11.235.2): +3 in canvas/schematic/
+    # schematic_append_set_test.dart on the real A04 and two F05s (the exit
+    # criterion's gesture through CON-001's chip and Connect anyway, one
+    # undo; a device the cable does not reach answered in words; Esc).
+    'rackpal_ui'     = 2134
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

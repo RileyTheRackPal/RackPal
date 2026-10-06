@@ -195,10 +195,9 @@ const Map<String, String> _exempt = {
   // is used twenty-one times, and is deliberately not reachable, so it
   // moved to `_infrastructure` below rather than leaving the list.
 
-  // BRK-A/2 LANDS THE COMMAND AND BRK-A/3 ITS HOST, in separate commits on
-  // purpose (DR-236 §11.235.2): the cable bar's "Add a set to this cable"
-  // is what makes it reachable, and this row must leave when it does.
-  'AppendSetToLinkCommand': '#1006',
+  // `#1006` CLOSED ITS ROW. `AppendSetToLinkCommand` landed a commit ahead
+  // of its host (BRK-A/2), exempted here; the cable bar's "Add a set to
+  // this cable" (BRK-A/3, DR-236 §11.235.2) is what reaches it now.
 };
 
 /// Commands that are NOT reachable from a person and are not supposed to
