@@ -429,6 +429,7 @@ Future<Outcome<ExportedDocument>> buildExportDocument(
           tagPillSample: _tagPillSample(doc, interconnects),
           netLabelSample: _netLabelSample(interconnects),
           adapterSample: _adapterSample(doc, interconnects),
+          junctionSample: _junctionSample(interconnects),
         );
         scene = built.scene;
         legibility = built.legibility;
@@ -725,6 +726,18 @@ SignalStyle? _adapterSample(
       for (final wire in drawing.wires.wires) {
         if (carries(wire.linkId)) return wire.style;
       }
+    }
+  }
+  return null;
+}
+
+/// The legend's junction dot (DR-236, BRK-A/5): the style of the first
+/// drawn wire that branches, or null when no printed wire does (DR-208).
+SignalStyle? _junctionSample(List<InterconnectDrawing> drawings) {
+  for (final drawing in drawings) {
+    if (drawing.fellBack) continue;
+    for (final wire in drawing.wires.wires) {
+      if (wire.junctions.isNotEmpty) return wire.style;
     }
   }
   return null;

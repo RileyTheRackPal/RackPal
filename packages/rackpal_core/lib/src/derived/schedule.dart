@@ -594,6 +594,7 @@ final class ScheduleEntry {
     this.wiringStandard,
     this.rackTerminationType,
     this.adapterNotes = const <String>[],
+    this.furtherPairs = const <ScheduleEndPair>[],
   });
 
   final Uuid linkId;
@@ -713,6 +714,64 @@ final class ScheduleEntry {
   /// in the notes' capitals; the model is a person's words and keeps its
   /// own case.
   final List<String> adapterNotes;
+
+  /// The cable's further ends (DR-236 §11.235.3, BRK-A/4): one pair per
+  /// (device, device) its conductors join BEYOND the pair [from] and [to]
+  /// already name, oriented as they are. Empty for every cable that joins
+  /// one pair of devices, which is every cable drawn before DR-236.
+  ///
+  /// A PAIR, NOT AN END, because a tap-and-continue's second line is
+  /// terminated at BOTH ends: the amplifier's zone 2 pins as well as SPK-2.
+  /// ONE ROW STILL, so the view's footage and counts read the cable once,
+  /// and the Termination Schedule prints a line per pair under it.
+  final List<ScheduleEndPair> furtherPairs;
+
+  /// " + SPK-2": each further pair's NEW end, on the side of the row the
+  /// pair does NOT share (§11.235.3, one row naming every far end).
+  ///
+  /// THE SHARED SIDE DECIDES IT, NOT "THE FAR END". A 16/4 from a rack
+  /// amplifier to two room speakers shares the amplifier, which is the
+  /// row's TO, so SPK-2 joins SPK-1 in FROM. The same cable rack to rack
+  /// shares the amplifier as the row's FROM, so the new end joins TO. A
+  /// pair that shares neither adds each end to its own side.
+  String _furtherOn({required bool fromSide}) {
+    final out = StringBuffer();
+    for (final p in furtherPairs) {
+      final sharesFrom = _shares(p.from, from);
+      final sharesTo = _shares(p.to, to);
+      // Shares TO: the new end is its FROM. Shares FROM: its TO. Shares
+      // neither: each end goes to its own side. (Sharing both cannot
+      // happen: a pair is a distinct pair of devices.)
+      final here = fromSide
+          ? (sharesFrom ? null : p.from)
+          : (sharesTo ? null : p.to);
+      if (here != null) out.write(' + ${here.farEndCell}');
+    }
+    return out.toString();
+  }
+
+  static bool _shares(ScheduleEnd a, ScheduleEnd b) =>
+      a.deviceId != null && a.deviceId == b.deviceId;
+
+  /// [id]'s text on the Termination Schedule's line for [pair]: the cable
+  /// number again, and the end columns for that pair. Everything else is
+  /// blank, so a length or a type is never printed twice for one cable.
+  String continuationCell(ScheduleColumnId id, ScheduleEndPair pair) {
+    final near = _nearOf(pair);
+    final far = _farOf(pair);
+    return switch (id) {
+      ScheduleColumnId.cableId ||
+      ScheduleColumnId.cableIdWithLifecycle => designator,
+      ScheduleColumnId.fromRoomOutlet => pair.from.locationCell,
+      ScheduleColumnId.toRackRuFace => pair.to.locationCell,
+      ScheduleColumnId.rackRuFace => near.locationCell,
+      ScheduleColumnId.device => near.deviceDesignator ?? kUnknownCell,
+      ScheduleColumnId.port => near.portCell,
+      ScheduleColumnId.farEnd => far.farEndCell,
+      ScheduleColumnId.farPort => far.portCell,
+      _ => '',
+    };
+  }
 
   /// How this run's field end terminates —
   /// `StructureOrigin.terminationField` for a home run, else a
@@ -1030,7 +1089,8 @@ final class ScheduleEntry {
     ScheduleColumnId.fieldLabel => fieldLabel ?? kUnknownCell,
     ScheduleColumnId.rackLabel => rackLabel ?? kUnknownCell,
     ScheduleColumnId.fromRoomOutlet => _fromRoomOutletCell,
-    ScheduleColumnId.toRackRuFace => to.locationCell,
+    ScheduleColumnId.toRackRuFace =>
+      '${to.locationCell}${_furtherOn(fromSide: false)}',
     ScheduleColumnId.rackRuFace => nearEnd.locationCell,
     ScheduleColumnId.device => nearEnd.deviceDesignator ?? kUnknownCell,
     ScheduleColumnId.port => nearEnd.portCell,
@@ -1055,8 +1115,12 @@ final class ScheduleEntry {
     if (boxless) {
       return base == kUnknownCell ? kNoBoxCell : '$base $kNoBoxCell';
     }
-    if (outlet == null || outlet.isEmpty) return base;
-    return base == kUnknownCell ? outlet : '$base $outlet';
+    // DR-236 §11.235.3: a cable that continues names its further far ends
+    // here, on the one row.
+    final more = _furtherOn(fromSide: true);
+    if (outlet == null || outlet.isEmpty) return '$base$more';
+    final at = base == kUnknownCell ? outlet : '$base $outlet';
+    return '$at$more';
   }
 
   String get _conductorNotesCell {
@@ -1188,12 +1252,53 @@ Schedule buildSchedule(RackDocument doc) {
   return Schedule(rows: List.unmodifiable(rows));
 }
 
+/// One further pair of a cable's ends (DR-236 §11.235.3).
+typedef ScheduleEndPair = ({ScheduleEnd from, ScheduleEnd to});
+
+ScheduleEnd _nearOf(ScheduleEndPair p) => p.to.isInRack ? p.to : p.from;
+ScheduleEnd _farOf(ScheduleEndPair p) => p.to.isInRack ? p.from : p.to;
+
+/// [link]'s pairs beyond its first conductor's (BRK-A/4): its conductors
+/// grouped by the devices (or field places) their two ends land on, the
+/// first conductor's group left out, each group oriented as `_row` orients
+/// the row (exactly one end in a rack means that end is TO).
+List<ScheduleEndPair> _furtherPairsOf(RackDocument doc, Link link) {
+  // A STRING FOR EVERY KIND: a port by its device, a place by where and
+  // what it says, every open end as one "nowhere". Neither `PlaceEndpoint`
+  // nor `OpenEndpoint` has value equality, so keying on the object made
+  // each conductor of a multi-pair cable to one place a pair of its own.
+  // (`Uuid` is an extension type, not an `Object`, hence `.v`.)
+  String keyOf(Endpoint e) => switch (e) {
+    PortEndpoint(:final portId) =>
+      'dev:${(doc.ports[portId]?.deviceId ?? portId).v}',
+    PlaceEndpoint(:final locationId, :final description) =>
+      'place:${locationId?.v}:$description',
+    OpenEndpoint() => 'open',
+  };
+
+  final conductors = link.conductors;
+  if (conductors.length < 2) return const <ScheduleEndPair>[];
+  final first = conductors.first;
+  final seen = <(String, String)>{(keyOf(first.from), keyOf(first.to))};
+  final out = <ScheduleEndPair>[];
+  for (final c in conductors.skip(1)) {
+    if (!seen.add((keyOf(c.from), keyOf(c.to)))) continue;
+    final a = _endOf(doc, c.from);
+    final b = _endOf(doc, c.to);
+    final flip = a.isInRack && !b.isInRack;
+    out.add((from: flip ? b : a, to: flip ? a : b));
+  }
+  return List<ScheduleEndPair>.unmodifiable(out);
+}
+
 ScheduleEntry _row(RackDocument doc, Link link) {
   final conductors = link.conductors;
-  // A Link's ends ARE its conductors' ends, and CR-014 gives every
-  // conductor of one cable the same physical pair, so the first speaks
-  // for the link — the identical assumption `linkClassOf` makes, spelled
-  // the same way so the two cannot drift.
+  // THE FIRST CONDUCTOR'S ENDS, AND THAT IS NOW KNOWN TO BE INCOMPLETE.
+  // This said CR-014 gives every conductor of one cable the same pair; it
+  // does not, and a cable may reach N devices (DR-236). For every cable
+  // with one pair of devices this is the whole answer. A cable that
+  // reaches further prints its far ends together on one row, which is
+  // BRK-A/4's (`#1007`) and DR-236 §11.235.3's, not this reader's.
   final first = conductors.isEmpty ? null : conductors.first;
   final endA = first == null ? ScheduleEnd.none : _endOf(doc, first.from);
   final endB = first == null ? ScheduleEnd.none : _endOf(doc, first.to);
@@ -1299,6 +1404,7 @@ ScheduleEntry _row(RackDocument doc, Link link) {
     notes: _trimToNull(link.notes),
     wiringStandard: effectiveWiringStandard(doc, link),
     rackTerminationType: link.structureOrigin?.terminationRack,
+    furtherPairs: _furtherPairsOf(doc, link),
     adapterNotes: List.unmodifiable(<String>[
       for (final a in link.inlineAdapters) _adapterNote(doc, a),
     ]),
@@ -1387,6 +1493,11 @@ Uuid? _roomIdOf(ScheduleEnd from, ScheduleEnd to, Outlet? outlet) =>
 Uuid? roomOfLink(RackDocument doc, Link link) {
   final conductors = link.conductors;
   if (conductors.isEmpty) return null;
+  // THE FIRST CONDUCTOR IS THE CABLE'S FIRST FAR END. A cable may reach N
+  // devices (CR-014, DR-236), and a set added to it appends after the
+  // conductors already there, so a 16/4 tapped and continued is placed in
+  // its first speaker's room. That is the row's room on DR-236 §11.235.3's
+  // one Pull Sheet row; where the run continues is the row's far ends.
   final first = conductors.first;
   final endA = _endOf(doc, first.from);
   final endB = _endOf(doc, first.to);

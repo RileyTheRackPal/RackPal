@@ -1,5 +1,27 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-fifteenth entry)
+
+* **Progress**: BRK-A built on `brk-a`: `#1004` (`2d7bc795`), `#1005` (`c3befee4`), `#1006` (`d0435993`), `#1007`
+  (`dee64537`), `#1008` (`ea591673`). DR-236 marked built; docs/12 §4.47. `#1010` filed (CON-001 on every
+  amplifier-to-in-wall-speaker run).
+* **Note**: **A PAIRED-INDEX LOOP IS A TWO-ENDS ASSUMPTION IN DISGUISE.** The pill loop read `ends[i]` beside
+  `pillAt[i]`, correct for every two-ended cable ever drawn and wrong for the first that branched. Census the
+  loops that zip two lists, not only the reads of `.first`.
+* **Note**: **A VALUE THAT IS NULL ON BOTH SIDES MAKES EQUALITY VACUOUS.** "The footage is the same" passed
+  with no footage at all; asserting the value itself caught it. Assert what the number is, then that it is
+  the same.
+
+## 2026-10-04 (hundred-and-fourteenth entry)
+
+* **Progress**: `adapters-1001` merged at `50dc9576` (PR 204); `#1001` closed. BRK-A opened on branch `brk-a`:
+  Epic `#1003` under the v1 Saga, `#1000` moved under it, decomposed into `#1004` to `#1009` before any code.
+* **Creation**: [DR-236](/decisions/dr-236-one-cable-several-sets-several-devices.md), a §8.3 amendment.
+* **Note**: **A COMMENT CAN CITE A RULING FOR ITS OPPOSITE.** Six readers take a cable's ends from its first
+  conductor "because CR-014 fixes every conductor of one cable to the same pair"; CR-014 rules that a cable may
+  reach N devices. The scope question ("is this v1.1?") was answered by reading the ruling the code cited,
+  which showed the model was v1 all along and only the authoring was deferred.
+
 ## 2026-10-04 (hundred-and-thirteenth entry)
 
 * **Progress**: `debt-908-909` merged at `02f38325` (PR 203); `#908`, `#909`, `#999` closed. `#1002` filed (a

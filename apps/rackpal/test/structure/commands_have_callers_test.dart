@@ -194,6 +194,10 @@ const Map<String, String> _exempt = {
   // comment, which the strip above now fixes. `AddLinkCommand` exists,
   // is used twenty-one times, and is deliberately not reachable, so it
   // moved to `_infrastructure` below rather than leaving the list.
+
+  // `#1006` CLOSED ITS ROW. `AppendSetToLinkCommand` landed a commit ahead
+  // of its host (BRK-A/2), exempted here; the cable bar's "Add a set to
+  // this cable" (BRK-A/3, DR-236 §11.235.2) is what reaches it now.
 };
 
 /// Commands that are NOT reachable from a person and are not supposed to

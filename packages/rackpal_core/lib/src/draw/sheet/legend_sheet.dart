@@ -217,6 +217,10 @@ LegendSheet buildLegendSheet({
   /// A cable an interconnect sheet in this set prints with an adapter's
   /// mark on it, or null when none does (DR-235 §11.234.5).
   SignalStyle? adapterSample,
+
+  /// A cable a drawn interconnect sheet prints with a branch and its
+  /// junction dot, or null when none does (DR-236, BRK-A/5).
+  SignalStyle? junctionSample,
   SheetPalette palette = const SheetPalette(),
 }) {
   assert(
@@ -386,6 +390,7 @@ LegendSheet buildLegendSheet({
       tagPill: tagPillSample,
       netLabel: netLabelSample,
       adapter: adapterSample,
+      junction: junctionSample,
       measurer: measurer,
       palette: palette,
     ),

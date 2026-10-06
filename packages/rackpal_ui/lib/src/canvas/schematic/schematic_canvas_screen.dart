@@ -569,6 +569,17 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   /// pin-to-pin gesture is the one that applies.
   String? _wireFromSetKey;
 
+  /// The cable being CONTINUED, while the cable bar's "Add a set to this
+  /// cable" is in force (DR-236 §11.235.2, BRK-A/3), or null.
+  ///
+  /// ITS OWN FIELD, NOT THE SELECTION: pressing a pin to start the set
+  /// gesture deselects the cable, and the mode must outlive that. While it
+  /// is set, a set gesture plans with `planAppendSetToLink` and its drop
+  /// appends to this cable instead of minting one; it ends when the append
+  /// lands, on its own `Esc` rung below the wire, or when another cable is
+  /// selected.
+  Uuid? _appendTo;
+
   /// The bank a MULTI-DRAW is armed from, or null when the armed gesture
   /// is not one. The third value of the same three-way branch
   /// [_wireFromSetKey] holds the second of.
@@ -1735,8 +1746,47 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
 
   /// Selects [linkId] and says what was picked.
   void _selectCable(Uuid linkId) {
-    setState(() => _selectedLink = linkId);
+    setState(() {
+      _selectedLink = linkId;
+      // Choosing another cable is choosing not to continue this one.
+      if (_appendTo != linkId) _appendTo = null;
+    });
     _status.show('${_cableSaying(linkId)} selected — Del removes it.');
+  }
+
+  /// Whether [link] already lands on [deviceId] (DR-236's "a device the
+  /// cable already reaches").
+  bool _reaches(Link link, Uuid deviceId) => link.conductors.any(
+    (c) => [c.from, c.to].any(
+      (e) => e is PortEndpoint && _doc.ports[e.portId]?.deviceId == deviceId,
+    ),
+  );
+
+  /// "AMP-1 or SPK-1": the devices [link] reaches, for a sentence.
+  String _reachedSaying(Link link) {
+    final names = <String>[];
+    for (final c in link.conductors) {
+      for (final e in [c.from, c.to]) {
+        if (e is! PortEndpoint) continue;
+        final device = _doc.devices[_doc.ports[e.portId]?.deviceId];
+        if (device != null && !names.contains(device.designator)) {
+          names.add(device.designator);
+        }
+      }
+    }
+    return names.isEmpty ? 'a device it reaches' : names.join(' or ');
+  }
+
+  /// The cable bar's "Add a set to this cable" (DR-236 §11.235.2).
+  void _beginAppend(Uuid linkId) {
+    final link = _doc.links[linkId];
+    if (link == null) return;
+    setState(() => _appendTo = linkId);
+    _status.show(
+      'Adding to ${link.designator}: press a free set on '
+      '${_reachedSaying(link)} and drop it on the set it goes to. Esc stops '
+      'adding.',
+    );
   }
 
   /// How a sentence should NAME a cable.
@@ -1746,30 +1796,41 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
   /// citation shape, so "W004" is anchored to something the user can see on
   /// the sheet rather than being a bare identifier.
   ///
-  /// THE CONDUCTOR COUNT IS SAID WHENEVER IT IS NOT ONE, and that is the
-  /// clause this method exists for. An atomic set — a stereo pair, a
-  /// speaker pair, a component run — is ONE `Link` carrying N conductors
-  /// across N pins, and `net_label_layer.dart` draws a pennant for
-  /// `conductors.first` alone. So a user deleting what looks like the cable
-  /// on `L` is also deleting the one on `R`, and the sheet has not told
-  /// them. Until the bracket lands, this sentence is the only place that
-  /// fact is stated.
+  /// THE CONDUCTOR COUNT IS SAID WHENEVER IT IS NOT ONE. An atomic set (a
+  /// stereo pair, a speaker pair, a component run) is ONE `Link` carrying N
+  /// conductors across N pins, so a user deleting what looks like the cable
+  /// on `L` is also deleting the one on `R`. DR-174's bracket now draws
+  /// that on the sheet; this sentence still says it in words, which is what
+  /// a screen reader hears.
+  ///
+  /// EVERY DEVICE THE CABLE REACHES (DR-236 §11.235.4), each by its first
+  /// pin, in conductor order: the first is where the cable starts and the
+  /// rest follow "to", joined with `+`. This read the first conductor
+  /// alone, which named only the first speaker of a 16/4 tapped and
+  /// continued. An ordinary cable reaches two devices and reads exactly as
+  /// it did.
   String _cableSaying(Uuid linkId) {
     final link = _doc.links[linkId];
     if (link == null) return 'That cable';
+    // The first conductor's two ends are named as they always were, so a
+    // loop-through (both ends on one device) still reads "A J01 to A J02";
+    // a further device the cable reaches is then added once.
     final ends = <String>[];
-    if (link.conductors.isNotEmpty) {
-      final first = link.conductors.first;
-      for (final end in <Endpoint>[first.from, first.to]) {
+    final seen = <Uuid>{};
+    for (final (i, conductor) in link.conductors.indexed) {
+      for (final end in <Endpoint>[conductor.from, conductor.to]) {
         if (end is! PortEndpoint) continue;
         final port = _doc.ports[end.portId];
         if (port == null) continue;
         final device = _doc.devices[port.deviceId];
         if (device == null) continue;
+        if (!seen.add(device.id) && i > 0) continue;
         ends.add('${device.designator} ${port.designator}');
       }
     }
-    final where = ends.length == 2 ? ' (${ends[0]} to ${ends[1]})' : '';
+    final where = ends.length < 2
+        ? ''
+        : ' (${ends.first} to ${ends.skip(1).join(' + ')})';
     final n = link.conductors.length;
     final wide = n > 1 ? ', $n conductors' : '';
     return '${link.designator}$where$wide';
@@ -2329,6 +2390,15 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     }
     if (_wireFrom != null) {
       _cancelWire();
+      return;
+    }
+    // CONTINUING A CABLE (DR-236), BELOW THE WIRE: the first Esc lets go of
+    // the set in hand, the next stops adding to the cable.
+    if (_appendTo case final linkId?) {
+      setState(() => _appendTo = null);
+      _status.show(
+        'Stopped adding to ${_doc.links[linkId]?.designator ?? 'the cable'}.',
+      );
       return;
     }
     // THE PIN RUN IS THE SECOND RUNG, ABOVE THE FOCUS SCOPE. Innermost
@@ -3027,6 +3097,38 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     return set;
   }
 
+  /// What the set gesture from [from] onto [to] would write: the ordinary
+  /// atomic plan, or, while a cable is being continued, the plan of
+  /// appending to it (DR-236). Null when that gesture would be refused.
+  ///
+  /// ONE SEAM, so the candidate walk, the amber ring and the chip are the
+  /// same code in both modes and only the commit differs.
+  AtomicConnectPlan? _planSetGesture(
+    ResolvedPortSet from,
+    ResolvedPortSet to,
+  ) {
+    final appendTo = _appendTo;
+    if (appendTo != null) {
+      final result = planAppendSetToLink(
+        _doc,
+        linkId: appendTo,
+        fromDeviceId: from.deviceId,
+        fromSetKey: from.def.key,
+        toDeviceId: to.deviceId,
+        toSetKey: to.def.key,
+      );
+      return result is AppendSetReady ? result.plan : null;
+    }
+    final planned = planAtomicConnect(
+      _doc,
+      fromDeviceId: from.deviceId,
+      fromSetKey: from.def.key,
+      toDeviceId: to.deviceId,
+      toSetKey: to.def.key,
+    );
+    return planned is AtomicConnectReady ? planned.plan : null;
+  }
+
   /// Arms a SET gesture from [caret]'s set — one cable, N conductors.
   ///
   /// Candidates are every pin belonging to a set that `planAtomicConnect`
@@ -3047,14 +3149,8 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       final to = _atomicSetFor(pin.ref);
       if (to == null) continue;
       if (to.deviceId == from.deviceId && to.def.key == from.def.key) continue;
-      final planned = planAtomicConnect(
-        _doc,
-        fromDeviceId: from.deviceId,
-        fromSetKey: from.def.key,
-        toDeviceId: to.deviceId,
-        toSetKey: to.def.key,
-      );
-      if (planned is! AtomicConnectReady) continue;
+      final plan = _planSetGesture(from, to);
+      if (plan == null) continue;
       candidates.add(pin.ref);
       // TIER 2 PER PAIR, AND THE RING IS DR-116 §11.115.5 reaching the set
       // (DR-234 §11.233.1): a set whose pairs would spring back stays
@@ -3065,7 +3161,7 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
         () =>
             evaluatePairedSpringBack(
               _doc,
-              [for (final p in planned.plan.pairs) (p.from, p.to)],
+              [for (final p in plan.pairs) (p.from, p.to)],
               gesture: PairedGesture.set,
             ) !=
             null,
@@ -3098,7 +3194,16 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       // would make, and the ring states the set's answer (`#909`).
       _setTargets(candidates: candidates, springBack: springBack);
     });
-    if (announce) {
+    if (announce && _appendTo != null) {
+      final link = _doc.links[_appendTo!];
+      _status.show(
+        'Continuing ${link?.designator ?? 'the cable'} with the '
+        '${from.def.label} from ${_saying(caret)}: '
+        '${candidates.length} target '
+        '${candidates.length == 1 ? 'pin' : 'pins'}. '
+        'Enter or release to add it, Esc to cancel.',
+      );
+    } else if (announce) {
       _status.show(
         '${from.def.label} from ${_saying(caret)} — one cable, '
         '${from.members.length} conductors. '
@@ -3125,6 +3230,11 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     final toSet = _atomicSetFor(to);
     if (fromTarget == null || toSet == null) {
       _cancelWire();
+      return;
+    }
+    // DR-236: while a cable is being continued, the drop appends to it.
+    if (_appendTo case final linkId?) {
+      _commitAppend(linkId, fromTarget, toSet, fromSetKey, to, overriding);
       return;
     }
     final result = planAtomicConnect(
@@ -3242,6 +3352,42 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     if (from == null) {
       if (announce) _status.show('That pin is no longer in this document.');
       return false;
+    }
+
+    // CONTINUING A CABLE COMES FIRST (DR-236 §11.235.2). The person pressed
+    // "Add a set to this cable" and is now choosing which set; any other
+    // gesture from here would make a new cable they did not ask for. So a
+    // pin that cannot start the append is answered in words, and the mode
+    // stays, rather than falling through to an ordinary connect.
+    if (_appendTo case final linkId?) {
+      final link = _doc.links[linkId];
+      final set = _atomicSetFor(caret);
+      if (link == null) {
+        setState(() => _appendTo = null);
+        if (announce) _status.show('That cable is no longer in this project.');
+        return false;
+      }
+      if (set == null) {
+        if (announce) {
+          _status.show(
+            'To continue ${link.designator}, start from a pin in a set '
+            '(a speaker or stereo pair) on ${_reachedSaying(link)}. Esc '
+            'stops adding.',
+          );
+        }
+        return false;
+      }
+      if (!_reaches(link, set.deviceId)) {
+        if (announce) {
+          _status.show(
+            '${link.designator} does not reach '
+            '${_doc.devices[set.deviceId]?.designator ?? 'that device'}. '
+            'Start from ${_reachedSaying(link)}. Esc stops adding.',
+          );
+        }
+        return false;
+      }
+      return _armSetFrom(caret, set, announce: announce);
     }
 
     // ═════════════════════════════════════════════════════════════════
@@ -4453,6 +4599,10 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
       _status.show("That cable's sets are no longer in this document.");
       return;
     }
+    if (_appendTo case final linkId?) {
+      _declareAppendAdapter(linkId, fromTarget, toSet, setKey);
+      return;
+    }
     final planned = planAtomicConnect(
       _doc,
       fromDeviceId: fromTarget.deviceId,
@@ -4527,6 +4677,127 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
     } finally {
       _committingWire = false;
     }
+    _clearWire();
+    _status.show(outcome);
+  }
+
+  /// Appends the armed set to the cable being continued (DR-236
+  /// §11.235.2): planned again rather than remembered, tier 2 per pair with
+  /// DR-234's chip, then one undo step.
+  void _commitAppend(
+    Uuid linkId,
+    ConnectTarget fromTarget,
+    ResolvedPortSet toSet,
+    String fromSetKey,
+    PinRef to,
+    bool overriding,
+  ) {
+    final result = planAppendSetToLink(
+      _doc,
+      linkId: linkId,
+      fromDeviceId: fromTarget.deviceId,
+      fromSetKey: fromSetKey,
+      toDeviceId: toSet.deviceId,
+      toSetKey: toSet.def.key,
+    );
+    switch (result) {
+      case AppendSetRefused(:final message, :final ruleId):
+        _clearWire();
+        _status.show(ruleId == null ? message : '$ruleId — $message');
+      case AppendSetReady(:final plan, :final command):
+        if (!overriding) {
+          final verdict = evaluatePairedSpringBack(
+            _doc,
+            [for (final p in plan.pairs) (p.from, p.to)],
+            gesture: PairedGesture.set,
+          );
+          if (verdict != null) {
+            _springBackOff(to, verdict.chip);
+            return;
+          }
+        }
+        _committingWire = true;
+        try {
+          widget.controller.run(command);
+        } finally {
+          _committingWire = false;
+        }
+        setState(() {
+          _pinCaret = to;
+          _wireFrom = null;
+          _wireFromSetKey = null;
+          _appendTo = null;
+          _clearTargets();
+        });
+        final link = _doc.links[linkId];
+        final reached = _doc.devices[toSet.deviceId]?.designator;
+        _status.show(
+          '${link?.designator ?? 'The cable'} now reaches '
+          '${reached ?? 'that device'} too: one cable, '
+          '${link?.conductors.length ?? 0} conductors. Ctrl+Z takes the set '
+          'back off.',
+        );
+    }
+  }
+
+  /// `Declare an adapter` while continuing a cable: the set appended and
+  /// the adapter declared on that same cable, in one undo step.
+  void _declareAppendAdapter(
+    Uuid linkId,
+    ConnectTarget fromTarget,
+    ResolvedPortSet toSet,
+    String setKey,
+  ) {
+    final result = planAppendSetToLink(
+      _doc,
+      linkId: linkId,
+      fromDeviceId: fromTarget.deviceId,
+      fromSetKey: setKey,
+      toDeviceId: toSet.deviceId,
+      toSetKey: toSet.def.key,
+    );
+    if (result is! AppendSetReady) {
+      _dismissChip();
+      _status.show('That set can no longer be added to the cable.');
+      return;
+    }
+    final verdict = evaluatePairedSpringBack(
+      _doc,
+      [for (final p in result.plan.pairs) (p.from, p.to)],
+      gesture: PairedGesture.set,
+    );
+    if (verdict == null ||
+        !verdict.chip.remedies.contains(SpringBackRemedy.declareAdapter)) {
+      _status.show('An adapter cannot answer for this set any more.');
+      return;
+    }
+    late String outcome;
+    _committingWire = true;
+    try {
+      widget.controller.transact(LabelKey.declareInlineAdapter, (tx) {
+        tx.add(result.command);
+        final adapter = buildDeclareAdapterCommand(
+          doc: _doc,
+          linkId: linkId,
+          from: verdict.from,
+          to: verdict.to,
+          ruleId: SpringBackRule.connectorsDoNotMate.id,
+        );
+        switch (adapter) {
+          case DeclareAdapterRefused(:final message):
+            outcome = message;
+          case DeclareAdapterReady(command: final declare):
+            tx.add(declare);
+            outcome =
+                '${_doc.links[linkId]?.designator ?? 'The cable'} now '
+                'reaches ${_doc.devices[toSet.deviceId]?.designator} too, '
+                'with an adapter declared on it.';
+        }
+      });
+    } finally {
+      _committingWire = false;
+    }
+    setState(() => _appendTo = null);
     _clearWire();
     _status.show(outcome);
   }
@@ -5100,6 +5371,12 @@ class _SchematicCanvasScreenState extends State<SchematicCanvasScreen>
                   adapters: _adaptersOf(id),
                   onAdapterModel: (i, model) => _setAdapterModel(id, i, model),
                   onRemoveAdapter: (i) => _removeAdapter(id, i),
+                  // DR-236 §11.235.2, BRK-A/3. Not for a home run, which
+                  // `planAppendSetToLink` refuses: no button that can only
+                  // ever say no.
+                  onAddSet: _doc.links[id]!.structureOrigin == null
+                      ? () => _beginAppend(id)
+                      : null,
                 ),
               ],
               const Divider(height: 1),

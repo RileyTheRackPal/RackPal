@@ -1823,6 +1823,28 @@ void main() {
       );
     });
 
+    // DR-236 (BRK-A/2): a conductor appended to an existing cable. Built
+    // directly rather than planned, because the house starter holds no
+    // second set to plan from; the mask is about what it writes.
+    test('AppendSetToLinkCommand', () {
+      final doc = _house();
+      final link = doc.links.values.first;
+      _covers(
+        doc,
+        AppendSetToLinkCommand(
+          linkId: link.id,
+          conductors: [
+            Conductor(
+              from: link.conductors.first.from,
+              to: const OpenEndpoint('continued'),
+            ),
+          ],
+          materialisations: const [],
+        ),
+        expectAtLeast: {'links'},
+      );
+    });
+
     test('BindEndpointCommand', () {
       final doc = _house();
       final link = _aHomeRun(doc, landed: false);

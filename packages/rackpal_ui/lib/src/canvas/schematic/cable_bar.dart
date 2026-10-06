@@ -44,6 +44,13 @@ const String kCrossoverNotSet = 'Not set';
 /// The crossover dropdown, so a test can find it.
 const Key kCableBarCrossoverKey = ValueKey('cable-bar-crossover');
 
+/// The button that continues the cable to another device (DR-236
+/// §11.235.2).
+const String kCableBarAddSetLabel = 'Add a set to this cable';
+
+/// That button, so a test can find it.
+const Key kCableBarAddSetKey = ValueKey('cable-bar-add-set');
+
 /// What an adapter row starts with, before its connectors.
 const String kCableBarAdapterLabel = 'Adapter';
 
@@ -70,6 +77,7 @@ class SchematicCableBar extends StatelessWidget {
     this.adapters = const <CableBarAdapter>[],
     this.onAdapterModel,
     this.onRemoveAdapter,
+    this.onAddSet,
     super.key,
   });
 
@@ -91,6 +99,9 @@ class SchematicCableBar extends StatelessWidget {
 
   /// Called with the position of the adapter to take off.
   final ValueChanged<int>? onRemoveAdapter;
+
+  /// "Add a set to this cable" (DR-236 §11.235.2), or null for no button.
+  final VoidCallback? onAddSet;
 
   @override
   Widget build(BuildContext context) {
@@ -136,6 +147,16 @@ class SchematicCableBar extends StatelessWidget {
                   ],
                   onChanged: onCrossover,
                 ),
+                // DR-236: one cable may carry several sets to several
+                // devices, and this is where a person says so.
+                if (onAddSet != null) ...[
+                  const SizedBox(width: 16),
+                  TextButton(
+                    key: kCableBarAddSetKey,
+                    onPressed: onAddSet,
+                    child: const Text(kCableBarAddSetLabel),
+                  ),
+                ],
               ],
             ),
             for (final (i, adapter) in adapters.indexed)

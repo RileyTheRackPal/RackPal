@@ -211,6 +211,11 @@ Set<Uuid> _datumRacksFor(RackDocument doc, Uuid roomId) {
     if (roomOfLink(doc, link) != roomId) continue;
     final conductors = link.conductors;
     if (conductors.isEmpty) continue;
+    // The first conductor holds the cable's rack end. A cable may reach N
+    // devices (DR-236), and a set added to it appends after the conductors
+    // already there, so the conductor the run was first drawn with, from
+    // the head end, stays first. A later conductor need not touch the rack
+    // at all: one added from the first speaker onward does not.
     final first = conductors.first;
     final rackFrom = rackOfEndpoint(doc, first.from);
     final rackTo = rackOfEndpoint(doc, first.to);

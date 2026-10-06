@@ -445,10 +445,10 @@ SchematicSymbolTier buildSchematicSymbolTier({
   final edges = <LayoutEdge>[];
   final feeds = <String>{};
   for (final link in links) {
-    final edge = _edgeFor(link, deviceOfPort, portDefOfPort, drawnIds);
-    if (edge == null) continue;
-    edges.add(edge);
-    feeds.add(edge.from);
+    for (final edge in _edgesFor(link, deviceOfPort, portDefOfPort, drawnIds)) {
+      edges.add(edge);
+      feeds.add(edge.from);
+    }
   }
 
   // ── the graph's nodes ────────────────────────────────────────────────
@@ -770,12 +770,13 @@ SchematicScene buildSchematicScene({
     unnamedLinkIds: labelLayer.unnamedLinkIds,
     unlabelledLinkIds: labelLayer.unlabelledLinkIds,
     underGlyphedFamilyIds: labelLayer.underGlyphedFamilyIds,
-    reversedLinkIds: List<Uuid>.unmodifiable(<Uuid>[
-      for (final id in layout.reversedEdgeIds) Uuid(id),
-    ]),
-    nonForwardLinkIds: List<Uuid>.unmodifiable(<Uuid>[
-      for (final id in layout.nonForwardEdgeIds) Uuid(id),
-    ]),
+    // A cable with several edges (DR-236) is reported once, by its own id.
+    reversedLinkIds: List<Uuid>.unmodifiable(<Uuid>{
+      for (final id in layout.reversedEdgeIds) _linkIdOfEdge(id),
+    }),
+    nonForwardLinkIds: List<Uuid>.unmodifiable(<Uuid>{
+      for (final id in layout.nonForwardEdgeIds) _linkIdOfEdge(id),
+    }),
     crossings: layout.crossings,
     layout: layout,
     symbolTier: tier,
@@ -1236,55 +1237,77 @@ Map<Uuid, Pt> storedSymbolPositions(
 /// none.
 ///
 /// ── DIRECTION IS THE MODEL'S, NOT AN INFERENCE ──────────────────────────
-/// A `Link`'s direction is its first conductor's `from → to`. CR-014 fixes
-/// each conductor at exactly two ends and every conductor of one cable
-/// shares the same pair of physical ends, so the first conductor speaks for
-/// the link — the same reading `derived/link_class.dart` takes, and for the
-/// same reason. `PortDirection` is NOT consulted: it drives the ARROWHEAD
-/// in `symbol_layer.dart`, and a graph that re-derived direction from it
-/// would be a second answer to a question the model already answers through
-/// `Ctrl+Shift+R` (docs/05 §9's `Reverse direction`).
+/// An edge's direction is its conductor's `from → to`. `PortDirection` is
+/// NOT consulted: it drives the ARROWHEAD in `symbol_layer.dart`, and a
+/// graph that re-derived direction from it would be a second answer to a
+/// question the model already answers through `Ctrl+Shift+R` (docs/05 §9's
+/// `Reverse direction`).
 ///
-/// `null` in three cases, none of them an error:
+/// ── ONE EDGE PER DEVICE PAIR THE CABLE JOINS (DR-236 §11.235.4) ─────────
+/// This read the first conductor alone, on the ground that "CR-014 ...
+/// every conductor of one cable shares the same pair of physical ends".
+/// CR-014 rules the opposite: a Link may reach N devices. A 16/4 tapped at
+/// one speaker and continued to the next joins the amplifier to two
+/// speakers, and laid out from its first conductor the second speaker
+/// floated free of the cable that feeds it. So every conductor is read and
+/// each distinct (from device, to device) pair is one edge, in conductor
+/// order. An ordinary cable has one pair and yields the one edge it did,
+/// under the link's own id. A further pair's id is the link's id with
+/// `#1`, `#2` and so on after it, because the layout keys edges by id;
+/// [_linkIdOfEdge] strips it on the way back out.
+///
+/// No edge for a conductor in three cases, none of them an error:
 ///   * an end that is not a `PortEndpoint`, or a port this document does not
 ///     contain — a home run to the field has no device to lay out
 ///     (AC-018's `PlaceEndpoint`/`OpenEndpoint`);
 ///   * an end on a device with no symbol (see the file header);
 ///   * both ends on ONE device — a loop-through is a real cable and says
 ///     nothing whatever about layering.
-LayoutEdge? _edgeFor(
+List<LayoutEdge> _edgesFor(
   Link link,
   Map<Uuid, Uuid> deviceOfPort,
   Map<Uuid, PortDef> portDefOfPort,
   Set<String> drawnIds,
 ) {
-  if (link.conductors.isEmpty) return null;
-  final conductor = link.conductors.first;
-  final from = _portOf(conductor.from);
-  final to = _portOf(conductor.to);
-  if (from == null || to == null) return null;
+  final edges = <LayoutEdge>[];
+  final seen = <(String, String)>{};
+  for (final conductor in link.conductors) {
+    final from = _portOf(conductor.from);
+    final to = _portOf(conductor.to);
+    if (from == null || to == null) continue;
 
-  final fromDevice = deviceOfPort[from];
-  final toDevice = deviceOfPort[to];
-  if (fromDevice == null || toDevice == null) return null;
-  if (fromDevice == toDevice) return null;
-  if (!drawnIds.contains(fromDevice.v)) return null;
-  if (!drawnIds.contains(toDevice.v)) return null;
+    final fromDevice = deviceOfPort[from];
+    final toDevice = deviceOfPort[to];
+    if (fromDevice == null || toDevice == null) continue;
+    if (fromDevice == toDevice) continue;
+    if (!drawnIds.contains(fromDevice.v)) continue;
+    if (!drawnIds.contains(toDevice.v)) continue;
+    if (!seen.add((fromDevice.v, toDevice.v))) continue;
 
-  // docs/05 §10.2 phase 0's bias: "the real cycles are AVR↔display eARC and
-  // matrix loop-throughs, so bias the heuristic to reverse edges whose
-  // family declares a return channel". `PortDef.returnChannel` is that
-  // declaration and it is the only field in the model that makes one.
-  final declaresReturn =
-      portDefOfPort[from]?.returnChannel != null ||
-      portDefOfPort[to]?.returnChannel != null;
+    // docs/05 §10.2 phase 0's bias: "the real cycles are AVR↔display eARC
+    // and matrix loop-throughs, so bias the heuristic to reverse edges whose
+    // family declares a return channel". `PortDef.returnChannel` is that
+    // declaration and it is the only field in the model that makes one.
+    final declaresReturn =
+        portDefOfPort[from]?.returnChannel != null ||
+        portDefOfPort[to]?.returnChannel != null;
 
-  return LayoutEdge(
-    id: link.id.v,
-    from: fromDevice.v,
-    to: toDevice.v,
-    preferReversed: declaresReturn,
-  );
+    edges.add(
+      LayoutEdge(
+        id: edges.isEmpty ? link.id.v : '${link.id.v}#${edges.length}',
+        from: fromDevice.v,
+        to: toDevice.v,
+        preferReversed: declaresReturn,
+      ),
+    );
+  }
+  return edges;
+}
+
+/// The link an edge id came from: [_edgesFor]'s `#n` suffix removed.
+Uuid _linkIdOfEdge(String id) {
+  final hash = id.indexOf('#');
+  return Uuid(hash < 0 ? id : id.substring(0, hash));
 }
 
 Uuid? _portOf(Endpoint endpoint) =>

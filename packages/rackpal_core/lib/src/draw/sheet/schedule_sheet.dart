@@ -186,10 +186,15 @@ final class ScheduleGroupBand extends ScheduleSheetItem {
 /// One run: each column's wrapped lines, and the entry for the chip.
 @immutable
 final class ScheduleSheetRow extends ScheduleSheetItem {
-  const ScheduleSheetRow(this.entry, this.cells);
+  const ScheduleSheetRow(this.entry, this.cells, {this.continuation = false});
 
   final ScheduleEntry entry;
   final List<List<String>> cells;
+
+  /// A further line of [entry]'s cable on the Termination Schedule (DR-236
+  /// §11.235.3): its cable number and one further pair of ends, and no type
+  /// chip, which the cable's first line already carries.
+  final bool continuation;
 
   String get designator => entry.designator;
 
@@ -409,6 +414,28 @@ List<ScheduleSheetPage> paginateSchedule({
               }(),
         ]),
       );
+      // DR-236 §11.235.3: A LINE PER FURTHER PAIR of a cable that reaches
+      // more devices, under the same cable number, on the Termination
+      // Schedule only. The Pull Sheet names them on its one row instead.
+      if (view.preset == SchedulePreset.terminationSchedule) {
+        for (final pair in entry.furtherPairs) {
+          flat.add(
+            ScheduleSheetRow(entry, [
+              for (final (i, column) in view.columns.indexed)
+                switch (wrapMeasured(
+                  entry.continuationCell(column.id, pair),
+                  widths[i] - 2 * _kCellPad,
+                  style: _style(0xFF000000),
+                  measurer: measurer,
+                  maxLines: _kMaxLines,
+                )) {
+                  final lines when lines.isEmpty => const <String>[''],
+                  final lines => lines,
+                },
+            ], continuation: true),
+          );
+        }
+      }
     }
   }
 
@@ -665,7 +692,7 @@ ScheduleSheet buildScheduleSheet({
             continue;
           }
           var offset = 0.0;
-          final isType = id == ScheduleColumnId.type;
+          final isType = id == ScheduleColumnId.type && !item.continuation;
           if (isType) {
             final family = item.entry.signalFamilyId;
             if (family != null &&

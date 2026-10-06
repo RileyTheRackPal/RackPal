@@ -1233,7 +1233,28 @@ $SuiteFloors = @{
     # adapter, no mark; a mark on EACH pennant's own leader and nothing else
     # added; a drawn wire's mark at its midpoint and inside its ink; the
     # legend row absent and present).
-    'rackpal_core'   = 5576
+    # 5583 at `#1004` (BRK-A/1, DR-236 §11.235.4): +7 in scene/multi_device_
+    # link_test.dart (a tap-and-continue whose second speaker is in another
+    # rack as a pull; one rack as a jumper; a set open at its first position
+    # by its landed ends; one conductor to nowhere still a field cable; the
+    # ordinary cable's two pennants; the 16/4's four with one name; SPK-2
+    # laid out downstream). Each old reader restored fails its own case.
+    # 5591 at `#1005` (BRK-A/2, DR-236 §11.235.2): +7 in commands/append_
+    # set_test.dart (zone 2 continuing W001 as one cable; append then undo
+    # byte-identical with the ports it made; a device the cable does not
+    # reach; another family; tier 1 on a full speaker; a home run; a
+    # refused plan writing nothing) and +1 epoch-mask case.
+    # 5597 at `#1007` (BRK-A/4, DR-236 §11.235.3): +6 in sheet/schedule_
+    # further_ends_test.dart (an ordinary cable unchanged; the 16/4 one row
+    # naming SPK-2 on the side it does not share; its footage once; the
+    # Termination Schedule's second line under W012 with no length; the
+    # Pull Sheet's one line; speakers in the room joining FROM).
+    # 5603 at `#1008` (BRK-A/5, DR-236 §11.235.5): +6 in scene/branched_
+    # wire_test.dart (two devices one trace and no dot; the 16/4 as trunk,
+    # joiner and branch with one dot and three pills; the branch's pill in
+    # SPK-2's ink; a bowtie never on the junction; the legend's dot row
+    # absent and present).
+    'rackpal_core'   = 5603
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1966,7 +1987,13 @@ $SuiteFloors = @{
     # adapter_test.dart (no row without an adapter; named by connectors; a
     # model as one undo step the field follows; blank as absent; a W and a
     # Backspace in the field driving nothing; Remove and the same one back).
-    'rackpal_ui'     = 2130
+    # 2131 at `#1004` (BRK-A/1): +1 in canvas/schematic/schematic_cable_bar_
+    # test.dart, the bar's sentence naming a third device the cable reaches.
+    # 2134 at `#1006` (BRK-A/3, DR-236 §11.235.2): +3 in canvas/schematic/
+    # schematic_append_set_test.dart on the real A04 and two F05s (the exit
+    # criterion's gesture through CON-001's chip and Connect anyway, one
+    # undo; a device the cable does not reach answered in words; Esc).
+    'rackpal_ui'     = 2134
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

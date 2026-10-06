@@ -2059,6 +2059,35 @@ off. Not yet driven by hand.
 
 ---
 
+### 4.47 BRK-A: one cable, several sets, several devices · 2026-10-06 · `#1003`, `#1004` to `#1009` · `DR-236`, `CR-014` · no version move
+
+The question arrived as scope ("is a 16/4 tapped and continued v1.1?") and was answered by reading the ruling
+the code cited for its shortcut. CR-014 has let a `Link` reach N devices since the corpus was reconciled;
+AC-053 deferred only the authoring. The user pulled the authoring into v1 (DR-236, a §8.3 amendment), and
+the Epic was decomposed into six chapters before any code.
+
+**Built.** BRK-A/1: the four readers that must see every conductor now do (the classifier, net labels, the
+layout, the bar's sentence), each old reader restored failing its own case; the census corrected the
+ruling's list (§11.235.7). BRK-A/2: `planAppendSetToLink` and its command, append then undo byte-identical
+with the ports it made. BRK-A/3: **Add a set to this cable** on the bar, through DR-234's chip. BRK-A/4: one
+Pull Sheet row naming the further end on the side its pair does not share, and a Termination Schedule line
+per further pair, with the footage counted once. BRK-A/5: trunk and branch with a junction dot, keyed on
+T0.01.
+
+**Found on the way.** The pill loop paired `ends[i]` with `pillAt[i]`, which would have given SPK-2's pill to
+the amplifier's ink. `PlaceEndpoint` has no value equality, so the first further-pairs key made a pair of
+every conductor to one place. A footage test passed vacuously because the fixture set a routed length and
+the schedule prints the cut length. And the real A04's binding posts mate with banana plugs only, so
+`CON-001` springs back on every amplifier-to-in-wall-speaker run (`#1010`, filed for the user).
+
+**Evidence.** `multi_device_link_test` (+7), `append_set_test` (+7, and an epoch-mask case),
+`schematic_append_set_test` (+3, the real A04 and two F05s through the screen),
+`schedule_further_ends_test` (+6), `branched_wire_test` (+6) and the bar's sentence case (+1). The
+interconnect sheet rendered through pdfium and looked at. **The exit criterion is met in tests and not yet
+driven by a person**, so the Epic stays open for that.
+
+---
+
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`
