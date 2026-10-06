@@ -112,14 +112,24 @@ DBox adapterMarkBox(DPt centre, double half, double strokeWidth) =>
 /// falls on runs horizontally: where a drawn wire's mark sits, and which
 /// way it faces. The first point, horizontal, for a polyline with no
 /// length.
-({DPt at, bool horizontal}) polylineMidpoint(List<DPt> points) {
+({DPt at, bool horizontal}) polylineMidpoint(List<DPt> points) =>
+    polylinePointAt(points, 0.5);
+
+/// The point [fraction] of the way along [points] by length (0 is the
+/// start, 1 the end), and whether its segment runs horizontally. A cable
+/// that branches (DR-236) puts its junction at the middle and its adapter
+/// mark at a quarter, so the two never sit on one point.
+({DPt at, bool horizontal}) polylinePointAt(
+  List<DPt> points,
+  double fraction,
+) {
   if (points.length < 2) return (at: points.first, horizontal: true);
   var total = 0.0;
   for (var i = 1; i < points.length; i++) {
     total += _len(points[i - 1], points[i]);
   }
   if (total == 0) return (at: points.first, horizontal: true);
-  var left = total / 2;
+  var left = total * fraction.clamp(0.0, 1.0);
   for (var i = 1; i < points.length; i++) {
     final a = points[i - 1];
     final b = points[i];

@@ -41,7 +41,7 @@ import 'package:rackpal_core/src/draw/scene/signal_style.dart' show SignalStyle;
 import 'package:rackpal_core/src/draw/scene/symbol_layer.dart'
     show SchematicPalette;
 import 'package:rackpal_core/src/draw/scene/wire_trace.dart'
-    show tagPillSampleOps;
+    show kJunctionDotGu, tagPillSampleOps;
 import 'package:rackpal_core/src/draw/sheet/equipment_sheet.dart'
     show wrapMeasured;
 import 'package:rackpal_core/src/draw/sheet/sheet_frame.dart';
@@ -319,6 +319,10 @@ const String kLegendNetLabelMeaning =
     'Net label: a cable shown as a named stub at each end, where its '
     'sheet notes it';
 
+/// The junction dot's meaning line (DR-236, BRK-A/5).
+const String kLegendJunctionMeaning =
+    'Dot: one cable branching to another device';
+
 /// The adapter mark's meaning line (DR-235 §11.234.5).
 const String kLegendAdapterMeaning =
     'Bowtie: an in-line adapter declared on the cable';
@@ -343,6 +347,7 @@ LegendBlock conventionsBlock({
   LegendCableSample? tagPill,
   LegendCableSample? netLabel,
   SignalStyle? adapter,
+  SignalStyle? junction,
   TextMeasurer? measurer,
   SheetPalette palette = const SheetPalette(),
 }) {
@@ -481,6 +486,33 @@ LegendBlock conventionsBlock({
       ..add(
         OpText(
           kLegendAdapterMeaning,
+          DPt(sampleW + 8, y),
+          _text(kLegendBlockPt, palette.text),
+        ),
+      );
+    y += kLegendBlockLine;
+  }
+  // DR-236 (BRK-A/5), joining in the change that first prints it (DR-208
+  // §11.207.1): the dot on a short run of the cable it was found on, at
+  // the size the wire layer draws it.
+  if (junction != null) {
+    final r = kJunctionDotGu * kSchematicUnitsPerGrid;
+    ops
+      ..add(
+        OpLine(
+          DPt(0, y),
+          DPt(sampleW, y),
+          Stroke(
+            argb: junction.argb,
+            widthPt: junction.widthPt,
+            dash: junction.dash,
+          ),
+        ),
+      )
+      ..add(OpCircle(DPt(sampleW / 2, y), r, fill: Fill(junction.argb)))
+      ..add(
+        OpText(
+          kLegendJunctionMeaning,
           DPt(sampleW + 8, y),
           _text(kLegendBlockPt, palette.text),
         ),

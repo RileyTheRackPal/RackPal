@@ -1249,7 +1249,12 @@ $SuiteFloors = @{
     # naming SPK-2 on the side it does not share; its footage once; the
     # Termination Schedule's second line under W012 with no length; the
     # Pull Sheet's one line; speakers in the room joining FROM).
-    'rackpal_core'   = 5597
+    # 5603 at `#1008` (BRK-A/5, DR-236 §11.235.5): +6 in scene/branched_
+    # wire_test.dart (two devices one trace and no dot; the 16/4 as trunk,
+    # joiner and branch with one dot and three pills; the branch's pill in
+    # SPK-2's ink; a bowtie never on the junction; the legend's dot row
+    # absent and present).
+    'rackpal_core'   = 5603
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

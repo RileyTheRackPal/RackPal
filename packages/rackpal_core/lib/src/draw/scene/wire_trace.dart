@@ -204,6 +204,10 @@ final class SchematicWireStyle {
   final double outlineWidthPt;
 }
 
+/// A junction dot's radius, in grid units: big enough to read as a join and
+/// not as a pin (DR-236, BRK-A/5).
+const double kJunctionDotGu = 0.4;
+
 /// One link's drawn rendering: where the wire runs, and what encodes it.
 @immutable
 final class DrawnWire {
@@ -212,6 +216,7 @@ final class DrawnWire {
     required this.style,
     required this.points,
     required this.ends,
+    this.junctions = const <DPt>[],
   });
 
   final Uuid linkId;
@@ -223,14 +228,21 @@ final class DrawnWire {
   final SignalStyle style;
 
   /// The wire, corner to corner, ABSOLUTE. Always ≥ 2 points; every
-  /// consecutive pair is axis-aligned.
+  /// consecutive pair is axis-aligned. For a cable that reaches more than
+  /// two devices (DR-236) this is its TRUNK; joiners and branches are drawn
+  /// beside it and are not in here.
   final List<DPt> points;
 
   /// The escape point at each end — where the wire has cleared its pin, and
   /// where the tag pill is ANCHORED. Not where the pill is centred: it
   /// hangs outboard from here, `_PillSizer.pillOps` says why. One entry for
-  /// a one-ended link (AC-018's home runs to the field), two otherwise.
+  /// a one-ended link (AC-018's home runs to the field), two for a link
+  /// between two devices, and one more for each device a branch reaches.
   final List<DPt> ends;
+
+  /// Where a branch meets the trunk, each drawn as a filled dot (DR-236,
+  /// BRK-A/5). Empty for every cable that reaches two devices.
+  final List<DPt> junctions;
 
   /// The number of corners in [points]. Never above [kMaxTraceBends].
   int get bends => points.length - 2;
@@ -761,6 +773,13 @@ DrawnWireLayer buildDrawnWireLayer({
     final List<DPt> points;
     final List<DPt> pillAt;
     final List<SymbolSide> pillSide;
+    // THE END EACH PILL BELONGS TO, by index. The pill loop used to read
+    // `ends[i]`, which matched while a cable had two ends; a branch's pill
+    // is a LATER end's, and reading `ends[i]` gave its ink to the wrong
+    // device (DR-236, BRK-A/5).
+    final pillEnds = <RenderedNetLabel>[];
+    final extra = <List<DPt>>[];
+    final junctions = <DPt>[];
     if (ends.length == 1) {
       // ONE END IS STILL A WIRE. A home run to the field (AC-018's
       // `PlaceEndpoint`/`OpenEndpoint`) has one pin and one direction, and
@@ -771,6 +790,7 @@ DrawnWireLayer buildDrawnWireLayer({
       points = <DPt>[end.pinCentre, tail];
       pillAt = <DPt>[tail];
       pillSide = <SymbolSide>[end.side];
+      pillEnds.add(end);
     } else {
       final a = ends[0];
       final b = ends[1];
@@ -793,6 +813,59 @@ DrawnWireLayer buildDrawnWireLayer({
         _escapePoint(b.pinCentre, b.side, escapeOf(b)),
       ];
       pillSide = <SymbolSide>[a.side, b.side];
+      pillEnds.addAll([a, b]);
+
+      // ═══════════════════════════════════════════════════════════════
+      // A CABLE THAT REACHES MORE: TRUNK AND BRANCH (DR-236, BRK-A/5)
+      // ═══════════════════════════════════════════════════════════════
+      // The user's choice. The first conductor's route above is the
+      // TRUNK, so every two-ended cable draws exactly as it did. Each
+      // further end is then one of two things:
+      //  * on a device the trunk already joins (the amplifier's zone 2
+      //    pair): a JOINER from its pin into the trunk's own escape point
+      //    at that device, so both pairs visibly leave as one cable;
+      //  * on another device (SPK-2): a BRANCH from a junction at the
+      //    trunk's midpoint, with its own pill, and a filled junction dot
+      //    where it meets the trunk.
+      final junction = polylineMidpoint(points);
+      for (final e in ends.skip(2)) {
+        final onTrunk = e.deviceId == a.deviceId
+            ? a
+            : (e.deviceId == b.deviceId ? b : null);
+        if (onTrunk != null) {
+          final into = _escapePoint(
+            onTrunk.pinCentre,
+            onTrunk.side,
+            escapeOf(onTrunk),
+          );
+          final out = _escapePoint(e.pinCentre, e.side, escapeOf(onTrunk));
+          extra.add(_simplify(<DPt>[e.pinCentre, out, into]));
+          growEnd(e.deviceId, DBox.fromCorners(e.pinCentre, into));
+          continue;
+        }
+        // THE BRANCH LEAVES THE TRUNK SQUARE TO IT, toward its target:
+        // across a horizontal run it goes up or down, across a vertical
+        // one left or right.
+        final j = junction.at;
+        final leaves = junction.horizontal
+            ? (e.pinCentre.y < j.y ? SymbolSide.top : SymbolSide.bottom)
+            : (e.pinCentre.x < j.x ? SymbolSide.left : SymbolSide.right);
+        extra.add(
+          orthogonalTrace(
+            fromPin: j,
+            fromSide: leaves,
+            fromEscape: 0,
+            toPin: e.pinCentre,
+            toSide: e.side,
+            toEscape: escapeOf(e),
+            toBody: symbolOf[e.deviceId]?.bodyRect,
+          ),
+        );
+        if (junctions.isEmpty) junctions.add(j);
+        pillAt.add(_escapePoint(e.pinCentre, e.side, escapeOf(e)));
+        pillSide.add(e.side);
+        pillEnds.add(e);
+      }
     }
 
     // THE FOUR CHANNELS ON ONE STROKE: hue is `argb`, dash is `dash`,
@@ -805,33 +878,38 @@ DrawnWireLayer buildDrawnWireLayer({
     // decided whether its width scales. A cable trace SCALES (CR-082:
     // "Cable traces, symbol outlines and rack rails scale") and takes the
     // ordinary 0.5 pt signal floor, not the 0.25 pt furniture one.
-    ops.add(
-      OpPolyline(
-        List<DPt>.unmodifiable(points),
-        Stroke(
-          argb: signal.argb,
-          widthPt: signal.widthPt,
-          dash: signal.dash,
-          // Both values happen to equal the defaults, and both are kept
-          // EXPLICIT anyway (hence the ignores) for `draw_source_gate_test
-          // .dart`'s reason: the two CR-082 knobs are orthogonal, and a
-          // stroke that inherits them has not decided. This one is a CABLE
-          // TRACE, the first noun in CR-082's own sentence — "Cable
-          // traces, symbol outlines and rack rails scale" — and it takes
-          // the ordinary 0.5 pt signal floor, not the 0.25 pt one only
-          // sheet furniture opts into.
-          // ignore: avoid_redundant_argument_values
-          scaleWithGeometry: true,
-          // Kept explicit for the reason stated immediately above: the two
-          // CR-082 knobs are decided together or not at all.
-          // ignore: avoid_redundant_argument_values
-          hairlineFloor: false,
-        ),
-      ),
+    final stroke = Stroke(
+      argb: signal.argb,
+      widthPt: signal.widthPt,
+      dash: signal.dash,
+      // Both values happen to equal the defaults, and both are kept
+      // EXPLICIT anyway (hence the ignores) for `draw_source_gate_test
+      // .dart`'s reason: the two CR-082 knobs are orthogonal, and a
+      // stroke that inherits them has not decided. This one is a CABLE
+      // TRACE, the first noun in CR-082's own sentence — "Cable
+      // traces, symbol outlines and rack rails scale" — and it takes
+      // the ordinary 0.5 pt signal floor, not the 0.25 pt one only
+      // sheet furniture opts into.
+      // ignore: avoid_redundant_argument_values
+      scaleWithGeometry: true,
+      // Kept explicit for the reason stated immediately above: the two
+      // CR-082 knobs are decided together or not at all.
+      // ignore: avoid_redundant_argument_values
+      hairlineFloor: false,
     );
-
-    for (final point in points) {
+    // THE TRUNK, then every joiner and branch in the same stroke: one
+    // cable, one hue, one dash, one weight.
+    for (final trace in [points, ...extra]) {
+      ops.add(OpPolyline(List<DPt>.unmodifiable(trace), stroke));
+    }
+    for (final point in [...points, for (final t in extra) ...t]) {
       grow(DBox.fromCorners(point, point));
+    }
+    // THE JUNCTION DOT, with the pills so it sits over the lines it joins.
+    for (final j in junctions) {
+      final r = kJunctionDotGu * upg;
+      pills.add(OpCircle(j, r, fill: Fill(signal.argb)));
+      grow(DBox.fromLtwh(j.x - r, j.y - r, 2 * r, 2 * r));
     }
 
     // DR-235 §11.234.5: A CABLE WITH AN ADAPTER WEARS ITS MARK HALFWAY
@@ -840,7 +918,9 @@ DrawnWireLayer buildDrawnWireLayer({
     // layer's ink but neither end's: like the trace, it belongs to the
     // route, and DR-232 places a device by what its own ends draw.
     if (link.inlineAdapters.isNotEmpty) {
-      final mid = polylineMidpoint(points);
+      // At the middle, unless a junction is there: then at a quarter, so
+      // a bowtie and a junction dot never sit on one point.
+      final mid = polylinePointAt(points, junctions.isEmpty ? 0.5 : 0.25);
       final half = kAdapterMarkHalfGu * upg;
       pills.add(
         adapterMarkOp(
@@ -865,9 +945,9 @@ DrawnWireLayer buildDrawnWireLayer({
       );
       pills.addAll(pillRun);
       // THE END'S OWN INK: its stub from pin to escape point, and below its
-      // pill. `ends` and `pillAt` are in the same order.
-      final owner = ends[i].deviceId;
-      growEnd(owner, DBox.fromCorners(ends[i].pinCentre, pillAt[i]));
+      // pill. `pillEnds` and `pillAt` are in the same order.
+      final owner = pillEnds[i].deviceId;
+      growEnd(owner, DBox.fromCorners(pillEnds[i].pinCentre, pillAt[i]));
       // The pill's own box, read back off the op rather than re-derived:
       // its text is anchored `midCenter` INSIDE that box, so the box is the
       // whole of what a pill contributes.
@@ -885,6 +965,7 @@ DrawnWireLayer buildDrawnWireLayer({
         style: signal,
         points: List<DPt>.unmodifiable(points),
         ends: List<DPt>.unmodifiable(pillAt),
+        junctions: List<DPt>.unmodifiable(junctions),
       ),
     );
   }
