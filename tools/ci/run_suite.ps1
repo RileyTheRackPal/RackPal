@@ -1239,7 +1239,12 @@ $SuiteFloors = @{
     # by its landed ends; one conductor to nowhere still a field cable; the
     # ordinary cable's two pennants; the 16/4's four with one name; SPK-2
     # laid out downstream). Each old reader restored fails its own case.
-    'rackpal_core'   = 5583
+    # 5591 at `#1005` (BRK-A/2, DR-236 §11.235.2): +7 in commands/append_
+    # set_test.dart (zone 2 continuing W001 as one cable; append then undo
+    # byte-identical with the ports it made; a device the cable does not
+    # reach; another family; tier 1 on a full speaker; a home run; a
+    # refused plan writing nothing) and +1 epoch-mask case.
+    'rackpal_core'   = 5591
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

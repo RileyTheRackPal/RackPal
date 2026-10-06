@@ -89,6 +89,7 @@ export 'src/catalog/seed_catalog.dart';
 export 'src/catalog/user_rack_presets.dart';
 export 'src/commands/acknowledgement_commands.dart';
 export 'src/commands/add_outlets.dart';
+export 'src/commands/append_set.dart';
 export 'src/commands/atomic_connect.dart';
 export 'src/commands/bind_endpoint_command.dart';
 export 'src/commands/catalog_placement.dart';

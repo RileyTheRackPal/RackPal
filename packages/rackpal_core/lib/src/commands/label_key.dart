@@ -586,6 +586,12 @@ enum LabelKey {
   setInlineAdapterModel,
   removeInlineAdapter,
 
+  // ADDING A SET TO AN EXISTING CABLE (commands/append_set.dart), BRK-A/2,
+  // DR-236. Not `atomicConnect`: no cable is made, and "Undo Connect set"
+  // in front of somebody who continued W012 to a second speaker would
+  // offer to take back a cable that still has its first speaker.
+  appendSetToLink,
+
   // A MOUNT NOTE ON AN OFF-RACK DEVICE (commands/mount_note_command.dart),
   // M5-L/`#839`, DR-130. Its own value and not `setProperty`: the field
   // lives on the `Placement` rather than on the device, and "Undo Set
