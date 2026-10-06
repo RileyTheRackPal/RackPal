@@ -241,10 +241,18 @@ Three entry points to one `RackInspector`, which replaces the Selection section:
 │  Width   [eia19 (482.6 mm)       ▾] │
 │  Usable depth [654.05] mm  ⓘ  [—]   │  ← nullable; 2-post leaves it unset
 │  Rail type    [tapped10_32       ▾] │
-│  Weight cap.  [1134] kg  ·  Own [—] │
+│  Weight cap.  [1134] kg             │
 │  Mount   ( ) Floor  (•) Wall        │
 │  Swing frame [x]   Hinge [Left ▾]   │
 │  Ground bar present  [x]            │  ← prints a note on the elevation (m21)
+├─────────────────────────────────────┤
+│ Enclosure (DR-239)                  │
+│  Overall  W [600 ] D [1000] H [2000]│
+│  Own weight   [68  ] kg             │
+│  Front door [x]  Rail [75  ] mm     │
+│                  Door [600 ] mm     │
+│  Rear door  [ ]  Rail [ —  ] mm     │
+│                  Door [ —  ] mm     │
 ├─────────────────────────────────────┤
 │ Display                             │
 │  RU numbering (•) Bottom-up ( ) Top │

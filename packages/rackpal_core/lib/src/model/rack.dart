@@ -53,17 +53,19 @@ final class Rack {
     this.fullHoleRail = false,
     RackFormFactor formFactor = RackFormFactor.floorEnclosure,
     Len? usableDepth,
-    this.overallDepth,
-    this.overallWidth,
-    this.overallHeight,
+    Len? overallDepth,
+    Len? overallWidth,
+    Len? overallHeight,
     Mass? weightCapacity,
-    this.ownWeight,
+    Mass? ownWeight,
     bool isSwingFrame = false,
     HingeSide? hingeSide,
-    this.hasFrontDoor = false,
-    this.hasRearDoor = false,
-    this.frontDoorClearance,
-    this.rearDoorClearance,
+    bool hasFrontDoor = false,
+    bool hasRearDoor = false,
+    Len? frontDoorClearance,
+    Len? rearDoorClearance,
+    Len? frontRailClearance,
+    Len? rearRailClearance,
     bool groundBarPresent = false,
     List<ZeroUChannel>? zeroUChannels,
   }) : _name = name,
@@ -81,6 +83,16 @@ final class Rack {
        _isSwingFrame = isSwingFrame,
        _hingeSide = hingeSide,
        _groundBarPresent = groundBarPresent,
+       _overallDepth = overallDepth,
+       _overallWidth = overallWidth,
+       _overallHeight = overallHeight,
+       _ownWeight = ownWeight,
+       _hasFrontDoor = hasFrontDoor,
+       _hasRearDoor = hasRearDoor,
+       _frontDoorClearance = frontDoorClearance,
+       _rearDoorClearance = rearDoorClearance,
+       _frontRailClearance = frontRailClearance,
+       _rearRailClearance = rearRailClearance,
        zeroUChannels = zeroUChannels ?? [];
 
   final Uuid id;
@@ -193,23 +205,76 @@ final class Rack {
   @internal
   set groundBarPresent(bool v) => _groundBarPresent = v;
 
+  /// THE ENVELOPE (DR-239 §11.238.1): the rack's outside size and own
+  /// weight, which a cabinetmaker or a closet must accommodate. Written from
+  /// the inspector's Enclosure section and printed on the elevation. Null is
+  /// unknown, never zero (CR-114).
+  Len? _overallDepth;
+  Len? get overallDepth => _overallDepth;
+  @internal
+  set overallDepth(Len? v) => _overallDepth = v;
+
+  Len? _overallWidth;
+  Len? get overallWidth => _overallWidth;
+  @internal
+  set overallWidth(Len? v) => _overallWidth = v;
+
+  Len? _overallHeight;
+  Len? get overallHeight => _overallHeight;
+  @internal
+  set overallHeight(Len? v) => _overallHeight = v;
+
+  Mass? _ownWeight;
+  Mass? get ownWeight => _ownWeight;
+  @internal
+  set ownWeight(Mass? v) => _ownWeight = v;
+
+  bool _hasFrontDoor;
+  bool get hasFrontDoor => _hasFrontDoor;
+  @internal
+  set hasFrontDoor(bool v) => _hasFrontDoor = v;
+
+  bool _hasRearDoor;
+  bool get hasRearDoor => _hasRearDoor;
+  @internal
+  set hasRearDoor(bool v) => _hasRearDoor = v;
+
+  /// DOOR CLEARANCE IS THE SWING SPACE in front of the door, which a
+  /// closet or millwork must leave free (DR-239 §11.238.2, the trade's own
+  /// term). Null is unknown (CR-114).
+  Len? _frontDoorClearance;
+  Len? get frontDoorClearance => _frontDoorClearance;
+  @internal
+  set frontDoorClearance(Len? v) => _frontDoorClearance = v;
+
+  Len? _rearDoorClearance;
+  Len? get rearDoorClearance => _rearDoorClearance;
+  @internal
+  set rearDoorClearance(Len? v) => _rearDoorClearance = v;
+
+  /// RAIL CLEARANCE IS THE DEPTH INSIDE the door, between the rail and the
+  /// closed door, which handles, cable and door-mounted fans eat (DR-239
+  /// §11.238.2). A different measurement from [frontDoorClearance] with a
+  /// different trade name; the model had one field where the trade has
+  /// two. Null is unknown (CR-114).
+  Len? _frontRailClearance;
+  Len? get frontRailClearance => _frontRailClearance;
+  @internal
+  set frontRailClearance(Len? v) => _frontRailClearance = v;
+
+  Len? _rearRailClearance;
+  Len? get rearRailClearance => _rearRailClearance;
+  @internal
+  set rearRailClearance(Len? v) => _rearRailClearance = v;
+
   // ACCESS CONTROL: the fields below are still plain mutable, pending the
-  // @internal retrofit (AC-013). Converted as each is wired to a Command;
-  // the twelve above have been. These remain because no Command writes
-  // them yet — `customPanelWidth` and `fullHoleRail` have no inspector
-  // control, the `overall*` dimensions and `ownWeight` are derived/
-  // read-only display, and doors, door clearances and 0U channels belong
-  // to sections not yet built. See internal_setter_grep_test.dart.
+  // @internal retrofit (AC-013). Converted as each is wired to a Command.
+  // These remain because no Command writes them yet: `customPanelWidth`
+  // and `fullHoleRail` have no inspector control, and 0U channels are
+  // written by their own planner. The envelope joined the converted
+  // fields above at `#1012` (DR-239). See internal_setter_grep_test.dart.
   Len? customPanelWidth;
   bool fullHoleRail;
-  Len? overallDepth;
-  Len? overallWidth;
-  Len? overallHeight;
-  Mass? ownWeight;
-  bool hasFrontDoor;
-  bool hasRearDoor;
-  Len? frontDoorClearance;
-  Len? rearDoorClearance;
 
   /// Sub-objects, string-keyed, no `EntityMeta`.
   List<ZeroUChannel> zeroUChannels;

@@ -1,17 +1,19 @@
 // packages/rackpal_ui/lib/src/inspector/rack_inspector_panel.dart
 //
 // docs/04-rack-editor.md §4's `RackInspector`, in the 320px fourth column
-// §1 specifies. Four sections, in the spec's own order:
+// §1 specifies. Its sections, in the spec's own order:
 //
 //   Identity     Name, Designator, Location
 //   Form factor  Preset, Height, Width, Usable depth, Rail type,
-//                Weight capacity (+ read-only Own weight), Mount,
-//                Swing frame (+ Hinge side), Ground bar
+//                Weight capacity, Mount, Swing frame (+ Hinge side),
+//                Ground bar
+//   Enclosure    Overall width, depth and height, Own weight, and per
+//                door its rail and door clearances (DR-239)
 //   Display      RU numbering, Mirror rear elevation
 //   Circuits     the flat list filtered by rackId (CR-028)
 //
 // EVERY EDITABLE FIELD ROUTES THROUGH A COMMAND, and this widget cannot
-// bypass that even by accident: `Rack`'s twelve editable properties carry
+// bypass that even by accident: `Rack`'s editable properties carry
 // `@internal` setters (AC-013), so assigning to one of them directly from
 // here would not compile against the package boundary — and, belt to that
 // brace, `internal_setter_grep_test.dart` now scans `rackpal_ui/lib` and
@@ -243,6 +245,7 @@ class RackInspectorPanel extends StatelessWidget {
         ),
         _NullableLengthField(
           label: 'Usable depth (mm)',
+          noun: 'Usable depth',
           value: rack.usableDepth,
           onCommit: (v) => onSetProperty(RackField.usableDepth, v),
           onRefuse: onRefuse,
@@ -256,18 +259,10 @@ class RackInspectorPanel extends StatelessWidget {
         ),
         _NullableMassField(
           label: 'Weight capacity (kg)',
+          noun: 'Weight capacity',
           value: rack.weightCapacity,
           onCommit: (v) => onSetProperty(RackField.weightCapacity, v),
           onRefuse: onRefuse,
-        ),
-        _ReadOnlyRow(
-          label: 'Own weight',
-          // CR-114: null means UNKNOWN, and an unknown must LOOK unknown —
-          // never 0 kg, which would silently enter a future weight rollup as
-          // a real measurement.
-          value: rack.ownWeight == null
-              ? '—'
-              : rack.ownWeight!.toKilograms(fractionDigits: 1),
         ),
         _MountField(rack: rack, onSetProperty: onSetProperty),
         _InspectorCheckbox(
@@ -290,6 +285,13 @@ class RackInspectorPanel extends StatelessWidget {
           label: 'Ground bar present',
           value: rack.groundBarPresent,
           onChanged: (v) => onSetProperty(RackField.groundBarPresent, v),
+        ),
+
+        const _SectionHeader(kEnclosureSectionLabel),
+        _EnclosureSection(
+          rack: rack,
+          onSetProperty: onSetProperty,
+          onRefuse: onRefuse,
         ),
 
         const _SectionHeader('Display'),
@@ -399,34 +401,6 @@ class _SectionHeader extends StatelessWidget {
           fontWeight: kConsoleEmphasis,
           letterSpacing: 0.8,
         ),
-      ),
-    );
-  }
-}
-
-class _ReadOnlyRow extends StatelessWidget {
-  const _ReadOnlyRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    final scheme = Theme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(label, style: Theme.of(context).textTheme.bodySmall),
-          ),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: scheme.onSurfaceVariant,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -591,20 +565,36 @@ class _InspectorTextFieldState extends State<_InspectorTextField> {
 class _NullableLengthField extends StatelessWidget {
   const _NullableLengthField({
     required this.label,
+    required this.noun,
     required this.value,
     required this.onCommit,
     required this.onRefuse,
+    this.helper,
+    this.enabled = true,
+    super.key,
   });
 
   final String label;
+
+  /// What the refusal sentence calls the field: one shell serves several
+  /// lengths since DR-239, and each refusal must name its own.
+  final String noun;
   final Len? value;
   final ValueChanged<Len?> onCommit;
   final ValueChanged<String> onRefuse;
+  final String? helper;
+
+  /// False dashes the field and refuses input WITHOUT clearing the value:
+  /// a clearance behind an unticked door is kept, so ticking the door back
+  /// loses nothing (DR-239 §11.238.1).
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
     return _NullableNumberField(
       label: label,
+      helper: helper,
+      enabled: enabled,
       // Exact nanometres in, a plain millimetre number out. Trailing ".0"
       // trimmed so a 457.2 mm depth and a 300 mm depth read alike.
       //
@@ -613,7 +603,9 @@ class _NullableLengthField extends StatelessWidget {
       // in a factor that differs by 1000; see `Mass.fromKilograms`, which
       // exists because those two literals were once confused for each other
       // and every seed template stored grams.
-      text: value == null ? '' : _trim(value!.nm / Len.nmPerMillimetre),
+      text: value == null || !enabled
+          ? ''
+          : _trim(value!.nm / Len.nmPerMillimetre),
       onCommit: (raw) {
         if (raw.trim().isEmpty) {
           onCommit(null);
@@ -621,7 +613,7 @@ class _NullableLengthField extends StatelessWidget {
         }
         final mm = double.tryParse(raw.trim());
         if (mm == null || mm < 0) {
-          onRefuse('Usable depth must be a positive number of mm, or empty.');
+          onRefuse('$noun must be a positive number of mm, or empty.');
           return;
         }
         onCommit(Len.fromMillimetres(mm));
@@ -638,12 +630,17 @@ class _NullableLengthField extends StatelessWidget {
 class _NullableMassField extends StatelessWidget {
   const _NullableMassField({
     required this.label,
+    required this.noun,
     required this.value,
     required this.onCommit,
     required this.onRefuse,
+    super.key,
   });
 
   final String label;
+
+  /// See [_NullableLengthField.noun].
+  final String noun;
   final Mass? value;
   final ValueChanged<Mass?> onCommit;
   final ValueChanged<String> onRefuse;
@@ -661,10 +658,7 @@ class _NullableMassField extends StatelessWidget {
         }
         final kg = double.tryParse(raw.trim());
         if (kg == null || kg < 0) {
-          onRefuse(
-            'Weight capacity must be a positive number of kg, or '
-            'empty.',
-          );
+          onRefuse('$noun must be a positive number of kg, or empty.');
           return;
         }
         onCommit(Mass.fromKilograms(kg));
@@ -691,6 +685,8 @@ class _NullableNumberField extends StatefulWidget {
     required this.onCommit,
     required this.onClear,
     required this.hasValue,
+    this.helper,
+    this.enabled = true,
   });
 
   final String label;
@@ -698,6 +694,8 @@ class _NullableNumberField extends StatefulWidget {
   final ValueChanged<String> onCommit;
   final VoidCallback onClear;
   final bool hasValue;
+  final String? helper;
+  final bool enabled;
 
   @override
   State<_NullableNumberField> createState() => _NullableNumberFieldState();
@@ -753,14 +751,16 @@ class _NullableNumberFieldState extends State<_NullableNumberField> {
         child: TextField(
           controller: _controller,
           focusNode: _focus,
+          enabled: widget.enabled,
           keyboardType: const TextInputType.numberWithOptions(decimal: true),
           decoration: InputDecoration(
             labelText: widget.label,
+            helperText: widget.helper,
             // NOT "0" — see the class doc and CR-114.
             hintText: '—',
             isDense: true,
             border: const OutlineInputBorder(),
-            suffixIcon: widget.hasValue
+            suffixIcon: widget.hasValue && widget.enabled
                 ? IconButton(
                     tooltip: 'Clear (unset)',
                     icon: const Icon(Icons.backspace_outlined, size: 16),
@@ -879,6 +879,117 @@ class _InspectorCheckbox extends StatelessWidget {
       onChanged: (v) {
         if (v != null && v != value) onChanged(v);
       },
+    );
+  }
+}
+
+/// The Enclosure section's header, public so a test finds the same words.
+const String kEnclosureSectionLabel = 'Enclosure';
+
+/// DR-239 §11.238.1's Enclosure section: the rack's outside size, its own
+/// weight, and per door its two clearances.
+///
+/// TWO CLEARANCES, IN THE TRADE'S OWN WORDS (§11.238.2). Rail clearance is
+/// the depth inside the door, between the rail and the closed door; door
+/// clearance is the swing space the door needs in front of it. The helper
+/// lines say which is which, because the two words are one letter apart in
+/// meaning to anybody who has not been told.
+///
+/// A CLEARANCE BEHIND AN UNTICKED DOOR is dashed and disabled, as Hinge side
+/// is without a swing frame, and its value is KEPT: ticking the door back
+/// restores it rather than asking for it again.
+class _EnclosureSection extends StatelessWidget {
+  const _EnclosureSection({
+    required this.rack,
+    required this.onSetProperty,
+    required this.onRefuse,
+  });
+
+  final Rack rack;
+  final void Function<T>(EntityField<Rack, T> field, T value) onSetProperty;
+  final ValueChanged<String> onRefuse;
+
+  static const _railHelper = 'Inside: rail to the closed door.';
+  static const _doorHelper = 'Swing space the door needs.';
+
+  Widget _length(
+    String key,
+    String label,
+    EntityField<Rack, Len?> field, {
+    String? helper,
+    bool enabled = true,
+  }) => _NullableLengthField(
+    key: ValueKey('rack-inspector.enclosure.$key'),
+    label: label,
+    noun: label.replaceFirst(' (mm)', ''),
+    value: field.get(rack),
+    helper: helper,
+    enabled: enabled,
+    onCommit: (v) => onSetProperty(field, v),
+    onRefuse: onRefuse,
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _length('overallWidth', 'Overall width (mm)', RackField.overallWidth),
+        _length('overallDepth', 'Overall depth (mm)', RackField.overallDepth),
+        _length(
+          'overallHeight',
+          'Overall height (mm)',
+          RackField.overallHeight,
+        ),
+        _NullableMassField(
+          key: const ValueKey('rack-inspector.enclosure.ownWeight'),
+          label: 'Own weight (kg)',
+          noun: 'Own weight',
+          // CR-114: null means UNKNOWN and must LOOK unknown, never 0 kg,
+          // which would enter a weight rollup as a real measurement.
+          value: rack.ownWeight,
+          onCommit: (v) => onSetProperty(RackField.ownWeight, v),
+          onRefuse: onRefuse,
+        ),
+        _InspectorCheckbox(
+          label: 'Front door',
+          value: rack.hasFrontDoor,
+          onChanged: (v) => onSetProperty(RackField.hasFrontDoor, v),
+        ),
+        _length(
+          'frontRailClearance',
+          'Front rail clearance (mm)',
+          RackField.frontRailClearance,
+          helper: _railHelper,
+          enabled: rack.hasFrontDoor,
+        ),
+        _length(
+          'frontDoorClearance',
+          'Front door clearance (mm)',
+          RackField.frontDoorClearance,
+          helper: _doorHelper,
+          enabled: rack.hasFrontDoor,
+        ),
+        _InspectorCheckbox(
+          label: 'Rear door',
+          value: rack.hasRearDoor,
+          onChanged: (v) => onSetProperty(RackField.hasRearDoor, v),
+        ),
+        _length(
+          'rearRailClearance',
+          'Rear rail clearance (mm)',
+          RackField.rearRailClearance,
+          helper: _railHelper,
+          enabled: rack.hasRearDoor,
+        ),
+        _length(
+          'rearDoorClearance',
+          'Rear door clearance (mm)',
+          RackField.rearDoorClearance,
+          helper: _doorHelper,
+          enabled: rack.hasRearDoor,
+        ),
+      ],
     );
   }
 }

@@ -317,7 +317,8 @@ final class Rack {
 
   bool isSwingFrame; HingeSide? hingeSide;
   bool hasFrontDoor, hasRearDoor;
-  Len? frontDoorClearance, rearDoorClearance;
+  Len? frontDoorClearance, rearDoorClearance;   // swing space in front of the door. DR-239.
+  Len? frontRailClearance, rearRailClearance;   // rail to closed door, inside. DR-239.
   bool groundBarPresent;          // feeds a note on the elevation. AC-034/m21.
 
   List<ZeroUChannel> zeroUChannels;   // sub-objects, string-keyed, no EntityMeta

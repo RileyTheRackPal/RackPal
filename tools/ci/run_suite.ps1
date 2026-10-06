@@ -1263,7 +1263,23 @@ $SuiteFloors = @{
     # (an A02's own lead out of T6.30 beside an A03's detachable cord; both
     # still power cords; the footage note agreeing with the table and
     # naming the captive cord; a captive lead to a wall receptacle).
-    'rackpal_core'   = 5613
+    # 5616 at `#1011` (ENV-1, DR-239 §11.238.2): +3 in persistence/rack_
+    # envelope_codec_test.dart (the envelope round-trips byte for byte;
+    # rail and door clearance are two keys with their own numbers; a file
+    # from before DR-239 opens with its rail clearances unknown).
+    # 5618 at `#1012` (ENV-2, DR-239 §11.238.1): +2 in commands/rack_
+    # envelope_writer_test.dart (every envelope field entered through the
+    # command survives a save and a reload; undo of a clearance lands the
+    # saved bytes exactly).
+    # 5638, re-measured at `#1013` from the gate's own count: ENV-2's 5618
+    # missed 20 cases that persistence/g4_wire_test.dart GENERATES, two per
+    # `RackField` row, and ENV-2 added ten rows. A floor is the gate's
+    # count, not a sum of the cases a commit wrote by hand.
+    # 5641 at `#1014` (ENV-4, DR-239 §11.238.4): +3 in sheet/elevation_
+    # sheet_test.dart (each face prints its own door, an unknown as a dash;
+    # nothing entered prints no line and no door the size alone; imperial
+    # prints inches).
+    'rackpal_core'   = 5641
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1378,7 +1394,10 @@ $SuiteFloors = @{
     # test.dart, a declared adapter and its unstated model in T6.30's ink.
     # 302 at `#1001` (DR-235 §11.234.5): +1 in interconnect_export_test.dart,
     # T0.01 keying the adapter mark only once a printed cable carries one.
-    'rackpal_export' = 302
+    # 306 at `#1014` (ENV-4, DR-239 §11.238.4): +4 in elevation_envelope_
+    # fit_test.dart, the worst-case envelope line printed whole through the
+    # real Jost metrics on both faces in both unit systems.
+    'rackpal_export' = 306
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,
@@ -2002,7 +2021,12 @@ $SuiteFloors = @{
     # schematic_append_set_test.dart on the real A04 and two F05s (the exit
     # criterion's gesture through CON-001's chip and Connect anyway, one
     # undo; a device the cable does not reach answered in words; Esc).
-    'rackpal_ui'     = 2134
+    # 2137 at `#1013` (ENV-3, DR-239 §11.238.1): +3 net in inspector/rack_
+    # inspector_panel_test.dart (the read-only Own weight case replaced by
+    # the field's; an overall dimension and its refusal naming it; a
+    # clearance disabled behind an unticked door, rail apart from door;
+    # unticking a door keeping its clearances).
+    'rackpal_ui'     = 2137
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

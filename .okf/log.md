@@ -1,5 +1,20 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-nineteenth entry)
+
+* **Progress**: `#923` built in four chapters (`#1011` to `#1014`); DR-239 marked built. docs/12 §4.49.
+* **Note**: **A FAKE MEASURER PASSES ANY LENGTH.** The ruling's envelope line, own weight included, was
+  4.5 pt too wide for its column on paper, and every core test would have stayed green. A note that a
+  person will read off a printed sheet needs one test through the real font.
+
+## 2026-10-06 (hundred-and-eighteenth entry)
+
+* **Progress**: PR 206 merged at `586fbd48`; `#1010` and `#1002` closed. `#923` taken, decomposed into
+  `#1011` to `#1015`; branch `rack-envelope`. `#1016` filed: the ground bar note is not printed.
+* **Creation**: [DR-239](/decisions/dr-239-rack-envelope-typed-and-printed.md).
+* **Note**: **A QUESTION WITH TWO OPTIONS WAS ANSWERED WITH BOTH.** Rail clearance and door clearance are
+  different measurements with different trade names, and the model had one field where the trade has two.
+
 ## 2026-10-06 (hundred-and-seventeenth entry)
 
 * **Progress**: `#1010` built at `1a6cf076` and `#1002` at `78d7deda`; DR-237 and DR-238 marked built. docs/12

@@ -60,6 +60,7 @@
 import 'dart:math' as math;
 
 import 'package:meta/meta.dart';
+import 'package:rackpal_core/src/derived/equipment_list.dart' show kUnknownCell;
 import 'package:rackpal_core/src/draw/geometry.dart';
 import 'package:rackpal_core/src/draw/ops.dart';
 import 'package:rackpal_core/src/draw/scene/rack_geometry.dart';
@@ -80,6 +81,8 @@ import 'package:rackpal_core/src/model/project_settings.dart';
 import 'package:rackpal_core/src/model/rack.dart';
 import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
 import 'package:rackpal_core/src/model/template.dart';
+import 'package:rackpal_core/src/units/len.dart';
+import 'package:rackpal_core/src/units/unit_formatter.dart';
 import 'package:vector_math/vector_math_64.dart';
 
 /// The band at the top of the drawing area holding the sheet's notes and
@@ -121,6 +124,54 @@ const String kScaleAppliesNote =
 /// header.
 const String kRearDetailNote =
     'REAR FACES SHOWN. PORT AND CONNECTION DETAIL NOT ISSUED IN THIS SET.';
+
+/// The rack's envelope and THIS FACE'S door, as one note line (DR-239
+/// §11.238.4): the printed dimension a cabinetmaker or general contractor
+/// can be handed before any DXF exists.
+///
+/// `ENCLOSURE 600 W x 1000 D x 2000 H MM; FRONT DOOR 75 RAIL, 600 SWING`.
+/// Rail is the depth inside the door and swing the space it needs in front
+/// of it, in the user's trade terms (§11.238.2). In the project's display
+/// units, as the load summary beside it is.
+///
+/// OWN WEIGHT IS NOT PRINTED, AND THAT WAS MEASURED, NOT PREFERRED. The
+/// note column is half the band, 327 pt on ANSI B through the real Jost
+/// metrics, and a 1200 x 1400 x 2400 mm cabinet at 300 kg with both
+/// clearances measured 331.5 pt: `_band` would have cut it with an
+/// ellipsis. Without the weight the same worst case is 299.6 pt metric and
+/// 285.4 imperial, and `elevation_envelope_fit_test.dart` in rackpal_export
+/// holds that against the real font. Prefixing "RACK" to save the room
+/// would have sat beside the summary's "RACK TOTAL", a different weight.
+///
+/// NULL WHEN NO NUMBER IS KNOWN: no dimension, and no clearance for this
+/// face's door. A ticked door alone does not print, because every starter
+/// ticks one and enters no size, and its elevation would carry a row of
+/// dashes, which tells a reader nothing the absence does not. An unknown
+/// among known values prints as a dash, never a guess (G4).
+String? envelopeNote(Rack rack, Face face, UnitSystem units) {
+  final front = face == Face.front;
+  final hasDoor = front ? rack.hasFrontDoor : rack.hasRearDoor;
+  final dims = [rack.overallWidth, rack.overallDepth, rack.overallHeight];
+  final rail = front ? rack.frontRailClearance : rack.rearRailClearance;
+  final swing = front ? rack.frontDoorClearance : rack.rearDoorClearance;
+  final measured = [
+    ...dims,
+    if (hasDoor) ...[rail, swing],
+  ];
+  if (measured.every((v) => v == null)) return null;
+  final metric = units == UnitSystem.metric;
+  String v(Len? l) => l == null
+      ? kUnknownCell
+      : metric
+      ? l.toMillimetresValue(fractionDigits: 0)
+      : l.toInchesValue(fractionDigits: 1);
+  final envelope =
+      'ENCLOSURE ${v(dims[0])} W x ${v(dims[1])} D x ${v(dims[2])} H '
+      '${metric ? 'MM' : 'IN'}';
+  if (!hasDoor) return envelope;
+  return '$envelope; ${front ? 'FRONT' : 'REAR'} DOOR ${v(rail)} RAIL, '
+      '${v(swing)} SWING';
+}
 
 /// CR-035's chip, for a rack whose `mirrorRearElevation` is off.
 ///
@@ -388,7 +439,10 @@ ElevationSheet buildElevationSheet({
     if (face == Face.rear)
       rack.mirrorRearElevation ? kMirroredChip : kNotMirroredChip,
     kScaleAppliesNote,
-    // FOURTH AT MOST, and the band holds five (`kElevationHeaderBand`).
+    // DR-239 §11.238.4. Only when something is known.
+    if (envelopeNote(rack, face, settings.displayUnits) case final note?) note,
+    // FIFTH AT MOST since DR-239, and the band holds five
+    // (`kElevationHeaderBand`): rear note, chip, scale, envelope, this.
     // Only ever present when it has something to say.
     if (labels.sheetNote case final note?) note,
   ];

@@ -85,8 +85,10 @@ ElevationSheet _build({
   List<DeviceInstance>? devices,
   Map<String, TemplateSnapshot>? templates,
   List<RevisionEntry> revisions = const <RevisionEntry>[],
+  Rack? rack,
+  ProjectSettings? settings,
 }) {
-  final rack = Rack(
+  rack ??= Rack(
     id: _rackId,
     name: 'MASTER RACK',
     designator: 'RK-1',
@@ -102,7 +104,7 @@ ElevationSheet _build({
     devices: devices ?? <DeviceInstance>[_device(id: 'amp', ru: 3)],
     templates: templates ?? _templates(),
     info: fullProjectInfo(),
-    settings: ProjectSettings(),
+    settings: settings ?? ProjectSettings(),
     revisions: revisions,
     fileName: 'smith.rppj',
     issuedAt: DateTime.utc(2026, 7, 18),
@@ -112,6 +114,32 @@ ElevationSheet _build({
 
 List<String> _texts(ElevationSheet sheet) =>
     sheet.scene.ops.whereType<OpText>().map((o) => o.text).toList();
+
+Len _mm(int mm) => Len(mm * 1000000);
+
+/// A 42 U closet rack with DR-239's envelope entered: a front door with
+/// both clearances, a rear door with only its swing space.
+Rack _closet({Len? width, bool frontDoor = true}) => Rack(
+  id: _rackId,
+  name: 'MASTER RACK',
+  designator: 'RK-1',
+  heightU: 42,
+  order: const FracIndex('a0'),
+  meta: testMeta(),
+  overallWidth: width ?? _mm(600),
+  overallDepth: _mm(1000),
+  overallHeight: _mm(2000),
+  hasFrontDoor: frontDoor,
+  frontRailClearance: _mm(75),
+  frontDoorClearance: _mm(600),
+  hasRearDoor: true,
+  rearDoorClearance: _mm(550),
+);
+
+final _metric = ProjectSettings(displayUnits: UnitSystem.metric);
+
+Iterable<String> _envelopeLines(ElevationSheet sheet) =>
+    _texts(sheet).where((t) => t.startsWith('ENCLOSURE'));
 
 void main() {
   group('the scale is chosen against what is actually drawn', () {
@@ -332,6 +360,57 @@ void main() {
         isNull,
         reason: 'an NTS sheet must not be at a standard ratio after all',
       );
+    });
+  });
+
+  // DR-239 §11.238.4 (`#1014`): the printed dimension a cabinetmaker can be
+  // handed. Asserted VERBATIM, because `_band` cuts a long note with an
+  // ellipsis and a contains() check would pass on the cut one.
+  group('the elevation prints the envelope (DR-239)', () {
+    test("THE FRONT SHEET CARRIES THE FRONT DOOR, the rear the rear's", () {
+      expect(_envelopeLines(_build(rack: _closet(), settings: _metric)), [
+        'ENCLOSURE 600 W x 1000 D x 2000 H MM; FRONT DOOR 75 RAIL, 600 SWING',
+      ]);
+      expect(
+        _envelopeLines(
+          _build(
+            rack: _closet(),
+            settings: _metric,
+            role: SheetRole.rackElevationRear,
+          ),
+        ),
+        ['ENCLOSURE 600 W x 1000 D x 2000 H MM; REAR DOOR — RAIL, 550 SWING'],
+        reason: 'an unknown rail clearance is a dash, never a guess (G4)',
+      );
+    });
+
+    test('A RACK WITH NO NUMBER ENTERED PRINTS NO LINE, a ticked door '
+        'alone included, and no door prints the size alone', () {
+      expect(_envelopeLines(_build()), isEmpty);
+      // Every starter ticks a door and enters no size.
+      final doorOnly = Rack(
+        id: _rackId,
+        name: 'MASTER RACK',
+        designator: 'RK-1',
+        heightU: 42,
+        order: const FracIndex('a0'),
+        meta: testMeta(),
+        hasFrontDoor: true,
+      );
+      expect(_envelopeLines(_build(rack: doorOnly)), isEmpty);
+      expect(
+        _envelopeLines(
+          _build(rack: _closet(frontDoor: false), settings: _metric),
+        ),
+        ['ENCLOSURE 600 W x 1000 D x 2000 H MM'],
+      );
+    });
+
+    test('in imperial it prints inches, as the load summary does', () {
+      const line =
+          'ENCLOSURE 23.6 W x 39.4 D x 78.7 H IN; FRONT DOOR 3.0 RAIL, '
+          '23.6 SWING';
+      expect(_envelopeLines(_build(rack: _closet())), [line]);
     });
   });
 

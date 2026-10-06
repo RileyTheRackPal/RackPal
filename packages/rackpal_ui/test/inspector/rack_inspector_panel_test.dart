@@ -142,6 +142,15 @@ Finder _field(String label) => find.ancestor(
 String _heightBuffer(WidgetTester tester) =>
     tester.widget<TextField>(_field('Height (U)')).controller!.text;
 
+/// What a numeric field's buffer holds, read off its controller.
+String _buffer(WidgetTester tester, String label) =>
+    tester.widget<TextField>(_field(label)).controller!.text;
+
+/// Whether a field accepts input. A clearance behind an unticked door does
+/// not (DR-239 §11.238.1).
+bool _enabled(WidgetTester tester, String label) =>
+    tester.widget<TextField>(_field(label)).enabled ?? true;
+
 /// Any `DropdownButtonFormField<T>`, whatever `T` is.
 ///
 /// `find.byType` is INVARIANT in the generic argument, so
@@ -168,13 +177,39 @@ Finder get _inspectorScrollable => find
     )
     .first;
 
-/// Scrolls [finder] into view inside the inspector.
+/// Scrolls [finder] into view inside the inspector, in WHICHEVER direction
+/// it lies.
+///
+/// `scrollUntilVisible` only moves one way and stops once the target is
+/// BUILT, not visible. Downward-only held while the panel was short; DR-239's
+/// Enclosure section (`#1013`) made it long enough that revealing Hinge side
+/// overshot, and Swing frame, the row above, was no longer built at all. So
+/// look down, then up, then make it visible.
 Future<void> _reveal(WidgetTester tester, Finder finder) async {
-  await tester.scrollUntilVisible(
-    finder,
-    120,
-    scrollable: _inspectorScrollable,
-  );
+  if (finder.evaluate().isEmpty) {
+    final position = tester
+        .state<ScrollableState>(_inspectorScrollable)
+        .position;
+    final before = position.pixels;
+    await tester
+        .scrollUntilVisible(
+          finder,
+          120,
+          scrollable: _inspectorScrollable,
+          maxScrolls: 100,
+        )
+        .catchError((Object _) {});
+    if (finder.evaluate().isEmpty) {
+      position.jumpTo(before);
+      await tester.pump();
+      await tester.scrollUntilVisible(
+        finder,
+        -120,
+        scrollable: _inspectorScrollable,
+      );
+    }
+  }
+  await tester.ensureVisible(finder.first);
   await tester.pumpAndSettle();
 }
 
@@ -667,16 +702,88 @@ void main() {
       expect(_rack(tester).weightCapacity, isNull);
     });
 
-    testWidgets('Own weight renders an em dash when unknown, never "0 kg" '
-        '(CR-114)', (tester) async {
+    // OWN WEIGHT WAS A READ-ONLY ROW until DR-239 gave it a writer (`#1013`).
+    // The CR-114 half of the old case survives: unknown is a dash, not 0 kg.
+    testWidgets('Own weight is a field now, dashed when unknown (CR-114), '
+        'and writes kilograms', (tester) async {
       await tester.pumpWidget(_app());
       await tester.pump();
       await _openInspector(tester);
 
-      await _reveal(tester, find.text('Own weight'));
-      expect(find.text('Own weight'), findsOneWidget);
-      expect(find.text('—'), findsWidgets);
+      await _reveal(tester, _field('Own weight (kg)'));
+      expect(_buffer(tester, 'Own weight (kg)'), isEmpty);
       expect(find.text('0.0 kg'), findsNothing);
+
+      await _typeAndEnter(tester, 'Own weight (kg)', '68');
+      expect(_rack(tester).ownWeight, const Mass(68000000000));
+      await _undo(tester);
+      expect(_rack(tester).ownWeight, isNull);
+    });
+
+    testWidgets('an overall dimension writes millimetres, and its refusal '
+        'names it', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await _openInspector(tester);
+
+      await _typeAndEnter(tester, 'Overall depth (mm)', '1000');
+      expect(_rack(tester).overallDepth, const Len(1000000000));
+
+      await _typeAndEnter(tester, 'Overall width (mm)', 'wide');
+      expect(_rack(tester).overallWidth, isNull);
+      expect(
+        find.textContaining('Overall width must be a positive number of mm'),
+        findsOneWidget,
+        reason:
+            'one shell serves several lengths; the refusal used to say '
+            '"Usable depth" whichever field refused',
+      );
+    });
+
+    testWidgets('A CLEARANCE IS DISABLED BEHIND AN UNTICKED DOOR, and rail '
+        'clearance is not door clearance (DR-239)', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await _openInspector(tester);
+
+      await _reveal(tester, _field('Front rail clearance (mm)'));
+      expect(_enabled(tester, 'Front rail clearance (mm)'), isFalse);
+      expect(_enabled(tester, 'Front door clearance (mm)'), isFalse);
+
+      await _tapTile(tester, 'Front door');
+      expect(_rack(tester).hasFrontDoor, isTrue);
+      expect(_enabled(tester, 'Front rail clearance (mm)'), isTrue);
+      expect(
+        _enabled(tester, 'Rear rail clearance (mm)'),
+        isFalse,
+        reason: 'the rear door is still unticked',
+      );
+
+      await _typeAndEnter(tester, 'Front rail clearance (mm)', '75');
+      await _typeAndEnter(tester, 'Front door clearance (mm)', '600');
+      expect(_rack(tester).frontRailClearance, const Len(75000000));
+      expect(_rack(tester).frontDoorClearance, const Len(600000000));
+    });
+
+    testWidgets('UNTICKING A DOOR KEEPS ITS CLEARANCES, dashed, and ticking '
+        'it back restores them', (tester) async {
+      await tester.pumpWidget(_app());
+      await tester.pump();
+      await _openInspector(tester);
+
+      await _reveal(tester, find.text('Front door'));
+      await _tapTile(tester, 'Front door');
+      await _typeAndEnter(tester, 'Front rail clearance (mm)', '75');
+
+      await _reveal(tester, find.text('Front door'));
+      await _tapTile(tester, 'Front door');
+      expect(_rack(tester).hasFrontDoor, isFalse);
+      expect(_rack(tester).frontRailClearance, const Len(75000000));
+      expect(_buffer(tester, 'Front rail clearance (mm)'), isEmpty);
+      expect(_enabled(tester, 'Front rail clearance (mm)'), isFalse);
+
+      await _tapTile(tester, 'Front door');
+      expect(_buffer(tester, 'Front rail clearance (mm)'), '75');
     });
 
     testWidgets('Swing frame toggles, and Hinge side is disabled until it '
