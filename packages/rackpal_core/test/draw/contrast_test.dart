@@ -1,15 +1,19 @@
-// #755 — DR-080's contrast primitive, and the gate that keeps it agreeing
-// with `tools/pal1_check.py`.
+// #755 — DR-080's contrast primitive, held to the figures
+// `tools/pal1_check.py` printed while it still computed its own.
 //
 // ═════════════════════════════════════════════════════════════════════
 // THE FIRST GROUP IS THE ONLY REASON THIS FILE EXISTS
 // ═════════════════════════════════════════════════════════════════════
 // DR-080 §11.79.4 forbids the product acquiring a SECOND definition of
-// contrast. `pal1_check.py` has owned relative luminance since M0 and the
-// PAL-1 gate runs it on every push, but a Dart process cannot call it, so
-// agreement is enforced by pinning: every expected figure below was
-// PRINTED BY THAT SCRIPT, not by this one, and is quoted to ten places.
-// Change either implementation and these fail.
+// contrast. `pal1_check.py` owned relative luminance from M0, and a Dart
+// process cannot call Python, so agreement was enforced by pinning: every
+// expected figure below was PRINTED BY THAT SCRIPT, not by this one, and
+// is quoted to ten places.
+//
+// SINCE SFE-A2 THE PYTHON NO LONGER COMPUTES IT: the gate asks
+// `contrast.dart` through `tool/pal1_verdicts.dart`. The pins stay, now as
+// the record of what the old implementation said, so a change to the
+// formula here still fails against an answer nobody derived from it.
 //
 // The colours pinned are the ones this product actually renders: the
 // eight Okabe-Ito accent swatches `device_builder_screen.dart` offers,
@@ -34,7 +38,7 @@ const _pinned = <String, (int, double)>{
 };
 
 void main() {
-  group('the Dart agrees with pal1_check.py, which owns this fact', () {
+  group('the Dart agrees with what pal1_check.py printed', () {
     for (final e in _pinned.entries) {
       final (argb, expected) = e.value;
       test('${e.key} matches the figure the Python prints', () {
@@ -76,6 +80,28 @@ void main() {
     test('the default body fill asks for dark ink, so an unaccented rack '
         'is unchanged', () {
       expect(prefersLightInk(const RackPalette().deviceFill), isFalse);
+    });
+  });
+
+  group('contrastRatio, which the PAL-1 gate asks for the callout', () {
+    // SFE-A2. Printed by `contrast()` in `tools/pal1_check.py` at
+    // a4926a2d, the last commit where the Python computed it. The first is
+    // the callout's own case: black ink on the darkest screened underlay
+    // sample, 192, which the gate prints as 11.54:1.
+    int grey(int v) => 0xFF000000 | (v << 16) | (v << 8) | v;
+
+    test('agrees with the figures the Python printed', () {
+      expect(contrastRatio(grey(0), grey(192)), closeTo(11.5423025141, 1e-9));
+      expect(contrastRatio(grey(0), grey(255)), closeTo(21.0, 1e-9));
+      expect(contrastRatio(grey(64), grey(200)), closeTo(6.1971343632, 1e-9));
+    });
+
+    test('is the same either way round, and 1 for a colour on itself', () {
+      expect(
+        contrastRatio(grey(200), grey(64)),
+        contrastRatio(grey(64), grey(200)),
+      );
+      expect(contrastRatio(0xFF0072B2, 0xFF0072B2), 1.0);
     });
   });
 

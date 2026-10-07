@@ -39,7 +39,10 @@ WHY IT PARSES DART SOURCE RATHER THAN RUNNING DART. This gate runs in the
 palette block of azure-pipelines.yml, which is explicitly the block that "needs
 no Dart and no dependencies" -- it is positioned to fail fast, before any
 toolchain is exercised. palette_parity.py text-scans markdown for the same
-reason. The parser below is whitespace- and format-insensitive (it reads
+reason. THAT REASON IS GONE: since SFE-A2 pal1_check.py runs Dart in the same
+block, and the block sits after `flutter pub get`, so it never did fail first.
+The parser stays because it works and is cheap, not because Dart is
+unavailable; reading the seed through rackpal_core instead is open. The parser below is whitespace- and format-insensitive (it reads
 balanced parentheses, not columns), so `dart format` cannot break it, and the
 id-set equality checks below make a parser that silently matched NOTHING fail
 rather than pass vacuously -- which is the only way a checker like this lies.

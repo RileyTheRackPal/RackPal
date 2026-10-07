@@ -123,6 +123,14 @@ const Map<String, String> _knownByteReaders = <String, String>{
       'reads every .rmda on the shelf at palette-build time; stats and '
       'runs checkImportedFileSize BEFORE reading, and re-stats rather '
       'than trusting the size listLibraries returned',
+  // ── ADDED AT `#823` (SFE-A2), BY THIS GATE, ON ITS FIRST RUN ─────────
+  // Found the way the PLAN-B container was: nobody thought of a CI tool's
+  // stdin as outside bytes, and the sweep did.
+  'packages/rackpal_core/tool/pal1_verdicts.dart':
+      'NOT an import path: a CI tool under tool/, never in the app, whose '
+      'only caller is tools/pal1_check.py sending its own FAMILIES table on '
+      'stdin (DR-122 §11.121.4). A malformed request throws and the gate '
+      'fails, which is the behaviour wanted',
 };
 
 String _repoRoot() {

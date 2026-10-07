@@ -6,6 +6,7 @@ gate's blind spot is as worth knowing as its coverage.
 
 * [Analyzer info ratchet](analyzer-baseline.md) - 0 errors, 0 warnings, and an exactly pinned info count. Scans tests too.
 * [Registry parity](registry-parity.md) - the Dart seed agrees with the palette authority on hue, dash and weight, and with seed-devices §4.4 on each family's name, connector, tag, direction and topology (DR-175).
+* [PAL-1 conformance](pal1-conformance.md) - the palette survives greyscale. The data is Python's and the rules are rackpal_core's since SFE-A2, so the gate and the clone editor read one implementation; two planted palettes known to fail are sent on every run, so green means the core could have said no.
 * [Milestone completeness](milestone-completeness.md) - roadmap section 8.9 as a check (DR-095): no milestone before the current one may hold an exit clause that is neither discharged nor parked on a later milestone by a ruling. It runs twelve planted cases before it reads the board, and its first real run failed on M1's goal line, which the prose called no exit clause and the table counted as one.
 * [Byte-exactness sweep](byte-exactness-sweep.md) - .gitattributes pins every extension in a byte-exact root; also the traversal bug worth not repeating.
 * [Catalog port order](catalog-port-order.md) - declared order must equal ranked order; FracIndex sorts as a string and 678 of 727 ports were scrambled.
@@ -19,7 +20,7 @@ gate's blind spot is as worth knowing as its coverage.
 
 # Not yet written up
 
-`flutter pin`, `tracked sources (would a clone compile?)`, `PAL-1 conformance`,
+`flutter pin`, `tracked sources (would a clone compile?)`,
 `palette parity`, `JUnit converter self-test`, `glyph coverage`, and the five
 package suites individually. The pipeline concept above covers what they prove
 COLLECTIVELY on the service; it does not replace a per-gate write-up.

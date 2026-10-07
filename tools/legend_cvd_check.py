@@ -21,10 +21,13 @@ WHICH FAMILIES. All of them, not requirement 4's ten. `legendCableTypes`
 prints the ten named types and then every other family in use, so any
 family can reach a legend; Whole House's prints Fibre OS2.
 
-ONE SOURCE. Hues, families, effective dashes and weights, the dash-class
-rule and the 1.4 ratio are imported from `pal1_check.py`, which the
-`palette parity` gate already holds to the seeded registries. This file
-adds only the simulation.
+ONE SOURCE. Hues, families, effective dashes and weights come from
+`pal1_check.py`, which the `palette parity` gate already holds to the seeded
+registries, and the PAL-1 verdict comes from `rackpal_core` through
+`pal1_check.core()` (SFE-A2), with each domain's SIMULATED luminance sent in
+place of the one its hue would give. This file adds only the simulation.
+It used to import the dash-class rule and the 1.4 ratio from the Python,
+which made it a third reader of a rule SFE-A2 exists to keep in one place.
 
 THE SIMULATION. Machado, Oliveira and Fernandes (2009), severity 1.0,
 applied in linear RGB. The test on the simulated colour is PAL-1's OWN: WCAG
@@ -54,7 +57,6 @@ carry, so M6's legend clause was marked demonstrated on the user's ruling,
 and whether PAL-1 should also hold here is board #1031's question. If that
 is ruled yes and the families restyled, this joins run_local.ps1.
 """
-import itertools
 import re
 import sys
 
@@ -102,34 +104,29 @@ def named_families():
     return ids
 
 
-def rescued(a, b):
-    """PAL-1's remedy, unchanged: dash class differs, or weight by 1.4."""
-    if pal1.dash_class(a[2]) != pal1.dash_class(b[2]):
-        return True
-    return max(a[3], b[3]) / min(a[3], b[3]) >= pal1.WEIGHT_RATIO
+def check(scopes):
+    """{(scope, deficiency): (in-band pairs, [failures])}, in one core call.
 
-
-def check(families):
-    """{deficiency: (in-band pairs, [failures])} over [families]."""
+    One call rather than four, because each is a `dart run`. Only the
+    cross-domain violations are this file's question: the within-domain and
+    period limbs do not depend on lightness, so a simulation cannot move them.
+    """
+    palettes = {}
+    for label, families in scopes:
+        for name, matrix in MACHADO.items():
+            lum = {d: simulated_luminance(h, matrix)
+                   for d, h in pal1.DOMAIN_HUE.items()}
+            palettes['%s|%s' % (label, name)] = pal1.palette(families, lum)
+    answer = pal1.core(palettes)['palettes']
     out = {}
-    for name, matrix in MACHADO.items():
-        lum = {d: simulated_luminance(h, matrix)
-               for d, h in pal1.DOMAIN_HUE.items()}
-        in_band, failures = 0, []
-        for a, b in itertools.combinations(families, 2):
-            if a[1] == b[1]:
-                continue
-            delta = abs(lum[a[1]] - lum[b[1]])
-            if delta >= pal1.BAND:
-                continue
-            in_band += 1
-            if not rescued(a, b):
-                failures.append(
-                    '%s and %s: simulated dL %.3f, both dash class %s, '
-                    'weight ratio %.2f' % (a[0], b[0], delta,
-                                           '/'.join(pal1.dash_class(a[2])),
-                                           max(a[3], b[3]) / min(a[3], b[3])))
-        out[name] = (in_band, failures)
+    for key, verdict in answer.items():
+        failures = [
+            '%s and %s: simulated dL %.3f, both dash class %s, '
+            'weight ratio %.2f' % (v['familyIds'][0], v['familyIds'][1],
+                                   v['deltaL'], v['dashClass'],
+                                   v['weightRatio'])
+            for v in verdict['violations'] if v['kind'] == 'cross']
+        out[tuple(key.split('|'))] = (verdict['inBandPairs'], failures)
     return out
 
 
@@ -141,9 +138,11 @@ def main():
         ('all families', pal1.FAMILIES),
     )
     verdict = 0
+    results = check(scopes)
     for label, families in scopes:
         print('%s: %d families' % (label, len(families)))
-        for name, (in_band, failures) in check(families).items():
+        for name in MACHADO:
+            in_band, failures = results[(label, name)]
             print('  %s: %d in-band cross-domain pairs, %d not rescued'
                   % (name, in_band, len(failures)))
             for f in failures:

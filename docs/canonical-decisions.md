@@ -24311,6 +24311,46 @@ condition**.
 
 **Scope.** No scope moves: two printed sentences corrected on the sheets that already carry them.
 
+### 11.242 DR-243 · A cloned family's dash is chosen from one pattern per class, at the weights the palette already uses
+
+**Settled by the user on 2026-10-07, for SFE-A3 (`#824`).** DR-122 §11.121.2 says the author of a clone
+*"chooses a dash and a weight"* and names no menu, and the headroom query SFE-A3 builds has to enumerate
+SOMETHING to say what is still free. Three menus were offered, each priced against the shipped palette:
+
+| Offered | Size | What it costs |
+|---|---|---|
+| **One dash per class**, at every shipped weight | 13 classes × 5 weights | Every swatch reads differently in greyscale |
+| Every dash pattern the catalogue ships | 37 patterns × 5 weights | `3,3`, `4,3`, `6,3` and `8,3` appear as four separate options, all class `short`, that a laser print barely separates |
+| A typed pattern, checked live | unbounded | The nearest thing to the hand-rolled surface RJ-012 objected to, and a value cannot be previewed until it is valid |
+
+**The user chose the first, which was the recommended option**, and gave no reason of their own; the
+reasons in the table are the recommendation's.
+
+**11.242.1 RULED: THE MENU IS THE PALETTE'S OWN CLASSES.** A clone's dash is one of the dash classes the
+shipped palette draws (canon §14.2), one pattern each, crossed with the distinct weights the shipped
+palette uses. **The menu is DERIVED from the seed rather than listed**, so it cannot drift from the palette
+that `registry_parity.py` already holds to `pal1_check.py`. Which pattern stands for a class is the
+implementation's choice, not the user's, and is recorded so it is not mistaken for one: **the pattern the
+most shipped families use, ties broken by the smallest permille list**, because that is the one an
+installer is likeliest to have seen in this product already.
+
+**11.242.2 WHAT IT DOES NOT CHANGE.** PAL-1 is untouched. The gate still checks whatever dash and weight a
+family carries, and the within-domain limb still compares exact patterns, so a menu narrower than the
+rule refuses nothing the rule permits to exist: it declines to OFFER it. No shipped family moves;
+`audio.mic` keeps `4,3` beside `audio.line_unbal`'s `6,3`.
+
+**11.242.3 THE TICKET'S PREMISE, MEASURED.** SFE-A3 said *"digital video and ctl are the crowded groups"*.
+That is true by family count and false by headroom. **What constrains a choice is the cross-domain
+luminance band, not the number of siblings**, so the tightest domains are `str`, `ctl` and `net`,
+and `video.digital` is among the roomiest. And a clone uses up exactly one combination in its own domain,
+so *"none left"* is reached by repetition rather than being an everyday state. The query still reports
+it as a state of its own (`isExhausted`), as the ticket asked. **The per-domain figures live in
+`pal1_test.dart` and are not copied here**: the ones shown when this was offered were computed under a
+provisional choice of pattern per class and differ from the built ones by one in three domains, which
+is this corpus's argument against a second copy of a moving number, made again in miniature.
+
+**Scope.** No scope moves: it settles a control DR-122 left open. Consumed by SFE-C2 (`#830`).
+
 ---
 
 ## 12. Superseded rulings

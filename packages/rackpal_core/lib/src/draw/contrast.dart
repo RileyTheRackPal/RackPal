@@ -2,35 +2,37 @@
 // whether ink over a fill should be dark or light. DR-080 (canon §11.79).
 //
 // ═════════════════════════════════════════════════════════════════════
-// THERE IS ALREADY AN AUTHORITY FOR THIS AND IT IS NOT DART
+// THIS IS THE PRODUCT'S ONE DEFINITION, AND THE CI GATE READS IT TOO
 // ═════════════════════════════════════════════════════════════════════
-// `tools/pal1_check.py`'s `luminance()` has computed this project's
-// luminances since M0, and the PAL-1 gate runs it on every push. DR-080
-// §11.79.4 requires that the product NOT acquire a second definition of
-// contrast, which is the mistake CR-080's font drift and the
-// `family_glyph` measurement each made in their own register: one fact,
-// two implementations, and nothing comparing them.
+// DR-080 §11.79.4 requires that the product NOT acquire a second
+// definition of contrast, which is the mistake CR-080's font drift and
+// the `family_glyph` measurement each made in their own register: one
+// fact, two implementations, and nothing comparing them.
 //
-// A Dart process cannot call that Python, so the agreement is enforced
-// the only way left: `contrast_test.dart` pins the value of every colour
-// this product actually renders against the figure `pal1_check.py`
-// produces for it, quoted in the case. Change either side and the case
-// fails. That is weaker than sharing code and it is stated rather than
-// glossed.
-//
-// WORTH KNOWING: `pal1_check.py`'s own header says it must be ported to a
-// conformance test in `rackpal_core` at M0 and kept as the authority
-// thereafter, and it names the file it expects. THAT PORT DOES NOT
-// EXIST: no such test is anywhere in the tree and the gate has been the
-// Python alone for the whole project. The name is deliberately not
-// repeated here, because `draw_source_gate_test.dart` reads production
-// comments and fails any that cite a test file which is missing — a
-// reader following a dead reference cannot tell an unwritten gate from a
-// deleted one, and it caught this very paragraph on its first run.
-//
-// This file is NOT that port and does not pretend to be: PAL-1 is a rule
-// about signal family PAIRS, and this is one scalar it happens to share.
+// For most of the project it had two anyway. `tools/pal1_check.py`
+// carried its own `luminance()` from M0, and since a Dart process cannot
+// call Python, this file was held to it by pinning: `contrast_test.dart`
+// quotes the figure the Python printed for every colour this product
+// renders. SFE-A2 (DR-122 §11.121.4) turned the arrangement round. PAL-1's
+// arithmetic now lives in `pal1.dart`, which reads [relativeLuminance],
+// and the Python gate asks `tool/pal1_verdicts.dart` for its verdicts and
+// for the callout's [contrastRatio] instead of computing them. The pinned
+// figures stay, because they are the record of what the Python said
+// before it stopped saying anything.
 import 'dart:math' as math;
+
+/// WCAG 2.x contrast ratio between two packed `0xAARRGGBB` colours, from
+/// 1 (identical) to 21 (black on white). Alpha is ignored, as it is in
+/// [relativeLuminance].
+///
+/// The PAL-1 gate asks this of the plan callout's ink against the darkest
+/// screened underlay sample (DR-150 §11.149.4), which is the one place a
+/// ratio, rather than a luminance, decides anything.
+double contrastRatio(int argbA, int argbB) {
+  final a = relativeLuminance(argbA);
+  final b = relativeLuminance(argbB);
+  return ((a > b ? a : b) + 0.05) / ((a > b ? b : a) + 0.05);
+}
 
 /// WCAG 2.x relative luminance of a packed `0xAARRGGBB` colour.
 ///

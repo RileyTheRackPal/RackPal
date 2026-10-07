@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-10-07 (hundred-and-twenty-eighth entry)
+
+* **Progress**: SFE-A (`#818`) built in three chapters: PAL-1's arithmetic in `rackpal_core` (`#822`,
+  `a4926a2d`), the gate reading it (`#823`, `1de8417d`), the headroom query (`#824`, `3eabe897`).
+  [DR-243](/decisions/dr-243-a-clone-picks-one-dash-per-class.md) ruled. New gate concept:
+  [PAL-1 conformance](/gates/pal1-conformance.md). docs/12 §4.54.
+* **Note**: **A DIFFERENTIAL OVER A PASSING INPUT PROVES ONLY AGREEMENT THAT NOTHING FAILS.** The shipped
+  palette is clean, so the port was held to the Python over two palettes known to collide as well, and the
+  gate now plants them on every run.
+* **Note**: **DUMP THE OLD ANSWER BEFORE YOU DELETE THE OLD CODE.** The fixture and the free counts were
+  printed by the Python's rules in the commit before those rules went; after it, nobody could have.
+* **Note**: **A TICKET'S "CROWDED" WAS A COUNT, NOT A MEASUREMENT.** The domains with the most families are
+  not the ones with the least room; the luminance band decides that.
+
 ## 2026-10-07 (hundred-and-twenty-seventh entry)
 
 * **Progress**: M6 re-marked `3 of 5`, `PARTIAL` (docs/12 §4.53): the complete-set, legend-simulation and

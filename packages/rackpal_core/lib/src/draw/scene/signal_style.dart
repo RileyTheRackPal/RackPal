@@ -36,8 +36,10 @@
 // PAL-1 is stated over the triple *(L, dashClass, weight)* where each
 // term is the family's EFFECTIVE value — "after any per-family override
 // (`colorOverride`, `dashOverride`, weight override), NOT the domain base
-// value" (docs/05 §6.3). `tools/pal1_check.py` is the authority and it
-// enumerates the 57 shipped families' rendered values pairwise. A
+// value" (docs/05 §6.3). `pal1.dart` holds the rule and resolves through
+// the same accessors (`Pal1Entry.of`), and the CI gate,
+// `tools/pal1_check.py`, has it enumerate the shipped families' rendered
+// values pairwise. A
 // renderer that read `SignalFamilyDef.dashOverride` directly would draw a
 // whole domain's families alike, and the check would then be clearing a
 // palette that nothing draws. So this file resolves through
@@ -126,7 +128,7 @@ enum SignalTheme { light, dark }
 ///
 /// THE ROUNDING IS DELIBERATELY NOT REPRODUCED. PAL-1's limb (b) rescues a
 /// shared dash class only when two weights "differ by a factor ≥ 1.4", and
-/// `tools/pal1_check.py` evaluates that ratio on the PERMILLE values.
+/// `pal1.dart` evaluates that ratio on the PERMILLE values.
 /// Emitting the table's rounded figures would put different ratios on
 /// paper than the authority cleared — 1.25× would arrive as 0.9/0.7 =
 /// 1.286 and 0.75× as 0.5/0.7 = 1.4 — so the check would be clearing a
@@ -141,9 +143,11 @@ const double kSignalBaseWeightPt = 0.7;
 /// permille = 0.525 pt. It is here for the family authored lighter one
 /// day, and that day has a consequence worth stating: once the floor
 /// clamps, PAL-1's ratio limb is being evaluated on permille values the
-/// sheet no longer reproduces, which `tools/pal1_check.py` cannot see.
+/// sheet no longer reproduces, which `pal1.dart` cannot see.
 /// `signal_style_test.dart` asserts the shipped seed stays clear of the
 /// floor, so that day arrives as a red test rather than as a quiet loss.
+/// A CLONE cannot bring it either: DR-243 offers only the weights the
+/// shipped palette already uses, so nothing authored goes under 750.
 const double kMinSignalStrokePt = 0.5;
 
 /// The ink a signal whose registry entry does not resolve is drawn in.

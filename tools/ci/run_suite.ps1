@@ -1293,7 +1293,23 @@ $SuiteFloors = @{
     # dart, LOWERED ON PURPOSE. rowAbove, columnAfter and columnBefore were
     # deleted with their four tests: default focus traversal already makes
     # Tab's move, measured through the real grid, and no key reaches rowAbove.
-    'rackpal_core'   = 5645
+    # 5662 at `#822` (SFE-A1, DR-122 §11.121.4): +17 in draw/pal1_test.dart.
+    # Nine are the differential against pal1_check.py's dumped verdicts,
+    # three per palette (triples, every cross-domain pair limb by limb, the
+    # violation list) over the shipped palette and the two canon §14.3 and
+    # §14.4 corrected; two hold the fixture to the seed and to failing in
+    # every limb; six are §14.2's examples, the 1.4 boundary in integers,
+    # the seed clean through core, and an unresolved domain left out.
+    # 5665 at `#823` (SFE-A2, DR-122 §11.121.4): +3. One in draw/pal1_test.
+    # dart (a supplied luminance is the one judged, which is how
+    # legend_cvd_check asks); two in draw/contrast_test.dart (contrastRatio
+    # against the old Python's printed figures, and symmetric).
+    # 5670 at `#824` (SFE-A3, DR-243 §11.242): +5 in draw/pal1_test.dart. The
+    # menu is one dash per class at the shipped weights; free counts per
+    # domain agree with figures the Python's rules computed; a refused
+    # option names its blocker; "none left" is reached and said; a
+    # candidate is not blamed for violations it did not add.
+    'rackpal_core'   = 5670
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

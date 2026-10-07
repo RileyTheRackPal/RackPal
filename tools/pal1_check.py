@@ -1,10 +1,27 @@
 #!/usr/bin/env python3
 """PAL-1 conformance check for the RackPal signal palette.
 
-Reference implementation of the pairwise greyscale-legibility test that
-docs/catalog/seed-devices.md section 4.2 requires. It is written in Python so it can run
-before any Dart exists; it must be ported to `pal1_conformance_test.dart` in
-`rackpal_core` at M0 and kept as the authority thereafter.
+The pairwise greyscale-legibility gate that docs/catalog/seed-devices.md section 4.2
+requires. It was written in Python so it could run before any Dart existed, and its
+header said it "must be ported to `pal1_conformance_test.dart` in `rackpal_core` at M0".
+That port never happened, and the gate was this file alone for the whole project.
+
+THIS FILE OWNS THE DATA AND NO LONGER OWNS THE RULES (SFE-A2, DR-122 section
+11.121.4). A person can now clone a family and pick its dash and weight, and a family
+that does not exist when CI runs cannot be CI-gated, so the editor has to run PAL-1
+itself. The arithmetic therefore lives in `packages/rackpal_core/lib/src/draw/pal1.dart`,
+and this gate SENDS its table to `packages/rackpal_core/tool/pal1_verdicts.dart` and
+prints what comes back. One implementation, read by the gate and the editor alike:
+two is how a printed sheet and a CI check come to disagree. `FAMILIES` and
+`DOMAIN_HUE` stay here because palette_parity.py and registry_parity.py hold the docs
+and the Dart seed to them.
+
+The port was held to this file's own verdicts before its copy of the rules was
+deleted: `rackpal_core/test/draw/pal1_test.dart` compares every family's triple and
+every cross-domain pair, limb by limb, with a dump this file printed at SFE-A1. Every
+run also sends two PLANTED palettes that are known to collide (`PLANTED` below) and
+fails unless the core reports them, so a green run is evidence that the core was
+asked and could have said no.
 
 WHY THIS FILE EXISTS. PAL-1 was asserted "verified clear" three times against a palette
 that in fact contained fourteen collisions, including S/PDIF against RS-232 and the two
@@ -26,52 +43,72 @@ the legend prints them adjacently -- but must still differ in dash, weight, or g
 The within-domain limb is a domain-equality check, never an allowlist of waived pairs.
 An allowlist is how a real collision gets waived.
 """
-import itertools
+import json
 import pathlib
 import re
+import shutil
+import subprocess
 import sys
 
-#: Repo root, for the one source file this gate parses.
+#: Repo root, for the source files this gate parses and the package it runs.
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 
-# --------------------------------------------------------------------------- colour
+#: Where the rules live now, and the tool that answers for them.
+CORE = ROOT / 'packages' / 'rackpal_core'
+TOOL = 'tool/pal1_verdicts.dart'
 
-def luminance(hex_str):
-    """WCAG 2.x relative luminance of an sRGB hex colour."""
-    h = hex_str.lstrip('#')
-    channels = [int(h[i:i + 2], 16) / 255.0 for i in (0, 2, 4)]
-    def linearise(c):
-        return c / 12.92 if c <= 0.03928 else ((c + 0.055) / 1.055) ** 2.4
-    r, g, b = (linearise(c) for c in channels)
-    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+# ------------------------------------------------------------------- the core
 
-# --------------------------------------------------------------------------- dash
+def permille_dash(pattern):
+    """`6,3,1.5,3` in points -> `[6000, 3000, 1500, 3000]`; `solid` -> `[]`.
 
-def mark_class(pt):
-    """A single mark is a dot, a short or a long."""
-    if pt < 2.5:
-        return 'dot'
-    if pt < 9.0:
-        return 'short'
-    return 'long'
-
-def dash_class(pattern):
-    """Class of a dash pattern: the sequence of its mark classes, up to rotation.
-
-    Marks are the even indices; odd indices are gaps and carry no class. Rotation
-    equivalence matters because `1.5,3,4,3` and `4,3,1.5,3` render as the same rhythm.
+    Marshalling, not a rule: the registry stores permille (CR-079) and the
+    core reads what the registry stores.
     """
     if pattern == 'solid':
-        return ('solid',)
-    nums = [float(x) for x in pattern.split(',')]
-    marks = tuple(mark_class(m) for m in nums[0::2])
-    return min(tuple(marks[i:] + marks[:i]) for i in range(len(marks)))
+        return []
+    return [round(float(x) * 1000) for x in pattern.split(',')]
 
-def dash_period(pattern):
-    """Total period in points. Must be >= 4.5 pt or the dash blurs to solid at 300 dpi."""
-    if pattern == 'solid':
-        return None
-    return sum(float(x) for x in pattern.split(','))
+
+def palette(families, luminance=None):
+    """One palette of a request: [families] as (id, domain, dash, weight).
+
+    [luminance], a {domain: L} map, replaces the luminance the core would
+    compute from the hue. legend_cvd_check.py uses it to ask PAL-1's
+    question of a SIMULATED lightness.
+    """
+    out = {
+        'hues': {d: DOMAIN_HUE[d] for d in sorted({f[1] for f in families})},
+        'families': [[f[0], f[1], permille_dash(f[2]), round(f[3] * 1000)]
+                     for f in families],
+    }
+    if luminance is not None:
+        out['luminance'] = luminance
+    return out
+
+
+def core(palettes, contrast=()):
+    """Ask `rackpal_core` for PAL-1's verdicts on each of [palettes].
+
+    Exits 1, loudly, if the tool cannot be run or does not answer. A gate
+    that reads "no violations" out of a crash is the failure this
+    repository has met more than once, so nothing here defaults to clean.
+    """
+    dart = shutil.which('dart')
+    if dart is None:
+        raise SystemExit('pal1_check: `dart` is not on PATH. PAL-1 is computed '
+                         'by rackpal_core now (SFE-A2); this gate cannot pass '
+                         'without asking it.')
+    request = json.dumps({'palettes': palettes,
+                          'contrast': [list(p) for p in contrast]})
+    run = subprocess.run([dart, 'run', TOOL], cwd=CORE, input=request,
+                         capture_output=True, text=True, encoding='utf-8')
+    body = run.stdout[run.stdout.find('{'):] if '{' in run.stdout else ''
+    if run.returncode != 0 or not body:
+        raise SystemExit('pal1_check: %s exited %d with no verdict.\n%s\n%s'
+                         % (TOOL, run.returncode, run.stdout, run.stderr))
+    return json.loads(body)
+
 
 # --------------------------------------------------------------------------- registry
 
@@ -157,9 +194,9 @@ FAMILIES = [
     ('structure.pathway',     'str',           '1.5,3,1.5,9',          0.75),
 ]
 
-BAND = 0.10          # luminance band inside which two families are confusable
-WEIGHT_RATIO = 1.4   # weight separation that rescues a shared dash class
-PERIOD_FLOOR = 4.5   # pt; below this a dash blurs to solid at 300 dpi
+#: The band (0.10), the weight ratio (1.4) and the period floor (4.5 pt) are
+#: NOT restated here. They live beside the rules in pal1.dart and come back
+#: with every answer under `constants`, which is what this file prints.
 
 #: The ten cable types the brief names by hand. A collision involving any of these is
 #: not a style nit -- it is requirement 4 failing its own acceptance test.
@@ -246,85 +283,110 @@ def underlay_ink_retained():
     return int(m.group(1))
 
 
-def contrast(a, b):
-    """WCAG contrast ratio between two greyscale 0-255 samples."""
-    la, lb = luminance('%02x%02x%02x' % (a, a, a)), luminance(
-        '%02x%02x%02x' % (b, b, b))
-    hi, lo = max(la, lb), min(la, lb)
-    return (hi + 0.05) / (lo + 0.05)
+def grey(v):
+    """An opaque 0xAARRGGBB grey of 0-255 value [v], as the core takes it."""
+    return 0xFF000000 | (v << 16) | (v << 8) | v
 
 
-def check_callout_over_underlay():
-    """Failures for the callout against the worst screened sample."""
+def callout_samples():
+    """(ink retained, darkest screened sample, callout ink), all 0-255 greys.
+
+    The screening: value + (255 - value) * (1 - keep), integer, truncating
+    the INK. Pure black is the darkest thing an architect's page holds, so
+    it is the worst case by construction.
+    """
     keep = underlay_ink_retained()
-    # The screening: value + (255 - value) * (1 - keep), integer, truncating
-    # the INK. Pure black is the darkest thing an architect's page holds, so
-    # it is the worst case by construction.
-    darkest = 255 - (255 * keep) // 1000
-    ink = CALLOUT_INK & 0xFF
-    ratio = contrast(ink, darkest)
+    return keep, 255 - (255 * keep) // 1000, CALLOUT_INK & 0xFF
+
+
+def check_callout_over_underlay(ratio, keep, darkest):
+    """Failures for the callout at [ratio], the core's WCAG contrast."""
     if ratio < CALLOUT_MIN_CONTRAST:
-        return [
-            'CALLOUT: black on the darkest screened sample (%d, from '
-            'kUnderlayInkRetained = %d) is %.2f:1, below the %.1f:1 floor. '
-            'Lower the screening constant or change the callout treatment.'
-            % (darkest, keep, ratio, CALLOUT_MIN_CONTRAST)
-        ], keep, darkest, ratio
-    return [], keep, darkest, ratio
+        return ['CALLOUT: black on the darkest screened sample (%d, from '
+                'kUnderlayInkRetained = %d) is %.2f:1, below the %.1f:1 floor. '
+                'Lower the screening constant or change the callout treatment.'
+                % (darkest, keep, ratio, CALLOUT_MIN_CONTRAST)]
+    return []
 
 def check_exclusions():
     """Ids that are excluded AND present. Any result is a contradiction."""
     return sorted({f[0] for f in FAMILIES} & set(NOT_A_SIGNAL_FAMILY))
 
+# ---------------------------------------------------------------- planted palettes
+
+#: The eight families canon section 14.3 moved, at their values BEFORE it moved
+#: them, and the control domain's dash before section 14.4's floor corrected it
+#: to `1.5,3`. Both are palettes KNOWN to fail, and every run sends them beside
+#: the real one: if the core reports nothing on them, this gate has not been
+#: shown to be reading anything, and it fails rather than passing on silence.
+SECTION_14_3_BEFORE = {
+    'audio.spdif_optical':    ('2,3',      1.00),
+    'structure.pathway':      ('2,6',      0.75),
+    'structure.undetermined': ('4,4',      0.75),
+    'video.hdmi.1_4':         ('solid',    1.00),
+    'video.composite':        ('12,4',     1.00),
+    'audio.line_bal':         ('10,3',     1.00),
+    'audio.spdif_coax':       ('6,3,1,3',  1.00),
+    'audio.aes3':             ('10,3,1,3', 1.00),
+}
+PERIOD_FLOOR_BEFORE = {'ctl.ir_emitter': ('1,3', 0.75)}
+
+#: Each planted palette, and the violation kinds the core must report on it.
+PLANTED = {
+    'planted: section 14.3 before': (SECTION_14_3_BEFORE, {'cross', 'within'}),
+    'planted: section 14.4 before': (PERIOD_FLOOR_BEFORE, {'period'}),
+}
+
+
+def moved(before):
+    """FAMILIES with the rows in [before] put back to their old values."""
+    return [(f[0], f[1]) + before.get(f[0], (f[2], f[3])) for f in FAMILIES]
+
 # --------------------------------------------------------------------------- checks
 
-def check():
-    lum = {d: luminance(h) for d, h in DOMAIN_HUE.items()}
-    failures = []
+def describe(v, by_id, constants):
+    """One violation from the core, worded as this gate has always printed it."""
+    ids = v['familyIds']
+    if v['kind'] == 'cross':
+        named = [REQUIREMENT_4[i] for i in ids if i in REQUIREMENT_4]
+        return ('PAL-1(a/b): %s and %s share dash class %s at weight ratio %.3f, '
+                'dL=%.4f%s' % (ids[0], ids[1], v['dashClass'], v['weightRatio'],
+                               v['deltaL'], '  [requirement 4: %s]'
+                               % ', '.join(named) if named else ''))
+    if v['kind'] == 'within':
+        a = by_id[ids[1]]
+        return ('PAL-1(within): %s and %s render identically in %s (%s, %.2fx)'
+                % (ids[0], ids[1], a[1], a[2], a[3]))
+    return ('PERIOD: %s has period %.2f pt, below the %.1f pt floor'
+            % (ids[0], v['periodPermille'] / 1000,
+               constants['periodFloorPermille'] / 1000))
 
-    # (a)/(b): cross-domain pairs inside the luminance band
-    for a, b in itertools.combinations(FAMILIES, 2):
-        if a[1] == b[1]:
-            continue
-        delta = abs(lum[a[1]] - lum[b[1]])
-        if delta >= BAND:
-            continue
-        if dash_class(a[2]) != dash_class(b[2]):
-            continue
-        ratio = max(a[3], b[3]) / min(a[3], b[3])
-        if ratio >= WEIGHT_RATIO:
-            continue
-        named = [REQUIREMENT_4[f[0]] for f in (a, b) if f[0] in REQUIREMENT_4]
-        failures.append(
-            'PAL-1(a/b): %s and %s share dash class %s at weight ratio %.3f, dL=%.4f%s'
-            % (a[0], b[0], '/'.join(dash_class(a[2])), ratio, delta,
-               '  [requirement 4: %s]' % ', '.join(named) if named else ''))
-
-    # within-domain: must differ in dash or weight (glyph is per-domain, so it cannot help)
-    seen = {}
-    for fid, dom, dash, wt in FAMILIES:
-        key = (dom, dash, wt)
-        if key in seen:
-            failures.append('PAL-1(within): %s and %s render identically in %s (%s, %.2fx)'
-                            % (seen[key], fid, dom, dash, wt))
-        seen[key] = fid
-
-    # period floor
-    for fid, _dom, dash, _wt in FAMILIES:
-        p = dash_period(dash)
-        if p is not None and p < PERIOD_FLOOR:
-            failures.append('PERIOD: %s has period %.2f pt, below the %.1f pt floor'
-                            % (fid, p, PERIOD_FLOOR))
-
-    return failures, lum
 
 def main():
-    failures, lum = check()
-    pairs = sum(1 for a, b in itertools.combinations(FAMILIES, 2)
-                if a[1] != b[1] and abs(lum[a[1]] - lum[b[1]]) < BAND)
-    print('PAL-1 conformance: %d families, %d in-band cross-domain pairs checked'
-          % (len(FAMILIES), pairs))
     contradictions = check_exclusions()
+    keep, darkest, ink = callout_samples()
+    palettes = {'shipped': palette(FAMILIES)}
+    for name, (before, _) in PLANTED.items():
+        palettes[name] = palette(moved(before))
+    answer = core(palettes, contrast=[(grey(ink), grey(darkest))])
+    shipped = answer['palettes']['shipped']
+    print('PAL-1 conformance: %d families, %d in-band cross-domain pairs checked'
+          % (shipped['families'], shipped['inBandPairs']))
+    print('  rules: packages/rackpal_core/lib/src/draw/pal1.dart, through %s' % TOOL)
+
+    # The planted palettes first: a core that cannot fail them cannot be trusted
+    # to pass the real one.
+    for name, (_, kinds) in PLANTED.items():
+        got = {v['kind'] for v in answer['palettes'][name]['violations']}
+        print('  %s: core reported %d violation(s), kinds %s'
+              % (name, len(answer['palettes'][name]['violations']),
+                 ', '.join(sorted(got)) or 'none'))
+        if not kinds <= got:
+            print('FAIL - the core did not report %s on a palette known to '
+                  'collide. The gate has not been shown to read anything.'
+                  % ', '.join(sorted(kinds - got)))
+            return 1
+
     if contradictions:
         print('FAIL - excluded id(s) present in FAMILIES: %s'
               % ', '.join(contradictions))
@@ -336,11 +398,14 @@ def main():
     # checked it and passed.
     print('  excluded (not signal families): %s'
           % ', '.join(sorted(NOT_A_SIGNAL_FAMILY)))
-    callout_failures, keep, darkest, ratio = check_callout_over_underlay()
+    ratio = answer['contrast'][0]
     print('  callout over the screened underlay: black on %d (ink retained '
           '%d per-mille) is %.2f:1, floor %.1f:1'
           % (darkest, keep, ratio, CALLOUT_MIN_CONTRAST))
-    failures = failures + callout_failures
+    by_id = {f[0]: f for f in FAMILIES}
+    failures = [describe(v, by_id, answer['constants'])
+                for v in shipped['violations']]
+    failures += check_callout_over_underlay(ratio, keep, darkest)
     if not failures:
         print('PASS - no collisions.')
         return 0
