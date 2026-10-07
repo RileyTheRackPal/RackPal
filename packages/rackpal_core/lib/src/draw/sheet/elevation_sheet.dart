@@ -51,11 +51,15 @@
 // WHAT T2.02 DOES NOT HAVE, AND SAYS SO ON THE SHEET
 // ─────────────────────────────────────────────────────────────────────────
 // §2.2 wants connector fields and per-port labels carrying
-// `Link.designator` on the rear elevation. There is no port strip in
-// `device_layer.dart` and a document edited in this build creates no
-// `Link`s at all, so the section is OMITTED rather than drawn empty. That
-// changes what a sheet titled "RACK ELEVATION — REAR" promises, so it is
-// stated ON THE SHEET — [kRearDetailNote] — and not only in the M1 log.
+// `Link.designator` on the rear elevation. There is still no port strip in
+// `device_layer.dart`, so the section is OMITTED rather than drawn empty.
+// That changes what a sheet titled "RACK ELEVATION — REAR" promises, so it
+// is stated ON THE SHEET, in [kRearDetailNote], and not only in the M1 log.
+//
+// THE NOTE POINTS TO T6.15 (DR-242). It said "NOT ISSUED IN THIS SET" until
+// then: true at M1, when no document had a `Link`, and false in every export
+// after M6-K made the Termination Schedule, which IS the port and
+// connection detail, ON in every set.
 
 import 'dart:math' as math;
 
@@ -144,7 +148,7 @@ const String kScaleAppliesNote =
 /// docs/08 §2.2's rear-elevation scope, stated on the sheet. See the file
 /// header.
 const String kRearDetailNote =
-    'REAR FACES SHOWN. PORT AND CONNECTION DETAIL NOT ISSUED IN THIS SET.';
+    'REAR FACES SHOWN. PORT AND CONNECTION DETAIL: SEE T6.15.';
 
 /// The rack's envelope and THIS FACE'S door, as one note line (DR-239
 /// §11.238.4): the printed dimension a cabinetmaker or general contractor
