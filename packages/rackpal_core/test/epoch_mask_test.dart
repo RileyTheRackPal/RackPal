@@ -1317,6 +1317,31 @@ void main() {
       );
     });
 
+    test('CloneSignalFamilyCommand', () {
+      // SFE-B1 (`#825`). Built through the one builder that makes it, on
+      // a dash and weight still free for a control family, so the case
+      // exercises the command a person would actually get.
+      final doc = _house();
+      final free = pal1Headroom(
+        palette: pal1EntriesOf(doc.registries),
+        domain: doc.registries.signalDomains[const SignalDomainId('ctl')]!,
+        vocabulary: pal1ClassVocabulary(pal1EntriesOf(buildSeedRegistries())),
+      ).free.first;
+      final built = buildCloneSignalFamily(
+        doc,
+        parent: const SignalFamilyId('ctl.cresnet'),
+        displayName: 'Epoch mask test',
+        shortTag: 'EMT',
+        dashPermille: free.dashPermille,
+        weightPermille: free.weightPermille,
+      );
+      _covers(
+        doc,
+        (built as CloneSignalFamilyReady).command,
+        expectAtLeast: {'registries'},
+      );
+    });
+
     test('SetConnectorAliasesCommand', () {
       final doc = _house();
       final id = doc.registries.connectorTypes.keys.first;

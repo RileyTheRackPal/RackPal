@@ -198,6 +198,12 @@ const Map<String, String> _exempt = {
   // `#1006` CLOSED ITS ROW. `AppendSetToLinkCommand` landed a commit ahead
   // of its host (BRK-A/2), exempted here; the cable bar's "Add a set to
   // this cable" (BRK-A/3, DR-236 §11.235.2) is what reaches it now.
+
+  // SFE-B1 (`#825`) LANDS THE CLONE AHEAD OF ITS HOST, the same shape as
+  // `#1006`'s row above. DR-122's command, refusal and round trip are
+  // SFE-B; the dialog a person reaches it through is SFE-C1, `#829`, which
+  // retires this row.
+  'CloneSignalFamilyCommand': '#829',
 };
 
 /// Commands that are NOT reachable from a person and are not supposed to
