@@ -2282,6 +2282,46 @@ status chips on screen, and flagged 32 pairs whose difference was mostly lightne
 open under §8.9**: the Plan view closes first, on `PLAN-J`'s drill, which sits in `Needs You` since today.
 No version move: M6 is later than the current epic.
 
+### 4.54 SFE-A: PAL-1 moves into core, and the gate and the editor read one implementation · 2026-10-07 · `#818`, `#822`, `#823`, `#824` · DR-122, `DR-243` · no version move
+
+DR-122 §11.121.4 lets a person clone a signal family and choose its dash and weight, and a family that
+does not exist when CI runs cannot be CI-gated. So PAL-1 had to run in the app, which meant in
+`rackpal_core`. **`tools/pal1_check.py`'s header had said since M0 that it "must be ported to
+`rackpal_core`"**, and `contrast.dart` carried a paragraph noting that the port did not exist. It now does.
+
+**A1 (`a4926a2d`), the port, held to the Python's own verdicts.** `lib/src/draw/pal1.dart` carries the five
+limbs. Before the Python's rules were deleted, it printed a dump of every family's triple and every
+cross-domain pair's verdict **limb by limb**, over three palettes, and `pal1_test.dart` compares the port
+with it. **The shipped palette alone would have proved nothing**, because it passes, so a comparison over
+it could only show the port agreeing that nothing fails. The other two are canon §14.3's eight families at
+their pre-correction values and §14.4's pre-floor control dash: 23 cross-domain collisions, 2 within-domain
+duplicates and 1 period failure between them.
+
+**A2 (`1de8417d`), the gate reads the port.** `pal1_check.py` keeps the palette DATA, which the two parity
+gates hold the docs and the seed to, and sends it to `tool/pal1_verdicts.dart`. Every run also sends the
+two failing palettes as **planted** cases and fails unless the core reports them. **Drilled**: setting the
+core's band to 0 failed the gate on the planted palette; putting `audio.spdif_coax` back to `6,3,1,3`
+reproduced exactly §14.3's six S/PDIF collisions. `legend_cvd_check.py` (M6-J1) imported the Python's
+`dash_class` and ratio and would have broken without a sound; it now sends simulated luminance through
+the same call, and its output, Board `#1031`'s fourteen pairs included, is **byte-identical**.
+`import_hardening_test`'s byte-reader census caught the tool's stdin on the first run.
+
+**A3 (`3eabe897`), headroom.** What a new family in a domain can still take, every option with the
+families that block it, and *"none left"* as a state of its own. The menu is **DR-243**'s, which the user
+chose: one dash per class at the shipped weights. **The per-domain free counts are a second
+differential**, computed by the Python's rules before they were deleted, and matched on the first run.
+
+**The ticket's premise did not survive measurement.** SFE-A3 called digital video and control the crowded
+groups. By family count they are; by headroom `str`, `ctl` and `net` are tightest and `video.digital` is
+among the roomiest, because the cross-domain luminance band is what constrains a choice. DR-243 §11.242.3
+records it.
+
+**Found and not fixed here.** DR-122 §11.121.2 says a clone *inherits* its connector, and its own worked
+example, `ctl.vantage`, is *"clone Cresnet, rename, change the connector"*. SFE-B1 needs that settled
+before the command is built.
+
+No version move: the DR-122 epic is not the current one.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
