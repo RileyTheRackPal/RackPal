@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-10-07 (hundred-and-twenty-fourth entry)
+
+* **Update**: [DR-089](/decisions/dr-089-the-wordmark-ships-as-outlines.md) and
+  [DR-090](/decisions/dr-090-hue-is-never-the-only-cue.md) caught up with DR-096, DR-117 and the built
+  palette, and both now link the three brand reference pages (Colour, Wordmark, Type), revised against the
+  code. The wordmark page absorbed the older "Mark at Size" page.
+* **Note**: **SHIPPED IN THE CODE IS NOT SHIPPED.** The settled lockup has no caller outside its own test,
+  and the app icon is still Flutter's logo. Every brand page said "ships" and none could see that.
+* **Note**: **A PROOF SHEET BROKE THE RULE IT ILLUSTRATED.** The 2026-08-27 palette page drew Notice as a
+  filled dot, the one shape DR-090 forbids. Nothing gates a picture, so it was redrawn from `status_marker.dart`.
+
 ## 2026-10-06 (hundred-and-twenty-third entry)
 
 * **Progress**: `#1020` built in two chapters, `#1021` (`076149a9`) and `#1022` (`f4750058`); DR-241 marked

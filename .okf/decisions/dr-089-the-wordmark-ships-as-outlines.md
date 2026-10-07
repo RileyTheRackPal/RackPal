@@ -8,7 +8,7 @@ description: >-
   both backends replay. Placing it on the board found that RJ-017's five
   accepted hardening items were decomposed into nothing.
 tags: [ruling, branding, wordmark, identity, licensing, rj-017, ac-058, cr-086, cr-117, dr-089, gpl]
-timestamp: 2026-08-25T00:00:00Z
+timestamp: 2026-10-07T00:00:00Z
 ruling_id: DR-089
 canon_section: "11.88"
 status: built
@@ -58,6 +58,11 @@ identical ops, so every gate passed. The licence and that field bug point the sa
 
 ## The lockup
 
+**Deprecation**: this section describes the RackMate lockup as DR-089 shipped it. DR-096
+re-spelled it at `1b9f861e` and DR-117 §11.116.1 settled the result; see
+[Since](#since-the-rename) below for the mark that ships now. Kept because the ink-flush
+reasoning is why PAL was *not* tracked to match.
+
 RACK over MATE, stacked and ruled. One line measures 8.95:1 and is a banner.
 
 MATE is 262 upem units wider, so RACK is tracked **+70/1000 em**, solved against **ink**
@@ -81,8 +86,35 @@ before any certificate or domain is bought, so it is cheap now and expensive the
 M8-A reaches for a code-signing certificate. See
 [check a decomposition for holes](/practices/check-a-decomposition-for-holes.md).
 
+## Since the rename
+
+DR-096 §11.95.4 made the letterforms an outside art dependency: nobody working in this
+tree can cut a new letter, because the tool that cuts them is the font and the font may
+not be here. RackPal arrived as paths at `1b9f861e`.
+
+PAL is 812 units **narrower** than RACK by ink, so the old solve would need +406/1000 em
+and PAL would read as three initials. So RACK sets the measure **untracked**, the rule
+matches RACK, PAL sits flush left, and Riley (544 × 675, even-odd, a separate path) takes
+the row-2 slot 268 units clear of the L. Box **2788 × 1486**; overshoot is now 12 **above
+only**, because the M that overshot the baseline is gone. **DR-117 §11.116.1 settled both
+review questions as drawn** (2026-09-03), after the mark went in front of a test group.
+
+The reference pages are claude.ai artifacts, revised 2026-10-07 and drawn from the
+`brand.dart` bytes: [Wordmark](https://claude.ai/artifact/DcHQGd3EUkLbo5pdRo65zS) (forms,
+anatomy, true-size and icon ladders; it absorbed the older "Mark at Size" page),
+[Colour](https://claude.ai/artifact/JRjXir27Kh52L8NDaQUttf) and
+[Type](https://claude.ai/artifact/S4j8rvE8ujjuQwVgShBSTe).
+
 ## Still open
 
-The **application icon** (Riley, per §10.12(f), blocked on assets, and needing a reduced
-mark because a character face at 16 px is mud), the **window and document icons**, the
-**trademark search**, and the **console palette**, which is DR-090.
+- **The mark is drawn nowhere.** `rackPalLockupPath` and `rackPalRileyPath` have no
+  caller outside `brand_test.dart`, measured 2026-10-07. "Shipped" here means shipped in
+  the code, not on any screen or sheet.
+- **The application icon is still Flutter's.** `app_icon.ico` is the stock logo, last
+  touched 2026-08-26. Riley is the intended icon (§10.12(f)) and below about 48 px the mark
+  *is* Riley; no icon art exists.
+- The **window and document icons**, behind the same art.
+- **Final Riley art**, which DR-117 expects to replace `_rileyD` and nothing else.
+
+The trademark search cleared before the rename (DR-096 §11.95.7). The console palette is
+[DR-090](dr-090-hue-is-never-the-only-cue.md).
