@@ -46,12 +46,14 @@ import 'package:rackpal_core/src/draw/text.dart';
 
 /// The font sheet furniture draws with.
 ///
-/// Only one TTF is bundled today (`Jost-Regular`), so this resolves to the
-/// same [FontRef] the rack scene uses. It is declared under its own name so
-/// furniture can move to CR-080's `RackBody`/`RackCond`/`RackMono` faces
-/// without touching every call site — and so a reader can see at a glance
-/// that furniture and rack geometry are separately styleable even while
-/// they currently share a face.
+/// The PDF embeds one face, Jost Regular (`kExportFont`), so this resolves
+/// to the same [FontRef] the rack scene uses. `RackMono` (Space Mono) is
+/// bundled for two screen widgets and is not loaded into the export, and
+/// `RackBody`/`RackCond` exist only as docs/08 §10.1's role names. It is
+/// declared under its own name so furniture can move to a role face without
+/// touching every call site, and so a reader can see at a glance that
+/// furniture and rack geometry are separately styleable even while they
+/// currently share a face.
 const FontRef kSheetFont = kRackFont;
 
 /// Per-sheet-role page margins (docs/08 §6.1).
@@ -275,7 +277,8 @@ const double kPlainInsetPt = 6;
 /// §5.1's zone module, 4.25 in.
 const double kZoneModulePt = 4.25 * 72;
 
-/// The zone labels' size: §5.1's RackMono 7, in the one face bundled.
+/// The zone labels' size: §5.1's RackMono 7, set in [kSheetFont] because
+/// the export loads no mono face.
 const double kZoneLabelPt = 7;
 
 /// How many zones run along a side [lengthPt] long: one per module,

@@ -13146,6 +13146,11 @@ point the same way**, which is the only reason this ruling is cheap.
 **11.88.6 THE LOCKUP.** `RACK` over `MATE`, stacked, with a rule between. Two rows of four, because
 one line measures **8.95:1** against its cap height and is a banner rather than a badge.
 
+**THIS SUBSECTION DESCRIBES THE RACKMATE LOCKUP, AND ITS GEOMETRY IS SUPERSEDED.** DR-096
+§11.95.4 re-spelled the mark at `1b9f861e`: `RACK` untracked over `PAL` flush left, the rule matching
+`RACK`, Riley in the row-2 slot, box **2788 × 1486** with overshoot above only. DR-117 §11.116.1
+settled that as drawn. The licence reasoning, the ink-flush method and the 20 px threshold stand.
+
 `MATE` is **262 upem units wider** than `RACK`, so `RACK` is tracked **+70/1000 em** and the rows
 flush to a residual of **zero units**. The tracking is solved against **ink**, not advances:
 advances carry side bearings, so flushing on them measures as flush and does not look it.
@@ -13331,6 +13336,10 @@ substituting silently, which is the right failure and is left as-is.
 build may keep the name. That matters for the four codepoints this build still lacks, `U+2192`,
 `U+2194`, `U+2032` and `U+2033`, which two live schedule cells emit onto `T6.10` and `T6.11`, and
 which remain owed.
+
+**ALL FOUR ARE BUILT, AT `b7b5ac2` (`#772`).** `tools/build_jost_glyphs.py` adds them and seven more
+from the face's own contours, and `tools/glyph_coverage_check.py` reads the binary to hold them there.
+The modified build records itself in its own name table, which said *RackMate* until `#1029`.
 
 **11.89.9 BUILT, AND WHAT REMAINS UNBUILT INSIDE IT.** The palette is applied at `b2b12fb` (`#770`)
 and `RackMono` is bundled at `71b9bd1` (`#773`, Space Mono, chosen by the user).

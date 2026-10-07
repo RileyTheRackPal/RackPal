@@ -121,7 +121,13 @@ sheet for the rule broke the rule, and nothing gates a picture.
 - **Device accent swatch 5 is PAL-2's reserved selection yellow `#F0E442`.** PAL-2 bars it
   from cables only, and §11.89.10 leaves accents to `#565`, so no ruling is broken. A
   device body in the colour that means "selected" is a UI question for `#565`'s owner.
-- **The bundled Jost reports "Version 3.710; RackMate build: +11 glyphs"** in its name
-  table, a pre-DR-096 name inside a shipped file. The four codepoints §11.89.8 lists as
-  owed (`U+2192`, `U+2194`, `U+2032`, `U+2033`) are in that build now.
-- `text.dart` and `sheet_frame.dart` still say only Jost Regular is bundled.
+- **Fixed at `6ef51f89` (`#1029`): the bundled Jost reported "RackMate build"** in its name
+  table. `#781` had corrected the generator and never re-run it. Only the name table was
+  rewritten, with every other table proven byte-identical. Canon §11.89.8 now records the
+  four owed codepoints as built at `b7b5ac2` (`a912bbcb`).
+- **Fixed at `7f5bbde3` (`#1029`): seven comments said only Jost Regular is bundled.** The
+  rewrite kept the half still true: a drawing op reaches one face, and `bold` must stay
+  unwired on screen until the PDF loads Medium too.
+- **Not fixed, because it is not a note:** docs/03, 05, 08, 11 and canon still specify
+  CR-080's IBM Plex. That face change was never ruled (docs/12 §4.6), so the docs are not
+  stale against a ruling; the code is ahead of one.

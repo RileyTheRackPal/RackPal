@@ -105,9 +105,10 @@
 //  * **Pagination, page geometry, the chip's dash and hue.** §3.5/§3.7
 //    are rendering. [ScheduleColumn.widthPt] carries §3.2/§3.3's exact
 //    point widths because they are the shared column contract, but no
-//    font is named here: CR-080's `RackBody`/`RackCond`/`RackMono` faces
-//    do not exist yet (`sheet_frame.dart:45`), and naming a face that
-//    ships nowhere would be the same fabrication.
+//    font is named here: the export embeds Jost Regular alone
+//    (`kSheetFont` in `sheet_frame.dart`), `RackMono` is bundled for the
+//    screen only, and `RackBody`/`RackCond` exist only as role names, so
+//    naming a face the sheet cannot draw would be the same fabrication.
 
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/commands/bind_endpoint_command.dart'

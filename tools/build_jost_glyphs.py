@@ -1,4 +1,7 @@
-"""Add the four codepoints Jost lacks, BUILT FROM JOST'S OWN CONTOURS.
+"""Add the eleven codepoints Jost lacks, BUILT FROM JOST'S OWN CONTOURS.
+
+Four for the printed sheets, below, and seven the chrome needs once
+ThemeData names Jost, further down.
 
 DR-090 §11.89.8. Regenerates `apps/rackpal/assets/fonts/Jost-*.ttf` in place
 from a pristine upstream copy.
@@ -337,7 +340,7 @@ for record in list(font['name'].names):
             'Version 3.710; RackPal build: +11 glyphs',
             5, record.platformID, record.platEncID, record.langID)
 font['name'].setName(
-    "Modified for RackPal: four glyphs added, built from the face's own "
+    "Modified for RackPal: eleven glyphs added, built from the face's own "
     'contours by tools/build_jost_glyphs.py. SIL OFL 1.1, no Reserved Font '
     'Name.', 10, 3, 1, 0x409)
 

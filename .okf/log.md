@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-10-07 (hundred-and-twenty-sixth entry)
+
+* **Progress**: `#1029` (M8-H5) built in three commits: the font comments (`7f5bbde3`), the Jost name table
+  (`6ef51f89`), canon's built and superseded notes (`a912bbcb`).
+  [DR-090](/decisions/dr-090-hue-is-never-the-only-cue.md) updated.
+* **Note**: **A FIXED GENERATOR IS NOT A FIXED ARTIFACT.** The rename corrected the script that writes the
+  font's name and never re-ran it; the binary disagreed with its own source for six weeks.
+* **Note**: **A STALE NOTE CAN HOLD A TRUE HALF.** "Only Jost Regular is bundled" was false about the bundle and
+  true about what a drawing op can reach. Deleting it whole would have invited wiring `bold` on screen alone.
+* **Note**: **NOT EVERY OUTDATED DOC IS STALE.** The IBM Plex text is the ruling the code outran, not a note
+  the docs forgot. Sweeping it would have ratified a face change nobody ruled.
+
 ## 2026-10-07 (hundred-and-twenty-fifth entry)
 
 * **Progress**: PR 209 merged at `b0c4ff56`; `#1020` closed. `#783` gained a second identity (ADO's server-made

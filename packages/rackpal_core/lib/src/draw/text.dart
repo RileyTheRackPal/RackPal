@@ -18,12 +18,16 @@ import 'package:rackpal_core/src/draw/geometry.dart';
 
 /// A bundled font family + weight, identified minimally.
 ///
-/// SCOPE NOTE: only Jost **Regular** is bundled as of this stage
-/// (`apps/rackpal/assets/fonts/Jost-Regular.ttf`) — Bold,
-/// Condensed, Mono and Noto Sans Symbols are a later stage's job per the
-/// architecture doc's font table. `bold` exists so callers can express
-/// intent now without a breaking change later, but nothing currently
-/// resolves it to a different TTF.
+/// SCOPE NOTE: a drawing op can reach ONE face, Jost Regular. The app
+/// bundles four TTFs (Jost 400 and 500, `RackMono` 400 and 700; see
+/// `apps/rackpal/pubspec.yaml`), but Medium and `RackMono` are reached by
+/// Flutter widgets through `TextStyle`, never through a [FontRef], and the
+/// PDF loads only `kExportFont`. No scene builder names another family or
+/// sets [bold]. Condensed and the Noto Sans Symbols 2 fallback from docs/08
+/// §10.1's table do not exist. `bold` exists so callers can express intent
+/// without a breaking change later, but nothing resolves it to a different
+/// TTF: the screen ignores it and the PDF throws on a face it was not
+/// given, which is the right failure.
 ///
 /// Deliberately `bool bold` rather than a `FontWeight`-style enum: an enum
 /// literally named `FontWeight` would collide with `dart:ui`/Material's

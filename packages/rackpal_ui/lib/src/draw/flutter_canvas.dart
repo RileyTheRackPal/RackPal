@@ -210,13 +210,15 @@ final class FlutterDiagramCanvas implements DiagramCanvas {
   /// rasterises the SAME TTF `PdfFontMeasurer`/`PdfTtfFont` measure on the
   /// PDF side (CR-080, docs/08-pdf-export.md §10.2).
   ///
-  /// SCOPE NOTE: only Jost Regular is bundled at this stage (see
-  /// `FontRef`'s own doc comment in rackpal_core/src/draw/text.dart), and
-  /// `FontRef.family` already carries the exact pubspec family string
-  /// (`'Jost'` -- matching both `rackpal_text`'s and
-  /// `rackpal_export`'s test fixtures), so this is a passthrough for now.
-  /// `bold` is not wired to a distinct family yet because no bold TTF is
-  /// bundled -- a later stage adds the SemiBold cut and must branch here.
+  /// SCOPE NOTE: drawing ops reach only Jost Regular (see `FontRef`'s own
+  /// doc comment in rackpal_core/src/draw/text.dart), and `FontRef.family`
+  /// already carries the exact pubspec family string (`'Jost'`, matching
+  /// both `rackpal_text`'s and `rackpal_export`'s test fixtures), so this is
+  /// a passthrough. `bold` is deliberately NOT wired here even though Jost
+  /// Medium is now bundled: the PDF embeds Regular alone, so mapping `bold`
+  /// to Medium on this side only would make the two backends measure
+  /// different outlines, which is the failure CR-081 exists to prevent.
+  /// Wiring it means loading Medium into the export at the same time.
   String _familyFor(FontRef font) => font.family;
 
   /// Builds the rounded-rectangle outline as a [DiagramPath] using kappa
