@@ -163,7 +163,9 @@ final class Pal1Entry {
     required this.hue,
     required List<int> dashPermille,
     required this.weightPermille,
-  }) : dashPermille = List.unmodifiable(dashPermille);
+    double? luminance,
+  }) : dashPermille = List.unmodifiable(dashPermille),
+       luminance = luminance ?? relativeLuminance(hue.argb);
 
   /// [family] resolved against its [domain], at the light theme's hue,
   /// which is the print theme and the one §14 tabulates.
@@ -186,9 +188,15 @@ final class Pal1Entry {
   /// Permille of the base signal weight: `1000` is 1×.
   final int weightPermille;
 
-  /// WCAG relative luminance of [hue], through `contrast.dart`, which is
-  /// the product's one definition of it (DR-080 §11.79.4).
-  double get luminance => relativeLuminance(hue.argb);
+  /// The lightness this family is SEEN at: WCAG relative luminance of
+  /// [hue], through `contrast.dart`, which is the product's one
+  /// definition of it (DR-080 §11.79.4).
+  ///
+  /// A caller may supply it instead. `tools/legend_cvd_check.py` asks
+  /// PAL-1's question of the lightness a colour-vision deficiency leaves
+  /// (AC-054, M6-J1), and passing that number in is how it asks without
+  /// keeping a second copy of the rule. Nothing in the product does.
+  final double luminance;
 
   Pal1DashClass get dashClass => Pal1DashClass.of(dashPermille);
 

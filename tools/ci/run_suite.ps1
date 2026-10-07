@@ -1300,7 +1300,11 @@ $SuiteFloors = @{
     # §14.4 corrected; two hold the fixture to the seed and to failing in
     # every limb; six are §14.2's examples, the 1.4 boundary in integers,
     # the seed clean through core, and an unresolved domain left out.
-    'rackpal_core'   = 5662
+    # 5665 at `#823` (SFE-A2, DR-122 §11.121.4): +3. One in draw/pal1_test.
+    # dart (a supplied luminance is the one judged, which is how
+    # legend_cvd_check asks); two in draw/contrast_test.dart (contrastRatio
+    # against the old Python's printed figures, and symmetric).
+    'rackpal_core'   = 5665
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

@@ -19,7 +19,9 @@ about the gate. Count the `Invoke-Gate` calls if the number matters.
 
 # The pair it completes
 
-`tools/pal1_check.py` is the **single authority** for the palette.
+`tools/pal1_check.py` is the **single authority** for the palette's DATA. Since
+SFE-A2 the RULES it applies to that data live in `rackpal_core`; see
+[PAL-1 conformance](/gates/pal1-conformance.md).
 
 - `palette_parity.py` proves the **docs** agree with the authority.
 - `registry_parity.py` proves the **code** does.

@@ -231,4 +231,28 @@ void main() {
     );
     expect(pal1EntriesOf(r), isEmpty);
   });
+
+  test('a supplied luminance is the one PAL-1 judges, which is how the '
+      'colour-blindness check asks its question', () {
+    // SFE-A2. Black and white sit a whole luminance apart, so the same
+    // dash at the same weight is legible; told that a deficiency leaves
+    // them at one lightness, the same pair collides.
+    Pal1Entry at(String domain, String hex, {double? seen}) => Pal1Entry(
+      familyId: SignalFamilyId('x.$domain'),
+      domainId: SignalDomainId(domain),
+      hue: Rgb.fromHex(hex),
+      luminance: seen,
+      dashPermille: const [6000, 3000],
+      weightPermille: 1000,
+    );
+    expect(at('a', '#000000').luminance, 0.0);
+    expect(pal1Pair(at('a', '#000000'), at('b', '#FFFFFF')).collides, isFalse);
+    expect(
+      pal1Pair(
+        at('a', '#000000', seen: 0.40),
+        at('b', '#FFFFFF', seen: 0.45),
+      ).collides,
+      isTrue,
+    );
+  });
 }

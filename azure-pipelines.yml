@@ -575,7 +575,7 @@ jobs:
         condition: succeededOrFailed()
 
       # ==================================================================
-      # GATE 2 — THE PALETTE, which needs no Dart and no dependencies
+      # GATE 2 — THE PALETTE
       # ==================================================================
       # docs/11 section 7 marks pal1_check BLOCKING: exit 1 means a palette
       # collision ships. PAL-1 was asserted "verified clear" three times
@@ -583,6 +583,11 @@ jobs:
       # table instead of enumerating the 385 in-band pairs. palette_parity
       # is the second half — it proves the DOCUMENTS still agree with the
       # registry — and its own docstring asks for both to run in CI.
+      #
+      # This block used to say it "needs no Dart and no dependencies". Since
+      # SFE-A2 (DR-122 section 11.121.4) pal1_check sends its table to
+      # rackpal_core's tool/pal1_verdicts.dart, so it NEEDS the workspace's
+      # `flutter pub get` above it, which is where it already sat.
       - pwsh: |
           python tools/pal1_check.py
           exit $LASTEXITCODE
