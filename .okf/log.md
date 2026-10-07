@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-twenty-third entry)
+
+* **Progress**: `#1020` built in two chapters, `#1021` (`076149a9`) and `#1022` (`f4750058`); DR-241 marked
+  built. docs/12 §4.51.
+* **Note**: **A PAGE-COORDINATE FILTER OVER A SPLICED SCENE PASSES BY LUCK.** The rack's labels sit inside a
+  save/transform bracket in scene units; an 8 pt layout move let one in. Read the ops outside the bracket.
+* **Note**: **THE DASH IS ALSO G4'S UNKNOWN.** A rule keyed on "the line has a dash" matched `RACK TOTAL  —`.
+  The mutation that forced the wrap found it; test the property that matters (width) before the shape.
+
 ## 2026-10-06 (hundred-and-twenty-second entry)
 
 * **Progress**: PR 208 merged at `ba27758c`; `#1016` closed. `#1020` taken, decomposed into `#1021` to `#1023`;

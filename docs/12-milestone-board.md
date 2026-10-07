@@ -2186,6 +2186,41 @@ red. Floors: core 5641 to 5645, export 306 to 308.
 
 ---
 
+### 4.51 The elevation sits 8 pt inside its frame, and a long summary line wraps · 2026-10-06 · `#1020`, `#1021` to `#1023` · `DR-241`, `DR-240` · no version move
+
+`#1020` was found by looking at a rendered page for §4.50: every note's first letter fused to the frame. Looking
+again at the whole page found the worse half, **the scale bar's zero tick drawn on the frame line**, so the start
+of the foot a person checks with a tape measure was part of the border. Every element of the elevation was
+anchored exactly on the frame's edge; the legend had the same defect and had fixed it with the 8 pt every
+other sheet uses.
+
+**Pricing the cosmetic fix found a factual one.** An inset narrows each note column from 327 to 319 pt, so the
+widest lines were measured through Jost: the `NOT DRAWN HERE` line was **already being cut** with an ellipsis at
+three-digit counts (331.7 pt). The user took 8 pt all round (an empty 55 U moves 1:8 to 1:10, nothing else) and
+a wrap after the line's dash onto the band's sixth row, amending DR-240 §11.239.2 (canon §12.52).
+
+**Built.** IN-1 at `076149a9`: `elevationBodyOf`, the drawing area less `kElevationInset` on every side, with the
+band, the rack's area and the scale bar hung from it. IN-2 at `f4750058`: `_wrapAfterDash` in `_band`, width
+tested first; the row-count assert moved into `_band`, where a wrap can overflow.
+
+**Found on the way, both in tests.** The band test excluded the rack's own labels from a page-coordinate filter
+**by luck**: they live inside the scene's save/transform bracket in scene units, and the 8 pt move let the RU
+numeral `7` in. It now reads page text only. And a mutation forcing every dashed line to wrap broke `RACK
+TOTAL` too: G4 prints an unknown as a spaced dash, so "contains a dash" is not the omission line, and width
+has to be tested first.
+
+**Looked at.** Small office, a six-note 60 U rear sheet and a 52-device wrapped summary, rendered through
+pdfium: every note clear of the frame, the bar's zero tick standing alone, the wrapped line in two whole rows.
+
+**Evidence.** `elevation_sheet_test` (+4: band 8 pt clear on every side, the bar's zero tick at frame plus 8,
+the 52-device sheet's six rows verbatim, a fitting line staying one row; literals for 55 U, the band, the
+overrun and the six-note filter moved with it), `elevation_true_scale_test` (one more page literal, the
+inset) and `elevation_summary_wrap_test` (+1, through Jost, its overflow premise asserted). Mutation: inset 0
+turns six cases red; wrap removed or forced, the wrap cases go red. Floors: core 5645 to 5649, export 308 to
+309.
+
+---
+
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`

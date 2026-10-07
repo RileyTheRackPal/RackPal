@@ -9,7 +9,7 @@ tags: [ruling, elevation, layout, inset, scale-bar, notes, dr-241, dr-240]
 timestamp: 2026-10-06T00:00:00Z
 ruling_id: DR-241
 canon_section: "11.240"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-06 for `#1020`, found by rendering a sheet while building
@@ -31,3 +31,5 @@ at 331.7 pt. An inset alone would have cut more of them: a cosmetic fix that cli
 defect. See [G4](/invariants/g4-unknowns-are-counted.md) for why a count that is printed has to be whole.
 
 Canon §11.240 holds the full text.
+
+Built at `076149a9` (the inset) and `f4750058` (the wrap); docs/12 §4.51 holds the evidence.
