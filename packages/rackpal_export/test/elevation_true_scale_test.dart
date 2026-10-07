@@ -126,13 +126,24 @@ const double _revisionBlockH = 2 * 13;
 /// elevation and so does not enter the bottom-edge arithmetic below.)
 const double _scaleBand = 34;
 
+/// `elevation_sheet.dart`'s body inset, 8 pt inside the drawing area on
+/// every side since DR-241 §11.240.1, so the scale bar's zero tick and the
+/// notes leave the frame line.
+const double _bodyInset = 8;
+
 /// Where the rack's own bottom edge lands, in PAGE coordinates (Y down).
 ///
-/// frame bottom 1224 - 36 - 6 = 1182; less the title block and the
-/// revision block gives the drawing area's bottom at 1041; less the scale
-/// bar band gives 1007.
+/// The frame bottom less the title block and the revision block gives the
+/// drawing area's bottom; less the body inset and the scale bar band gives
+/// the rack's.
 const double _rackBottomPageY =
-    _pageH - _marginB - _inset - _titleBlockH - _revisionBlockH - _scaleBand;
+    _pageH -
+    _marginB -
+    _inset -
+    _titleBlockH -
+    _revisionBlockH -
+    _bodyInset -
+    _scaleBand;
 
 /// The same edge in PDF USER SPACE, which is Y-UP.
 const double _rackBottomUserY = _pageH - _rackBottomPageY;
@@ -510,8 +521,9 @@ void main() {
         'literals', () {
       // (a)-(d) are all DIFFERENCES, so a flip about the wrong height
       // passes every one of them. This one cannot: it names where the rack
-      // is on the paper, in user space, from 1224/36/6/115/26/34 and
-      // nothing else.
+      // is on the paper, in user space, from the page, margin, zone band,
+      // title block, revision block, body inset and scale band literals
+      // and nothing else.
       final panel = _pt(_nmPanel) / n;
       final height = _rackHeightU * _pt(_nmPerU) / n;
       final frame = front.pathSized(panel, height, tolerance: _tol);

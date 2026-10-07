@@ -1283,7 +1283,10 @@ $SuiteFloors = @{
     # test.dart (ticked prints on both faces; unticked prints nothing; the
     # note follows the envelope; the fullest rear sheet is six notes, all
     # inside the band).
-    'rackpal_core'   = 5645
+    # 5647 at `#1021` (IN-1, DR-241 §11.240.1): +2 in sheet/elevation_sheet_
+    # test.dart, nothing in the band within 8 pt of the frame, and the scale
+    # bar's zero tick off the frame line.
+    'rackpal_core'   = 5647
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

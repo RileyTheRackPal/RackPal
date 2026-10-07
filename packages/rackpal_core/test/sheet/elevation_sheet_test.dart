@@ -115,6 +115,20 @@ ElevationSheet _build({
 List<String> _texts(ElevationSheet sheet) =>
     sheet.scene.ops.whereType<OpText>().map((o) => o.text).toList();
 
+/// The text ops drawn in PAGE coordinates: everything outside a
+/// save/restore bracket, which is where the rack scene is spliced in at
+/// its own units.
+List<OpText> _pageTexts(ElevationSheet sheet) {
+  final out = <OpText>[];
+  var depth = 0;
+  for (final op in sheet.scene.ops) {
+    if (op is OpSave) depth++;
+    if (op is OpRestore) depth--;
+    if (depth == 0 && op is OpText) out.add(op);
+  }
+  return out;
+}
+
 Len _mm(int mm) => Len(mm * 1000000);
 
 /// A 42 U closet rack with DR-239's envelope entered: a front door with
@@ -173,10 +187,14 @@ void main() {
       //
       // 55 U SINCE DR-240. The sixth note line takes 10 pt more, and 56 U
       // is the one rack height it moves, by the same measurement.
+      //
+      // 54 U SINCE DR-241. The 8 pt inset takes 16 pt of height, and 55 U
+      // is the one rack height it moves, by the same measurement.
       expect(_build(heightU: 60).scale.label, '1:10');
       expect(_build(heightU: 57).scale.label, '1:10');
       expect(_build(heightU: 56).scale.label, '1:10');
-      expect(_build(heightU: 55).scale.label, '1:8');
+      expect(_build(heightU: 55).scale.label, '1:10');
+      expect(_build(heightU: 54).scale.label, '1:8');
     });
 
     test('a SMALL rack is drawn LARGER — the fit is real, not a constant', () {
@@ -319,11 +337,15 @@ void main() {
 
       expect(sheet.fit.overrunPt, closeTo(measured, 1e-9));
       // ...and it is the WIDTH that overruns: 2.37 pt of label, plus the
-      // 19.68 pt the zone band took from the drawing area (DR-215).
+      // 19.68 pt the zone band took from the drawing area (DR-215), plus
+      // the 16 pt DR-241's inset takes, 8 pt each side.
       expect(bounds.width * s, greaterThan(area.width));
       expect(
         sheet.fit.overrunPt,
-        closeTo(2.366 + 2 * (kZoneBandWidthPt - kPlainInsetPt), 0.01),
+        closeTo(
+          2.366 + 2 * (kZoneBandWidthPt - kPlainInsetPt) + 2 * kElevationInset,
+          0.01,
+        ),
       );
     });
 
@@ -331,7 +353,7 @@ void main() {
       final sheet = overrunning();
       expect(sheet.fit.notice, isNotNull);
       expect(sheet.fit.notice, contains('past the drawing area'));
-      expect(sheet.fit.notice, contains('22.0 pt'));
+      expect(sheet.fit.notice, contains('38.0 pt'));
       // ...and the sheet IS still scalable, which is what the notice says.
       expect(sheet.scale.isToScale, isTrue);
       expect(sheet.scale.notice, isNull);
@@ -551,7 +573,7 @@ void main() {
               .where(
                 (o) =>
                     o.style.anchor == TextAnchor.topLeft &&
-                    o.at.x == drawing.left &&
+                    o.at.x == drawing.left + 8 &&
                     o.at.y >= drawing.top &&
                     o.at.y < area.top,
               )
@@ -1167,8 +1189,8 @@ void main() {
   });
 
   group('the drawing area is computed before the scale, and agrees', () {
-    test('elevationAreaOf reserves both bands — 66 pt above, 34 pt '
-        'below', () {
+    test('elevationAreaOf reserves 8 pt all round and both bands: 74 pt '
+        'above, 42 pt below, 8 pt each side', () {
       // ==================================================================
       // THE LITERALS, BECAUSE THE CONSTANTS PROVE NOTHING ABOUT THEMSELVES.
       // ==================================================================
@@ -1185,7 +1207,8 @@ void main() {
       // that fills it is asserted with the ground bar note), and the
       // scale band holds a 6 pt tall bar
       // centred in it with its `1 ft` label. Both are asserted against the
-      // INK that lands in them further down.
+      // INK that lands in them further down. Since DR-241 the whole body,
+      // both bands included, sits 8 pt inside the frame on every side.
       final drawing = SheetLayout.resolve(
         // THE SHEET'S OWN GEOMETRY: an elevation is zoned (DR-215).
         geometry: const SheetGeometry(SheetSize.ansiBPortrait, zoned: true),
@@ -1196,11 +1219,13 @@ void main() {
       expect(kElevationHeaderBand, 66);
       expect(kElevationNoteLines, 6);
       expect(kElevationScaleBand, 34);
-      expect(area.top - drawing.top, 66);
-      expect(drawing.bottom - area.bottom, 34);
-      expect(drawing.height - area.height, 100);
-      expect(area.left, drawing.left);
-      expect(area.width, drawing.width);
+      expect(kElevationInset, 8);
+      expect(area.top - drawing.top, 74);
+      expect(drawing.bottom - area.bottom, 42);
+      expect(drawing.height - area.height, 116);
+      expect(area.left - drawing.left, 8);
+      expect(drawing.right - area.right, 8);
+      expect(drawing.width - area.width, 16);
     });
 
     test('the reserved bands are the bands the sheet actually draws '
@@ -1220,8 +1245,11 @@ void main() {
 
       // Every note/summary line sits inside the header band, and the last
       // one clears its own descender before the elevation starts.
-      final band = sheet.scene.ops
-          .whereType<OpText>()
+      // PAGE text only. The rack scene's own labels sit inside its
+      // save/transform bracket in SCENE units, and a page-coordinate
+      // filter used to exclude them only by luck: DR-241 moved the area
+      // 8 pt down and the RU numeral `7`, at scene y = 121, fell in.
+      final band = _pageTexts(sheet)
           .where((o) => o.at.y >= drawing.top - 1e-9 && o.at.y < area.top)
           .toList();
       expect(band.length, greaterThanOrEqualTo(4));
@@ -1243,6 +1271,60 @@ void main() {
           expect(y, lessThan(drawing.bottom));
         }
       }
+    });
+
+    // DR-241 §11.240.1 (`#1021`): a pdfium render showed every note's
+    // first letter fused to the frame and the scale bar's zero tick drawn
+    // ON the frame line. Literal page positions, because "inside the area"
+    // is what the old layout also satisfied, exactly on its edge.
+    test('NOTHING IN THE BAND TOUCHES THE FRAME: 8 pt clear on every '
+        'side', () {
+      final sheet = _build(
+        rack: _closet(groundBar: true),
+        settings: _metric,
+        role: SheetRole.rackElevationRear,
+      );
+      final drawing = SheetLayout.resolve(
+        geometry: const SheetGeometry(SheetSize.ansiBPortrait, zoned: true),
+        revisionRowCount: 1,
+      ).drawingArea;
+      final area = elevationAreaOf(drawing);
+      final band = _pageTexts(
+        sheet,
+      ).where((o) => o.at.y >= drawing.top && o.at.y < area.top).toList();
+      final left = band.where((o) => o.style.anchor == TextAnchor.topLeft);
+      final right = band.where((o) => o.style.anchor == TextAnchor.topRight);
+      expect(left, hasLength(5), reason: 'the fixture fills five notes');
+      expect(right, isNotEmpty);
+
+      for (final o in left) {
+        expect(o.at.x, drawing.left + 8, reason: o.text);
+      }
+      for (final o in right) {
+        expect(o.at.x, drawing.right - 8, reason: o.text);
+      }
+      final top = band.map((o) => o.at.y).reduce((a, b) => a < b ? a : b);
+      expect(top, drawing.top + 8);
+    });
+
+    test("THE SCALE BAR'S ZERO TICK IS OFF THE FRAME LINE", () {
+      final sheet = _build();
+      final drawing = SheetLayout.resolve(
+        geometry: const SheetGeometry(SheetSize.ansiBPortrait, zoned: true),
+        revisionRowCount: 1,
+      ).drawingArea;
+      final area = elevationAreaOf(drawing);
+      final bar = sheet.scene.ops
+          .whereType<OpLine>()
+          .where((o) => o.a.y > area.bottom && o.a.y < drawing.bottom)
+          .toList();
+      expect(bar, isNotEmpty);
+      final xs = [
+        for (final l in bar) ...[l.a.x, l.b.x],
+      ];
+      // The zero tick IS the leftmost ink; it was at drawing.left, which
+      // is the frame's inner border.
+      expect(xs.reduce((a, b) => a < b ? a : b), drawing.left + 8);
     });
 
     test('more revisions shrink the drawing area, and it still fits', () {
