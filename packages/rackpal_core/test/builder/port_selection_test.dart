@@ -211,7 +211,11 @@ void main() {
     });
   });
 
-  group('Enter and Tab movement', () {
+  // Tab has no rule here: default focus traversal already walks the grid
+  // in reading order, skips closed packs and scrolls, measured through the
+  // real grid for #949, so columnAfter, columnBefore and rowAbove (which no
+  // key in docs/06 §4.6 reaches) were deleted with their tests.
+  group('Enter movement', () {
     test('Enter moves down, and crosses a band header without stopping', () {
       // `c` ends one band and `d` starts the next; the flat row order is
       // what `PortTable.rows` hands over for exactly this reason.
@@ -222,33 +226,8 @@ void main() {
       expect(rowBelow('f', _order), isNull);
     });
 
-    test('up stops at the first row', () {
-      expect(rowAbove('a', _order), isNull);
-      expect(rowAbove('b', _order), 'a');
-    });
-
     test('a row the display no longer holds moves nowhere', () {
       expect(rowBelow('gone', _order), isNull);
-      expect(rowAbove('gone', _order), isNull);
-    });
-
-    test('Tab moves across the VISIBLE columns, so a closed pack is never '
-        'tabbed into', () {
-      final visible = portVisibleColumns({PortColumnPack.power});
-      expect(visible.contains(PortColumnId.poeRole), isFalse);
-      expect(columnAfter(PortColumnId.notes, visible), PortColumnId.powerRole);
-    });
-
-    test('Tab stops at both edges rather than wrapping', () {
-      final visible = portVisibleColumns(const {});
-      expect(columnBefore(PortColumnId.portKey, visible), isNull);
-      expect(columnAfter(PortColumnId.notes, visible), isNull);
-    });
-
-    test('a column that is not showing moves nowhere', () {
-      final visible = portVisibleColumns(const {});
-      expect(columnAfter(PortColumnId.poeWatts, visible), isNull);
-      expect(columnBefore(PortColumnId.poeWatts, visible), isNull);
     });
   });
 }

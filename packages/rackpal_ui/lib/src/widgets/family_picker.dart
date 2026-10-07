@@ -104,7 +104,16 @@ class _FamilyPickerState extends State<FamilyPicker> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final value = widget.value;
+    // A LISTENER, NOT A STOP (#949). Without `canRequestFocus: false` this
+    // node was a Tab stop of its own, wrapped round the menu button that is
+    // the real one, so every signal cell took two presses of Tab: in the
+    // port grid, Quick Add, the change-type dialog and the Structure
+    // editor alike. `onFocusChange` still fires when the button inside
+    // takes focus, which is all this node was ever for; `port_grid.dart`
+    // reports its cells' columns the same way, for the same reason.
     return Focus(
+      canRequestFocus: false,
+      skipTraversal: true,
       onFocusChange: (has) {
         if (has) widget.onFocused?.call();
       },

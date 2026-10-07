@@ -1289,7 +1289,11 @@ $SuiteFloors = @{
     # 5649 at `#1022` (IN-2, DR-241 §11.240.2): +2 in sheet/elevation_sheet_
     # test.dart, a too-long summary line wrapping after its dash onto the
     # sixth row, and one that fits staying one row.
-    'rackpal_core'   = 5649
+    # 5645 at `#1026` (TAB-3, AC-058): -4 in builder/port_selection_test.
+    # dart, LOWERED ON PURPOSE. rowAbove, columnAfter and columnBefore were
+    # deleted with their four tests: default focus traversal already makes
+    # Tab's move, measured through the real grid, and no key reaches rowAbove.
+    'rackpal_core'   = 5645
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -2042,7 +2046,11 @@ $SuiteFloors = @{
     # the field's; an overall dimension and its refusal naming it; a
     # clearance disabled behind an unticked door, rail apart from door;
     # unticking a door keeping its clearances).
-    'rackpal_ui'     = 2137
+    # 2138 at `#1024` (TAB-1, AC-058): +1 in builder/port_grid_test.dart,
+    # a whole row tabbed from KEY with every stop strictly further right.
+    # 2139 at `#1025` (TAB-2, AC-058): +1 in builder/port_grid_test.dart,
+    # four labels typed down a column through Enter, across a bank header.
+    'rackpal_ui'     = 2139
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

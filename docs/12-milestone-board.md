@@ -2221,6 +2221,37 @@ turns six cases red; wrap removed or forced, the wrap cases go red. Floors: core
 
 ---
 
+### 4.52 The port grid's keyboard route, measured before it was changed · 2026-10-07 · `#949`, `#1024` to `#1027` · AC-058 (D11), docs/06 §4.6 · no version move
+
+`#949` asked whether the port grid needs Tab handling of its own, since `#945` found four tested moves in
+`port_selection.dart` that nothing called, and said to find out first. A scratch probe drove the real keys
+through the real grid and logged every stop.
+
+**What default traversal already did right.** Tab walks a row left to right, wraps to the next, never stops in
+a closed pack (it is not drawn), scrolls a 40-row grid with focus, and Shift+Tab reverses it. So
+`columnAfter`, `columnBefore` and `rowAbove` (which no key in docs/06 §4.6 reaches) were deleted (TAB-3 at
+`9c0c5e78`); their tests had asserted that Tab stops at a row's edge, which the product never did.
+
+**What it did wrong, twice.** TAB-1 at `c04c05d5`: the SIGNAL cell took **two** presses of Tab, because
+`FamilyPicker` wrapped its menu button in a focus node of its own. It is now a listener, which fixes all five
+places the picker is used. The existing Tab test compared stops against their sorted order and two stops at
+one x are still sorted, so it could not see this; the new one requires every stop strictly right of the last.
+TAB-2 at `70483032`: **Enter left the grid at the last row of a bank**. It moved by geometry, and the nearest
+focusable below that row is in the next band's header. `rowBelow` already encoded the move and had no caller;
+a registry of text-cell focus nodes by row and column now calls it, with geometry kept as the fallback for a
+row not yet built, which is the cost the old comment named when it chose geometry.
+
+**The user's choice.** Each row's checkbox stays a Tab stop: it is the only keyboard route to row selection,
+and fill-down, duplicate, move-to-bank and delete all act on the selection.
+
+**Evidence.** `port_grid_test` (+2: a whole row tabbed from KEY, every stop strictly further right; four labels
+typed down a column through Enter across a bank header, with no finder between keystrokes). Mutation: the
+picker's stop restored fails naming `734, 734`; the registry move removed reads back `['IN 1', 'IN 2', 'P3',
+'P4']`. Floors: ui 2137 to 2139; core 5649 to 5645, lowered on purpose by TAB-3. docs/21's key table gains
+Enter, Tab and Space.
+
+---
+
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`

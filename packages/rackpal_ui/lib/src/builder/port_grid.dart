@@ -221,6 +221,16 @@ class _PortGridState extends State<PortGrid> {
   /// member: the no-bank band folds like any other.
   final _collapsed = <String?>{};
 
+  /// The visible rows as last built, top to bottom, which is the order
+  /// Enter moves through (#949).
+  List<String> _visibleOrder = const <String>[];
+
+  /// The text cells by row and column, so Enter can move by [_visibleOrder]
+  /// rather than by geometry, which left the grid at a bank boundary.
+  late final PortCellFocusRegistry _cellFocus = PortCellFocusRegistry(
+    () => _visibleOrder,
+  );
+
   /// The selection (DR-061): which rows, where a `Shift`+click extends
   /// from, and which column has focus.
   ///
@@ -1153,6 +1163,7 @@ class _PortGridState extends State<PortGrid> {
         if (!_collapsed.contains(band.bankKey))
           for (final row in band.rows) row.port.key.v,
     ];
+    _visibleOrder = visible;
 
     final issues = validatePorts(widget.body);
     final columns = portVisibleColumns(_openPacks());
@@ -1165,82 +1176,86 @@ class _PortGridState extends State<PortGrid> {
     // then looks DOWN from the focused widget for an enabled handler, so
     // declaring these here is what keeps the fills acting on this grid's
     // own selection without the screen having to know it has one.
-    return Actions(
-      actions: <Type, Action<Intent>>{
-        BuilderFillDownIntent: CallbackAction<BuilderFillDownIntent>(
-          onInvoke: (_) {
-            _fill(buildFillDown, visible);
-            return null;
-          },
-        ),
-        BuilderFillSeriesIntent: CallbackAction<BuilderFillSeriesIntent>(
-          onInvoke: (_) {
-            _fill(buildFillSeries, visible);
-            return null;
-          },
-        ),
-        BuilderCopyCellsIntent: CallbackAction<BuilderCopyCellsIntent>(
-          onInvoke: (_) {
-            _copy(visible, columns);
-            return null;
-          },
-        ),
-        BuilderPasteCellsIntent: CallbackAction<BuilderPasteCellsIntent>(
-          onInvoke: (_) {
-            unawaited(_paste(visible, columns));
-            return null;
-          },
-        ),
-        BuilderMoveRowIntent: CallbackAction<BuilderMoveRowIntent>(
-          onInvoke: (intent) {
-            _nudge(up: intent.up);
-            return null;
-          },
-        ),
-        BuilderDuplicateRowsIntent: CallbackAction<BuilderDuplicateRowsIntent>(
-          onInvoke: (_) {
-            _duplicate(visible);
-            return null;
-          },
-        ),
-        BuilderRenumberIntent: CallbackAction<BuilderRenumberIntent>(
-          onInvoke: (_) {
-            unawaited(_renumber(visible));
-            return null;
-          },
-        ),
-        BuilderMoveToBankIntent: CallbackAction<BuilderMoveToBankIntent>(
-          onInvoke: (_) {
-            unawaited(_moveToBank(visible));
-            return null;
-          },
-        ),
-        BuilderChangeTypeIntent: CallbackAction<BuilderChangeTypeIntent>(
-          onInvoke: (_) {
-            unawaited(_changeType(visible));
-            return null;
-          },
-        ),
-        BuilderGroupAsSetIntent: CallbackAction<BuilderGroupAsSetIntent>(
-          onInvoke: (_) {
-            unawaited(_groupAsSet(visible));
-            return null;
-          },
-        ),
-        BuilderUngroupSetIntent: CallbackAction<BuilderUngroupSetIntent>(
-          onInvoke: (_) {
-            _ungroupSet(visible);
-            return null;
-          },
-        ),
-        BuilderFindReplaceIntent: CallbackAction<BuilderFindReplaceIntent>(
-          onInvoke: (_) {
-            unawaited(_findReplace(visible));
-            return null;
-          },
-        ),
-      },
-      child: _grid(context, table, columns, visible, issues),
+    return PortCellFocusScope(
+      registry: _cellFocus,
+      child: Actions(
+        actions: <Type, Action<Intent>>{
+          BuilderFillDownIntent: CallbackAction<BuilderFillDownIntent>(
+            onInvoke: (_) {
+              _fill(buildFillDown, visible);
+              return null;
+            },
+          ),
+          BuilderFillSeriesIntent: CallbackAction<BuilderFillSeriesIntent>(
+            onInvoke: (_) {
+              _fill(buildFillSeries, visible);
+              return null;
+            },
+          ),
+          BuilderCopyCellsIntent: CallbackAction<BuilderCopyCellsIntent>(
+            onInvoke: (_) {
+              _copy(visible, columns);
+              return null;
+            },
+          ),
+          BuilderPasteCellsIntent: CallbackAction<BuilderPasteCellsIntent>(
+            onInvoke: (_) {
+              unawaited(_paste(visible, columns));
+              return null;
+            },
+          ),
+          BuilderMoveRowIntent: CallbackAction<BuilderMoveRowIntent>(
+            onInvoke: (intent) {
+              _nudge(up: intent.up);
+              return null;
+            },
+          ),
+          BuilderDuplicateRowsIntent:
+              CallbackAction<BuilderDuplicateRowsIntent>(
+                onInvoke: (_) {
+                  _duplicate(visible);
+                  return null;
+                },
+              ),
+          BuilderRenumberIntent: CallbackAction<BuilderRenumberIntent>(
+            onInvoke: (_) {
+              unawaited(_renumber(visible));
+              return null;
+            },
+          ),
+          BuilderMoveToBankIntent: CallbackAction<BuilderMoveToBankIntent>(
+            onInvoke: (_) {
+              unawaited(_moveToBank(visible));
+              return null;
+            },
+          ),
+          BuilderChangeTypeIntent: CallbackAction<BuilderChangeTypeIntent>(
+            onInvoke: (_) {
+              unawaited(_changeType(visible));
+              return null;
+            },
+          ),
+          BuilderGroupAsSetIntent: CallbackAction<BuilderGroupAsSetIntent>(
+            onInvoke: (_) {
+              unawaited(_groupAsSet(visible));
+              return null;
+            },
+          ),
+          BuilderUngroupSetIntent: CallbackAction<BuilderUngroupSetIntent>(
+            onInvoke: (_) {
+              _ungroupSet(visible);
+              return null;
+            },
+          ),
+          BuilderFindReplaceIntent: CallbackAction<BuilderFindReplaceIntent>(
+            onInvoke: (_) {
+              unawaited(_findReplace(visible));
+              return null;
+            },
+          ),
+        },
+        child: _grid(context, table, columns, visible, issues),
+      ),
     );
   }
 
@@ -2585,7 +2600,13 @@ class _PortRow extends StatelessWidget {
                         onFocusChange: (has) {
                           if (has) onColumnFocused(id);
                         },
-                        child: _cell(context, id),
+                        // WHERE THIS CELL IS, for Enter (#949). Given here,
+                        // once, rather than to each of the twenty cell
+                        // constructors `_cell` chooses between.
+                        child: PortCellAddressScope(
+                          address: (row: _port.key.v, column: id),
+                          child: _cell(context, id),
+                        ),
                       ),
                     ),
                   ),

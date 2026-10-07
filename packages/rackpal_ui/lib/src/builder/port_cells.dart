@@ -43,9 +43,110 @@
 // `port_grid.dart` and `batch_inspector.dart`. They are not exported from
 // the package barrel: a third caller would be a surface drawing a port
 // cell outside the builder, which is a design question and not an import.
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:rackpal_ui/src/widgets/family_picker.dart';
+
+/// Where a text cell sits in the port grid: its row's port key and its
+/// column. Enter's move is expressed in these (#949).
+typedef PortCellAddress = ({String row, PortColumnId column});
+
+/// The port grid's text cells, by address, so Enter moves by the grid's ROW
+/// ORDER rather than by geometry (#949, docs/06 §4.6 row 1).
+///
+/// ═══════════════════════════════════════════════════════════════════════
+/// GEOMETRY WAS RIGHT EVERYWHERE BUT AT A BANK
+/// ═══════════════════════════════════════════════════════════════════════
+/// Enter used Flutter's directional traversal, on the reasoning that "the
+/// nearest focusable below" means "the same column, next row". Measured
+/// through the real grid, it does, until the last row of a bank: the
+/// nearest focusable below that is a control in the NEXT band's header,
+/// so Enter left the grid there and stranded focus somewhere Enter means
+/// nothing. `rowBelow` already said what the move is, a step through the
+/// flat row order that crosses a band without stopping, and nothing called
+/// it.
+///
+/// A ROW NOT YET BUILT FALLS BACK TO GEOMETRY, which is the cost the old
+/// comment on [PortTextCell] named and why it chose geometry: the list is
+/// virtualised, so a row far off screen has no node here. Typing down a
+/// column keeps the next row inside the sliver's cache extent, so the
+/// fallback is for a jump nobody types.
+final class PortCellFocusRegistry {
+  /// `order` is the grid's visible rows, top to bottom, read at the moment
+  /// Enter is pressed rather than captured once.
+  PortCellFocusRegistry(this._order);
+
+  final List<String> Function() _order;
+  final Map<PortCellAddress, FocusNode> _nodes = <PortCellAddress, FocusNode>{};
+
+  void register(PortCellAddress at, FocusNode node) => _nodes[at] = node;
+
+  /// Only if [node] is still the one registered there: a rebuilt row
+  /// registers its new cell before the old one is disposed.
+  void unregister(PortCellAddress at, FocusNode node) {
+    if (identical(_nodes[at], node)) _nodes.remove(at);
+  }
+
+  /// Focuses [at]'s column in the next row, and returns whether the move
+  /// was handled. The last row is handled by staying put; a next row that
+  /// is not built is not, and the caller falls back.
+  bool moveDown(PortCellAddress at) {
+    final next = rowBelow(at.row, _order());
+    if (next == null) return true;
+    final node = _nodes[(row: next, column: at.column)];
+    final target = node?.context;
+    if (node == null || target == null) return false;
+    node.requestFocus();
+    unawaited(
+      Scrollable.ensureVisible(
+        target,
+        alignmentPolicy: ScrollPositionAlignmentPolicy.keepVisibleAtEnd,
+      ),
+    );
+    return true;
+  }
+}
+
+/// Provides the grid's [PortCellFocusRegistry] to its text cells.
+class PortCellFocusScope extends InheritedWidget {
+  const PortCellFocusScope({
+    required this.registry,
+    required super.child,
+    super.key,
+  });
+
+  final PortCellFocusRegistry registry;
+
+  static PortCellFocusRegistry? maybeOf(BuildContext context) => context
+      .dependOnInheritedWidgetOfExactType<PortCellFocusScope>()
+      ?.registry;
+
+  @override
+  bool updateShouldNotify(PortCellFocusScope oldWidget) =>
+      !identical(registry, oldWidget.registry);
+}
+
+/// Tells a cell its [PortCellAddress]. Given once, by the row's per-column
+/// wrapper, rather than to each of the cell constructors underneath it.
+class PortCellAddressScope extends InheritedWidget {
+  const PortCellAddressScope({
+    required this.address,
+    required super.child,
+    super.key,
+  });
+
+  final PortCellAddress address;
+
+  static PortCellAddress? maybeOf(BuildContext context) => context
+      .dependOnInheritedWidgetOfExactType<PortCellAddressScope>()
+      ?.address;
+
+  @override
+  bool updateShouldNotify(PortCellAddressScope oldWidget) =>
+      address != oldWidget.address;
+}
 
 /// A cell holding a whole number.
 ///
@@ -183,16 +284,16 @@ class PortReadOnlyCell extends StatelessWidget {
 /// the cells are in reading order.
 ///
 /// ENTER ALSO MOVES DOWN, which M4-E deferred to M4-F and M4-F0 (`#695`)
-/// now owns. It is Flutter's own directional traversal rather than a
-/// registry of focus nodes keyed by row and column: the cells are laid out
-/// in a grid, so "the nearest focusable below" already means "the same
-/// column, next row", and a registry would have to be kept in step with a
-/// virtualised list that builds and discards rows as it scrolls.
+/// owned. Inside the port grid it moves by the grid's ROW ORDER, through
+/// [PortCellFocusRegistry]; elsewhere, and for a next row not yet built, it
+/// is Flutter's directional traversal.
 ///
-/// The one thing that costs: a row far enough off screen not to be built
-/// has no node to move to, so Enter on the last VISIBLE row stops there.
-/// Typing down a column keeps the next row inside the sliver's cache
-/// extent, which is the case this is for.
+/// THIS USED TO BE GEOMETRY EVERYWHERE, on the argument that "the nearest
+/// focusable below" already means "the same column, next row" and that a
+/// registry would have to be kept in step with a virtualised list. The
+/// second half is still true and is why the fallback exists. The first was
+/// false at the last row of a bank, where the nearest focusable below is
+/// in the next band's header (#949).
 class PortTextCell extends StatefulWidget {
   const PortTextCell({
     required this.value,
@@ -239,10 +340,26 @@ class PortTextCellState extends State<PortTextCell> {
   String get _seed => widget.mixedLabel == null ? (widget.value ?? '') : '';
   final FocusNode _focus = FocusNode();
 
+  /// Where this cell is registered, if it is inside the port grid.
+  PortCellFocusRegistry? _registry;
+  PortCellAddress? _address;
+
   @override
   void initState() {
     super.initState();
     _focus.addListener(_onFocusChange);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final registry = PortCellFocusScope.maybeOf(context);
+    final address = PortCellAddressScope.maybeOf(context);
+    if (identical(registry, _registry) && address == _address) return;
+    if (_address case final was?) _registry?.unregister(was, _focus);
+    _registry = registry;
+    _address = address;
+    if (address != null) registry?.register(address, _focus);
   }
 
   @override
@@ -261,6 +378,7 @@ class PortTextCellState extends State<PortTextCell> {
 
   @override
   void dispose() {
+    if (_address case final at?) _registry?.unregister(at, _focus);
     _focus
       ..removeListener(_onFocusChange)
       ..dispose();
@@ -319,6 +437,8 @@ class PortTextCellState extends State<PortTextCell> {
       // one command rather than two.
       onEditingComplete: () {
         _commit();
+        final at = _address;
+        if (at != null && (_registry?.moveDown(at) ?? false)) return;
         FocusScope.of(context).focusInDirection(TraversalDirection.down);
       },
       onSubmitted: (_) => _commit(),

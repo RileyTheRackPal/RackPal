@@ -2992,6 +2992,59 @@ void main() {
       );
     });
 
+    testWidgets('ENTER CROSSES A BANK BOUNDARY, so a column is typed straight '
+        'through the band header (#949)', (tester) async {
+      // THE DEFECT THIS WAS WRITTEN FOR. Enter used geometry, and at the
+      // last row of a bank the nearest focusable below was a control in
+      // the next band's header: focus left the grid there, and the third
+      // label below went nowhere. Measured before it was fixed, through
+      // this grid, with these two banks.
+      final harness = await _pump(
+        tester,
+        template: _saveable()
+          ..banks.addAll([
+            BankDef(
+              key: 'in',
+              label: 'Inputs',
+              abbr: 'IN',
+              order: const FracIndex('a1'),
+            ),
+            BankDef(
+              key: 'out',
+              label: 'Outputs',
+              abbr: 'OUT',
+              order: const FracIndex('a2'),
+            ),
+          ])
+          ..ports.addAll([
+            _port('p1', order: 'a0', bank: 'in'),
+            _port('p2', order: 'a1', bank: 'in'),
+            _port('p3', order: 'a2', bank: 'out'),
+            _port('p4', order: 'a3', bank: 'out'),
+          ]),
+      );
+
+      await tester.enterText(find.text('P1'), 'IN 1');
+      await tester.testTextInput.receiveAction(TextInputAction.done);
+      await tester.pumpAndSettle();
+      // No finder from here on: whatever Enter moved to is what this types
+      // into, which is the only way to test the ROUTE.
+      for (final label in ['IN 2', 'OUT 1', 'OUT 2']) {
+        tester.testTextInput.enterText(label);
+        await tester.testTextInput.receiveAction(TextInputAction.done);
+        await tester.pumpAndSettle();
+      }
+
+      final body = await harness.read(tester);
+      expect(
+        body.ports.map((p) => p.label),
+        ['IN 1', 'IN 2', 'OUT 1', 'OUT 2'],
+        reason:
+            'Enter on the last row of Inputs must land in the LABEL cell '
+            'of the first row of Outputs, across the band header',
+      );
+    });
+
     testWidgets('Enter on the last row commits rather than losing what was '
         'typed on the way to nowhere', (tester) async {
       final harness = await _pump(
@@ -3049,6 +3102,70 @@ void main() {
         stops,
         orderedEquals(<double>[...stops]..sort()),
         reason: 'a row is read left to right, so Tab moves right',
+      );
+    });
+
+    testWidgets('EVERY CELL IS ONE TAB STOP: a whole row from KEY, and '
+        'each press lands further right (#949)', (
+      tester,
+    ) async {
+      // THE DEFECT THIS WAS WRITTEN FOR. The SIGNAL cell took two presses:
+      // `FamilyPicker` wrapped its menu button in a focus node of its own,
+      // and the test above could not see it, because two stops at one x
+      // are still in sorted order. Strictly increasing is what fails.
+      //
+      // The CHECKBOX STAYS A STOP, by the user's choice on 2026-10-07: it
+      // is the only keyboard route to row selection, which fill-down,
+      // duplicate, move-to-bank and delete all act on.
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.addAll([_port('p1', order: 'a0'), _port('p2', order: 'a1')]),
+      );
+      // Row one's KEY cell, by the column header rather than an index.
+      final keyX = tester.getTopLeft(_inGrid(find.text('KEY'))).dx;
+      final fields = _inGrid(find.byType(TextField));
+      Finder? start;
+      for (var i = 0; i < tester.widgetList(fields).length; i++) {
+        if ((tester.getTopLeft(fields.at(i)).dx - keyX).abs() < 12) {
+          start = fields.at(i);
+          break;
+        }
+      }
+      await tester.tap(start!);
+      await tester.pumpAndSettle();
+      final rowOne = tester.getTopLeft(start).dy;
+
+      final xs = <double>[];
+      final ys = <double>[];
+      for (var press = 0; press < 30; press++) {
+        final box =
+            FocusManager.instance.primaryFocus!.context!.findRenderObject()!
+                as RenderBox;
+        final at = box.localToGlobal(Offset.zero);
+        // The next row's checkbox is where this row ends.
+        if (press > 0 && at.dy > rowOne + 20) break;
+        xs.add(at.dx);
+        ys.add(at.dy);
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pumpAndSettle();
+      }
+
+      expect(xs.length, greaterThan(5), reason: 'Tab never left the box');
+      for (var i = 1; i < xs.length; i++) {
+        expect(
+          xs[i],
+          greaterThan(xs[i - 1]),
+          reason:
+              'stop $i is not right of stop ${i - 1}: one cell took two '
+              'presses of Tab (${xs.map((x) => x.round()).toList()})',
+        );
+      }
+      final signal = tester.getTopLeft(_inGrid(find.text('SIGNAL'))).dx;
+      expect(
+        xs.where((x) => (x - signal).abs() < 12),
+        hasLength(1),
+        reason: 'the SIGNAL cell is one stop',
       );
     });
 

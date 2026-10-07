@@ -203,48 +203,11 @@ final class PortSelection {
 /// band is a run inside it rather than a break in it: `PortTable.rows`
 /// states the same thing for the same reason.
 ///
-/// NOTHING CALLS THIS YET (#945): the port grid has no Tab handling of its own,
-/// so Tab does what default focus traversal does. #949 decides whether the grid
-/// needs these moves or they go.
+/// `PortCellFocusRegistry.moveDown` in rackpal_ui is the caller (#949). Until
+/// then Enter used geometry, and at the last row of a bank the nearest
+/// focusable below was in the next band's header, so Enter left the grid.
 String? rowBelow(String key, List<String> order) {
   final at = order.indexOf(key);
   if (at < 0 || at + 1 >= order.length) return null;
   return order[at + 1];
-}
-
-/// The row before [key] in [order], or null at the top.
-///
-/// NOTHING CALLS THIS YET (#945): the port grid has no Tab handling of its own,
-/// so Tab does what default focus traversal does. #949 decides whether the grid
-/// needs these moves or they go.
-String? rowAbove(String key, List<String> order) {
-  final at = order.indexOf(key);
-  if (at <= 0) return null;
-  return order[at - 1];
-}
-
-/// The column after [id] in [columns], or null at the right edge.
-///
-/// TAB'S MOVE, and it takes the VISIBLE columns rather than
-/// `PortColumnId.values`: a pack the user has closed is not a cell, and
-/// tabbing into one would move focus somewhere nothing is drawn.
-///
-/// NOTHING CALLS THIS YET (#945): the port grid has no Tab handling of its own,
-/// so Tab does what default focus traversal does. #949 decides whether the grid
-/// needs these moves or they go.
-PortColumnId? columnAfter(PortColumnId id, List<PortColumnId> columns) {
-  final at = columns.indexOf(id);
-  if (at < 0 || at + 1 >= columns.length) return null;
-  return columns[at + 1];
-}
-
-/// The column before [id] in [columns], or null at the left edge.
-///
-/// NOTHING CALLS THIS YET (#945): the port grid has no Tab handling of its own,
-/// so Tab does what default focus traversal does. #949 decides whether the grid
-/// needs these moves or they go.
-PortColumnId? columnBefore(PortColumnId id, List<PortColumnId> columns) {
-  final at = columns.indexOf(id);
-  if (at <= 0) return null;
-  return columns[at - 1];
 }

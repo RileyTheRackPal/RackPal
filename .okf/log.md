@@ -1,5 +1,18 @@
 # Update Log
 
+## 2026-10-07 (hundred-and-twenty-fifth entry)
+
+* **Progress**: PR 209 merged at `b0c4ff56`; `#1020` closed. `#783` gained a second identity (ADO's server-made
+  merge commits, 205 on `main`), recorded by count only. `#949` built in three chapters: `#1024` (`c04c05d5`),
+  `#1025` (`70483032`), `#1026` (`9c0c5e78`). docs/12 §4.52.
+* **Note**: **ASK THE QUESTION THE TICKET ASKS BEFORE ANSWERING THE ONE IT SUGGESTS.** `#949` offered "wire the
+  moves or delete them". The probe found default Tab already right, two real defects nobody had filed (a double
+  stop, and Enter leaving the grid at every bank), and that three of the four moves had no job.
+* **Note**: **A SORTED-ORDER CHECK CANNOT SEE A REPEAT.** Two Tab stops at one x pass `orderedEquals(sorted)`.
+  Assert strictly increasing when the claim is "each press moves".
+* **Note**: **THE LOG IS A SHARED HEAD, LIKE A RULING ID.** This entry and PR 210's both claimed the hundred-and-
+  twenty-fourth and collided on merge; the one merged first keeps the number.
+
 ## 2026-10-07 (hundred-and-twenty-fourth entry)
 
 * **Update**: [DR-089](/decisions/dr-089-the-wordmark-ships-as-outlines.md) and
