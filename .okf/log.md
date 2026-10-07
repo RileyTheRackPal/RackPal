@@ -1,5 +1,13 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-twenty-first entry)
+
+* **Progress**: `#1016` built in two chapters, `#1017` (`78239478`) and `#1018` (`5fa04853`); DR-240 marked
+  built. docs/12 §4.50. `#1020` filed: the note band's text touches the drawing frame.
+* **Note**: **A TEST OF THE TEXT CANNOT SEE WHERE THE TEXT SITS.** Every band test asserted strings and the
+  band's bottom edge; none could say the first letter of each note was fused to the frame. One pdfium render
+  of a page a person will hold found it in seconds.
+
 ## 2026-10-06 (hundred-and-twentieth entry)
 
 * **Progress**: PR 207 merged at `dd7a8f17`. `#1016` taken, decomposed into `#1017` to `#1019`; branch

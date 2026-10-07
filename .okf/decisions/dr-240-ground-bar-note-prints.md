@@ -9,7 +9,7 @@ tags: [ruling, rack, elevation, grounding, notes, dr-240, m21]
 timestamp: 2026-10-06T00:00:00Z
 ruling_id: DR-240
 canon_section: "11.239"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-06 for `#1016`, found while building
@@ -34,3 +34,6 @@ scale is chosen against. So every option was offered with its measured cost on i
 and the width of each wording through the real font.
 
 Canon §11.239 holds the full text.
+
+Built at `78239478` (the band) and `5fa04853` (the note); docs/12 §4.50 holds the evidence. The render that
+confirmed it also showed the band's text touching the drawing frame on every elevation, filed as `#1020`.

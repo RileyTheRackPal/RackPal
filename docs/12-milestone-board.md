@@ -2155,6 +2155,37 @@ core 5613 to 5641, ui 2134 to 2137, export 302 to 306.
 
 ---
 
+### 4.50 The ground bar note prints on both elevations · 2026-10-06 · `#1016`, `#1017` to `#1019` · `DR-240`, AC-034/m21 · no version move
+
+AC-034/m21's minimum promised that `Rack.groundBarPresent` feeds a note on the elevation, and docs/04 §4
+drew the checkbox saying so. The box was written, saved and round-tripped, and nothing read it; three of the
+four starters tick it. The note was one line. Where it went was a layout ruling, because the band was full.
+
+**Priced before it was offered.** A rear sheet already filled the five-line band. Growing the band was
+measured over empty racks of 1 U to 60 U and every starter rack through the real Jost metrics: one rack height
+changes ratio. Each wording offered was measured against the 327 pt column. The user took both faces, a
+six-line band and the "bond per local code" wording.
+
+**Built.** GB-1 at `78239478`: `kElevationHeaderBand` 56 to 66 pt, `kElevationNoteLines` naming the budget,
+and an assert on both columns where nothing had stopped a sixth line printing over the rack. An empty 56 U
+rack now lands at 1:10, pinned beside the M6-G1 boundary. GB-2 at `5fa04853`: `kGroundBarNote` on both faces
+after the envelope line; unticked prints nothing, since `false` is also the default.
+
+**Looked at, not only asserted.** The small office set and a six-note 60 U rear sheet were rendered through
+pdfium: all six notes whole, the last clear of the rack, RK-1 carrying the note and RK-2 not.
+
+**Found on the way.** That render showed the band's text at zero inset from the drawing-area frame: the first
+letter of every note is fused to the left border and the summary's last glyph touches the right. Every
+elevation since the band existed (`#1020`, filed).
+
+**Evidence.** `elevation_sheet_test` (+4: both faces, unticked silent, order, the six-note rear sheet inside
+the band) and `elevation_ground_bar_test` (+2: `small_office`'s ticked RK-1 and unticked RK-2 read off the
+emitted PDF, and the six notes whole through the real font). Mutation: the note removed, printed
+unconditionally, the band put back at 56 pt and the wording lengthened past the column each turn a case
+red. Floors: core 5641 to 5645, export 306 to 308.
+
+---
+
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
 
 ### 5.1 M2, Wiring and the live schedule · `M` · CRITERION MET, weakest mark `CONFIRMED`
