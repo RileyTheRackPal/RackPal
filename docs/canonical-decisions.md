@@ -24277,6 +24277,40 @@ line measures 301.9 pt against 319.
 
 **Scope.** No scope moves: a layout defect and a truncation, fixed on the sheet that already carries them.
 
+### 11.241 DR-242 · The sheets say where the cable and port detail is, instead of saying it is not issued
+
+**Settled by the user on 2026-10-07, for `#1030`.** Demonstrating M6's first clause (`#46`, all four
+starters export a complete sheet set) read every page of every starter, and two notes printed in every
+export state that the set does not carry what it carries:
+
+- `T6.30`, on every page: *"EQUIPMENT AND RACK MATERIALS. CABLE AND POWER SCHEDULES NOT ISSUED IN THIS SET."*
+  The Pull Sheet (`T6.10`) and the Termination Schedule (`T6.15`) are `ON` in every set since M6-K
+  (`#977`, DR-222). Only the power schedule is absent, because `T6.40` is v1.1 (docs/08 §2.2).
+- `T2.02`: *"REAR FACES SHOWN. PORT AND CONNECTION DETAIL NOT ISSUED IN THIS SET."* The rear elevation still
+  draws no port strip, but `T6.15`, sorted rack then panel then port, is that detail and ships in every set.
+
+**Both were true when written**, at M1, when no cable schedule existed, and no ruling dictated either
+wording. Each became false the day M6-K shipped, and `starters_export_test.dart` asserted the `T6.30`
+sentence on all four starters as intended behaviour. A set that contradicts itself is not a complete one,
+so the clause waits on this.
+
+**11.241.1 RULED: POINT TO THE SHEETS.** `T6.30` prints *"EQUIPMENT AND RACK MATERIALS. CABLE SCHEDULES: SEE
+T6.10 AND T6.15. POWER SCHEDULE NOT ISSUED IN THIS SET."* `T2.02` prints *"REAR FACES SHOWN. PORT AND
+CONNECTION DETAIL: SEE T6.15."* The sheet ids are the identities `rack_load_gutter.dart`'s `SEE T6.30` and
+the title block's legend reference already print under both numbering schemes. Narrowing each note to its
+true half, and dropping the `T6.30` note to its scope alone, were offered beside it.
+
+**Measured before it was built**, in the bundled Jost: the `T6.30` note is 361.9 pt at 6.5 pt, 454.4 pt
+with a three-digit `NOT IN A RACK` suffix, on an 11 in wide sheet; the rear note is 243.7 pt at 8 pt, down
+from 294.7, in the 319 pt note column DR-241 measured.
+
+**What this does not rule.** The rear elevation still draws no ports; CR-071 keeps the interactive rear panel
+at v1.1 and nothing here schedules a port strip. A preset that drops `T6.10` or `T6.15` would make the
+pointer false, and presets do not exist yet (docs/08 §2.4); **whoever builds them owes this note a
+condition**.
+
+**Scope.** No scope moves: two printed sentences corrected on the sheets that already carry them.
+
 ---
 
 ## 12. Superseded rulings

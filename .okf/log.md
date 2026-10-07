@@ -1,5 +1,19 @@
 # Update Log
 
+## 2026-10-07 (hundred-and-twenty-seventh entry)
+
+* **Progress**: M6 re-marked `3 of 5`, `PARTIAL` (docs/12 §4.53): the complete-set, legend-simulation and
+  requirement-7 clauses (`#46`, `#47`, `#50`, `#358`) are `DEMONSTRATED`; the two physical prints remain.
+  [DR-242](/decisions/dr-242-sheets-point-to-the-schedules.md) built at `bf15cdaf` (`#1030`). `#1031` filed.
+  PLAN-J (`#606`) moved to Needs You.
+* **Note**: **A MILESTONE ROW DOES NOT RE-MARK ITSELF.** M6 read `0 of 5` with every slot shipped. Work
+  landing moves no clause; running the clause does, and nobody had.
+* **Note**: **READ THE PAGE, NOT THE COUNT.** The sheet counts were already tested. Looking at the 45 rendered
+  pages found two notes saying the set lacked what it carried, false on every export since M6-K.
+* **Note**: **A BORROWED THRESHOLD FLAGGED THE WRONG THING.** The first colour-blindness check used DR-090's
+  delta-E 25, measured for status chips on screen, and flagged lightness PAL-1 already counts. PAL-1's own
+  band on the simulated colour is the test that answers this question.
+
 ## 2026-10-07 (hundred-and-twenty-sixth entry)
 
 * **Progress**: `#1029` (M8-H5) built in three commits: the font comments (`7f5bbde3`), the Jost name table

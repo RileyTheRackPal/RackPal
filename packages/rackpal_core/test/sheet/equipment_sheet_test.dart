@@ -470,11 +470,15 @@ void main() {
       expect(texts(many), contains('LIFECYCLE'));
     });
 
-    test('the scope note is on EVERY page (the omitted §2.2 sections)', () {
+    // WHOLE AND ON EVERY PAGE. Asserted against the constant, so a note cut
+    // short or dropped from page 2 fails; WHAT it says is DR-242's, and
+    // whether its pointers are true is `starters_export_test.dart` (7)'s,
+    // which reads them against the sheets actually in the file.
+    test('the scope note is on EVERY page, whole', () {
       for (final index in <int>[0, 1]) {
         expect(
           texts(build(deviceCount: 200, pageIndex: index)).join(' '),
-          contains('CABLE AND POWER SCHEDULES NOT ISSUED'),
+          contains(kEquipmentScopeNote),
           reason: 'page ${index + 1}',
         );
       }

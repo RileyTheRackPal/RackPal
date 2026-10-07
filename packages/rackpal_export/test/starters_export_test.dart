@@ -366,10 +366,52 @@ void main() {
         expect(text.toUpperCase(), isNot(contains('COST')));
       });
 
-      test('(7) the omitted schedules are stated on the sheet', () async {
-        final text = scheduleText((await exportOf(name)).bytes);
-        expect(text, contains('CABLE AND POWER SCHEDULES NOT ISSUED'));
-      });
+      // (7) EVERY SHEET A NOTE POINTS TO IS IN THIS SET (DR-242).
+      //
+      // This test asserted "CABLE AND POWER SCHEDULES NOT ISSUED" on T6.30
+      // until DR-242, on all four starters, while every one of those PDFs
+      // carried T6.10 and T6.15: a test pinning copy outlived the fact the
+      // copy described. So it asserts the property instead. Every `SEE T…`
+      // in the ink (T6.30's cable-schedule pointer, T2.02's port-detail
+      // pointer, the title block's legend reference, and the elevation
+      // gutter's `SEE T6.30` wherever a rack has undrawn devices, which no
+      // starter does) must name a sheet whose `SHEET NO.` is printed in the
+      // same file. A preset that drops a schedule fails here, which is the
+      // condition DR-242 says presets will owe the note.
+      test(
+        '(7) every sheet a note points to is in this set (DR-242)',
+        () async {
+          final bytes = (await exportOf(name)).bytes;
+          final cmap = parseToUnicodeCMap(bytes);
+          final pages = [
+            for (final body in operatorStreams(bytes))
+              interpretContentStream(body, toUnicode: cmap).allText,
+          ];
+          final ink = pages.join('\n');
+          final issued = {
+            for (final m in RegExp(r'SHEET NO\.\s+(T\d\.\d\d)').allMatches(ink))
+              m.group(1)!,
+          };
+          final pointedTo = {
+            for (final m in RegExp(
+              r'SEE (?:SHEET )?(T\d\.\d\d(?: AND T\d\.\d\d)*)',
+            ).allMatches(ink))
+              ...m.group(1)!.split(' AND '),
+          };
+
+          // The two notes DR-242 rewrote are actually on the page, so the
+          // pointers below are not vacuously satisfied by finding none.
+          expect(ink, contains(kEquipmentScopeNote), reason: 'T6.30');
+          expect(ink, contains(kRearDetailNote), reason: 'T2.02');
+          expect(pointedTo, containsAll(<String>['T6.10', 'T6.15']));
+          expect(
+            pointedTo.difference(issued),
+            isEmpty,
+            reason: 'a note points to a sheet this set does not carry',
+          );
+          expect(ink, isNot(contains('CABLE AND POWER SCHEDULES NOT ISSUED')));
+        },
+      );
 
       test('(8) the SUBTOTAL DEVICE COUNT on T6.30 is the rack contents, '
           'in ink', () async {

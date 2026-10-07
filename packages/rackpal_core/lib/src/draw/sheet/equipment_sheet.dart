@@ -32,15 +32,20 @@
 // rendered.
 //
 // ─────────────────────────────────────────────────────────────────────────
-// SECTIONS OMITTED, AND SAID SO ON THE SHEET
+// WHERE THE REST OF THE SET IS, SAID ON THE SHEET (DR-242)
 // ─────────────────────────────────────────────────────────────────────────
-// §2.2 also asks T6.30 for the cable-footage rollup by media with waste
-// factor, the jumper/power-cord rollup and the PDU outlet map. Every one of
-// them derives from `Link`s, `Service`s or `Conductor`s, and a document
-// edited in this build creates none. They are omitted WHOLE rather than
-// printed empty — and because their absence changes what a sheet titled
-// "Equipment List and Materials" promises, the sheet carries
-// [kEquipmentScopeNote].
+// This header once explained that §2.2's cable-footage rollup, jumper and
+// power-cord rollup and PDU outlet map were omitted, because no `Link`s
+// existed. They print now (`materials_rollups.dart`, M6-F), and the cable
+// schedules a reader might look for here are their own sheets, `T6.10`
+// and `T6.15`, ON in every set since M6-K. So [kEquipmentScopeNote] says
+// what this sheet carries and POINTS to those two. It said "NOT ISSUED IN
+// THIS SET" until DR-242, a sentence true at M1 and false in every export
+// after M6-K. Only the power schedule (`T6.40`, v1.1) is still absent.
+//
+// A PRESET THAT DROPS T6.10 OR T6.15 MAKES THE POINTER FALSE. Presets do
+// not exist yet (docs/08 §2.4); whoever builds them owes this note a
+// condition.
 //
 // NO PRICING (AC-055), and the word BOM appears nowhere. See
 // `derived/equipment_list.dart`.
@@ -64,15 +69,15 @@ import 'package:rackpal_core/src/model/rack_document.dart' show RevisionEntry;
 import 'package:rackpal_core/src/units/mass.dart';
 import 'package:rackpal_core/src/units/unit_formatter.dart';
 
-/// What the sheet says about the schedules it does NOT carry. See the file
-/// header.
+/// What the sheet carries, and where the schedules it does not carry are.
+/// See the file header.
 ///
 /// "EQUIPMENT ONLY" until M6-F6: the sheet now also lists the rack
-/// materials (DR-213), so the note says what it carries and what it does
-/// not.
+/// materials (DR-213). "CABLE AND POWER SCHEDULES NOT ISSUED" until DR-242,
+/// which points to the cable schedules instead.
 const String kEquipmentScopeNote =
-    'EQUIPMENT AND RACK MATERIALS. CABLE AND POWER SCHEDULES NOT ISSUED IN '
-    'THIS SET.';
+    'EQUIPMENT AND RACK MATERIALS. CABLE SCHEDULES: SEE T6.10 AND T6.15. '
+    'POWER SCHEDULE NOT ISSUED IN THIS SET.';
 
 /// What an equipment list with nothing on it says.
 const String kNoEquipmentText = 'NO EQUIPMENT IN THIS PROJECT.';
