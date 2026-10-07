@@ -200,6 +200,7 @@ export 'src/draw/hit_test.dart';
 export 'src/draw/image_ref.dart';
 export 'src/draw/marquee.dart';
 export 'src/draw/ops.dart';
+export 'src/draw/pal1.dart';
 export 'src/draw/path.dart';
 export 'src/draw/scene/adapter_mark.dart';
 export 'src/draw/scene/device_glyph_art.dart';

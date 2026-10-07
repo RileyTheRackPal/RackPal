@@ -318,7 +318,94 @@ def check():
 
     return failures, lum
 
+# ------------------------------------------------------------------ verdict dump
+
+#: The eight families canon section 14.3 moved, at their values BEFORE it moved
+#: them. Run through the rules above they reproduce the collisions that section
+#: fixed, so a dump over them records this file's verdicts in the FAILING
+#: direction, which the shipped palette never exercises.
+SECTION_14_3_BEFORE = {
+    'audio.spdif_optical':    ('2,3',      1.00),
+    'structure.pathway':      ('2,6',      0.75),
+    'structure.undetermined': ('4,4',      0.75),
+    'video.hdmi.1_4':         ('solid',    1.00),
+    'video.composite':        ('12,4',     1.00),
+    'audio.line_bal':         ('10,3',     1.00),
+    'audio.spdif_coax':       ('6,3,1,3',  1.00),
+    'audio.aes3':             ('10,3,1,3', 1.00),
+}
+
+#: The control domain's dash before the period floor corrected it to `1.5,3`
+#: (section 14.4): a 4.0 pt period, the one shipped value the floor refused.
+PERIOD_FLOOR_BEFORE = {'ctl.ir_emitter': ('1,3', 0.75)}
+
+
+def verdicts(families):
+    """Every verdict the rules above reach over [families], limb by limb.
+
+    SFE-A1's differential test (DR-122 section 11.121.4) compares the Dart
+    port with this, pair by pair. It records each LIMB rather than only the
+    conclusion, because the shipped palette passes, so a conclusion-only
+    record would hold nothing but "no" and could not tell a port that
+    agrees from one that never fails.
+    """
+    global FAMILIES
+    saved = FAMILIES
+    FAMILIES = families
+    try:
+        failures, lum = check()
+    finally:
+        FAMILIES = saved
+    pairs = []
+    for a, b in itertools.combinations(families, 2):
+        if a[1] == b[1]:
+            continue
+        in_band = abs(lum[a[1]] - lum[b[1]]) < BAND
+        same = dash_class(a[2]) == dash_class(b[2])
+        rescued = max(a[3], b[3]) / min(a[3], b[3]) >= WEIGHT_RATIO
+        pairs.append([a[0], b[0], in_band, same, rescued,
+                      in_band and same and not rescued])
+    return {
+        'families': [[f[0], f[1], DOMAIN_HUE[f[1]], f[2], f[3]]
+                     for f in families],
+        'triples': {f[0]: {'L': luminance(DOMAIN_HUE[f[1]]),
+                           'class': '/'.join(dash_class(f[2])),
+                           'period': dash_period(f[2])}
+                    for f in families},
+        'pairs': pairs,
+        'failures': failures,
+    }
+
+
+def dump_verdicts():
+    """`--dump-verdicts`: SFE-A1's fixture, on stdout as JSON."""
+    import json
+
+    def moved(before):
+        return [(f[0], f[1]) + before.get(f[0], (f[2], f[3]))
+                for f in FAMILIES]
+
+    out = {
+        'shipped': verdicts(FAMILIES),
+        'section_14_3_before': verdicts(moved(SECTION_14_3_BEFORE)),
+        'period_floor_before': verdicts(moved(PERIOD_FLOOR_BEFORE)),
+    }
+    # One row per line: indented JSON put each of 4,161 booleans on its own
+    # line and made the fixture 460 KB for no reader's benefit.
+    text = json.dumps(out, indent=1, sort_keys=True)
+    text = re.sub(r'\[\s+([^\[\]{}]*?)\s+\]',
+                  lambda m: '[' + re.sub(r',\s+', ', ', m.group(1)) + ']', text)
+    # LF, explicitly. Text-mode stdout on Windows writes CRLF, and a fixture
+    # under test/fixtures/ may hold no CR (gitattributes_byte_exactness_test).
+    sys.stdout.reconfigure(newline='\n')
+    sys.stdout.write(text)
+    sys.stdout.write('\n')
+    return 0
+
+
 def main():
+    if '--dump-verdicts' in sys.argv[1:]:
+        return dump_verdicts()
     failures, lum = check()
     pairs = sum(1 for a, b in itertools.combinations(FAMILIES, 2)
                 if a[1] != b[1] and abs(lum[a[1]] - lum[b[1]]) < BAND)

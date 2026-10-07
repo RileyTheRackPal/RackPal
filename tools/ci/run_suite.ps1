@@ -1293,7 +1293,14 @@ $SuiteFloors = @{
     # dart, LOWERED ON PURPOSE. rowAbove, columnAfter and columnBefore were
     # deleted with their four tests: default focus traversal already makes
     # Tab's move, measured through the real grid, and no key reaches rowAbove.
-    'rackpal_core'   = 5645
+    # 5662 at `#822` (SFE-A1, DR-122 §11.121.4): +17 in draw/pal1_test.dart.
+    # Nine are the differential against pal1_check.py's dumped verdicts,
+    # three per palette (triples, every cross-domain pair limb by limb, the
+    # violation list) over the shipped palette and the two canon §14.3 and
+    # §14.4 corrected; two hold the fixture to the seed and to failing in
+    # every limb; six are §14.2's examples, the 1.4 boundary in integers,
+    # the seed clean through core, and an unresolved domain left out.
+    'rackpal_core'   = 5662
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
