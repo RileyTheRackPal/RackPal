@@ -24351,6 +24351,53 @@ is this corpus's argument against a second copy of a moving number, made again i
 
 **Scope.** No scope moves: it settles a control DR-122 left open. Consumed by SFE-C2 (`#830`).
 
+### 11.243 DR-244 · A clone may take any catalog connector as its default, and keeps its parent's direction and topology
+
+**Settled by the user on 2026-10-07, for SFE-B1 (`#825`).** DR-122 §11.121.2 says a clone *"inherits
+domain, direction, topology, connector and every field a rule reads"*, and the case it offers as proof
+of the shape, `ctl.vantage`, is *"clone Cresnet, rename, change the connector to `conn.hardwired`"*. Both
+cannot hold, and the clone command cannot be written until one gives.
+
+**11.243.1 WHAT A FAMILY'S DEFAULTS ACTUALLY DO, READ RATHER THAN RECALLED.** §11.121.1 says
+`defaultDirection`, `defaultTopology`, `defaultConnector` and `acceptedFamilies` *"are read by `TOP-003`,
+`DIR-001`, `SIG-002` and `CON-001`"*. **None of the four reads a family.** Every rule reads the PORT's own
+`direction`, `topology` and `connector` (`spring_back_rules.dart`, `connect_rules.dart`), and CON-001
+checks the two ports' connectors against the catalog's `matesWith`. A family's three defaults are read in
+exactly one place, the builder (`archetypes.dart`, `quick_add.dart`, `port_type_change.dart`), which
+COPIES them into a port when one is made. And `acceptedFamilies` is a port field; a family has none.
+
+**So RJ-012's objection survives, but by a different road than §11.121.1 drew.** A wrong default
+direction or topology is copied into every port quick-added with that family, and the rules then judge
+those ports confidently and wrongly. That is real, and it is why those two stay locked. A default
+connector is copied the same way, but **what CON-001 judges is a real connector from the catalog against
+the catalog's own mating table**, so a clone's choice of default cannot make any rule wrong. At worst it
+pre-fills a port with a connector the person changes.
+
+**11.243.2 THREE OPTIONS WERE OFFERED, EACH PRICED.**
+
+| Offered | What it costs |
+|---|---|
+| **Any connector type in the registry**, defaulting to the parent's | 49 to choose from today; no free text, so no connector is invented |
+| Inherit only | DR-122's text kept literally; the Vantage case becomes a by-hand connector change on every port, forever |
+| Only connectors the catalog pairs with the parent | Measured: Cresnet's catalog ports use only `conn.phoenix_4`, so Vantage is unreachable, and 23 of 57 families have no catalog pairing at all |
+
+A recommendation made before this was measured, *"a connector the parent already accepts"*, was offered
+first and accepted, and is **withdrawn here because it has no host**: no family carries a list of
+connectors it accepts, and the only proxy is the third row. **The user chose the first row**, the
+re-made recommendation, and gave no reason of their own.
+
+**11.243.3 RULED.** A clone inherits its parent's **domain, direction and topology, locked**. Its
+**default connector** starts as the parent's and may be changed to **any connector type the registry
+holds**. Connector types remain catalog-updated: this picks from them and never adds one, so RJ-012's
+connector-editor limb and DR-122 §11.121.3 are untouched.
+
+**11.243.4 WHAT IT DOES NOT CHANGE.** CR-078 (the clone's hue is its domain's). DR-243's dash and weight
+menu. `@signal=`'s refusal (§11.121.5). Nothing about an EXISTING port moves: a default is read when a port
+is made, never afterwards.
+
+**Scope.** No scope moves; it settles a contradiction inside DR-122. §12.53 records the amendment.
+Consumed by SFE-B1 (`#825`) and SFE-C1 (`#829`).
+
 ---
 
 ## 12. Superseded rulings
@@ -25117,6 +25164,13 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **DR-240 §11.239.2**, its last sentence | *"The load summary keeps its own five-line budget; only the note column gains the row."* | **The summary still holds at most five lines, and a line too long for its column wraps after its dash onto the sixth row** (§11.240.2). The note column's six rows are unchanged. |
+
+### 12.53 Amended by DR-244 (a clone may take any catalog connector)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-122 §11.121.1**, its mechanism | `defaultDirection`, `defaultTopology`, `defaultConnector` and `acceptedFamilies` *"are read by `TOP-003`, `DIR-001`, `SIG-002` and `CON-001`"* | **No rule reads a family** (§11.243.1). The rules read the PORT; the builder copies a family's defaults into a port when it is made, and `acceptedFamilies` is a port field. The objection survives for direction and topology through that copy, and does not reach the connector. |
+| **DR-122 §11.121.2**, the inherited list | The clone *"inherits domain, direction, topology, connector and every field a rule reads"* | **Domain, direction and topology are inherited and locked; the default connector starts as the parent's and may be any connector type the registry holds** (§11.243.3). The `ctl.vantage` example in the same section is now true as written. |
 
 ## 13. Resolved §10 questions
 
