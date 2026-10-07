@@ -108,6 +108,17 @@ const int kElevationNoteLines = 6;
 /// The band at the bottom holding the graphic scale bar.
 const double kElevationScaleBand = 34;
 
+/// How far the elevation's whole body (note band, rack drawing, scale bar)
+/// sits inside the drawing area, on every side (DR-241 §11.240.1).
+///
+/// The drawing area's edge IS the frame's inner border line. Until DR-241
+/// every element here was anchored exactly on it: each note's first letter
+/// fused to the left border, and the scale bar's zero tick drawn ON the
+/// frame line, so the start of the foot a person checks with a tape
+/// measure disappeared into it. 8 pt is the house standard the legend,
+/// cover, exceptions, network and pinout sheets already use.
+const double kElevationInset = 8;
+
 /// Point size of the notes and the load summary.
 const double kElevationNotePt = 8;
 
@@ -145,12 +156,13 @@ const String kRearDetailNote =
 /// units, as the load summary beside it is.
 ///
 /// OWN WEIGHT IS NOT PRINTED, AND THAT WAS MEASURED, NOT PREFERRED. The
-/// note column is half the band, 327 pt on ANSI B through the real Jost
-/// metrics, and a 1200 x 1400 x 2400 mm cabinet at 300 kg with both
-/// clearances measured 331.5 pt: `_band` would have cut it with an
-/// ellipsis. Without the weight the same worst case is 299.6 pt metric and
-/// 285.4 imperial, and `elevation_envelope_fit_test.dart` in rackpal_export
-/// holds that against the real font. Prefixing "RACK" to save the room
+/// note column is half the band, 327 pt on ANSI B when this was measured
+/// (319 since DR-241's inset), through the real Jost metrics, and a 1200 x
+/// 1400 x 2400 mm cabinet at 300 kg with both clearances measured 331.5
+/// pt: `_band` would have cut it with an ellipsis. Without the weight the
+/// same worst case is 299.6 pt metric and 285.4 imperial, and
+/// `elevation_envelope_fit_test.dart` in rackpal_export holds that against
+/// the real font. Prefixing "RACK" to save the room
 /// would have sat beside the summary's "RACK TOTAL", a different weight.
 ///
 /// NULL WHEN NO NUMBER IS KNOWN: no dimension, and no clearance for this
@@ -188,7 +200,7 @@ String? envelopeNote(Rack rack, Face face, UnitSystem units) {
 ///
 /// The fact and the act m21's liability argument is about, and no gauge,
 /// code section or jurisdiction: conductor sizing is RJ-010's v1.2 work.
-/// 288.5 pt of the 327 pt note column through the real Jost metrics, held
+/// 288.5 pt of the 319 pt note column through the real Jost metrics, held
 /// by `elevation_ground_bar_test.dart` in rackpal_export.
 ///
 /// AN UNTICKED BOX PRINTS NOTHING, and never "NO GROUND BAR": `false` is
@@ -378,6 +390,7 @@ ElevationSheet buildElevationSheet({
       : Face.rear;
 
   final layout = sheetLayoutFor(sheet, revisions);
+  final body = elevationBodyOf(layout.drawingArea);
   final area = elevationAreaOf(layout.drawingArea);
 
   // ── the scale, chosen against the content that will actually be drawn
@@ -474,16 +487,17 @@ ElevationSheet buildElevationSheet({
     if (labels.sheetNote case final note?) note,
   ];
   final summary = rackLoadSummaryLines(profile, settings.displayUnits, face);
+  // The summary is held to its own five LINES by `rackLoadSummaryLines`;
+  // `_band` asserts its ROWS, since a long one wraps onto a sixth.
   assert(
-    notes.length <= kElevationNoteLines &&
-        summary.length <= kElevationNoteLines,
-    'buildElevationSheet: ${notes.length} notes and ${summary.length} '
-    'summary lines, and the band holds $kElevationNoteLines',
+    notes.length <= kElevationNoteLines,
+    'buildElevationSheet: ${notes.length} notes, and the band holds '
+    '$kElevationNoteLines',
   );
   ops
     ..addAll(
       _band(
-        area: layout.drawingArea,
+        area: body,
         left: notes,
         right: summary,
         palette: palette,
@@ -493,7 +507,7 @@ ElevationSheet buildElevationSheet({
     // ── graphic scale bar ──────────────────────────────────────────────
     ..addAll(
       buildGraphicScaleBar(
-        at: DPt(layout.drawingArea.left, area.bottom + kElevationScaleBand / 2),
+        at: DPt(body.left, area.bottom + kElevationScaleBand / 2),
         scale: scale,
         palette: palette,
       ),
@@ -529,12 +543,24 @@ ElevationSheet buildElevationSheet({
 }
 
 /// The rectangle the rack elevation itself is drawn into: the drawing area
-/// less the header band and the scale-bar band.
-DBox elevationAreaOf(DBox drawingArea) => DBox.fromLtwh(
-  drawingArea.left,
-  drawingArea.top + kElevationHeaderBand,
-  drawingArea.width,
-  drawingArea.height - kElevationHeaderBand - kElevationScaleBand,
+/// less [kElevationInset] all round, the header band and the scale-bar band.
+DBox elevationAreaOf(DBox drawingArea) {
+  final body = elevationBodyOf(drawingArea);
+  return DBox.fromLtwh(
+    body.left,
+    body.top + kElevationHeaderBand,
+    body.width,
+    body.height - kElevationHeaderBand - kElevationScaleBand,
+  );
+}
+
+/// Everything the elevation draws, bands included: the drawing area
+/// less [kElevationInset] on every side.
+DBox elevationBodyOf(DBox drawingArea) => DBox.fromLtwh(
+  drawingArea.left + kElevationInset,
+  drawingArea.top + kElevationInset,
+  drawingArea.width - 2 * kElevationInset,
+  drawingArea.height - 2 * kElevationInset,
 );
 
 /// The result of the fit search — the chosen scale, the scene built at it
@@ -686,6 +712,17 @@ List<DiagramOp> _band({
   // Half the band each, so a long note and a long summary line cannot
   // collide however wordy either becomes.
   final half = area.width / 2 - 8;
+  final rows = _wrapAfterDash(
+    right,
+    half,
+    style: rightStyle,
+    measurer: measurer,
+  );
+  assert(
+    rows.length <= kElevationNoteLines,
+    '_band: ${rows.length} summary rows, and the band holds '
+    '$kElevationNoteLines',
+  );
 
   for (var i = 0; i < left.length; i++) {
     final text = fitTextToWidth(
@@ -703,9 +740,9 @@ List<DiagramOp> _band({
       ),
     );
   }
-  for (var i = 0; i < right.length; i++) {
+  for (var i = 0; i < rows.length; i++) {
     final text = fitTextToWidth(
-      right[i],
+      rows[i],
       half,
       style: rightStyle,
       measurer: measurer,
@@ -720,6 +757,38 @@ List<DiagramOp> _band({
     );
   }
   return ops;
+}
+
+/// [lines] as rows of a column [width] wide, a line that does not fit
+/// broken after its em dash onto the next row (DR-241 §11.240.2).
+///
+/// THE NOT DRAWN HERE LINE IS THE ONE THIS IS FOR. It grows with its
+/// counts, and at three digits it measured 331.7 pt against what was then
+/// a 327 pt column, so `fitTextToWidth` cut it with an ellipsis: a count
+/// on the sheet an installer reads, lost to typography. Its dash already
+/// separates how many from where they are, so that is where it breaks.
+/// The summary is five lines at most and the band has six rows, so a
+/// wrapped line always fits. A line with no dash is left to be cut, as
+/// before. The other summary lines can carry a dash too, G4's for an
+/// unknown (`RACK TOTAL  — (52 unknown)`), which is why the test is width
+/// first: none of them comes near the column.
+List<String> _wrapAfterDash(
+  List<String> lines,
+  double width, {
+  required TextStyleSpec style,
+  required TextMeasurer measurer,
+}) {
+  const dash = ' — ';
+  return <String>[
+    for (final line in lines)
+      if (measurer.measureText(line, style).advanceWidth <= width ||
+          !line.contains(dash))
+        line
+      else ...[
+        line.substring(0, line.indexOf(dash) + dash.length - 1),
+        line.substring(line.indexOf(dash) + dash.length),
+      ],
+  ];
 }
 
 /// How tall the scale bar's ticks are.
