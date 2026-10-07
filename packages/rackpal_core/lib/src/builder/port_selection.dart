@@ -203,9 +203,9 @@ final class PortSelection {
 /// band is a run inside it rather than a break in it: `PortTable.rows`
 /// states the same thing for the same reason.
 ///
-/// NOTHING CALLS THIS YET (#945): the port grid has no Tab handling of its own,
-/// so Tab does what default focus traversal does. #949 decides whether the grid
-/// needs these moves or they go.
+/// `PortCellFocusRegistry.moveDown` in rackpal_ui is the caller (#949). Until
+/// then Enter used geometry, and at the last row of a bank the nearest
+/// focusable below was in the next band's header, so Enter left the grid.
 String? rowBelow(String key, List<String> order) {
   final at = order.indexOf(key);
   if (at < 0 || at + 1 >= order.length) return null;
