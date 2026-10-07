@@ -3052,6 +3052,70 @@ void main() {
       );
     });
 
+    testWidgets('EVERY CELL IS ONE TAB STOP: a whole row from KEY, and '
+        'each press lands further right (#949)', (
+      tester,
+    ) async {
+      // THE DEFECT THIS WAS WRITTEN FOR. The SIGNAL cell took two presses:
+      // `FamilyPicker` wrapped its menu button in a focus node of its own,
+      // and the test above could not see it, because two stops at one x
+      // are still in sorted order. Strictly increasing is what fails.
+      //
+      // The CHECKBOX STAYS A STOP, by the user's choice on 2026-10-07: it
+      // is the only keyboard route to row selection, which fill-down,
+      // duplicate, move-to-bank and delete all act on.
+      await _pump(
+        tester,
+        template: _saveable()
+          ..ports.addAll([_port('p1', order: 'a0'), _port('p2', order: 'a1')]),
+      );
+      // Row one's KEY cell, by the column header rather than an index.
+      final keyX = tester.getTopLeft(_inGrid(find.text('KEY'))).dx;
+      final fields = _inGrid(find.byType(TextField));
+      Finder? start;
+      for (var i = 0; i < tester.widgetList(fields).length; i++) {
+        if ((tester.getTopLeft(fields.at(i)).dx - keyX).abs() < 12) {
+          start = fields.at(i);
+          break;
+        }
+      }
+      await tester.tap(start!);
+      await tester.pumpAndSettle();
+      final rowOne = tester.getTopLeft(start).dy;
+
+      final xs = <double>[];
+      final ys = <double>[];
+      for (var press = 0; press < 30; press++) {
+        final box =
+            FocusManager.instance.primaryFocus!.context!.findRenderObject()!
+                as RenderBox;
+        final at = box.localToGlobal(Offset.zero);
+        // The next row's checkbox is where this row ends.
+        if (press > 0 && at.dy > rowOne + 20) break;
+        xs.add(at.dx);
+        ys.add(at.dy);
+        await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+        await tester.pumpAndSettle();
+      }
+
+      expect(xs.length, greaterThan(5), reason: 'Tab never left the box');
+      for (var i = 1; i < xs.length; i++) {
+        expect(
+          xs[i],
+          greaterThan(xs[i - 1]),
+          reason:
+              'stop $i is not right of stop ${i - 1}: one cell took two '
+              'presses of Tab (${xs.map((x) => x.round()).toList()})',
+        );
+      }
+      final signal = tester.getTopLeft(_inGrid(find.text('SIGNAL'))).dx;
+      expect(
+        xs.where((x) => (x - signal).abs() < 12),
+        hasLength(1),
+        reason: 'the SIGNAL cell is one stop',
+      );
+    });
+
     testWidgets('a key typed by hand stays typed across a trip to another '
         'section', (tester) async {
       // THE DEFECT THIS TEST WAS WRITTEN FOR. The touched set lived in

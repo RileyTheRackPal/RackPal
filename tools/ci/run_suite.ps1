@@ -2042,7 +2042,9 @@ $SuiteFloors = @{
     # the field's; an overall dimension and its refusal naming it; a
     # clearance disabled behind an unticked door, rail apart from door;
     # unticking a door keeping its clearances).
-    'rackpal_ui'     = 2137
+    # 2138 at `#1024` (TAB-1, AC-058): +1 in builder/port_grid_test.dart,
+    # a whole row tabbed from KEY with every stop strictly further right.
+    'rackpal_ui'     = 2138
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
