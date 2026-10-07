@@ -567,6 +567,9 @@ the way a spreadsheet is:
 
 | Key | What it does |
 |---|---|
+| `Enter` | Keep what you typed and move down the column, straight across a bank's header |
+| `Tab` / `Shift+Tab` | Next / previous cell along the row, then on to the next row; each row starts at its checkbox |
+| `Space` on a row's checkbox | Select or deselect the row, so the keys below act on it without the mouse |
 | `Ctrl+D` / `Ctrl+Shift+D` | Fill down / fill a series down the selection |
 | `Ctrl+C` / `Ctrl+V` | Copy rows out (with a header row) / paste cells in |
 | `Alt+Up` / `Alt+Down` | Move the selected rows within their bank |

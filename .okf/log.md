@@ -1,5 +1,16 @@
 # Update Log
 
+## 2026-10-07 (hundred-and-twenty-fourth entry)
+
+* **Progress**: PR 209 merged at `b0c4ff56`; `#1020` closed. `#783` gained a second identity (ADO's server-made
+  merge commits, 205 on `main`), recorded by count only. `#949` built in three chapters: `#1024` (`c04c05d5`),
+  `#1025` (`70483032`), `#1026` (`9c0c5e78`). docs/12 §4.52.
+* **Note**: **ASK THE QUESTION THE TICKET ASKS BEFORE ANSWERING THE ONE IT SUGGESTS.** `#949` offered "wire the
+  moves or delete them". The probe found default Tab already right, two real defects nobody had filed (a double
+  stop, and Enter leaving the grid at every bank), and that three of the four moves had no job.
+* **Note**: **A SORTED-ORDER CHECK CANNOT SEE A REPEAT.** Two Tab stops at one x pass `orderedEquals(sorted)`.
+  Assert strictly increasing when the claim is "each press moves".
+
 ## 2026-10-06 (hundred-and-twenty-third entry)
 
 * **Progress**: `#1020` built in two chapters, `#1021` (`076149a9`) and `#1022` (`f4750058`); DR-241 marked
