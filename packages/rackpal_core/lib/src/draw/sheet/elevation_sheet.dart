@@ -88,12 +88,22 @@ import 'package:vector_math/vector_math_64.dart';
 /// The band at the top of the drawing area holding the sheet's notes and
 /// the rack's load summary, in points.
 ///
-/// Five lines of [kElevationNotePt] plus leading. Sized as a constant
-/// rather than measured because the drawing area it takes from is what the
-/// scale is chosen against, and a scale that depended on how many notes
-/// happened to apply would make two otherwise-identical racks print at
-/// different ratios.
-const double kElevationHeaderBand = 56;
+/// [kElevationNoteLines] lines of [kElevationNotePt] plus leading. Sized as
+/// a constant rather than measured because the drawing area it takes from
+/// is what the scale is chosen against, and a scale that depended on how
+/// many notes happened to apply would make two otherwise-identical racks
+/// print at different ratios.
+///
+/// SIX LINES SINCE DR-240, FIVE BEFORE (56 pt). The ground bar note needed
+/// a row on a rear sheet that already filled five. Measured over empty
+/// racks of 1 to 60 U and every starter rack on ANSI B, the extra 10 pt
+/// moves one rack height's ratio, an empty 56 U from 1:8 to 1:10.
+const double kElevationHeaderBand = 66;
+
+/// How many lines the header band holds in each column, and therefore the
+/// most either column may be handed. A line past it prints over the top of
+/// the elevation, so `buildElevationSheet` asserts it.
+const int kElevationNoteLines = 6;
 
 /// The band at the bottom holding the graphic scale bar.
 const double kElevationScaleBand = 34;
@@ -172,6 +182,20 @@ String? envelopeNote(Rack rack, Face face, UnitSystem units) {
   return '$envelope; ${front ? 'FRONT' : 'REAR'} DOOR ${v(rail)} RAIL, '
       '${v(swing)} SWING';
 }
+
+/// The note a rack with `groundBarPresent` carries on both elevations
+/// (AC-034/m21, DR-240 §11.239.3).
+///
+/// The fact and the act m21's liability argument is about, and no gauge,
+/// code section or jurisdiction: conductor sizing is RJ-010's v1.2 work.
+/// 288.5 pt of the 327 pt note column through the real Jost metrics, held
+/// by `elevation_ground_bar_test.dart` in rackpal_export.
+///
+/// AN UNTICKED BOX PRINTS NOTHING, and never "NO GROUND BAR": `false` is
+/// also the default every rack carries whether or not anybody looked, so
+/// such a line would print a default as though it were a finding.
+const String kGroundBarNote =
+    'RACK GROUND BAR PRESENT. BOND TO BUILDING GROUND PER LOCAL CODE.';
 
 /// CR-035's chip, for a rack whose `mirrorRearElevation` is off.
 ///
@@ -441,17 +465,27 @@ ElevationSheet buildElevationSheet({
     kScaleAppliesNote,
     // DR-239 §11.238.4. Only when something is known.
     if (envelopeNote(rack, face, settings.displayUnits) case final note?) note,
-    // FIFTH AT MOST since DR-239, and the band holds five
-    // (`kElevationHeaderBand`): rear note, chip, scale, envelope, this.
-    // Only ever present when it has something to say.
+    // DR-240 §11.239.1: both faces, beside the envelope, so the two rack
+    // facts read together and the sheet's notice about itself stays last.
+    if (rack.groundBarPresent) kGroundBarNote,
+    // SIXTH AT MOST since DR-240, and the band holds six: rear note, chip,
+    // scale, envelope, ground bar, this. Only ever present when it has
+    // something to say.
     if (labels.sheetNote case final note?) note,
   ];
+  final summary = rackLoadSummaryLines(profile, settings.displayUnits, face);
+  assert(
+    notes.length <= kElevationNoteLines &&
+        summary.length <= kElevationNoteLines,
+    'buildElevationSheet: ${notes.length} notes and ${summary.length} '
+    'summary lines, and the band holds $kElevationNoteLines',
+  );
   ops
     ..addAll(
       _band(
         area: layout.drawingArea,
         left: notes,
-        right: rackLoadSummaryLines(profile, settings.displayUnits, face),
+        right: summary,
         palette: palette,
         measurer: measurer,
       ),

@@ -46,9 +46,9 @@
 // that is FALSE of the shipped path (that a 60 U rack fits at 1:8 — it
 // needs 1:10, because the elevation is fitted against the RU ruler, the
 // load gutter and the inflated print type inside `elevationAreaOf`, which
-// is 90 pt shorter than the raw drawing area), and both suites passed at
-// the same time. So the dead one is gone and its tests now run the shipped
-// fit.
+// is shorter than the raw drawing area by both bands), and both suites
+// passed at the same time. So the dead one is gone and its tests now run
+// the shipped fit.
 //
 // NOTE ON THE PHRASING, because the design brief for this stage says
 // "picks the largest n ... for which the elevation fits" and that is a slip:

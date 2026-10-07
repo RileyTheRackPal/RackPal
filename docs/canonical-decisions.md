@@ -24198,6 +24198,42 @@ possible. Whether rack presets carry the envelope. Whether rack elevations join 
 
 **Scope.** No scope moves: fields the v1 model already declares, given a writer and a reader.
 
+### 11.239 DR-240 · The ground bar note prints on both elevations, and the note band holds six lines
+
+**Settled by the user on 2026-10-06, for `#1016`.** AC-034/m21 ruled that `Rack.groundBarPresent` feeds a
+note on the elevation, and docs/04 §4 draws the checkbox with *"prints a note on the elevation (m21)"*. The
+checkbox was built, saved and round-tripped, and nothing read it: the inverse of the `Placement.locked`
+shape (§11.185.0), a writer with no reader. Three of the four starters tick it. The note band could not take
+the line as it stood: it held five, and a rear sheet already fills five (the rear-detail note, the mirror
+chip, the scale note, DR-239's envelope line, and the unlabelled-blocks note on a rack of 58 U or more).
+
+**11.239.1 RULED: BOTH FACES.** The ground bar is a fact about the rack, as its envelope is, and the
+envelope already prints on both. The front elevation alone was offered and refused: the person bonding the
+bar is at the back of the rack reading `T2.02`. The rear alone costs the same band as both, because the
+rear is the face that was already full.
+
+**11.239.2 RULED: THE BAND HOLDS SIX LINES.** `kElevationHeaderBand` grows from 56 pt to 66 pt, still a
+constant, so two otherwise identical racks keep printing at one ratio whichever notes apply. **Measured
+before it was offered**, on ANSI B through the real Jost metrics, empty racks of 1 U to 60 U and every rack
+of every starter: **one rack height changes ratio**, an empty 56 U from 1:8 to 1:10, and no starter moves.
+The load summary keeps its own five-line budget; only the note column gains the row.
+
+**11.239.3 RULED: THE WORDS.** `RACK GROUND BAR PRESENT. BOND TO BUILDING GROUND PER LOCAL CODE.`, which
+measures 288.5 pt of the 327 pt column. It states the fact and the act m21's liability argument is about,
+and names no jurisdiction, code section or conductor gauge: sizing is RJ-010's v1.2 work. A bare
+`RACK GROUND BAR PRESENT.`, a TIA-607 `TGB` and an NEC grounding-electrode wording were offered beside it.
+
+**Unticked prints nothing, the implementer's reading, stated.** `false` is the default every rack carries
+whether or not anybody looked, so `NO GROUND BAR` would print a default as though it were a finding (G4's
+reasoning, applied to a boolean). It is also `#1016`'s own DONE clause. **The line sits after the envelope
+and before the unlabelled-blocks note**, so the two rack facts read together and the sheet's notice about
+itself stays last; also the implementer's, stated.
+
+**What this does not rule.** The bonding-detail sheet, a busbar entity and conductor sizing (RJ-010, v1.2).
+Whether the export summary mentions the bar.
+
+**Scope.** No scope moves: m21's own minimum, given the reader it was always owed.
+
 ---
 
 ## 12. Superseded rulings

@@ -319,7 +319,7 @@ final class Rack {
   bool hasFrontDoor, hasRearDoor;
   Len? frontDoorClearance, rearDoorClearance;   // swing space in front of the door. DR-239.
   Len? frontRailClearance, rearRailClearance;   // rail to closed door, inside. DR-239.
-  bool groundBarPresent;          // feeds a note on the elevation. AC-034/m21.
+  bool groundBarPresent;          // prints a note on both elevations. AC-034/m21, DR-240.
 
   List<ZeroUChannel> zeroUChannels;   // sub-objects, string-keyed, no EntityMeta
   FracIndex order;

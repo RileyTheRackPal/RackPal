@@ -244,7 +244,7 @@ Three entry points to one `RackInspector`, which replaces the Selection section:
 │  Weight cap.  [1134] kg             │
 │  Mount   ( ) Floor  (•) Wall        │
 │  Swing frame [x]   Hinge [Left ▾]   │
-│  Ground bar present  [x]            │  ← prints a note on the elevation (m21)
+│  Ground bar present  [x]            │  ← prints a note on both elevations (m21, DR-240)
 ├─────────────────────────────────────┤
 │ Enclosure (DR-239)                  │
 │  Overall  W [600 ] D [1000] H [2000]│

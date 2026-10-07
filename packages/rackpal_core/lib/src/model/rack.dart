@@ -199,7 +199,8 @@ final class Rack {
   @internal
   set hingeSide(HingeSide? v) => _hingeSide = v;
 
-  /// Feeds a note on the elevation (AC-034/m21).
+  /// Prints `kGroundBarNote` on both elevations when set, and nothing when
+  /// not (AC-034/m21, DR-240).
   bool _groundBarPresent;
   bool get groundBarPresent => _groundBarPresent;
   @internal
