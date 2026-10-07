@@ -1289,7 +1289,11 @@ $SuiteFloors = @{
     # 5649 at `#1022` (IN-2, DR-241 §11.240.2): +2 in sheet/elevation_sheet_
     # test.dart, a too-long summary line wrapping after its dash onto the
     # sixth row, and one that fits staying one row.
-    'rackpal_core'   = 5649
+    # 5645 at `#1026` (TAB-3, AC-058): -4 in builder/port_selection_test.
+    # dart, LOWERED ON PURPOSE. rowAbove, columnAfter and columnBefore were
+    # deleted with their four tests: default focus traversal already makes
+    # Tab's move, measured through the real grid, and no key reaches rowAbove.
+    'rackpal_core'   = 5645
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
