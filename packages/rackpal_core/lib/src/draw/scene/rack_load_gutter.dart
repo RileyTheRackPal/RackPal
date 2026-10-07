@@ -516,8 +516,9 @@ String _omissionLine(RackLoadProfile profile, Face face) {
 /// `kElevationHeaderBand`, and a line past `kElevationNoteLines` would
 /// print over the top of the elevation it belongs to. So the omission
 /// statement is ONE line carrying every count, not three. The band holds
-/// six since DR-240, and the sixth row was ruled for the NOTE column (the
-/// ground bar); this column keeps its five, so nothing here can take it.
+/// six rows since DR-240, and since DR-241 a line too long for its column
+/// wraps after its dash onto the next one, so five lines may print on six
+/// rows; a sixth LINE here would leave a wrapped one nowhere to go.
 List<String> rackLoadSummaryLines(
   RackLoadProfile profile,
   UnitSystem units,

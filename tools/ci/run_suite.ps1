@@ -1286,7 +1286,10 @@ $SuiteFloors = @{
     # 5647 at `#1021` (IN-1, DR-241 §11.240.1): +2 in sheet/elevation_sheet_
     # test.dart, nothing in the band within 8 pt of the frame, and the scale
     # bar's zero tick off the frame line.
-    'rackpal_core'   = 5647
+    # 5649 at `#1022` (IN-2, DR-241 §11.240.2): +2 in sheet/elevation_sheet_
+    # test.dart, a too-long summary line wrapping after its dash onto the
+    # sixth row, and one that fits staying one row.
+    'rackpal_core'   = 5649
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -1407,7 +1410,10 @@ $SuiteFloors = @{
     # 308 at `#1018` (GB-2, DR-240 §11.239): +2 in elevation_ground_bar_
     # test.dart, small_office's ticked RK-1 and unticked RK-2 read off the
     # emitted PDF, and the six-note rear sheet whole through the real font.
-    'rackpal_export' = 308
+    # 309 at `#1022` (IN-2, DR-241 §11.240.2): +1 in elevation_summary_
+    # wrap_test.dart, a 52-device rear sheet's NOT DRAWN HERE line that
+    # overflows Jost's 319 pt column, printed as two whole rows.
+    'rackpal_export' = 309
     # 22 at PLAN-K/1: the whole package is new (DR-153 §11.152.4). Four of
     # them run with no binary present, because they are about FINDING it:
     # an override that points nowhere is an error rather than a fallback,

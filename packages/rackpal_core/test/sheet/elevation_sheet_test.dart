@@ -595,6 +595,123 @@ void main() {
     });
   });
 
+  // DR-241 §11.240.2 (`#1022`): the NOT DRAWN HERE line grows with its
+  // counts and was cut with an ellipsis once it outgrew its column. It
+  // now breaks after its dash onto the band's sixth row.
+  group('a summary line too long for its column wraps (DR-241)', () {
+    /// A 45 U rack with a stated capacity (so the summary is five lines),
+    /// [front] front-only 1 U devices the rear sheet does not draw, and
+    /// [ghosts] whose template does not resolve, counted at the top.
+    ElevationSheet rear({required int front, required int ghosts}) {
+      final rack = Rack(
+        id: _rackId,
+        name: 'MASTER RACK',
+        designator: 'RK-1',
+        heightU: 45,
+        order: const FracIndex('a0'),
+        meta: testMeta(),
+        weightCapacity: const Mass(900000000000),
+      );
+      DeviceInstance device(String id, String template, int ru) =>
+          DeviceInstance(
+            id: Uuid(id),
+            kind: DeviceKind.rackDevice,
+            templateRef: TemplateRef(
+              templateId: TemplateId(template),
+              version: 1,
+              contentHash: 'h',
+            ),
+            designator: id.toUpperCase(),
+            name: 'x',
+            placement: RailPlacement(
+              rackId: _rackId,
+              ruIndex: ru,
+              face: Face.front,
+            ),
+            meta: testMeta(),
+          );
+      return _build(
+        rack: rack,
+        role: SheetRole.rackElevationRear,
+        settings: _metric,
+        devices: [
+          for (var i = 0; i < front; i++) device('sw-$i', 'FRONT', i + 1),
+          for (var i = 0; i < ghosts; i++) device('ghost-$i', 'MISSING', 44),
+        ],
+        templates: {
+          'FRONT@1': TemplateSnapshot(
+            templateId: const TemplateId('FRONT'),
+            version: 1,
+            contentHash: 'h',
+            body: TemplateBody(
+              manufacturer: 'ACME',
+              model: 'MDL',
+              displayName: 'Widget',
+              // FRONT-ONLY: `rearU` keeps its default 0, which is what
+              // keeps these devices off the rear sheet (CR-036).
+              frontU: 1,
+              side: OccupancySide.front,
+            ),
+            capturedAt: DateTime.utc(2026),
+          ),
+        },
+      );
+    }
+
+    /// The load summary as printed: the right column's rows, top down.
+    List<OpText> summaryRows(ElevationSheet sheet) {
+      final drawing = SheetLayout.resolve(
+        geometry: const SheetGeometry(SheetSize.ansiBPortrait, zoned: true),
+        revisionRowCount: 1,
+      ).drawingArea;
+      final area = elevationAreaOf(drawing);
+      return _pageTexts(sheet)
+          .where(
+            (o) =>
+                o.style.anchor == TextAnchor.topRight &&
+                o.at.y >= drawing.top &&
+                o.at.y < area.top,
+          )
+          .toList()
+        ..sort((a, b) => a.at.y.compareTo(b.at.y));
+    }
+
+    test('A LINE TOO LONG BREAKS AFTER ITS DASH, both halves whole, on the '
+        'sixth row', () {
+      final sheet = rear(front: 40, ghosts: 12);
+      final rows = summaryRows(sheet);
+      expect(rows.map((o) => o.text), [
+        'RACK TOTAL  — (52 unknown)',
+        'CAPACITY  900.0 kg',
+        'DRAW  — (52 unknown)',
+        'HEAT  — (52 unknown)',
+        'NOT DRAWN HERE  52 OF 52 —',
+        '40 ON FRONT, 12 ONLY ON T6.30; 12 COUNTED AT TOP',
+      ]);
+      final area = elevationAreaOf(
+        SheetLayout.resolve(
+          geometry: const SheetGeometry(SheetSize.ansiBPortrait, zoned: true),
+          revisionRowCount: 1,
+        ).drawingArea,
+      );
+      expect(
+        rows.last.at.y + kElevationNotePt,
+        lessThanOrEqualTo(area.top),
+        reason: 'the wrapped row prints over the top of the elevation',
+      );
+    });
+
+    test('A LINE THAT FITS STAYS ONE ROW', () {
+      final rows = summaryRows(rear(front: 7, ghosts: 1));
+      expect(rows, hasLength(5));
+      expect(
+        rows.last.text,
+        'NOT DRAWN HERE  8 OF 8 — 7 ON FRONT, 1 ONLY ON T6.30; 1 COUNTED AT '
+        'TOP',
+      );
+    });
+  });
+
   group('the sheet says what it is and what it is not', () {
     test('the FRONT sheet states what the ratio applies to', () {
       expect(_texts(_build()), contains(kScaleAppliesNote));

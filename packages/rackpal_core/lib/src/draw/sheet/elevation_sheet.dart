@@ -487,11 +487,12 @@ ElevationSheet buildElevationSheet({
     if (labels.sheetNote case final note?) note,
   ];
   final summary = rackLoadSummaryLines(profile, settings.displayUnits, face);
+  // The summary is held to its own five LINES by `rackLoadSummaryLines`;
+  // `_band` asserts its ROWS, since a long one wraps onto a sixth.
   assert(
-    notes.length <= kElevationNoteLines &&
-        summary.length <= kElevationNoteLines,
-    'buildElevationSheet: ${notes.length} notes and ${summary.length} '
-    'summary lines, and the band holds $kElevationNoteLines',
+    notes.length <= kElevationNoteLines,
+    'buildElevationSheet: ${notes.length} notes, and the band holds '
+    '$kElevationNoteLines',
   );
   ops
     ..addAll(
@@ -711,6 +712,17 @@ List<DiagramOp> _band({
   // Half the band each, so a long note and a long summary line cannot
   // collide however wordy either becomes.
   final half = area.width / 2 - 8;
+  final rows = _wrapAfterDash(
+    right,
+    half,
+    style: rightStyle,
+    measurer: measurer,
+  );
+  assert(
+    rows.length <= kElevationNoteLines,
+    '_band: ${rows.length} summary rows, and the band holds '
+    '$kElevationNoteLines',
+  );
 
   for (var i = 0; i < left.length; i++) {
     final text = fitTextToWidth(
@@ -728,9 +740,9 @@ List<DiagramOp> _band({
       ),
     );
   }
-  for (var i = 0; i < right.length; i++) {
+  for (var i = 0; i < rows.length; i++) {
     final text = fitTextToWidth(
-      right[i],
+      rows[i],
       half,
       style: rightStyle,
       measurer: measurer,
@@ -745,6 +757,38 @@ List<DiagramOp> _band({
     );
   }
   return ops;
+}
+
+/// [lines] as rows of a column [width] wide, a line that does not fit
+/// broken after its em dash onto the next row (DR-241 §11.240.2).
+///
+/// THE NOT DRAWN HERE LINE IS THE ONE THIS IS FOR. It grows with its
+/// counts, and at three digits it measured 331.7 pt against what was then
+/// a 327 pt column, so `fitTextToWidth` cut it with an ellipsis: a count
+/// on the sheet an installer reads, lost to typography. Its dash already
+/// separates how many from where they are, so that is where it breaks.
+/// The summary is five lines at most and the band has six rows, so a
+/// wrapped line always fits. A line with no dash is left to be cut, as
+/// before. The other summary lines can carry a dash too, G4's for an
+/// unknown (`RACK TOTAL  — (52 unknown)`), which is why the test is width
+/// first: none of them comes near the column.
+List<String> _wrapAfterDash(
+  List<String> lines,
+  double width, {
+  required TextStyleSpec style,
+  required TextMeasurer measurer,
+}) {
+  const dash = ' — ';
+  return <String>[
+    for (final line in lines)
+      if (measurer.measureText(line, style).advanceWidth <= width ||
+          !line.contains(dash))
+        line
+      else ...[
+        line.substring(0, line.indexOf(dash) + dash.length - 1),
+        line.substring(line.indexOf(dash) + dash.length),
+      ],
+  ];
 }
 
 /// How tall the scale bar's ticks are.
