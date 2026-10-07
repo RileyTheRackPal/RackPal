@@ -1,6 +1,6 @@
 # Update Log
 
-## 2026-10-07 (hundred-and-twenty-fourth entry)
+## 2026-10-07 (hundred-and-twenty-fifth entry)
 
 * **Progress**: PR 209 merged at `b0c4ff56`; `#1020` closed. `#783` gained a second identity (ADO's server-made
   merge commits, 205 on `main`), recorded by count only. `#949` built in three chapters: `#1024` (`c04c05d5`),
@@ -10,6 +10,19 @@
   stop, and Enter leaving the grid at every bank), and that three of the four moves had no job.
 * **Note**: **A SORTED-ORDER CHECK CANNOT SEE A REPEAT.** Two Tab stops at one x pass `orderedEquals(sorted)`.
   Assert strictly increasing when the claim is "each press moves".
+* **Note**: **THE LOG IS A SHARED HEAD, LIKE A RULING ID.** This entry and PR 210's both claimed the hundred-and-
+  twenty-fourth and collided on merge; the one merged first keeps the number.
+
+## 2026-10-07 (hundred-and-twenty-fourth entry)
+
+* **Update**: [DR-089](/decisions/dr-089-the-wordmark-ships-as-outlines.md) and
+  [DR-090](/decisions/dr-090-hue-is-never-the-only-cue.md) caught up with DR-096, DR-117 and the built
+  palette, and both now link the three brand reference pages (Colour, Wordmark, Type), revised against the
+  code. The wordmark page absorbed the older "Mark at Size" page.
+* **Note**: **SHIPPED IN THE CODE IS NOT SHIPPED.** The settled lockup has no caller outside its own test,
+  and the app icon is still Flutter's logo. Every brand page said "ships" and none could see that.
+* **Note**: **A PROOF SHEET BROKE THE RULE IT ILLUSTRATED.** The 2026-08-27 palette page drew Notice as a
+  filled dot, the one shape DR-090 forbids. Nothing gates a picture, so it was redrawn from `status_marker.dart`.
 
 ## 2026-10-06 (hundred-and-twenty-third entry)
 

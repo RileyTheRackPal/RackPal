@@ -7,10 +7,10 @@ description: >-
   window with; four of five collide and two of those are fixed brand values, so
   the remedy is a rule rather than a repaint.
 tags: [ruling, palette, colour, accessibility, status, cr-078, pal-1, ac-054, dr-090, contrast]
-timestamp: 2026-08-25T00:00:00Z
+timestamp: 2026-10-07T00:00:00Z
 ruling_id: DR-090
 canon_section: "11.89"
-status: ruled
+status: built
 ---
 
 # DR-090 · Hue is never the only cue
@@ -96,7 +96,32 @@ being perfectly adequate **as a line**. One token, two jobs, so it splits, with
 than assumed: a 1 px lighter edge raises the **rendered** peak from 1.22 to 1.94:1, not
 to legibility, because at 13 px the highlight competes for the stem's own pixels.
 
-## Not yet shipped
+## Built
 
-The **colour** half is `#770` and unbuilt; until it lands the colour here describes no
-shipped pixel. The **type** half is built at `875db98` (`#771`).
+The **type** half is built at `875db98` (`#771`); the 28 synthesising sites were
+retargeted to `kConsoleEmphasis` (`w500`) at `#775`, under a gate that reads the weights
+`pubspec.yaml` declares per family. The **colour** half is built at `b2b12fb` (`#770`),
+in `rackpal_core/draw/console_palette.dart` beside `contrast.dart`, and
+`console_theme.dart` defines no colour of its own. `RackMono` is Space Mono at `71b9bd1`
+(`#773`). The rule got a construction rather than a gate: `StatusMarker` has no
+constructor that takes a colour without a shape, and Notice's circle is an **outline**
+because a filled one is the bare dot this ruling forbids.
+
+Since the ruling, `kConsoleScopeInstance` `#FFC24D` joined the palette (`#230`) as an ink
+and border only: a scope is not a severity, so it does not borrow Warning.
+
+**The reference page is a claude.ai artifact**, revised 2026-10-07 against the code:
+[Colour](https://claude.ai/artifact/JRjXir27Kh52L8NDaQUttf), with
+[Type](https://claude.ai/artifact/S4j8rvE8ujjuQwVgShBSTe) beside it. Its 2026-08-27
+version drew Notice **filled**, the one shape this ruling names as forbidden: a proof
+sheet for the rule broke the rule, and nothing gates a picture.
+
+## Found by the 2026-10-07 audit, not ruled
+
+- **Device accent swatch 5 is PAL-2's reserved selection yellow `#F0E442`.** PAL-2 bars it
+  from cables only, and §11.89.10 leaves accents to `#565`, so no ruling is broken. A
+  device body in the colour that means "selected" is a UI question for `#565`'s owner.
+- **The bundled Jost reports "Version 3.710; RackMate build: +11 glyphs"** in its name
+  table, a pre-DR-096 name inside a shipped file. The four codepoints §11.89.8 lists as
+  owed (`U+2192`, `U+2194`, `U+2032`, `U+2033`) are in that build now.
+- `text.dart` and `sheet_frame.dart` still say only Jost Regular is bundled.
