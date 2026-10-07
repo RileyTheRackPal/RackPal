@@ -194,6 +194,7 @@ const Map<LabelKey, String> kUndoLabels = <LabelKey, String>{
 
   // ── registries and import ───────────────────────────────────────────
   LabelKey.addMediaType: 'Add media type',
+  LabelKey.cloneSignalFamily: 'Clone signal family',
   LabelKey.editMediaType: 'Edit media type',
   LabelKey.mergeMediaTypes: 'Merge media types',
   LabelKey.setConnectorAliases: 'Set connector aliases',

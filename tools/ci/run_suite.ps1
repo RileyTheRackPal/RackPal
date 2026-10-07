@@ -1309,7 +1309,17 @@ $SuiteFloors = @{
     # domain agree with figures the Python's rules computed; a refused
     # option names its blocker; "none left" is reached and said; a
     # candidate is not blamed for violations it did not add.
-    'rackpal_core'   = 5670
+    # 5682 at `#825`/`#826`/`#828` (SFE-B, DR-122, DR-244): +12 in commands/
+    # clone_signal_family_test.dart. Seven for the clone (Vantage from
+    # Cresnet, the parent's connector by default, a shipped id never
+    # taken, a spelling slugged, undo and no replace, four refusals, the
+    # menu), four for refusing a collision by name (within, across,
+    # clone against clone, the same sentence every time), one byte-exact
+    # round trip. `#827` swapped refused_surfaces_test's name ban for a
+    # construction-site census, one for one.
+    # 5683 at `#825`: +1 in epoch_mask_test.dart, which refused the clone
+    # until its declared EpochMask was checked against what it changes.
+    'rackpal_core'   = 5683
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

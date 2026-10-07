@@ -265,6 +265,11 @@ enum LabelKey {
   // that it removed some drops.
   addMediaType,
 
+  // SFE-B1 (`#825`, DR-122). The one way a signal family is made: cloned
+  // from one that ships. Its own key so undo says a family left the
+  // project, which a person who cloned one by mistake needs to read.
+  cloneSignalFamily,
+
   // M4-P2 (`#247`, RJ-012). Editing a media type's LABEL, never its id:
   // the id is frozen at creation because it is written into every
   // `Link.media` and read by a human diffing two `.rppj` files, so a

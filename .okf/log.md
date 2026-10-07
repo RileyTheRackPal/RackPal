@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-10-07 (hundred-and-twenty-ninth entry)
+
+* **Progress**: SFE-B (`#819`) built: the clone command and its refusal (`#825`, `#826`, `#828`, `423c3d16`),
+  and `refused_surfaces_test`'s signal-family arm replaced (`#827`, `54c49e3a`).
+  [DR-244](/decisions/dr-244-a-clone-may-change-its-default-connector.md) ruled first (`8f0625ae`).
+  docs/12 §4.55.
+* **Note**: **AN ACCEPTED RECOMMENDATION IS STILL A HYPOTHESIS.** "A connector the parent accepts" was
+  approved and had no host. Reading the readers of the field before writing the ruling caught it, and found
+  that the ruling being amended was wrong about its own mechanism.
+* **Note**: **A BAN BY NAME SEES ONLY THE NAMES SOMEBODY THOUGHT OF.** The refused-surfaces test banned four
+  command names and the clone was a fifth. Count construction sites instead.
+
 ## 2026-10-07 (hundred-and-twenty-eighth entry)
 
 * **Progress**: SFE-A (`#818`) built in three chapters: PAL-1's arithmetic in `rackpal_core` (`#822`,

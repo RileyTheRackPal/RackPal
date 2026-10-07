@@ -94,6 +94,7 @@ export 'src/commands/atomic_connect.dart';
 export 'src/commands/bind_endpoint_command.dart';
 export 'src/commands/catalog_placement.dart';
 export 'src/commands/clock.dart';
+export 'src/commands/clone_signal_family.dart';
 export 'src/commands/command.dart';
 export 'src/commands/compaction.dart';
 export 'src/commands/connect_commands.dart';

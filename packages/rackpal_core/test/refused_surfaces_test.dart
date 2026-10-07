@@ -17,6 +17,22 @@
 //     Rules are Dart functions in a registry keyed by `ruleId`, and a UI
 //     for them would make the app an interpreter for user input.
 //
+// ── THE SIGNAL-FAMILY ARM WENT, AND WHY (SFE-B3, `#827`) ───────────────
+// DR-122 (§11.121) amended RJ-012: a signal family may be CLONED from one
+// that ships, and never authored from blank. §11.121.3 said this file
+// keeps its signal-family arm until the chapter that builds the editor
+// removes it, and that removing it is that chapter's visible act. This is
+// that act. The arm banned `Add`/`Create`/`Edit`/`RemoveSignalFamilyCommand`
+// by name, and it is worth recording that it would NOT have caught the
+// clone: `CloneSignalFamilyCommand` matches none of those names. A ban by
+// name sees only the names somebody thought of.
+//
+// So it is REPLACED rather than deleted, by the rule DR-122 keeps: a
+// family comes from the catalogue, from a file, or from a clone, and from
+// nowhere else. That is checked by CONSTRUCTION SITE, which no new name
+// can slip past. DR-244 (§11.243) is why the clone may change its
+// connector and nothing else that travels into a port.
+//
 // A ruling states the reason; this states the consequence, so a later
 // chapter cannot build one in good faith without a test going red first.
 // That is the same division the repository already uses for PAL-1 and the
@@ -84,32 +100,38 @@ void main() {
   });
 
   group('RJ-012: no general registry authoring UI', () {
-    test('nothing mints a command that creates a SIGNAL FAMILY', () {
-      // The shapes such a command would have to take. Named rather than
-      // pattern-matched, because a vague regex over "signal family" would
-      // fire on every read of one.
-      const banned = [
-        'AddSignalFamilyCommand',
-        'CreateSignalFamilyCommand',
-        'EditSignalFamilyCommand',
-        'RemoveSignalFamilyCommand',
-      ];
-      for (final package in ['rackpal_core', 'rackpal_ui', 'rackpal_export']) {
-        for (final file in _sources(package)) {
-          final text = file.readAsStringSync();
-          for (final name in banned) {
-            expect(
-              text.contains('class $name'),
-              isFalse,
-              reason:
-                  '$name in ${file.path}. RJ-012 rejects a '
-                  'signal-family editor: a hand-rolled family carries '
-                  'direction defaults, topology and rule applicability, '
-                  'and produces silently wrong validation.',
-            );
-          }
-        }
-      }
+    test('a SIGNAL FAMILY is made by the catalogue, a file or a clone, and '
+        'nothing else (DR-122)', () {
+      // Every place a `SignalFamilyDef` is CONSTRUCTED, against why it
+      // may be. A new site anywhere in the three packages fails here,
+      // whatever its class is called, which is what the name ban this
+      // replaced could not do.
+      const allowed = {
+        'registries.dart': 'the declaration itself',
+        'seed_registries.dart': 'the shipped catalogue',
+        'json_codec.dart': 'reading a family a file already holds',
+        'clone_signal_family.dart':
+            'the clone, which takes domain, direction and topology from '
+            'a parent (DR-122 §11.121.2, DR-244 §11.243.3)',
+      };
+      final sites = <String>{
+        for (final file in _allSources())
+          if (file.readAsStringSync().contains('SignalFamilyDef('))
+            file.uri.pathSegments.last,
+      };
+      expect(
+        sites.difference(allowed.keys.toSet()),
+        isEmpty,
+        reason:
+            'a signal family is constructed somewhere new. DR-122 permits '
+            'a CLONE of a shipped family and nothing authored from blank: '
+            'a family whose direction or topology a person typed is copied '
+            'into every port made with it and judged confidently and '
+            'wrongly (DR-244 §11.243.1).',
+      );
+      // Every allowed site still exists, so this is a census of a real
+      // set and not a pass over a list that drifted from the tree.
+      expect(sites, allowed.keys.toSet());
     });
 
     test('nor one that creates a CONNECTOR TYPE', () {
