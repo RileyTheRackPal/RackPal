@@ -9,7 +9,7 @@ tags: [ruling, sheets, notes, equipment-list, rear-elevation, m6, dr-242, dr-222
 timestamp: 2026-10-07T00:00:00Z
 ruling_id: DR-242
 canon_section: "11.241"
-status: ruled
+status: built
 ---
 
 Settled by the user on 2026-10-07 for `#1030`, found while demonstrating M6's first exit clause
