@@ -1304,7 +1304,12 @@ $SuiteFloors = @{
     # dart (a supplied luminance is the one judged, which is how
     # legend_cvd_check asks); two in draw/contrast_test.dart (contrastRatio
     # against the old Python's printed figures, and symmetric).
-    'rackpal_core'   = 5665
+    # 5670 at `#824` (SFE-A3, DR-243 §11.242): +5 in draw/pal1_test.dart. The
+    # menu is one dash per class at the shipped weights; free counts per
+    # domain agree with figures the Python's rules computed; a refused
+    # option names its blocker; "none left" is reached and said; a
+    # candidate is not blamed for violations it did not add.
+    'rackpal_core'   = 5670
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.

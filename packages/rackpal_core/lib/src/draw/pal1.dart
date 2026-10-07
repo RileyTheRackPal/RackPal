@@ -344,3 +344,194 @@ List<Pal1Violation> pal1Violations(List<Pal1Entry> entries) {
   }
   return out;
 }
+
+// ═════════════════════════════════════════════════════════════════════
+// HEADROOM: WHAT AN EDITOR NEEDS AND THE GATE NEVER DID (SFE-A3)
+// ═════════════════════════════════════════════════════════════════════
+// The gate answers yes or no about a palette that already exists. A
+// person cloning a family has to be told what is still available BEFORE
+// they choose, and why each refused option is refused. So the question
+// turns around: given everything already drawn, which dash and weight
+// would a NEW family in this domain be allowed to take?
+
+/// The violations [candidate] would ADD to [palette], and no others.
+///
+/// A violation already present among [palette] is not the candidate's
+/// fault and is not reported. An entry carrying the candidate's own id
+/// is skipped, so a family can be re-checked against the palette it is
+/// already part of. Each violation names the family it collides with,
+/// which is what SFE-B2's refusal prints.
+List<Pal1Violation> pal1ViolationsOf(
+  Pal1Entry candidate,
+  Iterable<Pal1Entry> palette,
+) {
+  final out = <Pal1Violation>[];
+  final others = [
+    for (final e in palette)
+      if (e.familyId != candidate.familyId) e,
+  ];
+  for (final e in others) {
+    if (e.domainId == candidate.domainId) continue;
+    if (pal1Pair(e, candidate).collides) {
+      out.add(Pal1CrossDomainCollision(e, candidate));
+    }
+  }
+  for (final e in others) {
+    if (e.domainId == candidate.domainId &&
+        e.weightPermille == candidate.weightPermille &&
+        _dashEquality.equals(e.dashPermille, candidate.dashPermille)) {
+      out.add(Pal1WithinDomainDuplicate(e, candidate));
+    }
+  }
+  final p = candidate.periodPermille;
+  if (p != null && p < kPal1PeriodFloorPermille) {
+    out.add(Pal1PeriodBelowFloor(candidate));
+  }
+  return out;
+}
+
+/// The dashes and weights a clone may choose from (DR-243 §11.242.1).
+@immutable
+final class Pal1Vocabulary {
+  Pal1Vocabulary({
+    required List<List<int>> dashes,
+    required List<int> weights,
+  }) : dashes = List.unmodifiable([
+         for (final d in dashes) List<int>.unmodifiable(d),
+       ]),
+       weights = List.unmodifiable(weights);
+
+  /// One pattern per dash class, in permille-points; the empty list is
+  /// solid.
+  final List<List<int>> dashes;
+
+  /// Permille of the base signal weight, ascending.
+  final List<int> weights;
+}
+
+/// DR-243's menu, derived from [palette]: one dash per class the palette
+/// draws, crossed with every weight it uses.
+///
+/// DERIVED, NOT LISTED, so it cannot drift from the palette
+/// `registry_parity.py` holds to `pal1_check.py`. Pass the SHIPPED
+/// palette (`pal1EntriesOf(buildSeedRegistries())`) so a document's own
+/// clones cannot reshape the menu.
+///
+/// A class stands for itself through the pattern the most families use,
+/// ties to the smallest permille list: the one an installer is likeliest
+/// to have already seen in this product. Classes come solid first, then
+/// by mark count, then by name, so the menu reads simplest first.
+Pal1Vocabulary pal1ClassVocabulary(Iterable<Pal1Entry> palette) {
+  final uses = <String, (List<int>, int)>{};
+  for (final e in palette) {
+    final key = e.dashPermille.join(',');
+    final prior = uses[key];
+    uses[key] = (e.dashPermille, (prior?.$2 ?? 0) + 1);
+  }
+  final best = <Pal1DashClass, (List<int>, int)>{};
+  for (final (dash, n) in uses.values) {
+    final c = Pal1DashClass.of(dash);
+    final held = best[c];
+    if (held == null ||
+        n > held.$2 ||
+        (n == held.$2 && _compareInts(dash, held.$1) < 0)) {
+      best[c] = (dash, n);
+    }
+  }
+  final classes = best.keys.toList()
+    ..sort((a, b) {
+      final byLength = a.marks.length.compareTo(b.marks.length);
+      return byLength != 0 ? byLength : '$a'.compareTo('$b');
+    });
+  return Pal1Vocabulary(
+    dashes: [for (final c in classes) best[c]!.$1],
+    weights: {for (final e in palette) e.weightPermille}.toList()..sort(),
+  );
+}
+
+int _compareInts(List<int> a, List<int> b) {
+  for (var i = 0; i < a.length && i < b.length; i++) {
+    final c = a[i].compareTo(b[i]);
+    if (c != 0) return c;
+  }
+  return a.length.compareTo(b.length);
+}
+
+/// One dash and weight a clone could take, and what refuses it.
+@immutable
+final class Pal1Option {
+  Pal1Option({
+    required List<int> dashPermille,
+    required this.weightPermille,
+    required List<Pal1Violation> blockers,
+  }) : dashPermille = List.unmodifiable(dashPermille),
+       blockers = List.unmodifiable(blockers);
+
+  final List<int> dashPermille;
+  final int weightPermille;
+
+  /// Every violation this option would add. Empty means free.
+  final List<Pal1Violation> blockers;
+
+  bool get isFree => blockers.isEmpty;
+
+  Pal1DashClass get dashClass => Pal1DashClass.of(dashPermille);
+}
+
+/// What remains for a new family in one domain.
+@immutable
+final class Pal1Headroom {
+  Pal1Headroom({required this.domainId, required List<Pal1Option> options})
+    : options = List.unmodifiable(options);
+
+  final SignalDomainId domainId;
+
+  /// Every option in the vocabulary, free or not, in vocabulary order:
+  /// dash-major, then weight. An editor draws the refused ones too, with
+  /// their reason, rather than hiding them.
+  final List<Pal1Option> options;
+
+  Iterable<Pal1Option> get free => options.where((o) => o.isFree);
+
+  /// NONE LEFT, as a state of its own. An empty [free] reached by
+  /// iterating would read as a bug in the caller; this reads as an answer.
+  bool get isExhausted => !options.any((o) => o.isFree);
+}
+
+/// The headroom a new family in [domain] has against [palette], over
+/// [vocabulary] (SFE-A3).
+///
+/// [palette] is everything already drawn: the shipped families AND any
+/// clones the document holds, since a clone collides with a clone as
+/// surely as with a shipped family.
+Pal1Headroom pal1Headroom({
+  required Iterable<Pal1Entry> palette,
+  required SignalDomainDef domain,
+  required Pal1Vocabulary vocabulary,
+}) {
+  final drawn = palette.toList();
+  // An id no registry key can take: `SignalFamilyId`s are dotted
+  // lower-case, so this cannot shadow a real family and be skipped.
+  const probe = SignalFamilyId(' headroom candidate ');
+  return Pal1Headroom(
+    domainId: domain.id,
+    options: [
+      for (final dash in vocabulary.dashes)
+        for (final weight in vocabulary.weights)
+          Pal1Option(
+            dashPermille: dash,
+            weightPermille: weight,
+            blockers: pal1ViolationsOf(
+              Pal1Entry(
+                familyId: probe,
+                domainId: domain.id,
+                hue: domain.color,
+                dashPermille: dash,
+                weightPermille: weight,
+              ),
+              drawn,
+            ),
+          ),
+    ],
+  );
+}

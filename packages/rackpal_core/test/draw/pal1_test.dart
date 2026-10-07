@@ -22,6 +22,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:collection/collection.dart';
 import 'package:rackpal_core/rackpal_core.dart';
 import 'package:test/test.dart';
 
@@ -254,5 +255,156 @@ void main() {
       ).collides,
       isTrue,
     );
+  });
+
+  group('headroom, what a clone can still take (SFE-A3, DR-243)', () {
+    final shipped = pal1EntriesOf(buildSeedRegistries());
+    final domains = buildSeedRegistries().signalDomains;
+    final menu = pal1ClassVocabulary(shipped);
+
+    test('the menu is one dash per class at every shipped weight', () {
+      expect(menu.weights, [750, 1000, 1250, 1500, 2000]);
+      final classes = [for (final d in menu.dashes) Pal1DashClass.of(d)];
+      expect(classes.toSet(), hasLength(classes.length));
+      expect(classes.toSet(), {for (final e in shipped) e.dashClass});
+      expect(classes.first, Pal1DashClass.solid);
+      // A tie, broken as DR-243 §11.242.1 says: `4,3` and `6,3` each draw
+      // three shipped families, and the smaller permille list wins.
+      // Joined, because `contains` compares Lists by identity.
+      final spelled = [for (final d in menu.dashes) d.join(',')];
+      expect(spelled, contains('4000,3000'));
+      expect(spelled, isNot(contains('6000,3000')));
+    });
+
+    test('free counts agree with the Python rules, domain by domain', () {
+      // Computed by tools/pal1_check.py's own dash_class, luminance and
+      // ratio at a4926a2d, the last commit that had them, over this same
+      // menu. Not derived from pal1.dart, so this is a second
+      // differential, and the figures DR-243 declined to copy into canon.
+      const expected = {
+        'video.digital': 43,
+        'video.analog': 44,
+        'audio.analog': 42,
+        'audio.digital': 31,
+        'net': 29,
+        'ctl': 27,
+        'pwr': 64,
+        'str': 17,
+      };
+      expect({
+        for (final d in domains.values)
+          d.id.v: pal1Headroom(
+            palette: shipped,
+            domain: d,
+            vocabulary: menu,
+          ).free.length,
+      }, expected);
+    });
+
+    test('a refused option names what it collides with', () {
+      // §14.3's TOSLINK fix in reverse: a dot at 1.00x in digital audio
+      // sits 0.0715 from the IR families at 0.75x, a ratio of 1.33.
+      final audio = pal1Headroom(
+        palette: shipped,
+        domain: domains[const SignalDomainId('audio.digital')]!,
+        vocabulary: menu,
+      );
+      final dot = audio.options.singleWhere(
+        (o) =>
+            o.dashClass == Pal1DashClass.of(const [1500, 3000]) &&
+            o.weightPermille == 1000,
+      );
+      expect(dot.isFree, isFalse);
+      expect(
+        {for (final v in dot.blockers) ...v.familyIds.map((id) => id.v)},
+        containsAll(['ctl.ir_emitter', 'ctl.ir_direct']),
+      );
+      // And inside the domain: `4,3` at 0.75x is ctl.trigger12v already.
+      final ctl = pal1Headroom(
+        palette: shipped,
+        domain: domains[const SignalDomainId('ctl')]!,
+        vocabulary: menu,
+      );
+      final taken = ctl.options.singleWhere(
+        (o) =>
+            o.weightPermille == 750 &&
+            const ListEquality<int>().equals(o.dashPermille, [4000, 3000]),
+      );
+      expect(
+        taken.blockers.whereType<Pal1WithinDomainDuplicate>().map(
+          (v) => v.a.familyId.v,
+        ),
+        ['ctl.trigger12v'],
+      );
+    });
+
+    test('"none left" is a state the query reaches and says', () {
+      // The tightest domain, filled one clone at a time. Each clone uses
+      // up exactly one option in its own domain, which is why exhaustion
+      // takes repetition rather than being the everyday case.
+      final str = domains[const SignalDomainId('str')]!;
+      final palette = [...shipped];
+      var room = pal1Headroom(palette: palette, domain: str, vocabulary: menu);
+      final start = room.free.length;
+      var clones = 0;
+      while (!room.isExhausted) {
+        final pick = room.free.first;
+        palette.add(
+          Pal1Entry(
+            familyId: SignalFamilyId('str.clone_$clones'),
+            domainId: str.id,
+            hue: str.color,
+            dashPermille: pick.dashPermille,
+            weightPermille: pick.weightPermille,
+          ),
+        );
+        clones++;
+        final next = pal1Headroom(
+          palette: palette,
+          domain: str,
+          vocabulary: menu,
+        );
+        expect(next.free.length, room.free.length - 1);
+        room = next;
+      }
+      expect(clones, start);
+      expect(room.free, isEmpty);
+      expect(room.options, hasLength(menu.dashes.length * 5));
+    });
+
+    test('a candidate is not blamed for violations it did not add', () {
+      // Re-checking each shipped family against the palette it is part of
+      // finds nothing: its own entry is skipped, so it does not collide
+      // with itself.
+      for (final e in shipped) {
+        expect(pal1ViolationsOf(e, shipped), isEmpty, reason: e.familyId.v);
+      }
+      // And a palette that already collides elsewhere does not make an
+      // unrelated candidate look refused.
+      final broken = [
+        ...shipped,
+        Pal1Entry(
+          familyId: const SignalFamilyId('video.dup'),
+          domainId: const SignalDomainId('video.digital'),
+          hue: Rgb.fromHex('#0072B2'),
+          dashPermille: const [],
+          weightPermille: 1000,
+        ),
+      ];
+      expect(pal1Violations(broken), isNotEmpty);
+      final pwr = domains[const SignalDomainId('pwr')]!;
+      expect(
+        pal1Headroom(
+          palette: broken,
+          domain: pwr,
+          vocabulary: menu,
+        ).free.length,
+        pal1Headroom(
+          palette: shipped,
+          domain: pwr,
+          vocabulary: menu,
+        ).free.length,
+      );
+    });
   });
 }
