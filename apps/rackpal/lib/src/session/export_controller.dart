@@ -80,14 +80,15 @@ import 'package:rackpal_ui/rackpal_ui.dart'
 /// test supplies bytes directly.
 typedef ExportFontLoader = Future<Map<FontRef, Uint8List>> Function();
 
-/// The one bundled face, as `rackpal_export` names it.
+/// The one face the export embeds, as `rackpal_export` names it.
 ///
-/// SCOPE NOTE: only Jost Regular is bundled (docs/08 §10.1's full font
-/// table is a later stage). It is declared TWICE in `pubspec.yaml` —
-/// under `fonts:` for Flutter's text engine and under `assets:` so it is
-/// loadable as raw bytes here — which is §10.2's "two-declaration trap",
-/// and dropping either side makes the two backends measure different
-/// fonts.
+/// SCOPE NOTE: the app bundles four TTFs, and the PDF takes exactly one of
+/// them, Jost Regular. Medium and `RackMono` serve Flutter widgets only,
+/// and docs/08 §10.1's full font table is a later stage. This one is
+/// declared TWICE in `pubspec.yaml`, under `fonts:` for Flutter's text
+/// engine and under `assets:` so it is loadable as raw bytes here, which is
+/// §10.2's "two-declaration trap": dropping either side makes the two
+/// backends measure different fonts.
 const FontRef kExportFont = FontRef('Jost');
 
 /// The asset the [kExportFont] bytes come from.

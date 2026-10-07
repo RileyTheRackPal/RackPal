@@ -160,16 +160,20 @@ flutter:
   # verified to carry identical outlines and advances for the shared
   # codepoints -- so the pair cannot disagree about metrics the way two
   # vendors' builds would. Medium exists because 28 sites in `rackpal_ui`
-  # and the app ask for w600/w700 against what was a single Regular, and
+  # and the app asked for w600/w700 against what was a single Regular, and
   # Flutter answers that by SYNTHESISING the weight. A geometric face
   # smears under synthesis: the counters close before the stems thicken.
-  # Until those sites are retargeted to w500 (#770) they still synthesise,
-  # but now from 500 rather than from 400.
+  # All 28 were retargeted to `kConsoleEmphasis` (w500) at #775, and a gate
+  # now refuses any weight request this block does not declare.
   #
-  # SCOPE NOTE: SemiBold, Condensed, Mono and Noto Sans Symbols
+  # BOTH JOST FILES ARE A MODIFIED BUILD: `tools/build_jost_glyphs.py` adds
+  # eleven glyphs from the face's own contours (#772), including the four
+  # §10.2 needs (U+2192, U+2194, U+2032, U+2033), and
+  # `tools/glyph_coverage_check.py` reads the binary to hold them there.
+  #
+  # SCOPE NOTE: SemiBold, Condensed and Noto Sans Symbols 2
   # (docs/08-pdf-export.md §10.1's full font table) are still a later
-  # stage's job, as are the four codepoints §10.2 needs and this build
-  # lacks (U+2192, U+2194, U+2032, U+2033).
+  # stage's job. The mono face is RackMono, below.
   # RackMono is Space Mono (Colophon Foundry, SIL OFL 1.1, no Reserved Font
   # Name). The family is named for its ROLE, not its face, because docs/08
   # §10.1 names it that on four schedule columns and a role name lets the face
