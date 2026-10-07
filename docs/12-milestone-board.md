@@ -2322,6 +2322,36 @@ before the command is built.
 
 No version move: the DR-122 epic is not the current one.
 
+### 4.55 SFE-B: a family is cloned, and the ruling it was built on was wrong about how · 2026-10-07 · `#819`, `#825`, `#826`, `#827`, `#828` · DR-122, `DR-244`, DR-243 · no version move
+
+**The ruling came first, and reading the code first is what changed it.** DR-122 said a clone inherits its
+connector, and its own `ctl.vantage` example changes it. A recommendation to allow *"a connector the parent
+already accepts"* was accepted, and then withdrawn before anything was built: **no family lists connectors**.
+Reading every reader of `defaultConnector` found more. **No validation rule reads a family at all**: they
+read the port, and the builder copies a family's defaults into each port it makes. So a wrong direction or
+topology does reach validation, through the copy, and a connector does not, because CON-001 judges a real
+catalog connector against the catalog's own mating table. DR-244 (`8f0625ae`) locks the first two and frees
+the third. `acceptedFamilies`, which SFE-B1's brief listed as inherited, is a port field.
+
+**B1, B2, B4 (`423c3d16`).** `buildCloneSignalFamily` keeps domain, direction, topology and glyph from the
+parent and takes a name, a tag, a DR-243 menu option and optionally any registry connector. The id is the
+spelling under the parent's prefix through `mediaSlugFor`: Vantage from Cresnet is `ctl.vantage_2`,
+because `ctl.vantage` ships. Ids and the PAL-1 palette are checked against the document **and** the seed,
+since a file older than a shipped family does not carry it. A collision is refused in a sentence naming
+every family involved; skipping the check turns four cases red. A document holding a clone round-trips
+byte-exact, with the clone's fields asserted present.
+
+**B3 (`54c49e3a`).** `refused_surfaces_test` banned four command names, and **the clone matched none of them**:
+B1's commit passed it untouched. Its signal-family arm is replaced by a census of every source that
+constructs a `SignalFamilyDef`, which must be exactly the declaration, the seed, the codec and the clone.
+A planted site turned it red.
+
+**What is left is SFE-C**, the surface: the dialog (`#829`, which retires the clone's
+`commands_have_callers` exemption), the dash and weight control over `pal1Headroom` (`#830`), provenance in
+the picker (`#831`), and the shelf copy (`#832`).
+
+No version move: the DR-122 epic is not the current one.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them
