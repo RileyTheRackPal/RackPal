@@ -24234,6 +24234,40 @@ Whether the export summary mentions the bar.
 
 **Scope.** No scope moves: m21's own minimum, given the reader it was always owed.
 
+### 11.240 DR-241 · The elevation sits 8 pt inside its frame, and a summary line too long for its column wraps
+
+**Settled by the user on 2026-10-06, for `#1020`.** Rendering `T2.02` through pdfium for DR-240 showed every
+note's first letter fused to the drawing-area frame, the load summary's last glyph touching the right edge,
+and the top line touching the frame above. The graphic scale bar was worse: its zero tick is drawn on the
+frame line itself, so the start of the one-foot bar a person checks with a tape measure disappears into the
+border. Every element of the elevation was anchored at exactly the frame's edge. The legend had the same
+defect and fixed it with an 8 pt inset; cover, exceptions, network and pinout use the same 8 pt.
+
+Measuring the fix found a second, older defect. The `NOT DRAWN HERE` line grows with its counts and is
+**already cut** with an ellipsis at three digits (331.7 pt against the 327 pt column), and an inset narrows
+each column to 319 pt, so lines between those widths that print whole today would start being cut.
+
+**11.240.1 RULED: 8 PT ALL ROUND, THE HOUSE STANDARD.** The elevation's whole body, note band, rack
+drawing and scale band, sits 8 pt inside the drawing area on every side. **Measured before it was offered**,
+over empty racks of 1 U to 60 U and every starter rack through the real Jost metrics: **one rack height
+changes ratio**, an empty 55 U from 1:8 to 1:10; no starter moves and no overrun appears. A text-only inset
+with 4 pt at the top and no ratio cost was offered beside it.
+
+**11.240.2 RULED: A SUMMARY LINE TOO LONG FOR ITS COLUMN WRAPS AFTER ITS DASH**, onto the next row, instead
+of being cut. The load summary is five lines at most and DR-240 gave the band six rows, so a wrapped line
+always fits. **This amends §11.239.2's "the load summary keeps its own five-line budget"** (§12.52): the summary
+still holds at most five lines, and may print them on six rows. Narrowing the gutter between the columns
+(323 pt each, three-digit counts still cut) and filing the truncation separately were offered beside it.
+
+**The break is after the em dash, the implementer's reading, stated**: the only summary line long enough to
+wrap is the omission line, and its dash already separates the count from where the devices are. A line with
+no dash that does not fit is still cut with an ellipsis, as today.
+
+**What this does not rule.** The note column does not wrap: its six rows are all spoken for, and its widest
+line measures 301.9 pt against 319.
+
+**Scope.** No scope moves: a layout defect and a truncation, fixed on the sheet that already carries them.
+
 ---
 
 ## 12. Superseded rulings
@@ -24994,6 +25028,12 @@ close and a reopen.
 | Ruling | What it said | What now governs |
 |---|---|---|
 | **AC-053**, its deferral, and roadmap §2.2's row | *"Hand-authoring an arbitrary conductor map defers to v1.1"*; the row adds *"`atomicConnect` covers component video, stereo pairs, 16/4"* | **Adding a further set to an existing cable, each set to its own device, is v1** (§11.235.1, §11.235.2). Hand-mapping individual conductors stays v1.1. The row's claim is narrowed: `atomicConnect` covers a 16/4 between two devices, not one tapped and continued. |
+
+### 12.52 Amended by DR-241 (the elevation sits inside its frame)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-240 §11.239.2**, its last sentence | *"The load summary keeps its own five-line budget; only the note column gains the row."* | **The summary still holds at most five lines, and a line too long for its column wraps after its dash onto the sixth row** (§11.240.2). The note column's six rows are unchanged. |
 
 ## 13. Resolved §10 questions
 

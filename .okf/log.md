@@ -1,5 +1,14 @@
 # Update Log
 
+## 2026-10-06 (hundred-and-twenty-second entry)
+
+* **Progress**: PR 208 merged at `ba27758c`; `#1016` closed. `#1020` taken, decomposed into `#1021` to `#1023`;
+  branch `band-inset-1020`.
+* **Creation**: [DR-241](/decisions/dr-241-elevation-inside-its-frame.md), amending DR-240 §11.239.2.
+* **Note**: **PRICING A COSMETIC FIX FOUND A FACTUAL ONE.** Measuring how much an 8 pt inset narrows each
+  column showed the `NOT DRAWN HERE` line was already being cut at three-digit counts. A frame fix that clipped
+  a count would have traded a blemish for a wrong number on the sheet an installer reads.
+
 ## 2026-10-06 (hundred-and-twenty-first entry)
 
 * **Progress**: `#1016` built in two chapters, `#1017` (`78239478`) and `#1018` (`5fa04853`); DR-240 marked
