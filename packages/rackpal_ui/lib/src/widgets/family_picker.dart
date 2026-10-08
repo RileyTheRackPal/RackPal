@@ -26,10 +26,13 @@ import 'package:rackpal_core/rackpal_core.dart';
 /// families, and a refusal that printed them would be a wall a person
 /// scrolls past. The sentence a person needs is not "here are the
 /// options", it is "you cannot invent one here", which is DR-025
-/// §11.24.3 and RJ-012 in the one place a user meets them.
+/// §11.24.3 and RJ-012 in the one place a user meets them. Since DR-122
+/// it also says where a family CAN be made, because "you cannot" with no
+/// "but you can, there" leaves a person who needs Vantage stuck.
 String familyFilterEmpty(String query) =>
-    'No signal family matches "$query". Families come from the catalog '
-    'and cannot be created here.';
+    'No signal family matches "$query". Families come from the catalog, '
+    'or are cloned from one in Project settings, and cannot be created '
+    'here.';
 
 /// SIZED TO THE LONGEST LABEL RATHER THAN TO THE CELL, which is the whole
 /// reason this is not a `DropdownButton`. `AUD·Speaker, constant-voltage
@@ -190,6 +193,7 @@ class FamilyPickerPanel extends StatefulWidget {
 
 class _FamilyPickerPanelState extends State<FamilyPickerPanel> {
   final TextEditingController _filter = TextEditingController();
+  bool _clonesOnly = false;
 
   /// ITS OWN CONTROLLER, NOT THE PRIMARY ONE. `MenuAnchor` wraps its
   /// children in a `Scrollbar` bound to `PrimaryScrollController`, and a
@@ -215,9 +219,20 @@ class _FamilyPickerPanelState extends State<FamilyPickerPanel> {
     // searched only the printed label would fail on `hbt`, which is the
     // token `@signal=` already accepts, and the product would then have
     // two vocabularies for one fact.
+    // PROVENANCE IS A FILTER AS WELL AS A CHIP (SFE-C3), and the toggle
+    // only appears when there is something to narrow to: on a project with
+    // no clones it would be a control that does nothing.
+    final hasClones = widget.groups.any(
+      (g) => g.options.any((o) => o.cloneOf != null),
+    );
+    final clonesOnly = hasClones && _clonesOnly;
     final kept = [
       for (final group in widget.groups)
-        if (group.options.where((o) => o.matches(query)).toList()
+        if (group.options
+                .where(
+                  (o) => o.matches(query) && (!clonesOnly || o.cloneOf != null),
+                )
+                .toList()
             case final options when options.isNotEmpty)
           (group: group, options: options),
     ];
@@ -243,6 +258,20 @@ class _FamilyPickerPanelState extends State<FamilyPickerPanel> {
               onChanged: (_) => setState(() {}),
             ),
           ),
+          if (hasClones)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: FilterChip(
+                  key: kClonesOnlyKey,
+                  label: const Text('Clones only'),
+                  visualDensity: VisualDensity.compact,
+                  selected: _clonesOnly,
+                  onSelected: (v) => setState(() => _clonesOnly = v),
+                ),
+              ),
+            ),
           if (kept.isEmpty)
             Padding(
               padding: const EdgeInsets.fromLTRB(12, 4, 12, 12),
@@ -305,6 +334,8 @@ class _FamilyPickerPanelState extends State<FamilyPickerPanel> {
                                     style: theme.textTheme.bodySmall,
                                   ),
                                 ),
+                                if (option.cloneOf case final parent?)
+                                  _CloneChip(parent: parent),
                               ],
                             ),
                           ),
@@ -316,6 +347,36 @@ class _FamilyPickerPanelState extends State<FamilyPickerPanel> {
             ),
         ],
       ),
+    );
+  }
+}
+
+/// The "Clones only" toggle, so a test can find THAT chip.
+const Key kClonesOnlyKey = Key('family-picker-clones-only');
+
+/// A cloned family's provenance at the point of use (SFE-C3, DR-122).
+///
+/// It names the PARENT rather than saying "custom", because the user
+/// chose that (2026-10-07) and because the parent is what a person needs
+/// to reason about the direction and topology the clone inherited. The
+/// words come from core (`SignalFamilyCellOption.cloneOf`), so every
+/// surface listing families says it the same way.
+class _CloneChip extends StatelessWidget {
+  const _CloneChip({required this.parent});
+
+  final String parent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(left: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        border: Border.all(color: theme.colorScheme.outline),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text('clone of $parent', style: theme.textTheme.labelSmall),
     );
   }
 }

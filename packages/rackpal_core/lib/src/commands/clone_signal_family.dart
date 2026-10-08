@@ -145,6 +145,13 @@ CloneSignalFamilyResult buildCloneSignalFamily(
       'There is no signal family ${parent.v} to clone.',
     );
   }
+  if (from.clonedFrom case final grand?) {
+    final name = families[grand]?.displayName ?? grand.v;
+    return CloneSignalFamilyRefused(
+      '${from.displayName} is itself a clone. Clone the family it came '
+      'from, $name, instead.',
+    );
+  }
   final domain = _domains(doc)[from.domain];
   if (domain == null) {
     return CloneSignalFamilyRefused(
@@ -170,7 +177,22 @@ CloneSignalFamilyResult buildCloneSignalFamily(
     );
   }
 
-  final menu = pal1ClassVocabulary(pal1EntriesOf(buildSeedRegistries()));
+  // A SECOND FAMILY WITH THE SAME NAME IN ONE DOMAIN IS REFUSED, because
+  // the family picker shows and resolves a family by its printed label
+  // (`signalFamilyCellLabel`: domain tag and name). A clone named
+  // `Cresnet` in Control would print exactly as the real one, and the
+  // picker could not tell a person which of the two they were choosing.
+  for (final f in families.values) {
+    if (f.domain == from.domain &&
+        f.displayName.trim().toLowerCase() == name.toLowerCase()) {
+      return CloneSignalFamilyRefused(
+        '${domain.displayName} already has a family called '
+        '${f.displayName} (${f.id.v}). A new one needs its own name.',
+      );
+    }
+  }
+
+  final menu = cloneMenu();
   final onMenu =
       menu.weights.contains(weightPermille) &&
       menu.dashes.any((d) => d.join(',') == dashPermille.join(','));
@@ -181,12 +203,7 @@ CloneSignalFamilyResult buildCloneSignalFamily(
   }
 
   final id = signalFamilyIdFor(doc, parent, name);
-  final domains = _domains(doc);
-  // Through `pal1EntriesOf`, which sorts by id, so the refusal names the
-  // same families in the same order every time.
-  final palette = pal1EntriesOf(
-    Registries(signalDomains: domains, signalFamilies: families),
-  );
+  final palette = _palette(doc);
   final collisions = pal1ViolationsOf(
     Pal1Entry(
       familyId: id,
@@ -199,7 +216,7 @@ CloneSignalFamilyResult buildCloneSignalFamily(
   );
   if (collisions.isNotEmpty) {
     return CloneSignalFamilyRefused(
-      _collisionSentence(collisions, families, domains),
+      cloneCollisionSentence(doc, collisions),
       collisions: collisions,
     );
   }
@@ -220,12 +237,104 @@ CloneSignalFamilyResult buildCloneSignalFamily(
         dashOverride: dashPermille,
         lineWeightPermilleOverride: weightPermille,
         glyphOverride: from.glyphOverride,
+        clonedFrom: from.id,
       ),
     ),
   );
 }
 
-/// One sentence naming every family the choice collides with.
+// ═════════════════════════════════════════════════════════════════════
+// WHAT THE CLONE DIALOG READS, SO IT AND THE COMMAND CANNOT DISAGREE
+// ═════════════════════════════════════════════════════════════════════
+// The dialog (SFE-C1/C2) draws every option with its verdict BEFORE the
+// person chooses, and the builder above refuses AFTER. If each computed
+// its own menu, palette or sentence, a swatch could read free and then be
+// refused, or read taken for a reason the refusal never gives. So the
+// four things the dialog needs live here, beside the builder that uses
+// the same ones.
+
+/// Everything a clone is judged against: the document's families and any
+/// shipped family it lacks, through `pal1EntriesOf`, which sorts by id so
+/// a refusal names the same families in the same order every time.
+List<Pal1Entry> _palette(RackDocument doc) => pal1EntriesOf(
+  Registries(signalDomains: _domains(doc), signalFamilies: _families(doc)),
+);
+
+/// DR-243's menu: one dash per class at the shipped weights, from the
+/// SHIPPED palette, so a document's own clones cannot reshape it.
+Pal1Vocabulary cloneMenu() =>
+    pal1ClassVocabulary(pal1EntriesOf(buildSeedRegistries()));
+
+/// What a new family in [domain] can still take, every option with its
+/// blockers, or null when [doc] has no such domain.
+///
+/// [changing] is a clone choosing a NEW line (SFE-C7): it is judged as
+/// itself, so its current line does not block it.
+Pal1Headroom? cloneHeadroom(
+  RackDocument doc,
+  SignalDomainId domain, {
+  SignalFamilyId? changing,
+}) {
+  final d = _domains(doc)[domain];
+  if (d == null) return null;
+  return pal1Headroom(
+    palette: _palette(doc),
+    domain: d,
+    vocabulary: cloneMenu(),
+    candidate: changing,
+  );
+}
+
+/// The families a person may clone FROM: the shipped ones, never a clone.
+///
+/// DR-122 §11.121.2 says a family is *"derived from a shipped family"*. A
+/// clone of a clone would inherit the same locked fields, so it is not
+/// dangerous; it is refused because the ruling says shipped, and because
+/// "clone of Vantage, clone of Cresnet" is a chain a person reading the
+/// picker should never have to follow.
+Registries cloneableFamilies(RackDocument doc) => Registries(
+  signalDomains: _domains(doc),
+  signalFamilies: {
+    for (final f in _families(doc).values)
+      if (f.clonedFrom == null) f.id: f,
+  },
+);
+
+/// The domain a clone of a family in [domain] draws in, from the same
+/// document-then-seed union the builder judges against, or null.
+SignalDomainDef? cloneDomain(RackDocument doc, SignalDomainId domain) =>
+    _domains(doc)[domain];
+
+/// The connector types a clone may take as its default (DR-244 §11.243.3),
+/// sorted by display name then id so a menu built from it holds still.
+List<ConnectorTypeDef> cloneConnectorTypes(RackDocument doc) =>
+    _connectors(doc).values.toList()..sort((a, b) {
+      final byName = a.displayName.toLowerCase().compareTo(
+        b.displayName.toLowerCase(),
+      );
+      return byName != 0 ? byName : a.id.v.compareTo(b.id.v);
+    });
+
+/// Why the family [id] prints like another in [doc], or null when it does
+/// not (DR-245 §11.244.3).
+///
+/// The Signal families section marks a family with this until its line is
+/// changed. COMPUTED, NEVER STORED: a mark kept in the file would outlive
+/// the clash the day the other family changed, and this cannot.
+String? familyPrintClash(RackDocument doc, SignalFamilyId id) {
+  final palette = _palette(doc);
+  final entry = palette.where((e) => e.familyId == id).firstOrNull;
+  if (entry == null) return null;
+  final hits = pal1ViolationsOf(entry, palette);
+  return hits.isEmpty ? null : cloneCollisionSentence(doc, hits);
+}
+
+/// One sentence naming every family [collisions] involves.
+String cloneCollisionSentence(
+  RackDocument doc,
+  List<Pal1Violation> collisions,
+) => _collisionSentence(collisions, _families(doc), _domains(doc));
+
 String _collisionSentence(
   List<Pal1Violation> collisions,
   Map<SignalFamilyId, SignalFamilyDef> families,
@@ -315,4 +424,138 @@ final class CloneSignalFamilyCommand extends Command<RackDocument> {
     if (_added) doc.registries.signalFamilies.remove(family.id);
     _added = false;
   }
+}
+
+// ═════════════════════════════════════════════════════════════════════
+// CHANGING A CLONE'S LINE (SFE-C7, DR-245 §11.244.4)
+// ═════════════════════════════════════════════════════════════════════
+// The fix a PAL-1 clash on arrival points to, and the user's choice of
+// it: a clone's dash and weight may be changed, through the same menu and
+// the same refusal as cloning. A SHIPPED family's may not, because its
+// line is what the CI gate certified, and a project that restyled one
+// would print a palette nobody checked.
+
+/// The outcome of [buildChangeCloneLine].
+sealed class ChangeCloneLineResult {
+  const ChangeCloneLineResult();
+}
+
+final class ChangeCloneLineReady extends ChangeCloneLineResult {
+  const ChangeCloneLineReady(this.command);
+  final SetCloneLineCommand command;
+}
+
+final class ChangeCloneLineRefused extends ChangeCloneLineResult {
+  const ChangeCloneLineRefused(this.reason);
+  final String reason;
+}
+
+/// Builds the command that gives the clone [family] a new line, or says
+/// why it will not.
+ChangeCloneLineResult buildChangeCloneLine(
+  RackDocument doc, {
+  required SignalFamilyId family,
+  required List<int> dashPermille,
+  required int weightPermille,
+}) {
+  final from = doc.registries.signalFamilies[family];
+  if (from == null) {
+    return ChangeCloneLineRefused(
+      'There is no signal family ${family.v} in this project.',
+    );
+  }
+  if (from.clonedFrom == null) {
+    return ChangeCloneLineRefused(
+      '${from.displayName} ships with RackPal, and its line is the one '
+      "RackPal's print check was run on. Only a family you cloned can "
+      'change its line.',
+    );
+  }
+  final menu = cloneMenu();
+  final onMenu =
+      menu.weights.contains(weightPermille) &&
+      menu.dashes.any((d) => d.join(',') == dashPermille.join(','));
+  if (!onMenu) {
+    return const ChangeCloneLineRefused(
+      'That dash and weight are not among the ones a family can use.',
+    );
+  }
+  if (from.dashOverride?.join(',') == dashPermille.join(',') &&
+      from.lineWeightPermilleOverride == weightPermille) {
+    return ChangeCloneLineRefused(
+      "That is already ${from.displayName}'s line.",
+    );
+  }
+  final domain = _domains(doc)[from.domain];
+  if (domain == null) {
+    return ChangeCloneLineRefused(
+      '${from.displayName} names a domain, ${from.domain.v}, that this '
+      'project does not have.',
+    );
+  }
+  final collisions = pal1ViolationsOf(
+    Pal1Entry(
+      familyId: from.id,
+      domainId: domain.id,
+      hue: domain.color,
+      dashPermille: dashPermille,
+      weightPermille: weightPermille,
+    ),
+    _palette(doc),
+  );
+  if (collisions.isNotEmpty) {
+    return ChangeCloneLineRefused(cloneCollisionSentence(doc, collisions));
+  }
+  return ChangeCloneLineReady(
+    SetCloneLineCommand(
+      from: from,
+      to: SignalFamilyDef(
+        id: from.id,
+        displayName: from.displayName,
+        domain: from.domain,
+        defaultConnector: from.defaultConnector,
+        defaultDirection: from.defaultDirection,
+        defaultTopology: from.defaultTopology,
+        aliases: from.aliases,
+        shortTag: from.shortTag,
+        dashOverride: dashPermille,
+        lineWeightPermilleOverride: weightPermille,
+        glyphOverride: from.glyphOverride,
+        clonedFrom: from.clonedFrom,
+      ),
+    ),
+  );
+}
+
+/// Replaces a clone's definition with the same one on a new line.
+///
+/// Every cable of the family is restyled, which is the point: the clash
+/// it fixes is in how those cables print.
+final class SetCloneLineCommand extends Command<RackDocument> {
+  SetCloneLineCommand({required this.from, required this.to})
+    : assert(from.id == to.id, 'a line change never renames a family');
+
+  final SignalFamilyDef from;
+  final SignalFamilyDef to;
+
+  @override
+  LabelKey get label => LabelKey.setCloneLine;
+
+  /// `meta`, on `SetFamilyColorOverrideCommand`'s precedent: that command
+  /// also restyles every cable of one family and declares `meta` alone.
+  @override
+  EpochMask get touches => EpochMask.meta;
+
+  @override
+  Iterable<Uuid> get affects => const [];
+
+  @override
+  bool apply(RackDocument doc) {
+    doc.registries.signalFamilies[to.id] = to;
+    return true;
+  }
+
+  @override
+  void revert(RackDocument doc) =>
+      doc.registries.signalFamilies[from.id] = from;
 }

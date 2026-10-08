@@ -26,13 +26,17 @@
 //
 // ── WHAT THIS IS NOT ───────────────────────────────────────────────────
 // RJ-012 rejects a general registry authoring UI and AC-011 withdraws
-// user-authored validation rules. This edits a document's own settings. It
-// is not a registry editor, and `refused_surfaces_test.dart` fails if one
-// ever appears.
+// user-authored validation rules. This edits a document's own settings,
+// and since SFE-C1 it holds ONE registry surface, which DR-122 amended
+// RJ-012 to allow: cloning a signal family from one that ships. It is not
+// a general registry editor. `refused_surfaces_test.dart` still fails on a
+// connector-type or colour-scheme editor, and on any signal family made
+// other than by the clone.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/settings/clone_family_dialog.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 import 'package:rackpal_ui/src/validation/rule_severity_dialog.dart';
 
@@ -78,6 +82,7 @@ Future<void> showProjectSettingsDialog(
   required ProjectSettingEdit onEdit,
   required Clock clock,
   required String actor,
+  List<LibraryFamily> libraryFamilies = const [],
 }) => showDialog<void>(
   context: context,
   builder: (context) => _SettingsDialog(
@@ -85,6 +90,7 @@ Future<void> showProjectSettingsDialog(
     onEdit: onEdit,
     clock: clock,
     actor: actor,
+    libraryFamilies: libraryFamilies,
   ),
 );
 
@@ -94,12 +100,17 @@ class _SettingsDialog extends StatefulWidget {
     required this.onEdit,
     required this.clock,
     required this.actor,
+    required this.libraryFamilies,
   });
 
   final RackDocument doc;
   final ProjectSettingEdit onEdit;
   final Clock clock;
   final String actor;
+
+  /// Families the shelf's libraries carry (SFE-C8). Supplied by the app,
+  /// which owns the shelf; this package reads no files.
+  final List<LibraryFamily> libraryFamilies;
 
   @override
   State<_SettingsDialog> createState() => _SettingsDialogState();
@@ -143,6 +154,15 @@ class _SettingsDialogState extends State<_SettingsDialog> {
             const Divider(height: 32),
             _FamilyColours(
               doc: widget.doc,
+              onEdit: (commands) {
+                widget.onEdit(commands);
+                setState(() {});
+              },
+            ),
+            const Divider(height: 32),
+            _SignalFamilies(
+              doc: widget.doc,
+              libraryFamilies: widget.libraryFamilies,
               onEdit: (commands) {
                 widget.onEdit(commands);
                 setState(() {});
@@ -602,6 +622,176 @@ class _MediaRow extends StatelessWidget {
           if (v != null) onChanged(v);
         },
       ),
+    );
+  }
+}
+
+// ── DR-122's surface ────────────────────────────────────────────────────
+
+/// The button that opens the clone dialog, so a test can find THAT one.
+const Key kCloneFamilyButtonKey = Key('clone-family-button');
+
+/// This project's cloned families, and the way to make one (SFE-C1).
+///
+/// HERE, BESIDE THE COLOURS, AND THE USER CHOSE IT (2026-10-07). A family
+/// is a project-level registry decision like a colour exception, and the
+/// clone dialog needs a real window rather than a grid cell's popup. The
+/// list shows each clone with its parent, because the parent is what a
+/// person needs to reason about what it inherited.
+class _SignalFamilies extends StatelessWidget {
+  const _SignalFamilies({
+    required this.doc,
+    required this.onEdit,
+    required this.libraryFamilies,
+  });
+
+  final RackDocument doc;
+  final ProjectSettingEdit onEdit;
+  final List<LibraryFamily> libraryFamilies;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final families = doc.registries.signalFamilies;
+    final clones =
+        [
+          for (final f in families.values)
+            if (f.clonedFrom != null) f,
+        ]..sort((a, b) {
+          final c = a.displayName.toLowerCase().compareTo(
+            b.displayName.toLowerCase(),
+          );
+          return c != 0 ? c : a.id.v.compareTo(b.id.v);
+        });
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Signal families', style: theme.textTheme.titleSmall),
+        Text(
+          'A new family starts as a copy of one that ships, keeping what it '
+          'carries into every port: its domain, direction and topology. You '
+          'name it and choose a line no other family prints.',
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        if (clones.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'This project has no families of its own yet.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: kConsoleEmphasis,
+              ),
+            ),
+          ),
+        for (final f in clones)
+          ListTile(
+            dense: true,
+            title: Text(f.displayName),
+            // SFE-C7: the fix the mark below points to, offered on every
+            // clone and on no shipped family (DR-245 §11.244.4).
+            trailing: TextButton(
+              key: ValueKey('change-line-${f.id.v}'),
+              onPressed: () async {
+                final command = await showChangeLineDialog(
+                  context,
+                  doc: doc,
+                  family: f,
+                );
+                if (command != null) onEdit([command]);
+              },
+              child: const Text('Change line...'),
+            ),
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${f.id.v}  ·  clone of '
+                  '${families[f.clonedFrom]?.displayName ?? f.clonedFrom!.v}',
+                  style: theme.textTheme.bodySmall,
+                ),
+                // THE MARK A PAL-1 CLASH LEAVES (DR-245 §11.244.3), computed
+                // from the palette every build so it goes the moment either
+                // family's line changes. Only a family a library brought can
+                // carry one: the clone dialog refuses a clash outright.
+                //
+                // AN ICON, NOT A `⚠` IN THE TEXT: the bundled face has no such
+                // glyph, and the glyph-coverage gate refused it as a box.
+                if (familyPrintClash(doc, f.id) case final clash?)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        size: 14,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          clash,
+                          key: ValueKey('family-clash-${f.id.v}'),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        // SFE-C8 (DR-245 §11.244.5): THE ROAD INTO THIS PROJECT for a
+        // family no device brought. Families live inside libraries since
+        // DR-245, so one cloned on the last job reaches this one from here.
+        // Listed only when the project does not already hold it, by id or
+        // as an earlier arrival; added under C6's three cases, so a clash
+        // gets a fresh id here exactly as it would through a device.
+        if ([
+              for (final lf in libraryFamilies)
+                if (!projectHoldsFamily(doc, lf.family)) lf,
+            ]
+            case final offered when offered.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text('From your libraries', style: theme.textTheme.labelLarge),
+          for (final lf in offered)
+            ListTile(
+              dense: true,
+              title: Text(lf.family.displayName),
+              subtitle: Text(
+                '${lf.family.id.v}  ·  from ${lf.libraryName}',
+                style: theme.textTheme.bodySmall,
+              ),
+              trailing: TextButton(
+                key: ValueKey(
+                  'adopt-family-${lf.libraryName}-${lf.family.id.v}',
+                ),
+                onPressed: () {
+                  final command = planFamilyAdoption(
+                    doc,
+                    lf.family,
+                    libraryName: lf.libraryName,
+                  ).command;
+                  if (command != null) onEdit([command]);
+                },
+                child: const Text('Add to this project'),
+              ),
+            ),
+        ],
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: kCloneFamilyButtonKey,
+            icon: const Icon(Icons.copy_all, size: 18),
+            label: const Text('Clone a family...'),
+            onPressed: () async {
+              final command = await showCloneFamilyDialog(context, doc: doc);
+              if (command != null) onEdit([command]);
+            },
+          ),
+        ),
+      ],
     );
   }
 }

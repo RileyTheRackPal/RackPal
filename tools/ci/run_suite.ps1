@@ -1319,7 +1319,34 @@ $SuiteFloors = @{
     # construction-site census, one for one.
     # 5683 at `#825`: +1 in epoch_mask_test.dart, which refused the clone
     # until its declared EpochMask was checked against what it changes.
-    'rackpal_core'   = 5683
+    # 5686 at `#829`/`#830` (SFE-C1/C2): +3 in commands/clone_signal_family_
+    # test.dart. A name already in the domain is refused (the picker shows
+    # a family by its label); a clone is never cloned; and every option the
+    # dialog draws is the verdict the command reaches, in the same words.
+    # 5687 at `#831` (SFE-C3): +1 in commands/clone_signal_family_test.dart,
+    # the picker's "clone of" label and its fall-back to the bare id.
+    # 5694 at `#1033` (SFE-C5, DR-245 §11.244.1): +7 in library/library_
+    # families_test.dart. What a device file carries (carried and accepted
+    # clones, never a shipped family, never an undefined id), and both
+    # formats written at v4 only when they carry one, byte-exact either way.
+    # 5701 at `#1034` (SFE-C6, DR-245 §11.244.3): +7. Six in library/
+    # family_arrival_test.dart (absent arrives, identical is nothing, a
+    # different one takes a fresh id and name with the device following, a
+    # second placement mints nothing, a PAL-1 clash is placed and said by
+    # name, undo takes it back) and one in epoch_mask_test.dart.
+    # 5705 at `#1035` (SFE-C7, DR-245 §11.244.4): +4. Three in commands/
+    # clone_signal_family_test.dart (a clone's new line and its undo; a
+    # shipped family refused; a family judged as itself, so its own line
+    # does not block it and another's does) and one in epoch_mask_test.
+    # 5708 at `#1036` (SFE-C8, DR-245 §11.244.5): +3 in library/family_
+    # arrival_test.dart. A family added from a library follows the three
+    # cases and is then held; a clash arrives under a fresh id and counts
+    # as held; libraryFamiliesOf names each with its library, stably.
+    # 5711 at `#832` (SFE-C4, DR-245 §11.244.2): +3 in library/library_
+    # families_test.dart, shelveFamily. A shelf with no My library starts
+    # one; a family already there, by id or under another, writes nothing;
+    # a different one under the same id goes beside it, never over it.
+    'rackpal_core'   = 5711
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -2076,7 +2103,22 @@ $SuiteFloors = @{
     # a whole row tabbed from KEY with every stop strictly further right.
     # 2139 at `#1025` (TAB-2, AC-058): +1 in builder/port_grid_test.dart,
     # four labels typed down a column through Enter, across a bank header.
-    'rackpal_ui'     = 2139
+    # 2144 at `#829`/`#830` (SFE-C1/C2, DR-122): +5. Four in settings/
+    # clone_family_dialog_test.dart (the parent first and then in view; a
+    # taken line shown chosen with its reason on screen; a free line
+    # clones with what was chosen; one swatch per menu option) and one in
+    # project_settings_dialog_test.dart (the section lists a clone by its
+    # parent and opens the dialog).
+    # 2146 at `#831` (SFE-C3): +2 in widgets/family_picker_provenance_test.
+    # dart, the "clone of" chip on a clone's row and not a shipped one's,
+    # and "Clones only" narrowing, offered only when there is a clone.
+    # 2147 at `#1034` (SFE-C6): +1 in settings/project_settings_dialog_
+    # test.dart, a family that prints like another marked by name.
+    # 2148 at `#1035` (SFE-C7): +1 in settings/project_settings_dialog_
+    # test.dart, Change line fixing a clash end to end, the mark gone.
+    # 2149 at `#1036` (SFE-C8): +1 in settings/project_settings_dialog_
+    # test.dart, a library family offered, added, then no longer offered.
+    'rackpal_ui'     = 2149
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
@@ -2334,7 +2376,12 @@ $SuiteFloors = @{
     # label writes and the dash clears, any case, a refusal with the list,
     # the cell's dash and label, and a null-modem marked in the table
     # bringing T5.01 into the export.
-    'rackpal_app'    = 1201
+    # 1202 at `#1033` (SFE-C5, DR-245): +1 in session/library_io_test.dart,
+    # a library exported from a device on a clone carries the clone, at v4.
+    # 1205 at `#832` (SFE-C4): +3 in session/library_io_test.dart. A clone
+    # lands in My library and a second time says so; an unreadable My
+    # library is left byte-identical; no library folder writes nothing.
+    'rackpal_app'    = 1205
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

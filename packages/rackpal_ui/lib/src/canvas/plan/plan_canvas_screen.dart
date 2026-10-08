@@ -328,6 +328,7 @@ final class PlanCanvasScreen extends StatefulWidget {
     this.reshape,
     this.marquee,
     this.onRefuse,
+    this.onNotice,
     super.key,
   });
 
@@ -410,6 +411,12 @@ final class PlanCanvasScreen extends StatefulWidget {
   /// person. Null means the host shows nothing, which is legal and is what
   /// every render test uses.
   final void Function(String reason)? onRefuse;
+
+  /// Told something a person should know about a gesture that SUCCEEDED,
+  /// worded for them: today, that a family a library device brought prints
+  /// like one already in the project (DR-245 §11.244.3). Not [onRefuse],
+  /// because nothing was refused, though a host may show both on one line.
+  final void Function(String notice)? onNotice;
 
   @override
   State<PlanCanvasScreen> createState() => PlanCanvasScreenState();
@@ -850,18 +857,25 @@ final class PlanCanvasScreenState extends State<PlanCanvasScreen>
       case CatalogPlacementFailed(:final reason):
         widget.onRefuse?.call(reason);
       case CatalogPlacementReady(:final command):
-        final copy = plan?.copy;
-        if (copy == null) {
+        // The families a library device brings, then its template, then
+        // the add (DR-245 §11.244.3): `prelude` holds the first two in the
+        // order the add needs them.
+        final prelude = plan?.prelude ?? const <Command<RackDocument>>[];
+        if (prelude.isEmpty) {
           _controller.run(command);
         } else {
           // NAMED AFTER THE ADD, not the copy, on DR-156 §11.155.2's
           // reasoning as `_finalizeCatalogPlacement` applies it: the act
           // a person performed is the placement.
           _controller.transact(command.label, (tx) {
-            tx
-              ..add(copy)
-              ..add(command);
+            for (final c in prelude) {
+              tx.add(c);
+            }
+            tx.add(command);
           });
+        }
+        if (plan?.familyNotice case final notice?) {
+          widget.onNotice?.call(notice);
         }
         setState(
           () => widget.selection.apply([command.id], SelectMode.replace),

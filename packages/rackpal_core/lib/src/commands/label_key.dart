@@ -270,6 +270,16 @@ enum LabelKey {
   // project, which a person who cloned one by mistake needs to read.
   cloneSignalFamily,
 
+  // SFE-C6 (`#1034`, DR-245). The families a library device brought with
+  // it. Its own key because it is never a person's act on its own: it is
+  // the first child of a placement, and the transaction is named for that.
+  addArrivedFamilies,
+
+  // SFE-C7 (`#1035`, DR-245 §11.244.4). A clone's new dash and weight. Its
+  // own key because undo restyles every cable of the family back, and a
+  // person should read that it was a line that came back.
+  setCloneLine,
+
   // M4-P2 (`#247`, RJ-012). Editing a media type's LABEL, never its id:
   // the id is frozen at creation because it is written into every
   // `Link.media` and read by a human diffing two `.rppj` files, so a

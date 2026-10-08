@@ -3218,8 +3218,28 @@ JsonMap _encodeSignalFamilyDef(SignalFamilyDef d) {
   // move. A document written AFTER it carries 26 of these, which is why
   // the starters' bytes change: a document embeds its own registries.
   putIfNotNull(json, 'glyphOverride', d.glyphOverride);
+  // SFE-C3 (DR-122), ADDITIVE ON THE SAME PRECEDENT: only a clone carries
+  // it, so no shipped family and no older document gains a key.
+  putIfNotNull(json, 'clonedFrom', d.clonedFrom?.v);
   return json;
 }
+
+/// A [SignalFamilyDef] as JSON, `id` included, for a file that carries
+/// families in a LIST rather than in the document's id-keyed map.
+///
+/// **THE DOCUMENT'S ENCODING, NOT A SECOND ONE** (DR-245 §11.244.1). A
+/// device library carries the families its devices use, and if `.rmda`
+/// spelled a family differently from `.rppj`, a family would read one way
+/// in the file that made it and another in the library that carried it.
+JsonMap signalFamilyDefToJson(SignalFamilyDef d) => _encodeSignalFamilyDef(d);
+
+/// The reverse of [signalFamilyDefToJson]: the id is read from the JSON.
+/// Throws on a malformed entry, as every `_decode*` here does; the file
+/// readers that call it catch at their own boundary (CR-093).
+SignalFamilyDef signalFamilyDefFromJson(JsonMap json) => _decodeSignalFamilyDef(
+  SignalFamilyId(asStr(json['id'], 'SignalFamilyDef.id')),
+  json,
+);
 
 SignalFamilyDef _decodeSignalFamilyDef(SignalFamilyId id, JsonMap json) =>
     SignalFamilyDef(
@@ -3267,6 +3287,13 @@ SignalFamilyDef _decodeSignalFamilyDef(SignalFamilyId id, JsonMap json) =>
         json['glyphOverride'],
         'SignalFamilyDef.glyphOverride',
       ),
+      clonedFrom: switch (asStrOrNull(
+        json['clonedFrom'],
+        'SignalFamilyDef.clonedFrom',
+      )) {
+        final v? => SignalFamilyId(v),
+        null => null,
+      },
     );
 
 JsonMap _encodeConnectorTypeDef(ConnectorTypeDef d) {

@@ -81,7 +81,8 @@ SetSignalFamilyResult buildSetSignalFamily({
   if (!doc.registries.signalFamilies.containsKey(family)) {
     return SetSignalFamilyRefused(
       'No signal family is called "${family.v}". Signal families come from '
-      'the catalog and cannot be created here.',
+      'the catalog, or are cloned from one in Project settings, and cannot '
+      'be created here.',
     );
   }
   if (link.services.isEmpty) {

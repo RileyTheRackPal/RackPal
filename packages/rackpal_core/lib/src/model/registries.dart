@@ -86,10 +86,26 @@ final class SignalFamilyDef {
     this.dashOverride,
     this.lineWeightPermilleOverride,
     this.glyphOverride,
+    this.clonedFrom,
   });
 
   final SignalFamilyId id;
   final String displayName;
+
+  /// The family this one was cloned from (DR-122, SFE-C3), or null for a
+  /// family that ships.
+  ///
+  /// **PROVENANCE, AND NOTHING READS IT AS A RULE.** It is what lets a
+  /// picker say *"clone of Cresnet"* at the point of use, because the
+  /// parent is what a person needs to reason about the direction and
+  /// topology the clone inherited (DR-244 §11.243.3). Null and absent on
+  /// the wire for every shipped family, so a document written before this
+  /// field re-encodes byte-for-byte.
+  ///
+  /// It names the parent's ID, which may not resolve: a clone carried to a
+  /// project that does not hold its parent still says what it came from,
+  /// and a reader falls back to the bare id rather than to nothing.
+  final SignalFamilyId? clonedFrom;
   final SignalDomainId domain;
   final ConnectorTypeId defaultConnector;
   final PortDirection defaultDirection;

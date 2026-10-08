@@ -17,6 +17,7 @@ import 'package:rackpal/src/session/file_picker.dart';
 import 'package:rackpal/src/session/library_io_actions.dart';
 import 'package:rackpal/src/storage/atomic_writer.dart';
 import 'package:rackpal/src/storage/library_directory.dart';
+import 'package:rackpal/src/storage/save_paths.dart';
 import 'package:rackpal_core/rackpal_core.dart' hide MutableClock;
 import 'package:rackpal_ui/rackpal_ui.dart';
 
@@ -187,6 +188,54 @@ void main() {
               .value;
       expect(lib.templates.map((t) => t.body.displayName), ['Switch']);
     });
+
+    test(
+      'a device built on a cloned family carries that family, and the '
+      'library is written where an older build refuses it (DR-245)',
+      () async {
+        final doc = _doc()
+          ..templates.clear()
+          ..registries = buildSeedRegistries();
+        final free = cloneHeadroom(
+          doc,
+          const SignalDomainId('ctl'),
+        )!.free.first;
+        final clone =
+            (buildCloneSignalFamily(
+                      doc,
+                      parent: const SignalFamilyId('ctl.cresnet'),
+                      displayName: 'Vantage',
+                      shortTag: 'VNT',
+                      dashPermille: free.dashPermille,
+                      weightPermille: free.weightPermille,
+                    )
+                    as CloneSignalFamilyReady)
+                .command;
+        expect(clone.apply(doc), isTrue);
+        final body = buildSeedCatalog().values.firstWhere(
+          (b) => b.ports.isNotEmpty,
+        );
+        body.ports.first.signalFamily = clone.family.id;
+        _hold(doc, 'tpl.keypad', body);
+        final fs = FakeFileStore(initialDirectories: <String>{'C:', r'C:\out'});
+
+        await exportDeviceLibrary(
+          session: _session(doc),
+          picker: FakeFilePicker(savePaths: [r'C:\out\kit.rpda']),
+          writer: _writer(fs),
+          askForLibrary: (c) async =>
+              ExportLibraryRequest(name: 'Shop Kit', selected: c),
+          context: _windows,
+        );
+
+        final written = _bytesAt(fs, r'C:\out\kit.rpda')!;
+        final tree = jsonDecode(utf8.decode(written)) as Map<String, Object?>;
+        expect(tree['schemaVersion'], 4);
+        final lib = (readRmdaBytes(written) as Ok<DeviceLibraryFile>).value;
+        expect(lib.signalFamilies.single.id, clone.family.id);
+        expect(lib.signalFamilies.single.displayName, 'Vantage');
+      },
+    );
 
     test('a cancelled dialog opens no file picker and says so', () async {
       final doc = _doc()..templates.clear();
@@ -472,5 +521,90 @@ void main() {
         'That library could not be read',
       );
     });
+  });
+
+  group('a clone goes onto the shelf, into My library (SFE-C4, DR-245)', () {
+    final myLibrary = _windows.join(
+      _shelf,
+      'My library$kDeviceLibraryExtension',
+    );
+
+    SignalFamilyDef vantage() {
+      final doc = _doc()..registries = buildSeedRegistries();
+      final free = cloneHeadroom(doc, const SignalDomainId('ctl'))!.free.first;
+      return (buildCloneSignalFamily(
+                doc,
+                parent: const SignalFamilyId('ctl.cresnet'),
+                displayName: 'Vantage',
+                shortTag: 'VNT',
+                dashPermille: free.dashPermille,
+                weightPermille: free.weightPermille,
+              )
+              as CloneSignalFamilyReady)
+          .command
+          .family;
+    }
+
+    test('the family lands in My library, and a second time says it is '
+        'already there', () async {
+      final fs = FakeFileStore(initialDirectories: <String>{'C:', _root});
+      final family = vantage();
+
+      final said = await shelveFamilyToMyLibrary(
+        fs: fs,
+        writer: _writer(fs),
+        dataRoot: _root,
+        family: family,
+        context: _windows,
+      );
+      expect(said, 'Vantage is in this project and in My library.');
+      final lib =
+          (readRmdaBytes(_bytesAt(fs, myLibrary)!) as Ok<DeviceLibraryFile>)
+              .value;
+      expect(lib.name, 'My library');
+      expect(lib.signalFamilies.single.id, family.id);
+
+      final again = await shelveFamilyToMyLibrary(
+        fs: fs,
+        writer: _writer(fs),
+        dataRoot: _root,
+        family: family,
+        context: _windows,
+      );
+      expect(again, contains('already in My library'));
+    });
+
+    test('an unreadable My library is left exactly as it is', () async {
+      final junk = Uint8List.fromList(utf8.encode('not a library'));
+      final fs = FakeFileStore(
+        initialDirectories: <String>{'C:', _root, _shelf},
+        initialFiles: {myLibrary: junk},
+      );
+      final said = await shelveFamilyToMyLibrary(
+        fs: fs,
+        writer: _writer(fs),
+        dataRoot: _root,
+        family: vantage(),
+        context: _windows,
+      );
+      expect(said, contains('could not be read'));
+      expect(_bytesAt(fs, myLibrary), junk);
+    });
+
+    test(
+      'a session with no library folder writes nothing and says so',
+      () async {
+        final fs = FakeFileStore(initialDirectories: <String>{'C:'});
+        final said = await shelveFamilyToMyLibrary(
+          fs: fs,
+          writer: _writer(fs),
+          dataRoot: null,
+          family: vantage(),
+          context: _windows,
+        );
+        expect(said, contains('no library folder'));
+        expect(fs.state.files, isEmpty);
+      },
+    );
   });
 }

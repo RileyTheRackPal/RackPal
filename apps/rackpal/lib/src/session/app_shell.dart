@@ -75,6 +75,7 @@ import 'package:rackpal/src/storage/library_shelf.dart';
 import 'package:rackpal/src/storage/recents_store.dart';
 import 'package:rackpal_core/rackpal_core.dart'
     show
+        CloneSignalFamilyCommand,
         Err,
         Finding,
         FindingLocusKind,
@@ -87,6 +88,7 @@ import 'package:rackpal_core/rackpal_core.dart'
         RackPreset,
         RackWidthClass,
         Severity,
+        SignalFamilyDef,
         TemplateBody,
         TemplateId,
         TextMeasurer,
@@ -102,6 +104,7 @@ import 'package:rackpal_core/rackpal_core.dart'
         findingLocusOf,
         kDefaultUndoDepth,
         kUserPresetIdPrefix,
+        libraryFamiliesOf,
         mergeRackPresets,
         planOutletRemoval,
         planStructureRemoval,
@@ -1104,6 +1107,9 @@ final class AppShellState extends State<AppShell>
       // else in that dialog signs anything.
       clock: session.controller.clock,
       actor: session.controller.actor,
+      // SFE-C8: what the shelf's libraries carry, so a family cloned on
+      // the last job can be added to this one (DR-245 §11.244.5).
+      libraryFamilies: libraryFamiliesOf(_libraries),
       onEdit: (commands) {
         if (commands.isEmpty) return;
         // NULL: THE FIRST CHILD NAMES IT, read after it has applied
@@ -1116,8 +1122,25 @@ final class AppShellState extends State<AppShell>
             tx.add(command);
           }
         });
+        // SFE-C4 (DR-245 §11.244.2): A CLONE ALSO GOES ONTO THE SHELF, so
+        // it follows the person to the next job. AFTER the transaction,
+        // never inside it: the shelf is not the document, undo does not
+        // reach it (DR-123 §11.122.4), and a shelf that cannot be written
+        // costs a sentence on the status line, never the family.
+        for (final clone in commands.whereType<CloneSignalFamilyCommand>()) {
+          unawaited(_shelve(clone.family));
+        }
       },
     );
+  }
+
+  Future<void> _shelve(SignalFamilyDef family) async {
+    final sentence = await _services.libraryIo.shelveFamily(family);
+    if (!mounted) return;
+    _services.session.setStatus(sentence);
+    // Re-read, so "From your libraries" and the palette see My library as
+    // it now is rather than as it was when the session opened.
+    await _reloadLibraryShelf();
   }
 
   /// Opens `File ▸ Sheet set…`, the drawing set's front matter (`#969`,

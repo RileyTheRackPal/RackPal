@@ -170,7 +170,17 @@ Future<bool> exportDeviceTemplate({
     return false;
   }
 
-  final bytes = encodeRmdxBytes(DeviceTemplateFile.fromSnapshot(snapshot));
+  // DR-245 §11.244.1: the file carries the non-shipped families its ports
+  // name, so it places with its ports resolved on a machine that never
+  // saw them.
+  final bytes = encodeRmdxBytes(
+    DeviceTemplateFile.fromSnapshot(
+      snapshot,
+      signalFamilies: familiesToCarry([
+        snapshot.body,
+      ], session.document.registries),
+    ),
+  );
   final result = await writer.write(
     paths: SavePaths.forTarget(
       path,

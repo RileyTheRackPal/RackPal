@@ -36,6 +36,7 @@ Future<List<Command<RackDocument>>> _open(
   WidgetTester tester,
   RackDocument doc, {
   Size size = const Size(1100, 1400),
+  List<LibraryFamily> libraryFamilies = const [],
 }) async {
   final ran = <Command<RackDocument>>[];
   tester.view.physicalSize = size;
@@ -53,6 +54,7 @@ Future<List<Command<RackDocument>>> _open(
               // clock and an author for that one section.
               clock: FixedClock(DateTime.utc(2026, 9, 12)),
               actor: 'test',
+              libraryFamilies: libraryFamilies,
               onEdit: (commands) {
                 ran.addAll(commands);
                 for (final c in commands) {
@@ -643,5 +645,166 @@ void main() {
         reason: "the picker renders core's list, in core's order",
       );
     });
+  });
+
+  testWidgets('Signal families lists a clone by its parent, and its button '
+      'opens the clone dialog at the parent (SFE-C1)', (tester) async {
+    final doc = _doc();
+    final free = cloneHeadroom(doc, const SignalDomainId('ctl'))!.free.first;
+    final built = buildCloneSignalFamily(
+      doc,
+      parent: const SignalFamilyId('ctl.cresnet'),
+      displayName: 'Vantage',
+      shortTag: 'VNT',
+      dashPermille: free.dashPermille,
+      weightPermille: free.weightPermille,
+    );
+    (built as CloneSignalFamilyReady).command.apply(doc);
+
+    await _open(tester, doc);
+    await tester.scrollUntilVisible(
+      find.byKey(kCloneFamilyButtonKey),
+      120,
+      scrollable: _list,
+    );
+    await tester.ensureVisible(find.byKey(kCloneFamilyButtonKey));
+    await tester.pumpAndSettle();
+    expect(find.text('Vantage'), findsOneWidget);
+    expect(find.textContaining('clone of Cresnet'), findsOneWidget);
+
+    await tester.tap(find.byKey(kCloneFamilyButtonKey));
+    await tester.pumpAndSettle();
+    // The parent comes first: the picker, and no name field yet.
+    expect(find.byKey(const ValueKey('service-filter')), findsOneWidget);
+    expect(find.byKey(kCloneNameFieldKey), findsNothing);
+  });
+
+  testWidgets('a family a library brought that prints like another is '
+      'marked, by name, until it does not (DR-245)', (tester) async {
+    final doc = _doc();
+    final lutron =
+        doc.registries.signalFamilies[const SignalFamilyId('ctl.lutron_qs')]!;
+    // On Lutron QS's own line, as a hand-made library could carry it.
+    doc.registries.signalFamilies[const SignalFamilyId(
+      'ctl.clasher',
+    )] = SignalFamilyDef(
+      id: const SignalFamilyId('ctl.clasher'),
+      displayName: 'Clasher',
+      domain: lutron.domain,
+      defaultConnector: lutron.defaultConnector,
+      defaultDirection: lutron.defaultDirection,
+      defaultTopology: lutron.defaultTopology,
+      dashOverride: const [10000, 3000],
+      lineWeightPermilleOverride: 1000,
+      clonedFrom: const SignalFamilyId('ctl.cresnet'),
+    );
+    await _open(tester, doc);
+    const mark = ValueKey('family-clash-ctl.clasher');
+    await tester.scrollUntilVisible(
+      find.byKey(mark),
+      120,
+      scrollable: _list,
+    );
+    expect(
+      tester.widget<Text>(find.byKey(mark)).data,
+      contains('ctl.lutron_qs'),
+    );
+    // The warning is an ICON beside the sentence: the bundled face has no
+    // `\u26a0` glyph, and the glyph-coverage gate refused it as a box.
+    expect(
+      find.descendant(
+        of: find.ancestor(of: find.byKey(mark), matching: find.byType(Row)),
+        matching: find.byIcon(Icons.warning_amber_rounded),
+      ),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Change line fixes a clash: a free line picked, the mark goes '
+      '(SFE-C7)', (tester) async {
+    final doc = _doc();
+    final lutron =
+        doc.registries.signalFamilies[const SignalFamilyId('ctl.lutron_qs')]!;
+    const id = SignalFamilyId('ctl.clasher');
+    doc.registries.signalFamilies[id] = SignalFamilyDef(
+      id: id,
+      displayName: 'Clasher',
+      domain: lutron.domain,
+      defaultConnector: lutron.defaultConnector,
+      defaultDirection: lutron.defaultDirection,
+      defaultTopology: lutron.defaultTopology,
+      dashOverride: const [10000, 3000],
+      lineWeightPermilleOverride: 1000,
+      clonedFrom: const SignalFamilyId('ctl.cresnet'),
+    );
+    final free = cloneHeadroom(
+      doc,
+      lutron.domain,
+      changing: id,
+    )!.free.first;
+    final ran = await _open(tester, doc);
+
+    const button = ValueKey('change-line-ctl.clasher');
+    await tester.scrollUntilVisible(find.byKey(button), 120, scrollable: _list);
+    await tester.ensureVisible(find.byKey(button));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('family-clash-ctl.clasher')), findsOne);
+
+    await tester.tap(find.byKey(button));
+    await tester.pumpAndSettle();
+    final swatch = find.byKey(
+      cloneSwatchKey(free.dashPermille, free.weightPermille),
+    );
+    await tester.ensureVisible(swatch);
+    await tester.pumpAndSettle();
+    await tester.tap(swatch);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(kChangeLineSubmitKey));
+    await tester.pumpAndSettle();
+
+    expect(ran.whereType<SetCloneLineCommand>(), hasLength(1));
+    expect(doc.registries.signalFamilies[id]!.dashOverride, free.dashPermille);
+    expect(familyPrintClash(doc, id), isNull);
+    expect(
+      find.byKey(const ValueKey('family-clash-ctl.clasher')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('a family from a library is offered, added through the same '
+      'rules as a device, and then no longer offered (SFE-C8)', (tester) async {
+    final doc = _doc();
+    final lutron =
+        doc.registries.signalFamilies[const SignalFamilyId('ctl.lutron_qs')]!;
+    final vantage = SignalFamilyDef(
+      id: const SignalFamilyId('ctl.vantage_2'),
+      displayName: 'Vantage',
+      domain: lutron.domain,
+      defaultConnector: lutron.defaultConnector,
+      defaultDirection: lutron.defaultDirection,
+      defaultTopology: lutron.defaultTopology,
+      shortTag: 'VNT',
+      dashOverride: const [4000, 3000],
+      lineWeightPermilleOverride: 2000,
+      clonedFrom: const SignalFamilyId('ctl.cresnet'),
+    );
+    final ran = await _open(
+      tester,
+      doc,
+      libraryFamilies: [(libraryName: 'My library', family: vantage)],
+    );
+    const add = ValueKey('adopt-family-My library-ctl.vantage_2');
+    await tester.scrollUntilVisible(find.byKey(add), 120, scrollable: _list);
+    await tester.ensureVisible(find.byKey(add));
+    await tester.pumpAndSettle();
+    expect(find.text('From your libraries'), findsOneWidget);
+    expect(find.textContaining('from My library'), findsOneWidget);
+
+    await tester.tap(find.byKey(add));
+    await tester.pumpAndSettle();
+    expect(ran.whereType<AddArrivedFamiliesCommand>(), hasLength(1));
+    expect(doc.registries.signalFamilies[vantage.id], same(vantage));
+    expect(find.byKey(add), findsNothing);
+    expect(find.text('From your libraries'), findsNothing);
   });
 }

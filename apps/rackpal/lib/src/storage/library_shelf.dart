@@ -155,6 +155,7 @@ Future<ShelfLibrary> _load(
         id: file.id,
         name: value.name,
         templates: value.templates,
+        signalFamilies: value.signalFamilies,
       ),
     ),
     Err(:final error) => ShelfLibrary(file: file, fault: error),

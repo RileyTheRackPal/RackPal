@@ -1,5 +1,17 @@
 # Update Log
 
+## 2026-10-08 (hundred-and-thirtieth entry)
+
+* **Progress**: SFE-C (`#820`) built in seven chapters on DR-245 (`0458abe0`): the clone dialog and grid
+  (`8ba2dec5`), provenance (`892cc8bd`), families inside device libraries (`7902d621`), arrival
+  (`d2657b67`), Change line (`15556a87`), From your libraries (`f1cf002f`), My library (`c63358fb`).
+  docs/12 §4.56. The DR-122 epic waits in Needs You for its exit criterion, which a person performs.
+* **Note**: **A WIDGET TEST CAN FIND A UX DEFECT.** The clone dialog's verdict sat below a thirteen-row grid
+  and was not even built after a tap; a person would have read nothing either.
+* **Note**: **A CENSUS BY TEXT HAS A ROUTE AROUND IT, AND I TOOK IT ONCE.** Building a family through the
+  codec constructs one where the B3 census cannot see; it was rewritten as an open construction and added.
+* **Note**: **`N issues found` HIDES AN ERROR AMONG INFOS.** Grep analyzer output for severity.
+
 ## 2026-10-07 (hundred-and-twenty-ninth entry)
 
 * **Progress**: SFE-B (`#819`) built: the clone command and its refusal (`#825`, `#826`, `#828`, `423c3d16`),

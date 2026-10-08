@@ -40,6 +40,7 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/persistence/codec.dart';
 import 'package:rackpal_core/src/persistence/json_codec.dart';
@@ -67,7 +68,19 @@ import 'package:rackpal_core/src/util/outcome.dart';
 /// **3 SINCE DR-171 §11.170.3**, which deleted `PowerProfile`'s two outlet
 /// counts. The step is the one `.rppj` and `.rpda` share: strip both keys,
 /// and re-take the hash only where it attested the body as stored.
-const int kRmdxSchemaVersion = 3;
+///
+/// **4 SINCE DR-245 §11.244.1**, which lets a file carry the signal
+/// families its device uses. The step from 3 changes nothing, since a v3
+/// file carries none. **A file is WRITTEN at 4 only when it carries a
+/// family** ([kRmdxFamilyFreeSchemaVersion] otherwise): the reader ignores
+/// unknown keys, so a v3-labelled file with families would lose them in
+/// silence on an older build, and at 4 that build refuses it instead.
+const int kRmdxSchemaVersion = 4;
+
+/// The version a file that carries NO signal family is written at, so a
+/// family-free export stays byte-identical and opens on every build that
+/// opened it before DR-245.
+const int kRmdxFamilyFreeSchemaVersion = 3;
 
 /// The root `kind` tag every `.rpdx` carries (docs/06 §7.3).
 ///
@@ -86,6 +99,7 @@ const String _kTemplateId = 'templateId';
 const String _kVersion = 'version';
 const String _kContentHash = 'contentHash';
 const String _kBody = 'body';
+const String _kSignalFamilies = 'signalFamilies';
 
 /// One device template as it sits in a `.rpdx`.
 ///
@@ -98,17 +112,21 @@ final class DeviceTemplateFile {
     required this.version,
     required this.contentHash,
     required this.body,
+    this.signalFamilies = const [],
   });
 
   /// Built from an in-project snapshot, which is where every export
   /// starts (`#236`).
-  factory DeviceTemplateFile.fromSnapshot(TemplateSnapshot snapshot) =>
-      DeviceTemplateFile(
-        templateId: snapshot.templateId,
-        version: snapshot.version,
-        contentHash: snapshot.contentHash,
-        body: snapshot.body,
-      );
+  factory DeviceTemplateFile.fromSnapshot(
+    TemplateSnapshot snapshot, {
+    List<SignalFamilyDef> signalFamilies = const [],
+  }) => DeviceTemplateFile(
+    templateId: snapshot.templateId,
+    version: snapshot.version,
+    contentHash: snapshot.contentHash,
+    body: snapshot.body,
+    signalFamilies: signalFamilies,
+  );
 
   final TemplateId templateId;
 
@@ -141,6 +159,12 @@ final class DeviceTemplateFile {
   final String contentHash;
 
   final TemplateBody body;
+
+  /// The families [body]'s ports name that the shipped catalogue does not
+  /// hold (DR-245 §11.244.1), so the device places with its ports resolved
+  /// on a machine that never saw them. Empty for a device that uses only
+  /// shipped families, which is every device before DR-122.
+  final List<SignalFamilyDef> signalFamilies;
 }
 
 /// Refused: the root `kind` is missing or is not [kRmdxKind].
@@ -203,13 +227,31 @@ final class MalformedRmdxError implements Exception {
 
 /// [file] as the plain JSON tree a `.rpdx` holds.
 JsonMap rmdxToJsonTree(DeviceTemplateFile file) => <String, Object?>{
-  _kSchemaVersion: kRmdxSchemaVersion,
+  _kSchemaVersion: file.signalFamilies.isEmpty
+      ? kRmdxFamilyFreeSchemaVersion
+      : kRmdxSchemaVersion,
   _kKind: kRmdxKind,
   _kTemplateId: file.templateId.v,
   _kVersion: file.version,
   _kContentHash: file.contentHash,
   _kBody: templateBodyToJson(file.body),
+  if (file.signalFamilies.isNotEmpty)
+    _kSignalFamilies: signalFamiliesToJson(file.signalFamilies),
 };
+
+/// [families] as the list a device file carries, sorted by id so the
+/// bytes do not depend on the order a caller gathered them in.
+List<JsonMap> signalFamiliesToJson(Iterable<SignalFamilyDef> families) => [
+  for (final f in families.toList()..sort((a, b) => a.id.v.compareTo(b.id.v)))
+    signalFamilyDefToJson(f),
+];
+
+/// The `signalFamilies` list of a device file's root, or empty when the
+/// key is absent, which is every file written before DR-245.
+List<SignalFamilyDef> signalFamiliesFromJson(Object? raw, String context) => [
+  for (final (i, e) in asJsonList(raw ?? const <Object?>[], context).indexed)
+    signalFamilyDefFromJson(asJsonMap(e, '$context[$i]')),
+];
 
 /// [file] as the canonical bytes that go on disk: plain UTF-8 JSON, LF,
 /// two-space indent, keys sorted at every level (docs/06 §7.3).
@@ -303,6 +345,10 @@ Outcome<DeviceTemplateFile> readRmdxJsonTree(JsonMap raw) {
             body: templateBodyFromJson(
               asJsonMap(migrated[_kBody], 'rmdx.$_kBody'),
             ),
+            signalFamilies: signalFamiliesFromJson(
+              migrated[_kSignalFamilies],
+              'rmdx.$_kSignalFamilies',
+            ),
           ),
         );
       } on Object catch (e) {
@@ -335,10 +381,13 @@ Outcome<JsonMap> migrateRmdxToCurrent(
   required int storedSchemaVersion,
 }) {
   if (storedSchemaVersion == kRmdxSchemaVersion) return Ok(raw);
-  if (storedSchemaVersion == 2) return Ok(_migrateRmdxV2ToV3(raw));
+  if (storedSchemaVersion == 3) return Ok(_migrateRmdxV3ToV4(raw));
+  if (storedSchemaVersion == 2) {
+    return Ok(_migrateRmdxV3ToV4(_migrateRmdxV2ToV3(raw)));
+  }
   if (storedSchemaVersion == 1) {
     return switch (_migrateRmdxV1ToV2(raw)) {
-      Ok(value: final v2) => Ok(_migrateRmdxV2ToV3(v2)),
+      Ok(value: final v2) => Ok(_migrateRmdxV3ToV4(_migrateRmdxV2ToV3(v2))),
       Err(:final error) => Err(error),
     };
   }
@@ -406,3 +455,9 @@ JsonMap _migrateRmdxV2ToV3(JsonMap raw) {
   migrated[_kSchemaVersion] = 3;
   return migrated;
 }
+
+/// v3 to v4: nothing moves (DR-245 §11.244.1). A v3 file carries no
+/// signal families, and an absent `signalFamilies` already reads as none,
+/// so the step only restamps the version the decoder is promised.
+JsonMap _migrateRmdxV3ToV4(JsonMap raw) =>
+    JsonMap.of(raw)..[_kSchemaVersion] = 4;

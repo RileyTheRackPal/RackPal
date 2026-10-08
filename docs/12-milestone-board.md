@@ -2352,6 +2352,42 @@ the picker (`#831`), and the shelf copy (`#832`).
 
 No version move: the DR-122 epic is not the current one.
 
+### 4.56 SFE-C: the clone surface, and a family that travels inside the library · 2026-10-08 · `#820`, `#829`-`#832`, `#1033`-`#1036` · DR-122, DR-243, DR-244, `DR-245` · no version move
+
+**C1, C2 (`8ba2dec5`).** Project settings gains *Signal families*, the user's choice of host. The clone dialog
+asks for the PARENT first and keeps it in a banner, saying what is kept from it (domain, direction,
+topology: DR-244's locks). DR-243's menu is a grid drawn in the grey a mono laser prints the domain hue at;
+taken lines are dimmed and still selectable, and selecting one shows the family it collides with. **Nothing
+in the dialog decides**: menu, verdicts, sentence, parents and connectors come from
+`clone_signal_family.dart` beside the builder, and a core test holds every drawn verdict to the command's,
+sentence for sentence. **The widget tests found two defects**: the verdict sat under a thirteen-row grid
+inside the scrolling list and was not even built after a tap, and the chosen highlight compared options by
+identity against a headroom recomputed every build. A test of mine had also passed vacuously on "no reason
+shown" while the reason was off screen.
+
+**C3 (`892cc8bd`).** *"clone of Cresnet"* on the picker row and a *Clones only* filter, from an optional
+`clonedFrom` on the family; the three "cannot be created here" sentences now say where one can be.
+
+**C4 to C8, DR-245 (`0458abe0`).** The shelf could not hold a family. **The user chose to carry families
+inside device libraries** over a separate shelf file. Built as five chapters:
+
+| Chapter | Commit | What |
+|---|---|---|
+| C5 `#1033` | `7902d621` | `.rmda`/`.rmdx` carry the families their devices use, written at v4 only then, so an older build refuses rather than silently dropping them; family-free files stay byte-identical |
+| C6 `#1034` | `d2657b67` | Placing a library device brings its families in DR-103's three cases; families planned before the template, idempotent on re-placement; a PAL-1 clash placed and said |
+| C7 `#1035` | `15556a87` | *Change line* on a clone, judged as itself; never on a shipped family |
+| C8 `#1036` | `f1cf002f` | *From your libraries* in Signal families, through the same arrival rules |
+| C4 `#832` | `c63358fb` | A clone written to `My library.rpda`, not a Command, failure a notice, an unreadable file left byte-identical |
+
+**Two options were offered without a host and caught before code**: *"a connector the parent accepts"*
+(DR-244) and *"fix its line"* (DR-245 §11.244.4). Both were re-asked with prices. **Gates that earned their
+keep in SFE-C**: `commands_have_callers` retired the clone's exemption on the commit that wired it; glyph
+coverage refused a `⚠` the bundled face cannot draw; the formatter caught a script-edited test. The two new
+construction sites (arrival, My library) were added to the B3 census by hand, one of them after first being
+written through the codec, where the census could not have seen it.
+
+No version move: the DR-122 epic is not the current one.
+
 ---
 
 ## 5. M2 → M9: the unstarted, and where real work sits inside them

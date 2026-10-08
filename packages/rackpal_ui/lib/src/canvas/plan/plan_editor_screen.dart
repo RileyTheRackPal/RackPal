@@ -592,6 +592,10 @@ class PlanEditorScreenState extends State<PlanEditorScreen> {
     onCalibrationPicked: (a, b) => unawaited(_askDistance(open, a, b)),
     marquee: _marquee,
     onRefuse: widget.onRefuse,
+    // ONE LINE FOR BOTH. The host's status line is where a person reads
+    // what a gesture did, refused or not; the canvas keeps the two
+    // callbacks apart so a reader can tell which is which.
+    onNotice: widget.onRefuse,
   );
 
   @override

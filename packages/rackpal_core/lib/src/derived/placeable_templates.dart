@@ -73,6 +73,7 @@ import 'package:rackpal_core/src/library/loaded_library.dart';
 import 'package:rackpal_core/src/library/rmdx_codec.dart'
     show DeviceTemplateFile;
 import 'package:rackpal_core/src/model/rack_document.dart';
+import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/ids.dart' show TemplateId;
 
@@ -177,9 +178,16 @@ final class PlaceableTemplate {
     required this.contentHash,
     required this.body,
     required this.provenance,
+    this.carriedFamilies = const [],
   });
 
   final TemplateId templateId;
+
+  /// The signal families this row's LIBRARY carries (DR-245 §11.244.1), so
+  /// placing it can bring the ones its ports name. Empty for every row
+  /// that does not come from a library, and for every library written
+  /// before DR-245.
+  final List<SignalFamilyDef> carriedFamilies;
 
   /// The newest version of [templateId] on the SOURCE this row came from.
   final int version;
@@ -328,6 +336,7 @@ List<PlaceableTemplate> buildPlaceableTemplates(
           contentHash: entry.contentHash,
           body: entry.body,
           provenance: provenance,
+          carriedFamilies: library.signalFamilies,
         ),
       );
     }

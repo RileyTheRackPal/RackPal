@@ -4483,8 +4483,10 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     LibraryPlacement? plan,
     PlaceableTemplate? row,
   }) {
-    final copy = plan?.copy;
-    if (copy == null) {
+    // The families a library device brings, then its template copy
+    // (DR-245 §11.244.3), in the order the add needs them.
+    final prelude = plan?.prelude ?? const <Command<RackDocument>>[];
+    if (prelude.isEmpty) {
       _controller.run(command);
     } else {
       // NAMED EXPLICITLY AND NOT DEFERRED, which is deliberate: this
@@ -4493,10 +4495,19 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
       // §11.155.2's null would name it after the copy. `AddDeviceCommand`
       // has a static label, so nothing here was ever affected by `#866`.
       _controller.transact(command.label, (tx) {
-        tx
-          ..add(copy)
-          ..add(command);
+        for (final c in prelude) {
+          tx.add(c);
+        }
+        tx.add(command);
       });
+    }
+    // SHOWN AFTER THE FRAME, so it lands after the "Placed ..." line every
+    // caller of this shows next, rather than being replaced by it unread.
+    // Held longer than a placement's line because it asks for an action.
+    if (plan?.familyNotice case final notice?) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _status.show(notice, hold: const Duration(seconds: 8)),
+      );
     }
     // Return focus to the canvas so the brand-new selection can
     // immediately respond to Delete/undo/the arrow-key nudge without an
@@ -4535,7 +4546,7 @@ class RackCanvasScreenState extends State<RackCanvasScreen>
     // A second placement of the same library row copies nothing, so it
     // says nothing, and the rule cannot drift out of step with what the
     // document did because it IS what the document did.
-    final copied = copy == null || row == null
+    final copied = plan?.copy == null || row == null
         ? ''
         : 'Added ${row.body.displayName} from '
               '${row.library?.libraryName ?? 'a library'}. ';
