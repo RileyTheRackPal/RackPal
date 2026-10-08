@@ -307,6 +307,20 @@ List<ConnectorTypeDef> cloneConnectorTypes(RackDocument doc) =>
       return byName != 0 ? byName : a.id.v.compareTo(b.id.v);
     });
 
+/// Why the family [id] prints like another in [doc], or null when it does
+/// not (DR-245 §11.244.3).
+///
+/// The Signal families section marks a family with this until its line is
+/// changed. COMPUTED, NEVER STORED: a mark kept in the file would outlive
+/// the clash the day the other family changed, and this cannot.
+String? familyPrintClash(RackDocument doc, SignalFamilyId id) {
+  final palette = _palette(doc);
+  final entry = palette.where((e) => e.familyId == id).firstOrNull;
+  if (entry == null) return null;
+  final hits = pal1ViolationsOf(entry, palette);
+  return hits.isEmpty ? null : cloneCollisionSentence(doc, hits);
+}
+
 /// One sentence naming every family [collisions] involves.
 String cloneCollisionSentence(
   RackDocument doc,

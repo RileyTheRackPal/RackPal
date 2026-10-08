@@ -675,10 +675,43 @@ class _SignalFamilies extends StatelessWidget {
           ListTile(
             dense: true,
             title: Text(f.displayName),
-            subtitle: Text(
-              '${f.id.v}  ·  clone of '
-              '${families[f.clonedFrom]?.displayName ?? f.clonedFrom!.v}',
-              style: theme.textTheme.bodySmall,
+            subtitle: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${f.id.v}  ·  clone of '
+                  '${families[f.clonedFrom]?.displayName ?? f.clonedFrom!.v}',
+                  style: theme.textTheme.bodySmall,
+                ),
+                // THE MARK A PAL-1 CLASH LEAVES (DR-245 §11.244.3), computed
+                // from the palette every build so it goes the moment either
+                // family's line changes. Only a family a library brought can
+                // carry one: the clone dialog refuses a clash outright.
+                //
+                // AN ICON, NOT A `⚠` IN THE TEXT: the bundled face has no such
+                // glyph, and the glyph-coverage gate refused it as a box.
+                if (familyPrintClash(doc, f.id) case final clash?)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        size: 14,
+                        color: theme.colorScheme.error,
+                      ),
+                      const SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          clash,
+                          key: ValueKey('family-clash-${f.id.v}'),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
             ),
           ),
         const SizedBox(height: 8),

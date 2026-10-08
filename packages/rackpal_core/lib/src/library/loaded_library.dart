@@ -32,6 +32,7 @@
 import 'package:meta/meta.dart';
 import 'package:rackpal_core/src/library/rmdx_codec.dart'
     show DeviceTemplateFile;
+import 'package:rackpal_core/src/model/registries.dart';
 
 /// One library that is loaded and offering templates to the palette.
 @immutable
@@ -40,6 +41,7 @@ final class LoadedLibrary {
     required this.id,
     required this.name,
     required this.templates,
+    this.signalFamilies = const [],
   });
 
   /// Stable across relaunches, unique across the shelf, and NOT the
@@ -58,6 +60,10 @@ final class LoadedLibrary {
   final String name;
 
   final List<DeviceTemplateFile> templates;
+
+  /// The families the library carries (DR-245 §11.244.1), handed on to
+  /// every row it offers so a placement can bring the ones it needs.
+  final List<SignalFamilyDef> signalFamilies;
 
   @override
   String toString() => 'LoadedLibrary($id, ${templates.length} templates)';

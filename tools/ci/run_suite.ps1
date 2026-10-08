@@ -1329,7 +1329,12 @@ $SuiteFloors = @{
     # families_test.dart. What a device file carries (carried and accepted
     # clones, never a shipped family, never an undefined id), and both
     # formats written at v4 only when they carry one, byte-exact either way.
-    'rackpal_core'   = 5694
+    # 5701 at `#1034` (SFE-C6, DR-245 §11.244.3): +7. Six in library/
+    # family_arrival_test.dart (absent arrives, identical is nothing, a
+    # different one takes a fresh id and name with the device following, a
+    # second placement mints nothing, a PAL-1 clash is placed and said by
+    # name, undo takes it back) and one in epoch_mask_test.dart.
+    'rackpal_core'   = 5701
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -2095,7 +2100,9 @@ $SuiteFloors = @{
     # 2146 at `#831` (SFE-C3): +2 in widgets/family_picker_provenance_test.
     # dart, the "clone of" chip on a clone's row and not a shipped one's,
     # and "Clones only" narrowing, offered only when there is a clone.
-    'rackpal_ui'     = 2146
+    # 2147 at `#1034` (SFE-C6): +1 in settings/project_settings_dialog_
+    # test.dart, a family that prints like another marked by name.
+    'rackpal_ui'     = 2147
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

@@ -1342,6 +1342,33 @@ void main() {
       );
     });
 
+    test('AddArrivedFamiliesCommand', () {
+      // SFE-C6 (`#1034`). A family a library device brought, under an id
+      // the house document does not hold.
+      final doc = _house();
+      final parent =
+          doc.registries.signalFamilies[const SignalFamilyId(
+            'ctl.cresnet',
+          )]!;
+      _covers(
+        doc,
+        AddArrivedFamiliesCommand(
+          families: [
+            SignalFamilyDef(
+              id: const SignalFamilyId('ctl.epoch_arrival'),
+              displayName: 'Epoch arrival',
+              domain: parent.domain,
+              defaultConnector: parent.defaultConnector,
+              defaultDirection: parent.defaultDirection,
+              defaultTopology: parent.defaultTopology,
+              clonedFrom: parent.id,
+            ),
+          ],
+        ),
+        expectAtLeast: {'registries'},
+      );
+    });
+
     test('SetConnectorAliasesCommand', () {
       final doc = _house();
       final id = doc.registries.connectorTypes.keys.first;

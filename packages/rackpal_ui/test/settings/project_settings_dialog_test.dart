@@ -676,4 +676,45 @@ void main() {
     expect(find.byKey(const ValueKey('service-filter')), findsOneWidget);
     expect(find.byKey(kCloneNameFieldKey), findsNothing);
   });
+
+  testWidgets('a family a library brought that prints like another is '
+      'marked, by name, until it does not (DR-245)', (tester) async {
+    final doc = _doc();
+    final lutron =
+        doc.registries.signalFamilies[const SignalFamilyId('ctl.lutron_qs')]!;
+    // On Lutron QS's own line, as a hand-made library could carry it.
+    doc.registries.signalFamilies[const SignalFamilyId(
+      'ctl.clasher',
+    )] = SignalFamilyDef(
+      id: const SignalFamilyId('ctl.clasher'),
+      displayName: 'Clasher',
+      domain: lutron.domain,
+      defaultConnector: lutron.defaultConnector,
+      defaultDirection: lutron.defaultDirection,
+      defaultTopology: lutron.defaultTopology,
+      dashOverride: const [10000, 3000],
+      lineWeightPermilleOverride: 1000,
+      clonedFrom: const SignalFamilyId('ctl.cresnet'),
+    );
+    await _open(tester, doc);
+    const mark = ValueKey('family-clash-ctl.clasher');
+    await tester.scrollUntilVisible(
+      find.byKey(mark),
+      120,
+      scrollable: _list,
+    );
+    expect(
+      tester.widget<Text>(find.byKey(mark)).data,
+      contains('ctl.lutron_qs'),
+    );
+    // The warning is an ICON beside the sentence: the bundled face has no
+    // `\u26a0` glyph, and the glyph-coverage gate refused it as a box.
+    expect(
+      find.descendant(
+        of: find.ancestor(of: find.byKey(mark), matching: find.byType(Row)),
+        matching: find.byIcon(Icons.warning_amber_rounded),
+      ),
+      findsOneWidget,
+    );
+  });
 }

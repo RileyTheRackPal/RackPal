@@ -258,6 +258,7 @@ export 'src/idformat/collision_policy.dart';
 export 'src/idformat/designator_allocator.dart';
 export 'src/idformat/id_format.dart';
 export 'src/idformat/tokens.dart';
+export 'src/library/family_arrival.dart';
 export 'src/library/library_families.dart';
 export 'src/library/library_import.dart';
 export 'src/library/library_placement.dart';
