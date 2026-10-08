@@ -644,4 +644,36 @@ void main() {
       );
     });
   });
+
+  testWidgets('Signal families lists a clone by its parent, and its button '
+      'opens the clone dialog at the parent (SFE-C1)', (tester) async {
+    final doc = _doc();
+    final free = cloneHeadroom(doc, const SignalDomainId('ctl'))!.free.first;
+    final built = buildCloneSignalFamily(
+      doc,
+      parent: const SignalFamilyId('ctl.cresnet'),
+      displayName: 'Vantage',
+      shortTag: 'VNT',
+      dashPermille: free.dashPermille,
+      weightPermille: free.weightPermille,
+    );
+    (built as CloneSignalFamilyReady).command.apply(doc);
+
+    await _open(tester, doc);
+    await tester.scrollUntilVisible(
+      find.byKey(kCloneFamilyButtonKey),
+      120,
+      scrollable: _list,
+    );
+    await tester.ensureVisible(find.byKey(kCloneFamilyButtonKey));
+    await tester.pumpAndSettle();
+    expect(find.text('Vantage'), findsOneWidget);
+    expect(find.textContaining('clone of Cresnet'), findsOneWidget);
+
+    await tester.tap(find.byKey(kCloneFamilyButtonKey));
+    await tester.pumpAndSettle();
+    // The parent comes first: the picker, and no name field yet.
+    expect(find.byKey(const ValueKey('service-filter')), findsOneWidget);
+    expect(find.byKey(kCloneNameFieldKey), findsNothing);
+  });
 }

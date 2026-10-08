@@ -89,6 +89,10 @@ void main() {
       expect(made.defaultDirection, parent.defaultDirection);
       expect(made.defaultTopology, parent.defaultTopology);
       expect(made.glyphOverride, parent.glyphOverride);
+      // SFE-C3: the parent is recorded, so a picker can say what this
+      // was cloned from; and no shipped family carries the field.
+      expect(made.clonedFrom, _cresnet);
+      expect(parent.clonedFrom, isNull);
       // Aliases are NOT inherited: they are how a typed token finds a
       // family, and a copy would make `cresnet` resolve two ways.
       expect(made.aliases, isEmpty);
@@ -251,10 +255,66 @@ void main() {
       expect(made.shortTag, 'VNT');
       expect(made.defaultConnector, const ConnectorTypeId('conn.hardwired'));
       expect(made.dashOverride, clone.family.dashOverride);
+      expect(made.clonedFrom, _cresnet);
       expect(
         made.lineWeightPermilleOverride,
         clone.family.lineWeightPermilleOverride,
       );
+    });
+  });
+
+  group('SFE-C: what the clone dialog reads agrees with the command', () {
+    test('a name already in the domain is refused, because the picker '
+        'shows a family by its label', () {
+      expect(
+        _refused(_clone(_doc(), name: '  cresnet ')),
+        contains('ctl.cresnet'),
+      );
+    });
+
+    test('a clone is cloned from a shipped family, never from a clone', () {
+      final doc = _doc();
+      final first = _ready(_clone(doc));
+      expect(first.apply(doc), isTrue);
+      final reason = _refused(
+        _clone(doc, parent: first.family.id, name: 'Vantage Pro'),
+      );
+      expect(reason, contains('itself a clone'));
+      expect(reason, contains('Cresnet'));
+      expect(
+        cloneableFamilies(doc).signalFamilies.containsKey(first.family.id),
+        isFalse,
+      );
+    });
+
+    test('every option the dialog draws, free or taken, is the verdict the '
+        'command reaches, in the same words', () {
+      // The dialog draws before the person chooses and the command refuses
+      // after. Over every option of the most crowded domain by family
+      // count, a free option must build and a taken one must refuse with
+      // the exact sentence the dialog showed.
+      final doc = _doc();
+      final room = cloneHeadroom(doc, const SignalDomainId('ctl'))!;
+      expect(room.options, hasLength(cloneMenu().dashes.length * 5));
+      expect(room.free, isNotEmpty);
+      expect(room.options.where((o) => !o.isFree), isNotEmpty);
+      for (final o in room.options) {
+        final r = _clone(
+          doc,
+          dash: o.dashPermille,
+          weight: o.weightPermille,
+        );
+        final where = '${o.dashPermille} @ ${o.weightPermille}';
+        if (o.isFree) {
+          expect(r, isA<CloneSignalFamilyReady>(), reason: where);
+        } else {
+          expect(
+            _refused(r),
+            cloneCollisionSentence(doc, o.blockers),
+            reason: where,
+          );
+        }
+      }
     });
   });
 }

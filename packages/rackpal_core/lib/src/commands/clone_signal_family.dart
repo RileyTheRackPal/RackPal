@@ -145,6 +145,13 @@ CloneSignalFamilyResult buildCloneSignalFamily(
       'There is no signal family ${parent.v} to clone.',
     );
   }
+  if (from.clonedFrom case final grand?) {
+    final name = families[grand]?.displayName ?? grand.v;
+    return CloneSignalFamilyRefused(
+      '${from.displayName} is itself a clone. Clone the family it came '
+      'from, $name, instead.',
+    );
+  }
   final domain = _domains(doc)[from.domain];
   if (domain == null) {
     return CloneSignalFamilyRefused(
@@ -170,7 +177,22 @@ CloneSignalFamilyResult buildCloneSignalFamily(
     );
   }
 
-  final menu = pal1ClassVocabulary(pal1EntriesOf(buildSeedRegistries()));
+  // A SECOND FAMILY WITH THE SAME NAME IN ONE DOMAIN IS REFUSED, because
+  // the family picker shows and resolves a family by its printed label
+  // (`signalFamilyCellLabel`: domain tag and name). A clone named
+  // `Cresnet` in Control would print exactly as the real one, and the
+  // picker could not tell a person which of the two they were choosing.
+  for (final f in families.values) {
+    if (f.domain == from.domain &&
+        f.displayName.trim().toLowerCase() == name.toLowerCase()) {
+      return CloneSignalFamilyRefused(
+        '${domain.displayName} already has a family called '
+        '${f.displayName} (${f.id.v}). A new one needs its own name.',
+      );
+    }
+  }
+
+  final menu = cloneMenu();
   final onMenu =
       menu.weights.contains(weightPermille) &&
       menu.dashes.any((d) => d.join(',') == dashPermille.join(','));
@@ -181,12 +203,7 @@ CloneSignalFamilyResult buildCloneSignalFamily(
   }
 
   final id = signalFamilyIdFor(doc, parent, name);
-  final domains = _domains(doc);
-  // Through `pal1EntriesOf`, which sorts by id, so the refusal names the
-  // same families in the same order every time.
-  final palette = pal1EntriesOf(
-    Registries(signalDomains: domains, signalFamilies: families),
-  );
+  final palette = _palette(doc);
   final collisions = pal1ViolationsOf(
     Pal1Entry(
       familyId: id,
@@ -199,7 +216,7 @@ CloneSignalFamilyResult buildCloneSignalFamily(
   );
   if (collisions.isNotEmpty) {
     return CloneSignalFamilyRefused(
-      _collisionSentence(collisions, families, domains),
+      cloneCollisionSentence(doc, collisions),
       collisions: collisions,
     );
   }
@@ -220,12 +237,82 @@ CloneSignalFamilyResult buildCloneSignalFamily(
         dashOverride: dashPermille,
         lineWeightPermilleOverride: weightPermille,
         glyphOverride: from.glyphOverride,
+        clonedFrom: from.id,
       ),
     ),
   );
 }
 
-/// One sentence naming every family the choice collides with.
+// ═════════════════════════════════════════════════════════════════════
+// WHAT THE CLONE DIALOG READS, SO IT AND THE COMMAND CANNOT DISAGREE
+// ═════════════════════════════════════════════════════════════════════
+// The dialog (SFE-C1/C2) draws every option with its verdict BEFORE the
+// person chooses, and the builder above refuses AFTER. If each computed
+// its own menu, palette or sentence, a swatch could read free and then be
+// refused, or read taken for a reason the refusal never gives. So the
+// four things the dialog needs live here, beside the builder that uses
+// the same ones.
+
+/// Everything a clone is judged against: the document's families and any
+/// shipped family it lacks, through `pal1EntriesOf`, which sorts by id so
+/// a refusal names the same families in the same order every time.
+List<Pal1Entry> _palette(RackDocument doc) => pal1EntriesOf(
+  Registries(signalDomains: _domains(doc), signalFamilies: _families(doc)),
+);
+
+/// DR-243's menu: one dash per class at the shipped weights, from the
+/// SHIPPED palette, so a document's own clones cannot reshape it.
+Pal1Vocabulary cloneMenu() =>
+    pal1ClassVocabulary(pal1EntriesOf(buildSeedRegistries()));
+
+/// What a new family in [domain] can still take, every option with its
+/// blockers, or null when [doc] has no such domain.
+Pal1Headroom? cloneHeadroom(RackDocument doc, SignalDomainId domain) {
+  final d = _domains(doc)[domain];
+  if (d == null) return null;
+  return pal1Headroom(
+    palette: _palette(doc),
+    domain: d,
+    vocabulary: cloneMenu(),
+  );
+}
+
+/// The families a person may clone FROM: the shipped ones, never a clone.
+///
+/// DR-122 §11.121.2 says a family is *"derived from a shipped family"*. A
+/// clone of a clone would inherit the same locked fields, so it is not
+/// dangerous; it is refused because the ruling says shipped, and because
+/// "clone of Vantage, clone of Cresnet" is a chain a person reading the
+/// picker should never have to follow.
+Registries cloneableFamilies(RackDocument doc) => Registries(
+  signalDomains: _domains(doc),
+  signalFamilies: {
+    for (final f in _families(doc).values)
+      if (f.clonedFrom == null) f.id: f,
+  },
+);
+
+/// The domain a clone of a family in [domain] draws in, from the same
+/// document-then-seed union the builder judges against, or null.
+SignalDomainDef? cloneDomain(RackDocument doc, SignalDomainId domain) =>
+    _domains(doc)[domain];
+
+/// The connector types a clone may take as its default (DR-244 §11.243.3),
+/// sorted by display name then id so a menu built from it holds still.
+List<ConnectorTypeDef> cloneConnectorTypes(RackDocument doc) =>
+    _connectors(doc).values.toList()..sort((a, b) {
+      final byName = a.displayName.toLowerCase().compareTo(
+        b.displayName.toLowerCase(),
+      );
+      return byName != 0 ? byName : a.id.v.compareTo(b.id.v);
+    });
+
+/// One sentence naming every family [collisions] involves.
+String cloneCollisionSentence(
+  RackDocument doc,
+  List<Pal1Violation> collisions,
+) => _collisionSentence(collisions, _families(doc), _domains(doc));
+
 String _collisionSentence(
   List<Pal1Violation> collisions,
   Map<SignalFamilyId, SignalFamilyDef> families,

@@ -1319,7 +1319,11 @@ $SuiteFloors = @{
     # construction-site census, one for one.
     # 5683 at `#825`: +1 in epoch_mask_test.dart, which refused the clone
     # until its declared EpochMask was checked against what it changes.
-    'rackpal_core'   = 5683
+    # 5686 at `#829`/`#830` (SFE-C1/C2): +3 in commands/clone_signal_family_
+    # test.dart. A name already in the domain is refused (the picker shows
+    # a family by its label); a clone is never cloned; and every option the
+    # dialog draws is the verdict the command reaches, in the same words.
+    'rackpal_core'   = 5686
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -2076,7 +2080,13 @@ $SuiteFloors = @{
     # a whole row tabbed from KEY with every stop strictly further right.
     # 2139 at `#1025` (TAB-2, AC-058): +1 in builder/port_grid_test.dart,
     # four labels typed down a column through Enter, across a bank header.
-    'rackpal_ui'     = 2139
+    # 2144 at `#829`/`#830` (SFE-C1/C2, DR-122): +5. Four in settings/
+    # clone_family_dialog_test.dart (the parent first and then in view; a
+    # taken line shown chosen with its reason on screen; a free line
+    # clones with what was chosen; one swatch per menu option) and one in
+    # project_settings_dialog_test.dart (the section lists a clone by its
+    # parent and opens the dialog).
+    'rackpal_ui'     = 2144
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

@@ -26,13 +26,17 @@
 //
 // ── WHAT THIS IS NOT ───────────────────────────────────────────────────
 // RJ-012 rejects a general registry authoring UI and AC-011 withdraws
-// user-authored validation rules. This edits a document's own settings. It
-// is not a registry editor, and `refused_surfaces_test.dart` fails if one
-// ever appears.
+// user-authored validation rules. This edits a document's own settings,
+// and since SFE-C1 it holds ONE registry surface, which DR-122 amended
+// RJ-012 to allow: cloning a signal family from one that ships. It is not
+// a general registry editor. `refused_surfaces_test.dart` still fails on a
+// connector-type or colour-scheme editor, and on any signal family made
+// other than by the clone.
 import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:rackpal_core/rackpal_core.dart';
+import 'package:rackpal_ui/src/settings/clone_family_dialog.dart';
 import 'package:rackpal_ui/src/theme/console_theme.dart';
 import 'package:rackpal_ui/src/validation/rule_severity_dialog.dart';
 
@@ -142,6 +146,14 @@ class _SettingsDialogState extends State<_SettingsDialog> {
               if (!kSettingsDrawnInSheetSet.contains(f.key)) _row(f),
             const Divider(height: 32),
             _FamilyColours(
+              doc: widget.doc,
+              onEdit: (commands) {
+                widget.onEdit(commands);
+                setState(() {});
+              },
+            ),
+            const Divider(height: 32),
+            _SignalFamilies(
               doc: widget.doc,
               onEdit: (commands) {
                 widget.onEdit(commands);
@@ -602,6 +614,87 @@ class _MediaRow extends StatelessWidget {
           if (v != null) onChanged(v);
         },
       ),
+    );
+  }
+}
+
+// ── DR-122's surface ────────────────────────────────────────────────────
+
+/// The button that opens the clone dialog, so a test can find THAT one.
+const Key kCloneFamilyButtonKey = Key('clone-family-button');
+
+/// This project's cloned families, and the way to make one (SFE-C1).
+///
+/// HERE, BESIDE THE COLOURS, AND THE USER CHOSE IT (2026-10-07). A family
+/// is a project-level registry decision like a colour exception, and the
+/// clone dialog needs a real window rather than a grid cell's popup. The
+/// list shows each clone with its parent, because the parent is what a
+/// person needs to reason about what it inherited.
+class _SignalFamilies extends StatelessWidget {
+  const _SignalFamilies({required this.doc, required this.onEdit});
+
+  final RackDocument doc;
+  final ProjectSettingEdit onEdit;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final families = doc.registries.signalFamilies;
+    final clones =
+        [
+          for (final f in families.values)
+            if (f.clonedFrom != null) f,
+        ]..sort((a, b) {
+          final c = a.displayName.toLowerCase().compareTo(
+            b.displayName.toLowerCase(),
+          );
+          return c != 0 ? c : a.id.v.compareTo(b.id.v);
+        });
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text('Signal families', style: theme.textTheme.titleSmall),
+        Text(
+          'A new family starts as a copy of one that ships, keeping what it '
+          'carries into every port: its domain, direction and topology. You '
+          'name it and choose a line no other family prints.',
+          style: theme.textTheme.bodySmall,
+        ),
+        const SizedBox(height: 8),
+        if (clones.isEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Text(
+              'This project has no families of its own yet.',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: kConsoleEmphasis,
+              ),
+            ),
+          ),
+        for (final f in clones)
+          ListTile(
+            dense: true,
+            title: Text(f.displayName),
+            subtitle: Text(
+              '${f.id.v}  ·  clone of '
+              '${families[f.clonedFrom]?.displayName ?? f.clonedFrom!.v}',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton.icon(
+            key: kCloneFamilyButtonKey,
+            icon: const Icon(Icons.copy_all, size: 18),
+            label: const Text('Clone a family...'),
+            onPressed: () async {
+              final command = await showCloneFamilyDialog(context, doc: doc);
+              if (command != null) onEdit([command]);
+            },
+          ),
+        ),
+      ],
     );
   }
 }

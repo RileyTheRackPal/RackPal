@@ -3218,6 +3218,9 @@ JsonMap _encodeSignalFamilyDef(SignalFamilyDef d) {
   // move. A document written AFTER it carries 26 of these, which is why
   // the starters' bytes change: a document embeds its own registries.
   putIfNotNull(json, 'glyphOverride', d.glyphOverride);
+  // SFE-C3 (DR-122), ADDITIVE ON THE SAME PRECEDENT: only a clone carries
+  // it, so no shipped family and no older document gains a key.
+  putIfNotNull(json, 'clonedFrom', d.clonedFrom?.v);
   return json;
 }
 
@@ -3267,6 +3270,13 @@ SignalFamilyDef _decodeSignalFamilyDef(SignalFamilyId id, JsonMap json) =>
         json['glyphOverride'],
         'SignalFamilyDef.glyphOverride',
       ),
+      clonedFrom: switch (asStrOrNull(
+        json['clonedFrom'],
+        'SignalFamilyDef.clonedFrom',
+      )) {
+        final v? => SignalFamilyId(v),
+        null => null,
+      },
     );
 
 JsonMap _encodeConnectorTypeDef(ConnectorTypeDef d) {
