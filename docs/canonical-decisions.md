@@ -24422,7 +24422,7 @@ not in the shipped catalogue that its templates' ports name. DR-123 §11.122.6's
 or `.rmda`"* described DR-123's own scope and is not a bar on this; §12.54 records the reading.
 
 **11.244.2 THE PERSONAL LIBRARY IS `My library`, CHOSEN BY THE USER.** A clone is written to
-`My library.rmda` in the library directory, created on first use. This is **the first shelf write in the
+`My library.rpda` in the library directory, created on first use. This is **the first shelf write in the
 product**: DR-123's authored devices (`#817`) are unbuilt and will write to the same file. DR-123
 §11.122.4 governs it unchanged: **not a `Command`**, so undoing the clone does not remove it from the
 library, and **a failure is a notice, never a refusal**, since the project write has already happened.
@@ -25235,7 +25235,7 @@ close and a reopen.
 
 | Ruling | What it said | What now governs |
 |---|---|---|
-| **DR-122 §11.121.6**, the shelf half | A cloned family is written *"onto the user's shelf"* | **Into `My library.rmda`**, the personal device library on the shelf, which carries families since DR-245 (§11.244.1, §11.244.2). The project copy stays authoritative for the drawing. |
+| **DR-122 §11.121.6**, the shelf half | A cloned family is written *"onto the user's shelf"* | **Into `My library.rpda`**, the personal device library on the shelf, which carries families since DR-245 (§11.244.1, §11.244.2). The project copy stays authoritative for the drawing. |
 | **DR-123 §11.122.6** | *"does not touch `.rmdx` or `.rmda`"* | **Read as DR-123's own scope**, not a bar on later rulings. `.rmda` and `.rmdx` gain an optional `signalFamilies` list, written at schema v4 only when present (§11.244.1). |
 
 ## 13. Resolved §10 questions
