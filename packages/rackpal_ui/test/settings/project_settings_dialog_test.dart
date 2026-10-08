@@ -36,6 +36,7 @@ Future<List<Command<RackDocument>>> _open(
   WidgetTester tester,
   RackDocument doc, {
   Size size = const Size(1100, 1400),
+  List<LibraryFamily> libraryFamilies = const [],
 }) async {
   final ran = <Command<RackDocument>>[];
   tester.view.physicalSize = size;
@@ -53,6 +54,7 @@ Future<List<Command<RackDocument>>> _open(
               // clock and an author for that one section.
               clock: FixedClock(DateTime.utc(2026, 9, 12)),
               actor: 'test',
+              libraryFamilies: libraryFamilies,
               onEdit: (commands) {
                 ran.addAll(commands);
                 for (final c in commands) {
@@ -767,5 +769,42 @@ void main() {
       find.byKey(const ValueKey('family-clash-ctl.clasher')),
       findsNothing,
     );
+  });
+
+  testWidgets('a family from a library is offered, added through the same '
+      'rules as a device, and then no longer offered (SFE-C8)', (tester) async {
+    final doc = _doc();
+    final lutron =
+        doc.registries.signalFamilies[const SignalFamilyId('ctl.lutron_qs')]!;
+    final vantage = SignalFamilyDef(
+      id: const SignalFamilyId('ctl.vantage_2'),
+      displayName: 'Vantage',
+      domain: lutron.domain,
+      defaultConnector: lutron.defaultConnector,
+      defaultDirection: lutron.defaultDirection,
+      defaultTopology: lutron.defaultTopology,
+      shortTag: 'VNT',
+      dashOverride: const [4000, 3000],
+      lineWeightPermilleOverride: 2000,
+      clonedFrom: const SignalFamilyId('ctl.cresnet'),
+    );
+    final ran = await _open(
+      tester,
+      doc,
+      libraryFamilies: [(libraryName: 'My library', family: vantage)],
+    );
+    const add = ValueKey('adopt-family-My library-ctl.vantage_2');
+    await tester.scrollUntilVisible(find.byKey(add), 120, scrollable: _list);
+    await tester.ensureVisible(find.byKey(add));
+    await tester.pumpAndSettle();
+    expect(find.text('From your libraries'), findsOneWidget);
+    expect(find.textContaining('from My library'), findsOneWidget);
+
+    await tester.tap(find.byKey(add));
+    await tester.pumpAndSettle();
+    expect(ran.whereType<AddArrivedFamiliesCommand>(), hasLength(1));
+    expect(doc.registries.signalFamilies[vantage.id], same(vantage));
+    expect(find.byKey(add), findsNothing);
+    expect(find.text('From your libraries'), findsNothing);
   });
 }

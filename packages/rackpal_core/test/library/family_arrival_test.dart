@@ -162,4 +162,57 @@ void main() {
     }
     expect(doc.registries.signalFamilies.containsKey(vantage.id), isFalse);
   });
+
+  group('SFE-C8: adding a family straight from a library', () {
+    test('it follows the same three cases, and once added the project '
+        'holds it', () {
+      final vantage = _vantage();
+      final doc = _doc('doc-g');
+      expect(projectHoldsFamily(doc, vantage), isFalse);
+      final command = planFamilyAdoption(
+        doc,
+        vantage,
+        libraryName: 'My library',
+      ).command!;
+      expect(command.apply(doc), isTrue);
+      expect(projectHoldsFamily(doc, vantage), isTrue);
+      expect(
+        planFamilyAdoption(doc, vantage, libraryName: 'My library').command,
+        isNull,
+      );
+    });
+
+    test('a different family under the same id arrives under a fresh one, '
+        'and that arrival then counts as held', () {
+      final mine = _vantage();
+      final theirs = _vantage(nth: 1);
+      final doc = _doc('doc-h')..registries.signalFamilies[mine.id] = mine;
+      final plan = planFamilyAdoption(doc, theirs, libraryName: 'Acme');
+      expect(plan.added.single.id, isNot(mine.id));
+      expect(plan.added.single.displayName, 'Vantage 2');
+      plan.command!.apply(doc);
+      expect(doc.registries.signalFamilies[mine.id], same(mine));
+      expect(projectHoldsFamily(doc, theirs), isTrue);
+    });
+
+    test('libraryFamiliesOf names each family with its library, in a stable '
+        'order', () {
+      final v = _vantage();
+      final listed = libraryFamiliesOf([
+        LoadedLibrary(
+          id: 'b',
+          name: 'Zed',
+          templates: const [],
+          signalFamilies: [v],
+        ),
+        LoadedLibrary(
+          id: 'a',
+          name: 'Acme',
+          templates: const [],
+          signalFamilies: [v],
+        ),
+      ]);
+      expect([for (final lf in listed) lf.libraryName], ['Acme', 'Zed']);
+    });
+  });
 }

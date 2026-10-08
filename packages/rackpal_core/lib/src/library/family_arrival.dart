@@ -120,7 +120,42 @@ FamilyArrival planFamilyArrival(
       ...port.acceptedFamilies,
     ],
   }.where(byId.containsKey).toList()..sort((a, b) => a.v.compareTo(b.v));
-  if (named.isEmpty) return const FamilyArrival();
+  return _arrive(doc, [for (final id in named) byId[id]!], libraryName);
+}
+
+/// Plans adding [family] straight from a library a person chose it from
+/// (SFE-C8, DR-245 §11.244.5), under the SAME three cases as a device
+/// bringing it, so there is one set of rules for both roads in.
+FamilyArrival planFamilyAdoption(
+  RackDocument doc,
+  SignalFamilyDef family, {
+  required String libraryName,
+}) => _arrive(doc, [family], libraryName);
+
+/// Whether [doc] already holds [family]: by id and identical, or as an
+/// earlier arrival of it under a fresh id. What a library offers to add is
+/// what this answers no for.
+bool projectHoldsFamily(RackDocument doc, SignalFamilyDef family) {
+  final there = doc.registries.signalFamilies[family.id];
+  if (there != null &&
+      signalFamilyDefToJson(there).toString() ==
+          signalFamilyDefToJson(family).toString()) {
+    return true;
+  }
+  return doc.registries.signalFamilies.values.any(
+    (f) => f.id != family.id && _shape(f) == _shape(family),
+  );
+}
+
+/// The three cases over [arriving], sorted by id by every caller.
+FamilyArrival _arrive(
+  RackDocument doc,
+  List<SignalFamilyDef> arriving,
+  String libraryName,
+) {
+  if (arriving.isEmpty) return const FamilyArrival();
+  final byId = {for (final f in arriving) f.id: f};
+  final named = byId.keys.toList()..sort((a, b) => a.v.compareTo(b.v));
 
   final shipped = buildSeedSignalFamilies();
   final held = doc.registries.signalFamilies;

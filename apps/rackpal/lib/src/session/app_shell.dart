@@ -102,6 +102,7 @@ import 'package:rackpal_core/rackpal_core.dart'
         findingLocusOf,
         kDefaultUndoDepth,
         kUserPresetIdPrefix,
+        libraryFamiliesOf,
         mergeRackPresets,
         planOutletRemoval,
         planStructureRemoval,
@@ -1104,6 +1105,9 @@ final class AppShellState extends State<AppShell>
       // else in that dialog signs anything.
       clock: session.controller.clock,
       actor: session.controller.actor,
+      // SFE-C8: what the shelf's libraries carry, so a family cloned on
+      // the last job can be added to this one (DR-245 §11.244.5).
+      libraryFamilies: libraryFamiliesOf(_libraries),
       onEdit: (commands) {
         if (commands.isEmpty) return;
         // NULL: THE FIRST CHILD NAMES IT, read after it has applied

@@ -1338,7 +1338,11 @@ $SuiteFloors = @{
     # clone_signal_family_test.dart (a clone's new line and its undo; a
     # shipped family refused; a family judged as itself, so its own line
     # does not block it and another's does) and one in epoch_mask_test.
-    'rackpal_core'   = 5705
+    # 5708 at `#1036` (SFE-C8, DR-245 §11.244.5): +3 in library/family_
+    # arrival_test.dart. A family added from a library follows the three
+    # cases and is then held; a clash arrives under a fresh id and counts
+    # as held; libraryFamiliesOf names each with its library, stably.
+    'rackpal_core'   = 5708
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -2108,7 +2112,9 @@ $SuiteFloors = @{
     # test.dart, a family that prints like another marked by name.
     # 2148 at `#1035` (SFE-C7): +1 in settings/project_settings_dialog_
     # test.dart, Change line fixing a clash end to end, the mark gone.
-    'rackpal_ui'     = 2148
+    # 2149 at `#1036` (SFE-C8): +1 in settings/project_settings_dialog_
+    # test.dart, a library family offered, added, then no longer offered.
+    'rackpal_ui'     = 2149
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the

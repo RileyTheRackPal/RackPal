@@ -9,6 +9,7 @@
 // put a second copy of a CI-certified family into a file where it could
 // drift.
 import 'package:rackpal_core/src/catalog/seed_registries.dart';
+import 'package:rackpal_core/src/library/loaded_library.dart';
 import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/model/template.dart';
 import 'package:rackpal_core/src/units/ids.dart';
@@ -43,3 +44,22 @@ List<SignalFamilyDef> familiesToCarry(
       if (registries.signalFamilies[id] case final family?) family,
   ];
 }
+
+/// One family a loaded library carries, with the name of the library it
+/// came from, which is how Signal families says where it is from.
+typedef LibraryFamily = ({String libraryName, SignalFamilyDef family});
+
+/// Every family [libraries] carry, sorted by display name then library
+/// name then id, so a list built from it holds still (SFE-C8).
+List<LibraryFamily> libraryFamiliesOf(Iterable<LoadedLibrary> libraries) =>
+    [
+      for (final lib in libraries)
+        for (final f in lib.signalFamilies) (libraryName: lib.name, family: f),
+    ]..sort((a, b) {
+      final byName = a.family.displayName.toLowerCase().compareTo(
+        b.family.displayName.toLowerCase(),
+      );
+      if (byName != 0) return byName;
+      final byLib = a.libraryName.compareTo(b.libraryName);
+      return byLib != 0 ? byLib : a.family.id.v.compareTo(b.family.id.v);
+    });

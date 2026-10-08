@@ -82,6 +82,7 @@ Future<void> showProjectSettingsDialog(
   required ProjectSettingEdit onEdit,
   required Clock clock,
   required String actor,
+  List<LibraryFamily> libraryFamilies = const [],
 }) => showDialog<void>(
   context: context,
   builder: (context) => _SettingsDialog(
@@ -89,6 +90,7 @@ Future<void> showProjectSettingsDialog(
     onEdit: onEdit,
     clock: clock,
     actor: actor,
+    libraryFamilies: libraryFamilies,
   ),
 );
 
@@ -98,12 +100,17 @@ class _SettingsDialog extends StatefulWidget {
     required this.onEdit,
     required this.clock,
     required this.actor,
+    required this.libraryFamilies,
   });
 
   final RackDocument doc;
   final ProjectSettingEdit onEdit;
   final Clock clock;
   final String actor;
+
+  /// Families the shelf's libraries carry (SFE-C8). Supplied by the app,
+  /// which owns the shelf; this package reads no files.
+  final List<LibraryFamily> libraryFamilies;
 
   @override
   State<_SettingsDialog> createState() => _SettingsDialogState();
@@ -155,6 +162,7 @@ class _SettingsDialogState extends State<_SettingsDialog> {
             const Divider(height: 32),
             _SignalFamilies(
               doc: widget.doc,
+              libraryFamilies: widget.libraryFamilies,
               onEdit: (commands) {
                 widget.onEdit(commands);
                 setState(() {});
@@ -631,10 +639,15 @@ const Key kCloneFamilyButtonKey = Key('clone-family-button');
 /// list shows each clone with its parent, because the parent is what a
 /// person needs to reason about what it inherited.
 class _SignalFamilies extends StatelessWidget {
-  const _SignalFamilies({required this.doc, required this.onEdit});
+  const _SignalFamilies({
+    required this.doc,
+    required this.onEdit,
+    required this.libraryFamilies,
+  });
 
   final RackDocument doc;
   final ProjectSettingEdit onEdit;
+  final List<LibraryFamily> libraryFamilies;
 
   @override
   Widget build(BuildContext context) {
@@ -728,6 +741,43 @@ class _SignalFamilies extends StatelessWidget {
               ],
             ),
           ),
+        // SFE-C8 (DR-245 §11.244.5): THE ROAD INTO THIS PROJECT for a
+        // family no device brought. Families live inside libraries since
+        // DR-245, so one cloned on the last job reaches this one from here.
+        // Listed only when the project does not already hold it, by id or
+        // as an earlier arrival; added under C6's three cases, so a clash
+        // gets a fresh id here exactly as it would through a device.
+        if ([
+              for (final lf in libraryFamilies)
+                if (!projectHoldsFamily(doc, lf.family)) lf,
+            ]
+            case final offered when offered.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text('From your libraries', style: theme.textTheme.labelLarge),
+          for (final lf in offered)
+            ListTile(
+              dense: true,
+              title: Text(lf.family.displayName),
+              subtitle: Text(
+                '${lf.family.id.v}  ·  from ${lf.libraryName}',
+                style: theme.textTheme.bodySmall,
+              ),
+              trailing: TextButton(
+                key: ValueKey(
+                  'adopt-family-${lf.libraryName}-${lf.family.id.v}',
+                ),
+                onPressed: () {
+                  final command = planFamilyAdoption(
+                    doc,
+                    lf.family,
+                    libraryName: lf.libraryName,
+                  ).command;
+                  if (command != null) onEdit([command]);
+                },
+                child: const Text('Add to this project'),
+              ),
+            ),
+        ],
         const SizedBox(height: 8),
         Align(
           alignment: Alignment.centerLeft,
