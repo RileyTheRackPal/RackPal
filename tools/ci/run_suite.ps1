@@ -1325,7 +1325,11 @@ $SuiteFloors = @{
     # dialog draws is the verdict the command reaches, in the same words.
     # 5687 at `#831` (SFE-C3): +1 in commands/clone_signal_family_test.dart,
     # the picker's "clone of" label and its fall-back to the bare id.
-    'rackpal_core'   = 5687
+    # 5694 at `#1033` (SFE-C5, DR-245 §11.244.1): +7 in library/library_
+    # families_test.dart. What a device file carries (carried and accepted
+    # clones, never a shipped family, never an undefined id), and both
+    # formats written at v4 only when they carry one, byte-exact either way.
+    'rackpal_core'   = 5694
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -2349,7 +2353,9 @@ $SuiteFloors = @{
     # label writes and the dash clears, any case, a refusal with the list,
     # the cell's dash and label, and a null-modem marked in the table
     # bringing T5.01 into the export.
-    'rackpal_app'    = 1201
+    # 1202 at `#1033` (SFE-C5, DR-245): +1 in session/library_io_test.dart,
+    # a library exported from a device on a clone carries the clone, at v4.
+    'rackpal_app'    = 1202
 }
 
 # Test names in this repository contain em dashes. Without this the stream is

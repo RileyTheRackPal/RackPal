@@ -188,6 +188,54 @@ void main() {
       expect(lib.templates.map((t) => t.body.displayName), ['Switch']);
     });
 
+    test(
+      'a device built on a cloned family carries that family, and the '
+      'library is written where an older build refuses it (DR-245)',
+      () async {
+        final doc = _doc()
+          ..templates.clear()
+          ..registries = buildSeedRegistries();
+        final free = cloneHeadroom(
+          doc,
+          const SignalDomainId('ctl'),
+        )!.free.first;
+        final clone =
+            (buildCloneSignalFamily(
+                      doc,
+                      parent: const SignalFamilyId('ctl.cresnet'),
+                      displayName: 'Vantage',
+                      shortTag: 'VNT',
+                      dashPermille: free.dashPermille,
+                      weightPermille: free.weightPermille,
+                    )
+                    as CloneSignalFamilyReady)
+                .command;
+        expect(clone.apply(doc), isTrue);
+        final body = buildSeedCatalog().values.firstWhere(
+          (b) => b.ports.isNotEmpty,
+        );
+        body.ports.first.signalFamily = clone.family.id;
+        _hold(doc, 'tpl.keypad', body);
+        final fs = FakeFileStore(initialDirectories: <String>{'C:', r'C:\out'});
+
+        await exportDeviceLibrary(
+          session: _session(doc),
+          picker: FakeFilePicker(savePaths: [r'C:\out\kit.rpda']),
+          writer: _writer(fs),
+          askForLibrary: (c) async =>
+              ExportLibraryRequest(name: 'Shop Kit', selected: c),
+          context: _windows,
+        );
+
+        final written = _bytesAt(fs, r'C:\out\kit.rpda')!;
+        final tree = jsonDecode(utf8.decode(written)) as Map<String, Object?>;
+        expect(tree['schemaVersion'], 4);
+        final lib = (readRmdaBytes(written) as Ok<DeviceLibraryFile>).value;
+        expect(lib.signalFamilies.single.id, clone.family.id);
+        expect(lib.signalFamilies.single.displayName, 'Vantage');
+      },
+    );
+
     test('a cancelled dialog opens no file picker and says so', () async {
       final doc = _doc()..templates.clear();
       _hold(doc, 'tpl.mine', _body('Mine'));

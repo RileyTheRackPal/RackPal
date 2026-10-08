@@ -181,7 +181,15 @@ Future<bool> exportDeviceLibrary({
   }
 
   final bytes = encodeRmdaBytes(
-    DeviceLibraryFile(name: request.name, templates: request.selected),
+    DeviceLibraryFile(
+      name: request.name,
+      templates: request.selected,
+      // DR-245 §11.244.1: once for the library, the families its devices
+      // name that do not ship.
+      signalFamilies: familiesToCarry([
+        for (final t in request.selected) t.body,
+      ], session.document.registries),
+    ),
   );
   final result = await writer.write(
     paths: SavePaths.forTarget(

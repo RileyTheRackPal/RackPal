@@ -47,6 +47,7 @@ import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:rackpal_core/src/library/rmdx_codec.dart';
+import 'package:rackpal_core/src/model/registries.dart';
 import 'package:rackpal_core/src/persistence/codec.dart';
 import 'package:rackpal_core/src/persistence/json_codec.dart';
 import 'package:rackpal_core/src/persistence/json_limits.dart';
@@ -64,7 +65,9 @@ import 'package:rackpal_core/src/util/outcome.dart';
 /// what is really a wrong-file problem.
 const String kRmdaKind = 'device-library';
 
-/// The `.rpda` schema version this build writes and understands.
+/// The newest `.rpda` schema version this build understands. It WRITES
+/// this only for a library that carries a signal family, and
+/// [kRmdxFamilyFreeSchemaVersion] otherwise (DR-245 §11.244.1).
 ///
 /// **THE SAME CHAIN AS `.rmdx`, NOT A SECOND ONE** (DR-015 §11.15.4). The
 /// two formats move together by construction: a `.rpda` is `.rpdx`
@@ -76,10 +79,15 @@ const String _kSchemaVersion = 'schemaVersion';
 const String _kKind = 'kind';
 const String _kName = 'name';
 const String _kTemplates = 'templates';
+const String _kSignalFamilies = 'signalFamilies';
 
 /// A device library: a name and the templates it holds.
 final class DeviceLibraryFile {
-  const DeviceLibraryFile({required this.name, required this.templates});
+  const DeviceLibraryFile({
+    required this.name,
+    required this.templates,
+    this.signalFamilies = const [],
+  });
 
   /// What this library calls itself.
   ///
@@ -94,6 +102,13 @@ final class DeviceLibraryFile {
   final String name;
 
   final List<DeviceTemplateFile> templates;
+
+  /// The signal families this library's templates name that the shipped
+  /// catalogue does not hold, carried ONCE for the whole library rather
+  /// than per template (DR-245 §11.244.1). A library is the shelf, and two
+  /// devices built on one clone must not carry two copies that could
+  /// disagree. Empty in every library written before DR-245.
+  final List<SignalFamilyDef> signalFamilies;
 
   @override
   String toString() =>
@@ -145,7 +160,11 @@ final class MalformedRmdaError implements Exception {
 
 /// [file] as the plain JSON tree a `.rpda` holds.
 JsonMap rmdaToJsonTree(DeviceLibraryFile file) => <String, Object?>{
-  _kSchemaVersion: kRmdaSchemaVersion,
+  // `.rmdx`'s rule, and its constants: v4 only when a family is carried,
+  // so a family-free library stays byte-identical and opens everywhere.
+  _kSchemaVersion: file.signalFamilies.isEmpty
+      ? kRmdxFamilyFreeSchemaVersion
+      : kRmdaSchemaVersion,
   _kKind: kRmdaKind,
   _kName: file.name,
   _kTemplates: [
@@ -157,6 +176,8 @@ JsonMap rmdaToJsonTree(DeviceLibraryFile file) => <String, Object?>{
         'body': templateBodyToJson(t.body),
       },
   ],
+  if (file.signalFamilies.isNotEmpty)
+    _kSignalFamilies: signalFamiliesToJson(file.signalFamilies),
 };
 
 /// [file] as the canonical bytes that go on disk.
@@ -227,7 +248,7 @@ Outcome<DeviceLibraryFile> readRmdaJsonTree(JsonMap raw) {
   var tree = raw;
   if (stored == 2) {
     tree = _migrateRmdaV2ToV3(raw);
-  } else if (stored != kRmdaSchemaVersion) {
+  } else if (stored != 3 && stored != kRmdaSchemaVersion) {
     return Err(
       MalformedRmdaError(
         'no migration from $_kSchemaVersion $stored to $kRmdaSchemaVersion',
@@ -257,7 +278,18 @@ Outcome<DeviceLibraryFile> readRmdaJsonTree(JsonMap raw) {
         ),
       );
     }
-    return Ok(DeviceLibraryFile(name: name, templates: templates));
+    // v3 TO v4 MOVES NOTHING: a v3 library carries no families and an
+    // absent key reads as none, so 2, 3 and 4 all decode from here.
+    return Ok(
+      DeviceLibraryFile(
+        name: name,
+        templates: templates,
+        signalFamilies: signalFamiliesFromJson(
+          tree[_kSignalFamilies],
+          'rmda.$_kSignalFamilies',
+        ),
+      ),
+    );
   } on Object catch (e) {
     return Err(e);
   }
