@@ -1369,6 +1369,42 @@ void main() {
       );
     });
 
+    test('SetCloneLineCommand', () {
+      // SFE-C7 (`#1035`). A clone made through the real builder, then
+      // given another free line through the real one.
+      final doc = _house();
+      final menu = cloneHeadroom(doc, const SignalDomainId('ctl'))!;
+      final first = menu.free.first;
+      final clone =
+          (buildCloneSignalFamily(
+                    doc,
+                    parent: const SignalFamilyId('ctl.cresnet'),
+                    displayName: 'Epoch line test',
+                    shortTag: 'ELT',
+                    dashPermille: first.dashPermille,
+                    weightPermille: first.weightPermille,
+                  )
+                  as CloneSignalFamilyReady)
+              .command
+            ..apply(doc);
+      final next = cloneHeadroom(
+        doc,
+        const SignalDomainId('ctl'),
+        changing: clone.family.id,
+      )!.free.firstWhere((o) => o.weightPermille != first.weightPermille);
+      final built = buildChangeCloneLine(
+        doc,
+        family: clone.family.id,
+        dashPermille: next.dashPermille,
+        weightPermille: next.weightPermille,
+      );
+      _covers(
+        doc,
+        (built as ChangeCloneLineReady).command,
+        expectAtLeast: {'registries'},
+      );
+    });
+
     test('SetConnectorAliasesCommand', () {
       final doc = _house();
       final id = doc.registries.connectorTypes.keys.first;

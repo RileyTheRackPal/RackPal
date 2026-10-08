@@ -508,11 +508,16 @@ Pal1Headroom pal1Headroom({
   required Iterable<Pal1Entry> palette,
   required SignalDomainDef domain,
   required Pal1Vocabulary vocabulary,
+  SignalFamilyId? candidate,
 }) {
   final drawn = palette.toList();
   // An id no registry key can take: `SignalFamilyId`s are dotted
   // lower-case, so this cannot shadow a real family and be skipped.
-  const probe = SignalFamilyId(' headroom candidate ');
+  //
+  // [candidate] REPLACES IT when an EXISTING family is choosing a new line
+  // (SFE-C7): `pal1ViolationsOf` skips the candidate's own id, so a family
+  // is never refused a line for colliding with the one it is giving up.
+  final probe = candidate ?? const SignalFamilyId(' headroom candidate ');
   return Pal1Headroom(
     domainId: domain.id,
     options: [

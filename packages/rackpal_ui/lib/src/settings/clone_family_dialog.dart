@@ -514,3 +514,159 @@ class _LinePainter extends CustomPainter {
       old.weightPermille != weightPermille ||
       old.ink != ink;
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// CHANGE LINE (SFE-C7, DR-245 §11.244.4)
+// ═══════════════════════════════════════════════════════════════════════
+// The fix a PAL-1 clash points to: the same grid, judged as the family
+// itself so the line it is giving up never blocks it, and the current
+// line marked when it opens. The command restyles every cable of the
+// family, which is what fixes how they print.
+
+/// The submit button of the change-line dialog, so a test can find it.
+const Key kChangeLineSubmitKey = Key('change-line-submit');
+
+/// Opens the change-line dialog for the clone [family]; the command to
+/// apply, or null if cancelled.
+Future<SetCloneLineCommand?> showChangeLineDialog(
+  BuildContext context, {
+  required RackDocument doc,
+  required SignalFamilyDef family,
+}) => showDialog<SetCloneLineCommand>(
+  context: context,
+  builder: (context) => ChangeLineDialog(doc: doc, family: family),
+);
+
+/// Public so a widget test can pump it without a navigator round trip.
+class ChangeLineDialog extends StatefulWidget {
+  const ChangeLineDialog({required this.doc, required this.family, super.key});
+
+  final RackDocument doc;
+  final SignalFamilyDef family;
+
+  @override
+  State<ChangeLineDialog> createState() => _ChangeLineDialogState();
+}
+
+class _ChangeLineDialogState extends State<ChangeLineDialog> {
+  Pal1Option? _picked;
+  String? _refusal;
+
+  bool _isCurrent(Pal1Option o) =>
+      o.dashPermille.join(',') ==
+          (widget.family.dashOverride ?? const []).join(',') &&
+      o.weightPermille == widget.family.lineWeightPermilleOverride;
+
+  @override
+  void initState() {
+    super.initState();
+    final room = cloneHeadroom(
+      widget.doc,
+      widget.family.domain,
+      changing: widget.family.id,
+    );
+    _picked = room?.options.where(_isCurrent).firstOrNull;
+  }
+
+  void _submit() {
+    final picked = _picked;
+    if (picked == null) return;
+    switch (buildChangeCloneLine(
+      widget.doc,
+      family: widget.family.id,
+      dashPermille: picked.dashPermille,
+      weightPermille: picked.weightPermille,
+    )) {
+      case ChangeCloneLineReady(:final command):
+        Navigator.of(context).pop(command);
+      case ChangeCloneLineRefused(:final reason):
+        setState(() => _refusal = reason);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final family = widget.family;
+    final domain = cloneDomain(widget.doc, family.domain);
+    final room = cloneHeadroom(
+      widget.doc,
+      family.domain,
+      changing: family.id,
+    );
+    final picked = _picked;
+    final current = picked != null && _isCurrent(picked);
+    final reason =
+        _refusal ??
+        (picked == null || picked.isFree
+            ? null
+            : cloneCollisionSentence(widget.doc, picked.blockers));
+    return AlertDialog(
+      title: Text('Change line: ${family.displayName}'),
+      content: SizedBox(
+        width: 640,
+        height: 520,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              'Every ${family.displayName} cable is redrawn on the line you '
+              'pick. Dimmed lines are taken; pick one to see what by.',
+              style: theme.textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+            Expanded(
+              child: room == null || domain == null
+                  ? Text('This project has no ${family.domain.v} domain.')
+                  : SingleChildScrollView(
+                      child: _LineGrid(
+                        room: room,
+                        menu: cloneMenu(),
+                        ink: Color(greyscaleOf(domain.color.argb)),
+                        picked: picked,
+                        onPick: (o) => setState(() {
+                          _picked = o;
+                          _refusal = null;
+                        }),
+                      ),
+                    ),
+            ),
+            const Divider(height: 16),
+            SizedBox(
+              height: 40,
+              child: reason != null
+                  ? Text(
+                      reason,
+                      key: kCloneReasonKey,
+                      style: TextStyle(color: theme.colorScheme.error),
+                    )
+                  : Text(
+                      current
+                          ? 'This is its line now.'
+                          : picked == null
+                          ? 'Pick a line.'
+                          : 'Free: ${picked.dashClass} at '
+                                '${_weightLabel(picked.weightPermille)}.',
+                      key: kCloneFreeKey,
+                      style: theme.textTheme.bodySmall,
+                    ),
+            ),
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          key: kChangeLineSubmitKey,
+          onPressed: picked != null && picked.isFree && !current
+              ? _submit
+              : null,
+          child: const Text('Change'),
+        ),
+      ],
+    );
+  }
+}

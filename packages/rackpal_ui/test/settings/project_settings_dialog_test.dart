@@ -717,4 +717,55 @@ void main() {
       findsOneWidget,
     );
   });
+
+  testWidgets('Change line fixes a clash: a free line picked, the mark goes '
+      '(SFE-C7)', (tester) async {
+    final doc = _doc();
+    final lutron =
+        doc.registries.signalFamilies[const SignalFamilyId('ctl.lutron_qs')]!;
+    const id = SignalFamilyId('ctl.clasher');
+    doc.registries.signalFamilies[id] = SignalFamilyDef(
+      id: id,
+      displayName: 'Clasher',
+      domain: lutron.domain,
+      defaultConnector: lutron.defaultConnector,
+      defaultDirection: lutron.defaultDirection,
+      defaultTopology: lutron.defaultTopology,
+      dashOverride: const [10000, 3000],
+      lineWeightPermilleOverride: 1000,
+      clonedFrom: const SignalFamilyId('ctl.cresnet'),
+    );
+    final free = cloneHeadroom(
+      doc,
+      lutron.domain,
+      changing: id,
+    )!.free.first;
+    final ran = await _open(tester, doc);
+
+    const button = ValueKey('change-line-ctl.clasher');
+    await tester.scrollUntilVisible(find.byKey(button), 120, scrollable: _list);
+    await tester.ensureVisible(find.byKey(button));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('family-clash-ctl.clasher')), findsOne);
+
+    await tester.tap(find.byKey(button));
+    await tester.pumpAndSettle();
+    final swatch = find.byKey(
+      cloneSwatchKey(free.dashPermille, free.weightPermille),
+    );
+    await tester.ensureVisible(swatch);
+    await tester.pumpAndSettle();
+    await tester.tap(swatch);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(kChangeLineSubmitKey));
+    await tester.pumpAndSettle();
+
+    expect(ran.whereType<SetCloneLineCommand>(), hasLength(1));
+    expect(doc.registries.signalFamilies[id]!.dashOverride, free.dashPermille);
+    expect(familyPrintClash(doc, id), isNull);
+    expect(
+      find.byKey(const ValueKey('family-clash-ctl.clasher')),
+      findsNothing,
+    );
+  });
 }

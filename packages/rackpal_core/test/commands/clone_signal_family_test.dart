@@ -334,4 +334,80 @@ void main() {
     doc.registries.signalFamilies.remove(_cresnet);
     expect(optionOf(doc.registries, clone.family.id).cloneOf, 'ctl.cresnet');
   });
+
+  group('SFE-C7: changing a clone line (DR-245)', () {
+    test('a clone takes a new free line, and undo puts the old one back', () {
+      final doc = _doc();
+      final clone = _ready(_clone(doc));
+      expect(clone.apply(doc), isTrue);
+      final was = clone.family;
+      final room = cloneHeadroom(
+        doc,
+        was.domain,
+        changing: was.id,
+      )!;
+      final next = room.free.firstWhere(
+        (o) =>
+            o.dashPermille.join(',') != was.dashOverride!.join(',') ||
+            o.weightPermille != was.lineWeightPermilleOverride,
+      );
+      final built = buildChangeCloneLine(
+        doc,
+        family: was.id,
+        dashPermille: next.dashPermille,
+        weightPermille: next.weightPermille,
+      );
+      final command = (built as ChangeCloneLineReady).command;
+      expect(command.apply(doc), isTrue);
+      final now = doc.registries.signalFamilies[was.id]!;
+      expect(now.dashOverride, next.dashPermille);
+      expect(now.lineWeightPermilleOverride, next.weightPermille);
+      expect(now.displayName, was.displayName);
+      expect(now.clonedFrom, was.clonedFrom);
+
+      command.revert(doc);
+      expect(doc.registries.signalFamilies[was.id], same(was));
+    });
+
+    test('a shipped family never changes its line', () {
+      final reason = switch (buildChangeCloneLine(
+        _doc(),
+        family: const SignalFamilyId('ctl.lutron_qs'),
+        dashPermille: const [4000, 3000],
+        weightPermille: 2000,
+      )) {
+        ChangeCloneLineRefused(:final reason) => reason,
+        ChangeCloneLineReady() => fail('a shipped family was restyled'),
+      };
+      expect(reason, contains('ships with RackPal'));
+    });
+
+    test('a family is judged as itself: its own line does not block it, '
+        'another family line does, by name', () {
+      final doc = _doc();
+      final clone = _ready(_clone(doc));
+      expect(clone.apply(doc), isTrue);
+      final f = clone.family;
+      bool freeIn(Pal1Headroom room) => room.options
+          .singleWhere(
+            (o) =>
+                o.dashPermille.join(',') == f.dashOverride!.join(',') &&
+                o.weightPermille == f.lineWeightPermilleOverride,
+          )
+          .isFree;
+      expect(freeIn(cloneHeadroom(doc, f.domain, changing: f.id)!), isTrue);
+      expect(freeIn(cloneHeadroom(doc, f.domain)!), isFalse);
+
+      final reason = switch (buildChangeCloneLine(
+        doc,
+        family: f.id,
+        dashPermille: const [10000, 3000],
+        weightPermille: 1000,
+      )) {
+        ChangeCloneLineRefused(:final reason) => reason,
+        ChangeCloneLineReady() => fail('took Lutron QS line'),
+      };
+      expect(reason, contains('ctl.lutron_qs'));
+    });
+  });
 }

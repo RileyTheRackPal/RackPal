@@ -196,6 +196,7 @@ const Map<LabelKey, String> kUndoLabels = <LabelKey, String>{
   LabelKey.addMediaType: 'Add media type',
   LabelKey.cloneSignalFamily: 'Clone signal family',
   LabelKey.addArrivedFamilies: 'Add signal families',
+  LabelKey.setCloneLine: 'Change family line',
   LabelKey.editMediaType: 'Edit media type',
   LabelKey.mergeMediaTypes: 'Merge media types',
   LabelKey.setConnectorAliases: 'Set connector aliases',

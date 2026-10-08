@@ -675,6 +675,20 @@ class _SignalFamilies extends StatelessWidget {
           ListTile(
             dense: true,
             title: Text(f.displayName),
+            // SFE-C7: the fix the mark below points to, offered on every
+            // clone and on no shipped family (DR-245 §11.244.4).
+            trailing: TextButton(
+              key: ValueKey('change-line-${f.id.v}'),
+              onPressed: () async {
+                final command = await showChangeLineDialog(
+                  context,
+                  doc: doc,
+                  family: f,
+                );
+                if (command != null) onEdit([command]);
+              },
+              child: const Text('Change line...'),
+            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
