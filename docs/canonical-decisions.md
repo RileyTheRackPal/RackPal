@@ -24398,6 +24398,65 @@ is made, never afterwards.
 **Scope.** No scope moves; it settles a contradiction inside DR-122. §12.53 records the amendment.
 Consumed by SFE-B1 (`#825`) and SFE-C1 (`#829`).
 
+### 11.244 DR-245 · A cloned family travels inside the device library, and arrives without changing what is already drawn
+
+**Settled by the user on 2026-10-07 and 2026-10-08, for SFE-C4 (`#832`) and the four chapters it became
+(`#1033` to `#1036`).** DR-122 §11.121.6 writes a cloned family *"into `doc.registries.signalFamilies`
+**and** onto the user's shelf"*. **The shelf could not hold one**: it is a directory of `.rmda` device
+libraries, and the format carried device templates and nothing else.
+
+**11.244.1 FAMILIES TRAVEL INSIDE THE LIBRARY, AND THE USER OVERRODE THE RECOMMENDATION TO SAY SO.** Three
+homes were offered: a separate families file on the shelf (recommended, about a day), families inside
+`.rmda` libraries, or project-only with the shelf half parked. **The user chose the library**: *"the blast
+radius sucks but file portability FAR outweighs it."* A family stored apart from the device that uses it
+is how a library arrives on another machine with half its ports unresolved; carried inside, a library is
+self-contained the way DR-122 §11.121.6's RollerCoaster Tycoon precedent asks a project to be.
+
+`.rmda` and `.rmdx` gain an optional `signalFamilies` list, one shared encoding with the document's. **A
+library is written at schema v4 only when it carries a family; one that carries none stays v3.** That is
+the implementation's choice, made on `documentMinReaderVersion`'s precedent: the decoder ignores unknown
+keys, so an older build reading a v3-shaped library WITH families would drop them in silence and place
+devices whose ports name nothing. At v4 the same build refuses with `NewerRmdaSchemaError`, *"so the loss
+becomes a refusal somebody notices instead of a deletion nobody does."* An export carries every family
+not in the shipped catalogue that its templates' ports name. DR-123 §11.122.6's *"does not touch `.rmdx`
+or `.rmda`"* described DR-123's own scope and is not a bar on this; §12.54 records the reading.
+
+**11.244.2 THE PERSONAL LIBRARY IS `My library`, CHOSEN BY THE USER.** A clone is written to
+`My library.rmda` in the library directory, created on first use. This is **the first shelf write in the
+product**: DR-123's authored devices (`#817`) are unbuilt and will write to the same file. DR-123
+§11.122.4 governs it unchanged: **not a `Command`**, so undoing the clone does not remove it from the
+library, and **a failure is a notice, never a refusal**, since the project write has already happened.
+
+**11.244.3 ARRIVAL CHANGES NOTHING ALREADY DRAWN.** Placing a library device whose ports name a family the
+project lacks brings that family with it (copy-on-place, AC-041, DR-103). Three cases, decided with no
+prompt, on DR-103 §11.102.3's rule for templates, which the user chose to apply here:
+
+| The project holds that id | Result |
+|---|---|
+| Nothing | The family is added as it arrives |
+| An identical family | Nothing is added; the ports resolve to it |
+| A **different** family | The newcomer gets a fresh id (`ctl.vantage_3`) and, if its name is taken in the domain, a numbered name; the arriving device's ports point to it |
+
+**A newcomer that collides under PAL-1 is placed, and said.** The user chose this over refusing placement
+and over placing silently: a notice names the collision in the clone refusal's own words, and Signal
+families marks the family until its line is changed.
+
+**11.244.4 A CLONE'S LINE CAN BE CHANGED, AND A SHIPPED FAMILY'S CANNOT.** The notice above was first
+offered with *"fix its line"* attached, and **nothing could restyle a family**: SFE-B's census allows no
+construction site but the clone. That was caught after the choice and re-asked with prices. The user chose
+**Change line on clones**: the same greyscale grid, PAL-1-checked against the project, restyling every
+cable of that family. **A shipped family's line stays as the CI gate certified it.**
+
+**11.244.5 WHAT IS THE IMPLEMENTATION'S, NOT THE USER'S.** With families inside libraries, a clone no device
+uses still needs a road into the next project, so Signal families lists the families the shelf's libraries
+hold that the project does not, each with *Add to this project*, under §11.244.3's rules. Its place inside
+the section the user chose for SFE-C1 is the implementation's choice.
+
+**11.244.6 WHAT IT DOES NOT CHANGE.** CR-078 (a clone's hue is its domain's). DR-243's menu. DR-244's
+locks. RJ-012's two remaining limbs. The `.rppj` document format, beyond SFE-C3's additive `clonedFrom` (`892cc8bd`).
+
+**Scope.** No scope moves: it settles how DR-122 §11.121.6's shelf half is built. `#1033` to `#1036`.
+
 ---
 
 ## 12. Superseded rulings
@@ -25171,6 +25230,13 @@ close and a reopen.
 |---|---|---|
 | **DR-122 §11.121.1**, its mechanism | `defaultDirection`, `defaultTopology`, `defaultConnector` and `acceptedFamilies` *"are read by `TOP-003`, `DIR-001`, `SIG-002` and `CON-001`"* | **No rule reads a family** (§11.243.1). The rules read the PORT; the builder copies a family's defaults into a port when it is made, and `acceptedFamilies` is a port field. The objection survives for direction and topology through that copy, and does not reach the connector. |
 | **DR-122 §11.121.2**, the inherited list | The clone *"inherits domain, direction, topology, connector and every field a rule reads"* | **Domain, direction and topology are inherited and locked; the default connector starts as the parent's and may be any connector type the registry holds** (§11.243.3). The `ctl.vantage` example in the same section is now true as written. |
+
+### 12.54 Amended by DR-245 (a family travels inside the library)
+
+| Ruling | What it said | What now governs |
+|---|---|---|
+| **DR-122 §11.121.6**, the shelf half | A cloned family is written *"onto the user's shelf"* | **Into `My library.rmda`**, the personal device library on the shelf, which carries families since DR-245 (§11.244.1, §11.244.2). The project copy stays authoritative for the drawing. |
+| **DR-123 §11.122.6** | *"does not touch `.rmdx` or `.rmda`"* | **Read as DR-123's own scope**, not a bar on later rulings. `.rmda` and `.rmdx` gain an optional `signalFamilies` list, written at schema v4 only when present (§11.244.1). |
 
 ## 13. Resolved §10 questions
 
