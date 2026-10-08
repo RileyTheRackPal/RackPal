@@ -550,7 +550,8 @@ String? _signalFamily({
   );
   if (family == null) {
     return '"${edit.value}" is not a signal family. Choose one from the '
-        'list; families come from the catalog and cannot be created here.';
+        'list; families come from the catalog, or are cloned from one in '
+        'Project settings, and cannot be created here.';
   }
   final result = buildSetSignalFamily(
     doc: controller.doc,

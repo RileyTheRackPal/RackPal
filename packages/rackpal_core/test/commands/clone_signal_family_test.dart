@@ -317,4 +317,21 @@ void main() {
       }
     });
   });
+
+  test('SFE-C3: the picker says what a clone was cloned from, and falls '
+      'back to the bare id when the parent is not in the project', () {
+    final doc = _doc();
+    final clone = _ready(_clone(doc));
+    expect(clone.apply(doc), isTrue);
+
+    SignalFamilyCellOption optionOf(Registries r, SignalFamilyId id) => [
+      for (final g in signalFamilyCellGroups(r)) ...g.options,
+    ].singleWhere((o) => o.id == id);
+
+    expect(optionOf(doc.registries, clone.family.id).cloneOf, 'Cresnet');
+    expect(optionOf(doc.registries, _cresnet).cloneOf, isNull);
+
+    doc.registries.signalFamilies.remove(_cresnet);
+    expect(optionOf(doc.registries, clone.family.id).cloneOf, 'ctl.cresnet');
+  });
 }

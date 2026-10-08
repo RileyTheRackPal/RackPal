@@ -730,9 +730,20 @@ final class SignalFamilyCellOption {
     required this.id,
     required this.label,
     required this.searchKey,
+    this.cloneOf,
   });
 
   final SignalFamilyId id;
+
+  /// What this family was cloned from, as a person reads it, or null for a
+  /// family that ships (SFE-C3, DR-122).
+  ///
+  /// THE PARENT'S NAME, falling back to its bare id when the parent is not
+  /// in these registries, never to nothing: a clone carried to a project
+  /// that lacks its parent still says where it came from. Built here
+  /// rather than in the picker, beside [label], so every surface that
+  /// lists families says it in the same words.
+  final String? cloneOf;
 
   /// [signalFamilyCellLabel]'s spelling, which is also what the cell
   /// PRINTS. The menu and the cell must agree, or the first family whose
@@ -829,6 +840,11 @@ List<SignalFamilyCellGroup> signalFamilyCellGroups(Registries registries) {
                 ...family.aliases,
               ].join(' '),
             ),
+            cloneOf: switch (family.clonedFrom) {
+              final parent? =>
+                registries.signalFamilies[parent]?.displayName ?? parent.v,
+              null => null,
+            },
           ),
         );
   }

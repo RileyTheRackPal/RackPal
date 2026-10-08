@@ -1323,7 +1323,9 @@ $SuiteFloors = @{
     # test.dart. A name already in the domain is refused (the picker shows
     # a family by its label); a clone is never cloned; and every option the
     # dialog draws is the verdict the command reaches, in the same words.
-    'rackpal_core'   = 5686
+    # 5687 at `#831` (SFE-C3): +1 in commands/clone_signal_family_test.dart,
+    # the picker's "clone of" label and its fall-back to the bare id.
+    'rackpal_core'   = 5687
     # THE TIMED STEP (DR-178, #843). The five tests in
     # `schematic_perf_test.dart` tagged `perf`: the two one-frame budgets,
     # the twelve-pod ratchet, the tier comparison and the wires-only edit.
@@ -2086,7 +2088,10 @@ $SuiteFloors = @{
     # clones with what was chosen; one swatch per menu option) and one in
     # project_settings_dialog_test.dart (the section lists a clone by its
     # parent and opens the dialog).
-    'rackpal_ui'     = 2144
+    # 2146 at `#831` (SFE-C3): +2 in widgets/family_picker_provenance_test.
+    # dart, the "clone of" chip on a clone's row and not a shipped one's,
+    # and "Clones only" narrowing, offered only when there is a clone.
+    'rackpal_ui'     = 2146
     # 930 at PLAN-B: +13 from storage/container_open_test.dart, the file
     # -layer states a container owes (AC-058/D3), through the real store
     # and the real presenter. Its copy assertions are the point: the
